@@ -31,6 +31,7 @@ def resample(src, rm, method = 'nearest', nodata = None, band = 1):
     """
 
     arr = src.read(band)
+    if (rm == 1): return arr # If the resolution is the same, don't resample.
 
     # Set nodata to input
     nodataValue = src.nodata if nodata == None else nodata
