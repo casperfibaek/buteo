@@ -87,4 +87,5 @@ with rasterio.open('index_nbr.tif', 'w', **profile, compress='DEFLATE', predicto
     dst.write(nbr.astype(rasterio.float32))
 
 end = time.time()
+
 print(f'Script execution took: {round(end - start)}s')
