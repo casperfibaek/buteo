@@ -24,7 +24,7 @@ def ndvi(B08, B04):
     return np.divide((B08 - B04), (B08 + B04))
 
 @jit(nopython = True, parallel = True)
-def chlRedEdge(B07_10m, B05_10m):
+def cre(B07_10m, B05_10m):
     return np.power(np.divide(B07_10m, B05_10m), (-1))
 
 @jit(nopython = True, parallel = True)
