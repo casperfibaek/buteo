@@ -2,6 +2,7 @@ import rasterio
 import utils
 import indexFunc
 from rasterio import Affine
+import time
 
 threads = utils.threads()
 
@@ -45,10 +46,10 @@ def calc( yellowObj, arrOfIndices, dst='./indices/'):
         metaHolder[holderName] = band.meta
 
         if resoInt == nativeResolution[bandName]:
-            holder[holderName] = band.read().astype(rasterio.float32)
+            holder[holderName] = band.read().astype(rasterio.uint16)
         else:
             ratio = nativeResolution[bandName] / resoInt
-            holder[holderName] = utils.resample(band, ratio, 'bilinear')
+            holder[holderName] = utils.resample(band, ratio, 'nearest')
             metaHolder[holderName].update(width=round(metaHolder[holderName]['width']  * ratio))
             metaHolder[holderName].update(height=round(metaHolder[holderName]['height'] * ratio))
             metaHolder[holderName].update(transform=Affine(

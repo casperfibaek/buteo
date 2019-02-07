@@ -16,4 +16,4 @@ index.calc(img, [
     's2rep',
     'ndvi',
     ], './indices/')
-print(f'Execution took: {round(time.time() - start, 2)}')
+print(f'Execution took: {round(time.time() - start, 2)}s')

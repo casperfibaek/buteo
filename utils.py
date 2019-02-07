@@ -30,7 +30,7 @@ def resample(src, rm, method = 'nearest', nodata = None, band = 1):
     band    -- Raster band index (one-based indexing) (default 1)
     """
 
-    arr = src.read(band)
+    arr = src.read(band).astype(rasterio.uint16)
     if (rm == 1): return arr # If the resolution is the same, don't resample.
 
     # Set nodata to input
