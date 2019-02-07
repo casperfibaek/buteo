@@ -1,23 +1,40 @@
 import rasterio
 import utils
-import indexFunc
+import formulas
 from rasterio import Affine
 import time
 
 threads = utils.threads()
 
 def indexBands(index):
-    if index == 'msavi2': return [('B08', 10), ('B04', 10)]
-    if index == 'mcari': return [('B05', 10), ('B04', 10), ('B03', 10)]
-    if index == 's2rep': return [('B07', 20), ('B06', 20), ('B05', 20), ('B03', 20)]
-    if index == 'ndwi': return [('B11', 10), ('B08', 10)]
-    if index == 'ndvi': return [('B08', 10), ('B04', 10)]
+    if index == 'ari': return [('B05', 10), ('B03', 10)]
     if index == 'cre': return [('B07', 20), ('B05', 20)]
-    if index == 'moist': return [('B11', 20), ('B8A', 20)]
+    if index == 'chlre': return [('B08', 20), ('B05', 20)]
+    if index == 'rendvi': return [('B08', 20), ('B06', 20)]
+    if index == 's2rep': return [('B07', 20), ('B06', 20), ('B05', 20), ('B03', 20)]
+    if index == 'mcari': return [('B05', 10), ('B04', 10), ('B03', 10)]
+    if index == 'ireci': return [('B07', 20), ('B06', 20), ('B05', 20), ('B04', 20)]
+
+    if index == 'arvi': return [('B08', 10), ('B04', 10), ('B02', 10)]
     if index == 'evi': return [('B08', 10), ('B04', 10), ('B02', 10)]
     if index == 'evi2': return [('B08', 10), ('B04', 10)]
+    if index == 'savi': return [('B08', 10), ('B04', 10)]
+    if index == 'msavi2': return [('B08', 10), ('B04', 10)]
+    if index == 'ndvi': return [('B08', 10), ('B04', 10)]
+    if index == 'gndvi': return [('B08', 10), ('B04', 10)]
+
+    if index == 'moist': return [('B11', 20), ('B8A', 20)]
+    if index == 'ndwi': return [('B11', 10), ('B08', 10)]
+    if index == 'ndwi2': return [('B08', 10), ('B03', 10)]
+
     if index == 'nbr': return [('B12', 10), ('B08', 10)]
-    if index == 'ari': return [('B05', 10), ('B03', 10)]
+
+    if index == 'nvei': return [('B08', 10), ('B04', 10), ('B02', 10)]
+    if index == 'nbai': return [('B12', 10), ('B08', 10), ('B02', 10)]
+    if index == 'brba': return [('B08', 10), ('B03', 10)]
+    if index == 'ndbi': return [('B11', 20), ('B08', 20)]
+    if index == 'blfei': return [('B12', 20), ('B11', 20), ('B04', 20), ('B03', 20)]
+    if index == 'ibi': return [('B12', 20), ('B11', 20), ('B08', 20), ('B04', 20)]
     return []
 
 
@@ -73,7 +90,7 @@ def calc( yellowObj, arrOfIndices, dst='./indices/'):
         profile.update(driver = 'GTiff')
         profile.update(dtype = rasterio.float32)
 
-        calculatedIndex = getattr(indexFunc, index)(*bandsInIndex)
+        calculatedIndex = getattr(formulas, index)(*bandsInIndex)
 
         with rasterio.open(f'{dst}{index}.tif', 'w', **profile, compress='DEFLATE', predictor=3, num_threads=threads) as output:
             output.write(calculatedIndex.astype(rasterio.float32))
