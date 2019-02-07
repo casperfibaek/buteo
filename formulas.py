@@ -4,16 +4,6 @@ import math
 
 np.seterr(divide='ignore', invalid='ignore') # disable warnings for division by zero
 
-# Anthocyanin Reflectance Index
-@jit(nopython = True, parallel = True, fastmath = True)
-def ari(B05, B03):
-    return np.divide(1,  B03) - np.divide(1, B05)
-
-# Chlorophyll Red-Edge
-@jit(nopython = True, parallel = True, fastmath = True)
-def cre(B07, B05):
-    return np.power(np.divide(B07, B05), (-1))
-
 # Red Edge Chlorophyll Index
 @jit(nopython = True, parallel = True, fastmath = True)
 def chlre(B08, B05):
@@ -132,11 +122,11 @@ def blfei(B12, B11, B04, B03):
 
 # Index-based built-up index
 @jit(nopython = True, parallel = True, fastmath = True)
-def ibi(B12, B11, B08, B04):
+def ibi(B12, B11, B08, B04, B03):
     savi = np.divide(B08 - B04, B08 + B04 + 0.428) * 1.856
-    mndwi = np.divide((B08 - B11), (B08 + B11))
+    ndwi2 = np.divide((B03 - B08), (B03 + B08))
     ndbi = np.divide((B11 - B08), (B11 + B08))
-    base = np.divide(savi + mndwi, 2)
+    base = np.divide(savi + ndwi2, 2)
 
     return np.divide(ndbi - base, ndbi + base)
 
