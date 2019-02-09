@@ -3,14 +3,14 @@ import numpy as np
 import os
 import rasterio
 from rasterio import Affine
-import sentinelReader
+import sentinelHelper
 import indices
 import time
 
 start = time.time()
 
 threads = os.cpu_count() * 2
-img = sentinelReader.readS2("S2A_MSIL2A_20180727T104021_N0208_R008_T32VNH_20180727T134459.SAFE")
+img = sentinelHelper.readS2("S2A_MSIL2A_20180727T104021_N0208_R008_T32VNH_20180727T134459.SAFE")
 indicesToCalculate = [
     "chlre",    # Red Edge Chlorophyll Index
     # "rendvi",   # Red Edge NDVI
@@ -40,11 +40,11 @@ indicesToCalculate = [
     # 'ibi',      # Index-based built-up index
 ]
 
-# indicesToCalculate = ['ndvi', 'ndwi2']
+# indicesToCalculate = ['arvi', 'evi', 'evi2', 'savi', 'msavi2', 'ndvi', 'gndvi']
 
 indices.calc(img, indicesToCalculate, "./indices/")
 
-b2 = rasterio.open(img['10m']['B02'], driver="JP2OpenJPEG")
+b2 = rasterio.open(img['10m']['B02'])
 avgZscore = np.empty(shape=(1, b2.shape[0], b2.shape[1]), dtype = rasterio.float32)
 
 profile = b2.meta
@@ -55,42 +55,36 @@ for index in indicesToCalculate:
     a = rasterio.open(f"./indices/index_{index}.tif", driver="GTiff")
     b = a.read()
     stats = zonal_stats("./geometry/fieldTest_01.shp", f"./indices/index_{index}.tif", stats="median mean std min max range")
-    median = stats[0]["median"]
-    mean = stats[0]["mean"]
-    std = stats[0]["std"]
-    min = stats[0]["min"]
-    max = stats[0]["max"]
-    range = stats[0]["range"]
 
-    deviations = np.abs(median - b)
+    deviations = np.abs(stats[0]["median"] - b)
 
     with rasterio.open(f"./indices/deviation_{index}.tif", "w", **profile, compress='DEFLATE', predictor=3, num_threads=threads) as dst:
         dst.write(deviations)
 
     mad_std = zonal_stats("./geometry/fieldTest_01.shp", f"./indices/deviation_{index}.tif", stats="median")[0]["median"] * 1.4826
 
-    nonParametricSkew = (mean - median) / std
-    nonParametricSkewMad = (mean - median) / mad_std
-    simpleSkewRatio = abs(1 - (mean / median))
-    minZscore = (min - median) / mad_std
-    maxZscore = (max - median) / mad_std
+    normalRange = stats[0]["range"]
+    normalMean = stats[0]['mean']
+    nonParametricSkewMad = (stats[0]["mean"] - stats[0]["median"]) / mad_std
+    simpleSkewRatio = 1 - (stats[0]["mean"] / stats[0]["median"])
+    minZscore = (stats[0]["min"] - stats[0]["median"]) / mad_std
+    maxZscore = (stats[0]["max"] - stats[0]["median"]) / mad_std
+    rangeStdRatio = stats[0]["range"] / mad_std
     
     print('    ')
     print(f"{index}:")
-    print(f"    non-parametric skew       = {round(nonParametricSkew, 3)}")
     print(f"    non-parametric skew (mad) = {round(nonParametricSkewMad, 3)}")
-    print(f"    standard deviation        = {round(std, 3)}")
     print(f"    standard deviation (mad)  = {round(mad_std, 3)}")
+    print(f"    coef. of variation (mad)  = {round((mad_std / normalMean) * 100, 3)}")
+    print(f"    range std ratio (mad)     = {round(rangeStdRatio, 3)}")
+    print(f"    range                     = {round(normalRange, 3)}")
     print(f"    minimum training z-score  = {round(minZscore, 3)}")
     print(f"    maximum training z-score  = {round(maxZscore, 3)}")
     print(f"    simple skew ratio         = {round(simpleSkewRatio, 3)}")
-    print(f"    range                     = {round(range, 3)}")
-    print(f"    range std ratio           = {round(range / std, 3)}")
-    print(f"    range std ratio (mad)     = {round(range / mad_std, 3)}")
 
     os.remove(f"./indices/deviation_{index}.tif")
 
-    zscore = (b - median) / mad_std
+    zscore = (b - stats[0]["median"]) / mad_std
 
     # with rasterio.open(f"./indices/zscore_{index}.tif", "w", **profile, compress='DEFLATE', predictor=3, num_threads=threads) as dst:
     #     dst.write(zscore)
