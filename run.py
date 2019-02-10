@@ -3,46 +3,18 @@ import numpy as np
 import os
 import rasterio
 from rasterio import Affine
-import sentinelHelper
-import indices
+import lib.sentinelHelper as sentinelHelper
+import lib.indices as indices
 import time
 
 start = time.time()
 
 threads = os.cpu_count() * 2
 img = sentinelHelper.readS2("S2A_MSIL2A_20180727T104021_N0208_R008_T32VNH_20180727T134459.SAFE")
-indicesToCalculate = [
-    "chlre",    # Red Edge Chlorophyll Index
-    # "rendvi",   # Red Edge NDVI
-    "s2rep",    # Sentinel 2 Red Edge Position
-    # "mcari",    # Modified Chlorophyll Absorption in Reflectance Index
-    "ireci",    # Inverted Red Edge Chlorophyll Index
 
-    "arvi",     # Atmospherically Resistant Vegetation Index
-    "evi",      # Enhanced vegetation index
-    "evi2",     # Enhanced vegetation index v2
-    "savi",     # Soil adjusted vegetation index
-    "msavi2",   # Modified soil adjusted vegetation index v2
-    "ndvi",     # Normalised difference vegetation index
-    "gndvi",    # Green normalised difference vegetation index
-    
-    "moist",    # Soil moisture index
-    # "ndwi",     # Normalised difference water index
-    # "ndwi2",    # Normalised difference water index v2
+indicesToCalculate = ['arvi', 'evi', 'evi2', 'savi', 'msavi2', 'ndvi', 'gndvi']
 
-    "nbr",      # Normalised difference burn ratio
-
-    # "nvei",     # Non-elimination vegetation index
-    "nbai",     # Built-up area index
-    'brba',     # Band ratio for built-up areas
-    # 'ndbi',     # Normalised difference built-up index
-    'blfei',    # Built-up features extraction 
-    # 'ibi',      # Index-based built-up index
-]
-
-# indicesToCalculate = ['arvi', 'evi', 'evi2', 'savi', 'msavi2', 'ndvi', 'gndvi']
-
-indices.calc(img, indicesToCalculate, "./indices/")
+indices.calc(img, 'ALL', "./indices/")
 
 b2 = rasterio.open(img['10m']['B02'])
 avgZscore = np.empty(shape=(1, b2.shape[0], b2.shape[1]), dtype = rasterio.float32)
