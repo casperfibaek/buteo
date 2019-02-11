@@ -1,29 +1,37 @@
 import os
 from glob import glob
+import numpy as np
+import numpy.ma as ma
 import zipfile
+from rasterUtils import resample, rasterToArray, arrayToRaster
 
-dataurl = './raster/S2B_MSIL2A_20180702T104019_N0208_R008_T32VNJ_20180702T150728.SAFE'
 
-def createNodata(tree, clouds=True):
+def updateNoData(tree: dict, clouds: bool=True):
     if 'SCL' in tree['10m']:
         scl = tree['10m']['SCL']
-        resample = False
     else:
+        dest = os.path.join(tree['folders']['10m'], f"{tree['meta']['basename']}_SLC_10m.tif")
         scl = tree['20m']['SCL']
-        resample = True
-    print(scl)
+        tree['10m']['SCL'] = resample(scl, outRaster=dest, outputFormat='GTiff', targetSize=(10, 10))
 
-def addToHolder(arr, res, holdDict):
+        arr = rasterToArray(tree['10m']['SLC'])
+        mdata = ma.masked_where(arr == 4, arr)
+
+        raster
+
+
+def addToHolder(arr: list, res: str, holdDict: dict) -> None:
     for band in arr:
         base = os.path.basename(band)
         filename = base.split('.')[0]
         bandname = filename.split('_')[2]
         holdDict[res][bandname] = os.path.abspath(os.path.normpath(band))
 
-def sentinelMetadataFromFilename( filename ):
+
+def sentinelMetadataFromFilename(filename: str):
     arr = filename.split('_')
     holder = {}
-    
+
     s2sats = ['S2A', 'S2B']
     s1sats = ['S1A', 'S1B']
 
@@ -47,12 +55,14 @@ def sentinelMetadataFromFilename( filename ):
             holder['baseline'] = arr[3]
             holder['orbit'] = arr[4]
             holder['tile'] = arr[5]
+            holder['basename'] = f"{arr[5]}_{arr[2]}"
     except:
         raise ValueError('Unable to parse input string')
 
     return holder
 
-def readS2( url, deleteOnUnzip=False, createNodata=False, resampleTo10m=False ): 
+
+def readS2(url, deleteOnUnzip=False, createNodata=False, resampleTo10m=False):
     base = os.path.basename(url)
     filetype = base.split('.')[-1]
     filename = base.split('.')[0]
@@ -65,7 +75,6 @@ def readS2( url, deleteOnUnzip=False, createNodata=False, resampleTo10m=False ):
     if metadata['satellite'] != 'S2A' and metadata['satellite'] != 'S2B':
         if metadata['processinglevel'] != 'MSIL2A':
             raise ValueError('Level 1 data not yet supported.')
-
 
     if filetype == 'SAFE':
         imgBase = glob(f'{dataurl}/GRANULE/*/IMG_DATA/')[0]
@@ -93,6 +102,12 @@ def readS2( url, deleteOnUnzip=False, createNodata=False, resampleTo10m=False ):
         '20m': {},
         '60m': {},
         'meta': metadata,
+        'folders': {
+            'base': os.path.abspath(imgBase),
+            '10m': os.path.abspath(glob(f'{imgBase}\\R10m\\')[0]),
+            '20m': os.path.abspath(glob(f'{imgBase}\\R20m\\')[0]),
+            '60m': os.path.abspath(glob(f'{imgBase}\\R60m\\')[0]),
+        },
     }
 
     addToHolder(glob(f'{imgBase}\\R10m\\*'), '10m', holder)
@@ -101,6 +116,7 @@ def readS2( url, deleteOnUnzip=False, createNodata=False, resampleTo10m=False ):
 
     return holder
 
+
+dataurl = './raster/S2B_MSIL2A_20180702T104019_N0208_R008_T32VNJ_20180702T150728.SAFE'
 tree = readS2(dataurl)
-gdal.Open
-createNodata(tree)
+updateNoData(tree)

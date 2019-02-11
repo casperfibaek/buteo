@@ -1,6 +1,7 @@
 from osgeo import gdal, gdalconst
 import os
 
+
 def translateGDALResampleMethod(method):
     methods = {
         'nearest': 0,
@@ -22,6 +23,7 @@ def translateGDALResampleMethod(method):
     else:
         return 0
 
+
 def translateGDALDataTypes(datatype):
     datatypes = {
         'byte': 1,
@@ -42,6 +44,7 @@ def translateGDALDataTypes(datatype):
     else:
         return 6
 
+
 def isFloatGDAL(datatype):
     floats = [6, 7, 10, 11]
     if datatype in floats:
@@ -49,12 +52,14 @@ def isFloatGDAL(datatype):
     else:
         return False
 
+
 def isIntegerGDAL(datatype):
     integers = [1, 2, 3, 4, 5, 8, 9]
     if datatype in integers:
         return True
     else:
         return False
+
 
 def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, inRasterBand=1,
                   quiet=False, nodata=None):
@@ -100,13 +105,13 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
             destination,
             origin,
             format='MEM',
-            cutlineDSName = cutline,
-            cropToCutline = True,
-            multithread = True,
-            targetAlignedPixels = True,
-            xRes = inputTransform[1],
-            yRes = inputTransform[5],
-            warpOptions = options
+            cutlineDSName=cutline,
+            cropToCutline=True,
+            multithread=True,
+            targetAlignedPixels=True,
+            xRes=inputTransform[1],
+            yRes=inputTransform[5],
+            warpOptions=options
         )
 
         if quiet is True:
@@ -118,7 +123,7 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
 
     if inputNodataValue is not None:
         data = data[data != inputNodataValue]
-    
+
     if flatten is True:
         return data.flatten()
     else:
@@ -161,16 +166,16 @@ def arrayToRaster(array, reference, outRaster=None, outputFormat='MEM', nodata=N
 
     if nodata is not None:
         destinationBand.SetNoDataValue(nodata)
-    
+
     if outputFormat is not 'MEM':
         destinationBand.FlushCache()
         return os.path.abspath(outRaster)
     else:
         return destination
 
-# How to warp multi-band images?
-def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1, 
-             targetSize=None, outputFormat='MEM', method = 'nearest', quiet=False):
+
+def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1,
+             targetSize=None, outputFormat='MEM', method='nearest', quiet=False):
     if targetSize is None and byReference is None:
         raise ValueError('Either targetSize or a reference must be provided.')
     if outRaster is None:
@@ -186,7 +191,7 @@ def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1
     inputBand = inputDataframe.GetRasterBand(1)
     inputDatatype = inputBand.DataType
     inputNodataValue = inputBand.GetNoDataValue()
-    
+
     driver = gdal.GetDriverByName(outputFormat)
 
     if outputFormat is 'MEM':
@@ -216,18 +221,19 @@ def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1
         if quiet is True:
             gdal.PushErrorHandler('CPLQuietErrorHandler')
 
-        gdal.Warp(destination, inRaster,
-            format = outputFormat,
-            multithread = True,
-            targetAlignedPixels = True,
-            xRes = referenceTransform[1],
-            yRes = referenceTransform[5],
-            srcSRS = inputProjection,
-            dstSRS  = referenceProjection,
-            srcNodata = inputNodataValue,
-            dstNodata = referenceNoDataValue,
-            warpOptions = options,
-            resampleAlg = translateGDALResampleMethod(method),
+        gdal.Warp(
+            destination, inRaster,
+            format=outputFormat,
+            multithread=True,
+            targetAlignedPixels=True,
+            xRes=referenceTransform[1],
+            yRes=referenceTransform[5],
+            srcSRS=inputProjection,
+            dstSRS=referenceProjection,
+            srcNodata=inputNodataValue,
+            dstNodata=referenceNoDataValue,
+            warpOptions=options,
+            resampleAlg=translateGDALResampleMethod(method),
         )
 
         if quiet is True:
@@ -259,18 +265,19 @@ def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1
         if quiet is True:
             gdal.PushErrorHandler('CPLQuietErrorHandler')
 
-        gdal.Warp(destination, inRaster,
-            format = outputFormat,
-            multithread = True,
-            targetAlignedPixels = True,
-            xRes = targetSize[0],
-            yRes = targetSize[1],
-            srcSRS = inputProjection,
-            dstSRS  = inputProjection,
-            srcNodata = inputNodataValue,
-            dstNodata = inputNodataValue,
-            warpOptions = options,
-            resampleAlg = translateGDALResampleMethod(method),
+        gdal.Warp(
+            destination, inRaster,
+            format=outputFormat,
+            multithread=True,
+            targetAlignedPixels=True,
+            xRes=targetSize[0],
+            yRes=targetSize[1],
+            srcSRS=inputProjection,
+            dstSRS=inputProjection,
+            srcNodata=inputNodataValue,
+            dstNodata=inputNodataValue,
+            warpOptions=options,
+            resampleAlg=translateGDALResampleMethod(method),
         )
 
         if quiet is True:

@@ -3,7 +3,8 @@ import numpy as np
 from scipy.stats import stats
 import matplotlib.pyplot as plt
 import math
-import rasterUtils
+from src.rasterUtils import rasterToArray
+
 
 # TODO: Testing of this function
 def bincount(arr, iqr=None, rng=None):
@@ -17,11 +18,12 @@ def bincount(arr, iqr=None, rng=None):
             rng = np.range(arr)
 
         # Freedman Diaconis Estimator
-        fd = round(math.ceil(rng / (2 * (iqr / math.pow(len(arr), 1/3)) + 1)))
+        fd = round(math.ceil(rng / (2 * (iqr / math.pow(len(arr), 1 / 3)) + 1)))
         return fd
     else:
         # Sturges
         return round(math.log2(len(arr)) + 1)
+
 
 def calcStats(data, statistics=('std', 'mean', 'median')):
     holder = {}
@@ -105,7 +107,7 @@ def calcStats(data, statistics=('std', 'mean', 'median')):
             deviations = np.abs(holder['median'] - data)
         else:
             deviations = np.abs(np.median(data) - data)
-            
+
         holder['mad'] = np.median(deviations)
 
     if 'madstd' in statistics:
@@ -139,7 +141,7 @@ def calcStats(data, statistics=('std', 'mean', 'median')):
 
         belowLimit = _count - len(data[data > lowerbound])
         aboveLimit = _count - len(data[data < higherbound])
-    
+
         percent = 100 - (((belowLimit + aboveLimit) / _count) * 100)
         holder['within3std'] = percent
 
@@ -163,7 +165,7 @@ def calcStats(data, statistics=('std', 'mean', 'median')):
 
         belowLimit = _count - len(data[data > lowerbound])
         aboveLimit = _count - len(data[data < higherbound])
-    
+
         percent = 100 - (((belowLimit + aboveLimit) / _count) * 100)
         holder['within3std_mad'] = percent
 
@@ -171,10 +173,12 @@ def calcStats(data, statistics=('std', 'mean', 'median')):
 
     return holder
 
-def rstats(geometry, inRaster, outRaster='memory', nodata=None,
-           statistics=('std', 'mean', 'median'), histogram=False):
 
-    data = rasterUtils.read2flatArray(geometry, inRaster, nodata=nodata)
+def rstats(geometry, inRaster, outRaster='memory', nodata=None,
+           statistics=('std', 'mean', 'median'), histogram=False,
+           allTouch=True):
+
+    data = rasterToArray(inRaster, cutline=geometry, cutlineAllTouch=allTouch, flatten=True, nodata=nodata)
     stats = calcStats(data, statistics)
 
     if histogram is True:
