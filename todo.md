@@ -1,6 +1,6 @@
 # todo
 
-# Resample, mask and reformat
+# mask and reformat
 ## recreate rasterstats with global, local and scipy functions
 ## use to test viability of training materials
 
