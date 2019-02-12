@@ -1,4 +1,5 @@
 from osgeo import gdal, gdalconst
+import numpy.ma as ma
 import os
 
 
@@ -22,6 +23,20 @@ def translateGDALResampleMethod(method):
         return methods[method]
     else:
         return 0
+
+
+def translateGDALMaxValues(datatype):
+    datatypes = {
+        1: 255,
+        2: 65535,
+        3: 32767,
+        4: 2147483647,
+        5: 4294967295,
+        6: 3.39999999999999996e+38,
+        7: 1.7976931348623157e+308,
+    }
+
+    return datatypes[datatype]
 
 
 def translateGDALDataTypes(datatype):
@@ -62,7 +77,7 @@ def isIntegerGDAL(datatype):
 
 
 def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, inRasterBand=1,
-                  quiet=False, nodata=None):
+                  quiet=False):
     options = []
     if cutlineAllTouch is True:
         options.append('CUTLINE_ALL_TOUCHED=TRUE')
@@ -70,8 +85,6 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
     inputDataframe = gdal.Open(inRaster)
     inputBand = inputDataframe.GetRasterBand(inRasterBand)
     inputNodataValue = inputBand.GetNoDataValue()
-    if inputNodataValue is None:
-        inputNodataValue = nodata
 
     if cutline is not None:
         inputTransform = inputDataframe.GetGeoTransform()
@@ -91,8 +104,6 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
             subsetBand = subset.GetRasterBand(1)
             if inputNodataValue is not None:
                 subsetBand.SetNoDataValue(inputNodataValue)
-            elif nodata is not None:
-                subsetBand.SetNoDataValue(nodata)
             subsetBand.WriteArray(inputBand.ReadAsArray())
             origin = subset
         else:
@@ -122,22 +133,24 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
         data = inputBand.ReadAsArray()
 
     if inputNodataValue is not None:
-        data = data[data != inputNodataValue]
-
-    if flatten is True:
-        return data.flatten()
+        data = ma.masked_equal(data, inputNodataValue)
+        ma.set_fill_value(data, inputNodataValue)
+        if flatten is True:
+            return data.compressed()
     else:
-        return data
+        if flatten is True:
+            return data.flatten()
+    return data
 
 
-def arrayToRaster(array, reference, outRaster=None, outputFormat='MEM', nodata=None):
+def arrayToRaster(array, reference, outRaster=None, outputFormat='MEM'):
     if outRaster is None and outputFormat is not 'MEM':
         raise ValueError('Either outraster or memory output must be selected.')
+
     referenceDataframe = gdal.Open(reference, gdalconst.GA_ReadOnly)
     referenceTransform = referenceDataframe.GetGeoTransform()
     referenceProjection = referenceDataframe.GetProjection()
     referenceBand = referenceDataframe.GetRasterBand(1)
-    referenceNoDataValue = referenceBand.GetNoDataValue()
 
     if outRaster is None:
         outputFormat = 'MEM'
@@ -151,7 +164,7 @@ def arrayToRaster(array, reference, outRaster=None, outputFormat='MEM', nodata=N
     if outputFormat is 'MEM':
         options = []
     else:
-        if gdal.GetDataTypeName(referenceBand.DataType) == 'Float32':
+        if isFloatGDAL(referenceBand.DataType) is True:
             predictor = 3
         else:
             predictor = 2
@@ -162,10 +175,17 @@ def arrayToRaster(array, reference, outRaster=None, outputFormat='MEM', nodata=N
     destination.SetGeoTransform(referenceTransform)
     destination.SetProjection(referenceProjection)
     destinationBand = destination.GetRasterBand(1)
-    destinationBand.WriteArray(array)
 
-    if nodata is not None:
-        destinationBand.SetNoDataValue(nodata)
+    if ma.is_masked(array) is True:
+        fillValue = array.get_fill_value()
+        print(f'fill value before: {fillValue}')
+        if fillValue > translateGDALMaxValues(referenceBand.DataType):
+            fillValue = translateGDALMaxValues(referenceBand.DataType)
+            print(f'fill value after:  {fillValue}')
+        destinationBand.WriteArray(array.filled())
+        destinationBand.SetNoDataValue(fillValue)
+    else:
+        destinationBand.WriteArray(array)
 
     if outputFormat is not 'MEM':
         destinationBand.FlushCache()
@@ -197,7 +217,7 @@ def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1
     if outputFormat is 'MEM':
         options = []
     else:
-        if gdal.GetDataTypeName(inputBand.DataType) == 'Float32':
+        if isFloatGDAL(inputDatatype) is True:
             predictor = 3
         else:
             predictor = 2
@@ -210,9 +230,10 @@ def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1
         referenceXSize = referenceDataframe.RasterXSize
         referenceYSize = referenceDataframe.RasterYSize
         referenceBand = referenceDataframe.GetRasterBand(byReferenceBandNumber)
+        referenceDatatype = referenceBand.DataType
         referenceNoDataValue = referenceBand.GetNoDataValue()
 
-        destination = driver.Create(outRaster, referenceXSize, referenceYSize, inputBandCount, inputDatatype, options)
+        destination = driver.Create(outRaster, referenceXSize, referenceYSize, inputBandCount, referenceDatatype, options)
         destination.SetProjection(referenceProjection)
         destination.SetGeoTransform(referenceTransform)
         if referenceNoDataValue is not None:

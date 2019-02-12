@@ -169,8 +169,6 @@ def calcStats(data, statistics=('std', 'mean', 'median')):
         percent = 100 - (((belowLimit + aboveLimit) / _count) * 100)
         holder['within3std_mad'] = percent
 
-    bincount(data, holder['iqr'], holder['range'])
-
     return holder
 
 

@@ -10,14 +10,13 @@ def updateNoData(tree: dict, clouds: bool=True):
     if 'SCL' in tree['10m']:
         scl = tree['10m']['SCL']
     else:
-        dest = os.path.join(tree['folders']['10m'], f"{tree['meta']['basename']}_SLC_10m.tif")
-        scl = tree['20m']['SCL']
-        tree['10m']['SCL'] = resample(scl, outRaster=dest, outputFormat='GTiff', targetSize=(10, 10))
+        dest = os.path.join(tree['folders']['10m'], f"{tree['meta']['basename']}_SCL_10m.tif")
+        tree['10m']['SCL'] = resample(tree['20m']['SCL'], outRaster=dest, outputFormat='GTiff', targetSize=(10, 10), quiet=True)
 
-        arr = rasterToArray(tree['10m']['SLC'])
-        mdata = ma.masked_where(arr == 4, arr)
-
-        raster
+        arr = rasterToArray(tree['10m']['SCL'])
+        mdata = ma.masked_where(arr == 6, arr)
+        newRaster = os.path.join(tree['folders']['10m'], f"{tree['meta']['basename']}_SCL_10m_masked.tif")
+        arrayToRaster(mdata, tree['10m']['B02'], newRaster)
 
 
 def addToHolder(arr: list, res: str, holdDict: dict) -> None:
@@ -77,6 +76,7 @@ def readS2(url, deleteOnUnzip=False, createNodata=False, resampleTo10m=False):
             raise ValueError('Level 1 data not yet supported.')
 
     if filetype == 'SAFE':
+
         imgBase = glob(f'{dataurl}/GRANULE/*/IMG_DATA/')[0]
     elif filetype == 'zip':
         # Test if the file is already unzipped
@@ -117,6 +117,6 @@ def readS2(url, deleteOnUnzip=False, createNodata=False, resampleTo10m=False):
     return holder
 
 
-dataurl = './raster/S2B_MSIL2A_20180702T104019_N0208_R008_T32VNJ_20180702T150728.SAFE'
+dataurl = '../raster/S2B_MSIL2A_20180702T104019_N0208_R008_T32VNJ_20180702T150728.SAFE'
 tree = readS2(dataurl)
 updateNoData(tree)
