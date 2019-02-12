@@ -81,6 +81,11 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None, cut
     if dstNoDataValue is None:
         dstNoDataValue = inputNodataValue
 
+    ''' GDAL throws a warning whenever warpOptions are based to a function
+        that has the 'MEM' format. However, it is necessary to do so because
+        of the cutlineAllTouch feature.'''
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+
     # Test the cutline
     if cutline is not None:
         # Test the cutline. This adds a tiny overhead, but is usefull to ensure
@@ -138,12 +143,6 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None, cut
                 print(f"Reprojecting reference raster:")
                 progressbar = progress_callback
 
-            ''' GDAL throws a warning whenever warpOptions are based to a function
-                that has the 'MEM' format. However, it is necessary to do so because
-                of the cutlineAllTouch feature.
-            '''
-            gdal.PushErrorHandler('CPLQuietErrorHandler')
-
             try:
                 # Reproject the reference to match the input before cutting by extent
                 reprojectedReferenceDataframe = gdal.Warp(
@@ -163,9 +162,6 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None, cut
                 print('Warping completed with warnings. Check your result.')
             elif reprojectedReferenceDataframe is None:    # GDAL returns None for errors.
                 raise RuntimeError("Warping completed unsuccesfully.") from None
-
-            # Reenable the normal ErrorHandler.
-            gdal.PopErrorHandler()
 
             referenceExtent = getExtent(reprojectedReferenceDataframe)
 
@@ -202,12 +198,6 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None, cut
         if quiet is False:
             print(f"Clipping input raster:")
             progressbar = progress_callback
-
-        ''' GDAL throws a warning whenever warpOptions are based to a function
-            that has the 'MEM' format. However, it is necessary to do so because
-            of the cutlineAllTouch feature.
-        '''
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
 
         try:
             if cutline is None:
@@ -273,11 +263,6 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None, cut
             print(f"Warping the raster:")
             progressbar = progress_callback
 
-        ''' GDAL throws a warning whenever warpOptions are based to a function
-            that has the 'MEM' format. However, it is necessary to do so because
-            of the cutlineAllTouch feature.
-        '''
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
         try:
             warped = gdal.Warp(
                 destinationDataframe,
@@ -303,13 +288,14 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None, cut
         elif warped is None:    # GDAL returns None for errors.
             raise RuntimeError("Warping completed unsuccesfully.") from None
 
-        # Reenable the normal ErrorHandler.
-        gdal.PopErrorHandler()
+    # Reenable the normal ErrorHandler.
+    gdal.PopErrorHandler()
 
     # Close datasets again to free memory.
     inputDataframe = None
     destinationDataframe = None
     referenceDataframe = None
+    reprojectedReferenceDataframe = None
 
     if outRaster is not None:
         warped = None
