@@ -1,18 +1,48 @@
 def getExtent(dataframe):
     cols = dataframe.RasterXSize
     rows = dataframe.RasterYSize
-    gt = dataframe.GetGeoTransform()
-    ext = []
-    xarr = [0, cols]
-    yarr = [0, rows]
+    transform = dataframe.GetGeoTransform()
 
-    for px in xarr:
-        for py in yarr:
-            x = gt[0] + (px * gt[1]) + (py * gt[2])
-            y = gt[3] + (px * gt[4]) + (py * gt[5])
-            ext.append([x, y])
-        yarr.reverse()
-    return ext
+    bottomRightX = transform[0] + (cols * transform[1])
+    bottomRightY = transform[3] + (rows * transform[5])
+
+    #      (minX,         minY,         maxX,         maxY)
+    return (transform[0], bottomRightY, bottomRightX, transform[3])
+
+
+def getIntersection(extent1, extent2):
+    # # Too east
+    # if extent2[0] > extent1[2]:
+    #     return False
+    # # Too north
+    # elif extent2[1] > extent1[3]:
+    #     return False
+    # # Too west
+    # elif extent2[2] < extent1[0]:
+    #     return False
+    # # Too south
+    # elif extent2[3] < extent1[1]:
+    #     return False
+    # else:
+    return (
+        max(extent1[0], extent2[0]),    # minX
+        max(extent1[1], extent2[1]),    # minY
+        min(extent1[2], extent2[2]),    # maxX
+        min(extent1[3], extent2[3]),    # maxY
+    )
+
+
+def createClipGeoTransform(geoTransform, extent):
+    pixelWidth = geoTransform[1]
+    pixelHeight = geoTransform[5]
+    newCols = round((extent[2] - extent[0]) / pixelWidth)
+    newRows = round((extent[3] - extent[1]) / pixelHeight)
+
+    return {
+        'Transform': [extent[0], pixelWidth, 0, extent[3], 0, pixelHeight],
+        'RasterXSize': abs(newCols),
+        'RasterYSize': abs(newRows),
+    }
 
 
 def translateResampleMethod(method):
