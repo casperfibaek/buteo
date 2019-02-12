@@ -12,6 +12,12 @@ def progress(count, total):
     sys.stdout.write(f"[{bar}] {percents} %\r")
     sys.stdout.flush()
 
+    return None
+
 
 def progress_callback(complete, message, unknown):
-    progress(complete, 1)
+    return progress(complete, 1)
+
+
+def progress_callback_quiet(complete, message, unknown):
+    return None

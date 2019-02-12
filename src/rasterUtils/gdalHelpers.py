@@ -1,3 +1,20 @@
+def getExtent(dataframe):
+    cols = dataframe.RasterXSize
+    rows = dataframe.RasterYSize
+    gt = dataframe.GetGeoTransform()
+    ext = []
+    xarr = [0, cols]
+    yarr = [0, rows]
+
+    for px in xarr:
+        for py in yarr:
+            x = gt[0] + (px * gt[1]) + (py * gt[2])
+            y = gt[3] + (px * gt[4]) + (py * gt[5])
+            ext.append([x, y])
+        yarr.reverse()
+    return ext
+
+
 def translateResampleMethod(method):
     methods = {
         'nearest': 0,

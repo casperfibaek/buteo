@@ -39,10 +39,8 @@ def arrayToRaster(array, reference, outRaster=None, outputFormat='MEM'):
 
     if ma.is_masked(array) is True:
         fillValue = array.get_fill_value()
-        print(f'fill value before: {fillValue}')
         if fillValue > translateMaxValues(referenceBand.DataType):
             fillValue = translateMaxValues(referenceBand.DataType)
-            print(f'fill value after:  {fillValue}')
         destinationBand.WriteArray(array.filled())
         destinationBand.SetNoDataValue(fillValue)
     else:

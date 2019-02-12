@@ -1,14 +1,17 @@
-from osgeo import gdal, gdalconst
+from osgeo import gdal, ogr, gdalconst
 import numpy as np
 import numpy.ma as ma
-import utils
+import sys
+sys.path.append("..")
+from utils.progress import progress_callback, progress_callback_quiet
+
 
 # Author: CFI
 # LastUpdate: 12-02-2019
 
-
-def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, inRasterBand=1,
-                  quiet=True):
+# TODO: ADD REFERENCE OPTIONS
+def rasterToArray(inRaster, reference=None, cutline=None, cutlineAllTouch=False, compressed=False,
+                  filled=False, inRasterBand=1, srcNoDataValue=None, dstNoDataValue=None, quiet=False):
     ''' Turns a raster into an Numpy Array in memory.
 
     Args:
@@ -18,11 +21,15 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
         cutline (URL or OGR.DataFrame): A geometry used to cut the inRaster.
         cutlineAllTouch (Bool): Should all pixels that touch be included?
             False is only centroids.
-        flatten (Bool): Should the returned data be flattened to 1D?
-            If a masked array is flattened, nodata-values will be removed
+        compressed (Bool): Should the returned data be flattened to 1D?
+            If a masked array is compressed, nodata-values will be removed
             from the return array.
+        filled (Bool): Should they array be filled with the nodata value
+            contained in the mask.
         inRasterBand (Bool): The number of the band in the raster to turn into
             an array.
+        srcNoDataValue (Number): Overwrite the nodata value of the source raster.
+        dstNoDataValue (Number): Set a new nodata for the output array.
         quiet (Bool): Suppresses GDAL error messages.
 
     Returns:
@@ -31,6 +38,7 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
 
     Raises:
         AttributeError: If inRaster is invalid or unreadable by GDAL.
+        RuntimeError: If errors are encountered during warping.
     '''
 
     # Read the supplied raster
@@ -42,7 +50,11 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
 
     # Read the requested band. The NoDataValue might be: None.
     inputBand = inputDataframe.GetRasterBand(inRasterBand)
+
+    # Get the nodata-values from either the raster or the function parameters
     inputNodataValue = inputBand.GetNoDataValue()
+    if inputNodataValue is None and srcNoDataValue is not None:
+        inputNodataValue = srcNoDataValue
 
     # Bare options to pass to GDAL.Warp. Since output is memory no compression
     # options are passed.
@@ -53,6 +65,19 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
     # If a cutline is requested, a new DataFrame with the cut raster is created
     # in memory
     if cutline is not None:
+
+        # Test the cutline. This adds a tiny overhead, but is usefull to ensure
+        # that the error messages are easy to understand.
+        cutlineGeometry = ogr.Open(cutline)
+
+        # Check if cutline was read properly.
+        if cutlineGeometry is 0:         # GDAL returns 0 for warnings.
+            print('Geometry read with warnings. Check your result.')
+        elif cutlineGeometry is None:    # GDAL returns None for errors.
+            raise RuntimeError("It was not possible to read the cutline geometry.") from None
+
+        # Free the memory again.
+        cutlineGeometry = None
 
         # Read the attributes of the inputdataframe
         inputTransform = inputDataframe.GetGeoTransform()
@@ -74,10 +99,6 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
         destinationDataframe.SetGeoTransform(inputTransform)
         destinationDataframe.SetProjection(inputProjection)
 
-        # Add the nodata-value if one is present in the supplied raster.
-        if inputNodataValue is not None:
-            destinationDataframe.SetNoDataValue(inputNodataValue)
-
         ''' As the returned array can only hold one band; it is necessary to create
             a dataframe containing only one band from the input raster, should the
             input raster contain more than one band.'''
@@ -95,10 +116,6 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
             # The new empty band matching the input raster band kwarg(inRasterBand=1)
             subsetBand = subsetDataframe.GetRasterBand(1)
 
-            # Add the nodata-value if one is present in the supplied raster.
-            if inputNodataValue is not None:
-                subsetDataframe.SetNoDataValue(inputNodataValue)
-
             # Write the requested inputBand to the subset
             subsetDataframe.WriteArray(inputBand.ReadAsArray())
 
@@ -109,13 +126,16 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
             # Origin is then the input.
             origin = inputDataframe
 
+        progressbar = progress_callback_quiet
+        if quiet is False:
+            print(f"Running raster to array:")
+            progressbar = progress_callback
+
         ''' GDAL throws a warning whenever warpOptions are based to a function
             that has the 'MEM' format. However, it is necessary to do so because
             of the cutlineAllTouch feature.
         '''
-        if quiet is True:
-            gdal.PushErrorHandler('CPLQuietErrorHandler')
-
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
         try:
             warped = gdal.Warp(
                 destinationDataframe,
@@ -128,42 +148,42 @@ def rasterToArray(inRaster, cutline=None, cutlineAllTouch=False, flatten=False, 
                 xRes=inputTransform[1],
                 yRes=inputTransform[5],
                 warpOptions=options,
-                callback=progress_callback,
+                callback=progressbar,
             )
         except:
             raise RuntimeError("Error while Warping.") from None
 
         # Check if warped was successfull.
-        if warped != 1:
+        if warped is 0:         # GDAL returns 0 for warnings.
+            print('Warping completed with warnings. Check your result.')
+        elif warped is None:    # GDAL returns None for errors.
             raise RuntimeError("Warping completed unsuccesfully.") from None
 
         # Reenable the normal ErrorHandler.
-        if quiet is True:
-            gdal.PopErrorHandler()
+        gdal.PopErrorHandler()
 
         # Create the data array from the destination dataframe
-        data = destinationDataframe.GetRasterBand(inRasterBand).ReadAsArray()
+        data = ma.array(destinationDataframe.GetRasterBand(inRasterBand).ReadAsArray())
     else:
         # Data is simply the inputBand as a numpy array.
-        data = inputBand.ReadAsArray()
+        data = ma.array(inputBand.ReadAsArray())
 
     # Close datasets again to free memory.
     inputDataframe = None
     destinationDataframe = None
     subsetDataframe = None
 
-    # Handle nodata
-    if inputNodataValue is not None:
-        data = ma.masked_equal(data, inputNodataValue)
-        ma.set_fill_value(data, inputNodataValue)
-        if flatten is True:
-            return data.compressed()
-    else:
-        if flatten is True:
-            return data.flatten()
-    return data
+    # Nodata-value handling
+    if inputNodataValue is None and dstNoDataValue is not None:
+        data = ma.masked_equal(dstNoDataValue)
 
-test = rasterToArray(
-    '../raster/S2B_MSIL2A_20180702T104019_N0208_R008_T32VNJ_20180702T150728.SAFE/GRANULE/L2A_T32VNJ_A006898_20180702T104021/IMG_DATA/R10m/T32VNJ_20180702T104019_B02_10m.jp2',
-    cutline='../geometry/roses.geojson',
-)
+    data = ma.masked_equal(inputNodataValue)
+    if dstNoDataValue:
+        ma.set_fill_value(data, dstNoDataValue)
+
+    if filled is True:
+        data = data.filled()
+    if compressed is True:
+        data = data.compressed()
+
+    return data
