@@ -1,3 +1,4 @@
+from osgeo import gdal
 import numpy as np
 import numpy.ma as ma
 from rasterUtils.clipRaster import clipRaster
@@ -58,7 +59,7 @@ def rasterToArray(inRaster, referenceRaster=None, cutline=None, cutlineAllTouch=
     '''
 
     if referenceRaster is None and cutline is None:
-        readiedRaster = inRaster
+        readiedRaster = gdal.Open(inRaster)
     else:
         readiedRaster = clipRaster(
             inRaster,

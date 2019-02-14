@@ -1,218 +1,119 @@
-import gdal
 import numpy as np
 from enum import Enum
-from numba import jit
 from scipy.stats import stats
 import matplotlib.pyplot as plt
-import math
 from rasterUtils.rasterToArray import rasterToArray
 
 
-# TODO: Testing of this function
-def bincount(arr, iqr=None, rng=None):
-    if len(arr) > 1000:
-        if iqr is None:
-            q1 = np.quantile(arr, 0.25)
-            q3 = np.quantile(arr, 0.75)
-            iqr = q3 - q1
-
-        if rng is None:
-            rng = np.range(arr)
-
-        # Freedman Diaconis Estimator
-        fd = round(math.ceil(rng / (2 * (iqr / math.pow(len(arr), 1 / 3)) + 1)))
-        return fd
-    else:
-        # Sturges
-        return round(math.log2(len(arr)) + 1)
-
-
-@jit(nopython=True, parallel=True, fastmath=True)
-def calcStats2(data, statistics: list):
-    results = []
-    for statType in statistics:
-
-        if statType is 'min':
-            results.append(np.min(data))
-
-        if statType is 'max':
-            results.append(np.max(data))
-
-    return results
-
-
-def calcStats(data, statistics=('std', 'mean', 'median')):
+def calcStats(data, statsToCalc):
     holder = {}
+    for statType in statsToCalc:
+        if statType == 'min':
+            holder['min'] = np.min(data)
 
-    if 'min' in statistics:
-        holder['min'] = np.min(data)
+        elif statType == 'max':
+            holder['max'] = np.max(data)
 
-    if 'max' in statistics:
-        holder['max'] = np.max(data)
+        elif statType == 'count':
+            holder['count'] = len(data)
 
-    if 'count' in statistics:
-        holder['count'] = len(data)
+        elif statType == 'range':
+            holder['min'] = np.min(data) if holder.get('min') is None else holder['min']
+            holder['max'] = np.max(data) if holder.get('max') is None else holder['max']
+            holder['range'] = holder['max'] - holder['min']
 
-    if 'range' in statistics:
-        if 'min' in holder:
-            _min = holder['min']
-        else:
-            _min = np.min(data)
-        if 'max' in holder:
-            _max = holder['max']
-        else:
-            _max = np.max(data)
-        holder['range'] = _max - _min
+        elif statType == 'mean':
+            holder['mean'] = np.mean(data)
 
-    if 'mean' in statistics:
-        holder['mean'] = np.mean(data)
+        elif statType == 'median':
+            holder['median'] = np.median(data)
 
-    if 'median' in statistics:
-        holder['median'] = np.median(data)
+        elif statType == 'std':
+            holder['std'] = np.std(data)
 
-    if 'std' in statistics:
-        holder['std'] = np.std(data)
+        elif statType == 'kurtosis':
+            holder['kurtosis'] = stats.kurtosis(data)
 
-    if 'kurtosis' in statistics:
-        holder['kurtosis'] = stats.kurtosis(data)
+        elif statType == 'skew':
+            holder['skew'] = stats.skew(data)
 
-    if 'skew' in statistics:
-        holder['skew'] = stats.skew(data)
+        elif statType == 'npskew':
+            holder['mean'] = np.mean(data) if holder.get('mean') is None else holder['mean']
+            holder['median'] = np.median(data) if holder.get('median') is None else holder['median']
+            holder['std'] = np.std(data) if holder.get('std') is None else holder['std']
 
-    if 'npskew' in statistics:
-        if 'mean' in holder:
-            _mean = holder['mean']
-        else:
-            _mean = np.mean(data)
-        if 'median' in holder:
-            _median = holder['median']
-        else:
-            _median = np.median(data)
-        if 'std' in holder:
-            _std = holder['std']
-        else:
-            _std = np.std(data)
-        holder['npskew'] = (_mean - _median) / _std
+            holder['npskew'] = (holder['mean'] - holder['median']) / holder['std']
 
-    if 'skewratio' in statistics:
-        if 'mean' in holder:
-            _mean = holder['mean']
-        else:
-            _mean = np.mean(data)
-        if 'median' in holder:
-            _median = holder['median']
-        holder['skewratio'] = 1 - (_median / _mean)
+        elif statType == 'skewratio':
+            holder['mean'] = np.mean(data) if holder.get('mean') is None else holder['mean']
+            holder['median'] = np.median(data) if holder.get('median') is None else holder['median']
 
-    if 'variation' in statistics:
-        holder['variation'] = stats.variation(data)
+            holder['skewratio'] = holder['median'] / holder['mean']
 
-    if 'q1' in statistics:
-        holder['q1'] = np.quantile(data, 0.25)
+        elif statType == 'variation':
+            holder['variation'] = stats.variation(data)
 
-    if 'q3' in statistics:
-        holder['q3'] = np.quantile(data, 0.75)
+        elif statType == 'q1':
+            holder['q1'] = np.quantile(data, 0.25)
 
-    if 'iqr' in statistics:
-        if 'q1' in holder and 'q3' in statistics:
+        elif statType == 'q3':
+            holder['q3'] = np.quantile(data, 0.75)
+
+        elif statType == 'iqr':
+            holder['q1'] = np.quantile(data, 0.25) if holder.get('q1') is None else holder['q1']
+            holder['q3'] = np.quantile(data, 0.75) if holder.get('q3') is None else holder['q3']
+
             holder['iqr'] = holder['q3'] - holder['q1']
-        else:
-            holder['iqr'] = np.quantile(data, 0.75) - np.quantile(data, 0.25)
 
-    if 'mad' in statistics:
-        if 'median' in holder:
-            deviations = np.abs(holder['median'] - data)
-        else:
-            deviations = np.abs(np.median(data) - data)
+        elif statType == 'mad':
+            holder['median'] = np.median(data) if holder.get('median') is None else holder['median']
 
-        holder['mad'] = np.median(deviations)
+            deviations = np.abs(np.subtract(holder['median'], data))
+            holder['mad'] = np.median(deviations)
 
-    if 'madstd' in statistics:
-        if 'mad' in holder:
+        elif statType == 'madstd':
+            holder['median'] = np.median(data) if holder.get('median') is None else holder['median']
+            if holder.get('mad') is None:
+                deviations = np.abs(np.subtract(holder['median'], data))
+                holder['mad'] = np.median(deviations)
+
             holder['madstd'] = holder['mad'] * 1.4826
-        else:
-            if 'median' in holder:
-                deviations = np.abs(holder['median'] - data)
-            else:
-                deviations = np.abs(np.median(data) - data)
 
-            holder['madstd'] = np.median(deviations) * 1.4826
+        elif statType == 'within3std':
+            holder['count'] = len(data) if holder.get('count') is None else holder['count']
+            holder['mean'] = np.mean(data) if holder.get('mean') is None else holder['mean']
+            holder['std'] = np.std(data) if holder.get('std') is None else holder['std']
 
-    if 'within3std' in statistics:
-        if 'std' in holder:
-            _std = holder['std']
-        else:
-            _std = np.std(data)
-        if 'mean' in holder:
-            _mean = holder['mean']
-        else:
-            _mean = np.mean(data)
-        if 'count' in holder:
-            _count = holder['count']
-        else:
-            _count = len(data)
+            _std3 = holder['std'] * 3
+            lowerbound = holder['mean'] - _std3
+            higherbound = holder['mean'] + _std3
 
-        _std3 = _std * 3
-        lowerbound = _mean - _std3
-        higherbound = _mean + _std3
+            limit = holder['count'] - len(data[(data > lowerbound) & (data < higherbound)])
 
-        belowLimit = _count - len(data[data > lowerbound])
-        aboveLimit = _count - len(data[data < higherbound])
+            holder['within3std'] = 100 - ((limit / holder['count']) * 100)
 
-        percent = 100 - (((belowLimit + aboveLimit) / _count) * 100)
-        holder['within3std'] = percent
+        elif statType == 'within3std_mad':
+            holder['count'] = len(data) if holder.get('count') is None else holder['count']
+            holder['median'] = np.median(data) if holder.get('median') is None else holder['median']
+            if holder['mad'] == 0:
+                deviations = np.abs(np.subtract(holder['median'], data))
+                holder['mad'] = np.median(deviations)
+                holder['madstd'] = holder['mad'] * 1.4826
 
-    if 'within3std_mad' in statistics:
-        if 'median' in holder:
-            _median = holder['median']
-        else:
-            _median = np.median(data)
-        if 'madstd' in holder:
-            _madstd = holder['madstd']
-        else:
-            _madstd = np.median(np.abs(_median - data)) * 1.4826
-        if 'count' in holder:
-            _count = holder['count']
-        else:
-            _count = len(data)
+            _std3 = holder['madstd'] * 3
+            lowerbound = holder['median'] - _std3
+            higherbound = holder['median'] + _std3
 
-        _madstd3 = _madstd * 3
-        lowerbound = _median - _madstd3
-        higherbound = _median + _madstd3
+            limit = holder['count'] - len(data[(data > lowerbound) & (data < higherbound)])
 
-        belowLimit = _count - len(data[data > lowerbound])
-        aboveLimit = _count - len(data[data < higherbound])
-
-        percent = 100 - (((belowLimit + aboveLimit) / _count) * 100)
-        holder['within3std_mad'] = percent
+            holder['within3std_mad'] = 100 - ((limit / holder['count']) * 100)
 
     return holder
 
 
-class StatTypes(Enum):
-    min = 1
-    max = 2
-    count = 3
-    range = 4
-    mean = 5
-    median = 6
-    std = 7
-    kurtosis = 8
-    skew = 9
-    npskew = 10
-    skewratio = 11
-    variation = 12
-    q1 = 13
-    q3 = 14
-    iqr = 15
-    mad = 16
-    madstd = 17
-    within3std = 18
-    within3std_mad = 19
-
-
 def rasterStats(inRaster, cutline=None, srcNoDataValue=None,
                 histogram=False, cutlineAllTouch=True, bandToCalculate=1,
-                quiet=False, statistics=('std', 'mean', 'median')):
+                quiet=True, statistics=('mean', 'median', 'std')):
 
     data = rasterToArray(
         inRaster,
@@ -224,11 +125,21 @@ def rasterStats(inRaster, cutline=None, srcNoDataValue=None,
         quiet=quiet,
         calcBandStats=False,
     )
-    # stats = calcStats(data, statistics)
-    stats = calcStats2(data, ('min', 'max'))
+
+    if statistics == 'all':
+        zonalStatistics = calcStats(
+            data, ('min', 'max', 'count', 'range', 'mean', 'median',
+                   'std', 'kurtosis', 'skew', 'npskew', 'skewratio',
+                   'variation', 'q1', 'q3', 'iqr', 'mad', 'madstd',
+                   'with3std', 'within3st_mad'))
+    else:
+        zonalStatistics = calcStats(data, statistics)
+
+    if quiet is False:
+        print(zonalStatistics)
 
     if histogram is True:
         plt.hist(data, bins='auto')
         plt.show()
 
-    return stats
+    return zonalStatistics

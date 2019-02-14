@@ -62,11 +62,11 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
     '''
 
     # Is the output format correct?
-    if outRaster is None and outputFormat is not 'MEM':
+    if outRaster is None and outputFormat != 'MEM':
         raise AttributeError("Either a reference raster or a cutline must be provided.")
 
     # If outRaster is specified, default to GTiff output format
-    if outRaster is not None and outputFormat is 'MEM':
+    if outRaster is not None and outputFormat == 'MEM':
         outputFormat = 'GTiff'
 
     # Are none of either reference raster or cutline provided?
@@ -119,7 +119,7 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
 
     # If only one output band is requested it is necessary to create a subset
     # of the input data.
-    if inputBandCount is not 1 and bandToClip is not None:
+    if inputBandCount != 1 and bandToClip is not None:
         # Set the origin to a subset band of the input raster
         origin = createSubsetDataframe(inputDataframe, bandToClip)
     else:
@@ -134,7 +134,7 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
         cutlineGeometry = ogr.Open(cutline)
 
         # Check if cutline was read properly.
-        if cutlineGeometry is 0:         # GDAL returns 0 for warnings.
+        if cutlineGeometry == 0:         # GDAL returns 0 for warnings.
             print('Geometry read with warnings. Check your result.')
         elif cutlineGeometry is None:    # GDAL returns None for errors.
             raise RuntimeError("It was not possible to read the cutline geometry.") from None
@@ -156,7 +156,7 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
         vectorExtent = layer.GetExtent()
         vectorExtent = (vectorExtent[0], vectorExtent[2], vectorExtent[1], vectorExtent[3])
 
-        if vectorProjection.ExportToProj4() is not rasterProjection.ExportToProj4():
+        if vectorProjection.ExportToProj4() != rasterProjection.ExportToProj4():
             bottomLeft = ogr.Geometry(ogr.wkbPoint)
             topRight = ogr.Geometry(ogr.wkbPoint)
 
@@ -189,7 +189,7 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
         options.append('CUTLINE_ALL_TOUCHED=TRUE')
 
     creationOptions = []
-    if outputFormat is not 'MEM':
+    if outputFormat != 'MEM':
         if datatypeIsFloat(inputBand.DataType) is True:
             predictor = 3
         else:
@@ -312,7 +312,7 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
             raise RuntimeError("Error while Warping.") from None
 
         # Check if warped was successfull.
-        if warpSuccess is 0:         # GDAL returns 0 for warnings.
+        if warpSuccess == 0:         # GDAL returns 0 for warnings.
             print('Warping completed with warnings. Check your result.')
         elif warpSuccess is None:    # GDAL returns None for errors.
             raise RuntimeError("Warping completed unsuccesfully.") from None
@@ -364,7 +364,7 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
             raise RuntimeError("Error while Warping.") from None
 
         # Check if warped was successfull.
-        if warpSuccess is 0:         # GDAL returns 0 for warnings.
+        if warpSuccess == 0:         # GDAL returns 0 for warnings.
             print('Warping completed with warnings. Check your result.')
         elif warpSuccess is None:    # GDAL returns None for errors.
             raise RuntimeError("Warping completed unsuccesfully.") from None

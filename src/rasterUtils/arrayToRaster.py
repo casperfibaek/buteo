@@ -6,7 +6,7 @@ from gdalHelpers import datatypeIsFloat, translateMaxValues
 
 # If nodata value is above max value, reset to max value.
 def arrayToRaster(array, referenceRaster, outRaster=None, outputFormat='MEM'):
-    if outRaster is None and outputFormat is not 'MEM':
+    if outRaster is None and outputFormat != 'MEM':
         print('WARNING: No output raster specified. Output changed to memory')
         outputFormat = 'MEM'
 
@@ -18,13 +18,13 @@ def arrayToRaster(array, referenceRaster, outRaster=None, outputFormat='MEM'):
     if outRaster is None:
         outputFormat = 'MEM'
         outRaster = 'memory'
-    elif outRaster is not None and outputFormat is 'MEM':
+    elif outRaster is None & outputFormat == 'MEM':
         outputFormat = 'GTiff'
-    elif outRaster is None and outputFormat is not 'MEM':
+    elif outRaster is None and outputFormat != 'MEM':
         outputFormat = 'MEM'
         outRaster = 'memory'
 
-    if outputFormat is 'MEM':
+    if outputFormat == 'MEM':
         options = []
     else:
         if datatypeIsFloat(referenceBand.DataType) is True:
@@ -48,7 +48,7 @@ def arrayToRaster(array, referenceRaster, outRaster=None, outputFormat='MEM'):
     else:
         destinationBand.WriteArray(array)
 
-    if outputFormat is not 'MEM':
+    if outputFormat != 'MEM':
         destinationBand.FlushCache()
         return os.path.abspath(outRaster)
     else:

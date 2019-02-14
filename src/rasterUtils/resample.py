@@ -11,7 +11,7 @@ def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1
     if outRaster is None:
         outputFormat = 'MEM'
         outRaster = 'memory'
-    elif outputFormat is 'MEM':
+    elif outputFormat == 'MEM':
         outRaster = 'memory'
 
     inputDataframe = gdal.Open(inRaster, gdalconst.GA_ReadOnly)
@@ -24,7 +24,7 @@ def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1
 
     driver = gdal.GetDriverByName(outputFormat)
 
-    if outputFormat is 'MEM':
+    if outputFormat == 'MEM':
         options = []
     else:
         if datatypeIsFloat(inputDatatype) is True:
@@ -68,7 +68,7 @@ def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1
 
         # gdal.PopErrorHandler()
 
-        if outputFormat is 'MEM':
+        if outputFormat == 'MEM':
             return destination
         else:
             return os.path.abspath(outRaster)
@@ -112,7 +112,7 @@ def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1
         if quiet is True:
             gdal.PopErrorHandler()
 
-        if outputFormat is 'MEM':
+        if outputFormat == 'MEM':
             return destination
         else:
             return os.path.abspath(outRaster)
