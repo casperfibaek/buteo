@@ -4,11 +4,13 @@ import os
 from gdalHelpers import datatypeIsFloat, translateMaxValues
 
 
-def arrayToRaster(array, reference, outRaster=None, outputFormat='MEM'):
+# If nodata value is above max value, reset to max value.
+def arrayToRaster(array, referenceRaster, outRaster=None, outputFormat='MEM'):
     if outRaster is None and outputFormat is not 'MEM':
-        raise ValueError('Either outraster or memory output must be selected.')
+        print('WARNING: No output raster specified. Output changed to memory')
+        outputFormat = 'MEM'
 
-    referenceDataframe = gdal.Open(reference, gdalconst.GA_ReadOnly)
+    referenceDataframe = gdal.Open(referenceRaster, gdalconst.GA_ReadOnly)
     referenceTransform = referenceDataframe.GetGeoTransform()
     referenceProjection = referenceDataframe.GetProjection()
     referenceBand = referenceDataframe.GetRasterBand(1)

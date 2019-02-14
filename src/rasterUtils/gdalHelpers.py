@@ -1,48 +1,81 @@
+from osgeo import gdal
+
+
 def getExtent(dataframe):
-    cols = dataframe.RasterXSize
-    rows = dataframe.RasterYSize
     transform = dataframe.GetGeoTransform()
 
-    bottomRightX = transform[0] + (cols * transform[1])
-    bottomRightY = transform[3] + (rows * transform[5])
+    bottomRightX = transform[0] + (dataframe.RasterXSize * transform[1])
+    bottomRightY = transform[3] + (dataframe.RasterYSize * transform[5])
 
-    #      (minX,         minY,         maxX,         maxY)
+    #      (   minX,         minY,         maxX,         maxY     )
     return (transform[0], bottomRightY, bottomRightX, transform[3])
 
 
 def getIntersection(extent1, extent2):
-    # # Too east
-    # if extent2[0] > extent1[2]:
-    #     return False
-    # # Too north
-    # elif extent2[1] > extent1[3]:
-    #     return False
-    # # Too west
-    # elif extent2[2] < extent1[0]:
-    #     return False
-    # # Too south
-    # elif extent2[3] < extent1[1]:
-    #     return False
-    # else:
-    return (
-        max(extent1[0], extent2[0]),    # minX
-        max(extent1[1], extent2[1]),    # minY
-        min(extent1[2], extent2[2]),    # maxX
-        min(extent1[3], extent2[3]),    # maxY
-    )
+    one_bottomLeftX = extent1[0]
+    one_bottomLeftY = extent1[1]
+    one_topRightX = extent1[2]
+    one_topRightY = extent1[3]
+
+    two_bottomLeftX = extent2[0]
+    two_bottomLeftY = extent2[1]
+    two_topRightX = extent2[2]
+    two_topRightY = extent2[3]
+
+    if two_bottomLeftX > one_topRightX:     # Too far east
+        return False
+    elif two_bottomLeftY > one_topRightY:   # Too far north
+        return False
+    elif two_topRightX < one_bottomLeftX:   # Too far west
+        return False
+    elif two_topRightY < one_bottomLeftY:   # Too far south
+        return False
+    else:
+        return (
+            max(one_bottomLeftX, two_bottomLeftX),    # minX of intersection
+            max(one_bottomLeftY, two_bottomLeftY),    # minY of intersection
+            min(one_topRightX, two_topRightX),        # maxX of intersection
+            min(one_topRightY, two_topRightY),        # maxY of intersection
+        )
 
 
 def createClipGeoTransform(geoTransform, extent):
-    pixelWidth = geoTransform[1]
-    pixelHeight = geoTransform[5]
-    newCols = round((extent[2] - extent[0]) / pixelWidth)
-    newRows = round((extent[3] - extent[1]) / pixelHeight)
+    RasterXSize = round((extent[2] - extent[0]) / geoTransform[1])  # (maxX - minX) / pixelWidth
+    RasterYSize = round((extent[3] - extent[1]) / geoTransform[5])  # (maxY - minY) / pixelHeight
 
     return {
-        'Transform': [extent[0], pixelWidth, 0, extent[3], 0, pixelHeight],
-        'RasterXSize': abs(newCols),
-        'RasterYSize': abs(newRows),
+        'Transform': [extent[0], geoTransform[1], 0, extent[3], 0, geoTransform[5]],
+        'RasterXSize': abs(RasterXSize),
+        'RasterYSize': abs(RasterYSize),
     }
+
+
+def createSubsetDataframe(dataframe, band=1, noDataValue=None):
+        # Create a GDAL driver to create dataframes in the right outputFormat
+        driver = gdal.GetDriverByName('MEM')
+
+        inputBand = dataframe.GetRasterBand(band)
+        inputTransform = dataframe.GetGeoTransform()
+        inputProjection = dataframe.GetProjection()
+        inputDataType = inputBand.DataType
+
+        subsetDataframe = driver.Create(
+            'ignored',                 # Unused as destination is memory.
+            dataframe.RasterXSize,     # Dataframe width in pixels (e.g. 1920px).
+            dataframe.RasterYSize,     # Dataframe height in pixels (e.g. 1280px).
+            1,                         # The number of bands required.
+            inputDataType,             # Datatype of the destination
+        )
+        subsetDataframe.SetGeoTransform(inputTransform)
+        subsetDataframe.SetProjection(inputProjection)
+
+        # Write the requested inputBand to the subset
+        subsetDataframe.WriteArray(inputBand.ReadAsArray())
+
+        # Free memory
+        inputBand = None
+
+        return subsetDataframe
 
 
 def translateResampleMethod(method):
@@ -67,18 +100,46 @@ def translateResampleMethod(method):
         return 0
 
 
-def translateMaxValues(datatype):
+def numpyFillValues(dtype):
     datatypes = {
-        1: 255,
-        2: 65535,
-        3: 32767,
-        4: 2147483647,
-        5: 4294967295,
-        6: 3.39999999999999996e+38,
-        7: 1.7976931348623157e+308,
+        'int8': 127,
+        'int16': 32767,
+        'int32': 2147483647,
+        'int64': 9223372036854775807,
+        'uint8': 255,
+        'uint16': 65535,
+        'uint32': 4294967295,
+        'uint64': 18446744073709551615,
+        'float16': -9999,
+        'float32': -9999,
+        'float64': -9999,
     }
 
-    return datatypes[datatype]
+    if dtype in datatypes:
+        return datatypes[dtype]
+    else:
+        return 0
+
+
+def translateMaxValues(datatype):
+    datatypes = {
+        1: 255,             # GDT_Byte
+        2: 65535,           # GDT_Uint16
+        3: 32767,           # GDT_Int16
+        4: 2147483647,      # GDT_Uint32
+        5: 4294967295,      # GDT_Int32
+        6: -9999,           # GDT_Float32
+        7: -9999,           # GDT_Float64
+        8: 32767,           # GDT_CInt16
+        9: 4294967295,      # GDT_CInt32
+        10: -9999,          # GDT_CFloat32
+        11: -9999,          # GDT_CFloat64
+    }
+
+    if datatype in datatypes:
+        return datatypes[datatype]
+    else:
+        return 0
 
 
 def translateDataTypes(datatype):
@@ -105,14 +166,6 @@ def translateDataTypes(datatype):
 def datatypeIsFloat(datatype):
     floats = [6, 7, 10, 11]
     if datatype in floats:
-        return True
-    else:
-        return False
-
-
-def datatypeIsInteger(datatype):
-    integers = [1, 2, 3, 4, 5, 8, 9]
-    if datatype in integers:
         return True
     else:
         return False

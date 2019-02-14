@@ -1,9 +1,11 @@
 import gdal
 import numpy as np
+from enum import Enum
+from numba import jit
 from scipy.stats import stats
 import matplotlib.pyplot as plt
 import math
-from src.rasterUtils import rasterToArray
+from rasterUtils.rasterToArray import rasterToArray
 
 
 # TODO: Testing of this function
@@ -23,6 +25,20 @@ def bincount(arr, iqr=None, rng=None):
     else:
         # Sturges
         return round(math.log2(len(arr)) + 1)
+
+
+@jit(nopython=True, parallel=True, fastmath=True)
+def calcStats2(data, statistics: list):
+    results = []
+    for statType in statistics:
+
+        if statType is 'min':
+            results.append(np.min(data))
+
+        if statType is 'max':
+            results.append(np.max(data))
+
+    return results
 
 
 def calcStats(data, statistics=('std', 'mean', 'median')):
@@ -172,16 +188,47 @@ def calcStats(data, statistics=('std', 'mean', 'median')):
     return holder
 
 
-def rstats(geometry, inRaster, outRaster='memory', nodata=None,
-           statistics=('std', 'mean', 'median'), histogram=False,
-           allTouch=True):
+class StatTypes(Enum):
+    min = 1
+    max = 2
+    count = 3
+    range = 4
+    mean = 5
+    median = 6
+    std = 7
+    kurtosis = 8
+    skew = 9
+    npskew = 10
+    skewratio = 11
+    variation = 12
+    q1 = 13
+    q3 = 14
+    iqr = 15
+    mad = 16
+    madstd = 17
+    within3std = 18
+    within3std_mad = 19
 
-    data = rasterToArray(inRaster, cutline=geometry, cutlineAllTouch=allTouch, flatten=True, nodata=nodata)
-    stats = calcStats(data, statistics)
+
+def rasterStats(inRaster, cutline=None, srcNoDataValue=None,
+                histogram=False, cutlineAllTouch=True, bandToCalculate=1,
+                quiet=False, statistics=('std', 'mean', 'median')):
+
+    data = rasterToArray(
+        inRaster,
+        cutline=cutline,
+        cutlineAllTouch=cutlineAllTouch,
+        compressed=True,
+        srcNoDataValue=srcNoDataValue,
+        bandToClip=bandToCalculate,
+        quiet=quiet,
+        calcBandStats=False,
+    )
+    # stats = calcStats(data, statistics)
+    stats = calcStats2(data, ('min', 'max'))
 
     if histogram is True:
         plt.hist(data, bins='auto')
-        plt.title(f'{geometry} on {inRaster}')
         plt.show()
 
     return stats

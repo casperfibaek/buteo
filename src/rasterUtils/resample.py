@@ -1,7 +1,7 @@
 from osgeo import gdal, gdalconst
 import numpy.ma as ma
 import os
-from gdalHelpers import datatypeIsFloat, translateResampleMethod
+from rasterUtils.gdalHelpers import datatypeIsFloat, translateResampleMethod
 
 
 def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1,
@@ -49,8 +49,7 @@ def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1
         if referenceNoDataValue is not None:
             destination.SetNoDataValue(referenceNoDataValue)
 
-        if quiet is True:
-            gdal.PushErrorHandler('CPLQuietErrorHandler')
+        # gdal.PushErrorHandler('CPLQuietErrorHandler')
 
         gdal.Warp(
             destination, inRaster,
@@ -67,8 +66,7 @@ def resample(inRaster, outRaster=None, byReference=None, byReferenceBandNumber=1
             resampleAlg=translateResampleMethod(method),
         )
 
-        if quiet is True:
-            gdal.PopErrorHandler()
+        # gdal.PopErrorHandler()
 
         if outputFormat is 'MEM':
             return destination

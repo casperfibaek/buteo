@@ -18,7 +18,7 @@ allIndicies = [
     "msavi2",   # Modified soil adjusted vegetation index v2
     "ndvi",     # Normalised difference vegetation index
     "gndvi",    # Green normalised difference vegetation index
-    
+
     "moist",    # Soil moisture index
     "ndwi",     # Normalised difference water index
     "ndwi2",    # Normalised difference water index v2
