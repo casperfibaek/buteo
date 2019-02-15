@@ -7,9 +7,7 @@ from utils.progress import progress_callback, progress_callback_quiet
 from rasterUtils.gdalHelpers import getExtent, getIntersection, createSubsetDataframe, createClipGeoTransform, datatypeIsFloat, translateMaxValues
 
 
-# Author: CFI
 # TODO: Create a createDestinationFrame function
-
 def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
                cutlineAllTouch=False, cropToCutline=True, srcNoDataValue=None,
                dstNoDataValue=None, quiet=False, align=True, bandToClip=None,

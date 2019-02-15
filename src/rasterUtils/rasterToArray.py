@@ -58,6 +58,8 @@ def rasterToArray(inRaster, referenceRaster=None, cutline=None, cutlineAllTouch=
         Returns a numpy masked array with the raster data.
     '''
 
+    # If there is no referenceRaster or Cutline defined it is
+    # not necesarry to clip the raster.
     if referenceRaster is None and cutline is None:
         readiedRaster = gdal.Open(inRaster)
     else:
@@ -75,10 +77,13 @@ def rasterToArray(inRaster, referenceRaster=None, cutline=None, cutlineAllTouch=
             calcBandStats=calcBandStats,
         )
 
+    # Read the inraster as an array
     rasterBand = readiedRaster.GetRasterBand(bandToClip)
     rasterNoDataValue = rasterBand.GetNoDataValue()
     rasterAsArray = rasterBand.ReadAsArray()
 
+    # Create a numpy masked array that corresponds to the nodata
+    # values in the inRaster
     if rasterNoDataValue is None:
         data = ma.array(rasterAsArray, fill_value=fillValue)
     else:

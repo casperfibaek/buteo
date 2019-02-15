@@ -1,12 +1,74 @@
 import numpy as np
-from enum import Enum
 from scipy.stats import stats
-import matplotlib.pyplot as plt
 from rasterUtils.rasterToArray import rasterToArray
 
 
-def calcStats(data, statsToCalc):
+def rasterStats(inRaster, cutline=None, cutlineAllTouch=True,
+                referenceRaster=None, srcNoDataValue=None, quiet=False,
+                bandToClip=1, statistics=['mean', 'median', 'std']):
+    ''' Calculates the statistics of a raster layer. A refererence
+    raster or a cutline geometry can be provided to narrow down the
+    features for which the statistics are calculated.
+
+    Args:
+        inRaster (URL or GDAL.DataFrame): The raster to clip.
+
+    **kwargs:
+        cutline (URL or OGR.DataFrame): A geometry used to cut
+        the inRaster.
+
+        cutlineAllTouch (Bool): Should all pixels that touch
+        the cutline be included? False is only pixel centroids
+        that fall within the geometry.
+
+        referenceRaster (URL or GDAL.DataFrame): A reference
+        raster from where to clip the extent of the inRaster.
+
+        cropToCutline (Bool): Should the output raster be
+        clipped to the extent of the cutline geometry.
+
+        srcNoDataValue (Number): Overwrite the nodata value of
+        the source raster.
+
+        quiet (Bool): Do not show the progressbars.
+
+        bandToClip (Bool): Specify if only a specific band in
+        the input raster should be clipped.
+
+        statistics (List): A list containing all the statistics
+        one would want to calculate. 'all' can be specified if
+        every possible statistic is needed.
+
+    Returns:
+        Returns a dictionary with the requested statistics.
+    '''
+
+    # First: Turn the raster into a numpy array on which to calculate
+    #        the statistics
+    data = rasterToArray(
+        inRaster,
+        referenceRaster=referenceRaster,
+        cutline=cutline,
+        cutlineAllTouch=cutlineAllTouch,
+        compressed=True,
+        srcNoDataValue=srcNoDataValue,
+        bandToClip=bandToClip,
+        quiet=quiet,
+        calcBandStats=False,
+    )
+
+    # If all types of statistics are requested insert all possible statistics
+    # below. BEWARE: Slow..
+    if statistics == 'all':
+        statsToCalc = ['min', 'max', 'count', 'range', 'mean', 'median',
+                       'std', 'kurtosis', 'skew', 'npskew', 'skewratio',
+                       'variation', 'q1', 'q3', 'iqr', 'mad', 'madstd',
+                       'with3std', 'within3st_mad']
+    else:
+        statsToCalc = statistics
+
     holder = {}
+
     for statType in statsToCalc:
         if statType == 'min':
             holder['min'] = np.min(data)
@@ -109,37 +171,3 @@ def calcStats(data, statsToCalc):
             holder['within3std_mad'] = 100 - ((limit / holder['count']) * 100)
 
     return holder
-
-
-def rasterStats(inRaster, cutline=None, srcNoDataValue=None,
-                histogram=False, cutlineAllTouch=True, bandToCalculate=1,
-                quiet=True, statistics=('mean', 'median', 'std')):
-
-    data = rasterToArray(
-        inRaster,
-        cutline=cutline,
-        cutlineAllTouch=cutlineAllTouch,
-        compressed=True,
-        srcNoDataValue=srcNoDataValue,
-        bandToClip=bandToCalculate,
-        quiet=quiet,
-        calcBandStats=False,
-    )
-
-    if statistics == 'all':
-        zonalStatistics = calcStats(
-            data, ('min', 'max', 'count', 'range', 'mean', 'median',
-                   'std', 'kurtosis', 'skew', 'npskew', 'skewratio',
-                   'variation', 'q1', 'q3', 'iqr', 'mad', 'madstd',
-                   'with3std', 'within3st_mad'))
-    else:
-        zonalStatistics = calcStats(data, statistics)
-
-    if quiet is False:
-        print(zonalStatistics)
-
-    if histogram is True:
-        plt.hist(data, bins='auto')
-        plt.show()
-
-    return zonalStatistics
