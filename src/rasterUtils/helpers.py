@@ -1,4 +1,7 @@
 from osgeo import gdal
+import numpy as np
+from scipy.stats import norm
+import math
 
 
 def getExtent(dataframe):
@@ -78,6 +81,41 @@ def createSubsetDataframe(dataframe, band=1, noDataValue=None):
         return subsetDataframe
 
 
+def copyDataframe(dataframe, name='ignored', outputFormat='MEM'):
+    driver = gdal.GetDriverByName(outputFormat)
+
+    inputTransform = dataframe.GetGeoTransform()
+    inputProjection = dataframe.GetProjection()
+    inputBand = dataframe.GetRasterBand(1)
+    inputDataType = inputBand.DataType
+    inputBandCount = dataframe.RasterCount
+
+    if outputFormat == 'MEM':
+        options = []
+    else:
+        if datatypeIsFloat(inputDataType) is True:
+            predictor = 3
+        else:
+            predictor = 2
+        options = ['COMPRESS=DEFLATE', f'PREDICTOR={predictor}', 'NUM_THREADS=ALL_CPUS']
+
+    destination = driver.Create(name, dataframe.RasterXSize, dataframe.RasterYSize, inputBandCount, inputDataType, options)
+    destination.SetProjection(inputProjection)
+    destination.SetGeoTransform(inputTransform)
+
+    for i in range(inputBandCount):
+        _inputBand = dataframe.GetRasterBand(i + 1)
+        _inputBandNoDataValue = _inputBand.GetNoDataValue()
+        _inputBandData = _inputBand.ReadAsArray()
+        _destinationBand = destination.GetRasterBand(i + 1)
+        _destinationBand.WriteArray(_inputBandData)
+
+        if _inputBandNoDataValue is not None:
+            destination.SetNoDataValue(_inputBandNoDataValue)
+
+    return destination
+
+
 def translateResampleMethod(method):
     methods = {
         'nearest': 0,
@@ -136,7 +174,7 @@ def translateMaxValues(datatype):
         11: -9999,          # GDT_CFloat64
     }
 
-    if datatype in datatypes:
+    if datatype in datatypes.keys():
         return datatypes[datatype]
     else:
         return 0
@@ -157,10 +195,52 @@ def translateDataTypes(datatype):
         'cfloat64': 11,
     }
 
-    if datatype in datatypes:
+    if datatype in datatypes.keys():
         return datatypes[datatype]
     else:
         return 6
+
+
+def numpyToGdalDatatypes(datatype):
+    datatypes = {
+        'int8': gdal.GDT_Int16,
+        'int16': gdal.GDT_Int16,
+        'int32': gdal.GDT_Int32,
+        'int64': gdal.GDT_Int32,
+        'uint8': gdal.GDT_Byte,
+        'uint16': gdal.GDT_UInt16,
+        'uint32': gdal.GDT_UInt32,
+        'uint64': gdal.GDT_UInt32,
+        'float16': gdal.GDT_Float32,
+        'float32': gdal.GDT_Float32,
+        'float64': gdal.GDT_Float64,
+    }
+
+    if datatype.name in datatypes.keys():
+        return datatypes[datatype.name]
+    else:
+        return gdal.GDT_Float32
+
+
+def gdalToNumpyDatatypes(datatype):
+    datatypes = {
+        3: 'int8',
+        3: 'int16',
+        5: 'int32',
+        5: 'int64',
+        1: 'uint8',
+        2: 'uint16',
+        4: 'uint32',
+        4: 'uint64',
+        6: 'float16',
+        6: 'float32',
+        7: 'float64',
+    }
+
+    if datatype in datatypes.keys():
+        return datatypes[datatype]
+    else:
+        return 'float64'
 
 
 def datatypeIsFloat(datatype):
@@ -169,3 +249,19 @@ def datatypeIsFloat(datatype):
         return True
     else:
         return False
+
+
+# Turns zscores
+def __cScale(zscore, sqrt=True, root=math.pi):
+    cdf = 1 - abs((norm.cdf(zscore) - 0.5) / 0.5)
+    if sqrt is True:
+        return math.pow(cdf, 1 / root)
+    else:
+        return cdf
+
+
+_cScale = np.vectorize(__cScale)
+
+
+def cScale(arrOfZscores, sqrt=True, root=math.pi):
+        return _cScale(arrOfZscores, sqrt=sqrt)
