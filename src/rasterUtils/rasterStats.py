@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import stats
-from rasterUtils.rasterToArray import rasterToArray
+from rasterToArray import rasterToArray
 
 
 def rasterStats(inRaster, cutline=None, cutlineAllTouch=True,

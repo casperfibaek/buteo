@@ -3,8 +3,8 @@ import numpy as np
 import numpy.ma as ma
 import os
 import time
-from utils.progress import progress_callback, progress_callback_quiet
-from rasterUtils.helpers import getExtent, getIntersection, createSubsetDataframe, createClipGeoTransform, datatypeIsFloat, translateMaxValues
+from progress import progress_callback, progress_callback_quiet
+from helpers import getExtent, getIntersection, createSubsetDataframe, createClipGeoTransform, datatypeIsFloat, translateMaxValues
 
 
 # TODO: Create a createDestinationFrame function

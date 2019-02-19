@@ -123,3 +123,5 @@ __temp__/
 geometry/
 raster/
 __pycache__
+OTB/
+temp_

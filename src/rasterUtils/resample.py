@@ -1,8 +1,8 @@
 from osgeo import gdal
 import numpy.ma as ma
 import os
-from rasterUtils.helpers import datatypeIsFloat, translateResampleMethod, copyDataframe
-from utils.progress import progress_callback, progress_callback_quiet
+from helpers import datatypeIsFloat, translateResampleMethod, copyDataframe
+from progress import progress_callback, progress_callback_quiet
 
 
 def resample(inRaster, outRaster=None, referenceRaster=None, referenceBandNumber=1,
@@ -54,7 +54,13 @@ def resample(inRaster, outRaster=None, referenceRaster=None, referenceBandNumber
     if outRaster is None and outputFormat != 'MEM':
         raise AttributeError("Either a reference raster or a cutline must be provided.")
 
-    inputDataframe = gdal.Open(inRaster)
+    if outRaster is None:
+        outRaster = 'ignored'
+
+    if isinstance(inRaster, gdal.Dataset):
+        inputDataframe = inRaster
+    else:
+        inputDataframe = gdal.Open(inRaster)
 
     # Throw error if GDAL cannot open the raster
     if inputDataframe is None:
@@ -92,7 +98,10 @@ def resample(inRaster, outRaster=None, referenceRaster=None, referenceBandNumber
                 return os.path.abspath(outRaster)
 
     if referenceRaster is not None:
-        referenceDataframe = gdal.Open(referenceRaster)
+        if isinstance(referenceRaster, gdal.Dataset):
+            referenceDataframe = referenceRaster
+        else:
+            referenceDataframe = gdal.Open(referenceRaster)
 
         # Throw error if GDAL cannot open the raster
         if referenceDataframe is None:

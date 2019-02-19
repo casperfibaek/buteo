@@ -2,12 +2,12 @@ from osgeo import gdal, osr
 import numpy as np
 import numpy.ma as ma
 import os
-from rasterUtils.helpers import datatypeIsFloat, numpyToGdalDatatypes
-from utils.progress import progress_callback, progress_callback_quiet
+from helpers import datatypeIsFloat, numpyToGdalDatatypes
+from progress import progress_callback, progress_callback_quiet
 
 
 def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM',
-                  topLeft=None, pixelSize=None, projection=None,
+                  topLeft=None, pixelSize=None, projection=None, calcBandStats=True,
                   srcNoDataValue=None, resample=False, quiet=False):
     ''' Turns a numpy array into a gdal dataframe or exported
         as a raster. If no reference is specified, the following
@@ -68,6 +68,9 @@ def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM
     if outRaster is not None and outputFormat == 'MEM':
         outputFormat = 'GTiff'
 
+    if outRaster is None:
+        outRaster = 'ignored'
+
     if referenceRaster is None and (
         topLeft is None or
         pixelSize is None or
@@ -95,7 +98,10 @@ def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM
 
     # Gather reference information
     if referenceRaster is not None:
-        referenceDataframe = gdal.Open(referenceRaster)
+        if isinstance(referenceRaster, gdal.Dataset):
+            referenceDataframe = referenceRaster
+        else:
+            referenceDataframe = gdal.Open(referenceRaster)
 
         # Throw error if GDAL cannot open the raster
         if referenceDataframe is None:
@@ -140,6 +146,11 @@ def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM
         inputNoDataValue = data.get_fill_value()
         data = data.filled()
 
+    # Weird "double" issue with GDAL. Cast to float or int
+    inputNoDataValue = float(inputNoDataValue)
+    if (inputNoDataValue).is_integer() is True:
+        inputNoDataValue = int(inputNoDataValue)
+
     # If the output is not memory, set compression options.
     options = []
     if outputFormat != 'MEM':
@@ -180,8 +191,8 @@ def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM
 
     destination.SetProjection(referenceProjection)
     destinationBand = destination.GetRasterBand(1)
-
     destinationBand.WriteArray(data)
+
     if inputNoDataValue is not None:
         destinationBand.SetNoDataValue(inputNoDataValue)
 
@@ -223,6 +234,9 @@ def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM
         # Clear memory
         destination = None
 
+        if calcBandStats is True:
+            resampledDestination.GetRasterBand(1).GetStatistics(0, 1)
+
         # Return the resampled destination raster
         if outputFormat != 'MEM':
             resampledDestination.FlushCache()
@@ -230,6 +244,9 @@ def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM
             return os.path.abspath(outRaster)
         else:
             return resampledDestination
+
+    if calcBandStats is True:
+        destinationBand.GetStatistics(0, 1)
 
     # Return the destination raster
     if outputFormat != 'MEM':
