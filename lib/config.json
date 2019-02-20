@@ -1,0 +1,8 @@
+{
+    "DEFAULT": {
+        "temp_directory": "../temp/"
+    },
+    "Orfeo-Toolbox": {
+        "path": "../OTB/"
+    }
+}

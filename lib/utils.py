@@ -1,8 +1,31 @@
+import os
+import sys
 from osgeo import gdal
 import numpy as np
 from scipy.stats import norm
 import math
 
+
+def progress(count, total, name='Processing'):
+    bar_len = os.get_terminal_size().columns - 24
+    filled_len = int(round(bar_len * count / float(total)))
+    display_name = name[:10] + '..: '
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '█' * filled_len + '.' * (bar_len - filled_len)
+
+    sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
+    sys.stdout.flush()
+
+    return None
+
+
+def progress_callback(complete, message, unknown):
+    return progress(complete, 1)
+
+
+def progress_callback_quiet(complete, message, unknown):
+    return None
 
 def getExtent(dataframe):
     transform = dataframe.GetGeoTransform()
@@ -264,4 +287,4 @@ _cScale = np.vectorize(__cScale)
 
 
 def cScale(arrOfZscores, sqrt=True, root=math.pi):
-        return _cScale(arrOfZscores, sqrt=sqrt)
+    return _cScale(arrOfZscores, sqrt=sqrt, root=math.pi)

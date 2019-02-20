@@ -146,7 +146,7 @@ def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM
         inputNoDataValue = data.get_fill_value()
         data = data.filled()
 
-    # Weird "double" issue with GDAL. Cast to float or int
+    # Weird "double" issue with GDAL and numpy. Cast to float or int
     inputNoDataValue = float(inputNoDataValue)
     if (inputNoDataValue).is_integer() is True:
         inputNoDataValue = int(inputNoDataValue)
