@@ -3,23 +3,12 @@ from glob import glob
 import numpy as np
 import numpy.ma as ma
 import zipfile
-from rasterUtils import resample, rasterToArray, arrayToRaster
+from resample import resample
+from raster_to_array import rasterToArray
+from array_to_raster import arrayToRaster
 
 
-def updateNoData(tree: dict, clouds: bool=True):
-    if 'SCL' in tree['10m']:
-        scl = tree['10m']['SCL']
-    else:
-        dest = os.path.join(tree['folders']['10m'], f"{tree['meta']['basename']}_SCL_10m.tif")
-        tree['10m']['SCL'] = resample(tree['20m']['SCL'], outRaster=dest, outputFormat='GTiff', targetSize=(10, 10), quiet=True)
-
-        arr = rasterToArray(tree['10m']['SCL'])
-        mdata = ma.masked_where(arr == 6, arr)
-        newRaster = os.path.join(tree['folders']['10m'], f"{tree['meta']['basename']}_SCL_10m_masked.tif")
-        arrayToRaster(mdata, tree['10m']['B02'], newRaster)
-
-
-def addToHolder(arr: list, res: str, holdDict: dict) -> None:
+def addToHolder(arr, res, holdDict):
     for band in arr:
         base = os.path.basename(band)
         filename = base.split('.')[0]
@@ -27,7 +16,7 @@ def addToHolder(arr: list, res: str, holdDict: dict) -> None:
         holdDict[res][bandname] = os.path.abspath(os.path.normpath(band))
 
 
-def sentinelMetadataFromFilename(filename: str):
+def sentinelMetadataFromFilename(filename):
     arr = filename.split('_')
     holder = {}
 
@@ -61,7 +50,7 @@ def sentinelMetadataFromFilename(filename: str):
     return holder
 
 
-def readS2(url, deleteOnUnzip=False, createNodata=False, resampleTo10m=False):
+def readS2(url, delete_on_unzip=False, create_nodata=False, resample_to_10m=False):
     base = os.path.basename(url)
     filetype = base.split('.')[-1]
     filename = base.split('.')[0]
@@ -77,7 +66,7 @@ def readS2(url, deleteOnUnzip=False, createNodata=False, resampleTo10m=False):
 
     if filetype == 'SAFE':
 
-        imgBase = glob(f'{dataurl}/GRANULE/*/IMG_DATA/')[0]
+        imgBase = glob(f'{url}/GRANULE/*/IMG_DATA/')[0]
     elif filetype == 'zip':
         # Test if the file is already unzipped
         unzippedVersion = os.path.join(currDir, f'{filename}.SAFE')
@@ -90,7 +79,7 @@ def readS2(url, deleteOnUnzip=False, createNodata=False, resampleTo10m=False):
             zippedFilename = zipped.namelist()[0]
             zipped.extractall(currDir)
             zipped.close()
-            if deleteOnUnzip is True:
+            if delete_on_unzip is True:
                 os.remove(url)
             unzippedpath = os.path.join(currDir, zippedFilename)
             imgBase = glob(f'{unzippedpath}/GRANULE/*/IMG_DATA/')[0]
@@ -115,8 +104,3 @@ def readS2(url, deleteOnUnzip=False, createNodata=False, resampleTo10m=False):
     addToHolder(glob(f'{imgBase}\\R60m\\*'), '60m', holder)
 
     return holder
-
-
-dataurl = '../raster/S2B_MSIL2A_20180702T104019_N0208_R008_T32VNJ_20180702T150728.SAFE'
-tree = readS2(dataurl)
-updateNoData(tree)

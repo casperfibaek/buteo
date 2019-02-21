@@ -1,38 +1,38 @@
 import numpy as np
 from scipy.stats import stats
-from rasterToArray import rasterToArray
+from raster_to_array import rasterToArray
 
 
-def rasterStats(inRaster, cutline=None, cutlineAllTouch=True,
-                referenceRaster=None, srcNoDataValue=None, quiet=False,
-                bandToClip=1, statistics=['mean', 'median', 'std']):
+def rasterStats(in_raster, cutline=None, cutline_all_touch=True,
+                reference_raster=None, src_nodata=None, quiet=False,
+                band_to_clip=1, statistics=['mean', 'median', 'std']):
     ''' Calculates the statistics of a raster layer. A refererence
     raster or a cutline geometry can be provided to narrow down the
     features for which the statistics are calculated.
 
     Args:
-        inRaster (URL or GDAL.DataFrame): The raster to clip.
+        in_raster (URL or GDAL.DataFrame): The raster to clip.
 
     **kwargs:
         cutline (URL or OGR.DataFrame): A geometry used to cut
-        the inRaster.
+        the in_raster.
 
-        cutlineAllTouch (Bool): Should all pixels that touch
+        cutline_all_touch (Bool): Should all pixels that touch
         the cutline be included? False is only pixel centroids
         that fall within the geometry.
 
-        referenceRaster (URL or GDAL.DataFrame): A reference
-        raster from where to clip the extent of the inRaster.
+        reference_raster (URL or GDAL.DataFrame): A reference
+        raster from where to clip the extent of the in_raster.
 
         cropToCutline (Bool): Should the output raster be
         clipped to the extent of the cutline geometry.
 
-        srcNoDataValue (Number): Overwrite the nodata value of
+        src_nodata (Number): Overwrite the nodata value of
         the source raster.
 
         quiet (Bool): Do not show the progressbars.
 
-        bandToClip (Bool): Specify if only a specific band in
+        band_to_clip (Bool): Specify if only a specific band in
         the input raster should be clipped.
 
         statistics (List): A list containing all the statistics
@@ -46,13 +46,13 @@ def rasterStats(inRaster, cutline=None, cutlineAllTouch=True,
     # First: Turn the raster into a numpy array on which to calculate
     #        the statistics
     data = rasterToArray(
-        inRaster,
-        referenceRaster=referenceRaster,
+        in_raster,
+        reference_raster=reference_raster,
         cutline=cutline,
-        cutlineAllTouch=cutlineAllTouch,
+        cutline_all_touch=cutline_all_touch,
         compressed=True,
-        srcNoDataValue=srcNoDataValue,
-        bandToClip=bandToClip,
+        src_nodata=src_nodata,
+        band_to_clip=band_to_clip,
         quiet=quiet,
         calcBandStats=False,
     )

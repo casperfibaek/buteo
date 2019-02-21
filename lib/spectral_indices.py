@@ -33,6 +33,7 @@ allIndicies = [
     'ibi',      # Index-based built-up index
 ]
 
+
 def indexBands(index):
     if index == 'chlre': return [('B08', 10), ('B05', 10)]
     if index == 'rendvi': return [('B08', 10), ('B06', 10)]
@@ -61,6 +62,7 @@ def indexBands(index):
     if index == 'blfei': return [('B12', 10), ('B11', 10), ('B04', 10), ('B03', 10)]
     if index == 'ibi': return [('B12', 10), ('B11', 10), ('B08', 10), ('B04', 10), ('B03', 10)]
     return []
+
 
 def calc( yellowObj, arrOfIndices, dst='./indices/'):
     nativeResolution = { 'B02': 10, 'B03': 10, 'B04': 10,'B05': 20, 'B06': 20, 'B07': 20, 'B08': 10, 'B8A': 20, 'B11': 20, 'B12': 20 }

@@ -1,31 +1,31 @@
 from osgeo import gdal
 import numpy as np
 import numpy.ma as ma
-from clipRaster import clipRaster
-from helpers import numpyFillValues
+from clip_raster import clipRaster
+from utils import numpyfill_values
 
 
-def rasterToArray(inRaster, referenceRaster=None, cutline=None, cutlineAllTouch=False,
-                  cropToCutline=True, compressed=False, bandToClip=1, srcNoDataValue=None,
-                  filled=False, fillValue=None, quiet=False, calcBandStats=True, align=True):
+def rasterToArray(in_raster, reference_raster=None, cutline=None, cutline_all_touch=False,
+                  crop_to_cutline=True, compressed=False, band_to_clip=1, src_nodata=None,
+                  filled=False, fill_value=None, quiet=False, calc_band_stats=True, align=True):
     ''' Turns a raster into an Numpy Array in memory. Only
         supports for one band to be turned in to an array.
 
     Args:
-        inRaster (URL or GDAL.DataFrame): The raster to clip.
+        in_raster (URL or GDAL.DataFrame): The raster to clip.
 
     **kwargs:
-        referenceRaster (URL or GDAL.DataFrame): A reference
-        raster from where to clip the extent of the inRaster.
+        reference_raster (URL or GDAL.DataFrame): A reference
+        raster from where to clip the extent of the in_raster.
 
         cutline (URL or OGR.DataFrame): A geometry used to cut
-        the inRaster.
+        the in_raster.
 
-        cutlineAllTouch (Bool): Should all pixels that touch
+        cutline_all_touch (Bool): Should all pixels that touch
         the cutline be included? False is only pixel centroids
         that fall within the geometry.
 
-        cropToCutline (Bool): Should the output raster be
+        crop_to_cutline (Bool): Should the output raster be
         clipped to the extent of the cutline geometry.
 
         compressed (Bool): Should the returned data be flattened
@@ -35,13 +35,13 @@ def rasterToArray(inRaster, referenceRaster=None, cutline=None, cutlineAllTouch=
         filled (Bool): Should they array be filled with the
         nodata value contained in the mask.
 
-        bandToClip (Number): A specific band in the input raster
+        band_to_clip (Number): A specific band in the input raster
         the be turned to an array.
 
-        srcNoDataValue (Number): Overwrite the nodata value of
+        src_nodata (Number): Overwrite the nodata value of
         the source raster.
 
-        fillValue (Number): Set a number for the fill value of
+        fill_value (Number): Set a number for the fill value of
         the output masked array. Defaults to the max value for
         the datatype.
 
@@ -59,54 +59,54 @@ def rasterToArray(inRaster, referenceRaster=None, cutline=None, cutlineAllTouch=
     '''
 
     # Verify inputs
-    if not isinstance(bandToClip, int):
-        raise AttributeError("bandToClip must be provided and it must be an integer")
+    if not isinstance(band_to_clip, int):
+        raise AttributeError("band_to_clip must be provided and it must be an integer")
 
     # if outRaster is None:
     #     outRaster = 'ignored'
 
-    # If there is no referenceRaster or Cutline defined it is
+    # If there is no reference_raster or Cutline defined it is
     # not necesarry to clip the raster.
-    if referenceRaster is None and cutline is None:
-        if isinstance(inRaster, gdal.Dataset):
-            readiedRaster = inRaster
+    if reference_raster is None and cutline is None:
+        if isinstance(in_raster, gdal.Dataset):
+            readiedRaster = in_raster
         else:
-            readiedRaster = gdal.Open(inRaster)
+            readiedRaster = gdal.Open(in_raster)
 
         if readiedRaster is None:
-            raise AttributeError(f"Unable to parse the input raster: {inRaster}")
+            raise AttributeError(f"Unable to parse the input raster: {in_raster}")
 
     else:
         readiedRaster = clipRaster(
-            inRaster,
-            referenceRaster=referenceRaster,
+            in_raster,
+            reference_raster=reference_raster,
             cutline=cutline,
-            cutlineAllTouch=cutlineAllTouch,
-            cropToCutline=cropToCutline,
-            srcNoDataValue=srcNoDataValue,
+            cutline_all_touch=cutline_all_touch,
+            crop_to_cutline=crop_to_cutline,
+            src_nodata=src_nodata,
             quiet=quiet,
             align=align,
-            bandToClip=bandToClip,
+            band_to_clip=band_to_clip,
             outputFormat='MEM',
-            calcBandStats=calcBandStats,
+            calc_band_stats=calc_band_stats,
         )
 
-    # Read the inraster as an array
-    rasterBand = readiedRaster.GetRasterBand(bandToClip)
+    # Read the in_raster as an array
+    rasterBand = readiedRaster.GetRasterBand(band_to_clip)
     rasterNoDataValue = rasterBand.GetNoDataValue()
     rasterAsArray = rasterBand.ReadAsArray()
 
     # Create a numpy masked array that corresponds to the nodata
-    # values in the inRaster
+    # values in the in_raster
     if rasterNoDataValue is None:
-        data = ma.array(rasterAsArray, fill_value=fillValue)
+        data = ma.array(rasterAsArray, fill_value=fill_value)
     else:
         data = ma.masked_equal(rasterAsArray, rasterNoDataValue)
 
-    if fillValue is not None:
-        ma.set_fill_value(data, fillValue)
+    if fill_value is not None:
+        ma.set_fill_value(data, fill_value)
     else:
-        ma.set_fill_value(data, numpyFillValues(rasterAsArray.dtype))
+        ma.set_fill_value(data, numpyfill_values(rasterAsArray.dtype))
 
     # Free memory
     rasterAsArray = None

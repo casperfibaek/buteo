@@ -2,12 +2,12 @@ import subprocess
 import os
 import sys
 import time
-from progress import progress
+from utils import progress
 
 otb_folder = os.path.abspath('../OTB/bin/')
 
 
-def executeOtb(command, name, quiet=False):
+def execute_cli_function(command, name, quiet=False):
     process = subprocess.Popen(
         command,
         shell=True,
@@ -91,6 +91,6 @@ def pansharpen(in_pan, in_xs, out, options=None, out_datatype=None, quiet=False)
         Make CLI request and handle responses
     ******************************************************* '''
 
-    executeOtb(cli_string, name='Pansharpening')
+    execute_cli_function(cli_string, name='Pansharpening')
 
     return out

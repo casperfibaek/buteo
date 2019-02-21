@@ -2,13 +2,12 @@ from osgeo import gdal, osr
 import numpy as np
 import numpy.ma as ma
 import os
-from helpers import datatypeIsFloat, numpyToGdalDatatypes
-from progress import progress_callback, progress_callback_quiet
+from utils import datatype_is_float, numpy_to_gdal_datatypes, progress_callback, progress_callback_quiet
 
 
-def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM',
-                  topLeft=None, pixelSize=None, projection=None, calcBandStats=True,
-                  srcNoDataValue=None, resample=False, quiet=False):
+def arrayToRaster(array, out_raster=None, reference_raster=None, output_format='MEM',
+                  top_left=None, pixel_size=None, projection=None, calc_band_stats=True,
+                  src_nodata=None, resample=False, quiet=False):
     ''' Turns a numpy array into a gdal dataframe or exported
         as a raster. If no reference is specified, the following
         must be provided: topLeft coordinates, pixelSize such as:
@@ -21,31 +20,37 @@ def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM
         sizes must be in degrees.
 
     Args:
-        inRaster (URL or GDAL.DataFrame): The raster to clip.
+        in_raster (URL or GDAL.DataFrame): The raster to clip.
 
     **kwargs:
-        referenceRaster (URL or GDAL.DataFrame): A reference
+        reference_raster (URL or GDAL.DataFrame): A reference
         raster from where to clip the extent of the inRaster.
 
-        outRaster (URL): The name of the output raster. Only
+        out_raster (URL): The name of the output raster. Only
         used when output format is not memory.
 
-        outputFormat (String): Output of calculation. MEM is
-        default, if outRaster is specified but MEM is selected,
-        GTiff is used as outputformat.
+        output_format (String): Output of calculation. MEM is
+        default, if out_raster is specified but MEM is selected,
+        GTiff is used as output_format.
 
-        topLeft (List): The coordinates for the topleft corner
+        top_left (List): The coordinates for the topleft corner
         of the raster. Such as: [600000, 520000].
 
-        pixelSize (List): The width and height of the pixels in
+        pixel_size (List): The width and height of the pixels in
         the destination raster. Such as: [10, 10].
 
         projection (String): A proj4 string matching the projection
         of the destination raster. Such as: "+proj=utm +zone=32
             +ellps=WGS84 +datum=WGS84 +units=m +no_defs".
 
-        srcNoDataValue (Number): Overwrite the nodata value of
+        calc_band_stats (Bool): Calculate band statistics and add
+        them to the image. Might increase processing time.
+
+        src_nodata (Number): Overwrite the nodata value of
         the source raster.
+
+        resample (Bool): Resample the input raster to match the
+        reference if they do not overlap.
 
         quiet (Bool): Do not show the progressbars for warping.
 
@@ -61,100 +66,103 @@ def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM
         ********************************************************** '''
 
     # Is the output format correct?
-    if outRaster is None and outputFormat != 'MEM':
+    if out_raster is None and output_format != 'MEM':
         raise AttributeError("Either a reference raster or a cutline must be provided.")
 
-    # If outRaster is specified, default to GTiff output format
-    if outRaster is not None and outputFormat == 'MEM':
-        outputFormat = 'GTiff'
+    # If out_raster is specified, default to GTiff output format
+    if out_raster is not None and output_format == 'MEM':
+        output_format = 'GTiff'
 
-    if outRaster is None:
-        outRaster = 'ignored'
+    if out_raster is None:
+        out_raster = 'ignored'   # This is necessary as GDAL expects a string no matter what.
 
-    if referenceRaster is None and (
-        topLeft is None or
-        pixelSize is None or
+    if reference_raster is None and (
+        top_left is None or
+        pixel_size is None or
         projection is None
     ):
-        raise AttributeError("If no referenceRaster is provided. topLeft, pixelSize, projection and rasterSize are all required.")
+        raise AttributeError("If no reference_raster is provided. top_left, pixel_size, projection and raster_size are all required.")
 
-    if referenceRaster is not None and (
-        topLeft is not None or
-        pixelSize is not None or
+    if reference_raster is not None and (
+        top_left is not None or
+        pixel_size is not None or
         projection is not None
     ):
-        print('WARNING: Only the values from the referenceRaster will be used.')
+        print('WARNING: Only the values from the reference_raster will be used.')
 
     ''' **********************************************************
         STEP (2): Setup local values and ready data.
     ********************************************************** '''
 
     # The data that will be written to the raster
+    # If the data is not a numpy array, make it.
     data = array if isinstance(array, np.ndarray) else np.array(array)
-    # data = np.swapaxes(data, 0, 1)
+    datatype = numpy_to_gdal_datatypes(data.dtype)
 
     if data.ndim != 2:
         raise AttributeError("The input raster must be 2-dimensional")
 
+    reference = {} if reference_raster is not None else None
+
     # Gather reference information
-    if referenceRaster is not None:
-        if isinstance(referenceRaster, gdal.Dataset):
-            referenceDataframe = referenceRaster
+    if reference_raster is not None:
+
+        if isinstance(reference_raster, gdal.Dataset):  # Dataset alreadt GDAL dataframe.
+            reference['dataframe'] = reference_raster
         else:
-            referenceDataframe = gdal.Open(referenceRaster)
+            reference['dataframe'] = gdal.Open(reference_raster)
 
         # Throw error if GDAL cannot open the raster
-        if referenceDataframe is None:
-            raise AttributeError(f"Unable to parse the reference raster: {referenceRaster}")
+        if reference['dataframe'] is None:
+            raise AttributeError(f"Unable to parse the reference raster: {reference_raster}")
 
-        referenceTransform = referenceDataframe.GetGeoTransform()
-        referenceProjection = referenceDataframe.GetProjection()
-        referenceRasterXSize = referenceDataframe.RasterXSize
-        referenceRasterYSize = referenceDataframe.RasterYSize
-        referencePixelWidth = referenceTransform[1]
-        referencePixelHeight = referenceTransform[5]
-        referenceTopLeftX = referenceTransform[0]
-        referenceTopLeftY = referenceTransform[3]
-        referenceBand = referenceDataframe.GetRasterBand(1)
-        referenceNoDataValue = referenceBand.GetNoDataValue()
-        referenceDataType = numpyToGdalDatatypes(data.dtype)
+        reference['transform'] = reference['dataframe'].GetGeoTransform()
+        reference['projection'] = reference['dataframe'].GetProjection()
+        reference['x_size'] = reference['dataframe'].RasterXSize
+        reference['y_size'] = reference['dataframe'].RasterYSize
+        reference['pixel_width'] = reference['transform'][1]
+        reference['pixel_height'] = reference['transform'][5]
+        reference['x_top_left'] = reference['transform'][0]
+        reference['y_top_left'] = reference['transform'][3]
+        reference['bands'] = [reference['dataframe'].GetRasterBand(1)]
+        reference['nodata'] = reference['bands'][0].GetNoDataValue()
     else:
-        referenceRasterXSize = data.shape[0]
-        referenceRasterYSize = data.shape[1]
-        referencePixelWidth = pixelSize[0]
-        referencePixelHeight = pixelSize[1]
-        referenceTopLeftX = topLeft[0]
-        referenceTopLeftY = topLeft[1]
-        referenceNoDataValue = None,
-        referenceDataType = numpyToGdalDatatypes(data.dtype)
-        referenceTransform = [
-            referenceTopLeftX, referencePixelWidth, 0,
-            referenceTopLeftY, 0, -referencePixelHeight,
+        reference['x_size'] = data.shape[0]
+        reference['y_size'] = data.shape[1]
+        reference['pixel_width'] = pixel_size[0]
+        reference['pixel_height'] = pixel_size[1]
+        reference['x_top_left'] = top_left[0]
+        reference['y_top_left'] = top_left[1]
+        reference['nodata'] = None
+        reference['transform'] = [
+            reference['x_top_left'], reference['pixel_width'], 0,
+            reference['y_top_left'], 0, -reference['pixel_height'],
         ]
-        referenceProjection = osr.SpatialReference()
-        referenceProjection.ImportFromProj4(projection)
-        referenceProjection.ExportToWkt()
-        referenceProjection = str(referenceProjection)
+        reference['projection'] = osr.SpatialReference()
+        reference['projection'].ImportFromProj4(projection)
+        reference['projection'].ExportToWkt()
+        reference['projection'] = str(reference['projection'])
 
-    inputNoDataValue = srcNoDataValue if srcNoDataValue is not None else None
+    input_nodata = reference['nodata']
 
     # Ready the nodata values
     if ma.is_masked(data) is True:
-        if inputNoDataValue is not None:
-            ma.masked_equal(data, inputNoDataValue)
-            data.set_fill_value(inputNoDataValue)
-        inputNoDataValue = data.get_fill_value()
+        if input_nodata is not None:
+            ma.masked_equal(data, input_nodata)
+            data.set_fill_value(input_nodata)
+        input_nodata = data.get_fill_value()
         data = data.filled()
 
     # Weird "double" issue with GDAL and numpy. Cast to float or int
-    inputNoDataValue = float(inputNoDataValue)
-    if (inputNoDataValue).is_integer() is True:
-        inputNoDataValue = int(inputNoDataValue)
+    if input_nodata is not None:
+        input_nodata = float(input_nodata)
+        if (input_nodata).is_integer() is True:
+            input_nodata = int(input_nodata)
 
     # If the output is not memory, set compression options.
     options = []
-    if outputFormat != 'MEM':
-        if datatypeIsFloat(referenceDataType) is True:
+    if output_format != 'MEM':
+        if datatype_is_float(datatype) is True:
             predictor = 3  # Float predictor
         else:
             predictor = 2  # Integer predictor
@@ -163,44 +171,56 @@ def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM
     ''' **********************************************************
         STEP (3): The business logic.
     ********************************************************** '''
+    destination = {}
+
     if resample is False:
-        destinationDriver = gdal.GetDriverByName(outputFormat)
-        destinationName = outRaster
-        destinationOptions = options
+        destination['driver'] = gdal.GetDriverByName(output_format)
+        destination['name'] = out_raster
+        destination['options'] = options
     else:
-        destinationName = 'ignored'
-        destinationDriver = gdal.GetDriverByName('MEM')
-        destinationOptions = []
+        destination['driver'] = gdal.GetDriverByName('MEM')
+        destination['name'] = 'ignored'
+        destination['options'] = []
 
-    destination = destinationDriver.Create(destinationName, data.shape[1], data.shape[0], 1, referenceDataType, destinationOptions)
+    destination['dataframe'] = destination['driver'].Create(
+        destination['name'],
+        data.shape[1],
+        data.shape[0],
+        1,
+        datatype,
+        destination['options']
+    )
 
-    # Test if the scale is correct
-    if data.shape[0] == referenceRasterXSize and data.shape[1] == referenceRasterYSize:
-        destination.SetGeoTransform(referenceTransform)
+    # Test if the scale is correct and set transform
+    if data.shape[0] == reference['x_size'] and data.shape[1] == reference['y_size']:
+        destination['dataframe'].SetGeoTransform(reference['transform'])
     else:
-        destinationPixelWidth = (referenceRasterXSize / data.shape[1]) * referencePixelWidth
-        destinationPixelHeight = (referenceRasterYSize / data.shape[0]) * referencePixelHeight
-        destination.SetGeoTransform([
-            referenceTopLeftX,
-            destinationPixelWidth,
+        destination['pixel_width'] = (reference['x_size'] / data.shape[1]) * reference['pixel_width']
+        destination['pixel_height'] = (reference['y_size'] / data.shape[0]) * reference['pixel_height']
+        destination['dataframe'].SetGeoTransform([
+            reference['x_top_left'],
+            destination['pixel_width'],
             0,
-            referenceTopLeftY,
+            reference['y_top_left'],
             0,
-            destinationPixelHeight,
+            destination['pixel_height'],
         ])
 
-    destination.SetProjection(referenceProjection)
-    destinationBand = destination.GetRasterBand(1)
-    destinationBand.WriteArray(data)
+    destination['dataframe'].SetProjection(reference['projection'])
+    destination['bands'] = [destination['dataframe'].GetRasterBand(1)]
+    destination['bands'][0].WriteArray(data)
 
-    if inputNoDataValue is not None:
-        destinationBand.SetNoDataValue(inputNoDataValue)
+    if input_nodata is not None:
+        destination['bands'][0].SetNoDataValue(input_nodata)
 
-    if resample is True and (data.shape[0] != referenceRasterXSize or data.shape[1] != referenceRasterYSize):
-        resampledDestinationDriver = gdal.GetDriverByName(outputFormat)
-        resampledDestination = resampledDestinationDriver.Create(outRaster, referenceRasterXSize, referenceRasterYSize, 1, referenceDataType, options)
-        resampledDestination.SetGeoTransform(referenceTransform)
-        resampledDestination.SetProjection(referenceProjection)
+    # If it is necessary to resample to fit the reference:
+    if resample is True and (data.shape[0] != reference['x_size'] or data.shape[1] != reference['y_size']):
+        resampled_destination = {'driver': gdal.GetDriverByName(output_format)}
+        resampled_destination['dataframe'] = resampled_destination['driver'].Create(
+            out_raster, reference['x_size'], reference['y_size'], 1, datatype, options)
+
+        resampled_destination['dataframe'].SetGeoTransform(reference['transform'])
+        resampled_destination['dataframe'].SetGeoTransform(reference['projection'])
 
         progressbar = progress_callback_quiet
         if quiet is False:
@@ -210,13 +230,13 @@ def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM
         gdal.PushErrorHandler('CPLQuietErrorHandler')
 
         try:
-            warpSuccess = gdal.Warp(
-                resampledDestination,
-                destination,
-                format=outputFormat,
-                xRes=referenceRasterXSize,
-                yRes=referenceRasterYSize,
-                srcSRS=referenceProjection,
+            warp_sucess = gdal.Warp(
+                resampled_destination['dataframe'],
+                destination['dataframe'],
+                format=output_format,
+                xRes=reference['x_size'],
+                yRes=reference['y_size'],
+                srcSRS=reference['projection'],
                 multithread=True,
                 callback=progressbar,
             )
@@ -226,32 +246,36 @@ def arrayToRaster(array, outRaster=None, referenceRaster=None, outputFormat='MEM
         gdal.PopErrorHandler()
 
         # Check if warped was successfull.
-        if warpSuccess == 0:         # GDAL returns 0 for warnings.
+        if warp_sucess == 0:         # GDAL returns 0 for warnings.
             print('Warping completed with warnings. Check your result.')
-        elif warpSuccess is None:    # GDAL returns None for errors.
+        elif warp_sucess is None:    # GDAL returns None for errors.
             raise RuntimeError("Warping completed unsuccesfully.") from None
 
         # Clear memory
         destination = None
 
-        if calcBandStats is True:
-            resampledDestination.GetRasterBand(1).GetStatistics(0, 1)
+        if calc_band_stats is True:
+            resampled_destination['dataframe'].GetRasterBand(1).GetStatistics(0, 1)
+
+        reference_raster = None
 
         # Return the resampled destination raster
-        if outputFormat != 'MEM':
-            resampledDestination.FlushCache()
-            resampledDestination = None
-            return os.path.abspath(outRaster)
+        if output_format != 'MEM':
+            resampled_destination.FlushCache()
+            resampled_destination = None
+            return os.path.abspath(out_raster)
         else:
-            return resampledDestination
+            return resampled_destination
 
-    if calcBandStats is True:
-        destinationBand.GetStatistics(0, 1)
+    if calc_band_stats is True:
+        destination['bands'][0].GetStatistics(0, 1)
+
+    reference_raster = None
 
     # Return the destination raster
-    if outputFormat != 'MEM':
+    if output_format != 'MEM':
         destination.FlushCache()
         destination = None
-        return os.path.abspath(outRaster)
+        return os.path.abspath(out_raster)
     else:
         return destination

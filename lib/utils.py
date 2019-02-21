@@ -27,6 +27,7 @@ def progress_callback(complete, message, unknown):
 def progress_callback_quiet(complete, message, unknown):
     return None
 
+
 def getExtent(dataframe):
     transform = dataframe.GetGeoTransform()
 
@@ -65,19 +66,19 @@ def getIntersection(extent1, extent2):
         )
 
 
-def createClipGeoTransform(geoTransform, extent):
-    RasterXSize = round((extent[2] - extent[0]) / geoTransform[1])  # (maxX - minX) / pixelWidth
-    RasterYSize = round((extent[3] - extent[1]) / geoTransform[5])  # (maxY - minY) / pixelHeight
+def createClipgeo_transform(geo_transform, extent):
+    RasterXSize = round((extent[2] - extent[0]) / geo_transform[1])  # (maxX - minX) / pixelWidth
+    RasterYSize = round((extent[3] - extent[1]) / geo_transform[5])  # (maxY - minY) / pixelHeight
 
     return {
-        'Transform': [extent[0], geoTransform[1], 0, extent[3], 0, geoTransform[5]],
+        'Transform': [extent[0], geo_transform[1], 0, extent[3], 0, geo_transform[5]],
         'RasterXSize': abs(RasterXSize),
         'RasterYSize': abs(RasterYSize),
     }
 
 
-def createSubsetDataframe(dataframe, band=1, noDataValue=None):
-        # Create a GDAL driver to create dataframes in the right outputFormat
+def createSubsetDataframe(dataframe, band=1):
+        # Create a GDAL driver to create dataframes in the right output_format
         driver = gdal.GetDriverByName('MEM')
 
         inputBand = dataframe.GetRasterBand(band)
@@ -104,8 +105,8 @@ def createSubsetDataframe(dataframe, band=1, noDataValue=None):
         return subsetDataframe
 
 
-def copyDataframe(dataframe, name='ignored', outputFormat='MEM'):
-    driver = gdal.GetDriverByName(outputFormat)
+def copyDataframe(dataframe, name='ignored', output_format='MEM'):
+    driver = gdal.GetDriverByName(output_format)
 
     inputTransform = dataframe.GetGeoTransform()
     inputProjection = dataframe.GetProjection()
@@ -113,7 +114,7 @@ def copyDataframe(dataframe, name='ignored', outputFormat='MEM'):
     inputDataType = inputBand.DataType
     inputBandCount = dataframe.RasterCount
 
-    if outputFormat == 'MEM':
+    if output_format == 'MEM':
         options = []
     else:
         if datatypeIsFloat(inputDataType) is True:
@@ -161,7 +162,7 @@ def translateResampleMethod(method):
         return 0
 
 
-def numpyFillValues(dtype):
+def numpyFillValues(datatype):
     datatypes = {
         'int8': 127,
         'int16': 32767,
@@ -176,8 +177,8 @@ def numpyFillValues(dtype):
         'float64': -9999,
     }
 
-    if dtype in datatypes:
-        return datatypes[dtype]
+    if datatype in datatypes:
+        return datatypes[datatype]
     else:
         return 0
 
@@ -286,5 +287,5 @@ def __cScale(zscore, sqrt=True, root=math.pi):
 _cScale = np.vectorize(__cScale)
 
 
-def cScale(arrOfZscores, sqrt=True, root=math.pi):
-    return _cScale(arrOfZscores, sqrt=sqrt, root=math.pi)
+def cScale(arr_of_zscores, sqrt=True, root=math.pi):
+    return _cScale(arr_of_zscores, sqrt=sqrt, root=math.pi)

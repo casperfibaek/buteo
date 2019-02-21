@@ -3,42 +3,40 @@ import numpy as np
 import numpy.ma as ma
 import os
 import time
-from progress import progress_callback, progress_callback_quiet
-from helpers import getExtent, getIntersection, createSubsetDataframe, createClipGeoTransform, datatypeIsFloat, translateMaxValues
+from utils import *
 
 
-# TODO: Create a createDestinationFrame function
-def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
-               cutlineAllTouch=False, cropToCutline=True, srcNoDataValue=None,
-               dstNoDataValue=None, quiet=False, align=True, bandToClip=None,
-               calcBandStats=True, outputFormat='MEM'):
+def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
+               cutline_all_touch=False, crop_to_cutline=True, src_nodata=None,
+               dst_nodata=None, quiet=False, align=True, band_to_clip=None,
+               calc_band_stats=True, output_format='MEM'):
     ''' Clips a raster by either a reference raster, a cutline
         or both.
 
     Args:
-        inRaster (URL or GDAL.DataFrame): The raster to clip.
+        in_raster (URL or GDAL.DataFrame): The raster to clip.
 
     **kwargs:
-        outRaster (URL): The name of the output raster. Only
+        out_raster (URL): The name of the output raster. Only
         used when output format is not memory.
 
-        referenceRaster (URL or GDAL.DataFrame): A reference
-        raster from where to clip the extent of the inRaster.
+        reference_raster (URL or GDAL.DataFrame): A reference
+        raster from where to clip the extent of the in_raster.
 
         cutline (URL or OGR.DataFrame): A geometry used to cut
-        the inRaster.
+        the in_raster.
 
-        cutlineAllTouch (Bool): Should all pixels that touch
+        cutline_all_touch (Bool): Should all pixels that touch
         the cutline be included? False is only pixel centroids
         that fall within the geometry.
 
-        cropToCutline (Bool): Should the output raster be
+        crop_to_cutline (Bool): Should the output raster be
         clipped to the extent of the cutline geometry.
 
-        srcNoDataValue (Number): Overwrite the nodata value of
+        src_nodata (Number): Overwrite the nodata value of
         the source raster.
 
-        dstNoDataValue (Number): Set a new nodata for the
+        dst_nodata (Number): Set a new nodata for the
         output array.
 
         quiet (Bool): Do not show the progressbars.
@@ -46,37 +44,37 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
         align (Bool): Align the output pixels with the pixels
         in the input.
 
-        bandToClip (Bool): Specify if only a specific band in
+        band_to_clip (Bool): Specify if only a specific band in
         the input raster should be clipped.
 
-        outputFormat (String): Output of calculation. MEM is
-        default, if outRaster is specified but MEM is selected,
-        GTiff is used as outputformat.
+        output_format (String): Output of calculation. MEM is
+        default, if out_raster is specified but MEM is selected,
+        GTiff is used as output_format.
 
     Returns:
-        if MEM is selected as outputFormat a GDAL dataframe
+        if MEM is selected as output_format a GDAL dataframe
         is returned, otherwise a URL reference to the created
         raster is returned.
     '''
 
     # Is the output format correct?
-    if outRaster is None and outputFormat != 'MEM':
+    if out_raster is None and output_format != 'MEM':
         raise AttributeError("Either a reference raster or a cutline must be provided.")
 
-    # If outRaster is specified, default to GTiff output format
-    if outRaster is not None and outputFormat == 'MEM':
-        outputFormat = 'GTiff'
+    # If out_raster is specified, default to GTiff output format
+    if out_raster is not None and output_format == 'MEM':
+        output_format = 'GTiff'
 
     # Are none of either reference raster or cutline provided?
-    if referenceRaster is None and cutline is None:
+    if reference_raster is None and cutline is None:
         raise AttributeError("Either a reference raster or a cutline must be provided.")
 
     # Read the supplied raster
-    inputDataframe = gdal.Open(inRaster)
+    inputDataframe = gdal.Open(in_raster)
 
     # Throw error if GDAL cannot open the raster
     if inputDataframe is None:
-        raise AttributeError(f"Unable to parse the input raster: {inRaster}")
+        raise AttributeError(f"Unable to parse the input raster: {in_raster}")
 
     # Read the requested band. The NoDataValue might be: None.
     inputBand = inputDataframe.GetRasterBand(1)  # To read the datatype from
@@ -88,22 +86,22 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
     inputExtent = getExtent(inputDataframe)
 
     inputBandCount = inputDataframe.RasterCount  # Ensure compatability with multiband rasters
-    outputBandCount = 1 if bandToClip is not None else inputBandCount
+    outputBandCount = 1 if band_to_clip is not None else inputBandCount
 
     ''' PREPARE THE NODATA VALUES '''
     # Get the nodata-values from either the raster or the function parameters
     inputNodataValue = inputBand.GetNoDataValue()
 
-    if inputNodataValue is None and srcNoDataValue is not None:
-        inputNodataValue = srcNoDataValue
+    if inputNodataValue is None and src_nodata is not None:
+        inputNodataValue = src_nodata
 
     # If the destination nodata value is not set - set it to the input nodata value
-    if dstNoDataValue is None:
-        dstNoDataValue = inputNodataValue
+    if dst_nodata is None:
+        dst_nodata = inputNodataValue
 
     # If there is a cutline a nodata value must be set for the destination
-    if cutline is not None and dstNoDataValue is None:
-        dstNoDataValue = translateMaxValues(inputBand.DataType)
+    if cutline is not None and dst_nodata is None:
+        dst_nodata = translateMaxValues(inputBand.DataType)
     if cutline is not None and inputNodataValue is None:
         inputNodataValue = translateMaxValues(inputBand.DataType)
         for i in range(inputBandCount):
@@ -112,14 +110,14 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
 
     ''' GDAL throws a warning whenever warpOptions are based to a function
         that has the 'MEM' format. However, it is necessary to do so because
-        of the cutlineAllTouch feature.'''
+        of the cutline_all_touch feature.'''
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
     # If only one output band is requested it is necessary to create a subset
     # of the input data.
-    if inputBandCount != 1 and bandToClip is not None:
+    if inputBandCount != 1 and band_to_clip is not None:
         # Set the origin to a subset band of the input raster
-        origin = createSubsetDataframe(inputDataframe, bandToClip)
+        origin = createSubsetDataframe(inputDataframe, band_to_clip)
     else:
         # Subsets are not needed as the input only has one band.
         # Origin is then the input.
@@ -183,29 +181,29 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
     # Empty options to pass to GDAL.Warp. Since output is memory no compression
     # options are passed.
     options = ['INIT_DEST=NO_DATA']
-    if cutlineAllTouch is True:
+    if cutline_all_touch is True:
         options.append('CUTLINE_ALL_TOUCHED=TRUE')
 
     creationOptions = []
-    if outputFormat != 'MEM':
+    if output_format != 'MEM':
         if datatypeIsFloat(inputBand.DataType) is True:
             predictor = 3
         else:
             predictor = 2
         creationOptions = ['COMPRESS=DEFLATE', f'PREDICTOR={predictor}', 'NUM_THREADS=ALL_CPUS']
 
-    # Create a GDAL driver to create dataframes in the right outputFormat
-    driver = gdal.GetDriverByName(outputFormat)
+    # Create a GDAL driver to create dataframes in the right output_format
+    driver = gdal.GetDriverByName(output_format)
 
-    destinationName = outRaster if outRaster is not None else 'ignored'
+    destinationName = out_raster if out_raster is not None else 'ignored'
 
-    if referenceRaster is not None:
+    if reference_raster is not None:
         # Read the reference raster
-        referenceDataframe = gdal.Open(referenceRaster)
+        referenceDataframe = gdal.Open(reference_raster)
 
         # Throw error if GDAL cannot open the raster
         if referenceDataframe is None:
-            raise AttributeError(f"Unable to parse the reference raster: {referenceRaster}")
+            raise AttributeError(f"Unable to parse the reference raster: {reference_raster}")
 
         # Read the attributes of the referenceDataframe
         referenceTransform = referenceDataframe.GetGeoTransform()
@@ -267,7 +265,7 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
         if inputNodataValue is not None:
             for i in range(inputBandCount):
                 destinationBand = destinationDataframe.GetRasterBand(i + 1)
-                destinationBand.SetNoDataValue(dstNoDataValue)
+                destinationBand.SetNoDataValue(dst_nodata)
                 destinationBand.FlushCache()
 
         progressbar = progress_callback_quiet
@@ -275,33 +273,33 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
             print(f"Clipping input raster:")
             progressbar = progress_callback
 
-        ''' OBS: If cropToCutline and a reference raster are both provided. Crop to the
-            reference raster instead of the cropToCutline.'''
+        ''' OBS: If crop_to_cutline and a reference raster are both provided. Crop to the
+            reference raster instead of the crop_to_cutline.'''
         try:
             if cutline is None:
                 warpSuccess = gdal.Warp(
                     destinationDataframe,
                     origin,
-                    format=outputFormat,
+                    format=output_format,
                     targetAlignedPixels=align,
                     xRes=inputTransform[1],
                     yRes=inputTransform[5],
                     multithread=True,
                     srcNodata=inputNodataValue,
-                    dstNodata=dstNoDataValue,
+                    dstNodata=dst_nodata,
                     callback=progressbar,
                 )
             else:
                 warpSuccess = gdal.Warp(
                     destinationDataframe,
                     origin,
-                    format=outputFormat,
+                    format=output_format,
                     targetAlignedPixels=align,
                     xRes=inputTransform[1],
                     yRes=inputTransform[5],
                     multithread=True,
                     srcNodata=inputNodataValue,
-                    dstNodata=dstNoDataValue,
+                    dstNodata=dst_nodata,
                     callback=progressbar,
                     cutlineDSName=cutline,
                     warpOptions=options,
@@ -334,7 +332,7 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
         if inputNodataValue is not None:
             for i in range(inputBandCount):
                 destinationBand = destinationDataframe.GetRasterBand(i + 1)
-                destinationBand.SetNoDataValue(dstNoDataValue)
+                destinationBand.SetNoDataValue(dst_nodata)
                 destinationBand.FlushCache()
 
         progressbar = progress_callback_quiet
@@ -346,16 +344,16 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
             warpSuccess = gdal.Warp(
                 destinationDataframe,
                 origin,
-                format=outputFormat,
+                format=output_format,
                 targetAlignedPixels=align,
                 xRes=inputTransform[1],
                 yRes=inputTransform[5],
                 multithread=True,
                 srcNodata=inputNodataValue,
-                dstNodata=dstNoDataValue,
+                dstNodata=dst_nodata,
                 callback=progressbar,
                 cutlineDSName=cutline,
-                cropToCutline=cropToCutline,
+                crop_to_cutline=crop_to_cutline,
                 warpOptions=options,
             )
         except:
@@ -375,12 +373,12 @@ def clipRaster(inRaster, outRaster=None, referenceRaster=None, cutline=None,
     referenceDataframe = None
     reprojectedReferenceDataframe = None
 
-    if calcBandStats is True:
+    if calc_band_stats is True:
         for i in range(outputBandCount):
             destinationBand = destinationDataframe.GetRasterBand(i + 1).GetStatistics(0, 1)
 
-    if outRaster is not None:
+    if out_raster is not None:
         destinationDataframe = None
-        return os.path.abspath(outRaster)
+        return os.path.abspath(out_raster)
     else:
         return destinationDataframe
