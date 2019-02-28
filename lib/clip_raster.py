@@ -1,15 +1,14 @@
-from osgeo import gdal, ogr, osr
+import os
 import numpy as np
 import numpy.ma as ma
-import os
-import time
-from utils import *
+from osgeo import gdal, ogr, osr
+import utils
 
 
-def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
-               cutline_all_touch=False, crop_to_cutline=True, src_nodata=None,
-               dst_nodata=None, quiet=False, align=True, band_to_clip=None,
-               calc_band_stats=True, output_format='MEM'):
+def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
+                cutline_all_touch=False, crop_to_cutline=True, src_nodata=None,
+                dst_nodata=None, quiet=False, align=True, band_to_clip=None,
+                calc_band_stats=True, output_format='MEM'):
     ''' Clips a raster by either a reference raster, a cutline
         or both.
 
@@ -83,7 +82,7 @@ def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
     inputTransform = inputDataframe.GetGeoTransform()
     inputProjection = inputDataframe.GetProjection()
     inputProjectionRef = inputDataframe.GetProjectionRef()
-    inputExtent = getExtent(inputDataframe)
+    inputExtent = utils.get_extent(inputDataframe)
 
     inputBandCount = inputDataframe.RasterCount  # Ensure compatability with multiband rasters
     outputBandCount = 1 if band_to_clip is not None else inputBandCount
@@ -101,9 +100,9 @@ def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
 
     # If there is a cutline a nodata value must be set for the destination
     if cutline is not None and dst_nodata is None:
-        dst_nodata = translateMaxValues(inputBand.DataType)
+        dst_nodata = utils.translate_max_values(inputBand.DataType)
     if cutline is not None and inputNodataValue is None:
-        inputNodataValue = translateMaxValues(inputBand.DataType)
+        inputNodataValue = utils.translate_max_values(inputBand.DataType)
         for i in range(inputBandCount):
             _inputBand = inputDataframe.GetRasterBand(i + 1)
             _inputBand.SetNoDataValue(inputNodataValue)
@@ -117,7 +116,7 @@ def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
     # of the input data.
     if inputBandCount != 1 and band_to_clip is not None:
         # Set the origin to a subset band of the input raster
-        origin = createSubsetDataframe(inputDataframe, band_to_clip)
+        origin = utils.create_subset_dataframe(inputDataframe, band_to_clip)
     else:
         # Subsets are not needed as the input only has one band.
         # Origin is then the input.
@@ -166,7 +165,7 @@ def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
             vectorExtent = (bottomLeft.GetX(), bottomLeft.GetY(), topRight.GetX(), topRight.GetY())
 
         # Test if the geometry and the raster intersect
-        vectorIntersection = getIntersection(inputExtent, vectorExtent)
+        vectorIntersection = utils.get_intersection(inputExtent, vectorExtent)
 
         if vectorIntersection is False:
             raise RuntimeError("The cutline did not intersect the input raster") from None
@@ -186,7 +185,7 @@ def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
 
     creationOptions = []
     if output_format != 'MEM':
-        if datatypeIsFloat(inputBand.DataType) is True:
+        if utils.datatype_is_float(inputBand.DataType) is True:
             predictor = 3
         else:
             predictor = 2
@@ -211,12 +210,11 @@ def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
 
         # If the projections are the same there is no need to reproject.
         if osr.SpatialReference(inputProjection).ExportToProj4() == osr.SpatialReference(referenceProjection).ExportToProj4():
-            referenceExtent = getExtent(referenceDataframe)
+            referenceExtent = utils.get_extent(referenceDataframe)
         else:
-            progressbar = progress_callback_quiet
+            progressbar = utils.progress_callback_quiet
             if quiet is False:
-                print(f"Reprojecting reference raster:")
-                progressbar = progress_callback
+                progressbar = utils.create_progress_callback(1, 'clipping')
 
             try:
                 # Reproject the reference to match the input before cutting by extent
@@ -238,17 +236,17 @@ def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
             elif reprojectedReferenceDataframe is None:    # GDAL returns None for errors.
                 raise RuntimeError("Warping completed unsuccesfully.") from None
 
-            referenceExtent = getExtent(reprojectedReferenceDataframe)
+            referenceExtent = utils.get_extent(reprojectedReferenceDataframe)
 
         # Calculate the bounding boxes and test intersection
-        referenceIntersection = getIntersection(inputExtent, referenceExtent)
+        referenceIntersection = utils.get_intersection(inputExtent, referenceExtent)
 
         # If they dont intersect, throw error
         if referenceIntersection is False:
             raise RuntimeError("The reference raster did not intersect the input raster") from None
 
         # Calculates the GeoTransform and rastersize from an extent and a geotransform
-        referenceClipTransform = createClipGeoTransform(inputTransform, referenceIntersection)
+        referenceClipTransform = utils.create_geotransform(inputTransform, referenceIntersection)
 
         # Create the raster to serve as the destination for the warp
         destinationDataframe = driver.Create(
@@ -268,10 +266,9 @@ def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
                 destinationBand.SetNoDataValue(dst_nodata)
                 destinationBand.FlushCache()
 
-        progressbar = progress_callback_quiet
+        progressbar = utils.progress_callback_quiet
         if quiet is False:
-            print(f"Clipping input raster:")
-            progressbar = progress_callback
+            progressbar = utils.create_progress_callback(1, 'clipping')
 
         ''' OBS: If crop_to_cutline and a reference raster are both provided. Crop to the
             reference raster instead of the crop_to_cutline.'''
@@ -316,7 +313,7 @@ def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
     # If a cutline is requested, a new DataFrame with the cut raster is created in memory
     elif cutline is not None:
         # Calculates the GeoTransform and rastersize from an extent and a geotransform
-        vectorClipTransform = createClipGeoTransform(inputTransform, vectorIntersection)
+        vectorClipTransform = utils.create_geotransform(inputTransform, vectorIntersection)
 
         # Create the raster to serve as the destination for the warp
         destinationDataframe = driver.Create(
@@ -335,10 +332,9 @@ def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
                 destinationBand.SetNoDataValue(dst_nodata)
                 destinationBand.FlushCache()
 
-        progressbar = progress_callback_quiet
+        progressbar = utils.progress_callback_quiet
         if quiet is False:
-            print(f"Warping the raster:")
-            progressbar = progress_callback
+            progressbar = utils.create_progress_callback(1, 'clipping')
 
         try:
             warpSuccess = gdal.Warp(
@@ -353,7 +349,7 @@ def clipRaster(in_raster, out_raster=None, reference_raster=None, cutline=None,
                 dstNodata=dst_nodata,
                 callback=progressbar,
                 cutlineDSName=cutline,
-                crop_to_cutline=crop_to_cutline,
+                cropToCutline=crop_to_cutline,
                 warpOptions=options,
             )
         except:

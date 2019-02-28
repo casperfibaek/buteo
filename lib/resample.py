@@ -1,7 +1,7 @@
-from osgeo import gdal
-import numpy.ma as ma
 import os
-from utils import datatypeIsFloat, translateResampleMethod, copyDataframe, progress_callback, progress_callback_quiet
+import numpy.ma as ma
+import utils
+from osgeo import gdal
 
 
 def resample(in_raster, out_raster=None, reference_raster=None, reference_band_number=1,
@@ -79,7 +79,7 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
     if output_format == 'MEM':
         options = []
     else:
-        if datatypeIsFloat(inputDatatype) is True:
+        if utils.datatype_is_float(inputDatatype) is True:
             predictor = 3
         else:
             predictor = 2
@@ -88,7 +88,7 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
     # Test if the same size is requested.
     if target_size is not None:
         if abs(inputPixelWidth) == abs(target_size[0]) and abs(inputPixelHeight) == abs(target_size[1]):
-            copy = copyDataframe(inputDataframe, out_raster, output_format)
+            copy = utils.copyDataframe(inputDataframe, out_raster, output_format)
             copy.FlushCache()
 
             if output_format == 'MEM':
@@ -117,7 +117,7 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
 
         # Test if the reference size and the input size are the same
         if abs(inputPixelWidth) == abs(referencePixelWidth) and abs(inputPixelHeight) == abs(referencePixelHeight):
-            copy = copyDataframe(inputDataframe, out_raster, output_format)
+            copy = utils.copyDataframe(inputDataframe, out_raster, output_format)
             copy.FlushCache()
 
             if output_format == 'MEM':
@@ -131,10 +131,9 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
 
-        progressbar = progress_callback_quiet
+        progressbar = utils.progress_callback_quiet
         if quiet is False:
-            print(f"Resampling raster:")
-            progressbar = progress_callback
+            progressbar = utils.create_progress_callback(1, 'resampling')
 
         try:
             warpSuccess = gdal.Warp(
@@ -149,7 +148,7 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
                 srcNodata=inputNodataValue,
                 dstNodata=inputNodataValue,
                 warpOptions=options,
-                resampleAlg=translateResampleMethod(method),
+                resampleAlg=utils.translate_resample_method(method),
                 callback=progressbar,
             )
         except:
@@ -173,8 +172,6 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
         inputYSize = inputDataframe.RasterYSize
         xRatio = inputPixelWidth / target_size[0]
         yRatio = inputPixelHeight / target_size[1]
-        print(inputPixelWidth, target_size[0])
-        print(inputPixelHeight, target_size[1])
         xPixels = abs(round(xRatio * inputXSize))
         yPixels = abs(round(yRatio * inputYSize))
 
@@ -189,10 +186,9 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
 
-        progressbar = progress_callback_quiet
+        progressbar = utils.utils.progress_callback_quiet
         if quiet is False:
-            print(f"Resampling raster:")
-            progressbar = progress_callback
+            progressbar = utils.create_progress_callback(1, 'resampling')
 
         try:
             warpSuccess = gdal.Warp(
@@ -207,7 +203,7 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
                 srcNodata=inputNodataValue,
                 dstNodata=inputNodataValue,
                 warpOptions=options,
-                resampleAlg=translateResampleMethod(method),
+                resampleAlg=utils.translate_resample_method(method),
                 callback=progressbar,
             )
 

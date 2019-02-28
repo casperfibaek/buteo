@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import stats
-from raster_to_array import rasterToArray
+from raster_to_array import raster_to_array
 
 
 def rasterStats(in_raster, cutline=None, cutline_all_touch=True,
@@ -45,7 +45,7 @@ def rasterStats(in_raster, cutline=None, cutline_all_touch=True,
 
     # First: Turn the raster into a numpy array on which to calculate
     #        the statistics
-    data = rasterToArray(
+    data = raster_to_array(
         in_raster,
         reference_raster=reference_raster,
         cutline=cutline,

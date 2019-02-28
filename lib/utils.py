@@ -1,9 +1,9 @@
 import os
 import sys
-from osgeo import gdal
-import numpy as np
-from scipy.stats import norm
 import math
+import numpy as np
+from osgeo import gdal
+from scipy.stats import norm
 
 
 def progress(count, total, name='Processing'):
@@ -20,15 +20,17 @@ def progress(count, total, name='Processing'):
     return None
 
 
-def progress_callback(complete, message, unknown):
-    return progress(complete, 1)
+def create_progress_callback(total, name):
+    def _progress_callback(complete, message, unknown):
+        return progress(complete, total, name)
+    return _progress_callback
 
 
 def progress_callback_quiet(complete, message, unknown):
     return None
 
 
-def getExtent(dataframe):
+def get_extent(dataframe):
     transform = dataframe.GetGeoTransform()
 
     bottomRightX = transform[0] + (dataframe.RasterXSize * transform[1])
@@ -38,7 +40,7 @@ def getExtent(dataframe):
     return (transform[0], bottomRightY, bottomRightX, transform[3])
 
 
-def getIntersection(extent1, extent2):
+def get_intersection(extent1, extent2):
     one_bottomLeftX = extent1[0]
     one_bottomLeftY = extent1[1]
     one_topRightX = extent1[2]
@@ -66,7 +68,7 @@ def getIntersection(extent1, extent2):
         )
 
 
-def createClipgeo_transform(geo_transform, extent):
+def create_geotransform(geo_transform, extent):
     RasterXSize = round((extent[2] - extent[0]) / geo_transform[1])  # (maxX - minX) / pixelWidth
     RasterYSize = round((extent[3] - extent[1]) / geo_transform[5])  # (maxY - minY) / pixelHeight
 
@@ -77,7 +79,7 @@ def createClipgeo_transform(geo_transform, extent):
     }
 
 
-def createSubsetDataframe(dataframe, band=1):
+def create_subset_dataframe(dataframe, band=1):
         # Create a GDAL driver to create dataframes in the right output_format
         driver = gdal.GetDriverByName('MEM')
 
@@ -105,7 +107,7 @@ def createSubsetDataframe(dataframe, band=1):
         return subsetDataframe
 
 
-def copyDataframe(dataframe, name='ignored', output_format='MEM'):
+def copy_dataframe(dataframe, name='ignored', output_format='MEM'):
     driver = gdal.GetDriverByName(output_format)
 
     inputTransform = dataframe.GetGeoTransform()
@@ -117,7 +119,7 @@ def copyDataframe(dataframe, name='ignored', output_format='MEM'):
     if output_format == 'MEM':
         options = []
     else:
-        if datatypeIsFloat(inputDataType) is True:
+        if datatype_is_float(inputDataType) is True:
             predictor = 3
         else:
             predictor = 2
@@ -140,7 +142,7 @@ def copyDataframe(dataframe, name='ignored', output_format='MEM'):
     return destination
 
 
-def translateResampleMethod(method):
+def translate_resample_method(method):
     methods = {
         'nearest': 0,
         'bilinear': 1,
@@ -162,7 +164,7 @@ def translateResampleMethod(method):
         return 0
 
 
-def numpyFillValues(datatype):
+def numpy_fill_values(datatype):
     datatypes = {
         'int8': 127,
         'int16': 32767,
@@ -183,7 +185,7 @@ def numpyFillValues(datatype):
         return 0
 
 
-def translateMaxValues(datatype):
+def translate_max_values(datatype):
     datatypes = {
         1: 255,             # GDT_Byte
         2: 65535,           # GDT_Uint16
@@ -204,7 +206,7 @@ def translateMaxValues(datatype):
         return 0
 
 
-def translateDataTypes(datatype):
+def translate_datatypes(datatype):
     datatypes = {
         'byte': 1,
         'uint16': 2,
@@ -225,7 +227,7 @@ def translateDataTypes(datatype):
         return 6
 
 
-def numpyToGdalDatatypes(datatype):
+def numpy_to_gdal_datatype(datatype):
     datatypes = {
         'int8': gdal.GDT_Int16,
         'int16': gdal.GDT_Int16,
@@ -246,7 +248,7 @@ def numpyToGdalDatatypes(datatype):
         return gdal.GDT_Float32
 
 
-def gdalToNumpyDatatypes(datatype):
+def gdal_to_numpy_datatype(datatype):
     datatypes = {
         3: 'int8',
         3: 'int16',
@@ -267,7 +269,7 @@ def gdalToNumpyDatatypes(datatype):
         return 'float64'
 
 
-def datatypeIsFloat(datatype):
+def datatype_is_float(datatype):
     floats = [6, 7, 10, 11]
     if datatype in floats:
         return True
@@ -276,7 +278,7 @@ def datatypeIsFloat(datatype):
 
 
 # Turns zscores
-def __cScale(zscore, sqrt=True, root=math.pi):
+def __scale_zscores(zscore, sqrt=False, root=math.pi):
     cdf = 1 - abs((norm.cdf(zscore) - 0.5) / 0.5)
     if sqrt is True:
         return math.pow(cdf, 1 / root)
@@ -284,8 +286,8 @@ def __cScale(zscore, sqrt=True, root=math.pi):
         return cdf
 
 
-_cScale = np.vectorize(__cScale)
+_scale_zscores = np.vectorize(__scale_zscores)
 
 
-def cScale(arr_of_zscores, sqrt=True, root=math.pi):
-    return _cScale(arr_of_zscores, sqrt=sqrt, root=math.pi)
+def scale_zscores(arr_of_zscores, sqrt=False, root=math.pi):
+    return _scale_zscores(arr_of_zscores, sqrt=sqrt, root=math.pi)

@@ -1,13 +1,13 @@
-from osgeo import gdal
 import numpy as np
 import numpy.ma as ma
-from clip_raster import clipRaster
-from utils import numpyfill_values
+from osgeo import gdal
+from clip_raster import clip_raster
+from utils import numpy_fill_values
 
 
-def rasterToArray(in_raster, reference_raster=None, cutline=None, cutline_all_touch=False,
-                  crop_to_cutline=True, compressed=False, band_to_clip=1, src_nodata=None,
-                  filled=False, fill_value=None, quiet=False, calc_band_stats=True, align=True):
+def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_touch=False,
+                    crop_to_cutline=True, compressed=False, band_to_clip=1, src_nodata=None,
+                    filled=False, fill_value=None, quiet=False, calc_band_stats=True, align=True):
     ''' Turns a raster into an Numpy Array in memory. Only
         supports for one band to be turned in to an array.
 
@@ -62,9 +62,6 @@ def rasterToArray(in_raster, reference_raster=None, cutline=None, cutline_all_to
     if not isinstance(band_to_clip, int):
         raise AttributeError("band_to_clip must be provided and it must be an integer")
 
-    # if outRaster is None:
-    #     outRaster = 'ignored'
-
     # If there is no reference_raster or Cutline defined it is
     # not necesarry to clip the raster.
     if reference_raster is None and cutline is None:
@@ -77,7 +74,7 @@ def rasterToArray(in_raster, reference_raster=None, cutline=None, cutline_all_to
             raise AttributeError(f"Unable to parse the input raster: {in_raster}")
 
     else:
-        readiedRaster = clipRaster(
+        readiedRaster = clip_raster(
             in_raster,
             reference_raster=reference_raster,
             cutline=cutline,
@@ -106,7 +103,7 @@ def rasterToArray(in_raster, reference_raster=None, cutline=None, cutline_all_to
     if fill_value is not None:
         ma.set_fill_value(data, fill_value)
     else:
-        ma.set_fill_value(data, numpyfill_values(rasterAsArray.dtype))
+        ma.set_fill_value(data, numpy_fill_values(rasterAsArray.dtype))
 
     # Free memory
     rasterAsArray = None

@@ -1,13 +1,13 @@
-from osgeo import gdal, osr
+import os
 import numpy as np
 import numpy.ma as ma
-import os
-from utils import datatype_is_float, numpy_to_gdal_datatypes, progress_callback, progress_callback_quiet
+from osgeo import gdal, osr
+import utils
 
 
-def arrayToRaster(array, out_raster=None, reference_raster=None, output_format='MEM',
-                  top_left=None, pixel_size=None, projection=None, calc_band_stats=True,
-                  src_nodata=None, resample=False, quiet=False):
+def array_to_raster(array, out_raster=None, reference_raster=None, output_format='MEM',
+                    top_left=None, pixel_size=None, projection=None, calc_band_stats=True,
+                    src_nodata=None, resample=False, quiet=False):
     ''' Turns a numpy array into a gdal dataframe or exported
         as a raster. If no reference is specified, the following
         must be provided: topLeft coordinates, pixelSize such as:
@@ -81,7 +81,7 @@ def arrayToRaster(array, out_raster=None, reference_raster=None, output_format='
         pixel_size is None or
         projection is None
     ):
-        raise AttributeError("If no reference_raster is provided. top_left, pixel_size, projection and raster_size are all required.")
+        raise AttributeError("If no reference_raster is provided. top_left, pixel_size and projection are all required.")
 
     if reference_raster is not None and (
         top_left is not None or
@@ -97,12 +97,12 @@ def arrayToRaster(array, out_raster=None, reference_raster=None, output_format='
     # The data that will be written to the raster
     # If the data is not a numpy array, make it.
     data = array if isinstance(array, np.ndarray) else np.array(array)
-    datatype = numpy_to_gdal_datatypes(data.dtype)
+    datatype = utils.numpy_to_gdal_datatype(data.dtype)
 
     if data.ndim != 2:
-        raise AttributeError("The input raster must be 2-dimensional")
+        raise AttributeError("The input is not a raster or the input raster is not 2-dimensional")
 
-    reference = {} if reference_raster is not None else None
+    reference = {}
 
     # Gather reference information
     if reference_raster is not None:
@@ -162,7 +162,7 @@ def arrayToRaster(array, out_raster=None, reference_raster=None, output_format='
     # If the output is not memory, set compression options.
     options = []
     if output_format != 'MEM':
-        if datatype_is_float(datatype) is True:
+        if utils.datatype_is_float(datatype) is True:
             predictor = 3  # Float predictor
         else:
             predictor = 2  # Integer predictor
@@ -222,10 +222,10 @@ def arrayToRaster(array, out_raster=None, reference_raster=None, output_format='
         resampled_destination['dataframe'].SetGeoTransform(reference['transform'])
         resampled_destination['dataframe'].SetGeoTransform(reference['projection'])
 
-        progressbar = progress_callback_quiet
+        progressbar = utils.progress_callback_quiet
         if quiet is False:
             print(f"Warping input array:")
-            progressbar = progress_callback
+            progressbar = utils.progress_callback
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
 
@@ -265,7 +265,7 @@ def arrayToRaster(array, out_raster=None, reference_raster=None, output_format='
             resampled_destination = None
             return os.path.abspath(out_raster)
         else:
-            return resampled_destination
+            return resampled_destination['dataframe']
 
     if calc_band_stats is True:
         destination['bands'][0].GetStatistics(0, 1)
@@ -274,8 +274,8 @@ def arrayToRaster(array, out_raster=None, reference_raster=None, output_format='
 
     # Return the destination raster
     if output_format != 'MEM':
-        destination.FlushCache()
+        destination['dataframe'].FlushCache()
         destination = None
         return os.path.abspath(out_raster)
     else:
-        return destination
+        return destination['dataframe']

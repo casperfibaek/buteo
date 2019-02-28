@@ -1,22 +1,20 @@
+import os
+import uuid
+import shutil
 import numpy as np
-from raster_to_array import rasterToArray
-from array_to_raster import arrayToRaster
-from mask_raster import mask_raster as mask_raster_func
+from raster_to_array import raster_to_array
+from array_to_raster import array_to_raster
 from resample import resample
 from orfeo_toolbox import pansharpen
-import time
-import shutil
-import uuid
-import subprocess
-import os
+from mask_raster import mask_raster as mask_raster_func
 
 
-def super_sample_red_edge(B4, B8, B5=None, B6=None, B7=None, B8A=None,
-                          out_folder='../raster/', mask_raster=None, prefix='', suffix=''):
+def super_sample_s2(B4, B8, B5=None, B6=None, B7=None, B8A=None,
+                    out_folder='../raster/', mask_raster=None, prefix='', suffix=''):
     # Create temp folder
     temp_folder_name = os.path.join('../temp/', uuid.uuid4().hex)
-    os.makedirs(temp_folder_name)
     temp_folder_path = os.path.abspath(temp_folder_name)
+    os.makedirs(temp_folder_name)
 
     # Wrap all in a try catch to ensure deletion of the temp folder
     try:
@@ -62,13 +60,13 @@ def super_sample_red_edge(B4, B8, B5=None, B6=None, B7=None, B8A=None,
         }
 
         # Radiance p. nm in the bands
-        B4_arr = np.divide(rasterToArray(B4), S2_meta['B04']['width'])
-        B8_arr = np.divide(rasterToArray(B8), S2_meta['B08']['width'])
+        B4_arr = np.divide(raster_to_array(B4), S2_meta['B04']['width'])
+        B8_arr = np.divide(raster_to_array(B8), S2_meta['B08']['width'])
 
         band_arrays = {
-            'B05': np.divide(rasterToArray(B5), S2_meta['B05']['width']) if B5 is not None else False,
-            'B06': np.divide(rasterToArray(B6), S2_meta['B05']['width']) if B6 is not None else False,
-            'B07': np.divide(rasterToArray(B7), S2_meta['B07']['width']) if B7 is not None else False,
+            'B05': np.divide(raster_to_array(B5), S2_meta['B05']['width']) if B5 is not None else False,
+            'B06': np.divide(raster_to_array(B6), S2_meta['B05']['width']) if B6 is not None else False,
+            'B07': np.divide(raster_to_array(B7), S2_meta['B07']['width']) if B7 is not None else False,
         }
 
         bands_to_pansharpen = []
@@ -106,7 +104,7 @@ def super_sample_red_edge(B4, B8, B5=None, B6=None, B7=None, B8A=None,
                 (band_array.mean() / ratio.mean() * S2_meta[band]['width'])
             ).astype('uint16')
             pan_name = os.path.join(temp_folder_path, f'{band}_pan_ratio_10m.tif')
-            arrayToRaster(pan, referenceRaster=B8, outRaster=pan_name)
+            array_to_raster(pan, referenceRaster=B8, outRaster=pan_name)
 
             out_name = os.path.join(out_folder, f'{prefix}{band}{suffix}.tif')
 
@@ -114,7 +112,7 @@ def super_sample_red_edge(B4, B8, B5=None, B6=None, B7=None, B8A=None,
 
         # Special case for Band 8A as no interpolation is necessasry.
         if B8A is not None:
-            B8_arr = rasterToArray(B8A)
+            B8_arr = raster_to_array(B8A)
             resampled_name = os.path.join(temp_folder_path, 'B8A_resampled_10m.tif')
             resample(paths[band], referenceRaster=B8, outRaster=resampled_name)
 
