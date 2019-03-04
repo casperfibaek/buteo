@@ -105,7 +105,7 @@ def pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):
     return os.path.abspath(out_raster)
 
 
-def local_stats(in_raster, out_raster, options=None):
+def local_stats(in_raster, out_raster, options=None, band=None):
     ''' Computes local statistical moments on every pixel
         in the selected channel of the input image '''
 
@@ -117,11 +117,16 @@ def local_stats(in_raster, out_raster, options=None):
             'radius': 2,
         }
 
+    if band is not None:
+        band = f'&bands={band}'
+    else:
+        band = ''
+
     # Set RAM to 90% of available ram.
     if 'ram' not in options:
         options['ram'] = int((psutil.virtual_memory().available / (1024.0 * 1024.0)) * 0.9)
 
-    cli_args = [cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_raster)}?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=3&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" float']
+    cli_args = [cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_raster)}?{band}&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=3&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" float']
 
     for key, value in options.items():
         cli_args.append('-' + str(key))
@@ -138,7 +143,7 @@ def local_stats(in_raster, out_raster, options=None):
     return os.path.abspath(out_raster)
 
 
-def haralick(in_raster, out_raster, options=None, out_datatype='float'):
+def haralick(in_raster, out_raster, options=None, out_datatype='float', band=None):
     ''' Performs haralick texture extraction '''
 
     cli = os.path.join(otb_folder, 'otbcli_HaralickTextureExtraction.bat')
@@ -161,11 +166,16 @@ def haralick(in_raster, out_raster, options=None, out_datatype='float'):
     if out_datatype is None:
         out_datatype = 'float'
 
+    if band is not None:
+        band = f'&bands={band}'
+    else:
+        band = ''
+
     # Set RAM to 90% of available ram.
     if 'ram' not in options:
         options['ram'] = int((psutil.virtual_memory().available / (1024.0 * 1024.0)) * 0.9)
 
-    cli_args = [cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_raster)}?&gdal:co:COMPRESS=DEFLATE&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', out_datatype]
+    cli_args = [cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_raster)}?{band}&gdal:co:COMPRESS=DEFLATE&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', out_datatype]
 
     for key, value in options.items():
         cli_args.append('-' + str(key))
@@ -182,7 +192,7 @@ def haralick(in_raster, out_raster, options=None, out_datatype='float'):
     return os.path.abspath(out_raster)
 
 
-def dimension_reduction(in_raster, out_raster, options=None):
+def dimension_reduction(in_raster, out_raster, options=None, out_datatype=None):
     ''' Performs dimensionality reduction on input image.
         PCA,NA-PCA,MAF,ICA methods are available.
         It is also possible to compute the inverse transform
@@ -201,11 +211,14 @@ def dimension_reduction(in_raster, out_raster, options=None):
             'normalize': 'YES',
         }
 
+    if out_datatype is None:
+        out_datatype = ''
+
     # Set RAM to 90% of available ram.
     if 'ram' not in options:
         options['ram'] = int((psutil.virtual_memory().available / (1024.0 * 1024.0)) * 0.9)
 
-    cli_args = [cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_raster)}?&gdal:co:COMPRESS=DEFLATE&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"']
+    cli_args = [cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_raster)}?&gdal:co:COMPRESS=DEFLATE&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', out_datatype]
 
     for key, value in options.items():
         cli_args.append('-' + str(key))
@@ -222,7 +235,7 @@ def dimension_reduction(in_raster, out_raster, options=None):
     return os.path.abspath(out_raster)
 
 
-def concatenate_images(in_rasters, out_raster, ram=None):
+def concatenate_images(in_rasters, out_raster, ram=None, out_datatype=None):
     ''' This application performs images channels concatenation.
     It reads the input image list (single or multi-channel) and
     generates a single multi-channel image. The channel order
@@ -235,11 +248,14 @@ def concatenate_images(in_rasters, out_raster, ram=None):
         paths.append(os.path.abspath(raster))
     paths = ' '.join(paths)
 
+    if out_datatype is None:
+        out_datatype = ''
+
     # Set RAM to 90% of available ram.
     if ram is None:
         ram = int((psutil.virtual_memory().available / (1024.0 * 1024.0)) * 0.9)
 
-    cli_string = ' '.join([cli, '-il', os.path.abspath(paths), '-out', f'"{os.path.abspath(out_raster)}?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=3&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', '-ram', str(ram)])
+    cli_string = ' '.join([cli, '-il', os.path.abspath(paths), '-out', f'"{os.path.abspath(out_raster)}?&gdal:co:COMPRESS=DEFLATE&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', out_datatype, '-ram', str(ram)])
 
     ''' *******************************************************
         Make CLI request and handle responses
@@ -250,26 +266,29 @@ def concatenate_images(in_rasters, out_raster, ram=None):
     return os.path.abspath(out_raster)
 
 
-def split_images(in_raster, out_rasters, ram=None):
+def split_images(in_raster, out_rasters, ram=None, out_datatype=None):
     ''' This application splits a N-bands image into N mono-band images.
         The output images filename will be generated from the output parameter.
         Thus, if the input image has 2 channels, and the user has set as
         output parameter, outimage.tif, the generated images will be
         outimage_0.tif and outimage_1.tif. '''
 
-    cli = os.path.join(otb_folder, 'otbcli_ConcatenateImages.bat')
+    cli = os.path.join(otb_folder, 'otbcli_SplitImage.bat')
 
     # Set RAM to 90% of available ram.
     if ram is None:
         ram = int((psutil.virtual_memory().available / (1024.0 * 1024.0)) * 0.9)
 
-    cli_string = ' '.join([cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_rasters)}?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=3&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', '-ram', str(ram)])
+    if out_datatype is None:
+        out_datatype = ''
+
+    cli_string = ' '.join([cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_rasters)}?&gdal:co:COMPRESS=DEFLATE&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', out_datatype, '-ram', str(ram)])
 
     ''' *******************************************************
         Make CLI request and handle responses
     ******************************************************* '''
 
-    execute_cli_function(cli_string, name='concatenate images')
+    execute_cli_function(cli_string, name='splitting images')
 
     return out_rasters
 
@@ -287,11 +306,18 @@ def rescale(in_raster, out_raster, options=None, out_datatype='float'):
             'outmax': 1,
         }
 
+    if out_datatype == 'float':
+        predictor = 'gdal:co:PREDICTOR=3&'
+    elif out_datatype == 'uint16':
+        predictor = 'gdal:co:PREDICTOR=2&'
+    else:
+        predictor = ''
+
     # Set RAM to 90% of available ram.
     if 'ram' not in options:
         options['ram'] = int((psutil.virtual_memory().available / (1024.0 * 1024.0)) * 0.9)
 
-    cli_args = [cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_raster)}?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=3&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', out_datatype]
+    cli_args = [cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_raster)}?&gdal:co:COMPRESS=DEFLATE&{predictor}gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', out_datatype]
 
     for key, value in options.items():
         cli_args.append('-' + str(key))

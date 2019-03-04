@@ -1,6 +1,6 @@
 {
     "DEFAULT": {
-        "temp_directory": "./temp/"
+        "temp_directory": "D:\\pythonScripts\\yellow\\lib\\temp"
     },
     "Orfeo-Toolbox": {
         "path": "D:\\pythonScripts\\yellow\\OTB\\bin"

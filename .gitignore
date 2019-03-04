@@ -123,3 +123,4 @@ raster/
 __pycache__
 OTB/
 temp_
+lib/temp/

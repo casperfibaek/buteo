@@ -1,5 +1,6 @@
 import os
 import uuid
+import time
 import json
 import shutil
 import zipfile
@@ -8,7 +9,7 @@ import numpy.ma as ma
 from pprint import pprint
 from glob import glob
 from resample import resample
-from orfeo_toolbox import pansharpen
+from orfeo_toolbox import pansharpen, concatenate_images, dimension_reduction, rescale, local_stats, split_images
 from raster_to_array import raster_to_array
 from array_to_raster import array_to_raster
 
@@ -188,8 +189,9 @@ class Sentinel:
             return False
 
     def get_custom_image(self, name):
-        if name in self.data['custom']:
-            return self.data['custom'][name]
+        basename = os.path.basename(name).rsplit('.', 1)[0]
+        if basename in self.data['custom']:
+            return self.data['custom'][basename]
         else:
             return False
 
@@ -260,19 +262,18 @@ class Sentinel:
             B4 = self.get_raw_image('B04', 10)
             B8 = self.get_raw_image('B08', 10)
 
-            # Radiance p. nm in the bands
-            B4_arr = np.divide(raster_to_array(B4), self.s2_spectral_profile['B04']['width'])
-            B8_arr = np.divide(raster_to_array(B8), self.s2_spectral_profile['B08']['width'])
+            B4_arr = raster_to_array(B4)
+            B8_arr = raster_to_array(B8)
 
             if 'B8A' in bands:
                 # Test if resampled version already exists
                 band_potential_path = self.get_custom_image(f'{self.metadata["basename"]}_B8A_rs_10m')
                 band_exists = os.path.exists(band_potential_path)
-                if band_exists is True:
+                if band_potential_path is not False and band_exists is True:
                     resampled_name = band_potential_path
                 else:
                     resampled_name = os.path.join(temp_dir, f'{self.metadata["basename"]}_B8A_rs_10m.tif')
-                    resample(band_path, reference_raster=B8, out_raster=resampled_name)
+                    resample(self.get_raw_image('B8A', 20), reference_raster=B8, out_raster=resampled_name)
 
                 pansharpened_name = os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_B8A_ss_10m.tif')
 
@@ -295,15 +296,12 @@ class Sentinel:
                 B4_weight = 1 - (B4_distance / distance_sum)
                 B8_weight = 1 - (B8_distance / distance_sum)
 
-                ratio = np.multiply(np.add(
-                    np.multiply(B4_arr, B4_weight),
-                    np.multiply(B8_arr, B8_weight),
-                ), self.s2_spectral_profile[band]['width'])
+                ratio = np.add(np.multiply(B4_arr, B4_weight), np.multiply(B8_arr, B8_weight))
 
                 # Test if resampled version already exists
                 band_potential_path = self.get_custom_image(f'{self.metadata["basename"]}_{band}_rs_10m')
                 band_exists = os.path.exists(band_potential_path)
-                if band_exists is True:
+                if band_potential_path is not False and band_exists is True:
                     resampled_name = band_potential_path
                 else:
                     resampled_name = os.path.join(temp_dir, f'{self.metadata["basename"]}_{band}_rs_10m.tif')
@@ -315,9 +313,144 @@ class Sentinel:
                 pansharpened_name = os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_{band}_ss_10m.tif')
 
                 pansharpen(ratio_name, resampled_name, pansharpened_name, out_datatype='uint16')
+
+            resample(self.get_raw_image('B11', 20), reference_raster=B8, out_raster=os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_B11_ss_10m.tif'))
+            resample(self.get_raw_image('B12', 20), reference_raster=B8, out_raster=os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_B12_ss_10m.tif'))
+
+            shutil.copyfile(self.get_raw_image('B02', 10), os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_B02_ss_10m.tif'))
+            shutil.copyfile(self.get_raw_image('B03', 10), os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_B03_ss_10m.tif'))
+            shutil.copyfile(self.get_raw_image('B04', 10), os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_B04_ss_10m.tif'))
+            shutil.copyfile(self.get_raw_image('B04', 10), os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_B08_ss_10m.tif'))
         finally:
+            self.update_custom()
             shutil.rmtree(temp_dir)
+
+    def principal_components(self):
+        try:
+            temp_dir = self._make_temp_dir()
+            vis = [
+                self.get_custom_image(f'{self.metadata["basename"]}_B02_ss_10m'),
+                self.get_custom_image(f'{self.metadata["basename"]}_B03_ss_10m'),
+                self.get_custom_image(f'{self.metadata["basename"]}_B04_ss_10m'),
+                self.get_custom_image(f'{self.metadata["basename"]}_B08_ss_10m'),
+            ]
+
+            nir = [
+                self.get_custom_image(f'{self.metadata["basename"]}_B05_ss_10m'),
+                self.get_custom_image(f'{self.metadata["basename"]}_B06_ss_10m'),
+                self.get_custom_image(f'{self.metadata["basename"]}_B07_ss_10m'),
+                self.get_custom_image(f'{self.metadata["basename"]}_B08_ss_10m'),
+                self.get_custom_image(f'{self.metadata["basename"]}_B8A_ss_10m'),
+            ]
+
+            swir = [
+                self.get_custom_image(f'{self.metadata["basename"]}_B11_ss_10m'),
+                self.get_custom_image(f'{self.metadata["basename"]}_B12_ss_10m'),
+            ]
+
+            vis_path = concatenate_images(vis, os.path.join(temp_dir, f'{self.metadata["basename"]}_vis_ss_10m.tif'), out_datatype='uint16')
+            nir_path = concatenate_images(nir, os.path.join(temp_dir, f'{self.metadata["basename"]}_nir_ss_10m.tif'), out_datatype='uint16')
+            swir_path = concatenate_images(swir, os.path.join(temp_dir, f'{self.metadata["basename"]}_swir_ss_10m.tif'), out_datatype='uint16')
+
+            vis_pca = dimension_reduction(vis_path, os.path.join(temp_dir, f'{self.metadata["basename"]}_vis_pca_us_10m.tif'))
+            nir_pca = dimension_reduction(nir_path, os.path.join(temp_dir, f'{self.metadata["basename"]}_nir_pca_us_10m.tif'))
+            swir_pca = dimension_reduction(swir_path, os.path.join(temp_dir, f'{self.metadata["basename"]}_swir_pca_us_10m.tif'))
+
+            rescale(vis_pca, os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_vis_pca_10m.tif'), options={
+                'outmin': 0,
+                'outmax': 65535,
+            }, out_datatype='uint16')
+
+            rescale(nir_pca, os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_nir_pca_10m.tif'), options={
+                'outmin': 0,
+                'outmax': 65535,
+            }, out_datatype='uint16')
+
+            rescale(swir_pca, os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_swir_pca_10m.tif'), options={
+                'outmin': 0,
+                'outmax': 65535,
+            }, out_datatype='uint16')
+
+        finally:
+            self.update_custom()
+            shutil.rmtree(temp_dir)
+
+    def texture_variance(self):
+        before = time.time()
+        try:
+            temp_dir = self._make_temp_dir()
+
+            vis = self.get_custom_image(f'{self.metadata["basename"]}_vis_pca_10m')
+            nir = self.get_custom_image(f'{self.metadata["basename"]}_nir_pca_10m')
+            swir = self.get_custom_image(f'{self.metadata["basename"]}_swir_pca_10m')
+
+            # vis_stats_3 = local_stats(vis, os.path.join(temp_dir, f'{self.metadata["basename"]}_vis_pca_stats_rad3_10m.tif'), options={'radius': 3}, band=2)
+            # vis_stats_2 = local_stats(vis, os.path.join(temp_dir, f'{self.metadata["basename"]}_vis_pca_stats_rad2_10m.tif'), options={'radius': 2}, band=2)
+            # vis_stats_1 = local_stats(vis, os.path.join(temp_dir, f'{self.metadata["basename"]}_vis_pca_stats_rad1_10m.tif'), options={'radius': 1}, band=2)
+
+            # vis3_variance_arr = raster_to_array(os.path.join(temp_dir, f'{self.metadata["basename"]}_vis_pca_stats_rad3_10m.tif'))
+            # vis2_variance_arr = raster_to_array(os.path.join(temp_dir, f'{self.metadata["basename"]}_vis_pca_stats_rad2_10m.tif'))
+            # vis1_variance_arr = raster_to_array(os.path.join(temp_dir, f'{self.metadata["basename"]}_vis_pca_stats_rad1_10m.tif'))
+
+            # with np.errstate(divide='ignore', invalid='ignore'):
+            #     vis_mean_variance = np.true_divide(
+            #         np.add(
+            #             np.sqrt(vis3_variance_arr),
+            #             np.sqrt(vis2_variance_arr),
+            #             np.sqrt(vis1_variance_arr),
+            #         ), 3)
+            # array_to_raster(vis_mean_variance, reference_raster=vis, out_raster=os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_vis_pca_var_texture_10m.tif'))
+
+            # nir_stats_3 = local_stats(nir, os.path.join(temp_dir, f'{self.metadata["basename"]}_nir_pca_stats_rad3_10m.tif'), options={'radius': 3}, band=2)
+            # nir_stats_2 = local_stats(nir, os.path.join(temp_dir, f'{self.metadata["basename"]}_nir_pca_stats_rad2_10m.tif'), options={'radius': 2}, band=2)
+            # nir_stats_1 = local_stats(nir, os.path.join(temp_dir, f'{self.metadata["basename"]}_nir_pca_stats_rad1_10m.tif'), options={'radius': 1}, band=2)
+
+            # nir3_variance_arr = raster_to_array(os.path.join(temp_dir, f'{self.metadata["basename"]}_nir_pca_stats_rad3_10m.tif'))
+            # nir2_variance_arr = raster_to_array(os.path.join(temp_dir, f'{self.metadata["basename"]}_nir_pca_stats_rad2_10m.tif'))
+            # nir1_variance_arr = raster_to_array(os.path.join(temp_dir, f'{self.metadata["basename"]}_nir_pca_stats_rad1_10m.tif'))
+
+            # with np.errstate(divide='ignore', invalid='ignore'):
+            #     nir_mean_variance = np.true_divide(
+            #         np.add(
+            #             np.sqrt(nir3_variance_arr),
+            #             np.sqrt(nir2_variance_arr),
+            #             np.sqrt(nir1_variance_arr),
+            #         ), 3)
+            # array_to_raster(nir_mean_variance, reference_raster=nir, out_raster=os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_nir_pca_var_texture_10m.tif'))
+
+            swir_arr = raster_to_array(swir).astype('uint32')
+            swir_rast = array_to_raster(swir_arr, reference_raster=swir, out_raster=os.path.join(temp_dir, f'{self.metadata["basename"]}_swir_pca_uint32_10m.tif'))
+            swir_stats_3 = local_stats(swir_rast, os.path.join(temp_dir, f'{self.metadata["basename"]}_swir_pca_uint32_stats_10m.tif'), options={'radius': 3}, band=2)
+            # swir_stats_2 = local_stats(swir, os.path.join(temp_dir, f'{self.metadata["basename"]}_swir_pca_stats_rad2_10m.tif'), options={'radius': 2}, band=2)
+            # swir_stats_1 = local_stats(swir, os.path.join(temp_dir, f'{self.metadata["basename"]}_swir_pca_stats_rad1_10m.tif'), options={'radius': 1}, band=2)
+
+            swir3_variance_arr = raster_to_array(os.path.join(temp_dir, swir_stats_3))
+            # swir2_variance_arr = raster_to_array(os.path.join(temp_dir, swir_stats_2))
+            # swir1_variance_arr = raster_to_array(os.path.join(temp_dir, swir_stats_1))
+            array_to_raster(swir3_variance_arr, reference_raster=swir, out_raster=os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_swir_pca_var_texture_10m_rad3.tif'))
+
+            # with np.errstate(divide='ignore', invalid='ignore'):
+            #     swir_mean_sqrt3 = np.sqrt(swir3_variance_arr)
+            #     swir_mean_sqrt2 = np.sqrt(swir2_variance_arr)
+            #     swir_mean_sqrt1 = np.sqrt(swir1_variance_arr)
+            #     swir_mean_sqrt_sum = np.add(swir_mean_sqrt3, swir_mean_sqrt2)
+            #     swir_mean_sqrt_sum = np.add(swir_mean_sqrt_sum, swir_mean_sqrt1)
+
+            # swir_mean_variance = np.true_divide(swir_mean_sqrt_sum, 3).astype('float32')
+
+            # swir_mean_variance = np.true_divide(
+            #     np.add(
+            #         np.sqrt(swir3_variance_arr),
+            #         np.sqrt(swir2_variance_arr),
+            #         np.sqrt(swir1_variance_arr),
+            #     ), 3).astype('float32')
+            # array_to_raster(swir_mean_variance, reference_raster=swir, out_raster=os.path.join(self.folders['custom'], f'{self.metadata["basename"]}_swir_pca_var_texture_10m.tif'))
+
+        finally:
+            self.update_custom()
+            shutil.rmtree(temp_dir)
+            print(f'execution took: {round(time.time() - before, 2)}s')
 
 if __name__ == "__main__":
     bob = Sentinel('D:\\pythonScripts\\yellow\\raster\\S2A_MSIL2A_20180727T104021_N0208_R008_T32VNJ_20180727T134459.SAFE')
-    bob.super_sample_bands()
+    bob.texture_variance()

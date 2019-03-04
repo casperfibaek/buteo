@@ -10,10 +10,6 @@ from raster_to_array import raster_to_array
 from clip_raster import clip_raster
 from orfeo_toolbox import local_stats, haralick, concatenate_images, dimension_reduction, rescale
 
-raster_10m = './T32VNJ_20180727T104021_B04_10m.jp2'
-b5 = './T32VNJ_20180727T104021_B05_ss_10m.tif'
-b6 = './T32VNJ_20180727T104021_B06_ss_10m.tif'
-b7 = './T32VNJ_20180727T104021_B07_ss_10m.tif'
 raster_100m = './raster_100m.tif'
 raster_200m = './raster_200m.tif'
 geom_roses = './roses.geojson'
@@ -62,14 +58,4 @@ class Test_suite(unittest.TestCase):
         raster = clip_raster(raster_100m, cutline=geom_aalborg, quiet=True)
         self.assertEqual(isinstance(raster, gdal.Dataset), True, "Should be a GDAL dataframe")
 
-# unittest.main()
-
-red_edge = concatenate_images([b5, b6, b7], './red_edge.tif')
-pca = dimension_reduction(red_edge, './red_edge_PCA_ica.tif', options={
-    'method': 'ica',
-    'rescale.outmin': 0,
-    'rescale.outmax': 1,
-    'nbcomp': 1,
-    'normalize': 'YES',
-})
-rescale(pca, './red_edge_PCA_scaled_ica.tif')
+unittest.main()
