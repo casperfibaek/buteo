@@ -50,9 +50,9 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
         align (Bool): Align the output pixels with the pixels
         in the input.
 
-        outputFormat (String): Output of calculation. MEM is
+        output_format (String): Output of calculation. MEM is
         default, if outRaster is specified but MEM is selected,
-        GTiff is used as outputformat.
+        GTiff is used as output_format.
 
     Returns:
         Returns a numpy masked array with the raster data.
@@ -84,7 +84,7 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
             quiet=quiet,
             align=align,
             band_to_clip=band_to_clip,
-            outputFormat='MEM',
+            output_format='MEM',
             calc_band_stats=calc_band_stats,
         )
 

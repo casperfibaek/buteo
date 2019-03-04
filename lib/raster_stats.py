@@ -3,9 +3,9 @@ from scipy.stats import stats
 from raster_to_array import raster_to_array
 
 
-def rasterStats(in_raster, cutline=None, cutline_all_touch=True,
-                reference_raster=None, src_nodata=None, quiet=False,
-                band_to_clip=1, statistics=['mean', 'median', 'std']):
+def raster_stats(in_raster, cutline=None, cutline_all_touch=True,
+                 reference_raster=None, src_nodata=None, quiet=False,
+                 band_to_clip=1, statistics=['mean', 'median', 'std']):
     ''' Calculates the statistics of a raster layer. A refererence
     raster or a cutline geometry can be provided to narrow down the
     features for which the statistics are calculated.
@@ -54,7 +54,7 @@ def rasterStats(in_raster, cutline=None, cutline_all_touch=True,
         src_nodata=src_nodata,
         band_to_clip=band_to_clip,
         quiet=quiet,
-        calcBandStats=False,
+        calc_band_stats=False,
     )
 
     # If all types of statistics are requested insert all possible statistics
