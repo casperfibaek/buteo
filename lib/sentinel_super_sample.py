@@ -90,7 +90,7 @@ def super_sample_s2(B4, B8, B5=None, B6=None, B7=None, B8A=None,
             )
 
             resampled_name = os.path.join(temp_folder_path, f'{band}_resampled_10m.tif')
-            resample(paths[band], referenceRaster=B8, outRaster=resampled_name)
+            resample(paths[band], reference_raster=B8, out_raster=resampled_name)
 
             if mask_raster is not None:
                 resampled_name_masked = os.path.join(temp_folder_path, f'{band}_resampled_masked_10m.tif')
@@ -104,7 +104,7 @@ def super_sample_s2(B4, B8, B5=None, B6=None, B7=None, B8A=None,
                 (band_array.mean() / ratio.mean() * S2_meta[band]['width'])
             ).astype('uint16')
             pan_name = os.path.join(temp_folder_path, f'{band}_pan_ratio_10m.tif')
-            array_to_raster(pan, referenceRaster=B8, outRaster=pan_name)
+            array_to_raster(pan, reference_raster=B8, out_raster=pan_name)
 
             out_name = os.path.join(out_folder, f'{prefix}{band}{suffix}.tif')
 
@@ -114,7 +114,7 @@ def super_sample_s2(B4, B8, B5=None, B6=None, B7=None, B8A=None,
         if B8A is not None:
             B8_arr = raster_to_array(B8A)
             resampled_name = os.path.join(temp_folder_path, 'B8A_resampled_10m.tif')
-            resample(paths[band], referenceRaster=B8, outRaster=resampled_name)
+            resample(paths[band], reference_raster=B8, out_raster=resampled_name)
 
             if mask_raster is not None:
                 resampled_name_masked = os.path.join(temp_folder_path, 'B8A_resampled_masked_10m.tif')

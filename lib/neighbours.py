@@ -7,10 +7,6 @@ from numba import jit, cuda
 
 before = time.time()
 
-b8 = 'D:\\pythonScripts\\yellow\\raster\\T32VNJ_20180727T104021_vis_pca_10m.tif'
-b8_arr = raster_to_array(b8)
-
-
 @numba.jit(nopython=True, parallel=True, fastmath=True)
 def rolling_window(arr, shape):
     d2x = arr.shape[0] - shape[0] + 1
@@ -60,13 +56,17 @@ def local_statistics(raster, radius=1):
     raster_arr = raster_to_array(raster)
     return _local_statistics(raster_arr, radius)
 
+b8 = 'D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\data\\SAR\\VV_backscatter.tif'
+b8_arr = raster_to_array(b8)
+
+rad4 = local_statistics(b8, radius=4)
 rad3 = local_statistics(b8, radius=3)
 rad2 = local_statistics(b8, radius=2)
 rad1 = local_statistics(b8, radius=1)
 
-avg_std = np.divide(np.add(np.add(rad3, rad2), rad1), 3)
-
-array_to_raster(avg_std.astype('float32'), reference_raster=b8, out_raster='D:\\pythonScripts\\yellow\\raster\\T32VNJ_20180727T104021_vis_pca_10m_tex.tif')
+avg_std = np.divide(np.add(np.add(np.add(rad4, rad3), rad2), rad1), 4)
+array_to_raster(avg_std.astype('float32'), reference_raster=b8, out_raster='D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\data\\VV_std_9x9.tif')
+# array_to_raster(rad4.astype('float32'), reference_raster=b8, out_raster='D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\data\\R10m_B08_std_9x9_v2.tif')
 
 
 print(f'execution took: {round(time.time() - before, 2)}s')
