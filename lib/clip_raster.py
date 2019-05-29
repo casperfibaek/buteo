@@ -6,7 +6,7 @@ import utils
 
 
 def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
-                cutline_all_touch=False, crop_to_cutline=True, src_nodata=None,
+                cutline_all_touch=False, crop_to_cutline=True, cutlineWhere=None, src_nodata=None,
                 dst_nodata=None, quiet=False, align=True, band_to_clip=None,
                 calc_band_stats=True, output_format='MEM'):
     ''' Clips a raster by either a reference raster, a cutline
@@ -69,7 +69,10 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         raise AttributeError("Either a reference raster or a cutline must be provided.")
 
     # Read the supplied raster
-    inputDataframe = gdal.Open(in_raster)
+    if isinstance(in_raster, gdal.Dataset):
+        inputDataframe = in_raster
+    else:
+        inputDataframe = gdal.Open(in_raster)
 
     # Throw error if GDAL cannot open the raster
     if inputDataframe is None:
@@ -103,9 +106,10 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         dst_nodata = utils.translate_max_values(inputBand.DataType)
     if cutline is not None and inputNodataValue is None:
         inputNodataValue = utils.translate_max_values(inputBand.DataType)
-        for i in range(inputBandCount):
-            _inputBand = inputDataframe.GetRasterBand(i + 1)
-            _inputBand.SetNoDataValue(inputNodataValue)
+        # TODO: FIX
+        # for i in range(inputBandCount):
+        #     _inputBand = inputDataframe.GetRasterBand(i + 1)
+        #     _inputBand.SetNoDataValue(inputNodataValue)
 
     ''' GDAL throws a warning whenever warpOptions are based to a function
         that has the 'MEM' format. However, it is necessary to do so because
@@ -126,7 +130,10 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
     if cutline is not None:
         # Test the cutline. This adds a tiny overhead, but is usefull to ensure
         # that the error messages are easy to understand.
-        cutlineGeometry = ogr.Open(cutline)
+        if isinstance(cutline, ogr.DataSource):
+            cutlineGeometry = cutline
+        else:
+            cutlineGeometry = ogr.Open(cutline)
 
         # Check if cutline was read properly.
         if cutlineGeometry == 0:         # GDAL returns 0 for warnings.
@@ -137,6 +144,9 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         # Check whether it is a polygon or multipolygon
         layer = cutlineGeometry.GetLayer()
         vectorProjection = layer.GetSpatialRef()
+        vectorProjectionOSR = osr.SpatialReference()
+        vectorProjectionOSR.ImportFromWkt(str(vectorProjection))
+
         feat = layer.GetNextFeature()
         geom = feat.GetGeometryRef()
         geomType = geom.GetGeometryName()
@@ -145,20 +155,20 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         if geomType not in acceptedTypes:
             raise RuntimeError("Only polygons or multipolygons are support as cutlines.") from None
 
-        rasterProjection = osr.SpatialReference(inputProjection)
+        rasterProjectionOSR = osr.SpatialReference(inputProjection)
 
         # OGR has extents in different order than GDAL! minX minY maxX maxY
         vectorExtent = layer.GetExtent()
         vectorExtent = (vectorExtent[0], vectorExtent[2], vectorExtent[1], vectorExtent[3])
 
-        if vectorProjection.ExportToProj4() != rasterProjection.ExportToProj4():
+        if not vectorProjectionOSR.IsSame(rasterProjectionOSR):
             bottomLeft = ogr.Geometry(ogr.wkbPoint)
             topRight = ogr.Geometry(ogr.wkbPoint)
 
             bottomLeft.AddPoint(vectorExtent[0], vectorExtent[1])
             topRight.AddPoint(vectorExtent[2], vectorExtent[3])
 
-            coordinateTransform = osr.CoordinateTransformation(vectorProjection, rasterProjection)
+            coordinateTransform = osr.CoordinateTransformation(vectorProjection, inputProjection)
             bottomLeft.Transform(coordinateTransform)
             topRight.Transform(coordinateTransform)
 
@@ -198,7 +208,11 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
 
     if reference_raster is not None:
         # Read the reference raster
-        referenceDataframe = gdal.Open(reference_raster)
+
+        if isinstance(reference_raster, gdal.Dataset):
+            referenceDataframe = reference_raster
+        else:
+            referenceDataframe = gdal.Open(reference_raster)
 
         # Throw error if GDAL cannot open the raster
         if referenceDataframe is None:
@@ -207,9 +221,11 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         # Read the attributes of the referenceDataframe
         referenceTransform = referenceDataframe.GetGeoTransform()
         referenceProjection = referenceDataframe.GetProjection()
+        referenceProjectionOSR = osr.SpatialReference()
+        referenceProjectionOSR.ImportFromWkt(str(referenceProjection))
 
         # If the projections are the same there is no need to reproject.
-        if osr.SpatialReference(inputProjection).ExportToProj4() == osr.SpatialReference(referenceProjection).ExportToProj4():
+        if inputProjection.IsSame(referenceProjectionOSR):
             referenceExtent = utils.get_extent(referenceDataframe)
         else:
             progressbar = utils.progress_callback_quiet
@@ -240,6 +256,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
 
         # Calculate the bounding boxes and test intersection
         referenceIntersection = utils.get_intersection(inputExtent, referenceExtent)
+        referenceExtent = None
 
         # If they dont intersect, throw error
         if referenceIntersection is False:
@@ -247,6 +264,8 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
 
         # Calculates the GeoTransform and rastersize from an extent and a geotransform
         referenceClipTransform = utils.create_geotransform(inputTransform, referenceIntersection)
+
+        referenceIntersection = None
 
         # Create the raster to serve as the destination for the warp
         destinationDataframe = driver.Create(
@@ -265,6 +284,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
                 destinationBand = destinationDataframe.GetRasterBand(i + 1)
                 destinationBand.SetNoDataValue(dst_nodata)
                 destinationBand.FlushCache()
+                destinationBand = None
 
         progressbar = utils.progress_callback_quiet
         if quiet is False:
@@ -299,6 +319,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
                     dstNodata=dst_nodata,
                     callback=progressbar,
                     cutlineDSName=cutline,
+                    cutlineWhere=cutlineWhere,
                     warpOptions=options,
                 )
         except:
@@ -331,6 +352,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
                 destinationBand = destinationDataframe.GetRasterBand(i + 1)
                 destinationBand.SetNoDataValue(dst_nodata)
                 destinationBand.FlushCache()
+                destinationBand = None
 
         progressbar = utils.progress_callback_quiet
         if quiet is False:
@@ -350,6 +372,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
                 callback=progressbar,
                 cutlineDSName=cutline,
                 cropToCutline=crop_to_cutline,
+                cutlineWhere=cutlineWhere,
                 warpOptions=options,
             )
         except:
@@ -365,9 +388,19 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
     gdal.PopErrorHandler()
 
     # Close datasets again to free memory.
+
     inputDataframe = None
     referenceDataframe = None
+    destinationName = None
+    cutlineGeometry = None
+    layer = None
+    in_raster = None
+    reference_raster = None
     reprojectedReferenceDataframe = None
+    inputBand = None
+    origin = None
+    driver = None
+    _inputBand = None
 
     if calc_band_stats is True:
         for i in range(outputBandCount):

@@ -5,7 +5,7 @@ from clip_raster import clip_raster
 from utils import numpy_fill_values
 
 
-def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_touch=False,
+def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_touch=False, cutlineWhere=None,
                     crop_to_cutline=True, compressed=False, band_to_clip=1, src_nodata=None,
                     filled=False, fill_value=None, quiet=False, calc_band_stats=True, align=True):
     ''' Turns a raster into an Numpy Array in memory. Only
@@ -79,6 +79,7 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
             reference_raster=reference_raster,
             cutline=cutline,
             cutline_all_touch=cutline_all_touch,
+            cutlineWhere=None,
             crop_to_cutline=crop_to_cutline,
             src_nodata=src_nodata,
             quiet=quiet,

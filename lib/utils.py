@@ -79,6 +79,48 @@ def create_geotransform(geo_transform, extent):
     }
 
 
+def divide_steps(total, step):
+    steps = []
+    remainder = total % step
+    divided = int(total / step)
+    for cpu in range(step):
+        if remainder > 0:
+            steps.append(divided + 1)
+            remainder -= 1
+        else:
+            steps.append(divided)
+
+    return steps
+
+
+def step_ranges(steps):
+    start_stop = []
+    last = 0
+    for step in steps:
+        start_stop.append({
+            "start": last + 1,
+            "stop": last + step,
+        })
+        last += step
+    return start_stop
+
+
+def bbox_to_pixel_offsets(gt, bbox):
+    originX = gt[0]
+    originY = gt[3]
+    pixel_width = gt[1]
+    pixel_height = gt[5]
+    x1 = int((bbox[0] - originX) / pixel_width)
+    x2 = int((bbox[1] - originX) / pixel_width) + 1
+
+    y1 = int((bbox[3] - originY) / pixel_height)
+    y2 = int((bbox[2] - originY) / pixel_height) + 1
+
+    xsize = x2 - x1
+    ysize = y2 - y1
+    return (x1, y1, xsize, ysize)
+
+
 def create_subset_dataframe(dataframe, band=1):
         # Create a GDAL driver to create dataframes in the right output_format
         driver = gdal.GetDriverByName('MEM')

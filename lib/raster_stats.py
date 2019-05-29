@@ -1,10 +1,8 @@
 import numpy as np
-from numba import jit
 from scipy.stats import stats
 from raster_to_array import raster_to_array
 
 
-@jit(nopython=True, parallel=True, fastmath=True)
 def calc_stats(data, statistics):
     holder = {}
 
@@ -114,10 +112,11 @@ def calc_stats(data, statistics):
             limit = holder['count'] - len(data[(data > lowerbound) & (data < higherbound)])
 
             holder['within3std_mad'] = 100 - ((limit / holder['count']) * 100)
-    
+
     return holder
 
-def raster_stats(in_raster, cutline=None, cutline_all_touch=True,
+
+def raster_stats(in_raster, cutline=None, cutline_all_touch=True, cutlineWhere=None,
                  reference_raster=None, src_nodata=None, quiet=False,
                  band_to_clip=1, statistics=['mean', 'median', 'std']):
     ''' Calculates the statistics of a raster layer. A refererence
@@ -164,6 +163,7 @@ def raster_stats(in_raster, cutline=None, cutline_all_touch=True,
         reference_raster=reference_raster,
         cutline=cutline,
         cutline_all_touch=cutline_all_touch,
+        cutlineWhere=None,
         compressed=True,
         src_nodata=src_nodata,
         band_to_clip=band_to_clip,
@@ -174,9 +174,13 @@ def raster_stats(in_raster, cutline=None, cutline_all_touch=True,
     # If all types of statistics are requested insert all possible statistics
     # below. BEWARE: Slow..
     if statistics == 'all':
-        return calc_stats(['min', 'max', 'count', 'range', 'mean', 'median',
-                           'std', 'kurtosis', 'skew', 'npskew', 'skewratio',
-                           'variation', 'q1', 'q3', 'iqr', 'mad', 'madstd',
-                           'with3std', 'within3st_mad'])
+        stats = calc_stats(data, ['min', 'max', 'count', 'range', 'mean', 'median',
+                                  'std', 'kurtosis', 'skew', 'npskew', 'skewratio',
+                                  'variation', 'q1', 'q3', 'iqr', 'mad', 'madstd',
+                                  'with3std', 'within3st_mad'])
+        data = None
+        return stats
     else:
-        return calc_stats(statistics)
+        stats = calc_stats(data, statistics)
+        data = None
+        return stats
