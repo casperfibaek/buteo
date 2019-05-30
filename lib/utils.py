@@ -96,12 +96,18 @@ def divide_steps(total, step):
 def step_ranges(steps):
     start_stop = []
     last = 0
-    for step in steps:
+    for num in range(0, len(steps)):
+        step_size = steps[num]
+        id = num + 1
+
         start_stop.append({
-            "start": last + 1,
-            "stop": last + step,
+            "id": id,
+            "start": last,
+            "stop": last + step_size,
         })
-        last += step
+
+        last += step_size
+
     return start_stop
 
 

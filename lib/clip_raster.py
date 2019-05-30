@@ -388,7 +388,6 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
     gdal.PopErrorHandler()
 
     # Close datasets again to free memory.
-
     inputDataframe = None
     referenceDataframe = None
     destinationName = None
