@@ -18,13 +18,17 @@ bands = glob(f"{base}*_B*.tif")
 
 for path in bands:
     band_name = path.rsplit('\\')[-1]
-    stats = raster_stats(path, statistics=['q98', 'q02', 'min'])
+    stats = raster_stats(path, statistics=['q98', 'q02'])
     ratio = 1000 / (stats['q98'] - stats['q02'])
     band = raster_to_array(path)
-    zeroed = np.subtract(band, stats['min'])
+    zeroed = np.subtract(band, stats['q02'])
     scaled_band = np.multiply(zeroed, ratio)
     array_to_raster(scaled_band, reference_raster=path, out_raster=f"{out_folder}scaled_{band_name}")
 
 
 after = time.time()
-print((after - before) / 60)
+dif = after - before
+hours = int(dif / 3600)
+minutes = int((dif % 3600) / 60)
+seconds = "{0:.2f}".format(dif % 60)
+print(f"Normalize_bands took: {hours}h {minutes}m {seconds}s")

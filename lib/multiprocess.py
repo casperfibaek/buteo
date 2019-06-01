@@ -48,34 +48,34 @@ def runWorkers(partial_func, n_processes, jobs):
     This script is a queuing system that respects KeyboardInterrupt.
     Adapted from: https://github.com/ikreymer/cdx-index-client
     Which in turn was adapted from: http://bryceboe.com/2012/02/14/python-multiprocessing-pool-and-keyboardinterrupt-revisited/
-    
+
     Args:
         partial_func: Function to be run (established with functools.partial())
         n_processes: Number of parallel processes
         jobs: List of individual inputs for partial_func (e.g. a list of Sentinel-2 images)
-    """  
-    
+    """
+
     # Queue up all jobs
     job_queue = multiprocessing.Queue()
     counter = multiprocessing.Value('i', 0)
-    
+
     for job in jobs:
         job_queue.put(job)
-    
+
     workers = []
-    
+
     for i in range(0, n_processes):
-        
+
         tmp = multiprocessing.Process(target=_do_work, args=(job_queue, partial_func, counter))
         tmp.daemon = True
         tmp.start()
         workers.append(tmp)
 
     try:
-        
+
         for worker in workers:
             worker.join()
-            
+
     except KeyboardInterrupt:
         for worker in workers:
             print('Keyboard interrupt (ctrl-c) detected. Exiting all processes.')
@@ -87,11 +87,11 @@ def runWorkers(partial_func, n_processes, jobs):
                 process.send_signal(signal.SIGKILL)
             worker.terminate()
             worker.join()
-            
+
         raise
 
 
-def runCommand(command, verbose = False):
+def runCommand(command, verbose=False):
     """
     Function to run command line tool run a 'command' and tidily capture KeyboardInterrupt.
     Idea from: https://stackoverflow.com/questions/38487972/target-keyboardinterrupt-to-subprocess

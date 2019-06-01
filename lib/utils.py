@@ -1,6 +1,7 @@
 import os
 import sys
 import math
+import time
 import numpy as np
 from osgeo import gdal
 from scipy.stats import norm
@@ -18,6 +19,15 @@ def progress(count, total, name='Processing'):
     sys.stdout.flush()
 
     return None
+
+
+def timing(before):
+    after = time.time()
+    dif = after - before
+    hours = int(dif / 3600)
+    minutes = int((dif % 3600) / 60)
+    seconds = "{0:.2f}".format(dif % 60)
+    print(f"Processing took: {hours}h {minutes}m {seconds}s")
 
 
 def create_progress_callback(total, name):

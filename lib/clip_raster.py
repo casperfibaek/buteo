@@ -8,7 +8,7 @@ import utils
 def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
                 cutline_all_touch=False, crop_to_cutline=True, cutlineWhere=None, src_nodata=None,
                 dst_nodata=None, quiet=False, align=True, band_to_clip=None,
-                calc_band_stats=True, output_format='MEM'):
+                calc_band_stats=False, output_format='MEM'):
     ''' Clips a raster by either a reference raster, a cutline
         or both.
 
@@ -90,6 +90,9 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
     inputBandCount = inputDataframe.RasterCount  # Ensure compatability with multiband rasters
     outputBandCount = 1 if band_to_clip is not None else inputBandCount
 
+    # Create a GDAL driver to create dataframes in the right output_format
+    driver = gdal.GetDriverByName(output_format)
+
     ''' PREPARE THE NODATA VALUES '''
     # Get the nodata-values from either the raster or the function parameters
     inputNodataValue = inputBand.GetNoDataValue()
@@ -106,10 +109,6 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         dst_nodata = utils.translate_max_values(inputBand.DataType)
     if cutline is not None and inputNodataValue is None:
         inputNodataValue = utils.translate_max_values(inputBand.DataType)
-        # TODO: FIX
-        # for i in range(inputBandCount):
-        #     _inputBand = inputDataframe.GetRasterBand(i + 1)
-        #     _inputBand.SetNoDataValue(inputNodataValue)
 
     ''' GDAL throws a warning whenever warpOptions are based to a function
         that has the 'MEM' format. However, it is necessary to do so because
@@ -142,7 +141,14 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
             raise RuntimeError("It was not possible to read the cutline geometry.") from None
 
         # Check whether it is a polygon or multipolygon
-        layer = cutlineGeometry.GetLayer()
+        layer = cutlineGeometry.GetLayer(0)
+
+        # Check if layer contains features:
+        vectorFeatureCount = layer.GetFeatureCount()
+
+        if vectorFeatureCount == 0:         # GDAL returns 0 for warnings.
+            raise RuntimeError("Cutline geometry feature count is zero.") from None
+
         vectorProjection = layer.GetSpatialRef()
         vectorProjectionOSR = osr.SpatialReference()
         vectorProjectionOSR.ImportFromWkt(str(vectorProjection))
@@ -178,7 +184,9 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         vectorIntersection = utils.get_intersection(inputExtent, vectorExtent)
 
         if vectorIntersection is False:
-            raise RuntimeError("The cutline did not intersect the input raster") from None
+            if quiet is False:
+                print("The cutline did not intersect the input raster. Returning empty frame.")
+            return False
 
         # Free the memory again.
         cutlineGeometry = None
@@ -200,9 +208,6 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         else:
             predictor = 2
         creationOptions = ['COMPRESS=DEFLATE', f'PREDICTOR={predictor}', 'NUM_THREADS=ALL_CPUS']
-
-    # Create a GDAL driver to create dataframes in the right output_format
-    driver = gdal.GetDriverByName(output_format)
 
     destinationName = out_raster if out_raster is not None else 'ignored'
 
@@ -336,6 +341,11 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         # Calculates the GeoTransform and rastersize from an extent and a geotransform
         vectorClipTransform = utils.create_geotransform(inputTransform, vectorIntersection)
 
+        if vectorClipTransform['RasterXSize'] is 0 or vectorClipTransform['RasterYSize'] is 0:
+            if quiet is False:
+                print("The cutline only interesects at border. Returning empty frame.")
+            return False
+
         # Create the raster to serve as the destination for the warp
         destinationDataframe = driver.Create(
             destinationName,                        # Ignored as destination is memory.
@@ -345,6 +355,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
             inputBand.DataType,                     # Datatype of the destination
             creationOptions,                        # Compressions options for non-memory output.
         )
+
         destinationDataframe.SetGeoTransform(vectorClipTransform['Transform'])
         destinationDataframe.SetProjection(inputProjection)
         if inputNodataValue is not None:

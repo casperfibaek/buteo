@@ -89,6 +89,9 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
             calc_band_stats=calc_band_stats,
         )
 
+    if readiedRaster is False:
+        return False
+
     # Read the in_raster as an array
     rasterBand = readiedRaster.GetRasterBand(band_to_clip)
     rasterNoDataValue = rasterBand.GetNoDataValue()

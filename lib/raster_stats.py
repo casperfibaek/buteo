@@ -24,30 +24,30 @@ def calc_stats(data, statistics):
         elif statType == 'mean':
             holder['mean'] = np.mean(data)
 
-        elif statType == 'median':
-            holder['median'] = np.median(data)
+        elif statType == 'med':
+            holder['med'] = np.median(data)
 
         elif statType == 'std':
             holder['std'] = np.std(data)
 
-        elif statType == 'kurtosis':
-            holder['kurtosis'] = stats.kurtosis(data)
+        elif statType == 'kurt':
+            holder['kurt'] = stats.kurtosis(data)
 
         elif statType == 'skew':
             holder['skew'] = stats.skew(data)
 
         elif statType == 'npskew':
             holder['mean'] = np.mean(data) if holder.get('mean') is None else holder['mean']
-            holder['median'] = np.median(data) if holder.get('median') is None else holder['median']
+            holder['med'] = np.median(data) if holder.get('med') is None else holder['med']
             holder['std'] = np.std(data) if holder.get('std') is None else holder['std']
 
-            holder['npskew'] = (holder['mean'] - holder['median']) / holder['std']
+            holder['npskew'] = (holder['mean'] - holder['med']) / holder['std']
 
         elif statType == 'skewratio':
             holder['mean'] = np.mean(data) if holder.get('mean') is None else holder['mean']
-            holder['median'] = np.median(data) if holder.get('median') is None else holder['median']
+            holder['med'] = np.median(data) if holder.get('med') is None else holder['med']
 
-            holder['skewratio'] = holder['median'] / holder['mean']
+            holder['skewratio'] = holder['med'] / holder['mean']
 
         elif statType == 'variation':
             holder['variation'] = stats.variation(data)
@@ -71,15 +71,15 @@ def calc_stats(data, statistics):
             holder['iqr'] = holder['q3'] - holder['q1']
 
         elif statType == 'mad':
-            holder['median'] = np.median(data) if holder.get('median') is None else holder['median']
+            holder['med'] = np.median(data) if holder.get('med') is None else holder['med']
 
-            deviations = np.abs(np.subtract(holder['median'], data))
+            deviations = np.abs(np.subtract(holder['med'], data))
             holder['mad'] = np.median(deviations)
 
         elif statType == 'madstd':
-            holder['median'] = np.median(data) if holder.get('median') is None else holder['median']
+            holder['med'] = np.median(data) if holder.get('med') is None else holder['med']
             if holder.get('mad') is None:
-                deviations = np.abs(np.subtract(holder['median'], data))
+                deviations = np.abs(np.subtract(holder['med'], data))
                 holder['mad'] = np.median(deviations)
 
             holder['madstd'] = holder['mad'] * 1.4826
@@ -99,15 +99,15 @@ def calc_stats(data, statistics):
 
         elif statType == 'within3std_mad':
             holder['count'] = len(data) if holder.get('count') is None else holder['count']
-            holder['median'] = np.median(data) if holder.get('median') is None else holder['median']
+            holder['med'] = np.median(data) if holder.get('med') is None else holder['med']
             if holder['mad'] == 0:
-                deviations = np.abs(np.subtract(holder['median'], data))
+                deviations = np.abs(np.subtract(holder['med'], data))
                 holder['mad'] = np.median(deviations)
                 holder['madstd'] = holder['mad'] * 1.4826
 
             _std3 = holder['madstd'] * 3
-            lowerbound = holder['median'] - _std3
-            higherbound = holder['median'] + _std3
+            lowerbound = holder['med'] - _std3
+            higherbound = holder['med'] + _std3
 
             limit = holder['count'] - len(data[(data > lowerbound) & (data < higherbound)])
 
@@ -118,7 +118,7 @@ def calc_stats(data, statistics):
 
 def raster_stats(in_raster, cutline=None, cutline_all_touch=True, cutlineWhere=None,
                  reference_raster=None, src_nodata=None, quiet=False,
-                 band_to_clip=1, statistics=['mean', 'median', 'std']):
+                 band_to_clip=1, statistics=['mean', 'med', 'std']):
     ''' Calculates the statistics of a raster layer. A refererence
     raster or a cutline geometry can be provided to narrow down the
     features for which the statistics are calculated.
@@ -169,18 +169,26 @@ def raster_stats(in_raster, cutline=None, cutline_all_touch=True, cutlineWhere=N
         band_to_clip=band_to_clip,
         quiet=quiet,
         calc_band_stats=False,
+        align=False,
     )
 
     # If all types of statistics are requested insert all possible statistics
     # below. BEWARE: Slow..
     if statistics == 'all':
-        stats = calc_stats(data, ['min', 'max', 'count', 'range', 'mean', 'median',
-                                  'std', 'kurtosis', 'skew', 'npskew', 'skewratio',
-                                  'variation', 'q1', 'q3', 'iqr', 'mad', 'madstd',
-                                  'with3std', 'within3st_mad'])
+        if data is False:  # False if no intersection with Cutline.
+            stats = {el: None for el in statistics}
+        else:
+            stats = calc_stats(data, ['min', 'max', 'count', 'range', 'mean', 'med',
+                                      'std', 'kurt', 'skew', 'npskew', 'skewratio',
+                                      'variation', 'q1', 'q3', 'iqr', 'mad', 'madstd',
+                                      'with3std', 'within3st_mad'])
         data = None
         return stats
     else:
-        stats = calc_stats(data, statistics)
+        if data is False:  # False if no intersection with Cutline.
+            stats = {el: None for el in statistics}
+        else:
+            stats = calc_stats(data, statistics)
+
         data = None
         return stats
