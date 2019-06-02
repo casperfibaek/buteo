@@ -81,7 +81,7 @@ def zonal_stats(task):
 if __name__ == '__main__':
     before = time.time()
 
-    vect = 'D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\segmentation\\S2_MSI_ALL.shp'
+    vect = 'D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\training\\training_material_vector_01.shp'
     vect_key = 'DN'
     msi_base = 'D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\data\\MSI\\'
     B02 = msi_base + 'R10m_B02.tif'
@@ -102,10 +102,10 @@ if __name__ == '__main__':
     cutline_all_touch = False
 
     tasks = [
-        # {'vect_key': vect_key, 'vector_path': vect, 'raster_path': sar_vv_coh, 'prefix': 'vvc_', 'statistics': statistics, 'cutline_all_touch': False},
-        # {'vect_key': vect_key, 'vector_path': vect, 'raster_path': sar_vv_db, 'prefix': 'vvb_', 'statistics': statistics, 'cutline_all_touch': False},
-        # {'vect_key': vect_key, 'vector_path': vect, 'raster_path': sar_vh_coh, 'prefix': 'vhc_', 'statistics': statistics, 'cutline_all_touch': False},
-        # {'vect_key': vect_key, 'vector_path': vect, 'raster_path': sar_vh_db, 'prefix': 'vhb_', 'statistics': statistics, 'cutline_all_touch': False},
+        {'vect_key': vect_key, 'vector_path': vect, 'raster_path': sar_vv_coh, 'prefix': 'vvc_', 'statistics': statistics, 'cutline_all_touch': False},
+        {'vect_key': vect_key, 'vector_path': vect, 'raster_path': sar_vv_db, 'prefix': 'vvb_', 'statistics': statistics, 'cutline_all_touch': False},
+        {'vect_key': vect_key, 'vector_path': vect, 'raster_path': sar_vh_coh, 'prefix': 'vhc_', 'statistics': statistics, 'cutline_all_touch': False},
+        {'vect_key': vect_key, 'vector_path': vect, 'raster_path': sar_vh_db, 'prefix': 'vhb_', 'statistics': statistics, 'cutline_all_touch': False},
         {'vect_key': vect_key, 'vector_path': vect, 'raster_path': B02, 'prefix': 'b02_', 'statistics': statistics, 'cutline_all_touch': False},
         {'vect_key': vect_key, 'vector_path': vect, 'raster_path': B03, 'prefix': 'b03_', 'statistics': statistics, 'cutline_all_touch': False},
         {'vect_key': vect_key, 'vector_path': vect, 'raster_path': B04, 'prefix': 'b04_', 'statistics': statistics, 'cutline_all_touch': False},
@@ -118,10 +118,10 @@ if __name__ == '__main__':
         {'vect_key': vect_key, 'vector_path': vect, 'raster_path': B12, 'prefix': 'b12_', 'statistics': statistics, 'cutline_all_touch': False},
     ]
 
-    for task in tasks:
-        zonal_stats(task)
+    # for task in tasks:
+    #     zonal_stats(task)
 
-    # pool = multiprocessing.Pool(6)
-    # pool.map(zonal_stats, tasks, chunksize=1)
+    pool = multiprocessing.Pool()
+    pool.map(zonal_stats, tasks, chunksize=1)
 
     timing(before)

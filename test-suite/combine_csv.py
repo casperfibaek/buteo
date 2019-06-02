@@ -3,7 +3,7 @@ from glob import glob
 
 
 base = 'D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\csv\\'
-paths = glob(f"{base}pca_rural*.csv")
+paths = glob(f"{base}training_material_vector_01*.csv")
 
 new_csv = []
 
@@ -18,6 +18,6 @@ for path in paths[1:]:
         readied = ',' + ','.join(line.strip().split(',')[1:])
         new_csv[i] = new_csv[i] + readied
 
-out_csv = open(f'{base}pca_rural.csv', 'w')
+out_csv = open(f'{base}training_material_vector_01.csv', 'w')
 out_csv.write('\n'.join(new_csv))
 out_csv.close()
