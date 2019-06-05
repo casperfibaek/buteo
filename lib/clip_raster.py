@@ -84,7 +84,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
     # Read the attributes of the inputdataframe
     inputTransform = inputDataframe.GetGeoTransform()
     inputProjection = inputDataframe.GetProjection()
-    inputProjectionRef = inputDataframe.GetProjectionRef()
+    inputProjectionOSR = osr.SpatialReference(inputProjection)
     inputExtent = utils.get_extent(inputDataframe)
 
     inputBandCount = inputDataframe.RasterCount  # Ensure compatability with multiband rasters
@@ -161,13 +161,11 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         if geomType not in acceptedTypes:
             raise RuntimeError("Only polygons or multipolygons are support as cutlines.") from None
 
-        rasterProjectionOSR = osr.SpatialReference(inputProjection)
-
         # OGR has extents in different order than GDAL! minX minY maxX maxY
         vectorExtent = layer.GetExtent()
         vectorExtent = (vectorExtent[0], vectorExtent[2], vectorExtent[1], vectorExtent[3])
 
-        if not vectorProjectionOSR.IsSame(rasterProjectionOSR):
+        if not vectorProjectionOSR.IsSame(inputProjectionOSR):
             bottomLeft = ogr.Geometry(ogr.wkbPoint)
             topRight = ogr.Geometry(ogr.wkbPoint)
 
@@ -230,7 +228,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         referenceProjectionOSR.ImportFromWkt(str(referenceProjection))
 
         # If the projections are the same there is no need to reproject.
-        if inputProjection.IsSame(referenceProjectionOSR):
+        if referenceProjectionOSR.IsSame(inputProjectionOSR):
             referenceExtent = utils.get_extent(referenceDataframe)
         else:
             progressbar = utils.progress_callback_quiet
