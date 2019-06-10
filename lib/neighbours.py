@@ -56,17 +56,19 @@ def local_statistics(raster, radius=1):
     raster_arr = raster_to_array(raster)
     return _local_statistics(raster_arr, radius)
 
-b8 = 'D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\data\\SAR\\VV_backscatter.tif'
-b8_arr = raster_to_array(b8)
 
-rad4 = local_statistics(b8, radius=4)
-rad3 = local_statistics(b8, radius=3)
-rad2 = local_statistics(b8, radius=2)
-rad1 = local_statistics(b8, radius=1)
+if __name__ == '__main__':
+    base = 'C:\\Users\\CFI\\Desktop\\denmark\\'
+    b8 = f'{base}denmark_Apr2019_R10m_B04.tif'
+    b8_arr = raster_to_array(b8)
 
-avg_std = np.divide(np.add(np.add(np.add(rad4, rad3), rad2), rad1), 4)
-array_to_raster(avg_std.astype('float32'), reference_raster=b8, out_raster='D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\data\\VV_std_9x9.tif')
-# array_to_raster(rad4.astype('float32'), reference_raster=b8, out_raster='D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\data\\R10m_B08_std_9x9_v2.tif')
+    rad3 = local_statistics(b8, radius=3)
+    rad2 = local_statistics(b8, radius=2)
+    rad1 = local_statistics(b8, radius=1)
 
+    avg_std = np.divide(np.add(np.add(rad3, rad2), rad1), 3)
+    # array_to_raster(avg_std.astype('float32'), reference_raster=b8, out_raster='D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\data\\VV_std_9x9.tif')
+    array_to_raster(avg_std.astype('float32'), reference_raster=b8, out_raster=f'{base}denmark_Apr2019_R10m_B04_STD.tif')
+    # array_to_raster(rad4.astype('float32'), reference_raster=b8, out_raster='D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\data\\R10m_B08_std_9x9_v2.tif')
 
-print(f'execution took: {round(time.time() - before, 2)}s')
+    print(f'execution took: {round(time.time() - before, 2)}s')

@@ -88,7 +88,7 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
     # Test if the same size is requested.
     if target_size is not None:
         if abs(inputPixelWidth) == abs(target_size[0]) and abs(inputPixelHeight) == abs(target_size[1]):
-            copy = utils.copyDataframe(inputDataframe, out_raster, output_format)
+            copy = utils.copy_dataframe(inputDataframe, out_raster, output_format)
             copy.FlushCache()
 
             if output_format == 'MEM':
@@ -117,7 +117,7 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
 
         # Test if the reference size and the input size are the same
         if abs(inputPixelWidth) == abs(referencePixelWidth) and abs(inputPixelHeight) == abs(referencePixelHeight):
-            copy = utils.copyDataframe(inputDataframe, out_raster, output_format)
+            copy = utils.copy_dataframe(inputDataframe, out_raster, output_format)
             copy.FlushCache()
 
             if output_format == 'MEM':
