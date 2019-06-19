@@ -89,6 +89,20 @@ def create_geotransform(geo_transform, extent):
     }
 
 
+def get_size(start_path='.', rough=True):
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(start_path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            # skip if it is symbolic link
+            if not os.path.islink(fp):
+                total_size += os.path.getsize(fp)
+    if rough is True:
+        return total_size >> 20
+    else:
+        return total_size
+
+
 def divide_steps(total, step):
     steps = []
     remainder = total % step

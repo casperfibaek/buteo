@@ -30,15 +30,15 @@ def create_tile_mosaic(block):
     hours = int(dif / 3600)
     minutes = int((dif % 3600) / 60)
     seconds = "{0:.2f}".format(dif % 60)
-    print(f"Calculate tile: {block['output_name']} in {hours}h {minutes}m {seconds}s")
+    print(f"Calculated tile: {block['output_name']} in {hours}h {minutes}m {seconds}s")
 
 
 if __name__ == '__main__':
-    base = 'E:\\sentinel_2_data\\2019\\'
+    base = 'E:\\sentinel_2_data\\ghana\\wet_season_2019\\NZN\\'
     files = glob(f"{base}*MSIL2A*.SAFE")
 
-    output_dir = 'E:\\sentinel_2_data\\2019_mosaic\\'
-    epsg = 32632
+    output_dir = 'E:\\sentinel_2_data\\ghana\\wet_season_2019\\NZN\\'
+    epsg = 32630
     cloud_buffer = 200
     resolution = 10
 
@@ -87,10 +87,10 @@ if __name__ == '__main__':
             'cloud_buffer': cloud_buffer,
             'resolution': resolution,
             'level': '2A',
-            'target_epsg': 32632,
+            'target_epsg': epsg,
             'target_extent': target_bounds
         })
-    
+
     pool = multiprocessing.Pool(2, maxtasksperchild=1)
     pool.map(create_tile_mosaic, blocks, chunksize=1)
 

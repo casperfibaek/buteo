@@ -166,7 +166,7 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
             predictor = 3  # Float predictor
         else:
             predictor = 2  # Integer predictor
-        options = ['COMPRESS=DEFLATE', f'PREDICTOR={predictor}', 'NUM_THREADS=ALL_CPUS']
+        options = ['COMPRESS=DEFLATE', f'PREDICTOR={predictor}', 'NUM_THREADS=ALL_CPUS', 'BIGTIFF=YES']
 
     ''' **********************************************************
         STEP (3): The business logic.

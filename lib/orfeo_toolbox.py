@@ -332,3 +332,36 @@ def rescale(in_raster, out_raster, options=None, out_datatype='float'):
     execute_cli_function(cli_string, name='rescale image')
 
     return os.path.abspath(out_raster)
+
+
+def merge_rasters(in_rasters, out_raster, options=None, band=None, out_datatype='uint16'):
+    ''' Creates a mosaic out of a series of images. Must be of the same projection '''
+
+    cli = os.path.join(otb_folder, 'otbcli_Mosaic.bat')
+
+    if options is None:
+        options = {
+            'comp.feather': 'large',
+            'harmo.method': 'band',
+        }
+
+    if band is not None:
+        band = f'&bands={band}'
+    else:
+        band = ''
+
+    cli_args = [cli, '-il', ' '.join(in_rasters), '-out', f'"{os.path.abspath(out_raster)}?{band}&gdal:co:COMPRESS=DEFLATE&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', out_datatype]
+
+    for key, value in options.items():
+        cli_args.append('-' + str(key))
+        cli_args.append(str(value))
+
+    cli_string = ' '.join(cli_args)
+
+    ''' *******************************************************
+        Make CLI request and handle responses
+    ******************************************************* '''
+
+    execute_cli_function(cli_string, name='merge rasters')
+
+    return os.path.abspath(out_raster)
