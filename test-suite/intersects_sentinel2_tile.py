@@ -12,8 +12,3 @@ def intersecting_tile(shape):
     test_shape = gp.GeoDataFrame.from_file(shape).to_crs(world_tiles.crs)
 
     return gp.sjoin(world_tiles, test_shape, how="inner", op='intersects')['Name'].values
-
-
-if __name__ == '__main__':
-    bob = intersecting_tile('../geometry/test-tile-shape.shp')
-    print(divide_steps(len(bob), 3))

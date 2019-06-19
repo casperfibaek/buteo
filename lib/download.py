@@ -152,7 +152,7 @@ def download(products_df, output_dir = os.getcwd()):
     
     assert os.path.isdir(output_dir), "Output directory doesn't exist."
     
-    if products_df.empty == True:
+    if products_df.empty is True:
         print('WARNING: No products found to download. Check your search terms.')
         raise
         

@@ -117,6 +117,22 @@ def divide_steps(total, step):
     return steps
 
 
+def divide_into_steps(arr, steps_length):
+    steps = divide_steps(len(arr), steps_length)
+
+    ret_arr = []
+    last = 0
+    count = 0
+    for x in steps:
+        count += 1
+        if count > len(arr):
+            continue
+        ret_arr.append(arr[last:x + last])
+        last += x
+
+    return ret_arr
+
+
 def step_ranges(steps):
     start_stop = []
     last = 0
