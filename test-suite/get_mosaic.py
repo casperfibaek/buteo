@@ -34,9 +34,14 @@ def create_tile_mosaic(block):
 
 
 if __name__ == '__main__':
-    base = 'E:\\sentinel_2_data\\ghana\\wet_season_2019\\'
-    files = glob(f"{base}*MSIL2A*.SAFE")
-    output_dir = 'E:\\sentinel_2_data\\ghana\\wet_season_2019_mosaic\\'
+    base = 'E:\\sentinel_2_data\\ghana\\dry_season_2019\\'
+    files = glob(f"{base}*MSIL2A*NYM*.SAFE")
+
+    # TODO: START HERE!!!!!
+    # How do I get it do process NYL. Why is it casting to 3D?
+    # files = glob(f"{base}*MSIL2A*.SAFE")
+
+    output_dir = 'E:\\sentinel_2_data\\ghana\\dry_season_2019_mosaic\\'
     epsg = 32630
     cloud_buffer = 100
     resolution = 10
@@ -90,7 +95,7 @@ if __name__ == '__main__':
             'target_extent': target_bounds
         })
 
-    pool = multiprocessing.Pool(4, maxtasksperchild=1)
+    pool = multiprocessing.Pool(1, maxtasksperchild=1)
     pool.map(create_tile_mosaic, blocks, chunksize=1)
 
     pool.close()

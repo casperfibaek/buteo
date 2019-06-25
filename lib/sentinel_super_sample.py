@@ -125,3 +125,17 @@ def super_sample_s2(B4, B8, B5=None, B6=None, B7=None, B8A=None,
             pansharpen(B8, resampled_name, out_name_B8A, out_datatype='uint16')
     finally:
         shutil.rmtree(temp_folder_path)
+
+
+if __name__ == '__main__':
+    m10_folder = 'E:\\sentinel_2_data\\bornholm_mosaic\\S2A_MSIL2A_20190514T101031_N0212_R022_T33UWB_20190514T134657.SAFE\\GRANULE\\L2A_T33UWB_A020325_20190514T101441\\IMG_DATA\\R10m\\'
+    m20_folder = 'E:\\sentinel_2_data\\bornholm_mosaic\\S2A_MSIL2A_20190514T101031_N0212_R022_T33UWB_20190514T134657.SAFE\\GRANULE\\L2A_T33UWB_A020325_20190514T101441\\IMG_DATA\\R20m\\'
+
+    B4 = m10_folder + 'T33UWB_20190514T101031_B04_10m.jp2'
+    B5 = m20_folder + 'T33UWB_20190514T101031_B05_20m.jp2'
+    B6 = m20_folder + 'T33UWB_20190514T101031_B06_20m.jp2'
+    B7 = m20_folder + 'T33UWB_20190514T101031_B07_20m.jp2'
+    B8 = m10_folder + 'T33UWB_20190514T101031_B08_10m.jp2'
+    B8A = m20_folder + 'T33UWB_20190514T101031_B8A_20m.jp2'
+
+    super_sample_s2(B4, B8, B5=B5, B6=B6, B7=B7, B8A=B8A, out_folder=m10_folder, prefix='ss_')

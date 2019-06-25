@@ -58,8 +58,8 @@ def local_statistics(raster, radius=1):
 
 
 if __name__ == '__main__':
-    base = 'D:\\PhD\\Projects\\Byggemodning\\mosaics\\'
-    b8 = f'{base}2019_B04.tif'
+    base = 'D:\\PhD\\Projects\\SavingsAtTheFrontiers\\data\\s2\\mosaic\\'
+    b8 = f'{base}mosaic_R10m_B04.tif'
     b8_arr = raster_to_array(b8)
 
     rad3 = local_statistics(b8, radius=3)
@@ -68,7 +68,7 @@ if __name__ == '__main__':
 
     avg_std = np.divide(np.add(np.add(rad3, rad2), rad1), 3)
     # array_to_raster(avg_std.astype('float32'), reference_raster=b8, out_raster='D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\data\\VV_std_9x9.tif')
-    array_to_raster(avg_std.astype('float32'), reference_raster=b8, out_raster=f'{base}2019_B04_std3.tif')
+    array_to_raster(avg_std.astype('float32'), reference_raster=b8, out_raster=f'{base}mosaic_R10m_B04_STD3.tif')
     # array_to_raster(rad4.astype('float32'), reference_raster=b8, out_raster='D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\data\\R10m_B08_std_9x9_v2.tif')
 
     print(f'execution took: {round(time.time() - before, 2)}s')
