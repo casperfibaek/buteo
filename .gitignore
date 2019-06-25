@@ -117,7 +117,7 @@ dmypy.json
 # test-suite/get_imagery.py
 indices/
 __temp__/
-geometry/
+# geometry/
 raster/
 __pycache__
 OTB/
