@@ -114,7 +114,7 @@ dmypy.json
 .pyre/
 
 # S2 files
-test-suite/get_imagery.py
+# test-suite/get_imagery.py
 indices/
 __temp__/
 geometry/
