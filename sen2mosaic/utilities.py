@@ -164,7 +164,7 @@ class LoadScene(object):
         Test that the file of of an appropriate format
         '''
         
-        if self.filename.split('\\')[-3].split('.')[-1] == 'SAFE':
+        if self.filename.split('/')[-3].split('.')[-1] == 'SAFE':
             file_type = 'SAFE'
         
         assert file_type == 'SAFE', 'File %s does not match any expected file pattern'%self.filename
@@ -179,13 +179,13 @@ class LoadScene(object):
             An integer
         '''
         
-        if self.filename.split('\\')[-1][:3] == 'L2A':    
+        if self.filename.split('/')[-1][:3] == 'L2A':    
             level = '2A'
-        elif self.filename.split('\\')[-1][:3] == 'L1C':    
+        elif self.filename.split('/')[-1][:3] == 'L1C':    
             level = '1C'
-        elif self.filename.split('\\')[-1].split('_')[3] == 'L2A':
+        elif self.filename.split('/')[-1].split('_')[3] == 'L2A':
             level = '2A'
-        elif self.filename.split('\\')[-1].split('_')[3] == 'L1C':
+        elif self.filename.split('/')[-1].split('_')[3] == 'L1C':
             level = '1C'
         else:
             level = 'unknown'
@@ -222,15 +222,15 @@ class LoadScene(object):
         
         if self.level == '2A':
                         
-            image_path = glob.glob(self.filename + '\\IMG_DATA\\R%sm\\*%s*%sm.jp2'%(str(resolution), band, str(resolution)))
+            image_path = glob.glob(self.filename + '/IMG_DATA/R%sm/*%s*%sm.jp2'%(str(resolution), band, str(resolution)))
             
             # In old files the mask can be in the base folder
             if len(image_path) == 0 and band == 'SCL':
-                image_path = glob.glob(self.filename + '\\IMG_DATA\\*%s*%sm.jp2'%(band, str(resolution)))
+                image_path = glob.glob(self.filename + '/IMG_DATA/*%s*%sm.jp2'%(band, str(resolution)))
         
         elif self.level == '1C':
             
-            image_path = glob.glob(self.filename + '\\IMG_DATA\\%s_*_%s.jp2'%(str(self.tile), band))        
+            image_path = glob.glob(self.filename + '/IMG_DATA/%s_*_%s.jp2'%(str(self.tile), band))        
         
         assert len(image_path) > 0, "No file found for band: %s, resolution: %s in file %s."%(band, str(resolution), self.filename)
         
@@ -246,10 +246,10 @@ class LoadScene(object):
         assert self.level == '1C', "GML cloud masks are only used in Level 1C data."
         
         if variety == 'CLOUDS':
-            gml_path = glob.glob(self.filename + '\\QI_DATA\\MSK_%s_B00.gml'%variety)
+            gml_path = glob.glob(self.filename + '/QI_DATA/MSK_%s_B00.gml'%variety)
         else:
             # Assume all bands approx the same
-            gml_path = glob.glob(self.filename + '\\QI_DATA\\MSK_%s_%s.gml'%(variety, band))
+            gml_path = glob.glob(self.filename + '/QI_DATA/MSK_%s_%s.gml'%(variety, band))
         
         assert len(gml_path) > 0, "No GML file found for file %s"%self.filename
         
@@ -629,41 +629,22 @@ def prepInfiles(infiles, level, tile = ''):
     for infile in infiles:
          
         # Where infile is a directory:
-        # infiles_reduced.extend(glob.glob('%s/*_MSIL%s_*/GRANULE/*'%(infile, level)))
-
-        granule = glob.glob(f"{infile}\\GRANULE\\*")
-        assert len(granule) is not 0, "No files in directory"
-
-        ident = granule[0].split("\\")[-1].split("_")
-        file_tile = ident[1][1:]
-        file_proc_level = ident[0]
-
-        if tile != "":
-            if tile not in file_tile:
-                continue
-
-        if level not in file_proc_level:
-            continue
-
-        infiles_reduced.extend(granule)
+        infiles_reduced.extend(glob.glob('%s/*_MSIL%s_*/GRANULE/*'%(infile, level)))
         
         # Where infile is a .SAFE file
-        # if '_MSIL%s_'%level in infile.split('\\')[-1]:
-        #     infiles_reduced.extend(glob.glob('%s/GRANULE/*'%infile))
+        if '_MSIL%s_'%level in infile.split('/')[-1]: infiles_reduced.extend(glob.glob('%s/GRANULE/*'%infile))
         
-        # # Where infile is a specific granule 
-        # if infile.split('\\')[-2] == 'GRANULE':
-        #     infiles_reduced.extend(glob.glob('%s'%infile))
+        # Where infile is a specific granule 
+        if infile.split('/')[-2] == 'GRANULE': infiles_reduced.extend(glob.glob('%s'%infile))
     
-
     # Strip repeats (in case)
     infiles_reduced = list(set(infiles_reduced))
-   
+    
     # Reduce input to infiles that match the tile (where specified)
-    # infiles_reduced = [infile for infile in infiles_reduced if ('_T%s'%tile in infile.split('\\')[-1])]
+    infiles_reduced = [infile for infile in infiles_reduced if ('_T%s'%tile in infile.split('/')[-1])]
     
     # Reduce input files to only L1C or L2A files
-    # infiles_reduced = [infile for infile in infiles_reduced if ('_MSIL%s_'%level in infile.split('\\')[-3])]
+    infiles_reduced = [infile for infile in infiles_reduced if ('_MSIL%s_'%level in infile.split('/')[-3])]
     
     return infiles_reduced
 
@@ -809,10 +790,10 @@ def getS2Metadata(granule_file, resolution = 20, level = '2A', tile = ''):
     # Remove trailing / from granule directory if present 
     granule_file = granule_file.rstrip('/')
     
-    assert len(glob.glob((granule_file + '\\*MTD*.xml'))) > 0, "The location %s does not contain a metadata (*MTD*.xml) file."%granule_file
+    assert len(glob.glob((granule_file + '/*MTD*.xml'))) > 0, "The location %s does not contain a metadata (*MTD*.xml) file."%granule_file
     
     # Find the xml file that contains file metadata
-    xml_file = glob.glob(granule_file + '\\*MTD*.xml')[0]
+    xml_file = glob.glob(granule_file + '/*MTD*.xml')[0]
     
     # Parse xml file
     tree = ET.ElementTree(file = xml_file)
@@ -867,15 +848,15 @@ def getS2Metadata(granule_file, resolution = 20, level = '2A', tile = ''):
     
     if tile == '':
         # Get tile from granule filename
-        if granule_file.split('\\')[-1].split('_')[1] == 'USER':
+        if granule_file.split('/')[-1].split('_')[1] == 'USER':
             
             # If old file format
-            tile = granule_file.split('\\')[-1].split('_')[-2]
+            tile = granule_file.split('/')[-1].split('_')[-2]
             
         else:
             
             # If new file format
-            tile = granule_file.split('\\')[-1].split('_')[1]
+            tile = granule_file.split('/')[-1].split('_')[1]
     
     return extent, EPSG, date, tile, nodata_percent
 

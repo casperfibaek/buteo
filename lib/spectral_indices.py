@@ -2,38 +2,7 @@ import math
 import numpy as np
 from numba import jit
 
-allIndicies = [
-    "chlre",    # Red Edge Chlorophyll Index
-    "rendvi",   # Red Edge NDVI
-    "s2rep",    # Sentinel 2 Red Edge Position
-    "mcari",    # Modified Chlorophyll Absorption in Reflectance Index
-    "ireci",    # Inverted Red Edge Chlorophyll Index
-
-    "arvi",     # Atmospherically Resistant Vegetation Index
-    "evi",      # Enhanced vegetation index
-    "evi2",     # Enhanced vegetation index v2
-    "savi",     # Soil adjusted vegetation index
-    "msavi2",   # Modified soil adjusted vegetation index v2
-    "ndvi",     # Normalised difference vegetation index
-    "gndvi",    # Green normalised difference vegetation index
-
-    "moist",    # Soil moisture index
-    "ndwi",     # Normalised difference water index
-    "ndwi2",    # Normalised difference water index v2
-
-    "nbr",      # Normalised difference burn ratio
-
-    "nvei",     # Non-elimination vegetation index
-    "nbai",     # Built-up area index
-    'brba',     # Band ratio for built-up areas
-    'ndbi',     # Normalised difference built-up index
-    'blfei',    # Built-up features extraction
-    'ibi',      # Index-based built-up index
-]
-
-
 np.seterr(divide='ignore', invalid='ignore')  # disable warnings for division by zero
-
 
 # Red Edge Chlorophyll Index
 @jit(nopython=True, parallel=True, fastmath=True)

@@ -1,4 +1,7 @@
-import ogr,csv,sys
+import ogr
+import csv
+import sys
+
 
 def shp_to_csv(in_shp, out_csv, with_geom=False):
     csvfile = open(out_csv, 'wb')
@@ -7,7 +10,7 @@ def shp_to_csv(in_shp, out_csv, with_geom=False):
     dfn = lyr.GetLayerDefn()
     nfields = dfn.GetFieldCount()
 
-    fields=[]
+    fields = []
 
     for i in range(nfields):
         fields.append(dfn.GetFieldDefn(i).GetName())
@@ -18,9 +21,9 @@ def shp_to_csv(in_shp, out_csv, with_geom=False):
     csvwriter = csv.DictWriter(csvfile, fields)
 
     try:
-        csvwriter.writeheader() #python 2.7+
+        csvwriter.writeheader()
     except:
-        csvfile.write(','.join(fields)+'\n')
+        csvfile.write(','.join(fields) + '\n')
 
     if with_geom:
         for feat in lyr:

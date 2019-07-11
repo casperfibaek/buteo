@@ -191,4 +191,11 @@ def raster_stats(in_raster, cutline=None, cutline_all_touch=True, cutlineWhere=N
             stats = calc_stats(data, statistics)
 
         data = None
-        return stats
+
+        out_stats = {}
+
+        for key in stats:
+            if key in statistics:
+                out_stats[key] = stats[key]
+
+        return out_stats

@@ -30,7 +30,6 @@ def _get_stats(block):
         gdal.PopErrorHandler()
 
         temp_vector_layer.SyncToDisk()
-        # del temp_vector_dataSource, temp_vector_layer, vector_feature, vector_geometry
 
         stats = raster_stats(
             raster_datasource,
@@ -46,6 +45,3 @@ def _get_stats(block):
     csv.close()
 
     return
-
-    # del raster_datasource, vector_datasource, vector_layer, vector_driver, vector_projection
-    # return

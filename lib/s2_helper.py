@@ -15,7 +15,6 @@ from array_to_raster import array_to_raster
 
 
 class Sentinel:
-
     _temp_folder_dir_path = ''
     _config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.json')
     if os.path.exists(_config_path) is True:

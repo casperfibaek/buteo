@@ -72,7 +72,11 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
     if isinstance(in_raster, gdal.Dataset):
         inputDataframe = in_raster
     else:
-        inputDataframe = gdal.Open(in_raster)
+        try:
+            inputDataframe = gdal.Open(in_raster)
+        except:
+            print('GDAL could not read: ', in_raster)
+            exit()
 
     # Throw error if GDAL cannot open the raster
     if inputDataframe is None:

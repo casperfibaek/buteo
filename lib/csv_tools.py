@@ -1,6 +1,7 @@
 from osgeo import gdal, ogr, osr
 from osgeo.gdalconst import *
 
+
 def isfloat(value):
     try:
         float(value)
@@ -46,7 +47,7 @@ def get_csv_types(csv, max_rows=None):
     holder = {}
     for row in csv_header:
         holder[row] = 'int'
-    
+
     for i, line in enumerate(csv[1:]):
         if i > max_rows:
             return holder
@@ -64,7 +65,7 @@ def get_csv_types(csv, max_rows=None):
                 _type = get_type(value)
                 if _type is not 'int':
                     holder[csv_header[i]] = _type
-    
+
     return holder
 
 

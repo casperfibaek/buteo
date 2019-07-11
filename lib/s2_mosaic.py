@@ -3,11 +3,13 @@ from glob import glob
 import time
 import multiprocessing
 import sys
+import os
 
 sys.path.append('../lib')
 
 from utilities import prepInfiles
-from mosaic import main
+from .sen2mosaic import main
+from orfeo_toolbox import merge_rasters
 
 
 def create_tile_mosaic(block):
@@ -34,14 +36,10 @@ def create_tile_mosaic(block):
 
 
 if __name__ == '__main__':
-    base = 'E:\\sentinel_2_data\\ghana\\dry_season_2019\\'
-    files = glob(f"{base}*MSIL2A*NYM*.SAFE")
+    base = 'E:\\sentinel_2_data\\ghana\\wet_season_2019\\'
+    files = glob(f"{base}*MSIL2A*.SAFE")
 
-    # TODO: START HERE!!!!!
-    # How do I get it do process NYL. Why is it casting to 3D?
-    # files = glob(f"{base}*MSIL2A*.SAFE")
-
-    output_dir = 'E:\\sentinel_2_data\\ghana\\dry_season_2019_mosaic\\'
+    output_dir = 'E:\\sentinel_2_data\\ghana\\wet_season_2019_mosaic\\'
     epsg = 32630
     cloud_buffer = 100
     resolution = 10
@@ -100,3 +98,49 @@ if __name__ == '__main__':
 
     pool.close()
     pool.join()
+
+    generated_hash = {}
+    generated_files = glob(output_dir + '*.tif')
+
+    for f in generated_files:
+        tile_id = os.path.basename(f).split('_')[0]
+        if tile_id in generated_hash:
+            generated_hash[tile_id].append(f)
+        else:
+            generated_hash[tile_id] = [f]
+
+    # Terrible way of getting the length of the first hashed key
+    band_len = len(generated_hash[list(generated_hash.keys())[0]])
+
+    matches = [[] for i in range(band_len)]
+
+    for f in generated_hash:
+        generated_hash[f].sort()
+
+    for f in generated_hash:
+        for index, value in enumerate(generated_hash[f]):
+            matches[index].append(value)
+
+    destination_folder = os.path.abspath(os.path.dirname(matches[0][0]) + '\\' + 'merged')
+
+    for t in matches:
+        name = os.path.basename(t[0]).split('_')
+        name[0] = 'mosaic_cloud_100'
+
+        if not os.path.exists(destination_folder):
+            os.makedirs(destination_folder)
+
+        destination = os.path.abspath(destination_folder + '\\' + '_'.join(name))
+
+        merge_rasters(t, destination, tmp=output_dir)
+
+    delete_files = glob(output_dir + '\\' + '[!merged]*')
+    for f in delete_files:
+        os.remove(f)
+
+    # Filthy way of ensuring all the tmp files are deleted.
+    time.sleep(5)
+
+    delete_files = glob(output_dir + '\\' + '*.tif')
+    for f in delete_files:
+        os.remove(f)

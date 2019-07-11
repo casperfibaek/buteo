@@ -1,10 +1,10 @@
-from glob import glob
 import multiprocessing
 import sys
-sys.path.append('../lib')
+from glob import glob
 
-from download import main, search
+from sen2mosaic.download import main, search
 from utils import get_size, divide_into_steps
+# TODO: Incorporate the vector geometry.
 # from intersects_sentinel2_tile import intersecting_tile
 
 
@@ -50,6 +50,27 @@ def get_data(block):
 
 
 def download(tiles_or_geompath, start, end, out_folder, minsize=100, target_tile_size=3 * 1024):
+    '''
+        Downloads sentinel 2 imagery from either a geometry or a series of tiles.
+        Searches for imagery in 5% cloud intervals.
+
+        Args:
+            tiles_or_geompath: path to geometry or array with tiles.
+            start: start date to download from. eg. 20190301.
+            end: start date to download from. eg. 20190615.
+            out_folder: destination folder.
+            minsize: minimum size of files to download. Full coverage is about 1024mb. default = 100mb
+            target_tile_size: attempts to get at least that much data of each tile. default = 3 * 1024mb
+
+        Example:
+        start = '20190301'
+        end = '20190615'
+        out_folder = 'E:\\ghana\\wet_season_2019\\'
+        tiles = ['30NYM', '31NBG', '31NBH', '30NYL', '30NYN', '30NZN', '30NZM']
+
+        download(tiles, start, end, out_folder, target_tile_size=3 * 1024)
+    '''
+
     user1 = {'username': 'test', 'password': 'test'}
     user2 = {'username': 'test', 'password': 'test'}
     user3 = {'username': 'test', 'password': 'test'}
@@ -73,12 +94,3 @@ def download(tiles_or_geompath, start, end, out_folder, minsize=100, target_tile
 
     pool.close()
     pool.join()
-
-
-if __name__ == '__main__':
-    start = '20190301'
-    end = '20190615'
-    out_folder = 'E:\\sentinel_2_data\\ghana\\wet_season_2019\\'
-    tiles = ['30NYM', '31NBG', '31NBH', '30NYL', '30NYN', '30NZN', '30NZM']
-
-    download(tiles, start, end, out_folder, target_tile_size=3 * 1024)

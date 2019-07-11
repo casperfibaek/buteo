@@ -1,5 +1,5 @@
 {
     "python.linting.pep8Enabled": true,
     "python.linting.enabled": true,
-    "python.pythonPath": "C:\\ProgramData\\Anaconda3\\python.exe"
+    "python.pythonPath": "C:\\anaconda\\envs\\geo\\python.exe"
 }

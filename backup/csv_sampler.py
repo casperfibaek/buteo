@@ -8,7 +8,7 @@ def csv_sample_split(csv, sample_size=33, key=None):
     if key is not None:
         if key not in in_header:
             raise RuntimeError('Key not in csv') from None
-    
+
     rows = list(range(len(in_csv) - 1))
     shuffle(rows)
 

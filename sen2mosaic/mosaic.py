@@ -486,10 +486,10 @@ if __name__ == "__main__":
     
     # Get absolute path of input .safe files.
     infiles = sorted([os.path.abspath(i) for i in args.infiles])
-
-    infiles = glob.glob(f"{infiles[0]}\\*")
-
+    
     # Find all matching granule files
     infiles = utilities.prepInfiles(infiles, args.level)
     
     main(infiles, args.target_extent, args.epsg, resolution = args.resolution, start = args.start, end = args.end, cloud_buffer = args.cloud_buffer, colour_balance = args.colour_balance, processes = args.n_processes, output_dir = args.output_dir, output_name = args.output_name, masked_vals = masked_vals, temp_dir = args.temp_dir, verbose = args.verbose)
+    
+    

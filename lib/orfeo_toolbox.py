@@ -334,7 +334,7 @@ def rescale(in_raster, out_raster, options=None, out_datatype='float'):
     return os.path.abspath(out_raster)
 
 
-def merge_rasters(in_rasters, out_raster, options=None, band=None, out_datatype='uint16'):
+def merge_rasters(in_rasters, out_raster, options=None, band=None, out_datatype='uint16', tmp='.'):
     ''' Creates a mosaic out of a series of images. Must be of the same projection '''
 
     cli = os.path.join(otb_folder, 'otbcli_Mosaic.bat')
@@ -342,7 +342,8 @@ def merge_rasters(in_rasters, out_raster, options=None, band=None, out_datatype=
     if options is None:
         options = {
             'comp.feather': 'large',
-            'harmo.method': 'band',
+            'harmo.method': 'none',
+            'tmpdir': tmp,
         }
 
     if band is not None:
