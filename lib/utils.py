@@ -52,13 +52,13 @@ def get_extent(dataframe):
 
 def get_intersection(extent1, extent2):
     one_bottomLeftX = extent1[0]
-    one_bottomLeftY = extent1[1]
-    one_topRightX = extent1[2]
+    one_topRightX = extent1[1]
+    one_bottomLeftY = extent1[2]
     one_topRightY = extent1[3]
 
     two_bottomLeftX = extent2[0]
-    two_bottomLeftY = extent2[1]
-    two_topRightX = extent2[2]
+    two_topRightX = extent2[1]
+    two_bottomLeftY = extent2[2]
     two_topRightY = extent2[3]
 
     if two_bottomLeftX > one_topRightX:     # Too far east
@@ -72,8 +72,8 @@ def get_intersection(extent1, extent2):
     else:
         return (
             max(one_bottomLeftX, two_bottomLeftX),    # minX of intersection
-            max(one_bottomLeftY, two_bottomLeftY),    # minY of intersection
             min(one_topRightX, two_topRightX),        # maxX of intersection
+            max(one_bottomLeftY, two_bottomLeftY),    # minY of intersection
             min(one_topRightY, two_topRightY),        # maxY of intersection
         )
 

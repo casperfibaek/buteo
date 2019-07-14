@@ -113,7 +113,13 @@ def calc_stats(data, statistics):
 
             holder['within3std_mad'] = 100 - ((limit / holder['count']) * 100)
 
-    return holder
+    out_stats = {}
+
+    for key in holder:
+        if key in statistics:
+            out_stats[key] = holder[key]
+
+    return out_stats
 
 
 def raster_stats(in_raster, cutline=None, cutline_all_touch=True, cutlineWhere=None,
@@ -163,6 +169,7 @@ def raster_stats(in_raster, cutline=None, cutline_all_touch=True, cutlineWhere=N
         reference_raster=reference_raster,
         cutline=cutline,
         cutline_all_touch=cutline_all_touch,
+        crop_to_cutline=True,
         cutlineWhere=None,
         compressed=True,
         src_nodata=src_nodata,
@@ -192,10 +199,4 @@ def raster_stats(in_raster, cutline=None, cutline_all_touch=True, cutlineWhere=N
 
         data = None
 
-        out_stats = {}
-
-        for key in stats:
-            if key in statistics:
-                out_stats[key] = stats[key]
-
-        return out_stats
+        return stats

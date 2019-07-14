@@ -131,6 +131,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
 
     # Test the cutline
     if cutline is not None:
+
         # Test the cutline. This adds a tiny overhead, but is usefull to ensure
         # that the error messages are easy to understand.
         if isinstance(cutline, ogr.DataSource):
@@ -205,11 +206,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
 
     creationOptions = []
     if output_format != 'MEM':
-        if utils.datatype_is_float(inputBand.DataType) is True:
-            predictor = 3
-        else:
-            predictor = 2
-        creationOptions = ['COMPRESS=DEFLATE', f'PREDICTOR={predictor}', 'NUM_THREADS=ALL_CPUS']
+        creationOptions = ['COMPRESS=LZW', 'NUM_THREADS=ALL_CPUS']
 
     destinationName = out_raster if out_raster is not None else 'ignored'
 

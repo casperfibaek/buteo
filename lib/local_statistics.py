@@ -1,13 +1,14 @@
-import time
 import numpy as np
+from skimage.util.shape import view_as_windows
+from skimage.util import pad
+
 from raster_to_array import raster_to_array
 from array_to_raster import array_to_raster
 import numba
-from numba import jit, cuda
+from numba import jit
 
-before = time.time()
 
-@numba.jit(nopython=True, parallel=True, fastmath=True)
+@numba.jit(nopython=True, fastmath=True)
 def rolling_window(arr, shape):
     d2x = arr.shape[0] - shape[0] + 1
     d2y = arr.shape[1] - shape[1] + 1
@@ -47,12 +48,14 @@ def _local_statistics(raster_arr, radius=1):
     new_array = np.empty(raster_arr.shape, dtype=raster_arr.dtype)
 
     for index, value in np.ndenumerate(raster_arr):
-        new_array[index] = np.nanstd(view[index])
+        # new_array[index] = np.nanstd(view[index])
+        new_array[index] = np.mean(view[index])
+        # new_array[index] = np.quantile(view[index], 0.75)
 
     return new_array
 
 
-def local_statistics(raster, radius=1):
+def local_statistics(in_raster, out_raster=None, radius=1):
     '''
         Calculates the local standard deviation in a given radius. Output is a dateframe.
 
@@ -68,5 +71,38 @@ def local_statistics(raster, radius=1):
             avg_std = np.divide(np.add(np.add(rad3, rad2), rad1), 3)
             array_to_raster(avg_std.astype('float32'), reference_raster=b8, out_raster=f'{base}mosaic_R10m_B04_STD3.tif')
     '''
-    raster_arr = raster_to_array(raster)
-    return _local_statistics(raster_arr, radius)
+    raster_arr = raster_to_array(in_raster)
+    stats = _local_statistics(raster_arr, radius)
+
+    if out_raster is None:
+        return stats
+    else:
+        return array_to_raster(stats, reference_raster=in_raster, out_raster=out_raster)
+
+
+def local_statistics2(in_raster, out_raster=None, radius=1):
+    '''
+        Calculates the local standard deviation in a given radius. Output is a dateframe.
+
+    '''
+
+    raster_arr = raster_to_array(in_raster)
+
+    padded = np.pad(raster_arr, radius, 'edge')
+
+    if radius is 1:
+        window = view_as_windows(padded, 3, 1)
+    else:
+        if radius % 2 is 0:
+            rad = 3 + radius
+        else:
+            rad = 3 + radius + 1
+
+        window = view_as_windows(padded, rad, 1)
+
+    stats = np.max(window, axis=(2, 3))
+
+    if out_raster is None:
+        return stats
+    else:
+        return array_to_raster(stats, reference_raster=in_raster, out_raster=out_raster)

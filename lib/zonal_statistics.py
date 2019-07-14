@@ -3,11 +3,12 @@ from osgeo.gdalconst import *
 import multiprocessing
 from glob import glob
 import sys
+import os
 import time
 
 sys.path.append('../lib')
 from raster_stats import raster_stats
-from utils import timing
+from utils import timing, progress
 
 
 def zonal_stats(task):
@@ -17,10 +18,13 @@ def zonal_stats(task):
     prefix = task['prefix']
     cutline_all_touch = task['cutline_all_touch']
     vect_key = task['vect_key']
+    fix_geom = task['fix_geom']
 
     raster_datasource = gdal.Open(raster_path, GA_ReadOnly)
+
     vector_datasource = ogr.Open(vector_path, 0)
     vector_layer = vector_datasource.GetLayer(0)
+
     vector_driver = ogr.GetDriverByName('ESRI Shapefile')
     vector_projection = osr.SpatialReference()
     vector_projection.ImportFromWkt(str(vector_layer.GetSpatialRef()))
@@ -35,8 +39,11 @@ def zonal_stats(task):
 
     csv_lines = ''
 
+    calculated_features = 0
     for fid in range(vector_feature_count):
-        vector_feature = vector_layer.GetFeature(fid)
+        progress(calculated_features, vector_feature_count)
+
+        vector_feature = vector_layer.GetNextFeature()
         temp_vector_dataSource = vector_driver.CreateDataSource(f'/vsimem/temp_vector_{fid}.shp')
         temp_vector_layer = temp_vector_dataSource.CreateLayer('temp_polygon', vector_projection, ogr.wkbPolygon)
         vector_geometry = vector_feature.GetGeometryRef()
@@ -46,12 +53,17 @@ def zonal_stats(task):
             feature_key_value = vector_feature.GetField(vect_key)
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        if vector_geometry.IsValid():
-            temp_vector_layer.CreateFeature(vector_feature.Clone())
+
+        if fix_geom is True:
+            if vector_geometry.IsValid():
+                temp_vector_layer.CreateFeature(vector_feature.Clone())
+            else:
+                vector_feature_fixed = ogr.Feature(temp_vector_layer.GetLayerDefn())
+                vector_feature_fixed.SetGeometry(vector_geometry.Buffer(0))
+                temp_vector_layer.CreateFeature(vector_feature_fixed)
         else:
-            vector_feature_fixed = ogr.Feature(temp_vector_layer.GetLayerDefn())
-            vector_feature_fixed.SetGeometry(vector_geometry.Buffer(0))
-            temp_vector_layer.CreateFeature(vector_feature_fixed)
+            temp_vector_layer.CreateFeature(vector_feature.Clone())
+
         gdal.PopErrorHandler()
 
         temp_vector_layer.SyncToDisk()
@@ -65,6 +77,8 @@ def zonal_stats(task):
         )
 
         csv_lines += f'{feature_key_value},' + ','.join(str(x) for x in stats.values()) + '\n'
+
+        calculated_features += 1
 
     # Create temp csv-file
     vector_folder = vector_path.rsplit('\\', 1)[0]
@@ -82,20 +96,20 @@ def zonal_stats(task):
 if __name__ == '__main__':
     before = time.time()
 
-    vect = 'E:\\SATF\\phase_II_urban-seperation\\initial_segmentation.shp'
+    vect = 'E:\\SATF\\phase_IV_urban-classification\\urban_classification_zonal.gpkg'
     vect_key = 'DN'
 
     statistics = ['mean', 'med', 'mad', 'std', 'skew', 'kurt', 'iqr']
 
-    rasters = glob('E:\\SATF\\data\\*.tif')
+    rasters = glob('E:\\SATF\\data\\s2\\*.tif')
     tasks = []
 
     for index, raster in enumerate(rasters):
         tasks.append(
-            {'vect_key': vect_key, 'vector_path': vect, 'raster_path': raster, 'prefix': f'{index}_', 'statistics': statistics, 'cutline_all_touch': False},
+            {'vect_key': vect_key, 'vector_path': vect, 'raster_path': raster, 'prefix': f'{index}_', 'statistics': statistics, 'cutline_all_touch': False, 'fix_geom': False},
         )
 
-    pool = multiprocessing.Pool(6, maxtasksperchild=1)
+    pool = multiprocessing.Pool(len(rasters), maxtasksperchild=1)
     pool.map(zonal_stats, tasks, chunksize=1)
 
     pool.close()
