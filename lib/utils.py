@@ -13,6 +13,10 @@ def progress(count, total, name='Processing'):
     display_name = name[:10] + '..: '
 
     percents = round(100.0 * count / float(total), 1)
+    if percents == 100:
+        sys.stdout.flush()
+        return None
+
     bar = '█' * filled_len + '.' * (bar_len - filled_len)
 
     sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")

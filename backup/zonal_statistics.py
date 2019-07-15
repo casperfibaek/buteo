@@ -1,80 +1,118 @@
 from osgeo import gdal, ogr, osr
 from osgeo.gdalconst import *
-from collections import ChainMap
-from glob import glob
-import uuid
-import numpy as np
 import multiprocessing
+from glob import glob
 import sys
+import os
 import time
 
 sys.path.append('../lib')
-from zonal_statistics_worker import _get_stats
+from raster_stats import raster_stats
+from utils import timing, progress
 
 
-def zonal_stats(vector_path, raster_path, prefix='_', statistics=['mean', 'med', 'mad', 'std', 'skew', 'kurt', 'iqr'],
-                items_per_chunk=32, maxtasksperchild=None, quiet=False, cutline_all_touch=False, threads='cpu'):
-    vector_datasource = ogr.Open(vector_path, 1)
+def zonal_stats(task):
+    raster_path = task['raster_path']
+    vector_path = task['vector_path']
+    statistics = task['statistics']
+    prefix = task['prefix']
+    cutline_all_touch = task['cutline_all_touch']
+    vect_key = task['vect_key']
+    fix_geom = task['fix_geom']
+
+    raster_datasource = gdal.Open(raster_path, GA_ReadOnly)
+
+    vector_datasource = ogr.Open(vector_path, 0)
     vector_layer = vector_datasource.GetLayer(0)
-    total_features = vector_layer.GetFeatureCount()
 
+    vector_driver = ogr.GetDriverByName('ESRI Shapefile')
+    vector_projection = osr.SpatialReference()
+    vector_projection.ImportFromWkt(str(vector_layer.GetSpatialRef()))
+    vector_feature_count = vector_layer.GetFeatureCount()
     vector_field_names = [field.name for field in vector_layer.schema]
 
+    if vect_key is None:
+        vect_key = 'fid'
+    else:
+        if vect_key not in vector_field_names:
+            raise RuntimeError('Key not in shapefile.') from None
+
+    csv_lines = ''
+
+    calculated_features = 0
+    for fid in range(vector_feature_count):
+        progress(calculated_features, vector_feature_count)
+
+        vector_feature = vector_layer.GetNextFeature()
+        temp_vector_dataSource = vector_driver.CreateDataSource(f'/vsimem/temp_vector_{fid}.shp')
+        temp_vector_layer = temp_vector_dataSource.CreateLayer('temp_polygon', vector_projection, ogr.wkbPolygon)
+        vector_geometry = vector_feature.GetGeometryRef()
+        if vect_key is 'fid':
+            feature_key_value = fid
+        else:
+            feature_key_value = vector_feature.GetField(vect_key)
+
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+
+        if fix_geom is True:
+            if vector_geometry.IsValid():
+                temp_vector_layer.CreateFeature(vector_feature.Clone())
+            else:
+                vector_feature_fixed = ogr.Feature(temp_vector_layer.GetLayerDefn())
+                vector_feature_fixed.SetGeometry(vector_geometry.Buffer(0))
+                temp_vector_layer.CreateFeature(vector_feature_fixed)
+        else:
+            temp_vector_layer.CreateFeature(vector_feature.Clone())
+
+        gdal.PopErrorHandler()
+
+        temp_vector_layer.SyncToDisk()
+
+        stats = raster_stats(
+            raster_datasource,
+            cutline=f'/vsimem/temp_vector_{fid}.shp',
+            cutline_all_touch=cutline_all_touch,
+            quiet=True,
+            statistics=statistics,
+        )
+
+        csv_lines += f'{feature_key_value},' + ','.join(str(x) for x in stats.values()) + '\n'
+
+        calculated_features += 1
+
     # Create temp csv-file
-    raster_folder = raster_path.rsplit('\\', 1)[0]
-    raster_name = raster_path.rsplit('\\', 1)[1].rsplit('.', 1)[0]
-    csv_path = raster_folder + '\\' + raster_name + '_' + str(uuid.uuid4()) + '.csv'
+    vector_folder = vector_path.rsplit('\\', 1)[0]
+    vector_name = vector_path.rsplit('\\', 1)[1].rsplit('.', 1)[0]
+    csv_path = vector_folder + '\\' + vector_name + '_' + prefix[:-1] + '.csv'
     csv = open(csv_path, 'a')
-    csv.write(f'fid,{prefix}{f",{prefix}".join(statistics)}\n')  # Write the header
+    csv.write(f'{vect_key},{prefix}{f",{prefix}".join(statistics)}\n')  # Write the header
+    csv.write(csv_lines)
     csv.close()
 
-    all_features = np.array_split(
-        list(range(total_features)),
-        int(total_features / items_per_chunk)
-    )
-
-    if threads is 'cpu':
-        cpus = int(multiprocessing.cpu_count())
-    else:
-        cpus = int(threads)
-
-    ranges = []
-    for num in range(len(all_features)):
-        ranges.append({
-            'vector_path': vector_path,
-            'raster_path': raster_path,
-            'csv_path': csv_path,
-            'statistics': statistics,
-            'fids': all_features[num],
-            'cutline_all_touch': cutline_all_touch,
-        })
-
-    if maxtasksperchild is None:
-        pool = multiprocessing.Pool(cpus, maxtasksperchild=int(len(all_features) / 32))
-    else:
-        pool = multiprocessing.Pool(cpus, maxtasksperchild=maxtasksperchild)
-
-    composite_parts = pool.map(_get_stats, ranges, chunksize=1)
-
-    pool.close()
-
-    pool.join()
-
+    print('Finished: ', prefix)
     return None
 
 
 if __name__ == '__main__':
-    vect = 'E:\\SATF\\phase_II_urban-seperation\\segmentation_zonal.gpkg'
-    rasters = glob('E:\\SATF\\data\\*tif')
-
     before = time.time()
 
-    for index, raster in enumerate(rasters):
-        zonal_stats(vect, raster, prefix=f'{index}_')
+    vect = 'E:\\SATF\\phase_IV_urban-classification\\urban_classification_zonal.gpkg'
+    vect_key = 'DN'
 
-    after = time.time()
-    dif = after - before
-    hours = int(dif / 3600)
-    minutes = int((dif % 3600) / 60)
-    seconds = "{0:.2f}".format(dif % 60)
-    print(f"Zonal_stats took: {hours}h {minutes}m {seconds}s")
+    statistics = ['mean', 'med', 'mad', 'std', 'skew', 'kurt', 'iqr']
+
+    rasters = glob('E:\\SATF\\data\\s2\\*.tif')
+    tasks = []
+
+    for index, raster in enumerate(rasters):
+        tasks.append(
+            {'vect_key': vect_key, 'vector_path': vect, 'raster_path': raster, 'prefix': f'{index}_', 'statistics': statistics, 'cutline_all_touch': False, 'fix_geom': False},
+        )
+
+    pool = multiprocessing.Pool(len(rasters), maxtasksperchild=1)
+    pool.map(zonal_stats, tasks, chunksize=1)
+
+    pool.close()
+    pool.join()
+
+    timing(before)

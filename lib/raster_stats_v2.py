@@ -1,155 +1,216 @@
 import numpy as np
-from scipy.stats import stats
+import numba
 from raster_to_array import raster_to_array
+from numba import jit
 
 
-def _calc_stats(data, statistics):
-    calculated_names = np.array([], dtype=str)
-    calculated_values = np.array([], dtype=float)
+@numba.jit(nopython=True, parallel=True, fastmath=True)
+def calc_stats(data, translated_statistics):
+    calc_value = np.zeros(20, dtype=np.float64)
+    calc_names = np.zeros(20, dtype=np.int8)
 
-    for stat_type in statistics:
-        if stat_type == 'min':
-            calculated_names.append('min')
-            calculated_values.append(np.min(data))
+    for stat_type in translated_statistics:
+        if stat_type == 1:
+            calc_names[1] = 1
+            calc_value[1] = np.min(data)
 
-        elif stat_type == 'max':
-            calculated_names.append('max')
-            calculated_values.append(np.max(data))
+        elif stat_type == 2:
+            calc_names[2] = 1
+            calc_value[2] = np.max(data)
 
-        elif stat_type == 'count':
-            calculated_names.append('count')
-            calculated_values.append(data.size)
+        elif stat_type == 3:
+            calc_names[3] = 1
+            calc_value[3] = data.size
 
-        elif stat_type == 'range':
-            if 'min' not in calculated_names:
-                calculated_names.append('min')
-                calculated_values.append(np.min(data))
+        elif stat_type == 4:
+            if calc_names[1] is not 1:
+                calc_names[1] = 1
+                calc_value[1] = np.min(data)
 
-            if 'max' not in calculated_names:
-                calculated_names.append('max')
-                calculated_values.append(np.max(data))
+            if calc_names[2] is not 1:
+                calc_names[2] = 1
+                calc_value[2] = np.max(data)
 
-            calculated_names.append('range')
-            calculated_values.append(
-                calculated_values[calculated_names.index('max')] - calculated_values[calculated_names.index('min')]
-            )
+            calc_names[4] = 1
+            calc_value[4] = calc_value[2] - calc_value[1]
 
-        elif stat_type == 'mean':
-            calculated_names.append('mean')
-            calculated_values.append(np.mean(data))
+        elif stat_type == 5:
+            calc_names[5] = 1
+            calc_value[5] = np.mean(data)
 
-        elif stat_type == 'med':
-            calculated_names.append('med')
-            calculated_values.append(np.median(data))
+        elif stat_type == 6:
+            calc_names[6] = 1
+            calc_value[6] = np.median(data)
 
-        elif stat_type == 'std':
-            calculated_names.append('std')
-            calculated_values.append(np.std(data))
+        elif stat_type == 7:
+            calc_names[7] = 1
+            calc_value[7] = np.std(data)
 
-        elif stat_type == 'kurt':
-            calculated_names.append('kurt')
-            calculated_values.append(stats.kurtosis(data))
+        elif stat_type == 8:
+            if calc_names[5] is not 1:
+                calc_names[5] = 1
+                calc_value[5] = np.mean(data)
 
-        elif stat_type == 'skew':
-            calculated_names.append('skew')
-            calculated_values.append(stats.skew(data))
+            if calc_names[7] is not 1:
+                calc_names[7] = 1
+                calc_value[7] = np.std(data)
 
-        elif stat_type == 'npskew':
-            if 'mean' not in calculated_names:
-                calculated_names.append('mean')
-                calculated_values.append(np.mean(data))
+            dev = np.subtract(data, calc_value[5])
+            m2 = np.divide(np.power(dev, 2).sum(), data.shape[0])
+            m4 = np.divide(np.power(dev, 4).sum(), data.shape[0])
 
-            if 'med' not in calculated_names:
-                calculated_names.append('med')
-                calculated_values.append(np.median(data))
+            calc_names[8] = 1
+            calc_value[8] = (m4 / (m2 ** 2.0)) - 3.0
 
-            if 'std' not in calculated_names:
-                calculated_names.append('std')
-                calculated_values.append(np.std(data))
+        elif stat_type == 9:
+            if calc_names[5] is not 1:
+                calc_names[5] = 1
+                calc_value[5] = np.mean(data)
 
-            calculated_names.append('npskew')
-            calculated_values.append(
-                (calculated_values[calculated_names.index('mean')] - calculated_values[calculated_names.index('med')]) / calculated_values[calculated_names.index('std')]
-            )
+            if calc_names[7] is not 1:
+                calc_names[7] = 1
+                calc_value[7] = np.std(data)
 
-        elif stat_type == 'skewratio':
-            if 'mean' not in calculated_names:
-                calculated_names.append('mean')
-                calculated_values.append(np.mean(data))
+            dev = np.subtract(data, calc_value[5])
+            m2 = np.divide(np.power(dev, 2).sum(), data.shape[0])
+            m3 = np.divide(np.power(dev, 3).sum(), data.shape[0])
 
-            if 'med' not in calculated_names:
-                calculated_names.append('med')
-                calculated_values.append(np.median(data))
+            calc_names[9] = 1
+            calc_value[9] = (m3 / (m2 ** 1.5))
 
-            calculated_names.append('skewratio')
-            calculated_values.append(
-                (calculated_values[calculated_names.index('med')] / calculated_values[calculated_names.index('mean')])
-            )
+        elif stat_type == 10:
+            if calc_names[5] is not 1:
+                calc_names[5] = 1
+                calc_value[5] = np.mean(data)
 
-        elif stat_type == 'variation':
-            calculated_names.append('variation')
-            calculated_values.append(stats.variation(data))
+            if calc_names[6] is not 1:
+                calc_names[6] = 1
+                calc_value[6] = np.median(data)
 
-        elif stat_type == 'q1':
-            calculated_names.append('q1')
-            calculated_values.append(np.quantile(data, 0.25))
+            if calc_names[7] is not 1:
+                calc_names[7] = 1
+                calc_value[7] = np.std(data)
 
-        elif stat_type == 'q3':
-            calculated_names.append('q3')
-            calculated_values.append(np.quantile(data, 0.75))
+            calc_names[10] = 1
+            calc_value[10] = (calc_value[5] - calc_value[6]) / calc_value[7]
 
-        elif stat_type == 'q98':
-            calculated_names.append('q98')
-            calculated_values.append(np.quantile(data, 0.98))
+        elif stat_type == 11:
+            if calc_names[5] is not 1:
+                calc_names[5] = 1
+                calc_value[5] = np.mean(data)
 
-        elif stat_type == 'q02':
-            calculated_names.append('q02')
-            calculated_values.append(np.quantile(data, 0.02))
+            if calc_names[6] is not 1:
+                calc_names[6] = 1
+                calc_value[6] = np.median(data)
 
-        elif stat_type == 'iqr':
-            if 'q1' not in calculated_names:
-                calculated_names.append('q1')
-                calculated_values.append(np.quantile(data, 0.25))
+            calc_names[11] = 1
+            calc_value[11] = calc_value[6] / calc_value[5]
 
-            if 'q3' not in calculated_names:
-                calculated_names.append('q3')
-                calculated_values.append(np.quantile(data, 0.75))
+        elif stat_type == 12:
+            calc_names[12] = 1
+            calc_value[12] = np.var(data)
 
-            calculated_names.append('iqr')
-            calculated_values.append(
-                (calculated_values[calculated_names.index('q3')] - calculated_values[calculated_names.index('q1')])
-            )
+        elif stat_type == 13:
+            calc_names[13] = 1
+            calc_value[13] = np.quantile(data, 0.25)
 
-        elif stat_type == 'mad':
-            if 'med' not in calculated_names:
-                calculated_names.append('med')
-                calculated_values.append(np.median(data))
+        elif stat_type == 14:
+            calc_names[14] = 1
+            calc_value[14] = np.quantile(data, 0.75)
 
-            deviations = np.abs(np.subtract(calculated_values[calculated_names.index('med')], data))
+        elif stat_type == 15:
+            calc_names[15] = 1
+            calc_value[15] = np.quantile(data, 0.98)
 
-            calculated_names.append('mad')
-            calculated_values.append(np.median(deviations))
+        elif stat_type == 16:
+            calc_names[16] = 1
+            calc_value[16] = np.quantile(data, 0.02)
 
-        elif stat_type == 'madstd':
-            if 'med' not in calculated_names:
-                calculated_names.append('med')
-                calculated_values.append(np.median(data))
+        elif stat_type == 17:
+            if calc_names[13] is not 1:
+                calc_names[13] = 1
+                calc_value[13] = np.quantile(data, 0.25)
 
-            if 'mad' not in calculated_names:
-                deviations = np.abs(np.subtract(calculated_values[calculated_names.index('med')], data))
+            if calc_names[14] is not 1:
+                calc_names[14] = 1
+                calc_value[14] = np.quantile(data, 0.75)
 
-                calculated_names.append('mad')
-                calculated_values.append(np.median(deviations))
+            calc_names[17] = 1
+            calc_value[17] = calc_value[14] - calc_value[13]
 
-            calculated_names.append('madstd')
-            calculated_values.append(calculated_values[calculated_names.index('med')] * 1.4826)
+        elif stat_type == 18:
+            if calc_names[6] is not 1:
+                calc_names[6] = 1
+                calc_value[6] = np.median(data)
 
-    out_stats = np.array([], dtype=float)
+            deviations = np.abs(np.subtract(calc_value[5], data))
 
-    for index, value in enumerate(calculated_names):
-        if value in statistics:
-            out_stats.append(calculated_values[index])
+            calc_names[18] = 1
+            calc_value[18] = np.median(deviations)
+
+        elif stat_type == 19:
+            if calc_names[18] is not 1:
+                if calc_names[6] is not 1:
+                    calc_names[6] = 1
+                    calc_value[6] = np.median(data)
+
+                deviations = np.abs(np.subtract(calc_value[5], data))
+
+                calc_names[18] = 1
+                calc_value[18] = np.median(deviations)
+
+            calc_names[19] = 1
+            calc_value[19] = calc_value[18] * 1.4826
+
+    out_stats = np.empty(len(translated_statistics), dtype=np.float32)
+
+    for index, value in enumerate(translated_statistics):
+        out_stats[index] = calc_value[value]
 
     return out_stats
 
-calc_stats = np.vectorize(_calc_stats, otypes=[float])
+
+def translate_stats(statistics):
+    translated = np.array([], dtype=np.int8)
+
+    for stat in statistics:
+        if stat is 'min':
+            translated = np.append(translated, 1)
+        if stat is 'max':
+            translated = np.append(translated, 2)
+        if stat is 'count':
+            translated = np.append(translated, 3)
+        if stat is 'range':
+            translated = np.append(translated, 4)
+        if stat is 'mean':
+            translated = np.append(translated, 5)
+        if stat is 'med':
+            translated = np.append(translated, 6)
+        if stat is 'std':
+            translated = np.append(translated, 7)
+        if stat is 'kurt':
+            translated = np.append(translated, 8)
+        if stat is 'skew':
+            translated = np.append(translated, 9)
+        if stat is 'npskew':
+            translated = np.append(translated, 10)
+        if stat is 'skewratio':
+            translated = np.append(translated, 11)
+        if stat is 'var':
+            translated = np.append(translated, 12)
+        if stat is 'q1':
+            translated = np.append(translated, 13)
+        if stat is 'q3':
+            translated = np.append(translated, 14)
+        if stat is 'q98':
+            translated = np.append(translated, 15)
+        if stat is 'q02':
+            translated = np.append(translated, 16)
+        if stat is 'iqr':
+            translated = np.append(translated, 17)
+        if stat is 'mad':
+            translated = np.append(translated, 18)
+        if stat is 'madstd':
+            translated = np.append(translated, 19)
+
+    return translated
