@@ -3,7 +3,7 @@ import sys
 from glob import glob
 
 from sen2mosaic.download import main, search
-from utils import get_size, divide_into_steps
+from lib.utils import get_size, divide_into_steps
 # TODO: Incorporate the vector geometry.
 # from intersects_sentinel2_tile import intersecting_tile
 

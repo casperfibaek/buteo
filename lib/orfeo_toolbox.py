@@ -3,17 +3,11 @@ import psutil
 import os
 import sys
 import time
-import json
-from utils import progress
-from raster_to_array import raster_to_array
+from lib.utils import progress
+from lib.raster_io import raster_to_array
 
 
-config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.json')
-if os.path.exists(config_path) is True:
-    config = json.load(open(config_path))
-    otb_folder = os.path.abspath(config['Orfeo-Toolbox']['path'])
-else:
-    otb_folder = os.path.abspath('../OTB/bin/')
+otb_folder = "D:\\pythonScripts\\yellow\\OTB\\bin"
 
 
 def execute_cli_function(command, name, quiet=False):

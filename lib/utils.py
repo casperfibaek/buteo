@@ -369,17 +369,9 @@ def datatype_is_float(datatype):
         return False
 
 
-# Turns zscores
-def __scale_zscores(zscore, sqrt=False, root=math.pi):
-    cdf = 1 - abs((norm.cdf(zscore) - 0.5) / 0.5)
+def scale_zscores(arr_of_zscores, sqrt=False, root=math.pi):
+    cdf = 1 - abs((norm.cdf(arr_of_zscores) - 0.5) / 0.5)
     if sqrt is True:
         return math.pow(cdf, 1 / root)
     else:
         return cdf
-
-
-_scale_zscores = np.vectorize(__scale_zscores)
-
-
-def scale_zscores(arr_of_zscores, sqrt=False, root=math.pi):
-    return _scale_zscores(arr_of_zscores, sqrt=sqrt, root=math.pi)

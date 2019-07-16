@@ -5,11 +5,9 @@ import multiprocessing
 import sys
 import os
 
-sys.path.append('../lib')
-
-from utilities import prepInfiles
-from .sen2mosaic import main
-from orfeo_toolbox import merge_rasters
+from lib.utilities import prepInfiles
+from lib.sen2mosaic import main
+from lib.orfeo_toolbox import merge_rasters
 
 
 def create_tile_mosaic(block):

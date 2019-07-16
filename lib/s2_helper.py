@@ -8,20 +8,13 @@ import numpy as np
 import numpy.ma as ma
 from pprint import pprint
 from glob import glob
-from resample import resample
-from orfeo_toolbox import pansharpen, concatenate_images, dimension_reduction, rescale, local_stats, split_images
-from raster_to_array import raster_to_array
-from array_to_raster import array_to_raster
+from lib.orfeo_toolbox import pansharpen, concatenate_images, dimension_reduction, rescale, local_stats, split_images
+from lib.raster_io import raster_to_array, array_to_raster
+from lib.resample import resample
 
 
 class Sentinel:
-    _temp_folder_dir_path = ''
-    _config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'config.json')
-    if os.path.exists(_config_path) is True:
-        _config = json.load(open(_config_path))
-        _temp_folder_dir_path = os.path.abspath(_config['DEFAULT']['temp_directory'])
-    else:
-        _temp_folder_dir_path = os.path.abspath('./temp/')
+    _temp_folder_dir_path = os.path.abspath('./temp/')
 
     s2_spectral_profile = {
         'B04': {
@@ -450,6 +443,3 @@ class Sentinel:
             shutil.rmtree(temp_dir)
             print(f'execution took: {round(time.time() - before, 2)}s')
 
-if __name__ == "__main__":
-    bob = Sentinel('D:\\pythonScripts\\yellow\\raster\\S2A_MSIL2A_20180727T104021_N0208_R008_T32VNJ_20180727T134459.SAFE')
-    bob.texture_variance()

@@ -1,24 +1,24 @@
-import multiprocessing
 import sys
 import numpy as np
-import numpy.ma as ma
-import numba
+from numpy import ma
 from time import time
-from glob import glob
 from osgeo import ogr, gdal, osr
-from numba import jit
-
-sys.path.append('../lib')
-from raster_stats_v2 import calc_stats, translate_stats
-from utils import progress
+from lib.raster_stats import calc_stats, translate_stats
+from lib.utils import progress
 
 
-@numba.jit(nopython=True, fastmath=True)
 def calc_ipq(area, perimeter):
-    return (4 * np.pi * area) / perimeter ** 2
+    with np.errstate(divide='ignore', invalid='ignore'):
+        return (4 * np.pi * area) / perimeter ** 2
 
 
-@numba.jit(nopython=True, fastmath=True)
+def overlap_size_calc(extent, raster_transform):
+    return np.array([
+        (extent[1] - extent[0]) / raster_transform[1],
+        (extent[3] - extent[2]) / abs(raster_transform[5]),
+    ], dtype=np.int32)
+
+
 def align_extent(raster_transform, vector_extent, raster_size):
     pixel_width = abs(raster_transform[1])
     pixel_height = abs(raster_transform[5])
@@ -64,7 +64,6 @@ def align_extent(raster_transform, vector_extent, raster_size):
     return new_vector_extent, rasterized_size, offset
 
 
-@numba.jit(nopython=True, fastmath=True)
 def get_intersection(extent1, extent2):
     one_bottomLeftX = extent1[0]
     one_topRightX = extent1[1]
@@ -94,16 +93,13 @@ def get_intersection(extent1, extent2):
         return np.array([x_min, x_max, y_min, y_max], dtype=np.float64)
 
 
-@numba.jit(nopython=True, fastmath=True)
 def get_extent(raster_transform, raster_size):
     bottomRightX = raster_transform[0] + (raster_size[0] * raster_transform[1])
     bottomRightY = raster_transform[3] + (raster_size[1] * raster_transform[5])
 
-    # minX, maxX, minY, maxY
     return np.array([raster_transform[0], bottomRightX, bottomRightY, raster_transform[3]], dtype=np.float64)
 
 
-# vect_extent = (minX, maxX, minY, maxY)
 def rasterize_vector(vector, extent, raster_size, projection, all_touch=False):
 
     # Create destination dataframe
@@ -133,15 +129,7 @@ def crop_raster(raster_band, rasterized_size, offset):
     return raster_band.ReadAsArray(int(offset[0]), int(offset[1]), int(rasterized_size[0]), int(rasterized_size[1]))
 
 
-@numba.jit(nopython=True, fastmath=True)
-def overlap_size_calc(extent, raster_transform):
-    return np.array([
-        (extent[1] - extent[0]) / raster_transform[1],
-        (extent[3] - extent[2]) / abs(raster_transform[5]),
-    ], dtype=np.int32)
-
-
-def zonal_rasterize(vector, rast, prefix='', shape_attributes=True, stats=['mean', 'med', 'std']):
+def calc_zonal(vect, rast, prefix='', shape_attributes=True, stats=['mean', 'med', 'std']):
     # Translate stats to integers
     stats_translated = translate_stats(stats)
 
@@ -186,6 +174,8 @@ def zonal_rasterize(vector, rast, prefix='', shape_attributes=True, stats=['mean
     overlap_size = overlap_size_calc(overlap_aligned_extent, raster_transform)
 
     raster_data = crop_raster(raster_band, overlap_aligned_rasterized_size, overlap_aligned_offset)
+
+    vector_layer.StartTransaction()
 
     # Create fields
     vector_layer_defn = vector_layer.GetLayerDefn()
@@ -256,28 +246,4 @@ def zonal_rasterize(vector, rast, prefix='', shape_attributes=True, stats=['mean
 
         progress(n, vector_feature_count, name='zonal_statistics')
 
-    vector_layer.SyncToDisk()
-
-
-if __name__ == '__main__':
-    vect = 'C:\\Users\\CFI\\Desktop\\scratch_pad\\urban_classification_zonal.shp'
-    rast = 'C:\\Users\\CFI\\Desktop\\scratch_pad\\dry_b04.tif'
-    # vect = 'E:\\SATF\\phase_IV_urban-classification\\urban_classification_zonal.shp'
-    # rast = glob('E:\\SATF\\data\\s2\\*tif')
-
-    before = time()
-
-    zonal_rasterize(vect, rast, prefix='t_', stats=['mean', 'med', 'mad', 'std', 'kurt', 'skew', 'iqr'])
-
-    # for i, r in enumerate(rast):
-    #     zonal_rasterize(vect, r, prefix=f'{i}_', stats=['mean', 'med', 'mad', 'std', 'kurt', 'skew', 'iqr'])
-
-    after = time()
-    dif = after - before
-    hours = int(dif / 3600)
-    minutes = int((dif % 3600) / 60)
-    seconds = "{0:.2f}".format(dif % 60)
-    print(f"Zonal_stats took: {hours}h {minutes}m {seconds}s")
-
-    # zonal_rasterize(vect, rast, stats=['mean', 'med', 'mad', 'std', 'kurt', 'skew', 'iqr'])
-    # zonal_rasterize(vect, rast)
+    vector_layer.CommitTransaction()

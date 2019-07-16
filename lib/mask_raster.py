@@ -1,9 +1,8 @@
 import numpy as np
 import numpy.ma as ma
-from raster_to_array import raster_to_array
-from array_to_raster import array_to_raster
-from resample import resample
-from utils import numpy_fill_values
+from lib.raster_io import raster_to_array, array_to_raster
+from lib.resample import resample
+from lib.utils import numpy_fill_values
 
 
 def mask_raster(in_raster, mask_raster, out_raster, nodata=[0, 1, 9, 11]):
@@ -23,4 +22,4 @@ def mask_raster(in_raster, mask_raster, out_raster, nodata=[0, 1, 9, 11]):
 
     array_to_raster(in_arr, referenceRaster=in_raster, outRaster=out_raster)
 
-    return
+    return out_raster

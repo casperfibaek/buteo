@@ -1,202 +1,217 @@
 import numpy as np
-from scipy.stats import stats
-from raster_to_array import raster_to_array
+from lib.raster_io import raster_to_array
 
 
-def calc_stats(data, statistics):
-    holder = {}
+def calc_stats(data, translated_statistics):
+    calc_value = np.zeros(20, dtype=np.float64)
+    calc_names = np.zeros(20, dtype=np.int8)
 
-    for statType in statistics:
-        if statType == 'min':
-            holder['min'] = np.min(data)
+    for stat_type in translated_statistics:
+        if stat_type == 1:
+            calc_names[1] = 1
+            calc_value[1] = np.min(data)
 
-        elif statType == 'max':
-            holder['max'] = np.max(data)
+        elif stat_type == 2:
+            calc_names[2] = 1
+            calc_value[2] = np.max(data)
 
-        elif statType == 'count':
-            holder['count'] = len(data)
+        elif stat_type == 3:
+            calc_names[3] = 1
+            calc_value[3] = data.size
 
-        elif statType == 'range':
-            holder['min'] = np.min(data) if holder.get('min') is None else holder['min']
-            holder['max'] = np.max(data) if holder.get('max') is None else holder['max']
-            holder['range'] = holder['max'] - holder['min']
+        elif stat_type == 4:
+            if calc_names[1] is not 1:
+                calc_names[1] = 1
+                calc_value[1] = np.min(data)
 
-        elif statType == 'mean':
-            holder['mean'] = np.mean(data)
+            if calc_names[2] is not 1:
+                calc_names[2] = 1
+                calc_value[2] = np.max(data)
 
-        elif statType == 'med':
-            holder['med'] = np.median(data)
+            calc_names[4] = 1
+            calc_value[4] = calc_value[2] - calc_value[1]
 
-        elif statType == 'std':
-            holder['std'] = np.std(data)
+        elif stat_type == 5:
+            calc_names[5] = 1
+            calc_value[5] = np.mean(data)
 
-        elif statType == 'kurt':
-            holder['kurt'] = stats.kurtosis(data)
+        elif stat_type == 6:
+            calc_names[6] = 1
+            calc_value[6] = np.median(data)
 
-        elif statType == 'skew':
-            holder['skew'] = stats.skew(data)
+        elif stat_type == 7:
+            calc_names[7] = 1
+            calc_value[7] = np.std(data)
 
-        elif statType == 'npskew':
-            holder['mean'] = np.mean(data) if holder.get('mean') is None else holder['mean']
-            holder['med'] = np.median(data) if holder.get('med') is None else holder['med']
-            holder['std'] = np.std(data) if holder.get('std') is None else holder['std']
+        elif stat_type == 8:
+            if calc_names[5] is not 1:
+                calc_names[5] = 1
+                calc_value[5] = np.mean(data)
 
-            holder['npskew'] = (holder['mean'] - holder['med']) / holder['std']
+            if calc_names[7] is not 1:
+                calc_names[7] = 1
+                calc_value[7] = np.std(data)
 
-        elif statType == 'skewratio':
-            holder['mean'] = np.mean(data) if holder.get('mean') is None else holder['mean']
-            holder['med'] = np.median(data) if holder.get('med') is None else holder['med']
+            with np.errstate(divide='ignore', invalid='ignore'):
+                dev = np.subtract(data, calc_value[5])
+                m2 = np.divide(np.power(dev, 2).sum(), data.shape[0])
+                m4 = np.divide(np.power(dev, 4).sum(), data.shape[0])
 
-            holder['skewratio'] = holder['med'] / holder['mean']
+                calc_names[8] = 1
+                calc_value[8] = (m4 / (m2 ** 2.0)) - 3.0
 
-        elif statType == 'variation':
-            holder['variation'] = stats.variation(data)
+        elif stat_type == 9:
+            if calc_names[5] is not 1:
+                calc_names[5] = 1
+                calc_value[5] = np.mean(data)
 
-        elif statType == 'q1':
-            holder['q1'] = np.quantile(data, 0.25)
+            if calc_names[7] is not 1:
+                calc_names[7] = 1
+                calc_value[7] = np.std(data)
 
-        elif statType == 'q3':
-            holder['q3'] = np.quantile(data, 0.75)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                dev = np.subtract(data, calc_value[5])
+                m2 = np.divide(np.power(dev, 2).sum(), data.shape[0])
+                m3 = np.divide(np.power(dev, 3).sum(), data.shape[0])
 
-        elif statType == 'q98':
-            holder['q98'] = np.quantile(data, 0.98)
+                calc_names[9] = 1
+                calc_value[9] = (m3 / (m2 ** 1.5))
 
-        elif statType == 'q02':
-            holder['q02'] = np.quantile(data, 0.02)
+        elif stat_type == 10:
+            if calc_names[5] is not 1:
+                calc_names[5] = 1
+                calc_value[5] = np.mean(data)
 
-        elif statType == 'iqr':
-            holder['q1'] = np.quantile(data, 0.25) if holder.get('q1') is None else holder['q1']
-            holder['q3'] = np.quantile(data, 0.75) if holder.get('q3') is None else holder['q3']
+            if calc_names[6] is not 1:
+                calc_names[6] = 1
+                calc_value[6] = np.median(data)
 
-            holder['iqr'] = holder['q3'] - holder['q1']
+            if calc_names[7] is not 1:
+                calc_names[7] = 1
+                calc_value[7] = np.std(data)
 
-        elif statType == 'mad':
-            holder['med'] = np.median(data) if holder.get('med') is None else holder['med']
+            with np.errstate(divide='ignore', invalid='ignore'):
+                calc_names[10] = 1
+                calc_value[10] = (calc_value[5] - calc_value[6]) / calc_value[7]
 
-            deviations = np.abs(np.subtract(holder['med'], data))
-            holder['mad'] = np.median(deviations)
+        elif stat_type == 11:
+            if calc_names[5] is not 1:
+                calc_names[5] = 1
+                calc_value[5] = np.mean(data)
 
-        elif statType == 'madstd':
-            holder['med'] = np.median(data) if holder.get('med') is None else holder['med']
-            if holder.get('mad') is None:
-                deviations = np.abs(np.subtract(holder['med'], data))
-                holder['mad'] = np.median(deviations)
+            if calc_names[6] is not 1:
+                calc_names[6] = 1
+                calc_value[6] = np.median(data)
 
-            holder['madstd'] = holder['mad'] * 1.4826
+            with np.errstate(divide='ignore', invalid='ignore'):
+                calc_names[11] = 1
+                calc_value[11] = calc_value[6] / calc_value[5]
 
-        elif statType == 'within3std':
-            holder['count'] = len(data) if holder.get('count') is None else holder['count']
-            holder['mean'] = np.mean(data) if holder.get('mean') is None else holder['mean']
-            holder['std'] = np.std(data) if holder.get('std') is None else holder['std']
+        elif stat_type == 12:
+            calc_names[12] = 1
+            calc_value[12] = np.var(data)
 
-            _std3 = holder['std'] * 3
-            lowerbound = holder['mean'] - _std3
-            higherbound = holder['mean'] + _std3
+        elif stat_type == 13:
+            calc_names[13] = 1
+            calc_value[13] = np.quantile(data, 0.25)
 
-            limit = holder['count'] - len(data[(data > lowerbound) & (data < higherbound)])
+        elif stat_type == 14:
+            calc_names[14] = 1
+            calc_value[14] = np.quantile(data, 0.75)
 
-            holder['within3std'] = 100 - ((limit / holder['count']) * 100)
+        elif stat_type == 15:
+            calc_names[15] = 1
+            calc_value[15] = np.quantile(data, 0.98)
 
-        elif statType == 'within3std_mad':
-            holder['count'] = len(data) if holder.get('count') is None else holder['count']
-            holder['med'] = np.median(data) if holder.get('med') is None else holder['med']
-            if holder['mad'] == 0:
-                deviations = np.abs(np.subtract(holder['med'], data))
-                holder['mad'] = np.median(deviations)
-                holder['madstd'] = holder['mad'] * 1.4826
+        elif stat_type == 16:
+            calc_names[16] = 1
+            calc_value[16] = np.quantile(data, 0.02)
 
-            _std3 = holder['madstd'] * 3
-            lowerbound = holder['med'] - _std3
-            higherbound = holder['med'] + _std3
+        elif stat_type == 17:
+            if calc_names[13] is not 1:
+                calc_names[13] = 1
+                calc_value[13] = np.quantile(data, 0.25)
 
-            limit = holder['count'] - len(data[(data > lowerbound) & (data < higherbound)])
+            if calc_names[14] is not 1:
+                calc_names[14] = 1
+                calc_value[14] = np.quantile(data, 0.75)
 
-            holder['within3std_mad'] = 100 - ((limit / holder['count']) * 100)
+            calc_names[17] = 1
+            calc_value[17] = calc_value[14] - calc_value[13]
 
-    out_stats = {}
+        elif stat_type == 18:
+            if calc_names[6] is not 1:
+                calc_names[6] = 1
+                calc_value[6] = np.median(data)
 
-    for key in holder:
-        if key in statistics:
-            out_stats[key] = holder[key]
+            deviations = np.abs(np.subtract(calc_value[5], data))
+
+            calc_names[18] = 1
+            calc_value[18] = np.median(deviations)
+
+        elif stat_type == 19:
+            if calc_names[18] is not 1:
+                if calc_names[6] is not 1:
+                    calc_names[6] = 1
+                    calc_value[6] = np.median(data)
+
+                deviations = np.abs(np.subtract(calc_value[5], data))
+
+                calc_names[18] = 1
+                calc_value[18] = np.median(deviations)
+
+            calc_names[19] = 1
+            calc_value[19] = calc_value[18] * 1.4826
+
+    out_stats = np.empty(len(translated_statistics), dtype=np.float32)
+
+    for index, value in enumerate(translated_statistics):
+        out_stats[index] = calc_value[value]
 
     return out_stats
 
 
-def raster_stats(in_raster, cutline=None, cutline_all_touch=True, cutlineWhere=None,
-                 reference_raster=None, src_nodata=None, quiet=False,
-                 band_to_clip=1, statistics=['mean', 'med', 'std']):
-    ''' Calculates the statistics of a raster layer. A refererence
-    raster or a cutline geometry can be provided to narrow down the
-    features for which the statistics are calculated.
+def translate_stats(statistics):
+    translated = np.array([], dtype=np.int8)
 
-    Args:
-        in_raster (URL or GDAL.DataFrame): The raster to clip.
+    for stat in statistics:
+        if stat is 'min':
+            translated = np.append(translated, 1)
+        if stat is 'max':
+            translated = np.append(translated, 2)
+        if stat is 'count':
+            translated = np.append(translated, 3)
+        if stat is 'range':
+            translated = np.append(translated, 4)
+        if stat is 'mean':
+            translated = np.append(translated, 5)
+        if stat is 'med':
+            translated = np.append(translated, 6)
+        if stat is 'std':
+            translated = np.append(translated, 7)
+        if stat is 'kurt':
+            translated = np.append(translated, 8)
+        if stat is 'skew':
+            translated = np.append(translated, 9)
+        if stat is 'npskew':
+            translated = np.append(translated, 10)
+        if stat is 'skewratio':
+            translated = np.append(translated, 11)
+        if stat is 'var':
+            translated = np.append(translated, 12)
+        if stat is 'q1':
+            translated = np.append(translated, 13)
+        if stat is 'q3':
+            translated = np.append(translated, 14)
+        if stat is 'q98':
+            translated = np.append(translated, 15)
+        if stat is 'q02':
+            translated = np.append(translated, 16)
+        if stat is 'iqr':
+            translated = np.append(translated, 17)
+        if stat is 'mad':
+            translated = np.append(translated, 18)
+        if stat is 'madstd':
+            translated = np.append(translated, 19)
 
-    **kwargs:
-        cutline (URL or OGR.DataFrame): A geometry used to cut
-        the in_raster.
-
-        cutline_all_touch (Bool): Should all pixels that touch
-        the cutline be included? False is only pixel centroids
-        that fall within the geometry.
-
-        reference_raster (URL or GDAL.DataFrame): A reference
-        raster from where to clip the extent of the in_raster.
-
-        cropToCutline (Bool): Should the output raster be
-        clipped to the extent of the cutline geometry.
-
-        src_nodata (Number): Overwrite the nodata value of
-        the source raster.
-
-        quiet (Bool): Do not show the progressbars.
-
-        band_to_clip (Bool): Specify if only a specific band in
-        the input raster should be clipped.
-
-        statistics (List): A list containing all the statistics
-        one would want to calculate. 'all' can be specified if
-        every possible statistic is needed.
-
-    Returns:
-        Returns a dictionary with the requested statistics.
-    '''
-
-    # First: Turn the raster into a numpy array on which to calculate
-    #        the statistics
-    data = raster_to_array(
-        in_raster,
-        reference_raster=reference_raster,
-        cutline=cutline,
-        cutline_all_touch=cutline_all_touch,
-        crop_to_cutline=True,
-        cutlineWhere=None,
-        compressed=True,
-        src_nodata=src_nodata,
-        band_to_clip=band_to_clip,
-        quiet=quiet,
-        calc_band_stats=False,
-        align=False,
-    )
-
-    # If all types of statistics are requested insert all possible statistics
-    # below. BEWARE: Slow..
-    if statistics == 'all':
-        if data is False:  # False if no intersection with Cutline.
-            stats = {el: None for el in statistics}
-        else:
-            stats = calc_stats(data, ['min', 'max', 'count', 'range', 'mean', 'med',
-                                      'std', 'kurt', 'skew', 'npskew', 'skewratio',
-                                      'variation', 'q1', 'q3', 'iqr', 'mad', 'madstd',
-                                      'with3std', 'within3st_mad'])
-        data = None
-        return stats
-    else:
-        if data is False:  # False if no intersection with Cutline.
-            stats = {el: None for el in statistics}
-        else:
-            stats = calc_stats(data, statistics)
-
-        data = None
-
-        return stats
+    return translated
