@@ -2,7 +2,7 @@ import numpy as np
 from skimage.util.shape import view_as_windows
 from skimage.util import pad
 from osgeo import gdal
-from lib.raster_io import raster_to_array, array_to_raster
+from raster_io import raster_to_array, array_to_raster
 
 
 def local_statistics2(in_raster, stat='median', out_raster=None, radius=1):

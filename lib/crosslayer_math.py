@@ -2,8 +2,8 @@ import sys
 import os
 import numpy as np
 from glob import glob
-from lib.raster_io import raster_to_array, array_to_raster
-from lib.clip_raster import clip_raster
+from raster_io import raster_to_array, array_to_raster
+from clip_raster import clip_raster
 
 
 def layers_math(arr_of_rasters, out_raster, method='median'):

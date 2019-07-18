@@ -3,8 +3,8 @@ import psutil
 import os
 import sys
 import time
-from lib.utils import progress
-from lib.raster_io import raster_to_array
+from utils import progress
+from raster_io import raster_to_array
 
 
 otb_folder = "D:\\pythonScripts\\yellow\\OTB\\bin"

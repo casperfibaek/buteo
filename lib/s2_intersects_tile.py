@@ -1,7 +1,7 @@
 import sys
 import geopandas as gp
 from geopandas.tools import sjoin
-from lib.utils import divide_steps
+from utils import divide_steps
 
 
 def intersecting_tile(shape):

@@ -9,10 +9,9 @@ sys.path.append('../lib')
 # from tools import wrapData
 
 # from zscores import calc_zscores
-from local_statistics import local_statistics2
+from lib.local_statistics import local_statistics2
 # from crosslayer_math import layers_math
-from array_to_raster import array_to_raster
-from raster_to_array import raster_to_array
+from lib.raster_io import array_to_raster, raster_to_array
 
 # before1 = time()
 # i1, i2 = GEFolki(raster_to_array('E:\\SATF\\data\\folki_test\\dry_b04_test.tif'), raster_to_array('E:\\SATF\\data\\folki_test\\coh_gauss_test.tif'))

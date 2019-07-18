@@ -1,6 +1,6 @@
 import numpy as np
-from lib.raster_io import raster_to_array, array_to_raster
-from lib.raster_stats import raster_stats
+from raster_io import raster_to_array, array_to_raster
+from raster_stats import raster_stats
 
 
 def calc_zscores(layer, out_raster=None, vector=None, mad=False):

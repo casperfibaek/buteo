@@ -3,8 +3,9 @@ import numpy as np
 import numpy.ma as ma
 from osgeo import gdal, osr
 
-from .utils import numpy_to_gdal_datatype, datatype_is_float, progress_callback_quiet, progress_callback
-from .clip_raster import clip_raster
+from utils import *
+# from utils import numpy_to_gdal_datatype, datatype_is_float, progress_callback_quiet, progress_callback, numpy_fill_values
+from clip_raster import clip_raster
 
 
 def array_to_raster(array, out_raster=None, reference_raster=None, output_format='MEM',
@@ -227,7 +228,7 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
         progressbar = progress_callback_quiet
         if quiet is False:
             print(f"Warping input array:")
-            progressbar = progress_callback
+            # progressbar = create_progress_callback
 
         gdal.PushErrorHandler('CPLQuietErrorHandler')
 

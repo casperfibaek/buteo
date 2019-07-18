@@ -5,9 +5,9 @@ import multiprocessing
 import sys
 import os
 
-from lib.utilities import prepInfiles
-from lib.sen2mosaic import main
-from lib.orfeo_toolbox import merge_rasters
+from ..sen2mosaic.mosaic import main
+from ..sen2mosaic.utilities import prepInfiles
+from orfeo_toolbox import merge_rasters
 
 
 def create_tile_mosaic(block):

@@ -1,5 +1,5 @@
 import numpy as np
-from lib.raster_io import raster_to_array
+from raster_io import raster_to_array
 
 
 def calc_stats(data, translated_statistics):

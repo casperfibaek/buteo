@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from lib.raster_io import raster_to_array, array_to_raster
+from raster_io import raster_to_array, array_to_raster
 
 
 def standardize(in_raster, out_raster, method='std'):

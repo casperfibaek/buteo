@@ -2,7 +2,7 @@ import os
 import numpy as np
 import numpy.ma as ma
 from osgeo import gdal, ogr, osr
-from lib.utils import get_extent, translate_max_values, create_subset_dataframe, create_geotransform, get_intersection, progress_callback_quiet, create_progress_callback
+from utils import get_extent, translate_max_values, create_subset_dataframe, create_geotransform, get_intersection, progress_callback_quiet, create_progress_callback
 
 
 def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,

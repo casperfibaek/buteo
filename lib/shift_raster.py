@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.ma as ma
 from osgeo import gdal
-from lib.raster_io import raster_to_array, array_to_raster
+from raster_io import raster_to_array, array_to_raster
 
 
 def shift_raster(in_raster, out_raster, x, y):

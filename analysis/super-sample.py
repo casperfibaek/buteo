@@ -3,9 +3,7 @@ import os
 import numpy as np
 import time
 from glob import glob
-
-sys.path.append('../lib')
-from sentinel_super_sample import super_sample_s2
+from .lib.sentinel_super_sample import super_sample_s2
 
 before = time.time()
 

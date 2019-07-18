@@ -3,8 +3,8 @@ import numpy as np
 from numpy import ma
 from time import time
 from osgeo import ogr, gdal, osr
-from lib.raster_stats import calc_stats, translate_stats
-from lib.utils import progress
+from raster_stats import calc_stats, translate_stats
+from utils import progress
 
 
 def calc_ipq(area, perimeter):

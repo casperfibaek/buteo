@@ -6,17 +6,14 @@ sys.path.append('../lib')
 from zonal_statistics import calc_zonal
 
 
-zones = 'C:\\Users\\CFI\\Desktop\\scratch_pad\\urban_classification_zonal.shp'
-rasters = glob('E:\\SATF\\phase_II_urban-seperation\\data\\*.tif')
+zones = 'E:\\SATF\\phase_IV_urban-classification\\urban_segmentation.shp'
+rasters = glob('E:\\SATF\\phase_IV_urban-classification\\data\\*.tif')
 
 
 before = time()
 
-calc_zonal(zones, rasters[0], prefix=f't_', stats=['mean', 'med', 'mad', 'std', 'kurt', 'skew', 'iqr'], shape_attributes=True)
-
-# for i, r in enumerate(rasters):
-#     print(i, r)
-# calc_zonal(zones, r, prefix=f'{i}_', stats=['mean', 'med', 'mad', 'std', 'kurt', 'skew', 'iqr'], shape_attributes=True)
+for i, r in enumerate(rasters):
+    calc_zonal(zones, r, prefix=f'{i}_', stats=['mean', 'med', 'mad', 'std', 'kurt', 'skew', 'iqr'], shape_attributes=True)
 
 after = time()
 dif = after - before

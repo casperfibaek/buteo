@@ -8,9 +8,9 @@ import numpy as np
 import numpy.ma as ma
 from pprint import pprint
 from glob import glob
-from lib.orfeo_toolbox import pansharpen, concatenate_images, dimension_reduction, rescale, local_stats, split_images
-from lib.raster_io import raster_to_array, array_to_raster
-from lib.resample import resample
+from orfeo_toolbox import pansharpen, concatenate_images, dimension_reduction, rescale, local_stats, split_images
+from raster_io import raster_to_array, array_to_raster
+from resample import resample
 
 
 class Sentinel:

@@ -3,10 +3,10 @@ import uuid
 import shutil
 import numpy as np
 
-from lib.raster_io import raster_to_array, array_to_raster
-from lib.resample import resample
-from lib.orfeo_toolbox import pansharpen
-from lib.mask_raster import mask_raster as mask_raster_func
+from raster_io import raster_to_array, array_to_raster
+from resample import resample
+from orfeo_toolbox import pansharpen
+from mask_raster import mask_raster as mask_raster_func
 
 
 def super_sample_s2(B4, B8, B5=None, B6=None, B7=None, B8A=None,
