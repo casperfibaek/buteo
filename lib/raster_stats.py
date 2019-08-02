@@ -57,8 +57,14 @@ def calc_stats(data, translated_statistics):
                 m2 = np.divide(np.power(dev, 2).sum(), data.shape[0])
                 m4 = np.divide(np.power(dev, 4).sum(), data.shape[0])
 
+                denom = m2 ** 2.0
+
                 calc_names[8] = 1
-                calc_value[8] = (m4 / (m2 ** 2.0)) - 3.0
+
+                if denom == 0:
+                    calc_value[8] = 0
+                else:
+                    calc_value[8] = (m4 / denom) - 3.0
 
         elif stat_type == 9:
             if calc_names[5] is not 1:
@@ -74,8 +80,14 @@ def calc_stats(data, translated_statistics):
                 m2 = np.divide(np.power(dev, 2).sum(), data.shape[0])
                 m3 = np.divide(np.power(dev, 3).sum(), data.shape[0])
 
+                denom = m2 ** 1.5
+
                 calc_names[9] = 1
-                calc_value[9] = (m3 / (m2 ** 1.5))
+
+                if denom == 0:
+                    calc_value[9] = 0
+                else:
+                    calc_value[9] = (m3 / denom)
 
         elif stat_type == 10:
             if calc_names[5] is not 1:
@@ -92,7 +104,10 @@ def calc_stats(data, translated_statistics):
 
             with np.errstate(divide='ignore', invalid='ignore'):
                 calc_names[10] = 1
-                calc_value[10] = (calc_value[5] - calc_value[6]) / calc_value[7]
+                if calc_value[7] == 0:
+                    calc_value[10] = 0
+                else:
+                    calc_value[10] = (calc_value[5] - calc_value[6]) / calc_value[7]
 
         elif stat_type == 11:
             if calc_names[5] is not 1:
@@ -105,7 +120,10 @@ def calc_stats(data, translated_statistics):
 
             with np.errstate(divide='ignore', invalid='ignore'):
                 calc_names[11] = 1
-                calc_value[11] = calc_value[6] / calc_value[5]
+                if calc_value[5] == 0:
+                    calc_value[11] = 0
+                else:
+                    calc_value[11] = calc_value[6] / calc_value[5]
 
         elif stat_type == 12:
             calc_names[12] = 1

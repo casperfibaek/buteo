@@ -5,7 +5,7 @@ from osgeo import gdal
 from raster_io import raster_to_array, array_to_raster
 
 
-def local_statistics2(in_raster, stat='median', out_raster=None, radius=1):
+def local_statistics2(in_raster, stat='median', out_raster=None, radius=1, dst_nodata=False):
     '''
         Calculates the local standard deviation in a given radius. Output is a dateframe.
 
@@ -28,12 +28,18 @@ def local_statistics2(in_raster, stat='median', out_raster=None, radius=1):
 
         window = view_as_windows(padded, rad, 1)
 
+        # TODO: Add circular function
+
     if stat is 'max':
         stats = np.max(window, axis=(2, 3))
     elif stat is 'median':
         stats = np.median(window, axis=(2, 3))
+    elif stat is 'sum':
+        stats = np.sum(window, axis=(2, 3))
+    elif stat is 'mean':
+        stats = np.mean(window, axis=(2, 3))
 
     if out_raster is None:
-        return array_to_raster(stats, reference_raster=in_raster)
+        return array_to_raster(stats, reference_raster=in_raster, dst_nodata=dst_nodata)
     else:
-        return array_to_raster(stats, reference_raster=in_raster, out_raster=out_raster)
+        return array_to_raster(stats, reference_raster=in_raster, out_raster=out_raster, dst_nodata=dst_nodata)

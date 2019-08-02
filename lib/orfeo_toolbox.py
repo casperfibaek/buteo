@@ -7,7 +7,7 @@ from utils import progress
 from raster_io import raster_to_array
 
 
-otb_folder = "D:\\pythonScripts\\yellow\\OTB\\bin"
+otb_folder = "D:\\yellow\\OTB\\bin"
 
 
 def execute_cli_function(command, name, quiet=False):
@@ -360,3 +360,48 @@ def merge_rasters(in_rasters, out_raster, options=None, band=None, out_datatype=
     execute_cli_function(cli_string, name='merge rasters')
 
     return os.path.abspath(out_raster)
+
+
+def meanshift_segmentation(in_raster, out_geom, spatialr=5, ranger=15, thres=0.1, maxiter=100, minsize=100, mask=False, stitch=True, neighbor=True, vector_minsize=1, tilesize=0):
+    ''' Computes local statistical moments on every pixel
+        in the selected channel of the input image '''
+
+    cli = os.path.join(otb_folder, 'otbcli_Segmentation.bat')
+
+    options = {
+        'mode': 'vector',
+        'mode.vector.out': out_geom,
+        'mode.vector.neighbor': 'false' if neighbor is False else 'true',
+        'mode.vector.stitch': 'false' if stitch is False else 'true',
+        'mode.vector.tilesize': tilesize,
+        'mode.vector.minsize': vector_minsize,
+        'mode.vector.outmode': 'ovw',
+        'filter': 'meanshift',
+        'filter.meanshift.spatialr': spatialr,
+        'filter.meanshift.ranger': ranger,
+        'filter.meanshift.thres': thres,
+        'filter.meanshift.maxiter': maxiter,
+        'filter.meanshift.minsize': minsize,
+    }
+
+    if mask is not False:
+        options['mode.vector.inmask'] = mask
+
+    cli_args = [cli, '-in', os.path.abspath(in_raster)]
+
+    for key, value in options.items():
+        cli_args.append('-' + str(key))
+        cli_args.append(str(value))
+
+    cli_string = ' '.join(cli_args)
+
+    ''' *******************************************************
+        Make CLI request and handle responses
+    ******************************************************* '''
+
+    # print(cli_string)
+
+    execute_cli_function(cli_string, name='meanshifting')
+    # exit()
+
+    # return os.path.abspath(out_raster)

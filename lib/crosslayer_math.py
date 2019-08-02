@@ -18,10 +18,10 @@ def layers_math(arr_of_rasters, out_raster, method='median'):
         images_array = np.array(list(map(lambda x: raster_to_array(x), arr_of_rasters)))
 
     if method is 'median':
-        return array_to_raster(np.median(images_array, axis=0), out_raster=out_raster, reference_raster=images_array[0])
+        return array_to_raster(np.median(images_array, axis=0), out_raster=out_raster, reference_raster=arr_of_rasters[0])
     elif method is 'average':
-        return array_to_raster(np.average(images_array, axis=0), out_raster=out_raster, reference_raster=images_array[0])
+        return array_to_raster(np.average(images_array, axis=0), out_raster=out_raster, reference_raster=arr_of_rasters[0])
     elif method is 'max':
-        return array_to_raster(np.max(images_array, axis=0), out_raster=out_raster, reference_raster=images_array[0])
+        return array_to_raster(np.max(images_array, axis=0), out_raster=out_raster, reference_raster=arr_of_rasters[0])
     elif method is 'min':
-        return array_to_raster(np.min(images_array, axis=0), out_raster=out_raster, reference_raster=images_array[0])
+        return array_to_raster(np.min(images_array, axis=0), out_raster=out_raster, reference_raster=arr_of_rasters[0])

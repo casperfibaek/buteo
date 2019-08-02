@@ -244,6 +244,6 @@ def calc_zonal(vect, rast, prefix='', shape_attributes=True, stats=['mean', 'med
 
         vector_layer.SetFeature(vector_feature)
 
-        progress(n, vector_feature_count, name='zonal_statistics')
+        progress(n, vector_feature_count, name=prefix)
 
     vector_layer.CommitTransaction()
