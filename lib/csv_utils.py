@@ -202,10 +202,3 @@ def join_csv_to_shp(in_shp, shp_key, in_csv, csv_key, out_shp, skip_nulls=True):
                 out_vector_layer.CreateFeature(outFeature)
 
     return
-
-if __name__ == "__main__":
-    csv = 'D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\csv\\MSI_all\\S2_MSI_ALL.csv'
-    in_shp = base = 'D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\segmentation\\S2_MSI_ALL_01.shp'
-    out_shp = base = 'D:\\PhD\\Projects\\SavingsAtTheFrontiers\\pilot_analysis\\segmentation\\S2_MSI_ALL_02.shp'
-
-    join_csv_to_shp(in_shp, 'DN', csv, 'DN', out_shp)
