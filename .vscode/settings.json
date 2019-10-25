@@ -1,7 +1,7 @@
 {
-    "python.linting.pep8Enabled": true,
+    "python.linting.pycodestyleEnabled": false,
     "python.linting.enabled": true,
     "python.pythonPath": "C:\\anaconda\\envs\\geo\\python.exe",
-    "python.linting.pylintEnabled": false,
+    "python.linting.pylintEnabled": true,
     "python.formatting.provider": "black"
 }

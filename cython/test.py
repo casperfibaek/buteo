@@ -49,9 +49,6 @@ def circular_kernel_mask(width, weighted_edges=False, normalise=False, inverted=
 
 kernel = circular_kernel_mask(5, normalise=True, weighted_edges=True).astype(np.float)
 
-print(kernel)
-exit()
-
 in_raster = 'C:\\Users\\CFI\\Desktop\\surf_test\\surf_wet.tif'
 # in_raster = 'C:\\Users\\CFI\\Desktop\\surf_test\\b4_med7_absdif.tif'
 out_raster = 'C:\\Users\\CFI\\Desktop\\surf_test\\'
