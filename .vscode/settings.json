@@ -1,7 +1,7 @@
 {
     "python.linting.pycodestyleEnabled": false,
     "python.linting.enabled": true,
-    "python.pythonPath": "C:\\Program Files\\Python38\\python.exe",
+    "python.pythonPath": "C:\\ProgramData\\Anaconda3\\python.exe",
     "python.linting.pylintEnabled": true,
     "python.formatting.provider": "black"
 }
