@@ -340,25 +340,25 @@ def numpy_to_gdal_datatype(datatype):
         return gdal.GDT_Float32
 
 
-def gdal_to_numpy_datatype(datatype):
-    datatypes = {
-        3: 'int8',
-        3: 'int16',
-        5: 'int32',
-        5: 'int64',
-        1: 'uint8',
-        2: 'uint16',
-        4: 'uint32',
-        4: 'uint64',
-        6: 'float16',
-        6: 'float32',
-        7: 'float64',
-    }
+# def gdal_to_numpy_datatype(datatype):
+#     datatypes = {
+#         3: 'int8',
+#         3: 'int16',
+#         5: 'int32',
+#         5: 'int64',
+#         1: 'uint8',
+#         2: 'uint16',
+#         4: 'uint32',
+#         4: 'uint64',
+#         6: 'float16',
+#         6: 'float32',
+#         7: 'float64',
+#     }
 
-    if datatype in datatypes.keys():
-        return datatypes[datatype]
-    else:
-        return 'float64'
+#     if datatype in datatypes.keys():
+#         return datatypes[datatype]
+#     else:
+#         return 'float64'
 
 
 def datatype_is_float(datatype):

@@ -2,6 +2,7 @@ import multiprocessing
 import sys
 from glob import glob
 
+from credentials import credentials
 from sen2mosaic.download import main, search
 from utils import get_size, divide_into_steps
 # TODO: Incorporate the vector geometry.
@@ -52,7 +53,7 @@ def get_data(block):
 def download(tiles_or_geompath, start, end, out_folder, minsize=100, target_tile_size=3 * 1024):
     '''
         Downloads sentinel 2 imagery from either a geometry or a series of tiles.
-        Searches for imagery in 5% cloud intervals.
+        Searches for imagery in 3% cloud intervals.
 
         Args:
             tiles_or_geompath: path to geometry or array with tiles.
@@ -71,9 +72,9 @@ def download(tiles_or_geompath, start, end, out_folder, minsize=100, target_tile
         download(tiles, start, end, out_folder, target_tile_size=3 * 1024)
     '''
 
-    user1 = {'username': 'test', 'password': 'test'}
-    user2 = {'username': 'test', 'password': 'test'}
-    user3 = {'username': 'test', 'password': 'test'}
+    user1 = credentials["user1"]
+    user2 = credentials["user2"]
+    user3 = credentials["user3"]
     users = [user1, user1, user2, user2, user3, user3]
 
     tiles_to_download = tiles_or_geompath
@@ -90,7 +91,13 @@ def download(tiles_or_geompath, start, end, out_folder, minsize=100, target_tile
         )
 
     pool = multiprocessing.Pool(6, maxtasksperchild=1)
-    founds = pool.map(get_data, blocks, chunksize=1)
+    pool.map(get_data, blocks, chunksize=1)
 
     pool.close()
     pool.join()
+
+if __name__ == "__main__":
+    # pip install sentinelsat
+    # conda install -c conda-forge gdal
+
+    download(['32VNH', '32VNJ', '32UNG'], '20190301', '20190901', 'C:\\Users\\caspe\\Desktop\\s2_downloads')

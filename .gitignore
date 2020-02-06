@@ -123,3 +123,5 @@ __pycache__
 OTB/
 temp_
 lib/temp/
+
+lib/credentials.py
