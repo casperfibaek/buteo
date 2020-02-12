@@ -95,7 +95,7 @@ def gaussian_filter(img_arr, width=3, sigmaX=0, sigmaY=0, out_dtype=None):
     assert(isinstance(img_arr, np.ndarray))
     out_dtype = img_arr.dtype if out_dtype is None else out_dtype
 
-    kernel = cv2.getGaussianKernel(width, -1)
+    # kernel = cv2.getGaussianKernel(width, -1)
 
     return cv2.GaussianBlur(img_arr, (width, width), sigmaX, sigmaY=sigmaY).astype(out_dtype)
 
