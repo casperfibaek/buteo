@@ -5,7 +5,7 @@ from resample import resample
 from utils import numpy_fill_values
 
 
-def mask_raster(in_raster, mask_raster, out_raster, nodata=[0, 1, 9, 11]):
+def mask_raster(in_raster, mask_raster, out_raster, nodata=[0]):
     '''
         Sets multiple values in a rasters to nodata.
     '''

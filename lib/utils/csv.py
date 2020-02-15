@@ -1,5 +1,7 @@
 import csv
 import sys
+import pandas as pd
+import numpy as np
 from osgeo import gdal, ogr, osr
 from osgeo.gdalconst import *
 
@@ -202,3 +204,40 @@ def join_csv_to_shp(in_shp, shp_key, in_csv, csv_key, out_shp, skip_nulls=True):
                 out_vector_layer.CreateFeature(outFeature)
 
     return
+
+def find_feature_outliers(csv, out_csv, class_column, exclude=['fid', 'id', 'DN']):
+    # Read csv
+    df = pd.read_csv(csv)
+
+    # Create z-score column
+    df = df.assign(z_scr=pd.Series(np.zeros(len(df[class_column]))).values)
+
+    # Get unique attributes in class column
+    unique = df[class_column].unique().tolist()
+
+    # Create exclude lust
+    exclude.append(class_column)
+    exclude.append('z_scr')
+    exclude = list(set(exclude).intersection(df.columns.tolist()))
+
+    z_scores = []
+
+    # Calculate class values
+    for csv_class in unique:
+        sub_dataset = df.loc[df[class_column] == csv_class].drop(exclude, axis=1)
+
+        # Calculate the medians
+        medians = sub_dataset.median()
+
+        # Calculate the median absolute deviation
+        deviations = sub_dataset.subtract(medians)
+        abs_deviations = deviations.abs()
+        mad = abs_deviations.median()
+        mad_std = mad.apply(lambda x: x * 1.4826)
+
+        z_scores += sub_dataset.divide(mad_std).abs().mean(axis=1).tolist()
+
+    df['z_scr'] = z_scores
+    df.to_csv(out_csv)
+
+    return out_csv
