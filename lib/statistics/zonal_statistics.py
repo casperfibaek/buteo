@@ -24,7 +24,7 @@ def align_extent(raster_transform, vector_extent, raster_size):
     pixel_height = abs(raster_transform[5])
 
     raster_min_x = raster_transform[0]
-    raster_max_x = raster_min_x + (raster_size[0] * pixel_width)
+    # raster_max_x = raster_min_x + (raster_size[0] * pixel_width)
     raster_max_y = raster_transform[3]
     raster_min_y = raster_max_y + (raster_size[1] * -pixel_width)
 
