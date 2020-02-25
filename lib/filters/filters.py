@@ -5,7 +5,6 @@ from math import sqrt, floor
 from scipy.ndimage import median_filter as sci_median_filter
 from skimage.util.shape import view_as_windows
 from skimage.util import pad
-from numba import jit, prange
 
 
 def circular_kernel_mask(width, weighted_edges=False, inverted=False, average=False, dtype='float32'):

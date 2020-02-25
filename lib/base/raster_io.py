@@ -3,7 +3,7 @@ import numpy as np
 import numpy.ma as ma
 from osgeo import gdal, osr
 
-from utils.core import numpy_to_gdal_datatype,numpy_fill_values, datatype_is_float, progress_callback_quiet
+from utils.core import numpy_to_gdal_datatype, numpy_fill_values, datatype_is_float, progress_callback_quiet
 from clip import clip_raster
 
 
@@ -63,10 +63,6 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
         pointing to the created raster.
     '''
 
-    ''' **********************************************************
-        STEP (1): Verify the input data.
-        ********************************************************** '''
-
     # Is the output format correct?
     if out_raster is None and output_format != 'MEM':
         raise AttributeError("Either a reference raster or a cutline must be provided.")
@@ -91,10 +87,6 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
         projection is not None
     ):
         print('WARNING: Only the values from the reference_raster will be used.')
-
-    ''' **********************************************************
-        STEP (2): Setup local values and ready data.
-    ********************************************************** '''
 
     # The data that will be written to the raster
     # If the data is not a numpy array, make it.
@@ -173,9 +165,6 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
             predictor = 2  # Integer predictor
         options = ['COMPRESS=DEFLATE', f'PREDICTOR={predictor}', 'NUM_THREADS=ALL_CPUS', 'BIGTIFF=YES']
 
-    ''' **********************************************************
-        STEP (3): The business logic.
-    ********************************************************** '''
     destination = {}
 
     if resample is False:
@@ -306,8 +295,9 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
         the cutline be included? False is only pixel centroids
         that fall within the geometry.
 
-        crop_to_cutline (Bool): Should the output raster be
-        clipped to the extent of the cutline geometry.
+        crop_to_cutline (Bool): Should the output array be
+        clipped to the extent of the cutline geometry. Outside
+        values will be masked.
 
         compressed (Bool): Should the returned data be flattened
         to 1D? If a masked array is compressed, nodata-values
