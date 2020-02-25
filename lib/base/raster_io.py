@@ -3,8 +3,8 @@ import numpy as np
 import numpy.ma as ma
 from osgeo import gdal, osr
 
-import utils
-from clip_raster import clip_raster
+from utils.core import numpy_to_gdal_datatype,numpy_fill_values, datatype_is_float, progress_callback_quiet
+from clip import clip_raster
 
 
 def array_to_raster(array, out_raster=None, reference_raster=None, output_format='MEM',
@@ -99,7 +99,7 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
     # The data that will be written to the raster
     # If the data is not a numpy array, make it.
     data = array if isinstance(array, np.ndarray) else np.array(array)
-    datatype = utils.numpy_to_gdal_datatype(data.dtype)
+    datatype = numpy_to_gdal_datatype(data.dtype)
 
     if data.ndim != 2:
         raise AttributeError("The input is not a raster or the input raster is not 2-dimensional")
@@ -167,7 +167,7 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
     # If the output is not memory, set compression options.
     options = []
     if output_format != 'MEM':
-        if utils.datatype_is_float(datatype) is True:
+        if datatype_is_float(datatype) is True:
             predictor = 3  # Float predictor
         else:
             predictor = 2  # Integer predictor
@@ -227,7 +227,7 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
         resampled_destination['dataframe'].SetGeoTransform(reference['transform'])
         resampled_destination['dataframe'].SetGeoTransform(reference['projection'])
 
-        progressbar = utils.progress_callback_quiet
+        progressbar = progress_callback_quiet
         if quiet is False:
             print(f"Warping input array:")
             # progressbar = create_progress_callback
@@ -388,7 +388,7 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
     if fill_value is not None:
         ma.set_fill_value(data, fill_value)
     else:
-        ma.set_fill_value(data, utils.numpy_fill_values(rasterAsArray.dtype))
+        ma.set_fill_value(data, numpy_fill_values(rasterAsArray.dtype))
 
     # Free memory
     rasterAsArray = None

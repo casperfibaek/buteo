@@ -3,12 +3,10 @@ import psutil
 import os
 import sys
 import time
-from utils import progress
-from raster_io import raster_to_array
-
+from utils.core import progress
+from base.raster_io import raster_to_array
 
 otb_folder = "D:\\yellow\\OTB\\bin"
-
 
 def execute_cli_function(command, name, quiet=False):
     process = subprocess.Popen(

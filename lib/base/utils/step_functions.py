@@ -2,8 +2,6 @@ from itertools import product
 
 
 def step_function(func, *args, grid=None, outfile=False, outfile_arg='outfile', outfile_prefix='step_', outfile_suffix='.shp'):
-    assert(test_grid is not None)
-
     call_grid = []
     for key, val in grid.items():
         call = []
@@ -14,8 +12,6 @@ def step_function(func, *args, grid=None, outfile=False, outfile_arg='outfile', 
         call_grid.append(call)
 
     calls = list(product(*call_grid))
-
-    print(f'Running {len(calls)} calls!')
 
     for call in calls:
         calls_obj = {}

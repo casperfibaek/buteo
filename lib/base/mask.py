@@ -1,8 +1,8 @@
 import numpy as np
 import numpy.ma as ma
 from raster_io import raster_to_array, array_to_raster
-from resample import resample
-from utils import numpy_fill_values
+import resample
+from utils.core import numpy_fill_values
 
 
 def mask_raster(in_raster, mask_raster, out_raster, nodata=[0]):
