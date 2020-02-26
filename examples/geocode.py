@@ -21,7 +21,6 @@ for index, row in villages.iterrows():
 
   total += 1
 
-import pdb; pdb.set_trace();
 villages.to_csv(csv_file_out, index_label='index')
 
 print(f'Completed {success}/{total} ({((success / total) * 100):.2f}%) locations.')

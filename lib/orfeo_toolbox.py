@@ -3,10 +3,11 @@ import psutil
 import os
 import sys
 import time
-from utils.core import progress
+
+from base.utils.core import progress
 from base.raster_io import raster_to_array
 
-otb_folder = "D:\\yellow\\OTB\\bin"
+otb_folder = "C:\\Projects\\yellow\\OTB-7.0.0-Win64\\bin"
 
 def execute_cli_function(command, name, quiet=False):
     process = subprocess.Popen(
@@ -69,8 +70,8 @@ def pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):
     if options['method'] == 'lmvm':
         if 'method.lmvm.radiusx' not in options:
             options['method.lmvm.radiusx'] = 3
-        if 'method.lmvm.radiusx' not in options:
-            options['method.lmvm.radiusx'] = 3
+        if 'method.lmvm.radiusy' not in options:
+            options['method.lmvm.radiusy'] = 3
     if options['method'] == 'bayes':
         if 'method.bayes.lamda' not in options:
             options['method.bayes.lamda'] = 0.9999
