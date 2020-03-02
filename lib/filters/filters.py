@@ -119,7 +119,7 @@ def variance_filter(img_arr, width=3, circular=True, out_dtype=None):
     return np.subtract(mean_squared, squared_mean).astype(out_dtype)
 
 
-def stdev_filter(img_arr, width, circular=True, out_dtype=None):
+def stdev_filter(img_arr, width=3, circular=True, out_dtype=None):
     assert(width % 2 is not 0)
     assert(isinstance(img_arr, np.ndarray))
     assert(isinstance(circular, bool))
@@ -128,7 +128,7 @@ def stdev_filter(img_arr, width, circular=True, out_dtype=None):
     return np.sqrt(variance_filter(img_arr, width, circular=circular, out_dtype=out_dtype))
 
 
-def local_z_filter(img_arr, width, circular=True, out_dtype=None):
+def local_z_filter(img_arr, width=3, circular=True, out_dtype=None):
     assert(width % 2 is not 0)
     assert(isinstance(img_arr, np.ndarray))
     assert(isinstance(circular, bool))

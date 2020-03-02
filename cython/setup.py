@@ -1,13 +1,14 @@
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
-import numpy as np
+import numpy
 
+# python setup.py build_ext --inplace
 
 ext_modules = cythonize((Extension(
                             "c_filter",
                             sources=["c_filter.pyx"],
-                            include_dirs=[np.get_include()],
+                            include_dirs=[numpy.get_include()],
                             extra_compile_args=["/O2", "/fp:fast", "/openmp"],
                             extra_link_args=['/openmp']
                         )))

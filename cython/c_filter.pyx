@@ -1,11 +1,11 @@
 # distutils: language=py3
 # cython: boundscheck=False, wraparound=False, cdivision=False
-import numpy as np
-cimport numpy as np
 cimport cython
+cimport numpy as np
 from cython.parallel import prange
 from cython.view cimport array as cvarray
 from libc.stdlib cimport malloc, free
+import numpy as np
 
 
 cdef extern from "stdlib.h":
@@ -22,6 +22,19 @@ cdef int count_non_zero(double[:, ::1] kernel, int width) nogil:
         for y in range(width):
             if kernel[x, y] != 0:
                 accum += 1
+
+    return accum
+
+
+cdef double sum_arr(double[:, ::1] kernel, int width) nogil:
+    cdef int x, y
+    cdef double accum
+
+    accum = 0
+    for x in prange(width):
+        for y in range(width):
+            if kernel[x, y] != 0:
+                accum += kernel[x, y]
 
     return accum
 
@@ -61,11 +74,11 @@ cdef int [:, ::1] generate_offsets(double [:, ::1] kernel, int width, int number
 
 
 def filter_2d(double [:, ::1] arr, double [:, ::1] kernel):
-    cdef Py_ssize_t x_max = arr.shape[0]
-    cdef Py_ssize_t y_max = arr.shape[1]
-    cdef Py_ssize_t x_max_adj = arr.shape[0] - 1
-    cdef Py_ssize_t y_max_adj = arr.shape[1] - 1
-    cdef Py_ssize_t width = kernel.shape[0]
+    cdef int x_max = arr.shape[0]
+    cdef int y_max = arr.shape[1]
+    cdef int x_max_adj = arr.shape[0] - 1
+    cdef int y_max_adj = arr.shape[1] - 1
+    cdef int width = kernel.shape[0]
 
     cdef double[:, ::1] kernel_view = kernel
     cdef int number_of_nonzero = count_non_zero(kernel_view, width)
@@ -78,7 +91,7 @@ def filter_2d(double [:, ::1] arr, double [:, ::1] kernel):
     result = np.zeros((x_max, y_max), dtype=np.double)
     cdef double[:, ::1] result_view = result
 
-    cdef Py_ssize_t x, y, n, offset_x, offset_y
+    cdef int x, y, n, offset_x, offset_y
     for x in prange(x_max, nogil=True):
         for y in range(y_max):
             for n in range(number_of_nonzero):
@@ -99,6 +112,86 @@ def filter_2d(double [:, ::1] arr, double [:, ::1] kernel):
 
     return result
 
+def filter_weighted_variance(double [:, ::1] arr, double [:, ::1] kernel):
+    cdef int x_max = arr.shape[0]
+    cdef int y_max = arr.shape[1]
+    cdef int x_max_adj = arr.shape[0] - 1
+    cdef int y_max_adj = arr.shape[1] - 1
+    cdef int width = kernel.shape[0]
+
+    cdef double[:, ::1] kernel_view = kernel
+    cdef int number_of_nonzero = count_non_zero(kernel_view, width)
+    cdef double sum_of_weights = sum_arr(kernel_view, width)
+    
+    cdef int[:, ::1] offsets = generate_offsets(kernel_view, width, number_of_nonzero)
+    cdef double* weights = generate_weights(kernel_view, width, number_of_nonzero)
+    cdef double non_zero_stdev = (<double> number_of_nonzero - 1.0) / (<double> number_of_nonzero)
+
+    cdef double[:, ::1] arr_view = arr
+
+    result = np.zeros((x_max, y_max), dtype=np.double)
+    cdef double[:, ::1] result_view = result
+
+    cdef int x, y, n, m, offset_x, offset_y
+    cdef double weighted_avg
+    cdef double weighted_deviations
+    # for x in prange(x_max, nogil=True):
+    for x in range(x_max):
+        for y in range(y_max):
+
+            weighted_avg = 0
+            weighted_deviations = 0
+
+            for n in range(number_of_nonzero):
+                offset_x = x + offsets[n, 0]
+                offset_y = y + offsets[n, 1]
+
+                if offset_x < 0:
+                    offset_x = 0
+                elif offset_x > x_max_adj:
+                    offset_x = x_max_adj
+
+                if offset_y < 0:
+                    offset_y = 0
+                elif offset_y > y_max_adj:
+                    offset_y = y_max_adj
+
+                weighted_avg += arr_view[offset_x, offset_y] * weights[n]
+
+            for m in range(number_of_nonzero):
+                offset_x = x + offsets[m, 0]
+                offset_y = y + offsets[m, 1]
+
+                if offset_x < 0:
+                    offset_x = 0
+                elif offset_x > x_max_adj:
+                    offset_x = x_max_adj
+
+                if offset_y < 0:
+                    offset_y = 0
+                elif offset_y > y_max_adj:
+                    offset_y = y_max_adj
+
+                weighted_deviations += weights[m] * ((arr_view[offset_x, offset_y] - weighted_avg) ** 2)
+
+                print(weights[m])
+                print(arr_view[offset_x, offset_y])
+                print(weighted_avg)
+
+                import pdb; pdb.set_trace()
+            
+            # print(arr_view[offset_x, offset_y])
+            # print(weighted_avg)
+            # print(non_zero_stdev)
+            # print(weighted_deviations) 
+            # print(sum_of_weights) # good
+
+            # import pdb; pdb.set_trace()
+
+            result_view[x][y] = weighted_deviations / (non_zero_stdev * sum_of_weights)
+            
+
+    return result
 
 cdef struct IndexedElement:
     int index
@@ -322,11 +415,11 @@ cdef double mad(
 
 
 def filter_median(double [:, ::1] arr, double [:, ::1] kernel):
-    cdef Py_ssize_t x_max = arr.shape[0]
-    cdef Py_ssize_t y_max = arr.shape[1]
-    cdef Py_ssize_t x_max_adj = arr.shape[0] - 1
-    cdef Py_ssize_t y_max_adj = arr.shape[1] - 1
-    cdef Py_ssize_t width = kernel.shape[0]
+    cdef int x_max = arr.shape[0]
+    cdef int y_max = arr.shape[1]
+    cdef int x_max_adj = arr.shape[0] - 1
+    cdef int y_max_adj = arr.shape[1] - 1
+    cdef int width = kernel.shape[0]
 
     cdef double[:, ::1] kernel_view = kernel
 
@@ -341,7 +434,7 @@ def filter_median(double [:, ::1] arr, double [:, ::1] kernel):
     cdef double[:, ::1] result_view = result
 
     cdef double *neighborhood
-    cdef Py_ssize_t x, y, n, offset_x, offset_y
+    cdef int x, y, n, offset_x, offset_y
     for x in prange(x_max, nogil=True):
         for y in range(y_max):
             neighborhood = <double*> malloc(sizeof(double) * number_of_nonzero) 
@@ -361,8 +454,8 @@ def filter_median(double [:, ::1] arr, double [:, ::1] kernel):
 
                 neighborhood[n] = arr_view[offset_x, offset_y]
             
-            # result_view[x][y] = median(neighborhood, weights, number_of_nonzero)
-            result_view[x][y] = mad(neighborhood, weights, number_of_nonzero, arr_view[x, y])
+            result_view[x][y] = median(neighborhood, weights, number_of_nonzero)
+            # result_view[x][y] = mad(neighborhood, weights, number_of_nonzero, arr_view[x, y])
             free(neighborhood)
 
     return result

@@ -60,18 +60,18 @@ def super_sample_s2(B4, B8, B5=None, B6=None, B7=None, B8A=None,
     B4_arr = np.divide(raster_to_array(B4), S2_meta['B04']['width'])
     B8_arr = np.divide(raster_to_array(B8), S2_meta['B08']['width'])
 
-    band_arrays = {
+    band_array = {
         'B05': np.divide(raster_to_array(B5), S2_meta['B05']['width']) if B5 is not None else False,
         'B06': np.divide(raster_to_array(B6), S2_meta['B05']['width']) if B6 is not None else False,
         'B07': np.divide(raster_to_array(B7), S2_meta['B07']['width']) if B7 is not None else False,
     }
 
     bands_to_pansharpen = []
-    if band_arrays['B05'] is not False:
+    if band_array['B05'] is not False:
         bands_to_pansharpen.append('B05')
-    if band_arrays['B06'] is not False:
+    if band_array['B06'] is not False:
         bands_to_pansharpen.append('B06')
-    if band_arrays['B07'] is not False:
+    if band_array['B07'] is not False:
         bands_to_pansharpen.append('B07')
 
     for band in bands_to_pansharpen:
@@ -81,7 +81,7 @@ def super_sample_s2(B4, B8, B5=None, B6=None, B7=None, B8A=None,
         B4_weight = 1 - (B4_distance / distance_sum)
         B8_weight = 1 - (B8_distance / distance_sum)
 
-        ratio = np.add(
+        pseudo_band = np.add(
             np.multiply(B4_arr, B4_weight),
             np.multiply(B8_arr, B8_weight),
         )
@@ -89,12 +89,12 @@ def super_sample_s2(B4, B8, B5=None, B6=None, B7=None, B8A=None,
         resampled_name = f'{out_folder}{band}_resampled.tif'
         resample(paths[band], reference_raster=B8, out_raster=resampled_name)
 
-        band_array = band_arrays[band]
+        band = band_array[band]
 
-        pansharpen_ratio_name = f'{out_folder}{band}_pan-ratio.tif'
+        pansharpen_ratio_name = f'{out_folder}{band}_pan-pseudo.tif'
         pansharpen_ratio = np.multiply(
-            ratio,
-            (band_array.mean() / ratio.mean() * S2_meta[band]['width'])
+            pseudo_band,
+            ((band.mean() / pseudo_band.mean()) * S2_meta[band]['width'])
         ).astype('uint16')
         array_to_raster(pansharpen_ratio, reference_raster=B8, out_raster=pansharpen_ratio_name)
 
