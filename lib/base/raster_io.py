@@ -101,7 +101,7 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
     # Gather reference information
     if reference_raster is not None:
 
-        if isinstance(reference_raster, gdal.Dataset):  # Dataset alreadt GDAL dataframe.
+        if isinstance(reference_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
             reference['dataframe'] = reference_raster
         else:
             reference['dataframe'] = gdal.Open(reference_raster)

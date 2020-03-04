@@ -5,12 +5,17 @@ import numpy as np
 
 import sys
 sys.path.append('..\\base')
+sys.path.append('..\\cython')
 sys.path.append('..')
 
+import pyximport
+pyximport.install()
+
+from kernel_functions import pansharpen, pansharpen_mad_med
 from raster_io import raster_to_array, array_to_raster
 from resample import resample
 
-from orfeo_toolbox import pansharpen
+# from orfeo_toolbox import pansharpen
 
 
 def super_sample_s2(B4, B8, B5=None, B6=None, B7=None, B8A=None,
@@ -74,9 +79,9 @@ def super_sample_s2(B4, B8, B5=None, B6=None, B7=None, B8A=None,
     if band_array['B07'] is not False:
         bands_to_pansharpen.append('B07')
 
-    for band in bands_to_pansharpen:
-        B4_distance = S2_meta[band]['edge_bot'] - S2_meta['B04']['edge_top']
-        B8_distance = S2_meta['B08']['edge_bot'] - S2_meta[band]['edge_top']
+    for band_name in bands_to_pansharpen:
+        B4_distance = S2_meta[band_name]['edge_bot'] - S2_meta['B04']['edge_top']
+        B8_distance = S2_meta['B08']['edge_bot'] - S2_meta[band_name]['edge_top']
         distance_sum = B4_distance + B8_distance
         B4_weight = 1 - (B4_distance / distance_sum)
         B8_weight = 1 - (B8_distance / distance_sum)
@@ -86,29 +91,24 @@ def super_sample_s2(B4, B8, B5=None, B6=None, B7=None, B8A=None,
             np.multiply(B8_arr, B8_weight),
         )
 
-        resampled_name = f'{out_folder}{band}_resampled.tif'
-        resample(paths[band], reference_raster=B8, out_raster=resampled_name)
+        resampled_low_res = raster_to_array(resample(paths[band_name], reference_raster=B8)).astype('float64')
 
-        band = band_array[band]
+        band = band_array[band_name]
 
-        pansharpen_ratio_name = f'{out_folder}{band}_pan-pseudo.tif'
-        pansharpen_ratio = np.multiply(
+        pseudo_band_scaled = np.multiply(
             pseudo_band,
-            ((band.mean() / pseudo_band.mean()) * S2_meta[band]['width'])
-        ).astype('uint16')
-        array_to_raster(pansharpen_ratio, reference_raster=B8, out_raster=pansharpen_ratio_name)
+            ((band.mean() / pseudo_band.mean()) * S2_meta[band_name]['width'])
+        ).astype('float64')
 
-        out_name = os.path.join(out_folder, f'{prefix}{band}{suffix}.tif')
-        pansharpen(pansharpen_ratio_name, resampled_name, out_name, out_datatype='uint16')
+        pansharpened = pansharpen(resampled_low_res, pseudo_band_scaled, width=3, distance_calc='linear').astype('uint16')
+        array_to_raster(pansharpened, reference_raster=B8, out_raster=os.path.join(out_folder, f'{prefix}{band_name}{suffix}.tif'))
 
     # Special case for Band 8A as no interpolation is necessary. Use band 8.
     if B8A is not None:
-        B8_arr = raster_to_array(B8A)
-        resampled_name = f'{out_folder}B8A_resampled_10m.tif'
-        resample(paths[band], reference_raster=B8, out_raster=resampled_name)
-
-        out_name_B8A = os.path.join(out_folder, f'{prefix}B8A{suffix}.tif')
-        pansharpen(B8, resampled_name, out_name_B8A, out_datatype='uint16')
+        B8_arr = raster_to_array(B8).astype('float64')
+        resampled_low_res = raster_to_array(resample(paths[band_name], reference_raster=B8)).astype('float64')
+        pansharpened = pansharpen(resampled_low_res, B8_arr, width=3, distance_calc='linear').astype('uint16')
+        array_to_raster(pansharpened, reference_raster=B8, out_raster=os.path.join(out_folder, f'{prefix}B8A{suffix}.tif'))
 
 
 if __name__ == '__main__':
@@ -122,4 +122,4 @@ if __name__ == '__main__':
     B8 = m10_folder + 'T36RTV_20191019T083949_B08_10m.jp2'
     B8A = m20_folder + 'T36RTV_20191019T083949_B8A_20m.jp2'
 
-    super_sample_s2(B4, B8, B5=B5, B6=B6, B7=B7, B8A=B8A, out_folder=m10_folder, prefix='', suffix='_pansharpened')
+    super_sample_s2(B4, B8, B5=None, B6=B6, B7=None, B8A=None, out_folder=m10_folder, prefix='', suffix='_pansharpened_3x3_linear')
