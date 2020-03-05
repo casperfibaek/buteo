@@ -163,7 +163,7 @@ if __name__ == "__main__":
     # array_to_raster(mad_3d(stack, kernel).astype('float32'), out_raster=f'{folder_s1}grd_5x5-3d-mad.tif', reference_raster=f'{folder_s1}Gamma0_VV_mst_04Feb2020.img', dst_nodata=None)
     # array_to_raster((((b4 - b8) / (b4 + b8)) + 1).astype('float32'), out_raster=out_raster_ndvi, reference_raster=in_raster_b4, dst_nodata=None)
     # array_to_raster(mad(b8, kernel).astype('float32'), out_raster=out_raster_mad_b8, reference_raster=in_raster_b8, dst_nodata=None)
-    array_to_raster(mean(surf, kernel_sum).astype('float32'), out_raster=f'{folder_s1}surf_v2_1km-density.tif', reference_raster=f'{folder_s1}surf_v2.tif', dst_nodata=None)
+    array_to_raster(mean(surf, kernel_sum).astype('float32'), out_raster=f'{folder_s1}surf_v2_100m-density.tif', reference_raster=f'{folder_s1}surf_v2.tif', dst_nodata=None)
     # array_to_raster(mean(np.abs(median(b8, kernel_holed) - b8), kernel).astype('float32'), out_raster=out_raster_meddev_b8, reference_raster=in_raster_b4, dst_nodata=None)
     # array_to_raster(np.power(median(coh, kernel), 2).astype('float32'), out_raster=out_raster_coh, reference_raster=in_raster_coh, dst_nodata=None)
     print(time() - before2)

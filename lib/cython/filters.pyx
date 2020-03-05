@@ -1,7 +1,6 @@
 # cython: language_level=3, boundscheck=False, wraparound=False
 cimport cython
 from cython.parallel cimport prange
-from libc.stdio cimport printf
 from libc.stdlib cimport malloc, free
 from libc.math cimport sqrt, pow, floor, fabs
 import numpy as np
