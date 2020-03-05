@@ -3,16 +3,13 @@ import pyximport
 sys.path.append('../base')
 pyximport.install()
 # from c_filter import filter_2d, filter_median, filter_variance, filter_mad, filter_skew_fp, filter_stdev, filter_skew_p2, filter_skew_g, filter_kurtosis_excess
-from filters import mean, variance, standard_deviation, median, mad, mad_std, skew_fp, skew_p2, skew_g, kurtosis, iqr
+from filters import mean, variance, standard_deviation, median, median_3d, q3_3d, mad_3d, mad, mad_std, skew_fp, skew_p2, skew_g, kurtosis, iqr
 from math import floor, sqrt
 from time import time
 import numpy as np
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from shapely.geometry import Point, Polygon
-
-
-
 from raster_io import raster_to_array, array_to_raster
 
 
@@ -128,25 +125,45 @@ def create_kernel(width, circular=True, weighted_edges=True, holed=False, normal
 
 
 if __name__ == "__main__":
-    kernel_size = 9
-    kernel = create_kernel(kernel_size, circular=True, weighted_edges=True, inverted=False, ring=False, holed=False, normalise=True, weighted_distance=True, distance_scale=True, distance_calc='linear', plot=False).astype(np.float)
-    kernel_holed = create_kernel(kernel_size, circular=True, weighted_edges=True, inverted=False, ring=False, holed=True, normalise=True, weighted_distance=True, distance_scale=True, distance_calc='linear', plot=False).astype(np.float)
-    # kernel_ring = create_kernel(kernel_size, circular=True, weighted_edges=True, inverted=False, ring=True, holed=True, normalise=True, weighted_distance=True, distance_scale=True, distance_calc='linear', plot=True).astype(np.float)
+    kernel_size = 21
+    # kernel = create_kernel(kernel_size, circular=True, weighted_edges=True, inverted=False, ring=False, holed=False, normalise=True, weighted_distance=True, distance_scale=True, distance_calc='linear', plot=False).astype(np.float)
+    kernel_sum = create_kernel(kernel_size, circular=True, weighted_edges=True, inverted=False, ring=False, holed=False, normalise=False, weighted_distance=False, distance_scale=True, distance_calc='linear', plot=False).astype(np.float)
+    # kernel_holed = create_kernel(kernel_size, circular=True, weighted_edges=True, inverted=False, ring=False, holed=True, normalise=True, weighted_distance=True, distance_scale=True, distance_calc='linear', plot=False).astype(np.float)
+    # kernel_ring = create_kernel(kernel_size, circular=True, weighted_edges=True, inverted=False, ring=True, holed=True, normalise=True, weighted_distance=True, distance_scale=True, distance_calc='linear', plot=False).astype(np.float)
 
-    folder = 'C:\\Users\\caspe\\Desktop\\Data\\Sentinel2\\'
-    in_raster_b4 = f'{folder}egypt_b4.jp2'
-    in_raster_b8 = f'{folder}egypt_b8.jp2'
-    out_raster_mad_b4 = f'{folder}egypt_b4_{kernel_size}x{kernel_size}_mad-std.tif'
-    out_raster_mad_b8 = f'{folder}egypt_b8_{kernel_size}x{kernel_size}_mad-std.tif'
-    out_raster_meddev_b4 = f'{folder}egypt_b4_{kernel_size}x{kernel_size}_med-dev.tif'
-    out_raster_meddev_b8 = f'{folder}egypt_b8_{kernel_size}x{kernel_size}_med-dev.tif'
+    # folder = 'C:\\Users\\caspe\\Desktop\\Data\\Sentinel2\\'
+    folder_s1_grd = 'C:\\Users\\caspe\\Desktop\\Data\\Sentinel1\\S1B_IW_GRDH_1SDV_20200204T181721_20200204T181746_020123_02616A_B5C4_Orb_NR_Cal_TF_TC_Stack.data\\'
+    folder_s1 = 'C:\\Users\\caspe\\Desktop\\Data\\Sentinel1\\'
+    # in_raster_coh = f'{folder_s1}coherence_accra.tif'
+    # in_raster_s1 = f'{folder}accra_s1.tif'
+    # in_raster_b4 = f'{folder}accra_b4.jp2'
+    # in_raster_b8 = f'{folder}accra_b8.jp2'
+    # out_raster_mad_b4 = f'{folder}accra_b4_{kernel_size}x{kernel_size}_mad-std.tif'
+    # out_raster_mad_b8 = f'{folder}accra_b8_{kernel_size}x{kernel_size}_mad-std.tif'
+    # out_raster_meddev_b4 = f'{folder}accra_b4_{kernel_size}x{kernel_size}_med-dev.tif'
+    # out_raster_meddev_b8 = f'{folder}accra_b8_{kernel_size}x{kernel_size}_med-dev.tif'
+    # out_raster_ndvi = f'{folder}accra_ndvi_i.tif'
+    # out_raster_s1 = f'{folder}accra_med_5x5.tif'
+    # out_raster_coh = f'{folder_s1}coherence_accra_pow_med_5x5.tif'
 
-    b4 = raster_to_array(in_raster_b4).astype(np.float)
-    b8 = raster_to_array(in_raster_b8).astype(np.float)
+    # b4 = raster_to_array(in_raster_b4).astype(np.float)
+    # b8 = raster_to_array(in_raster_b8).astype(np.float)
+    # s1 = raster_to_array(in_raster_s1).astype(np.float)
+    # coh = raster_to_array(in_raster_coh).astype(np.float)
+
+    surf = raster_to_array(f'{folder_s1}surf_v2.tif').astype(np.float)
+    # coh = raster_to_array(f'{folder_s1}coherence_accra.tif').astype(np.float)
+    # grd_1 = raster_to_array(f'{folder_s1_grd}Gamma0_VV_mst_04Feb2020.img').astype(np.float)
+    # grd_2 = raster_to_array(f'{folder_s1_grd}Gamma0_VV_slv1_10Feb2020.img').astype(np.float)
+    # stack = np.array([grd_1,  grd_2])
 
     before2 = time()
-    array_to_raster(mad(b4, kernel).astype('float32'), out_raster=out_raster_mad_b4, reference_raster=in_raster_b4, dst_nodata=None)
-    array_to_raster(mad(b8, kernel).astype('float32'), out_raster=out_raster_mad_b8, reference_raster=in_raster_b8, dst_nodata=None)
-    array_to_raster(mean(np.abs(median(b4, kernel_holed) - b4), kernel).astype('float32'), out_raster=out_raster_meddev_b4, reference_raster=in_raster_b4, dst_nodata=None)
-    array_to_raster(mean(np.abs(median(b8, kernel_holed) - b8), kernel).astype('float32'), out_raster=out_raster_meddev_b8, reference_raster=in_raster_b4, dst_nodata=None)
+    # array_to_raster(median_3d(stack, kernel).astype('float32'), out_raster=f'{folder_s1}backscatter_3x3-median.tif', reference_raster=f'{folder_s1_grd}Gamma0_VV_mst_04Feb2020.img', dst_nodata=None)
+    # array_to_raster(median(coh, kernel).astype('float32'), out_raster=f'{folder_s1}coherence_7x7-median.tif', reference_raster=f'{folder_s1}coherence_accra.tif', dst_nodata=None)
+    # array_to_raster(mad_3d(stack, kernel).astype('float32'), out_raster=f'{folder_s1}grd_5x5-3d-mad.tif', reference_raster=f'{folder_s1}Gamma0_VV_mst_04Feb2020.img', dst_nodata=None)
+    # array_to_raster((((b4 - b8) / (b4 + b8)) + 1).astype('float32'), out_raster=out_raster_ndvi, reference_raster=in_raster_b4, dst_nodata=None)
+    # array_to_raster(mad(b8, kernel).astype('float32'), out_raster=out_raster_mad_b8, reference_raster=in_raster_b8, dst_nodata=None)
+    array_to_raster(mean(surf, kernel_sum).astype('float32'), out_raster=f'{folder_s1}surf_v2_1km-density.tif', reference_raster=f'{folder_s1}surf_v2.tif', dst_nodata=None)
+    # array_to_raster(mean(np.abs(median(b8, kernel_holed) - b8), kernel).astype('float32'), out_raster=out_raster_meddev_b8, reference_raster=in_raster_b4, dst_nodata=None)
+    # array_to_raster(np.power(median(coh, kernel), 2).astype('float32'), out_raster=out_raster_coh, reference_raster=in_raster_coh, dst_nodata=None)
     print(time() - before2)

@@ -22,4 +22,4 @@ natura2000_korr = raster_to_array(f'{base}\\natura2000_korr_v2.tif', fill_value=
 
 multicriteria = andrekomplan2 + unesco_area2 + unesco_buf2 + besnatur2 + besnat_sammen2 + fundarealbesk2 + fundfortid2 + fundbesk_sam2 + bygn_fred2 + boligo500100012 + foreneligfred2 + boligomr_komplan000500mbuf + fred_fredforslag + natura2000_korr
 
-array_to_raster(multicriteria, out_raster=f'{base}\\multicriteria4.tif', reference_raster=f'{base}\\andrekomplan2.tif', src_nodata=0, dst_nodata=None)
+array_to_raster(multicriteria, out_raster=f'{base}\\multicriteria_victor.tif', reference_raster=f'{base}\\andrekomplan2.tif', src_nodata=0, dst_nodata=None)

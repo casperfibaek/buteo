@@ -1,6 +1,7 @@
 # cython: language_level=3, boundscheck=False, wraparound=False
 cimport cython
 from cython.parallel cimport prange
+from libc.stdio cimport printf
 from libc.stdlib cimport malloc, free
 from libc.math cimport sqrt, pow, floor, fabs
 import numpy as np
@@ -150,6 +151,13 @@ cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non
   cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.5)
   return weighted_median
 
+cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero) nogil:
+  cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
+  return weighted_median
+
+cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero) nogil:
+  cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)
+  return weighted_median
 
 cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero) nogil:
   cdef double weighted_median = neighbourhood_weighted_median(neighbourhood, non_zero)
@@ -247,6 +255,7 @@ cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non
 
   return offsets
 
+
 cdef void loop(double [:, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int x_max, int y_max, int kernel_width, int non_zero, f_type apply) nogil:
   cdef int x, y, n, offset_x, offset_y
   cdef Neighbourhood * neighbourhood
@@ -277,6 +286,44 @@ cdef void loop(double [:, ::1] arr, double [:, ::1] kernel, double [:, ::1] resu
 
         neighbourhood[n].value = arr[offset_x, offset_y]
         neighbourhood[n].weight = offsets[n].weight
+
+      result[x][y] = apply(neighbourhood, non_zero)
+
+      free(neighbourhood)
+
+
+@cython.cdivision(True)
+cdef void loop_3d(double [:, :, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int depth, int x_max, int y_max, int kernel_width, int non_zero, f_type apply) nogil:
+  cdef int x, y, n, z, offset_x, offset_y
+  cdef Neighbourhood * neighbourhood
+  
+  cdef int x_max_adj = x_max - 1
+  cdef int y_max_adj = y_max - 1
+  cdef int neighbourhood_size = sizeof(Neighbourhood) * (non_zero * depth)
+
+  cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
+
+  for x in prange(x_max):
+    for y in range(y_max):
+
+      neighbourhood = <Neighbourhood*> malloc(neighbourhood_size) 
+
+      for z in range(depth):
+        for n in range(non_zero):
+          offset_x = x + offsets[n].x
+          offset_y = y + offsets[n].y
+
+          if offset_x < 0:
+            offset_x = 0
+          elif offset_x > x_max_adj:
+            offset_x = x_max_adj
+          if offset_y < 0:
+            offset_y = 0
+          elif offset_y > y_max_adj:
+            offset_y = y_max_adj
+
+          neighbourhood[n].value = arr[z, offset_x, offset_y]
+          neighbourhood[n].weight = offsets[n].weight / depth
 
       result[x][y] = apply(neighbourhood, non_zero)
 
@@ -318,6 +365,53 @@ def median(double [:, ::1] arr, double [:, ::1] kernel):
   loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, neighbourhood_weighted_median)
 
   return result
+
+
+def median_3d(double [:, :, ::1] arr, double [:, ::1] kernel):
+  cdef int non_zero = np.count_nonzero(kernel)
+  result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
+  cdef double[:, ::1] result_view = result
+
+  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], non_zero, neighbourhood_weighted_median)
+
+  return result
+
+def q1_3d(double [:, :, ::1] arr, double [:, ::1] kernel):
+  cdef int non_zero = np.count_nonzero(kernel)
+  result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
+  cdef double[:, ::1] result_view = result
+
+  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], non_zero, neighbourhood_weighted_q1)
+
+  return result
+
+def q3_3d(double [:, :, ::1] arr, double [:, ::1] kernel):
+  cdef int non_zero = np.count_nonzero(kernel)
+  result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
+  cdef double[:, ::1] result_view = result
+
+  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], non_zero, neighbourhood_weighted_q3)
+
+  return result
+
+def mad_3d(double [:, :, ::1] arr, double [:, ::1] kernel):
+  cdef int non_zero = np.count_nonzero(kernel)
+  result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
+  cdef double[:, ::1] result_view = result
+
+  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], non_zero, neighbourhood_weighted_mad)
+
+  return result
+
+def mean_3d(double [:, :, ::1] arr, double [:, ::1] kernel):
+  cdef int non_zero = np.count_nonzero(kernel)
+  result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
+  cdef double[:, ::1] result_view = result
+
+  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], non_zero, neighbourhood_sum)
+
+  return result
+
 
 def mad(double [:, ::1] arr, double [:, ::1] kernel):
   cdef int non_zero = np.count_nonzero(kernel)
