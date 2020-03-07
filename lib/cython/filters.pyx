@@ -1,8 +1,8 @@
-# cython: language_level=3, boundscheck=False, wraparound=False
+# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True, profile = False
 cimport cython
 from cython.parallel cimport prange
 from libc.stdlib cimport malloc, free
-from libc.math cimport sqrt, pow, floor, fabs
+from libc.math cimport sqrt, pow, fabs
 import numpy as np
 
 
@@ -27,10 +27,9 @@ cdef struct IndexedElement:
 ctypedef double (*f_type) (Neighbourhood *, int) nogil
 
 cdef int _compare(const_void *a, const_void *b) nogil:
-  cdef double v = (<IndexedElement*> a).value-(<IndexedElement*> b).value
+  cdef double v = (<IndexedElement*> a).value - (<IndexedElement*> b).value
   if v < 0: return -1
   if v >= 0: return 1
-
 
 cdef void argsort(Neighbourhood * neighbourhood, int* order, int non_zero) nogil:
   cdef int i
@@ -53,7 +52,6 @@ cdef void argsort(Neighbourhood * neighbourhood, int* order, int non_zero) nogil
   # Free index tracking array.
   free(order_struct)
 
-
 cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero) nogil:
     cdef int x, y
     cdef double accum
@@ -64,8 +62,6 @@ cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero) nogil
 
     return accum
 
-
-@cython.cdivision(True)
 cdef double weighted_variance(Neighbourhood * neighbourhood, int non_zero, int power) nogil:
     cdef int x, y
     cdef double accum, weighted_average, deviations, sum_of_weights
@@ -80,11 +76,9 @@ cdef double weighted_variance(Neighbourhood * neighbourhood, int non_zero, int p
 
     return deviations / sum_of_weights
 
-
 cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero) nogil:
   cdef double variance = weighted_variance(neighbourhood, non_zero, 2)
   return variance
-
 
 cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero) nogil:
   cdef double variance = weighted_variance(neighbourhood, non_zero, 2)
@@ -92,8 +86,6 @@ cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourh
 
   return standard_deviation
 
-
-@cython.cdivision(True)
 cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int non_zero, double quintile) nogil:
     cdef int i, j, q, p, ia
 
@@ -177,8 +169,6 @@ cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int no
   cdef double mad_std = neighbourhood_weighted_mad(neighbourhood, non_zero) * 1.4826
   return mad_std
 
-
-@cython.cdivision(True)
 cdef double neighbourhood_weighted_skew_fp(Neighbourhood * neighbourhood, int non_zero) nogil:
   cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
 
@@ -188,8 +178,6 @@ cdef double neighbourhood_weighted_skew_fp(Neighbourhood * neighbourhood, int no
   cdef double variance_3 = weighted_variance(neighbourhood, non_zero, 3)
   return variance_3 / (pow(standard_deviation, 3))
 
-
-@cython.cdivision(True)
 cdef double neighbourhood_weighted_skew_p2(Neighbourhood * neighbourhood, int non_zero) nogil:
   cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
 
@@ -201,8 +189,6 @@ cdef double neighbourhood_weighted_skew_p2(Neighbourhood * neighbourhood, int no
 
   return 3 * ((mean - median) / standard_deviation)
 
-
-@cython.cdivision(True)
 cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero) nogil:
   cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
   cdef double q2 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.50)
@@ -215,7 +201,6 @@ cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non
 
   return (q1 + q3 - (2 * q2)) / iqr
 
-
 cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero) nogil:
   cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
   cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)
@@ -224,8 +209,6 @@ cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_ze
 
   return iqr
 
-
-@cython.cdivision(True)
 cdef double neighbourhood_weighted_kurtosis_excess(Neighbourhood * neighbourhood, int non_zero) nogil:
   cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
 
@@ -235,8 +218,6 @@ cdef double neighbourhood_weighted_kurtosis_excess(Neighbourhood * neighbourhood
   cdef double variance_4 = weighted_variance(neighbourhood, non_zero, 4)
   return (variance_4 / (pow(standard_deviation, 4))) - 3
 
-
-@cython.cdivision(True)
 cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non_zero) nogil:
   cdef int x, y
   cdef int radius = <int>(kernel_width / 2)
@@ -253,7 +234,6 @@ cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non
         step += 1
 
   return offsets
-
 
 cdef void loop(double [:, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int x_max, int y_max, int kernel_width, int non_zero, f_type apply) nogil:
   cdef int x, y, n, offset_x, offset_y
@@ -290,8 +270,6 @@ cdef void loop(double [:, ::1] arr, double [:, ::1] kernel, double [:, ::1] resu
 
       free(neighbourhood)
 
-
-@cython.cdivision(True)
 cdef void loop_3d(double [:, :, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int depth, int x_max, int y_max, int kernel_width, int non_zero, f_type apply) nogil:
   cdef int x, y, n, z, offset_x, offset_y
   cdef Neighbourhood * neighbourhood
@@ -328,149 +306,39 @@ cdef void loop_3d(double [:, :, ::1] arr, double [:, ::1] kernel, double [:, ::1
 
       free(neighbourhood)
 
+cdef f_type func_selector(str func_type):
+  if func_type is 'mean': return neighbourhood_sum
+  elif func_type is 'variance': return neighbourhood_weighted_variance
+  elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
+  elif func_type is 'median': return neighbourhood_weighted_median
+  elif func_type is 'q1': return neighbourhood_weighted_q1
+  elif func_type is 'q3': return neighbourhood_weighted_q3
+  elif func_type is 'mad': return neighbourhood_weighted_mad
+  elif func_type is 'mad_std': return neighbourhood_weighted_mad_std
+  elif func_type is 'skew_fp': return neighbourhood_weighted_skew_fp
+  elif func_type is 'skew_p2': return neighbourhood_weighted_skew_p2
+  elif func_type is 'skew_g': return neighbourhood_weighted_skew_g
+  elif func_type is 'iqr': return neighbourhood_weighted_iqr
+  elif func_type is 'kurtosis': return neighbourhood_weighted_kurtosis_excess
+  
+  raise Exception('Unable to find filter type!')
 
-def mean(double [:, ::1] arr, double [:, ::1] kernel):
+def filter_2d(double [:, ::1] arr, double [:, ::1] kernel, str func_type):
+  cdef f_type apply = func_selector(func_type)
   cdef int non_zero = np.count_nonzero(kernel)
   result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
   cdef double[:, ::1] result_view = result
 
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, neighbourhood_sum)
+  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, apply)
 
   return result
 
-def variance(double [:, ::1] arr, double [:, ::1] kernel):
+def filter_3d(double [:, :, ::1] arr, double [:, ::1] kernel, str func_type):
+  cdef f_type apply = func_selector(func_type)
   cdef int non_zero = np.count_nonzero(kernel)
   result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
   cdef double[:, ::1] result_view = result
 
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, neighbourhood_weighted_variance)
-
-  return result
-
-def standard_deviation(double [:, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, neighbourhood_weighted_standard_deviation)
-
-  return result
-
-def median(double [:, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, neighbourhood_weighted_median)
-
-  return result
-
-
-def median_3d(double [:, :, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], non_zero, neighbourhood_weighted_median)
-
-  return result
-
-def q1_3d(double [:, :, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], non_zero, neighbourhood_weighted_q1)
-
-  return result
-
-def q3_3d(double [:, :, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], non_zero, neighbourhood_weighted_q3)
-
-  return result
-
-def mad_3d(double [:, :, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], non_zero, neighbourhood_weighted_mad)
-
-  return result
-
-def mean_3d(double [:, :, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], non_zero, neighbourhood_sum)
-
-  return result
-
-
-def mad(double [:, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, neighbourhood_weighted_mad)
-
-  return result
-
-def mad_std(double [:, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, neighbourhood_weighted_mad_std)
-
-  return result
-
-def skew_fp(double [:, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, neighbourhood_weighted_skew_fp)
-
-  return result
-
-def skew_p2(double [:, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, neighbourhood_weighted_skew_p2)
-
-  return result
-
-def skew_g(double [:, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, neighbourhood_weighted_skew_g)
-
-  return result
-
-def kurtosis(double [:, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, neighbourhood_weighted_kurtosis_excess)
-
-  return result
-
-def iqr(double [:, ::1] arr, double [:, ::1] kernel):
-  cdef int non_zero = np.count_nonzero(kernel)
-  result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, neighbourhood_weighted_iqr)
+  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], non_zero, apply)
 
   return result
