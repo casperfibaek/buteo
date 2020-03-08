@@ -4,10 +4,9 @@ import os
 import sys
 sys.path.append('../base')
 # sys.path.append('..\\cython')
-sys.path.append('..')
+sys.path.append('../')
 sys.path.append('../filters')
 sys.path.append("~/OTB-7.0.0-Linux64/lib/python")
-
 from raster_io import raster_to_array, array_to_raster
 from resample import resample
 from filters import standardize_filter

@@ -24,7 +24,7 @@ cdef struct IndexedElement:
     int index
     double value
 
-ctypedef double (*f_type) (Neighbourhood *, int) nogil
+ctypedef double (*f_type) (Neighbourhood *, int, double) nogil
 
 cdef int _compare(const_void *a, const_void *b) nogil:
   cdef double v = (<IndexedElement*> a).value - (<IndexedElement*> b).value
@@ -52,7 +52,7 @@ cdef void argsort(Neighbourhood * neighbourhood, int* order, int non_zero) nogil
   # Free index tracking array.
   free(order_struct)
 
-cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero) nogil:
+cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
     cdef int x, y
     cdef double accum
 
@@ -62,137 +62,118 @@ cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero) nogil
 
     return accum
 
-cdef double weighted_variance(Neighbourhood * neighbourhood, int non_zero, int power) nogil:
+cdef double weighted_variance(Neighbourhood * neighbourhood, int non_zero, int power, double sum_of_weights) nogil:
     cdef int x, y
-    cdef double accum, weighted_average, deviations, sum_of_weights
+    cdef double accum, weighted_average, deviations
 
     weighted_average = neighbourhood_sum(neighbourhood, non_zero)
 
     deviations = 0
-    sum_of_weights = 0
     for x in range(non_zero):
-      sum_of_weights += neighbourhood[x].weight
       deviations += neighbourhood[x].weight * (pow((neighbourhood[x].value - weighted_average), power))
 
     return deviations / sum_of_weights
 
-cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero) nogil:
-  cdef double variance = weighted_variance(neighbourhood, non_zero, 2)
+cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double variance = weighted_variance(neighbourhood, non_zero, 2, double sum_of_weights)
   return variance
 
-cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero) nogil:
-  cdef double variance = weighted_variance(neighbourhood, non_zero, 2)
+cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double variance = weighted_variance(neighbourhood, non_zero, 2, double sum_of_weights)
   cdef double standard_deviation = sqrt(variance)
 
   return standard_deviation
 
-cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int non_zero, double quintile) nogil:
-    cdef int i, j, q, p, ia
+cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int non_zero, double quintile, double sum_of_weights) nogil:
+    cdef int i
+    cdef double weighted_quantile, top, bot, s,
 
-    cdef double weighted_quantile, key, merge, sort_weight_half, top, bot, s,
-
-    cdef double half = 2.0
-    cdef double weight_sum = 0
     cdef double cumsum = 0
 
     cdef double* sort_arr = <double*> malloc(sizeof(double) * non_zero)
     cdef double* sort_weight = <double*> malloc(sizeof(double) * non_zero)
-    cdef double* weighted_quantiles = <double*> malloc(sizeof(double) * non_zero)
+    cdef double* cx = <double*> malloc(sizeof(double) * non_zero)
     cdef int* order = <int*> malloc(sizeof(int) * non_zero)
 
     argsort(neighbourhood, order, non_zero)
     
     for i in range(non_zero):
-        sort_arr[i] = neighbourhood[order[i]].value
-        sort_weight[i] = neighbourhood[order[i]].weight
-        weight_sum += neighbourhood[i].weight
+        cumsum += neighbourhood[order[i]].weight
+        cx[i] = (cumsum - (quintile * neighbourhood[order[i]].weight)) / sum_of_weights
 
     for i in range(non_zero):
-        cumsum += sort_weight[i]
-        weighted_quantiles[i] = (cumsum - (quintile * sort_weight[i])) / weight_sum
+        if cx[i] >= quintile:
+            if i == 0 or cx[i] == quintile:
+                return neighbourhood[order[i]].value
+            high = cx[i][v] - quintile
+            low = quintile - cx[i - 1]
+            weight = low / (low + high)    
 
-    weighted_quantile = sort_arr[non_zero - 1]
-    for i in range(non_zero):
-        if weighted_quantiles[i] >= quintile:
-            if i == 0 or weighted_quantiles[i] == quintile:
-                weighted_quantile = sort_arr[i]
-                break
-            top = weighted_quantiles[i] - quintile
-            bot = quintile - weighted_quantiles[i - 1]
-            s = top + bot
-            if s is 0:
-                top = 1
-                bot = 1
-            else:
-                top = 1 - (top / s)
-                bot = 1 - (bot / s)
-
-            weighted_quantile = (sort_arr[i - 1] * bot) + (sort_arr[i] * top)
-            break
+            return (neighbourhood[order[i - 1]].value * weight) + (neighbourhood[order[i]].value * (1 - weight))
 
     free(sort_arr)
     free(sort_weight)
     free(order)
-    free(weighted_quantiles)
+    free(cx)
 
-    return weighted_quantile
+    return neighbourhood[order[non_zero - 1]].value
 
 
-cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero) nogil:
-  cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.5)
+cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.5, double sum_of_weights)
   return weighted_median
 
-cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero) nogil:
-  cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
+cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, double sum_of_weights)
   return weighted_median
 
-cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero) nogil:
-  cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)
+cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, double sum_of_weights)
   return weighted_median
 
-cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero) nogil:
-  cdef double weighted_median = neighbourhood_weighted_median(neighbourhood, non_zero)
+cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double weighted_median = neighbourhood_weighted_median(neighbourhood, non_zero, double sum_of_weights)
   cdef Neighbourhood * deviations = <Neighbourhood*> malloc(sizeof(Neighbourhood) * non_zero)
 
   for x in range(non_zero):
     deviations[x].value = fabs(neighbourhood[x].value - weighted_median)
     deviations[x].weight = neighbourhood[x].weight
 
-  cdef double mad = neighbourhood_weighted_median(deviations, non_zero)
+  cdef double mad = neighbourhood_weighted_median(deviations, non_zero, double sum_of_weights)
 
   free(deviations)
 
   return mad
 
 
-cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int non_zero) nogil:
-  cdef double mad_std = neighbourhood_weighted_mad(neighbourhood, non_zero) * 1.4826
+cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double mad_std = neighbourhood_weighted_mad(neighbourhood, non_zero, double sum_of_weights) * 1.4826
   return mad_std
 
-cdef double neighbourhood_weighted_skew_fp(Neighbourhood * neighbourhood, int non_zero) nogil:
-  cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
+cdef double neighbourhood_weighted_skew_fp(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, double sum_of_weights)
 
   if standard_deviation == 0:
     return 0
 
-  cdef double variance_3 = weighted_variance(neighbourhood, non_zero, 3)
+  cdef double variance_3 = weighted_variance(neighbourhood, non_zero, 3, double sum_of_weights)
   return variance_3 / (pow(standard_deviation, 3))
 
-cdef double neighbourhood_weighted_skew_p2(Neighbourhood * neighbourhood, int non_zero) nogil:
-  cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
+cdef double neighbourhood_weighted_skew_p2(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, double sum_of_weights)
 
   if standard_deviation == 0:
     return 0
 
-  cdef double median = neighbourhood_weighted_median(neighbourhood, non_zero)
+  cdef double median = neighbourhood_weighted_median(neighbourhood, non_zero, double sum_of_weights)
   cdef double mean = neighbourhood_sum(neighbourhood, non_zero)
 
   return 3 * ((mean - median) / standard_deviation)
 
-cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero) nogil:
-  cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
-  cdef double q2 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.50)
-  cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)
+cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, double sum_of_weights)
+  cdef double q2 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.50, double sum_of_weights)
+  cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, double sum_of_weights)
 
   cdef double iqr = q3 - q1
 
@@ -201,21 +182,21 @@ cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non
 
   return (q1 + q3 - (2 * q2)) / iqr
 
-cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero) nogil:
-  cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
-  cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)
+cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, double sum_of_weights)
+  cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, double sum_of_weights)
 
   cdef double iqr = q3 - q1
 
   return iqr
 
-cdef double neighbourhood_weighted_kurtosis_excess(Neighbourhood * neighbourhood, int non_zero) nogil:
-  cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
+cdef double neighbourhood_weighted_kurtosis_excess(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, double sum_of_weights)
 
   if standard_deviation == 0:
     return 0
 
-  cdef double variance_4 = weighted_variance(neighbourhood, non_zero, 4)
+  cdef double variance_4 = weighted_variance(neighbourhood, non_zero, 4, double sum_of_weights)
   return (variance_4 / (pow(standard_deviation, 4))) - 3
 
 cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non_zero) nogil:
@@ -235,7 +216,7 @@ cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non
 
   return offsets
 
-cdef void loop(double [:, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int x_max, int y_max, int kernel_width, int non_zero, f_type apply) nogil:
+cdef void loop(double [:, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int x_max, int y_max, int kernel_width, double sum_of_weights, int non_zero, f_type apply) nogil:
   cdef int x, y, n, offset_x, offset_y
   cdef Neighbourhood * neighbourhood
   
@@ -266,11 +247,11 @@ cdef void loop(double [:, ::1] arr, double [:, ::1] kernel, double [:, ::1] resu
         neighbourhood[n].value = arr[offset_x, offset_y]
         neighbourhood[n].weight = offsets[n].weight
 
-      result[x][y] = apply(neighbourhood, non_zero)
+      result[x][y] = apply(neighbourhood, non_zero, sum_of_weights)
 
       free(neighbourhood)
 
-cdef void loop_3d(double [:, :, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int depth, int x_max, int y_max, int kernel_width, int non_zero, f_type apply) nogil:
+cdef void loop_3d(double [:, :, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int depth, int x_max, int y_max, int kernel_width, double sum_of_weights, int non_zero, f_type apply) nogil:
   cdef int x, y, n, z, offset_x, offset_y
   cdef Neighbourhood * neighbourhood
   
@@ -302,7 +283,7 @@ cdef void loop_3d(double [:, :, ::1] arr, double [:, ::1] kernel, double [:, ::1
           neighbourhood[n].value = arr[z, offset_x, offset_y]
           neighbourhood[n].weight = offsets[n].weight / depth
 
-      result[x][y] = apply(neighbourhood, non_zero)
+      result[x][y] = apply(neighbourhood, non_zero, sum_of_weights)
 
       free(neighbourhood)
 
@@ -324,34 +305,24 @@ cdef f_type func_selector(str func_type):
   raise Exception('Unable to find filter type!')
 
 
-def weighted_quantile(values, weights, quintile, sorted=False):
-    assert (quintile >= 0 and quintile <= 1)
-    if sorted is False:
-      sorter = np.argsort(values)
-      values = values[sorter]
-      weights = weights[sorter]
-
-    weighted_quantiles = (np.cumsum(weights) - (0.5 * weights)) / np.sum(weights)
-
-    return weighted_quantiles, np.interp(0.5, weighted_quantiles, values)
-
-
 def filter_2d(double [:, ::1] arr, double [:, ::1] kernel, str func_type):
   cdef f_type apply = func_selector(func_type)
   cdef int non_zero = np.count_nonzero(kernel)
+  cdef double sum_of_weights = np.sum(kernel)
   result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
   cdef double[:, ::1] result_view = result
 
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, apply)
+  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], sum_of_weights, non_zero, apply)
 
   return result
 
 def filter_3d(double [:, :, ::1] arr, double [:, ::1] kernel, str func_type):
   cdef f_type apply = func_selector(func_type)
   cdef int non_zero = np.count_nonzero(kernel)
+  cdef double sum_of_weights = np.sum(kernel)
   result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
   cdef double[:, ::1] result_view = result
 
-  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], non_zero, apply)
+  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], sum_of_weights, non_zero, apply)
 
   return result

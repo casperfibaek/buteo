@@ -22,22 +22,20 @@ def weighted_quantile(values, weights, quintile=0.5, sorted=False):
   assert(wq_sum != 0)
 
   for v in range(length):
-    wq[v] = (wq_cumsum[v] - (0.5 * weights[v])) / wq_sum
+    wq[v] = (wq_cumsum[v] - (quintile * weights[v])) / wq_sum
     if wq[v] == quintile:
-      return wq[v]
+      return values[v]
     if wq[v] > quintile:
-      a = (value[v], weights[v])
-      b = (value[v - 1], weight[v - 1])
-      
-  
-  weighted_quantiles = (np.cumsum(weights) - (0.5 * weights)) / np.sum(weights)
+      low = abs(wq[v - 1] - quintile)
+      high = abs(wq[v] - quintile)
+      weight = low / (low + high)
+      return (values[v - 1]) * weight + values[v] * (1 - weight)
 
-  # return np.interp(0.5, weighted_quantiles, values),
-  return values, wq
+  return values[length - 1]
 
 if __name__ == "__main__":
   val = np.array([1, 3, 1, 5, 7])
-  weights = np.array([1, 1, 1, 1, 2])
+  weights = np.array([1, 1, 1, 1, 1.1])
   
   bob = weighted_quantile(val, weights, 0.5)
   print(bob)
