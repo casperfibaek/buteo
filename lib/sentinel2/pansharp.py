@@ -2,11 +2,11 @@ import numpy as np
 import os
 
 import sys
-sys.path.append('..\\base')
+sys.path.append('../base')
 # sys.path.append('..\\cython')
 sys.path.append('..')
-sys.path.append('..\\filters')
-sys.path.append('..\\..\\OTB-7.0.0-Win64\\lib\\python')
+sys.path.append('../filters')
+sys.path.append("~/OTB-7.0.0-Linux64/lib/python")
 
 from raster_io import raster_to_array, array_to_raster
 from resample import resample
@@ -69,12 +69,14 @@ def super_sample_s2(B04_link, B08_link, B05_link=None, B06_link=None, B07_link=N
 
         os.remove(resampled_path)
         os.remove(pseudo_path)
-        os.remove(pansharpened_path)
+        # os.remove(pansharpened_path)
 
 
 if __name__ == '__main__':
-    m10_folder = 'C:\\Users\\caspe\\Desktop\\Data\\Sentinel2\\Egypt\\S2B_MSIL2A_20191019T083949_N0213_R064_T36RTV_20191019T123417.SAFE\\GRANULE\\L2A_T36RTV_A013675_20191019T084241\\IMG_DATA\\R10m\\'
-    m20_folder = 'C:\\Users\\caspe\\Desktop\\Data\\Sentinel2\\Egypt\\S2B_MSIL2A_20191019T083949_N0213_R064_T36RTV_20191019T123417.SAFE\\GRANULE\\L2A_T36RTV_A013675_20191019T084241\\IMG_DATA\\R20m\\'
+    base = '\\mnt\\c\\users\\caspe\\Desktop\\data\\'
+
+    m10_folder = base + 'Sentinel2\\Egypt\\S2B_MSIL2A_20191019T083949_N0213_R064_T36RTV_20191019T123417.SAFE\\GRANULE\\L2A_T36RTV_A013675_20191019T084241\\IMG_DATA\\R10m\\'
+    m20_folder = base + 'Sentinel2\\Egypt\\S2B_MSIL2A_20191019T083949_N0213_R064_T36RTV_20191019T123417.SAFE\\GRANULE\\L2A_T36RTV_A013675_20191019T084241\\IMG_DATA\\R20m\\'
 
     B4 = m10_folder + 'T36RTV_20191019T083949_B04_10m.jp2'
     B5 = m20_folder + 'T36RTV_20191019T083949_B05_20m.jp2'

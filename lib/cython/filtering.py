@@ -69,30 +69,6 @@ def generate_get_neighborhood(
     return get_neighborhood
 
 
-def weighted_quantile(values, weights):
-    """ Very close to numpy.percentile, but supports weights.
-    NOTE: quantiles should be in [0, 1]!
-    :param values: numpy.array with data
-    :param quantiles: array-like with many quantiles needed
-    :param sample_weight: array-like of the same length as `array`
-    :param values_sorted: bool, if True, then will avoid sorting of
-        initial array
-    :param old_style: if True, will correct output to be consistent
-        with numpy.percentile.
-    :return: numpy.array with computed quantiles.
-    """
-    sorter = np.argsort(values)
-    values = values[sorter]
-    sample_weight = weights[sorter]
-
-    weighted_quantiles = (np.cumsum(sample_weight) - (0.5 * sample_weight)) / np.sum(
-        sample_weight
-    )
-
-    # return weighted_quantiles
-    return weighted_quantiles, np.interp(0.5, weighted_quantiles, values)
-
-
 def weighted_sum_neighborhood(arr, kernel):
     x_max = arr.shape[0]
     y_max = arr.shape[1]

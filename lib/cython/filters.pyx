@@ -323,6 +323,19 @@ cdef f_type func_selector(str func_type):
   
   raise Exception('Unable to find filter type!')
 
+
+def weighted_quantile(values, weights, quintile, sorted=False):
+    assert (quintile >= 0 and quintile <= 1)
+    if sorted is False:
+      sorter = np.argsort(values)
+      values = values[sorter]
+      weights = weights[sorter]
+
+    weighted_quantiles = (np.cumsum(weights) - (0.5 * weights)) / np.sum(weights)
+
+    return weighted_quantiles, np.interp(0.5, weighted_quantiles, values)
+
+
 def filter_2d(double [:, ::1] arr, double [:, ::1] kernel, str func_type):
   cdef f_type apply = func_selector(func_type)
   cdef int non_zero = np.count_nonzero(kernel)

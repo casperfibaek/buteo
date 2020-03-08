@@ -7,7 +7,7 @@ import time
 from base.utils.core import progress
 from base.raster_io import raster_to_array
 
-otb_folder = "C:\\Projects\\yellow\\OTB-7.0.0-Win64\\bin"
+otb_folder = "~/OTB-7.0.0-Linux64/bin/"
 
 def execute_cli_function(command, name, quiet=False):
     process = subprocess.Popen(
