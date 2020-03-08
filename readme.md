@@ -14,22 +14,21 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * cd /tmp
   * curl -O https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh
   * sudo bash Anaconda3-2019.10-Linux-x86_64.sh -u
-  * source ~/.bashrc *to activate conda*
+  * source ~/.bashrc
   * cd ~
-  * sudo chown cfi -R ./*
-  * sudo chown cfi .conda
-  * sudo chown cfi .conda/environments.txt
+  * sudo chown user -R ./*
+  * sudo chown user .conda/environments.txt
   * conda update conda
   * conda update --all
-  * conda create --name eo --clone root
-  * conda activate eo
-  * conda update --all *just to verify*
+  * conda create --name yellow python=3.5
+  * conda activate yellow
+  * conda update --all
+
+  ## Orfeo-toolbox
+  * conda install -c terradue otb
 
   ## Git
   * sudo apt-get install git
   * cd ~
-  * 
+  * git clone https://github.com/casperfibaek/yellow.git
 
-  ## Orfeo-toolbox
-  * otb setup
-c

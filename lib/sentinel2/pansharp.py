@@ -11,7 +11,6 @@ sys.path.append('..\\..\\OTB-7.0.0-Win64\\lib\\python')
 from raster_io import raster_to_array, array_to_raster
 from resample import resample
 from filters import standardize_filter
-# from orfeo_toolbox import pansharpen
 import otbApplication
 
 
@@ -62,14 +61,14 @@ def super_sample_s2(B04_link, B08_link, B05_link=None, B06_link=None, B07_link=N
 
         low_res_10m = None
 
-        pansharpened_path = os.path.join(out_folder, f'{prefix}{band_x}{suffix}_float.tif')
-        pansharpen(pseudo_path, resampled_path, pansharpened_path)
+        # pansharpened_path = os.path.join(out_folder, f'{prefix}{band_x}{suffix}_float.tif')
+        # pansharpen(pseudo_path, resampled_path, pansharpened_path)
+
+        array_to_raster(raster_to_array(resampled_path).astype('uint16'), reference_raster=paths[pseudo_band], out_raster=os.path.join(out_folder, f'{prefix}{band_x}{suffix}.tif'))
+        # array_to_raster(raster_to_array(pansharpened_path).astype('uint16'), reference_raster=paths[pseudo_band], out_raster=os.path.join(out_folder, f'{prefix}{band_x}{suffix}.tif'))
 
         os.remove(resampled_path)
         os.remove(pseudo_path)
-
-        array_to_raster(raster_to_array(pansharpened_path).astype('uint16'), reference_raster=paths[pseudo_band], out_raster=os.path.join(out_folder, f'{prefix}{band_x}{suffix}.tif'))
-
         os.remove(pansharpened_path)
 
 
