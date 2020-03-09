@@ -8,7 +8,7 @@ import numpy
 
 ext_modules = cythonize((Extension(
                             "filters",
-                            sources=["filters.pyx"],
+                            sources=["./lib/cython/filters.pyx"],
                             include_dirs=[numpy.get_include()],
                             extra_compile_args=["/O2", "/fp:fast", "/openmp"],
                         )))
