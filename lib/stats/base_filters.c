@@ -14,7 +14,8 @@
         ],
         "name": "base_filters",
         "sources": [
-            "./lib/statistics/base_filters.pyx"
+            "./lib/stats/base_filters.pyx",
+            "./lib/stats/stats_calc.pyx"
         ]
     },
     "module_name": "base_filters"
@@ -611,8 +612,8 @@ static CYTHON_INLINE float __PYX_NAN() {
   #endif
 #endif
 
-#define __PYX_HAVE__base_filters
-#define __PYX_HAVE_API__base_filters
+#define __PYX_HAVE__stats__base_filters
+#define __PYX_HAVE_API__stats__base_filters
 /* Early includes */
 #include <string.h>
 #include <stdlib.h>
@@ -829,7 +830,7 @@ static const char *__pyx_filename;
 
 
 static const char *__pyx_f[] = {
-  "lib/statistics/base_filters.pyx",
+  "lib/stats/base_filters.pyx",
   "stringsource",
 };
 /* MemviewSliceStruct.proto */
@@ -946,55 +947,55 @@ struct __pyx_array_obj;
 struct __pyx_MemviewEnum_obj;
 struct __pyx_memoryview_obj;
 struct __pyx_memoryviewslice_obj;
-struct __pyx_t_12base_filters_Neighbourhood;
-struct __pyx_t_12base_filters_Offset;
-struct __pyx_t_12base_filters_IndexedElement;
+struct __pyx_t_5stats_12base_filters_Neighbourhood;
+struct __pyx_t_5stats_12base_filters_Offset;
+struct __pyx_t_5stats_12base_filters_IndexedElement;
 
-/* "base_filters.pyx":14
+/* "stats/base_filters.pyx":14
  *             int(*compar)(const_void *, const_void *)) nogil
  * 
  * cdef struct Neighbourhood:             # <<<<<<<<<<<<<<
  *   double value
  *   double weight
  */
-struct __pyx_t_12base_filters_Neighbourhood {
+struct __pyx_t_5stats_12base_filters_Neighbourhood {
   double value;
   double weight;
 };
 
-/* "base_filters.pyx":18
+/* "stats/base_filters.pyx":18
  *   double weight
  * 
  * cdef struct Offset:             # <<<<<<<<<<<<<<
  *   int x
  *   int y
  */
-struct __pyx_t_12base_filters_Offset {
+struct __pyx_t_5stats_12base_filters_Offset {
   int x;
   int y;
   double weight;
 };
 
-/* "base_filters.pyx":23
+/* "stats/base_filters.pyx":23
  *   double weight
  * 
  * cdef struct IndexedElement:             # <<<<<<<<<<<<<<
  *     int index
  *     double value
  */
-struct __pyx_t_12base_filters_IndexedElement {
+struct __pyx_t_5stats_12base_filters_IndexedElement {
   int index;
   double value;
 };
 
-/* "base_filters.pyx":27
+/* "stats/base_filters.pyx":27
  *     double value
  * 
  * ctypedef double (*f_type) (Neighbourhood *, int, double) nogil             # <<<<<<<<<<<<<<
  * 
  * cdef int _compare(const_void *a, const_void *b) nogil:
  */
-typedef double (*__pyx_t_12base_filters_f_type)(struct __pyx_t_12base_filters_Neighbourhood *, int, double);
+typedef double (*__pyx_t_5stats_12base_filters_f_type)(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double);
 
 /* "View.MemoryView":105
  * 
@@ -1750,7 +1751,7 @@ static PyObject *__pyx_memoryviewslice_assign_item_from_object(struct __pyx_memo
 
 /* Module declarations from 'libc.math' */
 
-/* Module declarations from 'base_filters' */
+/* Module declarations from 'stats.base_filters' */
 static PyTypeObject *__pyx_array_type = 0;
 static PyTypeObject *__pyx_MemviewEnum_type = 0;
 static PyTypeObject *__pyx_memoryview_type = 0;
@@ -1762,27 +1763,27 @@ static PyObject *contiguous = 0;
 static PyObject *indirect_contiguous = 0;
 static int __pyx_memoryview_thread_locks_used;
 static PyThread_type_lock __pyx_memoryview_thread_locks[8];
-static int __pyx_f_12base_filters__compare(const void *, const void *); /*proto*/
-static void __pyx_f_12base_filters_argsort(struct __pyx_t_12base_filters_Neighbourhood *, int *, int); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_sum(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static double __pyx_f_12base_filters_weighted_variance(struct __pyx_t_12base_filters_Neighbourhood *, int, int, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_variance(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_standard_deviation(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __pyx_t_12base_filters_Neighbourhood *, int, double, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_median(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_q1(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_q3(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_mad(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_mad_std(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_skew_fp(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_skew_p2(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_skew_g(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_iqr(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static double __pyx_f_12base_filters_neighbourhood_weighted_kurtosis_excess(struct __pyx_t_12base_filters_Neighbourhood *, int, double); /*proto*/
-static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_offsets(__Pyx_memviewslice, int, int); /*proto*/
-static void __pyx_f_12base_filters_loop(__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, int, int, int, double, int, __pyx_t_12base_filters_f_type); /*proto*/
-static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, int, int, int, int, double, int, __pyx_t_12base_filters_f_type); /*proto*/
-static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObject *); /*proto*/
+static int __pyx_f_5stats_12base_filters__compare(const void *, const void *); /*proto*/
+static void __pyx_f_5stats_12base_filters_argsort(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int *, int); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_sum(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_weighted_variance(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_variance(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_standard_deviation(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_quintile(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_median(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_q1(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_q3(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_mad(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_mad_std(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_skew_fp(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_skew_p2(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_skew_g(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_iqr(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_kurtosis_excess(struct __pyx_t_5stats_12base_filters_Neighbourhood *, int, double); /*proto*/
+static struct __pyx_t_5stats_12base_filters_Offset *__pyx_f_5stats_12base_filters_generate_offsets(__Pyx_memviewslice, int, int); /*proto*/
+static void __pyx_f_5stats_12base_filters_loop(__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, int, int, int, double, int, __pyx_t_5stats_12base_filters_f_type); /*proto*/
+static void __pyx_f_5stats_12base_filters_loop_3d(__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, int, int, int, int, double, int, __pyx_t_5stats_12base_filters_f_type); /*proto*/
+static __pyx_t_5stats_12base_filters_f_type __pyx_f_5stats_12base_filters_func_selector(PyObject *); /*proto*/
 static struct __pyx_array_obj *__pyx_array_new(PyObject *, Py_ssize_t, char *, char *, char *); /*proto*/
 static void *__pyx_align_pointer(void *, size_t); /*proto*/
 static PyObject *__pyx_memoryview_new(PyObject *, int, int, __Pyx_TypeInfo *); /*proto*/
@@ -1817,11 +1818,11 @@ static void __pyx_memoryview_slice_assign_scalar(__Pyx_memviewslice *, int, size
 static void __pyx_memoryview__slice_assign_scalar(char *, Py_ssize_t *, Py_ssize_t *, int, size_t, void *); /*proto*/
 static PyObject *__pyx_unpickle_Enum__set_state(struct __pyx_MemviewEnum_obj *, PyObject *); /*proto*/
 static __Pyx_TypeInfo __Pyx_TypeInfo_double = { "double", NULL, sizeof(double), { 0 }, 0, 'R', 0, 0 };
-#define __Pyx_MODULE_NAME "base_filters"
-extern int __pyx_module_is_main_base_filters;
-int __pyx_module_is_main_base_filters = 0;
+#define __Pyx_MODULE_NAME "stats.base_filters"
+extern int __pyx_module_is_main_stats__base_filters;
+int __pyx_module_is_main_stats__base_filters = 0;
 
-/* Implementation of 'base_filters' */
+/* Implementation of 'stats.base_filters' */
 static PyObject *__pyx_builtin_range;
 static PyObject *__pyx_builtin_ValueError;
 static PyObject *__pyx_builtin_MemoryError;
@@ -1906,7 +1907,6 @@ static const char __pyx_k_pyx_vtable[] = "__pyx_vtable__";
 static const char __pyx_k_MemoryError[] = "MemoryError";
 static const char __pyx_k_PickleError[] = "PickleError";
 static const char __pyx_k_result_view[] = "result_view";
-static const char __pyx_k_base_filters[] = "base_filters";
 static const char __pyx_k_pyx_checksum[] = "__pyx_checksum";
 static const char __pyx_k_stringsource[] = "stringsource";
 static const char __pyx_k_count_nonzero[] = "count_nonzero";
@@ -1921,6 +1921,7 @@ static const char __pyx_k_setstate_cython[] = "__setstate_cython__";
 static const char __pyx_k_pyx_unpickle_Enum[] = "__pyx_unpickle_Enum";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_standard_deviation[] = "standard_deviation";
+static const char __pyx_k_stats_base_filters[] = "stats.base_filters";
 static const char __pyx_k_strided_and_direct[] = "<strided and direct>";
 static const char __pyx_k_strided_and_indirect[] = "<strided and indirect>";
 static const char __pyx_k_contiguous_and_direct[] = "<contiguous and direct>";
@@ -1930,10 +1931,10 @@ static const char __pyx_k_contiguous_and_indirect[] = "<contiguous and indirect>
 static const char __pyx_k_Cannot_index_with_type_s[] = "Cannot index with type '%s'";
 static const char __pyx_k_Invalid_shape_in_axis_d_d[] = "Invalid shape in axis %d: %d.";
 static const char __pyx_k_Unable_to_find_filter_type[] = "Unable to find filter type!";
+static const char __pyx_k_lib_stats_base_filters_pyx[] = "lib/stats/base_filters.pyx";
 static const char __pyx_k_itemsize_0_for_cython_array[] = "itemsize <= 0 for cython.array";
 static const char __pyx_k_unable_to_allocate_array_data[] = "unable to allocate array data.";
 static const char __pyx_k_strided_and_direct_or_indirect[] = "<strided and direct or indirect>";
-static const char __pyx_k_lib_statistics_base_filters_pyx[] = "lib/statistics/base_filters.pyx";
 static const char __pyx_k_Buffer_view_does_not_expose_stri[] = "Buffer view does not expose strides";
 static const char __pyx_k_Can_only_create_a_buffer_that_is[] = "Can only create a buffer that is contiguous in memory.";
 static const char __pyx_k_Cannot_assign_to_read_only_memor[] = "Cannot assign to read-only memoryview";
@@ -1975,7 +1976,6 @@ static PyObject *__pyx_n_s_allocate_buffer;
 static PyObject *__pyx_n_s_apply;
 static PyObject *__pyx_n_s_arr;
 static PyObject *__pyx_n_s_base;
-static PyObject *__pyx_n_s_base_filters;
 static PyObject *__pyx_n_s_c;
 static PyObject *__pyx_n_u_c;
 static PyObject *__pyx_n_s_class;
@@ -2007,7 +2007,7 @@ static PyObject *__pyx_n_s_itemsize;
 static PyObject *__pyx_kp_s_itemsize_0_for_cython_array;
 static PyObject *__pyx_n_s_kernel;
 static PyObject *__pyx_n_u_kurtosis;
-static PyObject *__pyx_kp_s_lib_statistics_base_filters_pyx;
+static PyObject *__pyx_kp_s_lib_stats_base_filters_pyx;
 static PyObject *__pyx_n_u_mad;
 static PyObject *__pyx_n_u_mad_std;
 static PyObject *__pyx_n_s_main;
@@ -2051,6 +2051,7 @@ static PyObject *__pyx_n_u_skew_g;
 static PyObject *__pyx_n_u_skew_p2;
 static PyObject *__pyx_n_u_standard_deviation;
 static PyObject *__pyx_n_s_start;
+static PyObject *__pyx_n_s_stats_base_filters;
 static PyObject *__pyx_n_s_step;
 static PyObject *__pyx_n_s_stop;
 static PyObject *__pyx_kp_s_strided_and_direct;
@@ -2066,8 +2067,8 @@ static PyObject *__pyx_kp_s_unable_to_allocate_shape_and_str;
 static PyObject *__pyx_n_s_unpack;
 static PyObject *__pyx_n_s_update;
 static PyObject *__pyx_n_u_variance;
-static PyObject *__pyx_pf_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_arr, __Pyx_memviewslice __pyx_v_kernel, PyObject *__pyx_v_func_type); /* proto */
-static PyObject *__pyx_pf_12base_filters_2filter_3d(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_arr, __Pyx_memviewslice __pyx_v_kernel, PyObject *__pyx_v_func_type); /* proto */
+static PyObject *__pyx_pf_5stats_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_arr, __Pyx_memviewslice __pyx_v_kernel, PyObject *__pyx_v_func_type); /* proto */
+static PyObject *__pyx_pf_5stats_12base_filters_2filter_3d(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_arr, __Pyx_memviewslice __pyx_v_kernel, PyObject *__pyx_v_func_type); /* proto */
 static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array___cinit__(struct __pyx_array_obj *__pyx_v_self, PyObject *__pyx_v_shape, Py_ssize_t __pyx_v_itemsize, PyObject *__pyx_v_format, PyObject *__pyx_v_mode, int __pyx_v_allocate_buffer); /* proto */
 static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array_2__getbuffer__(struct __pyx_array_obj *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_array___pyx_pf_15View_dot_MemoryView_5array_4__dealloc__(struct __pyx_array_obj *__pyx_v_self); /* proto */
@@ -2150,7 +2151,7 @@ static PyObject *__pyx_codeobj__23;
 static PyObject *__pyx_codeobj__30;
 /* Late includes */
 
-/* "base_filters.pyx":29
+/* "stats/base_filters.pyx":29
  * ctypedef double (*f_type) (Neighbourhood *, int, double) nogil
  * 
  * cdef int _compare(const_void *a, const_void *b) nogil:             # <<<<<<<<<<<<<<
@@ -2158,21 +2159,21 @@ static PyObject *__pyx_codeobj__30;
  *   if v < 0: return -1
  */
 
-static int __pyx_f_12base_filters__compare(const void *__pyx_v_a, const void *__pyx_v_b) {
+static int __pyx_f_5stats_12base_filters__compare(const void *__pyx_v_a, const void *__pyx_v_b) {
   double __pyx_v_v;
   int __pyx_r;
   int __pyx_t_1;
 
-  /* "base_filters.pyx":30
+  /* "stats/base_filters.pyx":30
  * 
  * cdef int _compare(const_void *a, const_void *b) nogil:
  *   cdef double v = (<IndexedElement*> a).value - (<IndexedElement*> b).value             # <<<<<<<<<<<<<<
  *   if v < 0: return -1
  *   if v >= 0: return 1
  */
-  __pyx_v_v = (((struct __pyx_t_12base_filters_IndexedElement *)__pyx_v_a)->value - ((struct __pyx_t_12base_filters_IndexedElement *)__pyx_v_b)->value);
+  __pyx_v_v = (((struct __pyx_t_5stats_12base_filters_IndexedElement *)__pyx_v_a)->value - ((struct __pyx_t_5stats_12base_filters_IndexedElement *)__pyx_v_b)->value);
 
-  /* "base_filters.pyx":31
+  /* "stats/base_filters.pyx":31
  * cdef int _compare(const_void *a, const_void *b) nogil:
  *   cdef double v = (<IndexedElement*> a).value - (<IndexedElement*> b).value
  *   if v < 0: return -1             # <<<<<<<<<<<<<<
@@ -2185,7 +2186,7 @@ static int __pyx_f_12base_filters__compare(const void *__pyx_v_a, const void *__
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":32
+  /* "stats/base_filters.pyx":32
  *   cdef double v = (<IndexedElement*> a).value - (<IndexedElement*> b).value
  *   if v < 0: return -1
  *   if v >= 0: return 1             # <<<<<<<<<<<<<<
@@ -2198,7 +2199,7 @@ static int __pyx_f_12base_filters__compare(const void *__pyx_v_a, const void *__
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":29
+  /* "stats/base_filters.pyx":29
  * ctypedef double (*f_type) (Neighbourhood *, int, double) nogil
  * 
  * cdef int _compare(const_void *a, const_void *b) nogil:             # <<<<<<<<<<<<<<
@@ -2212,7 +2213,7 @@ static int __pyx_f_12base_filters__compare(const void *__pyx_v_a, const void *__
   return __pyx_r;
 }
 
-/* "base_filters.pyx":34
+/* "stats/base_filters.pyx":34
  *   if v >= 0: return 1
  * 
  * cdef void argsort(Neighbourhood * neighbourhood, int* order, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -2220,25 +2221,25 @@ static int __pyx_f_12base_filters__compare(const void *__pyx_v_a, const void *__
  * 
  */
 
-static void __pyx_f_12base_filters_argsort(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int *__pyx_v_order, int __pyx_v_non_zero) {
+static void __pyx_f_5stats_12base_filters_argsort(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int *__pyx_v_order, int __pyx_v_non_zero) {
   int __pyx_v_i;
-  struct __pyx_t_12base_filters_IndexedElement *__pyx_v_order_struct;
+  struct __pyx_t_5stats_12base_filters_IndexedElement *__pyx_v_order_struct;
   int __pyx_t_1;
   int __pyx_t_2;
   int __pyx_t_3;
   double __pyx_t_4;
   int __pyx_t_5;
 
-  /* "base_filters.pyx":38
+  /* "stats/base_filters.pyx":38
  * 
  *   # Allocate index tracking array.
- *   cdef IndexedElement *order_struct = <IndexedElement *> malloc(non_zero * sizeof(IndexedElement))             # <<<<<<<<<<<<<<
+ *   cdef IndexedElement* order_struct = <IndexedElement *> malloc(non_zero * sizeof(IndexedElement))             # <<<<<<<<<<<<<<
  * 
  *   # Copy data into index tracking array.
  */
-  __pyx_v_order_struct = ((struct __pyx_t_12base_filters_IndexedElement *)malloc((__pyx_v_non_zero * (sizeof(struct __pyx_t_12base_filters_IndexedElement)))));
+  __pyx_v_order_struct = ((struct __pyx_t_5stats_12base_filters_IndexedElement *)malloc((__pyx_v_non_zero * (sizeof(struct __pyx_t_5stats_12base_filters_IndexedElement)))));
 
-  /* "base_filters.pyx":41
+  /* "stats/base_filters.pyx":41
  * 
  *   # Copy data into index tracking array.
  *   for i in range(non_zero):             # <<<<<<<<<<<<<<
@@ -2250,7 +2251,7 @@ static void __pyx_f_12base_filters_argsort(struct __pyx_t_12base_filters_Neighbo
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_i = __pyx_t_3;
 
-    /* "base_filters.pyx":42
+    /* "stats/base_filters.pyx":42
  *   # Copy data into index tracking array.
  *   for i in range(non_zero):
  *       order_struct[i].index = i             # <<<<<<<<<<<<<<
@@ -2259,7 +2260,7 @@ static void __pyx_f_12base_filters_argsort(struct __pyx_t_12base_filters_Neighbo
  */
     (__pyx_v_order_struct[__pyx_v_i]).index = __pyx_v_i;
 
-    /* "base_filters.pyx":43
+    /* "stats/base_filters.pyx":43
  *   for i in range(non_zero):
  *       order_struct[i].index = i
  *       order_struct[i].value = neighbourhood[i].value             # <<<<<<<<<<<<<<
@@ -2270,16 +2271,16 @@ static void __pyx_f_12base_filters_argsort(struct __pyx_t_12base_filters_Neighbo
     (__pyx_v_order_struct[__pyx_v_i]).value = __pyx_t_4;
   }
 
-  /* "base_filters.pyx":46
+  /* "stats/base_filters.pyx":46
  * 
  *   # Sort index tracking array.
  *   qsort(<void *> order_struct, non_zero, sizeof(IndexedElement), _compare)             # <<<<<<<<<<<<<<
  * 
  *   # Copy indices from index tracking array to output array.
  */
-  qsort(((void *)__pyx_v_order_struct), __pyx_v_non_zero, (sizeof(struct __pyx_t_12base_filters_IndexedElement)), __pyx_f_12base_filters__compare);
+  qsort(((void *)__pyx_v_order_struct), __pyx_v_non_zero, (sizeof(struct __pyx_t_5stats_12base_filters_IndexedElement)), __pyx_f_5stats_12base_filters__compare);
 
-  /* "base_filters.pyx":49
+  /* "stats/base_filters.pyx":49
  * 
  *   # Copy indices from index tracking array to output array.
  *   for i in range(non_zero):             # <<<<<<<<<<<<<<
@@ -2291,7 +2292,7 @@ static void __pyx_f_12base_filters_argsort(struct __pyx_t_12base_filters_Neighbo
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_i = __pyx_t_3;
 
-    /* "base_filters.pyx":50
+    /* "stats/base_filters.pyx":50
  *   # Copy indices from index tracking array to output array.
  *   for i in range(non_zero):
  *       order[i] = order_struct[i].index             # <<<<<<<<<<<<<<
@@ -2302,7 +2303,7 @@ static void __pyx_f_12base_filters_argsort(struct __pyx_t_12base_filters_Neighbo
     (__pyx_v_order[__pyx_v_i]) = __pyx_t_5;
   }
 
-  /* "base_filters.pyx":53
+  /* "stats/base_filters.pyx":53
  * 
  *   # Free index tracking array.
  *   free(order_struct)             # <<<<<<<<<<<<<<
@@ -2311,7 +2312,7 @@ static void __pyx_f_12base_filters_argsort(struct __pyx_t_12base_filters_Neighbo
  */
   free(__pyx_v_order_struct);
 
-  /* "base_filters.pyx":34
+  /* "stats/base_filters.pyx":34
  *   if v >= 0: return 1
  * 
  * cdef void argsort(Neighbourhood * neighbourhood, int* order, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -2322,7 +2323,7 @@ static void __pyx_f_12base_filters_argsort(struct __pyx_t_12base_filters_Neighbo
   /* function exit code */
 }
 
-/* "base_filters.pyx":55
+/* "stats/base_filters.pyx":55
  *   free(order_struct)
  * 
  * cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2330,7 +2331,7 @@ static void __pyx_f_12base_filters_argsort(struct __pyx_t_12base_filters_Neighbo
  *     cdef double accum
  */
 
-static double __pyx_f_12base_filters_neighbourhood_sum(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, CYTHON_UNUSED double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_sum(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, CYTHON_UNUSED double __pyx_v_sum_of_weights) {
   int __pyx_v_x;
   double __pyx_v_accum;
   double __pyx_r;
@@ -2338,7 +2339,7 @@ static double __pyx_f_12base_filters_neighbourhood_sum(struct __pyx_t_12base_fil
   int __pyx_t_2;
   int __pyx_t_3;
 
-  /* "base_filters.pyx":59
+  /* "stats/base_filters.pyx":59
  *     cdef double accum
  * 
  *     accum = 0             # <<<<<<<<<<<<<<
@@ -2347,7 +2348,7 @@ static double __pyx_f_12base_filters_neighbourhood_sum(struct __pyx_t_12base_fil
  */
   __pyx_v_accum = 0.0;
 
-  /* "base_filters.pyx":60
+  /* "stats/base_filters.pyx":60
  * 
  *     accum = 0
  *     for x in range(non_zero):             # <<<<<<<<<<<<<<
@@ -2359,7 +2360,7 @@ static double __pyx_f_12base_filters_neighbourhood_sum(struct __pyx_t_12base_fil
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_x = __pyx_t_3;
 
-    /* "base_filters.pyx":61
+    /* "stats/base_filters.pyx":61
  *     accum = 0
  *     for x in range(non_zero):
  *       accum += neighbourhood[x].value * neighbourhood[x].weight             # <<<<<<<<<<<<<<
@@ -2369,7 +2370,7 @@ static double __pyx_f_12base_filters_neighbourhood_sum(struct __pyx_t_12base_fil
     __pyx_v_accum = (__pyx_v_accum + ((__pyx_v_neighbourhood[__pyx_v_x]).value * (__pyx_v_neighbourhood[__pyx_v_x]).weight));
   }
 
-  /* "base_filters.pyx":63
+  /* "stats/base_filters.pyx":63
  *       accum += neighbourhood[x].value * neighbourhood[x].weight
  * 
  *     return accum             # <<<<<<<<<<<<<<
@@ -2379,7 +2380,7 @@ static double __pyx_f_12base_filters_neighbourhood_sum(struct __pyx_t_12base_fil
   __pyx_r = __pyx_v_accum;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":55
+  /* "stats/base_filters.pyx":55
  *   free(order_struct)
  * 
  * cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2392,7 +2393,7 @@ static double __pyx_f_12base_filters_neighbourhood_sum(struct __pyx_t_12base_fil
   return __pyx_r;
 }
 
-/* "base_filters.pyx":65
+/* "stats/base_filters.pyx":65
  *     return accum
  * 
  * cdef double weighted_variance(Neighbourhood * neighbourhood, int non_zero, int power, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2400,7 +2401,7 @@ static double __pyx_f_12base_filters_neighbourhood_sum(struct __pyx_t_12base_fil
  *     cdef double accum, weighted_average, deviations
  */
 
-static double __pyx_f_12base_filters_weighted_variance(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, int __pyx_v_power, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_weighted_variance(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, int __pyx_v_power, double __pyx_v_sum_of_weights) {
   int __pyx_v_x;
   double __pyx_v_weighted_average;
   double __pyx_v_deviations;
@@ -2409,16 +2410,16 @@ static double __pyx_f_12base_filters_weighted_variance(struct __pyx_t_12base_fil
   int __pyx_t_2;
   int __pyx_t_3;
 
-  /* "base_filters.pyx":69
+  /* "stats/base_filters.pyx":69
  *     cdef double accum, weighted_average, deviations
  * 
  *     weighted_average = neighbourhood_sum(neighbourhood, non_zero, sum_of_weights)             # <<<<<<<<<<<<<<
  * 
  *     deviations = 0
  */
-  __pyx_v_weighted_average = __pyx_f_12base_filters_neighbourhood_sum(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
+  __pyx_v_weighted_average = __pyx_f_5stats_12base_filters_neighbourhood_sum(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":71
+  /* "stats/base_filters.pyx":71
  *     weighted_average = neighbourhood_sum(neighbourhood, non_zero, sum_of_weights)
  * 
  *     deviations = 0             # <<<<<<<<<<<<<<
@@ -2427,7 +2428,7 @@ static double __pyx_f_12base_filters_weighted_variance(struct __pyx_t_12base_fil
  */
   __pyx_v_deviations = 0.0;
 
-  /* "base_filters.pyx":72
+  /* "stats/base_filters.pyx":72
  * 
  *     deviations = 0
  *     for x in range(non_zero):             # <<<<<<<<<<<<<<
@@ -2439,7 +2440,7 @@ static double __pyx_f_12base_filters_weighted_variance(struct __pyx_t_12base_fil
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_x = __pyx_t_3;
 
-    /* "base_filters.pyx":73
+    /* "stats/base_filters.pyx":73
  *     deviations = 0
  *     for x in range(non_zero):
  *       deviations += neighbourhood[x].weight * (pow((neighbourhood[x].value - weighted_average), power))             # <<<<<<<<<<<<<<
@@ -2449,7 +2450,7 @@ static double __pyx_f_12base_filters_weighted_variance(struct __pyx_t_12base_fil
     __pyx_v_deviations = (__pyx_v_deviations + ((__pyx_v_neighbourhood[__pyx_v_x]).weight * pow(((__pyx_v_neighbourhood[__pyx_v_x]).value - __pyx_v_weighted_average), __pyx_v_power)));
   }
 
-  /* "base_filters.pyx":75
+  /* "stats/base_filters.pyx":75
  *       deviations += neighbourhood[x].weight * (pow((neighbourhood[x].value - weighted_average), power))
  * 
  *     return deviations / sum_of_weights             # <<<<<<<<<<<<<<
@@ -2459,7 +2460,7 @@ static double __pyx_f_12base_filters_weighted_variance(struct __pyx_t_12base_fil
   __pyx_r = (__pyx_v_deviations / __pyx_v_sum_of_weights);
   goto __pyx_L0;
 
-  /* "base_filters.pyx":65
+  /* "stats/base_filters.pyx":65
  *     return accum
  * 
  * cdef double weighted_variance(Neighbourhood * neighbourhood, int non_zero, int power, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2472,7 +2473,7 @@ static double __pyx_f_12base_filters_weighted_variance(struct __pyx_t_12base_fil
   return __pyx_r;
 }
 
-/* "base_filters.pyx":77
+/* "stats/base_filters.pyx":77
  *     return deviations / sum_of_weights
  * 
  * cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2480,20 +2481,20 @@ static double __pyx_f_12base_filters_weighted_variance(struct __pyx_t_12base_fil
  *   return variance
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_variance(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_variance(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
   double __pyx_v_variance;
   double __pyx_r;
 
-  /* "base_filters.pyx":78
+  /* "stats/base_filters.pyx":78
  * 
  * cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double variance = weighted_variance(neighbourhood, non_zero, 2, sum_of_weights)             # <<<<<<<<<<<<<<
  *   return variance
  * 
  */
-  __pyx_v_variance = __pyx_f_12base_filters_weighted_variance(__pyx_v_neighbourhood, __pyx_v_non_zero, 2, __pyx_v_sum_of_weights);
+  __pyx_v_variance = __pyx_f_5stats_12base_filters_weighted_variance(__pyx_v_neighbourhood, __pyx_v_non_zero, 2, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":79
+  /* "stats/base_filters.pyx":79
  * cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double variance = weighted_variance(neighbourhood, non_zero, 2, sum_of_weights)
  *   return variance             # <<<<<<<<<<<<<<
@@ -2503,7 +2504,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_variance(struct __py
   __pyx_r = __pyx_v_variance;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":77
+  /* "stats/base_filters.pyx":77
  *     return deviations / sum_of_weights
  * 
  * cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2516,7 +2517,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_variance(struct __py
   return __pyx_r;
 }
 
-/* "base_filters.pyx":81
+/* "stats/base_filters.pyx":81
  *   return variance
  * 
  * cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2524,21 +2525,21 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_variance(struct __py
  *   cdef double standard_deviation = sqrt(variance)
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_standard_deviation(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_standard_deviation(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
   double __pyx_v_variance;
   double __pyx_v_standard_deviation;
   double __pyx_r;
 
-  /* "base_filters.pyx":82
+  /* "stats/base_filters.pyx":82
  * 
  * cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double variance = weighted_variance(neighbourhood, non_zero, 2, sum_of_weights)             # <<<<<<<<<<<<<<
  *   cdef double standard_deviation = sqrt(variance)
  * 
  */
-  __pyx_v_variance = __pyx_f_12base_filters_weighted_variance(__pyx_v_neighbourhood, __pyx_v_non_zero, 2, __pyx_v_sum_of_weights);
+  __pyx_v_variance = __pyx_f_5stats_12base_filters_weighted_variance(__pyx_v_neighbourhood, __pyx_v_non_zero, 2, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":83
+  /* "stats/base_filters.pyx":83
  * cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double variance = weighted_variance(neighbourhood, non_zero, 2, sum_of_weights)
  *   cdef double standard_deviation = sqrt(variance)             # <<<<<<<<<<<<<<
@@ -2547,7 +2548,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_standard_deviation(s
  */
   __pyx_v_standard_deviation = sqrt(__pyx_v_variance);
 
-  /* "base_filters.pyx":85
+  /* "stats/base_filters.pyx":85
  *   cdef double standard_deviation = sqrt(variance)
  * 
  *   return standard_deviation             # <<<<<<<<<<<<<<
@@ -2557,7 +2558,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_standard_deviation(s
   __pyx_r = __pyx_v_standard_deviation;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":81
+  /* "stats/base_filters.pyx":81
  *   return variance
  * 
  * cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2570,7 +2571,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_standard_deviation(s
   return __pyx_r;
 }
 
-/* "base_filters.pyx":87
+/* "stats/base_filters.pyx":87
  *   return standard_deviation
  * 
  * cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int non_zero, double quintile, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2578,7 +2579,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_standard_deviation(s
  *     cdef double weighted_quantile, low, weight,
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_quintile, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_quintile(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_quintile, double __pyx_v_sum_of_weights) {
   int __pyx_v_i;
   double __pyx_v_low;
   double __pyx_v_weight;
@@ -2594,7 +2595,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
   int __pyx_t_4;
   int __pyx_t_5;
 
-  /* "base_filters.pyx":91
+  /* "stats/base_filters.pyx":91
  *     cdef double weighted_quantile, low, weight,
  * 
  *     cdef double cumsum = 0             # <<<<<<<<<<<<<<
@@ -2603,7 +2604,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
   __pyx_v_cumsum = 0.0;
 
-  /* "base_filters.pyx":93
+  /* "stats/base_filters.pyx":93
  *     cdef double cumsum = 0
  * 
  *     cdef double* sort_arr = <double*> malloc(sizeof(double) * non_zero)             # <<<<<<<<<<<<<<
@@ -2612,7 +2613,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
   __pyx_v_sort_arr = ((double *)malloc(((sizeof(double)) * __pyx_v_non_zero)));
 
-  /* "base_filters.pyx":94
+  /* "stats/base_filters.pyx":94
  * 
  *     cdef double* sort_arr = <double*> malloc(sizeof(double) * non_zero)
  *     cdef double* sort_weight = <double*> malloc(sizeof(double) * non_zero)             # <<<<<<<<<<<<<<
@@ -2621,7 +2622,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
   __pyx_v_sort_weight = ((double *)malloc(((sizeof(double)) * __pyx_v_non_zero)));
 
-  /* "base_filters.pyx":95
+  /* "stats/base_filters.pyx":95
  *     cdef double* sort_arr = <double*> malloc(sizeof(double) * non_zero)
  *     cdef double* sort_weight = <double*> malloc(sizeof(double) * non_zero)
  *     cdef double* cx = <double*> malloc(sizeof(double) * non_zero)             # <<<<<<<<<<<<<<
@@ -2630,7 +2631,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
   __pyx_v_cx = ((double *)malloc(((sizeof(double)) * __pyx_v_non_zero)));
 
-  /* "base_filters.pyx":96
+  /* "stats/base_filters.pyx":96
  *     cdef double* sort_weight = <double*> malloc(sizeof(double) * non_zero)
  *     cdef double* cx = <double*> malloc(sizeof(double) * non_zero)
  *     cdef int* order = <int*> malloc(sizeof(int) * non_zero)             # <<<<<<<<<<<<<<
@@ -2639,16 +2640,16 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
   __pyx_v_order = ((int *)malloc(((sizeof(int)) * __pyx_v_non_zero)));
 
-  /* "base_filters.pyx":98
+  /* "stats/base_filters.pyx":98
  *     cdef int* order = <int*> malloc(sizeof(int) * non_zero)
  * 
  *     argsort(neighbourhood, order, non_zero)             # <<<<<<<<<<<<<<
  * 
  *     for i in range(non_zero):
  */
-  __pyx_f_12base_filters_argsort(__pyx_v_neighbourhood, __pyx_v_order, __pyx_v_non_zero);
+  __pyx_f_5stats_12base_filters_argsort(__pyx_v_neighbourhood, __pyx_v_order, __pyx_v_non_zero);
 
-  /* "base_filters.pyx":100
+  /* "stats/base_filters.pyx":100
  *     argsort(neighbourhood, order, non_zero)
  * 
  *     for i in range(non_zero):             # <<<<<<<<<<<<<<
@@ -2660,7 +2661,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_i = __pyx_t_3;
 
-    /* "base_filters.pyx":101
+    /* "stats/base_filters.pyx":101
  * 
  *     for i in range(non_zero):
  *         cumsum += neighbourhood[order[i]].weight             # <<<<<<<<<<<<<<
@@ -2669,7 +2670,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
     __pyx_v_cumsum = (__pyx_v_cumsum + (__pyx_v_neighbourhood[(__pyx_v_order[__pyx_v_i])]).weight);
 
-    /* "base_filters.pyx":102
+    /* "stats/base_filters.pyx":102
  *     for i in range(non_zero):
  *         cumsum += neighbourhood[order[i]].weight
  *         cx[i] = (cumsum - (quintile * neighbourhood[order[i]].weight)) / sum_of_weights             # <<<<<<<<<<<<<<
@@ -2679,7 +2680,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
     (__pyx_v_cx[__pyx_v_i]) = ((__pyx_v_cumsum - (__pyx_v_quintile * (__pyx_v_neighbourhood[(__pyx_v_order[__pyx_v_i])]).weight)) / __pyx_v_sum_of_weights);
   }
 
-  /* "base_filters.pyx":104
+  /* "stats/base_filters.pyx":104
  *         cx[i] = (cumsum - (quintile * neighbourhood[order[i]].weight)) / sum_of_weights
  * 
  *     for i in range(non_zero):             # <<<<<<<<<<<<<<
@@ -2691,7 +2692,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_i = __pyx_t_3;
 
-    /* "base_filters.pyx":105
+    /* "stats/base_filters.pyx":105
  * 
  *     for i in range(non_zero):
  *         if cx[i] >= quintile:             # <<<<<<<<<<<<<<
@@ -2701,7 +2702,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
     __pyx_t_4 = (((__pyx_v_cx[__pyx_v_i]) >= __pyx_v_quintile) != 0);
     if (__pyx_t_4) {
 
-      /* "base_filters.pyx":106
+      /* "stats/base_filters.pyx":106
  *     for i in range(non_zero):
  *         if cx[i] >= quintile:
  *             if i == 0 or cx[i] == quintile:             # <<<<<<<<<<<<<<
@@ -2719,7 +2720,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
       __pyx_L9_bool_binop_done:;
       if (__pyx_t_4) {
 
-        /* "base_filters.pyx":107
+        /* "stats/base_filters.pyx":107
  *         if cx[i] >= quintile:
  *             if i == 0 or cx[i] == quintile:
  *                 return neighbourhood[order[i]].value             # <<<<<<<<<<<<<<
@@ -2729,7 +2730,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
         __pyx_r = (__pyx_v_neighbourhood[(__pyx_v_order[__pyx_v_i])]).value;
         goto __pyx_L0;
 
-        /* "base_filters.pyx":106
+        /* "stats/base_filters.pyx":106
  *     for i in range(non_zero):
  *         if cx[i] >= quintile:
  *             if i == 0 or cx[i] == quintile:             # <<<<<<<<<<<<<<
@@ -2738,7 +2739,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
       }
 
-      /* "base_filters.pyx":108
+      /* "stats/base_filters.pyx":108
  *             if i == 0 or cx[i] == quintile:
  *                 return neighbourhood[order[i]].value
  *             low = quintile - cx[i - 1]             # <<<<<<<<<<<<<<
@@ -2747,7 +2748,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
       __pyx_v_low = (__pyx_v_quintile - (__pyx_v_cx[(__pyx_v_i - 1)]));
 
-      /* "base_filters.pyx":109
+      /* "stats/base_filters.pyx":109
  *                 return neighbourhood[order[i]].value
  *             low = quintile - cx[i - 1]
  *             weight = low / (low + (cx[i] - quintile))             # <<<<<<<<<<<<<<
@@ -2756,7 +2757,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
       __pyx_v_weight = (__pyx_v_low / (__pyx_v_low + ((__pyx_v_cx[__pyx_v_i]) - __pyx_v_quintile)));
 
-      /* "base_filters.pyx":111
+      /* "stats/base_filters.pyx":111
  *             weight = low / (low + (cx[i] - quintile))
  * 
  *             return (neighbourhood[order[i - 1]].value * weight) + (neighbourhood[order[i]].value * (1 - weight))             # <<<<<<<<<<<<<<
@@ -2766,7 +2767,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
       __pyx_r = (((__pyx_v_neighbourhood[(__pyx_v_order[(__pyx_v_i - 1)])]).value * __pyx_v_weight) + ((__pyx_v_neighbourhood[(__pyx_v_order[__pyx_v_i])]).value * (1.0 - __pyx_v_weight)));
       goto __pyx_L0;
 
-      /* "base_filters.pyx":105
+      /* "stats/base_filters.pyx":105
  * 
  *     for i in range(non_zero):
  *         if cx[i] >= quintile:             # <<<<<<<<<<<<<<
@@ -2776,7 +2777,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
     }
   }
 
-  /* "base_filters.pyx":113
+  /* "stats/base_filters.pyx":113
  *             return (neighbourhood[order[i - 1]].value * weight) + (neighbourhood[order[i]].value * (1 - weight))
  * 
  *     free(sort_arr)             # <<<<<<<<<<<<<<
@@ -2785,7 +2786,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
   free(__pyx_v_sort_arr);
 
-  /* "base_filters.pyx":114
+  /* "stats/base_filters.pyx":114
  * 
  *     free(sort_arr)
  *     free(sort_weight)             # <<<<<<<<<<<<<<
@@ -2794,7 +2795,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
   free(__pyx_v_sort_weight);
 
-  /* "base_filters.pyx":115
+  /* "stats/base_filters.pyx":115
  *     free(sort_arr)
  *     free(sort_weight)
  *     free(order)             # <<<<<<<<<<<<<<
@@ -2803,7 +2804,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
   free(__pyx_v_order);
 
-  /* "base_filters.pyx":116
+  /* "stats/base_filters.pyx":116
  *     free(sort_weight)
  *     free(order)
  *     free(cx)             # <<<<<<<<<<<<<<
@@ -2812,7 +2813,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  */
   free(__pyx_v_cx);
 
-  /* "base_filters.pyx":118
+  /* "stats/base_filters.pyx":118
  *     free(cx)
  * 
  *     return neighbourhood[order[non_zero - 1]].value             # <<<<<<<<<<<<<<
@@ -2822,7 +2823,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
   __pyx_r = (__pyx_v_neighbourhood[(__pyx_v_order[(__pyx_v_non_zero - 1)])]).value;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":87
+  /* "stats/base_filters.pyx":87
  *   return standard_deviation
  * 
  * cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int non_zero, double quintile, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2835,7 +2836,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
   return __pyx_r;
 }
 
-/* "base_filters.pyx":121
+/* "stats/base_filters.pyx":121
  * 
  * 
  * cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2843,20 +2844,20 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_quintile(struct __py
  *   return weighted_median
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_median(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_median(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
   double __pyx_v_weighted_median;
   double __pyx_r;
 
-  /* "base_filters.pyx":122
+  /* "stats/base_filters.pyx":122
  * 
  * cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.5, sum_of_weights)             # <<<<<<<<<<<<<<
  *   return weighted_median
  * 
  */
-  __pyx_v_weighted_median = __pyx_f_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.5, __pyx_v_sum_of_weights);
+  __pyx_v_weighted_median = __pyx_f_5stats_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.5, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":123
+  /* "stats/base_filters.pyx":123
  * cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.5, sum_of_weights)
  *   return weighted_median             # <<<<<<<<<<<<<<
@@ -2866,7 +2867,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_median(struct __pyx_
   __pyx_r = __pyx_v_weighted_median;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":121
+  /* "stats/base_filters.pyx":121
  * 
  * 
  * cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2879,7 +2880,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_median(struct __pyx_
   return __pyx_r;
 }
 
-/* "base_filters.pyx":125
+/* "stats/base_filters.pyx":125
  *   return weighted_median
  * 
  * cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2887,20 +2888,20 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_median(struct __pyx_
  *   return weighted_median
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_q1(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_q1(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
   double __pyx_v_weighted_median;
   double __pyx_r;
 
-  /* "base_filters.pyx":126
+  /* "stats/base_filters.pyx":126
  * 
  * cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, sum_of_weights)             # <<<<<<<<<<<<<<
  *   return weighted_median
  * 
  */
-  __pyx_v_weighted_median = __pyx_f_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.25, __pyx_v_sum_of_weights);
+  __pyx_v_weighted_median = __pyx_f_5stats_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.25, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":127
+  /* "stats/base_filters.pyx":127
  * cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, sum_of_weights)
  *   return weighted_median             # <<<<<<<<<<<<<<
@@ -2910,7 +2911,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_q1(struct __pyx_t_12
   __pyx_r = __pyx_v_weighted_median;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":125
+  /* "stats/base_filters.pyx":125
  *   return weighted_median
  * 
  * cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2923,7 +2924,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_q1(struct __pyx_t_12
   return __pyx_r;
 }
 
-/* "base_filters.pyx":129
+/* "stats/base_filters.pyx":129
  *   return weighted_median
  * 
  * cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2931,20 +2932,20 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_q1(struct __pyx_t_12
  *   return weighted_median
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_q3(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_q3(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
   double __pyx_v_weighted_median;
   double __pyx_r;
 
-  /* "base_filters.pyx":130
+  /* "stats/base_filters.pyx":130
  * 
  * cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)             # <<<<<<<<<<<<<<
  *   return weighted_median
  * 
  */
-  __pyx_v_weighted_median = __pyx_f_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.75, __pyx_v_sum_of_weights);
+  __pyx_v_weighted_median = __pyx_f_5stats_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.75, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":131
+  /* "stats/base_filters.pyx":131
  * cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)
  *   return weighted_median             # <<<<<<<<<<<<<<
@@ -2954,7 +2955,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_q3(struct __pyx_t_12
   __pyx_r = __pyx_v_weighted_median;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":129
+  /* "stats/base_filters.pyx":129
  *   return weighted_median
  * 
  * cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2967,7 +2968,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_q3(struct __pyx_t_12
   return __pyx_r;
 }
 
-/* "base_filters.pyx":133
+/* "stats/base_filters.pyx":133
  *   return weighted_median
  * 
  * cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -2975,9 +2976,9 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_q3(struct __pyx_t_12
  *   cdef Neighbourhood * deviations = <Neighbourhood*> malloc(sizeof(Neighbourhood) * non_zero)
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_mad(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_mad(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
   double __pyx_v_weighted_median;
-  struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_deviations;
+  struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_deviations;
   int __pyx_v_x;
   double __pyx_v_mad;
   double __pyx_r;
@@ -2986,25 +2987,25 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_mad(struct __pyx_t_1
   int __pyx_t_3;
   double __pyx_t_4;
 
-  /* "base_filters.pyx":134
+  /* "stats/base_filters.pyx":134
  * 
  * cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double weighted_median = neighbourhood_weighted_median(neighbourhood, non_zero, sum_of_weights)             # <<<<<<<<<<<<<<
  *   cdef Neighbourhood * deviations = <Neighbourhood*> malloc(sizeof(Neighbourhood) * non_zero)
  * 
  */
-  __pyx_v_weighted_median = __pyx_f_12base_filters_neighbourhood_weighted_median(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
+  __pyx_v_weighted_median = __pyx_f_5stats_12base_filters_neighbourhood_weighted_median(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":135
+  /* "stats/base_filters.pyx":135
  * cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double weighted_median = neighbourhood_weighted_median(neighbourhood, non_zero, sum_of_weights)
  *   cdef Neighbourhood * deviations = <Neighbourhood*> malloc(sizeof(Neighbourhood) * non_zero)             # <<<<<<<<<<<<<<
  * 
  *   for x in range(non_zero):
  */
-  __pyx_v_deviations = ((struct __pyx_t_12base_filters_Neighbourhood *)malloc(((sizeof(struct __pyx_t_12base_filters_Neighbourhood)) * __pyx_v_non_zero)));
+  __pyx_v_deviations = ((struct __pyx_t_5stats_12base_filters_Neighbourhood *)malloc(((sizeof(struct __pyx_t_5stats_12base_filters_Neighbourhood)) * __pyx_v_non_zero)));
 
-  /* "base_filters.pyx":137
+  /* "stats/base_filters.pyx":137
  *   cdef Neighbourhood * deviations = <Neighbourhood*> malloc(sizeof(Neighbourhood) * non_zero)
  * 
  *   for x in range(non_zero):             # <<<<<<<<<<<<<<
@@ -3016,7 +3017,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_mad(struct __pyx_t_1
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_x = __pyx_t_3;
 
-    /* "base_filters.pyx":138
+    /* "stats/base_filters.pyx":138
  * 
  *   for x in range(non_zero):
  *     deviations[x].value = fabs(neighbourhood[x].value - weighted_median)             # <<<<<<<<<<<<<<
@@ -3025,7 +3026,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_mad(struct __pyx_t_1
  */
     (__pyx_v_deviations[__pyx_v_x]).value = fabs(((__pyx_v_neighbourhood[__pyx_v_x]).value - __pyx_v_weighted_median));
 
-    /* "base_filters.pyx":139
+    /* "stats/base_filters.pyx":139
  *   for x in range(non_zero):
  *     deviations[x].value = fabs(neighbourhood[x].value - weighted_median)
  *     deviations[x].weight = neighbourhood[x].weight             # <<<<<<<<<<<<<<
@@ -3036,16 +3037,16 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_mad(struct __pyx_t_1
     (__pyx_v_deviations[__pyx_v_x]).weight = __pyx_t_4;
   }
 
-  /* "base_filters.pyx":141
+  /* "stats/base_filters.pyx":141
  *     deviations[x].weight = neighbourhood[x].weight
  * 
  *   cdef double mad = neighbourhood_weighted_median(deviations, non_zero, sum_of_weights)             # <<<<<<<<<<<<<<
  * 
  *   free(deviations)
  */
-  __pyx_v_mad = __pyx_f_12base_filters_neighbourhood_weighted_median(__pyx_v_deviations, __pyx_v_non_zero, __pyx_v_sum_of_weights);
+  __pyx_v_mad = __pyx_f_5stats_12base_filters_neighbourhood_weighted_median(__pyx_v_deviations, __pyx_v_non_zero, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":143
+  /* "stats/base_filters.pyx":143
  *   cdef double mad = neighbourhood_weighted_median(deviations, non_zero, sum_of_weights)
  * 
  *   free(deviations)             # <<<<<<<<<<<<<<
@@ -3054,7 +3055,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_mad(struct __pyx_t_1
  */
   free(__pyx_v_deviations);
 
-  /* "base_filters.pyx":145
+  /* "stats/base_filters.pyx":145
  *   free(deviations)
  * 
  *   return mad             # <<<<<<<<<<<<<<
@@ -3064,7 +3065,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_mad(struct __pyx_t_1
   __pyx_r = __pyx_v_mad;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":133
+  /* "stats/base_filters.pyx":133
  *   return weighted_median
  * 
  * cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3077,7 +3078,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_mad(struct __pyx_t_1
   return __pyx_r;
 }
 
-/* "base_filters.pyx":148
+/* "stats/base_filters.pyx":148
  * 
  * 
  * cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3085,20 +3086,20 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_mad(struct __pyx_t_1
  *   return mad_std
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_mad_std(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_mad_std(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
   double __pyx_v_mad_std;
   double __pyx_r;
 
-  /* "base_filters.pyx":149
+  /* "stats/base_filters.pyx":149
  * 
  * cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double mad_std = neighbourhood_weighted_mad(neighbourhood, non_zero, sum_of_weights) * 1.4826             # <<<<<<<<<<<<<<
  *   return mad_std
  * 
  */
-  __pyx_v_mad_std = (__pyx_f_12base_filters_neighbourhood_weighted_mad(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights) * 1.4826);
+  __pyx_v_mad_std = (__pyx_f_5stats_12base_filters_neighbourhood_weighted_mad(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights) * 1.4826);
 
-  /* "base_filters.pyx":150
+  /* "stats/base_filters.pyx":150
  * cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double mad_std = neighbourhood_weighted_mad(neighbourhood, non_zero, sum_of_weights) * 1.4826
  *   return mad_std             # <<<<<<<<<<<<<<
@@ -3108,7 +3109,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_mad_std(struct __pyx
   __pyx_r = __pyx_v_mad_std;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":148
+  /* "stats/base_filters.pyx":148
  * 
  * 
  * cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3121,7 +3122,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_mad_std(struct __pyx
   return __pyx_r;
 }
 
-/* "base_filters.pyx":152
+/* "stats/base_filters.pyx":152
  *   return mad_std
  * 
  * cdef double neighbourhood_weighted_skew_fp(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3129,22 +3130,22 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_mad_std(struct __pyx
  * 
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_skew_fp(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_skew_fp(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
   double __pyx_v_standard_deviation;
   double __pyx_v_variance_3;
   double __pyx_r;
   int __pyx_t_1;
 
-  /* "base_filters.pyx":153
+  /* "stats/base_filters.pyx":153
  * 
  * cdef double neighbourhood_weighted_skew_fp(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, sum_of_weights)             # <<<<<<<<<<<<<<
  * 
  *   if standard_deviation == 0:
  */
-  __pyx_v_standard_deviation = __pyx_f_12base_filters_neighbourhood_weighted_standard_deviation(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
+  __pyx_v_standard_deviation = __pyx_f_5stats_12base_filters_neighbourhood_weighted_standard_deviation(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":155
+  /* "stats/base_filters.pyx":155
  *   cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, sum_of_weights)
  * 
  *   if standard_deviation == 0:             # <<<<<<<<<<<<<<
@@ -3154,7 +3155,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_fp(struct __pyx
   __pyx_t_1 = ((__pyx_v_standard_deviation == 0.0) != 0);
   if (__pyx_t_1) {
 
-    /* "base_filters.pyx":156
+    /* "stats/base_filters.pyx":156
  * 
  *   if standard_deviation == 0:
  *     return 0             # <<<<<<<<<<<<<<
@@ -3164,7 +3165,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_fp(struct __pyx
     __pyx_r = 0.0;
     goto __pyx_L0;
 
-    /* "base_filters.pyx":155
+    /* "stats/base_filters.pyx":155
  *   cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, sum_of_weights)
  * 
  *   if standard_deviation == 0:             # <<<<<<<<<<<<<<
@@ -3173,16 +3174,16 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_fp(struct __pyx
  */
   }
 
-  /* "base_filters.pyx":158
+  /* "stats/base_filters.pyx":158
  *     return 0
  * 
  *   cdef double variance_3 = weighted_variance(neighbourhood, non_zero, 3, sum_of_weights)             # <<<<<<<<<<<<<<
  *   return variance_3 / (pow(standard_deviation, 3))
  * 
  */
-  __pyx_v_variance_3 = __pyx_f_12base_filters_weighted_variance(__pyx_v_neighbourhood, __pyx_v_non_zero, 3, __pyx_v_sum_of_weights);
+  __pyx_v_variance_3 = __pyx_f_5stats_12base_filters_weighted_variance(__pyx_v_neighbourhood, __pyx_v_non_zero, 3, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":159
+  /* "stats/base_filters.pyx":159
  * 
  *   cdef double variance_3 = weighted_variance(neighbourhood, non_zero, 3, sum_of_weights)
  *   return variance_3 / (pow(standard_deviation, 3))             # <<<<<<<<<<<<<<
@@ -3192,7 +3193,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_fp(struct __pyx
   __pyx_r = (__pyx_v_variance_3 / pow(__pyx_v_standard_deviation, 3.0));
   goto __pyx_L0;
 
-  /* "base_filters.pyx":152
+  /* "stats/base_filters.pyx":152
  *   return mad_std
  * 
  * cdef double neighbourhood_weighted_skew_fp(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3205,7 +3206,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_fp(struct __pyx
   return __pyx_r;
 }
 
-/* "base_filters.pyx":161
+/* "stats/base_filters.pyx":161
  *   return variance_3 / (pow(standard_deviation, 3))
  * 
  * cdef double neighbourhood_weighted_skew_p2(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3213,23 +3214,23 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_fp(struct __pyx
  * 
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_skew_p2(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_skew_p2(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
   double __pyx_v_standard_deviation;
   double __pyx_v_median;
   double __pyx_v_mean;
   double __pyx_r;
   int __pyx_t_1;
 
-  /* "base_filters.pyx":162
+  /* "stats/base_filters.pyx":162
  * 
  * cdef double neighbourhood_weighted_skew_p2(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, sum_of_weights)             # <<<<<<<<<<<<<<
  * 
  *   if standard_deviation == 0:
  */
-  __pyx_v_standard_deviation = __pyx_f_12base_filters_neighbourhood_weighted_standard_deviation(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
+  __pyx_v_standard_deviation = __pyx_f_5stats_12base_filters_neighbourhood_weighted_standard_deviation(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":164
+  /* "stats/base_filters.pyx":164
  *   cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, sum_of_weights)
  * 
  *   if standard_deviation == 0:             # <<<<<<<<<<<<<<
@@ -3239,7 +3240,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_p2(struct __pyx
   __pyx_t_1 = ((__pyx_v_standard_deviation == 0.0) != 0);
   if (__pyx_t_1) {
 
-    /* "base_filters.pyx":165
+    /* "stats/base_filters.pyx":165
  * 
  *   if standard_deviation == 0:
  *     return 0             # <<<<<<<<<<<<<<
@@ -3249,7 +3250,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_p2(struct __pyx
     __pyx_r = 0.0;
     goto __pyx_L0;
 
-    /* "base_filters.pyx":164
+    /* "stats/base_filters.pyx":164
  *   cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, sum_of_weights)
  * 
  *   if standard_deviation == 0:             # <<<<<<<<<<<<<<
@@ -3258,25 +3259,25 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_p2(struct __pyx
  */
   }
 
-  /* "base_filters.pyx":167
+  /* "stats/base_filters.pyx":167
  *     return 0
  * 
  *   cdef double median = neighbourhood_weighted_median(neighbourhood, non_zero, sum_of_weights)             # <<<<<<<<<<<<<<
  *   cdef double mean = neighbourhood_sum(neighbourhood, non_zero, sum_of_weights)
  * 
  */
-  __pyx_v_median = __pyx_f_12base_filters_neighbourhood_weighted_median(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
+  __pyx_v_median = __pyx_f_5stats_12base_filters_neighbourhood_weighted_median(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":168
+  /* "stats/base_filters.pyx":168
  * 
  *   cdef double median = neighbourhood_weighted_median(neighbourhood, non_zero, sum_of_weights)
  *   cdef double mean = neighbourhood_sum(neighbourhood, non_zero, sum_of_weights)             # <<<<<<<<<<<<<<
  * 
  *   return 3 * ((mean - median) / standard_deviation)
  */
-  __pyx_v_mean = __pyx_f_12base_filters_neighbourhood_sum(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
+  __pyx_v_mean = __pyx_f_5stats_12base_filters_neighbourhood_sum(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":170
+  /* "stats/base_filters.pyx":170
  *   cdef double mean = neighbourhood_sum(neighbourhood, non_zero, sum_of_weights)
  * 
  *   return 3 * ((mean - median) / standard_deviation)             # <<<<<<<<<<<<<<
@@ -3286,7 +3287,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_p2(struct __pyx
   __pyx_r = (3.0 * ((__pyx_v_mean - __pyx_v_median) / __pyx_v_standard_deviation));
   goto __pyx_L0;
 
-  /* "base_filters.pyx":161
+  /* "stats/base_filters.pyx":161
  *   return variance_3 / (pow(standard_deviation, 3))
  * 
  * cdef double neighbourhood_weighted_skew_p2(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3299,7 +3300,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_p2(struct __pyx
   return __pyx_r;
 }
 
-/* "base_filters.pyx":172
+/* "stats/base_filters.pyx":172
  *   return 3 * ((mean - median) / standard_deviation)
  * 
  * cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3307,7 +3308,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_p2(struct __pyx
  *   cdef double q2 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.50, sum_of_weights)
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_skew_g(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_skew_g(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
   double __pyx_v_q1;
   double __pyx_v_q2;
   double __pyx_v_q3;
@@ -3315,34 +3316,34 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_g(struct __pyx_
   double __pyx_r;
   int __pyx_t_1;
 
-  /* "base_filters.pyx":173
+  /* "stats/base_filters.pyx":173
  * 
  * cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, sum_of_weights)             # <<<<<<<<<<<<<<
  *   cdef double q2 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.50, sum_of_weights)
  *   cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)
  */
-  __pyx_v_q1 = __pyx_f_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.25, __pyx_v_sum_of_weights);
+  __pyx_v_q1 = __pyx_f_5stats_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.25, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":174
+  /* "stats/base_filters.pyx":174
  * cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, sum_of_weights)
  *   cdef double q2 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.50, sum_of_weights)             # <<<<<<<<<<<<<<
  *   cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)
  * 
  */
-  __pyx_v_q2 = __pyx_f_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.50, __pyx_v_sum_of_weights);
+  __pyx_v_q2 = __pyx_f_5stats_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.50, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":175
+  /* "stats/base_filters.pyx":175
  *   cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, sum_of_weights)
  *   cdef double q2 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.50, sum_of_weights)
  *   cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)             # <<<<<<<<<<<<<<
  * 
  *   cdef double iqr = q3 - q1
  */
-  __pyx_v_q3 = __pyx_f_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.75, __pyx_v_sum_of_weights);
+  __pyx_v_q3 = __pyx_f_5stats_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.75, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":177
+  /* "stats/base_filters.pyx":177
  *   cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)
  * 
  *   cdef double iqr = q3 - q1             # <<<<<<<<<<<<<<
@@ -3351,7 +3352,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_g(struct __pyx_
  */
   __pyx_v_iqr = (__pyx_v_q3 - __pyx_v_q1);
 
-  /* "base_filters.pyx":179
+  /* "stats/base_filters.pyx":179
  *   cdef double iqr = q3 - q1
  * 
  *   if iqr == 0:             # <<<<<<<<<<<<<<
@@ -3361,7 +3362,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_g(struct __pyx_
   __pyx_t_1 = ((__pyx_v_iqr == 0.0) != 0);
   if (__pyx_t_1) {
 
-    /* "base_filters.pyx":180
+    /* "stats/base_filters.pyx":180
  * 
  *   if iqr == 0:
  *     return 0             # <<<<<<<<<<<<<<
@@ -3371,7 +3372,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_g(struct __pyx_
     __pyx_r = 0.0;
     goto __pyx_L0;
 
-    /* "base_filters.pyx":179
+    /* "stats/base_filters.pyx":179
  *   cdef double iqr = q3 - q1
  * 
  *   if iqr == 0:             # <<<<<<<<<<<<<<
@@ -3380,7 +3381,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_g(struct __pyx_
  */
   }
 
-  /* "base_filters.pyx":182
+  /* "stats/base_filters.pyx":182
  *     return 0
  * 
  *   return (q1 + q3 - (2 * q2)) / iqr             # <<<<<<<<<<<<<<
@@ -3390,7 +3391,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_g(struct __pyx_
   __pyx_r = (((__pyx_v_q1 + __pyx_v_q3) - (2.0 * __pyx_v_q2)) / __pyx_v_iqr);
   goto __pyx_L0;
 
-  /* "base_filters.pyx":172
+  /* "stats/base_filters.pyx":172
  *   return 3 * ((mean - median) / standard_deviation)
  * 
  * cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3403,7 +3404,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_g(struct __pyx_
   return __pyx_r;
 }
 
-/* "base_filters.pyx":184
+/* "stats/base_filters.pyx":184
  *   return (q1 + q3 - (2 * q2)) / iqr
  * 
  * cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3411,31 +3412,31 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_skew_g(struct __pyx_
  *   cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_iqr(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_iqr(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
   double __pyx_v_q1;
   double __pyx_v_q3;
   double __pyx_v_iqr;
   double __pyx_r;
 
-  /* "base_filters.pyx":185
+  /* "stats/base_filters.pyx":185
  * 
  * cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, sum_of_weights)             # <<<<<<<<<<<<<<
  *   cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)
  * 
  */
-  __pyx_v_q1 = __pyx_f_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.25, __pyx_v_sum_of_weights);
+  __pyx_v_q1 = __pyx_f_5stats_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.25, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":186
+  /* "stats/base_filters.pyx":186
  * cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, sum_of_weights)
  *   cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)             # <<<<<<<<<<<<<<
  * 
  *   cdef double iqr = q3 - q1
  */
-  __pyx_v_q3 = __pyx_f_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.75, __pyx_v_sum_of_weights);
+  __pyx_v_q3 = __pyx_f_5stats_12base_filters_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.75, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":188
+  /* "stats/base_filters.pyx":188
  *   cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)
  * 
  *   cdef double iqr = q3 - q1             # <<<<<<<<<<<<<<
@@ -3444,7 +3445,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_iqr(struct __pyx_t_1
  */
   __pyx_v_iqr = (__pyx_v_q3 - __pyx_v_q1);
 
-  /* "base_filters.pyx":190
+  /* "stats/base_filters.pyx":190
  *   cdef double iqr = q3 - q1
  * 
  *   return iqr             # <<<<<<<<<<<<<<
@@ -3454,7 +3455,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_iqr(struct __pyx_t_1
   __pyx_r = __pyx_v_iqr;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":184
+  /* "stats/base_filters.pyx":184
  *   return (q1 + q3 - (2 * q2)) / iqr
  * 
  * cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3467,7 +3468,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_iqr(struct __pyx_t_1
   return __pyx_r;
 }
 
-/* "base_filters.pyx":192
+/* "stats/base_filters.pyx":192
  *   return iqr
  * 
  * cdef double neighbourhood_weighted_kurtosis_excess(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3475,22 +3476,22 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_iqr(struct __pyx_t_1
  * 
  */
 
-static double __pyx_f_12base_filters_neighbourhood_weighted_kurtosis_excess(struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
+static double __pyx_f_5stats_12base_filters_neighbourhood_weighted_kurtosis_excess(struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood, int __pyx_v_non_zero, double __pyx_v_sum_of_weights) {
   double __pyx_v_standard_deviation;
   double __pyx_v_variance_4;
   double __pyx_r;
   int __pyx_t_1;
 
-  /* "base_filters.pyx":193
+  /* "stats/base_filters.pyx":193
  * 
  * cdef double neighbourhood_weighted_kurtosis_excess(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
  *   cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, sum_of_weights)             # <<<<<<<<<<<<<<
  * 
  *   if standard_deviation == 0:
  */
-  __pyx_v_standard_deviation = __pyx_f_12base_filters_neighbourhood_weighted_standard_deviation(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
+  __pyx_v_standard_deviation = __pyx_f_5stats_12base_filters_neighbourhood_weighted_standard_deviation(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":195
+  /* "stats/base_filters.pyx":195
  *   cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, sum_of_weights)
  * 
  *   if standard_deviation == 0:             # <<<<<<<<<<<<<<
@@ -3500,7 +3501,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_kurtosis_excess(stru
   __pyx_t_1 = ((__pyx_v_standard_deviation == 0.0) != 0);
   if (__pyx_t_1) {
 
-    /* "base_filters.pyx":196
+    /* "stats/base_filters.pyx":196
  * 
  *   if standard_deviation == 0:
  *     return 0             # <<<<<<<<<<<<<<
@@ -3510,7 +3511,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_kurtosis_excess(stru
     __pyx_r = 0.0;
     goto __pyx_L0;
 
-    /* "base_filters.pyx":195
+    /* "stats/base_filters.pyx":195
  *   cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, sum_of_weights)
  * 
  *   if standard_deviation == 0:             # <<<<<<<<<<<<<<
@@ -3519,16 +3520,16 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_kurtosis_excess(stru
  */
   }
 
-  /* "base_filters.pyx":198
+  /* "stats/base_filters.pyx":198
  *     return 0
  * 
  *   cdef double variance_4 = weighted_variance(neighbourhood, non_zero, 4, sum_of_weights)             # <<<<<<<<<<<<<<
  *   return (variance_4 / (pow(standard_deviation, 4))) - 3
  * 
  */
-  __pyx_v_variance_4 = __pyx_f_12base_filters_weighted_variance(__pyx_v_neighbourhood, __pyx_v_non_zero, 4, __pyx_v_sum_of_weights);
+  __pyx_v_variance_4 = __pyx_f_5stats_12base_filters_weighted_variance(__pyx_v_neighbourhood, __pyx_v_non_zero, 4, __pyx_v_sum_of_weights);
 
-  /* "base_filters.pyx":199
+  /* "stats/base_filters.pyx":199
  * 
  *   cdef double variance_4 = weighted_variance(neighbourhood, non_zero, 4, sum_of_weights)
  *   return (variance_4 / (pow(standard_deviation, 4))) - 3             # <<<<<<<<<<<<<<
@@ -3538,7 +3539,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_kurtosis_excess(stru
   __pyx_r = ((__pyx_v_variance_4 / pow(__pyx_v_standard_deviation, 4.0)) - 3.0);
   goto __pyx_L0;
 
-  /* "base_filters.pyx":192
+  /* "stats/base_filters.pyx":192
  *   return iqr
  * 
  * cdef double neighbourhood_weighted_kurtosis_excess(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:             # <<<<<<<<<<<<<<
@@ -3551,7 +3552,7 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_kurtosis_excess(stru
   return __pyx_r;
 }
 
-/* "base_filters.pyx":201
+/* "stats/base_filters.pyx":201
  *   return (variance_4 / (pow(standard_deviation, 4))) - 3
  * 
  * cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3559,13 +3560,13 @@ static double __pyx_f_12base_filters_neighbourhood_weighted_kurtosis_excess(stru
  *   cdef int radius = <int>(kernel_width / 2)
  */
 
-static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_offsets(__Pyx_memviewslice __pyx_v_kernel, int __pyx_v_kernel_width, int __pyx_v_non_zero) {
+static struct __pyx_t_5stats_12base_filters_Offset *__pyx_f_5stats_12base_filters_generate_offsets(__Pyx_memviewslice __pyx_v_kernel, int __pyx_v_kernel_width, int __pyx_v_non_zero) {
   int __pyx_v_x;
   int __pyx_v_y;
   int __pyx_v_radius;
   int __pyx_v_step;
-  struct __pyx_t_12base_filters_Offset *__pyx_v_offsets;
-  struct __pyx_t_12base_filters_Offset *__pyx_r;
+  struct __pyx_t_5stats_12base_filters_Offset *__pyx_v_offsets;
+  struct __pyx_t_5stats_12base_filters_Offset *__pyx_r;
   int __pyx_t_1;
   int __pyx_t_2;
   int __pyx_t_3;
@@ -3578,7 +3579,7 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
   Py_ssize_t __pyx_t_10;
   Py_ssize_t __pyx_t_11;
 
-  /* "base_filters.pyx":203
+  /* "stats/base_filters.pyx":203
  * cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non_zero) nogil:
  *   cdef int x, y
  *   cdef int radius = <int>(kernel_width / 2)             # <<<<<<<<<<<<<<
@@ -3587,7 +3588,7 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
  */
   __pyx_v_radius = ((int)(((long)__pyx_v_kernel_width) / 2));
 
-  /* "base_filters.pyx":204
+  /* "stats/base_filters.pyx":204
  *   cdef int x, y
  *   cdef int radius = <int>(kernel_width / 2)
  *   cdef int step = 0             # <<<<<<<<<<<<<<
@@ -3596,16 +3597,16 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
  */
   __pyx_v_step = 0;
 
-  /* "base_filters.pyx":206
+  /* "stats/base_filters.pyx":206
  *   cdef int step = 0
  * 
  *   cdef Offset *offsets = <Offset *> malloc(non_zero * sizeof(Offset))             # <<<<<<<<<<<<<<
  * 
  *   for x in range(kernel_width):
  */
-  __pyx_v_offsets = ((struct __pyx_t_12base_filters_Offset *)malloc((__pyx_v_non_zero * (sizeof(struct __pyx_t_12base_filters_Offset)))));
+  __pyx_v_offsets = ((struct __pyx_t_5stats_12base_filters_Offset *)malloc((__pyx_v_non_zero * (sizeof(struct __pyx_t_5stats_12base_filters_Offset)))));
 
-  /* "base_filters.pyx":208
+  /* "stats/base_filters.pyx":208
  *   cdef Offset *offsets = <Offset *> malloc(non_zero * sizeof(Offset))
  * 
  *   for x in range(kernel_width):             # <<<<<<<<<<<<<<
@@ -3617,7 +3618,7 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_x = __pyx_t_3;
 
-    /* "base_filters.pyx":209
+    /* "stats/base_filters.pyx":209
  * 
  *   for x in range(kernel_width):
  *     for y in range(kernel_width):             # <<<<<<<<<<<<<<
@@ -3629,7 +3630,7 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
     for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
       __pyx_v_y = __pyx_t_6;
 
-      /* "base_filters.pyx":210
+      /* "stats/base_filters.pyx":210
  *   for x in range(kernel_width):
  *     for y in range(kernel_width):
  *       if kernel[x, y] != 0.0:             # <<<<<<<<<<<<<<
@@ -3641,7 +3642,7 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
       __pyx_t_9 = (((*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_kernel.data + __pyx_t_7 * __pyx_v_kernel.strides[0]) )) + __pyx_t_8)) ))) != 0.0) != 0);
       if (__pyx_t_9) {
 
-        /* "base_filters.pyx":211
+        /* "stats/base_filters.pyx":211
  *     for y in range(kernel_width):
  *       if kernel[x, y] != 0.0:
  *         offsets[step].x = x - radius             # <<<<<<<<<<<<<<
@@ -3650,7 +3651,7 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
  */
         (__pyx_v_offsets[__pyx_v_step]).x = (__pyx_v_x - __pyx_v_radius);
 
-        /* "base_filters.pyx":212
+        /* "stats/base_filters.pyx":212
  *       if kernel[x, y] != 0.0:
  *         offsets[step].x = x - radius
  *         offsets[step].y = y - radius             # <<<<<<<<<<<<<<
@@ -3659,7 +3660,7 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
  */
         (__pyx_v_offsets[__pyx_v_step]).y = (__pyx_v_y - __pyx_v_radius);
 
-        /* "base_filters.pyx":213
+        /* "stats/base_filters.pyx":213
  *         offsets[step].x = x - radius
  *         offsets[step].y = y - radius
  *         offsets[step].weight = kernel[x, y]             # <<<<<<<<<<<<<<
@@ -3670,7 +3671,7 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
         __pyx_t_11 = __pyx_v_y;
         (__pyx_v_offsets[__pyx_v_step]).weight = (*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_kernel.data + __pyx_t_10 * __pyx_v_kernel.strides[0]) )) + __pyx_t_11)) )));
 
-        /* "base_filters.pyx":214
+        /* "stats/base_filters.pyx":214
  *         offsets[step].y = y - radius
  *         offsets[step].weight = kernel[x, y]
  *         step += 1             # <<<<<<<<<<<<<<
@@ -3679,7 +3680,7 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
  */
         __pyx_v_step = (__pyx_v_step + 1);
 
-        /* "base_filters.pyx":210
+        /* "stats/base_filters.pyx":210
  *   for x in range(kernel_width):
  *     for y in range(kernel_width):
  *       if kernel[x, y] != 0.0:             # <<<<<<<<<<<<<<
@@ -3690,7 +3691,7 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
     }
   }
 
-  /* "base_filters.pyx":216
+  /* "stats/base_filters.pyx":216
  *         step += 1
  * 
  *   return offsets             # <<<<<<<<<<<<<<
@@ -3700,7 +3701,7 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
   __pyx_r = __pyx_v_offsets;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":201
+  /* "stats/base_filters.pyx":201
  *   return (variance_4 / (pow(standard_deviation, 4))) - 3
  * 
  * cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3713,7 +3714,7 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
   return __pyx_r;
 }
 
-/* "base_filters.pyx":218
+/* "stats/base_filters.pyx":218
  *   return offsets
  * 
  * cdef void loop(double [:, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int x_max, int y_max, int kernel_width, double sum_of_weights, int non_zero, f_type apply) nogil:             # <<<<<<<<<<<<<<
@@ -3721,17 +3722,17 @@ static struct __pyx_t_12base_filters_Offset *__pyx_f_12base_filters_generate_off
  *   cdef Neighbourhood * neighbourhood
  */
 
-static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_memviewslice __pyx_v_kernel, __Pyx_memviewslice __pyx_v_result, int __pyx_v_x_max, int __pyx_v_y_max, int __pyx_v_kernel_width, double __pyx_v_sum_of_weights, int __pyx_v_non_zero, __pyx_t_12base_filters_f_type __pyx_v_apply) {
+static void __pyx_f_5stats_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_memviewslice __pyx_v_kernel, __Pyx_memviewslice __pyx_v_result, int __pyx_v_x_max, int __pyx_v_y_max, int __pyx_v_kernel_width, double __pyx_v_sum_of_weights, int __pyx_v_non_zero, __pyx_t_5stats_12base_filters_f_type __pyx_v_apply) {
   int __pyx_v_x;
   int __pyx_v_y;
   int __pyx_v_n;
   int __pyx_v_offset_x;
   int __pyx_v_offset_y;
-  struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood;
+  struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood;
   int __pyx_v_x_max_adj;
   int __pyx_v_y_max_adj;
   int __pyx_v_neighbourhood_size;
-  struct __pyx_t_12base_filters_Offset *__pyx_v_offsets;
+  struct __pyx_t_5stats_12base_filters_Offset *__pyx_v_offsets;
   int __pyx_t_1;
   int __pyx_t_2;
   int __pyx_t_3;
@@ -3748,7 +3749,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
   Py_ssize_t __pyx_t_14;
   Py_ssize_t __pyx_t_15;
 
-  /* "base_filters.pyx":222
+  /* "stats/base_filters.pyx":222
  *   cdef Neighbourhood * neighbourhood
  * 
  *   cdef int x_max_adj = x_max - 1             # <<<<<<<<<<<<<<
@@ -3757,7 +3758,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
  */
   __pyx_v_x_max_adj = (__pyx_v_x_max - 1);
 
-  /* "base_filters.pyx":223
+  /* "stats/base_filters.pyx":223
  * 
  *   cdef int x_max_adj = x_max - 1
  *   cdef int y_max_adj = y_max - 1             # <<<<<<<<<<<<<<
@@ -3766,25 +3767,25 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
  */
   __pyx_v_y_max_adj = (__pyx_v_y_max - 1);
 
-  /* "base_filters.pyx":224
+  /* "stats/base_filters.pyx":224
  *   cdef int x_max_adj = x_max - 1
  *   cdef int y_max_adj = y_max - 1
  *   cdef int neighbourhood_size = sizeof(Neighbourhood) * non_zero             # <<<<<<<<<<<<<<
  * 
  *   cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
  */
-  __pyx_v_neighbourhood_size = ((sizeof(struct __pyx_t_12base_filters_Neighbourhood)) * __pyx_v_non_zero);
+  __pyx_v_neighbourhood_size = ((sizeof(struct __pyx_t_5stats_12base_filters_Neighbourhood)) * __pyx_v_non_zero);
 
-  /* "base_filters.pyx":226
+  /* "stats/base_filters.pyx":226
  *   cdef int neighbourhood_size = sizeof(Neighbourhood) * non_zero
  * 
  *   cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)             # <<<<<<<<<<<<<<
  * 
  *   for x in prange(x_max):
  */
-  __pyx_v_offsets = __pyx_f_12base_filters_generate_offsets(__pyx_v_kernel, __pyx_v_kernel_width, __pyx_v_non_zero);
+  __pyx_v_offsets = __pyx_f_5stats_12base_filters_generate_offsets(__pyx_v_kernel, __pyx_v_kernel_width, __pyx_v_non_zero);
 
-  /* "base_filters.pyx":228
+  /* "stats/base_filters.pyx":228
  *   cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
  * 
  *   for x in prange(x_max):             # <<<<<<<<<<<<<<
@@ -3815,12 +3816,12 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                       __pyx_v_x = (int)(0 + 1 * __pyx_t_2);
                       /* Initialize private variables to invalid values */
                       __pyx_v_n = ((int)0xbad0bad0);
-                      __pyx_v_neighbourhood = ((struct __pyx_t_12base_filters_Neighbourhood *)1);
+                      __pyx_v_neighbourhood = ((struct __pyx_t_5stats_12base_filters_Neighbourhood *)1);
                       __pyx_v_offset_x = ((int)0xbad0bad0);
                       __pyx_v_offset_y = ((int)0xbad0bad0);
                       __pyx_v_y = ((int)0xbad0bad0);
 
-                      /* "base_filters.pyx":229
+                      /* "stats/base_filters.pyx":229
  * 
  *   for x in prange(x_max):
  *     for y in range(y_max):             # <<<<<<<<<<<<<<
@@ -3832,16 +3833,16 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                       for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
                         __pyx_v_y = __pyx_t_6;
 
-                        /* "base_filters.pyx":231
+                        /* "stats/base_filters.pyx":231
  *     for y in range(y_max):
  * 
  *       neighbourhood = <Neighbourhood*> malloc(neighbourhood_size)             # <<<<<<<<<<<<<<
  * 
  *       for n in range(non_zero):
  */
-                        __pyx_v_neighbourhood = ((struct __pyx_t_12base_filters_Neighbourhood *)malloc(__pyx_v_neighbourhood_size));
+                        __pyx_v_neighbourhood = ((struct __pyx_t_5stats_12base_filters_Neighbourhood *)malloc(__pyx_v_neighbourhood_size));
 
-                        /* "base_filters.pyx":233
+                        /* "stats/base_filters.pyx":233
  *       neighbourhood = <Neighbourhood*> malloc(neighbourhood_size)
  * 
  *       for n in range(non_zero):             # <<<<<<<<<<<<<<
@@ -3853,7 +3854,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                         for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_8; __pyx_t_9+=1) {
                           __pyx_v_n = __pyx_t_9;
 
-                          /* "base_filters.pyx":234
+                          /* "stats/base_filters.pyx":234
  * 
  *       for n in range(non_zero):
  *         offset_x = x + offsets[n].x             # <<<<<<<<<<<<<<
@@ -3862,7 +3863,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
  */
                           __pyx_v_offset_x = (__pyx_v_x + (__pyx_v_offsets[__pyx_v_n]).x);
 
-                          /* "base_filters.pyx":235
+                          /* "stats/base_filters.pyx":235
  *       for n in range(non_zero):
  *         offset_x = x + offsets[n].x
  *         offset_y = y + offsets[n].y             # <<<<<<<<<<<<<<
@@ -3871,7 +3872,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
  */
                           __pyx_v_offset_y = (__pyx_v_y + (__pyx_v_offsets[__pyx_v_n]).y);
 
-                          /* "base_filters.pyx":237
+                          /* "stats/base_filters.pyx":237
  *         offset_y = y + offsets[n].y
  * 
  *         if offset_x < 0:             # <<<<<<<<<<<<<<
@@ -3881,7 +3882,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                           __pyx_t_10 = ((__pyx_v_offset_x < 0) != 0);
                           if (__pyx_t_10) {
 
-                            /* "base_filters.pyx":238
+                            /* "stats/base_filters.pyx":238
  * 
  *         if offset_x < 0:
  *           offset_x = 0             # <<<<<<<<<<<<<<
@@ -3890,7 +3891,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
  */
                             __pyx_v_offset_x = 0;
 
-                            /* "base_filters.pyx":237
+                            /* "stats/base_filters.pyx":237
  *         offset_y = y + offsets[n].y
  * 
  *         if offset_x < 0:             # <<<<<<<<<<<<<<
@@ -3900,7 +3901,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                             goto __pyx_L11;
                           }
 
-                          /* "base_filters.pyx":239
+                          /* "stats/base_filters.pyx":239
  *         if offset_x < 0:
  *           offset_x = 0
  *         elif offset_x > x_max_adj:             # <<<<<<<<<<<<<<
@@ -3910,7 +3911,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                           __pyx_t_10 = ((__pyx_v_offset_x > __pyx_v_x_max_adj) != 0);
                           if (__pyx_t_10) {
 
-                            /* "base_filters.pyx":240
+                            /* "stats/base_filters.pyx":240
  *           offset_x = 0
  *         elif offset_x > x_max_adj:
  *           offset_x = x_max_adj             # <<<<<<<<<<<<<<
@@ -3919,7 +3920,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
  */
                             __pyx_v_offset_x = __pyx_v_x_max_adj;
 
-                            /* "base_filters.pyx":239
+                            /* "stats/base_filters.pyx":239
  *         if offset_x < 0:
  *           offset_x = 0
  *         elif offset_x > x_max_adj:             # <<<<<<<<<<<<<<
@@ -3929,7 +3930,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                           }
                           __pyx_L11:;
 
-                          /* "base_filters.pyx":241
+                          /* "stats/base_filters.pyx":241
  *         elif offset_x > x_max_adj:
  *           offset_x = x_max_adj
  *         if offset_y < 0:             # <<<<<<<<<<<<<<
@@ -3939,7 +3940,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                           __pyx_t_10 = ((__pyx_v_offset_y < 0) != 0);
                           if (__pyx_t_10) {
 
-                            /* "base_filters.pyx":242
+                            /* "stats/base_filters.pyx":242
  *           offset_x = x_max_adj
  *         if offset_y < 0:
  *           offset_y = 0             # <<<<<<<<<<<<<<
@@ -3948,7 +3949,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
  */
                             __pyx_v_offset_y = 0;
 
-                            /* "base_filters.pyx":241
+                            /* "stats/base_filters.pyx":241
  *         elif offset_x > x_max_adj:
  *           offset_x = x_max_adj
  *         if offset_y < 0:             # <<<<<<<<<<<<<<
@@ -3958,7 +3959,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                             goto __pyx_L12;
                           }
 
-                          /* "base_filters.pyx":243
+                          /* "stats/base_filters.pyx":243
  *         if offset_y < 0:
  *           offset_y = 0
  *         elif offset_y > y_max_adj:             # <<<<<<<<<<<<<<
@@ -3968,7 +3969,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                           __pyx_t_10 = ((__pyx_v_offset_y > __pyx_v_y_max_adj) != 0);
                           if (__pyx_t_10) {
 
-                            /* "base_filters.pyx":244
+                            /* "stats/base_filters.pyx":244
  *           offset_y = 0
  *         elif offset_y > y_max_adj:
  *           offset_y = y_max_adj             # <<<<<<<<<<<<<<
@@ -3977,7 +3978,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
  */
                             __pyx_v_offset_y = __pyx_v_y_max_adj;
 
-                            /* "base_filters.pyx":243
+                            /* "stats/base_filters.pyx":243
  *         if offset_y < 0:
  *           offset_y = 0
  *         elif offset_y > y_max_adj:             # <<<<<<<<<<<<<<
@@ -3987,7 +3988,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                           }
                           __pyx_L12:;
 
-                          /* "base_filters.pyx":246
+                          /* "stats/base_filters.pyx":246
  *           offset_y = y_max_adj
  * 
  *         neighbourhood[n].value = arr[offset_x, offset_y]             # <<<<<<<<<<<<<<
@@ -3998,7 +3999,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                           __pyx_t_12 = __pyx_v_offset_y;
                           (__pyx_v_neighbourhood[__pyx_v_n]).value = (*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_arr.data + __pyx_t_11 * __pyx_v_arr.strides[0]) )) + __pyx_t_12)) )));
 
-                          /* "base_filters.pyx":247
+                          /* "stats/base_filters.pyx":247
  * 
  *         neighbourhood[n].value = arr[offset_x, offset_y]
  *         neighbourhood[n].weight = offsets[n].weight             # <<<<<<<<<<<<<<
@@ -4009,7 +4010,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                           (__pyx_v_neighbourhood[__pyx_v_n]).weight = __pyx_t_13;
                         }
 
-                        /* "base_filters.pyx":249
+                        /* "stats/base_filters.pyx":249
  *         neighbourhood[n].weight = offsets[n].weight
  * 
  *       result[x][y] = apply(neighbourhood, non_zero, sum_of_weights)             # <<<<<<<<<<<<<<
@@ -4020,7 +4021,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
                         __pyx_t_15 = __pyx_v_y;
                         *((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_result.data + __pyx_t_14 * __pyx_v_result.strides[0]) )) + __pyx_t_15)) )) = __pyx_v_apply(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
 
-                        /* "base_filters.pyx":251
+                        /* "stats/base_filters.pyx":251
  *       result[x][y] = apply(neighbourhood, non_zero, sum_of_weights)
  * 
  *       free(neighbourhood)             # <<<<<<<<<<<<<<
@@ -4041,7 +4042,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
       #define unlikely(x) __builtin_expect(!!(x), 0)
   #endif
 
-  /* "base_filters.pyx":218
+  /* "stats/base_filters.pyx":218
  *   return offsets
  * 
  * cdef void loop(double [:, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int x_max, int y_max, int kernel_width, double sum_of_weights, int non_zero, f_type apply) nogil:             # <<<<<<<<<<<<<<
@@ -4052,7 +4053,7 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
   /* function exit code */
 }
 
-/* "base_filters.pyx":253
+/* "stats/base_filters.pyx":253
  *       free(neighbourhood)
  * 
  * cdef void loop_3d(double [:, :, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int depth, int x_max, int y_max, int kernel_width, double sum_of_weights, int non_zero, f_type apply) nogil:             # <<<<<<<<<<<<<<
@@ -4060,18 +4061,18 @@ static void __pyx_f_12base_filters_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_me
  *   cdef Neighbourhood * neighbourhood
  */
 
-static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_memviewslice __pyx_v_kernel, __Pyx_memviewslice __pyx_v_result, int __pyx_v_depth, int __pyx_v_x_max, int __pyx_v_y_max, int __pyx_v_kernel_width, double __pyx_v_sum_of_weights, int __pyx_v_non_zero, __pyx_t_12base_filters_f_type __pyx_v_apply) {
+static void __pyx_f_5stats_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_memviewslice __pyx_v_kernel, __Pyx_memviewslice __pyx_v_result, int __pyx_v_depth, int __pyx_v_x_max, int __pyx_v_y_max, int __pyx_v_kernel_width, double __pyx_v_sum_of_weights, int __pyx_v_non_zero, __pyx_t_5stats_12base_filters_f_type __pyx_v_apply) {
   int __pyx_v_x;
   int __pyx_v_y;
   int __pyx_v_n;
   int __pyx_v_z;
   int __pyx_v_offset_x;
   int __pyx_v_offset_y;
-  struct __pyx_t_12base_filters_Neighbourhood *__pyx_v_neighbourhood;
+  struct __pyx_t_5stats_12base_filters_Neighbourhood *__pyx_v_neighbourhood;
   int __pyx_v_x_max_adj;
   int __pyx_v_y_max_adj;
   int __pyx_v_neighbourhood_size;
-  struct __pyx_t_12base_filters_Offset *__pyx_v_offsets;
+  struct __pyx_t_5stats_12base_filters_Offset *__pyx_v_offsets;
   int __pyx_t_1;
   int __pyx_t_2;
   int __pyx_t_3;
@@ -4091,7 +4092,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
   Py_ssize_t __pyx_t_17;
   Py_ssize_t __pyx_t_18;
 
-  /* "base_filters.pyx":257
+  /* "stats/base_filters.pyx":257
  *   cdef Neighbourhood * neighbourhood
  * 
  *   cdef int x_max_adj = x_max - 1             # <<<<<<<<<<<<<<
@@ -4100,7 +4101,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
  */
   __pyx_v_x_max_adj = (__pyx_v_x_max - 1);
 
-  /* "base_filters.pyx":258
+  /* "stats/base_filters.pyx":258
  * 
  *   cdef int x_max_adj = x_max - 1
  *   cdef int y_max_adj = y_max - 1             # <<<<<<<<<<<<<<
@@ -4109,25 +4110,25 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
  */
   __pyx_v_y_max_adj = (__pyx_v_y_max - 1);
 
-  /* "base_filters.pyx":259
+  /* "stats/base_filters.pyx":259
  *   cdef int x_max_adj = x_max - 1
  *   cdef int y_max_adj = y_max - 1
  *   cdef int neighbourhood_size = sizeof(Neighbourhood) * (non_zero * depth)             # <<<<<<<<<<<<<<
  * 
  *   cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
  */
-  __pyx_v_neighbourhood_size = ((sizeof(struct __pyx_t_12base_filters_Neighbourhood)) * (__pyx_v_non_zero * __pyx_v_depth));
+  __pyx_v_neighbourhood_size = ((sizeof(struct __pyx_t_5stats_12base_filters_Neighbourhood)) * (__pyx_v_non_zero * __pyx_v_depth));
 
-  /* "base_filters.pyx":261
+  /* "stats/base_filters.pyx":261
  *   cdef int neighbourhood_size = sizeof(Neighbourhood) * (non_zero * depth)
  * 
  *   cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)             # <<<<<<<<<<<<<<
  * 
  *   for x in prange(x_max):
  */
-  __pyx_v_offsets = __pyx_f_12base_filters_generate_offsets(__pyx_v_kernel, __pyx_v_kernel_width, __pyx_v_non_zero);
+  __pyx_v_offsets = __pyx_f_5stats_12base_filters_generate_offsets(__pyx_v_kernel, __pyx_v_kernel_width, __pyx_v_non_zero);
 
-  /* "base_filters.pyx":263
+  /* "stats/base_filters.pyx":263
  *   cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
  * 
  *   for x in prange(x_max):             # <<<<<<<<<<<<<<
@@ -4158,13 +4159,13 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                       __pyx_v_x = (int)(0 + 1 * __pyx_t_2);
                       /* Initialize private variables to invalid values */
                       __pyx_v_n = ((int)0xbad0bad0);
-                      __pyx_v_neighbourhood = ((struct __pyx_t_12base_filters_Neighbourhood *)1);
+                      __pyx_v_neighbourhood = ((struct __pyx_t_5stats_12base_filters_Neighbourhood *)1);
                       __pyx_v_offset_x = ((int)0xbad0bad0);
                       __pyx_v_offset_y = ((int)0xbad0bad0);
                       __pyx_v_y = ((int)0xbad0bad0);
                       __pyx_v_z = ((int)0xbad0bad0);
 
-                      /* "base_filters.pyx":264
+                      /* "stats/base_filters.pyx":264
  * 
  *   for x in prange(x_max):
  *     for y in range(y_max):             # <<<<<<<<<<<<<<
@@ -4176,16 +4177,16 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                       for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
                         __pyx_v_y = __pyx_t_6;
 
-                        /* "base_filters.pyx":266
+                        /* "stats/base_filters.pyx":266
  *     for y in range(y_max):
  * 
  *       neighbourhood = <Neighbourhood*> malloc(neighbourhood_size)             # <<<<<<<<<<<<<<
  * 
  *       for z in range(depth):
  */
-                        __pyx_v_neighbourhood = ((struct __pyx_t_12base_filters_Neighbourhood *)malloc(__pyx_v_neighbourhood_size));
+                        __pyx_v_neighbourhood = ((struct __pyx_t_5stats_12base_filters_Neighbourhood *)malloc(__pyx_v_neighbourhood_size));
 
-                        /* "base_filters.pyx":268
+                        /* "stats/base_filters.pyx":268
  *       neighbourhood = <Neighbourhood*> malloc(neighbourhood_size)
  * 
  *       for z in range(depth):             # <<<<<<<<<<<<<<
@@ -4197,7 +4198,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                         for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_8; __pyx_t_9+=1) {
                           __pyx_v_z = __pyx_t_9;
 
-                          /* "base_filters.pyx":269
+                          /* "stats/base_filters.pyx":269
  * 
  *       for z in range(depth):
  *         for n in range(non_zero):             # <<<<<<<<<<<<<<
@@ -4209,7 +4210,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                           for (__pyx_t_12 = 0; __pyx_t_12 < __pyx_t_11; __pyx_t_12+=1) {
                             __pyx_v_n = __pyx_t_12;
 
-                            /* "base_filters.pyx":270
+                            /* "stats/base_filters.pyx":270
  *       for z in range(depth):
  *         for n in range(non_zero):
  *           offset_x = x + offsets[n].x             # <<<<<<<<<<<<<<
@@ -4218,7 +4219,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
  */
                             __pyx_v_offset_x = (__pyx_v_x + (__pyx_v_offsets[__pyx_v_n]).x);
 
-                            /* "base_filters.pyx":271
+                            /* "stats/base_filters.pyx":271
  *         for n in range(non_zero):
  *           offset_x = x + offsets[n].x
  *           offset_y = y + offsets[n].y             # <<<<<<<<<<<<<<
@@ -4227,7 +4228,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
  */
                             __pyx_v_offset_y = (__pyx_v_y + (__pyx_v_offsets[__pyx_v_n]).y);
 
-                            /* "base_filters.pyx":273
+                            /* "stats/base_filters.pyx":273
  *           offset_y = y + offsets[n].y
  * 
  *           if offset_x < 0:             # <<<<<<<<<<<<<<
@@ -4237,7 +4238,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                             __pyx_t_13 = ((__pyx_v_offset_x < 0) != 0);
                             if (__pyx_t_13) {
 
-                              /* "base_filters.pyx":274
+                              /* "stats/base_filters.pyx":274
  * 
  *           if offset_x < 0:
  *             offset_x = 0             # <<<<<<<<<<<<<<
@@ -4246,7 +4247,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
  */
                               __pyx_v_offset_x = 0;
 
-                              /* "base_filters.pyx":273
+                              /* "stats/base_filters.pyx":273
  *           offset_y = y + offsets[n].y
  * 
  *           if offset_x < 0:             # <<<<<<<<<<<<<<
@@ -4256,7 +4257,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                               goto __pyx_L13;
                             }
 
-                            /* "base_filters.pyx":275
+                            /* "stats/base_filters.pyx":275
  *           if offset_x < 0:
  *             offset_x = 0
  *           elif offset_x > x_max_adj:             # <<<<<<<<<<<<<<
@@ -4266,7 +4267,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                             __pyx_t_13 = ((__pyx_v_offset_x > __pyx_v_x_max_adj) != 0);
                             if (__pyx_t_13) {
 
-                              /* "base_filters.pyx":276
+                              /* "stats/base_filters.pyx":276
  *             offset_x = 0
  *           elif offset_x > x_max_adj:
  *             offset_x = x_max_adj             # <<<<<<<<<<<<<<
@@ -4275,7 +4276,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
  */
                               __pyx_v_offset_x = __pyx_v_x_max_adj;
 
-                              /* "base_filters.pyx":275
+                              /* "stats/base_filters.pyx":275
  *           if offset_x < 0:
  *             offset_x = 0
  *           elif offset_x > x_max_adj:             # <<<<<<<<<<<<<<
@@ -4285,7 +4286,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                             }
                             __pyx_L13:;
 
-                            /* "base_filters.pyx":277
+                            /* "stats/base_filters.pyx":277
  *           elif offset_x > x_max_adj:
  *             offset_x = x_max_adj
  *           if offset_y < 0:             # <<<<<<<<<<<<<<
@@ -4295,7 +4296,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                             __pyx_t_13 = ((__pyx_v_offset_y < 0) != 0);
                             if (__pyx_t_13) {
 
-                              /* "base_filters.pyx":278
+                              /* "stats/base_filters.pyx":278
  *             offset_x = x_max_adj
  *           if offset_y < 0:
  *             offset_y = 0             # <<<<<<<<<<<<<<
@@ -4304,7 +4305,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
  */
                               __pyx_v_offset_y = 0;
 
-                              /* "base_filters.pyx":277
+                              /* "stats/base_filters.pyx":277
  *           elif offset_x > x_max_adj:
  *             offset_x = x_max_adj
  *           if offset_y < 0:             # <<<<<<<<<<<<<<
@@ -4314,7 +4315,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                               goto __pyx_L14;
                             }
 
-                            /* "base_filters.pyx":279
+                            /* "stats/base_filters.pyx":279
  *           if offset_y < 0:
  *             offset_y = 0
  *           elif offset_y > y_max_adj:             # <<<<<<<<<<<<<<
@@ -4324,7 +4325,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                             __pyx_t_13 = ((__pyx_v_offset_y > __pyx_v_y_max_adj) != 0);
                             if (__pyx_t_13) {
 
-                              /* "base_filters.pyx":280
+                              /* "stats/base_filters.pyx":280
  *             offset_y = 0
  *           elif offset_y > y_max_adj:
  *             offset_y = y_max_adj             # <<<<<<<<<<<<<<
@@ -4333,7 +4334,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
  */
                               __pyx_v_offset_y = __pyx_v_y_max_adj;
 
-                              /* "base_filters.pyx":279
+                              /* "stats/base_filters.pyx":279
  *           if offset_y < 0:
  *             offset_y = 0
  *           elif offset_y > y_max_adj:             # <<<<<<<<<<<<<<
@@ -4343,7 +4344,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                             }
                             __pyx_L14:;
 
-                            /* "base_filters.pyx":282
+                            /* "stats/base_filters.pyx":282
  *             offset_y = y_max_adj
  * 
  *           neighbourhood[n].value = arr[z, offset_x, offset_y]             # <<<<<<<<<<<<<<
@@ -4355,7 +4356,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                             __pyx_t_16 = __pyx_v_offset_y;
                             (__pyx_v_neighbourhood[__pyx_v_n]).value = (*((double *) ( /* dim=2 */ ((char *) (((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr.data + __pyx_t_14 * __pyx_v_arr.strides[0]) ) + __pyx_t_15 * __pyx_v_arr.strides[1]) )) + __pyx_t_16)) )));
 
-                            /* "base_filters.pyx":283
+                            /* "stats/base_filters.pyx":283
  * 
  *           neighbourhood[n].value = arr[z, offset_x, offset_y]
  *           neighbourhood[n].weight = offsets[n].weight / depth             # <<<<<<<<<<<<<<
@@ -4366,7 +4367,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                           }
                         }
 
-                        /* "base_filters.pyx":285
+                        /* "stats/base_filters.pyx":285
  *           neighbourhood[n].weight = offsets[n].weight / depth
  * 
  *       result[x][y] = apply(neighbourhood, non_zero, sum_of_weights)             # <<<<<<<<<<<<<<
@@ -4377,7 +4378,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
                         __pyx_t_18 = __pyx_v_y;
                         *((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_result.data + __pyx_t_17 * __pyx_v_result.strides[0]) )) + __pyx_t_18)) )) = __pyx_v_apply(__pyx_v_neighbourhood, __pyx_v_non_zero, __pyx_v_sum_of_weights);
 
-                        /* "base_filters.pyx":287
+                        /* "stats/base_filters.pyx":287
  *       result[x][y] = apply(neighbourhood, non_zero, sum_of_weights)
  * 
  *       free(neighbourhood)             # <<<<<<<<<<<<<<
@@ -4398,7 +4399,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
       #define unlikely(x) __builtin_expect(!!(x), 0)
   #endif
 
-  /* "base_filters.pyx":253
+  /* "stats/base_filters.pyx":253
  *       free(neighbourhood)
  * 
  * cdef void loop_3d(double [:, :, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int depth, int x_max, int y_max, int kernel_width, double sum_of_weights, int non_zero, f_type apply) nogil:             # <<<<<<<<<<<<<<
@@ -4409,7 +4410,7 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
   /* function exit code */
 }
 
-/* "base_filters.pyx":289
+/* "stats/base_filters.pyx":289
  *       free(neighbourhood)
  * 
  * cdef f_type func_selector(str func_type):             # <<<<<<<<<<<<<<
@@ -4417,15 +4418,15 @@ static void __pyx_f_12base_filters_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx
  *   elif func_type is 'variance': return neighbourhood_weighted_variance
  */
 
-static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObject *__pyx_v_func_type) {
-  __pyx_t_12base_filters_f_type __pyx_r;
+static __pyx_t_5stats_12base_filters_f_type __pyx_f_5stats_12base_filters_func_selector(PyObject *__pyx_v_func_type) {
+  __pyx_t_5stats_12base_filters_f_type __pyx_r;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
   int __pyx_t_2;
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("func_selector", 0);
 
-  /* "base_filters.pyx":290
+  /* "stats/base_filters.pyx":290
  * 
  * cdef f_type func_selector(str func_type):
  *   if func_type is 'mean': return neighbourhood_sum             # <<<<<<<<<<<<<<
@@ -4435,11 +4436,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_mean);
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_sum;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_sum;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":291
+  /* "stats/base_filters.pyx":291
  * cdef f_type func_selector(str func_type):
  *   if func_type is 'mean': return neighbourhood_sum
  *   elif func_type is 'variance': return neighbourhood_weighted_variance             # <<<<<<<<<<<<<<
@@ -4449,11 +4450,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_2 = (__pyx_v_func_type == __pyx_n_u_variance);
   __pyx_t_1 = (__pyx_t_2 != 0);
   if (__pyx_t_1) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_weighted_variance;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_weighted_variance;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":292
+  /* "stats/base_filters.pyx":292
  *   if func_type is 'mean': return neighbourhood_sum
  *   elif func_type is 'variance': return neighbourhood_weighted_variance
  *   elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation             # <<<<<<<<<<<<<<
@@ -4463,11 +4464,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_standard_deviation);
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_weighted_standard_deviation;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_weighted_standard_deviation;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":293
+  /* "stats/base_filters.pyx":293
  *   elif func_type is 'variance': return neighbourhood_weighted_variance
  *   elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
  *   elif func_type is 'median': return neighbourhood_weighted_median             # <<<<<<<<<<<<<<
@@ -4477,11 +4478,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_2 = (__pyx_v_func_type == __pyx_n_u_median);
   __pyx_t_1 = (__pyx_t_2 != 0);
   if (__pyx_t_1) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_weighted_median;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_weighted_median;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":294
+  /* "stats/base_filters.pyx":294
  *   elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
  *   elif func_type is 'median': return neighbourhood_weighted_median
  *   elif func_type is 'q1': return neighbourhood_weighted_q1             # <<<<<<<<<<<<<<
@@ -4491,11 +4492,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_q1);
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_weighted_q1;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_weighted_q1;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":295
+  /* "stats/base_filters.pyx":295
  *   elif func_type is 'median': return neighbourhood_weighted_median
  *   elif func_type is 'q1': return neighbourhood_weighted_q1
  *   elif func_type is 'q3': return neighbourhood_weighted_q3             # <<<<<<<<<<<<<<
@@ -4505,11 +4506,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_2 = (__pyx_v_func_type == __pyx_n_u_q3);
   __pyx_t_1 = (__pyx_t_2 != 0);
   if (__pyx_t_1) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_weighted_q3;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_weighted_q3;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":296
+  /* "stats/base_filters.pyx":296
  *   elif func_type is 'q1': return neighbourhood_weighted_q1
  *   elif func_type is 'q3': return neighbourhood_weighted_q3
  *   elif func_type is 'mad': return neighbourhood_weighted_mad             # <<<<<<<<<<<<<<
@@ -4519,11 +4520,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_mad);
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_weighted_mad;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_weighted_mad;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":297
+  /* "stats/base_filters.pyx":297
  *   elif func_type is 'q3': return neighbourhood_weighted_q3
  *   elif func_type is 'mad': return neighbourhood_weighted_mad
  *   elif func_type is 'mad_std': return neighbourhood_weighted_mad_std             # <<<<<<<<<<<<<<
@@ -4533,11 +4534,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_2 = (__pyx_v_func_type == __pyx_n_u_mad_std);
   __pyx_t_1 = (__pyx_t_2 != 0);
   if (__pyx_t_1) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_weighted_mad_std;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_weighted_mad_std;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":298
+  /* "stats/base_filters.pyx":298
  *   elif func_type is 'mad': return neighbourhood_weighted_mad
  *   elif func_type is 'mad_std': return neighbourhood_weighted_mad_std
  *   elif func_type is 'skew_fp': return neighbourhood_weighted_skew_fp             # <<<<<<<<<<<<<<
@@ -4547,11 +4548,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_skew_fp);
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_weighted_skew_fp;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_weighted_skew_fp;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":299
+  /* "stats/base_filters.pyx":299
  *   elif func_type is 'mad_std': return neighbourhood_weighted_mad_std
  *   elif func_type is 'skew_fp': return neighbourhood_weighted_skew_fp
  *   elif func_type is 'skew_p2': return neighbourhood_weighted_skew_p2             # <<<<<<<<<<<<<<
@@ -4561,11 +4562,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_2 = (__pyx_v_func_type == __pyx_n_u_skew_p2);
   __pyx_t_1 = (__pyx_t_2 != 0);
   if (__pyx_t_1) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_weighted_skew_p2;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_weighted_skew_p2;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":300
+  /* "stats/base_filters.pyx":300
  *   elif func_type is 'skew_fp': return neighbourhood_weighted_skew_fp
  *   elif func_type is 'skew_p2': return neighbourhood_weighted_skew_p2
  *   elif func_type is 'skew_g': return neighbourhood_weighted_skew_g             # <<<<<<<<<<<<<<
@@ -4575,11 +4576,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_skew_g);
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_weighted_skew_g;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_weighted_skew_g;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":301
+  /* "stats/base_filters.pyx":301
  *   elif func_type is 'skew_p2': return neighbourhood_weighted_skew_p2
  *   elif func_type is 'skew_g': return neighbourhood_weighted_skew_g
  *   elif func_type is 'iqr': return neighbourhood_weighted_iqr             # <<<<<<<<<<<<<<
@@ -4589,11 +4590,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_2 = (__pyx_v_func_type == __pyx_n_u_iqr);
   __pyx_t_1 = (__pyx_t_2 != 0);
   if (__pyx_t_1) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_weighted_iqr;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_weighted_iqr;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":302
+  /* "stats/base_filters.pyx":302
  *   elif func_type is 'skew_g': return neighbourhood_weighted_skew_g
  *   elif func_type is 'iqr': return neighbourhood_weighted_iqr
  *   elif func_type is 'kurtosis': return neighbourhood_weighted_kurtosis_excess             # <<<<<<<<<<<<<<
@@ -4603,11 +4604,11 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_kurtosis);
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
-    __pyx_r = __pyx_f_12base_filters_neighbourhood_weighted_kurtosis_excess;
+    __pyx_r = __pyx_f_5stats_12base_filters_neighbourhood_weighted_kurtosis_excess;
     goto __pyx_L0;
   }
 
-  /* "base_filters.pyx":304
+  /* "stats/base_filters.pyx":304
  *   elif func_type is 'kurtosis': return neighbourhood_weighted_kurtosis_excess
  * 
  *   raise Exception('Unable to find filter type!')             # <<<<<<<<<<<<<<
@@ -4620,7 +4621,7 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __PYX_ERR(0, 304, __pyx_L1_error)
 
-  /* "base_filters.pyx":289
+  /* "stats/base_filters.pyx":289
  *       free(neighbourhood)
  * 
  * cdef f_type func_selector(str func_type):             # <<<<<<<<<<<<<<
@@ -4631,14 +4632,14 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_WriteUnraisable("base_filters.func_selector", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
+  __Pyx_WriteUnraisable("stats.base_filters.func_selector", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
   __pyx_r = 0;
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "base_filters.pyx":307
+/* "stats/base_filters.pyx":307
  * 
  * 
  * def filter_2d(double [:, ::1] arr, double [:, ::1] kernel, str func_type):             # <<<<<<<<<<<<<<
@@ -4647,9 +4648,9 @@ static __pyx_t_12base_filters_f_type __pyx_f_12base_filters_func_selector(PyObje
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_12base_filters_1filter_2d(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_12base_filters_1filter_2d = {"filter_2d", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_12base_filters_1filter_2d, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_12base_filters_1filter_2d(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_5stats_12base_filters_1filter_2d(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_5stats_12base_filters_1filter_2d = {"filter_2d", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_5stats_12base_filters_1filter_2d, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_5stats_12base_filters_1filter_2d(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   __Pyx_memviewslice __pyx_v_arr = { 0, 0, { 0 }, { 0 }, { 0 } };
   __Pyx_memviewslice __pyx_v_kernel = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyObject *__pyx_v_func_type = 0;
@@ -4708,12 +4709,12 @@ static PyObject *__pyx_pw_12base_filters_1filter_2d(PyObject *__pyx_self, PyObje
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("filter_2d", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 307, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("base_filters.filter_2d", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("stats.base_filters.filter_2d", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_func_type), (&PyUnicode_Type), 1, "func_type", 1))) __PYX_ERR(0, 307, __pyx_L1_error)
-  __pyx_r = __pyx_pf_12base_filters_filter_2d(__pyx_self, __pyx_v_arr, __pyx_v_kernel, __pyx_v_func_type);
+  __pyx_r = __pyx_pf_5stats_12base_filters_filter_2d(__pyx_self, __pyx_v_arr, __pyx_v_kernel, __pyx_v_func_type);
 
   /* function exit code */
   goto __pyx_L0;
@@ -4724,8 +4725,8 @@ static PyObject *__pyx_pw_12base_filters_1filter_2d(PyObject *__pyx_self, PyObje
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_arr, __Pyx_memviewslice __pyx_v_kernel, PyObject *__pyx_v_func_type) {
-  __pyx_t_12base_filters_f_type __pyx_v_apply;
+static PyObject *__pyx_pf_5stats_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_arr, __Pyx_memviewslice __pyx_v_kernel, PyObject *__pyx_v_func_type) {
+  __pyx_t_5stats_12base_filters_f_type __pyx_v_apply;
   int __pyx_v_non_zero;
   double __pyx_v_sum_of_weights;
   PyObject *__pyx_v_result = NULL;
@@ -4742,16 +4743,16 @@ static PyObject *__pyx_pf_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx
   __Pyx_memviewslice __pyx_t_8 = { 0, 0, { 0 }, { 0 }, { 0 } };
   __Pyx_RefNannySetupContext("filter_2d", 0);
 
-  /* "base_filters.pyx":308
+  /* "stats/base_filters.pyx":308
  * 
  * def filter_2d(double [:, ::1] arr, double [:, ::1] kernel, str func_type):
  *   cdef f_type apply = func_selector(func_type)             # <<<<<<<<<<<<<<
  *   cdef int non_zero = np.count_nonzero(kernel)
  *   cdef double sum_of_weights = np.sum(kernel)
  */
-  __pyx_v_apply = __pyx_f_12base_filters_func_selector(__pyx_v_func_type);
+  __pyx_v_apply = __pyx_f_5stats_12base_filters_func_selector(__pyx_v_func_type);
 
-  /* "base_filters.pyx":309
+  /* "stats/base_filters.pyx":309
  * def filter_2d(double [:, ::1] arr, double [:, ::1] kernel, str func_type):
  *   cdef f_type apply = func_selector(func_type)
  *   cdef int non_zero = np.count_nonzero(kernel)             # <<<<<<<<<<<<<<
@@ -4785,7 +4786,7 @@ static PyObject *__pyx_pf_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_non_zero = __pyx_t_5;
 
-  /* "base_filters.pyx":310
+  /* "stats/base_filters.pyx":310
  *   cdef f_type apply = func_selector(func_type)
  *   cdef int non_zero = np.count_nonzero(kernel)
  *   cdef double sum_of_weights = np.sum(kernel)             # <<<<<<<<<<<<<<
@@ -4819,7 +4820,7 @@ static PyObject *__pyx_pf_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_sum_of_weights = __pyx_t_6;
 
-  /* "base_filters.pyx":311
+  /* "stats/base_filters.pyx":311
  *   cdef int non_zero = np.count_nonzero(kernel)
  *   cdef double sum_of_weights = np.sum(kernel)
  *   result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)             # <<<<<<<<<<<<<<
@@ -4865,7 +4866,7 @@ static PyObject *__pyx_pf_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx
   __pyx_v_result = __pyx_t_7;
   __pyx_t_7 = 0;
 
-  /* "base_filters.pyx":312
+  /* "stats/base_filters.pyx":312
  *   cdef double sum_of_weights = np.sum(kernel)
  *   result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
  *   cdef double[:, ::1] result_view = result             # <<<<<<<<<<<<<<
@@ -4877,16 +4878,16 @@ static PyObject *__pyx_pf_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx
   __pyx_t_8.memview = NULL;
   __pyx_t_8.data = NULL;
 
-  /* "base_filters.pyx":314
+  /* "stats/base_filters.pyx":314
  *   cdef double[:, ::1] result_view = result
  * 
  *   loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], sum_of_weights, non_zero, apply)             # <<<<<<<<<<<<<<
  * 
  *   return result
  */
-  __pyx_f_12base_filters_loop(__pyx_v_arr, __pyx_v_kernel, __pyx_v_result_view, (__pyx_v_arr.shape[0]), (__pyx_v_arr.shape[1]), (__pyx_v_kernel.shape[0]), __pyx_v_sum_of_weights, __pyx_v_non_zero, __pyx_v_apply);
+  __pyx_f_5stats_12base_filters_loop(__pyx_v_arr, __pyx_v_kernel, __pyx_v_result_view, (__pyx_v_arr.shape[0]), (__pyx_v_arr.shape[1]), (__pyx_v_kernel.shape[0]), __pyx_v_sum_of_weights, __pyx_v_non_zero, __pyx_v_apply);
 
-  /* "base_filters.pyx":316
+  /* "stats/base_filters.pyx":316
  *   loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], sum_of_weights, non_zero, apply)
  * 
  *   return result             # <<<<<<<<<<<<<<
@@ -4898,7 +4899,7 @@ static PyObject *__pyx_pf_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx
   __pyx_r = __pyx_v_result;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":307
+  /* "stats/base_filters.pyx":307
  * 
  * 
  * def filter_2d(double [:, ::1] arr, double [:, ::1] kernel, str func_type):             # <<<<<<<<<<<<<<
@@ -4914,7 +4915,7 @@ static PyObject *__pyx_pf_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_7);
   __PYX_XDEC_MEMVIEW(&__pyx_t_8, 1);
-  __Pyx_AddTraceback("base_filters.filter_2d", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("stats.base_filters.filter_2d", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_result);
@@ -4926,7 +4927,7 @@ static PyObject *__pyx_pf_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx
   return __pyx_r;
 }
 
-/* "base_filters.pyx":319
+/* "stats/base_filters.pyx":319
  * 
  * 
  * def filter_3d(double [:, :, ::1] arr, double [:, ::1] kernel, str func_type):             # <<<<<<<<<<<<<<
@@ -4935,9 +4936,9 @@ static PyObject *__pyx_pf_12base_filters_filter_2d(CYTHON_UNUSED PyObject *__pyx
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_12base_filters_3filter_3d(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_12base_filters_3filter_3d = {"filter_3d", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_12base_filters_3filter_3d, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_12base_filters_3filter_3d(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_5stats_12base_filters_3filter_3d(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_5stats_12base_filters_3filter_3d = {"filter_3d", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_5stats_12base_filters_3filter_3d, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_5stats_12base_filters_3filter_3d(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   __Pyx_memviewslice __pyx_v_arr = { 0, 0, { 0 }, { 0 }, { 0 } };
   __Pyx_memviewslice __pyx_v_kernel = { 0, 0, { 0 }, { 0 }, { 0 } };
   PyObject *__pyx_v_func_type = 0;
@@ -4996,12 +4997,12 @@ static PyObject *__pyx_pw_12base_filters_3filter_3d(PyObject *__pyx_self, PyObje
   __pyx_L5_argtuple_error:;
   __Pyx_RaiseArgtupleInvalid("filter_3d", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 319, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("base_filters.filter_3d", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("stats.base_filters.filter_3d", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_func_type), (&PyUnicode_Type), 1, "func_type", 1))) __PYX_ERR(0, 319, __pyx_L1_error)
-  __pyx_r = __pyx_pf_12base_filters_2filter_3d(__pyx_self, __pyx_v_arr, __pyx_v_kernel, __pyx_v_func_type);
+  __pyx_r = __pyx_pf_5stats_12base_filters_2filter_3d(__pyx_self, __pyx_v_arr, __pyx_v_kernel, __pyx_v_func_type);
 
   /* function exit code */
   goto __pyx_L0;
@@ -5012,8 +5013,8 @@ static PyObject *__pyx_pw_12base_filters_3filter_3d(PyObject *__pyx_self, PyObje
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_12base_filters_2filter_3d(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_arr, __Pyx_memviewslice __pyx_v_kernel, PyObject *__pyx_v_func_type) {
-  __pyx_t_12base_filters_f_type __pyx_v_apply;
+static PyObject *__pyx_pf_5stats_12base_filters_2filter_3d(CYTHON_UNUSED PyObject *__pyx_self, __Pyx_memviewslice __pyx_v_arr, __Pyx_memviewslice __pyx_v_kernel, PyObject *__pyx_v_func_type) {
+  __pyx_t_5stats_12base_filters_f_type __pyx_v_apply;
   int __pyx_v_non_zero;
   double __pyx_v_sum_of_weights;
   PyObject *__pyx_v_result = NULL;
@@ -5030,16 +5031,16 @@ static PyObject *__pyx_pf_12base_filters_2filter_3d(CYTHON_UNUSED PyObject *__py
   __Pyx_memviewslice __pyx_t_8 = { 0, 0, { 0 }, { 0 }, { 0 } };
   __Pyx_RefNannySetupContext("filter_3d", 0);
 
-  /* "base_filters.pyx":320
+  /* "stats/base_filters.pyx":320
  * 
  * def filter_3d(double [:, :, ::1] arr, double [:, ::1] kernel, str func_type):
  *   cdef f_type apply = func_selector(func_type)             # <<<<<<<<<<<<<<
  *   cdef int non_zero = np.count_nonzero(kernel)
  *   cdef double sum_of_weights = np.sum(kernel)
  */
-  __pyx_v_apply = __pyx_f_12base_filters_func_selector(__pyx_v_func_type);
+  __pyx_v_apply = __pyx_f_5stats_12base_filters_func_selector(__pyx_v_func_type);
 
-  /* "base_filters.pyx":321
+  /* "stats/base_filters.pyx":321
  * def filter_3d(double [:, :, ::1] arr, double [:, ::1] kernel, str func_type):
  *   cdef f_type apply = func_selector(func_type)
  *   cdef int non_zero = np.count_nonzero(kernel)             # <<<<<<<<<<<<<<
@@ -5073,7 +5074,7 @@ static PyObject *__pyx_pf_12base_filters_2filter_3d(CYTHON_UNUSED PyObject *__py
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_non_zero = __pyx_t_5;
 
-  /* "base_filters.pyx":322
+  /* "stats/base_filters.pyx":322
  *   cdef f_type apply = func_selector(func_type)
  *   cdef int non_zero = np.count_nonzero(kernel)
  *   cdef double sum_of_weights = np.sum(kernel)             # <<<<<<<<<<<<<<
@@ -5107,7 +5108,7 @@ static PyObject *__pyx_pf_12base_filters_2filter_3d(CYTHON_UNUSED PyObject *__py
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_sum_of_weights = __pyx_t_6;
 
-  /* "base_filters.pyx":323
+  /* "stats/base_filters.pyx":323
  *   cdef int non_zero = np.count_nonzero(kernel)
  *   cdef double sum_of_weights = np.sum(kernel)
  *   result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)             # <<<<<<<<<<<<<<
@@ -5153,7 +5154,7 @@ static PyObject *__pyx_pf_12base_filters_2filter_3d(CYTHON_UNUSED PyObject *__py
   __pyx_v_result = __pyx_t_7;
   __pyx_t_7 = 0;
 
-  /* "base_filters.pyx":324
+  /* "stats/base_filters.pyx":324
  *   cdef double sum_of_weights = np.sum(kernel)
  *   result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
  *   cdef double[:, ::1] result_view = result             # <<<<<<<<<<<<<<
@@ -5165,16 +5166,16 @@ static PyObject *__pyx_pf_12base_filters_2filter_3d(CYTHON_UNUSED PyObject *__py
   __pyx_t_8.memview = NULL;
   __pyx_t_8.data = NULL;
 
-  /* "base_filters.pyx":326
+  /* "stats/base_filters.pyx":326
  *   cdef double[:, ::1] result_view = result
  * 
  *   loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], sum_of_weights, non_zero, apply)             # <<<<<<<<<<<<<<
  * 
  *   return result
  */
-  __pyx_f_12base_filters_loop_3d(__pyx_v_arr, __pyx_v_kernel, __pyx_v_result_view, (__pyx_v_arr.shape[0]), (__pyx_v_arr.shape[1]), (__pyx_v_arr.shape[2]), (__pyx_v_kernel.shape[0]), __pyx_v_sum_of_weights, __pyx_v_non_zero, __pyx_v_apply);
+  __pyx_f_5stats_12base_filters_loop_3d(__pyx_v_arr, __pyx_v_kernel, __pyx_v_result_view, (__pyx_v_arr.shape[0]), (__pyx_v_arr.shape[1]), (__pyx_v_arr.shape[2]), (__pyx_v_kernel.shape[0]), __pyx_v_sum_of_weights, __pyx_v_non_zero, __pyx_v_apply);
 
-  /* "base_filters.pyx":328
+  /* "stats/base_filters.pyx":328
  *   loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], sum_of_weights, non_zero, apply)
  * 
  *   return result             # <<<<<<<<<<<<<<
@@ -5184,7 +5185,7 @@ static PyObject *__pyx_pf_12base_filters_2filter_3d(CYTHON_UNUSED PyObject *__py
   __pyx_r = __pyx_v_result;
   goto __pyx_L0;
 
-  /* "base_filters.pyx":319
+  /* "stats/base_filters.pyx":319
  * 
  * 
  * def filter_3d(double [:, :, ::1] arr, double [:, ::1] kernel, str func_type):             # <<<<<<<<<<<<<<
@@ -5200,7 +5201,7 @@ static PyObject *__pyx_pf_12base_filters_2filter_3d(CYTHON_UNUSED PyObject *__py
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_7);
   __PYX_XDEC_MEMVIEW(&__pyx_t_8, 1);
-  __Pyx_AddTraceback("base_filters.filter_3d", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("stats.base_filters.filter_3d", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_result);
@@ -18157,7 +18158,7 @@ static PyBufferProcs __pyx_tp_as_buffer_array = {
 
 static PyTypeObject __pyx_type___pyx_array = {
   PyVarObject_HEAD_INIT(0, 0)
-  "base_filters.array", /*tp_name*/
+  "stats.base_filters.array", /*tp_name*/
   sizeof(struct __pyx_array_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc_array, /*tp_dealloc*/
@@ -18276,7 +18277,7 @@ static PyMethodDef __pyx_methods_Enum[] = {
 
 static PyTypeObject __pyx_type___pyx_MemviewEnum = {
   PyVarObject_HEAD_INIT(0, 0)
-  "base_filters.Enum", /*tp_name*/
+  "stats.base_filters.Enum", /*tp_name*/
   sizeof(struct __pyx_MemviewEnum_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc_Enum, /*tp_dealloc*/
@@ -18537,7 +18538,7 @@ static PyBufferProcs __pyx_tp_as_buffer_memoryview = {
 
 static PyTypeObject __pyx_type___pyx_memoryview = {
   PyVarObject_HEAD_INIT(0, 0)
-  "base_filters.memoryview", /*tp_name*/
+  "stats.base_filters.memoryview", /*tp_name*/
   sizeof(struct __pyx_memoryview_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc_memoryview, /*tp_dealloc*/
@@ -18675,7 +18676,7 @@ static struct PyGetSetDef __pyx_getsets__memoryviewslice[] = {
 
 static PyTypeObject __pyx_type___pyx_memoryviewslice = {
   PyVarObject_HEAD_INIT(0, 0)
-  "base_filters._memoryviewslice", /*tp_name*/
+  "stats.base_filters._memoryviewslice", /*tp_name*/
   sizeof(struct __pyx_memoryviewslice_obj), /*tp_basicsize*/
   0, /*tp_itemsize*/
   __pyx_tp_dealloc__memoryviewslice, /*tp_dealloc*/
@@ -18824,7 +18825,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_apply, __pyx_k_apply, sizeof(__pyx_k_apply), 0, 0, 1, 1},
   {&__pyx_n_s_arr, __pyx_k_arr, sizeof(__pyx_k_arr), 0, 0, 1, 1},
   {&__pyx_n_s_base, __pyx_k_base, sizeof(__pyx_k_base), 0, 0, 1, 1},
-  {&__pyx_n_s_base_filters, __pyx_k_base_filters, sizeof(__pyx_k_base_filters), 0, 0, 1, 1},
   {&__pyx_n_s_c, __pyx_k_c, sizeof(__pyx_k_c), 0, 0, 1, 1},
   {&__pyx_n_u_c, __pyx_k_c, sizeof(__pyx_k_c), 0, 1, 0, 1},
   {&__pyx_n_s_class, __pyx_k_class, sizeof(__pyx_k_class), 0, 0, 1, 1},
@@ -18856,7 +18856,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_itemsize_0_for_cython_array, __pyx_k_itemsize_0_for_cython_array, sizeof(__pyx_k_itemsize_0_for_cython_array), 0, 0, 1, 0},
   {&__pyx_n_s_kernel, __pyx_k_kernel, sizeof(__pyx_k_kernel), 0, 0, 1, 1},
   {&__pyx_n_u_kurtosis, __pyx_k_kurtosis, sizeof(__pyx_k_kurtosis), 0, 1, 0, 1},
-  {&__pyx_kp_s_lib_statistics_base_filters_pyx, __pyx_k_lib_statistics_base_filters_pyx, sizeof(__pyx_k_lib_statistics_base_filters_pyx), 0, 0, 1, 0},
+  {&__pyx_kp_s_lib_stats_base_filters_pyx, __pyx_k_lib_stats_base_filters_pyx, sizeof(__pyx_k_lib_stats_base_filters_pyx), 0, 0, 1, 0},
   {&__pyx_n_u_mad, __pyx_k_mad, sizeof(__pyx_k_mad), 0, 1, 0, 1},
   {&__pyx_n_u_mad_std, __pyx_k_mad_std, sizeof(__pyx_k_mad_std), 0, 1, 0, 1},
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
@@ -18900,6 +18900,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_u_skew_p2, __pyx_k_skew_p2, sizeof(__pyx_k_skew_p2), 0, 1, 0, 1},
   {&__pyx_n_u_standard_deviation, __pyx_k_standard_deviation, sizeof(__pyx_k_standard_deviation), 0, 1, 0, 1},
   {&__pyx_n_s_start, __pyx_k_start, sizeof(__pyx_k_start), 0, 0, 1, 1},
+  {&__pyx_n_s_stats_base_filters, __pyx_k_stats_base_filters, sizeof(__pyx_k_stats_base_filters), 0, 0, 1, 1},
   {&__pyx_n_s_step, __pyx_k_step, sizeof(__pyx_k_step), 0, 0, 1, 1},
   {&__pyx_n_s_stop, __pyx_k_stop, sizeof(__pyx_k_stop), 0, 0, 1, 1},
   {&__pyx_kp_s_strided_and_direct, __pyx_k_strided_and_direct, sizeof(__pyx_k_strided_and_direct), 0, 0, 1, 0},
@@ -18935,7 +18936,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "base_filters.pyx":304
+  /* "stats/base_filters.pyx":304
  *   elif func_type is 'kurtosis': return neighbourhood_weighted_kurtosis_excess
  * 
  *   raise Exception('Unable to find filter type!')             # <<<<<<<<<<<<<<
@@ -19138,7 +19139,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__19);
   __Pyx_GIVEREF(__pyx_tuple__19);
 
-  /* "base_filters.pyx":307
+  /* "stats/base_filters.pyx":307
  * 
  * 
  * def filter_2d(double [:, ::1] arr, double [:, ::1] kernel, str func_type):             # <<<<<<<<<<<<<<
@@ -19148,9 +19149,9 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__20 = PyTuple_Pack(8, __pyx_n_s_arr, __pyx_n_s_kernel, __pyx_n_s_func_type, __pyx_n_s_apply, __pyx_n_s_non_zero, __pyx_n_s_sum_of_weights, __pyx_n_s_result, __pyx_n_s_result_view); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(0, 307, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__20);
   __Pyx_GIVEREF(__pyx_tuple__20);
-  __pyx_codeobj__21 = (PyObject*)__Pyx_PyCode_New(3, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__20, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_lib_statistics_base_filters_pyx, __pyx_n_s_filter_2d, 307, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__21)) __PYX_ERR(0, 307, __pyx_L1_error)
+  __pyx_codeobj__21 = (PyObject*)__Pyx_PyCode_New(3, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__20, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_lib_stats_base_filters_pyx, __pyx_n_s_filter_2d, 307, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__21)) __PYX_ERR(0, 307, __pyx_L1_error)
 
-  /* "base_filters.pyx":319
+  /* "stats/base_filters.pyx":319
  * 
  * 
  * def filter_3d(double [:, :, ::1] arr, double [:, ::1] kernel, str func_type):             # <<<<<<<<<<<<<<
@@ -19160,7 +19161,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__22 = PyTuple_Pack(8, __pyx_n_s_arr, __pyx_n_s_kernel, __pyx_n_s_func_type, __pyx_n_s_apply, __pyx_n_s_non_zero, __pyx_n_s_sum_of_weights, __pyx_n_s_result, __pyx_n_s_result_view); if (unlikely(!__pyx_tuple__22)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__22);
   __Pyx_GIVEREF(__pyx_tuple__22);
-  __pyx_codeobj__23 = (PyObject*)__Pyx_PyCode_New(3, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__22, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_lib_statistics_base_filters_pyx, __pyx_n_s_filter_3d, 319, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__23)) __PYX_ERR(0, 319, __pyx_L1_error)
+  __pyx_codeobj__23 = (PyObject*)__Pyx_PyCode_New(3, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__22, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_lib_stats_base_filters_pyx, __pyx_n_s_filter_3d, 319, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__23)) __PYX_ERR(0, 319, __pyx_L1_error)
 
   /* "View.MemoryView":286
  *         return self.name
@@ -19544,14 +19545,14 @@ if (!__Pyx_RefNanny) {
   #if PY_MAJOR_VERSION < 3 && (__PYX_DEFAULT_STRING_ENCODING_IS_ASCII || __PYX_DEFAULT_STRING_ENCODING_IS_DEFAULT)
   if (__Pyx_init_sys_getdefaultencoding_params() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
-  if (__pyx_module_is_main_base_filters) {
+  if (__pyx_module_is_main_stats__base_filters) {
     if (PyObject_SetAttr(__pyx_m, __pyx_n_s_name_2, __pyx_n_s_main) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   }
   #if PY_MAJOR_VERSION >= 3
   {
     PyObject *modules = PyImport_GetModuleDict(); if (unlikely(!modules)) __PYX_ERR(0, 1, __pyx_L1_error)
-    if (!PyDict_GetItemString(modules, "base_filters")) {
-      if (unlikely(PyDict_SetItemString(modules, "base_filters", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
+    if (!PyDict_GetItemString(modules, "stats.base_filters")) {
+      if (unlikely(PyDict_SetItemString(modules, "stats.base_filters", __pyx_m) < 0)) __PYX_ERR(0, 1, __pyx_L1_error)
     }
   }
   #endif
@@ -19572,7 +19573,7 @@ if (!__Pyx_RefNanny) {
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "base_filters.pyx":6
+  /* "stats/base_filters.pyx":6
  * from libc.stdlib cimport malloc, free
  * from libc.math cimport sqrt, pow, fabs
  * import numpy as np             # <<<<<<<<<<<<<<
@@ -19584,31 +19585,31 @@ if (!__Pyx_RefNanny) {
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "base_filters.pyx":307
+  /* "stats/base_filters.pyx":307
  * 
  * 
  * def filter_2d(double [:, ::1] arr, double [:, ::1] kernel, str func_type):             # <<<<<<<<<<<<<<
  *   cdef f_type apply = func_selector(func_type)
  *   cdef int non_zero = np.count_nonzero(kernel)
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_12base_filters_1filter_2d, NULL, __pyx_n_s_base_filters); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 307, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5stats_12base_filters_1filter_2d, NULL, __pyx_n_s_stats_base_filters); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 307, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_filter_2d, __pyx_t_1) < 0) __PYX_ERR(0, 307, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "base_filters.pyx":319
+  /* "stats/base_filters.pyx":319
  * 
  * 
  * def filter_3d(double [:, :, ::1] arr, double [:, ::1] kernel, str func_type):             # <<<<<<<<<<<<<<
  *   cdef f_type apply = func_selector(func_type)
  *   cdef int non_zero = np.count_nonzero(kernel)
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_12base_filters_3filter_3d, NULL, __pyx_n_s_base_filters); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 319, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_5stats_12base_filters_3filter_3d, NULL, __pyx_n_s_stats_base_filters); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_filter_3d, __pyx_t_1) < 0) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "base_filters.pyx":1
+  /* "stats/base_filters.pyx":1
  * # cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True, profile = False             # <<<<<<<<<<<<<<
  * cimport cython
  * from cython.parallel cimport prange
@@ -19778,11 +19779,11 @@ if (!__Pyx_RefNanny) {
   __Pyx_XDECREF(__pyx_t_1);
   if (__pyx_m) {
     if (__pyx_d) {
-      __Pyx_AddTraceback("init base_filters", __pyx_clineno, __pyx_lineno, __pyx_filename);
+      __Pyx_AddTraceback("init stats.base_filters", __pyx_clineno, __pyx_lineno, __pyx_filename);
     }
     Py_CLEAR(__pyx_m);
   } else if (!PyErr_Occurred()) {
-    PyErr_SetString(PyExc_ImportError, "init base_filters");
+    PyErr_SetString(PyExc_ImportError, "init stats.base_filters");
   }
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();

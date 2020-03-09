@@ -35,6 +35,7 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * git clone https://github.com/casperfibaek/yellow.git
   * git config --global user.name "username"
   * git config --global user.email johndoe@example.com
+  * git config --global user.password fakefakefake
 
   # Test
   * otbApplicationLauncherCommandLine

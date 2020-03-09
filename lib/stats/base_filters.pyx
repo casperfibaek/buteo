@@ -35,7 +35,7 @@ cdef void argsort(Neighbourhood * neighbourhood, int* order, int non_zero) nogil
   cdef int i
   
   # Allocate index tracking array.
-  cdef IndexedElement *order_struct = <IndexedElement *> malloc(non_zero * sizeof(IndexedElement))
+  cdef IndexedElement* order_struct = <IndexedElement *> malloc(non_zero * sizeof(IndexedElement))
   
   # Copy data into index tracking array.
   for i in range(non_zero):

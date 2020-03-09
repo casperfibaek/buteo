@@ -2,8 +2,54 @@ import sys
 import numpy as np
 from numpy import ma
 from osgeo import ogr, gdal, osr
-from raster_stats import calc_stats, translate_stats
+from raster_stats import calc_stats
 from utils import progress
+
+
+def translate_stats(statistics):
+    translated = np.array([], dtype=np.int8)
+
+    for stat in statistics:
+        if stat is 'min':
+            translated = np.append(translated, 1)
+        elif stat is 'max':
+            translated = np.append(translated, 2)
+        elif stat is 'count':
+            translated = np.append(translated, 3)
+        elif stat is 'range':
+            translated = np.append(translated, 4)
+        elif stat is 'mean':
+            translated = np.append(translated, 5)
+        elif stat is 'med':
+            translated = np.append(translated, 6)
+        elif stat is 'std':
+            translated = np.append(translated, 7)
+        elif stat is 'kurt':
+            translated = np.append(translated, 8)
+        elif stat is 'skew':
+            translated = np.append(translated, 9)
+        elif stat is 'npskew':
+            translated = np.append(translated, 10)
+        elif stat is 'skewratio':
+            translated = np.append(translated, 11)
+        elif stat is 'var':
+            translated = np.append(translated, 12)
+        elif stat is 'q1':
+            translated = np.append(translated, 13)
+        elif stat is 'q3':
+            translated = np.append(translated, 14)
+        elif stat is 'q98':
+            translated = np.append(translated, 15)
+        elif stat is 'q02':
+            translated = np.append(translated, 16)
+        elif stat is 'iqr':
+            translated = np.append(translated, 17)
+        elif stat is 'mad':
+            translated = np.append(translated, 18)
+        elif stat is 'madstd':
+            translated = np.append(translated, 19)
+
+    return translated
 
 
 def calc_ipq(area, perimeter):
@@ -128,7 +174,7 @@ def crop_raster(raster_band, rasterized_size, offset):
     return raster_band.ReadAsArray(int(offset[0]), int(offset[1]), int(rasterized_size[0]), int(rasterized_size[1]))
 
 
-def calc_zonal(vect, rast, prefix='', shape_attributes=True, stats=['mean', 'med', 'std']):
+def calc_zonal(vect, rast, prefix='', shape_attributes=False, stats=['mean', 'med', 'std']):
     # Translate stats to integers
     stats_translated = translate_stats(stats)
 
@@ -236,7 +282,7 @@ def calc_zonal(vect, rast, prefix='', shape_attributes=True, stats=['mean', 'med
             print(f'feature and raster did not match for: {vector_feature.GetFID()}')
         else:
             raster_data_masked = ma.masked_array(cropped_raster, mask=feature_rasterized).compressed()
-            zonal_stats = calc_stats(raster_data_masked, stats_translated)
+            zonal_stats = calc_stats(raster_data_masked, translated_stats=stats_translated)
 
             for index, value in enumerate(stats):
                 vector_feature.SetField(f'{prefix}{value}', float(zonal_stats[index]))
