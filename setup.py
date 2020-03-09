@@ -7,10 +7,10 @@ import numpy
 # cython -a filters.pyx
 
 ext_modules = cythonize((Extension(
-                            "filters",
-                            sources=["./lib/cython/filters.pyx"],
+                            "base_filters",
+                            sources=["./lib/statistics/base_filters.pyx"],
                             include_dirs=[numpy.get_include()],
-                            extra_compile_args=["/O2", "/fp:fast", "/openmp"],
+                            extra_compile_args=["-Wall", "-O3", "-pthread"],
                         )))
 
-setup(ext_modules=cythonize(ext_modules, annotate=True))
+setup(ext_modules=cythonize(ext_modules, annotate=False))

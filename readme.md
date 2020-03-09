@@ -5,7 +5,7 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
 # Ubuntu setup
   * sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
   * sudo apt-get update
-  * sudo apt-get install otb-bin git
+  * sudo apt-get install otb-bin git build-essential manpages-dev
   * sudo apt-get upgrade
   * sudo apt full-upgrade
   * sudo apt autoremove
@@ -24,8 +24,10 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * conda update --all
   * conda create --name yellow python=3.8
   * conda activate yellow
+  * conda config --env --add channels conda-forge
+  * conda config --env --set channel_priority strict
   * conda install -c anaconda mkl numpy scipy scikit-learn cython numexpr
-  * conda install -c conda-forge gdal geopandas
+  * conda install -c conda-forge gdal matplotlib shapely opencv
   * conda update --all
 
   ## Git

@@ -1,7 +1,6 @@
 import sys
 import numpy as np
 from numpy import ma
-from time import time
 from osgeo import ogr, gdal, osr
 from raster_stats import calc_stats, translate_stats
 from utils import progress

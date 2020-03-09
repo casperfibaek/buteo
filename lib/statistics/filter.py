@@ -3,50 +3,20 @@ import numpy as np
 import numpy.ma as ma
 from math import sqrt, floor
 from scipy.ndimage import median_filter as sci_median_filter
-from skimage.util.shape import view_as_windows
-from skimage.util import pad
 
+def standardise(in_raster, out_raster):
+    ras = raster_to_array(in_raster)
+    new_ras = np.divide(np.subtract(ras, np.mean(ras)), np.std(ras))
 
-def circular_kernel_mask(width, weighted_edges=False, inverted=False, average=False, dtype='float32'):
-    assert(width % 2 is not 0)
+    return array_to_raster(new_ras, reference_raster=in_raster, out_raster=out_raster)
 
-    radius = floor(width / 2)
-    mask = np.empty((width, width), dtype=dtype)
+def normalise(in_raster, out_raster):
+    ras = raster_to_array(in_raster)
+    new_ras = np.divide(np.subtract(ras, np.mean(ras)), np.std(ras))
 
-    for x in range(width):
-        for y in range(width):
-            xm = x - radius
-            ym = y - radius
-            dist = sqrt(pow(xm, 2) + pow(ym, 2))
+    new_ras = np.divide((ras - np.min(ras)), np.ptp(ras))
 
-            weight = 0
-
-            if dist > radius:
-                if weighted_edges is True:
-                    if dist > (radius + 1):
-                        weight = 0
-                    else:
-                        weight = 1 - (dist - int(dist))
-                else:
-                    weight = 0
-            else:
-                weight = 1
-
-            if weighted_edges is False:
-                if weight > 0.5:
-                    weight = 1
-                else:
-                    weight = 0
-
-            mask[x][y] = weight if inverted is False else 1 - weight
-
-    if average is True:
-        if weighted_edges is True:
-            return np.multiply(mask, 1 / mask.size)
-        else:
-            return np.multiply(mask, 1 / mask.sum())
-
-    return mask
+    return array_to_raster(new_ras, reference_raster=in_raster, out_raster=out_raster)
 
 
 def mean_filter(img_arr, width=3, circular=True, out_dtype=None):

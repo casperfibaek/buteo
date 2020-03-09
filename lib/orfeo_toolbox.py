@@ -7,8 +7,6 @@ import time
 from base.utils.core import progress
 from base.raster_io import raster_to_array
 
-otb_folder = "~/OTB-7.0.0-Linux64/bin/"
-
 def execute_cli_function(command, name, quiet=False):
     process = subprocess.Popen(
         command,
@@ -50,7 +48,7 @@ def pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):
         of another image. Beware that the two images
         should be of the same size and position. '''
 
-    cli = os.path.join(otb_folder, 'otbcli_Pansharpening.bat')
+    cli = 'otbcli_Pansharpening'
 
     ''' *******************************************************
         Parse the input and create CLI string
@@ -102,7 +100,7 @@ def local_stats(in_raster, out_raster, options=None, band=None):
     ''' Computes local statistical moments on every pixel
         in the selected channel of the input image '''
 
-    cli = os.path.join(otb_folder, 'otbcli_LocalStatisticExtraction.bat')
+    cli = 'otbcli_LocalStatisticExtraction'
 
     if options is None:
         options = {
@@ -139,7 +137,7 @@ def local_stats(in_raster, out_raster, options=None, band=None):
 def haralick(in_raster, out_raster, options=None, out_datatype='float', band=None):
     ''' Performs haralick texture extraction '''
 
-    cli = os.path.join(otb_folder, 'otbcli_HaralickTextureExtraction.bat')
+    cli = 'otbcli_HaralickTextureExtraction'
 
     stats_raster = raster_to_array(in_raster)
     stats = {'min': stats_raster.min(), 'max': stats_raster.max()}
@@ -193,7 +191,7 @@ def dimension_reduction(in_raster, out_raster, options=None, out_datatype=None):
         optionally export the transformation matrix
         to a text file. '''
 
-    cli = os.path.join(otb_folder, 'otbcli_DimensionalityReduction.bat')
+    cli = 'otbcli_DimensionalityReduction'
 
     if options is None:
         options = {
@@ -234,7 +232,7 @@ def concatenate_images(in_rasters, out_raster, ram=None, out_datatype=None):
     generates a single multi-channel image. The channel order
     is the same as the list. '''
 
-    cli = os.path.join(otb_folder, 'otbcli_ConcatenateImages.bat')
+    cli = 'otbcli_ConcatenateImages'
 
     paths = []
     for raster in in_rasters:
@@ -266,7 +264,7 @@ def split_images(in_raster, out_rasters, ram=None, out_datatype=None):
         output parameter, outimage.tif, the generated images will be
         outimage_0.tif and outimage_1.tif. '''
 
-    cli = os.path.join(otb_folder, 'otbcli_SplitImage.bat')
+    cli = 'otbcli_SplitImage'
 
     # Set RAM to 90% of available ram.
     if ram is None:
@@ -291,7 +289,7 @@ def rescale(in_raster, out_raster, options=None, out_datatype='float'):
         By default min (resp. max) value is set to 0 (resp. 1).
         Input minimum and maximum values is automatically computed for all image bands. '''
 
-    cli = os.path.join(otb_folder, 'otbcli_Rescale.bat')
+    cli = 'otbcli_Rescale'
 
     if options is None:
         options = {
@@ -330,7 +328,7 @@ def rescale(in_raster, out_raster, options=None, out_datatype='float'):
 def merge_rasters(in_rasters, out_raster, options=None, band=None, out_datatype='uint16', tmp='.'):
     ''' Creates a mosaic out of a series of images. Must be of the same projection '''
 
-    cli = os.path.join(otb_folder, 'otbcli_Mosaic.bat')
+    cli = 'otbcli_Mosaic'
 
     if options is None:
         options = {
@@ -365,7 +363,7 @@ def meanshift_segmentation(in_raster, out_geom, spatialr=5, ranger=15, thres=0.1
     ''' Computes local statistical moments on every pixel
         in the selected channel of the input image '''
 
-    cli = os.path.join(otb_folder, 'otbcli_Segmentation.bat')
+    cli = 'otbcli_Segmentation'
 
     options = {
         'mode': 'vector',
