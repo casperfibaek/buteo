@@ -24,12 +24,13 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * conda update --all
   * conda create --name yellow python=3.8
   * conda activate yellow
-  * conda install -c conda-forge gdal
-  * conda install -c conda-forge geopandas
+  * conda install -c anaconda mkl numpy scipy scikit-learn cython numexpr
+  * conda install -c conda-forge gdal geopandas
   * conda update --all
 
   ## Git
-  * sudo apt-get install git
   * cd ~
   * git clone https://github.com/casperfibaek/yellow.git
+
+  # Test
   * otbApplicationLauncherCommandLine
