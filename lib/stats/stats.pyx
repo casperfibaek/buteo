@@ -10,10 +10,6 @@ cdef extern from "stdlib.h":
     ctypedef void const_void "const void"
     void qsort(void *base, int nmemb, int size, int(*compar)(const_void *, const_void *)) nogil
 
-cdef struct IndexedElement:
-    int index
-    double value
-
 cdef int compare(const_void *pa, const_void *pb) nogil:
   cdef double a = (<double *> pa)[0]
   cdef double b = (<double *> pb)[0]

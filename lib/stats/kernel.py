@@ -15,7 +15,6 @@ def create_kernel(width, circular=True, weighted_edges=True, holed=False, normal
             for j in range(width):
                 diff = np.sqrt((i - radius) ** 2 + (j - radius) ** 2)
                 kernel[i][j] = np.exp(-(diff ** 2) / (2 * sigma ** 2))
-        kernel = kernel / kernel.sum()
     else:
         for x in range(width):
             for y in range(width):

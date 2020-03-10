@@ -20,37 +20,46 @@ cdef struct Offset:
   int y
   double weight
 
-cdef struct IndexedElement:
-    int index
-    double value
-
 ctypedef double (*f_type) (Neighbourhood *, int, double) nogil
 
-cdef int _compare(const_void *a, const_void *b) nogil:
-  cdef double v = (<IndexedElement*> a).value - (<IndexedElement*> b).value
+cdef int compare(const_void *a, const_void *b) nogil:
+  cdef double v = (<Neighbourhood*> a).value - (<Neighbourhood*> b).value
   if v < 0: return -1
   if v >= 0: return 1
 
-cdef void argsort(Neighbourhood * neighbourhood, int* order, int non_zero) nogil:
-  cdef int i
-  
-  # Allocate index tracking array.
-  cdef IndexedElement* order_struct = <IndexedElement *> malloc(non_zero * sizeof(IndexedElement))
-  
-  # Copy data into index tracking array.
-  for i in range(non_zero):
-      order_struct[i].index = i
-      order_struct[i].value = neighbourhood[i].value
-      
-  # Sort index tracking array.
-  qsort(<void *> order_struct, non_zero, sizeof(IndexedElement), _compare)
-  
-  # Copy indices from index tracking array to output array.
-  for i in range(non_zero):
-      order[i] = order_struct[i].index
-      
-  # Free index tracking array.
-  free(order_struct)
+cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int non_zero, double quintile, double sum_of_weights) nogil:
+    cdef double weighted_quantile, top, bot, tb
+    cdef int i
+
+    cdef double cumsum = 0
+    cdef double* w_cum = <double*> malloc(sizeof(double) * non_zero)
+
+    qsort(<void *> neighbourhood, non_zero, sizeof(Neighbourhood), compare)
+    
+    for i in range(non_zero):
+      cumsum += neighbourhood[i].weight
+      w_cum[i] = (cumsum - (quintile * neighbourhood[i].weight)) / sum_of_weights
+
+    weighted_quantile = neighbourhood[non_zero - 1].value
+    for i in range(non_zero):
+      if w_cum[i] >= quintile:
+
+        if i == 0 or w_cum[i] == quintile:
+          weighted_quantile = neighbourhood[i].value
+          break
+          
+        top = w_cum[i] - quintile
+        bot = quintile - w_cum[i - 1]
+        tb = top + bot
+
+        top = 1 - (top / tb)
+        bot = 1 - (bot / tb)
+
+        weighted_quantile = (neighbourhood[i - 1].value * bot) + (neighbourhood[i].value * top)
+        break
+
+    free(w_cum)
+    return weighted_quantile
 
 cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
     cdef int x, y
@@ -61,6 +70,34 @@ cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero, doubl
       accum += neighbourhood[x].value * neighbourhood[x].weight
 
     return accum
+
+cdef double neighbourhood_max(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+    cdef int x, y, current_max_i
+    cdef double current_max, val
+
+    current_max = neighbourhood[0].value * neighbourhood[0].weight
+    current_max_i = 0
+    for x in range(non_zero):
+      val = neighbourhood[x].value * neighbourhood[x].weight
+      if val > current_max:
+        current_max = val
+        current_max_i = x
+
+    return neighbourhood[current_max_i].value
+
+cdef double neighbourhood_min(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+    cdef int x, y, current_min_i
+    cdef double current_min
+
+    current_min = neighbourhood[0].value * neighbourhood[0].weight
+    current_min_i = 0
+    for x in range(non_zero):
+      val = neighbourhood[x].value * neighbourhood[x].weight
+      if val < current_min:
+        current_min = val
+        current_min_i = x
+
+    return neighbourhood[current_min_i].value
 
 cdef double weighted_variance(Neighbourhood * neighbourhood, int non_zero, int power, double sum_of_weights) nogil:
     cdef int x, y
@@ -84,51 +121,17 @@ cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourh
 
   return standard_deviation
 
-cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int non_zero, double quintile, double sum_of_weights) nogil:
-    cdef int i
-    cdef double weighted_quantile, low, weight,
-
-    cdef double cumsum = 0
-
-    cdef double* sort_arr = <double*> malloc(sizeof(double) * non_zero)
-    cdef double* sort_weight = <double*> malloc(sizeof(double) * non_zero)
-    cdef double* cx = <double*> malloc(sizeof(double) * non_zero)
-    cdef int* order = <int*> malloc(sizeof(int) * non_zero)
-
-    argsort(neighbourhood, order, non_zero)
-    
-    for i in range(non_zero):
-        cumsum += neighbourhood[order[i]].weight
-        cx[i] = (cumsum - (quintile * neighbourhood[order[i]].weight)) / sum_of_weights
-
-    for i in range(non_zero):
-        if cx[i] >= quintile:
-            if i == 0 or cx[i] == quintile:
-                return neighbourhood[order[i]].value
-            low = quintile - cx[i - 1]
-            weight = low / (low + (cx[i] - quintile))
-
-            return (neighbourhood[order[i - 1]].value * weight) + (neighbourhood[order[i]].value * (1 - weight))
-
-    free(sort_arr)
-    free(sort_weight)
-    free(cx)
-    free(order)
-
-    return neighbourhood[order[non_zero - 1]].value
-
+cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
+  cdef double weighted_q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, sum_of_weights)
+  return weighted_q1
 
 cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
   cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.5, sum_of_weights)
   return weighted_median
 
-cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, sum_of_weights)
-  return weighted_median
-
 cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)
-  return weighted_median
+  cdef double weighted_q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)
+  return weighted_q3
 
 cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
   cdef double weighted_median = neighbourhood_weighted_median(neighbourhood, non_zero, sum_of_weights)
@@ -288,6 +291,8 @@ cdef void loop_3d(double [:, :, ::1] arr, double [:, ::1] kernel, double [:, ::1
 
 cdef f_type func_selector(str func_type):
   if func_type is 'mean': return neighbourhood_sum
+  elif func_type is 'dilate': return neighbourhood_max
+  elif func_type is 'erode': return neighbourhood_min
   elif func_type is 'median': return neighbourhood_weighted_median
   elif func_type is 'variance': return neighbourhood_weighted_variance
   elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
@@ -304,7 +309,7 @@ cdef f_type func_selector(str func_type):
   raise Exception('Unable to find filter type!')
 
 
-def filter_2d(arr, kernel, str func_type):
+def filter_2d(arr, kernel, str func_type, dtype='float32'):
   cdef f_type apply = func_selector(func_type)
   cdef int non_zero = np.count_nonzero(kernel)
   cdef double sum_of_weights = np.sum(kernel)
@@ -315,10 +320,10 @@ def filter_2d(arr, kernel, str func_type):
 
   loop(arr_view, kernel_view, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], sum_of_weights, non_zero, apply)
 
-  return result.astype('float32')
+  return result.astype(dtype)
 
 
-def filter_3d(arr, kernel, str func_type):
+def filter_3d(arr, kernel, str func_type, dtype='float32'):
   cdef f_type apply = func_selector(func_type)
   cdef int non_zero = np.count_nonzero(kernel)
   cdef double sum_of_weights = np.sum(kernel)
@@ -329,4 +334,4 @@ def filter_3d(arr, kernel, str func_type):
 
   loop_3d(arr_view, kernel_view, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], sum_of_weights, non_zero, apply)
 
-  return result.astype('float32')
+  return result.astype(dtype)
