@@ -111,7 +111,7 @@ def divide_steps(total, step):
     steps = []
     remainder = total % step
     divided = int(total / step)
-    for cpu in range(step):
+    for _ in range(step):
         if remainder > 0:
             steps.append(divided + 1)
             remainder -= 1

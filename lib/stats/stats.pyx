@@ -46,10 +46,11 @@ ctypedef enum stat_name:
   s_eff = 21
 
 
-# TODO: q1, q3 not working
-
-cdef void _calc_stats(double [:] arr, int arr_length, int [:] stats, int stats_length, double [:] result_arr):
+cdef void _calc_stats(double [:] arr, int arr_length, int [:] stats, int stats_length, double [:] result_arr) nogil:
   cdef int x, v, j
+  cdef int arr_i, q25i, q50i, q75i
+  cdef double q25w, q50w, q75w, q1, q2, q3, iqr, skew_p2, skew_g, skew_r, mad, mad_std
+  cdef double * median_deviations
 
   cdef double v_min = arr[0]
   cdef double v_max = arr[0]
@@ -71,29 +72,53 @@ cdef void _calc_stats(double [:] arr, int arr_length, int [:] stats, int stats_l
   v_range = v_max - v_min
   v_mean = v_sum / v_count
 
-  qsort(<void *> ordered_array, arr_length, sizeof(double), compare)
+  cdef bint calc_medians = 0
+  cdef bint calc_mad = 0
 
-  cdef int arr_i = arr_length - 1
-  cdef int q25i = <int>(arr_i * 0.25)
-  cdef double q25w = 1.0 - ((arr_i * 0.25) - q25i)
-  cdef int q50i = <int>(arr_i * 0.50)
-  cdef double q50w = 1.0 - ((arr_i * 0.50) - q50i)
-  cdef int q75i = <int>(arr_i * 0.75)
-  cdef double q75w = 1.0 - ((arr_i * 0.75) - q75i)
+  for x in range(stats_length):
+    if stats[x] == s_mad or stats[x] == s_mad_std:
+      calc_medians = 1
+      calc_mad = 1
+      break
+    if stats[x] == s_med or stats[x] == s_q1 or stats[x] == s_q3 or stats[x] == s_med or stats[x] == s_iqr or stats[x] == s_skew_p2 or stats[x] == s_skew_g or stats[x] == s_skew_r:
+      calc_medians = 1
 
-  cdef double q1 = ordered_array[q25i] * q25w + ordered_array[q25i + 1] * (1 - q25w)
-  cdef double q2 = ordered_array[q50i] * q50w + ordered_array[q50i + 1] * (1 - q50w)
-  cdef double q3 = ordered_array[q75i] * q75w + ordered_array[q75i + 1] * (1 - q75w)
+  if calc_medians == 1:
+    qsort(<void *> ordered_array, arr_length, sizeof(double), compare)
 
-  cdef double iqr = q3 - q1
+    arr_i = arr_length - 1
+    q25i = <int>(arr_i * 0.25)
+    q25w = 1.0 - ((arr_i * 0.25) - q25i)
+    q50i = <int>(arr_i * 0.50)
+    q50w = 1.0 - ((arr_i * 0.50) - q50i)
+    q75i = <int>(arr_i * 0.75)
+    q75w = 1.0 - ((arr_i * 0.75) - q75i)
 
-  cdef double * median_deviations = <double *> malloc(sizeof(double) * arr_length)
+    q1 = ordered_array[q25i] * q25w + ordered_array[q25i + 1] * (1 - q25w)
+    q2 = ordered_array[q50i] * q50w + ordered_array[q50i + 1] * (1 - q50w)
+    q3 = ordered_array[q75i] * q75w + ordered_array[q75i + 1] * (1 - q75w)
+    iqr = q3 - q1
+  else:
+    arr_i = 0
+    q25i = 0
+    q25w = 0.0
+    q50i = 0
+    q50w = 0.0
+    q75i = 0
+    q75w = 0.0
+    q1 = 0.0
+    q2 = 0.0
+    q3 = 0.0
+    iqr = 0.0
+
+  median_deviations = <double *> malloc(sizeof(double) * arr_length)
 
   cdef double deviations_2 = 0
   cdef double deviations_3 = 0
   cdef double deviations_4 = 0
   for j in range(arr_length):
-    median_deviations[j] = fabs(arr[j] - q2)
+    if calc_medians == 1:
+      median_deviations[j] = fabs(arr[j] - q2)
     deviations_2 += pow(arr[j] - v_mean, 2)
     deviations_3 += pow(arr[j] - v_mean, 3)
     deviations_4 += pow(arr[j] - v_mean, 4)
@@ -101,21 +126,30 @@ cdef void _calc_stats(double [:] arr, int arr_length, int [:] stats, int stats_l
   cdef double variance = deviations_2 * (1 / <double>arr_length)
   cdef double stdev = sqrt(variance)
 
-  cdef double skew_fp = (deviations_3 * (1 / <double>arr_length)) / (pow(stdev, 3))
-  cdef double skew_p2 = 3 * ((v_mean - q2) / stdev)
-  cdef double skew_g = 0 if iqr == 0 else (q1 + q3 - (2 * q2)) / iqr
-  cdef double skew_r = v_mean / q2
+  if calc_medians == 1:
+    skew_p2 = 3 * ((v_mean - q2) / stdev) if variance != 0 else 0
+    skew_g = (q1 + q3 - (2 * q2)) / iqr if iqr != 0 else 0
+    skew_r = v_mean / q2 if q2 != 0 else 0
+  else:
+    skew_p2 = 0
+    skew_g = 0
+    skew_r = 0
 
-  cdef double kurt = (deviations_4 * (1 / <double>arr_length)) / (pow(stdev, 4))
+  cdef double skew_fp = (deviations_3 * (1 / <double>arr_length)) / (pow(stdev, 3)) if variance != 0 else 0
+  cdef double kurt = (deviations_4 * (1 / <double>arr_length)) / (pow(stdev, 4)) if variance != 0 else 0
 
-  qsort(<void *> median_deviations, arr_length, sizeof(double), compare)
+  cdef double snr = (v_mean / stdev) if stdev != 0 else 0
+  cdef double eff = (variance / pow(v_mean, 2)) if v_mean != 0 else 0
+  cdef double cv = (stdev / v_mean) if v_mean != 0 else 0
 
-  cdef double mad = median_deviations[q50i] * q50w + median_deviations[q50i + 1] * (1 - q50w)
-  cdef double mad_std = mad * 1.4826
+  if calc_mad == 1:
+    qsort(<void *> median_deviations, arr_length, sizeof(double), compare)
 
-  cdef double snr = v_mean / stdev
-  cdef double eff = variance / pow(v_mean, 2)
-  cdef double cv = stdev / v_mean
+    mad = median_deviations[q50i] * q50w + median_deviations[q50i + 1] * (1 - q50w)
+    mad_std = mad * 1.4826
+  else:
+    mad = 0.0
+    mad_std = 0.0
 
   free(ordered_array)
   free(median_deviations)

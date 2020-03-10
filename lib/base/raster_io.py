@@ -1,9 +1,10 @@
+import sys; sys.path.append('../utils')
 import os
 import numpy as np
 import numpy.ma as ma
 from osgeo import gdal, osr
 
-from utils.core import numpy_to_gdal_datatype, numpy_fill_values, datatype_is_float, progress_callback_quiet
+from core import numpy_to_gdal_datatype, numpy_fill_values, datatype_is_float, progress_callback_quiet
 from clip import clip_raster
 
 

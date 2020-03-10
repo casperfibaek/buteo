@@ -3,7 +3,7 @@ from math import floor, sqrt
 from shapely.geometry import Point, Polygon
 
 
-def create_kernel(width, circular=True, weighted_edges=True, holed=False, normalise=True, inverted=False, weighted_distance=True, distance_calc='guassian', sigma=1, plot=False, dtype='float32'):
+def create_kernel(width, circular=True, weighted_edges=True, holed=False, normalise=True, inverted=False, weighted_distance=True, distance_calc='guassian', sigma=1, plot=False, dtype=np.double):
     assert(width % 2 != 0)
 
     radius = floor(width / 2) # 4

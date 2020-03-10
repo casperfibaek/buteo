@@ -1,7 +1,8 @@
+import sys; sys.path.append('../utils')
 import os
 import numpy.ma as ma
 from osgeo import gdal
-from utils.core import datatype_is_float, copy_dataframe, progress_callback_quiet, create_progress_callback, translate_resample_method
+from core import datatype_is_float, copy_dataframe, progress_callback_quiet, create_progress_callback, translate_resample_method
 
 
 def resample(in_raster, out_raster=None, reference_raster=None, reference_band_number=1,

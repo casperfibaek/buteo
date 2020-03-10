@@ -112,8 +112,8 @@ cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int n
 
     free(sort_arr)
     free(sort_weight)
-    free(order)
     free(cx)
+    free(order)
 
     return neighbourhood[order[non_zero - 1]].value
 
@@ -288,41 +288,45 @@ cdef void loop_3d(double [:, :, ::1] arr, double [:, ::1] kernel, double [:, ::1
 
 cdef f_type func_selector(str func_type):
   if func_type is 'mean': return neighbourhood_sum
+  elif func_type is 'median': return neighbourhood_weighted_median
   elif func_type is 'variance': return neighbourhood_weighted_variance
   elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
-  elif func_type is 'median': return neighbourhood_weighted_median
   elif func_type is 'q1': return neighbourhood_weighted_q1
   elif func_type is 'q3': return neighbourhood_weighted_q3
-  elif func_type is 'mad': return neighbourhood_weighted_mad
-  elif func_type is 'mad_std': return neighbourhood_weighted_mad_std
+  elif func_type is 'iqr': return neighbourhood_weighted_iqr
   elif func_type is 'skew_fp': return neighbourhood_weighted_skew_fp
   elif func_type is 'skew_p2': return neighbourhood_weighted_skew_p2
   elif func_type is 'skew_g': return neighbourhood_weighted_skew_g
-  elif func_type is 'iqr': return neighbourhood_weighted_iqr
   elif func_type is 'kurtosis': return neighbourhood_weighted_kurtosis_excess
+  elif func_type is 'mad': return neighbourhood_weighted_mad
+  elif func_type is 'mad_std': return neighbourhood_weighted_mad_std
   
   raise Exception('Unable to find filter type!')
 
 
-def filter_2d(double [:, ::1] arr, double [:, ::1] kernel, str func_type):
+def filter_2d(arr, kernel, str func_type):
   cdef f_type apply = func_selector(func_type)
   cdef int non_zero = np.count_nonzero(kernel)
   cdef double sum_of_weights = np.sum(kernel)
   result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
   cdef double[:, ::1] result_view = result
+  cdef double[:, ::1] arr_view = arr.astype(np.double) if arr.dtype != np.double else arr
+  cdef double[:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
 
-  loop(arr, kernel, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], sum_of_weights, non_zero, apply)
+  loop(arr_view, kernel_view, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], sum_of_weights, non_zero, apply)
 
-  return result
+  return result.astype('float32')
 
 
-def filter_3d(double [:, :, ::1] arr, double [:, ::1] kernel, str func_type):
+def filter_3d(arr, kernel, str func_type):
   cdef f_type apply = func_selector(func_type)
   cdef int non_zero = np.count_nonzero(kernel)
   cdef double sum_of_weights = np.sum(kernel)
   result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
   cdef double[:, ::1] result_view = result
+  cdef double[:, :, ::1] arr_view = arr.astype(np.double) if arr.dtype != np.double else arr
+  cdef double[:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
 
-  loop_3d(arr, kernel, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], sum_of_weights, non_zero, apply)
+  loop_3d(arr_view, kernel_view, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], sum_of_weights, non_zero, apply)
 
-  return result
+  return result.astype('float32')
