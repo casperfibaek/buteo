@@ -36,13 +36,12 @@ cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int n
 
     qsort(<void *> neighbourhood, non_zero, sizeof(Neighbourhood), compare)
     
+    weighted_quantile = neighbourhood[non_zero - 1].value
     for i in range(non_zero):
       cumsum += neighbourhood[i].weight
       w_cum[i] = (cumsum - (quintile * neighbourhood[i].weight)) / sum_of_weights
 
-    weighted_quantile = neighbourhood[non_zero - 1].value
-    for i in range(non_zero):
-      if w_cum[i] >= quintile:
+      if cumsum >= quintile:
 
         if i == 0 or w_cum[i] == quintile:
           weighted_quantile = neighbourhood[i].value

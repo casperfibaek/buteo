@@ -26,7 +26,7 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * conda activate yellow
   * conda config --env --add channels conda-forge
   * conda config --env --set channel_priority strict
-  * conda install -c anaconda mkl numpy scipy scikit-learn cython numexpr
+  * conda install -c anaconda mkl numpy scipy scikit-learn cython numexpr psutil
   * conda install -c conda-forge gdal matplotlib shapely opencv
   * conda update --all
 

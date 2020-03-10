@@ -13,85 +13,85 @@ def normalise_filter(in_raster):
 def sum_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=False, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, normalise=False, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'mean')
+        return filter_3d(in_raster, kernel, 'mean')
     return filter_2d(in_raster, kernel, 'mean')
 
 def mean_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'mean')
+        return filter_3d(in_raster, kernel, 'mean')
     return filter_2d(in_raster, kernel, 'mean')
 
 def median_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'median')
+        return filter_3d(in_raster, kernel, 'median')
     return filter_2d(in_raster, kernel, 'median')
 
 def variance_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'variance')
+        return filter_3d(in_raster, kernel, 'variance')
     return filter_2d(in_raster, kernel, 'variance')
 
 def standard_deviation_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'standard_deviation')
+        return filter_3d(in_raster, kernel, 'standard_deviation')
     return filter_2d(in_raster, kernel, 'standard_deviation')
 
 def q1_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'q1')
+        return filter_3d(in_raster, kernel, 'q1')
     return filter_2d(in_raster, kernel, 'q1')
 
 def q3_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'q3')
+        return filter_3d(in_raster, kernel, 'q3')
     return filter_2d(in_raster, kernel, 'q3')
 
 def iqr_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'iqr')
+        return filter_3d(in_raster, kernel, 'iqr')
     return filter_2d(in_raster, kernel, 'iqr')
 
 def mad_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'mad')
+        return filter_3d(in_raster, kernel, 'mad')
     return filter_2d(in_raster, kernel, 'mad')
 
 def mad_std_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'mad_std')
+        return filter_3d(in_raster, kernel, 'mad_std')
     return filter_2d(in_raster, kernel, 'mad_std')
 
 def skew_fp_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'skew_fp')
+        return filter_3d(in_raster, kernel, 'skew_fp')
     return filter_2d(in_raster, kernel, 'skew_fp')
 
 def skew_p2_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'skew_p2')
+        return filter_3d(in_raster, kernel, 'skew_p2')
     return filter_2d(in_raster, kernel, 'skew_p2')
 
 def skew_g_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'skew_g')
+        return filter_3d(in_raster, kernel, 'skew_g')
     return filter_2d(in_raster, kernel, 'skew_g')
 
 def kurtosis_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
     kernel = create_kernel(width, circular=circular, holed=holed, weighted_edges=weighted_edges, weighted_distance=weighted_distance, distance_calc=distance_calc, sigma=sigma)
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'kurtosis')
+        return filter_3d(in_raster, kernel, 'kurtosis')
     return filter_2d(in_raster, kernel, 'kurtosis')
 
 def z_filter(in_raster, width=3, circular=True, holed=False, weighted_edges=True, weighted_distance=True, distance_calc='gaussian', sigma=2, dim3=False):
@@ -145,18 +145,38 @@ def snr_filter(in_raster, width=3, circular=True, weighted_edges=True, weighted_
 def normalise_to_range_filter(in_raster, low=0, high=255):
     return ne.evaluate('(in_raster - low) / (high - low)')
 
-# TODO: add iterations..
-def dilation_filter(in_raster, width, interations=1, circular=True, weighted_distance=True, sigma=3.5, dim3=False):
+def dilation_filter(in_raster, width, iterations=1, circular=True, weighted_distance=True, sigma=3.5, dim3=False):
     kernel = create_kernel(width, circular=circular, weighted_edges=True, weighted_distance=weighted_distance, sigma=sigma, normalise=False)
+    if iterations == 1:
+        if dim3 == True:
+            return filter_3d(in_raster, kernel, 'dilate')
+        return filter_2d(in_raster, kernel, 'dilate')
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'dilate')
-    return filter_2d(in_raster, kernel, 'dilate')
+        result = filter_3d(in_raster, kernel, 'dilate')
+        for _ in range(iterations - 1):
+            result = filter_3d(result, kernel, 'dilate')
+    else:
+        result = filter_2d(in_raster, kernel, 'dilate')
+        for _ in range(iterations - 1):
+            result = filter_2d(result, kernel, 'dilate')
+    return result
+    
 
-def erosion_filter(in_raster, width, interations=1, circular=True, weighted_distance=True, sigma=3.5, dim3=False):
+def erosion_filter(in_raster, width, iterations=1, circular=True, weighted_distance=True, sigma=3.5, dim3=False):
     kernel = create_kernel(width, circular=circular, weighted_edges=True, weighted_distance=True, sigma=3.5, normalise=False)
+    if iterations == 1:
+        if dim3 == True:
+            return filter_3d(in_raster, kernel, 'erode')
+        return filter_2d(in_raster, kernel, 'erode')
     if dim3 == True:
-        filter_3d(in_raster, kernel, 'erode')
-    return filter_2d(in_raster, kernel, 'erode')
+        result = filter_3d(in_raster, kernel, 'erode')
+        for _ in range(iterations - 1):
+            result = filter_3d(result, kernel, 'erode')
+    else:
+        result = filter_2d(in_raster, kernel, 'erode')
+        for _ in range(iterations - 1):
+            result = filter_2d(result, kernel, 'erode')
+    return result
 
 def lee_filter(in_raster, width, circular=True, dim3=False):
     mean = mean_filter(in_raster, width, circular=circular)
@@ -191,8 +211,9 @@ def bi_truncation_filter(in_raster, t_min, t_max):
 
 
 if __name__ == "__main__":
-    import sys; sys.path.append('../base')
+    import sys; sys.path.append('../base'); sys.path.append('..')
     from time import time
+    from orfeo_toolbox import haralick
     from raster_io import raster_to_array, array_to_raster
 
     folder = '/mnt/c/users/caspe/desktop/data/'
@@ -200,13 +221,14 @@ if __name__ == "__main__":
     in_raster = raster_to_array(in_path).astype(np.double)
 
     before = time()
+    # haralick(in_path, folder + 'haralick_2.tif', band=2)
     # array_to_raster(standardise_filter(in_raster), out_raster=folder + 'b4_standard.tif', reference_raster=in_path)
     # array_to_raster(normalise_filter(in_raster), out_raster=folder + 'b4_norm.tif', reference_raster=in_path)
     # array_to_raster(sum_filter(in_raster, 5), out_raster=folder + 'b4_sum_5.tif', reference_raster=in_path)
     # array_to_raster(mean_filter(in_raster, 5), out_raster=folder + 'b4_mean_5.tif', reference_raster=in_path)
     # array_to_raster(variance_filter(in_raster, 5), out_raster=folder + 'b4_var_5.tif', reference_raster=in_path)
     # array_to_raster(standard_deviation_filter(in_raster, 5), out_raster=folder + 'b4_std_5.tif', reference_raster=in_path)
-    # array_to_raster(median_filter(in_raster, 5), out_raster=folder + 'b4_median_5.tif', reference_raster=in_path)
+    array_to_raster(median_filter(in_raster, 5), out_raster=folder + 'b4_median_5.tif', reference_raster=in_path)
     # array_to_raster(q1_filter(in_raster, 5), out_raster=folder + 'b4_q1_5.tif', reference_raster=in_path)
     # array_to_raster(q3_filter(in_raster, 5), out_raster=folder + 'b4_q3_5.tif', reference_raster=in_path)
     # array_to_raster(iqr_filter(in_raster, 5), out_raster=folder + 'b4_iqr_5.tif', reference_raster=in_path)
@@ -221,7 +243,7 @@ if __name__ == "__main__":
     # array_to_raster(np.abs(mean_deviation_filter(in_raster, 5)), out_raster=folder + 'b4_meandev_abs_5.tif', reference_raster=in_path)
     # array_to_raster(snr_filter(in_raster, 5), out_raster=folder + 'b4_snr_5.tif', reference_raster=in_path)
     # array_to_raster(normalise_to_range_filter(in_raster, low=0, high=255), out_raster=folder + 'b4_norm_range_5.tif', reference_raster=in_path)
-    array_to_raster(median_filter(erosion_filter(dilation_filter(np.abs(median_deviation_filter(in_raster, 7)), 3), 7), 5), out_raster=folder + 'b4_expand-contract_7-3-7-med5.tif', reference_raster=in_path)
+    # array_to_raster(median_filter(erosion_filter(dilation_filter(np.abs(median_deviation_filter(in_raster, 7)), 3, iterations=2), 5, iterations=3), 5), out_raster=folder + 'b4_expand-contract_7-3-7-med5.tif', reference_raster=in_path)
     # array_to_raster(erosion_filter(in_raster, 5), out_raster=folder + 'b4_erode_5_new.tif', reference_raster=in_path)
     # array_to_raster(lee_filter(in_raster, 5), out_raster=folder + 'b4_lee_5.tif', reference_raster=in_path)
     # array_to_raster(threshold_filter(in_raster, 500, 1), out_raster=folder + 'b4_thresh_bin_5.tif', reference_raster=in_path)

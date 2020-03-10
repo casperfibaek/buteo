@@ -1,10 +1,8 @@
-import subprocess
-import psutil
 import os
-import sys
+import subprocess
 import time
 
-from base.utils.core import progress
+from utils.core import progress
 from base.raster_io import raster_to_array
 
 def execute_cli_function(command, name, quiet=False):
@@ -113,10 +111,6 @@ def local_stats(in_raster, out_raster, options=None, band=None):
     else:
         band = ''
 
-    # Set RAM to 90% of available ram.
-    if 'ram' not in options:
-        options['ram'] = int((psutil.virtual_memory().available / (1024.0 * 1024.0)) * 0.9)
-
     cli_args = [cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_raster)}?{band}&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=3&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" float']
 
     for key, value in options.items():
@@ -147,9 +141,9 @@ def haralick(in_raster, out_raster, options=None, out_datatype='float', band=Non
         options = {
             'texture': 'simple',
             'channel': 1,
-            'parameters.nbbin': 32,
-            'parameters.xrad': 2,
-            'parameters.yrad': 2,
+            'parameters.nbbin': 64,
+            'parameters.xrad': 3,
+            'parameters.yrad': 3,
             'parameters.min': stats['min'],
             'parameters.max': stats['max'],
         }
@@ -161,10 +155,6 @@ def haralick(in_raster, out_raster, options=None, out_datatype='float', band=Non
         band = f'&bands={band}'
     else:
         band = ''
-
-    # Set RAM to 90% of available ram.
-    if 'ram' not in options:
-        options['ram'] = int((psutil.virtual_memory().available / (1024.0 * 1024.0)) * 0.9)
 
     cli_args = [cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_raster)}?{band}&gdal:co:COMPRESS=DEFLATE&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', out_datatype]
 
@@ -205,10 +195,6 @@ def dimension_reduction(in_raster, out_raster, options=None, out_datatype=None):
     if out_datatype is None:
         out_datatype = ''
 
-    # Set RAM to 90% of available ram.
-    if 'ram' not in options:
-        options['ram'] = int((psutil.virtual_memory().available / (1024.0 * 1024.0)) * 0.9)
-
     cli_args = [cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_raster)}?&gdal:co:COMPRESS=DEFLATE&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', out_datatype]
 
     for key, value in options.items():
@@ -242,10 +228,6 @@ def concatenate_images(in_rasters, out_raster, ram=None, out_datatype=None):
     if out_datatype is None:
         out_datatype = ''
 
-    # Set RAM to 90% of available ram.
-    if ram is None:
-        ram = int((psutil.virtual_memory().available / (1024.0 * 1024.0)) * 0.9)
-
     cli_string = ' '.join([cli, '-il', os.path.abspath(paths), '-out', f'"{os.path.abspath(out_raster)}?&gdal:co:COMPRESS=DEFLATE&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', out_datatype, '-ram', str(ram)])
 
     ''' *******************************************************
@@ -265,10 +247,6 @@ def split_images(in_raster, out_rasters, ram=None, out_datatype=None):
         outimage_0.tif and outimage_1.tif. '''
 
     cli = 'otbcli_SplitImage'
-
-    # Set RAM to 90% of available ram.
-    if ram is None:
-        ram = int((psutil.virtual_memory().available / (1024.0 * 1024.0)) * 0.9)
 
     if out_datatype is None:
         out_datatype = ''
@@ -303,10 +281,6 @@ def rescale(in_raster, out_raster, options=None, out_datatype='float'):
         predictor = 'gdal:co:PREDICTOR=2&'
     else:
         predictor = ''
-
-    # Set RAM to 90% of available ram.
-    if 'ram' not in options:
-        options['ram'] = int((psutil.virtual_memory().available / (1024.0 * 1024.0)) * 0.9)
 
     cli_args = [cli, '-in', os.path.abspath(in_raster), '-out', f'"{os.path.abspath(out_raster)}?&gdal:co:COMPRESS=DEFLATE&{predictor}gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"', out_datatype]
 
@@ -396,9 +370,4 @@ def meanshift_segmentation(in_raster, out_geom, spatialr=5, ranger=15, thres=0.1
         Make CLI request and handle responses
     ******************************************************* '''
 
-    # print(cli_string)
-
     execute_cli_function(cli_string, name='meanshifting')
-    # exit()
-
-    # return os.path.abspath(out_raster)
