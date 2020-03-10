@@ -149,34 +149,47 @@ def dilation_filter(in_raster, width, iterations=1, circular=True, weighted_dist
     kernel = create_kernel(width, circular=circular, weighted_edges=True, weighted_distance=weighted_distance, sigma=sigma, normalise=False)
     if iterations == 1:
         if dim3 == True:
-            return filter_3d(in_raster, kernel, 'dilate')
-        return filter_2d(in_raster, kernel, 'dilate')
+            return filter_3d(in_raster, kernel, 'dilate').astype(in_raster.dtype)
+        return filter_2d(in_raster, kernel, 'dilate').astype(in_raster.dtype)
     if dim3 == True:
-        result = filter_3d(in_raster, kernel, 'dilate')
+        result = filter_3d(in_raster, kernel, 'dilate').astype(in_raster.dtype)
         for _ in range(iterations - 1):
-            result = filter_3d(result, kernel, 'dilate')
+            result = filter_3d(result, kernel, 'dilate').astype(in_raster.dtype)
     else:
-        result = filter_2d(in_raster, kernel, 'dilate')
+        result = filter_2d(in_raster, kernel, 'dilate').astype(in_raster.dtype)
         for _ in range(iterations - 1):
-            result = filter_2d(result, kernel, 'dilate')
+            result = filter_2d(result, kernel, 'dilate').astype(in_raster.dtype)
     return result
     
 
 def erosion_filter(in_raster, width, iterations=1, circular=True, weighted_distance=True, sigma=3.5, dim3=False):
-    kernel = create_kernel(width, circular=circular, weighted_edges=True, weighted_distance=True, sigma=3.5, normalise=False)
+    kernel = create_kernel(width, circular=circular, weighted_edges=True, weighted_distance=weighted_distance, sigma=sigma, normalise=False)
     if iterations == 1:
         if dim3 == True:
-            return filter_3d(in_raster, kernel, 'erode')
-        return filter_2d(in_raster, kernel, 'erode')
+            return filter_3d(in_raster, kernel, 'erode').astype(in_raster.dtype)
+        return filter_2d(in_raster, kernel, 'erode').astype(in_raster.dtype)
     if dim3 == True:
-        result = filter_3d(in_raster, kernel, 'erode')
+        result = filter_3d(in_raster, kernel, 'erode').astype(in_raster.dtype)
         for _ in range(iterations - 1):
-            result = filter_3d(result, kernel, 'erode')
+            result = filter_3d(result, kernel, 'erode').astype(in_raster.dtype)
     else:
-        result = filter_2d(in_raster, kernel, 'erode')
+        result = filter_2d(in_raster, kernel, 'erode').astype(in_raster.dtype)
         for _ in range(iterations - 1):
-            result = filter_2d(result, kernel, 'erode')
+            result = filter_2d(result, kernel, 'erode').astype(in_raster.dtype)
     return result
+
+def open_filter(in_raster, width, circular=True, weighted_distance=True, sigma=3.5, dim3=False):
+    kernel = create_kernel(width, circular=circular, weighted_edges=True, weighted_distance=weighted_distance, sigma=sigma, normalise=False)
+    if dim3 == True:
+        return filter_3d(filter_3d(in_raster, kernel, 'erode'), kernel, 'dilate').astype(in_raster.dtype)
+    return filter_2d(filter_2d(in_raster, kernel, 'erode'), kernel, 'dilate').astype(in_raster.dtype)
+
+def close_filter(in_raster, width, circular=True, weighted_distance=True, sigma=3.5, dim3=False):
+    kernel = create_kernel(width, circular=circular, weighted_edges=True, weighted_distance=weighted_distance, sigma=sigma, normalise=False)
+    if dim3 == True:
+        return filter_3d(filter_3d(in_raster, kernel, 'dilate'), kernel, 'erode').astype(in_raster.dtype)
+    return filter_2d(filter_2d(in_raster, kernel, 'dilate'), kernel, 'erode').astype(in_raster.dtype)
+
 
 def lee_filter(in_raster, width, circular=True, dim3=False):
     mean = mean_filter(in_raster, width, circular=circular)
@@ -228,7 +241,7 @@ if __name__ == "__main__":
     # array_to_raster(mean_filter(in_raster, 5), out_raster=folder + 'b4_mean_5.tif', reference_raster=in_path)
     # array_to_raster(variance_filter(in_raster, 5), out_raster=folder + 'b4_var_5.tif', reference_raster=in_path)
     # array_to_raster(standard_deviation_filter(in_raster, 5), out_raster=folder + 'b4_std_5.tif', reference_raster=in_path)
-    array_to_raster(median_filter(in_raster, 5), out_raster=folder + 'b4_median_5.tif', reference_raster=in_path)
+    # array_to_raster(median_filter(in_raster, 5), out_raster=folder + 'b4_median_5.tif', reference_raster=in_path)
     # array_to_raster(q1_filter(in_raster, 5), out_raster=folder + 'b4_q1_5.tif', reference_raster=in_path)
     # array_to_raster(q3_filter(in_raster, 5), out_raster=folder + 'b4_q3_5.tif', reference_raster=in_path)
     # array_to_raster(iqr_filter(in_raster, 5), out_raster=folder + 'b4_iqr_5.tif', reference_raster=in_path)
@@ -243,8 +256,28 @@ if __name__ == "__main__":
     # array_to_raster(np.abs(mean_deviation_filter(in_raster, 5)), out_raster=folder + 'b4_meandev_abs_5.tif', reference_raster=in_path)
     # array_to_raster(snr_filter(in_raster, 5), out_raster=folder + 'b4_snr_5.tif', reference_raster=in_path)
     # array_to_raster(normalise_to_range_filter(in_raster, low=0, high=255), out_raster=folder + 'b4_norm_range_5.tif', reference_raster=in_path)
-    # array_to_raster(median_filter(erosion_filter(dilation_filter(np.abs(median_deviation_filter(in_raster, 7)), 3, iterations=2), 5, iterations=3), 5), out_raster=folder + 'b4_expand-contract_7-3-7-med5.tif', reference_raster=in_path)
-    # array_to_raster(erosion_filter(in_raster, 5), out_raster=folder + 'b4_erode_5_new.tif', reference_raster=in_path)
+    # array_to_raster(median_filter(erosion_filter(dilation_filter(np.abs(median_deviation_filter(in_raster, 7)), 5, iterations=3), 3, iterations=3), 5), out_raster=folder + 'b4_expand-contract_7-53-33-5.tif', reference_raster=in_path)
+    # array_to_raster(erosion_filter(in_raster, 5, iterations=1), out_raster=folder + 'b4_erode_5_1.tif', reference_raster=in_path)
+    # array_to_raster(close_filter(in_raster, 5, iterations=1), out_raster=folder + 'b4_close_1.tif', reference_raster=in_path)
+    # array_to_raster(close_filter(in_raster, 5, iterations=2), out_raster=folder + 'b4_close_2.tif', reference_raster=in_path)
+    # array_to_raster(open_filter(in_raster, 5, iterations=1), out_raster=folder + 'b4_open_1.tif', reference_raster=in_path)
+    # array_to_raster(np.abs(median_deviation_filter(in_raster, 7)), out_raster=folder + 'b4_meddev-7.tif', reference_raster=in_path)
+    # array_to_raster(np.abs(median_deviation_filter(in_raster, 5)), out_raster=folder + 'b4_meddev-5.tif', reference_raster=in_path)
+    abs_meddev = median_filter(
+        np.sqrt(
+            close_filter(
+                np.power(
+                    np.abs(
+                        median_deviation_filter(in_raster, 3)
+                    ),
+                2),
+            3, sigma=2.5),
+        ),
+    5)
+    array_to_raster(abs_meddev, out_raster=folder + 'b4_urb2.tif', reference_raster=in_path)
+    # array_to_raster(dilation_filter(in_raster, 5, iterations=1), out_raster=folder + 'b4_dilate_5_1.tif', reference_raster=in_path)
+    # array_to_raster(dilation_filter(in_raster, 5, iterations=2), out_raster=folder + 'b4_dilate_5_2.tif', reference_raster=in_path)
+    # array_to_raster(dilation_filter(in_raster, 5, iterations=3), out_raster=folder + 'b4_dilate_5_3.tif', reference_raster=in_path)
     # array_to_raster(lee_filter(in_raster, 5), out_raster=folder + 'b4_lee_5.tif', reference_raster=in_path)
     # array_to_raster(threshold_filter(in_raster, 500, 1), out_raster=folder + 'b4_thresh_bin_5.tif', reference_raster=in_path)
     # array_to_raster(bi_truncation_filter(in_raster, 200, 800), out_raster=folder + 'b4_trunk_5.tif', reference_raster=in_path)

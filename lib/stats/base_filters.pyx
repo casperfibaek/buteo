@@ -28,75 +28,78 @@ cdef int compare(const_void *a, const_void *b) nogil:
   if v >= 0: return 1
 
 cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int non_zero, double quintile, double sum_of_weights) nogil:
-    cdef double weighted_quantile, top, bot, tb
-    cdef int i
+  cdef double weighted_quantile, top, bot, tb
+  cdef int i
 
-    cdef double cumsum = 0
-    cdef double* w_cum = <double*> malloc(sizeof(double) * non_zero)
+  cdef double cumsum = 0
+  cdef double* w_cum = <double*> malloc(sizeof(double) * non_zero)
 
-    qsort(<void *> neighbourhood, non_zero, sizeof(Neighbourhood), compare)
-    
-    weighted_quantile = neighbourhood[non_zero - 1].value
-    for i in range(non_zero):
-      cumsum += neighbourhood[i].weight
-      w_cum[i] = (cumsum - (quintile * neighbourhood[i].weight)) / sum_of_weights
+  qsort(<void *> neighbourhood, non_zero, sizeof(Neighbourhood), compare)
+  
+  weighted_quantile = neighbourhood[non_zero - 1].value
+  for i in range(non_zero):
+    cumsum += neighbourhood[i].weight
+    w_cum[i] = (cumsum - (quintile * neighbourhood[i].weight)) / sum_of_weights
 
-      if cumsum >= quintile:
+    if cumsum >= quintile:
 
-        if i == 0 or w_cum[i] == quintile:
-          weighted_quantile = neighbourhood[i].value
-          break
-          
-        top = w_cum[i] - quintile
-        bot = quintile - w_cum[i - 1]
-        tb = top + bot
-
-        top = 1 - (top / tb)
-        bot = 1 - (bot / tb)
-
-        weighted_quantile = (neighbourhood[i - 1].value * bot) + (neighbourhood[i].value * top)
+      if i == 0 or w_cum[i] == quintile:
+        weighted_quantile = neighbourhood[i].value
         break
+        
+      top = w_cum[i] - quintile
+      bot = quintile - w_cum[i - 1]
+      tb = top + bot
 
-    free(w_cum)
-    return weighted_quantile
+      top = 1 - (top / tb)
+      bot = 1 - (bot / tb)
+
+      weighted_quantile = (neighbourhood[i - 1].value * bot) + (neighbourhood[i].value * top)
+      break
+
+  free(w_cum)
+  return weighted_quantile
 
 cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-    cdef int x, y
-    cdef double accum
+  cdef int x, y
+  cdef double accum
 
-    accum = 0
-    for x in range(non_zero):
-      accum += neighbourhood[x].value * neighbourhood[x].weight
+  accum = 0
+  for x in range(non_zero):
+    accum += neighbourhood[x].value * neighbourhood[x].weight
 
-    return accum
+  return accum
 
 cdef double neighbourhood_max(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-    cdef int x, y, current_max_i
-    cdef double current_max, val
+  cdef int x, y, current_max_i
+  cdef double current_max, val
 
-    current_max = neighbourhood[0].value * neighbourhood[0].weight
-    current_max_i = 0
-    for x in range(non_zero):
-      val = neighbourhood[x].value * neighbourhood[x].weight
-      if val > current_max:
-        current_max = val
-        current_max_i = x
+  current_max = neighbourhood[0].value * neighbourhood[0].weight
+  current_max_i = 0
+  for x in range(non_zero):
+    val = neighbourhood[x].value * neighbourhood[x].weight
+    if val > current_max:
+      current_max = val
+      current_max_i = x
 
-    return neighbourhood[current_max_i].value
+  return neighbourhood[current_max_i].value * neighbourhood[current_max_i].weight
 
 cdef double neighbourhood_min(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-    cdef int x, y, current_min_i
-    cdef double current_min
+  cdef int x, y, current_min_i
+  cdef double current_min
 
-    current_min = neighbourhood[0].value * neighbourhood[0].weight
-    current_min_i = 0
-    for x in range(non_zero):
-      val = neighbourhood[x].value * neighbourhood[x].weight
+  current_min = 999999999999.9
+  if neighbourhood[0].weight != 0:
+    current_min = neighbourhood[0].value / neighbourhood[0].weight
+  current_min_i = 0
+  for x in range(non_zero):
+    if current_min != 0:
+      val = neighbourhood[x].value / neighbourhood[x].weight
       if val < current_min:
         current_min = val
         current_min_i = x
 
-    return neighbourhood[current_min_i].value
+  return neighbourhood[current_min_i].value / neighbourhood[current_min_i].weight
 
 cdef double weighted_variance(Neighbourhood * neighbourhood, int non_zero, int power, double sum_of_weights) nogil:
     cdef int x, y
