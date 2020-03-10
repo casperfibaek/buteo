@@ -4,42 +4,23 @@ from cython.parallel cimport prange
 from libc.stdlib cimport malloc, free
 from libc.math cimport sqrt, pow, fabs
 import numpy as np
+from enum import Enum
 
 cdef extern from "stdlib.h":
     ctypedef void const_void "const void"
-    void qsort(void *base, int nmemb, int size,
-            int(*compar)(const_void *, const_void *)) nogil
+    void qsort(void *base, int nmemb, int size, int(*compar)(const_void *, const_void *)) nogil
 
 cdef struct IndexedElement:
     int index
     double value
 
-cdef int _compare(const_void *a, const_void *b) nogil:
-  cdef double v = (<IndexedElement*> a).value - (<IndexedElement*> b).value
+cdef int compare(const_void *pa, const_void *pb) nogil:
+  cdef double a = (<double *> pa)[0]
+  cdef double b = (<double *> pb)[0]
+  cdef double v = a - b
   if v < 0: return -1
   elif v > 0: return 1
-  else: return 0
-
-# cdef void argsort(Neighbourhood * neighbourhood, int* order, int non_zero) nogil:
-#   cdef int i
-  
-#   # Allocate index tracking array.
-#   cdef IndexedElement* order_struct = <IndexedElement *> malloc(non_zero * sizeof(IndexedElement))
-  
-#   # Copy data into index tracking array.
-#   for i in range(non_zero):
-#       order_struct[i].index = i
-#       order_struct[i].value = neighbourhood[i].value
-      
-#   # Sort index tracking array.
-#   qsort(<void *> order_struct, non_zero, sizeof(IndexedElement), _compare)
-  
-#   # Copy indices from index tracking array to output array.
-#   for i in range(non_zero):
-#       order[i] = order_struct[i].index
-      
-#   # Free index tracking array.
-#   free(order_struct)
+  return 0
 
 ctypedef enum stat_name:
   s_min = 1
@@ -60,11 +41,12 @@ ctypedef enum stat_name:
   s_iqr = 16
   s_mad = 17
   s_mad_std = 18
+  s_snr = 19
+  s_cv = 20
+  s_eff = 21
 
 
-# TODO: Sort function is broken
-# TODO: Stdev not working
-# TODO: Seperate translate function
+# TODO: q1, q3 not working
 
 cdef void _calc_stats(double [:] arr, int arr_length, int [:] stats, int stats_length, double [:] result_arr):
   cdef int x, v, j
@@ -77,35 +59,31 @@ cdef void _calc_stats(double [:] arr, int arr_length, int [:] stats, int stats_l
   cdef double v_range = 0
   cdef double v_mean = 0
 
-  cdef double* ordered_array = <IndexedElement *> malloc(sizeof(IndexedElement) * arr_length)
+  cdef double * ordered_array = <double *> malloc(sizeof(double) * arr_length)
   for v in range(arr_length):
     if arr[v] < v_min:
       v_min = arr[v]
     elif arr[v] > v_max:
       v_max = arr[v]
     v_sum += arr[v]
-    ordered_array[v].index = index
-    ordered_array[v].value = arr[v]
+    ordered_array[v] = arr[v]
 
   v_range = v_max - v_min
   v_mean = v_sum / v_count
 
-  qsort(<void *> ordered_array, arr_length, sizeof(double), _compare)
+  qsort(<void *> ordered_array, arr_length, sizeof(double), compare)
 
-  for q in range(arr_length):
-    print(ordered_array[q])
+  cdef int arr_i = arr_length - 1
+  cdef int q25i = <int>(arr_i * 0.25)
+  cdef double q25w = 1.0 - ((arr_i * 0.25) - q25i)
+  cdef int q50i = <int>(arr_i * 0.50)
+  cdef double q50w = 1.0 - ((arr_i * 0.50) - q50i)
+  cdef int q75i = <int>(arr_i * 0.75)
+  cdef double q75w = 1.0 - ((arr_i * 0.75) - q75i)
 
-  # calculate median and quintiles
-  cdef int bq25 = <int>(arr_length * 0.25)
-  cdef double bq25w = bq25 % (arr_length * 0.25)
-  cdef int bq50 = <int>(arr_length * 0.50)
-  cdef double bq50w = bq50 % (arr_length * 0.50)
-  cdef int bq75 = <int>(arr_length * 0.75)
-  cdef double bq75w = bq75 % (arr_length * 0.75)
-
-  cdef double q1 = ordered_array[bq25] * bq25w + ordered_array[bq25 + 1] * (1 - bq25w)
-  cdef double q2 = ordered_array[bq50] * bq50w + ordered_array[bq50 + 1] * (1 - bq50w)
-  cdef double q3 = ordered_array[bq75] * bq75w + ordered_array[bq75 + 1] * (1 - bq75w)
+  cdef double q1 = ordered_array[q25i] * q25w + ordered_array[q25i + 1] * (1 - q25w)
+  cdef double q2 = ordered_array[q50i] * q50w + ordered_array[q50i + 1] * (1 - q50w)
+  cdef double q3 = ordered_array[q75i] * q75w + ordered_array[q75i + 1] * (1 - q75w)
 
   cdef double iqr = q3 - q1
 
@@ -120,20 +98,24 @@ cdef void _calc_stats(double [:] arr, int arr_length, int [:] stats, int stats_l
     deviations_3 += pow(arr[j] - v_mean, 3)
     deviations_4 += pow(arr[j] - v_mean, 4)
 
-  cdef double var = deviations_2 * (1 / arr_length)
-  cdef double stdev = sqrt(var)
+  cdef double variance = deviations_2 * (1 / <double>arr_length)
+  cdef double stdev = sqrt(variance)
 
-  cdef double skew_fp = (deviations_3 * (1 / arr_length)) / (pow(stdev, 3))
+  cdef double skew_fp = (deviations_3 * (1 / <double>arr_length)) / (pow(stdev, 3))
   cdef double skew_p2 = 3 * ((v_mean - q2) / stdev)
   cdef double skew_g = 0 if iqr == 0 else (q1 + q3 - (2 * q2)) / iqr
   cdef double skew_r = v_mean / q2
 
-  cdef double kurt = (deviations_4 * (1 / arr_length)) / (pow(stdev, 4))
+  cdef double kurt = (deviations_4 * (1 / <double>arr_length)) / (pow(stdev, 4))
 
-  qsort(<void *> median_deviations, arr_length, sizeof(double), _compare)
+  qsort(<void *> median_deviations, arr_length, sizeof(double), compare)
 
-  cdef double mad = median_deviations[bq50] * bq50w + median_deviations[bq50 + 1] * (1 - bq50w)
+  cdef double mad = median_deviations[q50i] * q50w + median_deviations[q50i + 1] * (1 - q50w)
   cdef double mad_std = mad * 1.4826
+
+  cdef double snr = v_mean / stdev
+  cdef double eff = variance / pow(v_mean, 2)
+  cdef double cv = stdev / v_mean
 
   free(ordered_array)
   free(median_deviations)
@@ -150,7 +132,7 @@ cdef void _calc_stats(double [:] arr, int arr_length, int [:] stats, int stats_l
     elif(stats[x] == s_mean):
       result_arr[x] = v_mean
     elif(stats[x] == s_var):
-      result_arr[x] = var
+      result_arr[x] = variance
     elif(stats[x] == s_std):
       result_arr[x] = stdev
     elif(stats[x] == s_skew_fp):
@@ -175,55 +157,71 @@ cdef void _calc_stats(double [:] arr, int arr_length, int [:] stats, int stats_l
       result_arr[x] = mad
     elif(stats[x] == s_mad_std):
       result_arr[x] = mad_std
+    elif(stats[x] == s_snr):
+      result_arr[x] = snr
+    elif(stats[x] == s_eff):
+      result_arr[x] = eff
+    elif(stats[x] == s_cv):
+      result_arr[x] = cv
+
+class Stats(Enum):
+  min = 1
+  max = 2
+  count = 3
+  range = 4
+  mean = 5
+  var = 6
+  variance = 6
+  std = 7
+  stdev = 7
+  standard_deviation = 7
+  skew_fp = 8
+  skew_p2 = 9
+  skew_g = 10
+  skew_r = 11
+  kurt = 12
+  kurtosis = 12
+  q1 = 13
+  median = 14
+  q2 = 14
+  q3 = 15
+  iqr = 16
+  mad = 17
+  mad_std = 18
+  mad_stdev = 18
+  mad_standard_deviation = 18
+  signal_to_noise = 19
+  snr = 19
+  cv = 20
+  coefficient_of_variation = 20
+  eff = 21
+  efficiency = 21
 
 
-def global_statistics(double [:] arr, stats=['mean', 'median', 'stdev']):
+def enumerate_stats(stats_names=['mean', 'median', 'stdev']):
+  arr = np.zeros(len(stats_names), dtype=np.intc)
+  for i, v in enumerate(stats_names):
+    arr[i] = Stats[v].value
+  return arr
+
+
+def global_statistics(double [:] arr, translated_stats=[5, 14, 7], stats=None):
   cdef int arr_length = len(arr)
-  cdef int stats_length = len(stats)
+  cdef int stats_length = len(translated_stats) if stats == None else len(stats)
 
-  result = np.empty(len(stats), dtype=np.double)
-  stats_translated = np.zeros(len(stats), dtype=np.intc)
+  result = np.empty(stats_length, dtype=np.double)
 
-  for i, v in enumerate(stats):
-    if v == 'min':
-      stats_translated[i] = 1
-    elif v == 'max':
-      stats_translated[i] = 2
-    elif v == 'count':
-      stats_translated[i] = 3
-    elif v == 'range':
-      stats_translated[i] = 4
-    elif v == 'mean':
-      stats_translated[i] = 5
-    elif v == 'var':
-      stats_translated[i] = 6
-    elif v == 'stdev':
-      stats_translated[i] = 7
-    elif v == 'skew_fp':
-      stats_translated[i] = 8
-    elif v == 'skew_p2':
-      stats_translated[i] = 9
-    elif v == 'skew_g':
-      stats_translated[i] = 10
-    elif v == 'skew_r':
-      stats_translated[i] = 11
-    elif v == 'kurtosis':
-      stats_translated[i] = 12
-    elif v == 'q1':
-      stats_translated[i] = 13
-    elif v == 'median':
-      stats_translated[i] = 14
-    elif v == 'q3':
-      stats_translated[i] = 15
-    elif v == 'iqr':
-      stats_translated[i] = 16
-    elif v == 'mad':
-      stats_translated[i] = 17
-    elif v == 'mad_std':
-      stats_translated[i] = 18
+  cdef int[:] stats_view
+
+  if stats != None:
+    stats_translated = np.zeros(stats_length, dtype=np.intc)
+    for i, v in enumerate(stats):
+      stats_translated[i] = Stats[v].value
+    stats_view = stats_translated
+  else:
+    stats_view = translated_stats
 
   cdef double[:] result_view = result
-  cdef int[:] stats_view = stats_translated
 
   _calc_stats(arr, arr_length, stats_view, stats_length, result_view)
 
