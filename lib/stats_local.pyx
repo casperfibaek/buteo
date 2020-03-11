@@ -11,6 +11,10 @@ cdef extern from "stdlib.h":
     void qsort(void *base, int nmemb, int size,
             int(*compar)(const_void *, const_void *)) nogil
 
+cdef extern from "<float.h>":
+    const double DBL_MAX
+    const double DBL_MIN
+
 cdef struct Neighbourhood:
   double value
   double weight
@@ -292,48 +296,142 @@ cdef void loop_3d(double [:, :, ::1] arr, double [:, ::1] kernel, double [:, ::1
       free(neighbourhood)
 
 cdef f_type func_selector(str func_type):
-  if func_type is 'mean': return neighbourhood_sum
-  elif func_type is 'dilate': return neighbourhood_max
-  elif func_type is 'erode': return neighbourhood_min
-  elif func_type is 'median': return neighbourhood_weighted_median
-  elif func_type is 'variance': return neighbourhood_weighted_variance
-  elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
-  elif func_type is 'q1': return neighbourhood_weighted_q1
-  elif func_type is 'q3': return neighbourhood_weighted_q3
-  elif func_type is 'iqr': return neighbourhood_weighted_iqr
-  elif func_type is 'skew_fp': return neighbourhood_weighted_skew_fp
-  elif func_type is 'skew_p2': return neighbourhood_weighted_skew_p2
-  elif func_type is 'skew_g': return neighbourhood_weighted_skew_g
-  elif func_type is 'kurtosis': return neighbourhood_weighted_kurtosis_excess
-  elif func_type is 'mad': return neighbourhood_weighted_mad
-  elif func_type is 'mad_std': return neighbourhood_weighted_mad_std
-  
-  raise Exception('Unable to find filter type!')
+    if func_type is 'mean': return neighbourhood_sum
+    elif func_type is 'dilate': return neighbourhood_max
+    elif func_type is 'erode': return neighbourhood_min
+    elif func_type is 'median': return neighbourhood_weighted_median
+    elif func_type is 'variance': return neighbourhood_weighted_variance
+    elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
+    elif func_type is 'q1': return neighbourhood_weighted_q1
+    elif func_type is 'q3': return neighbourhood_weighted_q3
+    elif func_type is 'iqr': return neighbourhood_weighted_iqr
+    elif func_type is 'skew_fp': return neighbourhood_weighted_skew_fp
+    elif func_type is 'skew_p2': return neighbourhood_weighted_skew_p2
+    elif func_type is 'skew_g': return neighbourhood_weighted_skew_g
+    elif func_type is 'kurtosis': return neighbourhood_weighted_kurtosis_excess
+    elif func_type is 'mad': return neighbourhood_weighted_mad
+    elif func_type is 'mad_std': return neighbourhood_weighted_mad_std
+    
+    raise Exception('Unable to find filter type!')
 
+cdef void truncate_2d(double [:, ::1] arr, double [:, ::1] result, double min_value, double max_value, int x_max, int y_max) nogil:
+    cdef int x, y
+    for x in prange(x_max):
+        for y in range(y_max):
+            if arr[x][y] > max_value:
+                result[x][y] = max_value
+            elif arr[x][y] < min_value:
+                result[x][y] = min_value
+            else:
+                result[x][y] = arr[x][y]
 
-def filter_2d(arr, kernel, str func_type, dtype='float32'):
-  cdef f_type apply = func_selector(func_type)
-  cdef int non_zero = np.count_nonzero(kernel)
-  cdef double sum_of_weights = np.sum(kernel)
-  result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-  cdef double[:, ::1] arr_view = arr.astype(np.double) if arr.dtype != np.double else arr
-  cdef double[:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
+cdef void truncate_3d(double [:, :, ::1] arr, double [:, :, ::1] result, double min_value, double max_value, int x_max, int y_max, int z_max) nogil:
+    cdef int x, y, z
+    for x in prange(x_max):
+        for y in range(y_max):
+            for z in range(z_max):
+                if arr[x][y][z] > max_value:
+                    result[x][y][z] = max_value
+                elif arr[x][y][z] < min_value:
+                    result[x][y][z] = min_value
+                else:
+                    result[x][y][z] = arr[x][y][z]
 
-  loop(arr_view, kernel_view, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], sum_of_weights, non_zero, apply)
+cdef void threshold_2d(double [:, ::1] arr, int [:, ::1] result, double min_value, double max_value, int x_max, int y_max, bint invert) nogil:
+    cdef int x, y, p, f
+    p = 1
+    f = 0
+    if invert is True:
+        p = 0
+        f = 1
+    for x in prange(x_max):
+        for y in range(y_max):
+            if arr[x][y] <= max_value and arr[x][y] >= min_value:
+                result[x][y] = p
+            else:
+                result[x][y] = f
 
-  return result.astype(dtype)
+cdef void threshold_3d(double [:, :, ::1] arr, int [:, :, ::1] result, double min_value, double max_value, int x_max, int y_max, int z_max, bint invert) nogil:
+    cdef int x, y, z, p, f
+    p = 1
+    f = 0
+    if invert is True:
+        p = 0
+        f = 1
+    for x in prange(x_max):
+        for y in range(y_max):
+            for z in range(z_max):
+                if arr[x][y][z] <= max_value and arr[x][y][z] >= min_value:
+                    result[x][y][z] = p
+                else:
+                    result[x][y][z] = f
 
+def local_filter(arr, kernel, str func_type, dtype='float32'):
+    cdef f_type apply = func_selector(func_type)
+    cdef int non_zero = np.count_nonzero(kernel)
+    cdef double sum_of_weights = np.sum(kernel)
+    result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
+    cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
+    cdef double [:, ::1] result_view = result
+    cdef double [:, ::1] arr_view_2d
+    cdef double [:, :, ::1] arr_view_3d
+    cdef int dims = len(arr.shape)
 
-def filter_3d(arr, kernel, str func_type, dtype='float32'):
-  cdef f_type apply = func_selector(func_type)
-  cdef int non_zero = np.count_nonzero(kernel)
-  cdef double sum_of_weights = np.sum(kernel)
-  result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
-  cdef double[:, ::1] result_view = result
-  cdef double[:, :, ::1] arr_view = arr.astype(np.double) if arr.dtype != np.double else arr
-  cdef double[:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
+    assert(dims == 2 or dims == 3)
 
-  loop_3d(arr_view, kernel_view, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], sum_of_weights, non_zero, apply)
+    if dims is 3:
+        arr_view_3d = arr.astype(np.double) if arr.dtype != np.double else arr
+        loop_3d(arr_view_3d, kernel_view, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], sum_of_weights, non_zero, apply)
+    else:
+        arr_view_2d = arr.astype(np.double) if arr.dtype != np.double else arr
+        loop(arr_view_2d, kernel_view, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], sum_of_weights, non_zero, apply)
 
-  return result.astype(dtype)
+    return result.astype(dtype)
+
+def _threshold_filter(arr, min_value=False, max_value=False, invert=False):
+    cdef double min_v = min_value if min_value is not False else DBL_MIN
+    cdef double max_v = max_value if max_value is not False else DBL_MAX
+    cdef bint inv = invert
+    cdef double [:, ::1] arr_view_2d
+    cdef double [:, :, ::1] arr_view_3d
+    cdef int [:, ::1] result_view_2d
+    cdef int [:, :, ::1] result_view_3d
+    cdef int dims = len(arr.shape)
+
+    assert(dims == 2 or dims == 3)
+
+    result = np.zeros(arr.shape, dtype=np.intc)
+    if dims == 3:
+        arr_view_3d = arr.astype(np.double) if arr.dtype != np.double else arr
+        result_view_3d = result
+        threshold_3d(arr_view_3d, result_view_3d, min_v, max_v, arr.shape[0], arr.shape[1], arr.shape[2], invert)
+    else:
+        arr_view_2d = arr.astype(np.double) if arr.dtype != np.double else arr
+        result_view_2d = result
+        threshold_2d(arr_view_2d, result_view_2d, min_v, max_v, arr.shape[0], arr.shape[1], invert)
+    
+    return result.astype('uint8')
+
+def _truncate_filter(arr, min_value=False, max_value=False):
+    cdef double min_v = min_value if min_value is not False else DBL_MIN
+    cdef double max_v = max_value if max_value is not False else DBL_MAX
+    cdef double [:, ::1] arr_view_2d
+    cdef double [:, :, ::1] arr_view_3d
+    cdef double [:, ::1] result_view_2d
+    cdef double [:, :, ::1] result_view_3d
+    cdef int dims = len(arr.shape)
+
+    assert(dims == 2 or dims == 3)
+
+    if dims == 3:
+        result = np.empty(arr.shape, dtype=np.double)
+        arr_view_3d = arr.astype(np.double) if arr.dtype != np.double else arr
+        result_view_3d = result
+        truncate_3d(arr_view_3d, result_view_3d, min_v, max_v, arr.shape[0], arr.shape[1], arr.shape[2])
+    else:
+        result = np.empty(arr.shape, dtype=np.double)
+        arr_view_2d = arr.astype(np.double) if arr.dtype != np.double else arr
+        result_view_2d = result
+        truncate_2d(arr_view_2d, result_view_2d, min_v, max_v, arr.shape[0], arr.shape[1])
+    
+    return result
