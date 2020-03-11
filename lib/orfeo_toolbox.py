@@ -2,8 +2,8 @@ import os
 import subprocess
 import time
 
-from utils.core import progress
-from base.raster_io import raster_to_array
+from lib.utils_core import progress
+from lib.raster_io import raster_to_array
 
 def execute_cli_function(command, name, quiet=False):
     process = subprocess.Popen(
