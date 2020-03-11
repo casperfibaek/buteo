@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import ma
 from osgeo import ogr, gdal, osr
-from stats_global import enumerate_stats, global_statistics
+from lib.stats_global import enumerate_stats, global_statistics
 from lib.utils_core import progress
 
 
