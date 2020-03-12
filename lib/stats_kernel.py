@@ -3,14 +3,14 @@ from math import floor, sqrt
 from shapely.geometry import Point, Polygon
 
 
-def create_kernel(width, circular=True, weighted_edges=True, holed=False, normalise=True, inverted=False, weighted_distance=True, distance_calc='guassian', sigma=1, plot=False, dtype=np.double):
+def create_kernel(width, circular=True, weighted_edges=True, holed=False, normalise=True, inverted=False, weighted_distance=True, distance_calc='gaussian', sigma=2, plot=False, dtype=np.double):
     assert(width % 2 != 0)
 
     radius = floor(width / 2) # 4
     kernel = np.zeros((width, width), dtype=dtype)
     pixel_distance = sqrt(0.5)
 
-    if distance_calc == 'guassian':
+    if distance_calc == 'gaussian':
         for i in range(width):
             for j in range(width):
                 diff = np.sqrt((i - radius) ** 2 + (j - radius) ** 2)

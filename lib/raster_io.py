@@ -306,15 +306,15 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
         filled (Bool): Should they array be filled with the
         nodata value contained in the mask.
 
+        fill_value (Number): Set a number for the fill value of
+        the output masked array. Defaults to the max value for
+        the datatype.
+
         band_to_clip (Number): A specific band in the input raster
         the be turned to an array.
 
         src_nodata (Number): Overwrite the nodata value of
         the source raster.
-
-        fill_value (Number): Set a number for the fill value of
-        the output masked array. Defaults to the max value for
-        the datatype.
 
         quiet (Bool): Do not show the progressbars.
 
@@ -371,19 +371,15 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
     # Create a numpy masked array that corresponds to the nodata
     # values in the in_raster
     if rasterNoDataValue is None:
-        data = ma.array(rasterAsArray, fill_value=fill_value)
+        data = np.array(rasterAsArray)
     else:
         data = ma.masked_equal(rasterAsArray, rasterNoDataValue)
 
-    if fill_value is not None:
-        ma.set_fill_value(data, fill_value)
-    else:
-        ma.set_fill_value(data, numpy_fill_values(rasterAsArray.dtype))
+    if src_nodata is not None:
+        data = ma.masked_equal(rasterAsArray, src_nodata)
 
-    # Free memory
-    rasterAsArray = None
-    rasterBand = None
-    readiedRaster = None
+    if fill_value is not None:
+        data.fill_value = fill_value
 
     if filled is True:
         data = data.filled()

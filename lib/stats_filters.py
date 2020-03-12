@@ -9,21 +9,21 @@ def standardise_filter(in_raster, cdf_norm=False):
     s = np.nanstd(in_raster)
     if cdf_norm == False:
         return (in_raster - m) / s
-    return (norm.cdf((in_raster - m) / s) - 0.5) / 0.5
+    return ((norm.cdf((in_raster - m) / s) - 0.5) / 0.5).astype(in_raster.dtype)
 
 
 def normalise_filter(in_raster):
     mi = np.nanmin(in_raster)
     ma = np.nanmax(in_raster)
-    return (in_raster - mi) / (ma - mi)
+    return ((in_raster - mi) / (ma - mi)).astype(in_raster.dtype)
 
 
 def invert_filter(in_raster):
     mi = np.nanmin(in_raster)
     ma = np.nanmax(in_raster)
-    return (ma - in_raster) + mi
+    return ((ma - in_raster) + mi).astype(in_raster.dtype)
 
- 
+
 def sum_filter(
     in_raster,
     width=3,
@@ -49,7 +49,7 @@ def sum_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "mean")
+    return local_filter(in_raster, kernel, "mean").astype(in_raster.dtype)
 
 
 def mean_filter(
@@ -62,6 +62,7 @@ def mean_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -79,11 +80,11 @@ def mean_filter(
         )
     )
     if iterations == 1:
-        return local_filter(in_raster, kernel, "mean")
+        return local_filter(in_raster, kernel, "mean", dtype)
     else:
-        result = local_filter(in_raster, kernel, "mean")
+        result = local_filter(in_raster, kernel, "mean", dtype)
         for _ in range(iterations - 1):
-            result = local_filter(in_raster, kernel, "mean")
+            result = local_filter(in_raster, kernel, "mean", dtype)
         return result
 
 
@@ -97,6 +98,7 @@ def median_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -112,12 +114,13 @@ def median_filter(
             sigma=sigma,
         )
     )
+    
     if iterations == 1:
-        return local_filter(in_raster, kernel, "median")
+        return local_filter(in_raster, kernel, "median", dtype)
     else:
-        result = local_filter(in_raster, kernel, "median")
+        result = local_filter(in_raster, kernel, "median", dtype)
         for _ in range(iterations - 1):
-            result = local_filter(result, kernel, "median")
+            result = local_filter(result, kernel, "median", dtype)
         return result
 
 
@@ -130,6 +133,7 @@ def variance_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -145,7 +149,7 @@ def variance_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "variance")
+    return local_filter(in_raster, kernel, "variance", dtype)
 
 
 def standard_deviation_filter(
@@ -157,6 +161,7 @@ def standard_deviation_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -172,7 +177,7 @@ def standard_deviation_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "standard_deviation")
+    return local_filter(in_raster, kernel, "standard_deviation", dtype)
 
 
 def q1_filter(
@@ -184,6 +189,7 @@ def q1_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -199,7 +205,7 @@ def q1_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "q1")
+    return local_filter(in_raster, kernel, "q1", dtype)
 
 
 def q3_filter(
@@ -211,6 +217,7 @@ def q3_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -226,7 +233,7 @@ def q3_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "q3")
+    return local_filter(in_raster, kernel, "q3", dtype)
 
 
 def iqr_filter(
@@ -238,6 +245,7 @@ def iqr_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -253,7 +261,7 @@ def iqr_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "iqr")
+    return local_filter(in_raster, kernel, "iqr", dtype)
 
 
 def mad_filter(
@@ -265,6 +273,7 @@ def mad_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -280,7 +289,7 @@ def mad_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "mad")
+    return local_filter(in_raster, kernel, "mad", dtype)
 
 
 def mad_std_filter(
@@ -292,6 +301,7 @@ def mad_std_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -307,7 +317,7 @@ def mad_std_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "mad_std")
+    return local_filter(in_raster, kernel, "mad_std", dtype)
 
 
 def skew_fp_filter(
@@ -319,6 +329,7 @@ def skew_fp_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -334,7 +345,7 @@ def skew_fp_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "skew_fp")
+    return local_filter(in_raster, kernel, "skew_fp", dtype)
 
 
 def skew_p2_filter(
@@ -346,6 +357,7 @@ def skew_p2_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -361,7 +373,7 @@ def skew_p2_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "skew_p2")
+    return local_filter(in_raster, kernel, "skew_p2", dtype)
 
 
 def skew_g_filter(
@@ -373,6 +385,7 @@ def skew_g_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -388,7 +401,7 @@ def skew_g_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "skew_g")
+    return local_filter(in_raster, kernel, "skew_g", dtype)
 
 
 def kurtosis_filter(
@@ -400,6 +413,7 @@ def kurtosis_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -415,7 +429,7 @@ def kurtosis_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "kurtosis")
+    return local_filter(in_raster, kernel, "kurtosis", dtype)
 
 
 def z_filter(
@@ -427,6 +441,7 @@ def z_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -442,9 +457,9 @@ def z_filter(
             sigma=sigma,
         )
     )
-    return (
+    return ((
         in_raster - mean_filter(in_raster, _kernel=kernel)
-    ) / standard_deviation_filter(in_raster, _kernel=kernel)
+    ) / standard_deviation_filter(in_raster, _kernel=kernel)).astype(dtype)
 
 
 def median_deviation_filter(
@@ -457,6 +472,7 @@ def median_deviation_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -474,8 +490,8 @@ def median_deviation_filter(
     )
     result = in_raster - median_filter(in_raster, _kernel=kernel)
     if absolute_value is True:
-        return np.abs(result)
-    return result
+        return np.abs(result).astype(dtype)
+    return result.astype(dtype)
 
 
 def mean_deviation_filter(
@@ -488,6 +504,7 @@ def mean_deviation_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype='float32',
     _kernel=False,
 ):
     kernel = (
@@ -505,8 +522,8 @@ def mean_deviation_filter(
     )
     result = in_raster - mean_filter(in_raster, _kernel=kernel)
     if absolute_value is True:
-        return np.abs(result)
-    return result
+        return np.abs(result).astype(dtype)
+    return result.astype(dtype)
 
 
 def snr_filter(
@@ -517,6 +534,7 @@ def snr_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -534,11 +552,11 @@ def snr_filter(
     )
     return np.power(mean_filter(in_raster, _kernel=kernel), 2) / variance_filter(
         in_raster, _kernel=kernel
-    )
+    ).astype(dtype)
 
 
 def normalise_to_range_filter(in_raster, low=0, high=255):
-    return (in_raster - low) / (high - low)
+    return ((in_raster - low) / (high - low)).astype(in_raster.dtype)
 
 
 def dilation_filter(
@@ -623,7 +641,7 @@ def open_filter(
         )
     )
     return local_filter(
-        local_filter(in_raster, kernel, "erode"), kernel, "dilate"
+        local_filter(in_raster, kernel, "erode"), kernel, "dilate",
     ).astype(in_raster.dtype)
 
 
@@ -643,18 +661,18 @@ def close_filter(
         )
     )
     return local_filter(
-        local_filter(in_raster, kernel, "dilate"), kernel, "erode"
+        local_filter(in_raster, kernel, "dilate"), kernel, "erode",
     ).astype(in_raster.dtype)
 
 
 def threshold_filter(in_raster, min_value=False, max_value=False, invert=False):
     return _threshold_filter(
         in_raster, min_value=min_value, max_value=max_value, invert=invert
-    )
+    ).astype(in_raster.dtype)
 
 
 def truncate_filter(in_raster, min_value=False, max_value=False, dim3=False):
     return _truncate_filter(in_raster, min_value=min_value, max_value=max_value).astype(
         in_raster.dtype
-    )
+    ).astype(in_raster.dtype)
 

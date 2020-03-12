@@ -2,298 +2,395 @@
 cimport cython
 from cython.parallel cimport prange
 from libc.stdlib cimport malloc, free
-from libc.math cimport sqrt, pow, fabs
+from libc.math cimport sqrt, pow, fabs, isnan
 import numpy as np
 
 
 cdef extern from "stdlib.h":
     ctypedef void const_void "const void"
-    void qsort(void *base, int nmemb, int size,
-            int(*compar)(const_void *, const_void *)) nogil
+    void qsort(void *base, int nmemb, int size, int(*compar)(const_void *, const_void *)) nogil
+
 
 cdef extern from "<float.h>":
     const double DBL_MAX
     const double DBL_MIN
 
+
 cdef struct Neighbourhood:
-  double value
-  double weight
+    double value
+    double weight
+
 
 cdef struct Offset:
   int x
   int y
   double weight
 
-ctypedef double (*f_type) (Neighbourhood *, int, double) nogil
+
+ctypedef double (*f_type) (Neighbourhood *, int) nogil
+
 
 cdef int compare(const_void *a, const_void *b) nogil:
-  cdef double v = (<Neighbourhood*> a).value - (<Neighbourhood*> b).value
-  if v < 0: return -1
-  if v >= 0: return 1
+    cdef double v = (<Neighbourhood*> a).value - (<Neighbourhood*> b).value
+    if v < 0: return -1
+    if v > 0: return 1
+    return 0
 
-cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int non_zero, double quintile, double sum_of_weights) nogil:
-  cdef double weighted_quantile, top, bot, tb
-  cdef int i
 
-  cdef double cumsum = 0
-  cdef double* w_cum = <double*> malloc(sizeof(double) * non_zero)
+cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef int x
+    cdef double accum
 
-  qsort(<void *> neighbourhood, non_zero, sizeof(Neighbourhood), compare)
+    accum = 0
+    for x in range(non_zero):
+        accum += neighbourhood[x].value * neighbourhood[x].weight
+
+    return accum
+
+
+cdef double neighbourhood_weight_sum(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef int x
+    cdef double accum
+
+    accum = 0
+    for x in range(non_zero):
+        accum += neighbourhood[x].weight
+
+    return accum
+
+
+cdef void normalise_neighbourhood(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef int x
+    cdef double sum_of_weights = neighbourhood_weight_sum(neighbourhood, non_zero)
+
+    for x in range(non_zero):
+        neighbourhood[x].weight = neighbourhood[x].weight /sum_of_weights
+
+
+cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int non_zero, double quintile) nogil:
+    cdef double weighted_quantile, top, bot, tb
+    cdef int i
+
+    cdef double sum_of_weights = neighbourhood_weight_sum(neighbourhood, non_zero)
+    cdef double cumsum = 0
+    cdef double* w_cum = <double*> malloc(sizeof(double) * non_zero)
+
+    qsort(<void *> neighbourhood, non_zero, sizeof(Neighbourhood), compare)
   
-  weighted_quantile = neighbourhood[non_zero - 1].value
-  for i in range(non_zero):
-    cumsum += neighbourhood[i].weight
-    w_cum[i] = (cumsum - (quintile * neighbourhood[i].weight)) / sum_of_weights
+    weighted_quantile = neighbourhood[non_zero - 1].value
+    for i in range(non_zero):
+        cumsum += neighbourhood[i].weight
+        w_cum[i] = (cumsum - (quintile * neighbourhood[i].weight)) / sum_of_weights
 
-    if cumsum >= quintile:
+        if cumsum >= quintile:
+            if i == 0 or w_cum[i] == quintile:
+                weighted_quantile = neighbourhood[i].value
+                break
+                
+            top = w_cum[i] - quintile
+            bot = quintile - w_cum[i - 1]
+            tb = top + bot
 
-      if i == 0 or w_cum[i] == quintile:
-        weighted_quantile = neighbourhood[i].value
-        break
-        
-      top = w_cum[i] - quintile
-      bot = quintile - w_cum[i - 1]
-      tb = top + bot
+            top = 1 - (top / tb)
+            bot = 1 - (bot / tb)
 
-      top = 1 - (top / tb)
-      bot = 1 - (bot / tb)
+            weighted_quantile = (neighbourhood[i - 1].value * bot) + (neighbourhood[i].value * top)
+            break
 
-      weighted_quantile = (neighbourhood[i - 1].value * bot) + (neighbourhood[i].value * top)
-      break
+    free(w_cum)
+    return weighted_quantile
 
-  free(w_cum)
-  return weighted_quantile
 
-cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef int x, y
-  cdef double accum
+cdef double neighbourhood_max(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef int x, y, current_max_i
+    cdef double current_max, val
 
-  accum = 0
-  for x in range(non_zero):
-    accum += neighbourhood[x].value * neighbourhood[x].weight
+    current_max = neighbourhood[0].value * neighbourhood[0].weight
+    current_max_i = 0
+    for x in range(non_zero):
+        val = neighbourhood[x].value * neighbourhood[x].weight
+        if val > current_max:
+            current_max = val
+            current_max_i = x
 
-  return accum
+    return neighbourhood[current_max_i].value * neighbourhood[current_max_i].weight
 
-cdef double neighbourhood_max(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef int x, y, current_max_i
-  cdef double current_max, val
 
-  current_max = neighbourhood[0].value * neighbourhood[0].weight
-  current_max_i = 0
-  for x in range(non_zero):
-    val = neighbourhood[x].value * neighbourhood[x].weight
-    if val > current_max:
-      current_max = val
-      current_max_i = x
+cdef double neighbourhood_min(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef int x, y, current_min_i
+    cdef double current_min
 
-  return neighbourhood[current_max_i].value * neighbourhood[current_max_i].weight
+    current_min = DBL_MAX
 
-cdef double neighbourhood_min(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef int x, y, current_min_i
-  cdef double current_min
+    if neighbourhood[0].weight != 0:
+        current_min = neighbourhood[0].value / neighbourhood[0].weight
 
-  current_min = 999999999999.9
-  if neighbourhood[0].weight != 0:
-    current_min = neighbourhood[0].value / neighbourhood[0].weight
-  current_min_i = 0
-  for x in range(non_zero):
-    if current_min != 0:
-      val = neighbourhood[x].value / neighbourhood[x].weight
-      if val < current_min:
-        current_min = val
-        current_min_i = x
+    current_min_i = 0
+    for x in range(non_zero):
+        if current_min != 0:
+            val = neighbourhood[x].value / neighbourhood[x].weight
+            if val < current_min:
+                current_min = val
+                current_min_i = x
 
-  return neighbourhood[current_min_i].value / neighbourhood[current_min_i].weight
+    return neighbourhood[current_min_i].value / neighbourhood[current_min_i].weight
 
-cdef double weighted_variance(Neighbourhood * neighbourhood, int non_zero, int power, double sum_of_weights) nogil:
+
+cdef double weighted_variance(Neighbourhood * neighbourhood, int non_zero, int power) nogil:
     cdef int x, y
     cdef double accum, weighted_average, deviations
+    cdef double sum_of_weights = neighbourhood_weight_sum(neighbourhood, non_zero)
 
-    weighted_average = neighbourhood_sum(neighbourhood, non_zero, sum_of_weights)
+    weighted_average = neighbourhood_sum(neighbourhood, non_zero)
 
     deviations = 0
     for x in range(non_zero):
-      deviations += neighbourhood[x].weight * (pow((neighbourhood[x].value - weighted_average), power))
+        deviations += neighbourhood[x].weight * (pow((neighbourhood[x].value - weighted_average), power))
 
     return deviations / sum_of_weights
 
-cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double variance = weighted_variance(neighbourhood, non_zero, 2, sum_of_weights)
-  return variance
 
-cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double variance = weighted_variance(neighbourhood, non_zero, 2, sum_of_weights)
-  cdef double standard_deviation = sqrt(variance)
-
-  return standard_deviation
-
-cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double weighted_q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, sum_of_weights)
-  return weighted_q1
-
-cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.5, sum_of_weights)
-  return weighted_median
-
-cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double weighted_q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)
-  return weighted_q3
-
-cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double weighted_median = neighbourhood_weighted_median(neighbourhood, non_zero, sum_of_weights)
-  cdef Neighbourhood * deviations = <Neighbourhood*> malloc(sizeof(Neighbourhood) * non_zero)
-
-  for x in range(non_zero):
-    deviations[x].value = fabs(neighbourhood[x].value - weighted_median)
-    deviations[x].weight = neighbourhood[x].weight
-
-  cdef double mad = neighbourhood_weighted_median(deviations, non_zero, sum_of_weights)
-
-  free(deviations)
-
-  return mad
+cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef double variance = weighted_variance(neighbourhood, non_zero, 2)
+    return variance
 
 
-cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double mad_std = neighbourhood_weighted_mad(neighbourhood, non_zero, sum_of_weights) * 1.4826
-  return mad_std
+cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef double variance = weighted_variance(neighbourhood, non_zero, 2)
+    cdef double standard_deviation = sqrt(variance)
 
-cdef double neighbourhood_weighted_skew_fp(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, sum_of_weights)
+    return standard_deviation
 
-  if standard_deviation == 0:
-    return 0
 
-  cdef double variance_3 = weighted_variance(neighbourhood, non_zero, 3, sum_of_weights)
-  return variance_3 / (pow(standard_deviation, 3))
+cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef double weighted_q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
+    return weighted_q1
 
-cdef double neighbourhood_weighted_skew_p2(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, sum_of_weights)
 
-  if standard_deviation == 0:
-    return 0
+cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.5)
+    return weighted_median
 
-  cdef double median = neighbourhood_weighted_median(neighbourhood, non_zero, sum_of_weights)
-  cdef double mean = neighbourhood_sum(neighbourhood, non_zero, sum_of_weights)
 
-  return 3 * ((mean - median) / standard_deviation)
+cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef double weighted_q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)
+    return weighted_q3
 
-cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, sum_of_weights)
-  cdef double q2 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.50, sum_of_weights)
-  cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)
 
-  cdef double iqr = q3 - q1
+cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef double weighted_median = neighbourhood_weighted_median(neighbourhood, non_zero)
+    cdef Neighbourhood * deviations = <Neighbourhood*> malloc(sizeof(Neighbourhood) * non_zero)
 
-  if iqr == 0:
-    return 0
+    for x in range(non_zero):
+        deviations[x].value = fabs(neighbourhood[x].value - weighted_median)
+        deviations[x].weight = neighbourhood[x].weight
 
-  return (q1 + q3 - (2 * q2)) / iqr
+    cdef double mad = neighbourhood_weighted_median(deviations, non_zero)
 
-cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25, sum_of_weights)
-  cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75, sum_of_weights)
+    free(deviations)
 
-  cdef double iqr = q3 - q1
+    return mad
 
-  return iqr
 
-cdef double neighbourhood_weighted_kurtosis_excess(Neighbourhood * neighbourhood, int non_zero, double sum_of_weights) nogil:
-  cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero, sum_of_weights)
+cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef double mad_std = neighbourhood_weighted_mad(neighbourhood, non_zero) * 1.4826
+    return mad_std
 
-  if standard_deviation == 0:
-    return 0
 
-  cdef double variance_4 = weighted_variance(neighbourhood, non_zero, 4, sum_of_weights)
-  return (variance_4 / (pow(standard_deviation, 4))) - 3
+cdef double neighbourhood_weighted_skew_fp(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
+
+    if standard_deviation == 0:
+        return 0
+
+    cdef double variance_3 = weighted_variance(neighbourhood, non_zero, 3)
+
+    return variance_3 / (pow(standard_deviation, 3))
+
+
+cdef double neighbourhood_weighted_skew_p2(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
+
+    if standard_deviation == 0:
+        return 0
+
+    cdef double median = neighbourhood_weighted_median(neighbourhood, non_zero)
+    cdef double mean = neighbourhood_sum(neighbourhood, non_zero)
+
+    return 3 * ((mean - median) / standard_deviation)
+
+
+cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
+    cdef double q2 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.50)
+    cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)
+
+    cdef double iqr = q3 - q1
+
+    if iqr == 0:
+        return 0
+
+    return (q1 + q3 - (2 * q2)) / iqr
+
+
+cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
+    cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)
+
+    cdef double iqr = q3 - q1
+
+    return iqr
+
+
+cdef double neighbourhood_weighted_kurtosis_excess(Neighbourhood * neighbourhood, int non_zero) nogil:
+    cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
+
+    if standard_deviation == 0:
+        return 0
+
+    cdef double variance_4 = weighted_variance(neighbourhood, non_zero, 4)
+
+    return (variance_4 / (pow(standard_deviation, 4))) - 3
+
 
 cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non_zero) nogil:
-  cdef int x, y
-  cdef int radius = <int>(kernel_width / 2)
-  cdef int step = 0
+    cdef int x, y
+    cdef int radius = <int>(kernel_width / 2)
+    cdef int step = 0
 
-  cdef Offset *offsets = <Offset *> malloc(non_zero * sizeof(Offset))
+    cdef Offset *offsets = <Offset *> malloc(non_zero * sizeof(Offset))
 
-  for x in range(kernel_width):
-    for y in range(kernel_width):
-      if kernel[x, y] != 0.0:
-        offsets[step].x = x - radius
-        offsets[step].y = y - radius
-        offsets[step].weight = kernel[x, y]
-        step += 1
+    for x in range(kernel_width):
+        for y in range(kernel_width):
+            if kernel[x, y] != 0.0:
+                offsets[step].x = x - radius
+                offsets[step].y = y - radius
+                offsets[step].weight = kernel[x, y]
+                step += 1
 
-  return offsets
+    return offsets
 
-cdef void loop(double [:, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int x_max, int y_max, int kernel_width, double sum_of_weights, int non_zero, f_type apply) nogil:
-  cdef int x, y, n, offset_x, offset_y
-  cdef Neighbourhood * neighbourhood
-  
-  cdef int x_max_adj = x_max - 1
-  cdef int y_max_adj = y_max - 1
-  cdef int neighbourhood_size = sizeof(Neighbourhood) * non_zero
 
-  cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
+cdef void loop(
+    double [:, ::1] arr,
+    double [:, ::1] kernel,
+    double [:, ::1] result,
+    int x_max,
+    int y_max,
+    int kernel_width,
+    int non_zero,
+    bint has_nodata,
+    double fill_value,
+    f_type apply,
+) nogil:
+    cdef int x, y, n, offset_x, offset_y
+    cdef Neighbourhood * neighbourhood
+    
+    cdef int x_max_adj = x_max - 1
+    cdef int y_max_adj = y_max - 1
+    cdef int neighbourhood_size = sizeof(Neighbourhood) * non_zero
 
-  for x in prange(x_max):
-    for y in range(y_max):
+    cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
 
-      neighbourhood = <Neighbourhood*> malloc(neighbourhood_size) 
+    for x in prange(x_max):
+        for y in range(y_max):
 
-      for n in range(non_zero):
-        offset_x = x + offsets[n].x
-        offset_y = y + offsets[n].y
+            if has_nodata is True and arr[x][y] == fill_value:
+                result[x][y] = fill_value
+                continue
 
-        if offset_x < 0:
-          offset_x = 0
-        elif offset_x > x_max_adj:
-          offset_x = x_max_adj
-        if offset_y < 0:
-          offset_y = 0
-        elif offset_y > y_max_adj:
-          offset_y = y_max_adj
+            neighbourhood = <Neighbourhood*> malloc(neighbourhood_size) 
 
-        neighbourhood[n].value = arr[offset_x, offset_y]
-        neighbourhood[n].weight = offsets[n].weight
+            for n in range(non_zero):
+                offset_x = x + offsets[n].x
+                offset_y = y + offsets[n].y
 
-      result[x][y] = apply(neighbourhood, non_zero, sum_of_weights)
+                if offset_x < 0:
+                    offset_x = 0
+                elif offset_x > x_max_adj:
+                    offset_x = x_max_adj
+                if offset_y < 0:
+                    offset_y = 0
+                elif offset_y > y_max_adj:
+                    offset_y = y_max_adj
 
-      free(neighbourhood)
+                neighbourhood[n].value = arr[offset_x][offset_y]
 
-cdef void loop_3d(double [:, :, ::1] arr, double [:, ::1] kernel, double [:, ::1] result, int depth, int x_max, int y_max, int kernel_width, double sum_of_weights, int non_zero, f_type apply) nogil:
-  cdef int x, y, n, z, offset_x, offset_y
-  cdef Neighbourhood * neighbourhood
-  
-  cdef int x_max_adj = x_max - 1
-  cdef int y_max_adj = y_max - 1
-  cdef int neighbourhood_size = sizeof(Neighbourhood) * (non_zero * depth)
+                if has_nodata is True and neighbourhood[n].value == fill_value:
+                    neighbourhood[n].weight = 0
+                else:    
+                    neighbourhood[n].weight = offsets[n].weight
 
-  cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
+            if has_nodata is True:
+                normalise_neighbourhood(neighbourhood, non_zero)
 
-  for x in prange(x_max):
-    for y in range(y_max):
+            result[x][y] = apply(neighbourhood, non_zero)
 
-      neighbourhood = <Neighbourhood*> malloc(neighbourhood_size) 
+            free(neighbourhood)
 
-      for z in range(depth):
-        for n in range(non_zero):
-          offset_x = x + offsets[n].x
-          offset_y = y + offsets[n].y
 
-          if offset_x < 0:
-            offset_x = 0
-          elif offset_x > x_max_adj:
-            offset_x = x_max_adj
-          if offset_y < 0:
-            offset_y = 0
-          elif offset_y > y_max_adj:
-            offset_y = y_max_adj
+cdef void loop_3d(
+    double [:, :, ::1] arr,
+    double [:, ::1] kernel,
+    double [:, ::1] result,
+    int depth,
+    int x_max,
+    int y_max,
+    int kernel_width,
+    int non_zero,
+    bint has_nodata,
+    double fill_value,
+    f_type apply,
+) nogil:
+    cdef int x, y, n, z, offset_x, offset_y
+    cdef Neighbourhood * neighbourhood
+    cdef bint value_is_nodata
+    cdef int x_max_adj = x_max - 1
+    cdef int y_max_adj = y_max - 1
+    cdef int neighbourhood_size = sizeof(Neighbourhood) * (non_zero * depth)
 
-          neighbourhood[n].value = arr[z, offset_x, offset_y]
-          neighbourhood[n].weight = offsets[n].weight / depth
+    cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
 
-      result[x][y] = apply(neighbourhood, non_zero, sum_of_weights)
+    for x in prange(x_max):
+        for y in range(y_max):
 
-      free(neighbourhood)
+            neighbourhood = <Neighbourhood*> malloc(neighbourhood_size)
+
+            for z in range(depth):
+
+                if has_nodata is True and arr[z][x][y] == fill_value:
+                    result[x][y] = fill_value
+                    value_is_nodata = True
+                    break
+
+                for n in range(non_zero):
+                    offset_x = x + offsets[n].x
+                    offset_y = y + offsets[n].y
+
+                    if offset_x < 0:
+                        offset_x = 0
+                    elif offset_x > x_max_adj:
+                        offset_x = x_max_adj
+                    if offset_y < 0:
+                        offset_y = 0
+                    elif offset_y > y_max_adj:
+                        offset_y = y_max_adj
+
+                    neighbourhood[n].value = arr[z][offset_x][offset_y]
+
+                    if has_nodata is True and neighbourhood[n].value == fill_value:
+                        neighbourhood[n].weight = 0
+                    else:    
+                        neighbourhood[n].weight = offsets[n].weight / depth
+            
+            if has_nodata is True:
+                normalise_neighbourhood(neighbourhood, non_zero)
+
+            if value_is_nodata is False:
+                result[x][y] = apply(neighbourhood, non_zero)
+
+            free(neighbourhood)
+
 
 cdef f_type func_selector(str func_type):
     if func_type is 'mean': return neighbourhood_sum
@@ -314,44 +411,95 @@ cdef f_type func_selector(str func_type):
     
     raise Exception('Unable to find filter type!')
 
-cdef void truncate_2d(double [:, ::1] arr, double [:, ::1] result, double min_value, double max_value, int x_max, int y_max) nogil:
+
+cdef void truncate_2d(
+    double [:, ::1] arr,
+    double [:, ::1] result,
+    double min_value,
+    double max_value,
+    int x_max,
+    int y_max,
+    bint has_nodata,
+    double fill_value,
+) nogil:
     cdef int x, y
     for x in prange(x_max):
         for y in range(y_max):
-            if arr[x][y] > max_value:
+            if has_nodata is True and arr[x][y] == fill_value:
+                result[x][y] = max_value
+            elif arr[x][y] > max_value:
                 result[x][y] = max_value
             elif arr[x][y] < min_value:
                 result[x][y] = min_value
             else:
                 result[x][y] = arr[x][y]
 
-cdef void truncate_3d(double [:, :, ::1] arr, double [:, :, ::1] result, double min_value, double max_value, int x_max, int y_max, int z_max) nogil:
+
+cdef void truncate_3d(
+    double [:, :, ::1] arr,
+    double [:, :, ::1] result,
+    double min_value,
+    double max_value,
+    int x_max,
+    int y_max,
+    int z_max,
+    bint has_nodata,
+    double fill_value,
+) nogil:
     cdef int x, y, z
     for x in prange(x_max):
         for y in range(y_max):
             for z in range(z_max):
-                if arr[x][y][z] > max_value:
+                if has_nodata is True and arr[x][y][z] == fill_value:
+                    result[x][y][z] = fill_value
+                elif arr[x][y][z] > max_value:
                     result[x][y][z] = max_value
                 elif arr[x][y][z] < min_value:
                     result[x][y][z] = min_value
                 else:
                     result[x][y][z] = arr[x][y][z]
 
-cdef void threshold_2d(double [:, ::1] arr, int [:, ::1] result, double min_value, double max_value, int x_max, int y_max, bint invert) nogil:
+
+cdef void threshold_2d(
+  double [:, ::1] arr,
+  int [:, ::1] result,
+  double min_value,
+  double max_value,
+  int x_max,
+  int y_max,
+  bint has_nodata,
+  double fill_value,
+  bint invert,
+) nogil:
     cdef int x, y, p, f
     p = 1
     f = 0
     if invert is True:
         p = 0
         f = 1
+        
     for x in prange(x_max):
         for y in range(y_max):
-            if arr[x][y] <= max_value and arr[x][y] >= min_value:
+            if has_nodata is True and arr[x][y] == fill_value:
+                result[x][y] = <int>fill_value
+            elif arr[x][y] <= max_value and arr[x][y] >= min_value:
                 result[x][y] = p
             else:
                 result[x][y] = f
 
-cdef void threshold_3d(double [:, :, ::1] arr, int [:, :, ::1] result, double min_value, double max_value, int x_max, int y_max, int z_max, bint invert) nogil:
+
+cdef void threshold_3d(
+  double [:, :, ::1] arr,
+  int [:, :, ::1] result,
+  double min_value,
+  double max_value,
+  int x_max,
+  int y_max,
+  int z_max,
+  bint has_nodata,
+  double fill_value,
+  bint invert,
+) nogil:
     cdef int x, y, z, p, f
     p = 1
     f = 0
@@ -361,34 +509,81 @@ cdef void threshold_3d(double [:, :, ::1] arr, int [:, :, ::1] result, double mi
     for x in prange(x_max):
         for y in range(y_max):
             for z in range(z_max):
+                if has_nodata is True and arr[x][y][z] == fill_value:
+                    result[x][y][z] = <int>fill_value
                 if arr[x][y][z] <= max_value and arr[x][y][z] >= min_value:
                     result[x][y][z] = p
                 else:
                     result[x][y][z] = f
 
+
 def local_filter(arr, kernel, str func_type, dtype='float32'):
+    cdef bint has_nodata = False
+    cdef double fill_value
     cdef f_type apply = func_selector(func_type)
     cdef int non_zero = np.count_nonzero(kernel)
-    cdef double sum_of_weights = np.sum(kernel)
-    result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
     cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
-    cdef double [:, ::1] result_view = result
     cdef double [:, ::1] arr_view_2d
     cdef double [:, :, ::1] arr_view_3d
     cdef int dims = len(arr.shape)
 
     assert(dims == 2 or dims == 3)
 
-    if dims is 3:
-        arr_view_3d = arr.astype(np.double) if arr.dtype != np.double else arr
-        loop_3d(arr_view_3d, kernel_view, result_view, arr.shape[0], arr.shape[1], arr.shape[2], kernel.shape[0], sum_of_weights, non_zero, apply)
+    arr = arr.astype(np.double) if arr.dtype != np.double else arr
+    if dims ==2:
+        result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
     else:
-        arr_view_2d = arr.astype(np.double) if arr.dtype != np.double else arr
-        loop(arr_view_2d, kernel_view, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], sum_of_weights, non_zero, apply)
+        result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
+
+    cdef double [:, ::1] result_view = result
+
+    if isinstance(arr, np.ma.MaskedArray):
+        result = np.ma.array(result, fill_value=arr.fill_value)
+        fill_value = arr.fill_value
+        has_nodata = 1
+        arr = arr.filled()
+    else:
+        fill_value = 0.0
+
+    if dims is 3:
+        arr_view_3d = arr
+        loop_3d(
+          arr_view_3d,
+          kernel_view,
+          result_view,
+          arr.shape[0],
+          arr.shape[1],
+          arr.shape[2],
+          kernel.shape[0],
+          non_zero,
+          has_nodata,
+          fill_value,
+          apply,
+        )
+    else:
+        arr_view_2d = arr
+        loop(
+          arr_view_2d,
+          kernel_view,
+          result_view,
+          arr.shape[0],
+          arr.shape[1],
+          kernel.shape[0],
+          non_zero,
+          has_nodata,
+          fill_value,
+          apply,
+        )
+
+    if isinstance(arr, np.ma.MaskedArray):
+        return np.ma.masked_where(result == fill_value, result).astype(dtype)
 
     return result.astype(dtype)
 
+
 def _threshold_filter(arr, min_value=False, max_value=False, invert=False):
+    cdef bint has_nodata = False
+    cdef double fill_value
     cdef double min_v = min_value if min_value is not False else DBL_MIN
     cdef double max_v = max_value if max_value is not False else DBL_MAX
     cdef bint inv = invert
@@ -400,19 +595,56 @@ def _threshold_filter(arr, min_value=False, max_value=False, invert=False):
 
     assert(dims == 2 or dims == 3)
 
+    arr = arr.astype(np.double) if arr.dtype != np.double else arr
     result = np.zeros(arr.shape, dtype=np.intc)
-    if dims == 3:
-        arr_view_3d = arr.astype(np.double) if arr.dtype != np.double else arr
-        result_view_3d = result
-        threshold_3d(arr_view_3d, result_view_3d, min_v, max_v, arr.shape[0], arr.shape[1], arr.shape[2], invert)
+
+    if isinstance(arr, np.ma.MaskedArray):
+        result = np.ma.array(result, fill_value=arr.fill_value)
+        fill_value = arr.fill_value
+        has_nodata = 1
+        arr = arr.filled()
     else:
-        arr_view_2d = arr.astype(np.double) if arr.dtype != np.double else arr
+        fill_value = 0.0
+
+    if dims == 3:
+        result_view_3d = result
+        arr_view_3d = arr
+        threshold_3d(
+            arr_view_3d,
+            result_view_3d,
+            min_v,
+            max_v,
+            arr.shape[0],
+            arr.shape[1],
+            arr.shape[2],
+            has_nodata,
+            fill_value,
+            invert,
+        )
+    else:
+        arr_view_2d = arr
         result_view_2d = result
-        threshold_2d(arr_view_2d, result_view_2d, min_v, max_v, arr.shape[0], arr.shape[1], invert)
+        threshold_2d(
+            arr_view_2d,
+            result_view_2d,
+            min_v,
+            max_v,
+            arr.shape[0],
+            arr.shape[1],
+            has_nodata,
+            fill_value,
+            invert,
+        )
     
+    if isinstance(arr, np.ma.MaskedArray):
+        return np.ma.masked_where(result == fill_value, result).astype('uint8')
+
     return result.astype('uint8')
 
+
 def _truncate_filter(arr, min_value=False, max_value=False):
+    cdef bint has_nodata = False
+    cdef double fill_value
     cdef double min_v = min_value if min_value is not False else DBL_MIN
     cdef double max_v = max_value if max_value is not False else DBL_MAX
     cdef double [:, ::1] arr_view_2d
@@ -423,15 +655,46 @@ def _truncate_filter(arr, min_value=False, max_value=False):
 
     assert(dims == 2 or dims == 3)
 
-    if dims == 3:
-        result = np.empty(arr.shape, dtype=np.double)
-        arr_view_3d = arr.astype(np.double) if arr.dtype != np.double else arr
-        result_view_3d = result
-        truncate_3d(arr_view_3d, result_view_3d, min_v, max_v, arr.shape[0], arr.shape[1], arr.shape[2])
+    result = np.empty(arr.shape, dtype=np.double)
+    arr = arr.astype(np.double) if arr.dtype != np.double else arr
+
+    if isinstance(arr, np.ma.MaskedArray):
+        result = np.ma.array(result, fill_value=arr.fill_value)
+        fill_value = arr.fill_value
+        has_nodata = 1
+        arr = arr.filled()
     else:
-        result = np.empty(arr.shape, dtype=np.double)
-        arr_view_2d = arr.astype(np.double) if arr.dtype != np.double else arr
+        fill_value = 0.0
+
+    if dims == 3:
+        arr_view_3d = arr
+        result_view_3d = result
+        truncate_3d(
+            arr_view_3d,
+            result_view_3d,
+            min_v,
+            max_v,
+            arr.shape[0],
+            arr.shape[1],
+            arr.shape[2],
+            has_nodata,
+            fill_value,
+        )
+    else:
+        arr_view_2d = arr
         result_view_2d = result
-        truncate_2d(arr_view_2d, result_view_2d, min_v, max_v, arr.shape[0], arr.shape[1])
+        truncate_2d(
+            arr_view_2d,
+            result_view_2d,
+            min_v,
+            max_v,
+            arr.shape[0],
+            arr.shape[1],
+            has_nodata,
+            fill_value,
+        )
     
+    if isinstance(arr, np.ma.MaskedArray):
+        return np.ma.masked_where(result == fill_value, result).astype('uint8')
+
     return result

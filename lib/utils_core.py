@@ -257,10 +257,10 @@ def translate_resample_method(method):
 
 def numpy_fill_values(datatype):
     datatypes = {
-        'int8': 127,
-        'int16': 32767,
-        'int32': 2147483647,
-        'int64': 9223372036854775807,
+        'int8': -127,
+        'int16': -32767,
+        'int32': -2147483647,
+        'int64': -9223372036854775807,
         'uint8': 255,
         'uint16': 65535,
         'uint32': 4294967295,
