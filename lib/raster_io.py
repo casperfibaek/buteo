@@ -8,7 +8,7 @@ from lib.raster_clip import clip_raster
 
 
 def array_to_raster(array, out_raster=None, reference_raster=None, output_format='MEM',
-                    top_left=None, pixel_size=None, projection=None, calc_band_stats=True,
+                    top_left=None, pixel_size=None, projection=None, calc_band_stats=False,
                     src_nodata=None, dst_nodata=False, resample=False, quiet=False):
     ''' Turns a numpy array into a gdal dataframe or exported
         as a raster. If no reference is specified, the following
@@ -140,7 +140,10 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
     if dst_nodata is not False:
         input_nodata = dst_nodata
     else:
-        input_nodata = reference['nodata']
+        if ma.is_masked(data) is True:
+            input_nodata = data.get_fill_value()
+        else:
+            input_nodata = reference['nodata']
 
     # Ready the nodata values
     if ma.is_masked(data) is True:
