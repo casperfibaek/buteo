@@ -9,13 +9,13 @@ folder = '/mnt/c/users/caspe/desktop/data/DEM/'
 
 srtm = folder + 'Ghana_dem_utm30_wgs84_srtm_clipped_align.tif'
 aster = folder + 'Ghana_dem_utm30_wgs84_aster_clipped_align.tif'
-srtm_arr = raster_to_array(srtm, src_nodata=-32768)
-aster_arr = raster_to_array(aster, src_nodata=-32768)
+srtm_arr = raster_to_array(srtm)
+aster_arr = raster_to_array(aster)
 
-merge = np.ma.array([srtm_arr, aster_arr], fill_value=-32768)
+merge = np.ma.array([srtm_arr, aster_arr], fill_value=srtm_arr.fill_value)
 
 # import pdb; pdb.set_trace()
 
 before = time()
-array_to_raster(median_filter(merge, 3, sigma=1), reference_raster=srtm, out_raster=folder + 'ghana_DEM_merge.tif')
+array_to_raster(mean_filter(median_filter(merge, 11, iterations=2), 11, iterations=3), reference_raster=srtm, out_raster=folder + 'ghana_smooth_dem.tif')
 print(time() - before)

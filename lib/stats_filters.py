@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import norm
-from lib.stats_local import local_filter, _truncate_filter, _threshold_filter
+from lib.stats_local import kernel_filter
+# from lib.stats_local_no_kernel import truncate_array, threshold_array
 from lib.stats_kernel import create_kernel
 
 
@@ -49,7 +50,7 @@ def sum_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "mean").astype(in_raster.dtype)
+    return kernel_filter(in_raster, kernel, "mean").astype(in_raster.dtype)
 
 
 def mean_filter(
@@ -80,11 +81,11 @@ def mean_filter(
         )
     )
     if iterations == 1:
-        return local_filter(in_raster, kernel, "mean", dtype)
+        return kernel_filter(in_raster, kernel, "mean", dtype)
     else:
-        result = local_filter(in_raster, kernel, "mean", dtype)
+        result = kernel_filter(in_raster, kernel, "mean", dtype)
         for _ in range(iterations - 1):
-            result = local_filter(in_raster, kernel, "mean", dtype)
+            result = kernel_filter(in_raster, kernel, "mean", dtype)
         return result
 
 
@@ -116,11 +117,11 @@ def median_filter(
     )
     
     if iterations == 1:
-        return local_filter(in_raster, kernel, "median", dtype)
+        return kernel_filter(in_raster, kernel, "median", dtype)
     else:
-        result = local_filter(in_raster, kernel, "median", dtype)
+        result = kernel_filter(in_raster, kernel, "median", dtype)
         for _ in range(iterations - 1):
-            result = local_filter(result, kernel, "median", dtype)
+            result = kernel_filter(result, kernel, "median", dtype)
         return result
 
 
@@ -149,7 +150,7 @@ def variance_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "variance", dtype)
+    return kernel_filter(in_raster, kernel, "variance", dtype)
 
 
 def standard_deviation_filter(
@@ -177,7 +178,7 @@ def standard_deviation_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "standard_deviation", dtype)
+    return kernel_filter(in_raster, kernel, "standard_deviation", dtype)
 
 
 def q1_filter(
@@ -205,7 +206,7 @@ def q1_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "q1", dtype)
+    return kernel_filter(in_raster, kernel, "q1", dtype)
 
 
 def q3_filter(
@@ -233,7 +234,7 @@ def q3_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "q3", dtype)
+    return kernel_filter(in_raster, kernel, "q3", dtype)
 
 
 def iqr_filter(
@@ -261,7 +262,7 @@ def iqr_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "iqr", dtype)
+    return kernel_filter(in_raster, kernel, "iqr", dtype)
 
 
 def mad_filter(
@@ -289,7 +290,7 @@ def mad_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "mad", dtype)
+    return kernel_filter(in_raster, kernel, "mad", dtype)
 
 
 def mad_std_filter(
@@ -317,7 +318,7 @@ def mad_std_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "mad_std", dtype)
+    return kernel_filter(in_raster, kernel, "mad_std", dtype)
 
 
 def skew_fp_filter(
@@ -345,7 +346,7 @@ def skew_fp_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "skew_fp", dtype)
+    return kernel_filter(in_raster, kernel, "skew_fp", dtype)
 
 
 def skew_p2_filter(
@@ -373,7 +374,7 @@ def skew_p2_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "skew_p2", dtype)
+    return kernel_filter(in_raster, kernel, "skew_p2", dtype)
 
 
 def skew_g_filter(
@@ -401,7 +402,7 @@ def skew_g_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "skew_g", dtype)
+    return kernel_filter(in_raster, kernel, "skew_g", dtype)
 
 
 def kurtosis_filter(
@@ -429,7 +430,7 @@ def kurtosis_filter(
             sigma=sigma,
         )
     )
-    return local_filter(in_raster, kernel, "kurtosis", dtype)
+    return kernel_filter(in_raster, kernel, "kurtosis", dtype)
 
 
 def z_filter(
@@ -581,11 +582,11 @@ def dilation_filter(
         )
     )
     if iterations == 1:
-        return local_filter(in_raster, kernel, "dilate").astype(in_raster.dtype)
+        return kernel_filter(in_raster, kernel, "dilate").astype(in_raster.dtype)
     else:
-        result = local_filter(in_raster, kernel, "dilate").astype(in_raster.dtype)
+        result = kernel_filter(in_raster, kernel, "dilate").astype(in_raster.dtype)
         for _ in range(iterations - 1):
-            result = local_filter(result, kernel, "dilate").astype(in_raster.dtype)
+            result = kernel_filter(result, kernel, "dilate").astype(in_raster.dtype)
         return result
 
 
@@ -611,11 +612,11 @@ def erosion_filter(
         )
     )
     if iterations == 1:
-        return local_filter(in_raster, kernel, "erode").astype(in_raster.dtype)
+        return kernel_filter(in_raster, kernel, "erode").astype(in_raster.dtype)
     else:
-        result = local_filter(in_raster, kernel, "erode").astype(in_raster.dtype)
+        result = kernel_filter(in_raster, kernel, "erode").astype(in_raster.dtype)
         for _ in range(iterations - 1):
-            result = local_filter(result, kernel, "erode").astype(in_raster.dtype)
+            result = kernel_filter(result, kernel, "erode").astype(in_raster.dtype)
         return result
 
 
@@ -640,8 +641,8 @@ def open_filter(
             normalise=False,
         )
     )
-    return local_filter(
-        local_filter(in_raster, kernel, "erode"), kernel, "dilate",
+    return kernel_filter(
+        kernel_filter(in_raster, kernel, "erode"), kernel, "dilate",
     ).astype(in_raster.dtype)
 
 
@@ -660,19 +661,19 @@ def close_filter(
             normalise=False,
         )
     )
-    return local_filter(
-        local_filter(in_raster, kernel, "dilate"), kernel, "erode",
+    return kernel_filter(
+        kernel_filter(in_raster, kernel, "dilate"), kernel, "erode",
     ).astype(in_raster.dtype)
 
 
-def threshold_filter(in_raster, min_value=False, max_value=False, invert=False):
-    return _threshold_filter(
-        in_raster, min_value=min_value, max_value=max_value, invert=invert
-    ).astype(in_raster.dtype)
+# def threshold_filter(in_raster, min_value=False, max_value=False, invert=False):
+#     return threshold_array(
+#         in_raster, min_value=min_value, max_value=max_value, invert=invert
+#     ).astype(in_raster.dtype)
 
 
-def truncate_filter(in_raster, min_value=False, max_value=False, dim3=False):
-    return _truncate_filter(in_raster, min_value=min_value, max_value=max_value).astype(
-        in_raster.dtype
-    ).astype(in_raster.dtype)
+# def truncate_filter(in_raster, min_value=False, max_value=False, dim3=False):
+#     return truncate_array(in_raster, min_value=min_value, max_value=max_value).astype(
+#         in_raster.dtype
+#     ).astype(in_raster.dtype)
 

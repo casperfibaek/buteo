@@ -271,6 +271,26 @@ cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non
     return offsets
 
 
+cdef f_type func_selector(str func_type):
+    if func_type is 'mean': return neighbourhood_sum
+    elif func_type is 'dilate': return neighbourhood_max
+    elif func_type is 'erode': return neighbourhood_min
+    elif func_type is 'median': return neighbourhood_weighted_median
+    elif func_type is 'variance': return neighbourhood_weighted_variance
+    elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
+    elif func_type is 'q1': return neighbourhood_weighted_q1
+    elif func_type is 'q3': return neighbourhood_weighted_q3
+    elif func_type is 'iqr': return neighbourhood_weighted_iqr
+    elif func_type is 'skew_fp': return neighbourhood_weighted_skew_fp
+    elif func_type is 'skew_p2': return neighbourhood_weighted_skew_p2
+    elif func_type is 'skew_g': return neighbourhood_weighted_skew_g
+    elif func_type is 'kurtosis': return neighbourhood_weighted_kurtosis_excess
+    elif func_type is 'mad': return neighbourhood_weighted_mad
+    elif func_type is 'mad_std': return neighbourhood_weighted_mad_std
+    
+    raise Exception('Unable to find filter type!')
+
+
 cdef void loop(
     double [:, ::1] arr,
     double [:, ::1] kernel,
@@ -285,9 +305,12 @@ cdef void loop(
 ) nogil:
     cdef int x, y, n, offset_x, offset_y
     cdef Neighbourhood * neighbourhood
-    
     cdef int x_max_adj = x_max - 1
     cdef int y_max_adj = y_max - 1
+    cdef int x_edge_low = kernel_width
+    cdef int y_edge_low = kernel_width
+    cdef int x_edge_high = x_max_adj - kernel_width
+    cdef int y_edge_high = y_max_adj - kernel_width
     cdef int neighbourhood_size = sizeof(Neighbourhood) * non_zero
 
     cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
@@ -321,7 +344,7 @@ cdef void loop(
                 else:    
                     neighbourhood[n].weight = offsets[n].weight
 
-            if has_nodata is True:
+            if has_nodata is True or (x < x_edge_low or y < y_edge_low or x > x_edge_high or y > y_edge_high):
                 normalise_neighbourhood(neighbourhood, non_zero)
 
             result[x][y] = apply(neighbourhood, non_zero)
@@ -333,7 +356,7 @@ cdef void loop_3d(
     double [:, :, ::1] arr,
     double [:, ::1] kernel,
     double [:, ::1] result,
-    int depth,
+    int z_max,
     int x_max,
     int y_max,
     int kernel_width,
@@ -342,12 +365,16 @@ cdef void loop_3d(
     double fill_value,
     f_type apply,
 ) nogil:
-    cdef int x, y, n, z, offset_x, offset_y
+    cdef int x, y, n, z, ni, offset_x, offset_y
     cdef Neighbourhood * neighbourhood
     cdef bint value_is_nodata
     cdef int x_max_adj = x_max - 1
     cdef int y_max_adj = y_max - 1
-    cdef int neighbourhood_size = sizeof(Neighbourhood) * (non_zero * depth)
+    cdef int x_edge_low = kernel_width
+    cdef int y_edge_low = kernel_width
+    cdef int x_edge_high = x_max_adj - kernel_width
+    cdef int y_edge_high = y_max_adj - kernel_width
+    cdef int neighbourhood_size = sizeof(Neighbourhood) * (non_zero * z_max)
 
     cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
 
@@ -355,15 +382,17 @@ cdef void loop_3d(
         for y in range(y_max):
 
             neighbourhood = <Neighbourhood*> malloc(neighbourhood_size)
+            value_is_nodata = False
 
-            for z in range(depth):
+            for z in range(z_max):
 
                 if has_nodata is True and arr[z][x][y] == fill_value:
-                    result[x][y] = fill_value
                     value_is_nodata = True
-                    break
+                    continue
 
                 for n in range(non_zero):
+                    ni = n * (z + 1)
+
                     offset_x = x + offsets[n].x
                     offset_y = y + offsets[n].y
 
@@ -376,148 +405,26 @@ cdef void loop_3d(
                     elif offset_y > y_max_adj:
                         offset_y = y_max_adj
 
-                    neighbourhood[n].value = arr[z][offset_x][offset_y]
+                    neighbourhood[ni].value = arr[z][offset_x][offset_y]
+                    neighbourhood[ni].weight = offsets[n].weight / z_max
 
-                    if has_nodata is True and neighbourhood[n].value == fill_value:
-                        neighbourhood[n].weight = 0
+                    if has_nodata is True and neighbourhood[ni].value == fill_value:
+                        neighbourhood[ni].weight = 0
                     else:    
-                        neighbourhood[n].weight = offsets[n].weight / depth
+                        neighbourhood[ni].weight = offsets[n].weight / z_max
             
-            if has_nodata is True:
+            if has_nodata is True or (x < x_edge_low or y < y_edge_low or x > x_edge_high or y > y_edge_high):
                 normalise_neighbourhood(neighbourhood, non_zero)
 
             if value_is_nodata is False:
                 result[x][y] = apply(neighbourhood, non_zero)
+            else:
+                result[x][y] = fill_value
 
             free(neighbourhood)
 
 
-cdef f_type func_selector(str func_type):
-    if func_type is 'mean': return neighbourhood_sum
-    elif func_type is 'dilate': return neighbourhood_max
-    elif func_type is 'erode': return neighbourhood_min
-    elif func_type is 'median': return neighbourhood_weighted_median
-    elif func_type is 'variance': return neighbourhood_weighted_variance
-    elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
-    elif func_type is 'q1': return neighbourhood_weighted_q1
-    elif func_type is 'q3': return neighbourhood_weighted_q3
-    elif func_type is 'iqr': return neighbourhood_weighted_iqr
-    elif func_type is 'skew_fp': return neighbourhood_weighted_skew_fp
-    elif func_type is 'skew_p2': return neighbourhood_weighted_skew_p2
-    elif func_type is 'skew_g': return neighbourhood_weighted_skew_g
-    elif func_type is 'kurtosis': return neighbourhood_weighted_kurtosis_excess
-    elif func_type is 'mad': return neighbourhood_weighted_mad
-    elif func_type is 'mad_std': return neighbourhood_weighted_mad_std
-    
-    raise Exception('Unable to find filter type!')
-
-
-cdef void truncate_2d(
-    double [:, ::1] arr,
-    double [:, ::1] result,
-    double min_value,
-    double max_value,
-    int x_max,
-    int y_max,
-    bint has_nodata,
-    double fill_value,
-) nogil:
-    cdef int x, y
-    for x in prange(x_max):
-        for y in range(y_max):
-            if has_nodata is True and arr[x][y] == fill_value:
-                result[x][y] = max_value
-            elif arr[x][y] > max_value:
-                result[x][y] = max_value
-            elif arr[x][y] < min_value:
-                result[x][y] = min_value
-            else:
-                result[x][y] = arr[x][y]
-
-
-cdef void truncate_3d(
-    double [:, :, ::1] arr,
-    double [:, :, ::1] result,
-    double min_value,
-    double max_value,
-    int x_max,
-    int y_max,
-    int z_max,
-    bint has_nodata,
-    double fill_value,
-) nogil:
-    cdef int x, y, z
-    for x in prange(x_max):
-        for y in range(y_max):
-            for z in range(z_max):
-                if has_nodata is True and arr[x][y][z] == fill_value:
-                    result[x][y][z] = fill_value
-                elif arr[x][y][z] > max_value:
-                    result[x][y][z] = max_value
-                elif arr[x][y][z] < min_value:
-                    result[x][y][z] = min_value
-                else:
-                    result[x][y][z] = arr[x][y][z]
-
-
-cdef void threshold_2d(
-  double [:, ::1] arr,
-  int [:, ::1] result,
-  double min_value,
-  double max_value,
-  int x_max,
-  int y_max,
-  bint has_nodata,
-  double fill_value,
-  bint invert,
-) nogil:
-    cdef int x, y, p, f
-    p = 1
-    f = 0
-    if invert is True:
-        p = 0
-        f = 1
-        
-    for x in prange(x_max):
-        for y in range(y_max):
-            if has_nodata is True and arr[x][y] == fill_value:
-                result[x][y] = <int>fill_value
-            elif arr[x][y] <= max_value and arr[x][y] >= min_value:
-                result[x][y] = p
-            else:
-                result[x][y] = f
-
-
-cdef void threshold_3d(
-  double [:, :, ::1] arr,
-  int [:, :, ::1] result,
-  double min_value,
-  double max_value,
-  int x_max,
-  int y_max,
-  int z_max,
-  bint has_nodata,
-  double fill_value,
-  bint invert,
-) nogil:
-    cdef int x, y, z, p, f
-    p = 1
-    f = 0
-    if invert is True:
-        p = 0
-        f = 1
-    for x in prange(x_max):
-        for y in range(y_max):
-            for z in range(z_max):
-                if has_nodata is True and arr[x][y][z] == fill_value:
-                    result[x][y][z] = <int>fill_value
-                if arr[x][y][z] <= max_value and arr[x][y][z] >= min_value:
-                    result[x][y][z] = p
-                else:
-                    result[x][y][z] = f
-
-
-def local_filter(arr, kernel, str func_type, dtype='float32'):
+def kernel_filter(arr, kernel, str func_type, dtype='float32'):
     cdef bint has_nodata = False
     cdef double fill_value
     cdef f_type apply = func_selector(func_type)
@@ -580,121 +487,3 @@ def local_filter(arr, kernel, str func_type, dtype='float32'):
 
     return result.astype(dtype)
 
-
-def _threshold_filter(arr, min_value=False, max_value=False, invert=False):
-    cdef bint has_nodata = False
-    cdef double fill_value
-    cdef double min_v = min_value if min_value is not False else DBL_MIN
-    cdef double max_v = max_value if max_value is not False else DBL_MAX
-    cdef bint inv = invert
-    cdef double [:, ::1] arr_view_2d
-    cdef double [:, :, ::1] arr_view_3d
-    cdef int [:, ::1] result_view_2d
-    cdef int [:, :, ::1] result_view_3d
-    cdef int dims = len(arr.shape)
-
-    assert(dims == 2 or dims == 3)
-
-    arr = arr.astype(np.double) if arr.dtype != np.double else arr
-    result = np.zeros(arr.shape, dtype=np.intc)
-
-    if isinstance(arr, np.ma.MaskedArray):
-        result = np.ma.array(result, fill_value=arr.fill_value)
-        fill_value = arr.fill_value
-        has_nodata = 1
-        arr = arr.filled()
-    else:
-        fill_value = 0.0
-
-    if dims == 3:
-        result_view_3d = result
-        arr_view_3d = arr
-        threshold_3d(
-            arr_view_3d,
-            result_view_3d,
-            min_v,
-            max_v,
-            arr.shape[0],
-            arr.shape[1],
-            arr.shape[2],
-            has_nodata,
-            fill_value,
-            invert,
-        )
-    else:
-        arr_view_2d = arr
-        result_view_2d = result
-        threshold_2d(
-            arr_view_2d,
-            result_view_2d,
-            min_v,
-            max_v,
-            arr.shape[0],
-            arr.shape[1],
-            has_nodata,
-            fill_value,
-            invert,
-        )
-    
-    if isinstance(arr, np.ma.MaskedArray):
-        return np.ma.masked_where(result == fill_value, result).astype('uint8')
-
-    return result.astype('uint8')
-
-
-def _truncate_filter(arr, min_value=False, max_value=False):
-    cdef bint has_nodata = False
-    cdef double fill_value
-    cdef double min_v = min_value if min_value is not False else DBL_MIN
-    cdef double max_v = max_value if max_value is not False else DBL_MAX
-    cdef double [:, ::1] arr_view_2d
-    cdef double [:, :, ::1] arr_view_3d
-    cdef double [:, ::1] result_view_2d
-    cdef double [:, :, ::1] result_view_3d
-    cdef int dims = len(arr.shape)
-
-    assert(dims == 2 or dims == 3)
-
-    result = np.empty(arr.shape, dtype=np.double)
-    arr = arr.astype(np.double) if arr.dtype != np.double else arr
-
-    if isinstance(arr, np.ma.MaskedArray):
-        result = np.ma.array(result, fill_value=arr.fill_value)
-        fill_value = arr.fill_value
-        has_nodata = 1
-        arr = arr.filled()
-    else:
-        fill_value = 0.0
-
-    if dims == 3:
-        arr_view_3d = arr
-        result_view_3d = result
-        truncate_3d(
-            arr_view_3d,
-            result_view_3d,
-            min_v,
-            max_v,
-            arr.shape[0],
-            arr.shape[1],
-            arr.shape[2],
-            has_nodata,
-            fill_value,
-        )
-    else:
-        arr_view_2d = arr
-        result_view_2d = result
-        truncate_2d(
-            arr_view_2d,
-            result_view_2d,
-            min_v,
-            max_v,
-            arr.shape[0],
-            arr.shape[1],
-            has_nodata,
-            fill_value,
-        )
-    
-    if isinstance(arr, np.ma.MaskedArray):
-        return np.ma.masked_where(result == fill_value, result).astype('uint8')
-
-    return result

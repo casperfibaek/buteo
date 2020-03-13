@@ -46,3 +46,4 @@ def calc_indices(index, B02=None, B03=None, B04=None, B05=None, B06=None, B07=No
             "ndwi2": ne.evaluate('(B03 - B08) / (B03 + B08)'),
             "ndbi": ne.evaluate('(B11 - B08) / (B11 + B08)'),
         })
+
