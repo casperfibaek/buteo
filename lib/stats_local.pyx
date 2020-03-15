@@ -450,7 +450,6 @@ def kernel_filter(arr, kernel, str func_type, dtype='float32'):
     cdef double [:, ::1] result_view = result
 
     if isinstance(arr, np.ma.MaskedArray):
-        result = np.ma.array(result, fill_value=arr.fill_value)
         fill_value = arr.fill_value
         has_nodata = 1
         arr = arr.filled()
@@ -487,8 +486,8 @@ def kernel_filter(arr, kernel, str func_type, dtype='float32'):
           apply,
         )
 
-    if isinstance(arr, np.ma.MaskedArray):
-        return np.ma.masked_where(result == fill_value, result).astype(dtype)
+    if has_nodata is True:
+        return np.ma.masked_equal(result, fill_value).astype(dtype)
 
     return result.astype(dtype)
 

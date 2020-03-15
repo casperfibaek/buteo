@@ -173,11 +173,14 @@ def cdef_from_z(arr):
 
     result = np.empty(arr.shape, dtype=np.double)
     arr = arr.astype(np.double) if arr.dtype != np.double else arr
+    arr_mask = False
 
     if isinstance(arr, np.ma.MaskedArray):
         result = np.ma.array(result, fill_value=arr.fill_value)
         fill_value = arr.fill_value
         has_nodata = 1
+        if arr.mask is not False:
+            arr_mask = np.ma.getmask(arr)
         arr = arr.filled()
     else:
         fill_value = 0.0
@@ -206,8 +209,11 @@ def cdef_from_z(arr):
             fill_value,
         )
     
-    if isinstance(arr, np.ma.MaskedArray):
-        return np.ma.masked_where(result == fill_value, result)
+    if has_nodata is True:
+        if arr_mask is not False:
+            return np.ma.masked_where(arr_mask, result)
+        else:
+            return_arr = np.ma.masked_equal(result, fill_value)
 
     return result
 
@@ -228,11 +234,14 @@ def threshold_array(arr, min_value=False, max_value=False, invert=False):
 
     arr = arr.astype(np.double) if arr.dtype != np.double else arr
     result = np.zeros(arr.shape, dtype=np.intc)
+    arr_mask = False
 
     if isinstance(arr, np.ma.MaskedArray):
         result = np.ma.array(result, fill_value=arr.fill_value)
         fill_value = arr.fill_value
         has_nodata = 1
+        if arr.mask is not False:
+            arr_mask = np.ma.getmask(arr)
         arr = arr.filled()
     else:
         fill_value = 0.0
@@ -267,8 +276,13 @@ def threshold_array(arr, min_value=False, max_value=False, invert=False):
             invert,
         )
     
-    if isinstance(arr, np.ma.MaskedArray):
-        return np.ma.masked_where(result == fill_value, result).astype('uint8')
+    if has_nodata is True:
+        if arr_mask is not False:
+            return_arr = np.ma.masked_where(arr_mask, result).set_fill_value(255)
+            return return_arr.astype('uint8')
+        else:
+            return_arr = np.ma.masked_equal(result, fill_value).set_fill_value(255)
+            return return_arr
 
     return result.astype('uint8')
 
@@ -288,11 +302,14 @@ def truncate_array(arr, min_value=False, max_value=False):
 
     result = np.empty(arr.shape, dtype=np.double)
     arr = arr.astype(np.double) if arr.dtype != np.double else arr
+    arr_mask = False
 
     if isinstance(arr, np.ma.MaskedArray):
         result = np.ma.array(result, fill_value=arr.fill_value)
         fill_value = arr.fill_value
         has_nodata = 1
+        if arr.mask is not False:
+            arr_mask = np.ma.getmask(arr)
         arr = arr.filled()
     else:
         fill_value = 0.0
@@ -325,8 +342,11 @@ def truncate_array(arr, min_value=False, max_value=False):
             fill_value,
         )
     
-    if isinstance(arr, np.ma.MaskedArray):
-        return np.ma.masked_where(result == fill_value, result)
+    if has_nodata is True:
+        if arr_mask is not False:
+            return np.ma.masked_where(arr_mask, result)
+        else:
+            return_arr = np.ma.masked_equal(result, fill_value)
 
     return result
 

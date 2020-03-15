@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import numpy.ma as ma
 from osgeo import gdal, osr
 
 from lib.utils_core import numpy_to_gdal_datatype, numpy_fill_values, datatype_is_float, progress_callback_quiet
@@ -140,15 +139,15 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
     if dst_nodata is not False:
         input_nodata = dst_nodata
     else:
-        if ma.is_masked(data) is True:
+        if np.ma.is_masked(data) is True:
             input_nodata = data.get_fill_value()
         else:
             input_nodata = reference['nodata']
 
     # Ready the nodata values
-    if ma.is_masked(data) is True:
+    if np.ma.is_masked(data) is True:
         if input_nodata is not None:
-            ma.masked_equal(data, input_nodata)
+            np.ma.masked_equal(data, input_nodata)
             data.set_fill_value(input_nodata)
         input_nodata = data.get_fill_value()
         data = data.filled()
@@ -376,10 +375,10 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
     if rasterNoDataValue is None:
         data = np.array(rasterAsArray)
     else:
-        data = ma.masked_equal(rasterAsArray, rasterNoDataValue)
+        data = np.ma.masked_equal(rasterAsArray, rasterNoDataValue)
 
     if src_nodata is not None:
-        data = ma.masked_equal(rasterAsArray, src_nodata)
+        data = np.ma.masked_equal(rasterAsArray, src_nodata)
 
     if fill_value is not None:
         data.fill_value = fill_value

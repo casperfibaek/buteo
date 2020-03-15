@@ -1,5 +1,5 @@
 import numpy as np
-from lib.raster_io import raster_to_array, array_to_raster
+from raster_io import raster_to_array, array_to_raster
 
 
 def set_nodata(arr, move_current_mask=True, value='max'):

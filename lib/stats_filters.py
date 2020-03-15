@@ -734,14 +734,19 @@ def close_filter(
     ).astype(in_raster.dtype)
 
 
-# def threshold_filter(in_raster, min_value=False, max_value=False, invert=False):
-#     return threshold_array(
-#         in_raster, min_value=min_value, max_value=max_value, invert=invert
-#     ).astype(in_raster.dtype)
+def threshold_filter(in_raster, min_value=False, max_value=False, invert=False):
+    return threshold_array(
+        in_raster,
+        min_value=min_value,
+        max_value=max_value,
+        invert=invert,
+    ).astype(in_raster.dtype)
 
 
-# def truncate_filter(in_raster, min_value=False, max_value=False, dim3=False):
-#     return truncate_array(in_raster, min_value=min_value, max_value=max_value).astype(
-#         in_raster.dtype
-#     ).astype(in_raster.dtype)
+def truncate_filter(in_raster, min_value=False, max_value=False, dim3=False):
+    return truncate_array(
+        in_raster,
+        min_value=min_value,
+        max_value=max_value,
+    ).astype(in_raster.dtype)
 

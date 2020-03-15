@@ -7,7 +7,7 @@ from lib.utils_core import get_extent, translate_max_values, create_subset_dataf
 def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
                 cutline_all_touch=False, crop_to_cutline=True, cutlineWhere=None, src_nodata=None,
                 dst_nodata=None, quiet=False, align=True, band_to_clip=None,
-                calc_band_stats=False, output_format='MEM'):
+                calc_band_stats=False, scale_to_reference=False, output_format='MEM'):
     ''' Clips a raster by either a reference raster, a cutline
         or both.
 
@@ -160,9 +160,9 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         feat = layer.GetNextFeature()
         geom = feat.GetGeometryRef()
         geomType = geom.GetGeometryName()
-
+        
         acceptedTypes = ['POLYGON', 'MULTIPOLYGON']
-        if geomType != acceptedTypes:
+        if geomType not in acceptedTypes:
             raise RuntimeError("Only polygons or multipolygons are support as cutlines.") from None
 
         # OGR has extents in different order than GDAL! minX minY maxX maxY
@@ -266,7 +266,10 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
             raise RuntimeError("The reference raster did not intersect the input raster") from None
 
         # Calculates the GeoTransform and rastersize from an extent and a geotransform
-        referenceClipTransform = create_geotransform(inputTransform, referenceIntersection)
+        if scale_to_reference == True:
+            referenceClipTransform = create_geotransform(referenceTransform, referenceIntersection)
+        else:
+            referenceClipTransform = create_geotransform(inputTransform, referenceIntersection)
 
         referenceIntersection = None
 
