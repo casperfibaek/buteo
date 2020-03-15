@@ -1,14 +1,11 @@
 import multiprocessing
 import queue
-import psutil
 import signal
 import subprocess
 
 
-
 ### Functions to enable command line interface with multiprocessing, allowing for KeyboardInterrupt etc.
 
-## Used in sen2mosaic and sen1mosaic preprocessing steps
 
 def _do_work(job_queue, partial_func, counter=None):
     """
@@ -79,12 +76,6 @@ def runWorkers(partial_func, n_processes, jobs):
     except KeyboardInterrupt:
         for worker in workers:
             print('Keyboard interrupt (ctrl-c) detected. Exiting all processes.')
-            # This is an impolite way to kill sen2cor, but it otherwise does not listen.
-            parent = psutil.Process(worker.pid)
-            children = parent.children(recursive=True)
-            parent.send_signal(signal.SIGKILL)
-            for process in children:
-                process.send_signal(signal.SIGKILL)
             worker.terminate()
             worker.join()
             

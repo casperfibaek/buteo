@@ -1,10 +1,8 @@
-
-
 import datetime
 import glob
 import numpy as np
 import os
-from osgeo import gdal, gdalnumeric, osr
+from osgeo import gdal, gdalnumeric, osr, ogr
 from PIL import Image, ImageDraw
 import re
 import shapefile

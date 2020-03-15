@@ -1,14 +1,10 @@
-#!/usr/bin/env python
-
 import datetime
 import numpy as np
 import os
 import subprocess
 
-import pdb
-
 import sen1mosaic.IO
-import sen2mosaic.IO
+
 
 #########################
 ### Private functions ###
@@ -92,6 +88,7 @@ def _generateDataArray(scenes, pol, md_dest, output_dir = os.getcwd(), output_na
         
         if verbose: print('    Adding pixels from %s'%scene.filename.split('/')[-1])
         
+        last_date = None
         
         # Update output arrays if we're finished with the previous date. Skip on first iteration as there's no data yet.
         if n != 0:
@@ -141,10 +138,10 @@ def _generateDataArray(scenes, pol, md_dest, output_dir = os.getcwd(), output_na
     filename = '%s/%s_%s_%s_R%sm.tif'%(output_dir, output_name, '%s', pol, str(md_dest.res))
     
     # Output files (mean, stdev, max, min)
-    ds_out = sen2mosaic.IO.createGdalDataset(md_dest, data_out = data_mean, filename = filename%'mean', driver='GTiff', dtype = 6, options = ['COMPRESS=LZW'])
-    ds_out = sen2mosaic.IO.createGdalDataset(md_dest, data_out = data_std, filename = filename%'stdev', driver='GTiff', dtype = 6, options = ['COMPRESS=LZW'])    
-    ds_out = sen2mosaic.IO.createGdalDataset(md_dest, data_out = data_max, filename = filename%'max', driver='GTiff', dtype = 6, options = ['COMPRESS=LZW'])
-    ds_out = sen2mosaic.IO.createGdalDataset(md_dest, data_out = data_min, filename = filename%'min', driver='GTiff', dtype = 6, options = ['COMPRESS=LZW'])
+    ds_out = sen1mosaic.IO.createGdalDataset(md_dest, data_out = data_mean, filename = filename%'mean', driver='GTiff', dtype = 6, options = ['COMPRESS=LZW'])
+    ds_out = sen1mosaic.IO.createGdalDataset(md_dest, data_out = data_std, filename = filename%'stdev', driver='GTiff', dtype = 6, options = ['COMPRESS=LZW'])    
+    ds_out = sen1mosaic.IO.createGdalDataset(md_dest, data_out = data_max, filename = filename%'max', driver='GTiff', dtype = 6, options = ['COMPRESS=LZW'])
+    ds_out = sen1mosaic.IO.createGdalDataset(md_dest, data_out = data_min, filename = filename%'min', driver='GTiff', dtype = 6, options = ['COMPRESS=LZW'])
 
     return filename
 
@@ -209,7 +206,7 @@ def buildVVVH(VV_file, VH_file, md, output_dir = os.getcwd(), output_name = 'S1_
     res = str(int(round(ds_VV.GetGeoTransform()[1])))
     filename = '%s/%s_%s_VVVH_R%sm.tif'%(output_dir, output_name, 'mean', res)
     
-    ds_out = sen2mosaic.IO.createGdalDataset(md, data_out = VV_VH, filename = filename, driver='GTiff', dtype = 6, options = ['COMPRESS=LZW'])
+    ds_out = sen1mosaic.IO.createGdalDataset(md, data_out = VV_VH, filename = filename, driver='GTiff', dtype = 6, options = ['COMPRESS=LZW'])
             
     return filename
 
@@ -241,5 +238,5 @@ if __name__ == '__main__':
     '''
     '''
         
-    print('The sen1mosaic command line interface has been moved! Please use scripts in .../sen1mosaic/cli/ to operate sen2mosaic from the command line.')
+    print('The sen1mosaic command line interface has been moved! Please use scripts in .../sen1mosaic/cli/ to operate sen1mosaic from the command line.')
     

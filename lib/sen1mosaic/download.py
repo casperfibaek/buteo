@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import argparse
 import datetime
 import glob
@@ -9,6 +7,11 @@ import pandas
 import time
 
 import pdb
+
+
+# Let API be accessed by other functions
+global scihub_api
+scihub_api = None
 
 
 #################################################
@@ -25,10 +28,7 @@ def connectToAPI(username, password):
     '''
     
     import sentinelsat
-    
-    # Let API be accessed by other functions
-    global scihub_api
-    
+      
     # Connect to Sentinel API
     scihub_api = sentinelsat.SentinelAPI(username, password, 'https://scihub.copernicus.eu/dhus')
     

@@ -6,7 +6,106 @@ from osgeo import gdal, osr
 
 import sen1mosaic.IO
 import sen1mosaic.preprocess
-import sen2mosaic.core
+
+
+##################################################
+### Class containing geospatial image metadata ###
+##################################################
+
+class Metadata(object):
+    '''
+    This is a generic metadata class for Geospatial data
+    '''
+    
+    def __init__(self, extent, res, EPSG):
+        '''
+        Args:
+            extent: A list in the form [xmin, ymin, xmax, ymax]
+            res: Pixel resolution
+            EPSG: The EPSG code of the desired resolution
+        '''
+           
+        
+        # Define projection from EPSG code
+        self.EPSG_code = EPSG
+        
+        # Define resolution
+        self.res = res
+        
+        self.xres = float(res)
+        self.yres = float(-res)
+        
+        # Define image extent data
+        self.extent = self.__getExtent(extent)
+        
+        self.ulx = float(extent[0])
+        self.lry = float(extent[1])
+        self.lrx = float(extent[2])
+        self.uly = float(extent[3])
+        
+        # Get projection
+        self.proj = self.__getProjection()
+                
+        # Calculate array size
+        self.nrows = self.__getNRows()
+        self.ncols = self.__getNCols()
+        
+        # Define gdal geotransform (Affine)
+        self.geo_t = self.__getGeoT()
+        
+    def __getExtent(self, extent):
+        '''
+        '''
+        
+        assert len(extent) == 4, "Extent must be specified in the format [xmin, ymin, xmax, ymax]"
+        assert extent[0] < extent[2], "Extent incorrectly specified: xmin must be lower than xmax."
+        assert extent[1] < extent[3], "Extent incorrectly specified: ymin must be lower than ymax."
+        
+        return extent
+        
+    def __getProjection(self):
+        '''
+        '''
+                
+        # Get GDAL projection string
+        proj = osr.SpatialReference()
+        proj.ImportFromEPSG(self.EPSG_code)
+        
+        return proj
+    
+    def __getNRows(self):
+        '''
+        '''
+        
+        return int(round((self.lry - self.uly) / self.yres))
+    
+    def __getNCols(self):
+        '''
+        '''
+        
+        return int(round((self.lrx - self.ulx) / self.xres))
+    
+    def __getGeoT(self):
+        '''
+        '''
+        
+        geo_t = (self.ulx, self.xres, 0, self.uly, 0, self.yres)
+        
+        return geo_t
+    
+    def createBlankArray(self, dtype = np.uint16):
+        '''
+        Create a blank array with the extent of the Metadata class.
+            
+        Args:
+            dtype: Data type from numpy, defaults to np.uint16.
+            
+        Returns:
+            A numpy array sized to match the specification of the utilities.Metadata() class.
+        '''
+        
+        return np.zeros((self.nrows, self.ncols), dtype = dtype)
+
 
 
 #########################################
@@ -41,7 +140,7 @@ class LoadScene(object):
         self.__getMetadata()
         
         # Define source metadata
-        self.metadata = sen2mosaic.core.Metadata(self.extent, self.resolution, self.EPSG)
+        self.metadata = Metadata(self.extent, self.resolution, self.EPSG)
         
         
     def __checkFilename(self, filename):

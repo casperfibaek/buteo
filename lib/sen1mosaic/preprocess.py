@@ -176,14 +176,14 @@ def calibrateGraph(infile, temp_dir = os.getcwd(), short_chain = False, noorbit 
     
     if short_chain:
         if noorbit:
-            xmlfile = os.path.join(os.path.dirname(__file__), '../cfg/1_calibrate_noorbit_short.xml')
+            xmlfile = os.path.join(os.path.dirname(__file__), './graphs/1_calibrate_noorbit_short.xml')
         else:
-            xmlfile = os.path.join(os.path.dirname(__file__), '../cfg/1_calibrate_short.xml')
+            xmlfile = os.path.join(os.path.dirname(__file__), './graphs/1_calibrate_short.xml')
     else:
         if noorbit:
-            xmlfile = os.path.join(os.path.dirname(__file__), '../cfg/1_calibrate_noorbit.xml')
+            xmlfile = os.path.join(os.path.dirname(__file__), './graphs/1_calibrate_noorbit.xml')
         else:
-            xmlfile = os.path.join(os.path.dirname(__file__), '../cfg/1_calibrate.xml')        
+            xmlfile = os.path.join(os.path.dirname(__file__), './graphs/1_calibrate.xml')        
 
     # Prepare command
     command = [gpt, xmlfile, '-x', '-Pinputfile=%s'%infile, '-Poutputfile=%s'%outfile]
@@ -227,7 +227,7 @@ def multilookGraph(infiles, multilook = 2, gpt = '~/snap/bin/gpt', verbose = Fal
         # Select graph that first reassembles multiple images
         outfile = infiles[-1][:-4] + '_mtl_%st.dim'%str(len(infiles))
         
-        xmlfile = os.path.join(os.path.dirname(__file__), '../cfg/2_multilook.xml')
+        xmlfile = os.path.join(os.path.dirname(__file__), './graphs/2_multilook.xml')
         
     # And for case where only one file is input
     else:
@@ -235,7 +235,7 @@ def multilookGraph(infiles, multilook = 2, gpt = '~/snap/bin/gpt', verbose = Fal
         
         outfile = infiles[0][:-4] + '_mtl_1t.dim'
         
-        xmlfile = os.path.join(os.path.dirname(__file__), '../cfg/2_multilook_single.xml')        
+        xmlfile = os.path.join(os.path.dirname(__file__), './graphs/2_multilook_single.xml')        
     
     # Prepare command
     command = [gpt, xmlfile, '-x', '-Pinputfiles=%s'%infiles_formatted, '-Poutputfile=%s'%outfile, '-Pmultilook=%s'%str(multilook)]
@@ -338,7 +338,7 @@ def correctionGraph(infile, outfile, output_dir = os.getcwd(), multilook = 2, sp
     # Get extent of input file (for edge correction)
     extent = _getExtent(infile, multilook = multilook)
     
-    xmlfile = os.path.join(os.path.dirname(__file__), '../cfg/3_terrain_correction.xml')
+    xmlfile = os.path.join(os.path.dirname(__file__), './graphs/3_terrain_correction.xml')
     
     if output_units == 'decibels': xmlfile = xmlfile[:-4] + '_db.xml'
     if speckle_filter: xmlfile = xmlfile[:-4] + '_filter.xml'
@@ -495,11 +495,4 @@ def testCompletion(output_file, output_dir = os.getcwd()):
         failed = True
         
     return failed
-    
-
-if __name__ == '__main__':
-    '''
-    '''
-        
-    print('The sen1mosaic command line interface has been moved! Please use scripts in .../sen1mosaic/cli/ to operate sen2mosaic from the command line.')
     
