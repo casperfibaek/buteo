@@ -24,7 +24,7 @@ setup(ext_modules=cythonize(cythonize((Extension(
 
 setup(ext_modules=cythonize(cythonize((Extension(
                             "stats_local_no_kernel",
-                            sources=["stats_local.pyx"],
-                            extra_compile_args=["-Wall", "-O3", "-fopenmp", "-Ofast"],
+                            sources=["stats_local_no_kernel.pyx"],
+                            extra_compile_args=["-Wall", "-O3", "-fopenmp"],
                             extra_link_args=['-fopenmp'],
 )))))

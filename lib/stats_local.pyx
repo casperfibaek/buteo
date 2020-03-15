@@ -2,18 +2,18 @@
 cimport cython
 from cython.parallel cimport prange
 from libc.stdlib cimport malloc, free
-from libc.math cimport sqrt, pow, fabs, isnan
+from libc.math cimport sqrt, pow, fabs
 import numpy as np
-
-
-cdef extern from "stdlib.h":
-    ctypedef void const_void "const void"
-    void qsort(void *base, int nmemb, int size, int(*compar)(const_void *, const_void *)) nogil
 
 
 cdef extern from "<float.h>":
     const double DBL_MAX
     const double DBL_MIN
+
+
+cdef extern from "stdlib.h":
+    ctypedef void const_void "const void"
+    void qsort(void *base, int nmemb, int size, int(*compar)(const_void *, const_void *)) nogil
 
 
 cdef struct Neighbourhood:
@@ -35,7 +35,6 @@ cdef int compare(const_void *a, const_void *b) nogil:
     if v < 0: return -1
     if v > 0: return 1
     return 0
-
 
 cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero) nogil:
     cdef int x
@@ -273,11 +272,17 @@ cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non
 
 cdef f_type func_selector(str func_type):
     if func_type is 'mean': return neighbourhood_sum
+    elif func_type is 'avg': return neighbourhood_sum
+    elif func_type is 'average': return neighbourhood_sum
     elif func_type is 'dilate': return neighbourhood_max
     elif func_type is 'erode': return neighbourhood_min
     elif func_type is 'median': return neighbourhood_weighted_median
+    elif func_type is 'med': return neighbourhood_weighted_median
     elif func_type is 'variance': return neighbourhood_weighted_variance
+    elif func_type is 'var': return neighbourhood_weighted_variance
     elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
+    elif func_type is 'stdev': return neighbourhood_weighted_standard_deviation
+    elif func_type is 'std': return neighbourhood_weighted_standard_deviation
     elif func_type is 'q1': return neighbourhood_weighted_q1
     elif func_type is 'q3': return neighbourhood_weighted_q3
     elif func_type is 'iqr': return neighbourhood_weighted_iqr

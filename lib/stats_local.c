@@ -618,8 +618,8 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "stdlib.h"
 #include <float.h>
+#include "stdlib.h"
 #include "pythread.h"
 #include <stdio.h>
 #include "pystate.h"
@@ -1833,10 +1833,14 @@ static const char __pyx_k_np[] = "np";
 static const char __pyx_k_q1[] = "q1";
 static const char __pyx_k_q3[] = "q3";
 static const char __pyx_k_arr[] = "arr";
+static const char __pyx_k_avg[] = "avg";
 static const char __pyx_k_iqr[] = "iqr";
 static const char __pyx_k_mad[] = "mad";
+static const char __pyx_k_med[] = "med";
 static const char __pyx_k_new[] = "__new__";
 static const char __pyx_k_obj[] = "obj";
+static const char __pyx_k_std[] = "std";
+static const char __pyx_k_var[] = "var";
 static const char __pyx_k_base[] = "base";
 static const char __pyx_k_dict[] = "__dict__";
 static const char __pyx_k_dims[] = "dims";
@@ -1863,6 +1867,7 @@ static const char __pyx_k_numpy[] = "numpy";
 static const char __pyx_k_range[] = "range";
 static const char __pyx_k_shape[] = "shape";
 static const char __pyx_k_start[] = "start";
+static const char __pyx_k_stdev[] = "stdev";
 static const char __pyx_k_astype[] = "astype";
 static const char __pyx_k_dilate[] = "dilate";
 static const char __pyx_k_double[] = "double";
@@ -1880,6 +1885,7 @@ static const char __pyx_k_skew_g[] = "skew_g";
 static const char __pyx_k_struct[] = "struct";
 static const char __pyx_k_unpack[] = "unpack";
 static const char __pyx_k_update[] = "update";
+static const char __pyx_k_average[] = "average";
 static const char __pyx_k_float32[] = "float32";
 static const char __pyx_k_fortran[] = "fortran";
 static const char __pyx_k_mad_std[] = "mad_std";
@@ -1986,6 +1992,8 @@ static PyObject *__pyx_n_s_arr_view_2d;
 static PyObject *__pyx_n_s_arr_view_3d;
 static PyObject *__pyx_n_s_array;
 static PyObject *__pyx_n_s_astype;
+static PyObject *__pyx_n_u_average;
+static PyObject *__pyx_n_u_avg;
 static PyObject *__pyx_n_s_base;
 static PyObject *__pyx_n_s_c;
 static PyObject *__pyx_n_u_c;
@@ -2031,6 +2039,7 @@ static PyObject *__pyx_n_u_mad_std;
 static PyObject *__pyx_n_s_main;
 static PyObject *__pyx_n_s_masked_where;
 static PyObject *__pyx_n_u_mean;
+static PyObject *__pyx_n_u_med;
 static PyObject *__pyx_n_u_median;
 static PyObject *__pyx_n_s_memview;
 static PyObject *__pyx_n_s_mode;
@@ -2072,6 +2081,8 @@ static PyObject *__pyx_n_u_standard_deviation;
 static PyObject *__pyx_n_s_start;
 static PyObject *__pyx_n_s_stats_local;
 static PyObject *__pyx_kp_s_stats_local_pyx;
+static PyObject *__pyx_n_u_std;
+static PyObject *__pyx_n_u_stdev;
 static PyObject *__pyx_n_s_step;
 static PyObject *__pyx_n_s_stop;
 static PyObject *__pyx_kp_s_strided_and_direct;
@@ -2084,6 +2095,7 @@ static PyObject *__pyx_kp_s_unable_to_allocate_array_data;
 static PyObject *__pyx_kp_s_unable_to_allocate_shape_and_str;
 static PyObject *__pyx_n_s_unpack;
 static PyObject *__pyx_n_s_update;
+static PyObject *__pyx_n_u_var;
 static PyObject *__pyx_n_u_variance;
 static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_arr, PyObject *__pyx_v_kernel, PyObject *__pyx_v_func_type, PyObject *__pyx_v_dtype); /* proto */
 static int __pyx_array___pyx_pf_15View_dot_MemoryView_5array___cinit__(struct __pyx_array_obj *__pyx_v_self, PyObject *__pyx_v_shape, Py_ssize_t __pyx_v_itemsize, PyObject *__pyx_v_format, PyObject *__pyx_v_mode, int __pyx_v_allocate_buffer); /* proto */
@@ -2219,7 +2231,7 @@ static int __pyx_f_11stats_local_compare(const void *__pyx_v_a, const void *__py
  *     if v > 0: return 1
  *     return 0             # <<<<<<<<<<<<<<
  * 
- * 
+ * cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero) nogil:
  */
   __pyx_r = 0;
   goto __pyx_L0;
@@ -2237,8 +2249,8 @@ static int __pyx_f_11stats_local_compare(const void *__pyx_v_a, const void *__py
   return __pyx_r;
 }
 
-/* "stats_local.pyx":40
- * 
+/* "stats_local.pyx":39
+ *     return 0
  * 
  * cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
  *     cdef int x
@@ -2253,7 +2265,7 @@ static double __pyx_f_11stats_local_neighbourhood_sum(struct __pyx_t_11stats_loc
   int __pyx_t_2;
   int __pyx_t_3;
 
-  /* "stats_local.pyx":44
+  /* "stats_local.pyx":43
  *     cdef double accum
  * 
  *     accum = 0             # <<<<<<<<<<<<<<
@@ -2262,7 +2274,7 @@ static double __pyx_f_11stats_local_neighbourhood_sum(struct __pyx_t_11stats_loc
  */
   __pyx_v_accum = 0.0;
 
-  /* "stats_local.pyx":45
+  /* "stats_local.pyx":44
  * 
  *     accum = 0
  *     for x in range(non_zero):             # <<<<<<<<<<<<<<
@@ -2274,7 +2286,7 @@ static double __pyx_f_11stats_local_neighbourhood_sum(struct __pyx_t_11stats_loc
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_x = __pyx_t_3;
 
-    /* "stats_local.pyx":46
+    /* "stats_local.pyx":45
  *     accum = 0
  *     for x in range(non_zero):
  *         accum += neighbourhood[x].value * neighbourhood[x].weight             # <<<<<<<<<<<<<<
@@ -2284,7 +2296,7 @@ static double __pyx_f_11stats_local_neighbourhood_sum(struct __pyx_t_11stats_loc
     __pyx_v_accum = (__pyx_v_accum + ((__pyx_v_neighbourhood[__pyx_v_x]).value * (__pyx_v_neighbourhood[__pyx_v_x]).weight));
   }
 
-  /* "stats_local.pyx":48
+  /* "stats_local.pyx":47
  *         accum += neighbourhood[x].value * neighbourhood[x].weight
  * 
  *     return accum             # <<<<<<<<<<<<<<
@@ -2294,8 +2306,8 @@ static double __pyx_f_11stats_local_neighbourhood_sum(struct __pyx_t_11stats_loc
   __pyx_r = __pyx_v_accum;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":40
- * 
+  /* "stats_local.pyx":39
+ *     return 0
  * 
  * cdef double neighbourhood_sum(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
  *     cdef int x
@@ -2307,7 +2319,7 @@ static double __pyx_f_11stats_local_neighbourhood_sum(struct __pyx_t_11stats_loc
   return __pyx_r;
 }
 
-/* "stats_local.pyx":51
+/* "stats_local.pyx":50
  * 
  * 
  * cdef double neighbourhood_weight_sum(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -2323,7 +2335,7 @@ static double __pyx_f_11stats_local_neighbourhood_weight_sum(struct __pyx_t_11st
   int __pyx_t_2;
   int __pyx_t_3;
 
-  /* "stats_local.pyx":55
+  /* "stats_local.pyx":54
  *     cdef double accum
  * 
  *     accum = 0             # <<<<<<<<<<<<<<
@@ -2332,7 +2344,7 @@ static double __pyx_f_11stats_local_neighbourhood_weight_sum(struct __pyx_t_11st
  */
   __pyx_v_accum = 0.0;
 
-  /* "stats_local.pyx":56
+  /* "stats_local.pyx":55
  * 
  *     accum = 0
  *     for x in range(non_zero):             # <<<<<<<<<<<<<<
@@ -2344,7 +2356,7 @@ static double __pyx_f_11stats_local_neighbourhood_weight_sum(struct __pyx_t_11st
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_x = __pyx_t_3;
 
-    /* "stats_local.pyx":57
+    /* "stats_local.pyx":56
  *     accum = 0
  *     for x in range(non_zero):
  *         accum += neighbourhood[x].weight             # <<<<<<<<<<<<<<
@@ -2354,7 +2366,7 @@ static double __pyx_f_11stats_local_neighbourhood_weight_sum(struct __pyx_t_11st
     __pyx_v_accum = (__pyx_v_accum + (__pyx_v_neighbourhood[__pyx_v_x]).weight);
   }
 
-  /* "stats_local.pyx":59
+  /* "stats_local.pyx":58
  *         accum += neighbourhood[x].weight
  * 
  *     return accum             # <<<<<<<<<<<<<<
@@ -2364,7 +2376,7 @@ static double __pyx_f_11stats_local_neighbourhood_weight_sum(struct __pyx_t_11st
   __pyx_r = __pyx_v_accum;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":51
+  /* "stats_local.pyx":50
  * 
  * 
  * cdef double neighbourhood_weight_sum(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -2377,7 +2389,7 @@ static double __pyx_f_11stats_local_neighbourhood_weight_sum(struct __pyx_t_11st
   return __pyx_r;
 }
 
-/* "stats_local.pyx":62
+/* "stats_local.pyx":61
  * 
  * 
  * cdef void normalise_neighbourhood(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -2392,7 +2404,7 @@ static void __pyx_f_11stats_local_normalise_neighbourhood(struct __pyx_t_11stats
   int __pyx_t_2;
   int __pyx_t_3;
 
-  /* "stats_local.pyx":64
+  /* "stats_local.pyx":63
  * cdef void normalise_neighbourhood(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef int x
  *     cdef double sum_of_weights = neighbourhood_weight_sum(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -2401,7 +2413,7 @@ static void __pyx_f_11stats_local_normalise_neighbourhood(struct __pyx_t_11stats
  */
   __pyx_v_sum_of_weights = __pyx_f_11stats_local_neighbourhood_weight_sum(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":66
+  /* "stats_local.pyx":65
  *     cdef double sum_of_weights = neighbourhood_weight_sum(neighbourhood, non_zero)
  * 
  *     for x in range(non_zero):             # <<<<<<<<<<<<<<
@@ -2413,7 +2425,7 @@ static void __pyx_f_11stats_local_normalise_neighbourhood(struct __pyx_t_11stats
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_x = __pyx_t_3;
 
-    /* "stats_local.pyx":67
+    /* "stats_local.pyx":66
  * 
  *     for x in range(non_zero):
  *         neighbourhood[x].weight = neighbourhood[x].weight /sum_of_weights             # <<<<<<<<<<<<<<
@@ -2423,7 +2435,7 @@ static void __pyx_f_11stats_local_normalise_neighbourhood(struct __pyx_t_11stats
     (__pyx_v_neighbourhood[__pyx_v_x]).weight = ((__pyx_v_neighbourhood[__pyx_v_x]).weight / __pyx_v_sum_of_weights);
   }
 
-  /* "stats_local.pyx":62
+  /* "stats_local.pyx":61
  * 
  * 
  * cdef void normalise_neighbourhood(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -2434,7 +2446,7 @@ static void __pyx_f_11stats_local_normalise_neighbourhood(struct __pyx_t_11stats
   /* function exit code */
 }
 
-/* "stats_local.pyx":70
+/* "stats_local.pyx":69
  * 
  * 
  * cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int non_zero, double quintile) nogil:             # <<<<<<<<<<<<<<
@@ -2459,7 +2471,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
   int __pyx_t_5;
   int __pyx_t_6;
 
-  /* "stats_local.pyx":74
+  /* "stats_local.pyx":73
  *     cdef int i
  * 
  *     cdef double sum_of_weights = neighbourhood_weight_sum(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -2468,7 +2480,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
   __pyx_v_sum_of_weights = __pyx_f_11stats_local_neighbourhood_weight_sum(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":75
+  /* "stats_local.pyx":74
  * 
  *     cdef double sum_of_weights = neighbourhood_weight_sum(neighbourhood, non_zero)
  *     cdef double cumsum = 0             # <<<<<<<<<<<<<<
@@ -2477,7 +2489,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
   __pyx_v_cumsum = 0.0;
 
-  /* "stats_local.pyx":76
+  /* "stats_local.pyx":75
  *     cdef double sum_of_weights = neighbourhood_weight_sum(neighbourhood, non_zero)
  *     cdef double cumsum = 0
  *     cdef double* w_cum = <double*> malloc(sizeof(double) * non_zero)             # <<<<<<<<<<<<<<
@@ -2486,7 +2498,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
   __pyx_v_w_cum = ((double *)malloc(((sizeof(double)) * __pyx_v_non_zero)));
 
-  /* "stats_local.pyx":78
+  /* "stats_local.pyx":77
  *     cdef double* w_cum = <double*> malloc(sizeof(double) * non_zero)
  * 
  *     qsort(<void *> neighbourhood, non_zero, sizeof(Neighbourhood), compare)             # <<<<<<<<<<<<<<
@@ -2495,7 +2507,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
   qsort(((void *)__pyx_v_neighbourhood), __pyx_v_non_zero, (sizeof(struct __pyx_t_11stats_local_Neighbourhood)), __pyx_f_11stats_local_compare);
 
-  /* "stats_local.pyx":80
+  /* "stats_local.pyx":79
  *     qsort(<void *> neighbourhood, non_zero, sizeof(Neighbourhood), compare)
  * 
  *     weighted_quantile = neighbourhood[non_zero - 1].value             # <<<<<<<<<<<<<<
@@ -2505,7 +2517,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
   __pyx_t_1 = (__pyx_v_neighbourhood[(__pyx_v_non_zero - 1)]).value;
   __pyx_v_weighted_quantile = __pyx_t_1;
 
-  /* "stats_local.pyx":81
+  /* "stats_local.pyx":80
  * 
  *     weighted_quantile = neighbourhood[non_zero - 1].value
  *     for i in range(non_zero):             # <<<<<<<<<<<<<<
@@ -2517,7 +2529,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
   for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_i = __pyx_t_4;
 
-    /* "stats_local.pyx":82
+    /* "stats_local.pyx":81
  *     weighted_quantile = neighbourhood[non_zero - 1].value
  *     for i in range(non_zero):
  *         cumsum += neighbourhood[i].weight             # <<<<<<<<<<<<<<
@@ -2526,7 +2538,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
     __pyx_v_cumsum = (__pyx_v_cumsum + (__pyx_v_neighbourhood[__pyx_v_i]).weight);
 
-    /* "stats_local.pyx":83
+    /* "stats_local.pyx":82
  *     for i in range(non_zero):
  *         cumsum += neighbourhood[i].weight
  *         w_cum[i] = (cumsum - (quintile * neighbourhood[i].weight)) / sum_of_weights             # <<<<<<<<<<<<<<
@@ -2535,7 +2547,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
     (__pyx_v_w_cum[__pyx_v_i]) = ((__pyx_v_cumsum - (__pyx_v_quintile * (__pyx_v_neighbourhood[__pyx_v_i]).weight)) / __pyx_v_sum_of_weights);
 
-    /* "stats_local.pyx":85
+    /* "stats_local.pyx":84
  *         w_cum[i] = (cumsum - (quintile * neighbourhood[i].weight)) / sum_of_weights
  * 
  *         if cumsum >= quintile:             # <<<<<<<<<<<<<<
@@ -2545,7 +2557,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
     __pyx_t_5 = ((__pyx_v_cumsum >= __pyx_v_quintile) != 0);
     if (__pyx_t_5) {
 
-      /* "stats_local.pyx":86
+      /* "stats_local.pyx":85
  * 
  *         if cumsum >= quintile:
  *             if i == 0 or w_cum[i] == quintile:             # <<<<<<<<<<<<<<
@@ -2563,7 +2575,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
       __pyx_L7_bool_binop_done:;
       if (__pyx_t_5) {
 
-        /* "stats_local.pyx":87
+        /* "stats_local.pyx":86
  *         if cumsum >= quintile:
  *             if i == 0 or w_cum[i] == quintile:
  *                 weighted_quantile = neighbourhood[i].value             # <<<<<<<<<<<<<<
@@ -2573,7 +2585,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
         __pyx_t_1 = (__pyx_v_neighbourhood[__pyx_v_i]).value;
         __pyx_v_weighted_quantile = __pyx_t_1;
 
-        /* "stats_local.pyx":88
+        /* "stats_local.pyx":87
  *             if i == 0 or w_cum[i] == quintile:
  *                 weighted_quantile = neighbourhood[i].value
  *                 break             # <<<<<<<<<<<<<<
@@ -2582,7 +2594,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
         goto __pyx_L4_break;
 
-        /* "stats_local.pyx":86
+        /* "stats_local.pyx":85
  * 
  *         if cumsum >= quintile:
  *             if i == 0 or w_cum[i] == quintile:             # <<<<<<<<<<<<<<
@@ -2591,7 +2603,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
       }
 
-      /* "stats_local.pyx":90
+      /* "stats_local.pyx":89
  *                 break
  * 
  *             top = w_cum[i] - quintile             # <<<<<<<<<<<<<<
@@ -2600,7 +2612,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
       __pyx_v_top = ((__pyx_v_w_cum[__pyx_v_i]) - __pyx_v_quintile);
 
-      /* "stats_local.pyx":91
+      /* "stats_local.pyx":90
  * 
  *             top = w_cum[i] - quintile
  *             bot = quintile - w_cum[i - 1]             # <<<<<<<<<<<<<<
@@ -2609,7 +2621,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
       __pyx_v_bot = (__pyx_v_quintile - (__pyx_v_w_cum[(__pyx_v_i - 1)]));
 
-      /* "stats_local.pyx":92
+      /* "stats_local.pyx":91
  *             top = w_cum[i] - quintile
  *             bot = quintile - w_cum[i - 1]
  *             tb = top + bot             # <<<<<<<<<<<<<<
@@ -2618,7 +2630,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
       __pyx_v_tb = (__pyx_v_top + __pyx_v_bot);
 
-      /* "stats_local.pyx":94
+      /* "stats_local.pyx":93
  *             tb = top + bot
  * 
  *             top = 1 - (top / tb)             # <<<<<<<<<<<<<<
@@ -2627,7 +2639,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
       __pyx_v_top = (1.0 - (__pyx_v_top / __pyx_v_tb));
 
-      /* "stats_local.pyx":95
+      /* "stats_local.pyx":94
  * 
  *             top = 1 - (top / tb)
  *             bot = 1 - (bot / tb)             # <<<<<<<<<<<<<<
@@ -2636,7 +2648,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
       __pyx_v_bot = (1.0 - (__pyx_v_bot / __pyx_v_tb));
 
-      /* "stats_local.pyx":97
+      /* "stats_local.pyx":96
  *             bot = 1 - (bot / tb)
  * 
  *             weighted_quantile = (neighbourhood[i - 1].value * bot) + (neighbourhood[i].value * top)             # <<<<<<<<<<<<<<
@@ -2645,7 +2657,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
       __pyx_v_weighted_quantile = (((__pyx_v_neighbourhood[(__pyx_v_i - 1)]).value * __pyx_v_bot) + ((__pyx_v_neighbourhood[__pyx_v_i]).value * __pyx_v_top));
 
-      /* "stats_local.pyx":98
+      /* "stats_local.pyx":97
  * 
  *             weighted_quantile = (neighbourhood[i - 1].value * bot) + (neighbourhood[i].value * top)
  *             break             # <<<<<<<<<<<<<<
@@ -2654,7 +2666,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
       goto __pyx_L4_break;
 
-      /* "stats_local.pyx":85
+      /* "stats_local.pyx":84
  *         w_cum[i] = (cumsum - (quintile * neighbourhood[i].weight)) / sum_of_weights
  * 
  *         if cumsum >= quintile:             # <<<<<<<<<<<<<<
@@ -2665,7 +2677,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
   }
   __pyx_L4_break:;
 
-  /* "stats_local.pyx":100
+  /* "stats_local.pyx":99
  *             break
  * 
  *     free(w_cum)             # <<<<<<<<<<<<<<
@@ -2674,7 +2686,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
  */
   free(__pyx_v_w_cum);
 
-  /* "stats_local.pyx":101
+  /* "stats_local.pyx":100
  * 
  *     free(w_cum)
  *     return weighted_quantile             # <<<<<<<<<<<<<<
@@ -2684,7 +2696,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
   __pyx_r = __pyx_v_weighted_quantile;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":70
+  /* "stats_local.pyx":69
  * 
  * 
  * cdef double neighbourhood_weighted_quintile(Neighbourhood * neighbourhood, int non_zero, double quintile) nogil:             # <<<<<<<<<<<<<<
@@ -2697,7 +2709,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_quintile(struct __pyx
   return __pyx_r;
 }
 
-/* "stats_local.pyx":104
+/* "stats_local.pyx":103
  * 
  * 
  * cdef double neighbourhood_max(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -2716,7 +2728,7 @@ static double __pyx_f_11stats_local_neighbourhood_max(struct __pyx_t_11stats_loc
   int __pyx_t_3;
   int __pyx_t_4;
 
-  /* "stats_local.pyx":108
+  /* "stats_local.pyx":107
  *     cdef double current_max, val
  * 
  *     current_max = neighbourhood[0].value * neighbourhood[0].weight             # <<<<<<<<<<<<<<
@@ -2725,7 +2737,7 @@ static double __pyx_f_11stats_local_neighbourhood_max(struct __pyx_t_11stats_loc
  */
   __pyx_v_current_max = ((__pyx_v_neighbourhood[0]).value * (__pyx_v_neighbourhood[0]).weight);
 
-  /* "stats_local.pyx":109
+  /* "stats_local.pyx":108
  * 
  *     current_max = neighbourhood[0].value * neighbourhood[0].weight
  *     current_max_i = 0             # <<<<<<<<<<<<<<
@@ -2734,7 +2746,7 @@ static double __pyx_f_11stats_local_neighbourhood_max(struct __pyx_t_11stats_loc
  */
   __pyx_v_current_max_i = 0;
 
-  /* "stats_local.pyx":110
+  /* "stats_local.pyx":109
  *     current_max = neighbourhood[0].value * neighbourhood[0].weight
  *     current_max_i = 0
  *     for x in range(non_zero):             # <<<<<<<<<<<<<<
@@ -2746,7 +2758,7 @@ static double __pyx_f_11stats_local_neighbourhood_max(struct __pyx_t_11stats_loc
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_x = __pyx_t_3;
 
-    /* "stats_local.pyx":111
+    /* "stats_local.pyx":110
  *     current_max_i = 0
  *     for x in range(non_zero):
  *         val = neighbourhood[x].value * neighbourhood[x].weight             # <<<<<<<<<<<<<<
@@ -2755,7 +2767,7 @@ static double __pyx_f_11stats_local_neighbourhood_max(struct __pyx_t_11stats_loc
  */
     __pyx_v_val = ((__pyx_v_neighbourhood[__pyx_v_x]).value * (__pyx_v_neighbourhood[__pyx_v_x]).weight);
 
-    /* "stats_local.pyx":112
+    /* "stats_local.pyx":111
  *     for x in range(non_zero):
  *         val = neighbourhood[x].value * neighbourhood[x].weight
  *         if val > current_max:             # <<<<<<<<<<<<<<
@@ -2765,7 +2777,7 @@ static double __pyx_f_11stats_local_neighbourhood_max(struct __pyx_t_11stats_loc
     __pyx_t_4 = ((__pyx_v_val > __pyx_v_current_max) != 0);
     if (__pyx_t_4) {
 
-      /* "stats_local.pyx":113
+      /* "stats_local.pyx":112
  *         val = neighbourhood[x].value * neighbourhood[x].weight
  *         if val > current_max:
  *             current_max = val             # <<<<<<<<<<<<<<
@@ -2774,7 +2786,7 @@ static double __pyx_f_11stats_local_neighbourhood_max(struct __pyx_t_11stats_loc
  */
       __pyx_v_current_max = __pyx_v_val;
 
-      /* "stats_local.pyx":114
+      /* "stats_local.pyx":113
  *         if val > current_max:
  *             current_max = val
  *             current_max_i = x             # <<<<<<<<<<<<<<
@@ -2783,7 +2795,7 @@ static double __pyx_f_11stats_local_neighbourhood_max(struct __pyx_t_11stats_loc
  */
       __pyx_v_current_max_i = __pyx_v_x;
 
-      /* "stats_local.pyx":112
+      /* "stats_local.pyx":111
  *     for x in range(non_zero):
  *         val = neighbourhood[x].value * neighbourhood[x].weight
  *         if val > current_max:             # <<<<<<<<<<<<<<
@@ -2793,7 +2805,7 @@ static double __pyx_f_11stats_local_neighbourhood_max(struct __pyx_t_11stats_loc
     }
   }
 
-  /* "stats_local.pyx":116
+  /* "stats_local.pyx":115
  *             current_max_i = x
  * 
  *     return neighbourhood[current_max_i].value * neighbourhood[current_max_i].weight             # <<<<<<<<<<<<<<
@@ -2803,7 +2815,7 @@ static double __pyx_f_11stats_local_neighbourhood_max(struct __pyx_t_11stats_loc
   __pyx_r = ((__pyx_v_neighbourhood[__pyx_v_current_max_i]).value * (__pyx_v_neighbourhood[__pyx_v_current_max_i]).weight);
   goto __pyx_L0;
 
-  /* "stats_local.pyx":104
+  /* "stats_local.pyx":103
  * 
  * 
  * cdef double neighbourhood_max(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -2816,7 +2828,7 @@ static double __pyx_f_11stats_local_neighbourhood_max(struct __pyx_t_11stats_loc
   return __pyx_r;
 }
 
-/* "stats_local.pyx":119
+/* "stats_local.pyx":118
  * 
  * 
  * cdef double neighbourhood_min(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -2835,7 +2847,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
   int __pyx_t_3;
   int __pyx_t_4;
 
-  /* "stats_local.pyx":123
+  /* "stats_local.pyx":122
  *     cdef double current_min
  * 
  *     current_min = DBL_MAX             # <<<<<<<<<<<<<<
@@ -2844,7 +2856,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
  */
   __pyx_v_current_min = DBL_MAX;
 
-  /* "stats_local.pyx":125
+  /* "stats_local.pyx":124
  *     current_min = DBL_MAX
  * 
  *     if neighbourhood[0].weight != 0:             # <<<<<<<<<<<<<<
@@ -2854,7 +2866,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
   __pyx_t_1 = (((__pyx_v_neighbourhood[0]).weight != 0.0) != 0);
   if (__pyx_t_1) {
 
-    /* "stats_local.pyx":126
+    /* "stats_local.pyx":125
  * 
  *     if neighbourhood[0].weight != 0:
  *         current_min = neighbourhood[0].value / neighbourhood[0].weight             # <<<<<<<<<<<<<<
@@ -2863,7 +2875,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
  */
     __pyx_v_current_min = ((__pyx_v_neighbourhood[0]).value / (__pyx_v_neighbourhood[0]).weight);
 
-    /* "stats_local.pyx":125
+    /* "stats_local.pyx":124
  *     current_min = DBL_MAX
  * 
  *     if neighbourhood[0].weight != 0:             # <<<<<<<<<<<<<<
@@ -2872,7 +2884,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
  */
   }
 
-  /* "stats_local.pyx":128
+  /* "stats_local.pyx":127
  *         current_min = neighbourhood[0].value / neighbourhood[0].weight
  * 
  *     current_min_i = 0             # <<<<<<<<<<<<<<
@@ -2881,7 +2893,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
  */
   __pyx_v_current_min_i = 0;
 
-  /* "stats_local.pyx":129
+  /* "stats_local.pyx":128
  * 
  *     current_min_i = 0
  *     for x in range(non_zero):             # <<<<<<<<<<<<<<
@@ -2893,7 +2905,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
   for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_x = __pyx_t_4;
 
-    /* "stats_local.pyx":130
+    /* "stats_local.pyx":129
  *     current_min_i = 0
  *     for x in range(non_zero):
  *         if current_min != 0:             # <<<<<<<<<<<<<<
@@ -2903,7 +2915,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
     __pyx_t_1 = ((__pyx_v_current_min != 0.0) != 0);
     if (__pyx_t_1) {
 
-      /* "stats_local.pyx":131
+      /* "stats_local.pyx":130
  *     for x in range(non_zero):
  *         if current_min != 0:
  *             val = neighbourhood[x].value / neighbourhood[x].weight             # <<<<<<<<<<<<<<
@@ -2912,7 +2924,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
  */
       __pyx_v_val = ((__pyx_v_neighbourhood[__pyx_v_x]).value / (__pyx_v_neighbourhood[__pyx_v_x]).weight);
 
-      /* "stats_local.pyx":132
+      /* "stats_local.pyx":131
  *         if current_min != 0:
  *             val = neighbourhood[x].value / neighbourhood[x].weight
  *             if val < current_min:             # <<<<<<<<<<<<<<
@@ -2922,7 +2934,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
       __pyx_t_1 = ((__pyx_v_val < __pyx_v_current_min) != 0);
       if (__pyx_t_1) {
 
-        /* "stats_local.pyx":133
+        /* "stats_local.pyx":132
  *             val = neighbourhood[x].value / neighbourhood[x].weight
  *             if val < current_min:
  *                 current_min = val             # <<<<<<<<<<<<<<
@@ -2931,7 +2943,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
  */
         __pyx_v_current_min = __pyx_v_val;
 
-        /* "stats_local.pyx":134
+        /* "stats_local.pyx":133
  *             if val < current_min:
  *                 current_min = val
  *                 current_min_i = x             # <<<<<<<<<<<<<<
@@ -2940,7 +2952,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
  */
         __pyx_v_current_min_i = __pyx_v_x;
 
-        /* "stats_local.pyx":132
+        /* "stats_local.pyx":131
  *         if current_min != 0:
  *             val = neighbourhood[x].value / neighbourhood[x].weight
  *             if val < current_min:             # <<<<<<<<<<<<<<
@@ -2949,7 +2961,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
  */
       }
 
-      /* "stats_local.pyx":130
+      /* "stats_local.pyx":129
  *     current_min_i = 0
  *     for x in range(non_zero):
  *         if current_min != 0:             # <<<<<<<<<<<<<<
@@ -2959,7 +2971,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
     }
   }
 
-  /* "stats_local.pyx":136
+  /* "stats_local.pyx":135
  *                 current_min_i = x
  * 
  *     return neighbourhood[current_min_i].value / neighbourhood[current_min_i].weight             # <<<<<<<<<<<<<<
@@ -2969,7 +2981,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
   __pyx_r = ((__pyx_v_neighbourhood[__pyx_v_current_min_i]).value / (__pyx_v_neighbourhood[__pyx_v_current_min_i]).weight);
   goto __pyx_L0;
 
-  /* "stats_local.pyx":119
+  /* "stats_local.pyx":118
  * 
  * 
  * cdef double neighbourhood_min(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -2982,7 +2994,7 @@ static double __pyx_f_11stats_local_neighbourhood_min(struct __pyx_t_11stats_loc
   return __pyx_r;
 }
 
-/* "stats_local.pyx":139
+/* "stats_local.pyx":138
  * 
  * 
  * cdef double weighted_variance(Neighbourhood * neighbourhood, int non_zero, int power) nogil:             # <<<<<<<<<<<<<<
@@ -3000,7 +3012,7 @@ static double __pyx_f_11stats_local_weighted_variance(struct __pyx_t_11stats_loc
   int __pyx_t_2;
   int __pyx_t_3;
 
-  /* "stats_local.pyx":142
+  /* "stats_local.pyx":141
  *     cdef int x, y
  *     cdef double accum, weighted_average, deviations
  *     cdef double sum_of_weights = neighbourhood_weight_sum(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -3009,7 +3021,7 @@ static double __pyx_f_11stats_local_weighted_variance(struct __pyx_t_11stats_loc
  */
   __pyx_v_sum_of_weights = __pyx_f_11stats_local_neighbourhood_weight_sum(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":144
+  /* "stats_local.pyx":143
  *     cdef double sum_of_weights = neighbourhood_weight_sum(neighbourhood, non_zero)
  * 
  *     weighted_average = neighbourhood_sum(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -3018,7 +3030,7 @@ static double __pyx_f_11stats_local_weighted_variance(struct __pyx_t_11stats_loc
  */
   __pyx_v_weighted_average = __pyx_f_11stats_local_neighbourhood_sum(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":146
+  /* "stats_local.pyx":145
  *     weighted_average = neighbourhood_sum(neighbourhood, non_zero)
  * 
  *     deviations = 0             # <<<<<<<<<<<<<<
@@ -3027,7 +3039,7 @@ static double __pyx_f_11stats_local_weighted_variance(struct __pyx_t_11stats_loc
  */
   __pyx_v_deviations = 0.0;
 
-  /* "stats_local.pyx":147
+  /* "stats_local.pyx":146
  * 
  *     deviations = 0
  *     for x in range(non_zero):             # <<<<<<<<<<<<<<
@@ -3039,7 +3051,7 @@ static double __pyx_f_11stats_local_weighted_variance(struct __pyx_t_11stats_loc
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_x = __pyx_t_3;
 
-    /* "stats_local.pyx":148
+    /* "stats_local.pyx":147
  *     deviations = 0
  *     for x in range(non_zero):
  *         deviations += neighbourhood[x].weight * (pow((neighbourhood[x].value - weighted_average), power))             # <<<<<<<<<<<<<<
@@ -3049,7 +3061,7 @@ static double __pyx_f_11stats_local_weighted_variance(struct __pyx_t_11stats_loc
     __pyx_v_deviations = (__pyx_v_deviations + ((__pyx_v_neighbourhood[__pyx_v_x]).weight * pow(((__pyx_v_neighbourhood[__pyx_v_x]).value - __pyx_v_weighted_average), __pyx_v_power)));
   }
 
-  /* "stats_local.pyx":150
+  /* "stats_local.pyx":149
  *         deviations += neighbourhood[x].weight * (pow((neighbourhood[x].value - weighted_average), power))
  * 
  *     return deviations / sum_of_weights             # <<<<<<<<<<<<<<
@@ -3059,7 +3071,7 @@ static double __pyx_f_11stats_local_weighted_variance(struct __pyx_t_11stats_loc
   __pyx_r = (__pyx_v_deviations / __pyx_v_sum_of_weights);
   goto __pyx_L0;
 
-  /* "stats_local.pyx":139
+  /* "stats_local.pyx":138
  * 
  * 
  * cdef double weighted_variance(Neighbourhood * neighbourhood, int non_zero, int power) nogil:             # <<<<<<<<<<<<<<
@@ -3072,7 +3084,7 @@ static double __pyx_f_11stats_local_weighted_variance(struct __pyx_t_11stats_loc
   return __pyx_r;
 }
 
-/* "stats_local.pyx":153
+/* "stats_local.pyx":152
  * 
  * 
  * cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3084,7 +3096,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_variance(struct __pyx
   double __pyx_v_variance;
   double __pyx_r;
 
-  /* "stats_local.pyx":154
+  /* "stats_local.pyx":153
  * 
  * cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double variance = weighted_variance(neighbourhood, non_zero, 2)             # <<<<<<<<<<<<<<
@@ -3093,7 +3105,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_variance(struct __pyx
  */
   __pyx_v_variance = __pyx_f_11stats_local_weighted_variance(__pyx_v_neighbourhood, __pyx_v_non_zero, 2);
 
-  /* "stats_local.pyx":155
+  /* "stats_local.pyx":154
  * cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double variance = weighted_variance(neighbourhood, non_zero, 2)
  *     return variance             # <<<<<<<<<<<<<<
@@ -3103,7 +3115,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_variance(struct __pyx
   __pyx_r = __pyx_v_variance;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":153
+  /* "stats_local.pyx":152
  * 
  * 
  * cdef double neighbourhood_weighted_variance(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3116,7 +3128,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_variance(struct __pyx
   return __pyx_r;
 }
 
-/* "stats_local.pyx":158
+/* "stats_local.pyx":157
  * 
  * 
  * cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3129,7 +3141,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_standard_deviation(st
   double __pyx_v_standard_deviation;
   double __pyx_r;
 
-  /* "stats_local.pyx":159
+  /* "stats_local.pyx":158
  * 
  * cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double variance = weighted_variance(neighbourhood, non_zero, 2)             # <<<<<<<<<<<<<<
@@ -3138,7 +3150,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_standard_deviation(st
  */
   __pyx_v_variance = __pyx_f_11stats_local_weighted_variance(__pyx_v_neighbourhood, __pyx_v_non_zero, 2);
 
-  /* "stats_local.pyx":160
+  /* "stats_local.pyx":159
  * cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double variance = weighted_variance(neighbourhood, non_zero, 2)
  *     cdef double standard_deviation = sqrt(variance)             # <<<<<<<<<<<<<<
@@ -3147,7 +3159,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_standard_deviation(st
  */
   __pyx_v_standard_deviation = sqrt(__pyx_v_variance);
 
-  /* "stats_local.pyx":162
+  /* "stats_local.pyx":161
  *     cdef double standard_deviation = sqrt(variance)
  * 
  *     return standard_deviation             # <<<<<<<<<<<<<<
@@ -3157,7 +3169,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_standard_deviation(st
   __pyx_r = __pyx_v_standard_deviation;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":158
+  /* "stats_local.pyx":157
  * 
  * 
  * cdef double neighbourhood_weighted_standard_deviation(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3170,7 +3182,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_standard_deviation(st
   return __pyx_r;
 }
 
-/* "stats_local.pyx":165
+/* "stats_local.pyx":164
  * 
  * 
  * cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3182,7 +3194,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_q1(struct __pyx_t_11s
   double __pyx_v_weighted_q1;
   double __pyx_r;
 
-  /* "stats_local.pyx":166
+  /* "stats_local.pyx":165
  * 
  * cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double weighted_q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)             # <<<<<<<<<<<<<<
@@ -3191,7 +3203,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_q1(struct __pyx_t_11s
  */
   __pyx_v_weighted_q1 = __pyx_f_11stats_local_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.25);
 
-  /* "stats_local.pyx":167
+  /* "stats_local.pyx":166
  * cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double weighted_q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
  *     return weighted_q1             # <<<<<<<<<<<<<<
@@ -3201,7 +3213,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_q1(struct __pyx_t_11s
   __pyx_r = __pyx_v_weighted_q1;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":165
+  /* "stats_local.pyx":164
  * 
  * 
  * cdef double neighbourhood_weighted_q1(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3214,7 +3226,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_q1(struct __pyx_t_11s
   return __pyx_r;
 }
 
-/* "stats_local.pyx":170
+/* "stats_local.pyx":169
  * 
  * 
  * cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3226,7 +3238,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_median(struct __pyx_t
   double __pyx_v_weighted_median;
   double __pyx_r;
 
-  /* "stats_local.pyx":171
+  /* "stats_local.pyx":170
  * 
  * cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.5)             # <<<<<<<<<<<<<<
@@ -3235,7 +3247,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_median(struct __pyx_t
  */
   __pyx_v_weighted_median = __pyx_f_11stats_local_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.5);
 
-  /* "stats_local.pyx":172
+  /* "stats_local.pyx":171
  * cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double weighted_median = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.5)
  *     return weighted_median             # <<<<<<<<<<<<<<
@@ -3245,7 +3257,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_median(struct __pyx_t
   __pyx_r = __pyx_v_weighted_median;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":170
+  /* "stats_local.pyx":169
  * 
  * 
  * cdef double neighbourhood_weighted_median(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3258,7 +3270,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_median(struct __pyx_t
   return __pyx_r;
 }
 
-/* "stats_local.pyx":175
+/* "stats_local.pyx":174
  * 
  * 
  * cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3270,7 +3282,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_q3(struct __pyx_t_11s
   double __pyx_v_weighted_q3;
   double __pyx_r;
 
-  /* "stats_local.pyx":176
+  /* "stats_local.pyx":175
  * 
  * cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double weighted_q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)             # <<<<<<<<<<<<<<
@@ -3279,7 +3291,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_q3(struct __pyx_t_11s
  */
   __pyx_v_weighted_q3 = __pyx_f_11stats_local_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.75);
 
-  /* "stats_local.pyx":177
+  /* "stats_local.pyx":176
  * cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double weighted_q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)
  *     return weighted_q3             # <<<<<<<<<<<<<<
@@ -3289,7 +3301,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_q3(struct __pyx_t_11s
   __pyx_r = __pyx_v_weighted_q3;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":175
+  /* "stats_local.pyx":174
  * 
  * 
  * cdef double neighbourhood_weighted_q3(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3302,7 +3314,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_q3(struct __pyx_t_11s
   return __pyx_r;
 }
 
-/* "stats_local.pyx":180
+/* "stats_local.pyx":179
  * 
  * 
  * cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3321,7 +3333,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad(struct __pyx_t_11
   int __pyx_t_3;
   double __pyx_t_4;
 
-  /* "stats_local.pyx":181
+  /* "stats_local.pyx":180
  * 
  * cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double weighted_median = neighbourhood_weighted_median(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -3330,7 +3342,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad(struct __pyx_t_11
  */
   __pyx_v_weighted_median = __pyx_f_11stats_local_neighbourhood_weighted_median(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":182
+  /* "stats_local.pyx":181
  * cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double weighted_median = neighbourhood_weighted_median(neighbourhood, non_zero)
  *     cdef Neighbourhood * deviations = <Neighbourhood*> malloc(sizeof(Neighbourhood) * non_zero)             # <<<<<<<<<<<<<<
@@ -3339,7 +3351,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad(struct __pyx_t_11
  */
   __pyx_v_deviations = ((struct __pyx_t_11stats_local_Neighbourhood *)malloc(((sizeof(struct __pyx_t_11stats_local_Neighbourhood)) * __pyx_v_non_zero)));
 
-  /* "stats_local.pyx":184
+  /* "stats_local.pyx":183
  *     cdef Neighbourhood * deviations = <Neighbourhood*> malloc(sizeof(Neighbourhood) * non_zero)
  * 
  *     for x in range(non_zero):             # <<<<<<<<<<<<<<
@@ -3351,7 +3363,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad(struct __pyx_t_11
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_x = __pyx_t_3;
 
-    /* "stats_local.pyx":185
+    /* "stats_local.pyx":184
  * 
  *     for x in range(non_zero):
  *         deviations[x].value = fabs(neighbourhood[x].value - weighted_median)             # <<<<<<<<<<<<<<
@@ -3360,7 +3372,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad(struct __pyx_t_11
  */
     (__pyx_v_deviations[__pyx_v_x]).value = fabs(((__pyx_v_neighbourhood[__pyx_v_x]).value - __pyx_v_weighted_median));
 
-    /* "stats_local.pyx":186
+    /* "stats_local.pyx":185
  *     for x in range(non_zero):
  *         deviations[x].value = fabs(neighbourhood[x].value - weighted_median)
  *         deviations[x].weight = neighbourhood[x].weight             # <<<<<<<<<<<<<<
@@ -3371,7 +3383,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad(struct __pyx_t_11
     (__pyx_v_deviations[__pyx_v_x]).weight = __pyx_t_4;
   }
 
-  /* "stats_local.pyx":188
+  /* "stats_local.pyx":187
  *         deviations[x].weight = neighbourhood[x].weight
  * 
  *     cdef double mad = neighbourhood_weighted_median(deviations, non_zero)             # <<<<<<<<<<<<<<
@@ -3380,7 +3392,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad(struct __pyx_t_11
  */
   __pyx_v_mad = __pyx_f_11stats_local_neighbourhood_weighted_median(__pyx_v_deviations, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":190
+  /* "stats_local.pyx":189
  *     cdef double mad = neighbourhood_weighted_median(deviations, non_zero)
  * 
  *     free(deviations)             # <<<<<<<<<<<<<<
@@ -3389,7 +3401,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad(struct __pyx_t_11
  */
   free(__pyx_v_deviations);
 
-  /* "stats_local.pyx":192
+  /* "stats_local.pyx":191
  *     free(deviations)
  * 
  *     return mad             # <<<<<<<<<<<<<<
@@ -3399,7 +3411,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad(struct __pyx_t_11
   __pyx_r = __pyx_v_mad;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":180
+  /* "stats_local.pyx":179
  * 
  * 
  * cdef double neighbourhood_weighted_mad(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3412,7 +3424,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad(struct __pyx_t_11
   return __pyx_r;
 }
 
-/* "stats_local.pyx":195
+/* "stats_local.pyx":194
  * 
  * 
  * cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3424,7 +3436,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad_std(struct __pyx_
   double __pyx_v_mad_std;
   double __pyx_r;
 
-  /* "stats_local.pyx":196
+  /* "stats_local.pyx":195
  * 
  * cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double mad_std = neighbourhood_weighted_mad(neighbourhood, non_zero) * 1.4826             # <<<<<<<<<<<<<<
@@ -3433,7 +3445,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad_std(struct __pyx_
  */
   __pyx_v_mad_std = (__pyx_f_11stats_local_neighbourhood_weighted_mad(__pyx_v_neighbourhood, __pyx_v_non_zero) * 1.4826);
 
-  /* "stats_local.pyx":197
+  /* "stats_local.pyx":196
  * cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double mad_std = neighbourhood_weighted_mad(neighbourhood, non_zero) * 1.4826
  *     return mad_std             # <<<<<<<<<<<<<<
@@ -3443,7 +3455,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad_std(struct __pyx_
   __pyx_r = __pyx_v_mad_std;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":195
+  /* "stats_local.pyx":194
  * 
  * 
  * cdef double neighbourhood_weighted_mad_std(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3456,7 +3468,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_mad_std(struct __pyx_
   return __pyx_r;
 }
 
-/* "stats_local.pyx":200
+/* "stats_local.pyx":199
  * 
  * 
  * cdef double neighbourhood_weighted_skew_fp(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3470,7 +3482,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_fp(struct __pyx_
   double __pyx_r;
   int __pyx_t_1;
 
-  /* "stats_local.pyx":201
+  /* "stats_local.pyx":200
  * 
  * cdef double neighbourhood_weighted_skew_fp(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -3479,7 +3491,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_fp(struct __pyx_
  */
   __pyx_v_standard_deviation = __pyx_f_11stats_local_neighbourhood_weighted_standard_deviation(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":203
+  /* "stats_local.pyx":202
  *     cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
  * 
  *     if standard_deviation == 0:             # <<<<<<<<<<<<<<
@@ -3489,7 +3501,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_fp(struct __pyx_
   __pyx_t_1 = ((__pyx_v_standard_deviation == 0.0) != 0);
   if (__pyx_t_1) {
 
-    /* "stats_local.pyx":204
+    /* "stats_local.pyx":203
  * 
  *     if standard_deviation == 0:
  *         return 0             # <<<<<<<<<<<<<<
@@ -3499,7 +3511,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_fp(struct __pyx_
     __pyx_r = 0.0;
     goto __pyx_L0;
 
-    /* "stats_local.pyx":203
+    /* "stats_local.pyx":202
  *     cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
  * 
  *     if standard_deviation == 0:             # <<<<<<<<<<<<<<
@@ -3508,7 +3520,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_fp(struct __pyx_
  */
   }
 
-  /* "stats_local.pyx":206
+  /* "stats_local.pyx":205
  *         return 0
  * 
  *     cdef double variance_3 = weighted_variance(neighbourhood, non_zero, 3)             # <<<<<<<<<<<<<<
@@ -3517,7 +3529,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_fp(struct __pyx_
  */
   __pyx_v_variance_3 = __pyx_f_11stats_local_weighted_variance(__pyx_v_neighbourhood, __pyx_v_non_zero, 3);
 
-  /* "stats_local.pyx":208
+  /* "stats_local.pyx":207
  *     cdef double variance_3 = weighted_variance(neighbourhood, non_zero, 3)
  * 
  *     return variance_3 / (pow(standard_deviation, 3))             # <<<<<<<<<<<<<<
@@ -3527,7 +3539,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_fp(struct __pyx_
   __pyx_r = (__pyx_v_variance_3 / pow(__pyx_v_standard_deviation, 3.0));
   goto __pyx_L0;
 
-  /* "stats_local.pyx":200
+  /* "stats_local.pyx":199
  * 
  * 
  * cdef double neighbourhood_weighted_skew_fp(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3540,7 +3552,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_fp(struct __pyx_
   return __pyx_r;
 }
 
-/* "stats_local.pyx":211
+/* "stats_local.pyx":210
  * 
  * 
  * cdef double neighbourhood_weighted_skew_p2(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3555,7 +3567,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_p2(struct __pyx_
   double __pyx_r;
   int __pyx_t_1;
 
-  /* "stats_local.pyx":212
+  /* "stats_local.pyx":211
  * 
  * cdef double neighbourhood_weighted_skew_p2(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -3564,7 +3576,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_p2(struct __pyx_
  */
   __pyx_v_standard_deviation = __pyx_f_11stats_local_neighbourhood_weighted_standard_deviation(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":214
+  /* "stats_local.pyx":213
  *     cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
  * 
  *     if standard_deviation == 0:             # <<<<<<<<<<<<<<
@@ -3574,7 +3586,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_p2(struct __pyx_
   __pyx_t_1 = ((__pyx_v_standard_deviation == 0.0) != 0);
   if (__pyx_t_1) {
 
-    /* "stats_local.pyx":215
+    /* "stats_local.pyx":214
  * 
  *     if standard_deviation == 0:
  *         return 0             # <<<<<<<<<<<<<<
@@ -3584,7 +3596,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_p2(struct __pyx_
     __pyx_r = 0.0;
     goto __pyx_L0;
 
-    /* "stats_local.pyx":214
+    /* "stats_local.pyx":213
  *     cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
  * 
  *     if standard_deviation == 0:             # <<<<<<<<<<<<<<
@@ -3593,7 +3605,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_p2(struct __pyx_
  */
   }
 
-  /* "stats_local.pyx":217
+  /* "stats_local.pyx":216
  *         return 0
  * 
  *     cdef double median = neighbourhood_weighted_median(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -3602,7 +3614,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_p2(struct __pyx_
  */
   __pyx_v_median = __pyx_f_11stats_local_neighbourhood_weighted_median(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":218
+  /* "stats_local.pyx":217
  * 
  *     cdef double median = neighbourhood_weighted_median(neighbourhood, non_zero)
  *     cdef double mean = neighbourhood_sum(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -3611,7 +3623,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_p2(struct __pyx_
  */
   __pyx_v_mean = __pyx_f_11stats_local_neighbourhood_sum(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":220
+  /* "stats_local.pyx":219
  *     cdef double mean = neighbourhood_sum(neighbourhood, non_zero)
  * 
  *     return 3 * ((mean - median) / standard_deviation)             # <<<<<<<<<<<<<<
@@ -3621,7 +3633,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_p2(struct __pyx_
   __pyx_r = (3.0 * ((__pyx_v_mean - __pyx_v_median) / __pyx_v_standard_deviation));
   goto __pyx_L0;
 
-  /* "stats_local.pyx":211
+  /* "stats_local.pyx":210
  * 
  * 
  * cdef double neighbourhood_weighted_skew_p2(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3634,7 +3646,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_p2(struct __pyx_
   return __pyx_r;
 }
 
-/* "stats_local.pyx":223
+/* "stats_local.pyx":222
  * 
  * 
  * cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3650,7 +3662,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_g(struct __pyx_t
   double __pyx_r;
   int __pyx_t_1;
 
-  /* "stats_local.pyx":224
+  /* "stats_local.pyx":223
  * 
  * cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)             # <<<<<<<<<<<<<<
@@ -3659,7 +3671,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_g(struct __pyx_t
  */
   __pyx_v_q1 = __pyx_f_11stats_local_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.25);
 
-  /* "stats_local.pyx":225
+  /* "stats_local.pyx":224
  * cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
  *     cdef double q2 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.50)             # <<<<<<<<<<<<<<
@@ -3668,7 +3680,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_g(struct __pyx_t
  */
   __pyx_v_q2 = __pyx_f_11stats_local_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.50);
 
-  /* "stats_local.pyx":226
+  /* "stats_local.pyx":225
  *     cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
  *     cdef double q2 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.50)
  *     cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)             # <<<<<<<<<<<<<<
@@ -3677,7 +3689,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_g(struct __pyx_t
  */
   __pyx_v_q3 = __pyx_f_11stats_local_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.75);
 
-  /* "stats_local.pyx":228
+  /* "stats_local.pyx":227
  *     cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)
  * 
  *     cdef double iqr = q3 - q1             # <<<<<<<<<<<<<<
@@ -3686,7 +3698,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_g(struct __pyx_t
  */
   __pyx_v_iqr = (__pyx_v_q3 - __pyx_v_q1);
 
-  /* "stats_local.pyx":230
+  /* "stats_local.pyx":229
  *     cdef double iqr = q3 - q1
  * 
  *     if iqr == 0:             # <<<<<<<<<<<<<<
@@ -3696,7 +3708,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_g(struct __pyx_t
   __pyx_t_1 = ((__pyx_v_iqr == 0.0) != 0);
   if (__pyx_t_1) {
 
-    /* "stats_local.pyx":231
+    /* "stats_local.pyx":230
  * 
  *     if iqr == 0:
  *         return 0             # <<<<<<<<<<<<<<
@@ -3706,7 +3718,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_g(struct __pyx_t
     __pyx_r = 0.0;
     goto __pyx_L0;
 
-    /* "stats_local.pyx":230
+    /* "stats_local.pyx":229
  *     cdef double iqr = q3 - q1
  * 
  *     if iqr == 0:             # <<<<<<<<<<<<<<
@@ -3715,7 +3727,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_g(struct __pyx_t
  */
   }
 
-  /* "stats_local.pyx":233
+  /* "stats_local.pyx":232
  *         return 0
  * 
  *     return (q1 + q3 - (2 * q2)) / iqr             # <<<<<<<<<<<<<<
@@ -3725,7 +3737,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_g(struct __pyx_t
   __pyx_r = (((__pyx_v_q1 + __pyx_v_q3) - (2.0 * __pyx_v_q2)) / __pyx_v_iqr);
   goto __pyx_L0;
 
-  /* "stats_local.pyx":223
+  /* "stats_local.pyx":222
  * 
  * 
  * cdef double neighbourhood_weighted_skew_g(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3738,7 +3750,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_skew_g(struct __pyx_t
   return __pyx_r;
 }
 
-/* "stats_local.pyx":236
+/* "stats_local.pyx":235
  * 
  * 
  * cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3752,7 +3764,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_iqr(struct __pyx_t_11
   double __pyx_v_iqr;
   double __pyx_r;
 
-  /* "stats_local.pyx":237
+  /* "stats_local.pyx":236
  * 
  * cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)             # <<<<<<<<<<<<<<
@@ -3761,7 +3773,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_iqr(struct __pyx_t_11
  */
   __pyx_v_q1 = __pyx_f_11stats_local_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.25);
 
-  /* "stats_local.pyx":238
+  /* "stats_local.pyx":237
  * cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double q1 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.25)
  *     cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)             # <<<<<<<<<<<<<<
@@ -3770,7 +3782,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_iqr(struct __pyx_t_11
  */
   __pyx_v_q3 = __pyx_f_11stats_local_neighbourhood_weighted_quintile(__pyx_v_neighbourhood, __pyx_v_non_zero, 0.75);
 
-  /* "stats_local.pyx":240
+  /* "stats_local.pyx":239
  *     cdef double q3 = neighbourhood_weighted_quintile(neighbourhood, non_zero, 0.75)
  * 
  *     cdef double iqr = q3 - q1             # <<<<<<<<<<<<<<
@@ -3779,7 +3791,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_iqr(struct __pyx_t_11
  */
   __pyx_v_iqr = (__pyx_v_q3 - __pyx_v_q1);
 
-  /* "stats_local.pyx":242
+  /* "stats_local.pyx":241
  *     cdef double iqr = q3 - q1
  * 
  *     return iqr             # <<<<<<<<<<<<<<
@@ -3789,7 +3801,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_iqr(struct __pyx_t_11
   __pyx_r = __pyx_v_iqr;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":236
+  /* "stats_local.pyx":235
  * 
  * 
  * cdef double neighbourhood_weighted_iqr(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3802,7 +3814,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_iqr(struct __pyx_t_11
   return __pyx_r;
 }
 
-/* "stats_local.pyx":245
+/* "stats_local.pyx":244
  * 
  * 
  * cdef double neighbourhood_weighted_kurtosis_excess(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3816,7 +3828,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_kurtosis_excess(struc
   double __pyx_r;
   int __pyx_t_1;
 
-  /* "stats_local.pyx":246
+  /* "stats_local.pyx":245
  * 
  * cdef double neighbourhood_weighted_kurtosis_excess(Neighbourhood * neighbourhood, int non_zero) nogil:
  *     cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -3825,7 +3837,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_kurtosis_excess(struc
  */
   __pyx_v_standard_deviation = __pyx_f_11stats_local_neighbourhood_weighted_standard_deviation(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":248
+  /* "stats_local.pyx":247
  *     cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
  * 
  *     if standard_deviation == 0:             # <<<<<<<<<<<<<<
@@ -3835,7 +3847,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_kurtosis_excess(struc
   __pyx_t_1 = ((__pyx_v_standard_deviation == 0.0) != 0);
   if (__pyx_t_1) {
 
-    /* "stats_local.pyx":249
+    /* "stats_local.pyx":248
  * 
  *     if standard_deviation == 0:
  *         return 0             # <<<<<<<<<<<<<<
@@ -3845,7 +3857,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_kurtosis_excess(struc
     __pyx_r = 0.0;
     goto __pyx_L0;
 
-    /* "stats_local.pyx":248
+    /* "stats_local.pyx":247
  *     cdef double standard_deviation = neighbourhood_weighted_standard_deviation(neighbourhood, non_zero)
  * 
  *     if standard_deviation == 0:             # <<<<<<<<<<<<<<
@@ -3854,7 +3866,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_kurtosis_excess(struc
  */
   }
 
-  /* "stats_local.pyx":251
+  /* "stats_local.pyx":250
  *         return 0
  * 
  *     cdef double variance_4 = weighted_variance(neighbourhood, non_zero, 4)             # <<<<<<<<<<<<<<
@@ -3863,7 +3875,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_kurtosis_excess(struc
  */
   __pyx_v_variance_4 = __pyx_f_11stats_local_weighted_variance(__pyx_v_neighbourhood, __pyx_v_non_zero, 4);
 
-  /* "stats_local.pyx":253
+  /* "stats_local.pyx":252
  *     cdef double variance_4 = weighted_variance(neighbourhood, non_zero, 4)
  * 
  *     return (variance_4 / (pow(standard_deviation, 4))) - 3             # <<<<<<<<<<<<<<
@@ -3873,7 +3885,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_kurtosis_excess(struc
   __pyx_r = ((__pyx_v_variance_4 / pow(__pyx_v_standard_deviation, 4.0)) - 3.0);
   goto __pyx_L0;
 
-  /* "stats_local.pyx":245
+  /* "stats_local.pyx":244
  * 
  * 
  * cdef double neighbourhood_weighted_kurtosis_excess(Neighbourhood * neighbourhood, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3886,7 +3898,7 @@ static double __pyx_f_11stats_local_neighbourhood_weighted_kurtosis_excess(struc
   return __pyx_r;
 }
 
-/* "stats_local.pyx":256
+/* "stats_local.pyx":255
  * 
  * 
  * cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -3913,7 +3925,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
   Py_ssize_t __pyx_t_10;
   Py_ssize_t __pyx_t_11;
 
-  /* "stats_local.pyx":258
+  /* "stats_local.pyx":257
  * cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non_zero) nogil:
  *     cdef int x, y
  *     cdef int radius = <int>(kernel_width / 2)             # <<<<<<<<<<<<<<
@@ -3922,7 +3934,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
  */
   __pyx_v_radius = ((int)(((long)__pyx_v_kernel_width) / 2));
 
-  /* "stats_local.pyx":259
+  /* "stats_local.pyx":258
  *     cdef int x, y
  *     cdef int radius = <int>(kernel_width / 2)
  *     cdef int step = 0             # <<<<<<<<<<<<<<
@@ -3931,7 +3943,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
  */
   __pyx_v_step = 0;
 
-  /* "stats_local.pyx":261
+  /* "stats_local.pyx":260
  *     cdef int step = 0
  * 
  *     cdef Offset *offsets = <Offset *> malloc(non_zero * sizeof(Offset))             # <<<<<<<<<<<<<<
@@ -3940,7 +3952,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
  */
   __pyx_v_offsets = ((struct __pyx_t_11stats_local_Offset *)malloc((__pyx_v_non_zero * (sizeof(struct __pyx_t_11stats_local_Offset)))));
 
-  /* "stats_local.pyx":263
+  /* "stats_local.pyx":262
  *     cdef Offset *offsets = <Offset *> malloc(non_zero * sizeof(Offset))
  * 
  *     for x in range(kernel_width):             # <<<<<<<<<<<<<<
@@ -3952,7 +3964,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_x = __pyx_t_3;
 
-    /* "stats_local.pyx":264
+    /* "stats_local.pyx":263
  * 
  *     for x in range(kernel_width):
  *         for y in range(kernel_width):             # <<<<<<<<<<<<<<
@@ -3964,7 +3976,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
     for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
       __pyx_v_y = __pyx_t_6;
 
-      /* "stats_local.pyx":265
+      /* "stats_local.pyx":264
  *     for x in range(kernel_width):
  *         for y in range(kernel_width):
  *             if kernel[x, y] != 0.0:             # <<<<<<<<<<<<<<
@@ -3976,7 +3988,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
       __pyx_t_9 = (((*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_kernel.data + __pyx_t_7 * __pyx_v_kernel.strides[0]) )) + __pyx_t_8)) ))) != 0.0) != 0);
       if (__pyx_t_9) {
 
-        /* "stats_local.pyx":266
+        /* "stats_local.pyx":265
  *         for y in range(kernel_width):
  *             if kernel[x, y] != 0.0:
  *                 offsets[step].x = x - radius             # <<<<<<<<<<<<<<
@@ -3985,7 +3997,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
  */
         (__pyx_v_offsets[__pyx_v_step]).x = (__pyx_v_x - __pyx_v_radius);
 
-        /* "stats_local.pyx":267
+        /* "stats_local.pyx":266
  *             if kernel[x, y] != 0.0:
  *                 offsets[step].x = x - radius
  *                 offsets[step].y = y - radius             # <<<<<<<<<<<<<<
@@ -3994,7 +4006,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
  */
         (__pyx_v_offsets[__pyx_v_step]).y = (__pyx_v_y - __pyx_v_radius);
 
-        /* "stats_local.pyx":268
+        /* "stats_local.pyx":267
  *                 offsets[step].x = x - radius
  *                 offsets[step].y = y - radius
  *                 offsets[step].weight = kernel[x, y]             # <<<<<<<<<<<<<<
@@ -4005,7 +4017,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
         __pyx_t_11 = __pyx_v_y;
         (__pyx_v_offsets[__pyx_v_step]).weight = (*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_kernel.data + __pyx_t_10 * __pyx_v_kernel.strides[0]) )) + __pyx_t_11)) )));
 
-        /* "stats_local.pyx":269
+        /* "stats_local.pyx":268
  *                 offsets[step].y = y - radius
  *                 offsets[step].weight = kernel[x, y]
  *                 step += 1             # <<<<<<<<<<<<<<
@@ -4014,7 +4026,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
  */
         __pyx_v_step = (__pyx_v_step + 1);
 
-        /* "stats_local.pyx":265
+        /* "stats_local.pyx":264
  *     for x in range(kernel_width):
  *         for y in range(kernel_width):
  *             if kernel[x, y] != 0.0:             # <<<<<<<<<<<<<<
@@ -4025,7 +4037,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
     }
   }
 
-  /* "stats_local.pyx":271
+  /* "stats_local.pyx":270
  *                 step += 1
  * 
  *     return offsets             # <<<<<<<<<<<<<<
@@ -4035,7 +4047,7 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
   __pyx_r = __pyx_v_offsets;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":256
+  /* "stats_local.pyx":255
  * 
  * 
  * cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non_zero) nogil:             # <<<<<<<<<<<<<<
@@ -4048,12 +4060,12 @@ static struct __pyx_t_11stats_local_Offset *__pyx_f_11stats_local_generate_offse
   return __pyx_r;
 }
 
-/* "stats_local.pyx":274
+/* "stats_local.pyx":273
  * 
  * 
  * cdef f_type func_selector(str func_type):             # <<<<<<<<<<<<<<
  *     if func_type is 'mean': return neighbourhood_sum
- *     elif func_type is 'dilate': return neighbourhood_max
+ *     elif func_type is 'avg': return neighbourhood_sum
  */
 
 static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject *__pyx_v_func_type) {
@@ -4064,12 +4076,12 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("func_selector", 0);
 
-  /* "stats_local.pyx":275
+  /* "stats_local.pyx":274
  * 
  * cdef f_type func_selector(str func_type):
  *     if func_type is 'mean': return neighbourhood_sum             # <<<<<<<<<<<<<<
- *     elif func_type is 'dilate': return neighbourhood_max
- *     elif func_type is 'erode': return neighbourhood_min
+ *     elif func_type is 'avg': return neighbourhood_sum
+ *     elif func_type is 'average': return neighbourhood_sum
  */
   __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_mean);
   __pyx_t_2 = (__pyx_t_1 != 0);
@@ -4078,9 +4090,37 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":276
+  /* "stats_local.pyx":275
  * cdef f_type func_selector(str func_type):
  *     if func_type is 'mean': return neighbourhood_sum
+ *     elif func_type is 'avg': return neighbourhood_sum             # <<<<<<<<<<<<<<
+ *     elif func_type is 'average': return neighbourhood_sum
+ *     elif func_type is 'dilate': return neighbourhood_max
+ */
+  __pyx_t_2 = (__pyx_v_func_type == __pyx_n_u_avg);
+  __pyx_t_1 = (__pyx_t_2 != 0);
+  if (__pyx_t_1) {
+    __pyx_r = __pyx_f_11stats_local_neighbourhood_sum;
+    goto __pyx_L0;
+  }
+
+  /* "stats_local.pyx":276
+ *     if func_type is 'mean': return neighbourhood_sum
+ *     elif func_type is 'avg': return neighbourhood_sum
+ *     elif func_type is 'average': return neighbourhood_sum             # <<<<<<<<<<<<<<
+ *     elif func_type is 'dilate': return neighbourhood_max
+ *     elif func_type is 'erode': return neighbourhood_min
+ */
+  __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_average);
+  __pyx_t_2 = (__pyx_t_1 != 0);
+  if (__pyx_t_2) {
+    __pyx_r = __pyx_f_11stats_local_neighbourhood_sum;
+    goto __pyx_L0;
+  }
+
+  /* "stats_local.pyx":277
+ *     elif func_type is 'avg': return neighbourhood_sum
+ *     elif func_type is 'average': return neighbourhood_sum
  *     elif func_type is 'dilate': return neighbourhood_max             # <<<<<<<<<<<<<<
  *     elif func_type is 'erode': return neighbourhood_min
  *     elif func_type is 'median': return neighbourhood_weighted_median
@@ -4092,12 +4132,12 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":277
- *     if func_type is 'mean': return neighbourhood_sum
+  /* "stats_local.pyx":278
+ *     elif func_type is 'average': return neighbourhood_sum
  *     elif func_type is 'dilate': return neighbourhood_max
  *     elif func_type is 'erode': return neighbourhood_min             # <<<<<<<<<<<<<<
  *     elif func_type is 'median': return neighbourhood_weighted_median
- *     elif func_type is 'variance': return neighbourhood_weighted_variance
+ *     elif func_type is 'med': return neighbourhood_weighted_median
  */
   __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_erode);
   __pyx_t_2 = (__pyx_t_1 != 0);
@@ -4106,12 +4146,12 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":278
+  /* "stats_local.pyx":279
  *     elif func_type is 'dilate': return neighbourhood_max
  *     elif func_type is 'erode': return neighbourhood_min
  *     elif func_type is 'median': return neighbourhood_weighted_median             # <<<<<<<<<<<<<<
+ *     elif func_type is 'med': return neighbourhood_weighted_median
  *     elif func_type is 'variance': return neighbourhood_weighted_variance
- *     elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
  */
   __pyx_t_2 = (__pyx_v_func_type == __pyx_n_u_median);
   __pyx_t_1 = (__pyx_t_2 != 0);
@@ -4120,26 +4160,54 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":279
+  /* "stats_local.pyx":280
  *     elif func_type is 'erode': return neighbourhood_min
  *     elif func_type is 'median': return neighbourhood_weighted_median
- *     elif func_type is 'variance': return neighbourhood_weighted_variance             # <<<<<<<<<<<<<<
- *     elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
- *     elif func_type is 'q1': return neighbourhood_weighted_q1
+ *     elif func_type is 'med': return neighbourhood_weighted_median             # <<<<<<<<<<<<<<
+ *     elif func_type is 'variance': return neighbourhood_weighted_variance
+ *     elif func_type is 'var': return neighbourhood_weighted_variance
  */
-  __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_variance);
+  __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_med);
+  __pyx_t_2 = (__pyx_t_1 != 0);
+  if (__pyx_t_2) {
+    __pyx_r = __pyx_f_11stats_local_neighbourhood_weighted_median;
+    goto __pyx_L0;
+  }
+
+  /* "stats_local.pyx":281
+ *     elif func_type is 'median': return neighbourhood_weighted_median
+ *     elif func_type is 'med': return neighbourhood_weighted_median
+ *     elif func_type is 'variance': return neighbourhood_weighted_variance             # <<<<<<<<<<<<<<
+ *     elif func_type is 'var': return neighbourhood_weighted_variance
+ *     elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
+ */
+  __pyx_t_2 = (__pyx_v_func_type == __pyx_n_u_variance);
+  __pyx_t_1 = (__pyx_t_2 != 0);
+  if (__pyx_t_1) {
+    __pyx_r = __pyx_f_11stats_local_neighbourhood_weighted_variance;
+    goto __pyx_L0;
+  }
+
+  /* "stats_local.pyx":282
+ *     elif func_type is 'med': return neighbourhood_weighted_median
+ *     elif func_type is 'variance': return neighbourhood_weighted_variance
+ *     elif func_type is 'var': return neighbourhood_weighted_variance             # <<<<<<<<<<<<<<
+ *     elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
+ *     elif func_type is 'stdev': return neighbourhood_weighted_standard_deviation
+ */
+  __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_var);
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
     __pyx_r = __pyx_f_11stats_local_neighbourhood_weighted_variance;
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":280
- *     elif func_type is 'median': return neighbourhood_weighted_median
+  /* "stats_local.pyx":283
  *     elif func_type is 'variance': return neighbourhood_weighted_variance
+ *     elif func_type is 'var': return neighbourhood_weighted_variance
  *     elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation             # <<<<<<<<<<<<<<
- *     elif func_type is 'q1': return neighbourhood_weighted_q1
- *     elif func_type is 'q3': return neighbourhood_weighted_q3
+ *     elif func_type is 'stdev': return neighbourhood_weighted_standard_deviation
+ *     elif func_type is 'std': return neighbourhood_weighted_standard_deviation
  */
   __pyx_t_2 = (__pyx_v_func_type == __pyx_n_u_standard_deviation);
   __pyx_t_1 = (__pyx_t_2 != 0);
@@ -4148,9 +4216,37 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":281
- *     elif func_type is 'variance': return neighbourhood_weighted_variance
+  /* "stats_local.pyx":284
+ *     elif func_type is 'var': return neighbourhood_weighted_variance
  *     elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
+ *     elif func_type is 'stdev': return neighbourhood_weighted_standard_deviation             # <<<<<<<<<<<<<<
+ *     elif func_type is 'std': return neighbourhood_weighted_standard_deviation
+ *     elif func_type is 'q1': return neighbourhood_weighted_q1
+ */
+  __pyx_t_1 = (__pyx_v_func_type == __pyx_n_u_stdev);
+  __pyx_t_2 = (__pyx_t_1 != 0);
+  if (__pyx_t_2) {
+    __pyx_r = __pyx_f_11stats_local_neighbourhood_weighted_standard_deviation;
+    goto __pyx_L0;
+  }
+
+  /* "stats_local.pyx":285
+ *     elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
+ *     elif func_type is 'stdev': return neighbourhood_weighted_standard_deviation
+ *     elif func_type is 'std': return neighbourhood_weighted_standard_deviation             # <<<<<<<<<<<<<<
+ *     elif func_type is 'q1': return neighbourhood_weighted_q1
+ *     elif func_type is 'q3': return neighbourhood_weighted_q3
+ */
+  __pyx_t_2 = (__pyx_v_func_type == __pyx_n_u_std);
+  __pyx_t_1 = (__pyx_t_2 != 0);
+  if (__pyx_t_1) {
+    __pyx_r = __pyx_f_11stats_local_neighbourhood_weighted_standard_deviation;
+    goto __pyx_L0;
+  }
+
+  /* "stats_local.pyx":286
+ *     elif func_type is 'stdev': return neighbourhood_weighted_standard_deviation
+ *     elif func_type is 'std': return neighbourhood_weighted_standard_deviation
  *     elif func_type is 'q1': return neighbourhood_weighted_q1             # <<<<<<<<<<<<<<
  *     elif func_type is 'q3': return neighbourhood_weighted_q3
  *     elif func_type is 'iqr': return neighbourhood_weighted_iqr
@@ -4162,8 +4258,8 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":282
- *     elif func_type is 'standard_deviation': return neighbourhood_weighted_standard_deviation
+  /* "stats_local.pyx":287
+ *     elif func_type is 'std': return neighbourhood_weighted_standard_deviation
  *     elif func_type is 'q1': return neighbourhood_weighted_q1
  *     elif func_type is 'q3': return neighbourhood_weighted_q3             # <<<<<<<<<<<<<<
  *     elif func_type is 'iqr': return neighbourhood_weighted_iqr
@@ -4176,7 +4272,7 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":283
+  /* "stats_local.pyx":288
  *     elif func_type is 'q1': return neighbourhood_weighted_q1
  *     elif func_type is 'q3': return neighbourhood_weighted_q3
  *     elif func_type is 'iqr': return neighbourhood_weighted_iqr             # <<<<<<<<<<<<<<
@@ -4190,7 +4286,7 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":284
+  /* "stats_local.pyx":289
  *     elif func_type is 'q3': return neighbourhood_weighted_q3
  *     elif func_type is 'iqr': return neighbourhood_weighted_iqr
  *     elif func_type is 'skew_fp': return neighbourhood_weighted_skew_fp             # <<<<<<<<<<<<<<
@@ -4204,7 +4300,7 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":285
+  /* "stats_local.pyx":290
  *     elif func_type is 'iqr': return neighbourhood_weighted_iqr
  *     elif func_type is 'skew_fp': return neighbourhood_weighted_skew_fp
  *     elif func_type is 'skew_p2': return neighbourhood_weighted_skew_p2             # <<<<<<<<<<<<<<
@@ -4218,7 +4314,7 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":286
+  /* "stats_local.pyx":291
  *     elif func_type is 'skew_fp': return neighbourhood_weighted_skew_fp
  *     elif func_type is 'skew_p2': return neighbourhood_weighted_skew_p2
  *     elif func_type is 'skew_g': return neighbourhood_weighted_skew_g             # <<<<<<<<<<<<<<
@@ -4232,7 +4328,7 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":287
+  /* "stats_local.pyx":292
  *     elif func_type is 'skew_p2': return neighbourhood_weighted_skew_p2
  *     elif func_type is 'skew_g': return neighbourhood_weighted_skew_g
  *     elif func_type is 'kurtosis': return neighbourhood_weighted_kurtosis_excess             # <<<<<<<<<<<<<<
@@ -4246,7 +4342,7 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":288
+  /* "stats_local.pyx":293
  *     elif func_type is 'skew_g': return neighbourhood_weighted_skew_g
  *     elif func_type is 'kurtosis': return neighbourhood_weighted_kurtosis_excess
  *     elif func_type is 'mad': return neighbourhood_weighted_mad             # <<<<<<<<<<<<<<
@@ -4260,7 +4356,7 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":289
+  /* "stats_local.pyx":294
  *     elif func_type is 'kurtosis': return neighbourhood_weighted_kurtosis_excess
  *     elif func_type is 'mad': return neighbourhood_weighted_mad
  *     elif func_type is 'mad_std': return neighbourhood_weighted_mad_std             # <<<<<<<<<<<<<<
@@ -4274,25 +4370,25 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
     goto __pyx_L0;
   }
 
-  /* "stats_local.pyx":291
+  /* "stats_local.pyx":296
  *     elif func_type is 'mad_std': return neighbourhood_weighted_mad_std
  * 
  *     raise Exception('Unable to find filter type!')             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)(&((PyTypeObject*)PyExc_Exception)[0])), __pyx_tuple_, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 291, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)(&((PyTypeObject*)PyExc_Exception)[0])), __pyx_tuple_, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 296, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_Raise(__pyx_t_3, 0, 0, 0);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __PYX_ERR(0, 291, __pyx_L1_error)
+  __PYX_ERR(0, 296, __pyx_L1_error)
 
-  /* "stats_local.pyx":274
+  /* "stats_local.pyx":273
  * 
  * 
  * cdef f_type func_selector(str func_type):             # <<<<<<<<<<<<<<
  *     if func_type is 'mean': return neighbourhood_sum
- *     elif func_type is 'dilate': return neighbourhood_max
+ *     elif func_type is 'avg': return neighbourhood_sum
  */
 
   /* function exit code */
@@ -4305,7 +4401,7 @@ static __pyx_t_11stats_local_f_type __pyx_f_11stats_local_func_selector(PyObject
   return __pyx_r;
 }
 
-/* "stats_local.pyx":294
+/* "stats_local.pyx":299
  * 
  * 
  * cdef void loop(             # <<<<<<<<<<<<<<
@@ -4349,7 +4445,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
   Py_ssize_t __pyx_t_19;
   Py_ssize_t __pyx_t_20;
 
-  /* "stats_local.pyx":308
+  /* "stats_local.pyx":313
  *     cdef int x, y, n, offset_x, offset_y
  *     cdef Neighbourhood * neighbourhood
  *     cdef int x_max_adj = x_max - 1             # <<<<<<<<<<<<<<
@@ -4358,7 +4454,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
   __pyx_v_x_max_adj = (__pyx_v_x_max - 1);
 
-  /* "stats_local.pyx":309
+  /* "stats_local.pyx":314
  *     cdef Neighbourhood * neighbourhood
  *     cdef int x_max_adj = x_max - 1
  *     cdef int y_max_adj = y_max - 1             # <<<<<<<<<<<<<<
@@ -4367,7 +4463,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
   __pyx_v_y_max_adj = (__pyx_v_y_max - 1);
 
-  /* "stats_local.pyx":310
+  /* "stats_local.pyx":315
  *     cdef int x_max_adj = x_max - 1
  *     cdef int y_max_adj = y_max - 1
  *     cdef int x_edge_low = kernel_width             # <<<<<<<<<<<<<<
@@ -4376,7 +4472,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
   __pyx_v_x_edge_low = __pyx_v_kernel_width;
 
-  /* "stats_local.pyx":311
+  /* "stats_local.pyx":316
  *     cdef int y_max_adj = y_max - 1
  *     cdef int x_edge_low = kernel_width
  *     cdef int y_edge_low = kernel_width             # <<<<<<<<<<<<<<
@@ -4385,7 +4481,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
   __pyx_v_y_edge_low = __pyx_v_kernel_width;
 
-  /* "stats_local.pyx":312
+  /* "stats_local.pyx":317
  *     cdef int x_edge_low = kernel_width
  *     cdef int y_edge_low = kernel_width
  *     cdef int x_edge_high = x_max_adj - kernel_width             # <<<<<<<<<<<<<<
@@ -4394,7 +4490,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
   __pyx_v_x_edge_high = (__pyx_v_x_max_adj - __pyx_v_kernel_width);
 
-  /* "stats_local.pyx":313
+  /* "stats_local.pyx":318
  *     cdef int y_edge_low = kernel_width
  *     cdef int x_edge_high = x_max_adj - kernel_width
  *     cdef int y_edge_high = y_max_adj - kernel_width             # <<<<<<<<<<<<<<
@@ -4403,7 +4499,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
   __pyx_v_y_edge_high = (__pyx_v_y_max_adj - __pyx_v_kernel_width);
 
-  /* "stats_local.pyx":314
+  /* "stats_local.pyx":319
  *     cdef int x_edge_high = x_max_adj - kernel_width
  *     cdef int y_edge_high = y_max_adj - kernel_width
  *     cdef int neighbourhood_size = sizeof(Neighbourhood) * non_zero             # <<<<<<<<<<<<<<
@@ -4412,7 +4508,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
   __pyx_v_neighbourhood_size = ((sizeof(struct __pyx_t_11stats_local_Neighbourhood)) * __pyx_v_non_zero);
 
-  /* "stats_local.pyx":316
+  /* "stats_local.pyx":321
  *     cdef int neighbourhood_size = sizeof(Neighbourhood) * non_zero
  * 
  *     cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)             # <<<<<<<<<<<<<<
@@ -4421,7 +4517,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
   __pyx_v_offsets = __pyx_f_11stats_local_generate_offsets(__pyx_v_kernel, __pyx_v_kernel_width, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":318
+  /* "stats_local.pyx":323
  *     cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
  * 
  *     for x in prange(x_max):             # <<<<<<<<<<<<<<
@@ -4457,7 +4553,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                       __pyx_v_offset_y = ((int)0xbad0bad0);
                       __pyx_v_y = ((int)0xbad0bad0);
 
-                      /* "stats_local.pyx":319
+                      /* "stats_local.pyx":324
  * 
  *     for x in prange(x_max):
  *         for y in range(y_max):             # <<<<<<<<<<<<<<
@@ -4469,7 +4565,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                       for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
                         __pyx_v_y = __pyx_t_6;
 
-                        /* "stats_local.pyx":321
+                        /* "stats_local.pyx":326
  *         for y in range(y_max):
  * 
  *             if has_nodata is True and arr[x][y] == fill_value:             # <<<<<<<<<<<<<<
@@ -4489,7 +4585,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                         __pyx_L10_bool_binop_done:;
                         if (__pyx_t_7) {
 
-                          /* "stats_local.pyx":322
+                          /* "stats_local.pyx":327
  * 
  *             if has_nodata is True and arr[x][y] == fill_value:
  *                 result[x][y] = fill_value             # <<<<<<<<<<<<<<
@@ -4500,7 +4596,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                           __pyx_t_12 = __pyx_v_y;
                           *((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_result.data + __pyx_t_11 * __pyx_v_result.strides[0]) )) + __pyx_t_12)) )) = __pyx_v_fill_value;
 
-                          /* "stats_local.pyx":323
+                          /* "stats_local.pyx":328
  *             if has_nodata is True and arr[x][y] == fill_value:
  *                 result[x][y] = fill_value
  *                 continue             # <<<<<<<<<<<<<<
@@ -4509,7 +4605,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
                           goto __pyx_L7_continue;
 
-                          /* "stats_local.pyx":321
+                          /* "stats_local.pyx":326
  *         for y in range(y_max):
  * 
  *             if has_nodata is True and arr[x][y] == fill_value:             # <<<<<<<<<<<<<<
@@ -4518,7 +4614,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
                         }
 
-                        /* "stats_local.pyx":325
+                        /* "stats_local.pyx":330
  *                 continue
  * 
  *             neighbourhood = <Neighbourhood*> malloc(neighbourhood_size)             # <<<<<<<<<<<<<<
@@ -4527,7 +4623,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
                         __pyx_v_neighbourhood = ((struct __pyx_t_11stats_local_Neighbourhood *)malloc(__pyx_v_neighbourhood_size));
 
-                        /* "stats_local.pyx":327
+                        /* "stats_local.pyx":332
  *             neighbourhood = <Neighbourhood*> malloc(neighbourhood_size)
  * 
  *             for n in range(non_zero):             # <<<<<<<<<<<<<<
@@ -4539,7 +4635,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                         for (__pyx_t_15 = 0; __pyx_t_15 < __pyx_t_14; __pyx_t_15+=1) {
                           __pyx_v_n = __pyx_t_15;
 
-                          /* "stats_local.pyx":328
+                          /* "stats_local.pyx":333
  * 
  *             for n in range(non_zero):
  *                 offset_x = x + offsets[n].x             # <<<<<<<<<<<<<<
@@ -4548,7 +4644,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
                           __pyx_v_offset_x = (__pyx_v_x + (__pyx_v_offsets[__pyx_v_n]).x);
 
-                          /* "stats_local.pyx":329
+                          /* "stats_local.pyx":334
  *             for n in range(non_zero):
  *                 offset_x = x + offsets[n].x
  *                 offset_y = y + offsets[n].y             # <<<<<<<<<<<<<<
@@ -4557,7 +4653,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
                           __pyx_v_offset_y = (__pyx_v_y + (__pyx_v_offsets[__pyx_v_n]).y);
 
-                          /* "stats_local.pyx":331
+                          /* "stats_local.pyx":336
  *                 offset_y = y + offsets[n].y
  * 
  *                 if offset_x < 0:             # <<<<<<<<<<<<<<
@@ -4567,7 +4663,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                           __pyx_t_7 = ((__pyx_v_offset_x < 0) != 0);
                           if (__pyx_t_7) {
 
-                            /* "stats_local.pyx":332
+                            /* "stats_local.pyx":337
  * 
  *                 if offset_x < 0:
  *                     offset_x = 0             # <<<<<<<<<<<<<<
@@ -4576,7 +4672,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
                             __pyx_v_offset_x = 0;
 
-                            /* "stats_local.pyx":331
+                            /* "stats_local.pyx":336
  *                 offset_y = y + offsets[n].y
  * 
  *                 if offset_x < 0:             # <<<<<<<<<<<<<<
@@ -4586,7 +4682,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                             goto __pyx_L14;
                           }
 
-                          /* "stats_local.pyx":333
+                          /* "stats_local.pyx":338
  *                 if offset_x < 0:
  *                     offset_x = 0
  *                 elif offset_x > x_max_adj:             # <<<<<<<<<<<<<<
@@ -4596,7 +4692,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                           __pyx_t_7 = ((__pyx_v_offset_x > __pyx_v_x_max_adj) != 0);
                           if (__pyx_t_7) {
 
-                            /* "stats_local.pyx":334
+                            /* "stats_local.pyx":339
  *                     offset_x = 0
  *                 elif offset_x > x_max_adj:
  *                     offset_x = x_max_adj             # <<<<<<<<<<<<<<
@@ -4605,7 +4701,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
                             __pyx_v_offset_x = __pyx_v_x_max_adj;
 
-                            /* "stats_local.pyx":333
+                            /* "stats_local.pyx":338
  *                 if offset_x < 0:
  *                     offset_x = 0
  *                 elif offset_x > x_max_adj:             # <<<<<<<<<<<<<<
@@ -4615,7 +4711,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                           }
                           __pyx_L14:;
 
-                          /* "stats_local.pyx":335
+                          /* "stats_local.pyx":340
  *                 elif offset_x > x_max_adj:
  *                     offset_x = x_max_adj
  *                 if offset_y < 0:             # <<<<<<<<<<<<<<
@@ -4625,7 +4721,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                           __pyx_t_7 = ((__pyx_v_offset_y < 0) != 0);
                           if (__pyx_t_7) {
 
-                            /* "stats_local.pyx":336
+                            /* "stats_local.pyx":341
  *                     offset_x = x_max_adj
  *                 if offset_y < 0:
  *                     offset_y = 0             # <<<<<<<<<<<<<<
@@ -4634,7 +4730,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
                             __pyx_v_offset_y = 0;
 
-                            /* "stats_local.pyx":335
+                            /* "stats_local.pyx":340
  *                 elif offset_x > x_max_adj:
  *                     offset_x = x_max_adj
  *                 if offset_y < 0:             # <<<<<<<<<<<<<<
@@ -4644,7 +4740,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                             goto __pyx_L15;
                           }
 
-                          /* "stats_local.pyx":337
+                          /* "stats_local.pyx":342
  *                 if offset_y < 0:
  *                     offset_y = 0
  *                 elif offset_y > y_max_adj:             # <<<<<<<<<<<<<<
@@ -4654,7 +4750,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                           __pyx_t_7 = ((__pyx_v_offset_y > __pyx_v_y_max_adj) != 0);
                           if (__pyx_t_7) {
 
-                            /* "stats_local.pyx":338
+                            /* "stats_local.pyx":343
  *                     offset_y = 0
  *                 elif offset_y > y_max_adj:
  *                     offset_y = y_max_adj             # <<<<<<<<<<<<<<
@@ -4663,7 +4759,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
                             __pyx_v_offset_y = __pyx_v_y_max_adj;
 
-                            /* "stats_local.pyx":337
+                            /* "stats_local.pyx":342
  *                 if offset_y < 0:
  *                     offset_y = 0
  *                 elif offset_y > y_max_adj:             # <<<<<<<<<<<<<<
@@ -4673,7 +4769,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                           }
                           __pyx_L15:;
 
-                          /* "stats_local.pyx":340
+                          /* "stats_local.pyx":345
  *                     offset_y = y_max_adj
  * 
  *                 neighbourhood[n].value = arr[offset_x][offset_y]             # <<<<<<<<<<<<<<
@@ -4684,7 +4780,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                           __pyx_t_17 = __pyx_v_offset_y;
                           (__pyx_v_neighbourhood[__pyx_v_n]).value = (*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_arr.data + __pyx_t_16 * __pyx_v_arr.strides[0]) )) + __pyx_t_17)) )));
 
-                          /* "stats_local.pyx":342
+                          /* "stats_local.pyx":347
  *                 neighbourhood[n].value = arr[offset_x][offset_y]
  * 
  *                 if has_nodata is True and neighbourhood[n].value == fill_value:             # <<<<<<<<<<<<<<
@@ -4702,7 +4798,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                           __pyx_L17_bool_binop_done:;
                           if (__pyx_t_7) {
 
-                            /* "stats_local.pyx":343
+                            /* "stats_local.pyx":348
  * 
  *                 if has_nodata is True and neighbourhood[n].value == fill_value:
  *                     neighbourhood[n].weight = 0             # <<<<<<<<<<<<<<
@@ -4711,7 +4807,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
                             (__pyx_v_neighbourhood[__pyx_v_n]).weight = 0.0;
 
-                            /* "stats_local.pyx":342
+                            /* "stats_local.pyx":347
  *                 neighbourhood[n].value = arr[offset_x][offset_y]
  * 
  *                 if has_nodata is True and neighbourhood[n].value == fill_value:             # <<<<<<<<<<<<<<
@@ -4721,7 +4817,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                             goto __pyx_L16;
                           }
 
-                          /* "stats_local.pyx":345
+                          /* "stats_local.pyx":350
  *                     neighbourhood[n].weight = 0
  *                 else:
  *                     neighbourhood[n].weight = offsets[n].weight             # <<<<<<<<<<<<<<
@@ -4735,7 +4831,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                           __pyx_L16:;
                         }
 
-                        /* "stats_local.pyx":347
+                        /* "stats_local.pyx":352
  *                     neighbourhood[n].weight = offsets[n].weight
  * 
  *             if has_nodata is True or (x < x_edge_low or y < y_edge_low or x > x_edge_high or y > y_edge_high):             # <<<<<<<<<<<<<<
@@ -4771,7 +4867,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                         __pyx_L20_bool_binop_done:;
                         if (__pyx_t_7) {
 
-                          /* "stats_local.pyx":348
+                          /* "stats_local.pyx":353
  * 
  *             if has_nodata is True or (x < x_edge_low or y < y_edge_low or x > x_edge_high or y > y_edge_high):
  *                 normalise_neighbourhood(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -4780,7 +4876,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
                           __pyx_f_11stats_local_normalise_neighbourhood(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-                          /* "stats_local.pyx":347
+                          /* "stats_local.pyx":352
  *                     neighbourhood[n].weight = offsets[n].weight
  * 
  *             if has_nodata is True or (x < x_edge_low or y < y_edge_low or x > x_edge_high or y > y_edge_high):             # <<<<<<<<<<<<<<
@@ -4789,7 +4885,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
  */
                         }
 
-                        /* "stats_local.pyx":350
+                        /* "stats_local.pyx":355
  *                 normalise_neighbourhood(neighbourhood, non_zero)
  * 
  *             result[x][y] = apply(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -4800,7 +4896,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
                         __pyx_t_20 = __pyx_v_y;
                         *((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_result.data + __pyx_t_19 * __pyx_v_result.strides[0]) )) + __pyx_t_20)) )) = __pyx_v_apply(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-                        /* "stats_local.pyx":352
+                        /* "stats_local.pyx":357
  *             result[x][y] = apply(neighbourhood, non_zero)
  * 
  *             free(neighbourhood)             # <<<<<<<<<<<<<<
@@ -4822,7 +4918,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
       #define unlikely(x) __builtin_expect(!!(x), 0)
   #endif
 
-  /* "stats_local.pyx":294
+  /* "stats_local.pyx":299
  * 
  * 
  * cdef void loop(             # <<<<<<<<<<<<<<
@@ -4833,7 +4929,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice __pyx_v_arr, __Pyx_mem
   /* function exit code */
 }
 
-/* "stats_local.pyx":355
+/* "stats_local.pyx":360
  * 
  * 
  * cdef void loop_3d(             # <<<<<<<<<<<<<<
@@ -4884,7 +4980,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
   Py_ssize_t __pyx_t_23;
   Py_ssize_t __pyx_t_24;
 
-  /* "stats_local.pyx":371
+  /* "stats_local.pyx":376
  *     cdef Neighbourhood * neighbourhood
  *     cdef bint value_is_nodata
  *     cdef int x_max_adj = x_max - 1             # <<<<<<<<<<<<<<
@@ -4893,7 +4989,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
   __pyx_v_x_max_adj = (__pyx_v_x_max - 1);
 
-  /* "stats_local.pyx":372
+  /* "stats_local.pyx":377
  *     cdef bint value_is_nodata
  *     cdef int x_max_adj = x_max - 1
  *     cdef int y_max_adj = y_max - 1             # <<<<<<<<<<<<<<
@@ -4902,7 +4998,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
   __pyx_v_y_max_adj = (__pyx_v_y_max - 1);
 
-  /* "stats_local.pyx":373
+  /* "stats_local.pyx":378
  *     cdef int x_max_adj = x_max - 1
  *     cdef int y_max_adj = y_max - 1
  *     cdef int x_edge_low = kernel_width             # <<<<<<<<<<<<<<
@@ -4911,7 +5007,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
   __pyx_v_x_edge_low = __pyx_v_kernel_width;
 
-  /* "stats_local.pyx":374
+  /* "stats_local.pyx":379
  *     cdef int y_max_adj = y_max - 1
  *     cdef int x_edge_low = kernel_width
  *     cdef int y_edge_low = kernel_width             # <<<<<<<<<<<<<<
@@ -4920,7 +5016,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
   __pyx_v_y_edge_low = __pyx_v_kernel_width;
 
-  /* "stats_local.pyx":375
+  /* "stats_local.pyx":380
  *     cdef int x_edge_low = kernel_width
  *     cdef int y_edge_low = kernel_width
  *     cdef int x_edge_high = x_max_adj - kernel_width             # <<<<<<<<<<<<<<
@@ -4929,7 +5025,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
   __pyx_v_x_edge_high = (__pyx_v_x_max_adj - __pyx_v_kernel_width);
 
-  /* "stats_local.pyx":376
+  /* "stats_local.pyx":381
  *     cdef int y_edge_low = kernel_width
  *     cdef int x_edge_high = x_max_adj - kernel_width
  *     cdef int y_edge_high = y_max_adj - kernel_width             # <<<<<<<<<<<<<<
@@ -4938,7 +5034,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
   __pyx_v_y_edge_high = (__pyx_v_y_max_adj - __pyx_v_kernel_width);
 
-  /* "stats_local.pyx":377
+  /* "stats_local.pyx":382
  *     cdef int x_edge_high = x_max_adj - kernel_width
  *     cdef int y_edge_high = y_max_adj - kernel_width
  *     cdef int neighbourhood_size = sizeof(Neighbourhood) * (non_zero * z_max)             # <<<<<<<<<<<<<<
@@ -4947,7 +5043,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
   __pyx_v_neighbourhood_size = ((sizeof(struct __pyx_t_11stats_local_Neighbourhood)) * (__pyx_v_non_zero * __pyx_v_z_max));
 
-  /* "stats_local.pyx":379
+  /* "stats_local.pyx":384
  *     cdef int neighbourhood_size = sizeof(Neighbourhood) * (non_zero * z_max)
  * 
  *     cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)             # <<<<<<<<<<<<<<
@@ -4956,7 +5052,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
   __pyx_v_offsets = __pyx_f_11stats_local_generate_offsets(__pyx_v_kernel, __pyx_v_kernel_width, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":381
+  /* "stats_local.pyx":386
  *     cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
  * 
  *     for x in prange(x_max):             # <<<<<<<<<<<<<<
@@ -4995,7 +5091,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                       __pyx_v_y = ((int)0xbad0bad0);
                       __pyx_v_z = ((int)0xbad0bad0);
 
-                      /* "stats_local.pyx":382
+                      /* "stats_local.pyx":387
  * 
  *     for x in prange(x_max):
  *         for y in range(y_max):             # <<<<<<<<<<<<<<
@@ -5007,7 +5103,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                       for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
                         __pyx_v_y = __pyx_t_6;
 
-                        /* "stats_local.pyx":384
+                        /* "stats_local.pyx":389
  *         for y in range(y_max):
  * 
  *             neighbourhood = <Neighbourhood*> malloc(neighbourhood_size)             # <<<<<<<<<<<<<<
@@ -5016,7 +5112,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                         __pyx_v_neighbourhood = ((struct __pyx_t_11stats_local_Neighbourhood *)malloc(__pyx_v_neighbourhood_size));
 
-                        /* "stats_local.pyx":385
+                        /* "stats_local.pyx":390
  * 
  *             neighbourhood = <Neighbourhood*> malloc(neighbourhood_size)
  *             value_is_nodata = False             # <<<<<<<<<<<<<<
@@ -5025,7 +5121,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                         __pyx_v_value_is_nodata = 0;
 
-                        /* "stats_local.pyx":387
+                        /* "stats_local.pyx":392
  *             value_is_nodata = False
  * 
  *             for z in range(z_max):             # <<<<<<<<<<<<<<
@@ -5037,7 +5133,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                         for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_8; __pyx_t_9+=1) {
                           __pyx_v_z = __pyx_t_9;
 
-                          /* "stats_local.pyx":389
+                          /* "stats_local.pyx":394
  *             for z in range(z_max):
  * 
  *                 if has_nodata is True and arr[z][x][y] == fill_value:             # <<<<<<<<<<<<<<
@@ -5058,7 +5154,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                           __pyx_L12_bool_binop_done:;
                           if (__pyx_t_10) {
 
-                            /* "stats_local.pyx":390
+                            /* "stats_local.pyx":395
  * 
  *                 if has_nodata is True and arr[z][x][y] == fill_value:
  *                     value_is_nodata = True             # <<<<<<<<<<<<<<
@@ -5067,7 +5163,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                             __pyx_v_value_is_nodata = 1;
 
-                            /* "stats_local.pyx":391
+                            /* "stats_local.pyx":396
  *                 if has_nodata is True and arr[z][x][y] == fill_value:
  *                     value_is_nodata = True
  *                     continue             # <<<<<<<<<<<<<<
@@ -5076,7 +5172,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                             goto __pyx_L9_continue;
 
-                            /* "stats_local.pyx":389
+                            /* "stats_local.pyx":394
  *             for z in range(z_max):
  * 
  *                 if has_nodata is True and arr[z][x][y] == fill_value:             # <<<<<<<<<<<<<<
@@ -5085,7 +5181,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                           }
 
-                          /* "stats_local.pyx":393
+                          /* "stats_local.pyx":398
  *                     continue
  * 
  *                 for n in range(non_zero):             # <<<<<<<<<<<<<<
@@ -5097,7 +5193,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                           for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_16; __pyx_t_17+=1) {
                             __pyx_v_n = __pyx_t_17;
 
-                            /* "stats_local.pyx":394
+                            /* "stats_local.pyx":399
  * 
  *                 for n in range(non_zero):
  *                     ni = n * (z + 1)             # <<<<<<<<<<<<<<
@@ -5106,7 +5202,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                             __pyx_v_ni = (__pyx_v_n * (__pyx_v_z + 1));
 
-                            /* "stats_local.pyx":396
+                            /* "stats_local.pyx":401
  *                     ni = n * (z + 1)
  * 
  *                     offset_x = x + offsets[n].x             # <<<<<<<<<<<<<<
@@ -5115,7 +5211,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                             __pyx_v_offset_x = (__pyx_v_x + (__pyx_v_offsets[__pyx_v_n]).x);
 
-                            /* "stats_local.pyx":397
+                            /* "stats_local.pyx":402
  * 
  *                     offset_x = x + offsets[n].x
  *                     offset_y = y + offsets[n].y             # <<<<<<<<<<<<<<
@@ -5124,7 +5220,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                             __pyx_v_offset_y = (__pyx_v_y + (__pyx_v_offsets[__pyx_v_n]).y);
 
-                            /* "stats_local.pyx":399
+                            /* "stats_local.pyx":404
  *                     offset_y = y + offsets[n].y
  * 
  *                     if offset_x < 0:             # <<<<<<<<<<<<<<
@@ -5134,7 +5230,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                             __pyx_t_10 = ((__pyx_v_offset_x < 0) != 0);
                             if (__pyx_t_10) {
 
-                              /* "stats_local.pyx":400
+                              /* "stats_local.pyx":405
  * 
  *                     if offset_x < 0:
  *                         offset_x = 0             # <<<<<<<<<<<<<<
@@ -5143,7 +5239,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                               __pyx_v_offset_x = 0;
 
-                              /* "stats_local.pyx":399
+                              /* "stats_local.pyx":404
  *                     offset_y = y + offsets[n].y
  * 
  *                     if offset_x < 0:             # <<<<<<<<<<<<<<
@@ -5153,7 +5249,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                               goto __pyx_L16;
                             }
 
-                            /* "stats_local.pyx":401
+                            /* "stats_local.pyx":406
  *                     if offset_x < 0:
  *                         offset_x = 0
  *                     elif offset_x > x_max_adj:             # <<<<<<<<<<<<<<
@@ -5163,7 +5259,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                             __pyx_t_10 = ((__pyx_v_offset_x > __pyx_v_x_max_adj) != 0);
                             if (__pyx_t_10) {
 
-                              /* "stats_local.pyx":402
+                              /* "stats_local.pyx":407
  *                         offset_x = 0
  *                     elif offset_x > x_max_adj:
  *                         offset_x = x_max_adj             # <<<<<<<<<<<<<<
@@ -5172,7 +5268,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                               __pyx_v_offset_x = __pyx_v_x_max_adj;
 
-                              /* "stats_local.pyx":401
+                              /* "stats_local.pyx":406
  *                     if offset_x < 0:
  *                         offset_x = 0
  *                     elif offset_x > x_max_adj:             # <<<<<<<<<<<<<<
@@ -5182,7 +5278,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                             }
                             __pyx_L16:;
 
-                            /* "stats_local.pyx":403
+                            /* "stats_local.pyx":408
  *                     elif offset_x > x_max_adj:
  *                         offset_x = x_max_adj
  *                     if offset_y < 0:             # <<<<<<<<<<<<<<
@@ -5192,7 +5288,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                             __pyx_t_10 = ((__pyx_v_offset_y < 0) != 0);
                             if (__pyx_t_10) {
 
-                              /* "stats_local.pyx":404
+                              /* "stats_local.pyx":409
  *                         offset_x = x_max_adj
  *                     if offset_y < 0:
  *                         offset_y = 0             # <<<<<<<<<<<<<<
@@ -5201,7 +5297,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                               __pyx_v_offset_y = 0;
 
-                              /* "stats_local.pyx":403
+                              /* "stats_local.pyx":408
  *                     elif offset_x > x_max_adj:
  *                         offset_x = x_max_adj
  *                     if offset_y < 0:             # <<<<<<<<<<<<<<
@@ -5211,7 +5307,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                               goto __pyx_L17;
                             }
 
-                            /* "stats_local.pyx":405
+                            /* "stats_local.pyx":410
  *                     if offset_y < 0:
  *                         offset_y = 0
  *                     elif offset_y > y_max_adj:             # <<<<<<<<<<<<<<
@@ -5221,7 +5317,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                             __pyx_t_10 = ((__pyx_v_offset_y > __pyx_v_y_max_adj) != 0);
                             if (__pyx_t_10) {
 
-                              /* "stats_local.pyx":406
+                              /* "stats_local.pyx":411
  *                         offset_y = 0
  *                     elif offset_y > y_max_adj:
  *                         offset_y = y_max_adj             # <<<<<<<<<<<<<<
@@ -5230,7 +5326,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                               __pyx_v_offset_y = __pyx_v_y_max_adj;
 
-                              /* "stats_local.pyx":405
+                              /* "stats_local.pyx":410
  *                     if offset_y < 0:
  *                         offset_y = 0
  *                     elif offset_y > y_max_adj:             # <<<<<<<<<<<<<<
@@ -5240,7 +5336,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                             }
                             __pyx_L17:;
 
-                            /* "stats_local.pyx":408
+                            /* "stats_local.pyx":413
  *                         offset_y = y_max_adj
  * 
  *                     neighbourhood[ni].value = arr[z][offset_x][offset_y]             # <<<<<<<<<<<<<<
@@ -5252,7 +5348,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                             __pyx_t_20 = __pyx_v_offset_y;
                             (__pyx_v_neighbourhood[__pyx_v_ni]).value = (*((double *) ( /* dim=2 */ ((char *) (((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr.data + __pyx_t_18 * __pyx_v_arr.strides[0]) ) + __pyx_t_19 * __pyx_v_arr.strides[1]) )) + __pyx_t_20)) )));
 
-                            /* "stats_local.pyx":409
+                            /* "stats_local.pyx":414
  * 
  *                     neighbourhood[ni].value = arr[z][offset_x][offset_y]
  *                     neighbourhood[ni].weight = offsets[n].weight / z_max             # <<<<<<<<<<<<<<
@@ -5261,7 +5357,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                             (__pyx_v_neighbourhood[__pyx_v_ni]).weight = ((__pyx_v_offsets[__pyx_v_n]).weight / ((double)__pyx_v_z_max));
 
-                            /* "stats_local.pyx":411
+                            /* "stats_local.pyx":416
  *                     neighbourhood[ni].weight = offsets[n].weight / z_max
  * 
  *                     if has_nodata is True and neighbourhood[ni].value == fill_value:             # <<<<<<<<<<<<<<
@@ -5279,7 +5375,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                             __pyx_L19_bool_binop_done:;
                             if (__pyx_t_10) {
 
-                              /* "stats_local.pyx":412
+                              /* "stats_local.pyx":417
  * 
  *                     if has_nodata is True and neighbourhood[ni].value == fill_value:
  *                         neighbourhood[ni].weight = 0             # <<<<<<<<<<<<<<
@@ -5288,7 +5384,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                               (__pyx_v_neighbourhood[__pyx_v_ni]).weight = 0.0;
 
-                              /* "stats_local.pyx":411
+                              /* "stats_local.pyx":416
  *                     neighbourhood[ni].weight = offsets[n].weight / z_max
  * 
  *                     if has_nodata is True and neighbourhood[ni].value == fill_value:             # <<<<<<<<<<<<<<
@@ -5298,7 +5394,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                               goto __pyx_L18;
                             }
 
-                            /* "stats_local.pyx":414
+                            /* "stats_local.pyx":419
  *                         neighbourhood[ni].weight = 0
  *                     else:
  *                         neighbourhood[ni].weight = offsets[n].weight / z_max             # <<<<<<<<<<<<<<
@@ -5313,7 +5409,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                           __pyx_L9_continue:;
                         }
 
-                        /* "stats_local.pyx":416
+                        /* "stats_local.pyx":421
  *                         neighbourhood[ni].weight = offsets[n].weight / z_max
  * 
  *             if has_nodata is True or (x < x_edge_low or y < y_edge_low or x > x_edge_high or y > y_edge_high):             # <<<<<<<<<<<<<<
@@ -5349,7 +5445,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                         __pyx_L22_bool_binop_done:;
                         if (__pyx_t_10) {
 
-                          /* "stats_local.pyx":417
+                          /* "stats_local.pyx":422
  * 
  *             if has_nodata is True or (x < x_edge_low or y < y_edge_low or x > x_edge_high or y > y_edge_high):
  *                 normalise_neighbourhood(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -5358,7 +5454,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                           __pyx_f_11stats_local_normalise_neighbourhood(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-                          /* "stats_local.pyx":416
+                          /* "stats_local.pyx":421
  *                         neighbourhood[ni].weight = offsets[n].weight / z_max
  * 
  *             if has_nodata is True or (x < x_edge_low or y < y_edge_low or x > x_edge_high or y > y_edge_high):             # <<<<<<<<<<<<<<
@@ -5367,7 +5463,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
  */
                         }
 
-                        /* "stats_local.pyx":419
+                        /* "stats_local.pyx":424
  *                 normalise_neighbourhood(neighbourhood, non_zero)
  * 
  *             if value_is_nodata is False:             # <<<<<<<<<<<<<<
@@ -5377,7 +5473,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                         __pyx_t_10 = ((__pyx_v_value_is_nodata == 0) != 0);
                         if (__pyx_t_10) {
 
-                          /* "stats_local.pyx":420
+                          /* "stats_local.pyx":425
  * 
  *             if value_is_nodata is False:
  *                 result[x][y] = apply(neighbourhood, non_zero)             # <<<<<<<<<<<<<<
@@ -5388,7 +5484,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                           __pyx_t_22 = __pyx_v_y;
                           *((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_result.data + __pyx_t_21 * __pyx_v_result.strides[0]) )) + __pyx_t_22)) )) = __pyx_v_apply(__pyx_v_neighbourhood, __pyx_v_non_zero);
 
-                          /* "stats_local.pyx":419
+                          /* "stats_local.pyx":424
  *                 normalise_neighbourhood(neighbourhood, non_zero)
  * 
  *             if value_is_nodata is False:             # <<<<<<<<<<<<<<
@@ -5398,7 +5494,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                           goto __pyx_L27;
                         }
 
-                        /* "stats_local.pyx":422
+                        /* "stats_local.pyx":427
  *                 result[x][y] = apply(neighbourhood, non_zero)
  *             else:
  *                 result[x][y] = fill_value             # <<<<<<<<<<<<<<
@@ -5412,7 +5508,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
                         }
                         __pyx_L27:;
 
-                        /* "stats_local.pyx":424
+                        /* "stats_local.pyx":429
  *                 result[x][y] = fill_value
  * 
  *             free(neighbourhood)             # <<<<<<<<<<<<<<
@@ -5433,7 +5529,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
       #define unlikely(x) __builtin_expect(!!(x), 0)
   #endif
 
-  /* "stats_local.pyx":355
+  /* "stats_local.pyx":360
  * 
  * 
  * cdef void loop_3d(             # <<<<<<<<<<<<<<
@@ -5444,7 +5540,7 @@ static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice __pyx_v_arr, __Pyx_
   /* function exit code */
 }
 
-/* "stats_local.pyx":427
+/* "stats_local.pyx":432
  * 
  * 
  * def kernel_filter(arr, kernel, str func_type, dtype='float32'):             # <<<<<<<<<<<<<<
@@ -5491,13 +5587,13 @@ static PyObject *__pyx_pw_11stats_local_1kernel_filter(PyObject *__pyx_self, PyO
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_kernel)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("kernel_filter", 0, 3, 4, 1); __PYX_ERR(0, 427, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("kernel_filter", 0, 3, 4, 1); __PYX_ERR(0, 432, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_func_type)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("kernel_filter", 0, 3, 4, 2); __PYX_ERR(0, 427, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("kernel_filter", 0, 3, 4, 2); __PYX_ERR(0, 432, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
@@ -5507,7 +5603,7 @@ static PyObject *__pyx_pw_11stats_local_1kernel_filter(PyObject *__pyx_self, PyO
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "kernel_filter") < 0)) __PYX_ERR(0, 427, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "kernel_filter") < 0)) __PYX_ERR(0, 432, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -5527,13 +5623,13 @@ static PyObject *__pyx_pw_11stats_local_1kernel_filter(PyObject *__pyx_self, PyO
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("kernel_filter", 0, 3, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 427, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("kernel_filter", 0, 3, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 432, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("stats_local.kernel_filter", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_func_type), (&PyUnicode_Type), 1, "func_type", 1))) __PYX_ERR(0, 427, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_func_type), (&PyUnicode_Type), 1, "func_type", 1))) __PYX_ERR(0, 432, __pyx_L1_error)
   __pyx_r = __pyx_pf_11stats_local_kernel_filter(__pyx_self, __pyx_v_arr, __pyx_v_kernel, __pyx_v_func_type, __pyx_v_dtype);
 
   /* function exit code */
@@ -5578,7 +5674,7 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
   __Pyx_RefNannySetupContext("kernel_filter", 0);
   __Pyx_INCREF(__pyx_v_arr);
 
-  /* "stats_local.pyx":428
+  /* "stats_local.pyx":433
  * 
  * def kernel_filter(arr, kernel, str func_type, dtype='float32'):
  *     cdef bint has_nodata = False             # <<<<<<<<<<<<<<
@@ -5587,7 +5683,7 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
  */
   __pyx_v_has_nodata = 0;
 
-  /* "stats_local.pyx":430
+  /* "stats_local.pyx":435
  *     cdef bint has_nodata = False
  *     cdef double fill_value
  *     cdef f_type apply = func_selector(func_type)             # <<<<<<<<<<<<<<
@@ -5596,16 +5692,16 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
  */
   __pyx_v_apply = __pyx_f_11stats_local_func_selector(__pyx_v_func_type);
 
-  /* "stats_local.pyx":431
+  /* "stats_local.pyx":436
  *     cdef double fill_value
  *     cdef f_type apply = func_selector(func_type)
  *     cdef int non_zero = np.count_nonzero(kernel)             # <<<<<<<<<<<<<<
  *     cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
  *     cdef double [:, ::1] arr_view_2d
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 431, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 436, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_count_nonzero); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 431, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_count_nonzero); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 436, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -5620,38 +5716,38 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
   }
   __pyx_t_1 = (__pyx_t_2) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_2, __pyx_v_kernel) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_kernel);
   __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 431, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 436, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_4 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_4 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 431, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_4 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 436, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_non_zero = __pyx_t_4;
 
-  /* "stats_local.pyx":432
+  /* "stats_local.pyx":437
  *     cdef f_type apply = func_selector(func_type)
  *     cdef int non_zero = np.count_nonzero(kernel)
  *     cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel             # <<<<<<<<<<<<<<
  *     cdef double [:, ::1] arr_view_2d
  *     cdef double [:, :, ::1] arr_view_3d
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 432, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 432, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_double); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 432, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_double); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyObject_RichCompare(__pyx_t_1, __pyx_t_2, Py_NE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 432, __pyx_L1_error)
+  __pyx_t_3 = PyObject_RichCompare(__pyx_t_1, __pyx_t_2, Py_NE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 432, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 437, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (__pyx_t_6) {
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_astype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 432, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_astype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 437, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 432, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 437, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_double); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 432, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_double); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 437, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_1 = NULL;
@@ -5667,16 +5763,16 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     __pyx_t_3 = (__pyx_t_1) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_1, __pyx_t_7) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_7);
     __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 432, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 437, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_8 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_t_3, PyBUF_WRITABLE); if (unlikely(!__pyx_t_8.memview)) __PYX_ERR(0, 432, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_t_3, PyBUF_WRITABLE); if (unlikely(!__pyx_t_8.memview)) __PYX_ERR(0, 437, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_t_5 = __pyx_t_8;
     __pyx_t_8.memview = NULL;
     __pyx_t_8.data = NULL;
   } else {
-    __pyx_t_8 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_v_kernel, PyBUF_WRITABLE); if (unlikely(!__pyx_t_8.memview)) __PYX_ERR(0, 432, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_v_kernel, PyBUF_WRITABLE); if (unlikely(!__pyx_t_8.memview)) __PYX_ERR(0, 437, __pyx_L1_error)
     __pyx_t_5 = __pyx_t_8;
     __pyx_t_8.memview = NULL;
     __pyx_t_8.data = NULL;
@@ -5685,20 +5781,20 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "stats_local.pyx":435
+  /* "stats_local.pyx":440
  *     cdef double [:, ::1] arr_view_2d
  *     cdef double [:, :, ::1] arr_view_3d
  *     cdef int dims = len(arr.shape)             # <<<<<<<<<<<<<<
  * 
  *     assert(dims == 2 or dims == 3)
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 435, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 440, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_9 = PyObject_Length(__pyx_t_3); if (unlikely(__pyx_t_9 == ((Py_ssize_t)-1))) __PYX_ERR(0, 435, __pyx_L1_error)
+  __pyx_t_9 = PyObject_Length(__pyx_t_3); if (unlikely(__pyx_t_9 == ((Py_ssize_t)-1))) __PYX_ERR(0, 440, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_dims = __pyx_t_9;
 
-  /* "stats_local.pyx":437
+  /* "stats_local.pyx":442
  *     cdef int dims = len(arr.shape)
  * 
  *     assert(dims == 2 or dims == 3)             # <<<<<<<<<<<<<<
@@ -5718,36 +5814,36 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     }
     if (unlikely(!__pyx_t_6)) {
       PyErr_SetNone(PyExc_AssertionError);
-      __PYX_ERR(0, 437, __pyx_L1_error)
+      __PYX_ERR(0, 442, __pyx_L1_error)
     }
   }
   #endif
 
-  /* "stats_local.pyx":439
+  /* "stats_local.pyx":444
  *     assert(dims == 2 or dims == 3)
  * 
  *     arr = arr.astype(np.double) if arr.dtype != np.double else arr             # <<<<<<<<<<<<<<
  *     if dims ==2:
  *         result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_dtype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 439, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_dtype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 444, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_n_s_np); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 439, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_n_s_np); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 444, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_double); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 439, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_double); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 444, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = PyObject_RichCompare(__pyx_t_2, __pyx_t_1, Py_NE); __Pyx_XGOTREF(__pyx_t_7); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 439, __pyx_L1_error)
+  __pyx_t_7 = PyObject_RichCompare(__pyx_t_2, __pyx_t_1, Py_NE); __Pyx_XGOTREF(__pyx_t_7); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 444, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_7); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 439, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_7); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 444, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   if (__pyx_t_6) {
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_astype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 439, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_astype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 444, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 439, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 444, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_double); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 439, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_double); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 444, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_2 = NULL;
@@ -5763,7 +5859,7 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     __pyx_t_7 = (__pyx_t_2) ? __Pyx_PyObject_Call2Args(__pyx_t_1, __pyx_t_2, __pyx_t_10) : __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_10);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-    if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 439, __pyx_L1_error)
+    if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 444, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_3 = __pyx_t_7;
@@ -5775,7 +5871,7 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
   __Pyx_DECREF_SET(__pyx_v_arr, __pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "stats_local.pyx":440
+  /* "stats_local.pyx":445
  * 
  *     arr = arr.astype(np.double) if arr.dtype != np.double else arr
  *     if dims ==2:             # <<<<<<<<<<<<<<
@@ -5785,29 +5881,29 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
   __pyx_t_6 = ((__pyx_v_dims == 2) != 0);
   if (__pyx_t_6) {
 
-    /* "stats_local.pyx":441
+    /* "stats_local.pyx":446
  *     arr = arr.astype(np.double) if arr.dtype != np.double else arr
  *     if dims ==2:
  *         result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)             # <<<<<<<<<<<<<<
  *     else:
  *         result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 441, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_empty); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 441, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_empty); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 441, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_1 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 441, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 441, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_10 = __Pyx_GetItemInt(__pyx_t_3, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 441, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_GetItemInt(__pyx_t_3, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 441, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
@@ -5815,21 +5911,21 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_10);
     __pyx_t_1 = 0;
     __pyx_t_10 = 0;
-    __pyx_t_10 = PyTuple_New(1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 441, __pyx_L1_error)
+    __pyx_t_10 = PyTuple_New(1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
     __Pyx_GIVEREF(__pyx_t_3);
     PyTuple_SET_ITEM(__pyx_t_10, 0, __pyx_t_3);
     __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 441, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 441, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_double); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 441, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_double); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_2) < 0) __PYX_ERR(0, 441, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_2) < 0) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_10, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 441, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_10, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 446, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
@@ -5837,7 +5933,7 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     __pyx_v_result = __pyx_t_2;
     __pyx_t_2 = 0;
 
-    /* "stats_local.pyx":440
+    /* "stats_local.pyx":445
  * 
  *     arr = arr.astype(np.double) if arr.dtype != np.double else arr
  *     if dims ==2:             # <<<<<<<<<<<<<<
@@ -5847,7 +5943,7 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     goto __pyx_L3;
   }
 
-  /* "stats_local.pyx":443
+  /* "stats_local.pyx":448
  *         result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
  *     else:
  *         result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)             # <<<<<<<<<<<<<<
@@ -5855,22 +5951,22 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
  *     cdef double [:, ::1] result_view = result
  */
   /*else*/ {
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 443, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 443, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 443, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_10 = __Pyx_GetItemInt(__pyx_t_2, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 443, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_GetItemInt(__pyx_t_2, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 443, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_2, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 443, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_2, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 443, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_GIVEREF(__pyx_t_10);
     PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_10);
@@ -5878,21 +5974,21 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_7);
     __pyx_t_10 = 0;
     __pyx_t_7 = 0;
-    __pyx_t_7 = PyTuple_New(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 443, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_GIVEREF(__pyx_t_2);
     PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_2);
     __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 443, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_np); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 443, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_10, __pyx_n_s_np); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_10);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_n_s_double); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 443, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_10, __pyx_n_s_double); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
-    if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_1) < 0) __PYX_ERR(0, 443, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_1) < 0) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 443, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 448, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -5902,65 +5998,65 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
   }
   __pyx_L3:;
 
-  /* "stats_local.pyx":445
+  /* "stats_local.pyx":450
  *         result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
  * 
  *     cdef double [:, ::1] result_view = result             # <<<<<<<<<<<<<<
  * 
  *     if isinstance(arr, np.ma.MaskedArray):
  */
-  __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_v_result, PyBUF_WRITABLE); if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 445, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_v_result, PyBUF_WRITABLE); if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 450, __pyx_L1_error)
   __pyx_v_result_view = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "stats_local.pyx":447
+  /* "stats_local.pyx":452
  *     cdef double [:, ::1] result_view = result
  * 
  *     if isinstance(arr, np.ma.MaskedArray):             # <<<<<<<<<<<<<<
  *         result = np.ma.array(result, fill_value=arr.fill_value)
  *         fill_value = arr.fill_value
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 447, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 452, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_ma); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 447, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_ma); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 452, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_MaskedArray); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 447, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_MaskedArray); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 452, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_6 = PyObject_IsInstance(__pyx_v_arr, __pyx_t_1); if (unlikely(__pyx_t_6 == ((int)-1))) __PYX_ERR(0, 447, __pyx_L1_error)
+  __pyx_t_6 = PyObject_IsInstance(__pyx_v_arr, __pyx_t_1); if (unlikely(__pyx_t_6 == ((int)-1))) __PYX_ERR(0, 452, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_11 = (__pyx_t_6 != 0);
   if (__pyx_t_11) {
 
-    /* "stats_local.pyx":448
+    /* "stats_local.pyx":453
  * 
  *     if isinstance(arr, np.ma.MaskedArray):
  *         result = np.ma.array(result, fill_value=arr.fill_value)             # <<<<<<<<<<<<<<
  *         fill_value = arr.fill_value
  *         has_nodata = 1
  */
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 448, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 453, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_ma); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 448, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_ma); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 453, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_array); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 448, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_array); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 453, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 448, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 453, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_INCREF(__pyx_v_result);
     __Pyx_GIVEREF(__pyx_v_result);
     PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v_result);
-    __pyx_t_7 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 448, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 453, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_fill_value); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 448, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_fill_value); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 453, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_fill_value, __pyx_t_3) < 0) __PYX_ERR(0, 448, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_fill_value, __pyx_t_3) < 0) __PYX_ERR(0, 453, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_2, __pyx_t_7); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 448, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_2, __pyx_t_7); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 453, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -5968,20 +6064,20 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     __Pyx_DECREF_SET(__pyx_v_result, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "stats_local.pyx":449
+    /* "stats_local.pyx":454
  *     if isinstance(arr, np.ma.MaskedArray):
  *         result = np.ma.array(result, fill_value=arr.fill_value)
  *         fill_value = arr.fill_value             # <<<<<<<<<<<<<<
  *         has_nodata = 1
  *         arr = arr.filled()
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_fill_value); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 449, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_fill_value); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 454, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_12 = __pyx_PyFloat_AsDouble(__pyx_t_3); if (unlikely((__pyx_t_12 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 449, __pyx_L1_error)
+    __pyx_t_12 = __pyx_PyFloat_AsDouble(__pyx_t_3); if (unlikely((__pyx_t_12 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 454, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_v_fill_value = __pyx_t_12;
 
-    /* "stats_local.pyx":450
+    /* "stats_local.pyx":455
  *         result = np.ma.array(result, fill_value=arr.fill_value)
  *         fill_value = arr.fill_value
  *         has_nodata = 1             # <<<<<<<<<<<<<<
@@ -5990,14 +6086,14 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
  */
     __pyx_v_has_nodata = 1;
 
-    /* "stats_local.pyx":451
+    /* "stats_local.pyx":456
  *         fill_value = arr.fill_value
  *         has_nodata = 1
  *         arr = arr.filled()             # <<<<<<<<<<<<<<
  *     else:
  *         fill_value = 0.0
  */
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_filled); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 451, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_filled); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 456, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_t_2 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_7))) {
@@ -6011,13 +6107,13 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     }
     __pyx_t_3 = (__pyx_t_2) ? __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_2) : __Pyx_PyObject_CallNoArg(__pyx_t_7);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 451, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 456, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_DECREF_SET(__pyx_v_arr, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "stats_local.pyx":447
+    /* "stats_local.pyx":452
  *     cdef double [:, ::1] result_view = result
  * 
  *     if isinstance(arr, np.ma.MaskedArray):             # <<<<<<<<<<<<<<
@@ -6027,7 +6123,7 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     goto __pyx_L4;
   }
 
-  /* "stats_local.pyx":453
+  /* "stats_local.pyx":458
  *         arr = arr.filled()
  *     else:
  *         fill_value = 0.0             # <<<<<<<<<<<<<<
@@ -6039,7 +6135,7 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
   }
   __pyx_L4:;
 
-  /* "stats_local.pyx":455
+  /* "stats_local.pyx":460
  *         fill_value = 0.0
  * 
  *     if dims is 3:             # <<<<<<<<<<<<<<
@@ -6049,79 +6145,79 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
   __pyx_t_11 = ((__pyx_v_dims == 3) != 0);
   if (__pyx_t_11) {
 
-    /* "stats_local.pyx":456
+    /* "stats_local.pyx":461
  * 
  *     if dims is 3:
  *         arr_view_3d = arr             # <<<<<<<<<<<<<<
  *         loop_3d(
  *           arr_view_3d,
  */
-    __pyx_t_13 = __Pyx_PyObject_to_MemoryviewSlice_d_d_dc_double(__pyx_v_arr, PyBUF_WRITABLE); if (unlikely(!__pyx_t_13.memview)) __PYX_ERR(0, 456, __pyx_L1_error)
+    __pyx_t_13 = __Pyx_PyObject_to_MemoryviewSlice_d_d_dc_double(__pyx_v_arr, PyBUF_WRITABLE); if (unlikely(!__pyx_t_13.memview)) __PYX_ERR(0, 461, __pyx_L1_error)
     __pyx_v_arr_view_3d = __pyx_t_13;
     __pyx_t_13.memview = NULL;
     __pyx_t_13.data = NULL;
 
-    /* "stats_local.pyx":461
+    /* "stats_local.pyx":466
  *           kernel_view,
  *           result_view,
  *           arr.shape[0],             # <<<<<<<<<<<<<<
  *           arr.shape[1],
  *           arr.shape[2],
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 461, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 466, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 461, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 466, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_4 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_4 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 461, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_4 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 466, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-    /* "stats_local.pyx":462
+    /* "stats_local.pyx":467
  *           result_view,
  *           arr.shape[0],
  *           arr.shape[1],             # <<<<<<<<<<<<<<
  *           arr.shape[2],
  *           kernel.shape[0],
  */
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 462, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 467, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_7, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 462, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_7, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 467, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __pyx_t_14 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_14 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 462, __pyx_L1_error)
+    __pyx_t_14 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_14 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 467, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "stats_local.pyx":463
+    /* "stats_local.pyx":468
  *           arr.shape[0],
  *           arr.shape[1],
  *           arr.shape[2],             # <<<<<<<<<<<<<<
  *           kernel.shape[0],
  *           non_zero,
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 463, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 468, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_3, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 463, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_3, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 468, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_15 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_15 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 463, __pyx_L1_error)
+    __pyx_t_15 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_15 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 468, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-    /* "stats_local.pyx":464
+    /* "stats_local.pyx":469
  *           arr.shape[1],
  *           arr.shape[2],
  *           kernel.shape[0],             # <<<<<<<<<<<<<<
  *           non_zero,
  *           has_nodata,
  */
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_shape); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 464, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_shape); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 469, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_7, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 464, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_7, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 469, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __pyx_t_16 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_16 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 464, __pyx_L1_error)
+    __pyx_t_16 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_16 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 469, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "stats_local.pyx":457
+    /* "stats_local.pyx":462
  *     if dims is 3:
  *         arr_view_3d = arr
  *         loop_3d(             # <<<<<<<<<<<<<<
@@ -6130,7 +6226,7 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
  */
     __pyx_f_11stats_local_loop_3d(__pyx_v_arr_view_3d, __pyx_v_kernel_view, __pyx_v_result_view, __pyx_t_4, __pyx_t_14, __pyx_t_15, __pyx_t_16, __pyx_v_non_zero, __pyx_v_has_nodata, __pyx_v_fill_value, __pyx_v_apply);
 
-    /* "stats_local.pyx":455
+    /* "stats_local.pyx":460
  *         fill_value = 0.0
  * 
  *     if dims is 3:             # <<<<<<<<<<<<<<
@@ -6140,7 +6236,7 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     goto __pyx_L5;
   }
 
-  /* "stats_local.pyx":471
+  /* "stats_local.pyx":476
  *         )
  *     else:
  *         arr_view_2d = arr             # <<<<<<<<<<<<<<
@@ -6148,57 +6244,57 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
  *           arr_view_2d,
  */
   /*else*/ {
-    __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_v_arr, PyBUF_WRITABLE); if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 471, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_v_arr, PyBUF_WRITABLE); if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 476, __pyx_L1_error)
     __pyx_v_arr_view_2d = __pyx_t_5;
     __pyx_t_5.memview = NULL;
     __pyx_t_5.data = NULL;
 
-    /* "stats_local.pyx":476
+    /* "stats_local.pyx":481
  *           kernel_view,
  *           result_view,
  *           arr.shape[0],             # <<<<<<<<<<<<<<
  *           arr.shape[1],
  *           kernel.shape[0],
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 476, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 481, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 476, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 481, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_16 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_16 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 476, __pyx_L1_error)
+    __pyx_t_16 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_16 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 481, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-    /* "stats_local.pyx":477
+    /* "stats_local.pyx":482
  *           result_view,
  *           arr.shape[0],
  *           arr.shape[1],             # <<<<<<<<<<<<<<
  *           kernel.shape[0],
  *           non_zero,
  */
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 477, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_arr, __pyx_n_s_shape); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 482, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_7, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 477, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_7, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 482, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __pyx_t_15 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_15 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 477, __pyx_L1_error)
+    __pyx_t_15 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_15 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 482, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "stats_local.pyx":478
+    /* "stats_local.pyx":483
  *           arr.shape[0],
  *           arr.shape[1],
  *           kernel.shape[0],             # <<<<<<<<<<<<<<
  *           non_zero,
  *           has_nodata,
  */
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 478, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 483, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 478, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 483, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_14 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_14 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 478, __pyx_L1_error)
+    __pyx_t_14 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_14 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 483, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-    /* "stats_local.pyx":472
+    /* "stats_local.pyx":477
  *     else:
  *         arr_view_2d = arr
  *         loop(             # <<<<<<<<<<<<<<
@@ -6209,27 +6305,27 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
   }
   __pyx_L5:;
 
-  /* "stats_local.pyx":485
+  /* "stats_local.pyx":490
  *         )
  * 
  *     if isinstance(arr, np.ma.MaskedArray):             # <<<<<<<<<<<<<<
  *         return np.ma.masked_where(result == fill_value, result).astype(dtype)
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_n_s_np); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 485, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_7, __pyx_n_s_np); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 490, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_ma); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 485, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_ma); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 490, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_MaskedArray); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 485, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_MaskedArray); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 490, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_11 = PyObject_IsInstance(__pyx_v_arr, __pyx_t_7); if (unlikely(__pyx_t_11 == ((int)-1))) __PYX_ERR(0, 485, __pyx_L1_error)
+  __pyx_t_11 = PyObject_IsInstance(__pyx_v_arr, __pyx_t_7); if (unlikely(__pyx_t_11 == ((int)-1))) __PYX_ERR(0, 490, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __pyx_t_6 = (__pyx_t_11 != 0);
   if (__pyx_t_6) {
 
-    /* "stats_local.pyx":486
+    /* "stats_local.pyx":491
  * 
  *     if isinstance(arr, np.ma.MaskedArray):
  *         return np.ma.masked_where(result == fill_value, result).astype(dtype)             # <<<<<<<<<<<<<<
@@ -6237,17 +6333,17 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
  *     return result.astype(dtype)
  */
     __Pyx_XDECREF(__pyx_r);
-    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 486, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 491, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_ma); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 486, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_ma); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 491, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_masked_where); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 486, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_masked_where); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 491, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = PyFloat_FromDouble(__pyx_v_fill_value); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 486, __pyx_L1_error)
+    __pyx_t_1 = PyFloat_FromDouble(__pyx_v_fill_value); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 491, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_10 = PyObject_RichCompare(__pyx_v_result, __pyx_t_1, Py_EQ); __Pyx_XGOTREF(__pyx_t_10); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 486, __pyx_L1_error)
+    __pyx_t_10 = PyObject_RichCompare(__pyx_v_result, __pyx_t_1, Py_EQ); __Pyx_XGOTREF(__pyx_t_10); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 491, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_1 = NULL;
     __pyx_t_14 = 0;
@@ -6264,7 +6360,7 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[3] = {__pyx_t_1, __pyx_t_10, __pyx_v_result};
-      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_14, 2+__pyx_t_14); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 486, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_14, 2+__pyx_t_14); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 491, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
@@ -6273,14 +6369,14 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[3] = {__pyx_t_1, __pyx_t_10, __pyx_v_result};
-      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_14, 2+__pyx_t_14); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 486, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_14, 2+__pyx_t_14); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 491, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
     } else
     #endif
     {
-      __pyx_t_17 = PyTuple_New(2+__pyx_t_14); if (unlikely(!__pyx_t_17)) __PYX_ERR(0, 486, __pyx_L1_error)
+      __pyx_t_17 = PyTuple_New(2+__pyx_t_14); if (unlikely(!__pyx_t_17)) __PYX_ERR(0, 491, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_17);
       if (__pyx_t_1) {
         __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_17, 0, __pyx_t_1); __pyx_t_1 = NULL;
@@ -6291,12 +6387,12 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
       __Pyx_GIVEREF(__pyx_v_result);
       PyTuple_SET_ITEM(__pyx_t_17, 1+__pyx_t_14, __pyx_v_result);
       __pyx_t_10 = 0;
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_17, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 486, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_17, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 491, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
     }
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_astype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 486, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_astype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 491, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_t_3 = NULL;
@@ -6311,14 +6407,14 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
     }
     __pyx_t_7 = (__pyx_t_3) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_3, __pyx_v_dtype) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_dtype);
     __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 486, __pyx_L1_error)
+    if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 491, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_r = __pyx_t_7;
     __pyx_t_7 = 0;
     goto __pyx_L0;
 
-    /* "stats_local.pyx":485
+    /* "stats_local.pyx":490
  *         )
  * 
  *     if isinstance(arr, np.ma.MaskedArray):             # <<<<<<<<<<<<<<
@@ -6327,14 +6423,14 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
  */
   }
 
-  /* "stats_local.pyx":488
+  /* "stats_local.pyx":493
  *         return np.ma.masked_where(result == fill_value, result).astype(dtype)
  * 
  *     return result.astype(dtype)             # <<<<<<<<<<<<<<
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_result, __pyx_n_s_astype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 488, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_result, __pyx_n_s_astype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 493, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -6348,14 +6444,14 @@ static PyObject *__pyx_pf_11stats_local_kernel_filter(CYTHON_UNUSED PyObject *__
   }
   __pyx_t_7 = (__pyx_t_3) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_3, __pyx_v_dtype) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_dtype);
   __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 488, __pyx_L1_error)
+  if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 493, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_r = __pyx_t_7;
   __pyx_t_7 = 0;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":427
+  /* "stats_local.pyx":432
  * 
  * 
  * def kernel_filter(arr, kernel, str func_type, dtype='float32'):             # <<<<<<<<<<<<<<
@@ -20004,6 +20100,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_arr_view_3d, __pyx_k_arr_view_3d, sizeof(__pyx_k_arr_view_3d), 0, 0, 1, 1},
   {&__pyx_n_s_array, __pyx_k_array, sizeof(__pyx_k_array), 0, 0, 1, 1},
   {&__pyx_n_s_astype, __pyx_k_astype, sizeof(__pyx_k_astype), 0, 0, 1, 1},
+  {&__pyx_n_u_average, __pyx_k_average, sizeof(__pyx_k_average), 0, 1, 0, 1},
+  {&__pyx_n_u_avg, __pyx_k_avg, sizeof(__pyx_k_avg), 0, 1, 0, 1},
   {&__pyx_n_s_base, __pyx_k_base, sizeof(__pyx_k_base), 0, 0, 1, 1},
   {&__pyx_n_s_c, __pyx_k_c, sizeof(__pyx_k_c), 0, 0, 1, 1},
   {&__pyx_n_u_c, __pyx_k_c, sizeof(__pyx_k_c), 0, 1, 0, 1},
@@ -20049,6 +20147,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
   {&__pyx_n_s_masked_where, __pyx_k_masked_where, sizeof(__pyx_k_masked_where), 0, 0, 1, 1},
   {&__pyx_n_u_mean, __pyx_k_mean, sizeof(__pyx_k_mean), 0, 1, 0, 1},
+  {&__pyx_n_u_med, __pyx_k_med, sizeof(__pyx_k_med), 0, 1, 0, 1},
   {&__pyx_n_u_median, __pyx_k_median, sizeof(__pyx_k_median), 0, 1, 0, 1},
   {&__pyx_n_s_memview, __pyx_k_memview, sizeof(__pyx_k_memview), 0, 0, 1, 1},
   {&__pyx_n_s_mode, __pyx_k_mode, sizeof(__pyx_k_mode), 0, 0, 1, 1},
@@ -20090,6 +20189,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_start, __pyx_k_start, sizeof(__pyx_k_start), 0, 0, 1, 1},
   {&__pyx_n_s_stats_local, __pyx_k_stats_local, sizeof(__pyx_k_stats_local), 0, 0, 1, 1},
   {&__pyx_kp_s_stats_local_pyx, __pyx_k_stats_local_pyx, sizeof(__pyx_k_stats_local_pyx), 0, 0, 1, 0},
+  {&__pyx_n_u_std, __pyx_k_std, sizeof(__pyx_k_std), 0, 1, 0, 1},
+  {&__pyx_n_u_stdev, __pyx_k_stdev, sizeof(__pyx_k_stdev), 0, 1, 0, 1},
   {&__pyx_n_s_step, __pyx_k_step, sizeof(__pyx_k_step), 0, 0, 1, 1},
   {&__pyx_n_s_stop, __pyx_k_stop, sizeof(__pyx_k_stop), 0, 0, 1, 1},
   {&__pyx_kp_s_strided_and_direct, __pyx_k_strided_and_direct, sizeof(__pyx_k_strided_and_direct), 0, 0, 1, 0},
@@ -20102,11 +20203,12 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_unable_to_allocate_shape_and_str, __pyx_k_unable_to_allocate_shape_and_str, sizeof(__pyx_k_unable_to_allocate_shape_and_str), 0, 0, 1, 0},
   {&__pyx_n_s_unpack, __pyx_k_unpack, sizeof(__pyx_k_unpack), 0, 0, 1, 1},
   {&__pyx_n_s_update, __pyx_k_update, sizeof(__pyx_k_update), 0, 0, 1, 1},
+  {&__pyx_n_u_var, __pyx_k_var, sizeof(__pyx_k_var), 0, 1, 0, 1},
   {&__pyx_n_u_variance, __pyx_k_variance, sizeof(__pyx_k_variance), 0, 1, 0, 1},
   {0, 0, 0, 0, 0, 0, 0}
 };
 static CYTHON_SMALL_CODE int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 45, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 44, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(1, 133, __pyx_L1_error)
   __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) __PYX_ERR(1, 148, __pyx_L1_error)
   __pyx_builtin_enumerate = __Pyx_GetBuiltinName(__pyx_n_s_enumerate); if (!__pyx_builtin_enumerate) __PYX_ERR(1, 151, __pyx_L1_error)
@@ -20123,14 +20225,14 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "stats_local.pyx":291
+  /* "stats_local.pyx":296
  *     elif func_type is 'mad_std': return neighbourhood_weighted_mad_std
  * 
  *     raise Exception('Unable to find filter type!')             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_tuple_ = PyTuple_Pack(1, __pyx_kp_u_Unable_to_find_filter_type); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 291, __pyx_L1_error)
+  __pyx_tuple_ = PyTuple_Pack(1, __pyx_kp_u_Unable_to_find_filter_type); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 296, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple_);
   __Pyx_GIVEREF(__pyx_tuple_);
 
@@ -20326,17 +20428,17 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__19);
   __Pyx_GIVEREF(__pyx_tuple__19);
 
-  /* "stats_local.pyx":427
+  /* "stats_local.pyx":432
  * 
  * 
  * def kernel_filter(arr, kernel, str func_type, dtype='float32'):             # <<<<<<<<<<<<<<
  *     cdef bint has_nodata = False
  *     cdef double fill_value
  */
-  __pyx_tuple__20 = PyTuple_Pack(14, __pyx_n_s_arr, __pyx_n_s_kernel, __pyx_n_s_func_type, __pyx_n_s_dtype, __pyx_n_s_has_nodata, __pyx_n_s_fill_value, __pyx_n_s_apply, __pyx_n_s_non_zero, __pyx_n_s_kernel_view, __pyx_n_s_arr_view_2d, __pyx_n_s_arr_view_3d, __pyx_n_s_dims, __pyx_n_s_result, __pyx_n_s_result_view); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(0, 427, __pyx_L1_error)
+  __pyx_tuple__20 = PyTuple_Pack(14, __pyx_n_s_arr, __pyx_n_s_kernel, __pyx_n_s_func_type, __pyx_n_s_dtype, __pyx_n_s_has_nodata, __pyx_n_s_fill_value, __pyx_n_s_apply, __pyx_n_s_non_zero, __pyx_n_s_kernel_view, __pyx_n_s_arr_view_2d, __pyx_n_s_arr_view_3d, __pyx_n_s_dims, __pyx_n_s_result, __pyx_n_s_result_view); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(0, 432, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__20);
   __Pyx_GIVEREF(__pyx_tuple__20);
-  __pyx_codeobj__21 = (PyObject*)__Pyx_PyCode_New(4, 0, 14, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__20, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stats_local_pyx, __pyx_n_s_kernel_filter, 427, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__21)) __PYX_ERR(0, 427, __pyx_L1_error)
+  __pyx_codeobj__21 = (PyObject*)__Pyx_PyCode_New(4, 0, 14, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__20, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stats_local_pyx, __pyx_n_s_kernel_filter, 432, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__21)) __PYX_ERR(0, 432, __pyx_L1_error)
 
   /* "View.MemoryView":286
  *         return self.name
@@ -20750,7 +20852,7 @@ if (!__Pyx_RefNanny) {
 
   /* "stats_local.pyx":6
  * from libc.stdlib cimport malloc, free
- * from libc.math cimport sqrt, pow, fabs, isnan
+ * from libc.math cimport sqrt, pow, fabs
  * import numpy as np             # <<<<<<<<<<<<<<
  * 
  * 
@@ -20760,16 +20862,16 @@ if (!__Pyx_RefNanny) {
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "stats_local.pyx":427
+  /* "stats_local.pyx":432
  * 
  * 
  * def kernel_filter(arr, kernel, str func_type, dtype='float32'):             # <<<<<<<<<<<<<<
  *     cdef bint has_nodata = False
  *     cdef double fill_value
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_11stats_local_1kernel_filter, NULL, __pyx_n_s_stats_local); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 427, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_11stats_local_1kernel_filter, NULL, __pyx_n_s_stats_local); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 432, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_kernel_filter, __pyx_t_1) < 0) __PYX_ERR(0, 427, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_kernel_filter, __pyx_t_1) < 0) __PYX_ERR(0, 432, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "stats_local.pyx":1

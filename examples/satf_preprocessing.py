@@ -2,29 +2,49 @@ import sys; sys.path.append('..')
 import numpy as np
 from time import time
 from lib.raster_io import raster_to_array, array_to_raster
-from lib.stats_filters import median_filter, mean_filter
+from lib.stats_filters import median_filter
 
-# Merging aster and srtm to remove slope noise in srtm.
-folder = '/mnt/c/users/caspe/desktop/data/DEM/'
-dem = 'Ghana_DEM_terrain_int16.tif'
+folder = '/mnt/c/users/caspe/desktop/data/satf_preprocess/'
+sigma0_22jan2019 = 'Sigma0_VV_mst_22Jan2019.tif'
+sigma0_16jan2019 = 'Sigma0_VV_slv2_16Jan2019.tif'
+sigma0_09jun2019 = 'Sigma0_VV_slv3_09Jun2019.tif'
+sigma0_21jun2019 = 'Sigma0_VV_slv4_21Jun2019.tif'
 
-arr = raster_to_array(folder + dem, filled=True, fill_value=32767)
-bob = np.ma.masked_equal(arr, 32767)
-bob.set_fill_value(32767)
+# sigma0_22jan2019_arr = median_filter(raster_to_array(folder + sigma0_22jan2019))
+# sigma0_16jan2019_arr = median_filter(raster_to_array(folder + sigma0_16jan2019))
+# merged_jan2019 = np.mean(np.array([sigma0_16jan2019_arr, sigma0_22jan2019_arr]), axis=0)
 
-# import pdb; pdb.set_trace()
+# sigma0_09jun2019_arr = raster_to_array(folder + sigma0_09jun2019)
+# sigma0_21jun2019_arr = raster_to_array(folder + sigma0_21jun2019)
+# merged_jun2019 = np.mean(np.array([sigma0_09jun2019_arr, sigma0_21jun2019_arr]), axis=0)
 
-array_to_raster(bob, reference_raster=folder + dem, out_raster=folder + 'Ghana_DEM_terrain_int16_nodata_adjusted.tif')
+from scipy.stats import norm
 
-# srtm = folder + 'Ghana_dem_utm30_wgs84_srtm_clipped_align.tif'
-# aster = folder + 'Ghana_dem_utm30_wgs84_aster_clipped_align.tif'
-# srtm_arr = raster_to_array(srtm, src_nodata=-32768)
-# aster_arr = raster_to_array(aster, src_nodata=-32768)
+def normalise_filter_2(in_raster):
+    mi = np.nanmin(in_raster)
+    return (in_raster + np.abs(mi))
 
-# merge = np.ma.array([srtm_arr, aster_arr], fill_value=srtm_arr.fill_value)
+# def normalise_filter(in_raster):
+#     mi = np.nanmin(in_raster)
+#     ma = np.nanmax(in_raster)
+#     return ((in_raster - mi) / (ma - mi)).astype(in_raster.dtype)
 
-# import pdb; pdb.set_trace()
+a = np.array([[ 5.,  3.,  2.], [ 1., -10.,-1.], [-2., -3., -4.]])
+b = np.array([[-5., -3., -2.], [-1.,  10.,  1.], [ 2.,  3.,  4.]])
+c = np.array([a, b])
+k = np.array([[.3,  .7,  .3 ], [.7,  .9,  .7 ], [.3,  .7,  .3]])
+# a = b
+
+
+import pdb; pdb.set_trace()
+# diff = (a / a.sum()) - (b / b.sum())
+# m_norm = np.sum(np.abs(diff))
+# z_norm = norm(np.ravel(diff), 0)
+
 
 # before = time()
-# array_to_raster(mean_filter(median_filter(merge, 11, iterations=2), 11, iterations=3), reference_raster=srtm, out_raster=folder + 'ghana_smooth_dem.tif')
+
+# array_to_raster(median_filter(merged_jan2019, 3, sigma=2, iterations=2), out_raster=folder + 'jan2019_merge.tif', reference_raster=folder + sigma0_22jan2019)
+# array_to_raster(median_filter(merged_jun2019, 3, sigma=2, iterations=2), out_raster=folder + 'jun2019_merge.tif', reference_raster=folder + sigma0_09jun2019)
+
 # print(time() - before)

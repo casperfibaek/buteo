@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import argparse
 import datetime
 import functools
@@ -9,7 +7,7 @@ import os
 import sys
 import time
 
-import sen2mosaic.multiprocess
+import sen1mosaic.multiprocess
 
 import pdb
 
@@ -75,6 +73,9 @@ def getContiguousImages(infiles):
         # Get start time of current image
         starttime = _getMetaData(infile)['starttime']
                 
+        # Save end time of this image for the next loop
+        endtime = _getMetaData(infile)['endtime']
+
         # For the first loop, there's no previous file to compare to so skip this test
         if n > 0:
                 # If two images are contigous, the endtime of the previous image will equal starttime of current image
@@ -82,8 +83,6 @@ def getContiguousImages(infiles):
                 # If two images are not contigous, form a new group code
                 this_group += 1
             
-        # Save end time of this image for the next loop
-        endtime = _getMetaData(infile)['endtime']
         
         group[n] = (this_group)
     
@@ -192,7 +191,7 @@ def calibrateGraph(infile, temp_dir = os.getcwd(), short_chain = False, noorbit 
     if verbose: print('Executing: %s'%' '.join(command))
     
     # Execute chain
-    output_text = sen2mosaic.multiprocess.runCommand(command, verbose = verbose)
+    output_text = sen1mosaic.multiprocess.runCommand(command, verbose = verbose)
     
     return outfile + '.dim'
 
@@ -244,7 +243,7 @@ def multilookGraph(infiles, multilook = 2, gpt = '~/snap/bin/gpt', verbose = Fal
     if verbose: print('Executing: %s'%' '.join(command))
     
     # Execute chain
-    output_text = sen2mosaic.multiprocess.runCommand(command, verbose = verbose)
+    output_text = sen1mosaic.multiprocess.runCommand(command, verbose = verbose)
     
     return outfile
 
@@ -351,7 +350,7 @@ def correctionGraph(infile, outfile, output_dir = os.getcwd(), multilook = 2, sp
     if verbose: print('Executing: %s'%' '.join(command))
     
     # Execute chain
-    output_text = sen2mosaic.multiprocess.runCommand(command, verbose = verbose)
+    output_text = sen1mosaic.multiprocess.runCommand(command, verbose = verbose)
     
     return output_file
 

@@ -126,3 +126,5 @@ lib/temp/
 
 lib/credentials.py
 .vscode
+/lib/*.so
+/lib/*.c

@@ -1,7 +1,6 @@
 import numpy as np
-from scipy.stats import norm
 from lib.stats_local import kernel_filter
-# from lib.stats_local_no_kernel import truncate_array, threshold_array
+from lib.stats_local_no_kernel import truncate_array, threshold_array, cdef_from_z
 from lib.stats_kernel import create_kernel
 
 
@@ -10,7 +9,7 @@ def standardise_filter(in_raster, cdf_norm=False):
     s = np.nanstd(in_raster)
     if cdf_norm == False:
         return (in_raster - m) / s
-    return ((norm.cdf((in_raster - m) / s) - 0.5) / 0.5).astype(in_raster.dtype)
+    return cdef_from_z((in_raster - m) / s)
 
 
 def normalise_filter(in_raster):
@@ -34,6 +33,7 @@ def sum_filter(
     weighted_distance=False,
     distance_calc="gaussian",
     sigma=2,
+    dtype=False,
     _kernel=False,
 ):
     kernel = (
@@ -50,7 +50,75 @@ def sum_filter(
             sigma=sigma,
         )
     )
-    return kernel_filter(in_raster, kernel, "mean").astype(in_raster.dtype)
+    if dtype is False:
+        return kernel_filter(in_raster, kernel, "mean").astype(in_raster.dtype)
+    
+    return kernel_filter(in_raster, kernel, "mean").astype(dtype)
+
+
+def cdef_filter(in_raster):
+    return cdef_from_z(in_raster)
+
+
+def cdef_difference_filter(
+    in_raster_master,
+    in_raster_slave,
+    width=3,
+    circular=True,
+    holed=False,
+    weighted_edges=True,
+    weighted_distance=False,
+    distance_calc="gaussian",
+    sigma=2,
+    dtype='float32',
+    _kernel=False,
+):
+    kernel = (
+        _kernel
+        if _kernel is not False
+        else create_kernel(
+            width,
+            circular=circular,
+            holed=holed,
+            normalise=True,
+            weighted_edges=weighted_edges,
+            weighted_distance=weighted_distance,
+            distance_calc=distance_calc,
+            sigma=sigma,
+        )
+    )
+    
+    master_mean = kernel_filter(in_raster_master, kernel, 'mean')
+    slave_mean = kernel_filter(in_raster_slave, kernel, 'mean')
+
+    master_median = kernel_filter(in_raster_master, kernel, "median")
+    slave_median = kernel_filter(in_raster_slave, kernel, 'median')
+    
+    abs_median_diff = np.abs(master_median - slave_median)
+    master_mean_difference = np.abs(master_mean - np.abs(master_median - slave_median))
+    slave_mean_difference = np.abs(slave_mean - np.abs(master_median - slave_median))
+   
+    master_mad_std = kernel_filter(in_raster_master, kernel, 'mad_std')
+    slave_mad_std = kernel_filter(in_raster_slave, kernel, 'mad_std')
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        zscores_master = (master_mean - master_mean_difference) / master_mad_std
+        zscores_master[master_mad_std == 0] = 0
+        
+        zscores_slave = (slave_mean - slave_mean_difference) / slave_mad_std
+        zscores_slave[slave_mad_std == 0] = 0
+    
+    return np.min([zscores_master, zscores_slave], axis=0)
+
+    # master_cdef = cdef_from_z(zscores_master)
+    # slave_cdef = cdef_from_z(zscores_slave)
+    
+    # return (master_cdef + slave_cdef) / 2
+    
+    # if dtype is False:
+    #     return cdef_from_z(zscores).astype(in_raster_master.dtype)
+    # else:
+    #     return cdef_from_z(zscores).astype(dtype)
 
 
 def mean_filter(

@@ -27,6 +27,17 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * conda install -c anaconda mkl numpy scipy scikit-learn cython numexpr
   * conda install -c conda-forge gdal matplotlib shapely
   * conda update --all
+  * pip install sentinelsat
+
+  ## Snappy
+  * cd ~
+  * curl -O http://step.esa.int/downloads/7.0/installers/esa-snap_sentinel_unix_7_0.sh
+  * bash esa-snap_sentinel_unix_7_0.sh
+  * Yes to all defaults, set path of python env to /home/cfi/anaconda3/envs/yellow/bin/python
+  * echo 'alias gpt=~/snap/bin/gpt' >> ~/.bashrc
+  * echo '-Xmx16G' >> ~/snap/bin/gpt.vmoptions
+  * snap --nosplash --nogui --modules --update-all
+
 
   ## Git
   * cd ~
