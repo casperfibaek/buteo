@@ -213,7 +213,7 @@ def cdef_from_z(arr):
         if arr_mask is not False:
             return np.ma.masked_where(arr_mask, result)
         else:
-            return_arr = np.ma.masked_equal(result, fill_value)
+            return np.ma.masked_equal(result, fill_value)
 
     return result
 
@@ -346,7 +346,7 @@ def truncate_array(arr, min_value=False, max_value=False):
         if arr_mask is not False:
             return np.ma.masked_where(arr_mask, result)
         else:
-            return_arr = np.ma.masked_equal(result, fill_value)
+            return np.ma.masked_equal(result, fill_value)
 
     return result
 

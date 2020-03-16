@@ -2,21 +2,44 @@ import sys; sys.path.append('..')
 import numpy as np
 from time import time
 from lib.raster_io import raster_to_array, array_to_raster
-from lib.stats_filters import median_filter, mean_filter, threshold_array, truncate_filter, sum_filter
+from lib.stats_filters import median_filter, mean_filter, threshold_array, truncate_filter, sum_filter, fast_sum_filter
 
 folder = '/mnt/c/users/caspe/desktop/Analysis/data/clipped/'
 
-dry_perm2_mask = raster_to_array(folder + 's1_dry_perm2_mask.tif')
-dry_perm2_mask.fill_value = 0
-dry_perm2_mask = dry_perm2_mask.filled()
 
-dry_perm2_trunc = raster_to_array(folder + 's1_dry_perm2_truncated.tif')
-dry_perm2_trunc.fill_value = 0
-dry_perm2_trunc = dry_perm2_trunc.filled()
+# wet_prox = folder + 's1_wet_perm-proximity.tif'
+# wet_dens = folder + 's1_wet_mask-density.tif'
+# dry_prox = folder + 's1_dry_perm-proximity.tif'
+# dry_dens = folder + 's1_dry_mask-density.tif'
 
-array_to_raster(sum_filter(dry_perm2_mask, 201), reference_raster=folder + 's1_dry_perm2.tif', out_raster=folder + 's1_dry_perm2_mask-density.tif')
-array_to_raster(sum_filter(dry_perm2_trunc, 201), reference_raster=folder + 's1_dry_perm2.tif', out_raster=folder + 's1_dry_perm2_truncated-density.tif')
+# wet_prox_arr = np.ma.add(raster_to_array(wet_prox), 1)
+# wet_dens_arr = raster_to_array(wet_dens)
+# dry_prox_arr = np.ma.add(raster_to_array(dry_prox), 1)
+# dry_dens_arr = raster_to_array(dry_dens)
 
+# array_to_raster(dry_dens_arr / np.ma.sqrt(dry_prox_arr), reference_raster=dry_prox, out_raster=folder + 's1_dry_perm_merge.tif')
+# array_to_raster(wet_dens_arr / np.ma.sqrt(wet_prox_arr), reference_raster=wet_prox, out_raster=folder + 's1_wet_perm_merge.tif')
+
+wet_perm2_mask = raster_to_array(folder + 's1_wet_perm2_mask.tif').astype('float32')
+wet_perm2_mask.fill_value = 0
+wet_perm2_mask_filled = wet_perm2_mask.filled()
+wet_perm2_mask_sum = fast_sum_filter(wet_perm2_mask_filled, 201, distance_calc='power')
+
+array_to_raster(
+    wet_perm2_mask_sum,
+    reference_raster=folder + 's1_wet_perm2_mask.tif',
+    out_raster=folder + 's1_wet_mask-density_power.tif',
+)
+
+# dry_perm2_mask = raster_to_array(folder + 's1_dry_perm2_mask.tif').astype('float32')
+# dry_perm2_mask.fill_value = 0
+# mask1 = np.ma.getmask(dry_perm2_mask)
+# dry_perm2_mask = dry_perm2_mask.filled()
+# dry_perm2_mask_sum = fast_sum_filter(dry_perm2_mask, 21)
+# dry_perm2_mask_sum_masked = np.ma.masked_where(mask1, dry_perm2_mask_sum)
+# dry_perm2_mask_sum_masked.fill_value = -99999.99999
+
+# array_to_raster(dry_perm2_mask_sum_masked, reference_raster=folder + 's1_dry_perm2.tif', out_raster=folder + 's1_dry_perm2_mask-density.tif')
 
 # dry_perm2 = raster_to_array(folder + 's1_dry_perm2.tif')
 # wet_perm2 = raster_to_array(folder + 's1_wet_perm2.tif')

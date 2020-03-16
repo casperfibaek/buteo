@@ -1,5 +1,5 @@
 import numpy as np
-from lib.stats_local import kernel_filter
+from lib.stats_local import kernel_filter, fast_sum
 from lib.stats_local_no_kernel import truncate_array, threshold_array, cdef_from_z
 from lib.stats_kernel import create_kernel
 
@@ -50,10 +50,41 @@ def sum_filter(
             sigma=sigma,
         )
     )
+
     if dtype is False:
         return kernel_filter(in_raster, kernel, "mean").astype(in_raster.dtype)
     
     return kernel_filter(in_raster, kernel, "mean").astype(dtype)
+
+
+def fast_sum_filter(
+    in_raster,
+    width=3,
+    circular=True,
+    holed=False,
+    weighted_edges=True,
+    weighted_distance=False,
+    distance_calc="gaussian",
+    sigma=2,
+    dtype=False,
+    _kernel=False,
+):
+    kernel = (
+        _kernel
+        if _kernel is not False
+        else create_kernel(
+            width,
+            circular=circular,
+            holed=holed,
+            normalise=False,
+            weighted_edges=weighted_edges,
+            weighted_distance=weighted_distance,
+            distance_calc=distance_calc,
+            sigma=sigma,
+        )
+    )
+
+    return fast_sum(in_raster, kernel).astype(in_raster.dtype)
 
 
 def cdef_filter(in_raster):

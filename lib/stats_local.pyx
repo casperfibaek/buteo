@@ -296,6 +296,56 @@ cdef f_type func_selector(str func_type):
     raise Exception('Unable to find filter type!')
 
 
+cdef void fast_2d_sum(
+    double [:, ::1] arr,
+    double [:, ::1] kernel,
+    double [:, ::1] result,
+    int x_max,
+    int y_max,
+    int kernel_width,
+    int non_zero,
+) nogil:
+    cdef int x, y, n, i, j, offset_x, offset_y
+    cdef int x_max_adj = x_max - 1
+    cdef int y_max_adj = y_max - 1
+    cdef int neighbourhood_size = sizeof(double) * non_zero
+    cdef int radius = <int>(kernel_width / 2)
+
+    cdef int step = 0
+    cdef int * x_offsets = <int *> malloc(sizeof(int) * non_zero)
+    cdef int * y_offsets = <int *> malloc(sizeof(int) * non_zero) 
+    cdef double * weights = <double *> malloc(sizeof(double) * non_zero) 
+
+    for i in range(kernel_width):
+        for j in range(kernel_width):
+            if kernel[i, j] != 0.0:
+                x_offsets[step] = i - radius
+                y_offsets[step] = j - radius
+                weights[step] = kernel[i, j]
+                step += 1
+
+    for x in prange(x_max):
+        for y in range(y_max):
+            for n in range(non_zero):
+                offset_x = x + x_offsets[n]
+                offset_y = y + y_offsets[n]
+
+                if offset_x < 0:
+                    offset_x = 0
+                elif offset_x > x_max_adj:
+                    offset_x = x_max_adj
+                if offset_y < 0:
+                    offset_y = 0
+                elif offset_y > y_max_adj:
+                    offset_y = y_max_adj
+
+                result[x][y] += arr[offset_x][offset_y] * weights[n]
+
+    free(x_offsets)
+    free(y_offsets)
+    free(weights)
+
+
 cdef void loop(
     double [:, ::1] arr,
     double [:, ::1] kernel,
@@ -429,6 +479,21 @@ cdef void loop_3d(
             free(neighbourhood)
 
 
+def fast_sum(arr, kernel):
+    cdef int non_zero = np.count_nonzero(kernel)
+
+    result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
+    arr = arr.astype(np.double) if arr.dtype != np.double else arr
+
+    cdef double [:, ::1] arr_view = arr
+    cdef double [:, ::1] result_view = result
+    cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
+
+    fast_2d_sum(arr_view, kernel_view, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero)
+
+    return result
+
+
 def kernel_filter(arr, kernel, str func_type, dtype='float32'):
     cdef bint has_nodata = False
     cdef double fill_value
@@ -441,6 +506,7 @@ def kernel_filter(arr, kernel, str func_type, dtype='float32'):
 
     assert(dims == 2 or dims == 3)
 
+    arr_mask = False
     arr = arr.astype(np.double) if arr.dtype != np.double else arr
     if dims ==2:
         result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
@@ -452,6 +518,8 @@ def kernel_filter(arr, kernel, str func_type, dtype='float32'):
     if isinstance(arr, np.ma.MaskedArray):
         fill_value = arr.fill_value
         has_nodata = 1
+        if arr.mask is not False:
+            arr_mask = np.ma.getmask(arr)
         arr = arr.filled()
     else:
         fill_value = 0.0
@@ -487,7 +555,10 @@ def kernel_filter(arr, kernel, str func_type, dtype='float32'):
         )
 
     if has_nodata is True:
-        return np.ma.masked_equal(result, fill_value).astype(dtype)
+        if arr_mask is not False:
+            return np.ma.masked_where(arr_mask, result).astype(dtype)
+        else:
+            return np.ma.masked_equal(result, fill_value).astype(dtype)
 
     return result.astype(dtype)
 

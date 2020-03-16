@@ -16,3 +16,4 @@ def set_nodata(arr, move_current_mask=True, value='max'):
     # Mask data
     # Remove nodata
     # Invert nodata
+    # Copy mask

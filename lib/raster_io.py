@@ -6,6 +6,9 @@ from lib.utils_core import numpy_to_gdal_datatype, numpy_fill_values, datatype_i
 from lib.raster_clip import clip_raster
 
 
+# TODO: raster_to_metadata
+
+
 def array_to_raster(array, out_raster=None, reference_raster=None, output_format='MEM',
                     top_left=None, pixel_size=None, projection=None, calc_band_stats=False,
                     src_nodata=None, dst_nodata=False, resample=False, quiet=False):
