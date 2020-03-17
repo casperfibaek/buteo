@@ -5,9 +5,10 @@ from glob import glob
 from pathlib import Path
 from lib.stats_zonal import calc_zonal_fast
 
-folder = '/mnt/c/users/caspe/desktop/Analysis/'
+# folder = '/mnt/c/users/caspe/desktop/Analysis/'
+folder = 'C:/users/caspe/desktop/Analysis/'
 
-in_vector = folder + 'Phase2/vector/phase1_segmentation_test_area.gpkg'
+in_vector = folder + 'Phase2/vector/phase1_segmentation_test_area_repair.shp'
 in_rasters = [
     folder + 'Data/standardized/' + 'dem_slope_std.tif',
     folder + 'Data/standardized/' + 'nightlights_std.tif',

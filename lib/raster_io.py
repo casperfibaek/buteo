@@ -374,7 +374,7 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
     
     if crop is not False:
         x_offset, y_offset, x_size, y_size = crop
-        raster_arr = raster_band.ReadAsArray(x_offset, y_offset, x_size, y_size)
+        raster_arr = raster_band.ReadAsArray(int(x_offset), int(y_offset), int(x_size), int(y_size))
     else:
         raster_arr = raster_band.ReadAsArray()
 
@@ -383,7 +383,10 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
     if raster_nodata_value is None:
         data = np.array(raster_arr)
     else:
-        data = np.ma.masked_equal(raster_arr, raster_nodata_value)
+        if raster_nodata_value == np.nan:
+            data = np.ma.masked_invalid(raster_arr)
+        else:
+            data = np.ma.masked_equal(raster_arr, raster_nodata_value)
 
     if src_nodata is not None:
         data = np.ma.masked_equal(raster_arr, src_nodata)
