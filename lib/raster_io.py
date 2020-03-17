@@ -281,7 +281,7 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
 
 
 def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_touch=False, cutlineWhere=None,
-                    crop_to_cutline=True, compressed=False, band_to_clip=1, src_nodata=None,
+                    crop_to_cutline=True, compressed=False, band_to_clip=1, src_nodata=None, crop=False,
                     filled=False, fill_value=None, quiet=False, calc_band_stats=True, align=True):
     ''' Turns a raster into an Numpy Array in memory. Only
         supports for one band to be turned in to an array.
@@ -342,15 +342,15 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
     # not necesarry to clip the raster.
     if reference_raster is None and cutline is None:
         if isinstance(in_raster, gdal.Dataset):
-            readiedRaster = in_raster
+            readied_raster = in_raster
         else:
-            readiedRaster = gdal.Open(in_raster)
+            readied_raster = gdal.Open(in_raster)
 
-        if readiedRaster is None:
+        if readied_raster is None:
             raise AttributeError(f"Unable to parse the input raster: {in_raster}")
 
     else:
-        readiedRaster = clip_raster(
+        readied_raster = clip_raster(
             in_raster,
             reference_raster=reference_raster,
             cutline=cutline,
@@ -365,23 +365,28 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
             calc_band_stats=calc_band_stats,
         )
 
-    if readiedRaster is False:
+    if readied_raster is False:
         return False
 
     # Read the in_raster as an array
-    rasterBand = readiedRaster.GetRasterBand(band_to_clip)
-    rasterNoDataValue = rasterBand.GetNoDataValue()
-    rasterAsArray = rasterBand.ReadAsArray()
+    raster_band = readied_raster.GetRasterBand(band_to_clip)
+    raster_nodata_value = raster_band.GetNoDataValue()
+    
+    if crop is not False:
+        x_offset, y_offset, x_size, y_size = crop
+        raster_arr = raster_band.ReadAsArray(x_offset, y_offset, x_size, y_size)
+    else:
+        raster_arr = raster_band.ReadAsArray()
 
     # Create a numpy masked array that corresponds to the nodata
     # values in the in_raster
-    if rasterNoDataValue is None:
-        data = np.array(rasterAsArray)
+    if raster_nodata_value is None:
+        data = np.array(raster_arr)
     else:
-        data = np.ma.masked_equal(rasterAsArray, rasterNoDataValue)
+        data = np.ma.masked_equal(raster_arr, raster_nodata_value)
 
     if src_nodata is not None:
-        data = np.ma.masked_equal(rasterAsArray, src_nodata)
+        data = np.ma.masked_equal(raster_arr, src_nodata)
 
     if fill_value is not None:
         data.fill_value = fill_value

@@ -5,12 +5,12 @@ from pathlib import Path
 
 
 folder = '/mnt/c/users/caspe/desktop/Analysis/data/'
-master = folder + 'clipped/reference.tif'
+master = folder + 'dem_slope.tif'
 cutline = folder + 'vector/project_area.shp'
 
 layers = glob(folder + 'nightlights.tif')
 
 for layer in layers:
-    outname = folder + 'clipped/' + Path(layer).stem + '.tif'
-    clip_raster(layer, reference_raster=master, cutline=cutline, out_raster=outname, scale_to_reference=True, quiet=True)
+    outname = folder + Path(layer).stem + '_clip.tif'
+    clip_raster(layer, reference_raster=master, cutline=cutline, out_raster=outname, scale_to_reference=True, quiet=False)
         

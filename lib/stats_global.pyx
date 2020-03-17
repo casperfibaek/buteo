@@ -212,6 +212,7 @@ class Stats(Enum):
   kurt = 12
   kurtosis = 12
   q1 = 13
+  med = 14
   median = 14
   q2 = 14
   q3 = 15
@@ -256,3 +257,4 @@ def global_statistics(double [:] arr, translated_stats=[5, 14, 7], stats=None):
   _calc_stats(arr, arr_length, stats_view, stats_length, result_view)
 
   return result
+

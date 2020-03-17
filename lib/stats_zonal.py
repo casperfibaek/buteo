@@ -1,6 +1,7 @@
 import numpy as np
 from numpy import ma
 from osgeo import ogr, gdal, osr
+from lib.raster_io import raster_to_array
 from lib.stats_global import enumerate_stats, global_statistics
 from lib.utils_core import progress
 
@@ -117,10 +118,15 @@ def rasterize_vector(vector, extent, raster_size, projection, all_touch=False):
     # Rasterize and retrieve data
     destination_band = destination.GetRasterBand(1)
     destination_band.Fill(1)
-    gdal.RasterizeLayer(destination, [1], vector, burn_values=[0])
-    data = destination_band.ReadAsArray()
 
-    return data
+    gdal.RasterizeLayer(destination, [1], vector, burn_values=[0])
+
+    return destination
+
+    # gdal.RasterizeLayer(destination, [1], vector, burn_values=[0])
+    # data = destination_band.ReadAsArray()
+
+    # return data
 
 
 def crop_raster(raster_band, rasterized_size, offset):
@@ -178,13 +184,13 @@ def calc_zonal(vect, rast, prefix='', shape_attributes=False, stats=['mean', 'me
     # Create fields
     vector_layer_defn = vector_layer.GetLayerDefn()
     for stat in stats:
-        if vector_layer_defn.GetFieldIndex(f'{prefix}{stat}') is -1:
+        if vector_layer_defn.GetFieldIndex(f'{prefix}{stat}') == -1:
             field_defn = ogr.FieldDefn(f'{prefix}{stat}', ogr.OFTReal)
             vector_layer.CreateField(field_defn)
 
     if shape_attributes is True:
         for attribute in ['area', 'perimeter', 'ipq']:
-            if vector_layer_defn.GetFieldIndex(attribute) is -1:
+            if vector_layer_defn.GetFieldIndex(attribute) == -1:
                 field_defn = ogr.FieldDefn(attribute, ogr.OFTReal)
                 vector_layer.CreateField(field_defn)
 
@@ -235,7 +241,7 @@ def calc_zonal(vect, rast, prefix='', shape_attributes=False, stats=['mean', 'me
             print(f'feature and raster did not match for: {vector_feature.GetFID()}')
         else:
             raster_data_masked = ma.masked_array(cropped_raster, mask=feature_rasterized).compressed()
-            zonal_stats = global_statistics(raster_data_masked, translated_stats=stats_translated)
+            zonal_stats = global_statistics(raster_data_masked.astype(np.double), translated_stats=stats_translated)
 
             for index, value in enumerate(stats):
                 vector_feature.SetField(f'{prefix}{value}', float(zonal_stats[index]))
@@ -243,5 +249,145 @@ def calc_zonal(vect, rast, prefix='', shape_attributes=False, stats=['mean', 'me
         vector_layer.SetFeature(vector_feature)
 
         progress(n, vector_feature_count, name=prefix)
+
+    vector_layer.CommitTransaction()
+
+
+def calc_zonal_fast(in_vector, in_rasters=[], prefixes=[], all_touch=False, shape_attributes=False, stats=['mean', 'med', 'std']):
+    # Translate stats to integers
+    stats_translated = enumerate_stats(stats)
+
+    # Read the raster:
+    raster = gdal.Open(in_rasters[0])
+
+    # Read the vector
+    vector = ogr.Open(in_vector, 1)
+    vector_layer = vector.GetLayer(0)
+
+    # Check that projections match
+    vector_projection = vector_layer.GetSpatialRef()
+    raster_projection = raster.GetProjection()
+    raster_projection_osr = osr.SpatialReference(raster_projection)
+    vector_projection_osr = osr.SpatialReference()
+    vector_projection_osr.ImportFromWkt(str(vector_projection))
+
+    if not vector_projection_osr.IsSame(raster_projection_osr):
+        print('Vector projection: ', vector_projection_osr)
+        print('Raster projection: ', raster_projection_osr)
+        raise Exception('Projections do not match!')
+
+    # Read raster data in overlap
+    raster_transform = np.array(raster.GetGeoTransform())
+    raster_size = np.array([raster.RasterXSize, raster.RasterYSize], dtype=np.int32)
+    raster_extent = get_extent(raster_transform, raster_size)
+    vector_extent = np.array(vector_layer.GetExtent(), dtype=np.float64)
+    overlap_extent = get_intersection(raster_extent, vector_extent)
+
+    if overlap_extent is False:
+        print('raster_extent: ', raster_extent)
+        print('vector_extent: ', vector_extent)
+        raise Exception('Vector and raster do not overlap!')
+    
+
+    overlap_aligned_extent, overlap_aligned_rasterized_size, overlap_aligned_offset = align_extent(raster_transform, overlap_extent, raster_size)
+    overlap_transform = np.array([overlap_aligned_extent[0], raster_transform[1], 0, overlap_aligned_extent[3], 0, raster_transform[5]], dtype=np.float64)
+    overlap_size = overlap_size_calc(overlap_aligned_extent, raster_transform)
+
+    vector_layer.StartTransaction()
+
+    # Create fields
+    vector_layer_defn = vector_layer.GetLayerDefn()
+    vector_layer_field_count = vector_layer_defn.GetFieldCount()
+    existing_field_names = []
+    
+    for i in range(vector_layer_field_count):
+        existing_field_names.append(vector_layer_defn.GetFieldDefn(i).GetName())
+
+    for stat in stats:
+        for index, value in enumerate(in_rasters):
+            field_name = f'{prefixes[index]}{stat}'
+            if field_name not in existing_field_names:
+                field_defn = ogr.FieldDefn(field_name, ogr.OFTReal)
+                vector_layer.CreateField(field_defn)
+
+    if shape_attributes is True:
+        for attribute in ['area', 'perimeter', 'ipq']:
+            if attribute not in existing_field_names:
+                field_defn = ogr.FieldDefn(attribute, ogr.OFTReal)
+                vector_layer.CreateField(field_defn)
+
+    # Loop the features
+    vector_driver = ogr.GetDriverByName('Memory')
+    vector_feature_count = vector_layer.GetFeatureCount()
+    stored_features = []
+    
+    print('Finished initializing')
+    
+    # vector_layer.ResetReading()
+    for raster_index, raster_path in enumerate(in_rasters):
+        raster_data = raster_to_array(raster_path, crop=[
+            overlap_aligned_rasterized_size[0],
+            overlap_aligned_rasterized_size[1],
+            overlap_aligned_offset[0],
+            overlap_aligned_offset[1],
+        ])
+        
+        print('Finished reading: ', raster_path)
+
+        for x in range(vector_feature_count):
+            vector_feature = vector_layer.GetNextFeature()
+            
+            if raster_index != 0:
+                vector_geom = vector_feature.GetGeometryRef()
+                feature_extent = vector_geom.GetEnvelope()
+
+                # Create temp layer
+                temp_vector_datasource = vector_driver.CreateDataSource(f'vector_{x}')
+                temp_vector_layer = temp_vector_datasource.CreateLayer('temp_polygon', vector_projection, ogr.wkbPolygon)
+                temp_vector_layer.CreateFeature(vector_feature.Clone())
+                temp_vector_layer.SyncToDisk()
+
+                if shape_attributes is True:
+                    vector_area = vector_geom.GetArea()
+                    vector_perimeter = vector_geom.Boundary().Length()
+                    vector_ipq = calc_ipq(vector_area, vector_perimeter)
+
+                    vector_feature.SetField('area', vector_area)
+                    vector_feature.SetField('perimeter', vector_perimeter)
+                    vector_feature.SetField('ipq', vector_ipq)
+
+                overlap_aligned_extent, overlap_aligned_rasterized_size, overlap_aligned_offset = align_extent(raster_transform, overlap_extent, raster_size)
+                overlap_transform = np.array([overlap_aligned_extent[0], raster_transform[1], 0, overlap_aligned_extent[3], 0, raster_transform[5]], dtype=np.float64)
+                overlap_size = overlap_size_calc(overlap_aligned_extent, raster_transform)
+                feature_aligned_extent, feature_aligned_rasterized_size, feature_aligned_offset = align_extent(overlap_transform, feature_extent, overlap_size)
+                feature_rasterized = rasterize_vector(temp_vector_layer, feature_aligned_extent, feature_aligned_rasterized_size, raster_projection)
+
+                stored_features[x] = feature_rasterized
+
+            cropped_raster = raster_data[
+                feature_aligned_offset[1]:feature_aligned_offset[1] + feature_aligned_rasterized_size[1],
+                feature_aligned_offset[0]:feature_aligned_offset[0] + feature_aligned_rasterized_size[0],
+            ]
+
+            if stored_features[x] is None:
+                for key in stats:
+                    vector_feature.SetField(f'{prefixes[raster_index]}{key}', None)
+                print(f'feature_rasterized was None. FID: {vector_feature.GetFID()}')
+            elif cropped_raster is None:
+                for key in stats:
+                    vector_feature.SetField(f'{prefixes[raster_index]}{key}', None)
+                print(f'cropped_raster was None. FID: {vector_feature.GetFID()}')
+            else:
+                raster_data_masked = ma.masked_array(cropped_raster, mask=stored_features[x]).compressed()
+                zonal_stats = global_statistics(raster_data_masked.astype(np.double), translated_stats=stats_translated)
+
+                for index, value in enumerate(stats):
+                    vector_feature.SetField(f'{prefixes[raster_index]}{value}', float(zonal_stats[index]))
+
+            vector_layer.SetFeature(vector_feature)
+
+            progress(x, vector_feature_count, name=prefixes[raster_index])
+
+        vector_layer.ResetReading()
 
     vector_layer.CommitTransaction()

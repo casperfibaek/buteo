@@ -1,35 +1,78 @@
 import sys; sys.path.append('..')
 import numpy as np
 from time import time
+from glob import glob
+from pathlib import Path
 from lib.raster_io import raster_to_array, array_to_raster
-from lib.stats_filters import median_filter, mean_filter, threshold_array, truncate_filter, sum_filter, fast_sum_filter
+from lib.stats_filters import median_filter, mean_filter, threshold_array, close_filter, truncate_filter, sum_filter, fast_sum_filter, median_deviation_filter, standardise_filter
 
-folder = '/mnt/c/users/caspe/desktop/Analysis/data/clipped/'
+folder = '/mnt/c/users/caspe/desktop/Analysis/data/'
+
+road_prox = folder + 'roads_proximity.tif'
+road_dens = folder + 'roads_density.tif'
+road_merge = folder + 'roads_merge_1km.tif'
+nightlight = folder + 'nightlights_clip.tif'
+
+# road_prox_arr = np.ma.add(raster_to_array(road_prox), 1)
+# road_dens_arr = raster_to_array(road_dens)
+
+# array_to_raster(road_dens_arr / np.ma.sqrt(road_prox_arr), reference_raster=road_prox, out_raster=folder + 'roads_merge_1km.tif')
+array_to_raster(standardise_filter(raster_to_array(nightlight).astype('float32')), reference_raster=nightlight, out_raster=folder + '/standardized/roads_nightlight.tif')
+
+# bands = [
+#     's2_b04_10m_dry',
+#     's2_b04_10m_wet',
+#     's2_b08_10m_dry',
+#     's2_b08_10m_wet',
+#     's2_b12_10m_dry',
+#     's2_b12_10m_wet',
+# ]
+
+# for band in bands:
+#     arr = median_filter(np.ma.abs(median_deviation_filter(raster_to_array(folder + band + '.tif'), 3, distance_calc='power')), 3, distance_calc='power', iterations=2)
+#     array_to_raster(arr, reference_raster=folder + band + '.tif', out_raster=folder + band + '_tex' + '.tif')
+
+
+# all_imgs = glob(folder + '*.tif')
+# for img in all_imgs:
+#     outname = folder + 'standardized/' + Path(img).stem + '_std.tif'
+#     array_to_raster(standardise_filter(raster_to_array(img).astype('float32')), reference_raster=img, out_raster=outname)
+
+# s2_b04_10m_dry = folder + 's2_b04_10m_dry.tif'
+# s2_b04_10m_dry_arr = median_filter(np.ma.abs(median_deviation_filter(raster_to_array(s2_b04_10m_dry), 3, distance_calc='power')), 3, distance_calc='power', iterations=2)
+# array_to_raster(s2_b04_10m_dry_arr, reference_raster=s2_b04_10m_dry, out_raster=folder + 's2_b04_10m_dry_tex.tif')
+# s2_b04_10m_wet = folder + 's2_b04_10m_wet.tif'
+
+# s2_b08_10m_dry = folder + 's2_b08_10m_dry.tif'
+# s2_b08_10m_wet = folder + 's2_b08_10m_wet.tif'
+
+# s2_b12_10m_dry = folder + 's2_b12_10m_dry.tif'
+# s2_b12_10m_wet = folder + 's2_b12_10m_wet.tif'
 
 
 # wet_prox = folder + 's1_wet_perm-proximity.tif'
-# wet_dens = folder + 's1_wet_mask-density.tif'
+# wet_dens = folder + 's1_wet_mask-density_5km.tif'
 # dry_prox = folder + 's1_dry_perm-proximity.tif'
-# dry_dens = folder + 's1_dry_mask-density.tif'
+# dry_dens = folder + 's1_dry_mask-density_5km.tif'
 
 # wet_prox_arr = np.ma.add(raster_to_array(wet_prox), 1)
 # wet_dens_arr = raster_to_array(wet_dens)
 # dry_prox_arr = np.ma.add(raster_to_array(dry_prox), 1)
 # dry_dens_arr = raster_to_array(dry_dens)
 
-# array_to_raster(dry_dens_arr / np.ma.sqrt(dry_prox_arr), reference_raster=dry_prox, out_raster=folder + 's1_dry_perm_merge.tif')
-# array_to_raster(wet_dens_arr / np.ma.sqrt(wet_prox_arr), reference_raster=wet_prox, out_raster=folder + 's1_wet_perm_merge.tif')
+# array_to_raster(dry_dens_arr / np.ma.sqrt(dry_prox_arr), reference_raster=dry_prox, out_raster=folder + 's1_dry_perm_merge_5km.tif')
+# array_to_raster(wet_dens_arr / np.ma.sqrt(wet_prox_arr), reference_raster=wet_prox, out_raster=folder + 's1_wet_perm_merge_5km.tif')
 
-wet_perm2_mask = raster_to_array(folder + 's1_wet_perm2_mask.tif').astype('float32')
-wet_perm2_mask.fill_value = 0
-wet_perm2_mask_filled = wet_perm2_mask.filled()
-wet_perm2_mask_sum = fast_sum_filter(wet_perm2_mask_filled, 201, distance_calc='power')
+# wet_perm2_mask = raster_to_array(folder + 's1_wet_perm2_mask.tif').astype('float32')
+# wet_perm2_mask.fill_value = 0
+# wet_perm2_mask_filled = wet_perm2_mask.filled()
+# wet_perm2_mask_sum = fast_sum_filter(wet_perm2_mask_filled, 1001, weighted_distance=True, distance_calc='power')
 
-array_to_raster(
-    wet_perm2_mask_sum,
-    reference_raster=folder + 's1_wet_perm2_mask.tif',
-    out_raster=folder + 's1_wet_mask-density_power.tif',
-)
+# array_to_raster(
+#     wet_perm2_mask_sum,
+#     reference_raster=folder + 's1_wet_perm2_mask.tif',
+#     out_raster=folder + 's1_wet_mask-density_5km.tif',
+# )
 
 # dry_perm2_mask = raster_to_array(folder + 's1_dry_perm2_mask.tif').astype('float32')
 # dry_perm2_mask.fill_value = 0

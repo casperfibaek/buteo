@@ -2,6 +2,7 @@ import os
 import sys
 import math
 import time
+from itertools import product
 import numpy as np
 from osgeo import gdal
 
@@ -11,12 +12,13 @@ def progress(count, total, name='Processing'):
     filled_len = int(round(bar_len * count / float(total)))
     display_name = name[:10] + '..: '
 
+    bar = '█' * filled_len + '.' * (bar_len - filled_len)
+
     percents = round(100.0 * count / float(total), 1)
-    if percents == 100:
+
+    if percents > 100:
         sys.stdout.flush()
         return None
-
-    bar = '█' * filled_len + '.' * (bar_len - filled_len)
 
     sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
     sys.stdout.flush()

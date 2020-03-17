@@ -211,7 +211,6 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
 
     if reference_raster != None:
         # Read the reference raster
-
         if isinstance(reference_raster, gdal.Dataset):
             referenceDataframe = reference_raster
         else:

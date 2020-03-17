@@ -17,7 +17,7 @@ setup(ext_modules=cythonize(cythonize((Extension(
 setup(ext_modules=cythonize(cythonize((Extension(
                             "stats_global",
                             sources=["stats_global.pyx"],
-                            extra_compile_args=["-Wall", "-O3", "-fopenmp", "-Ofast"],
+                            extra_compile_args=["-Wall", "-O3", "-fopenmp"],
                             extra_link_args=['-fopenmp'],
 )))))
 

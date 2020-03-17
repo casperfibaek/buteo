@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.signal
 from lib.stats_local import kernel_filter, fast_sum
 from lib.stats_local_no_kernel import truncate_array, threshold_array, cdef_from_z
 from lib.stats_kernel import create_kernel
@@ -84,7 +85,8 @@ def fast_sum_filter(
         )
     )
 
-    return fast_sum(in_raster, kernel).astype(in_raster.dtype)
+    # return fast_sum(in_raster, kernel).astype(in_raster.dtype)
+    return scipy.signal.fftconvolve(in_raster, kernel, mode='same').astype(in_raster.dtype)
 
 
 def cdef_filter(in_raster):
