@@ -392,4 +392,4 @@ def calc_zonal_fast(in_vector, in_rasters = [], prefixes=[], shape_attributes=Fa
         for stat in stats:
             output_csv[prefixes[raster_index] + stat] = columns[prefixes[raster_index] + stat]
 
-    output_csv.to_csv(os.path.dirname(raster_value) + '\\' + Path(in_vector).stem + '.csv')
+    output_csv.to_csv(os.path.dirname(raster_value) + '\\' + Path(in_vector).stem + '.csv', index=False)
