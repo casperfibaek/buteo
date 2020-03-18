@@ -6,22 +6,18 @@ from pathlib import Path
 from lib.raster_io import raster_to_array, array_to_raster
 from lib.stats_filters import median_filter, mean_filter, threshold_array, close_filter, truncate_filter, sum_filter, fast_sum_filter, median_deviation_filter, standardise_filter
 
-folder = 'c:/users/caspe/desktop/Analysis/data/standardized/'
+folder = 'c:/users/caspe/desktop/Analysis/data/'
 
-road_prox = folder + 'roads_proximity.tif'
-road_dens = folder + 'roads_density.tif'
-road_merge = folder + 'roads_merge_1km.tif'
-nightlight = folder + 'nightlights_std.tif'
+prox = folder + 's1_wet_perm-proximity.tif'
+dens = folder + 's1_wet_mask-density_5km.tif'
+merge = folder + 's1_wet_perm.tif'
 
-nightlight_arr = raster_to_array(nightlight)
-import pdb; pdb.set_trace()
+prox_arr = np.ma.add(raster_to_array(prox), 1)
+dens_arr = np.ma.add(raster_to_array(dens), 1)
+merge_arr = dens_arr / np.ma.sqrt(prox_arr)
 
-
-# road_prox_arr = np.ma.add(raster_to_array(road_prox), 1)
-# road_dens_arr = raster_to_array(road_dens)
-
-# array_to_raster(road_dens_arr / np.ma.sqrt(road_prox_arr), reference_raster=road_prox, out_raster=folder + 'roads_merge_1km.tif')
-# array_to_raster(standardise_filter(raster_to_array(nightlight).astype('float32')), reference_raster=nightlight, out_raster=folder + '/standardized/roads_nightlight.tif')
+array_to_raster(merge_arr, reference_raster=prox, out_raster=merge)
+array_to_raster(standardise_filter(merge_arr.astype('float32')), reference_raster=prox, out_raster=folder + '/standardized/s1_wet_perm.tif')
 
 # bands = [
 #     's2_b04_10m_dry',

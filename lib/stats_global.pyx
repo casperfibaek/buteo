@@ -55,6 +55,7 @@ cdef void _calc_stats(double [:] arr, int arr_length, int [:] stats, int stats_l
   
   cdef double v_range = 0
   cdef double v_mean = 0
+  cdef double variance
 
   cdef double * ordered_array = <double *> malloc(sizeof(double) * arr_length)
   for v in range(arr_length):
@@ -66,7 +67,10 @@ cdef void _calc_stats(double [:] arr, int arr_length, int [:] stats, int stats_l
     ordered_array[v] = arr[v]
 
   v_range = v_max - v_min
-  v_mean = v_sum / v_count
+  if v_count == 0:
+    v_mean = 0
+  else:
+    v_mean = v_sum / v_count
 
   cdef bint calc_medians = 0
   cdef bint calc_mad = 0
@@ -119,7 +123,10 @@ cdef void _calc_stats(double [:] arr, int arr_length, int [:] stats, int stats_l
     deviations_3 += pow(arr[j] - v_mean, 3)
     deviations_4 += pow(arr[j] - v_mean, 4)
 
-  cdef double variance = deviations_2 * (1 / <double>arr_length)
+  if arr_length == 0:
+    variance = 0
+  else:
+    variance = deviations_2 * (1 / <double>arr_length)
   cdef double stdev = sqrt(variance)
 
   if calc_medians == 1:
