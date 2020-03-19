@@ -1,38 +1,38 @@
 import sqlite3
 import pandas as pd
-import geopandas as gpd
-from sklearn.cluster import DBSCAN, KMeans, AgglomerativeClustering
+import numpy as np
+from sklearn.cluster import KMeans, AgglomerativeClustering, SpectralClustering
+from sklearn.neural_network import BernoulliRBM
+folder = '/mnt/c/Users/caspe/Desktop/Analysis/Phase2/vector/'
 
-folder = 'C:/Users/caspe/Desktop/Analysis/Phase2/'
+db_connection = sqlite3.connect(folder + 'phase2_features_reduced.sqlite')
 
-# db_connection = sqlite3.connect(folder + 'subset_zonal.sqlite')
+df = pd.read_sql_query("SELECT * FROM phase2_features_reduced LIMIT 100;", db_connection)
 
-limit = 100
-df = gpd.read_file(folder + 'subset_zonal.sqlite')
-# df = pd.read_sql_query("select 'tbl_name' from sqlite_master where type = 'table'", db_connection)
+no_fid = df.loc[:, df.columns != 'ogc_fid0']
+no_fid = no_fid.loc[:, no_fid.columns != 'ogc_fid']
+no_fid = no_fid.loc[:, no_fid.columns != 'fid']
+no_fid = no_fid.loc[:, no_fid.columns != 'dn']
+no_fid = no_fid.loc[:, no_fid.columns != 'DN']
+no_fid = no_fid.loc[:, no_fid.columns != 'GEOMETRY']
+no_fid = no_fid.loc[:, no_fid.columns != 'area']
+no_fid = no_fid.loc[:, no_fid.columns != 'area_std']
+no_fid = no_fid.loc[:, no_fid.columns != 'perimeter']
+no_fid = no_fid.loc[:, no_fid.columns != 'perimeter_std']
+no_fid = no_fid.loc[:, no_fid.columns != 'ipq']
+
 import pdb; pdb.set_trace()
-# df = pd.read_sql_query(f"SELECT * FROM subset_zonal LIMIT {limit};", db_connection)
+print('read shp')
+rdf = pd.DataFrame()
+rdf['ogc_fid'] = df['ogc_fid']
+# rdf['spectr'] = SpectralClustering().fit_predict(no_fid)
+rdf['bernou'] = BernoulliRBM(verbose=True).fit_predict(no_fid)
+import pdb; pdb.set_trace()
+rdf['kmeans'] = KMeans(n_clusters=16, n_jobs=-1).fit_predict(no_fid)
+# print(DBSCAN(eps=2, min_samples=100).fit_predict(no_fid))
+# import pdb; pdb.set_trace()
+print('added columns')
 
 
-geometry = df['WKT_GEOMETRY'].values
-fids = df['ogc_fid'].values
-
-del df['ogc_fid']
-del df['WKT_GEOMETRY']
-
-dbscan = DBSCAN(n_jobs=-1, eps=2, min_samples=10, verbose=True).fit_predict(df)
-aggclu = AgglomerativeClustering(n_clusters=10, verbose=True).fit_predict(df)
-kmeans = KMeans(n_clusters=10, n_jobs=-1, verbose=True).fit_predict(df)
-
-df = None
-
-rdc = pd.DataFrame()
-
-# dfc['clu_optic'] = optic
-rdc['ogc_fid'] = fids
-rdc['WKT_GEOMETRY'] = geometry
-rdc['clu_dbsca'] = dbscan
-rdc['clu_aggcl'] = dbscan
-rdc['clu_kmean'] = dbscan
-
-rdc.to_csv(folder + 'clusters.csv', index=False)
+out_connection = sqlite3.connect(folder + 'phase2_features_reduced_clusters.sqlite')
+rdf.to_sql(name='phase2_features_reduced_clusters', con=out_connection, index=False)

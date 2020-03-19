@@ -129,7 +129,54 @@ def crop_raster(raster_band, rasterized_size, offset):
     return raster_band.ReadAsArray(int(offset[0]), int(offset[1]), int(rasterized_size[0]), int(rasterized_size[1]))
 
 
-def calc_zonal(in_vector, in_rasters = [], prefixes=[], shape_attributes=False, stats=['mean', 'med', 'std']):
+def calc_shapes(in_vector):
+    vector = ogr.Open(in_vector, 1)
+    vector_layer = vector.GetLayer(0)
+    vector_layer_defn = vector_layer.GetLayerDefn()
+    vector_field_counts = vector_layer_defn.GetFieldCount()
+    vector_current_fields = []
+    
+    # Get current fields
+    for i in range(vector_field_counts):
+        vector_current_fields.append(vector_layer_defn).GetFieldDefn(i).GetName()
+
+    vector_layer.StartTransaction()
+    
+    # Add missing fields
+    for attribute in ['area', 'perimeter', 'ipq']:
+        if attribute not in vector_current_fields:
+            field_defn = ogr.FieldDefn(attribute, ogr.OFTReal)
+            vector_layer.CreateField(field_defn)
+
+    vector_feature_count = vector_layer.GetFeatureCount()
+    for i in range(vector_feature_count):
+        vector_feature = vector_layer.GetNextFeature()
+    
+        try:
+            vector_geom = vector_feature.GetGeometryRef()
+        except:
+            vector_geom.Buffer(0)
+            Warning('Invalid geometry at : ', i)
+
+        if vector_geom is None:
+            raise Exception('Invalid geometry. Could not fix.')
+
+        vector_area = vector_geom.GetArea()
+        vector_perimeter = vector_geom.Boundary().Length()
+        vector_ipq = calc_ipq(vector_area, vector_perimeter)
+
+        vector_feature.SetField('area', vector_area)
+        vector_feature.SetField('perimeter', vector_perimeter)
+        vector_feature.SetField('ipq', vector_ipq)
+
+        vector_layer.SetFeature(vector_feature)
+        
+        progress(i, vector_feature_count, name='shape')
+        
+    vector_layer.CommitTransaction()
+
+
+def calc_zonal(in_vector, in_rasters = [], prefixes=[], stats=['mean', 'med', 'std']):
     # Translate stats to integers
     stats_translated = enumerate_stats(stats)
 
@@ -177,26 +224,28 @@ def calc_zonal(in_vector, in_rasters = [], prefixes=[], shape_attributes=False, 
     ], dtype=np.float64)
     overlap_size = overlap_size_calc(overlap_aligned_extent, raster_transform)
 
-    vector_layer.StartTransaction()
-
-    # Create fields
-    vector_layer_defn = vector_layer.GetLayerDefn()
-    for stat in stats:
-        for i in range(len(in_rasters)):
-            if vector_layer_defn.GetFieldIndex(f'{prefixes[i]}{stat}') == -1:
-                field_defn = ogr.FieldDefn(f'{prefixes[i]}{stat}', ogr.OFTReal)
-                vector_layer.CreateField(field_defn)
-
-    if shape_attributes is True:
-        for attribute in ['area', 'perimeter', 'ipq']:
-            if vector_layer_defn.GetFieldIndex(attribute) == -1:
-                field_defn = ogr.FieldDefn(attribute, ogr.OFTReal)
-                vector_layer.CreateField(field_defn)
-
 
     # Loop the features
     vector_driver = ogr.GetDriverByName('Memory')
     vector_feature_count = vector_layer.GetFeatureCount()
+    vector_layer.StartTransaction()
+
+    # Create fields
+    vector_layer_defn = vector_layer.GetLayerDefn()
+    vector_field_counts = vector_layer_defn.GetFieldCount()
+    vector_current_fields = []
+    
+    # Get current fields
+    for i in range(vector_field_counts):
+        vector_current_fields.append(vector_layer_defn).GetFieldDefn(i).GetName()
+    
+    # Add fields where missing
+    for stat in stats:
+        for i in range(len(in_rasters)):
+            field_name = f'{prefixes[i]}{stat}'
+            if field_name not in vector_current_fields:
+                field_defn = ogr.FieldDefn(field_name, ogr.OFTReal)
+                vector_layer.CreateField(field_defn)
 
     rasterized_features = []
     offsets = []
@@ -229,15 +278,6 @@ def calc_zonal(in_vector, in_rasters = [], prefixes=[], shape_attributes=False, 
                     raise Exception('Invalid geometry. Could not fix.')
 
                 feature_extent = vector_geom.GetEnvelope()
-
-                if shape_attributes is True:
-                    vector_area = vector_geom.GetArea()
-                    vector_perimeter = vector_geom.Boundary().Length()
-                    vector_ipq = calc_ipq(vector_area, vector_perimeter)
-
-                    vector_feature.SetField('area', vector_area)
-                    vector_feature.SetField('perimeter', vector_perimeter)
-                    vector_feature.SetField('ipq', vector_ipq)
 
                 # Create temp layer
                 temp_vector_datasource = vector_driver.CreateDataSource(f'vector_{n}')
