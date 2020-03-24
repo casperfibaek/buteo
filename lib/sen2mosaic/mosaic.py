@@ -315,7 +315,7 @@ def buildComposite(source_files, band, md_dest, resolution = 20, level = '2A', o
     assert percentile >=0 and percentile <=100, "Percentile cannot be set less than 0% or greater than 100%."
             
     # Set values to be masked
-    if masked_vals == 'auto': masked_vals = [0,9]#[0,1,2,3,7,8,9,10,11]
+    if masked_vals == 'auto': masked_vals = [0,9] # [0,1,2,3,7,8,9,10,11]
     if masked_vals == 'none': masked_vals = []
     assert type(masked_vals) == list, "Masked values must be a list of integers, or set to 'auto' or 'none'."
     
@@ -332,7 +332,7 @@ def buildComposite(source_files, band, md_dest, resolution = 20, level = '2A', o
     
     # It's only worth processing a tile if at least one input image is inside tile
     if len(scenes) == 0:
-        raise IOError("No data inside specified output area or date range for resolution %s. Make sure you specified your bouding box in the correct order (i.e. xmin ymin xmax ymax), EPSG code correctly, and that start and end dates are in the format YYYYMMDD. Continuing."%str(resolution))
+        raise IOError("No data inside specified output area or date range for resolution %s. Make sure you specified your bounding box in the correct order (i.e. xmin ymin xmax ymax), EPSG code correctly, and that start and end dates are in the format YYYYMMDD. Continuing."%str(resolution))
         
     # Print reassuring statement
     if verbose: print("Found %s scenes matching output criteria."%str(len(scenes)))
@@ -419,9 +419,100 @@ def buildVRT(red_band, green_band, blue_band, output_path):
     subprocess.call(command)
 
 
+def _getBands(resolution):
+    '''
+    Get a list of Sentinel-2 bands given an input resolution
+    
+    Args:
+        resolution: Sentinel-2 resolution (10, 20, or 60 m)
+    Returns:
+        A list of resolutions
+        A list of band names
+    '''
+    
+    band_list = []
+    res_list = []
+    
+    if resolution == 60 or resolution == 0:
+        band_list.extend(['B01','B02','B03','B04','B05','B06','B07','B8A','B09','B11','B12'])
+        res_list.extend([60] * 11)
+        
+    if resolution == 20 or resolution == 0:
+        band_list.extend(['B02','B03','B04','B05','B06','B07','B8A','B11','B12'])
+        res_list.extend([20] * 9)
+        
+    if resolution == 10 or resolution == 0:
+        band_list.extend(['B02','B03','B04','B08'])
+        res_list.extend([10] * 4)
+        
+    return np.array(res_list), np.array(band_list)
+
+
+
+def build_mosaic(source_files, extent_dest, EPSG_dest, resolution = 0, percentile = 25., level = '1C', start = '20150101', end = datetime.datetime.today().strftime('%Y%m%d'), improve_mask = False, colour_balance = False, processes = 1, output_dir = os.getcwd(), output_name = 'mosaic', masked_vals = 'auto', step=2000, temp_dir = '/tmp', verbose = False):
+    """main(source_files, extent_dest, EPSG_dest, start = '20150101', end = datetime.datetime.today().strftime('%Y%m%d'), resolution = 0, improve_mask = False, colour_balance = False, processes = 1, output_dir = os.getcwd(), output_name = 'mosaic', masked_vals = 'auto', temp_dir = '/tmp', verbose = False)
+    
+    Function to generate seamless mosaics from a list of Sentinel-2 level-2A input files.
+        
+    Args:
+        source_files: A list of level 1C/2A Sentinel-2 input files or a directory.
+        extent_dest: List desciribing corner coordinate points in destination CRS [xmin, ymin, xmax, ymax].
+        EPSG_dest: EPSG code of destination coordinate reference system. Must be a UTM projection. See: https://www.epsg-registry.org/ for codes.
+        resolution: Process 10, 20, or 60 m bands. Defaults to processing all three.
+        percentile: Percentile of reflectance to output. Defaults to 25%, which tends to produce good results.
+        level: Sentinel-2 level 1C '1C' or level 2A '2A' input data.
+        start: Start date to process, in format 'YYYYMMDD' Defaults to start of Sentinel-2 era.
+        end: End date to process, in format 'YYYYMMDD' Defaults to today's date.
+        improve_mask: Set True to apply improvements Sentinel-2 cloud mask. Not generally recommended.
+        processes: Number of processes to run similtaneously. Defaults to 1.
+        output_dir: Optionally specify an output directory.
+        output_name: Optionally specify a string to precede output file names. Defaults to 'mosaic'.
+        masked_vals: List of SLC mask values to not include in the final mosaic. Defaults to 'auto', which masks everything except [4,5,6]
+        temp_dir: Directory to temporarily write L1C mask files. Defaults to /tmp
+        verbose: Make script verbose (set True).
+    """
+    
+    # Get output bands based on input resolution
+    res_list, band_list = _getBands(resolution)
+    
+    # For each of the input resolutions
+    for res in np.unique(res_list)[::-1]:
+
+        # Build metadata of output object
+        md_dest = sen2mosaic.core.Metadata(extent_dest, res, EPSG_dest)
+        
+        # Only output one mask layer
+        output_mask = True
+        for band in band_list[res_list==res]:
+            
+            if verbose: print('Building band %s at %s m resolution'%(band, str(res)))
+            
+            # Build composite image for list of input scenes
+            band_out, QA_out = sen2mosaic.mosaic.buildComposite(source_files, band, md_dest, level = level, resolution = resolution, output_dir = output_dir, output_name = output_name, start = start, end = end, colour_balance = colour_balance, improve_mask = improve_mask, percentile = 25., processes = processes, step = step, masked_vals = masked_vals, temp_dir = temp_dir, verbose = verbose, output_mask = output_mask)            
+            
+            # Only output mask on first iteration
+            output_mask = False
+            
+        # Build VRT output files for straightforward visualisation
+        if verbose: print('Building .VRT images for visualisation')
+        
+        # Natural colour image (10 m)
+        sen2mosaic.mosaic.buildVRT('%s/%s_R%sm_B04.tif'%(output_dir, output_name, str(res)), '%s/%s_R%sm_B03.tif'%(output_dir, output_name, str(res)), '%s/%s_R%sm_B02.tif'%(output_dir, output_name, str(res)), '%s/%s_R%sm_RGB.vrt'%(output_dir, output_name, str(res)))
+
+        # Near infrared image. Band at (10 m) has a different format to bands at 20 and 60 m.
+        if res == 10:
+            sen2mosaic.mosaic.buildVRT('%s/%s_R%sm_B08.tif'%(output_dir, output_name, str(res)), '%s/%s_R%sm_B04.tif'%(output_dir, output_name, str(res)), '%s/%s_R%sm_B03.tif'%(output_dir, output_name, str(res)), '%s/%s_R%sm_NIR.vrt'%(output_dir, output_name, str(res)))    
+        else:
+            sen2mosaic.mosaic.buildVRT('%s/%s_R%sm_B8A.tif'%(output_dir, output_name, str(res)), '%s/%s_R%sm_B04.tif'%(output_dir, output_name, str(res)), '%s/%s_R%sm_B03.tif'%(output_dir, output_name, str(res)), '%s/%s_R%sm_NIR.vrt'%(output_dir, output_name, str(res)))
+        
+    if verbose: print('Processing complete!')
+
+
+
 if __name__ == '__main__':
     '''
     '''
         
     print('The sen2mosaic command line interface has been moved! Please use scripts in .../sen2mosaic/cli/ to operate sen2mosaic from the command line.')
     
+

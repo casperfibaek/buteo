@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.signal
 from lib.stats_local import kernel_filter, fast_sum
-from lib.stats_local_no_kernel import truncate_array, threshold_array, cdef_from_z
+from lib.stats_local_no_kernel import truncate_array, threshold_array, cdef_from_z, select_highest
 from lib.stats_kernel import create_kernel
 
 
@@ -85,6 +85,7 @@ def fast_sum_filter(
         )
     )
 
+    # TODO: HANDLE NODATA
     # return fast_sum(in_raster, kernel).astype(in_raster.dtype)
     return scipy.signal.fftconvolve(in_raster, kernel, mode='same').astype(in_raster.dtype)
 
@@ -783,3 +784,6 @@ def truncate_filter(in_raster, min_value=False, max_value=False, dim3=False):
         max_value=max_value,
     ).astype(in_raster.dtype)
 
+
+def highest_filter(in_rasters, weights):
+    return select_highest(in_rasters, weights).astype('uint8')

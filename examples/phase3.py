@@ -3,11 +3,11 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans, AgglomerativeClustering, SpectralClustering
 from sklearn.neural_network import BernoulliRBM
-folder = '/mnt/c/Users/caspe/Desktop/Analysis/Phase2/vector/'
+folder = '/mnt/c/Users/caspe/Desktop/Analysis/Phase3/'
 
-db_connection = sqlite3.connect(folder + 'features_perm_lights.sqlite')
+db_connection = sqlite3.connect(folder + 'phase3_assistant_kmeans_features.sqlite')
 
-df = pd.read_sql_query("SELECT * FROM features_perm_lights LIMIT -1;", db_connection)
+df = pd.read_sql_query("SELECT * FROM phase3_assistant_kmeans_features LIMIT -1;", db_connection)
 
 no_fid = df.loc[:, df.columns != 'ogc_fid0']
 no_fid = no_fid.loc[:, no_fid.columns != 'ogc_fid']
@@ -27,11 +27,11 @@ rdf = pd.DataFrame()
 # rdf['ogc_fid'] = df['ogc_fid']
 rdf['dn'] = df['dn']
 # rdf['spectr'] = SpectralClustering().fit_predict(no_fid)
-rdf['kmeans'] = KMeans(n_clusters=25, n_jobs=-1, max_iter=1000, tol=0.00001).fit_predict(no_fid)
+rdf['kmeans'] = KMeans(n_clusters=8, n_jobs=-1, max_iter=1000, tol=0.00001).fit_predict(no_fid)
 # print(DBSCAN(eps=2, min_samples=100).fit_predict(no_fid))
 # import pdb; pdb.set_trace()
 print('added columns')
 
 
-out_connection = sqlite3.connect(folder + 'features_perm_lights_clusters.sqlite')
-rdf.to_sql(name='features_perm_lights_clusters', con=out_connection, index=False)
+out_connection = sqlite3.connect(folder + 'phase3_assistant_kmeans_features_clusters.sqlite')
+rdf.to_sql(name='phase3_assistant_kmeans_features_clusters', con=out_connection, index=False)

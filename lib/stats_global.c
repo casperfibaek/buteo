@@ -5,12 +5,12 @@
     "distutils": {
         "depends": [],
         "extra_compile_args": [
-            "/O2",
-            "/fp:fast",
-            "/openmp"
+            "-Wall",
+            "-O3",
+            "-fopenmp"
         ],
         "extra_link_args": [
-            "/openmp"
+            "-fopenmp"
         ],
         "name": "stats_global",
         "sources": [

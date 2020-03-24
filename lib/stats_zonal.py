@@ -8,7 +8,9 @@ from pathlib import Path
 
 
 def calc_ipq(area, perimeter):
-    with np.errstate(divide='ignore', invalid='ignore'):
+    if perimeter == 0:
+        return 0
+    else:
         return (4 * np.pi * area) / perimeter ** 2
 
 

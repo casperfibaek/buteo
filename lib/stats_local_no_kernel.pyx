@@ -350,3 +350,90 @@ def truncate_array(arr, min_value=False, max_value=False):
 
     return result
 
+
+cdef void highest(
+  double [:, :, ::1] arr,
+  double [:, ::1] result,
+  double [::1] weights,
+  int z_max,
+  int x_max,
+  int y_max,
+  int weight_len,
+  bint has_nodata,
+  double fill_value,
+) nogil:
+    cdef int x, y, z, i, nodata
+    cdef double max_value
+    cdef double value
+
+    for x in prange(x_max):
+        for y in range(y_max):
+            nodata = 0
+            i = 0
+            max_value = -9999.9
+            for z in range(z_max):
+                if has_nodata is True and arr[z][x][y] == fill_value:
+                    nodata = 1
+                    break
+                else:
+                    value = arr[z][x][y] * weights[z]
+                    if value > max_value:
+                        i = (z + 1)
+                        max_value = value
+            if nodata == 1:
+                result[x][y] = fill_value
+            else:
+                result[x][y] = i
+
+
+def select_highest(arr, weights):
+    cdef bint has_nodata = False
+    cdef double fill_value
+    cdef double [:, :, ::1] arr_view
+    cdef double [:, ::1] result_view
+    cdef double [::1] weights_view
+    cdef int dims = len(arr.shape)
+
+    assert(dims == 2 or dims == 3)
+
+    result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
+    arr = arr.astype(np.double) if arr.dtype != np.double else arr
+    weights = weights.astype(np.double) if weights.dtype != np.double else weights
+
+    arr_mask = False
+
+    if isinstance(arr, np.ma.MaskedArray):
+        result = np.ma.array(result, fill_value=arr.fill_value)
+        fill_value = arr.fill_value
+        has_nodata = 1
+        if arr.mask is not False:
+            arr_mask = np.ma.getmask(arr)
+        arr = arr.filled()
+    else:
+        fill_value = 0.0
+
+    arr_view = arr
+    result_view = result
+    weights_view = weights
+
+    highest(
+        arr_view,
+        result_view,
+        weights_view,
+        arr.shape[0],
+        arr.shape[1],
+        arr.shape[2],
+        int(len(weights)),
+        has_nodata,
+        fill_value,
+    )
+    
+    if has_nodata is True:
+        if arr_mask is not False:
+            return np.ma.masked_where(arr_mask[0], result)
+        else:
+            return np.ma.masked_equal(result, fill_value)
+
+    return result
+
+

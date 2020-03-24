@@ -693,6 +693,7 @@ def loadSceneList(infiles, resolution = 20, md_dest = None, start = '20150101', 
             # Load scene
             scene = sen2mosaic.LoadScene(source_file, resolution = resolution)
             
+            
             # Skip scene if conditions not met
             if md_dest is not None and scene.testInsideTile(md_dest) == False: continue
             if scene.testInsideDate(start = start, end = end) == False: continue

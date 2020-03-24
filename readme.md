@@ -25,9 +25,15 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * conda create --name yellow python=3.8
   * conda activate yellow
   * conda install -c anaconda mkl numpy scipy scikit-learn cython numexpr pandas sqlite sqlalchemy pyamg
-  * conda install -c conda-forge gdal matplotlib opencv shapely geopandas
+  * conda install -c conda-forge gdal matplotlib opencv shapely geopandas scikit-image pyshp pyproj
   * conda update --all
   * pip install sentinelsat
+
+
+  * conda create --name py2 python=2.7
+  * conda activate py2
+  * pip install tables matplotlib scikit-image
+  * conda install scipy
 
   ## Snappy
   * cd ~
