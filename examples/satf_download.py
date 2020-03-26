@@ -43,6 +43,7 @@ for index, tile in enumerate(data):
     images = glob(f'/mnt/d/data/*{tile}*')
     decompress(images, tmp_dir)
     images = glob(f'{tmp_dir}*{tile}*')
+    images.reverse()
     
     mosaic_tile(images, dst_dir, tile)
     

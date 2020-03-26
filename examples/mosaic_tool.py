@@ -287,7 +287,7 @@ def prepare_metadata(list_of_SAFE_images):
     return metadata
 
 
-def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', cutoff_percentage=2, cloud_cutoff=2, border_cut=101):
+def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', cutoff_percentage=1, cloud_cutoff=2, border_cut=101):
 
     # Verify input
     assert isinstance(list_of_SAFE_images, list), "Input is not a list. [path_to_safe_file1, path_to_safe_file2, ...]"
@@ -333,15 +333,19 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', cutoff_percenta
 
         change_mask = (np.logical_and(mask == True, np.logical_and((mask != ex_mask), (ex_mask == False)))).astype('bool')
         
-        # Add to tracking array
-        tracking_array = tracking_array + (change_mask * current_image)
-        
-        # Update mask
-        mask = np.logical_and(mask, ex_mask).astype('bool')
+        # Check if change is > 1%, else skip
+        if (change_mask.sum() / change_mask.size) >= 0.01:
+            mask = np.logical_and(mask, ex_mask).astype('bool')
+            
+            # Add to tracking array
+            tracking_array = tracking_array + (change_mask * current_image)
 
-        # Update coverage
-        coverage = (mask.sum() / mask.size) * 100
-        print('Updating the tracking array: ', coverage, cutoff_percentage)
+            # Update coverage
+            coverage = (mask.sum() / mask.size) * 100
+
+            print(f'Updating the tracking array: {round(coverage, 3)} towards goal: {cutoff_percentage}')
+        else:
+            print('Skipped an image.')
 
         current_image += 1  
 
@@ -378,24 +382,26 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', cutoff_percenta
         
         paths = get_band_paths(image['path'])
 
-        ex_b2_raw = raster_to_array(paths['10m']['B02'])
+        ex_b2_raw = raster_to_array(paths['10m']['B08'])
         ex_b2_masked = np.ma.array(ex_b2_raw, mask=image['valid_mask'])
         ex_b2_mean = ex_b2_masked.mean()
 
         base_b2 = np.ma.array(best_image_b2, mask=image['valid_mask'])
         base_b2_mean = base_b2.mean()
         
-        if ex_b2_mean > 200 and ex_b2_mean < 800:
-            if (ex_b2_mean / base_b2_mean) < 1 - (index / 10):
-                tracking_array = np.where(image['valid_mask'] == False, index, tracking_array)
-                base_b2 = np.where(image['valid_mask'] == False, ex_b2_raw, base_b2)
+        # Only update if image is atleast 5%. Is between 500 and 3000 and mean lower that base.
+        if ((image['valid_mask'] == False).sum() / image['valid_mask'].size) > 0.05:
+            if ex_b2_mean > 500 and ex_b2_mean < 3000:
+                if (ex_b2_mean / base_b2_mean) < 1 - (index / 20):
+                    tracking_array = np.where(image['valid_mask'] == False, index, tracking_array)
+                    base_b2 = np.where(image['valid_mask'] == False, ex_b2_raw, base_b2)
 
 
     print('Filtering the tracking array.')
     # Run a mode filter on the tracking array
     tracking_array = mode_filter(tracking_array, 15)
     tracking_array = mode_filter(tracking_array, 5, 3)
-    array_to_raster(tracking_array, reference_raster=best_image_bands['10m']['B02'], out_raster=f"{out_dir}/tracking_{out_name}.tif")
+    array_to_raster(tracking_array, reference_raster=best_image_bands['10m']['B08'], out_raster=f"{out_dir}/tracking_{out_name}.tif")
 
 
     print('Merging band data.')
@@ -423,13 +429,11 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', cutoff_percenta
             
         array_to_raster(base_image, reference_raster=best_image_bands['10m'][band], out_raster=f"{out_dir}/{band}_{out_name}.tif")
 
-# TODO: Extra pass on tracking array, checking distance on B2 band
-
 
 if __name__ == "__main__":
     folder = "/mnt/c/Users/caspe/Desktop/tmp/"
     out_folder = "/mnt/c/Users/caspe/Desktop/tmp/mosaic"
     images = glob(folder + "*.*")
     
-    mosaic_tile(images, out_folder, "mosaic", cutoff_percentage=2, cloud_cutoff=3)
+    mosaic_tile(images, out_folder, "mosaic", cutoff_percentage=2, cloud_cutoff=1)
 
