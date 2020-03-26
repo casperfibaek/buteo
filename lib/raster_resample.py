@@ -5,7 +5,7 @@ from utils_core import datatype_is_float, copy_dataframe, progress_callback_quie
 
 
 def resample(in_raster, out_raster=None, reference_raster=None, reference_band_number=1,
-             target_size=None, output_format='MEM', method='nearest', quiet=False):
+             target_size=None, output_format='MEM', method='nearest', quiet=True):
     ''' Resample an input raster to match a reference raster or
         a target size. The target size is in the same unit as
         the input raster. If the unit is wgs84 - beware that

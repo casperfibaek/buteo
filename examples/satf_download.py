@@ -6,7 +6,7 @@ import shutil
 from glob import glob
 
 from sen2mosaic.download import search, download, connectToAPI, decompress
-from sen2mosaic.mosaic import build_mosaic
+from mosaic_tool import mosaic_tile
 
 project_area = '/mnt/c/Users/caspe/Desktop/Analysis/Data/vector/ghana_landarea.shp'
 project_geom = gpd.read_file(project_area)
@@ -39,19 +39,12 @@ for index, tile in enumerate(data):
 
     if len(glob(f"{dst_dir}*tile*")) != 0:
         continue
-    
-    if tile != '30NZN':
-        continue
 
     images = glob(f'/mnt/d/data/*{tile}*')
     decompress(images, tmp_dir)
     images = glob(f'{tmp_dir}*{tile}*')
-    epsg = project_geom.crs.to_epsg()
-    bounds = list(tiles_dest.loc[tiles_dest['Name'] == tile]['geometry'].iloc[0].bounds)
-    for i, x in enumerate(bounds):
-        bounds[i] = int(round(x))  # Only appropriate because I know its sentinel 2 imagery.
     
-    build_mosaic(images, bounds, epsg, resolution=60, level='2A', verbose=True, percentile=15.0, processes=8, improve_mask=False, colour_balance=False, output_name=f'{tile}', step=2000,  output_dir=dst_dir, temp_dir=tmp_dir)
+    mosaic_tile(images, dst_dir, tile)
     
     delete_files = glob(f"{tmp_dir}*.*")
     for f in delete_files:

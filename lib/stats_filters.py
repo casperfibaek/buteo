@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.signal
-from lib.stats_local import kernel_filter, fast_sum
+from lib.stats_local import kernel_filter, fast_sum, mode_array
 from lib.stats_local_no_kernel import truncate_array, threshold_array, cdef_from_z, select_highest
 from lib.stats_kernel import create_kernel
 
@@ -787,3 +787,22 @@ def truncate_filter(in_raster, min_value=False, max_value=False, dim3=False):
 
 def highest_filter(in_rasters, weights):
     return select_highest(in_rasters, weights).astype('uint8')
+
+
+def mode_filter(in_raster, width=5, iterations=1, circular=True):
+    kernel = create_kernel(
+            width,
+            circular=circular,
+            holed=False,
+            normalise=False,
+            weighted_edges=False,
+            weighted_distance=False,
+    )
+
+    if iterations == 1:
+        return mode_array(in_raster, kernel)
+    else:
+        result = mode_array(in_raster, kernel)
+        for x in range(iterations - 1):
+            result = mode_array(result, kernel)
+        return result
