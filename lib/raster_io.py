@@ -75,6 +75,8 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
 
     if out_raster is None:
         out_raster = 'ignored'   # This is necessary as GDAL expects a string no matter what.
+    else:
+        assert os.path.isdir(os.path.dirname(out_raster)), f'Output folder does not exists: {out_raster}'
 
     if reference_raster is None and (
         top_left is None or
@@ -282,7 +284,7 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
 
 def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_touch=False, cutlineWhere=None,
                     crop_to_cutline=True, compressed=False, band_to_clip=1, src_nodata=None, crop=False,
-                    filled=False, fill_value=None, quiet=False, calc_band_stats=True, align=True):
+                    filled=False, fill_value=None, quiet=False, calc_band_stats=False, align=True):
     ''' Turns a raster into an Numpy Array in memory. Only
         supports for one band to be turned in to an array.
 

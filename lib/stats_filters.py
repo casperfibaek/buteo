@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.signal
-from lib.stats_local import kernel_filter, fast_sum, mode_array
+from lib.stats_local import kernel_filter, fast_sum, mode_array, feather_s2_array
 from lib.stats_local_no_kernel import truncate_array, threshold_array, cdef_from_z, select_highest
 from lib.stats_kernel import create_kernel
 
@@ -806,3 +806,15 @@ def mode_filter(in_raster, width=5, iterations=1, circular=True):
         for x in range(iterations - 1):
             result = mode_array(result, kernel)
         return result
+
+
+def feather_s2_filter(tracking_image, in_raster, value_to_count, width=21, circular=True):
+    kernel = create_kernel(
+        width,
+        circular=circular,
+        holed=False,
+        normalise=False,
+        weighted_edges=False,
+        weighted_distance=False,
+    )
+    return np.rint(feather_s2_array(tracking_image, in_raster, value_to_count, kernel)).astype('uint16')

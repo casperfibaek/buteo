@@ -636,3 +636,79 @@ def mode_array(arr, kernel):
     loop_mode(arr_view, kernel_view, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero)
 
     return result
+
+
+cdef double feather_calc(
+    int * neighbourhood,
+    int value_to_count,
+    int non_zero,
+    int arr_value,
+) nogil :
+    cdef int count = 0
+
+    for i in range(non_zero):
+        if neighbourhood[i] == value_to_count:
+            count += 1
+    
+    cdef double value = (<double>count / <double>non_zero) * <double>arr_value
+    return value
+
+
+cdef void loop_feather(
+    int [:, ::1] tracker,
+    int [:, ::1] arr,
+    double [:, ::1] kernel,
+    double [:, ::1] result,
+    int x_max,
+    int y_max,
+    int kernel_width,
+    int non_zero,
+    int value_to_count,
+) nogil:
+    cdef int x, y, n, offset_x, offset_y
+    cdef int * neighbourhood
+    cdef int x_max_adj = x_max - 1
+    cdef int y_max_adj = y_max - 1
+    cdef int neighbourhood_size = sizeof(int) * non_zero
+
+    cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
+
+    for x in prange(x_max):
+        for y in range(y_max):
+
+            neighbourhood = <int *> malloc(neighbourhood_size)
+
+            for n in range(non_zero):
+                offset_x = x + offsets[n].x
+                offset_y = y + offsets[n].y
+
+                if offset_x < 0:
+                    offset_x = 0
+                elif offset_x > x_max_adj:
+                    offset_x = x_max_adj
+                if offset_y < 0:
+                    offset_y = 0
+                elif offset_y > y_max_adj:
+                    offset_y = y_max_adj
+
+                neighbourhood[n] = tracker[offset_x][offset_y]
+
+            result[x][y] = feather_calc(neighbourhood, value_to_count, non_zero, arr[x][y])
+
+            free(neighbourhood)
+
+
+
+def feather_s2_array(tracker, arr, value_to_count, kernel):
+    cdef int non_zero = np.count_nonzero(kernel)
+    cdef int val_to_count = value_to_count
+    cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
+
+    result = np.zeros(arr.shape, dtype=np.double)
+    cdef double [:, ::1] result_view = result
+    cdef int [:, ::1] arr_view = arr.astype(np.intc) if arr.dtype != np.intc else arr
+    cdef int [:, ::1] tracker_view = tracker.astype(np.intc) if tracker.dtype != np.intc else tracker
+
+    loop_feather(tracker_view, arr_view, kernel_view, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, val_to_count)
+
+    return result

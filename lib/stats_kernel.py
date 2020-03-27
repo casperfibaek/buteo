@@ -72,3 +72,7 @@ def create_kernel(width, circular=True, weighted_edges=True, holed=False, offset
 
     return kernel
 
+if __name__ == "__main__":
+    kernel = create_kernel(5, weighted_edges=False, weighted_distance=False, normalise=False)
+    
+    import pdb; pdb.set_trace()

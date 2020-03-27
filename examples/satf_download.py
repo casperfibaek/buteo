@@ -28,9 +28,14 @@ for index_g, geom in project_geom_wgs.iterrows():
 
 # data.reverse()
 
+# extra_tiles = ['30NVL', '30NWL', '30NYN', '30NVM', '31PBM', '30NWN']
+
 # for tile in data:
-#     sdf = search(tile, level='2A', start='20200101', maxcloud=50, minsize=50.0)
-#     download(sdf, '/mnt/d/data/')
+#     if tile in extra_tiles:
+#         sdf = search(tile, level='2A', start='20191201', maxcloud=50, minsize=50.0)
+#         download(sdf, '/mnt/d/data/')
+
+# TODO: Mean match using SLC pre-orfeo.
 
 tmp_dir = '/mnt/c/Users/caspe/Desktop/tmp/'
 dst_dir = '/mnt/d/mosaic/'
@@ -40,16 +45,19 @@ for index, tile in enumerate(data):
     if len(glob(f"{dst_dir}*tile*")) != 0:
         continue
 
-    images = glob(f'/mnt/d/data/*{tile}*')
+    if tile != '30NYN':
+        continue
+
+    images = glob(f'/mnt/d/data/*{tile}*.zip')
     decompress(images, tmp_dir)
-    images = glob(f'{tmp_dir}*{tile}*')
-    images.reverse()
+    # images = glob(f'{tmp_dir}*{tile}*')
+    # images.reverse()
     
-    mosaic_tile(images, dst_dir, tile)
+    # mosaic_tile(images, dst_dir, tile)
     
-    delete_files = glob(f"{tmp_dir}*.*")
-    for f in delete_files:
-        try:
-            shutil.rmtree(f)
-        except:
-            pass
+    # delete_files = glob(f"{tmp_dir}*.*")
+    # for f in delete_files:
+    #     try:
+    #         shutil.rmtree(f)
+    #     except:
+    #         pass
