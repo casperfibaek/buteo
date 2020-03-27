@@ -642,7 +642,6 @@ cdef double feather_calc(
     int * neighbourhood,
     int value_to_count,
     int non_zero,
-    int arr_value,
 ) nogil :
     cdef int count = 0
 
@@ -650,13 +649,12 @@ cdef double feather_calc(
         if neighbourhood[i] == value_to_count:
             count += 1
     
-    cdef double value = (<double>count / <double>non_zero) * <double>arr_value
+    cdef double value = <double>count / <double>non_zero
     return value
 
 
 cdef void loop_feather(
     int [:, ::1] tracker,
-    int [:, ::1] arr,
     double [:, ::1] kernel,
     double [:, ::1] result,
     int x_max,
@@ -693,22 +691,21 @@ cdef void loop_feather(
 
                 neighbourhood[n] = tracker[offset_x][offset_y]
 
-            result[x][y] = feather_calc(neighbourhood, value_to_count, non_zero, arr[x][y])
+            result[x][y] = feather_calc(neighbourhood, value_to_count, non_zero)
 
             free(neighbourhood)
 
 
 
-def feather_s2_array(tracker, arr, value_to_count, kernel):
+def feather_s2_array(tracker, value_to_count, kernel):
     cdef int non_zero = np.count_nonzero(kernel)
     cdef int val_to_count = value_to_count
     cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
 
-    result = np.zeros(arr.shape, dtype=np.double)
+    result = np.zeros(tracker.shape, dtype=np.double)
     cdef double [:, ::1] result_view = result
-    cdef int [:, ::1] arr_view = arr.astype(np.intc) if arr.dtype != np.intc else arr
     cdef int [:, ::1] tracker_view = tracker.astype(np.intc) if tracker.dtype != np.intc else tracker
 
-    loop_feather(tracker_view, arr_view, kernel_view, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero, val_to_count)
+    loop_feather(tracker_view, kernel_view, result_view, tracker.shape[0], tracker.shape[1], kernel.shape[0], non_zero, val_to_count)
 
     return result

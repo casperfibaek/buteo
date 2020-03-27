@@ -323,7 +323,7 @@ def prepare_metadata(list_of_SAFE_images):
 # TODO: feathering
 # TODO: add proj4 string support.
 
-def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', feather=True, cutoff_percentage=2, cloud_cutoff=2, border_cut=61, invalid_expand=41, match_mean=True, match_quintile=0.25):
+def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', feather=True, cutoff_percentage=2, cloud_cutoff=2, border_cut=61, invalid_expand=41, feather_dist=41, match_mean=True, match_quintile=0.25):
 
     # Verify input
     assert isinstance(list_of_SAFE_images, list), "Input is not a list. [path_to_safe_file1, path_to_safe_file2, ...]"
@@ -375,7 +375,7 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', feather=True, c
 
     tracking_array = np.zeros(mask.shape, dtype='uint8')
       
-    coverage = best_image['ALL_INVALID_PERCENTAGE']
+    coverage = (mask.sum() / mask.size) * 100
     current_image_index = 1  # The 0 index is for the best image
     
     print(f'Initial. the tracking array: {round(coverage, 3)} towards goal: {cutoff_percentage}')
@@ -431,10 +431,10 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', feather=True, c
         vegetation_quantile = np.quantile(vegetation_means, match_quintile)
         non_vegetation_quantile = np.quantile(non_vegetation_means, match_quintile)
 
-        for index, image in enumerate(metadata):
+        for index_j, image in enumerate(metadata):
 
             # Stop when no more processed images
-            if index > (current_image_index - 1):
+            if index_j > (current_image_index - 1):
                 break
             
             image['stats']['scaling'] = ((vegetation_quantile / (image['stats']['vegetation']) + (non_vegetation_quantile /  image['stats']['non_vegetation'])) / 2)
@@ -447,9 +447,13 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', feather=True, c
     array_to_raster(tracking_array, reference_raster=best_image['path']['10m']['B08'], out_raster=f"{out_dir}/tracking_{out_name}.tif")
 
 
-    print('Merging band data.')
-    # for band in ['B02', 'B03', 'B04', 'B08']:
-    for band in ['B02']:
+    base_image = False
+    base_feather = False
+
+    # If first band, calculate proportion (feather) layer.
+
+    print('Merging band data.')   
+    for index_i, band in enumerate(['B02', 'B03', 'B04', 'B08']):
         if match_mean:
             base_image = raster_to_array(best_image['path']['10m'][band]) * best_image['stats']['scaling']
         else:
@@ -457,19 +461,19 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', feather=True, c
         
         if feather is True:
             print('Feather the base image.')
-            base_image = feather_s2_filter(tracking_array, base_image, 0)
+            base_image = feather_s2_filter(tracking_array, base_image, 0, feather_dist)
         
-        for index, image in enumerate(metadata):
+        for index_j, image in enumerate(metadata):
 
             # Stop when no more processed images
-            if index > (current_image_index - 1):
+            if index_j > (current_image_index - 1):
                 break
             
             # Skip the base image
-            if index == 0:
+            if index_j == 0:
                 continue
             
-            if (tracking_array == index).sum() == 0:
+            if (tracking_array == index_j).sum() == 0:
                 continue
             
             if match_mean:
@@ -478,11 +482,11 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', feather=True, c
                 add_band = raster_to_array(image['path']['10m'][band])
             
             if feather is True:
-                print(f'Feathering image {index}')
-                add_band = feather_s2_filter(tracking_array, add_band, index)
+                print(f'Feathering image {index_j}')
+                add_band = feather_s2_filter(tracking_array, add_band, index_j, feather_dist)
                 base_image = np.add(base_image, add_band)
             else:
-                base_image = np.where(tracking_array == np.full(tracking_array.shape, index), add_band, base_image)        
+                base_image = np.where(tracking_array == np.full(tracking_array.shape, index_j), add_band, base_image)        
             
         array_to_raster(base_image, reference_raster=best_image['path']['10m'][band], out_raster=f"{out_dir}/{band}_{out_name}.tif")
 
@@ -492,5 +496,5 @@ if __name__ == "__main__":
     out_dir = "/mnt/c/Users/caspe/Desktop/tmp/mosaic"
     images = glob(folder + "*.*")
     
-    mosaic_tile(images, out_dir, "mosaic", cutoff_percentage=2, cloud_cutoff=3, match_mean=True, feather=True, match_quintile=0.25)
+    mosaic_tile(images, out_dir, "mosaic", cutoff_percentage=1, cloud_cutoff=0, match_mean=True, feather=True)
 

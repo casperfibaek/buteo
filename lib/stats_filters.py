@@ -808,7 +808,7 @@ def mode_filter(in_raster, width=5, iterations=1, circular=True):
         return result
 
 
-def feather_s2_filter(tracking_image, in_raster, value_to_count, width=21, circular=True):
+def feather_s2_filter(tracking_image, value_to_count, width=21, circular=True):
     kernel = create_kernel(
         width,
         circular=circular,
@@ -817,4 +817,4 @@ def feather_s2_filter(tracking_image, in_raster, value_to_count, width=21, circu
         weighted_edges=False,
         weighted_distance=False,
     )
-    return np.rint(feather_s2_array(tracking_image, in_raster, value_to_count, kernel)).astype('uint16')
+    return feather_s2_array(tracking_image, value_to_count, kernel)
