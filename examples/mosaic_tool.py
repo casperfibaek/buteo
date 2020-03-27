@@ -315,9 +315,7 @@ def prepare_metadata(list_of_SAFE_images):
     return metadata
 
 
-# TODO: add proj4 string support.
-
-def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', feather=True, cutoff_percentage=2, cloud_cutoff=2, border_cut=61, invalid_contract=5, invalid_expand=41, feather_dist=41, match_mean=True, match_quintile=0.25):
+def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', projection=None, feather=True, cutoff_percentage=1, cloud_cutoff=2, border_cut=51, invalid_contract=3, invalid_expand=51, feather_dist=51, match_mean=True, match_quintile=0.25):
 
     # Verify input
     assert isinstance(list_of_SAFE_images, list), "Input is not a list. [path_to_safe_file1, path_to_safe_file2, ...]"
@@ -466,7 +464,9 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', feather=True, c
     # Run a mode filter on the tracking array
     tracking_array = mode_filter(tracking_array, 9)
     tracking_array = mode_filter(tracking_array, 5, 2)
-    array_to_raster(tracking_array, reference_raster=best_image['path']['10m']['B08'], out_raster=f"{out_dir}/tracking_{out_name}.tif")
+    
+    # Save the slc file.
+    array_to_raster(projection, reference_raster=best_image['path']['10m']['B08'], out_raster=f"{out_dir}/slc_{out_name}.tif", projection=projection)
 
     # Prepare and save feathers (takes alot of ram... revise?)
     if feather:
@@ -498,7 +498,7 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', feather=True, c
                 else:
                     base_image = np.where(tracking_array == np.full(tracking_array.shape, i).astype('uint8'), add_band, base_image).astype('float32')
             
-        array_to_raster(base_image.astype('uint16'), reference_raster=best_image['path']['10m'][band], out_raster=f"{out_dir}/{band}_{out_name}.tif")
+        array_to_raster(base_image.astype('uint16'), reference_raster=best_image['path']['10m'][band], out_raster=f"{out_dir}/{band}_{out_name}.tif", projection=projection)
 
 
 if __name__ == "__main__":
@@ -510,8 +510,9 @@ if __name__ == "__main__":
         images,
         out_dir,
         "mosaic",
+        projection=None,
         feather=True,
-        cutoff_percentage=2,
+        cutoff_percentage=1,
         cloud_cutoff=2,
         border_cut=51,
         invalid_contract=3,

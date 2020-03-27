@@ -24,6 +24,7 @@ for index_g, geom in project_geom_wgs.iterrows():
             data.append(tile['Name'])
             data_bounds.append(list(tile['geometry'].bounds))
 
+# import pdb; pdb.set_trace()
 # connectToAPI('test', 'test')
 
 # data.reverse()
@@ -45,19 +46,16 @@ for index, tile in enumerate(data):
     if len(glob(f"{dst_dir}*tile*")) != 0:
         continue
 
-    if tile != '30NYN':
-        continue
-
     images = glob(f'/mnt/d/data/*{tile}*.zip')
     decompress(images, tmp_dir)
-    # images = glob(f'{tmp_dir}*{tile}*')
-    # images.reverse()
+    images = glob(f'{tmp_dir}*{tile}*')
+    images.reverse()
     
-    # mosaic_tile(images, dst_dir, tile)
+    mosaic_tile(images, dst_dir, tile, project_geom.crs.to_proj4())
     
-    # delete_files = glob(f"{tmp_dir}*.*")
-    # for f in delete_files:
-    #     try:
-    #         shutil.rmtree(f)
-    #     except:
-    #         pass
+    delete_files = glob(f"{tmp_dir}*.*")
+    for f in delete_files:
+        try:
+            shutil.rmtree(f)
+        except:
+            pass

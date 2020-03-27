@@ -136,10 +136,12 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
             reference['x_top_left'], reference['pixel_width'], 0,
             reference['y_top_left'], 0, -reference['pixel_height'],
         ]
+
+    if projection is not None:
         reference['projection'] = osr.SpatialReference()
         reference['projection'].ImportFromProj4(projection)
         reference['projection'].ExportToWkt()
-        reference['projection'] = str(reference['projection'])
+        reference['projection'] = str(reference['projection'])        
 
     if dst_nodata is not False:
         input_nodata = dst_nodata
