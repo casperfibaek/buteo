@@ -315,7 +315,7 @@ def prepare_metadata(list_of_SAFE_images):
     return metadata
 
 
-def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', projection=None, feather=True, cutoff_percentage=1, cloud_cutoff=2, border_cut=51, invalid_contract=3, invalid_expand=51, feather_dist=51, match_mean=True, match_quintile=0.25, max_images=10):
+def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', projection=None, feather=True, cutoff_percentage=2, cloud_cutoff=2, border_cut=51, invalid_contract=3, invalid_expand=51, feather_dist=51, match_mean=True, match_quintile=0.25, max_images=10, max_search_images=15):
 
     # Verify input
     assert isinstance(list_of_SAFE_images, list), "Input is not a list. [path_to_safe_file1, path_to_safe_file2, ...]"
@@ -388,7 +388,7 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', projection=None
     
     print(f'Initial. tracking array: {round(coverage, 3)} towards goal: {cutoff_percentage}')
     # Loop the images and update the tracking array
-    while coverage > cutoff_percentage and current_image_index < len(metadata) - 1 and len(processed_images_indices) <= max_images:
+    while coverage > cutoff_percentage and current_image_index < len(metadata) - 1 and len(processed_images_indices) <= max_images and current_image_index <= max_search_images:
         current_metadata = metadata[current_image_index]
         ex_slc = raster_to_array(resample(current_metadata['path']['20m']['SCL'], reference_raster=current_metadata['path']['10m']['B04'])).astype('uint8')
         ex_nodata = cv2.dilate(np.where(ex_slc == 0, 1, 0).astype('uint8'), border_kernel, iterations=1).astype('bool')
@@ -510,15 +510,5 @@ if __name__ == "__main__":
         images,
         out_dir,
         "mosaic",
-        projection=None,
-        feather=True,
-        cutoff_percentage=1,
-        cloud_cutoff=2,
-        border_cut=51,
-        invalid_contract=3,
-        invalid_expand=51,
-        feather_dist=51,
-        match_mean=True,
-        match_quintile=0.25,
     )
 

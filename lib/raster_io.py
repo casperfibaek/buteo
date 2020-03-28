@@ -85,12 +85,12 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
     ):
         raise AttributeError("If no reference_raster is provided. top_left, pixel_size and projection are all required.")
 
-    if reference_raster is not None and (
-        top_left is not None or
-        pixel_size is not None or
-        projection is not None
-    ):
-        print('WARNING: Only the values from the reference_raster will be used.')
+    # if reference_raster is not None and (
+    #     top_left is not None or
+    #     pixel_size is not None or
+    #     projection is not None
+    # ):
+    #     print('WARNING: Only the values from the reference_raster will be used.')
 
     # The data that will be written to the raster
     # If the data is not a numpy array, make it.
