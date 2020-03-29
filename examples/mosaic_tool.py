@@ -216,7 +216,6 @@ def get_metadata(safe_folder):
     metadata["INVALID_PERCENTAGE"] = (
         metadata["SATURATED_DEFECTIVE_PIXEL_PERCENTAGE"]
         + metadata["CLOUD_SHADOW_PERCENTAGE"]
-        + metadata["UNCLASSIFIED_PERCENTAGE"]
         + metadata["MEDIUM_PROBA_CLOUDS_PERCENTAGE"]
         + metadata["HIGH_PROBA_CLOUDS_PERCENTAGE"]
         + metadata["THIN_CIRRUS_PERCENTAGE"]
@@ -315,7 +314,16 @@ def prepare_metadata(list_of_SAFE_images):
     return metadata
 
 
-def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', projection=None, feather=True, cutoff_percentage=2, cloud_cutoff=2, border_cut=51, invalid_contract=3, invalid_expand=51, feather_dist=51, match_mean=True, match_quintile=0.25, max_images=10, max_search_images=15):
+# TODO: Choosing the best first image:
+#       Weight: Cloud cover, recentness, valid pixels contrast?
+# TODO: how to handle first image having poor contrast?
+# TODO: handle really poor images with no good pixels on best images
+# TODO: add processing of water and unclassified pixels. Weight them: 1 non-vegetation, 1 vegetation, 0.5 unclassified, 0.3 water, dark_feature_shadow 0.1
+# TODO: handle all bands
+# TODO: add pansharpen
+# TODO: ai resample of SWIR
+
+def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', dst_projection=None, feather=True, cutoff_percentage=2, cloud_cutoff=2, border_cut=51, invalid_contract=5, invalid_expand=51, feather_dist=41, match_mean=True, match_quintile=0.25, max_images=10, max_search_images=15):
 
     # Verify input
     assert isinstance(list_of_SAFE_images, list), "Input is not a list. [path_to_safe_file1, path_to_safe_file2, ...]"
@@ -412,15 +420,13 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', projection=None
                     base_ref = raster_to_array(metadata[0]['path']['10m'][band])
                 
                     ex_ref = raster_to_array(metadata[current_image_index]['path']['10m'][band])
-
-                    metadata[current_image_index]['stats'][band]['vegetation'] = np.ma.array(ex_ref, mask=ex_vegetation_mask).mean()
-                    metadata[current_image_index]['stats'][band]['non_vegetation'] = np.ma.array(ex_ref, mask=ex_non_vegetation_mask).mean()
                     
-                    # Set them to the last valid scale, if for some reason the means are invalid even with the 0.5% filter.
-                    if metadata[current_image_index]['stats'][band]['vegetation'] == 0 or metadata[current_image_index]['stats'][band]['non_vegetation'] == 0:
-                        print('Warning: mean was zero for changes array.. This should really not happen.')
+                    if (ex_vegetation_mask.size - ex_vegetation_mask.sum() == 0) or (ex_non_vegetation_mask.size - ex_non_vegetation_mask.sum() == 0):
                         metadata[current_image_index]['stats'][band]['vegetation'] = metadata[processed_images_indices[len(processed_images_indices) - 1]]['stats'][band]['vegetation']
                         metadata[current_image_index]['stats'][band]['non_vegetation'] = metadata[processed_images_indices[len(processed_images_indices) - 1]]['stats'][band]['non_vegetation']
+                    else:
+                        metadata[current_image_index]['stats'][band]['vegetation'] = np.ma.array(ex_ref, mask=ex_vegetation_mask).mean()
+                        metadata[current_image_index]['stats'][band]['non_vegetation'] = np.ma.array(ex_ref, mask=ex_non_vegetation_mask).mean()
                     
                     vegetation_means[band].append(metadata[current_image_index]['stats'][band]['vegetation'])
                     non_vegetation_means[band].append(metadata[current_image_index]['stats'][band]['non_vegetation'])
@@ -450,30 +456,31 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', projection=None
 
         current_image_index += 1      
 
-    # Calculate the scaling factors
-    if match_mean:
-        for band in ['B02', 'B03', 'B04', 'B08']:
-            vegetation_quantile = np.quantile(vegetation_means[band], match_quintile)
-            non_vegetation_quantile = np.quantile(non_vegetation_means[band], match_quintile)
+    # Only merge images if there are more than one.
+    if len(processed_images_indices) > 1:
+        # Calculate the scaling factors
+        if match_mean:
+            for band in ['B02', 'B03', 'B04', 'B08']:
+                vegetation_quantile = np.quantile(vegetation_means[band], match_quintile)
+                non_vegetation_quantile = np.quantile(non_vegetation_means[band], match_quintile)
 
+                for i in processed_images_indices:
+                    metadata[i]['stats'][band]['scaling'] = ((vegetation_quantile / (metadata[i]['stats'][band]['vegetation']) + (non_vegetation_quantile /  metadata[i]['stats'][band]['non_vegetation'])) / 2)
+
+        print('Filtering tracking array.')
+        # Run a mode filter on the tracking array
+        tracking_array = mode_filter(tracking_array, 9)
+        tracking_array = mode_filter(tracking_array, 5, 2)
+        
+        # Prepare and save feathers (takes alot of ram... revise?)
+        if feather:
+            print('Precalculating feathers..')
+            feathers = {}
             for i in processed_images_indices:
-                metadata[i]['stats'][band]['scaling'] = ((vegetation_quantile / (metadata[i]['stats'][band]['vegetation']) + (non_vegetation_quantile /  metadata[i]['stats'][band]['non_vegetation'])) / 2)
+                feathers[f"{i}"] = feather_s2_filter(tracking_array, i, feather_dist).astype('float32')
 
-
-    print('Filtering tracking array.')
-    # Run a mode filter on the tracking array
-    tracking_array = mode_filter(tracking_array, 9)
-    tracking_array = mode_filter(tracking_array, 5, 2)
-    
     # Save the slc file.
-    array_to_raster(slc, reference_raster=best_image['path']['10m']['B08'], out_raster=f"{out_dir}/slc_{out_name}.tif", projection=projection)
-
-    # Prepare and save feathers (takes alot of ram... revise?)
-    if feather:
-        print('Precalculating feathers..')
-        feathers = {}
-        for i in processed_images_indices:
-            feathers[f"{i}"] = feather_s2_filter(tracking_array, i, feather_dist).astype('float32')
+    array_to_raster(slc.astype('uint8'), reference_raster=best_image['path']['10m']['B08'], out_raster=os.path.join(out_dir, f"slc_{out_name}.tif"), dst_projection=dst_projection)
 
     print('Merging band data.')
     for band in ['B02', 'B03', 'B04', 'B08']:
@@ -498,12 +505,12 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', projection=None
                 else:
                     base_image = np.where(tracking_array == np.full(tracking_array.shape, i).astype('uint8'), add_band, base_image).astype('float32')
             
-        array_to_raster(base_image.astype('uint16'), reference_raster=best_image['path']['10m'][band], out_raster=f"{out_dir}/{band}_{out_name}.tif", projection=projection)
+        array_to_raster(base_image.astype('uint16'), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
 
 
 if __name__ == "__main__":
     folder = "/mnt/c/Users/caspe/Desktop/tmp/"
-    out_dir = "/mnt/c/Users/caspe/Desktop/tmp/mosaic"
+    out_dir = "/mnt/c/Users/caspe/Desktop/tmp/mosaic/"
     images = glob(folder + "*.*")
     
     mosaic_tile(
