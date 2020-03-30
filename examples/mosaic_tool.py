@@ -361,11 +361,11 @@ def prepare_metadata(list_of_SAFE_images):
             best_image = meta
 
     for meta in metadata:
-        if (meta['ALL_INVALID_PERCENTAGE'] - lowest_invalid_percentage) < 5:
+        if (meta['ALL_INVALID_PERCENTAGE'] - lowest_invalid_percentage) < 3:
             best_images.append(meta)
     
     if len(best_images) != 1:
-        # Search the top 5% images for for the most recent
+        # Search the top 3% images for for the most recent
         lowest_mean_b1 = 65535
         for image in best_images:
             nodata_mask = raster_to_array(image['path']['60m']['SCL']) == 0
@@ -385,7 +385,7 @@ def prepare_metadata(list_of_SAFE_images):
 
 
 # BUG: SLC Output not updated properly
-# TODO: Add processing of water and unclassified pixels. Match per class. Undefined = average scale. By area
+# BUG: match_individual_scaling not working
 
 # TODO: how to handle first image having poor contrast?
 # TODO: handle all bands
@@ -629,7 +629,7 @@ def mosaic_tile(
     # Only merge images if there are more than one.
     if len(processed_images_indices) > 1:
 
-        if match_mean:
+        if match_mean is True:
             # Calculate the scaling factors
             sums = {
                 "vegetation": 0,
@@ -719,23 +719,19 @@ def mosaic_tile(
                     'water': sums['water'] / total_pixels,
                     'unclassified': sums['unclassified'] / total_pixels,
                     'dark': sums['dark'] / total_pixels,
-                    'other': sums['other'] / total_pixels,
                 }
 
                 for i in processed_images_indices:
                     for band in ['B02', 'B03', 'B04', 'B08']:
                         simple_scale = (
-                            (simple_weights['vegetation'] * (quintiles[band]['vegetation'] / metadata[i]['stats'][band]['vegetation']))
-                          + (simple_weights['non_vegetation'] * (quintiles[band]['non_vegetation'] / metadata[i]['stats'][band]['non_vegetation']))
-                          + (simple_weights['water'] * (quintiles[band]['water'] / metadata[i]['stats'][band]['water']))
-                          + (simple_weights['unclassified'] * (quintiles[band]['unclassified'] / metadata[i]['stats'][band]['unclassified']))
-                          + (simple_weights['dark'] * (quintiles[band]['dark'] / metadata[i]['stats'][band]['dark']))
-                        #   + (simple_weights['other'] * (quintiles[band]['other'] / metadata[i]['stats'][band]['other']))
+                            (simple_weights['vegetation'] * metadata[i]['stats'][band]['vegetation_scale'])
+                          + (simple_weights['non_vegetation'] * metadata[i]['stats'][band]['non_vegetation_scale'])
+                          + (simple_weights['water'] *  metadata[i]['stats'][band]['water_scale'])
+                          + (simple_weights['unclassified'] * metadata[i]['stats'][band]['unclassified_scale'])
+                          + (simple_weights['dark'] * metadata[i]['stats'][band]['dark_scale'])
                         )
 
                         metadata[i]['stats'][band]['scale'] = simple_scale
-                        
-                        import pdb; pdb.set_trace()
 
         print('Filtering tracking array.')
         # Run a mode filter on the tracking array
@@ -751,31 +747,58 @@ def mosaic_tile(
     # Save the slc file.
     array_to_raster(slc.astype('uint8'), reference_raster=best_image['path']['10m']['B08'], out_raster=os.path.join(out_dir, f"slc_{out_name}.tif"), dst_projection=dst_projection)
 
+    # TODO: add individual scaling
+    # TODO: BUG BUG BUG Fix SCL & FIX individual scaling
+    # TODO: Fix scaling
     print('Merging band data.')
-    for band in ['B02', 'B03', 'B04', 'B08']:
-        base_image = raster_to_array(best_image['path']['10m'][band]).astype('float32')
+    if match_individual_scaling is True:
+        for band in ['B02', 'B03', 'B04', 'B08']:
+            print(f'Writing: {band}..')
+            if len(processed_images_indices) > 1:
 
-        for i in processed_images_indices:
-            if i == 0:
-                if match_mean and len(processed_images_indices) > 1:
-                    base_image = base_image * best_image['stats'][band]['scaling']
+                base_image = np.zeros(slc.shape, dtype='float32')
+                base_image = np.ma.array(base_image, mask=(slc == 0))
 
-                if feather is True and len(processed_images_indices) > 1:
-                    base_image = base_image * feathers[f"{i}"]
+                for i in processed_images_indices:
+                    add_band = raster_to_array(metadata[i]['path']['10m'][band]).astype('float32')
+                    base_image += np.where((tracking_array == i) & (slc == 4), add_band * metadata[i]['stats'][band]['vegetation_scale'], 0)
+                    base_image += np.where((tracking_array == i) & (slc == 5), add_band * metadata[i]['stats'][band]['non_vegetation_scale'], 0)
+                    base_image += np.where((tracking_array == i) & (slc == 6), add_band * metadata[i]['stats'][band]['water_scale'], 0)
+                    base_image += np.where((tracking_array == i) & (slc == 7), add_band * metadata[i]['stats'][band]['unclassified_scale'], 0)
+                    base_image += np.where((tracking_array == i) & ((slc != 2) & (slc != 3)), add_band * metadata[i]['stats'][band]['dark_scale'], 0)
+                    base_image += np.where((tracking_array == i) & ((slc != 1) & (slc != 8) & (slc != 9) & (slc != 10) & (slc != 11)), add_band * metadata[i]['stats'][band]['other_scale'], 0)
 
-            else:
-                add_band = raster_to_array(metadata[i]['path']['10m'][band]).astype('float32')
+                    if feather is True:
+                        base_image *= feathers[f"{i}"]
                 
-                if match_mean:
-                    add_band = add_band * metadata[i]['stats'][band]['scaling']
-            
-                if feather is True:
-                    base_image = np.add(base_image, (add_band * feathers[f"{i}"]))
+                array_to_raster(base_image.astype('uint16'), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
+            else:
+                array_to_raster(raster_to_array(metadata[i]['path']['10m'][band]), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
+    else:
+        for band in ['B02', 'B03', 'B04', 'B08']:
+            print(f'Writing: {band}..')
+            base_image = raster_to_array(best_image['path']['10m'][band]).astype('float32')
+
+            for i in processed_images_indices:
+                if i == 0:
+                    if match_mean and len(processed_images_indices) > 1:
+                        base_image = base_image * best_image['stats'][band]['scale']
+
+                    if feather is True and len(processed_images_indices) > 1:
+                        base_image = base_image * feathers[f"{i}"]
+
                 else:
-                    base_image = np.where(tracking_array == np.full(tracking_array.shape, i).astype('uint8'), add_band, base_image).astype('float32')
-        
-        print(f'Writing: {band}..')
-        array_to_raster(base_image.astype('uint16'), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
+                    add_band = raster_to_array(metadata[i]['path']['10m'][band]).astype('float32')
+                    
+                    if match_mean:
+                        add_band = add_band * metadata[i]['stats'][band]['scale']
+                
+                    if feather is True:
+                        base_image = np.add(base_image, (add_band * feathers[f"{i}"]))
+                    else:
+                        base_image = np.where(tracking_array == i, add_band, base_image).astype('float32')
+            
+            array_to_raster(base_image.astype('uint16'), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
 
 
 if __name__ == "__main__":

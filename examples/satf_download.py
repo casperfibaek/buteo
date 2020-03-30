@@ -38,7 +38,7 @@ for index_g, geom in project_geom_wgs.iterrows():
 
 
 tmp_dir = '/mnt/c/Users/caspe/Desktop/tmp/'
-dst_dir = '/mnt/c/Users/caspe/Desktop/mosaic/'
+dst_dir = '/mnt/c/Users/caspe/Desktop/test/'
 
 for index, tile in enumerate(data):
 
@@ -47,11 +47,11 @@ for index, tile in enumerate(data):
     
     # if tile in ['31NBG', '31NBH', '31NBJ', '31PBK', '31PBL', '31PBM']:
     if tile in ['31NBG']:
-        images = glob(f'/mnt/d/data/*{tile}*.zip')
-        decompress(images, tmp_dir)
+        # images = glob(f'/mnt/d/data/*{tile}*.zip')
+        # decompress(images, tmp_dir)
         images = glob(f'{tmp_dir}*{tile}*')
         
-        mosaic_tile(images, dst_dir, tile, dst_projection=project_geom.crs.to_wkt(), cutoff_invalid=5)
+        mosaic_tile(images, dst_dir, tile, dst_projection=project_geom.crs.to_wkt(), cutoff_invalid=5, match_individual_scaling=True)
         
         # delete_files = glob(f"{tmp_dir}*.*")
         # for f in delete_files:
