@@ -10,7 +10,7 @@ from lib.raster_clip import clip_raster
 
 
 def array_to_raster(array, out_raster=None, reference_raster=None, output_format='MEM',
-                    top_left=None, pixel_size=None, dst_projection=None, calc_band_stats=False, align=True,
+                    top_left=None, pixel_size=None, dst_projection=None, dst_crop_to_projection=True, calc_band_stats=False, align=True,
                     src_nodata=None, dst_nodata=False, resample=False, resample_alg='near', quiet=False):
     ''' Turns a numpy array into a gdal dataframe or exported
         as a raster. If no reference is specified, the following
@@ -236,13 +236,20 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
             lrx, lry, lrz = coord_transform.TransformPoint(float(o_lrx), float(o_lry))
             llx, lly, llz = coord_transform.TransformPoint(float(o_ulx), float(o_lry))
             
-            dst_col = max(lrx, urx) - min(llx, ulx)
-            dst_row = max(ury, uly) - min(lry, lly)
+            if dst_crop_to_projection:
+                dst_col = min(lrx, urx) - max(llx, ulx)
+                dst_row = min(ury, uly) - max(lry, lly)
+            else:
+                dst_col = max(lrx, urx) - min(llx, ulx)
+                dst_row = max(ury, uly) - min(lry, lly)
 
             cols = int((dst_col / og_col) * og_x_size)
             rows = int((dst_row / og_row) * og_y_size)
          
-            dst_transform = (min(ulx, llx), reference['pixel_width'], 0, max(uly, ury), 0, reference['pixel_height'])
+            if dst_crop_to_projection:
+                dst_transform = (max(ulx, llx), reference['pixel_width'], 0, min(uly, ury), 0, reference['pixel_height'])
+            else:
+                dst_transform = (min(ulx, llx), reference['pixel_width'], 0, max(uly, ury), 0, reference['pixel_height'])
 
             re_dataframe = re_driver.Create(
                 out_raster,

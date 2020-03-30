@@ -85,6 +85,8 @@ def get_band_paths(safe_folder):
         }
     }
     
+    assert os.path.isdir(safe_folder), f"Could not find folder: {safe_folder}"
+    
     bands['QI']['CLDPRB'] = glob(f"{safe_folder}/GRANULE/*/QI_DATA/MSK_CLDPRB_20m.jp2")[0]
     
     bands_10m = glob(f"{safe_folder}/GRANULE/*/IMG_DATA/R10m/*_???_*.jp2")
@@ -155,7 +157,7 @@ def get_band_paths(safe_folder):
     # Did we get all the bands?
     for resolution in bands:
         for name in bands[resolution]:
-            assert bands[resolution][name] != None, f'Could not find band: {resolution, name}'
+            assert bands[resolution][name] != None, f'Could not find band: {safe_folder, resolution, name}'
     
     return bands
 
@@ -258,7 +260,6 @@ def get_metadata(safe_folder):
 def get_time_difference(dict):
     return dict['time_difference']
 
-
 def prepare_metadata(list_of_SAFE_images):
 
     metadata = []
@@ -295,8 +296,9 @@ def prepare_metadata(list_of_SAFE_images):
     lowest_invalid_percentage = 100
     best_image = None
 
+    # Sort and weight. cloud cover 1, recentness 0.25, 0.125 mean of valid pixels
     # Sort by distance to best_image
-    sorted_by_valid = sorted(metadata, key=lambda k: k['ALL_INVALID_PERCENTAGE'])
+    # sorted_by_valid = sorted(metadata, key=lambda k: k['ALL_INVALID_PERCENTAGE'])
     
     # Select the image with the most valid pixels.
     for meta in metadata:
@@ -314,16 +316,36 @@ def prepare_metadata(list_of_SAFE_images):
     return metadata
 
 
+# BUG: SLC Output not updated properly
 # TODO: Choosing the best first image:
-#       Weight: Cloud cover, recentness, valid pixels contrast?
+#       Weight: Cloud cover, recentness
+# TODO: Weight the normalisation by amount of total area.
+# TODO: Add variance matching to normalisation?
+# TODO: Add processing of water and unclassified pixels. Weight them: 1 non-vegetation, 1 vegetation, 0.5 unclassified, 0.3 water, dark_feature_shadow 0.1
+
 # TODO: how to handle first image having poor contrast?
-# TODO: handle really poor images with no good pixels on best images
-# TODO: add processing of water and unclassified pixels. Weight them: 1 non-vegetation, 1 vegetation, 0.5 unclassified, 0.3 water, dark_feature_shadow 0.1
 # TODO: handle all bands
 # TODO: add pansharpen
 # TODO: ai resample of SWIR
 
-def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', dst_projection=None, feather=True, cutoff_percentage=2, cloud_cutoff=2, border_cut=51, invalid_contract=5, invalid_expand=51, feather_dist=41, match_mean=True, match_quintile=0.25, max_images=10, max_search_images=15):
+def mosaic_tile(
+    list_of_SAFE_images,
+    out_dir,
+    out_name='mosaic',
+    dst_projection=None,
+    feather=True,
+    cutoff_percentage=1,
+    cloud_cutoff=2,
+    border_cut=61,
+    invalid_contract=5,
+    invalid_expand=51,
+    feather_dist=21,
+    match_mean=True,
+    match_quintile=0.33,
+    max_images=10,
+    day_time_limit=30,
+    max_search_images=15,
+):
 
     # Verify input
     assert isinstance(list_of_SAFE_images, list), "Input is not a list. [path_to_safe_file1, path_to_safe_file2, ...]"
@@ -335,6 +357,8 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', dst_projection=
     
     # Sorted by best, so 0 is the best one.
     best_image = metadata[0]
+
+    time_limit = (day_time_limit * 86400)
     
     print('Resampling and reading base image.')
     border_kernel = create_kernel(border_cut, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
@@ -396,7 +420,7 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', dst_projection=
     
     print(f'Initial. tracking array: {round(coverage, 3)} towards goal: {cutoff_percentage}')
     # Loop the images and update the tracking array
-    while coverage > cutoff_percentage and current_image_index < len(metadata) - 1 and len(processed_images_indices) <= max_images and current_image_index <= max_search_images:
+    while coverage > cutoff_percentage and current_image_index < len(metadata) - 1 and len(processed_images_indices) <= max_images and current_image_index <= max_search_images and metadata[current_image_index]['time_difference'] < time_limit:
         current_metadata = metadata[current_image_index]
         ex_slc = raster_to_array(resample(current_metadata['path']['20m']['SCL'], reference_raster=current_metadata['path']['10m']['B04'])).astype('uint8')
         ex_nodata = cv2.dilate(np.where(ex_slc == 0, 1, 0).astype('uint8'), border_kernel, iterations=1).astype('bool')
@@ -488,10 +512,10 @@ def mosaic_tile(list_of_SAFE_images, out_dir, out_name='mosaic', dst_projection=
 
         for i in processed_images_indices:
             if i == 0:
-                if match_mean:
+                if match_mean and len(processed_images_indices) > 1:
                     base_image = base_image * best_image['stats'][band]['scaling']
 
-                if feather is True:
+                if feather is True and len(processed_images_indices) > 1:
                     base_image = base_image * feathers[f"{i}"]
 
             else:

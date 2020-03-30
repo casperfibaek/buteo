@@ -574,6 +574,11 @@ cdef int mode(int * a, int n) nogil:
         for j in range(n):
             if a[j] == a[i]:
                 count += 1
+
+            if count > n // 2:
+                max_count = count
+                max_value = a[i]
+                break
         
         if count > max_count:
             max_count = count
@@ -622,7 +627,6 @@ cdef void loop_mode(
             result[x][y] = mode(neighbourhood, non_zero)
 
             free(neighbourhood)
-
 
 
 def mode_array(arr, kernel):
@@ -694,7 +698,6 @@ cdef void loop_feather(
             result[x][y] = feather_calc(neighbourhood, value_to_count, non_zero)
 
             free(neighbourhood)
-
 
 
 def feather_s2_array(tracker, value_to_count, kernel):
