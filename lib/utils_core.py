@@ -384,3 +384,23 @@ def step_function(func, *args, grid=None, outfile=False, outfile_arg='outfile', 
             func(*edited_args, **calls_obj)
         else:
             func(*args, **calls_obj)
+
+
+# https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy
+def weighted_quantile(values, quantile, sample_weight=None):
+    values = np.array(values)
+    if sample_weight is None:
+        sample_weight = np.ones(len(values))
+
+    sample_weight = np.array(sample_weight)
+    assert quantile >= 0 and quantile <= 1, 'quantiles should be in [0, 1]'
+
+    sorter = np.argsort(values)
+    values = values[sorter]
+    sample_weight = sample_weight[sorter]
+
+    weighted_quantiles = np.cumsum(sample_weight) - 0.5 * sample_weight
+
+    weighted_quantiles /= np.sum(sample_weight)
+
+    return np.interp(quantile, weighted_quantiles, values)
