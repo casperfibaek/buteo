@@ -8,21 +8,21 @@ from glob import glob
 from sen2mosaic.download import search, download, connectToAPI, decompress
 from mosaic_tool import mosaic_tile
 
-project_area = '/mnt/c/Users/caspe/Desktop/Analysis/Data/vector/ghana_landarea.shp'
-project_geom = gpd.read_file(project_area)
-project_geom_wgs = project_geom.to_crs('EPSG:4326')
+# project_area = '/mnt/c/Users/caspe/Desktop/Analysis/Data/vector/ghana_landarea.shp'
+# project_geom = gpd.read_file(project_area)
+# project_geom_wgs = project_geom.to_crs('EPSG:4326')
 
-tiles = '../geometry/sentinel2_tiles_world.shp'
-tiles_geom = gpd.read_file(tiles)
-tiles_dest = tiles_geom.to_crs(project_geom.crs)
+# tiles = '../geometry/sentinel2_tiles_world.shp'
+# tiles_geom = gpd.read_file(tiles)
+# tiles_dest = tiles_geom.to_crs(project_geom.crs)
 
-data = []
-data_bounds = []
-for index_g, geom in project_geom_wgs.iterrows():
-    for index_t, tile in tiles_geom.iterrows():
-        if geom['geometry'].intersects(tile['geometry']):
-            data.append(tile['Name'])
-            data_bounds.append(list(tile['geometry'].bounds))
+# data = []
+# data_bounds = []
+# for index_g, geom in project_geom_wgs.iterrows():
+#     for index_t, tile in tiles_geom.iterrows():
+#         if geom['geometry'].intersects(tile['geometry']):
+#             data.append(tile['Name'])
+#             data_bounds.append(list(tile['geometry'].bounds))
 
 # import pdb; pdb.set_trace()
 # connectToAPI('test', 'test')
@@ -40,31 +40,32 @@ for index_g, geom in project_geom_wgs.iterrows():
 tmp_dir = '/mnt/c/Users/caspe/Desktop/tmp/'
 dst_dir = '/mnt/c/Users/caspe/Desktop/test/'
 
-for index, tile in enumerate(data):
+for index, tile in enumerate(['30NYL']):
 
     if len(glob(f"{dst_dir}*tile*")) != 0:
         continue
     
     # if tile in ['31NBG', '31NBH', '31NBJ', '31PBK', '31PBL', '31PBM']:
-    if tile in ['31NBG']:
+    if tile in ['30NYL']:
         # images = glob(f'/mnt/d/data/*{tile}*.zip')
         # decompress(images, tmp_dir)
         images = glob(f'{tmp_dir}*{tile}*')
-        
+
         mosaic_tile(
             images,
             dst_dir,
             tile,
-            dst_projection=project_geom.crs.to_wkt(),
+            # dst_projection=project_geom.crs.to_wkt(),
             feather=True,
-            cutoff_invalid=5,
-            cutoff_cloud=2,
-            invalid_contract=11,
+            cutoff_invalid=2,
+            cutoff_b1_cloud=800,
+            cutoff_b1_ratio=0.80,
+            invalid_contract=5,
             invalid_expand=61,
-            border_dist=61,
-            feather_dist=11,
+            border_dist=161,
+            feather_dist=31,
             filter_tracking=True,
-            filter_tracking_dist=7,
+            filter_tracking_dist=9,
             filter_tracking_iterations=2,
             match_mean=True,
             match_quintile=0.25,

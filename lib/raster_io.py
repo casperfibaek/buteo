@@ -164,14 +164,32 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
 
     destination = {}
 
-    if resample is False and dst_projection is None:
-        destination['name'] = out_raster
-        destination['driver'] = gdal.GetDriverByName(output_format)
-        destination['options'] = options
-    else:
+    destination['name'] = out_raster
+    destination['driver'] = gdal.GetDriverByName(output_format)
+    destination['options'] = options
+    
+    if resample is True:
+    
         destination['name'] = 'ignored'
         destination['driver'] = gdal.GetDriverByName('MEM')
         destination['options'] = []
+    
+    elif dst_projection is not None:
+        og_projection_osr = osr.SpatialReference() 
+        og_projection_osr.ImportFromWkt(reference['projection'])
+        og_projection_wkt = og_projection_osr.ExportToWkt()
+        
+        try:
+            dst_projection_osr = osr.SpatialReference()
+            dst_projection_osr.ImportFromWkt(dst_projection)
+            dst_projection_wkt = dst_projection_osr.ExportToWkt()
+        except:
+            raise Exception(f'Could not parse input projection: {dst_projection}')
+        
+        if og_projection_osr.IsSame(dst_projection_osr) == 0:
+            destination['name'] = 'ignored'
+            destination['driver'] = gdal.GetDriverByName('MEM')
+            destination['options'] = []
 
     destination['dataframe'] = destination['driver'].Create(
         destination['name'],
@@ -202,94 +220,82 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
     destination['bands'][0].WriteArray(data)
 
     if dst_projection is not None:
-        og_projection_osr = osr.SpatialReference() 
-        og_projection_osr.ImportFromWkt(reference['projection'])
-        og_projection_wkt = og_projection_osr.ExportToWkt()
+        destination['dataframe'].FlushCache()
+        re_driver = gdal.GetDriverByName(output_format)
+        
+        og_transform = destination['dataframe'].GetGeoTransform()
 
-        try:
-            dst_projection_osr = osr.SpatialReference()
-            dst_projection_osr.ImportFromWkt(dst_projection)
-            dst_projection_wkt = dst_projection_osr.ExportToWkt()
-        except:
-            raise Exception(f'Could not parse input projection: {dst_projection}')
+        og_x_size = destination['dataframe'].RasterXSize
+        og_y_size = destination['dataframe'].RasterYSize
 
-        if og_projection_osr.IsSame(dst_projection_osr) == 0:
-            destination['dataframe'].FlushCache()
-            re_driver = gdal.GetDriverByName(output_format)
-            
-            og_transform = destination['dataframe'].GetGeoTransform()
+        coord_transform = osr.CoordinateTransformation(og_projection_osr, dst_projection_osr)
+        
+        o_ulx, xres, xskew, o_uly, yskew, yres = og_transform
+        o_lrx = o_ulx + (og_x_size * xres)
+        o_lry = o_uly + (og_y_size * yres)
 
-            og_x_size = destination['dataframe'].RasterXSize
-            og_y_size = destination['dataframe'].RasterYSize
+        og_col = (o_lrx - o_ulx)
+        og_row = (o_uly - o_lry)
 
-            coord_transform = osr.CoordinateTransformation(og_projection_osr, dst_projection_osr)
-            
-            o_ulx, xres, xskew, o_uly, yskew, yres = og_transform
-            o_lrx = o_ulx + (og_x_size * xres)
-            o_lry = o_uly + (og_y_size * yres)
+        ulx, uly, ulz = coord_transform.TransformPoint(float(o_ulx), float(o_uly))
+        urx, ury, urz = coord_transform.TransformPoint(float(o_lrx), float(o_uly))
+        lrx, lry, lrz = coord_transform.TransformPoint(float(o_lrx), float(o_lry))
+        llx, lly, llz = coord_transform.TransformPoint(float(o_ulx), float(o_lry))
+        
+        if dst_crop_to_projection:
+            dst_col = min(lrx, urx) - max(llx, ulx)
+            dst_row = min(ury, uly) - max(lry, lly)
+        else:
+            dst_col = max(lrx, urx) - min(llx, ulx)
+            dst_row = max(ury, uly) - min(lry, lly)
 
-            og_col = (o_lrx - o_ulx)
-            og_row = (o_uly - o_lry)
+        cols = int((dst_col / og_col) * og_x_size)
+        rows = int((dst_row / og_row) * og_y_size)
+        
+        if dst_crop_to_projection:
+            dst_transform = (max(ulx, llx), reference['pixel_width'], 0, min(uly, ury), 0, reference['pixel_height'])
+        else:
+            dst_transform = (min(ulx, llx), reference['pixel_width'], 0, max(uly, ury), 0, reference['pixel_height'])
 
-            ulx, uly, ulz = coord_transform.TransformPoint(float(o_ulx), float(o_uly))
-            urx, ury, urz = coord_transform.TransformPoint(float(o_lrx), float(o_uly))
-            lrx, lry, lrz = coord_transform.TransformPoint(float(o_lrx), float(o_lry))
-            llx, lly, llz = coord_transform.TransformPoint(float(o_ulx), float(o_lry))
-            
-            if dst_crop_to_projection:
-                dst_col = min(lrx, urx) - max(llx, ulx)
-                dst_row = min(ury, uly) - max(lry, lly)
-            else:
-                dst_col = max(lrx, urx) - min(llx, ulx)
-                dst_row = max(ury, uly) - min(lry, lly)
+        re_dataframe = re_driver.Create(
+            out_raster,
+            cols,
+            rows,
+            1,
+            datatype,
+            options=options,
+        )
+        
+        re_dataframe.SetGeoTransform(dst_transform)
+        re_dataframe.SetProjection(dst_projection_wkt)
+        
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        
+        warp_sucess = gdal.Warp(
+            re_dataframe,
+            destination['dataframe'],
+            format=output_format,
+            xRes=reference['pixel_width'],
+            yRes=reference['pixel_height'],
+            srcSRS=og_projection_wkt,
+            dstSRS=dst_projection_wkt,
+            resampleAlg=resample_alg,
+            targetAlignedPixels=align,
+            multithread=True,
+            srcNodata=input_nodata,
+            dstNodata=input_nodata,
+        )
+        
+        gdal.PopErrorHandler()
+        
+        # Check if warped was successfull.
+        if warp_sucess == 0:         # GDAL returns 0 for warnings.
+            print('Warping completed with warnings. Check your result.')
+        elif warp_sucess is None:    # GDAL returns None for errors.
+            raise RuntimeError("Warping completed unsuccesfully.") from None
 
-            cols = int((dst_col / og_col) * og_x_size)
-            rows = int((dst_row / og_row) * og_y_size)
-         
-            if dst_crop_to_projection:
-                dst_transform = (max(ulx, llx), reference['pixel_width'], 0, min(uly, ury), 0, reference['pixel_height'])
-            else:
-                dst_transform = (min(ulx, llx), reference['pixel_width'], 0, max(uly, ury), 0, reference['pixel_height'])
-
-            re_dataframe = re_driver.Create(
-                out_raster,
-                cols,
-                rows,
-                1,
-                datatype,
-                options=options,
-            )
-            
-            re_dataframe.SetGeoTransform(dst_transform)
-            re_dataframe.SetProjection(dst_projection_wkt)
-            
-            gdal.PushErrorHandler('CPLQuietErrorHandler')
-            
-            warp_sucess = gdal.Warp(
-                re_dataframe,
-                destination['dataframe'],
-                format=output_format,
-                xRes=reference['pixel_width'],
-                yRes=reference['pixel_height'],
-                srcSRS=og_projection_wkt,
-                dstSRS=dst_projection_wkt,
-                resampleAlg=resample_alg,
-                targetAlignedPixels=align,
-                multithread=True,
-                srcNodata=input_nodata,
-                dstNodata=input_nodata,
-            )
-            
-            gdal.PopErrorHandler()
-            
-            # Check if warped was successfull.
-            if warp_sucess == 0:         # GDAL returns 0 for warnings.
-                print('Warping completed with warnings. Check your result.')
-            elif warp_sucess is None:    # GDAL returns None for errors.
-                raise RuntimeError("Warping completed unsuccesfully.") from None
-
-            destination['dataframe'] = re_dataframe
-            destination['bands'] = [destination['dataframe'].GetRasterBand(1)]
+        destination['dataframe'] = re_dataframe
+        destination['bands'] = [destination['dataframe'].GetRasterBand(1)]
 
     if input_nodata is not None:
         destination['bands'][0].SetNoDataValue(input_nodata)
