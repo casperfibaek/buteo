@@ -51,7 +51,27 @@ for index, tile in enumerate(data):
         # decompress(images, tmp_dir)
         images = glob(f'{tmp_dir}*{tile}*')
         
-        mosaic_tile(images, dst_dir, tile, dst_projection=project_geom.crs.to_wkt(), cutoff_invalid=5, match_individual_scaling=True)
+        mosaic_tile(
+            images,
+            dst_dir,
+            tile,
+            dst_projection=project_geom.crs.to_wkt(),
+            feather=True,
+            cutoff_invalid=5,
+            cutoff_cloud=2,
+            invalid_contract=11,
+            invalid_expand=61,
+            border_dist=61,
+            feather_dist=11,
+            filter_tracking=True,
+            filter_tracking_dist=7,
+            filter_tracking_iterations=2,
+            match_mean=True,
+            match_quintile=0.25,
+            max_days=30,
+            max_images_include=10,
+            max_search_images=15,
+        )
         
         # delete_files = glob(f"{tmp_dir}*.*")
         # for f in delete_files:

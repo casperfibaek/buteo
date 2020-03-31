@@ -147,7 +147,7 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
         input_nodata = data.get_fill_value()
         data = data.filled()
 
-    # Weird "double" issue with GDAL and numpy. Cast to float or int
+    # Weird double issue with GDAL and numpy. Cast to float or int
     if input_nodata is not None:
         input_nodata = float(input_nodata)
         if (input_nodata).is_integer() is True:
@@ -262,9 +262,6 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
             
             re_dataframe.SetGeoTransform(dst_transform)
             re_dataframe.SetProjection(dst_projection_wkt)
-            
-            if input_nodata is None:
-                input_nodata = numpy_fill_values(data.dtype)
             
             gdal.PushErrorHandler('CPLQuietErrorHandler')
             
