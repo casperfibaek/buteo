@@ -162,10 +162,13 @@ def get_band_paths(safe_folder):
         if band_name == 'SCL':
             bands['60m']['SCL'] = band
     
+    
+    # import pdb; pdb.set_trace()
+
     # Did we get all the bands?
-    for resolution in bands:
-        for name in bands[resolution]:
-            assert bands[resolution][name] != None, f'Could not find band: {safe_folder, resolution, name}'
+    # for resolution in bands:
+    #     for name in bands[resolution]:
+    #         assert bands[resolution][name] != None, f'Could not find band: {safe_folder, resolution, name}'
     
     return bands
 
@@ -231,9 +234,19 @@ def get_metadata(safe_folder):
         + metadata["HIGH_PROBA_CLOUDS_PERCENTAGE"]
         + metadata["THIN_CIRRUS_PERCENTAGE"]
         + metadata["SNOW_ICE_PERCENTAGE"]
+        + (metadata["DARK_FEATURES_PERCENTAGE"] * 0.75)
         + (metadata["UNCLASSIFIED_PERCENTAGE"] * 0.25)
-        + (metadata["DARK_FEATURES_PERCENTAGE"] * 0.25)
     )
+    
+    metadata["VALID_LAND"] = (
+        metadata["VEGETATION_PERCENTAGE"]
+        + metadata["NOT_VEGETATED_PERCENTAGE"]
+        + (metadata["UNCLASSIFIED_PERCENTAGE"] * 0.75)
+        + (metadata["DARK_FEATURES_PERCENTAGE"] * 0.25)
+        + (metadata["WATER_PERCENTAGE"] * 0.25)
+    )
+    
+    metadata["INVALID_LAND"] = 100 - metadata["VALID_LAND"]
     
     metadata["ALL_INVALID_PERCENTAGE"] = (
         metadata["INVALID_PERCENTAGE"] + metadata['NODATA_PIXEL_PERCENTAGE']
@@ -357,20 +370,36 @@ def prepare_metadata(list_of_SAFE_images):
     
     # Find the image with the lowest invalid percentage
     for meta in metadata:
-        if meta['ALL_INVALID_PERCENTAGE'] < lowest_invalid_percentage:
-            lowest_invalid_percentage = meta['ALL_INVALID_PERCENTAGE']
+        if meta['INVALID_LAND'] < lowest_invalid_percentage:
+            lowest_invalid_percentage = meta['INVALID_LAND']
             best_image = meta
 
     for meta in metadata:
-        if (meta['ALL_INVALID_PERCENTAGE'] - lowest_invalid_percentage) < 3:
+        if (meta['INVALID_LAND'] - lowest_invalid_percentage) < 5:
             best_images.append(meta)
-    
+
+    # SCL
+    ##  0: SC_NODATA
+    ##  1: SC_SATURATED_DEFECTIVE
+    ##  2: SC_DARK_FEATURE_SHADOW
+    ##  3: SC_CLOUD_SHADOW
+    ##  4: SC_VEGETATION
+    ##  5: SC_NOT_VEGETATED
+    ##  6: SC_WATER
+    ##  7: SC_UNCLASSIFIED
+    ##  8: SC_CLOUD_MEDIUM_PROBA
+    ##  9: SC_CLOUD_HIGH_PROBA
+    ## 10: SC_THIN_CIRRUS
+    ## 11: SC_SNOW_ICE
+
     if len(best_images) != 1:
-        # Search the top 3% images for for the most recent
+        # Search the top 5% images for for the most recent
         lowest_mean_b1 = 65535
         for image in best_images:
-            nodata_mask = raster_to_array(image['path']['60m']['SCL']) == 0
-            b1_mean = np.ma.array(raster_to_array(image['path']['60m']['B01']), mask=nodata_mask).mean()
+            scl60 = raster_to_array(image['path']['60m']['SCL'])
+            b1 = raster_to_array(image['path']['60m']['B01'])
+            nodata_mask = ((scl60 == 0) | (scl60 == 1) | (scl60 == 2) | (scl60 == 3) | (scl60 == 8) | (scl60 == 9) | (scl60 == 10)  | (scl60 == 11)) & b1 <= 1
+            b1_mean = np.ma.array(b1, mask=nodata_mask).mean()
             if b1_mean < lowest_mean_b1:
                 lowest_mean_b1 = b1_mean
                 best_image = image
@@ -396,7 +425,8 @@ def mosaic_tile(
     dst_projection=None,
     feather=True,
     cutoff_invalid=1,
-    cutoff_b1_cloud=1000,
+    cutoff_b1_cloud=850,
+    cutoff_b1_min=300,
     cutoff_b1_ratio=0.75,
     invalid_contract=11,
     invalid_expand=51,
@@ -545,7 +575,8 @@ def mosaic_tile(
         
         # Division by zero wont happend because of the two previous checks. Numpy warns anyways.
         with np.errstate(invalid='ignore'):
-            b1_dif = ((ex_nodata_raw == False) & (scl != 0) & ((ex_band_01 / band_01) < cutoff_b1_ratio)).astype('uint8')
+            with np.errstate(divide='ignore'):
+                b1_dif = ((ex_nodata_raw == False) & (scl != 0) & ((ex_band_01 / band_01) < cutoff_b1_ratio) & (band_01 > cutoff_b1_min)).astype('uint8')
         
         b1_dif = cv2.erode(b1_dif, invalid_kernel_small).astype('uint8')
         band_01 = np.where(b1_dif, ex_band_01, band_01)
@@ -682,7 +713,7 @@ def mosaic_tile(
             
             total_pixels = 0
             for key in sums:
-                if key != 'other' and key != 'dark':
+                if key != 'other' and key != 'dark' and key != 'water':
                     total_pixels += sums[key]
             
             weights = {
@@ -751,7 +782,7 @@ def mosaic_tile(
                 simple_weights = {
                     'vegetation': sums['vegetation'] / total_pixels,
                     'non_vegetation': sums['non_vegetation'] / total_pixels,
-                    'water': sums['water'] / total_pixels,
+                    # 'water': sums['water'] / total_pixels,
                     'unclassified': sums['unclassified'] / total_pixels,
                     # 'dark': sums['dark'] / total_pixels,
                 }
@@ -773,7 +804,7 @@ def mosaic_tile(
             # Run a mode filter on the tracking array
             tracking_array = mode_filter(tracking_array, filter_tracking_dist, filter_tracking_iterations).astype('uint8')
         
-        array_to_raster(tracking_array.astype('uint8'), reference_raster=best_image['path']['10m']['B08'], out_raster=os.path.join(out_dir, f"tracking_{out_name}.tif"), dst_projection=dst_projection)
+        # array_to_raster(tracking_array.astype('uint8'), reference_raster=best_image['path']['10m']['B08'], out_raster=os.path.join(out_dir, f"tracking_{out_name}.tif"), dst_projection=dst_projection)
 
         if feather:
             print('Precalculating feathers..')
@@ -811,4 +842,4 @@ def mosaic_tile(
 
         array_to_raster(np.ma.masked_where(scl == 0, base_image).astype('uint16'), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
 
-    print(f'Completed mosaic in: {round(time() / start_time, 1)}m')
+    print(f'Completed mosaic in: {round(time() - start_time, 1)}m')
