@@ -243,7 +243,6 @@ def get_metadata(safe_folder):
         + metadata["NOT_VEGETATED_PERCENTAGE"]
         + (metadata["UNCLASSIFIED_PERCENTAGE"] * 0.75)
         + (metadata["DARK_FEATURES_PERCENTAGE"] * 0.25)
-        + (metadata["WATER_PERCENTAGE"] * 0.25)
     )
     
     metadata["INVALID_LAND"] = 100 - metadata["VALID_LAND"]
@@ -391,14 +390,15 @@ def prepare_metadata(list_of_SAFE_images):
     ##  9: SC_CLOUD_HIGH_PROBA
     ## 10: SC_THIN_CIRRUS
     ## 11: SC_SNOW_ICE
-
+    
     if len(best_images) != 1:
         # Search the top 5% images for for the most recent
         lowest_mean_b1 = 65535
         for image in best_images:
             scl60 = raster_to_array(image['path']['60m']['SCL'])
             b1 = raster_to_array(image['path']['60m']['B01'])
-            nodata_mask = ((scl60 == 0) | (scl60 == 1) | (scl60 == 2) | (scl60 == 3) | (scl60 == 8) | (scl60 == 9) | (scl60 == 10)  | (scl60 == 11)) & b1 <= 1
+            b2 = raster_to_array(image['path']['60m']['B02'])
+            nodata_mask = ((scl60 == 0) | (scl60 == 1) | (scl60 == 2) | (scl60 == 3) | (scl60 == 8) | (scl60 == 9) | (scl60 == 11) | (b1 > 800) | ((b1 <= 1) & (b2 <= 1))) 
             b1_mean = np.ma.array(b1, mask=nodata_mask).mean()
             if b1_mean < lowest_mean_b1:
                 lowest_mean_b1 = b1_mean
@@ -413,6 +413,12 @@ def prepare_metadata(list_of_SAFE_images):
     
     return metadata
 
+
+# def assess_radiometric_quality(metadata):
+    
+    
+    
+
 # TODO: create harmonisation function
 # TODO: handle all bands
 # TODO: add pansharpen
@@ -425,22 +431,22 @@ def mosaic_tile(
     dst_projection=None,
     feather=True,
     cutoff_invalid=1,
-    cutoff_b1_cloud=850,
-    cutoff_b1_min=300,
-    cutoff_b1_ratio=0.75,
-    invalid_contract=11,
+    cutoff_b1_cloud=800,
+    cutoff_b1_min=50,
+    cutoff_b1_ratio=0.85,
+    invalid_contract=7,
     invalid_expand=51,
     border_dist=61,
-    feather_dist=21,
+    feather_dist=31,
     filter_tracking=True,
-    filter_tracking_dist=7,
-    filter_tracking_iterations=2,
+    filter_tracking_dist=11,
+    filter_tracking_iterations=1,
     match_mean=True,
     match_quintile=0.25,
     match_individual_scaling=False,
     max_days=30,
     max_images_include=10,
-    max_search_images=15,
+    max_search_images=25,
 ):
 
     start_time = time()
@@ -471,14 +477,15 @@ def mosaic_tile(
     
     # Test the water wapour layer
     band_01 = raster_to_array(resample(best_image['path']['60m']['B01'], reference_raster=best_image['path']['10m']['B04']))
-    cld_prb = band_01 > cutoff_b1_cloud
+    band_02 = raster_to_array(best_image['path']['10m']['B02'])
+    cld_prb = (band_01 > cutoff_b1_cloud) | ((band_01 <= 1) & (band_02 <= 1))
 
     nodata_raw = np.where(scl == 0, 1, 0).astype('uint8')
     nodata = cv2.dilate(nodata_raw, border_kernel).astype('bool')
 
-    mask = ((scl == 1) | (scl == 3) | (scl == 8) | (scl == 9) | (scl == 10) | (scl == 11))
-    mask = np.logical_or(mask, nodata)
-    mask = np.logical_or(mask, cld_prb)
+    # mask = ((scl == 1) | (scl == 3) | (scl == 8) | (scl == 9) | (scl == 10) | (scl == 11))
+    mask = ((scl == 1) | (scl == 3) | (scl == 8) | (scl == 9) | (scl == 11))
+    mask = mask | nodata | cld_prb
     mask = cv2.erode(mask.astype('uint8'), invalid_kernel_small)
     mask = cv2.dilate(mask.astype('uint8'), invalid_kernel).astype('bool')
        
@@ -560,6 +567,12 @@ def mosaic_tile(
     current_image_index = 1  # The 0 index is for the best image
     
     processed_images_indices = [0]
+    
+    # array_to_raster(scl, reference_raster=best_image['path']['10m']['B08'], out_raster=os.path.join(out_dir, f"scl_0_{out_name}.tif"), dst_projection=dst_projection)
+    # array_to_raster(band_01, reference_raster=best_image['path']['10m']['B08'], out_raster=os.path.join(out_dir, f"band_01_0_{out_name}.tif"), dst_projection=dst_projection)
+    # array_to_raster(cld_prb, reference_raster=best_image['path']['10m']['B08'], out_raster=os.path.join(out_dir, f"cldprb_0_{out_name}.tif"), dst_projection=dst_projection)
+    # array_to_raster(mask, reference_raster=best_image['path']['10m']['B08'], out_raster=os.path.join(out_dir, f"mask_0_{out_name}.tif"), dst_projection=dst_projection)
+    # import pdb; pdb.set_trace()
        
     print(f'Initial. tracking array: {round(coverage, 3)} towards goal: {cutoff_invalid}')
     # Loop the images and update the tracking array
@@ -571,34 +584,58 @@ def mosaic_tile(
        
         # Processes the water vapour band and add new masked pixels if needed.
         ex_band_01 = raster_to_array(resample(current_metadata['path']['60m']['B01'], reference_raster=current_metadata['path']['10m']['B04']))
-        ex_cldprb = ex_band_01 > cutoff_b1_cloud
+        ex_band_02 = raster_to_array(current_metadata['path']['10m']['B02'])
+        ex_cldprb = (ex_band_01 > cutoff_b1_cloud) | ((ex_band_01 <= 1) & (ex_band_02 <= 1))
         
-        # Division by zero wont happend because of the two previous checks. Numpy warns anyways.
-        with np.errstate(invalid='ignore'):
-            with np.errstate(divide='ignore'):
-                b1_dif = ((ex_nodata_raw == False) & (scl != 0) & ((ex_band_01 / band_01) < cutoff_b1_ratio) & (band_01 > cutoff_b1_min)).astype('uint8')
-        
-        b1_dif = cv2.erode(b1_dif, invalid_kernel_small).astype('uint8')
-        band_01 = np.where(b1_dif, ex_band_01, band_01)
-
-        b1_mask = cv2.dilate(b1_dif, invalid_kernel).astype('bool')
-        mask = np.logical_or(mask, b1_mask)
-        
-        ex_mask = ((ex_scl == 1) | (ex_scl == 3) | (ex_scl == 8) | (ex_scl == 9) | (ex_scl == 10) | (ex_scl == 11))
-        ex_mask = np.logical_or(ex_mask, ex_nodata)
-        ex_mask = np.logical_or(ex_mask, ex_cldprb)
-        ex_mask = cv2.erode(ex_mask.astype('uint8'), invalid_kernel_small).astype('bool')
-        ex_mask = cv2.dilate(ex_mask.astype('uint8'), invalid_kernel).astype('bool')
+        # ex_mask = ((ex_scl == 1) | (ex_scl == 3) | (ex_scl == 8) | (ex_scl == 9) | (ex_scl == 10) | (ex_scl == 11))
+        ex_mask = ((ex_scl == 1) | (ex_scl == 3) | (ex_scl == 8) | (ex_scl == 9) | (ex_scl == 11))
+        ex_mask = (ex_mask | ex_nodata | ex_cldprb).astype('uint8')
+        ex_mask = cv2.erode(ex_mask, invalid_kernel_small)
+        ex_mask = cv2.dilate(ex_mask, invalid_kernel).astype('bool')
 
         change_mask = ((mask == True) & (ex_mask == False))
+        
+        # Time difference
+        td = int(round(metadata[current_image_index]['time_difference'] / 86400, 0))
         
         # Only process if change is more that 0.5 procent.
         if ((change_mask.sum() / change_mask.size) * 100) > 0.5:
             
             # Update nodata with data from this image
-            nodata_dif = ((ex_scl != 0) & (scl == 0) & (tracking_array == 0)).astype("uint8")
-            tracking_array = np.where(nodata_dif, current_image_index, tracking_array).astype('uint8')
-            scl = np.where(nodata_dif, ex_scl, scl).astype('uint8')
+            nodata_dif = ((ex_scl != 0) & (scl == 0)).astype("uint8")
+            
+            # Lets try and replace hazy areas.
+            with np.errstate(invalid='ignore'):
+                with np.errstate(divide='ignore'):
+                    b1_mask = (
+                        (ex_nodata_raw == False)
+                        & (scl != 0)        # Original layer is not nodata (will be handled later)
+                        & (ex_scl != 2)     # New layer is not a dark feature
+                        & (ex_scl != 3)     # New layer is not a cloud shadow
+                        & (band_01 > 500)   # Old layer is bright
+                        & (ex_band_01 < 800)    # New layer is not bright
+                        & (ex_band_01 > cutoff_b1_min)  # The new layer is above the minimum value 
+                        & ((ex_band_01 / band_01) < cutoff_b1_ratio)    # The between new and old is used as a threshold
+                    ).astype('uint8')
+            
+            band_01 = np.where(b1_mask, ex_band_01, band_01)
+            cirrus_mask = (
+                (scl == 10)         # Old layer is cirrus
+                & (                 # New layer is either:
+                    (ex_scl == 4)   # Vegetation
+                    | (ex_scl == 5) # Non-vegetation
+                    | (ex_scl == 6) # Water
+                    | (ex_scl == 7) # Unclassified
+                )
+            )
+            
+            b1_cirrus = (b1_mask | nodata_dif).astype('uint8')
+            ex_mb1_cirrusask = cv2.erode(b1_cirrus, invalid_kernel_small)
+            b1_cirrus = cv2.dilate(b1_cirrus, invalid_kernel).astype('bool')
+
+            # Udpdate the trackers
+            tracking_array = np.where((b1_cirrus | nodata_dif), current_image_index, tracking_array).astype('uint8')
+            scl = np.where((b1_cirrus | nodata_dif), ex_scl, scl).astype('uint8')
             
             if match_mean:
                 ex_vegetation_mask = np.logical_or(ex_scl != 4, change_mask == False)
@@ -661,9 +698,6 @@ def mosaic_tile(
                 ex_dark_mask = None
                 ex_other_mask = None
 
-            # Clear memory
-            ex_cldprb = None
-
             metadata[current_image_index]['valid_mask'] = ex_mask
             mask = np.logical_and(mask, ex_mask).astype('bool')
             
@@ -682,9 +716,9 @@ def mosaic_tile(
             processed_images_indices.append(current_image_index)
 
             img_name = os.path.basename(os.path.normpath(metadata[current_image_index]['folder'])).split('_')[-1].split('.')[0]
-            print(f'Updating tracking array: {round(coverage, 2)}, goal: {cutoff_invalid}, img: {img_name}')
+            print(f'Updating tracking array: {round(coverage, 2)}, goal: {cutoff_invalid}, img: {img_name}, {td} days')
         else:
-            print('Skipping image due to low change.. (0.5% threshold)')
+            print(f'Skipping image due to low change.. (0.5% threshold) ({td} days)')
 
         current_image_index += 1      
 
@@ -792,7 +826,7 @@ def mosaic_tile(
                         simple_scale = (
                             (simple_weights['vegetation'] * metadata[i]['stats'][band]['vegetation_scale'])
                           + (simple_weights['non_vegetation'] * metadata[i]['stats'][band]['non_vegetation_scale'])
-                          + (simple_weights['water'] *  metadata[i]['stats'][band]['water_scale'])
+                        #   + (simple_weights['water'] *  metadata[i]['stats'][band]['water_scale'])
                           + (simple_weights['unclassified'] * metadata[i]['stats'][band]['unclassified_scale'])
                         #   + (simple_weights['dark'] * metadata[i]['stats'][band]['dark_scale'])
                         )
@@ -804,7 +838,7 @@ def mosaic_tile(
             # Run a mode filter on the tracking array
             tracking_array = mode_filter(tracking_array, filter_tracking_dist, filter_tracking_iterations).astype('uint8')
         
-        # array_to_raster(tracking_array.astype('uint8'), reference_raster=best_image['path']['10m']['B08'], out_raster=os.path.join(out_dir, f"tracking_{out_name}.tif"), dst_projection=dst_projection)
+        array_to_raster(tracking_array.astype('uint8'), reference_raster=best_image['path']['10m']['B08'], out_raster=os.path.join(out_dir, f"tracking_{out_name}.tif"), dst_projection=dst_projection)
 
         if feather:
             print('Precalculating feathers..')
@@ -842,4 +876,4 @@ def mosaic_tile(
 
         array_to_raster(np.ma.masked_where(scl == 0, base_image).astype('uint16'), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
 
-    print(f'Completed mosaic in: {round(time() - start_time, 1)}m')
+    print(f'Completed mosaic in: {round((time() - start_time) / 60, 1)}m')

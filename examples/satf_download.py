@@ -36,8 +36,8 @@ for index_g, geom in project_geom_wgs.iterrows():
 #         download(sdf, '/mnt/d/data/')
 
 
-tmp_dir = '/mnt/c/Users/caspe/Desktop/tmp/'
-dst_dir = '/mnt/c/Users/caspe/Desktop/mosaic/'
+tmp_dir = '/home/cfi/data/tmp/'
+dst_dir = '/home/cfi/data/mosaic/'
 
 for index, tile in enumerate(data):
 
@@ -55,22 +55,32 @@ for index, tile in enumerate(data):
         dst_projection=project_geom.crs.to_wkt(),
         feather=True,
         cutoff_invalid=1,
-        cutoff_b1_cloud=850,
-        cutoff_b1_min=200,
-        cutoff_b1_ratio=0.80,
-        invalid_contract=5,
-        invalid_expand=61,
-        border_dist=161,
+        cutoff_b1_cloud=800,
+        cutoff_b1_min=50,
+        cutoff_b1_ratio=0.85,
+        invalid_contract=7,
+        invalid_expand=51,
+        border_dist=61,
         feather_dist=31,
         filter_tracking=True,
-        filter_tracking_dist=9,
-        filter_tracking_iterations=2,
+        filter_tracking_dist=11,
+        filter_tracking_iterations=1,
         match_mean=True,
         match_quintile=0.25,
+        match_individual_scaling=False,
         max_days=30,
         max_images_include=10,
-        max_search_images=15,
+        max_search_images=25,
     )
+
+    exit()
+
+    delete_files = glob(f"{tmp_dir}*.*")
+    for f in delete_files:
+        try:
+            shutil.rmtree(f)
+        except:
+            pass
 
 
 # import numpy as np
@@ -121,9 +131,6 @@ for index, tile in enumerate(data):
 
 # for tile in data:
 
-#     if tile not in ['31NBG', '31NBH', '31NBJ', '31PBK', '31PBL', '31PBM']:
-#         continue
-
 #     print(f'Calculating means for: {tile}')
 
 #     stats[tile] = {}
@@ -171,9 +178,6 @@ for index, tile in enumerate(data):
 #     scales[band]['non_vegetation_q25'] = np.quantile(scales[band]['non_vegetation'], match_quintile)
 
 # for tile in data:
-
-#     if tile not in ['31NBG', '31NBH', '31NBJ', '31PBK', '31PBL', '31PBM']:
-#         continue
 
 #     print(f'Scaling: {tile}')
 #     for band in ['B02', 'B03', 'B04', 'B08']:
