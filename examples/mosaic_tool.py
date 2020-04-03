@@ -12,29 +12,6 @@ import datetime
 from glob import glob
 import numpy as np
 
-
-# INPUT: Array of sentinel 2 .SAFE files
-# Verify input, verify all same tile, notify if .zip
-
-# Read metadata of all files
-## Get sensing time
-## Get cloud coverage
-## Get amount of valid pixels
-
-# Select image with most cloudfree pixels
-# Sort input array according to time from selected image
-# Keep uint array with source pixels
-# Iteratively check nearest images 3 for valid pixels
-## Add min of valid pixels to source image (> 200 && < 3000)
-## Use the band 4 as synth.
-# Count invalid pixels
-# If invalid pixels, search next 3 images for valid pixels
-
-# Calculate the mode of the 5x5 neighbourhood on the valid pixel array
-# Use it to smooth the valid pixel array
-
-# Generate the images using the valid pixel array
-
 # SCL
 ##  0: SC_NODATA
 ##  1: SC_SATURATED_DEFECTIVE
@@ -48,7 +25,6 @@ import numpy as np
 ##  9: SC_CLOUD_HIGH_PROBA
 ## 10: SC_THIN_CIRRUS
 ## 11: SC_SNOW_ICE
-
 
 def get_band_paths(safe_folder):
     bands = {
@@ -252,80 +228,43 @@ def get_metadata(safe_folder):
     )
     
     metadata["timestamp"] = float(metadata['DATATAKE_SENSING_START'].timestamp())
-    
-    metadata["stats"] = {
-        "vegetation_count": 0,
-        "non_vegetation_count": 0,
-        "unclassified_count": 0,
-        "water_count": 0,
-        "dark_count": 0,
-        "other_count": 0,
-        "B02": {
-            "vegetation": None,
-            "vegetation_scale": 1,
-            "non_vegetation": None,
-            "non_vegetation_scale": 1,
-            "unclassified": None,
-            "unclassified_scale": 1, 
-            "water": None,
-            "water_scale": 1,
-            "dark": None,
-            "dark_scale": 1,
-            "other": None,
-            "other_scale": 1,
-            "scale": 1,
-        },
-        "B03": {
-            "vegetation": None,
-            "vegetation_scale": 1,
-            "non_vegetation": None,
-            "non_vegetation_scale": 1,
-            "unclassified": None,
-            "unclassified_scale": 1, 
-            "water": None,
-            "water_scale": 1,
-            "dark": None,
-            "dark_scale": 1,
-            "other": None,
-            "other_scale": 1,
-            "scale": 1,
-        },
-        "B04": {
-            "vegetation": None,
-            "vegetation_scale": 1,
-            "non_vegetation": None,
-            "non_vegetation_scale": 1,
-            "unclassified": None,
-            "unclassified_scale": 1, 
-            "water": None,
-            "water_scale": 1,
-            "dark": None,
-            "dark_scale": 1,
-            "other": None,
-            "other_scale": 1,
-            "scale": 1,
-        },
-        "B08": {
-            "vegetation": None,
-            "vegetation_scale": 1,
-            "non_vegetation": None,
-            "non_vegetation_scale": 1,
-            "unclassified": None,
-            "unclassified_scale": 1, 
-            "water": None,
-            "water_scale": 1,
-            "dark": None,
-            "dark_scale": 1,
-            "other": None,
-            "other_scale": 1,
-            "scale": 1,
-        }
-    }
 
     return metadata
 
 def get_time_difference(dict):
     return dict['time_difference']
+
+def assess_radiometric_quality(metadata, quality='high'):
+    if quality == 'high':
+        scl = raster_to_array(resample(metadata['path']['20m']['SCL'], reference_raster=metadata['path']['10m']['B04'])).astype('uint8')
+        band_01 = raster_to_array(resample(metadata['path']['60m']['B01'], reference_raster=metadata['path']['10m']['B04'])).astype('uint16')
+        band_02 = raster_to_array(metadata['path']['10m']['B02']).astype('uint16')
+    else:
+        scl = raster_to_array(metadata['path']['60m']['SCL']).astype('uint8')
+        band_01 = raster_to_array(metadata['path']['60m']['B01']).astype('uint16')
+        band_02 = raster_to_array(metadata['path']['60m']['B02']).astype('uint16')
+   
+    # Scale goes 0 best, 100 worst
+    quality = np.zeros(band_02.shape).astype('uint8')
+    
+    # Dilate nodata values by 1km each side 
+    kernel = create_kernel(201, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
+    nodata_dilated = cv2.dilate((scl == 0).astype('uint8'), kernel).astype('uint8')
+    
+    quality = np.where((nodata_dilated == 1), 100, quality)
+    quality = np.where((scl == 1), 100, quality)
+    quality = np.where(np.logical_or((scl == 2), (scl == 3)), 90, quality)
+    quality = np.where((scl == 9), 90, quality)
+    quality = np.where((scl == 8), 70, quality)
+    quality = np.where((scl == 11), 50, quality)
+    quality = np.where((scl == 10), 2, quality)
+
+    quality = np.where((band_01 > 885), quality + 10, quality)
+    quality = np.where(np.logical_and((band_01 > 600), (band_01 <= 850)), quality + 2, quality)
+    quality = np.where(np.logical_and((scl != 0), np.logical_and((band_01 <= 1), (band_02 <= 1))), quality + 15, quality)
+    quality = np.where(np.logical_and((scl != 0), np.logical_and((band_01 <= 10), (band_02 <= 200))), quality + 5, quality)
+
+    return quality, scl, band_01
 
 def prepare_metadata(list_of_SAFE_images):
 
@@ -376,17 +315,17 @@ def prepare_metadata(list_of_SAFE_images):
             best_images.append(meta)
 
     if len(best_images) != 1:
-        # Search the top 5% images for for the most recent
-        lowest_mean_b1 = 65535
+        # Search the top 5% images for the best image
+        min_quality_score = 1000000000000000000
         for image in best_images:
-            scl60 = raster_to_array(image['path']['60m']['SCL'])
-            b1 = raster_to_array(image['path']['60m']['B01'])
-            b2 = raster_to_array(image['path']['60m']['B02'])
-            nodata_mask = ((scl60 == 0) | (scl60 == 1) | (scl60 == 2) | (scl60 == 3) | (scl60 == 8) | (scl60 == 9) | (scl60 == 11) | (b1 > 800) | ((b1 <= 1) & (b2 <= 1))) 
-            b1_mean = np.ma.array(b1, mask=nodata_mask).mean()
-            if b1_mean < lowest_mean_b1:
-                lowest_mean_b1 = b1_mean
+            quality, scl, b1 = assess_radiometric_quality(image, quality='low')
+
+            quality_score = np.ma.masked_where((scl == 4) | (scl == 5) | (scl == 7), 1000 - quality, 1000).sum()
+
+            if quality_score < min_quality_score:
+                min_quality_score = quality_score
                 best_image = image
+
 
     # Calculate the time difference from each image to the best image
     for meta in metadata:
@@ -397,36 +336,10 @@ def prepare_metadata(list_of_SAFE_images):
     
     return metadata
 
-
-def assess_radiometric_quality(metadata):
-    scl = raster_to_array(resample(metadata['path']['20m']['SCL'], reference_raster=metadata['path']['10m']['B04'])).astype('uint8')
-    band_01 = raster_to_array(resample(metadata['path']['60m']['B01'], reference_raster=metadata['path']['10m']['B04'])).astype('uint16')
-    band_02 = raster_to_array(metadata['path']['10m']['B02']).astype('uint16')
-   
-    # Scale goes 0 best, 100 worst
-    quality = np.zeros(band_02.shape).astype('uint8')
-    
-    # Dilate nodata values by 1km each side 
-    kernel = create_kernel(201, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
-    nodata_dilated = cv2.dilate((scl == 0).astype('uint8'), kernel).astype('uint8')
-    
-    quality = np.where((nodata_dilated == 1), 100, quality)
-    quality = np.where((scl == 1), 100, quality)
-    quality = np.where(np.logical_or((scl == 2), (scl == 3)), 90, quality)
-    quality = np.where((scl == 9), 90, quality)
-    quality = np.where((scl == 8), 70, quality)
-    quality = np.where((scl == 11), 50, quality)
-    quality = np.where((scl == 10), 20, quality)
-
-    quality = np.where((band_01 > 800), quality + 10, quality)
-    quality = np.where(np.logical_and((band_01 > 500), (band_01 < 800)), quality + 5, quality)
-    quality = np.where(np.logical_and((scl != 0), np.logical_and((band_01 <= 1), (band_02 <= 1))), quality + 10, quality)
-    quality = np.where(np.logical_and((scl != 0), np.logical_and((band_01 <= 1), (band_02 <= 150))), quality + 5, quality)
-
-    return quality, scl, band_01
-    
-
-# TODO: create harmonisation function
+# TODO: Find out what is wrong with: ['30NYL', '30PWR', '30PXR', '30PXS', '30PYQ', '30NWN', '30NZM', '30NZP']
+# TODO: Move harmonisation function to 60m
+# TODO: Add multiprocessing
+# TODO: Add overlap harmonisation
 # TODO: handle all bands
 # TODO: add pansharpen
 # TODO: ai resample of SWIR
@@ -438,22 +351,21 @@ def mosaic_tile(
     dst_projection=None,
     feather=True,
     invalid_threshold=1,
-    invalid_contract=5,
-    invalid_expand=11,
-    vapour_ratio=0.8,
-    feather_dist=21,
+    vapour_ratio=0.75,
+    vapour_tests=True,
+    feather_dist=15,
     filter_tracking=True,
-    filter_tracking_dist=5,
+    filter_tracking_dist=9,
     filter_tracking_iterations=1,
     match_mean=True,
     match_quintile=0.25,
     max_days=30,
-    max_images_include=10,
-    max_search_images=25,
+    max_images_include=15,
+    max_search_images=35,
 ):
 
     start_time = time()
-    
+
     # Verify input
     assert isinstance(list_of_SAFE_images, list), "list_of_SAFE_images is not a list. [path_to_safe_file1, path_to_safe_file2, ...]"
     assert isinstance(out_dir, str), f"out_dir is not a string: {out_dir}"
@@ -468,158 +380,79 @@ def mosaic_tile(
     best_image_folder = best_image['folder']
     print(f'Selected: {os.path.basename(os.path.normpath(best_image_folder))}')
 
-    time_limit = (max_days * 86400)
     
     print('Resampling and reading base image..')
     quality, scl, b1 = assess_radiometric_quality(best_image)
-
-    # array_to_raster(quality.astype('uint8'), reference_raster=best_image['path']['10m']['B08'], out_raster=os.path.join(out_dir, f"quality_{out_name}.tif"), dst_projection=dst_projection)
-    # import pdb; pdb.set_trace()
     
-    # kernel_contract = create_kernel(invalid_contract, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
-    kernel_dilate = create_kernel(invalid_expand, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
+    time_limit = (max_days * 86400)
+    pixel_count = quality.size
+    
+    kernel_contract = create_kernel(5, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
+    kernel_contract_dilate = create_kernel(3, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
+    kernel_dilate = create_kernel(15, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
     
     mask = (quality > 0).astype('uint8')
-    # mask = cv2.erode(mask, kernel_contract)
     mask = cv2.dilate(mask, kernel_dilate).astype('bool')
        
     tracking_array = np.zeros(mask.shape, dtype='uint8')
+    timing_array = np.zeros(mask.shape, dtype='uint16')
       
-    coverage = (mask.sum() / mask.size) * 100
+    coverage = ((quality == 0).sum() / quality.size) * 100
     current_image_index = 1  # The 0 index is for the best image
     processed_images_indices = [0]
 
     # Match the means of the different tiles per classification type.
-    if match_mean:
-        vegetation_means = { "B02": [], "B03": [], "B04": [], "B08": [] }
-        non_vegetation_means = { "B02": [], "B03": [], "B04": [], "B08": [] }
-        water_means = { "B02": [], "B03": [], "B04": [], "B08": [] }
-        unclassified_means = { "B02": [], "B03": [], "B04": [], "B08": [] }
 
-        vegetation_mask = np.logical_or(scl != 4, mask)
-        non_vegetation_mask = np.logical_or(scl != 5, mask)
-        water_mask = np.logical_or(scl != 6, mask)
-        unclassified_mask = np.logical_or(scl != 7, mask)
-
-        metadata[0]['stats']['vegetation_count'] = (vegetation_mask == False).sum()
-        metadata[0]['stats']['non_vegetation_count'] = (non_vegetation_mask == False).sum()
-        metadata[0]['stats']['water_count'] = (water_mask == False).sum()
-        metadata[0]['stats']['unclassified_count'] = (unclassified_mask == False).sum()
-
-        for band in ['B02', 'B03', 'B04', 'B08']:
-            base_ref = raster_to_array(metadata[0]['path']['10m'][band])
-            
-            if metadata[0]['stats']['vegetation_count'] == 0:
-                metadata[0]['stats'][band]['vegetation'] = -1
-            else:
-                metadata[0]['stats'][band]['vegetation'] = np.ma.array(base_ref, mask=vegetation_mask).mean()
-                vegetation_means[band].append(metadata[0]['stats'][band]['vegetation'])
-            
-            if metadata[0]['stats']['non_vegetation_count'] == 0:
-                metadata[0]['stats'][band]['non_vegetation'] = -1
-            else:
-                metadata[0]['stats'][band]['non_vegetation'] = np.ma.array(base_ref, mask=non_vegetation_mask).mean()
-                non_vegetation_means[band].append(metadata[0]['stats'][band]['non_vegetation'])
-            
-            if metadata[0]['stats']['water_count'] == 0:
-                metadata[0]['stats'][band]['water'] = -1
-            else:    
-                metadata[0]['stats'][band]['water'] = np.ma.array(base_ref, mask=water_mask).mean()
-                water_means[band].append(metadata[0]['stats'][band]['water'])
-            
-            if metadata[0]['stats']['unclassified_count'] == 0:
-                metadata[0]['stats'][band]['unclassified'] = -1
-            else: 
-                metadata[0]['stats'][band]['unclassified'] = np.ma.array(base_ref, mask=unclassified_mask).mean()
-                unclassified_means[band].append(metadata[0]['stats'][band]['unclassified'])
-
-        vegetation_mask = None
-        non_vegetation_mask = None
-        water_mask = None
-        unclassified_mask = None
-
-    print(f'Initial. tracking array: {round(coverage, 3)} towards goal: {invalid_threshold}')
+    print(f'Initial. tracking array: {round(coverage, 2)} towards goal: {invalid_threshold}')
     # Loop the images and update the tracking array
-    while coverage > invalid_threshold and current_image_index < len(metadata) - 1 and len(processed_images_indices) <= max_images_include and current_image_index <= max_search_images and metadata[current_image_index]['time_difference'] < time_limit:
+    while (100 - coverage) > invalid_threshold and current_image_index < len(metadata) - 1 and len(processed_images_indices) <= max_images_include and current_image_index <= max_search_images and (metadata[current_image_index]['time_difference'] < time_limit or (scl == 0).sum() > 0):
         current_metadata = metadata[current_image_index]
         ex_quality, ex_scl, ex_b1 = assess_radiometric_quality(current_metadata)
         
-        with np.errstate(invalid='ignore'):
-            with np.errstate(divide='ignore'):
-                b1_ratio = (ex_b1 / b1) < vapour_ratio
-
-        ex_mask = (ex_quality >= quality).astype('uint8')
-        # ex_mask = cv2.erode(ex_mask, kernel_contract)
-        ex_mask = cv2.dilate(ex_mask, kernel_dilate).astype('bool')
-
-        change_mask = mask & ((ex_mask == False) | (b1_ratio & (ex_quality == quality)))
-        
         # Time difference
         td = int(round(metadata[current_image_index]['time_difference'] / 86400, 0))
+        time_difference = (np.full(timing_array.shape, td) - timing_array).astype('uint16')
+        
+        ex_mask = (ex_quality >= quality).astype('uint8')
+        ex_mask = cv2.dilate(ex_mask, kernel_dilate).astype('bool')
+
+        if vapour_tests is True:
+            # Don't add pixels that are significantly brighter, add pixels that are slightly darker
+            with np.errstate(invalid='ignore'):
+                with np.errstate(divide='ignore'):
+                    b1_ratio = (ex_b1 / b1)
+                    equal_quality = (ex_quality <= quality)
+                    b1_mask_add = ((b1_ratio < vapour_ratio) & (equal_quality & (time_difference <= 7))).astype('uint8')
+                    b1_mask_add = cv2.erode(b1_mask_add, kernel_contract)
+                    b1_mask_add = cv2.dilate(b1_mask_add, kernel_contract_dilate).astype('bool')
+                    b1_mask_remove = (b1_ratio <= (1 + (1 - vapour_ratio)))
+
+            change_mask = mask & b1_mask_remove & ((ex_mask == False) | b1_mask_add)
+            # change_mask = mask & b1_mask_remove & (ex_mask == False)
+        else:
+            change_mask = mask & (ex_mask == False)
         
         # Only process if change is more than 0.5 procent.
         if ((change_mask.sum() / change_mask.size) * 100) > 0.5:
             
             # Udpdate the trackers
+            timing_array = np.where(change_mask, td, timing_array).astype('uint16')
             tracking_array = np.where(change_mask, current_image_index, tracking_array).astype('uint8')
             scl = np.where(change_mask, ex_scl, scl).astype('uint8')
             quality = np.where(change_mask, ex_quality, quality).astype('uint8')
+            
+            if vapour_tests is True:
+                b1 = np.where(change_mask, ex_b1, b1).astype('uint16')
 
             mask = (quality > 0).astype('uint8')
-            # mask = cv2.erode(mask, kernel_contract)
-            mask = cv2.dilate(mask, kernel_dilate).astype('bool')
-            # mask = np.logical_and(mask, change_mask == False).astype('bool')
-
-            if match_mean:
-                ex_vegetation_mask = np.logical_or(ex_scl != 4, change_mask == False)
-                ex_non_vegetation_mask = np.logical_or(ex_scl != 5, change_mask == False)
-                ex_water_mask = np.logical_or(ex_scl != 6, change_mask == False)
-                ex_unclassified_mask = np.logical_or(ex_scl != 7, change_mask == False)
-
-                metadata[current_image_index]['stats']['vegetation_count'] = (ex_vegetation_mask == False).sum()
-                metadata[current_image_index]['stats']['non_vegetation_count'] = (ex_non_vegetation_mask == False).sum()
-                metadata[current_image_index]['stats']['water_count'] = (ex_water_mask == False).sum()
-                metadata[current_image_index]['stats']['unclassified_count'] = (ex_unclassified_mask == False).sum()
-                
-                for band in ['B02', 'B03', 'B04', 'B08']:              
-                    ex_ref = raster_to_array(metadata[current_image_index]['path']['10m'][band])
-                    
-                    if metadata[current_image_index]['stats']['vegetation_count'] == 0:
-                        metadata[current_image_index]['stats'][band]['vegetation'] = -1
-                    else:
-                        metadata[current_image_index]['stats'][band]['vegetation'] = np.ma.array(ex_ref, mask=ex_vegetation_mask).mean()
-                        vegetation_means[band].append(metadata[current_image_index]['stats'][band]['vegetation'])
-                    
-                    if metadata[current_image_index]['stats']['non_vegetation_count'] == 0:
-                        metadata[current_image_index]['stats'][band]['non_vegetation'] = -1
-                    else:
-                        metadata[current_image_index]['stats'][band]['non_vegetation'] = np.ma.array(ex_ref, mask=ex_non_vegetation_mask).mean()
-                        non_vegetation_means[band].append(metadata[current_image_index]['stats'][band]['non_vegetation'])
-
-                    if metadata[current_image_index]['stats']['water_count'] == 0:
-                        metadata[current_image_index]['stats'][band]['water'] = -1
-                    else:
-                        metadata[current_image_index]['stats'][band]['water'] = np.ma.array(ex_ref, mask=ex_water_mask).mean()
-                        water_means[band].append(metadata[current_image_index]['stats'][band]['water'])
-                    
-                    if metadata[current_image_index]['stats']['unclassified_count'] == 0:
-                        metadata[current_image_index]['stats'][band]['unclassified'] = -1
-                    else:
-                        metadata[current_image_index]['stats'][band]['unclassified'] = np.ma.array(ex_ref, mask=ex_unclassified_mask).mean()
-                        unclassified_means[band].append(metadata[current_image_index]['stats'][band]['unclassified'])
-
-                ex_vegetation_mask = None
-                ex_non_vegetation_mask = None
-                ex_water_mask = None
-                ex_unclassified_mask = None
 
             # Update coverage
-            coverage = (mask.sum() / mask.size) * 100
+            coverage = ((quality == 0).sum() / quality.size) * 100
 
             processed_images_indices.append(current_image_index)
 
             img_name = os.path.basename(os.path.normpath(metadata[current_image_index]['folder'])).split('_')[-1].split('.')[0]
-            print(f'Updating tracking array: {round(coverage, 2)}, goal: {invalid_threshold}, img: {img_name}, {td}/{max_days} days')
+            print(f'Updating tracking array: {round(coverage, 2)}, goal: {100 - invalid_threshold}, img: {img_name}, {td}/{max_days} days')
         else:
             print(f'Skipping image due to low change.. (0.5% threshold) ({td}/{max_days} days)')
 
@@ -629,94 +462,118 @@ def mosaic_tile(
     if len(processed_images_indices) > 1:
 
         if match_mean is True:
-            # Calculate the scaling factors
-            sums = {
-                "vegetation": 0,
-                "non_vegetation": 0,
-                "water": 0,
-                "unclassified": 0,
-                "dark": 0,
-                "other": 0,
-            }
-                      
-            for i in processed_images_indices:
-                img = metadata[i]
-                sums['vegetation'] += img['stats']['vegetation_count']
-                sums['non_vegetation'] += img['stats']['non_vegetation_count']
-                sums['water'] += img['stats']['water_count']
-                sums['unclassified'] += img['stats']['unclassified_count']
-            
-            total_pixels = 0
-            for key in sums:
-                if key != 'water':
-                    total_pixels += sums[key]
-            
-            weights = {
-                'vegetation': [],
-                'non_vegetation': [],
-                'water': [],
-                'unclassified': [],
-            }
-            
-            for i in processed_images_indices:
-                img = metadata[i]
-                weights["vegetation"].append(img['stats']['vegetation_count'] / sums['vegetation'])
-                weights["non_vegetation"].append(img['stats']['non_vegetation_count'] / sums['non_vegetation'])
-                weights["water"].append(img['stats']['water_count'] / sums['water'])
-                weights["unclassified"].append(img['stats']['unclassified_count'] / sums['unclassified'])
+            print('Harmonising layers..')
+        
+            for i in processed_images_indices:                
+                metadata[i]['stats'] = {
+                    'B02': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'scale': 1 },
+                    'B03': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'scale': 1 },
+                    'B04': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'scale': 1 },
+                    'B08': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'scale': 1 },
+                    'counts': {
+                        'vegetation': 0,
+                        'not_vegetation': 0,
+                        'unclassified': 0
+                    },
+                }
+                
+                # Prepare masks
+                layer_mask = tracking_array == i
+                layer_veg = layer_mask & (scl == 4)
+                layer_non_veg = layer_mask & (scl == 5)
+                layer_unclassified = layer_mask & (scl == 7)
+                
+                # Calculate count of pixels
+                metadata[i]['stats']['counts']['vegetation'] = layer_veg.sum()
+                metadata[i]['stats']['counts']['not_vegetation'] = layer_non_veg.sum()
+                metadata[i]['stats']['counts']['unclassified'] = layer_unclassified.sum()
 
-            quintiles = { "B02": {}, "B03": {}, "B04": {}, "B08": {} }
+                # Calculate the mean values for each band
+                for band in ['B02', 'B03', 'B04', 'B08']:
+                    array = raster_to_array(metadata[i]['path']['10m'][band])
+                    metadata[i]['stats'][band]['vegetation'] = np.ma.array(array, mask=layer_veg == False).mean()
+                    metadata[i]['stats'][band]['not_vegetation'] = np.ma.array(array, mask=layer_non_veg == False).mean()
+                    metadata[i]['stats'][band]['unclassified'] = np.ma.array(array, mask=layer_unclassified == False).mean()
+
+            pixel_sums = {
+                'vegetation': 0,
+                'not_vegetation': 0,
+                'unclassified': 0,
+                'valid_ground_pixels': 0,             
+            }
+            
+            mean_values = {
+                'B02': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] },
+                'B03': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] },
+                'B04': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] },
+                'B08': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] },
+            }
+            
+            for i in processed_images_indices:
+                image = metadata[i]
+                counts = [
+                    image['stats']['counts']['vegetation'],
+                    image['stats']['counts']['not_vegetation'],
+                    image['stats']['counts']['unclassified'],
+                ]
+                pixel_sums['vegetation'] += counts[0]
+                pixel_sums['not_vegetation'] += counts[1]
+                pixel_sums['unclassified'] += counts[2]
+                pixel_sums['valid_ground_pixels'] += sum(counts)
+                
+                for band in ['B02', 'B03', 'B04', 'B08']:
+                    mean_values[band]['vegetation'].append(image['stats'][band]['vegetation'])
+                    mean_values[band]['not_vegetation'].append(image['stats'][band]['not_vegetation'])
+                    mean_values[band]['unclassified'].append(image['stats'][band]['unclassified'])
+
+            ratios = {
+                'vegetation': pixel_sums['vegetation'] / pixel_sums['valid_ground_pixels'],
+                'not_vegetation': pixel_sums['not_vegetation'] / pixel_sums['valid_ground_pixels'],
+                'unclassified': pixel_sums['unclassified'] / pixel_sums['valid_ground_pixels'],
+            }
+
+            weights = { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] }
+            
+            for i in processed_images_indices:
+                image = metadata[i]
+
+                if pixel_sums['vegetation'] == 0:
+                    weights['vegetation'].append(0)
+                else:
+                    weights['vegetation'].append(image['stats']['counts']['vegetation'] / pixel_sums['vegetation'])
+
+                if pixel_sums['not_vegetation'] == 0:
+                    weights['not_vegetation'].append(0)
+                else:
+                    weights['not_vegetation'].append(image['stats']['counts']['not_vegetation'] / pixel_sums['not_vegetation'])
+
+                if pixel_sums['unclassified'] == 0:
+                    weights['unclassified'].append(0)
+                else:
+                    weights['unclassified'].append(image['stats']['counts']['unclassified'] / pixel_sums['unclassified'])         
+        
+            quintiles = {
+                'B02': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
+                'B03': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
+                'B04': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
+                'B08': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
+            }
 
             for band in ['B02', 'B03', 'B04', 'B08']:
-                quintiles[band]['vegetation'] = weighted_quantile(vegetation_means[band], match_quintile, weights['vegetation'])
-                quintiles[band]['non_vegetation'] = weighted_quantile(non_vegetation_means[band], match_quintile, weights['non_vegetation'])
-                quintiles[band]['water'] = weighted_quantile(water_means[band], match_quintile, weights['water'])
-                quintiles[band]['unclassified'] = weighted_quantile(unclassified_means[band], match_quintile, weights['unclassified'])
+                quintiles[band]['vegetation'] = weighted_quantile(mean_values[band]['vegetation'], match_quintile, weights['vegetation'])
+                quintiles[band]['not_vegetation'] = weighted_quantile(mean_values[band]['not_vegetation'], match_quintile, weights['not_vegetation'])
+                quintiles[band]['unclassified'] = weighted_quantile(mean_values[band]['unclassified'], match_quintile, weights['unclassified'])
 
             for i in processed_images_indices:
                 for band in ['B02', 'B03', 'B04', 'B08']:
-
-                    # If the is no pixels at all of the class. Insert a zero. Value does not matter as weighted addition will be zero.
-                    if len(vegetation_means[band]) == 0: vegetation_means[band].append(0)
-                    if len(non_vegetation_means[band]) == 0: non_vegetation_means[band].append(0)
-                    if len(water_means[band]) == 0: water_means[band].append(0)
-                    if len(unclassified_means[band]) == 0: unclassified_means[band].append(0)
-
-                    # If there is no data of the classification, use the median value of all other.
-                    if metadata[i]['stats'][band]['vegetation'] == -1:
-                        metadata[i]['stats'][band]['vegetation'] = weighted_quantile(vegetation_means[band], 0.5, weights['vegetation'])
-                    if metadata[i]['stats'][band]['non_vegetation'] == -1:
-                        metadata[i]['stats'][band]['non_vegetation'] = weighted_quantile(non_vegetation_means[band], 0.5, weights['non_vegetation'])
-                    if metadata[i]['stats'][band]['water'] == -1:
-                        metadata[i]['stats'][band]['water'] = weighted_quantile(water_means[band], 0.5, weights['water'])
-                    if metadata[i]['stats'][band]['unclassified'] == -1:
-                        metadata[i]['stats'][band]['unclassified'] = weighted_quantile(unclassified_means[band], 0.5, weights['unclassified'])
-
-                    metadata[i]['stats'][band]['vegetation_scale'] = quintiles[band]['vegetation'] / metadata[i]['stats'][band]['vegetation']
-                    metadata[i]['stats'][band]['non_vegetation_scale'] = quintiles[band]['non_vegetation'] / metadata[i]['stats'][band]['non_vegetation']
-                    metadata[i]['stats'][band]['water_scale'] = quintiles[band]['water'] / metadata[i]['stats'][band]['water']
-                    metadata[i]['stats'][band]['unclassified_scale'] = quintiles[band]['unclassified'] / metadata[i]['stats'][band]['unclassified']
-
-
-            simple_weights = {
-                'vegetation': sums['vegetation'] / total_pixels,
-                'non_vegetation': sums['non_vegetation'] / total_pixels,
-                # 'water': sums['water'] / total_pixels,
-                'unclassified': sums['unclassified'] / total_pixels,
-            }
-
-            for i in processed_images_indices:
-                for band in ['B02', 'B03', 'B04', 'B08']:
-                    simple_scale = (
-                        (simple_weights['vegetation'] * metadata[i]['stats'][band]['vegetation_scale'])
-                        + (simple_weights['non_vegetation'] * metadata[i]['stats'][band]['non_vegetation_scale'])
-                    #   + (simple_weights['water'] *  metadata[i]['stats'][band]['water_scale'])
-                        + (simple_weights['unclassified'] * metadata[i]['stats'][band]['unclassified_scale'])
-                    )
-
-                    metadata[i]['stats'][band]['scale'] = simple_scale
-            
-            # import pdb; pdb.set_trace()
+                    if pixel_sums['valid_ground_pixels'] == 0:
+                        metadata[i]['stats'][band]['scale'] = 1
+                    else:
+                        metadata[i]['stats'][band]['scale'] = sum([
+                            ratios['vegetation'] * (quintiles[band]['vegetation'] / metadata[i]['stats'][band]['vegetation']),
+                            ratios['not_vegetation'] * (quintiles[band]['not_vegetation'] / metadata[i]['stats'][band]['not_vegetation']),
+                            ratios['unclassified'] * (quintiles[band]['unclassified'] / metadata[i]['stats'][band]['unclassified']),
+                        ])
 
         if filter_tracking is True:
             print('Filtering tracking array..')
@@ -738,12 +595,12 @@ def mosaic_tile(
     print('Merging band data..')
     for band in bands_to_output:
         print(f'Writing: {band}..')
-        base_image = raster_to_array(best_image['path']['10m'][band]).astype('float32')
+        base_image = raster_to_array(metadata[0]['path']['10m'][band]).astype('float32')
 
         for i in processed_images_indices:
             if i == 0:
                 if match_mean and len(processed_images_indices) > 1:
-                    base_image = base_image * best_image['stats'][band]['scale']
+                    base_image = base_image * metadata[i]['stats'][band]['scale']
 
                 if feather is True and len(processed_images_indices) > 1:
                     base_image = base_image * feathers[str(i)]

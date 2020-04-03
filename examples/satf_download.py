@@ -28,7 +28,8 @@ for index_g, geom in project_geom_wgs.iterrows():
 
 # data.reverse()
 
-# extra_tiles = ['30NVL', '30NWL', '30NYN', '30NVM', '31PBM', '30NWN']
+# DIFFICULT TILES:
+extra_tiles = ['30NYL', '30PWR', '30PXR', '30PXS', '30PYQ', '30NWN', '30NZM', '30NZP']
 
 # for tile in data:
 #     if tile in extra_tiles:
@@ -53,22 +54,7 @@ for index, tile in enumerate(data):
         dst_dir,
         tile,
         dst_projection=project_geom.crs.to_wkt(),
-        feather=True,
-        invalid_threshold=1,
-        invalid_contract=5,
-        invalid_expand=11,
-        feather_dist=11,
-        filter_tracking=True,
-        filter_tracking_dist=5,
-        filter_tracking_iterations=1,
-        match_mean=True,
-        match_quintile=0.25,
-        max_days=30,
-        max_images_include=10,
-        max_search_images=25,
     )
-
-    exit()
 
     delete_files = glob(f"{tmp_dir}*.*")
     for f in delete_files:

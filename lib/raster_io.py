@@ -344,13 +344,8 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
         elif warp_sucess is None:    # GDAL returns None for errors.
             raise RuntimeError("Warping completed unsuccesfully.") from None
 
-        # Clear memory
-        destination = None
-
         if calc_band_stats is True:
             resampled_destination['dataframe'].GetRasterBand(1).GetStatistics(0, 1)
-
-        reference_raster = None
 
         # Return the resampled destination raster
         if output_format != 'MEM':
@@ -363,12 +358,9 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
     if calc_band_stats is True:
         destination['bands'][0].GetStatistics(0, 1)
 
-    reference_raster = None
-
     # Return the destination raster
     if output_format != 'MEM':
         destination['dataframe'].FlushCache()
-        destination = None
         return os.path.abspath(out_raster)
     else:
         return destination['dataframe']
