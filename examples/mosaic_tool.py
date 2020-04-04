@@ -231,7 +231,8 @@ def assess_radiometric_quality(metadata, quality='high', score=False):
     kernel = create_kernel(201, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
     kernel_long = create_kernel(dist_long, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
     kernel_short = create_kernel(dist_short, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
-    kernel_clean = create_kernel(3, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
+    kernel_clean_short = create_kernel(3, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
+    kernel_clean_long = create_kernel(5, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
     
     # Dilate nodata values by 1km each side 
     nodata_dilated = cv2.dilate((scl == 0).astype('uint8'), kernel).astype('intc')
@@ -242,9 +243,10 @@ def assess_radiometric_quality(metadata, quality='high', score=False):
 
     quality_uint16 = quality.astype('uint8')
     within_long = (cv2.erode(quality_uint16, kernel_long) < quality).astype('uint8')
+    within_long = cv2.morphologyEx(within_long, cv2.MORPH_OPEN, kernel_clean_long).astype('intc')
+    
     within_short = (cv2.erode(quality_uint16, kernel_short) < quality).astype('uint8')
-    within_long = cv2.erode(within_long, kernel_clean).astype('intc')
-    within_short = cv2.erode(within_short, kernel_clean).astype('intc')
+    within_short = cv2.morphologyEx(within_short, cv2.MORPH_OPEN, kernel_clean_short).astype('intc')
     
     combined_score = radiometric_quality_spatial(scl, quality, within_long, within_short, score)
     
@@ -325,6 +327,7 @@ def prepare_metadata(list_of_SAFE_images):
     
     return metadata
 
+# TODO: Weighted band ratio?
 # TODO: Find out what is wrong with: ['30NYL', '30PWR', '30PXR', '30PXS', '30PYQ', '30NWN', '30NZM', '30NZP']
 # TODO: Add multiprocessing
 # TODO: Add overlap harmonisation
@@ -557,29 +560,44 @@ def mosaic_tile(
             else:
                 weights['unclassified'].append(image['stats']['counts']['unclassified'] / pixel_sums['unclassified'])         
     
-        median_quintiles = {
+        weighted_medians = {
             'B02': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
             'B03': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
             'B04': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
             'B08': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
         }
         
-        madstd_quintiles = {
+        weighted_madstds = {
             'B02': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
             'B03': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
             'B04': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
             'B08': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
         }
+        
+        targets_median = { 'B02': None, 'B03': None, 'B04': None, 'B08': None }
+        targets_madstd = { 'B02': None, 'B03': None, 'B04': None, 'B08': None }
         
         for band in ['B02', 'B03', 'B04', 'B08']:
-            median_quintiles[band]['vegetation'] = np.average(medians[band]['vegetation'], weights=weights['vegetation'])
-            madstd_quintiles[band]['vegetation'] = np.average(madstds[band]['vegetation'], weights=weights['vegetation'])
+            weighted_medians[band]['vegetation'] = np.average(medians[band]['vegetation'], weights=weights['vegetation'])
+            weighted_medians[band]['unclassified'] = np.average(medians[band]['unclassified'], weights=weights['unclassified'])
+            weighted_medians[band]['not_vegetation'] = np.average(medians[band]['not_vegetation'], weights=weights['not_vegetation'])
             
-            median_quintiles[band]['not_vegetation'] = np.average(medians[band]['not_vegetation'], weights=weights['not_vegetation'])
-            madstd_quintiles[band]['not_vegetation'] = np.average(madstds[band]['not_vegetation'], weights=weights['not_vegetation'])
+            weighted_madstds[band]['vegetation'] = np.average(madstds[band]['vegetation'], weights=weights['vegetation'])
+            weighted_madstds[band]['not_vegetation'] = np.average(madstds[band]['not_vegetation'], weights=weights['not_vegetation'])
+            weighted_madstds[band]['unclassified'] = np.average(madstds[band]['unclassified'], weights=weights['unclassified'])
             
-            median_quintiles[band]['unclassified'] = np.average(medians[band]['unclassified'], weights=weights['unclassified'])
-            madstd_quintiles[band]['unclassified'] = np.average(madstds[band]['unclassified'], weights=weights['unclassified'])
+            targets_median[band] = sum([
+                ratios['vegetation'] * weighted_medians[band]['vegetation'],
+                ratios['not_vegetation'] * weighted_medians[band]['not_vegetation'],
+                ratios['unclassified'] * weighted_medians[band]['unclassified'],
+            ])
+            
+            targets_madstd[band] = sum([
+                ratios['vegetation'] * weighted_madstds[band]['vegetation'],
+                ratios['not_vegetation'] * weighted_madstds[band]['not_vegetation'],
+                ratios['unclassified'] * weighted_madstds[band]['unclassified'],
+            ])
+        
         
         for i in processed_images_indices:
             for band in ['B02', 'B03', 'B04', 'B08']:
@@ -599,38 +617,13 @@ def mosaic_tile(
                         ratios['unclassified'] * metadata[i]['stats'][band]['unclassified_mad'],                        
                     ])
                     
-                    target_median = sum([
-                        ratios['vegetation'] * median_quintiles[band]['vegetation'],
-                        ratios['not_vegetation'] * median_quintiles[band]['not_vegetation'],
-                        ratios['unclassified'] * median_quintiles[band]['unclassified'],
-                    ])
-                    
-                    target_madstd = sum([
-                        ratios['vegetation'] * madstd_quintiles[band]['vegetation'],
-                        ratios['not_vegetation'] * madstd_quintiles[band]['not_vegetation'],
-                        ratios['unclassified'] * madstd_quintiles[band]['unclassified'],
-                    ])
-                    
-                    if metadata[i]['stats'][band]['vegetation'] == 0:
-                        vegetation = 0
-                    else:
-                        vegetation = ratios['vegetation'] * (median_quintiles[band]['vegetation'] / metadata[i]['stats'][band]['vegetation'])
-                    
-                    if metadata[i]['stats'][band]['not_vegetation'] == 0:
-                        not_vegetation = 0
-                    else:
-                        not_vegetation = ratios['not_vegetation'] * (median_quintiles[band]['not_vegetation'] / metadata[i]['stats'][band]['not_vegetation'])
-                        
-                    if metadata[i]['stats'][band]['unclassified'] == 0:
-                        unclassified = 0
-                    else:
-                        unclassified = ratios['unclassified'] * (median_quintiles[band]['unclassified'] / metadata[i]['stats'][band]['unclassified'])
-                    
-                    metadata[i]['stats'][band]['scale'] = sum([vegetation, not_vegetation, unclassified])
+
                     metadata[i]['stats'][band]['src_median'] = src_median
                     metadata[i]['stats'][band]['src_madstd'] = src_madstd
-                    metadata[i]['stats'][band]['target_median'] = target_median
-                    metadata[i]['stats'][band]['target_madstd'] = target_madstd
+                    metadata[i]['stats'][band]['target_median'] = targets_median[band]
+                    metadata[i]['stats'][band]['target_madstd'] = targets_madstd[band]
+
+            import pdb; pdb.set_trace()
                     
 
     # Resample scl and tracking array
