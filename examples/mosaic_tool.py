@@ -243,7 +243,10 @@ def assess_radiometric_quality(metadata, quality='high', score=False):
 
     quality_uint16 = quality.astype('uint8')
     within_long = (cv2.erode(quality_uint16, kernel_long) < quality).astype('uint8')
-    within_long = cv2.morphologyEx(within_long, cv2.MORPH_OPEN, kernel_clean_long).astype('intc')
+    if score is True:
+        within_long = cv2.morphologyEx(within_long, cv2.MORPH_OPEN, kernel_clean_short).astype('intc')
+    else:
+        within_long = cv2.morphologyEx(within_long, cv2.MORPH_OPEN, kernel_clean_long).astype('intc')
     
     within_short = (cv2.erode(quality_uint16, kernel_short) < quality).astype('uint8')
     within_short = cv2.morphologyEx(within_short, cv2.MORPH_OPEN, kernel_clean_short).astype('intc')

@@ -576,13 +576,15 @@ cdef int assess_quality_func(
             quality -= 1
         else:
             quality -= 2
+    elif b1 <= 100 and b2 <= 200:
+        quality -= 2
 
     # Minus 1
     elif b2 >= 1400:
         quality -= 1
     elif b1 > 800:
         quality -= 1
-    elif b1 <= 100 and b2 <= 200:
+    elif b1 <= 125 and b2 <= 250:
         quality -= 1
 
 
