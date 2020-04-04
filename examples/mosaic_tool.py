@@ -219,8 +219,8 @@ def assess_radiometric_quality(metadata, quality='high', score=False):
         scl = raster_to_array(metadata['path']['20m']['SCL']).astype('intc')
         band_01 = raster_to_array(resample(metadata['path']['60m']['B01'], reference_raster=metadata['path']['20m']['B04'])).astype('intc')
         band_02 = raster_to_array(metadata['path']['20m']['B02']).astype('intc')
-        dist_short = 9
-        dist_long = 21
+        dist_short = 13
+        dist_long = 25
     else:
         scl = raster_to_array(metadata['path']['60m']['SCL']).astype('intc')
         band_01 = raster_to_array(metadata['path']['60m']['B01']).astype('intc')
@@ -327,7 +327,6 @@ def prepare_metadata(list_of_SAFE_images):
     
     return metadata
 
-# TODO: Weighted band ratio?
 # TODO: Find out what is wrong with: ['30NYL', '30PWR', '30PXR', '30PXS', '30PYQ', '30NWN', '30NZM', '30NZP']
 # TODO: Add multiprocessing
 # TODO: Add overlap harmonisation
@@ -372,8 +371,6 @@ def mosaic_tile(
     print('Resampling and reading base image..')
     quality, scl, b1 = assess_radiometric_quality(best_image)
     
-    array_to_raster(quality.astype('uint8'), reference_raster=best_image['path']['20m']['B02'], out_raster=os.path.join(out_dir, f"quality_{img_name}.tif"), dst_projection=dst_projection)
-    
     time_limit = (max_days * 86400)
        
     tracking_array = np.zeros(quality.shape, dtype='uint8')
@@ -417,8 +414,6 @@ def mosaic_tile(
             processed_images_indices.append(current_image_index)
 
             img_name = os.path.basename(os.path.normpath(metadata[current_image_index]['folder'])).split('_')[-1].split('.')[0]
-            
-            array_to_raster(quality.astype('uint8'), reference_raster=best_image['path']['20m']['B02'], out_raster=os.path.join(out_dir, f"quality_{img_name}.tif"), dst_projection=dst_projection)
 
             print(f'Updating tracking array: (coverage {round(coverage, 2)}%) (quality {round(avg_quality, 2)}%) ({td}/{max_days} days) (goal {ideal_percent}%)')
         else:
@@ -622,8 +617,6 @@ def mosaic_tile(
                     metadata[i]['stats'][band]['src_madstd'] = src_madstd
                     metadata[i]['stats'][band]['target_median'] = targets_median[band]
                     metadata[i]['stats'][band]['target_madstd'] = targets_madstd[band]
-
-            import pdb; pdb.set_trace()
                     
 
     # Resample scl and tracking array
@@ -680,6 +673,6 @@ def mosaic_tile(
                 else:
                     base_image = np.where(tracking_array == i, add_band, base_image).astype('float32')
 
-        array_to_raster(np.ma.masked_where(scl == 0, np.rint(base_image).astype('uint16')), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
+        array_to_raster(np.ma.masked_where(scl == 0, np.rint(np.where(base_image < 0, 0, base_image)).astype('uint16')), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
 
     print(f'Completed mosaic in: {round((time() - start_time) / 60, 1)}m')
