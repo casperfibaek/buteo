@@ -387,20 +387,26 @@ def step_function(func, *args, grid=None, outfile=False, outfile_arg='outfile', 
 
 
 # https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy
-def weighted_quantile(values, quantile, sample_weight=None):
-    values = np.array(values)
-    if sample_weight is None:
-        sample_weight = np.ones(len(values))
+def weighted_quantile(values, quantile, weights=None):
+    if weights is None or np.sum(weights) == 0:
+        weights = np.ones(len(values))
 
-    sample_weight = np.array(sample_weight)
+    values = np.array(values)
+    weights = np.array(weights)
     assert quantile >= 0 and quantile <= 1, 'quantiles should be in [0, 1]'
 
     sorter = np.argsort(values)
     values = values[sorter]
-    sample_weight = sample_weight[sorter]
+    weights = weights[sorter]
 
-    weighted_quantiles = np.cumsum(sample_weight) - 0.5 * sample_weight
-
-    weighted_quantiles /= np.sum(sample_weight)
+    weighted_quantiles = np.cumsum(weights) - 0.5 * weights
+    weighted_quantiles /= np.sum(weights)
 
     return np.interp(quantile, weighted_quantiles, values)
+
+
+def madstd(arr):
+    med = np.ma.median(arr)
+    meddevabs = np.ma.abs(arr - med)
+    devmed = np.ma.median(meddevabs)
+    return med, devmed * 1.4826

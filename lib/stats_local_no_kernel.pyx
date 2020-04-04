@@ -437,3 +437,235 @@ def select_highest(arr, weights):
     return result
 
 
+def truncate_array(arr, min_value=False, max_value=False):
+    cdef bint has_nodata = False
+    cdef double fill_value
+    cdef double min_v = min_value if min_value is not False else -99999999999999999999.0
+    cdef double max_v = max_value if max_value is not False else 99999999999999999999.0
+    cdef double [:, ::1] arr_view_2d
+    cdef double [:, :, ::1] arr_view_3d
+    cdef double [:, ::1] result_view_2d
+    cdef double [:, :, ::1] result_view_3d
+    cdef int dims = len(arr.shape)
+
+    assert(dims == 2 or dims == 3)
+
+    result = np.empty(arr.shape, dtype=np.double)
+    arr = arr.astype(np.double) if arr.dtype != np.double else arr
+    arr_mask = False
+
+    if isinstance(arr, np.ma.MaskedArray):
+        result = np.ma.array(result, fill_value=arr.fill_value)
+        fill_value = arr.fill_value
+        has_nodata = 1
+        if arr.mask is not False:
+            arr_mask = np.ma.getmask(arr)
+        arr = arr.filled()
+    else:
+        fill_value = 0.0
+
+    if dims == 3:
+        arr_view_3d = arr
+        result_view_3d = result
+        truncate_3d(
+            arr_view_3d,
+            result_view_3d,
+            min_v,
+            max_v,
+            arr.shape[0],
+            arr.shape[1],
+            arr.shape[2],
+            has_nodata,
+            fill_value,
+        )
+    else:
+        arr_view_2d = arr
+        result_view_2d = result
+        truncate_2d(
+            arr_view_2d,
+            result_view_2d,
+            min_v,
+            max_v,
+            arr.shape[0],
+            arr.shape[1],
+            has_nodata,
+            fill_value,
+        )
+    
+    if has_nodata is True:
+        if arr_mask is not False:
+            return np.ma.masked_where(arr_mask, result)
+        else:
+            return np.ma.masked_equal(result, fill_value)
+
+    return result
+
+# SCL
+##  0: SC_NODATA
+##  1: SC_SATURATED_DEFECTIVE
+##  2: SC_DARK_FEATURE_SHADOW
+##  3: SC_CLOUD_SHADOW
+##  4: SC_VEGETATION
+##  5: SC_NOT_VEGETATED
+##  6: SC_WATER
+##  7: SC_UNCLASSIFIED
+##  8: SC_CLOUD_MEDIUM_PROBA
+##  9: SC_CLOUD_HIGH_PROBA
+## 10: SC_THIN_CIRRUS
+## 11: SC_SNOW_ICE
+
+
+
+cdef int assess_quality_func(
+    int scl,
+    int b1,
+    int b2,
+    int nodata,
+) nogil:
+    cdef int quality = 0
+
+    if nodata == 1: # SC_NODATA
+        quality = 0 
+    elif scl == 1:  # SC_SATURATED_DEFECTIVE
+        quality = 0 
+    elif scl == 2:  # SC_DARK_FEATURE_SHADOW
+        quality = 1
+    elif scl == 3:  # SC_CLOUD_SHADOW
+        quality = 1
+    elif scl == 4:  # SC_VEGETATION
+        quality = 10
+    elif scl == 5:  # SC_NOT_VEGETATED
+        quality = 10
+    elif scl == 6:  # SC_WATER
+        quality = 10
+    elif scl == 7:  # SC_UNCLASSIFIED
+        quality = 10
+    elif scl == 8:  # SC_CLOUD_MEDIUM_PROBA
+        quality = 3
+    elif scl == 9:  # SC_CLOUD_HIGH_PROBA
+        quality = 1
+    elif scl == 10: # SC_THIN_CIRRUS
+        quality = 8
+    elif scl == 11: # SC_SNOW_ICE
+        quality = 6
+    
+
+    # Minus 3-4
+    if b1 > 1500:
+        if scl == 10:
+            quality -= 3
+        else:
+            quality -= 4
+    elif b2 <= 1 and b2 <= 1:
+        quality -= 4
+    elif b1 > 1200:
+        if scl == 10:
+            quality -= 2
+        else:
+            quality -= 3
+    elif b2 >= 2000:
+        quality -= 3
+    elif b1 <= 10 and b2 <= 100:
+        quality -= 3
+    
+    # Minus 2
+    elif b2 >= 1750:
+        quality -= 2
+    elif b1 > 1000:
+        if scl == 10:
+            quality -= 1
+        else:
+            quality -= 2
+
+    # Minus 1
+    elif b2 >= 1400:
+        quality -= 1
+    elif b1 > 800:
+        quality -= 1
+    elif b1 <= 100 and b2 <= 200:
+        quality -= 1
+
+
+    if quality < 0:
+        quality = 0
+
+    return quality
+
+
+cdef void assess_quality(
+    int [:, ::1] scl,
+    int [:, ::1] b1,
+    int [:, ::1] b2,
+    int [:, ::1] nodata,
+    int [:, ::1] quality,
+    int x_max,
+    int y_max,
+) nogil:
+    cdef int x, y
+
+    for x in prange(x_max, nogil=True):
+        for y in prange(y_max):
+            quality[x][y] = assess_quality_func(scl[x][y], b1[x][y], b2[x][y], nodata[x][y])
+
+
+cpdef void radiometric_quality(scl, b1, b2, nodata, quality):
+    cdef int [:, ::1] scl_view = scl
+    cdef int [:, ::1] b1_view = b1
+    cdef int [:, ::1] b2_view = b2
+    cdef int [:, ::1] nodata_view = nodata
+    cdef int [:, ::1] quality_view = quality
+
+    cdef int x_max = scl.shape[0]
+    cdef int y_max = scl.shape[1]
+    
+    assess_quality(scl_view, b1_view, b2_view, nodata_view, quality_view, x_max, y_max)
+
+
+cdef int assess_quality_spatial_func(
+    int scl,
+    int quality,
+    int within_long,
+    int within_short,
+) nogil:
+    cdef int negative = 0
+
+    if within_long == 1:
+        negative += 1
+    if within_short == 1:
+        negative += 1
+    
+    if (quality - negative) < 0:
+        return 0
+    else:
+        return quality - negative
+
+cdef int assess_quality_spatial(
+    int [:, ::1] scl,
+    int [:, ::1] quality,
+    int [:, ::1] within_long,
+    int [:, ::1] within_short,
+    bint score,
+    int x_max,
+    int y_max,
+) nogil:
+    cdef int x, y, q
+    cdef int score_sum = 0
+    for x in prange(x_max, nogil=True):
+        for y in prange(y_max):
+            q = assess_quality_spatial_func(scl[x][y], quality[x][y], within_long[x][y], within_short[x][y])
+            quality[x][y] = q
+            score_sum += q
+    
+    return score_sum
+
+cpdef int radiometric_quality_spatial(scl, quality, within_long, within_short, score):
+    cdef int [:, ::1] scl_view = scl
+    cdef int [:, ::1] quality_view = quality
+    cdef int [:, ::1] within_long_view = within_long
+    cdef int [:, ::1] within_short_view = within_short
+    cdef bint bint_score = score
+
+    cdef int x_max = scl.shape[0]
+    cdef int y_max = scl.shape[1]
+
+    return assess_quality_spatial(scl_view, quality_view, within_long_view, within_short_view, bint_score, x_max, y_max)
