@@ -537,9 +537,9 @@ cdef int assess_quality_func(
     elif scl == 5:  # SC_NOT_VEGETATED
         quality = 10
     elif scl == 6:  # SC_WATER
-        quality = 10
+        quality = 9
     elif scl == 7:  # SC_UNCLASSIFIED
-        quality = 10
+        quality = 9
     elif scl == 8:  # SC_CLOUD_MEDIUM_PROBA
         quality = 3
     elif scl == 9:  # SC_CLOUD_HIGH_PROBA
