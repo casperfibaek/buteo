@@ -242,13 +242,16 @@ def assess_radiometric_quality(metadata, quality='high', score=False):
     radiometric_quality(scl, band_01, band_02, nodata_dilated, quality)
 
     quality_uint16 = quality.astype('uint8')
-    within_long = (cv2.erode(quality_uint16, kernel_long) < quality).astype('uint8')
+
+    long_erode = cv2.erode(quality_uint16, kernel_long).astype('bool')
+    within_long = ((long_erode < quality) & (long_erode <= 9)).astype('uint8')
     if score is True:
         within_long = cv2.morphologyEx(within_long, cv2.MORPH_OPEN, kernel_clean_short).astype('intc')
     else:
         within_long = cv2.morphologyEx(within_long, cv2.MORPH_OPEN, kernel_clean_long).astype('intc')
     
-    within_short = (cv2.erode(quality_uint16, kernel_short) < quality).astype('uint8')
+    short_erode = cv2.erode(quality_uint16, kernel_short).astype('bool')
+    within_short = ((short_erode < quality) & (short_erode <= 9)).astype('uint8')
     within_short = cv2.morphologyEx(within_short, cv2.MORPH_OPEN, kernel_clean_short).astype('intc')
     
     combined_score = radiometric_quality_spatial(scl, quality, within_long, within_short, score)
@@ -383,7 +386,7 @@ def mosaic_tile(
     current_image_index = 1  # The 0 index is for the best image
     processed_images_indices = [0]
 
-    print(f'Initial. tracking array: (coverage {round(coverage, 2)}%) (quality {round(avg_quality, 2)}%) (0/{max_days} days) (goal {ideal_percent}%)')
+    print(f'Initial. tracking array: (ideals {round(coverage, 2)}%) (quality {round(avg_quality, 2)}%) (0/{max_days} days) (goal {ideal_percent}%)')
     # Loop the images and update the tracking array
     while (
         (coverage < ideal_percent)
@@ -418,7 +421,7 @@ def mosaic_tile(
 
             img_name = os.path.basename(os.path.normpath(metadata[current_image_index]['folder'])).split('_')[-1].split('.')[0]
 
-            print(f'Updating tracking array: (coverage {round(coverage, 2)}%) (quality {round(avg_quality, 2)}%) ({td}/{max_days} days) (goal {ideal_percent}%)')
+            print(f'Updating tracking array: (ideals {round(coverage, 2)}%) (quality {round(avg_quality, 2)}%) ({td}/{max_days} days) (goal {ideal_percent}%)')
         else:
             print(f'Skipping image due to low change.. (0.5% threshold) ({td}/{max_days} days)')
 

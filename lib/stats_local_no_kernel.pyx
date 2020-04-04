@@ -569,9 +569,7 @@ cdef int assess_quality_func(
         quality -= 3
     
     # Minus 2
-    elif b2 >= 1750:
-        quality -= 2
-    elif b1 > 1000:
+    elif b2 >= 1750 or b1 > 1000:
         if scl == 10:
             quality -= 1
         else:
