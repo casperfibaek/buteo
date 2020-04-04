@@ -203,8 +203,7 @@ def get_metadata(safe_folder):
         + metadata["HIGH_PROBA_CLOUDS_PERCENTAGE"]
         + metadata["THIN_CIRRUS_PERCENTAGE"]
         + metadata["SNOW_ICE_PERCENTAGE"]
-        + (metadata["DARK_FEATURES_PERCENTAGE"] * 0.75)
-        + (metadata["UNCLASSIFIED_PERCENTAGE"] * 0.25)
+        + metadata["DARK_FEATURES_PERCENTAGE"]
     )
     
     metadata["timestamp"] = float(metadata['DATATAKE_SENSING_START'].timestamp())
@@ -219,20 +218,18 @@ def assess_radiometric_quality(metadata, quality='high', score=False):
         scl = raster_to_array(metadata['path']['20m']['SCL']).astype('intc')
         band_01 = raster_to_array(resample(metadata['path']['60m']['B01'], reference_raster=metadata['path']['20m']['B04'])).astype('intc')
         band_02 = raster_to_array(metadata['path']['20m']['B02']).astype('intc')
-        dist_short = 13
-        dist_long = 25
+        dist_short = 15
+        dist_long = 31
     else:
         scl = raster_to_array(metadata['path']['60m']['SCL']).astype('intc')
         band_01 = raster_to_array(metadata['path']['60m']['B01']).astype('intc')
         band_02 = raster_to_array(metadata['path']['60m']['B02']).astype('intc')
         dist_short = 5
-        dist_long = 9
+        dist_long = 11
 
     kernel = create_kernel(201, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
     kernel_long = create_kernel(dist_long, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
     kernel_short = create_kernel(dist_short, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
-    kernel_clean_short = create_kernel(3, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
-    kernel_clean_long = create_kernel(5, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
     
     # Dilate nodata values by 1km each side 
     nodata_dilated = cv2.dilate((scl == 0).astype('uint8'), kernel).astype('intc')
@@ -241,20 +238,16 @@ def assess_radiometric_quality(metadata, quality='high', score=False):
     quality = np.full(scl.shape, 100).astype('intc')
     radiometric_quality(scl, band_01, band_02, nodata_dilated, quality)
 
-    quality_uint16 = quality.astype('uint8')
+    quality_uint8 = quality.astype('uint8')
 
-    long_erode = cv2.erode(quality_uint16, kernel_long).astype('bool')
-    within_long = ((long_erode < quality) & (long_erode <= 9)).astype('uint8')
-    if score is True:
-        within_long = cv2.morphologyEx(within_long, cv2.MORPH_OPEN, kernel_clean_short).astype('intc')
-    else:
-        within_long = cv2.morphologyEx(within_long, cv2.MORPH_OPEN, kernel_clean_long).astype('intc')
-    
-    short_erode = cv2.erode(quality_uint16, kernel_short).astype('bool')
-    within_short = ((short_erode < quality) & (short_erode <= 9)).astype('uint8')
-    within_short = cv2.morphologyEx(within_short, cv2.MORPH_OPEN, kernel_clean_short).astype('intc')
+    long_erode = cv2.erode(quality_uint8, kernel_long)
+    short_erode = cv2.erode(quality_uint8, kernel_short)
+    within_long = ((long_erode < quality) & (long_erode < 8)).astype('intc')
+    within_short = ((short_erode < quality) & (short_erode < 8)).astype('intc')
     
     combined_score = radiometric_quality_spatial(scl, quality, within_long, within_short, score)
+
+    # array_to_raster(quality.astype('uint8'), reference_raster=metadata['path']['20m']['B02'], out_raster=os.path.join('/home/cfi/data/tests/', f"q_{score}_{metadata['name']}_{combined_score}.tif"))
     
     if score is True:
         return combined_score
@@ -296,11 +289,13 @@ def prepare_metadata(list_of_SAFE_images):
 
         image_metadata = get_metadata(list_of_SAFE_images[index])
         image_metadata['path'] = get_band_paths(list_of_SAFE_images[index])
+        image_metadata['name'] = os.path.basename(os.path.normpath(image_metadata['folder'])).split('_')[-1].split('.')[0]
         metadata.append(image_metadata)
 
     lowest_invalid_percentage = 100
     best_image = None
     
+    best_images_names = []
     best_images = []
     
     # Find the image with the lowest invalid percentage
@@ -311,14 +306,15 @@ def prepare_metadata(list_of_SAFE_images):
 
     for meta in metadata:
         if (meta['INVALID'] - lowest_invalid_percentage) <= 10:
-            best_images.append(meta)
+            if meta['name'] not in best_images_names:
+                best_images.append(meta)
+                best_images_names.append(meta['name'])
 
     if len(best_images) != 1:
         # Search the top 10% images for the best image
         max_quality_score = 0
         for image in best_images:
             quality_score = assess_radiometric_quality(image, quality='low', score=True)
-            quality_arr, b1, scl = assess_radiometric_quality(image, quality='low', score=False)
 
             if quality_score > max_quality_score:
                 max_quality_score = quality_score
@@ -352,7 +348,7 @@ def mosaic_tile(
     filter_tracking_dist=7,
     filter_tracking_iterations=1,
     match_mean=True,
-    max_days=30,
+    max_days=45,
     max_images_include=15,
     max_search_images=35,
 ):
@@ -369,10 +365,9 @@ def mosaic_tile(
     
     # Sorted by best, so 0 is the best one.
     best_image = metadata[0]
-    best_image_folder = best_image['folder']
-    img_name = os.path.basename(os.path.normpath(best_image_folder)).split('_')[-1].split('.')[0]
+    best_image_name = best_image['name']
 
-    print(f'Selected: {img_name}')
+    print(f'Selected: {best_image_name}')
 
     print('Resampling and reading base image..')
     quality, scl, b1 = assess_radiometric_quality(best_image)
@@ -679,6 +674,6 @@ def mosaic_tile(
                 else:
                     base_image = np.where(tracking_array == i, add_band, base_image).astype('float32')
 
-        array_to_raster(np.ma.masked_where(scl == 0, np.rint(np.where(base_image < 0, 0, base_image)).astype('uint16')), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
+        array_to_raster(np.rint(base_image).astype('uint16'), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
 
     print(f'Completed mosaic in: {round((time() - start_time) / 60, 1)}m')

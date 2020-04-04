@@ -549,45 +549,55 @@ cdef int assess_quality_func(
     elif scl == 11: # SC_SNOW_ICE
         quality = 6
     
-
-    # Minus 3-4
-    if b1 > 1500:
-        if scl == 10:
-            quality -= 3
-        else:
+    # land pixels
+    if scl == 4 or scl == 5 or scl == 7:
+        if b1 <= 1 and b2 <= 1:
             quality -= 4
-    elif b2 <= 1 and b2 <= 1:
-        quality -= 4
-    elif b1 > 1200:
-        if scl == 10:
-            quality -= 2
-        else:
+        elif b1 > 1400:
             quality -= 3
-    elif b2 >= 2000:
-        quality -= 3
-    elif b1 <= 10 and b2 <= 100:
-        quality -= 3
-    
-    # Minus 2
-    elif b2 >= 1750 or b1 > 1000:
-        if scl == 10:
-            quality -= 1
-        else:
+        elif b1 <= 10 and b2 <= 30:
+            quality -= 3
+        elif b1 > 1100:
             quality -= 2
-    elif b1 <= 100 and b2 <= 200:
-        quality -= 2
+        elif b1 <= 40 and b2 <= 70:
+            quality -= 2
+        elif b1 <= 80 and b2 <= 125:
+            quality -= 1
+        elif b1 > 800:
+            quality -= 1
+    
+    # water pixels
+    elif scl == 6:
+        if b1 <= 50 or b2 <= 100:
+            quality -= 1
+        elif b1 > 1000:
+            quality -= 1
+    
+    # cirrus
+    elif scl == 10:
+        if b1 <= 1 and b2 <= 1:
+            quality -= 4
+        elif b1 <= 10 and b2 <= 50:
+            quality -= 3
+        elif b1 <= 50 and b2 <= 100:
+            quality -= 2
+        elif b1 <= 85 and b2 <= 125:
+            quality -= 1
+        elif b1 > 1400:
+            quality -= 2
+        elif b1 > 1100:
+            quality -= 1
+    
+    # other
+    else:
+        if b1 > 1000:
+            quality -= 1
 
-    # Minus 1
-    elif b2 >= 1400:
-        quality -= 1
-    elif b1 > 800:
-        quality -= 1
-    elif b1 <= 125 and b2 <= 250:
-        quality -= 1
-
-
-    if quality < 0:
-        quality = 0
+    if quality <= 0:
+        if nodata == 1 or scl == 1:
+            quality = 0
+        else:
+            quality = 1
 
     return quality
 
