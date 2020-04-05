@@ -10,26 +10,26 @@ from mosaic_tool import mosaic_tile
 
 project_area = '/mnt/c/Users/caspe/Desktop/Analysis/Data/vector/ghana_landarea.shp'
 project_geom = gpd.read_file(project_area)
-project_geom_wgs = project_geom.to_crs('EPSG:4326')
+# project_geom_wgs = project_geom.to_crs('EPSG:4326')
 
-tiles = '../geometry/sentinel2_tiles_world.shp'
-tiles_geom = gpd.read_file(tiles)
-tiles_dest = tiles_geom.to_crs(project_geom.crs)
+# tiles = '../geometry/sentinel2_tiles_world.shp'
+# tiles_geom = gpd.read_file(tiles)
+# tiles_dest = tiles_geom.to_crs(project_geom.crs)
 
-data = []
-data_bounds = []
-for index_g, geom in project_geom_wgs.iterrows():
-    for index_t, tile in tiles_geom.iterrows():
-        if geom['geometry'].intersects(tile['geometry']):
-            data.append(tile['Name'])
-            data_bounds.append(list(tile['geometry'].bounds))
+# data = []
+# data_bounds = []
+# for index_g, geom in project_geom_wgs.iterrows():
+#     for index_t, tile in tiles_geom.iterrows():
+#         if geom['geometry'].intersects(tile['geometry']):
+#             data.append(tile['Name'])
+#             data_bounds.append(list(tile['geometry'].bounds))
 
 # connectToAPI('test', 'test')
 
 # data.reverse()
 
 # DIFFICULT TILES:
-extra_tiles = ['30NYL', '30PWR', '30PXR', '30PXS', '30PYQ', '30NWN', '30NZM', '30NZP']
+# extra_tiles = ['30NYL', '30PWR', '30PXR', '30PXS', '30PYQ', '30NWN', '30NZM', '30NZP']
 
 # for tile in data:
 #     if tile in extra_tiles:
@@ -40,13 +40,14 @@ extra_tiles = ['30NYL', '30PWR', '30PXR', '30PXS', '30PYQ', '30NWN', '30NZM', '3
 tmp_dir = '/home/cfi/data/tmp/'
 dst_dir = '/home/cfi/data/mosaic/'
 
-for index, tile in enumerate(data):
+# for tile in data:
+for tile in ['30NVM']:
 
     if len(glob(f"{dst_dir}*tile*")) != 0:
         continue
     
-    images = glob(f'/mnt/d/data/*{tile}*.zip')
-    decompress(images, tmp_dir)
+    # images = glob(f'/mnt/d/data/*{tile}*.zip')
+    # decompress(images, tmp_dir)
     images = glob(f'{tmp_dir}*{tile}*')
 
     mosaic_tile(
@@ -56,12 +57,12 @@ for index, tile in enumerate(data):
         dst_projection=project_geom.crs.to_wkt(),
     )
 
-    delete_files = glob(f"{tmp_dir}*.*")
-    for f in delete_files:
-        try:
-            shutil.rmtree(f)
-        except:
-            pass
+    # delete_files = glob(f"{tmp_dir}*.*")
+    # for f in delete_files:
+    #     try:
+    #         shutil.rmtree(f)
+    #     except:
+    #         pass
 
 
 # import numpy as np
