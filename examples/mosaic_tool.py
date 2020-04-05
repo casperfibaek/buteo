@@ -230,6 +230,7 @@ def assess_radiometric_quality(metadata, quality='high', score=False):
     kernel = create_kernel(201, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
     kernel_long = create_kernel(dist_long, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
     kernel_short = create_kernel(dist_short, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
+    kernel_clean = create_kernel(3, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
     
     # Dilate nodata values by 1km each side 
     nodata_dilated = cv2.dilate((scl == 0).astype('uint8'), kernel).astype('intc')
@@ -242,8 +243,15 @@ def assess_radiometric_quality(metadata, quality='high', score=False):
 
     long_erode = cv2.erode(quality_uint8, kernel_long)
     short_erode = cv2.erode(quality_uint8, kernel_short)
-    within_long = ((long_erode < quality) & (long_erode < 8)).astype('intc')
-    within_short = ((short_erode < quality) & (short_erode < 8)).astype('intc')
+    
+    if score is False:
+        within_long = ((long_erode < quality) & (long_erode < 8)).astype('uint8')
+        within_long = cv2.morphologyEx(within_long, cv2.MORPH_OPEN, kernel_clean).astype('intc')
+        within_short = ((short_erode < quality) & (short_erode < 8)).astype('uint8')
+        within_short = cv2.morphologyEx(within_short, cv2.MORPH_OPEN, kernel_clean).astype('intc')
+    else:
+        within_long = within_long.astype('intc')
+        within_short = within_short.astype('intc')
     
     combined_score = radiometric_quality_spatial(scl, quality, within_long, within_short, score)
 
@@ -328,6 +336,11 @@ def prepare_metadata(list_of_SAFE_images):
     metadata = sorted(metadata, key=lambda k: k['time_difference']) 
     
     return metadata
+
+# TODO: What is it with the white spots? Overflow? Check uint8-16 and float32 conversions. 
+# TODO: Test: noise removal, 3x3 opening morph
+# TODO: Harmonisation target only on 10 pixels.
+# TODO: Ideal test layer: NVM
 
 # TODO: Find out what is wrong with: ['30NYL', '30PWR', '30PXR', '30PXS', '30PYQ', '30NWN', '30NZM', '30NZP']
 # TODO: Add multiprocessing
@@ -613,7 +626,6 @@ def mosaic_tile(
                         ratios['unclassified'] * metadata[i]['stats'][band]['unclassified_mad'],                        
                     ])
                     
-
                     metadata[i]['stats'][band]['src_median'] = src_median
                     metadata[i]['stats'][band]['src_madstd'] = src_madstd
                     metadata[i]['stats'][band]['target_median'] = targets_median[band]
@@ -637,9 +649,7 @@ def mosaic_tile(
         for i in processed_images_indices:
             feathers[str(i)] = feather_s2_filter(tracking_array, i, feather_dist).astype('float32')
 
-
     array_to_raster(scl.astype('uint8'), reference_raster=best_image['path']['10m']['B08'], out_raster=os.path.join(out_dir, f"slc_{out_name}.tif"), dst_projection=dst_projection)
-
 
     bands_to_output = ['B02', 'B03', 'B04', 'B08']
     print('Merging band data..')
