@@ -663,6 +663,7 @@ cdef int assess_quality_spatial_func(
     int quality_eroded,
 ) nogil:
     cdef int negative = 0
+    # cdef double float_negative = (-0.02 * distance) + 3
 
     if distance < 25 == 1:
         negative += 3

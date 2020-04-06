@@ -438,7 +438,7 @@ def mosaic_tile(
 
             print(f'Updating tracking array: (quality {round(avg_quality, 2)}%) ({td}/{max_days} days) (goal {ideal_percent}%) (name {img_name})')
         else:
-            print(f'Skipping image due to low change.. ({threshold}% threshold) ({td}/{max_days} days)')
+            print(f'Skipping image due to low change.. ({round(threshold, 3)}% threshold) ({td}/{max_days} days)')
 
         i += 1
 
@@ -512,7 +512,7 @@ def mosaic_tile(
                             while layer_mask.sum() < pixel_cutoff:
                                 quality_cutoff -= 1
                                 quality_mask = metadata[i]['quality'] < quality_cutoff
-                                layer_mask = quality_mask & land_mask
+                                layer_mask = quality_mask
                 
 
                 for band in ['B02', 'B03', 'B04', 'B08']:
@@ -521,8 +521,12 @@ def mosaic_tile(
                     else:
                         array = raster_to_array(metadata[i]['path']['20m'][band])
 
-                    array = np.ma.array(array, mask=layer_mask)
-                    med, mad = madstd(array)
+                    calc_array = np.ma.array(array, mask=layer_mask)
+                    med, mad = madstd(calc_array)
+
+                    if med == 0 or mad == 0:
+                        med, mad = madstd(array)
+                        
                     medians[band].append(med)
                     madstds[band].append(mad)
             
@@ -535,8 +539,8 @@ def mosaic_tile(
         
             for v, i in enumerate(processed_images_indices):
                 for band in ['B02', 'B03', 'B04', 'B08']:
-                    metadata[i]['stats'][band]['src_median'] = medians[band][v]
-                    metadata[i]['stats'][band]['src_madstd'] = madstds[band][v]
+                    metadata[i]['stats'][band]['src_median'] = medians[band][v] if medians[band][v] > 0 else targets_median[band]
+                    metadata[i]['stats'][band]['src_madstd'] = madstds[band][v] if madstds[band][v] > 0 else targets_madstd[band]
                     metadata[i]['stats'][band]['target_median'] = targets_median[band]
                     metadata[i]['stats'][band]['target_madstd'] = targets_madstd[band]
         
