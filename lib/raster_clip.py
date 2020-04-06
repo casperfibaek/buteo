@@ -6,7 +6,7 @@ from lib.utils_core import get_extent, translate_max_values, create_subset_dataf
 
 def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
                 cutline_all_touch=False, crop_to_cutline=True, cutlineWhere=None, src_nodata=None,
-                dst_nodata=None, quiet=False, align=True, band_to_clip=None,
+                dst_nodata=None, quiet=True, align=True, band_to_clip=None,
                 calc_band_stats=False, scale_to_reference=False, output_format='MEM'):
     ''' Clips a raster by either a reference raster, a cutline
         or both.
@@ -147,6 +147,8 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         # Check whether it is a polygon or multipolygon
         layer = cutlineGeometry.GetLayer(0)
 
+        cutlineLayer = layer
+
         # Check if layer contains features:
         vectorFeatureCount = layer.GetFeatureCount()
 
@@ -175,7 +177,6 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
 
             bottomLeft.AddPoint(vectorExtent[0], vectorExtent[1])
             topRight.AddPoint(vectorExtent[2], vectorExtent[3])
-
             coordinateTransform = osr.CoordinateTransformation(vectorProjection, inputProjectionOSR)
             bottomLeft.Transform(coordinateTransform)
             topRight.Transform(coordinateTransform)
@@ -191,7 +192,6 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
             return False
 
         # Free the memory again.
-        cutlineGeometry = None
         layer = None
         feat = None
         geom = None
@@ -323,7 +323,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
                     srcNodata=inputNodataValue,
                     dstNodata=dst_nodata,
                     callback=progressbar,
-                    cutlineDSName=cutline,
+                    cutlineLayer=cutlineLayer,
                     cutlineWhere=cutlineWhere,
                     warpOptions=options,
                 )
@@ -381,7 +381,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
                 srcNodata=inputNodataValue,
                 dstNodata=dst_nodata,
                 callback=progressbar,
-                cutlineDSName=cutline,
+                cutlineLayer=cutlineLayer,
                 cropToCutline=crop_to_cutline,
                 cutlineWhere=cutlineWhere,
                 warpOptions=options,
@@ -403,6 +403,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
     referenceDataframe = None
     destinationName = None
     cutlineGeometry = None
+    cutlineLayer = None
     layer = None
     in_raster = None
     reference_raster = None

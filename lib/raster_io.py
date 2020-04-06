@@ -1,12 +1,10 @@
 import os
 import numpy as np
+import json
 from osgeo import gdal, osr
 
 from lib.utils_core import numpy_to_gdal_datatype, numpy_fill_values, datatype_is_float, progress_callback_quiet
 from lib.raster_clip import clip_raster
-
-
-# TODO: raster_to_metadata
 
 
 def array_to_raster(array, out_raster=None, reference_raster=None, output_format='MEM',
@@ -487,3 +485,74 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
         data = data.compressed()
 
     return data
+
+
+def raster_to_metadata(in_raster):
+    metadata = {}
+    try:
+        if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
+            metadata['dataframe'] = in_raster
+        else:
+            metadata['dataframe'] = gdal.Open(in_raster)
+    except:
+        raise Exception('Could not read input raster')
+    
+    metadata['transform'] = metadata['dataframe'].GetGeoTransform()
+    metadata['projection'] = metadata['dataframe'].GetProjection()
+    
+    og = osr.SpatialReference()
+    og.ImportFromWkt(metadata['projection'])
+    wgs84 = osr.SpatialReference()
+    wgs84.ImportFromEPSG(4326)
+
+    tx = osr.CoordinateTransformation(og, wgs84)
+    
+    metadata['width'] = metadata['dataframe'].RasterXSize
+    metadata['height'] = metadata['dataframe'].RasterYSize
+    metadata['pixel_width'] = metadata['transform'][1]
+    metadata['pixel_height'] = metadata['transform'][5]
+    metadata['minx'] = metadata['transform'][0]
+    metadata['miny'] = metadata['transform'][3] + metadata['width'] * metadata['transform'][4] + metadata['height'] * metadata['transform'][5] 
+    metadata['maxx'] = metadata['transform'][0] + metadata['width'] * metadata['transform'][1] + metadata['height'] * metadata['transform'][2]
+    metadata['maxy'] = metadata['transform'][3]
+    
+    bottom_left = tx.TransformPoint(metadata['minx'], metadata['miny'])
+    top_left = tx.TransformPoint(metadata['minx'], metadata['maxy'])
+    top_right = tx.TransformPoint(metadata['maxx'], metadata['maxy'])
+    bottom_right = tx.TransformPoint(metadata['maxx'], metadata['miny'])
+    
+    metadata['footprint_dict'] = {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              bottom_left[1],
+              bottom_left[0]
+            ],
+            [
+              top_left[1],
+              top_left[0]
+            ],
+            [
+              top_right[1],
+              top_right[0]
+            ],
+            [
+              bottom_right[1],
+              bottom_right[0]
+            ],
+            [
+              bottom_left[1],
+              bottom_left[0]
+            ]
+          ]
+        ]
+      }
+    }
+    metadata['footprint'] = json.dumps(metadata['footprint_dict'])
+    metadata['footprint_crs'] = wgs84.ExportToWkt()
+
+    return metadata
