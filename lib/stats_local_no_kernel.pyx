@@ -731,11 +731,16 @@ cdef void assess_quality_haze(
                     haze_change[x][y] = 1
                 else:
                     ratio = b1[x][y] / previous_b1[x][y]
-                    if ratio <= 0.9:
-                        haze_change[x][y] = 1
-                    if ratio >= 1.1:
+                    if ratio >= 2.0:
+                        if quality[x][y] >= 3:
+                            quality[x][y] = quality[x][y] - 2
+                        elif quality[x][y] >= 2:
+                            quality[x][y] = quality[x][y] - 1
+                    elif ratio >= 1.1:
                         if quality[x][y] >= 2:
                             quality[x][y] = quality[x][y] - 1
+                    elif ratio <= 0.9:
+                        haze_change[x][y] = 1
 
 
 

@@ -39,8 +39,8 @@ extra_tiles = ['30NWL', '30PWR', '30PXR', '30PXS', '30PYQ', '30NWN', '30NZM', '3
 
 
 tmp_dir = '/home/cfi/data/tmp/'
-# dst_dir = '/home/cfi/data/mosaic/'
-dst_dir = '/home/cfi/data/mosaic_adv/'
+dst_dir = '/home/cfi/data/mosaic/'
+# dst_dir = '/home/cfi/data/mosaic_adv/'
 
 for tile in data:
     if len(glob(f"{dst_dir}*tile*")) != 0:
