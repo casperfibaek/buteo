@@ -10,6 +10,7 @@ import cv2
 import os
 import xml.etree.ElementTree as ET
 import datetime
+import math
 from glob import glob
 import numpy as np
 
@@ -138,6 +139,11 @@ def get_band_paths(safe_folder):
             bands['60m']['B12'] = band
         if band_name == 'SCL':
             bands['60m']['SCL'] = band
+    
+    for outer_key in bands:
+        for inner_key in bands[outer_key]:
+            current_band = bands[outer_key][inner_key]
+            assert current_band != None, f'{outer_key} - {inner_key} was not found. Verify the folders. Was the decompression interrupted?'
 
     return bands
 
@@ -244,21 +250,18 @@ def assess_radiometric_quality(metadata, calc_quality='high', score=False, previ
         dist = np.multiply(dist, 3)
 
     out_name = metadata['name']
-    # array_to_raster(dist, reference_raster=metadata['path']['20m']['B04'], out_raster=f'/home/cfi/data/tests/dist_{out_name}.tif')
 
     combined_score = radiometric_quality_spatial(scl, quality, dist, quality_eroded, score)
     
     if score is True:
         return combined_score
-    
+
     if previous_b1 is not None and previous_quality is not None:
-        previous_quality = previous_quality.astype('intc')
         haze = np.zeros(scl.shape, dtype='intc')
         radiometric_quality_haze(previous_quality, previous_b1, quality, band_01, haze)
     else:
         haze = None
 
-    # array_to_raster(quality, reference_raster=metadata['path']['20m']['B04'], out_raster=f'/home/cfi/data/tests/quality_{out_name}.tif')
     return quality, scl, band_01, haze
 
 def prepare_metadata(list_of_SAFE_images):
@@ -332,9 +335,8 @@ def prepare_metadata(list_of_SAFE_images):
     
     return metadata
 
-# TODO: What is it with the white spots? Overflow? Check uint8-16 and float32 conversions.
-# TODO: Harmonisation target only on 10 pixels.
-# TODO: Ideal test layer: NVM
+# TODO: For the simple harmonisation method: exclude quality < 8, decreasing until critical mass (~1% cover) 
+# TODO: Work on double for quality testing. Do linear functions instead of thresholding..
 
 # TODO: Find out what is wrong with: ['30NYL', '30PWR', '30PXR', '30PXS', '30PYQ', '30NWN', '30NZM', '30NZP']
 # TODO: Add multiprocessing
@@ -382,8 +384,9 @@ def mosaic_tile(
     quality, scl, b1, haze = assess_radiometric_quality(best_image)
     tracking_array = np.zeros(quality.shape, dtype='uint8')
     
-    if match_mean is True and match_simple is False:
+    if match_mean is True:
         metadata[0]['scl'] = np.copy(scl)
+        metadata[0]['quality'] = quality.astype('uint8')
   
     time_limit = (max_days * 86400)
     avg_quality = (quality.sum() / quality.size) * 10
@@ -405,25 +408,14 @@ def mosaic_tile(
         td = int(round(metadata[i]['time_difference'] / 86400, 0))  
 
         change_mask = np.zeros(ex_scl.shape, dtype='intc')
-        
         radiometric_change_mask(quality, ex_quality, scl, ex_scl, ex_haze, change_mask)
-        change_mask = change_mask.astype('uint8')
-        change_mask = mode_filter(change_mask).astype('bool')
+        change_mask = change_mask.astype('bool')
 
         ex_quality_test = np.where(change_mask, ex_quality, quality).astype('uint8')
         ex_quality_avg = (ex_quality_test.sum() / ex_quality_test.size) * 10
 
-        # Only process if change is more than 0.5 procent. At high quality lower change threshold.
-        if avg_quality > 98:
-            threshold = 0.05
-        elif avg_quality > 95:
-            threshold = 0.1
-        elif avg_quality > 85:
-            treshold = 0.2
-        elif avg_quality > 50:
-            threshold = 0.5
-        else:
-            threshold = 1
+        # exponential decrease of threshold
+        threshold = 2.0012 * math.exp(-0.028135 * avg_quality)
 
         if (ex_quality_avg - avg_quality) > threshold:
             
@@ -432,8 +424,9 @@ def mosaic_tile(
             scl = np.where(change_mask, ex_scl, scl).astype('intc')
             b1 = np.where(change_mask, ex_b1, b1).astype('intc')
 
-            if match_mean is True and match_simple is False:
+            if match_mean is True:
                 metadata[i]['scl'] = ex_scl
+                metadata[i]['quality'] = ex_quality_test
 
             quality = ex_quality_test.astype('intc')
 
@@ -467,6 +460,7 @@ def mosaic_tile(
                 pixel_count = (tracking_array == i).sum()
                 total_counts += pixel_count
                 counts.append(pixel_count)
+                metadata[i]['pixel_count'] = pixel_count
             
             for i in range(len(processed_images_indices)):
                 weights.append(counts[i] / total_counts)
@@ -475,12 +469,59 @@ def mosaic_tile(
             madstds = { 'B02': [], 'B03': [], 'B04': [], 'B08': [] }
 
             for v, i in enumerate(processed_images_indices):
+                pixel_cutoff = 1 / quality.size
+                
+                if metadata[i]['pixel_count'] < pixel_cutoff:
+                    layer_mask = np.full(quality.shape, False)
+                else:
+                    quality_cutoff = 10
+                    land_mask = (metadata[i]['scl'] == 4) | (metadata[i]['scl'] == 5) | (metadata[i]['scl'] == 7)
+                    quality_mask = metadata[i]['quality'] < quality_cutoff
+                    
+                    layer_mask = quality_mask & land_mask
+                    
+                    add_water = False
+                    while layer_mask.sum() < pixel_cutoff:
+                        quality_cutoff -= 1
+                        if quality_cutoff < 7:
+                            add_water = True
+                            break
+                        quality_mask = metadata[i]['quality'] < quality_cutoff
+                        layer_mask = quality_mask & land_mask
+                    
+                    if add_water is True:
+                        quality_cutoff = 10
+                        land_mask = (metadata[i]['scl'] == 4) | (metadata[i]['scl'] == 5) | (metadata[i]['scl'] == 6) | (metadata[i]['scl'] == 7)
+                        quality_mask = metadata[i]['quality'] < quality_cutoff
+                        layer_mask = quality_mask & land_mask
+                        
+                        add_all = False
+                        while layer_mask.sum() < pixel_cutoff:
+                            quality_cutoff -= 1
+                            if quality_cutoff < 5:
+                                add_all = True
+                                break
+                            quality_mask = metadata[i]['quality'] < quality_cutoff
+                            layer_mask = quality_mask & land_mask
+                        
+                        if add_all == True:
+                            quality_cutoff = 10
+                            quality_mask = metadata[i]['quality'] < quality_cutoff
+                            layer_mask = quality_mask
+                            
+                            while layer_mask.sum() < pixel_cutoff:
+                                quality_cutoff -= 1
+                                quality_mask = metadata[i]['quality'] < quality_cutoff
+                                layer_mask = quality_mask & land_mask
+                
+
                 for band in ['B02', 'B03', 'B04', 'B08']:
                     if band == 'B08':
                         array = raster_to_array(resample(metadata[i]['path']['10m'][band], reference_raster=metadata[i]['path']['20m']['B02']))
                     else:
                         array = raster_to_array(metadata[i]['path']['20m'][band])
 
+                    array = np.ma.array(array, mask=layer_mask)
                     med, mad = madstd(array)
                     medians[band].append(med)
                     madstds[band].append(mad)
@@ -503,92 +544,95 @@ def mosaic_tile(
             veg_mask = scl == 4
             non_veg_mask = scl == 5
             unclassified_mask = scl == 7
+            water_mask = scl == 6
         
             for i in processed_images_indices:                
                 metadata[i]['stats'] = {
-                    'B02': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'scale': 1 },
-                    'B03': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'scale': 1 },
-                    'B04': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'scale': 1 },
-                    'B08': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'scale': 1 },
+                    'B02': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'water': 0, 'scale': 1 },
+                    'B03': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'water': 0, 'scale': 1 },
+                    'B04': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'water': 0, 'scale': 1 },
+                    'B08': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'water': 0, 'scale': 1 },
                     'counts': {
                         'vegetation': 0,
                         'not_vegetation': 0,
-                        'unclassified': 0
+                        'unclassified': 0,
+                        'water': 0,
                     },
                 }
                 
                 # Prepare masks
                 layer_mask = tracking_array == i
-                layer_veg = layer_mask & veg_mask
-                layer_non_veg = layer_mask & non_veg_mask
-                layer_unclassified = layer_mask & unclassified_mask
                 
-                # Calculate count of pixels
-                metadata[i]['stats']['counts']['vegetation'] = layer_veg.sum()
-                metadata[i]['stats']['counts']['not_vegetation'] = layer_non_veg.sum()
-                metadata[i]['stats']['counts']['unclassified'] = layer_unclassified.sum()
+                # If not atleast 0.5% of pixels are included - exclude the image.
+                if (layer_mask.sum() / layer_mask.size) * 100 < 0.5:
+                    metadata[i]['stats']['counts']['vegetation'] = 0
+                    metadata[i]['stats']['counts']['not_vegetation'] = 0
+                    metadata[i]['stats']['counts']['unclassified'] = 0
+                    metadata[i]['stats']['counts']['water'] = 0
+                else:
+                    layer_veg = layer_mask & veg_mask
+                    layer_non_veg = layer_mask & non_veg_mask
+                    layer_unclassified = layer_mask & unclassified_mask
+                    layer_water = layer_mask & water_mask
+                        
+                    # Calculate count of pixels
+                    metadata[i]['stats']['counts']['vegetation'] = layer_veg.sum()
+                    metadata[i]['stats']['counts']['not_vegetation'] = layer_non_veg.sum()
+                    metadata[i]['stats']['counts']['unclassified'] = layer_unclassified.sum()
+                    metadata[i]['stats']['counts']['water'] = layer_water.sum()
                 
                 # Free memory again
                 layer_mask = None
                 layer_veg = None
                 layer_non_veg = None
                 layer_unclassified = None
+                layer_water = None
                 
                 # Calculate the mean values for each band
                 for band in ['B02', 'B03', 'B04', 'B08']:
-                    if ((
-                        metadata[i]['stats']['counts']['vegetation'] > 0 or
-                        metadata[i]['stats']['counts']['not_vegetation'] > 0 or
-                        metadata[i]['stats']['counts']['unclassified'] > 0) and
-                        (band == 'B08')
-                    ): # No 20m B08 from ESA
+                    if band == 'B08': # No 20m B08 from ESA
                         array = raster_to_array(resample(metadata[i]['path']['10m'][band], reference_raster=metadata[i]['path']['20m']['B02']))
                     else:
                         array = raster_to_array(metadata[i]['path']['20m'][band])
 
-                    if metadata[i]['stats']['counts']['vegetation'] == 0:
-                        metadata[i]['stats'][band]['vegetation'] = 0
-                        metadata[i]['stats'][band]['vegetation_mad'] = 0
-                    else:
-                        med, mad = madstd(np.ma.array(array, mask=metadata[i]['scl'] != 4))
-                        metadata[i]['stats'][band]['vegetation'] = med
-                        metadata[i]['stats'][band]['vegetation_mad'] = mad
+                    zero_mask = array == 0
 
-                    if metadata[i]['stats']['counts']['not_vegetation'] == 0:
-                        metadata[i]['stats'][band]['not_vegetation'] = 0
-                        metadata[i]['stats'][band]['not_vegetation_mad'] = 0
-                    else:
-                        med, mad = madstd(np.ma.array(array, mask=metadata[i]['scl'] != 5))
-                        metadata[i]['stats'][band]['not_vegetation'] = med
-                        metadata[i]['stats'][band]['not_vegetation_mad'] = mad
+                    med, mad = madstd(np.ma.array(array, mask=metadata[i]['scl'] != 4 | zero_mask))
+                    metadata[i]['stats'][band]['vegetation'] = med
+                    metadata[i]['stats'][band]['vegetation_mad'] = mad
+
+                    med, mad = madstd(np.ma.array(array, mask=metadata[i]['scl'] != 5 | zero_mask))
+                    metadata[i]['stats'][band]['not_vegetation'] = med
+                    metadata[i]['stats'][band]['not_vegetation_mad'] = mad
+                
+                    med, mad = madstd(np.ma.array(array, mask=metadata[i]['scl'] != 7 | zero_mask))
+                    metadata[i]['stats'][band]['unclassified'] = med
+                    metadata[i]['stats'][band]['unclassified_mad'] = mad
                     
-                    if metadata[i]['stats']['counts']['unclassified'] == 0:
-                        metadata[i]['stats'][band]['unclassified'] = 0
-                        metadata[i]['stats'][band]['unclassified_mad'] = 0
-                    else:
-                        med, mad = madstd(np.ma.array(array, mask=metadata[i]['scl'] != 7))
-                        metadata[i]['stats'][band]['unclassified'] = med
-                        metadata[i]['stats'][band]['unclassified_mad'] = mad
+                    med, mad = madstd(np.ma.array(array, mask=metadata[i]['scl'] != 6 | zero_mask))
+                    metadata[i]['stats'][band]['water'] = med
+                    metadata[i]['stats'][band]['water_mad'] = mad
 
             pixel_sums = {
                 'vegetation': 0,
                 'not_vegetation': 0,
                 'unclassified': 0,
+                'water': 0,
                 'valid_ground_pixels': 0,             
             }
             
             medians = {
-                'B02': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] },
-                'B03': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] },
-                'B04': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] },
-                'B08': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] },
+                'B02': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [], 'water': [] },
+                'B03': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [], 'water': [] },
+                'B04': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [], 'water': [] },
+                'B08': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [], 'water': [] },
             }
             
             madstds = {
-                'B02': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] },
-                'B03': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] },
-                'B04': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] },
-                'B08': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] },
+                'B02': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [], 'water': [] },
+                'B03': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [], 'water': [] },
+                'B04': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [], 'water': [] },
+                'B08': { 'vegetation': [], 'not_vegetation': [], 'unclassified': [], 'water': [] },
             }
             
             for i in processed_images_indices:
@@ -597,10 +641,12 @@ def mosaic_tile(
                     image['stats']['counts']['vegetation'],
                     image['stats']['counts']['not_vegetation'],
                     image['stats']['counts']['unclassified'],
+                    image['stats']['counts']['water'],
                 ]
                 pixel_sums['vegetation'] += counts[0]
                 pixel_sums['not_vegetation'] += counts[1]
                 pixel_sums['unclassified'] += counts[2]
+                pixel_sums['water'] += counts[3]
                 pixel_sums['valid_ground_pixels'] += sum(counts)
                 
                 for band in ['B02', 'B03', 'B04', 'B08']:
@@ -612,14 +658,18 @@ def mosaic_tile(
                     
                     medians[band]['unclassified'].append(image['stats'][band]['unclassified'])
                     madstds[band]['unclassified'].append(image['stats'][band]['unclassified_mad'])
+                    
+                    medians[band]['water'].append(image['stats'][band]['water'])
+                    madstds[band]['water'].append(image['stats'][band]['water_mad'])
 
             ratios = {
                 'vegetation': pixel_sums['vegetation'] / pixel_sums['valid_ground_pixels'],
                 'not_vegetation': pixel_sums['not_vegetation'] / pixel_sums['valid_ground_pixels'],
                 'unclassified': pixel_sums['unclassified'] / pixel_sums['valid_ground_pixels'],
+                'water': pixel_sums['water'] / pixel_sums['valid_ground_pixels'],
             }
 
-            weights = { 'vegetation': [], 'not_vegetation': [], 'unclassified': [] }
+            weights = { 'vegetation': [], 'not_vegetation': [], 'unclassified': [], 'water': [] }
             
             for i in processed_images_indices:
                 image = metadata[i]
@@ -637,20 +687,25 @@ def mosaic_tile(
                 if pixel_sums['unclassified'] == 0:
                     weights['unclassified'].append(0)
                 else:
-                    weights['unclassified'].append(image['stats']['counts']['unclassified'] / pixel_sums['unclassified'])         
+                    weights['unclassified'].append(image['stats']['counts']['unclassified'] / pixel_sums['unclassified'])
+                    
+                if pixel_sums['unclassified'] == 0:
+                    weights['water'].append(0)
+                else:
+                    weights['water'].append(image['stats']['counts']['water'] / pixel_sums['water'])
         
             weighted_medians = {
-                'B02': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
-                'B03': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
-                'B04': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
-                'B08': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
+                'B02': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'water': 0 },
+                'B03': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'water': 0 },
+                'B04': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'water': 0 },
+                'B08': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'water': 0 },
             }
             
             weighted_madstds = {
-                'B02': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
-                'B03': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
-                'B04': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
-                'B08': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0 },
+                'B02': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'water': 0 },
+                'B03': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'water': 0 },
+                'B04': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'water': 0 },
+                'B08': { 'vegetation': 0, 'not_vegetation': 0, 'unclassified': 0, 'water': 0 },
             }
             
             targets_median = { 'B02': None, 'B03': None, 'B04': None, 'B08': None }
@@ -660,44 +715,51 @@ def mosaic_tile(
                 weighted_medians[band]['vegetation'] = np.average(medians[band]['vegetation'], weights=weights['vegetation'])
                 weighted_medians[band]['unclassified'] = np.average(medians[band]['unclassified'], weights=weights['unclassified'])
                 weighted_medians[band]['not_vegetation'] = np.average(medians[band]['not_vegetation'], weights=weights['not_vegetation'])
+                weighted_medians[band]['water'] = np.average(medians[band]['water'], weights=weights['water'])
                 
                 weighted_madstds[band]['vegetation'] = np.average(madstds[band]['vegetation'], weights=weights['vegetation'])
                 weighted_madstds[band]['not_vegetation'] = np.average(madstds[band]['not_vegetation'], weights=weights['not_vegetation'])
                 weighted_madstds[band]['unclassified'] = np.average(madstds[band]['unclassified'], weights=weights['unclassified'])
+                weighted_madstds[band]['water'] = np.average(madstds[band]['water'], weights=weights['water'])
                 
                 targets_median[band] = sum([
                     ratios['vegetation'] * weighted_medians[band]['vegetation'],
                     ratios['not_vegetation'] * weighted_medians[band]['not_vegetation'],
                     ratios['unclassified'] * weighted_medians[band]['unclassified'],
+                    ratios['water'] * weighted_medians[band]['water'],
                 ])
                 
                 targets_madstd[band] = sum([
                     ratios['vegetation'] * weighted_madstds[band]['vegetation'],
                     ratios['not_vegetation'] * weighted_madstds[band]['not_vegetation'],
                     ratios['unclassified'] * weighted_madstds[band]['unclassified'],
+                    ratios['water'] * weighted_madstds[band]['water'],
                 ])
-            
+                
+                import pdb; pdb.set_trace()
             
             for i in processed_images_indices:
                 for band in ['B02', 'B03', 'B04', 'B08']:
 
                     if pixel_sums['valid_ground_pixels'] == 0:
-                        metadata[i]['stats'][band]['scale'] = 1
+                        raise Exception('No valid pixels in selected image band.')
                     else:
                         src_median = sum([
                             ratios['vegetation'] * metadata[i]['stats'][band]['vegetation'],
                             ratios['not_vegetation'] * metadata[i]['stats'][band]['not_vegetation'],
                             ratios['unclassified'] * metadata[i]['stats'][band]['unclassified'],
+                            ratios['water'] * metadata[i]['stats'][band]['water'],
                         ])
                         
                         src_madstd = sum([
                             ratios['vegetation'] * metadata[i]['stats'][band]['vegetation_mad'],
                             ratios['not_vegetation'] * metadata[i]['stats'][band]['not_vegetation_mad'],
-                            ratios['unclassified'] * metadata[i]['stats'][band]['unclassified_mad'],                        
+                            ratios['unclassified'] * metadata[i]['stats'][band]['unclassified_mad'],
+                            ratios['water'] * metadata[i]['stats'][band]['water_mad'],
                         ])
                         
-                        metadata[i]['stats'][band]['src_median'] = src_median
-                        metadata[i]['stats'][band]['src_madstd'] = src_madstd
+                        metadata[i]['stats'][band]['src_median'] = src_median if src_median > 0 else targets_median[band]
+                        metadata[i]['stats'][band]['src_madstd'] = src_madstd if src_madstd > 0 else targets_madstd[band]
                         metadata[i]['stats'][band]['target_median'] = targets_median[band]
                         metadata[i]['stats'][band]['target_madstd'] = targets_madstd[band]
                     

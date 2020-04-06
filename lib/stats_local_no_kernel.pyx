@@ -515,7 +515,6 @@ def truncate_array(arr, min_value=False, max_value=False):
 ## 11: SC_SNOW_ICE
 
 
-
 cdef int assess_quality_func(
     int scl,
     int b1,
@@ -723,13 +722,19 @@ cdef void assess_quality_haze(
     cdef double ratio
     for x in prange(x_max, nogil=True):
         for y in prange(y_max):
-            if quality[x][y] >= previous_quality[x][y]:
-                ratio = b1[x][y] / previous_b1[x][y]
-                if ratio <= 0.9:
+            if previous_quality[x][y] <= 0:
+                if quality[x][y] > 0:
                     haze_change[x][y] = 1
-                if ratio >= 1.1:
-                    if quality[x][y] >= 2:
-                        quality[x][y] = quality[x][y] - 1
+            elif quality[x][y] >= previous_quality[x][y]:
+                if previous_b1[x][y] == 0:
+                    haze_change[x][y] = 1
+                else:
+                    ratio = b1[x][y] / previous_b1[x][y]
+                    if ratio <= 0.9:
+                        haze_change[x][y] = 1
+                    if ratio >= 1.1:
+                        if quality[x][y] >= 2:
+                            quality[x][y] = quality[x][y] - 1
 
 
 
