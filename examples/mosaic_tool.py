@@ -2,7 +2,7 @@ import sys; sys.path.append('..'); sys.path.append('../lib/')
 from lib.raster_io import raster_to_array, array_to_raster
 from lib.raster_resample import resample
 from lib.stats_filters import mode_filter, feather_s2_filter, mean_filter, median_filter
-from lib.stats_local_no_kernel import radiometric_quality, radiometric_quality_spatial, radiometric_quality_haze, radiometric_change_mask
+from lib.stats_local_no_kernel import radiometric_quality
 from lib.stats_kernel import create_kernel
 from lib.utils_core import weighted_quantile, madstd
 from time import time
@@ -63,13 +63,15 @@ def get_band_paths(safe_folder):
           "SCL": None,        
         },
         "QI": {
-            'CLDPRB': None
+            'CLDPRB_20m': None,
+            'CLDPRB_60m': None,
         }
     }
     
     assert os.path.isdir(safe_folder), f"Could not find folder: {safe_folder}"
     
-    bands['QI']['CLDPRB'] = glob(f"{safe_folder}/GRANULE/*/QI_DATA/MSK_CLDPRB_20m.jp2")[0]
+    bands['QI']['CLDPRB_20m'] = glob(f"{safe_folder}/GRANULE/*/QI_DATA/MSK_CLDPRB_20m.jp2")[0]
+    bands['QI']['CLDPRB_60m'] = glob(f"{safe_folder}/GRANULE/*/QI_DATA/MSK_CLDPRB_60m.jp2")[0]
     
     bands_10m = glob(f"{safe_folder}/GRANULE/*/IMG_DATA/R10m/*_???_*.jp2")
     for band in bands_10m:
@@ -83,6 +85,8 @@ def get_band_paths(safe_folder):
             bands['10m']['B04'] = band
         if band_name == 'B08':
             bands['10m']['B08'] = band
+        if band_name == 'AOT':
+            bands['10m']['AOT'] = band
 
     bands_20m = glob(f"{safe_folder}/GRANULE/*/IMG_DATA/R20m/*.jp2")
     for band in bands_20m:
@@ -110,6 +114,8 @@ def get_band_paths(safe_folder):
             bands['20m']['B12'] = band
         if band_name == 'SCL':
             bands['20m']['SCL'] = band
+        if band_name == 'AOT':
+            bands['20m']['AOT'] = band
 
     bands_60m = glob(f"{safe_folder}/GRANULE/*/IMG_DATA/R60m/*_???_*.jp2")
     for band in bands_60m:
@@ -139,6 +145,8 @@ def get_band_paths(safe_folder):
             bands['60m']['B12'] = band
         if band_name == 'SCL':
             bands['60m']['SCL'] = band
+        if band_name == 'AOT':
+            bands['60m']['AOT'] = band
     
     for outer_key in bands:
         for inner_key in bands[outer_key]:
@@ -174,12 +182,16 @@ def get_metadata(safe_folder):
         "HIGH_PROBA_CLOUDS_PERCENTAGE": None,
         "THIN_CIRRUS_PERCENTAGE": None,
         "SNOW_ICE_PERCENTAGE": None,
+        "ZENITH_ANGLE": None,
+        "AZIMUTH_ANGLE": None,
         "folder": safe_folder,
     }
 
     meta_xml = os.path.join(safe_folder, "MTD_MSIL2A.xml")
+    meta_solar = glob(safe_folder + '/GRANULE/*/MTD_TL.xml')[0]
 
     assert os.path.isfile(meta_xml), f"{safe_folder} did not contain a valid metadata file."
+    assert os.path.isfile(meta_solar), f"{meta_solar} did not contain a valid metadata file."
 
     # Parse the xml tree and add metadata
     root = ET.parse(meta_xml).getroot()
@@ -194,6 +206,13 @@ def get_metadata(safe_folder):
                     )  # Date?
                 except:
                     metadata[elem.tag] = elem.text
+
+    # Parse the xml tree and add metadata
+    root = ET.parse(meta_solar).getroot()
+    for elem in root.iter():
+        if elem.tag == 'Mean_Sun_Angle':
+            metadata['ZENITH_ANGLE'] = float(elem.find('ZENITH_ANGLE').text)
+            metadata['AZIMUTH_ANGLE'] = float(elem.find('AZIMUTH_ANGLE').text)
 
     # Did we get all the metadata?
     for name in metadata:
@@ -219,55 +238,48 @@ def get_metadata(safe_folder):
 def get_time_difference(dict):
     return dict['time_difference']
 
-def assess_radiometric_quality(metadata, calc_quality='high', score=False, previous_b1=None, previous_quality=None):
+def assess_radiometric_quality(metadata, calc_quality='high', score=False):
     if calc_quality == 'high':
         scl = raster_to_array(metadata['path']['20m']['SCL']).astype('intc')
-        band_01 = raster_to_array(resample(metadata['path']['60m']['B01'], reference_raster=metadata['path']['20m']['B04'])).astype('intc')
+        aot = raster_to_array(metadata['path']['20m']['AOT']).astype('intc')
         band_02 = raster_to_array(metadata['path']['20m']['B02']).astype('intc')
-        distance = 61
+        band_12 = raster_to_array(metadata['path']['20m']['B12']).astype('intc')
+        band_cldprb = raster_to_array(metadata['path']['QI']['CLDPRB_20m'])
+        distance = 101
     else:
         scl = raster_to_array(metadata['path']['60m']['SCL']).astype('intc')
-        band_01 = raster_to_array(metadata['path']['60m']['B01']).astype('intc')
+        aot = raster_to_array(metadata['path']['60m']['AOT']).astype('intc')
+        band_cldprb = raster_to_array(metadata['path']['QI']['CLDPRB_60m'])
         band_02 = raster_to_array(metadata['path']['60m']['B02']).astype('intc')
-        distance = 21
+        band_12 = raster_to_array(metadata['path']['60m']['B12']).astype('intc')
+        distance = 33
 
     kernel = create_kernel(201, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
-    kernel_erode = create_kernel(201, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
     
     # Dilate nodata values by 1km each side 
     nodata_dilated = cv2.dilate((scl == 0).astype('uint8'), kernel).astype('intc')
+    band_cldprb = cv2.blur(band_cldprb * 2, (distance, distance)).astype(np.double)
     
     # OBS: the radiometric_quality functions mutates the quality input.
-    quality = np.zeros(scl.shape, dtype='intc')
-    radiometric_quality(scl, band_01, band_02, nodata_dilated, quality)
-
-    quality_uint8 = quality.astype('uint8')
-    quality_eroded = cv2.erode(quality_uint8, kernel_erode).astype('intc')
-    quality_mean = cv2.blur(quality_uint8, (distance, distance))
-    dist = cv2.distanceTransform((quality_mean > 8).astype('uint8'), cv2.DIST_L2, 5).astype('double')
+    quality = np.zeros(scl.shape, dtype=np.double)
     
-    if calc_quality != 'high':
-        dist = np.multiply(dist, 3)
-
-    out_name = metadata['name']
-
-    combined_score = radiometric_quality_spatial(scl, quality, dist, quality_eroded, score)
+    td = 0.0 if score is True else metadata['time_difference'] / 86400
+    
+    combined_score = radiometric_quality(scl, band_02, band_12, band_cldprb, aot, nodata_dilated, quality, td)
     
     if score is True:
         return combined_score
-
-    if previous_b1 is not None and previous_quality is not None:
-        haze = np.zeros(scl.shape, dtype='intc')
-        radiometric_quality_haze(previous_quality, previous_b1, quality, band_01, haze)
-    else:
-        haze = None
-
-    return quality, scl, band_01, haze
+    
+    if metadata['ZENITH_ANGLE'] < 45:
+        quality -= (0.1 * metadata['ZENITH_ANGLE']) + 4.5
+    
+    return quality, scl
 
 def prepare_metadata(list_of_SAFE_images):
 
     metadata = []
-        # Verify files
+
+    # Verify files
     for index, image in enumerate(list_of_SAFE_images):
         image_name = os.path.basename(image)
         assert (len(image_name.split("_")) == 7), f"Input file has invalid pattern: {image_name}"
@@ -335,9 +347,8 @@ def prepare_metadata(list_of_SAFE_images):
     
     return metadata
 
-# TODO: Work on double for quality testing. Do linear functions instead of thresholding..
+# TODO: Fix 30NWL - What goes wrong?
 
-# TODO: Find out what is wrong with: ['30NYL', '30PWR', '30PXR', '30PXS', '30PYQ', '30NWN', '30NZM', '30NZP']
 # TODO: Add multiprocessing
 # TODO: Add overlap harmonisation
 # TODO: handle all bands
@@ -350,11 +361,11 @@ def mosaic_tile(
     out_name='mosaic',
     dst_projection=None,
     feather=True,
-    ideal_percent=99,
-    feather_dist=31,
+    ideal_percent=100,
+    feather_dist=21,
     filter_tracking=True,
     match_mean=True,
-    max_days=30,
+    max_days=35,
     max_images_include=15,
     max_search_images=35,
 ):
@@ -376,15 +387,16 @@ def mosaic_tile(
     print(f'Selected: {best_image_name}')
 
     print('Resampling and reading base image..')
-    quality, scl, b1, haze = assess_radiometric_quality(best_image)
+    quality, scl = assess_radiometric_quality(best_image)
     tracking_array = np.zeros(quality.shape, dtype='uint8')
     
     if match_mean is True:
         metadata[0]['scl'] = np.copy(scl)
-        metadata[0]['quality'] = quality.astype('uint8')
+        metadata[0]['quality'] = quality
   
     time_limit = (max_days * 86400)
-    avg_quality = (quality.sum() / quality.size) * 10
+
+    avg_quality = (quality.sum() / quality.size)
     i = 1  # The 0 index is for the best image
     processed_images_indices = [0]
 
@@ -397,17 +409,16 @@ def mosaic_tile(
         and len(processed_images_indices) <= max_images_include
         and (metadata[i]['time_difference'] < time_limit)
     ):
-        ex_quality, ex_scl, ex_b1, ex_haze = assess_radiometric_quality(metadata[i], previous_b1=b1, previous_quality=quality)
-        
         # Time difference
         td = int(round(metadata[i]['time_difference'] / 86400, 0))  
 
-        change_mask = np.zeros(ex_scl.shape, dtype='intc')
-        radiometric_change_mask(quality, ex_quality, scl, ex_scl, ex_haze, change_mask)
-        change_mask = change_mask.astype('bool')
+        ex_quality, ex_scl = assess_radiometric_quality(metadata[i])
+        
 
-        ex_quality_test = np.where(change_mask, ex_quality, quality).astype('uint8')
-        ex_quality_avg = (ex_quality_test.sum() / ex_quality_test.size) * 10
+        change_mask = ex_quality > quality
+
+        ex_quality_test = np.where(change_mask, ex_quality, quality)
+        ex_quality_avg = (ex_quality_test.sum() / ex_quality_test.size)
 
         # exponential decrease of threshold
         threshold = 2.0012 * math.exp(-0.028135 * avg_quality)
@@ -417,15 +428,14 @@ def mosaic_tile(
             # Udpdate the trackers
             tracking_array = np.where(change_mask, i, tracking_array).astype('uint8')
             scl = np.where(change_mask, ex_scl, scl).astype('intc')
-            b1 = np.where(change_mask, ex_b1, b1).astype('intc')
 
             if match_mean is True:
                 metadata[i]['scl'] = ex_scl
                 metadata[i]['quality'] = ex_quality_test
 
-            quality = ex_quality_test.astype('intc')
+            quality = ex_quality_test.astype(np.double)
 
-            avg_quality = (quality.sum() / quality.size) * 10
+            avg_quality = (quality.sum() / quality.size)
 
             processed_images_indices.append(i)
 
@@ -463,51 +473,9 @@ def mosaic_tile(
         madstds = { 'B02': [], 'B03': [], 'B04': [], 'B08': [] }
 
         for v, i in enumerate(processed_images_indices):
-            pixel_cutoff = 1 / quality.size
+            layer_mask = (metadata[i]['scl'] == 4) | (metadata[i]['scl'] == 5) | (metadata[i]['scl'] == 6) | (metadata[i]['scl'] == 7)
             
-            if metadata[i]['pixel_count'] < pixel_cutoff:
-                layer_mask = np.full(quality.shape, False)
-            else:
-                quality_cutoff = 10
-                land_mask = (metadata[i]['scl'] == 4) | (metadata[i]['scl'] == 5) | (metadata[i]['scl'] == 7)
-                quality_mask = metadata[i]['quality'] < quality_cutoff
-                
-                layer_mask = quality_mask & land_mask
-                
-                add_water = False
-                while layer_mask.sum() < pixel_cutoff:
-                    quality_cutoff -= 1
-                    if quality_cutoff < 7:
-                        add_water = True
-                        break
-                    quality_mask = metadata[i]['quality'] < quality_cutoff
-                    layer_mask = quality_mask & land_mask
-                
-                if add_water is True:
-                    quality_cutoff = 10
-                    land_mask = (metadata[i]['scl'] == 4) | (metadata[i]['scl'] == 5) | (metadata[i]['scl'] == 6) | (metadata[i]['scl'] == 7)
-                    quality_mask = metadata[i]['quality'] < quality_cutoff
-                    layer_mask = quality_mask & land_mask
-                    
-                    add_all = False
-                    while layer_mask.sum() < pixel_cutoff:
-                        quality_cutoff -= 1
-                        if quality_cutoff < 5:
-                            add_all = True
-                            break
-                        quality_mask = metadata[i]['quality'] < quality_cutoff
-                        layer_mask = quality_mask & land_mask
-                    
-                    if add_all == True:
-                        quality_cutoff = 10
-                        quality_mask = metadata[i]['quality'] < quality_cutoff
-                        layer_mask = quality_mask
-                        
-                        while layer_mask.sum() < pixel_cutoff:
-                            quality_cutoff -= 1
-                            quality_mask = metadata[i]['quality'] < quality_cutoff
-                            layer_mask = quality_mask
-            
+            # TODO: Check if enough valid pixels..
 
             for band in ['B02', 'B03', 'B04', 'B08']:
                 if band == 'B08':
@@ -516,10 +484,14 @@ def mosaic_tile(
                     array = raster_to_array(metadata[i]['path']['20m'][band])
 
                 calc_array = np.ma.array(array, mask=layer_mask)
-                med, mad = madstd(calc_array)
+                med = calc_array.mean()
+                mad = calc_array.std()
+                # med, mad = madstd(calc_array)
 
                 if med == 0 or mad == 0:
-                    med, mad = madstd(array)
+                    med = array.mean()
+                    mad = array.std()
+                    # med, mad = madstd(array)
                     
                 medians[band].append(med)
                 madstds[band].append(mad)

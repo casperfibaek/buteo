@@ -500,123 +500,61 @@ def truncate_array(arr, min_value=False, max_value=False):
 
     return result
 
-# SCL
-##  0: SC_NODATA
-##  1: SC_SATURATED_DEFECTIVE
-##  2: SC_DARK_FEATURE_SHADOW
-##  3: SC_CLOUD_SHADOW
-##  4: SC_VEGETATION
-##  5: SC_NOT_VEGETATED
-##  6: SC_WATER
-##  7: SC_UNCLASSIFIED
-##  8: SC_CLOUD_MEDIUM_PROBA
-##  9: SC_CLOUD_HIGH_PROBA
-## 10: SC_THIN_CIRRUS
-## 11: SC_SNOW_ICE
 
-
-cdef int assess_quality_func(
+cdef double assess_quality_func(
     int scl,
-    int b1,
     int b2,
+    int b12,
+    double band_cldprb,
+    int aot,
     int nodata,
+    double time_difference,
 ) nogil:
-    cdef int quality = 0
+    cdef double cld = 0
+    cdef double quality = 0.0
 
     if nodata == 1: # SC_NODATA
-        quality = 0 
+        quality = 0.0
     elif scl == 1:  # SC_SATURATED_DEFECTIVE
-        quality = 0 
+        quality = 0.0
     elif scl == 2:  # SC_DARK_FEATURE_SHADOW
-        quality = 1
+        quality = 5.0
     elif scl == 3:  # SC_CLOUD_SHADOW
-        quality = 1
+        quality = 5.0
     elif scl == 4:  # SC_VEGETATION
-        quality = 10
+        quality = 100.0
     elif scl == 5:  # SC_NOT_VEGETATED
-        quality = 10
+        quality = 100.0
     elif scl == 6:  # SC_WATER
-        quality = 9
+        quality = 90.0
     elif scl == 7:  # SC_UNCLASSIFIED
-        quality = 9
+        quality = 95.0
     elif scl == 8:  # SC_CLOUD_MEDIUM_PROBA
-        quality = 3
+        quality = 30.0
     elif scl == 9:  # SC_CLOUD_HIGH_PROBA
-        quality = 1
+        quality = 10.0
     elif scl == 10: # SC_THIN_CIRRUS
-        quality = 8
+        quality = 75.0
     elif scl == 11: # SC_SNOW_ICE
-        quality = 6
-    
-    # land pixels
-    if scl == 4 or scl == 7:
-        if b1 <= 1 and b2 <= 1:
-            quality -= 4
-        elif b1 <= 10 and b2 <= 30:
-            quality -= 3
-        elif b1 <= 40 and b2 <= 70:
-            quality -= 2
-        elif b1 <= 80 and b2 <= 125:
-            quality -= 1
+        quality = 60.0
 
-        elif b1 > 1400:
-            quality -= 3
-        elif b1 > 1100:
-            quality -= 2
-        elif b1 > 800:
-            quality -= 1
-    
-    # non vegetation (often bare soil or urban)
-    if scl == 5:
-        if b1 <= 1 and b2 <= 1:
-            quality -= 4
-        elif b1 <= 10 and b2 <= 30:
-            quality -= 3
-        elif b1 <= 40 and b2 <= 70:
-            quality -= 2
-        elif b1 <= 80 and b2 <= 125:
-            quality -= 1
+    # First evaluate Aerosol Optical Thickness
+    quality = quality + ((-0.05 * aot) + 10)
 
-        elif b1 > 1500:
-            quality -= 3
-        elif b1 > 1200:
-            quality -= 2
-        elif b1 > 900:
-            quality -= 1    
-    
-    # water pixels
-    elif scl == 6:
-        if b1 <= 50 or b2 <= 100:
-            quality -= 1
-        elif b1 > 900:
-            quality -= 3
-        elif b1 > 700:
-            quality -= 2
-        elif b1 > 500:
-            quality -= 1
-    
-    # cirrus
-    elif scl == 10:
-        if b1 <= 1 and b2 <= 1:
-            quality -= 4
-        elif b1 <= 10 and b2 <= 50:
-            quality -= 3
-        elif b1 <= 50 and b2 <= 100:
-            quality -= 2
-        elif b1 <= 85 and b2 <= 125:
-            quality -= 1
+    # Evalutate cloud percentage
+    if ((scl == 4) | (scl == 5) | (scl == 6) | (scl == 7) | (scl == 11)) & (b12 < 1000):
+        cld = cld + ((0.01 * b12) - 10)
 
-        elif b1 > 1350:
-            quality -= 3
-        elif b1 > 1000:
-            quality -= 2
-        elif b1 > 700:
-            quality -= 1   
+    quality = quality - cld
+
+    # Evaluate blue band
+    if b2 > 700:
+        quality = quality + (-0.01 * b2 + 7)
+    elif b2 < 300:
+        quality = quality + ((-0.0002 * (b2 * b2)) + (0.1367 * b2) - 20)
     
-    # other
-    else:
-        if b1 > 1000:
-            quality -= 1
+    # evauluate time difference: minus % 5 quality per 30 days
+    quality = quality - (0.1667 * time_difference)
 
     if quality <= 0:
         if nodata == 1 or scl == 1:
@@ -627,176 +565,51 @@ cdef int assess_quality_func(
     return quality
 
 
-cdef void assess_quality(
+cdef double assess_quality(
     int [:, ::1] scl,
-    int [:, ::1] b1,
-    int [:, ::1] b2,
-    int [:, ::1] nodata,
-    int [:, ::1] quality,
+    int [:, ::1] band_02,
+    int [:, ::1] band_12,
+    double [:, ::1] band_cldprb,
+    int [:, ::1] aot,
+    int [:, ::1] nodata_dilated,
+    double [:, ::1] quality,
+    double time_difference,
     int x_max,
     int y_max,
 ) nogil:
     cdef int x, y
+    cdef double quality_sum = 0
 
     for x in prange(x_max, nogil=True):
         for y in prange(y_max):
-            quality[x][y] = assess_quality_func(scl[x][y], b1[x][y], b2[x][y], nodata[x][y])
+            quality[x][y] = assess_quality_func(scl[x][y], band_02[x][y], band_12[x][y], band_cldprb[x][y], aot[x][y], nodata_dilated[x][y], time_difference)
+            quality_sum += quality[x][y]
+    
+    return quality_sum
 
-
-cpdef void radiometric_quality(scl, b1, b2, nodata, quality):
+cpdef double radiometric_quality(scl, band_02, band_12, band_cldprb, aot, nodata_dilated, quality, td):
     cdef int [:, ::1] scl_view = scl
-    cdef int [:, ::1] b1_view = b1
-    cdef int [:, ::1] b2_view = b2
-    cdef int [:, ::1] nodata_view = nodata
-    cdef int [:, ::1] quality_view = quality
+    cdef int [:, ::1] band_02_view = band_02
+    cdef int [:, ::1] band_12_view = band_12
+    cdef double [:, ::1] band_cldprb_view = band_cldprb
+    cdef int [:, ::1] aot_view = aot
+    cdef int [:, ::1] nodata_dilated_view = nodata_dilated
+    cdef double [:, ::1] quality_view = quality
+    cdef double time_difference = td
 
     cdef int x_max = scl.shape[0]
     cdef int y_max = scl.shape[1]
     
-    assess_quality(scl_view, b1_view, b2_view, nodata_view, quality_view, x_max, y_max)
-
-
-cdef int assess_quality_spatial_func(
-    int scl,
-    int quality,
-    double distance,
-    int quality_eroded,
-) nogil:
-    cdef int negative = 0
-    # cdef double float_negative = (-0.02 * distance) + 3
-
-    if distance < 25 == 1:
-        negative += 3
-    elif distance < 50:
-        negative += 2
-    elif distance < 100:
-        negative += 1
-    
-    if (quality - negative) < quality_eroded:
-        return quality_eroded
-    else:
-        return quality - negative
-
-cdef int assess_quality_spatial(
-    int [:, ::1] scl,
-    int [:, ::1] quality,
-    double [:, ::1] distance,
-    int [:, ::1] quality_eroded,
-    bint score,
-    int x_max,
-    int y_max,
-) nogil:
-    cdef int x, y, q
-    cdef int score_sum = 0
-    for x in prange(x_max, nogil=True):
-        for y in prange(y_max):
-            q = assess_quality_spatial_func(scl[x][y], quality[x][y], distance[x][y], quality_eroded[x][y])
-            quality[x][y] = q
-            score_sum += q
-    
-    return score_sum
-
-
-cpdef int radiometric_quality_spatial(scl, quality, distance, quality_eroded, score):
-    cdef int [:, ::1] scl_view = scl
-    cdef int [:, ::1] quality_view = quality
-    cdef double [:, ::1] distance_view = distance
-    cdef int [:, ::1] quality_eroded_view = quality_eroded
-    cdef bint bint_score = score
-
-    cdef int x_max = scl.shape[0]
-    cdef int y_max = scl.shape[1]
-
-    return assess_quality_spatial(scl_view, quality_view, distance_view, quality_eroded_view, bint_score, x_max, y_max)
-
-
-cdef void assess_quality_haze(
-    int [:, ::1] previous_quality,
-    int [:, ::1] previous_b1,
-    int [:, ::1] quality,
-    int [:, ::1] b1,
-    int [:, ::1] haze_change,
-    int x_max,
-    int y_max,
-) nogil:
-    cdef int x, y
-    cdef double ratio
-    for x in prange(x_max, nogil=True):
-        for y in prange(y_max):
-            if previous_quality[x][y] <= 0:
-                if quality[x][y] > 0:
-                    haze_change[x][y] = 1
-            elif quality[x][y] >= previous_quality[x][y]:
-                if previous_b1[x][y] == 0:
-                    haze_change[x][y] = 1
-                else:
-                    ratio = b1[x][y] / previous_b1[x][y]
-                    if ratio >= 2.0:
-                        if quality[x][y] >= 3:
-                            quality[x][y] = quality[x][y] - 2
-                        elif quality[x][y] >= 2:
-                            quality[x][y] = quality[x][y] - 1
-                    elif ratio >= 1.1:
-                        if quality[x][y] >= 2:
-                            quality[x][y] = quality[x][y] - 1
-                    elif ratio <= 0.9:
-                        haze_change[x][y] = 1
-
-
-
-cpdef void radiometric_quality_haze(previous_quality, previous_b1, quality, b1, haze_change):
-    cdef int [:, ::1] previous_quality_view = previous_quality
-    cdef int [:, ::1] previous_b1_view = previous_b1
-    cdef int [:, ::1] quality_view = quality
-    cdef int [:, ::1] b1_view = b1
-    
-    cdef int [:, ::1] haze_change_view = haze_change
-
-    cdef int x_max = quality.shape[0]
-    cdef int y_max = quality.shape[1]
-    
-    assess_quality_haze(previous_quality_view, previous_b1_view, quality_view, b1_view, haze_change_view, x_max, y_max)
-
-
-cdef void assess_radiometric_change_mask(
-    int [:, ::1] previous_quality,
-    int [:, ::1] quality,
-    int [:, ::1] previous_scl,
-    int [:, ::1] scl,
-    int [:, ::1] haze,
-    int [:, ::1] result,
-    int x_max,
-    int y_max,
-) nogil:
-    cdef int x, y
-    for x in prange(x_max, nogil=True):
-        for y in prange(y_max):
-            if quality[x][y] > previous_quality[x][y]:
-                result[x][y] = 1
-            elif quality[x][y] == previous_quality[x][y] and (scl[x][y] == 4 or scl[x][y] == 5 or scl[x][y] == 6 or scl[x][y] == 7):
-                if haze[x][y] == 1:
-                    result[x][y] = 1
-
-
-cpdef int [:, ::1] radiometric_change_mask(previous_quality, quality, previous_scl, scl, haze, result):
-    cdef int [:, ::1] previous_quality_view = previous_quality
-    cdef int [:, ::1] quality_view = quality
-    cdef int [:, ::1] previous_scl_view = previous_scl
-    cdef int [:, ::1] scl_view = scl
-    cdef int [:, ::1] haze_view = haze
-    cdef int [:, ::1] result_view = result
-    cdef int x_max = quality.shape[0]
-    cdef int y_max = quality.shape[1]
-    
-    assess_radiometric_change_mask(
-        previous_quality_view,
-        quality_view,
-        previous_scl,
+    return assess_quality(
         scl_view,
-        haze_view,
-        result_view,
+        band_02_view,
+        band_12_view,
+        band_cldprb_view,
+        aot_view,
+        nodata_dilated_view,
+        quality_view,
+        time_difference,
         x_max,
         y_max,
     )
 
-    return result

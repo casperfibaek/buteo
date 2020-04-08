@@ -4,6 +4,9 @@ from osgeo import gdal, ogr, osr
 
 
 def intersection_rasters(raster_1, raster_2):
+    raster_1 = raster_1 if isinstance(raster_1, gdal.Dataset) else gdal.Open(raster_1)
+    raster_2 = raster_2 if isinstance(raster_2, gdal.Dataset) else gdal.Open(raster_2)
+
     img_1 = raster_to_metadata(raster_1)
     img_2 = raster_to_metadata(raster_2)
 
@@ -33,3 +36,31 @@ def intersection_rasters(raster_1, raster_2):
         return dst_source
     else:
         return False
+
+
+def vector_mask(vector, raster):
+    raster = raster if isinstance(raster, gdal.Dataset) else gdal.Open(raster)
+    vector = vector if isinstance(vector, ogr.DataSource) else ogr.Open(vector)
+
+    # Create destination dataframe
+    driver = gdal.GetDriverByName('MEM')
+
+    destination = driver.Create(
+        'in_memory_raster',     # Location of the saved raster, ignored if driver is memory.
+        raster.RasterXSize,     # Dataframe width in pixels (e.g. 1920px).
+        raster.RasterYSize,     # Dataframe height in pixels (e.g. 1280px).
+        1,                      # The number of bands required.
+        gdal.GDT_Byte,          # Datatype of the destination.
+    )
+
+    destination.SetGeoTransform(raster.GetGeoTransform())
+    destination.SetProjection(raster.GetProjection())
+
+    # Rasterize and retrieve data
+    destination_band = destination.GetRasterBand(1)
+    destination_band.Fill(1)
+
+    gdal.RasterizeLayer(destination, [1], vector.GetLayer(), burn_values=[0], options=['ALL_TOUCHED=TRUE'])
+
+    return destination
+    # return destination_band.ReadAsArray()
