@@ -74,3 +74,4 @@ def create_kernel(width, circular=True, weighted_edges=True, holed=False, offset
 
 if __name__ == "__main__":
     import pdb; pdb.set_trace()
+    

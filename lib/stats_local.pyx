@@ -642,20 +642,6 @@ def mode_array(arr, kernel):
     return result
 
 
-cdef double feather_calc(
-    int * neighbourhood,
-    int value_to_count,
-    int non_zero,
-) nogil :
-    cdef int count = 0
-
-    for i in range(non_zero):
-        if neighbourhood[i] == value_to_count:
-            count += 1
-    
-    cdef double value = <double>count / <double>non_zero
-    return value
-
 
 cdef void loop_feather(
     int [:, ::1] tracker,
@@ -668,18 +654,13 @@ cdef void loop_feather(
     int value_to_count,
 ) nogil:
     cdef int x, y, n, offset_x, offset_y
-    cdef int * neighbourhood
     cdef int x_max_adj = x_max - 1
     cdef int y_max_adj = y_max - 1
-    cdef int neighbourhood_size = sizeof(int) * non_zero
 
     cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
 
     for x in prange(x_max):
-        for y in range(y_max):
-
-            neighbourhood = <int *> malloc(neighbourhood_size)
-
+        for y in prange(y_max):
             for n in range(non_zero):
                 offset_x = x + offsets[n].x
                 offset_y = y + offsets[n].y
@@ -693,11 +674,10 @@ cdef void loop_feather(
                 elif offset_y > y_max_adj:
                     offset_y = y_max_adj
 
-                neighbourhood[n] = tracker[offset_x][offset_y]
-
-            result[x][y] = feather_calc(neighbourhood, value_to_count, non_zero)
-
-            free(neighbourhood)
+                if tracker[offset_x][offset_y] == value_to_count:
+                    result[x][y] += 1.0
+            
+            result[x][y] = result[x][y] / <double>non_zero
 
 
 def feather_s2_array(tracker, value_to_count, kernel):
