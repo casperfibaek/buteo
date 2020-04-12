@@ -38,7 +38,7 @@ for index_g, geom in project_geom_wgs.iterrows():
 
 
 tmp_dir = '/home/cfi/data/tmp/'
-dst_dir = '/home/cfi/data/mosaic/'
+dst_dir = '/home/cfi/data/tests/'
 # dst_dir = '/home/cfi/data/mosaic_adv/'
 
 for tile in data:
@@ -49,8 +49,8 @@ for tile in data:
     # if tile in ['30NVL', '30NVM', '30NVN', '30NVP', '30NWL', '30NVM', '30NWN', '30NWM' '30NWP', '30NXL', '30NXM', '30NXN', '30NXP', '30NYL', '30NYM', '30NYN', '30NYP', '30NZM', '30NZN', '30NZP', '30PVS', '30PWQ']:
     #     continue
     
-    # if tile != '30NVM':
-    #     continue
+    if tile not in ['30NZM']: # '30NYM'
+        continue
     
     images = glob(f'/mnt/d/data/*{tile}*.zip')
     decompress(images, tmp_dir)
@@ -63,7 +63,7 @@ for tile in data:
         dst_projection=project_geom.crs.to_wkt(),
     )
 
-    exit()
+    # exit()
 
     # delete_files = glob(f"{tmp_dir}*.*")
     # for f in delete_files:

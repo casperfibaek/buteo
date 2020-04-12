@@ -433,14 +433,26 @@ def mosaic_tile(
 
         # Calculate changes. Always update nodata.
         change_mask = (quality > master_quality) | ((master_scl == 0) & (scl != 0))
-        percent_change = (change_mask.sum() / change_mask.size) * 100
+        change_mask_inv = change_mask == False
+        change_sum = change_mask.sum()
+        percent_change = (change_sum / change_mask.size) * 100
         
         # Calculate the global change in quality
         quality_global = np.where(change_mask, quality, master_quality)
         quality_global_avg = quality_global.sum() / quality_global.size
         quality_global_change = quality_global_avg - master_quality_avg
+        
+        # Calculate the local change in quality
+        quality_local = np.ma.array(quality, mask=change_mask_inv).sum() / change_sum
+        quality_local_comp = np.ma.array(master_quality, mask=change_mask_inv).sum() / change_sum
+        quality_local_change = quality_local - quality_local_comp
     
-        if ((percent_change > threshold_change) and (quality_global_change > threshold_change)):
+        if (
+            (percent_change > threshold_change)
+            and (quality_global_change > threshold_change)
+            or ((quality_local_change > threshold_quality)
+                and (percent_change > (threshold_change / 2)))
+        ):
             
             # Udpdate the trackers
             tracking_array = np.where(change_mask, i, tracking_array).astype('uint8')
@@ -526,21 +538,36 @@ def mosaic_tile(
     # Only merge images if there are more than one.
     multiple_images = len(processed_images_indices) > 1
     if match_mean is True and multiple_images is True:
+
         print('Harmonising layers..')
         
         total_counts = 0
         counts = []
         weights = []
+        gains = { 'B02': [], 'B03': [], 'B04': [], 'B08': [] }
+        target_gain = { 'B02': 0, 'B03': 0, 'B04': 0, 'B08': 0 }
+        ratios = { 'B02': [], 'B03': [], 'B04': [], 'B08': [] }
         
         for i in processed_images_indices:
             metadata[i]['stats'] = { 'B02': {}, 'B03': {}, 'B04': {}, 'B08': {} }
             pixel_count = (tracking_array == i).sum()
             total_counts += pixel_count
             counts.append(pixel_count)
+            
+            for band in ['B02', 'B03', 'B04', 'B08']:
+                gains[band].append(metadata[i]['gains'][band])
         
         for i in range(len(processed_images_indices)):
             w = counts[i] / total_counts
+            
+            for band in ['B02', 'B03', 'B04', 'B08']:
+                target_gain[band] += gains[band][i] * w
+
             weights.append(w)
+        
+        for i in range(len(processed_images_indices)):
+            for band in ['B02', 'B03', 'B04', 'B08']:
+                ratios[band].append(target_gain[band] / metadata[processed_images_indices[i]]['gains'][band])
 
         medians = { 'B02': [], 'B03': [], 'B04': [], 'B08': [] }
         medians_4 = { 'B02': [], 'B03': [], 'B04': [], 'B08': [] }
@@ -553,85 +580,44 @@ def mosaic_tile(
         madstds_6 = { 'B02': [], 'B03': [], 'B04': [], 'B08': [] }
 
         for v, i in enumerate(processed_images_indices):
-            layer_mask_4 = metadata[i]['scl'] != 4
-            layer_mask_5 = metadata[i]['scl'] != 5
-            layer_mask_6 = metadata[i]['scl'] != 6
+            layer_mask = ((metadata[i]['scl'] == 4) | (metadata[i]['scl'] == 5) | (metadata[i]['scl'] == 6)) == False
 
-            layer_mask = (layer_mask_4 | layer_mask_5 | layer_mask_6 | (metadata[i]['scl'] == 7)) == False
+            if layer_mask.sum() / tracking_array.size <= 0.02:
+                layer_mask = ((metadata[i]['scl'] == 4) | (metadata[i]['scl'] == 5) | (metadata[i]['scl'] == 6) | (metadata[i]['scl'] == 7)) == False
+            
+            if layer_mask.sum() / tracking_array.size <= 0.02:
+                layer_mask = metadata[i]['scl'] == 0
 
             for band in ['B02', 'B03', 'B04', 'B08']:
                 if band == 'B08':
                     array = raster_to_array(resample(metadata[i]['path']['10m'][band], reference_raster=metadata[i]['path']['20m']['B02']))
                 else:
                     array = raster_to_array(metadata[i]['path']['20m'][band])
+                    
+                # array = array * (metadata[i]['gains'][band] / target_gain[band])
 
                 calc_array = np.ma.array(array, mask=layer_mask)
-                calc_array_4 = np.ma.array(array, mask=layer_mask_4)
-                calc_array_5 = np.ma.array(array, mask=layer_mask_5)
-                calc_array_6 = np.ma.array(array, mask=layer_mask_6)
-
                 med, mad = madstd(calc_array)
-                med_4, mad_4 = madstd(calc_array_4)
-                med_5, mad_5 = madstd(calc_array_5)
-                med_6, mad_6 = madstd(calc_array_6)
 
-                if med == 0 or mad == 0: med, mad = madstd(array)
-                if med_4 == 0 or mad_4 == 0: med_4, mad_4 = (med, mad)
-                if med_5 == 0 or mad_5 == 0: med_5, mad_5 = (med, mad)
-                if med_6 == 0 or mad_6 == 0: med_6, mad_6 = (med, mad)
+                if med == 0 or mad == 0:
+                    med, mad = madstd(array)
                     
                 medians[band].append(med)
-                medians_4[band].append(med_4)
-                medians_5[band].append(med_5)
-                medians_6[band].append(med_6)
-
                 madstds[band].append(mad)
-                madstds_4[band].append(mad_4)
-                madstds_5[band].append(mad_5)
-                madstds_6[band].append(mad_6)
         
         targets_median = { 'B02': None, 'B03': None, 'B04': None, 'B08': None }
-        targets_median_4 = { 'B02': None, 'B03': None, 'B04': None, 'B08': None }
-        targets_median_5 = { 'B02': None, 'B03': None, 'B04': None, 'B08': None }
-        targets_median_6 = { 'B02': None, 'B03': None, 'B04': None, 'B08': None }
-
         targets_madstd = { 'B02': None, 'B03': None, 'B04': None, 'B08': None }
-        targets_madstd_4 = { 'B02': None, 'B03': None, 'B04': None, 'B08': None }
-        targets_madstd_5 = { 'B02': None, 'B03': None, 'B04': None, 'B08': None }
-        targets_madstd_6 = { 'B02': None, 'B03': None, 'B04': None, 'B08': None }
         
         for band in ['B02', 'B03', 'B04', 'B08']:
             targets_median[band] = np.average(medians[band], weights=weights)
-            targets_median_4[band] = np.average(medians_4[band], weights=weights)
-            targets_median_5[band] = np.average(medians_5[band], weights=weights)
-            targets_median_6[band] = np.average(medians_6[band], weights=weights)
-
             targets_madstd[band] = np.average(madstds[band], weights=weights)
-            targets_madstd_4[band] = np.average(madstds_4[band], weights=weights)
-            targets_madstd_5[band] = np.average(madstds_5[band], weights=weights)
-            targets_madstd_6[band] = np.average(madstds_6[band], weights=weights)
     
         for v, i in enumerate(processed_images_indices):
             for band in ['B02', 'B03', 'B04', 'B08']:
                 metadata[i]['stats'][band]['src_median'] = medians[band][v] if medians[band][v] > 0 else targets_median[band]
-                metadata[i]['stats'][band]['src_median_4'] = medians_4[band][v] if medians_4[band][v] > 0 else targets_median_4[band]
-                metadata[i]['stats'][band]['src_median_5'] = medians_5[band][v] if medians_5[band][v] > 0 else targets_median_5[band]
-                metadata[i]['stats'][band]['src_median_6'] = medians_6[band][v] if medians_6[band][v] > 0 else targets_median_6[band]
-
                 metadata[i]['stats'][band]['src_madstd'] = madstds[band][v] if madstds[band][v] > 0 else targets_madstd[band]
-                metadata[i]['stats'][band]['src_madstd_4'] = madstds_4[band][v] if madstds_4[band][v] > 0 else targets_madstd_4[band]
-                metadata[i]['stats'][band]['src_madstd_5'] = madstds_5[band][v] if madstds_5[band][v] > 0 else targets_madstd_5[band]
-                metadata[i]['stats'][band]['src_madstd_6'] = madstds_6[band][v] if madstds_6[band][v] > 0 else targets_madstd_6[band]
-
                 metadata[i]['stats'][band]['target_median'] = targets_median[band]
-                metadata[i]['stats'][band]['target_median_4'] = targets_median_4[band]
-                metadata[i]['stats'][band]['target_median_5'] = targets_median_5[band]
-                metadata[i]['stats'][band]['target_median_6'] = targets_median_6[band]
-
                 metadata[i]['stats'][band]['target_madstd'] = targets_madstd[band]
-                metadata[i]['stats'][band]['target_madstd_4'] = targets_madstd_4[band]
-                metadata[i]['stats'][band]['target_madstd_5'] = targets_madstd_5[band]
-                metadata[i]['stats'][band]['target_madstd_6'] = targets_madstd_6[band]
         
     # Clear memory of scl images
     for j in range(len(metadata)):
@@ -665,11 +651,6 @@ def mosaic_tile(
         for i in processed_images_indices:
             feathers[str(i)] = feather_s2_filter(tracking_array, i, feather_dist).astype('float32')
 
-    if match_mean and len(processed_images_indices) > 1:
-        mask_4 = (master_scl == 4)
-        mask_5 = (master_scl == 5)
-        mask_6 = (master_scl == 6)
-        mask_rest = (master_scl != 4) & (master_scl != 5) & (master_scl != 6)
 
     bands_to_output = ['B02', 'B03', 'B04', 'B08']
     print('Merging band data..')
@@ -677,49 +658,22 @@ def mosaic_tile(
         print(f'Writing: {band}..')
         base_image = raster_to_array(metadata[0]['path']['10m'][band]).astype('float32')
 
+        count = 0
         for i in processed_images_indices:
 
             if match_mean and len(processed_images_indices) > 1:
                 src_med = metadata[i]['stats'][band]['src_median']
-                src_med_4 = metadata[i]['stats'][band]['src_median_4']
-                src_med_5 = metadata[i]['stats'][band]['src_median_5']
-                src_med_6 = metadata[i]['stats'][band]['src_median_6']
-
                 src_mad = metadata[i]['stats'][band]['src_madstd']
-                src_mad_4 = metadata[i]['stats'][band]['src_madstd_4']
-                src_mad_5 = metadata[i]['stats'][band]['src_madstd_5']
-                src_mad_6 = metadata[i]['stats'][band]['src_madstd_6']
-
                 target_med = metadata[i]['stats'][band]['target_median']
-                target_med_4 = metadata[i]['stats'][band]['target_median_4']
-                target_med_5 = metadata[i]['stats'][band]['target_median_5']
-                target_med_6 = metadata[i]['stats'][band]['target_median_6']
-
                 target_mad = metadata[i]['stats'][band]['target_madstd']
-                target_mad_4 = metadata[i]['stats'][band]['target_madstd_4']
-                target_mad_5 = metadata[i]['stats'][band]['target_madstd_5']
-                target_mad_6 = metadata[i]['stats'][band]['target_madstd_6']
 
             if i == 0:
                 if match_mean and len(processed_images_indices) > 1:
-
-                    dif = base_image - src_med
-                    dif_4 = base_image - src_med_4
-                    dif_5 = base_image - src_med_5
-                    dif_6 = base_image - src_med_6
-
-                    base_image_rest = ((dif * target_mad) / src_mad) + target_med
-                    base_image_4 = ((dif_4 * target_mad_4) / src_mad_4) + target_med_4
-                    base_image_5 = ((dif_5 * target_mad_5) / src_mad_5) + target_med_5
-                    base_image_6 = ((dif_6 * target_mad_6) / src_mad_6) + target_med_6
-
-                    base_image = np.where(mask_rest, base_image_rest, base_image)
-                    base_image = np.where(mask_4, base_image_4, base_image)
-                    base_image = np.where(mask_5, base_image_5, base_image)
-                    base_image = np.where(mask_6, base_image_6, base_image)
-
+                    # dif = ((base_image * ratios[band][count]) - src_med)
+                    dif = (base_image - src_med)
+                    base_image = ((dif * target_mad) / src_mad) + target_med
                     base_image = np.where(base_image >= 0, base_image, 0)
-
+                    
                 if feather is True and len(processed_images_indices) > 1:
                     base_image = base_image * feathers[str(i)]
 
@@ -727,27 +681,17 @@ def mosaic_tile(
                 add_band = raster_to_array(metadata[i]['path']['10m'][band]).astype('float32')
                 
                 if match_mean:                    
+                    # dif = ((add_band * ratios[band][count]) - src_med)
                     dif = add_band - src_med
-                    dif_4 = add_band - src_med_4
-                    dif_5 = add_band - src_med_5
-                    dif_6 = add_band - src_med_6
-
-                    add_band_rest = ((dif * target_mad) / src_mad) + target_med
-                    add_band_4 = ((dif_4 * target_mad_4) / src_mad_4) + target_med_4
-                    add_band_5 = ((dif_5 * target_mad_5) / src_mad_5) + target_med_5
-                    add_band_6 = ((dif_6 * target_mad_6) / src_mad_6) + target_med_6
-                    
-                    add_band = np.where(mask_rest, add_band_rest, add_band)
-                    add_band = np.where(mask_4, add_band_4, add_band)
-                    add_band = np.where(mask_5, add_band_5, add_band)
-                    add_band = np.where(mask_6, add_band_6, add_band)
-                    
+                    add_band = ((dif * target_mad) / src_mad) + target_med
                     add_band = np.where(add_band >= 0, add_band, 0)
 
                 if feather is True:
                     base_image = np.add(base_image, (add_band * feathers[str(i)]))
                 else:
                     base_image = np.where(tracking_array == i, add_band, base_image).astype('float32')
+            
+            count += 1
 
         array_to_raster(np.rint(base_image).astype('uint16'), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
 

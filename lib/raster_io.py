@@ -358,7 +358,7 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
 
     # Return the destination raster
     if output_format != 'MEM':
-        destination['dataframe'].FlushCache()
+        # destination['dataframe'].FlushCache()
         return os.path.abspath(out_raster)
     else:
         return destination['dataframe']

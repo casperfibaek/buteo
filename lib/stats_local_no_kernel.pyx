@@ -516,9 +516,9 @@ cdef double assess_quality_func(
     cdef double quality = 0.0
 
     if nodata == 1: # SC_NODATA
-        quality = 0.0
+        quality = -10.0
     elif scl == 1:  # SC_SATURATED_DEFECTIVE
-        quality = 0.0
+        quality = -10.0
     elif scl == 2:  # SC_DARK_FEATURE_SHADOW
         quality = 55.0
     elif scl == 3:  # SC_CLOUD_SHADOW
@@ -541,8 +541,7 @@ cdef double assess_quality_func(
         quality = 55.0
 
     # First evaluate Aerosol Optical Thickness
-    # quality = quality + ((-0.075 * aot) + 15)
-    quality = quality + ((-0.00006 * (aot * aot)) - (0.0306 * aot) + 9.2189)
+    quality = quality + ((-0.01 * aot) + 2.5)
 
     # Evalutate cloud percentage
     if ((scl == 4) | (scl == 5) | (scl == 6) | (scl == 7) | (scl == 11)):
@@ -559,8 +558,8 @@ cdef double assess_quality_func(
     # Evaluate blue band
     if b2 > 700:
         quality = quality + (-0.0175 * b2 + 7)
-    elif b2 < 300:
-        quality = quality + ((-0.0002 * (b2 * b2)) + (0.1367 * b2) - 20)
+    elif b2 < 100:
+        quality = quality + ((-0.002 * (b2 * b2)) + (0.4 * b2) - 20)
     
     # Evauluate time difference: minus 0.5% quality per week
     quality = quality + (-0.0725 * time_difference)
@@ -571,9 +570,9 @@ cdef double assess_quality_func(
 
     if quality <= 0:
         if nodata == 1 or scl == 1:
-            quality = 0
+            quality = -10.0
         else:
-            quality = 1
+            quality = 0
 
     return quality
 
