@@ -261,14 +261,14 @@ def assess_radiometric_quality(metadata, calc_quality='high', score=False):
         band_02 = raster_to_array(metadata['path']['20m']['B02']).astype('intc')
         band_12 = raster_to_array(metadata['path']['20m']['B12']).astype('intc')
         band_cldprb = raster_to_array(metadata['path']['QI']['CLDPRB_20m'])
-        distance = 101
+        distance = 63
     else:
         scl = raster_to_array(metadata['path']['60m']['SCL']).astype('intc')
         aot = raster_to_array(metadata['path']['60m']['AOT']).astype('intc')
         band_cldprb = raster_to_array(metadata['path']['QI']['CLDPRB_60m'])
         band_02 = raster_to_array(metadata['path']['60m']['B02']).astype('intc')
         band_12 = raster_to_array(metadata['path']['60m']['B12']).astype('intc')
-        distance = 33
+        distance = 21
 
     kernel_nodata = create_kernel(201, weighted_edges=False, weighted_distance=False, normalise=False).astype('uint8')
     
@@ -366,18 +366,19 @@ def mosaic_tile(
     dst_projection=None,
     feather=True,
     target_quality=100,
-    threshold_change=1.0,
-    threshold_quality=12.5,
-    feather_dist=31,
+    threshold_change=0.5,
+    threshold_quality=10.0,
+    feather_dist=21,
+    feather_scl=5,
     filter_tracking=True,
     match_mean=True,
     allow_nodata=False,
     max_days=60,
     max_images_include=15,
-    max_images_search=30,
+    max_images_search=25,
     output_scl=True,
     output_tracking=True,
-    output_quality=True,
+    output_quality=False,
 ):
     start_time = time()
 
@@ -467,61 +468,6 @@ def mosaic_tile(
     quality_global = None
     quality = None
     scl = None
-    
-    # If there is not enough data within the timeperiod to fill the tile. Expand time period.
-    if (master_scl == 0).sum() != 0:
-        print('Image still contains nodata - additional loop required..')
-        
-        v = 1
-        best_nodata_change = 0
-        best_nodata_arr = []
-
-        while v < len(metadata) - 1:
-            scl = metadata[v]['scl'] if v in processed_images_indices else raster_to_array(metadata[v]['path']['20m']['SCL'])
-
-            # Find all the arrays that have data for all the nodata in the master images.
-            metadata[v]['nodata_change_sum'] = ((master_scl == 0) & (scl != 0)).sum()
-            if metadata[v]['nodata_change_sum'] > best_nodata_change:
-                best_nodata_change = metadata[v]['nodata_change_sum']
-                best_nodata_arr = [v]
-                metadata[v]['scl'] = scl
-            elif metadata[v]['nodata_change_sum'] == best_nodata_change:
-                best_nodata_arr.append(v)
-                metadata[v]['scl'] = scl
-            
-            v += 1 
-        
-        # Select the best one of all the fitting images.
-        best_nodata_image = 0
-        best_nodata_quality = 0
-        for x in best_nodata_arr:
-            if metadata[x]['quality_score'] > best_nodata_quality:
-                best_nodata_image = x
-                best_nodata_quality = metadata[x]['quality_score']
-        
-        print('Nodata image selected: ' + metadata[best_nodata_image]['name'])
-        
-        quality, scl = assess_radiometric_quality(metadata[best_nodata_image])
-
-        # Update where valid data or quality is better (quality is decreased over time, so should be low or None)
-        change_mask = ((master_scl == 0) & (metadata[best_nodata_image]['scl'] != 0)) | (quality > master_quality)
-        
-        # Udpdate the trackers
-        tracking_array = np.where(change_mask, best_nodata_image, tracking_array).astype('uint8')
-        master_scl = np.where(change_mask, metadata[best_nodata_image]['scl'], master_scl).astype('uint8')
-        master_quality = np.where(change_mask, quality, master_quality).astype(np.double)
-        master_quality_avg = (master_quality.sum() / master_quality.size)
-        processed_images_indices.append(best_nodata_image)
-    
-    print(f'Final quality: {round(master_quality_avg, 2)}%..')
-
-            
-    # Free memory
-    scl = None
-    quality = None
-    change_mask = None    
-    best_nodata_arr = None
-
 
     # Only merge images if there are more than one.
     multiple_images = len(processed_images_indices) > 1
@@ -554,8 +500,11 @@ def mosaic_tile(
 
         for v, i in enumerate(processed_images_indices):
             layer_mask_4 = metadata[i]['scl'] != 4
+            layer_mask_4_inv = layer_mask_4 == False
             layer_mask_5 = metadata[i]['scl'] != 5
+            layer_mask_5_inv = layer_mask_5 == False
             layer_mask_6 = metadata[i]['scl'] != 6
+            layer_mask_6_inv = layer_mask_6 == False
 
             layer_mask = (layer_mask_4 | layer_mask_5 | layer_mask_6 | (metadata[i]['scl'] == 7)) == False
 
@@ -571,9 +520,20 @@ def mosaic_tile(
                 calc_array_6 = np.ma.array(array, mask=layer_mask_6)
 
                 med, mad = madstd(calc_array)
-                med_4, mad_4 = madstd(calc_array_4)
-                med_5, mad_5 = madstd(calc_array_5)
-                med_6, mad_6 = madstd(calc_array_6)
+                if layer_mask_4_inv.sum() > 1000:
+                    med_4, mad_4 = madstd(calc_array_4)
+                else:
+                    med_4, mad_4 = madstd(calc_array)
+                
+                if layer_mask_5_inv.sum() > 1000:
+                    med_5, mad_5 = madstd(calc_array_5)
+                else:
+                    med_5, mad_5 = madstd(calc_array)
+                
+                if layer_mask_6_inv.sum() > 1000:
+                    med_6, mad_6 = madstd(calc_array_6)
+                else:
+                    med_6, mad_6 = madstd(calc_array)
 
                 if med == 0 or mad == 0: med, mad = madstd(array)
                 if med_4 == 0 or mad_4 == 0: med_4, mad_4 = (med, mad)
@@ -657,15 +617,20 @@ def mosaic_tile(
         tracking_array = mode_filter(tracking_array, 7).astype('uint8')
 
     # Feather the edges between joined images (ensure enough valid pixels are on each side..)
-    if feather and multiple_images is True:
-        print('Precalculating feathers..')
-
+    if feather is True and multiple_images is True:
         feathers = {}
+        
+        print('Precalculating classification feathers..')
+        feather_rest = feather_s2_filter(master_scl, np.array([0, 1, 2, 3, 7, 8, 9, 10, 11], dtype='intc'), feather_scl).astype('float32')
+        feather_4 = feather_s2_filter(master_scl, np.array([4], dtype='intc'), feather_scl).astype('float32')
+        feather_5 = feather_s2_filter(master_scl, np.array([5], dtype='intc'), feather_scl).astype('float32')
+        feather_6 = feather_s2_filter(master_scl, np.array([6], dtype='intc'), feather_scl).astype('float32')
 
+        print('Precalculating inter-layer feathers..')
         for i in processed_images_indices:
-            feathers[str(i)] = feather_s2_filter(tracking_array, i, feather_dist).astype('float32')
+            feathers[str(i)] = feather_s2_filter(tracking_array, np.array([i], dtype='intc'), feather_dist).astype('float32')
 
-    if match_mean and len(processed_images_indices) > 1:
+    if match_mean is True and feather is False and len(processed_images_indices) > 1:
         mask_4 = (master_scl == 4)
         mask_5 = (master_scl == 5)
         mask_6 = (master_scl == 6)
@@ -702,22 +667,28 @@ def mosaic_tile(
 
             if i == 0:
                 if match_mean and len(processed_images_indices) > 1:
-
                     dif = base_image - src_med
                     dif_4 = base_image - src_med_4
                     dif_5 = base_image - src_med_5
                     dif_6 = base_image - src_med_6
 
-                    base_image_rest = ((dif * target_mad) / src_mad) + target_med
-                    base_image_4 = ((dif_4 * target_mad_4) / src_mad_4) + target_med_4
-                    base_image_5 = ((dif_5 * target_mad_5) / src_mad_5) + target_med_5
-                    base_image_6 = ((dif_6 * target_mad_6) / src_mad_6) + target_med_6
+                    if feather is True and len(processed_images_indices) > 1:
+                        base_image = (((dif * target_mad) / src_mad) + target_med) * feather_rest
+                        base_image = np.add(base_image, (((dif_4 * target_mad_4) / src_mad_4) + target_med_4) * feather_4)
+                        base_image = np.add(base_image, (((dif_5 * target_mad_5) / src_mad_5) + target_med_5) * feather_5)
+                        base_image = np.add(base_image, (((dif_6 * target_mad_6) / src_mad_6) + target_med_6) * feather_6)
 
-                    base_image = np.where(mask_rest, base_image_rest, base_image)
-                    base_image = np.where(mask_4, base_image_4, base_image)
-                    base_image = np.where(mask_5, base_image_5, base_image)
-                    base_image = np.where(mask_6, base_image_6, base_image)
+                    else:
+                        base_image_rest = ((dif * target_mad) / src_mad) + target_med
+                        base_image_4 = ((dif_4 * target_mad_4) / src_mad_4) + target_med_4
+                        base_image_5 = ((dif_5 * target_mad_5) / src_mad_5) + target_med_5
+                        base_image_6 = ((dif_6 * target_mad_6) / src_mad_6) + target_med_6
 
+                        base_image = np.where(mask_rest, base_image_rest, base_image)
+                        base_image = np.where(mask_4, base_image_4, base_image)
+                        base_image = np.where(mask_5, base_image_5, base_image)
+                        base_image = np.where(mask_6, base_image_6, base_image)
+                
                     base_image = np.where(base_image >= 0, base_image, 0)
 
                 if feather is True and len(processed_images_indices) > 1:
@@ -726,21 +697,27 @@ def mosaic_tile(
             else:
                 add_band = raster_to_array(metadata[i]['path']['10m'][band]).astype('float32')
                 
-                if match_mean:                    
+                if match_mean:       
                     dif = add_band - src_med
                     dif_4 = add_band - src_med_4
                     dif_5 = add_band - src_med_5
                     dif_6 = add_band - src_med_6
-
-                    add_band_rest = ((dif * target_mad) / src_mad) + target_med
-                    add_band_4 = ((dif_4 * target_mad_4) / src_mad_4) + target_med_4
-                    add_band_5 = ((dif_5 * target_mad_5) / src_mad_5) + target_med_5
-                    add_band_6 = ((dif_6 * target_mad_6) / src_mad_6) + target_med_6
                     
-                    add_band = np.where(mask_rest, add_band_rest, add_band)
-                    add_band = np.where(mask_4, add_band_4, add_band)
-                    add_band = np.where(mask_5, add_band_5, add_band)
-                    add_band = np.where(mask_6, add_band_6, add_band)
+                    if feather is True:
+                        add_band = (((dif * target_mad) / src_mad) + target_med) * feather_rest
+                        add_band = np.add(add_band, (((dif_4 * target_mad_4) / src_mad_4) + target_med_4) * feather_4)
+                        add_band = np.add(add_band, (((dif_5 * target_mad_5) / src_mad_5) + target_med_5) * feather_5)
+                        add_band = np.add(add_band, (((dif_6 * target_mad_6) / src_mad_6) + target_med_6) * feather_6)
+                    else:             
+                        add_band_rest = ((dif * target_mad) / src_mad) + target_med
+                        add_band_4 = ((dif_4 * target_mad_4) / src_mad_4) + target_med_4
+                        add_band_5 = ((dif_5 * target_mad_5) / src_mad_5) + target_med_5
+                        add_band_6 = ((dif_6 * target_mad_6) / src_mad_6) + target_med_6
+                        
+                        add_band = np.where(mask_rest, add_band_rest, add_band)
+                        add_band = np.where(mask_4, add_band_4, add_band)
+                        add_band = np.where(mask_5, add_band_5, add_band)
+                        add_band = np.where(mask_6, add_band_6, add_band)
                     
                     add_band = np.where(add_band >= 0, add_band, 0)
 

@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import shutil
 from glob import glob
+from multiprocessing import Pool
 
 from sen2mosaic.download import search, download, connectToAPI, decompress
 from mosaic_tool import mosaic_tile
@@ -37,21 +38,12 @@ for index_g, geom in project_geom_wgs.iterrows():
 #         download(sdf, '/mnt/d/data/')
 
 
-tmp_dir = '/home/cfi/data/tmp/'
-dst_dir = '/home/cfi/data/tests/'
 # dst_dir = '/home/cfi/data/mosaic_adv/'
 
-for tile in data:
-    if len(glob(f"{dst_dir}*tile*")) != 0:
-        continue
-    
-    # '30NVM', '30NVN', '30NVP', '30NWL', '30NVM', '30NWN', '30NWM' '30NWP'
-    # if tile in ['30NVL', '30NVM', '30NVN', '30NVP', '30NWL', '30NVM', '30NWN', '30NWM' '30NWP', '30NXL', '30NXM', '30NXN', '30NXP', '30NYL', '30NYM', '30NYN', '30NYP', '30NZM', '30NZN', '30NZP', '30PVS', '30PWQ']:
-    #     continue
-    
-    if tile not in ['30NZM']: # '30NYM'
-        continue
-    
+
+def calc_tile(tile):
+    tmp_dir = '/home/cfi/data/tmp/'
+    dst_dir = '/home/cfi/data/mosaic/'
     images = glob(f'/mnt/d/data/*{tile}*.zip')
     decompress(images, tmp_dir)
     images = glob(f'{tmp_dir}*{tile}*')
@@ -63,14 +55,24 @@ for tile in data:
         dst_projection=project_geom.crs.to_wkt(),
     )
 
-    # exit()
+    delete_files = glob(f"{tmp_dir}*{tile}*.*")
+    for f in delete_files:
+        try:
+            shutil.rmtree(f)
+        except:
+            pass
 
-    # delete_files = glob(f"{tmp_dir}*.*")
-    # for f in delete_files:
-    #     try:
-    #         shutil.rmtree(f)
-    #     except:
-    #         pass
+pool = Pool(processes=8)
+pool.map(calc_tile, data)
+    
+    # '30NVM', '30NVN', '30NVP', '30NWL', '30NVM', '30NWN', '30NWM' '30NWP'
+    # if tile in ['30NVL', '30NVM', '30NVN', '30NVP', '30NWL', '30NVM', '30NWN', '30NWM' '30NWP', '30NXL', '30NXM', '30NXN', '30NXP', '30NYL', '30NYM', '30NYN', '30NYP', '30NZM', '30NZN', '30NZP', '30PVS', '30PWQ']:
+    #     continue
+    
+    # if tile not in ['30NYM']:
+    #     continue
+    
+
 
 
 # import numpy as np
