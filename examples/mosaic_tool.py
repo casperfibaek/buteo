@@ -5,6 +5,7 @@ from lib.stats_filters import mode_filter, feather_s2_filter
 from lib.stats_local_no_kernel import radiometric_quality
 from lib.stats_kernel import create_kernel
 from lib.utils_core import madstd
+from multiprocessing import Pool, cpu_count
 from time import time
 import cv2
 import os
@@ -337,11 +338,16 @@ def prepare_metadata(list_of_SAFE_images):
     highest_quality = 0
 
     # Find the image with the lowest invalid percentage
+    pool_args = zip(metadata, ['low'] * len(metadata), [True] * len(metadata))
+    pool = Pool(cpu_count())
+    quality_scores = pool.starmap(assess_radiometric_quality, pool_args)
+    pool.close()
+    pool.join()
+    
     for index, value in enumerate(metadata):
-        quality_score = assess_radiometric_quality(value, calc_quality='low', score=True)
-        metadata[index]['quality_score'] = quality_score
-        if quality_score > highest_quality:
-            highest_quality = quality_score
+        metadata[index]['quality_score'] = quality_scores[index]
+        if quality_scores[index] > highest_quality:
+            highest_quality = quality_scores[index]
             best_image = value
 
     # Calculate the time difference from each image to the best image
@@ -379,6 +385,7 @@ def mosaic_tile(
     output_scl=True,
     output_tracking=True,
     output_quality=False,
+    verbose=True,
 ):
     start_time = time()
 
@@ -388,16 +395,16 @@ def mosaic_tile(
     assert isinstance(out_name, str), f"out_name is not a string: {out_name}"
     assert len(list_of_SAFE_images) > 1, "list_of_SAFE_images is empty or only a single image."
 
-    print('Selecting best image..')
+    if verbose: print('Selecting best image..')
     metadata = prepare_metadata(list_of_SAFE_images)
     
     # Sorted by best, so 0 is the best one.
     best_image = metadata[0]
     best_image_name = best_image['name']
 
-    print(f'Selected: {best_image_name} {out_name}')
+    if verbose: print(f'Selected: {best_image_name} {out_name}')
 
-    print('Preparing base image..')
+    if verbose: print('Preparing base image..')
     master_quality, master_scl = assess_radiometric_quality(best_image)
     tracking_array = np.zeros(master_quality.shape, dtype='uint8')
     
@@ -411,7 +418,7 @@ def mosaic_tile(
     processed_images_indices = [0]
 
     # Loop the images and update the tracking array (SYNTHESIS)
-    print(f'Initial. tracking array: (quality {round(master_quality_avg, 2)}%) (0/{max_days} days) (goal {target_quality}%)')
+    if verbose: print(f'Initial. tracking array: (quality {round(master_quality_avg, 2)}%) (0/{max_days} days) (goal {target_quality}%)')
     while (
         (master_quality_avg < target_quality)
         and i < len(metadata) - 1
@@ -424,7 +431,7 @@ def mosaic_tile(
         if (i >= max_images_search):
             if (master_scl == 0).sum() == 0 or allow_nodata is True:
                 break
-            print('Continuing dispite reaching max_images_search as there is still nodata in tile..')
+            if verbose: print('Continuing dispite reaching max_images_search as there is still nodata in tile..')
 
         # Time difference
         td = int(round(metadata[i]['time_difference'] / 86400, 0))  
@@ -456,9 +463,9 @@ def mosaic_tile(
             processed_images_indices.append(i)
 
             img_name = metadata[i]['name']
-            print(f'Updating tracking array: (quality {round(master_quality_avg, 2)}%) ({td}/{max_days} days) (goal {target_quality}%) (name {img_name})')
+            if verbose: print(f'Updating tracking array: (quality {round(master_quality_avg, 2)}%) ({td}/{max_days} days) (goal {target_quality}%) (name {img_name})')
         else:
-            print(f'Skipping image due to low change.. ({round(threshold_change, 3)}% threshold) ({td}/{max_days} days)')
+            if verbose: print(f'Skipping image due to low change.. ({round(threshold_change, 3)}% threshold) ({td}/{max_days} days)')
 
         i += 1
 
@@ -472,7 +479,7 @@ def mosaic_tile(
     # Only merge images if there are more than one.
     multiple_images = len(processed_images_indices) > 1
     if match_mean is True and multiple_images is True:
-        print('Harmonising layers..')
+        if verbose: print('Harmonising layers..')
         
         total_counts = 0
         counts = []
@@ -612,7 +619,7 @@ def mosaic_tile(
 
     # Run a mode filter on the tracking array
     if filter_tracking is True and multiple_images is True:
-        print('Filtering tracking array..')
+        if verbose: print('Filtering tracking array..')
 
         tracking_array = mode_filter(tracking_array, 7).astype('uint8')
 
@@ -626,7 +633,7 @@ def mosaic_tile(
         feather_5 = feather_s2_filter(master_scl, np.array([5], dtype='intc'), feather_scl).astype('float32')
         feather_6 = feather_s2_filter(master_scl, np.array([6], dtype='intc'), feather_scl).astype('float32')
 
-        print('Precalculating inter-layer feathers..')
+        if verbose: print('Precalculating inter-layer feathers..')
         for i in processed_images_indices:
             feathers[str(i)] = feather_s2_filter(tracking_array, np.array([i], dtype='intc'), feather_dist).astype('float32')
 
@@ -637,9 +644,9 @@ def mosaic_tile(
         mask_rest = (master_scl != 4) & (master_scl != 5) & (master_scl != 6)
 
     bands_to_output = ['B02', 'B03', 'B04', 'B08']
-    print('Merging band data..')
+    if verbose: print('Merging band data..')
     for band in bands_to_output:
-        print(f'Writing: {band}..')
+        if verbose: print(f'Writing: {band}..')
         base_image = raster_to_array(metadata[0]['path']['10m'][band]).astype('float32')
 
         for i in processed_images_indices:
@@ -728,4 +735,4 @@ def mosaic_tile(
 
         array_to_raster(np.rint(base_image).astype('uint16'), reference_raster=best_image['path']['10m'][band], out_raster=os.path.join(out_dir, f"{band}_{out_name}.tif"), dst_projection=dst_projection)
 
-    print(f'Completed mosaic in: {round((time() - start_time) / 60, 1)}m')
+    if verbose: print(f'Completed mosaic in: {round((time() - start_time) / 60, 1)}m')

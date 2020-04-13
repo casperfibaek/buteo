@@ -64,6 +64,10 @@ def calc_tile(tile):
 
 pool = Pool(processes=8)
 pool.map(calc_tile, data)
+pool.close()
+pool.join()
+
+
     
     # '30NVM', '30NVN', '30NVP', '30NWL', '30NVM', '30NWN', '30NWM' '30NWP'
     # if tile in ['30NVL', '30NVM', '30NVN', '30NVP', '30NWL', '30NVM', '30NWN', '30NWM' '30NWP', '30NXL', '30NXM', '30NXN', '30NXP', '30NYL', '30NYM', '30NYN', '30NYP', '30NZM', '30NZN', '30NZP', '30PVS', '30PWQ']:
