@@ -117,14 +117,13 @@ def search(tile, level = '1C', start = '20150523', end = datetime.datetime.today
     # convert to Pandas DataFrame, which can be searched modified before commiting to download()
     products_df = scihub_api.to_dataframe(products)
     
-    print('Found %s matching images'%str(len(products_df)))
-
     # Where no results for tile    
     if len(products_df) == 0: return products_df
     
     products_df['filesize_mb'] = _get_filesize(products_df)
     
     products_df = products_df[products_df['filesize_mb'] >= float(minsize)]
+    # print('Found %s matching images'%str(len(products_df)))
      
     return products_df
 

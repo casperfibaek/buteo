@@ -9,7 +9,7 @@ from multiprocessing import Pool
 from sen2mosaic.download import search, download, connectToAPI, decompress
 from mosaic_tool import mosaic_tile
 
-project_area = '/mnt/c/Users/caspe/Desktop/Analysis/Data/vector/ghana_landarea.shp'
+project_area = '../geometry/ghana_landarea.shp'
 project_geom = gpd.read_file(project_area)
 project_geom_wgs = project_geom.to_crs('EPSG:4326')
 
@@ -25,47 +25,62 @@ for index_g, geom in project_geom_wgs.iterrows():
             data.append(tile['Name'])
             data_bounds.append(list(tile['geometry'].bounds))
 
-# connectToAPI('test', 'test')
+connectToAPI('test', 'test')
 
-# data.reverse()
+data.reverse()
 
 # DIFFICULT TILES:
 # NWL has multiple issues with overflows on band 8
 # extra_tiles = ['30NWL', '30PWR', '30PXR', '30PXS', '30PYQ', '30NWN', '30NZM', '30NZP']
 
-# for tile in data:
-#         sdf = search(tile, level='2A', start='20191201', maxcloud=10, minsize=500.0)
-#         download(sdf, '/mnt/d/data/')
+
+
+for tile in data:
+    cloud_search = 5
+
+    while cloud_search <= 100:
+        sdf = search(tile, level='2A', start='20190101', end='20190301', maxcloud=cloud_search, minsize=500.0)
+
+        if len(sdf) >= 5:
+            print(f"Found {len(sdf)} images of {tile} @ {cloud_search}% cloud cover - downloading.." )
+            download(sdf, '/home/cfi/data')
+            break
+
+        print(f'Found too few images of {tile} @ {cloud_search}% cloud cover - skipping..')
+        cloud_search += 5
+        
+
+        
 
 
 # dst_dir = '/home/cfi/data/mosaic_adv/'
 
 
-def calc_tile(tile):
-    tmp_dir = '/home/cfi/data/tmp/'
-    dst_dir = '/home/cfi/data/mosaic/'
-    images = glob(f'/mnt/d/data/*{tile}*.zip')
-    decompress(images, tmp_dir)
-    images = glob(f'{tmp_dir}*{tile}*')
+# def calc_tile(tile):
+#     tmp_dir = '/home/cfi/data/tmp/'
+#     dst_dir = '/home/cfi/data/mosaic/'
+#     images = glob(f'/mnt/d/data/*{tile}*.zip')
+#     decompress(images, tmp_dir)
+#     images = glob(f'{tmp_dir}*{tile}*')
 
-    mosaic_tile(
-        images,
-        dst_dir,
-        tile,
-        dst_projection=project_geom.crs.to_wkt(),
-    )
+#     mosaic_tile(
+#         images,
+#         dst_dir,
+#         tile,
+#         dst_projection=project_geom.crs.to_wkt(),
+#     )
 
-    delete_files = glob(f"{tmp_dir}*{tile}*.*")
-    for f in delete_files:
-        try:
-            shutil.rmtree(f)
-        except:
-            pass
+#     delete_files = glob(f"{tmp_dir}*{tile}*.*")
+#     for f in delete_files:
+#         try:
+#             shutil.rmtree(f)
+#         except:
+#             pass
 
-pool = Pool(processes=8)
-pool.map(calc_tile, data)
-pool.close()
-pool.join()
+# pool = Pool(processes=8)
+# pool.map(calc_tile, data)
+# pool.close()
+# pool.join()
 
 
     

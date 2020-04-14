@@ -10,6 +10,7 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * sudo apt full-upgrade
   * sudo apt autoremove
 
+
 # Packages
   ## Anaconda
   * Get the newest link @ https://www.anaconda.com/distribution/ 
@@ -24,7 +25,7 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * conda update --all
   * conda create --name yellow python=3.8
   * conda activate yellow
-  * conda install -c anaconda mkl numpy scipy scikit-learn cython numexpr pandas sqlite sqlalchemy pyamg
+  * conda install -c anaconda psutil mkl numpy scipy scikit-learn cython numexpr pandas sqlite sqlalchemy pyamg
   * conda install -c conda-forge gdal matplotlib opencv shapely geopandas scikit-image pyshp pyproj
   * conda update --all
   * pip install sentinelsat
