@@ -30,11 +30,6 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * pip install sentinelsat
 
 
-  * conda create --name py2 python=2.7
-  * conda activate py2
-  * pip install tables matplotlib scikit-image
-  * conda install scipy
-
   ## Snappy
   * cd ~
   * curl -O http://step.esa.int/downloads/7.0/installers/esa-snap_sentinel_unix_7_0.sh
