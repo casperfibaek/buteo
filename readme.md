@@ -49,5 +49,6 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * git config --global credential.helper store
   * git config --global credential.helper wincred
 
+
   # Test
   * otbApplicationLauncherCommandLine
