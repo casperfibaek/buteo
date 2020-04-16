@@ -33,8 +33,10 @@ def execute_cli_function(command, name, quiet=False):
                     percent = int(part.split('%')[0])
                     progress(percent, 100, name)
             except:
+                # print('runtime error')
                 if len(line.strip()) != 0:
                     raise RuntimeError(line) from None
+                
     except:
         raise RuntimeError('Critical failure while performing Orfeo-Toolbox action.')
 

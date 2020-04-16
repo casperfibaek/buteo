@@ -292,7 +292,7 @@ def assess_radiometric_quality(metadata, calc_quality='high', score=False):
     if score is True:
         return combined_score
     
-    blur_dist = int(math.ceil(distance / 2))
+    blur_dist = 31
     quality_blurred = cv2.GaussianBlur(quality, (blur_dist, blur_dist), 0).astype(np.double)
     
     return quality_blurred, scl
@@ -337,17 +337,11 @@ def prepare_metadata(list_of_SAFE_images):
     best_image = None
     highest_quality = 0
 
-    # Find the image with the lowest invalid percentage
-    pool_args = zip(metadata, ['low'] * len(metadata), [True] * len(metadata))
-    pool = Pool(cpu_count())
-    quality_scores = pool.starmap(assess_radiometric_quality, pool_args)
-    pool.close()
-    pool.join()
-    
     for index, value in enumerate(metadata):
-        metadata[index]['quality_score'] = quality_scores[index]
-        if quality_scores[index] > highest_quality:
-            highest_quality = quality_scores[index]
+        quality_score = assess_radiometric_quality(value, calc_quality='low', score=True)
+        metadata[index]['quality_score'] = quality_score
+        if quality_score > highest_quality:
+            highest_quality = quality_score
             best_image = value
 
     # Calculate the time difference from each image to the best image
@@ -357,10 +351,9 @@ def prepare_metadata(list_of_SAFE_images):
     # Sort by distance to best_image
     metadata = sorted(metadata, key=lambda k: -k['quality_score'])
     
-   
     return metadata
 
-# TODO: Add multiprocessing
+
 # TODO: handle all bands
 # TODO: add pansharpen
 # TODO: ai resample of SWIR
@@ -379,7 +372,7 @@ def mosaic_tile(
     filter_tracking=True,
     match_mean=True,
     allow_nodata=False,
-    max_days=60,
+    max_days=120,
     max_images_include=15,
     max_images_search=25,
     output_scl=True,
@@ -397,7 +390,7 @@ def mosaic_tile(
 
     if verbose: print('Selecting best image..')
     metadata = prepare_metadata(list_of_SAFE_images)
-    
+
     # Sorted by best, so 0 is the best one.
     best_image = metadata[0]
     best_image_name = best_image['name']
@@ -507,11 +500,11 @@ def mosaic_tile(
 
         for v, i in enumerate(processed_images_indices):
             layer_mask_4 = metadata[i]['scl'] != 4
-            layer_mask_4_inv = layer_mask_4 == False
+            layer_mask_4_sum = (layer_mask_4 == False).sum()
             layer_mask_5 = metadata[i]['scl'] != 5
-            layer_mask_5_inv = layer_mask_5 == False
+            layer_mask_5_sum = (layer_mask_5 == False).sum()
             layer_mask_6 = metadata[i]['scl'] != 6
-            layer_mask_6_inv = layer_mask_6 == False
+            layer_mask_6_sum = (layer_mask_6 == False).sum()
 
             layer_mask = (layer_mask_4 | layer_mask_5 | layer_mask_6 | (metadata[i]['scl'] == 7)) == False
 
@@ -527,17 +520,17 @@ def mosaic_tile(
                 calc_array_6 = np.ma.array(array, mask=layer_mask_6)
 
                 med, mad = madstd(calc_array)
-                if layer_mask_4_inv.sum() > 1000:
+                if layer_mask_4_sum > 1000:
                     med_4, mad_4 = madstd(calc_array_4)
                 else:
                     med_4, mad_4 = madstd(calc_array)
                 
-                if layer_mask_5_inv.sum() > 1000:
+                if layer_mask_5_sum > 1000:
                     med_5, mad_5 = madstd(calc_array_5)
                 else:
                     med_5, mad_5 = madstd(calc_array)
                 
-                if layer_mask_6_inv.sum() > 1000:
+                if layer_mask_6_sum > 1000:
                     med_6, mad_6 = madstd(calc_array_6)
                 else:
                     med_6, mad_6 = madstd(calc_array)

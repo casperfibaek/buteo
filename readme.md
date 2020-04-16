@@ -26,9 +26,11 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * conda create --name yellow python=3.8
   * conda activate yellow
   * conda install -c anaconda psutil mkl numpy scipy scikit-learn cython numexpr pandas sqlite sqlalchemy pyamg
-  * conda install -c conda-forge gdal matplotlib opencv shapely geopandas scikit-image pyshp pyproj
+  * conda install -c conda-forge gdal matplotlib opencv shapely geopandas scikit-image pyshp proj
   * conda update --all
   * pip install sentinelsat
+
+  * add: OTB_MAX_RAM_HINT=24000 and GDAL_CACHEMAX=16000 to ~./bashrc with appropriate ram limits.
 
 
   ## Snappy

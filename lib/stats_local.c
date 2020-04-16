@@ -1787,6 +1787,7 @@ static void __pyx_f_11stats_local_loop(__Pyx_memviewslice, __Pyx_memviewslice, _
 static void __pyx_f_11stats_local_loop_3d(__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, int, int, int, int, int, int, double, __pyx_t_11stats_local_f_type); /*proto*/
 static int __pyx_f_11stats_local_mode(int *, int); /*proto*/
 static void __pyx_f_11stats_local_loop_mode(__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, int, int, int, int); /*proto*/
+static double __pyx_f_11stats_local_count_occurrances(int *, __Pyx_memviewslice, int, int); /*proto*/
 static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, int, int, int, int, __Pyx_memviewslice, int); /*proto*/
 static struct __pyx_array_obj *__pyx_array_new(PyObject *, Py_ssize_t, char *, char *, char *); /*proto*/
 static void *__pyx_align_pointer(void *, size_t); /*proto*/
@@ -8398,7 +8399,116 @@ static PyObject *__pyx_pf_11stats_local_4mode_array(CYTHON_UNUSED PyObject *__py
   return __pyx_r;
 }
 
-/* "stats_local.pyx":646
+/* "stats_local.pyx":645
+ * 
+ * 
+ * cdef double count_occurrances(             # <<<<<<<<<<<<<<
+ *     int * neighbourhood,
+ *     int [::1] values_to_count,
+ */
+
+static double __pyx_f_11stats_local_count_occurrances(int *__pyx_v_neighbourhood, __Pyx_memviewslice __pyx_v_values_to_count, int __pyx_v_val_to_count_len, int __pyx_v_non_zero) {
+  int __pyx_v_n;
+  int __pyx_v_m;
+  int __pyx_v_count;
+  double __pyx_r;
+  int __pyx_t_1;
+  int __pyx_t_2;
+  int __pyx_t_3;
+  int __pyx_t_4;
+  int __pyx_t_5;
+  int __pyx_t_6;
+  Py_ssize_t __pyx_t_7;
+  int __pyx_t_8;
+
+  /* "stats_local.pyx":652
+ * ) nogil:
+ *     cdef int n, m
+ *     cdef int count = 0             # <<<<<<<<<<<<<<
+ * 
+ *     for n in range(non_zero):
+ */
+  __pyx_v_count = 0;
+
+  /* "stats_local.pyx":654
+ *     cdef int count = 0
+ * 
+ *     for n in range(non_zero):             # <<<<<<<<<<<<<<
+ *         for m in range(val_to_count_len):
+ *             if neighbourhood[n] == values_to_count[m]:
+ */
+  __pyx_t_1 = __pyx_v_non_zero;
+  __pyx_t_2 = __pyx_t_1;
+  for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
+    __pyx_v_n = __pyx_t_3;
+
+    /* "stats_local.pyx":655
+ * 
+ *     for n in range(non_zero):
+ *         for m in range(val_to_count_len):             # <<<<<<<<<<<<<<
+ *             if neighbourhood[n] == values_to_count[m]:
+ *                 count += 1
+ */
+    __pyx_t_4 = __pyx_v_val_to_count_len;
+    __pyx_t_5 = __pyx_t_4;
+    for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
+      __pyx_v_m = __pyx_t_6;
+
+      /* "stats_local.pyx":656
+ *     for n in range(non_zero):
+ *         for m in range(val_to_count_len):
+ *             if neighbourhood[n] == values_to_count[m]:             # <<<<<<<<<<<<<<
+ *                 count += 1
+ * 
+ */
+      __pyx_t_7 = __pyx_v_m;
+      __pyx_t_8 = (((__pyx_v_neighbourhood[__pyx_v_n]) == (*((int *) ( /* dim=0 */ ((char *) (((int *) __pyx_v_values_to_count.data) + __pyx_t_7)) )))) != 0);
+      if (__pyx_t_8) {
+
+        /* "stats_local.pyx":657
+ *         for m in range(val_to_count_len):
+ *             if neighbourhood[n] == values_to_count[m]:
+ *                 count += 1             # <<<<<<<<<<<<<<
+ * 
+ *     return <double> count / <double> non_zero
+ */
+        __pyx_v_count = (__pyx_v_count + 1);
+
+        /* "stats_local.pyx":656
+ *     for n in range(non_zero):
+ *         for m in range(val_to_count_len):
+ *             if neighbourhood[n] == values_to_count[m]:             # <<<<<<<<<<<<<<
+ *                 count += 1
+ * 
+ */
+      }
+    }
+  }
+
+  /* "stats_local.pyx":659
+ *                 count += 1
+ * 
+ *     return <double> count / <double> non_zero             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_r = (((double)__pyx_v_count) / ((double)__pyx_v_non_zero));
+  goto __pyx_L0;
+
+  /* "stats_local.pyx":645
+ * 
+ * 
+ * cdef double count_occurrances(             # <<<<<<<<<<<<<<
+ *     int * neighbourhood,
+ *     int [::1] values_to_count,
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "stats_local.pyx":662
  * 
  * 
  * cdef void loop_feather(             # <<<<<<<<<<<<<<
@@ -8410,11 +8520,12 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
   int __pyx_v_x;
   int __pyx_v_y;
   int __pyx_v_n;
-  int __pyx_v_m;
   int __pyx_v_offset_x;
   int __pyx_v_offset_y;
   int __pyx_v_x_max_adj;
   int __pyx_v_y_max_adj;
+  int *__pyx_v_neighbourhood;
+  int __pyx_v_neighbourhood_size;
   struct __pyx_t_11stats_local_Offset *__pyx_v_offsets;
   int __pyx_t_1;
   int __pyx_t_2;
@@ -8426,39 +8537,40 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
   int __pyx_t_8;
   int __pyx_t_9;
   int __pyx_t_10;
-  int __pyx_t_11;
-  int __pyx_t_12;
-  int __pyx_t_13;
+  Py_ssize_t __pyx_t_11;
+  Py_ssize_t __pyx_t_12;
+  Py_ssize_t __pyx_t_13;
   Py_ssize_t __pyx_t_14;
-  Py_ssize_t __pyx_t_15;
-  Py_ssize_t __pyx_t_16;
-  Py_ssize_t __pyx_t_17;
-  Py_ssize_t __pyx_t_18;
-  Py_ssize_t __pyx_t_19;
-  Py_ssize_t __pyx_t_20;
-  Py_ssize_t __pyx_t_21;
-  Py_ssize_t __pyx_t_22;
 
-  /* "stats_local.pyx":658
+  /* "stats_local.pyx":674
  * ) nogil:
  *     cdef int x, y, n, m, offset_x, offset_y
  *     cdef int x_max_adj = x_max - 1             # <<<<<<<<<<<<<<
  *     cdef int y_max_adj = y_max - 1
- * 
+ *     cdef int * neighbourhood,
  */
   __pyx_v_x_max_adj = (__pyx_v_x_max - 1);
 
-  /* "stats_local.pyx":659
+  /* "stats_local.pyx":675
  *     cdef int x, y, n, m, offset_x, offset_y
  *     cdef int x_max_adj = x_max - 1
  *     cdef int y_max_adj = y_max - 1             # <<<<<<<<<<<<<<
- * 
- *     cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
+ *     cdef int * neighbourhood,
+ *     cdef int neighbourhood_size = sizeof(int) * non_zero
  */
   __pyx_v_y_max_adj = (__pyx_v_y_max - 1);
 
-  /* "stats_local.pyx":661
+  /* "stats_local.pyx":677
  *     cdef int y_max_adj = y_max - 1
+ *     cdef int * neighbourhood,
+ *     cdef int neighbourhood_size = sizeof(int) * non_zero             # <<<<<<<<<<<<<<
+ * 
+ *     cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
+ */
+  __pyx_v_neighbourhood_size = ((sizeof(int)) * __pyx_v_non_zero);
+
+  /* "stats_local.pyx":679
+ *     cdef int neighbourhood_size = sizeof(int) * non_zero
  * 
  *     cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)             # <<<<<<<<<<<<<<
  * 
@@ -8466,12 +8578,12 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
  */
   __pyx_v_offsets = __pyx_f_11stats_local_generate_offsets(__pyx_v_kernel, __pyx_v_kernel_width, __pyx_v_non_zero);
 
-  /* "stats_local.pyx":663
+  /* "stats_local.pyx":681
  *     cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
  * 
  *     for x in prange(x_max):             # <<<<<<<<<<<<<<
  *         for y in prange(y_max):
- *             for n in range(non_zero):
+ * 
  */
   __pyx_t_1 = __pyx_v_x_max;
   if (1 == 0) abort();
@@ -8490,24 +8602,24 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
           #endif /* _OPENMP */
           {
               #ifdef _OPENMP
-              #pragma omp for lastprivate(__pyx_v_m) lastprivate(__pyx_v_n) lastprivate(__pyx_v_offset_x) lastprivate(__pyx_v_offset_y) firstprivate(__pyx_v_x) lastprivate(__pyx_v_x) lastprivate(__pyx_v_y)
+              #pragma omp for lastprivate(__pyx_v_n) lastprivate(__pyx_v_neighbourhood) lastprivate(__pyx_v_offset_x) lastprivate(__pyx_v_offset_y) firstprivate(__pyx_v_x) lastprivate(__pyx_v_x) lastprivate(__pyx_v_y)
               #endif /* _OPENMP */
               for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_3; __pyx_t_2++){
                   {
                       __pyx_v_x = (int)(0 + 1 * __pyx_t_2);
                       /* Initialize private variables to invalid values */
-                      __pyx_v_m = ((int)0xbad0bad0);
                       __pyx_v_n = ((int)0xbad0bad0);
+                      __pyx_v_neighbourhood = ((int *)1);
                       __pyx_v_offset_x = ((int)0xbad0bad0);
                       __pyx_v_offset_y = ((int)0xbad0bad0);
                       __pyx_v_y = ((int)0xbad0bad0);
 
-                      /* "stats_local.pyx":664
+                      /* "stats_local.pyx":682
  * 
  *     for x in prange(x_max):
  *         for y in prange(y_max):             # <<<<<<<<<<<<<<
- *             for n in range(non_zero):
- *                 offset_x = x + offsets[n].x
+ * 
+ *             neighbourhood = <int *> malloc(neighbourhood_size)
  */
                       __pyx_t_4 = __pyx_v_y_max;
                       if (1 == 0) abort();
@@ -8516,24 +8628,33 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
                           if (__pyx_t_6 > 0)
                           {
                               #if 0
-                              #pragma omp parallel private(__pyx_t_10, __pyx_t_11, __pyx_t_12, __pyx_t_13, __pyx_t_14, __pyx_t_15, __pyx_t_16, __pyx_t_17, __pyx_t_18, __pyx_t_19, __pyx_t_20, __pyx_t_21, __pyx_t_22, __pyx_t_7, __pyx_t_8, __pyx_t_9)
+                              #pragma omp parallel private(__pyx_t_10, __pyx_t_11, __pyx_t_12, __pyx_t_13, __pyx_t_14, __pyx_t_7, __pyx_t_8, __pyx_t_9)
                               #endif /* _OPENMP */
                               {
                                   #if 0
-                                  #pragma omp for lastprivate(__pyx_v_m) lastprivate(__pyx_v_n) lastprivate(__pyx_v_offset_x) lastprivate(__pyx_v_offset_y) firstprivate(__pyx_v_y) lastprivate(__pyx_v_y)
+                                  #pragma omp for lastprivate(__pyx_v_n) lastprivate(__pyx_v_neighbourhood) lastprivate(__pyx_v_offset_x) lastprivate(__pyx_v_offset_y) firstprivate(__pyx_v_y) lastprivate(__pyx_v_y)
                                   #endif /* _OPENMP */
                                   for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_6; __pyx_t_5++){
                                       {
                                           __pyx_v_y = (int)(0 + 1 * __pyx_t_5);
                                           /* Initialize private variables to invalid values */
-                                          __pyx_v_m = ((int)0xbad0bad0);
                                           __pyx_v_n = ((int)0xbad0bad0);
+                                          __pyx_v_neighbourhood = ((int *)1);
                                           __pyx_v_offset_x = ((int)0xbad0bad0);
                                           __pyx_v_offset_y = ((int)0xbad0bad0);
 
-                                          /* "stats_local.pyx":665
- *     for x in prange(x_max):
+                                          /* "stats_local.pyx":684
  *         for y in prange(y_max):
+ * 
+ *             neighbourhood = <int *> malloc(neighbourhood_size)             # <<<<<<<<<<<<<<
+ * 
+ *             for n in range(non_zero):
+ */
+                                          __pyx_v_neighbourhood = ((int *)malloc(__pyx_v_neighbourhood_size));
+
+                                          /* "stats_local.pyx":686
+ *             neighbourhood = <int *> malloc(neighbourhood_size)
+ * 
  *             for n in range(non_zero):             # <<<<<<<<<<<<<<
  *                 offset_x = x + offsets[n].x
  *                 offset_y = y + offsets[n].y
@@ -8543,8 +8664,8 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
                                           for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_8; __pyx_t_9+=1) {
                                             __pyx_v_n = __pyx_t_9;
 
-                                            /* "stats_local.pyx":666
- *         for y in prange(y_max):
+                                            /* "stats_local.pyx":687
+ * 
  *             for n in range(non_zero):
  *                 offset_x = x + offsets[n].x             # <<<<<<<<<<<<<<
  *                 offset_y = y + offsets[n].y
@@ -8552,7 +8673,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
  */
                                             __pyx_v_offset_x = (__pyx_v_x + (__pyx_v_offsets[__pyx_v_n]).x);
 
-                                            /* "stats_local.pyx":667
+                                            /* "stats_local.pyx":688
  *             for n in range(non_zero):
  *                 offset_x = x + offsets[n].x
  *                 offset_y = y + offsets[n].y             # <<<<<<<<<<<<<<
@@ -8561,7 +8682,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
  */
                                             __pyx_v_offset_y = (__pyx_v_y + (__pyx_v_offsets[__pyx_v_n]).y);
 
-                                            /* "stats_local.pyx":669
+                                            /* "stats_local.pyx":690
  *                 offset_y = y + offsets[n].y
  * 
  *                 if offset_x < 0:             # <<<<<<<<<<<<<<
@@ -8571,7 +8692,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
                                             __pyx_t_10 = ((__pyx_v_offset_x < 0) != 0);
                                             if (__pyx_t_10) {
 
-                                              /* "stats_local.pyx":670
+                                              /* "stats_local.pyx":691
  * 
  *                 if offset_x < 0:
  *                     offset_x = 0             # <<<<<<<<<<<<<<
@@ -8580,7 +8701,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
  */
                                               __pyx_v_offset_x = 0;
 
-                                              /* "stats_local.pyx":669
+                                              /* "stats_local.pyx":690
  *                 offset_y = y + offsets[n].y
  * 
  *                 if offset_x < 0:             # <<<<<<<<<<<<<<
@@ -8590,7 +8711,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
                                               goto __pyx_L13;
                                             }
 
-                                            /* "stats_local.pyx":671
+                                            /* "stats_local.pyx":692
  *                 if offset_x < 0:
  *                     offset_x = 0
  *                 elif offset_x > x_max_adj:             # <<<<<<<<<<<<<<
@@ -8600,7 +8721,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
                                             __pyx_t_10 = ((__pyx_v_offset_x > __pyx_v_x_max_adj) != 0);
                                             if (__pyx_t_10) {
 
-                                              /* "stats_local.pyx":672
+                                              /* "stats_local.pyx":693
  *                     offset_x = 0
  *                 elif offset_x > x_max_adj:
  *                     offset_x = x_max_adj             # <<<<<<<<<<<<<<
@@ -8609,7 +8730,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
  */
                                               __pyx_v_offset_x = __pyx_v_x_max_adj;
 
-                                              /* "stats_local.pyx":671
+                                              /* "stats_local.pyx":692
  *                 if offset_x < 0:
  *                     offset_x = 0
  *                 elif offset_x > x_max_adj:             # <<<<<<<<<<<<<<
@@ -8619,7 +8740,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
                                             }
                                             __pyx_L13:;
 
-                                            /* "stats_local.pyx":673
+                                            /* "stats_local.pyx":694
  *                 elif offset_x > x_max_adj:
  *                     offset_x = x_max_adj
  *                 if offset_y < 0:             # <<<<<<<<<<<<<<
@@ -8629,7 +8750,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
                                             __pyx_t_10 = ((__pyx_v_offset_y < 0) != 0);
                                             if (__pyx_t_10) {
 
-                                              /* "stats_local.pyx":674
+                                              /* "stats_local.pyx":695
  *                     offset_x = x_max_adj
  *                 if offset_y < 0:
  *                     offset_y = 0             # <<<<<<<<<<<<<<
@@ -8638,7 +8759,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
  */
                                               __pyx_v_offset_y = 0;
 
-                                              /* "stats_local.pyx":673
+                                              /* "stats_local.pyx":694
  *                 elif offset_x > x_max_adj:
  *                     offset_x = x_max_adj
  *                 if offset_y < 0:             # <<<<<<<<<<<<<<
@@ -8648,7 +8769,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
                                               goto __pyx_L14;
                                             }
 
-                                            /* "stats_local.pyx":675
+                                            /* "stats_local.pyx":696
  *                 if offset_y < 0:
  *                     offset_y = 0
  *                 elif offset_y > y_max_adj:             # <<<<<<<<<<<<<<
@@ -8658,16 +8779,16 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
                                             __pyx_t_10 = ((__pyx_v_offset_y > __pyx_v_y_max_adj) != 0);
                                             if (__pyx_t_10) {
 
-                                              /* "stats_local.pyx":676
+                                              /* "stats_local.pyx":697
  *                     offset_y = 0
  *                 elif offset_y > y_max_adj:
  *                     offset_y = y_max_adj             # <<<<<<<<<<<<<<
  * 
- *                 for m in range(val_to_count_len):
+ *                 neighbourhood[n] = tracker[offset_x][offset_y]
  */
                                               __pyx_v_offset_y = __pyx_v_y_max_adj;
 
-                                              /* "stats_local.pyx":675
+                                              /* "stats_local.pyx":696
  *                 if offset_y < 0:
  *                     offset_y = 0
  *                 elif offset_y > y_max_adj:             # <<<<<<<<<<<<<<
@@ -8677,65 +8798,37 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
                                             }
                                             __pyx_L14:;
 
-                                            /* "stats_local.pyx":678
+                                            /* "stats_local.pyx":699
  *                     offset_y = y_max_adj
  * 
- *                 for m in range(val_to_count_len):             # <<<<<<<<<<<<<<
- *                     if tracker[offset_x][offset_y] == values_to_count[m]:
- *                         result[x][y] += 1.0
+ *                 neighbourhood[n] = tracker[offset_x][offset_y]             # <<<<<<<<<<<<<<
+ * 
+ *             result[x][y] = count_occurrances(neighbourhood, values_to_count, val_to_count_len, non_zero)
  */
-                                            __pyx_t_11 = __pyx_v_val_to_count_len;
-                                            __pyx_t_12 = __pyx_t_11;
-                                            for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
-                                              __pyx_v_m = __pyx_t_13;
-
-                                              /* "stats_local.pyx":679
- * 
- *                 for m in range(val_to_count_len):
- *                     if tracker[offset_x][offset_y] == values_to_count[m]:             # <<<<<<<<<<<<<<
- *                         result[x][y] += 1.0
- * 
- */
-                                              __pyx_t_14 = __pyx_v_offset_x;
-                                              __pyx_t_15 = __pyx_v_offset_y;
-                                              __pyx_t_16 = __pyx_v_m;
-                                              __pyx_t_10 = (((*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_tracker.data + __pyx_t_14 * __pyx_v_tracker.strides[0]) )) + __pyx_t_15)) ))) == (*((int *) ( /* dim=0 */ ((char *) (((int *) __pyx_v_values_to_count.data) + __pyx_t_16)) )))) != 0);
-                                              if (__pyx_t_10) {
-
-                                                /* "stats_local.pyx":680
- *                 for m in range(val_to_count_len):
- *                     if tracker[offset_x][offset_y] == values_to_count[m]:
- *                         result[x][y] += 1.0             # <<<<<<<<<<<<<<
- * 
- *             result[x][y] = result[x][y] / <double>non_zero
- */
-                                                __pyx_t_17 = __pyx_v_x;
-                                                __pyx_t_18 = __pyx_v_y;
-                                                *((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_result.data + __pyx_t_17 * __pyx_v_result.strides[0]) )) + __pyx_t_18)) )) += 1.0;
-
-                                                /* "stats_local.pyx":679
- * 
- *                 for m in range(val_to_count_len):
- *                     if tracker[offset_x][offset_y] == values_to_count[m]:             # <<<<<<<<<<<<<<
- *                         result[x][y] += 1.0
- * 
- */
-                                              }
-                                            }
+                                            __pyx_t_11 = __pyx_v_offset_x;
+                                            __pyx_t_12 = __pyx_v_offset_y;
+                                            (__pyx_v_neighbourhood[__pyx_v_n]) = (*((int *) ( /* dim=1 */ ((char *) (((int *) ( /* dim=0 */ (__pyx_v_tracker.data + __pyx_t_11 * __pyx_v_tracker.strides[0]) )) + __pyx_t_12)) )));
                                           }
 
-                                          /* "stats_local.pyx":682
- *                         result[x][y] += 1.0
+                                          /* "stats_local.pyx":701
+ *                 neighbourhood[n] = tracker[offset_x][offset_y]
  * 
- *             result[x][y] = result[x][y] / <double>non_zero             # <<<<<<<<<<<<<<
+ *             result[x][y] = count_occurrances(neighbourhood, values_to_count, val_to_count_len, non_zero)             # <<<<<<<<<<<<<<
+ * 
+ *             free(neighbourhood)
+ */
+                                          __pyx_t_13 = __pyx_v_x;
+                                          __pyx_t_14 = __pyx_v_y;
+                                          *((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_result.data + __pyx_t_13 * __pyx_v_result.strides[0]) )) + __pyx_t_14)) )) = __pyx_f_11stats_local_count_occurrances(__pyx_v_neighbourhood, __pyx_v_values_to_count, __pyx_v_val_to_count_len, __pyx_v_non_zero);
+
+                                          /* "stats_local.pyx":703
+ *             result[x][y] = count_occurrances(neighbourhood, values_to_count, val_to_count_len, non_zero)
+ * 
+ *             free(neighbourhood)             # <<<<<<<<<<<<<<
  * 
  * 
  */
-                                          __pyx_t_19 = __pyx_v_x;
-                                          __pyx_t_20 = __pyx_v_y;
-                                          __pyx_t_21 = __pyx_v_x;
-                                          __pyx_t_22 = __pyx_v_y;
-                                          *((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_result.data + __pyx_t_21 * __pyx_v_result.strides[0]) )) + __pyx_t_22)) )) = ((*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_result.data + __pyx_t_19 * __pyx_v_result.strides[0]) )) + __pyx_t_20)) ))) / ((double)__pyx_v_non_zero));
+                                          free(__pyx_v_neighbourhood);
                                       }
                                   }
                               }
@@ -8753,7 +8846,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
       #define unlikely(x) __builtin_expect(!!(x), 0)
   #endif
 
-  /* "stats_local.pyx":646
+  /* "stats_local.pyx":662
  * 
  * 
  * cdef void loop_feather(             # <<<<<<<<<<<<<<
@@ -8764,7 +8857,7 @@ static void __pyx_f_11stats_local_loop_feather(__Pyx_memviewslice __pyx_v_tracke
   /* function exit code */
 }
 
-/* "stats_local.pyx":685
+/* "stats_local.pyx":707
  * 
  * 
  * def feather_s2_array(tracker, values_to_count, kernel):             # <<<<<<<<<<<<<<
@@ -8807,17 +8900,17 @@ static PyObject *__pyx_pw_11stats_local_7feather_s2_array(PyObject *__pyx_self, 
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_values_to_count)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("feather_s2_array", 1, 3, 3, 1); __PYX_ERR(0, 685, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("feather_s2_array", 1, 3, 3, 1); __PYX_ERR(0, 707, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_kernel)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("feather_s2_array", 1, 3, 3, 2); __PYX_ERR(0, 685, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("feather_s2_array", 1, 3, 3, 2); __PYX_ERR(0, 707, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "feather_s2_array") < 0)) __PYX_ERR(0, 685, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "feather_s2_array") < 0)) __PYX_ERR(0, 707, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -8832,7 +8925,7 @@ static PyObject *__pyx_pw_11stats_local_7feather_s2_array(PyObject *__pyx_self, 
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("feather_s2_array", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 685, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("feather_s2_array", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 707, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("stats_local.feather_s2_array", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -8872,16 +8965,16 @@ static PyObject *__pyx_pf_11stats_local_6feather_s2_array(CYTHON_UNUSED PyObject
   int __pyx_t_15;
   __Pyx_RefNannySetupContext("feather_s2_array", 0);
 
-  /* "stats_local.pyx":686
+  /* "stats_local.pyx":708
  * 
  * def feather_s2_array(tracker, values_to_count, kernel):
  *     cdef int non_zero = np.count_nonzero(kernel)             # <<<<<<<<<<<<<<
  *     cdef int [::1] val_to_count_view = values_to_count
  *     cdef int val_to_count_len = len(values_to_count)
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 686, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 708, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_count_nonzero); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 686, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_count_nonzero); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 708, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -8896,60 +8989,60 @@ static PyObject *__pyx_pf_11stats_local_6feather_s2_array(CYTHON_UNUSED PyObject
   }
   __pyx_t_1 = (__pyx_t_2) ? __Pyx_PyObject_Call2Args(__pyx_t_3, __pyx_t_2, __pyx_v_kernel) : __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_kernel);
   __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 686, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 708, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_4 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_4 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 686, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_4 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 708, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_non_zero = __pyx_t_4;
 
-  /* "stats_local.pyx":687
+  /* "stats_local.pyx":709
  * def feather_s2_array(tracker, values_to_count, kernel):
  *     cdef int non_zero = np.count_nonzero(kernel)
  *     cdef int [::1] val_to_count_view = values_to_count             # <<<<<<<<<<<<<<
  *     cdef int val_to_count_len = len(values_to_count)
  *     cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
  */
-  __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_dc_int(__pyx_v_values_to_count, PyBUF_WRITABLE); if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 687, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_dc_int(__pyx_v_values_to_count, PyBUF_WRITABLE); if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 709, __pyx_L1_error)
   __pyx_v_val_to_count_view = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "stats_local.pyx":688
+  /* "stats_local.pyx":710
  *     cdef int non_zero = np.count_nonzero(kernel)
  *     cdef int [::1] val_to_count_view = values_to_count
  *     cdef int val_to_count_len = len(values_to_count)             # <<<<<<<<<<<<<<
  *     cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
  * 
  */
-  __pyx_t_6 = PyObject_Length(__pyx_v_values_to_count); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1))) __PYX_ERR(0, 688, __pyx_L1_error)
+  __pyx_t_6 = PyObject_Length(__pyx_v_values_to_count); if (unlikely(__pyx_t_6 == ((Py_ssize_t)-1))) __PYX_ERR(0, 710, __pyx_L1_error)
   __pyx_v_val_to_count_len = __pyx_t_6;
 
-  /* "stats_local.pyx":689
+  /* "stats_local.pyx":711
  *     cdef int [::1] val_to_count_view = values_to_count
  *     cdef int val_to_count_len = len(values_to_count)
  *     cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel             # <<<<<<<<<<<<<<
  * 
  *     result = np.zeros(tracker.shape, dtype=np.double)
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 711, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 711, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_double); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_double); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 711, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyObject_RichCompare(__pyx_t_1, __pyx_t_2, Py_NE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __pyx_t_3 = PyObject_RichCompare(__pyx_t_1, __pyx_t_2, Py_NE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 711, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(0, 689, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(0, 711, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (__pyx_t_8) {
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_astype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 689, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_astype); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 711, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 689, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 711, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_double); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 689, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_double); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 711, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_1 = NULL;
@@ -8965,16 +9058,16 @@ static PyObject *__pyx_pf_11stats_local_6feather_s2_array(CYTHON_UNUSED PyObject
     __pyx_t_3 = (__pyx_t_1) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_1, __pyx_t_9) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_9);
     __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 689, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 711, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_t_3, PyBUF_WRITABLE); if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 689, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_t_3, PyBUF_WRITABLE); if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 711, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_t_7 = __pyx_t_10;
     __pyx_t_10.memview = NULL;
     __pyx_t_10.data = NULL;
   } else {
-    __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_v_kernel, PyBUF_WRITABLE); if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 689, __pyx_L1_error)
+    __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_v_kernel, PyBUF_WRITABLE); if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 711, __pyx_L1_error)
     __pyx_t_7 = __pyx_t_10;
     __pyx_t_10.memview = NULL;
     __pyx_t_10.data = NULL;
@@ -8983,35 +9076,35 @@ static PyObject *__pyx_pf_11stats_local_6feather_s2_array(CYTHON_UNUSED PyObject
   __pyx_t_7.memview = NULL;
   __pyx_t_7.data = NULL;
 
-  /* "stats_local.pyx":691
+  /* "stats_local.pyx":713
  *     cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
  * 
  *     result = np.zeros(tracker.shape, dtype=np.double)             # <<<<<<<<<<<<<<
  *     cdef double [:, ::1] result_view = result
  *     cdef int [:, ::1] tracker_view = tracker.astype(np.intc) if tracker.dtype != np.intc else tracker
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 713, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 713, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_tracker, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_tracker, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 713, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_9 = PyTuple_New(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __pyx_t_9 = PyTuple_New(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 713, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 713, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 713, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_double); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_double); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 713, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_11);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_11) < 0) __PYX_ERR(0, 691, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_11) < 0) __PYX_ERR(0, 713, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-  __pyx_t_11 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_9, __pyx_t_3); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 691, __pyx_L1_error)
+  __pyx_t_11 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_9, __pyx_t_3); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 713, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_11);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
@@ -9019,43 +9112,43 @@ static PyObject *__pyx_pf_11stats_local_6feather_s2_array(CYTHON_UNUSED PyObject
   __pyx_v_result = __pyx_t_11;
   __pyx_t_11 = 0;
 
-  /* "stats_local.pyx":692
+  /* "stats_local.pyx":714
  * 
  *     result = np.zeros(tracker.shape, dtype=np.double)
  *     cdef double [:, ::1] result_view = result             # <<<<<<<<<<<<<<
  *     cdef int [:, ::1] tracker_view = tracker.astype(np.intc) if tracker.dtype != np.intc else tracker
  * 
  */
-  __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_v_result, PyBUF_WRITABLE); if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(0, 692, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_v_result, PyBUF_WRITABLE); if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(0, 714, __pyx_L1_error)
   __pyx_v_result_view = __pyx_t_7;
   __pyx_t_7.memview = NULL;
   __pyx_t_7.data = NULL;
 
-  /* "stats_local.pyx":693
+  /* "stats_local.pyx":715
  *     result = np.zeros(tracker.shape, dtype=np.double)
  *     cdef double [:, ::1] result_view = result
  *     cdef int [:, ::1] tracker_view = tracker.astype(np.intc) if tracker.dtype != np.intc else tracker             # <<<<<<<<<<<<<<
  * 
  *     loop_feather(tracker_view, kernel_view, result_view, tracker.shape[0], tracker.shape[1], kernel.shape[0], non_zero, val_to_count_view, val_to_count_len)
  */
-  __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_tracker, __pyx_n_s_dtype); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_tracker, __pyx_n_s_dtype); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_11);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_intc); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_intc); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyObject_RichCompare(__pyx_t_11, __pyx_t_9, Py_NE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __pyx_t_3 = PyObject_RichCompare(__pyx_t_11, __pyx_t_9, Py_NE); __Pyx_XGOTREF(__pyx_t_3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(0, 693, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_IsTrue(__pyx_t_3); if (unlikely(__pyx_t_8 < 0)) __PYX_ERR(0, 715, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   if (__pyx_t_8) {
-    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_tracker, __pyx_n_s_astype); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 693, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_tracker, __pyx_n_s_astype); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 715, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
-    __Pyx_GetModuleGlobalName(__pyx_t_11, __pyx_n_s_np); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 693, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_11, __pyx_n_s_np); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 715, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_11);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_11, __pyx_n_s_intc); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 693, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_11, __pyx_n_s_intc); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 715, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
     __pyx_t_11 = NULL;
@@ -9071,16 +9164,16 @@ static PyObject *__pyx_pf_11stats_local_6feather_s2_array(CYTHON_UNUSED PyObject
     __pyx_t_3 = (__pyx_t_11) ? __Pyx_PyObject_Call2Args(__pyx_t_9, __pyx_t_11, __pyx_t_2) : __Pyx_PyObject_CallOneArg(__pyx_t_9, __pyx_t_2);
     __Pyx_XDECREF(__pyx_t_11); __pyx_t_11 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 693, __pyx_L1_error)
+    if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 715, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __pyx_t_13 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(__pyx_t_3, PyBUF_WRITABLE); if (unlikely(!__pyx_t_13.memview)) __PYX_ERR(0, 693, __pyx_L1_error)
+    __pyx_t_13 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(__pyx_t_3, PyBUF_WRITABLE); if (unlikely(!__pyx_t_13.memview)) __PYX_ERR(0, 715, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_t_12 = __pyx_t_13;
     __pyx_t_13.memview = NULL;
     __pyx_t_13.data = NULL;
   } else {
-    __pyx_t_13 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(__pyx_v_tracker, PyBUF_WRITABLE); if (unlikely(!__pyx_t_13.memview)) __PYX_ERR(0, 693, __pyx_L1_error)
+    __pyx_t_13 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_int(__pyx_v_tracker, PyBUF_WRITABLE); if (unlikely(!__pyx_t_13.memview)) __PYX_ERR(0, 715, __pyx_L1_error)
     __pyx_t_12 = __pyx_t_13;
     __pyx_t_13.memview = NULL;
     __pyx_t_13.data = NULL;
@@ -9089,37 +9182,37 @@ static PyObject *__pyx_pf_11stats_local_6feather_s2_array(CYTHON_UNUSED PyObject
   __pyx_t_12.memview = NULL;
   __pyx_t_12.data = NULL;
 
-  /* "stats_local.pyx":695
+  /* "stats_local.pyx":717
  *     cdef int [:, ::1] tracker_view = tracker.astype(np.intc) if tracker.dtype != np.intc else tracker
  * 
  *     loop_feather(tracker_view, kernel_view, result_view, tracker.shape[0], tracker.shape[1], kernel.shape[0], non_zero, val_to_count_view, val_to_count_len)             # <<<<<<<<<<<<<<
  * 
  *     return result
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_tracker, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_tracker, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 717, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_9 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 717, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_4 = __Pyx_PyInt_As_int(__pyx_t_9); if (unlikely((__pyx_t_4 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_As_int(__pyx_t_9); if (unlikely((__pyx_t_4 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 717, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_tracker, __pyx_n_s_shape); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_tracker, __pyx_n_s_shape); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 717, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_9, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_9, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 717, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  __pyx_t_14 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_14 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_14 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_14 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 717, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_kernel, __pyx_n_s_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 717, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_9 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_GetItemInt(__pyx_t_3, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 717, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_15 = __Pyx_PyInt_As_int(__pyx_t_9); if (unlikely((__pyx_t_15 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 695, __pyx_L1_error)
+  __pyx_t_15 = __Pyx_PyInt_As_int(__pyx_t_9); if (unlikely((__pyx_t_15 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 717, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   __pyx_f_11stats_local_loop_feather(__pyx_v_tracker_view, __pyx_v_kernel_view, __pyx_v_result_view, __pyx_t_4, __pyx_t_14, __pyx_t_15, __pyx_v_non_zero, __pyx_v_val_to_count_view, __pyx_v_val_to_count_len);
 
-  /* "stats_local.pyx":697
+  /* "stats_local.pyx":719
  *     loop_feather(tracker_view, kernel_view, result_view, tracker.shape[0], tracker.shape[1], kernel.shape[0], non_zero, val_to_count_view, val_to_count_len)
  * 
  *     return result             # <<<<<<<<<<<<<<
@@ -9129,7 +9222,7 @@ static PyObject *__pyx_pf_11stats_local_6feather_s2_array(CYTHON_UNUSED PyObject
   __pyx_r = __pyx_v_result;
   goto __pyx_L0;
 
-  /* "stats_local.pyx":685
+  /* "stats_local.pyx":707
  * 
  * 
  * def feather_s2_array(tracker, values_to_count, kernel):             # <<<<<<<<<<<<<<
@@ -23156,17 +23249,17 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(__pyx_tuple__24);
   __pyx_codeobj__25 = (PyObject*)__Pyx_PyCode_New(2, 0, 7, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__24, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stats_local_pyx, __pyx_n_s_mode_array, 632, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__25)) __PYX_ERR(0, 632, __pyx_L1_error)
 
-  /* "stats_local.pyx":685
+  /* "stats_local.pyx":707
  * 
  * 
  * def feather_s2_array(tracker, values_to_count, kernel):             # <<<<<<<<<<<<<<
  *     cdef int non_zero = np.count_nonzero(kernel)
  *     cdef int [::1] val_to_count_view = values_to_count
  */
-  __pyx_tuple__26 = PyTuple_Pack(10, __pyx_n_s_tracker, __pyx_n_s_values_to_count, __pyx_n_s_kernel, __pyx_n_s_non_zero, __pyx_n_s_val_to_count_view, __pyx_n_s_val_to_count_len, __pyx_n_s_kernel_view, __pyx_n_s_result, __pyx_n_s_result_view, __pyx_n_s_tracker_view); if (unlikely(!__pyx_tuple__26)) __PYX_ERR(0, 685, __pyx_L1_error)
+  __pyx_tuple__26 = PyTuple_Pack(10, __pyx_n_s_tracker, __pyx_n_s_values_to_count, __pyx_n_s_kernel, __pyx_n_s_non_zero, __pyx_n_s_val_to_count_view, __pyx_n_s_val_to_count_len, __pyx_n_s_kernel_view, __pyx_n_s_result, __pyx_n_s_result_view, __pyx_n_s_tracker_view); if (unlikely(!__pyx_tuple__26)) __PYX_ERR(0, 707, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__26);
   __Pyx_GIVEREF(__pyx_tuple__26);
-  __pyx_codeobj__27 = (PyObject*)__Pyx_PyCode_New(3, 0, 10, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__26, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stats_local_pyx, __pyx_n_s_feather_s2_array, 685, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__27)) __PYX_ERR(0, 685, __pyx_L1_error)
+  __pyx_codeobj__27 = (PyObject*)__Pyx_PyCode_New(3, 0, 10, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__26, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_stats_local_pyx, __pyx_n_s_feather_s2_array, 707, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__27)) __PYX_ERR(0, 707, __pyx_L1_error)
 
   /* "View.MemoryView":286
  *         return self.name
@@ -23626,16 +23719,16 @@ if (!__Pyx_RefNanny) {
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_mode_array, __pyx_t_1) < 0) __PYX_ERR(0, 632, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "stats_local.pyx":685
+  /* "stats_local.pyx":707
  * 
  * 
  * def feather_s2_array(tracker, values_to_count, kernel):             # <<<<<<<<<<<<<<
  *     cdef int non_zero = np.count_nonzero(kernel)
  *     cdef int [::1] val_to_count_view = values_to_count
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_11stats_local_7feather_s2_array, NULL, __pyx_n_s_stats_local); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 685, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_11stats_local_7feather_s2_array, NULL, __pyx_n_s_stats_local); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 707, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_feather_s2_array, __pyx_t_1) < 0) __PYX_ERR(0, 685, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_feather_s2_array, __pyx_t_1) < 0) __PYX_ERR(0, 707, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "stats_local.pyx":1

@@ -642,6 +642,22 @@ def mode_array(arr, kernel):
     return result
 
 
+cdef double count_occurrances(
+    int * neighbourhood,
+    int [::1] values_to_count,
+    int val_to_count_len,
+    int non_zero,
+) nogil:
+    cdef int n, m
+    cdef int count = 0
+
+    for n in range(non_zero):
+        for m in range(val_to_count_len):
+            if neighbourhood[n] == values_to_count[m]:
+                count += 1
+    
+    return <double> count / <double> non_zero
+
 
 cdef void loop_feather(
     int [:, ::1] tracker,
@@ -657,11 +673,16 @@ cdef void loop_feather(
     cdef int x, y, n, m, offset_x, offset_y
     cdef int x_max_adj = x_max - 1
     cdef int y_max_adj = y_max - 1
+    cdef int * neighbourhood,
+    cdef int neighbourhood_size = sizeof(int) * non_zero
 
     cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
 
     for x in prange(x_max):
         for y in prange(y_max):
+
+            neighbourhood = <int *> malloc(neighbourhood_size)
+
             for n in range(non_zero):
                 offset_x = x + offsets[n].x
                 offset_y = y + offsets[n].y
@@ -675,11 +696,12 @@ cdef void loop_feather(
                 elif offset_y > y_max_adj:
                     offset_y = y_max_adj
 
-                for m in range(val_to_count_len):
-                    if tracker[offset_x][offset_y] == values_to_count[m]:
-                        result[x][y] += 1.0
+                neighbourhood[n] = tracker[offset_x][offset_y]
             
-            result[x][y] = result[x][y] / <double>non_zero
+            result[x][y] = count_occurrances(neighbourhood, values_to_count, val_to_count_len, non_zero)
+
+            free(neighbourhood)
+
 
 
 def feather_s2_array(tracker, values_to_count, kernel):
