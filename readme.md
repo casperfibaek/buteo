@@ -3,7 +3,6 @@
 This is the Yellow EO Toolbox. The following script and setup will be created as a docker image.
 
 # Ubuntu setup
-  * sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
   * sudo apt-get update
   * sudo apt-get install otb-bin git build-essential manpages-dev
   * sudo apt-get upgrade

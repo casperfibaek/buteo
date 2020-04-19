@@ -186,7 +186,7 @@ def calibrateGraph(infile, temp_dir = os.getcwd(), short_chain = False, noorbit 
             xmlfile = os.path.join(os.path.dirname(__file__), './graphs/1_calibrate.xml')        
 
     # Prepare command
-    command = [gpt, xmlfile, '-x', '-Pinputfile=%s'%infile, '-Poutputfile=%s'%outfile]
+    command = [gpt, os.path.abspath(xmlfile), '-x', '-Pinputfile=%s'%infile, '-Poutputfile=%s'%outfile]
     
     if verbose: print('Executing: %s'%' '.join(command))
     
@@ -238,7 +238,7 @@ def multilookGraph(infiles, multilook = 2, gpt = '~/snap/bin/gpt', verbose = Fal
         xmlfile = os.path.join(os.path.dirname(__file__), './graphs/2_multilook_single.xml')        
     
     # Prepare command
-    command = [gpt, xmlfile, '-x', '-Pinputfiles=%s'%infiles_formatted, '-Poutputfile=%s'%outfile, '-Pmultilook=%s'%str(multilook)]
+    command = [gpt, os.path.abspath(xmlfile), '-x', '-Pinputfiles=%s'%infiles_formatted, '-Poutputfile=%s'%outfile, '-Pmultilook=%s'%str(multilook)]
     
     if verbose: print('Executing: %s'%' '.join(command))
     
@@ -336,16 +336,19 @@ def correctionGraph(infile, outfile, output_dir = os.getcwd(), multilook = 2, sp
     output_file = '%s%s'%(output_dir, outfile)
     
     # Get extent of input file (for edge correction)
-    extent = _getExtent(infile, multilook = multilook)
+    # extent = _getExtent(infile, multilook = multilook)
     
-    xmlfile = os.path.join(os.path.dirname(__file__), './graphs/3_terrain_correction.xml')
+    # xmlfile = os.path.join(os.path.dirname(__file__), './graphs/3_terrain_correction.xml')
+    # xmlfile = os.path.join(os.path.dirname(__file__), './graphs/3_terrain_correction_custom.xml')
+    xmlfile = os.path.join(os.path.dirname(__file__), './graphs/preprocess.xml') 
     
-    if output_units == 'decibels': xmlfile = xmlfile[:-4] + '_db.xml'
-    if speckle_filter: xmlfile = xmlfile[:-4] + '_filter.xml'
-    if short_chain: xmlfile = xmlfile[:-4] + '_short.xml'
+    # if output_units == 'decibels': xmlfile = xmlfile[:-4] + '_db.xml'
+    # if speckle_filter: xmlfile = xmlfile[:-4] + '_filter.xml'
+    # if short_chain: xmlfile = xmlfile[:-4] + '_short.xml'
     
     # Prepare command
-    command = [gpt, xmlfile, '-x', '-Pinputfile=%s'%infile, '-Poutputfile=%s'%output_file, '-Pextent=%s'%extent]
+    # command = [gpt, os.path.abspath(xmlfile), '-x', '-Pinputfile=%s'%infile, '-Poutputfile=%s'%output_file, '-Pextent=%s'%extent]
+    command = [gpt, os.path.abspath(xmlfile), '-x', '-Pinputfile=%s'%infile, '-Poutputfile=%s'%output_file]
     
     if verbose: print('Executing: %s'%' '.join(command))
     
@@ -434,35 +437,40 @@ def processFiles(infiles, output_dir = os.getcwd(), temp_dir = os.getcwd(), mult
     
     # Step 1: Run calibration SNAP processing chain
     preprocess_files = []
+    processed = 0
     
     for infile in infiles:
-                   
         # Execute Graph Processing Tool
-        cal_file = calibrateGraph(infile, temp_dir = temp_dir, short_chain = short_chain, noorbit = noorbit, output_name = output_name, gpt = gpt, verbose = verbose)
+        # import pdb; pdb.set_trace()
+        cal = correctionGraph(infile, os.path.basename(infile).rsplit('.')[0], output_dir=temp_dir)
+        processed += 1
+
+        print(f'completed: {processed / len(infiles)}%')
+        # cal_file = calibrateGraph(infile, temp_dir = temp_dir, short_chain = short_chain, noorbit = noorbit, output_name = output_name, gpt = gpt, verbose = verbose)
         
         # Keep a record of which files have already been processed for each pass
-        preprocess_files.append(cal_file)
+        # preprocess_files.append(cal_file)
     
     # Step 2: Perform multilooking. Execute Graph Processing Tool
-    mtl_file = multilookGraph(preprocess_files, multilook = multilook, gpt = gpt, verbose = verbose)
+    # mtl_file = multilookGraph(preprocess_files, multilook = multilook, gpt = gpt, verbose = verbose)
     
     # Step 3: Perform geometric correction. Execute Graph Processing Tool
-    output_file = correctionGraph(mtl_file, _generateOutputFilename(infiles, output_name = output_name), output_dir = output_dir, speckle_filter = speckle_filter, short_chain = short_chain, multilook = multilook, output_units = output_units, gpt = gpt, verbose = verbose)
+    # output_file = correctionGraph(mtl_file, _generateOutputFilename(infiles, output_name = output_name), output_dir = output_dir, speckle_filter = speckle_filter, short_chain = short_chain, multilook = multilook, output_units = output_units, gpt = gpt, verbose = verbose)
     
     # Tidy up by deleting temporary intermediate files.
-    for this_file in preprocess_files:
-        if verbose: print('Removing %s'%this_file)
-        os.system('rm %s'%this_file)
-        os.system('rm -r %s.data'%this_file[:-4])
+    # for this_file in preprocess_files:
+    #     if verbose: print('Removing %s'%this_file)
+    #     os.system('rm %s'%this_file)
+    #     os.system('rm -r %s.data'%this_file[:-4])
             
-    if verbose: print('Removing %s'%mtl_file[:-4])
-    os.system('rm %s'%mtl_file)
-    os.system('rm -r %s.data'%mtl_file[:-4])
+    # if verbose: print('Removing %s'%mtl_file[:-4])
+    # os.system('rm %s'%mtl_file)
+    # os.system('rm -r %s.data'%mtl_file[:-4])
     
     
     if verbose: print('Done!')
     
-    return output_file
+    return 1
 
 
 def testCompletion(output_file, output_dir = os.getcwd()):

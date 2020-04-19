@@ -290,7 +290,7 @@ class LoadScene(object):
         
         # Reproject?
         if md is not None:
-            data = sen2mosaic.IO.reprojectBand(self, mask, md, dtype = 1, resampling = gdal.GRA_Mode).astype(np.bool)
+            data = sen1mosaic.IO.reprojectBand(self, mask, md, dtype = 1, resampling = gdal.GRA_Mode).astype(np.bool)
         
         # Return pixels without data
         return mask == 0
@@ -314,7 +314,7 @@ class LoadScene(object):
 
         # Reproject?
         if md is not None:
-            data = sen2mosaic.IO.reprojectBand(self, data, md, dtype = 6, resampling = gdal.GRA_Average) 
+            data = sen1mosaic.IO.reprojectBand(self, data, md, dtype = 6, resampling = gdal.GRA_Average) 
         
         return data
 

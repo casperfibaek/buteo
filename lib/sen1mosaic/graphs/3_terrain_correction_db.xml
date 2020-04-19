@@ -95,10 +95,10 @@
   <applicationData id="Presentation">
     <Description/>
     <node id="Write">
-            <displayPosition x="455.0" y="135.0"/>
+      <displayPosition x="455.0" y="135.0"/>
     </node>
     <node id="LinearToFromdB">
-            <displayPosition x="355.0" y="135.0"/>
+      <displayPosition x="355.0" y="135.0"/>
     </node>
     <node id="Terrain-Correction">
       <displayPosition x="290.0" y="116.0"/>
@@ -110,7 +110,7 @@
       <displayPosition x="273.0" y="159.0"/>
     </node>
     <node id="Read">
-            <displayPosition x="28.0" y="16.0"/>
+      <displayPosition x="28.0" y="16.0"/>
     </node>
   </applicationData>
 </graph>

@@ -5,13 +5,12 @@ import numpy as np
 import os
 import pandas
 import time
-
+import zipfile
+import sentinelsat
 import pdb
 
 
 # Let API be accessed by other functions
-global scihub_api
-scihub_api = None
 
 
 #################################################
@@ -26,11 +25,9 @@ def connectToAPI(username, password):
         username: Scihub username. 
         password: Scihub password.        
     '''
-    
-    import sentinelsat
       
     # Connect to Sentinel API
-    scihub_api = sentinelsat.SentinelAPI(username, password, 'https://scihub.copernicus.eu/dhus')
+    return  sentinelsat.SentinelAPI(username, password, 'https://scihub.copernicus.eu/dhus')
     
 
 def _buildWkt(search_area):
@@ -52,7 +49,7 @@ def _buildWkt(search_area):
     return wkt
 
 
-def search(search_area, start = '20140403', end = datetime.datetime.today().strftime('%Y%m%d'), direction= '*'):
+def search(search_area, api_connection, start = '20140403', producttype='GRD', end = datetime.datetime.today().strftime('%Y%m%d'), direction= '*'):
     """search(search_area, start = '20140403', end = datetime.datetime.today().strftime('%Y%m%d'), direction= '*')
     
     Searches for Sentinel-1 GRD IW images that meet conditions of date range and extent.
@@ -66,11 +63,6 @@ def search(search_area, start = '20140403', end = datetime.datetime.today().strf
         A pandas dataframe with details of scenes matching conditions.
     """
     
-    import sentinelsat
-
-    # Test that we're connected to SciHub
-    assert 'scihub_api' in globals(), "The global variable scihub_api doesn't exist. You should run connectToAPI(username, password) before searching the data archive."
-    
     # Set up start and end dates
     startdate = sentinelsat.format_query_date(start)
     enddate = sentinelsat.format_query_date(end)
@@ -79,11 +71,10 @@ def search(search_area, start = '20140403', end = datetime.datetime.today().strf
     search_polygon = _buildWkt(search_area)
     
     # Search data, filtering by options.
-    products = scihub_api.query(search_polygon, beginposition = (startdate,enddate),
-                         platformname = 'Sentinel-1', producttype = 'GRD', orbitdirection = direction, sensoroperationalmode = 'IW')
+    products = api_connection.query(search_polygon, beginposition = (startdate,enddate), platformname = 'Sentinel-1', producttype = producttype, orbitdirection = direction, sensoroperationalmode = 'IW')
 
     # convert to Pandas DataFrame, which can be searched modified before commiting to download()
-    products_df = scihub_api.to_dataframe(products)
+    products_df = api_connection.to_dataframe(products)
     
     if products_df.empty: raise IOError("No products found. Check your search terms.")
     
@@ -118,7 +109,54 @@ def removeDuplicates(products_df, data_dir = os.getcwd()):
     return products_df
 
 
-def download(products_df, output_dir = os.getcwd()):
+def _removeZip(zip_file):
+    """
+    Deletes Level 1C .zip file from disk.
+    
+    Args:
+        zip_file: A Sentinel-2 level 1C .zip file from Copernicus Open Access Data Hub.
+    """
+    
+    assert '_MSIL1C_' in zip_file, "removeZip function should only be used to delete Sentinel-2 level 1C compressed .SAFE files"
+    assert zip_file.split('/')[-1][-4:] == '.zip', "removeL1C function should only be used to delete Sentinel-2 level 1C compressed .SAFE files"
+    
+    os.remove(zip_file)
+
+
+
+def decompress(zip_files, output_dir = os.getcwd(), remove = False):
+    '''decompress(zip_files, output_dir = os.getcwd(), remove = False
+    
+    Decompresses .zip files downloaded from SciHub, and optionally removes original .zip file.
+    
+    Args:
+        zip_files: A list of .zip files to decompress.
+        output_dir: Optionally specify an output directory. Defaults to the present working directory.
+        remove: Boolean value, which when set to True deletes level 1C .zip files after decompression is complete. Defaults to False.
+    '''
+
+    if type(zip_files) == str: zip_files = [zip_files]
+    
+    for zip_file in zip_files:
+        assert zip_file[-4:] == '.zip', "Files to decompress must be .zip format."
+    
+    # Decompress each zip file
+    for zip_file in zip_files:
+        
+        # Skip those files that have already been extracted
+        if os.path.exists('%s/%s'%(output_dir, zip_file.split('/')[-1].replace('.zip', '.SAFE'))):
+            print('Skipping extraction of %s, as it has already been extracted in directory %s. If you want to re-extract it, delete the .SAFE file.'%(zip_file, output_dir))
+        
+        else:     
+            print('Extracting %s'%zip_file)
+            with zipfile.ZipFile(zip_file) as obj:
+                obj.extractall(output_dir)
+            
+            # Delete zip file
+            if remove: _removeZip(zip_file)
+
+
+def download(products_df, api_connection, output_dir = os.getcwd()):
     ''' download(products_df, output_dir = os.getcwd())
     
     Downloads all images from a dataframe produced by sentinelsat.
@@ -137,7 +175,8 @@ def download(products_df, output_dir = os.getcwd()):
         
         print('Downloading %s product(s)'%str(len(products_df)))
         # Download selected products
-        scihub_api.download_all(products_df['uuid'], output_dir)
+        api_connection.download_all(products_df['uuid'], output_dir)
+
         
 if __name__ == '__main__':
     '''

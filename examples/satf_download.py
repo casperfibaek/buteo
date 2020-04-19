@@ -8,6 +8,10 @@ import subprocess
 from multiprocessing import Pool, cpu_count
 # from lib.orfeo_toolbox import execute_cli_function
 
+from sen1mosaic.download import search, download, connectToAPI, decompress
+from sen1mosaic.preprocess import processFiles
+from sen1mosaic.mosaic import buildComposite
+
 # from sen2mosaic.download import search, download, connectToAPI, decompress
 # from mosaic_tool import mosaic_tile
 
@@ -27,9 +31,24 @@ from multiprocessing import Pool, cpu_count
 #             data.append(tile['Name'])
 #             data_bounds.append(list(tile['geometry'].bounds))
 
-# connectToAPI('casperfibaek', 'Goldfish12')
+# api_connection = connectToAPI('casperfibaek', 'Goldfish12')
 
 # data.reverse()
+
+
+# for index, tile in enumerate(data):
+#     # import pdb; pdb.set_trace()
+#     sdf_grd = search(data_bounds[index], api_connection, start='20200315', end='20200401', producttype='GRD')
+#     download(sdf_grd, api_connection, '/home/cfi/data')
+#     sdf_slc = search(data_bounds[index], api_connection, start='20200315', end='20200401', producttype='SLC')
+#     download(sdf_slc, api_connection, '/home/cfi/data')
+
+s1_images = glob('/home/cfi/data/*GRDH*.*')
+tmp_folder = '/home/cfi/tmp/'
+dst_folder = '/home/cfi/mosaic/'
+
+processFiles(s1_images, dst_folder, tmp_folder, verbose=True)
+# buildComposite(['/home/cfi/mosaic/S1_processed_20200321_183318_181855_020794_0276DC.dim'], 'VV', dst_folder)
 
 
 # for tile in data:
@@ -80,25 +99,25 @@ from multiprocessing import Pool, cpu_count
 # for tile in data:
 #     calc_tile(tile)
 
-src_dir = '/home/cfi/mosaic/'
-tmp_dir = '/home/cfi/tmp/'
-dst_dir = '/home/cfi/mosaic/merged/'
+# src_dir = '/home/cfi/mosaic/'
+# tmp_dir = '/home/cfi/tmp/'
+# dst_dir = '/home/cfi/mosaic/merged/'
 
-call = ''
+# call = ''
 
 # TODO: Figure out relative calls..
-for band in ['B02', 'B03', 'B04', 'B08']:
-    images = glob(f"{src_dir}{band}*.tif")
-    images_str = " ".join(images)
+# for band in ['B02', 'B03', 'B04', 'B08']:
+#     images = glob(f"{src_dir}{band}*.tif")
+#     images_str = " ".join(images)
 
-    cli = f'otbcli_Mosaic -il {images_str} -tmpdir {tmp_dir} -comp.feather large -harmo.method band -out "{dst_dir}{band}_mosaic.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" uint16 &'
-    import pdb; pdb.set_trace()
+#     cli = f'otbcli_Mosaic -il {images_str} -tmpdir {tmp_dir} -comp.feather large -harmo.method band -out "{dst_dir}{band}_mosaic.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" uint16 &'
+#     import pdb; pdb.set_trace()
     # subprocess.Popen(cli)
     
-b2 = 'otbcli_Mosaic -il /home/cfi/mosaic/B02_30NZN.tif /home/cfi/mosaic/B02_31NBJ.tif /home/cfi/mosaic/B02_30NVL.tif /home/cfi/mosaic/B02_31PBK.tif /home/cfi/mosaic/B02_30NZP.tif /home/cfi/mosaic/B02_30NXP.tif /home/cfi/mosaic/B02_31PBL.tif /home/cfi/mosaic/B02_30PXS.tif /home/cfi/mosaic/B02_30PXT.tif /home/cfi/mosaic/B02_30PZR.tif /home/cfi/mosaic/B02_30NVN.tif /home/cfi/mosaic/B02_30PXR.tif /home/cfi/mosaic/B02_30NXM.tif /home/cfi/mosaic/B02_30PVS.tif /home/cfi/mosaic/B02_30NWP.tif /home/cfi/mosaic/B02_30NYN.tif /home/cfi/mosaic/B02_30PYR.tif /home/cfi/mosaic/B02_30NWL.tif /home/cfi/mosaic/B02_30PWT.tif /home/cfi/mosaic/B02_31NBG.tif /home/cfi/mosaic/B02_30PYS.tif /home/cfi/mosaic/B02_30NZM.tif /home/cfi/mosaic/B02_30NWN.tif /home/cfi/mosaic/B02_30NYP.tif /home/cfi/mosaic/B02_30PWQ.tif /home/cfi/mosaic/B02_30NVP.tif /home/cfi/mosaic/B02_30NYM.tif /home/cfi/mosaic/B02_30PYT.tif /home/cfi/mosaic/B02_30NYL.tif /home/cfi/mosaic/B02_30NVM.tif /home/cfi/mosaic/B02_30PWR.tif /home/cfi/mosaic/B02_30PZQ.tif /home/cfi/mosaic/B02_30PXQ.tif /home/cfi/mosaic/B02_31NBH.tif /home/cfi/mosaic/B02_30NXN.tif /home/cfi/mosaic/B02_30NXL.tif /home/cfi/mosaic/B02_30NWM.tif /home/cfi/mosaic/B02_30PZS.tif /home/cfi/mosaic/B02_30PZT.tif /home/cfi/mosaic/B02_31PBM.tif /home/cfi/mosaic/B02_30PYQ.tif /home/cfi/mosaic/B02_30PWS.tif -tmpdir /home/cfi/tmp/ -comp.feather large -harmo.method band -out "/home/cfi/mosaic/merged/B02_mosaic.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" uint16'
-b3 = 'otbcli_Mosaic -il /home/cfi/mosaic/B03_31NBG.tif /home/cfi/mosaic/B03_30PYS.tif /home/cfi/mosaic/B03_30NXP.tif /home/cfi/mosaic/B03_30NWL.tif /home/cfi/mosaic/B03_30PVS.tif /home/cfi/mosaic/B03_30NYN.tif /home/cfi/mosaic/B03_30PZT.tif /home/cfi/mosaic/B03_30PXS.tif /home/cfi/mosaic/B03_30NYL.tif /home/cfi/mosaic/B03_30PWR.tif /home/cfi/mosaic/B03_30PWT.tif /home/cfi/mosaic/B03_30NZM.tif /home/cfi/mosaic/B03_31NBJ.tif /home/cfi/mosaic/B03_30NWP.tif /home/cfi/mosaic/B03_30NVL.tif /home/cfi/mosaic/B03_30NWN.tif /home/cfi/mosaic/B03_30NVM.tif /home/cfi/mosaic/B03_30PZS.tif /home/cfi/mosaic/B03_30NZN.tif /home/cfi/mosaic/B03_31PBM.tif /home/cfi/mosaic/B03_30PZQ.tif /home/cfi/mosaic/B03_30PXT.tif /home/cfi/mosaic/B03_30NXN.tif /home/cfi/mosaic/B03_31NBH.tif /home/cfi/mosaic/B03_30NWM.tif /home/cfi/mosaic/B03_30NXM.tif /home/cfi/mosaic/B03_30NVP.tif /home/cfi/mosaic/B03_30PXQ.tif /home/cfi/mosaic/B03_30PZR.tif /home/cfi/mosaic/B03_30NXL.tif /home/cfi/mosaic/B03_30PWS.tif /home/cfi/mosaic/B03_30PYR.tif /home/cfi/mosaic/B03_30NZP.tif /home/cfi/mosaic/B03_31PBL.tif /home/cfi/mosaic/B03_30NVN.tif /home/cfi/mosaic/B03_31PBK.tif /home/cfi/mosaic/B03_30PYT.tif /home/cfi/mosaic/B03_30NYM.tif /home/cfi/mosaic/B03_30PXR.tif /home/cfi/mosaic/B03_30NYP.tif /home/cfi/mosaic/B03_30PYQ.tif /home/cfi/mosaic/B03_30PWQ.tif -tmpdir /home/cfi/tmp/ -comp.feather large -harmo.method band -out "/home/cfi/mosaic/merged/B03_mosaic.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" uint16'
-b4 = 'otbcli_Mosaic -il /home/cfi/mosaic/B04_30PYT.tif /home/cfi/mosaic/B04_30PXS.tif /home/cfi/mosaic/B04_30NVN.tif /home/cfi/mosaic/B04_30NZM.tif /home/cfi/mosaic/B04_31PBM.tif /home/cfi/mosaic/B04_30NVL.tif /home/cfi/mosaic/B04_30NXL.tif /home/cfi/mosaic/B04_30NVP.tif /home/cfi/mosaic/B04_30NWN.tif /home/cfi/mosaic/B04_30PZS.tif /home/cfi/mosaic/B04_30PWS.tif /home/cfi/mosaic/B04_30PYS.tif /home/cfi/mosaic/B04_30NWP.tif /home/cfi/mosaic/B04_30NXP.tif /home/cfi/mosaic/B04_30PZQ.tif /home/cfi/mosaic/B04_30NWM.tif /home/cfi/mosaic/B04_30NYN.tif /home/cfi/mosaic/B04_31NBH.tif /home/cfi/mosaic/B04_30PWQ.tif /home/cfi/mosaic/B04_30PXR.tif /home/cfi/mosaic/B04_31NBJ.tif /home/cfi/mosaic/B04_30PZR.tif /home/cfi/mosaic/B04_30PWT.tif /home/cfi/mosaic/B04_30NXN.tif /home/cfi/mosaic/B04_30NYL.tif /home/cfi/mosaic/B04_30NYP.tif /home/cfi/mosaic/B04_30NVM.tif /home/cfi/mosaic/B04_30PZT.tif /home/cfi/mosaic/B04_30PYR.tif /home/cfi/mosaic/B04_30PYQ.tif /home/cfi/mosaic/B04_30NWL.tif /home/cfi/mosaic/B04_30NYM.tif /home/cfi/mosaic/B04_31NBG.tif /home/cfi/mosaic/B04_30PVS.tif /home/cfi/mosaic/B04_31PBK.tif /home/cfi/mosaic/B04_31PBL.tif /home/cfi/mosaic/B04_30NZP.tif /home/cfi/mosaic/B04_30NXM.tif /home/cfi/mosaic/B04_30PXQ.tif /home/cfi/mosaic/B04_30NZN.tif /home/cfi/mosaic/B04_30PXT.tif /home/cfi/mosaic/B04_30PWR.tif -tmpdir /home/cfi/tmp/ -comp.feather large -harmo.method band -out "/home/cfi/mosaic/merged/B04_mosaic.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" uint16'
-b8 = 'otbcli_Mosaic -il /home/cfi/mosaic/B08_31NBH.tif /home/cfi/mosaic/B08_30NXN.tif /home/cfi/mosaic/B08_30PYT.tif /home/cfi/mosaic/B08_30PXR.tif /home/cfi/mosaic/B08_31PBM.tif /home/cfi/mosaic/B08_30NZP.tif /home/cfi/mosaic/B08_30PYQ.tif /home/cfi/mosaic/B08_31NBG.tif /home/cfi/mosaic/B08_30PZQ.tif /home/cfi/mosaic/B08_30PYS.tif /home/cfi/mosaic/B08_30NYN.tif /home/cfi/mosaic/B08_30NWN.tif /home/cfi/mosaic/B08_30NWL.tif /home/cfi/mosaic/B08_30PWR.tif /home/cfi/mosaic/B08_30PWT.tif /home/cfi/mosaic/B08_30NYL.tif /home/cfi/mosaic/B08_30PWQ.tif /home/cfi/mosaic/B08_31PBL.tif /home/cfi/mosaic/B08_30NVN.tif /home/cfi/mosaic/B08_30NXL.tif /home/cfi/mosaic/B08_31NBJ.tif /home/cfi/mosaic/B08_30PXS.tif /home/cfi/mosaic/B08_30NWP.tif /home/cfi/mosaic/B08_30PZR.tif /home/cfi/mosaic/B08_30NVP.tif /home/cfi/mosaic/B08_30PZT.tif /home/cfi/mosaic/B08_30NZN.tif /home/cfi/mosaic/B08_30NVM.tif /home/cfi/mosaic/B08_30NWM.tif /home/cfi/mosaic/B08_31PBK.tif /home/cfi/mosaic/B08_30NVL.tif /home/cfi/mosaic/B08_30PYR.tif /home/cfi/mosaic/B08_30NYM.tif /home/cfi/mosaic/B08_30NXP.tif /home/cfi/mosaic/B08_30PVS.tif /home/cfi/mosaic/B08_30PZS.tif /home/cfi/mosaic/B08_30PWS.tif /home/cfi/mosaic/B08_30PXQ.tif /home/cfi/mosaic/B08_30NYP.tif /home/cfi/mosaic/B08_30PXT.tif /home/cfi/mosaic/B08_30NZM.tif /home/cfi/mosaic/B08_30NXM.tif -tmpdir /home/cfi/tmp/ -comp.feather large -harmo.method band -out "/home/cfi/mosaic/merged/B08_mosaic.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" uint16'
+# b2 = 'otbcli_Mosaic -il /home/cfi/mosaic/B02_30NZN.tif /home/cfi/mosaic/B02_31NBJ.tif /home/cfi/mosaic/B02_30NVL.tif /home/cfi/mosaic/B02_31PBK.tif /home/cfi/mosaic/B02_30NZP.tif /home/cfi/mosaic/B02_30NXP.tif /home/cfi/mosaic/B02_31PBL.tif /home/cfi/mosaic/B02_30PXS.tif /home/cfi/mosaic/B02_30PXT.tif /home/cfi/mosaic/B02_30PZR.tif /home/cfi/mosaic/B02_30NVN.tif /home/cfi/mosaic/B02_30PXR.tif /home/cfi/mosaic/B02_30NXM.tif /home/cfi/mosaic/B02_30PVS.tif /home/cfi/mosaic/B02_30NWP.tif /home/cfi/mosaic/B02_30NYN.tif /home/cfi/mosaic/B02_30PYR.tif /home/cfi/mosaic/B02_30NWL.tif /home/cfi/mosaic/B02_30PWT.tif /home/cfi/mosaic/B02_31NBG.tif /home/cfi/mosaic/B02_30PYS.tif /home/cfi/mosaic/B02_30NZM.tif /home/cfi/mosaic/B02_30NWN.tif /home/cfi/mosaic/B02_30NYP.tif /home/cfi/mosaic/B02_30PWQ.tif /home/cfi/mosaic/B02_30NVP.tif /home/cfi/mosaic/B02_30NYM.tif /home/cfi/mosaic/B02_30PYT.tif /home/cfi/mosaic/B02_30NYL.tif /home/cfi/mosaic/B02_30NVM.tif /home/cfi/mosaic/B02_30PWR.tif /home/cfi/mosaic/B02_30PZQ.tif /home/cfi/mosaic/B02_30PXQ.tif /home/cfi/mosaic/B02_31NBH.tif /home/cfi/mosaic/B02_30NXN.tif /home/cfi/mosaic/B02_30NXL.tif /home/cfi/mosaic/B02_30NWM.tif /home/cfi/mosaic/B02_30PZS.tif /home/cfi/mosaic/B02_30PZT.tif /home/cfi/mosaic/B02_31PBM.tif /home/cfi/mosaic/B02_30PYQ.tif /home/cfi/mosaic/B02_30PWS.tif -tmpdir /home/cfi/tmp/ -comp.feather large -harmo.method band -out "/home/cfi/mosaic/merged/B02_mosaic.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" uint16'
+# b3 = 'otbcli_Mosaic -il /home/cfi/mosaic/B03_31NBG.tif /home/cfi/mosaic/B03_30PYS.tif /home/cfi/mosaic/B03_30NXP.tif /home/cfi/mosaic/B03_30NWL.tif /home/cfi/mosaic/B03_30PVS.tif /home/cfi/mosaic/B03_30NYN.tif /home/cfi/mosaic/B03_30PZT.tif /home/cfi/mosaic/B03_30PXS.tif /home/cfi/mosaic/B03_30NYL.tif /home/cfi/mosaic/B03_30PWR.tif /home/cfi/mosaic/B03_30PWT.tif /home/cfi/mosaic/B03_30NZM.tif /home/cfi/mosaic/B03_31NBJ.tif /home/cfi/mosaic/B03_30NWP.tif /home/cfi/mosaic/B03_30NVL.tif /home/cfi/mosaic/B03_30NWN.tif /home/cfi/mosaic/B03_30NVM.tif /home/cfi/mosaic/B03_30PZS.tif /home/cfi/mosaic/B03_30NZN.tif /home/cfi/mosaic/B03_31PBM.tif /home/cfi/mosaic/B03_30PZQ.tif /home/cfi/mosaic/B03_30PXT.tif /home/cfi/mosaic/B03_30NXN.tif /home/cfi/mosaic/B03_31NBH.tif /home/cfi/mosaic/B03_30NWM.tif /home/cfi/mosaic/B03_30NXM.tif /home/cfi/mosaic/B03_30NVP.tif /home/cfi/mosaic/B03_30PXQ.tif /home/cfi/mosaic/B03_30PZR.tif /home/cfi/mosaic/B03_30NXL.tif /home/cfi/mosaic/B03_30PWS.tif /home/cfi/mosaic/B03_30PYR.tif /home/cfi/mosaic/B03_30NZP.tif /home/cfi/mosaic/B03_31PBL.tif /home/cfi/mosaic/B03_30NVN.tif /home/cfi/mosaic/B03_31PBK.tif /home/cfi/mosaic/B03_30PYT.tif /home/cfi/mosaic/B03_30NYM.tif /home/cfi/mosaic/B03_30PXR.tif /home/cfi/mosaic/B03_30NYP.tif /home/cfi/mosaic/B03_30PYQ.tif /home/cfi/mosaic/B03_30PWQ.tif -tmpdir /home/cfi/tmp/ -comp.feather large -harmo.method band -out "/home/cfi/mosaic/merged/B03_mosaic.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" uint16'
+# b4 = 'otbcli_Mosaic -il /home/cfi/mosaic/B04_30PYT.tif /home/cfi/mosaic/B04_30PXS.tif /home/cfi/mosaic/B04_30NVN.tif /home/cfi/mosaic/B04_30NZM.tif /home/cfi/mosaic/B04_31PBM.tif /home/cfi/mosaic/B04_30NVL.tif /home/cfi/mosaic/B04_30NXL.tif /home/cfi/mosaic/B04_30NVP.tif /home/cfi/mosaic/B04_30NWN.tif /home/cfi/mosaic/B04_30PZS.tif /home/cfi/mosaic/B04_30PWS.tif /home/cfi/mosaic/B04_30PYS.tif /home/cfi/mosaic/B04_30NWP.tif /home/cfi/mosaic/B04_30NXP.tif /home/cfi/mosaic/B04_30PZQ.tif /home/cfi/mosaic/B04_30NWM.tif /home/cfi/mosaic/B04_30NYN.tif /home/cfi/mosaic/B04_31NBH.tif /home/cfi/mosaic/B04_30PWQ.tif /home/cfi/mosaic/B04_30PXR.tif /home/cfi/mosaic/B04_31NBJ.tif /home/cfi/mosaic/B04_30PZR.tif /home/cfi/mosaic/B04_30PWT.tif /home/cfi/mosaic/B04_30NXN.tif /home/cfi/mosaic/B04_30NYL.tif /home/cfi/mosaic/B04_30NYP.tif /home/cfi/mosaic/B04_30NVM.tif /home/cfi/mosaic/B04_30PZT.tif /home/cfi/mosaic/B04_30PYR.tif /home/cfi/mosaic/B04_30PYQ.tif /home/cfi/mosaic/B04_30NWL.tif /home/cfi/mosaic/B04_30NYM.tif /home/cfi/mosaic/B04_31NBG.tif /home/cfi/mosaic/B04_30PVS.tif /home/cfi/mosaic/B04_31PBK.tif /home/cfi/mosaic/B04_31PBL.tif /home/cfi/mosaic/B04_30NZP.tif /home/cfi/mosaic/B04_30NXM.tif /home/cfi/mosaic/B04_30PXQ.tif /home/cfi/mosaic/B04_30NZN.tif /home/cfi/mosaic/B04_30PXT.tif /home/cfi/mosaic/B04_30PWR.tif -tmpdir /home/cfi/tmp/ -comp.feather large -harmo.method band -out "/home/cfi/mosaic/merged/B04_mosaic.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" uint16'
+# b8 = 'otbcli_Mosaic -il /home/cfi/mosaic/B08_31NBH.tif /home/cfi/mosaic/B08_30NXN.tif /home/cfi/mosaic/B08_30PYT.tif /home/cfi/mosaic/B08_30PXR.tif /home/cfi/mosaic/B08_31PBM.tif /home/cfi/mosaic/B08_30NZP.tif /home/cfi/mosaic/B08_30PYQ.tif /home/cfi/mosaic/B08_31NBG.tif /home/cfi/mosaic/B08_30PZQ.tif /home/cfi/mosaic/B08_30PYS.tif /home/cfi/mosaic/B08_30NYN.tif /home/cfi/mosaic/B08_30NWN.tif /home/cfi/mosaic/B08_30NWL.tif /home/cfi/mosaic/B08_30PWR.tif /home/cfi/mosaic/B08_30PWT.tif /home/cfi/mosaic/B08_30NYL.tif /home/cfi/mosaic/B08_30PWQ.tif /home/cfi/mosaic/B08_31PBL.tif /home/cfi/mosaic/B08_30NVN.tif /home/cfi/mosaic/B08_30NXL.tif /home/cfi/mosaic/B08_31NBJ.tif /home/cfi/mosaic/B08_30PXS.tif /home/cfi/mosaic/B08_30NWP.tif /home/cfi/mosaic/B08_30PZR.tif /home/cfi/mosaic/B08_30NVP.tif /home/cfi/mosaic/B08_30PZT.tif /home/cfi/mosaic/B08_30NZN.tif /home/cfi/mosaic/B08_30NVM.tif /home/cfi/mosaic/B08_30NWM.tif /home/cfi/mosaic/B08_31PBK.tif /home/cfi/mosaic/B08_30NVL.tif /home/cfi/mosaic/B08_30PYR.tif /home/cfi/mosaic/B08_30NYM.tif /home/cfi/mosaic/B08_30NXP.tif /home/cfi/mosaic/B08_30PVS.tif /home/cfi/mosaic/B08_30PZS.tif /home/cfi/mosaic/B08_30PWS.tif /home/cfi/mosaic/B08_30PXQ.tif /home/cfi/mosaic/B08_30NYP.tif /home/cfi/mosaic/B08_30PXT.tif /home/cfi/mosaic/B08_30NZM.tif /home/cfi/mosaic/B08_30NXM.tif -tmpdir /home/cfi/tmp/ -comp.feather large -harmo.method band -out "/home/cfi/mosaic/merged/B08_mosaic.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" uint16'
 # calc_tile(data[0])
 # exit()
 # pool = Pool(cpu_count())

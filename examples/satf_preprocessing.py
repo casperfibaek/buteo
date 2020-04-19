@@ -138,7 +138,6 @@ array_to_raster(standardise_filter(merge_arr.astype('float32')), reference_raste
 # array_to_raster(jan_dB, reference_raster=folder + jan, out_raster=folder + 's1_january_sigma0_dB.tif')
 # array_to_raster(june_dB, reference_raster=folder + june, out_raster=folder + 's1_june_sigma0_dB.tif')
 
-
 # sigma0_16jan2019 = 's1_2019-01-16_sigma0.tif'
 # sigma0_22jan2019 = 's1_2019-01-22_sigma0.tif'
 # sigma0_09jun2019 = 's1_2019-06-09_sigma0.tif'
