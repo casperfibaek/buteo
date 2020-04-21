@@ -161,6 +161,8 @@ def loadSceneList(infiles, pol = 'VV', md_dest = None, start = '20140101', end =
             # Load scene
             scene = sen1mosaic.core.LoadScene(source_file)
             
+            import pdb; pdb.set_trace()
+
             # Skip scene if conditions not met
             if md_dest is not None and scene.testInsideTile(md_dest) == False: continue
             if scene.testInsideDate(start = start, end = end) == False: continue

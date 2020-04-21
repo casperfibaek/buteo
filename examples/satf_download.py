@@ -6,11 +6,14 @@ import shutil
 from glob import glob
 import subprocess
 from multiprocessing import Pool, cpu_count
+from shutil import copyfile
 # from lib.orfeo_toolbox import execute_cli_function
+from lib.raster_reproject import reproject
 
 from sen1mosaic.download import search, download, connectToAPI, decompress
 from sen1mosaic.preprocess import processFiles
 from sen1mosaic.mosaic import buildComposite
+from pyproj import CRS
 
 # from sen2mosaic.download import search, download, connectToAPI, decompress
 # from mosaic_tool import mosaic_tile
@@ -43,13 +46,30 @@ from sen1mosaic.mosaic import buildComposite
 #     sdf_slc = search(data_bounds[index], api_connection, start='20200315', end='20200401', producttype='SLC')
 #     download(sdf_slc, api_connection, '/home/cfi/data')
 
-s1_images = glob('/home/cfi/data/*GRDH*.*')
-tmp_folder = '/home/cfi/tmp/'
-dst_folder = '/home/cfi/mosaic/'
+s1_images = glob('/home/cfi/tmp/*.data*/Gamma0_VV.img')
 
-processFiles(s1_images, dst_folder, tmp_folder, verbose=True)
-# buildComposite(['/home/cfi/mosaic/S1_processed_20200321_183318_181855_020794_0276DC.dim'], 'VV', dst_folder)
+tmp_folder = '/home/cfi/tmp/distances/'
+dst_folder = '/home/cfi/mosaic/merged/'
+# completed = 0
+# for image in s1_images:
+#     name = image.rsplit('/')[-2].split('.')[0] + '.tif'
 
+#     reproject(image, dst_folder + name, target_projection=CRS.from_string("epsg:32630"))
+#     completed += 1
+
+#     print(f'Completed: {completed}/{len(s1_images)}')
+
+
+# comp = 'pkcomposite -i ' + ' -i '.join(glob(dst_folder + '*.tif')) + f' -cr median -min 0 -o {dst_folder}merged/s1_vv_merged.tif'
+# subprocess.Popen(comp)
+# import pdb; pdb.set_trace()
+
+# processFiles(s1_images, dst_folder, tmp_folder, verbose=True)
+# buildComposite(s1_images, 'VV', dst_folder)
+
+s1_images_str = ' '.join(s1_images)
+cli = f'otbcli_Mosaic -il {s1_images_str} -comp.feather large -harmo.method band -out -tmpdir {tmp_folder} -nodata 0 -out {dst_folder}gamma0_VV_mosaic.tif float32'
+subprocess.Popen(cli)
 
 # for tile in data:
 #     cloud_search = 5

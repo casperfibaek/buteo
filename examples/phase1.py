@@ -10,12 +10,11 @@ from lib.utils_core import step_function
 
 # phase1_folder = 'C:/users/caspe/desktop/Analysis/Phase1/'
 
-# test_grid = {
-#     'spatialr': [3, 5, 7, 9],
-#     'ranger': [0.2, 0.3, 0.4],
-#     'thres': [0.1, 0.25, 0.5],
-#     'minsize': [50, 100, 200]
-# }
+test_grid = {
+    'spatialr': [3, 5, 7, 9],   # Spatial radius (Neighbourhood)
+    'ranger': [0.2, 0.3, 0.4],  # Value range to merge (Normalised values)
+    'minsize': [50, 100, 200],   # Minimum size of neighbourgood
+}
 
 # step_function(
 #     meanshift_segmentation,

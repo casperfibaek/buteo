@@ -7,9 +7,9 @@ from lib.utils_core import numpy_to_gdal_datatype, numpy_fill_values, datatype_i
 from lib.raster_clip import clip_raster
 
 
-def array_to_raster(array, out_raster=None, reference_raster=None, output_format='MEM',
-                    top_left=None, pixel_size=None, dst_projection=None, dst_crop_to_projection=True, calc_band_stats=False, align=True,
-                    src_nodata=None, dst_nodata=False, resample=False, resample_alg='near', quiet=False):
+def array_to_raster(array, out_raster=None, reference_raster=None, output_format='MEM', top_left=None,
+                    pixel_size=None, dst_projection=None, dst_crop_to_projection=True, calc_band_stats=False, 
+                    align=True, src_nodata=None, dst_nodata=False, resample=False, resample_alg='near', quiet=False):
     ''' Turns a numpy array into a gdal dataframe or exported
         as a raster. If no reference is specified, the following
         must be provided: topLeft coordinates, pixelSize such as:
