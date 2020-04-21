@@ -473,6 +473,25 @@ def processFiles(infiles, output_dir = os.getcwd(), temp_dir = os.getcwd(), mult
     return 1
 
 
+def processFiles_coherence(infile1, infile2, outfile, step=1, gpt = '~/snap/bin/gpt', verbose = False):
+    gpt = os.path.realpath(os.path.abspath(os.path.expanduser(gpt)))
+    assert os.path.exists(gpt), "Graph processing tool not found."    
+    
+    xmlfile = os.path.join(os.path.dirname(__file__), './graphs/coherence_step1.xml') 
+    
+    # Prepare command
+    # command = [gpt, os.path.abspath(xmlfile), '-x', '-Pinputfile=%s'%infile, '-Poutputfile=%s'%output_file, '-Pextent=%s'%extent]
+    command = [gpt, os.path.abspath(xmlfile), f'-Pproduct1={infile1}', f'-Pproduct2={infile2}', f'-Poutput={outfile}.dim', f'-Ppolarization="VV"']
+    
+    if verbose: print('Executing: %s'%' '.join(command))
+    
+    # Execute chain
+    output_text = sen1mosaic.multiprocess.runCommand(command, verbose = verbose)
+
+    if verbose: print('Done!')
+    
+    return 1
+
 def testCompletion(output_file, output_dir = os.getcwd()):
     """testCompletion(infiles, output_dir = os.getcwd())
     

@@ -4,7 +4,7 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
 
 # Ubuntu setup
   * sudo apt-get update
-  * sudo apt-get install otb-bin git build-essential manpages-dev
+  * sudo apt-get install otb-bin git build-essential manpages-dev libgfortran3
   * sudo apt-get upgrade
   * sudo apt full-upgrade
   * sudo apt autoremove

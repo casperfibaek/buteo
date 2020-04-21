@@ -129,7 +129,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
         origin = inputDataframe
 
     # Test the cutline
-    if cutline != None:
+    if cutline is not None:
 
         # Test the cutline. This adds a tiny overhead, but is usefull to ensure
         # that the error messages are easy to understand.
@@ -205,7 +205,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
 
     creationOptions = []
     if output_format != 'MEM':
-        creationOptions = ['COMPRESS=LZW', 'NUM_THREADS=ALL_CPUS']
+        creationOptions = ['COMPRESS=LZW', 'NUM_THREADS=ALL_CPUS', 'BIGTIFF=TRUE']
 
     destinationName = out_raster if out_raster != None else 'ignored'
 
@@ -337,7 +337,7 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
             raise RuntimeError("Warping completed unsuccesfully.") from None
 
     # If a cutline is requested, a new DataFrame with the cut raster is created in memory
-    elif cutline != None:
+    elif cutline is not None:
         # Calculates the GeoTransform and rastersize from an extent and a geotransform
         vectorClipTransform = create_geotransform(inputTransform, vectorIntersection)
 

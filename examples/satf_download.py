@@ -3,15 +3,18 @@ import geopandas as gpd
 import pandas as pd
 import os
 import shutil
-from glob import glob
 import subprocess
+from glob import glob
+from osgeo import ogr
 from multiprocessing import Pool, cpu_count
 from shutil import copyfile
 # from lib.orfeo_toolbox import execute_cli_function
 from lib.raster_reproject import reproject
+from lib.raster_clip import clip_raster
+from lib.raster_io import raster_to_metadata
 
 from sen1mosaic.download import search, download, connectToAPI, decompress
-from sen1mosaic.preprocess import processFiles
+from sen1mosaic.preprocess import processFiles, processFiles_coherence
 from sen1mosaic.mosaic import buildComposite
 from pyproj import CRS
 
@@ -45,11 +48,112 @@ from pyproj import CRS
 #     download(sdf_grd, api_connection, '/home/cfi/data')
 #     sdf_slc = search(data_bounds[index], api_connection, start='20200315', end='20200401', producttype='SLC')
 #     download(sdf_slc, api_connection, '/home/cfi/data')
-
-s1_images = glob('/home/cfi/tmp/*.data*/Gamma0_VV.img')
-
 tmp_folder = '/home/cfi/tmp/distances/'
 dst_folder = '/home/cfi/mosaic/merged/'
+
+
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from shapely.geometry import shape
+import zipfile
+import json
+# s1_images = glob('/home/cfi/tmp/*.dim')
+s1_images = glob('/home/cfi/data/slc/*/manifest.safe')
+
+images_obj = []
+
+def kml_to_bbox(path_to_kml):
+    root = ET.parse(path_to_kml).getroot()
+    for elem in root.iter():
+        if elem.tag == 'coordinates':
+            coords = elem.text
+
+    coords = coords.split(',')
+    coords[0] = coords[-1] + ' ' + coords[0]
+    del coords[-1]
+    coords.append(coords[0])
+
+    min_x = 180
+    max_x = -180
+    min_y = 90
+    max_y = -90
+
+    for i in range(len(coords)):
+        intermediate = coords[i].split(' ')
+        intermediate.reverse()
+
+        intermediate[0] = float(intermediate[0])
+        intermediate[1] = float(intermediate[1])
+
+        if intermediate[0] < min_x:
+            min_x = intermediate[0]
+        elif intermediate[0] > max_x:
+            max_x = intermediate[0]
+        
+        if intermediate[1] < min_y:
+            min_y = intermediate[1]
+        elif intermediate[1] > max_y:
+            max_y = intermediate[1]
+
+    footprint = f"POLYGON (({min_x} {min_y}, {min_x} {max_y}, {max_x} {max_y}, {max_x} {min_y}, {min_x} {min_y}))"
+    
+    return footprint
+
+for img in s1_images:
+    folder = img.rsplit('/', 1)[0]
+    kml = f"{folder}/preview/map-overlay.kml"
+
+    timestr = str(img.rsplit('.')[0].split('/')[-1].split('_')[5])
+    timestamp = datetime.strptime(timestr, "%Y%m%dT%H%M%S").timestamp()
+
+    meta = {
+        'path': img,
+        'timestamp': timestamp,
+        'footprint_wkt': kml_to_bbox(kml),
+    }
+
+    images_obj.append(meta)
+
+processed = []
+for index, metadata in enumerate(images_obj):
+    
+    # Find the image with the largest intersection
+    footprint = ogr.CreateGeometryFromWkt(metadata['footprint_wkt'])
+    highest_area = 0
+    best_overlap = False
+
+    for j in range(len(images_obj)):
+        if j == index: continue
+        
+        skip = False
+        for v in processed:
+            if (processed[v][0] == j or processed[v][0] == index) and (processed[v][1] == j or processed[v][1] == index):
+                skip = True
+
+        if skip is False:
+            comp_footprint = ogr.CreateGeometryFromWkt(images_obj[j]['footprint_wkt'])
+
+            intersection = footprint.Intersection(comp_footprint)
+
+            if intersection == None: continue
+            
+            area = intersection.Area()
+            if area > highest_area:
+                highest_area = area
+                best_overlap = j
+
+    if best_overlap is not False:
+        processed.append([index, j])
+
+    # .rsplit('/', 1)[0]
+    # import pdb; pdb.set_trace()
+    processFiles_coherence(metadata['path'].rsplit('/', 1)[0], images_obj[best_overlap]['path'].rsplit('/', 1)[0], dst_folder + str(int(metadata['timestamp'])) + '_step1.dim', step=1)
+
+step1_images = glob(dst_folder + '.dim')
+for image in step1_images:
+    processFiles_coherence(image, dst_folder + str(int(metadata['timestamp'])) + '_step2.dim', step=2)
+
+
 # completed = 0
 # for image in s1_images:
 #     name = image.rsplit('/')[-2].split('.')[0] + '.tif'
@@ -60,16 +164,16 @@ dst_folder = '/home/cfi/mosaic/merged/'
 #     print(f'Completed: {completed}/{len(s1_images)}')
 
 
-# comp = 'pkcomposite -i ' + ' -i '.join(glob(dst_folder + '*.tif')) + f' -cr median -min 0 -o {dst_folder}merged/s1_vv_merged.tif'
 # subprocess.Popen(comp)
-# import pdb; pdb.set_trace()
 
 # processFiles(s1_images, dst_folder, tmp_folder, verbose=True)
 # buildComposite(s1_images, 'VV', dst_folder)
 
-s1_images_str = ' '.join(s1_images)
-cli = f'otbcli_Mosaic -il {s1_images_str} -comp.feather large -harmo.method band -out -tmpdir {tmp_folder} -nodata 0 -out {dst_folder}gamma0_VV_mosaic.tif float32'
-subprocess.Popen(cli)
+# s1_images_str = ' '.join(glob('/home/cfi/mosaic/*.tif'))
+# cli = f'otbcli_Mosaic -il {s1_images_str} -tmpdir {tmp_folder} -nodata 0 -comp.feather large -out "{dst_folder}gamma0_VV_mosaic_feathered.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" float'
+
+# import pdb; pdb.set_trace()
+# clip_raster(dst_folder + 'gamma0_VV_mosaic.tif', out_raster=dst_folder + 'gamma0_VV_mosaic_clip.tif', cutline='/home/cfi/yellow/geometry/ghana_5km_buffer.shp', cutline_all_touch=True)
 
 # for tile in data:
 #     cloud_search = 5
@@ -154,118 +258,3 @@ subprocess.Popen(cli)
     # if tile not in ['30NYM']:
     #     continue
     
-
-
-
-# import numpy as np
-# import sys; sys.path.append('..'); sys.path.append('../lib/')
-# from lib.raster_io import raster_to_array, array_to_raster
-
-# # Pre-scaling of the mosaics.
-# in_scaled = '/mnt/c/Users/caspe/Desktop/mosaic/'
-# out_scaled = '/mnt/c/Users/caspe/Desktop/scaled/'
-# scales = {
-#     'B02': {
-#         'vegetation': [],
-#         'vegetation_q25': None,
-#         'non_vegetation': [],
-#         'non_vegetation_q25': None,
-#     },
-#     'B03': {
-#         'vegetation': [],
-#         'vegetation_q25': None,
-#         'non_vegetation': [],
-#         'non_vegetation_q25': None,
-#     },
-#     'B04': {
-#         'vegetation': [],
-#         'vegetation_q25': None,
-#         'non_vegetation': [],
-#         'non_vegetation_q25': None,
-#     },
-#     'B08': {
-#         'vegetation': [],
-#         'vegetation_q25': None,
-#         'non_vegetation': [],
-#         'non_vegetation_q25': None,
-#     }
-# }
-
-# stats = {
-#     'tile': {
-#         'band': {
-#             'vegetation_mean': None,
-#             'non_vegetation_mean': None,
-#             'scaling': 1,
-#         },
-#     },
-# }
-
-# match_quintile = 0.25
-
-# for tile in data:
-
-#     print(f'Calculating means for: {tile}')
-
-#     stats[tile] = {}
-
-#     # Since we are doing reprojection, the slc file can have nodata. Fill with zero
-#     slc = raster_to_array(glob(in_scaled + f'slc_{tile}.tif')[0])
-#     slc.fill_value = 0
-#     slc = slc.filled()
-    
-#     vegetation_mask = np.ma.masked_equal(slc != 4, slc).data
-#     vegetation_sum = vegetation_mask.size - vegetation_mask.sum()
-    
-#     if vegetation_sum == 0:
-#         continue
-    
-#     non_vegetation_mask = np.ma.masked_equal(slc != 5, slc).data
-#     non_vegetation_sum = non_vegetation_mask.size - non_vegetation_mask.sum()
-    
-#     if non_vegetation_sum == 0:
-#         continue
-    
-#     for band in ['B02', 'B03', 'B04', 'B08']:
-        
-#         tile_path = glob(in_scaled + f'{band}_{tile}.tif')[0]
-        
-#         stats[tile][band] = {
-#             'vegetation_mean': None,
-#             'non_vegetation_mean': None,
-#             'scaling': 1,
-#         }
-        
-#         raw_array = raster_to_array(tile_path)
-        
-#         vegetation_mean = np.ma.array(raw_array, mask=vegetation_mask).mean()
-#         non_vegetation_mean = np.ma.array(raw_array, mask=non_vegetation_mask).mean()
-
-#         stats[tile][band]['vegetation_mean'] = vegetation_mean
-#         scales[band]['vegetation'].append(vegetation_mean)
-
-#         stats[tile][band]['non_vegetation_mean'] = non_vegetation_mean
-#         scales[band]['non_vegetation'].append(non_vegetation_mean)
-
-# for band in ['B02', 'B03', 'B04', 'B08']:
-#     scales[band]['vegetation_q25'] = np.quantile(scales[band]['vegetation'] ,match_quintile)
-#     scales[band]['non_vegetation_q25'] = np.quantile(scales[band]['non_vegetation'], match_quintile)
-
-# for tile in data:
-
-#     print(f'Scaling: {tile}')
-#     for band in ['B02', 'B03', 'B04', 'B08']:
-#         tile_path = glob(in_scaled + f'{band}_{tile}.tif')[0]
-#         stats[tile][band]['scaling'] = (
-#               (scales[band]['vegetation_q25'] / stats[tile][band]['vegetation_mean'])
-#             + (scales[band]['non_vegetation_q25'] / stats[tile][band]['non_vegetation_mean'])
-#             / 2)
-
-#         input_band = np.ma.array(raster_to_array(tile_path))
-#         input_band.fill_value = 65535
-
-#         array_to_raster(
-#             np.ma.multiply(input_band, stats[tile][band]['scaling']).astype('uint16'),
-#             reference_raster=tile_path,
-#             out_raster=out_scaled + f'{band}_{tile}_scaled.tif',
-#         )

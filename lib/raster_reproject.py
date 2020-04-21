@@ -68,14 +68,14 @@ def reproject(in_raster, out_raster=None, reference_raster=None, target_projecti
     datatype = source_raster.GetRasterBand(1).DataType
 
     # If the output is not memory, set compression options.
-    options = []
+    creation_options = []
     if compress is True:
         if output_format != 'MEM':
             if datatype_is_float(datatype) is True:
                 predictor = 3  # Float predictor
             else:
                 predictor = 2  # Integer predictor
-            options = ['COMPRESS=DEFLATE', f'PREDICTOR={predictor}', 'NUM_THREADS=ALL_CPUS', 'BIGTIFF=YES']
+            creation_options = ['COMPRESS=DEFLATE', f'PREDICTOR={predictor}', 'NUM_THREADS=ALL_CPUS', 'BIGTIFF=YES']
     
 
     og_projection_osr = osr.SpatialReference() 
@@ -119,13 +119,21 @@ def reproject(in_raster, out_raster=None, reference_raster=None, target_projecti
         rows,
         1,
         datatype,
-        options
+        creation_options
     )
 
     destination_dataframe.SetProjection(target_projection.to_wkt())
     destination_dataframe.SetGeoTransform(dst_transform)
 
-    gdal.ReprojectImage(source_raster, destination_dataframe, og_projection_osr.ExportToWkt(), target_projection.to_wkt(), resampling)
+    gdal.Warp(
+        destination_dataframe,
+        source_raster,
+        format=output_format,
+        multithread=True,
+        srcSRS=og_projection_osr.ExportToWkt(),
+        dstSRS=target_projection.to_wkt(),
+    )
+    # gdal.ReprojectImage(source_raster, destination_dataframe, og_projection_osr.ExportToWkt(), target_projection.to_wkt(), resampling)
 
     destination_dataframe.FlushCache()
 
