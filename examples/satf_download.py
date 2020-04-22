@@ -62,11 +62,12 @@ s1_images = glob('/home/cfi/data/slc/*/manifest.safe')
 
 images_obj = []
 
-def kml_to_bbox(path_to_kml):
+def s1_kml_to_bbox(path_to_kml):
     root = ET.parse(path_to_kml).getroot()
     for elem in root.iter():
         if elem.tag == 'coordinates':
             coords = elem.text
+            break
 
     coords = coords.split(',')
     coords[0] = coords[-1] + ' ' + coords[0]
@@ -109,49 +110,49 @@ for img in s1_images:
     meta = {
         'path': img,
         'timestamp': timestamp,
-        'footprint_wkt': kml_to_bbox(kml),
+        'footprint_wkt': s1_kml_to_bbox(kml),
     }
 
     images_obj.append(meta)
 
 processed = []
-for index, metadata in enumerate(images_obj):
-    
+for index_i, metadata in enumerate(images_obj):
+
+
     # Find the image with the largest intersection
     footprint = ogr.CreateGeometryFromWkt(metadata['footprint_wkt'])
     highest_area = 0
     best_overlap = False
 
-    for j in range(len(images_obj)):
-        if j == index: continue
+    for index_j in range(len(images_obj)):
+        if index_j == index_i: continue
         
-        skip = False
-        for v in processed:
-            if (processed[v][0] == j or processed[v][0] == index) and (processed[v][1] == j or processed[v][1] == index):
-                skip = True
+        comp_footprint = ogr.CreateGeometryFromWkt(images_obj[index_j]['footprint_wkt'])
 
-        if skip is False:
-            comp_footprint = ogr.CreateGeometryFromWkt(images_obj[j]['footprint_wkt'])
+        intersection = footprint.Intersection(comp_footprint)
 
-            intersection = footprint.Intersection(comp_footprint)
+        if intersection == None: continue
+        
+        area = intersection.Area()
+        if area > highest_area:
+            highest_area = area
+            best_overlap = index_j
 
-            if intersection == None: continue
-            
-            area = intersection.Area()
-            if area > highest_area:
-                highest_area = area
-                best_overlap = j
+    skip = False
+    if [index_i, best_overlap] in processed:
+        skip = True
 
-    if best_overlap is not False:
-        processed.append([index, j])
+    if best_overlap is not False and skip is False:
+        processFiles_coherence(metadata['path'], images_obj[best_overlap]['path'], dst_folder + str(int(metadata['timestamp'])) + '_step1', step=1)
 
+        processed.append([best_overlap, index_i])
     # .rsplit('/', 1)[0]
-    # import pdb; pdb.set_trace()
-    processFiles_coherence(metadata['path'].rsplit('/', 1)[0], images_obj[best_overlap]['path'].rsplit('/', 1)[0], dst_folder + str(int(metadata['timestamp'])) + '_step1.dim', step=1)
+
+    print(processed)
 
 step1_images = glob(dst_folder + '.dim')
 for image in step1_images:
-    processFiles_coherence(image, dst_folder + str(int(metadata['timestamp'])) + '_step2.dim', step=2)
+    processFiles_coherence(image, dst_folder + str(int(metadata['timestamp'])) + '_step2', step=2)
 
 
 # completed = 0
