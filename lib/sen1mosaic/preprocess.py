@@ -495,7 +495,7 @@ def processFiles_coherence(infile1, infile2, outfile, step=1, gpt = '~/snap/bin/
         
         # Prepare command
         # command = [gpt, os.path.abspath(xmlfile), '-x', '-Pinputfile=%s'%infile, '-Poutputfile=%s'%output_file, '-Pextent=%s'%extent]
-        command = [gpt, os.path.abspath(xmlfile), f'-Pproduct1={infile1}'f'-Poutput={outfile}.dim']
+        command = [gpt, os.path.abspath(xmlfile), f'-Pproduct1={infile1}', f'-Poutput={outfile}.dim']
         
         if verbose: print('Executing: %s'%' '.join(command))
         

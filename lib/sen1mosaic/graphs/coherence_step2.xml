@@ -24,14 +24,13 @@
   <node id="Terrain-Correction">
     <operator>Terrain-Correction</operator>
     <sources>
-      <sourceProduct.1 refid="GoldsteinPhaseFiltering"/>
+      <sourceProduct refid="GoldsteinPhaseFiltering"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
       <sourceBands/>
       <demName>SRTM 3Sec</demName>
-      <externalDEMFile>C:\Users\caspe\Desktop\Drive\Articles @ Drive\.Article (1) Reaching Rural, Data Driven Approaches to Financial Inclusion\Analysis\Data\dem_terrain_int16.tif</externalDEMFile>
-      <externalDEMNoDataValue>32767.0</externalDEMNoDataValue>
-      <externalDEMApplyEGM>true</externalDEMApplyEGM>
+      <externalDEMFile/>
+      <externalDEMNoDataValue>0.0</externalDEMNoDataValue>
       <demResamplingMethod>BILINEAR_INTERPOLATION</demResamplingMethod>
       <imgResamplingMethod>BILINEAR_INTERPOLATION</imgResamplingMethod>
       <pixelSpacingInMeter>10.0</pixelSpacingInMeter>

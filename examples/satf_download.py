@@ -58,113 +58,130 @@ from shapely.geometry import shape
 import zipfile
 import json
 # s1_images = glob('/home/cfi/tmp/*.dim')
-s1_images = glob('/home/cfi/data/slc/*/manifest.safe')
+# s1_images = glob('/home/cfi/data/slc/*/manifest.safe')
 
-images_obj = []
+# images_obj = []
 
-def s1_kml_to_bbox(path_to_kml):
-    root = ET.parse(path_to_kml).getroot()
-    for elem in root.iter():
-        if elem.tag == 'coordinates':
-            coords = elem.text
-            break
+# def s1_kml_to_bbox(path_to_kml):
+#     root = ET.parse(path_to_kml).getroot()
+#     for elem in root.iter():
+#         if elem.tag == 'coordinates':
+#             coords = elem.text
+#             break
 
-    coords = coords.split(',')
-    coords[0] = coords[-1] + ' ' + coords[0]
-    del coords[-1]
-    coords.append(coords[0])
+#     coords = coords.split(',')
+#     coords[0] = coords[-1] + ' ' + coords[0]
+#     del coords[-1]
+#     coords.append(coords[0])
 
-    min_x = 180
-    max_x = -180
-    min_y = 90
-    max_y = -90
+#     min_x = 180
+#     max_x = -180
+#     min_y = 90
+#     max_y = -90
 
-    for i in range(len(coords)):
-        intermediate = coords[i].split(' ')
-        intermediate.reverse()
+#     for i in range(len(coords)):
+#         intermediate = coords[i].split(' ')
+#         intermediate.reverse()
 
-        intermediate[0] = float(intermediate[0])
-        intermediate[1] = float(intermediate[1])
+#         intermediate[0] = float(intermediate[0])
+#         intermediate[1] = float(intermediate[1])
 
-        if intermediate[0] < min_x:
-            min_x = intermediate[0]
-        elif intermediate[0] > max_x:
-            max_x = intermediate[0]
+#         if intermediate[0] < min_x:
+#             min_x = intermediate[0]
+#         elif intermediate[0] > max_x:
+#             max_x = intermediate[0]
         
-        if intermediate[1] < min_y:
-            min_y = intermediate[1]
-        elif intermediate[1] > max_y:
-            max_y = intermediate[1]
+#         if intermediate[1] < min_y:
+#             min_y = intermediate[1]
+#         elif intermediate[1] > max_y:
+#             max_y = intermediate[1]
 
-    footprint = f"POLYGON (({min_x} {min_y}, {min_x} {max_y}, {max_x} {max_y}, {max_x} {min_y}, {min_x} {min_y}))"
+#     footprint = f"POLYGON (({min_x} {min_y}, {min_x} {max_y}, {max_x} {max_y}, {max_x} {min_y}, {min_x} {min_y}))"
     
-    return footprint
+#     return footprint
 
-for img in s1_images:
-    folder = img.rsplit('/', 1)[0]
-    kml = f"{folder}/preview/map-overlay.kml"
+# for img in s1_images:
+#     folder = img.rsplit('/', 1)[0]
+#     kml = f"{folder}/preview/map-overlay.kml"
 
-    timestr = str(img.rsplit('.')[0].split('/')[-1].split('_')[5])
-    timestamp = datetime.strptime(timestr, "%Y%m%dT%H%M%S").timestamp()
+#     timestr = str(img.rsplit('.')[0].split('/')[-1].split('_')[5])
+#     timestamp = datetime.strptime(timestr, "%Y%m%dT%H%M%S").timestamp()
 
-    meta = {
-        'path': img,
-        'timestamp': timestamp,
-        'footprint_wkt': s1_kml_to_bbox(kml),
-    }
+#     meta = {
+#         'path': img,
+#         'timestamp': timestamp,
+#         'footprint_wkt': s1_kml_to_bbox(kml),
+#     }
 
-    images_obj.append(meta)
+#     images_obj.append(meta)
 
-processed = []
-for index_i, metadata in enumerate(images_obj):
+# processed = []
+# for index_i, metadata in enumerate(images_obj):
 
 
-    # Find the image with the largest intersection
-    footprint = ogr.CreateGeometryFromWkt(metadata['footprint_wkt'])
-    highest_area = 0
-    best_overlap = False
+#     # Find the image with the largest intersection
+#     footprint = ogr.CreateGeometryFromWkt(metadata['footprint_wkt'])
+#     highest_area = 0
+#     best_overlap = False
 
-    for index_j in range(len(images_obj)):
-        if index_j == index_i: continue
+#     for index_j in range(len(images_obj)):
+#         if index_j == index_i: continue
         
-        comp_footprint = ogr.CreateGeometryFromWkt(images_obj[index_j]['footprint_wkt'])
+#         comp_footprint = ogr.CreateGeometryFromWkt(images_obj[index_j]['footprint_wkt'])
 
-        intersection = footprint.Intersection(comp_footprint)
+#         intersection = footprint.Intersection(comp_footprint)
 
-        if intersection == None: continue
+#         if intersection == None: continue
         
-        area = intersection.Area()
-        if area > highest_area:
-            highest_area = area
-            best_overlap = index_j
+#         area = intersection.Area()
+#         if area > highest_area:
+#             highest_area = area
+#             best_overlap = index_j
 
-    skip = False
-    if [index_i, best_overlap] in processed:
-        skip = True
+#     skip = False
+#     if [index_i, best_overlap] in processed:
+#         skip = True
 
-    if best_overlap is not False and skip is False:
-        processFiles_coherence(metadata['path'], images_obj[best_overlap]['path'], dst_folder + str(int(metadata['timestamp'])) + '_step1', step=1)
+#     if best_overlap is not False and skip is False:
+#         processFiles_coherence(metadata['path'], images_obj[best_overlap]['path'], dst_folder + str(int(metadata['timestamp'])) + '_step1', step=1)
 
-        processed.append([best_overlap, index_i])
-    # .rsplit('/', 1)[0]
+#         processed.append([best_overlap, index_i])
+#     # .rsplit('/', 1)[0]
 
-    print(processed)
+#     print(processed)
 
-step1_images = glob(dst_folder + '.dim')
-for image in step1_images:
-    processFiles_coherence(image, dst_folder + str(int(metadata['timestamp'])) + '_step2', step=2)
+# step1_images = glob(dst_folder + '*step1*.dim')
+# completed = 0
+# for image in step1_images:
+#     outname = image.rsplit('_', 1)[0] + '_step2'
+#     try:
+#         processFiles_coherence(image, None, outname, step=2)
+#     except:
+#         print('Failed to processes: ', outname)
+#     completed += 1
+#     print(str(completed) + '/' + str(len(step1_images)))
 
+
+coh = glob('/home/cfi/mosaic/merged/*step2*.data/*.img')
+# coh_str = ' '.join(coh)
+# cli = f'otbcli_Mosaic -il {coh_str} -tmpdir {tmp_folder} -nodata 0 -comp.feather large -out "{dst_folder}gamma0_VV_coh_mosaic_feathered.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" float'
+
+# import pdb; pdb.set_trace()
 
 # completed = 0
-# for image in s1_images:
-#     name = image.rsplit('/')[-2].split('.')[0] + '.tif'
+# for image in coh:
+#     name = image.rsplit('/', 1)[1].split('.')[0] + '_' + str(completed) + '.tif'
 
-#     reproject(image, dst_folder + name, target_projection=CRS.from_string("epsg:32630"))
+#     reproject(image, dst_folder + 'reprojected/' + name, target_projection=CRS.from_string("epsg:32630"))
 #     completed += 1
 
-#     print(f'Completed: {completed}/{len(s1_images)}')
+#     print(f'Completed: {completed}/{len(coh)}')
 
 
+coh = glob('/home/cfi/mosaic/merged/reprojected/*.tif')
+coh_str = ' '.join(coh)
+cli = f'otbcli_Mosaic -il {coh_str} -tmpdir {tmp_folder} -nodata 0 -comp.feather large -out "{dst_folder}gamma0_VV_coh_mosaic_feathered.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" float'
+import pdb; pdb.set_trace()
 # subprocess.Popen(comp)
 
 # processFiles(s1_images, dst_folder, tmp_folder, verbose=True)

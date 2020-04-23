@@ -125,15 +125,15 @@ def reproject(in_raster, out_raster=None, reference_raster=None, target_projecti
     destination_dataframe.SetProjection(target_projection.to_wkt())
     destination_dataframe.SetGeoTransform(dst_transform)
 
-    gdal.Warp(
-        destination_dataframe,
-        source_raster,
-        format=output_format,
-        multithread=True,
-        srcSRS=og_projection_osr.ExportToWkt(),
-        dstSRS=target_projection.to_wkt(),
-    )
-    # gdal.ReprojectImage(source_raster, destination_dataframe, og_projection_osr.ExportToWkt(), target_projection.to_wkt(), resampling)
+    # gdal.Warp(
+    #     destination_dataframe,
+    #     source_raster,
+    #     format=output_format,
+    #     multithread=True,
+    #     srcSRS=og_projection_osr.ExportToWkt(),
+    #     dstSRS=target_projection.to_wkt(),
+    # )
+    gdal.ReprojectImage(source_raster, destination_dataframe, og_projection_osr.ExportToWkt(), target_projection.to_wkt(), resampling)
 
     destination_dataframe.FlushCache()
 
