@@ -1,22 +1,20 @@
 import sys; sys.path.append('..')
 import numpy as np
 from time import time
+import cv2
 from lib.raster_io import raster_to_array, array_to_raster
-from lib.stats_filters import threshold_filter, median_filter
+from lib.stats_filters import threshold_filter, median_filter, median_deviation_filter
 
+folder = '/mnt/c/Users/caspe/Desktop/Analysis/Data/mosaic/aligned/'
+b4_path = folder + 'B04.tif'
+b8_path = folder + 'B08.tif'
+bs_path = folder + 'BS.tif'
+blur_path = folder + 'bs_blur.tif'
 
+B4 = raster_to_array(b4_path)
+B8 = raster_to_array(b8_path)
 
-folder = '/mnt/c/users/caspe/desktop/tests/'
-in_path = folder + 'B02_30NVL.tif'
-in_raster = raster_to_array(in_path).astype(np.double)
+# bs_blur = cv2.GaussianBlur(raster_to_array(bs_path), (11, 11), 0)
+# array_to_raster(np.sqrt(raster_to_array(blur_path)).astype('float32'), out_raster=folder + 'bs_blur_sqrt.tif', reference_raster=b4_path)
 
-# array_to_raster(standardise_filter(in_raster).astype('float32'), out_raster=folder + 'b4_standard.tif', reference_raster=in_path)
-# array_to_raster(standardise_filter(in_raster, True).astype('float32'), out_raster=folder + 'b4_standard_scaled.tif', reference_raster=in_path)
-# array_to_raster(median_deviation_filter(in_raster, 5, absolute_value=True).astype('float32'), out_raster=folder + 'b4_meddev-holed.tif', reference_raster=in_path)
-# array_to_raster(median_deviation_filter(in_raster, 5, absolute_value=True, holed=False).astype('float32'), out_raster=folder + 'b4_meddev-no-holed.tif', reference_raster=in_path)
-# array_to_raster(mean_deviation_filter(in_raster, 5, absolute_value=True).astype('float32'), out_raster=folder + 'b4_meandev-holed.tif', reference_raster=in_path)
-# array_to_raster(mean_deviation_filter(in_raster, 5, absolute_value=True, holed=False).astype('float32'), out_raster=folder + 'b4_meandev-no-holed.tif', reference_raster=in_path)
-# array_to_raster(threshold_filter(in_raster, min_value=200, max_value=600), out_raster=folder + 'b4_threshold.tif', reference_raster=in_path)
-# array_to_raster(threshold_filter(in_raster, min_value=200, max_value=600, invert=True), out_raster=folder + 'b4_threshold_inverted.tif', reference_raster=in_path)
-
-array_to_raster(median_filter(in_raster, sigma=1, dtype='uint16'), reference_raster=in_path, out_raster=folder + 'B02_30NVL_filtered_sigma1.tif')
+array_to_raster((B4 - B8) / (B4 + B8), out_raster=folder + 'inv_ndvi.tif', reference_raster=b4_path)
