@@ -16,6 +16,12 @@ test_grid = {
     'minsize': [50, 100, 200],   # Minimum size of neighbourgood
 }
 
+# Chosen
+    # 7
+    # 0.1 ranger
+    # 200
+    
+
 # step_function(
 #     meanshift_segmentation,
 #     phase1_folder + 'phase1_layers.vrt',

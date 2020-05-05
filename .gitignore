@@ -128,3 +128,4 @@ lib/credentials.py
 .vscode
 /lib/*.so
 /lib/*.c
+/log
