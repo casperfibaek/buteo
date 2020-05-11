@@ -33,7 +33,7 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
 
   * conda create --name green
   * pip install --upgrade pip
-  * conda install -c conda-forge geojson scikit-learn sqlalchemy sqlite imbalanced-learn pandas matplotlib
+  * conda install -c conda-forge shapely gdal geojson scikit-learn sqlalchemy sqlite imbalanced-learn pandas matplotlib
   * pip install tensorflow
   * pip install keras
 
