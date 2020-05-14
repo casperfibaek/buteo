@@ -13,9 +13,9 @@ from imblearn.over_sampling import SMOTE
 import matplotlib.pyplot as plt
 import numpy as np
 
-db_engine = create_engine('sqlite:///C:\\Users\\caspe\\Desktop\\Ghana_data\\classification\\classification.sqlite') 
-db_path = 'C:\\Users\\caspe\\Desktop\\Ghana_data\\classification\\training_data.sqlite'
-target_path = 'C:\\Users\\caspe\\Desktop\\Ghana_data\\classification\\target_data.sqlite'
+db_engine = create_engine('sqlite:///C:\\Users\\caspe\\Desktop\\analysis_p2\\classification\\classification.sqlite') 
+db_path = 'C:\\Users\\caspe\\Desktop\\analysis_p2\\classification\\training_data.sqlite'
+target_path = 'C:\\Users\\caspe\\Desktop\\analysis_p2\\classification\\target_data.sqlite'
 
 cnx = sqlite3.connect(db_path)
 cnx_target = sqlite3.connect(target_path)
@@ -75,6 +75,9 @@ def best_param_random(X, y, n_iter=50, cv=3):
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 sm = SMOTE(random_state=42)
 X_train, y_train = sm.fit_sample(X_train, y_train)
+
+import pdb; pdb.set_trace()
+exit()
 
 params = {'n_estimators': 800, 'min_samples_split': 6, 'min_samples_leaf': 4, 'max_features': 'sqrt', 'max_depth': 50, 'bootstrap': True}
 
