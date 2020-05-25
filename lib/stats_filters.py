@@ -801,14 +801,14 @@ def mode_filter(in_raster, width=5, iterations=1, circular=True):
     )
 
     if iterations == 1:
-        # return mode_array(in_raster, kernel)
-        return majority(in_raster, kernel)
+        return mode_array(in_raster, kernel)
+        # return majority(in_raster, kernel)
     else:
-        # result = mode_array(in_raster, kernel)
-        result = majority(in_raster, kernel)
+        result = mode_array(in_raster, kernel)
+        # result = majority(in_raster, kernel)
         for x in range(iterations - 1):
-            result = majority(result, kernel)
-            # result = mode_array(result, kernel)
+            # result = majority(result, kernel)
+            result = mode_array(result, kernel)
         return result
 
 

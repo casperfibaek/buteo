@@ -40,7 +40,7 @@ c_path = folder + 'classification_01.tif'
 
 
 
-array_to_raster(mode_filter(raster_to_array(c_path), width=201), reference_raster=c_path, out_raster=folder + 'classification_01_1km_majority.tif')
+array_to_raster(mode_filter(raster_to_array(c_path), width=201), reference_raster=c_path, out_raster=folder + 'classification_01_1km_majority_v2.tif')
 # array_to_raster(mad_filter(raster_to_array(b8_path), width=7), reference_raster=b8_path, out_raster=folder + 'B08_MAD.tif')
 # array_to_raster(np.abs(raster_to_array(folder + 'B04_md7.tif')), reference_raster=b4_path, out_raster=folder + 'B04_md7_abs.tif')
 
