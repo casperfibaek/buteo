@@ -12,32 +12,60 @@ from shutil import copyfile
 from lib.raster_reproject import reproject
 from lib.raster_clip import clip_raster
 from lib.raster_io import raster_to_metadata
-
-from sen1mosaic.download import search, download, connectToAPI, decompress
-from sen1mosaic.preprocess import processFiles, processFiles_coherence
-from sen1mosaic.mosaic import buildComposite
 from pyproj import CRS
 
-# from sen2mosaic.download import search, download, connectToAPI, decompress
+# from sen1mosaic.download import search, download, connectToAPI, decompress
+# from sen1mosaic.preprocess import processFiles, processFiles_coherence
+# from sen1mosaic.mosaic import buildComposite
+
+
+
+# *****************************************
+# DOWNLOAD SENTINEL 2 PROJECT AREA
+# *****************************************
+from sen2mosaic.download import search, download, connectToAPI, decompress
 # from mosaic_tool import mosaic_tile
 
-# project_area = '../geometry/ghana_landarea.shp'
-# project_geom = gpd.read_file(project_area)
-# project_geom_wgs = project_geom.to_crs('EPSG:4326')
+project_area = '../geometry/studyAreaHull.gpkg'
+project_geom = gpd.read_file(project_area)
+project_geom_wgs = project_geom.to_crs('EPSG:4326')
 
-# tiles = '../geometry/sentinel2_tiles_world.shp'
-# tiles_geom = gpd.read_file(tiles)
-# tiles_dest = tiles_geom.to_crs(project_geom.crs)
+tiles = '../geometry/sentinel2_tiles_world.shp'
+tiles_geom = gpd.read_file(tiles)
+tiles_dest = tiles_geom.to_crs(project_geom.crs)
 
-# data = []
-# data_bounds = []
-# for index_g, geom in project_geom_wgs.iterrows():
-#     for index_t, tile in tiles_geom.iterrows():
-#         if geom['geometry'].intersects(tile['geometry']):
-#             data.append(tile['Name'])
-#             data_bounds.append(list(tile['geometry'].bounds))
+data = []
+data_bounds = []
+for index_g, geom in project_geom_wgs.iterrows():
+    for index_t, tile in tiles_geom.iterrows():
+        if geom['geometry'].intersects(tile['geometry']):
+            data.append(tile['Name'])
+            data_bounds.append(list(tile['geometry'].bounds))
 
-# api_connection = connectToAPI('casperfibaek', 'Goldfish12')
+api_connection = connectToAPI('casperfibaek', 'Goldfish12')
+
+for tile in data:
+    cloud_search = 5
+    min_images = 10
+    downloaded = False
+    sdf = None
+
+    while cloud_search <= 100:
+        sdf = search(tile, level='2A', start='20200301', end='20200331', maxcloud=cloud_search, minsize=100.0)
+        
+        if len(sdf) >= min_images:
+            print(f"Found {len(sdf)} images of {tile} @ {cloud_search}% cloud cover - downloading.." )
+            download(sdf, '/home/cfi/data')
+            downloaded = True
+            break
+
+        print(f'Found too few images of {tile} @ {cloud_search}% cloud cover - skipping..')
+        cloud_search += 5
+    
+    if downloaded == False:
+        download(sdf, '/home/cfi/data')
+
+print("Finished downloading all images..")
 
 # data.reverse()
 
@@ -48,15 +76,15 @@ from pyproj import CRS
 #     download(sdf_grd, api_connection, '/home/cfi/data')
 #     sdf_slc = search(data_bounds[index], api_connection, start='20200315', end='20200401', producttype='SLC')
 #     download(sdf_slc, api_connection, '/home/cfi/data')
-tmp_folder = '/home/cfi/tmp/distances/'
-dst_folder = '/home/cfi/mosaic/merged/'
+# tmp_folder = '/home/cfi/tmp/distances/'
+# dst_folder = '/home/cfi/mosaic/merged/'
 
 
-import xml.etree.ElementTree as ET
-from datetime import datetime
-from shapely.geometry import shape
-import zipfile
-import json
+# import xml.etree.ElementTree as ET
+# from datetime import datetime
+# from shapely.geometry import shape
+# import zipfile
+# import json
 # s1_images = glob('/home/cfi/tmp/*.dim')
 # s1_images = glob('/home/cfi/data/slc/*/manifest.safe')
 
@@ -162,7 +190,7 @@ import json
 #     print(str(completed) + '/' + str(len(step1_images)))
 
 
-coh = glob('/home/cfi/mosaic/merged/*step2*.data/*.img')
+# coh = glob('/home/cfi/mosaic/merged/*step2*.data/*.img')
 # coh_str = ' '.join(coh)
 # cli = f'otbcli_Mosaic -il {coh_str} -tmpdir {tmp_folder} -nodata 0 -comp.feather large -out "{dst_folder}gamma0_VV_coh_mosaic_feathered.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" float'
 
@@ -178,10 +206,10 @@ coh = glob('/home/cfi/mosaic/merged/*step2*.data/*.img')
 #     print(f'Completed: {completed}/{len(coh)}')
 
 
-coh = glob('/home/cfi/mosaic/merged/reprojected/*.tif')
-coh_str = ' '.join(coh)
-cli = f'otbcli_Mosaic -il {coh_str} -tmpdir {tmp_folder} -nodata 0 -comp.feather large -out "{dst_folder}gamma0_VV_coh_mosaic_feathered.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" float'
-import pdb; pdb.set_trace()
+# coh = glob('/home/cfi/mosaic/merged/reprojected/*.tif')
+# coh_str = ' '.join(coh)
+# cli = f'otbcli_Mosaic -il {coh_str} -tmpdir {tmp_folder} -nodata 0 -comp.feather large -out "{dst_folder}gamma0_VV_coh_mosaic_feathered.tif?&gdal:co:COMPRESS=DEFLATE&gdal:co:PREDICTOR=2&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES" float'
+# import pdb; pdb.set_trace()
 # subprocess.Popen(comp)
 
 # processFiles(s1_images, dst_folder, tmp_folder, verbose=True)

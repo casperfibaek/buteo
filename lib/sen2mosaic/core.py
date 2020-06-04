@@ -402,7 +402,7 @@ class LoadScene(object):
                 mask_dilate = scipy.ndimage.morphology.binary_dilation((mask==i).astype(np.int), iterations = iterations)
                 
                 # Set dilated area to the same value as input class (except for high probability cloud, set to medium)
-                mask_temp[mask_dilate] = i if i is not 9 else 8
+                mask_temp[mask_dilate] = i if i != 9 else 8
             
             mask = mask_temp.copy()
         

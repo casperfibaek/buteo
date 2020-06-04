@@ -24,7 +24,7 @@ This is the Yellow EO Toolbox. The following script and setup will be created as
   * conda update --all
   * conda create --name green
   * pip install --upgrade pip
-  * conda install -c conda-forge statsmodels scikit-image opencv shapely gdal geojson scikit-learn sqlalchemy sqlite imbalanced-learn pandas matplotlib
+  * conda install -c conda-forge statsmodels scikit-image opencv shapely gdal geojson scikit-learn sqlalchemy sqlite imbalanced-learn pandas matplotlib geopandas pyshp psutil
   * pip install tensorflow
   * pip install keras
   * conda update --all
