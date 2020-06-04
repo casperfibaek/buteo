@@ -46,5 +46,13 @@ def download_dtm(tile_names, dst_folder, username, password):
         get_file(base_path + file_name, dst_folder + file_name)
 
 
+def download_dsm(tile_names, dst_folder, username, password):
+    for tile in tile_names:
+        base_path = f'ftp://{username}:{password}@ftp.kortforsyningen.dk/dhm_danmarks_hoejdemodel/DSM/'
+        file_name = f'DSM_{tile.split("_", 1)[1]}_TIF_UTM32-ETRS89.zip'
+        get_file(base_path + file_name, dst_folder + file_name)
+
+
 if __name__ == "__main__":
-    download_dtm(find_tile_names('../geometry/studyAreaHull.gpkg'), '../test_data/', 'casperfibaek', 'Goldfish12')
+    # download_dtm(find_tile_names('../geometry/studyAreaHull.gpkg'), '/home/cfi/data/dtm/', 'casperfibaek', 'Goldfish12')
+    download_dsm(find_tile_names('../geometry/studyAreaHull.gpkg'), '/home/cfi/data/dsm/', 'casperfibaek', 'Goldfish12')
