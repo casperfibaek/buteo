@@ -1,11 +1,6 @@
 import geopandas as gpd
-
-
-# *****************************************
-# DOWNLOAD SENTINEL 2 PROJECT AREA
-# *****************************************
 from sen2mosaic.download import search, download, connectToAPI
-# from mosaic_tool import mosaic_tile
+
 
 project_area = '../geometry/studyAreaHull.gpkg'
 project_geom = gpd.read_file(project_area)
