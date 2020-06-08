@@ -442,7 +442,7 @@ def processFiles(infiles, output_dir = os.getcwd(), temp_dir = os.getcwd(), mult
     for infile in infiles:
         # Execute Graph Processing Tool
         # import pdb; pdb.set_trace()
-        cal = correctionGraph(infile, os.path.basename(infile).rsplit('.')[0], output_dir=temp_dir)
+        cal = correctionGraph(infile, os.path.basename(infile).rsplit('.')[0], output_dir=output_dir)
         processed += 1
 
         print(f'completed: {processed / len(infiles)}%')
