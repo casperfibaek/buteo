@@ -26,7 +26,7 @@ def align_extent(raster_transform, vector_extent, raster_size):
     pixel_height = abs(raster_transform[5])
 
     raster_min_x = raster_transform[0]
-    # raster_max_x = raster_min_x + (raster_size[0] * pixel_width)
+    raster_max_x = raster_min_x + (raster_size[0] * pixel_width)
     raster_max_y = raster_transform[3]
     raster_min_y = raster_max_y + (raster_size[1] * -pixel_width)
 
@@ -59,8 +59,8 @@ def align_extent(raster_transform, vector_extent, raster_size):
     if (rasterized_y_offset + rasterized_y_size) > raster_size[1]:
         rasterized_y_offset = rasterized_y_offset - ((rasterized_y_offset + rasterized_y_size) - raster_size[1])
 
-    new_vector_extent = np.array([vector_min_x, vector_max_x, vector_min_y, vector_max_y], dtype=np.float64)
-    rasterized_size = np.array([rasterized_x_size, rasterized_y_size, pixel_width, pixel_height], dtype=np.int32)
+    new_vector_extent = np.array([vector_min_x, vector_max_x, vector_min_y, vector_max_y], dtype=np.float32)
+    rasterized_size = np.array([rasterized_x_size, rasterized_y_size, pixel_width, pixel_height], dtype=np.float32)
     offset = np.array([rasterized_x_offset, rasterized_y_offset], dtype=np.int32)
 
     return new_vector_extent, rasterized_size, offset
@@ -78,13 +78,13 @@ def get_intersection(extent1, extent2):
     two_topRightY = extent2[3]
 
     if two_bottomLeftX > one_topRightX:     # Too far east
-        return np.array([0, 0, 0, 0], dtype=np.float64)
+        return np.array([0, 0, 0, 0], dtype=np.float32)
     elif two_bottomLeftY > one_topRightY:   # Too far north
-        return np.array([0, 0, 0, 0], dtype=np.float64)
+        return np.array([0, 0, 0, 0], dtype=np.float32)
     elif two_topRightX < one_bottomLeftX:   # Too far west
-        return np.array([0, 0, 0, 0], dtype=np.float64)
+        return np.array([0, 0, 0, 0], dtype=np.float32)
     elif two_topRightY < one_bottomLeftY:   # Too far south
-        return np.array([0, 0, 0, 0], dtype=np.float64)
+        return np.array([0, 0, 0, 0], dtype=np.float32)
     else:
 
         x_min = one_bottomLeftX if one_bottomLeftX > two_bottomLeftX else two_bottomLeftX
@@ -92,14 +92,14 @@ def get_intersection(extent1, extent2):
         y_min = one_bottomLeftY if one_bottomLeftY > two_bottomLeftY else two_bottomLeftY
         y_max = one_topRightY if one_topRightY < two_topRightY else two_topRightY
 
-        return np.array([x_min, x_max, y_min, y_max], dtype=np.float64)
+        return np.array([x_min, x_max, y_min, y_max], dtype=np.float32)
 
 
 def get_extent(raster_transform, raster_size):
     bottomRightX = raster_transform[0] + (raster_size[0] * raster_transform[1])
     bottomRightY = raster_transform[3] + (raster_size[1] * raster_transform[5])
 
-    return np.array([raster_transform[0], bottomRightX, bottomRightY, raster_transform[3]], dtype=np.float64)
+    return np.array([raster_transform[0], bottomRightX, bottomRightY, raster_transform[3]], dtype=np.float32)
 
 
 def rasterize_vector(vector, extent, raster_size, projection, all_touch=False):
@@ -140,7 +140,7 @@ def calc_shapes(in_vector):
     
     # Get current fields
     for i in range(vector_field_counts):
-        vector_current_fields.append(vector_layer_defn).GetFieldDefn(i).GetName()
+        vector_current_fields.append(vector_layer_defn.GetFieldDefn(i).GetName())
 
     vector_layer.StartTransaction()
     
@@ -178,7 +178,8 @@ def calc_shapes(in_vector):
     vector_layer.CommitTransaction()
 
 
-def calc_zonal(in_vector, in_rasters = [], prefixes=[], stats=['mean', 'med', 'std']):
+# Create a low-memory options
+def calc_zonal(in_vector, in_rasters=[], prefixes=[], stats=['mean', 'med', 'std']):
     # Translate stats to integers
     stats_translated = enumerate_stats(stats)
 
@@ -202,12 +203,12 @@ def calc_zonal(in_vector, in_rasters = [], prefixes=[], stats=['mean', 'med', 's
         raise Exception('Projections do not match!')
 
     # Read raster data in overlap
-    raster_transform = np.array(raster_origin.GetGeoTransform(), dtype=np.float64)
+    raster_transform = np.array(raster_origin.GetGeoTransform(), dtype=np.float32)
     raster_size = np.array([raster_origin.RasterXSize, raster_origin.RasterYSize], dtype=np.int32)
 
     raster_extent = get_extent(raster_transform, raster_size)
 
-    vector_extent = np.array(vector_layer.GetExtent(), dtype=np.float64)
+    vector_extent = np.array(vector_layer.GetExtent(), dtype=np.float32)
     overlap_extent = get_intersection(raster_extent, vector_extent)
 
     if overlap_extent is False:
@@ -223,9 +224,8 @@ def calc_zonal(in_vector, in_rasters = [], prefixes=[], stats=['mean', 'med', 's
         overlap_aligned_extent[3],
         0,
         raster_transform[5],
-    ], dtype=np.float64)
+    ], dtype=np.float32)
     overlap_size = overlap_size_calc(overlap_aligned_extent, raster_transform)
-
 
     # Loop the features
     vector_driver = ogr.GetDriverByName('Memory')
@@ -239,7 +239,7 @@ def calc_zonal(in_vector, in_rasters = [], prefixes=[], stats=['mean', 'med', 's
     
     # Get current fields
     for i in range(vector_field_counts):
-        vector_current_fields.append(vector_layer_defn).GetFieldDefn(i).GetName()
+        vector_current_fields.append(vector_layer_defn.GetFieldDefn(i).GetName())
     
     # Add fields where missing
     for stat in stats:
@@ -258,12 +258,19 @@ def calc_zonal(in_vector, in_rasters = [], prefixes=[], stats=['mean', 'med', 's
         for stat in stats:
             columns[prefixes[raster_index] + stat] = []
 
-        raster_data = raster_to_array(raster_value, crop=[
-            overlap_aligned_offset[0],
-            overlap_aligned_offset[1],
-            overlap_aligned_rasterized_size[0],
-            overlap_aligned_rasterized_size[1],
-        ]).astype(np.double)
+        # TODO: Do a smart divide and conquor approach instead of IO for each feature.
+        fits_in_memory = True
+        try:
+            raster_data = raster_to_array(raster_value, crop=[
+                overlap_aligned_offset[0],
+                overlap_aligned_offset[1],
+                overlap_aligned_rasterized_size[0],
+                overlap_aligned_rasterized_size[1],
+            ])
+        except:
+            print("Raster does not fit in memory.. Doing IO for each feature.")
+        raster_data = None
+        fits_in_memory = False
 
         for n in range(vector_feature_count):
             vector_feature = vector_layer.GetNextFeature()
@@ -287,16 +294,23 @@ def calc_zonal(in_vector, in_rasters = [], prefixes=[], stats=['mean', 'med', 's
                 temp_vector_layer.CreateFeature(vector_feature.Clone())
 
                 feature_aligned_extent, feature_aligned_rasterized_size, feature_aligned_offset = align_extent(overlap_transform, feature_extent, overlap_size)
-
                 rasterized_features.append(rasterize_vector(temp_vector_layer, feature_aligned_extent, feature_aligned_rasterized_size, raster_projection))
 
                 offsets.append(feature_aligned_offset)
                 sizes.append(feature_aligned_rasterized_size)
 
-            cropped_raster = raster_data[
-                offsets[n][1]:offsets[n][1] + sizes[n][1],
-                offsets[n][0]:offsets[n][0] + sizes[n][0],
-            ]
+            if fits_in_memory is True:
+                cropped_raster = raster_data[
+                    offsets[n][1]:offsets[n][1] + int(sizes[n][1]), # X
+                    offsets[n][0]:offsets[n][0] + int(sizes[n][0]), # Y
+                ]
+            else:
+                cropped_raster = raster_to_array(raster_value, crop=[
+                    overlap_aligned_offset[0] + offsets[n][0],
+                    overlap_aligned_offset[1] + offsets[n][1],
+                    int(sizes[n][0]),
+                    int(sizes[n][1]),
+                ])
 
             if rasterized_features[n] is None:
                 for stat in stats:
