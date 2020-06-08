@@ -1,8 +1,8 @@
 import sys; sys.path.append('..'); sys.path.append('../lib/')
 from glob import glob
 
-from sen1mosaic.preprocess import processFiles, processFiles_coherence
-from sen1mosaic.mosaic import buildComposite
+from sen1mosaic.preprocess import processFiles
+# from sen1mosaic.mosaic import buildComposite
 
 base_folder = "/mnt/c/users/caspe/Desktop/Paper_2_StruturalDensity/Data/sentinel1/"
 ascending_grd = glob(base_folder + "ascending/*.zip")
