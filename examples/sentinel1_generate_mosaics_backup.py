@@ -81,7 +81,6 @@ for img in s1_images:
 processed = []
 for index_i, metadata in enumerate(images_obj):
 
-
     # Find the image with the largest intersection
     footprint = ogr.CreateGeometryFromWkt(metadata['footprint_wkt'])
     highest_area = 0
