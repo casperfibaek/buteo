@@ -62,6 +62,11 @@ The system is under active development and is not ready for public release. It i
   * cd ~
   * curl -O http://step.esa.int/downloads/7.0/installers/esa-snap_sentinel_unix_7_0.sh
   * bash esa-snap_sentinel_unix_7_0.sh
+  * Yes to all defaults, set path of python env to /home/cfi/anaconda3/envs/yellow/bin/python
+  * echo 'alias gpt=~/esa_snap/bin/gpt' >> ~/.bashrc
+  * echo '-Xmx16G' >> ~/esa_snap/bin/gpt.vmoptions
+  * snap --nosplash --nogui --modules --update-all
+  * IF SNAP IS NOT UPDATE, THIS STEP IS NECESARRY ON FOCAL 20.04 https://forum.step.esa.int/t/error-in-applying-ers-orbit-informations/23195/13
   * Yes to all defaults, set path of python env to /home/cfi/anaconda3/envs/green/bin/python
   * echo 'alias gpt=~/snap/bin/gpt' >> ~/.bashrc
   * echo '-Xmx32G' >> ~/snap/bin/gpt.vmoptions
