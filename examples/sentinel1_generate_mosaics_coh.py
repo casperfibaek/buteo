@@ -66,7 +66,7 @@ def get_metadata(image_paths):
     return images_obj
 
 
-def coherence_step1(image_paths, out_folder):
+def coherence_step1(image_paths, out_folder, gpt="~/esa_snap/bin/gpt"):
     images_obj = get_metadata(image_paths)
     processed = []
 
@@ -96,16 +96,32 @@ def coherence_step1(image_paths, out_folder):
             skip = True
 
         if best_overlap is not False and skip is False:
-            processFiles_coherence(metadata['path'], images_obj[best_overlap]['path'], out_folder + str(int(metadata['timestamp'])) + '_step1', step=1)
+            processFiles_coherence(metadata['path'], images_obj[best_overlap]['path'], out_folder + str(int(metadata['timestamp'])) + '_step1', step=1, gpt=gpt)
 
             processed.append([best_overlap, index_i])
 
         print(processed)
 
 
+def coherence_step2(input_folder, gpt="~/esa_snap/bin/gpt"):
+    step1_images = glob(input_folder + '*step1*.dim')
+    completed = 0
+    for image in step1_images:
+        outname = image.rsplit('_', 1)[0] + '_step2'
+        try:
+            processFiles_coherence(image, None, outname, step=2, gpt=gpt)
+        except:
+            print('Failed to processes: ', outname)
+        completed += 1
+        print(str(completed) + '/' + str(len(step1_images)))
+
+
 if __name__ == "__main__":
-    base_folder = "/home/cfi/Desktop/sentinel1_midtjylland/ascending/slc/"
-    out_folder = "/home/cfi/Desktop/sentinel1_midtjylland/ascending/slc_processed/"
-    slc_files = glob(base_folder + "*.SAFE")
+    # base_folder = "/home/cfi/Desktop/sentinel1_midtjylland/descending/slc/"
+    # out_folder = "/home/cfi/Desktop/sentinel1_midtjylland/descending/slc_processed/"
+    # slc_files = glob(base_folder + "*.SAFE")
     
-    coherence_step1(slc_files, out_folder)
+    # coherence_step1(slc_files, out_folder, gpt="~/esa_snap/bin/gpt")
+
+    coherence_step2("/home/cfi/Desktop/sentinel1_midtjylland/descending/slc_processed/")
+    coherence_step2("/home/cfi/Desktop/sentinel1_midtjylland/ascending/slc_processed/")
