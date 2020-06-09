@@ -67,6 +67,10 @@ The system is under active development and is not ready for public release. It i
   * echo '-Xmx16G' >> ~/esa_snap/bin/gpt.vmoptions
   * snap --nosplash --nogui --modules --update-all
   * IF SNAP IS NOT UPDATE, THIS STEP IS NECESARRY ON FOCAL 20.04 https://forum.step.esa.int/t/error-in-applying-ers-orbit-informations/23195/13
+  * Yes to all defaults, set path of python env to /home/cfi/anaconda3/envs/green/bin/python
+  * echo 'alias gpt=~/snap/bin/gpt' >> ~/.bashrc
+  * echo '-Xmx32G' >> ~/snap/bin/gpt.vmoptions
+  * ~/snap/bin/snap --nosplash --nogui --modules --update-all
 
 
   ## Git
