@@ -1,8 +1,11 @@
 import sys; sys.path.append('..'); sys.path.append('../lib/')
+from lib.raster_io import raster_to_array, array_to_raster
+from lib.raster_reproject import reproject
 import xml.etree.ElementTree as ET
 from glob import glob
 from datetime import datetime
 from osgeo import ogr
+import os
 
 from sen1mosaic.preprocess import processFiles_coherence
 # from sen1mosaic.mosaic import buildComposite
@@ -123,5 +126,19 @@ if __name__ == "__main__":
     
     # coherence_step1(slc_files, out_folder, gpt="~/esa_snap/bin/gpt")
 
-    coherence_step2("/home/cfi/Desktop/sentinel1_midtjylland/descending/slc_processed/")
-    coherence_step2("/home/cfi/Desktop/sentinel1_midtjylland/ascending/slc_processed/")
+    ascending_folder = "/home/cfi/Desktop/sentinel1_midtjylland/ascending/slc_processed/"
+    descending_folder = "/home/cfi/Desktop/sentinel1_midtjylland/descending/slc_processed/"
+    # coherence_step2(ascending_folder)
+    # coherence_step2(descending_folder)
+
+    proj = 'PROJCS["ETRS89 / UTM zone 32N",GEOGCS["ETRS89",DATUM["European_Terrestrial_Reference_System_1989",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6258"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4258"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",9],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","25832"]]'
+
+    # ascending_images = glob(ascending_folder + "*step2*/*.img")
+    # for img in ascending_images:
+    #     name = os.path.basename(img).split(".", 1)[0] + "_asc.tif"
+    #     reproject(array_to_raster(raster_to_array(img), None, img), ascending_folder + name, target_projection=proj)
+
+    descdending_images = glob(descending_folder + "*step2*/*.img")
+    for img in descdending_images:
+        name = os.path.basename(img).split(".", 1)[0] + "_desc.tif"
+        reproject(array_to_raster(raster_to_array(img), None, img), descending_folder + name, target_projection=proj)

@@ -1,7 +1,7 @@
 {
     "python.linting.pycodestyleEnabled": false,
     "python.linting.enabled": true,
-    "python.pythonPath": "/home/cfi/anaconda3/envs/green/bin/python",
+    "python.pythonPath": "/home/cfi/tmp/yes/envs/green/bin/python",
     "python.linting.pylintEnabled": true,
     "python.formatting.provider": "black"
 }
