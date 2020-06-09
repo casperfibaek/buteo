@@ -442,10 +442,12 @@ def processFiles(infiles, output_dir = os.getcwd(), temp_dir = os.getcwd(), mult
     for infile in infiles:
         # Execute Graph Processing Tool
         # import pdb; pdb.set_trace()
-        cal = correctionGraph(infile, os.path.basename(infile).rsplit('.')[0], output_dir=output_dir)
+        out_name = os.path.basename(infile).rsplit('.')[0]
+        if os.path.exists(os.path.join(output_dir, out_name + '.dim')) == False:
+            cal = correctionGraph(infile, out_name, output_dir=output_dir)
         processed += 1
 
-        print(f'completed: {processed / len(infiles)}%')
+        print(f'completed: {round((processed / len(infiles)) * 100, 2)}%')
         # cal_file = calibrateGraph(infile, temp_dir = temp_dir, short_chain = short_chain, noorbit = noorbit, output_name = output_name, gpt = gpt, verbose = verbose)
         
         # Keep a record of which files have already been processed for each pass
