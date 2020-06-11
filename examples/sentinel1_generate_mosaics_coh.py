@@ -1,6 +1,7 @@
 import sys; sys.path.append('..'); sys.path.append('../lib/')
 from lib.raster_io import raster_to_array, array_to_raster
 from lib.raster_reproject import reproject
+from lib.raster_clip import clip_raster
 import xml.etree.ElementTree as ET
 from glob import glob
 from datetime import datetime
@@ -134,8 +135,14 @@ if __name__ == "__main__":
 
     proj = 'PROJCS["ETRS89 / UTM zone 32N",GEOGCS["ETRS89",DATUM["European_Terrestrial_Reference_System_1989",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6258"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4258"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",9],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","25832"]]'
 
-    coh_images = glob(folder + "*_desc*.tif")
-    cmd = "pkcomposite" +  " -i " + " -i ".join(coh_images) + f" -cr median -msknodata 0 -cut {folder}studyArea100mBuffer.gpkg -o {folder}mosaic_desc.tif "
+    # coh_images = glob(folder + "*.tif")
+    # for img in coh_images:
+    #     output_name = folder + "/clipped/" + os.path.basename(img).rsplit(".")[0] + "_nd.tif"
+    #     clipped = clip_raster(img, cutline=folder + "studyArea100mBuffer.gpkg", cutline_all_touch=True, src_nodata=0)
+    #     array_to_raster(raster_to_array(clipped), output_name, clipped, src_nodata=0, dst_nodata=0)
+    
+    clipped_images = glob(folder + "clipped/*asc*.tif")
+    cmd = "pkcomposite" +  " -i " + " -i ".join(clipped_images) + f" -cr median -srcnodata 0 -dstnodata 0 -msknodata 0 -o {folder}mosaic_asc.tif"
     import pdb; pdb.set_trace()
 
     # ascending_images = glob(ascending_folder + "*step2*/*.img")
