@@ -1,5 +1,17 @@
 import numpy as np
-from raster_io import raster_to_array, array_to_raster
+from lib.raster_io import raster_to_array, array_to_raster
+
+
+def remove_nodata(raster_or_array, out_raster=None):
+    if out_raster is None:
+        if isinstance(raster_or_array, np.ndarray):
+            return raster_or_array.filled()
+        else:
+            return raster_to_array(raster_or_array).filled()
+    else:
+        array_to_raster(raster_to_array(raster_or_array).filled(), raster_or_array, raster, dst_nodata=False)
+        return 1
+
 
 
 def set_nodata(arr, move_current_mask=True, value='max'):

@@ -1,7 +1,9 @@
 import sys; sys.path.append('..'); sys.path.append('../lib/')
 from lib.raster_io import raster_to_array, array_to_raster
+from lib.raster_clip import clip_raster
 from lib.raster_reproject import reproject
 from glob import glob
+import os
 
 from sen1mosaic.preprocess import processFiles
 # from sen1mosaic.mosaic import buildComposite
@@ -28,4 +30,28 @@ proj = 'PROJCS["ETRS89 / UTM zone 32N",GEOGCS["ETRS89",DATUM["European_Terrestri
 
 # processFiles(ascending_grd, ascdending_dst_folder)
 # processFiles(descending_grd, descdending_dst_folder)
+# folder = "/mnt/c/users/caspe/Desktop/Paper_2_StruturalDensity/Data/sentinel1/processed/"
+# folder_geom = "/mnt/c/users/caspe/Desktop/Paper_2_StruturalDensity/Data/"
 
+# images = glob(folder + "*.tif")
+# for img in images:
+#     output = folder + "clipped/" + os.path.basename(img)
+#     # import pdb; pdb.set_trace()
+#     try:
+#         clipped = clip_raster(img, cutline=folder_geom + "studyArea100mBuffer.gpkg", cutline_all_touch=True)
+#         array_to_raster(raster_to_array(clipped), output, clipped, src_nodata=0, dst_nodata=0)
+#     except:
+#         print(f"{img} did not overlap..")
+#         pass
+
+
+folder = "/mnt/c/users/caspe/Desktop/Paper_2_StruturalDensity/Data/sentinel1/processed/clipped/"
+out_folder = "/mnt/c/users/caspe/Desktop/Paper_2_StruturalDensity/Data/sentinel1/processed/"
+
+bsa_images = glob(folder + "asc_*.tif")
+bsd_images = glob(folder + "desc_*.tif")
+
+cmd_a = "pkcomposite" +  " -i " + " -i ".join(bsa_images) + f" -cr median -msknodata 0 -srcnodata 0 -dstnodata 0 -o {out_folder}mosaic_asc.tif"
+cmd_d = "pkcomposite" +  " -i " + " -i ".join(bsd_images) + f" -cr median -msknodata 0 -srcnodata 0 -dstnodata 0 -o {out_folder}mosaic_desc.tif"
+
+import pdb; pdb.set_trace()

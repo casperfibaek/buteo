@@ -11,7 +11,7 @@ from lib.raster_clip import clip_raster
 
 def array_to_raster(array, out_raster=None, reference_raster=None, output_format='MEM', top_left=None,
                     pixel_size=None, dst_projection=None, dst_crop_to_projection=True, calc_band_stats=False, 
-                    align=True, src_nodata=None, dst_nodata=False, resample=False, resample_alg='near', quiet=False):
+                    align=True, src_nodata=None, dst_nodata=None, resample=False, resample_alg='near', quiet=False):
     ''' Turns a numpy array into a gdal dataframe or exported
         as a raster. If no reference is specified, the following
         must be provided: topLeft coordinates, pixelSize such as:
@@ -131,8 +131,11 @@ def array_to_raster(array, out_raster=None, reference_raster=None, output_format
         reference['projection'].ImportFromWkt(dst_projection)
         reference['projection'] = reference['projection'].ExportToWkt()
 
-    if dst_nodata is not False:
-        input_nodata = dst_nodata
+    if dst_nodata is not None:
+        if dst_nodata is False:
+            input_nodata = None
+        else:
+            input_nodata = dst_nodata
     else:
         if np.ma.is_masked(data) is True:
             input_nodata = data.get_fill_value()

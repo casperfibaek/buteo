@@ -279,12 +279,12 @@ def threshold_array(arr, min_value=False, max_value=False, invert=False):
     if has_nodata is True:
         if arr_mask is not False:
             return_arr = np.ma.masked_where(arr_mask, result).set_fill_value(255)
-            return return_arr.astype('uint8')
+            return return_arr
         else:
             return_arr = np.ma.masked_equal(result, fill_value).set_fill_value(255)
             return return_arr
 
-    return result.astype('uint8')
+    return result
 
 
 def truncate_array(arr, min_value=False, max_value=False):

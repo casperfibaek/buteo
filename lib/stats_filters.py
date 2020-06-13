@@ -6,6 +6,10 @@ from lib.stats_local_no_kernel import truncate_array, threshold_array, cdef_from
 from lib.stats_kernel import create_kernel
 
 
+def scale_to_range_filder(in_raster, min_target, max_target):
+    return np.interp(in_raster, (in_raster.min(), in_raster.max()), (min_target, max_target))
+
+
 def standardise_filter(in_raster, cdf_norm=False):
     m = np.nanmean(in_raster)
     s = np.nanstd(in_raster)
