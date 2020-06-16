@@ -6,7 +6,7 @@ from lib.stats_local_no_kernel import truncate_array, threshold_array, cdef_from
 from lib.stats_kernel import create_kernel
 
 
-def scale_to_range_filder(in_raster, min_target, max_target):
+def scale_to_range_filter(in_raster, min_target, max_target):
     return np.interp(in_raster, (in_raster.min(), in_raster.max()), (min_target, max_target))
 
 

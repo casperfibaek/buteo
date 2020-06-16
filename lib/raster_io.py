@@ -492,7 +492,10 @@ def raster_to_array(in_raster, reference_raster=None, cutline=None, cutline_all_
         if compressed is True:
             data = data.compressed()
         
-        return_data.append(data)
+        if readied_raster.RasterCount == 1:
+            return data
+        else:
+            return_data.append(data)
         
     return np.dstack(return_data)
 

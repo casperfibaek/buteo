@@ -47,6 +47,7 @@ The system is under active development and is not ready for public release. It i
   * conda create --name green
   * pip install --upgrade pip
   * conda install -c conda-forge statsmodels scikit-image opencv shapely gdal geojson scikit-learn sqlalchemy sqlite imbalanced-learn pandas matplotlib geopandas pyshp psutil cython tensorflow seaborn
+  * conda install -c anaconda cudnn
   * pip install tensorflow
   * pip install keras
   * conda update --all
