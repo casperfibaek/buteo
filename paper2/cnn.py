@@ -3,8 +3,8 @@ import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, Flatten, BatchNormalization
+from tensorflow.keras import Sequential, Model
+from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, Flatten, BatchNormalization, Concatenate, Input
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.optimizers import Adam, Adamax
 from tensorflow.keras.constraints import max_norm, unit_norm
@@ -32,6 +32,7 @@ y = np.max([
     (y >= 2) * 2,
 ], axis=0).astype('int64')
 
+# Rotate and add all images
 y = np.concatenate([
     y,
     y,
@@ -75,43 +76,122 @@ X = X[mask]
 # X = X[:, :, :, 2:6] # B04, B08, BS, COH - 87.3%
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_split, random_state=seed)
-# split_amount = int(minority * val_split)
-# X_val = X_train[-split_amount:]
-# y_val = y_train[-split_amount:]
-# X_train = X_train[:-split_amount]
-# y_train = y_train[:-split_amount]
-X_train_left = X_train[:, :, :, [0, 1, 2]]
-X_train_mid = X_train[:, :, :, [3]]
-X_train_right = X_train[:, :, :, [4, 5]]
+split_amount = int(minority * val_split)
+
+y_val = y_train[-split_amount:]
+y_train = y_train[:-split_amount]
+
+X_val_rgb = X_train[-split_amount:, :, :, [0, 1, 2]]
+X_val_nir = X_train[-split_amount:, :, :, [3]]
+X_val_coh = X_train[-split_amount:, :, :, [4]]
+X_val_bs = X_train[-split_amount:, :, :, [5]]
+
+X_train_rgb = X_train[:-split_amount, :, :, [0, 1, 2]]
+X_train_nir = X_train[:-split_amount, :, :, [3]]
+X_train_coh = X_train[:-split_amount, :, :, [4]]
+X_train_bs = X_train[:-split_amount, :, :, [5]]
 
 
 classes = len(np.unique(y_train))
 
-model = Sequential([
-    Conv2D(32, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3), input_shape=(X_train.shape[1], X_train.shape[2], X_train.shape[3])),
-    Conv2D(32, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
-    MaxPooling2D(pool_size=(2, 2)),
-    BatchNormalization(),
-    Dropout(0.25),
 
-    Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
-    Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
-    MaxPooling2D(pool_size=(2, 2)),
-    BatchNormalization(),
-    Dropout(0.25),
+input_rgb = Input(shape=(X_train_rgb.shape[1], X_train_rgb.shape[2], X_train_rgb.shape[3]), name='input_rgb')
+model_rgb = Conv2D(32, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(input_rgb)
+model_rgb = Conv2D(32, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_rgb)
+model_rgb = MaxPooling2D(pool_size=(2, 2))(model_rgb)
+model_rgb = BatchNormalization()(model_rgb)
+model_rgb = Dropout(0.25)(model_rgb)
 
-    Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
-    Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
-    MaxPooling2D(pool_size=(2, 2)),
-    BatchNormalization(),
-    Dropout(0.25),
+model_rgb = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_rgb)
+model_rgb = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_rgb)
+model_rgb = MaxPooling2D(pool_size=(2, 2))(model_rgb)
+model_rgb = BatchNormalization()(model_rgb)
+model_rgb = Dropout(0.25)(model_rgb)
 
-    Flatten(),
-    Dense(1024, activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
-    BatchNormalization(),
-    Dropout(0.5),
-    Dense(classes, activation='softmax')
-])
+model_rgb = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_rgb)
+model_rgb = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_rgb)
+model_rgb = MaxPooling2D(pool_size=(2, 2))(model_rgb)
+model_rgb = BatchNormalization()(model_rgb)
+model_rgb = Dropout(0.25)(model_rgb)
+
+model_rgb = Flatten()(model_rgb)
+
+
+input_nir = Input(shape=(X_train_nir.shape[1], X_train_nir.shape[2], X_train_nir.shape[3]), name='input_nir')
+model_nir = Conv2D(32, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(input_nir)
+model_nir = Conv2D(32, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_nir)
+model_nir = MaxPooling2D(pool_size=(2, 2))(model_nir)
+model_nir = BatchNormalization()(model_nir)
+model_nir = Dropout(0.25)(model_nir)
+
+model_nir = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_nir)
+model_nir = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_nir)
+model_nir = MaxPooling2D(pool_size=(2, 2))(model_nir)
+model_nir = BatchNormalization()(model_nir)
+model_nir = Dropout(0.25)(model_nir)
+
+model_nir = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_nir)
+model_nir = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_nir)
+model_nir = MaxPooling2D(pool_size=(2, 2))(model_nir)
+model_nir = BatchNormalization()(model_nir)
+model_nir = Dropout(0.25)(model_nir)
+
+model_nir = Flatten()(model_nir)
+
+
+input_coh = Input(shape=(X_train_coh.shape[1], X_train_coh.shape[2], X_train_coh.shape[3]), name='input_coh')
+model_coh = Conv2D(32, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(input_coh)
+model_coh = Conv2D(32, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_coh)
+model_coh = MaxPooling2D(pool_size=(2, 2))(model_coh)
+model_coh = BatchNormalization()(model_coh)
+model_coh = Dropout(0.25)(model_coh)
+
+model_coh = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_coh)
+model_coh = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_coh)
+model_coh = MaxPooling2D(pool_size=(2, 2))(model_coh)
+model_coh = BatchNormalization()(model_coh)
+model_coh = Dropout(0.25)(model_coh)
+
+model_coh = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_coh)
+model_coh = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_coh)
+model_coh = MaxPooling2D(pool_size=(2, 2))(model_coh)
+model_coh = BatchNormalization()(model_coh)
+model_coh = Dropout(0.25)(model_coh)
+
+model_coh = Flatten()(model_coh)
+
+
+
+input_bs = Input(shape=(X_train_bs.shape[1], X_train_bs.shape[2], X_train_bs.shape[3]), name='input_bs')
+model_bs = Conv2D(32, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(input_bs)
+model_bs = Conv2D(32, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_bs)
+model_bs = MaxPooling2D(pool_size=(2, 2))(model_bs)
+model_bs = BatchNormalization()(model_bs)
+model_bs = Dropout(0.25)(model_bs)
+
+model_bs = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_bs)
+model_bs = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_bs)
+model_bs = MaxPooling2D(pool_size=(2, 2))(model_bs)
+model_bs = BatchNormalization()(model_bs)
+model_bs = Dropout(0.25)(model_bs)
+
+model_bs = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_bs)
+model_bs = Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model_bs)
+model_bs = MaxPooling2D(pool_size=(2, 2))(model_bs)
+model_bs = BatchNormalization()(model_bs)
+model_bs = Dropout(0.25)(model_bs)
+
+model_bs = Flatten()(model_bs)
+
+
+model = Concatenate()([model_rgb, model_nir, model_coh, model_bs])
+model = Dense(1024, activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model)
+model = BatchNormalization()(model)
+model = Dropout(0.5)(model)
+
+predictions = Dense(classes, activation='softmax')(model)
+
+model = Model(inputs=[input_rgb, input_nir, model_coh, input_bs], outputs=predictions)
 
 optimizer = Adam(
     learning_rate=0.001,
@@ -121,11 +201,23 @@ optimizer = Adam(
     name='Adam',
 )
 
-# model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
 model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-model.fit(X_train, y_train, epochs=500, verbose=1, batch_size=batches, validation_data=(X_val, y_val), callbacks=[
-    EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
-])
+
+model.fit(
+    x=[X_train_rgb, X_train_nir, X_train_coh, X_train_bs],
+    y=y_train,
+    epochs=500,
+    verbose=1,
+    batch_size=batches,
+    validation_data=([X_val_rgb, X_val_nir, X_val_coh, X_val_bs], y_val),
+    callbacks=[
+        EarlyStopping(
+            monitor='val_loss',
+            patience=5,
+            restore_best_weights=True,
+        )
+    ]
+)
 
 loss, acc = model.evaluate(X_test, y_test, verbose=1)
 print('Test Accuracy: %.3f' % acc)
