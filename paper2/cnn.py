@@ -1,47 +1,116 @@
 import os
 import numpy as np
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPool2D, AveragePooling2D, GlobalMaxPooling2D, Flatten, BatchNormalization
+from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, Flatten, BatchNormalization
 from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.regularizers import l1, l2
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam, Adamax
 from tensorflow.keras.constraints import max_norm, unit_norm
 
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\analysis\\"
 
-X = np.load(folder + "320m_images.npy")
-# y = np.load(folder + "320m_labels.npy")[0] * (100 * 100) >= (140 * 3) # area
-# y = np.load(folder + "320m_labels.npy")[1] * (100 * 100) >= (700 * 3) # volume
-y = np.load(folder + "320m_labels.npy")[0] > 0 # ppl
-
+size = "160m"
 seed = 42
+val_split = 0.1
+test_split = 0.33
+batches = 128
+kernel_size = (3, 3)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=seed)
-X_val = X_train[-10000:]
-y_val = y_train[-10000:]
-X_train = X_train[:-10000]
-y_train = y_train[:-10000]
+X = np.load(folder + f"{size}_images.npy")
 
+# 0. area, 1. volume, 2. people
+y = np.load(folder + f"{size}_labels.npy")[1] # volume
+y = (y * (100 * 100)) / 700 # Average houses per hectare
+
+y = np.max([
+    (y < 0.5) * 0,
+    np.logical_and((y >= 0.5), (y < 2)) * 1,
+    (y >= 2) * 2,
+], axis=0).astype('int64')
+
+y = np.concatenate([
+    y,
+    y,
+    y,
+    y,
+])
+
+X = np.concatenate([
+    X,
+    np.rot90(X, k=1, axes=(1, 2)),
+    np.rot90(X, k=2, axes=(1, 2)),
+    np.rot90(X, k=3, axes=(1, 2)),
+])
+
+def count_freq(arr):
+    yy = np.bincount(arr)
+    ii = np.nonzero(yy)[0]
+    return np.vstack((ii, yy[ii])).T
+
+# Find minority class
+frequency = count_freq(y)
+minority = frequency.min(axis=0)[1]
+
+print(frequency)
+
+# https://stackoverflow.com/a/44233061/8564588
+def minority_class_mask(arr, minority):
+    return np.hstack([
+        np.random.choice(np.where(y == l)[0], minority, replace=False) for l in np.unique(y)
+    ])
+
+mask = minority_class_mask(y, minority)
+
+y = y[mask]
+X = X[mask]
+
+# B02, B03, B04, B08, BS, COH
+# X = X[:, :, :, 4:5] # BS - 72.5%
+# X = X[:, :, :, 4:6] # BS COH - 75.1%
+# X = X[:, :, :, 0:4] # B02, B03, B04, B08 - 87.5%
+# X = X[:, :, :, 2:6] # B04, B08, BS, COH - 87.3%
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_split, random_state=seed)
+# split_amount = int(minority * val_split)
+# X_val = X_train[-split_amount:]
+# y_val = y_train[-split_amount:]
+# X_train = X_train[:-split_amount]
+# y_train = y_train[:-split_amount]
+X_train_left = X_train[:, :, :, [0, 1, 2]]
+X_train_mid = X_train[:, :, :, [3]]
+X_train_right = X_train[:, :, :, [4, 5]]
+
+
+classes = len(np.unique(y_train))
 
 model = Sequential([
-    Conv2D(32, kernel_size=(3,3), activation='swish', kernel_initializer='he_uniform', kernel_constraint=unit_norm(), input_shape=(32, 32, 6)),
+    Conv2D(32, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3), input_shape=(X_train.shape[1], X_train.shape[2], X_train.shape[3])),
+    Conv2D(32, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
+    MaxPooling2D(pool_size=(2, 2)),
     BatchNormalization(),
-    MaxPool2D(pool_size=(2, 2)),
+    Dropout(0.25),
+
+    Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
+    Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
+    MaxPooling2D(pool_size=(2, 2)),
     BatchNormalization(),
-    Conv2D(64, kernel_size=(3,3), activation='swish', kernel_initializer='he_uniform', kernel_constraint=unit_norm()),
+    Dropout(0.25),
+
+    Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
+    Conv2D(64, kernel_size=kernel_size, padding='same', activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
+    MaxPooling2D(pool_size=(2, 2)),
     BatchNormalization(),
-    # MaxPool2D(pool_size=(2, 2)),
-    GlobalMaxPooling2D(),
-    BatchNormalization(),
+    Dropout(0.25),
+
     Flatten(),
-    Dense(64, activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
-    Dropout(0.50),
-    Dense(32, activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
-    Dropout(0.50),
-    Dense(1, activation='sigmoid'),
+    Dense(1024, activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3)),
+    BatchNormalization(),
+    Dropout(0.5),
+    Dense(classes, activation='softmax')
 ])
 
 optimizer = Adam(
@@ -52,13 +121,19 @@ optimizer = Adam(
     name='Adam',
 )
 
-model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
-
-model.fit(X_train, y_train, epochs=25, verbose=1, batch_size=512, validation_data=(X_val, y_val), callbacks=[
-    EarlyStopping(monitor='loss', patience=5)
+# model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.fit(X_train, y_train, epochs=500, verbose=1, batch_size=batches, validation_data=(X_val, y_val), callbacks=[
+    EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
 ])
 
 loss, acc = model.evaluate(X_test, y_test, verbose=1)
 print('Test Accuracy: %.3f' % acc)
 
-import pdb; pdb.set_trace()
+y_pred = model.predict(X_test)
+y_prop = np.max(y_pred, axis=1)
+y_pred = np.argmax(y_pred, axis=1)
+
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+print(accuracy_score(y_test, y_pred))

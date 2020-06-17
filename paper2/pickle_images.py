@@ -7,11 +7,10 @@ import numpy as np
 from glob import glob
 
 folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\"
-tiles_path = folder + "tiles_320m\\"
+tiles_path = folder + "tiles_160m\\"
 
-# tiles = glob(tiles_path + "*.tif")
-labels_cnx = sqlite3.connect(folder + "analysis\\grid_320m.sqlite")
-labels = pd.read_sql_query(f"SELECT fid, b_area, b_volume, ppl_ha FROM 'grid_320m';", labels_cnx)
+labels_cnx = sqlite3.connect(folder + "analysis\\grid_160m.sqlite")
+labels = pd.read_sql_query(f"SELECT fid, b_area, b_volume, ppl_ha FROM 'grid_160m';", labels_cnx)
 
 label_area = []
 label_volume = []
@@ -29,7 +28,7 @@ for index, row in labels.iterrows():
     label_volume.append(b_volume)
     label_people.append(ppl_ha)
 
-    image_path = glob(tiles_path + f"320m_{fid}.tif")[0]
+    image_path = glob(tiles_path + f"160m_{fid}.tif")[0]
     image = raster_to_array(image_path)
 
     images.append(image)
@@ -39,8 +38,8 @@ for index, row in labels.iterrows():
 images = np.stack(images)
 labels = np.stack([label_area, label_volume, label_people])
 
-np.save(folder + 'analysis\\320m_images.npy', images)
-np.save(folder + 'analysis\\320m_labels.npy', labels)
+np.save(folder + 'analysis\\160m_images.npy', images)
+np.save(folder + 'analysis\\160m_labels.npy', labels)
 
 import pdb; pdb.set_trace()
 print(row)
