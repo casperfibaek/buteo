@@ -19,6 +19,7 @@ batches = 32
 validation_split = 0.3
 learning_rate = 0.001
 kfolds = 5
+msg = f"what currently is running"
 
 # ***********************************************************************
 #                   LOADING DATA
@@ -123,5 +124,6 @@ for train_index, test_index in skf.split(np.zeros(len(y)), y):
 mean = np.array(scores).mean()
 std = np.array(scores).std()
 print(mean, std)
+print(msg)
 
 import pdb; pdb.set_trace()

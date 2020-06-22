@@ -14,7 +14,7 @@ import numpy as np
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\analysis\\"
-size = 320
+size = 160
 seed = 42
 validation_split = 0.3
 kfolds = 5
@@ -23,6 +23,7 @@ learning_rate = 0.01
 rotation = False
 noise = False
 noise_amount = 0.01
+msg = f"{str(size)} - rgb + nir (same conv)"
 
 # ***********************************************************************
 #                   LOADING DATA
@@ -33,15 +34,18 @@ green = 1
 red = 2
 nir = 0
 
-# X = np.load(folder + f"{str(int(size))}_rgb.npy").astype('float32')
-X = np.load(folder + f"{str(int(size))}_nir.npy").astype('float32')
-X = X[:, :, :, np.newaxis]
+X = np.load(folder + f"{str(int(size))}_rgb.npy").astype('float32')
 
-# X[:, :, :, blue] = ml_utils.scale_to_01(np.clip(X[:, :, :, blue], 0, 4000))
-# X[:, :, :, green] = ml_utils.scale_to_01(np.clip(X[:, :, :, green], 0, 5000))
-# X[:, :, :, red] = ml_utils.scale_to_01(np.clip(X[:, :, :, red], 0, 6000))
+X[:, :, :, blue] = ml_utils.scale_to_01(np.clip(X[:, :, :, blue], 0, 4000))
+X[:, :, :, green] = ml_utils.scale_to_01(np.clip(X[:, :, :, green], 0, 5000))
+X[:, :, :, red] = ml_utils.scale_to_01(np.clip(X[:, :, :, red], 0, 6000))
 
-X[:, :, :, nir] = ml_utils.scale_to_01(np.clip(X[:, :, :, nir], 0, 11000))
+X_nir = np.load(folder + f"{str(int(size))}_nir.npy").astype('float32')
+X_nir = X_nir[:, :, :, np.newaxis]
+X_nir[:, :, :, nir] = ml_utils.scale_to_01(np.clip(X_nir[:, :, :, nir], 0, 11000))
+
+X = np.concatenate([X, X_nir], axis=3)
+X_nir = None
 
 y = np.load(folder + f"{str(int(size))}_y.npy")[:, ml_utils.y_class("volume")]
 
@@ -78,20 +82,34 @@ X = X[shuffle]
 #                   ANALYSIS
 # ***********************************************************************
 
+if size == 80:
+    kernel_start = (3, 3)
+    kernel_mid = (3, 3)
+    kernel_size = (3, 3)
+elif size == 160:
+    kernel_start = (5, 5)
+    kernel_mid = (5, 5)
+    kernel_end = (3, 3)
+else:
+    kernel_start = (7, 7)
+    kernel_mid = (5, 5)
+    kernel_end = (3, 3)
+
+
 def create_cnn_model(shape, name):
     model_input = Input(shape=shape, name=name)
-    model = Conv2D(64, kernel_size=(5, 5), padding='same', activation='swish', kernel_initializer='he_uniform')(model_input)
-    model = Conv2D(64, kernel_size=(3, 3), padding='same', activation='swish', kernel_initializer='he_uniform')(model)
+    model = Conv2D(64, kernel_size=kernel_start, padding='same', activation='swish', kernel_initializer='he_uniform')(model_input)
+    model = Conv2D(64, kernel_size=kernel_start, padding='same', activation='swish', kernel_initializer='he_uniform')(model)
     model = MaxPooling2D(pool_size=(2, 2))(model)
     model = BatchNormalization()(model)
 
-    model = Conv2D(128, kernel_size=(3, 3), padding='same', activation='swish', kernel_initializer='he_uniform')(model)
-    model = Conv2D(128, kernel_size=(3, 3), padding='same', activation='swish', kernel_initializer='he_uniform')(model)
+    model = Conv2D(128, kernel_size=kernel_mid, padding='same', activation='swish', kernel_initializer='he_uniform')(model)
+    model = Conv2D(128, kernel_size=kernel_mid, padding='same', activation='swish', kernel_initializer='he_uniform')(model)
     model = MaxPooling2D(pool_size=(2, 2))(model)
     model = BatchNormalization()(model)
 
-    model = Conv2D(256, kernel_size=(3, 3), padding='same', activation='swish', kernel_initializer='he_uniform')(model)
-    model = Conv2D(256, kernel_size=(3, 3), padding='same', activation='swish', kernel_initializer='he_uniform')(model)
+    model = Conv2D(256, kernel_size=kernel_end, padding='same', activation='swish', kernel_initializer='he_uniform')(model)
+    model = Conv2D(256, kernel_size=kernel_end, padding='same', activation='swish', kernel_initializer='he_uniform')(model)
     model = GlobalAveragePooling2D()(model)
     model = BatchNormalization()(model)
 
@@ -148,6 +166,7 @@ mean = np.array(scores).mean()
 std = np.array(scores).std()
 
 print(mean, std)
+print(msg)
 
 from playsound import playsound; playsound(folder + "alarm.wav")
 import pdb; pdb.set_trace()
