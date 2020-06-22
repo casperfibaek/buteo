@@ -3,7 +3,7 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras import Sequential, Model
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, GlobalAveragePooling2D, Flatten, BatchNormalization, Concatenate, Input
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.metrics import BinaryAccuracy, Accuracy
 
@@ -164,14 +164,7 @@ for train_index, test_index in skf.split(np.zeros(len(y)), y):
                 min_delta=0.01,
                 restore_best_weights=True,
             ),
-            ReduceLROnPlateau(
-                monitor='val_loss',
-                factor=0.1,
-                patience=4,
-                min_lr=0.0001,
-                cooldown=2,
-                min_delta=0.01,
-            ),
+            LearningRateScheduler(ml_utils.decay),
         ]
     )
 
