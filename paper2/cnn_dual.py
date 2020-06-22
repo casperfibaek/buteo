@@ -173,9 +173,7 @@ for train_index, test_index in skf.split(np.zeros(len(y)), y):
         # input_graph_4,
     ], outputs=predictions)
 
-    optimizer = Adam(learning_rate=learning_rate, name='Adam')
-
-    model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=[BinaryAccuracy()])
+    model.compile(optimizer=Adam(name='Adam'), loss='binary_crossentropy', metrics=[BinaryAccuracy()])
 
     model.fit(
         x=[

@@ -140,11 +140,9 @@ for train_index, test_index in skf.split(X, y):
 
     predictions = Dense(1, activation='sigmoid')(model)
 
-    model = Model(inputs=[input_graph], outputs=predictions)
+    model = Model(inputs=[input_graph], outputs=predictions)    
 
-    optimizer = Adam(learning_rate=learning_rate, name='Adam')
-
-    model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=[BinaryAccuracy()])
+    model.compile(optimizer=Adam(name='Adam'), loss='binary_crossentropy', metrics=[BinaryAccuracy()])
 
     model.fit(
         x=X_train,
