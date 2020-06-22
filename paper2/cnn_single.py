@@ -19,11 +19,18 @@ seed = 42
 validation_split = 0.3
 kfolds = 5
 batches = 16
-learning_rate = 0.01
 rotation = False
 noise = False
 noise_amount = 0.01
 msg = f"{str(size)} - rgb + nir (same conv)"
+
+def learning_rate_decay(epoch):
+  if epoch < 4:
+    return 1e-3
+  elif epoch >= 3 and epoch < 8:
+    return 1e-4
+  else:
+    return 1e-5
 
 # ***********************************************************************
 #                   LOADING DATA
@@ -153,7 +160,7 @@ for train_index, test_index in skf.split(X, y):
                 min_delta=0.01,
                 restore_best_weights=True,
             ),
-            LearningRateScheduler(ml_utils.decay),
+            LearningRateScheduler(learning_rate_decay),
         ]
     )
 

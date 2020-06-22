@@ -45,11 +45,3 @@ def add_noise(X, amount=0.01):
 
 def scale_to_01(arr):
       return (arr - arr.min()) / (arr.max() - arr.min())
-
-def decay(epoch):
-  if epoch < 4:
-    return 1e-3
-  elif epoch >= 3 and epoch < 8:
-    return 1e-4
-  else:
-    return 1e-5
