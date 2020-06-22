@@ -41,18 +41,23 @@ green = 1
 red = 2
 nir = 0
 
-X = np.load(folder + f"{str(int(size))}_rgb.npy").astype('float32')
+# X = np.load(folder + f"{str(int(size))}_rgb.npy").astype('float32')
 
-X[:, :, :, blue] = ml_utils.scale_to_01(np.clip(X[:, :, :, blue], 0, 4000))
-X[:, :, :, green] = ml_utils.scale_to_01(np.clip(X[:, :, :, green], 0, 5000))
-X[:, :, :, red] = ml_utils.scale_to_01(np.clip(X[:, :, :, red], 0, 6000))
+# X[:, :, :, blue] = ml_utils.scale_to_01(np.clip(X[:, :, :, blue], 0, 4000))
+# X[:, :, :, green] = ml_utils.scale_to_01(np.clip(X[:, :, :, green], 0, 5000))
+# X[:, :, :, red] = ml_utils.scale_to_01(np.clip(X[:, :, :, red], 0, 6000))
 
-X_nir = np.load(folder + f"{str(int(size))}_nir.npy").astype('float32')
-X_nir = X_nir[:, :, :, np.newaxis]
-X_nir[:, :, :, nir] = ml_utils.scale_to_01(np.clip(X_nir[:, :, :, nir], 0, 11000))
+# X_nir = np.load(folder + f"{str(int(size))}_nir.npy").astype('float32')
+# X_nir = X_nir[:, :, :, np.newaxis]
+# X_nir[:, :, :, nir] = ml_utils.scale_to_01(np.clip(X_nir[:, :, :, nir], 0, 11000))
 
-X = np.concatenate([X, X_nir], axis=3)
-X_nir = None
+X = np.load(folder + f"{str(int(size))}_nir.npy").astype('float32')
+X = X[:, :, :, np.newaxis]
+X[:, :, :, nir] = ml_utils.scale_to_01(np.clip(X[:, :, :, nir], 0, 11000))
+
+
+# X = np.concatenate([X, X_nir], axis=3)
+# X_nir = None
 
 y = np.load(folder + f"{str(int(size))}_y.npy")[:, ml_utils.y_class("volume")]
 
