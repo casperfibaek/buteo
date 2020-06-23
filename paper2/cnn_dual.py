@@ -53,7 +53,7 @@ X2[:, :, :, nir] = ml_utils.scale_to_01(np.clip(X2[:, :, :, nir], 0, 11000))
 X2 = np.concatenate([X1, X2], axis=3)
 
 X3_raw = np.load(folder + f"{str(int(size))}_bs.npy")[:, :, :, [ml_utils.sar_class("asc"), ml_utils.sar_class("desc")]]
-X3 = ml_utils.scale_to_01(X3_raw)
+X3 = ml_utils.scale_to_01(np.clip(X3_raw, 0, np.quantile(X3_raw, 0.99)))
 
 X4 = np.load(folder + f"{str(int(size))}_coh.npy")[:, :, :, [ml_utils.sar_class("asc"), ml_utils.sar_class("desc")]]
 
@@ -138,6 +138,9 @@ def create_cnn_model(shape, name):
 
     model = Flatten()(model)
 
+    model = Dense(512, activation='swish', kernel_initializer='he_uniform')(model)
+    model = BatchNormalization()(model)
+
     return (model, model_input)
 
 
@@ -165,7 +168,7 @@ for train_index, test_index in skf.split(np.zeros(len(y)), y):
         model_graph_4,
     ])
 
-    model = Dense(1024, activation='swish', kernel_initializer='he_uniform')(model)
+    model = Dense(512, activation='swish', kernel_initializer='he_uniform')(model)
     model = BatchNormalization()(model)
     model = Dropout(0.5)(model)
 
