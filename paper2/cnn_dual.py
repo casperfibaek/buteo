@@ -1,6 +1,7 @@
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 from sklearn.preprocessing import MinMaxScaler
+from keras.constraints import max_norm
 from tensorflow.keras import Sequential, Model
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, GlobalAveragePooling2D, Flatten, BatchNormalization, Concatenate, Input
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
@@ -138,7 +139,7 @@ def create_cnn_model(shape, name):
 
     model = Flatten()(model)
 
-    model = Dense(512, activation='swish', kernel_initializer='he_uniform')(model)
+    model = Dense(512, activation='swish', kernel_initializer='he_uniform', kernel_constraint=max_norm(3))(model)
     model = BatchNormalization()(model)
 
     return (model, model_input)
