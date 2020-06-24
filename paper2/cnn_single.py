@@ -55,7 +55,6 @@ X = np.load(folder + f"{str(int(size))}_nir.npy").astype('float32')
 X = X[:, :, :, np.newaxis]
 X[:, :, :, nir] = ml_utils.scale_to_01(np.clip(X[:, :, :, nir], 0, 11000))
 
-
 # X = np.concatenate([X, X_nir], axis=3)
 # X_nir = None
 

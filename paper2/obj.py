@@ -2,45 +2,64 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import StratifiedKFold
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.constraints import max_norm
 from tensorflow.keras.metrics import BinaryAccuracy
 
+import os
 import ml_utils
 import numpy as np
 import pandas as pd
 
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+
 folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\analysis\\"
 
 seed = 42 # Ensure replicability
-grid = 320
-batches = 32
+grid = 160
+batches = 16
 validation_split = 0.3
-learning_rate = 0.001
 kfolds = 5
-msg = f"what currently is running"
+msg = f"{str(grid)} rgb nir coh"
+
+# learning_rate = 0.001
+def learning_rate_decay(epoch):
+  if epoch < 5:
+    return 1e-3
+  elif epoch >= 5 and epoch < 10:
+    return 1e-4
+  else:
+    return 1e-5
+
 
 # ***********************************************************************
 #                   LOADING DATA
 # ***********************************************************************
 
+bs_asc = ['bs_asc_mean', 'bs_asc_median', 'bs_asc_stdev', 'bs_asc_min', 'bs_asc_max']
+bs_desc = ['bs_desc_mean', 'bs_desc_median', 'bs_desc_stdev', 'bs_desc_min', 'bs_desc_max']
+coh_asc = ['coh_asc_mean', 'coh_asc_median', 'coh_asc_stdev', 'coh_asc_min', 'coh_asc_max']
+coh_desc = ['coh_desc_mean', 'coh_desc_median', 'coh_desc_stdev', 'coh_desc_min', 'coh_desc_max']
+
 df_y = pd.read_csv(folder + f"zonal\\{grid}_zonal_y.csv", index_col=0)
 
-df_X = pd.concat([
-    # pd.read_csv(folder + f"zonal\\{grid}_zonal_rgb.csv", index_col=0),
-    # pd.read_csv(folder + f"zonal\\{grid}_zonal_nir.csv", index_col=0),
-    # pd.read_csv(folder + f"zonal\\{grid}_zonal_bs.csv", index_col=0)[['bs_asc_mean', 'bs_asc_median', 'bs_asc_stdev', 'bs_asc_min', 'bs_asc_max']],
-    pd.read_csv(folder + f"zonal\\{grid}_zonal_bs.csv", index_col=0)[['bs_desc_mean', 'bs_desc_median', 'bs_desc_stdev', 'bs_desc_min', 'bs_desc_max']],
-    # pd.read_csv(folder + f"zonal\\{grid}_zonal_coh.csv", index_col=0)[['coh_asc_mean', 'coh_asc_median', 'coh_asc_stdev', 'coh_asc_min', 'coh_asc_max']],
-    # pd.read_csv(folder + f"zonal\\{grid}_zonal_coh.csv", index_col=0)[['coh_desc_mean', 'coh_desc_median', 'coh_desc_stdev', 'coh_desc_min', 'coh_desc_max']],
-], axis=1)
+# Load backscatter
+df_bs = pd.read_csv(folder + f"zonal\\{grid}_zonal_bs.csv", index_col=0)
 
+df_X = pd.concat([
+    df_bs.clip(df_bs.quantile(0.01), df_bs.quantile(0.99), axis=1)[bs_asc],
+    df_bs.clip(df_bs.quantile(0.01), df_bs.quantile(0.99), axis=1)[bs_desc],
+    pd.read_csv(folder + f"zonal\\{grid}_zonal_coh.csv", index_col=0)[coh_asc],
+    pd.read_csv(folder + f"zonal\\{grid}_zonal_coh.csv", index_col=0)[coh_desc],
+    pd.read_csv(folder + f"zonal\\{grid}_zonal_rgb.csv", index_col=0),
+    pd.read_csv(folder + f"zonal\\{grid}_zonal_nir.csv", index_col=0),
+], axis=1)
 
 scaler = MinMaxScaler()
 
-X = scaler.fit_transform(df_X.values.astype("float32"))
-y = (((df_y["b_volume"] * (100 * 100)) / 400) > 1).to_numpy()
+X = scaler.fit_transform(df_X.values).astype("float32")
+y = (((df_y["b_volume"] * (100 * 100)) / 400) > 1).to_numpy(dtype="int64")
 
 # ***********************************************************************
 #                   PREPARING DATA
@@ -86,9 +105,7 @@ for train_index, test_index in skf.split(np.zeros(len(y)), y):
         Dense(1, activation='sigmoid'),
     ])
 
-    optimizer = Adam(learning_rate=learning_rate, name='Adam')
-
-    model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=[BinaryAccuracy()])
+    model.compile(optimizer=Adam(name='Adam'), loss='binary_crossentropy', metrics=[BinaryAccuracy()])
 
     model.fit(
         x=X_train,
@@ -104,14 +121,7 @@ for train_index, test_index in skf.split(np.zeros(len(y)), y):
                 min_delta=0.01,
                 restore_best_weights=True,
             ),
-            ReduceLROnPlateau(
-                monitor='val_loss',
-                patience=4,
-                factor=0.1,
-                min_lr=0.00001,
-                cooldown=2,
-                min_delta=0.01,
-            ),
+            LearningRateScheduler(learning_rate_decay),
         ]
     )
 

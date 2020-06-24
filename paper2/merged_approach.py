@@ -15,7 +15,7 @@ import numpy as np
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
 folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\analysis\\"
-size = 160
+size = 320
 seed = 42
 kfolds = 5
 batches = 16
@@ -43,28 +43,46 @@ red = 2
 nir = 0
 
 # Load and scale RGB channels
-X1 = np.load(folder + f"{str(int(size))}_rgb.npy").astype('float32')
-X1[:, :, :, blue] = ml_utils.scale_to_01(np.clip(X1[:, :, :, blue], 0, 4000))
-X1[:, :, :, green] = ml_utils.scale_to_01(np.clip(X1[:, :, :, green], 0, 5000))
-X1[:, :, :, red] = ml_utils.scale_to_01(np.clip(X1[:, :, :, red], 0, 6000))
+X_rgb = np.load(folder + f"{str(int(size))}_rgb.npy").astype('float32')
+X_rgb[:, :, :, blue] = ml_utils.scale_to_01(np.clip(X_rgb[:, :, :, blue], 0, 4000))
+X_rgb[:, :, :, green] = ml_utils.scale_to_01(np.clip(X_rgb[:, :, :, green], 0, 5000))
+X_rgb[:, :, :, red] = ml_utils.scale_to_01(np.clip(X_rgb[:, :, :, red], 0, 6000))
 
 # Load and scale NIR channel (Add additional axis to match RGB)
-X2 = np.load(folder + f"{str(int(size))}_nir.npy").astype('float32')
-X2 = X2[:, :, :, np.newaxis]
-X2[:, :, :, nir] = ml_utils.scale_to_01(np.clip(X2[:, :, :, nir], 0, 11000))
+X_nir = np.load(folder + f"{str(int(size))}_nir.npy").astype('float32')
+X_nir = X_nir[:, :, :, np.newaxis]
+X_nir[:, :, :, nir] = ml_utils.scale_to_01(np.clip(X_nir[:, :, :, nir], 0, 11000))
 
 # Merge RGB and NIR
-X2 = np.concatenate([X1, X2], axis=3)
+X = np.concatenate([X_rgb, X_nir], axis=3)
 
 # Load Backscatter (asc + desc), remove the largest outliers (1% - 99%)
-X3_raw = np.load(folder + f"{str(int(size))}_bs.npy")[:, :, :, [ml_utils.sar_class("asc"), ml_utils.sar_class("desc")]]
-X3 = ml_utils.scale_to_01(np.clip(X3_raw, np.quantile(X3_raw, 0.01), np.quantile(X3_raw, 0.99)))
+bs = np.load(folder + f"{str(int(size))}_bs.npy")[:, :, :, [ml_utils.sar_class("asc"), ml_utils.sar_class("desc")]]
+bs = ml_utils.scale_to_01(np.clip(bs, np.quantile(bs, 0.01), np.quantile(bs, 0.99)))
+bs = np.concatenate([
+    bs.mean(axis=(1,2)),
+    bs.std(axis=(1,2)),
+    bs.min(axis=(1,2)),
+    bs.max(axis=(1,2)),
+    np.median(bs, axis=(1,2)),
+])
 
 # Load coherence
-X4 = np.load(folder + f"{str(int(size))}_coh.npy")[:, :, :, [ml_utils.sar_class("asc"), ml_utils.sar_class("desc")]]
+coh = np.load(folder + f"{str(int(size))}_coh.npy")[:, :, :, [ml_utils.sar_class("asc"), ml_utils.sar_class("desc")]]
+coh = np.concatenate([
+    coh.mean(axis=(1,2)),
+    coh.std(axis=(1,2)),
+    coh.min(axis=(1,2)),
+    coh.max(axis=(1,2)),
+    np.median(coh, axis=(1,2)),
+])
 
-X1 = None
-X3_raw = None
+sar = np.concatenate([bs, coh], axis=1)
+
+X_rgb = None
+X_nir = None
+bs = None
+coh = None
 
 y = np.load(folder + f"{str(int(size))}_y.npy")[:, ml_utils.y_class("volume")]
 
@@ -78,6 +96,7 @@ y = (y >= 1.0).astype('int64')
 # Rotate and add all images, add random noise to images to reduce overfit.
 if rotation is True:
     X = ml_utils.add_rotations(X)
+    sar = ml_utils.add_rotations(sar)
     y = np.concatenate([y, y, y, y])
 
 if noise is True:
@@ -90,18 +109,15 @@ minority = frequency.min(axis=0)[1]
 # Undersample
 mask = ml_utils.minority_class_mask(y, minority)
 y = y[mask]
-# X1 = X1[mask]
-X2 = X2[mask]
-X3 = X3[mask]
-X4 = X4[mask]
+X = X[mask]
+sar = sar[mask]
 
 # Shuffle
 shuffle = np.random.permutation(len(y))
 y = y[shuffle]
-# X1 = X1[shuffle]
-X2 = X2[shuffle]
-X3 = X3[shuffle]
-X4 = X4[shuffle]
+X = X[shuffle]
+sar = sar[shuffle]
+
 
 mask = None
 shuffle = None
@@ -122,6 +138,18 @@ else:
     kernel_start = (7, 7)
     kernel_mid = (5, 5)
     kernel_end = (3, 3)
+
+
+def create_mlp_model(shape, name):
+    model_input = Input(shape=shape, name=name)
+    model = Dense(512, activation='swish', kernel_initializer='he_normal')(model_input)
+    model = BatchNormalization()(model)
+    model = Dense(256, activation='swish', kernel_initializer='he_normal')(model)
+    model = BatchNormalization()(model)
+    model = Dense(128, activation='swish', kernel_initializer='he_normal')(model)
+    model = BatchNormalization()(model)
+
+    return (model, model_input)
 
 
 def create_cnn_model(shape, name):
@@ -154,23 +182,17 @@ skf = StratifiedKFold(n_splits=kfolds)
 scores = []
 
 for train_index, test_index in skf.split(np.zeros(len(y)), y):
-    # X_train_1, X_test_1 = X1[train_index], X1[test_index]
-    X_train_2, X_test_2 = X2[train_index], X2[test_index]
-    X_train_3, X_test_3 = X3[train_index], X3[test_index]
-    X_train_4, X_test_4 = X4[train_index], X4[test_index]
+    X_train_1, X_test_1 = X[train_index], X[test_index]
+    X_train_2, X_test_2 = sar[train_index], sar[test_index]
 
     y_train, y_test = y[train_index], y[test_index]
 
-    # model_graph_1, input_graph_1 = create_cnn_model(ml_utils.get_shape(X_train_1), "input_1")
-    model_graph_2, input_graph_2 = create_cnn_model(ml_utils.get_shape(X_train_2), "input_2")
-    model_graph_3, input_graph_3 = create_cnn_model(ml_utils.get_shape(X_train_3), "input_3")
-    model_graph_4, input_graph_4 = create_cnn_model(ml_utils.get_shape(X_train_4), "input_4")
+    model_graph_1, input_graph_1 = create_cnn_model(ml_utils.get_shape(X_train_1), "sentinel_2")
+    model_graph_2, input_graph_2 = create_mlp_model(ml_utils.get_shape((X_train_2.shape[1],)), "sentinel_1")
 
     model = Concatenate()([
-        # model_graph_1,
+        model_graph_1,
         model_graph_2,
-        model_graph_3,
-        model_graph_4,
     ])
 
     model = Dense(512, activation='swish', kernel_initializer='he_uniform')(model)
@@ -180,20 +202,16 @@ for train_index, test_index in skf.split(np.zeros(len(y)), y):
     predictions = Dense(1, activation='sigmoid')(model)
 
     model = Model(inputs=[
-        # input_graph_1,
+        input_graph_1,
         input_graph_2,
-        input_graph_3,
-        input_graph_4,
     ], outputs=predictions)
 
     model.compile(optimizer=Adam(name='Adam'), loss='binary_crossentropy', metrics=[BinaryAccuracy()])
 
     model.fit(
         x=[
-            # X_train_1,
+            X_train_1,
             X_train_2,
-            X_train_3,
-            X_train_4,
         ],
         y=y_train,
         epochs=500,
@@ -212,10 +230,8 @@ for train_index, test_index in skf.split(np.zeros(len(y)), y):
     )
 
     loss, acc = model.evaluate([
-        # X_test_1,
+        X_test_1,
         X_test_2,
-        X_test_3,
-        X_test_4,
     ], y_test, verbose=1)
     print('Test Accuracy: %.3f' % acc)
 
