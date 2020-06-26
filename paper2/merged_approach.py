@@ -1,12 +1,11 @@
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import StratifiedKFold
 from tensorflow.keras.constraints import max_norm
 from tensorflow.keras import Sequential, Model
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, GlobalAveragePooling2D, Flatten, BatchNormalization, Concatenate, Input
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.metrics import BinaryAccuracy, Accuracy
+from tensorflow.keras.metrics import BinaryAccuracy
 
 import os
 import ml_utils
@@ -18,7 +17,7 @@ folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\analysis\\"
 size = 320
 seed = 42
 kfolds = 5
-batches = 16
+batches = 32
 validation_split = 0.3
 rotation = False
 noise = False
@@ -65,7 +64,7 @@ bs = np.concatenate([
     bs.min(axis=(1,2)),
     bs.max(axis=(1,2)),
     np.median(bs, axis=(1,2)),
-])
+], axis=1)
 
 # Load coherence
 coh = np.load(folder + f"{str(int(size))}_coh.npy")[:, :, :, [ml_utils.sar_class("asc"), ml_utils.sar_class("desc")]]
@@ -75,7 +74,7 @@ coh = np.concatenate([
     coh.min(axis=(1,2)),
     coh.max(axis=(1,2)),
     np.median(coh, axis=(1,2)),
-])
+], axis=1)
 
 sar = np.concatenate([bs, coh], axis=1)
 
@@ -188,7 +187,7 @@ for train_index, test_index in skf.split(np.zeros(len(y)), y):
     y_train, y_test = y[train_index], y[test_index]
 
     model_graph_1, input_graph_1 = create_cnn_model(ml_utils.get_shape(X_train_1), "sentinel_2")
-    model_graph_2, input_graph_2 = create_mlp_model(ml_utils.get_shape((X_train_2.shape[1],)), "sentinel_1")
+    model_graph_2, input_graph_2 = create_mlp_model((X_train_2.shape[1],), "sentinel_1")
 
     model = Concatenate()([
         model_graph_1,

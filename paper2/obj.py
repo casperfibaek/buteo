@@ -17,11 +17,11 @@ os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\analysis\\"
 
 seed = 42 # Ensure replicability
-grid = 160
-batches = 16
+grid = 80
+batches = 64
 validation_split = 0.3
 kfolds = 5
-msg = f"{str(grid)} rgb nir coh"
+msg = f"{str(grid)} rgbn + bs + coh (asc + desc)"
 
 # learning_rate = 0.001
 def learning_rate_decay(epoch):

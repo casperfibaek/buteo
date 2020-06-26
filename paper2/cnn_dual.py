@@ -1,12 +1,11 @@
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.constraints import max_norm
+from sklearn.model_selection import StratifiedKFold
 from tensorflow.keras import Sequential, Model
+from tensorflow.keras.constraints import max_norm
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, GlobalAveragePooling2D, Flatten, BatchNormalization, Concatenate, Input
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.metrics import BinaryAccuracy, Accuracy
+from tensorflow.keras.metrics import BinaryAccuracy
 
 import os
 import ml_utils
@@ -18,7 +17,7 @@ folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\analysis\\"
 size = 160
 seed = 42
 kfolds = 5
-batches = 16
+batches = 256
 validation_split = 0.3
 rotation = False
 noise = False

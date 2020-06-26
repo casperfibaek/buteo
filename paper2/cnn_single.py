@@ -1,11 +1,10 @@
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import StratifiedKFold
 from tensorflow.keras import Sequential, Model
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, GlobalAveragePooling2D, Flatten, BatchNormalization, Concatenate, Input
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.metrics import BinaryAccuracy, Accuracy
+from tensorflow.keras.metrics import BinaryAccuracy
 
 import os
 import ml_utils
@@ -18,7 +17,7 @@ size = 160
 seed = 42
 validation_split = 0.3
 kfolds = 5
-batches = 16
+batches = 128
 rotation = False
 noise = False
 noise_amount = 0.01
@@ -96,7 +95,7 @@ X = X[shuffle]
 if size == 80:
     kernel_start = (3, 3)
     kernel_mid = (3, 3)
-    kernel_size = (3, 3)
+    kernel_end = (3, 3)
 elif size == 160:
     kernel_start = (5, 5)
     kernel_mid = (5, 5)
