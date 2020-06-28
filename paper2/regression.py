@@ -4,12 +4,12 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 import tensorflow as tf
 import tensorflow_addons as tfa
 import tensorflow_probability as tfp
-from tensorflow.keras import Sequential, Model
-from tensorflow.keras.constraints import max_norm
+from tensorflow.keras import Sequential, Model, regularizers
+from tensorflow.keras.constraints import max_norm, min_max_norm
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, GlobalAveragePooling2D, Flatten, BatchNormalization, Concatenate, Input, SeparableConv2D, AveragePooling2D, GlobalMaxPool2D
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
-from tensorflow.keras.optimizers import Adam, Adamax
+from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.metrics import BinaryAccuracy
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
@@ -17,11 +17,12 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import os
 import ml_utils
 import numpy as np
+import matplotlib.pyplot as plt
 
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
 folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\analysis\\"
-size = 160
+size = 320
 start_lr = 0.01
 epochs = 100
 batches = 32
@@ -77,42 +78,16 @@ X = np.concatenate([
 ], axis=3)
 
 if target == "area":
-    labels = [*range(140, 5740, 140)]
+    labels = [*range(0, 5740, 140)]
 else:
-    labels = [*range(500, 20500, 500)]
+    labels = [*range(0, 20500, 500)]
 
 y = np.load(folder + f"{str(int(size))}_y.npy")[:, ml_utils.y_class(target)]
 y = (size * size) * y # Small house (100m2 * 4m avg. height)
 
-y_pre = y
-X_pre = X
 # ***********************************************************************
 #                   PREPARING DATA
 # ***********************************************************************
-
-# # Subsample the areas with zero houses (vast majority)
-# zero_house = y == 0
-# zero_house_y = y[zero_house]
-# zero_house_X = X[zero_house]
-
-# # Remove zero values from origial sample
-# y = y[~zero_house]
-# X = X[~zero_house]
-
-# Mask very high volume areas
-# mask_above = (y / 140) < 40
-# y = y[mask_above]
-# X = X[mask_above]
-
-# # Shuffle zero_house sample before we can add back in
-# shuffle = np.random.permutation(len(zero_house_y))
-# zero_house_y = zero_house_y[shuffle]
-# zero_house_X = zero_house_X[shuffle]
-
-# # Add the subsampled houses back in
-# house_samples = int(round((len(y) * 0.2) * inserted_zeros))
-# y = np.concatenate([y, zero_house_y[0:house_samples]])
-# X = np.concatenate([X, zero_house_X[0:house_samples]])
 
 # Shuffle
 shuffle = np.random.permutation(len(y))
@@ -123,51 +98,41 @@ if test is True:
     y = y[:test_size]
     X = X[:test_size]
 
-# zero_house = None
-# zero_house_y = None
-# zero_house_X = None
-# undersample_mask = None
-shuffle = None
-
-# Randomly rotate images
-# X = ml_utils.add_randomness(X)
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
 # Balance training dataset
-# histogram_mask = ml_utils.histogram_selection(y_train, cut_limit=0.5, resolution=9, remove_outliers=True, whisk_range=2.0)
-# y_train = y_train[histogram_mask]
-# X_train = X_train[histogram_mask]
+histogram_mask = ml_utils.histogram_selection(y, resolution=9, zero_class=True, outliers=True)
+y = y[histogram_mask]
+X = X[histogram_mask]
+
+y = np.concatenate([y, y])
+X = ml_utils.add_rotations(X, 2)
+
 
 # ***********************************************************************
 #                   ANALYSIS
 # ***********************************************************************
 
-model_input = Input(shape=ml_utils.get_shape(X_train), name="input")
-model = SeparableConv2D(128, kernel_size=(5, 5), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model_input)
-model = SeparableConv2D(128, kernel_size=(3, 3), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model)
-# model = AveragePooling2D(pool_size=(2, 2))(model)
+model_input = Input(shape=ml_utils.get_shape(X), name="input")
+model = Conv2D(256, kernel_size=(5, 5), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal")(model_input)
+model = Conv2D(256, kernel_size=(3, 3), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
 model = MaxPooling2D(pool_size=(2,2))(model)
 model = BatchNormalization()(model)
 
-model = SeparableConv2D(256, kernel_size=(3, 3), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model)
-model = SeparableConv2D(256, kernel_size=(2, 2), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model)
+model = Conv2D(512, kernel_size=(3, 3), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal")(model_input)
+model = Conv2D(512, kernel_size=(3, 3), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
 model = MaxPooling2D(pool_size=(2,2))(model)
-# model = AveragePooling2D(pool_size=(2, 2))(model)
 model = BatchNormalization()(model)
 
-model = SeparableConv2D(128, kernel_size=(2, 2), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model)
-model = SeparableConv2D(128, kernel_size=(2, 2), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model)
+model = Conv2D(256, kernel_size=(3, 3), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
+model = Conv2D(256, kernel_size=(2, 2), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
 model = GlobalAveragePooling2D()(model)
-# model = GlobalMaxPool2D()(model)
 model = BatchNormalization()(model)
-model = Dropout(0.25)(model)
-
 model = Flatten()(model)
 
 model = Dense(2048, activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
 model = BatchNormalization()(model)
-model = Dropout(0.5)(model)
+model = Dropout(0.25)(model)
 
 predictions = Dense(1, activation="relu", dtype="float32")(model)
 
@@ -176,15 +141,12 @@ model = Model(inputs=[model_input], outputs=predictions)
 def median_error(y_actual, y_pred):
     return tfp.stats.percentile(tf.math.abs(y_actual - y_pred), 50.0)
 
-def median_loss(y_actual, y_pred):
-    return tf.math.square(tfp.stats.percentile(tf.math.abs(y_actual - y_pred), 50.0))
-
 optimizer = tfa.optimizers.Lookahead(
     Adam(
         learning_rate=tfa.optimizers.TriangularCyclicalLearningRate(
             initial_learning_rate=1e-5,
             maximal_learning_rate=1e-2,
-            step_size=3,
+            step_size=4,
             scale_mode='cycle',
             name='Triangular2CyclicalLearningRate',
         ),
@@ -200,12 +162,12 @@ model.compile(
     loss=tf.keras.losses.Huber(),
     metrics=[
         "mean_absolute_error",
-        # median_error,
+        median_error,
     ])
 
 model.fit(
-    x=X_train,
-    y=y_train,
+    x=X,
+    y=y,
     epochs=epochs,
     verbose=1,
     batch_size=batches,
@@ -217,37 +179,26 @@ model.fit(
             min_delta=1.0,
             restore_best_weights=True,
         ),
-        # ReduceLROnPlateau(
-        #     monitor="val_loss",
-        #     factor=0.25,
-        #     patience=5,
-        #     cooldown=1,
-        #     min_delta=1.0,
-        #     min_lr=0.00001,
-        # ),
     ]
 )
 
-loss, mean_absolute_error = model.evaluate(X_test, y_test, verbose=1)
+from playsound import playsound; playsound(folder + "alarm.wav", block=False)
+
+
+loss, mean_absolute_error, median_absolute_error = model.evaluate(X, y, verbose=1)
 
 print("Test accuracy:")
 print(f"Mean Absolute Error (MAE): {str(round(mean_absolute_error, 5))}")
+print(f"Median Absolute Error (MAE): {str(round(median_absolute_error, 5))}")
 
-from playsound import playsound; playsound(folder + "alarm.wav", block=False)
-
-import matplotlib.pyplot as plt
-
-
-truth = y_pre.astype("float32")
-
-predicted = model.predict(X_pre).squeeze().astype("float32")
+truth = y.astype("float32")
+predicted = model.predict(X).squeeze().astype("float32")
 
 truth_labels = np.digitize(truth, labels, right=True)
 predicted_labels = np.digitize(predicted, labels, right=True)
 labels_unique = np.unique(truth_labels)
 
-residuals = (truth - predicted).astype("float32")
-# residuals = residuals / 140 if target == "area" else residuals / 700
+residuals = ((truth - predicted) / 140).astype("float32")
 
 fig1, ax = plt.subplots()
 ax.set_title("violin area")
@@ -255,7 +206,7 @@ ax.set_title("violin area")
 per_class = []
 for cl in labels_unique: per_class.append(residuals[truth_labels == cl])
 
-ax.violinplot(per_class, showextrema=False, showmedians=True, showmeans=True, points=200, vert=True, widths=1.1)
+ax.violinplot(per_class, showextrema=False, showmedians=True, vert=False, widths=1)
 
 plt.show()
 

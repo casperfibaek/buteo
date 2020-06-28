@@ -123,35 +123,44 @@ def viz(X, y, model, target='area'):
     plt.show()
 
 
-def histogram_selection(y, cut_limit=0.5, resolution=9, remove_outliers=False, whisk_range=1.5):
-    arr = y
+def histogram_selection(y, zero_class=True, resolution=5, outliers=True, allow_gap=0.2, whisk_range=1.5):
 
-    if remove_outliers is True:
-        q1 = np.quantile(arr, 0.25)
-        q3 = np.quantile(arr, 0.75)
+    indices = np.arange(0, len(y), 1)
+
+    if outliers is True:
+        if zero_class is True:
+            q1 = np.quantile(y[y > 0], 0.25)
+            q3 = np.quantile(y[y > 0], 0.75)
+        else:
+            q1 = np.quantile(y, 0.25)
+            q3 = np.quantile(y, 0.75)
         iqr = q3 - q1
         whisk = iqr * whisk_range
+        
+        cl_start = q1 - whisk
+        cl_end = q3 + whisk
+        step_size = (cl_end - cl_start) / resolution
+    else:
+        step_size = (y.max() - y.min()) / resolution
+        cl_start = step_size
+        cl_end = y.max()
 
-        arr = y[np.logical_and(y >= q1 - whisk, y <= q3 + whisk)]
-
-    step_size = (arr.max() - arr.min()) / resolution
-
-    classes = np.digitize(arr, np.arange(step_size, arr.max() - step_size, step_size))
+    if zero_class is True:
+        classes = np.digitize(y, np.arange(0, cl_end + step_size, step_size), right=True)
+    else:
+        classes = np.digitize(y, np.arange(step_size, cl_end + step_size, step_size), right=True)
+    
     frequency = count_freq(classes)
     minority = frequency.min(axis=0)[1]
-
-    min_size = int(round((len(arr) * cut_limit) / resolution))
+    max_samples = int(round(minority * (1 + allow_gap)))
 
     samples = []
 
-    for l in np.unique(classes):
-        count = len(classes[classes == l])
-        if minority < min_size:
-            if min_size > count:
-                samples.append(np.random.choice(np.where(classes == l)[0], count, replace=False))
-            else:
-                samples.append(np.random.choice(np.where(classes == l)[0], min_size, replace=False))
+    for hist_class in np.unique(classes):
+        sample_count = len(classes[classes == hist_class])
+        if sample_count > max_samples:
+            samples.append(np.random.choice(indices[classes == hist_class], max_samples, replace=False))
         else:
-            samples.append(np.random.choice(np.where(classes == l)[0], minority, replace=False))
+            samples.append(np.random.choice(indices[classes == hist_class], sample_count, replace=False))
 
     return np.hstack(samples)
