@@ -123,16 +123,24 @@ def viz(X, y, model, target='area'):
     plt.show()
 
 
-def histogram_selection(y, outliers=(0.1, 0.9), cut_limit=0.5, resolution=9):
-    low = np.quantile(y, outliers[0])
-    high = np.quantile(y, outliers[1])
-    step_size = (high - low) / resolution
+def histogram_selection(y, cut_limit=0.5, resolution=9, remove_outliers=False, whisk_range=1.5):
+    arr = y
 
-    classes = np.digitize(y, np.arange(step_size, high, step_size))
+    if remove_outliers is True:
+        q1 = np.quantile(arr, 0.25)
+        q3 = np.quantile(arr, 0.75)
+        iqr = q3 - q1
+        whisk = iqr * whisk_range
+
+        arr = y[np.logical_and(y >= q1 - whisk, y <= q3 + whisk)]
+
+    step_size = (arr.max() - arr.min()) / resolution
+
+    classes = np.digitize(arr, np.arange(step_size, arr.max() - step_size, step_size))
     frequency = count_freq(classes)
     minority = frequency.min(axis=0)[1]
 
-    min_size = int(round((len(y) * cut_limit) / resolution))
+    min_size = int(round((len(arr) * cut_limit) / resolution))
 
     samples = []
 

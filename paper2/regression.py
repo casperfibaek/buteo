@@ -1,13 +1,15 @@
 from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+
 import tensorflow as tf
+import tensorflow_addons as tfa
 import tensorflow_probability as tfp
 from tensorflow.keras import Sequential, Model
 from tensorflow.keras.constraints import max_norm
-from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, GlobalAveragePooling2D, Flatten, BatchNormalization, Concatenate, Input, SeparableConv2D
+from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, GlobalAveragePooling2D, Flatten, BatchNormalization, Concatenate, Input, SeparableConv2D, AveragePooling2D, GlobalMaxPool2D
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam, Adamax
 from tensorflow.keras.metrics import BinaryAccuracy
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
@@ -22,7 +24,7 @@ folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\analysis\\"
 size = 160
 start_lr = 0.01
 epochs = 100
-batches = 64
+batches = 32
 seed = 42
 validation_split = 0.3
 rotation = False
@@ -60,18 +62,18 @@ bs_desc = np.load(folder + f"{str(int(size))}_bs.npy")[:, :, :, [ml_utils.sar_cl
 bs_desc = ml_utils.scale_to_01(np.clip(bs_desc, 0, np.quantile(bs_desc, 0.98)))
 
 # # Load coherence
-# coh_asc = np.load(folder + f"{str(int(size))}_coh.npy")[:, :, :, [ml_utils.sar_class("asc")]]
-# coh_asc = ml_utils.scale_to_01(coh_asc)
-# coh_desc = np.load(folder + f"{str(int(size))}_coh.npy")[:, :, :, [ml_utils.sar_class("desc")]]
-# coh_desc = ml_utils.scale_to_01(coh_desc)
+coh_asc = np.load(folder + f"{str(int(size))}_coh.npy")[:, :, :, [ml_utils.sar_class("asc")]]
+coh_asc = ml_utils.scale_to_01(coh_asc)
+coh_desc = np.load(folder + f"{str(int(size))}_coh.npy")[:, :, :, [ml_utils.sar_class("desc")]]
+coh_desc = ml_utils.scale_to_01(coh_desc)
 
 X = np.concatenate([
     rgb,
     nir,
     bs_asc,
     bs_desc,
-    # coh_asc,
-    # coh_desc,
+    coh_asc,
+    coh_desc,
 ], axis=3)
 
 if target == "area":
@@ -82,6 +84,8 @@ else:
 y = np.load(folder + f"{str(int(size))}_y.npy")[:, ml_utils.y_class(target)]
 y = (size * size) * y # Small house (100m2 * 4m avg. height)
 
+y_pre = y
+X_pre = X
 # ***********************************************************************
 #                   PREPARING DATA
 # ***********************************************************************
@@ -95,10 +99,10 @@ y = (size * size) * y # Small house (100m2 * 4m avg. height)
 # y = y[~zero_house]
 # X = X[~zero_house]
 
-# Balance dataset
-histogram_mask = ml_utils.histogram_selection(y)
-y = y[histogram_mask]
-X = X[histogram_mask]
+# Mask very high volume areas
+# mask_above = (y / 140) < 40
+# y = y[mask_above]
+# X = X[mask_above]
 
 # # Shuffle zero_house sample before we can add back in
 # shuffle = np.random.permutation(len(zero_house_y))
@@ -119,41 +123,51 @@ if test is True:
     y = y[:test_size]
     X = X[:test_size]
 
-zero_house = None
-zero_house_y = None
-zero_house_X = None
-undersample_mask = None
+# zero_house = None
+# zero_house_y = None
+# zero_house_X = None
+# undersample_mask = None
 shuffle = None
 
 # Randomly rotate images
 # X = ml_utils.add_randomness(X)
 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+
+# Balance training dataset
+# histogram_mask = ml_utils.histogram_selection(y_train, cut_limit=0.5, resolution=9, remove_outliers=True, whisk_range=2.0)
+# y_train = y_train[histogram_mask]
+# X_train = X_train[histogram_mask]
+
 # ***********************************************************************
 #                   ANALYSIS
 # ***********************************************************************
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-
 model_input = Input(shape=ml_utils.get_shape(X_train), name="input")
-model = SeparableConv2D(256, kernel_size=(5, 5), padding="valid", activation="swish", kernel_initializer="he_normal")(model_input)
-model = SeparableConv2D(256, kernel_size=(3, 3), padding="same", activation="swish", kernel_initializer="he_normal")(model)
-model = MaxPooling2D(pool_size=(2, 2))(model)
+model = SeparableConv2D(128, kernel_size=(5, 5), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model_input)
+model = SeparableConv2D(128, kernel_size=(3, 3), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model)
+# model = AveragePooling2D(pool_size=(2, 2))(model)
+model = MaxPooling2D(pool_size=(2,2))(model)
 model = BatchNormalization()(model)
 
-# model = SeparableConv2D(512, kernel_size=(3, 3), padding="valid", activation="swish", kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model)
-# model = SeparableConv2D(512, kernel_size=(2, 2), padding="same", activation="swish", kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model)
-# model = MaxPooling2D(pool_size=(2, 2))(model)
-# model = BatchNormalization()(model)
+model = SeparableConv2D(256, kernel_size=(3, 3), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model)
+model = SeparableConv2D(256, kernel_size=(2, 2), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model)
+model = MaxPooling2D(pool_size=(2,2))(model)
+# model = AveragePooling2D(pool_size=(2, 2))(model)
+model = BatchNormalization()(model)
 
-model = SeparableConv2D(512, kernel_size=(3, 3), padding="valid", activation="swish", kernel_initializer="he_normal")(model)
-model = SeparableConv2D(512, kernel_size=(2, 2), padding="same", activation="swish", kernel_initializer="he_normal")(model)
+model = SeparableConv2D(128, kernel_size=(2, 2), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model)
+model = SeparableConv2D(128, kernel_size=(2, 2), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=max_norm(3))(model)
 model = GlobalAveragePooling2D()(model)
+# model = GlobalMaxPool2D()(model)
 model = BatchNormalization()(model)
+model = Dropout(0.25)(model)
 
 model = Flatten()(model)
 
-model = Dense(512, activation="swish", kernel_initializer="he_normal")(model)
+model = Dense(2048, activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
 model = BatchNormalization()(model)
+model = Dropout(0.5)(model)
 
 predictions = Dense(1, activation="relu", dtype="float32")(model)
 
@@ -165,16 +179,28 @@ def median_error(y_actual, y_pred):
 def median_loss(y_actual, y_pred):
     return tf.math.square(tfp.stats.percentile(tf.math.abs(y_actual - y_pred), 50.0))
 
-model.compile(
-    optimizer=Adam(
-        learning_rate=start_lr,
+optimizer = tfa.optimizers.Lookahead(
+    Adam(
+        learning_rate=tfa.optimizers.TriangularCyclicalLearningRate(
+            initial_learning_rate=1e-5,
+            maximal_learning_rate=1e-2,
+            step_size=3,
+            scale_mode='cycle',
+            name='Triangular2CyclicalLearningRate',
+        ),
         name="Adam",
-    ),
+    )
+)
+
+model.compile(
+    optimizer=optimizer,
+    # loss="mean_absolute_error",
     # loss="mean_squared_error",
-    loss="mean_absolute_error",
+    # loss=tfa.losses.PinballLoss(),
+    loss=tf.keras.losses.Huber(),
     metrics=[
         "mean_absolute_error",
-        median_error,
+        # median_error,
     ])
 
 model.fit(
@@ -187,41 +213,41 @@ model.fit(
     callbacks=[
         EarlyStopping(
             monitor="val_loss",
-            patience=10,
+            patience=15,
             min_delta=1.0,
             restore_best_weights=True,
         ),
-        ReduceLROnPlateau(
-            monitor="val_loss",
-            factor=0.5,
-            patience=3,
-            cooldown=1,
-            min_delta=1.0,
-            min_lr=0.00001,
-        ),
+        # ReduceLROnPlateau(
+        #     monitor="val_loss",
+        #     factor=0.25,
+        #     patience=5,
+        #     cooldown=1,
+        #     min_delta=1.0,
+        #     min_lr=0.00001,
+        # ),
     ]
 )
 
-loss, mean_absolute_error, median_absolute_error = model.evaluate(X_test, y_test, verbose=1)
+loss, mean_absolute_error = model.evaluate(X_test, y_test, verbose=1)
 
 print("Test accuracy:")
 print(f"Mean Absolute Error (MAE): {str(round(mean_absolute_error, 5))}")
-print(f"Median Absolute Error (MSE): {str(round(median_absolute_error, 5))}")
 
 from playsound import playsound; playsound(folder + "alarm.wav", block=False)
 
 import matplotlib.pyplot as plt
 
-truth = y.astype("float32")
 
-predicted = model.predict(X).squeeze().astype("float32")
+truth = y_pre.astype("float32")
+
+predicted = model.predict(X_pre).squeeze().astype("float32")
 
 truth_labels = np.digitize(truth, labels, right=True)
 predicted_labels = np.digitize(predicted, labels, right=True)
 labels_unique = np.unique(truth_labels)
 
 residuals = (truth - predicted).astype("float32")
-residuals = residuals / 140 if target == "area" else residuals / 700
+# residuals = residuals / 140 if target == "area" else residuals / 700
 
 fig1, ax = plt.subplots()
 ax.set_title("violin area")
@@ -229,7 +255,7 @@ ax.set_title("violin area")
 per_class = []
 for cl in labels_unique: per_class.append(residuals[truth_labels == cl])
 
-ax.violinplot(per_class, showextrema=False, showmedians=True)
+ax.violinplot(per_class, showextrema=False, showmedians=True, showmeans=True, points=200, vert=True, widths=1.1)
 
 plt.show()
 
