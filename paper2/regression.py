@@ -22,15 +22,15 @@ import matplotlib.pyplot as plt
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
 folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\analysis\\"
-size = 320
+size = 160
 start_lr = 0.01
 epochs = 100
-batches = 32
+batches = 96
 seed = 42
 validation_split = 0.3
 rotation = False
 noise = False
-test = False
+test = True
 test_size = 50000
 inserted_zeros = 1 # * minority class
 target = "area"
@@ -56,11 +56,13 @@ nir = np.load(folder + f"{str(int(size))}_nir.npy").astype("float32")
 nir = nir[:, :, :, np.newaxis]
 nir[:, :, :, infra] = ml_utils.scale_to_01(np.clip(nir[:, :, :, infra], 0, 11000))
 
+# σ0 (dB) = 10*log10 (abs (σ0))
 # # Load Backscatter (asc + desc), clip the largest outliers (> 92%)
-bs_asc = np.load(folder + f"{str(int(size))}_bs.npy")[:, :, :, [ml_utils.sar_class("asc")]]
-bs_asc = ml_utils.scale_to_01(np.clip(bs_asc, 0, np.quantile(bs_asc, 0.98)))
-bs_desc = np.load(folder + f"{str(int(size))}_bs.npy")[:, :, :, [ml_utils.sar_class("desc")]]
-bs_desc = ml_utils.scale_to_01(np.clip(bs_desc, 0, np.quantile(bs_desc, 0.98)))
+bs_asc = 10 * np.log10(np.abs(np.load(folder + f"{str(int(size))}_bs.npy")[:, :, :, [ml_utils.sar_class("asc")]]))
+bs_asc = ml_utils.scale_to_01(np.clip(bs_asc, np.quantile(bs_asc, 0.02), np.quantile(bs_asc, 0.98)))
+
+bs_desc = 10 * np.log10(np.abs(np.load(folder + f"{str(int(size))}_bs.npy")[:, :, :, [ml_utils.sar_class("desc")]]))
+bs_desc = ml_utils.scale_to_01(np.clip(bs_desc, np.quantile(bs_desc, 0.02), np.quantile(bs_desc, 0.98)))
 
 # # Load coherence
 coh_asc = np.load(folder + f"{str(int(size))}_coh.npy")[:, :, :, [ml_utils.sar_class("asc")]]
@@ -69,21 +71,21 @@ coh_desc = np.load(folder + f"{str(int(size))}_coh.npy")[:, :, :, [ml_utils.sar_
 coh_desc = ml_utils.scale_to_01(coh_desc)
 
 X = np.concatenate([
-    rgb,
-    nir,
+    # rgb,
+    # nir,
     bs_asc,
     bs_desc,
-    coh_asc,
-    coh_desc,
+    # coh_asc,
+    # coh_desc,
 ], axis=3)
-
-if target == "area":
-    labels = [*range(0, 5740, 140)]
-else:
-    labels = [*range(0, 20500, 500)]
 
 y = np.load(folder + f"{str(int(size))}_y.npy")[:, ml_utils.y_class(target)]
 y = (size * size) * y # Small house (100m2 * 4m avg. height)
+
+if target == "area":
+    labels = [*range(0, int(round((y.max()))), 140)]
+else:
+    labels = [*range(0, int(round((y.max()))), 700)]
 
 # ***********************************************************************
 #                   PREPARING DATA
@@ -94,20 +96,26 @@ shuffle = np.random.permutation(len(y))
 y = y[shuffle]
 X = X[shuffle]
 
-if test is True:
-    y = y[:test_size]
-    X = X[:test_size]
-
 # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
 # Balance training dataset
-histogram_mask = ml_utils.histogram_selection(y, resolution=9, zero_class=True, outliers=True)
-y = y[histogram_mask]
-X = X[histogram_mask]
+# histogram_mask = ml_utils.histogram_selection(y, resolution=9, zero_class=True, outliers=True)
+histogram_mask = y > 0
+house_count = np.sum(np.logical_and(y > 0, y <= 140))
+yn = y[~histogram_mask][0:house_count]
+Xn = X[~histogram_mask][0:house_count]
 
-y = np.concatenate([y, y])
-X = ml_utils.add_rotations(X, 2)
+y = np.concatenate([y[histogram_mask], yn])
+X = np.concatenate([X[histogram_mask], Xn])
 
+# Shuffle
+shuffle = np.random.permutation(len(y))
+y = y[shuffle]
+X = X[shuffle]
+
+if test is True:
+    y = y[:test_size]
+    X = X[:test_size]
 
 # ***********************************************************************
 #                   ANALYSIS
@@ -144,11 +152,11 @@ def median_error(y_actual, y_pred):
 optimizer = tfa.optimizers.Lookahead(
     Adam(
         learning_rate=tfa.optimizers.TriangularCyclicalLearningRate(
-            initial_learning_rate=1e-5,
+            initial_learning_rate=1e-4,
             maximal_learning_rate=1e-2,
-            step_size=4,
+            step_size=6,
             scale_mode='cycle',
-            name='Triangular2CyclicalLearningRate',
+            name='TriangularCyclicalLearningRate',
         ),
         name="Adam",
     )
