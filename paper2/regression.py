@@ -21,16 +21,16 @@ import matplotlib.pyplot as plt
 
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
-folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\analysis\\"
+folder = "C:\\Users\\Nmapservice\\Desktop\\structural_density\\data\\"
 size = 160
 start_lr = 0.01
 epochs = 100
-batches = 96
+batches = 128
 seed = 42
 validation_split = 0.3
 rotation = False
 noise = False
-test = True
+test = False
 test_size = 50000
 inserted_zeros = 1 # * minority class
 target = "area"
@@ -71,12 +71,12 @@ coh_desc = np.load(folder + f"{str(int(size))}_coh.npy")[:, :, :, [ml_utils.sar_
 coh_desc = ml_utils.scale_to_01(coh_desc)
 
 X = np.concatenate([
-    # rgb,
-    # nir,
+    rgb,
+    nir,
     bs_asc,
     bs_desc,
-    # coh_asc,
-    # coh_desc,
+    coh_asc,
+    coh_desc,
 ], axis=3)
 
 y = np.load(folder + f"{str(int(size))}_y.npy")[:, ml_utils.y_class(target)]
@@ -100,6 +100,7 @@ X = X[shuffle]
 
 # Balance training dataset
 # histogram_mask = ml_utils.histogram_selection(y, resolution=9, zero_class=True, outliers=True)
+# histogram_mask = np.logical_and(y > 0, (y / 140) < 80)
 histogram_mask = y > 0
 house_count = np.sum(np.logical_and(y > 0, y <= 140))
 yn = y[~histogram_mask][0:house_count]
@@ -122,25 +123,25 @@ if test is True:
 # ***********************************************************************
 
 model_input = Input(shape=ml_utils.get_shape(X), name="input")
-model = Conv2D(256, kernel_size=(5, 5), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal")(model_input)
-model = Conv2D(256, kernel_size=(3, 3), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
+model = Conv2D(256, kernel_size=(5, 5), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=min_max_norm(-3.0, 3.0))(model_input)
+model = Conv2D(256, kernel_size=(3, 3), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=min_max_norm(-3.0, 3.0))(model)
 model = MaxPooling2D(pool_size=(2,2))(model)
 model = BatchNormalization()(model)
 
-model = Conv2D(512, kernel_size=(3, 3), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal")(model_input)
-model = Conv2D(512, kernel_size=(3, 3), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
+model = Conv2D(512, kernel_size=(3, 3), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=min_max_norm(-3.0, 3.0))(model_input)
+model = Conv2D(512, kernel_size=(3, 3), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=min_max_norm(-3.0, 3.0))(model)
 model = MaxPooling2D(pool_size=(2,2))(model)
 model = BatchNormalization()(model)
 
-model = Conv2D(256, kernel_size=(3, 3), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
-model = Conv2D(256, kernel_size=(2, 2), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
+model = Conv2D(256, kernel_size=(3, 3), padding="valid", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=min_max_norm(-3.0, 3.0))(model)
+model = Conv2D(256, kernel_size=(2, 2), padding="same", activation=tfa.activations.mish, kernel_initializer="he_normal", kernel_constraint=min_max_norm(-3.0, 3.0))(model)
 model = GlobalAveragePooling2D()(model)
 model = BatchNormalization()(model)
 model = Flatten()(model)
 
-model = Dense(2048, activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
+model = Dense(1024, activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
 model = BatchNormalization()(model)
-model = Dropout(0.25)(model)
+model = Dropout(0.5)(model)
 
 predictions = Dense(1, activation="relu", dtype="float32")(model)
 
@@ -148,6 +149,13 @@ model = Model(inputs=[model_input], outputs=predictions)
 
 def median_error(y_actual, y_pred):
     return tfp.stats.percentile(tf.math.abs(y_actual - y_pred), 50.0)
+
+def abs_percentage(y_actual, y_pred):
+    return tfp.stats.percentile(
+        tf.divide(
+            tf.abs(tf.subtract(y_actual, y_pred)), (y_actual + 1e-10)
+        )
+    , 50.0)
 
 optimizer = tfa.optimizers.Lookahead(
     Adam(
@@ -171,6 +179,7 @@ model.compile(
     metrics=[
         "mean_absolute_error",
         median_error,
+        abs_percentage,
     ])
 
 model.fit(
@@ -190,14 +199,14 @@ model.fit(
     ]
 )
 
-from playsound import playsound; playsound(folder + "alarm.wav", block=False)
+# from playsound import playsound; playsound(folder + "alarm.wav", block=False)
 
-
-loss, mean_absolute_error, median_absolute_error = model.evaluate(X, y, verbose=1)
+loss, mean_absolute_error, median_absolute_error, absolute_percentage_error = model.evaluate(X, y, verbose=1)
 
 print("Test accuracy:")
 print(f"Mean Absolute Error (MAE): {str(round(mean_absolute_error, 5))}")
 print(f"Median Absolute Error (MAE): {str(round(median_absolute_error, 5))}")
+print(f"Absolute Percentage Error (MAPE): {str(round(absolute_percentage_error, 5))}")
 
 truth = y.astype("float32")
 predicted = model.predict(X).squeeze().astype("float32")
