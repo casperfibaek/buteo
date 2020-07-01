@@ -25,7 +25,7 @@ folder = "C:\\Users\\Nmapservice\\Desktop\\structural_density\\data\\"
 size = 160
 start_lr = 0.01
 epochs = 100
-batches = 128
+batches = 32
 seed = 42
 validation_split = 0.3
 rotation = False
@@ -82,30 +82,15 @@ X = np.concatenate([
 y = np.load(folder + f"{str(int(size))}_y.npy")[:, ml_utils.y_class(target)]
 y = (size * size) * y # Small house (100m2 * 4m avg. height)
 
-if target == "area":
-    labels = [*range(0, int(round((y.max()))), 140)]
-else:
-    labels = [*range(0, int(round((y.max()))), 700)]
-
 # ***********************************************************************
 #                   PREPARING DATA
 # ***********************************************************************
 
-# Shuffle
-shuffle = np.random.permutation(len(y))
-y = y[shuffle]
-X = X[shuffle]
-
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-
 # Balance training dataset
-# histogram_mask = ml_utils.histogram_selection(y, resolution=9, zero_class=True, outliers=True)
-# histogram_mask = np.logical_and(y > 0, (y / 140) < 80)
 histogram_mask = y > 0
 house_count = np.sum(np.logical_and(y > 0, y <= 140))
 yn = y[~histogram_mask][0:house_count]
 Xn = X[~histogram_mask][0:house_count]
-
 y = np.concatenate([y[histogram_mask], yn])
 X = np.concatenate([X[histogram_mask], Xn])
 
@@ -117,6 +102,8 @@ X = X[shuffle]
 if test is True:
     y = y[:test_size]
     X = X[:test_size]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
 # ***********************************************************************
 #                   ANALYSIS
@@ -140,8 +127,10 @@ model = BatchNormalization()(model)
 model = Flatten()(model)
 
 model = Dense(1024, activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
+model = Dense(1024, activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
+model = Dense(512, activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
 model = BatchNormalization()(model)
-model = Dropout(0.5)(model)
+model = Dropout(0.25)(model)
 
 predictions = Dense(1, activation="relu", dtype="float32")(model)
 
@@ -183,8 +172,8 @@ model.compile(
     ])
 
 model.fit(
-    x=X,
-    y=y,
+    x=X_train,
+    y=y_train,
     epochs=epochs,
     verbose=1,
     batch_size=batches,
@@ -199,17 +188,24 @@ model.fit(
     ]
 )
 
-# from playsound import playsound; playsound(folder + "alarm.wav", block=False)
+# ***********************************************************************
+#                   Evaluate
+# ***********************************************************************
 
-loss, mean_absolute_error, median_absolute_error, absolute_percentage_error = model.evaluate(X, y, verbose=1)
+if target == "area":
+    labels = [*range(0, int(round((y.max()))), 140)]
+else:
+    labels = [*range(0, int(round((y.max()))), 700)]
+
+loss, mean_absolute_error, median_absolute_error, absolute_percentage_error = model.evaluate(X_test, y_test, verbose=1)
 
 print("Test accuracy:")
 print(f"Mean Absolute Error (MAE): {str(round(mean_absolute_error, 5))}")
 print(f"Median Absolute Error (MAE): {str(round(median_absolute_error, 5))}")
 print(f"Absolute Percentage Error (MAPE): {str(round(absolute_percentage_error, 5))}")
 
-truth = y.astype("float32")
-predicted = model.predict(X).squeeze().astype("float32")
+truth = y_test.astype("float32")
+predicted = model.predict(X_test).squeeze().astype("float32")
 
 truth_labels = np.digitize(truth, labels, right=True)
 predicted_labels = np.digitize(predicted, labels, right=True)
