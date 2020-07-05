@@ -529,11 +529,17 @@ def raster_to_metadata(in_raster):
     metadata['maxx'] = metadata['transform'][0] + metadata['width'] * metadata['transform'][1] + metadata['height'] * metadata['transform'][2]
     metadata['maxy'] = metadata['transform'][3]
     
+    # ulx, uly, lrx, lry = -180, 90, 180, -90
+    metadata["extent"] = (metadata['minx'], metadata['maxy'], metadata['maxx'], metadata['miny'])
+
     bottom_left = tx.TransformPoint(metadata['minx'], metadata['miny'])
     top_left = tx.TransformPoint(metadata['minx'], metadata['maxy'])
     top_right = tx.TransformPoint(metadata['maxx'], metadata['maxy'])
     bottom_right = tx.TransformPoint(metadata['maxx'], metadata['miny'])
     
+    # ulx, uly, lrx, lry = -180, 90, 180, -90
+    metadata["extent_wgs84"] = (top_left[0], top_left[1], bottom_right[0], bottom_right[1])
+
     metadata['footprint_dict'] = {
       "type": "Feature",
       "properties": {},
