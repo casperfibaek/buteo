@@ -12,10 +12,29 @@ import os
 
 
 # Channel last format
-def array_to_blocks(arr, block_shape, offset=0):
+def array_to_blocks(array, block_shape, offset=0):
+    if offset == 0:
+        arr = array
+    else:
+        if len(array.shape) == 1:
+            arr = array[
+                offset:array.shape[0] - ((array.shape[0] - offset) % block_shape[0]),
+            ]
+        if len(array.shape) == 2:
+            arr = array[
+                offset:array.shape[0] - ((array.shape[0] - offset) % block_shape[0]),
+                offset:array.shape[1] - ((array.shape[1] - offset) % block_shape[1]),
+            ]
+        if len(array.shape) == 3:
+            arr = array[
+                offset:array.shape[0] - ((array.shape[0] - offset) % block_shape[0]),
+                offset:array.shape[1] - ((array.shape[1] - offset) % block_shape[1]),
+                offset:array.shape[2] - ((array.shape[2] - offset) % block_shape[2]),
+            ]
+
     if len(arr.shape) == 1:
         return arr[
-            offset:arr.shape[0] - ceil(arr.shape[0] % block_shape[0]),
+            0:arr.shape[0] - ceil(arr.shape[0] % block_shape[0]),
         ].reshape(
             arr.shape[0] // block_shape[0],
             block_shape[0],
@@ -23,8 +42,8 @@ def array_to_blocks(arr, block_shape, offset=0):
 
     elif len(arr.shape) == 2:
         return arr[
-            offset:arr.shape[0] - ceil(arr.shape[0] % block_shape[0]),
-            offset:arr.shape[1] - ceil(arr.shape[1] % block_shape[1]),
+            0:arr.shape[0] - ceil(arr.shape[0] % block_shape[0]),
+            0:arr.shape[1] - ceil(arr.shape[1] % block_shape[1]),
         ].reshape(
             arr.shape[0] // block_shape[0],
             block_shape[0],
@@ -34,9 +53,9 @@ def array_to_blocks(arr, block_shape, offset=0):
 
     elif len(arr.shape) == 3:
         return arr[
-            offset:arr.shape[0] - ceil(arr.shape[0] % block_shape[0]),
-            offset:arr.shape[1] - ceil(arr.shape[1] % block_shape[1]),
-            offset:arr.shape[2] - ceil(arr.shape[2] % block_shape[2]),
+            0:arr.shape[0] - ceil(arr.shape[0] % block_shape[0]),
+            0:arr.shape[1] - ceil(arr.shape[1] % block_shape[1]),
+            0:arr.shape[2] - ceil(arr.shape[2] % block_shape[2])
         ].reshape(
             arr.shape[0] // block_shape[0],
             block_shape[0],
@@ -52,6 +71,9 @@ def array_to_blocks(arr, block_shape, offset=0):
 def to_8bit(arr, min_target, max_target):
     return np.interp(arr, (min_target, max_target), (0, 255)).astype('uint8')
 
+# TODO: Enable offset overlap (i.e. overlaps=[(8,0), (8,8), (0,8)])
+# TODO: Handle 3d arrays
+# TODO: Match processed and image count
 
 def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], output_geom=None, clip_to_vector=None, epsilon=1e-5):
     assert width == height, print("height must equal width.")
@@ -65,9 +87,22 @@ def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], o
     patches_x = int(img_width / width)
     patches_y = int(img_height / height)
 
-    # Enables strides
-    blocks = array_to_blocks(reference, (width, height))
-    mask = np.ones(blocks.shape[0], dtype=bool)
+    blocks = [array_to_blocks(reference, (width, height))]
+    images = blocks[0].shape[0]
+
+    for overlap in overlaps:
+        block = array_to_blocks(reference, (width, height), offset=overlap)
+        images += block.shape[0]
+        blocks.append(block)
+
+    print("block1: ", blocks[0].shape)
+
+    if len(overlaps) > 0:
+        blocks = np.concatenate(blocks)
+    else:
+        blocks = blocks[0]
+    
+    mask = np.ones(images, dtype=bool)
 
     total_length = 0
     
@@ -90,21 +125,22 @@ def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], o
         coord_grid_x = [xx]
         coord_grid_y = [yy]
 
-        total_length += (len(xx) * len(yy))
+        total_length += xx.shape[0] * yy.shape[1]
 
         for o in overlaps:
             odx = ((metadata["pixel_width"] * width) - (o * metadata["pixel_width"])) - dx
             ody = ((metadata["pixel_height"] * height) - (o * metadata["pixel_height"])) - dy
 
+            # Verify that this is correct
             oxx, oyy = np.meshgrid(
-                np.arange(ulx + odx, lrx + odx, xres), 
-                np.arange(uly + ody, lry + ody, yres),
+                np.arange(ulx + odx + dx, lrx + odx - dx, xres), 
+                np.arange(uly + ody + dy, lry + ody - dy, yres),
             )
 
-            coord_grid_x.append(oxx[:, 1:])
-            coord_grid_y.append(oyy[1:, :])
+            coord_grid_x.append(oxx)
+            coord_grid_y.append(oyy)
 
-            total_length += (len(oxx) * len(oyy))
+            total_length += oxx.shape[0] * oyy.shape[1]
 
         projection = osr.SpatialReference()
         projection.ImportFromWkt(metadata["projection"])
@@ -137,11 +173,16 @@ def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], o
         fdefn = lyr.GetLayerDefn()
 
         processed = 0
+        valids = 0
         progress(processed, total_length, 'Creating patches')
 
         for coord_grid_id in range(len(coord_grid_x)):
             for x, y in zip(coord_grid_x[coord_grid_id].ravel(), coord_grid_y[coord_grid_id].ravel()):
-                if (x + dx) > lrx or (y + dy) < lry: continue
+                if (x + dx) > lrx or (y + dy) < lry:
+                    mask[processed] = False
+                    processed += 1
+                    progress(processed, total_length, 'Patches')
+                    continue
 
                 poly_wkt = f'POLYGON (({x - dx} {y - dy}, {x + dx} {y - dy}, {x + dx} {y + dy}, {x - dx} {y + dy}, {x - dx} {y - dy}))'
 
@@ -152,7 +193,7 @@ def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], o
                     intersections = list(clip_index.intersection((x - dx, x + dx, y + dy, y - dy)))
 
                     if len(intersections) == 0:
-                        # mask[processed] = False
+                        mask[processed] = False
                         processed += 1
                         progress(processed, total_length, 'Patches')
                         continue
@@ -175,6 +216,7 @@ def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], o
                         if clip_geometry.Intersects(lr) is True: is_within[3] = True
 
                     if False in is_within:
+                        mask[processed] = False
                         processed += 1
                         progress(processed, total_length, 'Patches')
                         continue
@@ -182,6 +224,7 @@ def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], o
                 lyr.CreateFeature(ft)
                 ft = None
 
+                valids += 1
                 processed += 1
                 progress(processed, total_length, 'Patches')
 
@@ -191,6 +234,10 @@ def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], o
         clip_layer = None
 
     np.save(output_numpy, blocks[mask])
+    
+    import pdb; pdb.set_trace()
+
+    return 1
 
 
 if __name__ == "__main__":
@@ -205,7 +252,7 @@ if __name__ == "__main__":
         numpy_arr,
         width=16,
         height=16,
-        overlaps=[4, 8, 12],
+        overlaps=[8],
         output_geom=geom,
         clip_to_vector=grid,
     )
