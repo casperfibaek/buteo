@@ -54,54 +54,32 @@ def to_8bit(arr, min_target, max_target):
     return np.interp(arr, (min_target, max_target), (0, 255)).astype('uint8')
 
 
-# GPKG does not support looping by fid value (massive bug?)
-def fix_gpkg(ogr_shadow):
-    return 1
-    # SetFID(self, *args)
-
-
 # TODO: Verify output, ensure images == total_length
 # TODO: Enable offset overlap (i.e. overlaps=[(8,0), (8,8), (0,8)])
 # TODO: Handle 3d arrays
 
-def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], output_geom=None, clip_to_vector=None, verbose=1, epsilon=0):
-    assert width == height, print("height must equal width.")
-
+def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=None, clip_to_vector=None, verbose=1):
     metadata = raster_to_metadata(reference)
     reference = to_8bit(raster_to_array(reference), 0, 2000)
 
-    img_width = metadata["width"]
-    img_height = metadata["height"]
-
-    patches_x = int(img_width / width)
-    patches_y = int(img_height / height)
-
     if verbose == 1: print("Generating blocks..")
-    blocks = [array_to_blocks(reference, (width, height))]
-    images = blocks[0].shape[0]
-    images_per_block = [images]
+    blocks = array_to_blocks(reference, (size, size))
+    images_per_block = [blocks.shape[0]]
 
     for overlap in overlaps:
-        block = array_to_blocks(reference, (width, height), offset=overlap)
-        images += block.shape[0]
+        block = array_to_blocks(reference, (size, size), offset=overlap)
+        blocks = np.concatenate([blocks, block])
         images_per_block.append(block.shape[0])
-        blocks.append(block)
 
-    if len(overlaps) > 0:
-        blocks = np.concatenate(blocks)
-    else:
-        blocks = blocks[0]
-    
+    images = blocks.shape[0]
     mask = np.ones(images, dtype=bool)
 
-    total_length = 0
-    
     if output_geom is not None:
         ulx, uly, lrx, lry = metadata["extent"]
 
         # Resolution
-        xres = metadata["pixel_width"] * width
-        yres = metadata["pixel_height"] * height
+        xres = metadata["pixel_width"] * size
+        yres = metadata["pixel_height"] * size
 
         dx = xres / 2
         dy = yres / 2
@@ -111,34 +89,38 @@ def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], o
             np.arange(uly + dy, lry + dy, yres),
         )
 
+        # TODO: Calculate which one is necessary!
         if images_per_block[0] == xx.size:
-            coord_grid_x = [xx]
-            coord_grid_y = [yy]
-            total_length += xx.size
+            coord_grid = np.array([xx.ravel(), yy.ravel()])
+        elif images_per_block[0] == xx[1:, 1:].size: 
+            coord_grid = np.array([xx[1:, 1:].ravel(), yy[1:, 1:].ravel()])
+        elif images_per_block[0] == xx[1:-1, 1:-1].size:
+            coord_grid = np.array([xx[1:-1, 1:-1].ravel(), yy[1:-1, 1:-1].ravel()])
         else:
-            coord_grid_x = [xx[1:, 1:]]
-            coord_grid_y = [yy[1:, 1:]]
-            total_length += xx[1:, 1:].shape[0] * yy[1:, 1:].shape[1]
+            raise Exception("Unable to fit geom to images.. (base)")
 
         for i in range(len(overlaps)):
-            odx = ((metadata["pixel_width"] * width) - (overlaps[i] * metadata["pixel_width"])) - dx
-            ody = ((metadata["pixel_height"] * height) - (overlaps[i] * metadata["pixel_height"])) - dy
+            odx = ((metadata["pixel_width"] * size) - (overlaps[i] * metadata["pixel_width"])) - dx
+            ody = ((metadata["pixel_height"] * size) - (overlaps[i] * metadata["pixel_height"])) - dy
 
             oxx, oyy = np.meshgrid(
-                np.arange(ulx + odx + dx, lrx + odx - dx, xres), 
-                np.arange(uly + ody + dy, lry + ody - dy, yres),
+                np.arange(ulx + odx, lrx + odx, xres), 
+                np.arange(uly + ody, lry + ody, yres),
             )
 
+            # TODO: Calculate which one is necessary!
             if images_per_block[i + 1] == oxx.size:
-                coord_grid_x.append(oxx)
-                coord_grid_y.append(oyy)
-                total_length += oxx.size
+                coord_grid = np.concatenate([coord_grid, np.array([oxx.ravel(), oyy.ravel()])], axis=1)
+            elif images_per_block[i + 1] == xx[1:, 1:].size:
+                coord_grid = np.concatenate([coord_grid, np.array([oxx[1:, 1:].ravel(), oyy[1:, 1:].ravel()])], axis=1)
+            elif images_per_block[i + 1] == xx[1:-1, 1:-1].size:
+                coord_grid = np.concatenate([coord_grid, np.array([oxx[1:-1, 1:-1].ravel(), oyy[1:-1, 1:-1].ravel()])], axis=1)
             else:
-                coord_grid_x.append(oxx[1:, 1:])
-                coord_grid_y.append(oyy[1:, 1:])
-                total_length += oxx[1:, 1:].shape[0] * oyy[1:, 1:].shape[1]
+                raise Exception("Unable to fit geom to images.. (overlap)")
 
-        if total_length != images:
+        coord_grid = np.swapaxes(coord_grid, 0, 1)
+
+        if coord_grid.shape[0] != images:
             raise Exception("Error while calculating. Total_images != total squares")
 
         projection = osr.SpatialReference()
@@ -148,7 +130,6 @@ def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], o
         shp_driver = ogr.GetDriverByName('ESRI Shapefile')
 
         if clip_to_vector is not None:
-
             clip_vector = clip_to_vector if isinstance(clip_to_vector, ogr.DataSource) else ogr.Open(clip_to_vector)
             clip_layer = clip_vector.GetLayer(0)
             clip_projection = clip_layer.GetSpatialRef()
@@ -179,84 +160,61 @@ def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], o
         lyr = ds.CreateLayer("mem_grid_layer", geom_type=ogr.wkbPolygon, srs=projection)
         fdefn = lyr.GetLayerDefn()
 
-        processed = 0
-        valids = 0
         if verbose == 1: print("Creating patches..")
-        if verbose == 1: progress(processed, total_length, 'Creating patches')
 
-        skipped_0 = 0
-        skipped_1 = 0
-        skipped_2 = 0
+        for i in range(images):
+            x, y = coord_grid[i]
 
-        for coord_grid_id in range(len(coord_grid_x)):
-            for x, y in zip(coord_grid_x[coord_grid_id].ravel(), coord_grid_y[coord_grid_id].ravel()):
-                if processed >= images:
-                        print("Should not be here...")
-                        processed = images - 1
+            if (x + dx) > lrx or (y + dy) < lry:
+                mask[i] = False
+                continue
 
-                if (x + dx) > lrx or (y + dy) < lry:
-                    mask[processed] = False
-                    processed += 1
-                    if verbose == 1: progress(processed, total_length, 'Patches')
-                    skipped_0 += 1
+            poly_wkt = f'POLYGON (({x - dx} {y - dy}, {x + dx} {y - dy}, {x + dx} {y + dy}, {x - dx} {y + dy}, {x - dx} {y - dy}))'
+
+            ft = ogr.Feature(fdefn)
+            ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
+
+            if clip_to_vector is not None:
+                intersections = list(clip_index.intersection((x - dx, x + dx, y + dy, y - dy)))
+
+                if len(intersections) < 4:
+                    mask[i] = False
                     continue
 
-                poly_wkt = f'POLYGON (({x - dx} {y - dy}, {x + dx} {y - dy}, {x + dx} {y + dy}, {x - dx} {y + dy}, {x - dx} {y - dy}))'
+                if len(intersections) < 9:
+                    is_within = [False, False, False, False]
+                    for intersection in intersections:
+                        clip_feature = clip_layer.GetFeature(intersection)
+                        clip_geometry = clip_feature.GetGeometryRef()
+                        ft_geom = ft.GetGeometryRef()
 
-                ft = ogr.Feature(fdefn)
-                ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
+                        e = 1e-7
+                        ul = ogr.Geometry(ogr.wkbPoint); ul.AddPoint(x - dx - e, y - dy)
+                        ur = ogr.Geometry(ogr.wkbPoint); ur.AddPoint(x + dx + e, y - dy)
+                        ll = ogr.Geometry(ogr.wkbPoint); ll.AddPoint(x - dx, y + dy)
+                        lr = ogr.Geometry(ogr.wkbPoint); lr.AddPoint(x + dx, y + dy)
 
-                if clip_to_vector is not None:
-                    intersections = list(clip_index.intersection((x - dx, x + dx, y + dy, y - dy)))
+                        if clip_geometry.Intersects(ul.Buffer(e)) is True: is_within[0] = True
+                        if clip_geometry.Intersects(ur.Buffer(e)) is True: is_within[1] = True
+                        if clip_geometry.Intersects(ll.Buffer(e)) is True: is_within[2] = True
+                        if clip_geometry.Intersects(lr.Buffer(e)) is True: is_within[3] = True
 
-                    if len(intersections) < 4:
-                        mask[processed] = False
-                        processed += 1
-                        if verbose == 1: progress(processed, total_length, 'Patches')
-                        skipped_1 += 1
+                        clip_feature = None
+                        clip_geometry = None
+
+                        if False not in is_within:
+                            break
+
+                    if False in is_within:
+                        mask[i] = False
                         continue
 
-                    if len(intersections) < 9:
-                        is_within = [False, False, False, False]
-                        for i in intersections:
-                            clip_feature = clip_layer.GetFeature(i)
-                            clip_geometry = clip_feature.GetGeometryRef()
-                            ft_geom = ft.GetGeometryRef()
-
-                            e = epsilon
-                            ul = ogr.Geometry(ogr.wkbPoint); ul.AddPoint(x - dx + e, y - dy - e)
-                            ur = ogr.Geometry(ogr.wkbPoint); ur.AddPoint(x + dx - e, y - dy - e)
-                            ll = ogr.Geometry(ogr.wkbPoint); ll.AddPoint(x - dx + e, y + dy + e)
-                            lr = ogr.Geometry(ogr.wkbPoint); lr.AddPoint(x + dx - e, y + dy + e)
-
-                            if clip_geometry.Intersects(ul) is True: is_within[0] = True
-                            if clip_geometry.Intersects(ur) is True: is_within[1] = True
-                            if clip_geometry.Intersects(ll) is True: is_within[2] = True
-                            if clip_geometry.Intersects(lr) is True: is_within[3] = True
-
-                            clip_feature = None
-                            clip_geometry = None
-
-                        if False in is_within:
-                            mask[processed] = False
-                            processed += 1
-                            if verbose == 1: progress(processed, total_length, 'Patches')
-                            skipped_2 += 1
-                            continue
-
-                lyr.CreateFeature(ft)
-                ft = None
-
-                valids += 1
-                processed += 1
-                if verbose == 1: progress(processed, total_length, 'Patches')
-            
-            print("Overlap done")
-            import pdb; pdb.set_trace()
-
+            lyr.CreateFeature(ft)
+            ft = None
+            if verbose == 1: progress(i, images, 'Patches')
     
     grid_cells = lyr.GetFeatureCount()
-    if grid_cells != images:
+    if grid_cells != blocks[mask].shape[0]:
         print("Count does not match..")
         import pdb; pdb.set_trace()
 
@@ -274,7 +232,9 @@ def extract_patches(reference, output_numpy, width=32, height=32, overlaps=[], o
     out_grid = None
     out_grid_layer = None
 
-    # np.save(output_numpy, blocks[mask])
+    np.save(output_numpy, blocks[mask])
+
+    import pdb; pdb.set_trace()
 
     return 1
 
@@ -289,8 +249,7 @@ if __name__ == "__main__":
     extract_patches(
         ref,
         numpy_arr,
-        width=16,
-        height=16,
+        size=16,
         overlaps=[8],
         output_geom=geom,
         clip_to_vector=grid,
