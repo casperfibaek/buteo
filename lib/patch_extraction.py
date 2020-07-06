@@ -58,7 +58,7 @@ def to_8bit(arr, min_target, max_target):
 # TODO: Enable offset overlap (i.e. overlaps=[(8,0), (8,8), (0,8)])
 # TODO: Handle 3d arrays
 
-def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=None, clip_to_vector=None, verbose=1):
+def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=None, clip_to_vector=None, epsilon=1e-7, verbose=1):
     metadata = raster_to_metadata(reference)
     reference = to_8bit(raster_to_array(reference), 0, 2000)
 
@@ -188,16 +188,15 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
                         clip_geometry = clip_feature.GetGeometryRef()
                         ft_geom = ft.GetGeometryRef()
 
-                        e = 1e-7
-                        ul = ogr.Geometry(ogr.wkbPoint); ul.AddPoint(x - dx - e, y - dy)
-                        ur = ogr.Geometry(ogr.wkbPoint); ur.AddPoint(x + dx + e, y - dy)
+                        ul = ogr.Geometry(ogr.wkbPoint); ul.AddPoint(x - dx, y - dy)
+                        ur = ogr.Geometry(ogr.wkbPoint); ur.AddPoint(x + dx, y - dy)
                         ll = ogr.Geometry(ogr.wkbPoint); ll.AddPoint(x - dx, y + dy)
                         lr = ogr.Geometry(ogr.wkbPoint); lr.AddPoint(x + dx, y + dy)
 
-                        if clip_geometry.Intersects(ul.Buffer(e)) is True: is_within[0] = True
-                        if clip_geometry.Intersects(ur.Buffer(e)) is True: is_within[1] = True
-                        if clip_geometry.Intersects(ll.Buffer(e)) is True: is_within[2] = True
-                        if clip_geometry.Intersects(lr.Buffer(e)) is True: is_within[3] = True
+                        if clip_geometry.Intersects(ul.Buffer(epsilon)) is True: is_within[0] = True
+                        if clip_geometry.Intersects(ur.Buffer(epsilon)) is True: is_within[1] = True
+                        if clip_geometry.Intersects(ll.Buffer(epsilon)) is True: is_within[2] = True
+                        if clip_geometry.Intersects(lr.Buffer(epsilon)) is True: is_within[3] = True
 
                         clip_feature = None
                         clip_geometry = None
@@ -253,4 +252,5 @@ if __name__ == "__main__":
         overlaps=[8],
         output_geom=geom,
         clip_to_vector=grid,
+        epsilon=1e-7,
     )
