@@ -145,30 +145,31 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
             raise RuntimeError("It was not possible to read the cutline geometry.") from None
 
         # Check whether it is a polygon or multipolygon
-        layer = cutlineGeometry.GetLayer(0)
-
-        cutlineLayer = layer
+        cutlineLayer = cutlineGeometry.GetLayer(0)
 
         # Check if layer contains features:
-        vectorFeatureCount = layer.GetFeatureCount()
+        vectorFeatureCount = cutlineLayer.GetFeatureCount()
 
         if vectorFeatureCount == 0:         # GDAL returns 0 for warnings.
             raise RuntimeError("Cutline geometry feature count is zero.") from None
 
-        vectorProjection = layer.GetSpatialRef()
+        vectorProjection = cutlineLayer.GetSpatialRef()
         vectorProjectionOSR = osr.SpatialReference()
         vectorProjectionOSR.ImportFromWkt(str(vectorProjection))
 
-        feat = layer.GetNextFeature()
-        geom = feat.GetGeometryRef()
-        geomType = geom.GetGeometryName()
-        
-        acceptedTypes = ['POLYGON', 'MULTIPOLYGON']
-        if geomType not in acceptedTypes:
-            raise RuntimeError("Only polygons or multipolygons are support as cutlines.") from None
+        try:
+            for feat in cutlineLayer:
+                geom = feat.GetGeometryRef()
+                geomType = geom.GetGeometryName()
+                
+                acceptedTypes = ['POLYGON', 'MULTIPOLYGON']
+                if geomType not in acceptedTypes:
+                    raise RuntimeError("Only polygons or multipolygons are support as cutlines.") from None
+        except:
+            Warning("Unable to get feature information. Attempting to continue..")
 
         # OGR has extents in different order than GDAL! minX minY maxX maxY
-        vectorExtent = layer.GetExtent()
+        vectorExtent = cutlineLayer.GetExtent()
         vectorExtent = (vectorExtent[0], vectorExtent[2], vectorExtent[1], vectorExtent[3])
 
         if not vectorProjectionOSR.IsSame(inputProjectionOSR):
@@ -192,7 +193,6 @@ def clip_raster(in_raster, out_raster=None, reference_raster=None, cutline=None,
             return False
 
         # Free the memory again.
-        layer = None
         feat = None
         geom = None
         geomType = None

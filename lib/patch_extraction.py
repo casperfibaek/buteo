@@ -58,7 +58,7 @@ def to_8bit(arr, min_target, max_target):
 
 def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=None, clip_to_vector=None, epsilon=1e-7, verbose=1, testing=False):
     metadata = raster_to_metadata(reference)
-    reference_array = to_8bit(raster_to_array(reference), 0, 2000)
+    reference_array = raster_to_array(reference)
 
     if verbose == 1: print("Generating blocks..")
     blocks = array_to_blocks(reference_array, (size, size))
@@ -72,7 +72,7 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
     images = blocks.shape[0]
     mask = np.ones(images, dtype=bool)
 
-    if output_geom is not None:
+    if output_geom is not None or clip_to_vector is not None:
         ulx, uly, lrx, lry = metadata["extent"]
 
         width = abs(metadata["width"])
@@ -106,6 +106,9 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
                 np.arange(y_max - overlap_y_size, y_min + overlap_y_size, -yres),
             )
 
+            if oxx.size != images_per_block[i + 1]:
+                import pdb; pdb.set_trace()
+
             coord_grid = np.append(coord_grid, np.array([oxx.ravel(), oyy.ravel()]), axis=1)
 
         coord_grid = np.swapaxes(coord_grid, 0, 1)
@@ -117,7 +120,7 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
         projection.ImportFromWkt(metadata["projection"])
 
         mem_driver = ogr.GetDriverByName('MEMORY')
-        shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+        gpkg_driver = ogr.GetDriverByName('GPKG')
 
         if clip_to_vector is not None:
             clip_vector = clip_to_vector if isinstance(clip_to_vector, ogr.DataSource) else ogr.Open(clip_to_vector)
@@ -138,12 +141,12 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
             # Generate spatial index
             clip_index = rtree.index.Index(interleaved=False)
             clip_feature_count = clip_mem_layer.GetFeatureCount()
-            for clip_fid in range(0, clip_feature_count):
+            for p in range(0, clip_feature_count):
                 clip_feature = clip_mem_layer.GetNextFeature()
                 clip_geometry = clip_feature.GetGeometryRef()
                 xmin, xmax, ymin, ymax = clip_geometry.GetEnvelope()
-                clip_index.insert(clip_fid, (xmin, xmax, ymin, ymax))
-                if verbose == 1: progress(clip_fid, clip_feature_count, 'rTree generation')
+                clip_index.insert(clip_feature.GetFID(), (xmin, xmax, ymin, ymax))
+                if verbose == 1: progress(p, clip_feature_count, 'rTree generation')
 
         ds = mem_driver.CreateDataSource("mem_grid")
         lyr = ds.CreateLayer("mem_grid_layer", geom_type=ogr.wkbPolygon, srs=projection)
@@ -155,7 +158,8 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
         for i in range(images):
             x, y = coord_grid[i]
 
-            if x > lrx or x < ulx or y > uly or y < lry:
+            # OBS: TEST
+            if x + dx > lrx or x - dx < ulx or y + dy > uly or y - dy < lry:
                 mask[i] = False
                 continue
 
@@ -208,33 +212,39 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
         grid_cells = lyr.GetFeatureCount()
         assert grid_cells == blocks[mask].shape[0], "Image count and grid count does not match."
 
-        if os.path.exists(output_geom):
-            shp_driver.DeleteDataSource(output_geom)
-
         if testing == True:
             test_rast = raster_to_memory(reference)
             img = blocks[mask]
             test_fids = np.random.randint(0, grid_cells, 100)
+            tested = 0
 
             for feature in lyr:
                 fid = feature.GetFID()
 
                 if fid not in test_fids: continue
 
-                clone = feature.Clone()
-
                 test_ds = mem_driver.CreateDataSource("test_mem_grid")
                 test_lyr = test_ds.CreateLayer("test_mem_grid_layer", geom_type=ogr.wkbPolygon, srs=projection)
-                test_lyr.CreateFeature(clone)
+                test_lyr.CreateFeature(feature.Clone())
 
-                clipped_ref_raster = to_8bit(raster_to_array(clip_raster(test_rast, cutline=test_ds)), 0, 2000)
+                ref_img = raster_to_array(test_rast, cutline=test_ds)
                 image_block = img[fid]
 
-                assert np.array_equal(clipped_ref_raster, image_block), "Image and grid cell did not match.."      
+                if not np.array_equal(ref_img, image_block):
+                    import pdb; pdb.set_trace()
 
-        out_name = os.path.basename(output_geom).rsplit('.', 1)[0]
-        out_grid = shp_driver.CreateDataSource(output_geom)
-        out_grid.CopyLayer(lyr, out_name, ['OVERWRITE=YES'])
+                assert np.array_equal(ref_img, image_block), "Image and grid cell did not match.."      
+
+                if verbose == 1: progress(tested, 100, "verifying..")
+                tested += 1
+        
+        if output_geom is not None:
+            if os.path.exists(output_geom):
+                gpkg_driver.DeleteDataSource(output_geom)
+
+            out_name = os.path.basename(output_geom).rsplit('.', 1)[0]
+            out_grid = gpkg_driver.CreateDataSource(output_geom)
+            out_grid.CopyLayer(lyr, out_name, ['OVERWRITE=YES'])
     
     lyr = None
     ds = None
@@ -252,19 +262,23 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
 
 if __name__ == "__main__":
     folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\patch_extraction\\"
-    ref = folder + "b04_test.tif"
-    grid = folder + "grid_test.shp"
-    geom = folder + "processed\\b4_160m_geom.shp"
-    numpy_arr = folder + "processed\\b4_160m.npy"
+    ref = folder + "b04.tif"
+    # grid = folder + "grid_160m.gpkg"
+    geom = folder + "processed\\b4_grid_320m.gpkg"
+    numpy_arr = folder + "processed\\b4_320m.npy"
 
     extract_patches(
         ref,
         numpy_arr,
-        size=16,
-        overlaps=[(8, 0), (8, 8), (0, 8)],
-        # overlaps=[],
+        size=32,
+        # overlaps=[(8, 0), (8, 8), (0, 8)],
+        overlaps=[
+            (24, 24), (24, 0), (0, 24),
+            (16, 16), (16, 0), (0, 16),
+            (8, 8), (8, 0), (0, 8),
+        ],
         output_geom=geom,
-        clip_to_vector=grid,
+        # clip_to_vector=grid,
         epsilon=1e-7,
         testing=True,
     )
