@@ -211,37 +211,26 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
         if os.path.exists(output_geom):
             shp_driver.DeleteDataSource(output_geom)
 
-        # plt.imshow(blocks[mask][0], vmin=0, vmax=255); plt.show()
-        # import pdb; pdb.set_trace()
-
         if testing == True:
-            test_ds = mem_driver.CreateDataSource("test_mem_grid")
-            test_lyr = test_ds.CreateLayer("test_mem_grid_layer", geom_type=ogr.wkbPolygon, srs=projection)
-
             test_rast = raster_to_memory(reference)
-
             img = blocks[mask]
-
-            test_ids = np.random.randint(0, grid_cells, 100)
+            test_fids = np.random.randint(0, grid_cells, 100)
 
             for feature in lyr:
                 fid = feature.GetFID()
-                print(fid)
-                if fid in test_ids:
-                    test_lyr.CreateFeature(feature)
 
-                    clipped_ref_raster = to_8bit(raster_to_array(clip_raster(test_rast, cutline=test_ds)), 0, 2000)
-                    image_block = img[fid]
+                if fid not in test_fids: continue
 
-                    for (i, v) in enumerate(img):
-                        if np.array_equal(clipped_ref_raster, v):
-                            print("here", i)
-                    
-                    import pdb; pdb.set_trace()
+                clone = feature.Clone()
 
-                    for feature in test_lyr:
-                        test_lyr.DeleteFeature(feature.GetFID())              
+                test_ds = mem_driver.CreateDataSource("test_mem_grid")
+                test_lyr = test_ds.CreateLayer("test_mem_grid_layer", geom_type=ogr.wkbPolygon, srs=projection)
+                test_lyr.CreateFeature(clone)
 
+                clipped_ref_raster = to_8bit(raster_to_array(clip_raster(test_rast, cutline=test_ds)), 0, 2000)
+                image_block = img[fid]
+
+                assert np.array_equal(clipped_ref_raster, image_block), "Image and grid cell did not match.."      
 
         out_name = os.path.basename(output_geom).rsplit('.', 1)[0]
         out_grid = shp_driver.CreateDataSource(output_geom)
@@ -272,10 +261,10 @@ if __name__ == "__main__":
         ref,
         numpy_arr,
         size=16,
-        # overlaps=[(8, 0), (8, 8), (0, 8)],
-        overlaps=[],
+        overlaps=[(8, 0), (8, 8), (0, 8)],
+        # overlaps=[],
         output_geom=geom,
         clip_to_vector=grid,
         epsilon=1e-7,
-        # testing=True,
+        testing=True,
     )
