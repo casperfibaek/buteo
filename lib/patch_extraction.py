@@ -1,7 +1,8 @@
 # Extract patches to numpy arrays from a rasters extent and pixel count
 # optionally output centroids
 import sys; sys.path.append('..');
-from lib.raster_io import raster_to_array, array_to_raster, raster_to_metadata
+from lib.raster_io import raster_to_array, array_to_raster, raster_to_metadata, raster_to_memory
+from lib.raster_clip import clip_raster
 from lib.utils_core import progress
 from math import ceil
 import numpy as np
@@ -14,7 +15,6 @@ import os
 # Channel last format
 def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
     assert len(offset) >= len(array.shape), "input offsets must equal array dimensions."
-
     if len(array.shape) == 1:
         arr = array[
             offset[0]:int(array.shape[0] - ((array.shape[0] - offset[0]) % block_shape[0])),
@@ -25,8 +25,8 @@ def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
         ).swapaxes(1).reshape(-1, block_shape[0])
     elif len(array.shape) == 2:
         arr = array[
-            offset[0]:int(array.shape[0] - ((array.shape[0] - offset[0]) % block_shape[0])),
-            offset[1]:int(array.shape[1] - ((array.shape[1] - offset[1]) % block_shape[1])),
+            offset[1]:int(array.shape[0] - ((array.shape[0] - offset[1]) % block_shape[0])),
+            offset[0]:int(array.shape[1] - ((array.shape[1] - offset[0]) % block_shape[1])),
         ]
         return arr.reshape(
             arr.shape[0] // block_shape[0],
@@ -36,9 +36,9 @@ def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
         ).swapaxes(1, 2).reshape(-1, block_shape[0], block_shape[1])
     elif len(array.shape) == 3:
         arr = array[
-            offset[0]:int(array.shape[0] - ((array.shape[0] - offset[0]) % block_shape[0])),
+            offset[2]:int(array.shape[0] - ((array.shape[0] - offset[2]) % block_shape[0])),
             offset[1]:int(array.shape[1] - ((array.shape[1] - offset[1]) % block_shape[1])),
-            offset[2]:int(array.shape[2] - ((array.shape[2] - offset[2]) % block_shape[2])),
+            offset[0]:int(array.shape[2] - ((array.shape[2] - offset[0]) % block_shape[2])),
         ]
         return arr.reshape(
             arr.shape[0] // block_shape[0],
@@ -56,19 +56,16 @@ def to_8bit(arr, min_target, max_target):
     return np.interp(arr, (min_target, max_target), (0, 255)).astype('uint8')
 
 
-# TODO: Enable offset overlap (i.e. overlaps=[(8,0), (8,8), (0,8)])
-# TODO: Handle 3d arrays
-
-def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=None, clip_to_vector=None, epsilon=1e-7, verbose=1):
+def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=None, clip_to_vector=None, epsilon=1e-7, verbose=1, testing=False):
     metadata = raster_to_metadata(reference)
-    reference = to_8bit(raster_to_array(reference), 0, 2000)
+    reference_array = to_8bit(raster_to_array(reference), 0, 2000)
 
     if verbose == 1: print("Generating blocks..")
-    blocks = array_to_blocks(reference, (size, size))
+    blocks = array_to_blocks(reference_array, (size, size))
     images_per_block = [blocks.shape[0]]
 
     for overlap in overlaps:
-        block = array_to_blocks(reference, (size, size), offset=overlap)
+        block = array_to_blocks(reference_array, (size, size), offset=overlap)
         blocks = np.concatenate([blocks, block])
         images_per_block.append(block.shape[0])
 
@@ -83,7 +80,6 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
         pixel_width = abs(metadata["pixel_width"])
         pixel_height = abs(metadata["pixel_height"])
 
-        # Resolution
         xres = pixel_width * size
         yres = pixel_height * size
 
@@ -92,10 +88,11 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
 
         x_max = lrx + dx - ((width % size) * pixel_width)
         x_min = ulx + dx
-        y_max = uly + dy
-        y_min = lry + dy + ((height % size) * pixel_height)
+        y_max = uly - dy
+        y_min = lry - dy + ((height % size) * pixel_height)
 
-        xx, yy = np.meshgrid(np.arange(x_min, x_max, xres), np.arange(y_min, y_max, yres))
+        # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, xres), np.arange(y_max, y_min, -yres))
 
         coord_grid = np.array([xx.ravel(), yy.ravel()])
 
@@ -103,12 +100,11 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
             overlap_x_size = overlaps[i][0] * pixel_width
             overlap_y_size = overlaps[i][1] * pixel_height
 
+            # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
             oxx, oyy = np.meshgrid(
                 np.arange(x_min + overlap_x_size, x_max - overlap_x_size, xres),
-                np.arange(y_min + overlap_y_size, y_max - overlap_y_size, yres),
+                np.arange(y_max - overlap_y_size, y_min + overlap_y_size, -yres),
             )
-
-            import pdb; pdb.set_trace()
 
             coord_grid = np.append(coord_grid, np.array([oxx.ravel(), oyy.ravel()]), axis=1)
 
@@ -149,24 +145,19 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
                 clip_index.insert(clip_fid, (xmin, xmax, ymin, ymax))
                 if verbose == 1: progress(clip_fid, clip_feature_count, 'rTree generation')
 
-
         ds = mem_driver.CreateDataSource("mem_grid")
         lyr = ds.CreateLayer("mem_grid_layer", geom_type=ogr.wkbPolygon, srs=projection)
         fdefn = lyr.GetLayerDefn()
 
         if verbose == 1: print("Creating patches..")
 
+        valid_fid = -1
         for i in range(images):
             x, y = coord_grid[i]
 
-            if (x + dx) > lrx or (y - dy) < lry:
+            if x > lrx or x < ulx or y > uly or y < lry:
                 mask[i] = False
                 continue
-
-            poly_wkt = f'POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))'
-
-            ft = ogr.Feature(fdefn)
-            ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
 
             if clip_to_vector is not None:
                 intersections = list(clip_index.intersection((x - dx, x + dx, y - dy, y + dy)))
@@ -180,7 +171,6 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
                     for intersection in intersections:
                         clip_feature = clip_layer.GetFeature(intersection)
                         clip_geometry = clip_feature.GetGeometryRef()
-                        ft_geom = ft.GetGeometryRef()
 
                         ul = ogr.Geometry(ogr.wkbPoint); ul.AddPoint(x - dx, y + dy)
                         ur = ogr.Geometry(ogr.wkbPoint); ur.AddPoint(x + dx, y + dy)
@@ -202,21 +192,60 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
                         mask[i] = False
                         continue
 
+            poly_wkt = f'POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))'
+
+            valid_fid += 1
+
+            ft = ogr.Feature(fdefn)
+            ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
+            ft.SetFID(valid_fid)
+
             lyr.CreateFeature(ft)
             ft = None
+
             if verbose == 1: progress(i, images, 'Patches')
     
-    grid_cells = lyr.GetFeatureCount()
-    if grid_cells != blocks[mask].shape[0]:
-        print("Count does not match..")
-        import pdb; pdb.set_trace()
+        grid_cells = lyr.GetFeatureCount()
+        assert grid_cells == blocks[mask].shape[0], "Image count and grid count does not match."
 
-    if os.path.exists(output_geom):
-        shp_driver.DeleteDataSource(output_geom)
+        if os.path.exists(output_geom):
+            shp_driver.DeleteDataSource(output_geom)
 
-    out_name = os.path.basename(output_geom).rsplit('.', 1)[0]
-    out_grid = shp_driver.CreateDataSource(output_geom)
-    out_grid.CopyLayer(lyr, out_name, ['OVERWRITE=YES'])
+        # plt.imshow(blocks[mask][0], vmin=0, vmax=255); plt.show()
+        # import pdb; pdb.set_trace()
+
+        if testing == True:
+            test_ds = mem_driver.CreateDataSource("test_mem_grid")
+            test_lyr = test_ds.CreateLayer("test_mem_grid_layer", geom_type=ogr.wkbPolygon, srs=projection)
+
+            test_rast = raster_to_memory(reference)
+
+            img = blocks[mask]
+
+            test_ids = np.random.randint(0, grid_cells, 100)
+
+            for feature in lyr:
+                fid = feature.GetFID()
+                print(fid)
+                if fid in test_ids:
+                    test_lyr.CreateFeature(feature)
+
+                    clipped_ref_raster = to_8bit(raster_to_array(clip_raster(test_rast, cutline=test_ds)), 0, 2000)
+                    image_block = img[fid]
+
+                    for (i, v) in enumerate(img):
+                        if np.array_equal(clipped_ref_raster, v):
+                            print("here", i)
+                    
+                    import pdb; pdb.set_trace()
+
+                    for feature in test_lyr:
+                        test_lyr.DeleteFeature(feature.GetFID())              
+
+
+        out_name = os.path.basename(output_geom).rsplit('.', 1)[0]
+        out_grid = shp_driver.CreateDataSource(output_geom)
+        out_grid.CopyLayer(lyr, out_name, ['OVERWRITE=YES'])
     
     lyr = None
     ds = None
@@ -243,8 +272,10 @@ if __name__ == "__main__":
         ref,
         numpy_arr,
         size=16,
-        overlaps=[(8, 8)],
+        # overlaps=[(8, 0), (8, 8), (0, 8)],
+        overlaps=[],
         output_geom=geom,
         clip_to_vector=grid,
         epsilon=1e-7,
+        # testing=True,
     )

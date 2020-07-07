@@ -576,3 +576,17 @@ def raster_to_metadata(in_raster):
     metadata['footprint_crs'] = wgs84.ExportToWkt()
 
     return metadata
+
+
+def raster_to_memory(in_raster):
+    try:
+        if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
+            src = in_raster
+        else:
+            src = gdal.Open(in_raster)
+    except:
+        raise Exception('Could not read input raster')
+    
+    driver = gdal.GetDriverByName('MEM')
+
+    return driver.CreateCopy('mem_raster', src) 
