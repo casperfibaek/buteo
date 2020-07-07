@@ -327,13 +327,22 @@ def correctionGraph(infile, outfile, output_dir = os.getcwd(), multilook = 2, sp
     
     # Get absolute location of graph processing tool
     gpt = os.path.realpath(os.path.abspath(os.path.expanduser(gpt)))
-    assert os.path.exists(gpt), "Graph processing tool not found."    
-    
+    if not os.path.exists(gpt):
+        gpt = os.path.realpath(os.path.abspath(os.path.expanduser("~/esa_snap/bin/gpt")))
+        if not os.path.exists(gpt):
+            gpt = os.path.realpath(os.path.abspath(os.path.expanduser("~/snap/bin/gpt")))
+            if not os.path.exists(gpt):
+                assert os.path.exists(gpt), "Graph processing tool not found."  
+
     # Ensure that output directory has a tailing '/'.
     output_dir = '%s/'%output_dir.rstrip('/')
     
     # Build an output filename
     output_file = '%s%s'%(output_dir, outfile)
+
+    if os.path.exists(output_file):
+        print("File already processed")
+        return 1
     
     # Get extent of input file (for edge correction)
     # extent = _getExtent(infile, multilook = multilook)

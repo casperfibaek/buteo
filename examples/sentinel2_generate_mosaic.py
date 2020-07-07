@@ -42,8 +42,6 @@ def create_mosaic(s2_files, dst_dir, dst_projection=None):
             tiles[tile_name].append(f)
 
     for tile, paths in tiles.items():
-        # TODO: DELETE
-        if tile == "32VMH": continue
 
         before = time()
 
@@ -87,6 +85,6 @@ def create_mosaic(s2_files, dst_dir, dst_projection=None):
 
 
 if __name__ == "__main__":
-    in_files = "/mnt/c/Users/caspe/Desktop/Paper_2_StruturalDensity/Data/sentinel2/"
-    out_folder = "/mnt/c/Users/caspe/Desktop/Paper_2_StruturalDensity/Data/sentinel2_mosaic/"
+    in_files = "/home/cfi/data/sentinel2_paper2/"
+    out_folder = "/home/cfi/data/sentinel2_paper2_mosaic/"
     create_mosaic(in_files, out_folder)
