@@ -50,7 +50,7 @@ model.fit(X, y, epochs=500, verbose=1, batch_size=2048)
 
 y_pred = model.predict(target)
 
-target_base["vol_sum_pred"] = y_pred
-target_base.to_csv(folder + "vol_sum_pred.csv")
+# target_base["vol_sum_pred"] = y_pred
+# target_base.to_csv(folder + "vol_sum_pred.csv")
 
 import pdb; pdb.set_trace()

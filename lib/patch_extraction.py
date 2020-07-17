@@ -19,27 +19,30 @@ def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
         arr = array[
             offset[0]:int(array.shape[0] - ((array.shape[0] - offset[0]) % block_shape[0])),
         ]
+        shape = (np.array(arr.shape) / np.array(block_shape)).astype("int64")
         return arr.reshape(
             arr.shape[0] // block_shape[0],
             block_shape[0],
-        ).swapaxes(1).reshape(-1, block_shape[0])
+        ).swapaxes(1).reshape(-1, block_shape[0]), shape
     elif len(array.shape) == 2:
         arr = array[
             offset[1]:int(array.shape[0] - ((array.shape[0] - offset[1]) % block_shape[0])),
             offset[0]:int(array.shape[1] - ((array.shape[1] - offset[0]) % block_shape[1])),
         ]
+        shape = (np.array(arr.shape) / np.array(block_shape)).astype("int64")
         return arr.reshape(
             arr.shape[0] // block_shape[0],
             block_shape[0],
             arr.shape[1] // block_shape[1],
             block_shape[1]
-        ).swapaxes(1, 2).reshape(-1, block_shape[0], block_shape[1])
+        ).swapaxes(1, 2).reshape(-1, block_shape[0], block_shape[1]), shape
     elif len(array.shape) == 3:
         arr = array[
             offset[2]:int(array.shape[0] - ((array.shape[0] - offset[2]) % block_shape[0])),
             offset[1]:int(array.shape[1] - ((array.shape[1] - offset[1]) % block_shape[1])),
             offset[0]:int(array.shape[2] - ((array.shape[2] - offset[0]) % block_shape[2])),
         ]
+        shape = (np.array(arr.shape) / np.array(block_shape)).astype("int64")
         return arr.reshape(
             arr.shape[0] // block_shape[0],
             block_shape[0],
@@ -47,7 +50,7 @@ def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
             block_shape[1],
             arr.shape[2] // block_shape[2],
             block_shape[2]
-        ).swapaxes(1, 2).reshape(-1, block_shape[0], block_shape[1], block_shape[2])
+        ).swapaxes(1, 2).reshape(-1, block_shape[0], block_shape[1], block_shape[2]), shape
     else:
         raise Exception("Unable to handle more than 3 dimensions")
 
@@ -56,18 +59,20 @@ def to_8bit(arr, min_target, max_target):
     return np.interp(arr, (min_target, max_target), (0, 255)).astype('uint8')
 
 
-def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=None, clip_to_vector=None, epsilon=1e-7, verbose=1, testing=False):
+def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=None, clip_to_vector=None, epsilon=1e-7, verbose=1, testing=False, testing_sample=1000):
     metadata = raster_to_metadata(reference)
     reference_array = raster_to_array(reference)
 
     if verbose == 1: print("Generating blocks..")
-    blocks = array_to_blocks(reference_array, (size, size))
+    blocks, shape = array_to_blocks(reference_array, (size, size))
     images_per_block = [blocks.shape[0]]
+    shapes = [shape.tolist()]
 
     for overlap in overlaps:
-        block = array_to_blocks(reference_array, (size, size), offset=overlap)
+        block, shape = array_to_blocks(reference_array, (size, size), offset=overlap)
         blocks = np.concatenate([blocks, block])
         images_per_block.append(block.shape[0])
+        shapes.append(shape.tolist())
 
     images = blocks.shape[0]
     mask = np.ones(images, dtype=bool)
@@ -100,14 +105,32 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
             overlap_x_size = overlaps[i][0] * pixel_width
             overlap_y_size = overlaps[i][1] * pixel_height
 
+            xt = shapes[i + 1][1]
+            yt = shapes[i + 1][0]
+
             # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
-            oxx, oyy = np.meshgrid(
-                np.arange(x_min + overlap_x_size, x_max - overlap_x_size, xres),
-                np.arange(y_max - overlap_y_size, y_min + overlap_y_size, -yres),
-            )
+            xr = np.arange(x_min + overlap_x_size, x_max - overlap_x_size, xres)
+            yr = np.arange(y_max - overlap_y_size, y_min + overlap_y_size, -yres)
+
+            xfix = 0
+            yfix = 0
+            if xr.shape[0] < xt:
+                xfix = xres
+            elif xr.shape[0] > xt:
+                xfix = -xres
+            
+            if yr.shape[0] < yt:
+                yfix = -yres
+            elif yr.shape[0] > yt:
+                yfix = yres
+
+            xr = np.arange(x_min + overlap_x_size, x_max - overlap_x_size + xfix, xres)
+            yr = np.arange(y_max - overlap_y_size, y_min + overlap_y_size + yfix, -yres)
+
+            oxx, oyy = np.meshgrid(xr, yr)
 
             if oxx.size != images_per_block[i + 1]:
-                import pdb; pdb.set_trace()
+                raise Exception("Error while matching grid and images.")
 
             coord_grid = np.append(coord_grid, np.array([oxx.ravel(), oyy.ravel()]), axis=1)
 
@@ -158,7 +181,6 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
         for i in range(images):
             x, y = coord_grid[i]
 
-            # OBS: TEST
             if x + dx > lrx or x - dx < ulx or y + dy > uly or y - dy < lry:
                 mask[i] = False
                 continue
@@ -213,9 +235,10 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
         assert grid_cells == blocks[mask].shape[0], "Image count and grid count does not match."
 
         if testing == True:
+            if verbose == 1: print("\nVerifying integrity of output grid..")
             test_rast = raster_to_memory(reference)
             img = blocks[mask]
-            test_fids = np.random.randint(0, grid_cells, 100)
+            test_fids = np.random.randint(0, grid_cells, testing_sample)
             tested = 0
 
             for feature in lyr:
@@ -227,7 +250,7 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
                 test_lyr = test_ds.CreateLayer("test_mem_grid_layer", geom_type=ogr.wkbPolygon, srs=projection)
                 test_lyr.CreateFeature(feature.Clone())
 
-                ref_img = raster_to_array(test_rast, cutline=test_ds)
+                ref_img = raster_to_array(test_rast, cutline=test_ds, quiet=True)
                 image_block = img[fid]
 
                 if not np.array_equal(ref_img, image_block):
@@ -235,10 +258,12 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
 
                 assert np.array_equal(ref_img, image_block), "Image and grid cell did not match.."      
 
-                if verbose == 1: progress(tested, 100, "verifying..")
+                if verbose == 1: progress(tested, testing_sample - 1, "verifying..")
                 tested += 1
         
         if output_geom is not None:
+            if verbose == 1: print("Writing output geometry..")
+
             if os.path.exists(output_geom):
                 gpkg_driver.DeleteDataSource(output_geom)
 
@@ -253,9 +278,8 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
     out_grid = None
     out_grid_layer = None
 
+    if verbose == 1: print("Writing numpy array to disc..")
     np.save(output_numpy, blocks[mask])
-
-    import pdb; pdb.set_trace()
 
     return 1
 
@@ -264,21 +288,22 @@ if __name__ == "__main__":
     folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\patch_extraction\\"
     ref = folder + "b04.tif"
     # grid = folder + "grid_160m.gpkg"
-    geom = folder + "processed\\b4_grid_320m.gpkg"
-    numpy_arr = folder + "processed\\b4_320m.npy"
+    geom = folder + "processed\\b4_grid_16.gpkg"
+    numpy_arr = folder + "processed\\b4_16.npy"
 
     extract_patches(
         ref,
         numpy_arr,
-        size=32,
-        # overlaps=[(8, 0), (8, 8), (0, 8)],
-        overlaps=[
-            (24, 24), (24, 0), (0, 24),
-            (16, 16), (16, 0), (0, 16),
-            (8, 8), (8, 0), (0, 8),
-        ],
+        size=16,
+        overlaps=[(8, 0), (8, 8), (0, 8)],
+        # overlaps=[
+        #     (24, 24), (24, 0), (0, 24),
+        #     (16, 16), (16, 0), (0, 16),
+        #     (8, 8), (8, 0), (0, 8),
+        # ],
         output_geom=geom,
         # clip_to_vector=grid,
         epsilon=1e-7,
         testing=True,
+        testing_sample=1000,
     )

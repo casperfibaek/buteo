@@ -16,12 +16,14 @@ def progress(count, total, name='Processing'):
 
     percents = round(100.0 * count / float(total), 1)
 
-    if percents > 100:
+    if count == total:
+        sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
         sys.stdout.flush()
+        print("")
         return None
-
-    sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
-    sys.stdout.flush()
+    else:
+        sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
+        sys.stdout.flush()
 
     return None
 
