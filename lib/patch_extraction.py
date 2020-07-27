@@ -1,7 +1,14 @@
 # Extract patches to numpy arrays from a rasters extent and pixel count
 # optionally output centroids
-import sys; sys.path.append('..');
-from lib.raster_io import raster_to_array, array_to_raster, raster_to_metadata, raster_to_memory
+import sys
+
+sys.path.append("..")
+from lib.raster_io import (
+    raster_to_array,
+    array_to_raster,
+    raster_to_metadata,
+    raster_to_memory,
+)
 from lib.raster_clip import clip_raster
 from lib.utils_core import progress
 from math import ceil
@@ -17,53 +24,89 @@ def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
     assert len(offset) >= len(array.shape), "input offsets must equal array dimensions."
     if len(array.shape) == 1:
         arr = array[
-            offset[0]:int(array.shape[0] - ((array.shape[0] - offset[0]) % block_shape[0])),
+            offset[0] : int(
+                array.shape[0] - ((array.shape[0] - offset[0]) % block_shape[0])
+            ),
         ]
         shape = (np.array(arr.shape) / np.array(block_shape)).astype("int64")
-        return arr.reshape(
-            arr.shape[0] // block_shape[0],
-            block_shape[0],
-        ).swapaxes(1).reshape(-1, block_shape[0]), shape
+        return (
+            arr.reshape(arr.shape[0] // block_shape[0], block_shape[0],)
+            .swapaxes(1)
+            .reshape(-1, block_shape[0]),
+            shape,
+        )
     elif len(array.shape) == 2:
         arr = array[
-            offset[1]:int(array.shape[0] - ((array.shape[0] - offset[1]) % block_shape[0])),
-            offset[0]:int(array.shape[1] - ((array.shape[1] - offset[0]) % block_shape[1])),
+            offset[1] : int(
+                array.shape[0] - ((array.shape[0] - offset[1]) % block_shape[0])
+            ),
+            offset[0] : int(
+                array.shape[1] - ((array.shape[1] - offset[0]) % block_shape[1])
+            ),
         ]
         shape = (np.array(arr.shape) / np.array(block_shape)).astype("int64")
-        return arr.reshape(
-            arr.shape[0] // block_shape[0],
-            block_shape[0],
-            arr.shape[1] // block_shape[1],
-            block_shape[1]
-        ).swapaxes(1, 2).reshape(-1, block_shape[0], block_shape[1]), shape
+        return (
+            arr.reshape(
+                arr.shape[0] // block_shape[0],
+                block_shape[0],
+                arr.shape[1] // block_shape[1],
+                block_shape[1],
+            )
+            .swapaxes(1, 2)
+            .reshape(-1, block_shape[0], block_shape[1]),
+            shape,
+        )
     elif len(array.shape) == 3:
         arr = array[
-            offset[2]:int(array.shape[0] - ((array.shape[0] - offset[2]) % block_shape[0])),
-            offset[1]:int(array.shape[1] - ((array.shape[1] - offset[1]) % block_shape[1])),
-            offset[0]:int(array.shape[2] - ((array.shape[2] - offset[0]) % block_shape[2])),
+            offset[2] : int(
+                array.shape[0] - ((array.shape[0] - offset[2]) % block_shape[0])
+            ),
+            offset[1] : int(
+                array.shape[1] - ((array.shape[1] - offset[1]) % block_shape[1])
+            ),
+            offset[0] : int(
+                array.shape[2] - ((array.shape[2] - offset[0]) % block_shape[2])
+            ),
         ]
         shape = (np.array(arr.shape) / np.array(block_shape)).astype("int64")
-        return arr.reshape(
-            arr.shape[0] // block_shape[0],
-            block_shape[0],
-            arr.shape[1] // block_shape[1],
-            block_shape[1],
-            arr.shape[2] // block_shape[2],
-            block_shape[2]
-        ).swapaxes(1, 2).reshape(-1, block_shape[0], block_shape[1], block_shape[2]), shape
+        return (
+            arr.reshape(
+                arr.shape[0] // block_shape[0],
+                block_shape[0],
+                arr.shape[1] // block_shape[1],
+                block_shape[1],
+                arr.shape[2] // block_shape[2],
+                block_shape[2],
+            )
+            .swapaxes(1, 2)
+            .reshape(-1, block_shape[0], block_shape[1], block_shape[2]),
+            shape,
+        )
     else:
         raise Exception("Unable to handle more than 3 dimensions")
 
 
 def to_8bit(arr, min_target, max_target):
-    return np.interp(arr, (min_target, max_target), (0, 255)).astype('uint8')
+    return np.interp(arr, (min_target, max_target), (0, 255)).astype("uint8")
 
 
-def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=None, clip_to_vector=None, epsilon=1e-7, verbose=1, testing=False, testing_sample=1000):
+def extract_patches(
+    reference,
+    output_numpy,
+    size=32,
+    overlaps=[],
+    output_geom=None,
+    clip_to_vector=None,
+    epsilon=1e-7,
+    verbose=1,
+    testing=False,
+    testing_sample=1000,
+):
     metadata = raster_to_metadata(reference)
     reference_array = raster_to_array(reference)
 
-    if verbose == 1: print("Generating blocks..")
+    if verbose == 1:
+        print("Generating blocks..")
     blocks, shape = array_to_blocks(reference_array, (size, size))
     images_per_block = [blocks.shape[0]]
     shapes = [shape.tolist()]
@@ -97,7 +140,9 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
         y_min = lry - dy + ((height % size) * pixel_height)
 
         # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
-        xx, yy = np.meshgrid(np.arange(x_min, x_max, xres), np.arange(y_max, y_min, -yres))
+        xx, yy = np.meshgrid(
+            np.arange(x_min, x_max, xres), np.arange(y_max, y_min, -yres)
+        )
 
         coord_grid = np.array([xx.ravel(), yy.ravel()])
 
@@ -118,7 +163,7 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
                 xfix = xres
             elif xr.shape[0] > xt:
                 xfix = -xres
-            
+
             if yr.shape[0] < yt:
                 yfix = -yres
             elif yr.shape[0] > yt:
@@ -132,7 +177,9 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
             if oxx.size != images_per_block[i + 1]:
                 raise Exception("Error while matching grid and images.")
 
-            coord_grid = np.append(coord_grid, np.array([oxx.ravel(), oyy.ravel()]), axis=1)
+            coord_grid = np.append(
+                coord_grid, np.array([oxx.ravel(), oyy.ravel()]), axis=1
+            )
 
         coord_grid = np.swapaxes(coord_grid, 0, 1)
 
@@ -142,25 +189,32 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
         projection = osr.SpatialReference()
         projection.ImportFromWkt(metadata["projection"])
 
-        mem_driver = ogr.GetDriverByName('MEMORY')
-        gpkg_driver = ogr.GetDriverByName('GPKG')
+        mem_driver = ogr.GetDriverByName("MEMORY")
+        gpkg_driver = ogr.GetDriverByName("GPKG")
 
         if clip_to_vector is not None:
-            clip_vector = clip_to_vector if isinstance(clip_to_vector, ogr.DataSource) else ogr.Open(clip_to_vector)
+            clip_vector = (
+                clip_to_vector
+                if isinstance(clip_to_vector, ogr.DataSource)
+                else ogr.Open(clip_to_vector)
+            )
             clip_layer = clip_vector.GetLayer(0)
             clip_projection = clip_layer.GetSpatialRef()
             clip_projection_osr = osr.SpatialReference()
             clip_projection_osr.ImportFromWkt(str(clip_projection))
 
             if not projection.IsSame(clip_projection_osr):
-                raise Exception("clip vector and reference vector is not in the same reference system. Please reproject..")
+                raise Exception(
+                    "clip vector and reference vector is not in the same reference system. Please reproject.."
+                )
 
             # Copy ogr to memory
-            clip_mem = mem_driver.CreateDataSource('memData')
-            clip_mem.CopyLayer(clip_layer, 'mem_clip', ['OVERWRITE=YES'])
-            clip_mem_layer = clip_mem.GetLayer('mem_clip')
+            clip_mem = mem_driver.CreateDataSource("memData")
+            clip_mem.CopyLayer(clip_layer, "mem_clip", ["OVERWRITE=YES"])
+            clip_mem_layer = clip_mem.GetLayer("mem_clip")
 
-            if verbose == 1: print("Generating rTree..")
+            if verbose == 1:
+                print("Generating rTree..")
             # Generate spatial index
             clip_index = rtree.index.Index(interleaved=False)
             clip_feature_count = clip_mem_layer.GetFeatureCount()
@@ -169,13 +223,15 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
                 clip_geometry = clip_feature.GetGeometryRef()
                 xmin, xmax, ymin, ymax = clip_geometry.GetEnvelope()
                 clip_index.insert(clip_feature.GetFID(), (xmin, xmax, ymin, ymax))
-                if verbose == 1: progress(p, clip_feature_count, 'rTree generation')
+                if verbose == 1:
+                    progress(p, clip_feature_count, "rTree generation")
 
         ds = mem_driver.CreateDataSource("mem_grid")
         lyr = ds.CreateLayer("mem_grid_layer", geom_type=ogr.wkbPolygon, srs=projection)
         fdefn = lyr.GetLayerDefn()
 
-        if verbose == 1: print("Creating patches..")
+        if verbose == 1:
+            print("Creating patches..")
 
         valid_fid = -1
         for i in range(images):
@@ -186,7 +242,9 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
                 continue
 
             if clip_to_vector is not None:
-                intersections = list(clip_index.intersection((x - dx, x + dx, y - dy, y + dy)))
+                intersections = list(
+                    clip_index.intersection((x - dx, x + dx, y - dy, y + dy))
+                )
 
                 if len(intersections) < 4:
                     mask[i] = False
@@ -198,15 +256,23 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
                         clip_feature = clip_layer.GetFeature(intersection)
                         clip_geometry = clip_feature.GetGeometryRef()
 
-                        ul = ogr.Geometry(ogr.wkbPoint); ul.AddPoint(x - dx, y + dy)
-                        ur = ogr.Geometry(ogr.wkbPoint); ur.AddPoint(x + dx, y + dy)
-                        ll = ogr.Geometry(ogr.wkbPoint); ll.AddPoint(x - dx, y - dy)
-                        lr = ogr.Geometry(ogr.wkbPoint); lr.AddPoint(x + dx, y - dy)
+                        ul = ogr.Geometry(ogr.wkbPoint)
+                        ul.AddPoint(x - dx, y + dy)
+                        ur = ogr.Geometry(ogr.wkbPoint)
+                        ur.AddPoint(x + dx, y + dy)
+                        ll = ogr.Geometry(ogr.wkbPoint)
+                        ll.AddPoint(x - dx, y - dy)
+                        lr = ogr.Geometry(ogr.wkbPoint)
+                        lr.AddPoint(x + dx, y - dy)
 
-                        if clip_geometry.Intersects(ul.Buffer(epsilon)) is True: is_within[0] = True
-                        if clip_geometry.Intersects(ur.Buffer(epsilon)) is True: is_within[1] = True
-                        if clip_geometry.Intersects(ll.Buffer(epsilon)) is True: is_within[2] = True
-                        if clip_geometry.Intersects(lr.Buffer(epsilon)) is True: is_within[3] = True
+                        if clip_geometry.Intersects(ul.Buffer(epsilon)) is True:
+                            is_within[0] = True
+                        if clip_geometry.Intersects(ur.Buffer(epsilon)) is True:
+                            is_within[1] = True
+                        if clip_geometry.Intersects(ll.Buffer(epsilon)) is True:
+                            is_within[2] = True
+                        if clip_geometry.Intersects(lr.Buffer(epsilon)) is True:
+                            is_within[3] = True
 
                         clip_feature = None
                         clip_geometry = None
@@ -218,7 +284,7 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
                         mask[i] = False
                         continue
 
-            poly_wkt = f'POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))'
+            poly_wkt = f"POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))"
 
             valid_fid += 1
 
@@ -229,13 +295,17 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
             lyr.CreateFeature(ft)
             ft = None
 
-            if verbose == 1: progress(i, images, 'Patches')
-    
+            if verbose == 1:
+                progress(i, images, "Patches")
+
         grid_cells = lyr.GetFeatureCount()
-        assert grid_cells == blocks[mask].shape[0], "Image count and grid count does not match."
+        assert (
+            grid_cells == blocks[mask].shape[0]
+        ), "Image count and grid count does not match."
 
         if testing == True:
-            if verbose == 1: print("\nVerifying integrity of output grid..")
+            if verbose == 1:
+                print("\nVerifying integrity of output grid..")
             test_rast = raster_to_memory(reference)
             img = blocks[mask]
             test_fids = np.random.randint(0, grid_cells, testing_sample)
@@ -244,33 +314,42 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
             for feature in lyr:
                 fid = feature.GetFID()
 
-                if fid not in test_fids: continue
+                if fid not in test_fids:
+                    continue
 
                 test_ds = mem_driver.CreateDataSource("test_mem_grid")
-                test_lyr = test_ds.CreateLayer("test_mem_grid_layer", geom_type=ogr.wkbPolygon, srs=projection)
+                test_lyr = test_ds.CreateLayer(
+                    "test_mem_grid_layer", geom_type=ogr.wkbPolygon, srs=projection
+                )
                 test_lyr.CreateFeature(feature.Clone())
 
                 ref_img = raster_to_array(test_rast, cutline=test_ds, quiet=True)
                 image_block = img[fid]
 
                 if not np.array_equal(ref_img, image_block):
-                    import pdb; pdb.set_trace()
+                    import pdb
 
-                assert np.array_equal(ref_img, image_block), "Image and grid cell did not match.."      
+                    pdb.set_trace()
 
-                if verbose == 1: progress(tested, testing_sample - 1, "verifying..")
+                assert np.array_equal(
+                    ref_img, image_block
+                ), "Image and grid cell did not match.."
+
+                if verbose == 1:
+                    progress(tested, testing_sample - 1, "verifying..")
                 tested += 1
-        
+
         if output_geom is not None:
-            if verbose == 1: print("Writing output geometry..")
+            if verbose == 1:
+                print("Writing output geometry..")
 
             if os.path.exists(output_geom):
                 gpkg_driver.DeleteDataSource(output_geom)
 
-            out_name = os.path.basename(output_geom).rsplit('.', 1)[0]
+            out_name = os.path.basename(output_geom).rsplit(".", 1)[0]
             out_grid = gpkg_driver.CreateDataSource(output_geom)
-            out_grid.CopyLayer(lyr, out_name, ['OVERWRITE=YES'])
-    
+            out_grid.CopyLayer(lyr, out_name, ["OVERWRITE=YES"])
+
     lyr = None
     ds = None
     clip_vector = None
@@ -278,7 +357,8 @@ def extract_patches(reference, output_numpy, size=32, overlaps=[], output_geom=N
     out_grid = None
     out_grid_layer = None
 
-    if verbose == 1: print("Writing numpy array to disc..")
+    if verbose == 1:
+        print("Writing numpy array to disc..")
     np.save(output_numpy, blocks[mask])
 
     return 1
