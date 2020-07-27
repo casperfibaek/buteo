@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.ma as ma
 from osgeo import gdal
-from raster_io import raster_to_array, array_to_raster
+from .raster_io import raster_to_array, array_to_raster
 
 
 def shift_raster(in_raster, out_raster, x, y):
@@ -12,14 +12,14 @@ def shift_raster(in_raster, out_raster, x, y):
     raster_nodata_value = raster_band.GetNoDataValue()
     raster_datatype = raster_band.DataType
 
-    raster_driver = gdal.GetDriverByName('GTiff')
+    raster_driver = gdal.GetDriverByName("GTiff")
 
     raster_target = raster_driver.Create(
-        out_raster,                         # Location of the saved raster, ignored if driver is memory.
-        raster.RasterXSize,                 # Dataframe width in pixels (e.g. 1920px).
-        raster.RasterYSize,                 # Dataframe height in pixels (e.g. 1280px).
-        1,                                  # The number of bands required.
-        raster_datatype,                    # Datatype of the destination.
+        out_raster,  # Location of the saved raster, ignored if driver is memory.
+        raster.RasterXSize,  # Dataframe width in pixels (e.g. 1920px).
+        raster.RasterYSize,  # Dataframe height in pixels (e.g. 1280px).
+        1,  # The number of bands required.
+        raster_datatype,  # Datatype of the destination.
     )
 
     new_transform = list(raster_transform)

@@ -5,8 +5,8 @@ import multiprocessing
 import sys
 import os
 
-from sen2mosaic.mosaic import main
-from sen2mosaic.utilities import prepInfiles
+from .sen2mosaic.mosaic import main
+from .sen2mosaic.utilities import prepInfiles
 from lib.orfeo_toolbox import merge_rasters
 
 

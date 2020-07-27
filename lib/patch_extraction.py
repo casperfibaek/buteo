@@ -86,10 +86,6 @@ def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
         raise Exception("Unable to handle more than 3 dimensions")
 
 
-def to_8bit(arr, min_target, max_target):
-    return np.interp(arr, (min_target, max_target), (0, 255)).astype("uint8")
-
-
 def extract_patches(
     reference,
     output_numpy,

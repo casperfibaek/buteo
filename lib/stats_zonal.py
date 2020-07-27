@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from osgeo import ogr, gdal, osr
-from lib.raster_io import raster_to_array
+from lib.raster_io import raster_to_array, raster_to_memory
 from lib.stats_global import enumerate_stats, global_statistics
 from lib.utils_core import progress
 from pathlib import Path
@@ -180,10 +180,12 @@ def calc_shapes(in_vector):
 
 # Create a low-memory options
 def calc_zonal(in_vector, in_rasters=[], prefixes=[], stats=['mean', 'med', 'std']):
+    # TODO: Do vector calculation in memory to reduce IO.
+
     # Translate stats to integers
     stats_translated = enumerate_stats(stats)
 
-    # Read the raster:
+    # Read the raster meta:
     raster_origin = gdal.Open(in_rasters[0])
 
     # Read the vector

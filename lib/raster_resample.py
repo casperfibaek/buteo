@@ -1,12 +1,26 @@
 import os
 import numpy.ma as ma
 from osgeo import gdal
-from utils_core import datatype_is_float, copy_dataframe, progress_callback_quiet, create_progress_callback, translate_resample_method
+from .utils_core import (
+    datatype_is_float,
+    copy_dataframe,
+    progress_callback_quiet,
+    create_progress_callback,
+    translate_resample_method,
+)
 
 
-def resample(in_raster, out_raster=None, reference_raster=None, reference_band_number=1,
-             target_size=None, output_format='MEM', method='nearest', quiet=True):
-    ''' Resample an input raster to match a reference raster or
+def resample(
+    in_raster,
+    out_raster=None,
+    reference_raster=None,
+    reference_band_number=1,
+    target_size=None,
+    output_format="MEM",
+    method="nearest",
+    quiet=True,
+):
+    """ Resample an input raster to match a reference raster or
         a target size. The target size is in the same unit as
         the input raster. If the unit is wgs84 - beware that
         the target should be in degrees.
@@ -42,19 +56,19 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
         containing the resampled raster. Otherwise a
         raster is created and the return value is the URL string
         pointing to the created raster.
-    '''
+    """
 
     if target_size is None and reference_raster is None:
-        raise ValueError('Either target_size or a reference must be provided.')
+        raise ValueError("Either target_size or a reference must be provided.")
 
-    if out_raster is not None and output_format == 'MEM':
-        output_format = 'GTiff'
+    if out_raster is not None and output_format == "MEM":
+        output_format = "GTiff"
 
-    if out_raster is None and output_format != 'MEM':
+    if out_raster is None and output_format != "MEM":
         raise AttributeError("Either a reference raster or a cutline must be provided.")
 
     if out_raster is None:
-        out_raster = 'ignored'
+        out_raster = "ignored"
 
     if isinstance(in_raster, gdal.Dataset):
         inputDataframe = in_raster
@@ -76,22 +90,24 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
     inputDatatype = inputBand.DataType
     inputNodataValue = inputBand.GetNoDataValue()
 
-    if output_format == 'MEM':
+    if output_format == "MEM":
         options = []
     else:
         if datatype_is_float(inputDatatype) is True:
             predictor = 3
         else:
             predictor = 2
-        options = ['COMPRESS=DEFLATE', f'PREDICTOR={predictor}', 'NUM_THREADS=ALL_CPUS']
+        options = ["COMPRESS=DEFLATE", f"PREDICTOR={predictor}", "NUM_THREADS=ALL_CPUS"]
 
     # Test if the same size is requested.
     if target_size is not None:
-        if abs(inputPixelWidth) == abs(target_size[0]) and abs(inputPixelHeight) == abs(target_size[1]):
+        if abs(inputPixelWidth) == abs(target_size[0]) and abs(inputPixelHeight) == abs(
+            target_size[1]
+        ):
             copy = copy_dataframe(inputDataframe, out_raster, output_format)
             copy.FlushCache()
 
-            if output_format == 'MEM':
+            if output_format == "MEM":
                 return copy
             else:
                 return os.path.abspath(out_raster)
@@ -104,7 +120,9 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
 
         # Throw error if GDAL cannot open the raster
         if referenceDataframe is None:
-            raise AttributeError(f"Unable to parse the reference raster: {reference_raster}")
+            raise AttributeError(
+                f"Unable to parse the reference raster: {reference_raster}"
+            )
 
         referenceTransform = referenceDataframe.GetGeoTransform()
         referenceProjection = referenceDataframe.GetProjection()
@@ -116,28 +134,38 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
         referenceDatatype = referenceBand.DataType
 
         # Test if the reference size and the input size are the same
-        if abs(inputPixelWidth) == abs(referencePixelWidth) and abs(inputPixelHeight) == abs(referencePixelHeight):
+        if abs(inputPixelWidth) == abs(referencePixelWidth) and abs(
+            inputPixelHeight
+        ) == abs(referencePixelHeight):
             copy = copy_dataframe(inputDataframe, out_raster, output_format)
             copy.FlushCache()
 
-            if output_format == 'MEM':
+            if output_format == "MEM":
                 return copy
             else:
                 return os.path.abspath(out_raster)
         else:
-            destination = driver.Create(out_raster, referenceXSize, referenceYSize, inputBandCount, referenceDatatype, options)
+            destination = driver.Create(
+                out_raster,
+                referenceXSize,
+                referenceYSize,
+                inputBandCount,
+                referenceDatatype,
+                options,
+            )
             destination.SetProjection(referenceProjection)
             destination.SetGeoTransform(referenceTransform)
 
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
 
         progressbar = progress_callback_quiet
         if quiet is False:
-            progressbar = create_progress_callback(1, 'resampling')
+            progressbar = create_progress_callback(1, "resampling")
 
         try:
             warpSuccess = gdal.Warp(
-                destination, in_raster,
+                destination,
+                in_raster,
                 format=output_format,
                 multithread=True,
                 targetAlignedPixels=True,
@@ -157,12 +185,12 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
         gdal.PopErrorHandler()
 
         # Check if warped was successfull.
-        if warpSuccess == 0:         # GDAL returns 0 for warnings.
-            print('Warping completed with warnings. Check your result.')
-        elif warpSuccess is None:    # GDAL returns None for errors.
+        if warpSuccess == 0:  # GDAL returns 0 for warnings.
+            print("Warping completed with warnings. Check your result.")
+        elif warpSuccess is None:  # GDAL returns None for errors.
             raise RuntimeError("Warping completed unsuccesfully.") from None
 
-        if output_format == 'MEM':
+        if output_format == "MEM":
             return destination
         else:
             return os.path.abspath(out_raster)
@@ -175,24 +203,33 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
         xPixels = abs(round(xRatio * inputXSize))
         yPixels = abs(round(yRatio * inputYSize))
 
-        destination = driver.Create(out_raster, xPixels, yPixels, inputBandCount, inputDatatype, options)
+        destination = driver.Create(
+            out_raster, xPixels, yPixels, inputBandCount, inputDatatype, options
+        )
         destination.SetProjection(inputProjection)
-        destination.SetGeoTransform([
-            inputTransform[0], target_size[0], inputTransform[2],
-            inputTransform[3], inputTransform[4], -target_size[1],
-        ])
+        destination.SetGeoTransform(
+            [
+                inputTransform[0],
+                target_size[0],
+                inputTransform[2],
+                inputTransform[3],
+                inputTransform[4],
+                -target_size[1],
+            ]
+        )
         if inputNodataValue is not None:
             destination.SetNoDataValue(inputNodataValue)
 
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
 
         progressbar = progress_callback_quiet
         if quiet is False:
-            progressbar = create_progress_callback(1, 'resampling')
+            progressbar = create_progress_callback(1, "resampling")
 
         try:
             warpSuccess = gdal.Warp(
-                destination, in_raster,
+                destination,
+                in_raster,
                 format=output_format,
                 multithread=True,
                 targetAlignedPixels=True,
@@ -213,12 +250,12 @@ def resample(in_raster, out_raster=None, reference_raster=None, reference_band_n
         gdal.PopErrorHandler()
 
         # Check if warped was successfull.
-        if warpSuccess == 0:         # GDAL returns 0 for warnings.
-            print('Warping completed with warnings. Check your result.')
-        elif warpSuccess is None:    # GDAL returns None for errors.
+        if warpSuccess == 0:  # GDAL returns 0 for warnings.
+            print("Warping completed with warnings. Check your result.")
+        elif warpSuccess is None:  # GDAL returns None for errors.
             raise RuntimeError("Warping completed unsuccesfully.") from None
 
-        if output_format == 'MEM':
+        if output_format == "MEM":
             return destination
         else:
             return os.path.abspath(out_raster)

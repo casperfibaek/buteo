@@ -2,12 +2,25 @@ import numpy as np
 import scipy.signal
 from skimage.filters.rank import majority
 from lib.stats_local import kernel_filter, fast_sum, mode_array, feather_s2_array
-from lib.stats_local_no_kernel import truncate_array, threshold_array, cdef_from_z, select_highest
+from lib.stats_local_no_kernel import (
+    truncate_array,
+    threshold_array,
+    cdef_from_z,
+    select_highest,
+)
 from lib.stats_kernel import create_kernel
+
+def sigma_to_db(arr):
+    return 10 * np.log10(np.abs(arr))
+
+def to_8bit(arr, min_target, max_target):
+    return np.interp(arr, (min_target, max_target), (0, 255)).astype("uint8")
 
 
 def scale_to_range_filter(in_raster, min_target, max_target):
-    return np.interp(in_raster, (in_raster.min(), in_raster.max()), (min_target, max_target))
+    return np.interp(
+        in_raster, (in_raster.min(), in_raster.max()), (min_target, max_target)
+    )
 
 
 def standardise_filter(in_raster, cdf_norm=False):
@@ -67,7 +80,7 @@ def sum_filter(
 
     if dtype is False:
         return kernel_filter(in_raster, kernel, "mean").astype(in_raster.dtype)
-    
+
     return kernel_filter(in_raster, kernel, "mean").astype(dtype)
 
 
@@ -100,7 +113,9 @@ def fast_sum_filter(
 
     # TODO: HANDLE NODATA
     # return fast_sum(in_raster, kernel).astype(in_raster.dtype)
-    return scipy.signal.fftconvolve(in_raster, kernel, mode='same').astype(in_raster.dtype)
+    return scipy.signal.fftconvolve(in_raster, kernel, mode="same").astype(
+        in_raster.dtype
+    )
 
 
 def cdef_filter(in_raster):
@@ -117,7 +132,7 @@ def cdef_difference_filter(
     weighted_distance=False,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -134,34 +149,34 @@ def cdef_difference_filter(
             sigma=sigma,
         )
     )
-    
-    master_mean = kernel_filter(in_raster_master, kernel, 'mean')
-    slave_mean = kernel_filter(in_raster_slave, kernel, 'mean')
+
+    master_mean = kernel_filter(in_raster_master, kernel, "mean")
+    slave_mean = kernel_filter(in_raster_slave, kernel, "mean")
 
     master_median = kernel_filter(in_raster_master, kernel, "median")
-    slave_median = kernel_filter(in_raster_slave, kernel, 'median')
-    
+    slave_median = kernel_filter(in_raster_slave, kernel, "median")
+
     abs_median_diff = np.abs(master_median - slave_median)
     master_mean_difference = np.abs(master_mean - np.abs(master_median - slave_median))
     slave_mean_difference = np.abs(slave_mean - np.abs(master_median - slave_median))
-   
-    master_mad_std = kernel_filter(in_raster_master, kernel, 'mad_std')
-    slave_mad_std = kernel_filter(in_raster_slave, kernel, 'mad_std')
 
-    with np.errstate(divide='ignore', invalid='ignore'):
+    master_mad_std = kernel_filter(in_raster_master, kernel, "mad_std")
+    slave_mad_std = kernel_filter(in_raster_slave, kernel, "mad_std")
+
+    with np.errstate(divide="ignore", invalid="ignore"):
         zscores_master = (master_mean - master_mean_difference) / master_mad_std
         zscores_master[master_mad_std == 0] = 0
-        
+
         zscores_slave = (slave_mean - slave_mean_difference) / slave_mad_std
         zscores_slave[slave_mad_std == 0] = 0
-    
+
     return np.min([zscores_master, zscores_slave], axis=0)
 
     # master_cdef = cdef_from_z(zscores_master)
     # slave_cdef = cdef_from_z(zscores_slave)
-    
+
     # return (master_cdef + slave_cdef) / 2
-    
+
     # if dtype is False:
     #     return cdef_from_z(zscores).astype(in_raster_master.dtype)
     # else:
@@ -178,7 +193,7 @@ def mean_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -214,7 +229,7 @@ def median_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -230,7 +245,7 @@ def median_filter(
             sigma=sigma,
         )
     )
-    
+
     if iterations == 1:
         return kernel_filter(in_raster, kernel, "median", dtype)
     else:
@@ -249,7 +264,7 @@ def variance_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -277,7 +292,7 @@ def standard_deviation_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -305,7 +320,7 @@ def q1_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -333,7 +348,7 @@ def q3_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -361,7 +376,7 @@ def iqr_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -389,7 +404,7 @@ def mad_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -417,7 +432,7 @@ def mad_std_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -445,7 +460,7 @@ def skew_fp_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -473,7 +488,7 @@ def skew_p2_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -501,7 +516,7 @@ def skew_g_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -529,7 +544,7 @@ def kurtosis_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -557,7 +572,7 @@ def z_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -573,9 +588,10 @@ def z_filter(
             sigma=sigma,
         )
     )
-    return ((
-        in_raster - mean_filter(in_raster, _kernel=kernel)
-    ) / standard_deviation_filter(in_raster, _kernel=kernel)).astype(dtype)
+    return (
+        (in_raster - mean_filter(in_raster, _kernel=kernel))
+        / standard_deviation_filter(in_raster, _kernel=kernel)
+    ).astype(dtype)
 
 
 def median_deviation_filter(
@@ -588,7 +604,7 @@ def median_deviation_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -620,7 +636,7 @@ def mean_deviation_filter(
     weighted_distance=True,
     distance_calc="gaussian",
     sigma=2,
-    dtype='float32',
+    dtype="float32",
     _kernel=False,
 ):
     kernel = (
@@ -783,33 +799,28 @@ def close_filter(
 
 def threshold_filter(in_raster, min_value=False, max_value=False, invert=False):
     return threshold_array(
-        in_raster,
-        min_value=min_value,
-        max_value=max_value,
-        invert=invert,
+        in_raster, min_value=min_value, max_value=max_value, invert=invert,
     ).astype(in_raster.dtype)
 
 
 def truncate_filter(in_raster, min_value=False, max_value=False, dim3=False):
-    return truncate_array(
-        in_raster,
-        min_value=min_value,
-        max_value=max_value,
-    ).astype(in_raster.dtype)
+    return truncate_array(in_raster, min_value=min_value, max_value=max_value,).astype(
+        in_raster.dtype
+    )
 
 
 def highest_filter(in_rasters, weights):
-    return select_highest(in_rasters, weights).astype('uint8')
+    return select_highest(in_rasters, weights).astype("uint8")
 
 
 def mode_filter(in_raster, width=5, iterations=1, circular=True):
     kernel = create_kernel(
-            width,
-            circular=circular,
-            holed=False,
-            normalise=False,
-            weighted_edges=False,
-            weighted_distance=False,
+        width,
+        circular=circular,
+        holed=False,
+        normalise=False,
+        weighted_edges=False,
+        weighted_distance=False,
     )
 
     if iterations == 1:
