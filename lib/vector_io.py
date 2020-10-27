@@ -12,7 +12,7 @@ def intersection_rasters(raster_1, raster_2):
 
     driver = ogr.GetDriverByName('Memory')
     dst_source = driver.CreateDataSource('clipped_rasters')
-    dst_srs = ogr.osr.SpatialReference()
+    dst_srs = osr.SpatialReference()
     dst_srs.ImportFromEPSG(4326)
     dst_layer = dst_source.CreateLayer('unused', dst_srs, geom_type=ogr.wkbPolygon)
 
@@ -38,14 +38,14 @@ def intersection_rasters(raster_1, raster_2):
         return False
 
 
-def vector_mask(vector, raster):
+def vector_mask(vector:ogr.DataSource or str, raster:gdal.Dataset or str) -> gdal.Dataset:
     raster = raster if isinstance(raster, gdal.Dataset) else gdal.Open(raster)
     vector = vector if isinstance(vector, ogr.DataSource) else ogr.Open(vector)
 
     # Create destination dataframe
     driver = gdal.GetDriverByName('MEM')
 
-    destination = driver.Create(
+    destination:gdal.Dataset = driver.Create(
         'in_memory_raster',     # Location of the saved raster, ignored if driver is memory.
         raster.RasterXSize,     # Dataframe width in pixels (e.g. 1920px).
         raster.RasterYSize,     # Dataframe height in pixels (e.g. 1280px).
@@ -66,7 +66,7 @@ def vector_mask(vector, raster):
     # return destination_band.ReadAsArray()
 
 
-def vector_to_memory(in_vector, layer=0):
+def vector_to_memory(in_vector:ogr.DataSource or str, layer:int=0) -> ogr.DataSource:
     try:
         if isinstance(in_vector, ogr.DataSource):
             src = in_vector
