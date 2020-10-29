@@ -1,32 +1,17 @@
-#%%
 import ee
+
+#### must be run first/if no account is registered ###
+### pairs with google account ### 
+
+# ee.Authenticate()
+
 ee.Initialize()
 #%%
-image = ee.Image('COPERNICUS/S1_GRD/S1A_IW_GRDH_1SDV_20160701T155827_20160701T155852_011957_0126F0_E543')
+my_image = ee.Image('COPERNICUS/S1_GRD/S1A_IW_GRDH_1SDV_20160701T155827_20160701T155852_011957_0126F0_E543')
 
-test = ee.Image('USGS/SRTMGL1_003')
 # Get a download URL for an image.
 
-study_area = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "MINX": 804123.2211340084,
-        "MINY": 7343073.665317697,
-        "MAXX": 864410.690564305,
-        "MAXY": 7410611.773716191,
-        "CNTX": 834266.9558491567,
-        "CNTY": 7376842.719516944,
-        "AREA": 4071701645.454233,
-        "PERIM": 255651.15565758012,
-        "HEIGHT": 67538.10839849338,
-        "WIDTH": 60287.46943029668
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
+aoi = [
           [
             [
               21.727211420427153,
@@ -50,26 +35,28 @@ study_area = {
             ]
           ]
         ]
-      }
-    }
-  ]
-}
 
-geom = ee.Geometry(study_area)
-#%%
-import ipygee as ui
+#### sentinel 1 / 2 images have bands at different float values (16/32/64) ###
+### these bands must either be removed or converted in order to export successfully ###
 
-Map = ui.Map()
+my_image = my_image.toUint16()
 
-Map.show()
+my_geometry = ee.Geometry.Polygon(aoi)
 
 
+### exports to google drive associated with google account used to log in ###
 
+task = ee.batch.Export.image.toDrive(image=my_image,  # an ee.Image object.
+                                     region=my_geometry,  # an ee.Geometry object.
+                                     description='mock_export',
+                                     folder='export_test',
+                                     fileNamePrefix='mock_export',
+                                     scale=1000,
+                                     crs='EPSG:4326')
 
-
-
-
-
+task.start()
 # %%
-Map.show()
-# %%
+task.status()
+
+
+
