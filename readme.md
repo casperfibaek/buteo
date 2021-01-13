@@ -36,8 +36,8 @@ The system is under active development and is not ready for public release. It i
   ## Anaconda
   * Get the newest link @ https://www.anaconda.com/distribution/ 
   * cd /tmp
-  * curl -O https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh
-  * sudo bash Anaconda3-2019.10-Linux-x86_64.sh
+  * curl -O https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_64.sh
+  * bash Anaconda3-2020.11-Linux-x86_64.sh
   * source ~/.bashrc
   * cd ~
   * sudo chown cfi -R ./*
@@ -54,10 +54,6 @@ The system is under active development and is not ready for public release. It i
   * pip install sentinelsat
 
   * add: OTB_MAX_RAM_HINT=24000 and GDAL_CACHEMAX=16000 to ~./bashrc with appropriate ram limits.
-
-
-
-
 
   ## Snappy
   * cd ~
