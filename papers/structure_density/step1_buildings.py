@@ -1,31 +1,38 @@
+
 import sys; sys.path.append('../../lib/')
 import sqlite3
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn import preprocessing
+from sklearn.preprocessing import MinMaxScaler
 import ml_utils
-
 
 import tensorflow as tf
 import tensorflow_addons as tfa
 import tensorflow_probability as tfp
 from tensorflow.keras import Model
-from tensorflow.keras.layers import Dense, Dropout, Input
+from tensorflow.keras.layers import Dense, Input
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-folder = "C:/Users/caspe/Desktop/Paper_2_StruturalDensity/building_analysis/"
+folder = "C:/Users/caspe/Desktop/paper2_revised/buildings_sync/"
 
-db_path = folder + "buildings.sqlite" 
-db_cnx = sqlite3.connect(db_path)
+in_sync_path = folder + "buildings_in_sync.sqlite"
+out_of_sync_path = folder + "buildings_out_of_sync.sqlite"
 
-df = pd.read_sql_query("SELECT fid, area, perimeter, ipq, vol_sum, hot_mean, sync FROM 'buildings' WHERE area > 10 and vol_sum > 25;", db_cnx)
-df["area_norm"] = (df["area"] - df["area"].min()) / (df["area"].max() - df["area"].min())
-df["peri_norm"] = (df["perimeter"] - df["perimeter"].min()) / (df["perimeter"].max() - df["perimeter"].min())
-df["ipq_norm"] = (df["ipq"] - df["ipq"].min()) / (df["ipq"].max() - df["ipq"].min())
+in_sync_cnx = sqlite3.connect(in_sync_path)
+out_of_sync_cnx = sqlite3.connect(out_of_sync_path)
+
+df_in_sync = pd.read_sql_query("SELECT * FROM 'buildings_in_sync';", in_sync_cnx)
+df_out_of_sync = pd.read_sql_query("SELECT * FROM 'buildings_out_of_sync';", out_of_sync_cnx)
+
+scaler = MinMaxScaler()
+in_scaled = scaler.fit_transform(df_in_sync[['area', 'perimeter', 'ipq']])
+out_scaled = scaler.fit_transform(df_out_of_sync[['area', 'perimeter', 'ipq']])
+
+import pdb; pdb.set_trace();
 
 training = df[df["sync"] == 1]
 target_base = df[df["sync"] == 0]

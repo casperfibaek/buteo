@@ -1,16 +1,14 @@
-import sys; sys.path.append('..')
-import numpy as np
-import geopandas as gpd
-from time import time
-from glob import glob
-from pathlib import Path
+import sys; sys.path.append('c:/Users/caspe/desktop/yellow')
 from lib.raster_io import raster_to_array, array_to_raster
-from lib.stats_filters import fast_sum_filter, highest_filter
+from lib.stats_filters import mad_std_filter
 
-phase4_folder = '/mnt/c/users/caspe/desktop/Analysis/'
+phase4_folder = 'c:/Users/caspe/desktop/Paper_2_StruturalDensity/'
 
-ref_path = phase4_folder + 'Data/s2_b04_10m_dry.tif'
+ref_path = phase4_folder + 'b08_spring.tif'
 ref = raster_to_array(ref_path)
+
+filtered = mad_std_filter(ref, 5)
+array_to_raster(filtered, phase4_folder + 'b08_spring_madstd.tif', ref_path)
 
 # path = phase4_folder + 'Phase4/urban_raw_masked.tif'
 # arr = raster_to_array(path).astype('float32')
