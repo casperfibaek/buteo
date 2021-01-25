@@ -3,7 +3,7 @@ from distutils.extension import Extension
 from Cython.Build import cythonize
 import os
 
-# python setup.py build_ext --inplace
+# python compile_cython.py build_ext --inplace
 # cython -a filters.pyx
 
 if os.name == 'nt':  # Windows
@@ -14,14 +14,12 @@ if os.name == 'nt':  # Windows
                                 extra_link_args=['/openmp']
     )))))
 
-
     setup(ext_modules=cythonize(cythonize((Extension(
                                 "stats_global",
                                 sources=["stats_global.pyx"],
                                 extra_compile_args=["/O2", "/fp:fast", "/openmp"],
                                 extra_link_args=['/openmp']
     )))))
-
 
     setup(ext_modules=cythonize(cythonize((Extension(
                                 "stats_local_no_kernel",

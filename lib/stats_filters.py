@@ -1,7 +1,7 @@
 import numpy as np
+import sys; sys.path.append('c:/Users/caspe/desktop/yellow')
 import scipy.signal
-from skimage.filters.rank import majority
-from lib.stats_local import kernel_filter, fast_sum, mode_array, feather_s2_array
+from lib.stats_local import kernel_filter, mode_array, feather_s2_array
 from lib.stats_local_no_kernel import (
     truncate_array,
     threshold_array,

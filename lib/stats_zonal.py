@@ -1,10 +1,9 @@
-import os
 import numpy as np
+import sys; sys.path.append('c:/Users/caspe/desktop/yellow')
 from osgeo import ogr, gdal, osr
-from lib.raster_io import raster_to_array, raster_to_memory
+from lib.raster_io import raster_to_array
 from lib.stats_global import enumerate_stats, global_statistics
 from lib.utils_core import progress
-from pathlib import Path
 
 
 def calc_ipq(area, perimeter):
@@ -323,7 +322,7 @@ def calc_zonal(in_vector, in_rasters=[], prefixes=[], stats=['mean', 'med', 'std
                     field_name = f'{prefixes[raster_index]}{stat}'
                     vector_feature.SetField(field_name, None)
             else:
-                raster_data_masked = np.ma.masked_array(cropped_raster, mask=rasterized_features[n]).compressed()
+                raster_data_masked = np.ma.masked_array(cropped_raster, mask=rasterized_features[n], dtype='double').compressed()
                 zonal_stats = global_statistics(raster_data_masked, translated_stats=stats_translated)
                 nodata = np.isnan(zonal_stats).any()
 
