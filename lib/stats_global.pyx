@@ -247,11 +247,6 @@ def global_statistics(double [:] arr, translated_stats=[5, 14, 7], stats=None):
   cdef int arr_length = len(arr)
   cdef int stats_length = len(translated_stats) if stats == None else len(stats)
 
-  usearr = arr
-
-  if arr.dtype != 'double':
-    usearr = arr.astype('double')
-
   result = np.empty(stats_length, dtype=np.double)
 
   cdef int[:] stats_view
@@ -266,7 +261,7 @@ def global_statistics(double [:] arr, translated_stats=[5, 14, 7], stats=None):
 
   cdef double[:] result_view = result
 
-  _calc_stats(usearr, arr_length, stats_view, stats_length, result_view)
+  _calc_stats(arr, arr_length, stats_view, stats_length, result_view)
 
   return result
 

@@ -1,9 +1,12 @@
-import sys; sys.path.append('c:/Users/caspe/desktop/yellow')
+import pyximport
+pyximport.install()
+
+import sys; sys.path.append('/mnt/c/users/caspe/desktop/yellow/')
 import os
 from glob import glob
 from lib.stats_zonal import calc_zonal
 
-folder = 'C:/Users/caspe/Desktop/Paper_2_StructuralVolume/'
+folder = '/mnt/c/users/caspe/Desktop/Paper_2_StructuralVolume/'
 rasters = glob(folder + '*.tif')
 prefixes = []
 

@@ -1,5 +1,5 @@
 import numpy as np
-import sys; sys.path.append('c:/Users/caspe/desktop/yellow')
+import sys; sys.path.append('/mnt/c/users/caspe/desktop/yellow/lib/')
 from osgeo import ogr, gdal, osr
 from lib.raster_io import raster_to_array
 from lib.stats_global import enumerate_stats, global_statistics
