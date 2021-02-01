@@ -1,0 +1,25 @@
+Analysis: bsac_bsdc_s2
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                  142.804
+    Median Absolute Error (MeAE):                 6.595
+    Median Absolute Percentage Error (MeAPE):     0.715
+  Z Mean Absolute Error (MAE):                  540.854
+  Z Median Absolute Error (MeAE):               307.180
+  Z Median Absolute Percentage Error (MeAPE):    83.624
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                  159.116
+    Median Absolute Error (MeAE):                18.527
+    Median Absolute Percentage Error (MeAPE):     1.843
+  Z Mean Absolute Error (MAE):                  493.258
+  Z Median Absolute Error (MeAE):               306.038
+  Z Median Absolute Percentage Error (MeAPE):    72.428
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                  395.987
+    Median Absolute Error (MeAE):               137.206
+    Median Absolute Percentage Error (MeAPE):     6.112
+  Z Mean Absolute Error (MAE):                  786.817
+  Z Median Absolute Error (MeAE):               503.235
+  Z Median Absolute Percentage Error (MeAPE):    42.519

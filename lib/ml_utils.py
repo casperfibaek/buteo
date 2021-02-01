@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 import numpy as np
 
+# Tensorflow
+import tensorflow as tf
+import tensorflow_probability as tfp
 
 def y_class(s):
     if s == "fid":
@@ -28,6 +31,30 @@ def count_freq(arr):
     ii = np.nonzero(yy)[0]
     return np.vstack((ii, yy[ii])).T
 
+# Metrics for testing model accuracy
+def median_absolute_error(y_actual, y_pred):
+    return tfp.stats.percentile(tf.math.abs(y_actual - y_pred), 50.0)
+
+def median_absolute_percentage_error(y_actual, y_pred):
+    return tfp.stats.percentile(
+        tf.divide(
+            tf.abs(tf.subtract(y_actual, y_pred)), (y_actual + 1e-10)
+        ) * 100
+    , 50.0)
+
+# Printing visuals
+def pad(s, dl, dr):
+    split = s.split('.')
+    left = split[0]
+    right = split[1]
+
+    if len(left) < dl:
+        left = ((dl - len(left)) * ' ') + left
+    
+    if len(right) < dr:
+        right = right + ((dr - len(right)) * '0')
+    
+    return left + '.' + right
 
 # https://stackoverflow.com/a/44233061/8564588
 def minority_class_mask(arr, minority):

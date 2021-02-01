@@ -351,7 +351,6 @@ def extract_patches(
     clip_vector = None
     clip_layer = None
     out_grid = None
-    out_grid_layer = None
 
     if verbose == 1:
         print("Writing numpy array to disc..")
@@ -361,7 +360,7 @@ def extract_patches(
 
 
 if __name__ == "__main__":
-    folder = "C:\\Users\\caspe\\Desktop\\Paper_2_StruturalDensity\\patch_extraction\\"
+    folder = "C:/Users/caspe/Desktop/Paper_2_StructuralVolume/"
     ref = folder + "b04.tif"
     # grid = folder + "grid_160m.gpkg"
     geom = folder + "processed\\b4_grid_16.gpkg"

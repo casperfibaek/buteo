@@ -6,7 +6,6 @@ from glob import glob
 import os
 
 from sen1mosaic.preprocess import processFiles
-# from sen1mosaic.mosaic import buildComposite
 
 base_folder = "/home/cfi/data/sentinel1_paper2/"
 geom_path = "../geometry/studyArea100mBuffer.gpkg"

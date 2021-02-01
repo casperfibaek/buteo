@@ -1,0 +1,342 @@
+Analysis: nl
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.911
+    Mean Absolute Percentage Error (MAPE):    43563504.000
+    Median Absolute Error (MeAE):                 0.106
+    Median Absolute Percentage Error (MeAPE):     1.200
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    2.644
+    Mean Absolute Percentage Error (MAPE):    98781256.000
+    Median Absolute Error (MeAE):                 0.505
+    Median Absolute Percentage Error (MeAPE): 1054533632.000
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   18.931
+    Mean Absolute Percentage Error (MAPE):       39.312
+    Median Absolute Error (MeAE):                 5.414
+    Median Absolute Percentage Error (MeAPE):    27.741
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   7.495 (    8.117 stdev)
+    Mean Absolute Percentage Error (MAPE):   47448266.437 (40420710.261 stdev)
+    Median Absolute Error (MeAE):                2.008 (    2.414 stdev)
+    Median Absolute Percentage Error (MAPE): 351511220.314 (497111914.629 stdev)
+
+Analysis: s2
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.749
+    Mean Absolute Percentage Error (MAPE):    73117600.000
+    Median Absolute Error (MeAE):                 0.058
+    Median Absolute Percentage Error (MeAPE):     0.654
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    1.802
+    Mean Absolute Percentage Error (MAPE):    67721608.000
+    Median Absolute Error (MeAE):                 0.188
+    Median Absolute Percentage Error (MeAPE):     1.609
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   13.701
+    Mean Absolute Percentage Error (MAPE):    111500632.000
+    Median Absolute Error (MeAE):                 2.714
+    Median Absolute Percentage Error (MeAPE):    13.680
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   5.417 (    5.873 stdev)
+    Mean Absolute Percentage Error (MAPE):   84113280.000 (19490672.463 stdev)
+    Median Absolute Error (MeAE):                0.986 (    1.222 stdev)
+    Median Absolute Percentage Error (MAPE):     5.315 (    5.928 stdev)
+
+Analysis: s2_notex
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.922
+    Mean Absolute Percentage Error (MAPE):    97471336.000
+    Median Absolute Error (MeAE):                 0.075
+    Median Absolute Percentage Error (MeAPE):     0.839
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    2.394
+    Mean Absolute Percentage Error (MAPE):    82591000.000
+    Median Absolute Error (MeAE):                 0.335
+    Median Absolute Percentage Error (MeAPE):     2.713
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   17.150
+    Mean Absolute Percentage Error (MAPE):    101138440.000
+    Median Absolute Error (MeAE):                 4.363
+    Median Absolute Percentage Error (MeAPE):    21.971
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   6.822 (    7.327 stdev)
+    Mean Absolute Percentage Error (MAPE):   93733592.000 (8019972.165 stdev)
+    Median Absolute Error (MeAE):                1.591 (    1.963 stdev)
+    Median Absolute Percentage Error (MAPE):     8.508 (    9.551 stdev)
+
+Analysis: bsa
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.915
+    Mean Absolute Percentage Error (MAPE):    65367588.000
+    Median Absolute Error (MeAE):                 0.115
+    Median Absolute Percentage Error (MeAPE):     1.218
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    2.655
+    Mean Absolute Percentage Error (MAPE):    82244840.000
+    Median Absolute Error (MeAE):                 0.410
+    Median Absolute Percentage Error (MeAPE):     3.826
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   18.484
+    Mean Absolute Percentage Error (MAPE):    92104632.000
+    Median Absolute Error (MeAE):                 5.136
+    Median Absolute Percentage Error (MeAPE):    26.713
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   7.351 (    7.904 stdev)
+    Mean Absolute Percentage Error (MAPE):   79905686.667 (11039961.027 stdev)
+    Median Absolute Error (MeAE):                1.887 (    2.301 stdev)
+    Median Absolute Percentage Error (MAPE):    10.586 (   11.453 stdev)
+
+Analysis: bsd
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.926
+    Mean Absolute Percentage Error (MAPE):    61655320.000
+    Median Absolute Error (MeAE):                 0.118
+    Median Absolute Percentage Error (MeAPE):     1.351
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    2.675
+    Mean Absolute Percentage Error (MAPE):    41489408.000
+    Median Absolute Error (MeAE):                 0.413
+    Median Absolute Percentage Error (MeAPE):     3.601
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   18.931
+    Mean Absolute Percentage Error (MAPE):       39.312
+    Median Absolute Error (MeAE):                 5.414
+    Median Absolute Percentage Error (MeAPE):    27.741
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   7.511 (    8.107 stdev)
+    Mean Absolute Percentage Error (MAPE):   34381589.104 (25667544.049 stdev)
+    Median Absolute Error (MeAE):                1.982 (    2.430 stdev)
+    Median Absolute Percentage Error (MAPE):    10.898 (   11.945 stdev)
+
+Analysis: bsa_bsd
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.916
+    Mean Absolute Percentage Error (MAPE):    87220712.000
+    Median Absolute Error (MeAE):                 0.108
+    Median Absolute Percentage Error (MeAPE):     1.166
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    2.628
+    Mean Absolute Percentage Error (MAPE):    66904932.000
+    Median Absolute Error (MeAE):                 0.403
+    Median Absolute Percentage Error (MeAPE):     3.778
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   18.400
+    Mean Absolute Percentage Error (MAPE):    94591568.000
+    Median Absolute Error (MeAE):                 5.087
+    Median Absolute Percentage Error (MeAPE):    25.586
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   7.315 (    7.870 stdev)
+    Mean Absolute Percentage Error (MAPE):   82905737.333 (11707596.054 stdev)
+    Median Absolute Error (MeAE):                1.866 (    2.280 stdev)
+    Median Absolute Percentage Error (MAPE):    10.177 (   10.948 stdev)
+
+Analysis: bsac
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.909
+    Mean Absolute Percentage Error (MAPE):    59701060.000
+    Median Absolute Error (MeAE):                 0.108
+    Median Absolute Percentage Error (MeAPE):     1.144
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    2.644
+    Mean Absolute Percentage Error (MAPE):    47482112.000
+    Median Absolute Error (MeAE):                 0.401
+    Median Absolute Percentage Error (MeAPE):     3.648
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   18.321
+    Mean Absolute Percentage Error (MAPE):    75616904.000
+    Median Absolute Error (MeAE):                 5.043
+    Median Absolute Percentage Error (MeAPE):    25.053
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   7.291 (    7.831 stdev)
+    Mean Absolute Percentage Error (MAPE):   60933358.667 (11518985.784 stdev)
+    Median Absolute Error (MeAE):                1.851 (    2.261 stdev)
+    Median Absolute Percentage Error (MAPE):     9.948 (   10.729 stdev)
+
+Analysis: bsdc
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.920
+    Mean Absolute Percentage Error (MAPE):    56275768.000
+    Median Absolute Error (MeAE):                 0.102
+    Median Absolute Percentage Error (MeAPE):     1.153
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    2.663
+    Mean Absolute Percentage Error (MAPE):    39458432.000
+    Median Absolute Error (MeAE):                 0.412
+    Median Absolute Percentage Error (MeAPE):     3.763
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   18.520
+    Mean Absolute Percentage Error (MAPE):    51153904.000
+    Median Absolute Error (MeAE):                 5.166
+    Median Absolute Percentage Error (MeAPE):    26.000
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   7.367 (    7.918 stdev)
+    Mean Absolute Percentage Error (MAPE):   48962701.333 (7038310.611 stdev)
+    Median Absolute Error (MeAE):                1.893 (    2.317 stdev)
+    Median Absolute Percentage Error (MAPE):    10.305 (   11.149 stdev)
+
+Analysis: bsac_bsdc
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.901
+    Mean Absolute Percentage Error (MAPE):    67364280.000
+    Median Absolute Error (MeAE):                 0.094
+    Median Absolute Percentage Error (MeAPE):     1.060
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    2.596
+    Mean Absolute Percentage Error (MAPE):    51409356.000
+    Median Absolute Error (MeAE):                 0.396
+    Median Absolute Percentage Error (MeAPE):     3.538
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   18.125
+    Mean Absolute Percentage Error (MAPE):    81921016.000
+    Median Absolute Error (MeAE):                 5.025
+    Median Absolute Percentage Error (MeAPE):    24.461
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   7.207 (    7.751 stdev)
+    Mean Absolute Percentage Error (MAPE):   66898217.333 (12460691.789 stdev)
+    Median Absolute Error (MeAE):                1.838 (    2.257 stdev)
+    Median Absolute Percentage Error (MAPE):     9.686 (   10.496 stdev)
+
+Analysis: bsac_s2
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.726
+    Mean Absolute Percentage Error (MAPE):    39495224.000
+    Median Absolute Error (MeAE):                 0.066
+    Median Absolute Percentage Error (MeAPE):     0.579
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    1.762
+    Mean Absolute Percentage Error (MAPE):    28692790.000
+    Median Absolute Error (MeAE):                 0.200
+    Median Absolute Percentage Error (MeAPE):     1.425
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   14.059
+    Mean Absolute Percentage Error (MAPE):    77050728.000
+    Median Absolute Error (MeAE):                 2.841
+    Median Absolute Percentage Error (MeAPE):    14.945
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   5.516 (    6.056 stdev)
+    Mean Absolute Percentage Error (MAPE):   48412914.000 (20724646.167 stdev)
+    Median Absolute Error (MeAE):                1.035 (    1.278 stdev)
+    Median Absolute Percentage Error (MAPE):     5.650 (    6.582 stdev)
+
+Analysis: bsa_bsd_s2
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.728
+    Mean Absolute Percentage Error (MAPE):    60242808.000
+    Median Absolute Error (MeAE):                 0.069
+    Median Absolute Percentage Error (MeAPE):     0.624
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    2.076
+    Mean Absolute Percentage Error (MAPE):    20871976.000
+    Median Absolute Error (MeAE):                 0.283
+    Median Absolute Percentage Error (MeAPE):     2.152
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   14.235
+    Mean Absolute Percentage Error (MAPE):    79454088.000
+    Median Absolute Error (MeAE):                 3.026
+    Median Absolute Percentage Error (MeAPE):    14.617
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   5.680 (    6.074 stdev)
+    Mean Absolute Percentage Error (MAPE):   53522957.333 (24383508.858 stdev)
+    Median Absolute Error (MeAE):                1.126 (    1.346 stdev)
+    Median Absolute Percentage Error (MAPE):     5.798 (    6.268 stdev)
+
+Analysis: bsac_bsdc_s2
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.703
+    Mean Absolute Percentage Error (MAPE):    26348670.000
+    Median Absolute Error (MeAE):                 0.058
+    Median Absolute Percentage Error (MeAPE):     0.545
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    1.963
+    Mean Absolute Percentage Error (MAPE):    17900126.000
+    Median Absolute Error (MeAE):                 0.238
+    Median Absolute Percentage Error (MeAPE):     1.956
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   13.631
+    Mean Absolute Percentage Error (MAPE):    66186508.000
+    Median Absolute Error (MeAE):                 2.669
+    Median Absolute Percentage Error (MeAPE):    13.417
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   5.433 (    5.820 stdev)
+    Mean Absolute Percentage Error (MAPE):   36811768.000 (21055497.880 stdev)
+    Median Absolute Error (MeAE):                0.988 (    1.191 stdev)
+    Median Absolute Percentage Error (MAPE):     5.306 (    5.764 stdev)
+
+Analysis: bsac_bsdc_s2_nl
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                    0.684
+    Mean Absolute Percentage Error (MAPE):    44733212.000
+    Median Absolute Error (MeAE):                 0.061
+    Median Absolute Percentage Error (MeAPE):     0.485
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                    1.735
+    Mean Absolute Percentage Error (MAPE):    51691816.000
+    Median Absolute Error (MeAE):                 0.212
+    Median Absolute Percentage Error (MeAPE):     1.740
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                   13.062
+    Mean Absolute Percentage Error (MAPE):    126232288.000
+    Median Absolute Error (MeAE):                 2.406
+    Median Absolute Percentage Error (MeAPE):    12.665
+
+    Combined Score:
+    Mean Absolute Error (MAE):                   5.160 (    5.604 stdev)
+    Mean Absolute Percentage Error (MAPE):   74219105.333 (36888425.653 stdev)
+    Median Absolute Error (MeAE):                0.893 (    1.071 stdev)
+    Median Absolute Percentage Error (MAPE):     4.963 (    5.470 stdev)
+
+--Return--
+> c:\users\caspe\desktop\yellow\papers\structure_density\step3_summary_statistics.py(237)<module>()->None
+-> import pdb; pdb.set_trace()
+(Pdb) 
