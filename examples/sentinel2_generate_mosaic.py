@@ -2,11 +2,9 @@ import sys; sys.path.append('..'); sys.path.append('../lib/')
 
 import os
 from time import time
-import geopandas as gpd
 from fnmatch import fnmatch
 from glob import glob
 import shutil
-from pyproj import CRS
 from sen2mosaic.download import decompress
 from mosaic_tool import mosaic_tile
 

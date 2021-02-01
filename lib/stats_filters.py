@@ -1,14 +1,14 @@
 import numpy as np
 import sys; sys.path.append('c:/Users/caspe/desktop/yellow')
 import scipy.signal
-from lib.stats_local import kernel_filter, mode_array, feather_s2_array
-from lib.stats_local_no_kernel import (
+from stats_local import kernel_filter, mode_array, feather_s2_array
+from stats_local_no_kernel import (
     truncate_array,
     threshold_array,
     cdef_from_z,
     select_highest,
 )
-from lib.stats_kernel import create_kernel
+from stats_kernel import create_kernel
 
 def sigma_to_db(arr):
     return 10 * np.log10(np.abs(arr))

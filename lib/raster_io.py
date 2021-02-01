@@ -5,13 +5,13 @@ import geojson
 from osgeo import gdal, osr
 from shapely.geometry import shape
 
-from lib.utils_core import (
+from utils_core import (
     numpy_to_gdal_datatype,
     numpy_fill_values,
     datatype_is_float,
     progress_callback_quiet,
 )
-from lib.raster_clip import clip_raster
+from raster_clip import clip_raster
 
 
 def array_to_raster(
