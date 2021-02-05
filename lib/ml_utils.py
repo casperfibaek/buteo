@@ -65,27 +65,41 @@ def minority_class_mask(arr, minority):
         ]
     )
 
+def create_submask(arr, amount):
+    z = np.zeros(len(arr) - int(amount), "bool")
+    m = np.ones(amount, "bool")
+    a = np.concatenate([z, m])
+    np.random.shuffle(a)
+
+    return a
 
 def get_shape(numpy_arr):
     return (numpy_arr.shape[1], numpy_arr.shape[2], numpy_arr.shape[3])
 
 
-def add_rotations(X, k=4):
+def add_rotations(X, k=4, axes=(1, 2)):
     if k == 1:
         return X
     elif k == 2:
-        return np.concatenate([X, np.rot90(X, k=2, axes=(1, 2)),])
+        return np.concatenate([
+            X,
+            np.rot90(X, k=2, axes=axes),
+        ])
     elif k == 3:
         return np.concatenate(
-            [X, np.rot90(X, k=1, axes=(1, 2)), np.rot90(X, k=2, axes=(1, 2)),]
+            [
+                X,
+                np.rot90(X, k=1, axes=axes),
+                np.rot90(X, k=2, axes=axes),
+            ]
         )
     else:
         return np.concatenate(
             [
-                np.rot90(X, k=1, axes=(1, 2)),
-                np.rot90(X, k=2, axes=(1, 2)),
-                np.rot90(X, k=3, axes=(1, 2)),
                 X,
+                np.rot90(X, k=1, axes=axes),
+                np.rot90(X, k=2, axes=axes),
+                np.rot90(X, k=3, axes=axes),
             ]
         )
 

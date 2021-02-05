@@ -5,15 +5,11 @@ import sys
 sys.path.append("..")
 from lib.raster_io import (
     raster_to_array,
-    array_to_raster,
     raster_to_metadata,
     raster_to_memory,
 )
-from lib.raster_clip import clip_raster
 from lib.utils_core import progress
-from math import ceil
 import numpy as np
-import matplotlib.pyplot as plt
 from osgeo import ogr, osr
 import rtree
 import os
@@ -93,6 +89,7 @@ def extract_patches(
     overlaps=[],
     output_geom=None,
     clip_to_vector=None,
+    fill_value=None,
     epsilon=1e-7,
     verbose=1,
     testing=False,
@@ -354,31 +351,12 @@ def extract_patches(
 
     if verbose == 1:
         print("Writing numpy array to disc..")
-    np.save(output_numpy, blocks[mask])
+    
+    output = blocks[mask]
+
+    if isinstance(output, np.ma.MaskedArray):
+        np.save(output_numpy, output.filled(fill_value=fill_value))
+    else:
+        np.save(output_numpy, output)
 
     return 1
-
-
-if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/Paper_2_StructuralVolume/"
-    ref = folder + "b04.tif"
-    # grid = folder + "grid_160m.gpkg"
-    geom = folder + "processed\\b4_grid_16.gpkg"
-    numpy_arr = folder + "processed\\b4_16.npy"
-
-    extract_patches(
-        ref,
-        numpy_arr,
-        size=16,
-        overlaps=[(8, 0), (8, 8), (0, 8)],
-        # overlaps=[
-        #     (24, 24), (24, 0), (0, 24),
-        #     (16, 16), (16, 0), (0, 16),
-        #     (8, 8), (8, 0), (0, 8),
-        # ],
-        output_geom=geom,
-        # clip_to_vector=grid,
-        epsilon=1e-7,
-        testing=True,
-        testing_sample=1000,
-    )

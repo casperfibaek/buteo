@@ -15,7 +15,7 @@ import tensorflow_addons as tfa
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Dense, BatchNormalization, Dropout
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
 
 # Load data
 folder = "C:/Users/caspe/Desktop/Paper_2_StructuralVolume/"
@@ -51,12 +51,19 @@ test_municipalities = [
     'Aarhus',       # Urban
 ]
 
-# target = 'volume'
+target = 'volume'
 # target = 'people'
-target = 'area'
-save_results = False
-split_zero = True
-logfile_name = 'log_area_50.txt'
+# target = 'area'
+save_results = True
+split_zero = False
+logfile_name = 'log_vol_lr1024.txt'
+
+epochs = 100
+initial_learning_rate = 0.01
+end_learning_rate = 0.0001
+
+def lr_time_based_decay(epoch):
+    return initial_learning_rate - (epoch * ((initial_learning_rate - end_learning_rate) / epochs))
 
 # Define model
 def define_model(shape, name):
@@ -65,25 +72,34 @@ def define_model(shape, name):
     model = Dropout(0.2)(model)
     model = BatchNormalization()(model)
     model = Dense(256, activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
-    model = BatchNormalization()(model)
+    # model = BatchNormalization()(model)
     model = Dense(64, activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
+    # model = BatchNormalization()(model)
     model = Dense(16, activation=tfa.activations.mish, kernel_initializer="he_normal")(model)
-
+    # model = BatchNormalization()(model)
     predictions = Dense(1, activation='relu')(model)
 
     return Model(inputs=[model_input], outputs=predictions)
 
 # Define Optimizer
+# def define_optimizer():
+#     return tfa.optimizers.Lookahead(
+#         Adam(
+#             learning_rate=tfa.optimizers.TriangularCyclicalLearningRate(
+#                 initial_learning_rate=1e-5,
+#                 maximal_learning_rate=1e-2,
+#                 step_size=9,
+#                 scale_mode='cycle',
+#                 name='TriangularCyclicalLearningRate',
+#             ),
+#             name="Adam",
+#         )
+#     )
+
 def define_optimizer():
     return tfa.optimizers.Lookahead(
         Adam(
-            learning_rate=tfa.optimizers.TriangularCyclicalLearningRate(
-                initial_learning_rate=1e-5,
-                maximal_learning_rate=1e-2,
-                step_size=9,
-                scale_mode='cycle',
-                name='TriangularCyclicalLearningRate',
-            ),
+            learning_rate=initial_learning_rate,
             name="Adam",
         )
     )
@@ -120,7 +136,7 @@ for analysis in analysis_to_run:
         if split_zero:
             # Split dataset into two. One with all data, one with most zero tiles removed
             nonzero_tiles = len(train[train[target] != 0])
-            ten_percent = train[train[target] == 0].sample(int(nonzero_tiles * 0.50))
+            ten_percent = train[train[target] == 0].sample(int(nonzero_tiles * 0.25))
             train = train[train[target] != 0].append(ten_percent)
 
         muni_code = str(int(test['muni_code'].iloc[0]))
@@ -157,11 +173,12 @@ for analysis in analysis_to_run:
         model.fit(
             x=X_train,
             y=y_train,
-            epochs=100,
-            verbose=1,
-            batch_size=2048,
+            epochs=epochs,
+            verbose=2,
+            batch_size=1024,
             validation_split=0.2,
             callbacks=[
+                LearningRateScheduler(lr_time_based_decay, verbose=1),
                 EarlyStopping(
                     monitor="val_loss",
                     patience=9,
@@ -174,8 +191,8 @@ for analysis in analysis_to_run:
         zero_mask = y_test > 0
 
         # Evaluate model
-        loss, mae, mape, meae, meape = model.evaluate(X_test, y_test, verbose=1)
-        loss, z_mae, z_mape, z_meae, z_meape = model.evaluate(X_test[zero_mask], y_test[zero_mask], verbose=1)
+        loss, mae, mape, meae, meape = model.evaluate(X_test, y_test, verbose=2)
+        loss, z_mae, z_mape, z_meae, z_meape = model.evaluate(X_test[zero_mask], y_test[zero_mask], verbose=2)
 
         scores[muni] = {
             "mean_absolute_error": mae,
@@ -193,7 +210,7 @@ for analysis in analysis_to_run:
             pred = model.predict(X_test)
             test[f"pred_{analysis_name}_{muni_code}"] = pred
 
-            engine = create_engine(f"sqlite:///{folder}results_area/grid_{analysis_name}_{muni_code}.sqlite", echo=True)
+            engine = create_engine(f"sqlite:///{folder}results_final/grid_{analysis_name}_{muni_code}.sqlite", echo=True)
             sqlite_connection = engine.connect()
 
             test.to_sql(f"grid_{analysis_name}_{muni_code}", sqlite_connection, if_exists='fail')
