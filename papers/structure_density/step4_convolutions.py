@@ -8,9 +8,10 @@
 yellow_follow = 'C:/Users/caspe/Desktop/yellow/lib/'
 
 import sys; sys.path.append(yellow_follow) 
-import sqlite3
 import pandas as pd
 import ml_utils
+import math
+import time
 import numpy as np
 import os
 
@@ -20,23 +21,19 @@ os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 from sqlalchemy import create_engine
 
 # Tensorflow
-import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Dense, BatchNormalization, Dropout, Dropout, Conv2D, MaxPooling2D, GlobalAveragePooling2D, Flatten, Conv3D, MaxPooling3D
+from tensorflow.keras.layers import Dense, BatchNormalization, Dropout, Dropout, Conv2D, MaxPooling2D, Flatten
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
+from tensorflow.keras.constraints import max_norm
 
 folder = "C:/Users/caspe/Desktop/Paper_2_StructuralVolume/"
 
-epochs = 50
-initial_learning_rate = 0.001
-end_learning_rate = 0.00001
-
 target_munis = [
     665, # Lemvig
-    # 740, # Silkeborg
-    # 751, # Aarhus
+    740, # Silkeborg
+    751, # Aarhus
 ]
 
 targets = [
@@ -45,170 +42,175 @@ targets = [
     # 5, # People
 ]
 
+images = np.load(folder + "all_images.npy").transpose(0, 2, 3, 1) # channel-last format of tensorflow
+truth = np.load(folder + "images_ground_truth.npy")
+
 for target_muni in target_munis:
-  for target in targets:
+    for target in targets:
 
-    rotation = True
-    rotation_count = 4
+        before = time.perf_counter()
+        rotation = True
+        rotation_count = 4
 
-    images = np.load(folder + "all_images.npy").transpose(0, 2, 3, 1) # channel-last format of tensorflow
-    truth = np.load(folder + "images_ground_truth.npy")
+        # Select municipality
+        test_muni_mask = (truth[:, 2] == target_muni)
+        train_muni_mask = (truth[:, 2] != target_muni)
 
-    # Select municipality
-    test_muni_mask = (truth[:, 2] == target_muni)
-    train_muni_mask = (truth[:, 2] != target_muni)
+        X_test = images[test_muni_mask]
+        y_test = truth[test_muni_mask]
 
-    X_test = images[test_muni_mask]
-    y_test = truth[test_muni_mask]
+        X_train = images[train_muni_mask]
+        y_train = truth[train_muni_mask]
 
-    X_train = images[train_muni_mask]
-    y_train = truth[train_muni_mask]
+        all_layers = [
+            # { "name": "s2", "layers": [0, 2] },
+            # { "name": "bsa", "layers": [4] },
+            # { "name": "bsd", "layers": [5] },
+            # { "name": "bsa_bsd", "layers": [4, 5] },
+            # { "name": "bsac", "layers": [4, 6] },
+            # { "name": "bsdc", "layers": [5, 7] },
+            # { "name": "bsac_bsdc", "layers": [4, 5, 6, 7] },
+            # { "name": "bsac_s2", "layers": [0, 2, 4, 6] },
+            # { "name": "bsa_bsd_s2", "layers": [0, 2, 4, 5 },
+            { "name": "bsac_bsdc_s2", "layers": [0, 2, 4, 5, 6, 7] },
+        ]
 
-    all_layers = [
-        # { "name": "s2", "layers": [0, 2] },
-        # { "name": "bsa", "layers": [4] },
-        # { "name": "bsd", "layers": [5] },
-        # { "name": "bsa_bsd", "layers": [4, 5] },
-        # { "name": "bsac", "layers": [4, 6] },
-        # { "name": "bsdc", "layers": [5, 7] },
-        { "name": "bsac_bsdc", "layers": [4, 5, 6, 7] },
-        # { "name": "bsac_s2", "layers": [0, 2, 4, 6] },
-        # { "name": "bsa_bsd_s2", "layers": [0, 2, 4, 5 },
-        # { "name": "bsac_bsdc_s2", "layers": [0, 2, 4, 5, 6, 7] },
-    ]
+        layers = all_layers[0]["layers"]
+        layer_name = all_layers[0]["name"]
 
-    layers = all_layers[0]["layers"]
-    layer_name = all_layers[0]["name"]
+        # Selected layers
+        X_train = X_train[:, :, :, layers]
+        y_train = y_train[:, target]
 
-    # Selected layers
-    X_train = X_train[:, :, :, layers]
-    y_train = y_train[:, target]
+        X_test = X_test[:, :, :, layers]
+        y_test = y_test[:, target]
 
-    X_test = X_test[:, :, :, layers]
-    y_test = y_test[:, target]
+        # Simple balance dataset (Equal amount 0 to rest)
+        balance_target = y_train > 0
+        frequency = ml_utils.count_freq(balance_target)
+        minority = frequency.min(axis=0)[1]
+        balance_mask = ml_utils.minority_class_mask(balance_target, minority)
 
-    # Simple balance dataset (Equal amount 0 to rest)
-    balance_target = y_train > 0
-    frequency = ml_utils.count_freq(balance_target)
-    minority = frequency.min(axis=0)[1]
-    balance_mask = ml_utils.minority_class_mask(balance_target, minority)
+        X_train = X_train[balance_mask]
+        y_train = y_train[balance_mask]
 
-    X_train = X_train[balance_mask]
-    y_train = y_train[balance_mask]
+        if rotation is True:
+            X_train = ml_utils.add_rotations(X_train, axes=(1,2), k=rotation_count)
+            y_train = np.concatenate([y_train] * rotation_count)
 
-    # train_mask_sub = ml_utils.create_submask(y_train, 100000)
-    # X_train = X_train[train_mask_sub]
-    # y_train = y_train[train_mask_sub]
+        # Shuffle the training dataset
+        shuffle_mask = np.random.permutation(len(y_train))
+        X_train = X_train[shuffle_mask]
+        y_train = y_train[shuffle_mask]
 
-    if rotation is True:
-        X_train = ml_utils.add_rotations(X_train, axes=(2,3), k=rotation_count)
-        y_train = np.concatenate([y_train] * rotation_count)
+        # train_mask_sub = ml_utils.create_submask(y_train, 100000)
+        # X_train = X_train[train_mask_sub]
+        # y_train = y_train[train_mask_sub]
 
-    # Shuffle the training dataset
-    shuffle_mask = np.random.permutation(len(y_train))
-    X_train = X_train[shuffle_mask]
-    y_train = y_train[shuffle_mask]
+        def define_model(shape, name, drop=0.2, activation=tfa.activations.mish, kernel_initializer='normal', maxnorm=4, sizes=[64, 96, 128]):
+            model_input = Input(shape=shape, name=name)
+            model = Conv2D(sizes[0], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model_input)
+            model = BatchNormalization()(model)
 
-    def lr_time_based_decay(epoch):
-        return initial_learning_rate - (epoch * ((initial_learning_rate - end_learning_rate) / epochs))
+            model = Conv2D(sizes[0], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
+            model = BatchNormalization()(model)
 
-    def define_optimizer():
-        return tfa.optimizers.Lookahead(
-            Adam(
-                learning_rate=initial_learning_rate,
+            model = MaxPooling2D(pool_size=(2, 2), padding='same', strides=(2, 2))(model)
+
+            model = Conv2D(sizes[1], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
+            model = BatchNormalization()(model)
+
+            model = Conv2D(sizes[1], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
+            model = BatchNormalization()(model)
+
+            model = MaxPooling2D(pool_size=(2, 2), padding='same', strides=(2, 2))(model)
+
+            model = Conv2D(sizes[2], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
+            model = BatchNormalization()(model)
+
+            model = Conv2D(sizes[2], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
+            model = BatchNormalization()(model)
+
+            model = Flatten()(model)
+            model = Dropout(drop)(model)
+
+            model = Dense(256, activation='relu', kernel_initializer=kernel_initializer)(model)
+            model = BatchNormalization()(model)
+            model = Dropout(drop)(model)
+
+            model = Dense(128, activation='relu', kernel_initializer=kernel_initializer)(model)
+            model = BatchNormalization()(model)
+            model = Dropout(drop)(model)
+
+            predictions = Dense(1, activation='relu')(model)
+
+            return Model(inputs=[model_input], outputs=predictions)
+
+        def step_decay(epoch):
+            initial_lrate = 0.01
+            drop = 0.5
+            epochs_drop = 5
+            lrate = initial_lrate * math.pow(drop, math.floor((1 + epoch) / epochs_drop))
+            return lrate
+
+
+        model = define_model(ml_utils.get_shape(X_train), "conv2")
+
+        model.compile(
+            optimizer=Adam(
+                learning_rate=0.01,
                 name="Adam",
-            )
+            ),
+            loss='log_cosh',
+            metrics=[
+                'mse',
+                'mae',
+                'log_cosh',
+            ],
         )
 
-    def define_model(shape, name):
-        drop = 0.25
-        model_input = Input(shape=shape, name=name)
-        model = Conv2D(64, kernel_size=3, padding='same', activation=tfa.activations.mish, kernel_initializer='he_uniform')(model_input)
-        model = BatchNormalization()(model)
-        model = Conv2D(64, kernel_size=3, padding='same', activation=tfa.activations.mish, kernel_initializer='he_uniform')(model)
-        model = BatchNormalization()(model)
-        model = Dropout(drop)(model)
+        model.fit(
+            x=X_train,
+            y=y_train,
+            epochs=50,
+            verbose=1,
+            batch_size=256,
+            validation_split=0.2,
+            callbacks=[
+                LearningRateScheduler(step_decay),
+                EarlyStopping(
+                    monitor="val_loss",
+                    patience=15,
+                    min_delta=1,
+                    restore_best_weights=True,
+                ),
+            ]
+        )
 
-        model = MaxPooling2D(pool_size=(2, 2), padding='same', strides=(2, 2))(model)
+        model.evaluate(X_test, y_test, verbose=2)
 
-        model = Conv2D(96, kernel_size=3, padding='same', activation=tfa.activations.mish, kernel_initializer='he_uniform')(model)
-        model = BatchNormalization()(model)
-        model = Conv2D(96, kernel_size=3, padding='same', activation=tfa.activations.mish, kernel_initializer='he_uniform')(model)
-        model = BatchNormalization()(model)  
-        model = Dropout(drop)(model)
+        # Evaluate model
+        after = time.perf_counter()
 
-        model = MaxPooling2D(pool_size=(2, 2), padding='same', strides=(2, 2))(model)
+        _loss, mse, mae, log_cosh = model.evaluate(X_test, y_test, verbose=0)
+        print(f"Municipality: {str(target_muni)}")
+        print(f"Mean Square Error:      {round(mse, 3)}")
+        print(f"Mean Absolute Error:    {round(mae, 3)}")
+        print(f"log_cosh:               {round(log_cosh, 3)}")
+        print(f"Processing took {after - before:0.4f} seconds")
+        print("")
 
-        model = Conv2D(128, kernel_size=2, padding='same', activation=tfa.activations.mish, kernel_initializer='he_uniform')(model)
-        model = BatchNormalization()(model)
-        model = Conv2D(128, kernel_size=2, padding='same', activation=tfa.activations.mish, kernel_initializer='he_uniform')(model)
-        model = BatchNormalization()(model)
-        model = Dropout(drop)(model)
+        y_test = truth[test_muni_mask]
+        pred = model.predict(X_test)
 
-        model = Flatten()(model)
+        y_test = pd.DataFrame(truth[test_muni_mask], columns=[["id", "fid", "muni_code", "volume", "area", "people"]])
 
-        model = Dense(256, activation=tfa.activations.mish, kernel_initializer='he_uniform')(model)
-        model = BatchNormalization()(model)
-        model = Dense(128, activation=tfa.activations.mish, kernel_initializer='he_uniform')(model)
-        model = BatchNormalization()(model)
-        model = Dropout(drop)(model)
+        y_test[f"cnn_pred_{str(target)}_{str(target_muni)}"] = pred
 
-        predictions = Dense(1, activation='relu')(model)
+        engine = create_engine(f"sqlite:///./predictions/bsac_bsdc_s2/cnn_pred_{layer_name}_{str(target)}_{str(target_muni)}.sqlite", echo=True)
+        sqlite_connection = engine.connect()
 
-        return Model(inputs=[model_input], outputs=predictions)
-
-    model = define_model(ml_utils.get_shape(X_train), "conv2")
-
-    model.compile(
-        optimizer=define_optimizer(),
-        loss="mean_absolute_error",
-        metrics=[
-            "mean_absolute_error",
-            # "mean_absolute_percentage_error",
-            # ml_utils.median_absolute_error,
-            # ml_utils.median_absolute_percentage_error,
-        ])
-
-    model.fit(
-        x=X_train,
-        y=y_train, # area
-        epochs=epochs,
-        verbose=1,
-        batch_size=384,
-        validation_split=0.2,
-        callbacks=[
-            LearningRateScheduler(lr_time_based_decay, verbose=1),
-            EarlyStopping(
-                monitor="val_loss",
-                patience=9,
-                min_delta=1,
-                restore_best_weights=True,
-            ),
-        ]
-    )
-
-    zero_mask = y_test > 0
-
-    # Evaluate model
-    print("")
-    loss, mae = model.evaluate(X_test, y_test, verbose=2)
-    print("")
-    loss, z_mae = model.evaluate(X_test[zero_mask], y_test[zero_mask], verbose=2)
-    print("")
-
-    model.save(f'./models/cnn_{layer_name}_{str(target_muni)}_{str(target)}.h5', include_optimizer=False)
-
-    y_test = truth[test_muni_mask]
-    pred = model.predict(X_test)
-
-    y_test = pd.DataFrame(truth[test_muni_mask], columns=[["id", "fid", "muni_code", "volume", "area", "people"]])
-
-    y_test[f"cnn_pred_{str(target)}_{str(target_muni)}"] = pred
-
-    engine = create_engine(f"sqlite:///./predictions/bsac_bsdc_v2/cnn_pred_{layer_name}_{str(target)}_{str(target_muni)}.sqlite", echo=True)
-    sqlite_connection = engine.connect()
-
-    y_test.to_sql(f"cnn_pred_{layer_name}_{str(target)}_{str(target_muni)}", sqlite_connection, if_exists='fail')
-    sqlite_connection.close()
+        y_test.to_sql(f"cnn_pred_{layer_name}_{str(target)}_{str(target_muni)}", sqlite_connection, if_exists='fail')
+        sqlite_connection.close()
 
 import pdb; pdb.set_trace()
