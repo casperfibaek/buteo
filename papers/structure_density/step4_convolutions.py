@@ -37,8 +37,8 @@ target_munis = [
 ]
 
 targets = [
-    3, # Volume
-    # 4, # Area
+    # 3, # Volume
+    4, # Area
     # 5, # People
 ]
 

@@ -2,6 +2,7 @@ yellow_follow = 'C:/Users/caspe/Desktop/yellow/lib/'
 import sys; sys.path.append(yellow_follow) 
 
 import os
+import math
 import numpy as np
 import tensorflow as tf
 
@@ -9,7 +10,7 @@ from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import BatchNormalization, Dropout, Dropout, Conv2D
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.constraints import max_norm
-from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
 
 np.set_printoptions(suppress=True)
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
@@ -58,9 +59,16 @@ def define_model(shape, name, activation='relu', kernel_initializer='normal', ma
 
     return Model(inputs=[model_input], outputs=output)
 
-lr = 0.0001
+lr = 0.001
 bs = 512
 epochs = 50
+
+def step_decay(epoch):
+    initial_lrate = lr
+    drop = 0.5
+    epochs_drop = 5
+    lrate = initial_lrate * math.pow(drop, math.floor((1 + epoch) / epochs_drop))
+    return lrate
 
 model = define_model(X_train.shape[1:], "Generative")
 
@@ -85,13 +93,7 @@ model.fit(
     batch_size=bs,
     validation_split=0.2,
     callbacks=[
-        ReduceLROnPlateau(
-            monitor='val_loss',
-            factor=0.2,
-            patience=5,
-            min_delta=0.1,
-            min_lr=0.00001,
-        ),
+        LearningRateScheduler(step_decay),
         EarlyStopping(
             monitor="val_loss",
             patience=10,

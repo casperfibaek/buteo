@@ -7,6 +7,7 @@ from lib.raster_io import (
     raster_to_array,
     raster_to_metadata,
     raster_to_memory,
+    array_to_raster,
 )
 from lib.utils_core import progress
 import numpy as np
@@ -14,6 +15,33 @@ from osgeo import ogr, osr
 import rtree
 import os
 
+def blocks_to_array(blocks, reference, output):
+    metadata = raster_to_metadata(reference)
+    reference_shape = (metadata["height"], metadata["width"])
+    top_left = [metadata["transform"][0], metadata["transform"][3]]
+    pixel_size = [metadata["transform"][1], metadata["transform"][5]]
+    proj = metadata["projection"]
+
+    tiles = blocks.reshape(
+        reference_shape[0] // blocks.shape[1],
+        reference_shape[1] // blocks.shape[2],
+        blocks.shape[1],
+        blocks.shape[2],
+    ).swapaxes(1, 2).reshape(
+        (reference_shape[0] // blocks.shape[1]) * blocks.shape[1],
+        (reference_shape[1] // blocks.shape[2]) * blocks.shape[2],
+    )
+
+    array_to_raster(
+        tiles,
+        reference_raster=array_to_raster(
+            tiles,
+            top_left=top_left,
+            pixel_size=pixel_size,
+            dst_projection=proj,
+        ),
+        out_raster=output,
+    )
 
 # Channel last format
 def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
