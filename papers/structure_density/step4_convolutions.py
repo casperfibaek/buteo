@@ -37,8 +37,8 @@ target_munis = [
 ]
 
 targets = [
-    # 3, # Volume
-    4, # Area
+    3, # Volume
+    # 4, # Area
     # 5, # People
 ]
 
@@ -66,13 +66,13 @@ for target_muni in target_munis:
             # { "name": "s2", "layers": [0, 2] },
             # { "name": "bsa", "layers": [4] },
             # { "name": "bsd", "layers": [5] },
-            # { "name": "bsa_bsd", "layers": [4, 5] },
+            { "name": "bsa_bsd", "layers": [4, 5] },
             # { "name": "bsac", "layers": [4, 6] },
             # { "name": "bsdc", "layers": [5, 7] },
             # { "name": "bsac_bsdc", "layers": [4, 5, 6, 7] },
             # { "name": "bsac_s2", "layers": [0, 2, 4, 6] },
             # { "name": "bsa_bsd_s2", "layers": [0, 2, 4, 5 },
-            { "name": "bsac_bsdc_s2", "layers": [0, 2, 4, 5, 6, 7] },
+            # { "name": "bsac_bsdc_s2", "layers": [0, 2, 4, 5, 6, 7] },
         ]
 
         layers = all_layers[0]["layers"]
@@ -207,7 +207,7 @@ for target_muni in target_munis:
 
         y_test[f"cnn_pred_{str(target)}_{str(target_muni)}"] = pred
 
-        engine = create_engine(f"sqlite:///./predictions/bsac_bsdc_s2/cnn_pred_{layer_name}_{str(target)}_{str(target_muni)}.sqlite", echo=True)
+        engine = create_engine(f"sqlite:///./predictions/bsa_bsd/cnn_pred_{layer_name}_{str(target)}_{str(target_muni)}.sqlite", echo=True)
         sqlite_connection = engine.connect()
 
         y_test.to_sql(f"cnn_pred_{layer_name}_{str(target)}_{str(target_muni)}", sqlite_connection, if_exists='fail')
