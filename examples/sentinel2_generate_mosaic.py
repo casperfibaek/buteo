@@ -6,7 +6,7 @@ from fnmatch import fnmatch
 from glob import glob
 import shutil
 from sen2mosaic.download import decompress
-from mosaic_tool import mosaic_tile
+from mosaic_s2 import mosaic_tile
 
 
 def create_mosaic(s2_files, dst_dir, dst_projection=None):
@@ -54,22 +54,27 @@ def create_mosaic(s2_files, dst_dir, dst_projection=None):
         
         assert zipped == 0 or zipped == len(paths), "Mix of zipped and unzipped files"
 
-        # If files are zipped, unzip to temporary folder
-        if zipped > 0:
-            tmp_folder = os.path.join(dst_dir, "__tmp__")
-            if not os.path.exists(tmp_folder):
-                os.makedirs(tmp_folder)
-            
-            empty = glob(tmp_folder + "/*")
-            for e in empty:
-                os.remove(e)
+        # Check if file already exists
+        if not os.path.isfile(dst_dir + "B02_" + tile + ".tif"):
 
-            for f in paths:
-                decompress(f, tmp_folder)
+            # If files are zipped, unzip to temporary folder
+            if zipped > 0:
+                tmp_folder = os.path.join(dst_dir, "__tmp__")
+                if not os.path.exists(tmp_folder):
+                    os.makedirs(tmp_folder)
+                
+                empty = glob(tmp_folder + "/*")
+                for e in empty:
+                    os.remove(e)
 
-            paths = glob(tmp_folder + "/*")
+                for f in paths:
+                    decompress(f, tmp_folder)
 
-        mosaic_tile(paths, dst_dir, out_name=tile, dst_projection=dst_projection)
+                paths = glob(tmp_folder + "/*")
+
+            mosaic_tile(paths, dst_dir, out_name=tile, dst_projection=dst_projection)
+        else:
+            print("Skipped as file already processed.")
 
         if zipped > 0:
             try:
@@ -83,6 +88,6 @@ def create_mosaic(s2_files, dst_dir, dst_projection=None):
 
 
 if __name__ == "__main__":
-    in_files = "/home/cfi/data/sentinel2_paper2/"
-    out_folder = "/home/cfi/data/sentinel2_paper2_mosaic/"
+    in_files = "C:/Users/caspe/Desktop/sne_mosaic/raw/"
+    out_folder = "C:/Users/caspe/Desktop/sne_mosaic/mosaic/"
     create_mosaic(in_files, out_folder)

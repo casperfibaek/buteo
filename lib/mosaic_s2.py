@@ -405,7 +405,7 @@ def mosaic_tile(
     dst_projection=None,
     feather=True,
     target_quality=100,
-    threshold_change=0.5,
+    threshold_change=1.0,
     threshold_quality=10.0,
     feather_dist=21,
     feather_scl=5,
@@ -428,9 +428,8 @@ def mosaic_tile(
     ), "list_of_SAFE_images is not a list. [path_to_safe_file1, path_to_safe_file2, ...]"
     assert isinstance(out_dir, str), f"out_dir is not a string: {out_dir}"
     assert isinstance(out_name, str), f"out_name is not a string: {out_name}"
-    assert (
-        len(list_of_SAFE_images) > 1
-    ), "list_of_SAFE_images is empty or only a single image."
+    if len(list_of_SAFE_images) <= 1:
+        print("list_of_SAFE_images is empty or only a single image.")
 
     if verbose:
         print("Selecting best image..")

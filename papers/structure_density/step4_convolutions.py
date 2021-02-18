@@ -23,17 +23,18 @@ from sqlalchemy import create_engine
 # Tensorflow
 import tensorflow_addons as tfa
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Dense, BatchNormalization, Dropout, Dropout, Conv2D, MaxPooling2D, Flatten
+from tensorflow.keras.layers import Dense, BatchNormalization, Dropout, Dropout, Conv2D, MaxPooling2D, Flatten, Conv2DTranspose, Add
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
 from tensorflow.keras.constraints import max_norm
+from tensorflow.keras.utils import plot_model
 
 folder = "C:/Users/caspe/Desktop/Paper_2_StructuralVolume/"
 
 target_munis = [
-    665, # Lemvig
+    # 665, # Lemvig
     740, # Silkeborg
-    751, # Aarhus
+    # 751, # Aarhus
 ]
 
 targets = [
@@ -66,13 +67,13 @@ for target_muni in target_munis:
             # { "name": "s2", "layers": [0, 2] },
             # { "name": "bsa", "layers": [4] },
             # { "name": "bsd", "layers": [5] },
-            { "name": "bsa_bsd", "layers": [4, 5] },
+            # { "name": "bsa_bsd", "layers": [4, 5] },
             # { "name": "bsac", "layers": [4, 6] },
             # { "name": "bsdc", "layers": [5, 7] },
             # { "name": "bsac_bsdc", "layers": [4, 5, 6, 7] },
             # { "name": "bsac_s2", "layers": [0, 2, 4, 6] },
             # { "name": "bsa_bsd_s2", "layers": [0, 2, 4, 5 },
-            # { "name": "bsac_bsdc_s2", "layers": [0, 2, 4, 5, 6, 7] },
+            { "name": "bsac_bsdc_s2", "layers": [0, 2, 4, 5, 6, 7] },
         ]
 
         layers = all_layers[0]["layers"]
@@ -113,9 +114,26 @@ for target_muni in target_munis:
             model = BatchNormalization()(model)
 
             model = Conv2D(sizes[0], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
+            model_skip1 = BatchNormalization()(model)
+
+            model = MaxPooling2D(pool_size=(2, 2), padding='same', strides=(2, 2))(model_skip1)
+
+            model = Conv2D(sizes[1], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
             model = BatchNormalization()(model)
 
-            model = MaxPooling2D(pool_size=(2, 2), padding='same', strides=(2, 2))(model)
+            model = Conv2D(sizes[1], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
+            model_skip2 = BatchNormalization()(model)
+
+            model = MaxPooling2D(pool_size=(2, 2), padding='same', strides=(2, 2))(model_skip2)
+
+            model = Conv2D(sizes[2], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
+            model = BatchNormalization()(model)
+
+            model = Conv2D(sizes[2], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
+            model = BatchNormalization()(model)
+
+            model = Conv2DTranspose(sizes[1], kernel_size=3, strides=(2, 2), kernel_initializer=kernel_initializer, activation=activation, padding="same")(model)
+            model = Add()([model_skip2, model])
 
             model = Conv2D(sizes[1], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
             model = BatchNormalization()(model)
@@ -123,12 +141,13 @@ for target_muni in target_munis:
             model = Conv2D(sizes[1], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
             model = BatchNormalization()(model)
 
-            model = MaxPooling2D(pool_size=(2, 2), padding='same', strides=(2, 2))(model)
+            model = Conv2DTranspose(sizes[0], kernel_size=3, strides=(2, 2), kernel_initializer=kernel_initializer, activation=activation, padding="same")(model)
+            model = Add()([model_skip1, model])
 
-            model = Conv2D(sizes[2], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
+            model = Conv2D(sizes[0], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
             model = BatchNormalization()(model)
 
-            model = Conv2D(sizes[2], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
+            model = Conv2D(sizes[0], kernel_size=3, padding='same', activation=activation, kernel_initializer=kernel_initializer, kernel_constraint=max_norm(maxnorm), bias_constraint=max_norm(maxnorm))(model)
             model = BatchNormalization()(model)
 
             model = Flatten()(model)
@@ -174,7 +193,7 @@ for target_muni in target_munis:
             y=y_train,
             epochs=50,
             verbose=1,
-            batch_size=256,
+            batch_size=128,
             validation_split=0.2,
             callbacks=[
                 LearningRateScheduler(step_decay),
@@ -207,7 +226,7 @@ for target_muni in target_munis:
 
         y_test[f"cnn_pred_{str(target)}_{str(target_muni)}"] = pred
 
-        engine = create_engine(f"sqlite:///./predictions/bsa_bsd/cnn_pred_{layer_name}_{str(target)}_{str(target_muni)}.sqlite", echo=True)
+        engine = create_engine(f"sqlite:///./predictions/skip_connections/cnn_pred_{layer_name}_{str(target)}_{str(target_muni)}.sqlite", echo=True)
         sqlite_connection = engine.connect()
 
         y_test.to_sql(f"cnn_pred_{layer_name}_{str(target)}_{str(target_muni)}", sqlite_connection, if_exists='fail')
