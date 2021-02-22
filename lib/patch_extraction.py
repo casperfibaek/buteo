@@ -161,23 +161,14 @@ def extract_patches(
         x_step = (ref.shape[1] - (ref.shape[1] % size)) // size
         y_step = (ref.shape[0] - (ref.shape[0] % size)) // size
 
-        x_min = ulx + dx
-        x_max = x_min + (x_step * xres)
+        base_x_min = ulx + dx
+        base_x_max = base_x_min + (x_step * xres)
 
-        y_max = uly - dx
-        y_min = y_max - (y_step * yres)
+        base_y_max = uly - dx
+        base_y_min = base_y_max - (y_step * yres)
 
-        # y_min = lry - dy
-        # y_max = y_min + (y_step * yres)
-
-        # base_x_max = lrx + dx - ((width % size) * pixel_width)
-        # base_x_min = ulx + dx
-        # base_y_max = uly - dy
-        # base_y_min = lry - dy + ((height % size) * pixel_height)
-
-        xr = np.arange(x_min, x_max, xres)[0:x_step]
-        # yr = np.arange(base_y_max, base_y_min, -yres)
-        yr = np.arange(y_min, y_max, yres)[::-1][0:y_step]
+        xr = np.arange(base_x_min, base_x_max, xres)[0:x_step]
+        yr = np.arange(base_y_min, base_y_max, yres)[::-1][0:y_step]
 
         # y is flipped so: xmin --> xmax, ymax --> ymin to keep same order as numpy array
         xx, yy = np.meshgrid(xr, yr)
@@ -185,22 +176,21 @@ def extract_patches(
         coord_grid = np.array([xx.ravel(), yy.ravel()])
 
         for i in range(len(overlaps)):
-            xt = shapes[i + 1][0]
-            yt = shapes[i + 1][1]
+            x_offset = overlaps[i][0]
+            y_offset = overlaps[i][1]
 
-            x_offset = overlaps[i][1]
-            y_offset = overlaps[i][0]
+            x_step = ((ref.shape[1] - x_offset) - ((ref.shape[1] - x_offset) % size)) // size
+            y_step = ((ref.shape[0] - y_offset) - ((ref.shape[0] - y_offset) % size)) // size
 
-            x_min = ulx + x_offset
-            x_max = x_min + (xt * xres)
-            y_max = uly - y_offset
-            y_min = y_max - (yt * yres)
+            x_min = base_x_min + (x_offset * pixel_width)
+            x_max = x_min + (x_step * xres)
+
+            y_max = base_y_max - (y_offset * pixel_height)
+            y_min = y_max - (y_step * yres)
 
             # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
-            xr = np.arange(x_min, x_max, xres)[0:xt]
-            yr = np.arange(y_max, y_min, -yres)[0:yt]
-
-            # import pdb; pdb.set_trace()
+            xr = np.arange(x_min, x_max, xres)[0:x_step]
+            yr = np.arange(y_max, y_min, -yres)[0:y_step]
 
             oxx, oyy = np.meshgrid(xr, yr)
 
@@ -269,9 +259,9 @@ def extract_patches(
         for i in range(images):
             x, y = coord_grid[i]
 
-            # if x + dx > lrx or x - dx < ulx or y + dy > uly or y - dy < lry:
-            #     mask[i] = False
-            #     continue
+            if x + dx > lrx or x - dx < ulx or y + dy > uly or y - dy < lry:
+                mask[i] = False
+                continue
 
             if clip_to_vector is not None:
                 intersections = list(
@@ -418,7 +408,7 @@ if __name__ == "__main__":
             image,
             folder + f"{name}.npy",
             size=64,
-            # overlaps=[(32, 0)],
+            overlaps=[(0, 32), (32, 32), (32, 0)],
             fill_value=0,
             output_geom=folder + f"{name}_geom.gpkg",
             # verbose=False,
