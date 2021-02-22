@@ -1,5 +1,6 @@
 # Extract patches to numpy arrays from a rasters extent and pixel count
 # optionally output centroids
+from pdb import main
 import sys
 
 sys.path.append("..")
@@ -69,6 +70,7 @@ def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
             ),
         ]
         shape = (np.array(arr.shape) / np.array(block_shape)).astype("int64")
+
         return (
             arr.reshape(
                 arr.shape[0] // block_shape[0],
@@ -124,19 +126,20 @@ def extract_patches(
     testing_sample=1000,
 ):
     metadata = raster_to_metadata(reference)
-    reference_array = raster_to_array(reference)
+    ref = raster_to_array(reference)
 
     if verbose == 1:
         print("Generating blocks..")
-    blocks, shape = array_to_blocks(reference_array, (size, size))
+
+    blocks, shape = array_to_blocks(ref, (size, size))
     images_per_block = [blocks.shape[0]]
     shapes = [shape.tolist()]
 
     for overlap in overlaps:
-        block, shape = array_to_blocks(reference_array, (size, size), offset=overlap)
-        blocks = np.concatenate([blocks, block])
-        images_per_block.append(block.shape[0])
-        shapes.append(shape.tolist())
+        _block, _shape = array_to_blocks(ref, (size, size), offset=overlap)
+        blocks = np.concatenate([blocks, _block])
+        images_per_block.append(_block.shape[0])
+        shapes.append(_shape.tolist())
 
     images = blocks.shape[0]
     mask = np.ones(images, dtype=bool)
@@ -155,47 +158,54 @@ def extract_patches(
         dx = xres / 2
         dy = yres / 2
 
-        x_max = lrx + dx - ((width % size) * pixel_width)
-        x_min = ulx + dx
-        y_max = uly - dy
-        y_min = lry - dy + ((height % size) * pixel_height)
+        x_step = (ref.shape[1] - (ref.shape[1] % size)) // size
+        y_step = (ref.shape[0] - (ref.shape[0] % size)) // size
 
-        # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
-        xx, yy = np.meshgrid(
-            np.arange(x_min, x_max, xres), np.arange(y_max, y_min, -yres)
-        )
+        x_min = ulx + dx
+        x_max = x_min + (x_step * xres)
+
+        y_max = uly - dx
+        y_min = y_max - (y_step * yres)
+
+        # y_min = lry - dy
+        # y_max = y_min + (y_step * yres)
+
+        # base_x_max = lrx + dx - ((width % size) * pixel_width)
+        # base_x_min = ulx + dx
+        # base_y_max = uly - dy
+        # base_y_min = lry - dy + ((height % size) * pixel_height)
+
+        xr = np.arange(x_min, x_max, xres)[0:x_step]
+        # yr = np.arange(base_y_max, base_y_min, -yres)
+        yr = np.arange(y_min, y_max, yres)[::-1][0:y_step]
+
+        # y is flipped so: xmin --> xmax, ymax --> ymin to keep same order as numpy array
+        xx, yy = np.meshgrid(xr, yr)
 
         coord_grid = np.array([xx.ravel(), yy.ravel()])
 
         for i in range(len(overlaps)):
-            overlap_x_size = overlaps[i][0] * pixel_width
-            overlap_y_size = overlaps[i][1] * pixel_height
+            xt = shapes[i + 1][0]
+            yt = shapes[i + 1][1]
 
-            xt = shapes[i + 1][1]
-            yt = shapes[i + 1][0]
+            x_offset = overlaps[i][1]
+            y_offset = overlaps[i][0]
+
+            x_min = ulx + x_offset
+            x_max = x_min + (xt * xres)
+            y_max = uly - y_offset
+            y_min = y_max - (yt * yres)
 
             # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
-            xr = np.arange(x_min + overlap_x_size, x_max - overlap_x_size, xres)
-            yr = np.arange(y_max - overlap_y_size, y_min + overlap_y_size, -yres)
+            xr = np.arange(x_min, x_max, xres)[0:xt]
+            yr = np.arange(y_max, y_min, -yres)[0:yt]
 
-            xfix = 0
-            yfix = 0
-            if xr.shape[0] < xt:
-                xfix = xres
-            elif xr.shape[0] > xt:
-                xfix = -xres
-
-            if yr.shape[0] < yt:
-                yfix = -yres
-            elif yr.shape[0] > yt:
-                yfix = yres
-
-            xr = np.arange(x_min + overlap_x_size, x_max - overlap_x_size + xfix, xres)
-            yr = np.arange(y_max - overlap_y_size, y_min + overlap_y_size + yfix, -yres)
+            # import pdb; pdb.set_trace()
 
             oxx, oyy = np.meshgrid(xr, yr)
 
             if oxx.size != images_per_block[i + 1]:
+                import pdb; pdb.set_trace()
                 raise Exception("Error while matching grid and images.")
 
             coord_grid = np.append(
@@ -205,6 +215,7 @@ def extract_patches(
         coord_grid = np.swapaxes(coord_grid, 0, 1)
 
         if coord_grid.shape[0] != images:
+            import pdb; pdb.set_trace()
             raise Exception("Error while calculating. Total_images != total squares")
 
         projection = osr.SpatialReference()
@@ -258,9 +269,9 @@ def extract_patches(
         for i in range(images):
             x, y = coord_grid[i]
 
-            if x + dx > lrx or x - dx < ulx or y + dy > uly or y - dy < lry:
-                mask[i] = False
-                continue
+            # if x + dx > lrx or x - dx < ulx or y + dy > uly or y - dy < lry:
+            #     mask[i] = False
+            #     continue
 
             if clip_to_vector is not None:
                 intersections = list(
@@ -362,6 +373,7 @@ def extract_patches(
 
         if output_geom is not None:
             if verbose == 1:
+                print("")
                 print("Writing output geometry..")
 
             if os.path.exists(output_geom):
@@ -388,3 +400,26 @@ def extract_patches(
         np.save(output_numpy, output)
 
     return 1
+
+if __name__ == "__main__":
+
+    from patch_extraction import extract_patches
+    from raster_io import raster_to_array, array_to_raster
+    import numpy as np
+    from glob import glob
+    import os
+
+
+    folder = "C:/Users/caspe/Desktop/wall_data/"
+    images = glob(folder + '*.tif')
+    for image in images:
+        name = os.path.splitext(os.path.basename(image))[0]
+        extract_patches(
+            image,
+            folder + f"{name}.npy",
+            size=64,
+            # overlaps=[(32, 0)],
+            fill_value=0,
+            output_geom=folder + f"{name}_geom.gpkg",
+            # verbose=False,
+        )
