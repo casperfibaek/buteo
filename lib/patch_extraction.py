@@ -124,6 +124,7 @@ def extract_patches(
     verbose=1,
     testing=False,
     testing_sample=1000,
+    dtype=None,
 ):
     metadata = raster_to_metadata(reference)
     ref = raster_to_array(reference)
@@ -147,8 +148,6 @@ def extract_patches(
     if output_geom is not None or clip_to_vector is not None:
         ulx, uly, lrx, lry = metadata["extent"]
 
-        width = abs(metadata["width"])
-        height = abs(metadata["height"])
         pixel_width = abs(metadata["pixel_width"])
         pixel_height = abs(metadata["pixel_height"])
 
@@ -383,6 +382,9 @@ def extract_patches(
         print("Writing numpy array to disc..")
     
     output = blocks[mask]
+    
+    if dtype is not None:
+        output = output.astype(dtype)
 
     if isinstance(output, np.ma.MaskedArray):
         np.save(output_numpy, output.filled(fill_value=fill_value))
@@ -410,6 +412,7 @@ if __name__ == "__main__":
             size=64,
             overlaps=[(0, 32), (32, 32), (32, 0)],
             fill_value=0,
-            output_geom=folder + f"{name}_geom.gpkg",
+            # output_geom=folder + f"{name}_geom.gpkg",
             # verbose=False,
         )
+        # break
