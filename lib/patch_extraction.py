@@ -125,7 +125,7 @@ def extract_patches(
     testing=False,
     testing_sample=1000,
     dtype=None,
-    start_fid=-1,
+    start_fid=0,
 ):
     metadata = raster_to_metadata(reference)
     ref = raster_to_array(reference)
