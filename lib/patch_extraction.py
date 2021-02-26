@@ -125,6 +125,7 @@ def extract_patches(
     testing=False,
     testing_sample=1000,
     dtype=None,
+    start_fid=-1,
 ):
     metadata = raster_to_metadata(reference)
     ref = raster_to_array(reference)
@@ -254,7 +255,7 @@ def extract_patches(
         if verbose == 1:
             print("Creating patches..")
 
-        valid_fid = -1
+        valid_fid = start_fid - 1
         for i in range(images):
             x, y = coord_grid[i]
 

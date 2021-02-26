@@ -6,19 +6,11 @@ from raster_clip import clip_raster
 from glob import glob
 import os
 
-folder = "C:/Users/caspe/Desktop/Paper_2_StructuralVolume/"
-ref = folder + "clip/reference.tif"
+folder = "C:/Users/caspe/Desktop/Paper_2_StructuralVolume/imagery_unscaled/"
+ref = folder + "clip_file_silkeborg.gpkg"
 
-images = glob(folder + '*.tif')
+images = glob(folder + 'bob_*.tif')
 for image in images:
     name = os.path.splitext(os.path.basename(image))[0]
 
-    clipped = clip_raster(image, reference_raster=ref)
-
-    extract_patches(
-        clipped,
-        folder + f"clip/{name}.npy",
-        size=16,
-        # overlaps=[(8, 0), (8, 8), (0, 8)],
-        # fill_value=0,
-    )
+    clip_raster(image, crop_to_cutline=True, cutline=ref, out_raster=folder + f"/clipped/{name}.tif")
