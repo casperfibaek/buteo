@@ -144,7 +144,7 @@ def extract_patches(
         shapes.append(_shape.tolist())
 
     images = blocks.shape[0]
-    mask = np.ones(images, dtype=bool)
+    mask = np.ones(images, 'uint64')
 
     if output_geom is not None or clip_to_vector is not None:
         ulx, uly, lrx, lry = metadata["extent"]
@@ -168,7 +168,18 @@ def extract_patches(
         base_y_min = base_y_max - (y_step * yres)
 
         xr = np.arange(base_x_min, base_x_max, xres)[0:x_step]
-        yr = np.arange(base_y_min, base_y_max, yres)[::-1][0:y_step]
+        yr = np.arange(base_y_min, base_y_max + yres, yres)[::-1][0:y_step]
+
+        # adjust shape if needed
+        if yr.shape[0] < y_step:
+            yr = np.arange(base_y_min, base_y_max + yres, yres)[::-1][0:y_step]
+        elif yr.shape[0] > y_step:
+            yr = np.arange(base_y_min, base_y_max - yres, yres)[::-1][0:y_step]
+
+        if xr.shape[0] < x_step:
+            xr = np.arange(base_x_min, base_x_max + xres, xres)[0:x_step]
+        elif xr.shape[0] > x_step:
+            xr = np.arange(base_x_min, base_x_max - xres, xres)[0:x_step]
 
         # y is flipped so: xmin --> xmax, ymax --> ymin to keep same order as numpy array
         xx, yy = np.meshgrid(xr, yr)
@@ -190,22 +201,29 @@ def extract_patches(
 
             # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
             xr = np.arange(x_min, x_max, xres)[0:x_step]
-            yr = np.arange(y_max, y_min, -yres)[0:y_step]
+            yr = np.arange(y_min, y_max + yres, yres)[::-1][0:y_step]
+
+            # adjust shape if needed
+            if yr.shape[0] < y_step:
+                yr = np.arange(y_min, y_max + yres, yres)[::-1][0:y_step]
+            elif yr.shape[0] > y_step:
+                yr = np.arange(y_min, y_max - yres, yres)[::-1][0:y_step]
+
+            if xr.shape[0] < x_step:
+                xr = np.arange(x_min, x_max + xres, xres)[0:x_step]
+            elif xr.shape[0] > x_step:
+                xr = np.arange(x_min, x_max - xres, xres)[0:x_step]
 
             oxx, oyy = np.meshgrid(xr, yr)
 
             if oxx.size != images_per_block[i + 1]:
-                import pdb; pdb.set_trace()
                 raise Exception("Error while matching grid and images.")
 
-            coord_grid = np.append(
-                coord_grid, np.array([oxx.ravel(), oyy.ravel()]), axis=1
-            )
+            coord_grid = np.append(coord_grid, np.array([oxx.ravel(), oyy.ravel()]), axis=1)
 
         coord_grid = np.swapaxes(coord_grid, 0, 1)
 
         if coord_grid.shape[0] != images:
-            import pdb; pdb.set_trace()
             raise Exception("Error while calculating. Total_images != total squares")
 
         projection = osr.SpatialReference()
@@ -237,14 +255,17 @@ def extract_patches(
 
             if verbose == 1:
                 print("Generating rTree..")
+
             # Generate spatial index
             clip_index = rtree.index.Index(interleaved=False)
             clip_feature_count = clip_mem_layer.GetFeatureCount()
+
             for p in range(0, clip_feature_count):
                 clip_feature = clip_mem_layer.GetNextFeature()
                 clip_geometry = clip_feature.GetGeometryRef()
                 xmin, xmax, ymin, ymax = clip_geometry.GetEnvelope()
                 clip_index.insert(clip_feature.GetFID(), (xmin, xmax, ymin, ymax))
+
                 if verbose == 1:
                     progress(p, clip_feature_count, "rTree generation")
 
@@ -254,83 +275,74 @@ def extract_patches(
 
         if verbose == 1:
             print("Creating patches..")
+            print("")
 
         valid_fid = start_fid - 1
-        for i in range(images):
+        for i in range(len(blocks)):
             x, y = coord_grid[i]
 
-            if x + dx > lrx or x - dx < ulx or y + dy > uly or y - dy < lry:
-                mask[i] = False
-                continue
-
             if clip_to_vector is not None:
-                intersections = list(
-                    clip_index.intersection((x - dx, x + dx, y - dy, y + dy))
-                )
+                tile_bounds = (x - dx, x + dx, y - dy, y + dy)
+                intersections = list(clip_index.intersection(tile_bounds))
 
-                if len(intersections) < 4:
-                    mask[i] = False
+                if len(intersections) == 0:
+
+                    if verbose == 1:
+                        progress(i, images, "Patches")
+
                     continue
 
-                if len(intersections) < 9:
-                    is_within = [False, False, False, False]
-                    for intersection in intersections:
-                        clip_feature = clip_layer.GetFeature(intersection)
-                        clip_geometry = clip_feature.GetGeometryRef()
+                tile_intersects_geom = False
+                for intersection in intersections:
+                    clip_feature = clip_layer.GetFeature(intersection)
+                    clip_geometry = clip_feature.GetGeometryRef()
 
-                        ul = ogr.Geometry(ogr.wkbPoint)
-                        ul.AddPoint(x - dx, y + dy)
-                        ur = ogr.Geometry(ogr.wkbPoint)
-                        ur.AddPoint(x + dx, y + dy)
-                        ll = ogr.Geometry(ogr.wkbPoint)
-                        ll.AddPoint(x - dx, y - dy)
-                        lr = ogr.Geometry(ogr.wkbPoint)
-                        lr.AddPoint(x + dx, y - dy)
+                    tile_ring = ogr.Geometry(ogr.wkbLinearRing)
+                    tile_ring.AddPoint(x - dx, y + dy) # ul
+                    tile_ring.AddPoint(x + dx, y + dy) # ur
+                    tile_ring.AddPoint(x + dx, y - dy) # lr 
+                    tile_ring.AddPoint(x - dx, y - dy) # ll
+                    tile_ring.AddPoint(x - dx, y + dy) # ul begin
 
-                        if clip_geometry.Intersects(ul.Buffer(epsilon)) is True:
-                            is_within[0] = True
-                        if clip_geometry.Intersects(ur.Buffer(epsilon)) is True:
-                            is_within[1] = True
-                        if clip_geometry.Intersects(ll.Buffer(epsilon)) is True:
-                            is_within[2] = True
-                        if clip_geometry.Intersects(lr.Buffer(epsilon)) is True:
-                            is_within[3] = True
+                    tile_poly = ogr.Geometry(ogr.wkbPolygon)
+                    tile_poly.AddGeometry(tile_ring)
 
-                        clip_feature = None
-                        clip_geometry = None
+                    if tile_poly.Intersects(clip_geometry) is True:
+                        tile_intersects_geom = True
+                        break
 
-                        if False not in is_within:
-                            break
+            if clip_to_vector is None or tile_intersects_geom is True:
+                valid_fid += 1
+                mask[valid_fid] = i
 
-                    if False in is_within:
-                        mask[i] = False
-                        continue
+                poly_wkt = f"POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))"
 
-            poly_wkt = f"POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))"
+                ft = ogr.Feature(fdefn)
+                ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
+                ft.SetFID(valid_fid)
 
-            valid_fid += 1
-
-            ft = ogr.Feature(fdefn)
-            ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
-            ft.SetFID(valid_fid)
-
-            lyr.CreateFeature(ft)
-            ft = None
+                lyr.CreateFeature(ft)
+                ft = None
 
             if verbose == 1:
                 progress(i, images, "Patches")
 
         grid_cells = lyr.GetFeatureCount()
+
+        mask = mask[:valid_fid + 1]
+
         assert (
             grid_cells == blocks[mask].shape[0]
         ), "Image count and grid count does not match."
 
-        if testing == True:
+        if testing == True and output_geom is not None:
             if verbose == 1:
                 print("\nVerifying integrity of output grid..")
+
             test_rast = raster_to_memory(reference)
             img = blocks[mask]
-            test_fids = np.random.randint(0, grid_cells, testing_sample)
+            max_test = min(int(testing_sample), int(valid_fid))
+            test_fids = np.random.randint(0, grid_cells - 1, max_test)
             tested = 0
 
             for feature in lyr:
@@ -346,19 +358,13 @@ def extract_patches(
                 test_lyr.CreateFeature(feature.Clone())
 
                 ref_img = raster_to_array(test_rast, cutline=test_ds, quiet=True)
-                image_block = img[fid]
+                image_block = img[fid]      
 
-                if not np.array_equal(ref_img, image_block):
-                    import pdb
-
-                    pdb.set_trace()
-
-                assert np.array_equal(
-                    ref_img, image_block
-                ), "Image and grid cell did not match.."
+                assert np.array_equal(ref_img, image_block), print("Image and grid cell did not match..")
 
                 if verbose == 1:
-                    progress(tested, testing_sample - 1, "verifying..")
+                    progress(tested, len(test_fids) - 1, "verifying..")
+
                 tested += 1
 
         if output_geom is not None:
@@ -373,11 +379,8 @@ def extract_patches(
             out_grid = gpkg_driver.CreateDataSource(output_geom)
             out_grid.CopyLayer(lyr, out_name, ["OVERWRITE=YES"])
 
-    lyr = None
-    ds = None
-    clip_vector = None
-    clip_layer = None
-    out_grid = None
+            if valid_fid == start_fid - 1:
+                print("WARNING: Empty geometry output")
 
     if verbose == 1:
         print("Writing numpy array to disc..")
@@ -396,6 +399,7 @@ def extract_patches(
 
 if __name__ == "__main__":
 
+    import matplotlib.pyplot as plt
     from patch_extraction import extract_patches
     from raster_io import raster_to_array, array_to_raster
     import numpy as np
@@ -403,17 +407,18 @@ if __name__ == "__main__":
     import os
 
 
-    folder = "C:/Users/caspe/Desktop/wall_data/"
-    images = glob(folder + '*.tif')
-    for image in images:
-        name = os.path.splitext(os.path.basename(image))[0]
-        extract_patches(
-            image,
-            folder + f"{name}.npy",
-            size=64,
-            overlaps=[(0, 32), (32, 32), (32, 0)],
-            fill_value=0,
-            # output_geom=folder + f"{name}_geom.gpkg",
-            # verbose=False,
-        )
-        # break
+    folder = "C:/Users/caspe/Desktop/patch_test/"
+
+    extract_patches(
+        folder + "red_fyn.tif",
+        folder + "red_fyn.npy",
+        size=64,
+        clip_to_vector=folder + "buffered_wall.gpkg",
+        overlaps=[(0, 32), (32, 32), (32, 0)],
+        fill_value=0,
+        output_geom=folder + "red_fyn.gpkg",
+        testing=True,
+    )
+
+    test_arr = np.load(folder + "red_fyn.npy")
+    import pdb; pdb.set_trace()
