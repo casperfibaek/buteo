@@ -107,12 +107,12 @@ def add_rotations(X, k=4, axes=(1, 2)):
 def add_noise(X, amount=0.01):
     return X * np.random.normal(1, amount, X.shape)
 
-def add_fixed_noise(arr, center=0, amount=0.05):
-    return arr + np.random.normal(center, amount, arr.shape)
+def add_fixed_noise(X, center=0, amount=0.05):
+    return X + np.random.normal(center, amount, X.shape)
 
 
-def scale_to_01(arr):
-    return (arr - arr.min()) / (arr.max() - arr.min())
+def scale_to_01(X):
+    return (X - X.min()) / (X.max() - X.min())
 
 
 def train_split_mask(y, split=0.3, stratified=True):
