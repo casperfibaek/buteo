@@ -15,6 +15,7 @@ import numpy as np
 from osgeo import ogr, osr
 import rtree
 import os
+import random
 
 def blocks_to_array(blocks, reference, output):
     metadata = raster_to_metadata(reference)
@@ -132,7 +133,7 @@ def extract_patches(
         shapes.append(shape_to_blockshape(input_shape, (size, size), offset))
 
     all_rows = 0
-    offset_rows = [0]
+    offset_rows = []
     for i in range(len(shapes)):
         row = 0
 
@@ -149,8 +150,14 @@ def extract_patches(
     output_array = np.empty(output_shape, dtype=input_datatype)
     offset_rows_cumsum = np.cumsum(offset_rows)
 
-    for index, offset in enumerate(offsets):
-        output_array[offset_rows_cumsum[index]:offset_rows_cumsum[index + 1]] = array_to_blocks(raster_to_array(reference), (size, size), offset)
+
+    for k, offset in enumerate(offsets):
+
+        start = 0
+        if k > 0:
+            start = offset_rows_cumsum[k - 1]
+
+        output_array[start:offset_rows_cumsum[k]] = array_to_blocks(raster_to_array(reference), (size, size), offset)
 
     mask = np.ones(all_rows, 'uint64')
 
@@ -172,9 +179,9 @@ def extract_patches(
 
         coord_grid = np.empty((all_rows, 2), dtype="uint64")
 
-        for i in range(len(offsets)):
-            x_offset = offsets[i][0]
-            y_offset = offsets[i][1]
+        for l in range(len(offsets)):
+            x_offset = offsets[l][0]
+            y_offset = offsets[l][1]
 
             x_step = ((input_shape[1] - x_offset) - ((input_shape[1] - x_offset) % size)) // size
             y_step = ((input_shape[0] - y_offset) - ((input_shape[0] - y_offset) % size)) // size
@@ -202,12 +209,18 @@ def extract_patches(
 
             oxx, oyy = np.meshgrid(xr, yr)
 
-            if i > 0 and oxx.size != offset_rows[i + 1]:
-                import pdb; pdb.set_trace()
+            if l > 0 and oxx.size != offset_rows[l]:
                 raise Exception("Error while matching grid and images.")
+            
+            start = 0
+            if l > 0:
+                start = offset_rows_cumsum[l - 1]
 
-            coord_grid[offset_rows_cumsum[i]:offset_rows_cumsum[i + 1], 0] = oxx.ravel()
-            coord_grid[offset_rows_cumsum[i]:offset_rows_cumsum[i + 1], 1] = oyy.ravel()
+            try:
+                coord_grid[start:offset_rows_cumsum[l], 0] = oxx.ravel()
+                coord_grid[start:offset_rows_cumsum[l], 1] = oyy.ravel()
+            except:
+                import pdb; pdb.set_trace()
 
         if coord_grid.shape[0] != all_rows:
             raise Exception("Error while calculating. Total_images != total squares")
@@ -263,11 +276,10 @@ def extract_patches(
 
         if verbose == 1:
             print("Creating patches..")
-            print("")
 
         valid_fid = start_fid - 1
-        for i in range(all_rows):
-            x, y = coord_grid[i]
+        for q in range(all_rows):
+            x, y = coord_grid[q]
 
             if clip_to_vector is not None:
                 tile_bounds = (x - dx, x + dx, y - dy, y + dy)
@@ -276,7 +288,7 @@ def extract_patches(
                 if len(intersections) == 0:
 
                     if verbose == 1:
-                        progress(i, all_rows, "Patches")
+                        progress(q, all_rows, "Patches")
 
                     continue
 
@@ -301,7 +313,7 @@ def extract_patches(
 
             if clip_to_vector is None or tile_intersects_geom is True:
                 valid_fid += 1
-                mask[valid_fid] = i
+                mask[valid_fid] = q
 
                 poly_wkt = f"POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))"
 
@@ -313,7 +325,7 @@ def extract_patches(
                 ft = None
 
             if verbose == 1:
-                progress(i, all_rows, "Patches")
+                progress(q, all_rows, "Patches")
 
         grid_cells = lyr.GetFeatureCount()
 
@@ -330,7 +342,8 @@ def extract_patches(
 
             test_rast = raster_to_memory(reference)
             max_test = min(int(testing_sample), int(valid_fid))
-            test_fids = np.random.randint(0, grid_cells - 1, max_test)
+
+            test_fids = np.array(random.sample(range(0, grid_cells - 1), max_test), dtype="uint64")
             tested = 0
 
             for feature in lyr:
@@ -356,8 +369,8 @@ def extract_patches(
                 tested += 1
 
         if output_geom is not None:
+
             if verbose == 1:
-                print("")
                 print("Writing output geometry..")
 
             if os.path.exists(output_geom):
