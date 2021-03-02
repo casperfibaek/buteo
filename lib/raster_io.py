@@ -588,6 +588,7 @@ def raster_to_metadata(in_raster):
     metadata["transform"] = metadata["dataframe"].GetGeoTransform()
     metadata["projection"] = metadata["dataframe"].GetProjection()
 
+    band0 = metadata["dataframe"].GetRasterBand(1)
     og = osr.SpatialReference()
     og.ImportFromWkt(metadata["projection"])
     wgs84 = osr.SpatialReference()
@@ -597,6 +598,7 @@ def raster_to_metadata(in_raster):
 
     metadata["width"] = metadata["dataframe"].RasterXSize
     metadata["height"] = metadata["dataframe"].RasterYSize
+    metadata["shape"] = (metadata["width"], metadata["height"])
     metadata["pixel_width"] = metadata["transform"][1]
     metadata["pixel_height"] = metadata["transform"][5]
     metadata["minx"] = metadata["transform"][0]
@@ -611,6 +613,9 @@ def raster_to_metadata(in_raster):
         + metadata["height"] * metadata["transform"][2]
     )
     metadata["maxy"] = metadata["transform"][3]
+
+    metadata["dtype"] = gdal.GetDataTypeName(band0.DataType)
+    metadata["nodata_value"] = band0.GetNoDataValue()
 
     # ulx, uly, lrx, lry = -180, 90, 180, -90
     metadata["extent"] = (
