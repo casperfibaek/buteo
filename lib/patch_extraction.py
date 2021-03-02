@@ -109,7 +109,6 @@ def extract_patches(
     output_geom=None,
     clip_to_vector=None,
     fill_value=None,
-    epsilon=1e-7,
     verbose=1,
     testing=False,
     testing_sample=1000,
@@ -150,15 +149,18 @@ def extract_patches(
     output_array = np.empty(output_shape, dtype=input_datatype)
     offset_rows_cumsum = np.cumsum(offset_rows)
 
+    ref = raster_to_array(reference, filled=True)
+
     for k, offset in enumerate(offsets):
 
         start = 0
         if k > 0:
             start = offset_rows_cumsum[k - 1]
 
-        output_array[start:offset_rows_cumsum[k]] = array_to_blocks(raster_to_array(reference), (size, size), offset)
+        output_array[start:offset_rows_cumsum[k]] = array_to_blocks(ref, (size, size), offset)
 
-    mask = np.ones(all_rows, 'uint64')
+    ref = None
+    geo_fid = np.zeros(all_rows, dtype="uint64")
 
     if output_geom is not None or clip_to_vector is not None:
 
@@ -176,14 +178,14 @@ def extract_patches(
         dx = xres / 2
         dy = yres / 2
 
-        coord_grid = np.empty((all_rows, 2), dtype="uint64")
+        coord_grid = np.empty((all_rows, 2), dtype="float64")
 
         for l in range(len(offsets)):
             x_offset = offsets[l][0]
             y_offset = offsets[l][1]
 
-            x_step = ((input_shape[1] - x_offset) - ((input_shape[1] - x_offset) % size)) // size
-            y_step = ((input_shape[0] - y_offset) - ((input_shape[0] - y_offset) % size)) // size
+            x_step = shapes[l][0]
+            y_step = shapes[l][1]
 
             x_min = (ulx + dx) + (x_offset * pixel_width)
             x_max = x_min + (x_step * xres)
@@ -191,25 +193,12 @@ def extract_patches(
             y_max = (uly - dx) - (y_offset * pixel_height)
             y_min = y_max - (y_step * yres)
 
+
             # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
-            xr = np.arange(x_min, x_max, xres, dtype="uint64")[0:x_step]
-            yr = np.arange(y_min, y_max + yres, yres, dtype="uint64")[::-1][0:y_step]
-
-            # adjust shape if needed
-            if yr.shape[0] < y_step:
-                yr = np.arange(y_min, y_max + yres, yres, dtype="uint64")[::-1][0:y_step]
-            elif yr.shape[0] > y_step:
-                yr = np.arange(y_min, y_max - yres, yres, dtype="uint64")[::-1][0:y_step]
-
-            if xr.shape[0] < x_step:
-                xr = np.arange(x_min, x_max + xres, xres, dtype="uint64")[0:x_step]
-            elif xr.shape[0] > x_step:
-                xr = np.arange(x_min, x_max - xres, xres, dtype="uint64")[0:x_step]
+            xr = np.arange(x_min, x_max, xres, dtype="float64")[0:x_step]
+            yr = np.arange(y_min, y_max, yres, dtype="float64")[::-1][0:y_step]
 
             oxx, oyy = np.meshgrid(xr, yr)
-
-            if l > 0 and oxx.size != offset_rows[l]:
-                raise Exception("Error while matching grid and images.")
             
             start = 0
             if l > 0:
@@ -217,9 +206,6 @@ def extract_patches(
 
             coord_grid[start:offset_rows_cumsum[l], 0] = oxx.ravel()
             coord_grid[start:offset_rows_cumsum[l], 1] = oyy.ravel()
-
-        if coord_grid.shape[0] != all_rows:
-            raise Exception("Error while calculating. Total_images != total squares")
 
         projection = osr.SpatialReference()
         projection.ImportFromWkt(metadata["projection"])
@@ -272,10 +258,13 @@ def extract_patches(
 
         if verbose == 1:
             print("Creating patches..")
+            print("")
 
         valid_fid = start_fid - 1
         for q in range(all_rows):
             x, y = coord_grid[q]
+
+            tile_intersects_geom = False
 
             if clip_to_vector is not None:
                 tile_bounds = (x - dx, x + dx, y - dy, y + dy)
@@ -288,7 +277,6 @@ def extract_patches(
 
                     continue
 
-                tile_intersects_geom = False
                 for intersection in intersections:
                     clip_feature = clip_layer.GetFeature(intersection)
                     clip_geometry = clip_feature.GetGeometryRef()
@@ -308,25 +296,29 @@ def extract_patches(
                         break
 
             if clip_to_vector is None or tile_intersects_geom is True:
-                valid_fid += 1
-                mask[valid_fid] = q
+                
+                if tile_intersects_geom is True:
+                    valid_fid += 1
 
-                poly_wkt = f"POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))"
+                if output_geom is not None:
 
-                ft = ogr.Feature(fdefn)
-                ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
-                ft.SetFID(valid_fid)
+                    poly_wkt = f"POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))"
 
-                lyr.CreateFeature(ft)
-                ft = None
+                    ft = ogr.Feature(fdefn)
+                    ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
+                    ft.SetFID(valid_fid)
+
+                    geo_fid[valid_fid] = q
+
+                    lyr.CreateFeature(ft)
+                    ft = None
 
             if verbose == 1:
                 progress(q, all_rows, "Patches")
 
         grid_cells = lyr.GetFeatureCount()
 
-        mask = mask[:valid_fid + 1]
-        output_array = output_array[mask]
+        output_array = output_array[geo_fid[0:int(valid_fid + 1)]]
 
         assert (
             grid_cells == output_array.shape[0]
@@ -342,11 +334,8 @@ def extract_patches(
             test_fids = np.array(random.sample(range(0, grid_cells - 1), max_test), dtype="uint64")
             tested = 0
 
-            for feature in lyr:
-                fid = feature.GetFID()
-
-                if fid not in test_fids:
-                    continue
+            for test in test_fids:
+                feature = lyr.GetFeature(test)
 
                 test_ds = mem_driver.CreateDataSource("test_mem_grid")
                 test_lyr = test_ds.CreateLayer(
@@ -354,16 +343,19 @@ def extract_patches(
                 )
                 test_lyr.CreateFeature(feature.Clone())
 
-                ref_img = raster_to_array(test_rast, cutline=test_ds, quiet=True)
-                image_block = output_array[fid]      
+                ref_img = raster_to_array(test_rast, cutline=test_ds, quiet=True, filled=True)
 
-                assert np.array_equal(ref_img, image_block), print("Image and grid cell did not match..")
+                image_block = output_array[test]
+
+                if not np.array_equal(ref_img, image_block):
+                    import pdb; pdb.set_trace()
+                    # raise Exception("Image and grid cell did not match..")
 
                 if verbose == 1:
                     progress(tested, len(test_fids) - 1, "verifying..")
 
                 tested += 1
-
+            
         if output_geom is not None:
 
             if verbose == 1:
@@ -402,25 +394,24 @@ def extract_patches(
     return 1
 
 if __name__ == "__main__":
-
     import matplotlib.pyplot as plt
     from patch_extraction import extract_patches
     from raster_io import raster_to_array, array_to_raster
     import numpy as np
-    from glob import glob
     import os
 
+    # 172, 3000, 3010, 50, 
 
     folder = "C:/Users/caspe/Desktop/patch_test/"
 
     extract_patches(
-        folder + "red_fyn.tif",
-        folder + "red_fyn.npy",
+        folder + "walls_aeroe_final_comp7.tif",
+        folder + "ana_wall.npy",
         size=64,
-        clip_to_vector=folder + "buffered_wall.gpkg",
-        offsets=[(0, 32), (32, 32), (32, 0)],
+        clip_to_vector=folder + "walls_buffer.gpkg",
+        offsets=[(32, 32), (32, 0), (0, 32)],
         fill_value=0,
-        output_geom=folder + "red_fyn.gpkg",
+        output_geom=folder + "ana_wall.gpkg",
         testing=True,
     )
 

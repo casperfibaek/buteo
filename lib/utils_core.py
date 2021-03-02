@@ -321,6 +321,23 @@ def translate_datatypes(datatype):
     else:
         return 6
 
+def gdal_to_numpy_datatype(gdal_int):
+    datatypes = {
+        '1': 'uint8',
+        '2': 'uint16',
+        '3': 'int16',
+        '4': 'uint32',
+        '5': 'int32',
+        '6': 'float32',
+        '7': 'float64',
+        '8': 'cint16',
+        '9': 'cint32',
+        '10': 'cfloat32',
+        '11': 'cfloat64',
+    }
+    return datatypes[str(gdal_int)]
+
+
 
 def numpy_to_gdal_datatype(datatype):
     datatypes = {

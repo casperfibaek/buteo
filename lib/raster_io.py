@@ -10,6 +10,7 @@ from utils_core import (
     numpy_fill_values,
     datatype_is_float,
     progress_callback_quiet,
+    gdal_to_numpy_datatype,
 )
 from raster_clip import clip_raster
 
@@ -614,7 +615,8 @@ def raster_to_metadata(in_raster):
     )
     metadata["maxy"] = metadata["transform"][3]
 
-    metadata["dtype"] = gdal.GetDataTypeName(band0.DataType)
+    metadata["dtype_gdal"] = gdal.GetDataTypeName(band0.DataType)
+    metadata["dtype"] = gdal_to_numpy_datatype(band0.DataType)
     metadata["nodata_value"] = band0.GetNoDataValue()
 
     # ulx, uly, lrx, lry = -180, 90, 180, -90
