@@ -150,7 +150,6 @@ def extract_patches(
     output_array = np.empty(output_shape, dtype=input_datatype)
     offset_rows_cumsum = np.cumsum(offset_rows)
 
-
     for k, offset in enumerate(offsets):
 
         start = 0
@@ -216,11 +215,8 @@ def extract_patches(
             if l > 0:
                 start = offset_rows_cumsum[l - 1]
 
-            try:
-                coord_grid[start:offset_rows_cumsum[l], 0] = oxx.ravel()
-                coord_grid[start:offset_rows_cumsum[l], 1] = oyy.ravel()
-            except:
-                import pdb; pdb.set_trace()
+            coord_grid[start:offset_rows_cumsum[l], 0] = oxx.ravel()
+            coord_grid[start:offset_rows_cumsum[l], 1] = oyy.ravel()
 
         if coord_grid.shape[0] != all_rows:
             raise Exception("Error while calculating. Total_images != total squares")
