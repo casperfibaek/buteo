@@ -10,6 +10,9 @@ from lib.raster_io import (
     raster_to_memory,
     array_to_raster,
 )
+from lib.vector_io import vector_to_memory
+from lib.raster_clip import clip_raster
+from lib.raster_align import is_aligned
 from lib.utils_core import progress
 import numpy as np
 from osgeo import ogr, osr
@@ -102,23 +105,34 @@ def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
 
 
 def extract_patches(
-    reference,
-    output_numpy,
+    in_rasters,
+    output_folder,
+    prefix="",
+    postfix="_patches",
     size=32,
     offsets=[],
-    output_geom=None,
+    output_geom=True,
     clip_to_vector=None,
-    fill_value=None,
     verbose=1,
-    testing=False,
-    testing_sample=1000,
-    dtype=None,
-    start_fid=0,
 ):
-    metadata = raster_to_metadata(reference)
+    if len(in_rasters) == 0:
+        raise ValueError("An input raster is required.")
 
-    input_datatype = metadata["dtype"]
-    input_nodata_value = metadata["nodata_value"]
+    if not is_aligned(in_rasters):
+        raise ValueError("Input rasters must be aligned. Please use the align function.")
+
+    metadata = None
+
+    clipped = clip_raster(in_rasters[0], cutline=clip_to_vector, cutline_all_touch=True)
+    array_to_raster(raster_to_array(clipped), out_raster=output_folder + "bob.tif", reference_raster=clipped)
+
+    import pdb; pdb.set_trace()
+
+    if clip_to_vector is not None:
+        metadata = raster_to_metadata(clip_raster(in_rasters[0], cutline=clip_to_vector, cutline_all_touch=True))
+    else:
+        metadata = raster_to_metadata(in_rasters[0])
+
     input_shape = metadata["shape"]
 
     if verbose == 1:
@@ -145,24 +159,12 @@ def extract_patches(
         offset_rows.append(row)
         all_rows += row
 
-    output_shape = (all_rows, size, size)
-    output_array = np.empty(output_shape, dtype=input_datatype)
     offset_rows_cumsum = np.cumsum(offset_rows)
 
-    ref = raster_to_array(reference, filled=True)
-
-    for k, offset in enumerate(offsets):
-
-        start = 0
-        if k > 0:
-            start = offset_rows_cumsum[k - 1]
-
-        output_array[start:offset_rows_cumsum[k]] = array_to_blocks(ref, (size, size), offset)
-
-    ref = None
     geo_fid = np.zeros(all_rows, dtype="uint64")
+    mask = geo_fid
 
-    if output_geom is not None or clip_to_vector is not None:
+    if output_geom is True or clip_to_vector is not None:
 
         if verbose == 1:
             print("Calculating grid cells..")
@@ -195,7 +197,7 @@ def extract_patches(
 
             # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
             xr = np.arange(x_min, x_max, xres, dtype="float64")[0:x_step]
-            yr = np.arange(y_min, y_max, yres, dtype="float64")[::-1][0:y_step]
+            yr = np.arange(y_min, y_max + yres, yres, dtype="float64")[::-1][0:y_step]
 
             oxx, oyy = np.meshgrid(xr, yr)
             
@@ -257,9 +259,8 @@ def extract_patches(
 
         if verbose == 1:
             print("Creating patches..")
-            print("")
 
-        valid_fid = start_fid - 1
+        valid_fid = -1
         for q in range(all_rows):
             x, y = coord_grid[q]
 
@@ -293,123 +294,163 @@ def extract_patches(
                     if tile_poly.Intersects(clip_geometry) is True:
                         tile_intersects_geom = True
                         break
-
-            if clip_to_vector is None or tile_intersects_geom is True:
                 
                 if tile_intersects_geom is True:
                     valid_fid += 1
+            else:
+                valid_fid += 1
+                
+            if (output_geom is True and clip_to_vector is None) or (output_geom is True and clip_to_vector is not None and tile_intersects_geom is True):
 
-                if output_geom is not None:
+                poly_wkt = f"POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))"
 
-                    poly_wkt = f"POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))"
+                ft = ogr.Feature(fdefn)
+                ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
+                ft.SetFID(valid_fid)
 
-                    ft = ogr.Feature(fdefn)
-                    ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
-                    ft.SetFID(valid_fid)
+                geo_fid[valid_fid] = q
 
-                    geo_fid[valid_fid] = q
-
-                    lyr.CreateFeature(ft)
-                    ft = None
+                lyr.CreateFeature(ft)
+                ft = None
 
             if verbose == 1:
                 progress(q, all_rows, "Patches")
 
-        grid_cells = lyr.GetFeatureCount()
+        # Create mask for numpy arrays
+        mask = geo_fid[0:int(valid_fid + 1)]
 
-        output_array = output_array[geo_fid[0:int(valid_fid + 1)]]
-
-        assert (
-            grid_cells == output_array.shape[0]
-        ), "Image count and grid count does not match."
-
-        if testing == True and output_geom is not None:
-            if verbose == 1:
-                print("\nVerifying integrity of output grid..")
-
-            test_rast = raster_to_memory(reference)
-            max_test = min(int(testing_sample), int(valid_fid))
-
-            test_fids = np.array(random.sample(range(0, grid_cells - 1), max_test), dtype="uint64")
-            tested = 0
-
-            for test in test_fids:
-                feature = lyr.GetFeature(test)
-
-                test_ds = mem_driver.CreateDataSource("test_mem_grid")
-                test_lyr = test_ds.CreateLayer(
-                    "test_mem_grid_layer", geom_type=ogr.wkbPolygon, srs=projection
-                )
-                test_lyr.CreateFeature(feature.Clone())
-
-                ref_img = raster_to_array(test_rast, cutline=test_ds, quiet=True, filled=True)
-
-                image_block = output_array[test]
-
-                if not np.array_equal(ref_img, image_block):
-                    raise Exception("Image and grid cell did not match..")
-
-                if verbose == 1:
-                    progress(tested, len(test_fids) - 1, "verifying..")
-
-                tested += 1
-            
-        if output_geom is not None:
+        if output_geom is True:
+            geom_name = f"{prefix}patches_{str(size)}{postfix}"
+            geom_out_path = os.path.join(output_folder + f"{geom_name}.gpkg")
 
             if verbose == 1:
                 print("Writing output geometry..")
 
-            if os.path.exists(output_geom):
-                gpkg_driver.DeleteDataSource(output_geom)
+            if os.path.exists(geom_out_path):
+                gpkg_driver.DeleteDataSource(geom_out_path)
 
-            out_name = os.path.basename(output_geom).rsplit(".", 1)[0]
-            out_grid = gpkg_driver.CreateDataSource(output_geom)
-            out_grid.CopyLayer(lyr, out_name, ["OVERWRITE=YES"])
+            out_grid = gpkg_driver.CreateDataSource(geom_out_path)
+            out_grid.CopyLayer(lyr, geom_name, ["OVERWRITE=YES"])
 
-            if valid_fid == start_fid - 1:
+            if valid_fid == -1:
                 print("WARNING: Empty geometry output")
 
     if verbose == 1:
         print("Writing numpy array to disc..")
-    
-    if dtype is not None:
-        output_array = output_array.astype(dtype)
 
-    if isinstance(output_array, np.ma.MaskedArray):
-        
-        fill = fill_value
-        
-        if fill == None:
-            fill = input_nodata_value
-        
-        if fill == None:
-            fill = 0
-        
-        np.save(output_numpy, output_array.filled(fill_value=fill_value))
-    else:
-        np.save(output_numpy, output_array)
+    # Generate some numpy arrays
+    for raster in in_rasters:
+        base = os.path.basename(raster)
+        basename = os.path.splitext(base)[0]
+        out_path = os.path.join(output_folder + f"{prefix}{basename}{postfix}.npy")
+
+        metadata = raster_to_metadata(raster)
+
+        output_shape = (all_rows, size, size)
+        input_datatype = metadata["dtype"]
+
+        output_array = np.empty(output_shape, dtype=input_datatype)
+
+        ref = None
+        if clip_to_vector is not None:
+            ref = raster_to_array(clip_raster(raster, cutline=clip_to_vector, cutline_all_touch=True), filled=True)
+        else:
+            ref = raster_to_array(raster, filled=True)
+
+        for k, offset in enumerate(offsets):
+
+            start = 0
+            if k > 0:
+                start = offset_rows_cumsum[k - 1]
+
+            output_array[start:offset_rows_cumsum[k]] = array_to_blocks(ref, (size, size), offset)
+
+        np.save(out_path, output_array[mask])
+
+        ref = None
+        output_array = None
 
     return 1
+
+
+def test_extraction(in_rasters, numpy_arrays, grid, test_sample=1000, verbose=1):
+    if verbose == 1:
+        print("Verifying integrity of output grid..")
+
+    test_vect = vector_to_memory(grid)
+    test_lyr = test_vect.GetLayer(0)
+    test_projection = test_lyr.GetSpatialRef()
+
+    feature_count = test_lyr.GetFeatureCount()
+    mem_driver = ogr.GetDriverByName("MEMORY")
+
+    max_test = min(test_sample, feature_count) - 1
+    test_fids = np.array(random.sample(range(0, feature_count), max_test), dtype="uint64")
+
+    for index, raster in enumerate(in_rasters):
+        test_rast = raster_to_memory(raster)
+        test_array = np.load(numpy_arrays[index])
+
+        base = os.path.basename(raster)
+        basename = os.path.splitext(base)[0]
+        
+        test_lyr = test_vect.GetLayer(0)
+
+        if verbose == 1:
+            print(f"Testing: {basename}")
+
+        tested = 0
+        for test in test_fids:
+            feature = test_lyr.GetFeature(test)
+
+            if feature is None:
+                raise Exception(f"Feature not found: {test}")
+
+            test_ds = mem_driver.CreateDataSource("test_mem_grid")
+            test_ds_lyr = test_ds.CreateLayer(
+                "test_mem_grid_layer", geom_type=ogr.wkbPolygon, srs=test_projection
+            )
+            test_ds_lyr.CreateFeature(feature.Clone())
+
+            ref_img = raster_to_array(test_rast, cutline=test_ds, quiet=True, filled=True)
+
+            image_block = test_array[test]
+
+            if not np.array_equal(ref_img, image_block):
+                raise Exception(f"Image {basename} and grid cell did not match..")
+
+            if verbose == 1:
+                progress(tested, len(test_fids) - 1, "verifying..")
+
+            tested += 1
+
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from patch_extraction import extract_patches
     from raster_io import raster_to_array, array_to_raster
     import numpy as np
+    from glob import glob
     import os
 
     # 172, 3000, 3010, 50, 
 
-    folder = "C:/Users/caspe/Desktop/patch_test/"
+    folder = "C:/Users/caspe/Desktop/align_test/"
 
     extract_patches(
-        folder + "walls_aeroe_final_comp7.tif",
-        folder + "ana_wall.npy",
+        glob(folder + "aligned/*.tif"),
+        folder + "out/",
+        prefix="",
+        postfix="_patches",
         size=64,
-        clip_to_vector=folder + "walls_buffer.gpkg",
         offsets=[(32, 32), (32, 0), (0, 32)],
-        fill_value=0,
-        output_geom=folder + "ana_wall.gpkg",
-        testing=True,
+        output_geom=True,
+        clip_to_vector=folder + "project_area3.gpkg",
+        verbose=1,
     )
 
+    aligned = glob(folder + "aligned/*.tif")
+    numpy_arrays = glob(folder + "out/*.npy")
+    grid = folder + "out/patches_64_patches.gpkg"
+
+    test_extraction(aligned, numpy_arrays, grid)

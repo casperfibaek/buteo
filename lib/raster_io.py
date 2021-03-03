@@ -559,14 +559,16 @@ def raster_to_array(
         if src_nodata is not None:
             data = np.ma.masked_equal(raster_arr, src_nodata)
 
-        if fill_value is not None:
-            data.fill_value = fill_value
-
         if filled is True:
-            data = data.filled()
+            if isinstance(data, np.ma.MaskedArray):
+                if fill_value is not None:
+                    data = data.filled(fill_value)
+                else:
+                    data = data.filled()
 
         if compressed is True:
-            data = data.compressed()
+            if isinstance(data, np.ma.MaskedArray):
+                data = data.compressed()
 
         if readied_raster.RasterCount == 1:
             return data
