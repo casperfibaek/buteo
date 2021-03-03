@@ -193,7 +193,6 @@ def extract_patches(
             y_max = (uly - dx) - (y_offset * pixel_height)
             y_min = y_max - (y_step * yres)
 
-
             # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
             xr = np.arange(x_min, x_max, xres, dtype="float64")[0:x_step]
             yr = np.arange(y_min, y_max, yres, dtype="float64")[::-1][0:y_step]
@@ -348,8 +347,7 @@ def extract_patches(
                 image_block = output_array[test]
 
                 if not np.array_equal(ref_img, image_block):
-                    import pdb; pdb.set_trace()
-                    # raise Exception("Image and grid cell did not match..")
+                    raise Exception("Image and grid cell did not match..")
 
                 if verbose == 1:
                     progress(tested, len(test_fids) - 1, "verifying..")
