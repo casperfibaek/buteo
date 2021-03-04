@@ -81,6 +81,22 @@ def vector_to_memory(in_vector:ogr.DataSource or str, layer:int=0) -> ogr.DataSo
 
     return copy
 
+
+def vector_to_metadata(in_vector:ogr.DataSource or str, layer:int=0) -> ogr.DataSource:
+    try:
+        if isinstance(in_vector, ogr.DataSource):
+            src = in_vector
+        else:
+            src = ogr.Open(in_vector)
+    except:
+        raise Exception("Could not read input raster")
+
+    driver = ogr.GetDriverByName("MEMORY")
+    copy = driver.CreateDataSource("copy")
+    copy.CopyLayer(src.GetLayer(layer), "copy", ["OVERWRITE=YES"])
+
+    return copy
+
 if __name__ == "__main__":
     bob = vector_to_memory("../geometry/denmark_10km_grid.gpkg")
     import pdb; pdb.set_trace()

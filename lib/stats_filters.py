@@ -1,14 +1,14 @@
 import numpy as np
 import sys; sys.path.append('c:/Users/caspe/desktop/yellow')
 import scipy.signal
-from stats_local import kernel_filter, mode_array, feather_s2_array
-from stats_local_no_kernel import (
+from lib.stats_local import kernel_filter, mode_array, feather_s2_array
+from lib.stats_local_no_kernel import (
     truncate_array,
     threshold_array,
     cdef_from_z,
     select_highest,
 )
-from stats_kernel import create_kernel
+from lib.stats_kernel import create_kernel
 
 def sigma_to_db(arr):
     return 10 * np.log10(np.abs(arr))
@@ -825,12 +825,9 @@ def mode_filter(in_raster, width=5, iterations=1, circular=True):
 
     if iterations == 1:
         return mode_array(in_raster, kernel)
-        # return majority(in_raster, kernel)
     else:
         result = mode_array(in_raster, kernel)
-        # result = majority(in_raster, kernel)
-        for x in range(iterations - 1):
-            # result = majority(result, kernel)
+        for _x in range(iterations - 1):
             result = mode_array(result, kernel)
         return result
 

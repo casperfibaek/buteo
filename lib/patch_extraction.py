@@ -423,14 +423,7 @@ def test_extraction(in_rasters, numpy_arrays, grid, test_sample=1000, verbose=1)
 
 
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    from patch_extraction import extract_patches
-    from raster_io import raster_to_array, array_to_raster
-    import numpy as np
-    from glob import glob
-    import os
-
-    # 172, 3000, 3010, 50, 
+    from glob import glob 
 
     folder = "C:/Users/caspe/Desktop/align_test/"
 

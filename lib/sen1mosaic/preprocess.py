@@ -6,6 +6,7 @@ import numpy as np
 import os
 import sys
 import time
+import multiprocessing
 
 import sen1mosaic.multiprocess
 
@@ -307,7 +308,7 @@ def _getExtent(infile, buffer_size = 1000, multilook = 2, correct = True):
     return ','.join([str(i) for i in extent])
 
 
-def correctionGraph(infile, outfile, output_dir = os.getcwd(), multilook = 2, speckle_filter = False, short_chain = False, output_units = 'decibels', gpt = '~/snap/bin/gpt', verbose = False):
+def correctionGraph(infile, outfile, output_dir = os.getcwd(), graph="backscatter_step1.xml", multilook = 2, speckle_filter = False, short_chain = False, output_units = 'decibels', gpt = '~/snap/bin/gpt', verbose = False):
     """
     Perform radiometic/geometric terrain correction and filtering.
     
@@ -332,7 +333,13 @@ def correctionGraph(infile, outfile, output_dir = os.getcwd(), multilook = 2, sp
         if not os.path.exists(gpt):
             gpt = os.path.realpath(os.path.abspath(os.path.expanduser("~/snap/bin/gpt")))
             if not os.path.exists(gpt):
-                assert os.path.exists(gpt), "Graph processing tool not found."  
+                gpt = os.path.realpath(os.path.abspath(os.path.expanduser('C:/Program Files/snap/bin/gpt.exe')))
+
+                if os.path.exists(gpt):
+                    gpt = '"C:/Program Files/snap/bin/gpt.exe"'
+                else:
+                    if not os.path.exists(gpt):
+                        assert os.path.exists(gpt), "Graph processing tool not found."  
 
     # Ensure that output directory has a tailing '/'.
     output_dir = '%s/'%output_dir.rstrip('/')
@@ -349,7 +356,7 @@ def correctionGraph(infile, outfile, output_dir = os.getcwd(), multilook = 2, sp
     
     # xmlfile = os.path.join(os.path.dirname(__file__), './graphs/3_terrain_correction.xml')
     # xmlfile = os.path.join(os.path.dirname(__file__), './graphs/3_terrain_correction_custom.xml')
-    xmlfile = os.path.join(os.path.dirname(__file__), './graphs/preprocess.xml') 
+    xmlfile = os.path.join(os.path.dirname(__file__), f'./graphs/{graph}') 
     
     # if output_units == 'decibels': xmlfile = xmlfile[:-4] + '_db.xml'
     # if speckle_filter: xmlfile = xmlfile[:-4] + '_filter.xml'
@@ -357,7 +364,13 @@ def correctionGraph(infile, outfile, output_dir = os.getcwd(), multilook = 2, sp
     
     # Prepare command
     # command = [gpt, os.path.abspath(xmlfile), '-x', '-Pinputfile=%s'%infile, '-Poutputfile=%s'%output_file, '-Pextent=%s'%extent]
-    command = [gpt, os.path.abspath(xmlfile), '-x', '-Pinputfile=%s'%infile, '-Poutputfile=%s'%output_file]
+    command = [gpt, os.path.abspath(xmlfile), '-Pinputfile=%s'%infile, '-Poutputfile=%s'%output_file, f"-q {multiprocessing.cpu_count()}", "-c 31978M", "-J-Xmx45G -J-Xms2G"]
+    
+    command_str = " ".join(command)
+
+    os.system(f'cmd /c {" ".join(command)}')
+
+    import pdb; pdb.set_trace()
     
     if verbose: print('Executing: %s'%' '.join(command))
     

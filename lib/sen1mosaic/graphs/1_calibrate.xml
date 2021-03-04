@@ -72,7 +72,7 @@
   <applicationData id="Presentation">
     <Description/>
     <node id="Write">
-            <displayPosition x="626.0" y="128.0"/>
+      <displayPosition x="626.0" y="128.0"/>
     </node>
     <node id="Calibration">
       <displayPosition x="492.0" y="128.0"/>

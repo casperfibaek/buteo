@@ -177,9 +177,9 @@ def calc_shapes(in_vector):
     vector_layer.CommitTransaction()
 
 
-# Create a low-memory options
+# TODO: Do vector calculation in memory to reduce IO.
+# TODO Create a low-memory options
 def calc_zonal(in_vector, in_rasters=[], prefixes=[], stats=['mean', 'med', 'std']):
-    # TODO: Do vector calculation in memory to reduce IO.
 
     # Translate stats to integers
     stats_translated = enumerate_stats(stats)
@@ -269,9 +269,10 @@ def calc_zonal(in_vector, in_rasters=[], prefixes=[], stats=['mean', 'med', 'std
                 overlap_aligned_rasterized_size[1],
             ])
         except:
+            fits_in_memory = False
             print("Raster does not fit in memory.. Doing IO for each feature.")
+
         raster_data = None
-        fits_in_memory = False
 
         for n in range(vector_feature_count):
             vector_feature = vector_layer.GetNextFeature()
