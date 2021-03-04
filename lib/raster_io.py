@@ -605,6 +605,7 @@ def raster_to_metadata(in_raster):
     metadata["pixel_width"] = metadata["transform"][1]
     metadata["pixel_height"] = metadata["transform"][5]
     metadata["minx"] = metadata["transform"][0]
+    metadata["bands"] = metadata["dataframe"].RasterCount
     metadata["miny"] = (
         metadata["transform"][3]
         + metadata["width"] * metadata["transform"][4]

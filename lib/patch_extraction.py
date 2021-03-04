@@ -1,6 +1,3 @@
-# Extract patches to numpy arrays from a rasters extent and pixel count
-# optionally output centroids
-from pdb import main
 import sys
 
 sys.path.append("..")
