@@ -270,6 +270,30 @@ cdef Offset * generate_offsets(double [:, ::1] kernel, int kernel_width, int non
     return offsets
 
 
+cdef Offset * generate_offsets_3d(double [:, ::1] kernel, int x_kernel_size, int y_kernel_size, int z_kernel_size, int non_zero) nogil:
+    cdef int x, y, z
+    
+    cdef int radius_x = <int>(x_kernel_size / 2)
+    cdef int radius_y = <int>(y_kernel_size / 2)
+    cdef int radius_z = <int>(z_kernel_size / 2)
+
+    cdef int step = 0
+
+    cdef Offset *offsets = <Offset *> malloc(non_zero * sizeof(Offset))
+
+    for x in range(x_kernel_size):
+        for y in range(y_kernel_size):
+            for z in range(z_kernel_size):
+                if kernel[x, y, z] != 0.0:
+                    offsets[step].x = x - radius_x
+                    offsets[step].y = y - radius_y
+                    offsets[step].z = z - radius_z
+                    offsets[step].weight = kernel[x, y, z]
+                    step += 1
+
+    return offsets
+
+
 cdef f_type func_selector(str func_type):
     if func_type is 'mean': return neighbourhood_sum
     elif func_type is 'avg': return neighbourhood_sum
@@ -409,12 +433,14 @@ cdef void loop(
 
 cdef void loop_3d(
     double [:, :, ::1] arr,
-    double [:, ::1] kernel,
+    double [:, :, ::1] kernel,
     double [:, ::1] result,
-    int z_max,
     int x_max,
     int y_max,
-    int kernel_width,
+    int z_max,
+    int x_kernel_size,
+    int y_kernel_size,
+    int z_kernel_size,
     int non_zero,
     bint has_nodata,
     double fill_value,
@@ -423,15 +449,23 @@ cdef void loop_3d(
     cdef int x, y, n, z, ni, offset_x, offset_y
     cdef Neighbourhood * neighbourhood
     cdef bint value_is_nodata
+    
     cdef int x_max_adj = x_max - 1
     cdef int y_max_adj = y_max - 1
-    cdef int x_edge_low = kernel_width
-    cdef int y_edge_low = kernel_width
-    cdef int x_edge_high = x_max_adj - kernel_width
-    cdef int y_edge_high = y_max_adj - kernel_width
+    cdef int z_max_adj = z_max - 1
+
+    cdef int x_edge_low = x_kernel_size
+    cdef int y_edge_low = y_kernel_size
+    cdef int z_edge_low = z_kernel_size
+
+    cdef int x_edge_high = x_max_adj - x_kernel_size
+    cdef int y_edge_high = y_max_adj - y_kernel_size
+    cdef int z_edge_high = z_max_adj - z_kernel_size
+
+
     cdef int neighbourhood_size = sizeof(Neighbourhood) * (non_zero * z_max)
 
-    cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
+    cdef Offset * offsets = generate_offsets_3d(kernel, x_kernel_size, y_kernel_size, z_kernel_size, non_zero)
 
     for x in prange(x_max):
         for y in range(y_max):
@@ -441,7 +475,7 @@ cdef void loop_3d(
 
             for z in range(z_max):
 
-                if has_nodata is True and arr[z][x][y] == fill_value:
+                if has_nodata is True and arr[x][y][z] == fill_value:
                     value_is_nodata = True
                     continue
 
@@ -450,17 +484,24 @@ cdef void loop_3d(
 
                     offset_x = x + offsets[n].x
                     offset_y = y + offsets[n].y
+                    offset_z = z + offsets[n].z
 
                     if offset_x < 0:
                         offset_x = 0
                     elif offset_x > x_max_adj:
                         offset_x = x_max_adj
+
                     if offset_y < 0:
                         offset_y = 0
                     elif offset_y > y_max_adj:
                         offset_y = y_max_adj
 
-                    neighbourhood[ni].value = arr[z][offset_x][offset_y]
+                    if offset_z < 0:
+                        offset_z = 0
+                    elif offset_z > z_max_adj:
+                        offset_z = z_max_adj
+
+                    neighbourhood[ni].value = arr[offset_x][offset_y][offset_z]
                     neighbourhood[ni].weight = offsets[n].weight / z_max
 
                     if has_nodata is True and neighbourhood[ni].value == fill_value:
@@ -468,30 +509,64 @@ cdef void loop_3d(
                     else:    
                         neighbourhood[ni].weight = offsets[n].weight / z_max
             
-            if has_nodata is True or (x < x_edge_low or y < y_edge_low or x > x_edge_high or y > y_edge_high):
+            if has_nodata is True or (x < x_edge_low or x > x_edge_high or y < y_edge_low or y > y_edge_high or z < z_edge_low or z > z_edge_high):
                 normalise_neighbourhood(neighbourhood, non_zero)
 
             if value_is_nodata is False:
-                result[x][y] = apply(neighbourhood, non_zero)
+                result[x][y][z] = apply(neighbourhood, non_zero)
             else:
-                result[x][y] = fill_value
+                result[x][y][z] = fill_value
 
             free(neighbourhood)
 
 
-def fast_sum(arr, kernel):
+def kernel_filter_3d(arr, kernel, str func_type, dtype='float32'):
+    cdef bint has_nodata = False
+    cdef double fill_value
+    cdef f_type apply = func_selector(func_type)
     cdef int non_zero = np.count_nonzero(kernel)
+    cdef double [:, :, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
+    cdef double [:, :, ::1] arr_view_3d
 
-    result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
+    arr_mask = False
     arr = arr.astype(np.double) if arr.dtype != np.double else arr
 
-    cdef double [:, ::1] arr_view = arr
+    result = np.empty((arr.shape[1], arr.shape[2]), dtype=np.double)
+
     cdef double [:, ::1] result_view = result
-    cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
 
-    fast_2d_sum(arr_view, kernel_view, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero)
+    if isinstance(arr, np.ma.MaskedArray):
+        fill_value = arr.fill_value
+        has_nodata = 1
+        if arr.mask is not False:
+            arr_mask = np.ma.getmask(arr)
+        arr = arr.filled()
+    else:
+        fill_value = 0.0
 
-    return result
+    arr_view_3d = arr
+    loop_3d(
+        arr_view_3d,
+        kernel_view,
+        result_view,
+        arr.shape[0],
+        arr.shape[1],
+        arr.shape[2],
+        kernel.shape[0],
+        kernel.shape[1],
+        kernel.shape[2],
+        non_zero,
+        has_nodata,
+        fill_value,
+        apply,
+    )
+    if has_nodata is True:
+        if arr_mask is not False:
+            return np.ma.masked_where(arr_mask, result).astype(dtype)
+        else:
+            return np.ma.masked_equal(result, fill_value).astype(dtype)
+
+    return result.astype(dtype)
 
 
 def kernel_filter(arr, kernel, str func_type, dtype='float32'):
@@ -715,5 +790,20 @@ def feather_s2_array(tracker, values_to_count, kernel):
     cdef int [:, ::1] tracker_view = tracker.astype(np.intc) if tracker.dtype != np.intc else tracker
 
     loop_feather(tracker_view, kernel_view, result_view, tracker.shape[0], tracker.shape[1], kernel.shape[0], non_zero, val_to_count_view, val_to_count_len)
+
+    return result
+
+
+def fast_sum(arr, kernel):
+    cdef int non_zero = np.count_nonzero(kernel)
+
+    result = np.empty((arr.shape[0], arr.shape[1]), dtype=np.double)
+    arr = arr.astype(np.double) if arr.dtype != np.double else arr
+
+    cdef double [:, ::1] arr_view = arr
+    cdef double [:, ::1] result_view = result
+    cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
+
+    fast_2d_sum(arr_view, kernel_view, result_view, arr.shape[0], arr.shape[1], kernel.shape[0], non_zero)
 
     return result
