@@ -82,6 +82,7 @@ def vector_to_memory(in_vector:ogr.DataSource or str, layer:int=0) -> ogr.DataSo
     return copy
 
 
+# TODO: CREATE THE BELOW FUNCTION, ADD TO SENTINEL 1 Subsampling
 def vector_to_metadata(in_vector:ogr.DataSource or str, layer:int=0) -> ogr.DataSource:
     try:
         if isinstance(in_vector, ogr.DataSource):

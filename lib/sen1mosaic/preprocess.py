@@ -370,12 +370,7 @@ def correctionGraph(infile, outfile, output_dir = os.getcwd(), graph="backscatte
 
     os.system(f'cmd /c {" ".join(command)}')
 
-    import pdb; pdb.set_trace()
-    
-    if verbose: print('Executing: %s'%' '.join(command))
-    
-    # Execute chain
-    output_text = sen1mosaic.multiprocess.runCommand(command, verbose = verbose)
+    # import pdb; pdb.set_trace()
     
     return output_file
 

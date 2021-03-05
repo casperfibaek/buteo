@@ -123,7 +123,7 @@ def align(
 
 if __name__ == "__main__":
     from glob import glob
-    folder = "C:/Users/caspe/Desktop/align_test/"
+    folder = "C:/Users/caspe/Desktop/noise_test/processed/"
 
     align(
         glob(folder + "*.tif"),
