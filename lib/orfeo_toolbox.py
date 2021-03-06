@@ -51,9 +51,6 @@ def pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):
 
     cli = "otbcli_Pansharpening"
 
-    """ *******************************************************
-        Parse the input and create CLI string
-    ******************************************************* """
     methods = ["rcs", "lmvm", "bayes"]
 
     if options is None:
@@ -97,10 +94,6 @@ def pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):
 
     cli_string = " ".join(cli_args)
 
-    """ *******************************************************
-        Make CLI request and handle responses
-    ******************************************************* """
-
     execute_cli_function(cli_string, name="Pansharpening")
 
     return os.path.abspath(out_raster)
@@ -136,10 +129,6 @@ def local_stats(in_raster, out_raster, options=None, band=None):
         cli_args.append(str(value))
 
     cli_string = " ".join(cli_args)
-
-    """ *******************************************************
-        Make CLI request and handle responses
-    ******************************************************* """
 
     execute_cli_function(cli_string, name="Local statistics")
 
@@ -189,10 +178,6 @@ def haralick(in_raster, out_raster, options=None, out_datatype="float", band=Non
 
     cli_string = " ".join(cli_args)
 
-    """ *******************************************************
-        Make CLI request and handle responses
-    ******************************************************* """
-
     execute_cli_function(cli_string, name="Texture extraction")
 
     return os.path.abspath(out_raster)
@@ -235,10 +220,6 @@ def dimension_reduction(in_raster, out_raster, options=None, out_datatype=None):
 
     cli_string = " ".join(cli_args)
 
-    """ *******************************************************
-        Make CLI request and handle responses
-    ******************************************************* """
-
     execute_cli_function(cli_string, name="Dimension reduction")
 
     return os.path.abspath(out_raster)
@@ -273,10 +254,6 @@ def concatenate_images(in_rasters, out_raster, ram=None, out_datatype=None):
         ]
     )
 
-    """ *******************************************************
-        Make CLI request and handle responses
-    ******************************************************* """
-
     execute_cli_function(cli_string, name="concatenate images")
 
     return os.path.abspath(out_raster)
@@ -306,10 +283,6 @@ def split_images(in_raster, out_rasters, ram=None, out_datatype=None):
             str(ram),
         ]
     )
-
-    """ *******************************************************
-        Make CLI request and handle responses
-    ******************************************************* """
 
     execute_cli_function(cli_string, name="splitting images")
 
@@ -351,10 +324,6 @@ def rescale(in_raster, out_raster, options=None, out_datatype="float"):
 
     cli_string = " ".join(cli_args)
 
-    """ *******************************************************
-        Make CLI request and handle responses
-    ******************************************************* """
-
     execute_cli_function(cli_string, name="rescale image")
 
     return os.path.abspath(out_raster)
@@ -393,10 +362,6 @@ def merge_rasters(
         cli_args.append(str(value))
 
     cli_string = " ".join(cli_args)
-
-    """ *******************************************************
-        Make CLI request and handle responses
-    ******************************************************* """
 
     execute_cli_function(cli_string, name="merge rasters")
 
@@ -449,9 +414,4 @@ def meanshift_segmentation(
 
     cli_string = " ".join(cli_args)
 
-    """ *******************************************************
-        Make CLI request and handle responses
-    ******************************************************* """
-
     execute_cli_function(cli_string, name="meanshifting")
-

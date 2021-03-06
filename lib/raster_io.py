@@ -1,18 +1,131 @@
 import os
 import numpy as np
 import json
-import geojson
 from osgeo import gdal, osr
-from shapely.geometry import shape
 
-from utils_core import (
+from lib.utils_core import (
     numpy_to_gdal_datatype,
-    numpy_fill_values,
     datatype_is_float,
-    progress_callback_quiet,
     gdal_to_numpy_datatype,
 )
-from raster_clip import clip_raster
+from lib.raster_clip import clip_raster
+
+
+def raster_to_reference(in_raster):
+    try:
+        if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
+            return in_raster
+        else:
+            opened = gdal.Open(in_raster)
+            
+            if opened is None:
+                raise Exception("Could not read input raster")
+
+            return opened
+    except:
+        raise Exception("Could not read input raster")
+
+
+def raster_to_memory(in_raster):
+    ref = raster_to_reference(in_raster)
+    driver = gdal.GetDriverByName("MEM")
+
+    return driver.CreateCopy("mem_raster", ref)
+
+
+def raster_to_metadata(in_raster):
+    metadata = {}
+    try:
+        if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
+            metadata["dataframe"] = in_raster
+        else:
+            metadata["dataframe"] = gdal.Open(in_raster)
+    except:
+        raise Exception("Could not read input raster")
+
+    metadata["transform"] = metadata["dataframe"].GetGeoTransform()
+    metadata["projection"] = metadata["dataframe"].GetProjection()
+
+    band0 = metadata["dataframe"].GetRasterBand(1)
+    og = osr.SpatialReference()
+    og.ImportFromWkt(metadata["projection"])
+    wgs84 = osr.SpatialReference()
+    wgs84.ImportFromEPSG(4326)
+
+    tx = osr.CoordinateTransformation(og, wgs84)
+
+    metadata["width"] = metadata["dataframe"].RasterXSize
+    metadata["height"] = metadata["dataframe"].RasterYSize
+    metadata["shape"] = (metadata["width"], metadata["height"])
+    metadata["pixel_width"] = metadata["transform"][1]
+    metadata["pixel_height"] = metadata["transform"][5]
+    metadata["minx"] = metadata["transform"][0]
+    metadata["bands"] = metadata["dataframe"].RasterCount
+    metadata["miny"] = (
+        metadata["transform"][3]
+        + metadata["width"] * metadata["transform"][4]
+        + metadata["height"] * metadata["transform"][5]
+    )
+    metadata["maxx"] = (
+        metadata["transform"][0]
+        + metadata["width"] * metadata["transform"][1]
+        + metadata["height"] * metadata["transform"][2]
+    )
+    metadata["maxy"] = metadata["transform"][3]
+
+    metadata["dtype_gdal"] = gdal.GetDataTypeName(band0.DataType)
+    metadata["dtype"] = gdal_to_numpy_datatype(band0.DataType)
+    metadata["nodata_value"] = band0.GetNoDataValue()
+
+    # ulx, uly, lrx, lry = -180, 90, 180, -90
+    metadata["extent"] = [
+        metadata["minx"],
+        metadata["maxy"],
+        metadata["maxx"],
+        metadata["miny"],
+    ]
+
+    bottom_left = tx.TransformPoint(metadata["minx"], metadata["miny"])
+    top_left = tx.TransformPoint(metadata["minx"], metadata["maxy"])
+    top_right = tx.TransformPoint(metadata["maxx"], metadata["maxy"])
+    bottom_right = tx.TransformPoint(metadata["maxx"], metadata["miny"])
+
+    # ulx, uly, lrx, lry = -180, 90, 180, -90
+    metadata["extent_wgs84"] = [
+        top_left[0],
+        top_left[1],
+        bottom_right[0],
+        bottom_right[1],
+    ]
+
+    coord_array = [
+        [bottom_left[1], bottom_left[0]],
+        [top_left[1], top_left[0]],
+        [top_right[1], top_right[0]],
+        [bottom_right[1], bottom_right[0]],
+        [bottom_left[1], bottom_left[0]],
+    ]
+
+    wkt_coords = ""
+    for coord in coord_array:
+        wkt_coords += f"{coord[1]} {coord[0]}, "
+    wkt_coords = wkt_coords[:-2]
+
+    metadata["footprint_wkt"] = f"POLYGON (({wkt_coords}))"
+
+    metadata["extent_geojson_dict"] = {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [coord_array],
+        },
+    }
+    metadata["extent_geojson"] = json.dumps(metadata["footprint_dict"])
+
+    return metadata
+
+
 
 
 def array_to_raster(
@@ -26,11 +139,9 @@ def array_to_raster(
     dst_crop_to_projection=True,
     calc_band_stats=False,
     align=True,
-    src_nodata=None,
     dst_nodata=None,
     resample=False,
     resample_alg="near",
-    quiet=False,
 ):
     """ Turns a numpy array into a gdal dataframe or exported
         as a raster. If no reference is specified, the following
@@ -435,7 +546,6 @@ def raster_to_array(
     reference_raster=None,
     cutline=None,
     cutline_all_touch=False,
-    cutlineWhere=None,
     crop_to_cutline=True,
     compressed=False,
     band_to_clip=1,
@@ -576,106 +686,3 @@ def raster_to_array(
             return_data.append(data)
 
     return np.dstack(return_data)
-
-
-def raster_to_metadata(in_raster):
-    metadata = {}
-    try:
-        if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
-            metadata["dataframe"] = in_raster
-        else:
-            metadata["dataframe"] = gdal.Open(in_raster)
-    except:
-        raise Exception("Could not read input raster")
-
-    metadata["transform"] = metadata["dataframe"].GetGeoTransform()
-    metadata["projection"] = metadata["dataframe"].GetProjection()
-
-    band0 = metadata["dataframe"].GetRasterBand(1)
-    og = osr.SpatialReference()
-    og.ImportFromWkt(metadata["projection"])
-    wgs84 = osr.SpatialReference()
-    wgs84.ImportFromEPSG(4326)
-
-    tx = osr.CoordinateTransformation(og, wgs84)
-
-    metadata["width"] = metadata["dataframe"].RasterXSize
-    metadata["height"] = metadata["dataframe"].RasterYSize
-    metadata["shape"] = (metadata["width"], metadata["height"])
-    metadata["pixel_width"] = metadata["transform"][1]
-    metadata["pixel_height"] = metadata["transform"][5]
-    metadata["minx"] = metadata["transform"][0]
-    metadata["bands"] = metadata["dataframe"].RasterCount
-    metadata["miny"] = (
-        metadata["transform"][3]
-        + metadata["width"] * metadata["transform"][4]
-        + metadata["height"] * metadata["transform"][5]
-    )
-    metadata["maxx"] = (
-        metadata["transform"][0]
-        + metadata["width"] * metadata["transform"][1]
-        + metadata["height"] * metadata["transform"][2]
-    )
-    metadata["maxy"] = metadata["transform"][3]
-
-    metadata["dtype_gdal"] = gdal.GetDataTypeName(band0.DataType)
-    metadata["dtype"] = gdal_to_numpy_datatype(band0.DataType)
-    metadata["nodata_value"] = band0.GetNoDataValue()
-
-    # ulx, uly, lrx, lry = -180, 90, 180, -90
-    metadata["extent"] = (
-        metadata["minx"],
-        metadata["maxy"],
-        metadata["maxx"],
-        metadata["miny"],
-    )
-
-    bottom_left = tx.TransformPoint(metadata["minx"], metadata["miny"])
-    top_left = tx.TransformPoint(metadata["minx"], metadata["maxy"])
-    top_right = tx.TransformPoint(metadata["maxx"], metadata["maxy"])
-    bottom_right = tx.TransformPoint(metadata["maxx"], metadata["miny"])
-
-    # ulx, uly, lrx, lry = -180, 90, 180, -90
-    metadata["extent_wgs84"] = (
-        top_left[0],
-        top_left[1],
-        bottom_right[0],
-        bottom_right[1],
-    )
-
-    metadata["footprint_dict"] = {
-        "type": "Feature",
-        "properties": {},
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [
-                [
-                    [bottom_left[1], bottom_left[0]],
-                    [top_left[1], top_left[0]],
-                    [top_right[1], top_right[0]],
-                    [bottom_right[1], bottom_right[0]],
-                    [bottom_left[1], bottom_left[0]],
-                ]
-            ],
-        },
-    }
-    metadata["footprint"] = json.dumps(metadata["footprint_dict"])
-    metadata["footprint_wkt"] = shape(metadata["footprint_dict"]["geometry"]).wkt
-    metadata["footprint_crs"] = wgs84.ExportToWkt()
-
-    return metadata
-
-
-def raster_to_memory(in_raster):
-    try:
-        if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
-            src = in_raster
-        else:
-            src = gdal.Open(in_raster)
-    except:
-        raise Exception("Could not read input raster")
-
-    driver = gdal.GetDriverByName("MEM")
-
-    return driver.CreateCopy("mem_raster", src)
-

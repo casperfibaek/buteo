@@ -1,8 +1,6 @@
 import os
-import numpy as np
-import numpy.ma as ma
 from osgeo import gdal, ogr, osr
-from utils_core import (
+from lib.utils_core import (
     get_extent,
     translate_max_values,
     create_subset_dataframe,

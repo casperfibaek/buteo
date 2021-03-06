@@ -1,0 +1,109 @@
+<graph id="Graph">
+  <version>1.0</version>
+  <node id="Read">
+    <operator>Read</operator>
+    <sources/>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>${inputfile}</file>
+      <formatName>BEAM-DIMAP</formatName>
+    </parameters>
+  </node>
+  <node id="Speckle-Filter">
+    <operator>Speckle-Filter</operator>
+    <sources>
+      <sourceProduct refid="Read"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <sourceBands/>
+      <filter>Refined Lee</filter>
+      <filterSizeX>3</filterSizeX>
+      <filterSizeY>3</filterSizeY>
+      <dampingFactor>2</dampingFactor>
+      <estimateENL>true</estimateENL>
+      <enl>1.0</enl>
+      <numLooksStr>1</numLooksStr>
+      <windowSize>7x7</windowSize>
+      <targetWindowSizeStr>3x3</targetWindowSizeStr>
+      <sigmaStr>0.9</sigmaStr>
+      <anSize>50</anSize>
+    </parameters>
+  </node>
+  <node id="Subset">
+    <operator>Subset</operator>
+    <sources>
+      <sourceProduct refid="Speckle-Filter"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <sourceBands/>
+      <region>${extent}</region>
+      <geoRegion/>
+      <subSamplingX>1</subSamplingX>
+      <subSamplingY>1</subSamplingY>
+      <fullSwath>false</fullSwath>
+      <tiePointGridNames/>
+      <copyMetadata>true</copyMetadata>
+    </parameters>
+  </node>
+  <node id="Terrain-Correction">
+    <operator>Terrain-Correction</operator>
+    <sources>
+      <sourceProduct refid="Subset"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <sourceBands/>
+      <demName>SRTM 1Sec HGT</demName>
+      <externalDEMFile/>
+      <externalDEMNoDataValue>0.0</externalDEMNoDataValue>
+      <externalDEMApplyEGM>true</externalDEMApplyEGM>
+      <demResamplingMethod>BILINEAR_INTERPOLATION</demResamplingMethod>
+      <imgResamplingMethod>BILINEAR_INTERPOLATION</imgResamplingMethod>
+      <pixelSpacingInMeter>0.0</pixelSpacingInMeter>
+      <pixelSpacingInDegree>0.0</pixelSpacingInDegree>
+      <mapProjection>AUTO:42001</mapProjection>
+      <nodataValueAtSea>true</nodataValueAtSea>
+      <saveDEM>false</saveDEM>
+      <saveLatLon>false</saveLatLon>
+      <saveIncidenceAngleFromEllipsoid>false</saveIncidenceAngleFromEllipsoid>
+      <saveLocalIncidenceAngle>false</saveLocalIncidenceAngle>
+      <saveProjectedLocalIncidenceAngle>false</saveProjectedLocalIncidenceAngle>
+      <saveSelectedSourceBand>true</saveSelectedSourceBand>
+      <outputComplex>false</outputComplex>
+      <applyRadiometricNormalization>false</applyRadiometricNormalization>
+      <saveSigmaNought>false</saveSigmaNought>
+      <saveGammaNought>false</saveGammaNought>
+      <saveBetaNought>false</saveBetaNought>
+      <incidenceAngleForSigma0>Use projected local incidence angle from DEM</incidenceAngleForSigma0>
+      <incidenceAngleForGamma0>Use projected local incidence angle from DEM</incidenceAngleForGamma0>
+      <auxFile>Latest Auxiliary File</auxFile>
+      <externalAuxFile/>
+    </parameters>
+  </node>
+  <node id="Write">
+    <operator>Write</operator>
+    <sources>
+      <sourceProduct refid="Terrain-Correction"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>${outputfile}</file>
+      <formatName>BEAM-DIMAP</formatName>
+    </parameters>
+  </node>
+  <applicationData id="Presentation">
+    <Description/>
+    <node id="Write">
+            <displayPosition x="455.0" y="135.0"/>
+    </node>
+    <node id="Terrain-Correction">
+      <displayPosition x="290.0" y="116.0"/>
+    </node>
+    <node id="Subset">
+      <displayPosition x="200.0" y="116.0"/>
+    </node>
+    <node id="Speckle-Filter">
+      <displayPosition x="113.0" y="47.0"/>
+    </node>
+    <node id="Read">
+            <displayPosition x="28.0" y="16.0"/>
+    </node>
+  </applicationData>
+</graph>

@@ -1,7 +1,208 @@
 import sys; sys.path.append('..'); sys.path.append('../lib/')
 from lib.raster_io import raster_to_metadata
 from osgeo import gdal, ogr, osr
+import pandas as pd
+import os, json
 
+
+def vector_to_reference(vector):
+    try:
+        if isinstance(vector, ogr.DataSource):  # Dataset already OGR dataframe.
+            return vector
+        else:
+            opened = ogr.Open(vector)
+            
+            if opened is None:
+                raise Exception("Could not read input raster")
+
+            return opened
+    except:
+        raise Exception("Could not read input raster")
+
+
+def vector_to_memory(vector):
+    ref = vector_to_reference(vector)
+    metadata = vector_to_metadata(ref)
+
+    driver = ogr.GetDriverByName("Memory")
+
+    copy = driver.CreateDataSource("mem_vector")
+
+    for layer in range(metadata["layer_count"]):
+        copy.CopyLayer(ref.GetLayer(layer), f"mem_vector_{layer}", ["OVERWRITE=YES"])
+
+    return copy
+
+
+def vector_to_metadata(vector, process="first"):
+    try:
+        vector = vector if isinstance(vector, ogr.DataSource) else ogr.Open(vector)
+    except:
+        raise Exception("Could not read input vector")
+
+    abs_path = os.path.abspath(vector.GetName())
+
+    metadata = {
+        "path": abs_path,
+        "basename": os.path.basename(abs_path),
+        "filetype": os.path.splitext(os.path.basename(abs_path))[1],
+        "name": os.path.splitext(os.path.basename(abs_path))[0],
+        "layer_count": vector.GetLayerCount(),
+        "layers": []
+    }
+
+    wgs84 = osr.SpatialReference()
+    wgs84.ImportFromEPSG(4326) # WGS84, latlng
+
+    for layer_index in range(metadata["layer_count"]):
+        layer = vector.GetLayerByIndex(layer_index)
+
+        min_x, max_x, min_y, max_y = layer.GetExtent()
+
+        layer_dict = {
+            "name": layer.GetName(),
+            "minx": min_x,
+            "maxx": max_x,
+            "miny": min_y,
+            "maxy": max_y,
+            "extent": [min_x, max_y, max_x, min_y],
+            "extent_ogr": layer.GetExtent(),
+            "fid_column": layer.GetFIDColumn(),
+            "feature_count": layer.GetFeatureCount(),
+        }
+
+        projection = layer.GetSpatialRef().ExportToWkt()
+        projection_osr = osr.SpatialReference()
+        projection_osr.ImportFromWkt(projection)
+    
+        bottom_left = ogr.Geometry(ogr.wkbPoint)
+        top_left = ogr.Geometry(ogr.wkbPoint)
+        top_right = ogr.Geometry(ogr.wkbPoint)
+        bottom_right = ogr.Geometry(ogr.wkbPoint)
+
+        bottom_left.AddPoint(min_x, min_y)
+        top_left.AddPoint(min_x, max_y)
+        top_right.AddPoint(max_x, max_y)
+        bottom_right.AddPoint(max_x, min_y)
+
+        if not projection_osr.IsSame(wgs84):
+            tx = osr.CoordinateTransformation(projection_osr, wgs84)
+
+            bottom_left.Transform(tx)
+            top_left.Transform(tx)
+            top_right.Transform(tx)
+            bottom_right.Transform(tx)
+
+            layer_dict["extent_wgs84"] = [
+                top_left.GetX(),
+                top_left.GetY(),
+                bottom_right.GetX(),
+                bottom_right.GetY(),
+            ]
+
+        else:
+            layer_dict["extent_wgs84"] = layer_dict["extent"]
+        
+        # WKT has latitude first, geojson has longitude first
+        coord_array = [
+            [bottom_left.GetY(), bottom_left.GetX()],
+            [top_left.GetY(), top_left.GetX()],
+            [top_right.GetY(), top_right.GetX()],
+            [bottom_right.GetY(), bottom_right.GetX()],
+            [bottom_left.GetY(), bottom_left.GetX()],
+        ]
+
+        wkt_coords = ""
+        for coord in coord_array:
+            wkt_coords += f"{coord[1]} {coord[0]}, "
+        wkt_coords = wkt_coords[:-2] # Remove the last ", "
+
+        layer_dict["extent_wkt"] = f"POLYGON (({wkt_coords}))"
+
+        layer_dict["extent_geojson_dict"] = {
+            "type": "Feature",
+            "properties": {},
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [coord_array],
+            },
+        }
+        layer_dict["extent_geojson"] = json.dumps(layer_dict["extent_geojson_dict"])
+
+        layer_defn = layer.GetLayerDefn()
+
+        layer_dict["field_count"] = layer_defn.GetFieldCount()
+        layer_dict["geom_type"] = ogr.GeometryTypeToName(layer_defn.GetGeomType())
+
+        layer_dict["field_names"] = []
+        layer_dict["field_types"] = []
+
+        for field_index in range(layer_dict["field_count"]):
+            field_defn = layer_defn.GetFieldDefn(field_index)
+            layer_dict["field_names"].append(field_defn.GetName())
+            layer_dict["field_types"].append(field_defn.GetFieldTypeName(field_defn.GetType()))
+
+        if process == "first":
+
+            for key, value in layer_dict.items():
+                metadata[key] = value
+            
+            del metadata["layers"]
+            break
+
+        metadata["layers"].append(layer_dict)
+   
+
+    return metadata
+
+
+def vector_get_attribute_table(vector, process="first", geom=False):
+    ref = vector_to_reference(vector)
+    metadata = vector_to_metadata(ref, process=process)
+
+    dataframes = []
+
+    for vector_layer in range(metadata["layer_count"]):
+        attribute_table_header = None
+        feature_count = None
+
+        if process != "first":
+            attribute_table_header = metadata["layers"][vector_layer]["field_names"]
+            feature_count = metadata["layers"][vector_layer]["feature_count"]
+        else:
+            attribute_table_header = metadata["field_names"]
+            feature_count = metadata["feature_count"]
+
+        attribute_table = []
+
+        layer = ref.GetLayer(vector_layer)
+
+        for _ in range(feature_count):
+            feature = layer.GetNextFeature()
+            attributes = [feature.GetFID()]
+
+            for field_name in attribute_table_header:
+                attributes.append(feature.GetField(field_name))
+
+            if geom:
+                geom_defn = feature.GetGeometryRef()
+                attributes.append(geom_defn.ExportToIsoWkt())
+            
+            attribute_table.append(attributes)
+
+        attribute_table_header.insert(0, "fid")
+
+        if geom:
+            attribute_table_header.append("geom")
+        
+        df = pd.DataFrame(attribute_table, columns=attribute_table_header)
+
+        if process == "first": return df
+        
+        dataframes.append(df)
+
+    return dataframes
+    
 
 def intersection_rasters(raster_1, raster_2):
     raster_1 = raster_1 if isinstance(raster_1, gdal.Dataset) else gdal.Open(raster_1)
@@ -63,41 +264,3 @@ def vector_mask(vector:ogr.DataSource or str, raster:gdal.Dataset or str) -> gda
     gdal.RasterizeLayer(destination, [1], vector.GetLayer(), burn_values=[0], options=['ALL_TOUCHED=TRUE'])
 
     return destination
-    # return destination_band.ReadAsArray()
-
-
-def vector_to_memory(in_vector:ogr.DataSource or str, layer:int=0) -> ogr.DataSource:
-    try:
-        if isinstance(in_vector, ogr.DataSource):
-            src = in_vector
-        else:
-            src = ogr.Open(in_vector)
-    except:
-        raise Exception("Could not read input raster")
-
-    driver = ogr.GetDriverByName("MEMORY")
-    copy = driver.CreateDataSource("copy")
-    copy.CopyLayer(src.GetLayer(layer), "copy", ["OVERWRITE=YES"])
-
-    return copy
-
-
-# TODO: CREATE THE BELOW FUNCTION, ADD TO SENTINEL 1 Subsampling
-def vector_to_metadata(in_vector:ogr.DataSource or str, layer:int=0) -> ogr.DataSource:
-    try:
-        if isinstance(in_vector, ogr.DataSource):
-            src = in_vector
-        else:
-            src = ogr.Open(in_vector)
-    except:
-        raise Exception("Could not read input raster")
-
-    driver = ogr.GetDriverByName("MEMORY")
-    copy = driver.CreateDataSource("copy")
-    copy.CopyLayer(src.GetLayer(layer), "copy", ["OVERWRITE=YES"])
-
-    return copy
-
-if __name__ == "__main__":
-    bob = vector_to_memory("../geometry/denmark_10km_grid.gpkg")
-    import pdb; pdb.set_trace()

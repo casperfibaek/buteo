@@ -202,41 +202,6 @@ def create_subset_dataframe(dataframe, band=1):
         return subsetDataframe
 
 
-def copy_dataframe(dataframe, name='ignored', output_format='MEM'):
-    driver = gdal.GetDriverByName(output_format)
-
-    inputTransform = dataframe.GetGeoTransform()
-    inputProjection = dataframe.GetProjection()
-    inputBand = dataframe.GetRasterBand(1)
-    inputDataType = inputBand.DataType
-    inputBandCount = dataframe.RasterCount
-
-    if output_format == 'MEM':
-        options = []
-    else:
-        if datatype_is_float(inputDataType) is True:
-            predictor = 3
-        else:
-            predictor = 2
-        options = ['COMPRESS=DEFLATE', f'PREDICTOR={predictor}', 'NUM_THREADS=ALL_CPUS']
-
-    destination = driver.Create(name, dataframe.RasterXSize, dataframe.RasterYSize, inputBandCount, inputDataType, options)
-    destination.SetProjection(inputProjection)
-    destination.SetGeoTransform(inputTransform)
-
-    for i in range(inputBandCount):
-        _inputBand = dataframe.GetRasterBand(i + 1)
-        _inputBandNoDataValue = _inputBand.GetNoDataValue()
-        _inputBandData = _inputBand.ReadAsArray()
-        _destinationBand = destination.GetRasterBand(i + 1)
-        _destinationBand.WriteArray(_inputBandData)
-
-        if _inputBandNoDataValue is not None:
-            destination.SetNoDataValue(_inputBandNoDataValue)
-
-    return destination
-
-
 def translate_resample_method(method):
     methods = {
         'nearest': 0,

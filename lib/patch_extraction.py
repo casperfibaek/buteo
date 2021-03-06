@@ -120,11 +120,6 @@ def extract_patches(
 
     metadata = None
 
-    clipped = clip_raster(in_rasters[0], cutline=clip_to_vector, cutline_all_touch=True)
-    array_to_raster(raster_to_array(clipped), out_raster=output_folder + "bob.tif", reference_raster=clipped)
-
-    import pdb; pdb.set_trace()
-
     if clip_to_vector is not None:
         metadata = raster_to_metadata(clip_raster(in_rasters[0], cutline=clip_to_vector, cutline_all_touch=True))
     else:

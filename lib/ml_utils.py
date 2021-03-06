@@ -1,29 +1,8 @@
-import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 import numpy as np
 
-# Tensorflow
 import tensorflow as tf
 import tensorflow_probability as tfp
-
-def y_class(s):
-    if s == "fid":
-        return 0
-    if s == "area" or s == "b_area":
-        return 1
-    if s == "volume" or s == "b_volume":
-        return 2
-    if s == "ppl" or s == "ppl_ha":
-        return 3
-
-
-def sar_class(s):
-    if s == "asc" or s == "ascending":
-        return 0
-    if s == "desc" or s == "descending":
-        return 1
-    if s == "joined" or s == "max":
-        return 2
 
 
 def count_freq(arr):
@@ -31,9 +10,11 @@ def count_freq(arr):
     ii = np.nonzero(yy)[0]
     return np.vstack((ii, yy[ii])).T
 
+
 # Metrics for testing model accuracy
 def median_absolute_error(y_actual, y_pred):
     return tfp.stats.percentile(tf.math.abs(y_actual - y_pred), 50.0)
+
 
 def median_absolute_percentage_error(y_actual, y_pred):
     return tfp.stats.percentile(
@@ -41,6 +22,7 @@ def median_absolute_percentage_error(y_actual, y_pred):
             tf.abs(tf.subtract(y_actual, y_pred)), (y_actual + 1e-10)
         ) * 100
     , 50.0)
+
 
 # Printing visuals
 def pad(s, dl, dr):
@@ -55,6 +37,7 @@ def pad(s, dl, dr):
         right = right + ((dr - len(right)) * '0')
     
     return left + '.' + right
+
 
 # https://stackoverflow.com/a/44233061/8564588
 def minority_class_mask(arr, minority):
@@ -72,9 +55,6 @@ def create_submask(arr, amount):
     np.random.shuffle(a)
 
     return a
-
-def get_shape(numpy_arr):
-    return (numpy_arr.shape[1], numpy_arr.shape[2], numpy_arr.shape[3])
 
 
 def add_rotations(X, k=4, axes=(1, 2)):
@@ -106,6 +86,7 @@ def add_rotations(X, k=4, axes=(1, 2)):
 
 def add_noise(X, amount=0.01):
     return X * np.random.normal(1, amount, X.shape)
+
 
 def add_fixed_noise(X, center=0, amount=0.05):
     return X + np.random.normal(center, amount, X.shape)
@@ -146,34 +127,6 @@ def add_randomness(arr):
             np.rot90(arr[flips * 3 :], k=3, axes=(1, 2)),
         ]
     )
-
-
-def viz(X, y, model, target="area"):
-    truth = y.astype("float32")
-    predicted = model.predict(X).squeeze().astype("float32")
-
-    if target == "area":
-        labels = [*range(140, 5740, 140)]
-    else:
-        labels = [*range(500, 20500, 500)]
-
-    truth_labels = np.digitize(truth, labels, right=True)
-    predicted_labels = np.digitize(predicted, labels, right=True)
-    labels_unique = np.unique(truth_labels)
-
-    residuals = (truth - predicted).astype("float32")
-    residuals = residuals / 140 if target == "area" else residuals / 700
-
-    fig1, ax = plt.subplots()
-    ax.set_title("violin area")
-
-    per_class = []
-    for cl in labels_unique:
-        per_class.append(residuals[truth_labels == cl])
-
-    ax.violinplot(per_class, showextrema=False, showmedians=True)
-
-    plt.show()
 
 
 def histogram_selection(
@@ -235,7 +188,6 @@ def histogram_selection(
 
 def correlation(dataset, threshold):
     col_corr = set()  # Set of all the names of deleted columns
-    sets = {}
     corr_matrix = dataset.corr()
     for i in range(len(corr_matrix.columns)):
         for j in range(i):
@@ -249,38 +201,3 @@ def correlation(dataset, threshold):
                 #     del dataset[colname]  # deleting the column from the dataset
 
     return col_corr
-
-
-def best_param_random(X, y, n_iter=50, cv=3):
-    n_estimators = [int(x) for x in np.linspace(start=200, stop=2000, num=10)]
-    max_features = ["log2", "sqrt"]
-    max_depth = [int(x) for x in np.linspace(10, 110, num=11)]
-    max_depth.append(None)
-    min_samples_split = [2, 4, 6]
-    min_samples_leaf = [1, 2, 4]
-    bootstrap = [True, False]
-
-    random_grid = {
-        "n_estimators": n_estimators,
-        "max_features": max_features,
-        "max_depth": max_depth,
-        "min_samples_split": min_samples_split,
-        "min_samples_leaf": min_samples_leaf,
-        "bootstrap": bootstrap,
-    }
-
-    random_forest_tuned = RandomForestClassifier()
-
-    rf_random = RandomizedSearchCV(
-        estimator=random_forest_tuned,
-        param_distributions=random_grid,
-        n_iter=n_iter,
-        cv=cv,
-        verbose=2,
-        random_state=42,
-        n_jobs=-1,
-    )
-
-    rf_random.fit(X, y)
-
-    return rf_random.best_params_

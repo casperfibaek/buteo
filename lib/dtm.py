@@ -3,7 +3,7 @@ import sys
 sys.path.append("..")
 sys.path.append("../lib/")
 import geopandas as gpd
-import numpy
+import numpy as np
 from .raster_io import *
 from .stats_filters import truncate_array
 import sys
@@ -19,6 +19,7 @@ def reporthook(count, block_size, total_size):
     if count == 0:
         start_time = time.time()
         return
+
     duration = time.time() - start_time
     progress_size = int(count * block_size)
     speed = int(progress_size / (1024 * duration))
@@ -120,7 +121,7 @@ def height_over_terrain(dsm_folder, dtm_folder, out_folder, tmp_folder):
                             tt = raster_to_array(t_tiff)
 
                             array_to_raster(
-                                truncate_array(numpy.subtract(ss, tt), min_value=0),
+                                np.abs(np.subtract(ss, tt)),
                                 out_raster=hot_folder + f"HOT_1km_{s_tiff_tile}.tif",
                                 reference_raster=s_tiff,
                             )
