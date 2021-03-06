@@ -1,5 +1,16 @@
 # Buteo - Facilitating EO-Supported Decision Support Systems
 
+# Dependencies
+cython
+numpy
+pandas
+ogr, gdal, osr
+sentinelsat
+
+optional:
+  orfeo-toolbox
+  snap
+
 The Buteo-Toolbox is a series of packages that ease the creation of decision support systems. It is designed to run on Linux, but should run on MacOS/Windows as well. It contains the following packages:
 
 * Rasters
@@ -12,14 +23,6 @@ The Buteo-Toolbox is a series of packages that ease the creation of decision sup
 * Monitor
 
 It is capable of downloading and processing a range of openEO data sources, integrate with ESA Snap and CNES Orfeo to wrangle the data. It has a series of recipes to apply machine learning to the data and a monitoring package to automatically download, process and upload imagery.
-
-Dependencies:
-* Orfeo
-* Snap
-* OpenCV
-* SentinelSat
-* Numpy
-* Cython
 
 The system is under active development and is not ready for public release. It is being developed by NIRAS and Aalborg University.
 

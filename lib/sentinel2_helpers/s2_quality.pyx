@@ -1,4 +1,4 @@
-# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True, profile = False
+# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True, profile=False
 cimport cython
 from cython.parallel cimport prange
 
@@ -136,3 +136,91 @@ cpdef double radiometric_quality(scl, band_02, band_12, band_cldprb, darkprb, ao
         x_max,
         y_max,
     )
+
+
+def feather_s2_filter(tracking_image, value_to_count, width=21):
+    kernel = create_kernel(
+        width,
+        circular=circular,
+        holed=False,
+        normalise=False,
+        weighted_edges=False,
+        weighted_distance=False,
+    )
+    return feather_s2_array(tracking_image, value_to_count, kernel)
+
+
+cdef double count_occurrances(
+    int * neighbourhood,
+    int [::1] values_to_count,
+    int val_to_count_len,
+    int non_zero,
+) nogil:
+    cdef int n, m
+    cdef int count = 0
+
+    for n in range(non_zero):
+        for m in range(val_to_count_len):
+            if neighbourhood[n] == values_to_count[m]:
+                count += 1
+    
+    return <double> count / <double> non_zero
+
+
+cdef void loop_feather(
+    int [:, ::1] tracker,
+    double [:, ::1] kernel,
+    double [:, ::1] result,
+    int x_max,
+    int y_max,
+    int kernel_width,
+    int non_zero,
+    int [::1] values_to_count,
+    int val_to_count_len,
+) nogil:
+    cdef int x, y, n, m, offset_x, offset_y
+    cdef int x_max_adj = x_max - 1
+    cdef int y_max_adj = y_max - 1
+    cdef int * neighbourhood,
+    cdef int neighbourhood_size = sizeof(int) * non_zero
+
+    cdef Offset * offsets = generate_offsets(kernel, kernel_width, non_zero)
+
+    for x in prange(x_max):
+        for y in prange(y_max):
+
+            neighbourhood = <int *> malloc(neighbourhood_size)
+
+            for n in range(non_zero):
+                offset_x = x + offsets[n].x
+                offset_y = y + offsets[n].y
+
+                if offset_x < 0:
+                    offset_x = 0
+                elif offset_x > x_max_adj:
+                    offset_x = x_max_adj
+                if offset_y < 0:
+                    offset_y = 0
+                elif offset_y > y_max_adj:
+                    offset_y = y_max_adj
+
+                neighbourhood[n] = tracker[offset_x][offset_y]
+            
+            result[x][y] = count_occurrances(neighbourhood, values_to_count, val_to_count_len, non_zero)
+
+            free(neighbourhood)
+
+
+def feather_s2_array(tracker, values_to_count, kernel):
+    cdef int non_zero = np.count_nonzero(kernel)
+    cdef int [::1] val_to_count_view = values_to_count
+    cdef int val_to_count_len = len(values_to_count)
+    cdef double [:, ::1] kernel_view = kernel.astype(np.double) if kernel.dtype != np.double else kernel
+
+    result = np.zeros(tracker.shape, dtype=np.double)
+    cdef double [:, ::1] result_view = result
+    cdef int [:, ::1] tracker_view = tracker.astype(np.intc) if tracker.dtype != np.intc else tracker
+
+    loop_feather(tracker_view, kernel_view, result_view, tracker.shape[0], tracker.shape[1], kernel.shape[0], non_zero, val_to_count_view, val_to_count_len)
+
+    return result

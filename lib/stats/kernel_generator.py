@@ -38,7 +38,7 @@ def cube_sphere_intersection_area(cube_center, circle_center, circle_radius, cub
     return area
 
 
-def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, spherical=True, distance_calc="gaussian"):
+def create_kernel(shape, sigma=2, holed=False, inverted=False, normalised=True, spherical=True, distance_calc="gaussian"):
     assert(shape[0] % 2 != 0), "Kernel depth has to be an uneven number."
     assert(shape[1] % 2 != 0), "Kernel width has to be an uneven number."
     assert(shape[2] % 2 != 0), "Kernel height has to be an uneven number."
@@ -94,6 +94,17 @@ def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, 
     if normalised == True: kernel = np.divide(kernel, kernel.sum())
 
     return kernel
+
+
+def generate_offsets(kernel):
+    offsets = []
+    weights = []
+    for x in range(kernel.shape[0]):
+        for y in range(kernel.shape[1]):
+            for z in range(kernel.shape[2]):
+                offsets.append([x - (kernel.shape[0] // 2), y - (kernel.shape[1] // 2), z - (kernel.shape[2] // 2)])
+                weights.append(kernel[x][y][z])
+    return (np.array(offsets, dtype=int), np.array(weights, dtype=float))
 
 
 if __name__ == "__main__":
