@@ -121,7 +121,7 @@ def raster_to_metadata(in_raster):
             "coordinates": [coord_array],
         },
     }
-    metadata["extent_geojson"] = json.dumps(metadata["footprint_dict"])
+    metadata["extent_geojson"] = json.dumps(metadata["extent_geojson_dict"])
 
     return metadata
 
