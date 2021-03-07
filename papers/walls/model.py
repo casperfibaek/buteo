@@ -2,7 +2,6 @@
 from sklearn.model_selection import train_test_split
 
 from tensorflow import keras
-import tensorflow_addons as tfa
 from tensorflow.keras import layers
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
