@@ -337,18 +337,6 @@ cdef void loop(
             free(hood)
 
 
-def generate_offsets(kernel):
-    offsets = []
-    weights = []
-    for x in range(kernel.shape[0]):
-        for y in range(kernel.shape[1]):
-            for z in range(kernel.shape[2]):
-                offsets.append([x - (kernel.shape[0] // 2), y - (kernel.shape[1] // 2), z - (kernel.shape[2] // 2)])
-                weights.append(kernel[x][y][z])
-
-    return (np.array(offsets, dtype=int), np.array(weights, dtype=float))
-
-
 def kernel_filter(arr, kernel, str func_type):
     offsets_py, weights_py = generate_offsets(kernel)
 
