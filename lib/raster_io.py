@@ -126,8 +126,6 @@ def raster_to_metadata(in_raster):
     return metadata
 
 
-
-
 def array_to_raster(
     array,
     out_raster=None,

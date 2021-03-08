@@ -1,6 +1,8 @@
 import numpy as np
+from numba import jit, prange
 
 
+@jit(nopython=True, parallel=True, nogil=True)
 def scale_vectors(points, abs_dist):
     scalar = 1 - (abs_dist / np.linalg.norm(points, axis=1))
     scalar = scalar[:, np.newaxis]
@@ -8,6 +10,7 @@ def scale_vectors(points, abs_dist):
     return points * scalar
 
 
+@jit(nopython=True, parallel=True, nogil=True)
 def points_intersects_ellipsoid(ellipsoid, points, axis=1):
     return np.sum(np.sum(np.power(np.divide(points, ellipsoid), 2), axis=axis) <= 1)
 
@@ -59,7 +62,11 @@ def cube_sphere_intersection_area(cube_center, circle_center, circle_radius, ell
         return (step * step * step) * np.sum(dist <= circle_radius)
 
 
-def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, spherical=True, edge_weights=True, distance_calc="gaussian", offsets=False, remove_zero_weights=False, radius_method="2d", epsilon=1e-7):
+def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, spherical=True, edge_weights=True, distance_calc="gaussian", offsets=False, remove_zero_weights=False, radius_method="2d"):
+
+    if len(shape) == 2:
+        shape = [1, shape[0], shape[1]]
+
     assert(shape[0] % 2 != 0), "Kernel depth has to be an uneven number."
     assert(shape[1] % 2 != 0), "Kernel width has to be an uneven number."
     assert(shape[2] % 2 != 0), "Kernel height has to be an uneven number."
@@ -86,9 +93,9 @@ def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, 
     else:
         raise ValueError("Unable to parse radius_method. Must be 2d, 3d or squish")
 
-    for z in range(edge_z + 1):
-        for x in range(edge_x + 1):
-            for y in range(edge_y + 1):
+    for z in prange(edge_z + 1):
+        for x in prange(edge_x + 1):
+            for y in prange(edge_y + 1):
 
                 weight = 0
                 normed = np.linalg.norm(np.array([z, x, y]))
@@ -100,7 +107,6 @@ def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, 
                 elif distance_calc == 'power':
                     weight = 1 - np.power(normed / edge_length, 2)
                 elif distance_calc == "gaussian":
-                    # import pdb; pdb.set_trace()
                     weight = np.exp(-(normed ** 2) / (2 * sigma ** 2))
                 elif distance_calc == False or distance_calc == None:
                     weight = 1
@@ -138,6 +144,9 @@ def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, 
     if holed:
         kernel[0, 0, 0] = 0
 
+    if normalised:
+        kernel = np.divide(kernel, kernel.sum())
+
     if offsets:
         offsets = []
         weights = []
@@ -146,17 +155,14 @@ def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, 
                 for y in range(kernel.shape[2]):
                     current_weight = kernel[z][x][y]
                     
-                    if remove_zero_weights and current_weight <= epsilon:
+                    if remove_zero_weights:
                         continue
                     
                     offsets.append([z - (kernel.shape[0] // 2), x - (kernel.shape[1] // 2), y - (kernel.shape[2] // 2)])
                     weights.append(current_weight)
 
-    if normalised:
-        kernel = np.divide(kernel, kernel.sum())
-
-    if offsets:
         return (kernel, np.array(offsets, dtype=int), np.array(weights, dtype=float))
+
 
     return kernel
 
