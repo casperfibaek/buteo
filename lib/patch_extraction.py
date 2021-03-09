@@ -17,7 +17,7 @@ import rtree
 import os
 import random
 
-def blocks_to_array(blocks, reference, output):
+def blocks_to_raster(blocks, reference, output):
     metadata = raster_to_metadata(reference)
     reference_shape = (metadata["height"], metadata["width"])
     top_left = [metadata["transform"][0], metadata["transform"][3]]

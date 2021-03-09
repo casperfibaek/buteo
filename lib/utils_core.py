@@ -1,10 +1,39 @@
 import os
 import sys
-import math
 import time
 from itertools import product
 import numpy as np
-from osgeo import gdal
+from osgeo import gdal, ogr
+
+
+def vector_to_reference(vector):
+    try:
+        if isinstance(vector, ogr.DataSource):  # Dataset already OGR dataframe.
+            return vector
+        else:
+            opened = ogr.Open(vector)
+            
+            if opened is None:
+                raise Exception("Could not read input raster")
+
+            return opened
+    except:
+        raise Exception("Could not read input raster")
+
+
+def raster_to_reference(in_raster):
+    try:
+        if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
+            return in_raster
+        else:
+            opened = gdal.Open(in_raster)
+            
+            if opened is None:
+                raise Exception("Could not read input raster")
+
+            return opened
+    except:
+        raise Exception("Could not read input raster")
 
 
 def progress(count, total, name='Processing'):

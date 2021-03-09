@@ -1,23 +1,10 @@
 import sys; sys.path.append('..'); sys.path.append('../lib/')
-from lib.raster_io import raster_to_metadata
 from osgeo import gdal, ogr, osr
 import pandas as pd
 import os, json
 
-
-def vector_to_reference(vector):
-    try:
-        if isinstance(vector, ogr.DataSource):  # Dataset already OGR dataframe.
-            return vector
-        else:
-            opened = ogr.Open(vector)
-            
-            if opened is None:
-                raise Exception("Could not read input raster")
-
-            return opened
-    except:
-        raise Exception("Could not read input raster")
+from lib.raster_io import raster_to_metadata
+from lib.utils_core import vector_to_reference
 
 
 def vector_to_memory(vector):

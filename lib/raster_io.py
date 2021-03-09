@@ -7,23 +7,10 @@ from lib.utils_core import (
     numpy_to_gdal_datatype,
     datatype_is_float,
     gdal_to_numpy_datatype,
+    raster_to_reference,
+    vector_to_reference,
 )
 from lib.raster_clip import clip_raster
-
-
-def raster_to_reference(in_raster):
-    try:
-        if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
-            return in_raster
-        else:
-            opened = gdal.Open(in_raster)
-            
-            if opened is None:
-                raise Exception("Could not read input raster")
-
-            return opened
-    except:
-        raise Exception("Could not read input raster")
 
 
 def raster_to_memory(in_raster):
@@ -236,7 +223,7 @@ def array_to_raster(
         ):  # Dataset already GDAL dataframe.
             reference["dataframe"] = reference_raster
         else:
-            reference["dataframe"] = gdal.Open(reference_raster)
+            reference["dataframe"] = raster_to_reference(reference_raster)
 
         # Throw error if GDAL cannot open the raster
         if reference["dataframe"] is None:
@@ -610,22 +597,45 @@ def raster_to_array(
     if not isinstance(band_to_clip, int):
         raise AttributeError("band_to_clip must be provided and it must be an integer")
 
+    if isinstance(in_raster, list):
+        if len(in_raster) == 0:
+            raise ValueError("Provided raster list is empty.")
+    
+        stack = []
+        for raster in in_raster:
+            stack.append(
+                raster_to_array(
+                    raster,
+                    reference_raster=reference_raster,
+                    cutline=cutline,
+                    cutline_all_touch=cutline_all_touch,
+                    crop_to_cutline=crop_to_cutline,
+                    compressed=compressed,
+                    band_to_clip=band_to_clip,
+                    src_nodata=src_nodata,
+                    crop=crop,
+                    filled=filled,
+                    fill_value=fill_value,
+                    quiet=quiet,
+                    calc_band_stats=calc_band_stats,
+                    align=align,
+                )
+            )
+        
+        return np.stack(stack)
+
     # If there is no reference_raster or Cutline defined it is
     # not necesarry to clip the raster.
+    readied_raster = None
     if reference_raster is None and cutline is None:
-        if isinstance(in_raster, gdal.Dataset):
-            readied_raster = in_raster
-        else:
-            readied_raster = gdal.Open(in_raster)
-
-        if readied_raster is None:
-            raise AttributeError(f"Unable to parse the input raster: {in_raster}")
-
+        readied_raster = raster_to_reference(in_raster)
     else:
+        reference = raster_to_reference(reference_raster)
+        readied_vector = vector_to_reference(cutline)
         readied_raster = clip_raster(
             in_raster,
-            reference_raster=reference_raster,
-            cutline=cutline,
+            reference_raster=reference,
+            cutline=readied_vector,
             cutline_all_touch=cutline_all_touch,
             cutlineWhere=None,
             crop_to_cutline=crop_to_cutline,
@@ -637,8 +647,8 @@ def raster_to_array(
             calc_band_stats=calc_band_stats,
         )
 
-    if readied_raster is False:
-        return False
+    if readied_raster is None:
+        raise ValueError("Unable to parse input. The provided reference raster or cutline is invalid.")
 
     return_data = []
     for band in range(readied_raster.RasterCount):

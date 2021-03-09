@@ -2,7 +2,6 @@ import numpy as np
 from numba import jit, prange
 
 
-@jit(nopython=True, parallel=True, nogil=True)
 def scale_vectors(points, abs_dist):
     scalar = 1 - (abs_dist / np.linalg.norm(points, axis=1))
     scalar = scalar[:, np.newaxis]
