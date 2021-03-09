@@ -8,7 +8,7 @@ from lib.raster_io import raster_to_array, array_to_raster
 
 
 @jit(nopython=True, parallel=True, nogil=True)
-def convolve_3d(arr, offsets, weights, operation="sum", border="valid"):
+def convolve_3d(arr, offsets, weights, operation="sum", border="valid", quantile=0.5):
     z_adj = arr.shape[0] - 1
     x_adj = arr.shape[1] - 1
     y_adj = arr.shape[2] - 1
@@ -70,15 +70,35 @@ def convolve_3d(arr, offsets, weights, operation="sum", border="valid"):
                 if operation == "sum":
                     result[z, x, y] = np.sum(np.multiply(hood_values, hood_weights))
 
-                elif operation == "median":
+                elif operation == "quantile" or operation == "median_absolute_deviation" or operation == "median":
+                    quantile_to_find = quantile if operation == "quantile" else 0.5
+
                     sort_mask = np.argsort(hood_values)
                     sorted_data = hood_values[sort_mask]
                     sorted_weights = hood_weights[sort_mask]
                     cumsum = np.cumsum(sorted_weights)
                     intersect = (cumsum - 0.5 * sorted_weights) / cumsum[-1]
+                    quant = np.interp(quantile_to_find, intersect, sorted_data)
 
-                    result[z, x, y] = np.interp(0.5, intersect, sorted_data)
+                    if operation == "quantile" or operation == "median":
+                        result[z, x, y] = quant
+                    else:
+                        absolute_deviations = np.abs(np.subtract(hood_values, quant))
 
+                        sort_mask = np.argsort(absolute_deviations)
+                        sorted_data = absolute_deviations[sort_mask]
+                        sorted_weights = hood_weights[sort_mask]
+                        cumsum = np.cumsum(sorted_weights)
+                        intersect = (cumsum - 0.5 * sorted_weights) / cumsum[-1]
+
+                        mad = np.interp(quantile_to_find, intersect, sorted_data)
+
+                        result[z, x, y] = mad
+
+                elif operation == "standard_deviation":
+                    summed = np.sum(np.multiply(hood_values, hood_weights))
+                    variance = np.sum(np.multiply(np.power(np.subtract(hood_values, summed), 2), hood_weights))
+                    result[z, x, y] = np.sqrt(variance)
 
     return result
 
@@ -89,7 +109,7 @@ def mean_filter(arr, shape):
 
     kernel, offsets, weights = create_kernel(
         shape,
-        sigma=2,
+        sigma=1,
         spherical=True,
         edge_weights=True,
         offsets=True,
@@ -105,11 +125,9 @@ if __name__ == "__main__":
     np.set_printoptions(suppress=True)
 
     folder = "C:/Users/caspe/Desktop/numba_conv/"
-    raster = raster_to_array(folder + "fyn.tif")
+    raster = raster_to_array(folder + "spec_vh.tif")
     # raster = np.arange(0, 25).reshape((1, 5, 5))
 
-    med = mean_filter(raster, (1, 5, 5))
+    med = mean_filter(raster, (1, 7, 7))
 
-    import pdb; pdb.set_trace()
-
-    array_to_raster(med, reference_raster=folder + "fyn.tif", out_raster=folder + "fyn_smooth.tif")
+    array_to_raster(med, reference_raster=folder + "spec_vh.tif", out_raster=folder + "spec_vh_med5_sig1.tif")
