@@ -9,12 +9,12 @@ def scale_vectors(points, abs_dist):
     return points * scalar
 
 
-@jit(nopython=True, parallel=True, nogil=True)
+@jit(nopython=True, parallel=True, nogil=True, inline='always')
 def points_intersects_ellipsoid(ellipsoid, points, axis=1):
     return np.sum(np.sum(np.power(np.divide(points, ellipsoid), 2), axis=axis) <= 1)
 
 
-def cube_sphere_intersection_area(cube_center, circle_center, circle_radius, ellipsoid=None, cube_width=1, resolution=0.01, epsilon=1e-7):
+def cube_sphere_intersection_area(cube_center, circle_center, circle_radius, ellipsoid=None, cube_width=1, resolution=0.05, epsilon=1e-7):
     assert(len(cube_center) == 3), "Cube center must be a len 3 array."
     assert(len(circle_center) == 3), "Circle center must be a len 3 array."
     assert(circle_radius >= 0), "Radius must be a positive number."
@@ -25,6 +25,16 @@ def cube_sphere_intersection_area(cube_center, circle_center, circle_radius, ell
     step = resolution
     box_sides = sides * step
     radius_add = 0.5
+
+    # The radius of the encompasing sphere.
+    corner_distance = np.linalg.norm(np.array([sides, sides, sides], dtype="float32"))
+
+    dist = np.linalg.norm(np.subtract(circle_center, cube_center))
+
+    if dist > circle_radius + corner_distance:
+        return 0.0
+    elif dist == 0:
+        return 1.0
 
     z_start = (cube_center[0] - sides) + box_sides
     x_start = (cube_center[1] - sides) + box_sides
@@ -62,7 +72,6 @@ def cube_sphere_intersection_area(cube_center, circle_center, circle_radius, ell
 
 
 def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, spherical=True, edge_weights=True, distance_calc="gaussian", offsets=False, remove_zero_weights=False, radius_method="2d"):
-
     if len(shape) == 2:
         shape = [1, shape[0], shape[1]]
 
@@ -141,7 +150,7 @@ def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, 
     kernel[:, :, edge_y + 1:] = np.flip(kernel[:, :, :edge_y], axis=2)
 
     if holed:
-        kernel[0, 0, 0] = 0
+        kernel[edge_z, edge_x, edge_y] = 0
 
     if normalised:
         kernel = np.divide(kernel, kernel.sum())
@@ -168,10 +177,12 @@ def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, 
 
 # Something is wrong with the guassian function
 if __name__ == "__main__":
+    from time import perf_counter
     np.set_printoptions(suppress=True)
 
+    before = perf_counter()
     kernel, offsets, weights = create_kernel(
-        (3, 7, 7),
+        (3, 11, 11),
         sigma=1,
         spherical=True,
         edge_weights=True,
@@ -180,5 +191,6 @@ if __name__ == "__main__":
         distance_calc="gaussian",
         radius_method="ellipsoid",
     )
+    print(f"Generating kernel took: {round(perf_counter() - before, 3)}s")
     print(np.round(kernel, 3))
     # import pdb; pdb.set_trace()

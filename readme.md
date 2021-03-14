@@ -1,88 +1,72 @@
-# Buteo - Facilitating EO-Supported Decision Support Systems
+# Buteo - Facilitating EO-Driven Decision Support Systems
+
+The Buteo-Toolbox is a series of modules that ease the creation of Earth Observation Driven Spatial Decision Support Systems. The modules are located in the lib folder, geometry used for testing and clipping is located in geometry. In the examples folder there are jupyter notebooks that showcase analysis' done using the toolbox.
+
+There are modules are:
+
+raster
+  * read and verify a raster or a list of rasters
+  * clip rasters to other rasters or vectors
+  * align a list of rasters for analysis
+  * shift, resample and reproject raster data
+  * easily manage nodata values
+  * parallel zonal statistics (link - host)
+
+vector
+  * read and verify integrity
+  * parallel zonal statistics (link)
+  * clip, buffer
+
+filter
+  * custom convolution based filters.
+  * global filters and multispectral indices (link - host)
+  * textures for analysis
+  * noise reduction of SAR imagery (link - host)
+  * kernel designer
+  * reduction bootcamp
+
+terrain
+  * download srtm, aster and the danish national DEM
+  * basic propocessing of the DEM's.
+
+earth_observation
+  * download sentinel 1, 2, 3, 5, landsat and modis data
+  * process sentinel 1 and 2 (sentinel 1 requires esa-snap dep.)
+  * generate mosaics of sentinel 1 and 2
+  * pansharpen bands
+  * noise reduction of SAR imagery (link)
+  * multispectral indices (link)
+
+machine_learning
+  * patch extraction of tiles and geometries, allows overlaps, for CNN's
+  * machine learning utilities library: rotate images, add noise etc..
+  * model for building extraction for sentinel 1 and 2
+  * model for pansharpening sentinel 2
+  * model for noise reduction sentinel 1
+
+extra
+  * custom orfeo-toolbox python bindings
+  * ESA snap GPT python bindings and graphs
+
+The system is under active development and is not ready for public release. It is being developed by NIRAS and Aalborg University.
 
 # Dependencies
-cython
+gdal
 numpy
+numba
 pandas
-ogr, gdal, osr
 sentinelsat
 
 optional:
   orfeo-toolbox
-  snap
+  esa-snap
 
-The Buteo-Toolbox is a series of packages that ease the creation of decision support systems. It is designed to run on Linux, but should run on MacOS/Windows as well. It contains the following packages:
-
-* Rasters
-* Statistics
-* Sentinel/Landsat/Viirs/SRTM
-* Learn
-* Orfeo
-* Snap
-* Visualise
-* Monitor
-
-It is capable of downloading and processing a range of openEO data sources, integrate with ESA Snap and CNES Orfeo to wrangle the data. It has a series of recipes to apply machine learning to the data and a monitoring package to automatically download, process and upload imagery.
-
-The system is under active development and is not ready for public release. It is being developed by NIRAS and Aalborg University.
-
-
-# Ubuntu setup
-  * sudo apt-get update
-  * sudo apt-get install otb-bin git build-essential manpages-dev libgfortran3
-  * sudo apt-get upgrade
-  * sudo apt full-upgrade
-  * sudo apt autoremove
-
-
-# Packages
-  ## Anaconda
-  * Get the newest link @ https://www.anaconda.com/distribution/ 
-  * cd /tmp
-  * curl -O https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_64.sh
-  * bash Anaconda3-2020.11-Linux-x86_64.sh
-  * source ~/.bashrc
-  * cd ~
-  * sudo chown cfi -R ./*
-  * sudo chown cfi .conda/environments.txt
-  * conda update conda
-  * conda update --all
-  * conda create --name green
-  * pip install --upgrade pip
-  * conda install -c conda-forge scikit-learn scipy
-  * conda install -c conda-forge statsmodels scikit-image opencv shapely gdal geojson scikit-learn sqlalchemy sqlite imbalanced-learn pandas matplotlib geopandas pyshp psutil cython tensorflow seaborn
-  * conda install -c anaconda cudnn
-  * pip install tensorflow
-  * pip install keras
-  * conda update --all
-  * pip install sentinelsat
-
-  * add: OTB_MAX_RAM_HINT=24000 and GDAL_CACHEMAX=16000 to ~./bashrc with appropriate ram limits.
-
-  ## Snappy
-  * cd ~
-  * curl -O http://step.esa.int/downloads/7.0/installers/esa-snap_sentinel_unix_7_0.sh
-  * bash esa-snap_sentinel_unix_7_0.sh
-  * Yes to all defaults, set path of python env to /home/cfi/anaconda3/envs/yellow/bin/python
-  * echo 'alias gpt=~/esa_snap/bin/gpt' >> ~/.bashrc
-  * echo '-Xmx16G' >> ~/esa_snap/bin/gpt.vmoptions
-  * snap --nosplash --nogui --modules --update-all
-  * IF SNAP IS NOT UPDATE, THIS STEP IS NECESARRY ON FOCAL 20.04 https://forum.step.esa.int/t/error-in-applying-ers-orbit-informations/23195/13
-  * Yes to all defaults, set path of python env to /home/cfi/anaconda3/envs/green/bin/python
-  * echo 'alias gpt=~/snap/bin/gpt' >> ~/.bashrc
-  * echo '-Xmx32G' >> ~/snap/bin/gpt.vmoptions
-  * ~/snap/bin/snap --nosplash --nogui --modules --update-all
-
-
-  ## Git
-  * cd ~
-  * git clone https://github.com/casperfibaek/yellow.git
-  * git config --global user.name "johndoe"
-  * git config --global user.email johndoe@example.com
-  * git config --global user.password fakefakefake
-  * git config --global credential.helper store
-  * git config --global credential.helper wincred
-
-
-  # Test
-  * otbApplicationLauncherCommandLine
+# Todo
+  * organise library
+  * remove dependencies: cython, senmosaic, pygeoprocessing
+  * finish filters library - kernel tests
+  * update zonal statistics & parallelise vector math
+  * fix sentinel 2 mosaic tool
+  * create models for pansharpening, buildings and noise-reduction
+  * generate examples
+  * synthetic sentinel 2?

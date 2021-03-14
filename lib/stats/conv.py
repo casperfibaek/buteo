@@ -3,6 +3,126 @@ from numba import jit, prange
 from kernel_generator import create_kernel
 
 
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_summed(values, weights):
+    return np.sum(np.multiply(values, weights))
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_quantile(values, weights, quant):
+    sort_mask = np.argsort(values)
+    sorted_data = values[sort_mask]
+    sorted_weights = weights[sort_mask]
+    cumsum = np.cumsum(sorted_weights)
+    intersect = (cumsum - 0.5 * sorted_weights) / cumsum[-1]
+    return np.interp(quant, intersect, sorted_data)
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_standard_deviation(values, weights):
+    summed = hood_summed(values, weights)
+    variance = np.sum(np.multiply(np.power(np.subtract(values, summed), 2), weights))
+    return np.sqrt(variance) 
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_median_absolute_deviation(values, weights):
+    median = hood_quantile(values, weights, 0.5)
+    absdeviation = np.abs(np.subtract(values, median))
+    return hood_quantile(absdeviation, weights, 0.5)
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_z_score(values, weights):
+    center_idx = len(values) // 2
+    center = values[center_idx]
+    std = hood_standard_deviation(values, weights)
+    mean = hood_summed(values, weights)
+
+    return (center - mean) / std
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_z_score_mad(values, weights):
+    center_idx = len(values) // 2
+    center = values[center_idx]
+    mad_std = hood_median_absolute_deviation(values, weights) * 1.4826
+    median = hood_quantile(values, weights, 0.5)
+
+    return (center - median) / mad_std
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def k_to_size(size):
+    return int(np.rint(-0.0000837834 * size ** 2 + 0.045469 * size + 0.805733))
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_sigma_lee_mad(values, weights):
+    std = hood_median_absolute_deviation(values, weights) * 1.4826
+    selected_values = np.zeros_like(values)
+    selected_weights = np.zeros_like(weights)
+
+    sigma2 = std * 2
+    sigma_min = -sigma2
+    sigma_max = sigma2
+
+    passed = 0
+    for idx in range(len(values)):
+        if values[idx] >= sigma_min and values[idx] <= sigma_max:
+            selected_values[idx] = values[idx]
+            selected_weights[idx] = weights[idx]
+            passed += 1
+
+    if passed <= k_to_size(values.size):
+        steep = np.power(weights, 2)
+        steep_sum = np.sum(steep)
+        normed_steed = np.divide(steep, steep_sum)
+        return hood_quantile(values, normed_steed, 0.5)
+
+    sum_of_weights = np.sum(selected_weights)
+    if sum_of_weights == 0:
+        return 0
+    
+    selected_weights = np.divide(selected_weights, sum_of_weights)
+
+    return hood_quantile(selected_values, selected_weights, 0.5)
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_sigma_lee(values, weights):
+    std = hood_standard_deviation(values, weights)
+    selected_values = np.zeros_like(values)
+    selected_weights = np.zeros_like(weights)
+
+    sigma_mult = 1
+    passed = 0
+    attempts = 0
+    ks = k_to_size(values.size)
+
+    while passed < ks and attempts < 5:
+        for idx in range(len(values)):
+            if values[idx] >= std * sigma_mult and values[idx] <= -std * sigma_mult:
+                selected_values[idx] = values[idx]
+                selected_weights[idx] = weights[idx]
+                passed += 1
+
+        sigma_mult += 1
+        attempts += 1
+
+    if passed < ks:
+        return hood_summed(values, weights)
+
+    sum_of_weights = np.sum(selected_weights)
+
+    if sum_of_weights == 0:
+        return 0
+
+    selected_weights = np.divide(selected_weights, sum_of_weights)
+
+    return hood_summed(selected_values, selected_weights)
+
+
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True)
 def convolve_3d(arr, offsets, weights, operation="sum", border="valid", quantile=0.5):
     z_adj = (arr.shape[0] - 1) // 2
@@ -10,7 +130,6 @@ def convolve_3d(arr, offsets, weights, operation="sum", border="valid", quantile
     y_adj = arr.shape[2] - 1
 
     hood_size = len(offsets)
-
     result = np.zeros(arr.shape[1:], dtype="float32")
     border = True if border == "valid" else False
 
@@ -22,7 +141,6 @@ def convolve_3d(arr, offsets, weights, operation="sum", border="valid", quantile
             weight_sum = np.array([0.0], dtype="float32")
             normalise = False
 
-            # for z in range(arr.shape[0]):
             for n in range(hood_size):
                 offset_z = offsets[n][0]
                 offset_x = x + offsets[n][1]
@@ -57,8 +175,10 @@ def convolve_3d(arr, offsets, weights, operation="sum", border="valid", quantile
                     normalise = True
                     hood_weights[n] = 0
                 else:
-                    hood_weights[n] = weights[n]
-                    weight_sum[0] += weights[n]
+                    weight = weights[n]
+
+                    hood_weights[n] = weight
+                    weight_sum[0] += weight
 
             if normalise:
                 hood_weights = np.divide(hood_weights, weight_sum[0])
@@ -66,88 +186,73 @@ def convolve_3d(arr, offsets, weights, operation="sum", border="valid", quantile
             if operation == "sum":
                 result[x, y] = np.sum(np.multiply(hood_values, hood_weights))
 
-            elif operation == "quantile" or operation == "median_absolute_deviation" or operation == "median":
-                quantile_to_find = quantile if operation == "quantile" else 0.5
+            elif operation == "quantile":
+                result[x, y] = hood_quantile(hood_values, hood_weights, quantile)
+            
+            elif operation == "median":
+                result[x, y] = hood_quantile(hood_values, hood_weights, 0.5)
 
-                sort_mask = np.argsort(hood_values)
-                sorted_data = hood_values[sort_mask]
-                sorted_weights = hood_weights[sort_mask]
-                cumsum = np.cumsum(sorted_weights)
-                intersect = (cumsum - 0.5 * sorted_weights) / cumsum[-1]
-                quant = np.interp(quantile_to_find, intersect, sorted_data)
-
-                if operation == "quantile" or operation == "median":
-                    result[x, y] = quant
-                else:
-                    absolute_deviations = np.abs(np.subtract(hood_values, quant))
-
-                    sort_mask = np.argsort(absolute_deviations)
-                    sorted_data = absolute_deviations[sort_mask]
-                    sorted_weights = hood_weights[sort_mask]
-                    cumsum = np.cumsum(sorted_weights)
-                    intersect = (cumsum - 0.5 * sorted_weights) / cumsum[-1]
-
-                    mad = np.interp(quantile_to_find, intersect, sorted_data)
-
-                    result[x, y] = mad
+            elif operation == "median_absolute_deviation":
+                result[x, y] == hood_median_absolute_deviation(hood_values, hood_weights)
 
             elif operation == "standard_deviation":
-                summed = np.sum(np.multiply(hood_values, hood_weights))
-                variance = np.sum(np.multiply(np.power(np.subtract(hood_values, summed), 2), hood_weights))
-                result[x, y] = np.sqrt(variance)
+                result[x, y] = hood_standard_deviation(hood_values, hood_weights)
+            
+            elif operation == "z_score":
+                result[x, y] = hood_z_score(hood_values, hood_weights)
+
+            elif operation == "z_score_mad":
+                result[x, y] = hood_z_score_mad(hood_values, hood_weights)
+
+            elif operation == "sigma_lee":
+                result[x, y] = hood_sigma_lee(hood_values, hood_weights)
+            
+            elif operation == "sigma_lee_mad":
+                result[x, y] = hood_sigma_lee_mad(hood_values, hood_weights)
 
     return result
 
 
-def mean_filter(arr, shape):
+def filter_array(arr, shape, sigma=1, spherical=True, edge_weights=True, normalised=True, distance_calc="gaussian", radius_method="ellipsoid", operation="sum"):
+    if len(arr.shape) == 3:
+        if len(shape) == 2:
+            shape = (arr.shape[0], shape[0], shape[1])
+
     if len(arr.shape) == 2:
-        arr = arr[np.newaxis, :, :]
+        if len(shape) == 3:
+            if shape[0] != 1:
+                shape[0] = 1
+        elif len(shape) == 2:
+            arr = arr[np.newaxis, :, :]
+        else:
+            raise ValueError("Unable to merge shape and array.")
 
     kernel, offsets, weights = create_kernel(
         shape,
-        sigma=1,
-        spherical=True,
-        edge_weights=True,
+        sigma=sigma,
+        spherical=spherical,
+        edge_weights=edge_weights,
         offsets=True,
-        normalised=True,
-        distance_calc="gaussian",
-        radius_method="ellipsoid",
+        normalised=normalised,
+        distance_calc=distance_calc,
+        radius_method=radius_method,
     )
 
-    return convolve_3d(arr, offsets, weights, operation="median")
+    return convolve_3d(arr, offsets, weights, operation=operation)
 
 
 if __name__ == "__main__":
     yellow_follow = 'C:/Users/caspe/Desktop/yellow/'
-    np.set_printoptions(suppress=True)
     import sys; sys.path.append(yellow_follow)
+    np.set_printoptions(suppress=True)
     from lib.raster_io import raster_to_array, array_to_raster
-    from lib.raster_align import align
     from glob import glob
 
-    folder = "C:/Users/caspe/Desktop/numba_conv/"
 
-    images = glob(folder + "*_vv*.tif")
-    # images.reverse()
+    folder = "C:/Users/caspe/Desktop/noise_test/processed/aligned/"
+    images = glob(folder + "*_vv_*.tif")
+    images_arr = raster_to_array(images)
 
-    arr = raster_to_array(images)
+    slee = filter_array(images_arr, (3, 5, 5), operation="sigma_lee")
+    array_to_raster(slee, folder + "sigma_lee_v6.tif", images[0])
 
-    # win = np.load(folder + "min.npy")
-    # arr1 = np.ones((10, 10)) * 1
-    # arr2 = np.ones((10, 10)) * 0
-    # arr3 = np.ones((10, 10)) * 2
-
-    # arr = np.stack([arr1, arr2, arr3])
-
-    med = mean_filter(arr, (3, 5, 5))
-
-    array_to_raster(med, folder + "3d_filter_vv_5x5.tif", images[0])
-
-    # import pdb; pdb.set_trace()
-
-    # raster = raster_to_array(folder + "spec_vh.tif")
-    # # raster = np.arange(0, 25).reshape((1, 5, 5))
-
-    # med = mean_filter(raster, (1, 7, 7))
-
-    # array_to_raster(med, reference_raster=folder + "spec_vh.tif", out_raster=folder + "spec_vh_med5_sig1.tif")

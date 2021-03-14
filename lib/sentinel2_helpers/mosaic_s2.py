@@ -393,11 +393,6 @@ def prepare_metadata(list_of_SAFE_images):
     return metadata
 
 
-# TODO: handle all bands
-# TODO: add pansharpen
-# TODO: ai resample of SWIR
-
-
 def mosaic_tile(
     list_of_SAFE_images,
     out_dir,

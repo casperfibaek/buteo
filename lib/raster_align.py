@@ -69,7 +69,8 @@ def align(
     if base_projection_wkt_list is None:
         base_projection_wkt_list = []
         for in_raster in input_rasters:
-            base_projection_wkt_list.append(raster_to_metadata(in_raster)["projection"])
+            in_rast = raster_to_metadata(in_raster)
+            base_projection_wkt_list.append(in_rast["projection"])
 
     if target_projection_wkt is None:
         counts = None
@@ -81,7 +82,8 @@ def align(
         else:
             projections = []
             for in_raster in input_rasters:
-                projections.append(raster_to_metadata(in_raster)["projection"])
+                in_rast = raster_to_metadata(in_raster)
+                projections.append(in_rast["projection"])
 
             counts = Counter(base_projection_wkt_list)
             target_projection_wkt = counts.most_common(1)[0][0]
@@ -93,7 +95,7 @@ def align(
             meta = raster_to_metadata(in_raster)
             pixel_size = min(meta["pixel_width"], meta["pixel_height"])
             if pixel_size < target_pixel_size:
-                target_pixel_size = pixel_size
+                target_pixel_size = (pixel_size, pixel_size)
     
     output_rasters = []
     for raster in input_rasters:
@@ -120,16 +122,3 @@ def align(
     )
 
     return 1
-
-if __name__ == "__main__":
-    from glob import glob
-    folder = "C:/Users/caspe/Desktop/noise_test/processed/"
-
-    align(
-        glob(folder + "*.tif"),
-        folder + "aligned/",
-        target_pixel_size=(10, 10),
-    )
-
-    # bob = is_aligned(glob(folder + "out/*.tif"))
-    # import pdb; pdb.set_trace()

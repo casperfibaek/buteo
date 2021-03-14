@@ -22,13 +22,7 @@ def raster_to_memory(in_raster):
 
 def raster_to_metadata(in_raster):
     metadata = {}
-    try:
-        if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
-            metadata["dataframe"] = in_raster
-        else:
-            metadata["dataframe"] = gdal.Open(in_raster)
-    except:
-        raise Exception("Could not read input raster")
+    metadata["dataframe"] = raster_to_reference(in_raster)
 
     metadata["transform"] = metadata["dataframe"].GetGeoTransform()
     metadata["projection"] = metadata["dataframe"].GetProjection()
