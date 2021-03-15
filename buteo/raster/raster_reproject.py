@@ -1,9 +1,10 @@
 import os
+import sys; sys.path.append('../../')
 import numpy as np
 from pyproj import CRS
 from osgeo import gdal, osr
-from lib.utils_core import datatype_is_float
-from lib.raster_io import array_to_raster
+from buteo.utils import datatype_is_float
+from buteo.raster.raster_io import array_to_raster
 
 
 def reproject(

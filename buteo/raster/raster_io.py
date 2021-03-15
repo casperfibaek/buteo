@@ -1,16 +1,10 @@
-import os
-import numpy as np
-import json
+import sys; sys.path.append('../../')
 from osgeo import gdal, osr
+import numpy as np
+import os, json
 
-from lib.utils_core import (
-    numpy_to_gdal_datatype,
-    datatype_is_float,
-    gdal_to_numpy_datatype,
-    raster_to_reference,
-    vector_to_reference,
-)
-from lib.raster_clip import clip_raster
+from buteo.utils import numpy_to_gdal_datatype, datatype_is_float, gdal_to_numpy_datatype, raster_to_reference, vector_to_reference
+from buteo.raster.raster_clip import clip_raster
 
 
 def raster_to_memory(in_raster):
@@ -20,23 +14,31 @@ def raster_to_memory(in_raster):
     return driver.CreateCopy("mem_raster", ref)
 
 
-def raster_to_metadata(in_raster):
+# TODO
+def raster_to_disc(dataframe):
+    return 0
+
+
+def raster_to_metadata(in_raster, project_and_footprint=True):
     metadata = {}
     metadata["dataframe"] = raster_to_reference(in_raster)
 
     metadata["transform"] = metadata["dataframe"].GetGeoTransform()
     metadata["projection"] = metadata["dataframe"].GetProjection()
-
-    band0 = metadata["dataframe"].GetRasterBand(1)
     og = osr.SpatialReference()
     og.ImportFromWkt(metadata["projection"])
-    wgs84 = osr.SpatialReference()
-    wgs84.ImportFromEPSG(4326)
+    metadata["projection_osr"] = og
 
-    tx = osr.CoordinateTransformation(og, wgs84)
+    band0 = metadata["dataframe"].GetRasterBand(1)
+
+    if project_and_footprint:
+        wgs84 = osr.SpatialReference()
+        wgs84.ImportFromEPSG(4326)
+        tx = osr.CoordinateTransformation(og, wgs84)
 
     metadata["width"] = metadata["dataframe"].RasterXSize
     metadata["height"] = metadata["dataframe"].RasterYSize
+    metadata["size"] = [metadata["dataframe"].RasterXSize, metadata["dataframe"].RasterYSize]
     metadata["shape"] = (metadata["width"], metadata["height"])
     metadata["pixel_width"] = metadata["transform"][1]
     metadata["pixel_height"] = metadata["transform"][5]
@@ -66,43 +68,44 @@ def raster_to_metadata(in_raster):
         metadata["miny"],
     ]
 
-    bottom_left = tx.TransformPoint(metadata["minx"], metadata["miny"])
-    top_left = tx.TransformPoint(metadata["minx"], metadata["maxy"])
-    top_right = tx.TransformPoint(metadata["maxx"], metadata["maxy"])
-    bottom_right = tx.TransformPoint(metadata["maxx"], metadata["miny"])
+    if project_and_footprint:
+        bottom_left = tx.TransformPoint(metadata["minx"], metadata["miny"])
+        top_left = tx.TransformPoint(metadata["minx"], metadata["maxy"])
+        top_right = tx.TransformPoint(metadata["maxx"], metadata["maxy"])
+        bottom_right = tx.TransformPoint(metadata["maxx"], metadata["miny"])
 
-    # ulx, uly, lrx, lry = -180, 90, 180, -90
-    metadata["extent_wgs84"] = [
-        top_left[0],
-        top_left[1],
-        bottom_right[0],
-        bottom_right[1],
-    ]
+        # ulx, uly, lrx, lry = -180, 90, 180, -90
+        metadata["extent_wgs84"] = [
+            top_left[0],
+            top_left[1],
+            bottom_right[0],
+            bottom_right[1],
+        ]
 
-    coord_array = [
-        [bottom_left[1], bottom_left[0]],
-        [top_left[1], top_left[0]],
-        [top_right[1], top_right[0]],
-        [bottom_right[1], bottom_right[0]],
-        [bottom_left[1], bottom_left[0]],
-    ]
+        coord_array = [
+            [bottom_left[1], bottom_left[0]],
+            [top_left[1], top_left[0]],
+            [top_right[1], top_right[0]],
+            [bottom_right[1], bottom_right[0]],
+            [bottom_left[1], bottom_left[0]],
+        ]
 
-    wkt_coords = ""
-    for coord in coord_array:
-        wkt_coords += f"{coord[1]} {coord[0]}, "
-    wkt_coords = wkt_coords[:-2]
+        wkt_coords = ""
+        for coord in coord_array:
+            wkt_coords += f"{coord[1]} {coord[0]}, "
+        wkt_coords = wkt_coords[:-2]
 
-    metadata["footprint_wkt"] = f"POLYGON (({wkt_coords}))"
+        metadata["footprint_wkt"] = f"POLYGON (({wkt_coords}))"
 
-    metadata["extent_geojson_dict"] = {
-        "type": "Feature",
-        "properties": {},
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [coord_array],
-        },
-    }
-    metadata["extent_geojson"] = json.dumps(metadata["extent_geojson_dict"])
+        metadata["extent_geojson_dict"] = {
+            "type": "Feature",
+            "properties": {},
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [coord_array],
+            },
+        }
+        metadata["extent_geojson"] = json.dumps(metadata["extent_geojson_dict"])
 
     return metadata
 
@@ -211,20 +214,7 @@ def array_to_raster(
 
     # Gather reference information
     if reference_raster is not None:
-
-        if isinstance(
-            reference_raster, gdal.Dataset
-        ):  # Dataset already GDAL dataframe.
-            reference["dataframe"] = reference_raster
-        else:
-            reference["dataframe"] = raster_to_reference(reference_raster)
-
-        # Throw error if GDAL cannot open the raster
-        if reference["dataframe"] is None:
-            raise AttributeError(
-                f"Unable to parse the reference raster: {reference_raster}"
-            )
-
+        reference["dataframe"] = raster_to_reference(reference_raster)
         reference["transform"] = reference["dataframe"].GetGeoTransform()
         reference["projection"] = reference["dataframe"].GetProjection()
         reference["x_size"] = reference["dataframe"].RasterXSize
@@ -370,17 +360,17 @@ def array_to_raster(
             og_projection_osr, dst_projection_osr
         )
 
-        o_ulx, xres, xskew, o_uly, yskew, yres = og_transform
+        o_ulx, xres, _xskew, o_uly, _yskew, yres = og_transform
         o_lrx = o_ulx + (og_x_size * xres)
         o_lry = o_uly + (og_y_size * yres)
 
         og_col = o_lrx - o_ulx
         og_row = o_uly - o_lry
 
-        ulx, uly, ulz = coord_transform.TransformPoint(float(o_ulx), float(o_uly))
-        urx, ury, urz = coord_transform.TransformPoint(float(o_lrx), float(o_uly))
-        lrx, lry, lrz = coord_transform.TransformPoint(float(o_lrx), float(o_lry))
-        llx, lly, llz = coord_transform.TransformPoint(float(o_ulx), float(o_lry))
+        ulx, uly, _ulz = coord_transform.TransformPoint(float(o_ulx), float(o_uly))
+        urx, ury, _urz = coord_transform.TransformPoint(float(o_lrx), float(o_uly))
+        lrx, lry, _lrz = coord_transform.TransformPoint(float(o_lrx), float(o_lry))
+        llx, lly, _llz = coord_transform.TransformPoint(float(o_ulx), float(o_lry))
 
         if dst_crop_to_projection:
             dst_col = min(lrx, urx) - max(llx, ulx)
@@ -503,7 +493,7 @@ def array_to_raster(
 
         # Return the resampled destination raster
         if output_format != "MEM":
-            resampled_destination.FlushCache()
+            resampled_destination["dataframe"].FlushCache()
             resampled_destination = None
             return os.path.abspath(out_raster)
         else:

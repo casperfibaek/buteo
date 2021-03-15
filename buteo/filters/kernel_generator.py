@@ -101,9 +101,9 @@ def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, 
     else:
         raise ValueError("Unable to parse radius_method. Must be 2d, 3d or squish")
 
-    for z in prange(edge_z + 1):
-        for x in prange(edge_x + 1):
-            for y in prange(edge_y + 1):
+    for z in range(edge_z + 1):
+        for x in range(edge_x + 1):
+            for y in range(edge_y + 1):
 
                 weight = 0
                 normed = np.linalg.norm(np.array([z, x, y]))
@@ -165,7 +165,7 @@ def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, 
                     
                     if remove_zero_weights:
                         continue
-                    
+
                     offsets.append([z - (kernel.shape[0] // 2), x - (kernel.shape[1] // 2), y - (kernel.shape[2] // 2)])
                     weights.append(current_weight)
 
@@ -173,24 +173,3 @@ def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, 
 
 
     return kernel
-
-
-# Something is wrong with the guassian function
-if __name__ == "__main__":
-    from time import perf_counter
-    np.set_printoptions(suppress=True)
-
-    before = perf_counter()
-    kernel, offsets, weights = create_kernel(
-        (3, 11, 11),
-        sigma=1,
-        spherical=True,
-        edge_weights=True,
-        offsets=True,
-        normalised=False,
-        distance_calc="gaussian",
-        radius_method="ellipsoid",
-    )
-    print(f"Generating kernel took: {round(perf_counter() - before, 3)}s")
-    print(np.round(kernel, 3))
-    # import pdb; pdb.set_trace()

@@ -1,7 +1,7 @@
 import numpy as np
-import sys; sys.path.append('c:/Users/caspe/desktop/yellow')
-from lib.stats.convolutions import kernel_filter
-from lib.stats.kernel_generator import create_kernel
+import sys; sys.path.append('../../')
+from buteo.filters.convolutions import kernel_filter
+from buteo.filters.kernel_generator import create_kernel
 
 
 # filters = [

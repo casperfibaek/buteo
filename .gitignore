@@ -118,7 +118,6 @@ dmypy.json
 indices/
 __temp__/
 # geometry/
-raster/
 __pycache__
 OTB/
 temp_

@@ -1,19 +1,14 @@
+import sys; sys.path.append('../../')
 import numpy as np
-import sys; sys.path.append('/mnt/c/users/caspe/desktop/yellow/lib/')
-from osgeo import ogr, gdal, osr
-from lib.raster_io import raster_to_array
-from lib.vector_io import vector_to_memory
-from stats_global import enumerate_stats, global_statistics
-from lib.utils_core import progress
+from numba import jit
+from osgeo import ogr
+from buteo.raster.raster_io import raster_to_array, raster_to_metadata
+from buteo.vector.vector_io import vector_to_memory, vector_to_metadata, rasterize_vector, vector_to_disc
+from buteo.filters.stats import stats_to_ints, calculate_array_stats
+from buteo.utils import progress, vector_to_reference
 
 
-def calc_ipq(area, perimeter):
-    if perimeter == 0:
-        return 0
-    else:
-        return (4 * np.pi * area) / perimeter ** 2
-
-
+@jit(nopython=True, nogil=True, fastmath=True, inline="always")
 def overlap_size_calc(extent, raster_transform):
     return np.array([
         (extent[1] - extent[0]) / raster_transform[1],
@@ -21,12 +16,13 @@ def overlap_size_calc(extent, raster_transform):
     ], dtype=np.int32)
 
 
+@jit(nopython=True, nogil=True, fastmath=True, inline="always")
 def align_extent(raster_transform, vector_extent, raster_size):
     pixel_width = abs(raster_transform[1])
     pixel_height = abs(raster_transform[5])
 
     raster_min_x = raster_transform[0]
-    raster_max_x = raster_min_x + (raster_size[0] * pixel_width)
+    # raster_max_x = raster_min_x + (raster_size[0] * pixel_width)
     raster_max_y = raster_transform[3]
     raster_min_y = raster_max_y + (raster_size[1] * -pixel_width)
 
@@ -66,6 +62,7 @@ def align_extent(raster_transform, vector_extent, raster_size):
     return new_vector_extent, rasterized_size, offset
 
 
+@jit(nopython=True, nogil=True, fastmath=True, inline="always")
 def get_intersection(extent1, extent2):
     one_bottomLeftX = extent1[0]
     one_topRightX = extent1[1]
@@ -95,6 +92,7 @@ def get_intersection(extent1, extent2):
         return np.array([x_min, x_max, y_min, y_max], dtype=np.float32)
 
 
+@jit(nopython=True, nogil=True, fastmath=True, inline="always")
 def get_extent(raster_transform, raster_size):
     bottomRightX = raster_transform[0] + (raster_size[0] * raster_transform[1])
     bottomRightY = raster_transform[3] + (raster_size[1] * raster_transform[5])
@@ -102,109 +100,46 @@ def get_extent(raster_transform, raster_size):
     return np.array([raster_transform[0], bottomRightX, bottomRightY, raster_transform[3]], dtype=np.float32)
 
 
-def rasterize_vector(vector, extent, raster_size, projection, all_touch=False):
+def zonal_statistics(in_vector, output_vector=None, in_rasters=[], prefixes=[], stats=['mean', 'med', 'std']):
 
-    # Create destination dataframe
-    driver = gdal.GetDriverByName('MEM')
-
-    destination = driver.Create(
-        'in_memory_raster',     # Location of the saved raster, ignored if driver is memory.
-        int(raster_size[0]),    # Dataframe width in pixels (e.g. 1920px).
-        int(raster_size[1]),    # Dataframe height in pixels (e.g. 1280px).
-        1,                      # The number of bands required.
-        gdal.GDT_Byte,          # Datatype of the destination.
-    )
-
-    destination.SetGeoTransform((extent[0], raster_size[2], 0, extent[3], 0, -raster_size[3]))
-    destination.SetProjection(projection)
-
-    # Rasterize and retrieve data
-    destination_band = destination.GetRasterBand(1)
-    destination_band.Fill(1)
-
-    gdal.RasterizeLayer(destination, [1], vector, burn_values=[0])
-
-    return destination_band.ReadAsArray()
-
-
-def crop_raster(raster_band, rasterized_size, offset):
-    return raster_band.ReadAsArray(int(offset[0]), int(offset[1]), int(rasterized_size[0]), int(rasterized_size[1]))
-
-
-def calc_shapes(in_vector):
-    vector = ogr.Open(in_vector, 1)
-    vector_layer = vector.GetLayer(0)
-    vector_layer_defn = vector_layer.GetLayerDefn()
-    vector_field_counts = vector_layer_defn.GetFieldCount()
-    vector_current_fields = []
+    if len(prefixes) != 0:
+        if len(in_rasters) != len(prefixes):
+            raise ValueError("Unable to parse prefixes.")
     
-    # Get current fields
-    for i in range(vector_field_counts):
-        vector_current_fields.append(vector_layer_defn.GetFieldDefn(i).GetName())
-
-    vector_layer.StartTransaction()
+    if isinstance(in_rasters, list):
+        if len(in_rasters) == 0:
+            raise ValueError("List of rasters (in_rasters) is empty.")
     
-    # Add missing fields
-    for attribute in ['area', 'perimeter', 'ipq']:
-        if attribute not in vector_current_fields:
-            field_defn = ogr.FieldDefn(attribute, ogr.OFTReal)
-            vector_layer.CreateField(field_defn)
-
-    vector_feature_count = vector_layer.GetFeatureCount()
-    for i in range(vector_feature_count):
-        vector_feature = vector_layer.GetNextFeature()
-    
-        try:
-            vector_geom = vector_feature.GetGeometryRef()
-        except:
-            vector_geom.Buffer(0)
-            Warning('Invalid geometry at : ', i)
-
-        if vector_geom is None:
-            raise Exception('Invalid geometry. Could not fix.')
-
-        vector_area = vector_geom.GetArea()
-        vector_perimeter = vector_geom.Boundary().Length()
-        vector_ipq = calc_ipq(vector_area, vector_perimeter)
-
-        vector_feature.SetField('area', vector_area)
-        vector_feature.SetField('perimeter', vector_perimeter)
-        vector_feature.SetField('ipq', vector_ipq)
-
-        vector_layer.SetFeature(vector_feature)
-        
-        progress(i, vector_feature_count, name='shape')
-        
-    vector_layer.CommitTransaction()
-
-
-def calc_zonal(in_vector, in_rasters=[], prefixes=[], stats=['mean', 'med', 'std']):
+    if len(stats) == 0:
+        raise ValueError("Unable to parse statistics (stats).")
 
     # Translate stats to integers
-    stats_translated = enumerate_stats(stats)
+    stats_translated = stats_to_ints(stats)
 
     # Read the raster meta:
-    raster_origin = gdal.Open(in_rasters[0])
+    raster_metadata = raster_to_metadata(in_rasters[0])
 
-    # Read the vector
-    vector = vector_to_memory(in_vector)
+    vector = None
+    if output_vector is None:
+        vector = vector_to_reference(in_vector, writeable=True)
+    else:
+        vector = vector_to_memory(in_vector)
+
+    vector_metadata = vector_to_metadata(vector)
     vector_layer = vector.GetLayer()
 
     # Check that projections match
-    vector_projection = vector_layer.GetSpatialRef()
-    raster_projection = raster_origin.GetProjection()
-    raster_projection_osr = osr.SpatialReference(raster_projection)
-    vector_projection_osr = osr.SpatialReference()
-    vector_projection_osr.ImportFromWkt(str(vector_projection))
-
-    if not vector_projection_osr.IsSame(raster_projection_osr):
-        print('Vector projection: ', vector_projection_osr)
-        print('Raster projection: ', raster_projection_osr)
+    if not vector_metadata["projection_osr"].IsSame(raster_metadata["projection_osr"]):
+        print('Vector projection: ', vector_metadata["projection"])
+        print('Raster projection: ', raster_metadata["projection"])
         raise Exception('Projections do not match!')
 
+    vector_projection = vector_metadata["projection_osr"]
+    raster_projection = raster_metadata["projection"]
+
     # Read raster data in overlap
-    raster_transform = np.array(raster_origin.GetGeoTransform(), dtype=np.float32)
-    raster_size = np.array([raster_origin.RasterXSize, raster_origin.RasterYSize], dtype=np.int32)
+    raster_transform = np.array(raster_metadata["transform"], dtype=np.float32)
+    raster_size = np.array(raster_metadata["size"], dtype=np.int32)
 
     raster_extent = get_extent(raster_transform, raster_size)
 
@@ -250,8 +185,9 @@ def calc_zonal(in_vector, in_rasters=[], prefixes=[], stats=['mean', 'med', 'std
                 vector_layer.CreateField(field_defn)
 
     rasterized_features = []
-    offsets = []
-    sizes = []
+    sizes = np.zeros((vector_feature_count, 4), dtype="float32")
+    offsets = np.zeros((vector_feature_count, 2), dtype=np.int32)
+    raster_data = None
     for raster_index, raster_value in enumerate(in_rasters):
 
         columns = {}
@@ -270,10 +206,9 @@ def calc_zonal(in_vector, in_rasters=[], prefixes=[], stats=['mean', 'med', 'std
             fits_in_memory = False
             print("Raster does not fit in memory.. Doing IO for each feature.")
 
-        raster_data = None
-
         for n in range(vector_feature_count):
             vector_feature = vector_layer.GetNextFeature()
+            rasterized_vector = None
 
             if raster_index == 0:
 
@@ -294,10 +229,11 @@ def calc_zonal(in_vector, in_rasters=[], prefixes=[], stats=['mean', 'med', 'std
                 temp_vector_layer.CreateFeature(vector_feature.Clone())
 
                 feature_aligned_extent, feature_aligned_rasterized_size, feature_aligned_offset = align_extent(overlap_transform, feature_extent, overlap_size)
-                rasterized_features.append(rasterize_vector(temp_vector_layer, feature_aligned_extent, feature_aligned_rasterized_size, raster_projection))
+                rasterized_vector = rasterize_vector(temp_vector_layer, feature_aligned_extent, feature_aligned_rasterized_size, raster_projection)
+                rasterized_features.append(rasterized_vector)
 
-                offsets.append(feature_aligned_offset)
-                sizes.append(feature_aligned_rasterized_size)
+                offsets[n] = feature_aligned_offset
+                sizes[n] = feature_aligned_rasterized_size
 
             if fits_in_memory is True:
                 cropped_raster = raster_data[
@@ -322,20 +258,38 @@ def calc_zonal(in_vector, in_rasters=[], prefixes=[], stats=['mean', 'med', 'std
                     vector_feature.SetField(field_name, None)
             else:
                 raster_data_masked = np.ma.masked_array(cropped_raster, mask=rasterized_features[n], dtype='float32').compressed()
-                zonal_stats = global_statistics(raster_data_masked, translated_stats=stats_translated)
-                nodata = np.isnan(zonal_stats).any()
+                zonal_stats = calculate_array_stats(raster_data_masked, stats_translated)
 
                 for index, stat in enumerate(stats):
                     field_name = f'{prefixes[raster_index]}{stat}'
-                    if nodata is True:
-                        vector_feature.SetField(field_name, None)
-                    else:
-                        vector_feature.SetField(f'{prefixes[raster_index]}{stat}', float(zonal_stats[index]))
+                    vector_feature.SetField(field_name, float(zonal_stats[index]))
 
-            vector_layer.SetFeature(vector_feature)
+                vector_layer.SetFeature(vector_feature)
 
             progress(n, vector_feature_count, name=prefixes[raster_index])
         
         vector_layer.ResetReading()
 
     vector_layer.CommitTransaction()
+
+    if output_vector is not None:
+        vector_to_disc(vector, output_vector)
+    
+    return None
+
+if __name__ == "__main__":
+    from buteo.raster.raster_io import raster_to_array
+    from glob import glob
+
+    data_dir = "C:/Users/caspe/Desktop/geoai/data/"
+
+    images = glob(data_dir + "*B0*_10m.jp2")
+
+    zonal_statistics(
+        data_dir + "fields_selected_zonal.gpkg",
+        in_rasters=images,
+        # output_vector=data_dir + "fields_selected_zonal.gpkg",
+        prefixes=["0629_b2_", "0629_b3_", "0629_b4_", "0629_b8_"],
+        stats=["mean", "std", "min", "max"],
+    )
+    # import pdb; pdb.set_trace()

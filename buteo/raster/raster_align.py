@@ -1,9 +1,10 @@
-import sys
+import sys; sys.path.append('../../')
 import os
 from collections import Counter
-from numpy.core.numeric import Infinity; sys.path.append('..')
+from numpy.core.numeric import Infinity
 from pygeoprocessing import geoprocessing
-from lib.raster_io import raster_to_metadata
+from buteo.raster.raster_io import raster_to_metadata
+
 
 def is_aligned(input_rasters, same_extent=False, same_dtype=False):
     if len(input_rasters) == 1:

@@ -1,6 +1,7 @@
 import os
+import sys; sys.path.append('../../')
 from osgeo import gdal, ogr, osr
-from lib.utils_core import (
+from buteo.utils import (
     get_extent,
     translate_max_values,
     create_subset_dataframe,

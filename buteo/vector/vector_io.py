@@ -1,27 +1,39 @@
-import sys; sys.path.append('..'); sys.path.append('../lib/')
-from osgeo import gdal, ogr, osr
-import pandas as pd
+import sys; sys.path.append('../../')
 import os, json
+import numpy as np
+import pandas as pd
+from osgeo import gdal, ogr, osr
 
-from lib.raster_io import raster_to_metadata
-from lib.utils_core import vector_to_reference
+from buteo.raster.raster_io import raster_to_metadata
+from buteo.utils import progress, vector_to_reference
+
+# TODO:
+#   - rasterize - with antialiasing/weights
+#   - join by attribute + summary
+#   - join by location + summary
+#   - intersection, buffer, union, clip, erase
+#   - sanity checks: vectors_intersect, is_not_empty, does_vectors_match, match_vectors
+#   - repair vector
+#   - multithreaded processing
 
 
 def vector_to_memory(vector):
     ref = vector_to_reference(vector)
-    metadata = vector_to_metadata(ref)
+    metadata = vector_to_metadata(ref, process_layers="all")
 
     driver = ogr.GetDriverByName("Memory")
 
-    copy = driver.CreateDataSource("mem_vector")
+    basename = metadata["basename"] if metadata["basename"] is not None else "mem_vector"
+    copy = driver.CreateDataSource(basename)
 
-    for layer in range(metadata["layer_count"]):
-        copy.CopyLayer(ref.GetLayer(layer), f"mem_vector_{layer}", ["OVERWRITE=YES"])
+    for layer_idx in range(metadata["layer_count"]):
+        layername = metadata["layers"][layer_idx]["name"]
+        copy.CopyLayer(ref.GetLayer(layer_idx), layername, ["OVERWRITE=YES"])
 
     return copy
 
 
-def vector_to_metadata(vector, process="first"):
+def vector_to_metadata(vector, process_layers="first"):
     try:
         vector = vector if isinstance(vector, ogr.DataSource) else ogr.Open(vector)
     except:
@@ -61,6 +73,9 @@ def vector_to_metadata(vector, process="first"):
         projection = layer.GetSpatialRef().ExportToWkt()
         projection_osr = osr.SpatialReference()
         projection_osr.ImportFromWkt(projection)
+
+        layer_dict["projection"] = projection
+        layer_dict["projection_osr"] = projection_osr
     
         bottom_left = ogr.Geometry(ogr.wkbPoint)
         top_left = ogr.Geometry(ogr.wkbPoint)
@@ -129,7 +144,7 @@ def vector_to_metadata(vector, process="first"):
             layer_dict["field_names"].append(field_defn.GetName())
             layer_dict["field_types"].append(field_defn.GetFieldTypeName(field_defn.GetType()))
 
-        if process == "first":
+        if process_layers == "first":
 
             for key, value in layer_dict.items():
                 metadata[key] = value
@@ -138,14 +153,31 @@ def vector_to_metadata(vector, process="first"):
             break
 
         metadata["layers"].append(layer_dict)
-   
 
     return metadata
 
 
-def vector_get_attribute_table(vector, process="first", geom=False):
+def vector_to_disc(vector, output_path, driver="GPKG"):
+    assert isinstance(vector, ogr.DataSource), "Input not a vector datasource."
+
+    driver = ogr.GetDriverByName(driver)
+    assert driver != None, "Unable to parse driver."
+
+    metadata = vector_to_metadata(vector, process_layers="all")
+
+    copy = driver.CreateDataSource(output_path)
+
+    for layer_idx in range(metadata["layer_count"]):
+        layer_name = metadata["layers"][layer_idx]["name"]
+        copy.CopyLayer(vector.GetLayer(layer_idx), str(layer_name), ["OVERWRITE=YES"])
+
+    copy = None
+    return None
+
+
+def vector_get_attribute_table(vector, process_layers="first", geom=False):
     ref = vector_to_reference(vector)
-    metadata = vector_to_metadata(ref, process=process)
+    metadata = vector_to_metadata(ref, process_layers=process_layers)
 
     dataframes = []
 
@@ -153,7 +185,7 @@ def vector_get_attribute_table(vector, process="first", geom=False):
         attribute_table_header = None
         feature_count = None
 
-        if process != "first":
+        if process_layers != "first":
             attribute_table_header = metadata["layers"][vector_layer]["field_names"]
             feature_count = metadata["layers"][vector_layer]["feature_count"]
         else:
@@ -184,7 +216,7 @@ def vector_get_attribute_table(vector, process="first", geom=False):
         
         df = pd.DataFrame(attribute_table, columns=attribute_table_header)
 
-        if process == "first": return df
+        if process_layers == "first": return df
         
         dataframes.append(df)
 
@@ -226,7 +258,7 @@ def intersection_rasters(raster_1, raster_2):
         return False
 
 
-def vector_mask(vector:ogr.DataSource or str, raster:gdal.Dataset or str) -> gdal.Dataset:
+def vector_mask(vector, raster):
     raster = raster if isinstance(raster, gdal.Dataset) else gdal.Open(raster)
     vector = vector if isinstance(vector, ogr.DataSource) else ogr.Open(vector)
 
@@ -251,3 +283,111 @@ def vector_mask(vector:ogr.DataSource or str, raster:gdal.Dataset or str) -> gda
     gdal.RasterizeLayer(destination, [1], vector.GetLayer(), burn_values=[0], options=['ALL_TOUCHED=TRUE'])
 
     return destination
+
+
+def rasterize_vector(vector, extent, raster_size, projection, all_touch=False, optim="raster", band=1, antialias=False):
+
+    # Create destination dataframe
+    driver = gdal.GetDriverByName('MEM')
+
+    destination = driver.Create(
+        'in_memory_raster',     # Location of the saved raster, ignored if driver is memory.
+        int(raster_size[0]),    # Dataframe width in pixels (e.g. 1920px).
+        int(raster_size[1]),    # Dataframe height in pixels (e.g. 1280px).
+        1,                      # The number of bands required.
+        gdal.GDT_Byte,          # Datatype of the destination.
+    )
+
+    destination.SetGeoTransform((extent[0], raster_size[2], 0, extent[3], 0, -raster_size[3]))
+    destination.SetProjection(projection)
+
+    # Rasterize and retrieve data
+    destination_band = destination.GetRasterBand(band)
+    destination_band.Fill(1)
+
+    options = []
+    if all_touch == True:
+        options.append("ALL_TOUCHED=TRUE")
+    
+    if optim == "raster":
+        options.append("OPTIM=RASTER")
+    elif optim == "vector":
+        options.append("OPTIM=VECTOR")
+    else:
+        options.append("OPTIM=AUTO")
+
+    gdal.RasterizeLayer(destination, [1], vector, burn_values=[0], options=options)
+
+    return destination_band.ReadAsArray()
+
+
+def calc_ipq(area, perimeter):
+    if perimeter == 0:
+        return 0
+    else:
+        return (4 * np.pi * area) / perimeter ** 2
+
+
+def calc_shapes(in_vector, shapes=["area", "perimeter", "ipq", "hull", "compactness"]):
+    vector = ogr.Open(in_vector, 1)
+    vector_layer = vector.GetLayer(0)
+    vector_layer_defn = vector_layer.GetLayerDefn()
+    vector_field_counts = vector_layer_defn.GetFieldCount()
+    vector_current_fields = []
+    
+    # Get current fields
+    for i in range(vector_field_counts):
+        vector_current_fields.append(vector_layer_defn.GetFieldDefn(i).GetName())
+
+    vector_layer.StartTransaction()
+    
+    # Add missing fields
+    for attribute in ['area', 'perimeter', 'ipq']:
+        if attribute not in vector_current_fields:
+            field_defn = ogr.FieldDefn(attribute, ogr.OFTReal)
+            vector_layer.CreateField(field_defn)
+
+    vector_feature_count = vector_layer.GetFeatureCount()
+    for i in range(vector_feature_count):
+        vector_feature = vector_layer.GetNextFeature()
+    
+        try:
+            vector_geom = vector_feature.GetGeometryRef()
+        except:
+            vector_geom.Buffer(0)
+            Warning('Invalid geometry at : ', i)
+
+        if vector_geom is None:
+            raise Exception('Invalid geometry. Could not fix.')
+
+        vector_area = vector_geom.GetArea()
+        vector_perimeter = vector_geom.Boundary().Length()
+
+        if "ipq" or "compact" in shapes:
+            vector_ipq = calc_ipq(vector_area, vector_perimeter)
+
+        if "hull" in shapes or "compact" in shapes:
+            vector_hull = vector_geom.ConvexHull()
+            hull_area = vector_hull.GetArea()
+            hull_peri = vector_hull.Boundary().Length()
+            hull_ratio = float(vector_area) / float(hull_area)
+            compactness = float(hull_ratio) * float(vector_ipq)
+
+        if "area" in shapes:
+            vector_feature.SetField('area', vector_area)
+        if "perimeter" in shapes:
+            vector_feature.SetField('perimeter', vector_perimeter)
+        if "ipq" in shapes:
+            vector_feature.SetField('ipq', vector_ipq)
+        if "hull" in shapes:
+            vector_feature.SetField('hull_area', hull_area)
+            vector_feature.SetField('hull_peri', hull_peri)
+            vector_feature.SetField('hull_ratio', hull_ratio)
+        if "compact" in shapes:
+            vector_feature.SetField('compact', compactness)
+
+        vector_layer.SetFeature(vector_feature)
+        
+        progress(i, vector_feature_count, name='shape')
+        
+    vector_layer.CommitTransaction()

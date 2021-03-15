@@ -6,12 +6,12 @@ import numpy as np
 from osgeo import gdal, ogr
 
 
-def vector_to_reference(vector):
+def raster_to_reference(in_raster, writeable=False):
     try:
-        if isinstance(vector, ogr.DataSource):  # Dataset already OGR dataframe.
-            return vector
+        if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
+            return in_raster
         else:
-            opened = ogr.Open(vector)
+            opened = gdal.Open(in_raster, 1) if writeable else gdal.Open(in_raster, 0)
             
             if opened is None:
                 raise Exception("Could not read input raster")
@@ -21,12 +21,12 @@ def vector_to_reference(vector):
         raise Exception("Could not read input raster")
 
 
-def raster_to_reference(in_raster):
+def vector_to_reference(vector, writeable=False):
     try:
-        if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
-            return in_raster
+        if isinstance(vector, ogr.DataSource):  # Dataset already OGR dataframe.
+            return vector
         else:
-            opened = gdal.Open(in_raster)
+            opened = ogr.Open(vector, 1) if writeable else ogr.Open(vector, 0)
             
             if opened is None:
                 raise Exception("Could not read input raster")
@@ -127,7 +127,7 @@ def create_geotransform(geo_transform, extent):
 
 def get_size(start_path='.', rough=True):
     total_size = 0
-    for dirpath, dirnames, filenames in os.walk(start_path):
+    for dirpath, _dirnames, filenames in os.walk(start_path):
         for f in filenames:
             fp = os.path.join(dirpath, f)
             # skip if it is symbolic link
@@ -399,7 +399,6 @@ def step_function(func, *args, grid=None, outfile=False, outfile_arg='outfile', 
             func(*args, **calls_obj)
 
 
-# https://stackoverflow.com/questions/21844024/weighted-percentile-using-numpy
 def weighted_quantile(values, quantile, weights=None):
     if weights is None or np.sum(weights) == 0:
         weights = np.ones(len(values))

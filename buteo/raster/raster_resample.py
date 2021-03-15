@@ -1,7 +1,7 @@
 import os
-import numpy.ma as ma
+import sys; sys.path.append('../../')
 from osgeo import gdal
-from .utils_core import (
+from buteo.utils import (
     datatype_is_float,
     copy_dataframe,
     progress_callback_quiet,

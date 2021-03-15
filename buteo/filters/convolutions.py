@@ -1,6 +1,7 @@
+import sys; sys.path.append('../../')
 import numpy as np
 from numba import jit, prange
-from kernel_generator import create_kernel
+from buteo.filters.kernel_generator import create_kernel
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
@@ -256,3 +257,4 @@ if __name__ == "__main__":
     slee = filter_array(images_arr, (3, 5, 5), operation="sigma_lee")
     array_to_raster(slee, folder + "sigma_lee_v6.tif", images[0])
 
+    # ZOBEL, MODE, MORPHOLOGY

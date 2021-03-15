@@ -22,8 +22,7 @@ filter
   * global filters and multispectral indices (link - host)
   * textures for analysis
   * noise reduction of SAR imagery (link - host)
-  * kernel designer
-  * reduction bootcamp
+  * kernel designer & reduction bootcamp
 
 terrain
   * download srtm, aster and the danish national DEM
@@ -62,10 +61,9 @@ optional:
   esa-snap
 
 # Todo
-  * organise library
-  * remove dependencies: cython, senmosaic, pygeoprocessing
   * finish filters library - kernel tests
   * update zonal statistics & parallelise vector math
+  * remove dependencies: cython, senmosaic, pygeoprocessing
   * fix sentinel 2 mosaic tool
   * create models for pansharpening, buildings and noise-reduction
   * generate examples
