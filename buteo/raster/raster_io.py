@@ -14,6 +14,18 @@ def raster_to_memory(in_raster):
     return driver.CreateCopy("mem_raster", ref)
 
 
+def is_raster(raster):
+    if isinstance(raster, gdal.Dataset):
+        return True
+    if isinstance(raster, str):
+        ref = gdal.Open(raster, 0)
+        if isinstance(ref, gdal.Dataset):
+            ref = None
+            return True
+    
+    return False
+
+
 # TODO
 def raster_to_disc(dataframe):
     return 0

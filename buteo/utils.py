@@ -3,7 +3,7 @@ import sys
 import time
 from itertools import product
 import numpy as np
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 
 def raster_to_reference(in_raster, writeable=False):
@@ -34,6 +34,57 @@ def vector_to_reference(vector, writeable=False):
             return opened
     except:
         raise Exception("Could not read input raster")
+
+
+def parse_projection(target, input_type="auto", export_wkt=False):
+    err_msg = f"Unable to parse target projection: {target}"
+    target_proj = osr.SpatialReference()
+
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
+
+    if isinstance(target, ogr.DataSource):
+        layer = target.GetLayer()
+        target_proj = layer.GetSpatialRef()
+    elif isinstance(target, gdal.Dataset):
+        target_proj = target.GetProjection()
+    elif isinstance(target, osr.SpatialReference):
+        target_proj = target
+    elif isinstance(target, str):
+        ref = gdal.Open(target, 0)
+
+        if ref != None:
+            target_proj = ref.GetProjection()
+        else:
+            ref = ogr.Open(target, 0)
+
+            if ref != None:
+                layer = ref.GetLayer()
+                target_proj = layer.GetSpatialRef()
+            else:
+                code = target_proj.ImportFromWkt(target)
+                if code != 0:
+                    code = target_proj.ImportFromProj4(target)
+                    if code != 0:
+                        raise ValueError(err_msg)
+    elif isinstance(target, int):
+        code = target_proj.ImportFromEPSG(target)
+        if code != 0:
+            raise ValueError(err_msg)
+    else:
+        raise ValueError(err_msg)
+
+    gdal.PopErrorHandler()
+
+    if isinstance(target_proj, osr.SpatialReference):
+        if target_proj.GetName() == None:
+            raise ValueError(err_msg)
+        
+        if export_wkt:
+            return target_proj.ExportToWkt()
+
+        return target_proj
+    else:
+        raise ValueError(err_msg)
 
 
 def progress(count, total, name='Processing'):

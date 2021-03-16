@@ -2,10 +2,11 @@ import sys; sys.path.append('../../')
 import os, json
 import numpy as np
 import pandas as pd
+import osgeo
 from osgeo import gdal, ogr, osr
 
 from buteo.raster.raster_io import raster_to_metadata
-from buteo.utils import progress, vector_to_reference
+from buteo.utils import progress, vector_to_reference, parse_projection
 
 # TODO:
 #   - rasterize - with antialiasing/weights
@@ -59,7 +60,7 @@ def vector_to_metadata(vector, process_layers="first"):
         min_x, max_x, min_y, max_y = layer.GetExtent()
 
         layer_dict = {
-            "name": layer.GetName(),
+            "layer_name": layer.GetName(),
             "minx": min_x,
             "maxx": max_x,
             "miny": min_y,
@@ -73,6 +74,10 @@ def vector_to_metadata(vector, process_layers="first"):
         projection = layer.GetSpatialRef().ExportToWkt()
         projection_osr = osr.SpatialReference()
         projection_osr.ImportFromWkt(projection)
+
+        if layer_index == 0:
+            metadata["projection"] = projection
+            metadata["projection_osr"] = projection_osr
 
         layer_dict["projection"] = projection
         layer_dict["projection_osr"] = projection_osr
@@ -135,6 +140,7 @@ def vector_to_metadata(vector, process_layers="first"):
 
         layer_dict["field_count"] = layer_defn.GetFieldCount()
         layer_dict["geom_type"] = ogr.GeometryTypeToName(layer_defn.GetGeomType())
+        layer_dict["geom_type_ogr"] = layer_defn.GetGeomType()
 
         layer_dict["field_names"] = []
         layer_dict["field_types"] = []
@@ -168,11 +174,85 @@ def vector_to_disc(vector, output_path, driver="GPKG"):
     copy = driver.CreateDataSource(output_path)
 
     for layer_idx in range(metadata["layer_count"]):
-        layer_name = metadata["layers"][layer_idx]["name"]
+        layer_name = metadata["layers"][layer_idx]["layer_name"]
         copy.CopyLayer(vector.GetLayer(layer_idx), str(layer_name), ["OVERWRITE=YES"])
 
     copy = None
     return None
+
+
+def is_vector(vector):
+    if isinstance(vector, ogr.DataSource):
+        return True
+    if isinstance(vector, str):
+        ref = ogr.Open(vector, 0)
+        if isinstance(ref, ogr.DataSource):
+            ref = None
+            return True
+    
+    return False
+
+
+def reproject_vector(vector, target, output=None):
+    origin = vector_to_reference(vector)
+    metadata = vector_to_metadata(origin, process_layers="all")
+
+    origin_projection = metadata["projection_osr"]
+    target_projection = parse_projection(target)
+
+    # GDAL 3 changes axis order: https://github.com/OSGeo/gdal/issues/1546
+    if int(osgeo.__version__[0]) >= 3:
+        origin_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+        target_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    coord_trans = osr.CoordinateTransformation(origin_projection, target_projection)
+
+    driver = ogr.GetDriverByName('Memory')
+
+    destination = driver.CreateDataSource(metadata["name"])
+
+    for layer_idx in range(len(metadata["layers"])):
+        origin_layer = origin.GetLayerByIndex(layer_idx)
+        origin_layer_defn = origin_layer.GetLayerDefn()
+
+        layer_dict = metadata["layers"][layer_idx]
+        layer_name = layer_dict["layer_name"]
+        layer_geom_type = layer_dict["geom_type_ogr"]
+
+        destination_layer = destination.CreateLayer(layer_name, target_projection, layer_geom_type)
+        destination_layer_defn = destination_layer.GetLayerDefn()
+
+        # Copy field definitions
+        origin_layer_defn = origin_layer.GetLayerDefn()
+        for i in range(0, origin_layer_defn.GetFieldCount()):
+            field_defn = origin_layer_defn.GetFieldDefn(i)
+            destination_layer.CreateField(field_defn)
+
+        # Loop through the input features
+        for _ in range(origin_layer.GetFeatureCount()):
+            feature = origin_layer.GetNextFeature()
+            geom = feature.GetGeometryRef()
+            geom.Transform(coord_trans)
+
+            new_feature = ogr.Feature(destination_layer_defn)
+            new_feature.SetGeometry(geom)
+
+            # Copy field values
+            for i in range(0, destination_layer_defn.GetFieldCount()):
+                new_feature.SetField(destination_layer_defn.GetFieldDefn(i).GetNameRef(), feature.GetField(i))
+
+            destination_layer.CreateFeature(new_feature)
+            
+        destination_layer.ResetReading()
+        destination_layer.CommitTransaction()
+
+    if output is not None:
+        vector_to_disc(destination, output_path=output)
+        return output
+    else:
+        return destination
+    
+
 
 
 def vector_get_attribute_table(vector, process_layers="first", geom=False):
@@ -305,18 +385,19 @@ def rasterize_vector(vector, extent, raster_size, projection, all_touch=False, o
     destination_band = destination.GetRasterBand(band)
     destination_band.Fill(1)
 
-    options = []
-    if all_touch == True:
-        options.append("ALL_TOUCHED=TRUE")
-    
-    if optim == "raster":
-        options.append("OPTIM=RASTER")
-    elif optim == "vector":
-        options.append("OPTIM=VECTOR")
-    else:
-        options.append("OPTIM=AUTO")
+    if antialias is False:
+        options = []
+        if all_touch == True:
+            options.append("ALL_TOUCHED=TRUE")
+        
+        if optim == "raster":
+            options.append("OPTIM=RASTER")
+        elif optim == "vector":
+            options.append("OPTIM=VECTOR")
+        else:
+            options.append("OPTIM=AUTO")
 
-    gdal.RasterizeLayer(destination, [1], vector, burn_values=[0], options=options)
+        gdal.RasterizeLayer(destination, [1], vector, burn_values=[0], options=options)
 
     return destination_band.ReadAsArray()
 
@@ -391,3 +472,19 @@ def calc_shapes(in_vector, shapes=["area", "perimeter", "ipq", "hull", "compactn
         progress(i, vector_feature_count, name='shape')
         
     vector_layer.CommitTransaction()
+
+
+if __name__ == "__main__":
+    yellow_follow = 'C:/Users/caspe/Desktop/yellow/'
+    import sys; sys.path.append(yellow_follow)
+    np.set_printoptions(suppress=True)
+    from buteo.raster.raster_io import raster_to_array, array_to_raster
+    from glob import glob
+    
+    folder = "C:/Users/caspe/Desktop/vector_test/"
+    vector_utm = glob(folder + "*utm*.gpkg")[0]
+    vector_wgs = glob(folder + "*wgs*.gpkg")[0]
+    
+    # vector_utm = "bobthegreat"
+
+    reproject_vector(vector_wgs, vector_utm, folder + "wgs_to_utm.gpkg")
