@@ -53,7 +53,7 @@ def parse_projection(target, input_type="auto", export_wkt=False):
         ref = gdal.Open(target, 0)
 
         if ref != None:
-            target_proj = ref.GetProjection()
+            target_proj.ImportFromWkt(ref.GetProjection())
         else:
             ref = ogr.Open(target, 0)
 

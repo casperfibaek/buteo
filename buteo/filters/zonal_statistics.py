@@ -3,7 +3,7 @@ import numpy as np
 from numba import jit
 from osgeo import ogr
 from buteo.raster.raster_io import raster_to_array, raster_to_metadata
-from buteo.vector.vector_io import vector_to_memory, vector_to_metadata, rasterize_vector, vector_to_disc
+from buteo.vector.vector_io import vector_to_memory, vector_to_metadata, rasterize_vector, vector_to_disc, reproject_vector
 from buteo.filters.stats import stats_to_ints, calculate_array_stats
 from buteo.utils import progress, vector_to_reference
 
@@ -130,9 +130,14 @@ def zonal_statistics(in_vector, output_vector=None, in_rasters=[], prefixes=[], 
 
     # Check that projections match
     if not vector_metadata["projection_osr"].IsSame(raster_metadata["projection_osr"]):
-        print('Vector projection: ', vector_metadata["projection"])
-        print('Raster projection: ', raster_metadata["projection"])
-        raise Exception('Projections do not match!')
+        if output_vector is None:
+            vector = reproject_vector(in_vector, in_rasters[0])
+        else:
+            vector_path = reproject_vector(in_vector, in_rasters[0], output_vector)
+            vector = vector_to_reference(vector_path, writeable=True)
+
+        vector_metadata = vector_to_metadata(vector)
+        vector_layer = vector.GetLayer()
 
     vector_projection = vector_metadata["projection_osr"]
     raster_projection = raster_metadata["projection"]
@@ -283,13 +288,15 @@ if __name__ == "__main__":
 
     data_dir = "C:/Users/caspe/Desktop/geoai/data/"
 
-    images = glob(data_dir + "*B0*_10m.jp2")
+    images = glob(data_dir + "**/*B0*_10m.jp2")
 
     zonal_statistics(
-        data_dir + "fields_selected_zonal.gpkg",
+        data_dir + "fields_selected.gpkg",
         in_rasters=images,
-        # output_vector=data_dir + "fields_selected_zonal.gpkg",
-        prefixes=["0629_b2_", "0629_b3_", "0629_b4_", "0629_b8_"],
+        output_vector=data_dir + "fields_selected_zonal.gpkg",
+        prefixes=[
+            "0629_b2_", "0629_b3_", "0629_b4_", "0629_b8_",
+            "0724_b2_", "0724_b3_", "0724_b4_", "0724_b8_",
+        ],
         stats=["mean", "std", "min", "max"],
     )
-    # import pdb; pdb.set_trace()

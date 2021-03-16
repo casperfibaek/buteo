@@ -1,16 +1,14 @@
-import sys
-
-sys.path.append("..")
-from lib.raster_io import (
+import sys; sys.path.append("../../")
+from buteo.raster.raster_io import (
     raster_to_array,
     raster_to_metadata,
     raster_to_memory,
     array_to_raster,
 )
-from lib.vector_io import vector_to_memory
-from lib.raster_clip import clip_raster
-from lib.raster_align import is_aligned
-from lib.utils_core import progress
+from buteo.raster.raster_clip import clip_raster
+from buteo.raster.raster_align import is_aligned
+from buteo.vector.vector_io import vector_to_memory
+from buteo.utils import progress
 import numpy as np
 from osgeo import ogr, osr
 import rtree

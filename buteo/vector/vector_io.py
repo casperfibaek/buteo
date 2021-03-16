@@ -28,7 +28,7 @@ def vector_to_memory(vector):
     copy = driver.CreateDataSource(basename)
 
     for layer_idx in range(metadata["layer_count"]):
-        layername = metadata["layers"][layer_idx]["name"]
+        layername = metadata["layers"][layer_idx]["layer_name"]
         copy.CopyLayer(ref.GetLayer(layer_idx), layername, ["OVERWRITE=YES"])
 
     return copy
