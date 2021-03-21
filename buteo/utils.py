@@ -6,6 +6,12 @@ import numpy as np
 from osgeo import gdal, ogr, osr
 
 
+def extension_to_driver(filename):
+    # parse both paths and names and just the extension. 
+    # return the gdal or ogr driver needed
+    return 1
+
+
 def raster_to_reference(in_raster, writeable=False):
     try:
         if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.

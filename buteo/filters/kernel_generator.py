@@ -144,7 +144,7 @@ def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, 
 
                 kernel[edge_z - z][edge_x - x][edge_y - y] = weight
 
-    # We're coping the one quadrant to the other three quadrants
+    # We're copying the one quadrant to the other three quadrants
     kernel[edge_z + 1:, :, :] = np.flip(kernel[:edge_z, :, :], axis=0)
     kernel[:, edge_x + 1:, :] = np.flip(kernel[:, :edge_x, :], axis=1)
     kernel[:, :, edge_y + 1:] = np.flip(kernel[:, :, :edge_y], axis=2)

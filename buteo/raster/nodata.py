@@ -1,6 +1,9 @@
 import numpy as np
 import sys; sys.path.append('../../')
-from buteo.raster.raster_io import raster_to_array, array_to_raster
+from buteo.raster.io import raster_to_array, array_to_raster
+
+
+# has nodata
 
 
 def remove_nodata(raster_or_array, out_raster=None):

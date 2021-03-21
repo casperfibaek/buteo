@@ -4,7 +4,7 @@ import numpy as np
 from pyproj import CRS
 from osgeo import gdal, osr
 from buteo.utils import datatype_is_float
-from buteo.raster.raster_io import array_to_raster
+from buteo.raster.io import array_to_raster
 
 
 def reproject(
@@ -118,17 +118,17 @@ def reproject(
         og_projection_osr, dst_projection_osr
     )
 
-    o_ulx, xres, xskew, o_uly, yskew, yres = og_transform
+    o_ulx, xres, _xskew, o_uly, _yskew, yres = og_transform
     o_lrx = o_ulx + (og_x_size * xres)
     o_lry = o_uly + (og_y_size * yres)
 
     og_col = o_lrx - o_ulx
     og_row = o_uly - o_lry
 
-    ulx, uly, ulz = coord_transform.TransformPoint(float(o_ulx), float(o_uly))
-    urx, ury, urz = coord_transform.TransformPoint(float(o_lrx), float(o_uly))
-    lrx, lry, lrz = coord_transform.TransformPoint(float(o_lrx), float(o_lry))
-    llx, lly, llz = coord_transform.TransformPoint(float(o_ulx), float(o_lry))
+    ulx, uly, _ulz = coord_transform.TransformPoint(float(o_ulx), float(o_uly))
+    urx, ury, _urz = coord_transform.TransformPoint(float(o_lrx), float(o_uly))
+    lrx, lry, _lrz = coord_transform.TransformPoint(float(o_lrx), float(o_lry))
+    llx, lly, _llz = coord_transform.TransformPoint(float(o_ulx), float(o_lry))
 
     dst_col = max(lrx, urx) - min(llx, ulx)
     dst_row = max(ury, uly) - min(lry, lly)

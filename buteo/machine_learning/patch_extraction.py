@@ -159,7 +159,7 @@ def extract_patches(
         if verbose == 1:
             print("Calculating grid cells..")
 
-        ulx, uly, lrx, lry = metadata["extent"]
+        ulx, uly, _lrx, _lry = metadata["extent"]
 
         pixel_width = abs(metadata["pixel_width"])
         pixel_height = abs(metadata["pixel_height"])

@@ -1,5 +1,5 @@
-import os
 import sys; sys.path.append('../../')
+import os
 from osgeo import gdal
 from buteo.utils import (
     datatype_is_float,

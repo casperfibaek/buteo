@@ -3,7 +3,7 @@ import os
 from collections import Counter
 from numpy.core.numeric import Infinity
 from pygeoprocessing import geoprocessing
-from buteo.raster.raster_io import raster_to_metadata
+from buteo.raster.io import raster_to_metadata
 
 
 def is_aligned(input_rasters, same_extent=False, same_dtype=False):

@@ -5,7 +5,7 @@ import pandas as pd
 import osgeo
 from osgeo import gdal, ogr, osr
 
-from buteo.raster.raster_io import raster_to_metadata
+from buteo.raster.io import raster_to_metadata
 from buteo.utils import progress, vector_to_reference, parse_projection
 
 # TODO:

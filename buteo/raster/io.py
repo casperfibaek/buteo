@@ -4,12 +4,14 @@ import numpy as np
 import os, json
 
 from buteo.utils import numpy_to_gdal_datatype, datatype_is_float, gdal_to_numpy_datatype, raster_to_reference, vector_to_reference
-from buteo.raster.raster_clip import clip_raster
+from buteo.raster.clip import clip_raster
 
 
 def raster_to_memory(in_raster):
     ref = raster_to_reference(in_raster)
     driver = gdal.GetDriverByName("MEM")
+
+    import pdb; pdb.set_trace()
 
     return driver.CreateCopy("mem_raster", ref)
 
@@ -27,7 +29,12 @@ def is_raster(raster):
 
 
 # TODO
-def raster_to_disc(dataframe):
+def create_raster(path="optional", format="optional", fill=0):
+    return 0
+
+
+# TODO
+def raster_to_disc(dataframe, out_path, driver="BigGTiff"):
     return 0
 
 

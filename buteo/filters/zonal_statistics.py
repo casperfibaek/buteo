@@ -276,11 +276,11 @@ def zonal_statistics(in_vector, output_vector=None, in_rasters=[], prefixes=[], 
         vector_layer.ResetReading()
 
     vector_layer.CommitTransaction()
-
-    if output_vector is not None:
-        vector_to_disc(vector, output_vector)
     
-    return None
+    if output_vector is None:
+        return vector
+    
+    return output_vector
 
 if __name__ == "__main__":
     from buteo.raster.raster_io import raster_to_array
