@@ -2,7 +2,7 @@ import sys; sys.path.append('../../')
 import os
 from collections import Counter
 from numpy.core.numeric import Infinity
-from pygeoprocessing import geoprocessing
+# from pygeoprocessing import geoprocessing
 from buteo.raster.io import raster_to_metadata
 
 

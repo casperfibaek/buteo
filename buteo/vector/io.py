@@ -6,8 +6,8 @@ import osgeo
 from osgeo import gdal, ogr, osr
 
 from buteo.raster.io import raster_to_metadata
-from buteo.gdal_utils import progress, parse_projection
-
+from buteo.gdal_utils import parse_projection
+from buteo.utils import progress
 # TODO:
 #   - rasterize - with antialiasing/weights
 #   - join by attribute + summary
