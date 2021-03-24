@@ -18,6 +18,10 @@ from buteo.gdal_utils import (
 )
 
 
+# TODO: Create empty or filled raster.
+# TODO: Array to raster (advanced)
+
+
 def raster_to_memory(raster: Union[str, gdal.Dataset]) -> gdal.Dataset:
     """ Takes a file path or a gdal raster dataset and copies
     it to memory. 
@@ -42,7 +46,7 @@ def raster_to_disk(
     raster: Union[str, gdal.Dataset],
     out_path: str,
     overwrite: bool=True,
-    options: list=[],
+    creation_options: list=[],
 ) -> str:
     """ Saves or copies a raster to disc. Input is either a 
     filepath to a raster or a GDAL.Dataset. The driver is infered
@@ -54,7 +58,7 @@ def raster_to_disk(
 
     **kwargs:
         overwrite (bool): If the file exists, should it be overwritten?
-        options (list): GDAL creation options. Defaults are:
+        creation_options (list): GDAL creation options. Defaults are:
             "TILED=YES"
             "NUM_THREADS=ALL_CPUS"
             "BIGG_TIF=YES"
@@ -71,10 +75,10 @@ def raster_to_disk(
     if driver is None:
         raise ValueError(f"Unable to parse filetype from extension: {out_path}")
 
-    if not isinstance(options, list):
+    if not isinstance(creation_options, list):
         raise ValueError("Options must be a list. ['BIGTIFF=YES', ...]")
 
-    copy_created = driver.CreateCopy(out_path, ref, options=default_options(options))
+    copy_created = driver.CreateCopy(out_path, ref, options=default_options(creation_options))
 
     if copy_created is None:
         raise Exception("Error while creating copy.")
@@ -216,7 +220,7 @@ def array_to_raster(
     reference: Union[str, gdal.Dataset],
     out_path: Union[str, None]=None,
     overwrite: bool=True,
-    options: list=[],
+    creation_options: list=[],
 ) -> Union[str, gdal.Dataset]:
     """ Turns a numpy array into a GDAL dataset or exported
         as a raster using a reference raster.
@@ -235,7 +239,7 @@ def array_to_raster(
         overwrite (bool): Specifies if the file already exists, should
         it be overwritten?
 
-        options (list): A list of options for the GDAL creation. Only
+        creation_options (list): A list of options for the GDAL creation. Only
         used if an outpath is specified. Defaults are:
             "TILED=YES"
             "NUM_THREADS=ALL_CPUS"
@@ -269,7 +273,7 @@ def array_to_raster(
     else:
         raise TypeError("overwrite parameter must be a boolean, 0, or 1.")
     
-    if not isinstance(options, list):
+    if not isinstance(creation_options, list):
         raise TypeError("Options must be a list of valid GDAL options or empty list.")
 
     # Parse the driver
@@ -306,7 +310,7 @@ def array_to_raster(
     # If the output is not memory, set compression options.
     creation_options = []
     if driver_name != "MEM":
-        creation_options = default_options(options)
+        creation_options = default_options(creation_options)
 
     output_name = metadata["name"] if out_path is None else out_path
 

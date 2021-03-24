@@ -29,8 +29,43 @@ def reproject_raster(
     creation_options: list=[],
     dst_nodata: Union[str, int, float]="infer",
 ) -> Union[gdal.Dataset, str]:
-    """
-        Reprojects raster to reference raster projection or target projection.
+    """ Reprojects a raster given a target projection.
+
+    Args:
+        raster (path | raster): The raster to reproject.
+        
+        projection (str | int | vector | raster): The projection is infered from
+        the input. The input can be: WKT proj, EPSG proj, Proj, or read from a 
+        vector or raster datasource either from path or in-memory.
+
+    **kwargs:
+        out_path (path | None): The destination to save to. If None then
+        the output is an in-memory raster.
+
+        resample_alg (str): The algorithm to resample the raster. The following
+        are available:
+            'nearest', 'bilinear', 'cubic', 'cubicSpline', 'lanczos', 'average',
+            'mode', 'max', 'min', 'median', 'q1', 'q3', 'sum', 'rms'.
+        
+        align_pixels (bool): Should the resulting pixels be aligned with the
+        original pixels.
+
+        overwite (bool): Is it possible to overwrite the out_path if it exists.
+
+        creation_options (list): A list of options for the GDAL creation. Only
+        used if an outpath is specified. Defaults are:
+            "TILED=YES"
+            "NUM_THREADS=ALL_CPUS"
+            "BIGG_TIF=YES"
+            "COMPRESS=LZW"
+
+        dst_nodata (str | int | float): If dst_nodata is 'infer' the destination nodata
+        is the src_nodata if one exists, otherwise it's automatically chosen based
+        on the datatype. If an int or a float is given, it is used as the output nodata.
+
+    Returns:
+        An in-memory raster. If an out_path is given the output is a string containing
+        the path to the newly created raster.
     """
     # Verify Inputs
     ref = raster_to_reference(raster)

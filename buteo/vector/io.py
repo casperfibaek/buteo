@@ -9,16 +9,16 @@ from osgeo import gdal, ogr, osr
 
 from buteo.raster.io import raster_to_metadata
 from buteo.gdal_utils import parse_projection, vector_to_reference, path_to_driver
-from buteo.utils import progress, remove_if_overwrite
+from buteo.utils import progress, remove_if_overwrite, path_to_ext
 
 
 # TODO:
+#   - repair vector
+#   - sanity checks: vectors_intersect, is_not_empty, does_vectors_match, match_vectors
 #   - rasterize - with antialiasing/weights
 #   - join by attribute + summary
 #   - join by location + summary
 #   - intersection, buffer, union, clip, erase
-#   - sanity checks: vectors_intersect, is_not_empty, does_vectors_match, match_vectors
-#   - repair vector
 #   - multithreaded processing
 
 
@@ -26,6 +26,21 @@ def vector_to_memory(
     vector: Union[str, ogr.DataSource],
     memory_path: Union[str, None]=None,
 ) -> ogr.DataSource:
+    """ Copies a vector source to memory.
+
+    Args:
+        vector (path | DataSource): The vector to copy to memory
+
+    **kwargs:
+        memory_path (str | None): If a path is provided, uses the
+        appropriate driver and uses the VSIMEM gdal system.
+        Example: vector_to_memory(clip_ref, "clip_geom.gpkg")
+        /vsimem/ is autumatically added.
+
+    Returns:
+        An in-memory ogr.DataSource. If a memory path was provided a
+        string for the in-memory location is returned.
+    """
     ref = vector_to_reference(vector)
     metadata = vector_to_metadata(ref, process_layers="all")
 
@@ -35,11 +50,14 @@ def vector_to_memory(
     else:
         driver = ogr.GetDriverByName("Memory")
 
+
+    basename = metadata["basename"] if metadata["basename"] is not None else "mem_vector"
+
     vector_name = None
     if memory_path is None:
-        vector_name = metadata["basename"] if metadata["basename"] is not None else "mem_vector"
+        vector_name = basename
     else:
-        vector_name = memory_path
+        vector_name = f"/vsimem/{memory_path}"
 
     copy = driver.CreateDataSource(vector_name)
 
@@ -55,6 +73,19 @@ def vector_to_disk(
     out_path: str,
     overwrite: bool=True,
 ) -> str:
+    """ Copies a vector source to disk.
+
+    Args:
+        vector (path | DataSource): The vector to copy to disk
+
+        out_path (path): The destination to save to.
+
+    **kwargs:
+        overwite (bool): Is it possible to overwrite the out_path if it exists.
+
+    Returns:
+        An path to the created vector.
+    """
     assert isinstance(vector, ogr.DataSource), "Input not a vector datasource."
 
     driver = ogr.GetDriverByName(path_to_driver(out_path))
@@ -74,10 +105,24 @@ def vector_to_disk(
     return out_path
 
 
+# TODO: Rework the way process_layers work.
 def vector_to_metadata(
     vector: Union[str, ogr.DataSource],
-    process_layers: str="first",
+    process_layers: Union[str, int]="first",
 ) -> dict:
+    """ Creates a dictionary with metadata about the vector layer.
+
+    Args:
+        vector (path | DataSource): The vector to analyse.
+
+        process_layers (str): The layers to process. if "first" only processes
+        the first layer the vector source. If "all" is passed, all layers are
+        processed. If an INT is passed, only the layer with that index is 
+        processed.
+
+    Returns:
+        A dictionary containing the metadata.
+    """
     try:
         vector = vector if isinstance(vector, ogr.DataSource) else ogr.Open(vector)
     except:
@@ -228,6 +273,25 @@ def reproject_vector(
     out_path: Union[str, None]=None,
     overwrite: bool=True,
 ) -> Union[str, ogr.DataSource]:
+    """ Reprojects a vector given a target projection.
+
+    Args:
+        vector (path | vector): The vector to reproject.
+        
+        projection (str | int | vector | raster): The projection is infered from
+        the input. The input can be: WKT proj, EPSG proj, Proj, or read from a 
+        vector or raster datasource either from path or in-memory.
+
+    **kwargs:
+        out_path (path | None): The destination to save to. If None then
+        the output is an in-memory raster.
+
+        overwite (bool): Is it possible to overwrite the out_path if it exists.
+
+    Returns:
+        An in-memory vector. If an out_path is given, the output is a string containing
+        the path to the newly created vecotr.
+    """
     origin = vector_to_reference(vector)
     metadata = vector_to_metadata(origin, process_layers="all")
 
@@ -299,174 +363,41 @@ def reproject_vector(
         return destination
 
 
-def empty_vector(name="Empty_dataframe", filetype="Memory"):
-    wgs84 = osr.SpatialReference()
-    wgs84.ImportFromEPSG(4326) # WGS84, latlng
+# TODO: Update this to work on every geom layer.
+# TODO: Add output array.
+# TODO: Add copy
+def vector_add_shapes(
+    vector: Union[str, ogr.DataSource],
+    shapes: list=["area", "perimeter", "ipq", "hull", "compactness"],
+    output_array: bool=False,
+    output_copy: bool=False,
+) -> Union[str, np.ndarray]:
+    """ Adds shape calculations to a vector such as area and perimeter.
+        Can also add compactness measurements.
 
-    driver = ogr.GetDriverByName(filetype)
-    datasource = driver.CreateDataSource(name)
-    datasource.CreateLayer(name + "_layer", wgs84, ogr.wkbPolygon)
-
-    return datasource
-
-
-def vector_get_attribute_table(vector, process_layers="first", geom=False):
-    ref = vector_to_reference(vector)
-    metadata = vector_to_metadata(ref, process_layers=process_layers)
-
-    dataframes = []
-
-    for vector_layer in range(metadata["layer_count"]):
-        attribute_table_header = None
-        feature_count = None
-
-        if process_layers != "first":
-            attribute_table_header = metadata["layers"][vector_layer]["field_names"]
-            feature_count = metadata["layers"][vector_layer]["feature_count"]
-        else:
-            attribute_table_header = metadata["field_names"]
-            feature_count = metadata["feature_count"]
-
-        attribute_table = []
-
-        layer = ref.GetLayer(vector_layer)
-
-        for _ in range(feature_count):
-            feature = layer.GetNextFeature()
-            attributes = [feature.GetFID()]
-
-            for field_name in attribute_table_header:
-                attributes.append(feature.GetField(field_name))
-
-            if geom:
-                geom_defn = feature.GetGeometryRef()
-                attributes.append(geom_defn.ExportToIsoWkt())
-            
-            attribute_table.append(attributes)
-
-        attribute_table_header.insert(0, "fid")
-
-        if geom:
-            attribute_table_header.append("geom")
+    Args:
+        vector (path | vector): The vector to add shapes to.
         
-        df = pd.DataFrame(attribute_table, columns=attribute_table_header)
+    **kwargs:
+        shapes (list): The shapes to calculate. The following a possible:
+            * Area          (In same unit as projection)
+            * Perimeter     (In same unit as projection)
+            * IPQ           (0-1) given as (4*Pi*Area)/(Perimeter ** 2)
+            * Hull Area     (The area of the hull. Same unit as projection)
+            * Compactness   (0-1) given as (Area / Hull Area) * IPQ
 
-        if process_layers == "first": return df
-        
-        dataframes.append(df)
+        output_array (bool): If true a numpy array matching the FID's of the
+        vector and the calculated shapes (same order as 'shapes').
 
-    return dataframes
-    
+        output_copy (bool): If true a copy is return with the added shapes. if
+        false the input vector is updated in place.
 
-def intersection_rasters(raster_1, raster_2):
-    raster_1 = raster_1 if isinstance(raster_1, gdal.Dataset) else gdal.Open(raster_1)
-    raster_2 = raster_2 if isinstance(raster_2, gdal.Dataset) else gdal.Open(raster_2)
+    Returns:
+        Either the path to the updated vector
+    """
 
-    img_1 = raster_to_metadata(raster_1)
-    img_2 = raster_to_metadata(raster_2)
-
-    driver = ogr.GetDriverByName('Memory')
-    dst_source = driver.CreateDataSource('clipped_rasters')
-    dst_srs = osr.SpatialReference()
-    dst_srs.ImportFromEPSG(4326)
-    dst_layer = dst_source.CreateLayer('unused', dst_srs, geom_type=ogr.wkbPolygon)
-
-    geom1 = gdal.OpenEx(img_1['footprint'])
-    layer1 = geom1.GetLayer()
-    feature1 = layer1.GetFeature(0)
-    feature1_geom = feature1.GetGeometryRef()
-
-    geom2 = gdal.OpenEx(img_2['footprint'])
-    layer2 = geom2.GetLayer()
-    feature2 = layer2.GetFeature(0)
-    feature2_geom = feature2.GetGeometryRef()
-
-    if feature2_geom.Intersects(feature1_geom):
-        intersection = feature2_geom.Intersection(feature1_geom)
-        dstfeature = ogr.Feature(dst_layer.GetLayerDefn())
-        dstfeature.SetGeometry(intersection)
-        dst_layer.CreateFeature(dstfeature)
-        dstfeature.Destroy()
-        
-        return dst_source
-    else:
-        return False
-
-
-def vector_mask(vector, raster):
-    raster = raster if isinstance(raster, gdal.Dataset) else gdal.Open(raster)
-    vector = vector if isinstance(vector, ogr.DataSource) else ogr.Open(vector)
-
-    # Create destination dataframe
-    driver = gdal.GetDriverByName('MEM')
-
-    destination:gdal.Dataset = driver.Create(
-        'in_memory_raster',     # Location of the saved raster, ignored if driver is memory.
-        raster.RasterXSize,     # Dataframe width in pixels (e.g. 1920px).
-        raster.RasterYSize,     # Dataframe height in pixels (e.g. 1280px).
-        1,                      # The number of bands required.
-        gdal.GDT_Byte,          # Datatype of the destination.
-    )
-
-    destination.SetGeoTransform(raster.GetGeoTransform())
-    destination.SetProjection(raster.GetProjection())
-
-    # Rasterize and retrieve data
-    destination_band = destination.GetRasterBand(1)
-    destination_band.Fill(1)
-
-    gdal.RasterizeLayer(destination, [1], vector.GetLayer(), burn_values=[0], options=['ALL_TOUCHED=TRUE'])
-
-    return destination
-
-
-def rasterize_vector(vector, extent, raster_size, projection, all_touch=False, optim="raster", band=1, antialias=False):
-
-    # Create destination dataframe
-    driver = gdal.GetDriverByName('MEM')
-
-    destination = driver.Create(
-        'in_memory_raster',     # Location of the saved raster, ignored if driver is memory.
-        int(raster_size[0]),    # Dataframe width in pixels (e.g. 1920px).
-        int(raster_size[1]),    # Dataframe height in pixels (e.g. 1280px).
-        1,                      # The number of bands required.
-        gdal.GDT_Byte,          # Datatype of the destination.
-    )
-
-    destination.SetGeoTransform((extent[0], raster_size[2], 0, extent[3], 0, -raster_size[3]))
-    destination.SetProjection(projection)
-
-    # Rasterize and retrieve data
-    destination_band = destination.GetRasterBand(band)
-    destination_band.Fill(1)
-
-    if antialias is False:
-        options = []
-        if all_touch == True:
-            options.append("ALL_TOUCHED=TRUE")
-        
-        if optim == "raster":
-            options.append("OPTIM=RASTER")
-        elif optim == "vector":
-            options.append("OPTIM=VECTOR")
-        else:
-            options.append("OPTIM=AUTO")
-
-        gdal.RasterizeLayer(destination, [1], vector, burn_values=[0], options=options)
-
-    return destination_band.ReadAsArray()
-
-
-def calc_ipq(area, perimeter):
-    if perimeter == 0:
-        return 0
-    else:
-        return (4 * np.pi * area) / perimeter ** 2
-
-
-def calc_shapes(in_vector, shapes=["area", "perimeter", "ipq", "hull", "compactness"]):
-    vector = ogr.Open(in_vector, 1)
-    vector_layer = vector.GetLayer(0)
+    internal_vector = ogr.Open(vector, 1)
+    vector_layer = internal_vector.GetLayer(0)
     vector_layer_defn = vector_layer.GetLayerDefn()
     vector_field_counts = vector_layer_defn.GetFieldCount()
     vector_current_fields = []
@@ -500,7 +431,9 @@ def calc_shapes(in_vector, shapes=["area", "perimeter", "ipq", "hull", "compactn
         vector_perimeter = vector_geom.Boundary().Length()
 
         if "ipq" or "compact" in shapes:
-            vector_ipq = calc_ipq(vector_area, vector_perimeter)
+            vector_ipq = 0
+            if vector_perimeter != 0:
+                vector_ipq = (4 * np.pi * vector_area) / vector_perimeter ** 2
 
         if "hull" in shapes or "compact" in shapes:
             vector_hull = vector_geom.ConvexHull()
@@ -528,18 +461,4 @@ def calc_shapes(in_vector, shapes=["area", "perimeter", "ipq", "hull", "compactn
         
     vector_layer.CommitTransaction()
 
-
-# if __name__ == "__main__":
-#     yellow_follow = 'C:/Users/caspe/Desktop/yellow/'
-#     import sys; sys.path.append(yellow_follow)
-#     np.set_printoptions(suppress=True)
-#     from buteo.raster.io import raster_to_array, array_to_raster
-#     from glob import glob
-    
-#     folder = "C:/Users/caspe/Desktop/vector_test/"
-#     vector_utm = glob(folder + "*utm*.gpkg")[0]
-#     vector_wgs = glob(folder + "*wgs*.gpkg")[0]
-    
-#     # vector_utm = "bobthegreat"
-
-#     reproject_vector(vector_wgs, vector_utm, folder + "wgs_to_utm.gpkg")
+    return vector
