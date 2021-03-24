@@ -110,7 +110,7 @@ def extract_patches(
     metadata = None
 
     if clip_to_vector is not None:
-        metadata = raster_to_metadata(clip_raster(in_rasters[0], cutline=clip_to_vector, cutline_all_touch=True))
+        metadata = raster_to_metadata(clip_raster(in_rasters[0], clip_to_vector, all_touch=True))
     else:
         metadata = raster_to_metadata(in_rasters[0])
 
