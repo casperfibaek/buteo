@@ -1,125 +1,24 @@
 import sys; sys.path.append('../../')
-from osgeo import gdal, osr
+from osgeo import gdal, ogr, osr
 from typing import Union
 import numpy as np
 import os, json
 
 from buteo.utils import (
-    file_exists,
-    path_to_ext,
+    remove_if_overwrite,
     path_to_name,
 )
 from buteo.gdal_utils import (
-    vector_to_reference,
+    is_raster,
+    raster_to_reference,
+    path_to_driver,
     numpy_to_gdal_datatype,
     gdal_to_numpy_datatype,
+    default_options,
 )
 
 
-def default_options(options: list) -> list:
-    """ Takes a list of GDAL options and adds the following
-        defaults to it:
-            "TILED=YES"
-            "NUM_THREADS=ALL_CPUS"
-            "BIGG_TIF=YES"
-            "COMPRESS=LZW
-        If any of the options are already specified, they are not
-        added.
-
-    Args:
-        options (List): A list of options (str). Can be empty.
-
-    Returns:
-        A list of strings with the default options for a GDAL
-        raster.
-    """
-    internal_options = list(options)
-
-    opt_str = " ".join(internal_options)
-    if "TILED" not in opt_str:
-        internal_options.append("TILED=YES")
-    
-    if "NUM_THREADS" not in opt_str:
-       internal_options.append("NUM_THREADS=ALL_CPUS") 
-
-    if "BIGTIFF" not in opt_str:
-        internal_options.append("BIGTIFF=YES")
-    
-    if "COMPRESS" not in opt_str:
-        internal_options.append("COMPRESS=LZW")
-    
-    return internal_options
-
-
-def extension_to_driver(file_path: str) -> Union[str, None]:
-    """ Takes a file path and returns the GDAL driver matching
-    the extension.
-
-    Args:
-        file_path (path): A file path string
-
-    Returns:
-        A string representing the GDAL Driver matching the
-        extension. If none is found, None is returned.
-    """
-    ext = path_to_ext(file_path)
-
-    if ext == ".tif" or ext == ".tiff":
-        return "GTiff"
-    elif ext == ".img":
-        return "HFA"
-    elif ext ==".jp2":
-        return "JP2ECW"
-    else:
-        return None
-
-
-def is_raster(raster: Union[str, gdal.Dataset]) -> bool:
-    """ Takes a string or a gdal.Dataset and returns a boolean
-    indicating if it is a valid raster.
-
-    Args:
-        file_path (path | Dataset): A path to a raster or a GDAL dataframe.
-
-    Returns:
-        A boolean. True if input is a valid raster, false otherwise.
-    """
-    if isinstance(raster, gdal.Dataset):
-        return True
-    if isinstance(raster, str):
-        ref = gdal.Open(raster, 0)
-        if isinstance(ref, gdal.Dataset):
-            ref = None
-            return True
-    
-    return False
-
-
-def raster_to_reference(in_raster: Union[str, gdal.Dataset], writeable: bool=False) -> gdal.Dataset:
-    """ Takes a file path or a gdal raster dataset and opens it in GDAL.
-
-    Args:
-        file_path (path | Dataset): A path to a raster or a GDAL dataframe.
-
-    Returns:
-        A gdal.Dataset copied into memory.
-    """
-    try:
-        if isinstance(in_raster, gdal.Dataset):
-            return in_raster
-        else:
-            opened = gdal.Open(in_raster, 1) if writeable else gdal.Open(in_raster, 0)
-            
-            if opened is None:
-                raise Exception("Could not read input raster")
-
-            return opened
-    except:
-        raise Exception("Could not read input raster")
-
-
-
-def raster_to_memory(in_raster: Union[str, gdal.Dataset]) -> gdal.Dataset:
+def raster_to_memory(raster: Union[str, gdal.Dataset]) -> gdal.Dataset:
     """ Takes a file path or a gdal raster dataset and copies
     it to memory. 
 
@@ -129,7 +28,7 @@ def raster_to_memory(in_raster: Union[str, gdal.Dataset]) -> gdal.Dataset:
     Returns:
         A gdal.Dataset copied into memory.
     """
-    ref = raster_to_reference(in_raster)
+    ref = raster_to_reference(raster)
     driver = gdal.GetDriverByName("MEM")
 
     name = path_to_name(ref.GetDescription())
@@ -140,9 +39,9 @@ def raster_to_memory(in_raster: Union[str, gdal.Dataset]) -> gdal.Dataset:
 
 
 def raster_to_disk(
-    in_raster: Union[str, gdal.Dataset],
+    raster: Union[str, gdal.Dataset],
     out_path: str,
-    overwrite: bool=False,
+    overwrite: bool=True,
     options: list=[],
 ) -> str:
     """ Saves or copies a raster to disc. Input is either a 
@@ -150,8 +49,10 @@ def raster_to_disk(
     from the file extension.
 
     Args:
-        in_raster (path | Dataset): The raster to save to disc.
+        raster (path | Dataset): The raster to save to disc.
         out_path (path): The destination to save to.
+
+    **kwargs:
         overwrite (bool): If the file exists, should it be overwritten?
         options (list): GDAL creation options. Defaults are:
             "TILED=YES"
@@ -162,35 +63,32 @@ def raster_to_disk(
     Returns:
         The filepath for the newly created raster.
     """
-    ref = raster_to_reference(in_raster)
+    ref = raster_to_reference(raster)
 
-    exists = file_exists(out_path)
-    if exists and overwrite:
-        os.remove(out_path)
-    elif exists:
-        raise Exception(f"File: {out_path} already exists and overwrite is False.")
+    remove_if_overwrite(out_path, overwrite)
     
-    driver_str = extension_to_driver(out_path)
-    if driver_str is None:
-        raise ValueError(f"Unable to parse filetype from extension: {out_path}")
-
-    driver = gdal.GetDriverByName(driver_str)
+    driver = gdal.GetDriverByName(path_to_driver(out_path))
     if driver is None:
         raise ValueError(f"Unable to parse filetype from extension: {out_path}")
 
     if not isinstance(options, list):
         raise ValueError("Options must be a list. ['BIGTIFF=YES', ...]")
 
-    driver.CreateCopy(out_path, ref, options=default_options(options))
+    copy_created = driver.CreateCopy(out_path, ref, options=default_options(options))
+
+    if copy_created is None:
+        raise Exception("Error while creating copy.")
 
     return out_path
 
 
-def raster_to_metadata(in_raster: Union[str, gdal.Dataset], latlng_and_footprint: bool=True) -> dict:
+def raster_to_metadata(raster: Union[str, gdal.Dataset], latlng_and_footprint: bool=True) -> dict:
     """ Reads a raster from a string or a dataset and returns metadata.
 
     Args:
-        in_raster (path | Dataset): The raster to save to disc.
+        raster (path | Dataset): The raster to save to disc.
+
+    **kwargs:
         latlng_and_footprint (bool): Should the metadata include a
             footprint of the raster in wgs84. Requires a reprojection
             check do not use it if not required and performance is important.
@@ -199,7 +97,7 @@ def raster_to_metadata(in_raster: Union[str, gdal.Dataset], latlng_and_footprint
         A dictionary containing metadata about the raster.
     """
     metadata = {}
-    metadata["dataframe"] = raster_to_reference(in_raster)
+    metadata["dataframe"] = raster_to_reference(raster)
     metadata["name"] = metadata["dataframe"].GetDescription()
 
     metadata["transform"] = metadata["dataframe"].GetGeoTransform()
@@ -236,8 +134,15 @@ def raster_to_metadata(in_raster: Union[str, gdal.Dataset], latlng_and_footprint
     )
     metadata["maxy"] = metadata["transform"][3]
 
-    metadata["dtype_gdal"] = gdal.GetDataTypeName(band0.DataType)
+    metadata["dtype_gdal_raw"] = band0.DataType
+    metadata["datatype_gdal_raw"] = metadata["dtype_gdal_raw"]
+
+    metadata["dtype_gdal"] = gdal.GetDataTypeName(metadata["dtype_gdal_raw"])
+    metadata["datatype_gdal"] = metadata["dtype_gdal"]
+
     metadata["dtype"] = gdal_to_numpy_datatype(band0.DataType)
+    metadata["datatype"] = metadata["dtype"]
+
     metadata["nodata_value"] = band0.GetNoDataValue()
 
     # ulx, uly, lrx, lry = -180, 90, 180, -90
@@ -275,7 +180,23 @@ def raster_to_metadata(in_raster: Union[str, gdal.Dataset], latlng_and_footprint
             wkt_coords += f"{coord[1]} {coord[0]}, "
         wkt_coords = wkt_coords[:-2]
 
-        metadata["footprint_wkt"] = f"POLYGON (({wkt_coords}))"
+        metadata["extent_wkt"] = f"POLYGON (({wkt_coords}))"
+
+        # Create an OGR Datasource in memory with the extent
+        extent_name = str(metadata["name"]) + "_extent"
+
+        driver = ogr.GetDriverByName("Memory")
+        extent_ogr = driver.CreateDataSource(extent_name)
+        layer = extent_ogr.CreateLayer(extent_name + "_layer", wgs84, ogr.wkbPolygon)
+
+        feature = ogr.Feature(layer.GetLayerDefn())
+        extent_geom = ogr.CreateGeometryFromWkt(metadata["extent_wkt"], wgs84)
+        feature.SetGeometry(extent_geom)
+        layer.CreateFeature(feature)
+        feature = None
+
+        metadata["extent_ogr"] = extent_ogr
+        metadata["extent_ogr_geom"] = extent_geom
 
         metadata["extent_geojson_dict"] = {
             "type": "Feature",
@@ -294,7 +215,7 @@ def array_to_raster(
     array: np.ndarray,
     reference: Union[str, gdal.Dataset],
     out_path: Union[str, None]=None,
-    overwrite: bool=False,
+    overwrite: bool=True,
     options: list=[],
 ) -> Union[str, gdal.Dataset]:
     """ Turns a numpy array into a GDAL dataset or exported
@@ -352,7 +273,7 @@ def array_to_raster(
         raise TypeError("Options must be a list of valid GDAL options or empty list.")
 
     # Parse the driver
-    driver_name = "MEM" if out_path is None else extension_to_driver(out_path)
+    driver_name = "MEM" if out_path is None else path_to_driver(out_path)
     if driver_name is None:
         raise ValueError(f"Unable to parse filetype from path: {out_path}")
     
@@ -365,12 +286,7 @@ def array_to_raster(
     if array.ndim == 3:
         bands = array.shape[2]
 
-    # Overwrite?
-    exists = file_exists(out_path)
-    if exists and overwrite:
-        os.remove(out_path)
-    elif exists:
-        raise Exception(f"File: {out_path} already exists and overwrite is False.")
+    remove_if_overwrite(out_path, overwrite)
 
     metadata = raster_to_metadata(reference, latlng_and_footprint=False)
 
@@ -427,7 +343,7 @@ def array_to_raster(
 
 
 def raster_to_array(
-    in_raster: Union[str, gdal.Dataset],
+    raster: Union[str, gdal.Dataset],
     bands: Union[str, int, list]="all",
     filled: bool=False,
     first_band: bool=False,
@@ -436,7 +352,7 @@ def raster_to_array(
         array.
 
     Args:
-        in_raster (path | Dataset): The raster to convert.
+        raster (path | Dataset): The raster to convert.
 
     **kwargs:
         bands (str | int | list): The bands from the raster to turn
@@ -454,7 +370,7 @@ def raster_to_array(
         A numpy array in the channel-last format unless first_band is
         specified.
     """
-    ref = raster_to_reference(in_raster)
+    ref = raster_to_reference(raster)
     metadata = raster_to_metadata(ref, latlng_and_footprint=False)
     band_count = metadata["bands"]
 
@@ -523,3 +439,17 @@ def raster_to_array(
         band_stack.append(arr)
 
     return np.dstack(band_stack)
+
+
+def empty_raster(filetype: str="MEM", path: Union[str, None]=None) -> Union[gdal.Dataset, str]:
+    wgs84 = osr.SpatialReference()
+    wgs84.ImportFromEPSG(4326) # WGS84, latlng
+
+    driver = gdal.GetDriverByName(filetype)
+    destination = driver.Create(path, 0, 0, 1, 1, default_options([]))
+    destination.SetProjection(wgs84.ExportToWkt())
+
+    if filetype == "MEM":
+        return destination
+    else:
+        return path

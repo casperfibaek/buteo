@@ -1,22 +1,23 @@
 from sklearn.model_selection import train_test_split
 import numpy as np
+import pandas as pd
 
 import tensorflow as tf
 import tensorflow_probability as tfp
 
 
-def count_freq(arr):
+def count_freq(arr: np.ndarray) -> np.ndarray:
     yy = np.bincount(arr)
     ii = np.nonzero(yy)[0]
     return np.vstack((ii, yy[ii])).T
 
 
 # Metrics for testing model accuracy
-def median_absolute_error(y_actual, y_pred):
+def median_absolute_error(y_actual: float, y_pred: float) -> float:
     return tfp.stats.percentile(tf.math.abs(y_actual - y_pred), 50.0)
 
 
-def median_absolute_percentage_error(y_actual, y_pred):
+def median_absolute_percentage_error(y_actual: float, y_pred: float) -> float:
     return tfp.stats.percentile(
         tf.divide(
             tf.abs(tf.subtract(y_actual, y_pred)), (y_actual + 1e-10)
@@ -186,18 +187,9 @@ def histogram_selection(
     return np.hstack(samples)
 
 
-def correlation(dataset, threshold):
-    col_corr = set()  # Set of all the names of deleted columns
-    corr_matrix = dataset.corr()
-    for i in range(len(corr_matrix.columns)):
-        for j in range(i):
-            if (corr_matrix.iloc[i, j] >= threshold) and (
-                corr_matrix.columns[j] not in col_corr
-            ):
-                colname = corr_matrix.columns[i]  # getting the name of column
-                target_name = corr_matrix.columns[j]
-                col_corr.add(f"{colname}:{target_name}")
-                # if colname in dataset.columns:
-                #     del dataset[colname]  # deleting the column from the dataset
-
-    return col_corr
+def test_correlation(df: pd.DataFrame, cutoff: float=0.75) -> np.ndarray:
+    abs_corr = df.corr().abs()
+    triangle = np.array(np.triu(np.ones(abs_corr.shape), k=1), dtype=np.bool)
+    upper_tri = abs_corr.where(triangle)
+    to_drop = [column for column in upper_tri.columns if any(upper_tri[column] > cutoff)]
+    return to_drop

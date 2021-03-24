@@ -4,10 +4,18 @@ import numpy as np
 
 folder = "C:/Users/caspe/Desktop/test/"
 
-from buteo.raster.io import raster_to_array, array_to_raster
+from buteo.raster.clip import clip_raster
 
-raster = glob(folder + "*.tif")
+raster = folder + "fyn_wgs84_utm32.tif"
 
-arr = raster_to_array(raster[0])
+target = folder + "odense.gpkg"
 
-import pdb; pdb.set_trace()
+clip_raster(
+    raster,
+    target,
+    out_path=folder + "fyn_clip.tif",
+    crop_to_geom=False,
+    overwrite=True,
+)
+
+# import pdb; pdb.set_trace()

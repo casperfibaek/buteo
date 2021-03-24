@@ -57,6 +57,15 @@ def file_exists(path):
     return os.path.exists(path)
 
 
+def remove_if_overwrite(path, overwrite):
+    if path is not None:
+        exists = file_exists(path)
+        if exists and overwrite:
+            os.remove(path)
+        elif exists:
+            raise Exception(f"File: {path} already exists and overwrite is False.")
+
+
 def get_size(start_path='.', rough=True):
     total_size = 0
     for dirpath, _dirnames, filenames in os.walk(start_path):

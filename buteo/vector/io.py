@@ -1,4 +1,6 @@
-import sys; sys.path.append('../../')
+import sys
+sys.path.append('../../')
+from typing import Union
 import os, json
 import numpy as np
 import pandas as pd
@@ -6,8 +8,10 @@ import osgeo
 from osgeo import gdal, ogr, osr
 
 from buteo.raster.io import raster_to_metadata
-from buteo.gdal_utils import parse_projection
-from buteo.utils import progress
+from buteo.gdal_utils import parse_projection, vector_to_reference, path_to_driver
+from buteo.utils import progress, remove_if_overwrite
+
+
 # TODO:
 #   - rasterize - with antialiasing/weights
 #   - join by attribute + summary
@@ -18,29 +22,26 @@ from buteo.utils import progress
 #   - multithreaded processing
 
 
-def vector_to_reference(vector, writeable=False):
-    try:
-        if isinstance(vector, ogr.DataSource):  # Dataset already OGR dataframe.
-            return vector
-        else:
-            opened = ogr.Open(vector, 1) if writeable else ogr.Open(vector, 0)
-            
-            if opened is None:
-                raise Exception("Could not read input raster")
-
-            return opened
-    except:
-        raise Exception("Could not read input raster")
-
-
-def vector_to_memory(vector):
+def vector_to_memory(
+    vector: Union[str, ogr.DataSource],
+    memory_path: Union[str, None]=None,
+) -> ogr.DataSource:
     ref = vector_to_reference(vector)
     metadata = vector_to_metadata(ref, process_layers="all")
 
-    driver = ogr.GetDriverByName("Memory")
+    driver = None
+    if memory_path is not None:
+        driver = ogr.GetDriverByName(path_to_driver(memory_path))
+    else:
+        driver = ogr.GetDriverByName("Memory")
 
-    basename = metadata["basename"] if metadata["basename"] is not None else "mem_vector"
-    copy = driver.CreateDataSource(basename)
+    vector_name = None
+    if memory_path is None:
+        vector_name = metadata["basename"] if metadata["basename"] is not None else "mem_vector"
+    else:
+        vector_name = memory_path
+
+    copy = driver.CreateDataSource(vector_name)
 
     for layer_idx in range(metadata["layer_count"]):
         layername = metadata["layers"][layer_idx]["layer_name"]
@@ -49,7 +50,34 @@ def vector_to_memory(vector):
     return copy
 
 
-def vector_to_metadata(vector, process_layers="first"):
+def vector_to_disk(
+    vector: Union[str, ogr.DataSource],
+    out_path: str,
+    overwrite: bool=True,
+) -> str:
+    assert isinstance(vector, ogr.DataSource), "Input not a vector datasource."
+
+    driver = ogr.GetDriverByName(path_to_driver(out_path))
+    assert driver != None, "Unable to parse driver."
+
+    metadata = vector_to_metadata(vector, process_layers="all")
+
+    remove_if_overwrite(out_path, overwrite)
+
+    copy = driver.CreateDataSource(out_path)
+
+    for layer_idx in range(metadata["layer_count"]):
+        layer_name = metadata["layers"][layer_idx]["layer_name"]
+        copy.CopyLayer(vector.GetLayer(layer_idx), str(layer_name), ["OVERWRITE=YES"])
+
+    copy = None
+    return out_path
+
+
+def vector_to_metadata(
+    vector: Union[str, ogr.DataSource],
+    process_layers: str="first",
+) -> dict:
     try:
         vector = vector if isinstance(vector, ogr.DataSource) else ogr.Open(vector)
     except:
@@ -63,7 +91,7 @@ def vector_to_metadata(vector, process_layers="first"):
         "filetype": os.path.splitext(os.path.basename(abs_path))[1],
         "name": os.path.splitext(os.path.basename(abs_path))[0],
         "layer_count": vector.GetLayerCount(),
-        "layers": []
+        "layers": [],
     }
 
     wgs84 = osr.SpatialReference()
@@ -141,6 +169,22 @@ def vector_to_metadata(vector, process_layers="first"):
 
         layer_dict["extent_wkt"] = f"POLYGON (({wkt_coords}))"
 
+        # Create an OGR Datasource in memory with the extent
+        extent_name = str(layer_dict["layer_name"]) + "_extent"
+
+        driver = ogr.GetDriverByName("Memory")
+        extent_ogr = driver.CreateDataSource(extent_name)
+        layer = extent_ogr.CreateLayer(extent_name + "_layer", wgs84, ogr.wkbPolygon)
+
+        feature = ogr.Feature(layer.GetLayerDefn())
+        extent_geom = ogr.CreateGeometryFromWkt(layer_dict["extent_wkt"], wgs84)
+        feature.SetGeometry(extent_geom)
+        layer.CreateFeature(feature)
+        feature = None
+
+        layer_dict["extent_ogr"] = extent_ogr
+        layer_dict["extent_ogr_geom"] = extent_geom
+
         layer_dict["extent_geojson_dict"] = {
             "type": "Feature",
             "properties": {},
@@ -178,42 +222,25 @@ def vector_to_metadata(vector, process_layers="first"):
     return metadata
 
 
-def vector_to_disc(vector, output_path, driver="GPKG"):
-    assert isinstance(vector, ogr.DataSource), "Input not a vector datasource."
-
-    driver = ogr.GetDriverByName(driver)
-    assert driver != None, "Unable to parse driver."
-
-    metadata = vector_to_metadata(vector, process_layers="all")
-
-    copy = driver.CreateDataSource(output_path)
-
-    for layer_idx in range(metadata["layer_count"]):
-        layer_name = metadata["layers"][layer_idx]["layer_name"]
-        copy.CopyLayer(vector.GetLayer(layer_idx), str(layer_name), ["OVERWRITE=YES"])
-
-    copy = None
-    return None
-
-
-def is_vector(vector):
-    if isinstance(vector, ogr.DataSource):
-        return True
-    if isinstance(vector, str):
-        ref = ogr.Open(vector, 0)
-        if isinstance(ref, ogr.DataSource):
-            ref = None
-            return True
-    
-    return False
-
-
-def reproject_vector(vector, target, output=None):
+def reproject_vector(
+    vector: Union[str, ogr.DataSource],
+    projection: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
+    out_path: Union[str, None]=None,
+    overwrite: bool=True,
+) -> Union[str, ogr.DataSource]:
     origin = vector_to_reference(vector)
     metadata = vector_to_metadata(origin, process_layers="all")
 
     origin_projection = metadata["projection_osr"]
-    target_projection = parse_projection(target)
+    target_projection = parse_projection(projection)
+
+    if origin_projection.IsSame(target_projection):
+        if out_path is None:
+            return vector_to_memory(vector)
+        
+        return vector_to_disk(vector, out_path)
+
+    remove_if_overwrite(out_path, overwrite)
 
     # GDAL 3 changes axis order: https://github.com/OSGeo/gdal/issues/1546
     if int(osgeo.__version__[0]) >= 3:
@@ -222,9 +249,14 @@ def reproject_vector(vector, target, output=None):
 
     coord_trans = osr.CoordinateTransformation(origin_projection, target_projection)
 
-    driver = ogr.GetDriverByName('Memory')
-
-    destination = driver.CreateDataSource(metadata["name"])
+    driver = None
+    destination = None
+    if out_path is not None:
+        driver = ogr.GetDriverByName(path_to_driver(out_path))
+        destination = driver.CreateDataSource(out_path)
+    else:
+        driver = ogr.GetDriverByName('Memory')
+        destination = driver.CreateDataSource(metadata["name"])
 
     for layer_idx in range(len(metadata["layers"])):
         origin_layer = origin.GetLayerByIndex(layer_idx)
@@ -261,13 +293,21 @@ def reproject_vector(vector, target, output=None):
         destination_layer.ResetReading()
         destination_layer.CommitTransaction()
 
-    if output is not None:
-        vector_to_disc(destination, output_path=output)
-        return output
+    if out_path is not None:
+        return out_path
     else:
         return destination
-    
 
+
+def empty_vector(name="Empty_dataframe", filetype="Memory"):
+    wgs84 = osr.SpatialReference()
+    wgs84.ImportFromEPSG(4326) # WGS84, latlng
+
+    driver = ogr.GetDriverByName(filetype)
+    datasource = driver.CreateDataSource(name)
+    datasource.CreateLayer(name + "_layer", wgs84, ogr.wkbPolygon)
+
+    return datasource
 
 
 def vector_get_attribute_table(vector, process_layers="first", geom=False):
@@ -489,17 +529,17 @@ def calc_shapes(in_vector, shapes=["area", "perimeter", "ipq", "hull", "compactn
     vector_layer.CommitTransaction()
 
 
-if __name__ == "__main__":
-    yellow_follow = 'C:/Users/caspe/Desktop/yellow/'
-    import sys; sys.path.append(yellow_follow)
-    np.set_printoptions(suppress=True)
-    from buteo.raster.io import raster_to_array, array_to_raster
-    from glob import glob
+# if __name__ == "__main__":
+#     yellow_follow = 'C:/Users/caspe/Desktop/yellow/'
+#     import sys; sys.path.append(yellow_follow)
+#     np.set_printoptions(suppress=True)
+#     from buteo.raster.io import raster_to_array, array_to_raster
+#     from glob import glob
     
-    folder = "C:/Users/caspe/Desktop/vector_test/"
-    vector_utm = glob(folder + "*utm*.gpkg")[0]
-    vector_wgs = glob(folder + "*wgs*.gpkg")[0]
+#     folder = "C:/Users/caspe/Desktop/vector_test/"
+#     vector_utm = glob(folder + "*utm*.gpkg")[0]
+#     vector_wgs = glob(folder + "*wgs*.gpkg")[0]
     
-    # vector_utm = "bobthegreat"
+#     # vector_utm = "bobthegreat"
 
-    reproject_vector(vector_wgs, vector_utm, folder + "wgs_to_utm.gpkg")
+#     reproject_vector(vector_wgs, vector_utm, folder + "wgs_to_utm.gpkg")

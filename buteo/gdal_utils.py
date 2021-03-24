@@ -1,11 +1,26 @@
 from osgeo import gdal, ogr, osr
+from typing import Union
+from buteo.utils import path_to_ext
 
-def raster_to_reference(in_raster, writeable=False):
+
+def raster_to_reference(raster: Union[str, gdal.Dataset], writeable: bool=False) -> gdal.Dataset:
+    """ Takes a file path or a gdal.Dataset and opens it with
+        GDAL. Raises exception if the raster cannot be read.
+
+    Args:
+        raster (path | Dataset): A path to a raster or a GDAL dataframe.
+
+    **kwargs:
+        writeable (bool): Indicates if the opened raster be writeable.
+
+    Returns:
+        A GDAL.dataset of the input raster.
+    """
     try:
-        if isinstance(in_raster, gdal.Dataset):  # Dataset already GDAL dataframe.
-            return in_raster
+        if isinstance(raster, gdal.Dataset):  # Dataset already GDAL dataframe.
+            return raster
         else:
-            opened = gdal.Open(in_raster, 1) if writeable else gdal.Open(in_raster, 0)
+            opened = gdal.Open(raster, 1) if writeable else gdal.Open(raster, 0)
             
             if opened is None:
                 raise Exception("Could not read input raster")
@@ -15,7 +30,19 @@ def raster_to_reference(in_raster, writeable=False):
         raise Exception("Could not read input raster")
 
 
-def vector_to_reference(vector, writeable=False):
+def vector_to_reference(vector: Union[str, ogr.DataSource], writeable: bool=False) -> ogr.DataSource:
+    """ Takes a file path or an ogr.DataSOurce and opens it with
+        OGR. Raises exception if the raster cannot be read.
+
+    Args:
+        raster (path | DataSource): A path to a vector or an ogr.DataSource.
+
+    **kwargs:
+        writeable (bool): Indicates if the opened vector be writeable.
+
+    Returns:
+        An OGR.DataSource of the input vector.
+    """
     try:
         if isinstance(vector, ogr.DataSource):  # Dataset already OGR dataframe.
             return vector
@@ -29,17 +56,152 @@ def vector_to_reference(vector, writeable=False):
     except:
         raise Exception("Could not read input raster")
 
-def parse_projection(target, return_wkt=False):
+
+def default_options(options: list) -> list:
+    """ Takes a list of GDAL options and adds the following
+        defaults to it:
+            "TILED=YES"
+            "NUM_THREADS=ALL_CPUS"
+            "BIGG_TIF=YES"
+            "COMPRESS=LZW
+        If any of the options are already specified, they are not
+        added.
+
+    Args:
+        options (List): A list of options (str). Can be empty.
+
+    Returns:
+        A list of strings with the default options for a GDAL
+        raster.
+    """
+    internal_options = list(options)
+
+    opt_str = " ".join(internal_options)
+    if "TILED" not in opt_str:
+        internal_options.append("TILED=YES")
+    
+    if "NUM_THREADS" not in opt_str:
+       internal_options.append("NUM_THREADS=ALL_CPUS") 
+
+    if "BIGTIFF" not in opt_str:
+        internal_options.append("BIGTIFF=YES")
+    
+    if "COMPRESS" not in opt_str:
+        internal_options.append("COMPRESS=LZW")
+    
+    return internal_options
+
+
+def path_to_driver(file_path: str) -> Union[str, None]:
+    """ Takes a file path and returns the GDAL driver matching
+    the extension.
+
+    Args:
+        file_path (path): A file path string
+
+    Returns:
+        A string representing the GDAL Driver matching the
+        extension. If none is found, None is returned.
+    """
+    ext = path_to_ext(file_path)
+
+    # Raster formats
+    if ext == ".tif" or ext == ".tiff": return "GTiff"
+    elif ext == ".img": return "HFA"
+    elif ext ==".jp2": return "JP2ECW"
+
+    # Vector formats
+    elif ext == ".shp": return "ESRI Shapefile"
+    elif ext == ".gpkg": return "GPKG"
+    elif ext == ".fgb": return "FlatGeobuf"
+    elif ext == ".json" or ext == ".geojson": return "GeoJSON"
+
+    else:
+        raise ValueError(f"Unable to parse GDAL driver from path: {file_path}")
+
+
+def is_raster(raster: Union[str, gdal.Dataset]) -> bool:
+    """ Takes a string or a gdal.Dataset and returns a boolean
+    indicating if it is a valid raster.
+
+    Args:
+        file_path (path | Dataset): A path to a raster or a GDAL dataframe.
+
+    Returns:
+        A boolean. True if input is a valid raster, false otherwise.
+    """
+    if isinstance(raster, gdal.Dataset):
+        return True
+
+    if isinstance(raster, str):
+
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
+        ref = gdal.Open(raster, 0)
+        gdal.PopErrorHandler()
+
+        if isinstance(ref, gdal.Dataset):
+            ref = None
+            return True
+    
+    return False
+
+
+def is_vector(vector: Union[str, ogr.DataSource]) -> bool:
+    """ Takes a string or an ogr.DataSource and returns a boolean
+    indicating if it is a valid vector.
+
+    Args:
+        file_path (path | DataSource): A path to a vector or an ogr DataSource.
+
+    Returns:
+        A boolean. True if input is a valid vector, false otherwise.
+    """
+    if isinstance(vector, ogr.DataSource):
+        return True
+
+    if isinstance(vector, str):
+
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
+        ref = ogr.Open(vector, 0)
+        gdal.PopErrorHandler()
+
+        if isinstance(ref, ogr.DataSource):
+            ref = None
+            return True
+    
+    return False
+
+
+def parse_projection(
+    target: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
+    return_wkt: bool=False,
+) -> Union[osr.SpatialReference, str]:
+    """ Parses a gdal, ogr og osr data source and extraction the projection. If
+        a string is passed, it attempts to open it and return the projection as
+        an osr.SpatialReference.
+    Args:
+        target (str | gdal.datasource): A gdal data source or the path to one.
+
+    **kwargs:
+        return_wkt (bool): Indicates if the function should return a wkt string
+        instead of an osr.SpatialReference.
+
+    Returns:
+        An osr.SpatialReference matching the input. If return_wkt is true, WKT
+        string representing the projection is returned.
+    """
     err_msg = f"Unable to parse target projection: {target}"
     target_proj = osr.SpatialReference()
 
+    # Suppress gdal errors and handle them ourselves.
+    # This ensures that the console is not flooded.
     gdal.PushErrorHandler("CPLQuietErrorHandler")
 
     if isinstance(target, ogr.DataSource):
         layer = target.GetLayer()
         target_proj = layer.GetSpatialRef()
     elif isinstance(target, gdal.Dataset):
-        target_proj = target.GetProjection()
+        target_proj.ImportFromWkt(target.GetProjection())
     elif isinstance(target, osr.SpatialReference):
         target_proj = target
     elif isinstance(target, str):
@@ -110,6 +272,8 @@ def translate_resample_method(method):
         'median': 10,
         'q1': 11,
         'q3': 12,
+        'sum': 13,
+        'rms': 14,
     }
 
     if method in methods:
@@ -128,15 +292,27 @@ def numpy_fill_values(datatype):
         'uint16': 65535,
         'uint32': 4294967295,
         'uint64': 18446744073709551615,
-        'float16': -9999,
-        'float32': -9999,
-        'float64': -9999,
+        'float16': -999999.9,
+        'float32': -999999.9,
+        'float64': -999999.9,
     }
 
     if datatype in datatypes:
         return datatypes[datatype]
     else:
         return 0
+
+
+def gdal_nodata_value_from_type(gdal_datatype_raw):
+    if gdal_datatype_raw == 0: return 0
+    elif gdal_datatype_raw == 1: return 255
+    elif gdal_datatype_raw == 2: return 65535
+    elif gdal_datatype_raw == 3: return -32767
+    elif gdal_datatype_raw == 4: return 4294967295
+    elif gdal_datatype_raw == 5: return -2147483647
+    elif gdal_datatype_raw == 6: return -9999.0
+    elif gdal_datatype_raw == 7: return -9999.0
+    else: return 0
 
 
 def translate_datatypes(datatype):
