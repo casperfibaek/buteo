@@ -1,80 +1,28 @@
 import os
 import sys; sys.path.append('../../')
 from osgeo import gdal, ogr, osr
-from buteo.utils import (
+from typing import Union
+from buteo.raster.io import raster_to_reference, raster_to_metadata
+from buteo.gdal_utils import (
     get_extent,
-    translate_max_values,
-    create_subset_dataframe,
     create_geotransform,
     get_intersection,
-    progress_callback_quiet,
-    create_progress_callback,
+    parse_projection,
+    vector_to_reference,
 )
 
-
 def clip_raster(
-    in_raster,
-    out_raster=None,
-    reference_raster=None,
-    cutline=None,
-    cutline_all_touch=False,
-    crop_to_cutline=True,
-    cutlineWhere=None,
-    src_nodata=None,
-    dst_nodata=None,
-    quiet=True,
-    align=True,
-    band_to_clip=None,
-    calc_band_stats=False,
-    scale_to_reference=False,
-    output_format="MEM",
+    in_raster: Union[str, gdal.Dataset],
+    clip_geom: Union[str, ogr.DataSource],
+    out_path: Union[str, None]=None,
+    crop_to_geom: bool=True,
+    all_touch: bool=False,
+    align_pixels: bool=True,
 ):
-    """ Clips a raster by either a reference raster, a cutline
-        or both.
-
-    Args:
-        in_raster (URL or GDAL.DataFrame): The raster to clip.
-
-    **kwargs:
-        out_raster (URL): The name of the output raster. Only
-        used when output format is not memory.
-
-        reference_raster (URL or GDAL.DataFrame): A reference
-        raster from where to clip the extent of the in_raster.
-
-        cutline (URL or OGR.DataFrame): A geometry used to cut
-        the in_raster.
-
-        cutline_all_touch (Bool): Should all pixels that touch
-        the cutline be included? False is only pixel centroids
-        that fall within the geometry.
-
-        crop_to_cutline (Bool): Should the output raster be
-        clipped to the extent of the cutline geometry.
-
-        src_nodata (Number): Overwrite the nodata value of
-        the source raster.
-
-        dst_nodata (Number): Set a new nodata for the
-        output array.
-
-        quiet (Bool): Do not show the progressbars.
-
-        align (Bool): Align the output pixels with the pixels
-        in the input.
-
-        band_to_clip (Bool): Specify if only a specific band in
-        the input raster should be clipped.
-
-        output_format (String): Output of calculation. MEM is
-        default, if out_raster is specified but MEM is selected,
-        GTiff is used as output_format.
-
-    Returns:
-        if MEM is selected as output_format a GDAL dataframe
-        is returned, otherwise a URL reference to the created
-        raster is returned.
-    """
+    # Verify inputs
+    ref = raster_to_reference(in_raster)
+    metadata = raster_to_metadata(ref)
+    band_count = metadata["bands"]
 
     # Is the output format correct?
     if out_raster == None and output_format != "MEM":
@@ -464,14 +412,12 @@ def clip_raster(
     destinationName = None
     cutlineGeometry = None
     cutlineLayer = None
-    layer = None
     in_raster = None
     reference_raster = None
     reprojectedReferenceDataframe = None
     inputBand = None
     origin = None
     driver = None
-    _inputBand = None
 
     if calc_band_stats == True:
         for i in range(outputBandCount):

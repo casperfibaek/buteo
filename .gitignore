@@ -128,3 +128,5 @@ lib/credentials.py
 /lib/*.so
 /lib/*.c
 /log
+
+/papers/walls/*npy

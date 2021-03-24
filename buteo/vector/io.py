@@ -6,7 +6,7 @@ import osgeo
 from osgeo import gdal, ogr, osr
 
 from buteo.raster.io import raster_to_metadata
-from buteo.utils import progress, vector_to_reference, parse_projection
+from buteo.gdal_utils import progress, parse_projection
 
 # TODO:
 #   - rasterize - with antialiasing/weights
@@ -16,6 +16,21 @@ from buteo.utils import progress, vector_to_reference, parse_projection
 #   - sanity checks: vectors_intersect, is_not_empty, does_vectors_match, match_vectors
 #   - repair vector
 #   - multithreaded processing
+
+
+def vector_to_reference(vector, writeable=False):
+    try:
+        if isinstance(vector, ogr.DataSource):  # Dataset already OGR dataframe.
+            return vector
+        else:
+            opened = ogr.Open(vector, 1) if writeable else ogr.Open(vector, 0)
+            
+            if opened is None:
+                raise Exception("Could not read input raster")
+
+            return opened
+    except:
+        raise Exception("Could not read input raster")
 
 
 def vector_to_memory(vector):
@@ -478,7 +493,7 @@ if __name__ == "__main__":
     yellow_follow = 'C:/Users/caspe/Desktop/yellow/'
     import sys; sys.path.append(yellow_follow)
     np.set_printoptions(suppress=True)
-    from buteo.raster.raster_io import raster_to_array, array_to_raster
+    from buteo.raster.io import raster_to_array, array_to_raster
     from glob import glob
     
     folder = "C:/Users/caspe/Desktop/vector_test/"

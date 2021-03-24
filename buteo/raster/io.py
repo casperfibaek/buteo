@@ -1,22 +1,89 @@
 import sys; sys.path.append('../../')
 from osgeo import gdal, osr
+from typing import Union
 import numpy as np
 import os, json
 
-from buteo.utils import numpy_to_gdal_datatype, datatype_is_float, gdal_to_numpy_datatype, raster_to_reference, vector_to_reference
-from buteo.raster.clip import clip_raster
+from buteo.utils import (
+    file_exists,
+    path_to_ext,
+    path_to_name,
+)
+from buteo.gdal_utils import (
+    vector_to_reference,
+    numpy_to_gdal_datatype,
+    gdal_to_numpy_datatype,
+)
 
 
-def raster_to_memory(in_raster):
-    ref = raster_to_reference(in_raster)
-    driver = gdal.GetDriverByName("MEM")
+def default_options(options: list) -> list:
+    """ Takes a list of GDAL options and adds the following
+        defaults to it:
+            "TILED=YES"
+            "NUM_THREADS=ALL_CPUS"
+            "BIGG_TIF=YES"
+            "COMPRESS=LZW
+        If any of the options are already specified, they are not
+        added.
 
-    import pdb; pdb.set_trace()
+    Args:
+        options (List): A list of options (str). Can be empty.
 
-    return driver.CreateCopy("mem_raster", ref)
+    Returns:
+        A list of strings with the default options for a GDAL
+        raster.
+    """
+    internal_options = list(options)
+
+    opt_str = " ".join(internal_options)
+    if "TILED" not in opt_str:
+        internal_options.append("TILED=YES")
+    
+    if "NUM_THREADS" not in opt_str:
+       internal_options.append("NUM_THREADS=ALL_CPUS") 
+
+    if "BIGTIFF" not in opt_str:
+        internal_options.append("BIGTIFF=YES")
+    
+    if "COMPRESS" not in opt_str:
+        internal_options.append("COMPRESS=LZW")
+    
+    return internal_options
 
 
-def is_raster(raster):
+def extension_to_driver(file_path: str) -> Union[str, None]:
+    """ Takes a file path and returns the GDAL driver matching
+    the extension.
+
+    Args:
+        file_path (path): A file path string
+
+    Returns:
+        A string representing the GDAL Driver matching the
+        extension. If none is found, None is returned.
+    """
+    ext = path_to_ext(file_path)
+
+    if ext == ".tif" or ext == ".tiff":
+        return "GTiff"
+    elif ext == ".img":
+        return "HFA"
+    elif ext ==".jp2":
+        return "JP2ECW"
+    else:
+        return None
+
+
+def is_raster(raster: Union[str, gdal.Dataset]) -> bool:
+    """ Takes a string or a gdal.Dataset and returns a boolean
+    indicating if it is a valid raster.
+
+    Args:
+        file_path (path | Dataset): A path to a raster or a GDAL dataframe.
+
+    Returns:
+        A boolean. True if input is a valid raster, false otherwise.
+    """
     if isinstance(raster, gdal.Dataset):
         return True
     if isinstance(raster, str):
@@ -28,32 +95,126 @@ def is_raster(raster):
     return False
 
 
-# TODO
-def create_raster(path="optional", format="optional", fill=0):
-    return 0
+def raster_to_reference(in_raster: Union[str, gdal.Dataset], writeable: bool=False) -> gdal.Dataset:
+    """ Takes a file path or a gdal raster dataset and opens it in GDAL.
+
+    Args:
+        file_path (path | Dataset): A path to a raster or a GDAL dataframe.
+
+    Returns:
+        A gdal.Dataset copied into memory.
+    """
+    try:
+        if isinstance(in_raster, gdal.Dataset):
+            return in_raster
+        else:
+            opened = gdal.Open(in_raster, 1) if writeable else gdal.Open(in_raster, 0)
+            
+            if opened is None:
+                raise Exception("Could not read input raster")
+
+            return opened
+    except:
+        raise Exception("Could not read input raster")
 
 
-# TODO
-def raster_to_disc(dataframe, out_path, driver="BigGTiff"):
-    return 0
+
+def raster_to_memory(in_raster: Union[str, gdal.Dataset]) -> gdal.Dataset:
+    """ Takes a file path or a gdal raster dataset and copies
+    it to memory. 
+
+    Args:
+        file_path (path | Dataset): A path to a raster or a GDAL dataframe.
+
+    Returns:
+        A gdal.Dataset copied into memory.
+    """
+    ref = raster_to_reference(in_raster)
+    driver = gdal.GetDriverByName("MEM")
+
+    name = path_to_name(ref.GetDescription())
+
+    copy = driver.CreateCopy(name, ref)
+
+    return copy
 
 
-def raster_to_metadata(in_raster, project_and_footprint=True):
+def raster_to_disk(
+    in_raster: Union[str, gdal.Dataset],
+    out_path: str,
+    overwrite: bool=False,
+    options: list=[],
+) -> str:
+    """ Saves or copies a raster to disc. Input is either a 
+    filepath to a raster or a GDAL.Dataset. The driver is infered
+    from the file extension.
+
+    Args:
+        in_raster (path | Dataset): The raster to save to disc.
+        out_path (path): The destination to save to.
+        overwrite (bool): If the file exists, should it be overwritten?
+        options (list): GDAL creation options. Defaults are:
+            "TILED=YES"
+            "NUM_THREADS=ALL_CPUS"
+            "BIGG_TIF=YES"
+            "COMPRESS=LZW"
+
+    Returns:
+        The filepath for the newly created raster.
+    """
+    ref = raster_to_reference(in_raster)
+
+    exists = file_exists(out_path)
+    if exists and overwrite:
+        os.remove(out_path)
+    elif exists:
+        raise Exception(f"File: {out_path} already exists and overwrite is False.")
+    
+    driver_str = extension_to_driver(out_path)
+    if driver_str is None:
+        raise ValueError(f"Unable to parse filetype from extension: {out_path}")
+
+    driver = gdal.GetDriverByName(driver_str)
+    if driver is None:
+        raise ValueError(f"Unable to parse filetype from extension: {out_path}")
+
+    if not isinstance(options, list):
+        raise ValueError("Options must be a list. ['BIGTIFF=YES', ...]")
+
+    driver.CreateCopy(out_path, ref, options=default_options(options))
+
+    return out_path
+
+
+def raster_to_metadata(in_raster: Union[str, gdal.Dataset], latlng_and_footprint: bool=True) -> dict:
+    """ Reads a raster from a string or a dataset and returns metadata.
+
+    Args:
+        in_raster (path | Dataset): The raster to save to disc.
+        latlng_and_footprint (bool): Should the metadata include a
+            footprint of the raster in wgs84. Requires a reprojection
+            check do not use it if not required and performance is important.
+
+    Returns:
+        A dictionary containing metadata about the raster.
+    """
     metadata = {}
     metadata["dataframe"] = raster_to_reference(in_raster)
+    metadata["name"] = metadata["dataframe"].GetDescription()
 
     metadata["transform"] = metadata["dataframe"].GetGeoTransform()
     metadata["projection"] = metadata["dataframe"].GetProjection()
-    og = osr.SpatialReference()
-    og.ImportFromWkt(metadata["projection"])
-    metadata["projection_osr"] = og
+
+    original_projection = osr.SpatialReference()
+    original_projection.ImportFromWkt(metadata["projection"])
+    metadata["projection_osr"] = original_projection
 
     band0 = metadata["dataframe"].GetRasterBand(1)
 
-    if project_and_footprint:
+    if latlng_and_footprint:
         wgs84 = osr.SpatialReference()
         wgs84.ImportFromEPSG(4326)
-        tx = osr.CoordinateTransformation(og, wgs84)
+        tx = osr.CoordinateTransformation(original_projection, wgs84)
 
     metadata["width"] = metadata["dataframe"].RasterXSize
     metadata["height"] = metadata["dataframe"].RasterYSize
@@ -87,7 +248,7 @@ def raster_to_metadata(in_raster, project_and_footprint=True):
         metadata["miny"],
     ]
 
-    if project_and_footprint:
+    if latlng_and_footprint:
         bottom_left = tx.TransformPoint(metadata["minx"], metadata["miny"])
         top_left = tx.TransformPoint(metadata["minx"], metadata["maxy"])
         top_right = tx.TransformPoint(metadata["maxx"], metadata["maxy"])
@@ -130,158 +291,95 @@ def raster_to_metadata(in_raster, project_and_footprint=True):
 
 
 def array_to_raster(
-    array,
-    out_raster=None,
-    reference_raster=None,
-    output_format="MEM",
-    top_left=None,
-    pixel_size=None,
-    dst_projection=None,
-    dst_crop_to_projection=True,
-    calc_band_stats=False,
-    align=True,
-    dst_nodata=None,
-    resample=False,
-    resample_alg="near",
-):
-    """ Turns a numpy array into a gdal dataframe or exported
-        as a raster. If no reference is specified, the following
-        must be provided: topLeft coordinates, pixelSize such as:
-        (10, 10), projection in proj4 format and output raster size.
-
-        The datatype of the raster will match the datatype of the input
-        numpy array.
-
-        OBS: If WGS84 lat long is specified as the projection the pixel
-        sizes must be in degrees.
+    array: np.ndarray,
+    reference: Union[str, gdal.Dataset],
+    out_path: Union[str, None]=None,
+    overwrite: bool=False,
+    options: list=[],
+) -> Union[str, gdal.Dataset]:
+    """ Turns a numpy array into a GDAL dataset or exported
+        as a raster using a reference raster.
 
     Args:
-        in_raster (URL or GDAL.DataFrame): The raster to clip.
+        array (np.ndarray): The numpy array to convert
+
+        reference (path or Dataset): A reference on which to base
+        the geographical extent and projection of the raster.
 
     **kwargs:
-        reference_raster (URL or GDAL.DataFrame): A reference
-        raster from where to clip the extent of the inRaster.
+        out_path (path): The location to save the raster. If None is
+        supplied an in memory raster is returned. filetype is infered
+        from the extension.
 
-        out_raster (URL): The name of the output raster. Only
-        used when output format is not memory.
+        overwrite (bool): Specifies if the file already exists, should
+        it be overwritten?
 
-        output_format (String): Output of calculation. MEM is
-        default, if out_raster is specified but MEM is selected,
-        GTiff is used as output_format.
-
-        top_left (List): The coordinates for the topleft corner
-        of the raster. Such as: [600000, 520000].
-
-        pixel_size (List): The width and height of the pixels in
-        the destination raster. Such as: [10, 10].
-
-        dst_projection (String): A WKT string matching the projection
-        of the destination raster.
-
-        calc_band_stats (Bool): Calculate band statistics and add
-        them to the image. Might increase processing time.
-
-        src_nodata (Number): Overwrite the nodata value of
-        the source raster.
-
-        resample (Bool): Resample the input raster to match the
-        reference if they do not overlap.
-
-        quiet (Bool): Do not show the progressbars for warping.
+        options (list): A list of options for the GDAL creation. Only
+        used if an outpath is specified. Defaults are:
+            "TILED=YES"
+            "NUM_THREADS=ALL_CPUS"
+            "BIGG_TIF=YES"
+            "COMPRESS=LZW"
 
     Returns:
-        If the output format is memory outpus a GDAL dataframe
-        containing the data contained in the array. Otherwise a
-        raster is created and the return value is the URL string
-        pointing to the created raster.
+        If an out_path has been specified, it returns the path to the 
+        newly created raster file. If 
     """
 
-    # Is the output format correct?
-    if out_raster is None and output_format != "MEM":
-        raise AttributeError("Either a reference raster or a cutline must be provided.")
+    # Verify inputs
+    if not isinstance(reference, gdal.Dataset) and not isinstance(reference, str):
+        raise ValueError("A valid reference raster must be supplied.")
 
-    # If out_raster is specified, default to GTiff output format
-    if out_raster is not None and output_format == "MEM":
-        output_format = "GTiff"
+    if isinstance(reference, str):
+        if not is_raster(reference):
+            raise ValueError("A valid reference raster must be supplied.")
+    
+    if not isinstance(out_path, str) and out_path != None:
+        raise TypeError("out_path must be None or a path")
 
-    if out_raster is None:
-        out_raster = (
-            "ignored"  # This is necessary as GDAL expects a string no matter what.
-        )
+    # Verify the numpy array
+    if not isinstance(array, np.ndarray) or array.size == 0 or array.ndim < 2 or array.ndim > 3:
+        raise ValueError(f"Input array is invalid {array}")
+
+    if not isinstance(overwrite, bool) and not isinstance(overwrite, int):
+        if isinstance(overwrite, int):
+            if overwrite != 0 and overwrite != 1:
+                raise ValueError("overwrite parameter must be a boolean, 0, or 1.")
     else:
-        assert os.path.isdir(
-            os.path.dirname(out_raster)
-        ), f"Output folder does not exists: {out_raster}"
+        raise TypeError("overwrite parameter must be a boolean, 0, or 1.")
+    
+    if not isinstance(options, list):
+        raise TypeError("Options must be a list of valid GDAL options or empty list.")
 
-    if reference_raster is None and (
-        top_left is None or pixel_size is None or dst_projection is None
-    ):
-        raise AttributeError(
-            "If no reference_raster is provided. top_left, pixel_size and projection are all required."
-        )
+    # Parse the driver
+    driver_name = "MEM" if out_path is None else extension_to_driver(out_path)
+    if driver_name is None:
+        raise ValueError(f"Unable to parse filetype from path: {out_path}")
+    
+    driver = gdal.GetDriverByName(driver_name)
+    if driver is None:
+        raise ValueError(f"Error while creating driver from extension: {out_path}")
 
-    # If the data is not a numpy array, make it.
-    data = array if isinstance(array, np.ndarray) else np.array(array)
-    datatype = numpy_to_gdal_datatype(data.dtype)
+    # How many bands?
+    bands = 1
+    if array.ndim == 3:
+        bands = array.shape[2]
 
-    if data.ndim != 2:
-        raise AttributeError(
-            "The input is not a raster or the input raster is not 2-dimensional"
-        )
+    # Overwrite?
+    exists = file_exists(out_path)
+    if exists and overwrite:
+        os.remove(out_path)
+    elif exists:
+        raise Exception(f"File: {out_path} already exists and overwrite is False.")
 
-    reference = {}
+    metadata = raster_to_metadata(reference, latlng_and_footprint=False)
 
-    # Gather reference information
-    if reference_raster is not None:
-        reference["dataframe"] = raster_to_reference(reference_raster)
-        reference["transform"] = reference["dataframe"].GetGeoTransform()
-        reference["projection"] = reference["dataframe"].GetProjection()
-        reference["x_size"] = reference["dataframe"].RasterXSize
-        reference["y_size"] = reference["dataframe"].RasterYSize
-        reference["pixel_width"] = reference["transform"][1]
-        reference["pixel_height"] = reference["transform"][5]
-        reference["x_top_left"] = reference["transform"][0]
-        reference["y_top_left"] = reference["transform"][3]
-        reference["bands"] = [reference["dataframe"].GetRasterBand(1)]
-        reference["nodata"] = reference["bands"][0].GetNoDataValue()
-    else:
-        reference["x_size"] = data.shape[0]
-        reference["y_size"] = data.shape[1]
-        reference["pixel_width"] = pixel_size[0]
-        reference["pixel_height"] = pixel_size[1]
-        reference["x_top_left"] = top_left[0]
-        reference["y_top_left"] = top_left[1]
-        reference["nodata"] = None
-        reference["transform"] = [
-            reference["x_top_left"],
-            reference["pixel_width"],
-            0,
-            reference["y_top_left"],
-            0,
-            -reference["pixel_height"],
-        ]
-        reference["projection"] = osr.SpatialReference()
-        reference["projection"].ImportFromWkt(dst_projection)
-        reference["projection"] = reference["projection"].ExportToWkt()
+    # Handle nodata
+    input_nodata = None
+    if np.ma.is_masked(array) is True:
+        input_nodata = array.get_fill_value()
 
-    if dst_nodata is not None:
-        if dst_nodata is False:
-            input_nodata = None
-        else:
-            input_nodata = dst_nodata
-    else:
-        if np.ma.is_masked(data) is True:
-            input_nodata = data.get_fill_value()
-        else:
-            input_nodata = reference["nodata"]
-
-    # Ready the nodata values
-    if np.ma.is_masked(data) is True:
-        if input_nodata is not None:
-            np.ma.masked_equal(data, input_nodata)
-            data.set_fill_value(input_nodata)
-        input_nodata = data.get_fill_value()
-        data = data.filled()
+    destination_dtype = numpy_to_gdal_datatype(array.dtype)
 
     # Weird double issue with GDAL and numpy. Cast to float or int
     if input_nodata is not None:
@@ -290,410 +388,138 @@ def array_to_raster(
             input_nodata = int(input_nodata)
 
     # If the output is not memory, set compression options.
-    options = []
-    if output_format != "MEM":
-        if datatype_is_float(datatype) is True:
-            predictor = 3  # Float predictor
-        else:
-            predictor = 2  # Integer predictor
-        options = [
-            "COMPRESS=DEFLATE",
-            f"PREDICTOR={predictor}",
-            "NUM_THREADS=ALL_CPUS",
-            "BIGTIFF=YES",
-        ]
+    creation_options = []
+    if driver_name != "MEM":
+        creation_options = default_options(options)
 
-    destination = {}
+    output_name = metadata["name"] if out_path is None else out_path
 
-    destination["name"] = out_raster
-    destination["driver"] = gdal.GetDriverByName(output_format)
-    destination["options"] = options
+    if metadata["width"] != array.shape[1] or metadata["height"] != array.shape[0]:
+        raise ValueError("The numpy array and the reference are not of the same size. Use the array_to_raster_adv function instead")
 
-    if resample is True:
-
-        destination["name"] = "ignored"
-        destination["driver"] = gdal.GetDriverByName("MEM")
-        destination["options"] = []
-
-    elif dst_projection is not None:
-        og_projection_osr = osr.SpatialReference()
-        og_projection_osr.ImportFromWkt(reference["projection"])
-        og_projection_wkt = og_projection_osr.ExportToWkt()
-
-        try:
-            dst_projection_osr = osr.SpatialReference()
-            dst_projection_osr.ImportFromWkt(dst_projection)
-            dst_projection_wkt = dst_projection_osr.ExportToWkt()
-        except:
-            raise Exception(f"Could not parse input projection: {dst_projection}")
-
-        if og_projection_osr.IsSame(dst_projection_osr) == 0:
-            destination["name"] = "ignored"
-            destination["driver"] = gdal.GetDriverByName("MEM")
-            destination["options"] = []
-
-    destination["dataframe"] = destination["driver"].Create(
-        destination["name"],
-        data.shape[1],
-        data.shape[0],
-        1,
-        datatype,
-        destination["options"],
+    destination = driver.Create(
+        output_name,
+        array.shape[1],
+        array.shape[0],
+        bands,
+        destination_dtype,
+        creation_options,
     )
 
-    # Test if the scale is correct and set transform
-    if data.shape[0] == reference["x_size"] and data.shape[1] == reference["y_size"]:
-        destination["dataframe"].SetGeoTransform(reference["transform"])
-    else:
-        destination["pixel_width"] = (reference["x_size"] / data.shape[1]) * reference[
-            "pixel_width"
-        ]
-        destination["pixel_height"] = (reference["y_size"] / data.shape[0]) * reference[
-            "pixel_height"
-        ]
-        destination["dataframe"].SetGeoTransform(
-            [
-                reference["x_top_left"],
-                destination["pixel_width"],
-                0,
-                reference["y_top_left"],
-                0,
-                destination["pixel_height"],
-            ]
-        )
+    destination.SetProjection(metadata["projection"])
+    destination.SetGeoTransform(metadata["transform"])
 
-    destination["dataframe"].SetProjection(reference["projection"])
-    destination["bands"] = [destination["dataframe"].GetRasterBand(1)]
-    destination["bands"][0].WriteArray(data)
-
-    if dst_projection is not None:
-        destination["dataframe"].FlushCache()
-        re_driver = gdal.GetDriverByName(output_format)
-
-        og_transform = destination["dataframe"].GetGeoTransform()
-
-        og_x_size = destination["dataframe"].RasterXSize
-        og_y_size = destination["dataframe"].RasterYSize
-
-        coord_transform = osr.CoordinateTransformation(
-            og_projection_osr, dst_projection_osr
-        )
-
-        o_ulx, xres, _xskew, o_uly, _yskew, yres = og_transform
-        o_lrx = o_ulx + (og_x_size * xres)
-        o_lry = o_uly + (og_y_size * yres)
-
-        og_col = o_lrx - o_ulx
-        og_row = o_uly - o_lry
-
-        ulx, uly, _ulz = coord_transform.TransformPoint(float(o_ulx), float(o_uly))
-        urx, ury, _urz = coord_transform.TransformPoint(float(o_lrx), float(o_uly))
-        lrx, lry, _lrz = coord_transform.TransformPoint(float(o_lrx), float(o_lry))
-        llx, lly, _llz = coord_transform.TransformPoint(float(o_ulx), float(o_lry))
-
-        if dst_crop_to_projection:
-            dst_col = min(lrx, urx) - max(llx, ulx)
-            dst_row = min(ury, uly) - max(lry, lly)
+    for band_idx in range(bands):
+        band = destination.GetRasterBand(band_idx + 1)
+        if bands > 1 or array.ndim == 3:
+            band.WriteArray(array[:, :, band_idx])
         else:
-            dst_col = max(lrx, urx) - min(llx, ulx)
-            dst_row = max(ury, uly) - min(lry, lly)
+            band.WriteArray(array)
 
-        cols = int((dst_col / og_col) * og_x_size)
-        rows = int((dst_row / og_row) * og_y_size)
-
-        if dst_crop_to_projection:
-            dst_transform = (
-                max(ulx, llx),
-                reference["pixel_width"],
-                0,
-                min(uly, ury),
-                0,
-                reference["pixel_height"],
-            )
-        else:
-            dst_transform = (
-                min(ulx, llx),
-                reference["pixel_width"],
-                0,
-                max(uly, ury),
-                0,
-                reference["pixel_height"],
-            )
-
-        re_dataframe = re_driver.Create(
-            out_raster, cols, rows, 1, datatype, options=options,
-        )
-
-        re_dataframe.SetGeoTransform(dst_transform)
-        re_dataframe.SetProjection(dst_projection_wkt)
-
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-
-        warp_sucess = gdal.Warp(
-            re_dataframe,
-            destination["dataframe"],
-            format=output_format,
-            xRes=reference["pixel_width"],
-            yRes=reference["pixel_height"],
-            srcSRS=og_projection_wkt,
-            dstSRS=dst_projection_wkt,
-            resampleAlg=resample_alg,
-            targetAlignedPixels=align,
-            multithread=True,
-            srcNodata=input_nodata,
-            dstNodata=input_nodata,
-        )
-
-        gdal.PopErrorHandler()
-
-        # Check if warped was successfull.
-        if warp_sucess == 0:  # GDAL returns 0 for warnings.
-            print("Warping completed with warnings. Check your result.")
-        elif warp_sucess is None:  # GDAL returns None for errors.
-            raise RuntimeError("Warping completed unsuccesfully.") from None
-
-        destination["dataframe"] = re_dataframe
-        destination["bands"] = [destination["dataframe"].GetRasterBand(1)]
-
-    if input_nodata is not None:
-        destination["bands"][0].SetNoDataValue(input_nodata)
-
-    # If it is necessary to resample to fit the reference:
-    if (
-        resample is True
-        and (
-            data.shape[0] != reference["x_size"] or data.shape[1] != reference["y_size"]
-        )
-        and dst_projection is None
-    ):
-        resampled_destination = {"driver": gdal.GetDriverByName(output_format)}
-        resampled_destination["dataframe"] = resampled_destination["driver"].Create(
-            out_raster, reference["y_size"], reference["x_size"], 1, datatype, options,
-        )
-
-        if dst_projection is not None:
-            warp_src_proj = dst_projection_wkt
-            resampled_destination["dataframe"].SetGeoTransform(
-                destination["dataframe"].GetGeoTransform()
-            )
-            resampled_destination["dataframe"].SetProjection(
-                destination["dataframe"].GetProjection()
-            )
-        else:
-            warp_src_proj = reference["projection"]
-            resampled_destination["dataframe"].SetGeoTransform(reference["transform"])
-            resampled_destination["dataframe"].SetProjection(reference["projection"])
-
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-
-        warp_sucess = gdal.Warp(
-            resampled_destination["dataframe"],
-            destination["dataframe"],
-            format=output_format,
-            xRes=reference["pixel_width"],
-            yRes=reference["pixel_height"],
-            srcSRS=warp_src_proj,
-            resampleAlg=resample_alg,
-            targetAlignedPixels=align,
-            multithread=True,
-            creationOptions=options,
-        )
-
-        gdal.PopErrorHandler()
-
-        # Check if warped was successfull.
-        if warp_sucess == 0:  # GDAL returns 0 for warnings.
-            print("Warping completed with warnings. Check your result.")
-        elif warp_sucess is None:  # GDAL returns None for errors.
-            raise RuntimeError("Warping completed unsuccesfully.") from None
-
-        if calc_band_stats is True:
-            resampled_destination["dataframe"].GetRasterBand(1).GetStatistics(0, 1)
-
-        # Return the resampled destination raster
-        if output_format != "MEM":
-            resampled_destination["dataframe"].FlushCache()
-            resampled_destination = None
-            return os.path.abspath(out_raster)
-        else:
-            return resampled_destination["dataframe"]
-
-    if calc_band_stats is True:
-        destination["bands"][0].GetStatistics(0, 1)
+        if metadata["nodata_value"] == None and input_nodata is not None:
+            band.SetNodataValue(input_nodata)
 
     # Return the destination raster
-    if output_format != "MEM":
-        # destination['dataframe'].FlushCache()
-        return os.path.abspath(out_raster)
+    if driver != "MEM":
+        return os.path.abspath(out_path)
     else:
         return destination["dataframe"]
 
 
 def raster_to_array(
-    in_raster,
-    reference_raster=None,
-    cutline=None,
-    cutline_all_touch=False,
-    crop_to_cutline=True,
-    compressed=False,
-    band_to_clip=1,
-    src_nodata=None,
-    crop=False,
-    filled=False,
-    fill_value=None,
-    quiet=False,
-    calc_band_stats=False,
-    align=True,
-):
-    """ Turns a raster into an Numpy Array in memory. Only
-        supports for one band to be turned in to an array.
+    in_raster: Union[str, gdal.Dataset],
+    bands: Union[str, int, list]="all",
+    filled: bool=False,
+    first_band: bool=False,
+) -> np.ndarray:
+    """ Turns a path to a raster or a GDAL.Dataset into a numpy
+        array.
 
     Args:
-        in_raster (URL or GDAL.DataFrame): The raster to clip.
+        in_raster (path | Dataset): The raster to convert.
 
     **kwargs:
-        reference_raster (URL or GDAL.DataFrame): A reference
-        raster from where to clip the extent of the in_raster.
+        bands (str | int | list): The bands from the raster to turn
+        into a numpy array. Can be "all", "ALL", a list of ints or a
+        single int.
 
-        cutline (URL or OGR.DataFrame): A geometry used to cut
-        the in_raster.
+        filled (bool): If the array contains nodata values. Should the
+        resulting array be a filled numpy array or a masked array?
 
-        cutline_all_touch (Bool): Should all pixels that touch
-        the cutline be included? False is only pixel centroids
-        that fall within the geometry.
-
-        crop_to_cutline (Bool): Should the output array be
-        clipped to the extent of the cutline geometry. Outside
-        values will be masked.
-
-        compressed (Bool): Should the returned data be flattened
-        to 1D? If a masked array is compressed, nodata-values
-        will be removed from the return array.
-
-        filled (Bool): Should they array be filled with the
-        nodata value contained in the mask.
-
-        fill_value (Number): Set a number for the fill value of
-        the output masked array. Defaults to the max value for
-        the datatype.
-
-        band_to_clip (Number): A specific band in the input raster
-        the be turned to an array.
-
-        src_nodata (Number): Overwrite the nodata value of
-        the source raster.
-
-        quiet (Bool): Do not show the progressbars.
-
-        align (Bool): Align the output pixels with the pixels
-        in the input.
-
-        output_format (String): Output of calculation. MEM is
-        default, if outRaster is specified but MEM is selected,
-        GTiff is used as output_format.
+        first_band (bool): If True, returns only the first band in a 2D
+        fashion eg. (1920x1080) instead of the default channel-last format
+        (1920x1080x1)
 
     Returns:
-        Returns a numpy masked array with the raster data.
+        A numpy array in the channel-last format unless first_band is
+        specified.
     """
+    ref = raster_to_reference(in_raster)
+    metadata = raster_to_metadata(ref, latlng_and_footprint=False)
+    band_count = metadata["bands"]
+
+    internal_bands = []
+
+    if band_count == 0:
+        raise ValueError("The input raster does not have any valid bands.")
 
     # Verify inputs
-    if not isinstance(band_to_clip, int):
-        raise AttributeError("band_to_clip must be provided and it must be an integer")
-
-    if isinstance(in_raster, list):
-        if len(in_raster) == 0:
-            raise ValueError("Provided raster list is empty.")
-    
-        stack = []
-        for raster in in_raster:
-            stack.append(
-                raster_to_array(
-                    raster,
-                    reference_raster=reference_raster,
-                    cutline=cutline,
-                    cutline_all_touch=cutline_all_touch,
-                    crop_to_cutline=crop_to_cutline,
-                    compressed=compressed,
-                    band_to_clip=band_to_clip,
-                    src_nodata=src_nodata,
-                    crop=crop,
-                    filled=filled,
-                    fill_value=fill_value,
-                    quiet=quiet,
-                    calc_band_stats=calc_band_stats,
-                    align=align,
-                )
-            )
-        
-        return np.stack(stack)
-
-    # If there is no reference_raster or Cutline defined it is
-    # not necesarry to clip the raster.
-    readied_raster = None
-    if reference_raster is None and cutline is None:
-        readied_raster = raster_to_reference(in_raster)
-    else:
-        reference = raster_to_reference(reference_raster)
-        readied_vector = vector_to_reference(cutline)
-        readied_raster = clip_raster(
-            in_raster,
-            reference_raster=reference,
-            cutline=readied_vector,
-            cutline_all_touch=cutline_all_touch,
-            cutlineWhere=None,
-            crop_to_cutline=crop_to_cutline,
-            src_nodata=src_nodata,
-            quiet=quiet,
-            align=align,
-            band_to_clip=band_to_clip,
-            output_format="MEM",
-            calc_band_stats=calc_band_stats,
-        )
-
-    if readied_raster is None:
-        raise ValueError("Unable to parse input. The provided reference raster or cutline is invalid.")
-
-    return_data = []
-    for band in range(readied_raster.RasterCount):
-        # Read the in_raster as an array
-        raster_band = readied_raster.GetRasterBand(band + 1)
-        raster_nodata_value = raster_band.GetNoDataValue()
-
-        if crop is not False:
-            x_offset, y_offset, x_size, y_size = crop
-            raster_arr = raster_band.ReadAsArray(
-                int(x_offset), int(y_offset), int(x_size), int(y_size)
-            )
+    if isinstance(bands, str):
+        if bands != "all" and bands != "ALL":
+            raise ValueError(f"Unable to parse bands. Passed: {bands}")
         else:
-            raster_arr = raster_band.ReadAsArray()
+            for val in range(band_count):
+                internal_bands.append(val)
 
-        # Create a numpy masked array that corresponds to the nodata
-        # values in the in_raster
-        if raster_nodata_value is None:
-            data = np.array(raster_arr)
-        else:
-            if raster_nodata_value == np.nan:
-                data = np.ma.masked_invalid(raster_arr)
+    elif isinstance(bands, list):
+        if len(bands) == 0:
+            raise ValueError("Provided list of bands is empty.")
+        for val in bands:
+            try:
+                band_int = int(val)
+            except:
+                raise ValueError(f"List of bands contained non-valid band number: {val}")
+
+            if band_int > band_count + 1:
+                raise ValueError("Requested a higher band that is available in raster.")
             else:
-                data = np.ma.masked_equal(raster_arr, raster_nodata_value)
+                internal_bands.append(band_int)
 
-        if src_nodata is not None:
-            data = np.ma.masked_equal(raster_arr, src_nodata)
-
-        if filled is True:
-            if isinstance(data, np.ma.MaskedArray):
-                if fill_value is not None:
-                    data = data.filled(fill_value)
-                else:
-                    data = data.filled()
-
-        if compressed is True:
-            if isinstance(data, np.ma.MaskedArray):
-                data = data.compressed()
-
-        if readied_raster.RasterCount == 1:
-            return data
+    elif isinstance(bands, int):
+        if bands > band_count + 1:
+            raise ValueError("Requested a higher band that is available in raster.")
         else:
-            return_data.append(data)
+            internal_bands.append(bands)
 
-    return np.dstack(return_data)
+    if not isinstance(filled, bool) and not isinstance(filled, int):
+        if isinstance(filled, int):
+            if filled != 0 and filled != 1:
+                raise ValueError("Filled parameter must be a boolean, 0, or 1.")
+    else:
+        raise TypeError("Filled parameter must be a boolean, 0, or 1.")
+
+    if not isinstance(first_band, bool) and not isinstance(first_band, int):
+        if isinstance(first_band, int):
+            if first_band != 0 and first_band != 1:
+                raise ValueError("first_band parameter must be a boolean, 0, or 1.")
+    else:
+        raise TypeError("first_band parameter must be a boolean, 0, or 1.")
+
+    band_stack = []
+    for band in internal_bands:
+        band_ref = ref.GetRasterBand(band + 1)
+        band_nodata_value = band_ref.GetNoDataValue()
+
+        arr = band_ref.ReadAsArray()
+
+        if band_nodata_value is None and filled is None:
+            arr = np.ma.masked_invalid(arr)
+        elif filled is None:
+            arr = np.ma.masked_equal(arr, band_nodata_value)
+
+        if first_band:
+            return arr
+
+        band_stack.append(arr)
+
+    return np.dstack(band_stack)

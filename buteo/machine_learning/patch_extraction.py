@@ -1,13 +1,13 @@
 import sys; sys.path.append("../../")
-from buteo.raster.raster_io import (
+from buteo.raster.io import (
     raster_to_array,
     raster_to_metadata,
     raster_to_memory,
     array_to_raster,
 )
-from buteo.raster.raster_clip import clip_raster
-from buteo.raster.raster_align import is_aligned
-from buteo.vector.vector_io import vector_to_memory
+from buteo.raster.clip import clip_raster
+from buteo.raster.align import is_aligned
+from buteo.vector.io import vector_to_memory
 from buteo.utils import progress
 import numpy as np
 from osgeo import ogr, osr
@@ -15,12 +15,11 @@ import rtree
 import os
 import random
 
-def blocks_to_raster(blocks, reference, output):
+
+# TODO: Enable the blocks to rasters to handle overlap
+def blocks_to_raster(blocks, reference, out_path):
     metadata = raster_to_metadata(reference)
     reference_shape = (metadata["height"], metadata["width"])
-    top_left = [metadata["transform"][0], metadata["transform"][3]]
-    pixel_size = [metadata["transform"][1], metadata["transform"][5]]
-    proj = metadata["projection"]
 
     tiles = blocks.reshape(
         reference_shape[0] // blocks.shape[1],
@@ -32,16 +31,8 @@ def blocks_to_raster(blocks, reference, output):
         (reference_shape[1] // blocks.shape[2]) * blocks.shape[2],
     )
 
-    array_to_raster(
-        tiles,
-        reference_raster=array_to_raster(
-            tiles,
-            top_left=top_left,
-            pixel_size=pixel_size,
-            dst_projection=proj,
-        ),
-        out_raster=output,
-    )
+    return array_to_raster(tiles, reference, out_path=out_path)
+
 
 def shape_to_blockshape(shape, block_shape, offset=(0, 0, 0)):
     assert len(offset) >= len(shape), "Input offsets must equal array dimensions."
@@ -50,7 +41,7 @@ def shape_to_blockshape(shape, block_shape, offset=(0, 0, 0)):
     base_shape = list(shape)
     for index, value in enumerate(offset):
         base_shape[index] = base_shape[index] - value
-    
+
     sizes = []
 
     for index, value in enumerate(base_shape):
@@ -402,7 +393,7 @@ def test_extraction(in_rasters, numpy_arrays, grid, test_sample=1000, verbose=1)
             )
             test_ds_lyr.CreateFeature(feature.Clone())
 
-            ref_img = raster_to_array(test_rast, cutline=test_ds, quiet=True, filled=True)
+            ref_img = clip_raster(test_rast, cutline=test_ds, quiet=True)
 
             image_block = test_array[test]
 

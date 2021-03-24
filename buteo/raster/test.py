@@ -1,9 +1,13 @@
 import sys; sys.path.append('../../')
+from glob import glob
+import numpy as np
 
 folder = "C:/Users/caspe/Desktop/test/"
 
-from buteo.raster.io import raster_to_memory
+from buteo.raster.io import raster_to_array, array_to_raster
 
-raster = folder + "fyn_vv.tif"
+raster = glob(folder + "*.tif")
 
-mem = raster_to_memory(raster)
+arr = raster_to_array(raster[0])
+
+import pdb; pdb.set_trace()
