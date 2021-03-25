@@ -266,12 +266,8 @@ def array_to_raster(
     if not isinstance(array, np.ndarray) or array.size == 0 or array.ndim < 2 or array.ndim > 3:
         raise ValueError(f"Input array is invalid {array}")
 
-    if not isinstance(overwrite, bool) and not isinstance(overwrite, int):
-        if isinstance(overwrite, int):
-            if overwrite != 0 and overwrite != 1:
-                raise ValueError("overwrite parameter must be a boolean, 0, or 1.")
-    else:
-        raise TypeError("overwrite parameter must be a boolean, 0, or 1.")
+    if not isinstance(overwrite, bool):
+        raise ValueError("overwrite parameter must be a boolean")
     
     if not isinstance(creation_options, list):
         raise TypeError("Options must be a list of valid GDAL options or empty list.")

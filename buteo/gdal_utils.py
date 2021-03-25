@@ -159,6 +159,9 @@ def is_vector(vector: Union[str, ogr.DataSource]) -> bool:
     if isinstance(vector, ogr.DataSource):
         return True
 
+    if isinstance(vector, ogr.Layer):
+        return True
+
     if isinstance(vector, str):
 
         gdal.PushErrorHandler("CPLQuietErrorHandler")

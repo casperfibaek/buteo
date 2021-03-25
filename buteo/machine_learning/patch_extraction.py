@@ -136,11 +136,8 @@ def extract_patches(
         A numpy array in the 3D channel-last format unless output_2D is
         specified.
     """
-    if isinstance(in_rasters, str) or isinstance(in_rasters, gdal.Dataset):
-        in_rasters = [in_rasters]
-
     if not isinstance(in_rasters, list):
-        raise ValueError("Raster input invalid.")
+        in_rasters = [in_rasters]
 
     if isinstance(in_rasters, list) and len(in_rasters) == 0:
         raise ValueError("An input raster is required.")
@@ -160,7 +157,8 @@ def extract_patches(
     if verbose == 1:
         print("Generating blocks..")
 
-    offsets.insert(0, (0, 0)) # insert a 0,0 overlap
+    if (0, 0) not in offsets:
+        offsets.insert(0, (0, 0)) # insert a 0,0 overlap
 
     shapes = []
     
@@ -183,13 +181,13 @@ def extract_patches(
 
     offset_rows_cumsum = np.cumsum(offset_rows)
 
-    geo_fid = np.zeros(all_rows, dtype="uint64")
-    mask = geo_fid
-
     if output_geom is True or clip_to_vector is not None:
 
         if verbose == 1:
             print("Calculating grid cells..")
+
+        geo_fid = np.zeros(all_rows, dtype="uint64")
+        mask = geo_fid
 
         ulx, uly, _lrx, _lry = metadata["extent"]
 
@@ -387,7 +385,10 @@ def extract_patches(
 
             output_array[start:offset_rows_cumsum[k]] = array_to_blocks(ref, (size, size), offset)
 
-        np.save(out_path, output_array[mask])
+        if output_geom is False and clip_to_vector is None:
+            np.save(out_path, output_array)
+        else:
+            np.save(out_path, output_array[mask])
 
         ref = None
         output_array = None
@@ -396,6 +397,12 @@ def extract_patches(
 
 
 def test_extraction(in_rasters, numpy_arrays, grid, test_sample=1000, verbose=1):
+    if not isinstance(in_rasters, list):
+        in_rasters = [in_rasters]
+
+    if not isinstance(numpy_arrays, list):
+        numpy_arrays = [numpy_arrays]
+
     if verbose == 1:
         print("Verifying integrity of output grid..")
 
@@ -404,7 +411,7 @@ def test_extraction(in_rasters, numpy_arrays, grid, test_sample=1000, verbose=1)
     test_projection = test_lyr.GetSpatialRef()
 
     feature_count = test_lyr.GetFeatureCount()
-    gpkg_driver = ogr.GetDriverByName("GPKG")
+    mem_driver = ogr.GetDriverByName("Memory")
 
     max_test = min(test_sample, feature_count) - 1
     test_fids = np.array(random.sample(range(0, feature_count), max_test), dtype="uint64")
@@ -428,14 +435,13 @@ def test_extraction(in_rasters, numpy_arrays, grid, test_sample=1000, verbose=1)
             if feature is None:
                 raise Exception(f"Feature not found: {test}")
 
-            test_ds = gpkg_driver.CreateDataSource("/vsimem/test_mem_grid.gpkg")
+            test_ds = mem_driver.CreateDataSource("test_mem_grid.gpkg")
             test_ds_lyr = test_ds.CreateLayer(
                 "test_mem_grid_layer", geom_type=ogr.wkbPolygon, srs=test_projection
             )
             test_ds_lyr.CreateFeature(feature.Clone())
 
-            ref_img = clip_raster(test_rast, test_ds)
-
+            ref_img = raster_to_array(clip_raster(test_rast, test_ds, adjust=False), output_2D=True)
             image_block = test_array[test]
 
             if not np.array_equal(ref_img, image_block):

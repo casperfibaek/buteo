@@ -17,6 +17,7 @@ from buteo.gdal_utils import (
 
 
 # TODO: Test this for robustness, other projections and speed.
+# TODO: Enables layers
 def clip_raster(
     raster: Union[str, gdal.Dataset],
     clip_geom: Union[str, ogr.DataSource],
@@ -27,6 +28,7 @@ def clip_raster(
     overwrite: bool=True,
     creation_options: list=[],
     dst_nodata: Union[str, int, float]="infer",
+    adjust: bool=True,
 ) -> Union[gdal.Dataset, str]:
     """ Clips a raster using a vector geometry or the extents of
         a raster.
@@ -95,13 +97,13 @@ def clip_raster(
     #     print("WARNING: Geometries did not intersect. Returning empty layer.")
 
     out_clip_layer = None
-    out_clip_geom = None
+    out_clip_ds = None
     if isinstance(clip_geom, str):
-        out_clip_geom = clip_geom
+        out_clip_ds = clip_geom
+    elif isinstance(clip_geom, ogr.DataSource):
+        out_clip_layer = clip_geom.GetLayer()
     elif isinstance(clip_geom, ogr.Layer):
         out_clip_layer = clip_geom
-    elif isinstance(clip_geom, ogr.DataSource):
-        out_clip_geom = vector_to_memory(clip_ref, "/vsimem/clip_geom.gpkg")
     else:
         raise Exception("Unable to parse clip_geom.")
 
@@ -141,11 +143,12 @@ def clip_raster(
         meta_ref = vector_to_metadata(clip_ref)
         ta_minX, ta_maxY, ta_maxX, ta_minY = meta_ref["extent"]
 
-        ta_minX = ta_minX - ((ta_minX - og_minX) % metadata["pixel_width"])
-        ta_maxX = ta_maxX + ((og_maxX - ta_maxX) % metadata["pixel_width"])
+        if adjust:
+            ta_minX = ta_minX - ((ta_minX - og_minX) % metadata["pixel_width"])
+            ta_maxX = ta_maxX + ((og_maxX - ta_maxX) % metadata["pixel_width"])
 
-        ta_minY = ta_minY - ((ta_minY - og_minY) % abs(metadata["pixel_height"]))
-        ta_maxY = ta_maxY + ((og_maxY - ta_maxY) % abs(metadata["pixel_height"]))
+            ta_minY = ta_minY - ((ta_minY - og_minY) % abs(metadata["pixel_height"]))
+            ta_maxY = ta_maxY + ((og_maxY - ta_maxY) % abs(metadata["pixel_height"]))
 
         output_bounds = (ta_minX, ta_minY, ta_maxX, ta_maxY)
     
@@ -160,8 +163,9 @@ def clip_raster(
         outputBounds=output_bounds,
         xRes=metadata["pixel_width"],
         yRes=metadata["pixel_height"],
-        cutlineDSName=out_clip_geom,
+        cutlineDSName=out_clip_ds,
         cutlineLayer=out_clip_layer,
+        cropToCutline=False,
         warpOptions=warp_options,
         srcNodata=metadata["nodata_value"],
         dstNodata=out_nodata,

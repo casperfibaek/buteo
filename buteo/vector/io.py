@@ -65,7 +65,11 @@ def vector_to_memory(
         layername = metadata["layers"][layer_idx]["layer_name"]
         copy.CopyLayer(ref.GetLayer(layer_idx), layername, ["OVERWRITE=YES"])
 
-    return copy
+    if memory_path is None:
+        return copy
+    
+    copy = None
+    return memory_path
 
 
 def vector_to_disk(

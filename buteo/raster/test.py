@@ -1,22 +1,28 @@
 import sys; sys.path.append('../../')
-from glob import glob
 import numpy as np
 
+from buteo.machine_learning.patch_extraction import extract_patches, test_extraction
+
 folder = "C:/Users/caspe/Desktop/test/"
-
-from buteo.raster.clip import clip_raster
-from buteo.machine_learning.patch_extraction import extract_patches
-
-raster = folder + "fyn.tif"
-target = folder + "odense.gpkg"
+raster = folder + "dtm.tif"
+patches = folder + "dtm_patches.npy"
+geom = folder + "patches_64_patches.gpkg"
+# target = folder + "odense.gpkg"
 
 # vector = vector_to_reference(target)
 
-extract_patches(
-    raster,
-    folder,
-    clip_to_vector=target,
-    offsets=[(16, 16)]
-)
+# extract_patches(
+#     raster,
+#     folder,
+#     size=64,
+#     output_geom=True,
+# )
 
-# import pdb; pdb.set_trace()
+
+test_extraction(raster, patches, geom)
+import pdb; pdb.set_trace()
+
+
+# from matplotlib import pyplot as plt
+
+# en [1] == en [3]
