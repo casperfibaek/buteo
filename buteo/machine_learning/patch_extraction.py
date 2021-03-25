@@ -1,4 +1,5 @@
-import sys; sys.path.append("../../")
+import sys
+from typing import Union; sys.path.append("../../")
 from buteo.raster.io import (
     raster_to_array,
     raster_to_metadata,
@@ -10,7 +11,7 @@ from buteo.raster.align import is_aligned
 from buteo.vector.io import vector_to_memory
 from buteo.utils import progress
 import numpy as np
-from osgeo import ogr, osr
+from osgeo import ogr, osr, gdal
 import rtree
 import os
 import random
@@ -52,6 +53,7 @@ def shape_to_blockshape(shape, block_shape, offset=(0, 0, 0)):
 
 # Channel last format
 def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
+    assert array.ndim <= 3, "Unable to handle more than 3 dimensions"
     assert len(offset) >= len(array.shape), "input offsets must equal array dimensions."
     if len(array.shape) == 1:
         arr = array[
@@ -91,17 +93,56 @@ def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
 
 
 def extract_patches(
-    in_rasters,
-    output_folder,
-    prefix="",
-    postfix="_patches",
-    size=32,
-    offsets=[],
-    output_geom=True,
-    clip_to_vector=None,
-    verbose=1,
+    in_rasters: Union[str, list, gdal.Dataset],
+    output_folder: str,
+    prefix: str="",
+    postfix: str="_patches",
+    size: int=32,
+    offsets: list=[],
+    output_geom: bool=True,
+    clip_to_vector: Union[str, ogr.DataSource, gdal.Dataset]=None,
+    epsilon: float=1e-7,
+    verbose: int=1,
 ):
-    if len(in_rasters) == 0:
+    """ Extracts square tiles from a raster.
+    Args:
+        raster (list of rasters | path | raster): The raster(s) to convert.
+
+        output_folder (path): The path of the output folder.
+
+    **kwargs:
+        prefix (str): A prefix for all outputs.
+
+        postfix (str): A postfix for all outputs.
+
+        size (int): The size of the tiles in pixels.
+
+        offsets: (list of tuples): List of offsets to extract. Example:
+        offsets=[(16, 16), (8, 8), (0, 16)]. Will offset the initial raster
+        and extract from there.
+
+        output_geom (bool): Output a geopackage with the grid of tiles.
+        
+        clip_to_vector (str, raster, vector): Clip the output to the
+        intersections with a geometry. Useful if a lot of the target
+        area is water or similar.
+
+        epsilon (float): How much for buffer the arange array function. This
+        should usually just be left alone.
+
+        verbose (int): If 1 will output messages on progress.
+
+    Returns:
+        A numpy array in the 3D channel-last format unless output_2D is
+        specified.
+    """
+    if isinstance(in_rasters, str) or isinstance(in_rasters, gdal.Dataset):
+        in_rasters = [in_rasters]
+
+    if not isinstance(in_rasters, list):
+        raise ValueError("Raster input invalid.")
+
+    if isinstance(in_rasters, list) and len(in_rasters) == 0:
         raise ValueError("An input raster is required.")
 
     if not is_aligned(in_rasters):
@@ -177,8 +218,8 @@ def extract_patches(
             y_min = y_max - (y_step * yres)
 
             # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
-            xr = np.arange(x_min, x_max, xres, dtype="float64")[0:x_step]
-            yr = np.arange(y_min, y_max + yres, yres, dtype="float64")[::-1][0:y_step]
+            xr = np.arange(x_min, x_max + epsilon, xres, dtype="float64")[0:x_step]
+            yr = np.arange(y_min, y_max + epsilon, yres, dtype="float64")[::-1][0:y_step]
 
             oxx, oyy = np.meshgrid(xr, yr)
             
@@ -334,9 +375,9 @@ def extract_patches(
 
         ref = None
         if clip_to_vector is not None:
-            ref = raster_to_array(clip_raster(raster, cutline=clip_to_vector, cutline_all_touch=True), filled=True)
+            ref = raster_to_array(clip_raster(raster, clip_to_vector, all_touch=True), filled=True, output_2D=True)
         else:
-            ref = raster_to_array(raster, filled=True)
+            ref = raster_to_array(raster, filled=True, output_2D=True)
 
         for k, offset in enumerate(offsets):
 
@@ -363,7 +404,7 @@ def test_extraction(in_rasters, numpy_arrays, grid, test_sample=1000, verbose=1)
     test_projection = test_lyr.GetSpatialRef()
 
     feature_count = test_lyr.GetFeatureCount()
-    mem_driver = ogr.GetDriverByName("MEMORY")
+    gpkg_driver = ogr.GetDriverByName("GPKG")
 
     max_test = min(test_sample, feature_count) - 1
     test_fids = np.array(random.sample(range(0, feature_count), max_test), dtype="uint64")
@@ -387,13 +428,13 @@ def test_extraction(in_rasters, numpy_arrays, grid, test_sample=1000, verbose=1)
             if feature is None:
                 raise Exception(f"Feature not found: {test}")
 
-            test_ds = mem_driver.CreateDataSource("test_mem_grid")
+            test_ds = gpkg_driver.CreateDataSource("/vsimem/test_mem_grid.gpkg")
             test_ds_lyr = test_ds.CreateLayer(
                 "test_mem_grid_layer", geom_type=ogr.wkbPolygon, srs=test_projection
             )
             test_ds_lyr.CreateFeature(feature.Clone())
 
-            ref_img = clip_raster(test_rast, cutline=test_ds, quiet=True)
+            ref_img = clip_raster(test_rast, test_ds)
 
             image_block = test_array[test]
 

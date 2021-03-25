@@ -5,17 +5,18 @@ import numpy as np
 folder = "C:/Users/caspe/Desktop/test/"
 
 from buteo.raster.clip import clip_raster
+from buteo.machine_learning.patch_extraction import extract_patches
 
-raster = folder + "fyn_wgs84_utm32.tif"
-
+raster = folder + "fyn.tif"
 target = folder + "odense.gpkg"
 
-clip_raster(
+# vector = vector_to_reference(target)
+
+extract_patches(
     raster,
-    target,
-    out_path=folder + "fyn_clip.tif",
-    crop_to_geom=False,
-    overwrite=True,
+    folder,
+    clip_to_vector=target,
+    offsets=[(16, 16)]
 )
 
 # import pdb; pdb.set_trace()

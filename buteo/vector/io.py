@@ -154,7 +154,6 @@ def vector_to_metadata(
             "miny": min_y,
             "maxy": max_y,
             "extent": [min_x, max_y, max_x, min_y],
-            "extent_ogr": layer.GetExtent(),
             "fid_column": layer.GetFIDColumn(),
             "feature_count": layer.GetFeatureCount(),
         }
@@ -227,8 +226,8 @@ def vector_to_metadata(
         layer.CreateFeature(feature)
         feature = None
 
-        layer_dict["extent_ogr"] = extent_ogr
-        layer_dict["extent_ogr_geom"] = extent_geom
+        layer_dict["extent_ogr_wgs84"] = extent_ogr
+        layer_dict["extent_ogr_geom_wgs84"] = extent_geom
 
         layer_dict["extent_geojson_dict"] = {
             "type": "Feature",
@@ -355,9 +354,10 @@ def reproject_vector(
             destination_layer.CreateFeature(new_feature)
             
         destination_layer.ResetReading()
-        destination_layer.CommitTransaction()
+        destination_layer = None
 
     if out_path is not None:
+        destination = None
         return out_path
     else:
         return destination

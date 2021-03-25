@@ -228,7 +228,7 @@ def filter_array(arr, shape, sigma=1, spherical=True, edge_weights=True, normali
         else:
             raise ValueError("Unable to merge shape and array.")
 
-    kernel, offsets, weights = create_kernel(
+    _kernel, offsets, weights = create_kernel(
         shape,
         sigma=sigma,
         spherical=spherical,
@@ -243,18 +243,4 @@ def filter_array(arr, shape, sigma=1, spherical=True, edge_weights=True, normali
 
 
 if __name__ == "__main__":
-    yellow_follow = 'C:/Users/caspe/Desktop/yellow/'
-    import sys; sys.path.append(yellow_follow)
-    np.set_printoptions(suppress=True)
-    from lib.raster_io import raster_to_array, array_to_raster
-    from glob import glob
-
-
-    folder = "C:/Users/caspe/Desktop/noise_test/processed/aligned/"
-    images = glob(folder + "*_vv_*.tif")
-    images_arr = raster_to_array(images)
-
-    slee = filter_array(images_arr, (3, 5, 5), operation="sigma_lee")
-    array_to_raster(slee, folder + "sigma_lee_v6.tif", images[0])
-
     # ZOBEL, MODE, MORPHOLOGY

@@ -199,8 +199,8 @@ def raster_to_metadata(raster: Union[str, gdal.Dataset], latlng_and_footprint: b
         layer.CreateFeature(feature)
         feature = None
 
-        metadata["extent_ogr"] = extent_ogr
-        metadata["extent_ogr_geom"] = extent_geom
+        metadata["extent_ogr_wgs84"] = extent_ogr
+        metadata["extent_ogr_geom_wgs84"] = extent_geom
 
         metadata["extent_geojson_dict"] = {
             "type": "Feature",
@@ -350,7 +350,7 @@ def raster_to_array(
     raster: Union[str, gdal.Dataset],
     bands: Union[str, int, list]="all",
     filled: bool=False,
-    first_band: bool=False,
+    output_2D: bool=False,
 ) -> np.ndarray:
     """ Turns a path to a raster or a GDAL.Dataset into a numpy
         array.
@@ -366,12 +366,12 @@ def raster_to_array(
         filled (bool): If the array contains nodata values. Should the
         resulting array be a filled numpy array or a masked array?
 
-        first_band (bool): If True, returns only the first band in a 2D
+        output_2D (bool): If True, returns only the first band in a 2D
         fashion eg. (1920x1080) instead of the default channel-last format
         (1920x1080x1)
 
     Returns:
-        A numpy array in the channel-last format unless first_band is
+        A numpy array in the 3D channel-last format unless output_2D is
         specified.
     """
     ref = raster_to_reference(raster)
@@ -411,19 +411,11 @@ def raster_to_array(
         else:
             internal_bands.append(bands)
 
-    if not isinstance(filled, bool) and not isinstance(filled, int):
-        if isinstance(filled, int):
-            if filled != 0 and filled != 1:
-                raise ValueError("Filled parameter must be a boolean, 0, or 1.")
-    else:
-        raise TypeError("Filled parameter must be a boolean, 0, or 1.")
+    if not isinstance(filled, bool):
+        raise ValueError("Filled parameter must be a boolean")
 
-    if not isinstance(first_band, bool) and not isinstance(first_band, int):
-        if isinstance(first_band, int):
-            if first_band != 0 and first_band != 1:
-                raise ValueError("first_band parameter must be a boolean, 0, or 1.")
-    else:
-        raise TypeError("first_band parameter must be a boolean, 0, or 1.")
+    if not isinstance(output_2D, bool):
+        raise ValueError("output_2D parameter must be a boolean")
 
     band_stack = []
     for band in internal_bands:
@@ -437,7 +429,7 @@ def raster_to_array(
         elif filled is None:
             arr = np.ma.masked_equal(arr, band_nodata_value)
 
-        if first_band:
+        if output_2D:
             return arr
 
         band_stack.append(arr)

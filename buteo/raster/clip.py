@@ -1,9 +1,8 @@
 import sys; sys.path.append('../../')
-import os
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 from typing import Union
 from buteo.raster.io import raster_to_metadata
-from buteo.vector.io import vector_to_metadata, vector_to_memory
+from buteo.vector.io import vector_to_metadata, vector_to_memory, reproject_vector
 from buteo.utils import remove_if_overwrite
 from buteo.gdal_utils import (
     raster_to_reference,
@@ -17,6 +16,7 @@ from buteo.gdal_utils import (
 )
 
 
+# TODO: Test this for robustness, other projections and speed.
 def clip_raster(
     raster: Union[str, gdal.Dataset],
     clip_geom: Union[str, ogr.DataSource],
@@ -24,7 +24,6 @@ def clip_raster(
     resample_alg: str="nearest",
     crop_to_geom: bool=True,
     all_touch: bool=False,
-    align_pixels: bool=True,
     overwrite: bool=True,
     creation_options: list=[],
     dst_nodata: Union[str, int, float]="infer",
@@ -53,9 +52,6 @@ def clip_raster(
         all_touch (bool): Should all the pixels touched by the clipped 
         geometry be included or only those which centre lie within the
         geometry.
-
-        align_pixels (bool): Should the resulting pixels be aligned with the
-        original pixels.
 
         overwite (bool): Is it possible to overwrite the out_path if it exists.
 
@@ -94,15 +90,20 @@ def clip_raster(
     remove_if_overwrite(out_path, overwrite)
 
     # Fast check: Does the extent of the two inputs overlap?
-    intersection = metadata["extent_ogr_geom"].Intersection(meta_ref["extent_ogr_geom"])
-    if intersection is None or intersection.Area() == 0.0:
-        print("WARNING: Geometries did not intersect. Returning empty layer.")
+    # intersection = metadata["extent_ogr_geom_wgs84"].Intersection(meta_ref["extent_ogr_geom_wgs84"])
+    # if intersection is None or intersection.Area() == 0.0:
+    #     print("WARNING: Geometries did not intersect. Returning empty layer.")
 
+    out_clip_layer = None
     out_clip_geom = None
     if isinstance(clip_geom, str):
         out_clip_geom = clip_geom
-    else:
+    elif isinstance(clip_geom, ogr.Layer):
+        out_clip_layer = clip_geom
+    elif isinstance(clip_geom, ogr.DataSource):
         out_clip_geom = vector_to_memory(clip_ref, "/vsimem/clip_geom.gpkg")
+    else:
+        raise Exception("Unable to parse clip_geom.")
 
     warp_options = []
     if all_touch:
@@ -119,7 +120,6 @@ def clip_raster(
         out_name = out_path
         out_format = path_to_driver(out_path)
         out_creation_options = default_options(creation_options)
-
     src_nodata = metadata["nodata_value"]
     out_nodata = None
     if src_nodata is not None:
@@ -130,6 +130,25 @@ def clip_raster(
         else:
             out_nodata = dst_nodata
 
+    # Check if projections match, otherwise reproject target geom.
+    if not metadata["projection_osr"].IsSame(meta_ref["projection_osr"]):
+        clip_ref = reproject_vector(clip_ref, metadata["projection_osr"], out_path="/vsimem/clip_geom.gpkg")
+
+    og_minX, og_maxY, og_maxX, og_minY = metadata["extent"]
+    output_bounds = (og_minX, og_minY, og_maxX, og_maxY)
+
+    if crop_to_geom:
+        meta_ref = vector_to_metadata(clip_ref)
+        ta_minX, ta_maxY, ta_maxX, ta_minY = meta_ref["extent"]
+
+        ta_minX = ta_minX - ((ta_minX - og_minX) % metadata["pixel_width"])
+        ta_maxX = ta_maxX + ((og_maxX - ta_maxX) % metadata["pixel_width"])
+
+        ta_minY = ta_minY - ((ta_minY - og_minY) % abs(metadata["pixel_height"]))
+        ta_maxY = ta_maxY + ((og_maxY - ta_maxY) % abs(metadata["pixel_height"]))
+
+        output_bounds = (ta_minX, ta_minY, ta_maxX, ta_maxY)
+    
 
     clipped = gdal.Warp(
         out_name,
@@ -137,9 +156,12 @@ def clip_raster(
         format=out_format,
         creationOptions=out_creation_options,
         resampleAlg=translate_resample_method(resample_alg),
-        targetAlignedPixels=align_pixels,
+        targetAlignedPixels=False,
+        outputBounds=output_bounds,
+        xRes=metadata["pixel_width"],
+        yRes=metadata["pixel_height"],
         cutlineDSName=out_clip_geom,
-        cropToCutline=crop_to_geom,
+        cutlineLayer=out_clip_layer,
         warpOptions=warp_options,
         srcNodata=metadata["nodata_value"],
         dstNodata=out_nodata,
@@ -147,7 +169,7 @@ def clip_raster(
     )
 
     if clipped is None:
-        print("WARNING: Geometries did not intersect. Returning empty layer.")
+        print("WARNING: Output is None. Returning empty layer.")
 
     if out_path is not None:
         return out_path
