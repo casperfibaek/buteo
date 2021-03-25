@@ -1,28 +1,29 @@
 import sys; sys.path.append('../../')
-import numpy as np
 
-from buteo.machine_learning.patch_extraction import extract_patches, test_extraction
+from buteo.raster.warp import warp_raster
+from buteo.raster.clip import clip_raster
 
 folder = "C:/Users/caspe/Desktop/test/"
 raster = folder + "dtm.tif"
 patches = folder + "dtm_patches.npy"
 geom = folder + "patches_64_patches.gpkg"
-# target = folder + "odense.gpkg"
+vector = folder + "aeroe.gpkg"
+vector_odense = folder + "odense.gpkg"
 
-# vector = vector_to_reference(target)
 
-# extract_patches(
+# all_touch does not work..
+# warp_raster(
 #     raster,
-#     folder,
-#     size=64,
-#     output_geom=True,
+#     out_path=folder + "dtm_warp.tif",
+#     projection=vector_odense,
+#     target_size=(10, 10),
+#     clip_geom=vector,
+#     crop_to_geom=True,
 # )
 
-
-test_extraction(raster, patches, geom)
-import pdb; pdb.set_trace()
-
-
-# from matplotlib import pyplot as plt
-
-# en [1] == en [3]
+clip_raster(
+    raster,
+    vector,
+    out_path=folder + "dtm_clipped3.tif",
+    all_touch=True,
+)

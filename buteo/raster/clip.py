@@ -13,11 +13,12 @@ from buteo.gdal_utils import (
     default_options,
     translate_resample_method,
     gdal_nodata_value_from_type,
+    align_bbox,
 )
 
 
 # TODO: Test this for robustness, other projections and speed.
-# TODO: Enables layers
+# TODO: enable layer selection or always use all.
 def clip_raster(
     raster: Union[str, gdal.Dataset],
     clip_geom: Union[str, ogr.DataSource],
@@ -26,9 +27,9 @@ def clip_raster(
     crop_to_geom: bool=True,
     all_touch: bool=False,
     overwrite: bool=True,
+    adjust_bbox: bool=True,
     creation_options: list=[],
     dst_nodata: Union[str, int, float]="infer",
-    adjust: bool=True,
 ) -> Union[gdal.Dataset, str]:
     """ Clips a raster using a vector geometry or the extents of
         a raster.
@@ -111,6 +112,7 @@ def clip_raster(
     if all_touch:
         warp_options.append("CUTLINE_ALL_TOUCHED=TRUE")
 
+    # formats
     out_name = None
     out_format = None
     out_creation_options = None
@@ -122,6 +124,8 @@ def clip_raster(
         out_name = out_path
         out_format = path_to_driver(out_path)
         out_creation_options = default_options(creation_options)
+
+    # nodata
     src_nodata = metadata["nodata_value"]
     out_nodata = None
     if src_nodata is not None:
@@ -135,29 +139,26 @@ def clip_raster(
     # Check if projections match, otherwise reproject target geom.
     if not metadata["projection_osr"].IsSame(meta_ref["projection_osr"]):
         clip_ref = reproject_vector(clip_ref, metadata["projection_osr"], out_path="/vsimem/clip_geom.gpkg")
-
+    
     og_minX, og_maxY, og_maxX, og_minY = metadata["extent"]
     output_bounds = (og_minX, og_minY, og_maxX, og_maxY)
 
     if crop_to_geom:
-        meta_ref = vector_to_metadata(clip_ref)
-        ta_minX, ta_maxY, ta_maxX, ta_minY = meta_ref["extent"]
+        clip_meta = vector_to_metadata(clip_ref)
 
-        if adjust:
-            ta_minX = ta_minX - ((ta_minX - og_minX) % metadata["pixel_width"])
-            ta_maxX = ta_maxX + ((og_maxX - ta_maxX) % metadata["pixel_width"])
+        if adjust_bbox:
+            output_bounds = align_bbox(
+                metadata["extent"],
+                clip_meta["extent"],
+                metadata["pixel_width"],
+                metadata["pixel_height"],
+            )
 
-            ta_minY = ta_minY - ((ta_minY - og_minY) % abs(metadata["pixel_height"]))
-            ta_maxY = ta_maxY + ((og_maxY - ta_maxY) % abs(metadata["pixel_height"]))
-
-        output_bounds = (ta_minX, ta_minY, ta_maxX, ta_maxY)
-    
 
     clipped = gdal.Warp(
         out_name,
         ref,
         format=out_format,
-        creationOptions=out_creation_options,
         resampleAlg=translate_resample_method(resample_alg),
         targetAlignedPixels=False,
         outputBounds=output_bounds,
@@ -166,6 +167,7 @@ def clip_raster(
         cutlineDSName=out_clip_ds,
         cutlineLayer=out_clip_layer,
         cropToCutline=False,
+        creationOptions=out_creation_options,
         warpOptions=warp_options,
         srcNodata=metadata["nodata_value"],
         dstNodata=out_nodata,

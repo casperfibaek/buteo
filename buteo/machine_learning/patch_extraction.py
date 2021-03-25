@@ -92,6 +92,7 @@ def array_to_blocks(array, block_shape, offset=(0, 0, 0)):
         raise Exception("Unable to handle more than 3 dimensions")
 
 
+# Handle multiple dimensional rasters
 def extract_patches(
     in_rasters: Union[str, list, gdal.Dataset],
     output_folder: str,
@@ -441,7 +442,7 @@ def test_extraction(in_rasters, numpy_arrays, grid, test_sample=1000, verbose=1)
             )
             test_ds_lyr.CreateFeature(feature.Clone())
 
-            ref_img = raster_to_array(clip_raster(test_rast, test_ds, adjust=False), output_2D=True)
+            ref_img = raster_to_array(clip_raster(test_rast, test_ds, adjust_bbox=False), output_2D=True)
             image_block = test_array[test]
 
             if not np.array_equal(ref_img, image_block):

@@ -1,6 +1,6 @@
 from osgeo import gdal, ogr, osr
 from typing import Union
-from buteo.utils import path_to_ext
+from buteo.utils import path_to_ext, is_number
 
 
 def raster_to_reference(raster: Union[str, gdal.Dataset], writeable: bool=False) -> gdal.Dataset:
@@ -432,3 +432,83 @@ def create_geotransform(geo_transform, extent):
         'RasterXSize': abs(RasterXSize),
         'RasterYSize': abs(RasterYSize),
     }
+
+
+def raster_size_from_list(target_size, target_in_pixels=False):
+    x_res = None
+    y_res = None
+
+    x_pixels = None
+    y_pixels = None
+
+    if target_size is None:
+        return x_res, y_res, x_pixels, y_pixels
+
+    if isinstance(target_size, gdal.Dataset) or isinstance(target_size, str):
+        reference = target_size if isinstance(target_size, gdal.Dataset) else gdal.Open(target_size, 0)
+        
+        transform = reference.GetGeoTransform()
+
+        x_res = transform[1]
+        y_res = abs(transform[5])
+
+    elif target_in_pixels:
+        if isinstance(target_size, tuple) or isinstance(target_size, list):
+            if len(target_size) == 1:
+                if is_number(target_size[0]):
+                    x_pixels = int(target_size[0])
+                    y_pixels = int(target_size[0])
+                else:
+                    raise ValueError("target_size_pixels is not a number or a list/tuple of numbers.")
+            elif len(target_size) == 2:
+                if is_number(target_size[0]) and is_number(target_size[1]):
+                    x_pixels = int(target_size[0])
+                    y_pixels = int(target_size[1])
+            else:
+                raise ValueError("target_size_pixels is either empty or larger than 2.")
+        elif is_number(target_size):
+            x_pixels = int(target_size)
+            y_pixels = int(target_size)
+        else:
+            raise ValueError("target_size_pixels is invalid.")
+        
+        x_res = None
+        y_res = None
+    else:
+        if isinstance(target_size, tuple) or isinstance(target_size, list):
+            if len(target_size) == 1:
+                if is_number(target_size[0]):
+                    x_res = float(target_size[0])
+                    y_res = float(target_size[0])
+                else:
+                    raise ValueError("target_size is not a number or a list/tuple of numbers.")
+            elif len(target_size) == 2:
+                if is_number(target_size[0]) and is_number(target_size[1]):
+                    x_res = float(target_size[0])
+                    y_res = float(target_size[1])
+            else:
+                raise ValueError("target_size is either empty or larger than 2.")
+        elif is_number(target_size):
+            x_res = float(target_size)
+            y_res = float(target_size)
+        else:
+            raise ValueError("target_size is invalid.")
+        
+        x_pixels = None
+        y_pixels = None
+    
+    return x_res, y_res, x_pixels, y_pixels
+
+
+def align_bbox(og_extent, ta_extent, pixel_width, pixel_height):
+    og_minX, og_maxY, og_maxX, og_minY = og_extent
+    ta_minX, ta_maxY, ta_maxX, ta_minY = ta_extent
+
+    minX = ta_minX - ((ta_minX - og_minX) % pixel_width)
+    maxX = ta_maxX + ((og_maxX - ta_maxX) % pixel_width)
+
+    minY = ta_minY - ((ta_minY - og_minY) % abs(pixel_height))
+    maxY = ta_maxY + ((og_maxY - ta_maxY) % abs(pixel_height))
+
+    # gdal_warp format
+    return (minX, minY, maxX, maxY)

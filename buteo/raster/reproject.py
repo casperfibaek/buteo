@@ -1,7 +1,6 @@
 import sys; sys.path.append('../../')
-import os
 from typing import Union
-from osgeo import gdal, osr, ogr
+from osgeo import gdal, ogr, osr
 from buteo.utils import remove_if_overwrite
 from buteo.gdal_utils import (
     parse_projection,
@@ -19,24 +18,23 @@ from buteo.raster.io import (
 )
 
 
-def reproject_raster(
+def resample_raster(
     raster: Union[str, gdal.Dataset],
-    projection: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
+    projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     out_path: Union[str, None]=None,
     resample_alg: str="nearest",
-    align_pixels: bool=False,
     overwrite: bool=True,
     creation_options: list=[],
     dst_nodata: Union[str, int, float]="infer",
 ) -> Union[gdal.Dataset, str]:
-    """ Reprojects a raster given a target projection.
+    """ Resample a raster to a target resolution.
 
     Args:
         raster (path | raster): The raster to reproject.
-        
+
         projection (str | int | vector | raster): The projection is infered from
-        the input. The input can be: WKT proj, EPSG proj, Proj, or read from a 
-        vector or raster datasource either from path or in-memory.
+        the input. The input can be: WKT proj, EPSG proj, Proj, osr proj, or read
+        from a vector or raster datasource either from path or in-memory.
 
     **kwargs:
         out_path (path | None): The destination to save to. If None then
@@ -47,9 +45,6 @@ def reproject_raster(
             'nearest', 'bilinear', 'cubic', 'cubicSpline', 'lanczos', 'average',
             'mode', 'max', 'min', 'median', 'q1', 'q3', 'sum', 'rms'.
         
-        align_pixels (bool): Should the resulting pixels be aligned with the
-        original pixels.
-
         overwite (bool): Is it possible to overwrite the out_path if it exists.
 
         creation_options (list): A list of options for the GDAL creation. Only
@@ -67,7 +62,6 @@ def reproject_raster(
         An in-memory raster. If an out_path is given the output is a string containing
         the path to the newly created raster.
     """
-    # Verify Inputs
     ref = raster_to_reference(raster)
     metadata = raster_to_metadata(ref)
 
@@ -110,7 +104,6 @@ def reproject_raster(
         srcSRS=original_projection,
         dstSRS=target_projection,
         resampleAlg=translate_resample_method(resample_alg),
-        targetAlignedPixels=align_pixels,
         creationOptions=out_creation_options,
         srcNodata=metadata["nodata_value"],
         dstNodata=out_nodata,

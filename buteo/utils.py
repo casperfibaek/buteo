@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from osgeo import gdal
 
 
 def progress(count, total, name='Processing'):
@@ -55,6 +56,16 @@ def path_to_name(path, with_ext=False):
 
 def file_exists(path):
     return os.path.exists(path)
+
+
+def is_number(potential_number):
+    if isinstance(potential_number, float):
+        return True
+    
+    if isinstance(potential_number, int):
+        return True
+    
+    return False
 
 
 def remove_if_overwrite(path, overwrite):

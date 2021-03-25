@@ -1,261 +1,113 @@
 import sys; sys.path.append('../../')
-import os
-from osgeo import gdal
-from buteo.utils import (
-    datatype_is_float,
-    copy_dataframe,
-    progress_callback_quiet,
-    create_progress_callback,
+from typing import Union
+from osgeo import gdal, osr, ogr
+from buteo.utils import remove_if_overwrite, is_number
+from buteo.gdal_utils import (
+    path_to_driver,
+    raster_to_reference,
+    default_options,
     translate_resample_method,
+    gdal_nodata_value_from_type,
+    raster_size_from_list,
+)
+from buteo.raster.io import (
+    default_options,
+    raster_to_metadata,
 )
 
 
-def resample(
-    in_raster,
-    out_raster=None,
-    reference_raster=None,
-    reference_band_number=1,
-    target_size=None,
-    output_format="MEM",
-    method="nearest",
-    quiet=True,
-):
-    """ Resample an input raster to match a reference raster or
-        a target size. The target size is in the same unit as
-        the input raster. If the unit is wgs84 - beware that
-        the target should be in degrees.
+def resample_raster(
+    raster: Union[str, gdal.Dataset],
+    target_size: Union[tuple, int, float, str, gdal.Dataset],
+    target_in_pixels: bool=False,
+    out_path: Union[str, None]=None,
+    resample_alg: str="nearest",
+    overwrite: bool=True,
+    creation_options: list=[],
+    dst_nodata: Union[str, int, float]="infer",
+) -> Union[gdal.Dataset, str]:
+    """ Reprojects a raster given a target projection.
 
     Args:
-        in_raster (URL or GDAL.DataFrame): The raster to clip.
+        raster (path | raster): The raster to reproject.
+        
+        target_size (str | int | vector | raster): The target resolution of the
+        raster. In the same unit as the projection of the raster. Beware if your
+        input is in latitude and longitude, you'll need to specify degrees as well!
+        It's better to reproject to a projected coordinate system for resampling.
+        If a raster is the target_size the function will read the pixel size from 
+        that raster.
 
     **kwargs:
-        out_raster (URL): The name of the output raster. Only
-        used when output format is not memory.
+        out_path (path | None): The destination to save to. If None then
+        the output is an in-memory raster.
 
-        reference_raster (URL or GDAL.DataFrame): A reference
-        raster from where to clip the extent of the in_raster.
+        resample_alg (str): The algorithm to resample the raster. The following
+        are available:
+            'nearest', 'bilinear', 'cubic', 'cubicSpline', 'lanczos', 'average',
+            'mode', 'max', 'min', 'median', 'q1', 'q3', 'sum', 'rms'.
 
-        reference_band_number (Integer): The number of the band in
-        the reference to use as a target.
+        overwite (bool): Is it possible to overwrite the out_path if it exists.
 
-        target_size (List): The target pixel size of the destination.
-        e.g. [10, 10] for 10m resolution if the map unit is meters.
+        creation_options (list): A list of options for the GDAL creation. Only
+        used if an outpath is specified. Defaults are:
+            "TILED=YES"
+            "NUM_THREADS=ALL_CPUS"
+            "BIGG_TIF=YES"
+            "COMPRESS=LZW"
 
-        output_format (String): Output of calculation. MEM is
-        default, if out_raster is specified but MEM is selected,
-        GTiff is used as output_format.
-
-        method (String): The method to use for resampling. By default
-        nearest pixel is used. Supports bilinear, cubic and so on.
-        For more details look at the GDAL reference.
-
-        quiet (Bool): Do not show the progressbars for warping.
+        dst_nodata (str | int | float): If dst_nodata is 'infer' the destination nodata
+        is the src_nodata if one exists, otherwise it's automatically chosen based
+        on the datatype. If an int or a float is given, it is used as the output nodata.
 
     Returns:
-        If the output format is memory outpus a GDAL dataframe
-        containing the resampled raster. Otherwise a
-        raster is created and the return value is the URL string
-        pointing to the created raster.
+        An in-memory raster. If an out_path is given the output is a string containing
+        the path to the newly created raster.
     """
+    ref = raster_to_reference(raster)
+    metadata = raster_to_metadata(ref)
 
-    if target_size is None and reference_raster is None:
-        raise ValueError("Either target_size or a reference must be provided.")
+    x_res, y_res, x_pixels, y_pixels = raster_size_from_list(target_size, target_in_pixels)
 
-    if out_raster is not None and output_format == "MEM":
-        output_format = "GTiff"
-
-    if out_raster is None and output_format != "MEM":
-        raise AttributeError("Either a reference raster or a cutline must be provided.")
-
-    if out_raster is None:
-        out_raster = "ignored"
-
-    if isinstance(in_raster, gdal.Dataset):
-        inputDataframe = in_raster
+    out_name = None
+    out_format = None
+    out_creation_options = []
+    if out_path is None:
+        out_name = metadata["name"]
+        out_format = "MEM"
     else:
-        inputDataframe = gdal.Open(in_raster)
-
-    # Throw error if GDAL cannot open the raster
-    if inputDataframe is None:
-        raise AttributeError(f"Unable to parse the input raster: {in_raster}")
-
-    driver = gdal.GetDriverByName(output_format)
-
-    inputTransform = inputDataframe.GetGeoTransform()
-    inputPixelWidth = inputTransform[1]
-    inputPixelHeight = inputTransform[5]
-    inputProjection = inputDataframe.GetProjection()
-    inputBandCount = inputDataframe.RasterCount
-    inputBand = inputDataframe.GetRasterBand(1)
-    inputDatatype = inputBand.DataType
-    inputNodataValue = inputBand.GetNoDataValue()
-
-    if output_format == "MEM":
-        options = []
+        out_creation_options = default_options(creation_options)
+        out_name = out_path
+        out_format = path_to_driver(out_path)
+    
+    src_nodata = metadata["nodata_value"]
+    out_nodata = None
+    if src_nodata is not None:
+        out_nodata = src_nodata
     else:
-        if datatype_is_float(inputDatatype) is True:
-            predictor = 3
+        if dst_nodata == "infer":
+            out_nodata = gdal_nodata_value_from_type(metadata["dtype_gdal_raw"])
         else:
-            predictor = 2
-        options = ["COMPRESS=DEFLATE", f"PREDICTOR={predictor}", "NUM_THREADS=ALL_CPUS"]
+            out_nodata = dst_nodata
 
-    # Test if the same size is requested.
-    if target_size is not None:
-        if abs(inputPixelWidth) == abs(target_size[0]) and abs(inputPixelHeight) == abs(
-            target_size[1]
-        ):
-            copy = copy_dataframe(inputDataframe, out_raster, output_format)
-            copy.FlushCache()
+    remove_if_overwrite(out_path, overwrite)
 
-            if output_format == "MEM":
-                return copy
-            else:
-                return os.path.abspath(out_raster)
+    resampled = gdal.Warp(
+        out_name,
+        ref,
+        width=x_pixels,
+        height=y_pixels,
+        xRes=x_res,
+        yRes=y_res,
+        format=out_format,
+        resampleAlg=translate_resample_method(resample_alg),
+        creationOptions=out_creation_options,
+        srcNodata=metadata["nodata_value"],
+        dstNodata=out_nodata,
+        multithread=True,
+    )
 
-    if reference_raster is not None:
-        if isinstance(reference_raster, gdal.Dataset):
-            referenceDataframe = reference_raster
-        else:
-            referenceDataframe = gdal.Open(reference_raster)
-
-        # Throw error if GDAL cannot open the raster
-        if referenceDataframe is None:
-            raise AttributeError(
-                f"Unable to parse the reference raster: {reference_raster}"
-            )
-
-        referenceTransform = referenceDataframe.GetGeoTransform()
-        referenceProjection = referenceDataframe.GetProjection()
-        referenceXSize = referenceDataframe.RasterXSize
-        referenceYSize = referenceDataframe.RasterYSize
-        referencePixelWidth = referenceTransform[1]
-        referencePixelHeight = referenceTransform[5]
-        referenceBand = referenceDataframe.GetRasterBand(reference_band_number)
-        referenceDatatype = referenceBand.DataType
-
-        # Test if the reference size and the input size are the same
-        if abs(inputPixelWidth) == abs(referencePixelWidth) and abs(
-            inputPixelHeight
-        ) == abs(referencePixelHeight):
-            copy = copy_dataframe(inputDataframe, out_raster, output_format)
-            copy.FlushCache()
-
-            if output_format == "MEM":
-                return copy
-            else:
-                return os.path.abspath(out_raster)
-        else:
-            destination = driver.Create(
-                out_raster,
-                referenceXSize,
-                referenceYSize,
-                inputBandCount,
-                referenceDatatype,
-                options,
-            )
-            destination.SetProjection(referenceProjection)
-            destination.SetGeoTransform(referenceTransform)
-
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-
-        progressbar = progress_callback_quiet
-        if quiet is False:
-            progressbar = create_progress_callback(1, "resampling")
-
-        try:
-            warpSuccess = gdal.Warp(
-                destination,
-                in_raster,
-                format=output_format,
-                multithread=True,
-                targetAlignedPixels=True,
-                xRes=referenceTransform[1],
-                yRes=referenceTransform[5],
-                srcSRS=inputProjection,
-                dstSRS=referenceProjection,
-                srcNodata=inputNodataValue,
-                dstNodata=inputNodataValue,
-                warpOptions=options,
-                resampleAlg=translate_resample_method(method),
-                callback=progressbar,
-            )
-        except:
-            raise RuntimeError("Error while Warping.") from None
-
-        gdal.PopErrorHandler()
-
-        # Check if warped was successfull.
-        if warpSuccess == 0:  # GDAL returns 0 for warnings.
-            print("Warping completed with warnings. Check your result.")
-        elif warpSuccess is None:  # GDAL returns None for errors.
-            raise RuntimeError("Warping completed unsuccesfully.") from None
-
-        if output_format == "MEM":
-            return destination
-        else:
-            return os.path.abspath(out_raster)
+    if out_path is not None:
+        return out_path
     else:
-
-        inputXSize = inputDataframe.RasterXSize
-        inputYSize = inputDataframe.RasterYSize
-        xRatio = inputPixelWidth / target_size[0]
-        yRatio = inputPixelHeight / target_size[1]
-        xPixels = abs(round(xRatio * inputXSize))
-        yPixels = abs(round(yRatio * inputYSize))
-
-        destination = driver.Create(
-            out_raster, xPixels, yPixels, inputBandCount, inputDatatype, options
-        )
-        destination.SetProjection(inputProjection)
-        destination.SetGeoTransform(
-            [
-                inputTransform[0],
-                target_size[0],
-                inputTransform[2],
-                inputTransform[3],
-                inputTransform[4],
-                -target_size[1],
-            ]
-        )
-        if inputNodataValue is not None:
-            destination.SetNoDataValue(inputNodataValue)
-
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-
-        progressbar = progress_callback_quiet
-        if quiet is False:
-            progressbar = create_progress_callback(1, "resampling")
-
-        try:
-            warpSuccess = gdal.Warp(
-                destination,
-                in_raster,
-                format=output_format,
-                multithread=True,
-                targetAlignedPixels=True,
-                xRes=target_size[0],
-                yRes=target_size[1],
-                srcSRS=inputProjection,
-                dstSRS=inputProjection,
-                srcNodata=inputNodataValue,
-                dstNodata=inputNodataValue,
-                warpOptions=options,
-                resampleAlg=translate_resample_method(method),
-                callback=progressbar,
-            )
-
-        except:
-            raise RuntimeError("Error while Warping.") from None
-
-        gdal.PopErrorHandler()
-
-        # Check if warped was successfull.
-        if warpSuccess == 0:  # GDAL returns 0 for warnings.
-            print("Warping completed with warnings. Check your result.")
-        elif warpSuccess is None:  # GDAL returns None for errors.
-            raise RuntimeError("Warping completed unsuccesfully.") from None
-
-        if output_format == "MEM":
-            return destination
-        else:
-            return os.path.abspath(out_raster)
+        return resampled

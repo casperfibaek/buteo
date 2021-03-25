@@ -6,9 +6,10 @@ from numpy.core.numeric import Infinity
 from buteo.raster.io import raster_to_metadata
 
 
-def is_aligned(input_rasters, same_extent=False, same_dtype=False):
+def is_aligned(input_rasters, same_extent=False, same_dtype=False, verbose=False):
     if len(input_rasters) == 1:
-        print("WARNING: Only one input raster")
+        if verbose:
+            print("WARNING: Only one input raster")
         return True
 
     metas = []
