@@ -7,9 +7,9 @@ import tensorflow_probability as tfp
 
 
 def count_freq(arr: np.ndarray) -> np.ndarray:
-    yy = np.bincount(arr)
-    ii = np.nonzero(yy)[0]
-    return np.vstack((ii, yy[ii])).T
+    bins = np.bincount(arr)
+    classes = np.nonzero(bins)[0]
+    return np.vstack([classes, bins[classes]]).T
 
 
 # Metrics for testing model accuracy
@@ -97,12 +97,13 @@ def scale_to_01(X):
     return (X - X.min()) / (X.max() - X.min())
 
 
-def train_split_mask(y, split=0.3, stratified=True):
+# stratify a regression split
+def train_split_mask_regression(y, split=0.3, stratified=True):
     if stratified is True:
         strats = np.digitize(y, np.percentile(y, [10, 20, 30, 40, 50, 60, 70, 80, 90]))
         indices = np.arange(0, len(strats), 1)
 
-        X_train, X_test, y_train, y_test = train_test_split(
+        _X_train, _X_test, y_train, y_test = train_test_split(
             indices, strats, stratify=strats, test_size=split
         )
 

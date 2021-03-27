@@ -248,7 +248,7 @@ def array_to_raster(
 
     Returns:
         If an out_path has been specified, it returns the path to the 
-        newly created raster file. If 
+        newly created raster file.
     """
 
     # Verify inputs

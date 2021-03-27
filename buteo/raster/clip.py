@@ -30,6 +30,7 @@ def clip_raster(
     adjust_bbox: bool=True,
     creation_options: list=[],
     dst_nodata: Union[str, int, float]="infer",
+    layer_to_clip: Union[str, int]="first",
 ) -> Union[gdal.Dataset, str]:
     """ Clips a raster using a vector geometry or the extents of
         a raster.
@@ -69,6 +70,11 @@ def clip_raster(
         is the src_nodata if one exists, otherwise it's automatically chosen based
         on the datatype. If an int or a float is given, it is used as the output nodata.
 
+        layer_to_clip (str, int): The layer in the input vector to use for clipping.
+        If  layer_to_clip is "first" the first layer in the vector is used. If "all",
+        all layers a used to process. An INT can be passed to use a specific layer.
+
+
     Returns:
         An in-memory raster. If an out_path is given the output is a string containing
         the path to the newly created raster.
@@ -97,14 +103,13 @@ def clip_raster(
     # if intersection is None or intersection.Area() == 0.0:
     #     print("WARNING: Geometries did not intersect. Returning empty layer.")
 
+    # TODO: Handle layer_to_clip
     out_clip_layer = None
     out_clip_ds = None
     if isinstance(clip_geom, str):
         out_clip_ds = clip_geom
     elif isinstance(clip_geom, ogr.DataSource):
         out_clip_layer = clip_geom.GetLayer()
-    elif isinstance(clip_geom, ogr.Layer):
-        out_clip_layer = clip_geom
     else:
         raise Exception("Unable to parse clip_geom.")
 

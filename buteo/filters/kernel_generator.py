@@ -1,5 +1,4 @@
 import numpy as np
-from numba import jit, prange
 
 
 def scale_vectors(points, abs_dist):
@@ -9,12 +8,19 @@ def scale_vectors(points, abs_dist):
     return points * scalar
 
 
-@jit(nopython=True, parallel=True, nogil=True, inline='always')
 def points_intersects_ellipsoid(ellipsoid, points, axis=1):
     return np.sum(np.sum(np.power(np.divide(points, ellipsoid), 2), axis=axis) <= 1)
 
 
-def cube_sphere_intersection_area(cube_center, circle_center, circle_radius, ellipsoid=None, cube_width=1, resolution=0.05, epsilon=1e-7):
+def cube_sphere_intersection_area(
+    cube_center,
+    circle_center,
+    circle_radius,
+    ellipsoid=None,
+    cube_width=1,
+    resolution=0.05,
+    epsilon=1e-7,
+):
     assert(len(cube_center) == 3), "Cube center must be a len 3 array."
     assert(len(circle_center) == 3), "Circle center must be a len 3 array."
     assert(circle_radius >= 0), "Radius must be a positive number."
@@ -71,7 +77,20 @@ def cube_sphere_intersection_area(cube_center, circle_center, circle_radius, ell
         return (step * step * step) * np.sum(dist <= circle_radius)
 
 
-def create_kernel(shape, sigma=1, holed=False, inverted=False, normalised=True, spherical=True, edge_weights=True, distance_calc="gaussian", offsets=False, remove_zero_weights=False, radius_method="2d"):
+# TODO channel last?
+def create_kernel(
+    shape,
+    sigma=1,
+    holed=False,
+    inverted=False,
+    normalised=True,
+    spherical=True,
+    edge_weights=True,
+    distance_calc="gaussian",
+    offsets=False,
+    remove_zero_weights=False,
+    radius_method="2d",
+):
     if len(shape) == 2:
         shape = [1, shape[0], shape[1]]
 

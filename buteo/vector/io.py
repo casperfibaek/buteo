@@ -1,15 +1,12 @@
-import sys
-sys.path.append('../../')
-from typing import Union
+import sys; sys.path.append('../../')
 import os, json
 import numpy as np
-import pandas as pd
 import osgeo
+from typing import Union
 from osgeo import gdal, ogr, osr
 
-from buteo.raster.io import raster_to_metadata
 from buteo.gdal_utils import parse_projection, vector_to_reference, path_to_driver
-from buteo.utils import progress, remove_if_overwrite, path_to_ext
+from buteo.utils import progress, remove_if_overwrite
 
 
 # TODO:
@@ -370,9 +367,10 @@ def reproject_vector(
 # TODO: Update this to work on every geom layer.
 # TODO: Add output array.
 # TODO: Add copy
+# TODO: Update to do circular hull
 def vector_add_shapes(
     vector: Union[str, ogr.DataSource],
-    shapes: list=["area", "perimeter", "ipq", "hull", "compactness"],
+    shapes: list=["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
     output_array: bool=False,
     output_copy: bool=False,
 ) -> Union[str, np.ndarray]:
@@ -387,8 +385,9 @@ def vector_add_shapes(
             * Area          (In same unit as projection)
             * Perimeter     (In same unit as projection)
             * IPQ           (0-1) given as (4*Pi*Area)/(Perimeter ** 2)
-            * Hull Area     (The area of the hull. Same unit as projection)
-            * Compactness   (0-1) given as (Area / Hull Area) * IPQ
+            * Hull Area     (The area of the convex hull. Same unit as projection)
+            * Compactness   (0-1) given as sqrt((area / hull_area) * ipq)
+            * Centroid      (Coordinate of X and Y)
 
         output_array (bool): If true a numpy array matching the FID's of the
         vector and the calculated shapes (same order as 'shapes').
@@ -413,8 +412,17 @@ def vector_add_shapes(
     vector_layer.StartTransaction()
     
     # Add missing fields
-    for attribute in ['area', 'perimeter', 'ipq']:
-        if attribute not in vector_current_fields:
+    for attribute in shapes:
+        if attribute == "centroid":
+            if "centroid_x" not in vector_current_fields:
+                field_defn = ogr.FieldDefn("centroid_x", ogr.OFTReal)
+                vector_layer.CreateField(field_defn)
+
+            if "centroid_y" not in vector_current_fields:
+                field_defn = ogr.FieldDefn("centroid_y", ogr.OFTReal)
+                vector_layer.CreateField(field_defn)
+
+        elif attribute not in vector_current_fields:
             field_defn = ogr.FieldDefn(attribute, ogr.OFTReal)
             vector_layer.CreateField(field_defn)
 
@@ -431,6 +439,7 @@ def vector_add_shapes(
         if vector_geom is None:
             raise Exception('Invalid geometry. Could not fix.')
 
+        centroid = vector_geom.Centroid()
         vector_area = vector_geom.GetArea()
         vector_perimeter = vector_geom.Boundary().Length()
 
@@ -438,13 +447,17 @@ def vector_add_shapes(
             vector_ipq = 0
             if vector_perimeter != 0:
                 vector_ipq = (4 * np.pi * vector_area) / vector_perimeter ** 2
+        
+        if "centroid" in shapes:
+            vector_feature.SetField("centroid_x", centroid.GetX())
+            vector_feature.SetField("centroid_y", centroid.GetY())
 
         if "hull" in shapes or "compact" in shapes:
             vector_hull = vector_geom.ConvexHull()
             hull_area = vector_hull.GetArea()
             hull_peri = vector_hull.Boundary().Length()
             hull_ratio = float(vector_area) / float(hull_area)
-            compactness = float(hull_ratio) * float(vector_ipq)
+            compactness = np.sqrt(float(hull_ratio) * float(vector_ipq))
 
         if "area" in shapes:
             vector_feature.SetField('area', vector_area)
