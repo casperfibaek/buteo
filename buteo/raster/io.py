@@ -2,7 +2,7 @@ import sys; sys.path.append('../../')
 from osgeo import gdal, ogr, osr
 from typing import Union
 import numpy as np
-import os, json
+import os
 
 from buteo.utils import (
     remove_if_overwrite,
@@ -15,6 +15,7 @@ from buteo.gdal_utils import (
     numpy_to_gdal_datatype,
     gdal_to_numpy_datatype,
     default_options,
+    geoms_from_extent,
 )
 
 
@@ -22,24 +23,42 @@ from buteo.gdal_utils import (
 # TODO: Array to raster (advanced)
 
 
-def raster_to_memory(raster: Union[str, gdal.Dataset]) -> gdal.Dataset:
+def raster_to_memory(
+    raster: Union[str, gdal.Dataset],
+    memory_path: Union[str, None]=None,
+) -> gdal.Dataset:
     """ Takes a file path or a gdal raster dataset and copies
     it to memory. 
 
     Args:
         file_path (path | Dataset): A path to a raster or a GDAL dataframe.
 
+    **kwargs:
+        memory_path (str | None): If a path is provided, uses the
+        appropriate driver and uses the VSIMEM gdal system.
+        Example: vector_to_memory(clip_ref, "clip_geom.gpkg")
+        /vsimem/ is autumatically added.
+
     Returns:
         A gdal.Dataset copied into memory.
     """
     ref = raster_to_reference(raster)
-    driver = gdal.GetDriverByName("MEM")
 
-    name = path_to_name(ref.GetDescription())
+    driver = None
+    raster_name = None
+    if memory_path is not None:
+        raster_name = path_to_name(ref.GetDescription())
+        driver = ogr.GetDriverByName(path_to_driver(memory_path))
+    else:
+        raster_name = f"/vsimem/{memory_path}"
+        driver = ogr.GetDriverByName("Memory")
 
-    copy = driver.CreateCopy(name, ref)
+    copy = driver.CreateCopy(raster_name, ref)
 
-    return copy
+    if memory_path is None:
+        return copy
+
+    return memory_path
 
 
 def raster_to_disk(
@@ -86,7 +105,10 @@ def raster_to_disk(
     return out_path
 
 
-def raster_to_metadata(raster: Union[str, gdal.Dataset], latlng_and_footprint: bool=True) -> dict:
+def raster_to_metadata(
+    raster: Union[str, gdal.Dataset],
+    latlng_and_footprint: bool=True,
+) -> dict:
     """ Reads a raster from a string or a dataset and returns metadata.
 
     Args:
@@ -100,44 +122,54 @@ def raster_to_metadata(raster: Union[str, gdal.Dataset], latlng_and_footprint: b
     Returns:
         A dictionary containing metadata about the raster.
     """
-    metadata = {}
-    metadata["dataframe"] = raster_to_reference(raster)
-    metadata["name"] = metadata["dataframe"].GetDescription()
+    try:
+        raster = raster if isinstance(raster, gdal.Dataset) else gdal.Open(raster)
+    except:
+        raise Exception("Could not read input raster")
 
-    metadata["transform"] = metadata["dataframe"].GetGeoTransform()
-    metadata["projection"] = metadata["dataframe"].GetProjection()
+    if raster is None:
+        raise Exception("Could not read input raster")    
+
+    metadata = {
+        "name": raster.GetDescription(),
+        "transform": raster.GetGeoTransform(),
+        "projection": raster.GetProjection(),
+        "width": raster.RasterXSize,
+        "height": raster.RasterYSize,
+        "bands": raster.RasterCount,
+    }
+
+    basename = os.path.basename(metadata["name"])
+    metadata["basename"] = os.path.splitext(basename)[0]
+    metadata["ext"] = os.path.splitext(basename)[1]
 
     original_projection = osr.SpatialReference()
     original_projection.ImportFromWkt(metadata["projection"])
     metadata["projection_osr"] = original_projection
 
-    band0 = metadata["dataframe"].GetRasterBand(1)
-
-    if latlng_and_footprint:
-        wgs84 = osr.SpatialReference()
-        wgs84.ImportFromEPSG(4326)
-        tx = osr.CoordinateTransformation(original_projection, wgs84)
-
-    metadata["width"] = metadata["dataframe"].RasterXSize
-    metadata["height"] = metadata["dataframe"].RasterYSize
-    metadata["size"] = [metadata["dataframe"].RasterXSize, metadata["dataframe"].RasterYSize]
+    metadata["size"] = [raster.RasterXSize, raster.RasterYSize]
     metadata["shape"] = (metadata["width"], metadata["height"])
-    metadata["pixel_width"] = metadata["transform"][1]
-    metadata["pixel_height"] = metadata["transform"][5]
-    metadata["minx"] = metadata["transform"][0]
-    metadata["bands"] = metadata["dataframe"].RasterCount
-    metadata["miny"] = (
-        metadata["transform"][3]
-        + metadata["width"] * metadata["transform"][4]
-        + metadata["height"] * metadata["transform"][5]
-    )
-    metadata["maxx"] = (
-        metadata["transform"][0]
-        + metadata["width"] * metadata["transform"][1]
+    metadata["pixel_width"] = abs(metadata["transform"][1])
+    metadata["pixel_height"] = abs(metadata["transform"][5])
+    metadata["x_min"] = metadata["transform"][0]
+    metadata["y_max"] = metadata["transform"][3]
+    metadata["x_max"] = (
+        metadata["x_min"]
+        + metadata["width"] * metadata["transform"][1] # Handle skew
         + metadata["height"] * metadata["transform"][2]
     )
-    metadata["maxy"] = metadata["transform"][3]
+    metadata["y_min"] = (
+        metadata["y_max"]
+        + metadata["width"] * metadata["transform"][4] # Handle skew
+        + metadata["height"] * metadata["transform"][5]
+    )
 
+    x_min = metadata["x_min"]
+    y_max = metadata["y_max"]
+    x_max = metadata["x_max"]
+    y_min = metadata["y_min"]
+
+    band0 = raster.GetRasterBand(1)
     metadata["dtype_gdal_raw"] = band0.DataType
     metadata["datatype_gdal_raw"] = metadata["dtype_gdal_raw"]
 
@@ -150,67 +182,30 @@ def raster_to_metadata(raster: Union[str, gdal.Dataset], latlng_and_footprint: b
     metadata["nodata_value"] = band0.GetNoDataValue()
 
     # ulx, uly, lrx, lry = -180, 90, 180, -90
-    metadata["extent"] = [
-        metadata["minx"],
-        metadata["maxy"],
-        metadata["maxx"],
-        metadata["miny"],
-    ]
+    metadata["extent"] = [x_min, y_max, x_max, y_min]
+
+    metadata["extent_dict"] = {
+        "left": x_min,
+        "top": y_max,
+        "right": x_max,
+        "bottom": y_min,
+    }
 
     if latlng_and_footprint:
-        bottom_left = tx.TransformPoint(metadata["minx"], metadata["miny"])
-        top_left = tx.TransformPoint(metadata["minx"], metadata["maxy"])
-        top_right = tx.TransformPoint(metadata["maxx"], metadata["maxy"])
-        bottom_right = tx.TransformPoint(metadata["maxx"], metadata["miny"])
+        wgs84 = osr.SpatialReference()
+        wgs84.ImportFromEPSG(4326)
 
-        # ulx, uly, lrx, lry = -180, 90, 180, -90
-        metadata["extent_wgs84"] = [
-            top_left[0],
-            top_left[1],
-            bottom_right[0],
-            bottom_right[1],
-        ]
+        extents = geoms_from_extent(metadata["extent"], original_projection, wgs84, metadata["name"])
 
-        coord_array = [
-            [bottom_left[1], bottom_left[0]],
-            [top_left[1], top_left[0]],
-            [top_right[1], top_right[0]],
-            [bottom_right[1], bottom_right[0]],
-            [bottom_left[1], bottom_left[0]],
-        ]
+        metadata["extent_wgs84"] = extents["ta_proj"]
+        metadata["extent_wgs84_dict"] = extents["ta_proj_dict"]
+        metadata["extent_wkt"] = extents["wkt"]
+        metadata["extent_ogr"] = extents["ogr"]
+        metadata["extent_ogr_geom"] = extents["ogr_geom"]
+        metadata["extent_geojson"] = extents["geojson"]
+        metadata["extent_geojson_dict"] = extents["geojson_dict"]
 
-        wkt_coords = ""
-        for coord in coord_array:
-            wkt_coords += f"{coord[1]} {coord[0]}, "
-        wkt_coords = wkt_coords[:-2]
-
-        metadata["extent_wkt"] = f"POLYGON (({wkt_coords}))"
-
-        # Create an OGR Datasource in memory with the extent
-        extent_name = str(metadata["name"]) + "_extent"
-
-        driver = ogr.GetDriverByName("Memory")
-        extent_ogr = driver.CreateDataSource(extent_name)
-        layer = extent_ogr.CreateLayer(extent_name + "_layer", wgs84, ogr.wkbPolygon)
-
-        feature = ogr.Feature(layer.GetLayerDefn())
-        extent_geom = ogr.CreateGeometryFromWkt(metadata["extent_wkt"], wgs84)
-        feature.SetGeometry(extent_geom)
-        layer.CreateFeature(feature)
-        feature = None
-
-        metadata["extent_ogr_wgs84"] = extent_ogr
-        metadata["extent_ogr_geom_wgs84"] = extent_geom
-
-        metadata["extent_geojson_dict"] = {
-            "type": "Feature",
-            "properties": {},
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [coord_array],
-            },
-        }
-        metadata["extent_geojson"] = json.dumps(metadata["extent_geojson_dict"])
+    raster = None
 
     return metadata
 

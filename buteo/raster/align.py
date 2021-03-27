@@ -1,20 +1,35 @@
 import sys; sys.path.append('../../')
-import os
-from collections import Counter
-from numpy.core.numeric import Infinity
-# from pygeoprocessing import geoprocessing
-from buteo.raster.io import raster_to_metadata
+from typing import Union, List
+from osgeo import gdal, ogr, osr
+import numpy as np
+from buteo.raster.io import (
+    raster_to_metadata,
+)
+from buteo.raster.reproject import reproject_raster
+from buteo.utils import folder_exists, overwrite_required, remove_if_overwrite
+from buteo.gdal_utils import (
+    parse_projection,
+    raster_size_from_list,
+    is_raster,
+    path_to_driver,
+    default_options,
+    gdal_nodata_value_from_type,
+    align_bbox,
+    translate_resample_method,
+)
 
 
-def is_aligned(input_rasters, same_extent=False, same_dtype=False, verbose=False):
-    if len(input_rasters) == 1:
-        if verbose:
-            print("WARNING: Only one input raster")
+def is_aligned(
+    rasters: list,
+    same_extent: bool=False,
+    same_dtype: bool=False,
+) -> bool:
+    if len(rasters) == 1:
         return True
 
     metas = []
 
-    for raster in input_rasters:
+    for raster in rasters:
         metas.append(raster_to_metadata(raster))
 
     base = {}
@@ -52,75 +67,219 @@ def is_aligned(input_rasters, same_extent=False, same_dtype=False, verbose=False
     return True
 
 
-def align(
-    input_rasters, output_folder, postfix="_aligned", prefix="",
-    bounding_box_mode="intersection",
-    resample_method_list=None,
-    target_pixel_size=None,
-    base_vector_path_list=None,
-    raster_align_index=None,
-    base_projection_wkt_list=None,
-    target_projection_wkt=None,
-    vector_mask_options=None,
-    gdal_warp_options=None,
-    raster_driver_creation_tuple=('GTIFF', ('TILED=YES', 'BIGTIFF=YES', 'COMPRESS=LZW', 'BLOCKXSIZE=256', 'BLOCKYSIZE=256')),
-):
-    if resample_method_list is None:
-        resample_method_list = ["near"] * len(input_rasters)
+def align_rasters(
+    rasters: list,
+    output: Union[list, str, None]=None,
+    master: Union[gdal.Dataset, str, None]=None,
+    bounding_box: Union[str, gdal.Dataset, list, tuple]="intersection", # intersection
+    resample_alg: str='nearest',
+    target_size: Union[tuple, int, float, str, gdal.Dataset, None]=None,
+    target_in_pixels: bool=False,
+    projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference, None]=None,
+    overwrite: bool=True,
+    creation_options: list=[],
+    src_nodata: Union[str, int, float]="infer",
+    dst_nodata: Union[str, int, float]="infer",
+    postfix: str="_aligned",
+    prefix: str="",
+) -> list:
+    if isinstance(output, list):
+        if len(output) != len(rasters):
+            raise ValueError("If output is a list of paths, it must have the same length as rasters")
+
+    metadata: List[dict] = []
+    master_metadata = None
+
+    target_projection = None
+    target_bounds = None
+    x_res = None
+    y_res = None
+    x_pixels = None
+    y_pixels = None
+
+    reprojected_rasters = []
+
+    output_names = []
+    if isinstance(output, list):
+        output_names = output
+    elif isinstance(output, str):
+        if not folder_exists(output):
+            raise ValueError("output folder does not exists.")
+
+    used_projections = []
+    for index, raster in enumerate(rasters):
+        raster_metadata = raster_to_metadata(raster)
+        used_projections.append(raster_metadata["projection"])
+
+        if isinstance(output, str):
+            basename = raster_metadata["basename"]
+            ext = raster_metadata["ext"]
+            output_names.append(f"{output}{prefix}{basename}{postfix}{ext}")
+
+        metadata.append(raster_metadata)
     
-    if base_projection_wkt_list is None:
-        base_projection_wkt_list = []
-        for in_raster in input_rasters:
-            in_rast = raster_to_metadata(in_raster)
-            base_projection_wkt_list.append(in_rast["projection"])
+    # throws an error if the file exists and overwrite is False.
+    for output_name in output_names:
+        overwrite_required(output_name, overwrite)
 
-    if target_projection_wkt is None:
-        counts = None
-        target_projection_wkt = None
+    if master is not None:
+        master_metadata = raster_to_metadata(master)
 
-        if base_projection_wkt_list is not None:
-            counts = Counter(base_projection_wkt_list)
-            target_projection_wkt = counts.most_common(1)[0][0]
+        target_projection = master_metadata["projection_osr"]
+        x_min, y_max, x_max, y_min = master_metadata["extent"]
+        target_bounds = (x_min, y_min, x_max, y_max)
+        x_res = master_metadata["width"]
+        y_res = master_metadata["height"]
+        target_in_pixels = False
+
+    if projection is not None:
+        target_projection = parse_projection(projection)
+    elif target_projection is None:
+        projection_counter = {}
+        for proj in used_projections:
+            if proj in projection_counter:
+                projection_counter[proj] += 1
+            else:
+                projection_counter[proj] = 1
+        most_common_projection = sorted(projection_counter, key=projection_counter.get, reverse=True)
+        target_projection = parse_projection(most_common_projection[0])
+        
+    if target_size is not None:
+        if isinstance(target_size, gdal.Dataset) or isinstance(target_size, str):
+            target_size_raster = raster_to_metadata(reproject_raster(target_size, target_projection))
+            x_res = target_size_raster["width"]
+            y_res = target_size_raster["height"]
         else:
-            projections = []
-            for in_raster in input_rasters:
-                in_rast = raster_to_metadata(in_raster)
-                projections.append(in_rast["projection"])
+            x_res, y_res, x_pixels, y_pixels = raster_size_from_list(target_size, target_in_pixels)
+    elif x_res is None and y_res is None and x_pixels is None and y_pixels is None:
+        x_res_arr = np.empty(len(rasters), dtype="float32")
+        y_res_arr = np.empty(len(rasters), dtype="float32")
+        for index, raster in enumerate(rasters):
+            reprojected = reproject_raster(raster, target_projection)
+            target_size_raster = raster_to_metadata(reprojected)
+            x_res_arr[index] = target_size_raster["width"]
+            y_res_arr[index] = target_size_raster["height"]
+            reprojected_rasters.append(reproject_raster)
+        x_res = np.median(x_res_arr)
+        y_res = np.median(x_res_arr)
 
-            counts = Counter(base_projection_wkt_list)
-            target_projection_wkt = counts.most_common(1)[0][0]
+    if target_bounds is None:
+        if isinstance(bounding_box, list) or isinstance(bounding_box, tuple):
+            if len(bounding_box) != 4:
+                raise ValueError("bounding_box as a list/tuple must have 4 values.")
+            target_bounds = bounding_box
+        elif is_raster(bounding_box):
+            reprojected_bbox = raster_to_metadata(reproject_raster(bounding_box, target_projection))
+            x_min, y_max, x_max, y_min = reprojected_bbox["extent"]
+            target_bounds = (x_min, y_min, x_max, y_max)
+        elif isinstance(bounding_box, str):
+            if bounding_box == "intersection" or bounding_box == "union":
+                extents = []
 
-    if target_pixel_size is None:
-        target_pixel_size = Infinity
+                if len(reprojected_rasters) != len(rasters):
+                    reprojected_rasters = []
 
-        for in_raster in input_rasters:
-            meta = raster_to_metadata(in_raster)
-            pixel_size = min(meta["pixel_width"], meta["pixel_height"])
-            if pixel_size < target_pixel_size:
-                target_pixel_size = (pixel_size, pixel_size)
+                    for raster in rasters:
+                        reprojected_raster = reproject_raster(raster, target_projection)
+                        reprojected_rasters.append(reprojected_raster)
+                
+                for reprojected_raster in reprojected_rasters:
+                    reprojected_raster_metadata = raster_to_metadata(reprojected_raster)
+                    extents.append(reprojected_raster_metadata["extent"])
+
+                x_min, y_max, x_max, y_min = extents[0]
+
+                for index, extent in extents:
+                    if index == 0:
+                        continue
+
+                    if bounding_box == "intersection":
+                        if extent[0] > x_min: x_min = extent[0]
+                        if extent[1] < y_max: y_max = extent[1]
+                        if extent[2] < x_max: x_max = extent[2]
+                        if extent[3] > y_min: y_min = extent[3]
+                    
+                    elif bounding_box == "union":
+                        if extent[0] < x_min: x_min = extent[0]
+                        if extent[1] > y_max: y_max = extent[1]
+                        if extent[2] > x_max: x_max = extent[2]
+                        if extent[3] < y_min: y_min = extent[3]
+
+                target_bounds = (x_min, y_min, x_max, y_max)
+
+            else:
+                raise ValueError(f"Unable to parse or infer target_bounds: {target_bounds}")
+        else:
+            raise ValueError(f"Unable to parse or infer target_bounds: {target_bounds}")
+
+    if len(reprojected_rasters) != len(rasters):
+        reprojected_rasters = []
+
+        for raster in rasters:
+            reprojected_raster = reproject_raster(raster, target_projection)
+            reprojected_rasters.append(reprojected_raster)
+
+    return_list = []
+    for index, raster in enumerate(reprojected_rasters):
+        raster_metadata = raster_to_metadata(raster)
+        out_name = None
+        out_format = None
+        out_creation_options = None
+        if output is None:
+            out_name = raster_metadata["name"]
+            out_format = "MEM"
+            out_creation_options = []
+        else:
+            out_name = output_names[index]
+            out_format = path_to_driver(out_name)
+            out_creation_options = default_options(creation_options)
     
-    output_rasters = []
-    for raster in input_rasters:
-        base = os.path.basename(raster)
-        basename = os.path.splitext(base)[0]
-        extension = os.path.splitext(base)[1]
-        out_path = os.path.join(output_folder + f"{prefix}{basename}{postfix}{extension}")
+        # nodata
+        src_nodata = raster_metadata["nodata_value"]
+        out_nodata = None
+        if src_nodata is not None:
+            out_nodata = src_nodata
+        else:
+            if dst_nodata == "infer":
+                out_nodata = gdal_nodata_value_from_type(raster_metadata["dtype_gdal_raw"])
+            else:
+                out_nodata = dst_nodata
 
-        output_rasters.append(out_path)
+        # Removes file if it exists and overwrite is True.
+        remove_if_overwrite(out_name, overwrite)
 
-    geoprocessing.align_and_resize_raster_stack(
-        input_rasters,
-        output_rasters,
-        resample_method_list,
-        target_pixel_size,
-        bounding_box_mode,
-        base_vector_path_list=base_vector_path_list,
-        raster_align_index=raster_align_index,
-        base_projection_wkt_list=base_projection_wkt_list,
-        target_projection_wkt=target_projection_wkt,
-        vector_mask_options=vector_mask_options,
-        gdal_warp_options=gdal_warp_options,
-        raster_driver_creation_tuple=raster_driver_creation_tuple,
-    )
+        x_min, y_min, x_max, y_max = target_bounds
 
-    return 1
+        output_bounds = align_bbox(
+            raster_metadata["extent"],
+            [x_min, y_max, x_max, y_min],
+            x_res,
+            y_res,
+            warp_format=True,
+        )
+
+        warped = gdal.Warp(
+            out_name,
+            raster,
+            xRes=x_res,
+            yRes=y_res,
+            width=x_pixels,
+            height=y_pixels,
+            outputBounds=output_bounds,
+            format=out_format,
+            resampleAlg=translate_resample_method(resample_alg),
+            creationOptions=out_creation_options,
+            srcNodata=src_nodata,
+            dstNodata=out_nodata,
+            targetAlignedPixels=False,
+            cropToCutline=False,
+            multithread=True,
+        )
+
+        if output is not None:
+            warped = None
+            return_list.append(out_name)
+        else:
+            return_list.append(warped)
+    
+    return return_list

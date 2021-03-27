@@ -1,7 +1,7 @@
-from osgeo import gdal, ogr, osr
+import osgeo; from osgeo import gdal, ogr, osr
 from typing import Union
 from buteo.utils import path_to_ext, is_number
-
+import json
 
 def raster_to_reference(raster: Union[str, gdal.Dataset], writeable: bool=False) -> gdal.Dataset:
     """ Takes a file path or a gdal.Dataset and opens it with
@@ -500,15 +500,144 @@ def raster_size_from_list(target_size, target_in_pixels=False):
     return x_res, y_res, x_pixels, y_pixels
 
 
-def align_bbox(og_extent, ta_extent, pixel_width, pixel_height):
-    og_minX, og_maxY, og_maxX, og_minY = og_extent
-    ta_minX, ta_maxY, ta_maxX, ta_minY = ta_extent
+def align_bbox(extent_og, extent_ta, pixel_width, pixel_height, warp_format=True):
+    x_min_og, y_max_og, x_max_og, y_min_og = extent_og
+    x_min_ta, y_max_ta, x_max_ta, y_min_ta = extent_ta
 
-    minX = ta_minX - ((ta_minX - og_minX) % pixel_width)
-    maxX = ta_maxX + ((og_maxX - ta_maxX) % pixel_width)
+    x_min = x_min_ta - ((x_min_ta - x_min_og) % pixel_width)
+    x_max = x_max_ta + ((x_max_og - x_max_ta) % pixel_width)
 
-    minY = ta_minY - ((ta_minY - og_minY) % abs(pixel_height))
-    maxY = ta_maxY + ((og_maxY - ta_maxY) % abs(pixel_height))
+    y_min = y_min_ta - ((y_min_ta - y_min_og) % abs(pixel_height))
+    y_max = y_max_ta + ((y_max_og - y_max_ta) % abs(pixel_height))
 
     # gdal_warp format
-    return (minX, minY, maxX, maxY)
+    if warp_format:
+        return (x_min, y_min, x_max, y_max)
+    
+    return (x_min, y_max, x_max, y_min)
+
+
+def geoms_from_extent(
+    extent, # [x_min, y_max, x_max, y_min],
+    original_projection,
+    target_projection,
+    layer_name,
+):
+    if int(osgeo.__version__[0]) >= 3:
+        original_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+        target_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+    extents = {
+        "ta_proj": None,
+        "ta_proj_dict": None,
+        "wkt": None,
+        "ogr": None,
+        "ogr_geom": None,
+        "geojson_dict": None,
+        "geojson": None,
+    }
+
+    x_min = extent[0]
+    y_max = extent[1]
+    x_max = extent[2]
+    y_min = extent[3]
+
+    bottom_left = [x_min, y_min]
+    top_left = [x_min, y_max]
+    top_right = [x_max, y_max]
+    bottom_right = [x_max, y_min]
+
+    if not original_projection.IsSame(target_projection):
+        tx = osr.CoordinateTransformation(original_projection, target_projection)
+
+        bottom_left = tx.TransformPoint(x_min, y_min)
+        top_left = tx.TransformPoint(x_min, y_max)
+        top_right = tx.TransformPoint(x_max, y_max)
+        bottom_right = tx.TransformPoint(x_max, y_min)
+
+    extents["ta_proj"] = [
+        top_left[0],
+        top_left[1],
+        bottom_right[0],
+        bottom_right[1],
+    ]
+
+    extents["ta_proj_dict"] = {
+        "left": top_left[0],
+        "top": top_left[1],
+        "right": bottom_right[0],
+        "bottom": bottom_right[1],
+    }
+    
+    # WKT has latitude first, geojson has longitude first
+    coord_array = [
+        [bottom_left[1], bottom_left[0]],
+        [top_left[1], top_left[0]],
+        [top_right[1], top_right[0]],
+        [bottom_right[1], bottom_right[0]],
+        [bottom_left[1], bottom_left[0]],
+    ]
+
+    wkt_coords = ""
+    for coord in coord_array:
+        wkt_coords += f"{coord[1]} {coord[0]}, "
+    wkt_coords = wkt_coords[:-2] # Remove the last ", "
+
+    extents["wkt"] = f"POLYGON (({wkt_coords}))"
+
+    # Create an OGR Datasource in memory with the extent
+    extent_name = f"{layer_name}_extent"
+
+    driver = ogr.GetDriverByName("Memory")
+    extent_ogr = driver.CreateDataSource(extent_name)
+    layer = extent_ogr.CreateLayer(extent_name + "_layer", target_projection, ogr.wkbPolygon)
+
+    feature = ogr.Feature(layer.GetLayerDefn())
+    extent_geom = ogr.CreateGeometryFromWkt(extents["wkt"], target_projection)
+    feature.SetGeometry(extent_geom)
+    layer.CreateFeature(feature)
+    feature = None
+
+    extents["ogr"] = extent_ogr
+    extents["ogr_geom"] = extent_geom
+
+    extents["geojson_dict"] = {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [coord_array],
+        },
+    }
+    extents["extent_geojson"] = json.dumps(extents["geojson_dict"])
+
+    return extents
+
+def reproject_extent(
+    extent, # x_min, y_max, x_max, y_in
+    source_projection,
+    target_projection,
+):
+    if len(extent) != 4: raise ValueError("Invalid shape of extent.")
+    if not isinstance(extent[0], float): raise ValueError("x_min not float.")
+    if not isinstance(extent[1], float): raise ValueError("y_max not float.")
+    if not isinstance(extent[2], float): raise ValueError("x_max not float.")
+    if not isinstance(extent[3], float): raise ValueError("y_min not float.")
+
+    if not isinstance(source_projection, osr.SpatialReference):
+        raise ValueError("source_projection not a valid spatial reference.")
+
+    if not isinstance(target_projection, osr.SpatialReference):
+        raise ValueError("target_projection not a valid spatial reference.")
+
+    tx = osr.CoordinateTransformation(source_projection, target_projection)
+
+    top_left = tx.TransformPoint(extent[0], extent[1])
+    bottom_right = tx.TransformPoint(extent[2], extent[3])
+
+    return [
+        top_left[0],
+        top_left[1],
+        bottom_right[0],
+        bottom_right[1],
+    ]

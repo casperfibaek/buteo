@@ -1,7 +1,7 @@
 import sys; sys.path.append('../../')
 from typing import Union
 from osgeo import gdal, ogr, osr
-from buteo.utils import remove_if_overwrite
+from buteo.utils import remove_if_overwrite, overwrite_required
 from buteo.gdal_utils import (
     parse_projection,
     path_to_driver,
@@ -18,7 +18,7 @@ from buteo.raster.io import (
 )
 
 
-def resample_raster(
+def reproject_raster(
     raster: Union[str, gdal.Dataset],
     projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     out_path: Union[str, None]=None,
@@ -27,7 +27,7 @@ def resample_raster(
     creation_options: list=[],
     dst_nodata: Union[str, int, float]="infer",
 ) -> Union[gdal.Dataset, str]:
-    """ Resample a raster to a target resolution.
+    """ Reproject a raster to a target coordinate reference system.
 
     Args:
         raster (path | raster): The raster to reproject.
@@ -62,6 +62,9 @@ def resample_raster(
         An in-memory raster. If an out_path is given the output is a string containing
         the path to the newly created raster.
     """
+    # Throws an error if file exists and overwrite is False.
+    overwrite_required(out_path, overwrite)
+
     ref = raster_to_reference(raster)
     metadata = raster_to_metadata(ref)
 

@@ -1,7 +1,7 @@
 import sys; sys.path.append('../../')
 from typing import Union
-from osgeo import gdal, osr, ogr
-from buteo.utils import remove_if_overwrite, is_number
+from osgeo import gdal
+from buteo.utils import remove_if_overwrite, overwrite_required
 from buteo.gdal_utils import (
     path_to_driver,
     raster_to_reference,
@@ -64,6 +64,8 @@ def resample_raster(
         An in-memory raster. If an out_path is given the output is a string containing
         the path to the newly created raster.
     """
+    overwrite_required(out_path, overwrite)
+
     ref = raster_to_reference(raster)
     metadata = raster_to_metadata(ref)
 

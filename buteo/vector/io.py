@@ -1,11 +1,15 @@
 import sys; sys.path.append('../../')
-import os, json
+import os
 import numpy as np
-import osgeo
 from typing import Union
-from osgeo import gdal, ogr, osr
+import osgeo; from osgeo import gdal, ogr, osr
 
-from buteo.gdal_utils import parse_projection, vector_to_reference, path_to_driver
+from buteo.gdal_utils import (
+    parse_projection,
+    vector_to_reference,
+    path_to_driver,
+    geoms_from_extent,
+)
 from buteo.utils import progress, remove_if_overwrite
 
 
@@ -22,6 +26,7 @@ from buteo.utils import progress, remove_if_overwrite
 def vector_to_memory(
     vector: Union[str, ogr.DataSource],
     memory_path: Union[str, None]=None,
+    layer_to_extract: Union[int, None]=None,
 ) -> ogr.DataSource:
     """ Copies a vector source to memory.
 
@@ -39,34 +44,30 @@ def vector_to_memory(
         string for the in-memory location is returned.
     """
     ref = vector_to_reference(vector)
-    metadata = vector_to_metadata(ref, process_layers="all")
-
-    driver = None
-    if memory_path is not None:
-        driver = ogr.GetDriverByName(path_to_driver(memory_path))
-    else:
-        driver = ogr.GetDriverByName("Memory")
-
-
+    metadata = vector_to_metadata(ref)
     basename = metadata["basename"] if metadata["basename"] is not None else "mem_vector"
 
+    driver = None
     vector_name = None
-    if memory_path is None:
-        vector_name = basename
-    else:
+    if memory_path is not None:
         vector_name = f"/vsimem/{memory_path}"
+        driver = ogr.GetDriverByName(path_to_driver(memory_path))
+    else:
+        vector_name = basename
+        driver = ogr.GetDriverByName("Memory")
 
     copy = driver.CreateDataSource(vector_name)
 
     for layer_idx in range(metadata["layer_count"]):
+        if layer_to_extract is not None and layer_idx != layer_to_extract:
+            continue
         layername = metadata["layers"][layer_idx]["layer_name"]
         copy.CopyLayer(ref.GetLayer(layer_idx), layername, ["OVERWRITE=YES"])
 
     if memory_path is None:
         return copy
-    
-    copy = None
-    return memory_path
+
+    return vector_name
 
 
 def vector_to_disk(
@@ -92,7 +93,7 @@ def vector_to_disk(
     driver = ogr.GetDriverByName(path_to_driver(out_path))
     assert driver != None, "Unable to parse driver."
 
-    metadata = vector_to_metadata(vector, process_layers="all")
+    metadata = vector_to_metadata(vector)
 
     remove_if_overwrite(out_path, overwrite)
 
@@ -106,20 +107,23 @@ def vector_to_disk(
     return out_path
 
 
-# TODO: Rework the way process_layers work.
 def vector_to_metadata(
     vector: Union[str, ogr.DataSource],
-    process_layers: Union[str, int]="first",
+    latlng_and_footprint: bool=True,
+    process_layer: Union[str, int]="all",
 ) -> dict:
     """ Creates a dictionary with metadata about the vector layer.
 
     Args:
         vector (path | DataSource): The vector to analyse.
 
-        process_layers (str): The layers to process. if "first" only processes
-        the first layer the vector source. If "all" is passed, all layers are
-        processed. If an INT is passed, only the layer with that index is 
-        processed.
+    **kwargs:
+        latlng_and_footprint (bool): Should the metadata include a
+            footprint of the raster in wgs84. Requires a reprojection
+            check do not use it if not required and performance is important.
+        
+        process_layer (str, int): The layer to process. Default is "all". 
+        Must be either an int or "all".
 
     Returns:
         A dictionary containing the metadata.
@@ -127,6 +131,9 @@ def vector_to_metadata(
     try:
         vector = vector if isinstance(vector, ogr.DataSource) else ogr.Open(vector)
     except:
+        raise Exception("Could not read input vector")
+    
+    if vector is None:
         raise Exception("Could not read input vector")
 
     abs_path = os.path.abspath(vector.GetName())
@@ -138,107 +145,87 @@ def vector_to_metadata(
         "name": os.path.splitext(os.path.basename(abs_path))[0],
         "layer_count": vector.GetLayerCount(),
         "layers": [],
+        "extent": None,
+        "extent_dict": None,
+        "x_min": None,
+        "x_max": None,
+        "y_min": None,
+        "y_max": None,
+        "extent_wgs84": None,
+        "extent_dict_wgs84": None,
+        "extent_wkt": None,
+        "extent_ogr": None,
+        "extent_ogr_geom": None,
+        "extent_geojson": None,
+        "extent_geojson_dict": None,
     }
 
-    wgs84 = osr.SpatialReference()
-    wgs84.ImportFromEPSG(4326) # WGS84, latlng
+    if isinstance(process_layer, int) and process_layer > (metadata["layer_count"] - 1):
+        raise ValueError("Requested a non-present layer.")
+    
+    processed = False
 
     for layer_index in range(metadata["layer_count"]):
+
+        if isinstance(process_layer, int) and layer_index != process_layer:
+            continue
+        
         layer = vector.GetLayerByIndex(layer_index)
 
-        min_x, max_x, min_y, max_y = layer.GetExtent()
+        x_min, x_max, y_min, y_max = layer.GetExtent()
 
         layer_dict = {
             "layer_name": layer.GetName(),
-            "minx": min_x,
-            "maxx": max_x,
-            "miny": min_y,
-            "maxy": max_y,
-            "extent": [min_x, max_y, max_x, min_y],
+            "x_min": x_min,
+            "x_max": x_max,
+            "y_min": y_min,
+            "y_max": y_max,
+            "extent": [x_min, y_max, x_max, y_min],
+            "extent_dict": {
+                "left": x_min,
+                "top": y_max,
+                "right": x_max,
+                "bottom": y_min,
+            },
             "fid_column": layer.GetFIDColumn(),
             "feature_count": layer.GetFeatureCount(),
+            "field_count": None,
+            "geom_type": None,
+            "geom_type_ogr": None,
+            "field_names": None,
+            "field_types": None,
+            "extent_wgs84": None,
+            "extent_dict_wgs84": None,
+            "extent_wkt": None,
+            "extent_ogr": None,
+            "extent_ogr_geom": None,
+            "extent_geojson": None,
+            "extent_geojson_dict": None,
+            "projection": None,
+            "projection_osr": None,
         }
 
-        projection = layer.GetSpatialRef().ExportToWkt()
-        projection_osr = osr.SpatialReference()
-        projection_osr.ImportFromWkt(projection)
+        projection_wkt = layer.GetSpatialRef().ExportToWkt()
+        original_projection = osr.SpatialReference()
+        original_projection.ImportFromWkt(projection_wkt)
 
-        if layer_index == 0:
-            metadata["projection"] = projection
-            metadata["projection_osr"] = projection_osr
+        if processed is False:
+            metadata["projection"] = projection_wkt
+            metadata["projection_osr"] = original_projection
+            metadata["x_min"] = x_min
+            metadata["x_max"] = x_max
+            metadata["y_min"] = y_min
+            metadata["y_max"] = y_max
 
-        layer_dict["projection"] = projection
-        layer_dict["projection_osr"] = projection_osr
-    
-        bottom_left = ogr.Geometry(ogr.wkbPoint)
-        top_left = ogr.Geometry(ogr.wkbPoint)
-        top_right = ogr.Geometry(ogr.wkbPoint)
-        bottom_right = ogr.Geometry(ogr.wkbPoint)
-
-        bottom_left.AddPoint(min_x, min_y)
-        top_left.AddPoint(min_x, max_y)
-        top_right.AddPoint(max_x, max_y)
-        bottom_right.AddPoint(max_x, min_y)
-
-        if not projection_osr.IsSame(wgs84):
-            tx = osr.CoordinateTransformation(projection_osr, wgs84)
-
-            bottom_left.Transform(tx)
-            top_left.Transform(tx)
-            top_right.Transform(tx)
-            bottom_right.Transform(tx)
-
-            layer_dict["extent_wgs84"] = [
-                top_left.GetX(),
-                top_left.GetY(),
-                bottom_right.GetX(),
-                bottom_right.GetY(),
-            ]
-
+            processed = True
         else:
-            layer_dict["extent_wgs84"] = layer_dict["extent"]
-        
-        # WKT has latitude first, geojson has longitude first
-        coord_array = [
-            [bottom_left.GetY(), bottom_left.GetX()],
-            [top_left.GetY(), top_left.GetX()],
-            [top_right.GetY(), top_right.GetX()],
-            [bottom_right.GetY(), bottom_right.GetX()],
-            [bottom_left.GetY(), bottom_left.GetX()],
-        ]
+            if x_min < metadata["x_min"]: metadata["x_min"] = x_min
+            if x_max > metadata["x_max"]: metadata["x_max"] = x_max
+            if y_min < metadata["y_min"]: metadata["y_min"] = y_min
+            if y_max > metadata["y_max"]: metadata["y_max"] = y_max
 
-        wkt_coords = ""
-        for coord in coord_array:
-            wkt_coords += f"{coord[1]} {coord[0]}, "
-        wkt_coords = wkt_coords[:-2] # Remove the last ", "
-
-        layer_dict["extent_wkt"] = f"POLYGON (({wkt_coords}))"
-
-        # Create an OGR Datasource in memory with the extent
-        extent_name = str(layer_dict["layer_name"]) + "_extent"
-
-        driver = ogr.GetDriverByName("Memory")
-        extent_ogr = driver.CreateDataSource(extent_name)
-        layer = extent_ogr.CreateLayer(extent_name + "_layer", wgs84, ogr.wkbPolygon)
-
-        feature = ogr.Feature(layer.GetLayerDefn())
-        extent_geom = ogr.CreateGeometryFromWkt(layer_dict["extent_wkt"], wgs84)
-        feature.SetGeometry(extent_geom)
-        layer.CreateFeature(feature)
-        feature = None
-
-        layer_dict["extent_ogr_wgs84"] = extent_ogr
-        layer_dict["extent_ogr_geom_wgs84"] = extent_geom
-
-        layer_dict["extent_geojson_dict"] = {
-            "type": "Feature",
-            "properties": {},
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [coord_array],
-            },
-        }
-        layer_dict["extent_geojson"] = json.dumps(layer_dict["extent_geojson_dict"])
+        layer_dict["projection"] = projection_wkt
+        layer_dict["projection_osr"] = original_projection
 
         layer_defn = layer.GetLayerDefn()
 
@@ -254,15 +241,59 @@ def vector_to_metadata(
             layer_dict["field_names"].append(field_defn.GetName())
             layer_dict["field_types"].append(field_defn.GetFieldTypeName(field_defn.GetType()))
 
-        if process_layers == "first":
-
-            for key, value in layer_dict.items():
-                metadata[key] = value
-            
-            del metadata["layers"]
-            break
-
         metadata["layers"].append(layer_dict)
+    
+    metadata["extent"] = [
+        metadata["x_min"],
+        metadata["y_max"],
+        metadata["x_max"],
+        metadata["y_min"],
+    ]
+
+    metadata["extent_dict"] = {
+        "left": metadata["x_min"],
+        "top": metadata["y_max"],
+        "right": metadata["x_max"],
+        "bottom":metadata["y_min"],
+    }
+
+    if latlng_and_footprint:
+        wgs84 = osr.SpatialReference()
+        wgs84.ImportFromEPSG(4326) # WGS84, latlng
+
+        for layer_index in range(metadata["layer_count"]):
+            layer_dict = metadata["layers"][layer_index]
+            
+            extents = geoms_from_extent(layer_dict["extent"], original_projection, wgs84, layer_dict["layer_name"])
+
+            layer_dict["extent_wgs84"] = extents["ta_proj"]
+            layer_dict["extent_wgs84_dict"] = extents["ta_proj_dict"]
+            layer_dict["extent_wkt"] = extents["wkt"]
+            layer_dict["extent_ogr"] = extents["ogr"]
+            layer_dict["extent_ogr_geom"] = extents["ogr_geom"]
+            layer_dict["extent_geojson"] = extents["geojson"]
+            layer_dict["extent_geojson_dict"] = extents["geojson_dict"]
+
+        if metadata["layer_count"] == 1:
+            metadata["extent_wgs84"] = layer_dict["extent_wgs84"]
+            metadata["extent_wgs84_dict"] = layer_dict["extent_wgs84_dict"]
+            metadata["extent_wkt"] = layer_dict["extent_wkt"]
+            metadata["extent_ogr"] = layer_dict["extent_ogr"]
+            metadata["extent_ogr_geom"] = layer_dict["extent_ogr_geom"]
+            metadata["extent_geojson"] = layer_dict["extent_geojson"]
+            metadata["extent_geojson_dict"] = layer_dict["extent_geojson_dict"]
+        else:
+            extents = geoms_from_extent(metadata["extent"], original_projection, wgs84, metadata["name"])
+
+            metadata["extent_wgs84"] = extents["ta_proj"]
+            metadata["extent_wgs84_dict"] = extents["ta_proj_dict"]
+            metadata["extent_wkt"] = extents["wkt"]
+            metadata["extent_ogr"] = extents["ogr"]
+            metadata["extent_ogr_geom"] = extents["ogr_geom"]
+            metadata["extent_geojson"] = extents["geojson"]
+            metadata["extent_geojson_dict"] = extents["geojson_dict"]
+
+    vector = None
 
     return metadata
 
@@ -293,7 +324,7 @@ def reproject_vector(
         the path to the newly created vecotr.
     """
     origin = vector_to_reference(vector)
-    metadata = vector_to_metadata(origin, process_layers="all")
+    metadata = vector_to_metadata(origin)
 
     origin_projection = metadata["projection_osr"]
     target_projection = parse_projection(projection)

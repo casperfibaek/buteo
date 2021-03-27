@@ -58,6 +58,10 @@ def file_exists(path):
     return os.path.exists(path)
 
 
+def folder_exists(path):
+    return os.path.isdir(path)
+
+
 def is_number(potential_number):
     if isinstance(potential_number, float):
         return True
@@ -66,6 +70,13 @@ def is_number(potential_number):
         return True
     
     return False
+
+
+def overwrite_required(path, overwrite):
+    if path is not None:
+        exists = file_exists(path)
+        if exists and not overwrite:
+            raise Exception(f"File: {path} already exists and overwrite is False.")
 
 
 def remove_if_overwrite(path, overwrite):

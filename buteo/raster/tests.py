@@ -1,17 +1,17 @@
 import sys; sys.path.append('../../')
 
+# from buteo.raster.warp import warp_raster
 from buteo.raster.warp import warp_raster
-from buteo.raster.clip import clip_raster
+from buteo.vector.io import vector_to_reference
 
 folder = "C:/Users/caspe/Desktop/test/"
 raster = folder + "dtm.tif"
-patches = folder + "dtm_patches.npy"
-geom = folder + "patches_64_patches.gpkg"
 vector = folder + "aeroe.gpkg"
+# patches = folder + "dtm_patches.npy"
+# geom = folder + "patches_64_patches.gpkg"
 vector_odense = folder + "odense.gpkg"
 
 
-# all_touch does not work..
 # warp_raster(
 #     raster,
 #     out_path=folder + "dtm_warp.tif",
@@ -21,9 +21,14 @@ vector_odense = folder + "odense.gpkg"
 #     crop_to_geom=True,
 # )
 
-clip_raster(
+# vector_df = vector_to_reference(vector)
+
+# import pdb; pdb.set_trace()
+
+warp_raster(
     raster,
-    vector,
-    out_path=folder + "dtm_clipped3.tif",
+    out_path=folder + "dtm_clipped2.tif",
+    clip_geom=vector,
+    # projection=vector_odense,
     all_touch=True,
 )
