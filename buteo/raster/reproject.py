@@ -64,7 +64,6 @@ def reproject_raster(
     """
     # Throws an error if file exists and overwrite is False.
     overwrite_required(out_path, overwrite)
-
     ref = raster_to_reference(raster)
     metadata = raster_to_metadata(ref)
 
@@ -73,6 +72,9 @@ def reproject_raster(
 
     if original_projection.IsSame(target_projection):
         if out_path is None:
+            if isinstance(raster, str):
+                return raster
+
             return raster_to_memory(ref)
         
         return raster_to_disk(raster, out_path)

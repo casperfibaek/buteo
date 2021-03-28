@@ -47,10 +47,13 @@ def raster_to_memory(
     driver = None
     raster_name = None
     if memory_path is not None:
-        raster_name = path_to_name(ref.GetDescription())
-        driver = ogr.GetDriverByName(path_to_driver(memory_path))
-    else:
         raster_name = f"/vsimem/{memory_path}"
+        driver_name = path_to_driver(memory_path)
+        if driver_name is None:
+            driver_name = "GTiff"
+        driver = ogr.GetDriverByName(driver_name)
+    else:
+        raster_name = path_to_name(ref.GetDescription())
         driver = ogr.GetDriverByName("Memory")
 
     copy = driver.CreateCopy(raster_name, ref)
@@ -132,6 +135,7 @@ def raster_to_metadata(
 
     metadata = {
         "name": raster.GetDescription(),
+        "path": raster.GetDescription(),
         "transform": raster.GetGeoTransform(),
         "projection": raster.GetProjection(),
         "width": raster.RasterXSize,
@@ -337,8 +341,9 @@ def array_to_raster(
         return destination["dataframe"]
 
 
+# TODO: ALLOW LISTS
 def raster_to_array(
-    raster: Union[str, gdal.Dataset],
+    raster: Union[list, str, gdal.Dataset],
     bands: Union[str, int, list]="all",
     filled: bool=False,
     output_2D: bool=False,
@@ -365,6 +370,9 @@ def raster_to_array(
         A numpy array in the 3D channel-last format unless output_2D is
         specified.
     """
+    # TODO: CHECK IF ALIGNED
+    # if isinstance(raster, list):
+
     ref = raster_to_reference(raster)
     metadata = raster_to_metadata(ref, latlng_and_footprint=False)
     band_count = metadata["bands"]

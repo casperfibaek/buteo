@@ -14,7 +14,6 @@ from buteo.gdal_utils import (
     path_to_driver,
     default_options,
     gdal_nodata_value_from_type,
-    align_bbox,
     translate_resample_method,
 )
 
@@ -71,7 +70,7 @@ def align_rasters(
     rasters: list,
     output: Union[list, str, None]=None,
     master: Union[gdal.Dataset, str, None]=None,
-    bounding_box: Union[str, gdal.Dataset, list, tuple]="intersection", # intersection
+    bounding_box: Union[str, gdal.Dataset, list, tuple]="intersection",
     resample_alg: str='nearest',
     target_size: Union[tuple, int, float, str, gdal.Dataset, None]=None,
     target_in_pixels: bool=False,
@@ -146,7 +145,8 @@ def align_rasters(
         
     if target_size is not None:
         if isinstance(target_size, gdal.Dataset) or isinstance(target_size, str):
-            target_size_raster = raster_to_metadata(reproject_raster(target_size, target_projection))
+            reprojected_target_size = reproject_raster(target_size, target_projection)
+            target_size_raster = raster_to_metadata(reprojected_target_size)
             x_res = target_size_raster["width"]
             y_res = target_size_raster["height"]
         else:
@@ -157,11 +157,12 @@ def align_rasters(
         for index, raster in enumerate(rasters):
             reprojected = reproject_raster(raster, target_projection)
             target_size_raster = raster_to_metadata(reprojected)
-            x_res_arr[index] = target_size_raster["width"]
-            y_res_arr[index] = target_size_raster["height"]
-            reprojected_rasters.append(reproject_raster)
+            x_res_arr[index] = target_size_raster["pixel_width"]
+            y_res_arr[index] = target_size_raster["pixel_height"]
+            reprojected_rasters.append(reprojected)
+
         x_res = np.median(x_res_arr)
-        y_res = np.median(x_res_arr)
+        y_res = np.median(y_res_arr)
 
     if target_bounds is None:
         if isinstance(bounding_box, list) or isinstance(bounding_box, tuple):
@@ -179,17 +180,21 @@ def align_rasters(
                 if len(reprojected_rasters) != len(rasters):
                     reprojected_rasters = []
 
-                    for raster in rasters:
-                        reprojected_raster = reproject_raster(raster, target_projection)
-                        reprojected_rasters.append(reprojected_raster)
-                
+                    for index, raster in enumerate(rasters):
+                        raster_metadata = metadata[index]
+                        if raster_metadata["projection_osr"].IsSame(target_projection):
+                            reprojected_rasters.append(raster)
+                        else:
+                            reprojected = reproject_raster(raster, target_projection)
+                            reprojected_rasters.append(reprojected)
+
                 for reprojected_raster in reprojected_rasters:
                     reprojected_raster_metadata = raster_to_metadata(reprojected_raster)
                     extents.append(reprojected_raster_metadata["extent"])
 
                 x_min, y_max, x_max, y_min = extents[0]
 
-                for index, extent in extents:
+                for index, extent in enumerate(extents):
                     if index == 0:
                         continue
 
@@ -215,9 +220,19 @@ def align_rasters(
     if len(reprojected_rasters) != len(rasters):
         reprojected_rasters = []
 
-        for raster in rasters:
-            reprojected_raster = reproject_raster(raster, target_projection)
-            reprojected_rasters.append(reprojected_raster)
+        for index, raster in enumerate(rasters):
+            raster_metadata = metadata[index]
+            if raster_metadata["projection_osr"].IsSame(target_projection):
+                reprojected_rasters.append(raster)
+            else:
+                reprojected = reproject_raster(raster, target_projection)
+                reprojected_rasters.append(reprojected)
+
+    if target_projection is None or target_bounds is None:
+        raise Exception("Error while preparing the target projection or bounds.")
+    
+    if x_res is None and y_res is None and x_pixels is None and y_pixels is None:
+        raise Exception("Error while preparing the target pixel size.")
 
     return_list = []
     for index, raster in enumerate(reprojected_rasters):
@@ -235,28 +250,29 @@ def align_rasters(
             out_creation_options = default_options(creation_options)
     
         # nodata
-        src_nodata = raster_metadata["nodata_value"]
-        out_nodata = None
-        if src_nodata is not None:
-            out_nodata = src_nodata
+        out_src_nodata = None
+        out_dst_nodata = None
+        if src_nodata == "infer":
+            out_src_nodata = raster_metadata["nodata_value"]
+
+            if out_src_nodata is None:
+                out_src_nodata = gdal_nodata_value_from_type(raster_metadata["dtype_gdal_raw"])
+
+        elif src_nodata == None:
+            out_src_nodata = None
         else:
-            if dst_nodata == "infer":
-                out_nodata = gdal_nodata_value_from_type(raster_metadata["dtype_gdal_raw"])
-            else:
-                out_nodata = dst_nodata
+            out_src_nodata = src_nodata
+
+        if dst_nodata == "infer":
+            out_dst_nodata = out_src_nodata
+        elif src_nodata == None:
+            out_dst_nodata = None
+        else:
+            out_dst_nodata = dst_nodata
+
 
         # Removes file if it exists and overwrite is True.
         remove_if_overwrite(out_name, overwrite)
-
-        x_min, y_min, x_max, y_max = target_bounds
-
-        output_bounds = align_bbox(
-            raster_metadata["extent"],
-            [x_min, y_max, x_max, y_min],
-            x_res,
-            y_res,
-            warp_format=True,
-        )
 
         warped = gdal.Warp(
             out_name,
@@ -265,12 +281,12 @@ def align_rasters(
             yRes=y_res,
             width=x_pixels,
             height=y_pixels,
-            outputBounds=output_bounds,
+            outputBounds=target_bounds,
             format=out_format,
             resampleAlg=translate_resample_method(resample_alg),
             creationOptions=out_creation_options,
-            srcNodata=src_nodata,
-            dstNodata=out_nodata,
+            srcNodata=out_src_nodata,
+            dstNodata=out_dst_nodata,
             targetAlignedPixels=False,
             cropToCutline=False,
             multithread=True,

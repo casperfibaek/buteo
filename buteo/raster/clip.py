@@ -122,17 +122,24 @@ def clip_raster(
             origin_projection,
         )
 
-    if clip_metadata["layer_count"] > 1:
-        clip_ds = vector_to_memory(
-            clip_ds,
-            memory_path=f"clip_geom_{uuid1().int}.gpkg",
-            layer_to_extract=layer_to_clip,
-        )
-    elif not isinstance(clip_ds, str):
-        clip_ds = vector_to_memory(
-            clip_ds,
-            memory_path=f"clip_geom_{uuid1().int}.gpkg",
-        )
+    if not isinstance(clip_ds, str):
+        clip_path = clip_metadata["path"]
+        if file_exists(clip_path):
+            clip_ds = clip_path
+        elif "/vsimem/" in clip_path:
+            clip_ds = clip_path
+        
+        if clip_metadata["layer_count"] > 1:
+            clip_ds = vector_to_memory(
+                clip_ds,
+                memory_path=f"clip_geom_{uuid1().int}.gpkg",
+                layer_to_extract=layer_to_clip,
+            )
+        elif not isinstance(clip_ds, str): 
+            clip_ds = vector_to_memory(
+                clip_ds,
+                memory_path=f"clip_geom_{uuid1().int}.gpkg",
+            )
 
     if clip_ds is None:
         raise ValueError(f"Unable to parse input clip geom: {clip_geom}")
