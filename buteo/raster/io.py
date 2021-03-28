@@ -423,9 +423,9 @@ def raster_to_array(
 
         arr = band_ref.ReadAsArray()
 
-        if band_nodata_value is None and filled is None:
+        if band_nodata_value is None and filled is False:
             arr = np.ma.masked_invalid(arr)
-        elif filled is None:
+        elif filled is False:
             arr = np.ma.masked_equal(arr, band_nodata_value)
 
         if output_2D:

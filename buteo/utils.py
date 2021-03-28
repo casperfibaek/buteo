@@ -71,7 +71,6 @@ def is_number(potential_number):
     
     return False
 
-
 def overwrite_required(path, overwrite):
     if path is not None:
         exists = file_exists(path)
