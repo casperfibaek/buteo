@@ -3,7 +3,7 @@ from uuid import uuid1
 from osgeo import gdal, ogr
 from typing import Union
 from buteo.raster.io import raster_to_metadata
-from buteo.vector.io import vector_to_memory, vector_to_metadata, reproject_vector
+from buteo.vector.io import vector_to_memory, vector_to_metadata
 from buteo.utils import file_exists, remove_if_overwrite, overwrite_required
 from buteo.gdal_utils import (
     raster_to_reference, reproject_extent,

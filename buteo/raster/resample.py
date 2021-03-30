@@ -26,14 +26,14 @@ def resample_raster(
     creation_options: list=[],
     dst_nodata: Union[str, int, float]="infer",
 ) -> Union[gdal.Dataset, str]:
-    """ Reprojects a raster given a target projection.
+    """ Reprojects a raster given a target projection. Beware if your input is in
+        latitude and longitude, you'll need to specify the target_sizedegrees as well.
 
     Args:
         raster (path | raster): The raster to reproject.
         
         target_size (str | int | vector | raster): The target resolution of the
-        raster. In the same unit as the projection of the raster. Beware if your
-        input is in latitude and longitude, you'll need to specify degrees as well!
+        raster. In the same unit as the projection of the raster. 
         It's better to reproject to a projected coordinate system for resampling.
         If a raster is the target_size the function will read the pixel size from 
         that raster.

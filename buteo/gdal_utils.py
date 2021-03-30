@@ -1,7 +1,10 @@
 import osgeo; from osgeo import gdal, ogr, osr
 from typing import Union
-from buteo.utils import path_to_ext, is_number
+import numpy as np
+import os
 import json
+
+from buteo.utils import path_to_ext, is_number
 
 def raster_to_reference(raster: Union[str, gdal.Dataset], writeable: bool=False) -> gdal.Dataset:
     """ Takes a file path or a gdal.Dataset and opens it with
@@ -613,6 +616,17 @@ def geoms_from_extent(
 
     return extents
 
+
+# x_min, x_max, y_min, y_max
+def ogr_bbox_intersects(bbox1, bbox2):
+    return (bbox1[0] <= bbox2[1]) and (bbox2[0] <= bbox1[1]) and (bbox1[2] <= bbox2[3]) and (bbox2[2] <= bbox1[3])
+
+
+# x_min, y_max, x_max, y_min
+def gdal_bbox_intersects(bbox1, bbox2):
+    return (bbox1[0] <= bbox2[2]) and (bbox2[0] <= bbox1[2]) and (bbox1[3] <= bbox2[1]) and (bbox2[3] <= bbox1[1])
+
+
 def reproject_extent(
     extent, # x_min, y_max, x_max, y_in
     source_projection,
@@ -641,3 +655,61 @@ def reproject_extent(
         bottom_right[0],
         bottom_right[1],
     ]
+
+
+def to_raster_list(variable):
+    return_list = []
+    if isinstance(variable, list):
+        return_list = variable
+    else:
+        return_list.append(variable)
+    
+    if len(return_list) == 0:
+        raise ValueError("Empty raster list.")
+
+    for raster in return_list:
+        if not is_raster(raster):
+            raise ValueError(f"Invalid raster in list: {variable}")
+
+    return return_list
+
+
+def to_vector_list(variable):
+    return_list = []
+    if isinstance(variable, list):
+        return_list = variable
+    else:
+        return_list.append(variable)
+    
+    if len(return_list) == 0:
+        raise ValueError("Empty vector list.")
+
+    for vector in return_list:
+        if not is_vector(vector):
+            raise ValueError(f"Invalid vector in list: {variable}")
+
+    return return_list
+
+
+def to_array_list(variable):
+    return_list = []
+    if isinstance(variable, list):
+        return_list = variable
+    else:
+        return_list.append(variable)
+
+    if len(return_list) == 0:
+        raise ValueError("Empty array list.")
+    
+    for array in return_list:
+        if not isinstance(array, np.ndarray):
+            if isinstance(array, str) and os.path.exists(array):
+                try:
+                    _ = np.load(array)
+                except:
+                    raise ValueError(f"Invalid array in list: {array}")    
+        else:
+            raise ValueError(f"Invalid array in list: {array}")
+
+    return return_list
+

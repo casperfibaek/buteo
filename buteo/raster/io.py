@@ -26,6 +26,7 @@ from buteo.gdal_utils import (
 def raster_to_memory(
     raster: Union[str, gdal.Dataset],
     memory_path: Union[str, None]=None,
+    opened: bool=False,
 ) -> gdal.Dataset:
     """ Takes a file path or a gdal raster dataset and copies
     it to memory. 
@@ -38,6 +39,10 @@ def raster_to_memory(
         appropriate driver and uses the VSIMEM gdal system.
         Example: vector_to_memory(clip_ref, "clip_geom.gpkg")
         /vsimem/ is autumatically added.
+    
+        opened (bool): If a memory path is specified, the default is 
+        to return a path. If open is supplied. The raster is opened
+        before returning.
 
     Returns:
         A gdal.Dataset copied into memory.
@@ -51,14 +56,14 @@ def raster_to_memory(
         driver_name = path_to_driver(memory_path)
         if driver_name is None:
             driver_name = "GTiff"
-        driver = ogr.GetDriverByName(driver_name)
+        driver = gdal.GetDriverByName(driver_name)
     else:
         raster_name = path_to_name(ref.GetDescription())
-        driver = ogr.GetDriverByName("Memory")
+        driver = gdal.GetDriverByName("MEM")
 
     copy = driver.CreateCopy(raster_name, ref)
 
-    if memory_path is None:
+    if memory_path is None or opened:
         return copy
 
     return memory_path
@@ -131,7 +136,9 @@ def raster_to_metadata(
         raise Exception("Could not read input raster")
 
     if raster is None:
-        raise Exception("Could not read input raster")    
+        raise Exception("Could not read input raster")
+
+    raster_driver = raster.GetDriver()
 
     metadata = {
         "name": raster.GetDescription(),
@@ -141,6 +148,8 @@ def raster_to_metadata(
         "width": raster.RasterXSize,
         "height": raster.RasterYSize,
         "bands": raster.RasterCount,
+        "driver": raster_driver.ShortName,
+        "driver_long": raster_driver.LongName,
     }
 
     basename = os.path.basename(metadata["name"])
@@ -448,3 +457,17 @@ def empty_raster(filetype: str="MEM", path: Union[str, None]=None) -> Union[gdal
         return destination
     else:
         return path
+
+
+def raster_in_memory(raster):
+    metadata = raster_to_metadata(raster)
+    
+    if metadata["driver"] == "MEM":
+        return True
+    
+    if "/vsimem/" in metadata["path"]:
+        return True
+    
+    return False
+
+# TODO: raster_define_dtype

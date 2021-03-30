@@ -2,10 +2,9 @@ import sys; sys.path.append('../../')
 import os
 import numpy as np
 from typing import Union
-import osgeo; from osgeo import gdal, ogr, osr
+from osgeo import ogr, osr
 
 from buteo.gdal_utils import (
-    parse_projection,
     vector_to_reference,
     path_to_driver,
     geoms_from_extent,
@@ -23,94 +22,10 @@ from buteo.utils import progress, remove_if_overwrite
 #   - multithreaded processing
 
 
-def vector_to_memory(
-    vector: Union[str, ogr.DataSource],
-    memory_path: Union[str, None]=None,
-    layer_to_extract: Union[int, None]=None,
-) -> ogr.DataSource:
-    """ Copies a vector source to memory.
-
-    Args:
-        vector (path | DataSource): The vector to copy to memory
-
-    **kwargs:
-        memory_path (str | None): If a path is provided, uses the
-        appropriate driver and uses the VSIMEM gdal system.
-        Example: vector_to_memory(clip_ref, "clip_geom.gpkg")
-        /vsimem/ is autumatically added.
-
-    Returns:
-        An in-memory ogr.DataSource. If a memory path was provided a
-        string for the in-memory location is returned.
-    """
-    ref = vector_to_reference(vector)
-    metadata = vector_to_metadata(ref)
-    basename = metadata["basename"] if metadata["basename"] is not None else "mem_vector"
-
-    driver = None
-    vector_name = None
-    if memory_path is not None:
-        vector_name = f"/vsimem/{memory_path}"
-        driver = ogr.GetDriverByName(path_to_driver(memory_path))
-    else:
-        vector_name = basename
-        driver = ogr.GetDriverByName("Memory")
-
-    copy = driver.CreateDataSource(vector_name)
-
-    for layer_idx in range(metadata["layer_count"]):
-        if layer_to_extract is not None and layer_idx != layer_to_extract:
-            continue
-        layername = metadata["layers"][layer_idx]["layer_name"]
-        copy.CopyLayer(ref.GetLayer(layer_idx), layername, ["OVERWRITE=YES"])
-
-    if memory_path is None:
-        return copy
-
-    return vector_name
-
-
-def vector_to_disk(
-    vector: Union[str, ogr.DataSource],
-    out_path: str,
-    overwrite: bool=True,
-) -> str:
-    """ Copies a vector source to disk.
-
-    Args:
-        vector (path | DataSource): The vector to copy to disk
-
-        out_path (path): The destination to save to.
-
-    **kwargs:
-        overwite (bool): Is it possible to overwrite the out_path if it exists.
-
-    Returns:
-        An path to the created vector.
-    """
-    assert isinstance(vector, ogr.DataSource), "Input not a vector datasource."
-
-    driver = ogr.GetDriverByName(path_to_driver(out_path))
-    assert driver != None, "Unable to parse driver."
-
-    metadata = vector_to_metadata(vector)
-
-    remove_if_overwrite(out_path, overwrite)
-
-    copy = driver.CreateDataSource(out_path)
-
-    for layer_idx in range(metadata["layer_count"]):
-        layer_name = metadata["layers"][layer_idx]["layer_name"]
-        copy.CopyLayer(vector.GetLayer(layer_idx), str(layer_name), ["OVERWRITE=YES"])
-
-    copy = None
-    return out_path
-
-
 def vector_to_metadata(
     vector: Union[str, ogr.DataSource],
     latlng_and_footprint: bool=True,
-    process_layer: Union[str, int]="all",
+    process_layer: Union[int, str]="all",
 ) -> dict:
     """ Creates a dictionary with metadata about the vector layer.
 
@@ -136,6 +51,8 @@ def vector_to_metadata(
     if vector is None:
         raise Exception("Could not read input vector")
 
+    vector_driver = vector.GetDriver()
+
     abs_path = os.path.abspath(vector.GetName())
 
     metadata = {
@@ -144,6 +61,8 @@ def vector_to_metadata(
         "filetype": os.path.splitext(os.path.basename(abs_path))[1],
         "name": os.path.splitext(os.path.basename(abs_path))[0],
         "layer_count": vector.GetLayerCount(),
+        "driver": vector_driver.GetName(),
+        "driver_long": vector_driver.GetName(), # This is to keep it in sync with raster_to_metadata
         "layers": [],
         "extent": None,
         "extent_dict": None,
@@ -298,6 +217,100 @@ def vector_to_metadata(
     return metadata
 
 
+
+def vector_to_memory(
+    vector: Union[str, ogr.DataSource],
+    memory_path: Union[str, None]=None,
+    layer_to_extract: Union[int, None]=None,
+    opened: bool=False,
+) -> ogr.DataSource:
+    """ Copies a vector source to memory.
+
+    Args:
+        vector (path | DataSource): The vector to copy to memory
+
+    **kwargs:
+        memory_path (str | None): If a path is provided, uses the
+        appropriate driver and uses the VSIMEM gdal system.
+        Example: vector_to_memory(clip_ref, "clip_geom.gpkg")
+        /vsimem/ is autumatically added.
+
+        layer_to_extract (int | None): The layer in the vector to copy.
+        if None is specified, all layers are copied.
+        
+        opened (bool): If a memory path is specified, the default is 
+        to return a path. If open is supplied. The vector is opened
+        before returning.
+
+    Returns:
+        An in-memory ogr.DataSource. If a memory path was provided a
+        string for the in-memory location is returned.
+    """
+    ref = vector_to_reference(vector)
+    metadata = vector_to_metadata(ref)
+    basename = metadata["basename"] if metadata["basename"] is not None else "mem_vector"
+
+    driver = None
+    vector_name = None
+    if memory_path is not None:
+        vector_name = f"/vsimem/{memory_path}"
+        driver = ogr.GetDriverByName(path_to_driver(memory_path))
+    else:
+        vector_name = basename
+        driver = ogr.GetDriverByName("Memory")
+
+    copy = driver.CreateDataSource(vector_name)
+
+    for layer_idx in range(metadata["layer_count"]):
+        if layer_to_extract is not None and layer_idx != layer_to_extract:
+            continue
+        layername = metadata["layers"][layer_idx]["layer_name"]
+        copy.CopyLayer(ref.GetLayer(layer_idx), layername, ["OVERWRITE=YES"])
+
+    if memory_path is None or opened:
+        return copy
+
+    return vector_name
+
+
+def vector_to_disk(
+    vector: Union[str, ogr.DataSource],
+    out_path: str,
+    overwrite: bool=True,
+) -> str:
+    """ Copies a vector source to disk.
+
+    Args:
+        vector (path | DataSource): The vector to copy to disk
+
+        out_path (path): The destination to save to.
+
+    **kwargs:
+        overwite (bool): Is it possible to overwrite the out_path if it exists.
+
+    Returns:
+        An path to the created vector.
+    """
+    assert isinstance(vector, ogr.DataSource), "Input not a vector datasource."
+
+    driver = ogr.GetDriverByName(path_to_driver(out_path))
+    assert driver != None, "Unable to parse driver."
+
+    metadata = vector_to_metadata(vector)
+
+    remove_if_overwrite(out_path, overwrite)
+
+    copy = driver.CreateDataSource(out_path)
+
+    for layer_idx in range(metadata["layer_count"]):
+        layer_name = metadata["layers"][layer_idx]["layer_name"]
+        copy.CopyLayer(vector.GetLayer(layer_idx), str(layer_name), ["OVERWRITE=YES"])
+
+    copy = None
+    return out_path
+
+
+
 # TODO: Update this to work on every geom layer.
 # TODO: Add output array.
 # TODO: Add copy
@@ -413,3 +426,15 @@ def vector_add_shapes(
     vector_layer.CommitTransaction()
 
     return vector
+
+
+def vector_in_memory(vector):
+    metadata = vector_to_metadata(vector)
+    
+    if metadata["driver"] == "Memory":
+        return True
+    
+    if "/vsimem/" in metadata["path"]:
+        return True
+    
+    return False

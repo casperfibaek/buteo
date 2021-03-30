@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from typing import Union
 from osgeo import gdal
 
 
@@ -148,3 +149,51 @@ def step_ranges(steps):
 
     return start_stop
 
+
+def type_check(
+    variable: any,
+    types: tuple,
+    name: str="",
+    allow_none=False,
+    throw_error=True,
+) -> bool:
+    '''
+        Utility function to type check the inputs of a function.
+
+    Args:
+        variable (any): The variable to typecheck
+
+        types (tuple): A tuple of type classes. e.g. int, float, etc.
+
+    **kwargs:
+        name (str): The name printed in the error string if an error is thrown.
+
+        allow_none (bool): Allow the type to be None
+
+        throw_error (bool): Should the function throw an error if the type
+        is wrong or return a boolean.
+
+    Returns:
+        A boolean indicating if the type is valid. If throw_error an error is 
+        raised if the input is not a valid type.
+    '''
+    is_valid_type = isinstance(variable, tuple(types))
+
+    if is_valid_type:
+        return True
+
+    if allow_none and variable is None:
+        return True
+
+    type_names = []
+    valid_types = list(types)
+    if allow_none:
+        valid_types.append(None)
+    
+    for t in valid_types:
+        type_names.append(t.__name__)
+
+    if throw_error:
+        raise ValueError(f"Variable: {name} must be type(s): {' '.join(type_names)} - Received type: {type(variable).__name__}, variable: {variable}")
+
+    return False

@@ -444,4 +444,7 @@ def align_rasters(
         else:
             return_list.append(warped)
     
+    if not is_aligned(return_list, same_extent=True):
+        raise Exception("Error while aligning rasters. Output is not aligned")
+
     return return_list

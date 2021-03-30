@@ -4,14 +4,20 @@ import numpy as np
 
 
 # from buteo.raster.warp import warp_raster
-from buteo.raster.align import align_rasters
-from buteo.raster.io import raster_to_array, array_to_raster
+from buteo.raster.io import raster_to_metadata, raster_to_memory
 # from buteo.raster.clip import clip_raster
-# from buteo.vector.io import vector_to_reference
+from buteo.vector.io import vector_to_metadata, vector_to_memory
 
-folder = "C:/Users/caspe/Desktop/test/align/comp/"
-rasters = glob(folder + "*.tif")
+folder = "C:/Users/caspe/Desktop/test/"
 
-raster = raster_to_array(rasters[2])
+vector_path = folder + "odense.gpkg"
+vector_memory = vector_to_memory(vector_path)
 
-import pdb; pdb.set_trace()
+# raster_path = folder + "fyn.tif"
+# raster_memory = raster_to_memory(raster_path)
+
+# raster_to_metadata(raster_path)
+# raster_to_metadata(raster_memory)
+
+# vector_to_metadata(vector_path)
+vector_to_metadata(vector_memory)
