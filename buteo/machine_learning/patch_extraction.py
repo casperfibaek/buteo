@@ -1,9 +1,9 @@
-import sys
-from typing import Union; sys.path.append("../../")
-from osgeo import ogr, gdal
+import sys;  sys.path.append("../../")
 import numpy as np
 import os
 import random
+from typing import Union
+from osgeo import ogr, gdal
 from uuid import uuid1
 from buteo.raster.io import (
     raster_to_array,
@@ -22,8 +22,72 @@ from buteo.vector.io import (
 from buteo.raster.clip import clip_raster
 from buteo.raster.align import is_aligned
 from buteo.vector.reproject import reproject_vector
-from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check, file_in_use
+from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
 from buteo.gdal_utils import to_array_list, to_raster_list, ogr_bbox_intersects
+
+
+def reconstitute_raster(
+    blocks: Union[str, np.ndarray],
+    raster_height: int,
+    raster_width: int,
+    size: int,
+    offset: tuple,
+    border_patches: bool,
+    border_patches_x: bool,
+    border_patches_y: bool,
+) -> Union[str, gdal.Dataset]:
+    ref_shape = [raster_height - offset[1], raster_width - offset[0]]
+
+    if offset != (0, 0):
+        border_patches = False
+        border_patches_x = False
+        border_patches_y = False
+
+    if border_patches and (border_patches_x or border_patches_y):
+        if border_patches_x:
+            ref_shape[1] = ((ref_shape[1] // size) * size) + size
+        if border_patches_y:
+            ref_shape[0] = ((ref_shape[0] // size) * size) + size
+
+    import pdb; pdb.set_trace()
+
+    reshape = blocks.reshape(
+        ref_shape[0] // size,
+        ref_shape[1] // size,
+        size,
+        size,
+        blocks.shape[3],
+        blocks.shape[3],
+    )
+
+    swap = reshape.swapaxes(1, 2)
+    
+    destination = swap.reshape(
+        (ref_shape[0] // size) * size,
+        (ref_shape[1] // size) * size,
+        blocks.shape[3],
+    )
+
+    # Order: Y, X, Z
+    if border_patches and (border_patches_x or border_patches_y):
+
+        if border_patches_x:
+            x_offset = ref_shape[1] - raster_width
+            x_edge = destination[:raster_height, -(size - x_offset):, :]
+            destination[:raster_height, -size:-x_offset, :] = x_edge
+
+        if border_patches_y:
+            y_offset = ref_shape[0] - raster_height
+            y_edge = destination[-(size - y_offset):, :raster_width, :]
+            destination[-size:-y_offset, :raster_width, :] = y_edge
+
+        if border_patches_y and border_patches_y:
+            corner = destination[-(size - y_offset):, -(size - x_offset):, :]
+            destination[-size:-y_offset, -size:-x_offset, :] = corner
+
+        destination = destination[ : raster_height, : raster_width, 0 : blocks.shape[3]]
+    
+    return destination
 
 
 # TODO: reconstitute offsets.
@@ -71,7 +135,6 @@ def blocks_to_raster(
             raise ValueError(f"Failed to parse blocks: {blocks}")
 
     metadata = raster_to_metadata(reference)
-    ref_shape = [metadata["height"], metadata["width"]]
 
     border_patches_x = False
     border_patches_y = False
@@ -81,76 +144,112 @@ def blocks_to_raster(
     
     size = blocks.shape[1]
 
-    if metadata["width"] % size != 0:
+    if metadata["width"] % size != 0 and border_patches:
         border_patches_x = True
-    if metadata["height"] % size != 0:
+    if metadata["height"] % size != 0 and border_patches:
         border_patches_y = True
 
-    destination = None
-    if border_patches:
-        destination = np.empty((metadata["height"], metadata["width"], metadata["bands"]), dtype=metadata["dtype"])
-
     has_offsets = False
+    in_offsets = []
     if isinstance(offsets, (list, tuple)):
         if len(offsets) > 0:
-            has_offsets = True
+            if offsets[0] != (0, 0) and offsets[0] != [0, 0]:
+                in_offsets.append((0, 0))
+            
+            for offset in offsets:
+                if offset == [0, 0] or offset == (0, 0):
+                    continue
+
+                in_offsets.append(offset)
+
+    if len(in_offsets) > 1:
+        has_offsets = True
 
     if has_offsets:
-        return 0
+        passes = []
+
+        previous = 0
+        largest_x = 0
+        largest_y = 0
+        for index, offset in enumerate(in_offsets):
+            passes.append(
+                np.ma.masked_all((
+                    metadata["height"],
+                    metadata["width"],
+                    blocks.shape[3],
+                ),
+                dtype=metadata["dtype"],
+                ),
+            )
+            
+            if index == 0:
+                x_blocks = (metadata["width"] // size) + border_patches_x
+                y_blocks = (metadata["height"] // size) + border_patches_x
+            else:
+                x_blocks = metadata["width"] // size
+                y_blocks = metadata["height"] // size
+
+            block_size = x_blocks * y_blocks
+
+            raster_pass = reconstitute_raster( #pylint: disable=too-many-function-args
+                blocks[previous:block_size + previous, :, :, :],
+                metadata["height"],
+                metadata["width"],
+                size,
+                offset,
+                border_patches,
+                border_patches_x,
+                border_patches_y,
+            )
+
+            if raster_pass.shape[1] > largest_x:
+                largest_x = raster_pass.shape[1]
+            
+            if raster_pass.shape[0] > largest_y:
+                largest_y = raster_pass.shape[0]
+
+            previous += block_size
+
+            passes[index][
+                offset[1] : raster_pass.shape[0] + offset[1],
+                offset[0] : raster_pass.shape[1] + offset[0],
+                :,
+            ] = raster_pass
+
+            passes[index] = passes[index].filled(np.nan)
+
+        if merge_method == "median":
+            raster = np.nanmedian(passes, axis=0)
+        elif merge_method == "mean" or merge_method == "average":
+            raster = np.nanmean(passes, axis=0)
+        elif merge_method == "min" or merge_method == "minumum":
+            raster = np.nanmin(passes, axis=0)
+        elif merge_method == "max" or merge_method == "maximum":
+            raster = np.nanmax(passes, axis=0)
+        elif merge_method == "mode" or merge_method == "majority":
+            for index, _ in enumerate(passes):
+                passes[index] = np.rint(passes[index]).astype(int)
+            raster = np.apply_along_axis(lambda x: np.bincount(x).argmax(), axis=0, arr=passes)
+        else:
+            raise ValueError(f"Unable to parse merge_method: {merge_method}")
+
     else:
-        if border_patches and (border_patches_x or border_patches_y):
-            if border_patches_x:
-                ref_shape[1] = ((ref_shape[1] // size) * size) + size
-            if border_patches_y:
-                ref_shape[0] = ((ref_shape[0] // size) * size) + size
-
-        reshape = blocks.reshape(
-            ref_shape[0] // size,
-            ref_shape[1] // size,
+        raster = reconstitute_raster( #pylint: disable=too-many-function-args
+            blocks,
+            metadata["height"],
+            metadata["width"],
             size,
-            size,
-            blocks.shape[3],
-            blocks.shape[3],
-        )
-        swap = reshape.swapaxes(1, 2)
-        destination = swap.reshape(
-            (ref_shape[0] // size) * size,
-            (ref_shape[1] // size) * size,
-            blocks.shape[3],
+            (0, 0),
+            border_patches,
+            border_patches_x,
+            border_patches_y,
         )
 
-        # order: Y, X, Z
-        if border_patches and (border_patches_x or border_patches_y):
-
-            if border_patches_x:
-                x_offset = ref_shape[1] - metadata["width"]
-                x_edge = destination[:metadata["height"], -(size - x_offset):, :]
-                destination[:metadata["height"], -size:-x_offset, :] = x_edge
-
-            if border_patches_y:
-                y_offset = ref_shape[0] - metadata["height"]
-                y_edge = destination[-(size - y_offset):, :metadata["width"], :]
-                destination[-size:-y_offset, :metadata["width"], :] = y_edge
-
-            if border_patches_y and border_patches_y:
-                corner = destination[-(size - y_offset):, -(size - x_offset):, :]
-                destination[-size:-y_offset, -size:-x_offset, :] = corner
-
-            destination = destination[ : metadata["height"], : metadata["width"], 0 : blocks.shape[3]]
-
-        return array_to_raster(
-            destination,
-            reference,
-            out_path=out_path,
-        )
-
-        import pdb; pdb.set_trace()
-    
-    
-    import pdb; pdb.set_trace()
-        
-
-    # raise Exception("Handling multiple offsets is not yet supported. Check in soon.")
+    return array_to_raster(
+        raster,
+        reference,
+        out_path=out_path,
+    )
 
 
 def shape_to_blockshape(
@@ -245,8 +344,6 @@ def array_to_blocks(
         
         if border_patches_y:
             arr_exp[-block_shape[0]:, :array.shape[1], :] = array[-block_shape[1]:, :, :]
-
-        # plt.imshow(bob, vmin=0, vmax=1); plt.show() 
 
         # The bottom right corner will still have empty values if both a True
         if border_patches_x and border_patches_y:
@@ -732,7 +829,7 @@ if __name__ == "__main__":
         prefix="",
         postfix="_patches",
         size=64,
-        # offsets=[(32, 32)],
+        offsets=[(32, 0)],
         generate_grid_geom=True,
         generate_border_patches=True,
         # clip_geom=vector,
@@ -751,7 +848,7 @@ if __name__ == "__main__":
         blocks,
         raster,
         out_path=out_dir + "fyn_close_reconstituded.tif",
-        # offsets=[(32, 32)],
+        offsets=[(32, 0)],
         border_patches=True,
         merge_method="median",
     )
