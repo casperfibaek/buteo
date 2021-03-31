@@ -319,7 +319,7 @@ def array_to_raster(
     output_name = metadata["name"] if out_path is None else out_path
 
     if metadata["width"] != array.shape[1] or metadata["height"] != array.shape[0]:
-        raise ValueError("The numpy array and the reference are not of the same size. Use the array_to_raster_adv function instead")
+        print("WARNING: Input array and raster are not of equal size.")
 
     destination = driver.Create(
         output_name,
@@ -471,3 +471,7 @@ def raster_in_memory(raster):
     return False
 
 # TODO: raster_define_dtype
+
+
+def raster_to_extent(raster):
+    return raster_to_metadata(raster)["extent_ogr"]

@@ -22,18 +22,19 @@ from buteo.vector.io import (
 from buteo.raster.clip import clip_raster
 from buteo.raster.align import is_aligned
 from buteo.vector.reproject import reproject_vector
-from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
+from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check, file_in_use
 from buteo.gdal_utils import to_array_list, to_raster_list, ogr_bbox_intersects
 
 
-
+# TODO: reconstitute offsets.
 def blocks_to_raster(
     blocks: Union[str, np.ndarray],
     reference: Union[str, gdal.Dataset],
     out_path: Union[str, None]=None,
     offsets: Union[list, tuple, np.ndarray, None]=None,
+    border_patches: bool=True,
     merge_method: str="median",
-):
+) -> Union[str, gdal.Dataset]:
     """ Recombines a series of blocks to a raster.
     Args:
         blocks (ndarray): A numpy array with the values to recombine. The shape
@@ -48,6 +49,8 @@ def blocks_to_raster(
         offsets (tuple, list, ndarray): The offsets used in the original. A (0 ,0)
         offset is assumed.
 
+        border_patches (bool): Do the blocks contain border patches?
+
         merge_method (str): How to handle overlapping pixels. Options are:
         median, average, mode, min, max
 
@@ -58,6 +61,7 @@ def blocks_to_raster(
     type_check(reference, [str, gdal.Dataset], "reference")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(offsets, [list, tuple, np.ndarray], "offsets", allow_none=True)
+    type_check(border_patches, [bool], "border_patches")
     type_check(merge_method, [str], "merge_method")
 
     if isinstance(blocks, str):
@@ -67,39 +71,93 @@ def blocks_to_raster(
             raise ValueError(f"Failed to parse blocks: {blocks}")
 
     metadata = raster_to_metadata(reference)
-    reference_shape = (metadata["height"], metadata["width"])
+    ref_shape = [metadata["height"], metadata["width"]]
 
-    if offsets is None:
-        tiles = blocks.reshape(
-            reference_shape[0] // blocks.shape[1],
-            reference_shape[1] // blocks.shape[2],
-            blocks.shape[1],
-            blocks.shape[2],
+    border_patches_x = False
+    border_patches_y = False
+
+    if blocks.shape[1] != blocks.shape[2]:
+        raise ValueError("The input blocks must be square. Rectangles might supported in the future.")
+    
+    size = blocks.shape[1]
+
+    if metadata["width"] % size != 0:
+        border_patches_x = True
+    if metadata["height"] % size != 0:
+        border_patches_y = True
+
+    destination = None
+    if border_patches:
+        destination = np.empty((metadata["height"], metadata["width"], metadata["bands"]), dtype=metadata["dtype"])
+
+    has_offsets = False
+    if isinstance(offsets, (list, tuple)):
+        if len(offsets) > 0:
+            has_offsets = True
+
+    if has_offsets:
+        return 0
+    else:
+        if border_patches and (border_patches_x or border_patches_y):
+            if border_patches_x:
+                ref_shape[1] = ((ref_shape[1] // size) * size) + size
+            if border_patches_y:
+                ref_shape[0] = ((ref_shape[0] // size) * size) + size
+
+        reshape = blocks.reshape(
+            ref_shape[0] // size,
+            ref_shape[1] // size,
+            size,
+            size,
             blocks.shape[3],
             blocks.shape[3],
-        ).swapaxes(1, 2).reshape(
-            (reference_shape[0] // blocks.shape[1]) * blocks.shape[1],
-            (reference_shape[1] // blocks.shape[2]) * blocks.shape[2],
+        )
+        swap = reshape.swapaxes(1, 2)
+        destination = swap.reshape(
+            (ref_shape[0] // size) * size,
+            (ref_shape[1] // size) * size,
             blocks.shape[3],
         )
 
+        # order: Y, X, Z
+        if border_patches and (border_patches_x or border_patches_y):
+
+            if border_patches_x:
+                x_offset = ref_shape[1] - metadata["width"]
+                x_edge = destination[:metadata["height"], -(size - x_offset):, :]
+                destination[:metadata["height"], -size:-x_offset, :] = x_edge
+
+            if border_patches_y:
+                y_offset = ref_shape[0] - metadata["height"]
+                y_edge = destination[-(size - y_offset):, :metadata["width"], :]
+                destination[-size:-y_offset, :metadata["width"], :] = y_edge
+
+            if border_patches_y and border_patches_y:
+                corner = destination[-(size - y_offset):, -(size - x_offset):, :]
+                destination[-size:-y_offset, -size:-x_offset, :] = corner
+
+            destination = destination[ : metadata["height"], : metadata["width"], 0 : blocks.shape[3]]
+
+        return array_to_raster(
+            destination,
+            reference,
+            out_path=out_path,
+        )
 
         import pdb; pdb.set_trace()
-
-        return array_to_raster(tiles, reference, out_path=out_path)
-
     
+    
+    import pdb; pdb.set_trace()
+        
 
-    internal_offsets = []
-    if (0, 0) not in offsets or [0, 0] not in offsets:
-        internal_offsets.append([0, 0])
+    # raise Exception("Handling multiple offsets is not yet supported. Check in soon.")
 
 
 def shape_to_blockshape(
     shape: Union[list, tuple, np.ndarray],
     block_shape: Union[list, tuple, np.ndarray],
     offset: Union[list, tuple, np.ndarray],
-) -> tuple:
+) -> list:
     """ Calculates the shape of the output array.
     Args:
         shape (tuple | list): The shape if the original raster.
@@ -109,7 +167,7 @@ def shape_to_blockshape(
         offset (tuple, list): An initial offset for the array eg. (32, 32)
 
     Returns:
-        A tuple with the modified shape.
+        A list with the modified shape.
     """
     type_check(shape, [list, tuple, np.ndarray], "shape")
     type_check(block_shape, [list, tuple, np.ndarray], "block_shape")
@@ -127,7 +185,7 @@ def shape_to_blockshape(
     for index, value in enumerate(base_shape):
         sizes.append(value // block_shape[index])
 
-    return tuple(sizes)
+    return sizes
 
 
 # Channel last!
@@ -135,10 +193,12 @@ def array_to_blocks(
     array: np.ndarray,
     block_shape: Union[list, tuple, np.ndarray],
     offset: Union[list, tuple, np.ndarray],
+    border_patches_x: bool=False,
+    border_patches_y: bool=False,
 ) -> np.ndarray:
     """ Turns an array into a series of blocks. The array can be offset.
     Args:
-        array (ndarray): The array to turn to blocks.
+        array (ndarray): The array to turn to blocks. (Channel last format: 1920x1080x3)
 
         block_shape (tuple | list | ndarray): The size of the blocks eg. (64, 64)
 
@@ -150,6 +210,8 @@ def array_to_blocks(
     type_check(array, [np.ndarray], "array")
     type_check(block_shape, [list, tuple], "block_shape")
     type_check(offset, [list, tuple], "offset")
+    type_check(border_patches_x, [bool], "border_patches_x")
+    type_check(border_patches_y, [bool], "border_patches_y")
 
     assert array.ndim == 3, "Input raster must be three dimensional"
 
@@ -163,6 +225,37 @@ def array_to_blocks(
         :,
     ]
 
+    # If border patches are needed. A new array must be created to hold the border values.
+    if border_patches_x or border_patches_y:
+        x_shape = arr.shape[1]
+        y_shape = arr.shape[0]
+        
+        if border_patches_x:
+            x_shape = ((array.shape[1] // block_shape[0]) * block_shape[0]) + block_shape[0]
+        
+        if border_patches_y:
+            y_shape = ((array.shape[0] // block_shape[1]) * block_shape[1]) + block_shape[1]
+
+        # Expand and copy the original array
+        arr_exp = np.empty((y_shape, x_shape, array.shape[2]), dtype=array.dtype)
+        arr_exp[0:arr.shape[0], 0:arr.shape[1], 0:arr.shape[2]] = arr
+
+        if border_patches_x:
+            arr_exp[:array.shape[0], -block_shape[1]:, :] = array[:, -block_shape[0]:, :]
+        
+        if border_patches_y:
+            arr_exp[-block_shape[0]:, :array.shape[1], :] = array[-block_shape[1]:, :, :]
+
+        # plt.imshow(bob, vmin=0, vmax=1); plt.show() 
+
+        # The bottom right corner will still have empty values if both a True
+        if border_patches_x and border_patches_y:
+            border_square = array[-block_shape[0]:, -block_shape[1]:, :]
+            arr_exp[-block_shape[0]:, -block_shape[1]:, :] = border_square
+
+        arr = arr_exp
+
+    # This only creates views into the array, so should still be fast.
     reshaped = arr.reshape(
         arr.shape[0] // block_shape[0], block_shape[0],
         arr.shape[1] // block_shape[1], block_shape[1],
@@ -186,12 +279,13 @@ def extract_patches(
     postfix: str="_patches",
     size: int=32,
     offsets: list=[],
+    generate_border_patches: bool=True,
     generate_zero_offset: bool=True,
     generate_grid_geom: bool=True,
     clip_geom: Union[str, ogr.DataSource, gdal.Dataset, None]=None,
     clip_layer_index: int=0,
     overwrite=True,
-    epsilon: float=1e-7,
+    epsilon: float=1e-9,
     verbose: int=1,
 ) -> tuple:
     """ Extracts square tiles from a raster.
@@ -210,6 +304,10 @@ def extract_patches(
         offsets (list of tuples): List of offsets to extract. Example:
         offsets=[(16, 16), (8, 8), (0, 16)]. Will offset the initial raster
         and extract from there.
+
+        generate_border_patches (bool): The tiles often do not align with the
+        rasters which means borders are trimmed somewhat. If generate_border_patches
+        is True, an additional tile is added where needed.
 
         generate_zero_offset (bool): if True, an offset is inserted at (0, 0)
         if none is present.
@@ -260,9 +358,30 @@ def extract_patches(
     if generate_zero_offset and (0, 0) not in offsets:
         offsets.insert(0, (0, 0)) # insert a 0,0 overlap
 
+    border_patches_needed_x = True
+    border_patches_needed_y = True
+
     shapes = []
     for offset in offsets:
-        shapes.append(shape_to_blockshape(metadata["shape"], (size, size), offset))
+        block_shape = shape_to_blockshape(metadata["shape"], (size, size), offset)
+
+        if block_shape[0] * size == metadata["width"]:
+            border_patches_needed_x = False
+        
+        if block_shape[1] * size == metadata["height"]:
+            border_patches_needed_y = False
+
+        shapes.append(block_shape)
+
+    if generate_border_patches:
+        cut_x = (metadata["width"] - offsets[0][0]) - (shapes[0][0] * size)
+        cut_y = (metadata["height"] - offsets[0][1]) - (shapes[0][1] * size)
+
+        if border_patches_needed_x and cut_x > 0:
+            shapes[0][0] += 1
+        
+        if border_patches_needed_y and cut_y > 0:
+            shapes[0][1] += 1
 
     # calculate the offsets
     all_rows = 0
@@ -312,15 +431,23 @@ def extract_patches(
             x_min = (ulx + dx) + (x_offset * pixel_width)
             x_max = x_min + (x_step * xres)
 
-            y_max = (uly - dx) - (y_offset * pixel_height)
+            y_max = (uly - dy) - (y_offset * pixel_height)
             y_min = y_max - (y_step * yres)
 
             # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
-            xr = np.arange(x_min, x_max + epsilon, xres, dtype="float64")[0:x_step]
-            yr = np.arange(y_min, y_max + epsilon, yres, dtype="float64")[::-1][0:y_step]
+            xr = np.arange(x_min, x_max + epsilon, xres)[0:x_step]
+            yr = np.arange(y_max, y_min + epsilon, -yres)[0:y_step]
+
+            if generate_border_patches and l == 0:
+
+                if border_patches_needed_x:
+                    xr[-1] = xr[-1] - ((xr[-1] + dx) - metadata["extent_dict"]["right"])
+                
+                if border_patches_needed_y:
+                    yr[-1] = yr[-1] - ((yr[-1] - dy) - metadata["extent_dict"]["bottom"])
 
             oxx, oyy = np.meshgrid(xr, yr)
-            
+
             start = 0
             if l > 0:
                 start = offset_rows_cumsum[l - 1]
@@ -430,7 +557,8 @@ def extract_patches(
             if valid_fid == -1:
                 print("WARNING: Empty geometry output")
 
-            geom_name = f"{prefix}geom_{str(size)}{postfix}.gpkg"
+            raster_basename = metadata["basename"]
+            geom_name = f"{prefix}{raster_basename}_geom_{str(size)}{postfix}.gpkg"
             out_path_geom = os.path.join(output_folder, geom_name)
 
             overwrite_required(out_path_geom, overwrite)
@@ -463,16 +591,19 @@ def extract_patches(
             start = 0
             if k > 0:
                 start = offset_rows_cumsum[k - 1]
+            
+            blocks = None
+            if k == 0 and generate_border_patches and (border_patches_needed_x or border_patches_needed_y):
+                blocks = array_to_blocks(ref, (size, size), offset, border_patches_needed_x, border_patches_needed_y)
+            else:
+                blocks = array_to_blocks(ref, (size, size), offset)
 
-            output_array[start:offset_rows_cumsum[k]] = array_to_blocks(ref, (size, size), offset)
+            output_array[start:offset_rows_cumsum[k]] = blocks
 
         if generate_grid_geom is False and clip_geom is None:
             np.save(out_path, output_array)
         else:
             np.save(out_path, output_array[mask])
-
-        ref = None
-        output_array = None
 
     return (out_path, out_path_geom)
 
@@ -572,10 +703,10 @@ def test_extraction(
                 crop_to_geom=True,
                 all_touch=False,
             )
-            ref_img = raster_to_array(clipped, filled=True)
+            ref_image = raster_to_array(clipped, filled=True)
             image_block = test_array[test]
 
-            if not np.array_equal(ref_img, image_block):
+            if not np.array_equal(ref_image, image_block):
                 raise Exception(f"Image {basename} and grid cell did not match..")
 
             if verbose == 1:
@@ -589,35 +720,38 @@ def test_extraction(
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
     
-    raster = folder + "fyn.tif"
+    raster = folder + "fyn_close.tif"
     vector = folder + "odense2.gpkg"
     out_dir = folder + "out/"
 
-    blocks = out_dir + "fyn_patches.npy"
+    blocks = out_dir + "fyn_close_patches.npy"
 
-    # extract_patches(
-    #     raster,
-    #     out_dir,
-    #     prefix="",
-    #     postfix="_patches",
-    #     size=64,
-    #     # offsets=[(32, 32), (32, 0), (0, 32)],
-    #     generate_grid_geom=True,
-    #     # clip_geom=vector,
-    #     verbose=1,
-    # )
+    path_np, path_geom = extract_patches(
+        raster,
+        out_dir,
+        prefix="",
+        postfix="_patches",
+        size=64,
+        # offsets=[(32, 32)],
+        generate_grid_geom=True,
+        generate_border_patches=True,
+        # clip_geom=vector,
+        verbose=1,
+    )
 
-    # test_extraction(
-    #     raster,
-    #     out_dir + "fyn_patches.npy",
-    #     out_dir + "geom_64_patches.gpkg",
-    #     samples=100,
-    # )
+    test_extraction(
+        raster,
+        path_np,
+        path_geom,
+        samples=100,
+        verbose=1,
+    )
 
     blocks_to_raster(
         blocks,
         raster,
-        out_path=out_dir + "reconstituted.tif",
-        # offsets=[(32, 32), (32, 0), (0, 32)],
+        out_path=out_dir + "fyn_close_reconstituded.tif",
+        # offsets=[(32, 32)],
+        border_patches=True,
         merge_method="median",
     )

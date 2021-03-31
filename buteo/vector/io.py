@@ -438,3 +438,7 @@ def vector_in_memory(vector):
         return True
     
     return False
+
+
+def vector_to_extent(vector):
+    return vector_to_metadata(vector)["extent_ogr"]
