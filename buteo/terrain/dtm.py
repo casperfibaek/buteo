@@ -1,11 +1,8 @@
 import sys
-
-sys.path.append("..")
-sys.path.append("../lib/")
+sys.path.append('../'); sys.path.append('../../')
 import geopandas as gpd
 import numpy as np
-from .raster_io import *
-from .stats_filters import truncate_array
+from buteo.raster.io import *
 import sys
 import os
 import time
@@ -14,32 +11,52 @@ from glob import glob
 from urllib import request
 
 
-def reporthook(count, block_size, total_size):
-    global start_time
-    if count == 0:
-        start_time = time.time()
-        return
+# def download_progress_hook(count, blockSize, totalSize):
+#   """A hook to report the progress of a download. This is mostly intended for users with
+#   slow internet connections. Reports every 5% change in download progress.
+#   """
+#   global last_percent_reported
+#   percent = int(count * blockSize * 100 / totalSize)
 
-    duration = time.time() - start_time
-    progress_size = int(count * block_size)
-    speed = int(progress_size / (1024 * duration))
-    percent = int(count * block_size * 100 / total_size)
-    sys.stdout.write(
-        "\r...%d%%, %d MB, %d KB/s, %d seconds passed"
-        % (percent, progress_size / (1024 * 1024), speed, duration)
-    )
-    sys.stdout.flush()
+#   if last_percent_reported != percent:
+#     if percent % 5 == 0:
+#       sys.stdout.write("%s%%" % percent)
+#       sys.stdout.flush()
+#     else:
+#       sys.stdout.write(".")
+#       sys.stdout.flush()
+
+#     last_percent_reported = percent
+
+
+#TODO add report hook to get_file()
+# def reporthook(count, block_size, total_size):
+#     global start_time
+#     if count == 0:
+#         start_time = time.time()
+#         return
+
+#     duration = time.time() - start_time
+#     progress_size = int(count * block_size)
+#     speed = int(progress_size / (1024 * duration))
+#     percent = int(count * block_size * 100 / total_size)
+#     sys.stdout.write(
+#         "\r...%d%%, %d MB, %d KB/s, %d seconds passed"
+#         % (percent, progress_size / (1024 * 1024), speed, duration)
+#     )
+#     sys.stdout.flush()
 
 
 def get_file(url, filename):
-    request.urlretrieve(url, filename, reporthook)
+    request.urlretrieve(url, filename)
+    
 
 
 def find_tile_names(path_to_geom):
     project_geom = gpd.read_file(path_to_geom)
     project_geom_wgs = project_geom.to_crs("EPSG:4326")
 
-    grid = "../geometry/Denmark_10km_grid.gpkg"
+    grid = "../../geometry/Denmark_10km_grid.gpkg"
     grid_geom = gpd.read_file(grid)
     grid_dest = grid_geom.to_crs("EPSG:4326")
 
@@ -55,10 +72,12 @@ def find_tile_names(path_to_geom):
 
 def download_dtm(tile_names, dst_folder, username, password):
     completed = 0
+    if not os.path.isdir(dst_folder):
+        raise Exception("Error: output directory does not exist.")
+
     for tile in tile_names:
         base_path = f"ftp://{username}:{password}@ftp.kortforsyningen.dk/dhm_danmarks_hoejdemodel/DTM/"
         file_name = f'DTM_{tile.split("_", 1)[1]}_TIF_UTM32-ETRS89.zip'
-
         if not os.path.exists(dst_folder + file_name):
             try:
                 get_file(base_path + file_name, dst_folder + file_name)
@@ -70,6 +89,9 @@ def download_dtm(tile_names, dst_folder, username, password):
 
 def download_dsm(tile_names, dst_folder, username, password):
     completed = 0
+    if not os.path.isdir(dst_folder):
+        raise Exception("Error: output directory does not exist.")
+
     for tile in tile_names:
         base_path = f"ftp://{username}:{password}@ftp.kortforsyningen.dk/dhm_danmarks_hoejdemodel/DSM/"
         file_name = f'DSM_{tile.split("_", 1)[1]}_TIF_UTM32-ETRS89.zip'
@@ -122,8 +144,8 @@ def height_over_terrain(dsm_folder, dtm_folder, out_folder, tmp_folder):
 
                             array_to_raster(
                                 np.abs(np.subtract(ss, tt)),
-                                out_raster=hot_folder + f"HOT_1km_{s_tiff_tile}.tif",
-                                reference_raster=s_tiff,
+                                out_path=hot_folder + f"HOT_1km_{s_tiff_tile}.tif",
+                                reference=s_tiff,
                             )
 
                 for f in glob(tmp_folder + "/*"):
@@ -134,41 +156,44 @@ def height_over_terrain(dsm_folder, dtm_folder, out_folder, tmp_folder):
 
 
 if __name__ == "__main__":
-    dsm_folder = "/home/cfi/data/dsm/"
-    dtm_folder = "/home/cfi/data/dtm/"
-    hot_folder = "/home/cfi/data/hot/"
-    tmp_folder = "/home/cfi/data/tmp/"
-    vol_folder = "/home/cfi/data/vol/"
 
-    hot_files = glob(hot_folder + "/*.tif")
-    meta = raster_to_metadata(hot_files[0])
+    base = 'C:/Users/EZRA/Desktop/downloaded_tiles/'
 
-    completed = 0
-    for f in hot_files:
-        tile_base = os.path.basename(f).split("_")[2:4]
-        tile_name = "_".join(tile_base).split(".")[0]
+    dsm_folder = base + 'dsm/'
+    dtm_folder = base + 'dtm/'
+    hot_folder = base + 'hot/'
+    tmp_folder = base + 'tmp/'
+    vol_folder = base + 'vol/'
 
-        array_to_raster(
-            raster_to_array(f)
-            * (meta["pixel_width"] * (-meta["pixel_height"])),
-            out_raster=vol_folder + f"VOL_1km_{tile_name}.tif",
-            reference_raster=f,
-        )
+    # hot_files = glob(hot_folder + "/*.tif")
+    # meta = raster_to_metadata(hot_files[0])
 
-        completed += 1
-        print(f"Completed: {completed}/{len(hot_files)}")
+    # completed = 0
+    # for f in hot_files:
+    #     tile_base = os.path.basename(f).split("_")[2:4]
+    #     tile_name = "_".join(tile_base).split(".")[0]
 
-    download_dtm(
-        find_tile_names("../geometry/studyAreaHull.gpkg"),
-        "/home/cfi/data/dtm/",
-        "casperfibaek",
-        "Goldfish12",
-    )
-    download_dsm(
-        find_tile_names("../geometry/studyAreaHull.gpkg"),
-        "/home/cfi/data/dsm/",
-        "casperfibaek",
-        "Goldfish12",
-    )
+    #     array_to_raster(
+    #         raster_to_array(f)
+    #         * (meta["pixel_width"] * (-meta["pixel_height"])),
+    #         out_raster=vol_folder + f"VOL_1km_{tile_name}.tif",
+    #         reference_raster=f,
+    #     )
+
+    #     completed += 1
+    #     print(f"Completed: {completed}/{len(hot_files)}")
+
+    # download_dtm(
+    #     find_tile_names(base + 'cutout.shp'),
+    #     dtm_folder,
+    #     "ezratrotter",
+    #     "Bigcloud8!!!",
+    # )
+    # download_dsm(
+    #     find_tile_names(base + 'cutout.shp'),
+    #     dsm_folder,
+    #     "ezratrotter",
+    #     "Bigcloud8!!!",
+    # )
 
     height_over_terrain(dsm_folder, dtm_folder, hot_folder, tmp_folder)
