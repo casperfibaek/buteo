@@ -2,6 +2,7 @@ import sys;  sys.path.append("../../")
 import numpy as np
 import os
 import random
+import rtree
 from typing import Union
 from osgeo import ogr, gdal
 from uuid import uuid1
@@ -770,6 +771,17 @@ def extract_patches(
         if verbose == 1:
             print("Creating patches..")
 
+        spatial_index = rtree.index.Index(interleaved=False)
+        features = {}
+        for _ in range(clip_feature_count):
+            clip_feature = clip_layer.GetNextFeature()
+            clip_fid = clip_feature.GetFID()
+            clip_feature_geom = clip_feature.GetGeometryRef()
+            xmin, xmax, ymin, ymax = clip_feature_geom.GetEnvelope()
+
+            spatial_index.insert(clip_fid, (xmin, xmax, ymin, ymax))
+            features[clip_fid] = clip_feature_geom
+
         valid_fid = -1
         for q in range(all_rows):
             x, y = coord_grid[q]
@@ -780,8 +792,6 @@ def extract_patches(
                 progress(q, all_rows, "Patches")
 
             if clip_geom is not None:
-
-                clip_layer.ResetReading()
 
                 tile_bounds = (x - dx, x + dx, y - dy, y + dy)
 
@@ -798,11 +808,10 @@ def extract_patches(
                 tile_poly = ogr.Geometry(ogr.wkbPolygon)
                 tile_poly.AddGeometry(tile_ring)
 
-                for _ in range(clip_feature_count):
-                    clip_feature = clip_layer.GetNextFeature()
-                    clip_geometry = clip_feature.GetGeometryRef()
+                for fid1 in list(spatial_index.intersection((xmin, xmax, ymin, ymax))):
+                    geometry1 = features[fid1]
 
-                    if tile_poly.Intersects(clip_geometry):
+                    if tile_poly.Intersects(geometry1):
                         valid_fid += 1
                         tile_intersects_geom = True
                         break
