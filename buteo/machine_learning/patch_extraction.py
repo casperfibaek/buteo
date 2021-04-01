@@ -894,13 +894,11 @@ def extract_patches(
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
     
-    raster = folder + "fyn_close.tif"
+    raster = folder + "fyn.tif"
     vector = folder + "odense2.gpkg"
     out_dir = folder + "out/"
 
-    blocks = out_dir + "fyn_close_patches.npy"
-
-    offsets = [(32, 32), (32, 0)]
+    offsets = [(32, 32), (32, 0), (0, 32)]
     borders = True
 
     path_np, path_geom = extract_patches(
@@ -914,12 +912,12 @@ if __name__ == "__main__":
         generate_border_patches=borders,
         # clip_geom=vector,
         verify_output=True,
-        verification_samples=100,
+        verification_samples=1000,
         verbose=1,
     )
 
     blocks_to_raster(
-        blocks,
+        path_np,
         raster,
         out_path=out_dir + "fyn_close_reconstituded.tif",
         offsets=offsets,
