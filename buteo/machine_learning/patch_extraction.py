@@ -620,6 +620,10 @@ def extract_patches(
         print("Generating blocks..")
 
     # internal offset array. Avoid manipulating the og array.
+    # TODO: Verify
+    if offsets is None:
+        offsets = []
+
     in_offsets = []
     if generate_zero_offset and (0, 0) not in offsets:
         in_offsets.append((0, 0))
