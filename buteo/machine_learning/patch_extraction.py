@@ -540,7 +540,7 @@ def extract_patches(
     prefix: str="",
     postfix: str="_patches",
     size: int=32,
-    offsets: list=[],
+    offsets: Union[list, None]=[],
     generate_border_patches: bool=True,
     generate_zero_offset: bool=True,
     generate_grid_geom: bool=True,
@@ -939,24 +939,25 @@ if __name__ == "__main__":
 
     path_np, path_geom = extract_patches(
         raster,
-        out_dir=None,
+        out_dir=out_dir,
         prefix="",
         postfix="_patches",
         size=64,
         offsets=offsets,
         generate_grid_geom=True,
+        generate_zero_offset=True,
         generate_border_patches=borders,
-        clip_geom=vector,
-        verify_output=True,
+        # clip_geom=vector,
+        verify_output=False,
         verification_samples=100,
         verbose=1,
     )
 
-    # blocks_to_raster(
-    #     path_np,
-    #     raster,
-    #     out_path=out_dir + "fyn_close_reconstituded.tif",
-    #     offsets=offsets,
-    #     border_patches=borders,
-    #     merge_method="median",
-    # )
+    blocks_to_raster(
+        path_np,
+        raster,
+        out_path=out_dir + "fyn_close_reconstituded.tif",
+        offsets=offsets,
+        border_patches=borders,
+        merge_method="median",
+    )
