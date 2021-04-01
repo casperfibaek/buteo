@@ -36,6 +36,29 @@ def reconstitute_raster(
     border_patches_x: bool,
     border_patches_y: bool,
 ) -> Union[str, gdal.Dataset]:
+    """ Recombines blocks into an array.
+    Args:
+        blocks (ndarray): A numpy array with the values to recombine. The shape
+        should be (blocks, rows, column, channel).
+
+        raster_height (int): height in pixels of target raster.
+        
+        raster_width (int): width in pixels of target raster.
+
+        size (int): size of patches in pixels. (square patches.)
+
+        offset (tuple): A tuple with the offset of the blocks (x, y)
+
+        border_patches (bool): Does the patches contain border_patches?
+
+        border_patches_x (bool): Does the patches contain border_patches on the x axis?
+
+        border_patches_y (bool): Does the patches contain border_patches on the y axis?
+
+
+    Returns:
+        A reconstituted raster.
+    """
     ref_shape = [raster_height - offset[1], raster_width - offset[0]]
 
     if offset != (0, 0):
@@ -48,8 +71,6 @@ def reconstitute_raster(
             ref_shape[1] = ((ref_shape[1] // size) * size) + size
         if border_patches_y:
             ref_shape[0] = ((ref_shape[0] // size) * size) + size
-
-    import pdb; pdb.set_trace()
 
     reshape = blocks.reshape(
         ref_shape[0] // size,
@@ -97,7 +118,9 @@ def blocks_to_raster(
     out_path: Union[str, None]=None,
     offsets: Union[list, tuple, np.ndarray, None]=None,
     border_patches: bool=True,
+    generate_zero_offset: bool=True,
     merge_method: str="median",
+    verbose: int=1,
 ) -> Union[str, gdal.Dataset]:
     """ Recombines a series of blocks to a raster.
     Args:
@@ -107,6 +130,7 @@ def blocks_to_raster(
         reference (str, raster): A reference raster to help coax the blocks back
         into shape.
 
+    **kwargs:
         out_path (str | None): Where to save the reconstituted raster. If None
         are memory raster is returned.
 
@@ -115,8 +139,13 @@ def blocks_to_raster(
 
         border_patches (bool): Do the blocks contain border patches?
 
+        generate_zero_offset (bool): if True, an offset is inserted at (0, 0)
+        if none is present.
+
         merge_method (str): How to handle overlapping pixels. Options are:
         median, average, mode, min, max
+
+        verbose (int): If 1 will output messages on progress.
 
     Returns:
         A reconstituted raster.
@@ -134,6 +163,9 @@ def blocks_to_raster(
         except:
             raise ValueError(f"Failed to parse blocks: {blocks}")
 
+    if verbose == 1:
+        print("Reconstituting blocks into target raster.")
+
     metadata = raster_to_metadata(reference)
 
     border_patches_x = False
@@ -149,20 +181,23 @@ def blocks_to_raster(
     if metadata["height"] % size != 0 and border_patches:
         border_patches_y = True
 
-    has_offsets = False
+    # internal offset array. Avoid manipulating the og array.
     in_offsets = []
-    if isinstance(offsets, (list, tuple)):
-        if len(offsets) > 0:
-            if offsets[0] != (0, 0) and offsets[0] != [0, 0]:
-                in_offsets.append((0, 0))
-            
-            for offset in offsets:
-                if offset == [0, 0] or offset == (0, 0):
-                    continue
+    if generate_zero_offset and (0, 0) not in offsets:
+        in_offsets.append((0, 0))
+    
+    for offset in offsets:
+        if offset != (0, 0):
+            if not isinstance(offset, (list, tuple)) or len(offset) != 2:
+                raise ValueError(f"offset must be a list or tuple of two integers. Recieved: {offset}")
+            in_offsets.append((offset[0], offset[1]))
 
-                in_offsets.append(offset)
-
-    if len(in_offsets) > 1:
+    # Easier to read this way.
+    has_offsets = False
+    if generate_zero_offset and len(in_offsets) > 1:
+        has_offsets = True
+    
+    if not generate_zero_offset and len(in_offsets) > 0:
         has_offsets = True
 
     if has_offsets:
@@ -183,11 +218,11 @@ def blocks_to_raster(
             )
             
             if index == 0:
-                x_blocks = (metadata["width"] // size) + border_patches_x
-                y_blocks = (metadata["height"] // size) + border_patches_x
+                x_blocks = ((metadata["width"] - offset[0]) // size) + border_patches_x
+                y_blocks = ((metadata["height"] - offset[1]) // size) + border_patches_x
             else:
-                x_blocks = metadata["width"] // size
-                y_blocks = metadata["height"] // size
+                x_blocks = (metadata["width"] - offset[0]) // size
+                y_blocks = (metadata["height"] - offset[1]) // size
 
             block_size = x_blocks * y_blocks
 
@@ -287,7 +322,6 @@ def shape_to_blockshape(
     return sizes
 
 
-# Channel last!
 def array_to_blocks(
     array: np.ndarray,
     block_shape: Union[list, tuple, np.ndarray],
@@ -369,6 +403,137 @@ def array_to_blocks(
     return merge
 
 
+def test_extraction(
+    rasters: Union[list, str, gdal.Dataset],
+    arrays: Union[list, np.ndarray],
+    grid: Union[ogr.DataSource, str],
+    samples: int=1000, # if 0, all
+    grid_layer_index: int=0,
+    verbose: int=1,
+) -> bool:
+    """ Validates the output of the patch_extractor. Useful if you need peace of mind.
+    Set samples to 0 to tests everything.
+    Args:
+        rasters (list of rasters | path | raster): The raster(s) used.
+
+        arrays (list of arrays | ndarray): The arrays generated.
+
+        grid (vector | vector_path): The grid generated.
+
+    **kwargs:
+        samples (int): The amount of patches to randomly test. If 0 all patches will be
+        tested. This is a long process, so consider only testing everything if absolutely
+        necessary.
+
+        grid_layer_index (int): If the grid is part of a multi-layer vector, specify the
+        index of the grid.
+
+        verbose (int): If 1 will output messages on progress.
+
+    Returns:
+        True if the extraction is valid. Raises an error otherwise.
+    """
+    type_check(rasters, [list, str, gdal.Dataset], "rasters")
+    type_check(arrays, [list, str, np.ndarray], "arrays")
+    type_check(grid, [list, str, np.ndarray], "grid")
+    type_check(samples, [int], "samples")
+    type_check(grid_layer_index, [int], "clip_layer_index")
+    type_check(verbose, [int], "verbose")
+
+    in_rasters = to_raster_list(rasters)
+    in_arrays = to_array_list(arrays)
+
+    if verbose == 1:
+        print("Verifying integrity of output grid..")
+
+    grid_memory = None
+    if vector_in_memory(grid):
+        grid_memory = grid
+    else:
+        grid_memory = vector_to_memory(
+            grid,
+            memory_path=f"/vsimem/grid_{uuid1().int}.gpkg",
+            opened=True
+        )
+
+    grid_metadata = vector_to_metadata(grid, latlng_and_footprint=False)
+    grid_projection = grid_metadata["projection_osr"]
+
+    if grid_layer_index > (grid_metadata["layer_count"] - 1):
+        raise ValueError(f"Requested non-existing layer index: {grid_layer_index}")
+
+    grid_layer = grid_memory.GetLayer(grid_layer_index)
+
+    # Select sample fids
+    feature_count = grid_metadata["layers"][grid_layer_index]["feature_count"]
+    test_samples = samples if samples > 0 else feature_count
+    max_test = min(test_samples, feature_count) - 1
+    test_fids = np.array(random.sample(range(0, feature_count), max_test), dtype="uint64")
+
+    mem_driver = ogr.GetDriverByName("Memory")
+    for index, raster in enumerate(in_rasters):
+        test_rast = None
+        if raster_in_memory(raster):
+            test_rast = raster
+        else:
+            test_rast = raster_to_memory(
+                raster,
+                memory_path=f"/vsimem/raster_{uuid1().int}.tif",
+                opened=True,
+            )
+
+        test_array = in_arrays[index]
+        if isinstance(test_array, str):
+            if not os.path.exists(test_array):
+                raise ValueError(f"Numpy array does not exist: {test_array}")
+
+            try:
+                test_array = np.load(in_arrays[index])
+            except:
+                raise Exception(f"Attempted to read numpy raster from: {in_arrays[index]}")
+
+        base = os.path.basename(raster)
+        basename = os.path.splitext(base)[0]
+
+        if verbose == 1:
+            print(f"Testing: {basename}")
+
+        tested = 0
+        for test in test_fids:
+            feature = grid_layer.GetFeature(test)
+
+            if feature is None:
+                raise Exception(f"Feature not found: {test}")
+
+            test_ds = mem_driver.CreateDataSource("test_mem_grid.gpkg")
+            test_ds_lyr = test_ds.CreateLayer(
+                "test_mem_grid_layer",
+                geom_type=ogr.wkbPolygon,
+                srs=grid_projection
+            )
+            test_ds_lyr.CreateFeature(feature.Clone())
+
+            clipped = clip_raster(
+                test_rast,
+                test_ds,
+                adjust_bbox=False,
+                crop_to_geom=True,
+                all_touch=False,
+            )
+            ref_image = raster_to_array(clipped, filled=True)
+            image_block = test_array[test]
+
+            if not np.array_equal(ref_image, image_block):
+                raise Exception(f"Image {basename} and grid cell did not match..")
+
+            if verbose == 1:
+                progress(tested, len(test_fids) - 1, "verifying..")
+
+            tested += 1
+
+    return True
+
+
 def extract_patches(
     raster: Union[str, list, gdal.Dataset],
     output_folder: str,
@@ -381,6 +546,8 @@ def extract_patches(
     generate_grid_geom: bool=True,
     clip_geom: Union[str, ogr.DataSource, gdal.Dataset, None]=None,
     clip_layer_index: int=0,
+    verify_output=False,
+    verification_samples=100,
     overwrite=True,
     epsilon: float=1e-9,
     verbose: int=1,
@@ -399,7 +566,7 @@ def extract_patches(
         size (int): The size of the tiles in pixels.
 
         offsets (list of tuples): List of offsets to extract. Example:
-        offsets=[(16, 16), (8, 8), (0, 16)]. Will offset the initial raster
+        offsets=[(16, 16), (16, 0), (0, 16)]. Will offset the initial raster
         and extract from there.
 
         generate_border_patches (bool): The tiles often do not align with the
@@ -452,14 +619,22 @@ def extract_patches(
     if verbose == 1:
         print("Generating blocks..")
 
+    # internal offset array. Avoid manipulating the og array.
+    in_offsets = []
     if generate_zero_offset and (0, 0) not in offsets:
-        offsets.insert(0, (0, 0)) # insert a 0,0 overlap
+        in_offsets.append((0, 0))
+    
+    for offset in offsets:
+        if offset != (0, 0):
+            if not isinstance(offset, (list, tuple)) or len(offset) != 2:
+                raise ValueError(f"offset must be a list or tuple of two integers. Recieved: {offset}")
+            in_offsets.append((offset[0], offset[1]))
 
     border_patches_needed_x = True
     border_patches_needed_y = True
 
     shapes = []
-    for offset in offsets:
+    for offset in in_offsets:
         block_shape = shape_to_blockshape(metadata["shape"], (size, size), offset)
 
         if block_shape[0] * size == metadata["width"]:
@@ -471,8 +646,8 @@ def extract_patches(
         shapes.append(block_shape)
 
     if generate_border_patches:
-        cut_x = (metadata["width"] - offsets[0][0]) - (shapes[0][0] * size)
-        cut_y = (metadata["height"] - offsets[0][1]) - (shapes[0][1] * size)
+        cut_x = (metadata["width"] - in_offsets[0][0]) - (shapes[0][0] * size)
+        cut_y = (metadata["height"] - in_offsets[0][1]) - (shapes[0][1] * size)
 
         if border_patches_needed_x and cut_x > 0:
             shapes[0][0] += 1
@@ -518,9 +693,9 @@ def extract_patches(
 
         coord_grid = np.empty((all_rows, 2), dtype="float64")
 
-        for l in range(len(offsets)):
-            x_offset = offsets[l][0]
-            y_offset = offsets[l][1]
+        for l in range(len(in_offsets)):
+            x_offset = in_offsets[l][0]
+            y_offset = in_offsets[l][1]
 
             x_step = shapes[l][0]
             y_step = shapes[l][1]
@@ -645,7 +820,7 @@ def extract_patches(
                 ft = None
 
         if verbose == 1:
-            progress(q, all_rows, "Patches")
+            progress(all_rows, all_rows, "Patches")
 
         # Create mask for numpy arrays
         mask = geo_fid[0:int(valid_fid + 1)]
@@ -684,7 +859,7 @@ def extract_patches(
 
         ref = raster_to_array(raster, filled=True)
 
-        for k, offset in enumerate(offsets):
+        for k, offset in enumerate(in_offsets):
             start = 0
             if k > 0:
                 start = offset_rows_cumsum[k - 1]
@@ -702,116 +877,18 @@ def extract_patches(
         else:
             np.save(out_path, output_array[mask])
 
+    if verify_output:
+        test_extraction(
+            in_rasters,
+            out_path,
+            out_path_geom,
+            samples=verification_samples,
+            grid_layer_index=0,
+            verbose=verbose,
+        ) 
+
     return (out_path, out_path_geom)
 
-
-def test_extraction(
-    rasters: Union[list, str, gdal.Dataset],
-    arrays: Union[list, np.ndarray],
-    grid: Union[ogr.DataSource, str],
-    samples: int=1000, # if 0, all
-    clip_layer_index: int=0,
-    verbose: int=1,
-) -> bool:
-    type_check(rasters, [list, str, gdal.Dataset], "rasters")
-    type_check(arrays, [list, str, np.ndarray], "arrays")
-    type_check(grid, [list, str, np.ndarray], "grid")
-    type_check(samples, [int], "samples")
-    type_check(clip_layer_index, [int], "clip_layer_index")
-    type_check(verbose, [int], "verbose")
-
-    in_rasters = to_raster_list(rasters)
-    in_arrays = to_array_list(arrays)
-
-    if verbose == 1:
-        print("Verifying integrity of output grid..")
-
-    grid_memory = None
-    if vector_in_memory(grid):
-        grid_memory = grid
-    else:
-        grid_memory = vector_to_memory(
-            grid,
-            memory_path=f"/vsimem/grid_{uuid1().int}.gpkg",
-            opened=True
-        )
-
-    grid_metadata = vector_to_metadata(grid, latlng_and_footprint=False)
-    grid_projection = grid_metadata["projection_osr"]
-
-    if clip_layer_index > (grid_metadata["layer_count"] - 1):
-        raise ValueError(f"Requested non-existing layer index: {clip_layer_index}")
-
-    grid_layer = grid_memory.GetLayer(clip_layer_index)
-
-    # Select sample fids
-    feature_count = grid_metadata["layers"][clip_layer_index]["feature_count"]
-    test_samples = samples if samples > 0 else feature_count
-    max_test = min(test_samples, feature_count) - 1
-    test_fids = np.array(random.sample(range(0, feature_count), max_test), dtype="uint64")
-
-    mem_driver = ogr.GetDriverByName("Memory")
-    for index, raster in enumerate(in_rasters):
-        test_rast = None
-        if raster_in_memory(raster):
-            test_rast = raster
-        else:
-            test_rast = raster_to_memory(
-                raster,
-                memory_path=f"/vsimem/raster_{uuid1().int}.tif",
-                opened=True,
-            )
-
-        test_array = in_arrays[index]
-        if isinstance(test_array, str):
-            if not os.path.exists(test_array):
-                raise ValueError(f"Numpy array does not exist: {test_array}")
-
-            try:
-                test_array = np.load(in_arrays[index])
-            except:
-                raise Exception(f"Attempted to read numpy raster from: {in_arrays[index]}")
-
-        base = os.path.basename(raster)
-        basename = os.path.splitext(base)[0]
-
-        if verbose == 1:
-            print(f"Testing: {basename}")
-
-        tested = 0
-        for test in test_fids:
-            feature = grid_layer.GetFeature(test)
-
-            if feature is None:
-                raise Exception(f"Feature not found: {test}")
-
-            test_ds = mem_driver.CreateDataSource("test_mem_grid.gpkg")
-            test_ds_lyr = test_ds.CreateLayer(
-                "test_mem_grid_layer",
-                geom_type=ogr.wkbPolygon,
-                srs=grid_projection
-            )
-            test_ds_lyr.CreateFeature(feature.Clone())
-
-            clipped = clip_raster(
-                test_rast,
-                test_ds,
-                adjust_bbox=False,
-                crop_to_geom=True,
-                all_touch=False,
-            )
-            ref_image = raster_to_array(clipped, filled=True)
-            image_block = test_array[test]
-
-            if not np.array_equal(ref_image, image_block):
-                raise Exception(f"Image {basename} and grid cell did not match..")
-
-            if verbose == 1:
-                progress(tested, len(test_fids) - 1, "verifying..")
-
-            tested += 1
-
-    return True
 
 
 if __name__ == "__main__":
@@ -823,24 +900,21 @@ if __name__ == "__main__":
 
     blocks = out_dir + "fyn_close_patches.npy"
 
+    offsets = [(32, 32), (32, 0)]
+    borders = True
+
     path_np, path_geom = extract_patches(
         raster,
         out_dir,
         prefix="",
         postfix="_patches",
         size=64,
-        offsets=[(32, 0)],
+        offsets=offsets,
         generate_grid_geom=True,
-        generate_border_patches=True,
+        generate_border_patches=borders,
         # clip_geom=vector,
-        verbose=1,
-    )
-
-    test_extraction(
-        raster,
-        path_np,
-        path_geom,
-        samples=100,
+        verify_output=True,
+        verification_samples=100,
         verbose=1,
     )
 
@@ -848,7 +922,7 @@ if __name__ == "__main__":
         blocks,
         raster,
         out_path=out_dir + "fyn_close_reconstituded.tif",
-        offsets=[(32, 0)],
-        border_patches=True,
+        offsets=offsets,
+        border_patches=borders,
         merge_method="median",
     )
