@@ -46,6 +46,9 @@ def vector_to_reference(vector: Union[str, ogr.DataSource], writeable: bool=Fals
     Returns:
         An OGR.DataSource of the input vector.
     """
+
+    import pdb; pdb.set_trace()
+
     try:
         if isinstance(vector, ogr.DataSource):  # Dataset already OGR dataframe.
             return vector
