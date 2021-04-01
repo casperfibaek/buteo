@@ -528,13 +528,15 @@ def test_extraction(
                 raise Exception(f"Image {basename} and grid cell did not match..")
 
             if verbose == 1:
-                progress(tested, len(test_fids) - 1, "verifying..")
+                progress(tested, len(test_fids) - 1, "Verifying..")
 
             tested += 1
 
     return True
 
 
+# TODO: Clip vector to raster bounds before doing patches.
+# TODO: Add multiprocessing to intersection tests.
 def extract_patches(
     raster: Union[str, list, gdal.Dataset],
     out_dir: Union[str, None]=None,
@@ -735,6 +737,8 @@ def extract_patches(
         if clip_geom is not None:
             clip_vector = vector_to_reference(clip_geom)
             clip_vector_metadata = vector_to_metadata(clip_vector, latlng_and_footprint=False)
+            
+            # TODO: CLIP vector to raster bounds.
 
             if clip_layer_index > (clip_vector_metadata["layer_count"] - 1):
                 raise ValueError("Requested a layer not present in the clip_vector.")
@@ -944,7 +948,7 @@ if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
     
     raster = folder + "hot_clip.tif"
-    vector = folder + "walls_clip_dissolve.gpkg"
+    vector = folder + "walls_clip_2.gpkg"
     out_dir = folder + "out/"
 
     offsets = [(32, 32), (32, 0), (0, 32)]
@@ -961,7 +965,7 @@ if __name__ == "__main__":
         generate_zero_offset=True,
         generate_border_patches=borders,
         clip_geom=vector,
-        verify_output=False,
+        verify_output=True,
         verification_samples=100,
         verbose=1,
     )

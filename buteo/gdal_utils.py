@@ -619,9 +619,16 @@ def geoms_from_extent(
 
 
 # x_min, x_max, y_min, y_max
+def ogr_bbox_within(bbox1, bbox2):
+    return (bbox1[0] >= bbox2[0]) and (bbox1[1] <= bbox2[1]) and (bbox1[3] >= bbox2[3]) and (bbox1[4] <= bbox2[4])
+
+# x_min, y_max, x_max, y_min
+def gdal_bbox_within(bbox1, bbox2):
+    return (bbox1[0] >= bbox2[0]) and (bbox1[1] <= bbox2[1]) and (bbox1[3] <= bbox2[3]) and (bbox1[4] >= bbox2[4])
+
+# x_min, x_max, y_min, y_max
 def ogr_bbox_intersects(bbox1, bbox2):
     return (bbox1[0] <= bbox2[1]) and (bbox2[0] <= bbox1[1]) and (bbox1[2] <= bbox2[3]) and (bbox2[2] <= bbox1[3])
-
 
 # x_min, y_max, x_max, y_min
 def gdal_bbox_intersects(bbox1, bbox2):

@@ -2,7 +2,7 @@ import sys; sys.path.append('../../')
 import os
 import numpy as np
 from typing import Union
-from osgeo import ogr, osr
+from osgeo import ogr, osr, gdal
 
 from buteo.gdal_utils import (
     vector_to_reference,
@@ -442,3 +442,30 @@ def vector_in_memory(vector):
 
 def vector_to_extent(vector):
     return vector_to_metadata(vector)["extent_ogr"]
+
+
+def clip_vector(vector_og, vector):
+    memory_path = "/vsimem/clipped_vector.gpkg"
+    # driver = ogr.GetDriverByName("GPKG")
+    # dst = driver.CreateDataSource(memory_path)
+
+    # driver.CreateDataSource(memory_path, )
+    clipped = gdal.VectorTranslate(
+        memory_path,
+        vector_og,
+        # clipsrc=vector,
+        format='GPKG',
+        # options = f'clipsrc={vector}',
+        options = f'-clipsrc {vector}',
+        # layerCreationOptions = ['RFC7946=YES', 'WRITE_BBOX=YES'],
+    )
+
+    return clipped
+
+
+if __name__ == "__main__":
+    folder = "C:/Users/caspe/Desktop/test/"
+    og_vect = folder + "walls_clip_2.gpkg"
+    cl_vect = folder + "clip_extent.gpkg"
+
+    bob = clip_vector(og_vect, cl_vect)
