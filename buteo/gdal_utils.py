@@ -47,8 +47,6 @@ def vector_to_reference(vector: Union[str, ogr.DataSource], writeable: bool=Fals
         An OGR.DataSource of the input vector.
     """
 
-    import pdb; pdb.set_trace()
-
     try:
         if isinstance(vector, ogr.DataSource):  # Dataset already OGR dataframe.
             return vector
@@ -56,11 +54,11 @@ def vector_to_reference(vector: Union[str, ogr.DataSource], writeable: bool=Fals
             opened = ogr.Open(vector, 1) if writeable else ogr.Open(vector, 0)
             
             if opened is None:
-                raise Exception("Could not read input raster")
+                raise Exception("Could not read input vector")
 
             return opened
     except:
-        raise Exception("Could not read input raster")
+        raise Exception("Could not read input vector")
 
 
 def default_options(options: list) -> list:

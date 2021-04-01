@@ -752,7 +752,7 @@ def extract_patches(
                     clip_vector_memory = clip_vector
                 else:
                     clip_vector_memory = vector_to_memory(
-                        clip_vector_memory,
+                        clip_vector,
                         memory_path=f"clip_vect_{uuid1().int}.gpkg",
                         opened=True,
                     )
@@ -934,8 +934,8 @@ def predict_raster(
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
     
-    raster = folder + "fyn_close.tif"
-    vector = folder + "odense2.gpkg"
+    raster = folder + "hot_clip.tif"
+    vector = folder + "walls_clip_dissolve.gpkg"
     out_dir = folder + "out/"
 
     offsets = [(32, 32), (32, 0), (0, 32)]
@@ -951,17 +951,17 @@ if __name__ == "__main__":
         generate_grid_geom=True,
         generate_zero_offset=True,
         generate_border_patches=borders,
-        # clip_geom=vector,
+        clip_geom=vector,
         verify_output=False,
         verification_samples=100,
         verbose=1,
     )
 
-    blocks_to_raster(
-        path_np,
-        raster,
-        out_path=out_dir + "fyn_close_reconstituded.tif",
-        offsets=offsets,
-        border_patches=borders,
-        merge_method="median",
-    )
+    # blocks_to_raster(
+    #     path_np,
+    #     raster,
+    #     out_path=out_dir + "fyn_close_reconstituded.tif",
+    #     offsets=offsets,
+    #     border_patches=borders,
+    #     merge_method="median",
+    # )
