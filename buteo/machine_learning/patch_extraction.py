@@ -111,7 +111,6 @@ def reconstitute_raster(
     return destination
 
 
-# TODO: reconstitute offsets.
 def blocks_to_raster(
     blocks: Union[str, np.ndarray],
     reference: Union[str, gdal.Dataset],
@@ -122,7 +121,8 @@ def blocks_to_raster(
     merge_method: str="median",
     verbose: int=1,
 ) -> Union[str, gdal.Dataset]:
-    """ Recombines a series of blocks to a raster.
+    """ Recombines a series of blocks to a raster. OBS: Does not work if the patch
+        extraction was done with clip geom.
     Args:
         blocks (ndarray): A numpy array with the values to recombine. The shape
         should be (blocks, rows, column, channel).
@@ -435,13 +435,13 @@ def test_extraction(
     """
     type_check(rasters, [list, str, gdal.Dataset], "rasters")
     type_check(arrays, [list, str, np.ndarray], "arrays")
-    type_check(grid, [list, str, np.ndarray], "grid")
+    type_check(grid, [list, str, ogr.DataSource], "grid")
     type_check(samples, [int], "samples")
     type_check(grid_layer_index, [int], "clip_layer_index")
     type_check(verbose, [int], "verbose")
 
     in_rasters = to_raster_list(rasters)
-    in_arrays = to_array_list(arrays)
+    in_arrays = arrays
 
     if verbose == 1:
         print("Verifying integrity of output grid..")
@@ -536,7 +536,7 @@ def test_extraction(
 
 def extract_patches(
     raster: Union[str, list, gdal.Dataset],
-    output_folder: str,
+    out_dir: Union[str, None]=None,
     prefix: str="",
     postfix: str="_patches",
     size: int=32,
@@ -546,7 +546,7 @@ def extract_patches(
     generate_grid_geom: bool=True,
     clip_geom: Union[str, ogr.DataSource, gdal.Dataset, None]=None,
     clip_layer_index: int=0,
-    verify_output=False,
+    verify_output=True,
     verification_samples=100,
     overwrite=True,
     epsilon: float=1e-9,
@@ -556,9 +556,10 @@ def extract_patches(
     Args:
         raster (list of rasters | path | raster): The raster(s) to convert.
 
-        output_folder (path): The path of the output folder.
-
     **kwargs:
+        out_dir (path | none): Folder to save output. If None, in-memory
+        arrays and geometries are outputted.
+
         prefix (str): A prefix for all outputs.
 
         postfix (str): A postfix for all outputs.
@@ -591,7 +592,7 @@ def extract_patches(
         A tuple with paths to the generated items. (numpy_array, grid_geom)
     """
     type_check(raster, [str, list, gdal.Dataset], "in_rasters")
-    type_check(output_folder, [str], "output_folder")
+    type_check(out_dir, [str], "out_dir", allow_none=True)
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
     type_check(size, [int], "size")
@@ -605,14 +606,13 @@ def extract_patches(
 
     in_rasters = to_raster_list(raster)
 
-    if not os.path.isdir(output_folder):
-        raise ValueError(f"Output folder does not exists: {output_folder}")
+    if out_dir is not None and not os.path.isdir(out_dir):
+        raise ValueError(f"Output directory does not exists: {out_dir}")
 
     if not is_aligned(in_rasters):
         raise ValueError("Input rasters must be aligned. Please use the align function.")
 
-    out_path = None
-    out_path_geom = None
+    output_geom = None
 
     metadata = raster_to_metadata(in_rasters[0])
 
@@ -829,26 +829,37 @@ def extract_patches(
             if valid_fid == -1:
                 print("WARNING: Empty geometry output")
 
-            raster_basename = metadata["basename"]
-            geom_name = f"{prefix}{raster_basename}_geom_{str(size)}{postfix}.gpkg"
-            out_path_geom = os.path.join(output_folder, geom_name)
+            if out_dir is None:
+                output_geom = patches_ds
+            else:
+                raster_basename = metadata["basename"]
+                geom_name = f"{prefix}{raster_basename}_geom_{str(size)}{postfix}.gpkg"
+                output_geom = os.path.join(out_dir, geom_name)
 
-            overwrite_required(out_path_geom, overwrite)
-            remove_if_overwrite(out_path_geom, overwrite)
+                overwrite_required(output_geom, overwrite)
+                remove_if_overwrite(output_geom, overwrite)
 
-            if verbose == 1:
-                print("Writing output geometry..")
+                if verbose == 1:
+                    print("Writing output geometry..")
 
-            vector_to_disk(patches_ds, out_path_geom, overwrite=overwrite)
+                vector_to_disk(patches_ds, output_geom, overwrite=overwrite)
 
     if verbose == 1:
         print("Writing numpy array to disc..")
 
+    output_blocks = []
+
     # Generate some numpy arrays
     for raster in in_rasters:
-        base = os.path.basename(raster)
-        basename = os.path.splitext(base)[0]
-        out_path = os.path.join(output_folder + f"{prefix}{basename}{postfix}.npy")
+
+        base = None
+        basename = None
+        output_block = None
+
+        if out_dir is not None:
+            base = os.path.basename(raster)
+            basename = os.path.splitext(base)[0]
+            output_block = os.path.join(out_dir + f"{prefix}{basename}{postfix}.npy")
 
         metadata = raster_to_metadata(raster)
 
@@ -873,28 +884,53 @@ def extract_patches(
             output_array[start:offset_rows_cumsum[k]] = blocks
 
         if generate_grid_geom is False and clip_geom is None:
-            np.save(out_path, output_array)
+            if out_dir is None:
+                output_blocks.append(output_array)
+            else:
+                output_blocks.append(output_block)
+                np.save(output_block, output_array)
         else:
-            np.save(out_path, output_array[mask])
+            if out_dir is None:
+                output_blocks.append(output_array[mask])
+            else:
+                output_blocks.append(output_block)
+                np.save(output_block, output_array[mask])
 
-    if verify_output:
+    
+    if verify_output and generate_grid_geom:
         test_extraction(
             in_rasters,
-            out_path,
-            out_path_geom,
+            output_blocks,
+            output_geom,
             samples=verification_samples,
             grid_layer_index=0,
             verbose=verbose,
         ) 
 
-    return (out_path, out_path_geom)
+    if len(output_blocks) == 1:
+        output_blocks = output_blocks[0]
+
+    return (output_blocks, output_geom)
 
 
+# create predict raster function
+def predict_raster(
+    raster,
+    model,
+    tile_size=64,
+    offsets=[(32, 32), (32, 0), (0, 32)],
+    clip_geom=None,
+    mirror=True,
+    rotate=True,
+):
+    raise ValueError("Not yet implemented.")
 
+
+# TODO: Memory outputs, flips and mirrors - consider
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
     
-    raster = folder + "fyn.tif"
+    raster = folder + "fyn_close.tif"
     vector = folder + "odense2.gpkg"
     out_dir = folder + "out/"
 
@@ -903,24 +939,24 @@ if __name__ == "__main__":
 
     path_np, path_geom = extract_patches(
         raster,
-        out_dir,
+        out_dir=None,
         prefix="",
         postfix="_patches",
         size=64,
         offsets=offsets,
         generate_grid_geom=True,
         generate_border_patches=borders,
-        # clip_geom=vector,
+        clip_geom=vector,
         verify_output=True,
-        verification_samples=1000,
+        verification_samples=100,
         verbose=1,
     )
 
-    blocks_to_raster(
-        path_np,
-        raster,
-        out_path=out_dir + "fyn_close_reconstituded.tif",
-        offsets=offsets,
-        border_patches=borders,
-        merge_method="median",
-    )
+    # blocks_to_raster(
+    #     path_np,
+    #     raster,
+    #     out_path=out_dir + "fyn_close_reconstituded.tif",
+    #     offsets=offsets,
+    #     border_patches=borders,
+    #     merge_method="median",
+    # )
