@@ -1,9 +1,7 @@
 import os
 import sys
 import time
-from typing import Union
-from osgeo import gdal
-
+import psutil
 
 def progress(count, total, name='Processing'):
     sys.stdout.flush()
@@ -148,6 +146,18 @@ def step_ranges(steps):
         last += step_size
 
     return start_stop
+
+
+def file_in_use(path):
+    for process in psutil.process_iter():
+        try:
+            for item in process.open_files():
+                if path == item.path:
+                    return True
+        except Exception:
+            pass
+
+    return False
 
 
 def type_check(
