@@ -10,48 +10,26 @@ from zipfile import ZipFile
 from glob import glob
 from urllib import request
 
-
-# def download_progress_hook(count, blockSize, totalSize):
-#   """A hook to report the progress of a download. This is mostly intended for users with
-#   slow internet connections. Reports every 5% change in download progress.
-#   """
-#   global last_percent_reported
-#   percent = int(count * blockSize * 100 / totalSize)
-
-#   if last_percent_reported != percent:
-#     if percent % 5 == 0:
-#       sys.stdout.write("%s%%" % percent)
-#       sys.stdout.flush()
-#     else:
-#       sys.stdout.write(".")
-#       sys.stdout.flush()
-
-#     last_percent_reported = percent
-
-
-#TODO add report hook to get_file()
-# def reporthook(count, block_size, total_size):
-#     global start_time
-#     if count == 0:
-#         start_time = time.time()
-#         return
-
-#     duration = time.time() - start_time
-#     progress_size = int(count * block_size)
-#     speed = int(progress_size / (1024 * duration))
-#     percent = int(count * block_size * 100 / total_size)
-#     sys.stdout.write(
-#         "\r...%d%%, %d MB, %d KB/s, %d seconds passed"
-#         % (percent, progress_size / (1024 * 1024), speed, duration)
-#     )
-#     sys.stdout.flush()
-
+def reporthook(count, block_size, total_size):
+    # print('-------------------------', count)
+    global start_time
+    if count == 0:
+        start_time = time.time()
+        return
+    duration = (time.time() + 0.1) - start_time
+    progress_size = int(count * block_size)
+    speed = int(progress_size / (1024 * duration))
+    percent = int(count * block_size * 100 / total_size)
+    # import pdb; pdb.set_trace()
+    sys.stdout.write(
+        "\r...%d%%, %d MB, %d KB/s, %d seconds passed"
+        % (percent, progress_size / (1024 * 1024), speed, duration)
+    )
+    sys.stdout.flush()
 
 def get_file(url, filename):
-    request.urlretrieve(url, filename)
+    request.urlretrieve(url, filename, reporthook)
     
-
-
 def find_tile_names(path_to_geom):
     project_geom = gpd.read_file(path_to_geom)
     project_geom_wgs = project_geom.to_crs("EPSG:4326")
@@ -61,8 +39,8 @@ def find_tile_names(path_to_geom):
     grid_dest = grid_geom.to_crs("EPSG:4326")
 
     data = []
-    for index_g, geom in project_geom_wgs.iterrows():
-        for index_t, tile in grid_dest.iterrows():
+    for _, geom in project_geom_wgs.iterrows():
+        for _, tile in grid_dest.iterrows():
             if geom["geometry"].intersects(tile["geometry"]):
                 if tile["KN10kmDK"] not in data:
                     data.append(tile["KN10kmDK"])
@@ -81,10 +59,13 @@ def download_dtm(tile_names, dst_folder, username, password):
         if not os.path.exists(dst_folder + file_name):
             try:
                 get_file(base_path + file_name, dst_folder + file_name)
+                print(f"Completed: {completed}/{len(tile_names)} DTM tiles.")
             except:
                 print(f"Error while trying to download: {base_path + file_name}")
+        else:
+            print(f"{file_name} Already exists.")
         completed += 1
-        print(f"Completed: {completed}/{len(tile_names)} DTM tiles.")
+        
 
 
 def download_dsm(tile_names, dst_folder, username, password):
@@ -99,11 +80,14 @@ def download_dsm(tile_names, dst_folder, username, password):
         if not os.path.exists(dst_folder + file_name):
             try:
                 get_file(base_path + file_name, dst_folder + file_name)
+                print(f"Completed: {completed}/{len(tile_names)} DSM tiles.")
             except:
                 print(f"Error while trying to download: {base_path + file_name}")
-
+        else:
+            print(f"{file_name} Already exists.")
         completed += 1
-        print(f"Completed: {completed}/{len(tile_names)} DSM tiles.")
+        
+        
 
 
 def get_tile_from_zipped_url(path):
@@ -183,17 +167,19 @@ if __name__ == "__main__":
     #     completed += 1
     #     print(f"Completed: {completed}/{len(hot_files)}")
 
-    # download_dtm(
-    #     find_tile_names(base + 'cutout.shp'),
-    #     dtm_folder,
-    #     "ezratrotter",
-    #     "Bigcloud8!!!",
-    # )
+    cutout = 'C://Users/EZRA/Desktop/Aeroe_Kommune.shp'
+# DTM_608_57_TIF_UTM32-ETRS89
+    download_dtm(
+        find_tile_names(cutout),
+        dtm_folder,
+        "ezratrotter",
+        "Bigcloud8!!!",
+    )
     # download_dsm(
-    #     find_tile_names(base + 'cutout.shp'),
+    #     find_tile_names(cutout),
     #     dsm_folder,
     #     "ezratrotter",
     #     "Bigcloud8!!!",
     # )
 
-    height_over_terrain(dsm_folder, dtm_folder, hot_folder, tmp_folder)
+    # height_over_terrain(dsm_folder, dtm_folder, hot_folder, tmp_folder)
