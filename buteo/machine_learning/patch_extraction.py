@@ -23,7 +23,7 @@ from buteo.raster.clip import clip_raster
 from buteo.raster.align import is_aligned
 from buteo.vector.reproject import reproject_vector
 from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
-from buteo.gdal_utils import to_array_list, to_raster_list, ogr_bbox_intersects
+from buteo.gdal_utils import to_raster_list, ogr_bbox_intersects
 
 
 def reconstitute_raster(
