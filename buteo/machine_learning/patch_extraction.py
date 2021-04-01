@@ -596,7 +596,7 @@ def extract_patches(
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
     type_check(size, [int], "size")
-    type_check(offsets, [list], "offsets")
+    type_check(offsets, [list], "offsets", allow_none=True)
     type_check(generate_grid_geom, [bool], "generate_grid_geom")
     type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_layer_index", allow_none=True)
     type_check(clip_layer_index, [int], "clip_layer_index")
