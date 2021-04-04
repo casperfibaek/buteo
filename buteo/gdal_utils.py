@@ -180,7 +180,7 @@ def is_vector(vector: Union[str, ogr.DataSource]) -> bool:
 
 
 def parse_projection(
-    target: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
+    target: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int],
     return_wkt: bool=False,
 ) -> Union[osr.SpatialReference, str]:
     """ Parses a gdal, ogr og osr data source and extraction the projection. If

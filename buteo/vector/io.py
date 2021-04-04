@@ -1,11 +1,13 @@
 import sys; sys.path.append('../../')
 import os
 import numpy as np
-from typing import Union
-from osgeo import ogr, osr, gdal
+from uuid import uuid4
+from typing import Type, Union
+from osgeo import ogr, osr
 
 from buteo.gdal_utils import (
     vector_to_reference,
+    is_vector,
     path_to_driver,
     geoms_from_extent,
 )
@@ -53,10 +55,12 @@ def vector_to_metadata(
 
     vector_driver = vector.GetDriver()
 
-    abs_path = os.path.abspath(vector.GetName())
+    vector_name = vector.GetName()
+    abs_path = os.path.abspath(vector_name)
 
     metadata = {
-        "path": abs_path,
+        "path": vector_name,
+        "abs_path": abs_path,
         "basename": os.path.basename(abs_path),
         "filetype": os.path.splitext(os.path.basename(abs_path))[1],
         "name": os.path.splitext(os.path.basename(abs_path))[0],
@@ -253,7 +257,10 @@ def vector_to_memory(
     driver = None
     vector_name = None
     if memory_path is not None:
-        vector_name = f"/vsimem/{memory_path}"
+        if memory_path[0:8] == "/vsimem/":
+            vector_name = memory_path
+        else:
+            vector_name = f"/vsimem/{memory_path}"
         driver = ogr.GetDriverByName(path_to_driver(memory_path))
     else:
         vector_name = basename
@@ -291,7 +298,8 @@ def vector_to_disk(
     Returns:
         An path to the created vector.
     """
-    assert isinstance(vector, ogr.DataSource), "Input not a vector datasource."
+    if not is_vector(vector):
+        raise TypeError("Input not a vector.")
 
     driver = ogr.GetDriverByName(path_to_driver(out_path))
     assert driver != None, "Unable to parse driver."
@@ -302,9 +310,11 @@ def vector_to_disk(
 
     copy = driver.CreateDataSource(out_path)
 
+    ref = vector_to_reference(vector)
+
     for layer_idx in range(metadata["layer_count"]):
         layer_name = metadata["layers"][layer_idx]["layer_name"]
-        copy.CopyLayer(vector.GetLayer(layer_idx), str(layer_name), ["OVERWRITE=YES"])
+        copy.CopyLayer(ref.GetLayer(layer_idx), str(layer_name), ["OVERWRITE=YES"])
 
     copy = None
     return out_path
@@ -429,7 +439,7 @@ def vector_add_shapes(
 
 
 def vector_in_memory(vector):
-    metadata = vector_to_metadata(vector)
+    metadata = vector_to_metadata(vector, latlng_and_footprint=False)
     
     if metadata["driver"] == "Memory":
         return True
@@ -440,32 +450,24 @@ def vector_in_memory(vector):
     return False
 
 
+def vector_to_path(vector):
+    metadata = vector_to_metadata(vector, latlng_and_footprint=False)
+
+    if metadata["driver"] == "Memory":
+        out_format = '.gpkg'
+        out_target = f"/vsimem/memvect_{uuid4().int}{out_format}"
+        return vector_to_memory(vector, memory_path=out_target)
+    
+    if str(metadata["path"])[0:8] == "/vsimem/":
+        return metadata["path"]
+    
+    if os.path.exists(metadata["abs_path"]):
+        return metadata["abs_path"]
+    
+    raise Exception("Unable to find path from vector source.")
+
+
+
 def vector_to_extent(vector):
     return vector_to_metadata(vector)["extent_ogr"]
 
-
-def clip_vector(vector_og, vector):
-    memory_path = "/vsimem/clipped_vector.gpkg"
-    # driver = ogr.GetDriverByName("GPKG")
-    # dst = driver.CreateDataSource(memory_path)
-
-    # driver.CreateDataSource(memory_path, )
-    clipped = gdal.VectorTranslate(
-        memory_path,
-        vector_og,
-        # clipsrc=vector,
-        format='GPKG',
-        # options = f'clipsrc={vector}',
-        options = f'-clipsrc {vector}',
-        # layerCreationOptions = ['RFC7946=YES', 'WRITE_BBOX=YES'],
-    )
-
-    return clipped
-
-
-if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/test/"
-    og_vect = folder + "walls_clip_2.gpkg"
-    cl_vect = folder + "clip_extent.gpkg"
-
-    bob = clip_vector(og_vect, cl_vect)

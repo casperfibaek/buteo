@@ -2,9 +2,10 @@ import sys;  sys.path.append("../../")
 import numpy as np
 import os
 import random
+import rtree
 from typing import Union
 from osgeo import ogr, gdal
-from uuid import uuid4
+from uuid import uuid1
 from buteo.raster.io import (
     raster_to_array,
     raster_to_metadata,
@@ -14,18 +15,16 @@ from buteo.raster.io import (
 )
 from buteo.vector.io import (
     vector_to_memory,
+    vector_to_reference,
     vector_to_metadata,
     vector_to_disk,
-    vector_to_path,
     vector_in_memory,
 )
-from buteo.vector.reproject import reproject_vector
-from buteo.vector.clip import clip_vector
-from buteo.vector.attributes import vector_get_attribute_table
 from buteo.raster.clip import clip_raster
 from buteo.raster.align import is_aligned
+from buteo.vector.reproject import reproject_vector
 from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
-from buteo.gdal_utils import to_raster_list, vector_to_reference
+from buteo.gdal_utils import to_raster_list, ogr_bbox_intersects
 
 
 def reconstitute_raster(
@@ -454,7 +453,7 @@ def test_extraction(
     else:
         grid_memory = vector_to_memory(
             grid,
-            memory_path=f"/vsimem/grid_{uuid4().int}.gpkg",
+            memory_path=f"/vsimem/grid_{uuid1().int}.gpkg",
             opened=True
         )
 
@@ -472,7 +471,7 @@ def test_extraction(
     max_test = min(test_samples, feature_count) - 1
     test_fids = np.array(random.sample(range(0, feature_count), max_test), dtype="uint64")
 
-    mem_driver = ogr.GetDriverByName("ESRI Shapefile")
+    mem_driver = ogr.GetDriverByName("Memory")
     for index, raster in enumerate(in_rasters):
         test_rast = None
         if raster_in_memory(raster):
@@ -480,7 +479,7 @@ def test_extraction(
         else:
             test_rast = raster_to_memory(
                 raster,
-                memory_path=f"/vsimem/raster_{uuid4().int}.tif",
+                memory_path=f"/vsimem/raster_{uuid1().int}.tif",
                 opened=True,
             )
 
@@ -501,27 +500,30 @@ def test_extraction(
             print(f"Testing: {basename}")
 
         tested = 0
-
         for test in test_fids:
             feature = grid_layer.GetFeature(test)
 
             if feature is None:
                 raise Exception(f"Feature not found: {test}")
 
-            test_ds_path = f"/vsimem/test_mem_grid_{uuid4().int}.shp"
-            test_ds = mem_driver.CreateDataSource(test_ds_path)
+            test_ds = mem_driver.CreateDataSource("test_mem_grid.gpkg")
             test_ds_lyr = test_ds.CreateLayer(
                 "test_mem_grid_layer",
                 geom_type=ogr.wkbPolygon,
                 srs=grid_projection
             )
             test_ds_lyr.CreateFeature(feature.Clone())
-            test_ds.SyncToDisk()
 
-            clipped = clip_raster(test_rast, test_ds_path, adjust_bbox=False, crop_to_geom=True, all_touch=False)
-
+            clipped = clip_raster(
+                test_rast,
+                test_ds,
+                adjust_bbox=False,
+                crop_to_geom=True,
+                all_touch=False,
+            )
             ref_image = raster_to_array(clipped, filled=True)
             image_block = test_array[test]
+
             if not np.array_equal(ref_image, image_block):
                 raise Exception(f"Image {basename} and grid cell did not match..")
 
@@ -682,7 +684,8 @@ def extract_patches(
         if verbose == 1:
             print("Calculating grid cells..")
 
-        mask = np.arange(all_rows, dtype="uint64")
+        geo_fid = np.zeros(all_rows, dtype="uint64")
+        mask = geo_fid
 
         ulx, uly, _lrx, _lry = metadata["extent"]
 
@@ -731,73 +734,118 @@ def extract_patches(
             coord_grid[start:offset_rows_cumsum[l], 0] = oxx.ravel()
             coord_grid[start:offset_rows_cumsum[l], 1] = oyy.ravel()
 
+        if clip_geom is not None:
+            clip_vector = vector_to_reference(clip_geom)
+            clip_vector_metadata = vector_to_metadata(clip_vector, latlng_and_footprint=False)
+            
+            # TODO: CLIP vector to raster bounds.
+
+            if clip_layer_index > (clip_vector_metadata["layer_count"] - 1):
+                raise ValueError("Requested a layer not present in the clip_vector.")
+
+            clip_vector_memory = None
+
+            if not metadata["projection_osr"].IsSame(clip_vector_metadata["projection_osr"]):
+                clip_vector_memory = reproject_vector(
+                    clip_vector, metadata["projection_osr"],
+                    out_path=f"/vsimem/clip_vect_{uuid1().int}.gpkg",
+                )
+                clip_vector_memory = vector_to_reference(clip_vector_memory)
+
+            if clip_vector_memory is None:
+                if vector_in_memory(clip_vector):
+                    clip_vector_memory = clip_vector
+                else:
+                    clip_vector_memory = vector_to_memory(
+                        clip_vector,
+                        memory_path=f"clip_vect_{uuid1().int}.gpkg",
+                        opened=True,
+                    )
+  
+            clip_layer = clip_vector_memory.GetLayer(clip_layer_index)
+            clip_layer_extent = clip_layer.GetExtent() # x_min, x_max, y_min, y_max
+            clip_feature_count = clip_vector_metadata["layers"][clip_layer_index]["feature_count"]
+
         # Output geometry
         driver = ogr.GetDriverByName("GPKG")
-        patches_path = f"/vsimem/patches_{uuid4().int}.gpkg"
-        patches_ds = driver.CreateDataSource(patches_path)
+        patches_ds = driver.CreateDataSource(f"/vsimem/patches_{uuid1().int}.gpkg")
         patches_layer = patches_ds.CreateLayer("patches", geom_type=ogr.wkbPolygon, srs=metadata["projection_osr"])
         patches_fdefn = patches_layer.GetLayerDefn()
 
-        field_defn = ogr.FieldDefn("og_fid", ogr.OFTInteger)
-        patches_layer.CreateField(field_defn)
+        if verbose == 1:
+            print("Creating patches..")
 
+        spatial_index = rtree.index.Index(interleaved=False)
+        features = {}
+        for _ in range(clip_feature_count):
+            clip_feature = clip_layer.GetNextFeature()
+            clip_fid = clip_feature.GetFID()
+            clip_feature_geom = clip_feature.GetGeometryRef()
+            xmin, xmax, ymin, ymax = clip_feature_geom.GetEnvelope()
+
+            spatial_index.insert(clip_fid, (xmin, xmax, ymin, ymax))
+            features[clip_fid] = clip_feature_geom
+
+        valid_fid = -1
         for q in range(all_rows):
             x, y = coord_grid[q]
 
+            tile_intersects_geom = False
+
             if verbose == 1:
-                progress(q, all_rows, "Creating Patches")
+                progress(q, all_rows, "Patches")
 
-            poly_wkt = f"POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))"
+            if clip_geom is not None:
 
-            ft = ogr.Feature(patches_fdefn)
-            ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
-            ft.SetField("og_fid", int(q))
-            ft.SetFID(int(q))
+                tile_bounds = (x - dx, x + dx, y - dy, y + dy)
 
-            patches_layer.CreateFeature(ft)
-            ft = None
+                if not ogr_bbox_intersects(tile_bounds, clip_layer_extent):
+                    continue
+
+                tile_ring = ogr.Geometry(ogr.wkbLinearRing)
+                tile_ring.AddPoint(x - dx, y + dy) # ul
+                tile_ring.AddPoint(x + dx, y + dy) # ur
+                tile_ring.AddPoint(x + dx, y - dy) # lr 
+                tile_ring.AddPoint(x - dx, y - dy) # ll
+                tile_ring.AddPoint(x - dx, y + dy) # ul begin
+
+                tile_poly = ogr.Geometry(ogr.wkbPolygon)
+                tile_poly.AddGeometry(tile_ring)
+
+                for fid1 in list(spatial_index.intersection((xmin, xmax, ymin, ymax))):
+                    geometry1 = features[fid1]
+
+                    if tile_poly.Intersects(geometry1):
+                        valid_fid += 1
+                        tile_intersects_geom = True
+                        break
+
+            else:
+                valid_fid += 1
+                
+            if (generate_grid_geom is True and clip_geom is None) or (generate_grid_geom is True and clip_geom is not None and tile_intersects_geom is True):
+
+                poly_wkt = f"POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))"
+
+                ft = ogr.Feature(patches_fdefn)
+                ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
+                ft.SetFID(valid_fid)
+
+                geo_fid[valid_fid] = q
+
+                patches_layer.CreateFeature(ft)
+                ft = None
 
         if verbose == 1:
-            progress(all_rows, all_rows, "Creating Patches")
+            progress(all_rows, all_rows, "Patches")
 
-        if clip_geom is not None:
-            clip_ref = reproject_vector(clip_geom, metadata["projection_osr"])
-            clip_layer = clip_ref.GetLayerByIndex(clip_layer_index)
-
-            patches_ds.CopyLayer(clip_layer, 'clip_geom', ["OVERWRITE=YES"])
-
-            patches_geom_col = patches_layer.GetGeometryColumn()
-            clip_geom_col = clip_layer.GetGeometryColumn()
-
-            if patches_geom_col == "":
-                patches_geom_col = "geom"
-            
-            if clip_geom_col == "":
-                clip_geom_col = "geom"
-
-            add_idx_patches = f"SELECT CreateSpatialIndex('patches', '{patches_geom_col}') WHERE NOT EXISTS (SELECT HasSpatialIndex('patches', '{patches_geom_col}'));"
-            add_idx_clip = f"SELECT CreateSpatialIndex('clip_geom', '{clip_geom_col}') WHERE NOT EXISTS (SELECT HasSpatialIndex('clip_geom', '{clip_geom_col}'));"
-
-            # TODO: dissolve, single_to_multipart, multipart_to_singlepart
-
-            patches_ds.ExecuteSQL(add_idx_patches, dialect="SQLITE")
-            patches_ds.ExecuteSQL(add_idx_clip, dialect="SQLITE")
-
-            sql = f"SELECT ROW_NUMBER() OVER (ORDER BY A.fid) - 1 AS fid, A.* FROM patches A, clip_geom B WHERE ST_INTERSECTS(A.geom, B.geom);"
-            result = patches_ds.ExecuteSQL(sql, dialect="SQLITE")
-
-            if result is None:
-                raise Exception("Clip geom did not intersect raster.")
-
-            patches_ds.CopyLayer(result, 'patches_intersect', ["OVERWRITE=YES"])
-            patches_ds.DeleteLayer('patches')
-            patches_ds.DeleteLayer('clip_geom')
-
-            attributes = vector_get_attribute_table(patches_ds)
-
-            mask = attributes["og_fid"].values
+        # Create mask for numpy arrays
+        mask = geo_fid[0:int(valid_fid + 1)]
 
         if generate_grid_geom is True:
+            if valid_fid == -1:
+                print("WARNING: Empty geometry output")
+
             if out_dir is None:
                 output_geom = patches_ds
             else:
@@ -865,6 +913,7 @@ def extract_patches(
                 output_blocks.append(output_block)
                 np.save(output_block, output_array[mask])
 
+    
     if verify_output and generate_grid_geom:
         test_extraction(
             in_rasters,
@@ -899,7 +948,7 @@ if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
     
     raster = folder + "hot_clip.tif"
-    vector = folder + "walls_single.gpkg"
+    vector = folder + "walls_clip_2.gpkg"
     out_dir = folder + "out/"
 
     offsets = [(32, 32), (32, 0), (0, 32)]

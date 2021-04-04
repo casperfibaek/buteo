@@ -52,7 +52,10 @@ def raster_to_memory(
     driver = None
     raster_name = None
     if memory_path is not None:
-        raster_name = f"/vsimem/{memory_path}"
+        if memory_path[0:8] == "/vsimem/":
+            raster_name = memory_path
+        else:
+            raster_name = f"/vsimem/{memory_path}"
         driver_name = path_to_driver(memory_path)
         if driver_name is None:
             driver_name = "GTiff"

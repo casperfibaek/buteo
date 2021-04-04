@@ -3,7 +3,7 @@ from uuid import uuid1
 from osgeo import gdal, ogr
 from typing import Union
 from buteo.raster.io import raster_to_metadata
-from buteo.vector.io import vector_to_memory, vector_to_metadata
+from buteo.vector.io import vector_to_memory, vector_to_metadata, vector_to_path
 from buteo.utils import file_exists, remove_if_overwrite, overwrite_required
 from buteo.gdal_utils import (
     raster_to_reference, reproject_extent,
@@ -122,24 +122,7 @@ def clip_raster(
             origin_projection,
         )
 
-    if not isinstance(clip_ds, str):
-        clip_path = clip_metadata["path"]
-        if file_exists(clip_path):
-            clip_ds = clip_path
-        elif "/vsimem/" in clip_path:
-            clip_ds = clip_path
-        
-        if clip_metadata["layer_count"] > 1:
-            clip_ds = vector_to_memory(
-                clip_ds,
-                memory_path=f"clip_geom_{uuid1().int}.gpkg",
-                layer_to_extract=layer_to_clip,
-            )
-        elif not isinstance(clip_ds, str): 
-            clip_ds = vector_to_memory(
-                clip_ds,
-                memory_path=f"clip_geom_{uuid1().int}.gpkg",
-            )
+    clip_ds = vector_to_path(clip_ds)
 
     if clip_ds is None:
         raise ValueError(f"Unable to parse input clip geom: {clip_geom}")
