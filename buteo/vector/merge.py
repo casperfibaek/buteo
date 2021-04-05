@@ -1,17 +1,15 @@
 import sys; sys.path.append('../../')
 from uuid import uuid4
-from typing import Type, Union
-from osgeo import ogr, osr, gdal
+from typing import Union
+from osgeo import ogr
 
 from buteo.gdal_utils import (
     is_vector,
     path_to_driver,
-    is_raster,
     vector_to_reference,
 )
 from buteo.utils import path_to_ext, type_check
-from buteo.raster.io import raster_to_metadata
-from buteo.vector.io import vector_to_path, vector_to_metadata
+from buteo.vector.io import vector_to_metadata
 
 
 def merge_vectors(

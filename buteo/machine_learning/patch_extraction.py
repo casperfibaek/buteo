@@ -20,12 +20,11 @@ from buteo.vector.io import (
     vector_in_memory,
 )
 from buteo.vector.reproject import reproject_vector
-from buteo.vector.clip import clip_vector
 from buteo.vector.attributes import vector_get_attribute_table
 from buteo.raster.clip import clip_raster
 from buteo.raster.align import is_aligned
 from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
-from buteo.gdal_utils import to_raster_list, vector_to_reference
+from buteo.gdal_utils import to_raster_list
 
 
 def reconstitute_raster(
@@ -880,7 +879,7 @@ def predict_raster(
     raise ValueError("Not yet implemented.")
 
 
-# TODO: Memory outputs, flips and mirrors - consider
+# TODO: flips and mirrors - consider
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
     

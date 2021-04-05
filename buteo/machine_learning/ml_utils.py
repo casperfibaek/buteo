@@ -2,9 +2,6 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
 
-import tensorflow as tf
-import tensorflow_probability as tfp
-
 
 def count_freq(arr: np.ndarray) -> np.ndarray:
     bins = np.bincount(arr)
@@ -13,16 +10,16 @@ def count_freq(arr: np.ndarray) -> np.ndarray:
 
 
 # Metrics for testing model accuracy
-def median_absolute_error(y_actual: float, y_pred: float) -> float:
-    return tfp.stats.percentile(tf.math.abs(y_actual - y_pred), 50.0)
+# def median_absolute_error(y_actual: float, y_pred: float) -> float:
+#     return tfp.stats.percentile(tf.math.abs(y_actual - y_pred), 50.0)
 
 
-def median_absolute_percentage_error(y_actual: float, y_pred: float) -> float:
-    return tfp.stats.percentile(
-        tf.divide(
-            tf.abs(tf.subtract(y_actual, y_pred)), (y_actual + 1e-10)
-        ) * 100
-    , 50.0)
+# def median_absolute_percentage_error(y_actual: float, y_pred: float) -> float:
+#     return tfp.stats.percentile(
+#         tf.divide(
+#             tf.abs(tf.subtract(y_actual, y_pred)), (y_actual + 1e-10)
+#         ) * 100
+#     , 50.0)
 
 
 # Printing visuals

@@ -1,7 +1,7 @@
 import sys; sys.path.append('../../')
 from uuid import uuid4
 from typing import Union
-from osgeo import ogr, gdal
+from osgeo import ogr
 
 from buteo.gdal_utils import (
     is_vector,

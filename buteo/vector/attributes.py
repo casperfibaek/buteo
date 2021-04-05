@@ -8,7 +8,6 @@ import pandas as pd
 import numpy as np
 
 
-
 def vector_get_attribute_table(
     vector: Union[ogr.DataSource, str, list],
     process_layer: int=0,
@@ -20,8 +19,6 @@ def vector_get_attribute_table(
 
     ref = vector_to_reference(vector)
     metadata = vector_to_metadata(ref, process_layer=process_layer, latlng_and_footprint=False)
-
-    dataframes = []
 
     attribute_table_header = None
     feature_count = None
