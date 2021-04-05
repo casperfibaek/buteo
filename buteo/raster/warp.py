@@ -22,13 +22,13 @@ from buteo.raster.io import (
 )
 from buteo.vector.io import (
     vector_to_metadata,
-    reproject_vector,
     vector_to_reference,
     vector_to_memory,
 )
 
 
-# TODO: documentation, robustness. handle layer
+# TODO: documentation, robustness. handle layer, reprojections?
+
 def warp_raster(
     raster: Union[str, gdal.Dataset],
     out_path: Union[str, None]=None,

@@ -10,7 +10,7 @@ from buteo.gdal_utils import (
 )
 from buteo.utils import type_check
 from buteo.raster.io import raster_to_metadata
-from buteo.vector.io import vector_to_path, vector_to_metadata
+from buteo.vector.io import vector_to_path, vector_to_metadata, vector_add_index
 from buteo.vector.merge import merge_vectors
 
 
@@ -82,6 +82,8 @@ def intersect_vector(
     driver = ogr.GetDriverByName(out_format)
 
     merged = merge_vectors([vector, geometry_to_clip], opened=True)
+
+    vector_add_index(merged)
 
     vector_metadata = vector_to_metadata(vector, latlng_and_footprint=False)
     vector_layername = vector_metadata["layers"][vector_idx]["layer_name"]

@@ -16,7 +16,7 @@ from buteo.vector.io import (
     vector_to_memory,
     vector_to_metadata,
     vector_to_disk,
-    vector_to_path,
+    vector_add_index,
     vector_in_memory,
 )
 from buteo.vector.reproject import reproject_vector
@@ -766,22 +766,8 @@ def extract_patches(
 
             patches_ds.CopyLayer(clip_layer, 'clip_geom', ["OVERWRITE=YES"])
 
-            patches_geom_col = patches_layer.GetGeometryColumn()
-            clip_geom_col = clip_layer.GetGeometryColumn()
-
-            if patches_geom_col == "":
-                patches_geom_col = "geom"
-            
-            if clip_geom_col == "":
-                clip_geom_col = "geom"
-
-            add_idx_patches = f"SELECT CreateSpatialIndex('patches', '{patches_geom_col}') WHERE NOT EXISTS (SELECT HasSpatialIndex('patches', '{patches_geom_col}'));"
-            add_idx_clip = f"SELECT CreateSpatialIndex('clip_geom', '{clip_geom_col}') WHERE NOT EXISTS (SELECT HasSpatialIndex('clip_geom', '{clip_geom_col}'));"
-
-            # TODO: dissolve, single_to_multipart, multipart_to_singlepart
-
-            patches_ds.ExecuteSQL(add_idx_patches, dialect="SQLITE")
-            patches_ds.ExecuteSQL(add_idx_clip, dialect="SQLITE")
+            # add spatial indices if they don't exists.
+            vector_add_index(patches_ds)
 
             sql = f"SELECT ROW_NUMBER() OVER (ORDER BY A.fid) - 1 AS fid, A.* FROM patches A, clip_geom B WHERE ST_INTERSECTS(A.geom, B.geom);"
             result = patches_ds.ExecuteSQL(sql, dialect="SQLITE")

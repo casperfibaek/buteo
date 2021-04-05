@@ -2,7 +2,7 @@ import sys; sys.path.append('../../')
 import os
 import numpy as np
 from uuid import uuid4
-from typing import Type, Union
+from typing import Union
 from osgeo import ogr, osr
 
 from buteo.gdal_utils import (
@@ -11,7 +11,7 @@ from buteo.gdal_utils import (
     path_to_driver,
     geoms_from_extent,
 )
-from buteo.utils import progress, remove_if_overwrite
+from buteo.utils import progress, remove_if_overwrite, type_check
 
 
 # TODO:
@@ -20,8 +20,9 @@ from buteo.utils import progress, remove_if_overwrite
 #   - rasterize - with antialiasing/weights
 #   - join by attribute + summary
 #   - join by location + summary
-#   - intersection, buffer, union, clip, erase
+#   - buffer, union, erase
 #   - multithreaded processing
+#   - Rename layers function
 
 
 def vector_to_metadata(
@@ -127,6 +128,12 @@ def vector_to_metadata(
             "projection": None,
             "projection_osr": None,
         }
+
+        geom_col = layer.GetGeometryColumn()
+        if geom_col == "":
+            layer_dict["geom_column"] = "geom"
+        else:
+            layer_dict["geom_column"] = geom_col
 
         projection_wkt = layer.GetSpatialRef().ExportToWkt()
         original_projection = osr.SpatialReference()
@@ -320,6 +327,29 @@ def vector_to_disk(
     return out_path
 
 
+def vector_add_index(vector: Union[str, ogr.DataSource]) -> None:
+    """ Adds a spatial index to the vector if it doesn't have one.
+
+    Args:
+        vector (path | vector): The vector to add the index to.
+
+    Returns:
+        None
+    """
+    type_check(vector, [str, ogr.DataSource], "vector")
+
+    ref = vector_to_reference(vector)
+    metadata = vector_to_metadata(ref)
+    
+    for layer in metadata["layers"]:
+        name = layer["layer_name"]
+        geom = layer["geom_column"]
+
+        sql = f"SELECT CreateSpatialIndex('{name}', '{geom}') WHERE NOT EXISTS (SELECT HasSpatialIndex('{name}', '{geom}'));"
+        ref.ExecuteSQL(sql, dialect="SQLITE")
+
+    return None
+
 
 # TODO: Update this to work on every geom layer.
 # TODO: Add output array.
@@ -470,4 +500,3 @@ def vector_to_path(vector):
 
 def vector_to_extent(vector):
     return vector_to_metadata(vector)["extent_ogr"]
-
