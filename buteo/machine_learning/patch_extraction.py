@@ -901,16 +901,55 @@ def predict_raster(
 ):
     """ Runs a raster through a deep learning network (Tensorflow). Supports
         tiling and reconstituting the output. Offsets are allowed and will be
-        bleneded with the merge_method.
+        bleneded with the merge_method. If the output is a different resolution
+        than the input. The output will automatically be scaled to match.
     Args:
-        raster (list of rasters | path | raster): The raster(s) to convert.
+        raster (path | raster): The raster(s) to convert.
+
+        model (path): A path to the tensorflow .h5 model.
 
     **kwargs:
+        out_path (str | None): Where to save the reconstituted raster. If None
+        are memory raster is returned.
+
+        offsets (tuple, list, ndarray): The offsets used in the original. A (0 ,0)
+        offset is assumed.
+
+        border_patches (bool): Do the blocks contain border patches?
+
+        device (str): Either CPU or GPU to use with tensorflow.
+
+        merge_method (str): How to handle overlapping pixels. Options are:
+        median, average, mode, min, max
+
+        mirror (bool): Mirror the raster and do predictions as well.
+
+        rotate (bool): rotate the raster and do predictions as well.
+
+        dtype (str | None): The dtype of the output. If None: Float32, "save"
+        is the same as the input raster. Otherwise overwrite dtype.
+
+        overwrite (bool): Overwrite output files if they exists.
+
+        creation_options: Extra creation options for the output raster.
+
+        verbose (int): If 1 will output messages on progress.
 
     Returns:
+        A predicted raster.
     """
-    type_check(raster, [str, list, gdal.Dataset], "raster")
+    type_check(raster, [str, gdal.Dataset], "raster")
     type_check(model, [str], "model")
+    type_check(out_path, [str], "out_path", allow_none=True)
+    type_check(offsets, [list], "offsets")
+    type_check(device, [str], "device")
+    type_check(merge_method, [str], "merge_method")
+    type_check(mirror, [bool], "mirror")
+    type_check(rotate, [bool], "rotate")
+    type_check(dtype, [str], "rotate", allow_none=True)
+    type_check(overwrite, [bool], "overwrite")
+    type_check(creation_options, [list], "creation_options")
+    type_check(verbose, [int], "verbose")
 
     import tensorflow as tf
 
