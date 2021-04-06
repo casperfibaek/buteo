@@ -1,4 +1,4 @@
-import sys;  sys.path.append("../../")
+import sys; sys.path.append("../../")
 import numpy as np
 import os
 import random
@@ -7,6 +7,7 @@ from osgeo import ogr, gdal
 from uuid import uuid4
 from buteo.raster.io import (
     raster_to_array,
+    raster_to_disk,
     raster_to_metadata,
     raster_to_memory,
     array_to_raster,
@@ -25,7 +26,7 @@ from buteo.raster.clip import clip_raster
 from buteo.raster.align import is_aligned
 from buteo.raster.resample import resample_raster
 from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
-from buteo.gdal_utils import to_raster_list, translate_datatypes
+from buteo.gdal_utils import to_raster_list
 
 
 def reconstitute_raster(
@@ -121,6 +122,7 @@ def blocks_to_raster(
     border_patches: bool=True,
     generate_zero_offset: bool=True,
     merge_method: str="median",
+    output_array: bool=False,
     verbose: int=1,
 ) -> Union[str, gdal.Dataset]:
     """ Recombines a series of blocks to a raster. OBS: Does not work if the patch
@@ -146,6 +148,9 @@ def blocks_to_raster(
 
         merge_method (str): How to handle overlapping pixels. Options are:
         median, average, mode, min, max
+
+        output_array (bool): If True the output will be a numpy array instead of a
+        raster.
 
         verbose (int): If 1 will output messages on progress.
 
@@ -271,7 +276,7 @@ def blocks_to_raster(
         elif merge_method == "mode" or merge_method == "majority":
             for index, _ in enumerate(passes):
                 passes[index] = np.rint(passes[index]).astype(int)
-            raster = np.apply_along_axis(lambda x: np.bincount(x).argmax(), axis=0, arr=passes)
+            raster = np.apply_along_axis(lambda x: np.bincount(x).argmax(), axis=0, arr=passes) #pylint: disable=no-member
         else:
             raise ValueError(f"Unable to parse merge_method: {merge_method}")
 
@@ -286,6 +291,9 @@ def blocks_to_raster(
             border_patches_x,
             border_patches_y,
         )
+
+    if output_array:
+        return raster
 
     return array_to_raster(
         raster,
@@ -596,7 +604,7 @@ def extract_patches(
     Returns:
         A tuple with paths to the generated items. (numpy_array, grid_geom)
     """
-    type_check(raster, [str, list, gdal.Dataset], "in_rasters")
+    type_check(raster, [str, list, gdal.Dataset], "raster")
     type_check(out_dir, [str], "out_dir", allow_none=True)
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
@@ -811,7 +819,7 @@ def extract_patches(
                 vector_to_disk(patches_ds, output_geom, overwrite=overwrite)
 
     if verbose == 1:
-        print("Writing numpy array to disc..")
+        print("Writing numpy array..")
 
     output_blocks = []
 
@@ -881,58 +889,181 @@ def predict_raster(
     raster,
     model,
     out_path=None,
-    in_tile_size=64,
-    in_offsets=[(32, 32), (32, 0), (0, 32)],
-    out_tile_size=None,
-    out_offsets=None,
-    device="cpu",
+    offsets=[],
+    device="gpu",
     merge_method="median",
+    mirror=False,
+    rotate=False,
+    dtype="same",
+    overwrite=True,
+    creation_options=[],
+    verbose=1,
 ):
+    """ Runs a raster through a deep learning network (Tensorflow). Supports
+        tiling and reconstituting the output. Offsets are allowed and will be
+        bleneded with the merge_method.
+    Args:
+        raster (list of rasters | path | raster): The raster(s) to convert.
+
+    **kwargs:
+
+    Returns:
+    """
+    type_check(raster, [str, list, gdal.Dataset], "raster")
+    type_check(model, [str], "model")
+
     import tensorflow as tf
+
+    if verbose == 1:
+        print("Loading model.")
+
+    model = tf.keras.models.load_model(model)
+
+    shape_input = tuple(model.input.shape)
+    shape_output = tuple(model.output.shape)
+
+    if len(shape_input) != 4 or len(shape_output) != 4:
+        raise ValueError(f"Model input not 4d: {shape_input} - {shape_output}")
+    
+    if shape_input[1] != shape_input[2] or shape_output[1] != shape_output[2]:
+        raise ValueError("Model does not take square images.")
+    
+    src_tile_size = shape_input[1]
+    dst_tile_size = shape_output[1]
+    pixel_factor = src_tile_size / dst_tile_size
+    scale_factor = dst_tile_size / src_tile_size
+
+    dst_offsets = []
+
+    for offset in offsets:
+        dst_offsets.append((
+            round(offset[0] * scale_factor),
+            round(offset[1] * scale_factor),
+        ))
 
     blocks, _ = extract_patches(
         raster,
-        size=64,
-        offsets=[(32, 32), (32, 0), (0, 32)],
+        size=src_tile_size,
+        offsets=offsets,
         generate_border_patches=True,
         generate_grid_geom=False,
+        verbose=verbose,
     )
+
+    if verbose == 1:
+        print("Predicting raster.")
 
     if device == "cpu":
         with tf.device('/cpu:0'):
-            model = tf.keras.models.load_model(model)
             predictions = model.predict(blocks)
     else:
-        model = tf.keras.models.load_model(model)
         predictions = model.predict(blocks)
 
-    dst_tile_size = in_tile_size if out_tile_size is None else out_tile_size
-    dst_offsets = in_offsets if out_offsets is None else out_offsets
-
-    pixel_factor = in_tile_size / dst_tile_size
+    print("Reconstituting Raster.")
 
     rast_meta = raster_to_metadata(raster)
     resampled = resample_raster(
         raster,
-        (rast_meta["pixel_width"] * pixel_factor, rast_meta["pixel_height"] * pixel_factor),
-        dtype=translate_datatypes("float32"),
+        (
+            rast_meta["pixel_width"] * pixel_factor,
+            rast_meta["pixel_height"] * pixel_factor,
+        ),
+        dtype="float32",
     )
 
-    predicted = blocks_to_raster(
-        predictions,
-        resampled,
-        out_path=out_path,
-        border_patches=True,
-        offsets=dst_offsets,
-        merge_method=merge_method,
+    prediction_arr = []
+
+    prediction_arr.append(
+        blocks_to_raster(
+            predictions,
+            resampled,
+            border_patches=True,
+            offsets=dst_offsets,
+            merge_method=merge_method,
+            output_array=True,
+        )
     )
 
-    return predicted
+    if mirror:
+        if verbose == 1:
+            print("Mirroring blocks.")
+
+        if device == "cpu":
+            with tf.device('/cpu:0'):
+                predictions_lr = model.predict(np.fliplr(blocks))
+        else:
+            predictions_lr = model.predict(np.fliplr(blocks))
+        
+        prediction_arr.append(
+            blocks_to_raster(
+                np.fliplr(predictions_lr),
+                resampled,
+                border_patches=True,
+                offsets=dst_offsets,
+                merge_method=merge_method,
+                output_array=True,
+            )
+        )
+
+    if rotate:
+        if verbose == 1:
+            print("Rotating blocks.")
+
+        if device == "cpu":
+            with tf.device('/cpu:0'):
+                predictions_rot = model.predict(np.rot90(blocks, k=2))
+        else:
+            predictions_rot = model.predict(np.rot90(blocks, k=2))
+        
+        prediction_arr.append(
+            blocks_to_raster(
+                np.rot90(predictions_rot, k=2),
+                resampled,
+                border_patches=True,
+                offsets=dst_offsets,
+                merge_method=merge_method,
+                output_array=True,
+            )
+        )
+
+    if merge_method == "median":
+        predicted = np.median(prediction_arr, axis=0)
+    elif merge_method == "mean" or merge_method == "average":
+        predicted = np.mean(prediction_arr, axis=0)
+    elif merge_method == "min" or merge_method == "minumum":
+        predicted = np.min(prediction_arr, axis=0)
+    elif merge_method == "max" or merge_method == "maximum":
+        predicted = np.max(prediction_arr, axis=0)
+    elif merge_method == "mode" or merge_method == "majority":
+        for index, _ in enumerate(prediction_arr):
+            prediction_arr[index] = np.rint(prediction_arr[index]).astype(int)
+
+        predicted = np.apply_along_axis(lambda x: np.bincount(x).argmax(), axis=0, arr=prediction_arr) #pylint: disable=no-member
+    else:
+        raise ValueError(f"Unable to parse merge_method: {merge_method}")
+
+    if dtype == "same":
+        predicted = array_to_raster(
+            predicted.astype(rast_meta["dtype"]),
+            reference=resampled,
+        )
+    elif dtype is not None:
+        predicted = array_to_raster(
+            raster_to_array(predicted).astype(dtype),
+            reference=resampled,
+        )
+
+    if out_path is None:
+        return predicted
+    else:
+        return raster_to_disk(
+            predicted,
+            out_path=out_path,
+            overwrite=overwrite,
+            creation_options=creation_options,
+        )
 
 
-
-
-# TODO: flips and mirrors - consider
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
     
@@ -944,17 +1075,13 @@ if __name__ == "__main__":
     # offsets = [(64, 64), (64, 0), (0, 64)]
     # borders = True
 
-    predict_raster(
+    path = predict_raster(
         raster,
         model,
-        out_path=out_dir + "predicted_raster_no_offsets.tif",
-        in_tile_size=64,
-        in_offsets=[(32, 32)],
-        out_tile_size=128,
-        out_offsets=[(64, 64)]
+        out_path=out_dir + "predicted_raster_base.tif",
     )
 
-    # path_np, path_geom = extract_patches(
+    # # path_np, path_geom = extract_patches(
     #     raster,
     #     out_dir=out_dir,
     #     prefix="",

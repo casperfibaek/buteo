@@ -4,7 +4,6 @@ import sys; sys.path.append(yellow_follow)
 import os
 import math
 import numpy as np
-import tensorflow as tf
 
 from sklearn.model_selection import train_test_split
 
@@ -12,6 +11,7 @@ from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Conv2DTranspose, Concatenate
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler
+import tensorflow_addons as tfa
 
 np.set_printoptions(suppress=True)
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
@@ -23,29 +23,17 @@ y = np.load(folder + "Fyn_B2_10m_patches.npy")
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
 
-def define_model(shape, name, activation='relu'):
+def define_model(shape, name, activation=tfa.activations.mish):
     model_input = Input(shape=shape, name=name)
-    model = Conv2D(
-        32,
-        kernel_size=3,
-        padding='same',
-        activation=activation,
-    )(model_input)
     model_skip1 = Conv2D(
         32,
         kernel_size=3,
         padding='same',
         activation=activation,
-    )(model)
+    )(model_input)
 
     model = MaxPooling2D(padding="same")(model_skip1)
 
-    model = Conv2D(
-        48,
-        kernel_size=3,
-        padding='same',
-        activation=activation,
-    )(model)
     model_skip2 = Conv2D(
         48,
         kernel_size=3,
@@ -61,15 +49,9 @@ def define_model(shape, name, activation='relu'):
         padding='same',
         activation=activation,
     )(model)
-    model = Conv2D(
-        64,
-        kernel_size=3,
-        padding='same',
-        activation=activation,
-    )(model)
 
     model = Conv2DTranspose(
-        48,
+        64,
         kernel_size=3,
         strides=(2, 2),
         activation=activation,
@@ -78,7 +60,7 @@ def define_model(shape, name, activation='relu'):
     model = Concatenate()([model_skip2, model])
 
     model = Conv2DTranspose(
-        48,
+        64,
         kernel_size=3,
         strides=(2, 2),
         activation=activation,
@@ -95,7 +77,14 @@ def define_model(shape, name, activation='relu'):
     )(model)
 
     model = Conv2D(
-        32,
+        16,
+        kernel_size=5,
+        padding='same',
+        activation=activation,
+    )(model)
+
+    model = Conv2D(
+        16,
         kernel_size=3,
         padding='same',
         activation=activation,
@@ -111,7 +100,7 @@ def define_model(shape, name, activation='relu'):
     return Model(inputs=[model_input], outputs=output)
 
 lr = 0.001
-bs = 32
+bs = 16
 epochs = 10
 
 def step_decay(epoch):
@@ -129,10 +118,7 @@ model.compile(
         name="Adam",
     ),
     loss='log_cosh',
-    metrics=[
-        'mse',
-        'mae',
-    ]
+    metrics=['mse', 'mae']
 )
 
 model.fit(

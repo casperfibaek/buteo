@@ -7,6 +7,7 @@ import os
 from buteo.utils import (
     remove_if_overwrite,
     path_to_name,
+    type_check,
 )
 from buteo.gdal_utils import (
     is_raster,
@@ -78,12 +79,12 @@ def raster_to_disk(
     overwrite: bool=True,
     creation_options: list=[],
 ) -> str:
-    """ Saves or copies a raster to disc. Input is either a 
+    """ Saves or copies a raster to disk. Input is either a 
     filepath to a raster or a GDAL.Dataset. The driver is infered
     from the file extension.
 
     Args:
-        raster (path | Dataset): The raster to save to disc.
+        raster (path | Dataset): The raster to save to disk.
         out_path (path): The destination to save to.
 
     **kwargs:
@@ -261,27 +262,15 @@ def array_to_raster(
         If an out_path has been specified, it returns the path to the 
         newly created raster file.
     """
-
-    # Verify inputs
-    if not isinstance(reference, gdal.Dataset) and not isinstance(reference, str):
-        raise ValueError("A valid reference raster must be supplied.")
-
-    if isinstance(reference, str):
-        if not is_raster(reference):
-            raise ValueError("A valid reference raster must be supplied.")
-    
-    if not isinstance(out_path, str) and out_path != None:
-        raise TypeError("out_path must be None or a path")
+    type_check(array, [np.ndarray], "array")
+    type_check(reference, [str, gdal.Dataset], "reference")
+    type_check(out_path, [str], "out_path", allow_none=True)
+    type_check(overwrite, [bool], "overwrite")
+    type_check(creation_options, [list], "creation_options")
 
     # Verify the numpy array
     if not isinstance(array, np.ndarray) or array.size == 0 or array.ndim < 2 or array.ndim > 3:
         raise ValueError(f"Input array is invalid {array}")
-
-    if not isinstance(overwrite, bool):
-        raise ValueError("overwrite parameter must be a boolean")
-    
-    if not isinstance(creation_options, list):
-        raise TypeError("Options must be a list of valid GDAL options or empty list.")
 
     # Parse the driver
     driver_name = "MEM" if out_path is None else path_to_driver(out_path)
@@ -346,10 +335,10 @@ def array_to_raster(
             band.SetNodataValue(input_nodata)
 
     # Return the destination raster
-    if driver != "MEM":
+    if driver_name != "MEM":
         return os.path.abspath(out_path)
     else:
-        return destination["dataframe"]
+        return destination
 
 
 # TODO: ALLOW LISTS

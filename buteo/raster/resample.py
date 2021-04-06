@@ -9,6 +9,7 @@ from buteo.gdal_utils import (
     translate_resample_method,
     gdal_nodata_value_from_type,
     raster_size_from_list,
+    translate_datatypes,
 )
 from buteo.raster.io import (
     default_options,
@@ -103,7 +104,7 @@ def resample_raster(
         xRes=x_res,
         yRes=y_res,
         format=out_format,
-        outputType=dtype,
+        outputType=translate_datatypes(dtype),
         resampleAlg=translate_resample_method(resample_alg),
         creationOptions=out_creation_options,
         srcNodata=metadata["nodata_value"],
