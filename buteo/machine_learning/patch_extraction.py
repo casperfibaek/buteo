@@ -23,8 +23,9 @@ from buteo.vector.reproject import reproject_vector
 from buteo.vector.attributes import vector_get_attribute_table
 from buteo.raster.clip import clip_raster
 from buteo.raster.align import is_aligned
+from buteo.raster.resample import resample_raster
 from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
-from buteo.gdal_utils import to_raster_list
+from buteo.gdal_utils import to_raster_list, translate_datatypes
 
 
 def reconstitute_raster(
@@ -184,8 +185,13 @@ def blocks_to_raster(
 
     # internal offset array. Avoid manipulating the og array.
     in_offsets = []
-    if generate_zero_offset and (0, 0) not in offsets:
-        in_offsets.append((0, 0))
+
+    if generate_zero_offset:
+        if offsets is not None:
+            if (0, 0) not in offsets:
+                in_offsets.append((0, 0))
+        else:
+            in_offsets.append((0, 0))
     
     for offset in offsets:
         if offset != (0, 0):
@@ -533,7 +539,6 @@ def test_extraction(
 
 
 # TODO: Clip vector to raster bounds before doing patches.
-# TODO: Add multiprocessing to intersection tests.
 def extract_patches(
     raster: Union[str, list, gdal.Dataset],
     out_dir: Union[str, None]=None,
@@ -763,12 +768,19 @@ def extract_patches(
             clip_ref = reproject_vector(clip_geom, metadata["projection_osr"])
             clip_layer = clip_ref.GetLayerByIndex(clip_layer_index)
 
+            meta_patches = vector_to_metadata(patches_ds, latlng_and_footprint=False)
+            meta_clip = vector_to_metadata(clip_ref, latlng_and_footprint=False)
+
+            fid_patches = meta_patches["layers"][0]["fid_column"]
+
+            geom_patches = meta_patches["layers"][0]["geom_column"]
+            geom_clip = meta_clip["layers"][clip_layer_index]["geom_column"]
+
             patches_ds.CopyLayer(clip_layer, 'clip_geom', ["OVERWRITE=YES"])
 
-            # add spatial indices if they don't exists.
             vector_add_index(patches_ds)
 
-            sql = f"SELECT ROW_NUMBER() OVER (ORDER BY A.fid) - 1 AS fid, A.* FROM patches A, clip_geom B WHERE ST_INTERSECTS(A.geom, B.geom);"
+            sql = f"SELECT ROW_NUMBER() OVER (ORDER BY A.{fid_patches}) - 1 AS fid, A.* FROM patches A, clip_geom B WHERE ST_INTERSECTS(A.{geom_patches}, B.{geom_clip});"
             result = patches_ds.ExecuteSQL(sql, dialect="SQLITE")
 
             if result is None:
@@ -803,7 +815,6 @@ def extract_patches(
 
     output_blocks = []
 
-    # Generate some numpy arrays
     for raster in in_rasters:
 
         base = None
@@ -866,45 +877,98 @@ def extract_patches(
     return (output_blocks, output_geom)
 
 
-# create predict raster function
 def predict_raster(
     raster,
     model,
-    tile_size=64,
-    offsets=[(32, 32), (32, 0), (0, 32)],
-    clip_geom=None,
-    mirror=True,
-    rotate=True,
+    out_path=None,
+    in_tile_size=64,
+    in_offsets=[(32, 32), (32, 0), (0, 32)],
+    out_tile_size=None,
+    out_offsets=None,
+    device="cpu",
+    merge_method="median",
 ):
-    raise ValueError("Not yet implemented.")
+    import tensorflow as tf
+
+    blocks, _ = extract_patches(
+        raster,
+        size=64,
+        offsets=[(32, 32), (32, 0), (0, 32)],
+        generate_border_patches=True,
+        generate_grid_geom=False,
+    )
+
+    if device == "cpu":
+        with tf.device('/cpu:0'):
+            model = tf.keras.models.load_model(model)
+            predictions = model.predict(blocks)
+    else:
+        model = tf.keras.models.load_model(model)
+        predictions = model.predict(blocks)
+
+    dst_tile_size = in_tile_size if out_tile_size is None else out_tile_size
+    dst_offsets = in_offsets if out_offsets is None else out_offsets
+
+    pixel_factor = in_tile_size / dst_tile_size
+
+    rast_meta = raster_to_metadata(raster)
+    resampled = resample_raster(
+        raster,
+        (rast_meta["pixel_width"] * pixel_factor, rast_meta["pixel_height"] * pixel_factor),
+        dtype=translate_datatypes("float32"),
+    )
+
+    predicted = blocks_to_raster(
+        predictions,
+        resampled,
+        out_path=out_path,
+        border_patches=True,
+        offsets=dst_offsets,
+        merge_method=merge_method,
+    )
+
+    return predicted
+
+
 
 
 # TODO: flips and mirrors - consider
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
     
-    raster = folder + "hot_clip.tif"
-    vector = folder + "walls_single.gpkg"
+    raster = folder + "Fyn_B2_20m_close.tif"
+    # vector = folder + "walls_single.gpkg"
     out_dir = folder + "out/"
+    model = out_dir + "model.h5"
 
-    offsets = [(32, 32), (32, 0), (0, 32)]
-    borders = True
+    # offsets = [(64, 64), (64, 0), (0, 64)]
+    # borders = True
 
-    path_np, path_geom = extract_patches(
+    predict_raster(
         raster,
-        out_dir=out_dir,
-        prefix="",
-        postfix="_patches",
-        size=64,
-        offsets=offsets,
-        generate_grid_geom=True,
-        generate_zero_offset=True,
-        generate_border_patches=borders,
-        clip_geom=vector,
-        verify_output=True,
-        verification_samples=100,
-        verbose=1,
+        model,
+        out_path=out_dir + "predicted_raster_no_offsets.tif",
+        in_tile_size=64,
+        in_offsets=[(32, 32)],
+        out_tile_size=128,
+        out_offsets=[(64, 64)]
     )
+
+    # path_np, path_geom = extract_patches(
+    #     raster,
+    #     out_dir=out_dir,
+    #     prefix="",
+    #     postfix="_patches",
+    #     size=128,
+    #     offsets=offsets,
+    #     generate_grid_geom=True,
+    #     generate_zero_offset=True,
+    #     generate_border_patches=borders,
+    #     # clip_geom=vector,
+    #     verify_output=True,
+    #     verification_samples=100,
+    #     verbose=1,
+    # )
 
     # blocks_to_raster(
     #     path_np,

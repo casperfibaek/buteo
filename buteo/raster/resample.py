@@ -24,6 +24,7 @@ def resample_raster(
     resample_alg: str="nearest",
     overwrite: bool=True,
     creation_options: list=[],
+    dtype=None,
     dst_nodata: Union[str, int, float]="infer",
 ) -> Union[gdal.Dataset, str]:
     """ Reprojects a raster given a target projection. Beware if your input is in
@@ -102,6 +103,7 @@ def resample_raster(
         xRes=x_res,
         yRes=y_res,
         format=out_format,
+        outputType=dtype,
         resampleAlg=translate_resample_method(resample_alg),
         creationOptions=out_creation_options,
         srcNodata=metadata["nodata_value"],

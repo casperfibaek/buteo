@@ -315,7 +315,6 @@ def array_to_raster(
             input_nodata = int(input_nodata)
 
     # If the output is not memory, set compression options.
-    creation_options = []
     if driver_name != "MEM":
         creation_options = default_options(creation_options)
 
