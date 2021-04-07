@@ -69,12 +69,12 @@ def intersect_vector(
     geometry_to_clip = None
     if is_vector(clip_geom):
         if to_extent:
-            extent = vector_to_metadata(clip_geom)["extent_ogr"]
+            extent = vector_to_metadata(clip_geom, simple=False)["extent_ogr"]
             geometry_to_clip = vector_to_path(extent)
         else:
             geometry_to_clip = clip_geom
     elif is_raster(clip_geom):
-        extent = raster_to_metadata(clip_geom)["extent_ogr"]
+        extent = raster_to_metadata(clip_geom, simple=False)["extent_ogr"]
         geometry_to_clip = vector_to_path(extent)
     else:
         raise ValueError(f"Invalid input in clip_geom, unable to parse: {clip_geom}")      
@@ -85,10 +85,10 @@ def intersect_vector(
 
     vector_add_index(merged)
 
-    vector_metadata = vector_to_metadata(vector, latlng_and_footprint=False)
+    vector_metadata = vector_to_metadata(vector)
     vector_layername = vector_metadata["layers"][vector_idx]["layer_name"]
     
-    clip_geom_metadata = vector_to_metadata(clip_geom, latlng_and_footprint=False)
+    clip_geom_metadata = vector_to_metadata(clip_geom)
     clip_geom_layername = clip_geom_metadata["layers"][clip_idx]["layer_name"]
 
     sql = f"SELECT A.* FROM {vector_layername} A, {clip_geom_layername} B WHERE ST_INTERSECTS(A.geom, B.geom);"

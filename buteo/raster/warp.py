@@ -1,7 +1,7 @@
 import sys; sys.path.append('../../')
 from typing import Union
 from osgeo import gdal, osr, ogr
-from uuid import uuid1
+from uuid import uuid4
 from buteo.utils import remove_if_overwrite, overwrite_required, file_exists
 from buteo.gdal_utils import (
     parse_projection,
@@ -26,7 +26,7 @@ from buteo.vector.io import (
     vector_to_memory,
 )
 
-
+# TODO: Accept lists of rasters.
 # TODO: documentation, robustness. handle layer, reprojections?
 
 def warp_raster(
@@ -63,7 +63,6 @@ def warp_raster(
     raster_metadata = raster_to_metadata(origin)
     origin_projection = raster_metadata["projection_osr"]
     origin_extent = raster_metadata["extent_ogr_geom"]
-
 
     target_projection = origin_projection
     if projection is not None:
@@ -135,13 +134,13 @@ def warp_raster(
         if clip_metadata["layer_count"] > 1:
             clip_ds = vector_to_memory(
                 clip_ds,
-                memory_path=f"clip_geom_{uuid1().int}.gpkg",
+                memory_path=f"clip_geom_{uuid4().int}.gpkg",
                 layer_to_extract=layer_to_clip,
             )
         elif not isinstance(clip_ds, str):
             clip_ds = vector_to_memory(
                 clip_ds,
-                memory_path=f"clip_geom_{uuid1().int}.gpkg",
+                memory_path=f"clip_geom_{uuid4().int}.gpkg",
             )
 
         if clip_ds is None:

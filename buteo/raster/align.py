@@ -1,16 +1,18 @@
 import sys; sys.path.append('../../')
+from uuid import uuid4
 from typing import Union
 from osgeo import gdal, ogr, osr
 import numpy as np
 from buteo.raster.io import (
     raster_to_metadata,
+    rasters_is_aligned,
 )
 from buteo.vector.io import (
     vector_to_metadata,
 )
 from buteo.raster.reproject import reproject_raster
 from buteo.vector.reproject import reproject_vector
-from buteo.utils import folder_exists, overwrite_required, remove_if_overwrite
+from buteo.utils import folder_exists, overwrite_required, remove_if_overwrite, type_check
 from buteo.gdal_utils import (
     parse_projection,
     raster_size_from_list,
@@ -23,83 +25,9 @@ from buteo.gdal_utils import (
 )
 
 
-def is_aligned(
-    rasters: list,
-    same_extent: bool=False,
-    same_dtype: bool=False,
-) -> bool:
-    """ Verifies if a list of rasters are aligned.
-
-    Args:
-        rasters (list): A list of raster, either in gdal.Dataset or a string
-        refering to the dataset.
-
-    **kwargs:
-        same_extent (bool): Should all the rasters have the same extent?
-
-        same_dtype (bool): Should all the rasters have the same data type?
-    Returns:
-        True if rasters and aligned and optional parameters are True, False
-        otherwise.
-    """
-    if not isinstance(rasters, list):
-        raise ValueError("rasters must be a list.")
-
-    if not isinstance(same_extent, bool):
-        raise ValueError("same_extent must be a boolean.")
-
-    if not isinstance(same_dtype, bool):
-        raise ValueError("same_dtype must be a boolean.")
-
-    if len(rasters) == 1:
-        if not is_raster(rasters[0]):
-            raise ValueError(f"Input raster is invalid. {rasters[0]}")
-
-        return True
-
-    metas = []
-
-    for raster in rasters:
-        metas.append(raster_to_metadata(raster))
-
-    base = {}
-
-    for index, meta in enumerate(metas):
-        if index == 0:
-            base["projection"] = meta["projection"]
-            base["pixel_width"] = meta["pixel_width"]
-            base["pixel_height"] = meta["pixel_height"]
-            
-            base["transform"] = meta["transform"]
-            base["height"] = meta["height"]
-            base["width"] = meta["width"]
-            base["dtype"] = meta["nodata_value"]
-        else:
-            if meta["projection"] != base["projection"]:
-                return False
-            if meta["pixel_width"] != base["pixel_width"]:
-                return False
-            if meta["pixel_height"] != base["pixel_height"]:
-                return False
-            
-            if same_extent:
-                if meta["transform"] != base["transform"]:
-                    return False
-                if meta["height"] != base["height"]:
-                    return False
-                if meta["width"] != base["width"]:
-                    return False
-            
-            if same_dtype:
-                if meta["dtype"] != base["dtype"]:
-                    return False
-
-    return True
-
-
 def align_rasters(
     rasters: list,
-    output: Union[list, str, None]=None,
+    out_path: Union[list, str, None]=None,
     master: Union[gdal.Dataset, str, None]=None,
     bounding_box: Union[str, gdal.Dataset, ogr.DataSource, list, tuple]="intersection",
     resample_alg: str='nearest',
@@ -113,55 +41,26 @@ def align_rasters(
     prefix: str="",
     postfix: str="_aligned",
 ) -> list:
-    if isinstance(output, list):
-        if len(output) != len(rasters):
+    type_check(rasters, [list], "rasters")
+    type_check(out_path, [list, str], "out_path", allow_none=True)
+    type_check(master, [list, str], "master", allow_none=True)
+    type_check(bounding_box, [str, gdal.Dataset, ogr.DataSource, list, tuple], "bounding_box")
+    type_check(resample_alg, [str], "resample_alg")
+    type_check(target_size, [tuple, list, int, float, str, gdal.Dataset], "target_size", allow_none=True)
+    type_check(target_in_pixels, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "target_in_pixels", allow_none=True)
+    type_check(overwrite, [bool], "overwrite")
+    type_check(creation_options, [list], "creation_options")
+    type_check(src_nodata, [str, int, float], "src_nodata", allow_none=True)
+    type_check(dst_nodata, [str, int, float], "dst_nodata", allow_none=True)
+    type_check(prefix, [str], "prefix")
+    type_check(postfix, [list], "postfix")
+
+    if isinstance(out_path, list):
+        if len(out_path) != len(rasters):
             raise ValueError("If output is a list of paths, it must have the same length as rasters")
-    
-    # Type checks - very defensive for the big functions.
-    if not isinstance(rasters, list):
-        raise ValueError("rasters must be a list.")
-    
-    if not isinstance(output, (list, str)) and output is not None:
-        raise ValueError("output must be a folder path, a list of paths or None.")
-
-    if not isinstance(master, (gdal.Dataset, str)) and master is not None:
-        raise ValueError("master must be a gdal.Dataset, a str or None.")
-    
-    if not isinstance(bounding_box, (gdal.Dataset, str, list, tuple, ogr.DataSource)):
-        raise ValueError("bounding_box must be an iterable or flots, a path to a gdal.Dataset, a gdal.Dataset or a str of 'intersection' or 'union'.")
-    
-    if not isinstance(resample_alg, str):
-        raise ValueError("resample_alg must be a str.")
-    
-    if isinstance(target_size, (dict, bool)):
-        raise ValueError("target_size must be an interable of floats or ints, a gdal.Dataset or the reference to one, or None.")
-    
-    if not isinstance(target_in_pixels, bool):
-        raise ValueError("target_in_pixels must be a boolean.")
-
-    if not isinstance(projection, (osr.SpatialReference, int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference)) and projection is not None:
-        raise ValueError("projection is an invalid type.")
-
-    if not isinstance(overwrite, bool):
-        raise ValueError("overwrite must be a boolean.")
-    
-    if not isinstance(creation_options, list):
-        raise ValueError("creation_options must be a list.")
-    
-    if not isinstance(src_nodata, (str, int, float)) and src_nodata is not None:
-        raise ValueError("src_nodata has an invalid type.")
-    
-    if not isinstance(dst_nodata, (str, int, float)) and dst_nodata is not None:
-        raise ValueError("dst_nodata has an invalid type.")
-    
-    if not isinstance(prefix, str):
-        raise ValueError("prefix must be a string.")
-    
-    if not isinstance(postfix, str):
-        raise ValueError("postfix must be a string.")
 
     target_projection = None
-    target_bounds: Union[list[float], None] = None
+    target_bounds: Union[list, None] = None
 
     # It's only necessary to set either res or pixels.
     x_res = None
@@ -173,24 +72,24 @@ def align_rasters(
 
     # Ready the output names. Check output folder if one is specified.
     output_names = []
-    if isinstance(output, list):
-        output_names = output
-    elif isinstance(output, str):
-        if not folder_exists(output):
+    if isinstance(out_path, list):
+        output_names = out_path
+    elif isinstance(out_path, str):
+        if not folder_exists(out_path):
             raise ValueError("output folder does not exists.")
 
     # Read the metadata for each raster.
     # Catalogue the used projections, to choose the most common one if necessary.
-    metadata: list[dict] = []
+    metadata: list = []
     used_projections = []
     for index, raster in enumerate(rasters):
         raster_metadata = raster_to_metadata(raster)
         used_projections.append(raster_metadata["projection"])
 
-        if isinstance(output, str):
+        if isinstance(out_path, str):
             basename = raster_metadata["basename"]
             ext = raster_metadata["ext"]
-            output_names.append(f"{output}{prefix}{basename}{postfix}{ext}")
+            output_names.append(f"{out_path}{prefix}{basename}{postfix}{ext}")
 
         metadata.append(raster_metadata)
     
@@ -219,7 +118,7 @@ def align_rasters(
     elif target_projection is None:
         
         # Sort and count the projections
-        projection_counter: dict[str, int] = {}
+        projection_counter: dict = {}
         for proj in used_projections:
             if proj in projection_counter:
                 projection_counter[proj] += 1
@@ -381,10 +280,10 @@ def align_rasters(
         out_creation_options = None
 
         # Use the memory driver, no creation_options
-        if output is None:
-            out_name = raster_metadata["name"]
-            out_format = "MEM"
-            out_creation_options = []
+        if out_path is None:
+            out_name = "/vsimem/" + raster_metadata["name"] + f"_{uuid4().int}_aligned.tif"
+            out_format = "GTiff"
+            out_creation_options = ["BIGTIFF=YES"]
         
         # Use the driver matching the file extension of the input raster.
         # merge options from creation_options with defaults.
@@ -414,7 +313,6 @@ def align_rasters(
         else:
             out_dst_nodata = dst_nodata
 
-
         # Removes file if it exists and overwrite is True.
         remove_if_overwrite(out_name, overwrite)
 
@@ -438,13 +336,13 @@ def align_rasters(
             multithread=True,
         )
 
-        if output is not None:
+        if out_path is not None:
             warped = None
             return_list.append(out_name)
         else:
             return_list.append(warped)
     
-    if not is_aligned(return_list, same_extent=True):
+    if not rasters_is_aligned(return_list, same_extent=True):
         raise Exception("Error while aligning rasters. Output is not aligned")
 
     return return_list

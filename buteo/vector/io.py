@@ -9,7 +9,7 @@ from buteo.gdal_utils import (
     vector_to_reference,
     is_vector,
     path_to_driver,
-    geoms_from_extent,
+    advanced_extents,
 )
 from buteo.utils import progress, remove_if_overwrite, type_check
 
@@ -27,7 +27,7 @@ from buteo.utils import progress, remove_if_overwrite, type_check
 
 def vector_to_metadata(
     vector: Union[str, ogr.DataSource],
-    latlng_and_footprint: bool=True,
+    simple: bool=True,
     process_layer: Union[int, str]="all",
 ) -> dict:
     """ Creates a dictionary with metadata about the vector layer.
@@ -187,46 +187,12 @@ def vector_to_metadata(
         "bottom":metadata["y_min"],
     }
 
-    if latlng_and_footprint:
-        wgs84 = osr.SpatialReference()
-        wgs84.ImportFromEPSG(4326) # WGS84, latlng
-
+    if not simple:
         for layer_index in range(metadata["layer_count"]):
             layer_dict = metadata["layers"][layer_index]
-            
-            extents = geoms_from_extent(layer_dict["extent"], original_projection, wgs84, layer_dict["layer_name"])
-
-            layer_dict["extent_wgs84"] = extents["ta_proj"]
-            layer_dict["extent_wgs84_dict"] = extents["ta_proj_dict"]
-            layer_dict["extent_wkt"] = extents["wkt"]
-            layer_dict["extent_ogr"] = extents["ogr"]
-            layer_dict["extent_ogr_geom"] = extents["ogr_geom"]
-            layer_dict["extent_geojson"] = extents["geojson"]
-            layer_dict["extent_geojson_dict"] = extents["geojson_dict"]
-
-        if metadata["layer_count"] == 1:
-            metadata["extent_wgs84"] = layer_dict["extent_wgs84"]
-            metadata["extent_wgs84_dict"] = layer_dict["extent_wgs84_dict"]
-            metadata["extent_wkt"] = layer_dict["extent_wkt"]
-            metadata["extent_ogr"] = layer_dict["extent_ogr"]
-            metadata["extent_ogr_geom"] = layer_dict["extent_ogr_geom"]
-            metadata["extent_geojson"] = layer_dict["extent_geojson"]
-            metadata["extent_geojson_dict"] = layer_dict["extent_geojson_dict"]
-        else:
-            extents = geoms_from_extent(metadata["extent"], original_projection, wgs84, metadata["name"])
-
-            metadata["extent_wgs84"] = extents["ta_proj"]
-            metadata["extent_wgs84_dict"] = extents["ta_proj_dict"]
-            metadata["extent_wkt"] = extents["wkt"]
-            metadata["extent_ogr"] = extents["ogr"]
-            metadata["extent_ogr_geom"] = extents["ogr_geom"]
-            metadata["extent_geojson"] = extents["geojson"]
-            metadata["extent_geojson_dict"] = extents["geojson_dict"]
-
-    vector = None
+            advanced_extents(layer_dict)
 
     return metadata
-
 
 
 def vector_to_memory(
@@ -469,7 +435,7 @@ def vector_add_shapes(
 
 
 def vector_in_memory(vector):
-    metadata = vector_to_metadata(vector, latlng_and_footprint=False)
+    metadata = vector_to_metadata(vector)
     
     if metadata["driver"] == "Memory":
         return True
@@ -481,7 +447,7 @@ def vector_in_memory(vector):
 
 
 def vector_to_path(vector):
-    metadata = vector_to_metadata(vector, latlng_and_footprint=False)
+    metadata = vector_to_metadata(vector)
 
     if metadata["driver"] == "Memory":
         out_format = '.gpkg'

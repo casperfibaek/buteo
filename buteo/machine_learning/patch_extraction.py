@@ -12,6 +12,7 @@ from buteo.raster.io import (
     raster_to_memory,
     array_to_raster,
     raster_in_memory,
+    rasters_are_aligned,
 )
 from buteo.vector.io import (
     vector_to_memory,
@@ -23,7 +24,6 @@ from buteo.vector.io import (
 from buteo.vector.reproject import reproject_vector
 from buteo.vector.attributes import vector_get_attribute_table
 from buteo.raster.clip import clip_raster
-from buteo.raster.align import is_aligned
 from buteo.raster.resample import resample_raster
 from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
 from buteo.gdal_utils import to_raster_list
@@ -471,7 +471,7 @@ def test_extraction(
             opened=True
         )
 
-    grid_metadata = vector_to_metadata(grid, latlng_and_footprint=False)
+    grid_metadata = vector_to_metadata(grid)
     grid_projection = grid_metadata["projection_osr"]
 
     if grid_layer_index > (grid_metadata["layer_count"] - 1):
@@ -546,9 +546,8 @@ def test_extraction(
     return True
 
 
-# TODO: Clip vector to raster bounds before doing patches.
 def extract_patches(
-    raster: Union[str, list, gdal.Dataset],
+    raster: Union[list, str, gdal.Dataset],
     out_dir: Union[str, None]=None,
     prefix: str="",
     postfix: str="_patches",
@@ -622,7 +621,7 @@ def extract_patches(
     if out_dir is not None and not os.path.isdir(out_dir):
         raise ValueError(f"Output directory does not exists: {out_dir}")
 
-    if not is_aligned(in_rasters):
+    if not rasters_are_aligned(in_rasters):
         raise ValueError("Input rasters must be aligned. Please use the align function.")
 
     output_geom = None
@@ -633,7 +632,6 @@ def extract_patches(
         print("Generating blocks..")
 
     # internal offset array. Avoid manipulating the og array.
-    # TODO: Verify
     if offsets is None:
         offsets = []
 
@@ -776,8 +774,8 @@ def extract_patches(
             clip_ref = reproject_vector(clip_geom, metadata["projection_osr"])
             clip_layer = clip_ref.GetLayerByIndex(clip_layer_index)
 
-            meta_patches = vector_to_metadata(patches_ds, latlng_and_footprint=False)
-            meta_clip = vector_to_metadata(clip_ref, latlng_and_footprint=False)
+            meta_patches = vector_to_metadata(patches_ds)
+            meta_clip = vector_to_metadata(clip_ref)
 
             fid_patches = meta_patches["layers"][0]["fid_column"]
 
@@ -1106,18 +1104,22 @@ def predict_raster(
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
     
-    raster = folder + "Fyn_B2_20m_close.tif"
+    raster_to_predict = folder + "Fyn_B2_20m.tif"
     # vector = folder + "walls_single.gpkg"
     out_dir = folder + "out/"
-    model = out_dir + "model.h5"
+    tensorflow_model_path = out_dir + "model.h5"
 
     # offsets = [(64, 64), (64, 0), (0, 64)]
     # borders = True
 
     path = predict_raster(
-        raster,
-        model,
-        out_path=out_dir + "predicted_raster_base.tif",
+        raster_to_predict,
+        tensorflow_model_path,
+        out_path=out_dir + "predicted_raster_32-16.tif",
+        offsets=[(32, 32), (16, 16)],
+        mirror=True,
+        rotate=True,
+        device="gpu",
     )
 
     # # path_np, path_geom = extract_patches(

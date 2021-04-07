@@ -69,7 +69,7 @@ def define_model(shape, name, activation=tfa.activations.mish):
     model = Concatenate()([model_skip1, model])
 
     model = Conv2DTranspose(
-        32,
+        24,
         kernel_size=3,
         strides=(2, 2),
         activation=activation,
@@ -84,7 +84,7 @@ def define_model(shape, name, activation=tfa.activations.mish):
     )(model)
 
     model = Conv2D(
-        16,
+        8,
         kernel_size=3,
         padding='same',
         activation=activation,

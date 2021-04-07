@@ -1,7 +1,8 @@
 import sys; sys.path.append('../../')
+from uuid import uuid4
 from typing import Union
 from osgeo import gdal
-from buteo.utils import remove_if_overwrite, is_number
+from buteo.utils import remove_if_overwrite, is_number, type_check
 from buteo.gdal_utils import (
     path_to_driver,
     raster_to_reference,
@@ -47,6 +48,12 @@ def shift_raster(
         An in-memory raster. If an out_path is given the output is a string containing
         the path to the newly created raster.
     """
+    type_check(raster, [list, str, gdal.Dataset], "raster")
+    type_check(shift, [tuple, list], "shift")
+    type_check(out_path, [list, str], "out_path", allow_none=True)
+    type_check(overwrite, [bool], "overwrite")
+    type_check(creation_options, [list], "creation_options")
+
     ref = raster_to_reference(raster)
     metadata = raster_to_metadata(ref)
 
@@ -75,8 +82,9 @@ def shift_raster(
     out_format = None
     out_creation_options = []
     if out_path is None:
-        out_name = metadata["name"]
-        out_format = "MEM"
+        raster_name = metadata["basename"]
+        out_name = f"/vsimem/{raster_name}_{uuid4().int}_resampled.tif"
+        out_format = "GTiff"
     else:
         out_creation_options = default_options(creation_options)
         out_name = out_path

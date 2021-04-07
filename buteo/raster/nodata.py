@@ -8,6 +8,10 @@ from buteo.gdal_utils import is_raster, gdal_nodata_value_from_type
 from buteo.raster.io import raster_to_array, raster_to_disk, raster_to_memory, raster_to_metadata, array_to_raster
 
 
+# TODO: raster_to_mask
+# TODO: raster_invert_nodata
+
+
 def raster_has_nodata_value(
     raster: Union[gdal.Dataset, str, list],
 ) -> Union[bool, Sequence[bool]]:
@@ -158,7 +162,7 @@ def raster_set_nodata(
     elif isinstance(out_path, str):
         if os.path.isdir(out_path):
             for internal_raster in rasters:
-                raster_metadata = raster_to_metadata(internal_raster, latlng_and_footprint=False)
+                raster_metadata = raster_to_metadata(internal_raster)
                 rasters_metadata.append(raster_metadata)
 
                 raster_basename = raster_metadata["basename"]
@@ -180,7 +184,7 @@ def raster_set_nodata(
         
         raster_metadata = None
         if len(rasters_metadata) == 0:
-            raster_metadata = raster_to_metadata(internal_raster, latlng_and_footprint=False)
+            raster_metadata = raster_to_metadata(internal_raster)
             rasters_metadata.append(raster_metadata)
         else:
             raster_metadata = rasters_metadata[index]
@@ -351,7 +355,7 @@ def raster_mask_values(
     elif isinstance(out_path, str):
         if os.path.isdir(out_path):
             for internal_raster in rasters:
-                raster_metadata = raster_to_metadata(internal_raster, latlng_and_footprint=False)
+                raster_metadata = raster_to_metadata(internal_raster)
                 rasters_metadata.append(raster_metadata)
 
                 raster_basename = raster_metadata["basename"]
@@ -373,7 +377,7 @@ def raster_mask_values(
         
         raster_metadata = None
         if len(rasters_metadata) == 0:
-            raster_metadata = raster_to_metadata(internal_raster, latlng_and_footprint=False)
+            raster_metadata = raster_to_metadata(internal_raster)
             rasters_metadata.append(raster_metadata)
         else:
             raster_metadata = rasters_metadata[index]
@@ -425,14 +429,3 @@ def raster_mask_values(
         return output_rasters
     
     return output_rasters[0]
-
-
-# def raster_to_mask(
-
-# )
-
-
-# def raster_invert_nodata(
-    # warn does not have nodata.
-# )
-

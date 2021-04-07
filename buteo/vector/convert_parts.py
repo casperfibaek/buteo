@@ -40,7 +40,7 @@ def singlepart_to_multipart(
     driver = ogr.GetDriverByName(out_format)
 
     ref = vector_to_reference(vector)
-    metadata = vector_to_metadata(ref, latlng_and_footprint=False)
+    metadata = vector_to_metadata(ref)
 
     remove_if_overwrite(out_target, overwrite)
 
@@ -109,7 +109,7 @@ def multipart_to_singlepart(
     driver = ogr.GetDriverByName(out_format)
 
     ref = vector_to_reference(vector)
-    metadata = vector_to_metadata(ref, latlng_and_footprint=False)
+    metadata = vector_to_metadata(ref)
 
     remove_if_overwrite(out_target, overwrite)
     destination = driver.CreateDataSource(out_target)

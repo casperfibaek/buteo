@@ -1,10 +1,11 @@
 import osgeo; from osgeo import gdal, ogr, osr
 from typing import Union
+from uuid import uuid4
 import numpy as np
 import os
 import json
 
-from buteo.utils import path_to_ext, is_number
+from buteo.utils import path_to_ext, is_number, folder_exists, overwrite_required
 
 def raster_to_reference(raster: Union[str, gdal.Dataset], writeable: bool=False) -> gdal.Dataset:
     """ Takes a file path or a gdal.Dataset and opens it with
@@ -96,7 +97,7 @@ def default_options(options: list) -> list:
     return internal_options
 
 
-def path_to_driver(file_path: str) -> Union[str, None]:
+def path_to_driver(file_path: str) -> str:
     """ Takes a file path and returns the GDAL driver matching
     the extension.
 
@@ -521,35 +522,53 @@ def align_bbox(extent_og, extent_ta, pixel_width, pixel_height, warp_format=True
     return (x_min, y_max, x_max, y_min)
 
 
-def geoms_from_extent(
-    extent, # [x_min, y_max, x_max, y_min],
-    original_projection,
-    target_projection,
-    layer_name,
-):
+def advanced_extents(
+    metadata: dict,
+) -> None:
+    original_projection = metadata["projection_osr"]
+    target_projection = osr.SpatialReference(); target_projection.ImportFromEPSG(4326)
+
     if int(osgeo.__version__[0]) >= 3:
         original_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         target_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
-    extents = {
-        "ta_proj": None,
-        "ta_proj_dict": None,
-        "wkt": None,
-        "ogr": None,
-        "ogr_geom": None,
-        "geojson_dict": None,
-        "geojson": None,
-    }
-
-    x_min = extent[0]
-    y_max = extent[1]
-    x_max = extent[2]
-    y_min = extent[3]
+    x_min, x_max, y_min, y_max = metadata["extent_ogr"]
 
     bottom_left = [x_min, y_min]
     top_left = [x_min, y_max]
     top_right = [x_max, y_max]
     bottom_right = [x_max, y_min]
+
+    coord_array = [
+        [bottom_left[1], bottom_left[0]],
+        [top_left[1], top_left[0]],
+        [top_right[1], top_right[0]],
+        [bottom_right[1], bottom_right[0]],
+        [bottom_left[1], bottom_left[0]],
+    ]
+
+    wkt_coords = ""
+    for coord in coord_array:
+        wkt_coords += f"{coord[1]} {coord[0]}, "
+    wkt_coords = wkt_coords[:-2] # Remove the last ", "
+
+    metadata["extent_wkt"] = f"POLYGON (({wkt_coords}))"
+
+    layer_name = metadata["name"]
+    extent_name = f"{layer_name}_extent"
+
+    driver = ogr.GetDriverByName("Memory")
+    extent_ogr = driver.CreateDataSource(extent_name)
+    layer = extent_ogr.CreateLayer(extent_name + "_layer", original_projection, ogr.wkbPolygon)
+
+    feature = ogr.Feature(layer.GetLayerDefn())
+    extent_geom = ogr.CreateGeometryFromWkt(metadata["extent_wkt"], original_projection)
+    feature.SetGeometry(extent_geom)
+    layer.CreateFeature(feature)
+    feature = None
+
+    metadata["extent_datasource"] = extent_ogr
+    metadata["extent_geom"] = extent_geom
 
     if not original_projection.IsSame(target_projection):
         tx = osr.CoordinateTransformation(original_projection, target_projection)
@@ -559,14 +578,14 @@ def geoms_from_extent(
         top_right = tx.TransformPoint(x_max, y_max)
         bottom_right = tx.TransformPoint(x_max, y_min)
 
-    extents["ta_proj"] = [
+    metadata["extent_latlng"] = [
         top_left[0],
         top_left[1],
         bottom_right[0],
         bottom_right[1],
     ]
 
-    extents["ta_proj_dict"] = {
+    metadata["extent_latlng_dict"] = {
         "left": top_left[0],
         "top": top_left[1],
         "right": bottom_right[0],
@@ -587,25 +606,25 @@ def geoms_from_extent(
         wkt_coords += f"{coord[1]} {coord[0]}, "
     wkt_coords = wkt_coords[:-2] # Remove the last ", "
 
-    extents["wkt"] = f"POLYGON (({wkt_coords}))"
+    metadata["extent_wkt_latlng"] = f"POLYGON (({wkt_coords}))"
 
     # Create an OGR Datasource in memory with the extent
-    extent_name = f"{layer_name}_extent"
+    extent_name = f"{layer_name}_extent_latlng"
 
     driver = ogr.GetDriverByName("Memory")
-    extent_ogr = driver.CreateDataSource(extent_name)
-    layer = extent_ogr.CreateLayer(extent_name + "_layer", target_projection, ogr.wkbPolygon)
+    extent_ogr_latlng = driver.CreateDataSource(extent_name)
+    layer = extent_ogr_latlng.CreateLayer(extent_name + "_layer", target_projection, ogr.wkbPolygon)
 
     feature = ogr.Feature(layer.GetLayerDefn())
-    extent_geom = ogr.CreateGeometryFromWkt(extents["wkt"], target_projection)
-    feature.SetGeometry(extent_geom)
+    extent_geom_latlng = ogr.CreateGeometryFromWkt(metadata["extent_wkt_latlng"], target_projection)
+    feature.SetGeometry(extent_geom_latlng)
     layer.CreateFeature(feature)
     feature = None
 
-    extents["ogr"] = extent_ogr
-    extents["ogr_geom"] = extent_geom
+    metadata["extent_datasource_latlng"] = extent_ogr_latlng
+    metadata["extent_geom_latlng"] = extent_geom_latlng
 
-    extents["geojson_dict"] = {
+    metadata["geojson_dict"] = {
         "type": "Feature",
         "properties": {},
         "geometry": {
@@ -613,9 +632,9 @@ def geoms_from_extent(
             "coordinates": [coord_array],
         },
     }
-    extents["extent_geojson"] = json.dumps(extents["geojson_dict"])
+    metadata["extent_geojson"] = json.dumps(metadata["geojson_dict"])
 
-    return extents
+    return None
 
 
 # x_min, x_max, y_min, y_max
@@ -665,7 +684,7 @@ def reproject_extent(
     ]
 
 
-def to_raster_list(variable):
+def to_raster_list(variable: any) -> list:
     return_list = []
     if isinstance(variable, list):
         return_list = variable
@@ -682,7 +701,7 @@ def to_raster_list(variable):
     return return_list
 
 
-def to_vector_list(variable):
+def to_vector_list(variable: any) -> list:
     return_list = []
     if isinstance(variable, list):
         return_list = variable
@@ -699,7 +718,25 @@ def to_vector_list(variable):
     return return_list
 
 
-def to_array_list(variable):
+# TODO: Verify folder exists.
+def to_path_list(variable: any) -> list:
+    return_list = []
+    if isinstance(variable, list):
+        return_list = variable
+    else:
+        return_list.append(variable)
+
+    if len(return_list) == 0:
+        raise ValueError("Empty array list.")
+
+    for path in return_list:
+        if not isinstance(path, str):
+            raise ValueError(f"Invalid string in  path list: {variable}")
+    
+    return return_list
+
+
+def to_array_list(variable: any) -> list:
     return_list = []
     if isinstance(variable, list):
         return_list = variable
@@ -721,3 +758,78 @@ def to_array_list(variable):
 
     return return_list
 
+def to_band_list(
+    variable: any,
+    band_count,
+) -> list:
+    return_list = []
+    if not isinstance(variable, (int, float, list)):
+        raise TypeError(f"Invalid type for band: {type(variable)}")
+    
+    if isinstance(variable, list):
+        if len(variable) == 0:
+            raise ValueError("Provided list of bands is empty.")
+        for val in variable:
+            try:
+                band_int = int(val)
+            except:
+                raise ValueError(f"List of bands contained non-valid band number: {val}")
+
+            if band_int > band_count - 1:
+                raise ValueError("Requested a higher band that is available in raster.")
+            else:
+                return_list.append(band_int)
+    elif variable == -1:
+        for val in range(band_count):
+            return_list.append(val)
+    else:
+        if variable > band_count + 1:
+            raise ValueError("Requested a higher band that is available in raster.")
+        else:
+            return_list.append(variable)
+    
+    return return_list
+
+
+def ready_io_raster(
+    raster,
+    out_path,
+    overwrite,
+    prefix,
+    postfix,
+) -> tuple:
+    raster_list = to_raster_list(raster)
+
+    if isinstance(out_path, list):
+        if len(raster_list) != len(out_path):
+            raise ValueError("The length of raster_list must equal the length of the out_path")
+
+    # Check if folder exists and is required.
+    if isinstance(raster, list):
+        if len(raster) > 1 and isinstance(out_path, str):
+            if not folder_exists(out_path):
+                raise ValueError("Output folder does not exists.")
+
+    out_names = []
+    # Generate output names
+    for index, in_raster in enumerate(raster_list):
+        path = None
+
+        if out_path is None:
+            path = f"/vsimem/{prefix}{uuid4().int}{postfix}.tif"
+        elif isinstance(out_path, list):
+            path = out_path[index]
+        else:
+            if isinstance(in_raster, str):
+                raster_name = os.path.basename(in_raster)
+            elif isinstance(in_raster, gdal.Dataset):
+                raster_name = os.path.basename(in_raster.GetDescription())
+            else:
+                raise ValueError(f"Unable to parse name of raster: {in_raster}")
+
+            path = f"{out_path}/{prefix}{raster_name}{postfix}.tif"
+
+        overwrite_required(path, overwrite)
+        out_names.append(path)
+
+    return (raster_list, out_names)

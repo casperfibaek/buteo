@@ -1,7 +1,7 @@
 import sys; sys.path.append('../../')
 from typing import Union
 from osgeo import gdal, ogr, osr
-from buteo.utils import remove_if_overwrite, overwrite_required
+from buteo.utils import remove_if_overwrite, type_check
 from buteo.gdal_utils import (
     parse_projection,
     path_to_driver,
@@ -9,6 +9,7 @@ from buteo.gdal_utils import (
     default_options,
     translate_resample_method,
     gdal_nodata_value_from_type,
+    ready_io_raster,
 )
 from buteo.raster.io import (
     default_options,
@@ -19,25 +20,28 @@ from buteo.raster.io import (
 
 
 def reproject_raster(
-    raster: Union[str, gdal.Dataset],
+    raster: Union[list, str, gdal.Dataset],
     projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-    out_path: Union[str, None]=None,
+    out_path: Union[list, str, None]=None,
     resample_alg: str="nearest",
     overwrite: bool=True,
     creation_options: list=[],
     dst_nodata: Union[str, int, float]="infer",
+    prefix: str="",
+    postfix: str="_reprojected",
+    opened: bool=False,
 ) -> Union[gdal.Dataset, str]:
-    """ Reproject a raster to a target coordinate reference system.
+    """ Reproject a raster(s) to a target coordinate reference system.
 
     Args:
-        raster (path | raster): The raster to reproject.
+        raster(s) (list, path | raster): The raster(s) to reproject.
 
         projection (str | int | vector | raster): The projection is infered from
         the input. The input can be: WKT proj, EPSG proj, Proj, osr proj, or read
         from a vector or raster datasource either from path or in-memory.
 
     **kwargs:
-        out_path (path | None): The destination to save to. If None then
+        out_path (list, path | None): The destination to save to. If None then
         the output is an in-memory raster.
 
         resample_alg (str): The algorithm to resample the raster. The following
@@ -62,60 +66,71 @@ def reproject_raster(
         An in-memory raster. If an out_path is given the output is a string containing
         the path to the newly created raster.
     """
-    # Throws an error if file exists and overwrite is False.
-    overwrite_required(out_path, overwrite)
-    ref = raster_to_reference(raster)
-    metadata = raster_to_metadata(ref)
+    type_check(raster, [list, str, gdal.Dataset], "raster")
+    type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
+    type_check(out_path, [list, str], "out_path", allow_none=True)
+    type_check(resample_alg, [str], "resample_alg")
+    type_check(overwrite, [bool], "overwrite")
+    type_check(creation_options, [list], "creation_options")
+    type_check(dst_nodata, [str, int, float], "dst_nodata")
+    type_check(prefix, [str], "prefix")
+    type_check(postfix, [list], "postfix")
+    type_check(opened, [bool], "opened")
 
-    original_projection = parse_projection(ref)
-    target_projection = parse_projection(projection)
+    raster_list, out_names = ready_io_raster(raster, out_path, overwrite, prefix, postfix)
 
-    if original_projection.IsSame(target_projection):
-        if out_path is None:
-            if isinstance(raster, str):
-                return raster
+    reprojected_rasters = []
 
-            return raster_to_memory(ref)
-        
-        return raster_to_disk(raster, out_path)
+    for index, in_raster in enumerate(raster_list):
+        ref = raster_to_reference(in_raster)
+        metadata = raster_to_metadata(ref)
 
-    out_name = None
-    out_format = None
-    out_creation_options = []
-    if out_path is None:
-        out_name = metadata["name"]
-        out_format = "MEM"
-    else:
+        out_name = out_names[index]
         out_creation_options = default_options(creation_options)
-        out_name = out_path
         out_format = path_to_driver(out_path)
-    
-    src_nodata = metadata["nodata_value"]
-    out_nodata = None
-    if src_nodata is not None:
-        out_nodata = src_nodata
-    else:
-        if dst_nodata == "infer":
-            out_nodata = gdal_nodata_value_from_type(metadata["dtype_gdal_raw"])
+
+        original_projection = parse_projection(ref)
+        target_projection = parse_projection(projection)
+
+        if original_projection.IsSame(target_projection):
+            if out_path is None:
+                reprojected_rasters.append(raster_to_memory(ref, opened=opened))
+            else:
+                reprojected_rasters.append(raster_to_disk(raster, out_name, opened=opened))
+
+            continue
+        
+        src_nodata = metadata["nodata_value"]
+        out_nodata = None
+        if src_nodata is not None:
+            out_nodata = src_nodata
         else:
-            out_nodata = dst_nodata
+            if dst_nodata == "infer":
+                out_nodata = gdal_nodata_value_from_type(metadata["dtype_gdal_raw"])
+            else:
+                out_nodata = dst_nodata
 
-    remove_if_overwrite(out_path, overwrite)
+        remove_if_overwrite(out_path, overwrite)
 
-    reprojected = gdal.Warp(
-        out_name,
-        ref,
-        format=out_format,
-        srcSRS=original_projection,
-        dstSRS=target_projection,
-        resampleAlg=translate_resample_method(resample_alg),
-        creationOptions=out_creation_options,
-        srcNodata=metadata["nodata_value"],
-        dstNodata=out_nodata,
-        multithread=True,
-    )
+        reprojected = gdal.Warp(
+            out_name,
+            ref,
+            format=out_format,
+            srcSRS=original_projection,
+            dstSRS=target_projection,
+            resampleAlg=translate_resample_method(resample_alg),
+            creationOptions=out_creation_options,
+            srcNodata=metadata["nodata_value"],
+            dstNodata=out_nodata,
+            multithread=True,
+        )
 
-    if out_path is not None:
-        return out_path
-    else:
-        return reprojected
+        if opened:
+            reprojected_rasters.append(reprojected)
+        else:
+            reprojected_rasters.append(out_name)
+
+    if isinstance(raster, list):
+        return reprojected_rasters
+    
+    return reprojected_rasters[0]

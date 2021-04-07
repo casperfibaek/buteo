@@ -55,7 +55,7 @@ def dissolve_vector(
     driver = ogr.GetDriverByName(out_format)
 
     ref = vector_to_reference(vector)
-    metadata = vector_to_metadata(vector, latlng_and_footprint=False)
+    metadata = vector_to_metadata(vector)
 
     layers = []
 

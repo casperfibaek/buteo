@@ -46,7 +46,7 @@ def merge_vectors(
     merged_ds = driver.CreateDataSource(out_target)
 
     for vector in vectors:
-        metadata = vector_to_metadata(vector, latlng_and_footprint=False)
+        metadata = vector_to_metadata(vector)
         ref = vector_to_reference(vector)
 
         layers = metadata["layers"]
