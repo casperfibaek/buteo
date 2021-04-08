@@ -13,6 +13,7 @@ from buteo.raster.io import (
     array_to_raster,
     raster_in_memory,
     rasters_are_aligned,
+    stack_rasters,
 )
 from buteo.vector.io import (
     vector_to_memory,
@@ -404,15 +405,10 @@ def array_to_blocks(
     reshaped = arr.reshape(
         arr.shape[0] // block_shape[0], block_shape[0],
         arr.shape[1] // block_shape[1], block_shape[1],
-        arr.shape[2], arr.shape[2],
+        arr.shape[2],
     )
     swaped = reshaped.swapaxes(1, 2)
-    merge = swaped.reshape(
-        -1,
-        block_shape[0],
-        block_shape[1],
-        array.shape[2],
-    )
+    merge = swaped.reshape(-1, block_shape[0], block_shape[1], array.shape[2])
 
     return merge
 
@@ -797,7 +793,6 @@ def extract_patches(
             # Clip layer already has index.
             patches_ds.CopyLayer(clip_layer, 'clip_geom', ["OVERWRITE=YES"])
 
-            # sql = f"SELECT DISTINCT A.og_fid as og_fid, ROW_NUMBER() OVER (ORDER BY A.{fid_patches}) - 1 AS fid FROM patches A, clip_geom B WHERE ST_INTERSECTS(A.{geom_patches}, B.{geom_clip});"
             sql = f"SELECT DISTINCT A.{og_fid} as {og_fid}, A.{geom_patches} AS geom FROM patches_all A, clip_geom B WHERE ST_INTERSECTS(A.{geom_patches}, B.{geom_clip});"
             result = patches_ds.ExecuteSQL(sql, dialect="SQLITE")
 
@@ -806,6 +801,7 @@ def extract_patches(
 
             patch_count = result.GetFeatureCount()
 
+            # Maybe this should be sorted ascending.
             mask = np.empty(patch_count, dtype=int)
 
             for patch_idx in range(patch_count):
@@ -900,18 +896,19 @@ def extract_patches(
 
 
 def predict_raster(
-    raster,
-    model,
-    out_path=None,
-    offsets=[],
-    device="gpu",
-    merge_method="median",
-    mirror=False,
-    rotate=False,
-    dtype="same",
-    overwrite=True,
-    creation_options=[],
-    verbose=1,
+    raster: Union[str, gdal.Dataset],
+    model: str,
+    out_path: Union[str, None]=None,
+    offsets: list=[],
+    device: str="gpu",
+    merge_method: str="median",
+    mirror: bool=False,
+    rotate: bool=False,
+    custom_objects: dict={},
+    dtype: str="same",
+    overwrite: bool=True,
+    creation_options: list=[],
+    verbose: int=1,
 ):
     """ Runs a raster through a deep learning network (Tensorflow). Supports
         tiling and reconstituting the output. Offsets are allowed and will be
@@ -960,6 +957,7 @@ def predict_raster(
     type_check(merge_method, [str], "merge_method")
     type_check(mirror, [bool], "mirror")
     type_check(rotate, [bool], "rotate")
+    type_check(custom_objects, [dict], "custom_objects")
     type_check(dtype, [str], "rotate", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
     type_check(creation_options, [list], "creation_options")
@@ -970,7 +968,7 @@ def predict_raster(
     if verbose == 1:
         print("Loading model.")
 
-    model = tf.keras.models.load_model(model)
+    model = tf.keras.models.load_model(model, custom_objects=custom_objects)
 
     shape_input = tuple(model.input.shape)
     shape_output = tuple(model.output.shape)
@@ -1015,14 +1013,10 @@ def predict_raster(
     print("Reconstituting Raster.")
 
     rast_meta = raster_to_metadata(raster)
-    resampled = resample_raster(
-        raster,
-        (
-            rast_meta["pixel_width"] * pixel_factor,
-            rast_meta["pixel_height"] * pixel_factor,
-        ),
-        dtype="float32",
-    )
+
+    target_size = (rast_meta["pixel_width"] * pixel_factor, rast_meta["pixel_height"] * pixel_factor)
+
+    resampled = resample_raster(raster, target_size=target_size, dtype="float32")
 
     prediction_arr = []
 
@@ -1139,21 +1133,21 @@ if __name__ == "__main__":
     #     device="gpu",
     # )
 
-    path_np, path_geom = extract_patches(
-        raster,
-        out_dir=out_dir,
-        prefix="",
-        postfix="_patches",
-        size=64,
-        offsets=[],
-        generate_grid_geom=True,
-        generate_zero_offset=True,
-        generate_border_patches=True,
-        clip_geom=vector,
-        verify_output=True,
-        verification_samples=100,
-        verbose=1,
-    )
+    # path_np, path_geom = extract_patches(
+    #     raster,
+    #     out_dir=out_dir,
+    #     prefix="",
+    #     postfix="_patches",
+    #     size=64,
+    #     offsets=[],
+    #     generate_grid_geom=True,
+    #     generate_zero_offset=True,
+    #     generate_border_patches=True,
+    #     clip_geom=vector,
+    #     verify_output=True,
+    #     verification_samples=100,
+    #     verbose=1,
+    # )
 
     # blocks_to_raster(
     #     path_np,
@@ -1163,3 +1157,27 @@ if __name__ == "__main__":
     #     border_patches=borders,
     #     merge_method="median",
     # )
+
+
+    # dsm = folder + "dsm_test_clip.tif"
+    # dtm = folder + "dtm_test_clip.tif"
+    # hot = folder + "hot_test_clip.tif"
+
+    # stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif")
+
+
+    model = folder + "model3_3L_rotations.h5"
+    stacked = folder + "dtm_dsm_hot_stacked.tif"
+    
+    from tensorflow_addons.activations import mish
+
+    path = predict_raster(
+        stacked,
+        model,
+        out_path=out_dir + "predicted_raster_32-16.tif",
+        offsets=[(32, 32), (16, 16)],
+        # mirror=True,
+        # rotate=True,
+        device="cpu",
+        custom_objects={ "mish": mish },
+    )

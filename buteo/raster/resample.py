@@ -97,7 +97,7 @@ def resample_raster(
 
         out_name = out_names[index]
         out_creation_options = default_options(creation_options)
-        out_format = path_to_driver(out_path)
+        out_format = path_to_driver(out_name)
         
         src_nodata = metadata["nodata_value"]
         out_nodata = None

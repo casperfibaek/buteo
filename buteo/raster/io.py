@@ -27,16 +27,18 @@ from buteo.gdal_utils import (
 )
 
 
+# TODO: copy_raster
 # TODO: seperate_bands
 # TODO: stack_rasters_vrt
-# TODO: Create raster
-# TODO: Delete raster // clear memory
+# TODO: create_raster
+# TODO: assign_projection + link in reproject.py
+# TODO: delete_raster // clear memory
 
 
 def raster_to_metadata(
-    raster: Union[str, gdal.Dataset],
+    raster: Union[list, str, gdal.Dataset],
     simple: bool=True,
-) -> dict:
+) -> Union[list, dict]:
     """ Reads a raster from a string or a dataset and returns metadata.
 
     Args:
@@ -50,91 +52,95 @@ def raster_to_metadata(
     Returns:
         A dictionary containing metadata about the raster.
     """
-    type_check(raster, [str, gdal.Dataset], "raster")
+    type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(simple, [bool], "simple")
 
-    try:
-        raster = raster if isinstance(raster, gdal.Dataset) else gdal.Open(raster)
-    except:
-        raise Exception("Could not read input raster")
+    rasters = to_raster_list(raster)
 
-    if raster is None:
-        raise Exception("Could not read input raster")
+    metadatas = []
 
-    raster_driver = raster.GetDriver()
+    for in_raster in rasters:
+        in_raster = raster_to_reference(in_raster)
 
-    metadata = {
-        "name": raster.GetDescription(),
-        "path": raster.GetDescription(),
-        "transform": raster.GetGeoTransform(),
-        "projection": raster.GetProjection(),
-        "width": raster.RasterXSize,
-        "height": raster.RasterYSize,
-        "bands": raster.RasterCount,
-        "band_count": raster.RasterCount,
-        "driver": raster_driver.ShortName,
-        "driver_long": raster_driver.LongName,
-    }
+        raster_driver = in_raster.GetDriver()
 
-    basename = os.path.basename(metadata["name"])
-    metadata["basename"] = os.path.splitext(basename)[0]
-    metadata["ext"] = os.path.splitext(basename)[1]
+        metadata = {
+            "name": in_raster.GetDescription(),
+            "path": in_raster.GetDescription(),
+            "transform": in_raster.GetGeoTransform(),
+            "projection": in_raster.GetProjection(),
+            "width": in_raster.RasterXSize,
+            "height": in_raster.RasterYSize,
+            "bands": in_raster.RasterCount,
+            "band_count": in_raster.RasterCount,
+            "driver": raster_driver.ShortName,
+            "driver_long": raster_driver.LongName,
+        }
 
-    original_projection = osr.SpatialReference()
-    original_projection.ImportFromWkt(metadata["projection"])
-    metadata["projection_osr"] = original_projection
+        basename = os.path.basename(metadata["name"])
+        metadata["basename"] = os.path.splitext(basename)[0]
+        metadata["ext"] = os.path.splitext(basename)[1]
 
-    metadata["size"] = [raster.RasterXSize, raster.RasterYSize]
-    metadata["shape"] = (metadata["width"], metadata["height"])
-    metadata["pixel_width"] = abs(metadata["transform"][1])
-    metadata["pixel_height"] = abs(metadata["transform"][5])
-    metadata["xres"] = metadata["pixel_width"]
-    metadata["yres"] = metadata["pixel_height"]
-    metadata["x_min"] = metadata["transform"][0]
-    metadata["y_max"] = metadata["transform"][3]
-    metadata["x_max"] = (
-        metadata["x_min"]
-        + metadata["width"] * metadata["transform"][1] # Handle skew
-        + metadata["height"] * metadata["transform"][2]
-    )
-    metadata["y_min"] = (
-        metadata["y_max"]
-        + metadata["width"] * metadata["transform"][4] # Handle skew
-        + metadata["height"] * metadata["transform"][5]
-    )
+        original_projection = osr.SpatialReference()
+        original_projection.ImportFromWkt(metadata["projection"])
+        metadata["projection_osr"] = original_projection
 
-    x_min = metadata["x_min"]
-    y_max = metadata["y_max"]
-    x_max = metadata["x_max"]
-    y_min = metadata["y_min"]
+        metadata["size"] = [in_raster.RasterXSize, in_raster.RasterYSize]
+        metadata["shape"] = (metadata["width"], metadata["height"])
+        metadata["pixel_width"] = abs(metadata["transform"][1])
+        metadata["pixel_height"] = abs(metadata["transform"][5])
+        metadata["xres"] = metadata["pixel_width"]
+        metadata["yres"] = metadata["pixel_height"]
+        metadata["x_min"] = metadata["transform"][0]
+        metadata["y_max"] = metadata["transform"][3]
+        metadata["x_max"] = (
+            metadata["x_min"]
+            + metadata["width"] * metadata["transform"][1] # Handle skew
+            + metadata["height"] * metadata["transform"][2]
+        )
+        metadata["y_min"] = (
+            metadata["y_max"]
+            + metadata["width"] * metadata["transform"][4] # Handle skew
+            + metadata["height"] * metadata["transform"][5]
+        )
 
-    band0 = raster.GetRasterBand(1)
-    metadata["dtype_gdal_raw"] = band0.DataType
-    metadata["datatype_gdal_raw"] = metadata["dtype_gdal_raw"]
+        x_min = metadata["x_min"]
+        y_max = metadata["y_max"]
+        x_max = metadata["x_max"]
+        y_min = metadata["y_min"]
 
-    metadata["dtype_gdal"] = gdal.GetDataTypeName(metadata["dtype_gdal_raw"])
-    metadata["datatype_gdal"] = metadata["dtype_gdal"]
+        band0 = in_raster.GetRasterBand(1)
+        metadata["dtype_gdal_raw"] = band0.DataType
+        metadata["datatype_gdal_raw"] = metadata["dtype_gdal_raw"]
 
-    metadata["dtype"] = gdal_to_numpy_datatype(band0.DataType)
-    metadata["datatype"] = metadata["dtype"]
+        metadata["dtype_gdal"] = gdal.GetDataTypeName(metadata["dtype_gdal_raw"])
+        metadata["datatype_gdal"] = metadata["dtype_gdal"]
 
-    metadata["nodata_value"] = band0.GetNoDataValue()
+        metadata["dtype"] = gdal_to_numpy_datatype(band0.DataType)
+        metadata["datatype"] = metadata["dtype"]
 
-    metadata["extent"] = [x_min, y_max, x_max, y_min]
-    metadata["extent_ogr"] = [x_min, x_max, y_min, y_max]
-    metadata["extent_gdal_warp"] = [x_min, y_min, x_max, y_max]
+        metadata["nodata_value"] = band0.GetNoDataValue()
 
-    metadata["extent_dict"] = {
-        "left": x_min,
-        "top": y_max,
-        "right": x_max,
-        "bottom": y_min,
-    }
+        metadata["extent"] = [x_min, y_max, x_max, y_min]
+        metadata["extent_ogr"] = [x_min, x_max, y_min, y_max]
+        metadata["extent_gdal_warp"] = [x_min, y_min, x_max, y_max]
 
-    if not simple:
-        advanced_extents(metadata)
+        metadata["extent_dict"] = {
+            "left": x_min,
+            "top": y_max,
+            "right": x_max,
+            "bottom": y_min,
+        }
 
-    return metadata
+        if not simple:
+            advanced_extents(metadata)
+
+        metadatas.append(metadata)
+
+    if isinstance(raster, list):
+        return metadatas
+    
+    return metadatas[0]
 
 
 def rasters_are_aligned(
@@ -223,6 +229,7 @@ def raster_in_memory(
         True if raster is in Memory, False otherwise.
     """
     type_check(raster, [str, gdal.Dataset], "raster")
+
     metadata = raster_to_metadata(raster)
     
     if metadata["driver"] == "MEM":
@@ -402,7 +409,7 @@ def raster_to_disk(
     dtype: Union[str, None]=None,
     creation_options: list=[],
     opened: bool=False,
-) -> str:
+) -> Union[list, str]:
     """ Saves or copies a raster to disk. Can be used to change datatype.
     Input is either a filepath to a raster or a GDAL.Dataset.
     The driver is infered from the file extension.
@@ -433,6 +440,7 @@ def raster_to_disk(
     type_check(overwrite, [bool], "overwrite")
     type_check(dtype, [str], "dtype", allow_none=True)
     type_check(creation_options, [list], "creation_options")
+    type_check(opened, [bool], "opened")
 
     if isinstance(raster, list) and not isinstance(out_path, list):
         raise ValueError("If input raster is a list, out_path must also be a list.")
@@ -761,18 +769,35 @@ def stack_rasters(
     datatype = translate_datatypes(dtype) if dtype is not None else metadata["datatype_gdal_raw"]
 
     metas = []
+    nodata_values = []
+    nodata_missmatch = False
+    nodata_value = None
     total_bands = 0
     for raster in in_rasters:
         rast_meta = raster_to_metadata(raster)
+        nodata_value = rast_meta["nodata_value"]
         total_bands += rast_meta["band_count"]
+
+        if nodata_missmatch is False:
+            for ndv in nodata_values:
+                if nodata_missmatch: continue
+
+                if rast_meta["nodata_value"] != ndv:
+                    print("WARNING: NoDataValues of input rasters do not match. Removing nodata.")
+                    nodata_missmatch = True
+
+        nodata_values.append(rast_meta["nodata_value"])
         metas.append(rast_meta)
+
+    if nodata_missmatch:
+        nodata_value = None
 
     remove_if_overwrite(out_path, overwrite)
 
     destination = driver.Create(
         output_name,
-        metadata["height"],
         metadata["width"],
+        metadata["height"],
         total_bands,
         datatype,
         creation_options,
@@ -791,7 +816,9 @@ def stack_rasters(
         for band_idx in range(band_count):
             dst_band = destination.GetRasterBand(bands_added + 1)
             dst_band.WriteArray(array[:, :, band_idx])
-            dst_band.SetNodataValue(rast_meta["nodata_value"])
+
+            if nodata_value is not None:
+                dst_band.SetNoDataValue(nodata_value)
             
             bands_added += 1
 
@@ -823,12 +850,36 @@ def stack_rasters_vrt(
     type_check(creation_options, [list], "creation_options")
 
     resample_algorithm = translate_resample_method(resample_alg)
+    options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)
 
-    raise ValueError("Not yet implemented.")
+    vrt = gdal.BuildVRT(out_path, rasters, options=options)
 
-    # options = gdal.BuildVRTOptions(resampleAlg=gdal.GRA_NearestNeighbour, separate=True)
+    if opened:
+        return vrt
+    
+    return out_path
 
-    # return gdal.BuildVRT(out_path, in_rasters, options=options)
+
+def copy_raster(
+    raster: Union[list, str, gdal.Dataset],
+    out_path: Union[list, str],
+    overwrite: bool=True,
+    dtype: Union[str, None]=None,
+    creation_options: list=[],
+    opened: bool=False,
+) -> Union[list, str]:
+    """ Copies a raster to a path. Can be both memory and disk.
+    """
+    type_check(raster, [list, str, gdal.Dataset], "raster")
+    type_check(out_path, [list, str], "out_path")
+    type_check(overwrite, [bool], "overwrite")
+    type_check(dtype, [str], "dtype", allow_none=True)
+    type_check(creation_options, [list], "creation_options")
+    type_check(opened, [bool], "opened")
+
+    rasters = to_raster_list(raster)
+
+    raise ValueError("Not yet implemented. Sorry")
 
 
 def seperate_bands(
@@ -838,7 +889,7 @@ def seperate_bands(
     overwrite: bool=True,
     opened: bool=False,
     prefix: str="",
-    postfix: str="_bandID",
+    postfix: str="_bandID", # add automatically
     creation_options: list=[],
 ) -> list:
     """ Seperates the bands of a multiband raster.
@@ -852,7 +903,7 @@ def seperate_bands(
     type_check(postfix, [str], "postfix")
     type_check(creation_options, [list], "creation_options")
 
-    raise ValueError("Not yet implemented.")
+    raise ValueError("Not yet implemented. Sorry")
 
 
 def create_raster(

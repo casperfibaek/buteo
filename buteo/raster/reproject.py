@@ -87,7 +87,7 @@ def reproject_raster(
 
         out_name = out_names[index]
         out_creation_options = default_options(creation_options)
-        out_format = path_to_driver(out_path)
+        out_format = path_to_driver(out_name)
 
         original_projection = parse_projection(ref)
         target_projection = parse_projection(projection)
