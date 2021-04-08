@@ -966,6 +966,7 @@ def predict_raster(
     type_check(verbose, [int], "verbose")
 
     import tensorflow as tf
+    os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
     if verbose == 1:
         print("Loading model.")
@@ -1011,12 +1012,27 @@ def predict_raster(
     if verbose == 1:
         print("Predicting raster.")
 
+    start = 0
+    end = blocks.shape[0]
+
+
+    predictions = np.empty((blocks.shape[0], dst_tile_size, dst_tile_size, shape_output[3]), dtype="float32")
+
     if device == "cpu":
         with tf.device('/cpu:0'):
-            predictions = model.predict(blocks, batch_size=batch_size, verbose=verbose, use_multiprocessing=True)
+            while start < end:
+                predictions[start:start + batch_size] = model.predict_on_batch(blocks[start:start + batch_size])
+                start += batch_size
+                progress(start, end, "Predicting")
     else:
-        predictions = model.predict(blocks, batch_size=batch_size, verbose=verbose, use_multiprocessing=True)
-
+        while start < end:
+            predictions[start:start + batch_size] = model.predict_on_batch(blocks[start:start + batch_size])
+            start += batch_size
+            progress(start, end, "Predicting")
+        
+        start = 0
+    
+    print("")
     print("Reconstituting Raster.")
 
     rast_meta = raster_to_metadata(raster)
@@ -1039,15 +1055,25 @@ def predict_raster(
     )
 
     if mirror:
+        predictions_lr = np.empty((blocks.shape[0], dst_tile_size, dst_tile_size, shape_output[3]), dtype="float32")
+
         if verbose == 1:
             print("Mirroring blocks.")
 
         if device == "cpu":
             with tf.device('/cpu:0'):
-                predictions_lr = model.predict(np.fliplr(blocks), batch_size=batch_size, verbose=verbose, use_multiprocessing=True)
+                while start < end:
+                    predictions_lr[start:start + batch_size] = model.predict_on_batch(np.fliplr(blocks[start:start + batch_size]))
+                    start += batch_size
+                    progress(start, end, "Predicting")
         else:
-            predictions_lr = model.predict(np.fliplr(blocks), batch_size=batch_size, verbose=verbose, use_multiprocessing=True)
+            while start < end:
+                predictions_lr[start:start + batch_size] = model.predict_on_batch(np.fliplr(blocks[start:start + batch_size]))
+                start += batch_size
+                progress(start, end, "Predicting")
         
+        start = 0
+
         prediction_arr.append(
             blocks_to_raster(
                 np.fliplr(predictions_lr),
@@ -1060,14 +1086,22 @@ def predict_raster(
         )
 
     if rotate:
+        predictions_rot = np.empty((blocks.shape[0], dst_tile_size, dst_tile_size, shape_output[3]), dtype="float32")
+
         if verbose == 1:
             print("Rotating blocks.")
 
         if device == "cpu":
             with tf.device('/cpu:0'):
-                predictions_rot = model.predict(np.rot90(blocks, k=2), batch_size=batch_size, verbose=verbose, use_multiprocessing=True)
+                while start < end:
+                    predictions_rot[start:start + batch_size] = model.predict_on_batch(np.rot90(blocks[start:start + batch_size], k=2))
+                    start += batch_size
+                    progress(start, end, "Predicting")
         else:
-            predictions_rot = model.predict(np.rot90(blocks, k=2), batch_size=batch_size, verbose=verbose, use_multiprocessing=True)
+            while start < end:
+                predictions_rot[start:start + batch_size] = model.predict_on_batch(np.rot90(blocks[start:start + batch_size], k=2))
+                start += batch_size
+                progress(start, end, "Predicting")
         
         prediction_arr.append(
             blocks_to_raster(
@@ -1079,6 +1113,9 @@ def predict_raster(
                 output_array=True,
             )
         )
+
+    if verbose == 1:
+        print("Merging rasters.")
 
     if merge_method == "median":
         predicted = np.median(prediction_arr, axis=0)
@@ -1166,11 +1203,11 @@ if __name__ == "__main__":
     # )
 
 
-    dsm = folder + "dsm_test_clip.tif"
-    dtm = folder + "dtm_test_clip.tif"
-    hot = folder + "hot_test_clip.tif"
+    # dsm = folder + "dsm_test_clip.tif"
+    # dtm = folder + "dtm_test_clip.tif"
+    # hot = folder + "hot_test_clip.tif"
 
-    stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif")
+    # stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif")
 
     model = folder + "model3_3L_rotations.h5"
     stacked = folder + "dtm_dsm_hot_stacked.tif"
@@ -1182,7 +1219,7 @@ if __name__ == "__main__":
         model,
         out_path=out_dir + "predicted_raster_32-16.tif",
         offsets=[(32, 32), (16, 16)],
-        batch_size=8,
+        batch_size=64,
         # mirror=True,
         # rotate=True,
         device="gpu",
