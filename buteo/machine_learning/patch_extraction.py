@@ -1015,7 +1015,6 @@ def predict_raster(
     start = 0
     end = blocks.shape[0]
 
-
     predictions = np.empty((blocks.shape[0], dst_tile_size, dst_tile_size, shape_output[3]), dtype="float32")
 
     if device == "cpu":
@@ -1203,15 +1202,13 @@ if __name__ == "__main__":
     # )
 
 
-    # dsm = folder + "dsm_test_clip.tif"
-    # dtm = folder + "dtm_test_clip.tif"
-    # hot = folder + "hot_test_clip.tif"
-
-    # stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif")
-
+    dsm = folder + "dsm_test_clip.tif"
+    dtm = folder + "dtm_test_clip.tif"
+    hot = folder + "hot_test_clip.tif"
     model = folder + "model3_3L_rotations.h5"
-    stacked = folder + "dtm_dsm_hot_stacked.tif"
-    
+
+    stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif") # shape = (14400, 26112, 3)  
+
     from tensorflow_addons.activations import mish
 
     path = predict_raster(
@@ -1220,8 +1217,8 @@ if __name__ == "__main__":
         out_path=out_dir + "predicted_raster_32-16.tif",
         offsets=[(32, 32), (16, 16)],
         batch_size=64,
-        # mirror=True,
-        # rotate=True,
+        mirror=False,
+        rotate=False,
         device="gpu",
         custom_objects={ "mish": mish },
     )
