@@ -906,6 +906,7 @@ def predict_raster(
     rotate: bool=False,
     custom_objects: dict={},
     dtype: str="same",
+    batch_size: int=16,
     overwrite: bool=True,
     creation_options: list=[],
     verbose: int=1,
@@ -959,6 +960,7 @@ def predict_raster(
     type_check(rotate, [bool], "rotate")
     type_check(custom_objects, [dict], "custom_objects")
     type_check(dtype, [str], "rotate", allow_none=True)
+    type_check(batch_size, [int], "batch_size")
     type_check(overwrite, [bool], "overwrite")
     type_check(creation_options, [list], "creation_options")
     type_check(verbose, [int], "verbose")
@@ -987,6 +989,11 @@ def predict_raster(
     dst_offsets = []
 
     for offset in offsets:
+        if not isinstance(offset, tuple):
+            raise ValueError(f"Offset must be a tuple of two ints. Recieved: {offset}")
+        if len(offset) != 2:
+            raise ValueError("Offsets must have two values. Both integers.")
+
         dst_offsets.append((
             round(offset[0] * scale_factor),
             round(offset[1] * scale_factor),
@@ -1006,9 +1013,9 @@ def predict_raster(
 
     if device == "cpu":
         with tf.device('/cpu:0'):
-            predictions = model.predict(blocks)
+            predictions = model.predict(blocks, batch_size=batch_size, verbose=verbose, use_multiprocessing=True)
     else:
-        predictions = model.predict(blocks)
+        predictions = model.predict(blocks, batch_size=batch_size, verbose=verbose, use_multiprocessing=True)
 
     print("Reconstituting Raster.")
 
@@ -1037,9 +1044,9 @@ def predict_raster(
 
         if device == "cpu":
             with tf.device('/cpu:0'):
-                predictions_lr = model.predict(np.fliplr(blocks))
+                predictions_lr = model.predict(np.fliplr(blocks), batch_size=batch_size, verbose=verbose, use_multiprocessing=True)
         else:
-            predictions_lr = model.predict(np.fliplr(blocks))
+            predictions_lr = model.predict(np.fliplr(blocks), batch_size=batch_size, verbose=verbose, use_multiprocessing=True)
         
         prediction_arr.append(
             blocks_to_raster(
@@ -1058,9 +1065,9 @@ def predict_raster(
 
         if device == "cpu":
             with tf.device('/cpu:0'):
-                predictions_rot = model.predict(np.rot90(blocks, k=2))
+                predictions_rot = model.predict(np.rot90(blocks, k=2), batch_size=batch_size, verbose=verbose, use_multiprocessing=True)
         else:
-            predictions_rot = model.predict(np.rot90(blocks, k=2))
+            predictions_rot = model.predict(np.rot90(blocks, k=2), batch_size=batch_size, verbose=verbose, use_multiprocessing=True)
         
         prediction_arr.append(
             blocks_to_raster(
@@ -1159,12 +1166,11 @@ if __name__ == "__main__":
     # )
 
 
-    # dsm = folder + "dsm_test_clip.tif"
-    # dtm = folder + "dtm_test_clip.tif"
-    # hot = folder + "hot_test_clip.tif"
+    dsm = folder + "dsm_test_clip.tif"
+    dtm = folder + "dtm_test_clip.tif"
+    hot = folder + "hot_test_clip.tif"
 
-    # stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif")
-
+    stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif")
 
     model = folder + "model3_3L_rotations.h5"
     stacked = folder + "dtm_dsm_hot_stacked.tif"
@@ -1176,8 +1182,9 @@ if __name__ == "__main__":
         model,
         out_path=out_dir + "predicted_raster_32-16.tif",
         offsets=[(32, 32), (16, 16)],
+        batch_size=8,
         # mirror=True,
         # rotate=True,
-        device="cpu",
+        device="gpu",
         custom_objects={ "mish": mish },
     )
