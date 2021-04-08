@@ -28,7 +28,7 @@ from buteo.utils import progress, remove_if_overwrite, type_check
 def vector_to_metadata(
     vector: Union[str, ogr.DataSource],
     simple: bool=True,
-    process_layer: Union[int, str]="all",
+    process_layer: int=-1,
 ) -> dict:
     """ Creates a dictionary with metadata about the vector layer.
 
@@ -40,12 +40,16 @@ def vector_to_metadata(
             footprint of the raster in wgs84. Requires a reprojection
             check do not use it if not required and performance is important.
         
-        process_layer (str, int): The layer to process. Default is "all". 
-        Must be either an int or "all".
+        process_layer (str, int): The layer to process. Default it -1 which
+        equals all. Zero indexed.
 
     Returns:
         A dictionary containing the metadata.
     """
+    type_check(vector, [str, ogr.DataSource], "vector")
+    type_check(simple, [bool], "simple")
+    type_check(process_layer, [int], "process_layer")
+
     try:
         vector = vector if isinstance(vector, ogr.DataSource) else ogr.Open(vector)
     except:
@@ -62,26 +66,13 @@ def vector_to_metadata(
     metadata = {
         "path": vector_name,
         "abs_path": abs_path,
-        "basename": os.path.basename(abs_path),
+        "name": os.path.basename(abs_path),
+        "basename": os.path.splitext(os.path.basename(abs_path))[0],
         "filetype": os.path.splitext(os.path.basename(abs_path))[1],
-        "name": os.path.splitext(os.path.basename(abs_path))[0],
         "layer_count": vector.GetLayerCount(),
         "driver": vector_driver.GetName(),
         "driver_long": vector_driver.GetName(), # This is to keep it in sync with raster_to_metadata
         "layers": [],
-        "extent": None,
-        "extent_dict": None,
-        "x_min": None,
-        "x_max": None,
-        "y_min": None,
-        "y_max": None,
-        "extent_wgs84": None,
-        "extent_dict_wgs84": None,
-        "extent_wkt": None,
-        "extent_ogr": None,
-        "extent_ogr_geom": None,
-        "extent_geojson": None,
-        "extent_geojson_dict": None,
     }
 
     if isinstance(process_layer, int) and process_layer > (metadata["layer_count"] - 1):
@@ -91,7 +82,7 @@ def vector_to_metadata(
 
     for layer_index in range(metadata["layer_count"]):
 
-        if isinstance(process_layer, int) and layer_index != process_layer:
+        if process_layer != -1 and layer_index != process_layer:
             continue
         
         layer = vector.GetLayerByIndex(layer_index)
@@ -105,6 +96,7 @@ def vector_to_metadata(
             "y_min": y_min,
             "y_max": y_max,
             "extent": [x_min, y_max, x_max, y_min],
+            "extent_ogr": [x_min, x_max, x_min, x_max],
             "extent_dict": {
                 "left": x_min,
                 "top": y_max,
@@ -113,20 +105,6 @@ def vector_to_metadata(
             },
             "fid_column": layer.GetFIDColumn(),
             "feature_count": layer.GetFeatureCount(),
-            "field_count": None,
-            "geom_type": None,
-            "geom_type_ogr": None,
-            "field_names": None,
-            "field_types": None,
-            "extent_wgs84": None,
-            "extent_dict_wgs84": None,
-            "extent_wkt": None,
-            "extent_ogr": None,
-            "extent_ogr_geom": None,
-            "extent_geojson": None,
-            "extent_geojson_dict": None,
-            "projection": None,
-            "projection_osr": None,
         }
 
         geom_col = layer.GetGeometryColumn()
@@ -180,6 +158,20 @@ def vector_to_metadata(
         metadata["y_min"],
     ]
 
+    metadata["extent_ogr"] = [
+        metadata["x_min"],
+        metadata["x_max"],
+        metadata["y_min"],
+        metadata["y_max"],
+    ]
+
+    metadata["extent_gdal_warp"] = [
+        metadata["x_min"],
+        metadata["y_min"],
+        metadata["x_max"],
+        metadata["y_max"],
+    ]
+
     metadata["extent_dict"] = {
         "left": metadata["x_min"],
         "top": metadata["y_max"],
@@ -188,6 +180,10 @@ def vector_to_metadata(
     }
 
     if not simple:
+        # Combined extents
+        advanced_extents(metadata)
+
+        # Individual layer extents
         for layer_index in range(metadata["layer_count"]):
             layer_dict = metadata["layers"][layer_index]
             advanced_extents(layer_dict)
@@ -200,7 +196,7 @@ def vector_to_memory(
     memory_path: Union[str, None]=None,
     layer_to_extract: Union[int, None]=None,
     opened: bool=False,
-) -> ogr.DataSource:
+) -> Union[str, ogr.DataSource]:
     """ Copies a vector source to memory.
 
     Args:
@@ -236,8 +232,8 @@ def vector_to_memory(
             vector_name = f"/vsimem/{memory_path}"
         driver = ogr.GetDriverByName(path_to_driver(memory_path))
     else:
-        vector_name = basename
-        driver = ogr.GetDriverByName("Memory")
+        vector_name = f"/vsimem/memvector_{basename}_{uuid4().int}.gpkg"
+        driver = ogr.GetDriverByName("GPKG")
 
     copy = driver.CreateDataSource(vector_name)
 
@@ -247,7 +243,7 @@ def vector_to_memory(
         layername = metadata["layers"][layer_idx]["layer_name"]
         copy.CopyLayer(ref.GetLayer(layer_idx), layername, ["OVERWRITE=YES"])
 
-    if memory_path is None or opened:
+    if opened:
         return copy
 
     return vector_name
@@ -257,6 +253,7 @@ def vector_to_disk(
     vector: Union[str, ogr.DataSource],
     out_path: str,
     overwrite: bool=True,
+    opened: bool=False,
 ) -> str:
     """ Copies a vector source to disk.
 
@@ -289,7 +286,12 @@ def vector_to_disk(
         layer_name = metadata["layers"][layer_idx]["layer_name"]
         copy.CopyLayer(ref.GetLayer(layer_idx), str(layer_name), ["OVERWRITE=YES"])
 
+    # Flush to disk
     copy = None
+
+    if opened:
+        return vector_to_reference(out_path)
+
     return out_path
 
 

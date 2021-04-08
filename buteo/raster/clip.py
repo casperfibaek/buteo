@@ -96,7 +96,7 @@ def clip_raster(
     type_check(creation_options, [list], "creation_options")
     type_check(opened, [bool], "opened")
     type_check(prefix, [str], "prefix")
-    type_check(postfix, [list], "postfix")
+    type_check(postfix, [str], "postfix")
 
     raster_list, out_names = ready_io_raster(raster, out_path, overwrite, prefix, postfix)
 
@@ -109,7 +109,7 @@ def clip_raster(
         clip_ds = vector_to_path(clip_metadata["extent_ogr"])
     elif is_vector(clip_geom):
         clip_ds = vector_to_memory(clip_geom)
-        clip_metadata = vector_to_metadata(clip_geom)
+        clip_metadata = vector_to_metadata(clip_geom, simple=False, process_layer=layer_to_clip)
     else:
         if file_exists(clip_geom):
             raise ValueError(f"Unable to parse clip geometry: {clip_geom}")
@@ -137,7 +137,7 @@ def clip_raster(
     for index, in_raster in enumerate(raster_list):
         origin_layer = raster_to_reference(in_raster)
 
-        raster_metadata = raster_to_metadata(origin_layer)
+        raster_metadata = raster_to_metadata(origin_layer, simple=False)
         origin_projection = raster_metadata["projection_osr"]
         origin_extent = raster_metadata["extent_geom_latlng"]
 
@@ -154,8 +154,7 @@ def clip_raster(
                 origin_projection,
             )
 
-        x_min_og, y_max_og, x_max_og, y_min_og = raster_metadata["extent"]
-        output_bounds = (x_min_og, y_min_og, x_max_og, y_max_og) # gdal_warp format
+        output_bounds = raster_metadata["extent_gdal_warp"]
 
         if crop_to_geom:
 
@@ -169,8 +168,7 @@ def clip_raster(
                 )
 
             else:
-                x_min_og, y_max_og, x_max_og, y_min_og = clip_metadata["extent"]
-                output_bounds = (x_min_og, y_min_og, x_max_og, y_max_og) # gdal_warp format
+                output_bounds = clip_metadata["extent_gdal_warp"]
 
         # formats
         out_name = out_names[index]

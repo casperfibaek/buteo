@@ -1,4 +1,5 @@
 import sys; sys.path.append('../../')
+from uuid import uuid4
 from typing import Union
 import osgeo; from osgeo import ogr, osr, gdal
 from buteo.vector.io import (
@@ -7,7 +8,7 @@ from buteo.vector.io import (
     vector_to_metadata,
     vector_to_disk
 )
-from buteo.gdal_utils import parse_projection, path_to_driver
+from buteo.gdal_utils import parse_projection, path_to_driver, raster_to_reference
 from buteo.utils import remove_if_overwrite
 
 
@@ -15,7 +16,9 @@ def reproject_vector(
     vector: Union[str, ogr.DataSource],
     projection: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
     out_path: Union[str, None]=None,
+    copy_if_same: bool=False,
     overwrite: bool=True,
+    opened: bool=False,
 ) -> Union[str, ogr.DataSource]:
     """ Reprojects a vector given a target projection.
 
@@ -43,10 +46,16 @@ def reproject_vector(
     target_projection = parse_projection(projection)
 
     if origin_projection.IsSame(target_projection):
-        if out_path is None:
-            return vector_to_memory(vector)
-        
-        return vector_to_disk(vector, out_path)
+        if copy_if_same:
+            if out_path is None:
+                return vector_to_memory(vector, opened=opened)
+            
+            return vector_to_disk(vector, out_path, opened=opened)
+        else:
+            if opened:
+                return vector_to_reference(vector)
+
+            return vector
 
     remove_if_overwrite(out_path, overwrite)
 
@@ -63,8 +72,10 @@ def reproject_vector(
         driver = ogr.GetDriverByName(path_to_driver(out_path))
         destination = driver.CreateDataSource(out_path)
     else:
-        driver = ogr.GetDriverByName('Memory')
-        destination = driver.CreateDataSource(metadata["name"])
+        driver = ogr.GetDriverByName('GPKG')
+        basename = metadata["basename"]
+        out_path = f"/vsimem/{basename}_reproject_{uuid4().int}.gpkg"
+        destination = driver.CreateDataSource(out_path)
 
     for layer_idx in range(len(metadata["layers"])):
         origin_layer = origin.GetLayerByIndex(layer_idx)
@@ -101,9 +112,7 @@ def reproject_vector(
         destination_layer.ResetReading()
         destination_layer = None
 
-    if out_path is not None:
-        destination = None
-        return out_path
-    else:
+    if opened:
         return destination
-
+    
+    return out_path

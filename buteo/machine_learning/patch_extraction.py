@@ -22,7 +22,6 @@ from buteo.vector.io import (
     vector_in_memory,
 )
 from buteo.vector.reproject import reproject_vector
-from buteo.vector.attributes import vector_get_attribute_table
 from buteo.raster.clip import clip_raster
 from buteo.raster.resample import resample_raster
 from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
@@ -521,7 +520,7 @@ def test_extraction(
             if feature is None:
                 raise Exception(f"Feature not found: {test}")
 
-            test_ds_path = f"/vsimem/test_mem_grid_{uuid4().int}.shp"
+            test_ds_path = f"/vsimem/test_mem_grid_{uuid4().int}.gpkg"
             test_ds = mem_driver.CreateDataSource(test_ds_path)
             test_ds_lyr = test_ds.CreateLayer(
                 "test_mem_grid_layer",
@@ -531,7 +530,13 @@ def test_extraction(
             test_ds_lyr.CreateFeature(feature.Clone())
             test_ds.SyncToDisk()
 
-            clipped = clip_raster(test_rast, test_ds_path, adjust_bbox=False, crop_to_geom=True, all_touch=False)
+            clipped = clip_raster(
+                test_rast,
+                test_ds_path,
+                adjust_bbox=False,
+                crop_to_geom=True,
+                all_touch=False,
+            )
 
             ref_image = raster_to_array(clipped, filled=True)
             image_block = test_array[test]
@@ -687,6 +692,14 @@ def extract_patches(
 
     offset_rows_cumsum = np.cumsum(offset_rows)
 
+
+    # Ready clip geom outside of loop.
+    if clip_geom is not None:
+        clip_ref = reproject_vector(clip_geom, metadata["projection_osr"], opened=True)
+        clip_layer = clip_ref.GetLayerByIndex(clip_layer_index)
+        vector_add_index(clip_ref)
+
+
     if generate_grid_geom is True or clip_geom is not None:
 
         if verbose == 1:
@@ -745,10 +758,12 @@ def extract_patches(
         driver = ogr.GetDriverByName("GPKG")
         patches_path = f"/vsimem/patches_{uuid4().int}.gpkg"
         patches_ds = driver.CreateDataSource(patches_path)
-        patches_layer = patches_ds.CreateLayer("patches", geom_type=ogr.wkbPolygon, srs=metadata["projection_osr"])
+        patches_layer = patches_ds.CreateLayer("patches_all", geom_type=ogr.wkbPolygon, srs=metadata["projection_osr"])
         patches_fdefn = patches_layer.GetLayerDefn()
 
-        field_defn = ogr.FieldDefn("og_fid", ogr.OFTInteger)
+        og_fid = "og_fid"
+
+        field_defn = ogr.FieldDefn(og_fid, ogr.OFTInteger)
         patches_layer.CreateField(field_defn)
 
         for q in range(all_rows):
@@ -761,7 +776,7 @@ def extract_patches(
 
             ft = ogr.Feature(patches_fdefn)
             ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
-            ft.SetField("og_fid", int(q))
+            ft.SetField(og_fid, int(q))
             ft.SetFID(int(q))
 
             patches_layer.CreateFeature(ft)
@@ -771,34 +786,35 @@ def extract_patches(
             progress(all_rows, all_rows, "Creating Patches")
 
         if clip_geom is not None:
-            clip_ref = reproject_vector(clip_geom, metadata["projection_osr"])
-            clip_layer = clip_ref.GetLayerByIndex(clip_layer_index)
-
             meta_patches = vector_to_metadata(patches_ds)
             meta_clip = vector_to_metadata(clip_ref)
-
-            fid_patches = meta_patches["layers"][0]["fid_column"]
 
             geom_patches = meta_patches["layers"][0]["geom_column"]
             geom_clip = meta_clip["layers"][clip_layer_index]["geom_column"]
 
-            patches_ds.CopyLayer(clip_layer, 'clip_geom', ["OVERWRITE=YES"])
-
             vector_add_index(patches_ds)
 
-            sql = f"SELECT ROW_NUMBER() OVER (ORDER BY A.{fid_patches}) - 1 AS fid, A.* FROM patches A, clip_geom B WHERE ST_INTERSECTS(A.{geom_patches}, B.{geom_clip});"
+            # Clip layer already has index.
+            patches_ds.CopyLayer(clip_layer, 'clip_geom', ["OVERWRITE=YES"])
+
+            # sql = f"SELECT DISTINCT A.og_fid as og_fid, ROW_NUMBER() OVER (ORDER BY A.{fid_patches}) - 1 AS fid FROM patches A, clip_geom B WHERE ST_INTERSECTS(A.{geom_patches}, B.{geom_clip});"
+            sql = f"SELECT DISTINCT A.{og_fid} as {og_fid}, A.{geom_patches} AS geom FROM patches_all A, clip_geom B WHERE ST_INTERSECTS(A.{geom_patches}, B.{geom_clip});"
             result = patches_ds.ExecuteSQL(sql, dialect="SQLITE")
 
             if result is None:
                 raise Exception("Clip geom did not intersect raster.")
 
-            patches_ds.CopyLayer(result, 'patches_intersect', ["OVERWRITE=YES"])
-            patches_ds.DeleteLayer('patches')
+            patch_count = result.GetFeatureCount()
+
+            mask = np.empty(patch_count, dtype=int)
+
+            for patch_idx in range(patch_count):
+                feature = result.GetNextFeature()
+                mask[patch_idx] = (feature.GetField(og_fid))
+
+            patches_ds.CopyLayer(result, 'patches_clipped', ["OVERWRITE=YES"])
+            patches_ds.DeleteLayer('patches_all')
             patches_ds.DeleteLayer('clip_geom')
-
-            attributes = vector_get_attribute_table(patches_ds)
-
-            mask = attributes["og_fid"].values
 
         if generate_grid_geom is True:
             if out_dir is None:
@@ -1104,39 +1120,40 @@ def predict_raster(
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
     
-    raster_to_predict = folder + "Fyn_B2_20m.tif"
-    # vector = folder + "walls_single.gpkg"
+    # raster_to_predict = folder + "Fyn_B2_20m.tif"
+    vector = folder + "walls_singleparts_clip.gpkg"
+    raster = folder + "dtm_clip.tif"
     out_dir = folder + "out/"
-    tensorflow_model_path = out_dir + "model.h5"
+    # tensorflow_model_path = out_dir + "model.h5"
 
     # offsets = [(64, 64), (64, 0), (0, 64)]
     # borders = True
 
-    path = predict_raster(
-        raster_to_predict,
-        tensorflow_model_path,
-        out_path=out_dir + "predicted_raster_32-16.tif",
-        offsets=[(32, 32), (16, 16)],
-        mirror=True,
-        rotate=True,
-        device="gpu",
-    )
-
-    # # path_np, path_geom = extract_patches(
-    #     raster,
-    #     out_dir=out_dir,
-    #     prefix="",
-    #     postfix="_patches",
-    #     size=128,
-    #     offsets=offsets,
-    #     generate_grid_geom=True,
-    #     generate_zero_offset=True,
-    #     generate_border_patches=borders,
-    #     # clip_geom=vector,
-    #     verify_output=True,
-    #     verification_samples=100,
-    #     verbose=1,
+    # path = predict_raster(
+    #     raster_to_predict,
+    #     tensorflow_model_path,
+    #     out_path=out_dir + "predicted_raster_32-16.tif",
+    #     offsets=[(32, 32), (16, 16)],
+    #     mirror=True,
+    #     rotate=True,
+    #     device="gpu",
     # )
+
+    path_np, path_geom = extract_patches(
+        raster,
+        out_dir=out_dir,
+        prefix="",
+        postfix="_patches",
+        size=64,
+        offsets=[],
+        generate_grid_geom=True,
+        generate_zero_offset=True,
+        generate_border_patches=True,
+        clip_geom=vector,
+        verify_output=True,
+        verification_samples=100,
+        verbose=1,
+    )
 
     # blocks_to_raster(
     #     path_np,

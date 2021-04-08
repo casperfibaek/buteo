@@ -522,6 +522,7 @@ def align_bbox(extent_og, extent_ta, pixel_width, pixel_height, warp_format=True
     return (x_min, y_max, x_max, y_min)
 
 
+# TODO: Vector extent is wrong...
 def advanced_extents(
     metadata: dict,
 ) -> None:
@@ -554,12 +555,16 @@ def advanced_extents(
 
     metadata["extent_wkt"] = f"POLYGON (({wkt_coords}))"
 
-    layer_name = metadata["name"]
+    if "basename" in metadata:
+        layer_name = metadata["basename"]    
+    else:
+        layer_name = metadata["layer_name"]
+
     extent_name = f"{layer_name}_extent"
 
     driver = ogr.GetDriverByName("Memory")
-    extent_ogr = driver.CreateDataSource(extent_name)
-    layer = extent_ogr.CreateLayer(extent_name + "_layer", original_projection, ogr.wkbPolygon)
+    extent_ds = driver.CreateDataSource(extent_name)
+    layer = extent_ds.CreateLayer(extent_name + "_layer", original_projection, ogr.wkbPolygon)
 
     feature = ogr.Feature(layer.GetLayerDefn())
     extent_geom = ogr.CreateGeometryFromWkt(metadata["extent_wkt"], original_projection)
@@ -567,7 +572,7 @@ def advanced_extents(
     layer.CreateFeature(feature)
     feature = None
 
-    metadata["extent_datasource"] = extent_ogr
+    metadata["extent_datasource"] = extent_ds
     metadata["extent_geom"] = extent_geom
 
     if not original_projection.IsSame(target_projection):
@@ -585,7 +590,21 @@ def advanced_extents(
         bottom_right[1],
     ]
 
-    metadata["extent_latlng_dict"] = {
+    metadata["extent_gdal_warp_latlng"] = [
+        top_left[0],
+        bottom_right[1],
+        bottom_right[0],
+        top_left[1],
+    ]
+
+    metadata["extent_ogr_latlng"] = [
+        top_left[0],
+        bottom_right[0],
+        bottom_right[1],
+        top_left[1],
+    ]
+
+    metadata["extent_dict_latlng"] = {
         "left": top_left[0],
         "top": top_left[1],
         "right": bottom_right[0],
@@ -612,8 +631,8 @@ def advanced_extents(
     extent_name = f"{layer_name}_extent_latlng"
 
     driver = ogr.GetDriverByName("Memory")
-    extent_ogr_latlng = driver.CreateDataSource(extent_name)
-    layer = extent_ogr_latlng.CreateLayer(extent_name + "_layer", target_projection, ogr.wkbPolygon)
+    extent_ds_latlng = driver.CreateDataSource(extent_name)
+    layer = extent_ds_latlng.CreateLayer(extent_name + "_layer", target_projection, ogr.wkbPolygon)
 
     feature = ogr.Feature(layer.GetLayerDefn())
     extent_geom_latlng = ogr.CreateGeometryFromWkt(metadata["extent_wkt_latlng"], target_projection)
@@ -621,9 +640,10 @@ def advanced_extents(
     layer.CreateFeature(feature)
     feature = None
 
-    metadata["extent_datasource_latlng"] = extent_ogr_latlng
+    metadata["extent_datasource_latlng"] = extent_ds_latlng
     metadata["extent_geom_latlng"] = extent_geom_latlng
 
+    # We don't define a geojson in the original projection as geojson is usually expected to be latlng.
     metadata["geojson_dict"] = {
         "type": "Feature",
         "properties": {},
@@ -760,7 +780,7 @@ def to_array_list(variable: any) -> list:
 
 def to_band_list(
     variable: any,
-    band_count,
+    band_count: int,
 ) -> list:
     return_list = []
     if not isinstance(variable, (int, float, list)):

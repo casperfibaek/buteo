@@ -74,7 +74,7 @@ def reproject_raster(
     type_check(creation_options, [list], "creation_options")
     type_check(dst_nodata, [str, int, float], "dst_nodata")
     type_check(prefix, [str], "prefix")
-    type_check(postfix, [list], "postfix")
+    type_check(postfix, [str], "postfix")
     type_check(opened, [bool], "opened")
 
     raster_list, out_names = ready_io_raster(raster, out_path, overwrite, prefix, postfix)

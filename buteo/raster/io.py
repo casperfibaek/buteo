@@ -71,6 +71,7 @@ def raster_to_metadata(
         "width": raster.RasterXSize,
         "height": raster.RasterYSize,
         "bands": raster.RasterCount,
+        "band_count": raster.RasterCount,
         "driver": raster_driver.ShortName,
         "driver_long": raster_driver.LongName,
     }
@@ -121,6 +122,7 @@ def raster_to_metadata(
 
     metadata["extent"] = [x_min, y_max, x_max, y_min]
     metadata["extent_ogr"] = [x_min, x_max, y_min, y_max]
+    metadata["extent_gdal_warp"] = [x_min, y_min, x_max, y_max]
 
     metadata["extent_dict"] = {
         "left": x_min,
@@ -351,7 +353,7 @@ def raster_to_array(
         if band_count == 0:
             raise ValueError("The input raster does not have any valid bands.")
 
-        internal_bands = to_band_list(bands, metadata)
+        internal_bands = to_band_list(bands, metadata["band_count"])
 
         band_stack = []
         for band in internal_bands:

@@ -1,12 +1,9 @@
 import sys; sys.path.append('../../')
-from uuid import uuid4
 from typing import Union
 from osgeo import gdal
 from buteo.utils import (
     remove_if_overwrite,
-    overwrite_required,
     type_check,
-    folder_exists,
 )
 from buteo.gdal_utils import (
     path_to_driver,
@@ -17,7 +14,6 @@ from buteo.gdal_utils import (
     gdal_nodata_value_from_type,
     raster_size_from_list,
     translate_datatypes,
-    to_raster_list,
 )
 from buteo.raster.io import (
     default_options,
@@ -86,7 +82,7 @@ def resample_raster(
     type_check(creation_options, [list], "creation_options")
     type_check(dst_nodata, [str, int, float], "dst_nodata")
     type_check(prefix, [str], "prefix")
-    type_check(postfix, [list], "postfix")
+    type_check(postfix, [str], "postfix")
     type_check(opened, [bool], "opened")
 
     raster_list, out_names = ready_io_raster(raster, out_path, overwrite, prefix, postfix)

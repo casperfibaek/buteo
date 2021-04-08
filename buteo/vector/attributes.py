@@ -18,7 +18,7 @@ def vector_get_attribute_table(
     type_check(include_geom, [bool], "include_geom")
 
     ref = vector_to_reference(vector)
-    metadata = vector_to_metadata(ref, process_layer=process_layer, latlng_and_footprint=False)
+    metadata = vector_to_metadata(ref, process_layer=process_layer)
 
     attribute_table_header = None
     feature_count = None
@@ -58,7 +58,7 @@ def vector_get_fids(
 ) -> Union[np.ndarray, list]:
     type_check(vector, (ogr.DataSource, str, list), "vector")
     
-    metadata = vector_to_metadata(vector, latlng_and_footprint=False)
+    metadata = vector_to_metadata(vector)
     features = metadata["layers"][0]["feature_count"]
     
     ref = vector_to_reference(vector)

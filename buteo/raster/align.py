@@ -5,7 +5,7 @@ from osgeo import gdal, ogr, osr
 import numpy as np
 from buteo.raster.io import (
     raster_to_metadata,
-    rasters_is_aligned,
+    rasters_are_aligned,
 )
 from buteo.vector.io import (
     vector_to_metadata,
@@ -53,7 +53,7 @@ def align_rasters(
     type_check(src_nodata, [str, int, float], "src_nodata", allow_none=True)
     type_check(dst_nodata, [str, int, float], "dst_nodata", allow_none=True)
     type_check(prefix, [str], "prefix")
-    type_check(postfix, [list], "postfix")
+    type_check(postfix, [str], "postfix")
 
     if isinstance(out_path, list):
         if len(out_path) != len(rasters):
@@ -342,7 +342,7 @@ def align_rasters(
         else:
             return_list.append(warped)
     
-    if not rasters_is_aligned(return_list, same_extent=True):
+    if not rasters_are_aligned(return_list, same_extent=True):
         raise Exception("Error while aligning rasters. Output is not aligned")
 
     return return_list

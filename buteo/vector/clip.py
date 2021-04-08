@@ -54,12 +54,12 @@ def clip_vector(
     geometry_to_clip = None
     if is_vector(clip_geom):
         if to_extent:
-            extent = vector_to_metadata(clip_geom, simple=False)["extent_ogr"]
+            extent = vector_to_metadata(clip_geom, simple=False)["extent_datasource"]
             geometry_to_clip = vector_to_path(extent)
         else:
             geometry_to_clip = clip_geom
     elif is_raster(clip_geom):
-        extent = raster_to_metadata(clip_geom, simple=False)["extent_ogr"]
+        extent = raster_to_metadata(clip_geom, simple=False)["extent_datasource"]
         geometry_to_clip = vector_to_path(extent)
     else:
         raise ValueError(f"Invalid input in clip_geom, unable to parse: {clip_geom}")      
