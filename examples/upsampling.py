@@ -158,7 +158,7 @@ def define_model(shape_s, shape_l, name, activation=tfa.activations.mish):
 
 lr = 0.001
 bs = 24
-epochs = 1
+epochs = 10
 
 def step_decay(epoch):
     initial_lrate = lr
@@ -204,3 +204,6 @@ print(f"Mean Absolute Error:    {round(mae, 3)}")
 print(f"log_cosh:               {round(loss, 3)}")
 print("")
 
+# model.save(folder + "upsampling_10epochs.h5")
+
+import pdb; pdb.set_trace()
