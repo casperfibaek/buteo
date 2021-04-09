@@ -38,6 +38,7 @@ def clip_raster(
     opened: bool=False,
     prefix: str="",
     postfix: str="_clipped",
+    verbose: int=1,
 ) -> Union[list, gdal.Dataset, str]:
     """ Clips a raster(s) using a vector geometry or the extents of
         a raster.
@@ -97,6 +98,7 @@ def clip_raster(
     type_check(opened, [bool], "opened")
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
+    type_check(verbose, [int], "verbose")
 
     raster_list, out_names = ready_io_raster(raster, out_path, overwrite, prefix, postfix)
 
@@ -189,6 +191,9 @@ def clip_raster(
         # Removes file if it exists and overwrite is True.
         remove_if_overwrite(out_path, overwrite)
 
+        if verbose == 0:
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+
         clipped = gdal.Warp(
             out_name,
             origin_layer,
@@ -206,6 +211,9 @@ def clip_raster(
             dstNodata=out_nodata,
             multithread=True,
         )
+
+        if verbose == 0:
+            gdal.PopErrorHandler()
 
         if clipped is None:
             print("WARNING: Output is None. Returning empty layer.")

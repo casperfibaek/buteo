@@ -835,19 +835,22 @@ def ready_io_raster(
     for index, in_raster in enumerate(raster_list):
         path = None
 
+        if isinstance(in_raster, str):
+            raster_name = os.path.basename(in_raster)
+        elif isinstance(in_raster, gdal.Dataset):
+            raster_name = os.path.basename(in_raster.GetDescription())
+
         if out_path is None:
-            path = f"/vsimem/{prefix}{uuid4().int}{postfix}.tif"
+            path = f"/vsimem/{prefix}{raster_name}{uuid4().int}{postfix}.tif"
+        elif isinstance(out_path, str):
+            if folder_exists(out_path):
+                path = f"{out_path}/{prefix}{raster_name}{uuid4().int}{postfix}.tif"
+            else:
+                path = out_path
         elif isinstance(out_path, list):
             path = out_path[index]
         else:
-            if isinstance(in_raster, str):
-                raster_name = os.path.basename(in_raster)
-            elif isinstance(in_raster, gdal.Dataset):
-                raster_name = os.path.basename(in_raster.GetDescription())
-            else:
-                raise ValueError(f"Unable to parse name of raster: {in_raster}")
-
-            path = f"{out_path}/{prefix}{raster_name}{postfix}.tif"
+            raise ValueError(f"Unable to parse out_path: {out_path}")
 
         overwrite_required(path, overwrite)
         out_names.append(path)

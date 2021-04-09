@@ -1,4 +1,6 @@
-import sys; sys.path.append("../../")
+import sys
+
+from tensorflow.python.types.core import Value; sys.path.append("../../")
 import numpy as np
 import os
 import random
@@ -895,8 +897,9 @@ def extract_patches(
     return (output_blocks, output_geom)
 
 
+# TODO: Create input option
 def predict_raster(
-    raster: Union[str, gdal.Dataset],
+    raster: Union[list, str, gdal.Dataset],
     model: str,
     out_path: Union[str, None]=None,
     offsets: list=[],
@@ -911,12 +914,12 @@ def predict_raster(
     creation_options: list=[],
     verbose: int=1,
 ):
-    """ Runs a raster through a deep learning network (Tensorflow). Supports
-        tiling and reconstituting the output. Offsets are allowed and will be
+    """ Runs a raster or list of rasters through a deep learning network (Tensorflow).
+        Supports tiling and reconstituting the output. Offsets are allowed and will be
         bleneded with the merge_method. If the output is a different resolution
         than the input. The output will automatically be scaled to match.
     Args:
-        raster (path | raster): The raster(s) to convert.
+        raster (list | path | raster): The raster(s) to convert.
 
         model (path): A path to the tensorflow .h5 model.
 
@@ -950,7 +953,7 @@ def predict_raster(
     Returns:
         A predicted raster.
     """
-    type_check(raster, [str, gdal.Dataset], "raster")
+    type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(model, [str], "model")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(offsets, [list], "offsets")
@@ -973,87 +976,118 @@ def predict_raster(
 
     model = tf.keras.models.load_model(model, custom_objects=custom_objects)
 
-    shape_input = tuple(model.input.shape)
+    multi_input = False
+    if isinstance(model.input, list):
+        if not isinstance(raster, list):
+            raise TypeError("Multi input model must have a list as input.")
+
+        if len(offsets) > 0:
+            for offset in offsets:
+                if not isinstance(offset, list):
+                    raise TypeError("Offsets must be a list of tuples, same length as inputs.")
+                
+                for _offset in offset:
+                    if not isinstance(_offset, tuple):
+                        raise TypeError("Offset must be a tuple")
+                    
+                    if len(_offset) != 2:
+                        raise ValueError("Offset must be length 2.")
+
+            if len(model.input) != len(offsets):
+                raise ValueError("Length of offsets must equal model inputs.")
+
+        multi_input = True
+
+    import pdb; pdb.set_trace()
+
+    model_inputs = model.input if isinstance(model.input, list) else [model.input]
+
+    prediction_arr = []
+
+
     shape_output = tuple(model.output.shape)
 
-    if len(shape_input) != 4 or len(shape_output) != 4:
-        raise ValueError(f"Model input not 4d: {shape_input} - {shape_output}")
-    
-    if shape_input[1] != shape_input[2] or shape_output[1] != shape_output[2]:
-        raise ValueError("Model does not take square images.")
-    
-    src_tile_size = shape_input[1]
-    dst_tile_size = shape_output[1]
-    pixel_factor = src_tile_size / dst_tile_size
-    scale_factor = dst_tile_size / src_tile_size
+    for index, model_input in enumerate(model_inputs):
+        shape_input = tuple(model_input.shape)
+        
+        if len(shape_input) != 4 or len(shape_output) != 4:
+            raise ValueError(f"Model input not 4d: {shape_input} - {shape_output}")
+        
+        if shape_input[1] != shape_input[2] or shape_output[1] != shape_output[2]:
+            raise ValueError("Model does not take square images.")
 
-    dst_offsets = []
+        src_tile_size = shape_input[1]
+        dst_tile_size = shape_output[1]
+        pixel_factor = src_tile_size / dst_tile_size
+        scale_factor = dst_tile_size / src_tile_size
 
-    for offset in offsets:
-        if not isinstance(offset, tuple):
-            raise ValueError(f"Offset must be a tuple of two ints. Recieved: {offset}")
-        if len(offset) != 2:
-            raise ValueError("Offsets must have two values. Both integers.")
+        dst_offsets = []
 
-        dst_offsets.append((
-            round(offset[0] * scale_factor),
-            round(offset[1] * scale_factor),
-        ))
+        for offset in offsets:
+            if not isinstance(offset, tuple):
+                raise ValueError(f"Offset must be a tuple of two ints. Recieved: {offset}")
+            if len(offset) != 2:
+                raise ValueError("Offsets must have two values. Both integers.")
 
-    blocks, _ = extract_patches(
-        raster,
-        size=src_tile_size,
-        offsets=offsets,
-        generate_border_patches=True,
-        generate_grid_geom=False,
-        verbose=verbose,
-    )
+            dst_offsets.append((
+                round(offset[0] * scale_factor),
+                round(offset[1] * scale_factor),
+            ))
 
-    if verbose == 1:
-        print("Predicting raster.")
+        blocks, _ = extract_patches(
+            raster,
+            size=src_tile_size,
+            offsets=offsets,
+            generate_border_patches=True,
+            generate_grid_geom=False,
+            verbose=verbose,
+        )
 
-    start = 0
-    end = blocks.shape[0]
+        if verbose == 1:
+            print("Predicting raster.")
 
-    predictions = np.empty((blocks.shape[0], dst_tile_size, dst_tile_size, shape_output[3]), dtype="float32")
+        start = 0
+        end = blocks.shape[0]
 
-    if device == "cpu":
-        with tf.device('/cpu:0'):
+        predictions = np.empty((blocks.shape[0], dst_tile_size, dst_tile_size, shape_output[3]), dtype="float32")
+
+        if device == "cpu":
+            with tf.device('/cpu:0'):
+                while start < end:
+                    predictions[start:start + batch_size] = model.predict_on_batch(blocks[start:start + batch_size])
+                    start += batch_size
+                    progress(start, end, "Predicting")
+        else:
             while start < end:
                 predictions[start:start + batch_size] = model.predict_on_batch(blocks[start:start + batch_size])
                 start += batch_size
                 progress(start, end, "Predicting")
-    else:
-        while start < end:
-            predictions[start:start + batch_size] = model.predict_on_batch(blocks[start:start + batch_size])
-            start += batch_size
-            progress(start, end, "Predicting")
         
-        start = 0
-    
-    print("")
-    print("Reconstituting Raster.")
+        print("")
+        print("Reconstituting Raster.")
 
-    rast_meta = raster_to_metadata(raster)
+        rast_meta = raster_to_metadata(raster)
 
-    target_size = (rast_meta["pixel_width"] * pixel_factor, rast_meta["pixel_height"] * pixel_factor)
+        target_size = (rast_meta["pixel_width"] * pixel_factor, rast_meta["pixel_height"] * pixel_factor)
 
-    resampled = resample_raster(raster, target_size=target_size, dtype="float32")
+        resampled = resample_raster(raster, target_size=target_size, dtype="float32")
 
-    prediction_arr = []
-
-    prediction_arr.append(
-        blocks_to_raster(
-            predictions,
-            resampled,
-            border_patches=True,
-            offsets=dst_offsets,
-            merge_method=merge_method,
-            output_array=True,
+        prediction_arr.append(
+            blocks_to_raster(
+                predictions,
+                resampled,
+                border_patches=True,
+                offsets=dst_offsets,
+                merge_method=merge_method,
+                output_array=True,
+            )
         )
-    )
 
     if mirror:
+
+        # Reset the counter
+        start = 0
+
         predictions_lr = np.empty((blocks.shape[0], dst_tile_size, dst_tile_size, shape_output[3]), dtype="float32")
 
         if verbose == 1:
@@ -1071,8 +1105,6 @@ def predict_raster(
                 start += batch_size
                 progress(start, end, "Predicting")
         
-        start = 0
-
         prediction_arr.append(
             blocks_to_raster(
                 np.fliplr(predictions_lr),
@@ -1085,6 +1117,10 @@ def predict_raster(
         )
 
     if rotate:
+
+        # Reset the counter
+        start = 0
+
         predictions_rot = np.empty((blocks.shape[0], dst_tile_size, dst_tile_size, shape_output[3]), dtype="float32")
 
         if verbose == 1:
@@ -1176,18 +1212,24 @@ if __name__ == "__main__":
     #     device="gpu",
     # )
 
+    B03_10m = folder + "B03_10m.jp2"
+    B04_10m = folder + "B04_10m.jp2"
+    B04_20m = folder + "B04_20m.jp2"
+
+    model = folder + "upsampling.h5"
+
     # path_np, path_geom = extract_patches(
-    #     raster,
+    #     B04_20m,
     #     out_dir=out_dir,
     #     prefix="",
     #     postfix="_patches",
-    #     size=64,
-    #     offsets=[],
-    #     generate_grid_geom=True,
+    #     size=32,
+    #     offsets=[(16, 16), (8, 8)],
+    #     generate_grid_geom=False,
     #     generate_zero_offset=True,
     #     generate_border_patches=True,
-    #     clip_geom=vector,
-    #     verify_output=True,
+    #     clip_geom=None,
+    #     verify_output=False,
     #     verification_samples=100,
     #     verbose=1,
     # )
@@ -1202,20 +1244,20 @@ if __name__ == "__main__":
     # )
 
 
-    dsm = folder + "dsm_test_clip.tif"
-    dtm = folder + "dtm_test_clip.tif"
-    hot = folder + "hot_test_clip.tif"
-    model = folder + "model3_3L_rotations.h5"
+    # dsm = folder + "dsm_test_clip.tif"
+    # dtm = folder + "dtm_test_clip.tif"
+    # hot = folder + "hot_test_clip.tif"
+    # model = folder + "model3_3L_rotations.h5"
 
-    stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif") # shape = (14400, 26112, 3)  
+    # stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif") # shape = (14400, 26112, 3)  
 
     from tensorflow_addons.activations import mish
 
     path = predict_raster(
-        stacked,
+        [B03_10m, B04_20m],
         model,
-        out_path=out_dir + "predicted_raster_32-16.tif",
-        offsets=[(32, 32), (16, 16)],
+        out_path=out_dir + "B04_10m_upsampled.tif",
+        offsets=[[(32, 32), (16, 16)], [(16, 16), (8, 8)]],
         batch_size=64,
         mirror=False,
         rotate=False,

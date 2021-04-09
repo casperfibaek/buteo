@@ -1,4 +1,6 @@
-import sys; sys.path.append('../../')
+import sys
+
+from pandas.core.base import PandasObject; sys.path.append('../../')
 from uuid import uuid4
 from typing import Union
 from osgeo import ogr, osr, gdal
@@ -21,6 +23,7 @@ def intersect_vector(
     to_extent: bool=False,
     vector_idx: int=0,
     clip_idx: int=0,
+    opened: bool=False,
     target_projection: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int]=None,
     preserve_fid: bool=True,
 ) -> str:
@@ -64,8 +67,6 @@ def intersect_vector(
     else:
         raise ValueError(f"Invalid input in clip_geom, unable to parse: {clip_geom}")      
 
-    driver = ogr.GetDriverByName("GPKG")
-
     geometry_to_clip = None
     if is_vector(clip_geom):
         if to_extent:
@@ -78,8 +79,6 @@ def intersect_vector(
         geometry_to_clip = vector_to_path(extent)
     else:
         raise ValueError(f"Invalid input in clip_geom, unable to parse: {clip_geom}")      
-
-    driver = ogr.GetDriverByName(out_format)
 
     merged = merge_vectors([vector, geometry_to_clip], opened=True)
 
@@ -94,9 +93,14 @@ def intersect_vector(
     sql = f"SELECT A.* FROM {vector_layername} A, {clip_geom_layername} B WHERE ST_INTERSECTS(A.geom, B.geom);"
     result = merged.ExecuteSQL(sql, dialect="SQLITE")
 
+    driver = ogr.GetDriverByName(path_to_driver(out_target))
     destination = driver.CreateDataSource(out_target)
-
     destination.CopyLayer(result, vector_layername, ["OVERWRITE=YES"])
+
+    if opened:
+        return destination
+    
+    return out_target
 
 
 if __name__ == "__main__":
