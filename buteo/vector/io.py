@@ -1,11 +1,15 @@
-import sys; sys.path.append('../../')
+import sys
+
+sys.path.append("../../")
 import os
 import numpy as np
 from uuid import uuid4
-from typing import Union
+from typing import Union, List, Dict, Optional, Any
 from osgeo import ogr, osr
 
+from buteo.project_types import Metadata_vector_layer, Number, Metadata_vector
 from buteo.gdal_utils import (
+    to_vector_list,
     vector_to_reference,
     is_vector,
     path_to_driver,
@@ -26,176 +30,216 @@ from buteo.utils import progress, remove_if_overwrite, type_check
 
 
 def vector_to_metadata(
-    vector: Union[str, ogr.DataSource],
-    simple: bool=True,
-    process_layer: int=-1,
-) -> dict:
+    vector: Union[List[Union[ogr.DataSource, str]], ogr.DataSource, str],
+    simple: bool = True,
+) -> Union[Metadata_vector, List[Metadata_vector]]:
     """ Creates a dictionary with metadata about the vector layer.
 
     Args:
-        vector (path | DataSource): The vector to analyse.
+        vector (list | path | DataSource): The vector to analyse.
 
     **kwargs:
-        latlng_and_footprint (bool): Should the metadata include a
+        simple (bool): Should the metadata include a
             footprint of the raster in wgs84. Requires a reprojection
             check do not use it if not required and performance is important.
-        
-        process_layer (str, int): The layer to process. Default it -1 which
-        equals all. Zero indexed.
 
     Returns:
         A dictionary containing the metadata.
     """
-    type_check(vector, [str, ogr.DataSource], "vector")
+    type_check(vector, [list, str, ogr.DataSource], "vector")
     type_check(simple, [bool], "simple")
-    type_check(process_layer, [int], "process_layer")
 
-    try:
-        vector = vector if isinstance(vector, ogr.DataSource) else ogr.Open(vector)
-    except:
-        raise Exception("Could not read input vector")
-    
-    if vector is None:
-        raise Exception("Could not read input vector")
+    vectors = to_vector_list(vector)
 
-    vector_driver = vector.GetDriver()
+    metadatas: List[Metadata_vector] = []
 
-    vector_name = vector.GetName()
-    abs_path = os.path.abspath(vector_name)
+    for in_vector in vectors:
+        datasource: ogr.DataSource = vector_to_reference(in_vector)
 
-    metadata = {
-        "path": vector_name,
-        "abs_path": abs_path,
-        "name": os.path.basename(abs_path),
-        "basename": os.path.splitext(os.path.basename(abs_path))[0],
-        "filetype": os.path.splitext(os.path.basename(abs_path))[1],
-        "layer_count": vector.GetLayerCount(),
-        "driver": vector_driver.GetName(),
-        "driver_long": vector_driver.GetName(), # This is to keep it in sync with raster_to_metadata
-        "layers": [],
-    }
+        vector_driver: ogr.Driver = datasource.GetDriver()
 
-    if isinstance(process_layer, int) and process_layer > (metadata["layer_count"] - 1):
-        raise ValueError("Requested a non-present layer.")
-    
-    processed = False
+        path: str = datasource.GetDescription()
+        basename: str = os.path.basename(path)
+        name: str = os.path.splitext(basename)[0]
+        ext: str = os.path.splitext(basename)[1]
+        driver_name: str = vector_driver.GetName()
 
-    for layer_index in range(metadata["layer_count"]):
+        layer_count: int = datasource.GetLayerCount()
+        layers: List[Metadata_vector_layer] = []
 
-        if process_layer != -1 and layer_index != process_layer:
-            continue
-        
-        layer = vector.GetLayerByIndex(layer_index)
+        processed: bool = False
 
-        x_min, x_max, y_min, y_max = layer.GetExtent()
+        for layer_index in range(layer_count):
+            layer: ogr.Layer = datasource.GetLayerByIndex(layer_index)
 
-        layer_dict = {
-            "layer_name": layer.GetName(),
-            "x_min": x_min,
-            "x_max": x_max,
-            "y_min": y_min,
-            "y_max": y_max,
-            "extent": [x_min, y_max, x_max, y_min],
-            "extent_ogr": [x_min, x_max, x_min, x_max],
-            "extent_dict": {
+            x_min, x_max, y_min, y_max = layer.GetExtent()
+            layer_name: str = layer.GetName()
+            extent: List[Number] = [x_min, y_max, x_max, y_min]
+            extent_ogr: List[Number] = [x_min, x_max, x_min, x_max]
+            extent_dict: Dict[str, Number] = {
                 "left": x_min,
                 "top": y_max,
                 "right": x_max,
                 "bottom": y_min,
-            },
-            "fid_column": layer.GetFIDColumn(),
-            "feature_count": layer.GetFeatureCount(),
+            }
+
+            column_fid: str = layer.GetFIDColumn()
+            column_geom: str = layer.GetGeometryColumn()
+
+            if column_geom == "":
+                column_geom = "geom"
+
+            feature_count: int = layer.GetFeatureCount()
+
+            projection_osr = layer.GetSpatialRef()
+            projection = layer.GetSpatialRef().ExportToWkt()
+
+            if processed is False:
+                ds_projection = projection
+                ds_projection_osr = projection_osr
+                ds_x_min: Number = x_min
+                ds_x_max: Number = x_max
+                ds_y_min: Number = y_min
+                ds_y_max: Number = y_max
+
+                processed = True
+            else:
+                if x_min < ds_x_min:
+                    ds_x_min = x_min
+                if x_max > ds_x_max:
+                    ds_x_max = x_max
+                if y_min < ds_y_min:
+                    ds_y_min = y_min
+                if y_max > ds_y_max:
+                    ds_y_max = y_max
+
+            layer_defn: ogr.FeatureDefn = layer.GetLayerDefn()
+
+            geom_type_ogr: int = layer_defn.GetGeomType()
+            geom_type: str = ogr.GeometryTypeToName(layer_defn.GetGeomType())
+
+            field_count: int = layer_defn.GetFieldCount()
+            field_names: List[str] = []
+            field_types: List[str] = []
+            field_types_ogr: List[int] = []
+
+            for field_index in range(field_count):
+                field_defn: ogr.FieldDefn = layer_defn.GetFieldDefn(field_index)
+                field_names.append(field_defn.GetName())
+                field_type = field_defn.GetType()
+                field_types_ogr.append(field_type)
+                field_types.append(field_defn.GetFieldTypeName(field_type))
+
+            layer_dict: Metadata_vector_layer = {
+                "layer_name": layer_name,
+                "x_min": x_min,
+                "x_max": x_max,
+                "y_min": y_min,
+                "y_max": y_max,
+                "column_fid": column_fid,
+                "column_geom": column_geom,
+                "feature_count": feature_count,
+                "projection": projection,
+                "projection_osr": projection_osr,
+                "geom_type": geom_type,
+                "geom_type_ogr": geom_type_ogr,
+                "field_count": field_count,
+                "field_names": field_names,
+                "field_types": field_types,
+                "field_types_ogr": field_types_ogr,
+                "extent": extent,
+                "extent_ogr": extent_ogr,
+                "extent_dict": extent_dict,
+                "extent_wkt": None,
+                "extent_datasource": None,
+                "extent_geom": None,
+                "extent_latlng": None,
+                "extent_gdal_warp_latlng": None,
+                "extent_ogr_latlng": None,
+                "extent_dict_latlng": None,
+                "extent_wkt_latlng": None,
+                "extent_datasource_latlng": None,
+                "extent_geom_latlng": None,
+                "extent_geojson": None,
+                "extent_geojson_dict": None,
+            }
+
+            layers.append(layer_dict)
+
+        ds_extent: List[Number] = [ds_x_min, ds_y_max, ds_x_max, ds_y_min]
+        ds_extent_ogr: List[Number] = [ds_x_min, ds_x_max, ds_y_min, ds_y_max]
+        ds_extent_gdal_warp: List[Number] = [ds_x_min, ds_y_min, ds_x_max, ds_y_max]
+        ds_extent_dict: Dict[str, Number] = {
+            "left": ds_x_min,
+            "top": ds_y_max,
+            "right": ds_x_max,
+            "bottom": ds_y_min,
         }
 
-        geom_col = layer.GetGeometryColumn()
-        if geom_col == "":
-            layer_dict["geom_column"] = "geom"
-        else:
-            layer_dict["geom_column"] = geom_col
+        metadata: Metadata_vector = {
+            "path": path,
+            "basename": basename,
+            "name": name,
+            "ext": ext,
+            "projection": ds_projection,
+            "projection_osr": ds_projection_osr,
+            "driver": driver_name,
+            "x_min": ds_x_min,
+            "y_max": ds_y_max,
+            "x_max": ds_x_max,
+            "y_min": ds_y_min,
+            "is_vector": True,
+            "is_raster": False,
+            "layer_count": layer_count,
+            "layers": layers,
+            "extent": ds_extent,
+            "extent_ogr": ds_extent_ogr,
+            "extent_gdal_warp": ds_extent_gdal_warp,
+            "extent_dict": ds_extent_dict,
+            "extent_wkt": None,
+            "extent_datasource": None,
+            "extent_geom": None,
+            "extent_latlng": None,
+            "extent_gdal_warp_latlng": None,
+            "extent_ogr_latlng": None,
+            "extent_dict_latlng": None,
+            "extent_wkt_latlng": None,
+            "extent_datasource_latlng": None,
+            "extent_geom_latlng": None,
+            "extent_geojson": None,
+            "extent_geojson_dict": None,
+        }
 
-        projection_wkt = layer.GetSpatialRef().ExportToWkt()
-        original_projection = osr.SpatialReference()
-        original_projection.ImportFromWkt(projection_wkt)
+        if not simple:
+            # Combined extents
+            extended_extents = advanced_extents(ds_extent_ogr, ds_projection)
 
-        if processed is False:
-            metadata["projection"] = projection_wkt
-            metadata["projection_osr"] = original_projection
-            metadata["x_min"] = x_min
-            metadata["x_max"] = x_max
-            metadata["y_min"] = y_min
-            metadata["y_max"] = y_max
+            for key, value in extended_extents.items():
+                metadata[key] = value  # type: ignore
 
-            processed = True
-        else:
-            if x_min < metadata["x_min"]: metadata["x_min"] = x_min
-            if x_max > metadata["x_max"]: metadata["x_max"] = x_max
-            if y_min < metadata["y_min"]: metadata["y_min"] = y_min
-            if y_max > metadata["y_max"]: metadata["y_max"] = y_max
+            # Individual layer extents
+            for layer_index in range(layer_count):
+                layer_dict = layers[layer_index]
+                extended_extents_layer = advanced_extents(
+                    layer_dict["extent_ogr"], layer_dict["projection_osr"]
+                )
 
-        layer_dict["projection"] = projection_wkt
-        layer_dict["projection_osr"] = original_projection
+                for key, value in extended_extents_layer.items():
+                    metadata[key] = value  # type: ignore
 
-        layer_defn = layer.GetLayerDefn()
+        metadatas.append(metadata)
 
-        layer_dict["field_count"] = layer_defn.GetFieldCount()
-        layer_dict["geom_type"] = ogr.GeometryTypeToName(layer_defn.GetGeomType())
-        layer_dict["geom_type_ogr"] = layer_defn.GetGeomType()
+    if isinstance(vector, list):
+        return metadatas
 
-        layer_dict["field_names"] = []
-        layer_dict["field_types"] = []
-
-        for field_index in range(layer_dict["field_count"]):
-            field_defn = layer_defn.GetFieldDefn(field_index)
-            layer_dict["field_names"].append(field_defn.GetName())
-            layer_dict["field_types"].append(field_defn.GetFieldTypeName(field_defn.GetType()))
-
-        metadata["layers"].append(layer_dict)
-    
-    metadata["extent"] = [
-        metadata["x_min"],
-        metadata["y_max"],
-        metadata["x_max"],
-        metadata["y_min"],
-    ]
-
-    metadata["extent_ogr"] = [
-        metadata["x_min"],
-        metadata["x_max"],
-        metadata["y_min"],
-        metadata["y_max"],
-    ]
-
-    metadata["extent_gdal_warp"] = [
-        metadata["x_min"],
-        metadata["y_min"],
-        metadata["x_max"],
-        metadata["y_max"],
-    ]
-
-    metadata["extent_dict"] = {
-        "left": metadata["x_min"],
-        "top": metadata["y_max"],
-        "right": metadata["x_max"],
-        "bottom":metadata["y_min"],
-    }
-
-    if not simple:
-        # Combined extents
-        advanced_extents(metadata)
-
-        # Individual layer extents
-        for layer_index in range(metadata["layer_count"]):
-            layer_dict = metadata["layers"][layer_index]
-            advanced_extents(layer_dict)
-
-    return metadata
+    return metadatas[0]
 
 
 def vector_to_memory(
     vector: Union[str, ogr.DataSource],
-    memory_path: Union[str, None]=None,
-    layer_to_extract: Union[int, None]=None,
-    opened: bool=False,
+    memory_path: Union[str, None] = None,
+    layer_to_extract: Union[int, None] = None,
+    opened: bool = False,
 ) -> Union[str, ogr.DataSource]:
     """ Copies a vector source to memory.
 
@@ -221,7 +265,9 @@ def vector_to_memory(
     """
     ref = vector_to_reference(vector)
     metadata = vector_to_metadata(ref)
-    basename = metadata["basename"] if metadata["basename"] is not None else "mem_vector"
+    basename = (
+        metadata["basename"] if metadata["basename"] is not None else "mem_vector"
+    )
 
     driver = None
     vector_name = None
@@ -252,8 +298,8 @@ def vector_to_memory(
 def vector_to_disk(
     vector: Union[str, ogr.DataSource],
     out_path: str,
-    overwrite: bool=True,
-    opened: bool=False,
+    overwrite: bool = True,
+    opened: bool = False,
 ) -> str:
     """ Copies a vector source to disk.
 
@@ -308,7 +354,7 @@ def vector_add_index(vector: Union[str, ogr.DataSource]) -> None:
 
     ref = vector_to_reference(vector)
     metadata = vector_to_metadata(ref)
-    
+
     for layer in metadata["layers"]:
         name = layer["layer_name"]
         geom = layer["geom_column"]
@@ -325,9 +371,9 @@ def vector_add_index(vector: Union[str, ogr.DataSource]) -> None:
 # TODO: Update to do circular hull
 def vector_add_shapes(
     vector: Union[str, ogr.DataSource],
-    shapes: list=["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
-    output_array: bool=False,
-    output_copy: bool=False,
+    shapes: list = ["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
+    output_array: bool = False,
+    output_copy: bool = False,
 ) -> Union[str, np.ndarray]:
     """ Adds shape calculations to a vector such as area and perimeter.
         Can also add compactness measurements.
@@ -359,13 +405,13 @@ def vector_add_shapes(
     vector_layer_defn = vector_layer.GetLayerDefn()
     vector_field_counts = vector_layer_defn.GetFieldCount()
     vector_current_fields = []
-    
+
     # Get current fields
     for i in range(vector_field_counts):
         vector_current_fields.append(vector_layer_defn.GetFieldDefn(i).GetName())
 
     vector_layer.StartTransaction()
-    
+
     # Add missing fields
     for attribute in shapes:
         if attribute == "centroid":
@@ -384,15 +430,15 @@ def vector_add_shapes(
     vector_feature_count = vector_layer.GetFeatureCount()
     for i in range(vector_feature_count):
         vector_feature = vector_layer.GetNextFeature()
-    
+
         try:
             vector_geom = vector_feature.GetGeometryRef()
         except:
             vector_geom.Buffer(0)
-            Warning('Invalid geometry at : ', i)
+            Warning("Invalid geometry at : ", i)
 
         if vector_geom is None:
-            raise Exception('Invalid geometry. Could not fix.')
+            raise Exception("Invalid geometry. Could not fix.")
 
         centroid = vector_geom.Centroid()
         vector_area = vector_geom.GetArea()
@@ -402,7 +448,7 @@ def vector_add_shapes(
             vector_ipq = 0
             if vector_perimeter != 0:
                 vector_ipq = (4 * np.pi * vector_area) / vector_perimeter ** 2
-        
+
         if "centroid" in shapes:
             vector_feature.SetField("centroid_x", centroid.GetX())
             vector_feature.SetField("centroid_y", centroid.GetY())
@@ -415,22 +461,22 @@ def vector_add_shapes(
             compactness = np.sqrt(float(hull_ratio) * float(vector_ipq))
 
         if "area" in shapes:
-            vector_feature.SetField('area', vector_area)
+            vector_feature.SetField("area", vector_area)
         if "perimeter" in shapes:
-            vector_feature.SetField('perimeter', vector_perimeter)
+            vector_feature.SetField("perimeter", vector_perimeter)
         if "ipq" in shapes:
-            vector_feature.SetField('ipq', vector_ipq)
+            vector_feature.SetField("ipq", vector_ipq)
         if "hull" in shapes:
-            vector_feature.SetField('hull_area', hull_area)
-            vector_feature.SetField('hull_peri', hull_peri)
-            vector_feature.SetField('hull_ratio', hull_ratio)
+            vector_feature.SetField("hull_area", hull_area)
+            vector_feature.SetField("hull_peri", hull_peri)
+            vector_feature.SetField("hull_ratio", hull_ratio)
         if "compact" in shapes:
-            vector_feature.SetField('compact', compactness)
+            vector_feature.SetField("compact", compactness)
 
         vector_layer.SetFeature(vector_feature)
-        
-        progress(i, vector_feature_count, name='shape')
-        
+
+        progress(i, vector_feature_count, name="shape")
+
     vector_layer.CommitTransaction()
 
     return vector
@@ -438,13 +484,13 @@ def vector_add_shapes(
 
 def vector_in_memory(vector):
     metadata = vector_to_metadata(vector)
-    
+
     if metadata["driver"] == "Memory":
         return True
-    
+
     if "/vsimem/" in metadata["path"]:
         return True
-    
+
     return False
 
 
@@ -452,18 +498,17 @@ def vector_to_path(vector):
     metadata = vector_to_metadata(vector)
 
     if metadata["driver"] == "Memory":
-        out_format = '.gpkg'
+        out_format = ".gpkg"
         out_target = f"/vsimem/memvect_{uuid4().int}{out_format}"
         return vector_to_memory(vector, memory_path=out_target)
-    
+
     if str(metadata["path"])[0:8] == "/vsimem/":
         return metadata["path"]
-    
+
     if os.path.exists(metadata["abs_path"]):
         return metadata["abs_path"]
-    
-    raise Exception("Unable to find path from vector source.")
 
+    raise Exception("Unable to find path from vector source.")
 
 
 def vector_to_extent(vector):

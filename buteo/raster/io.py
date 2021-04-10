@@ -64,57 +64,54 @@ def raster_to_metadata(
     metadatas: List[Metadata_raster] = []
 
     for in_raster in rasters:
-        in_raster = raster_to_reference(in_raster)
+        dataset = raster_to_reference(in_raster)
 
-        raster_driver = in_raster.GetDriver()
+        raster_driver = dataset.GetDriver()
 
-        path: str = in_raster.GetDescription()
+        path: str = dataset.GetDescription()
         basename: str = os.path.basename(path)
         name: str = os.path.splitext(basename)[0]
         ext: str = os.path.splitext(basename)[1]
 
-        transform: List[Union[int, float]] = in_raster.GetGeoTransform()
-        projection: str = in_raster.GetProjection()
+        transform: List[Number] = dataset.GetGeoTransform()
+        projection: str = dataset.GetProjection()
 
         original_projection: osr.SpatialReference = osr.SpatialReference()
         original_projection.ImportFromWkt(projection)
         projection_osr: osr.SpatialReference = original_projection
 
-        width: int = in_raster.RasterXSize
-        height: int = in_raster.RasterYSize
-        band_count: int = in_raster.RasterCount
+        width: int = dataset.RasterXSize
+        height: int = dataset.RasterYSize
+        band_count: int = dataset.RasterCount
 
         driver: str = raster_driver.ShortName
 
-        size: List[int] = [in_raster.RasterXSize, in_raster.RasterYSize]
+        size: List[int] = [dataset.RasterXSize, dataset.RasterYSize]
         shape: Tuple[int, int, int] = (width, height, band_count)
 
-        pixel_width: float = abs(transform[1])
-        pixel_height: float = abs(transform[5])
+        pixel_width: Number = abs(transform[1])
+        pixel_height: Number = abs(transform[5])
 
-        x_min: float = transform[0]
-        y_max: float = transform[3]
-        x_max: float = x_min + width * pixel_width + height * abs(transform[2])
-        y_min: float = y_max + width * abs(transform[4]) + height * pixel_height
+        x_min: Number = transform[0]
+        y_max: Number = transform[3]
+        x_max: Number = x_min + width * pixel_width + height * abs(transform[2])
+        y_min: Number = y_max + width * abs(transform[4]) + height * pixel_height
 
-        band0 = in_raster.GetRasterBand(1)
+        band0 = dataset.GetRasterBand(1)
 
         datatype_gdal_raw: int = band0.DataType
         datatype_gdal: str = gdal.GetDataTypeName(datatype_gdal_raw)
 
         datatype: str = gdal_to_numpy_datatype(band0.DataType)
 
-        nodata_value: Union[int, float, None] = band0.GetNoDataValue()
+        nodata_value: Optional[Number] = band0.GetNoDataValue()
         has_nodata = True if nodata_value is not None else False
 
-        extent: List[float] = [x_min, y_max, x_max, y_min]
-        extent_ogr: List[float] = [x_min, x_max, y_min, y_max]
-        extent_gdal_warp: List[float] = [x_min, y_min, x_max, y_max]
+        extent: List[Number] = [x_min, y_max, x_max, y_min]
+        extent_ogr: List[Number] = [x_min, x_max, y_min, y_max]
+        extent_gdal_warp: List[Number] = [x_min, y_min, x_max, y_max]
 
-        is_raster: bool = True
-        is_vector: bool = False
-
-        extent_dict: Dict[Any, float] = {
+        extent_dict: Dict[Any, Number] = {
             "left": x_min,
             "top": y_max,
             "right": x_max,
@@ -146,8 +143,8 @@ def raster_to_metadata(
             "datatype_gdal_raw": datatype_gdal_raw,
             "nodata_value": nodata_value,
             "has_nodata": has_nodata,
-            "is_raster": is_raster,
-            "is_vector": is_vector,
+            "is_raster": True,
+            "is_vector": False,
             "extent": extent,
             "extent_ogr": extent_ogr,
             "extent_gdal_warp": extent_gdal_warp,
@@ -167,7 +164,10 @@ def raster_to_metadata(
         }
 
         if not simple:
-            advanced_extents(metadata)
+            extended_extents = advanced_extents(extent_ogr, projection_osr)
+
+            for key, value in extended_extents.items():
+                metadata[key] = value # type: ignore
 
         metadatas.append(metadata)
 

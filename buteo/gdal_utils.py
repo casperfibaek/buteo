@@ -6,7 +6,10 @@ import numpy as np
 import os
 import json
 
-from buteo.project_types import Metadata_raster
+from buteo.project_types import (
+    Expanded_extents,
+    Number,
+)
 from buteo.utils import path_to_ext, is_number, folder_exists, overwrite_required
 
 
@@ -557,8 +560,10 @@ def align_bbox(extent_og, extent_ta, pixel_width, pixel_height, warp_format=True
     return (x_min, y_max, x_max, y_min)
 
 
-def advanced_extents(metadata: Metadata_raster) -> None:
-    original_projection = metadata["projection_osr"]
+def advanced_extents(
+    extent_ogr: List[Number], projection: osr.SpatialReference
+) -> Expanded_extents:
+    original_projection = projection
     target_projection = osr.SpatialReference()
     target_projection.ImportFromEPSG(4326)
 
@@ -566,7 +571,7 @@ def advanced_extents(metadata: Metadata_raster) -> None:
         original_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         target_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
 
-    x_min, x_max, y_min, y_max = metadata["extent_ogr"]
+    x_min, x_max, y_min, y_max = extent_ogr
 
     bottom_left = [x_min, y_min]
     top_left = [x_min, y_max]
@@ -586,11 +591,9 @@ def advanced_extents(metadata: Metadata_raster) -> None:
         wkt_coords += f"{coord[1]} {coord[0]}, "
     wkt_coords = wkt_coords[:-2]  # Remove the last ", "
 
-    metadata["extent_wkt"] = f"POLYGON (({wkt_coords}))"
+    extent_wkt = f"POLYGON (({wkt_coords}))"
 
-    layer_name = metadata["name"]
-
-    extent_name = f"{layer_name}_extent"
+    extent_name = f"{uuid4().int}_extent"
 
     driver = ogr.GetDriverByName("Memory")
     extent_ds = driver.CreateDataSource(extent_name)
@@ -599,13 +602,10 @@ def advanced_extents(metadata: Metadata_raster) -> None:
     )
 
     feature = ogr.Feature(layer.GetLayerDefn())
-    extent_geom = ogr.CreateGeometryFromWkt(metadata["extent_wkt"], original_projection)
+    extent_geom = ogr.CreateGeometryFromWkt(extent_wkt, original_projection)
     feature.SetGeometry(extent_geom)
     layer.CreateFeature(feature)
     feature = None
-
-    metadata["extent_datasource"] = extent_ds
-    metadata["extent_geom"] = extent_geom
 
     if not original_projection.IsSame(target_projection):
         tx = osr.CoordinateTransformation(original_projection, target_projection)
@@ -615,28 +615,28 @@ def advanced_extents(metadata: Metadata_raster) -> None:
         top_right = tx.TransformPoint(x_max, y_max)
         bottom_right = tx.TransformPoint(x_max, y_min)
 
-    metadata["extent_latlng"] = [
+    extent_latlng = [
         top_left[0],
         top_left[1],
         bottom_right[0],
         bottom_right[1],
     ]
 
-    metadata["extent_gdal_warp_latlng"] = [
+    extent_gdal_warp_latlng = [
         top_left[0],
         bottom_right[1],
         bottom_right[0],
         top_left[1],
     ]
 
-    metadata["extent_ogr_latlng"] = [
+    extent_ogr_latlng = [
         top_left[0],
         bottom_right[0],
         bottom_right[1],
         top_left[1],
     ]
 
-    metadata["extent_dict_latlng"] = {
+    extent_dict_latlng = {
         "left": top_left[0],
         "top": top_left[1],
         "right": bottom_right[0],
@@ -657,10 +657,10 @@ def advanced_extents(metadata: Metadata_raster) -> None:
         wkt_coords += f"{coord[1]} {coord[0]}, "
     wkt_coords = wkt_coords[:-2]  # Remove the last ", "
 
-    metadata["extent_wkt_latlng"] = f"POLYGON (({wkt_coords}))"
+    extent_wkt_latlng = f"POLYGON (({wkt_coords}))"
 
     # Create an OGR Datasource in memory with the extent
-    extent_name = f"{layer_name}_extent_latlng"
+    extent_name = f"{uuid4().int}_extent_latlng"
 
     driver = ogr.GetDriverByName("Memory")
     extent_ds_latlng = driver.CreateDataSource(extent_name)
@@ -669,25 +669,35 @@ def advanced_extents(metadata: Metadata_raster) -> None:
     )
 
     feature = ogr.Feature(layer.GetLayerDefn())
-    extent_geom_latlng = ogr.CreateGeometryFromWkt(
-        metadata["extent_wkt_latlng"], target_projection
-    )
+    extent_geom_latlng = ogr.CreateGeometryFromWkt(extent_wkt_latlng, target_projection)
     feature.SetGeometry(extent_geom_latlng)
     layer.CreateFeature(feature)
     feature = None
 
-    metadata["extent_datasource_latlng"] = extent_ds_latlng
-    metadata["extent_geom_latlng"] = extent_geom_latlng
-
     # We don't define a geojson in the original projection as geojson is usually expected to be latlng.
-    metadata["extent_geojson_dict"] = {
+    extent_geojson_dict = {
         "type": "Feature",
         "properties": {},
         "geometry": {"type": "Polygon", "coordinates": [coord_array],},
     }
-    metadata["extent_geojson"] = json.dumps(metadata["extent_geojson_dict"])
+    extent_geojson = json.dumps(extent_geojson_dict)
 
-    return None
+    expanded_extents: Expanded_extents = {
+        "extent_wkt": extent_wkt,
+        "extent_datasource": extent_ds,
+        "extent_geom": extent_geom,
+        "extent_latlng": extent_latlng,
+        "extent_gdal_warp_latlng": extent_gdal_warp_latlng,
+        "extent_ogr_latlng": extent_ogr_latlng,
+        "extent_dict_latlng": extent_dict_latlng,
+        "extent_wkt_latlng": extent_wkt_latlng,
+        "extent_datasource_latlng": extent_ds_latlng,
+        "extent_geom_latlng": extent_geom_latlng,
+        "extent_geojson": extent_geojson,
+        "extent_geojson_dict": extent_geojson_dict,
+    }
+
+    return expanded_extents
 
 
 # x_min, x_max, y_min, y_max
