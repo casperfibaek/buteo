@@ -1,5 +1,7 @@
-import sys; sys.path.append('../../')
-from typing import Union
+import sys
+
+sys.path.append("../../")
+from typing import Union, List
 from osgeo import gdal
 from buteo.utils import (
     remove_if_overwrite,
@@ -22,18 +24,18 @@ from buteo.raster.io import (
 
 
 def resample_raster(
-    raster: Union[list, str, gdal.Dataset],
+    raster: Union[List[Union[gdal.Dataset, str]], str, gdal.Dataset],
     target_size: Union[tuple, int, float, str, gdal.Dataset],
-    target_in_pixels: bool=False,
-    out_path: Union[list, str, None]=None,
-    resample_alg: str="nearest",
-    overwrite: bool=True,
-    creation_options: list=[],
+    target_in_pixels: bool = False,
+    out_path: Union[list, str, None] = None,
+    resample_alg: str = "nearest",
+    overwrite: bool = True,
+    creation_options: list = [],
     dtype=None,
-    dst_nodata: Union[str, int, float]="infer",
-    opened: bool=False,
-    prefix: str="",
-    postfix: str="_resampled",
+    dst_nodata: Union[str, int, float] = "infer",
+    opened: bool = False,
+    prefix: str = "",
+    postfix: str = "_resampled",
 ) -> Union[list, gdal.Dataset, str]:
     """ Reprojects a raster given a target projection. Beware if your input is in
         latitude and longitude, you'll need to specify the target_sizedegrees as well.
@@ -85,7 +87,9 @@ def resample_raster(
     type_check(postfix, [str], "postfix")
     type_check(opened, [bool], "opened")
 
-    raster_list, out_names = ready_io_raster(raster, out_path, overwrite, prefix, postfix)
+    raster_list, out_names = ready_io_raster(
+        raster, out_path, overwrite, prefix, postfix
+    )
 
     resampled_rasters = []
 
@@ -93,19 +97,26 @@ def resample_raster(
         ref = raster_to_reference(in_raster)
         metadata = raster_to_metadata(ref)
 
-        x_res, y_res, x_pixels, y_pixels = raster_size_from_list(target_size, target_in_pixels)
+        if not isinstance(metadata, dict):
+            raise Exception("Error while parsing metadata.")
+
+        x_res, y_res, x_pixels, y_pixels = raster_size_from_list(
+            target_size, target_in_pixels
+        )
 
         out_name = out_names[index]
         out_creation_options = default_options(creation_options)
         out_format = path_to_driver(out_name)
-        
+
         src_nodata = metadata["nodata_value"]
         out_nodata = None
         if src_nodata is not None:
             out_nodata = src_nodata
         else:
             if dst_nodata == "infer":
-                out_nodata = gdal_nodata_value_from_type(metadata["dtype_gdal_raw"])
+                out_nodata = gdal_nodata_value_from_type(metadata["datatype_gdal_raw"])
+            elif isinstance(dst_nodata, str):
+                raise TypeError(f"dst_nodata is in a wrong format: {dst_nodata}")
             else:
                 out_nodata = dst_nodata
 

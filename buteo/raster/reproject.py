@@ -1,5 +1,7 @@
-import sys; sys.path.append('../../')
-from typing import Union
+import sys
+
+sys.path.append("../../")
+from typing import Union, List
 from osgeo import gdal, ogr, osr
 from buteo.utils import remove_if_overwrite, type_check
 from buteo.gdal_utils import (
@@ -20,16 +22,16 @@ from buteo.raster.io import (
 
 
 def reproject_raster(
-    raster: Union[list, str, gdal.Dataset],
+    raster: Union[List[Union[gdal.Dataset, str]], str, gdal.Dataset],
     projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-    out_path: Union[list, str, None]=None,
-    resample_alg: str="nearest",
-    overwrite: bool=True,
-    creation_options: list=[],
-    dst_nodata: Union[str, int, float]="infer",
-    prefix: str="",
-    postfix: str="_reprojected",
-    opened: bool=False,
+    out_path: Union[List[str], str, None] = None,
+    resample_alg: str = "nearest",
+    overwrite: bool = True,
+    creation_options: list = [],
+    dst_nodata: Union[str, int, float] = "infer",
+    prefix: str = "",
+    postfix: str = "_reprojected",
+    opened: bool = False,
 ) -> Union[gdal.Dataset, str]:
     """ Reproject a raster(s) to a target coordinate reference system.
 
@@ -67,7 +69,11 @@ def reproject_raster(
         the path to the newly created raster.
     """
     type_check(raster, [list, str, gdal.Dataset], "raster")
-    type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
+    type_check(
+        projection,
+        [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
+        "projection",
+    )
     type_check(out_path, [list, str], "out_path", allow_none=True)
     type_check(resample_alg, [str], "resample_alg")
     type_check(overwrite, [bool], "overwrite")
@@ -77,13 +83,18 @@ def reproject_raster(
     type_check(postfix, [str], "postfix")
     type_check(opened, [bool], "opened")
 
-    raster_list, out_names = ready_io_raster(raster, out_path, overwrite, prefix, postfix)
+    raster_list, out_names = ready_io_raster(
+        raster, out_path, overwrite, prefix, postfix
+    )
 
     reprojected_rasters = []
 
     for index, in_raster in enumerate(raster_list):
         ref = raster_to_reference(in_raster)
         metadata = raster_to_metadata(ref)
+
+        if not isinstance(metadata, dict):
+            raise Exception("Error while parsing metadata.")
 
         out_name = out_names[index]
         out_creation_options = default_options(creation_options)
@@ -92,21 +103,31 @@ def reproject_raster(
         original_projection = parse_projection(ref)
         target_projection = parse_projection(projection)
 
+        if not isinstance(original_projection, osr.SpatialReference):
+            raise Exception("Error while parsing input projection.")
+
+        if not isinstance(target_projection, osr.SpatialReference):
+            raise Exception("Error while parsing target projection.")
+
         if original_projection.IsSame(target_projection):
             if out_path is None:
                 reprojected_rasters.append(raster_to_memory(ref, opened=opened))
             else:
-                reprojected_rasters.append(raster_to_disk(raster, out_name, opened=opened))
+                reprojected_rasters.append(
+                    raster_to_disk(raster, out_name, opened=opened)
+                )
 
             continue
-        
+
         src_nodata = metadata["nodata_value"]
         out_nodata = None
         if src_nodata is not None:
             out_nodata = src_nodata
         else:
             if dst_nodata == "infer":
-                out_nodata = gdal_nodata_value_from_type(metadata["dtype_gdal_raw"])
+                out_nodata = gdal_nodata_value_from_type(metadata["datatype_gdal_raw"])
+            elif isinstance(dst_nodata, str):
+                raise TypeError(f"dst_nodata is in a wrong format: {dst_nodata}")
             else:
                 out_nodata = dst_nodata
 
@@ -132,5 +153,5 @@ def reproject_raster(
 
     if isinstance(raster, list):
         return reprojected_rasters
-    
+
     return reprojected_rasters[0]

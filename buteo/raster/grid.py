@@ -1,11 +1,11 @@
-import sys; sys.path.append('../../')
+import sys
+
+sys.path.append("../../")
 from uuid import uuid4
 from osgeo import gdal, ogr
 from typing import Union
 
-from buteo.vector.io import (
-    vector_to_metadata,
-)
+from buteo.vector.io import vector_to_metadata
 
 from buteo.vector.intersect import intersect_vector
 from buteo.vector.reproject import reproject_vector
@@ -29,12 +29,12 @@ def raster_to_grid(
     raster: Union[str, gdal.Dataset],
     grid: Union[str, ogr.DataSource],
     out_dir: str,
-    generate_vrt: bool=True,
-    overwrite: bool=True,
-    process_layer: int=0,
-    creation_options: list=[],
-    opened: bool=False,
-) -> Union[list, str]:
+    generate_vrt: bool = True,
+    overwrite: bool = True,
+    process_layer: int = 0,
+    creation_options: list = [],
+    opened: bool = False,
+) -> Union[list, tuple]:
     """ Clips a raster to a grid. Generate .vrt.
 
     Returns:
@@ -50,18 +50,22 @@ def raster_to_grid(
 
     creation_options = default_options(creation_options)
 
-    raster_metadata = raster_to_metadata(raster, simple=False)
+    raster_metadata = dict(raster_to_metadata(raster, simple=False))
     grid_metadata = vector_to_metadata(grid)
 
     use_grid = vector_to_reference(grid)
     if not raster_metadata["projection_osr"].IsSame(grid_metadata["projection_osr"]):
-        use_grid = reproject_vector(grid, raster_metadata["projection_osr"], opened=True)
+        use_grid = reproject_vector(
+            grid, raster_metadata["projection_osr"], opened=True
+        )
         grid_metadata = vector_to_metadata(use_grid)
 
-    use_grid = intersect_vector(use_grid, raster_metadata["extent_datasource"], opened=True)
+    use_grid = intersect_vector(
+        use_grid, raster_metadata["extent_datasource"], opened=True
+    )
 
     ref = raster_to_reference(raster)
-   
+
     shp_driver = ogr.GetDriverByName("ESRI Shapefile")
 
     filetype = path_to_ext(raster)
@@ -87,7 +91,7 @@ def raster_to_grid(
         test_ds_lyr = test_ds.CreateLayer(
             "test_mem_grid_layer",
             geom_type=geom_type,
-            srs=raster_metadata["projection_osr"]
+            srs=raster_metadata["projection_osr"],
         )
         test_ds_lyr.CreateFeature(feature.Clone())
 
@@ -97,9 +101,9 @@ def raster_to_grid(
 
         if not ogr_bbox_intersects(raster_extent, test_extent):
             continue
-        
+
         out_name = f"{out_dir}{basename}_{fid}{filetype}"
-        
+
         generated.append(out_name)
 
         clip_raster(
@@ -117,7 +121,12 @@ def raster_to_grid(
         progress(_, feature_count - 1, "clip_grid")
 
     if generate_vrt:
-        stack_rasters_vrt(generated, f"{out_dir}{basename}.vrt", seperate=False)
+        vrt_name = f"{out_dir}{basename}.vrt"
+        stack_rasters_vrt(generated, vrt_name, seperate=False)
+
+        return (vrt_name, generated)
+
+    return generated
 
 
 if __name__ == "__main__":

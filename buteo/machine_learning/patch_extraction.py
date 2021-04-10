@@ -1,4 +1,6 @@
-import sys; sys.path.append("../../")
+import sys
+
+sys.path.append("../../")
 import numpy as np
 import os
 import random
@@ -84,11 +86,9 @@ def reconstitute_raster(
     )
 
     swap = reshape.swapaxes(1, 2)
-    
+
     destination = swap.reshape(
-        (ref_shape[0] // size) * size,
-        (ref_shape[1] // size) * size,
-        blocks.shape[3],
+        (ref_shape[0] // size) * size, (ref_shape[1] // size) * size, blocks.shape[3],
     )
 
     # Order: Y, X, Z
@@ -96,33 +96,33 @@ def reconstitute_raster(
 
         if border_patches_x:
             x_offset = ref_shape[1] - raster_width
-            x_edge = destination[:raster_height, -(size - x_offset):, :]
+            x_edge = destination[:raster_height, -(size - x_offset) :, :]
             destination[:raster_height, -size:-x_offset, :] = x_edge
 
         if border_patches_y:
             y_offset = ref_shape[0] - raster_height
-            y_edge = destination[-(size - y_offset):, :raster_width, :]
+            y_edge = destination[-(size - y_offset) :, :raster_width, :]
             destination[-size:-y_offset, :raster_width, :] = y_edge
 
         if border_patches_y and border_patches_y:
-            corner = destination[-(size - y_offset):, -(size - x_offset):, :]
+            corner = destination[-(size - y_offset) :, -(size - x_offset) :, :]
             destination[-size:-y_offset, -size:-x_offset, :] = corner
 
-        destination = destination[ : raster_height, : raster_width, 0 : blocks.shape[3]]
-    
+        destination = destination[:raster_height, :raster_width, 0 : blocks.shape[3]]
+
     return destination
 
 
 def blocks_to_raster(
     blocks: Union[str, np.ndarray],
     reference: Union[str, gdal.Dataset],
-    out_path: Union[str, None]=None,
-    offsets: Union[list, tuple, np.ndarray, None]=None,
-    border_patches: bool=True,
-    generate_zero_offset: bool=True,
-    merge_method: str="median",
-    output_array: bool=False,
-    verbose: int=1,
+    out_path: Union[str, None] = None,
+    offsets: Union[list, tuple, np.ndarray, None] = None,
+    border_patches: bool = True,
+    generate_zero_offset: bool = True,
+    merge_method: str = "median",
+    output_array: bool = False,
+    verbose: int = 1,
 ) -> Union[str, gdal.Dataset]:
     """ Recombines a series of blocks to a raster. OBS: Does not work if the patch
         extraction was done with clip geom.
@@ -178,8 +178,10 @@ def blocks_to_raster(
     border_patches_y = False
 
     if blocks.shape[1] != blocks.shape[2]:
-        raise ValueError("The input blocks must be square. Rectangles might supported in the future.")
-    
+        raise ValueError(
+            "The input blocks must be square. Rectangles might supported in the future."
+        )
+
     size = blocks.shape[1]
 
     if metadata["width"] % size != 0 and border_patches:
@@ -196,18 +198,20 @@ def blocks_to_raster(
                 in_offsets.append((0, 0))
         else:
             in_offsets.append((0, 0))
-    
+
     for offset in offsets:
         if offset != (0, 0):
             if not isinstance(offset, (list, tuple)) or len(offset) != 2:
-                raise ValueError(f"offset must be a list or tuple of two integers. Recieved: {offset}")
+                raise ValueError(
+                    f"offset must be a list or tuple of two integers. Recieved: {offset}"
+                )
             in_offsets.append((offset[0], offset[1]))
 
     # Easier to read this way.
     has_offsets = False
     if generate_zero_offset and len(in_offsets) > 1:
         has_offsets = True
-    
+
     if not generate_zero_offset and len(in_offsets) > 0:
         has_offsets = True
 
@@ -219,15 +223,12 @@ def blocks_to_raster(
         largest_y = 0
         for index, offset in enumerate(in_offsets):
             passes.append(
-                np.ma.masked_all((
-                    metadata["height"],
-                    metadata["width"],
-                    blocks.shape[3],
-                ),
-                dtype=metadata["dtype"],
+                np.ma.masked_all(
+                    (metadata["height"], metadata["width"], blocks.shape[3],),
+                    dtype=metadata["dtype"],
                 ),
             )
-            
+
             if index == 0:
                 x_blocks = ((metadata["width"] - offset[0]) // size) + border_patches_x
                 y_blocks = ((metadata["height"] - offset[1]) // size) + border_patches_x
@@ -237,8 +238,8 @@ def blocks_to_raster(
 
             block_size = x_blocks * y_blocks
 
-            raster_pass = reconstitute_raster( #pylint: disable=too-many-function-args
-                blocks[previous:block_size + previous, :, :, :],
+            raster_pass = reconstitute_raster(  # pylint: disable=too-many-function-args
+                blocks[previous : block_size + previous, :, :, :],
                 metadata["height"],
                 metadata["width"],
                 size,
@@ -250,7 +251,7 @@ def blocks_to_raster(
 
             if raster_pass.shape[1] > largest_x:
                 largest_x = raster_pass.shape[1]
-            
+
             if raster_pass.shape[0] > largest_y:
                 largest_y = raster_pass.shape[0]
 
@@ -275,12 +276,14 @@ def blocks_to_raster(
         elif merge_method == "mode" or merge_method == "majority":
             for index, _ in enumerate(passes):
                 passes[index] = np.rint(passes[index]).astype(int)
-            raster = np.apply_along_axis(lambda x: np.bincount(x).argmax(), axis=0, arr=passes) #pylint: disable=no-member
+            raster = np.apply_along_axis(
+                lambda x: np.bincount(x).argmax(), axis=0, arr=passes
+            )  # pylint: disable=no-member
         else:
             raise ValueError(f"Unable to parse merge_method: {merge_method}")
 
     else:
-        raster = reconstitute_raster( #pylint: disable=too-many-function-args
+        raster = reconstitute_raster(  # pylint: disable=too-many-function-args
             blocks,
             metadata["height"],
             metadata["width"],
@@ -294,11 +297,7 @@ def blocks_to_raster(
     if output_array:
         return raster
 
-    return array_to_raster(
-        raster,
-        reference,
-        out_path=out_path,
-    )
+    return array_to_raster(raster, reference, out_path=out_path,)
 
 
 def shape_to_blockshape(
@@ -340,8 +339,8 @@ def array_to_blocks(
     array: np.ndarray,
     block_shape: Union[list, tuple, np.ndarray],
     offset: Union[list, tuple, np.ndarray],
-    border_patches_x: bool=False,
-    border_patches_y: bool=False,
+    border_patches_x: bool = False,
+    border_patches_y: bool = False,
 ) -> np.ndarray:
     """ Turns an array into a series of blocks. The array can be offset.
     Args:
@@ -376,34 +375,44 @@ def array_to_blocks(
     if border_patches_x or border_patches_y:
         x_shape = arr.shape[1]
         y_shape = arr.shape[0]
-        
+
         if border_patches_x:
-            x_shape = ((array.shape[1] // block_shape[0]) * block_shape[0]) + block_shape[0]
-        
+            x_shape = (
+                (array.shape[1] // block_shape[0]) * block_shape[0]
+            ) + block_shape[0]
+
         if border_patches_y:
-            y_shape = ((array.shape[0] // block_shape[1]) * block_shape[1]) + block_shape[1]
+            y_shape = (
+                (array.shape[0] // block_shape[1]) * block_shape[1]
+            ) + block_shape[1]
 
         # Expand and copy the original array
         arr_exp = np.empty((y_shape, x_shape, array.shape[2]), dtype=array.dtype)
-        arr_exp[0:arr.shape[0], 0:arr.shape[1], 0:arr.shape[2]] = arr
+        arr_exp[0 : arr.shape[0], 0 : arr.shape[1], 0 : arr.shape[2]] = arr
 
         if border_patches_x:
-            arr_exp[:array.shape[0], -block_shape[1]:, :] = array[:, -block_shape[0]:, :]
-        
+            arr_exp[: array.shape[0], -block_shape[1] :, :] = array[
+                :, -block_shape[0] :, :
+            ]
+
         if border_patches_y:
-            arr_exp[-block_shape[0]:, :array.shape[1], :] = array[-block_shape[1]:, :, :]
+            arr_exp[-block_shape[0] :, : array.shape[1], :] = array[
+                -block_shape[1] :, :, :
+            ]
 
         # The bottom right corner will still have empty values if both a True
         if border_patches_x and border_patches_y:
-            border_square = array[-block_shape[0]:, -block_shape[1]:, :]
-            arr_exp[-block_shape[0]:, -block_shape[1]:, :] = border_square
+            border_square = array[-block_shape[0] :, -block_shape[1] :, :]
+            arr_exp[-block_shape[0] :, -block_shape[1] :, :] = border_square
 
         arr = arr_exp
 
     # This only creates views into the array, so should still be fast.
     reshaped = arr.reshape(
-        arr.shape[0] // block_shape[0], block_shape[0],
-        arr.shape[1] // block_shape[1], block_shape[1],
+        arr.shape[0] // block_shape[0],
+        block_shape[0],
+        arr.shape[1] // block_shape[1],
+        block_shape[1],
         arr.shape[2],
     )
     swaped = reshaped.swapaxes(1, 2)
@@ -416,9 +425,9 @@ def test_extraction(
     rasters: Union[list, str, gdal.Dataset],
     arrays: Union[list, np.ndarray],
     grid: Union[ogr.DataSource, str],
-    samples: int=1000, # if 0, all
-    grid_layer_index: int=0,
-    verbose: int=1,
+    samples: int = 1000,  # if 0, all
+    grid_layer_index: int = 0,
+    verbose: int = 1,
 ) -> bool:
     """ Validates the output of the patch_extractor. Useful if you need peace of mind.
     Set samples to 0 to tests everything.
@@ -460,9 +469,7 @@ def test_extraction(
         grid_memory = grid
     else:
         grid_memory = vector_to_memory(
-            grid,
-            memory_path=f"/vsimem/grid_{uuid4().int}.gpkg",
-            opened=True
+            grid, memory_path=f"/vsimem/grid_{uuid4().int}.gpkg", opened=True
         )
 
     grid_metadata = vector_to_metadata(grid)
@@ -477,7 +484,9 @@ def test_extraction(
     feature_count = grid_metadata["layers"][grid_layer_index]["feature_count"]
     test_samples = samples if samples > 0 else feature_count
     max_test = min(test_samples, feature_count) - 1
-    test_fids = np.array(random.sample(range(0, feature_count), max_test), dtype="uint64")
+    test_fids = np.array(
+        random.sample(range(0, feature_count), max_test), dtype="uint64"
+    )
 
     mem_driver = ogr.GetDriverByName("ESRI Shapefile")
     for index, raster in enumerate(in_rasters):
@@ -486,9 +495,7 @@ def test_extraction(
             test_rast = raster
         else:
             test_rast = raster_to_memory(
-                raster,
-                memory_path=f"/vsimem/raster_{uuid4().int}.tif",
-                opened=True,
+                raster, memory_path=f"/vsimem/raster_{uuid4().int}.tif", opened=True,
             )
 
         test_array = in_arrays[index]
@@ -499,7 +506,9 @@ def test_extraction(
             try:
                 test_array = np.load(in_arrays[index])
             except:
-                raise Exception(f"Attempted to read numpy raster from: {in_arrays[index]}")
+                raise Exception(
+                    f"Attempted to read numpy raster from: {in_arrays[index]}"
+                )
 
         base = os.path.basename(raster)
         basename = os.path.splitext(base)[0]
@@ -518,9 +527,7 @@ def test_extraction(
             test_ds_path = f"/vsimem/test_mem_grid_{uuid4().int}.gpkg"
             test_ds = mem_driver.CreateDataSource(test_ds_path)
             test_ds_lyr = test_ds.CreateLayer(
-                "test_mem_grid_layer",
-                geom_type=ogr.wkbPolygon,
-                srs=grid_projection
+                "test_mem_grid_layer", geom_type=ogr.wkbPolygon, srs=grid_projection
             )
             test_ds_lyr.CreateFeature(feature.Clone())
             test_ds.SyncToDisk()
@@ -548,21 +555,21 @@ def test_extraction(
 
 def extract_patches(
     raster: Union[list, str, gdal.Dataset],
-    out_dir: Union[str, None]=None,
-    prefix: str="",
-    postfix: str="_patches",
-    size: int=32,
-    offsets: Union[list, None]=[],
-    generate_border_patches: bool=True,
-    generate_zero_offset: bool=True,
-    generate_grid_geom: bool=True,
-    clip_geom: Union[str, ogr.DataSource, gdal.Dataset, None]=None,
-    clip_layer_index: int=0,
+    out_dir: Union[str, None] = None,
+    prefix: str = "",
+    postfix: str = "_patches",
+    size: int = 32,
+    offsets: Union[list, None] = [],
+    generate_border_patches: bool = True,
+    generate_zero_offset: bool = True,
+    generate_grid_geom: bool = True,
+    clip_geom: Union[str, ogr.DataSource, gdal.Dataset, None] = None,
+    clip_layer_index: int = 0,
     verify_output=True,
     verification_samples=100,
     overwrite=True,
-    epsilon: float=1e-9,
-    verbose: int=1,
+    epsilon: float = 1e-9,
+    verbose: int = 1,
 ) -> tuple:
     """ Extracts square tiles from a raster.
     Args:
@@ -610,7 +617,12 @@ def extract_patches(
     type_check(size, [int], "size")
     type_check(offsets, [list], "offsets", allow_none=True)
     type_check(generate_grid_geom, [bool], "generate_grid_geom")
-    type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_layer_index", allow_none=True)
+    type_check(
+        clip_geom,
+        [str, ogr.DataSource, gdal.Dataset],
+        "clip_layer_index",
+        allow_none=True,
+    )
     type_check(clip_layer_index, [int], "clip_layer_index")
     type_check(overwrite, [bool], "overwrite")
     type_check(epsilon, [float], "epsilon")
@@ -622,7 +634,9 @@ def extract_patches(
         raise ValueError(f"Output directory does not exists: {out_dir}")
 
     if not rasters_are_aligned(in_rasters):
-        raise ValueError("Input rasters must be aligned. Please use the align function.")
+        raise ValueError(
+            "Input rasters must be aligned. Please use the align function."
+        )
 
     output_geom = None
 
@@ -638,11 +652,13 @@ def extract_patches(
     in_offsets = []
     if generate_zero_offset and (0, 0) not in offsets:
         in_offsets.append((0, 0))
-    
+
     for offset in offsets:
         if offset != (0, 0):
             if not isinstance(offset, (list, tuple)) or len(offset) != 2:
-                raise ValueError(f"offset must be a list or tuple of two integers. Recieved: {offset}")
+                raise ValueError(
+                    f"offset must be a list or tuple of two integers. Recieved: {offset}"
+                )
             in_offsets.append((offset[0], offset[1]))
 
     border_patches_needed_x = True
@@ -654,7 +670,7 @@ def extract_patches(
 
         if block_shape[0] * size == metadata["width"]:
             border_patches_needed_x = False
-        
+
         if block_shape[1] * size == metadata["height"]:
             border_patches_needed_y = False
 
@@ -666,7 +682,7 @@ def extract_patches(
 
         if border_patches_needed_x and cut_x > 0:
             shapes[0][0] += 1
-        
+
         if border_patches_needed_y and cut_y > 0:
             shapes[0][1] += 1
 
@@ -687,13 +703,11 @@ def extract_patches(
 
     offset_rows_cumsum = np.cumsum(offset_rows)
 
-
     # Ready clip geom outside of loop.
     if clip_geom is not None:
         clip_ref = reproject_vector(clip_geom, metadata["projection_osr"], opened=True)
         clip_layer = clip_ref.GetLayerByIndex(clip_layer_index)
         vector_add_index(clip_ref)
-
 
     if generate_grid_geom is True or clip_geom is not None:
 
@@ -736,9 +750,11 @@ def extract_patches(
 
                 if border_patches_needed_x:
                     xr[-1] = xr[-1] - ((xr[-1] + dx) - metadata["extent_dict"]["right"])
-                
+
                 if border_patches_needed_y:
-                    yr[-1] = yr[-1] - ((yr[-1] - dy) - metadata["extent_dict"]["bottom"])
+                    yr[-1] = yr[-1] - (
+                        (yr[-1] - dy) - metadata["extent_dict"]["bottom"]
+                    )
 
             oxx, oyy = np.meshgrid(xr, yr)
 
@@ -746,14 +762,16 @@ def extract_patches(
             if l > 0:
                 start = offset_rows_cumsum[l - 1]
 
-            coord_grid[start:offset_rows_cumsum[l], 0] = oxx.ravel()
-            coord_grid[start:offset_rows_cumsum[l], 1] = oyy.ravel()
+            coord_grid[start : offset_rows_cumsum[l], 0] = oxx.ravel()
+            coord_grid[start : offset_rows_cumsum[l], 1] = oyy.ravel()
 
         # Output geometry
         driver = ogr.GetDriverByName("GPKG")
         patches_path = f"/vsimem/patches_{uuid4().int}.gpkg"
         patches_ds = driver.CreateDataSource(patches_path)
-        patches_layer = patches_ds.CreateLayer("patches_all", geom_type=ogr.wkbPolygon, srs=metadata["projection_osr"])
+        patches_layer = patches_ds.CreateLayer(
+            "patches_all", geom_type=ogr.wkbPolygon, srs=metadata["projection_osr"]
+        )
         patches_fdefn = patches_layer.GetLayerDefn()
 
         og_fid = "og_fid"
@@ -790,7 +808,7 @@ def extract_patches(
             vector_add_index(patches_ds)
 
             # Clip layer already has index.
-            patches_ds.CopyLayer(clip_layer, 'clip_geom', ["OVERWRITE=YES"])
+            patches_ds.CopyLayer(clip_layer, "clip_geom", ["OVERWRITE=YES"])
 
             sql = f"SELECT DISTINCT A.{og_fid} as {og_fid}, A.{geom_patches} AS geom FROM patches_all A, clip_geom B WHERE ST_INTERSECTS(A.{geom_patches}, B.{geom_clip});"
             result = patches_ds.ExecuteSQL(sql, dialect="SQLITE")
@@ -805,11 +823,11 @@ def extract_patches(
 
             for patch_idx in range(patch_count):
                 feature = result.GetNextFeature()
-                mask[patch_idx] = (feature.GetField(og_fid))
+                mask[patch_idx] = feature.GetField(og_fid)
 
-            patches_ds.CopyLayer(result, 'patches_clipped', ["OVERWRITE=YES"])
-            patches_ds.DeleteLayer('patches_all')
-            patches_ds.DeleteLayer('clip_geom')
+            patches_ds.CopyLayer(result, "patches_clipped", ["OVERWRITE=YES"])
+            patches_ds.DeleteLayer("patches_all")
+            patches_ds.DeleteLayer("clip_geom")
 
         if generate_grid_geom is True:
             if out_dir is None:
@@ -856,14 +874,24 @@ def extract_patches(
             start = 0
             if k > 0:
                 start = offset_rows_cumsum[k - 1]
-            
+
             blocks = None
-            if k == 0 and generate_border_patches and (border_patches_needed_x or border_patches_needed_y):
-                blocks = array_to_blocks(ref, (size, size), offset, border_patches_needed_x, border_patches_needed_y)
+            if (
+                k == 0
+                and generate_border_patches
+                and (border_patches_needed_x or border_patches_needed_y)
+            ):
+                blocks = array_to_blocks(
+                    ref,
+                    (size, size),
+                    offset,
+                    border_patches_needed_x,
+                    border_patches_needed_y,
+                )
             else:
                 blocks = array_to_blocks(ref, (size, size), offset)
 
-            output_array[start:offset_rows_cumsum[k]] = blocks
+            output_array[start : offset_rows_cumsum[k]] = blocks
 
         if generate_grid_geom is False and clip_geom is None:
             if out_dir is None:
@@ -886,7 +914,7 @@ def extract_patches(
             samples=verification_samples,
             grid_layer_index=0,
             verbose=verbose,
-        ) 
+        )
 
     if len(output_blocks) == 1:
         output_blocks = output_blocks[0]
@@ -898,18 +926,18 @@ def extract_patches(
 def predict_raster(
     raster: Union[list, str, gdal.Dataset],
     model: str,
-    out_path: Union[str, None]=None,
-    offsets: list=[],
-    device: str="gpu",
-    merge_method: str="median",
-    mirror: bool=False,
-    rotate: bool=False,
-    custom_objects: dict={},
-    dtype: str="same",
-    batch_size: int=16,
-    overwrite: bool=True,
-    creation_options: list=[],
-    verbose: int=1,
+    out_path: Union[str, None] = None,
+    offsets: list = [],
+    device: str = "gpu",
+    merge_method: str = "median",
+    mirror: bool = False,
+    rotate: bool = False,
+    custom_objects: dict = {},
+    dtype: str = "same",
+    batch_size: int = 16,
+    overwrite: bool = True,
+    creation_options: list = [],
+    verbose: int = 1,
 ):
     """ Runs a raster or list of rasters through a deep learning network (Tensorflow).
         Supports tiling and reconstituting the output. Offsets are allowed and will be
@@ -969,7 +997,8 @@ def predict_raster(
         raise Exception("Mirror and rotate currently disabled.")
 
     import tensorflow as tf
-    os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+
+    os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
     if verbose == 1:
         print("Loading model.")
@@ -984,12 +1013,14 @@ def predict_raster(
         if len(offsets) > 0:
             for offset in offsets:
                 if not isinstance(offset, list):
-                    raise TypeError("Offsets must be a list of tuples, same length as inputs.")
-                
+                    raise TypeError(
+                        "Offsets must be a list of tuples, same length as inputs."
+                    )
+
                 for _offset in offset:
                     if not isinstance(_offset, tuple):
                         raise TypeError("Offset must be a tuple")
-                    
+
                     if len(_offset) != 2:
                         raise ValueError("Offset must be length 2.")
 
@@ -1009,10 +1040,10 @@ def predict_raster(
             print(f"Readying input: {index}")
 
         shape_input = tuple(model_input.shape)
-        
+
         if len(shape_input) != 4 or len(shape_output) != 4:
             raise ValueError(f"Model input not 4d: {shape_input} - {shape_output}")
-        
+
         if shape_input[1] != shape_input[2] or shape_output[1] != shape_output[2]:
             raise ValueError("Model does not take square images.")
 
@@ -1031,14 +1062,15 @@ def predict_raster(
 
         for offset in in_offsets:
             if not isinstance(offset, tuple):
-                raise ValueError(f"Offset must be a tuple of two ints. Recieved: {offset}")
+                raise ValueError(
+                    f"Offset must be a tuple of two ints. Recieved: {offset}"
+                )
             if len(offset) != 2:
                 raise ValueError("Offsets must have two values. Both integers.")
 
-            dst_offsets.append((
-                round(offset[0] * scale_factor),
-                round(offset[1] * scale_factor),
-            ))
+            dst_offsets.append(
+                (round(offset[0] * scale_factor), round(offset[1] * scale_factor),)
+            )
 
         use_raster = raster[index] if isinstance(raster, list) else raster
 
@@ -1059,7 +1091,9 @@ def predict_raster(
             first_len = readied.shape[0]
         else:
             if readied.shape[0] != first_len:
-                raise ValueError("Length of inputs do not match. Have you set the offsets in the correct order?")
+                raise ValueError(
+                    "Length of inputs do not match. Have you set the offsets in the correct order?"
+                )
 
     if verbose == 1:
         print("Predicting raster.")
@@ -1067,38 +1101,46 @@ def predict_raster(
     start = 0
     end = readied_inputs[0].shape[0]
 
-    predictions = np.empty((end, dst_tile_size, dst_tile_size, shape_output[3]), dtype="float32")
+    predictions = np.empty(
+        (end, dst_tile_size, dst_tile_size, shape_output[3]), dtype="float32"
+    )
 
     if multi_input is False:
         if device == "cpu":
-            with tf.device('/cpu:0'):
+            with tf.device("/cpu:0"):
                 while start < end:
-                    predictions[start:start + batch_size] = model.predict_on_batch(readied_inputs[0][start:start + batch_size])
+                    predictions[start : start + batch_size] = model.predict_on_batch(
+                        readied_inputs[0][start : start + batch_size]
+                    )
                     start += batch_size
-                    progress(start, end-1, "Predicting")
+                    progress(start, end - 1, "Predicting")
         else:
             while start < end:
-                predictions[start:start + batch_size] = model.predict_on_batch(readied_inputs[0][start:start + batch_size])
+                predictions[start : start + batch_size] = model.predict_on_batch(
+                    readied_inputs[0][start : start + batch_size]
+                )
                 start += batch_size
-                progress(start, end-1, "Predicting")
+                progress(start, end - 1, "Predicting")
     else:
         if device == "cpu":
-            with tf.device('/cpu:0'):
+            with tf.device("/cpu:0"):
                 while start < end:
                     batch = []
                     for i in range(len(readied_inputs)):
-                        batch.append(readied_inputs[i][start:start + batch_size])
-                    predictions[start:start + batch_size] = model.predict_on_batch(batch)
+                        batch.append(readied_inputs[i][start : start + batch_size])
+                    predictions[start : start + batch_size] = model.predict_on_batch(
+                        batch
+                    )
                     start += batch_size
-                    progress(start, end-1, "Predicting")
+                    progress(start, end - 1, "Predicting")
         else:
             while start < end:
                 batch = []
                 for i in range(len(readied_inputs)):
-                    batch.append(readied_inputs[i][start:start + batch_size])
-                predictions[start:start + batch_size] = model.predict_on_batch(batch)
+                    batch.append(readied_inputs[i][start : start + batch_size])
+                predictions[start : start + batch_size] = model.predict_on_batch(batch)
                 start += batch_size
-                progress(start, end-1, "Predicting")
+                progress(start, end - 1, "Predicting")
     print("")
     print("Reconstituting Raster.")
 
@@ -1107,12 +1149,20 @@ def predict_raster(
     resampled = None
     if isinstance(raster, list):
         rast_meta = raster_to_metadata(raster[-1])
-        target_size = (rast_meta["pixel_width"] * pixel_factor, rast_meta["pixel_height"] * pixel_factor)
-        resampled = resample_raster(raster[-1], target_size=target_size, dtype="float32")
+        target_size = (
+            rast_meta["pixel_width"] * pixel_factor,
+            rast_meta["pixel_height"] * pixel_factor,
+        )
+        resampled = resample_raster(
+            raster[-1], target_size=target_size, dtype="float32"
+        )
 
     else:
         rast_meta = raster_to_metadata(raster)
-        target_size = (rast_meta["pixel_width"] * pixel_factor, rast_meta["pixel_height"] * pixel_factor)
+        target_size = (
+            rast_meta["pixel_width"] * pixel_factor,
+            rast_meta["pixel_height"] * pixel_factor,
+        )
         resampled = resample_raster(raster, target_size=target_size, dtype="float32")
 
     prediction_arr.append(
@@ -1131,23 +1181,30 @@ def predict_raster(
         # Reset the counter
         start = 0
 
-        predictions_lr = np.empty((blocks.shape[0], dst_tile_size, dst_tile_size, shape_output[3]), dtype="float32")
+        predictions_lr = np.empty(
+            (blocks.shape[0], dst_tile_size, dst_tile_size, shape_output[3]),
+            dtype="float32",
+        )
 
         if verbose == 1:
             print("Mirroring blocks.")
 
         if device == "cpu":
-            with tf.device('/cpu:0'):
+            with tf.device("/cpu:0"):
                 while start < end:
-                    predictions_lr[start:start + batch_size] = model.predict_on_batch(np.fliplr(blocks[start:start + batch_size]))
+                    predictions_lr[start : start + batch_size] = model.predict_on_batch(
+                        np.fliplr(blocks[start : start + batch_size])
+                    )
                     start += batch_size
                     progress(start, end, "Predicting")
         else:
             while start < end:
-                predictions_lr[start:start + batch_size] = model.predict_on_batch(np.fliplr(blocks[start:start + batch_size]))
+                predictions_lr[start : start + batch_size] = model.predict_on_batch(
+                    np.fliplr(blocks[start : start + batch_size])
+                )
                 start += batch_size
                 progress(start, end, "Predicting")
-        
+
         prediction_arr.append(
             blocks_to_raster(
                 np.fliplr(predictions_lr),
@@ -1164,23 +1221,32 @@ def predict_raster(
         # Reset the counter
         start = 0
 
-        predictions_rot = np.empty((blocks.shape[0], dst_tile_size, dst_tile_size, shape_output[3]), dtype="float32")
+        predictions_rot = np.empty(
+            (blocks.shape[0], dst_tile_size, dst_tile_size, shape_output[3]),
+            dtype="float32",
+        )
 
         if verbose == 1:
             print("Rotating blocks.")
 
         if device == "cpu":
-            with tf.device('/cpu:0'):
+            with tf.device("/cpu:0"):
                 while start < end:
-                    predictions_rot[start:start + batch_size] = model.predict_on_batch(np.rot90(blocks[start:start + batch_size], k=2))
+                    predictions_rot[
+                        start : start + batch_size
+                    ] = model.predict_on_batch(
+                        np.rot90(blocks[start : start + batch_size], k=2)
+                    )
                     start += batch_size
                     progress(start, end, "Predicting")
         else:
             while start < end:
-                predictions_rot[start:start + batch_size] = model.predict_on_batch(np.rot90(blocks[start:start + batch_size], k=2))
+                predictions_rot[start : start + batch_size] = model.predict_on_batch(
+                    np.rot90(blocks[start : start + batch_size], k=2)
+                )
                 start += batch_size
                 progress(start, end, "Predicting")
-        
+
         prediction_arr.append(
             blocks_to_raster(
                 np.rot90(predictions_rot, k=2),
@@ -1207,19 +1273,19 @@ def predict_raster(
         for index, _ in enumerate(prediction_arr):
             prediction_arr[index] = np.rint(prediction_arr[index]).astype(int)
 
-        predicted = np.apply_along_axis(lambda x: np.bincount(x).argmax(), axis=0, arr=prediction_arr) #pylint: disable=no-member
+        predicted = np.apply_along_axis(
+            lambda x: np.bincount(x).argmax(), axis=0, arr=prediction_arr
+        )  # pylint: disable=no-member
     else:
         raise ValueError(f"Unable to parse merge_method: {merge_method}")
 
     if dtype == "same":
         predicted = array_to_raster(
-            predicted.astype(rast_meta["dtype"]),
-            reference=resampled,
+            predicted.astype(rast_meta["dtype"]), reference=resampled,
         )
     elif dtype is not None:
         predicted = array_to_raster(
-            raster_to_array(predicted).astype(dtype),
-            reference=resampled,
+            raster_to_array(predicted).astype(dtype), reference=resampled,
         )
 
     if out_path is None:
@@ -1235,7 +1301,7 @@ def predict_raster(
 
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
-    
+
     # raster_to_predict = folder + "Fyn_B2_20m.tif"
     vector = folder + "walls_singleparts_clip.gpkg"
     raster = folder + "dtm_clip.tif"
@@ -1288,13 +1354,12 @@ if __name__ == "__main__":
     #     merge_method="median",
     # )
 
-
     # dsm = folder + "dsm_test_clip.tif"
     # dtm = folder + "dtm_test_clip.tif"
     # hot = folder + "hot_test_clip.tif"
     # model = folder + "model3_3L_rotations.h5"
 
-    # stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif") # shape = (14400, 26112, 3)  
+    # stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif") # shape = (14400, 26112, 3)
 
     from tensorflow_addons.activations import mish
 
@@ -1310,5 +1375,5 @@ if __name__ == "__main__":
         mirror=False,
         rotate=False,
         device="gpu",
-        custom_objects={ "mish": mish },
+        custom_objects={"mish": mish},
     )

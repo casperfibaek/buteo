@@ -1,7 +1,10 @@
-import sys; sys.path.append('../../')
-from typing import Union
+import sys
+
+sys.path.append("../../")
+from typing import Union, List, Optional, Tuple
 from osgeo import gdal, osr, ogr
 from uuid import uuid4
+from buteo.project_types import Metadata_raster, Number
 from buteo.utils import remove_if_overwrite, file_exists, type_check
 from buteo.gdal_utils import (
     parse_projection,
@@ -29,31 +32,44 @@ from buteo.vector.io import (
 
 # TODO: documentation, robustness
 
+
 def warp_raster(
-    raster: Union[list, str, gdal.Dataset],
-    out_path: Union[list, str, None]=None,
-    projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference, None]=None,
-    clip_geom: Union[str, ogr.DataSource, None]=None,
-    target_size: Union[tuple, int, float, None]=None,
-    target_in_pixels: bool=False,
-    resample_alg: str="nearest",
-    crop_to_geom: bool=True,
-    all_touch: bool=True,
-    adjust_bbox: bool=True,
-    overwrite: bool=True,
-    creation_options: list=[],
-    src_nodata: Union[str, int, float]="infer",
-    dst_nodata: Union[str, int, float]="infer",
-    layer_to_clip: int=0,
-    opened: bool=False,
-    prefix: str="",
-    postfix: str="_resampled",
+    raster: Union[List[Union[gdal.Dataset, str]], str, gdal.Dataset],
+    out_path: Optional[Union[List[str], str]] = None,
+    projection: Optional[
+        Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
+    ] = None,
+    clip_geom: Optional[Union[str, ogr.DataSource]] = None,
+    target_size: Optional[Union[Tuple[Number], Number]] = None,
+    target_in_pixels: bool = False,
+    resample_alg: str = "nearest",
+    crop_to_geom: bool = True,
+    all_touch: bool = True,
+    adjust_bbox: bool = True,
+    overwrite: bool = True,
+    creation_options: list = [],
+    src_nodata: Union[str, int, float] = "infer",
+    dst_nodata: Union[str, int, float] = "infer",
+    layer_to_clip: int = 0,
+    opened: bool = False,
+    prefix: str = "",
+    postfix: str = "_resampled",
 ) -> Union[gdal.Dataset, str]:
     type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection", allow_none=True)
+    type_check(
+        projection,
+        [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
+        "projection",
+        allow_none=True,
+    )
     type_check(clip_geom, [str, ogr.DataSource], "clip_geom", allow_none=True)
-    type_check(target_size, [tuple, int, float, str, gdal.Dataset], "target_size", allow_none=True)
+    type_check(
+        target_size,
+        [tuple, int, float, str, gdal.Dataset],
+        "target_size",
+        allow_none=True,
+    )
     type_check(target_in_pixels, [bool], "target_in_pixels")
     type_check(resample_alg, [str], "resample_alg")
     type_check(crop_to_geom, [bool], "crop_to_geom")
@@ -75,7 +91,9 @@ def warp_raster(
         resample -> warp or resample -> clip.
     """
 
-    raster_list, out_names = ready_io_raster(raster, out_path, overwrite, prefix, postfix)
+    raster_list, out_names = ready_io_raster(
+        raster, out_path, overwrite, prefix, postfix
+    )
 
     warped_rasters = []
 
@@ -90,27 +108,32 @@ def warp_raster(
         origin = raster_to_reference(in_raster)
 
         raster_metadata = raster_to_metadata(origin)
-        origin_projection = raster_metadata["projection_osr"]
-        origin_extent = raster_metadata["extent_geom_latlng"]
+
+        if not isinstance(raster_metadata, dict):
+            raise Exception("Error while parsing metadata.")
+
+        origin_projection: osr.SpatialReference = raster_metadata["projection_osr"]
+        origin_extent: ogr.Geometry = raster_metadata["extent_geom_latlng"]
 
         target_projection = origin_projection
         if projection is not None:
             target_projection = parse_projection(projection)
-        
-        # clip placeholders.
-        clip_metadata = None
-        clip_extent = None
-        clip_ds = None
-        clip_projection = None
-        output_bounds = None
 
         if clip_geom is not None:
             if is_raster(clip_geom):
                 clip_metadata = raster_to_metadata(clip_geom, simple=False)
+
+                if not isinstance(clip_metadata, dict):
+                    raise Exception("Error while parsing metadata.")
+
                 clip_ds = clip_metadata["extent_ogr"]
             elif is_vector(clip_geom):
                 clip_ds = vector_to_reference(clip_geom)
                 clip_metadata = vector_to_metadata(clip_geom, simple=False)
+
+                if not isinstance(clip_metadata, dict):
+                    raise Exception("Error while parsing metadata.")
+
             else:
                 if file_exists(clip_geom):
                     raise ValueError(f"Unable to parse clip geometry: {clip_geom}")
@@ -131,19 +154,15 @@ def warp_raster(
             # Check if projections match, otherwise reproject target geom.
             if not target_projection.IsSame(clip_projection):
                 clip_metadata["extent"] = reproject_extent(
-                    clip_metadata["extent"],
-                    clip_projection,
-                    target_projection,
+                    clip_metadata["extent"], clip_projection, target_projection,
                 )
-            
+
             # The extent needs to be reprojected to the target.
             # this ensures that adjust_bbox works.
             x_min_og, y_max_og, x_max_og, y_min_og = reproject_extent(
-                raster_metadata["extent"],
-                origin_projection,
-                target_projection,
+                raster_metadata["extent"], origin_projection, target_projection,
             )
-            output_bounds = (x_min_og, y_min_og, x_max_og, y_max_og) # gdal_warp format
+            output_bounds = (x_min_og, y_min_og, x_max_og, y_max_og)  # gdal_warp format
 
             if crop_to_geom:
 
@@ -158,7 +177,12 @@ def warp_raster(
 
                 else:
                     x_min_og, y_max_og, x_max_og, y_min_og = clip_metadata["extent"]
-                    output_bounds = (x_min_og, y_min_og, x_max_og, y_max_og) # gdal_warp format
+                    output_bounds = (
+                        x_min_og,
+                        y_min_og,
+                        x_max_og,
+                        y_max_og,
+                    )  # gdal_warp format
 
             if clip_metadata["layer_count"] > 1:
                 clip_ds = vector_to_memory(
@@ -168,14 +192,15 @@ def warp_raster(
                 )
             elif not isinstance(clip_ds, str):
                 clip_ds = vector_to_memory(
-                    clip_ds,
-                    memory_path=f"clip_geom_{uuid4().int}.gpkg",
+                    clip_ds, memory_path=f"clip_geom_{uuid4().int}.gpkg",
                 )
 
             if clip_ds is None:
                 raise ValueError(f"Unable to parse input clip geom: {clip_geom}")
 
-        x_res, y_res, x_pixels, y_pixels = raster_size_from_list(target_size, target_in_pixels)
+        x_res, y_res, x_pixels, y_pixels = raster_size_from_list(
+            target_size, target_in_pixels
+        )
 
         out_name = out_names[index]
         out_format = path_to_driver(out_path)
@@ -188,7 +213,9 @@ def warp_raster(
             out_nodata = src_nodata
         else:
             if dst_nodata == "infer":
-                out_nodata = gdal_nodata_value_from_type(raster_metadata["dtype_gdal_raw"])
+                out_nodata = gdal_nodata_value_from_type(
+                    raster_metadata["dtype_gdal_raw"]
+                )
             else:
                 out_nodata = dst_nodata
 
@@ -224,5 +251,5 @@ def warp_raster(
 
     if isinstance(raster, list):
         return warped_rasters
-    
+
     return warped_rasters[0]

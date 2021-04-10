@@ -1,13 +1,18 @@
-import osgeo; from osgeo import gdal, ogr, osr
-from typing import Union
+import osgeo
+from osgeo import gdal, ogr, osr
+from typing import Union, Any, Tuple, List
 from uuid import uuid4
 import numpy as np
 import os
 import json
 
+from buteo.project_types import Metadata_raster
 from buteo.utils import path_to_ext, is_number, folder_exists, overwrite_required
 
-def raster_to_reference(raster: Union[str, gdal.Dataset], writeable: bool=False) -> gdal.Dataset:
+
+def raster_to_reference(
+    raster: Union[str, gdal.Dataset], writeable: bool = False
+) -> gdal.Dataset:
     """ Takes a file path or a gdal.Dataset and opens it with
         GDAL. Raises exception if the raster cannot be read.
 
@@ -25,7 +30,7 @@ def raster_to_reference(raster: Union[str, gdal.Dataset], writeable: bool=False)
             return raster
         else:
             opened = gdal.Open(raster, 1) if writeable else gdal.Open(raster, 0)
-            
+
             if opened is None:
                 raise Exception("Could not read input raster")
 
@@ -34,7 +39,9 @@ def raster_to_reference(raster: Union[str, gdal.Dataset], writeable: bool=False)
         raise Exception("Could not read input raster")
 
 
-def vector_to_reference(vector: Union[str, ogr.DataSource], writeable: bool=False) -> ogr.DataSource:
+def vector_to_reference(
+    vector: Union[str, ogr.DataSource], writeable: bool = False
+) -> ogr.DataSource:
     """ Takes a file path or an ogr.DataSOurce and opens it with
         OGR. Raises exception if the raster cannot be read.
 
@@ -53,7 +60,7 @@ def vector_to_reference(vector: Union[str, ogr.DataSource], writeable: bool=Fals
             return vector
         else:
             opened = ogr.Open(vector, 1) if writeable else ogr.Open(vector, 0)
-            
+
             if opened is None:
                 raise Exception("Could not read input vector")
 
@@ -84,16 +91,16 @@ def default_options(options: list) -> list:
     opt_str = " ".join(internal_options)
     if "TILED" not in opt_str:
         internal_options.append("TILED=YES")
-    
+
     if "NUM_THREADS" not in opt_str:
-       internal_options.append("NUM_THREADS=ALL_CPUS") 
+        internal_options.append("NUM_THREADS=ALL_CPUS")
 
     if "BIGTIFF" not in opt_str:
         internal_options.append("BIGTIFF=YES")
-    
+
     if "COMPRESS" not in opt_str:
         internal_options.append("COMPRESS=LZW")
-    
+
     return internal_options
 
 
@@ -111,15 +118,22 @@ def path_to_driver(file_path: str) -> str:
     ext = path_to_ext(file_path)
 
     # Raster formats
-    if ext == ".tif" or ext == ".tiff": return "GTiff"
-    elif ext == ".img": return "HFA"
-    elif ext ==".jp2": return "JP2ECW"
+    if ext == ".tif" or ext == ".tiff":
+        return "GTiff"
+    elif ext == ".img":
+        return "HFA"
+    elif ext == ".jp2":
+        return "JP2ECW"
 
     # Vector formats
-    elif ext == ".shp": return "ESRI Shapefile"
-    elif ext == ".gpkg": return "GPKG"
-    elif ext == ".fgb": return "FlatGeobuf"
-    elif ext == ".json" or ext == ".geojson": return "GeoJSON"
+    elif ext == ".shp":
+        return "ESRI Shapefile"
+    elif ext == ".gpkg":
+        return "GPKG"
+    elif ext == ".fgb":
+        return "FlatGeobuf"
+    elif ext == ".json" or ext == ".geojson":
+        return "GeoJSON"
 
     else:
         raise ValueError(f"Unable to parse GDAL driver from path: {file_path}")
@@ -147,7 +161,7 @@ def is_raster(raster: Union[str, gdal.Dataset]) -> bool:
         if isinstance(ref, gdal.Dataset):
             ref = None
             return True
-    
+
     return False
 
 
@@ -176,13 +190,13 @@ def is_vector(vector: Union[str, ogr.DataSource]) -> bool:
         if isinstance(ref, ogr.DataSource):
             ref = None
             return True
-    
+
     return False
 
 
 def parse_projection(
     target: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int],
-    return_wkt: bool=False,
+    return_wkt: bool = False,
 ) -> Union[osr.SpatialReference, str]:
     """ Parses a gdal, ogr og osr data source and extraction the projection. If
         a string is passed, it attempts to open it and return the projection as
@@ -241,7 +255,7 @@ def parse_projection(
     if isinstance(target_proj, osr.SpatialReference):
         if target_proj.GetName() == None:
             raise ValueError(err_msg)
-        
+
         if return_wkt:
             return target_proj.ExportToWkt()
 
@@ -268,20 +282,20 @@ def bbox_to_pixel_offsets(gt, bbox):
 
 def translate_resample_method(method):
     methods = {
-        'nearest': 0,
-        'bilinear': 1,
-        'cubic': 2,
-        'cubicSpline': 3,
-        'lanczos': 4,
-        'average': 5,
-        'mode': 6,
-        'max': 8,
-        'min': 9,
-        'median': 10,
-        'q1': 11,
-        'q3': 12,
-        'sum': 13,
-        'rms': 14,
+        "nearest": 0,
+        "bilinear": 1,
+        "cubic": 2,
+        "cubicSpline": 3,
+        "lanczos": 4,
+        "average": 5,
+        "mode": 6,
+        "max": 8,
+        "min": 9,
+        "median": 10,
+        "q1": 11,
+        "q3": 12,
+        "sum": 13,
+        "rms": 14,
     }
 
     if method in methods:
@@ -292,17 +306,17 @@ def translate_resample_method(method):
 
 def numpy_fill_values(datatype):
     datatypes = {
-        'int8': -127,
-        'int16': -32767,
-        'int32': -2147483647,
-        'int64': -9223372036854775807,
-        'uint8': 255,
-        'uint16': 65535,
-        'uint32': 4294967295,
-        'uint64': 18446744073709551615,
-        'float16': -999999.9,
-        'float32': -999999.9,
-        'float64': -999999.9,
+        "int8": -127,
+        "int16": -32767,
+        "int32": -2147483647,
+        "int64": -9223372036854775807,
+        "uint8": 255,
+        "uint16": 65535,
+        "uint32": 4294967295,
+        "uint64": 18446744073709551615,
+        "float16": -999999.9,
+        "float32": -999999.9,
+        "float64": -999999.9,
     }
 
     if datatype in datatypes:
@@ -312,30 +326,39 @@ def numpy_fill_values(datatype):
 
 
 def gdal_nodata_value_from_type(gdal_datatype_raw):
-    if gdal_datatype_raw == 0: return 0
-    elif gdal_datatype_raw == 1: return 255
-    elif gdal_datatype_raw == 2: return 65535
-    elif gdal_datatype_raw == 3: return -32767
-    elif gdal_datatype_raw == 4: return 4294967295
-    elif gdal_datatype_raw == 5: return -2147483647
-    elif gdal_datatype_raw == 6: return -9999.0
-    elif gdal_datatype_raw == 7: return -9999.0
-    else: return 0
+    if gdal_datatype_raw == 0:
+        return 0
+    elif gdal_datatype_raw == 1:
+        return 255
+    elif gdal_datatype_raw == 2:
+        return 65535
+    elif gdal_datatype_raw == 3:
+        return -32767
+    elif gdal_datatype_raw == 4:
+        return 4294967295
+    elif gdal_datatype_raw == 5:
+        return -2147483647
+    elif gdal_datatype_raw == 6:
+        return -9999.0
+    elif gdal_datatype_raw == 7:
+        return -9999.0
+    else:
+        return 0
 
 
 def translate_datatypes(datatype):
     datatypes = {
-        'byte': 1,
-        'uint16': 2,
-        'int16': 3,
-        'uint32': 4,
-        'int32': 5,
-        'float32': 6,
-        'float64': 7,
-        'cint16': 8,
-        'cint32': 9,
-        'cfloat32': 10,
-        'cfloat64': 11,
+        "byte": 1,
+        "uint16": 2,
+        "int16": 3,
+        "uint32": 4,
+        "int32": 5,
+        "float32": 6,
+        "float64": 7,
+        "cint16": 8,
+        "cint32": 9,
+        "cfloat32": 10,
+        "cfloat64": 11,
     }
 
     if datatype in datatypes.keys():
@@ -346,34 +369,34 @@ def translate_datatypes(datatype):
 
 def gdal_to_numpy_datatype(gdal_int):
     datatypes = {
-        '1': 'uint8',
-        '2': 'uint16',
-        '3': 'int16',
-        '4': 'uint32',
-        '5': 'int32',
-        '6': 'float32',
-        '7': 'float64',
-        '8': 'cint16',
-        '9': 'cint32',
-        '10': 'cfloat32',
-        '11': 'cfloat64',
+        "1": "uint8",
+        "2": "uint16",
+        "3": "int16",
+        "4": "uint32",
+        "5": "int32",
+        "6": "float32",
+        "7": "float64",
+        "8": "cint16",
+        "9": "cint32",
+        "10": "cfloat32",
+        "11": "cfloat64",
     }
     return datatypes[str(gdal_int)]
 
 
 def numpy_to_gdal_datatype(datatype):
     datatypes = {
-        'int8': gdal.GDT_Int16,
-        'int16': gdal.GDT_Int16,
-        'int32': gdal.GDT_Int32,
-        'int64': gdal.GDT_Int32,
-        'uint8': gdal.GDT_Byte,
-        'uint16': gdal.GDT_UInt16,
-        'uint32': gdal.GDT_UInt32,
-        'uint64': gdal.GDT_UInt32,
-        'float16': gdal.GDT_Float32,
-        'float32': gdal.GDT_Float32,
-        'float64': gdal.GDT_Float64,
+        "int8": gdal.GDT_Int16,
+        "int16": gdal.GDT_Int16,
+        "int32": gdal.GDT_Int32,
+        "int64": gdal.GDT_Int32,
+        "uint8": gdal.GDT_Byte,
+        "uint16": gdal.GDT_UInt16,
+        "uint32": gdal.GDT_UInt32,
+        "uint64": gdal.GDT_UInt32,
+        "float16": gdal.GDT_Float32,
+        "float32": gdal.GDT_Float32,
+        "float64": gdal.GDT_Float64,
     }
 
     if datatype.name in datatypes.keys():
@@ -411,31 +434,35 @@ def get_intersection(extent1, extent2):
     two_bottomLeftY = extent2[1]
     two_topRightY = extent2[3]
 
-    if two_bottomLeftX > one_topRightX:     # Too far east
+    if two_bottomLeftX > one_topRightX:  # Too far east
         return False
-    elif two_bottomLeftY > one_topRightY:   # Too far north
+    elif two_bottomLeftY > one_topRightY:  # Too far north
         return False
-    elif two_topRightX < one_bottomLeftX:   # Too far west
+    elif two_topRightX < one_bottomLeftX:  # Too far west
         return False
-    elif two_topRightY < one_bottomLeftY:   # Too far south
+    elif two_topRightY < one_bottomLeftY:  # Too far south
         return False
     else:
         return (
-            max(one_bottomLeftX, two_bottomLeftX),    # minX of intersection
-            max(one_bottomLeftY, two_bottomLeftY),    # minY of intersection
-            min(one_topRightX, two_topRightX),        # maxX of intersection
-            min(one_topRightY, two_topRightY),        # maxY of intersection
+            max(one_bottomLeftX, two_bottomLeftX),  # minX of intersection
+            max(one_bottomLeftY, two_bottomLeftY),  # minY of intersection
+            min(one_topRightX, two_topRightX),  # maxX of intersection
+            min(one_topRightY, two_topRightY),  # maxY of intersection
         )
 
 
 def create_geotransform(geo_transform, extent):
-    RasterXSize = round((extent[2] - extent[0]) / geo_transform[1])  # (maxX - minX) / pixelWidth
-    RasterYSize = round((extent[3] - extent[1]) / geo_transform[5])  # (maxY - minY) / pixelHeight
+    RasterXSize = round(
+        (extent[2] - extent[0]) / geo_transform[1]
+    )  # (maxX - minX) / pixelWidth
+    RasterYSize = round(
+        (extent[3] - extent[1]) / geo_transform[5]
+    )  # (maxY - minY) / pixelHeight
 
     return {
-        'Transform': [extent[0], geo_transform[1], 0, extent[3], 0, geo_transform[5]],
-        'RasterXSize': abs(RasterXSize),
-        'RasterYSize': abs(RasterYSize),
+        "Transform": [extent[0], geo_transform[1], 0, extent[3], 0, geo_transform[5]],
+        "RasterXSize": abs(RasterXSize),
+        "RasterYSize": abs(RasterYSize),
     }
 
 
@@ -450,8 +477,12 @@ def raster_size_from_list(target_size, target_in_pixels=False):
         return x_res, y_res, x_pixels, y_pixels
 
     if isinstance(target_size, gdal.Dataset) or isinstance(target_size, str):
-        reference = target_size if isinstance(target_size, gdal.Dataset) else gdal.Open(target_size, 0)
-        
+        reference = (
+            target_size
+            if isinstance(target_size, gdal.Dataset)
+            else gdal.Open(target_size, 0)
+        )
+
         transform = reference.GetGeoTransform()
 
         x_res = transform[1]
@@ -464,7 +495,9 @@ def raster_size_from_list(target_size, target_in_pixels=False):
                     x_pixels = int(target_size[0])
                     y_pixels = int(target_size[0])
                 else:
-                    raise ValueError("target_size_pixels is not a number or a list/tuple of numbers.")
+                    raise ValueError(
+                        "target_size_pixels is not a number or a list/tuple of numbers."
+                    )
             elif len(target_size) == 2:
                 if is_number(target_size[0]) and is_number(target_size[1]):
                     x_pixels = int(target_size[0])
@@ -476,7 +509,7 @@ def raster_size_from_list(target_size, target_in_pixels=False):
             y_pixels = int(target_size)
         else:
             raise ValueError("target_size_pixels is invalid.")
-        
+
         x_res = None
         y_res = None
     else:
@@ -486,7 +519,9 @@ def raster_size_from_list(target_size, target_in_pixels=False):
                     x_res = float(target_size[0])
                     y_res = float(target_size[0])
                 else:
-                    raise ValueError("target_size is not a number or a list/tuple of numbers.")
+                    raise ValueError(
+                        "target_size is not a number or a list/tuple of numbers."
+                    )
             elif len(target_size) == 2:
                 if is_number(target_size[0]) and is_number(target_size[1]):
                     x_res = float(target_size[0])
@@ -498,10 +533,10 @@ def raster_size_from_list(target_size, target_in_pixels=False):
             y_res = float(target_size)
         else:
             raise ValueError("target_size is invalid.")
-        
+
         x_pixels = None
         y_pixels = None
-    
+
     return x_res, y_res, x_pixels, y_pixels
 
 
@@ -518,16 +553,14 @@ def align_bbox(extent_og, extent_ta, pixel_width, pixel_height, warp_format=True
     # gdal_warp format
     if warp_format:
         return (x_min, y_min, x_max, y_max)
-    
+
     return (x_min, y_max, x_max, y_min)
 
 
-# TODO: Vector extent is wrong...
-def advanced_extents(
-    metadata: dict,
-) -> None:
+def advanced_extents(metadata: Metadata_raster) -> None:
     original_projection = metadata["projection_osr"]
-    target_projection = osr.SpatialReference(); target_projection.ImportFromEPSG(4326)
+    target_projection = osr.SpatialReference()
+    target_projection.ImportFromEPSG(4326)
 
     if int(osgeo.__version__[0]) >= 3:
         original_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
@@ -551,20 +584,19 @@ def advanced_extents(
     wkt_coords = ""
     for coord in coord_array:
         wkt_coords += f"{coord[1]} {coord[0]}, "
-    wkt_coords = wkt_coords[:-2] # Remove the last ", "
+    wkt_coords = wkt_coords[:-2]  # Remove the last ", "
 
     metadata["extent_wkt"] = f"POLYGON (({wkt_coords}))"
 
-    if "basename" in metadata:
-        layer_name = metadata["basename"]    
-    else:
-        layer_name = metadata["layer_name"]
+    layer_name = metadata["name"]
 
     extent_name = f"{layer_name}_extent"
 
     driver = ogr.GetDriverByName("Memory")
     extent_ds = driver.CreateDataSource(extent_name)
-    layer = extent_ds.CreateLayer(extent_name + "_layer", original_projection, ogr.wkbPolygon)
+    layer = extent_ds.CreateLayer(
+        extent_name + "_layer", original_projection, ogr.wkbPolygon
+    )
 
     feature = ogr.Feature(layer.GetLayerDefn())
     extent_geom = ogr.CreateGeometryFromWkt(metadata["extent_wkt"], original_projection)
@@ -610,7 +642,7 @@ def advanced_extents(
         "right": bottom_right[0],
         "bottom": bottom_right[1],
     }
-    
+
     # WKT has latitude first, geojson has longitude first
     coord_array = [
         [bottom_left[1], bottom_left[0]],
@@ -623,7 +655,7 @@ def advanced_extents(
     wkt_coords = ""
     for coord in coord_array:
         wkt_coords += f"{coord[1]} {coord[0]}, "
-    wkt_coords = wkt_coords[:-2] # Remove the last ", "
+    wkt_coords = wkt_coords[:-2]  # Remove the last ", "
 
     metadata["extent_wkt_latlng"] = f"POLYGON (({wkt_coords}))"
 
@@ -632,10 +664,14 @@ def advanced_extents(
 
     driver = ogr.GetDriverByName("Memory")
     extent_ds_latlng = driver.CreateDataSource(extent_name)
-    layer = extent_ds_latlng.CreateLayer(extent_name + "_layer", target_projection, ogr.wkbPolygon)
+    layer = extent_ds_latlng.CreateLayer(
+        extent_name + "_layer", target_projection, ogr.wkbPolygon
+    )
 
     feature = ogr.Feature(layer.GetLayerDefn())
-    extent_geom_latlng = ogr.CreateGeometryFromWkt(metadata["extent_wkt_latlng"], target_projection)
+    extent_geom_latlng = ogr.CreateGeometryFromWkt(
+        metadata["extent_wkt_latlng"], target_projection
+    )
     feature.SetGeometry(extent_geom_latlng)
     layer.CreateFeature(feature)
     feature = None
@@ -644,46 +680,69 @@ def advanced_extents(
     metadata["extent_geom_latlng"] = extent_geom_latlng
 
     # We don't define a geojson in the original projection as geojson is usually expected to be latlng.
-    metadata["geojson_dict"] = {
+    metadata["extent_geojson_dict"] = {
         "type": "Feature",
         "properties": {},
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [coord_array],
-        },
+        "geometry": {"type": "Polygon", "coordinates": [coord_array],},
     }
-    metadata["extent_geojson"] = json.dumps(metadata["geojson_dict"])
+    metadata["extent_geojson"] = json.dumps(metadata["extent_geojson_dict"])
 
     return None
 
 
 # x_min, x_max, y_min, y_max
 def ogr_bbox_within(bbox1, bbox2):
-    return (bbox1[0] >= bbox2[0]) and (bbox1[1] <= bbox2[1]) and (bbox1[3] >= bbox2[3]) and (bbox1[4] <= bbox2[4])
+    return (
+        (bbox1[0] >= bbox2[0])
+        and (bbox1[1] <= bbox2[1])
+        and (bbox1[3] >= bbox2[3])
+        and (bbox1[4] <= bbox2[4])
+    )
+
 
 # x_min, y_max, x_max, y_min
 def gdal_bbox_within(bbox1, bbox2):
-    return (bbox1[0] >= bbox2[0]) and (bbox1[1] <= bbox2[1]) and (bbox1[3] <= bbox2[3]) and (bbox1[4] >= bbox2[4])
+    return (
+        (bbox1[0] >= bbox2[0])
+        and (bbox1[1] <= bbox2[1])
+        and (bbox1[3] <= bbox2[3])
+        and (bbox1[4] >= bbox2[4])
+    )
+
 
 # x_min, x_max, y_min, y_max
 def ogr_bbox_intersects(bbox1, bbox2):
-    return (bbox1[0] <= bbox2[1]) and (bbox2[0] <= bbox1[1]) and (bbox1[2] <= bbox2[3]) and (bbox2[2] <= bbox1[3])
+    return (
+        (bbox1[0] <= bbox2[1])
+        and (bbox2[0] <= bbox1[1])
+        and (bbox1[2] <= bbox2[3])
+        and (bbox2[2] <= bbox1[3])
+    )
+
 
 # x_min, y_max, x_max, y_min
 def gdal_bbox_intersects(bbox1, bbox2):
-    return (bbox1[0] <= bbox2[2]) and (bbox2[0] <= bbox1[2]) and (bbox1[3] <= bbox2[1]) and (bbox2[3] <= bbox1[1])
+    return (
+        (bbox1[0] <= bbox2[2])
+        and (bbox2[0] <= bbox1[2])
+        and (bbox1[3] <= bbox2[1])
+        and (bbox2[3] <= bbox1[1])
+    )
 
 
 def reproject_extent(
-    extent, # x_min, y_max, x_max, y_in
-    source_projection,
-    target_projection,
+    extent, source_projection, target_projection,  # x_min, y_max, x_max, y_in
 ):
-    if len(extent) != 4: raise ValueError("Invalid shape of extent.")
-    if not isinstance(extent[0], float): raise ValueError("x_min not float.")
-    if not isinstance(extent[1], float): raise ValueError("y_max not float.")
-    if not isinstance(extent[2], float): raise ValueError("x_max not float.")
-    if not isinstance(extent[3], float): raise ValueError("y_min not float.")
+    if len(extent) != 4:
+        raise ValueError("Invalid shape of extent.")
+    if not isinstance(extent[0], float):
+        raise ValueError("x_min not float.")
+    if not isinstance(extent[1], float):
+        raise ValueError("y_max not float.")
+    if not isinstance(extent[2], float):
+        raise ValueError("x_max not float.")
+    if not isinstance(extent[3], float):
+        raise ValueError("y_min not float.")
 
     if not isinstance(source_projection, osr.SpatialReference):
         raise ValueError("source_projection not a valid spatial reference.")
@@ -704,13 +763,13 @@ def reproject_extent(
     ]
 
 
-def to_raster_list(variable: any) -> list:
+def to_raster_list(variable: Any) -> List[Union[gdal.Dataset, str]]:
     return_list = []
     if isinstance(variable, list):
         return_list = variable
     else:
         return_list.append(variable)
-    
+
     if len(return_list) == 0:
         raise ValueError("Empty raster list.")
 
@@ -721,13 +780,13 @@ def to_raster_list(variable: any) -> list:
     return return_list
 
 
-def to_vector_list(variable: any) -> list:
+def to_vector_list(variable: Any) -> List[Union[ogr.DataSource, str]]:
     return_list = []
     if isinstance(variable, list):
         return_list = variable
     else:
         return_list.append(variable)
-    
+
     if len(return_list) == 0:
         raise ValueError("Empty vector list.")
 
@@ -739,7 +798,7 @@ def to_vector_list(variable: any) -> list:
 
 
 # TODO: Verify folder exists.
-def to_path_list(variable: any) -> list:
+def to_path_list(variable: Any) -> List[str]:
     return_list = []
     if isinstance(variable, list):
         return_list = variable
@@ -752,11 +811,11 @@ def to_path_list(variable: any) -> list:
     for path in return_list:
         if not isinstance(path, str):
             raise ValueError(f"Invalid string in  path list: {variable}")
-    
+
     return return_list
 
 
-def to_array_list(variable: any) -> list:
+def to_array_list(variable: Any) -> List[Union[List, np.ndarray]]:
     return_list = []
     if isinstance(variable, list):
         return_list = variable
@@ -765,27 +824,25 @@ def to_array_list(variable: any) -> list:
 
     if len(return_list) == 0:
         raise ValueError("Empty array list.")
-    
+
     for array in return_list:
         if not isinstance(array, np.ndarray):
             if isinstance(array, str) and os.path.exists(array):
                 try:
                     _ = np.load(array)
                 except:
-                    raise ValueError(f"Invalid array in list: {array}")    
+                    raise ValueError(f"Invalid array in list: {array}")
         else:
             raise ValueError(f"Invalid array in list: {array}")
 
     return return_list
 
-def to_band_list(
-    variable: any,
-    band_count: int,
-) -> list:
+
+def to_band_list(variable: Any, band_count: int,) -> List[int]:
     return_list = []
     if not isinstance(variable, (int, float, list)):
         raise TypeError(f"Invalid type for band: {type(variable)}")
-    
+
     if isinstance(variable, list):
         if len(variable) == 0:
             raise ValueError("Provided list of bands is empty.")
@@ -793,7 +850,9 @@ def to_band_list(
             try:
                 band_int = int(val)
             except:
-                raise ValueError(f"List of bands contained non-valid band number: {val}")
+                raise ValueError(
+                    f"List of bands contained non-valid band number: {val}"
+                )
 
             if band_int > band_count - 1:
                 raise ValueError("Requested a higher band that is available in raster.")
@@ -806,23 +865,25 @@ def to_band_list(
         if variable > band_count + 1:
             raise ValueError("Requested a higher band that is available in raster.")
         else:
-            return_list.append(variable)
-    
+            return_list.append(int(variable))
+
     return return_list
 
 
 def ready_io_raster(
-    raster,
-    out_path,
-    overwrite,
-    prefix,
-    postfix,
-) -> tuple:
+    raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
+    out_path: Union[List[str], str, None],
+    overwrite: bool,
+    prefix: str = "",
+    postfix: str = "",
+) -> Tuple[List[Union[str, gdal.Dataset]], List[str]]:
     raster_list = to_raster_list(raster)
 
     if isinstance(out_path, list):
         if len(raster_list) != len(out_path):
-            raise ValueError("The length of raster_list must equal the length of the out_path")
+            raise ValueError(
+                "The length of raster_list must equal the length of the out_path"
+            )
 
     # Check if folder exists and is required.
     if isinstance(raster, list):
@@ -830,10 +891,9 @@ def ready_io_raster(
             if not folder_exists(out_path):
                 raise ValueError("Output folder does not exists.")
 
-    out_names = []
     # Generate output names
+    out_names: List[str] = []
     for index, in_raster in enumerate(raster_list):
-        path = None
 
         if isinstance(in_raster, str):
             raster_name = os.path.basename(in_raster)
@@ -848,7 +908,12 @@ def ready_io_raster(
             else:
                 path = out_path
         elif isinstance(out_path, list):
-            path = out_path[index]
+            if out_path[index] is None:
+                path = f"/vsimem/{prefix}{raster_name}{uuid4().int}{postfix}.tif"
+            elif isinstance(out_path[index], str):
+                path = out_path[index]
+            else:
+                raise ValueError(f"Unable to parse out_path: {out_path}")
         else:
             raise ValueError(f"Unable to parse out_path: {out_path}")
 

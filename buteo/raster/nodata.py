@@ -1,7 +1,11 @@
-import sys; sys.path.append('../../')
+from buteo.project_types import Number
+import sys
+
+sys.path.append("../../")
 import numpy as np
-from typing import Union, Sequence
+from typing import Union, List, Optional
 from osgeo import gdal
+from buteo.project_types import Metadata_raster
 from buteo.utils import remove_if_overwrite, type_check
 from buteo.gdal_utils import (
     is_raster,
@@ -24,8 +28,8 @@ from buteo.raster.io import (
 
 
 def raster_has_nodata_value(
-    raster: Union[list, gdal.Dataset, str],
-) -> Union[bool, Sequence[bool]]:
+    raster: Union[List[Union[gdal.Dataset, str]], gdal.Dataset, str],
+) -> Union[bool, List[bool]]:
     """ Check if a raster or a list of rasters contain nodata values
 
     Args:
@@ -39,12 +43,16 @@ def raster_has_nodata_value(
 
     nodata_values = []
     rasters = to_raster_list(raster)
-    
+
     for internal_raster in rasters:
         if not is_raster(internal_raster):
             raise ValueError(f"Input raster is invalid: {internal_raster}")
-        
+
         raster_metadata = raster_to_metadata(internal_raster)
+
+        if not isinstance(raster_metadata, dict):
+            raise Exception("Metadata is in the wrong format.")
+
         raster_nodata = raster_metadata["nodata_value"]
 
         if raster_nodata is not None:
@@ -59,8 +67,8 @@ def raster_has_nodata_value(
 
 
 def raster_get_nodata_value(
-   raster: Union[gdal.Dataset, str, list],
-) -> Union[float, None]:
+    raster: Union[List[Union[gdal.Dataset, str]], gdal.Dataset, str],
+) -> Union[List[Optional[Number]], Optional[Number]]:
     """ Get the nodata value of a raster or a from a list of rasters.
 
     Args:
@@ -72,13 +80,17 @@ def raster_get_nodata_value(
     type_check(raster, [list, str, gdal.Dataset], "raster")
 
     rasters = to_raster_list(raster)
-    
+
     nodata_values = []
     for internal_raster in rasters:
         if not is_raster(internal_raster):
             raise ValueError(f"Input raster is invalid: {internal_raster}")
-        
+
         raster_metadata = raster_to_metadata(internal_raster)
+
+        if not isinstance(raster_metadata, dict):
+            raise Exception("Metadata is in the wrong format.")
+
         raster_nodata = raster_metadata["nodata_value"]
 
         nodata_values.append(raster_nodata)
@@ -89,16 +101,16 @@ def raster_get_nodata_value(
         return nodata_values[0]
 
 
+# TODO: Revise this function. It
 def raster_set_nodata(
-    raster: Union[list, gdal.Dataset, str],
+    raster: Union[List[Union[gdal.Dataset, str]], gdal.Dataset, str],
     dst_nodata: Union[float, int, str, list, None],
-    out_path: Union[list, str, None]=None,
-    in_place: bool=False,
-    overwrite: bool=True,
-    prefix: str="",
-    postfix: str="_nodata_set",
-    opened: bool=False,
-    creation_options: list=[],
+    out_path: Union[list, str, None] = None,
+    overwrite: bool = True,
+    prefix: str = "",
+    postfix: str = "_nodata_set",
+    opened: bool = False,
+    creation_options: list = [],
 ) -> Union[list, gdal.Dataset, str]:
     """ Sets all the nodata from a raster or a list of rasters.
 
@@ -127,7 +139,6 @@ def raster_set_nodata(
     type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(dst_nodata, [float, int, str, list], "dst_nodata", allow_none=True)
     type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(in_place, [bool], "in_place")
     type_check(overwrite, [bool], "overwrite")
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
@@ -136,37 +147,44 @@ def raster_set_nodata(
 
     rasters, out_names = ready_io_raster(raster, out_path, overwrite, prefix, postfix)
 
-    rasters_metadata = []
-    internal_in_place = in_place if out_path is None else False
+    rasters_metadata: List[Metadata_raster] = []
     internal_dst_nodata = None
 
     if isinstance(dst_nodata, str) and dst_nodata != "infer":
         raise ValueError(f"Invalid dst_nodata value. {dst_nodata}")
-    
+
     if isinstance(dst_nodata, list):
         if not isinstance(raster, list) or len(dst_nodata) != len(raster):
-            raise ValueError("If dst_nodata is a list, raster must also be a list of equal length.")
-        
+            raise ValueError(
+                "If dst_nodata is a list, raster must also be a list of equal length."
+            )
+
         for value in dst_nodata:
             if isinstance(value, (float, int, str, None)):
                 raise ValueError("Invalid type in dst_nodata list.")
-            
+
             if isinstance(value, str) and value != "infer":
                 raise ValueError("If dst_nodata is a string it must be 'infer'")
 
     output_rasters = []
 
     for index, internal_raster in enumerate(rasters):
-        
+
         raster_metadata = None
         if len(rasters_metadata) == 0:
             raster_metadata = raster_to_metadata(internal_raster)
+
+            if not isinstance(raster_metadata, dict):
+                raise Exception("Metadata is in the wrong format.")
+
             rasters_metadata.append(raster_metadata)
         else:
             raster_metadata = rasters_metadata[index]
-        
+
         if dst_nodata == "infer":
-            internal_dst_nodata = gdal_nodata_value_from_type(raster_metadata["dtype_gdal_raw"])
+            internal_dst_nodata = gdal_nodata_value_from_type(
+                raster_metadata["dtype_gdal_raw"]
+            )
         elif isinstance(dst_nodata, list):
             internal_dst_nodata = dst_nodata[index]
         else:
@@ -192,18 +210,18 @@ def raster_set_nodata(
 
     if isinstance(raster, list):
         return output_rasters
-    
+
     return output_rasters[0]
 
 
 def raster_remove_nodata(
     raster: Union[gdal.Dataset, str, list],
-    out_path: Union[str, Sequence[str], None]=None,
-    in_place: bool=False,
-    overwrite: bool=True,
-    prefix: str="",
-    postfix: str="_nodata_removed",
-    creation_options: list=[],
+    out_path: Union[str, Sequence[str], None] = None,
+    in_place: bool = False,
+    overwrite: bool = True,
+    prefix: str = "",
+    postfix: str = "_nodata_removed",
+    creation_options: list = [],
 ) -> Union[gdal.Dataset, Sequence[gdal.Dataset], str, Sequence[str]]:
     """ Removes all the nodata from a raster or a list of rasters.
 
@@ -241,15 +259,15 @@ def raster_remove_nodata(
 def raster_mask_values(
     raster: Union[gdal.Dataset, str, list],
     values_to_mask: list,
-    out_path: Union[list, str, None]=None,
-    include_original_nodata: bool=True,
-    dst_nodata: Union[float, int, str, list, None]="infer",
-    in_place: bool=False,
-    overwrite: bool=True,
-    opened: bool=False,
-    prefix: str="",
-    postfix: str="_nodata_masked",
-    creation_options: list=[],
+    out_path: Union[list, str, None] = None,
+    include_original_nodata: bool = True,
+    dst_nodata: Union[float, int, str, list, None] = "infer",
+    in_place: bool = False,
+    overwrite: bool = True,
+    opened: bool = False,
+    prefix: str = "",
+    postfix: str = "_nodata_masked",
+    creation_options: list = [],
 ) -> Union[list, gdal.Dataset, str]:
     """ Mask a raster with a list of values.
 
@@ -295,26 +313,30 @@ def raster_mask_values(
     rasters_metadata = []
     internal_in_place = in_place if out_path is None else False
     internal_dst_nodata = None
-  
+
     for value in values_to_mask:
         if not isinstance(value, (int, float)):
             raise ValueError("Values in values_to_mask must be ints or floats")
 
     if isinstance(dst_nodata, str) and dst_nodata != "infer":
         raise ValueError(f"Invalid dst_nodata value. {dst_nodata}")
-    
+
     if isinstance(dst_nodata, list):
         if not isinstance(raster, list) or len(dst_nodata) != len(raster):
-            raise ValueError("If dst_nodata is a list, raster must also be a list of equal length.")
-        
+            raise ValueError(
+                "If dst_nodata is a list, raster must also be a list of equal length."
+            )
+
         for value in dst_nodata:
             if isinstance(value, (float, int, str, None)):
                 raise ValueError("Invalid type in dst_nodata list.")
-            
+
             if isinstance(value, str) and value != "infer":
                 raise ValueError("If dst_nodata is a string it must be 'infer'")
 
-    raster_list, out_names = ready_io_raster(raster, out_path, overwrite, prefix, postfix)
+    raster_list, out_names = ready_io_raster(
+        raster, out_path, overwrite, prefix, postfix
+    )
 
     output_rasters = []
 
@@ -326,9 +348,11 @@ def raster_mask_values(
             rasters_metadata.append(raster_metadata)
         else:
             raster_metadata = rasters_metadata[index]
-        
+
         if dst_nodata == "infer":
-            internal_dst_nodata = gdal_nodata_value_from_type(raster_metadata["dtype_gdal_raw"])
+            internal_dst_nodata = gdal_nodata_value_from_type(
+                raster_metadata["dtype_gdal_raw"]
+            )
         elif isinstance(dst_nodata, list):
             internal_dst_nodata = dst_nodata[index]
         else:
@@ -347,7 +371,7 @@ def raster_mask_values(
                 mask = arr == mask_value
             else:
                 mask = mask | arr == mask_value
-        
+
         arr = np.ma.masked_array(arr, mask=mask, fill_value=internal_dst_nodata)
 
         if internal_in_place:
@@ -359,10 +383,11 @@ def raster_mask_values(
             out_name = out_names[index]
             remove_if_overwrite(out_name, overwrite)
 
-            output_rasters.append(array_to_raster(arr, internal_raster, out_path=out_name, opened=opened))
-
+            output_rasters.append(
+                array_to_raster(arr, internal_raster, out_path=out_name, opened=opened)
+            )
 
     if isinstance(raster, list):
         return output_rasters
-    
+
     return output_rasters[0]

@@ -1,7 +1,10 @@
-import sys; sys.path.append('../../')
+import sys
+
+sys.path.append("../../")
 from uuid import uuid4
-from typing import Union
+from typing import Union, Tuple, List
 from osgeo import gdal
+from buteo.project_types import Number
 from buteo.utils import remove_if_overwrite, is_number, type_check
 from buteo.gdal_utils import (
     path_to_driver,
@@ -15,11 +18,11 @@ from buteo.raster.io import (
 
 
 def shift_raster(
-    raster: Union[str, gdal.Dataset],
-    shift: Union[tuple, list],
-    out_path: Union[str, None]=None,
-    overwrite: bool=True,
-    creation_options: list=[],
+    raster: Union[gdal.Dataset, str],
+    shift: Union[Number, Tuple[Number, Number], List[Number]],
+    out_path: Union[str, None] = None,
+    overwrite: bool = True,
+    creation_options: list = [],
 ) -> Union[gdal.Dataset, str]:
     """ Reprojects a raster given a target projection.
 
@@ -57,8 +60,11 @@ def shift_raster(
     ref = raster_to_reference(raster)
     metadata = raster_to_metadata(ref)
 
-    x_shift = None
-    y_shift = None
+    if not isinstance(metadata, dict):
+        raise Exception("Error while parsing metadata.")
+
+    x_shift: float = 0.0
+    y_shift: float = 0.0
     if isinstance(shift, tuple) or isinstance(shift, list):
         if len(shift) == 1:
             if is_number(shift[0]):
@@ -98,8 +104,8 @@ def shift_raster(
         out_name,  # Location of the saved raster, ignored if driver is memory.
         metadata["width"],  # Dataframe width in pixels (e.g. 1920px).
         metadata["height"],  # Dataframe height in pixels (e.g. 1280px).
-        metadata["bands"],  # The number of bands required.
-        metadata["dtype_gdal_raw"],  # Datatype of the destination.
+        metadata["band_count"],  # The number of bands required.
+        metadata["datatype_gdal_raw"],  # Datatype of the destination.
         out_creation_options,
     )
 
@@ -112,7 +118,7 @@ def shift_raster(
 
     src_nodata = metadata["nodata_value"]
 
-    for band in range(metadata["bands"]):
+    for band in range(metadata["band_count"]):
         origin_raster_band = ref.GetRasterBand(band + 1)
         target_raster_band = shifted.GetRasterBand(band + 1)
 

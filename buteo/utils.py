@@ -162,7 +162,7 @@ def file_in_use(path):
 
 def type_check(
     variable: any,
-    types: tuple,
+    types: list,
     name: str="",
     allow_none=False,
     throw_error=True,
