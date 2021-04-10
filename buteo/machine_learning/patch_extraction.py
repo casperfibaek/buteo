@@ -1,6 +1,4 @@
-import sys
-
-from tensorflow.python.types.core import Value; sys.path.append("../../")
+import sys; sys.path.append("../../")
 import numpy as np
 import os
 import random
@@ -15,7 +13,6 @@ from buteo.raster.io import (
     array_to_raster,
     raster_in_memory,
     rasters_are_aligned,
-    stack_rasters,
 )
 from buteo.vector.io import (
     vector_to_memory,
