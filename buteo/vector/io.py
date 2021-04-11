@@ -31,6 +31,7 @@ from buteo.utils import progress, remove_if_overwrite, type_check
 
 def vector_to_metadata(
     vector: Union[List[Union[ogr.DataSource, str]], ogr.DataSource, str],
+    process_layer: int = -1,
     simple: bool = True,
 ) -> Union[Metadata_vector, List[Metadata_vector]]:
     """ Creates a dictionary with metadata about the vector layer.
@@ -70,6 +71,10 @@ def vector_to_metadata(
         processed: bool = False
 
         for layer_index in range(layer_count):
+
+            if process_layer != -1 and layer_index != process_layer:
+                continue
+
             layer: ogr.Layer = datasource.GetLayerByIndex(layer_index)
 
             x_min, x_max, y_min, y_max = layer.GetExtent()
@@ -212,7 +217,7 @@ def vector_to_metadata(
 
         if not simple:
             # Combined extents
-            extended_extents = advanced_extents(ds_extent_ogr, ds_projection)
+            extended_extents = advanced_extents(ds_extent_ogr, ds_projection_osr)
 
             for key, value in extended_extents.items():
                 metadata[key] = value  # type: ignore
@@ -341,26 +346,36 @@ def vector_to_disk(
     return out_path
 
 
-def vector_add_index(vector: Union[str, ogr.DataSource]) -> None:
+def vector_add_index(
+    vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource]
+) -> None:
     """ Adds a spatial index to the vector if it doesn't have one.
 
     Args:
-        vector (path | vector): The vector to add the index to.
+        vector (list, path | vector): The vector to add the index to.
 
     Returns:
         None
     """
-    type_check(vector, [str, ogr.DataSource], "vector")
+    type_check(vector, [list, str, ogr.DataSource], "vector")
 
-    ref = vector_to_reference(vector)
-    metadata = vector_to_metadata(ref)
+    in_vectors = to_vector_list(vector)
 
-    for layer in metadata["layers"]:
-        name = layer["layer_name"]
-        geom = layer["geom_column"]
+    metadatas = vector_to_metadata(in_vectors)
 
-        sql = f"SELECT CreateSpatialIndex('{name}', '{geom}') WHERE NOT EXISTS (SELECT HasSpatialIndex('{name}', '{geom}'));"
-        ref.ExecuteSQL(sql, dialect="SQLITE")
+    if not isinstance(metadatas, list):
+        raise Exception("Error while parsing metadata.")
+
+    for index, in_vector in enumerate(in_vectors):
+        metadata = metadatas[index]
+        ref = vector_to_reference(in_vector)
+
+        for layer in metadata["layers"]:
+            name = layer["layer_name"]
+            geom = layer["column_geom"]
+
+            sql = f"SELECT CreateSpatialIndex('{name}', '{geom}') WHERE NOT EXISTS (SELECT HasSpatialIndex('{name}', '{geom}'));"
+            ref.ExecuteSQL(sql, dialect="SQLITE")
 
     return None
 

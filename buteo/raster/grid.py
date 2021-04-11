@@ -3,7 +3,7 @@ import sys
 sys.path.append("../../")
 from uuid import uuid4
 from osgeo import gdal, ogr
-from typing import Union
+from typing import Union, Optional
 
 from buteo.vector.io import vector_to_metadata
 
@@ -29,6 +29,7 @@ def raster_to_grid(
     raster: Union[str, gdal.Dataset],
     grid: Union[str, ogr.DataSource],
     out_dir: str,
+    use_field: Optional[str] = None,
     generate_vrt: bool = True,
     overwrite: bool = True,
     process_layer: int = 0,
@@ -48,11 +49,17 @@ def raster_to_grid(
     type_check(creation_options, [list], "creation_options")
     type_check(opened, [bool], "opened")
 
-    creation_options = default_options(creation_options)
-
-    raster_metadata = dict(raster_to_metadata(raster, simple=False))
+    raster_metadata = raster_to_metadata(raster, simple=False)
     grid_metadata = vector_to_metadata(grid)
 
+    # This is necessary to ensure mypy that the metadata is a dictionary.
+    if not isinstance(raster_metadata, dict):
+        raise Exception("Error while parsing metadata.")
+
+    if not isinstance(grid_metadata, dict):
+        raise Exception("Error while parsing metadata.")
+
+    # Reproject raster if necessary.
     use_grid = vector_to_reference(grid)
     if not raster_metadata["projection_osr"].IsSame(grid_metadata["projection_osr"]):
         use_grid = reproject_vector(
@@ -60,30 +67,40 @@ def raster_to_grid(
         )
         grid_metadata = vector_to_metadata(use_grid)
 
+        if not isinstance(grid_metadata, dict):
+            raise Exception("Error while parsing metadata.")
+
+    # Only use the polygons in the grid that intersect the extent of the raster.
     use_grid = intersect_vector(
         use_grid, raster_metadata["extent_datasource"], opened=True
     )
 
     ref = raster_to_reference(raster)
 
-    shp_driver = ogr.GetDriverByName("ESRI Shapefile")
-
-    filetype = path_to_ext(raster)
+    shp_driver = ogr.GetDriverByName("Esri Shapefile")
 
     layer = use_grid.GetLayer(process_layer)
-
     feature_count = layer.GetFeatureCount()
-
     raster_extent = raster_metadata["extent_ogr"]
-
+    filetype = path_to_ext(raster)
     basename = raster_metadata["basename"]
-
     geom_type = grid_metadata["layers"][process_layer]["geom_type_ogr"]
+
+    if use_field is not None:
+        if use_field not in grid_metadata["layers"][process_layer]["field_names"]:
+            raise ValueError("Requested field not found.")
 
     generated = []
 
     for _ in range(feature_count):
+        progress(_, feature_count - 1, "clip_grid")
+
         feature = layer.GetNextFeature()
+        geom = feature.GetGeometryRef()
+
+        if not ogr_bbox_intersects(raster_extent, geom.GetEnvelope()):
+            continue
+
         fid = feature.GetFID()
 
         test_ds_path = f"/vsimem/grid_{uuid4().int}.shp"
@@ -94,31 +111,29 @@ def raster_to_grid(
             srs=raster_metadata["projection_osr"],
         )
         test_ds_lyr.CreateFeature(feature.Clone())
-
         test_ds.FlushCache()
 
-        test_extent = vector_to_metadata(test_ds)["extent_ogr"]
+        out_name = None
 
-        if not ogr_bbox_intersects(raster_extent, test_extent):
-            continue
-
-        out_name = f"{out_dir}{basename}_{fid}{filetype}"
+        if use_field is not None:
+            out_name = f"{out_dir}{feature.GetField(use_field)}{filetype}"
+        else:
+            out_name = f"{out_dir}{basename}_{fid}{filetype}"
 
         generated.append(out_name)
 
-        clip_raster(
+        clipped = clip_raster(
             ref,
             test_ds_path,
             out_path=out_name,
-            adjust_bbox=False,
+            adjust_bbox=True,
             crop_to_geom=True,
             all_touch=False,
             postfix="",
             prefix="",
+            creation_options=creation_options,
             verbose=0,
         )
-
-        progress(_, feature_count - 1, "clip_grid")
 
     if generate_vrt:
         vrt_name = f"{out_dir}{basename}.vrt"
@@ -130,9 +145,9 @@ def raster_to_grid(
 
 
 if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/test/"
+    folder = "C:/Users/caspe/Desktop/test/out/"
 
     vector = folder + "denmark_10km_grid.gpkg"
-    raster = folder + "snow.tif"
+    raster = folder + "predicted_raster_32-16.tif"
 
-    raster_to_grid(raster, vector, folder + "out/snow/")
+    raster_to_grid(raster, vector, folder + "snow/", use_field="KN10kmDK")

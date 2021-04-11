@@ -1,3 +1,4 @@
+from buteo.project_types import Metadata_vector
 import sys
 
 sys.path.append("../../")
@@ -105,10 +106,6 @@ def clip_raster(
         raster, out_path, overwrite, prefix, postfix
     )
 
-    # Verify geom
-    clip_metadata = None
-    clip_ds = None
-
     if is_raster(clip_geom):
         clip_metadata = raster_to_metadata(clip_geom, simple=False)
 
@@ -119,7 +116,7 @@ def clip_raster(
     elif is_vector(clip_geom):
         clip_ds = vector_to_memory(clip_geom)
         clip_metadata = vector_to_metadata(
-            clip_geom, simple=False, process_layer=layer_to_clip
+            clip_ds, simple=False, process_layer=layer_to_clip
         )
 
         if not isinstance(clip_metadata, dict):
@@ -156,11 +153,6 @@ def clip_raster(
         origin_projection = raster_metadata["projection_osr"]
         origin_extent = raster_metadata["extent_geom_latlng"]
 
-        # Fast check: Does the extent of the two inputs overlap?
-        if not origin_extent.Intersects(clip_extent):
-            print("WARNING: Geometries did not intersect. Returning None.")
-            return None
-
         # Check if projections match, otherwise reproject target geom.
         if not origin_projection.IsSame(clip_projection):
             clip_metadata["extent"] = reproject_extent(
@@ -196,7 +188,7 @@ def clip_raster(
         else:
             if dst_nodata == "infer":
                 out_nodata = gdal_nodata_value_from_type(
-                    raster_metadata["dtype_gdal_raw"]
+                    raster_metadata["datatype_gdal_raw"]
                 )
             else:
                 out_nodata = dst_nodata

@@ -4,10 +4,14 @@ sys.path.append("../../")
 from uuid import uuid4
 from osgeo import gdal, osr, ogr
 from typing import Dict, Tuple, Union, List, Any, Optional
-from buteo.project_types import Metadata_raster, Metadata_raster_comp, Number
 import numpy as np
 import os
 
+from buteo.project_types import (
+    Metadata_raster,
+    Metadata_raster_comp,
+    Number,
+)
 from buteo.utils import (
     overwrite_required,
     path_to_ext,
@@ -23,7 +27,6 @@ from buteo.gdal_utils import (
     default_options,
     ready_io_raster,
     to_band_list,
-    to_path_list,
     to_raster_list,
     translate_resample_method,
     is_raster,
@@ -94,8 +97,9 @@ def raster_to_metadata(
 
         x_min: Number = transform[0]
         y_max: Number = transform[3]
-        x_max: Number = x_min + width * pixel_width + height * abs(transform[2])
-        y_min: Number = y_max + width * abs(transform[4]) + height * pixel_height
+
+        x_max = x_min + width * transform[1] + height * transform[2]  # Handle skew
+        y_min = y_max + width * transform[4] + height * transform[5]  # Handle skew
 
         band0 = dataset.GetRasterBand(1)
 
@@ -167,7 +171,7 @@ def raster_to_metadata(
             extended_extents = advanced_extents(extent_ogr, projection_osr)
 
             for key, value in extended_extents.items():
-                metadata[key] = value # type: ignore
+                metadata[key] = value  # type: ignore
 
         metadatas.append(metadata)
 

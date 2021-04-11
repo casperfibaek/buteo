@@ -1,15 +1,17 @@
 import os
 import sys
 import time
+from typing import Any
 import psutil
 
-def progress(count, total, name='Processing'):
+
+def progress(count, total, name="Processing"):
     sys.stdout.flush()
     bar_len = os.get_terminal_size().columns - 24
     filled_len = int(round(bar_len * count / float(total)))
-    display_name = name[:10] + '..: '
+    display_name = name[:10] + "..: "
 
-    bar = '█' * filled_len + '.' * (bar_len - filled_len)
+    bar = "█" * filled_len + "." * (bar_len - filled_len)
 
     percents = round(100.0 * count / float(total), 1)
 
@@ -49,7 +51,7 @@ def path_to_name(path, with_ext=False):
 
     if with_ext:
         return basename
-    
+
     return name
 
 
@@ -64,11 +66,12 @@ def folder_exists(path):
 def is_number(potential_number):
     if isinstance(potential_number, float):
         return True
-    
+
     if isinstance(potential_number, int):
         return True
-    
+
     return False
+
 
 def overwrite_required(path, overwrite):
     if path is not None:
@@ -86,7 +89,7 @@ def remove_if_overwrite(path, overwrite):
             raise Exception(f"File: {path} already exists and overwrite is False.")
 
 
-def get_size(start_path='.', rough=True):
+def get_size(start_path=".", rough=True):
     total_size = 0
     for dirpath, _dirnames, filenames in os.walk(start_path):
         for f in filenames:
@@ -124,7 +127,7 @@ def divide_into_steps(arr, steps_length):
         count += 1
         if count > len(arr):
             continue
-        ret_arr.append(arr[last:x + last])
+        ret_arr.append(arr[last : x + last])
         last += x
 
     return ret_arr
@@ -137,11 +140,9 @@ def step_ranges(steps):
         step_size = steps[num]
         id = num + 1
 
-        start_stop.append({
-            "id": id,
-            "start": last,
-            "stop": last + step_size,
-        })
+        start_stop.append(
+            {"id": id, "start": last, "stop": last + step_size,}
+        )
 
         last += step_size
 
@@ -161,13 +162,9 @@ def file_in_use(path):
 
 
 def type_check(
-    variable: any,
-    types: list,
-    name: str="",
-    allow_none=False,
-    throw_error=True,
+    variable: Any, types: list, name: str = "", allow_none=False, throw_error=True,
 ) -> bool:
-    '''
+    """
         Utility function to type check the inputs of a function.
 
     Args:
@@ -186,7 +183,19 @@ def type_check(
     Returns:
         A boolean indicating if the type is valid. If throw_error an error is 
         raised if the input is not a valid type.
-    '''
+    """
+
+    if variable is None:
+        if allow_none:
+            return True
+
+        if throw_error:
+            raise ValueError(
+                f"Variable: {name} is type None when type None is not allowed."
+            )
+
+        return False
+
     is_valid_type = isinstance(variable, tuple(types))
 
     if is_valid_type:
@@ -199,11 +208,13 @@ def type_check(
     valid_types = list(types)
     if allow_none:
         valid_types.append(None)
-    
+
     for t in valid_types:
         type_names.append(t.__name__)
 
     if throw_error:
-        raise ValueError(f"Variable: {name} must be type(s): {' '.join(type_names)} - Received type: {type(variable).__name__}, variable: {variable}")
+        raise ValueError(
+            f"Variable: {name} must be type(s): {' '.join(type_names)} - Received type: {type(variable).__name__}, variable: {variable}"
+        )
 
     return False
