@@ -1,6 +1,6 @@
 import osgeo
 from osgeo import gdal, ogr, osr
-from typing import Union, Any, Tuple, List
+from typing import Sequence, Union, Any, Tuple, List
 from uuid import uuid4
 import numpy as np
 import os
@@ -701,7 +701,7 @@ def advanced_extents(
 
 
 # x_min, x_max, y_min, y_max
-def ogr_bbox_within(bbox1, bbox2):
+def ogr_bbox_within(bbox1: Sequence[Number], bbox2: Sequence[Number]) -> bool:
     return (
         (bbox1[0] >= bbox2[0])
         and (bbox1[1] <= bbox2[1])
@@ -711,7 +711,7 @@ def ogr_bbox_within(bbox1, bbox2):
 
 
 # x_min, y_max, x_max, y_min
-def gdal_bbox_within(bbox1, bbox2):
+def gdal_bbox_within(bbox1: Sequence[Number], bbox2: Sequence[Number]) -> bool:
     return (
         (bbox1[0] >= bbox2[0])
         and (bbox1[1] <= bbox2[1])
@@ -721,7 +721,7 @@ def gdal_bbox_within(bbox1, bbox2):
 
 
 # x_min, x_max, y_min, y_max
-def ogr_bbox_intersects(bbox1, bbox2):
+def ogr_bbox_intersects(bbox1: Sequence[Number], bbox2: Sequence[Number]) -> bool:
     return (
         (bbox1[0] <= bbox2[1])
         and (bbox2[0] <= bbox1[1])
@@ -731,7 +731,7 @@ def ogr_bbox_intersects(bbox1, bbox2):
 
 
 # x_min, y_max, x_max, y_min
-def gdal_bbox_intersects(bbox1, bbox2):
+def gdal_bbox_intersects(bbox1: Sequence[Number], bbox2: Sequence[Number]) -> bool:
     return (
         (bbox1[0] <= bbox2[2])
         and (bbox2[0] <= bbox1[2])
@@ -741,8 +741,11 @@ def gdal_bbox_intersects(bbox1, bbox2):
 
 
 def reproject_extent(
-    extent, source_projection, target_projection,  # x_min, y_max, x_max, y_in
+    extent: Sequence[Number],
+    source_projection: osr.SpatialReference,
+    target_projection: osr.SpatialReference,  # x_min, y_max, x_max, y_min
 ):
+    """ GDAL Format """
     if len(extent) != 4:
         raise ValueError("Invalid shape of extent.")
     if not isinstance(extent[0], float):

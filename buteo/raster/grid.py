@@ -35,6 +35,7 @@ def raster_to_grid(
     process_layer: int = 0,
     creation_options: list = [],
     opened: bool = False,
+    verbose: int = 1,
 ) -> Union[list, tuple]:
     """ Clips a raster to a grid. Generate .vrt.
 
@@ -48,6 +49,7 @@ def raster_to_grid(
     type_check(process_layer, [int], "process_layer")
     type_check(creation_options, [list], "creation_options")
     type_check(opened, [bool], "opened")
+    type_check(verbose, [int], "verbose")
 
     raster_metadata = raster_to_metadata(raster, simple=False)
     grid_metadata = vector_to_metadata(grid)
@@ -77,23 +79,50 @@ def raster_to_grid(
 
     ref = raster_to_reference(raster)
 
-    shp_driver = ogr.GetDriverByName("Esri Shapefile")
-
     layer = use_grid.GetLayer(process_layer)
     feature_count = layer.GetFeatureCount()
     raster_extent = raster_metadata["extent_ogr"]
     filetype = path_to_ext(raster)
-    basename = raster_metadata["basename"]
+    name = raster_metadata["name"]
     geom_type = grid_metadata["layers"][process_layer]["geom_type_ogr"]
 
     if use_field is not None:
         if use_field not in grid_metadata["layers"][process_layer]["field_names"]:
-            raise ValueError("Requested field not found.")
+            names = grid_metadata["layers"][process_layer]["field_names"]
+            raise ValueError(f"Requested field not found. Fields available are: {names}")
 
     generated = []
 
+    # For the sake of good reporting - lets first establish how many features intersect
+    # the raster.
+
+    if verbose:
+        print("Finding intersections.")
+
+    intersections = 0
     for _ in range(feature_count):
-        progress(_, feature_count - 1, "clip_grid")
+        feature = layer.GetNextFeature()
+        geom = feature.GetGeometryRef()
+
+        if not ogr_bbox_intersects(raster_extent, geom.GetEnvelope()):
+            continue
+
+        intersections += 1
+
+    layer.ResetReading()
+
+    if verbose:
+        print(f"Found {intersections} intersections.")
+
+    if intersections == 0:
+        print("Warning: Found 0 intersections. Returning empty list.")
+        return []
+
+    # TODO: Replace this in gdal. 3.1
+    driver = ogr.GetDriverByName("Esri Shapefile")
+
+    clipped = 0
+    for _ in range(feature_count):
 
         feature = layer.GetNextFeature()
         geom = feature.GetGeometryRef()
@@ -101,12 +130,15 @@ def raster_to_grid(
         if not ogr_bbox_intersects(raster_extent, geom.GetEnvelope()):
             continue
 
+        if verbose == 1:
+            progress(clipped, intersections - 1, "clip_grid")
+
         fid = feature.GetFID()
 
         test_ds_path = f"/vsimem/grid_{uuid4().int}.shp"
-        test_ds = shp_driver.CreateDataSource(test_ds_path)
+        test_ds = driver.CreateDataSource(test_ds_path)
         test_ds_lyr = test_ds.CreateLayer(
-            "test_mem_grid_layer",
+            "mem_layer_grid",
             geom_type=geom_type,
             srs=raster_metadata["projection_osr"],
         )
@@ -118,11 +150,11 @@ def raster_to_grid(
         if use_field is not None:
             out_name = f"{out_dir}{feature.GetField(use_field)}{filetype}"
         else:
-            out_name = f"{out_dir}{basename}_{fid}{filetype}"
+            out_name = f"{out_dir}{name}_{fid}{filetype}"
 
         generated.append(out_name)
 
-        clipped = clip_raster(
+        clip_raster(
             ref,
             test_ds_path,
             out_path=out_name,
@@ -135,8 +167,10 @@ def raster_to_grid(
             verbose=0,
         )
 
+        clipped += 1
+
     if generate_vrt:
-        vrt_name = f"{out_dir}{basename}.vrt"
+        vrt_name = f"{out_dir}{name}.vrt"
         stack_rasters_vrt(generated, vrt_name, seperate=False)
 
         return (vrt_name, generated)

@@ -1,17 +1,23 @@
-from buteo.project_types import Metadata_vector
+from buteo.project_types import Metadata_raster, Metadata_vector
 import sys
 
 sys.path.append("../../")
 from osgeo import gdal, ogr
 from typing import Union, List
 from buteo.raster.io import raster_to_metadata
-from buteo.vector.io import vector_to_memory, vector_to_metadata, vector_to_path
+from buteo.vector.io import (
+    vector_in_memory,
+    vector_to_memory,
+    vector_to_metadata,
+    vector_to_path,
+)
 from buteo.utils import (
     file_exists,
     remove_if_overwrite,
     type_check,
 )
 from buteo.gdal_utils import (
+    gdal_bbox_intersects,
     raster_to_reference,
     reproject_extent,
     ready_io_raster,
@@ -106,26 +112,37 @@ def clip_raster(
         raster, out_path, overwrite, prefix, postfix
     )
 
-    if is_raster(clip_geom):
-        clip_metadata = raster_to_metadata(clip_geom, simple=False)
+    # Input is a vector.
+    if is_vector(clip_geom):
+        if vector_in_memory(clip_geom):
+            clip_ds = clip_geom
+        else:
+            clip_ds = vector_to_memory(clip_geom)
+
+        clip_metadata = vector_to_metadata(clip_ds, process_layer=layer_to_clip)
 
         if not isinstance(clip_metadata, dict):
-            raise Exception("Metadata is not a dict.")
+            raise Exception("Error while parsing metadata.")
 
-        clip_ds = vector_to_path(clip_metadata["extent_ogr"])
-    elif is_vector(clip_geom):
-        clip_ds = vector_to_memory(clip_geom)
-        clip_metadata = vector_to_metadata(
-            clip_ds, simple=False, process_layer=layer_to_clip
-        )
+    # Input is a raster (use extent)
+    elif is_raster(clip_geom):
+        clip_metadata_raster = raster_to_metadata(clip_geom, simple=False)
+
+        if not isinstance(clip_metadata_raster, dict):
+            raise Exception("Error while parsing metadata.")
+
+        clip_ds = vector_to_memory(clip_metadata_raster["extent_datasource"])
+
+        clip_metadata = vector_to_metadata(clip_ds)
 
         if not isinstance(clip_metadata, dict):
-            raise Exception("Metadata is not a dict.")
+            raise Exception("Error while parsing metadata.")
+
     else:
         if file_exists(clip_geom):
             raise ValueError(f"Unable to parse clip geometry: {clip_geom}")
         else:
-            raise ValueError(f"Unable to find clip geometry {clip_geom}")
+            raise ValueError(f"Unable to locate clip geometry {clip_geom}")
 
     if layer_to_clip > (clip_metadata["layer_count"] - 1):
         raise ValueError("Requested an unable layer_to_clip.")
@@ -134,7 +151,7 @@ def clip_raster(
         raise ValueError(f"Unable to parse input clip geom: {clip_geom}")
 
     clip_projection = clip_metadata["projection_osr"]
-    clip_extent = clip_metadata["extent_geom_latlng"]
+    clip_extent = clip_metadata["extent"]
 
     # options
     warp_options = []
@@ -143,21 +160,29 @@ def clip_raster(
     else:
         warp_options.append("CUTLINE_ALL_TOUCHED=FALSE")
 
-    metadatas = list(raster_to_metadata(raster_list, simple=False))
-    clipped_rasters = []
+    metadatas = raster_to_metadata(raster_list)
 
+    if not isinstance(metadatas, list):
+        raise Exception("Error while parsing metadata.")
+
+    clipped_rasters = []
     for index, in_raster in enumerate(raster_list):
         origin_layer = raster_to_reference(in_raster)
 
         raster_metadata = metadatas[index]
         origin_projection = raster_metadata["projection_osr"]
-        origin_extent = raster_metadata["extent_geom_latlng"]
+        origin_extent = raster_metadata["extent"]
 
         # Check if projections match, otherwise reproject target geom.
         if not origin_projection.IsSame(clip_projection):
             clip_metadata["extent"] = reproject_extent(
                 clip_metadata["extent"], clip_projection, origin_projection,
             )
+
+        # Fast check: Does the extent of the two inputs overlap?
+        if not gdal_bbox_intersects(origin_extent, clip_extent):
+            print("WARNING: Geometries did not intersect. Returning None.")
+            return None
 
         output_bounds = raster_metadata["extent_gdal_warp"]
 
@@ -190,8 +215,12 @@ def clip_raster(
                 out_nodata = gdal_nodata_value_from_type(
                     raster_metadata["datatype_gdal_raw"]
                 )
-            else:
+            elif dst_nodata == None:
+                out_nodata = None
+            elif isinstance(dst_nodata, (int, float)):
                 out_nodata = dst_nodata
+            else:
+                raise ValueError(f"Unable to parse nodata_value: {dst_nodata}")
 
         # Removes file if it exists and overwrite is True.
         remove_if_overwrite(out_path, overwrite)

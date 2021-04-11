@@ -80,7 +80,7 @@ def vector_to_metadata(
             x_min, x_max, y_min, y_max = layer.GetExtent()
             layer_name: str = layer.GetName()
             extent: List[Number] = [x_min, y_max, x_max, y_min]
-            extent_ogr: List[Number] = [x_min, x_max, x_min, x_max]
+            extent_ogr: List[Number] = [x_min, x_max, y_min, y_max]
             extent_dict: Dict[str, Number] = {
                 "left": x_min,
                 "top": y_max,
@@ -241,20 +241,20 @@ def vector_to_metadata(
 
 
 def vector_to_memory(
-    vector: Union[str, ogr.DataSource],
-    memory_path: Union[str, None] = None,
-    layer_to_extract: Union[int, None] = None,
+    vector: Union[List[Union[ogr.DataSource, str]], ogr.DataSource, str],
+    memory_path: Union[List[str], str, None] = None,
+    layer_to_extract: int = -1,
     opened: bool = False,
 ) -> Union[str, ogr.DataSource]:
     """ Copies a vector source to memory.
 
     Args:
-        vector (path | DataSource): The vector to copy to memory
+        vector (list | path | DataSource): The vector to copy to memory
 
     **kwargs:
         memory_path (str | None): If a path is provided, uses the
         appropriate driver and uses the VSIMEM gdal system.
-        Example: vector_to_memory(clip_ref, "clip_geom.gpkg")
+        Example: vector_to_memory(clip_ref.tif, "clip_geom.gpkg")
         /vsimem/ is autumatically added.
 
         layer_to_extract (int | None): The layer in the vector to copy.
@@ -270,9 +270,8 @@ def vector_to_memory(
     """
     ref = vector_to_reference(vector)
     metadata = vector_to_metadata(ref)
-    basename = (
-        metadata["basename"] if metadata["basename"] is not None else "mem_vector"
-    )
+
+    basename = metadata["name"] if metadata["name"] is not None else "name"
 
     driver = None
     vector_name = None
