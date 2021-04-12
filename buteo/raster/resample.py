@@ -39,7 +39,7 @@ def internal_resample_raster(
     """ OBS: Internal. Single output.
 
         Reprojects a raster given a target projection. Beware if your input is in
-        latitude and longitude, you'll need to specify the target_sizedegrees as well.
+        latitude and longitude, you'll need to specify the target_size in degrees as well.
     """
     type_check(raster, [str, gdal.Dataset], "raster")
     type_check(target_size, [tuple, int, float, str, gdal.Dataset], "target_size")
@@ -117,7 +117,7 @@ def resample_raster(
     postfix: str = "_resampled",
 ) -> Union[List[str], str]:
     """ Reprojects a raster given a target projection. Beware if your input is in
-        latitude and longitude, you'll need to specify the target_sizedegrees as well.
+        latitude and longitude, you'll need to specify the target_size in degrees as well.
 
     Args:
         raster (list, path | raster): The raster to reproject.

@@ -1,26 +1,108 @@
-import sys; sys.path.append('../../')
-from uuid import uuid4
-from typing import Union
+import sys
+
+from mypy_extensions import TypedDict
+
+sys.path.append("../../")
+from typing import Union, List, Optional
 from osgeo import ogr
 
-from buteo.gdal_utils import (
-    is_vector,
-    path_to_driver,
-    vector_to_reference,
-)
+from buteo.gdal_utils import path_to_driver
 from buteo.utils import type_check
-from buteo.vector.io import vector_to_metadata, vector_add_index
+from buteo.vector.io import (
+    open_vector,
+    ready_io_vector,
+    internal_vector_to_metadata,
+    vector_add_index,
+)
+
+
+def internal_dissolve_vector(
+    vector: Union[str, ogr.DataSource],
+    attribute: Optional[str] = None,
+    out_path: str = None,
+    overwrite: bool = True,
+    add_index: bool = True,
+    vector_idx: int = -1,
+) -> str:
+    """ Clips a vector to a geometry.
+    """
+    type_check(vector, [str, ogr.DataSource], "vector")
+    type_check(attribute, [str], "attribute", allow_none=True)
+    type_check(out_path, [str], "out_path", allow_none=True)
+    type_check(overwrite, [bool], "overwrite")
+    type_check(add_index, [bool], "add_index")
+    type_check(vector_idx, [int], "vector_idx")
+
+    vector_list, path_list = ready_io_vector(vector, out_path)
+    out_name = path_list[0]
+    out_format = path_to_driver(out_name)
+
+    driver = ogr.GetDriverByName(out_format)
+
+    ref = open_vector(vector_list[0])
+    metadata = internal_vector_to_metadata(ref)
+
+    Layer_info = TypedDict(
+        "Layer_info", {"name": str, "geom": str, "fields": List[str]},
+    )
+
+    layers: List[Layer_info] = []
+
+    if vector_idx == -1:
+        for index in range(len(metadata["layers"])):
+            layers.append(
+                {
+                    "name": metadata["layers"][index]["layer_name"],
+                    "geom": metadata["layers"][index]["column_geom"],
+                    "fields": metadata["layers"][index]["field_names"],
+                }
+            )
+    else:
+        layers.append(
+            {
+                "name": metadata["layers"][vector_idx]["layer_name"],
+                "geom": metadata["layers"][vector_idx]["column_geom"],
+                "fields": metadata["layers"][vector_idx]["field_names"],
+            }
+        )
+
+    destination = driver.CreateDataSource(out_name)
+
+    # Check if attribute table is valid
+    for index in range(len(metadata["layers"])):
+        layer = layers[index]
+        if attribute is not None and attribute not in layer["fields"]:
+            layer_fields = layer["fields"]
+            raise ValueError(
+                f"Invalid attribute for layer. Layers has the following fields: {layer_fields}"
+            )
+
+        geom_col = layer["geom"]
+        name = layer["name"]
+
+        sql = None
+        if attribute is None:
+            sql = f"SELECT ST_Union({geom_col}) AS geom FROM {name};"
+        else:
+            sql = f"SELECT {attribute}, ST_Union({geom_col}) AS geom FROM {name} GROUP BY {attribute};"
+
+        result = ref.ExecuteSQL(sql, dialect="SQLITE")
+        destination.CopyLayer(result, name, ["OVERWRITE=YES"])
+
+    if add_index:
+        vector_add_index(destination)
+
+    return out_name
 
 
 def dissolve_vector(
-    vector: Union[ogr.DataSource, str, list],
-    attribute: Union[list, str, None]=None,
-    single_parts: bool=False,
-    out_path: str=None,
-    overwrite: bool=True,
-    opened: bool=False,
-    vector_idx: int=-1,
-) -> str:
+    vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource],
+    attribute: Optional[str] = None,
+    out_path: str = None,
+    overwrite: bool = True,
+    add_index: bool = True,
+    vector_idx: int = -1,
+) -> Union[List[str], str]:
     """ Clips a vector to a geometry.
     Args:
         vector (list of vectors | path | vector): The vectors(s) to clip.
@@ -36,69 +118,30 @@ def dissolve_vector(
     """
     type_check(vector, [ogr.DataSource, str, list], "vector")
     type_check(attribute, [str], "attribute", allow_none=True)
-    type_check(single_parts, [bool], "single_parts")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
-    type_check(opened, [bool], "opened")
+    type_check(add_index, [bool], "add_index")
     type_check(vector_idx, [int], "vector_idx")
 
-    out_format = 'GPKG'
-    out_target = f"/vsimem/union_{uuid4().int}.gpkg"
+    raster_list, path_list = ready_io_vector(vector, out_path)
 
-    if out_path is not None:
-        out_target = out_path
-        out_format = path_to_driver(out_path)
+    output = []
+    for index, in_vector in enumerate(raster_list):
+        output.append(
+            internal_dissolve_vector(
+                in_vector,
+                attribute=attribute,
+                out_path=path_list[index],
+                overwrite=overwrite,
+                add_index=add_index,
+                vector_idx=vector_idx,
+            )
+        )
 
-    if not is_vector(vector):
-        raise TypeError(f"Invalid vector input: {vector}.")
+    if isinstance(vector, list):
+        return output
 
-    driver = ogr.GetDriverByName(out_format)
-
-    ref = vector_to_reference(vector)
-    metadata = vector_to_metadata(vector)
-
-    layers = []
-
-    if vector_idx == -1:
-        for layer in metadata["layers"]:
-            layers.append({
-                "name": layer["layer_name"],
-                "geom": layer["geom_column"],
-                "fields": layer["field_names"],
-            })
-    else:
-        layers.append({
-            "name": metadata["layers"][vector_idx]["layer_name"],
-            "geom": metadata["layers"][vector_idx]["geom_column"],
-            "fields": metadata["layers"][vector_idx]["field_names"]
-        })
-
-    destination = driver.CreateDataSource(out_target)
-
-    # Check if attribute table is valid
-    for layer in layers:
-        if attribute is not None and attribute not in layer["fields"]:
-            layer_fields = layer["fields"]
-            raise ValueError(f"Invalid attribute for layer. Layers has the following fields: {layer_fields}")
-        
-        geom_col = layer["geom"]
-        name = layer["name"]
-    
-        sql = None
-        if attribute is None:
-            sql = f"SELECT ST_Union({geom_col}) AS geom FROM {name};"
-        else:
-            sql = f"SELECT {attribute}, ST_Union({geom_col}) AS geom FROM {name} GROUP BY {attribute};"
-
-        result = ref.ExecuteSQL(sql, dialect="SQLITE")
-        destination.CopyLayer(result, name, ["OVERWRITE=YES"])
-    
-    vector_add_index(destination)
-
-    if opened:
-        return destination
-    
-    return out_path
+    return output[0]
 
 
 if __name__ == "__main__":

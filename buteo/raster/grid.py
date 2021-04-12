@@ -23,6 +23,25 @@ from buteo.gdal_utils import (
 )
 
 
+# TODO: raster_to_grid without geom.
+#   dset = gdal.Open(raster_path)
+
+# width = dset.RasterXSize
+# height = dset.RasterYSize
+
+# print(width,'x',height)
+
+# tilesize =5000
+
+# for i inrange(0, width, tilesize):
+# for j inrange(0, height, tilesize):
+#         w =min(i+tilesize, width) - i
+#         h =min(j+tilesize, height) - j
+#         gdaltranString ="gdal_translate -of GTIFF -srcwin "+str(i)+", "+str(j)+", "+str(w)+", " \
+# +str(h)+" "+ raster_path +" "+ path +"test_area"+"_"+str(i)+"_"+str(j)+".tif"
+#         os.system(gdaltranString)
+
+
 def raster_to_grid(
     raster: Union[str, gdal.Dataset],
     grid: Union[str, ogr.DataSource],

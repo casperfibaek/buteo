@@ -2,7 +2,7 @@ import sys
 
 sys.path.append("../../")
 from uuid import uuid4
-from typing import Union
+from typing import Union, Optional, List
 from osgeo import ogr, osr, gdal
 
 from buteo.gdal_utils import (
@@ -14,29 +14,28 @@ from buteo.gdal_utils import (
 from buteo.utils import type_check
 from buteo.raster.io import internal_raster_to_metadata
 from buteo.vector.io import (
-    get_vector_path,
     internal_vector_to_memory,
     internal_vector_to_metadata,
-    open_vector,
+    ready_io_vector,
 )
 
 
-def clip_vector(
-    vector: Union[ogr.DataSource, str, list],
-    clip_geom: Union[ogr.DataSource, str, list, tuple],
-    out_path: str = None,
+def internal_clip_vector(
+    vector: Union[str, ogr.DataSource],
+    clip_geom: Union[str, ogr.DataSource],
+    out_path: Optional[str] = None,
     to_extent: bool = False,
-    target_projection: Union[
-        str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int
+    target_projection: Optional[
+        Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int]
     ] = None,
     preserve_fid: bool = True,
-):
+) -> str:
     """ Clips a vector to a geometry.
 
     Returns:
         A clipped ogr.Datasource or the path to one.
     """
-    type_check(vector, [ogr.DataSource, str, list], "vector")
+    type_check(vector, [str, ogr.DataSource], "vector")
     type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(to_extent, [bool], "to_extent")
@@ -86,8 +85,9 @@ def clip_vector(
         out_projection = parse_projection(target_projection, return_wkt=True)
         options.append(f"-t_srs {out_projection}")
 
+    # dst  # src
     success = gdal.VectorTranslate(
-        out_target, vector, format=out_format, options=" ".join(options),  # dst  # src
+        out_target, vector, format=out_format, options=" ".join(options),
     )
 
     if success != 0:
@@ -95,3 +95,50 @@ def clip_vector(
     else:
         raise Exception("Error while clipping geometry.")
 
+
+def clip_vector(
+    vector: Union[List[Union[str, ogr.DataSource]], Union[str, ogr.DataSource]],
+    clip_geom: Union[ogr.DataSource, str, list, tuple],
+    out_path: str = None,
+    to_extent: bool = False,
+    target_projection: Union[
+        str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int
+    ] = None,
+    preserve_fid: bool = True,
+) -> Union[List[str], str]:
+    """ Clips a vector to a geometry.
+
+    Returns:
+        A clipped ogr.Datasource or the path to one.
+    """
+    type_check(vector, [list, str, ogr.DataSource], "vector")
+    type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
+    type_check(out_path, [str], "out_path", allow_none=True)
+    type_check(to_extent, [bool], "to_extent")
+    type_check(
+        target_projection,
+        [str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int],
+        "target_projection",
+        allow_none=True,
+    )
+    type_check(preserve_fid, [bool], "preserve_fid")
+
+    vector_list, path_list = ready_io_vector(vector, out_path)
+
+    output: List[str] = []
+    for index, in_vector in enumerate(vector_list):
+        output.append(
+            internal_clip_vector(
+                in_vector,
+                clip_geom,
+                out_path=path_list[index],
+                to_extent=to_extent,
+                target_projection=target_projection,
+                preserve_fid=preserve_fid,
+            )
+        )
+
+    if isinstance(vector, list):
+        return output
+
+    return output[0]
