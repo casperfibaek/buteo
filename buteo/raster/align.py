@@ -1,20 +1,19 @@
 import sys
 
 sys.path.append("../../")
-from uuid import uuid4
-from typing import Union
+from typing import Union, List, Optional
 from osgeo import gdal, ogr, osr
 import numpy as np
 from buteo.raster.io import (
+    internal_raster_to_metadata,
     raster_to_metadata,
     rasters_are_aligned,
+    ready_io_raster,
 )
-from buteo.vector.io import vector_to_metadata
+from buteo.vector.io import internal_vector_to_metadata
 from buteo.raster.reproject import reproject_raster
 from buteo.vector.reproject import reproject_vector
 from buteo.utils import (
-    folder_exists,
-    overwrite_required,
     remove_if_overwrite,
     type_check,
 )
@@ -32,25 +31,25 @@ from buteo.gdal_utils import (
 
 # TODO: Verify that sorting the dictionary works properly.
 def align_rasters(
-    rasters: list,
-    out_path: Union[list, str, None] = None,
-    master: Union[gdal.Dataset, str, None] = None,
+    rasters: List[str, gdal.Dataset],
+    out_path: Optional[Union[List[str], str]] = None,
+    master: Optional[Union[gdal.Dataset, str]] = None,
     bounding_box: Union[
         str, gdal.Dataset, ogr.DataSource, list, tuple
     ] = "intersection",
     resample_alg: str = "nearest",
-    target_size: Union[tuple, list, int, float, str, gdal.Dataset, None] = None,
+    target_size: Optional[Union[tuple, list, int, float, str, gdal.Dataset]] = None,
     target_in_pixels: bool = False,
-    projection: Union[
-        int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference, None
+    projection: Optional[
+        Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
     ] = None,
     overwrite: bool = True,
     creation_options: list = [],
-    src_nodata: Union[str, int, float, None] = "infer",
-    dst_nodata: Union[str, int, float, None] = "infer",
+    src_nodata: Optional[Union[str, int, float]] = "infer",
+    dst_nodata: Optional[Union[str, int, float]] = "infer",
     prefix: str = "",
     postfix: str = "_aligned",
-) -> list:
+) -> List[str]:
     type_check(rasters, [list], "rasters")
     type_check(out_path, [list, str], "out_path", allow_none=True)
     type_check(master, [list, str], "master", allow_none=True)
@@ -77,14 +76,12 @@ def align_rasters(
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
 
-    if isinstance(out_path, list):
-        if len(out_path) != len(rasters):
-            raise ValueError(
-                "If output is a list of paths, it must have the same length as rasters"
-            )
+    raster_list, path_list = ready_io_raster(
+        rasters, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix
+    )
 
     target_projection = None
-    target_bounds: Union[tuple, None] = None
+    target_bounds = None
 
     # It's only necessary to set either res or pixels.
     x_res = None
@@ -94,36 +91,14 @@ def align_rasters(
 
     reprojected_rasters = []
 
-    # Ready the output names. Check output folder if one is specified.
-    output_names = []
-    if isinstance(out_path, list):
-        output_names = out_path
-    elif isinstance(out_path, str):
-        if not folder_exists(out_path):
-            raise ValueError("output folder does not exists.")
-
     # Read the metadata for each raster.
     # Catalogue the used projections, to choose the most common one if necessary.
-    metadata: list = []
     used_projections = []
-    for index, raster in enumerate(rasters):
-        raster_metadata = dict(raster_to_metadata(raster))
-        used_projections.append(raster_metadata["projection"])
-
-        if isinstance(out_path, str):
-            basename = raster_metadata["basename"]
-            ext = raster_metadata["ext"]
-            output_names.append(f"{out_path}{prefix}{basename}{postfix}{ext}")
-
-        metadata.append(raster_metadata)
-
-    # throws an error if the file exists and overwrite is False.
-    for output_name in output_names:
-        overwrite_required(output_name, overwrite)
 
     # If there is a master layer, copy information from that layer.
     if master is not None:
-        master_metadata = dict(raster_to_metadata(master))
+        master_metadata = internal_raster_to_metadata(master)
+
         target_projection = master_metadata["projection_osr"]
         x_min, y_max, x_max, y_min = master_metadata["extent"]
 
@@ -166,7 +141,7 @@ def align_rasters(
 
             # Reprojection is necessary to ensure the correct pixel_size
             reprojected_target_size = reproject_raster(target_size, target_projection)
-            target_size_raster = dict(raster_to_metadata(reprojected_target_size))
+            target_size_raster = internal_raster_to_metadata(reprojected_target_size)
 
             # Set the target values.
             x_res = target_size_raster["width"]
@@ -187,7 +162,7 @@ def align_rasters(
         for index, raster in enumerate(rasters):
             # It is necessary to reproject each raster, as pixel height and width might be different after projection.
             reprojected = reproject_raster(raster, target_projection)
-            target_size_raster = dict(raster_to_metadata(reprojected))
+            target_size_raster = internal_raster_to_metadata(reprojected)
 
             # Add the pixel sizes to the numpy arrays
             x_res_arr[index] = target_size_raster["pixel_width"]
@@ -210,9 +185,10 @@ def align_rasters(
 
         # If the bounding box is a raster. Take the extent and reproject it to the target projection.
         elif is_raster(bounding_box):
-            reprojected_bbox = dict(
-                raster_to_metadata(reproject_raster(bounding_box, target_projection))
+            reprojected_bbox = internal_raster_to_metadata(
+                reproject_raster(bounding_box, target_projection)
             )
+
             x_min, y_max, x_max, y_min = reprojected_bbox["extent"]
 
             # add to target values.
@@ -220,9 +196,10 @@ def align_rasters(
 
         # If the bounding box is a raster. Take the extent and reproject it to the target projection.
         elif is_vector(bounding_box):
-            reprojected_bbox = vector_to_metadata(
+            reprojected_bbox = internal_vector_to_metadata(
                 reproject_vector(bounding_box, target_projection)
             )
+
             x_min, y_max, x_max, y_min = reprojected_bbox["extent"]
 
             # add to target values.
@@ -238,8 +215,9 @@ def align_rasters(
                 if len(reprojected_rasters) != len(rasters):
                     reprojected_rasters = []
 
-                    for index, raster in enumerate(rasters):
-                        raster_metadata = metadata[index]
+                    for raster in rasters:
+                        raster_metadata = internal_raster_to_metadata(raster)
+
                         if raster_metadata["projection_osr"].IsSame(target_projection):
                             reprojected_rasters.append(raster)
                         else:
@@ -300,8 +278,8 @@ def align_rasters(
     if len(reprojected_rasters) != len(rasters):
         reprojected_rasters = []
 
-        for index, raster in enumerate(rasters):
-            raster_metadata = metadata[index]
+        for raster in rasters:
+            raster_metadata = internal_raster_to_metadata(raster)
 
             # If the raster is already the correct projection, simply append the raster.
             if raster_metadata["projection_osr"].IsSame(target_projection):
@@ -318,27 +296,12 @@ def align_rasters(
         raise Exception("Error while preparing the target pixel size.")
 
     # This is the list of rasters to return. If output is not memory, it's a list of paths.
-    return_list = []
+    return_list: List[str] = []
     for index, raster in enumerate(reprojected_rasters):
-        raster_metadata = dict(raster_to_metadata(raster))
-        out_name = None
-        out_format = None
-        out_creation_options = None
+        raster_metadata = internal_raster_to_metadata(raster)
 
-        # Use the memory driver, no creation_options
-        if out_path is None:
-            out_name = (
-                "/vsimem/" + raster_metadata["name"] + f"_{uuid4().int}_aligned.tif"
-            )
-            out_format = "GTiff"
-            out_creation_options = ["BIGTIFF=YES"]
-
-        # Use the driver matching the file extension of the input raster.
-        # merge options from creation_options with defaults.
-        else:
-            out_name = output_names[index]
-            out_format = path_to_driver(out_name)
-            out_creation_options = default_options(creation_options)
+        out_name = path_list(index)
+        out_format = path_to_driver(out_name)
 
         # Handle nodata.
         out_src_nodata = None
@@ -367,7 +330,7 @@ def align_rasters(
         remove_if_overwrite(out_name, overwrite)
 
         # Hand over to gdal.Warp to do the heavy lifting!
-        warped = gdal.Warp(
+        gdal.Warp(
             out_name,
             raster,
             xRes=x_res,
@@ -378,7 +341,7 @@ def align_rasters(
             outputBounds=target_bounds,
             format=out_format,
             resampleAlg=translate_resample_method(resample_alg),
-            creationOptions=out_creation_options,
+            creationOptions=default_options(creation_options),
             srcNodata=out_src_nodata,
             dstNodata=out_dst_nodata,
             targetAlignedPixels=False,
@@ -386,11 +349,7 @@ def align_rasters(
             multithread=True,
         )
 
-        if out_path is not None:
-            warped = None
-            return_list.append(out_name)
-        else:
-            return_list.append(warped)
+        return_list.append(out_name)
 
     if not rasters_are_aligned(return_list, same_extent=True):
         raise Exception("Error while aligning rasters. Output is not aligned")

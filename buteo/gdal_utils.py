@@ -776,40 +776,6 @@ def reproject_extent(
     ]
 
 
-def to_raster_list(variable: Any) -> List[Union[gdal.Dataset, str]]:
-    return_list = []
-    if isinstance(variable, list):
-        return_list = variable
-    else:
-        return_list.append(variable)
-
-    if len(return_list) == 0:
-        raise ValueError("Empty raster list.")
-
-    for raster in return_list:
-        if not is_raster(raster):
-            raise ValueError(f"Invalid raster in list: {variable}")
-
-    return return_list
-
-
-def to_vector_list(variable: Any) -> List[Union[ogr.DataSource, str]]:
-    return_list = []
-    if isinstance(variable, list):
-        return_list = variable
-    else:
-        return_list.append(variable)
-
-    if len(return_list) == 0:
-        raise ValueError("Empty vector list.")
-
-    for vector in return_list:
-        if not is_vector(vector):
-            raise ValueError(f"Invalid vector in list: {variable}")
-
-    return return_list
-
-
 # TODO: Verify folder exists.
 def to_path_list(variable: Any) -> List[str]:
     return_list = []
@@ -882,55 +848,3 @@ def to_band_list(variable: Any, band_count: int,) -> List[int]:
 
     return return_list
 
-
-def ready_io_raster(
-    raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
-    out_path: Union[List[str], str, None],
-    overwrite: bool,
-    prefix: str = "",
-    postfix: str = "",
-) -> Tuple[List[Union[str, gdal.Dataset]], List[str]]:
-    raster_list = to_raster_list(raster)
-
-    if isinstance(out_path, list):
-        if len(raster_list) != len(out_path):
-            raise ValueError(
-                "The length of raster_list must equal the length of the out_path"
-            )
-
-    # Check if folder exists and is required.
-    if isinstance(raster, list):
-        if len(raster) > 1 and isinstance(out_path, str):
-            if not folder_exists(out_path):
-                raise ValueError("Output folder does not exists.")
-
-    # Generate output names
-    out_names: List[str] = []
-    for index, in_raster in enumerate(raster_list):
-
-        if isinstance(in_raster, str):
-            raster_name = os.path.basename(in_raster)
-        elif isinstance(in_raster, gdal.Dataset):
-            raster_name = os.path.basename(in_raster.GetDescription())
-
-        if out_path is None:
-            path = f"/vsimem/{prefix}{raster_name}{uuid4().int}{postfix}.tif"
-        elif isinstance(out_path, str):
-            if folder_exists(out_path):
-                path = f"{out_path}/{prefix}{raster_name}{uuid4().int}{postfix}.tif"
-            else:
-                path = out_path
-        elif isinstance(out_path, list):
-            if out_path[index] is None:
-                path = f"/vsimem/{prefix}{raster_name}{uuid4().int}{postfix}.tif"
-            elif isinstance(out_path[index], str):
-                path = out_path[index]
-            else:
-                raise ValueError(f"Unable to parse out_path: {out_path}")
-        else:
-            raise ValueError(f"Unable to parse out_path: {out_path}")
-
-        overwrite_required(path, overwrite)
-        out_names.append(path)
-
-    return (raster_list, out_names)

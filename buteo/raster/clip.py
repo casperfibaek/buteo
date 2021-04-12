@@ -1,15 +1,13 @@
-from buteo.project_types import Metadata_raster, Metadata_vector
 import sys
 
 sys.path.append("../../")
 from osgeo import gdal, ogr
-from typing import Union, List
-from buteo.raster.io import raster_to_metadata
+from typing import Union, List, Optional
+from buteo.raster.io import internal_raster_to_metadata, ready_io_raster, open_raster
 from buteo.vector.io import (
-    vector_in_memory,
+    open_vector,
     vector_to_memory,
-    vector_to_metadata,
-    vector_to_path,
+    internal_vector_to_metadata,
 )
 from buteo.utils import (
     file_exists,
@@ -18,9 +16,7 @@ from buteo.utils import (
 )
 from buteo.gdal_utils import (
     gdal_bbox_intersects,
-    raster_to_reference,
     reproject_extent,
-    ready_io_raster,
     is_raster,
     is_vector,
     path_to_driver,
@@ -31,9 +27,174 @@ from buteo.gdal_utils import (
 )
 
 
+def internal_clip_raster(
+    raster: Union[str, gdal.Dataset],
+    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
+    out_path: Optional[str] = None,
+    resample_alg: str = "nearest",
+    crop_to_geom: bool = True,
+    adjust_bbox: bool = True,
+    all_touch: bool = True,
+    overwrite: bool = True,
+    creation_options: list = [],
+    dst_nodata: Union[str, int, float] = "infer",
+    layer_to_clip: int = 0,
+    prefix: str = "",
+    postfix: str = "_clipped",
+    verbose: int = 1,
+) -> str:
+    """ OBS: Internal. Single output.
+        
+        Clips a raster(s) using a vector geometry or the extents of
+        a raster.
+    """
+    type_check(raster, [str, gdal.Dataset], "raster")
+    type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_geom")
+    type_check(out_path, [str], "out_path", allow_none=True)
+    type_check(resample_alg, [str], "resample_alg")
+    type_check(crop_to_geom, [bool], "crop_to_geom")
+    type_check(adjust_bbox, [bool], "adjust_bbox")
+    type_check(all_touch, [bool], "all_touch")
+    type_check(dst_nodata, [str, int, float], "dst_nodata")
+    type_check(layer_to_clip, [int], "layer_to_clip")
+    type_check(overwrite, [bool], "overwrite")
+    type_check(creation_options, [list], "creation_options")
+    type_check(prefix, [str], "prefix")
+    type_check(postfix, [str], "postfix")
+    type_check(verbose, [int], "verbose")
+
+    _, path_list = ready_io_raster(raster, out_path, overwrite, prefix, postfix)
+
+    # Input is a vector.
+    if is_vector(clip_geom):
+        clip_ds = open_vector(clip_geom)
+
+        clip_metadata = internal_vector_to_metadata(
+            clip_ds, process_layer=layer_to_clip
+        )
+
+    # Input is a raster (use extent)
+    elif is_raster(clip_geom):
+        clip_metadata_raster = internal_raster_to_metadata(
+            clip_geom, create_geometry=True
+        )
+
+        clip_ds = vector_to_memory(clip_metadata_raster["extent_datasource"])
+
+        clip_metadata = internal_vector_to_metadata(clip_ds)
+
+    else:
+        if file_exists(clip_geom):
+            raise ValueError(f"Unable to parse clip geometry: {clip_geom}")
+        else:
+            raise ValueError(f"Unable to locate clip geometry {clip_geom}")
+
+    if layer_to_clip > (clip_metadata["layer_count"] - 1):
+        raise ValueError("Requested an unable layer_to_clip.")
+
+    if clip_ds is None:
+        raise ValueError(f"Unable to parse input clip geom: {clip_geom}")
+
+    clip_projection = clip_metadata["projection_osr"]
+    clip_extent = clip_metadata["extent"]
+
+    # options
+    warp_options = []
+    if all_touch:
+        warp_options.append("CUTLINE_ALL_TOUCHED=TRUE")
+    else:
+        warp_options.append("CUTLINE_ALL_TOUCHED=FALSE")
+
+    origin_layer = open_raster(raster)
+
+    raster_metadata = internal_raster_to_metadata(raster)
+    origin_projection = raster_metadata["projection_osr"]
+    origin_extent = raster_metadata["extent"]
+
+    # Check if projections match, otherwise reproject target geom.
+    if not origin_projection.IsSame(clip_projection):
+        clip_metadata["extent"] = reproject_extent(
+            clip_metadata["extent"], clip_projection, origin_projection,
+        )
+
+    # Fast check: Does the extent of the two inputs overlap?
+    if not gdal_bbox_intersects(origin_extent, clip_extent):
+        raise Exception("Geometries did not intersect.")
+
+    output_bounds = raster_metadata["extent_gdal_warp"]
+
+    if crop_to_geom:
+
+        if adjust_bbox:
+            output_bounds = align_bbox(
+                raster_metadata["extent"],
+                clip_metadata["extent"],
+                raster_metadata["pixel_width"],
+                raster_metadata["pixel_height"],
+                warp_format=True,
+            )
+
+        else:
+            output_bounds = clip_metadata["extent_gdal_warp"]
+
+    # formats
+    out_name = path_list[0]
+    out_format = path_to_driver(out_name)
+    out_creation_options = default_options(creation_options)
+
+    # nodata
+    src_nodata = raster_metadata["nodata_value"]
+    out_nodata = None
+    if src_nodata is not None:
+        out_nodata = src_nodata
+    else:
+        if dst_nodata == "infer":
+            out_nodata = gdal_nodata_value_from_type(
+                raster_metadata["datatype_gdal_raw"]
+            )
+        elif dst_nodata == None:
+            out_nodata = None
+        elif isinstance(dst_nodata, (int, float)):
+            out_nodata = dst_nodata
+        else:
+            raise ValueError(f"Unable to parse nodata_value: {dst_nodata}")
+
+    # Removes file if it exists and overwrite is True.
+    remove_if_overwrite(out_path, overwrite)
+
+    if verbose == 0:
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
+
+    clipped = gdal.Warp(
+        out_name,
+        origin_layer,
+        format=out_format,
+        resampleAlg=translate_resample_method(resample_alg),
+        targetAlignedPixels=False,
+        outputBounds=output_bounds,
+        xRes=raster_metadata["pixel_width"],
+        yRes=raster_metadata["pixel_height"],
+        cutlineDSName=clip_ds,
+        cropToCutline=False,  # GDAL does this incorrectly when targetAlignedPixels is True.
+        creationOptions=out_creation_options,
+        warpOptions=warp_options,
+        srcNodata=raster_metadata["nodata_value"],
+        dstNodata=out_nodata,
+        multithread=True,
+    )
+
+    if verbose == 0:
+        gdal.PopErrorHandler()
+
+    if clipped is None:
+        raise Exception("Geometries did not intersect.")
+
+    return out_name
+
+
 def clip_raster(
     raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
-    clip_geom: Union[str, ogr.DataSource],
+    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
     out_path: Union[List[str], str, None] = None,
     resample_alg: str = "nearest",
     crop_to_geom: bool = True,
@@ -43,7 +204,6 @@ def clip_raster(
     creation_options: list = [],
     dst_nodata: Union[str, int, float] = "infer",
     layer_to_clip: int = 0,
-    opened: bool = False,
     prefix: str = "",
     postfix: str = "_clipped",
     verbose: int = 1,
@@ -93,7 +253,7 @@ def clip_raster(
         the path to the newly created raster.
     """
     type_check(raster, [list, str, gdal.Dataset], "raster")
-    type_check(clip_geom, [str, ogr.DataSource], "clip_geom")
+    type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_geom")
     type_check(out_path, [list, str], "out_path", allow_none=True)
     type_check(resample_alg, [str], "resample_alg")
     type_check(crop_to_geom, [bool], "crop_to_geom")
@@ -103,161 +263,36 @@ def clip_raster(
     type_check(layer_to_clip, [int], "layer_to_clip")
     type_check(overwrite, [bool], "overwrite")
     type_check(creation_options, [list], "creation_options")
-    type_check(opened, [bool], "opened")
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
     type_check(verbose, [int], "verbose")
 
-    raster_list, out_names = ready_io_raster(
+    raster_list, path_list = ready_io_raster(
         raster, out_path, overwrite, prefix, postfix
     )
 
-    # Input is a vector.
-    if is_vector(clip_geom):
-        if vector_in_memory(clip_geom):
-            clip_ds = clip_geom
-        else:
-            clip_ds = vector_to_memory(clip_geom)
-
-        clip_metadata = vector_to_metadata(clip_ds, process_layer=layer_to_clip)
-
-        if not isinstance(clip_metadata, dict):
-            raise Exception("Error while parsing metadata.")
-
-    # Input is a raster (use extent)
-    elif is_raster(clip_geom):
-        clip_metadata_raster = raster_to_metadata(clip_geom, simple=False)
-
-        if not isinstance(clip_metadata_raster, dict):
-            raise Exception("Error while parsing metadata.")
-
-        clip_ds = vector_to_memory(clip_metadata_raster["extent_datasource"])
-
-        clip_metadata = vector_to_metadata(clip_ds)
-
-        if not isinstance(clip_metadata, dict):
-            raise Exception("Error while parsing metadata.")
-
-    else:
-        if file_exists(clip_geom):
-            raise ValueError(f"Unable to parse clip geometry: {clip_geom}")
-        else:
-            raise ValueError(f"Unable to locate clip geometry {clip_geom}")
-
-    if layer_to_clip > (clip_metadata["layer_count"] - 1):
-        raise ValueError("Requested an unable layer_to_clip.")
-
-    if clip_ds is None:
-        raise ValueError(f"Unable to parse input clip geom: {clip_geom}")
-
-    clip_projection = clip_metadata["projection_osr"]
-    clip_extent = clip_metadata["extent"]
-
-    # options
-    warp_options = []
-    if all_touch:
-        warp_options.append("CUTLINE_ALL_TOUCHED=TRUE")
-    else:
-        warp_options.append("CUTLINE_ALL_TOUCHED=FALSE")
-
-    metadatas = raster_to_metadata(raster_list)
-
-    if not isinstance(metadatas, list):
-        raise Exception("Error while parsing metadata.")
-
-    clipped_rasters = []
+    output = []
     for index, in_raster in enumerate(raster_list):
-        origin_layer = raster_to_reference(in_raster)
-
-        raster_metadata = metadatas[index]
-        origin_projection = raster_metadata["projection_osr"]
-        origin_extent = raster_metadata["extent"]
-
-        # Check if projections match, otherwise reproject target geom.
-        if not origin_projection.IsSame(clip_projection):
-            clip_metadata["extent"] = reproject_extent(
-                clip_metadata["extent"], clip_projection, origin_projection,
+        output.append(
+            internal_clip_raster(
+                in_raster,
+                clip_geom,
+                out_path=path_list[index],
+                resample_alg=resample_alg,
+                crop_to_geom=crop_to_geom,
+                adjust_bbox=adjust_bbox,
+                all_touch=all_touch,
+                dst_nodata=dst_nodata,
+                layer_to_clip=layer_to_clip,
+                overwrite=overwrite,
+                creation_options=creation_options,
+                prefix=prefix,
+                postfix=postfix,
+                verbose=verbose,
             )
-
-        # Fast check: Does the extent of the two inputs overlap?
-        if not gdal_bbox_intersects(origin_extent, clip_extent):
-            print("WARNING: Geometries did not intersect. Returning None.")
-            return None
-
-        output_bounds = raster_metadata["extent_gdal_warp"]
-
-        if crop_to_geom:
-
-            if adjust_bbox:
-                output_bounds = align_bbox(
-                    raster_metadata["extent"],
-                    clip_metadata["extent"],
-                    raster_metadata["pixel_width"],
-                    raster_metadata["pixel_height"],
-                    warp_format=True,
-                )
-
-            else:
-                output_bounds = clip_metadata["extent_gdal_warp"]
-
-        # formats
-        out_name = out_names[index]
-        out_format = path_to_driver(out_name)
-        out_creation_options = default_options(creation_options)
-
-        # nodata
-        src_nodata = raster_metadata["nodata_value"]
-        out_nodata = None
-        if src_nodata is not None:
-            out_nodata = src_nodata
-        else:
-            if dst_nodata == "infer":
-                out_nodata = gdal_nodata_value_from_type(
-                    raster_metadata["datatype_gdal_raw"]
-                )
-            elif dst_nodata == None:
-                out_nodata = None
-            elif isinstance(dst_nodata, (int, float)):
-                out_nodata = dst_nodata
-            else:
-                raise ValueError(f"Unable to parse nodata_value: {dst_nodata}")
-
-        # Removes file if it exists and overwrite is True.
-        remove_if_overwrite(out_path, overwrite)
-
-        if verbose == 0:
-            gdal.PushErrorHandler("CPLQuietErrorHandler")
-
-        clipped = gdal.Warp(
-            out_name,
-            origin_layer,
-            format=out_format,
-            resampleAlg=translate_resample_method(resample_alg),
-            targetAlignedPixels=False,
-            outputBounds=output_bounds,
-            xRes=raster_metadata["pixel_width"],
-            yRes=raster_metadata["pixel_height"],
-            cutlineDSName=clip_ds,
-            cropToCutline=False,  # GDAL does this incorrectly when targetAlignedPixels is True.
-            creationOptions=out_creation_options,
-            warpOptions=warp_options,
-            srcNodata=raster_metadata["nodata_value"],
-            dstNodata=out_nodata,
-            multithread=True,
         )
 
-        if verbose == 0:
-            gdal.PopErrorHandler()
-
-        if clipped is None:
-            print("WARNING: Output is None. Returning empty layer.")
-
-        if opened:
-            clipped_rasters.append(clipped)
-        else:
-            clipped_rasters.append(out_name)
-
     if isinstance(raster, list):
-        return clipped_rasters
+        return output
 
-    return clipped_rasters[0]
+    return output[0]

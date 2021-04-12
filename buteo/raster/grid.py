@@ -3,14 +3,14 @@ import sys
 sys.path.append("../../")
 from uuid import uuid4
 from osgeo import gdal, ogr
-from typing import Union, Optional
+from typing import Union, Optional, Tuple, List
 
-from buteo.vector.io import vector_to_metadata
+from buteo.vector.io import open_vector, internal_vector_to_metadata
 
 from buteo.vector.intersect import intersect_vector
 from buteo.vector.reproject import reproject_vector
-from buteo.raster.clip import clip_raster
-from buteo.raster.io import raster_to_metadata, stack_rasters_vrt
+from buteo.raster.clip import internal_clip_raster
+from buteo.raster.io import open_raster, internal_raster_to_metadata, stack_rasters_vrt
 
 from buteo.utils import (
     path_to_ext,
@@ -19,8 +19,6 @@ from buteo.utils import (
 )
 from buteo.gdal_utils import (
     ogr_bbox_intersects,
-    vector_to_reference,
-    raster_to_reference,
     default_options,
 )
 
@@ -34,9 +32,8 @@ def raster_to_grid(
     overwrite: bool = True,
     process_layer: int = 0,
     creation_options: list = [],
-    opened: bool = False,
     verbose: int = 1,
-) -> Union[list, tuple]:
+) -> Union[List[str], Tuple[Optional[List[str]], Optional[str]]]:
     """ Clips a raster to a grid. Generate .vrt.
 
     Returns:
@@ -48,36 +45,25 @@ def raster_to_grid(
     type_check(overwrite, [bool], "overwrite")
     type_check(process_layer, [int], "process_layer")
     type_check(creation_options, [list], "creation_options")
-    type_check(opened, [bool], "opened")
     type_check(verbose, [int], "verbose")
 
-    raster_metadata = raster_to_metadata(raster, simple=False)
-    grid_metadata = vector_to_metadata(grid)
-
-    # This is necessary to ensure mypy that the metadata is a dictionary.
-    if not isinstance(raster_metadata, dict):
-        raise Exception("Error while parsing metadata.")
-
-    if not isinstance(grid_metadata, dict):
-        raise Exception("Error while parsing metadata.")
+    use_grid = open_vector(grid)
+    grid_metadata = internal_vector_to_metadata(use_grid)
+    raster_metadata = internal_raster_to_metadata(raster, create_geometry=True)
 
     # Reproject raster if necessary.
-    use_grid = vector_to_reference(grid)
     if not raster_metadata["projection_osr"].IsSame(grid_metadata["projection_osr"]):
-        use_grid = reproject_vector(
-            grid, raster_metadata["projection_osr"], opened=True
-        )
-        grid_metadata = vector_to_metadata(use_grid)
+        use_grid = reproject_vector(grid, raster_metadata["projection_osr"])
+        grid_metadata = internal_vector_to_metadata(use_grid)
 
         if not isinstance(grid_metadata, dict):
             raise Exception("Error while parsing metadata.")
 
     # Only use the polygons in the grid that intersect the extent of the raster.
-    use_grid = intersect_vector(
-        use_grid, raster_metadata["extent_datasource"], opened=True
-    )
+    use_grid = intersect_vector(use_grid, raster_metadata["extent_datasource"])
 
-    ref = raster_to_reference(raster)
+    ref = open_raster(raster)
+    use_grid = open_vector(use_grid)
 
     layer = use_grid.GetLayer(process_layer)
     feature_count = layer.GetFeatureCount()
@@ -89,7 +75,9 @@ def raster_to_grid(
     if use_field is not None:
         if use_field not in grid_metadata["layers"][process_layer]["field_names"]:
             names = grid_metadata["layers"][process_layer]["field_names"]
-            raise ValueError(f"Requested field not found. Fields available are: {names}")
+            raise ValueError(
+                f"Requested field not found. Fields available are: {names}"
+            )
 
     generated = []
 
@@ -116,7 +104,7 @@ def raster_to_grid(
 
     if intersections == 0:
         print("Warning: Found 0 intersections. Returning empty list.")
-        return []
+        return ([], None)
 
     # TODO: Replace this in gdal. 3.1
     driver = ogr.GetDriverByName("Esri Shapefile")
@@ -152,9 +140,7 @@ def raster_to_grid(
         else:
             out_name = f"{out_dir}{name}_{fid}{filetype}"
 
-        generated.append(out_name)
-
-        clip_raster(
+        internal_clip_raster(
             ref,
             test_ds_path,
             out_path=out_name,
@@ -163,17 +149,18 @@ def raster_to_grid(
             all_touch=False,
             postfix="",
             prefix="",
-            creation_options=creation_options,
+            creation_options=default_options(creation_options),
             verbose=0,
         )
 
+        generated.append(out_name)
         clipped += 1
 
     if generate_vrt:
         vrt_name = f"{out_dir}{name}.vrt"
         stack_rasters_vrt(generated, vrt_name, seperate=False)
 
-        return (vrt_name, generated)
+        return (generated, vrt_name)
 
     return generated
 

@@ -2,50 +2,29 @@ import sys
 
 sys.path.append("../../")
 from uuid import uuid4
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Optional
 from osgeo import gdal
 from buteo.project_types import Number
 from buteo.utils import remove_if_overwrite, is_number, type_check
 from buteo.gdal_utils import (
     path_to_driver,
-    raster_to_reference,
     default_options,
 )
 from buteo.raster.io import (
+    open_raster,
     default_options,
-    raster_to_metadata,
+    internal_raster_to_metadata,
 )
 
 
 def shift_raster(
     raster: Union[gdal.Dataset, str],
     shift: Union[Number, Tuple[Number, Number], List[Number]],
-    out_path: Union[str, None] = None,
+    out_path: Optional[str] = None,
     overwrite: bool = True,
     creation_options: list = [],
 ) -> Union[gdal.Dataset, str]:
-    """ Reprojects a raster given a target projection.
-
-    Args:
-        raster (path | raster): The raster to reproject.
-        
-        target_size (str | int | vector | raster): The target resolution of the
-        raster. In the same unit as the projection of the raster. Beware if your
-        input is in latitude and longitude, you'll need to specify degrees as well!
-        It's better to reproject to a projected coordinate system for resampling.
-
-    **kwargs:
-        out_path (path | None): The destination to save to. If None then
-        the output is an in-memory raster.
-
-        overwite (bool): Is it possible to overwrite the out_path if it exists.
-
-        creation_options (list): A list of options for the GDAL creation. Only
-        used if an outpath is specified. Defaults are:
-            "TILED=YES"
-            "NUM_THREADS=ALL_CPUS"
-            "BIGG_TIF=YES"
-            "COMPRESS=LZW"
+    """ Shifts a raster in a given direction.
 
     Returns:
         An in-memory raster. If an out_path is given the output is a string containing
@@ -57,11 +36,8 @@ def shift_raster(
     type_check(overwrite, [bool], "overwrite")
     type_check(creation_options, [list], "creation_options")
 
-    ref = raster_to_reference(raster)
-    metadata = raster_to_metadata(ref)
-
-    if not isinstance(metadata, dict):
-        raise Exception("Error while parsing metadata.")
+    ref = open_raster(raster)
+    metadata = internal_raster_to_metadata(ref)
 
     x_shift: float = 0.0
     y_shift: float = 0.0

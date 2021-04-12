@@ -1,12 +1,15 @@
-import sys; sys.path.append('../../')
+import sys
+
+sys.path.append("../../")
 from uuid import uuid4
 from typing import Union
-import osgeo; from osgeo import ogr, osr, gdal
+import osgeo
+from osgeo import ogr, osr, gdal
 from buteo.vector.io import (
     vector_to_reference,
     vector_to_memory,
     vector_to_metadata,
-    vector_to_disk
+    vector_to_disk,
 )
 from buteo.gdal_utils import parse_projection, path_to_driver, raster_to_reference
 from buteo.utils import remove_if_overwrite
@@ -15,10 +18,10 @@ from buteo.utils import remove_if_overwrite
 def reproject_vector(
     vector: Union[str, ogr.DataSource],
     projection: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
-    out_path: Union[str, None]=None,
-    copy_if_same: bool=False,
-    overwrite: bool=True,
-    opened: bool=False,
+    out_path: Union[str, None] = None,
+    copy_if_same: bool = False,
+    overwrite: bool = True,
+    opened: bool = False,
 ) -> Union[str, ogr.DataSource]:
     """ Reprojects a vector given a target projection.
 
@@ -49,7 +52,7 @@ def reproject_vector(
         if copy_if_same:
             if out_path is None:
                 return vector_to_memory(vector, opened=opened)
-            
+
             return vector_to_disk(vector, out_path, opened=opened)
         else:
             if opened:
@@ -72,7 +75,7 @@ def reproject_vector(
         driver = ogr.GetDriverByName(path_to_driver(out_path))
         destination = driver.CreateDataSource(out_path)
     else:
-        driver = ogr.GetDriverByName('GPKG')
+        driver = ogr.GetDriverByName("GPKG")
         basename = metadata["basename"]
         out_path = f"/vsimem/{basename}_reproject_{uuid4().int}.gpkg"
         destination = driver.CreateDataSource(out_path)
@@ -85,7 +88,9 @@ def reproject_vector(
         layer_name = layer_dict["layer_name"]
         layer_geom_type = layer_dict["geom_type_ogr"]
 
-        destination_layer = destination.CreateLayer(layer_name, target_projection, layer_geom_type)
+        destination_layer = destination.CreateLayer(
+            layer_name, target_projection, layer_geom_type
+        )
         destination_layer_defn = destination_layer.GetLayerDefn()
 
         # Copy field definitions
@@ -105,14 +110,20 @@ def reproject_vector(
 
             # Copy field values
             for i in range(0, destination_layer_defn.GetFieldCount()):
-                new_feature.SetField(destination_layer_defn.GetFieldDefn(i).GetNameRef(), feature.GetField(i))
+                new_feature.SetField(
+                    destination_layer_defn.GetFieldDefn(i).GetNameRef(),
+                    feature.GetField(i),
+                )
 
             destination_layer.CreateFeature(new_feature)
-            
+
         destination_layer.ResetReading()
         destination_layer = None
 
     if opened:
         return destination
-    
+
     return out_path
+
+
+internal_reproject_vector = reproject_vector

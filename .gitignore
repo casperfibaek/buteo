@@ -130,3 +130,6 @@ lib/credentials.py
 /log
 
 /papers/walls/*npy
+
+*.shm
+*.wal

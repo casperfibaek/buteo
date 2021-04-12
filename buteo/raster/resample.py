@@ -1,7 +1,7 @@
 import sys
 
 sys.path.append("../../")
-from typing import Union, List
+from typing import Union, List, Optional
 from osgeo import gdal
 from buteo.utils import (
     remove_if_overwrite,
@@ -9,34 +9,113 @@ from buteo.utils import (
 )
 from buteo.gdal_utils import (
     path_to_driver,
-    raster_to_reference,
     default_options,
-    ready_io_raster,
     translate_resample_method,
     gdal_nodata_value_from_type,
     raster_size_from_list,
     translate_datatypes,
 )
 from buteo.raster.io import (
+    open_raster,
+    ready_io_raster,
     default_options,
-    raster_to_metadata,
+    internal_raster_to_metadata,
 )
 
 
-def resample_raster(
-    raster: Union[List[Union[gdal.Dataset, str]], str, gdal.Dataset],
+def internal_resample_raster(
+    raster: Union[str, gdal.Dataset],
     target_size: Union[tuple, int, float, str, gdal.Dataset],
     target_in_pixels: bool = False,
-    out_path: Union[list, str, None] = None,
+    out_path: Optional[str] = None,
     resample_alg: str = "nearest",
     overwrite: bool = True,
     creation_options: list = [],
     dtype=None,
     dst_nodata: Union[str, int, float] = "infer",
-    opened: bool = False,
     prefix: str = "",
     postfix: str = "_resampled",
-) -> Union[list, gdal.Dataset, str]:
+) -> str:
+    """ OBS: Internal. Single output.
+
+        Reprojects a raster given a target projection. Beware if your input is in
+        latitude and longitude, you'll need to specify the target_sizedegrees as well.
+    """
+    type_check(raster, [str, gdal.Dataset], "raster")
+    type_check(target_size, [tuple, int, float, str, gdal.Dataset], "target_size")
+    type_check(target_in_pixels, [bool], "target_in_pixels")
+    type_check(out_path, [list, str], "out_path", allow_none=True)
+    type_check(resample_alg, [str], "resample_alg")
+    type_check(overwrite, [bool], "overwrite")
+    type_check(creation_options, [list], "creation_options")
+    type_check(dst_nodata, [str, int, float], "dst_nodata")
+    type_check(prefix, [str], "prefix")
+    type_check(postfix, [str], "postfix")
+
+    raster_list, path_list = ready_io_raster(
+        raster, out_path, overwrite, prefix, postfix
+    )
+
+    ref = open_raster(raster_list[0])
+    metadata = internal_raster_to_metadata(ref)
+    out_name = path_list[0]
+
+    x_res, y_res, x_pixels, y_pixels = raster_size_from_list(
+        target_size, target_in_pixels
+    )
+
+    out_creation_options = default_options(creation_options)
+    out_format = path_to_driver(out_name)
+
+    src_nodata = metadata["nodata_value"]
+    out_nodata = None
+    if src_nodata is not None:
+        out_nodata = src_nodata
+    else:
+        if dst_nodata == "infer":
+            out_nodata = gdal_nodata_value_from_type(metadata["datatype_gdal_raw"])
+        elif isinstance(dst_nodata, str):
+            raise TypeError(f"dst_nodata is in a wrong format: {dst_nodata}")
+        else:
+            out_nodata = dst_nodata
+
+    remove_if_overwrite(out_path, overwrite)
+
+    resampled = gdal.Warp(
+        out_name,
+        ref,
+        width=x_pixels,
+        height=y_pixels,
+        xRes=x_res,
+        yRes=y_res,
+        format=out_format,
+        outputType=translate_datatypes(dtype),
+        resampleAlg=translate_resample_method(resample_alg),
+        creationOptions=out_creation_options,
+        srcNodata=metadata["nodata_value"],
+        dstNodata=out_nodata,
+        multithread=True,
+    )
+
+    if resampled is None:
+        raise Exception(f"Error while resampling raster: {out_name}")
+
+    return out_name
+
+
+def resample_raster(
+    raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
+    target_size: Union[tuple, int, float, str, gdal.Dataset],
+    target_in_pixels: bool = False,
+    out_path: Optional[Union[list, str]] = None,
+    resample_alg: str = "nearest",
+    overwrite: bool = True,
+    creation_options: list = [],
+    dtype=None,
+    dst_nodata: Union[str, int, float] = "infer",
+    prefix: str = "",
+    postfix: str = "_resampled",
+) -> Union[List[str], str]:
     """ Reprojects a raster given a target projection. Beware if your input is in
         latitude and longitude, you'll need to specify the target_sizedegrees as well.
 
@@ -85,63 +164,28 @@ def resample_raster(
     type_check(dst_nodata, [str, int, float], "dst_nodata")
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
-    type_check(opened, [bool], "opened")
 
-    raster_list, out_names = ready_io_raster(
+    raster_list, path_list = ready_io_raster(
         raster, out_path, overwrite, prefix, postfix
     )
 
     resampled_rasters = []
-
     for index, in_raster in enumerate(raster_list):
-        ref = raster_to_reference(in_raster)
-        metadata = raster_to_metadata(ref)
-
-        if not isinstance(metadata, dict):
-            raise Exception("Error while parsing metadata.")
-
-        x_res, y_res, x_pixels, y_pixels = raster_size_from_list(
-            target_size, target_in_pixels
+        resampled_rasters.append(
+            internal_resample_raster(
+                in_raster,
+                target_size,
+                target_in_pixels=target_in_pixels,
+                out_path=path_list[index],
+                resample_alg=resample_alg,
+                overwrite=overwrite,
+                creation_options=creation_options,
+                dtype=dtype,
+                dst_nodata=dst_nodata,
+                prefix=prefix,
+                postfix=postfix,
+            )
         )
-
-        out_name = out_names[index]
-        out_creation_options = default_options(creation_options)
-        out_format = path_to_driver(out_name)
-
-        src_nodata = metadata["nodata_value"]
-        out_nodata = None
-        if src_nodata is not None:
-            out_nodata = src_nodata
-        else:
-            if dst_nodata == "infer":
-                out_nodata = gdal_nodata_value_from_type(metadata["datatype_gdal_raw"])
-            elif isinstance(dst_nodata, str):
-                raise TypeError(f"dst_nodata is in a wrong format: {dst_nodata}")
-            else:
-                out_nodata = dst_nodata
-
-        remove_if_overwrite(out_path, overwrite)
-
-        resampled = gdal.Warp(
-            out_name,
-            ref,
-            width=x_pixels,
-            height=y_pixels,
-            xRes=x_res,
-            yRes=y_res,
-            format=out_format,
-            outputType=translate_datatypes(dtype),
-            resampleAlg=translate_resample_method(resample_alg),
-            creationOptions=out_creation_options,
-            srcNodata=metadata["nodata_value"],
-            dstNodata=out_nodata,
-            multithread=True,
-        )
-
-        if opened:
-            resampled_rasters.append(resampled)
-        else:
-            resampled_rasters.append(out_name)
 
     if isinstance(raster, list):
         return resampled_rasters
