@@ -1,7 +1,11 @@
-import sys; sys.path.append('../../')
+import sys
+
+sys.path.append("../../")
 import numpy as np
 from numba import jit, prange
 from buteo.filters.kernel_generator import create_kernel
+
+# TODO: ZOBEL, MODE, MORPHOLOGY
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
@@ -23,7 +27,7 @@ def hood_quantile(values, weights, quant):
 def hood_standard_deviation(values, weights):
     summed = hood_summed(values, weights)
     variance = np.sum(np.multiply(np.power(np.subtract(values, summed), 2), weights))
-    return np.sqrt(variance) 
+    return np.sqrt(variance)
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
@@ -84,7 +88,7 @@ def hood_sigma_lee_mad(values, weights):
     sum_of_weights = np.sum(selected_weights)
     if sum_of_weights == 0:
         return 0
-    
+
     selected_weights = np.divide(selected_weights, sum_of_weights)
 
     return hood_quantile(selected_values, selected_weights, 0.5)
@@ -169,7 +173,7 @@ def convolve_3d(arr, offsets, weights, operation="sum", border="valid", quantile
                 elif offset_y > y_adj:
                     offset_y = y_adj
                     outside = True
-                
+
                 hood_values[n] = arr[offset_z, offset_x, offset_y]
 
                 if border == True and outside == True:
@@ -189,16 +193,18 @@ def convolve_3d(arr, offsets, weights, operation="sum", border="valid", quantile
 
             elif operation == "quantile":
                 result[x, y] = hood_quantile(hood_values, hood_weights, quantile)
-            
+
             elif operation == "median":
                 result[x, y] = hood_quantile(hood_values, hood_weights, 0.5)
 
             elif operation == "median_absolute_deviation":
-                result[x, y] == hood_median_absolute_deviation(hood_values, hood_weights)
+                result[x, y] == hood_median_absolute_deviation(
+                    hood_values, hood_weights
+                )
 
             elif operation == "standard_deviation":
                 result[x, y] = hood_standard_deviation(hood_values, hood_weights)
-            
+
             elif operation == "z_score":
                 result[x, y] = hood_z_score(hood_values, hood_weights)
 
@@ -207,14 +213,24 @@ def convolve_3d(arr, offsets, weights, operation="sum", border="valid", quantile
 
             elif operation == "sigma_lee":
                 result[x, y] = hood_sigma_lee(hood_values, hood_weights)
-            
+
             elif operation == "sigma_lee_mad":
                 result[x, y] = hood_sigma_lee_mad(hood_values, hood_weights)
 
     return result
 
 
-def filter_array(arr, shape, sigma=1, spherical=True, edge_weights=True, normalised=True, distance_calc="gaussian", radius_method="ellipsoid", operation="sum"):
+def filter_array(
+    arr,
+    shape,
+    sigma=1,
+    spherical=True,
+    edge_weights=True,
+    normalised=True,
+    distance_calc="gaussian",
+    radius_method="ellipsoid",
+    operation="sum",
+):
     if len(arr.shape) == 3:
         if len(shape) == 2:
             shape = (arr.shape[0], shape[0], shape[1])
@@ -241,6 +257,3 @@ def filter_array(arr, shape, sigma=1, spherical=True, edge_weights=True, normali
 
     return convolve_3d(arr, offsets, weights, operation=operation)
 
-
-if __name__ == "__main__":
-    # ZOBEL, MODE, MORPHOLOGY

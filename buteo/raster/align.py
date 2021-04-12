@@ -11,8 +11,8 @@ from buteo.raster.io import (
     ready_io_raster,
 )
 from buteo.vector.io import internal_vector_to_metadata
-from buteo.raster.reproject import reproject_raster
-from buteo.vector.reproject import reproject_vector
+from buteo.raster.reproject import internal_reproject_raster
+from buteo.vector.reproject import internal_reproject_vector
 from buteo.utils import (
     remove_if_overwrite,
     type_check,
@@ -31,7 +31,7 @@ from buteo.gdal_utils import (
 
 # TODO: Verify that sorting the dictionary works properly.
 def align_rasters(
-    rasters: List[str, gdal.Dataset],
+    rasters: List[Union[str, gdal.Dataset]],
     out_path: Optional[Union[List[str], str]] = None,
     master: Optional[Union[gdal.Dataset, str]] = None,
     bounding_box: Union[
@@ -80,20 +80,14 @@ def align_rasters(
         rasters, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix
     )
 
-    target_projection = None
-    target_bounds = None
-
-    # It's only necessary to set either res or pixels.
-    x_res = None
-    y_res = None
     x_pixels = None
     y_pixels = None
 
-    reprojected_rasters = []
+    reprojected_rasters: List[str] = []
 
     # Read the metadata for each raster.
     # Catalogue the used projections, to choose the most common one if necessary.
-    used_projections = []
+    used_projections: List[dict] = []
 
     # If there is a master layer, copy information from that layer.
     if master is not None:
@@ -140,7 +134,9 @@ def align_rasters(
                 )
 
             # Reprojection is necessary to ensure the correct pixel_size
-            reprojected_target_size = reproject_raster(target_size, target_projection)
+            reprojected_target_size = internal_reproject_raster(
+                target_size, target_projection
+            )
             target_size_raster = internal_raster_to_metadata(reprojected_target_size)
 
             # Set the target values.
@@ -156,12 +152,12 @@ def align_rasters(
     elif x_res is None and y_res is None and x_pixels is None and y_pixels is None:
 
         # Ready numpy arrays for insertion
-        x_res_arr = np.empty(len(rasters), dtype="float32")
-        y_res_arr = np.empty(len(rasters), dtype="float32")
+        x_res_arr = np.empty(len(raster_list), dtype="float32")
+        y_res_arr = np.empty(len(raster_list), dtype="float32")
 
-        for index, raster in enumerate(rasters):
+        for index, raster in enumerate(raster_list):
             # It is necessary to reproject each raster, as pixel height and width might be different after projection.
-            reprojected = reproject_raster(raster, target_projection)
+            reprojected = internal_reproject_raster(raster, target_projection)
             target_size_raster = internal_raster_to_metadata(reprojected)
 
             # Add the pixel sizes to the numpy arrays
@@ -181,26 +177,26 @@ def align_rasters(
         if isinstance(bounding_box, (list, tuple)):
             if len(bounding_box) != 4:
                 raise ValueError("bounding_box as a list/tuple must have 4 values.")
-            target_bounds = tuple(bounding_box)
+            target_bounds = bounding_box
 
         # If the bounding box is a raster. Take the extent and reproject it to the target projection.
         elif is_raster(bounding_box):
-            reprojected_bbox = internal_raster_to_metadata(
-                reproject_raster(bounding_box, target_projection)
+            reprojected_bbox_raster = internal_raster_to_metadata(
+                internal_reproject_raster(bounding_box, target_projection)
             )
 
-            x_min, y_max, x_max, y_min = reprojected_bbox["extent"]
+            x_min, y_max, x_max, y_min = reprojected_bbox_raster["extent"]
 
             # add to target values.
             target_bounds = (x_min, y_min, x_max, y_max)
 
         # If the bounding box is a raster. Take the extent and reproject it to the target projection.
         elif is_vector(bounding_box):
-            reprojected_bbox = internal_vector_to_metadata(
-                reproject_vector(bounding_box, target_projection)
+            reprojected_bbox_vector = internal_vector_to_metadata(
+                internal_reproject_vector(bounding_box, target_projection)
             )
 
-            x_min, y_max, x_max, y_min = reprojected_bbox["extent"]
+            x_min, y_max, x_max, y_min = reprojected_bbox_vector["extent"]
 
             # add to target values.
             target_bounds = (x_min, y_min, x_max, y_max)
@@ -212,16 +208,18 @@ def align_rasters(
                 extents = []
 
                 # If the rasters have not been reprojected, reproject them now.
-                if len(reprojected_rasters) != len(rasters):
+                if len(reprojected_rasters) != len(raster_list):
                     reprojected_rasters = []
 
-                    for raster in rasters:
+                    for raster in raster_list:
                         raster_metadata = internal_raster_to_metadata(raster)
 
                         if raster_metadata["projection_osr"].IsSame(target_projection):
                             reprojected_rasters.append(raster)
                         else:
-                            reprojected = reproject_raster(raster, target_projection)
+                            reprojected = internal_reproject_raster(
+                                raster, target_projection
+                            )
                             reprojected_rasters.append(reprojected)
 
                 # Add the extents of the reprojected rasters to the extents list.
@@ -275,17 +273,17 @@ def align_rasters(
         in order to align the rasters properly. This might not be necessary
         in a future version of gdal.
     """
-    if len(reprojected_rasters) != len(rasters):
+    if len(reprojected_rasters) != len(raster_list):
         reprojected_rasters = []
 
-        for raster in rasters:
+        for raster in raster_list:
             raster_metadata = internal_raster_to_metadata(raster)
 
             # If the raster is already the correct projection, simply append the raster.
             if raster_metadata["projection_osr"].IsSame(target_projection):
                 reprojected_rasters.append(raster)
             else:
-                reprojected = reproject_raster(raster, target_projection)
+                reprojected = internal_reproject_raster(raster, target_projection)
                 reprojected_rasters.append(reprojected)
 
     # If any of the target values are still undefined. Throw an error!
@@ -300,7 +298,7 @@ def align_rasters(
     for index, raster in enumerate(reprojected_rasters):
         raster_metadata = internal_raster_to_metadata(raster)
 
-        out_name = path_list(index)
+        out_name = path_list[index]
         out_format = path_to_driver(out_name)
 
         # Handle nodata.
@@ -311,19 +309,19 @@ def align_rasters(
 
             if out_src_nodata is None:
                 out_src_nodata = gdal_nodata_value_from_type(
-                    raster_metadata["dtype_gdal_raw"]
+                    raster_metadata["datatype_gdal_raw"]
                 )
 
         elif src_nodata == None:
             out_src_nodata = None
-        else:
+        elif not isinstance(src_nodata, str):
             out_src_nodata = src_nodata
 
         if dst_nodata == "infer":
             out_dst_nodata = out_src_nodata
         elif src_nodata == None:
             out_dst_nodata = None
-        else:
+        elif not isinstance(dst_nodata, str):
             out_dst_nodata = dst_nodata
 
         # Removes file if it exists and overwrite is True.

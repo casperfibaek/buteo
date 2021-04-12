@@ -9,32 +9,19 @@ def count_freq(arr: np.ndarray) -> np.ndarray:
     return np.vstack([classes, bins[classes]]).T
 
 
-# Metrics for testing model accuracy
-# def median_absolute_error(y_actual: float, y_pred: float) -> float:
-#     return tfp.stats.percentile(tf.math.abs(y_actual - y_pred), 50.0)
-
-
-# def median_absolute_percentage_error(y_actual: float, y_pred: float) -> float:
-#     return tfp.stats.percentile(
-#         tf.divide(
-#             tf.abs(tf.subtract(y_actual, y_pred)), (y_actual + 1e-10)
-#         ) * 100
-#     , 50.0)
-
-
 # Printing visuals
 def pad(s, dl, dr):
-    split = s.split('.')
+    split = s.split(".")
     left = split[0]
     right = split[1]
 
     if len(left) < dl:
-        left = ((dl - len(left)) * ' ') + left
-    
+        left = ((dl - len(left)) * " ") + left
+
     if len(right) < dr:
-        right = right + ((dr - len(right)) * '0')
-    
-    return left + '.' + right
+        right = right + ((dr - len(right)) * "0")
+
+    return left + "." + right
 
 
 # https://stackoverflow.com/a/44233061/8564588
@@ -45,6 +32,7 @@ def minority_class_mask(arr, minority):
             for l in np.unique(arr)
         ]
     )
+
 
 def create_submask(arr, amount):
     z = np.zeros(len(arr) - int(amount), "bool")
@@ -59,17 +47,10 @@ def add_rotations(X, k=4, axes=(1, 2)):
     if k == 1:
         return X
     elif k == 2:
-        return np.concatenate([
-            X,
-            np.rot90(X, k=2, axes=axes),
-        ])
+        return np.concatenate([X, np.rot90(X, k=2, axes=axes),])
     elif k == 3:
         return np.concatenate(
-            [
-                X,
-                np.rot90(X, k=1, axes=axes),
-                np.rot90(X, k=2, axes=axes),
-            ]
+            [X, np.rot90(X, k=1, axes=axes), np.rot90(X, k=2, axes=axes),]
         )
     else:
         return np.concatenate(
@@ -185,9 +166,11 @@ def histogram_selection(
     return np.hstack(samples)
 
 
-def test_correlation(df: pd.DataFrame, cutoff: float=0.75) -> np.ndarray:
+def test_correlation(df: pd.DataFrame, cutoff: float = 0.75) -> np.ndarray:
     abs_corr = df.corr().abs()
     triangle = np.array(np.triu(np.ones(abs_corr.shape), k=1), dtype=np.bool)
     upper_tri = abs_corr.where(triangle)
-    to_drop = [column for column in upper_tri.columns if any(upper_tri[column] > cutoff)]
+    to_drop = [
+        column for column in upper_tri.columns if any(upper_tri[column] > cutoff)
+    ]
     return to_drop
