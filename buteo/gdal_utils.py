@@ -127,6 +127,8 @@ def path_to_driver(file_path: str) -> str:
         return "HFA"
     elif ext == ".jp2":
         return "JP2ECW"
+    elif ext == ".ecw":
+        return "ECW"
 
     # Vector formats
     elif ext == ".shp":

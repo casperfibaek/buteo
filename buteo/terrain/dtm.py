@@ -1,5 +1,7 @@
 import sys
-sys.path.append('../'); sys.path.append('../../')
+
+sys.path.append("../")
+sys.path.append("../../")
 import geopandas as gpd
 import numpy as np
 from buteo.raster.io import *
@@ -9,6 +11,7 @@ import time
 from zipfile import ZipFile
 from glob import glob
 from urllib import request
+
 
 def reporthook(count, block_size, total_size):
     # print('-------------------------', count)
@@ -20,16 +23,18 @@ def reporthook(count, block_size, total_size):
     progress_size = int(count * block_size)
     speed = int(progress_size / (1024 * duration))
     percent = int(count * block_size * 100 / total_size)
-    # import pdb; pdb.set_trace()
+
     sys.stdout.write(
         "\r...%d%%, %d MB, %d KB/s, %d seconds passed"
         % (percent, progress_size / (1024 * 1024), speed, duration)
     )
     sys.stdout.flush()
 
+
 def get_file(url, filename):
     request.urlretrieve(url, filename, reporthook)
-    
+
+
 def find_tile_names(path_to_geom):
     project_geom = gpd.read_file(path_to_geom)
     project_geom_wgs = project_geom.to_crs("EPSG:4326")
@@ -65,7 +70,6 @@ def download_dtm(tile_names, dst_folder, username, password):
         else:
             print(f"{file_name} Already exists.")
         completed += 1
-        
 
 
 def download_dsm(tile_names, dst_folder, username, password):
@@ -86,8 +90,26 @@ def download_dsm(tile_names, dst_folder, username, password):
         else:
             print(f"{file_name} Already exists.")
         completed += 1
-        
-        
+
+
+def download_orto(tile_names, dst_folder, username, password, year="2019"):
+    completed = 0
+    if not os.path.isdir(dst_folder):
+        raise Exception("Error: output directory does not exist.")
+
+    for tile in tile_names:
+        base_path = f"ftp://{username}:{password}@ftp.kortforsyningen.dk/grundlaeggende_landkortdata/ortofoto/blokinddelt/GEODANMARK/"
+        file_name = f'10km_{year}_{tile.split("_", 1)[1]}_ECW_UTM32-ETRS89.zip'
+
+        if not os.path.exists(dst_folder + file_name):
+            try:
+                get_file(base_path + file_name, dst_folder + file_name)
+                print(f"Completed: {completed + 1}/{len(tile_names)} orto tiles.")
+            except:
+                print(f"Error while trying to download: {base_path + file_name}")
+        else:
+            print(f"{file_name} Already exists.")
+        completed += 1
 
 
 def get_tile_from_zipped_url(path):
@@ -128,7 +150,7 @@ def height_over_terrain(dsm_folder, dtm_folder, out_folder, tmp_folder):
 
                             array_to_raster(
                                 np.abs(np.subtract(ss, tt)),
-                                out_path=hot_folder + f"HOT_1km_{s_tiff_tile}.tif",
+                                out_path=out_folder + f"HOT_1km_{s_tiff_tile}.tif",
                                 reference=s_tiff,
                             )
 
@@ -140,46 +162,29 @@ def height_over_terrain(dsm_folder, dtm_folder, out_folder, tmp_folder):
 
 
 if __name__ == "__main__":
+    from glob import glob
+    from buteo.raster.resample import resample_raster
 
-    base = 'C:/Users/EZRA/Desktop/downloaded_tiles/'
+    base = "C:/Users/caspe/Desktop/test/"
+    orto_folder = base + "orto/"
 
-    dsm_folder = base + 'dsm/'
-    dtm_folder = base + 'dtm/'
-    hot_folder = base + 'hot/'
-    tmp_folder = base + 'tmp/'
-    vol_folder = base + 'vol/'
-
-    # hot_files = glob(hot_folder + "/*.tif")
-    # meta = raster_to_metadata(hot_files[0])
-
-    # completed = 0
-    # for f in hot_files:
-    #     tile_base = os.path.basename(f).split("_")[2:4]
-    #     tile_name = "_".join(tile_base).split(".")[0]
-
-    #     array_to_raster(
-    #         raster_to_array(f)
-    #         * (meta["pixel_width"] * (-meta["pixel_height"])),
-    #         out_raster=vol_folder + f"VOL_1km_{tile_name}.tif",
-    #         reference_raster=f,
-    #     )
-
-    #     completed += 1
-    #     print(f"Completed: {completed}/{len(hot_files)}")
-
-    cutout = 'C://Users/EZRA/Desktop/Aeroe_Kommune.shp'
-# DTM_608_57_TIF_UTM32-ETRS89
-    download_dtm(
-        find_tile_names(cutout),
-        dtm_folder,
-        "ezratrotter",
-        "Bigcloud8!!!",
-    )
-    # download_dsm(
-    #     find_tile_names(cutout),
-    #     dsm_folder,
+    # download_orto(
+    #     find_tile_names(base + "fjord.gpkg"),
+    #     orto_folder,
     #     "ezratrotter",
     #     "Bigcloud8!!!",
     # )
 
-    # height_over_terrain(dsm_folder, dtm_folder, hot_folder, tmp_folder)
+    ortos = glob(orto_folder + "og/*.ecw")
+    for index, orto in enumerate(ortos):
+        ortos[index] = os.path.abspath(ortos[index])
+
+    # stupid ecw format.. :/
+    # gdal_translate -of GTiff -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BIGTIFF=YES" -co "NUM_THREADS=ALL_CPUS" 10km_6140_580_2019.ecw 10km_6140_580_2019.tif
+    resample_raster(
+        ortos, target_size=2.0, out_path=orto_folder + "2m/", resample_alg="average"
+    )
+    import pdb
+
+    pdb.set_trace()
+

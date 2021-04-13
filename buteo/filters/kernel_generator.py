@@ -21,11 +21,11 @@ def cube_sphere_intersection_area(
     resolution=0.05,
     epsilon=1e-7,
 ):
-    assert(len(cube_center) == 3), "Cube center must be a len 3 array."
-    assert(len(circle_center) == 3), "Circle center must be a len 3 array."
-    assert(circle_radius >= 0), "Radius must be a positive number."
-    assert(cube_width >= 0), "Width of cube must be a positive number."
-    
+    assert len(cube_center) == 3, "Cube center must be a len 3 array."
+    assert len(circle_center) == 3, "Circle center must be a len 3 array."
+    assert circle_radius >= 0, "Radius must be a positive number."
+    assert cube_width >= 0, "Width of cube must be a positive number."
+
     sides = cube_width / 2
 
     step = resolution
@@ -94,9 +94,9 @@ def create_kernel(
     if len(shape) == 2:
         shape = [1, shape[0], shape[1]]
 
-    assert(shape[0] % 2 != 0), "Kernel depth has to be an uneven number."
-    assert(shape[1] % 2 != 0), "Kernel width has to be an uneven number."
-    assert(shape[2] % 2 != 0), "Kernel height has to be an uneven number."
+    assert shape[0] % 2 != 0, "Kernel depth has to be an uneven number."
+    assert shape[1] % 2 != 0, "Kernel width has to be an uneven number."
+    assert shape[2] % 2 != 0, "Kernel height has to be an uneven number."
 
     if shape[0] == 1:
         radius_method = "2d"
@@ -129,9 +129,9 @@ def create_kernel(
 
                 if distance_calc == "linear":
                     weight = 1 - (normed / edge_length)
-                elif distance_calc == 'sqrt':
+                elif distance_calc == "sqrt":
                     weight = 1 - np.sqrt(normed / edge_length)
-                elif distance_calc == 'power':
+                elif distance_calc == "power":
                     weight = 1 - np.power(normed / edge_length, 2)
                 elif distance_calc == "gaussian":
                     weight = np.exp(-(normed ** 2) / (2 * sigma ** 2))
@@ -164,9 +164,9 @@ def create_kernel(
                 kernel[edge_z - z][edge_x - x][edge_y - y] = weight
 
     # We're copying the one quadrant to the other three quadrants
-    kernel[edge_z + 1:, :, :] = np.flip(kernel[:edge_z, :, :], axis=0)
-    kernel[:, edge_x + 1:, :] = np.flip(kernel[:, :edge_x, :], axis=1)
-    kernel[:, :, edge_y + 1:] = np.flip(kernel[:, :, :edge_y], axis=2)
+    kernel[edge_z + 1 :, :, :] = np.flip(kernel[:edge_z, :, :], axis=0)
+    kernel[:, edge_x + 1 :, :] = np.flip(kernel[:, :edge_x, :], axis=1)
+    kernel[:, :, edge_y + 1 :] = np.flip(kernel[:, :, :edge_y], axis=2)
 
     if holed:
         kernel[edge_z, edge_x, edge_y] = 0
@@ -181,14 +181,19 @@ def create_kernel(
             for x in range(kernel.shape[1]):
                 for y in range(kernel.shape[2]):
                     current_weight = kernel[z][x][y]
-                    
+
                     if remove_zero_weights:
                         continue
 
-                    offsets.append([z - (kernel.shape[0] // 2), x - (kernel.shape[1] // 2), y - (kernel.shape[2] // 2)])
+                    offsets.append(
+                        [
+                            z - (kernel.shape[0] // 2),
+                            x - (kernel.shape[1] // 2),
+                            y - (kernel.shape[2] // 2),
+                        ]
+                    )
                     weights.append(current_weight)
 
         return (kernel, np.array(offsets, dtype=int), np.array(weights, dtype=float))
-
 
     return kernel

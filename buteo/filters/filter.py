@@ -1,6 +1,8 @@
 import numpy as np
-import sys; sys.path.append('../../')
-from buteo.filters.convolutions import kernel_filter
+import sys
+
+sys.path.append("../../")
+from buteo.filters.convolutions import filter_array
 from buteo.filters.kernel_generator import create_kernel
 
 
@@ -24,9 +26,10 @@ from buteo.filters.kernel_generator import create_kernel
 #     "mode",
 # ]
 
+
 def conv_filter(in_raster, kernel=None, filter="sum", iterations=1):
     _kernel = kernel if kernel != None else create_kernel()
-    return kernel_filter(in_raster, _kernel, filter, iterations)
+    return filter_array(in_raster, _kernel, filter, iterations)
 
 
 def sigma_to_db(arr):
@@ -81,11 +84,13 @@ def threshold_filter(in_raster, min_value=False, max_value=False, inverted=False
 
     if not inverted:
         return in_raster[np.logical_and(in_raster >= min_v, in_raster <= max_v)]
-    
+
     return in_raster[np.logical_or(in_raster < min_value, in_raster > max_value)]
 
 
-def truncate_filter(in_raster, min_value=False, max_value=False, inverted=False, replace_value=0):
+def truncate_filter(
+    in_raster, min_value=False, max_value=False, inverted=False, replace_value=0
+):
     if min_value == False and max_value == False:
         return in_raster
 
@@ -97,8 +102,10 @@ def truncate_filter(in_raster, min_value=False, max_value=False, inverted=False,
         thresholded[thresholded <= min_v] = min_v
         thresholded[thresholded >= max_v] = max_v
     else:
-        thresholded[np.logical_and(thresholded >= min_v, thresholded <= max_v)] = replace_value
-    
+        thresholded[
+            np.logical_and(thresholded >= min_v, thresholded <= max_v)
+        ] = replace_value
+
     return thresholded
 
 
