@@ -7,23 +7,27 @@ from osgeo import ogr, osr, gdal
 
 from buteo.gdal_utils import (
     is_vector,
+    is_raster,
     parse_projection,
     path_to_driver,
-    is_raster,
 )
 from buteo.utils import type_check
 from buteo.raster.io import internal_raster_to_metadata
 from buteo.vector.io import (
+    get_vector_path,
     internal_vector_to_memory,
     internal_vector_to_metadata,
+    open_vector,
     ready_io_vector,
 )
 
 
 def internal_clip_vector(
     vector: Union[str, ogr.DataSource],
-    clip_geom: Union[str, ogr.DataSource],
+    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
     out_path: Optional[str] = None,
+    process_layer: int = 0,
+    process_layer_clip: int = 0,
     to_extent: bool = False,
     target_projection: Optional[
         Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int]
@@ -38,6 +42,8 @@ def internal_clip_vector(
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
     type_check(out_path, [str], "out_path", allow_none=True)
+    type_check(process_layer, [int], "process_layer")
+    type_check(process_layer_clip, [int], "process_layer_clip")
     type_check(to_extent, [bool], "to_extent")
     type_check(
         target_projection,
@@ -64,7 +70,7 @@ def internal_clip_vector(
             ]
             geometry_to_clip = internal_vector_to_memory(extent)
         else:
-            geometry_to_clip = internal_vector_to_memory(clip_geom)
+            geometry_to_clip = open_vector(clip_geom, layer=process_layer_clip)
     elif is_raster(clip_geom):
         extent = internal_raster_to_metadata(clip_geom, create_geometry=True)[
             "extent_datasource"
@@ -85,9 +91,14 @@ def internal_clip_vector(
         out_projection = parse_projection(target_projection, return_wkt=True)
         options.append(f"-t_srs {out_projection}")
 
+    origin = open_vector(vector, layer=process_layer)
+
     # dst  # src
     success = gdal.VectorTranslate(
-        out_target, vector, format=out_format, options=" ".join(options),
+        out_target,
+        get_vector_path(origin),
+        format=out_format,
+        options=" ".join(options),
     )
 
     if success != 0:
@@ -98,8 +109,10 @@ def internal_clip_vector(
 
 def clip_vector(
     vector: Union[List[Union[str, ogr.DataSource]], Union[str, ogr.DataSource]],
-    clip_geom: Union[ogr.DataSource, str, list, tuple],
+    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
     out_path: str = None,
+    process_layer: int = 0,
+    process_layer_clip: int = 0,
     to_extent: bool = False,
     target_projection: Union[
         str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int
@@ -114,6 +127,8 @@ def clip_vector(
     type_check(vector, [list, str, ogr.DataSource], "vector")
     type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
     type_check(out_path, [str], "out_path", allow_none=True)
+    type_check(process_layer, [int], "process_layer")
+    type_check(process_layer_clip, [int], "process_layer_clip")
     type_check(to_extent, [bool], "to_extent")
     type_check(
         target_projection,
@@ -132,6 +147,8 @@ def clip_vector(
                 in_vector,
                 clip_geom,
                 out_path=path_list[index],
+                process_layer=process_layer,
+                process_layer_clip=process_layer_clip,
                 to_extent=to_extent,
                 target_projection=target_projection,
                 preserve_fid=preserve_fid,

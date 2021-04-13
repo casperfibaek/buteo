@@ -73,6 +73,9 @@ def internal_clip_raster(
             clip_ds, process_layer=layer_to_clip
         )
 
+        if clip_metadata["layer_count"] > 1:
+            clip_ds = vector_to_memory(clip_ds, layer_to_extract=layer_to_clip)
+
     # Input is a raster (use extent)
     elif is_raster(clip_geom):
         clip_metadata_raster = internal_raster_to_metadata(

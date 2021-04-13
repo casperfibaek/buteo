@@ -15,12 +15,10 @@ from buteo.raster.io import (
     raster_to_array,
     internal_raster_to_disk,
     internal_raster_to_metadata,
-    internal_raster_to_memory,
     array_to_raster,
     rasters_are_aligned,
 )
 from buteo.vector.io import (
-    internal_vector_to_memory,
     internal_vector_to_metadata,
     internal_vector_to_disk,
     open_vector,

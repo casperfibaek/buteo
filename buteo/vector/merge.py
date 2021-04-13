@@ -1,39 +1,30 @@
-import sys; sys.path.append('../../')
+import sys
+
+sys.path.append("../../")
 from uuid import uuid4
-from typing import Union
+from typing import Union, List, Optional
 from osgeo import ogr
 
-from buteo.gdal_utils import (
-    is_vector,
-    path_to_driver,
-    vector_to_reference,
-)
+from buteo.gdal_utils import path_to_driver
 from buteo.utils import path_to_ext, type_check
-from buteo.vector.io import vector_to_metadata
+from buteo.vector.io import open_vector, to_vector_list, internal_vector_to_metadata
 
 
 def merge_vectors(
-    vectors: Union[ogr.DataSource, str, list],
-    out_path: str=None,
-    preserve_fid: bool=True,
-    opened: bool=False,
-):
-    """ Description.
-    Args:
-    **kwargs:
-    Returns:
-        Description.
+    vectors: List[Union[str, ogr.DataSource]],
+    out_path: Optional[str] = None,
+    preserve_fid: bool = True,
+) -> str:
+    """ Merge vectors to a single geopackage.
     """
     type_check(vectors, [list], "vector")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(preserve_fid, [bool], "preserve_fid")
 
-    for vector in vectors:
-        if not is_vector(vector):
-            raise TypeError(f"Invalid vector input: {vector}")
+    vector_list = to_vector_list(vectors)
 
-    out_driver = 'GPKG'
-    out_format = '.gpkg'
+    out_driver = "GPKG"
+    out_format = ".gpkg"
     out_target = f"/vsimem/clipped_{uuid4().int}{out_format}"
 
     if out_path is not None:
@@ -43,19 +34,17 @@ def merge_vectors(
 
     driver = ogr.GetDriverByName(out_driver)
 
-    merged_ds = driver.CreateDataSource(out_target)
+    merged_ds: ogr.DataSource = driver.CreateDataSource(out_target)
 
-    for vector in vectors:
-        metadata = vector_to_metadata(vector)
-        ref = vector_to_reference(vector)
+    for vector in vector_list:
+        ref = open_vector(vector)
+        metadata = internal_vector_to_metadata(ref)
 
-        layers = metadata["layers"]
-        for layer in layers:
+        for layer in metadata["layers"]:
             name = layer["layer_name"]
             merged_ds.CopyLayer(ref.GetLayer(name), name, ["OVERWRITE=YES"])
 
-    if opened:
-        return merged_ds
+    merged_ds.FlushCache()
 
     return out_target
 
@@ -69,5 +58,3 @@ if __name__ == "__main__":
     out_dir = folder + "out/"
 
     bob = merge_vectors([vector, clip_geom])
-
-    import pdb; pdb.set_trace()

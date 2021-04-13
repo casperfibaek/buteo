@@ -9,9 +9,8 @@ from osgeo import ogr, osr, gdal
 
 from buteo.project_types import Metadata_vector_layer, Number, Metadata_vector
 from buteo.gdal_utils import (
-    to_path_list,
-    vector_to_reference,
     is_vector,
+    is_raster,
     path_to_driver,
     advanced_extents,
 )
@@ -37,9 +36,10 @@ from buteo.utils import (
 
 
 def open_vector(
-    vector: Union[str, ogr.DataSource],
+    vector: Union[str, ogr.DataSource, gdal.Dataset],
     convert_mem_driver: bool = True,
     writeable: bool = True,
+    layer: int = -1,
 ) -> ogr.DataSource:
     """ Opens a vector to an ogr.Datasource class.
 
@@ -53,18 +53,78 @@ def open_vector(
     Returns:
         A gdal.Dataset
     """
-    type_check(vector, [str, gdal.Dataset], "vector")
+    type_check(vector, [str, ogr.DataSource, gdal.Dataset], "vector")
     type_check(convert_mem_driver, [bool], "convert_mem_driver")
     type_check(writeable, [bool], "writeable")
+    type_check(layer, [int], "layer")
 
     try:
         opened: Optional[ogr.DataSource] = None
-        if isinstance(vector, str):
+        if is_vector(vector):
             gdal.PushErrorHandler("CPLQuietErrorHandler")
             opened = ogr.Open(vector, 1) if writeable else ogr.Open(vector, 0)
             gdal.PopErrorHandler()
-        elif isinstance(vector, ogr.DataSource):
-            opened = vector
+        elif is_raster(vector):
+            temp_opened: Optional[gdal.Dataset] = None
+            if isinstance(vector, str):
+                gdal.PushErrorHandler("CPLQuietErrorHandler")
+                temp_opened = (
+                    gdal.Open(vector, 1) if writeable else gdal.Open(vector, 0)
+                )
+                gdal.PopErrorHandler()
+            elif isinstance(vector, gdal.Dataset):
+                temp_opened = vector
+            else:
+                raise Exception(f"Could not read input vector: {vector}")
+
+            projection: osr.SpatialReference = osr.SpatialReference()
+            projection.ImportFromWkt(temp_opened.GetProjection())
+            transform: List[Number] = temp_opened.GetGeoTransform()
+
+            width: int = temp_opened.RasterXSize
+            height: int = temp_opened.RasterYSize
+
+            x_min: Number = transform[0]
+            y_max: Number = transform[3]
+
+            x_max = x_min + width * transform[1] + height * transform[2]  # Handle skew
+            y_min = y_max + width * transform[4] + height * transform[5]  # Handle skew
+
+            bottom_left = [x_min, y_min]
+            top_left = [x_min, y_max]
+            top_right = [x_max, y_max]
+            bottom_right = [x_max, y_min]
+
+            coord_array = [
+                [bottom_left[1], bottom_left[0]],
+                [top_left[1], top_left[0]],
+                [top_right[1], top_right[0]],
+                [bottom_right[1], bottom_right[0]],
+                [bottom_left[1], bottom_left[0]],
+            ]
+
+            wkt_coords = ""
+            for coord in coord_array:
+                wkt_coords += f"{coord[1]} {coord[0]}, "
+            wkt_coords = wkt_coords[:-2]  # Remove the last ", "
+
+            extent_wkt = f"POLYGON (({wkt_coords}))"
+
+            extent_name = f"/vsimem/{uuid4().int}_extent.GPKG"
+
+            extent_driver = ogr.GetDriverByName("GPKG")
+            extent_ds = extent_driver.CreateDataSource(extent_name)
+            extent_layer = extent_ds.CreateLayer(
+                f"auto_extent_{uuid4().int}", projection, ogr.wkbPolygon
+            )
+
+            feature = ogr.Feature(extent_layer.GetLayerDefn())
+            extent_geom = ogr.CreateGeometryFromWkt(extent_wkt, projection)
+            feature.SetGeometry(extent_geom)
+            extent_layer.CreateFeature(feature)
+            feature = None
+
+            opened = extent_ds
         else:
             raise Exception(f"Could not read input vector: {vector}")
     except:
@@ -73,21 +133,35 @@ def open_vector(
     if opened is None:
         raise Exception(f"Could not read input vector: {vector}")
 
-    if convert_mem_driver:
-        driver: ogr.Driver = opened.GetDriver()
+    driver: ogr.Driver = opened.GetDriver()
+    driver_name: str = driver.ShortName
 
-        if driver is None:
-            raise Exception("Unable to parse the driver of vector.")
+    if driver is None:
+        raise Exception("Unable to parse the driver of vector.")
 
-        driver_name: str = driver.ShortName
+    if layer != -1:
+        layer_count = opened.GetLayerCount()
 
-        if driver_name == "Memory":
-            path = opened.GetDescription()
-            basename = os.path.basename(path)
-            name = os.path.splitext(basename)[0]
-            raster_name = f"/vsimem/{name}_{uuid4().int}.gpkg"
-            driver = gdal.GetDriverByName("GPKG")
+        if layer > layer_count - 1:
+            raise Exception(f"Requested a non-existing layer: {layer}")
 
+        if layer_count > 1:
+            driver_name = "Memory"
+
+    if convert_mem_driver and driver_name == "Memory":
+        path = opened.GetDescription()
+        basename = os.path.basename(path)
+        name = os.path.splitext(basename)[0]
+        raster_name = f"/vsimem/{name}_{uuid4().int}.gpkg"
+        driver = gdal.GetDriverByName("GPKG")
+
+        if layer != -1:
+            opened = driver.CreateDataSource(raster_name)
+            orignal_layer = opened.GetLayerByIndex(layer)
+            opened.CopyLayer(
+                orignal_layer, orignal_layer.GetDescription(), ["OVERWRITE=YES"]
+            )
+        else:
             opened = driver.CreateCopy(raster_name, opened)
 
     return opened
@@ -156,9 +230,7 @@ def internal_vector_to_metadata(
     type_check(process_layer, [int], "process_layer")
     type_check(create_geometry, [bool], "create_geometry")
 
-    datasource: ogr.DataSource = vector_to_reference(
-        open_vector(vector, convert_mem_driver=False)
-    )
+    datasource: ogr.DataSource = open_vector(vector, convert_mem_driver=False)
 
     vector_driver: ogr.Driver = datasource.GetDriver()
 
@@ -447,7 +519,7 @@ def ready_io_vector(
 def internal_vector_to_memory(
     vector: Union[str, ogr.DataSource],
     memory_path: Optional[str] = None,
-    copy_if_already_in_memory: bool = False,
+    copy_if_already_in_memory: bool = True,
     layer_to_extract: int = -1,
 ) -> str:
     """ OBS: Internal. Single output.
@@ -463,8 +535,9 @@ def internal_vector_to_memory(
     metadata = internal_vector_to_metadata(ref)
     name = metadata["name"]
 
-    if not copy_if_already_in_memory and path[0:8] == "/vsimem/":
-        return path
+    if not copy_if_already_in_memory and metadata["in_memory"]:
+        if layer_to_extract == -1:
+            return path
 
     if memory_path is not None:
         if memory_path[0:8] == "/vsimem/":

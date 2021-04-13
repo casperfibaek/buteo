@@ -54,14 +54,20 @@ def vector_get_attribute_table(
     return df
 
 
-def vector_get_fids(vector: Union[ogr.DataSource, str],) -> Union[np.ndarray, list]:
+def vector_get_fids(
+    vector: Union[str, ogr.DataSource], process_layer: int = 0
+) -> np.ndarray:
     type_check(vector, [str, ogr.DataSource], "vector")
+    type_check(process_layer, [int], "process_layer")
 
     metadata = internal_vector_to_metadata(vector)
     features = metadata["layers"][0]["feature_count"]
 
     ref = open_vector(vector)
-    layer = ref.GetLayer()
+    layer = ref.GetLayer(process_layer)
+
+    if layer is None:
+        raise Exception(f"Requested a non-existing layer: layer_idx={process_layer}")
 
     fid_list = np.empty(features, dtype=int)
 

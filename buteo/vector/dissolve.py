@@ -22,7 +22,7 @@ def internal_dissolve_vector(
     out_path: str = None,
     overwrite: bool = True,
     add_index: bool = True,
-    vector_idx: int = -1,
+    process_layer: int = -1,
 ) -> str:
     """ Clips a vector to a geometry.
     """
@@ -31,7 +31,7 @@ def internal_dissolve_vector(
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
     type_check(add_index, [bool], "add_index")
-    type_check(vector_idx, [int], "vector_idx")
+    type_check(process_layer, [int], "process_layer")
 
     vector_list, path_list = ready_io_vector(vector, out_path)
     out_name = path_list[0]
@@ -48,7 +48,7 @@ def internal_dissolve_vector(
 
     layers: List[Layer_info] = []
 
-    if vector_idx == -1:
+    if process_layer == -1:
         for index in range(len(metadata["layers"])):
             layers.append(
                 {
@@ -60,13 +60,13 @@ def internal_dissolve_vector(
     else:
         layers.append(
             {
-                "name": metadata["layers"][vector_idx]["layer_name"],
-                "geom": metadata["layers"][vector_idx]["column_geom"],
-                "fields": metadata["layers"][vector_idx]["field_names"],
+                "name": metadata["layers"][process_layer]["layer_name"],
+                "geom": metadata["layers"][process_layer]["column_geom"],
+                "fields": metadata["layers"][process_layer]["field_names"],
             }
         )
 
-    destination = driver.CreateDataSource(out_name)
+    destination: ogr.DataSource = driver.CreateDataSource(out_name)
 
     # Check if attribute table is valid
     for index in range(len(metadata["layers"])):
@@ -92,6 +92,8 @@ def internal_dissolve_vector(
     if add_index:
         vector_add_index(destination)
 
+    destination.FlushCache()
+
     return out_name
 
 
@@ -101,7 +103,7 @@ def dissolve_vector(
     out_path: str = None,
     overwrite: bool = True,
     add_index: bool = True,
-    vector_idx: int = -1,
+    process_layer: int = -1,
 ) -> Union[List[str], str]:
     """ Clips a vector to a geometry.
     Args:
@@ -121,7 +123,7 @@ def dissolve_vector(
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
     type_check(add_index, [bool], "add_index")
-    type_check(vector_idx, [int], "vector_idx")
+    type_check(process_layer, [int], "process_layer")
 
     raster_list, path_list = ready_io_vector(vector, out_path)
 
@@ -134,7 +136,7 @@ def dissolve_vector(
                 out_path=path_list[index],
                 overwrite=overwrite,
                 add_index=add_index,
-                vector_idx=vector_idx,
+                process_layer=process_layer,
             )
         )
 
