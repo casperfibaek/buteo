@@ -23,7 +23,7 @@ from buteo.vector.io import (
     internal_vector_to_disk,
     open_vector,
     vector_add_index,
-    vector_to_memory,
+    internal_vector_to_memory,
 )
 from buteo.vector.reproject import internal_reproject_vector
 from buteo.raster.clip import internal_clip_raster
@@ -476,7 +476,8 @@ def test_extraction(
     if verbose == 1:
         print("Verifying integrity of output grid..")
 
-    grid_memory = open_vector(vector_to_memory(grid))
+    # grid_memory = open_vector(internal_vector_to_memory(grid))
+    grid_memory = open_vector(grid)
     grid_metadata = internal_vector_to_metadata(grid)
     grid_projection = grid_metadata["projection_osr"]
 
@@ -530,6 +531,10 @@ def test_extraction(
             )
             test_ds_lyr.CreateFeature(feature.Clone())
             test_ds.SyncToDisk()
+
+            import pdb
+
+            pdb.set_trace()
 
             clipped = internal_clip_raster(
                 test_rast,
@@ -1235,8 +1240,8 @@ if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/"
 
     # raster_to_predict = folder + "Fyn_B2_20m.tif"
-    vector = folder + "walls_singleparts_clip.gpkg"
-    raster = folder + "dtm_clip.tif"
+    vector = folder + "fjord.gpkg"
+    raster = folder + "B08_10m.jp2"
     out_dir = folder + "out/"
     # tensorflow_model_path = out_dir + "model.h5"
 
@@ -1253,29 +1258,29 @@ if __name__ == "__main__":
     #     device="gpu",
     # )
 
-    B03_10m = folder + "B03_10m.jp2"
-    B04_10m = folder + "B04_10m.jp2"
-    B04_20m = folder + "B04_20m.jp2"
-    B08_10m = folder + "B08_10m.jp2"
-    B11_20m = folder + "B11_20m.jp2"
+    # B03_10m = folder + "B03_10m.jp2"
+    # B04_10m = folder + "B04_10m.jp2"
+    # B04_20m = folder + "B04_20m.jp2"
+    # B08_10m = folder + "B08_10m.jp2"
+    # B11_20m = folder + "B11_20m.jp2"
 
-    model = folder + "upsampling_10epochs.h5"
+    # model = folder + "upsampling_10epochs.h5"
 
-    # path_np, path_geom = extract_patches(
-    #     B04_20m,
-    #     out_dir=out_dir,
-    #     prefix="",
-    #     postfix="_patches",
-    #     size=32,
-    #     offsets=[(16, 16), (8, 8)],
-    #     generate_grid_geom=False,
-    #     generate_zero_offset=True,
-    #     generate_border_patches=True,
-    #     clip_geom=None,
-    #     verify_output=False,
-    #     verification_samples=100,
-    #     verbose=1,
-    # )
+    path_np, path_geom = extract_patches(
+        raster,
+        out_dir=out_dir,
+        prefix="",
+        postfix="_patches",
+        size=128,
+        offsets=[(32, 32), (64, 64), (96, 96)],
+        generate_grid_geom=True,
+        generate_zero_offset=True,
+        generate_border_patches=True,
+        clip_geom=vector,
+        verify_output=False,
+        verification_samples=100,
+        verbose=1,
+    )
 
     # blocks_to_raster(
     #     path_np,
@@ -1293,19 +1298,19 @@ if __name__ == "__main__":
 
     # stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif") # shape = (14400, 26112, 3)
 
-    from tensorflow_addons.activations import mish
+    # from tensorflow_addons.activations import mish
 
     # 2m 17s
     # 0m 50s
 
-    path = predict_raster(
-        [B11_20m, B08_10m],
-        model,
-        out_path=out_dir + "validation.tif",
-        offsets=[[(16, 16), (8, 8)], [(32, 32), (16, 16)]],
-        batch_size=64,
-        mirror=False,
-        rotate=False,
-        device="gpu",
-        custom_objects={"mish": mish},
-    )
+    # path = predict_raster(
+    #     [B11_20m, B08_10m],
+    #     model,
+    #     out_path=out_dir + "validation.tif",
+    #     offsets=[[(16, 16), (8, 8)], [(32, 32), (16, 16)]],
+    #     batch_size=64,
+    #     mirror=False,
+    #     rotate=False,
+    #     device="gpu",
+    #     custom_objects={"mish": mish},
+    # )

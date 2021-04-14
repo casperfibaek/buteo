@@ -62,15 +62,24 @@ def open_vector(
         opened: Optional[ogr.DataSource] = None
         if is_vector(vector):
             gdal.PushErrorHandler("CPLQuietErrorHandler")
-            opened = ogr.Open(vector, 1) if writeable else ogr.Open(vector, 0)
+
+            if isinstance(vector, str):
+                opened = ogr.Open(vector, 1) if writeable else ogr.Open(vector, 0)
+            elif isinstance(vector, ogr.DataSource):
+                opened = vector
+            else:
+                raise Exception(f"Could not read input vector: {vector}")
+
             gdal.PopErrorHandler()
         elif is_raster(vector):
             temp_opened: Optional[gdal.Dataset] = None
             if isinstance(vector, str):
                 gdal.PushErrorHandler("CPLQuietErrorHandler")
+
                 temp_opened = (
                     gdal.Open(vector, 1) if writeable else gdal.Open(vector, 0)
                 )
+
                 gdal.PopErrorHandler()
             elif isinstance(vector, gdal.Dataset):
                 temp_opened = vector
@@ -134,7 +143,7 @@ def open_vector(
         raise Exception(f"Could not read input vector: {vector}")
 
     driver: ogr.Driver = opened.GetDriver()
-    driver_name: str = driver.ShortName
+    driver_name: str = driver.GetName()
 
     if driver is None:
         raise Exception("Unable to parse the driver of vector.")
@@ -167,7 +176,7 @@ def open_vector(
     return opened
 
 
-def get_vector_path(vector: Union[str, gdal.Dataset]) -> str:
+def get_vector_path(vector: Union[str, ogr.DataSource]) -> str:
     """ Takes a string or a ogr.Datasource and returns its path.
 
     Args:
@@ -176,7 +185,7 @@ def get_vector_path(vector: Union[str, gdal.Dataset]) -> str:
     Returns:
         A string representing the path to the vector.
     """
-    type_check(vector, [str, gdal.Dataset], "vector")
+    type_check(vector, [str, ogr.DataSource], "vector")
 
     opened = open_vector(vector, convert_mem_driver=True, writeable=False)
     try:
@@ -463,7 +472,7 @@ def ready_io_vector(
     prefix: str = "",
     postfix: str = "",
 ) -> Tuple[List[str], List[str]]:
-    type_check(vector, [list, str, gdal.Dataset], "vector")
+    type_check(vector, [list, str, ogr.DataSource], "vector")
     type_check(out_path, [list, str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
     type_check(prefix, [str], "prefix")
@@ -526,7 +535,7 @@ def internal_vector_to_memory(
         
         Copies a vector source to memory.
     """
-    type_check(vector, [str, gdal.Dataset], "vector")
+    type_check(vector, [str, ogr.DataSource], "vector")
     type_check(memory_path, [str], "memory_path", allow_none=True)
     type_check(layer_to_extract, [int], "layer_to_extract")
 
@@ -592,7 +601,7 @@ def vector_to_memory(
         An in-memory ogr.DataSource. If a memory path was provided a
         string for the in-memory location is returned.
     """
-    type_check(vector, [list, str, gdal.Dataset], "vector")
+    type_check(vector, [list, str, ogr.DataSource], "vector")
     type_check(memory_path, [list, str], "memory_pathout_path", allow_none=True)
     type_check(layer_to_extract, [int], "layer_to_extract")
 
@@ -624,7 +633,7 @@ def internal_vector_to_disk(
     
         Copies a vector source to disk.
     """
-    type_check(vector, [str, gdal.Dataset], "vector")
+    type_check(vector, [str, ogr.DataSource], "vector")
     type_check(out_path, [str], "out_path")
     type_check(overwrite, [bool], "overwrite")
 
@@ -677,7 +686,7 @@ def vector_to_disk(
     Returns:
         An path to the created vector.
     """
-    type_check(vector, [str, gdal.Dataset], "vector")
+    type_check(vector, [str, ogr.DataSource], "vector")
     type_check(out_path, [str], "out_path")
     type_check(overwrite, [bool], "overwrite")
 
