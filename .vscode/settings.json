@@ -1,8 +1,8 @@
 {
     "python.linting.pycodestyleEnabled": false,
     "python.linting.enabled": true,
-    "python.pythonPath": "C:\\ProgramData\\Anaconda3\\envs\\green\\python.exe",
-    "python.linting.pylintEnabled": false,
+    "python.pythonPath": "C:\\ProgramData\\Anaconda3\\envs\\buteo\\python.exe",
+    "python.linting.pylintEnabled": true,
     "python.formatting.provider": "black",
-    "python.linting.mypyEnabled": true
+    "python.linting.mypyEnabled": false
 }

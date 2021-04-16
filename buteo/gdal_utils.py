@@ -10,7 +10,7 @@ from buteo.project_types import (
     Expanded_extents,
     Number,
 )
-from buteo.utils import path_to_ext, is_number, folder_exists, overwrite_required
+from buteo.utils import path_to_ext, is_number
 
 
 def raster_to_reference(

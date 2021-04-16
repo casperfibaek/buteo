@@ -4,9 +4,10 @@ sys.path.append("../../")
 import numpy as np
 import os
 import random
-from typing import Union, Optional, Tuple, List
+from typing import Any, Dict, Union, Optional, Tuple, List
 from osgeo import ogr, gdal
 from uuid import uuid4
+import rtree
 
 from buteo.project_types import Number
 from buteo.raster.io import (
@@ -23,12 +24,12 @@ from buteo.vector.io import (
     internal_vector_to_disk,
     open_vector,
     vector_add_index,
-    internal_vector_to_memory,
 )
 from buteo.vector.reproject import internal_reproject_vector
 from buteo.raster.clip import internal_clip_raster
 from buteo.raster.resample import internal_resample_raster
 from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
+from buteo.gdal_utils import ogr_bbox_intersects
 
 
 def reconstitute_raster(
@@ -103,6 +104,9 @@ def reconstitute_raster(
     # Order: Y, X, Z
     if border_patches and (border_patches_x or border_patches_y):
 
+        x_offset = 0
+        y_offset = 0
+
         if border_patches_x:
             x_offset = int(ref_shape[1] - raster_width)
             x_edge = destination[:raster_height, -(size - x_offset) :, :]
@@ -132,7 +136,7 @@ def blocks_to_raster(
     merge_method: str = "median",
     output_array: bool = False,
     verbose: int = 1,
-) -> Union[str, gdal.Dataset]:
+) -> Union[str, np.ndarray]:
     """ Recombines a series of blocks to a raster. OBS: Does not work if the patch
         extraction was done with clip geom.
     Args:
@@ -297,7 +301,7 @@ def blocks_to_raster(
             raise ValueError(f"Unable to parse merge_method: {merge_method}")
 
     else:
-        raster = reconstitute_raster(
+        raster: np.ndarray = reconstitute_raster(
             blocks,
             metadata["height"],
             metadata["width"],
@@ -532,10 +536,6 @@ def test_extraction(
             test_ds_lyr.CreateFeature(feature.Clone())
             test_ds.SyncToDisk()
 
-            import pdb
-
-            pdb.set_trace()
-
             clipped = internal_clip_raster(
                 test_rast,
                 test_ds_path,
@@ -550,6 +550,7 @@ def test_extraction(
             ref_image = raster_to_array(clipped, filled=True)
             image_block = test_array[test]
             if not np.array_equal(ref_image, image_block):
+                # from matplotlib import pyplot as plt; plt.imshow(ref_image[:,:,0]); plt.show()
                 raise Exception(f"Image {basename} and grid cell did not match..")
 
             if verbose == 1:
@@ -560,6 +561,7 @@ def test_extraction(
     return True
 
 
+# TODO: Initial clip to extent of clip.
 def extract_patches(
     raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
     out_dir: Optional[str] = None,
@@ -671,6 +673,10 @@ def extract_patches(
     border_patches_needed_x = True
     border_patches_needed_y = True
 
+    if clip_geom is not None:
+        border_patches_needed_x = False
+        border_patches_needed_y = False
+
     shapes = []
     for offset in in_offsets:
         block_shape = shape_to_blockshape(metadata["shape"], (size, size), offset)
@@ -710,14 +716,6 @@ def extract_patches(
 
     offset_rows_cumsum = np.cumsum(offset_rows)
 
-    # Ready clip geom outside of loop.
-    if clip_geom is not None:
-        clip_ref = open_vector(
-            internal_reproject_vector(clip_geom, metadata["projection_osr"])
-        )
-        clip_layer = clip_ref.GetLayerByIndex(clip_layer_index)
-        vector_add_index(clip_ref)
-
     if generate_grid_geom is True or clip_geom is not None:
 
         if verbose == 1:
@@ -736,14 +734,35 @@ def extract_patches(
         dx = xres / 2
         dy = yres / 2
 
+        # Ready clip geom outside of loop.
+        if clip_geom is not None:
+            clip_ref = open_vector(
+                internal_reproject_vector(clip_geom, metadata["projection_osr"])
+            )
+            clip_layer = clip_ref.GetLayerByIndex(clip_layer_index)
+
+            meta_clip = internal_vector_to_metadata(clip_ref)
+            geom_clip = meta_clip["layers"][clip_layer_index]["column_geom"]
+
+            clip_extent = meta_clip["extent_ogr"]
+            clip_adjust = [
+                clip_extent[0] - clip_extent[0] % xres,  # x_min
+                (clip_extent[1] - clip_extent[1] % xres) + xres,  # x_max
+                clip_extent[2] - clip_extent[2] % yres,  # y_min
+                (clip_extent[3] - clip_extent[3] % yres) + yres,  # y_max
+            ]
+
         coord_grid = np.empty((all_rows, 2), dtype="float64")
 
-        for l in range(len(in_offsets)):
-            x_offset = in_offsets[l][0]
-            y_offset = in_offsets[l][1]
+        # tiled_extent = [None, None, None, None]
 
-            x_step = shapes[l][0]
-            y_step = shapes[l][1]
+        row_count = 0
+        for idx in range(len(in_offsets)):
+            x_offset = in_offsets[idx][0]
+            y_offset = in_offsets[idx][1]
+
+            x_step = shapes[idx][0]
+            y_step = shapes[idx][1]
 
             x_min = (ulx + dx) + (x_offset * pixel_width)
             x_max = x_min + (x_step * xres)
@@ -751,11 +770,48 @@ def extract_patches(
             y_max = (uly - dy) - (y_offset * pixel_height)
             y_min = y_max - (y_step * yres)
 
-            # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
-            xr = np.arange(x_min, x_max + epsilon, xres)[0:x_step]
-            yr = np.arange(y_max, y_min + epsilon, -yres)[0:y_step]
+            # if clip_geom is not None:
+            #     if clip_adjust[0] > x_min:
+            #         x_min = clip_adjust[0] + (x_offset * pixel_width)
+            #     if clip_adjust[1] < x_max:
+            #         x_max = clip_adjust[1] + (x_offset * pixel_width)
+            #     if clip_adjust[2] > y_min:
+            #         y_min = clip_adjust[2] - (y_offset * pixel_height)
+            #     if clip_adjust[3] < y_max:
+            #         y_max = clip_adjust[3] - (y_offset * pixel_height)
 
-            if generate_border_patches and l == 0:
+            # if idx == 0:
+            #     tiled_extent[0] = x_min
+            #     tiled_extent[1] = x_max
+            #     tiled_extent[2] = y_min
+            #     tiled_extent[3] = y_max
+            # else:
+            #     if x_min < tiled_extent[0]:
+            #         tiled_extent[0] = x_min
+            #     if x_max > tiled_extent[1]:
+            #         tiled_extent[1] = x_max
+            #     if y_min < tiled_extent[2]:
+            #         tiled_extent[2] = y_min
+            #     if y_max > tiled_extent[3]:
+            #         tiled_extent[3] = y_max
+
+            # y is flipped so: xmin --> xmax, ymax -- ymin to keep same order as numpy array
+            x_patches = round((x_max - x_min) / xres)
+            y_patches = round((y_max - y_min) / yres)
+
+            xr = np.arange(x_min, x_max, xres)[0:x_step]
+            if xr.shape[0] < x_patches:
+                xr = np.arange(x_min, x_max + epsilon, xres)[0:x_step]
+            elif xr.shape[0] > x_patches:
+                xr = np.arange(x_min, x_max - epsilon, xres)[0:x_step]
+
+            yr = np.arange(y_max, y_min + epsilon, -yres)[0:y_step]
+            if yr.shape[0] < y_patches:
+                yr = np.arange(y_max, y_min - epsilon, -yres)[0:y_step]
+            elif yr.shape[0] > y_patches:
+                yr = np.arange(y_max, y_min + epsilon, -yres)[0:y_step]
+
+            if generate_border_patches and idx == 0:
 
                 if border_patches_needed_x:
                     xr[-1] = xr[-1] - ((xr[-1] + dx) - metadata["extent_dict"]["right"])
@@ -766,13 +822,20 @@ def extract_patches(
                     )
 
             oxx, oyy = np.meshgrid(xr, yr)
+            oxr = oxx.ravel()
+            oyr = oyy.ravel()
 
-            start = 0
-            if l > 0:
-                start = offset_rows_cumsum[l - 1]
+            offset_length = oxr.shape[0]
 
-            coord_grid[start : offset_rows_cumsum[l], 0] = oxx.ravel()
-            coord_grid[start : offset_rows_cumsum[l], 1] = oyy.ravel()
+            coord_grid[row_count : row_count + offset_length, 0] = oxr
+            coord_grid[row_count : row_count + offset_length, 1] = oyr
+
+            row_count += offset_length
+
+            offset_rows_cumsum[idx] = offset_length
+
+        offset_rows_cumsum = np.cumsum(offset_rows_cumsum)
+        coord_grid = coord_grid[:row_count]
 
         # Output geometry
         driver = ogr.GetDriverByName("GPKG")
@@ -788,55 +851,81 @@ def extract_patches(
         field_defn = ogr.FieldDefn(og_fid, ogr.OFTInteger)
         patches_layer.CreateField(field_defn)
 
-        for q in range(all_rows):
-            x, y = coord_grid[q]
+        if clip_geom is not None:
+            clip_feature_count = meta_clip["layers"][clip_layer_index]["feature_count"]
+            spatial_index = rtree.index.Index(interleaved=False)
+            for _ in range(clip_feature_count):
+                clip_feature = clip_layer.GetNextFeature()
+                clip_fid = clip_feature.GetFID()
+                clip_feature_geom = clip_feature.GetGeometryRef()
+                xmin, xmax, ymin, ymax = clip_feature_geom.GetEnvelope()
+
+                spatial_index.insert(clip_fid, (xmin, xmax, ymin, ymax))
+
+        fids = 0
+        mask = []
+        for tile_id in range(coord_grid.shape[0]):
+            x, y = coord_grid[tile_id]
 
             if verbose == 1:
-                progress(q, all_rows, "Creating Patches")
+                progress(tile_id, coord_grid.shape[0], "Patch generation")
 
-            poly_wkt = f"POLYGON (({x - dx} {y + dy}, {x + dx} {y + dy}, {x + dx} {y - dy}, {x - dx} {y - dy}, {x - dx} {y + dy}))"
+            x_min = x - dx
+            x_max = x + dx
+            y_min = y - dx
+            y_max = y + dx
 
-            ft = ogr.Feature(patches_fdefn)
-            ft.SetGeometry(ogr.CreateGeometryFromWkt(poly_wkt))
-            ft.SetField(og_fid, int(q))
-            ft.SetFID(int(q))
+            tile_intersects = True
 
-            patches_layer.CreateFeature(ft)
-            ft = None
+            grid_geom = None
+            poly_wkt = None
+
+            if clip_geom is not None:
+                tile_intersects = False
+
+                if not ogr_bbox_intersects([x_min, x_max, y_min, y_max], clip_extent):
+                    continue
+
+                intersections = list(
+                    spatial_index.intersection((x_min, x_max, y_min, y_max))
+                )
+                if len(intersections) == 0:
+                    continue
+
+                poly_wkt = f"POLYGON (({x_min} {y_max}, {x_max} {y_max}, {x_max} {y_min}, {x_min} {y_min}, {x_min} {y_max}))"
+                grid_geom = ogr.CreateGeometryFromWkt(poly_wkt)
+
+                for fid1 in intersections:
+                    clip_feature = clip_layer.GetFeature(fid1)
+                    clip_geom = clip_feature.GetGeometryRef()
+
+                    if grid_geom.Intersects(clip_geom):
+                        tile_intersects = True
+                        continue
+
+            if tile_intersects:
+                ft = ogr.Feature(patches_fdefn)
+
+                if grid_geom is None:
+                    poly_wkt = f"POLYGON (({x_min} {y_max}, {x_max} {y_max}, {x_max} {y_min}, {x_min} {y_min}, {x_min} {y_max}))"
+                    grid_geom = ogr.CreateGeometryFromWkt(poly_wkt)
+
+                ft_geom = ogr.CreateGeometryFromWkt(poly_wkt)
+                ft.SetGeometry(ft_geom)
+
+                ft.SetField(og_fid, int(fids))
+                ft.SetFID(int(fids))
+
+                patches_layer.CreateFeature(ft)
+                ft = None
+
+                mask.append(tile_id)
+                fids += 1
 
         if verbose == 1:
-            progress(all_rows, all_rows, "Creating Patches")
+            progress(coord_grid.shape[0], coord_grid.shape[0], "Patch generation")
 
-        if clip_geom is not None:
-            meta_patches = internal_vector_to_metadata(patches_ds)
-            meta_clip = internal_vector_to_metadata(clip_ref)
-
-            geom_patches = meta_patches["layers"][0]["column_geom"]
-            geom_clip = meta_clip["layers"][clip_layer_index]["column_geom"]
-
-            vector_add_index(patches_ds)
-
-            # Clip layer already has index.
-            patches_ds.CopyLayer(clip_layer, "clip_geom", ["OVERWRITE=YES"])
-
-            sql = f"SELECT DISTINCT A.{og_fid} as {og_fid}, A.{geom_patches} AS geom FROM patches_all A, clip_geom B WHERE ST_INTERSECTS(A.{geom_patches}, B.{geom_clip});"
-            result = patches_ds.ExecuteSQL(sql, dialect="SQLITE")
-
-            if result is None:
-                raise Exception("Clip geom did not intersect raster.")
-
-            patch_count = result.GetFeatureCount()
-
-            # Maybe this should be sorted ascending.
-            mask = np.empty(patch_count, dtype=int)
-
-            for patch_idx in range(patch_count):
-                feature = result.GetNextFeature()
-                mask[patch_idx] = feature.GetField(og_fid)
-
-            patches_ds.CopyLayer(result, "patches_clipped", ["OVERWRITE=YES"])
-            patches_ds.DeleteLayer("patches_all")
-            patches_ds.DeleteLayer("clip_geom")
+        mask = np.array(mask, dtype=int)
 
         if generate_grid_geom is True:
             if out_dir is None:
@@ -872,11 +961,14 @@ def extract_patches(
 
         metadata = internal_raster_to_metadata(raster)
 
-        output_shape = (all_rows, size, size, metadata["band_count"])
+        output_shape = (row_count, size, size, metadata["band_count"])
         input_datatype = metadata["datatype"]
 
         output_array = np.empty(output_shape, dtype=input_datatype)
 
+        # if clip_geom is not None:
+        #     ref = raster_to_array(raster, filled=True, extent=tiled_extent)
+        # else:
         ref = raster_to_array(raster, filled=True)
 
         for k, offset in enumerate(in_offsets):
@@ -936,16 +1028,16 @@ def predict_raster(
     raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
     model: str,
     out_path: Optional[str] = None,
-    offsets: list = [],
+    offsets: Union[List[Tuple[int, int]], List[List[Tuple[int, int]]]] = [(0, 0)],
     device: str = "gpu",
     merge_method: str = "median",
     mirror: bool = False,
     rotate: bool = False,
-    custom_objects: dict = {},
+    custom_objects: Dict[str, Any] = {},
     dtype: str = "same",
     batch_size: int = 16,
     overwrite: bool = True,
-    creation_options: list = [],
+    creation_options: List[str] = [],
     verbose: int = 1,
 ):
     """ Runs a raster or list of rasters through a deep learning network (Tensorflow).
@@ -1048,6 +1140,7 @@ def predict_raster(
 
     prediction_arr = []
     readied_inputs = []
+    pixel_factor = 1.0
     for index, model_input in enumerate(model_inputs):
         if verbose == 1:
             print(f"Readying input: {index}")
@@ -1066,7 +1159,7 @@ def predict_raster(
 
         dst_offsets = []
 
-        in_offsets = []
+        in_offsets: List[Tuple[Number, Number]] = []
         if multi_input:
             if len(offsets) > 0:
                 in_offsets = offsets[index]
@@ -1245,6 +1338,22 @@ if __name__ == "__main__":
     out_dir = folder + "out/"
     # tensorflow_model_path = out_dir + "model.h5"
 
+    path_np, path_geom = extract_patches(
+        raster,
+        out_dir=out_dir,
+        prefix="",
+        postfix="_patches",
+        size=32,
+        offsets=[(8, 8), (16, 16), (24, 24)],
+        generate_grid_geom=True,
+        generate_zero_offset=True,
+        generate_border_patches=True,
+        clip_geom=vector,
+        verify_output=True,
+        verification_samples=100,
+        verbose=1,
+    )
+
     # offsets = [(64, 64), (64, 0), (0, 64)]
     # borders = True
 
@@ -1265,22 +1374,6 @@ if __name__ == "__main__":
     # B11_20m = folder + "B11_20m.jp2"
 
     # model = folder + "upsampling_10epochs.h5"
-
-    path_np, path_geom = extract_patches(
-        raster,
-        out_dir=out_dir,
-        prefix="",
-        postfix="_patches",
-        size=128,
-        offsets=[(32, 32), (64, 64), (96, 96)],
-        generate_grid_geom=True,
-        generate_zero_offset=True,
-        generate_border_patches=True,
-        clip_geom=vector,
-        verify_output=False,
-        verification_samples=100,
-        verbose=1,
-    )
 
     # blocks_to_raster(
     #     path_np,

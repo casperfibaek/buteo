@@ -5,6 +5,7 @@ from osgeo import gdal, ogr
 from typing import Union, List, Optional
 from buteo.raster.io import internal_raster_to_metadata, ready_io_raster, open_raster
 from buteo.vector.io import (
+    get_vector_path,
     open_vector,
     vector_to_memory,
     internal_vector_to_metadata,
@@ -177,7 +178,7 @@ def internal_clip_raster(
         outputBounds=output_bounds,
         xRes=raster_metadata["pixel_width"],
         yRes=raster_metadata["pixel_height"],
-        cutlineDSName=clip_ds,
+        cutlineDSName=get_vector_path(clip_ds),
         cropToCutline=False,  # GDAL does this incorrectly when targetAlignedPixels is True.
         creationOptions=out_creation_options,
         warpOptions=warp_options,
@@ -190,6 +191,9 @@ def internal_clip_raster(
         gdal.PopErrorHandler()
 
     if clipped is None:
+        import pdb
+
+        pdb.set_trace()
         raise Exception("Geometries did not intersect.")
 
     return out_name

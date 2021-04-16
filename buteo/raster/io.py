@@ -4,6 +4,7 @@ sys.path.append("../../")
 from uuid import uuid4
 from osgeo import gdal, osr, ogr
 from typing import Dict, Tuple, Union, List, Any, Optional
+from math import ceil
 import numpy as np
 import os
 
@@ -568,6 +569,8 @@ def raster_to_array(
     filled: bool = False,
     merge: bool = True,
     output_2d: bool = False,
+    extent: Optional[List[Number]] = None,
+    extent_pixels: Optional[List[Number]] = None,
 ) -> np.ndarray:
     """ Turns a path to a raster(s) or a GDAL.Dataset(s) into a numpy
         array(s).
@@ -611,6 +614,11 @@ def raster_to_array(
         metadata = internal_raster_to_metadata(ref)
 
         band_count = metadata["band_count"]
+        raster_extent = metadata["extent_ogr"]
+        width = metadata["width"]
+        height = metadata["height"]
+        pixel_width = metadata["pixel_width"]
+        pixel_height = metadata["pixel_height"]
 
         if band_count == 0:
             raise ValueError("The input raster does not have any valid bands.")
@@ -622,7 +630,47 @@ def raster_to_array(
             band_ref = ref.GetRasterBand(band + 1)
             band_nodata_value = band_ref.GetNoDataValue()
 
-            arr = band_ref.ReadAsArray()
+            if extent_pixels is not None:
+                arr = band_ref.ReadAsArray(
+                    extent_pixels[0],
+                    extent_pixels[1],
+                    extent_pixels[2],
+                    extent_pixels[3],
+                )
+            elif extent is not None:
+                ex_min, ex_max, ey_min, ey_max = extent
+                x_min, x_max, y_min, y_max = raster_extent
+
+                if ex_min > x_max or ex_max < x_min or ey_min > y_max or ey_max < y_min:
+                    raise ValueError("Extent is outside of raster.")
+
+                if ex_min < x_min:
+                    x_offset = int(0)
+                else:
+                    x_offset = int((ex_min - x_min) // pixel_width)
+
+                if ex_max > x_max:
+                    x_pixels = ceil(width - x_offset)
+                else:
+                    x_pixels = ceil(
+                        int(width) - int(((x_max - ex_max) // pixel_width)) - x_offset
+                    )
+
+                if ey_min < y_min:
+                    y_offset = int(0)
+                else:
+                    y_offset = int((ey_min - y_min) // pixel_height)
+
+                if ey_max > y_max:
+                    y_pixels = ceil(height - y_offset)
+                else:
+                    y_pixels = ceil(
+                        int(height) - int((y_max - ey_max) // pixel_height) - y_offset
+                    )
+
+                arr = band_ref.ReadAsArray(x_offset, y_offset, x_pixels, y_pixels)
+            else:
+                arr = band_ref.ReadAsArray()
 
             if band_nodata_value is None and filled is False:
                 arr = np.ma.masked_invalid(arr)
