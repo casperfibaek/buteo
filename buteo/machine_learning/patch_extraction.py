@@ -26,7 +26,7 @@ from buteo.vector.io import (
     vector_add_index,
 )
 from buteo.vector.reproject import internal_reproject_vector
-from buteo.raster.clip import internal_clip_raster
+from buteo.raster.clip import clip_raster, internal_clip_raster
 from buteo.raster.resample import internal_resample_raster
 from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
 from buteo.gdal_utils import ogr_bbox_intersects
@@ -1029,6 +1029,7 @@ def predict_raster(
     model: str,
     out_path: Optional[str] = None,
     offsets: Union[List[Tuple[int, int]], List[List[Tuple[int, int]]]] = [(0, 0)],
+    region: Optional[Union[str, ogr.DataSource]] = None,
     device: str = "gpu",
     merge_method: str = "median",
     mirror: bool = False,
@@ -1083,6 +1084,7 @@ def predict_raster(
     type_check(model, [str], "model")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(offsets, [list], "offsets")
+    type_check(region, [str, ogr.DataSource], allow_none=True)
     type_check(device, [str], "device")
     type_check(merge_method, [str], "merge_method")
     type_check(mirror, [bool], "mirror")
@@ -1180,6 +1182,9 @@ def predict_raster(
 
         use_raster = raster[index] if isinstance(raster, list) else raster
 
+        if region is not None:
+            use_raster = clip_raster(use_raster, region)
+
         blocks, _ = extract_patches(
             use_raster,
             size=src_tile_size,
@@ -1276,6 +1281,9 @@ def predict_raster(
         resampled = internal_resample_raster(
             raster, target_size=target_size, dtype="float32"
         )
+
+    if region is not None:
+        resampled = clip_raster(resampled, region)
 
     prediction_arr.append(
         blocks_to_raster(
