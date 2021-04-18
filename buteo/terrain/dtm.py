@@ -1,10 +1,12 @@
+from buteo.vector.rasterize import rasterize_vector
+from buteo.vector.clip import clip_vector
 import sys
 
 sys.path.append("../")
 sys.path.append("../../")
 import geopandas as gpd
 import numpy as np
-from buteo.raster.io import *
+from buteo.raster.io import raster_to_array, array_to_raster, stack_rasters_vrt
 import sys
 import os
 import time
@@ -130,8 +132,8 @@ def height_over_terrain(dsm_folder, dtm_folder, out_folder, tmp_folder):
             t = get_tile_from_zipped_url(dtm_tile)
 
             if s == t:
-                sz = ZipFile(dsm_tile).extractall(tmp_folder)
-                tz = ZipFile(dtm_tile).extractall(tmp_folder)
+                ZipFile(dsm_tile).extractall(tmp_folder)
+                ZipFile(dtm_tile).extractall(tmp_folder)
 
                 dsm_tiffs = glob(tmp_folder + "DSM_*.tif")
                 dtm_tiffs = glob(tmp_folder + "DTM_*.tif")
@@ -161,29 +163,112 @@ def height_over_terrain(dsm_folder, dtm_folder, out_folder, tmp_folder):
         print(f"Completed: {completed}/{len(dsm_zipped)}")
 
 
+def volume_over_terrain(
+    tile_names, username, password, out_folder, tmp_folder,
+):
+    if not os.path.isdir(tmp_folder):
+        raise Exception("Error: output directory does not exist.")
+
+    error_tiles = []
+
+    for tile in tile_names:
+        base_path_DSM = f"ftp://{username}:{password}@ftp.kortforsyningen.dk/dhm_danmarks_hoejdemodel/DSM/"
+        file_name_DSM = f'DSM_{tile.split("_", 1)[1]}_TIF_UTM32-ETRS89.zip'
+
+        base_path_DTM = f"ftp://{username}:{password}@ftp.kortforsyningen.dk/dhm_danmarks_hoejdemodel/DTM/"
+        file_name_DTM = f'DTM_{tile.split("_", 1)[1]}_TIF_UTM32-ETRS89.zip'
+
+        try:
+
+            if not os.path.exists(tmp_folder + file_name_DSM):
+                try:
+                    get_file(base_path_DSM + file_name_DSM, tmp_folder + file_name_DSM)
+                except:
+                    print(
+                        f"Error while trying to download: {base_path_DSM + file_name_DSM}"
+                    )
+            else:
+                print(f"{file_name_DSM} Already exists.")
+
+            if not os.path.exists(tmp_folder + file_name_DTM):
+                try:
+                    get_file(base_path_DTM + file_name_DTM, tmp_folder + file_name_DTM)
+                except:
+                    print(
+                        f"Error while trying to download: {base_path_DTM + file_name_DTM}"
+                    )
+            else:
+                print(f"{file_name_DTM} Already exists.")
+
+            ZipFile(tmp_folder + file_name_DSM).extractall(tmp_folder)
+            ZipFile(tmp_folder + file_name_DTM).extractall(tmp_folder)
+
+            dsm_tiffs = glob(tmp_folder + "DSM_*.tif")
+            dtm_tiffs = glob(tmp_folder + "DTM_*.tif")
+
+            hot_files = []
+
+            for s_tiff in dsm_tiffs:
+                s_tiff_tile_base = os.path.basename(s_tiff).split("_")[2:4]
+                s_tiff_tile = "_".join(s_tiff_tile_base).split(".")[0]
+
+                for t_tiff in dtm_tiffs:
+                    t_tiff_tile_base = os.path.basename(t_tiff).split("_")[2:4]
+                    t_tiff_tile = "_".join(t_tiff_tile_base).split(".")[0]
+
+                    if s_tiff_tile == t_tiff_tile:
+                        ss = raster_to_array(s_tiff)
+                        tt = raster_to_array(t_tiff)
+
+                        hot_name = out_folder + f"HOT_1km_{s_tiff_tile}.tif"
+
+                        array_to_raster(
+                            np.abs(np.subtract(ss, tt)),
+                            out_path=hot_name,
+                            reference=s_tiff,
+                        )
+
+                        hot_files.append(hot_name)
+
+            km10_tilename = "_".join(file_name_DSM.split("_")[1:3])
+
+            vrt_name = out_folder + f"HOT_10km_{km10_tilename}.vrt"
+
+            stack_rasters_vrt(
+                hot_files, seperate=False, out_path=vrt_name,
+            )
+
+        except:
+            print("Error while processing tile: {tile}")
+            error_tiles.append(tile)
+
+        finally:
+            for f in glob(tmp_folder + "/*"):
+                os.remove(f)
+
+    import pdb
+
+    pdb.set_trace()
+
+
 if __name__ == "__main__":
     from glob import glob
     from buteo.raster.resample import resample_raster
 
-    base = "C:/Users/caspe/Desktop/test/"
+    base = "C:/Users/caspe/Desktop/paper_transfer_learning/data/"
+    vector = base + "fjord.gpkg"
     orto_folder = base + "orto/"
 
-    # download_orto(
-    #     find_tile_names(base + "fjord.gpkg"),
-    #     orto_folder,
-    #     "ezratrotter",
-    #     "Bigcloud8!!!",
-    # )
-
-    ortos = glob(orto_folder + "og/*.ecw")
-    for index, orto in enumerate(ortos):
-        ortos[index] = os.path.abspath(ortos[index])
-
-    # stupid ecw format.. :/
-    # gdal_translate -of GTiff -co "COMPRESS=DEFLATE" -co "TILED=YES" -co "BIGTIFF=YES" -co "NUM_THREADS=ALL_CPUS" 10km_6140_580_2019.ecw 10km_6140_580_2019.tif
-    resample_raster(
-        ortos, target_size=2.0, out_path=orto_folder + "2m/", resample_alg="average"
+    volume_over_terrain(
+        find_tile_names(vector),
+        "casperfibaek",
+        "Goldfish12",
+        base + "hot/",
+        base + "vol/",
+        base + "tmp/",
+        vector,
     )
+
     import pdb
 
     pdb.set_trace()

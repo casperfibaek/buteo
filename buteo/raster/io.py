@@ -95,6 +95,9 @@ def open_raster(
 
             opened = driver.CreateCopy(raster_name, opened, options=["BIGTIFF=YES"])
 
+    if opened is None:
+        raise Exception(f"Could not read input raster: {raster}")
+
     return opened
 
 
@@ -431,7 +434,7 @@ def rasters_are_aligned(
     }
 
     for index in range(len(raster_list)):
-        meta = internal_raster_to_metadata(rasters)
+        meta = internal_raster_to_metadata(raster_list[index])
         if index == 0:
             base["projection"] = meta["projection"]
             base["pixel_width"] = meta["pixel_width"]
@@ -545,7 +548,7 @@ def raster_to_memory(
     type_check(memory_path, [list, str], "memory_path", allow_none=True)
 
     raster_list, out_paths = ready_io_raster(
-        raster, out_path=memory_path, overwrite=True
+        raster, out_path=memory_path, overwrite=True  # type: ignore
     )
 
     results: List[str] = []
@@ -567,7 +570,6 @@ def raster_to_array(
     raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
     bands: Union[int, list] = -1,
     filled: bool = False,
-    merge: bool = True,
     output_2d: bool = False,
     extent: Optional[List[Number]] = None,
     extent_pixels: Optional[List[Number]] = None,
@@ -597,7 +599,6 @@ def raster_to_array(
     type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(bands, [int, list], "bands")
     type_check(filled, [bool], "filled")
-    type_check(merge, [bool], "merge")
     type_check(output_2d, [bool], "output_2d")
 
     internal_rasters = to_raster_list(raster)
@@ -625,7 +626,6 @@ def raster_to_array(
 
         internal_bands = to_band_list(bands, metadata["band_count"])
 
-        band_stack = []
         for band in internal_bands:
             band_ref = ref.GetRasterBand(band + 1)
             band_nodata_value = band_ref.GetNoDataValue()
@@ -677,32 +677,15 @@ def raster_to_array(
             elif filled is False:
                 arr = np.ma.masked_equal(arr, band_nodata_value)
 
-            if merge:
-                layers.append(arr)
-            else:
-                band_stack.append(arr)
+            layers.append(arr)
 
             if output_2d:
                 break
 
-        if not merge:
-            layers.append(band_stack)
+    if output_2d:
+        return np.dstack(layers)[:, :, :, 0]
 
-    if merge:
-        if output_2d:
-            return np.dstack(layers)[:, :, :, 0]
-
-        return np.dstack(layers)
-
-    else:
-        return_layers = []
-        for layer in layers:
-            if output_2d:
-                return_layers.append(np.dstack(layer)[:, :, :, 0])
-            else:
-                return_layers.append(np.dstack(layer)[:, :, :, :])
-
-        return return_layers
+    return np.dstack(layers)
 
 
 def internal_raster_to_disk(
@@ -898,7 +881,7 @@ def raster_set_datatype(
 
 
 def array_to_raster(
-    array: np.ndarray,
+    array: Union[np.ndarray, np.ma.MaskedArray],
     reference: Union[str, gdal.Dataset],
     out_path: Optional[str] = None,
     overwrite: bool = True,
@@ -932,7 +915,7 @@ def array_to_raster(
         If an out_path has been specified, it returns the path to the 
         newly created raster file.
     """
-    type_check(array, [np.ndarray], "array")
+    type_check(array, [np.ndarray, np.ma.MaskedArray], "array")
     type_check(reference, [str, gdal.Dataset], "reference")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
@@ -940,7 +923,7 @@ def array_to_raster(
 
     # Verify the numpy array
     if (
-        not isinstance(array, np.ndarray)
+        not isinstance(array, (np.ndarray, np.ma.MaskedArray))
         or array.size == 0
         or array.ndim < 2
         or array.ndim > 3
@@ -968,7 +951,7 @@ def array_to_raster(
     # Handle nodata
     input_nodata = None
     if np.ma.is_masked(array) is True:
-        input_nodata = array.get_fill_value()
+        input_nodata = array.get_fill_value()  # type: ignore (because it's a masked array.)
 
     destination_dtype = numpy_to_gdal_datatype(array.dtype)
 
@@ -1063,8 +1046,10 @@ def stack_rasters(
     nodata_missmatch = False
     nodata_value = None
     total_bands = 0
+    metadatas = []
     for raster in raster_list:
         metadata = internal_raster_to_metadata(raster)
+        metadatas.append(metadata)
 
         nodata_value = metadata["nodata_value"]
         total_bands += metadata["band_count"]
@@ -1089,19 +1074,19 @@ def stack_rasters(
 
     destination = driver.Create(
         output_name,
-        metadata["width"],
-        metadata["height"],
+        metadatas[0]["width"],
+        metadatas[0]["height"],
         total_bands,
         datatype,
         default_options(creation_options),
     )
 
-    destination.SetProjection(metadata["projection"])
-    destination.SetGeoTransform(metadata["transform"])
+    destination.SetProjection(metadatas[0]["projection"])
+    destination.SetGeoTransform(metadatas[0]["transform"])
 
     bands_added = 0
-    for raster in raster_list:
-        metadata = internal_raster_to_metadata(raster)
+    for index, raster in enumerate(raster_list):
+        metadata = metadatas[index]
         band_count = metadata["band_count"]
 
         array = raster_to_array(raster)
@@ -1123,7 +1108,7 @@ def stack_rasters_vrt(
     out_path: str,
     seperate: bool = True,
     resample_alg="nearest",
-    options: list = [],
+    options: tuple = (),
     overwrite: bool = True,
     creation_options: list = [],
 ) -> str:
@@ -1133,14 +1118,14 @@ def stack_rasters_vrt(
     type_check(out_path, [str], "out_path")
     type_check(seperate, [bool], "seperate")
     type_check(resample_alg, [str], "resample_alg")
-    type_check(options, [list], "options")
+    type_check(options, [tuple], "options")
     type_check(overwrite, [bool], "overwrite")
     type_check(creation_options, [list], "creation_options")
 
     resample_algorithm = translate_resample_method(resample_alg)
     options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)
 
-    vrt = gdal.BuildVRT(out_path, rasters, options=options)
+    gdal.BuildVRT(out_path, rasters, options=options)
 
     return out_path
 
@@ -1162,7 +1147,7 @@ def copy_raster(
     type_check(creation_options, [list], "creation_options")
     type_check(opened, [bool], "opened")
 
-    rasters = to_raster_list(raster)
+    # rasters = to_raster_list(raster)
 
     raise ValueError("Not yet implemented. Sorry")
 

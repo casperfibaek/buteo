@@ -1040,7 +1040,7 @@ def predict_raster(
     overwrite: bool = True,
     creation_options: List[str] = [],
     verbose: int = 1,
-):
+) -> str:
     """ Runs a raster or list of rasters through a deep learning network (Tensorflow).
         Supports tiling and reconstituting the output. Offsets are allowed and will be
         bleneded with the merge_method. If the output is a different resolution
