@@ -961,7 +961,11 @@ def extract_patches(
 
         metadata = internal_raster_to_metadata(raster)
 
-        output_shape = (row_count, size, size, metadata["band_count"])
+        if generate_grid_geom is True or clip_geom is not None:
+            output_shape = (row_count, size, size, metadata["band_count"])
+        else:
+            output_shape = (all_rows, size, size, metadata["band_count"])
+
         input_datatype = metadata["datatype"]
 
         output_array = np.empty(output_shape, dtype=input_datatype)

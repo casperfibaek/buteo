@@ -1,11 +1,11 @@
-from buteo.vector.rasterize import rasterize_vector
-from buteo.vector.clip import clip_vector
 import sys
 
 sys.path.append("../")
 sys.path.append("../../")
 import geopandas as gpd
 import numpy as np
+from buteo.vector.rasterize import rasterize_vector
+from buteo.vector.clip import clip_vector
 from buteo.raster.io import raster_to_array, array_to_raster, stack_rasters_vrt
 import sys
 import os
@@ -259,6 +259,12 @@ if __name__ == "__main__":
     vector = base + "fjord.gpkg"
     orto_folder = base + "orto/"
 
+    tiles = find_tile_names(vector)
+
+    import pdb
+
+    pdb.set_trace()
+
     volume_over_terrain(
         find_tile_names(vector),
         "casperfibaek",
@@ -268,8 +274,4 @@ if __name__ == "__main__":
         base + "tmp/",
         vector,
     )
-
-    import pdb
-
-    pdb.set_trace()
 
