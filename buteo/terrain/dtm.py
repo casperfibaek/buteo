@@ -41,7 +41,7 @@ def find_tile_names(path_to_geom):
     project_geom = gpd.read_file(path_to_geom)
     project_geom_wgs = project_geom.to_crs("EPSG:4326")
 
-    grid = "../../geometry/Denmark_10km_grid.gpkg"
+    grid = "../../geometry/Denmark_10km_grid_land.gpkg"
     grid_geom = gpd.read_file(grid)
     grid_dest = grid_geom.to_crs("EPSG:4326")
 
@@ -171,7 +171,15 @@ def volume_over_terrain(
 
     error_tiles = []
 
+    completed = 0
+
     for tile in tile_names:
+
+        # import pdb; pdb.set_trace()
+
+        if tile not in ['10km_613_56', '10km_633_55', '10km_633_56']:
+            continue
+
         base_path_DSM = f"ftp://{username}:{password}@ftp.kortforsyningen.dk/dhm_danmarks_hoejdemodel/DSM/"
         file_name_DSM = f'DSM_{tile.split("_", 1)[1]}_TIF_UTM32-ETRS89.zip'
 
@@ -181,22 +189,12 @@ def volume_over_terrain(
         try:
 
             if not os.path.exists(tmp_folder + file_name_DSM):
-                try:
-                    get_file(base_path_DSM + file_name_DSM, tmp_folder + file_name_DSM)
-                except:
-                    print(
-                        f"Error while trying to download: {base_path_DSM + file_name_DSM}"
-                    )
+                get_file(base_path_DSM + file_name_DSM, tmp_folder + file_name_DSM)
             else:
                 print(f"{file_name_DSM} Already exists.")
 
             if not os.path.exists(tmp_folder + file_name_DTM):
-                try:
-                    get_file(base_path_DTM + file_name_DTM, tmp_folder + file_name_DTM)
-                except:
-                    print(
-                        f"Error while trying to download: {base_path_DTM + file_name_DTM}"
-                    )
+                get_file(base_path_DTM + file_name_DTM, tmp_folder + file_name_DTM)
             else:
                 print(f"{file_name_DTM} Already exists.")
 
@@ -222,8 +220,10 @@ def volume_over_terrain(
 
                         hot_name = out_folder + f"HOT_1km_{s_tiff_tile}.tif"
 
+                        subtracted = np.subtract(ss, tt)
+                        hot_arr = np.abs((subtracted >= 0) * subtracted)
                         array_to_raster(
-                            np.abs(np.subtract(ss, tt)),
+                            hot_arr,
                             out_path=hot_name,
                             reference=s_tiff,
                         )
@@ -239,39 +239,41 @@ def volume_over_terrain(
             )
 
         except:
+            import pdb; pdb.set_trace()
             print("Error while processing tile: {tile}")
             error_tiles.append(tile)
 
         finally:
             for f in glob(tmp_folder + "/*"):
                 os.remove(f)
+            
+            completed += 1
+            print(f"Completed: {completed}/{len(tile_names)} - {tile}")
 
     import pdb
 
     pdb.set_trace()
 
+
+# '/media/cfi/lts/terrain/hot/HOT_10km_633_55.vrt' is broken. please fix.
+# 613_56
+# 633_56
+# ['10km_613_56', '10km_633_55', '10km_633_56']
 
 if __name__ == "__main__":
     from glob import glob
     from buteo.raster.resample import resample_raster
 
-    base = "C:/Users/caspe/Desktop/paper_transfer_learning/data/"
-    vector = base + "fjord.gpkg"
+    base = "/media/cfi/lts/terrain/"
     orto_folder = base + "orto/"
 
-    tiles = find_tile_names(vector)
-
-    import pdb
-
-    pdb.set_trace()
+    denmark = "/home/cfi/Desktop/buteo/geometry/Denmark_10km_grid.gpkg"
 
     volume_over_terrain(
-        find_tile_names(vector),
+        find_tile_names(denmark),
         "casperfibaek",
         "Goldfish12",
-        base + "hot/",
-        base + "vol/",
+        base + "hot_missing/",
         base + "tmp/",
-        vector,
     )
 
