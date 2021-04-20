@@ -40,6 +40,7 @@ def open_vector(
     convert_mem_driver: bool = True,
     writeable: bool = True,
     layer: int = -1,
+    where: tuple = (),
 ) -> ogr.DataSource:
     """ Opens a vector to an ogr.Datasource class.
 
@@ -407,8 +408,9 @@ def internal_vector_to_metadata(
     }
 
     if create_geometry:
+        proj = projection_osr if ds_projection_osr is None else ds_projection_osr
         # Combined extents
-        extended_extents = advanced_extents(ds_extent_ogr, ds_projection_osr)
+        extended_extents = advanced_extents(ds_extent_ogr, proj)
 
         for key, value in extended_extents.items():
             metadata[key] = value  # type: ignore
@@ -701,6 +703,56 @@ def vector_to_disk(
         return output
 
     return output[0]
+
+
+def filter_vector(vector, filter_where, process_layer=0):
+    metadata = internal_vector_to_metadata(vector)
+
+    name = f"/vsimem/{uuid4().int}_filtered.shp"
+
+    projection = metadata["projection_osr"]
+
+    driver = ogr.GetDriverByName("ESRI Shapefile")
+    ds = driver.CreateDataSource(name)
+    og_ds = open_vector(vector)
+
+    added = 0
+
+    for index, _layer in enumerate(metadata["layers"]):
+        if index != process_layer:
+            continue
+
+        features = metadata["layers"][index]["feature_count"]
+        field_names = metadata["layers"][index]["field_names"]
+
+        if filter_where[0] not in field_names:
+            continue
+
+        geom_type = metadata["layers"][index]["geom_type_ogr"]
+
+        og_layer = og_ds.GetLayer(index)
+        ds_layer = ds.CreateLayer(f"filtered_{uuid4().int}", projection, geom_type)
+
+        found_match = False
+        for _ in range(features):
+            feature = og_layer.GetNextFeature()
+
+            field_val = feature.GetField(filter_where[0])
+
+            if field_val == filter_where[1]:
+                ds_layer.CreateFeature(feature.Clone())
+
+                found_match = True
+
+        ds_layer.SyncToDisk()
+
+        if found_match:
+            added += 1
+
+    if added == 0:
+        raise ValueError("No matches found.")
+
+    return name
 
 
 def vector_add_index(
