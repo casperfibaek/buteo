@@ -25,7 +25,7 @@
       <oversamplingMultiple>1.5</oversamplingMultiple>
     </parameters>
   </node>
-  <!-- <node id="Subset">
+  <node id="Subset">
     <operator>Subset</operator>
     <sources>
       <sourceProduct refid="Terrain-Flattening"/>
@@ -40,7 +40,7 @@
       <tiePointGridNames/>
       <copyMetadata>true</copyMetadata>
     </parameters>
-  </node> -->
+  </node>
   <node id="Terrain-Correction">
     <operator>Terrain-Correction</operator>
     <sources>

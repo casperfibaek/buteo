@@ -1,22 +1,25 @@
-import sys; sys.path.append('..'); sys.path.append('../lib/')
-import xml.etree.ElementTree as ET
+import sys
+
+sys.path.append("..")
+sys.path.append("../../")
+
 from glob import glob
+import xml.etree.ElementTree as ET
 from datetime import datetime
-from osgeo import ogr
+from multiprocessing import cpu_count
+from buteo.vector.io import internal_vector_to_metadata
 import os
 
-from sen1mosaic.preprocess import processFiles_coherence
-# from sen1mosaic.mosaic import buildComposite
 
 def s1_kml_to_bbox(path_to_kml):
     root = ET.parse(path_to_kml).getroot()
     for elem in root.iter():
-        if elem.tag == 'coordinates':
+        if elem.tag == "coordinates":
             coords = elem.text
             break
 
-    coords = coords.split(',')
-    coords[0] = coords[-1] + ' ' + coords[0]
+    coords = coords.split(",")
+    coords[0] = coords[-1] + " " + coords[0]
     del coords[-1]
     coords.append(coords[0])
 
@@ -26,7 +29,7 @@ def s1_kml_to_bbox(path_to_kml):
     max_y = -90
 
     for i in range(len(coords)):
-        intermediate = coords[i].split(' ')
+        intermediate = coords[i].split(" ")
         intermediate.reverse()
 
         intermediate[0] = float(intermediate[0])
@@ -36,14 +39,14 @@ def s1_kml_to_bbox(path_to_kml):
             min_x = intermediate[0]
         elif intermediate[0] > max_x:
             max_x = intermediate[0]
-        
+
         if intermediate[1] < min_y:
             min_y = intermediate[1]
         elif intermediate[1] > max_y:
             max_y = intermediate[1]
 
     footprint = f"POLYGON (({min_x} {min_y}, {min_x} {max_y}, {max_x} {max_y}, {max_x} {min_y}, {min_x} {min_y}))"
-    
+
     return footprint
 
 
@@ -53,13 +56,13 @@ def get_metadata(image_paths):
     for img in image_paths:
         kml = f"{img}/preview/map-overlay.kml"
 
-        timestr = str(img.rsplit('.')[0].split('/')[-1].split('_')[5])
+        timestr = str(img.rsplit(".")[0].split("/")[-1].split("_")[5])
         timestamp = datetime.strptime(timestr, "%Y%m%dT%H%M%S").timestamp()
 
         meta = {
-            'path': img,
-            'timestamp': timestamp,
-            'footprint_wkt': s1_kml_to_bbox(kml),
+            "path": img,
+            "timestamp": timestamp,
+            "footprint_wkt": s1_kml_to_bbox(kml),
         }
 
         images_obj.append(meta)
@@ -67,87 +70,131 @@ def get_metadata(image_paths):
     return images_obj
 
 
-def coherence_step1(image_paths, out_folder, gpt="~/esa_snap/bin/gpt"):
-    images_obj = get_metadata(image_paths)
-    processed = []
+def backscatter_step1(
+    zip_file,
+    out_path,
+    graph="backscatter_step1.xml",
+    speckle_filter=False,
+    extent=None,
+    output_units="decibels",
+    gpt="~/snap/bin/gpt",
+    verbose=True,
+):
+    # Get absolute location of graph processing tool
+    gpt = os.path.realpath(os.path.abspath(os.path.expanduser(gpt)))
+    if not os.path.exists(gpt):
+        gpt = os.path.realpath(
+            os.path.abspath(os.path.expanduser("~/esa_snap/bin/gpt"))
+        )
+        if not os.path.exists(gpt):
+            gpt = os.path.realpath(
+                os.path.abspath(os.path.expanduser("~/snap/bin/gpt"))
+            )
+            if not os.path.exists(gpt):
+                gpt = os.path.realpath(
+                    os.path.abspath(
+                        os.path.expanduser("C:/Program Files/snap/bin/gpt.exe")
+                    )
+                )
 
-    for index_i, metadata in enumerate(images_obj):
+                if os.path.exists(gpt):
+                    gpt = '"C:/Program Files/snap/bin/gpt.exe"'
+                else:
+                    if not os.path.exists(gpt):
+                        assert os.path.exists(gpt), "Graph processing tool not found."
 
-        # Find the image with the largest intersection
-        footprint = ogr.CreateGeometryFromWkt(metadata['footprint_wkt'])
-        highest_area = 0
-        best_overlap = False
+    if os.path.exists(out_path):
+        print("File already processed")
+        return 1
 
-        for index_j in range(len(images_obj)):
-            if index_j == index_i: continue
-            
-            comp_footprint = ogr.CreateGeometryFromWkt(images_obj[index_j]['footprint_wkt'])
+    xmlfile = os.path.join(os.path.dirname(__file__), f"./graphs/{graph}")
 
-            intersection = footprint.Intersection(comp_footprint)
+    command = [
+        gpt,
+        os.path.abspath(xmlfile),
+        f"-Pinputfile={zip_file}",
+        f"-Poutputfile={out_path}",
+        f"-q {cpu_count()}",
+        "-c 31978M",
+        "-J-Xmx45G -J-Xms2G",
+    ]
 
-            if intersection == None: continue
-            
-            area = intersection.Area()
-            if area > highest_area:
-                highest_area = area
-                best_overlap = index_j
+    os.system(f'cmd /c {" ".join(command)}')
 
-        skip = False
-        if [index_i, best_overlap] in processed:
-            skip = True
-
-        if best_overlap is not False and skip is False:
-            processFiles_coherence(metadata['path'], images_obj[best_overlap]['path'], out_folder + str(int(metadata['timestamp'])) + '_step1', step=1, gpt=gpt)
-
-            processed.append([best_overlap, index_i])
-
-        print(processed)
+    return out_path
 
 
-def coherence_step2(input_folder, gpt="~/esa_snap/bin/gpt"):
-    step1_images = glob(input_folder + '*step1*.dim')
-    completed = 0
-    for image in step1_images:
-        outname = image.rsplit('_', 1)[0] + '_step2'
-        try:
-            processFiles_coherence(image, None, outname, step=2, gpt=gpt)
-        except:
-            print('Failed to processes: ', outname)
-        completed += 1
-        print(str(completed) + '/' + str(len(step1_images)))
+def backscatter_step2(
+    zip_file,
+    out_path,
+    graph="backscatter_step2.xml",
+    interest_area=None,
+    speckle_filter=False,
+    extent=None,
+    output_units="decibels",
+    gpt="~/snap/bin/gpt",
+    verbose=True,
+):
+    # Get absolute location of graph processing tool
+    gpt = os.path.realpath(os.path.abspath(os.path.expanduser(gpt)))
+    if not os.path.exists(gpt):
+        gpt = os.path.realpath(
+            os.path.abspath(os.path.expanduser("~/esa_snap/bin/gpt"))
+        )
+        if not os.path.exists(gpt):
+            gpt = os.path.realpath(
+                os.path.abspath(os.path.expanduser("~/snap/bin/gpt"))
+            )
+            if not os.path.exists(gpt):
+                gpt = os.path.realpath(
+                    os.path.abspath(
+                        os.path.expanduser("C:/Program Files/snap/bin/gpt.exe")
+                    )
+                )
+
+                if os.path.exists(gpt):
+                    gpt = '"C:/Program Files/snap/bin/gpt.exe"'
+                else:
+                    if not os.path.exists(gpt):
+                        assert os.path.exists(gpt), "Graph processing tool not found."
+
+    if os.path.exists(out_path):
+        print("File already processed")
+        return 1
+
+    xmlfile = os.path.join(os.path.dirname(__file__), f"./graphs/{graph}")
+
+    command = [
+        gpt,
+        os.path.abspath(xmlfile),
+        f"-Pinputfile={zip_file}",
+        f"-Poutputfile={out_path}",
+        f"-q {cpu_count()}",
+        "-c 31978M",
+        "-J-Xmx45G -J-Xms2G",
+    ]
+
+    if interest_area is not None:
+        extent = internal_vector_to_metadata(interest_area)["extent_latlng"]
+        command.append(f"-Pextent={' '.join(extent)}")
+
+    print(command)
+
+    os.system(f'cmd /c {" ".join(command)}')
+
+    return out_path
 
 
 if __name__ == "__main__":
-    # base_folder = "/home/cfi/Desktop/sentinel1_midtjylland/descending/slc/"
-    # out_folder = "/home/cfi/Desktop/sentinel1_midtjylland/descending/slc_processed/"
-    # slc_files = glob(base_folder + "*.SAFE")
-    
-    # coherence_step1(slc_files, out_folder, gpt="~/esa_snap/bin/gpt")
+    folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/sentinel1/"
+    images = glob(folder + "*.dim")
+    interest_area = folder + "denmark_polygon.gpkg"
 
-    folder = "/home/cfi/Desktop/sentinel1_midtjylland/"
-    ascending_folder = "/home/cfi/Desktop/sentinel1_midtjylland/ascending/slc_processed/"
-    descending_folder = "/home/cfi/Desktop/sentinel1_midtjylland/descending/slc_processed/"
-    # coherence_step2(ascending_folder)
-    # coherence_step2(descending_folder)
+    for image in images:
+        out_name = os.path.splitext(os.path.basename(image))[0] + "bob"
+        backscatter_step2(image, folder + out_name, interest_area=interest_area)
 
-    proj = 'PROJCS["ETRS89 / UTM zone 32N",GEOGCS["ETRS89",DATUM["European_Terrestrial_Reference_System_1989",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6258"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4258"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",9],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","25832"]]'
+        import pdb
 
-    # coh_images = glob(folder + "*.tif")
-    # for img in coh_images:
-    #     output_name = folder + "/clipped/" + os.path.basename(img).rsplit(".")[0] + "_nd.tif"
-    #     clipped = clip_raster(img, cutline=folder + "studyArea100mBuffer.gpkg", cutline_all_touch=True, src_nodata=0)
-    #     array_to_raster(raster_to_array(clipped), output_name, clipped, src_nodata=0, dst_nodata=0)
-    
-    clipped_images = glob(folder + "clipped/*asc*.tif")
-    cmd = "pkcomposite" +  " -i " + " -i ".join(clipped_images) + f" -cr median -srcnodata 0 -dstnodata 0 -msknodata 0 -o {folder}mosaic_asc.tif"
-    import pdb; pdb.set_trace()
+        pdb.set_trace()
 
-    # ascending_images = glob(ascending_folder + "*step2*/*.img")
-    # for img in ascending_images:
-    #     name = os.path.basename(img).split(".", 1)[0] + "_asc.tif"
-    #     reproject(array_to_raster(raster_to_array(img), None, img), ascending_folder + name, target_projection=proj)
-
-    # descdending_images = glob(descending_folder + "*step2*/*.img")
-    # for img in descdending_images:
-    #     name = os.path.basename(img).split(".", 1)[0] + "_desc.tif"
-    #     reproject(array_to_raster(raster_to_array(img), None, img), descending_folder + name, target_projection=proj)

@@ -58,14 +58,18 @@ def list_available_s1(
     return df
 
 
+# Only Ascending imagery available over Africa.
 def download_s1(
-    footprint,
     username,
     password,
+    footprint,
     destination,
     date=("20200601", "20210101"),
-    orbitdirection="Ascending",  # Ascending, Descending
+    orbitdirection="ASCENDING",  # ASCENDING, DESCENDING
+    min_overlap=0.25,
     producttype="GRD",
+    sensoroperationalmode="IW",
+    polarisationmode="VV VH",
 ):
     api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
 
@@ -77,10 +81,30 @@ def download_s1(
         platformname="Sentinel-1",
         orbitdirection=orbitdirection,
         producttype=producttype,
-        sensoroperationalmode="IW",
+        sensoroperationalmode=sensoroperationalmode,
+        polarisationmode=polarisationmode,
     )
 
-    download = api.download_all(products, directory_path=destination)
+    download_products = OrderedDict()
+
+    geom_footprint = ogr.CreateGeometryFromWkt(geom["extent_wkt_latlng"])
+    geom_area = geom_footprint.GetArea()
+
+    for product in products:
+        dic = products[product]
+
+        img_footprint = ogr.CreateGeometryFromWkt(dic["footprint"])
+
+        intersection = img_footprint.Intersection(geom_footprint)
+        intersection_area = intersection.GetArea()
+
+        overlap = intersection_area / geom_area
+
+        if overlap > min_overlap:
+            download_products[product] = dic
+
+    print(f"Downloading {len(download_products)} files.")
+    download = api.download_all(download_products, directory_path=destination)
 
     return download
 
@@ -312,62 +336,24 @@ def download_s2(
     return download
 
 
-# Only Ascending imagery available over Africa.
 if __name__ == "__main__":
-    from glob import glob
-    from buteo.vector.attributes import vector_get_attribute_table
-
     folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/"
-    dst = folder + "sentinel2/raw_2021/"
+    dst = folder + "sentinel1/raw_2020/"
 
-    vector = folder + "s2_tiles_in_project_area.gpkg"
-
-    attributes = vector_get_attribute_table(vector)
-    tiles = attributes["Name"].values.tolist()
+    vector = folder + "denmark_polygon_border_region_removed.gpkg"
 
     # 2020 06 01 - 2020 08 01 (good dates: 0615-0701)
     # 2021 02 15 - 2021 04 15
 
-    # 2020
-    # improve = [
-    #     "32UMG",  # Sky issues, download from previous year?
-    #     "32VNH",  # Sky issues, download from previous year?
-    #     "32UNG",  # border issue.
-    #     "32VMH",  # interesting border issue
-    #     "33UWB",  # Helt skidt.
-    #     "33UVB",  # intersting shadow issue
-    # ]
-
-    # 2021
-    improve = [
-        "32UNG",  # Minor border issue.
-        "32VMH",  # Still bad
-        "32VNH",  # Minor issues
-    ]
-
-    for tile in tiles:
-
-        if tile not in improve:
-            continue
-
-        avai = download_s2(
-            "casperfibaek",
-            "Goldfish12",
-            dst,
-            tile=tile,
-            date=("20200201", "20200423"),
-            # date=("20200201", "20200423"),
-            # date=("20200501", "20210901"),
-            clouds=5,
-            min_update=0,
-            min_overlap=0.50,
-            min_images=3,
-            iterate=True,
-        )
+    avai = download_s1(
+        "casperfibaek",
+        "Goldfish12",
+        vector,
+        dst,
+        date=("20200601", "20200630"),
+        min_overlap=0.1,
+    )
 
     import pdb
 
     pdb.set_trace()
-
-    # s2_files = glob(dst + "*.safe")
-    # align
