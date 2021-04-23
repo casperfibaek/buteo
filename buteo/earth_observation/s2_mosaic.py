@@ -47,6 +47,7 @@ def mosaic_tile(
     output_scl=False,
     output_tracking=False,
     output_quality=False,
+    process_bands=None,
 ):
 
     start = time()
@@ -74,15 +75,15 @@ def mosaic_tile(
             else:
                 comp_time = ideal_date
 
-        time_delta = abs(
-            (
-                metadata["PRODUCT_STOP_TIME"]
-                - datetime.datetime.strptime(comp_time, "%Y%m%d").replace(
-                    tzinfo=datetime.timezone.utc
-                )
-            ).total_seconds()
-            / 86400
-        )
+            time_delta = abs(
+                (
+                    metadata["PRODUCT_STOP_TIME"]
+                    - datetime.datetime.strptime(comp_time, "%Y%m%d").replace(
+                        tzinfo=datetime.timezone.utc
+                    )
+                ).total_seconds()
+                / 86400
+            )
 
         quality_adjustment = 1
         if ideal_date is not None:
@@ -181,18 +182,22 @@ def mosaic_tile(
 
         print(f"Current quality: {round(current_quality_score, 4)}")
 
-    bands_to_process = [
-        {"size": "10m", "band": "B02"},
-        {"size": "10m", "band": "B03"},
-        {"size": "10m", "band": "B04"},
-        {"size": "20m", "band": "B05"},
-        {"size": "20m", "band": "B06"},
-        {"size": "20m", "band": "B07"},
-        {"size": "20m", "band": "B8A"},
-        {"size": "10m", "band": "B08"},
-        {"size": "20m", "band": "B11"},
-        {"size": "20m", "band": "B12"},
-    ]
+    bands_to_process = (
+        [
+            {"size": "10m", "band": "B02"},
+            {"size": "10m", "band": "B03"},
+            {"size": "10m", "band": "B04"},
+            {"size": "20m", "band": "B05"},
+            {"size": "20m", "band": "B06"},
+            {"size": "20m", "band": "B07"},
+            {"size": "20m", "band": "B8A"},
+            {"size": "10m", "band": "B08"},
+            {"size": "20m", "band": "B11"},
+            {"size": "20m", "band": "B12"},
+        ]
+        if process_bands is None
+        else process_bands
+    )
 
     if len(used_images) > 1:
         print("Pre-calculating feathers")
@@ -435,19 +440,24 @@ def join_tiles(
     nodata_value=0.0,
     pixel_width=None,
     pixel_height=None,
+    bands_to_process=None,
 ):
-    bands = [
-        "B02_10m",
-        "B03_10m",
-        "B04_10m",
-        "B08_10m",
-        "B05_20m",
-        "B06_20m",
-        "B07_20m",
-        "B8A_20m",
-        "B11_20m",
-        "B12_20m",
-    ]
+    bands = (
+        [
+            "B02_10m",
+            "B03_10m",
+            "B04_10m",
+            "B08_10m",
+            "B05_20m",
+            "B06_20m",
+            "B07_20m",
+            "B8A_20m",
+            "B11_20m",
+            "B12_20m",
+        ]
+        if bands_to_process is None
+        else bands_to_process
+    )
 
     created = []
     for band in bands:
@@ -491,17 +501,30 @@ if __name__ == "__main__":
     # land_vector = data_folder + "denmark_polygon_1280m_buffer.gpkg"
 
     tmp_folder = folder + "tmp/"
-    raw_folder = folder + "raw_2020/"
-    dst_folder = folder + "mosaic_2020/"
+    raw_folder = folder + "raw_2021/"
+    dst_folder = folder + "mosaic_2021/"
+
     join_tiles(
         dst_folder,
         folder,
         folder + "tmp/",
-        prefix="summer_2020_",
+        prefix="spring_2021_",
         nodata_value=0.0,
-        pixel_width=10.0,
-        pixel_height=10.0,
+        pixel_width=20.0,
+        pixel_height=20.0,
         # clip_geom=land_vector,
+        bands_to_process=[
+            # "B02_10m",
+            # "B03_10m",
+            # "B04_10m",
+            # "B08_10m",
+            "B05_20m",
+            "B06_20m",
+            "B07_20m",
+            "B8A_20m",
+            "B11_20m",
+            "B12_20m",
+        ],
     )
 
     tmp_files = glob(tmp_folder + "*.tif")
@@ -531,24 +554,19 @@ if __name__ == "__main__":
     # 2021 02 15 - 2021 04 15
 
     # 2020
-    improve = [
-        "32UMG",  # Sky issues, download from previous year? RUN AGAIN WITH use_image set
-        "32VNH",  # Sky issues, download from previous year?
-        "32UNG",  # border issue.
-        "32VMH",  # interesting border issue
-        "33UWB",  # Helt skidt.
-        "33UVB",  # intersting shadow issue
-    ]
+    # improve = [
+    #     "32UMG",  # Sky issues, download from previous year? RUN AGAIN WITH use_image set
+    #     "32VNH",  # Sky issues, download from previous year?
+    #     "32UNG",  # border issue.
+    #     "32VMH",  # interesting border issue
+    #     "33UWB",  # Helt skidt.
+    #     "33UVB",  # intersting shadow issue
+    # ]
 
     # 2021
     improve = [
-        "32UMG",
-        "32UNG",
-        "32VMH",
-        "32UMG",  # Very poor
-        "32UMF",  # Very poor
-        "32UWB",  # Very poor
-        "32VNH",  # Poor
+        "32UNG",  # Minor border issue.
+        "32VNH",  # Minor issues
     ]
 
     for tile in tiles:
@@ -565,12 +583,24 @@ if __name__ == "__main__":
             tile,
             dst_folder,
             max_harmony=20,
-            min_improvement=0.1,
+            min_improvement=0.01,
             quality_threshold=110,
-            time_penalty=15,
+            time_penalty=30,
             max_time_delta=400.0,
             # ideal_date="20210226",
             use_image="20210226",
+            process_bands=[
+                {"size": "10m", "band": "B02"},
+                {"size": "10m", "band": "B03"},
+                {"size": "10m", "band": "B04"},
+                {"size": "20m", "band": "B05"},
+                {"size": "20m", "band": "B06"},
+                {"size": "20m", "band": "B07"},
+                {"size": "20m", "band": "B8A"},
+                {"size": "10m", "band": "B08"},
+                {"size": "20m", "band": "B11"},
+                {"size": "20m", "band": "B12"},
+            ],
         )
 
         tmp_files = glob(tmp_folder + "*.SAFE")

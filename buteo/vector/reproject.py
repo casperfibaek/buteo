@@ -18,7 +18,7 @@ from buteo.utils import remove_if_overwrite, type_check
 
 def internal_reproject_vector(
     vector: Union[str, ogr.DataSource],
-    projection: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
+    projection: Union[str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
     out_path: Optional[str] = None,
     copy_if_same: bool = False,
     overwrite: bool = True,
@@ -26,7 +26,7 @@ def internal_reproject_vector(
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(
         projection,
-        [str, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
+        [str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
         "projection",
     )
     type_check(out_path, [str], "out_path", allow_none=True)
@@ -112,7 +112,7 @@ def internal_reproject_vector(
 
 def reproject_vector(
     vector: Union[List[Union[str, ogr.DataSource]], Union[str, ogr.DataSource]],
-    projection: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
+    projection: Union[str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
     out_path: Optional[str] = None,
     copy_if_same: bool = False,
     overwrite: bool = True,
@@ -139,7 +139,7 @@ def reproject_vector(
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(
         projection,
-        [str, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
+        [str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
         "projection",
     )
     type_check(out_path, [str], "out_path", allow_none=True)
