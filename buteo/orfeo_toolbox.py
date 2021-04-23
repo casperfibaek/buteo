@@ -1,9 +1,13 @@
+import sys
+
+sys.path.append("../")
+
 import os
 import subprocess
 import time
 
-from lib.utils_core import progress
-from lib.raster_io import raster_to_array
+from buteo.utils import progress
+from buteo.raster.io import raster_to_array
 
 
 def execute_cli_function(command, name, quiet=False):
@@ -39,7 +43,8 @@ def execute_cli_function(command, name, quiet=False):
                     raise RuntimeError(line) from None
 
     except:
-        raise RuntimeError("Critical failure while performing Orfeo-Toolbox action.")
+        print("Critical failure while performing Orfeo-Toolbox action.")
+        pass
 
     print(f"{name} completed in {round(time.time() - before, 2)}s.")
 
@@ -330,7 +335,18 @@ def rescale(in_raster, out_raster, options=None, out_datatype="float"):
 
 
 def merge_rasters(
-    in_rasters, out_raster, options=None, band=None, out_datatype="uint16", tmp="."
+    in_rasters,
+    out_raster,
+    options=None,
+    band=None,
+    out_datatype="uint16",
+    tmp=".",
+    ram=42000,
+    obt_path="C:/Program Files/OTB-7.2.0-Win64/",
+    harmonisation=False,
+    nodata_value=0,
+    pixel_width=None,
+    pixel_height=None,
 ):
     """ Creates a mosaic out of a series of images. Must be of the same projection """
 
@@ -339,9 +355,21 @@ def merge_rasters(
     if options is None:
         options = {
             "comp.feather": "large",
-            "harmo.method": "none",
+            "harmo.method": "band",
+            "harmo.cost": "rmse",
+            "interpolator": "linear",
             "tmpdir": tmp,
+            "nodata": nodata_value,
         }
+
+        if pixel_width is not None and pixel_height is not None:
+            options["output.spacingx"] = pixel_width
+            options["output.spacingy"] = pixel_height
+
+        if harmonisation:
+            options["harmo.method"] = "band"
+        else:
+            options["harmo.method"] = "none"
 
     if band is not None:
         band = f"&bands={band}"
@@ -353,8 +381,10 @@ def merge_rasters(
         "-il",
         " ".join(in_rasters),
         "-out",
-        f'"{os.path.abspath(out_raster)}?{band}&gdal:co:COMPRESS=DEFLATE&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES"',
+        f'"{os.path.abspath(out_raster)}?{band}&gdal:co:COMPRESS=DEFLATE&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES&gdal:co:TILED=YES"',
         out_datatype,
+        "-ram",
+        str(ram),
     ]
 
     for key, value in options.items():
@@ -362,6 +392,13 @@ def merge_rasters(
         cli_args.append(str(value))
 
     cli_string = " ".join(cli_args)
+
+    os.environ["PATH"] += os.pathsep + f"{obt_path}bin"
+    os.environ["GDAL_DATA"] = os.pathsep + f"{obt_path}share/data"
+    os.environ["PROJ_LIB"] = os.pathsep + f"{obt_path}share/proj"
+    os.environ["OTB_APPLICATION_PATH"] = os.pathsep + f"{obt_path}lib/otb/applications"
+    os.environ["PYTHONPATH"] = os.pathsep + f"{obt_path}lib/python"
+    os.system(cli_string)
 
     execute_cli_function(cli_string, name="merge rasters")
 

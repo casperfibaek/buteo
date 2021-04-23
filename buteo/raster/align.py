@@ -3,6 +3,7 @@ import sys
 sys.path.append("../../")
 from typing import Union, List, Optional
 from osgeo import gdal, ogr, osr
+import os
 import numpy as np
 from buteo.raster.io import (
     internal_raster_to_metadata,
@@ -27,6 +28,31 @@ from buteo.gdal_utils import (
     gdal_nodata_value_from_type,
     translate_resample_method,
 )
+
+
+def match_projections(rasters, master, out_dir, overwrite=False, dst_nodata="infer"):
+    target_projection = parse_projection(master)
+
+    created = []
+
+    for raster in rasters:
+        metadata = internal_raster_to_metadata(raster)
+        outname = out_dir + metadata["name"] + ".tif"
+        created.append(outname)
+
+        if os.path.exists(outname):
+            if not overwrite:
+                continue
+
+        internal_reproject_raster(
+            raster,
+            target_projection,
+            outname,
+            copy_if_already_correct=False,
+            dst_nodata=dst_nodata,
+        )
+
+    return created
 
 
 # TODO: Verify that sorting the dictionary works properly.

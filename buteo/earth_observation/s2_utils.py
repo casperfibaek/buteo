@@ -2,17 +2,18 @@ import sys
 
 sys.path.append("../../")
 import os
+from zipfile import ZipFile
 import xml.etree.ElementTree as ET
-from buteo.vector.io import internal_vector_to_metadata, filter_vector
+from buteo.vector.io import filter_vector
 from buteo.vector.intersect import internal_intersect_vector
 from buteo.vector.attributes import vector_get_attribute_table
-import datetime
+from datetime import datetime
 from glob import glob
 
 
 def get_band_paths(safe_folder):
     bands = {
-        "10m": {"B02": None, "B03": None, "B04": None, "B08": None,},
+        "10m": {"B02": None, "B03": None, "B04": None, "B08": None, "AOT": None},
         "20m": {
             "B02": None,
             "B03": None,
@@ -24,6 +25,7 @@ def get_band_paths(safe_folder):
             "B11": None,
             "B12": None,
             "SCL": None,
+            "AOT": None,
         },
         "60m": {
             "B01": None,
@@ -188,7 +190,7 @@ def get_metadata(safe_folder):
                 metadata[elem.tag] = float(elem.text)  # Number?
             except:
                 try:
-                    metadata[elem.tag] = datetime.datetime.strptime(
+                    metadata[elem.tag] = datetime.strptime(
                         elem.text, "%Y-%m-%dT%H:%M:%S.%f%z"
                     )  # Date?
                 except:
@@ -253,8 +255,8 @@ def get_metadata(safe_folder):
     return metadata
 
 
-def get_tilename_from_safe(safe_folder):
-    return safe_folder.split("_")[-2][1:]
+def get_tilename_from_safe(safe_file):
+    return safe_file.split("_")[-2][1:]
 
 
 def get_adjacent_tiles(tile_name):
@@ -267,10 +269,58 @@ def get_adjacent_tiles(tile_name):
     return attributes["Name"].values.tolist()
 
 
+def get_date_from_safe(safe_file):
+    datestr = os.path.basename(safe_file).split("_")[2]
+    return datetime.strptime(datestr, "%Y%m%dt%H%M%S")
+
+
+def get_tile_files_from_safe(safe_folder, tile_name):
+    files = glob(safe_folder + "*.SAFE")
+
+    tile_files = []
+    for file in files:
+        try:
+            tile = get_tilename_from_safe(file)
+
+            if tile == tile_name:
+                tile_files.append(file)
+
+        except:
+            pass
+
+    return tile_files
+
+
+def get_tile_files_from_safe_zip(safe_folder, tile_name):
+    files = glob(safe_folder + "*.zip")
+
+    tile_files = []
+    for file in files:
+        try:
+            tile = get_tilename_from_safe(file)
+
+            if tile == tile_name:
+                tile_files.append(file)
+
+        except:
+            pass
+
+    return tile_files
+
+
+def unzip_files_to_folder(files, dst_folder):
+    for f in files:
+        try:
+            with ZipFile(f) as z:
+                z.extractall(dst_folder)
+        except:
+            print("Invalid file")
+
+
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/test/s2_download/"
 
-    bob = get_adjacent_tiles("32VNH")
+    bob = get_tile_files_from_safe(folder, "32VNH")
 
     import pdb
 

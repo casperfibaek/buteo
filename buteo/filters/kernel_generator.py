@@ -90,6 +90,8 @@ def create_kernel(
     offsets=False,
     remove_zero_weights=False,
     radius_method="2d",
+    channel_last=True,
+    output_2d=False,
 ):
     if len(shape) == 2:
         shape = [1, shape[0], shape[1]]
@@ -174,26 +176,64 @@ def create_kernel(
     if normalised:
         kernel = np.divide(kernel, kernel.sum())
 
+    idx_offsets = []
+    weights = []
     if offsets:
-        offsets = []
-        weights = []
         for z in range(kernel.shape[0]):
             for x in range(kernel.shape[1]):
                 for y in range(kernel.shape[2]):
                     current_weight = kernel[z][x][y]
 
-                    if remove_zero_weights:
+                    if remove_zero_weights and current_weight == 0.0:
                         continue
 
-                    offsets.append(
-                        [
-                            z - (kernel.shape[0] // 2),
-                            x - (kernel.shape[1] // 2),
-                            y - (kernel.shape[2] // 2),
-                        ]
-                    )
+                    if channel_last:
+                        if output_2d:
+                            idx_offsets.append(
+                                [
+                                    x - (kernel.shape[1] // 2),
+                                    y - (kernel.shape[2] // 2),
+                                ]
+                            )
+                        else:
+                            idx_offsets.append(
+                                [
+                                    x - (kernel.shape[1] // 2),
+                                    y - (kernel.shape[2] // 2),
+                                    z - (kernel.shape[0] // 2),
+                                ]
+                            )
+                    else:
+                        if output_2d:
+                            idx_offsets.append(
+                                [
+                                    x - (kernel.shape[1] // 2),
+                                    y - (kernel.shape[2] // 2),
+                                ]
+                            )
+                        else:
+                            idx_offsets.append(
+                                [
+                                    z - (kernel.shape[0] // 2),
+                                    x - (kernel.shape[1] // 2),
+                                    y - (kernel.shape[2] // 2),
+                                ]
+                            )
                     weights.append(current_weight)
 
-        return (kernel, np.array(offsets, dtype=int), np.array(weights, dtype=float))
+    if channel_last:
+        kernel = kernel.reshape(kernel.shape[1], kernel.shape[2], kernel.shape[0])
+
+    if output_2d and channel_last:
+        kernel = kernel[:, :, 0]
+    elif output_2d:
+        kernel = kernel[0, :, :]
+
+    if offsets:
+        return (
+            kernel,
+            np.array(idx_offsets, dtype=int),
+            np.array(weights, dtype=float),
+        )
 
     return kernel

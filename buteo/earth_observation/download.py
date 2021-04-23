@@ -136,50 +136,56 @@ def list_available_s2(
     return dfs
 
 
+# Update to have at least x of tile
 def download_s2(
     username,
     password,
     destination,
     footprint=None,
-    tiles=[],
+    tile=None,
     date=("20200601", "20210101"),
-    clouds=30,
+    only_specified_tile=True,
+    clouds=20,
     min_size=50,
-    overlap=0.5,
     min_update=0.01,
+    min_overlap=0.33,
+    min_images=5,
     iterate=False,
     _iteration=0,
     _coverage=0.0,
     _union=0.0,
+    _added_images=0,
 ):
-    if _iteration > 10 or clouds > 100:
+    if _iteration > 5 or clouds > 100:
         print("Ended due to iteration or cloud limit.")
         return None
 
     api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
 
-    if footprint is None and len(tiles) == 0:
+    if footprint is None and tile is None:
         raise ValueError("Either footprint or tilesnames must be supplied.")
 
-    if len(tiles) > 0:
-        products = OrderedDict()
+    if tile is not None:
+        if _iteration == 0:
+            print(f"Processing tile: {tile}")
 
-        for tile in tiles:
-            geom = filter_vector(
-                "../../geometry/sentinel2_tiles_world.shp", filter_where=("Name", tile)
-            )
+        geom = filter_vector(
+            "../../geometry/sentinel2_tiles_world.shp", filter_where=("Name", tile)
+        )
 
-            geom_meta = internal_vector_to_metadata(geom, create_geometry=True)
-            geom_extent = geom_meta["extent_wkt_latlng"]
+        geom_meta = internal_vector_to_metadata(geom, create_geometry=True)
+        geom_extent = geom_meta["extent_wkt_latlng"]
 
-            tile_products = api.query(
-                geom_extent,
-                date=date,
-                platformname="Sentinel-2",
-                cloudcoverpercentage=(0, clouds),
-                producttype="S2MSI2A",
-            )
-            products.update(tile_products)
+        kw = {"raw": f"tileid:{tile} OR filename:*_T{tile}_*"}
+
+        products = api.query(
+            geom_extent,
+            date=date,
+            platformname="Sentinel-2",
+            cloudcoverpercentage=(0, clouds),
+            producttype="S2MSI2A",
+            **kw,
+        )
     else:
         geom_meta = internal_vector_to_metadata(footprint, create_geometry=True)
         geom_extent = geom_meta["extent_wkt_latlng"]
@@ -201,23 +207,36 @@ def download_s2(
 
     for product in products:
         dic = products[product]
+        product_tile = dic["title"].split("_")[-2][1:]
+
+        if tile is not None and only_specified_tile and product_tile != tile:
+            continue
 
         img_footprint = ogr.CreateGeometryFromWkt(dic["footprint"])
 
         intersection = img_footprint.Intersection(geom_footprint)
         intersection_area = intersection.GetArea()
 
-        if _iteration == 0 and (intersection_area / geom_area) > overlap:
+        overlap = intersection_area / geom_area
+
+        if _iteration == 0 and overlap > min_overlap:
             download_products[product] = dic
 
-        if union == 0.0 and (intersection_area / geom_area) > overlap:
+            if tile is not None and product_tile != tile:
+                _added_images += 1
+
+        elif union == 0.0 and overlap > min_overlap:
             size = str_to_mb(dic["size"])
 
             if size > min_size:
                 union = intersection
-                coverage = intersection_area / geom_area
+                coverage = overlap
 
                 download_products[product] = dic
+
+                if tile is not None and product_tile != tile:
+                    _added_images += 1
+
         elif union != 0.0:
             comp = union.Union(intersection)
             cover = comp.GetArea() / geom_area
@@ -231,14 +250,44 @@ def download_s2(
 
                     download_products[product] = dic
 
+                    if tile is not None and product_tile != tile:
+                        _added_images += 1
+
+    if tile is not None:
+        if coverage > 95 and _added_images < min_images:
+            for product in products:
+                dic = products[product]
+                product_tile = dic["title"].split("_")[-2][1:]
+
+                img_footprint = ogr.CreateGeometryFromWkt(dic["footprint"])
+
+                intersection = img_footprint.Intersection(geom_footprint)
+                intersection_area = intersection.GetArea()
+
+                overlap = intersection_area / geom_area
+
+                if product_tile != tile:
+                    continue
+
+                if overlap > min_overlap:
+                    union = union.Union(intersection)
+                    coverage = comp.GetArea() / geom_area
+
+                    download_products[product] = dic
+
+                    _added_images += 1
+
     if len(download_products) == 0:
         print("Download list was empty")
         return download_products
     else:
+        if _iteration == 0:
+            print(f"Downloading {len(download_products)} tiles")
+
         download = api.download_all(download_products, directory_path=destination)
 
     if iterate and clouds <= 100:
-        if coverage < 0.98:
+        if coverage < 0.975:
 
             print(
                 f"Completed. Iteration: {_iteration} - Cloud cover: {clouds}% - Coverage: {round(coverage * 100, 3)}%"
@@ -249,14 +298,15 @@ def download_s2(
                 password,
                 destination,
                 footprint=footprint,
-                tiles=tiles,
+                tile=tile,
                 date=date,
                 clouds=clouds + 10,
                 min_size=min_size,
-                overlap=overlap,
+                min_overlap=min_overlap,
                 iterate=iterate,
                 _iteration=_iteration + 1,
                 _union=union,
+                _added_images=_added_images,
             )
 
     return download
@@ -265,22 +315,63 @@ def download_s2(
 # Only Ascending imagery available over Africa.
 if __name__ == "__main__":
     from glob import glob
+    from buteo.vector.attributes import vector_get_attribute_table
 
-    folder = "C:/Users/caspe/Desktop/test/"
-    vector = folder + "tema.gpkg"
-    dst = folder + "s2_download/"
+    folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/"
+    dst = folder + "sentinel2/raw_2020/"
 
-    # avai = download_s2(
-    #     "casperfibaek2",
-    #     "Goldfish12",
-    #     dst,
-    #     tiles=["32VNH"],
-    #     date=("20210201", "20210420"),
-    #     clouds=10,
-    #     min_update=0.01,
-    #     iterate=True,
-    #     # orbitdirection="Ascending",
-    # )
+    vector = folder + "s2_tiles_in_project_area.gpkg"
 
-    s2_files = glob(dst + "*.safe")
-    align
+    attributes = vector_get_attribute_table(vector)
+    tiles = attributes["Name"].values.tolist()
+
+    # 2020 06 01 - 2020 08 01 (good dates: 0615-0701)
+    # 2021 02 15 - 2021 04 15
+
+    # 2020
+    # improve = [
+    #     "32UMG",  # Sky issues, download from previous year?
+    #     "32VNH",  # Sky issues, download from previous year?
+    #     "32UNG",  # border issue.
+    #     "32VMH",  # interesting border issue
+    #     "33UWB",  # Helt skidt.
+    #     "33UVB",  # intersting shadow issue
+    # ]
+
+    # 2021
+    improve = [
+        "32UMG",
+        "32UNG",
+        "32VMH",
+        # "32UMG",  # Very poor
+        # "32UMF",  # Very poor
+        # "32UWB",  # Very poor
+        # "32VNH",  # Poor
+    ]
+
+    for tile in tiles:
+
+        if tile not in improve:
+            continue
+
+        avai = download_s2(
+            "casperfibaek",
+            "Goldfish12",
+            dst,
+            tile=tile,
+            # date=("20210200", "20210422"),
+            # date=("20200201", "20200422"),
+            date=("20200501", "20210901"),
+            clouds=5,
+            min_update=0,
+            min_overlap=0.25,
+            min_images=7,
+            iterate=True,
+        )
+
+    import pdb
+
+    pdb.set_trace()
+
+    # s2_files = glob(dst + "*.safe")
+    # align
