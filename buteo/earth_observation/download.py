@@ -287,7 +287,7 @@ def download_s2(
         download = api.download_all(download_products, directory_path=destination)
 
     if iterate and clouds <= 100:
-        if coverage < 0.975:
+        if coverage < 0.975 or _added_images < min_images:
 
             print(
                 f"Completed. Iteration: {_iteration} - Cloud cover: {clouds}% - Coverage: {round(coverage * 100, 3)}%"
@@ -318,7 +318,7 @@ if __name__ == "__main__":
     from buteo.vector.attributes import vector_get_attribute_table
 
     folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/"
-    dst = folder + "sentinel2/raw_2020/"
+    dst = folder + "sentinel2/raw_2021/"
 
     vector = folder + "s2_tiles_in_project_area.gpkg"
 
@@ -340,13 +340,9 @@ if __name__ == "__main__":
 
     # 2021
     improve = [
-        "32UMG",
-        "32UNG",
-        "32VMH",
-        # "32UMG",  # Very poor
-        # "32UMF",  # Very poor
-        # "32UWB",  # Very poor
-        # "32VNH",  # Poor
+        "32UNG",  # Minor border issue.
+        "32VMH",  # Still bad
+        "32VNH",  # Minor issues
     ]
 
     for tile in tiles:
@@ -359,13 +355,13 @@ if __name__ == "__main__":
             "Goldfish12",
             dst,
             tile=tile,
-            # date=("20210200", "20210422"),
-            # date=("20200201", "20200422"),
-            date=("20200501", "20210901"),
+            date=("20200201", "20200423"),
+            # date=("20200201", "20200423"),
+            # date=("20200501", "20210901"),
             clouds=5,
             min_update=0,
-            min_overlap=0.25,
-            min_images=7,
+            min_overlap=0.50,
+            min_images=3,
             iterate=True,
         )
 
