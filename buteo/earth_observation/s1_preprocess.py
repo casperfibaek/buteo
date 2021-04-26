@@ -7,8 +7,40 @@ from glob import glob
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from multiprocessing import cpu_count
+from buteo.raster.io import (
+    raster_to_array,
+    array_to_raster,
+)
 from buteo.vector.io import internal_vector_to_metadata
 import os
+import numpy as np
+import shutil
+
+
+def find_gpt(test_gpt_path):
+    gpt = os.path.realpath(os.path.abspath(os.path.expanduser(test_gpt_path)))
+    if not os.path.exists(gpt):
+        gpt = os.path.realpath(
+            os.path.abspath(os.path.expanduser("~/esa_snap/bin/gpt"))
+        )
+        if not os.path.exists(gpt):
+            gpt = os.path.realpath(
+                os.path.abspath(os.path.expanduser("~/snap/bin/gpt"))
+            )
+            if not os.path.exists(gpt):
+                gpt = os.path.realpath(
+                    os.path.abspath(
+                        os.path.expanduser("C:/Program Files/snap/bin/gpt.exe")
+                    )
+                )
+
+                if os.path.exists(gpt):
+                    gpt = '"C:/Program Files/snap/bin/gpt.exe"'
+                else:
+                    if not os.path.exists(gpt):
+                        assert os.path.exists(gpt), "Graph processing tool not found."
+
+    return gpt
 
 
 def s1_kml_to_bbox(path_to_kml):
@@ -71,41 +103,17 @@ def get_metadata(image_paths):
 
 
 def backscatter_step1(
-    zip_file,
-    out_path,
-    graph="backscatter_step1.xml",
-    speckle_filter=False,
-    extent=None,
-    output_units="decibels",
-    gpt="~/snap/bin/gpt",
-    verbose=True,
+    zip_file, out_path, gpt_path="~/snap/bin/gpt",
 ):
+    graph = "backscatter_step1.xml"
+
     # Get absolute location of graph processing tool
-    gpt = os.path.realpath(os.path.abspath(os.path.expanduser(gpt)))
-    if not os.path.exists(gpt):
-        gpt = os.path.realpath(
-            os.path.abspath(os.path.expanduser("~/esa_snap/bin/gpt"))
-        )
-        if not os.path.exists(gpt):
-            gpt = os.path.realpath(
-                os.path.abspath(os.path.expanduser("~/snap/bin/gpt"))
-            )
-            if not os.path.exists(gpt):
-                gpt = os.path.realpath(
-                    os.path.abspath(
-                        os.path.expanduser("C:/Program Files/snap/bin/gpt.exe")
-                    )
-                )
+    gpt = find_gpt(gpt_path)
 
-                if os.path.exists(gpt):
-                    gpt = '"C:/Program Files/snap/bin/gpt.exe"'
-                else:
-                    if not os.path.exists(gpt):
-                        assert os.path.exists(gpt), "Graph processing tool not found."
-
-    if os.path.exists(out_path):
-        print("File already processed")
-        return 1
+    out_path_ext = out_path + ".dim"
+    if os.path.exists(out_path_ext):
+        print(f"{out_path_ext} already processed")
+        return out_path_ext
 
     xmlfile = os.path.join(os.path.dirname(__file__), f"./graphs/{graph}")
 
@@ -119,82 +127,144 @@ def backscatter_step1(
         "-J-Xmx45G -J-Xms2G",
     ]
 
-    os.system(f'cmd /c {" ".join(command)}')
+    cmd = f'cmd /c {" ".join(command)}'
+    os.system(cmd)
 
-    return out_path
+    return out_path_ext
 
 
 def backscatter_step2(
-    zip_file,
-    out_path,
-    graph="backscatter_step2.xml",
-    interest_area=None,
-    speckle_filter=False,
-    extent=None,
-    output_units="decibels",
-    gpt="~/snap/bin/gpt",
-    verbose=True,
+    dim_file, out_path, speckle_filter=False, extent=None, gpt_path="~/snap/bin/gpt",
 ):
+    graph = "backscatter_step2.xml"
+    if speckle_filter:
+        graph = "backscatter_step2_speckle.xml"
+
     # Get absolute location of graph processing tool
-    gpt = os.path.realpath(os.path.abspath(os.path.expanduser(gpt)))
-    if not os.path.exists(gpt):
-        gpt = os.path.realpath(
-            os.path.abspath(os.path.expanduser("~/esa_snap/bin/gpt"))
-        )
-        if not os.path.exists(gpt):
-            gpt = os.path.realpath(
-                os.path.abspath(os.path.expanduser("~/snap/bin/gpt"))
-            )
-            if not os.path.exists(gpt):
-                gpt = os.path.realpath(
-                    os.path.abspath(
-                        os.path.expanduser("C:/Program Files/snap/bin/gpt.exe")
-                    )
-                )
+    gpt = find_gpt(gpt_path)
 
-                if os.path.exists(gpt):
-                    gpt = '"C:/Program Files/snap/bin/gpt.exe"'
-                else:
-                    if not os.path.exists(gpt):
-                        assert os.path.exists(gpt), "Graph processing tool not found."
-
-    if os.path.exists(out_path):
-        print("File already processed")
-        return 1
+    out_path_ext = out_path + ".dim"
+    if os.path.exists(out_path_ext):
+        print(f"{out_path_ext} already processed")
+        return out_path_ext
 
     xmlfile = os.path.join(os.path.dirname(__file__), f"./graphs/{graph}")
 
     command = [
         gpt,
         os.path.abspath(xmlfile),
-        f"-Pinputfile={zip_file}",
+        f"-Pinputfile={dim_file}",
         f"-Poutputfile={out_path}",
         f"-q {cpu_count()}",
         "-c 31978M",
         "-J-Xmx45G -J-Xms2G",
     ]
 
-    if interest_area is not None:
-        extent = internal_vector_to_metadata(interest_area)["extent_latlng"]
-        command.append(f"-Pextent={' '.join(extent)}")
+    if extent is not None:
+        metadata = internal_vector_to_metadata(extent)
+        interest_area = metadata["extent_wkt_latlng"]
 
-    print(command)
+        command.append(f"-Pextent='{interest_area}'")
+    else:
+        command.append(
+            f"-Pextent='POLYGON ((-180.0 -90.0, 180.0 -90.0, 180.0 90.0, -180.0 90.0, -180.0 -90.0))'"
+        )
 
-    os.system(f'cmd /c {" ".join(command)}')
+    cmd = f'cmd /c {" ".join(command)}'
+    os.system(cmd)
 
-    return out_path
+    return out_path_ext
+
+
+def convert_to_tiff(
+    dim_file, out_folder, decibel=False, use_nodata=True, nodata_value=0.0
+):
+    data_folder = dim_file.split(".")[0] + ".data/"
+    name = os.path.splitext(os.path.basename(dim_file))[0].replace("_step_2", "")
+
+    vh_path = data_folder + "Gamma0_VH.img"
+    vv_path = data_folder + "Gamma0_VV.img"
+
+    out_paths = [
+        out_folder + name + "_Gamma0_VH.tif",
+        out_folder + name + "_Gamma0_VV.tif",
+    ]
+
+    if os.path.exists(out_paths[0]) and os.path.exists(out_paths[1]):
+        print(f"{name} already processed")
+        return out_paths
+
+    vh = raster_to_array(vh_path)
+    vv = raster_to_array(vv_path)
+
+    if use_nodata:
+        vh = np.ma.masked_equal(vh, nodata_value, copy=False)
+        vv = np.ma.masked_equal(vv, nodata_value, copy=False)
+
+    if decibel:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            if use_nodata:
+                vh = np.ma.multiply(np.ma.log10(vh), 10)
+                vv = np.ma.multiply(np.ma.log10(vv), 10)
+            else:
+                vh = np.multiply(np.log10(vh), 10)
+                vv = np.multiply(np.log10(vv), 10)
+
+    out_paths = [
+        out_folder + name + "_Gamma0_VH.tif",
+        out_folder + name + "_Gamma0_VV.tif",
+    ]
+
+    array_to_raster(vh, vh_path, out_paths[0])
+    array_to_raster(vv, vv_path, out_paths[1])
+
+    return out_paths
+
+
+def backscatter(
+    zip_file,
+    out_path,
+    tmp_folder,
+    extent=None,
+    speckle_filter=False,
+    decibel=False,
+    gpt_path="~/snap/bin/gpt",
+):
+    name = os.path.splitext(os.path.basename(zip_file))[0] + "_step_1"
+    step1 = backscatter_step1(zip_file, tmp_folder + name, gpt_path=gpt_path)
+
+    name = os.path.splitext(os.path.basename(zip_file))[0] + "_step_2"
+    step2 = backscatter_step2(
+        step1,
+        tmp_folder + name,
+        speckle_filter=speckle_filter,
+        extent=extent,
+        gpt_path=gpt_path,
+    )
+
+    converted = convert_to_tiff(step2, out_path, decibel)
+
+    try:
+        tmp_files = glob(tmp_folder + "*.dim")
+        for f in tmp_files:
+            os.remove(f)
+        tmp_files = glob(tmp_folder + "*.data")
+        for f in tmp_files:
+            shutil.rmtree(f)
+    except:
+        print("Error while cleaning tmp files.")
+
+    return converted
 
 
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/sentinel1/"
-    images = glob(folder + "*.dim")
-    interest_area = folder + "denmark_polygon.gpkg"
+    tmp = folder + "tmp/"
+    dst = folder + "mosaic_2020/"
+    raw = folder + "raw_2020/"
+
+    images = glob(raw + "*.zip")
+    interest_area = folder + "denmark_polygon_1280m_buffer.gpkg"
 
     for image in images:
-        out_name = os.path.splitext(os.path.basename(image))[0] + "bob"
-        backscatter_step2(image, folder + out_name, interest_area=interest_area)
-
-        import pdb
-
-        pdb.set_trace()
-
+        paths = backscatter(image, dst, tmp, extent=interest_area)

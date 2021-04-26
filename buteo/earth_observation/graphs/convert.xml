@@ -1,0 +1,42 @@
+<graph id="Graph">
+  <version>1.0</version>
+  <node id="Read">
+    <operator>Read</operator>
+    <sources/>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>${inputfile}</file>
+    </parameters>
+  </node>
+  <node id="SetNoDataValue">
+    <operator>SetNoDataValue</operator>
+    <sources>
+      <sourceProduct refid="Read"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <noDataValueUsed>${use_nodata_value}</noDataValueUsed>
+      <noDataValue>${nodata_value}</noDataValue>
+    </parameters>
+  </node>
+  <node id="Write">
+    <operator>Write</operator>
+    <sources>
+      <sourceProduct refid="SetNoDataValue"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <file>${outputfile}</file>
+      <formatName>GeoTIFF-BigTIFF</formatName>
+    </parameters>
+  </node>
+  <applicationData id="Presentation">
+    <Description/>
+    <node id="Read">
+      <displayPosition x="40.0" y="100.0"/>
+    </node>
+    <node id="SetNoDataValue">
+      <displayPosition x="140.0" y="100.0"/>
+    </node>
+    <node id="Write">
+      <displayPosition x="240.0" y="100.0"/>
+    </node>
+  </applicationData>
+</graph>

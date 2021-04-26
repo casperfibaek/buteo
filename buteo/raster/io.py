@@ -822,7 +822,7 @@ def internal_raster_set_datatype(
     for band_idx in range(metadata["band_count"]):
         band = copy.GetRasterBand(band_idx + 1)
         band.WriteArray(array[:, :, band_idx])
-        band.SetNodataValue(metadata["nodata_value"])
+        band.SetNoDataValue(metadata["nodata_value"])
 
     return path
 
@@ -992,7 +992,7 @@ def array_to_raster(
             band.WriteArray(array)
 
         if metadata["nodata_value"] == None and input_nodata is not None:
-            band.SetNodataValue(input_nodata)
+            band.SetNoDataValue(input_nodata)
 
     return output_name
 

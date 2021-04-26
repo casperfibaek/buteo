@@ -106,3 +106,14 @@ def shift_raster(
         return out_path
     else:
         return shifted
+
+
+if __name__ == "__main__":
+    from buteo.raster.shift import shift_raster
+    from glob import glob
+
+    folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/sentinel2/"
+
+    for image in glob(folder + "spring*.tif"):
+        name = os.path.splitext(os.path.basename(image))[0]
+        shift_raster(image, (0.0, -10.0), folder + f"{name}_shifted.tif")

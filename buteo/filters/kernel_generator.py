@@ -237,3 +237,18 @@ def create_kernel(
         )
 
     return kernel
+
+
+if __name__ == "__main__":
+    np.set_printoptions(suppress=True)
+    kernel = create_kernel([11, 11], sigma=2, normalised=False, distance_calc=False
+    print(kernel)
+    from matplotlib import pyplot as plt
+
+    plt.imshow(kernel)
+    plt.show()
+
+    import pdb
+
+    pdb.set_trace()
+

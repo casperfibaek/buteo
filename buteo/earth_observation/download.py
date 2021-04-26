@@ -66,7 +66,7 @@ def download_s1(
     destination,
     date=("20200601", "20210101"),
     orbitdirection="ASCENDING",  # ASCENDING, DESCENDING
-    min_overlap=0.25,
+    min_overlap=0.50,
     producttype="GRD",
     sensoroperationalmode="IW",
     polarisationmode="VV VH",
@@ -88,17 +88,19 @@ def download_s1(
     download_products = OrderedDict()
 
     geom_footprint = ogr.CreateGeometryFromWkt(geom["extent_wkt_latlng"])
-    geom_area = geom_footprint.GetArea()
 
     for product in products:
         dic = products[product]
 
         img_footprint = ogr.CreateGeometryFromWkt(dic["footprint"])
+        img_area = img_footprint.GetArea()
 
         intersection = img_footprint.Intersection(geom_footprint)
-        intersection_area = intersection.GetArea()
 
-        overlap = intersection_area / geom_area
+        within = img_footprint.Intersection(intersection)
+        within_area = within.GetArea()
+
+        overlap = within_area / img_area
 
         if overlap > min_overlap:
             download_products[product] = dic
@@ -160,7 +162,6 @@ def list_available_s2(
     return dfs
 
 
-# Update to have at least x of tile
 def download_s2(
     username,
     password,
@@ -338,7 +339,7 @@ def download_s2(
 
 if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/"
-    dst = folder + "sentinel1/raw_2020/"
+    dst = folder + "sentinel1/raw_2021/"
 
     vector = folder + "denmark_polygon_border_region_removed.gpkg"
 
@@ -350,8 +351,8 @@ if __name__ == "__main__":
         "Goldfish12",
         vector,
         dst,
-        date=("20200601", "20200630"),
-        min_overlap=0.1,
+        date=("20210325", "20210425"),
+        min_overlap=0.50,
     )
 
     import pdb
