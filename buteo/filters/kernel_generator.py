@@ -241,7 +241,7 @@ def create_kernel(
 
 if __name__ == "__main__":
     np.set_printoptions(suppress=True)
-    kernel = create_kernel([11, 11], sigma=2, normalised=False, distance_calc=False
+    kernel = create_kernel([11, 11], sigma=2, normalised=False, distance_calc=False)
     print(kernel)
     from matplotlib import pyplot as plt
 
