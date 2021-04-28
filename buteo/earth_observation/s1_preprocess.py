@@ -31,16 +31,24 @@ def find_gpt(test_gpt_path):
             )
             if not os.path.exists(gpt):
                 gpt = os.path.realpath(
-                    os.path.abspath(
-                        os.path.expanduser("C:/Program Files/snap/bin/gpt.exe")
-                    )
+                    os.path.abspath(os.path.expanduser("/opt/esa_snap/bin/gpt"))
                 )
-
-                if os.path.exists(gpt):
-                    gpt = '"C:/Program Files/snap/bin/gpt.exe"'
-                else:
+                if not os.path.exists(gpt):
+                    gpt = os.path.realpath(
+                        os.path.abspath(os.path.expanduser("/opt/snap/bin/gpt"))
+                    )
                     if not os.path.exists(gpt):
-                        assert os.path.exists(gpt), "Graph processing tool not found."
+                        gpt = os.path.realpath(
+                            os.path.abspath(
+                                os.path.expanduser("C:/Program Files/snap/bin/gpt.exe")
+                            )
+                        )
+
+                        if os.path.exists(gpt):
+                            gpt = '"C:/Program Files/snap/bin/gpt.exe"'
+                        else:
+                            if not os.path.exists(gpt):
+                                assert os.path.exists(gpt), "Graph processing tool not found."
 
     return gpt
 
@@ -261,14 +269,12 @@ def backscatter(
         print(f"{zip_file} already processed")
         return [vh, vv]
 
-
     def step1_helper(args=[]):
         return backscatter_step1(args[0], args[1], gpt_path=args[2])
 
     try:
         p = ThreadPoolExecutor(1)
 
-        # step1 = backscatter_step1(zip_file, tmp_folder + name, gpt_path=gpt_path)
         step1 = p.submit(step1_helper, args=[zip_file, tmp_folder + name, gpt_path])
         step1 = step1.result(timeout=60*10)
 
@@ -291,15 +297,6 @@ def backscatter(
         clear_tmp_folder(tmp_folder)
         raise Exception(f"{zip_file} filed to complete step 2.")
 
-
-    # step2 = backscatter_step2(
-    #     step1,
-    #     tmp_folder + name,
-    #     speckle_filter=speckle_filter,
-    #     extent=extent,
-    #     gpt_path=gpt_path,
-    # )
-
     converted = convert_to_tiff(step2, out_path, decibel)
 
     clear_tmp_folder(tmp_folder)
@@ -308,25 +305,25 @@ def backscatter(
 
 
 if __name__ == "__main__":
-    # folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/sentinel1/"
+    folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/sentinel1/"
     # folder = "/media/cfi/lts/ghana/sentinel1/"
-    folder = "/home/cfi/Desktop/sentinel1/"
+    # folder = "/home/cfi/Desktop/sentinel1/"
     tmp = folder + "tmp/"
     dst = folder + "mosaic_2021/"
     raw = folder + "raw_2021/"
 
     images = glob(raw + "*.zip")
-    interest_area = folder + "ghana_buffered_1280.gpkg"
+    interest_area = folder + "denmark_polygon_1280m_buffer.gpkg"
     gpt_path = "/opt/esa_snap/bin/gpt"
 
     error_images = []
     for idx, image in enumerate(images):
-        if image == "/home/cfi/Desktop/sentinel1/raw_2021/S1A_IW_GRDH_1SDV_20210329T182708_20210329T182733_037217_046214_0F1D.zip":
-            continue
         try:
             paths = backscatter(image, dst, tmp, extent=interest_area, gpt_path=gpt_path)
         except:
             print(f"Error with image: {image}")
             error_images.append(image)
+
+        print(f"Completed {idx+1}/{len(images)}")
     
     import pdb; pdb.set_trace()
