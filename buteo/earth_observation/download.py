@@ -100,15 +100,20 @@ def download_s1(
         within = img_footprint.Intersection(intersection)
         within_area = within.GetArea()
 
-        overlap = within_area / img_area
+        overlap_img = within_area / img_area
+        overlap_geom = within_area / geom_footprint.GetArea()
 
-        if overlap > min_overlap:
+        if max(overlap_img, overlap_geom) > min_overlap:
             download_products[product] = dic
 
-    print(f"Downloading {len(download_products)} files.")
-    download = api.download_all(download_products, directory_path=destination)
+    if len(download_products) > 0:
+        print(f"Downloading {len(download_products)} files.")
+        download = api.download_all(download_products, directory_path=destination)
 
-    return download
+        return download
+    else:
+        print("No images found")
+        return []
 
 
 def list_available_s2(
@@ -338,21 +343,21 @@ def download_s2(
 
 
 if __name__ == "__main__":
-    # folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/"
-    folder = "/media/cfi/lts/ghana/"
-    dst = folder + "sentinel1/raw_2021/"
+    folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/"
 
-    vector = folder + "ghana.gpkg"
+    dst = folder + "sentinel1/raw_2021/"
+    vector = folder + "sentinel1/bornholm.gpkg"
 
     # 2020 06 01 - 2020 08 01 (good dates: 0615-0701)
     # 2021 02 15 - 2021 04 15
 
     avai = download_s1(
-        "casperfibaek",
+        "casperfibaek2",
         "Goldfish12",
         vector,
         dst,
-        date=("20210325", "20210425"),
+        date=("20210325", "20210425"), # 2021
+        # date=("20200601", "20200630"), # 2020
         min_overlap=0.50,
     )
 
