@@ -338,10 +338,11 @@ def download_s2(
 
 
 if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/"
+    # folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/"
+    folder = "/media/cfi/lts/ghana/"
     dst = folder + "sentinel1/raw_2021/"
 
-    vector = folder + "denmark_polygon_border_region_removed.gpkg"
+    vector = folder + "ghana.gpkg"
 
     # 2020 06 01 - 2020 08 01 (good dates: 0615-0701)
     # 2021 02 15 - 2021 04 15

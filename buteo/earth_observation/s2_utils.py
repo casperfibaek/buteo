@@ -309,12 +309,14 @@ def get_tile_files_from_safe_zip(safe_folder, tile_name):
 
 
 def unzip_files_to_folder(files, dst_folder):
+    unzipped = []
     for f in files:
         try:
             with ZipFile(f) as z:
-                z.extractall(dst_folder)
+                unzipped.append(z.extractall(dst_folder))
         except:
-            print("Invalid file")
+            print(f"Invalid file: {f}")
+    return unzipped
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ sys.path.append("..")
 sys.path.append("../../")
 
 from glob import glob
+from sys import platform
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from multiprocessing import cpu_count
@@ -15,6 +16,7 @@ from buteo.vector.io import internal_vector_to_metadata
 import os
 import numpy as np
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 
 
 def find_gpt(test_gpt_path):
@@ -123,11 +125,15 @@ def backscatter_step1(
         f"-Pinputfile={zip_file}",
         f"-Poutputfile={out_path}",
         f"-q {cpu_count()}",
-        "-c 31978M",
-        "-J-Xmx45G -J-Xms2G",
+        # "-c 16978M",
+        # "-J-Xmx16G -J-Xms1G",
     ]
 
-    cmd = f'cmd /c {" ".join(command)}'
+    if platform == "linux" or platform == "linux2":
+        cmd = " ".join(command)
+    else:
+        cmd = f'cmd /c {" ".join(command)}'
+
     os.system(cmd)
 
     return out_path_ext
@@ -156,8 +162,8 @@ def backscatter_step2(
         f"-Pinputfile={dim_file}",
         f"-Poutputfile={out_path}",
         f"-q {cpu_count()}",
-        "-c 31978M",
-        "-J-Xmx45G -J-Xms2G",
+        # "-c 16978M",
+        # "-J-Xmx16G -J-Xms1G",
     ]
 
     if extent is not None:
@@ -170,7 +176,10 @@ def backscatter_step2(
             f"-Pextent='POLYGON ((-180.0 -90.0, 180.0 -90.0, 180.0 90.0, -180.0 90.0, -180.0 -90.0))'"
         )
 
-    cmd = f'cmd /c {" ".join(command)}'
+    if platform == "linux" or platform == "linux2":
+        cmd = " ".join(command)
+    else:
+        cmd = f'cmd /c {" ".join(command)}'
     os.system(cmd)
 
     return out_path_ext
@@ -221,29 +230,7 @@ def convert_to_tiff(
     return out_paths
 
 
-def backscatter(
-    zip_file,
-    out_path,
-    tmp_folder,
-    extent=None,
-    speckle_filter=False,
-    decibel=False,
-    gpt_path="~/snap/bin/gpt",
-):
-    name = os.path.splitext(os.path.basename(zip_file))[0] + "_step_1"
-    step1 = backscatter_step1(zip_file, tmp_folder + name, gpt_path=gpt_path)
-
-    name = os.path.splitext(os.path.basename(zip_file))[0] + "_step_2"
-    step2 = backscatter_step2(
-        step1,
-        tmp_folder + name,
-        speckle_filter=speckle_filter,
-        extent=extent,
-        gpt_path=gpt_path,
-    )
-
-    converted = convert_to_tiff(step2, out_path, decibel)
-
+def clear_tmp_folder(tmp_folder):
     try:
         tmp_files = glob(tmp_folder + "*.dim")
         for f in tmp_files:
@@ -254,17 +241,92 @@ def backscatter(
     except:
         print("Error while cleaning tmp files.")
 
+
+def backscatter(
+    zip_file,
+    out_path,
+    tmp_folder,
+    extent=None,
+    speckle_filter=False,
+    decibel=False,
+    gpt_path="~/snap/bin/gpt",
+):
+    name = os.path.splitext(os.path.basename(zip_file))[0] + "_step_1"
+    
+    vh = out_path + os.path.splitext(os.path.basename(zip_file))[0] + "_Gamma0_VH.tif"
+    vv = out_path + os.path.splitext(os.path.basename(zip_file))[0] + "_Gamma0_VV.tif"
+
+    if os.path.exists(vh) and os.path.exists(vv):
+        clear_tmp_folder(tmp_folder)
+        print(f"{zip_file} already processed")
+        return [vh, vv]
+
+
+    def step1_helper(args=[]):
+        return backscatter_step1(args[0], args[1], gpt_path=args[2])
+
+    try:
+        p = ThreadPoolExecutor(1)
+
+        # step1 = backscatter_step1(zip_file, tmp_folder + name, gpt_path=gpt_path)
+        step1 = p.submit(step1_helper, args=[zip_file, tmp_folder + name, gpt_path])
+        step1 = step1.result(timeout=60*10)
+
+    except:
+        clear_tmp_folder(tmp_folder)
+        raise Exception(f"{zip_file} filed to complete step 1.")
+
+    name = os.path.splitext(os.path.basename(zip_file))[0] + "_step_2"
+
+    def step2_helper(args=[]):
+        return backscatter_step2(args[0], args[1], speckle_filter=args[2], extent=args[3], gpt_path=args[4])
+
+    try:
+        p = ThreadPoolExecutor(1)
+
+        step2 = p.submit(step2_helper, args=(step1, tmp_folder + name, speckle_filter, extent, gpt_path))
+        step2 = step2.result(timeout=60*60)
+        
+    except:
+        clear_tmp_folder(tmp_folder)
+        raise Exception(f"{zip_file} filed to complete step 2.")
+
+
+    # step2 = backscatter_step2(
+    #     step1,
+    #     tmp_folder + name,
+    #     speckle_filter=speckle_filter,
+    #     extent=extent,
+    #     gpt_path=gpt_path,
+    # )
+
+    converted = convert_to_tiff(step2, out_path, decibel)
+
+    clear_tmp_folder(tmp_folder)
+
     return converted
 
 
 if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/sentinel1/"
+    # folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/sentinel1/"
+    # folder = "/media/cfi/lts/ghana/sentinel1/"
+    folder = "/home/cfi/Desktop/sentinel1/"
     tmp = folder + "tmp/"
-    dst = folder + "mosaic_2020/"
-    raw = folder + "raw_2020/"
+    dst = folder + "mosaic_2021/"
+    raw = folder + "raw_2021/"
 
     images = glob(raw + "*.zip")
-    interest_area = folder + "denmark_polygon_1280m_buffer.gpkg"
+    interest_area = folder + "ghana_buffered_1280.gpkg"
+    gpt_path = "/opt/esa_snap/bin/gpt"
 
-    for image in images:
-        paths = backscatter(image, dst, tmp, extent=interest_area)
+    error_images = []
+    for idx, image in enumerate(images):
+        if image == "/home/cfi/Desktop/sentinel1/raw_2021/S1A_IW_GRDH_1SDV_20210329T182708_20210329T182733_037217_046214_0F1D.zip":
+            continue
+        try:
+            paths = backscatter(image, dst, tmp, extent=interest_area, gpt_path=gpt_path)
+        except:
+            print(f"Error with image: {image}")
+            error_images.append(image)
+    
+    import pdb; pdb.set_trace()
