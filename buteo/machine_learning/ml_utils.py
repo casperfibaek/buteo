@@ -1,6 +1,9 @@
 from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
+import tensorflow as tf
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.utils import get_custom_objects
 
 
 def count_freq(arr: np.ndarray) -> np.ndarray:
@@ -174,3 +177,30 @@ def test_correlation(df: pd.DataFrame, cutoff: float = 0.75) -> np.ndarray:
         column for column in upper_tri.columns if any(upper_tri[column] > cutoff)
     ]
     return to_drop
+
+
+class Mish(Activation):
+    """
+    Mish Activation Function.
+    .. math::
+        mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + e^{x}))
+    Shape:
+        - Input: Arbitrary. Use the keyword argument `input_shape`
+        (tuple of integers, does not include the samples axis)
+        when using this layer as the first layer in a model.
+        - Output: Same shape as the input.
+    Examples:
+        >>> X = Activation('Mish', name="conv1_act")(X_input)
+    """
+
+    def __init__(self, activation, **kwargs):
+        super(Mish, self).__init__(activation, **kwargs)
+        self.__name__ = "Mish"
+
+
+def mish(inputs):
+    return inputs * tf.math.tanh(tf.math.softplus(inputs))
+
+
+def load_mish():
+    get_custom_objects().update({"Mish": Mish(mish)})
