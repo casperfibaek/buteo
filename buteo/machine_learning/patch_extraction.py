@@ -4,6 +4,7 @@ sys.path.append("../../")
 import numpy as np
 import os
 import random
+
 from typing import Any, Dict, Union, Optional, Tuple, List
 from osgeo import ogr, gdal
 from uuid import uuid4
@@ -23,7 +24,6 @@ from buteo.vector.io import (
     internal_vector_to_metadata,
     internal_vector_to_disk,
     open_vector,
-    vector_add_index,
 )
 from buteo.vector.reproject import internal_reproject_vector
 from buteo.raster.clip import clip_raster, internal_clip_raster
@@ -1085,7 +1085,7 @@ def predict_raster(
         A predicted raster.
     """
     type_check(raster, [list, str, gdal.Dataset], "raster")
-    type_check(model, [str], "model")
+    # type_check(model, [str], "model")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(offsets, [list], "offsets")
     type_check(region, [str, ogr.DataSource], allow_none=True)
@@ -1105,12 +1105,15 @@ def predict_raster(
 
     import tensorflow as tf
 
+    # import h5py
+
     os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
     if verbose == 1:
         print("Loading model.")
 
-    model_loaded = tf.keras.models.load_model(model, custom_objects=custom_objects)
+    # model_loaded = tf.keras.models.load_model(model, custom_objects=custom_objects)
+    model_loaded = model
 
     multi_input = False
     if isinstance(model_loaded.input, list) and len(model_loaded.input) > 1:
