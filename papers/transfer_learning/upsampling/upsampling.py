@@ -48,13 +48,17 @@ band_11 = folder + "out/" + "32UMF_B11_20m.tif"
 
 stack = []
 for arr in merge_10:
-    stack.append(np.load(arr))
+    loaded = np.load(arr)
+    stack.append((loaded / loaded.max()) * 1000)
 
 stacked = np.stack(stack, axis=3)[:, :, :, :, 0]
 stack = None
 
 target_10m = np.load(target_10m)
+target_10m = (target_10m / target_10m.max()) * 1000
+
 target_20m = np.load(target_20m)
+target_20m = (target_20m / target_20m.max()) * 1000
 
 y = target_10m
 
@@ -286,5 +290,5 @@ pdb.set_trace()
 
 import h5py
 
-model.save(folder + "upsampling_model_new_10epochs.h5")
+model.save(folder + "upsampling_model_10epochs_norm.h5")
 
