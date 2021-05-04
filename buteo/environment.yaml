@@ -1,4 +1,4 @@
-name: buteo
+name: buteo2
 channels:
   - conda-forge
   - defaults
@@ -84,4 +84,4 @@ dependencies:
   - xz=5.2.5=h62dcd97_0
   - zlib=1.2.11=h62dcd97_4
   - zstd=1.4.9=h6255e5f_0
-prefix: C:\ProgramData\Anaconda3\envs\buteo
+prefix: C:\ProgramData\Anaconda3\envs\buteo2
