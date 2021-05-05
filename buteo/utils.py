@@ -3,11 +3,12 @@ import sys
 import time
 from typing import Any
 import psutil
+import shutil
 
 
 def progress(count, total, name="Processing"):
     sys.stdout.flush()
-    bar_len = os.get_terminal_size().columns - 24
+    bar_len = shutil.get_terminal_size().columns - 24
     filled_len = int(round(bar_len * count / float(total)))
     display_name = name[:10] + "..: "
 
