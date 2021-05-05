@@ -14,11 +14,11 @@ from buteo.raster.io import (
 )
 from buteo.vector.io import internal_vector_to_metadata
 from buteo.gdal_utils import parse_projection, ogr_bbox_intersects
-from buteo.raster.clip import internal_clip_raster
 from buteo.raster.align import rasters_are_aligned, align_rasters
 from buteo.filters.kernel_generator import create_kernel
-from buteo.filters.filter import filter_array
+from buteo.utils import timing
 from osgeo import gdal, osr
+from time import time
 import numpy as np
 import os
 import datetime
@@ -128,7 +128,10 @@ def mosaic_sentinel1(
     step_size=1.0,
     polarization="VV",
     epsilon: float = 1e-9,
+    overlap=0.0,
 ):
+    start = time()
+
     metadatas = []
     images = glob(folder + f"*Gamma0_{polarization}.tif")
     used_projections = []
@@ -205,10 +208,10 @@ def mosaic_sentinel1(
     for coord in bottom_left:
         tile_extents.append(
             [
-                coord[0],
-                coord[0] + step_size,
-                coord[1],
-                coord[1] + step_size,
+                coord[0] - overlap,
+                coord[0] + step_size + overlap,
+                coord[1] - overlap,
+                coord[1] + step_size + overlap,
             ]
         )
 
@@ -216,6 +219,7 @@ def mosaic_sentinel1(
     wgs84.ImportFromEPSG(4326)
 
     tile_nr = 0
+    created_tiles = []
     for tile_extent in tile_extents:
         overlapping_images = []
         clipped_images = []
@@ -261,7 +265,7 @@ def mosaic_sentinel1(
         merge_images = raster_to_array(clipped_images).filled(0)
 
         _kernel, offsets, weights = create_kernel(
-            (image_count, 7, 7),
+            (image_count, 5, 5),
             sigma=2,
             distance_calc="gaussian",
             radius_method="ellipsoid",
@@ -276,39 +280,31 @@ def mosaic_sentinel1(
             merge_images,
             offsets,
             weights,
-            quantile=0.333,
+            quantile=0.5,
             nodata=True,
             nodata_value=0,
         )
 
+        tile_path = output_folder + f"tile_{tile_nr}_{polarization}.tif"
+
         array_to_raster(
             image,
             reference=clipped_images[0],
-            out_path=output_folder + f"tile_{tile_nr}.tif",
+            out_path=tile_path,
         )
 
-        import pdb
+        created_tiles.append(tile_path)
 
-        pdb.set_trace()
+        tmp_files = glob(tmp_folder + "*.tif")
+        for f in tmp_files:
+            os.remove(f)
 
-    # 1.  save all metadatas from images
-    # 2.  find sentinel 2 tiles that intersect interest area
-    # 3.  for tile in sentinel2_tiles:
-    #         test does extent intersect tile
-    #         clip to tile and reproject to tmp_folder
+        tile_nr += 1
 
-    #         base = the most central date and overlap > 50
+        print(f"Created: {tile_nr}/{tiles}")
+        timing(start)
 
-    #         coregister images to base
-
-    #         order images by time distance to base
-
-    #         3D elipsodial weighted median filter
-
-    #         save to output_folder
-
-    # 4.  update and coregister all tiles
-    # 5.  orfeo-toolbox mosaic tiles.
+    return created_tiles
 
 
 if __name__ == "__main__":
