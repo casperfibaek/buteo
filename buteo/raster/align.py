@@ -103,17 +103,27 @@ def align_rasters(
     type_check(postfix, [str], "postfix")
 
     raster_list, path_list = ready_io_raster(
-        rasters, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix
+        rasters, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix, uuid=False
     )
 
     x_pixels = None
     y_pixels = None
+    x_res = None
+    y_res = None
+    target_projection = None
+    target_bounds = None
 
     reprojected_rasters: List[str] = []
 
     # Read the metadata for each raster.
     # Catalogue the used projections, to choose the most common one if necessary.
     used_projections: List[dict] = []
+    metadata: List[str] = []
+
+    for raster in rasters:
+        meta = internal_raster_to_metadata(raster)
+        metadata.append(meta)
+        used_projections.append(meta["projection"])
 
     # If there is a master layer, copy information from that layer.
     if master is not None:
@@ -146,8 +156,9 @@ def align_rasters(
 
         # Choose most common projection
         most_common_projection = sorted(
-            projection_counter, key=projection_counter.__getitem__, reverse=True
+            projection_counter, key=projection_counter.get, reverse=True
         )
+
         target_projection = parse_projection(most_common_projection[0])
 
     if target_size is not None:
