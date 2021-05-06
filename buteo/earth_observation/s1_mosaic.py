@@ -219,6 +219,13 @@ def mosaic_sentinel1(
     tile_nr = 0
     created_tiles = []
     for tile_extent in tile_extents:
+        tile_path = output_folder + f"{prefix}{polarization}_{tile_nr}{postfix}.tif"
+
+        if os.path.exists(tile_path):
+            tile_nr += 1
+            print(f"Created: {tile_nr}/{tiles}")
+            continue
+
         overlapping_images = []
         clipped_images = []
         for meta in metadatas:
