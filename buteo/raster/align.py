@@ -365,7 +365,7 @@ def align_rasters(
         remove_if_overwrite(out_name, overwrite)
 
         # Hand over to gdal.Warp to do the heavy lifting!
-        gdal.Warp(
+        warped = gdal.Warp(
             out_name,
             raster,
             xRes=x_res,
@@ -383,6 +383,9 @@ def align_rasters(
             cropToCutline=False,
             multithread=True,
         )
+
+        if warped == None:
+            raise Exception("Error while warping rasters.")
 
         return_list.append(out_name)
 

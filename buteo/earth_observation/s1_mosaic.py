@@ -19,6 +19,7 @@ from buteo.gdal_utils import parse_projection, ogr_bbox_intersects
 from buteo.raster.align import rasters_are_aligned, align_rasters
 from buteo.filters.kernel_generator import create_kernel
 from buteo.utils import timing
+from buteo.gdal_utils import default_options
 from osgeo import gdal, osr
 from time import time
 import numpy as np
@@ -122,11 +123,13 @@ def mosaic_sentinel1(
     output_folder,
     tmp_folder,
     interest_area=None,
+    use_tiles=True,
     target_projection=None,
     step_size=1.0,
     polarization="VV",
     epsilon: float = 1e-9,
     overlap=0.0,
+    target_size=[10.0, 10.0],
     prefix="",
     postfix="",
 ):
@@ -186,46 +189,60 @@ def mosaic_sentinel1(
     else:
         use_projection = parse_projection(target_projection)
 
-    use_area = None
-    if interest_area is None:
-        use_area = extent
-    else:
-        interest_area_metadata = internal_vector_to_metadata(interest_area)
-        use_area = interest_area_metadata["extent_ogr_latlng"]
-
-        use_area[0] -= use_area[0] % step_size
-        use_area[1] += 1 - (use_area[1] % step_size)
-
-        use_area[2] -= use_area[2] % step_size
-        use_area[3] += 1 - (use_area[3] % step_size)
-
-    x_size = round((use_area[1] - use_area[0]) / step_size)
-    y_size = round((use_area[3] - use_area[2]) / step_size)
-
-    xr = np.arange(use_area[0], use_area[1] + epsilon, step_size)
-    yr = np.arange(use_area[2], use_area[3] + epsilon, step_size)
-
-    tiles = int(x_size * y_size)
-    coord_grid = np.empty((tiles, 2), dtype="float64")
-
-    oxx, oyy = np.meshgrid(xr[:-1], yr[:-1])
-    oxr = oxx.ravel()
-    oyr = oyy.ravel()
-
-    coord_grid[:, 0] = oxr
-    coord_grid[:, 1] = oyr
-
     tile_extents = []
-    bottom_left = coord_grid.tolist()
-    for coord in bottom_left:
+    
+    tiles = 1
+    if not use_tiles and interest_area is not None:
         tile_extents.append(
             [
-                coord[0] - overlap,
-                coord[0] + step_size + overlap,
-                coord[1] - overlap,
-                coord[1] + step_size + overlap,
+                tile_extent[0] - overlap,
+                tile_extent[1] + overlap,
+                tile_extent[2] - overlap,
+                tile_extent[3] + overlap,
             ]
         )
+    elif not use_tiles:
+        tile_extents.append(extent)
+    else:
+        use_area = None
+        if interest_area is None:
+            use_area = extent
+        else:
+            interest_area_metadata = internal_vector_to_metadata(interest_area)
+            use_area = interest_area_metadata["extent_ogr_latlng"]
+
+            use_area[0] -= use_area[0] % step_size
+            use_area[1] += 1 - (use_area[1] % step_size)
+
+            use_area[2] -= use_area[2] % step_size
+            use_area[3] += 1 - (use_area[3] % step_size)
+
+        x_size = round((use_area[1] - use_area[0]) / step_size)
+        y_size = round((use_area[3] - use_area[2]) / step_size)
+
+        xr = np.arange(use_area[0], use_area[1] + epsilon, step_size)
+        yr = np.arange(use_area[2], use_area[3] + epsilon, step_size)
+
+        tiles = int(x_size * y_size)
+        coord_grid = np.empty((tiles, 2), dtype="float64")
+
+        oxx, oyy = np.meshgrid(xr[:-1], yr[:-1])
+        oxr = oxx.ravel()
+        oyr = oyy.ravel()
+
+        coord_grid[:, 0] = oxr
+        coord_grid[:, 1] = oyr
+
+        bottom_left = coord_grid.tolist()
+        for coord in bottom_left:
+            tile_extents.append(
+                [
+                    coord[0] - overlap,
+                    coord[0] + step_size + overlap,
+                    coord[1] - overlap,
+                    coord[1] + step_size + overlap,
+                ]
+            )
 
     wgs84 = osr.SpatialReference()
     wgs84.ImportFromEPSG(4326)
@@ -250,18 +267,43 @@ def mosaic_sentinel1(
 
                 tile_img_path = tmp_folder + meta["name"] + ".tif"
 
-                gdal.Translate(
+                if os.path.exists(tile_img_path):
+                    clipped_images.append(tile_img_path)
+                    continue
+
+                warped = gdal.Warp(
                     tile_img_path,
                     meta["path"],
-                    projWin=[
+                    outputBounds=[
                         tile_extent[0],
-                        tile_extent[3],
-                        tile_extent[1],
                         tile_extent[2],
+                        tile_extent[1],
+                        tile_extent[3],
                     ],
-                    projWinSRS=wgs84,
-                    outputSRS=target_projection,
+                    outputBoundsSRS=wgs84,
+                    targetAlignedPixels=True,
+                    xRes=target_size[0],
+                    yRes=target_size[1],
+                    dstSRS=use_projection,
+                    srcSRS=meta["projection_osr"],
+                    multithread=True,
                 )
+
+                if warped == None:
+                    raise Exception("Error while warping..")
+
+                # gdal.Translate(
+                #     tile_img_path,
+                #     meta["path"],
+                #     projWin=[
+                #         tile_extent[0],
+                #         tile_extent[3],
+                #         tile_extent[1],
+                #         tile_extent[2],
+                #     ],
+                #     projWinSRS=wgs84,
+                #     outputSRS=use_projection,
+                # )
 
                 clipped_images.append(tile_img_path)
 
@@ -275,8 +317,9 @@ def mosaic_sentinel1(
             clipped_images = align_rasters(
                 clipped_images,
                 tmp_folder,
+                target_size=target_size,
                 projection=use_projection,
-                target_size=[10.0, 10.0],
+                bounding_box="union",
             )
 
         clipped_images.sort(reverse=False, key=name_to_date)
@@ -306,7 +349,7 @@ def mosaic_sentinel1(
             merge_images,
             offsets,
             weights,
-            quantile=0.5,
+            quantile=0.33,
             nodata=True,
             nodata_value=0,
         )
@@ -345,19 +388,21 @@ def mosaic_sentinel1(
 
 
 if __name__ == "__main__":
-    # data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
-    folder = "/home/cfi/Desktop/sentinel1/"
-    # folder = data_folder + "sentinel1/"
-    tiles = folder + "tiles/"
-    processed = folder + "mosaic_2021/"
+    data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
+    # folder = "/home/cfi/Desktop/sentinel1/"
+    folder = data_folder + "sentinel1/"
+    tiles = folder + "errors/"
+    processed = folder + "mosaic_2020/"
     tmp = folder + "tmp/"
 
     mosaic_sentinel1(
         processed,
         tiles,
         tmp,
-        interest_area=folder + "ghana_buffered_1280.gpkg",
+        interest_area=folder + "vh_errors_2020.gpkg",
         overlap=0.05,
+        use_tiles=False,
         polarization="VH",
-        prefix="2021_",
+        target_projection=folder + "2020_mosaic_VH_v2.tif",
+        prefix="2020_",
     )
