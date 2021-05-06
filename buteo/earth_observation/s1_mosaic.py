@@ -130,6 +130,7 @@ def mosaic_sentinel1(
     epsilon: float = 1e-9,
     overlap=0.0,
     target_size=[10.0, 10.0],
+    max_images=0,
     prefix="",
     postfix="",
 ):
@@ -292,19 +293,6 @@ def mosaic_sentinel1(
                 if warped == None:
                     raise Exception("Error while warping..")
 
-                # gdal.Translate(
-                #     tile_img_path,
-                #     meta["path"],
-                #     projWin=[
-                #         tile_extent[0],
-                #         tile_extent[3],
-                #         tile_extent[1],
-                #         tile_extent[2],
-                #     ],
-                #     projWinSRS=wgs84,
-                #     outputSRS=use_projection,
-                # )
-
                 clipped_images.append(tile_img_path)
 
         if len(clipped_images) == 0:
@@ -321,6 +309,25 @@ def mosaic_sentinel1(
                 projection=use_projection,
                 bounding_box="union",
             )
+
+        # TODO: Check if there is a combination that covers all of tile.
+        if max_images != 0:
+            tmp_clipped_images = []
+            use_idx = []
+
+            for idx, image in enumerate(clipped_images):
+                valid_sum = (raster_to_array(image, filled=True, output_2d=True) != 0).sum()
+                use_idx.append({ "idx": idx, "valid": valid_sum, "image": image })
+            
+            use_idx = sorted(use_idx, key = lambda i: i['valid'], reverse=True)
+
+            for nr in range(max_images):
+                try:
+                    tmp_clipped_images.append(use_idx[nr]["image"])
+                except:
+                    break
+
+            clipped_images = tmp_clipped_images
 
         clipped_images.sort(reverse=False, key=name_to_date)
 
@@ -388,21 +395,22 @@ def mosaic_sentinel1(
 
 
 if __name__ == "__main__":
-    data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
-    # folder = "/home/cfi/Desktop/sentinel1/"
-    folder = data_folder + "sentinel1/"
-    tiles = folder + "errors/"
-    processed = folder + "mosaic_2020/"
+    # data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
+    folder = "/home/cfi/Desktop/sentinel1/"
+    # folder = data_folder + "sentinel1/"
+    tiles = folder + "tiles/"
+    processed = folder + "mosaic_2021/"
     tmp = folder + "tmp/"
 
     mosaic_sentinel1(
         processed,
         tiles,
         tmp,
-        interest_area=folder + "vh_errors_2020.gpkg",
-        overlap=0.05,
-        use_tiles=False,
+        interest_area=folder + "ghana_buffered_1280.gpkg",
+        target_projection=folder + "ghana_buffered_1280.gpkg",
+        overlap=0.025,
+        step_size=0.75,
+        max_images=5,
         polarization="VH",
-        target_projection=folder + "2020_mosaic_VH_v2.tif",
-        prefix="2020_",
+        prefix="2021_",
     )
