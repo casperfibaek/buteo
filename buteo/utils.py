@@ -4,17 +4,26 @@ import time
 from typing import Any
 import psutil
 import shutil
+import builtins
 
 
 def progress(count, total, name="Processing"):
     sys.stdout.flush()
-    bar_len = shutil.get_terminal_size().columns - 24
+
+    if hasattr(__builtins__,'__IPYTHON__'):
+        bar_len = shutil.get_terminal_size().columns - 24
+    else:
+        bar_len = os.get_terminal_size().columns - 24
+
     filled_len = int(round(bar_len * count / float(total)))
     display_name = name[:10] + "..: "
 
     bar = "█" * filled_len + "." * (bar_len - filled_len)
 
     percents = round(100.0 * count / float(total), 1)
+
+    if percents >= 100.0:
+        percents = 100.0
 
     if count == total:
         sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
