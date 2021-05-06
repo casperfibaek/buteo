@@ -706,7 +706,7 @@ def vector_to_disk(
 
 
 def filter_vector(vector, filter_where, process_layer=0):
-    metadata = internal_vector_to_metadata(vector)
+    metadata = internal_vector_to_metadata(vector, create_geometry=False)
 
     name = f"/vsimem/{uuid4().int}_filtered.shp"
 

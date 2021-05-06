@@ -331,6 +331,7 @@ def ready_io_raster(
     overwrite: bool = True,
     prefix: str = "",
     postfix: str = "",
+    uuid: bool = True,
 ) -> Tuple[List[str], List[str]]:
     type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(out_path, [list, str], "out_path", allow_none=True)
@@ -360,18 +361,20 @@ def ready_io_raster(
 
         name = metadata["name"]
 
+        path_id = "" if uuid is False else uuid4().int
+
         if out_path is None:
-            path = f"/vsimem/{prefix}{name}{uuid4().int}{postfix}.tif"
+            path = f"/vsimem/{prefix}{name}{path_id}{postfix}.tif"
         elif isinstance(out_path, str):
             if folder_exists(out_path):
                 path = os.path.join(
-                    out_path, f"{prefix}{name}{uuid4().int}{postfix}.tif"
+                    out_path, f"{prefix}{name}{path_id}{postfix}.tif"
                 )
             else:
                 path = out_path
         elif isinstance(out_path, list):
             if out_path[index] is None:
-                path = f"/vsimem/{prefix}{name}{uuid4().int}{postfix}.tif"
+                path = f"/vsimem/{prefix}{name}{path_id}{postfix}.tif"
             elif isinstance(out_path[index], str):
                 path = out_path[index]
             else:

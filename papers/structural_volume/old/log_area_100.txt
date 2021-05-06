@@ -1,0 +1,55 @@
+Analysis: bsac_bsdc_s2
+
+    Test area: Lemvig
+    Mean Absolute Error (MAE):                  142.804
+    Median Absolute Error (MeAE):                 6.595
+    Median Absolute Percentage Error (MeAPE):     0.715
+  Z Mean Absolute Error (MAE):                  540.854
+  Z Median Absolute Error (MeAE):               307.180
+  Z Median Absolute Percentage Error (MeAPE):    83.624
+
+    Test area: Silkeborg
+    Mean Absolute Error (MAE):                  159.116
+    Median Absolute Error (MeAE):                18.527
+    Median Absolute Percentage Error (MeAPE):     1.843
+  Z Mean Absolute Error (MAE):                  493.258
+  Z Median Absolute Error (MeAE):               306.038
+  Z Median Absolute Percentage Error (MeAPE):    72.428
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                  395.987
+    Median Absolute Error (MeAE):               137.206
+    Median Absolute Percentage Error (MeAPE):     6.112
+  Z Mean Absolute Error (MAE):                  786.817
+  Z Median Absolute Error (MeAE):               503.235
+  Z Median Absolute Percentage Error (MeAPE):    42.519
+
+  CNN Silkeborg (4 rotations)
+    Mean Absolute Error (MAE):                  142.9353 
+    Median Absolute Error (MeAE):               17.7657
+  Z Mean Absolute Error (MAE):                  433.9400
+  Z Median Absolute Error (MeAE):               251.9899
+
+  CNN Silkeborg (2 rotations)
+    Mean Absolute Error (MAE):                  161.2699 
+    Median Absolute Error (MeAE):               21.5266
+  Z Mean Absolute Error (MAE):                  479.4710 
+  Z Median Absolute Error (MeAE):               282.1310
+
+  CNN Silkeborg (0 rotations)
+    Mean Absolute Error (MAE):                  184.9310 
+    Median Absolute Error (MeAE):               34.8976
+  Z Mean Absolute Error (MAE):                  494.6018 
+  Z Median Absolute Error (MeAE):               288.4999
+
+CNN Silkeborg Optimized (0 rotations)
+    Mean Absolute Error (MAE):                  148.7659
+    Median Absolute Error (MeAE):               18.5593
+  Z Mean Absolute Error (MAE):                  449.0070
+  Z Median Absolute Error (MeAE):               257.6540
+
+CNN Silkeborg Optimized (4 rotations, 100k sample)
+    Mean Absolute Error (MAE):                   132.1211
+    Median Absolute Error (MeAE):                 16.2966
+  Z Mean Absolute Error (MAE):                   410.0826
+  Z Median Absolute Error (MeAE):                230.4033

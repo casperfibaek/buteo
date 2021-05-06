@@ -19,7 +19,7 @@ def vector_get_attribute_table(
     type_check(include_geom, [bool], "include_geom")
 
     ref = open_vector(vector)
-    metadata = internal_vector_to_metadata(ref, process_layer=process_layer)
+    metadata = internal_vector_to_metadata(ref, process_layer=process_layer, create_geometry=False)
 
     attribute_table_header = None
     feature_count = None

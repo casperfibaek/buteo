@@ -77,9 +77,8 @@ def cube_sphere_intersection_area(
         return (step * step * step) * np.sum(dist <= circle_radius)
 
 
-# TODO channel last?
 def create_kernel(
-    shape,
+    kernel_shape,
     sigma=1,
     holed=False,
     inverted=False,
@@ -93,10 +92,15 @@ def create_kernel(
     channel_last=True,
     output_2d=False,
 ):
+    if channel_last:
+        shape = kernel_shape[::-1]
+    else:
+        shape = kernel_shape
+
     if len(shape) == 2:
         shape = [1, shape[0], shape[1]]
 
-    assert shape[0] % 2 != 0, "Kernel depth has to be an uneven number."
+    # assert shape[0] % 2 != 0, "Kernel depth has to be an uneven number."
     assert shape[1] % 2 != 0, "Kernel width has to be an uneven number."
     assert shape[2] % 2 != 0, "Kernel height has to be an uneven number."
 
@@ -111,7 +115,7 @@ def create_kernel(
     edge_length = np.linalg.norm(np.array([edge_z, edge_x, edge_y]))
 
     radius = None
-    radius_add = 0.5
+    radius_add = 1.5
 
     if radius_method == "2d" or edge_z == 0:
         radius = min(edge_x, edge_y) + radius_add
@@ -135,7 +139,7 @@ def create_kernel(
                     weight = 1 - np.sqrt(normed / edge_length)
                 elif distance_calc == "power":
                     weight = 1 - np.power(normed / edge_length, 2)
-                elif distance_calc == "gaussian":
+                elif distance_calc == "gaussian" or distance_calc == True:
                     weight = np.exp(-(normed ** 2) / (2 * sigma ** 2))
                 elif distance_calc == False or distance_calc == None:
                     weight = 1
@@ -198,9 +202,9 @@ def create_kernel(
                         else:
                             idx_offsets.append(
                                 [
+                                    z - (kernel.shape[0] // 2),
                                     x - (kernel.shape[1] // 2),
                                     y - (kernel.shape[2] // 2),
-                                    z - (kernel.shape[0] // 2),
                                 ]
                             )
                     else:
@@ -222,7 +226,8 @@ def create_kernel(
                     weights.append(current_weight)
 
     if channel_last:
-        kernel = kernel.reshape(kernel.shape[1], kernel.shape[2], kernel.shape[0])
+        kernel = kernel.swapaxes(0, 1)
+        kernel = kernel.swapaxes(1, 2)
 
     if output_2d and channel_last:
         kernel = kernel[:, :, 0]
@@ -241,14 +246,14 @@ def create_kernel(
 
 if __name__ == "__main__":
     np.set_printoptions(suppress=True)
-    kernel = create_kernel([11, 11], sigma=2, normalised=False, distance_calc=False
-    print(kernel)
-    from matplotlib import pyplot as plt
-
-    plt.imshow(kernel)
-    plt.show()
-
+    kernel = create_kernel(
+        [5, 3, 3],
+        normalised=False,
+        sigma=3,
+        distance_calc=True,
+        radius_method="ellipsoid",
+    )
     import pdb
 
     pdb.set_trace()
-
+    print(kernel)

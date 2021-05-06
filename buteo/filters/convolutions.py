@@ -129,17 +129,26 @@ def hood_sigma_lee(values, weights):
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True)
-def convolve_3d(arr, offsets, weights, operation="sum", border="valid", quantile=0.5):
-    z_adj = (arr.shape[0] - 1) // 2
-    x_adj = arr.shape[1] - 1
-    y_adj = arr.shape[2] - 1
+def convolve_3d(
+    arr,
+    offsets,
+    weights,
+    operation="sum",
+    border="valid",
+    quantile=0.5,
+    nodata=False,
+    nodata_value=0,
+):
+    x_adj = arr.shape[0] - 1
+    y_adj = arr.shape[1] - 1
+    z_adj = (arr.shape[2] - 1) // 2
 
     hood_size = len(offsets)
-    result = np.zeros(arr.shape[1:], dtype="float32")
+    result = np.zeros(arr.shape[:2], dtype="float32")
     border = True if border == "valid" else False
 
-    for x in prange(arr.shape[1]):
-        for y in range(arr.shape[2]):
+    for x in prange(arr.shape[0]):
+        for y in range(arr.shape[1]):
 
             hood_values = np.zeros(hood_size, dtype="float32")
             hood_weights = np.zeros(hood_size, dtype="float32")
@@ -147,9 +156,9 @@ def convolve_3d(arr, offsets, weights, operation="sum", border="valid", quantile
             normalise = False
 
             for n in range(hood_size):
-                offset_z = offsets[n][0]
-                offset_x = x + offsets[n][1]
-                offset_y = y + offsets[n][2]
+                offset_x = x + offsets[n][0]
+                offset_y = y + offsets[n][1]
+                offset_z = offsets[n][2]
 
                 outside = False
 
@@ -174,12 +183,16 @@ def convolve_3d(arr, offsets, weights, operation="sum", border="valid", quantile
                     offset_y = y_adj
                     outside = True
 
-                hood_values[n] = arr[offset_z, offset_x, offset_y]
+                value = arr[offset_z, offset_x, offset_y]
 
                 if border == True and outside == True:
                     normalise = True
                     hood_weights[n] = 0
+                elif value == 0:
+                    normalise = True
+                    hood_weights[n] = 0
                 else:
+                    hood_values[n] = value
                     weight = weights[n]
 
                     hood_weights[n] = weight
@@ -227,6 +240,9 @@ def filter_array(
     spherical=True,
     edge_weights=True,
     normalised=True,
+    nodata=False,
+    nodata_value=0,
+    quantile=0.5,
     distance_calc="gaussian",
     radius_method="ellipsoid",
     operation="sum",
@@ -255,5 +271,16 @@ def filter_array(
         radius_method=radius_method,
     )
 
-    return convolve_3d(arr, offsets, weights, operation=operation)
+    import pdb
 
+    pdb.set_trace()
+
+    return convolve_3d(
+        arr,
+        offsets,
+        weights,
+        operation=operation,
+        nodata=nodata,
+        nodata_value=nodata_value,
+        quantile=quantile,
+    )

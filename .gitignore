@@ -129,7 +129,8 @@ lib/credentials.py
 /lib/*.c
 /log
 
-/papers/walls/*npy
+/papers/**/.npy
+/papers/**/*.sqlite
 
 *.shm
 *.wal
