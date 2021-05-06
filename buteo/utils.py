@@ -4,17 +4,26 @@ import time
 from typing import Any
 import psutil
 import shutil
+import builtins
 
 
 def progress(count, total, name="Processing"):
     sys.stdout.flush()
-    bar_len = shutil.get_terminal_size().columns - 24
+
+    try:
+        bar_len = os.get_terminal_size().columns - 24
+    except:
+        bar_len = shutil.get_terminal_size().columns - 24
+
     filled_len = int(round(bar_len * count / float(total)))
     display_name = name[:10] + "..: "
 
     bar = "█" * filled_len + "." * (bar_len - filled_len)
 
     percents = round(100.0 * count / float(total), 1)
+
+    if percents >= 100.0:
+        percents = 100.0
 
     if count == total:
         sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
@@ -142,7 +151,11 @@ def step_ranges(steps):
         id = num + 1
 
         start_stop.append(
-            {"id": id, "start": last, "stop": last + step_size,}
+            {
+                "id": id,
+                "start": last,
+                "stop": last + step_size,
+            }
         )
 
         last += step_size
@@ -163,7 +176,11 @@ def file_in_use(path):
 
 
 def type_check(
-    variable: Any, types: list, name: str = "", allow_none=False, throw_error=True,
+    variable: Any,
+    types: list,
+    name: str = "",
+    allow_none=False,
+    throw_error=True,
 ) -> bool:
     """
         Utility function to type check the inputs of a function.
@@ -182,7 +199,7 @@ def type_check(
         is wrong or return a boolean.
 
     Returns:
-        A boolean indicating if the type is valid. If throw_error an error is 
+        A boolean indicating if the type is valid. If throw_error an error is
         raised if the input is not a valid type.
     """
 
