@@ -13,6 +13,8 @@ from buteo.raster.io import (
     array_to_raster,
 )
 from buteo.vector.io import internal_vector_to_metadata
+from buteo.vector.reproject import internal_reproject_vector
+from buteo.vector.intersect import internal_intersect_vector
 from buteo.gdal_utils import parse_projection, ogr_bbox_intersects
 from buteo.raster.align import rasters_are_aligned, align_rasters
 from buteo.filters.kernel_generator import create_kernel
@@ -133,11 +135,22 @@ def mosaic_sentinel1(
     metadatas = []
     images = glob(folder + f"*Gamma0_{polarization}.tif")
     used_projections = []
+    used_metadatas = []
     extent = []
 
-    for idx, image in enumerate(images):
+    for image in images:
         metadata = internal_raster_to_metadata(image, create_geometry=True)
-        used_projections.append(metadata["projection"])
+        metadatas.append(metadata)
+
+    if interest_area is not None:
+        tile_extent = internal_vector_to_metadata(interest_area)["extent_ogr_latlng"]
+
+    for idx, image in enumerate(images):
+        metadata = metadatas[idx]
+
+        if interest_area is not None:
+            if not ogr_bbox_intersects(tile_extent, metadata["extent_ogr_latlng"]):
+                continue
 
         x_min, x_max, y_min, y_max = metadata["extent_ogr_latlng"]
 
@@ -153,7 +166,8 @@ def mosaic_sentinel1(
             if y_max > extent[3]:
                 extent[3] = y_max
 
-        metadatas.append(metadata)
+        used_metadatas.append(metadata)
+        used_projections.append(metadata["projection"])   
 
     use_projection = None
     if target_projection is None:
@@ -223,12 +237,13 @@ def mosaic_sentinel1(
 
         if os.path.exists(tile_path):
             tile_nr += 1
+            created_tiles.append(tile_path)
             print(f"Created: {tile_nr}/{tiles}")
             continue
 
         overlapping_images = []
         clipped_images = []
-        for meta in metadatas:
+        for meta in used_metadatas:
             image_extent = meta["extent_ogr_latlng"]
             if ogr_bbox_intersects(tile_extent, image_extent):
                 overlapping_images.append(meta)
@@ -249,6 +264,12 @@ def mosaic_sentinel1(
                 )
 
                 clipped_images.append(tile_img_path)
+
+        if len(clipped_images) == 0:
+            tile_nr += 1
+            created_tiles.append(tile_path)
+            print(f"Created: {tile_nr}/{tiles}")
+            continue
 
         if not rasters_are_aligned(clipped_images):
             clipped_images = align_rasters(
@@ -290,13 +311,14 @@ def mosaic_sentinel1(
             nodata_value=0,
         )
 
-        tile_path = output_folder + f"{prefix}{polarization}_{tile_nr}{postfix}.tif"
-
         array_to_raster(
             image,
             reference=clipped_images[0],
             out_path=tile_path,
         )
+
+        merge_images = None
+        image = None
 
         created_tiles.append(tile_path)
 
@@ -323,18 +345,19 @@ def mosaic_sentinel1(
 
 
 if __name__ == "__main__":
-    data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
-    folder = data_folder + "sentinel1/"
-    merged = folder + "tiles/"
-    processed = folder + "mosaic_2020/"
+    # data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
+    folder = "/home/cfi/Desktop/sentinel1/"
+    # folder = data_folder + "sentinel1/"
+    tiles = folder + "tiles/"
+    processed = folder + "mosaic_2021/"
     tmp = folder + "tmp/"
 
     mosaic_sentinel1(
         processed,
-        merged,
+        tiles,
         tmp,
-        interest_area=data_folder + "denmark_polygon_border_region_removed.gpkg",
+        interest_area=folder + "ghana_buffered_1280.gpkg",
         overlap=0.05,
         polarization="VH",
-        prefix="2020_",
+        prefix="2021_",
     )

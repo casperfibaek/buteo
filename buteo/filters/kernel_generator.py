@@ -9,7 +9,8 @@ def scale_vectors(points, abs_dist):
 
 
 def points_intersects_ellipsoid(ellipsoid, points, axis=1):
-    return np.sum(np.sum(np.power(np.divide(points, ellipsoid), 2), axis=axis) <= 1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.sum(np.sum(np.power(np.divide(points, ellipsoid), 2), axis=axis) <= 1)
 
 
 def cube_sphere_intersection_area(

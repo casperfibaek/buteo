@@ -595,9 +595,9 @@ def advanced_extents(
 
     extent_wkt = f"POLYGON (({wkt_coords}))"
 
-    extent_name = f"{uuid4().int}_extent"
+    extent_name = f"/vsimem/{uuid4().int}_extent.shp"
 
-    driver = ogr.GetDriverByName("Memory")
+    driver = ogr.GetDriverByName("ESRI Shapefile")
     extent_ds = driver.CreateDataSource(extent_name)
     layer = extent_ds.CreateLayer(
         extent_name + "_layer", original_projection, ogr.wkbPolygon
@@ -662,9 +662,9 @@ def advanced_extents(
     extent_wkt_latlng = f"POLYGON (({wkt_coords}))"
 
     # Create an OGR Datasource in memory with the extent
-    extent_name = f"{uuid4().int}_extent_latlng"
+    extent_name = f"/vsimem/{uuid4().int}_extent_latlng.shp"
 
-    driver = ogr.GetDriverByName("Memory")
+    driver = ogr.GetDriverByName("ESRI Shapefile")
     extent_ds_latlng = driver.CreateDataSource(extent_name)
     layer = extent_ds_latlng.CreateLayer(
         extent_name + "_layer", target_projection, ogr.wkbPolygon

@@ -17,6 +17,7 @@ from buteo.vector.io import (
     internal_vector_to_metadata,
     vector_add_index,
 )
+from buteo.vector.reproject import internal_reproject_vector
 from buteo.vector.merge import merge_vectors
 
 
@@ -28,11 +29,9 @@ def internal_intersect_vector(
     process_layer: int = 0,
     process_layer_clip: int = 0,
     add_index: bool = True,
-    target_projection: Union[
-        str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int
-    ] = None,
     preserve_fid: bool = True,
     overwrite: bool = True,
+    return_bool: bool = False
 ) -> str:
     """ Clips a vector to a geometry.
  
@@ -46,22 +45,16 @@ def internal_intersect_vector(
     type_check(process_layer, [int], "process_layer")
     type_check(process_layer_clip, [int], "process_layer_clip")
     type_check(add_index, [bool], "add_index")
-    type_check(
-        target_projection,
-        [str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int],
-        "target_projection",
-        allow_none=True,
-    )
     type_check(preserve_fid, [bool], "preserve_fid")
     type_check(overwrite, [bool], "overwrite")
 
-    vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
-    ref = open_vector(vector_list[0])
+    _vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
     out_name = path_list[0]
 
-    geometry_to_clip = open_vector(clip_geom)
+    match_projection = internal_reproject_vector(clip_geom, vector)
+    geometry_to_clip = open_vector(match_projection)
 
-    merged = open_vector(merge_vectors([vector, geometry_to_clip]))
+    merged = open_vector(merge_vectors([vector, match_projection]))
 
     if add_index:
         vector_add_index(merged)
@@ -74,8 +67,20 @@ def internal_intersect_vector(
     clip_geom_layername = clip_geom_metadata["layers"][process_layer_clip]["layer_name"]
     clip_geom_col = clip_geom_metadata["layers"][process_layer_clip]["column_geom"]
 
-    sql = f"SELECT A.* FROM '{vector_layername}' A, '{clip_geom_layername}' B WHERE ST_INTERSECTS(A.{vector_geom_col}, B.{clip_geom_col});"
+    if return_bool:
+        sql = f"SELECT A.* FROM '{vector_layername}' A, '{clip_geom_layername}' B WHERE ST_INTERSECTS(A.{vector_geom_col}, B.{clip_geom_col});"
+    else:
+        sql = f"SELECT A.* FROM '{vector_layername}' A, '{clip_geom_layername}' B WHERE ST_INTERSECTS(A.{vector_geom_col}, B.{clip_geom_col});"
+
     result = merged.ExecuteSQL(sql, dialect="SQLITE")
+
+    import pdb; pdb.set_trace()
+
+    if return_bool:
+        if result.GetFeatureCount() == 0:
+            return False
+        else:
+            return True
 
     driver = ogr.GetDriverByName(path_to_driver(out_name))
     destination: ogr.DataSource = driver.CreateDataSource(out_name)
