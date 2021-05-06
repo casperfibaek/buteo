@@ -49,7 +49,6 @@ def s1_collapse(
 
     hood_size = len(offsets)
     result = np.zeros(arr.shape[:2], dtype="float32")
-    border = True
 
     for x in prange(arr.shape[0]):
         for y in range(arr.shape[1]):
@@ -89,10 +88,7 @@ def s1_collapse(
 
                 value = arr[offset_x, offset_y, offset_z]
 
-                if border == True and outside == True:
-                    normalise = True
-                    hood_weights[n] = 0
-                elif nodata and value == nodata_value:
+                if outside or (nodata and nodata_value == value):
                     normalise = True
                     hood_weights[n] = 0
                 else:
@@ -129,6 +125,8 @@ def mosaic_sentinel1(
     polarization="VV",
     epsilon: float = 1e-9,
     overlap=0.0,
+    prefix="",
+    postfix="",
 ):
     start = time()
 
@@ -285,7 +283,7 @@ def mosaic_sentinel1(
             nodata_value=0,
         )
 
-        tile_path = output_folder + f"tile_{tile_nr}_{polarization}.tif"
+        tile_path = output_folder + f"{prefix}{polarization}_{tile_nr}{postfix}.tif"
 
         array_to_raster(
             image,
@@ -304,13 +302,23 @@ def mosaic_sentinel1(
         print(f"Created: {tile_nr}/{tiles}")
         timing(start)
 
+        # output = merge_rasters(
+        #     reprojected,
+        #     out_folder + prefix + band + ".tif",
+        #     tmp=tmp_dir,
+        #     harmonisation=harmonisation,
+        #     nodata_value=nodata_value,
+        #     pixel_width=pixel_width,
+        #     pixel_height=pixel_height,
+        # )
+
     return created_tiles
 
 
 if __name__ == "__main__":
     data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
     folder = data_folder + "sentinel1/"
-    merged = folder + "merged/"
+    merged = folder + "tiles/"
     processed = folder + "mosaic_2020/"
     tmp = folder + "tmp/"
 
@@ -319,4 +327,7 @@ if __name__ == "__main__":
         merged,
         tmp,
         interest_area=data_folder + "denmark_polygon_border_region_removed.gpkg",
+        overlap=0.05,
+        polarization="VH",
+        prefix="2020_",
     )
