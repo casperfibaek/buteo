@@ -586,7 +586,7 @@ if __name__ == "__main__":
             min_improvement=0.01,
             quality_threshold=110,
             time_penalty=30,
-            max_time_delta=400.0,
+            max_time_delta=30.0,
             # ideal_date="20210226",
             use_image="20210226",
             process_bands=[

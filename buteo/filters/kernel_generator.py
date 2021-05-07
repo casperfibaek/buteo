@@ -79,7 +79,7 @@ def cube_sphere_intersection_area(
 
 
 def create_kernel(
-    kernel_shape,
+    shape,
     sigma=1,
     holed=False,
     inverted=False,
@@ -87,59 +87,55 @@ def create_kernel(
     spherical=True,
     edge_weights=True,
     distance_calc="gaussian",
+    decay=0.25,
     offsets=False,
     remove_zero_weights=False,
     radius_method="2d",
-    channel_last=True,
     output_2d=False,
 ):
-    if channel_last:
-        shape = kernel_shape[::-1]
-    else:
-        shape = kernel_shape
+    """ Channel last """
 
     if len(shape) == 2:
-        shape = [1, shape[0], shape[1]]
+        shape = (shape[0], shape[1], 1)
 
-    # assert shape[0] % 2 != 0, "Kernel depth has to be an uneven number."
-    assert shape[1] % 2 != 0, "Kernel width has to be an uneven number."
-    assert shape[2] % 2 != 0, "Kernel height has to be an uneven number."
+    assert shape[0] % 2 != 0, "Kernel width has to be an uneven number."
+    assert shape[1] % 2 != 0, "Kernel height has to be an uneven number."
 
-    if shape[0] == 1:
+    if shape[2] == 1:
         radius_method = "2d"
 
     kernel = np.zeros(shape, dtype="float32")
 
-    edge_z = shape[0] // 2
-    edge_x = shape[1] // 2
-    edge_y = shape[2] // 2
-    edge_length = np.linalg.norm(np.array([edge_z, edge_x, edge_y]))
+    edge_x = shape[0] // 2
+    edge_y = shape[1] // 2
+    edge_z = shape[2] // 2
 
     radius = None
-    radius_add = 1.5
+    radius_add = np.sqrt(2)
+    target = 0.5 if (shape[2] % 2) == 0 else 0.0
 
     if radius_method == "2d" or edge_z == 0:
         radius = min(edge_x, edge_y) + radius_add
     elif radius_method == "3d":
-        radius = min(edge_z, edge_x, edge_y) + radius_add
+        radius = min(edge_x, edge_y, edge_z) + radius_add
     elif radius_method == "ellipsoid":
         radius = min(edge_x, edge_y) + radius_add
     else:
         raise ValueError("Unable to parse radius_method. Must be 2d, 3d or squish")
 
-    for z in range(edge_z + 1):
-        for x in range(edge_x + 1):
-            for y in range(edge_y + 1):
+    for x in range(edge_x + 1):
+        for y in range(edge_y + 1):
+            for z in range(edge_z + 1):
 
                 weight = 0
-                normed = np.linalg.norm(np.array([z, x, y]))
+                normed = np.linalg.norm(np.array([x - target, y - target, z - target]))
 
                 if distance_calc == "linear":
-                    weight = 1 - (normed / edge_length)
+                    weight = (1 - decay) ** normed
                 elif distance_calc == "sqrt":
-                    weight = 1 - np.sqrt(normed / edge_length)
+                    weight = np.sqrt((1 - decay)) ** normed
                 elif distance_calc == "power":
-                    weight = 1 - np.power(normed / edge_length, 2)
+                    weight = np.power((1 - decay), 2) ** normed
                 elif distance_calc == "gaussian" or distance_calc == True:
                     weight = np.exp(-(normed ** 2) / (2 * sigma ** 2))
                 elif distance_calc == False or distance_calc == None:
@@ -149,11 +145,11 @@ def create_kernel(
 
                 ellipsoid = None
                 if radius_method == "ellipsoid":
-                    ellipsoid = np.array([edge_z, edge_x, edge_y], dtype="float32")
+                    ellipsoid = np.array([edge_x, edge_y, edge_z], dtype="float32")
 
                 if spherical:
                     adj = cube_sphere_intersection_area(
-                        np.array([z, x, y], dtype="float32"),
+                        np.array([x, y, z], dtype="float32"),
                         np.array([0, 0, 0], dtype="float32"),
                         radius,
                         ellipsoid=ellipsoid,
@@ -168,15 +164,17 @@ def create_kernel(
                 if inverted:
                     weight = 1 - weight
 
-                kernel[edge_z - z][edge_x - x][edge_y - y] = weight
+                kernel[edge_x - x][edge_y - y][edge_z - z] = weight
+
+    z_adjust = 1 if (shape[2] % 2) == 0 else 0
 
     # We're copying the one quadrant to the other three quadrants
-    kernel[edge_z + 1 :, :, :] = np.flip(kernel[:edge_z, :, :], axis=0)
-    kernel[:, edge_x + 1 :, :] = np.flip(kernel[:, :edge_x, :], axis=1)
-    kernel[:, :, edge_y + 1 :] = np.flip(kernel[:, :, :edge_y], axis=2)
+    kernel[edge_x + 1 :, :, :] = np.flip(kernel[:edge_x, :, :], axis=0)
+    kernel[:, edge_y + 1 :, :] = np.flip(kernel[:, :edge_y, :], axis=1)
+    kernel[:, :, edge_z + (1 - z_adjust) :] = np.flip(kernel[:, :, :edge_z], axis=2)
 
     if holed:
-        kernel[edge_z, edge_x, edge_y] = 0
+        kernel[edge_x, edge_y, edge_z] = 0
 
     if normalised:
         kernel = np.divide(kernel, kernel.sum())
@@ -184,56 +182,33 @@ def create_kernel(
     idx_offsets = []
     weights = []
     if offsets:
-        for z in range(kernel.shape[0]):
-            for x in range(kernel.shape[1]):
-                for y in range(kernel.shape[2]):
-                    current_weight = kernel[z][x][y]
+        for x in range(kernel.shape[0]):
+            for y in range(kernel.shape[1]):
+                for z in range(kernel.shape[2]):
+                    current_weight = kernel[x][y][z]
 
                     if remove_zero_weights and current_weight == 0.0:
                         continue
 
-                    if channel_last:
-                        if output_2d:
-                            idx_offsets.append(
-                                [
-                                    x - (kernel.shape[1] // 2),
-                                    y - (kernel.shape[2] // 2),
-                                ]
-                            )
-                        else:
-                            idx_offsets.append(
-                                [
-                                    z - (kernel.shape[0] // 2),
-                                    x - (kernel.shape[1] // 2),
-                                    y - (kernel.shape[2] // 2),
-                                ]
-                            )
+                    if output_2d:
+                        idx_offsets.append(
+                            [
+                                x - (kernel.shape[0] // 2),
+                                y - (kernel.shape[1] // 2),
+                            ]
+                        )
                     else:
-                        if output_2d:
-                            idx_offsets.append(
-                                [
-                                    x - (kernel.shape[1] // 2),
-                                    y - (kernel.shape[2] // 2),
-                                ]
-                            )
-                        else:
-                            idx_offsets.append(
-                                [
-                                    z - (kernel.shape[0] // 2),
-                                    x - (kernel.shape[1] // 2),
-                                    y - (kernel.shape[2] // 2),
-                                ]
-                            )
+                        idx_offsets.append(
+                            [
+                                x - (kernel.shape[0] // 2),
+                                y - (kernel.shape[1] // 2),
+                                z - (kernel.shape[2] // 2),
+                            ]
+                        )
                     weights.append(current_weight)
 
-    if channel_last:
-        kernel = kernel.swapaxes(0, 1)
-        kernel = kernel.swapaxes(1, 2)
-
-    if output_2d and channel_last:
+    if output_2d:
         kernel = kernel[:, :, 0]
-    elif output_2d:
-        kernel = kernel[0, :, :]
 
     if offsets:
         return (
@@ -247,14 +222,19 @@ def create_kernel(
 
 if __name__ == "__main__":
     np.set_printoptions(suppress=True)
-    kernel = create_kernel(
-        [5, 3, 3],
-        normalised=False,
-        sigma=3,
-        distance_calc=True,
+    kernel, offsets, weights = create_kernel(
+        (3, 3, 5),
+        sigma=2,
+        distance_calc=False,
+        decay=0.10,
         radius_method="ellipsoid",
+        offsets=True,
+        spherical=True,
+        edge_weights=True,
+        normalised=False,
+        remove_zero_weights=True,
     )
+    # print(kernel)
     import pdb
 
     pdb.set_trace()
-    print(kernel)

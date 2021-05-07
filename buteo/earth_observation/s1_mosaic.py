@@ -1,7 +1,5 @@
 import sys
 
-from numpy.lib.function_base import quantile
-
 sys.path.append("..")
 sys.path.append("../../")
 
@@ -13,13 +11,10 @@ from buteo.raster.io import (
     array_to_raster,
 )
 from buteo.vector.io import internal_vector_to_metadata
-from buteo.vector.reproject import internal_reproject_vector
-from buteo.vector.intersect import internal_intersect_vector
 from buteo.gdal_utils import parse_projection, ogr_bbox_intersects
 from buteo.raster.align import rasters_are_aligned, align_rasters
 from buteo.filters.kernel_generator import create_kernel
 from buteo.utils import timing
-from buteo.gdal_utils import default_options
 from osgeo import gdal, osr
 from time import time
 import numpy as np
@@ -116,7 +111,7 @@ def name_to_date(path):
     )
 
 
-# phase_cross_correlatio
+# phase_cross_correlation
 # https://github.com/scikit-image/scikit-image/blob/main/skimage/registration/_phase_cross_correlation.py#L109-L276
 def mosaic_sentinel1(
     folder,
@@ -132,8 +127,11 @@ def mosaic_sentinel1(
     target_size=[10.0, 10.0],
     kernel_size=5,
     max_images=0,
+    quantile=0.5,
+    overwrite=False,
     prefix="",
     postfix="",
+    high_memory=False,
 ):
     start = time()
 
@@ -172,7 +170,7 @@ def mosaic_sentinel1(
                 extent[3] = y_max
 
         used_metadatas.append(metadata)
-        used_projections.append(metadata["projection"])   
+        used_projections.append(metadata["projection"])
 
     use_projection = None
     if target_projection is None:
@@ -192,7 +190,7 @@ def mosaic_sentinel1(
         use_projection = parse_projection(target_projection)
 
     tile_extents = []
-    
+
     tiles = 1
     if not use_tiles and interest_area is not None:
         tile_extents.append(
@@ -254,34 +252,40 @@ def mosaic_sentinel1(
     for tile_extent in tile_extents:
         tile_path = output_folder + f"{prefix}{polarization}_{tile_nr}{postfix}.tif"
 
-        if os.path.exists(tile_path):
+        if not overwrite and os.path.exists(tile_path):
             tile_nr += 1
             created_tiles.append(tile_path)
             print(f"Created: {tile_nr}/{tiles}")
             continue
 
         overlapping_images = []
+        clipped_images_holder = []
         clipped_images = []
         for meta in used_metadatas:
             image_extent = meta["extent_ogr_latlng"]
             if ogr_bbox_intersects(tile_extent, image_extent):
                 overlapping_images.append(meta)
 
-                tile_img_path = tmp_folder + meta["name"] + ".tif"
+                if high_memory:
+                    tile_img_path = "/vsimem/" + meta["name"] + ".tif"
+                else:
+                    tile_img_path = tmp_folder + meta["name"] + ".tif"
 
-                if os.path.exists(tile_img_path):
+                if not overwrite and os.path.exists(tile_img_path):
                     clipped_images.append(tile_img_path)
                     continue
+
+                clip_bounds = [
+                    tile_extent[0],
+                    tile_extent[2],
+                    tile_extent[1],
+                    tile_extent[3],
+                ]
 
                 warped = gdal.Warp(
                     tile_img_path,
                     meta["path"],
-                    outputBounds=[
-                        tile_extent[0],
-                        tile_extent[2],
-                        tile_extent[1],
-                        tile_extent[3],
-                    ],
+                    outputBounds=clip_bounds,
                     outputBoundsSRS=wgs84,
                     targetAlignedPixels=True,
                     xRes=target_size[0],
@@ -303,9 +307,11 @@ def mosaic_sentinel1(
             continue
 
         if not rasters_are_aligned(clipped_images):
+            target_folder = None if high_memory else tmp_folder
+            clipped_images_holder = clipped_images
             clipped_images = align_rasters(
                 clipped_images,
-                tmp_folder,
+                target_folder,
                 target_size=target_size,
                 projection=use_projection,
                 bounding_box="union",
@@ -319,19 +325,21 @@ def mosaic_sentinel1(
             for idx, image in enumerate(clipped_images):
                 valid_mask = raster_to_array(image, filled=True, output_2d=True) != 0
                 valid_sum = valid_mask.sum()
-                use_idx.append({ "idx": idx, "valid": valid_sum, "mask": valid_mask, "image": image })
-            
-            use_idx = sorted(use_idx, key = lambda i: i['valid'], reverse=True)
+                use_idx.append(
+                    {"idx": idx, "valid": valid_sum, "mask": valid_mask, "image": image}
+                )
+
+            use_idx = sorted(use_idx, key=lambda i: i["valid"], reverse=True)
 
             combined_mask = None
             combined_sum = 0
             for nr in range(max_images):
                 try:
-                    tmp_clipped_images.append(ordered_image)
-
                     ordered_image = use_idx[nr]["image"]
                     ordered_mask = use_idx[nr]["mask"]
                     ordered_sum = use_idx[nr]["valid"]
+
+                    tmp_clipped_images.append(ordered_image)
 
                     if nr == 0:
                         combined_mask = ordered_mask
@@ -340,16 +348,15 @@ def mosaic_sentinel1(
                         joined_masks = np.logical_or(combined_mask, ordered_mask)
                         combined_mask = joined_masks
                         combined_sum = joined_masks.sum()
-                    
+
                     added_images += 1
                 except:
                     break
 
-
             for nr in range(len(use_idx)):
                 if nr <= added_images:
                     continue
-                
+
                 test_join = np.logical_or(combined_mask, use_idx[nr]["mask"])
                 test_sum = test_join.sum()
 
@@ -357,7 +364,7 @@ def mosaic_sentinel1(
                     combined_mask = test_join
                     combined_sum = test_sum
 
-                    tmp_clipped_images.append(ordered_image)
+                    tmp_clipped_images.append(use_idx[nr]["image"])
 
             clipped_images = tmp_clipped_images
             use_idx = None
@@ -366,20 +373,24 @@ def mosaic_sentinel1(
 
         image_count = len(clipped_images)
 
-        if (image_count % 2) == 0:
-            clipped_images.append(clipped_images[0])
-
-            image_count += 1
-
         merge_images = raster_to_array(clipped_images).filled(0)
 
+        if high_memory:
+            driver = gdal.GetDriverByName("GTiff")
+
+            for idx, img in enumerate(clipped_images):
+                if idx > 0:
+                    driver.Delete(img)
+
+            for img in clipped_images_holder:
+                driver.Delete(img)
+
         _kernel, offsets, weights = create_kernel(
-            (image_count, kernel_size, kernel_size),
-            sigma=2,
-            distance_calc="gaussian",
+            (kernel_size, kernel_size, image_count),
+            distance_calc=False,
+            spherical=True,
             radius_method="ellipsoid",
             offsets=True,
-            spherical=True,
             edge_weights=True,
             normalised=True,
             remove_zero_weights=True,
@@ -389,7 +400,7 @@ def mosaic_sentinel1(
             merge_images,
             offsets,
             weights,
-            quantile=0.33,
+            quantile=quantile,
             nodata=True,
             nodata_value=0,
         )
@@ -400,37 +411,39 @@ def mosaic_sentinel1(
             out_path=tile_path,
         )
 
+        if high_memory:
+            driver.Delete(clipped_images[0])
+
         merge_images = None
         image = None
 
         created_tiles.append(tile_path)
 
-        tmp_files = glob(tmp_folder + "*.tif")
-        for f in tmp_files:
-            os.remove(f)
+        if not high_memory:
+            tmp_files = glob(tmp_folder + "*.tif")
+            for f in tmp_files:
+                try:
+                    os.remove(f)
+                except:
+                    pass
 
         tile_nr += 1
 
         print(f"Created: {tile_nr}/{tiles}")
         timing(start)
 
-        # output = merge_rasters(
-        #     reprojected,
-        #     out_folder + prefix + band + ".tif",
-        #     tmp=tmp_dir,
-        #     harmonisation=harmonisation,
-        #     nodata_value=nodata_value,
-        #     pixel_width=pixel_width,
-        #     pixel_height=pixel_height,
-        # )
-
     return created_tiles
 
 
+# Errors with extent (too big?)
+# Errors with use_tiles == False
+# bad extent: 13.90, 53.854 : 15.10, 55.148
+
+
 if __name__ == "__main__":
-    # data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
-    folder = "/home/cfi/Desktop/sentinel1/"
-    # folder = data_folder + "sentinel1/"
+    data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
+    # folder = "/home/cfi/Desktop/sentinel1/"
+    folder = data_folder + "sentinel1/"
     tiles = folder + "tiles/"
     processed = folder + "mosaic_2021/"
     tmp = folder + "tmp/"
@@ -439,13 +452,16 @@ if __name__ == "__main__":
         processed,
         tiles,
         tmp,
-        interest_area=folder + "ghana_buffered_1280.gpkg",
-        target_projection=folder + "ghana_buffered_1280.gpkg",
+        interest_area=folder + "bornholm.gpkg",
+        target_projection=folder + "denmark_proper.gpkg",
         kernel_size=3,
-        overlap=0.025,
+        overlap=0.1,
         step_size=1.0,
-        max_images=10,
+        quantile=0.5,
+        # max_images=10,
+        overwrite=True,
         use_tiles=False,
+        high_memory=True,
         polarization="VH",
         prefix="2021_",
     )
