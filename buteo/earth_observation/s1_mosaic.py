@@ -130,6 +130,7 @@ def mosaic_sentinel1(
     epsilon: float = 1e-9,
     overlap=0.0,
     target_size=[10.0, 10.0],
+    kernel_size=5,
     max_images=0,
     prefix="",
     postfix="",
@@ -158,7 +159,7 @@ def mosaic_sentinel1(
 
         x_min, x_max, y_min, y_max = metadata["extent_ogr_latlng"]
 
-        if idx == 0:
+        if len(extent) == 0:
             extent = metadata["extent_ogr_latlng"]
         else:
             if x_min < extent[0]:
@@ -310,24 +311,56 @@ def mosaic_sentinel1(
                 bounding_box="union",
             )
 
-        # TODO: Check if there is a combination that covers all of tile.
         if max_images != 0:
             tmp_clipped_images = []
             use_idx = []
+            added_images = 0
 
             for idx, image in enumerate(clipped_images):
-                valid_sum = (raster_to_array(image, filled=True, output_2d=True) != 0).sum()
-                use_idx.append({ "idx": idx, "valid": valid_sum, "image": image })
+                valid_mask = raster_to_array(image, filled=True, output_2d=True) != 0
+                valid_sum = valid_mask.sum()
+                use_idx.append({ "idx": idx, "valid": valid_sum, "mask": valid_mask, "image": image })
             
             use_idx = sorted(use_idx, key = lambda i: i['valid'], reverse=True)
 
+            combined_mask = None
+            combined_sum = 0
             for nr in range(max_images):
                 try:
-                    tmp_clipped_images.append(use_idx[nr]["image"])
+                    tmp_clipped_images.append(ordered_image)
+
+                    ordered_image = use_idx[nr]["image"]
+                    ordered_mask = use_idx[nr]["mask"]
+                    ordered_sum = use_idx[nr]["valid"]
+
+                    if nr == 0:
+                        combined_mask = ordered_mask
+                        combined_sum = ordered_sum
+                    else:
+                        joined_masks = np.logical_or(combined_mask, ordered_mask)
+                        combined_mask = joined_masks
+                        combined_sum = joined_masks.sum()
+                    
+                    added_images += 1
                 except:
                     break
 
+
+            for nr in range(len(use_idx)):
+                if nr <= added_images:
+                    continue
+                
+                test_join = np.logical_or(combined_mask, use_idx[nr]["mask"])
+                test_sum = test_join.sum()
+
+                if test_sum > combined_sum:
+                    combined_mask = test_join
+                    combined_sum = test_sum
+
+                    tmp_clipped_images.append(ordered_image)
+
             clipped_images = tmp_clipped_images
+            use_idx = None
 
         clipped_images.sort(reverse=False, key=name_to_date)
 
@@ -341,7 +374,7 @@ def mosaic_sentinel1(
         merge_images = raster_to_array(clipped_images).filled(0)
 
         _kernel, offsets, weights = create_kernel(
-            (image_count, 5, 5),
+            (image_count, kernel_size, kernel_size),
             sigma=2,
             distance_calc="gaussian",
             radius_method="ellipsoid",
@@ -408,9 +441,11 @@ if __name__ == "__main__":
         tmp,
         interest_area=folder + "ghana_buffered_1280.gpkg",
         target_projection=folder + "ghana_buffered_1280.gpkg",
+        kernel_size=3,
         overlap=0.025,
-        step_size=0.75,
-        max_images=5,
+        step_size=1.0,
+        max_images=10,
+        use_tiles=False,
         polarization="VH",
         prefix="2021_",
     )
