@@ -324,15 +324,10 @@ def mosaic_sentinel1(
             added_images = 0
             used_images = []
 
-            for idx, image in enumerate(clipped_images):
+            for image in clipped_images:
                 valid_sum = (raster_to_array(image, filled=True, output_2d=True) != 0).sum()
 
-                if not expand_if_missing:
-                    valid_mask = None
-
-                use_idx.append(
-                    {"idx": idx, "valid": valid_sum, "image": image}
-                )
+                use_idx.append({ "valid": valid_sum, "image": image })
 
             use_idx = sorted(use_idx, key=lambda i: i["valid"], reverse=True)
 
@@ -376,7 +371,6 @@ def mosaic_sentinel1(
             remove_zero_weights=True,
         )
 
-        print("Merging tiles.")
         image = s1_collapse(
             merge_images,
             offsets,
@@ -411,7 +405,7 @@ def mosaic_sentinel1(
 
         tile_nr += 1
 
-        print(f"Created: {tile_nr}/{tiles} - {polarization}, {prefix[:-1]}")
+        print(f"Created: {tile_path} ({tile_nr}/{tiles})")
         timing(start)
 
     return created_tiles
