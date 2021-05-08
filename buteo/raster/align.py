@@ -55,7 +55,8 @@ def match_projections(rasters, master, out_dir, overwrite=False, dst_nodata="inf
     return created
 
 
-# TODO: Verify that sorting the dictionary works properly.
+# TODO: phase_cross_correlation
+# https://github.com/scikit-image/scikit-image/blob/main/skimage/registration/_phase_cross_correlation.py#L109-L276
 def align_rasters(
     rasters: List[Union[str, gdal.Dataset]],
     out_path: Optional[Union[List[str], str]] = None,
