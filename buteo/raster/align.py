@@ -104,7 +104,12 @@ def align_rasters(
     type_check(postfix, [str], "postfix")
 
     raster_list, path_list = ready_io_raster(
-        rasters, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix, uuid=False
+        rasters,
+        out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        postfix=postfix,
+        uuid=False,
     )
 
     x_pixels = None
@@ -394,3 +399,37 @@ def align_rasters(
         raise Exception("Error while aligning rasters. Output is not aligned")
 
     return return_list
+
+
+if __name__ == "__main__":
+    from buteo.raster.align import align_rasters
+    from glob import glob
+
+    data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
+    s1 = data_folder + "sentinel1/"
+    s2 = data_folder + "sentinel2/"
+
+    out_dir = data_folder + "bornholm/"
+
+    denmark_proper_hull = s1 + "bornholm_hull.gpkg"
+
+    s1_images = []
+    # s1_images = glob(s1 + "*_bornholm_*.tif")
+    s2_images = glob(s2 + "*20m.tif")
+
+    images = []
+
+    for img in s1_images:
+        images.append(img)
+
+    for img in s2_images:
+        images.append(img)
+
+    align_rasters(
+        images,
+        out_dir,
+        bounding_box=denmark_proper_hull,
+        target_size=(20, 20),
+        projection=denmark_proper_hull,
+        postfix="",
+    )

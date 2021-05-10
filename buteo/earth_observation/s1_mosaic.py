@@ -40,6 +40,7 @@ def s1_collapse(
     quantile=0.5,
     nodata=False,
     nodata_value=0,
+    weighted=True,
 ):
     x_adj = arr.shape[0] - 1
     y_adj = arr.shape[1] - 1
@@ -99,7 +100,10 @@ def s1_collapse(
             if normalise:
                 hood_weights = np.divide(hood_weights, weight_sum[0])
 
-            result[x, y] = hood_quantile(hood_values, hood_weights, quantile)
+            if weighted:
+                result[x, y] = hood_quantile(hood_values, hood_weights, quantile)
+            else:
+                result[x, y] = np.median(hood_values[np.nonzero(hood_weights)])
 
     return result
 
@@ -125,6 +129,7 @@ def mosaic_sentinel1(
     target_size=[10.0, 10.0],
     kernel_size=3,
     max_images=0,
+    weighted=True,
     quantile=0.5,
     overwrite=False,
     prefix="",
@@ -257,7 +262,7 @@ def mosaic_sentinel1(
         if not overwrite and os.path.exists(tile_path):
             tile_nr += 1
             created_tiles.append(tile_path)
-            print(f"Created: {tile_nr}/{tiles}")
+            print(f"Created: {tile_path} ({tile_nr}/{tiles}) - already existed")
             continue
 
         overlapping_images = []
@@ -322,17 +327,16 @@ def mosaic_sentinel1(
             tmp_clipped_images = []
             use_idx = []
             added_images = 0
-            used_images = []
 
             for image in clipped_images:
-                valid_sum = (raster_to_array(image, filled=True, output_2d=True) != 0).sum()
+                valid_sum = (
+                    raster_to_array(image, filled=True, output_2d=True) != 0
+                ).sum()
 
-                use_idx.append({ "valid": valid_sum, "image": image })
+                use_idx.append({"valid": valid_sum, "image": image})
 
             use_idx = sorted(use_idx, key=lambda i: i["valid"], reverse=True)
 
-            combined_mask = None
-            combined_sum = 0
             for nr in range(max_images):
                 try:
                     ordered_image = use_idx[nr]["image"]
@@ -376,6 +380,7 @@ def mosaic_sentinel1(
             offsets,
             weights,
             quantile=quantile,
+            weighted=weighted,
             nodata=True,
             nodata_value=0,
         )
@@ -412,45 +417,30 @@ def mosaic_sentinel1(
 
 
 if __name__ == "__main__":
-    # data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
-    folder = "/home/cfi/Desktop/sentinel1/"
-    # folder = data_folder + "sentinel1/"
+    data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
+    # folder = "/home/cfi/Desktop/sentinel1/"
+    folder = data_folder + "sentinel1/"
     tiles = folder + "tiles/"
     processed = folder + "mosaic_2021/"
     tmp = folder + "tmp/"
 
-    mosaic_sentinel1(
-        processed,
-        tiles,
-        tmp,
-        interest_area=folder + "ghana_buffered_1280.gpkg",
-        target_projection=folder + "ghana_buffered_1280.gpkg",
-        kernel_size=3,
-        overlap=0.05,
-        step_size=1.0,
-        quantile=0.5,
-        max_images=16,
-        overwrite=False,
-        use_tiles=True,
-        high_memory=True,
-        polarization="VH",
-        prefix="2021_",
-    )
+    area = folder + "errors/2021_VH_error.gpkg"
 
     mosaic_sentinel1(
         processed,
         tiles,
         tmp,
-        interest_area=folder + "ghana_buffered_1280.gpkg",
-        target_projection=folder + "ghana_buffered_1280.gpkg",
+        interest_area=area,
+        target_projection=area,
         kernel_size=3,
-        overlap=0.05,
+        overlap=0.00,
         step_size=1.0,
         quantile=0.5,
-        max_images=16,
+        max_images=0,
+        weighted=True,
         overwrite=False,
-        use_tiles=True,
+        use_tiles=False,
         high_memory=True,
         polarization="VV",
-        prefix="2021_",
+        prefix="2021_error_",
     )
