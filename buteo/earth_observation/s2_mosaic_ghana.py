@@ -67,8 +67,6 @@ def harmonise_band(
     if overlap.sum() < 100:
         overlap = np.ones_like(overlap)
 
-    array_to_raster(overlap, reference=metadata["paths"]["60m"]["B04"], out_path=folder + f"overlap_{_index}.tif")
-
     slave_arr_60 = slave_arr_60[overlap]
     slave_quality_60 = slave_quality[overlap]
 
@@ -78,11 +76,9 @@ def harmonise_band(
     if method == "mean_std_match":
         slave_med = np.ma.average(slave_arr_60, weights=slave_quality_60)
         slave_std = np.ma.sqrt(np.ma.average((slave_arr_60 - slave_med) ** 2, weights=slave_quality_60))
-        # slave_std = np.ma.std(slave_arr_60)
         
         master_med = np.ma.average(master_arr_60, weights=master_quality_60)
         master_std = np.ma.sqrt(np.ma.average((master_arr_60 - master_med) ** 2, weights=master_quality_60))
-        # master_std = np.ma.std(master_arr_60)
     else:
         slave_med = np.ma.median(slave_arr_60)
         slave_absdev = np.ma.abs(np.ma.subtract(slave_arr_60, slave_med)) 
@@ -110,8 +106,6 @@ def harmonise_band(
         negative_limit,
         np.where(harmony > positive_limit, positive_limit, harmony),
     )
-
-    array_to_raster(ret_arr, reference=metadata["paths"]["20m"]["B04"], out_path=folder + f"ret_arr_{_index}.tif")
 
     return ret_arr
 
