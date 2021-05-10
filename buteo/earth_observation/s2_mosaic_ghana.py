@@ -44,6 +44,7 @@ def mosaic_tile(
     harmonise=True,
     harmony_type="median",
     max_harmony=10,
+    max_images=10,
     output_scl=False,
     output_tracking=False,
     output_quality=False,
@@ -154,6 +155,9 @@ def mosaic_tile(
         if index == 0 or current_quality_score > quality_threshold:
             continue
 
+        if max_images != 0 and index >= max_images:
+            break
+
         tile_quality = metadata["quality"]
         tile_scl = raster_to_array(
             metadatas[index]["paths"]["20m"]["SCL"], filled=True, output_2d=True
@@ -166,11 +170,10 @@ def mosaic_tile(
         )
         improvement_percent = np.average(improvement_mask) * 100
 
-        merged_valid_mask = current_valid_mask | valid_mask
+        # merged_valid_mask = current_valid_mask | valid_mask
 
-        if improvement_percent < min_improvement and (
-            merged_valid_mask.sum() <= current_valid_mask.sum()
-        ):
+        # if improvement_percent < min_improvement and (merged_valid_mask.sum() <= current_valid_mask.sum()):
+        if improvement_percent < min_improvement:
             continue
 
         # Update tracking arrays
@@ -494,29 +497,18 @@ if __name__ == "__main__":
     from shutil import rmtree
     from buteo.vector.attributes import vector_get_attribute_table
 
-    folder = "/media/cfi/lts/ghana/"
-    tmp_folder = folder + "sentinel2/tmp/"
-    raw_folder = folder + "sentinel2/raw_2021/"
-    dst_folder = folder + "sentinel2/mosaic_2021/"
+    folder = "/home/cfi/Desktop/sentinel2/"
+
+    tmp = folder + "tmp/"
+    raw = folder + "raw/"
+    dst = folder + "mosaic/"
 
     vector = folder + "ghana_s2_tiles.gpkg"
 
     attributes = vector_get_attribute_table(vector)
     tiles = attributes["Name"].values.tolist()
 
-    completed = [
-        "30NVL",
-        "30NVM",
-        "30NVN",
-        "30NWL",
-        "30NWM",
-        "30NWN",
-        "30NWP",
-        "30NXL",
-        "30NXM",
-        "30NXN",
-        "30NXP",
-    ]
+    completed = []
 
     all_tiles = [
         # '30NVL',
@@ -529,78 +521,76 @@ if __name__ == "__main__":
         # '30NXL',
         # '30NXM',
         # '30NXN',
-        '30NXP',
-        # '30NYL', # error
+        # '30NXP',
+        # '30NYL',
         # '30NYM',
         # '30NYN',
         # '30NYP',
         # '30NZM',
-        # '30NZN', # error
+        # '30NZN',
         # '30NZP',
         # '30PWQ',
-        '30PWR',
-        '30PWS',
-        '30PWT',
-        '30PXQ',
-        # '30PXR', # error
+        # '30PWR',
+        # '30PWS',
+        # '30PWT',
+        # '30PXQ',
+        # '30PXR',
         # '30PXS',
-        # '30PXT', # error
-        # '30PYQ', # error
-        '30PYR',
-        '30PYS',
-        # '30PYT', # error
+        # '30PXT',
+        # '30PYQ',
+        # '30PYR',
+        # '30PYS',
+        # '30PYT',
         # '30PZQ',
-        '30PZR',
-        '30PZS',
-        # '30PZT', # error
+        # '30PZR',
+        # '30PZS',
+        # '30PZT',
         # '31NBG',
         # '31NBH',
-        # '31NBJ', # error
-        '31PBK',
-        '31PBL',
-        # '31PBM', # error
-        # '31PBN', # error
+        # '31NBJ',
+        # '31PBK',
+        # '31PBL',
+        '31PBM',
+        '31PBN',
     ]
-
-    # 30NYL has issues
 
     for tile in all_tiles:
 
-        # if tile in completed:
-        #     continue
+        if tile in completed:
+            continue
 
         try:
             unzipped = unzip_files_to_folder(
-                get_tile_files_from_safe_zip(raw_folder, tile), tmp_folder,
+                get_tile_files_from_safe_zip(raw, tile), tmp,
             )
 
             mosaic_tile(
-                tmp_folder,
+                tmp,
                 tile,
-                dst_folder,
-                max_harmony=20,
-                min_improvement=0.01,
+                dst,
+                min_improvement=0.1,
                 quality_threshold=110,
                 time_penalty=14,
                 max_time_delta=90.0,
+                max_images=10,
                 # ideal_date="20210226",
                 # use_image="20210226",
                 process_bands=[
                     # {"size": "10m", "band": "B02"},
                     # {"size": "10m", "band": "B03"},
                     # {"size": "10m", "band": "B04"},
-                    {"size": "20m", "band": "B05"},
+                    # {"size": "20m", "band": "B05"},
                 #     {"size": "20m", "band": "B06"},
                 #     {"size": "20m", "band": "B07"},
                 #     {"size": "20m", "band": "B8A"},
                 #     {"size": "10m", "band": "B08"},
                 #     {"size": "20m", "band": "B11"},
-                #     {"size": "20m", "band": "B12"},
+                    {"size": "20m", "band": "B12"},
                 ],
             )
         except:
             print(f"Error with tile: {tile}")
         finally:
-            tmp_files = glob(tmp_folder + "*.SAFE")
+            tmp_files = glob(tmp + "*.SAFE")
             for f in tmp_files:
                 rmtree(f)

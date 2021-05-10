@@ -44,6 +44,7 @@ def mosaic_tile(
     harmonise=True,
     harmony_type="median",
     max_harmony=10,
+    max_images=10,
     output_scl=False,
     output_tracking=False,
     output_quality=False,
@@ -154,6 +155,9 @@ def mosaic_tile(
         if index == 0 or current_quality_score > quality_threshold:
             continue
 
+        if max_images != 0 and index >= max_images:
+            break
+
         tile_quality = metadata["quality"]
         tile_scl = raster_to_array(
             metadatas[index]["paths"]["20m"]["SCL"], filled=True, output_2d=True
@@ -166,11 +170,12 @@ def mosaic_tile(
         )
         improvement_percent = np.average(improvement_mask) * 100
 
-        merged_valid_mask = current_valid_mask | valid_mask
+        # merged_valid_mask = current_valid_mask | valid_mask
 
-        if improvement_percent < min_improvement and (
-            merged_valid_mask.sum() <= current_valid_mask.sum()
-        ):
+        # merged_valid_mask = current_valid_mask | valid_mask
+
+        # if improvement_percent < min_improvement and (merged_valid_mask.sum() <= current_valid_mask.sum()):
+        if improvement_percent < min_improvement:
             continue
 
         # Update tracking arrays

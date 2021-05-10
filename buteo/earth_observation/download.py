@@ -41,7 +41,10 @@ def list_available_s1(
     orbitdirection="Ascending",  # Ascending, Descending
     producttype="GRD",
 ):
-    api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
+    try:
+        api = SentinelAPI(username, password, "https://apihub.copernicus.eu/apihub/")
+    except:
+        api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
 
     geom = internal_vector_to_metadata(footprint, create_geometry=True)
 
@@ -72,7 +75,10 @@ def download_s1(
     sensoroperationalmode="IW",
     polarisationmode="VV VH",
 ):
-    api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
+    try:
+        api = SentinelAPI(username, password, "https://apihub.copernicus.eu/apihub/")
+    except:
+        api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
 
     geom = internal_vector_to_metadata(footprint, create_geometry=True)
 
@@ -109,7 +115,7 @@ def download_s1(
 
     if len(download_products) > 0:
         print(f"Downloading {len(download_products)} files.")
-        download = api.download_all(download_products, directory_path=destination)
+        download = api.download_all(download_products, directory_path=destination, checksum=False)
 
         return download
     else:
@@ -126,7 +132,10 @@ def list_available_s2(
     clouds=20,
     min_size=500,
 ):
-    api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
+    try:
+        api = SentinelAPI(username, password, "https://apihub.copernicus.eu/apihub/")
+    except:
+        api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
 
     if footprint is None and len(tiles) == 0:
         raise ValueError("Either footprint or tilesnames must be supplied.")
@@ -176,8 +185,8 @@ def download_s2(
     tile=None,
     date=("20200601", "20210101"),
     only_specified_tile=True,
-    clouds=20,
-    min_size=50,
+    clouds=10,
+    min_size=100,
     min_update=0.01,
     min_overlap=0.33,
     min_images=5,
@@ -192,12 +201,10 @@ def download_s2(
         print("Ended due to iteration or cloud limit.")
         return None
 
-    api = SentinelAPI(
-        username,
-        password,
-        "https://scihub.copernicus.eu/apihub",
-        # "https://scihub.copernicus.eu/dhus",
-    )
+    try:
+        api = SentinelAPI(username, password, "https://apihub.copernicus.eu/apihub/")
+    except:
+        api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
 
     if footprint is None and tile is None:
         raise ValueError("Either footprint or tilesnames must be supplied.")

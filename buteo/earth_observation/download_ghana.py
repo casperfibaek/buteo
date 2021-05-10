@@ -40,7 +40,10 @@ def list_available_s1(
     orbitdirection="Ascending",  # Ascending, Descending
     producttype="GRD",
 ):
-    api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
+    try:
+        api = SentinelAPI(username, password, "https://apihub.copernicus.eu/apihub/")
+    except:
+        api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
 
     geom = internal_vector_to_metadata(footprint, create_geometry=True)
 
@@ -71,8 +74,10 @@ def download_s1(
     sensoroperationalmode="IW",
     polarisationmode="VV VH",
 ):
-    api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
-
+    try:
+        api = SentinelAPI(username, password, "https://apihub.copernicus.eu/apihub/")
+    except:
+        api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
     geom = internal_vector_to_metadata(footprint, create_geometry=True)
 
     products = api.query(
@@ -120,7 +125,10 @@ def list_available_s2(
     clouds=20,
     min_size=500,
 ):
-    api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
+    try:
+        api = SentinelAPI(username, password, "https://apihub.copernicus.eu/apihub/")
+    except:
+        api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
 
     if footprint is None and len(tiles) == 0:
         raise ValueError("Either footprint or tilesnames must be supplied.")
@@ -170,7 +178,7 @@ def download_s2(
     tile=None,
     date=("20200601", "20210101"),
     only_specified_tile=True,
-    clouds=20,
+    clouds=10,
     min_size=50,
     min_update=0.01,
     min_overlap=0.33,
@@ -185,7 +193,10 @@ def download_s2(
         print("Ended due to iteration or cloud limit.")
         return None
 
-    api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
+    try:
+        api = SentinelAPI(username, password, "https://apihub.copernicus.eu/apihub/")
+    except:
+        api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
 
     if footprint is None and tile is None:
         raise ValueError("Either footprint or tilesnames must be supplied.")
@@ -309,7 +320,7 @@ def download_s2(
         if _iteration == 0:
             print(f"Downloading {len(download_products)} tiles")
 
-        download = api.download_all(download_products, directory_path=destination)
+        download = api.download_all(download_products, directory_path=destination, checksum=False)
 
     if iterate and clouds <= 100:
         if coverage < 0.975 or _added_images < min_images:
@@ -338,23 +349,82 @@ def download_s2(
 
 
 if __name__ == "__main__":
-    # folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/"
-    folder = "/media/cfi/lts/ghana/"
-    dst = folder + "sentinel1/raw_2021/"
+    from buteo.vector.attributes import vector_get_attribute_table
+    folder = "/home/cfi/Desktop/sentinel2/"
 
-    vector = folder + "south_east.gpkg"
+    tmp = folder + "tmp/"
+    raw = folder + "raw/"
+    dst = folder + "mosaic/"
+
+    vector = folder + "ghana_s2_tiles.gpkg"
+
+    attributes = vector_get_attribute_table(vector)
+    tiles = attributes["Name"].values.tolist()
 
     # 2020 06 01 - 2020 08 01 (good dates: 0615-0701)
     # 2021 02 15 - 2021 04 15
 
-    avai = download_s1(
-        "casperfibaek",
-        "Goldfish12",
-        vector,
-        dst,
-        date=("20210325", "20210425"),
-        min_overlap=0.50,
-    )
+    all_tiles = [
+        '30NVL',
+        '30NVM',
+        '30NVN',
+        '30NWL',
+        '30NWM',
+        '30NWN',
+        # '30NWP',
+        '30NXL',
+        '30NXM',
+        '30NXN',
+        # '30NXP',
+        '30NYL',
+        '30NYM',
+        '30NYN',
+        # '30NYP',
+        '30NZM',
+        '30NZN',
+        # '30NZP',
+        # '30PWQ',
+        # '30PWR',
+        # '30PWS',
+        # '30PWT',
+        # '30PXQ',
+        # '30PXR',
+        # '30PXS',
+        # '30PXT',
+        # '30PYQ',
+        # '30PYR',
+        # '30PYS',
+        # '30PYT',
+        # '30PZQ',
+        # '30PZR',
+        # '30PZS',
+        # '30PZT',
+        # '31NBG',
+        # '31NBH',
+        # '31NBJ',
+        # '31PBK',
+        # '31PBL',
+        # '31PBM',
+        # '31PBN',
+    ]
+
+    for idx, tile in enumerate(tiles):
+
+        if tile not in all_tiles:
+            continue
+
+        avai = download_s2(
+            "casperfibaek",
+            "Goldfish12",
+            raw,
+            tile=tile,
+            date=("20210101", "20210510"),
+            min_overlap=0.50,
+            clouds=10,
+            min_images=0,
+        )
+
+        print(f"Completed tile: {tile} ({idx + 1}/{len(tiles)})")
 
     import pdb
 
