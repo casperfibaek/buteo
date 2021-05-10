@@ -125,7 +125,7 @@ def convolve_2D(
     return result
 
 
-def smooth_quality(quality, dilate_size=7, erode_size=11):
+def smooth_quality(quality, dilate_size=5, erode_size=15):
     _dilate_kernel, dilate_offsets, _dilate_weights = create_kernel(
         (dilate_size, dilate_size),
         spherical=True,

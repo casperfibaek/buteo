@@ -25,6 +25,7 @@ from buteo.earth_observation.s2_quality_assessment import (
     erode_mask,
     feather,
 )
+from buteo.gdal_utils import destroy_raster
 from buteo.utils import timing
 from buteo.orfeo_toolbox import merge_rasters
 
@@ -51,14 +52,15 @@ def harmonise_band(
     name,
     master_arr,
     master_quality,
-    max_harmony=20,
+    max_harmony=50,
     quality_to_include=75,
     method="mean_std_match",
     _index=0,
 ):
-    folder = "/home/cfi/Desktop/sentinel2/"
     slave_quality = resample_array(metadata["quality"], metadata["paths"]["20m"]["SCL"], metadata["paths"]["60m"]["B04"])
-    slave_arr_60 = raster_to_array(internal_resample_raster(metadata["paths"][size][name], target_size=metadata["paths"]["60m"]["B04"]), output_2d=True, filled=True)
+    slave_raster = internal_resample_raster(metadata["paths"][size][name], target_size=metadata["paths"]["60m"]["B04"])
+    slave_arr_60 = raster_to_array(slave_raster, output_2d=True, filled=True)
+    destroy_raster(slave_raster)
 
     overlap = np.logical_and(master_quality > quality_to_include, slave_quality > quality_to_include)
 
@@ -123,8 +125,8 @@ def mosaic_tile(
     ideal_date=None,
     use_image=None,
     harmonise=True,
-    max_harmony=0,
-    max_images=10,
+    max_harmony=50,
+    max_images=6,
     output_scl=False,
     output_tracking=False,
     output_quality=False,
@@ -392,9 +394,7 @@ def mosaic_tile(
 
             if index == 0:
                 out_arr = feather_scale * band_arr
-                # out_arr = band_arr
             else:
-                # out_arr = np.where(tracking_array == image, band_arr, out_arr)
                 out_arr += feather_scale * band_arr
 
         ref = None
@@ -521,26 +521,26 @@ if __name__ == "__main__":
     completed = []
 
     all_tiles = [
-        '30NVL',
-        '30NVM',
-        '30NVN',
-        '30NWL',
-        '30NWM',
-        '30NWN',
-        '30NWP',
-        '30NXL',
-        '30NXM',
-        '30NXN',
-        '30NXP',
-        '30NYL',
-        '30NYM',
-        '30NYN',
-        '30NYP',
-        '30NZM',
-        '30NZN',
-        '30NZP',
-        '30PWQ',
-        '30PWR',
+        # '30NVL',
+        # '30NVM',
+        # '30NVN',
+        # '30NWL',
+        # '30NWM',
+        # '30NWN',
+        # '30NWP',
+        # '30NXL',
+        # '30NXM',
+        # '30NXN',
+        # '30NXP',
+        # '30NYL',
+        # '30NYM',
+        # '30NYN',
+        # '30NYP',
+        # '30NZM',
+        # '30NZN',
+        # '30NZP',
+        # '30PWQ',
+        # '30PWR',
         '30PWS',
         '30PWT',
         '30PXQ',
@@ -569,40 +569,43 @@ if __name__ == "__main__":
         if tile in completed:
             continue
 
-        # try:
-        unzipped = unzip_files_to_folder(
-            get_tile_files_from_safe_zip(raw, tile), tmp,
-        )
+        try:
+            unzipped = unzip_files_to_folder(
+                get_tile_files_from_safe_zip(raw, tile), tmp,
+            )
 
-        mosaic_tile(
-            tmp,
-            tile,
-            dst,
-            min_improvement=0.25,
-            quality_threshold=110,
-            time_penalty=14,
-            max_time_delta=90.0,
-            max_images=10,
-            harmonise=True,
-            max_harmony=50,
-            # ideal_date="20210226",
-            # use_image="20210226",
-            process_bands=[
-                # {"size": "10m", "band": "B02"},
-                # {"size": "10m", "band": "B03"},
-                # {"size": "10m", "band": "B04"},
-                # {"size": "20m", "band": "B05"},
-            #     {"size": "20m", "band": "B06"},
-            #     {"size": "20m", "band": "B07"},
-            #     {"size": "20m", "band": "B8A"},
-            #     {"size": "10m", "band": "B08"},
-            #     {"size": "20m", "band": "B11"},
-                {"size": "20m", "band": "B12"},
-            ],
-        )
-        # except:
-        #     print(f"Error with tile: {tile}")
-        # finally:
-            # tmp_files = glob(tmp + "*.SAFE")
-            # for f in tmp_files:
-            #     rmtree(f)
+            mosaic_tile(
+                tmp,
+                tile,
+                dst,
+                min_improvement=0.5,
+                quality_threshold=110,
+                time_penalty=14,
+                max_time_delta=90.0,
+                max_images=10,
+                harmonise=True,
+                max_harmony=50,
+                # ideal_date="20210226",
+                # use_image="20210226",
+                process_bands=[
+                    # {"size": "10m", "band": "B02"},
+                    # {"size": "10m", "band": "B03"},
+                    # {"size": "10m", "band": "B04"},
+                    # {"size": "20m", "band": "B05"},
+                #     {"size": "20m", "band": "B06"},
+                #     {"size": "20m", "band": "B07"},
+                #     {"size": "20m", "band": "B8A"},
+                #     {"size": "10m", "band": "B08"},
+                #     {"size": "20m", "band": "B11"},
+                    {"size": "20m", "band": "B12"},
+                ],
+            )
+        except:
+            print(f"Error with tile: {tile}")
+        finally:
+            tmp_files = glob(tmp + "*.SAFE")
+            for f in tmp_files:
+                try:
+                    rmtree(f)
+                except:
+                    pass

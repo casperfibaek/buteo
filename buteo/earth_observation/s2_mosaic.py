@@ -25,6 +25,7 @@ from buteo.earth_observation.s2_quality_assessment import (
     erode_mask,
     feather,
 )
+from buteo.gdal_utils import destroy_raster
 from buteo.utils import timing
 from buteo.orfeo_toolbox import merge_rasters
 
@@ -51,14 +52,15 @@ def harmonise_band(
     name,
     master_arr,
     master_quality,
-    max_harmony=20,
+    max_harmony=50,
     quality_to_include=75,
     method="mean_std_match",
     _index=0,
 ):
-    folder = "/home/cfi/Desktop/sentinel2/"
     slave_quality = resample_array(metadata["quality"], metadata["paths"]["20m"]["SCL"], metadata["paths"]["60m"]["B04"])
-    slave_arr_60 = raster_to_array(internal_resample_raster(metadata["paths"][size][name], target_size=metadata["paths"]["60m"]["B04"]), output_2d=True, filled=True)
+    slave_raster = internal_resample_raster(metadata["paths"][size][name], target_size=metadata["paths"]["60m"]["B04"])
+    slave_arr_60 = raster_to_array(slave_raster, output_2d=True, filled=True)
+    destroy_raster(slave_raster)
 
     overlap = np.logical_and(master_quality > quality_to_include, slave_quality > quality_to_include)
 
@@ -123,8 +125,8 @@ def mosaic_tile(
     ideal_date=None,
     use_image=None,
     harmonise=True,
-    max_harmony=0,
-    max_images=10,
+    max_harmony=50,
+    max_images=6,
     output_scl=False,
     output_tracking=False,
     output_quality=False,
@@ -392,9 +394,7 @@ def mosaic_tile(
 
             if index == 0:
                 out_arr = feather_scale * band_arr
-                # out_arr = band_arr
             else:
-                # out_arr = np.where(tracking_array == image, band_arr, out_arr)
                 out_arr += feather_scale * band_arr
 
         ref = None
@@ -599,10 +599,10 @@ if __name__ == "__main__":
             tmp_folder,
             tile,
             dst_folder,
-            max_harmony=20,
-            min_improvement=0.01,
+            max_harmony=50,
+            min_improvement=0.1,
             quality_threshold=110,
-            time_penalty=30,
+            time_penalty=7,
             max_time_delta=30.0,
             # ideal_date="20210226",
             use_image="20210226",

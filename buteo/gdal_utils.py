@@ -144,6 +144,12 @@ def path_to_driver(file_path: str) -> str:
         raise ValueError(f"Unable to parse GDAL driver from path: {file_path}")
 
 
+def destroy_raster(raster: str) -> None:
+    driver = gdal.GetDriverByName(path_to_driver(raster))
+    driver.Destroy(raster)
+    return None
+
+
 def is_raster(raster: Union[str, gdal.Dataset]) -> bool:
     """ Takes a string or a gdal.Dataset and returns a boolean
     indicating if it is a valid raster.

@@ -254,16 +254,16 @@ def download_s2(
         intersection_area = intersection.GetArea()
 
         overlap = intersection_area / geom_area
+        size = str_to_mb(dic["size"])
 
         if _iteration == 0 and overlap > min_overlap:
-            download_products[product] = dic
+            if size > min_size:
+                download_products[product] = dic
 
-            if tile is not None and product_tile != tile:
-                _added_images += 1
+                if tile is not None and product_tile != tile:
+                    _added_images += 1
 
         elif union == 0.0 and overlap > min_overlap:
-            size = str_to_mb(dic["size"])
-
             if size > min_size:
                 union = intersection
                 coverage = overlap
@@ -293,6 +293,7 @@ def download_s2(
         if coverage > 95 and _added_images < min_images:
             for product in products:
                 dic = products[product]
+                size = str_to_mb(dic["size"])
                 product_tile = dic["title"].split("_")[-2][1:]
 
                 img_footprint = ogr.CreateGeometryFromWkt(dic["footprint"])
@@ -305,7 +306,7 @@ def download_s2(
                 if product_tile != tile:
                     continue
 
-                if overlap > min_overlap:
+                if overlap > min_overlap and size > min_size:
                     union = union.Union(intersection)
                     coverage = comp.GetArea() / geom_area
 
@@ -367,14 +368,14 @@ if __name__ == "__main__":
     all_tiles = [
         '30NVL',
         '30NVM',
-        '30NVN',
+        # '30NVN',
         '30NWL',
         '30NWM',
         '30NWN',
         # '30NWP',
         '30NXL',
         '30NXM',
-        '30NXN',
+        # '30NXN',
         # '30NXP',
         '30NYL',
         '30NYM',
@@ -382,7 +383,7 @@ if __name__ == "__main__":
         # '30NYP',
         '30NZM',
         '30NZN',
-        # '30NZP',
+        '30NZP',
         # '30PWQ',
         # '30PWR',
         # '30PWS',
@@ -419,9 +420,9 @@ if __name__ == "__main__":
                 "Goldfish12",
                 raw,
                 tile=tile,
-                date=("20210101", "20210510"),
+                date=("20200601", "20210601"),
                 min_overlap=0.50,
-                clouds=20,
+                clouds=25,
                 min_images=0,
             )
 
