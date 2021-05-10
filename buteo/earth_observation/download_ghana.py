@@ -413,16 +413,20 @@ if __name__ == "__main__":
         if tile not in all_tiles:
             continue
 
-        avai = download_s2(
-            "casperfibaek",
-            "Goldfish12",
-            raw,
-            tile=tile,
-            date=("20210101", "20210510"),
-            min_overlap=0.50,
-            clouds=10,
-            min_images=0,
-        )
+        try:
+            avai = download_s2(
+                "casperfibaek2",
+                "Goldfish12",
+                raw,
+                tile=tile,
+                date=("20210101", "20210510"),
+                min_overlap=0.50,
+                clouds=20,
+                min_images=0,
+            )
+
+        except:
+            pass
 
         print(f"Completed tile: {tile} ({idx + 1}/{len(tiles)})")
 

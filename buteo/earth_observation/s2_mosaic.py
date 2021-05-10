@@ -29,6 +29,93 @@ from buteo.utils import timing
 from buteo.orfeo_toolbox import merge_rasters
 
 
+def resample_array(arr, original_reference, target_reference, resample_alg="average"):
+    return raster_to_array(
+        internal_resample_raster(
+            array_to_raster(
+                arr,
+                reference=original_reference,
+            ),
+            target_size=target_reference,
+            resample_alg=resample_alg,
+        ),
+        filled=True,
+        output_2d=True,
+    )
+
+
+def harmonise_band(
+    slave_arr,
+    metadata,
+    size,
+    name,
+    master_arr,
+    master_quality,
+    max_harmony=20,
+    quality_to_include=75,
+    method="mean_std_match",
+    _index=0,
+):
+    folder = "/home/cfi/Desktop/sentinel2/"
+    slave_quality = resample_array(metadata["quality"], metadata["paths"]["20m"]["SCL"], metadata["paths"]["60m"]["B04"])
+    slave_arr_60 = raster_to_array(internal_resample_raster(metadata["paths"][size][name], target_size=metadata["paths"]["60m"]["B04"]), output_2d=True, filled=True)
+
+    overlap = np.logical_and(master_quality > quality_to_include, slave_quality > quality_to_include)
+
+    if overlap.sum() < 100:
+        overlap = slave_quality > quality_to_include
+    if overlap.sum() < 100:
+        overlap = np.ones_like(overlap)
+
+    array_to_raster(overlap, reference=metadata["paths"]["60m"]["B04"], out_path=folder + f"overlap_{_index}.tif")
+
+    slave_arr_60 = slave_arr_60[overlap]
+    slave_quality_60 = slave_quality[overlap]
+
+    master_arr_60 = master_arr[overlap]
+    master_quality_60 = master_quality[overlap]
+
+    if method == "mean_std_match":
+        slave_med = np.ma.average(slave_arr_60, weights=slave_quality_60)
+        slave_std = np.ma.sqrt(np.ma.average((slave_arr_60 - slave_med) ** 2, weights=slave_quality_60))
+        # slave_std = np.ma.std(slave_arr_60)
+        
+        master_med = np.ma.average(master_arr_60, weights=master_quality_60)
+        master_std = np.ma.sqrt(np.ma.average((master_arr_60 - master_med) ** 2, weights=master_quality_60))
+        # master_std = np.ma.std(master_arr_60)
+    else:
+        slave_med = np.ma.median(slave_arr_60)
+        slave_absdev = np.ma.abs(np.ma.subtract(slave_arr_60, slave_med)) 
+        slave_std = np.ma.multiply(np.ma.median(slave_absdev), 1.4826)
+
+        master_med = np.ma.median(master_arr_60)
+        master_absdev = np.ma.abs(np.ma.subtract(master_arr_60, master_med)) 
+        master_std = np.ma.multiply(np.ma.median(master_absdev), 1.4826)
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        harmony = master_med + (slave_arr - slave_med) * (master_std / slave_std)
+
+    if max_harmony != 0:
+        negative_limit = slave_arr * (1 - (max_harmony / 100))
+        positive_limit = slave_arr * (1 + (max_harmony / 100))
+    else:
+        negative_limit = np.zeros_like(slave_arr)
+        positive_limit = np.full_like(slave_arr, 65534.0)
+
+    negative_limit = np.where(negative_limit < 0, 0, negative_limit)
+    positive_limit = np.where(positive_limit > 65534.0, 65534.0, positive_limit)
+
+    ret_arr = np.where(
+        harmony < negative_limit,
+        negative_limit,
+        np.where(harmony > positive_limit, positive_limit, harmony),
+    )
+
+    array_to_raster(ret_arr, reference=metadata["paths"]["20m"]["B04"], out_path=folder + f"ret_arr_{_index}.tif")
+
+    return ret_arr
+
+
 def mosaic_tile(
     folder,
     tile_name,
@@ -42,8 +129,7 @@ def mosaic_tile(
     ideal_date=None,
     use_image=None,
     harmonise=True,
-    harmony_type="median",
-    max_harmony=10,
+    max_harmony=0,
     max_images=10,
     output_scl=False,
     output_tracking=False,
@@ -151,15 +237,24 @@ def mosaic_tile(
     print("Tracking..")
     print(f"Current quality: {round(current_quality_score, 4)}")
     used_images = [0]
-    while current_quality_score < quality_threshold and len(used_images) < max_images:
-        improvements = []
-        for index, metadata in metadatas:
+    tested_images = 1
+    while current_quality_score < quality_threshold and len(used_images) < max_images and tested_images < len(metadatas):
+    
+        best_idx = None
+        best_improvement = None
+        best_valid_sum = None
+        best_tile_quality = None
+        best_tile_scl = None
+        best_improvement_mask = None
+
+        first = True
+        for index, metadata in enumerate(metadatas):
             if index in used_images:
                 continue
 
             tile_quality = metadata["quality"]
             tile_scl = raster_to_array(
-                metadatas[index]["paths"]["20m"]["SCL"], filled=True, output_2d=True
+                metadata["paths"]["20m"]["SCL"], filled=True, output_2d=True
             )
 
             valid_mask = erode_mask(tile_scl != 0, feather_dist)
@@ -169,29 +264,38 @@ def mosaic_tile(
             )
             improvement_percent = np.average(improvement_mask) * 100
 
-            improvements.append(
-                {
-                    "index": index,
-                    "improvement": improvement_percent,
-                    "valid_sum": valid_mask.sum(),
-                }
-            )
+            if first:
+                best_idx = index
+                best_improvement = improvement_percent
+                best_valid_sum = valid_mask.sum()
+                best_tile_quality = tile_quality
+                best_tile_scl = tile_scl
+                best_improvement_mask = improvement_mask
+                first = False
+            else:
+                if improvement_percent > best_improvement:
+                    best_idx = index
+                    best_improvement = improvement_percent
+                    best_valid_sum = valid_mask.sum()
+                    best_tile_quality = tile_quality
+                    best_tile_scl = tile_scl
+                    best_improvement_mask = improvement_mask
 
-        improvements = sorted(
-            improvements, key=lambda i: i["improvement"], reverse=True
-        )
+        tile_quality = np.where(best_improvement_mask, best_tile_quality, current_quality)
+        tile_quality_score = np.average(tile_quality)
 
-        if improvements[0]["improvements"] < min_improvement and (
-            improvements[0]["valid_sum"] <= current_valid_mask.sum()
+        if (tile_quality_score - current_quality_score) < min_improvement and (
+            best_valid_sum <= current_valid_mask.sum()
         ):
             break
 
         # Update tracking arrays
-        tracking_array = np.where(improvement_mask, index, tracking_array)
-        scl_array = np.where(improvement_mask, tile_scl, scl_array)
-        current_quality = np.where(improvement_mask, tile_quality, current_quality)
-        current_quality_score = np.average(current_quality)
-        used_images.append(index)
+        tracking_array = np.where(best_improvement_mask, best_idx, tracking_array)
+        scl_array = np.where(best_improvement_mask, best_tile_scl, scl_array)
+        current_quality = tile_quality
+        current_quality_score = tile_quality_score
+        used_images.append(best_idx)
+        tested_images += 1
 
         print(f"Current quality: {round(current_quality_score, 4)}")
 
@@ -240,9 +344,8 @@ def mosaic_tile(
             filled=True,
         )
 
-    target_harmony = {}
-    created_images = []
 
+    created_images = []
     print("Harmonising and merging tiles")
     for pi, process_band in enumerate(bands_to_process):
         size = process_band["size"]
@@ -251,8 +354,10 @@ def mosaic_tile(
 
         print(f"Now processing {pi + 1}/{len(bands_to_process)}: {name} @ {size}")
 
-        band_data = None
-        master_valid = None
+        out_arr = None
+
+        master_arr = None
+        master_quality = None
         for index, image in enumerate(used_images):
             metadata = metadatas[image]
 
@@ -261,168 +366,58 @@ def mosaic_tile(
             )
 
             if len(used_images) == 1:
-                array_to_raster(
-                    band_arr,
-                    reference=metadata["paths"][size][name],
-                    out_path=tile_outname,
-                )
+                out_arr = band_arr
                 continue
 
-            if harmonise:
-                image_quality = raster_to_array(
-                    internal_resample_raster(
-                        array_to_raster(
-                            metadata["quality"],
-                            reference=metadatas[0]["paths"]["20m"]["SCL"],
-                        ),
-                        target_size=metadatas[0]["paths"]["60m"]["B04"],
-                        resample_alg="average",
-                    ),
-                    filled=True,
-                    output_2d=True,
+            if harmonise and index == 0:
+                master_arr = resample_array(band_arr, metadata["paths"][size]["B04"], metadata["paths"]["60m"]["B04"])
+                master_quality = resample_array(metadata["quality"], metadata["paths"]["20m"]["SCL"], metadata["paths"]["60m"]["B04"])
+
+            if harmonise and index != 0:
+
+                band_arr = harmonise_band(
+                    band_arr,
+                    metadata,
+                    size,
+                    name,
+                    master_arr,
+                    master_quality,
+                    max_harmony=max_harmony,
+                    _index=index,
                 )
 
-                if index == 0:
-                    master_valid = image_quality > 10
-
-                overlap_mask = np.logical_and(image_quality > 10, master_valid)
-
-                if overlap_mask.sum() < 100:
-                    overlap_mask = np.ones_like(overlap_mask)
-
-                image_quality = image_quality * overlap_mask
-
-                image_quality_norm = image_quality / image_quality.max()
-                weights = (image_quality_norm / image_quality_norm.sum()).astype(
-                    "float32"
-                )
-
-            scale = None
-            med_arr = None
+            feather_scale = None
             if size == "10m":
-                scale = tracking_10m[:, :, index]
+                feather_scale = tracking_10m[:, :, index]
             elif size == "20m":
-                scale = tracking_20m[:, :, index]
+                feather_scale = tracking_20m[:, :, index]
             elif size == "60m":
-                scale = tracking_60m[:, :, index]
+                feather_scale = tracking_60m[:, :, index]
             else:
                 raise Exception("Unknown band size.")
 
-            if harmonise:
-
-                # The infrared band is only available in 10m resolution.
-                if name == "B08":
-                    med_arr = raster_to_array(
-                        internal_resample_raster(
-                            metadata["paths"]["10m"][name],
-                            target_size=metadatas[0]["paths"]["60m"]["B04"],
-                            resample_alg="average",
-                        ),
-                        filled=True,
-                        output_2d=True,
-                    )
-                else:
-                    med_arr = raster_to_array(
-                        metadata["paths"]["60m"][name], filled=True, output_2d=True
-                    )
-
-                if index != 0:
-                    med_arr = med_arr * (
-                        target_harmony[name]["gain"] / metadata["gains"][name]
-                    )
-
-                # find weighted_median and mad
-                average = (
-                    np.sum(med_arr * image_quality_norm)
-                    if harmony_type != "median"
-                    else None
-                )
-                std = (
-                    weighted_std(med_arr, weights) if harmony_type != "median" else None
-                )
-                median = (
-                    weighted_quantile_2d(med_arr, weights, 0.5)
-                    if harmony_type == "median"
-                    else None
-                )
-                absdeviation = (
-                    np.abs(np.subtract(med_arr, median))
-                    if harmony_type == "median"
-                    else None
-                )
-                madstd = (
-                    weighted_quantile_2d(absdeviation, weights, 0.5) * 1.4826
-                    if harmony_type == "median"
-                    else None
-                )
-
             if index == 0:
-                if harmonise:
-                    target_harmony[name] = {
-                        "median": median,
-                        "madstd": madstd,
-                        "average": average,
-                        "std": std,
-                        "gain": metadata["gains"][name],
-                    }
-
-                readied_tile = scale * band_arr
-                band_data = readied_tile
+                out_arr = feather_scale * band_arr
+                # out_arr = band_arr
             else:
-                if harmonise:
-                    band_arr = band_arr * (
-                        target_harmony[name]["gain"] / metadata["gains"][name]
-                    )
-                    if harmony_type == "median":
-                        deviation = band_arr - median
-                        with np.errstate(divide="ignore", invalid="ignore"):
-                            harmony_scale = (
-                                np.true_divide(
-                                    deviation * target_harmony[name]["madstd"],
-                                    madstd,
-                                )
-                            ) + target_harmony[name]["median"]
-                    else:
-                        deviation = band_arr - average
-                        with np.errstate(divide="ignore", invalid="ignore"):
-                            harmony_scale = (
-                                np.true_divide(
-                                    deviation * target_harmony[name]["std"], std
-                                )
-                            ) + target_harmony[name]["average"]
+                # out_arr = np.where(tracking_array == image, band_arr, out_arr)
+                out_arr += feather_scale * band_arr
 
-                    merged = band_arr + harmony_scale
-                    negative_limit = band_arr * (1 - (max_harmony / 100))
-                    positive_limit = band_arr * (1 + (max_harmony / 100))
+        ref = None
+        if size == "10m":
+            ref = metadatas[0]["paths"]["10m"]["B04"]
+        elif size == "20m":
+            ref = metadatas[0]["paths"]["20m"]["B04"]
+        elif size == "60m":
+            ref = metadatas[0]["paths"]["60m"]["B04"]
 
-                    readied_tile = (
-                        np.where(
-                            merged < negative_limit,
-                            negative_limit,
-                            np.where(merged > positive_limit, positive_limit, merged),
-                        ).astype("uint16")
-                        * scale
-                    )
-                else:
-                    readied_tile = scale * band_arr
+        created_images.append(tile_outname)
 
-                band_data = band_data + readied_tile
-
-            ref = None
-            if size == "10m":
-                ref = metadatas[0]["paths"]["10m"]["B04"]
-            elif size == "20m":
-                ref = metadatas[0]["paths"]["20m"]["B04"]
-            elif size == "60m":
-                ref = metadatas[0]["paths"]["60m"]["B04"]
-
-            created_images.append(tile_outname)
-
-            array_to_raster(
-                np.rint(band_data).astype("uint16"),
-                reference=ref,
-                out_path=tile_outname,
-            )
+        array_to_raster(
+            np.rint(out_arr).astype("uint16"),
+            reference=ref,
+            out_path=tile_outname,
+        )
 
     if output_tracking:
         tracking_outname = out_folder + f"{tile_name}_tracking_20m.tif"
@@ -467,6 +462,7 @@ def join_tiles(
     pixel_width=None,
     pixel_height=None,
     bands_to_process=None,
+    projection_to_match=25832,
 ):
     bands = (
         [
@@ -489,7 +485,7 @@ def join_tiles(
     for band in bands:
         images = glob(mosaic_tile_folder + f"*_{band}.tif")
 
-        reprojected = match_projections(images, 25832, tmp_dir, dst_nodata=nodata_value)
+        reprojected = match_projections(images, projection_to_match, tmp_dir, dst_nodata=nodata_value)
 
         if clip_geom is not None:
             reprojected = clip_raster(
