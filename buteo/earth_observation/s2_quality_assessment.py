@@ -86,7 +86,9 @@ def feather(arr, values_to_count, size=11):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True)
 def convolve_2D(
-    arr, offsets, operation="dilate",
+    arr,
+    offsets,
+    operation="dilate",
 ):
     x_adj = arr.shape[0] - 1
     y_adj = arr.shape[1] - 1
@@ -123,7 +125,7 @@ def convolve_2D(
     return result
 
 
-def smooth_quality(quality, dilate_size=7, erode_size=11):
+def smooth_quality(quality, dilate_size=7, erode_size=15):
     _dilate_kernel, dilate_offsets, _dilate_weights = create_kernel(
         (dilate_size, dilate_size),
         spherical=True,
@@ -304,4 +306,3 @@ def assess_quality(safe_folder):
     quality = smooth_quality(quality)
 
     return quality
-

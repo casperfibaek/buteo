@@ -37,8 +37,8 @@ def mosaic_tile(
     time_penalty=7,
     quality_threshold=105,
     quality_to_update=5,
-    min_improvement=1,
-    feather_dist=15,
+    min_improvement=0.5,
+    feather_dist=7,
     ideal_date=None,
     use_image=None,
     harmonise=True,
@@ -151,32 +151,40 @@ def mosaic_tile(
     print("Tracking..")
     print(f"Current quality: {round(current_quality_score, 4)}")
     used_images = [0]
-    for index, metadata in enumerate(metadatas):
-        if index == 0 or current_quality_score > quality_threshold:
-            continue
+    while current_quality_score < quality_threshold and len(used_images) < max_images:
+        improvements = []
+        for index, metadata in metadatas:
+            if index in used_images:
+                continue
 
-        if max_images != 0 and index >= max_images:
+            tile_quality = metadata["quality"]
+            tile_scl = raster_to_array(
+                metadatas[index]["paths"]["20m"]["SCL"], filled=True, output_2d=True
+            )
+
+            valid_mask = erode_mask(tile_scl != 0, feather_dist)
+
+            improvement_mask = valid_mask & smooth_mask(
+                tile_quality > (current_quality * (1 + (quality_to_update / 100)))
+            )
+            improvement_percent = np.average(improvement_mask) * 100
+
+            improvements.append(
+                {
+                    "index": index,
+                    "improvement": improvement_percent,
+                    "valid_sum": valid_mask.sum(),
+                }
+            )
+
+        improvements = sorted(
+            improvements, key=lambda i: i["improvement"], reverse=True
+        )
+
+        if improvements[0]["improvements"] < min_improvement and (
+            improvements[0]["valid_sum"] <= current_valid_mask.sum()
+        ):
             break
-
-        tile_quality = metadata["quality"]
-        tile_scl = raster_to_array(
-            metadatas[index]["paths"]["20m"]["SCL"], filled=True, output_2d=True
-        )
-
-        valid_mask = erode_mask(tile_scl != 0, feather_dist)
-
-        improvement_mask = valid_mask & smooth_mask(
-            tile_quality > (current_quality * (1 + (quality_to_update / 100)))
-        )
-        improvement_percent = np.average(improvement_mask) * 100
-
-        # merged_valid_mask = current_valid_mask | valid_mask
-
-        # merged_valid_mask = current_valid_mask | valid_mask
-
-        # if improvement_percent < min_improvement and (merged_valid_mask.sum() <= current_valid_mask.sum()):
-        if improvement_percent < min_improvement:
-            continue
 
         # Update tracking arrays
         tracking_array = np.where(improvement_mask, index, tracking_array)
@@ -244,6 +252,7 @@ def mosaic_tile(
         print(f"Now processing {pi + 1}/{len(bands_to_process)}: {name} @ {size}")
 
         band_data = None
+        master_valid = None
         for index, image in enumerate(used_images):
             metadata = metadatas[image]
 
@@ -272,6 +281,17 @@ def mosaic_tile(
                     filled=True,
                     output_2d=True,
                 )
+
+                if index == 0:
+                    master_valid = image_quality > 10
+
+                overlap_mask = np.logical_and(image_quality > 10, master_valid)
+
+                if overlap_mask.sum() < 100:
+                    overlap_mask = np.ones_like(overlap_mask)
+
+                image_quality = image_quality * overlap_mask
+
                 image_quality_norm = image_quality / image_quality.max()
                 weights = (image_quality_norm / image_quality_norm.sum()).astype(
                     "float32"
@@ -313,7 +333,7 @@ def mosaic_tile(
 
                 # find weighted_median and mad
                 average = (
-                    np.average(med_arr * image_quality_norm)
+                    np.sum(med_arr * image_quality_norm)
                     if harmony_type != "median"
                     else None
                 )
@@ -358,7 +378,8 @@ def mosaic_tile(
                         with np.errstate(divide="ignore", invalid="ignore"):
                             harmony_scale = (
                                 np.true_divide(
-                                    deviation * target_harmony[name]["madstd"], madstd,
+                                    deviation * target_harmony[name]["madstd"],
+                                    madstd,
                                 )
                             ) + target_harmony[name]["median"]
                     else:
@@ -580,7 +601,8 @@ if __name__ == "__main__":
             continue
 
         unzip_files_to_folder(
-            get_tile_files_from_safe_zip(raw_folder, tile), tmp_folder,
+            get_tile_files_from_safe_zip(raw_folder, tile),
+            tmp_folder,
         )
 
         mosaic_tile(
