@@ -146,7 +146,7 @@ def path_to_driver(file_path: str) -> str:
 
 def destroy_raster(raster: str) -> None:
     driver = gdal.GetDriverByName(path_to_driver(raster))
-    driver.Destroy(raster)
+    driver.Delete(raster)
     return None
 
 

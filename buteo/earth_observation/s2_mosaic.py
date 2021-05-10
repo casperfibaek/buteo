@@ -55,7 +55,6 @@ def harmonise_band(
     max_harmony=50,
     quality_to_include=75,
     method="mean_std_match",
-    _index=0,
 ):
     slave_quality = resample_array(metadata["quality"], metadata["paths"]["20m"]["SCL"], metadata["paths"]["60m"]["B04"])
     slave_raster = internal_resample_raster(metadata["paths"][size][name], target_size=metadata["paths"]["60m"]["B04"])
@@ -132,7 +131,6 @@ def mosaic_tile(
     output_quality=False,
     process_bands=None,
 ):
-
     start = time()
 
     tiles = get_tile_files_from_safe(folder, tile_name)
@@ -510,8 +508,8 @@ if __name__ == "__main__":
     from shutil import rmtree
     from buteo.vector.attributes import vector_get_attribute_table
 
-    folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/sentinel2/"
-    data_folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/"
+    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/sentinel2/"
+    data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 
     vector = data_folder + "s2_tiles_in_project_area.gpkg"
     # land_vector = data_folder + "denmark_polygon_1280m_buffer.gpkg"
@@ -520,49 +518,7 @@ if __name__ == "__main__":
     raw_folder = folder + "raw_2021/"
     dst_folder = folder + "mosaic_2021/"
 
-    join_tiles(
-        dst_folder,
-        folder,
-        folder + "tmp/",
-        prefix="spring_2021_",
-        nodata_value=0.0,
-        pixel_width=20.0,
-        pixel_height=20.0,
-        # clip_geom=land_vector,
-        bands_to_process=[
-            # "B02_10m",
-            # "B03_10m",
-            # "B04_10m",
-            # "B08_10m",
-            "B05_20m",
-            "B06_20m",
-            "B07_20m",
-            "B8A_20m",
-            "B11_20m",
-            "B12_20m",
-        ],
-    )
 
-    tmp_files = glob(tmp_folder + "*.tif")
-    try:
-        for f in tmp_files:
-            rmtree(f)
-    except:
-        pass
-
-    # tmp_folder = folder + "tmp2/"
-    # raw_folder = folder + "raw_2020/"
-    # dst_folder = folder + "mosaic_2020/"
-    # join_tiles(dst_folder, folder, folder + "tmp/", "spring_2020_")
-
-    # tmp_files = glob(tmp_folder + "*.tif")
-    # try:
-    #     for f in tmp_files:
-    #         rmtree(f)
-    # except:
-    #     pass
-
-    exit()
     attributes = vector_get_attribute_table(vector)
     tiles = attributes["Name"].values.tolist()
 
@@ -581,8 +537,7 @@ if __name__ == "__main__":
 
     # 2021
     improve = [
-        "32UNG",  # Minor border issue.
-        "32VNH",  # Minor issues
+        "32UMF",  # Minor issues
     ]
 
     for tile in tiles:
@@ -600,22 +555,24 @@ if __name__ == "__main__":
             tile,
             dst_folder,
             max_harmony=50,
-            min_improvement=0.1,
+            min_improvement=0.05,
             quality_threshold=110,
-            time_penalty=7,
+            time_penalty=14,
             max_time_delta=30.0,
+            harmonise=True,
+            max_images=8,
             # ideal_date="20210226",
-            use_image="20210226",
+            # use_image="20210226",
             process_bands=[
-                {"size": "10m", "band": "B02"},
-                {"size": "10m", "band": "B03"},
-                {"size": "10m", "band": "B04"},
-                {"size": "20m", "band": "B05"},
-                {"size": "20m", "band": "B06"},
-                {"size": "20m", "band": "B07"},
-                {"size": "20m", "band": "B8A"},
-                {"size": "10m", "band": "B08"},
-                {"size": "20m", "band": "B11"},
+                # {"size": "10m", "band": "B02"},
+                # {"size": "10m", "band": "B03"},
+                # {"size": "10m", "band": "B04"},
+                # {"size": "20m", "band": "B05"},
+                # {"size": "20m", "band": "B06"},
+                # {"size": "20m", "band": "B07"},
+                # {"size": "20m", "band": "B8A"},
+                # {"size": "10m", "band": "B08"},
+                # {"size": "20m", "band": "B11"},
                 {"size": "20m", "band": "B12"},
             ],
         )

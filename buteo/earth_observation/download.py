@@ -177,6 +177,61 @@ def list_available_s2(
     return dfs
 
 
+def download_s2_tile(
+    username,
+    password,
+    destination,
+    tile,
+    date=("20200601", "20210101"),
+    clouds=10,
+    min_size=100,
+):
+    try:
+        api = SentinelAPI(username, password, "https://apihub.copernicus.eu/apihub/")
+    except:
+        api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
+
+    geom = filter_vector(
+        "../../geometry/sentinel2_tiles_world.shp", filter_where=("Name", tile)
+    )
+
+    geom_meta = internal_vector_to_metadata(geom, create_geometry=True)
+    geom_extent = geom_meta["extent_wkt_latlng"]
+
+    kw = {"raw": f"tileid:{tile} OR filename:*_T{tile}_*"}
+
+    download_products = OrderedDict()
+
+    products = api.query(
+        geom_extent,
+        date=date,
+        platformname="Sentinel-2",
+        cloudcoverpercentage=(0, clouds),
+        producttype="S2MSI2A",
+        **kw,
+    )
+
+    for product in products:
+        dic = products[product]
+
+        product_tile = dic["title"].split("_")[-2][1:]
+        if product_tile != tile:
+            continue
+
+        size = str_to_mb(dic["size"])
+        if size < min_size:
+            continue
+
+        download_products[product] = dic
+    
+
+    print(f"Downloading {len(download_products)} tiles")
+
+    download = api.download_all(download_products, directory_path=destination, checksum=False)
+
+    return download
+
+
 def download_s2(
     username,
     password,
@@ -241,6 +296,8 @@ def download_s2(
             cloudcoverpercentage=(0, clouds),
             producttype="S2MSI2A",
         )
+        
+    import pdb; pdb.set_trace()
 
     download_products = OrderedDict()
 
@@ -365,22 +422,32 @@ def download_s2(
 
 
 if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/egypt/"
+    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
+    folder_s2 = folder + "sentinel2/"
 
-    tiles = vector_get_attribute_table(folder + "coastal_tiles.gpkg")
+    tiles = vector_get_attribute_table(folder + "s2_tiles_in_project_area.gpkg")
     tiles = tiles["Name"].values.tolist()
 
+    improve = [
+        "32UMF",  # Minor issues
+    ]
+
     for tile in tiles:
-        download_s2(
-            "casperfibaek",
+
+        if tile not in improve:
+            continue
+
+        download_s2_tile(
+            "casperfibaek2",
             "Goldfish12",
-            folder + "downloaded/",
+            folder_s2 + "raw_2021/",
             # footprint=folder + "coastal_tiles.gpkg",
             tile=tile,
-            date=("20210315", "20210401"),
+            # date=("20210315", "20210510"),
+            date=("20210215", "20210510"),
             # min_overlap=0.50,
-            # max_images=None,
-            clouds=2,
+            # max_images=0,
+            clouds=10,
         )
 
 
