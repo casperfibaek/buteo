@@ -19,8 +19,6 @@ from buteo.earth_observation.s2_utils import (
 )
 from buteo.earth_observation.s2_quality_assessment import (
     assess_quality,
-    weighted_quantile_2d,
-    weighted_std,
     smooth_mask,
     erode_mask,
     feather,
@@ -56,12 +54,20 @@ def harmonise_band(
     quality_to_include=75,
     method="mean_std_match",
 ):
-    slave_quality = resample_array(metadata["quality"], metadata["paths"]["20m"]["SCL"], metadata["paths"]["60m"]["B04"])
-    slave_raster = internal_resample_raster(metadata["paths"][size][name], target_size=metadata["paths"]["60m"]["B04"])
+    slave_quality = resample_array(
+        metadata["quality"],
+        metadata["paths"]["20m"]["SCL"],
+        metadata["paths"]["60m"]["B04"],
+    )
+    slave_raster = internal_resample_raster(
+        metadata["paths"][size][name], target_size=metadata["paths"]["60m"]["B04"]
+    )
     slave_arr_60 = raster_to_array(slave_raster, output_2d=True, filled=True)
     destroy_raster(slave_raster)
 
-    overlap = np.logical_and(master_quality > quality_to_include, slave_quality > quality_to_include)
+    overlap = np.logical_and(
+        master_quality > quality_to_include, slave_quality > quality_to_include
+    )
 
     if overlap.sum() < 100:
         overlap = slave_quality > quality_to_include
@@ -76,17 +82,21 @@ def harmonise_band(
 
     if method == "mean_std_match":
         slave_med = np.ma.average(slave_arr_60, weights=slave_quality_60)
-        slave_std = np.ma.sqrt(np.ma.average((slave_arr_60 - slave_med) ** 2, weights=slave_quality_60))
-        
+        slave_std = np.ma.sqrt(
+            np.ma.average((slave_arr_60 - slave_med) ** 2, weights=slave_quality_60)
+        )
+
         master_med = np.ma.average(master_arr_60, weights=master_quality_60)
-        master_std = np.ma.sqrt(np.ma.average((master_arr_60 - master_med) ** 2, weights=master_quality_60))
+        master_std = np.ma.sqrt(
+            np.ma.average((master_arr_60 - master_med) ** 2, weights=master_quality_60)
+        )
     else:
         slave_med = np.ma.median(slave_arr_60)
-        slave_absdev = np.ma.abs(np.ma.subtract(slave_arr_60, slave_med)) 
+        slave_absdev = np.ma.abs(np.ma.subtract(slave_arr_60, slave_med))
         slave_std = np.ma.multiply(np.ma.median(slave_absdev), 1.4826)
 
         master_med = np.ma.median(master_arr_60)
-        master_absdev = np.ma.abs(np.ma.subtract(master_arr_60, master_med)) 
+        master_absdev = np.ma.abs(np.ma.subtract(master_arr_60, master_med))
         master_std = np.ma.multiply(np.ma.median(master_absdev), 1.4826)
 
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -232,8 +242,12 @@ def mosaic_tile(
     print(f"Current quality: {round(current_quality_score, 4)}")
     used_images = [0]
     tested_images = 1
-    while current_quality_score < quality_threshold and len(used_images) < max_images and tested_images < len(metadatas):
-    
+    while (
+        current_quality_score < quality_threshold
+        and len(used_images) < max_images
+        and tested_images < len(metadatas)
+    ):
+
         best_idx = None
         best_improvement = None
         best_valid_sum = None
@@ -275,7 +289,9 @@ def mosaic_tile(
                     best_tile_scl = tile_scl
                     best_improvement_mask = improvement_mask
 
-        tile_quality = np.where(best_improvement_mask, best_tile_quality, current_quality)
+        tile_quality = np.where(
+            best_improvement_mask, best_tile_quality, current_quality
+        )
         tile_quality_score = np.average(tile_quality)
 
         if (tile_quality_score - current_quality_score) < min_improvement and (
@@ -338,7 +354,6 @@ def mosaic_tile(
             filled=True,
         )
 
-
     created_images = []
     print("Harmonising and merging tiles")
     for pi, process_band in enumerate(bands_to_process):
@@ -364,8 +379,16 @@ def mosaic_tile(
                 continue
 
             if harmonise and index == 0:
-                master_arr = resample_array(band_arr, metadata["paths"][size]["B04"], metadata["paths"]["60m"]["B04"])
-                master_quality = resample_array(metadata["quality"], metadata["paths"]["20m"]["SCL"], metadata["paths"]["60m"]["B04"])
+                master_arr = resample_array(
+                    band_arr,
+                    metadata["paths"][size]["B04"],
+                    metadata["paths"]["60m"]["B04"],
+                )
+                master_quality = resample_array(
+                    metadata["quality"],
+                    metadata["paths"]["20m"]["SCL"],
+                    metadata["paths"]["60m"]["B04"],
+                )
 
             if harmonise and index != 0:
 
@@ -377,7 +400,6 @@ def mosaic_tile(
                     master_arr,
                     master_quality,
                     max_harmony=max_harmony,
-                    _index=index,
                 )
 
             feather_scale = None
@@ -443,7 +465,7 @@ def mosaic_tile(
     return created_images
 
 
-def join_tiles(
+def join_s2_tiles(
     mosaic_tile_folder,
     out_folder,
     tmp_dir,
@@ -477,7 +499,9 @@ def join_tiles(
     for band in bands:
         images = glob(mosaic_tile_folder + f"*_{band}.tif")
 
-        reprojected = match_projections(images, projection_to_match, tmp_dir, dst_nodata=nodata_value)
+        reprojected = match_projections(
+            images, projection_to_match, tmp_dir, dst_nodata=nodata_value
+        )
 
         if clip_geom is not None:
             reprojected = clip_raster(
@@ -498,7 +522,10 @@ def join_tiles(
 
     tmp_files = glob(tmp_dir + "*.tif")
     for f in tmp_files:
-        os.remove(f)
+        try:
+            os.remove(f)
+        except:
+            pass
 
     return created
 
@@ -511,72 +538,170 @@ if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/sentinel2/"
     data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 
-    vector = data_folder + "s2_tiles_in_project_area.gpkg"
-    # land_vector = data_folder + "denmark_polygon_1280m_buffer.gpkg"
-
     tmp_folder = folder + "tmp/"
-    raw_folder = folder + "raw_2021/"
-    dst_folder = folder + "mosaic_2021/"
+    mosaic_folder_2020 = folder + "mosaic_2020/"
+    mosaic_folder_2021 = folder + "mosaic_2021/"
+    dst_folder = folder + "mosaic/"
 
+    join_s2_tiles(
+        mosaic_folder_2020,
+        dst_folder,
+        tmp_folder,
+        prefix="2020_",
+        harmonisation=False,
+        pixel_height=10.0,
+        pixel_width=10.0,
+        nodata_value=0,
+        bands_to_process=[
+            "B02_10m",
+            "B03_10m",
+            "B04_10m",
+            "B08_10m",
+            # "B05_20m",
+            # "B06_20m",
+            # "B07_20m",
+            # "B8A_20m",
+            # "B11_20m",
+            # "B12_20m",
+        ],
+        projection_to_match=25832,
+    )
 
-    attributes = vector_get_attribute_table(vector)
-    tiles = attributes["Name"].values.tolist()
+    join_s2_tiles(
+        mosaic_folder_2020,
+        dst_folder,
+        tmp_folder,
+        prefix="2020_",
+        harmonisation=False,
+        pixel_height=20.0,
+        pixel_width=20.0,
+        nodata_value=0,
+        bands_to_process=[
+            # "B02_10m",
+            # "B03_10m",
+            # "B04_10m",
+            # "B08_10m",
+            "B05_20m",
+            "B06_20m",
+            "B07_20m",
+            "B8A_20m",
+            "B11_20m",
+            "B12_20m",
+        ],
+        projection_to_match=25832,
+    )
 
-    # 2020 06 01 - 2020 08 01 (good dates: 0615-0701)
-    # 2021 02 15 - 2021 04 15
+    join_s2_tiles(
+        mosaic_folder_2021,
+        dst_folder,
+        tmp_folder,
+        prefix="2021_",
+        harmonisation=False,
+        pixel_height=10.0,
+        pixel_width=10.0,
+        nodata_value=0,
+        bands_to_process=[
+            "B02_10m",
+            "B03_10m",
+            "B04_10m",
+            "B08_10m",
+            # "B05_20m",
+            # "B06_20m",
+            # "B07_20m",
+            # "B8A_20m",
+            # "B11_20m",
+            # "B12_20m",
+        ],
+        projection_to_match=25832,
+    )
 
-    # 2020
+    join_s2_tiles(
+        mosaic_folder_2021,
+        dst_folder,
+        tmp_folder,
+        prefix="2021_",
+        harmonisation=False,
+        pixel_height=20.0,
+        pixel_width=20.0,
+        nodata_value=0,
+        bands_to_process=[
+            # "B02_10m",
+            # "B03_10m",
+            # "B04_10m",
+            # "B08_10m",
+            "B05_20m",
+            "B06_20m",
+            "B07_20m",
+            "B8A_20m",
+            "B11_20m",
+            "B12_20m",
+        ],
+        projection_to_match=25832,
+    )
+
+    exit()
+
+    # vector = data_folder + "s2_tiles_in_project_area.gpkg"
+    # # land_vector = data_folder + "denmark_polygon_1280m_buffer.gpkg"
+
+    # tmp_folder = folder + "tmp/"
+    # raw_folder = folder + "raw_2021/"
+    # dst_folder = folder + "mosaic_2021/"
+
+    # attributes = vector_get_attribute_table(vector)
+    # tiles = attributes["Name"].values.tolist()
+
+    # # 2020 06 01 - 2020 08 01 (good dates: 0615-0701)
+    # # 2021 02 15 - 2021 04 15
+
+    # # 2020
     # improve = [
-    #     "32UMG",  # Sky issues, download from previous year? RUN AGAIN WITH use_image set
-    #     "32VNH",  # Sky issues, download from previous year?
-    #     "32UNG",  # border issue.
-    #     "32VMH",  # interesting border issue
-    #     "33UWB",  # Helt skidt.
-    #     "33UVB",  # intersting shadow issue
+    #     "32UPG",
+    #     "32UPF",
     # ]
 
-    # 2021
-    improve = [
-        "32UMF",  # Minor issues
-    ]
+    # # 2021
+    # # completed = [
+    # #     # "32UMF",
+    # # ]
 
-    for tile in tiles:
+    # for tile in ["33UUA"]:
 
-        if tile not in improve:
-            continue
+    #     # if tile not in improve:
+    #     #     continue
 
-        unzip_files_to_folder(
-            get_tile_files_from_safe_zip(raw_folder, tile),
-            tmp_folder,
-        )
+    #     unzip_files_to_folder(
+    #         get_tile_files_from_safe_zip(raw_folder, tile),
+    #         tmp_folder,
+    #     )
 
-        mosaic_tile(
-            tmp_folder,
-            tile,
-            dst_folder,
-            max_harmony=50,
-            min_improvement=0.05,
-            quality_threshold=110,
-            time_penalty=14,
-            max_time_delta=30.0,
-            harmonise=True,
-            max_images=8,
-            # ideal_date="20210226",
-            # use_image="20210226",
-            process_bands=[
-                # {"size": "10m", "band": "B02"},
-                # {"size": "10m", "band": "B03"},
-                # {"size": "10m", "band": "B04"},
-                # {"size": "20m", "band": "B05"},
-                # {"size": "20m", "band": "B06"},
-                # {"size": "20m", "band": "B07"},
-                # {"size": "20m", "band": "B8A"},
-                # {"size": "10m", "band": "B08"},
-                # {"size": "20m", "band": "B11"},
-                {"size": "20m", "band": "B12"},
-            ],
-        )
+    #     mosaic_tile(
+    #         tmp_folder,
+    #         tile,
+    #         dst_folder,
+    #         max_harmony=100,
+    #         min_improvement=0.01,
+    #         quality_threshold=110,
+    #         time_penalty=60,
+    #         max_time_delta=90.0,
+    #         harmonise=True,
+    #         max_images=10,
+    #         # ideal_date="20210226",
+    #         # use_image="20210226",
+    #         process_bands=[
+    #             {"size": "10m", "band": "B02"},
+    #             {"size": "10m", "band": "B03"},
+    #             {"size": "10m", "band": "B04"},
+    #             {"size": "20m", "band": "B05"},
+    #             {"size": "20m", "band": "B06"},
+    #             {"size": "20m", "band": "B07"},
+    #             {"size": "20m", "band": "B8A"},
+    #             {"size": "10m", "band": "B08"},
+    #             {"size": "20m", "band": "B11"},
+    #             {"size": "20m", "band": "B12"},
+    #         ],
+    #     )
 
-        tmp_files = glob(tmp_folder + "*.SAFE")
-        for f in tmp_files:
-            rmtree(f)
+    #     tmp_files = glob(tmp_folder + "*.SAFE")
+    #     for f in tmp_files:
+    #         rmtree(f)

@@ -30,6 +30,7 @@ from buteo.raster.clip import clip_raster, internal_clip_raster
 from buteo.raster.resample import internal_resample_raster
 from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
 from buteo.gdal_utils import ogr_bbox_intersects
+from buteo.machine_learning.ml_utils import Mish, mish, load_mish
 
 
 def reconstitute_raster(
@@ -42,13 +43,13 @@ def reconstitute_raster(
     border_patches_x: bool,
     border_patches_y: bool,
 ) -> np.ndarray:
-    """ Recombines blocks into an array.
+    """Recombines blocks into an array.
     Args:
         blocks (ndarray): A numpy array with the values to recombine. The shape
         should be (blocks, rows, column, channel).
 
         raster_height (int): height in pixels of target raster.
-        
+
         raster_width (int): width in pixels of target raster.
 
         size (int): size of patches in pixels. (square patches.)
@@ -98,7 +99,9 @@ def reconstitute_raster(
     swap = reshape.swapaxes(1, 2)
 
     destination = swap.reshape(
-        (ref_shape[0] // size) * size, (ref_shape[1] // size) * size, blocks.shape[3],
+        (ref_shape[0] // size) * size,
+        (ref_shape[1] // size) * size,
+        blocks.shape[3],
     )
 
     # Order: Y, X, Z
@@ -137,7 +140,7 @@ def blocks_to_raster(
     output_array: bool = False,
     verbose: int = 1,
 ) -> Union[str, np.ndarray]:
-    """ Recombines a series of blocks to a raster. OBS: Does not work if the patch
+    """Recombines a series of blocks to a raster. OBS: Does not work if the patch
         extraction was done with clip geom.
     Args:
         blocks (ndarray): A numpy array with the values to recombine. The shape
@@ -242,7 +245,11 @@ def blocks_to_raster(
         for index, offset in enumerate(in_offsets):
             passes.append(
                 np.ma.masked_all(
-                    (metadata["height"], metadata["width"], blocks.shape[3],),
+                    (
+                        metadata["height"],
+                        metadata["width"],
+                        blocks.shape[3],
+                    ),
                     dtype=metadata["datatype"],
                 ),
             )
@@ -319,7 +326,7 @@ def blocks_to_raster(
 
 
 def shape_to_blockshape(shape: tuple, block_shape: tuple, offset: tuple) -> list:
-    """ Calculates the shape of the output array.
+    """Calculates the shape of the output array.
     Args:
         shape (tuple | list): The shape if the original raster. (1980, 1080, 3)
 
@@ -358,7 +365,7 @@ def array_to_blocks(
     border_patches_x: bool = False,
     border_patches_y: bool = False,
 ) -> np.ndarray:
-    """ Turns an array into a series of blocks. The array can be offset.
+    """Turns an array into a series of blocks. The array can be offset.
     Args:
         array (ndarray): The array to turn to blocks. (Channel last format: 1920x1080x3)
 
@@ -445,7 +452,7 @@ def test_extraction(
     grid_layer_index: int = 0,
     verbose: int = 1,
 ) -> bool:
-    """ Validates the output of the patch_extractor. Useful if you need peace of mind.
+    """Validates the output of the patch_extractor. Useful if you need peace of mind.
     Set samples to 0 to tests everything.
     Args:
         rasters (list of rasters | path | raster): The raster(s) used.
@@ -580,7 +587,7 @@ def extract_patches(
     epsilon: float = 1e-9,
     verbose: int = 1,
 ) -> tuple:
-    """ Extracts square tiles from a raster.
+    """Extracts square tiles from a raster.
     Args:
         raster (list of rasters | path | raster): The raster(s) to convert.
 
@@ -606,7 +613,7 @@ def extract_patches(
         if none is present.
 
         generate_grid_geom (bool): Output a geopackage with the grid of tiles.
-        
+
         clip_geom (str, raster, vector): Clip the output to the
         intersections with a geometry. Useful if a lot of the target
         area is water or similar.
@@ -742,15 +749,15 @@ def extract_patches(
             clip_layer = clip_ref.GetLayerByIndex(clip_layer_index)
 
             meta_clip = internal_vector_to_metadata(clip_ref)
-            geom_clip = meta_clip["layers"][clip_layer_index]["column_geom"]
+            # geom_clip = meta_clip["layers"][clip_layer_index]["column_geom"]
 
             clip_extent = meta_clip["extent_ogr"]
-            clip_adjust = [
-                clip_extent[0] - clip_extent[0] % xres,  # x_min
-                (clip_extent[1] - clip_extent[1] % xres) + xres,  # x_max
-                clip_extent[2] - clip_extent[2] % yres,  # y_min
-                (clip_extent[3] - clip_extent[3] % yres) + yres,  # y_max
-            ]
+            # clip_adjust = [
+            #     clip_extent[0] - clip_extent[0] % xres,  # x_min
+            #     (clip_extent[1] - clip_extent[1] % xres) + xres,  # x_max
+            #     clip_extent[2] - clip_extent[2] % yres,  # y_min
+            #     (clip_extent[3] - clip_extent[3] % yres) + yres,  # y_max
+            # ]
 
         coord_grid = np.empty((all_rows, 2), dtype="float64")
 
@@ -1038,14 +1045,15 @@ def predict_raster(
     merge_method: str = "median",
     mirror: bool = False,
     rotate: bool = False,
-    custom_objects: Dict[str, Any] = {},
+    custom_objects: Dict[str, Any] = {"Mish": Mish, "mish": mish},
+    output_size=128,
     dtype: str = "same",
     batch_size: int = 16,
     overwrite: bool = True,
     creation_options: List[str] = [],
     verbose: int = 1,
 ) -> str:
-    """ Runs a raster or list of rasters through a deep learning network (Tensorflow).
+    """Runs a raster or list of rasters through a deep learning network (Tensorflow).
         Supports tiling and reconstituting the output. Offsets are allowed and will be
         bleneded with the merge_method. If the output is a different resolution
         than the input. The output will automatically be scaled to match.
@@ -1105,15 +1113,17 @@ def predict_raster(
 
     import tensorflow as tf
 
-    # import h5py
+    import h5py
 
     os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
     if verbose == 1:
         print("Loading model.")
 
-    # model_loaded = tf.keras.models.load_model(model, custom_objects=custom_objects)
-    model_loaded = model
+    if isinstance(model, str):  # , custom_objects=custom_objects
+        model_loaded = tf.keras.models.load_model(model)
+    else:
+        model_loaded = model
 
     multi_input = False
     if isinstance(model_loaded.input, list) and len(model_loaded.input) > 1:
@@ -1145,6 +1155,11 @@ def predict_raster(
         else [model_loaded.input]
     )
     shape_output = tuple(model_loaded.output.shape)
+
+    if shape_output[1] == None or shape_output[2] == None or shape_output[3] == None:
+        print(f"Unable to find output size, using the supplied variable: {output_size}")
+        shape_output = (None, output_size, output_size, 1)
+
     dst_tile_size = shape_output[1]
 
     prediction_arr = []
@@ -1160,7 +1175,7 @@ def predict_raster(
             raise ValueError(f"Model input not 4d: {shape_input} - {shape_output}")
 
         if shape_input[1] != shape_input[2] or shape_output[1] != shape_output[2]:
-            raise ValueError("Model does not take square images.")
+            raise ValueError("Model only takes square images.")
 
         src_tile_size = shape_input[1]
         pixel_factor = src_tile_size / dst_tile_size
@@ -1184,7 +1199,10 @@ def predict_raster(
                 raise ValueError("Offsets must have two values. Both integers.")
 
             dst_offsets.append(
-                (round(offset[0] * scale_factor), round(offset[1] * scale_factor),)
+                (
+                    round(offset[0] * scale_factor),
+                    round(offset[1] * scale_factor),
+                )
             )
 
         use_raster = raster[index] if isinstance(raster, list) else raster
@@ -1326,11 +1344,13 @@ def predict_raster(
 
     if dtype == "same":
         predicted = array_to_raster(
-            predicted.astype(rast_meta["datatype"]), reference=resampled,
+            predicted.astype(rast_meta["datatype"]),
+            reference=resampled,
         )
     elif dtype is not None:
         predicted = array_to_raster(
-            raster_to_array(predicted).astype(dtype), reference=resampled,
+            raster_to_array(predicted).astype(dtype),
+            reference=resampled,
         )
 
     if out_path is None:
@@ -1345,80 +1365,56 @@ def predict_raster(
 
 
 if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/test/"
+    from buteo.raster.io import stack_rasters
+    from glob import glob
 
-    # raster_to_predict = folder + "Fyn_B2_20m.tif"
-    vector = folder + "fjord.gpkg"
-    raster = folder + "B08_10m.jp2"
-    out_dir = folder + "out/"
-    # tensorflow_model_path = out_dir + "model.h5"
+    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
+    bornholm = folder + "bornholm/"
+    vector = folder + "vector/bornholm.gpkg"
+    model = bornholm + "bornholm_40epochs.h5"
 
-    path_np, path_geom = extract_patches(
-        raster,
-        out_dir=out_dir,
-        prefix="",
-        postfix="_patches",
-        size=32,
-        offsets=[(8, 8), (16, 16), (24, 24)],
-        generate_grid_geom=True,
-        generate_zero_offset=True,
-        generate_border_patches=True,
-        clip_geom=vector,
-        verify_output=True,
-        verification_samples=100,
-        verbose=1,
-    )
+    # s2_10m = glob(bornholm + "raster/*10m.tif")
+    # s1_VV = glob(bornholm + "raster/*VV.tif")
+    # s1_VH = glob(bornholm + "raster/*VH.tif")
+    # s2_filt = glob(bornholm + "raster/*filter*.tif")
 
-    # offsets = [(64, 64), (64, 0), (0, 64)]
-    # borders = True
+    # # area = bornholm + "raster/area.tif"
+    # # volume = bornholm + "raster/volume.tif"
 
-    # path = predict_raster(
-    #     raster_to_predict,
-    #     tensorflow_model_path,
-    #     out_path=out_dir + "predicted_raster_32-16.tif",
-    #     offsets=[(32, 32), (16, 16)],
-    #     mirror=True,
-    #     rotate=True,
-    #     device="gpu",
-    # )
+    # images = []
 
-    # B03_10m = folder + "B03_10m.jp2"
-    # B04_10m = folder + "B04_10m.jp2"
-    # B04_20m = folder + "B04_20m.jp2"
-    # B08_10m = folder + "B08_10m.jp2"
-    # B11_20m = folder + "B11_20m.jp2"
+    # # for img in s2_10m:
+    # #     images.append(img)
 
-    # model = folder + "upsampling_10epochs.h5"
+    # # for img in s1_VV:
+    # #     images.append(img)
 
-    # blocks_to_raster(
-    #     path_np,
-    #     raster,
-    #     out_path=out_dir + "fyn_close_reconstituded.tif",
-    #     offsets=offsets,
-    #     border_patches=borders,
-    #     merge_method="median",
-    # )
+    # # for img in s1_VH:
+    # #     images.append(img)
 
-    # dsm = folder + "dsm_test_clip.tif"
-    # dtm = folder + "dtm_test_clip.tif"
-    # hot = folder + "hot_test_clip.tif"
-    # model = folder + "model3_3L_rotations.h5"
+    # for img in s2_filt:
+    #     images.append(img)
 
-    # stacked = stack_rasters([dtm, dsm, hot], folder + "dtm_dsm_hot_stacked.tif") # shape = (14400, 26112, 3)
+    # # images.append(area)
+    # # images.append(volume)
 
-    # from tensorflow_addons.activations import mish
+    # # s2_20m = glob(bornholm + "raster/*20m.tif")
+    # # images = s2_20m
 
-    # 2m 17s
-    # 0m 50s
-
-    # path = predict_raster(
-    #     [B11_20m, B08_10m],
-    #     model,
-    #     out_path=out_dir + "validation.tif",
-    #     offsets=[[(16, 16), (8, 8)], [(32, 32), (16, 16)]],
-    #     batch_size=64,
-    #     mirror=False,
-    #     rotate=False,
-    #     device="gpu",
-    #     custom_objects={"mish": mish},
+    # path_np, path_geom = extract_patches(
+    #     images,
+    #     out_dir=bornholm,
+    #     prefix="",
+    #     postfix="",
+    #     size=128,
+    #     # size=64,
+    #     offsets=[(32, 32), (64, 64), (96, 96)],
+    #     # offsets=[(16, 16), (32, 32), (48, 48)],
+    #     generate_grid_geom=True,
+    #     generate_zero_offset=True,
+    #     generate_border_patches=True,
+    #     clip_geom=vector,
+    #     verify_output=True,
+    #     verification_samples=100,
+    #     verbose=1,
     # )

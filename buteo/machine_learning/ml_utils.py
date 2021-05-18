@@ -1,9 +1,39 @@
 from sklearn.model_selection import train_test_split
+import math
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.layers import Activation
 from tensorflow.keras.utils import get_custom_objects
+
+
+def plot_figures(figures, nrows=1, ncols=1, vmax=[1, 1000]):
+    """Plot a dictionary of figures.
+
+    Parameters
+    ----------
+    figures : <title, figure> dictionary
+    ncols : number of columns of subplots wanted in the display
+    nrows : number of rows of subplots wanted in the figure
+    """
+
+    _fig, axeslist = plt.subplots(ncols=ncols, nrows=nrows)
+    for ind, title in zip(range(len(figures)), figures):
+        axeslist.ravel()[ind].imshow(figures[title], vmin=0, vmax=vmax[ind])
+        axeslist.ravel()[ind].set_title(title)
+        axeslist.ravel()[ind].set_axis_off()
+    plt.tight_layout()  # optional
+
+
+def create_step_decay(learning_rate=0.001, drop_rate=0.5, epochs_per_drop=10):
+    def step_decay(epoch):
+        initial_lrate = learning_rate
+        drop = drop_rate
+        epochs_drop = epochs_per_drop
+        lrate = initial_lrate * math.pow(drop, math.floor((1 + epoch) / epochs_drop))
+        return lrate
+
+    return step_decay
 
 
 def count_freq(arr: np.ndarray) -> np.ndarray:
@@ -50,10 +80,19 @@ def add_rotations(X, k=4, axes=(1, 2)):
     if k == 1:
         return X
     elif k == 2:
-        return np.concatenate([X, np.rot90(X, k=2, axes=axes),])
+        return np.concatenate(
+            [
+                X,
+                np.rot90(X, k=2, axes=axes),
+            ]
+        )
     elif k == 3:
         return np.concatenate(
-            [X, np.rot90(X, k=1, axes=axes), np.rot90(X, k=2, axes=axes),]
+            [
+                X,
+                np.rot90(X, k=1, axes=axes),
+                np.rot90(X, k=2, axes=axes),
+            ]
         )
     else:
         return np.concatenate(
@@ -204,3 +243,40 @@ def mish(inputs):
 
 def load_mish():
     get_custom_objects().update({"Mish": Mish(mish)})
+
+
+def mad_standard(arr):
+    median = np.median(arr)
+    absdev = np.abs(np.subtract(arr, median))
+    madstd = np.median(absdev) * 1.4826
+
+    return ((arr - median) / madstd).astype("float32")
+
+
+def iqr_scale(arr, bottom=25, top=75):
+    q1, median, q3 = np.percentile(arr, [bottom, 50, top])
+
+    return ((arr - median) / (q3 - q1)).astype("float32")
+
+
+def mean_standard(arr):
+    mean = np.mean(arr)
+    std = np.std(arr)
+
+    return ((arr - mean) / std).astype("float32")
+
+
+def min_max(arr):
+    return (arr / arr.max()).astype("float32")
+
+
+def trunc_scale(arr, val):
+    return (np.where(arr > val, val, arr) / val).astype("float32")
+
+
+def scale_percentile(arr, percentile=98):
+    percentile = np.percentile(arr, percentile)
+
+    truncated = np.where(arr > percentile, percentile, arr)
+
+    return (truncated / truncated.max()).astype("float32")

@@ -46,14 +46,14 @@ def open_raster(
     convert_mem_driver: bool = True,
     writeable: bool = True,
 ) -> gdal.Dataset:
-    """ Opens a raster to a gdal.Dataset class.
+    """Opens a raster to a gdal.Dataset class.
 
     Args:
         raster (path | Dataset): A path to a raster or a GDAL dataframe.
 
         convert_mem_driver (bool): Converts MEM driver rasters to /vsimem/ Gtiffs.
 
-        writable (bool): Should the opened raster be writeable.       
+        writable (bool): Should the opened raster be writeable.
 
     Returns:
         A gdal.Dataset
@@ -102,7 +102,7 @@ def open_raster(
 
 
 def get_raster_path(raster: Union[str, gdal.Dataset]) -> str:
-    """ Takes a string or a gdal.Dataset and returns its path.
+    """Takes a string or a gdal.Dataset and returns its path.
 
     Args:
         raster (path | Dataset): A path to a raster or a GDAL dataframe.
@@ -128,7 +128,7 @@ def get_raster_path(raster: Union[str, gdal.Dataset]) -> str:
 
 
 def to_raster_list(variable: Any) -> List[str]:
-    """ Reads a list of rasters and returns a list of paths to the rasters.
+    """Reads a list of rasters and returns a list of paths to the rasters.
 
     Args:
         variable (list, path | Dataset): The rasters to generate paths for.
@@ -152,11 +152,12 @@ def to_raster_list(variable: Any) -> List[str]:
 
 
 def internal_raster_to_metadata(
-    raster: Union[str, gdal.Dataset], create_geometry: bool = False,
+    raster: Union[str, gdal.Dataset],
+    create_geometry: bool = False,
 ) -> Metadata_raster:
-    """ OBS: Internal. Single output.
+    """OBS: Internal. Single output.
 
-        Reads a raster from a string or a dataset and returns metadata.
+    Reads a raster from a string or a dataset and returns metadata.
     """
     type_check(raster, [str, gdal.Dataset], "raster")
     type_check(create_geometry, [bool], "create_geometry")
@@ -295,7 +296,7 @@ def raster_to_metadata(
     raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
     create_geometry: bool = False,
 ) -> Union[Metadata_raster, List[Metadata_raster]]:
-    """ Reads a raster from a list of rasters, string or a dataset and returns metadata.
+    """Reads a raster from a list of rasters, string or a dataset and returns metadata.
 
     Args:
         raster (list, path | Dataset): The raster to calculate metadata for.
@@ -367,9 +368,7 @@ def ready_io_raster(
             path = f"/vsimem/{prefix}{name}{path_id}{postfix}.tif"
         elif isinstance(out_path, str):
             if folder_exists(out_path):
-                path = os.path.join(
-                    out_path, f"{prefix}{name}{path_id}{postfix}.tif"
-                )
+                path = os.path.join(out_path, f"{prefix}{name}{path_id}{postfix}.tif")
             else:
                 path = out_path
         elif isinstance(out_path, list):
@@ -393,8 +392,9 @@ def rasters_are_aligned(
     same_extent: bool = False,
     same_dtype: bool = False,
     same_nodata: bool = False,
+    threshold=0.001,
 ) -> bool:
-    """ Verifies if a list of rasters are aligned.
+    """Verifies if a list of rasters are aligned.
 
     Args:
         rasters (list): A list of raster, either in gdal.Dataset or a string
@@ -439,6 +439,7 @@ def rasters_are_aligned(
     for index in range(len(raster_list)):
         meta = internal_raster_to_metadata(raster_list[index])
         if index == 0:
+            base["name"] = meta["name"]
             base["projection"] = meta["projection"]
             base["pixel_width"] = meta["pixel_width"]
             base["pixel_height"] = meta["pixel_height"]
@@ -451,16 +452,24 @@ def rasters_are_aligned(
             base["nodata_value"] = meta["nodata_value"]
         else:
             if meta["projection"] != base["projection"]:
+                print(base["name"] + " did not match " + meta["name"] + " projection")
                 return False
             if meta["pixel_width"] != base["pixel_width"]:
-                return False
+                if abs(meta["pixel_width"] - base["pixel_width"]) > threshold:
+                    print(base["name"] + " did not match " + meta["name"] + " pixel_width")
+                    return False
             if meta["pixel_height"] != base["pixel_height"]:
-                return False
+                if abs(meta["pixel_height"] - base["pixel_height"]) > threshold:
+                    print(base["name"] + " did not match " + meta["name"] + " pixel_height")
+                    return False
             if meta["x_min"] != base["x_min"]:
-                return False
+                if abs(meta["x_min"] - base["x_min"]) > threshold:
+                    print(base["name"] + " did not match " + meta["name"] + " x_min")
+                    return False
             if meta["y_max"] != base["y_max"]:
-                return False
-
+                if abs(meta["y_max"] - base["y_max"]) > threshold:
+                    print(base["name"] + " did not match " + meta["name"] + " y_max")
+                    return False
             if same_extent:
                 if meta["transform"] != base["transform"]:
                     return False
@@ -485,10 +494,10 @@ def internal_raster_to_memory(
     memory_path: Optional[Union[str]] = None,
     copy_if_already_in_memory: bool = False,
 ) -> str:
-    """ OBS: INTERNAL: Single output.
+    """OBS: INTERNAL: Single output.
 
     Takes a file path or a gdal raster dataset and copies
-    it to memory. 
+    it to memory.
     """
     type_check(raster, [str, gdal.Dataset], "raster")
     type_check(memory_path, [str], "memory_path", allow_none=True)
@@ -532,8 +541,8 @@ def raster_to_memory(
     raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
     memory_path: Optional[Union[List[Union[str, gdal.Dataset]], str]] = None,
 ) -> Union[List[str], str]:
-    """ Takes a file path or a gdal raster dataset and copies
-    it to memory. 
+    """Takes a file path or a gdal raster dataset and copies
+    it to memory.
 
     Args:
         file_path (path | Dataset): A path to a raster or a GDAL dataframe.
@@ -577,7 +586,7 @@ def raster_to_array(
     extent: Optional[List[Number]] = None,
     extent_pixels: Optional[List[Number]] = None,
 ) -> np.ndarray:
-    """ Turns a path to a raster(s) or a GDAL.Dataset(s) into a numpy
+    """Turns a path to a raster(s) or a GDAL.Dataset(s) into a numpy
         array(s).
 
     Args:
@@ -697,7 +706,7 @@ def internal_raster_to_disk(
     overwrite: bool = True,
     creation_options: list = [],
 ) -> str:
-    """ OBS: INTERNAL: Single output.
+    """OBS: INTERNAL: Single output.
 
     Saves or copies a raster to disk. Can be used to change datatype.
     Input is either a filepath to a raster or a GDAL.Dataset.
@@ -733,7 +742,7 @@ def raster_to_disk(
     overwrite: bool = True,
     creation_options: list = [],
 ) -> Union[List[str], str]:
-    """ Saves or copies a raster to disk. Can be used to change datatype.
+    """Saves or copies a raster to disk. Can be used to change datatype.
     Input is either a filepath to a raster or a GDAL.Dataset.
     The driver is infered from the file extension.
 
@@ -749,7 +758,7 @@ def raster_to_disk(
             "NUM_THREADS=ALL_CPUS"
             "BIGG_TIF=YES"
             "COMPRESS=LZW"
-        
+
         opened (bool): Should the resulting raster be opened
         or a path.
 
@@ -787,9 +796,9 @@ def internal_raster_set_datatype(
     overwrite: bool = True,
     creation_options: list = [],
 ) -> str:
-    """ OBS: INTERNAL: Single output.
-        
-        Changes the datatype of a raster.
+    """OBS: INTERNAL: Single output.
+
+    Changes the datatype of a raster.
     """
     type_check(raster, [str, gdal.Dataset], "raster")
     type_check(dtype, [str], "dtype")
@@ -837,7 +846,7 @@ def raster_set_datatype(
     overwrite: bool = True,
     creation_options: list = [],
 ) -> Union[List[str], str]:
-    """ Changes the datatype of a raster.
+    """Changes the datatype of a raster.
 
     Args:
         raster (path | Dataset): The raster(s) to convert.
@@ -890,7 +899,7 @@ def array_to_raster(
     overwrite: bool = True,
     creation_options: list = [],
 ) -> str:
-    """ Turns a numpy array into a GDAL dataset or exported
+    """Turns a numpy array into a GDAL dataset or exported
         as a raster using a reference raster.
 
     Args:
@@ -915,7 +924,7 @@ def array_to_raster(
             "COMPRESS=LZW"
 
     Returns:
-        If an out_path has been specified, it returns the path to the 
+        If an out_path has been specified, it returns the path to the
         newly created raster file.
     """
     type_check(array, [np.ndarray, np.ma.MaskedArray], "array")
@@ -1007,8 +1016,7 @@ def stack_rasters(
     dtype: Optional[str] = None,
     creation_options: list = [],
 ) -> str:
-    """ Stacks a list of rasters. Must be aligned.
-    """
+    """Stacks a list of rasters. Must be aligned."""
     type_check(rasters, [list], "rasters")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
@@ -1115,8 +1123,7 @@ def stack_rasters_vrt(
     overwrite: bool = True,
     creation_options: list = [],
 ) -> str:
-    """ Stacks a list of rasters into a virtual rasters (.vrt).
-    """
+    """Stacks a list of rasters into a virtual rasters (.vrt)."""
     type_check(rasters, [list], "rasters")
     type_check(out_path, [str], "out_path")
     type_check(seperate, [bool], "seperate")
@@ -1141,8 +1148,7 @@ def copy_raster(
     creation_options: list = [],
     opened: bool = False,
 ) -> Union[list, str]:
-    """ Copies a raster to a path. Can be both memory and disk.
-    """
+    """Copies a raster to a path. Can be both memory and disk."""
     type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(out_path, [list, str], "out_path")
     type_check(overwrite, [bool], "overwrite")
@@ -1165,8 +1171,7 @@ def seperate_bands(
     postfix: str = "_bandID",  # add automatically
     creation_options: list = [],
 ) -> list:
-    """ Seperates the bands of a multiband raster.
-    """
+    """Seperates the bands of a multiband raster."""
     type_check(raster, [str, gdal.Dataset], "raster")
     type_check(out_names, [list], "out_names", allow_none=True)
     type_check(out_dir, [str], "out_dir", allow_none=True)
@@ -1199,8 +1204,7 @@ def create_raster(
     opened: bool = False,
     creation_options: list = [],
 ) -> Union[gdal.Dataset, str]:
-    """ Returns a new created raster initialised with some value.
-    """
+    """Returns a new created raster initialised with some value."""
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(reference, [str, gdal.Dataset], "reference", allow_none=True)
     type_check(top_left, [list, tuple], "top_left", allow_none=True)

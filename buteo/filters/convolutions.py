@@ -5,8 +5,6 @@ import numpy as np
 from numba import jit, prange
 from buteo.filters.kernel_generator import create_kernel
 
-# TODO: ZOBEL, MODE, MORPHOLOGY
-
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_summed(values, weights):
@@ -183,12 +181,12 @@ def convolve_3d(
                     offset_y = y_adj
                     outside = True
 
-                value = arr[offset_z, offset_x, offset_y]
+                value = arr[offset_x, offset_y, offset_z]
 
                 if border == True and outside == True:
                     normalise = True
                     hood_weights[n] = 0
-                elif value == 0:
+                elif nodata and value == nodata_value:
                     normalise = True
                     hood_weights[n] = 0
                 else:
@@ -202,33 +200,32 @@ def convolve_3d(
                 hood_weights = np.divide(hood_weights, weight_sum[0])
 
             if operation == "sum":
-                result[x, y] = np.sum(np.multiply(hood_values, hood_weights))
+                result[x][y] = np.sum(np.multiply(hood_values, hood_weights))
 
             elif operation == "quantile":
-                result[x, y] = hood_quantile(hood_values, hood_weights, quantile)
+                result[x][y] = hood_quantile(hood_values, hood_weights, quantile)
 
             elif operation == "median":
-                result[x, y] = hood_quantile(hood_values, hood_weights, 0.5)
+                result[x][y] = hood_quantile(hood_values, hood_weights, 0.5)
 
             elif operation == "median_absolute_deviation":
-                result[x, y] == hood_median_absolute_deviation(
+                result[x][y] == hood_median_absolute_deviation(
                     hood_values, hood_weights
                 )
-
             elif operation == "standard_deviation":
-                result[x, y] = hood_standard_deviation(hood_values, hood_weights)
+                result[x][y] = hood_standard_deviation(hood_values, hood_weights)
 
             elif operation == "z_score":
-                result[x, y] = hood_z_score(hood_values, hood_weights)
+                result[x][y] = hood_z_score(hood_values, hood_weights)
 
             elif operation == "z_score_mad":
-                result[x, y] = hood_z_score_mad(hood_values, hood_weights)
+                result[x][y] = hood_z_score_mad(hood_values, hood_weights)
 
             elif operation == "sigma_lee":
-                result[x, y] = hood_sigma_lee(hood_values, hood_weights)
+                result[x][y] = hood_sigma_lee(hood_values, hood_weights)
 
             elif operation == "sigma_lee_mad":
-                result[x, y] = hood_sigma_lee_mad(hood_values, hood_weights)
+                result[x][y] = hood_sigma_lee_mad(hood_values, hood_weights)
 
     return result
 
@@ -271,10 +268,6 @@ def filter_array(
         radius_method=radius_method,
     )
 
-    import pdb
-
-    pdb.set_trace()
-
     return convolve_3d(
         arr,
         offsets,
@@ -284,3 +277,28 @@ def filter_array(
         nodata_value=nodata_value,
         quantile=quantile,
     )
+
+
+if __name__ == "__main__":
+    yellow_follow = "C:/Users/caspe/Desktop/buteo/"
+    import sys
+
+    sys.path.append(yellow_follow)
+
+    from buteo.raster.io import raster_to_array, array_to_raster
+
+    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/bornholm/raster/"
+
+    raster_path = folder + "2020_B04_10m.tif"
+    mad = filter_array(
+        raster_to_array(raster_path, filled=True),
+        [3, 3, 1],
+        distance_calc="linear",
+        operation="standard_deviation",
+    )
+
+    # import pdb
+
+    # pdb.set_trace()
+
+    array_to_raster(mad, raster_path, out_path=folder + "2020_std_10m.tif")

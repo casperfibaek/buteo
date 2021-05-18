@@ -150,8 +150,8 @@ def zobel_filter(arr, size=[3, 3], normalised=False):
     sobel_flattened = sobel_filter.flatten()
     sobel_flattened90 = sobel_filter90.flatten()
 
-    res1 = convolve_sobel_2D(arr, sobel_flattened, offsets)
-    res2 = convolve_sobel_2D(arr, sobel_flattened90, offsets)
+    res1 = convolve_sobel_2D(arr.astype("float32"), sobel_flattened, offsets)
+    res2 = convolve_sobel_2D(arr.astype("float32"), sobel_flattened90, offsets)
 
     filtered = (res1 ** 2 + res2 ** 2) ** 0.5
 
@@ -159,48 +159,20 @@ def zobel_filter(arr, size=[3, 3], normalised=False):
 
 
 if __name__ == "__main__":
-
-    buteo_follow = "c:/buteo/"
-    buteo_buteo_follow = "c:/buteo/buteo/"
-
+    yellow_follow = "C:/Users/caspe/Desktop/buteo/"
     import sys
 
-    sys.path.append(buteo_follow)
-    sys.path.append(buteo_buteo_follow)
-    sys.path.append(buteo_buteo_follow + "filters/")
-    sys.path.append(buteo_buteo_follow + "machine_learning/")
-    sys.path.append(buteo_buteo_follow + "raster/")
+    sys.path.append(yellow_follow)
 
-    # from convolutions import *
-    # from kernel_generator import *
-    from filter import *
-    from patch_extraction import *
-    from raster import *
+    from buteo.raster.io import raster_to_array, array_to_raster
 
-    from osgeo import gdal
+    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/bornholm/raster/"
 
-    # ref = "/mnt/c/Users/EZRA/Desktop/tmp/DTM_AEROE/DTM_AEROE.vrt"
+    raster_path = folder + "2020_B04_10m.tif"
+    sobel = zobel_filter(
+        raster_to_array(raster_path, output_2d=True, filled=True),
+        size=[3, 3],
+        normalised=True,
+    )
 
-    patches = np.load("dtm_aeroe_64.npy").squeeze()
-
-    # rebuild_ref = "/mnt/c/Users/EZRA/Desktop/tmp/DTM_AEROE/DTM_AEROE.vrt"
-
-    # raster = gdal.Open(ref)
-    # bandarr = raster.GetRasterBand(1).ReadAsArray()
-    # npy = np.array(bandarr)
-
-    result = np.zeros_like(patches, dtype="float32")
-
-    for i in range(patches.shape[0]):
-
-        sobel_patch = zobel_filter(patches[i], size=[5, 5], normalised=True)
-        result[i] = sobel_patch
-
-    result = result[:, :, :, np.newaxis]
-
-    import pdb
-
-    pdb.set_trace()
-
-    # np.save(result, "sobel_filter_DTM_64.npy")
-
+    array_to_raster(sobel, raster_path, out_path=folder + "2020_sobel_10m.tif")

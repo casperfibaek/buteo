@@ -425,33 +425,34 @@ if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
     folder_s2 = folder + "sentinel2/"
 
-    tiles = vector_get_attribute_table(folder + "s2_tiles_in_project_area.gpkg")
-    tiles = tiles["Name"].values.tolist()
+    # tiles = vector_get_attribute_table(folder + "s2_tiles_in_project_area.gpkg")
+    # tiles = tiles["Name"].values.tolist()
 
-    improve = [
-        "32UMF",  # Minor issues
-    ]
+    # improve = [
+    #     "32UPG",
+    #     "32UPF",
+    # ]
 
-    for tile in tiles:
+    # for tile in tiles:
 
-        if tile not in improve:
-            continue
+    #     if tile not in improve:
+    #         continue
 
-        download_s2_tile(
-            "casperfibaek2",
-            "Goldfish12",
-            folder_s2 + "raw_2021/",
-            # footprint=folder + "coastal_tiles.gpkg",
-            tile=tile,
-            # date=("20210315", "20210510"),
-            date=("20210215", "20210510"),
-            # min_overlap=0.50,
-            # max_images=0,
-            clouds=10,
-        )
+    download_s2_tile(
+        "casperfibaek",
+        "Goldfish12",
+        folder_s2 + "raw_2021/",
+        # footprint=folder + "coastal_tiles.gpkg",
+        tile="33UUA",
+        # date=("20200615", "20200815"),
+        date=("20210215", "20210510"),
+        # min_overlap=0.50,
+        # max_images=0,
+        clouds=10,
+    )
 
 
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     # download_s2
 

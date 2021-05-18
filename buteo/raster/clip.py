@@ -43,11 +43,12 @@ def internal_clip_raster(
     prefix: str = "",
     postfix: str = "_clipped",
     verbose: int = 1,
+    uuid: bool = False,
 ) -> str:
-    """ OBS: Internal. Single output.
-        
-        Clips a raster(s) using a vector geometry or the extents of
-        a raster.
+    """OBS: Internal. Single output.
+
+    Clips a raster(s) using a vector geometry or the extents of
+    a raster.
     """
     type_check(raster, [str, gdal.Dataset], "raster")
     type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_geom")
@@ -63,8 +64,11 @@ def internal_clip_raster(
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
     type_check(verbose, [int], "verbose")
+    type_check(uuid, [bool], "uuid")
 
-    _, path_list = ready_io_raster(raster, out_path, overwrite, prefix, postfix)
+    _, path_list = ready_io_raster(
+        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix, uuid=uuid
+    )
 
     # Input is a vector.
     if is_vector(clip_geom):
@@ -118,7 +122,9 @@ def internal_clip_raster(
     # Check if projections match, otherwise reproject target geom.
     if not origin_projection.IsSame(clip_projection):
         clip_metadata["extent"] = reproject_extent(
-            clip_metadata["extent"], clip_projection, origin_projection,
+            clip_metadata["extent"],
+            clip_projection,
+            origin_projection,
         )
 
     # Fast check: Does the extent of the two inputs overlap?
@@ -214,13 +220,14 @@ def clip_raster(
     prefix: str = "",
     postfix: str = "_clipped",
     verbose: int = 1,
+    uuid: bool = False,
 ) -> Union[list, gdal.Dataset, str]:
-    """ Clips a raster(s) using a vector geometry or the extents of
+    """Clips a raster(s) using a vector geometry or the extents of
         a raster.
 
     Args:
         raster(s) (list, path | raster): The raster(s) to clip.
-        
+
         clip_geom (path | vector | raster): The geometry to use to clip
         the raster
 
@@ -232,11 +239,11 @@ def clip_raster(
         are available:
             'nearest', 'bilinear', 'cubic', 'cubicSpline', 'lanczos', 'average',
             'mode', 'max', 'min', 'median', 'q1', 'q3', 'sum', 'rms'.
-        
+
         crop_to_geom (bool): Should the extent of the raster be clipped
         to the extent of the clipping geometry.
 
-        all_touch (bool): Should all the pixels touched by the clipped 
+        all_touch (bool): Should all the pixels touched by the clipped
         geometry be included or only those which centre lie within the
         geometry.
 
@@ -273,9 +280,15 @@ def clip_raster(
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
     type_check(verbose, [int], "verbose")
+    type_check(uuid, [bool], "uuid")
 
     raster_list, path_list = ready_io_raster(
-        raster, out_path, overwrite, prefix, postfix
+        raster,
+        out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        postfix=postfix,
+        uuid=uuid,
     )
 
     output = []

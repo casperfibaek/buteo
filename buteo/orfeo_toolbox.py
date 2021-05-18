@@ -354,7 +354,8 @@ def merge_rasters(
 
     if options is None:
         options = {
-            "comp.feather": "large",
+            "comp.feather": "slim",
+            "comp.feather.slim.length": 2000,
             "harmo.method": "band",
             "harmo.cost": "rmse",
             "interpolator": "linear",
