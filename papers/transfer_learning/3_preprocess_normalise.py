@@ -21,6 +21,9 @@ test_munis = [
     657,  # herning
     707,  # norddjurs
     630,  # vejle
+    411,  # christiansoe
+    250,  # frederiksund
+    550,  # toender
 ]
 
 rgbn_dir = []
