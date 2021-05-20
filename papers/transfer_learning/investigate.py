@@ -6,26 +6,36 @@ sys.path.append(yellow_follow)
 import os
 import time
 import numpy as np
+import datetime
 
 import tensorflow as tf
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras import Model, Input
+from tensorflow.keras.regularizers import l2
 from tensorflow.keras.layers import (
     Conv2D,
     MaxPooling2D,
     AveragePooling2D,
     Conv2DTranspose,
     Concatenate,
+    SpatialDropout2D,
 )
 from tensorflow.keras.callbacks import (
-    EarlyStopping,
     LearningRateScheduler,
     ModelCheckpoint,
+    TensorBoard,
 )
 from tensorflow.keras import mixed_precision
 from buteo.machine_learning.ml_utils import load_mish, create_step_decay
 from buteo.utils import timing
 from utils import preprocess_optical, preprocess_sar
+from datagenerator import DataGenerator
+from utils import (
+    preprocess_optical,
+    preprocess_sar,
+    random_scale_noise,
+    rotate_shuffle,
+)
 
 np.set_printoptions(suppress=True)
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
@@ -41,7 +51,7 @@ start = time.time()
 def reduction_block(
     inputs, size=32, activation="Mish", kernel_initializer="glorot_normal"
 ):
-    track1 = MaxPooling2D(pool_size=(2, 2), padding="same")(inputs)
+    track1 = AveragePooling2D(pool_size=(2, 2), padding="same")(inputs)
     track2 = Conv2D(
         size,
         kernel_size=3,
@@ -74,14 +84,12 @@ def reduction_block(
         activation=activation,
         kernel_initializer=kernel_initializer,
     )(track3)
-    track4 = AveragePooling2D(pool_size=(2, 2), padding="same")(inputs)
 
     return Concatenate()(
         [
             track1,
             track2,
             track3,
-            track4,
         ]
     )
 
@@ -170,7 +178,7 @@ def define_model(
     shape_sar,
     activation="Mish",
     kernel_initializer="glorot_normal",
-    sizes=[32, 48, 64],
+    sizes=[64, 64, 64],
 ):
     # ----------------- RGBN ------------------------
     rgbn_input = Input(shape=shape_rgbn, name="rgbn")
@@ -181,17 +189,13 @@ def define_model(
         activation=activation,
         kernel_initializer=kernel_initializer,
     )(rgbn_input)
-    rgbn = Conv2D(
-        sizes[0],
-        kernel_size=3,
-        padding="same",
-        activation=activation,
-        kernel_initializer=kernel_initializer,
-    )(rgbn)
+    rgbn = inception_block(rgbn, size=sizes[0])
     rgbn_skip1 = inception_block(rgbn, size=sizes[0])
     rgbn = reduction_block(rgbn, size=sizes[0])
+    rgbn = inception_block(rgbn, size=sizes[0])
     rgbn_skip2 = inception_block(rgbn, size=sizes[1])
     rgbn = reduction_block(rgbn_skip2, size=sizes[1])
+    rgbn = inception_block(rgbn, size=sizes[0])
     rgbn = inception_block(rgbn, size=sizes[2])
     rgbn = expansion_block(rgbn, size=sizes[1])
     rgbn = Concatenate()([rgbn_skip2, rgbn])
@@ -206,8 +210,10 @@ def define_model(
         activation=activation,
         kernel_initializer=kernel_initializer,
     )(swir_input)
+    swir = inception_block(swir, size=sizes[2])
     swir_skip1 = inception_block(swir, size=sizes[1])
     swir = reduction_block(swir_skip1, size=sizes[1])
+    swir = inception_block(swir, size=sizes[2])
     swir = inception_block(swir, size=sizes[2])
     swir = expansion_block(swir, size=sizes[1])
     swir = Concatenate()([swir_skip1, swir])
@@ -229,31 +235,31 @@ def define_model(
         activation=activation,
         kernel_initializer=kernel_initializer,
     )(sar_input)
-    sar = Conv2D(
-        sizes[0],
-        kernel_size=3,
-        padding="same",
-        activation=activation,
-        kernel_initializer=kernel_initializer,
-    )(sar)
+    sar = inception_block(sar, size=sizes[0])
     sar_skip1 = inception_block(sar, size=sizes[0])
     sar = reduction_block(sar_skip1, size=sizes[0])
+    sar = inception_block(sar, size=sizes[0])
     sar_skip2 = inception_block(sar, size=sizes[1])
     sar = reduction_block(sar_skip2, size=sizes[1])
+    sar = inception_block(sar, size=sizes[0])
     sar = inception_block(rgbn, size=sizes[2])
     sar = expansion_block(rgbn, size=sizes[1])
     sar = Concatenate()([sar_skip2, rgbn])
-    sar = inception_block(rgbn, size=sizes[1])
+    sar = inception_block(sar, size=sizes[0])
+    sar = inception_block(sar, size=sizes[0])
     sar = expansion_block(sar, size=sizes[0])
     sar = Concatenate()([sar_skip1, sar])
     sar = inception_block(sar, size=sizes[0])
-
-    model = Concatenate()([model, sar])
+    sar = inception_block(sar, size=sizes[0])
 
     # ----------------- TAIL ------------------------
-    model = inception_block(model, size=sizes[2])
-    model = inception_block(model, size=sizes[2])
-    model = inception_block(model, size=sizes[2])
+    model = Concatenate()([model, sar])
+
+    model = inception_block(model, size=sizes[0])
+    model = inception_block(model, size=sizes[0])
+    model = inception_block(model, size=sizes[0])
+    model = inception_block(model, size=sizes[0])
+    model = inception_block(model, size=sizes[0])
 
     model = Conv2D(
         sizes[0],
@@ -264,8 +270,16 @@ def define_model(
     )(model)
 
     model = Conv2D(
-        1,
+        sizes[0],
         kernel_size=3,
+        padding="same",
+        activation=activation,
+        kernel_initializer=kernel_initializer,
+    )(model)
+
+    model = Conv2D(
+        sizes[0],
+        kernel_size=1,
         padding="same",
         activation=activation,
         kernel_initializer=kernel_initializer,
@@ -282,23 +296,16 @@ def define_model(
     return Model(inputs=[rgbn_input, swir_input, sar_input], outputs=output)
 
 
-x_train_rgbn = np.load(folder + "000_RGBN.npy")
-x_train_swir = np.load(folder + "000_SWIR.npy")
-x_train_sar = np.load(folder + "000_SAR.npy")
+x_train_rgbn = np.load(folder + "001_RGBN.npy")
+x_train_swir = np.load(folder + "001_SWIR.npy")
+x_train_sar = np.load(folder + "001_SAR.npy")
 
-y_train = np.load(folder + "000_LABELS.npy")[:, :, :, 0]
+y_train = np.load(folder + "001_LABEL_AREA.npy")[:, :, :, 0]
 
-shuffle_mask = np.random.permutation(x_train_rgbn.shape[0])
-
-x_train_rgbn = x_train_rgbn[shuffle_mask]
-x_train_swir = x_train_swir[shuffle_mask]
-x_train_sar = x_train_sar[shuffle_mask]
-y_train = y_train[shuffle_mask]
-
-x_test_rgbn = preprocess_optical(np.load(folder + "851_RGBN.npy"))
-x_test_swir = preprocess_optical(np.load(folder + "851_SWIR.npy"))
-x_test_sar = preprocess_sar(np.load(folder + "851_SAR.npy"))
-y_test = np.load(folder + "851_LABELS.npy")[:, :, :, 0]
+x_test_rgbn = preprocess_optical(np.load(folder + "10830461_RGBN.npy"))
+x_test_swir = preprocess_optical(np.load(folder + "10830461_SWIR.npy"))
+x_test_sar = preprocess_sar(np.load(folder + "10830461_SAR.npy"))
+y_test = np.load(folder + "10830461_LABEL_AREA.npy")[:, :, :, 0]
 
 
 def create_model(
@@ -334,16 +341,16 @@ def create_model(
 
 
 with tf.device("/device:GPU:0"):
-    lr = 0.001
-    # epochs = [10, 50, 90, 100]
-    epichs = [10]
-    # bs = [32, 16, 8, 1]
-    bs = [32]
+    lr = 0.00075
+    epochs = [10, 30, 90]
+    # epochs = [10]
+    bs = [32, 16, 8]
+    # bs = [32]
 
     model = create_model(
-        (128, 128, 4),
+        (64, 64, 4),
+        (32, 32, 2),
         (64, 64, 2),
-        (128, 128, 2),
         kernel_initializer="glorot_normal",
         activation="Mish",
         learning_rate=lr,
@@ -352,34 +359,39 @@ with tf.device("/device:GPU:0"):
     print(model.summary())
 
     model_checkpoint_callback = ModelCheckpoint(
-        filepath=folder + "tmp/",
+        filepath=folder + "tmp/model_checkpoint-{epoch:02d}",
     )
+
+    # log_dir = folder + "logs/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    # tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)
 
     for phase in range(len(bs)):
         use_epoch = epochs[phase]
         use_bs = bs[phase]
-        initial_epoch = epochs[phase] if phase != 0 else 0
+        initial_epoch = epochs[phase - 1] if phase != 0 else 0
 
         model.fit(
             x=[x_train_rgbn, x_train_swir, x_train_sar],
             y=y_train,
-            validation_split=0.2,
+            validation_split=0.05,
+            shuffle=True,
+            validation_data=([x_test_rgbn, x_test_swir, x_test_sar], y_test),
             epochs=use_epoch,
             initial_epoch=initial_epoch,
             verbose=1,
             batch_size=use_bs,
             use_multiprocessing=True,
             workers=0,
-            shuffle=True,
             callbacks=[
                 model_checkpoint_callback,
                 LearningRateScheduler(
                     create_step_decay(
                         learning_rate=lr,
-                        drop_rate=0.5,
+                        drop_rate=0.6,
                         epochs_per_drop=10,
                     )
                 ),
+                # tensorboard_callback,
             ],
         )
 
@@ -433,6 +445,10 @@ with tf.device("/device:GPU:0"):
 # Mean Square Error:      46.042
 # Mean Absolute Error:    1.438
 
-model.save(folder + "models/denmark_07", save_format="tf")
+# model lol
+# Mean Square Error:      10.923
+# Mean Absolute Error:    0.342
+
+model.save(folder + "models/denmark_10_all_area", save_format="tf")
 
 timing(start)

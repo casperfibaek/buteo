@@ -15,7 +15,7 @@ dst = folder + "machine_learning_data/"
 denmark_patches = denmark + "denmark_patches.gpkg"
 
 denmark_attr = vector_get_attribute_table(denmark_patches)
-denmark_attr["municipality"] = denmark_attr["municipality"].fillna(0)
+denmark_attr["municipality"] = denmark_attr["code"].fillna(0)
 denmark_attr = denmark_attr.astype({"municipality": int})
 denmark_attr["fid"] -= 1
 
@@ -23,7 +23,7 @@ denmark_attr["fid"] -= 1
 bornholm_patches = bornholm + "bornholm_patches.gpkg"
 
 bornholm_attr = vector_get_attribute_table(bornholm_patches)
-bornholm_attr["municipality"] = bornholm_attr["municipality"].fillna(0)
+bornholm_attr["municipality"] = bornholm_attr["code"].fillna(0)
 bornholm_attr = bornholm_attr.astype({"municipality": int})
 
 # ------- COMMON PREPROCESSING ------------
@@ -67,6 +67,8 @@ for idx in range(len(denmark_paths)):
         merged = np.concatenate([img1[indices], img2[indices]])
 
         np.save(tmp + f"{muni}_{name}.npy", merged)
+
+# denmark_municipalities = np.array([], dtype=int)
 
 # ------- BORNHOLM PREPROCESSING -----------
 bornholm_municipalities = bornholm_attr["municipality"].unique()
@@ -121,19 +123,13 @@ for muni in municipalities:
         axis=3,
     )[:, :, :, :, 0]
 
-    images_labels = np.stack(
-        [
-            np.load(tmp + f"{muni}_AREA.npy"),
-            np.load(tmp + f"{muni}_VOLUME.npy"),
-            np.load(tmp + f"{muni}_PEOPLE.npy"),
-        ],
-        axis=3,
-    )[:, :, :, :, 0]
-
     np.save(dst + f"{muni}_RGBN.npy", images_10m)
     np.save(dst + f"{muni}_SWIR.npy", images_20m)
     np.save(dst + f"{muni}_SAR.npy", images_sar)
-    np.save(dst + f"{muni}_LABELS.npy", images_labels)
+
+    np.save(dst + f"{muni}_LABEL_AREA.npy", np.load(tmp + f"{muni}_AREA.npy"))
+    np.save(dst + f"{muni}_LABEL_VOLUME.npy", np.load(tmp + f"{muni}_VOLUME.npy"))
+    np.save(dst + f"{muni}_LABEL_PEOPLE.npy", np.load(tmp + f"{muni}_PEOPLE.npy"))
 
 
 np.save(dst + "municipalities.npy", municipalities[municipalities != 0])

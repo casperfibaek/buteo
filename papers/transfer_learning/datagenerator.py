@@ -1,3 +1,6 @@
+from tensorflow.keras.utils import Sequence
+import numpy as np
+
 # x=DataGenerator(munis=test_munis, batch_size=bs[0], target="area"),
 
 
@@ -7,7 +10,7 @@ class DataGenerator(Sequence):
     Sequence based data generator. Suitable for building data generator for training and prediction.
     """
 
-    def __init__(self, munis=[], batch_size=64, target="area"):
+    def __init__(self, batch_size=32, target=0):
         """Initialization
         :param batch_size: batch size at each iteration
         :param shuffle: True to shuffle label indexes after every epoch
@@ -15,41 +18,31 @@ class DataGenerator(Sequence):
 
         self.folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/machine_learning_data/"
 
-        self.images = []
-        self.length = 0
-        self.first_run = True
-        self.current_muni = 0
-        self.current_batch = 0
-        self.batches_on_image = 0
-        self.x_array = None
-        self.y_array = None
-        self.target = target
-        self.use_munis = munis
+        self.regions = ["001", "002", "003", "004"]
+        # self.regions = [779, 707]
+        self.region_lengths = []
         self.batch_size = batch_size
-        self.on_epoch_end()
+        self.length = 0
+        self.target = target
 
-        self.all_munis = np.load(self.folder + "municipalities.npy")
-
-        for muni in self.all_munis:
-            if muni not in self.use_munis:
-                continue
-
-            labels = np.load(self.folder + f"{muni}_LABELS.npy")
-            batch_count = int(np.ceil(labels.shape[0] / self.batch_size))
-
-            self.images.append(
-                {
-                    "muni": muni,
-                    "length": labels.shape[0],
-                    "batches": batch_count,
-                    "rgbn": self.folder + f"{muni}_RGBN.npy",
-                    "swir": self.folder + f"{muni}_SWIR.npy",
-                    "sar": self.folder + f"{muni}_SAR.npy",
-                    "labels": self.folder + f"{muni}_LABELS.npy",
-                }
+        for region in self.regions:
+            self.region_lengths.append(
+                np.load(self.folder + f"{region}_SWIR.npy").shape[0]
             )
-            self.length += batch_count
-            labels = None
+
+        self.region_lengths_cumsum = np.cumsum(self.region_lengths)
+
+        for length in self.region_lengths:
+            self.length += int(np.floor(length / self.batch_size))
+
+        self.loaded = 0
+        self.load = 0
+        self.rgbn = np.load(self.folder + f"{self.regions[self.loaded]}_RGBN.npy")
+        self.swir = np.load(self.folder + f"{self.regions[self.loaded]}_SWIR.npy")
+        self.sar = np.load(self.folder + f"{self.regions[self.loaded]}_SAR.npy")
+        self.labels = np.load(self.folder + f"{self.regions[self.loaded]}_LABELS.npy")[
+            :, :, :, self.target
+        ]
 
     def __len__(self):
         """Denotes the number of batches per epoch
@@ -63,61 +56,79 @@ class DataGenerator(Sequence):
         :return: X and y when fitting. X only when predicting
         """
 
-        current_muni = 0
-        label_index = {
-            "area": 0,
-            "volume": 1,
-            "people": 2,
-        }
+        cumsum = index * self.batch_size
 
-        if self.first_run:
-            x_arr = preprocess_optical(
-                random_scale_noise(np.load(self.images[0]["rgbn"]))
-            )
-            x_arr, y_arr = rotate_shuffle(
-                [
-                    x_arr,
-                    np.load(self.images[0]["labels"])[
-                        :, :, :, label_index[self.target]
-                    ],
-                ]
-            )
+        if index == 0:
+            self.load = 0
 
-            self.x_array = x_arr
-            self.y_array = y_arr
+        for idx, region in enumerate(self.region_lengths_cumsum):
+            if cumsum < region:
+                self.load = idx
+                break
 
-            self.batches_on_image = self.images[0]["batches"]
-            self.first_run = False
+        if self.load != self.loaded:
+            self.rgbn = np.load(self.folder + f"{self.regions[self.loaded]}_RGBN.npy")
+            self.swir = np.load(self.folder + f"{self.regions[self.loaded]}_SWIR.npy")
+            self.sar = np.load(self.folder + f"{self.regions[self.loaded]}_SAR.npy")
+            self.labels = np.load(
+                self.folder + f"{self.regions[self.loaded]}_LABELS.npy"
+            )[:, :, :, self.target]
 
-        if self.batches_on_image <= 0:
-            current_muni += 1
-            x_arr = preprocess_optical(
-                random_scale_noise(np.load(self.images[current_muni]["rgbn"]))
-            )
-            x_arr, y_arr = rotate_shuffle(
-                [
-                    x_arr,
-                    np.load(self.images[current_muni]["labels"])[
-                        :, :, :, label_index[self.target]
-                    ],
-                ]
-            )
+            self.loaded = self.load
 
-            self.x_array = x_arr
-            self.y_array = y_arr
-            self.batches_on_image = self.images[current_muni]["batches"]
-            self.current_batch = 0
+        if self.loaded != 0:
+            region_start = self.region_lengths_cumsum[self.loaded - 1]
+        else:
+            region_start = 0
 
-        low = self.current_batch * self.batch_size
-        high = (self.current_batch + 1) * self.batch_size
+        region_end = self.region_lengths_cumsum[self.loaded]
 
-        if high > self.x_array.shape[0]:
-            high = self.x_array.shape[0]
+        start = (index * self.batch_size) - region_start
 
-        X = self.x_array[low:high]
-        y = self.y_array[low:high]
+        end = start + self.batch_size
 
-        self.batches_on_image -= 1
-        self.current_batch += 1
+        if end > region_end:
+            end = region_end
 
-        return X, y
+        return (
+            [self.rgbn[start:end], self.swir[start:end], self.sar[start:end]],
+            self.labels[start:end],
+        )
+
+        # for idx, region_sum in enumerate(self.region_lengths_cumsum):
+        #     if low < region_sum:
+        #         if idx > 0 and low < (self.region_lengths_cumsum[idx - 1] + self.batch_size)
+
+        #         if idx != self.loaded:
+        #             if idx == 0:
+        #                 self.loaded = 0
+        #             else:
+        #                 self.loaded += 1
+
+        #             self.rgbn = np.load(
+        #                 self.folder + f"{self.regions[self.loaded]}_RGBN.npy"
+        #             )
+        #             self.swir = np.load(
+        #                 self.folder + f"{self.regions[self.loaded]}_SWIR.npy"
+        #             )
+        #             self.sar = np.load(
+        #                 self.folder + f"{self.regions[self.loaded]}_SAR.npy"
+        #             )
+        #             self.labels = np.load(
+        #                 self.folder + f"{self.regions[self.loaded]}_LABELS.npy"
+        #             )[:, :, :, self.target]
+
+        #         if high >= region_sum:
+        #             high = region_sum
+
+        #         if self.loaded != 0:
+        #             import pdb
+
+        #             pdb.set_trace()
+
+        #         return (
+        #             [self.rgbn[low:high], self.swir[low:high], self.sar[low:high]],
+        #             self.labels[low:high],
+        #         )
+
+        raise Exception("Should not get here.")

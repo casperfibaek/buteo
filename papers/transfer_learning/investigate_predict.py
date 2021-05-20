@@ -12,7 +12,7 @@ from utils import preprocess_optical, preprocess_sar
 
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/bornholm/"
 
-model_nr = "07"
+model_nr = "10"
 model = f"C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/machine_learning_data/models/denmark_{model_nr}"
 
 date = "2021"
@@ -70,9 +70,9 @@ predict_raster(
     model,
     out_path=folder + f"model_{model_nr}.tif",
     offsets=[
-        [(32, 32), (64, 64), (96, 96)],
         [(16, 16), (32, 32), (48, 48)],
-        [(32, 32), (64, 64), (96, 96)],
+        [(8, 8), (16, 16), (24, 24)],
+        [(16, 16), (32, 32), (48, 48)],
     ],
     # offsets=[[], [], []],
     device="gpu",

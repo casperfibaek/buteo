@@ -35,7 +35,7 @@ def mult_along_axis(A, B, axis):
 def random_scale_noise(arr, std=0.01):
     tile_scale = np.random.normal(1, std, (arr.shape[0]))
     scaled = mult_along_axis(arr, tile_scale, 0)
-    noise = scaled * np.random.normal(1, std, arr.shape)
+    noise = scaled * np.random.normal(1, 0.001, arr.shape)
     return noise.astype(arr.dtype)
 
 

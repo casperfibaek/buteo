@@ -6,11 +6,14 @@ from buteo.machine_learning.patch_extraction import extract_patches
 
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 
-target = "denmark"
+target = "bornholm"
 
 region = folder + f"{target}/"
 
-vector = folder + f"vector/denmark_polygon_border_region_removed.gpkg"
+if target == "denmark":
+    vector = folder + "vector/denmark_polygon_border_region_removed.gpkg"
+else:
+    vector = folder + "vector/bornholm_nobuffer.gpkg"
 
 s2_10m = glob(region + "raster/*10m.tif")
 s1_VV = glob(region + "raster/*VV.tif")
@@ -40,8 +43,10 @@ path_np, path_geom = extract_patches(
     out_dir=region,
     prefix="",
     postfix="",
-    size=128,
-    offsets=[(32, 32), (64, 64), (96, 96)],
+    size=64,
+    # offsets=[(32, 32), (64, 64), (96, 96)],
+    # offsets=[(16, 16), (32, 32), (48, 48)],
+    offsets=[(32, 32)],
     generate_grid_geom=True,
     generate_zero_offset=True,
     generate_border_patches=True,
@@ -59,8 +64,10 @@ path_np, path_geom = extract_patches(
     out_dir=region,
     prefix="",
     postfix="",
-    size=64,
-    offsets=[(16, 16), (32, 32), (48, 48)],
+    size=32,
+    # offsets=[(16, 16), (32, 32), (48, 48)],
+    # offsets=[(8, 8), (16, 16), (24, 24)],
+    offsets=[(16, 16)],
     generate_grid_geom=True,
     generate_zero_offset=True,
     generate_border_patches=True,
