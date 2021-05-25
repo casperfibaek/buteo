@@ -5,6 +5,7 @@ from osgeo import ogr
 from sentinelsat import SentinelAPI
 from collections import OrderedDict
 from buteo.vector.io import internal_vector_to_metadata, filter_vector
+from buteo.vector.attributes import vector_get_attribute_table
 import numpy as np
 
 
@@ -78,6 +79,7 @@ def download_s1(
         api = SentinelAPI(username, password, "https://apihub.copernicus.eu/apihub/")
     except:
         api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
+
     geom = internal_vector_to_metadata(footprint, create_geometry=True)
 
     products = api.query(
@@ -105,15 +107,20 @@ def download_s1(
         within = img_footprint.Intersection(intersection)
         within_area = within.GetArea()
 
-        overlap = within_area / img_area
+        overlap_img = within_area / img_area
+        overlap_geom = within_area / geom_footprint.GetArea()
 
-        if overlap > min_overlap:
+        if max(overlap_img, overlap_geom) > min_overlap:
             download_products[product] = dic
 
-    print(f"Downloading {len(download_products)} files.")
-    download = api.download_all(download_products, directory_path=destination)
+    if len(download_products) > 0:
+        print(f"Downloading {len(download_products)} files.")
+        download = api.download_all(download_products, directory_path=destination, checksum=False)
 
-    return download
+        return download
+    else:
+        print("No images found")
+        return []
 
 
 def list_available_s2(
@@ -170,6 +177,72 @@ def list_available_s2(
     return dfs
 
 
+def download_s2_tile(
+    username,
+    password,
+    destination,
+    tile,
+    date=("20200601", "20210101"),
+    adjacent_tiles=False,
+    clouds=10,
+    min_size=100,
+    level=2,
+):
+    try:
+        api = SentinelAPI(username, password, "https://apihub.copernicus.eu/apihub/")
+    except:
+        api = SentinelAPI(username, password, "https://scihub.copernicus.eu/apihub")
+
+    geom = filter_vector(
+        "../../geometry/sentinel2_tiles_world.shp", filter_where=("Name", tile)
+    )
+
+    geom_meta = internal_vector_to_metadata(geom, create_geometry=True)
+    geom_extent = geom_meta["extent_wkt_latlng"]
+
+    kw = {"raw": f"tileid:{tile} OR filename:*_T{tile}_*"}
+
+    if adjacent_tiles:
+        kw = {}
+
+    download_products = OrderedDict()
+
+    if level == 1:
+        producttype = "S2MSI1C"
+    elif level == 2:
+        producttype = "S2MSI2A"
+
+    products = api.query(
+        geom_extent,
+        date=date,
+        platformname="Sentinel-2",
+        cloudcoverpercentage=(0, clouds),
+        producttype=producttype,
+        **kw,
+    )
+
+    for product in products:
+        dic = products[product]
+        
+        if not adjacent_tiles:
+            product_tile = dic["title"].split("_")[-2][1:]
+            if product_tile != tile:
+                continue
+
+        size = str_to_mb(dic["size"])
+        if size < min_size:
+            continue
+
+        download_products[product] = dic
+    
+
+    print(f"Downloading {len(download_products)} tiles")
+
+    download = api.download_all(download_products, directory_path=destination, checksum=False)
+
+    return download
+
+
 def download_s2(
     username,
     password,
@@ -179,10 +252,11 @@ def download_s2(
     date=("20200601", "20210101"),
     only_specified_tile=True,
     clouds=10,
-    min_size=50,
+    min_size=100,
     min_update=0.01,
     min_overlap=0.33,
     min_images=5,
+    max_images=None,
     iterate=False,
     _iteration=0,
     _coverage=0.0,
@@ -242,6 +316,9 @@ def download_s2(
     geom_area = geom_footprint.GetArea()
 
     for product in products:
+        if max_images is not None and _added_images >= max_images:
+            break
+
         dic = products[product]
         product_tile = dic["title"].split("_")[-2][1:]
 
@@ -254,16 +331,16 @@ def download_s2(
         intersection_area = intersection.GetArea()
 
         overlap = intersection_area / geom_area
-        size = str_to_mb(dic["size"])
 
         if _iteration == 0 and overlap > min_overlap:
-            if size > min_size:
-                download_products[product] = dic
+            download_products[product] = dic
 
-                if tile is not None and product_tile != tile:
-                    _added_images += 1
+            if tile is not None and product_tile != tile:
+                _added_images += 1
 
         elif union == 0.0 and overlap > min_overlap:
+            size = str_to_mb(dic["size"])
+
             if size > min_size:
                 union = intersection
                 coverage = overlap
@@ -292,8 +369,9 @@ def download_s2(
     if tile is not None:
         if coverage > 95 and _added_images < min_images:
             for product in products:
+                if max_images is not None and _added_images >= max_images:
+                    break
                 dic = products[product]
-                size = str_to_mb(dic["size"])
                 product_tile = dic["title"].split("_")[-2][1:]
 
                 img_footprint = ogr.CreateGeometryFromWkt(dic["footprint"])
@@ -306,7 +384,7 @@ def download_s2(
                 if product_tile != tile:
                     continue
 
-                if overlap > min_overlap and size > min_size:
+                if overlap > min_overlap:
                     union = union.Union(intersection)
                     coverage = comp.GetArea() / geom_area
 
@@ -330,21 +408,24 @@ def download_s2(
                 f"Completed. Iteration: {_iteration} - Cloud cover: {clouds}% - Coverage: {round(coverage * 100, 3)}%"
             )
 
-            download_s2(
-                username,
-                password,
-                destination,
-                footprint=footprint,
-                tile=tile,
-                date=date,
-                clouds=clouds + 10,
-                min_size=min_size,
-                min_overlap=min_overlap,
-                iterate=iterate,
-                _iteration=_iteration + 1,
-                _union=union,
-                _added_images=_added_images,
-            )
+            if max_images is not None and _added_images >= max_images:
+                pass
+            else:
+                download_s2(
+                    username,
+                    password,
+                    destination,
+                    footprint=footprint,
+                    tile=tile,
+                    date=date,
+                    clouds=clouds + 10,
+                    min_size=min_size,
+                    min_overlap=min_overlap,
+                    iterate=iterate,
+                    _iteration=_iteration + 1,
+                    _union=union,
+                    _added_images=_added_images,
+                )
 
     return download
 
@@ -354,7 +435,7 @@ if __name__ == "__main__":
     folder = "/home/cfi/Desktop/sentinel2/"
 
     tmp = folder + "tmp/"
-    raw = folder + "raw/"
+    raw = folder + "raw_l1/"
     dst = folder + "mosaic/"
 
     vector = folder + "ghana_s2_tiles.gpkg"
@@ -367,46 +448,17 @@ if __name__ == "__main__":
 
     all_tiles = [
         '30NVL',
-        '30NVM',
-        # '30NVN',
         '30NWL',
         '30NWM',
-        '30NWN',
-        # '30NWP',
-        '30NXL',
         '30NXM',
-        # '30NXN',
-        # '30NXP',
-        '30NYL',
-        '30NYM',
-        '30NYN',
-        # '30NYP',
+        '30NXL',
         '30NZM',
+        '30NYN',
         '30NZN',
         '30NZP',
-        # '30PWQ',
-        # '30PWR',
-        # '30PWS',
-        # '30PWT',
-        # '30PXQ',
-        # '30PXR',
-        # '30PXS',
-        # '30PXT',
-        # '30PYQ',
-        # '30PYR',
-        # '30PYS',
-        # '30PYT',
-        # '30PZQ',
-        # '30PZR',
-        # '30PZS',
-        # '30PZT',
-        # '31NBG',
-        # '31NBH',
-        # '31NBJ',
-        # '31PBK',
-        # '31PBL',
-        # '31PBM',
-        # '31PBN',
+        '31NBG',
+        '31NBH',
+        '31NBJ',
     ]
 
     for idx, tile in enumerate(tiles):
@@ -415,15 +467,14 @@ if __name__ == "__main__":
             continue
 
         try:
-            avai = download_s2(
-                "casperfibaek2",
+            avai = download_s2_tile(
+                "casperfibaek",
                 "Goldfish12",
                 raw,
                 tile=tile,
-                date=("20200601", "20210601"),
-                min_overlap=0.50,
-                clouds=25,
-                min_images=0,
+                date=("20200101", "20210601"),
+                clouds=10,
+                level=1,
             )
 
         except:

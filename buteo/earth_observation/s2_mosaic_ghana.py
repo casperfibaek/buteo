@@ -55,7 +55,6 @@ def harmonise_band(
     max_harmony=50,
     quality_to_include=75,
     method="mean_std_match",
-    _index=0,
 ):
     slave_quality = resample_array(metadata["quality"], metadata["paths"]["20m"]["SCL"], metadata["paths"]["60m"]["B04"])
     slave_raster = internal_resample_raster(metadata["paths"][size][name], target_size=metadata["paths"]["60m"]["B04"])
@@ -379,7 +378,6 @@ def mosaic_tile(
                     master_arr,
                     master_quality,
                     max_harmony=max_harmony,
-                    _index=index,
                 )
 
             feather_scale = None
@@ -511,101 +509,100 @@ if __name__ == "__main__":
 
     tmp = folder + "tmp/"
     raw = folder + "raw/"
-    dst = folder + "mosaic/"
+    dst = folder + "test/"
 
     vector = folder + "ghana_s2_tiles.gpkg"
 
     attributes = vector_get_attribute_table(vector)
     tiles = attributes["Name"].values.tolist()
 
-    completed = []
+    # completed = [
+    #     '30NVM',
+    #     '30NWN',
+    #     '30NWP',
+    #     '30NXN',
+    #     '30NXP',
+    #     '30NYL',
+    #     '30NYM',
+    #     '30NVN',
+    #     '30NYP',
+    #     '30PWQ',
+    #     '30PWR',
+    #     '30PWS',
+    #     '30PWT',
+    #     '30PXQ',
+    #     '30PXR',
+    #     '30PXS',
+    #     '30PXT',
+    #     '30PYQ',
+    #     '30PYR',
+    #     '30PYS',
+    #     '30PYT',
+    #     '30PZQ',
+    #     '30PZR',
+    #     '30PZS',
+    #     '30PZT',
+    #     '30NZP',
+    #     '31PBK',
+    #     '31PBL',
+    #     '31PBM',
+    #     '31PBN',
+    #     '31NBJ',
+    #     '31NBH',
+    # ]
 
-    all_tiles = [
-        # '30NVL',
-        # '30NVM',
-        # '30NVN',
-        # '30NWL',
-        # '30NWM',
-        # '30NWN',
-        # '30NWP',
-        # '30NXL',
-        # '30NXM',
-        # '30NXN',
-        # '30NXP',
-        # '30NYL',
-        # '30NYM',
-        # '30NYN',
-        # '30NYP',
-        # '30NZM',
-        # '30NZN',
-        # '30NZP',
-        # '30PWQ',
-        # '30PWR',
-        '30PWS',
-        '30PWT',
-        '30PXQ',
-        '30PXR',
-        '30PXS',
-        '30PXT',
-        '30PYQ',
-        '30PYR',
-        '30PYS',
-        '30PYT',
-        '30PZQ',
-        '30PZR',
-        '30PZS',
-        '30PZT',
-        '31NBG',
-        '31NBH',
-        '31NBJ',
-        '31PBK',
-        '31PBL',
-        '31PBM',
-        '31PBN',
-    ]
+    # all_tiles = [
+    #     '30NVL',
+    #     '30NWL',
+    #     '30NWM',
+    #     '30NXM',
+    #     '30NXL',
+    #     '30NZM',
+    #     '30NYN',
+    #     '30NZN',
+    #     '31NBG',
+    # ]
 
-    for tile in all_tiles:
+    for tile in tiles:
 
-        if tile in completed:
-            continue
+        # if tile in completed:
+        #     continue
 
-        try:
-            unzipped = unzip_files_to_folder(
-                get_tile_files_from_safe_zip(raw, tile), tmp,
-            )
+        unzipped = unzip_files_to_folder(
+            get_tile_files_from_safe_zip(raw, tile), tmp,
+        )
 
-            mosaic_tile(
-                tmp,
-                tile,
-                dst,
-                min_improvement=0.5,
-                quality_threshold=110,
-                time_penalty=14,
-                max_time_delta=90.0,
-                max_images=10,
-                harmonise=True,
-                max_harmony=50,
-                # ideal_date="20210226",
-                # use_image="20210226",
-                process_bands=[
-                    # {"size": "10m", "band": "B02"},
-                    # {"size": "10m", "band": "B03"},
-                    # {"size": "10m", "band": "B04"},
-                    # {"size": "20m", "band": "B05"},
-                #     {"size": "20m", "band": "B06"},
-                #     {"size": "20m", "band": "B07"},
-                #     {"size": "20m", "band": "B8A"},
-                #     {"size": "10m", "band": "B08"},
-                #     {"size": "20m", "band": "B11"},
-                    {"size": "20m", "band": "B12"},
-                ],
-            )
-        except:
-            print(f"Error with tile: {tile}")
-        finally:
-            tmp_files = glob(tmp + "*.SAFE")
-            for f in tmp_files:
-                try:
-                    rmtree(f)
-                except:
-                    pass
+        mosaic_tile(
+            tmp,
+            tile,
+            dst,
+            min_improvement=0.1,
+            quality_threshold=110,
+            time_penalty=30,
+            max_time_delta=1000.0,
+            max_images=10,
+            harmonise=True,
+            max_harmony=100,
+            # ideal_date="20210315",
+            # use_image="20210226",
+            process_bands=[
+                {"size": "10m", "band": "B02"},
+                {"size": "10m", "band": "B03"},
+                {"size": "10m", "band": "B04"},
+                {"size": "20m", "band": "B05"},
+                {"size": "20m", "band": "B06"},
+                {"size": "20m", "band": "B07"},
+                {"size": "20m", "band": "B8A"},
+                {"size": "10m", "band": "B08"},
+                {"size": "20m", "band": "B11"},
+                {"size": "20m", "band": "B12"},
+                # {"size": "20m", "band": "B04"}, # REMOVE ME LATER
+            ],
+        )
+
+        tmp_files = glob(tmp + "*.SAFE")
+        for f in tmp_files:
+            try:
+                rmtree(f)
+            except:
+                pass

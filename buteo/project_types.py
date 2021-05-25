@@ -1,6 +1,6 @@
 from osgeo import osr, ogr
 from typing import Dict, Tuple, Union, List, Any, Optional
-from mypy_extensions import TypedDict
+from typing import TypedDict
 
 Number = Union[float, int]
 
