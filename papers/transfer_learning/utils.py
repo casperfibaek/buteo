@@ -74,4 +74,4 @@ def preprocess_sar(arr, cutoffs=[-30, 10]):
         np.where(arr_db < cutoffs[0], cutoffs[0], arr_db),
     )
 
-    return np.true_divide(np.add(thresholded, diff), diff)
+    return np.true_divide(np.add(thresholded, np.abs(thresholded.min())), diff)

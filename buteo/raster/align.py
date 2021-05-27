@@ -30,7 +30,15 @@ from buteo.gdal_utils import (
 )
 
 
-def match_projections(rasters, master, out_dir, overwrite=False, dst_nodata="infer"):
+# TODO: Fix if not all a reprojected, paths are incorrect.
+def match_projections(
+    rasters,
+    master,
+    out_dir,
+    overwrite=False,
+    dst_nodata="infer",
+    copy_if_already_correct=True,
+):
     target_projection = parse_projection(master)
 
     created = []
@@ -48,7 +56,7 @@ def match_projections(rasters, master, out_dir, overwrite=False, dst_nodata="inf
             raster,
             target_projection,
             outname,
-            copy_if_already_correct=False,
+            copy_if_already_correct=copy_if_already_correct,
             dst_nodata=dst_nodata,
         )
 
@@ -77,6 +85,7 @@ def align_rasters(
     dst_nodata: Optional[Union[str, int, float]] = "infer",
     prefix: str = "",
     postfix: str = "_aligned",
+    ram=8000,
 ) -> List[str]:
     type_check(rasters, [list], "rasters")
     type_check(out_path, [list, str], "out_path", allow_none=True)
@@ -389,6 +398,7 @@ def align_rasters(
             targetAlignedPixels=False,
             cropToCutline=False,
             multithread=True,
+            warpMemoryLimit=ram,
         )
 
         if warped == None:
@@ -408,25 +418,31 @@ if __name__ == "__main__":
     from buteo.raster.io import raster_to_array, array_to_raster
     from glob import glob
 
-    data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
-    denmark = data_folder + "denmark/"
+    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/"
+    clipped = folder + "clipped/"
+    aligned = folder + "aligned/"
 
-    images = [
-        denmark + "area.tif",
-        denmark + "volume.tif",
-        denmark + "2020_B02_10m.tif",
-        denmark + "2020_B03_10m.tif",
-        denmark + "2020_B04_10m.tif",
-    ]
+    align_rasters(glob(clipped + "*10m.tif"), aligned, postfix="", ram="80%")
 
-    array_to_raster(
-        raster_to_array(images[0]), reference=images[2], out_path=denmark + "area2.tif"
-    )
-    array_to_raster(
-        raster_to_array(images[1]),
-        reference=images[2],
-        out_path=denmark + "volume2.tif",
-    )
+    # data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
+    # denmark = data_folder + "denmark/"
+
+    # images = [
+    #     denmark + "area.tif",
+    #     denmark + "volume.tif",
+    #     denmark + "2020_B02_10m.tif",
+    #     denmark + "2020_B03_10m.tif",
+    #     denmark + "2020_B04_10m.tif",
+    # ]
+
+    # array_to_raster(
+    #     raster_to_array(images[0]), reference=images[2], out_path=denmark + "area2.tif"
+    # )
+    # array_to_raster(
+    #     raster_to_array(images[1]),
+    #     reference=images[2],
+    #     out_path=denmark + "volume2.tif",
+    # )
 
     # s1 = data_folder + "sentinel1/"
     # s2 = data_folder + "sentinel2/"

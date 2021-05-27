@@ -42,14 +42,14 @@ def open_vector(
     layer: int = -1,
     where: tuple = (),
 ) -> ogr.DataSource:
-    """ Opens a vector to an ogr.Datasource class.
+    """Opens a vector to an ogr.Datasource class.
 
     Args:
         vector (path | datasource): A path to a vector or a ogr datasource.
 
         convert_mem_driver (bool): Converts MEM driver vectors to /vsimem/ geopackage.
 
-        writable (bool): Should the opened raster be writeable.       
+        writable (bool): Should the opened raster be writeable.
 
     Returns:
         A gdal.Dataset
@@ -178,7 +178,7 @@ def open_vector(
 
 
 def get_vector_path(vector: Union[str, ogr.DataSource]) -> str:
-    """ Takes a string or a ogr.Datasource and returns its path.
+    """Takes a string or a ogr.Datasource and returns its path.
 
     Args:
         vector (path | Dataset): A path to a vector or an ogr.Datasource.
@@ -186,6 +186,9 @@ def get_vector_path(vector: Union[str, ogr.DataSource]) -> str:
     Returns:
         A string representing the path to the vector.
     """
+    if isinstance(vector, str) and (len(vector) >= 8 and vector[0:8]) == "/vsimem/":
+        return vector
+
     type_check(vector, [str, ogr.DataSource], "vector")
 
     opened = open_vector(vector, convert_mem_driver=True, writeable=False)
@@ -204,7 +207,7 @@ def get_vector_path(vector: Union[str, ogr.DataSource]) -> str:
 
 
 def to_vector_list(variable: Any) -> List[str]:
-    """ Reads a list of vectors and returns a list of paths to the vectors.
+    """Reads a list of vectors and returns a list of paths to the vectors.
 
     Args:
         variable (list, path | Dataset): The vectors to generate paths for.
@@ -232,8 +235,8 @@ def internal_vector_to_metadata(
     process_layer: int = -1,
     create_geometry: bool = True,
 ) -> Metadata_vector:
-    """ OBS: Internal. Single output.
-    
+    """OBS: Internal. Single output.
+
     Creates a dictionary with metadata about the vector layer.
     """
     type_check(vector, [str, ogr.DataSource], "vector")
@@ -425,6 +428,12 @@ def internal_vector_to_metadata(
             for key, value in extended_extents_layer.items():
                 metadata[key] = value  # type: ignore
 
+        extent_datasource_layer = metadata["extent_datasource"].GetLayer()
+        extent_datasource_layer.SyncToDisk()
+
+        extent_datasource_latlng_layer = metadata["extent_datasource_latlng"].GetLayer()
+        extent_datasource_latlng_layer.SyncToDisk()
+
     return metadata
 
 
@@ -433,7 +442,7 @@ def vector_to_metadata(
     process_layer: int = -1,
     create_geometry: bool = True,
 ) -> Union[List[Metadata_vector], Metadata_vector]:
-    """ Creates a dictionary with metadata about the vector layer.
+    """Creates a dictionary with metadata about the vector layer.
 
     Args:
         vector (path | DataSource): The vector to analyse.
@@ -533,9 +542,9 @@ def internal_vector_to_memory(
     copy_if_already_in_memory: bool = True,
     layer_to_extract: int = -1,
 ) -> str:
-    """ OBS: Internal. Single output.
-        
-        Copies a vector source to memory.
+    """OBS: Internal. Single output.
+
+    Copies a vector source to memory.
     """
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(memory_path, [str], "memory_path", allow_none=True)
@@ -581,7 +590,7 @@ def vector_to_memory(
     copy_if_already_in_memory: bool = False,
     layer_to_extract: int = -1,
 ) -> Union[List[str], str]:
-    """ Copies a vector source to memory.
+    """Copies a vector source to memory.
 
     Args:
         vector (list | path | DataSource): The vector to copy to memory
@@ -594,8 +603,8 @@ def vector_to_memory(
 
         layer_to_extract (int | None): The layer in the vector to copy.
         if None is specified, all layers are copied.
-        
-        opened (bool): If a memory path is specified, the default is 
+
+        opened (bool): If a memory path is specified, the default is
         to return a path. If open is supplied. The vector is opened
         before returning.
 
@@ -629,11 +638,13 @@ def vector_to_memory(
 
 
 def internal_vector_to_disk(
-    vector: Union[str, ogr.DataSource], out_path: str, overwrite: bool = True,
+    vector: Union[str, ogr.DataSource],
+    out_path: str,
+    overwrite: bool = True,
 ) -> str:
-    """ OBS: Internal. Single output.
-    
-        Copies a vector source to disk.
+    """OBS: Internal. Single output.
+
+    Copies a vector source to disk.
     """
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(out_path, [str], "out_path")
@@ -675,7 +686,7 @@ def vector_to_disk(
     out_path: Union[List[str], str],
     overwrite: bool = True,
 ) -> Union[List[str], str]:
-    """ Copies a vector source to disk.
+    """Copies a vector source to disk.
 
     Args:
         vector (path | DataSource): The vector to copy to disk
@@ -758,7 +769,7 @@ def filter_vector(vector, filter_where, process_layer=0):
 def vector_add_index(
     vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource]
 ) -> List[str]:
-    """ Adds a spatial index to the vector if it doesn't have one.
+    """Adds a spatial index to the vector if it doesn't have one.
 
     Args:
         vector (list, path | vector): The vector to add the index to.
@@ -791,10 +802,10 @@ def internal_vector_add_shapes(
     vector: Union[str, ogr.DataSource],
     shapes: list = ["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
 ) -> str:
-    """ OBS: Internal. Single output.
-        
-        Adds shape calculations to a vector such as area and perimeter.
-        Can also add compactness measurements.
+    """OBS: Internal. Single output.
+
+    Adds shape calculations to a vector such as area and perimeter.
+    Can also add compactness measurements.
     """
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(shapes, [list], "shapes")
@@ -883,12 +894,12 @@ def vector_add_shapes(
     vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource],
     shapes: list = ["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
 ) -> Union[List[str], str]:
-    """ Adds shape calculations to a vector such as area and perimeter.
+    """Adds shape calculations to a vector such as area and perimeter.
         Can also add compactness measurements.
 
     Args:
         vector (path | vector): The vector to add shapes to.
-        
+
     **kwargs:
         shapes (list): The shapes to calculate. The following a possible:
             * Area          (In same unit as projection)

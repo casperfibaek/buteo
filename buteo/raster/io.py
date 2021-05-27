@@ -289,6 +289,12 @@ def internal_raster_to_metadata(
         metadata["extent_geojson"] = extended_extents["extent_geojson"]
         metadata["extent_geojson_dict"] = extended_extents["extent_geojson_dict"]
 
+        extent_datasource_layer = metadata["extent_datasource"].GetLayer()
+        extent_datasource_layer.SyncToDisk()
+
+        extent_datasource_latlng_layer = metadata["extent_datasource_latlng"].GetLayer()
+        extent_datasource_latlng_layer.SyncToDisk()
+
     return metadata
 
 

@@ -7,7 +7,7 @@ from buteo.raster.io import internal_raster_to_metadata, ready_io_raster, open_r
 from buteo.vector.io import (
     get_vector_path,
     open_vector,
-    vector_to_memory,
+    internal_vector_to_memory,
     internal_vector_to_metadata,
 )
 from buteo.utils import (
@@ -44,6 +44,7 @@ def internal_clip_raster(
     postfix: str = "_clipped",
     verbose: int = 1,
     uuid: bool = False,
+    ram: int = 8000,
 ) -> str:
     """OBS: Internal. Single output.
 
@@ -79,18 +80,16 @@ def internal_clip_raster(
         )
 
         if clip_metadata["layer_count"] > 1:
-            clip_ds = vector_to_memory(clip_ds, layer_to_extract=layer_to_clip)
+            clip_ds = internal_vector_to_memory(clip_ds, layer_to_extract=layer_to_clip)
+
+        if isinstance(clip_ds, ogr.DataSource):
+            clip_ds = clip_ds.GetName()
 
     # Input is a raster (use extent)
     elif is_raster(clip_geom):
-        clip_metadata_raster = internal_raster_to_metadata(
-            clip_geom, create_geometry=True
-        )
-
-        clip_ds = vector_to_memory(clip_metadata_raster["extent_datasource"])
-
-        clip_metadata = internal_vector_to_metadata(clip_ds)
-
+        clip_metadata = internal_raster_to_metadata(clip_geom, create_geometry=True)
+        clip_metadata["layer_count"] = 1
+        clip_ds = clip_metadata["extent_datasource"].GetName()
     else:
         if file_exists(clip_geom):
             raise ValueError(f"Unable to parse clip geometry: {clip_geom}")
@@ -184,9 +183,10 @@ def internal_clip_raster(
         outputBounds=output_bounds,
         xRes=raster_metadata["pixel_width"],
         yRes=raster_metadata["pixel_height"],
-        cutlineDSName=get_vector_path(clip_ds),
+        cutlineDSName=clip_ds,
         cropToCutline=False,  # GDAL does this incorrectly when targetAlignedPixels is True.
         creationOptions=out_creation_options,
+        warpMemoryLimit=ram,
         warpOptions=warp_options,
         srcNodata=raster_metadata["nodata_value"],
         dstNodata=out_nodata,
@@ -197,9 +197,6 @@ def internal_clip_raster(
         gdal.PopErrorHandler()
 
     if clipped is None:
-        import pdb
-
-        pdb.set_trace()
         raise Exception("Geometries did not intersect.")
 
     return out_name
@@ -221,6 +218,7 @@ def clip_raster(
     postfix: str = "_clipped",
     verbose: int = 1,
     uuid: bool = False,
+    ram: int = 8000,
 ) -> Union[list, gdal.Dataset, str]:
     """Clips a raster(s) using a vector geometry or the extents of
         a raster.
@@ -309,6 +307,7 @@ def clip_raster(
                 prefix=prefix,
                 postfix=postfix,
                 verbose=verbose,
+                ram=ram,
             )
         )
 
@@ -316,3 +315,30 @@ def clip_raster(
         return output
 
     return output[0]
+
+
+if __name__ == "__main__":
+    import os
+    from buteo.raster.clip import clip_raster
+    from buteo.raster.shift import shift_raster
+    from glob import glob
+
+    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/"
+    dst = folder + "tmp/"
+    # geom = folder + "ghana_buffered_1280.gpkg"
+    geom = folder + "2021_B04_10m.tif"
+
+    files = glob(folder + "clipped/*20m.tif")
+
+    paths = clip_raster(
+        files,
+        geom,
+        postfix="",
+        creation_options=["COMPRESS=NONE", "TILED=NO"],
+        ram="80%",
+        all_touch=False,
+        adjust_bbox=False,
+    )
+
+    for idx, path in enumerate(paths):
+        shift_raster(path, [10.0, 0], dst + os.path.basename(paths[idx]))

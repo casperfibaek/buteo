@@ -538,17 +538,23 @@ if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/sentinel2/"
     data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 
-    tmp_folder = folder + "tmp/"
-    mosaic_folder_2020 = folder + "mosaic_2020/"
-    mosaic_folder_2021 = folder + "mosaic_2021/"
-    dst_folder = folder + "mosaic/"
+    # mosaic_folder_2020 = folder + "mosaic_2020/"
+    # mosaic_folder_2021 = folder + "mosaic_2021/"
+    # dst_folder = folder + "mosaic/"
+    tmp_folder = (
+        "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/tmp/"
+    )
+    mosaic_folder = (
+        "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/tiles/"
+    )
+    dst_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/"
 
     join_s2_tiles(
-        mosaic_folder_2020,
+        mosaic_folder,
         dst_folder,
         tmp_folder,
-        prefix="2020_",
-        harmonisation=False,
+        prefix="2021_",
+        harmonisation=True,
         pixel_height=10.0,
         pixel_width=10.0,
         nodata_value=0,
@@ -564,15 +570,15 @@ if __name__ == "__main__":
             # "B11_20m",
             # "B12_20m",
         ],
-        projection_to_match=25832,
+        projection_to_match=32630,  # utm30, wgs84
     )
 
     join_s2_tiles(
-        mosaic_folder_2020,
+        mosaic_folder,
         dst_folder,
         tmp_folder,
-        prefix="2020_",
-        harmonisation=False,
+        prefix="2021_",
+        harmonisation=True,
         pixel_height=20.0,
         pixel_width=20.0,
         nodata_value=0,
@@ -588,58 +594,58 @@ if __name__ == "__main__":
             "B11_20m",
             "B12_20m",
         ],
-        projection_to_match=25832,
+        projection_to_match=32630,  # utm30, wgs84
     )
 
-    join_s2_tiles(
-        mosaic_folder_2021,
-        dst_folder,
-        tmp_folder,
-        prefix="2021_",
-        harmonisation=False,
-        pixel_height=10.0,
-        pixel_width=10.0,
-        nodata_value=0,
-        bands_to_process=[
-            "B02_10m",
-            "B03_10m",
-            "B04_10m",
-            "B08_10m",
-            # "B05_20m",
-            # "B06_20m",
-            # "B07_20m",
-            # "B8A_20m",
-            # "B11_20m",
-            # "B12_20m",
-        ],
-        projection_to_match=25832,
-    )
+    # join_s2_tiles(
+    #     mosaic_folder_2021,
+    #     dst_folder,
+    #     tmp_folder,
+    #     prefix="2021_",
+    #     harmonisation=False,
+    #     pixel_height=10.0,
+    #     pixel_width=10.0,
+    #     nodata_value=0,
+    #     bands_to_process=[
+    #         "B02_10m",
+    #         "B03_10m",
+    #         "B04_10m",
+    #         "B08_10m",
+    #         # "B05_20m",
+    #         # "B06_20m",
+    #         # "B07_20m",
+    #         # "B8A_20m",
+    #         # "B11_20m",
+    #         # "B12_20m",
+    #     ],
+    #     projection_to_match=25832,
+    # )
 
-    join_s2_tiles(
-        mosaic_folder_2021,
-        dst_folder,
-        tmp_folder,
-        prefix="2021_",
-        harmonisation=False,
-        pixel_height=20.0,
-        pixel_width=20.0,
-        nodata_value=0,
-        bands_to_process=[
-            # "B02_10m",
-            # "B03_10m",
-            # "B04_10m",
-            # "B08_10m",
-            "B05_20m",
-            "B06_20m",
-            "B07_20m",
-            "B8A_20m",
-            "B11_20m",
-            "B12_20m",
-        ],
-        projection_to_match=25832,
-    )
+    # join_s2_tiles(
+    #     mosaic_folder_2021,
+    #     dst_folder,
+    #     tmp_folder,
+    #     prefix="2021_",
+    #     harmonisation=False,
+    #     pixel_height=20.0,
+    #     pixel_width=20.0,
+    #     nodata_value=0,
+    #     bands_to_process=[
+    #         # "B02_10m",
+    #         # "B03_10m",
+    #         # "B04_10m",
+    #         # "B08_10m",
+    #         "B05_20m",
+    #         "B06_20m",
+    #         "B07_20m",
+    #         "B8A_20m",
+    #         "B11_20m",
+    #         "B12_20m",
+    #     ],
+    #     projection_to_match=25832,
+    # )
 
-    exit()
+    # exit()
 
     # vector = data_folder + "s2_tiles_in_project_area.gpkg"
     # # land_vector = data_folder + "denmark_polygon_1280m_buffer.gpkg"

@@ -341,8 +341,8 @@ def create_model(
 
 
 with tf.device("/device:GPU:0"):
-    lr = 0.00075
-    epochs = [10, 30, 90]
+    lr = 0.0006
+    epochs = [20, 70, 10]
     # epochs = [10]
     bs = [32, 16, 8]
     # bs = [32]
@@ -365,10 +365,24 @@ with tf.device("/device:GPU:0"):
     # log_dir = folder + "logs/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     # tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)
 
+    model.fit(
+        x=[x_train_rgbn[0:5000], x_train_swir[0:5000], x_train_sar[0:5000]],
+        y=y_train[0:5000],
+        validation_split=0.1,
+        shuffle=True,
+        validation_data=([x_test_rgbn, x_test_swir, x_test_sar], y_test),
+        epochs=10,
+        initial_epoch=0,
+        verbose=1,
+        batch_size=32,
+        use_multiprocessing=True,
+        workers=0,
+    )
+
     for phase in range(len(bs)):
         use_epoch = epochs[phase]
         use_bs = bs[phase]
-        initial_epoch = epochs[phase - 1] if phase != 0 else 0
+        initial_epoch = epochs[phase - 1] if phase != 0 else 10
 
         model.fit(
             x=[x_train_rgbn, x_train_swir, x_train_sar],
@@ -387,8 +401,8 @@ with tf.device("/device:GPU:0"):
                 LearningRateScheduler(
                     create_step_decay(
                         learning_rate=lr,
-                        drop_rate=0.6,
-                        epochs_per_drop=10,
+                        drop_rate=0.8,
+                        epochs_per_drop=5,
                     )
                 ),
                 # tensorboard_callback,
