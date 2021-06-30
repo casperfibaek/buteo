@@ -1368,10 +1368,33 @@ if __name__ == "__main__":
     from buteo.raster.io import stack_rasters
     from glob import glob
 
-    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
-    bornholm = folder + "bornholm/"
-    vector = folder + "vector/bornholm.gpkg"
-    model = bornholm + "bornholm_40epochs.h5"
+    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/"
+
+    grid = folder + "ghana_grid.gpkg"
+    raster = folder + "/raster/2021_B12_20m.tif"
+
+    path_np, path_geom = extract_patches(
+        raster,
+        out_dir=folder + "patches/",
+        prefix="",
+        postfix="",
+        size=64,
+        # size=64,
+        # offsets=[(32, 32), (64, 64), (96, 96)],
+        offsets=[(16, 16), (32, 32), (48, 48)],
+        generate_grid_geom=True,
+        generate_zero_offset=True,
+        generate_border_patches=True,
+        clip_geom=grid,
+        verify_output=True,
+        verification_samples=100,
+        verbose=1,
+    )
+
+
+    # bornholm = folder + "bornholm/"
+    # vector = folder + "vector/bornholm.gpkg"
+    # model = bornholm + "bornholm_40epochs.h5"
 
     # s2_10m = glob(bornholm + "raster/*10m.tif")
     # s1_VV = glob(bornholm + "raster/*VV.tif")

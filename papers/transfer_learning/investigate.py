@@ -178,7 +178,7 @@ def define_model(
     shape_sar,
     activation="Mish",
     kernel_initializer="glorot_normal",
-    sizes=[64, 64, 64],
+    sizes=[48, 48, 48],
 ):
     # ----------------- RGBN ------------------------
     rgbn_input = Input(shape=shape_rgbn, name="rgbn")
@@ -296,16 +296,38 @@ def define_model(
     return Model(inputs=[rgbn_input, swir_input, sar_input], outputs=output)
 
 
-x_train_rgbn = np.load(folder + "001_RGBN.npy")
-x_train_swir = np.load(folder + "001_SWIR.npy")
-x_train_sar = np.load(folder + "001_SAR.npy")
+version = 1
 
-y_train = np.load(folder + "001_LABEL_AREA.npy")[:, :, :, 0]
+# x_train_rgbn = np.load(folder + f"00{version}_RGBN.npy")
+# x_train_swir = np.load(folder + f"00{version}_SWIR.npy")
+# x_train_sar = np.load(folder + f"00{version}_SAR.npy")
+
+# y_train = np.load(folder + f"00{version}_LABEL_AREA.npy")[:, :, :, 0]
+# y_train = np.load(folder + f"00{version}_LABEL_AREA.npy")
+
+# init_mask = y_train.sum(axis=(1, 2)) > 1000
+
+# x_train_rgbn = x_train_rgbn[init_mask][0:5000]
+# x_train_swir = x_train_swir[init_mask][0:5000]
+# x_train_sar = x_train_sar[init_mask][0:5000]
+
+# y_train = y_train[init_mask][0:5000]
+
+# np.save(folder + "003_RGBN.npy", x_train_rgbn)
+# np.save(folder + "003_SWIR.npy", x_train_swir)
+# np.save(folder + "003_SAR.npy", x_train_sar)
+# np.save(folder + "003_LABEL_AREA.npy", y_train)
 
 x_test_rgbn = preprocess_optical(np.load(folder + "10830461_RGBN.npy"))
 x_test_swir = preprocess_optical(np.load(folder + "10830461_SWIR.npy"))
 x_test_sar = preprocess_sar(np.load(folder + "10830461_SAR.npy"))
 y_test = np.load(folder + "10830461_LABEL_AREA.npy")[:, :, :, 0]
+# y_test = np.load(folder + "10830461_LABEL_AREA.npy")
+
+
+# import pdb
+
+# pdb.set_trace()
 
 
 def create_model(
@@ -341,80 +363,67 @@ def create_model(
 
 
 with tf.device("/device:GPU:0"):
-    lr = 0.0006
-    epochs = [20, 70, 10]
+    lr = 0.00001
+    epochs = [10]
     # epochs = [10]
-    bs = [32, 16, 8]
+    bs = [16]
     # bs = [32]
 
-    model = create_model(
-        (64, 64, 4),
-        (32, 32, 2),
-        (64, 64, 2),
-        kernel_initializer="glorot_normal",
-        activation="Mish",
-        learning_rate=lr,
-    )
+    # model = create_model(
+    #     (64, 64, 4),
+    #     (32, 32, 2),
+    #     (64, 64, 2),
+    #     kernel_initializer="glorot_normal",
+    #     activation="Mish",
+    #     learning_rate=lr,
+    # )
 
-    print(model.summary())
+    model = tf.keras.models.load_model(folder + "/models/denmark_base_06")
 
-    model_checkpoint_callback = ModelCheckpoint(
-        filepath=folder + "tmp/model_checkpoint-{epoch:02d}",
-    )
+    # print(model.summary())
 
-    # log_dir = folder + "logs/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    # tensorboard_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)
+    # model_checkpoint_callback = ModelCheckpoint(
+    #     filepath=folder + "tmp/model_check_advanced_final-{epoch:02d}",
+    # )
 
-    model.fit(
-        x=[x_train_rgbn[0:5000], x_train_swir[0:5000], x_train_sar[0:5000]],
-        y=y_train[0:5000],
-        validation_split=0.1,
-        shuffle=True,
-        validation_data=([x_test_rgbn, x_test_swir, x_test_sar], y_test),
-        epochs=10,
-        initial_epoch=0,
-        verbose=1,
-        batch_size=32,
-        use_multiprocessing=True,
-        workers=0,
-    )
+    # for phase in range(len(bs)):
+    #     use_epoch = epochs[phase]
+    #     use_bs = bs[phase]
+    #     initial_epoch = epochs[phase - 1] if phase != 0 else 0
 
-    for phase in range(len(bs)):
-        use_epoch = epochs[phase]
-        use_bs = bs[phase]
-        initial_epoch = epochs[phase - 1] if phase != 0 else 10
+    #     model.fit(
+    #         x=[x_train_rgbn, x_train_swir, x_train_sar],
+    #         y=y_train,
+    #         validation_split=0.05,
+    #         shuffle=True,
+    #         validation_data=([x_test_rgbn, x_test_swir, x_test_sar], y_test),
+    #         epochs=use_epoch,
+    #         initial_epoch=initial_epoch,
+    #         verbose=1,
+    #         batch_size=use_bs,
+    #         use_multiprocessing=True,
+    #         workers=0,
+    #         callbacks=[
+    #             model_checkpoint_callback,
+    #             LearningRateScheduler(
+    #                 create_step_decay(
+    #                     learning_rate=lr,
+    #                     drop_rate=0.8,
+    #                     epochs_per_drop=3,
+    #                 )
+    #             ),
+    #             # tensorboard_callback,
+    #         ],
+    #     )
 
-        model.fit(
-            x=[x_train_rgbn, x_train_swir, x_train_sar],
-            y=y_train,
-            validation_split=0.05,
-            shuffle=True,
-            validation_data=([x_test_rgbn, x_test_swir, x_test_sar], y_test),
-            epochs=use_epoch,
-            initial_epoch=initial_epoch,
-            verbose=1,
-            batch_size=use_bs,
-            use_multiprocessing=True,
-            workers=0,
-            callbacks=[
-                model_checkpoint_callback,
-                LearningRateScheduler(
-                    create_step_decay(
-                        learning_rate=lr,
-                        drop_rate=0.8,
-                        epochs_per_drop=5,
-                    )
-                ),
-                # tensorboard_callback,
-            ],
-        )
+    # model.save(folder + "models/denmark_01", save_format="tf")
 
     print(f"Batch_size: {str(bs)}")
     loss, mse, mae = model.evaluate(
         x=[x_test_rgbn, x_test_swir, x_test_sar],
         y=y_test,
         verbose=1,
-        batch_size=bs[0],
+        batch_size=32,
         use_multiprocessing=True,
     )
 
@@ -422,47 +431,23 @@ with tf.device("/device:GPU:0"):
     print(f"Mean Absolute Error:    {round(mae, 3)}")
     print("")
 
-
-# 10 Epochs baseline (mse loss, relu, 32 min)
-# Mean Square Error:      65.925
-# Mean Absolute Error:    2.222
-
-# 10 Epochs (mse loss, mish, 16 min) 0h 5m 14.45s
-# Mean Square Error:      56.484
-# Mean Absolute Error:    1.798
-
-# 10 Epochs (mse loss, mish, 16 min, reduction_blocks) 0h 7m 14.29s
-# Mean Square Error:      54.795
-# Mean Absolute Error:    1.695
-
-# 10 Epochs (mse loss, mish, 32 min, reduction_blocks) 0h 6m 38.52s
-# Mean Square Error:      56.03
-# Mean Absolute Error:    1.736
-
-# 10 Epochs (mse loss, mish, 32 min, reduction_blocks, inception_blocks) 0h 11m 16.59s
-# Mean Square Error:      53.597
-# Mean Absolute Error:    1.627
-
-# 10 Epochs (mse loss, mish, 32 min, reduction_blocks, inception_blocks, expansion_blocks) 0h 12m 39.16s
-# Mean Square Error:      54.442
-# Mean Absolute Error:    1.704
-
-# 10 Epochs massive
-# Mean Square Error:      47.476
-# Mean Absolute Error:    1.481
-
-# model 6
-# Mean Square Error:      45.438
-# Mean Absolute Error:    1.456
-
-# model 7
-# Mean Square Error:      46.042
-# Mean Absolute Error:    1.438
-
-# model lol
-# Mean Square Error:      10.923
-# Mean Absolute Error:    0.342
-
-model.save(folder + "models/denmark_10_all_area", save_format="tf")
-
 timing(start)
+
+
+# Epoch 7/10
+# 13133/13133 [==============================] - 5528s 421ms/step - loss: 16.4366 - mse: 16.4365 - mae: 0.7040 - val_loss: 17.0241 - val_mse: 17.0240 - val_mae: 0.7045
+
+# 120s 213ms/step - loss: 12.0723 - mse: 12.0723 - mae: 0.7749 - val_loss: 61.4837 - val_mse: 61.4804 - val_mae: 1.6726
+
+# best val
+# val_loss: 58.2583 - val_mse: 58.2562 - val_mae: 1.6984
+
+# model5
+# Mean Square Error:      64.323
+# Mean Absolute Error:    2.418
+
+# Processing took: 0h 1m 3.66s
+
+
+# Mean Square Error:      144.236
+# Mean Absolute Error:    3.824

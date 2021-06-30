@@ -8,14 +8,20 @@ from buteo.raster.io import stack_rasters
 from buteo.machine_learning.patch_extraction import predict_raster
 from buteo.raster.io import raster_to_array, array_to_raster
 from utils import preprocess_optical, preprocess_sar
+from buteo.raster.clip import clip_raster
 
+from glob import glob
 
-folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/bornholm/"
+# folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/bornholm/"
 
-model_nr = "10"
-model = f"C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/machine_learning_data/models/denmark_{model_nr}"
+# model_nr = "15"
+# model = f"C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/machine_learning_data/models/denmark_{model_nr}"
 
-date = "2021"
+folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/"
+# model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/machine_learning_data/models/denmark_base_06"
+model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/models/ghana_02"
+
+date = "clipped/2021"
 
 rgbn = stack_rasters(
     [
@@ -68,7 +74,8 @@ sar = stack_rasters(
 predict_raster(
     [rgbn, swir, sar],
     model,
-    out_path=folder + f"model_{model_nr}.tif",
+    # out_path=folder + f"model_{model_nr}.tif",
+    out_path=folder + f"ghana_02.tif",
     offsets=[
         [(16, 16), (32, 32), (48, 48)],
         [(8, 8), (16, 16), (24, 24)],
@@ -76,5 +83,5 @@ predict_raster(
     ],
     # offsets=[[], [], []],
     device="gpu",
-    output_size=128,
+    output_size=64,
 )

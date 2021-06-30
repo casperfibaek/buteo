@@ -326,13 +326,14 @@ if __name__ == "__main__":
     folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/"
     dst = folder + "tmp/"
     # geom = folder + "ghana_buffered_1280.gpkg"
-    geom = folder + "2021_B04_10m.tif"
+    geom = folder + "west/area.tif"
 
-    files = glob(folder + "clipped/*20m.tif")
+    files = glob(folder + "*20m.tif")
 
     paths = clip_raster(
         files,
         geom,
+        out_path=folder + "/west/",
         postfix="",
         creation_options=["COMPRESS=NONE", "TILED=NO"],
         ram="80%",
@@ -340,5 +341,5 @@ if __name__ == "__main__":
         adjust_bbox=False,
     )
 
-    for idx, path in enumerate(paths):
-        shift_raster(path, [10.0, 0], dst + os.path.basename(paths[idx]))
+    # for idx, path in enumerate(paths):
+    #     shift_raster(path, [10.0, 0], dst + os.path.basename(paths[idx]))

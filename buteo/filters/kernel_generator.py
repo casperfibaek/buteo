@@ -93,7 +93,7 @@ def create_kernel(
     radius_method="2d",
     output_2d=False,
 ):
-    """ Channel last """
+    """Channel last"""
 
     if len(shape) == 2:
         shape = (shape[0], shape[1], 1)
@@ -223,18 +223,39 @@ def create_kernel(
 if __name__ == "__main__":
     np.set_printoptions(suppress=True)
     kernel, offsets, weights = create_kernel(
-        (3, 3, 5),
+        (5, 5, 1),
         sigma=2,
-        distance_calc=False,
+        distance_calc="gaussian",
         decay=0.10,
-        radius_method="ellipsoid",
+        # radius_method="ellipsoid",
         offsets=True,
         spherical=True,
         edge_weights=True,
-        normalised=False,
+        normalised=True,
         remove_zero_weights=True,
     )
-    # print(kernel)
-    import pdb
 
-    pdb.set_trace()
+    from matplotlib import pyplot as plt
+
+    bob = kernel[:, :, 0]
+    fig, ax = plt.subplots()
+    im = ax.imshow(bob, cmap="viridis")
+
+    for i in range(5):
+        for j in range(5):
+            if i == 2 and j == 2:
+                color = "black"
+            else:
+                color = "white"
+            text = ax.text(
+                j, i, np.round(bob[i, j], 4), ha="center", va="center", color=color
+            )
+
+    ax.set_title("Kernel values")
+    fig.tight_layout()
+
+    plt.show()
+    # print(kernel)
+    # import pdb
+
+    # pdb.set_trace()
