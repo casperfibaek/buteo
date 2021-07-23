@@ -50,7 +50,7 @@ def reduction_block(
     track1 = AveragePooling2D(
         pool_size=(2, 2),
         padding="same",
-        name=name + "_track1",
+        name=name + "_reduction_t1",
     )(inputs)
     track2 = Conv2D(
         size,
@@ -59,7 +59,7 @@ def reduction_block(
         strides=(2, 2),
         activation=activation,
         kernel_initializer=kernel_initializer,
-        name=name + "_track2",
+        name=name + "_reduction_t2",
     )(inputs)
     track3 = Conv2D(
         size - 16,

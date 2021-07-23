@@ -8,9 +8,7 @@ from buteo.raster.io import stack_rasters
 from buteo.machine_learning.patch_extraction import predict_raster
 from buteo.raster.io import raster_to_array, array_to_raster
 from utils import preprocess_optical, preprocess_sar
-from buteo.raster.clip import clip_raster
 
-from glob import glob
 
 # folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/bornholm/"
 

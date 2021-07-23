@@ -12,8 +12,8 @@ s1_VV = glob(folder + "west/*VV.tif")
 s1_VH = glob(folder + "west/*VH.tif")
 
 area = folder + "west/area.tif"
-# volume = region + "raster/volume.tif"
-# people = region + "raster/people.tif"
+volume = folder + "west/volume.tif"
+people = folder + "west/people.tif"
 
 images = []
 

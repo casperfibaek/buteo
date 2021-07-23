@@ -60,10 +60,12 @@ def rotate_shuffle(arrs=[]):
     return rotated
 
 
+# Thresholds at 10000 and scales to 0 to 1
 def preprocess_optical(arr, cutoff=10000):
     return np.true_divide(np.where(arr > cutoff, cutoff, arr), cutoff).astype("float32")
 
 
+# Converts to decibel, thresholds between -30 and 10db and scales to 0 to 1
 def preprocess_sar(arr, cutoffs=[-30, 10]):
     with np.errstate(divide="ignore", invalid="ignore"):
         arr_db = 10 * np.where(arr != 0, np.log10(arr), 0)
@@ -74,4 +76,6 @@ def preprocess_sar(arr, cutoffs=[-30, 10]):
         np.where(arr_db < cutoffs[0], cutoffs[0], arr_db),
     )
 
-    return np.true_divide(np.add(thresholded, np.abs(thresholded.min())), diff)
+    return np.true_divide(np.add(thresholded, np.abs(thresholded.min())), diff).astype(
+        "float32"
+    )

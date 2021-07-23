@@ -18,24 +18,10 @@ from tensorflow.keras.layers import (
     AveragePooling2D,
     Conv2DTranspose,
     Concatenate,
-    SpatialDropout2D,
-)
-from tensorflow.keras.callbacks import (
-    LearningRateScheduler,
-    ModelCheckpoint,
-    TensorBoard,
 )
 from tensorflow.keras import mixed_precision
-from buteo.machine_learning.ml_utils import load_mish, create_step_decay
+from buteo.machine_learning.ml_utils import load_mish
 from buteo.utils import timing
-from utils import preprocess_optical, preprocess_sar
-from datagenerator import DataGenerator
-from utils import (
-    preprocess_optical,
-    preprocess_sar,
-    random_scale_noise,
-    rotate_shuffle,
-)
 
 np.set_printoptions(suppress=True)
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
@@ -49,9 +35,17 @@ start = time.time()
 
 
 def reduction_block(
-    inputs, size=32, activation="Mish", kernel_initializer="glorot_normal"
+    inputs,
+    size=32,
+    activation="Mish",
+    kernel_initializer="glorot_normal",
+    name=None,
 ):
-    track1 = AveragePooling2D(pool_size=(2, 2), padding="same")(inputs)
+    track1 = AveragePooling2D(
+        pool_size=(2, 2),
+        padding="same",
+        name=name + "_reduction_t1_0",
+    )(inputs)
     track2 = Conv2D(
         size,
         kernel_size=3,
@@ -59,6 +53,7 @@ def reduction_block(
         strides=(2, 2),
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name=name + "_reduction_t2_0",
     )(inputs)
     track3 = Conv2D(
         size - 16,
@@ -67,6 +62,7 @@ def reduction_block(
         strides=(1, 1),
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name=name + "_reduction_t3_0",
     )(inputs)
     track3 = Conv2D(
         size - 8,
@@ -75,6 +71,7 @@ def reduction_block(
         strides=(1, 1),
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name=name + "_reduction_t3_1",
     )(track3)
     track3 = Conv2D(
         size,
@@ -83,6 +80,7 @@ def reduction_block(
         strides=(2, 2),
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name=name + "_reduction_t3_2",
     )(track3)
 
     return Concatenate()(
@@ -95,7 +93,11 @@ def reduction_block(
 
 
 def expansion_block(
-    inputs, size=32, activation="Mish", kernel_initializer="glorot_normal"
+    inputs,
+    size=32,
+    activation="Mish",
+    kernel_initializer="glorot_normal",
+    name=None,
 ):
     track1 = Conv2DTranspose(
         size,
@@ -104,15 +106,25 @@ def expansion_block(
         kernel_initializer=kernel_initializer,
         activation=activation,
         padding="same",
+        name=name + "_expansion_t1_0",
     )(inputs)
 
     return track1
 
 
 def inception_block(
-    inputs, size=32, activation="Mish", kernel_initializer="glorot_normal"
+    inputs,
+    size=32,
+    activation="Mish",
+    kernel_initializer="glorot_normal",
+    name=None,
 ):
-    track1 = MaxPooling2D(pool_size=2, strides=1, padding="same")(inputs)
+    track1 = MaxPooling2D(
+        pool_size=2,
+        strides=1,
+        padding="same",
+        name=name + "_inception_t1_0",
+    )(inputs)
     track2 = Conv2D(
         size,
         kernel_size=1,
@@ -120,6 +132,7 @@ def inception_block(
         strides=(1, 1),
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name=name + "_inception_t2_0",
     )(inputs)
     track3 = Conv2D(
         size - 8,
@@ -128,6 +141,7 @@ def inception_block(
         strides=(1, 1),
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name=name + "_inception_t3_0",
     )(inputs)
     track3 = Conv2D(
         size,
@@ -136,6 +150,7 @@ def inception_block(
         strides=(1, 1),
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name=name + "_inception_t3_1",
     )(track3)
     track4 = Conv2D(
         size - 16,
@@ -144,6 +159,7 @@ def inception_block(
         strides=(1, 1),
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name=name + "_inception_t4_0",
     )(inputs)
     track4 = Conv2D(
         size - 8,
@@ -152,6 +168,7 @@ def inception_block(
         strides=(1, 1),
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name=name + "_inception_t4_1",
     )(track4)
     track4 = Conv2D(
         size,
@@ -160,6 +177,7 @@ def inception_block(
         strides=(1, 1),
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name=name + "_inception_t4_2",
     )(track4)
 
     return Concatenate()(
@@ -181,13 +199,14 @@ def define_model(
     sizes=[48, 48, 48],
 ):
     # ----------------- RGBN ------------------------
-    rgbn_input = Input(shape=shape_rgbn, name="rgbn")
+    rgbn_input = Input(shape=shape_rgbn, name="rgbn_input")
     rgbn = Conv2D(
         sizes[0],
         kernel_size=5,
         padding="same",
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name="initial_conv_rgbn",
     )(rgbn_input)
     rgbn = inception_block(rgbn, size=sizes[0])
     rgbn_skip1 = inception_block(rgbn, size=sizes[0])
@@ -202,13 +221,14 @@ def define_model(
     rgbn = inception_block(rgbn, size=sizes[1])
 
     # ----------------- SWIR ------------------------
-    swir_input = Input(shape=shape_swir, name="swir")
+    swir_input = Input(shape=shape_swir, name="swir_input")
     swir = Conv2D(
         sizes[1],
         kernel_size=3,
         padding="same",
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name="initial_conv_swir",
     )(swir_input)
     swir = inception_block(swir, size=sizes[2])
     swir_skip1 = inception_block(swir, size=sizes[1])
@@ -227,13 +247,14 @@ def define_model(
     model = inception_block(model, size=sizes[0])
 
     # ----------------- SAR -------------------------
-    sar_input = Input(shape=shape_sar, name="sar")
+    sar_input = Input(shape=shape_sar, name="sar_input")
     sar = Conv2D(
         sizes[0],
         kernel_size=5,
         padding="same",
         activation=activation,
         kernel_initializer=kernel_initializer,
+        name="initial_conv_sar",
     )(sar_input)
     sar = inception_block(sar, size=sizes[0])
     sar_skip1 = inception_block(sar, size=sizes[0])
