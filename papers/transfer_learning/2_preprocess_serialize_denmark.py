@@ -3,7 +3,6 @@ import numpy as np
 from utils import (
     preprocess_optical,
     preprocess_sar,
-    random_scale_noise,
 )
 
 
@@ -70,16 +69,28 @@ def merge_and_preprocess(folder, test_or_train="train"):
         np.stack(
             [
                 np.concatenate(
-                    [np.load(images[0][0][1]), np.load(images[0][0][2])]
+                    [
+                        np.load(images[0][0][1]),  # 2020
+                        np.load(images[0][0][2]),  # 2021
+                    ],
                 ),  # B02
                 np.concatenate(
-                    [np.load(images[0][1][1]), np.load(images[0][1][2])]
+                    [
+                        np.load(images[0][1][1]),  # 2020
+                        np.load(images[0][1][2]),  # 2021
+                    ],
                 ),  # B03
                 np.concatenate(
-                    [np.load(images[0][2][1]), np.load(images[0][2][2])]
+                    [
+                        np.load(images[0][2][1]),  # 2020
+                        np.load(images[0][2][2]),  # 2021
+                    ],
                 ),  # B04
                 np.concatenate(
-                    [np.load(images[0][3][1]), np.load(images[0][3][2])]
+                    [
+                        np.load(images[0][3][1]),  # 2020
+                        np.load(images[0][3][2]),  # 2021
+                    ],
                 ),  # B08
             ],
             axis=3,
@@ -108,10 +119,16 @@ def merge_and_preprocess(folder, test_or_train="train"):
         np.stack(
             [
                 np.concatenate(
-                    [np.load(images[1][0][1]), np.load(images[1][0][2])]
+                    [
+                        np.load(images[1][0][1]),  # 2020
+                        np.load(images[1][0][2]),  # 2021
+                    ]
                 ),  # B11
                 np.concatenate(
-                    [np.load(images[1][1][1]), np.load(images[1][1][2])]
+                    [
+                        np.load(images[1][1][1]),  # 2020
+                        np.load(images[1][1][2]),  # 2021
+                    ]
                 ),  # B12
             ],
             axis=3,
@@ -135,10 +152,16 @@ def merge_and_preprocess(folder, test_or_train="train"):
         np.stack(
             [
                 np.concatenate(
-                    [np.load(images[2][0][1]), np.load(images[2][0][2])]
+                    [
+                        np.load(images[2][0][1]),  # 2020
+                        np.load(images[2][0][2]),  # 2021
+                    ]
                 ),  # VH
                 np.concatenate(
-                    [np.load(images[2][1][1]), np.load(images[2][1][2])]
+                    [
+                        np.load(images[2][1][1]),  # 2020
+                        np.load(images[2][1][2]),  # 2021
+                    ]
                 ),  # VV
             ],
             axis=3,
@@ -161,7 +184,10 @@ def merge_and_preprocess(folder, test_or_train="train"):
     images_area = np.stack(
         [
             np.concatenate(
-                [np.load(images[3][0][1]), np.load(images[3][0][1])]
+                [
+                    np.load(images[3][0][1]),  # 2020
+                    np.load(images[3][0][1]),  # 2021
+                ],
             ),  # Area
         ],
         axis=3,
@@ -183,7 +209,10 @@ def merge_and_preprocess(folder, test_or_train="train"):
     images_volume = np.stack(
         [
             np.concatenate(
-                [np.load(images[3][1][1]), np.load(images[3][1][1])]
+                [
+                    np.load(images[3][1][1]),  # 2020
+                    np.load(images[3][1][1]),  # 2021
+                ],
             ),  # Area
         ],
         axis=3,
@@ -205,7 +234,10 @@ def merge_and_preprocess(folder, test_or_train="train"):
     images_people = np.stack(
         [
             np.concatenate(
-                [np.load(images[3][2][1]), np.load(images[3][2][1])]
+                [
+                    np.load(images[3][2][1]),  # 2020
+                    np.load(images[3][2][1]),  # 2021
+                ],
             ),  # Area
         ],
         axis=3,
@@ -226,5 +258,6 @@ def merge_and_preprocess(folder, test_or_train="train"):
 
 
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/denmark/"
+
 merge_and_preprocess(folder, "train")
 merge_and_preprocess(folder, "test")

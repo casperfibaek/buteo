@@ -5,7 +5,6 @@ sys.path.append(yellow_follow)
 
 import os
 import time
-import datetime
 import numpy as np
 
 import tensorflow as tf
@@ -20,8 +19,6 @@ from tensorflow.keras.layers import (
 from tensorflow.keras import mixed_precision
 from tensorflow.keras.callbacks import (
     LearningRateScheduler,
-    ModelCheckpoint,
-    TensorBoard,
 )
 from buteo.machine_learning.ml_utils import load_mish, create_step_decay
 
@@ -59,7 +56,7 @@ def reduction_block(
         kernel_regularizer=kernel_regularizer,
     )(inputs)
     track3 = Conv2D(
-        size - 8,
+        size - 16,
         kernel_size=1,
         padding="same",
         strides=(1, 1),
@@ -68,7 +65,7 @@ def reduction_block(
         kernel_initializer=kernel_initializer,
     )(inputs)
     track3 = Conv2D(
-        size - 4,
+        size - 8,
         kernel_size=3,
         padding="same",
         strides=(1, 1),
@@ -141,7 +138,7 @@ def inception_block(
         kernel_regularizer=kernel_regularizer,
     )(inputs)
     track3 = Conv2D(
-        size - 4,
+        size - 8,
         kernel_size=1,
         padding="same",
         strides=(1, 1),
@@ -160,7 +157,7 @@ def inception_block(
         kernel_regularizer=kernel_regularizer,
     )(track3)
     track4 = Conv2D(
-        size - 8,
+        size - 16,
         kernel_size=1,
         padding="same",
         strides=(1, 1),
@@ -169,7 +166,7 @@ def inception_block(
         kernel_initializer=kernel_initializer,
     )(inputs)
     track4 = Conv2D(
-        size - 4,
+        size - 8,
         kernel_size=3,
         padding="same",
         strides=(1, 1),
@@ -204,7 +201,7 @@ def define_model(
     shape_sar,
     activation="Mish",
     kernel_initializer="glorot_normal",
-    sizes=[40, 48, 56],
+    sizes=[24, 32, 40],
 ):
     # ----------------- RGBN ------------------------
     rgbn_input = Input(shape=shape_rgbn, name="rgbn_input")
@@ -275,10 +272,7 @@ def define_model(
     sar = expansion_block(sar, size=sizes[0], name="sar_eb_01")
     sar = Concatenate()([sar_skip1, sar])
     sar = inception_block(
-        sar,
-        size=sizes[0],
-        # kernel_regularizer=tf.keras.regularizers.L2(l2=0.01),
-        name="sar_ib_06",
+        sar, size=sizes[0], kernel_regularizer="l1_l2", name="sar_ib_06"
     )
 
     # ----------------- TAIL ------------------------
@@ -312,13 +306,13 @@ def create_subset(folder, train_or_test="train"):
     y_area = np.load(folder + f"LABEL_AREA_{train_or_test}.npy")
 
     limit = 25000
-    area_limit = 2500
+    area_limit = 1000
 
     mask = y_area.sum(axis=(1, 2))[:, 0] > area_limit
 
     y_area = y_area[mask]
     y_area = y_area[0:limit]
-    np.save(folder + f"subset_{limit}_LABEL_AREA_{train_or_test}", y_area)
+    np.save(folder + f"subset_{limit}_AREA_{train_or_test}", y_area)
 
     x_rgbn = np.load(folder + f"RGBN_{train_or_test}.npy")[mask]
     x_rgbn = x_rgbn[0:limit]
@@ -334,11 +328,11 @@ def create_subset(folder, train_or_test="train"):
 
     x_vol = np.load(folder + f"LABEL_VOLUME_{train_or_test}.npy")[mask]
     x_vol = x_vol[0:limit]
-    np.save(folder + f"subset_{limit}_LABEL_VOLUME_{train_or_test}", x_vol)
+    np.save(folder + f"subset_{limit}_VOLUME_{train_or_test}", x_vol)
 
     x_pop = np.load(folder + f"LABEL_PEOPLE_{train_or_test}.npy")[mask]
     x_pop = x_pop[0:limit]
-    np.save(folder + f"subset_{limit}_LABEL_PEOPLE_{train_or_test}", x_pop)
+    np.save(folder + f"subset_{limit}_PEOPLE_{train_or_test}", x_pop)
 
 
 def create_model(
@@ -375,54 +369,31 @@ def create_model(
 
 with tf.device("/device:GPU:0"):
     lr = 0.0001
-    epochs = [1]
-    bs = [96]
+    epochs = [10, 10]
+    bs = [128, 64]
 
-    # model_name = "subset_25000_area_simple_01"
-    model_name = "area_advanced_v07"
-
-    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/denmark/"
-
-    x_train_rgbn = np.load(folder + "RGBN_train.npy")
-    x_train_swir = np.load(folder + "SWIR_train.npy")
-    x_train_sar = np.load(folder + "SAR_train.npy")
-    y_train = np.load(folder + "LABEL_AREA_train.npy")
-
-    # create_subset(folder, "train")
-    # x_train_rgbn = np.load(folder + "subset_25000_RGBN_train.npy")
-    # x_train_swir = np.load(folder + "subset_25000_SWIR_train.npy")
-    # x_train_sar = np.load(folder + "subset_25000_SAR_train.npy")
-    # y_train = np.load(folder + "subset_25000_LABEL_AREA_train.npy")
-
-    # donor_model = tf.keras.models.load_model(
-    #     folder + "/models/area_advanced_v05_log_cosh_17"
-    # )
-
-    # model = create_model(
-    #     (64, 64, 4),
-    #     (32, 32, 2),
-    #     (64, 64, 2),
-    #     kernel_initializer="glorot_normal",
-    #     activation="relu",
-    #     learning_rate=lr,
-    # )
-
-    # model.set_weights(donor_model.get_weights())
-
-    model = tf.keras.models.load_model(
-        folder + "/models/area_advanced_v06_urban_subset_05"
+    model = create_model(
+        (64, 64, 4),
+        (32, 32, 2),
+        (64, 64, 2),
+        kernel_initializer="glorot_normal",
+        activation="Mish",
+        learning_rate=lr,
     )
 
     print(model.summary())
 
-    model_checkpoint_callback = ModelCheckpoint(
-        filepath=folder + f"models/{model_name}_" + "{epoch:02d}",
-    )
+    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/denmark/"
+
+    x_train_rgbn = np.load(folder + "subset_25000_RGBN_train.npy")
+    x_train_swir = np.load(folder + "subset_25000_SWIR_train.npy")
+    x_train_sar = np.load(folder + "subset_25000_SAR_train.npy")
+    y_train = np.load(folder + "subset_25000_AREA_train.npy")
 
     for phase in range(len(bs)):
-        use_epoch = np.cumsum(epochs)[phase]
+        use_epoch = epochs[phase]
         use_bs = bs[phase]
-        initial_epoch = np.cumsum(epochs)[phase - 1] if phase != 0 else 0
+        initial_epoch = epochs[phase - 1] if phase != 0 else 0
 
         model.fit(
             x=[x_train_rgbn, x_train_swir, x_train_sar],
@@ -439,11 +410,10 @@ with tf.device("/device:GPU:0"):
                 LearningRateScheduler(
                     create_step_decay(
                         learning_rate=lr,
-                        drop_rate=0.5,
+                        drop_rate=0.75,
                         epochs_per_drop=3,
                     )
                 ),
-                model_checkpoint_callback,
             ],
         )
 
@@ -452,10 +422,10 @@ with tf.device("/device:GPU:0"):
     x_train_sar = None
     y_train = None
 
-    x_test_rgbn = np.load(folder + "RGBN_test.npy")
-    x_test_swir = np.load(folder + "SWIR_test.npy")
-    x_test_sar = np.load(folder + "SAR_test.npy")
-    y_test = np.load(folder + "LABEL_AREA_test.npy")
+    x_test_rgbn = folder + "RGBN_test.npy"
+    x_test_swir = folder + "SWIR_test.npy"
+    x_test_sar = folder + "SAR_test.npy"
+    y_test = folder + "area_test.npy"
 
     loss, mse, mae = model.evaluate(
         x=[x_test_rgbn, x_test_swir, x_test_sar],
@@ -468,3 +438,9 @@ with tf.device("/device:GPU:0"):
     print(f"Mean Square Error:      {round(mse, 3)}")
     print(f"Mean Absolute Error:    {round(mae, 3)}")
     print("")
+
+
+# TODO:
+# Make small samples to tune model
+# Optimize simple model, get < 65 on train
+# 215ms/step with 10000
