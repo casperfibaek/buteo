@@ -1,36 +1,56 @@
-from buteo.raster.io import internal_raster_to_metadata
+from numpy.ma import clip
+from buteo.raster.io import internal_raster_to_metadata, open_raster
 from buteo.vector.clip import internal_clip_vector
+from buteo.vector.io import internal_vector_to_metadata, open_vector
+from math import ceil
 from osgeo import gdal
 
 
 def rasterize_vector(
     vector,
-    reference,
+    pixel_size,
     out_path=None,
+    extent=None,
     all_touch=False,
     optim="raster",
     band=1,
+    fill_value=0,
+    nodata_value=None,
+    burn_value=1,
 ):
+    vector_fn = vector
 
-    # Create destination dataframe
-    driver = gdal.GetDriverByName("GTiff")
+    raster_fn = out_path
 
-    metadata = internal_raster_to_metadata(reference)
+    # Open the data source and read in the extent
+    source_ds = open_vector(vector_fn)
+    source_meta = internal_vector_to_metadata(vector_fn)
+    source_layer = source_ds.GetLayer()
+    x_min, x_max, y_min, y_max = source_layer.GetExtent()
 
-    destination = driver.Create(
-        out_path,  # Location of the saved raster, ignored if driver is memory.
-        metadata["width"],  # Dataframe width in pixels (e.g. 1920px).
-        metadata["height"],  # Dataframe height in pixels (e.g. 1280px).
-        1,  # The number of bands required.
-        gdal.GDT_Byte,  # Datatype of the destination.
+    # Create the destination data source
+    x_res = int((x_max - x_min) / pixel_size)
+    y_res = int((y_max - y_min) / pixel_size)
+
+    if extent is not None:
+        extent_vector = internal_vector_to_metadata(extent)
+        extent_dict = extent_vector["extent_dict"]
+        x_res = int((extent_dict["right"] - extent_dict["left"]) / pixel_size)
+        y_res = int((extent_dict["top"] - extent_dict["bottom"]) / pixel_size)
+        x_min = extent_dict["left"]
+        y_max = extent_dict["top"]
+
+    target_ds = gdal.GetDriverByName("GTiff").Create(
+        raster_fn, x_res, y_res, 1, gdal.GDT_Byte
     )
+    target_ds.SetGeoTransform((x_min, pixel_size, 0, y_max, 0, -pixel_size))
+    target_ds.SetProjection(source_meta["projection"])
 
-    destination.SetGeoTransform(metadata["transform"])
-    destination.SetProjection(metadata["projection_osr"])
+    band = target_ds.GetRasterBand(1)
+    band.Fill(fill_value)
 
-    # Rasterize and retrieve data
-    destination_band = destination.GetRasterBand(band)
-    destination_band.Fill(0)
+    if nodata_value is not None:
+        band.SetNoDataValue(nodata_value)
 
     options = []
     if all_touch == True:
@@ -45,8 +65,9 @@ def rasterize_vector(
     else:
         options.append("OPTIM=AUTO")
 
-    clip_vector = internal_clip_vector(vector, reference)
-
-    gdal.RasterizeLayer(destination, [1], clip_vector, burn_values=[1], options=options)
+    # Rasterize
+    gdal.RasterizeLayer(
+        target_ds, [1], source_layer, burn_values=[burn_value], options=options
+    )
 
     return out_path

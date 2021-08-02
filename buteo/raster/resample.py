@@ -36,10 +36,10 @@ def internal_resample_raster(
     prefix: str = "",
     postfix: str = "_resampled",
 ) -> str:
-    """ OBS: Internal. Single output.
+    """OBS: Internal. Single output.
 
-        Reprojects a raster given a target projection. Beware if your input is in
-        latitude and longitude, you'll need to specify the target_size in degrees as well.
+    Reprojects a raster given a target projection. Beware if your input is in
+    latitude and longitude, you'll need to specify the target_size in degrees as well.
     """
     type_check(raster, [str, gdal.Dataset], "raster")
     type_check(target_size, [tuple, int, float, str, gdal.Dataset], "target_size")
@@ -116,16 +116,16 @@ def resample_raster(
     prefix: str = "",
     postfix: str = "_resampled",
 ) -> Union[List[str], str]:
-    """ Reprojects a raster given a target projection. Beware if your input is in
+    """Reprojects a raster given a target projection. Beware if your input is in
         latitude and longitude, you'll need to specify the target_size in degrees as well.
 
     Args:
         raster (list, path | raster): The raster to reproject.
-        
+
         target_size (str | int | vector | raster): The target resolution of the
-        raster. In the same unit as the projection of the raster. 
+        raster. In the same unit as the projection of the raster.
         It's better to reproject to a projected coordinate system for resampling.
-        If a raster is the target_size the function will read the pixel size from 
+        If a raster is the target_size the function will read the pixel size from
         that raster.
 
     **kwargs:

@@ -4,52 +4,60 @@ The Buteo-Toolbox is a series of modules that ease the creation of Earth Observa
 
 There are modules are:
 
-raster
-  * read and verify a raster or a list of rasters
-  * clip rasters to other rasters or vectors
-  * align a list of rasters for analysis
-  * shift, resample and reproject raster data
-  * easily manage nodata values
-  * parallel zonal statistics (link - host)
+## raster
 
-vector
-  * read and verify integrity
-  * parallel zonal statistics (link)
-  * clip, buffer
+- read and verify a raster or a list of rasters
+- clip rasters to other rasters or vectors
+- align a list of rasters for analysis
+- shift, resample and reproject raster data
+- easily manage nodata values
+- parallel zonal statistics (link - host)
 
-filter
-  * custom convolution based filters.
-  * global filters and multispectral indices (link - host)
-  * textures for analysis
-  * noise reduction of SAR imagery (link - host)
-  * kernel designer & reduction bootcamp
+## vector
 
-terrain
-  * download srtm, aster and the danish national DEM
-  * basic propocessing of the DEM's.
+- read and verify integrity
+- parallel zonal statistics (link)
+- clip, buffer
 
-earth_observation
-  * download sentinel 1, 2, 3, 5, landsat and modis data
-  * process sentinel 1 and 2 (sentinel 1 requires esa-snap dep.)
-  * generate mosaics of sentinel 1 and 2
-  * pansharpen bands
-  * noise reduction of SAR imagery (link)
-  * multispectral indices (link)
+## filter
 
-machine_learning
-  * patch extraction of tiles and geometries, allows overlaps, for CNN's
-  * machine learning utilities library: rotate images, add noise etc..
-  * model for building extraction for sentinel 1 and 2
-  * model for pansharpening sentinel 2
-  * model for noise reduction sentinel 1
+- custom convolution based filters.
+- global filters and multispectral indices (link - host)
+- textures for analysis
+- noise reduction of SAR imagery (link - host)
+- kernel designer & reduction bootcamp
 
-extra
-  * custom orfeo-toolbox python bindings
-  * ESA snap GPT python bindings and graphs
+## terrain
+
+- download srtm, aster and the danish national DEM
+- basic propocessing of the DEM's.
+
+## earth_observation
+
+- download sentinel 1, 2, 3, 5, landsat and modis data
+- process sentinel 1 and 2 (sentinel 1 requires esa-snap dep.)
+- generate mosaics of sentinel 1 and 2
+- pansharpen bands
+- noise reduction of SAR imagery (link)
+- multispectral indices (link)
+
+## machine_learning
+
+- patch extraction of tiles and geometries, allows overlaps, for CNN's
+- machine learning utilities library: rotate images, add noise etc..
+- model for building extraction for sentinel 1 and 2
+- model for pansharpening sentinel 2
+- model for noise reduction sentinel 1
+
+## extra
+
+- custom orfeo-toolbox python bindings
+- ESA snap GPT python bindings and graphs
 
 The system is under active development and is not ready for public release. It is being developed by NIRAS and Aalborg University.
 
 # Dependencies
+
 gdal
 numpy
 numba
@@ -57,14 +65,15 @@ pandas
 sentinelsat
 
 optional:
-  orfeo-toolbox
-  esa-snap
+orfeo-toolbox
+esa-snap
 
 # Todo
-  * finish filters library - kernel tests
-  * update zonal statistics & parallelise vector math
-  * remove dependencies: cython, senmosaic, pygeoprocessing
-  * fix sentinel 2 mosaic tool
-  * create models for pansharpening, buildings and noise-reduction
-  * generate examples
-  * synthetic sentinel 2?
+
+- finish filters library - kernel tests
+- update zonal statistics & parallelise vector math
+- remove dependencies: cython, senmosaic, pygeoprocessing
+- fix sentinel 2 mosaic tool
+- create models for pansharpening, buildings and noise-reduction
+- generate examples
+- synthetic sentinel 2?

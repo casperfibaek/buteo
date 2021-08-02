@@ -12,8 +12,6 @@ s1_VV = glob(folder + "west/*VV.tif")
 s1_VH = glob(folder + "west/*VH.tif")
 
 area = folder + "west/area.tif"
-volume = folder + "west/volume.tif"
-people = folder + "west/people.tif"
 
 images = []
 
@@ -34,9 +32,23 @@ path_np, path_geom = extract_patches(
     prefix="",
     postfix="",
     size=64,
-    # offsets=[(32, 32), (64, 64), (96, 96)],
-    offsets=[(16, 16), (32, 32), (48, 48)],
-    # offsets=[(32, 32)],
+    offsets=[
+        (0, 16),
+        (0, 32),
+        (0, 48),
+        (16, 0),
+        (16, 16),
+        (16, 32),
+        (16, 48),
+        (32, 0),
+        (32, 16),
+        (32, 32),
+        (32, 48),
+        (48, 0),
+        (48, 16),
+        (48, 32),
+        (48, 48),
+    ],
     generate_grid_geom=True,
     generate_zero_offset=True,
     generate_border_patches=True,
@@ -54,9 +66,23 @@ path_np, path_geom = extract_patches(
     prefix="",
     postfix="",
     size=32,
-    # offsets=[(16, 16), (32, 32), (48, 48)],
-    offsets=[(8, 8), (16, 16), (24, 24)],
-    # offsets=[(16, 16)],
+    offsets=[
+        (0, 8),
+        (0, 16),
+        (0, 24),
+        (8, 0),
+        (8, 8),
+        (8, 16),
+        (8, 24),
+        (16, 0),
+        (16, 8),
+        (16, 16),
+        (16, 24),
+        (24, 0),
+        (24, 8),
+        (24, 16),
+        (24, 24),
+    ],
     generate_grid_geom=True,
     generate_zero_offset=True,
     generate_border_patches=True,

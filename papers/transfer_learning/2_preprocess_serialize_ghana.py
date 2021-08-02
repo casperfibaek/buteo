@@ -1,135 +1,157 @@
-import sys
-
-sys.path.append("../../")
 import numpy as np
-from buteo.vector.attributes import vector_get_attribute_table
+
+from utils import (
+    preprocess_optical,
+    preprocess_sar,
+)
 
 
-folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
-bornholm = folder + "bornholm/"
-denmark = folder + "denmark/"
-tmp = folder + "tmp/"
-dst = folder + "machine_learning_data/"
-
-# ------- DENMARK ATTRIBUTES -----------
-denmark_patches = denmark + "denmark_patches.gpkg"
-
-denmark_attr = vector_get_attribute_table(denmark_patches)
-denmark_attr["municipality"] = denmark_attr["code"].fillna(0)
-denmark_attr = denmark_attr.astype({"municipality": int})
-denmark_attr["fid"] -= 1
-
-# ------- BORNHOLM ATTRIBUTES -----------
-bornholm_patches = bornholm + "bornholm_patches.gpkg"
-
-bornholm_attr = vector_get_attribute_table(bornholm_patches)
-bornholm_attr["municipality"] = bornholm_attr["code"].fillna(0)
-bornholm_attr = bornholm_attr.astype({"municipality": int})
-
-# ------- COMMON PREPROCESSING ------------
-def get_image_paths(folder):
+def get_image_paths(folder, test_or_train="train"):
     return [
-        ["B02", folder + "2020_B02_10m.npy", folder + "2021_B02_10m.npy"],
-        ["B03", folder + "2020_B03_10m.npy", folder + "2021_B03_10m.npy"],
-        ["B04", folder + "2020_B04_10m.npy", folder + "2021_B04_10m.npy"],
-        ["B08", folder + "2020_B08_10m.npy", folder + "2021_B08_10m.npy"],
-        ["B11", folder + "2020_B11_20m.npy", folder + "2021_B11_20m.npy"],
-        ["B12", folder + "2020_B12_20m.npy", folder + "2021_B12_20m.npy"],
-        ["VH", folder + "2020_VH.npy", folder + "2021_VH.npy"],
-        ["VV", folder + "2020_VV.npy", folder + "2021_VV.npy"],
-        ["AREA", folder + "area.npy"],
-        ["VOLUME", folder + "volume.npy"],
-        ["PEOPLE", folder + "people.npy"],
+        [
+            [
+                "B02",
+                folder + f"B02.npy",
+            ],
+            [
+                "B03",
+                folder + f"B03.npy",
+            ],
+            [
+                "B04",
+                folder + f"B04.npy",
+            ],
+            [
+                "B08",
+                folder + f"B08.npy",
+            ],
+        ],
+        [
+            [
+                "B11",
+                folder + f"B11.npy",
+            ],
+            [
+                "B12",
+                folder + f"B12.npy",
+            ],
+        ],
+        [
+            [
+                "VH",
+                folder + f"VH.npy",
+            ],
+            [
+                "VV",
+                folder + f"VV.npy",
+            ],
+        ],
+        [
+            ["AREA", folder + f"AREA.npy"],
+        ],
     ]
 
 
-# ------- DENMARK PREPROCESSING -----------
-denmark_municipalities = denmark_attr["municipality"].unique()
-denmark_paths = get_image_paths(denmark)
+def merge_and_preprocess(folder):
+    images = get_image_paths(folder)
 
-for idx in range(len(denmark_paths)):
-    img = denmark_paths[idx]
-    name = img[0]
+    images_10m = preprocess_optical(
+        np.stack(
+            [
+                np.load(images[0][0][1]),
+                np.load(images[0][1][1]),
+                np.load(images[0][2][1]),
+                np.load(images[0][3][1]),
+            ],
+            axis=3,
+        )[:, :, :, :, 0]
+    )
 
-    if len(img) == 3:
-        path_2020 = img[1]
-        path_2021 = img[2]
+    sample_arr = [True, False]
+    shuffle_mask = np.random.permutation(images_10m.shape[0])
+    flip = np.random.choice(sample_arr, size=images_10m.shape[0])
+    norm = ~flip
 
-        img1 = np.load(path_2020)
-        img2 = np.load(path_2021)
-    else:
-        path = img[1]
-        img1 = np.load(path)
-        img2 = img1
+    np.save(
+        folder + f"RGBN.npy",
+        np.concatenate(
+            [
+                np.rot90(images_10m[flip], k=2, axes=(1, 2)),
+                images_10m[norm],
+            ]
+        )[shuffle_mask],
+    )
 
-    for muni in denmark_municipalities:
-        indices = denmark_attr[denmark_attr["municipality"] == muni]["fid"].values
-        merged = np.concatenate([img1[indices], img2[indices]])
+    # Free memory
+    images_10m = None
 
-        np.save(tmp + f"{muni}_{name}.npy", merged)
+    images_20m = preprocess_optical(
+        np.stack(
+            [
+                np.load(images[1][0][1]),
+                np.load(images[1][1][1]),
+            ],
+            axis=3,
+        )[:, :, :, :, 0]
+    )
 
-# denmark_municipalities = np.array([], dtype=int)
+    np.save(
+        folder + f"SWIR.npy",
+        np.concatenate(
+            [
+                np.rot90(images_20m[flip], k=2, axes=(1, 2)),
+                images_20m[norm],
+            ]
+        )[shuffle_mask],
+    )
 
-# ------- BORNHOLM PREPROCESSING -----------
-bornholm_municipalities = bornholm_attr["municipality"].unique()
-bornholm_paths = get_image_paths(bornholm)
+    # Free memory
+    images_20m = None
 
-for idx in range(len(bornholm_paths)):
-    img = bornholm_paths[idx]
-    name = img[0]
+    images_sar = preprocess_sar(
+        np.stack(
+            [
+                np.load(images[2][0][1]),
+                np.load(images[2][1][1]),
+            ],
+            axis=3,
+        )[:, :, :, :, 0]
+    )
 
-    if len(img) == 3:
-        path_2020 = img[1]
-        path_2021 = img[2]
+    np.save(
+        folder + f"SAR.npy",
+        np.concatenate(
+            [
+                np.rot90(images_sar[flip], k=2, axes=(1, 2)),
+                images_sar[norm],
+            ]
+        )[shuffle_mask],
+    )
 
-        img1 = np.load(path_2020)
-        img2 = np.load(path_2021)
-    else:
-        path = img[1]
-        img1 = np.load(path)
-        img2 = img1
+    # Free memory
+    images_sar = None
 
-    for muni in bornholm_municipalities:
-        indices = bornholm_attr[bornholm_attr["municipality"] == muni]["fid"].values
-        merged = np.concatenate([img1[indices], img2[indices]])
-
-        np.save(tmp + f"{muni}_{name}.npy", merged)
-
-municipalities = np.concatenate([denmark_municipalities, bornholm_municipalities])
-for muni in municipalities:
-    images_10m = np.stack(
+    images_area = np.stack(
         [
-            np.load(tmp + f"{muni}_B02.npy"),
-            np.load(tmp + f"{muni}_B03.npy"),
-            np.load(tmp + f"{muni}_B04.npy"),
-            np.load(tmp + f"{muni}_B08.npy"),
+            np.load(images[3][0][1]),
         ],
         axis=3,
     )[:, :, :, :, 0]
 
-    images_20m = np.stack(
-        [
-            np.load(tmp + f"{muni}_B11.npy"),
-            np.load(tmp + f"{muni}_B12.npy"),
-        ],
-        axis=3,
-    )[:, :, :, :, 0]
+    np.save(
+        folder + f"LABEL_AREA.npy",
+        np.concatenate(
+            [
+                np.rot90(images_area[flip], k=2, axes=(1, 2)),
+                images_area[norm],
+            ]
+        )[shuffle_mask],
+    )
 
-    images_sar = np.stack(
-        [
-            np.load(tmp + f"{muni}_VH.npy"),
-            np.load(tmp + f"{muni}_VV.npy"),
-        ],
-        axis=3,
-    )[:, :, :, :, 0]
-
-    np.save(dst + f"{muni}_RGBN.npy", images_10m)
-    np.save(dst + f"{muni}_SWIR.npy", images_20m)
-    np.save(dst + f"{muni}_SAR.npy", images_sar)
-
-    np.save(dst + f"{muni}_LABEL_AREA.npy", np.load(tmp + f"{muni}_AREA.npy"))
-    np.save(dst + f"{muni}_LABEL_VOLUME.npy", np.load(tmp + f"{muni}_VOLUME.npy"))
-    np.save(dst + f"{muni}_LABEL_PEOPLE.npy", np.load(tmp + f"{muni}_PEOPLE.npy"))
+    # Free memory
+    images_area = None
 
 
-np.save(dst + "municipalities.npy", municipalities[municipalities != 0])
+folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/ghana/vector/grid_cells/patches/merged/"
+
+merge_and_preprocess(folder)

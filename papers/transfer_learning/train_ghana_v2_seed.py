@@ -5,7 +5,6 @@ sys.path.append(yellow_follow)
 
 import os
 import time
-import datetime
 import numpy as np
 
 import tensorflow as tf
@@ -21,16 +20,15 @@ from tensorflow.keras import mixed_precision
 from tensorflow.keras.callbacks import (
     LearningRateScheduler,
     ModelCheckpoint,
-    TensorBoard,
+    EarlyStopping,
 )
-from buteo.machine_learning.ml_utils import load_mish, create_step_decay
+from buteo.machine_learning.ml_utils import create_step_decay
+from buteo.utils import timing
 
 
 np.set_printoptions(suppress=True)
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 mixed_precision.set_global_policy("mixed_float16")
-
-load_mish()
 
 start = time.time()
 
@@ -87,7 +85,7 @@ def reduction_block(
         name=name + "_reduction_t3_2",
     )(track3)
 
-    return Concatenate()(
+    return Concatenate(name=f"{name}_reduction_concat")(
         [
             track1,
             track2,
@@ -188,7 +186,7 @@ def inception_block(
         name=name + "_inception_t4_2",
     )(track4)
 
-    return Concatenate()(
+    return Concatenate(name=f"{name}_inception_concat")(
         [
             track1,
             track2,
@@ -530,6 +528,7 @@ def create_model(
     kernel_initializer="normal",
     activation="Mish",
     learning_rate=0.001,
+    name=None,
 ):
     model = define_model(
         shape_rgbn,
@@ -537,6 +536,7 @@ def create_model(
         shape_sar,
         kernel_initializer=kernel_initializer,
         activation=activation,
+        name=name,
     )
 
     optimizer = tf.keras.optimizers.Adam(
@@ -556,19 +556,36 @@ def create_model(
 
 
 with tf.device("/device:GPU:0"):
-    lr = 0.0001
-    epochs = [3, 2]
-    bs = [96, 64]
+    lr = 0.00001
+    epochs = [5, 5, 5]
+    bs = [32, 16, 8]
 
     # model_name = "subset_25000_area_simple_01"
-    model_name = "area_advanced_v10"
+    model_name = "ghana_seed_01"
 
-    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/denmark/"
+    # folder_dk = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/denmark/"
+    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/ghana/vector/grid_cells/patches/merged/"
 
-    x_train_rgbn = np.load(folder + "RGBN_train.npy")
-    x_train_swir = np.load(folder + "SWIR_train.npy")
-    x_train_sar = np.load(folder + "SAR_train.npy")
-    y_train = np.load(folder + "LABEL_AREA_train.npy")
+    # test_size = 5000
+
+    x_train_rgbn = np.load(folder + "RGBN.npy")
+    x_train_swir = np.load(folder + "SWIR.npy")
+    x_train_sar = np.load(folder + "SAR.npy")
+    y_train = np.load(folder + "LABEL_AREA.npy")
+
+    # x_test_rgbn = x_train_rgbn[:test_size]
+    # x_test_swir = x_train_swir[:test_size]
+    # x_test_sar = x_train_sar[:test_size]
+    # y_test = y_train[:test_size]
+
+    # x_train_rgbn = x_train_rgbn[test_size:]
+    # x_train_swir = x_train_swir[test_size:]
+    # x_train_sar = x_train_sar[test_size:]
+    # y_train = y_train[test_size:]
+
+    # import pdb
+
+    # pdb.set_trace()
 
     # create_subset(folder, "train")
     # x_train_rgbn = np.load(folder + "subset_25000_RGBN_train.npy")
@@ -576,9 +593,8 @@ with tf.device("/device:GPU:0"):
     # x_train_sar = np.load(folder + "subset_25000_SAR_train.npy")
     # y_train = np.load(folder + "subset_25000_LABEL_AREA_train.npy")
 
-    donor_model = tf.keras.models.load_model(
-        folder + "/models/area_advanced_v09_closeup_05"
-    )
+    # donor_model = tf.keras.models.load_model(folder_dk + "/models/area_advanced_v10_05")
+    donor_model = tf.keras.models.load_model(folder + "/models/ghana_init_01_85_best")
 
     model = create_model(
         (64, 64, 4),
@@ -587,17 +603,18 @@ with tf.device("/device:GPU:0"):
         kernel_initializer="glorot_normal",
         activation="relu",
         learning_rate=lr,
+        name=model_name,
     )
 
     model.set_weights(donor_model.get_weights())
 
-    # model = tf.keras.models.load_model(folder + "/models/area_advanced_v07_01")
+    # model = tf.keras.models.load_model(folder + "/models/ghana_init_01_85_best")
 
     print(model.summary())
 
     model_checkpoint_callback = ModelCheckpoint(
-        filepath=folder + f"models/{model_name}_" + "{epoch:02d}",
-        # period=5,
+        filepath=folder + f"models/{model_name}_" + "{epoch:02d}" + "_best",
+        save_best_only=True,
     )
 
     for phase in range(len(bs)):
@@ -620,40 +637,32 @@ with tf.device("/device:GPU:0"):
                 LearningRateScheduler(
                     create_step_decay(
                         learning_rate=lr,
-                        drop_rate=0.8,
-                        epochs_per_drop=3,
+                        drop_rate=0.9,
+                        epochs_per_drop=5,
                     )
                 ),
                 model_checkpoint_callback,
+                EarlyStopping(monitor="val_loss", patience=3, min_delta=0.05),
             ],
         )
 
-    x_train_rgbn = None
-    x_train_swir = None
-    x_train_sar = None
-    y_train = None
+    # x_train_rgbn = None
+    # x_train_swir = None
+    # x_train_sar = None
+    # y_train = None
 
-    x_test_rgbn = np.load(folder + "RGBN_test.npy")
-    x_test_swir = np.load(folder + "SWIR_test.npy")
-    x_test_sar = np.load(folder + "SAR_test.npy")
-    y_test = np.load(folder + "LABEL_AREA_test.npy")
+    # loss, mse, mae = model.evaluate(
+    #     x=[x_test_rgbn, x_test_swir, x_test_sar],
+    #     y=y_test,
+    #     verbose=1,
+    #     batch_size=32,
+    #     use_multiprocessing=True,
+    # )
 
-    loss, mse, mae = model.evaluate(
-        x=[x_test_rgbn, x_test_swir, x_test_sar],
-        y=y_test,
-        verbose=1,
-        batch_size=32,
-        use_multiprocessing=True,
-    )
+    # print(f"Mean Square Error:      {round(mse, 3)}")
+    # print(f"Mean Absolute Error:    {round(mae, 3)}")
+    # print("")
 
-    print(f"Mean Square Error:      {round(mse, 3)}")
-    print(f"Mean Absolute Error:    {round(mae, 3)}")
-    print("")
+    # model.save(folder + f"/models/{model_name}_final")
 
-    # Create test for Ghana
-
-    # Pure: Train on Ghana data without transfer learning
-    # Straight: Predict Ghana using Danish model
-    # Seed: Use the weights of the Danish model to initialise Ghana model.
-    # Fusion: Incorporate Danish model as branch on Ghana model
-    # Transfer: Classic transfer learning
+timing(start)
