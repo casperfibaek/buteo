@@ -78,6 +78,52 @@ def cube_sphere_intersection_area(
         return (step * step * step) * np.sum(dist <= circle_radius)
 
 
+def create_circle_kernel(
+    kernel_size=5, circle_radius=5, round_val=5, remove_zero_weights=True
+):
+    tmp = np.zeros((kernel_size + 1, kernel_size + 1), dtype="float32")
+    kernel = np.zeros((kernel_size * 2 + 1, kernel_size * 2 + 1), dtype="float32")
+
+    for x in range(kernel_size + 1):
+        for y in range(kernel_size + 1):
+            tmp[x][y] = round(
+                cube_sphere_intersection_area((0, x, y), (0, 0, 0), circle_radius),
+                round_val,
+            )
+
+    tmp = np.fliplr(np.flipud(tmp))
+    kernel[: kernel_size + 1, : kernel_size + 1] = tmp
+    kernel[: kernel_size + 1, kernel_size:] = np.fliplr(tmp)
+    kernel[kernel_size + 1 :, :] = np.flipud(kernel[:kernel_size, :])
+
+    idx_offsets = []
+    weights = []
+    for x in range(kernel.shape[0]):
+        for y in range(kernel.shape[1]):
+            current_weight = round(kernel[x][y], round_val)
+
+            if remove_zero_weights and current_weight == 0.0:
+                continue
+
+            idx_offsets.append(
+                [
+                    x - ((kernel_size * 2 + 1) // 2),
+                    y - ((kernel_size * 2 + 1) // 2),
+                    0,
+                ]
+            )
+
+            weights.append(current_weight)
+
+    kernel = kernel[:, :, np.newaxis]
+
+    return (
+        kernel,
+        np.array(idx_offsets, dtype=int),
+        np.round(np.array(weights, dtype=float), round_val),
+    )
+
+
 def create_kernel(
     shape,
     sigma=1,
@@ -121,7 +167,7 @@ def create_kernel(
     elif radius_method == "ellipsoid":
         radius = min(edge_x, edge_y) + radius_add
     else:
-        raise ValueError("Unable to parse radius_method. Must be 2d, 3d or squish")
+        raise ValueError("Unable to parse radius_method. Must be 2d, 3d or ellipsoid")
 
     for x in range(edge_x + 1):
         for y in range(edge_y + 1):

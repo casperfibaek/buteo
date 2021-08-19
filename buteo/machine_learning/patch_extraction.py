@@ -99,9 +99,7 @@ def reconstitute_raster(
     swap = reshape.swapaxes(1, 2)
 
     destination = swap.reshape(
-        (ref_shape[0] // size) * size,
-        (ref_shape[1] // size) * size,
-        blocks.shape[3],
+        (ref_shape[0] // size) * size, (ref_shape[1] // size) * size, blocks.shape[3]
     )
 
     # Order: Y, X, Z
@@ -1034,18 +1032,18 @@ def extract_patches(
     return (output_blocks, output_geom)
 
 
-# TODO: Create input option
 def predict_raster(
     raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
     model: str,
     out_path: Optional[str] = None,
-    offsets: Union[List[Tuple[int, int]], List[List[Tuple[int, int]]]] = [(0, 0)],
+    offsets: Union[List[Tuple[int, int]], List[List[Tuple[int, int]]]] = [],
     region: Optional[Union[str, ogr.DataSource]] = None,
     device: str = "gpu",
     merge_method: str = "median",
     mirror: bool = False,
     rotate: bool = False,
     custom_objects: Dict[str, Any] = {"Mish": Mish, "mish": mish},
+    target_raster: Optional[str] = None,
     output_size=128,
     dtype: str = "same",
     batch_size: int = 16,
@@ -1093,7 +1091,7 @@ def predict_raster(
         A predicted raster.
     """
     type_check(raster, [list, str, gdal.Dataset], "raster")
-    # type_check(model, [str], "model")
+    type_check(model, [str], "model")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(offsets, [list], "offsets")
     type_check(region, [str, ogr.DataSource], allow_none=True)
@@ -1112,8 +1110,6 @@ def predict_raster(
         raise Exception("Mirror and rotate currently disabled.")
 
     import tensorflow as tf
-
-    import h5py
 
     os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 
@@ -1215,6 +1211,7 @@ def predict_raster(
             size=src_tile_size,
             offsets=in_offsets,
             generate_border_patches=True,
+            # generate_border_patches=False,
             generate_grid_geom=False,
             verbose=verbose,
         )
@@ -1287,7 +1284,9 @@ def predict_raster(
     rast_meta = None
     target_size = None
     resampled = None
-    if isinstance(raster, list):
+    if target_raster is not None:
+        resampled = target_raster
+    elif isinstance(raster, list):
         rast_meta = internal_raster_to_metadata(raster[-1])
         target_size = (
             rast_meta["pixel_width"] * pixel_factor,
@@ -1315,6 +1314,7 @@ def predict_raster(
             predictions,
             resampled,
             border_patches=True,
+            # border_patches=False,
             offsets=dst_offsets,
             merge_method=merge_method,
             output_array=True,
@@ -1362,82 +1362,3 @@ def predict_raster(
             overwrite=overwrite,
             creation_options=creation_options,
         )
-
-
-if __name__ == "__main__":
-    from buteo.raster.io import stack_rasters
-    from glob import glob
-
-    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/"
-
-    grid = folder + "ghana_grid.gpkg"
-    raster = folder + "/raster/2021_B12_20m.tif"
-
-    path_np, path_geom = extract_patches(
-        raster,
-        out_dir=folder + "patches/",
-        prefix="",
-        postfix="",
-        size=64,
-        # size=64,
-        # offsets=[(32, 32), (64, 64), (96, 96)],
-        offsets=[(16, 16), (32, 32), (48, 48)],
-        generate_grid_geom=True,
-        generate_zero_offset=True,
-        generate_border_patches=True,
-        clip_geom=grid,
-        verify_output=True,
-        verification_samples=100,
-        verbose=1,
-    )
-
-
-    # bornholm = folder + "bornholm/"
-    # vector = folder + "vector/bornholm.gpkg"
-    # model = bornholm + "bornholm_40epochs.h5"
-
-    # s2_10m = glob(bornholm + "raster/*10m.tif")
-    # s1_VV = glob(bornholm + "raster/*VV.tif")
-    # s1_VH = glob(bornholm + "raster/*VH.tif")
-    # s2_filt = glob(bornholm + "raster/*filter*.tif")
-
-    # # area = bornholm + "raster/area.tif"
-    # # volume = bornholm + "raster/volume.tif"
-
-    # images = []
-
-    # # for img in s2_10m:
-    # #     images.append(img)
-
-    # # for img in s1_VV:
-    # #     images.append(img)
-
-    # # for img in s1_VH:
-    # #     images.append(img)
-
-    # for img in s2_filt:
-    #     images.append(img)
-
-    # # images.append(area)
-    # # images.append(volume)
-
-    # # s2_20m = glob(bornholm + "raster/*20m.tif")
-    # # images = s2_20m
-
-    # path_np, path_geom = extract_patches(
-    #     images,
-    #     out_dir=bornholm,
-    #     prefix="",
-    #     postfix="",
-    #     size=128,
-    #     # size=64,
-    #     offsets=[(32, 32), (64, 64), (96, 96)],
-    #     # offsets=[(16, 16), (32, 32), (48, 48)],
-    #     generate_grid_geom=True,
-    #     generate_zero_offset=True,
-    #     generate_border_patches=True,
-    #     clip_geom=vector,
-    #     verify_output=True,
-    #     verification_samples=100,
-    #     verbose=1,
-    # )

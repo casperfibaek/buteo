@@ -17,6 +17,7 @@ def rasterize_vector(
     fill_value=0,
     nodata_value=None,
     burn_value=1,
+    attribute=None,
 ):
     vector_fn = vector
 
@@ -65,9 +66,12 @@ def rasterize_vector(
     else:
         options.append("OPTIM=AUTO")
 
-    # Rasterize
-    gdal.RasterizeLayer(
-        target_ds, [1], source_layer, burn_values=[burn_value], options=options
-    )
+    if attribute is None:
+        gdal.RasterizeLayer(
+            target_ds, [1], source_layer, burn_values=[burn_value], options=options
+        )
+    else:
+        options.append(f"ATTRIBUTE={attribute}")
+        gdal.RasterizeLayer(target_ds, [1], source_layer, options=options)
 
     return out_path

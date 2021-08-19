@@ -34,7 +34,7 @@ def internal_clip_vector(
     ] = None,
     preserve_fid: bool = True,
 ) -> str:
-    """ Clips a vector to a geometry.
+    """Clips a vector to a geometry.
 
     Returns:
         A clipped ogr.Datasource or the path to one.
@@ -79,7 +79,8 @@ def internal_clip_vector(
     else:
         raise ValueError(f"Invalid input in clip_geom, unable to parse: {clip_geom}")
 
-    options.append(f"-clipsrc {geometry_to_clip}")
+    clip_vector_path = internal_vector_to_metadata(geometry_to_clip)["path"]
+    options.append(f"-clipsrc {clip_vector_path}")
 
     if preserve_fid:
         options.append("-preserve_fid")
@@ -119,7 +120,7 @@ def clip_vector(
     ] = None,
     preserve_fid: bool = True,
 ) -> Union[List[str], str]:
-    """ Clips a vector to a geometry.
+    """Clips a vector to a geometry.
 
     Returns:
         A clipped ogr.Datasource or the path to one.

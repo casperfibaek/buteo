@@ -4,6 +4,7 @@ sys.path.append("../../")
 import numpy as np
 from numba import jit, prange
 from buteo.filters.kernel_generator import create_kernel
+from buteo.filters.kernel_generator import create_circle_kernel
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
@@ -242,7 +243,9 @@ def filter_array(
     quantile=0.5,
     distance_calc="gaussian",
     radius_method="ellipsoid",
+    remove_zero_weights=True,
     operation="sum",
+    kernel=None,
 ):
     if len(arr.shape) == 3:
         if len(shape) == 2:
@@ -257,16 +260,20 @@ def filter_array(
         else:
             raise ValueError("Unable to merge shape and array.")
 
-    _kernel, offsets, weights = create_kernel(
-        shape,
-        sigma=sigma,
-        spherical=spherical,
-        edge_weights=edge_weights,
-        offsets=True,
-        normalised=normalised,
-        distance_calc=distance_calc,
-        radius_method=radius_method,
-    )
+    if kernel is None:
+        _kernel, offsets, weights = create_kernel(
+            shape,
+            sigma=sigma,
+            spherical=spherical,
+            edge_weights=edge_weights,
+            offsets=True,
+            normalised=normalised,
+            distance_calc=distance_calc,
+            radius_method=radius_method,
+            remove_zero_weights=remove_zero_weights,
+        )
+    else:
+        _kernel, offsets, weights = kernel
 
     return convolve_3d(
         arr,

@@ -1235,11 +1235,3 @@ def create_raster(
 
     raise ValueError("Not yet implemented. Sorry")
 
-
-if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/test/out/"
-
-    # vector = folder + "denmark_10km_grid.gpkg"
-    raster = folder + "predicted_raster_32-16.tif"
-
-    bob = open_raster(raster)

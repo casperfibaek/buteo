@@ -60,6 +60,19 @@ def rotate_shuffle(arrs=[]):
     return rotated
 
 
+# np.set_printoptions(suppress=True)
+def preprocess_optical_11(
+    arr, cutoff_low=0, cutoff_high=10000, target_low=-1, target_high=1
+):
+    clipped = np.where(
+        arr > cutoff_high, cutoff_high, np.where(arr < cutoff_low, cutoff_low, arr)
+    )
+    val_a = (target_high - target_low) / (cutoff_high - cutoff_low)
+    val_b = target_high - (val_a * cutoff_high)
+
+    return ((val_a * clipped) + val_b).astype("float32")
+
+
 # Thresholds at 10000 and scales to 0 to 1
 def preprocess_optical(arr, cutoff=10000):
     return np.true_divide(np.where(arr > cutoff, cutoff, arr), cutoff).astype("float32")

@@ -539,6 +539,12 @@ def create_model(
         name=name,
     )
 
+    model_shape = model.output.shape
+    model_size = model_shape[1] * model_shape[2] * model_shape[3]  # x, y, z
+
+    def per_tile_error(y_true, y_pred):
+        return tf.math.reduce_mean(tf.math.abs(y_pred - y_true), axis=-1) * model_size
+
     optimizer = tf.keras.optimizers.Adam(
         learning_rate=learning_rate,
         epsilon=1e-07,
@@ -549,22 +555,23 @@ def create_model(
     model.compile(
         optimizer=optimizer,
         loss="mse",
-        metrics=["mse", "mae"],
+        metrics=["mse", "mae", per_tile_error],
     )
 
     return model
 
 
 with tf.device("/device:GPU:0"):
-    lr = 0.00001
-    epochs = [5, 5, 5]
-    bs = [32, 16, 8]
+    lr = 0.000001
+    epochs = [25, 25, 10]
+    bs = [64, 32, 16]
 
     # model_name = "subset_25000_area_simple_01"
-    model_name = "ghana_seed_01"
+    model_name = "ghana_seed_06"
 
     # folder_dk = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/denmark/"
-    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/ghana/vector/grid_cells/patches/merged/"
+    # folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/ghana/vector/grid_cells/patches/merged/"
+    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/ghana/vector/grid_cells4/patches/merged/"
 
     # test_size = 5000
 
@@ -572,6 +579,10 @@ with tf.device("/device:GPU:0"):
     x_train_swir = np.load(folder + "SWIR.npy")
     x_train_sar = np.load(folder + "SAR.npy")
     y_train = np.load(folder + "LABEL_AREA.npy")
+
+    # concatenate and mask places with buildings
+    # run model
+    # run with all
 
     # x_test_rgbn = x_train_rgbn[:test_size]
     # x_test_swir = x_train_swir[:test_size]
@@ -583,10 +594,6 @@ with tf.device("/device:GPU:0"):
     # x_train_sar = x_train_sar[test_size:]
     # y_train = y_train[test_size:]
 
-    # import pdb
-
-    # pdb.set_trace()
-
     # create_subset(folder, "train")
     # x_train_rgbn = np.load(folder + "subset_25000_RGBN_train.npy")
     # x_train_swir = np.load(folder + "subset_25000_SWIR_train.npy")
@@ -594,23 +601,29 @@ with tf.device("/device:GPU:0"):
     # y_train = np.load(folder + "subset_25000_LABEL_AREA_train.npy")
 
     # donor_model = tf.keras.models.load_model(folder_dk + "/models/area_advanced_v10_05")
-    donor_model = tf.keras.models.load_model(folder + "/models/ghana_init_01_85_best")
+    # donor_model = tf.keras.models.load_model(folder + "/models/ghana_seed_02_54_best")
 
-    model = create_model(
-        (64, 64, 4),
-        (32, 32, 2),
-        (64, 64, 2),
-        kernel_initializer="glorot_normal",
-        activation="relu",
-        learning_rate=lr,
-        name=model_name,
+    # model = create_model(
+    #     (64, 64, 4),
+    #     (32, 32, 2),
+    #     (64, 64, 2),
+    #     kernel_initializer="glorot_normal",
+    #     activation="relu",
+    #     learning_rate=lr,
+    #     name=model_name,
+    # )
+
+    # model.set_weights(donor_model.get_weights())
+
+    model = tf.keras.models.load_model(
+        "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/ghana/vector/grid_cells4/patches/merged/models/ghana_seed_05_80_best"
     )
 
-    model.set_weights(donor_model.get_weights())
+    import pdb
 
-    # model = tf.keras.models.load_model(folder + "/models/ghana_init_01_85_best")
+    pdb.set_trace()
 
-    print(model.summary())
+    # print(model.summary())
 
     model_checkpoint_callback = ModelCheckpoint(
         filepath=folder + f"models/{model_name}_" + "{epoch:02d}" + "_best",
@@ -666,3 +679,9 @@ with tf.device("/device:GPU:0"):
     # model.save(folder + f"/models/{model_name}_final")
 
 timing(start)
+
+# Epoch 65/65
+# 7128/7128 [==============================] - 1054s 148ms/step - loss: 3.0426 - mse: 3.0426 - mae: 0.2165 - val_loss: 3.9255 - val_mse: 3.9256 - val_mae: 0.2510
+# 157/157 [==============================] - 11s 71ms/step - loss: 4.5820 - mse: 4.5820 - mae: 0.2980
+# Mean Square Error:      4.582
+# Mean Absolute Error:    0.298

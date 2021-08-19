@@ -17,20 +17,24 @@ import os
 # preprocess rgbn, swir, sar
 
 folder = (
-    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/ghana/vector/grid_cells/"
+    # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/ghana/vector/grid_cells/"
+    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/ghana/vector/grid_cells4/"
 )
 raster_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/"
 
-for cell in glob(folder + "fid*.gpkg"):
+# for cell in glob(folder + "fid*.gpkg"):
+for cell in glob(folder + "grid_id_*.gpkg"):
     name = os.path.basename(cell)
-    number = os.path.splitext(name.split("_")[1])[0]
+    # number = os.path.splitext(name.split("_")[1])[1]
+    number = os.path.splitext(name)[0].split("_")[-1]
 
     grid = cell
-    buildings = folder + "grid_fid_" + number + ".gpkg"
+    # buildings = folder + "grid_fid_" + number + ".gpkg"
+    buildings = folder + "building_grid_fid_" + number + ".gpkg"
 
     rasterize_vector(
         buildings,
-        0.5,
+        0.2,
         out_path=f"/vsimem/fid_{number}_rasterized.tif",
         extent=grid,
     )
@@ -52,8 +56,10 @@ for cell in glob(folder + "fid*.gpkg"):
     )
 
 for cell in glob(folder + "fid*_rasterized.tif"):
-    number = os.path.basename(cell).split("_")[1]
-    vector_cell = folder + "fid_" + number + ".gpkg"
+    number = os.path.basename(os.path.basename(cell)).split("_")[1]
+    # number = os.path.splitext(name)[0].split("_")[-1]
+    # vector_cell = folder + "fid_" + number + ".gpkg"
+    vector_cell = folder + "grid_id_" + number + ".gpkg"
 
     clipped_rgbn = clip_raster(
         [
@@ -128,7 +134,7 @@ for cell in glob(folder + "fid*_rasterized.tif"):
         m10,
         out_dir=folder + "patches/",
         prefix=number + "_",
-        postfix="_train",
+        postfix="",
         size=64,
         offsets=[
             (0, 16),
@@ -160,7 +166,7 @@ for cell in glob(folder + "fid*_rasterized.tif"):
         m20,
         out_dir=folder + "patches/",
         prefix=number + "_",
-        postfix="_train",
+        postfix="",
         size=32,
         offsets=[
             (0, 8),
@@ -209,7 +215,7 @@ for band in ["B02", "B03", "B04", "B08", "B11", "B12", "VV", "VH"]:
 
     np.save(folder + f"patches/merged/{band}.npy", loaded)
 
-band_paths = glob(folder + f"patches/*fid*.npy")
+band_paths = glob(folder + f"patches/*rasterized*.npy")
 band_paths = sorted(band_paths, key=sortKeyFunc)
 
 # merge all in bob by band
@@ -219,4 +225,4 @@ for index, key in enumerate(band_paths):
     else:
         loaded = np.concatenate([loaded, np.load(key)])
 
-np.save(folder + "patches/merged/label_area.npy", loaded)
+np.save(folder + "patches/merged/AREA.npy", loaded)

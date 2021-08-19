@@ -6,7 +6,7 @@ from utils import (
 )
 
 
-def get_image_paths(folder, test_or_train="train"):
+def get_image_paths(folder):
     return [
         [
             [
@@ -74,12 +74,13 @@ def merge_and_preprocess(folder):
 
     np.save(
         folder + f"RGBN.npy",
-        np.concatenate(
-            [
-                np.rot90(images_10m[flip], k=2, axes=(1, 2)),
-                images_10m[norm],
-            ]
-        )[shuffle_mask],
+        images_10m[shuffle_mask],
+        # np.concatenate(
+        #     [
+        #         np.rot90(images_10m[flip], k=2, axes=(1, 2)),
+        #         images_10m[norm],
+        #     ]
+        # )[shuffle_mask],
     )
 
     # Free memory
@@ -97,12 +98,13 @@ def merge_and_preprocess(folder):
 
     np.save(
         folder + f"SWIR.npy",
-        np.concatenate(
-            [
-                np.rot90(images_20m[flip], k=2, axes=(1, 2)),
-                images_20m[norm],
-            ]
-        )[shuffle_mask],
+        images_20m[shuffle_mask],
+        # np.concatenate(
+        #     [
+        #         np.rot90(images_20m[flip], k=2, axes=(1, 2)),
+        #         images_20m[norm],
+        #     ]
+        # )[shuffle_mask],
     )
 
     # Free memory
@@ -120,12 +122,13 @@ def merge_and_preprocess(folder):
 
     np.save(
         folder + f"SAR.npy",
-        np.concatenate(
-            [
-                np.rot90(images_sar[flip], k=2, axes=(1, 2)),
-                images_sar[norm],
-            ]
-        )[shuffle_mask],
+        images_sar[shuffle_mask],
+        # np.concatenate(
+        #     [
+        #         np.rot90(images_sar[flip], k=2, axes=(1, 2)),
+        #         images_sar[norm],
+        #     ]
+        # )[shuffle_mask],
     )
 
     # Free memory
@@ -140,18 +143,19 @@ def merge_and_preprocess(folder):
 
     np.save(
         folder + f"LABEL_AREA.npy",
-        np.concatenate(
-            [
-                np.rot90(images_area[flip], k=2, axes=(1, 2)),
-                images_area[norm],
-            ]
-        )[shuffle_mask],
+        images_area[shuffle_mask],
+        # np.concatenate(
+        #     [
+        #         np.rot90(images_area[flip], k=2, axes=(1, 2)),
+        #         images_area[norm],
+        #     ]
+        # )[shuffle_mask],
     )
 
     # Free memory
     images_area = None
 
 
-folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/ghana/vector/grid_cells/patches/merged/"
+folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/ghana/vector/grid_cells4/patches/merged/"
 
 merge_and_preprocess(folder)
