@@ -9,10 +9,8 @@ import linecache
 import tracemalloc
 
 
-
-
-def display_top(snapshot, key_type='lineno', limit=3):
-    # usage: 
+def display_top(snapshot, key_type="lineno", limit=3):
+    # usage:
 
     # Memory profiling
     # from collections import Counter
@@ -26,10 +24,12 @@ def display_top(snapshot, key_type='lineno', limit=3):
     # display_top(snapshot)
 
     # from https://stackoverflow.com/questions/552744/how-do-i-profile-memory-usage-in-python
-    snapshot = snapshot.filter_traces((
-        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
-        tracemalloc.Filter(False, "<unknown>"),
-    ))
+    snapshot = snapshot.filter_traces(
+        (
+            tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+            tracemalloc.Filter(False, "<unknown>"),
+        )
+    )
     top_stats = snapshot.statistics(key_type)
 
     print("Top %s lines" % limit)
@@ -37,11 +37,12 @@ def display_top(snapshot, key_type='lineno', limit=3):
         frame = stat.traceback[0]
         # replace "/path/to/module/file.py" with "module/file.py"
         filename = os.sep.join(frame.filename.split(os.sep)[-2:])
-        print("#%s: %s:%s: %.1f KiB"
-              % (index, filename, frame.lineno, stat.size / 1024))
+        print(
+            "#%s: %s:%s: %.1f KiB" % (index, filename, frame.lineno, stat.size / 1024)
+        )
         line = linecache.getline(frame.filename, frame.lineno).strip()
         if line:
-            print('    %s' % line)
+            print("    %s" % line)
 
     other = top_stats[limit:]
     if other:
@@ -81,13 +82,17 @@ def progress(count, total, name="Processing"):
     return None
 
 
-def timing(before):
+def timing(before, print_msg=True):
     after = time.time()
     dif = after - before
     hours = int(dif / 3600)
     minutes = int((dif % 3600) / 60)
     seconds = "{0:.2f}".format(dif % 60)
-    print(f"Processing took: {hours}h {minutes}m {seconds}s")
+    message = f"Processing took: {hours}h {minutes}m {seconds}s"
+    if print_msg:
+        print(message)
+
+    return message
 
 
 def path_to_ext(path):

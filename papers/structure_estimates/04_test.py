@@ -17,12 +17,21 @@ folder = "C:/Users/caspe/Desktop/paper_2_Structural_Volume/data/"
 
 
 def test_model(model_path, label, inputs):
-    for place in ["aarhus", "holsterbro", "samsoe"]:
+    for place in ["holsterbro", "aarhus", "samsoe"]:
         x_test = []
         for layer in inputs:
             x_test.append(np.load(folder + f"patches/{place}_{layer}.npy"))
 
         y_test = np.load(folder + f"patches/{place}_label_{label}.npy")
+
+        if label == "people":
+            y_test = y_test * 10.0
+        elif label == "area":
+            y_test = y_test * 1.0
+        elif label == "volume":
+            y_test = y_test * 0.01
+        else:
+            raise Exception("Wrong label used.")
 
         model = tf.keras.models.load_model(model_path)
 
@@ -42,4 +51,4 @@ def test_model(model_path, label, inputs):
         print("")
 
 
-test_model(folder + "tmp/RGBN_SWIR_12_best", "area", ["RGBN", "RESWIR"])
+test_model(folder + "models/rgb_people_32", "people", ["RGB"])

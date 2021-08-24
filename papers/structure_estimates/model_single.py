@@ -11,7 +11,7 @@ def model_single(
     activation="relu",
     kernel_initializer="glorot_normal",
     sizes=[32, 40, 48],
-    inception_blocks=3,
+    inception_blocks=2,
     name="denmark",
 ):
     model_input = Input(shape=shape, name=f"{name}_single_input")

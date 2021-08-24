@@ -333,3 +333,11 @@ def preprocess_sar(
 
 def per_tile_error(y_true, y_pred):
     return tf.math.reduce_mean(tf.math.abs(y_pred - y_true), axis=-1) * model_size
+
+
+def mse(y_pred, y_true):
+    y_pred = tf.cast(y_pred, tf.float64)
+    y_true = tf.cast(y_true, tf.float64)
+    y_pred = tf.nn.relu(y_pred)
+
+    return tf.math.reduce_mean(tf.math.squared_difference(y_pred, y_true))

@@ -9,7 +9,7 @@ from buteo.machine_learning.ml_utils import (
 
 base_folder = "C:/Users/caspe/Desktop/paper_2_Structural_Volume/data/patches/"
 folder = base_folder + "raw/"
-outdir = base_folder + "reswir/"
+outdir = base_folder
 prefix = ""
 
 
