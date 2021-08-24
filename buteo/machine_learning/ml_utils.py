@@ -280,3 +280,56 @@ def scale_percentile(arr, percentile=98):
     truncated = np.where(arr > percentile, percentile, arr)
 
     return (truncated / truncated.max()).astype("float32")
+
+
+# np.set_printoptions(suppress=True)
+def preprocess_optical(
+    arr, cutoff_low=0, cutoff_high=10000, target_low=-1, target_high=1
+):
+    clipped = np.where(
+        arr > cutoff_high, cutoff_high, np.where(arr < cutoff_low, cutoff_low, arr)
+    )
+    val_a = (target_high - target_low) / (cutoff_high - cutoff_low)
+    val_b = target_high - (val_a * cutoff_high)
+
+    return ((val_a * clipped) + val_b).astype("float32")
+
+
+def preprocess_coh(arr, target_low=-1, target_high=1):
+    return preprocess_optical(arr, 0, 1, target_low, target_high)
+
+
+# # Thresholds at 10000 and scales to 0 to 1
+# def preprocess_optical(arr, cutoff=10000):
+#     return np.true_divide(np.where(arr > cutoff, cutoff, arr), cutoff).astype("float32")
+
+
+# Converts to decibel, thresholds between -30db and 10db and scales to -1 to 1
+def preprocess_sar(
+    arr, convert_db=True, cutoff_low=-30, cutoff_high=15, target_low=-1, target_high=1
+):
+    if convert_db:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            arr_adj = 10 * np.where(arr != 0, np.log10(arr), cutoff_low)
+    else:
+        arr_adj = arr
+
+    thresholded = np.where(
+        arr_adj > cutoff_high,
+        cutoff_high,
+        np.where(arr_adj < cutoff_low, cutoff_low, arr_adj),
+    )
+
+    scaled = preprocess_optical(
+        thresholded,
+        cutoff_low=cutoff_low,
+        cutoff_high=cutoff_high,
+        target_low=target_low,
+        target_high=target_high,
+    )
+
+    return scaled
+
+
+def per_tile_error(y_true, y_pred):
+    return tf.math.reduce_mean(tf.math.abs(y_pred - y_true), axis=-1) * model_size
