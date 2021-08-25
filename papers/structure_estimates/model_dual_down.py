@@ -7,15 +7,15 @@ from tensorflow.keras.layers import (
 
 
 def model_dual_down(
-    shape_rgbn,
-    shape_swir,
+    shape_higher,
+    shape_lower,
     activation="relu",
     kernel_initializer="glorot_normal",
     sizes=[32, 40, 48],
     inception_blocks=2,
     name="denmark",
 ):
-    model_input_rgbn = Input(shape=shape_rgbn, name=f"{name}_dual_input_rgbn")
+    model_input_rgbn = Input(shape=shape_higher, name=f"{name}_dual_input_rgbn")
     rgbn = Conv2D(
         sizes[0],
         kernel_size=5,
@@ -59,7 +59,7 @@ def model_dual_down(
             name=f"{name}_dual_rgbn_ib_02_{idx}",
         )
 
-    model_input_swir = Input(shape=shape_swir, name=f"{name}_dual_input_swir")
+    model_input_swir = Input(shape=shape_lower, name=f"{name}_dual_input_swir")
 
     swir = Conv2D(
         sizes[1],

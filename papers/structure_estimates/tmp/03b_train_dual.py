@@ -51,18 +51,15 @@ for model_name in ["RGBN-SWIR", "RGBN-RE", "RGBN-RESWIR"]:
         x_train_swir = x_train_swir[:tile_limit]
         y_train = y_train[:tile_limit]
 
-        if label == "people":
-            lr = 0.001
-            min_delta = 0.025
-            y_train = y_train * 10.0
-        elif label == "area":
+        if label == "area":
             lr = 0.001
             min_delta = 0.05
-            y_train = y_train * 1.0
         elif label == "volume":
             lr = 0.0001
-            min_delta = 0.005
-            y_train = y_train * 0.01
+            min_delta = 0.5
+        elif label == "people":
+            lr = 0.00001
+            min_delta = 0.025
         else:
             raise Exception("Wrong label used.")
 

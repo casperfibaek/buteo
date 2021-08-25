@@ -27,65 +27,76 @@ mixed_precision.set_global_policy("mixed_float16")
 folder = "C:/Users/caspe/Desktop/paper_2_Structural_Volume/data/"
 outdir = folder + "tmp/"
 
-layers = {
-    "rgb": np.load(folder + "patches/RGB.npy"),
-    "rgbn": np.load(folder + "patches/RGBN.npy"),
-    "VVa": np.load(folder + "patches/vv_asc_v2.npy"),
-    "VVa_VHa": np.concatenate(
-        [
-            np.load(folder + "patches/vv_asc_v2.npy"),
-            np.load(folder + "patches/vh_asc_v2.npy"),
-        ],
-        axis=3,
-    ),
-    "VVa_VVd": np.concatenate(
-        [
-            np.load(folder + "patches/vv_asc.npy"),
-            np.load(folder + "patches/vv_desc.npy"),
-        ],
-        axis=3,
-    ),
-    "VVa_COHa": np.concatenate(
-        [
-            np.load(folder + "patches/vv_asc.npy"),
-            np.load(folder + "patches/coh_asc.npy"),
-        ],
-        axis=3,
-    ),
-    "VVa_VVd_COHa_COHd": np.concatenate(
-        [
-            np.load(folder + "patches/vv_asc.npy"),
-            np.load(folder + "patches/vv_desc.npy"),
-            np.load(folder + "patches/coh_asc.npy"),
-            np.load(folder + "patches/coh_desc.npy"),
-        ],
-        axis=3,
-    ),
-    "VVa_VHa_COHa": np.concatenate(
-        [
-            np.load(folder + "patches/vv_asc_v2.npy"),
-            np.load(folder + "patches/vh_asc_v2.npy"),
-            np.load(folder + "patches/coh_asc.npy"),
-        ],
-        axis=3,
-    ),
-}
+
+def get_layer(name):
+    if name == "rgb":
+        return np.load(folder + f"patches/RGB.npy")
+    elif name == "rgbn":
+        return np.load(folder + f"patches/RGBN.npy")
+    elif name == "VVa":
+        return np.load(folder + f"patches/_vv_asc_v2.npy")
+    elif name == "VVa_VHa":
+        return np.concatenate(
+            [
+                np.load(folder + f"patches/vv_asc_v2.npy"),
+                np.load(folder + f"patches/vh_asc_v2.npy"),
+            ],
+            axis=3,
+        )
+    elif name == "VVa_VVd":
+        return np.concatenate(
+            [
+                np.load(folder + f"patches/vv_asc.npy"),
+                np.load(folder + f"patches/vv_desc.npy"),
+            ],
+            axis=3,
+        )
+    elif name == "VVa_COHa":
+        return np.concatenate(
+            [
+                np.load(folder + f"patches/vv_asc.npy"),
+                np.load(folder + f"patches/coh_asc.npy"),
+            ],
+            axis=3,
+        )
+    elif name == "VVa_VVd_COHa_COHd":
+        return np.concatenate(
+            [
+                np.load(folder + f"patches/vv_asc.npy"),
+                np.load(folder + f"patches/vv_desc.npy"),
+                np.load(folder + f"patches/coh_asc.npy"),
+                np.load(folder + f"patches/coh_desc.npy"),
+            ],
+            axis=3,
+        )
+    elif name == "VVa_VHa_COHa":
+        return np.concatenate(
+            [
+                np.load(folder + f"patches/vv_asc_v2.npy"),
+                np.load(folder + f"patches/vh_asc_v2.npy"),
+                np.load(folder + f"patches/coh_asc.npy"),
+            ],
+            axis=3,
+        )
+    else:
+        raise Exception("Could not find layer.")
+
 
 for model_name in [
-    "rgb",
-    "rgbn",
-    "VVa",
-    "VVa_VHa",
-    "VVa_VVd",
-    "VVa_COHa",
+    # "rgb",
+    # "rgbn",
+    # "VVa",
+    # "VVa_VHa",
+    # "VVa_VVd",
+    # "VVa_COHa",
     "VVa_VVd_COHa_COHd",
-    "VVa_VHa_COHa",
+    # "VVa_VHa_COHa",
 ]:
     timings = []
 
     for idx, val in enumerate(["area", "volume", "people"]):
         label = val
-        x_train = layers[model_name]
+        x_train = get_layer(model_name)
         y_train = np.load(folder + f"patches/label_{label}.npy")
 
         area_limit = 250
@@ -143,6 +154,7 @@ for model_name in [
 
             if label == "area":
                 print(model.summary())
+
             elif label == "volume":
                 area_model = sorted(glob(outdir + f"{model_name.lower()}_area_*"))[-1]
                 donor_model = tf.keras.models.load_model(area_model)
@@ -151,7 +163,6 @@ for model_name in [
             elif label == "people":
                 area_model = sorted(glob(outdir + f"{model_name.lower()}_volume_*"))[-1]
                 donor_model = tf.keras.models.load_model(area_model)
-
                 model.set_weights(donor_model.get_weights())
 
             donor_model = None
@@ -197,5 +208,5 @@ for model_name in [
         timings.append([label, timing(start)])
 
     with open(folder + f"logs/{model_name}.txt", "w") as f:
-        for time in timings:
-            f.write(f"{time[0]} - {time[1]}\n")
+        for t in timings:
+            f.write(f"{t[0]} - {t[1]}\n")
