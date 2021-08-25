@@ -1,5 +1,4 @@
 yellow_follow = "C:/Users/caspe/Desktop/buteo/"
-from papers.structure_estimates.model_trio_end import model_trio_down
 import sys
 
 sys.path.append(yellow_follow)
@@ -21,8 +20,7 @@ from buteo.utils import timing
 
 from model_single import model_single
 from model_dual_down import model_dual_down
-from model_trio_down import model_dual_down
-from model_trio_end import model_trio_end
+from model_trio_down import model_trio_down
 from training_utils import get_layer
 
 np.set_printoptions(suppress=True)
@@ -34,8 +32,8 @@ outdir = folder + "tmp/"
 
 
 for model_name in [
-    # "rgb",
-    # "rgbn",
+    # "RGB",
+    # "RGBN",
     # "VVa",
     # "VVa_VHa",
     # "VVa_VVd",
@@ -45,9 +43,8 @@ for model_name in [
     # "RGBN_SWIR",
     # "RGBN_RE",
     # "RGBN_RESWIR",
-    "merge_test_join",
-    "merge_test_down",
-    "merge_test_end",
+    # "RGBN_RESWIR_VVa_VVd_COHa_COHd",
+    "RGBN_RESWIR_VVa_VHa",
 ]:
     timings = []
 
@@ -66,16 +63,18 @@ for model_name in [
             "RGBN_SWIR",
             "RGBN_RE",
             "RGBN_RESWIR",
-            "merge_test_join",
-            "merge_test_down",
-            "merge_test_end",
+            "RGBN_RESWIR_VVa_VVd_COHa_COHd",
+            "RGBN_RESWIR_VVa_VHa",
         ]:
+            x_train_holder = []
             for idx in range(len(x_train)):
-                x_train[idx] = x_train[idx][mask]
-                x_train[idx] = x_train[idx][:tile_limit]
-        else:
-            y_train = y_train[mask]
-            y_train = y_train[:tile_limit]
+                x_train_masked = x_train[idx][mask]
+                x_train_limited = x_train_masked[:tile_limit]
+                x_train_holder.append(x_train_limited)
+            x_train = x_train_holder
+
+        y_train = y_train[mask]
+        y_train = y_train[:tile_limit]
 
         if label == "area":
             lr = 0.001
@@ -83,23 +82,20 @@ for model_name in [
         elif label == "volume":
             lr = 0.0001
             min_delta = 0.5
-            continue
         elif label == "people":
             lr = 0.00001
             min_delta = 0.025
-            continue
         else:
             raise Exception("Wrong label used.")
 
         with tf.device("/device:GPU:0"):
-            # epochs = [15, 15, 5]
-            epochs = [15]
+            epochs = [15, 15, 5]
             bs = [64, 32, 16]
             inception_blocks = 2
             activation = "relu"
             initializer = "glorot_normal"
 
-            if model_name in ["RGBN_SWIR", "RGBN_RE", "RGBN_RESWIR", "merge_test_join"]:
+            if model_name in ["RGBN_SWIR", "RGBN_RE", "RGBN_RESWIR"]:
                 model = model_dual_down(
                     x_train[0].shape[1:],
                     x_train[1].shape[1:],
@@ -108,18 +104,8 @@ for model_name in [
                     inception_blocks=inception_blocks,
                     name=f"{model_name.lower()}_{label}",
                 )
-            elif model_name in ["merge_test_down"]:
+            elif model_name in ["RGBN_RESWIR_VVa_VVd_COHa_COHd", "RGBN_RESWIR_VVa_VHa"]:
                 model = model_trio_down(
-                    x_train[0].shape[1:],
-                    x_train[1].shape[1:],
-                    x_train[2].shape[1:],
-                    kernel_initializer=initializer,
-                    activation=activation,
-                    inception_blocks=inception_blocks,
-                    name=f"{model_name.lower()}_{label}",
-                )
-            elif model_name in ["merge_test_end"]:
-                model = model_trio_end(
                     x_train[0].shape[1:],
                     x_train[1].shape[1:],
                     x_train[2].shape[1:],
@@ -158,21 +144,16 @@ for model_name in [
                 print(model.summary())
 
             elif label == "volume":
-                area_model = sorted(glob(outdir + f"{model_name.lower()}_area_*"))[-1]
+                area_model = f"{outdir}{model_name.lower()}_area"
                 donor_model = tf.keras.models.load_model(area_model)
                 model.set_weights(donor_model.get_weights())
 
             elif label == "people":
-                area_model = sorted(glob(outdir + f"{model_name.lower()}_volume_*"))[-1]
-                donor_model = tf.keras.models.load_model(area_model)
+                volume_model = f"{outdir}{model_name.lower()}_volume"
+                donor_model = tf.keras.models.load_model(volume_model)
                 model.set_weights(donor_model.get_weights())
 
             donor_model = None
-
-            model_checkpoint_callback = ModelCheckpoint(
-                filepath=f"{outdir}{model_name.lower()}_{label}_" + "{epoch:02d}",
-                save_best_only=True,
-            )
 
             start = time.time()
 
@@ -200,12 +181,20 @@ for model_name in [
                                 epochs_per_drop=3,
                             )
                         ),
-                        model_checkpoint_callback,
+                        # ModelCheckpoint(
+                        #     filepath=f"{outdir}{model_name.lower()}_{label}_" + "{epoch:02d}",
+                        #     save_best_only=True,
+                        # ),
                         EarlyStopping(
-                            monitor="val_loss", patience=3, min_delta=min_delta
+                            monitor="val_loss",
+                            patience=3,
+                            min_delta=min_delta,
+                            restore_best_weights=True,
                         ),
                     ],
                 )
+
+            model.save(f"{outdir}{model_name.lower()}_{label}")
 
         timings.append([label, timing(start)])
 

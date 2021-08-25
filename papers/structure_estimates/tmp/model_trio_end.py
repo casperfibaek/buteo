@@ -12,7 +12,7 @@ def model_trio_end(
     shape_lower,
     activation="relu",
     kernel_initializer="glorot_normal",
-    sizes=[32, 40, 48],
+    sizes=[24, 32, 40],
     inception_blocks=2,
     name="denmark",
 ):
@@ -299,9 +299,9 @@ def model_trio_end(
 
     return Model(
         inputs=[
-            shape_higher_01,
-            shape_higher_02,
-            shape_lower,
+            model_input_higher_01,
+            model_input_higher_02,
+            model_input_model_lower,
         ],
         outputs=output,
     )

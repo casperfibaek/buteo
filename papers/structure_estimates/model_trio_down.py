@@ -209,9 +209,9 @@ def model_trio_down(
 
     return Model(
         inputs=[
-            shape_higher_01,
-            shape_higher_02,
-            shape_lower,
+            model_input_higher_01,
+            model_input_higher_02,
+            model_input_model_lower,
         ],
         outputs=output,
     )
