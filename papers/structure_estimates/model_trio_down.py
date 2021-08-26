@@ -12,7 +12,7 @@ def model_trio_down(
     shape_lower,
     activation="relu",
     kernel_initializer="glorot_normal",
-    sizes=[32, 40, 48],
+    sizes=[48, 64, 80],
     inception_blocks=2,
     name="denmark",
 ):

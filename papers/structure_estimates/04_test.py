@@ -41,7 +41,7 @@ def test_model(model_path, label, inputs):
 
 
 test_model(
-    folder + "models/rgbn_reswir_vva_vvd_coha_cohd_area",
-    "AREA",
-    "RGBN_RESWIR_VVa_VVd_COHa_COHd",
+    folder + "models/rgbn_reswir_vva_vha_people",
+    "PEOPLE",
+    "RGBN_RESWIR_VVa_VHa",
 )

@@ -7,7 +7,7 @@ from buteo.machine_learning.ml_utils import (
     preprocess_coh,
 )
 
-base_folder = "C:/Users/caspe/Desktop/paper_2_Structural_Volume/data/patches/"
+base_folder = "C:/Users/caspe/Desktop/paper_2_Structural_Volume/data/patches/128x128/"
 folder = base_folder + "raw/"
 outdir = base_folder
 prefix = ""

@@ -315,31 +315,3 @@ def clip_raster(
         return output
 
     return output[0]
-
-
-if __name__ == "__main__":
-    import os
-    from buteo.raster.clip import clip_raster
-    from buteo.raster.shift import shift_raster
-    from glob import glob
-
-    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/"
-    dst = folder + "tmp/"
-    # geom = folder + "ghana_buffered_1280.gpkg"
-    geom = folder + "west/area.tif"
-
-    files = glob(folder + "*20m.tif")
-
-    paths = clip_raster(
-        files,
-        geom,
-        out_path=folder + "/west/",
-        postfix="",
-        creation_options=["COMPRESS=NONE", "TILED=NO"],
-        ram="80%",
-        all_touch=False,
-        adjust_bbox=False,
-    )
-
-    # for idx, path in enumerate(paths):
-    #     shift_raster(path, [10.0, 0], dst + os.path.basename(paths[idx]))
