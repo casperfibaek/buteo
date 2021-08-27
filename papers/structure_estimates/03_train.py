@@ -39,39 +39,39 @@ for tile_size in [
     for model_name in [
         # "RGB",
         # "RGBN",
+        # "RGBN_RE",
+        # "RGBN_SWIR",
+        # "RGBN_RESWIR",
         # "VVa",
         # "VVa_VHa",
         # "VVa_VVd",
         # "VVa_COHa",
-        # "VVa_VVd_COHa_COHd",
         # "VVa_VHa_COHa",
-        # "RGBN_SWIR",
-        # "RGBN_RE",
-        # "RGBN_RESWIR",
-        "RGBN_RESWIR_VVa_VVd_COHa_COHd",
+        # "VVa_VVd_COHa_COHd",
         # "RGBN_RESWIR_VVa_VHa",
+        "RGBN_RESWIR_VVa_VVd_COHa_COHd",
     ]:
         timings = []
 
         for idx, val in enumerate(["area", "volume", "people"]):
+            print(f"Processing: {model_name} - {val}")
+
             label = val
             x_train = get_layer(folder, model_name, tile_size=tile_size)
             y_train = get_layer(folder, label, tile_size=tile_size)
 
-            # y_train = np.load(folder + f"patches/label_{label}.npy")
-
             # area_limit = 250
             # tile_limit = 15000
 
-            # mask = np.load(folder + f"patches/label_area.npy")
+            # mask = get_layer(folder, "area", tile_size=tile_size)
             # mask = (mask.sum(axis=(1, 2)) > area_limit)[:, 0]
 
             # if model_name in [
-            #     "RGBN_SWIR",
             #     "RGBN_RE",
+            #     "RGBN_SWIR",
             #     "RGBN_RESWIR",
-            #     "RGBN_RESWIR_VVa_VVd_COHa_COHd",
             #     "RGBN_RESWIR_VVa_VHa",
+            #     "RGBN_RESWIR_VVa_VVd_COHa_COHd",
             # ]:
             #     x_train_holder = []
             #     for idx in range(len(x_train)):
@@ -79,6 +79,9 @@ for tile_size in [
             #         x_train_limited = x_train_masked[:tile_limit]
             #         x_train_holder.append(x_train_limited)
             #     x_train = x_train_holder
+            # else:
+            #     x_train = x_train[mask]
+            #     x_train = x_train[:tile_limit]
 
             # y_train = y_train[mask]
             # y_train = y_train[:tile_limit]
@@ -86,12 +89,17 @@ for tile_size in [
             if label == "area":
                 lr = 0.001
                 min_delta = 0.05
+                continue
             elif label == "volume":
                 lr = 0.0001
                 min_delta = 0.5
+                continue
             elif label == "people":
-                lr = 0.00001
-                min_delta = 0.025
+                lr = 0.0001
+                min_delta = 0.25
+
+                # Ensures the model does not optimize to zero.
+                y_train = y_train * 100
             else:
                 raise Exception("Wrong label used.")
 
@@ -105,13 +113,45 @@ for tile_size in [
                 # elif tile_size == "16x16":
                 #     bs = [1024, 512]  # for 16x16
 
+                # for big_model
                 epochs = [25, 25, 10]
                 bs = [256, 128, 64]
-                inception_blocks = 3
+
+                # for testing
+                # epochs = [20, 5]
+                # bs = [64, 32]
+
+                # for big_model
+                # inception_blocks = 2
+                inception_blocks = 3  # model model
                 activation = "relu"
                 initializer = "glorot_normal"
 
-                if model_name in ["RGBN_SWIR", "RGBN_RE", "RGBN_RESWIR"]:
+                # Triple Model
+                if model_name in [
+                    "RGBN_RESWIR_VVa_VHa",
+                    "RGBN_RESWIR_VVa_VVd_COHa_COHd",
+                ]:
+                    # model = model_trio_down(
+                    #     x_train[0].shape[1:],
+                    #     x_train[1].shape[1:],
+                    #     x_train[2].shape[1:],
+                    #     kernel_initializer=initializer,
+                    #     activation=activation,
+                    #     inception_blocks=inception_blocks,
+                    #     name=f"{model_name.lower()}_{label}",
+                    # )
+
+                    model = tf.keras.models.load_model(
+                        folder + "models/big_model_32x32_people"
+                    )
+
+                # Dual model
+                elif model_name in [
+                    "RGBN_RE",
+                    "RGBN_SWIR",
+                    "RGBN_RESWIR",
+                ]:
                     model = model_dual_down(
                         x_train[0].shape[1:],
                         x_train[1].shape[1:],
@@ -120,19 +160,8 @@ for tile_size in [
                         inception_blocks=inception_blocks,
                         name=f"{model_name.lower()}_{label}",
                     )
-                elif model_name in [
-                    "RGBN_RESWIR_VVa_VVd_COHa_COHd",
-                    "RGBN_RESWIR_VVa_VHa",
-                ]:
-                    model = model_trio_down(
-                        x_train[0].shape[1:],
-                        x_train[1].shape[1:],
-                        x_train[2].shape[1:],
-                        kernel_initializer=initializer,
-                        activation=activation,
-                        inception_blocks=inception_blocks,
-                        name=f"{model_name.lower()}_{label}",
-                    )
+
+                # Single Model
                 else:
                     model = model_single(
                         x_train.shape[1:],
@@ -142,37 +171,39 @@ for tile_size in [
                         name=f"{model_name.lower()}_{label}",
                     )
 
-                optimizer = tf.keras.optimizers.Adam(
-                    learning_rate=lr,
-                    epsilon=1e-07,
-                    amsgrad=False,
-                    name="Adam",
-                )
+                # optimizer = tf.keras.optimizers.Adam(
+                #     learning_rate=lr,
+                #     epsilon=1e-07,
+                #     amsgrad=False,
+                #     name="Adam",
+                # )
 
-                loss = "mse"
-                if label != "area":
-                    loss = mse
+                # Cast two 64 bit loss function for area.
+                # Ensures that the loss doesn't go NaN
+                # loss = "mse"
+                # if label != "area":
+                #     loss = mse
 
-                model.compile(
-                    optimizer=optimizer,
-                    loss=loss,
-                    metrics=["mse", "mae"],
-                )
+                # model.compile(
+                #     optimizer=optimizer,
+                #     loss=loss,
+                #     metrics=["mse", "mae"],
+                # )
 
-                if label == "area":
-                    print(model.summary())
+                # if label == "area":
+                #     print(model.summary())
+                # elif label == "volume" or label == "people":
+                #     area_model = f"{outdir}{model_name.lower()}_area"
+                #     donor_model = tf.keras.models.load_model(area_model)
+                #     model.set_weights(donor_model.get_weights())
+                # elif label == "people":
+                #     volume_model = (
+                #         f"{folder}models/testing_models/{model_name.lower()}_volume"
+                #     )
+                #     donor_model = tf.keras.models.load_model(volume_model)
+                #     model.set_weights(donor_model.get_weights())
 
-                elif label == "volume":
-                    area_model = f"{outdir}{model_name.lower()}_area"
-                    donor_model = tf.keras.models.load_model(area_model)
-                    model.set_weights(donor_model.get_weights())
-
-                elif label == "people":
-                    volume_model = f"{outdir}{model_name.lower()}_volume"
-                    donor_model = tf.keras.models.load_model(volume_model)
-                    model.set_weights(donor_model.get_weights())
-
-                donor_model = None
+                # donor_model = None
 
                 start = time.time()
 
@@ -196,12 +227,12 @@ for tile_size in [
                             LearningRateScheduler(
                                 create_step_decay(
                                     learning_rate=lr,
-                                    drop_rate=0.8,
+                                    drop_rate=0.85,
                                     epochs_per_drop=3,
                                 )
                             ),
                             ModelCheckpoint(
-                                filepath=f"{outdir}{model_name.lower()}_{label}_"
+                                filepath=f"{outdir}{model_name.lower()}_{label}_v3_"
                                 + "{epoch:02d}",
                                 save_best_only=True,
                             ),
@@ -214,7 +245,7 @@ for tile_size in [
                         ],
                     )
 
-                model.save(f"{outdir}{model_name.lower()}_{label}")
+                model.save(f"{outdir}{model_name.lower()}_{label}_v3")
 
             timings.append([label, timing(start)])
 

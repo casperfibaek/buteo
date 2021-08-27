@@ -112,12 +112,6 @@ def inception_block(
         padding="same",
         name=name + "_inception_t1_0",
     )(inputs)
-    # track2 = AveragePooling2D(
-    #     pool_size=2,
-    #     strides=1,
-    #     padding="same",
-    #     name=name + "_inception_t2_0",
-    # )(inputs)
     track3 = Conv2D(
         size,
         kernel_size=1,
@@ -179,7 +173,6 @@ def inception_block(
     return Concatenate(name=f"{name}_inception_concat")(
         [
             track1,
-            # track2,
             track3,
             track4,
         ]

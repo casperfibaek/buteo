@@ -22,6 +22,9 @@ def test_model(model_path, label, inputs):
         x_test = get_layer(folder, inputs, prefix=place + "_")
         y_test = np.load(folder + f"patches/{place}_label_{label}.npy")
 
+        if label == "people":
+            y_test = y_test * 100
+
         model = tf.keras.models.load_model(model_path)
 
         _loss, mse, mae = model.evaluate(

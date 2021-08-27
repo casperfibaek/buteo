@@ -54,6 +54,14 @@ def get_offsets(size):
     ]
 
 
+# def get_offsets(size):
+#     return [
+#         [],
+#         [],
+#         [],
+#     ]
+
+
 def predict_model(
     model,
     name,
@@ -207,19 +215,50 @@ def predict_model(
 
 folder = "C:/Users/caspe/Desktop/paper_2_Structural_Volume/data/"
 
-for target_area in [
-    # "holsterbro",
-    "aarhus",
-    "samsoe",
-]:
+for target_area in ["holsterbro", "aarhus", "samsoe"]:
+    predict_model(
+        folder + "models/128_area",
+        f"{target_area}_area_128x128_9_overlaps",
+        folder,
+        target_area,
+        128,
+        offsets=get_offsets(128),
+        target_low=0,
+        target_high=1,
+        optical_top=6000,
+    )
 
     predict_model(
-        folder + "tmp/rgbn_reswir_vva_vvd_coha_cohd_people_v2_13",
-        f"{target_area}_big_model_people_v2_01",
+        folder + "models/64_area",
+        f"{target_area}_area_64x64_9_overlaps",
+        folder,
+        target_area,
+        64,
+        offsets=get_offsets(64),
+        target_low=0,
+        target_high=1,
+        optical_top=6000,
+    )
+
+    predict_model(
+        folder + "models/32_area",
+        f"{target_area}_area_32x32_9_overlaps",
         folder,
         target_area,
         32,
         offsets=get_offsets(32),
+        target_low=0,
+        target_high=1,
+        optical_top=6000,
+    )
+
+    predict_model(
+        folder + "models/16_area",
+        f"{target_area}_area_16x16_9_overlaps",
+        folder,
+        target_area,
+        16,
+        offsets=get_offsets(16),
         target_low=0,
         target_high=1,
         optical_top=6000,
