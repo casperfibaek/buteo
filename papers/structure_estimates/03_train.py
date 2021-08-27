@@ -66,38 +66,42 @@ for tile_size in [
             x_train = get_layer(folder, model_name, tile_size=tile_size)
             y_train = get_layer(folder, label, tile_size=tile_size)
 
-            # area_limit = 250
-            # tile_limit = 15000
+            area_limit = 250
+            tile_limit = 15000 * 4
 
-            # mask = get_layer(folder, "area", tile_size=tile_size)
-            # mask = (mask.sum(axis=(1, 2)) > area_limit)[:, 0]
+            mask = get_layer(folder, "area", tile_size=tile_size)
+            mask = (mask.sum(axis=(1, 2)) > area_limit)[:, 0]
 
-            # if model_name in [
-            #     "RGBN_RE",
-            #     "RGBN_SWIR",
-            #     "RGBN_RESWIR",
-            #     "RGBN_RESWIR_VVa_VHa",
-            #     "RGBN_RESWIR_VVa_VVd_COHa_COHd",
-            # ]:
-            #     x_train_holder = []
-            #     for idx in range(len(x_train)):
-            #         x_train_masked = x_train[idx][mask]
-            #         x_train_limited = x_train_masked[:tile_limit]
-            #         x_train_holder.append(x_train_limited)
-            #     x_train = x_train_holder
-            # else:
-            #     x_train = x_train[mask]
-            #     x_train = x_train[:tile_limit]
+            if model_name in [
+                "RGBN_RE",
+                "RGBN_SWIR",
+                "RGBN_RESWIR",
+                "RGBN_RESWIR_VVa_VHa",
+                "RGBN_RESWIR_VVa_VVd_COHa_COHd",
+            ]:
+                x_train_holder = []
+                for idx in range(len(x_train)):
+                    x_train_masked = x_train[idx][mask]
+                    x_train_limited = x_train_masked[:tile_limit]
+                    x_train_holder.append(x_train_limited)
+                x_train_reduced = x_train_holder
+            else:
+                x_train_reduced = x_train_reduced[mask]
+                x_train_reduced = x_train_reduced[:tile_limit]
 
-            # y_train = y_train[mask]
-            # y_train = y_train[:tile_limit]
+            y_train_reduced = y_train[mask]
+            y_train_reduced = y_train_reduced[:tile_limit]
 
             if label == "area":
                 lr = 0.001
                 min_delta = 0.05
+                y_train = y_train_reduced
+                x_train = x_train_reduced
             elif label == "volume":
                 lr = 0.0001
                 min_delta = 0.5
+                y_train = y_train_reduced
+                x_train = x_train_reduced
             elif label == "people":
                 lr = 0.0001
                 min_delta = 0.25
