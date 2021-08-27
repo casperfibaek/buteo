@@ -53,7 +53,13 @@ for tile_size in [
     ]:
         timings = []
 
-        for idx, val in enumerate(["area", "volume", "people"]):
+        for idx, val in enumerate(
+            [
+                "area",
+                "volume",
+                "people",
+            ]
+        ):
             print(f"Processing: {model_name} - {val}")
 
             label = val
@@ -89,11 +95,9 @@ for tile_size in [
             if label == "area":
                 lr = 0.001
                 min_delta = 0.05
-                continue
             elif label == "volume":
                 lr = 0.0001
                 min_delta = 0.5
-                continue
             elif label == "people":
                 lr = 0.0001
                 min_delta = 0.25
@@ -122,8 +126,8 @@ for tile_size in [
                 # bs = [64, 32]
 
                 # for big_model
-                # inception_blocks = 2
-                inception_blocks = 3  # model model
+                inception_blocks = 3
+                # inception_blocks = 3  # model model
                 activation = "relu"
                 initializer = "glorot_normal"
 
@@ -132,18 +136,14 @@ for tile_size in [
                     "RGBN_RESWIR_VVa_VHa",
                     "RGBN_RESWIR_VVa_VVd_COHa_COHd",
                 ]:
-                    # model = model_trio_down(
-                    #     x_train[0].shape[1:],
-                    #     x_train[1].shape[1:],
-                    #     x_train[2].shape[1:],
-                    #     kernel_initializer=initializer,
-                    #     activation=activation,
-                    #     inception_blocks=inception_blocks,
-                    #     name=f"{model_name.lower()}_{label}",
-                    # )
-
-                    model = tf.keras.models.load_model(
-                        folder + "models/big_model_32x32_people"
+                    model = model_trio_down(
+                        x_train[0].shape[1:],
+                        x_train[1].shape[1:],
+                        x_train[2].shape[1:],
+                        kernel_initializer=initializer,
+                        activation=activation,
+                        inception_blocks=inception_blocks,
+                        name=f"{model_name.lower()}_{label}",
                     )
 
                 # Dual model
@@ -171,39 +171,37 @@ for tile_size in [
                         name=f"{model_name.lower()}_{label}",
                     )
 
-                # optimizer = tf.keras.optimizers.Adam(
-                #     learning_rate=lr,
-                #     epsilon=1e-07,
-                #     amsgrad=False,
-                #     name="Adam",
-                # )
+                optimizer = tf.keras.optimizers.Adam(
+                    learning_rate=lr,
+                    epsilon=1e-07,
+                    amsgrad=False,
+                    name="Adam",
+                )
 
                 # Cast two 64 bit loss function for area.
                 # Ensures that the loss doesn't go NaN
-                # loss = "mse"
-                # if label != "area":
-                #     loss = mse
+                loss = "mse"
+                if label != "area":
+                    loss = mse
 
-                # model.compile(
-                #     optimizer=optimizer,
-                #     loss=loss,
-                #     metrics=["mse", "mae"],
-                # )
+                model.compile(
+                    optimizer=optimizer,
+                    loss=loss,
+                    metrics=["mse", "mae"],
+                )
 
-                # if label == "area":
-                #     print(model.summary())
-                # elif label == "volume" or label == "people":
-                #     area_model = f"{outdir}{model_name.lower()}_area"
-                #     donor_model = tf.keras.models.load_model(area_model)
-                #     model.set_weights(donor_model.get_weights())
-                # elif label == "people":
-                #     volume_model = (
-                #         f"{folder}models/testing_models/{model_name.lower()}_volume"
-                #     )
-                #     donor_model = tf.keras.models.load_model(volume_model)
-                #     model.set_weights(donor_model.get_weights())
+                if label == "area":
+                    print(model.summary())
+                elif label == "volume":
+                    area_model = f"{outdir}{model_name.lower()}_area"
+                    donor_model = tf.keras.models.load_model(area_model)
+                    model.set_weights(donor_model.get_weights())
+                elif label == "people":
+                    volume_model = f"{outdir}{model_name.lower()}_volume"
+                    donor_model = tf.keras.models.load_model(volume_model)
+                    model.set_weights(donor_model.get_weights())
 
-                # donor_model = None
+                donor_model = None
 
                 start = time.time()
 
@@ -227,12 +225,12 @@ for tile_size in [
                             LearningRateScheduler(
                                 create_step_decay(
                                     learning_rate=lr,
-                                    drop_rate=0.85,
-                                    epochs_per_drop=3,
+                                    drop_rate=0.80,
+                                    epochs_per_drop=5,
                                 )
                             ),
                             ModelCheckpoint(
-                                filepath=f"{outdir}{model_name.lower()}_{label}_v3_"
+                                filepath=f"{outdir}{model_name.lower()}_{label}_"
                                 + "{epoch:02d}",
                                 save_best_only=True,
                             ),
@@ -245,7 +243,7 @@ for tile_size in [
                         ],
                     )
 
-                model.save(f"{outdir}{model_name.lower()}_{label}_v3")
+                model.save(f"{outdir}{model_name.lower()}_{label}")
 
             timings.append([label, timing(start)])
 

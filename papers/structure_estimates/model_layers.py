@@ -22,11 +22,34 @@ def reduction_block(
         padding="same",
         name=name + "_reduction_t1_0",
     )(inputs)
-    track2 = MaxPooling2D(
-        pool_size=(2, 2),
+    track2 = Conv2D(
+        size,
+        kernel_size=3,
         padding="same",
+        strides=(2, 2),
+        activation=activation,
+        kernel_initializer=kernel_initializer,
+        kernel_regularizer=kernel_regularizer,
         name=name + "_reduction_t2_0",
     )(inputs)
+    track3 = Conv2D(
+        size - reduction_02,
+        kernel_size=1,
+        padding="same",
+        strides=(1, 1),
+        activation=activation,
+        kernel_initializer=kernel_initializer,
+        name=name + "_reduction_t3_0",
+    )(inputs)
+    track3 = Conv2D(
+        size - reduction_01,
+        kernel_size=3,
+        padding="same",
+        strides=(1, 1),
+        activation=activation,
+        kernel_initializer=kernel_initializer,
+        name=name + "_reduction_t3_1",
+    )(track3)
     track3 = Conv2D(
         size,
         kernel_size=3,
@@ -35,36 +58,13 @@ def reduction_block(
         activation=activation,
         kernel_initializer=kernel_initializer,
         kernel_regularizer=kernel_regularizer,
-        name=name + "_reduction_t3_0",
-    )(inputs)
-    track4 = Conv2D(
-        size - reduction_02,
-        kernel_size=1,
+        name=name + "_reduction_t3_2",
+    )(track3)
+    track4 = MaxPooling2D(
+        pool_size=(2, 2),
         padding="same",
-        strides=(1, 1),
-        activation=activation,
-        kernel_initializer=kernel_initializer,
         name=name + "_reduction_t4_0",
     )(inputs)
-    track4 = Conv2D(
-        size - reduction_01,
-        kernel_size=3,
-        padding="same",
-        strides=(1, 1),
-        activation=activation,
-        kernel_initializer=kernel_initializer,
-        name=name + "_reduction_t3_1",
-    )(track4)
-    track4 = Conv2D(
-        size,
-        kernel_size=3,
-        padding="same",
-        strides=(2, 2),
-        activation=activation,
-        kernel_initializer=kernel_initializer,
-        kernel_regularizer=kernel_regularizer,
-        name=name + "_reduction_t3_2",
-    )(track4)
 
     return Concatenate(name=f"{name}_reduction_concat")(
         [
@@ -112,7 +112,7 @@ def inception_block(
         padding="same",
         name=name + "_inception_t1_0",
     )(inputs)
-    track3 = Conv2D(
+    track2 = Conv2D(
         size,
         kernel_size=1,
         padding="same",
@@ -120,10 +120,29 @@ def inception_block(
         activation=activation,
         kernel_initializer=kernel_initializer,
         kernel_regularizer=kernel_regularizer,
+        name=name + "_inception_t2_0",
+    )(inputs)
+    track3 = Conv2D(
+        size - reduction_01,
+        kernel_size=1,
+        padding="same",
+        strides=(1, 1),
+        activation=activation,
+        kernel_initializer=kernel_initializer,
         name=name + "_inception_t3_0",
     )(inputs)
+    track3 = Conv2D(
+        size,
+        kernel_size=3,
+        padding="same",
+        strides=(1, 1),
+        activation=activation,
+        kernel_initializer=kernel_initializer,
+        kernel_regularizer=kernel_regularizer,
+        name=name + "_inception_t3_1",
+    )(track3)
     track4 = Conv2D(
-        size - reduction_01,
+        size - reduction_02,
         kernel_size=1,
         padding="same",
         strides=(1, 1),
@@ -132,34 +151,15 @@ def inception_block(
         name=name + "_inception_t4_0",
     )(inputs)
     track4 = Conv2D(
-        size,
-        kernel_size=3,
-        padding="same",
-        strides=(1, 1),
-        activation=activation,
-        kernel_initializer=kernel_initializer,
-        kernel_regularizer=kernel_regularizer,
-        name=name + "_inception_t4_1",
-    )(track4)
-    track5 = Conv2D(
-        size - reduction_02,
-        kernel_size=1,
-        padding="same",
-        strides=(1, 1),
-        activation=activation,
-        kernel_initializer=kernel_initializer,
-        name=name + "_inception_t5_0",
-    )(inputs)
-    track5 = Conv2D(
         size - reduction_01,
         kernel_size=3,
         padding="same",
         strides=(1, 1),
         activation=activation,
         kernel_initializer=kernel_initializer,
-        name=name + "_inception_t5_1",
-    )(track5)
-    track5 = Conv2D(
+        name=name + "_inception_t4_1",
+    )(track4)
+    track4 = Conv2D(
         size,
         kernel_size=3,
         padding="same",
@@ -167,12 +167,13 @@ def inception_block(
         activation=activation,
         kernel_initializer=kernel_initializer,
         kernel_regularizer=kernel_regularizer,
-        name=name + "_inception_t5_2",
-    )(track5)
+        name=name + "_inception_t4_2",
+    )(track4)
 
     return Concatenate(name=f"{name}_inception_concat")(
         [
             track1,
+            track2,
             track3,
             track4,
         ]
