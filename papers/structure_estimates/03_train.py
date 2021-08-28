@@ -55,8 +55,8 @@ for tile_size in [
 
         for idx, val in enumerate(
             [
-                "area",
-                "volume",
+                # "area",
+                # "volume",
                 "people",
             ]
         ):
@@ -66,8 +66,10 @@ for tile_size in [
             x_train = get_layer(folder, model_name, tile_size=tile_size)
             y_train = get_layer(folder, label, tile_size=tile_size)
 
-            area_limit = 250
-            tile_limit = 15000 * 4
+            # area_limit = 250
+            # tile_limit = 15000 * 4
+            area_limit = 65
+            tile_limit = None
 
             mask = get_layer(folder, "area", tile_size=tile_size)
             mask = (mask.sum(axis=(1, 2)) > area_limit)[:, 0]

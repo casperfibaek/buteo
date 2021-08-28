@@ -17,10 +17,10 @@ mixed_precision.set_global_policy("mixed_float16")
 folder = "C:/Users/caspe/Desktop/paper_2_Structural_Volume/data/"
 
 
-def test_model(model_path, label, inputs):
+def test_model(model_path, label, inputs, tile_size="64x64"):
     for place in ["holsterbro", "aarhus", "samsoe"]:
-        x_test = get_layer(folder, inputs, prefix=place + "_")
-        y_test = np.load(folder + f"patches/{place}_label_{label}.npy")
+        x_test = get_layer(folder, inputs, prefix=place + "_", tile_size=tile_size)
+        y_test = np.load(folder + f"patches/{tile_size}/{place}_label_{label}.npy")
 
         if label == "people":
             y_test = y_test * 100
@@ -44,7 +44,7 @@ def test_model(model_path, label, inputs):
 
 
 test_model(
-    folder + "models/rgbn_reswir_vva_vha_people",
-    "PEOPLE",
-    "RGBN_RESWIR_VVa_VHa",
+    folder + "tmp/people_retest/rgbn_reswir_vva_vvd_coha_cohd_people",
+    "people",
+    "RGBN_RESWIR_VVa_VVd_COHa_COHd",
 )

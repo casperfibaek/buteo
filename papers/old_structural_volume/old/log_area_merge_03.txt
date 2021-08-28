@@ -1,0 +1,28 @@
+Analysis: bsac_bsdc_s2, target: area
+
+    Test area: Aarhus
+    Mean Absolute Error (MAE):                  385.714
+    Mean Absolute Percentage Error (MAPE):    12988678144.000
+    Median Absolute Error (MeAE):               134.811
+    Median Absolute Percentage Error (MeAPE):  1137.493
+  Z Mean Absolute Error (MAE):                  765.793
+  Z Mean Absolute Percentage Error (MAPE):     9583.205
+  Z Median Absolute Error (MeAE):               484.159
+  Z Median Absolute Percentage Error (MeAPE):    39.502
+
+    Combined Score:
+    Mean Absolute Error (MAE):                 385.714 (    0.000 stdev)
+    Mean Absolute Percentage Error (MAPE):   12988678144.000 (    0.000 stdev)
+    Median Absolute Error (MeAE):              134.811 (    0.000 stdev)
+    Median Absolute Percentage Error (MAPE):  1137.493 (    0.000 stdev)
+  Z Mean Absolute Error (MAE):                 765.793 (    0.000 stdev)
+  Z Mean Absolute Percentage Error (MAPE):    9583.205 (    0.000 stdev)
+  Z Median Absolute Error (MeAE):              484.159 (    0.000 stdev)
+  Z Median Absolute Percentage Error (MAPE):    39.502 (    0.000 stdev)
+
+Start: 2021-01-31 15:12:44.686484
+End:   2021-01-31 15:22:54.092560
+--Return--
+> c:\users\caspe\desktop\yellow\papers\structure_density\step3_summary_statistics_merge.py(377)<module>()->None
+-> import pdb; pdb.set_trace()
+(Pdb) 

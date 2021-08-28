@@ -315,3 +315,19 @@ def clip_raster(
         return output
 
     return output[0]
+
+
+if __name__ == "__main__":
+    from glob import glob
+
+    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/"
+    clip_vect = folder + "2021_validity_mask.tif"
+
+    clip_raster(
+        glob(folder + "raster/*.tif"),
+        clip_vect,
+        folder + "raster/clipped/",
+        postfix="",
+        all_touch=False,
+        adjust_bbox=False,
+    )
