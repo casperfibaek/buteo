@@ -4,7 +4,7 @@ sys.path.append("../../")
 from buteo.machine_learning.patch_extraction import extract_patches
 from glob import glob
 
-folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/odense_2020/"
+folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/bornholm/"
 outdir = folder + "patches/raw/"
 tmpdir = folder + "tmp/"
 

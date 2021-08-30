@@ -82,14 +82,12 @@ def preprocess(prefix, folder, outdir, low=0, high=1, optical_top=8000):
     np.save(outdir + f"{prefix}_label_people", np.load(label_people)[shuffle_mask])
 
 
-base_folder = (
-    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/odense_2020/patches/"
-)
+base_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/bornholm/patches/"
 folder = base_folder + "raw/"
 outdir = base_folder
 
 preprocess("2020", folder, outdir)
-# preprocess("2021", folder, outdir)
+preprocess("2021", folder, outdir)
 exit()
 # Merge seasons
 rgbn_merge = np.concatenate(

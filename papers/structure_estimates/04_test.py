@@ -1,11 +1,5 @@
-yellow_follow = "C:/Users/caspe/Desktop/buteo/"
-import sys
-
-sys.path.append(yellow_follow)
-
 import os
 import numpy as np
-
 import tensorflow as tf
 from tensorflow.keras import mixed_precision
 from training_utils import get_layer
@@ -17,7 +11,7 @@ mixed_precision.set_global_policy("mixed_float16")
 folder = "C:/Users/caspe/Desktop/paper_2_Structural_Volume/data/"
 
 
-def test_model(model_path, label, inputs, tile_size="64x64"):
+def test_model(model_path, label, inputs, tile_size="32x32"):
     for place in ["holsterbro", "aarhus", "samsoe"]:
         x_test = get_layer(folder, inputs, prefix=place + "_", tile_size=tile_size)
         y_test = np.load(folder + f"patches/{tile_size}/{place}_label_{label}.npy")
@@ -44,7 +38,7 @@ def test_model(model_path, label, inputs, tile_size="64x64"):
 
 
 test_model(
-    folder + "tmp/people_retest/rgbn_reswir_vva_vvd_coha_cohd_people",
+    folder + "models/big_model_32x32_people",
     "people",
     "RGBN_RESWIR_VVa_VVd_COHa_COHd",
 )
