@@ -55,9 +55,9 @@ for tile_size in [
 
         for idx, val in enumerate(
             [
-                # "area",
+                "area",
                 # "volume",
-                "people",
+                # "people",
             ]
         ):
             print(f"Processing: {model_name} - {val}")
@@ -88,7 +88,7 @@ for tile_size in [
                     x_train_holder.append(x_train_limited)
                 x_train_reduced = x_train_holder
             else:
-                x_train_reduced = x_train_reduced[mask]
+                x_train_reduced = x_train[mask]
                 x_train_reduced = x_train_reduced[:tile_limit]
 
             y_train_reduced = y_train[mask]
@@ -132,7 +132,7 @@ for tile_size in [
                 # bs = [64, 32]
 
                 # for big_model
-                inception_blocks = 3
+                inception_blocks = 2
                 # inception_blocks = 3  # model model
                 activation = "relu"
                 initializer = "glorot_normal"
@@ -208,6 +208,10 @@ for tile_size in [
                     model.set_weights(donor_model.get_weights())
 
                 donor_model = None
+
+                import pdb
+
+                pdb.set_trace()
 
                 start = time.time()
 
