@@ -4,6 +4,7 @@ from buteo.vector.clip import internal_clip_vector
 from buteo.vector.io import internal_vector_to_metadata, open_vector
 from math import ceil
 from osgeo import gdal
+from uuid import uuid4
 
 
 def rasterize_vector(
@@ -16,12 +17,16 @@ def rasterize_vector(
     band=1,
     fill_value=0,
     nodata_value=None,
+    check_memory=True,
     burn_value=1,
     attribute=None,
 ):
     vector_fn = vector
 
-    raster_fn = out_path
+    if out_path is None:
+        raster_fn = f"/vsimem/{str(uuid4())}.tif"
+    else:
+        raster_fn = out_path
 
     # Open the data source and read in the extent
     source_ds = open_vector(vector_fn)
@@ -41,9 +46,23 @@ def rasterize_vector(
         x_min = extent_dict["left"]
         y_max = extent_dict["top"]
 
-    target_ds = gdal.GetDriverByName("GTiff").Create(
-        raster_fn, x_res, y_res, 1, gdal.GDT_Byte
-    )
+    if check_memory is False:
+        gdal.SetConfigOption("CHECK_DISK_FREE_SPACE", "FALSE")
+
+    try:
+        target_ds = gdal.GetDriverByName("GTiff").Create(
+            raster_fn,
+            x_res,
+            y_res,
+            1,
+            gdal.GDT_Byte,
+        )
+    finally:
+        gdal.SetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")
+
+    if target_ds is None:
+        raise Exception("Unable to rasterize.")
+
     target_ds.SetGeoTransform((x_min, pixel_size, 0, y_max, 0, -pixel_size))
     target_ds.SetProjection(source_meta["projection"])
 
@@ -74,4 +93,4 @@ def rasterize_vector(
         options.append(f"ATTRIBUTE={attribute}")
         gdal.RasterizeLayer(target_ds, [1], source_layer, options=options)
 
-    return out_path
+    return raster_fn

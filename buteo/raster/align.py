@@ -372,6 +372,8 @@ def align_rasters(
 
         if dst_nodata == "infer":
             out_dst_nodata = out_src_nodata
+        elif dst_nodata == False or dst_nodata == None:
+            out_dst_nodata = None
         elif src_nodata == None:
             out_dst_nodata = None
         elif not isinstance(dst_nodata, str):

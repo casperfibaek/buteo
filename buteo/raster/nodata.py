@@ -3,7 +3,7 @@ import sys
 
 sys.path.append("../../")
 import numpy as np
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Sequence
 from osgeo import gdal
 from buteo.project_types import Metadata_raster
 from buteo.utils import remove_if_overwrite, type_check
@@ -11,8 +11,6 @@ from buteo.gdal_utils import (
     is_raster,
     gdal_nodata_value_from_type,
     raster_to_reference,
-    ready_io_raster,
-    to_raster_list,
 )
 from buteo.raster.io import (
     raster_to_array,
@@ -20,6 +18,8 @@ from buteo.raster.io import (
     raster_to_memory,
     raster_to_metadata,
     array_to_raster,
+    ready_io_raster,
+    to_raster_list,
 )
 
 
@@ -30,7 +30,7 @@ from buteo.raster.io import (
 def raster_has_nodata_value(
     raster: Union[List[Union[gdal.Dataset, str]], gdal.Dataset, str],
 ) -> Union[bool, List[bool]]:
-    """ Check if a raster or a list of rasters contain nodata values
+    """Check if a raster or a list of rasters contain nodata values
 
     Args:
         raster (path | raster | list): The raster(s) to check for nodata values.
@@ -69,7 +69,7 @@ def raster_has_nodata_value(
 def raster_get_nodata_value(
     raster: Union[List[Union[gdal.Dataset, str]], gdal.Dataset, str],
 ) -> Union[List[Optional[Number]], Optional[Number]]:
-    """ Get the nodata value of a raster or a from a list of rasters.
+    """Get the nodata value of a raster or a from a list of rasters.
 
     Args:
         raster (path | raster | list): The raster(s) to retrieve nodata values from.
@@ -107,12 +107,13 @@ def raster_set_nodata(
     dst_nodata: Union[float, int, str, list, None],
     out_path: Union[list, str, None] = None,
     overwrite: bool = True,
+    in_place: bool = False,
     prefix: str = "",
     postfix: str = "_nodata_set",
     opened: bool = False,
     creation_options: list = [],
 ) -> Union[list, gdal.Dataset, str]:
-    """ Sets all the nodata from a raster or a list of rasters.
+    """Sets all the nodata from a raster or a list of rasters.
 
     Args:
         raster (path | raster | list): The raster(s) to retrieve nodata values from.
@@ -120,7 +121,7 @@ def raster_set_nodata(
         dst_nodata (float, int, str, None): The target nodata value. If 'infer' the nodata
         value is set based on the input datatype. A list of nodata values can be based matching
         the amount of input rasters. If multiple nodata values should be set, use raster_mask_values.
-    
+
     **kwargs:
         out_path (path | list | None): The destination of the changed rasters. If out_paths
         are specified, in_place is automatically set to False. The path can be a folder.
@@ -132,7 +133,7 @@ def raster_set_nodata(
         postfix (str): Postfix to add the the output if a folder is specified in out_path.
 
     Returns:
-        Returns the rasters with nodata set. If in_place is True a reference to the 
+        Returns the rasters with nodata set. If in_place is True a reference to the
         changed orignal is returned, otherwise a copied memory raster or the path to the
         generated raster is outputted.
     """
@@ -190,7 +191,7 @@ def raster_set_nodata(
         else:
             internal_dst_nodata = dst_nodata
 
-        if internal_in_place:
+        if in_place:
             for band in range(raster_metadata["bands"]):
                 raster_band = internal_raster.GetRasterBand(band + 1)
                 raster_band.SetNodataValue(internal_dst_nodata)
@@ -223,11 +224,11 @@ def raster_remove_nodata(
     postfix: str = "_nodata_removed",
     creation_options: list = [],
 ) -> Union[gdal.Dataset, Sequence[gdal.Dataset], str, Sequence[str]]:
-    """ Removes all the nodata from a raster or a list of rasters.
+    """Removes all the nodata from a raster or a list of rasters.
 
     Args:
         raster (path | raster | list): The raster(s) to retrieve nodata values from.
-    
+
     **kwargs:
         out_path (path | list | None): The destination of the changed rasters. If out_paths
         are specified, in_place is automatically set to False. The path can be a folder.
@@ -239,7 +240,7 @@ def raster_remove_nodata(
         postfix (str): Postfix to add the the output if a folder is specified in out_path.
 
     Returns:
-        Returns the rasters with nodata removed. If in_place is True a reference to the 
+        Returns the rasters with nodata removed. If in_place is True a reference to the
         changed orignal is returned, otherwise a copied memory raster or the path to the
         generated raster is outputted.
     """
@@ -269,13 +270,13 @@ def raster_mask_values(
     postfix: str = "_nodata_masked",
     creation_options: list = [],
 ) -> Union[list, gdal.Dataset, str]:
-    """ Mask a raster with a list of values.
+    """Mask a raster with a list of values.
 
     Args:
         raster (path | raster | list): The raster(s) to retrieve nodata values from.
 
         values_to_mask (list): The list of values to mask in the raster(s)
-    
+
     **kwargs:
         include_original_nodata: (bool): If True, the nodata value of the raster(s) will be
         included in the values to mask.
@@ -294,7 +295,7 @@ def raster_mask_values(
         postfix (str): Postfix to add the the output if a folder is specified in out_path.
 
     Returns:
-        Returns the rasters with nodata removed. If in_place is True a reference to the 
+        Returns the rasters with nodata removed. If in_place is True a reference to the
         changed orignal is returned, otherwise a copied memory raster or the path to the
         generated raster is outputted.
     """
