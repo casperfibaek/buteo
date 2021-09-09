@@ -31,15 +31,26 @@ def create_ground_truth(buildings, b4, output, size=0.4):
     )
 
 
-folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/tanzania_kigoma/"
-# create_valid_mask(
-#     folder + "vector/kigoma_valid_mask.gpkg",
-#     folder + "B04_10m.tif",
-#     folder + "validation_mask.tif",
+folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/tanzania_kilimanjaro/"
+valid_mask = folder + "vector/kilimanjaro_valid.gpkg"
+buildings = folder + "vector/kilimanjaro_buildings.gpkg"
+
+# clip_raster(
+#     glob(folder + "whole/*.tif"),
+#     clip_raster(folder + "whole/B04_10m.tif", valid_mask),
+#     all_touch=False,
+#     out_path=folder,
+#     postfix="",
 # )
 
+create_valid_mask(
+    valid_mask,
+    folder + "B04_10m.tif",
+    folder + "validation_mask.tif",
+)
+
 create_ground_truth(
-    folder + "vector/kigoma_buildings.gpkg",
+    buildings,
     folder + "B04_10m.tif",
     folder + "label_area.tif",
     size=0.5,

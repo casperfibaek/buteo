@@ -48,8 +48,8 @@ for tile_size in [
         # "VVa_COHa",
         # "VVa_VHa_COHa",
         # "VVa_VVd_COHa_COHd",
-        # "RGBN_RESWIR_VVa_VHa",
-        "RGBN_RESWIR_VVa_VVd_COHa_COHd",
+        "RGBN_RESWIR_VVa_VHa",
+        # "RGBN_RESWIR_VVa_VVd_COHa_COHd",
     ]:
         timings = []
 
@@ -68,7 +68,7 @@ for tile_size in [
 
             # area_limit = 250
             # tile_limit = 15000 * 4
-            area_limit = 65
+            area_limit = 250
             tile_limit = None
 
             mask = get_layer(folder, "area", tile_size=tile_size)
@@ -124,12 +124,12 @@ for tile_size in [
                 #     bs = [1024, 512]  # for 16x16
 
                 # for big_model
-                epochs = [25, 25, 10]
-                bs = [256, 128, 64]
+                # epochs = [25, 25, 10]
+                # bs = [256, 128, 64]
 
                 # for testing
-                # epochs = [20, 5]
-                # bs = [64, 32]
+                epochs = [5]
+                bs = [128]
 
                 # for big_model
                 inception_blocks = 2
@@ -186,9 +186,7 @@ for tile_size in [
 
                 # Cast two 64 bit loss function for area.
                 # Ensures that the loss doesn't go NaN
-                loss = "mse"
-                if label != "area":
-                    loss = mse
+                loss = mse
 
                 model.compile(
                     optimizer=optimizer,
@@ -196,22 +194,18 @@ for tile_size in [
                     metrics=["mse", "mae"],
                 )
 
-                if label == "area":
-                    print(model.summary())
-                elif label == "volume":
-                    area_model = f"{outdir}{model_name.lower()}_area"
-                    donor_model = tf.keras.models.load_model(area_model)
-                    model.set_weights(donor_model.get_weights())
-                elif label == "people":
-                    volume_model = f"{outdir}{model_name.lower()}_volume"
-                    donor_model = tf.keras.models.load_model(volume_model)
-                    model.set_weights(donor_model.get_weights())
+                # if label == "area":
+                # print(model.summary())
+                # elif label == "volume":
+                #     area_model = f"{outdir}{model_name.lower()}_area"
+                #     donor_model = tf.keras.models.load_model(area_model)
+                #     model.set_weights(donor_model.get_weights())
+                # elif label == "people":
+                #     volume_model = f"{outdir}{model_name.lower()}_volume"
+                #     donor_model = tf.keras.models.load_model(volume_model)
+                #     model.set_weights(donor_model.get_weights())
 
                 donor_model = None
-
-                import pdb
-
-                pdb.set_trace()
 
                 start = time.time()
 
