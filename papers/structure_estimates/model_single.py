@@ -145,6 +145,7 @@ def model_single(
         activation="relu",
         kernel_initializer=kernel_initializer,
         name=f"{name}_tail_output",
+        dtype="float32",
     )(model)
 
     return Model(inputs=[model_input], outputs=output)

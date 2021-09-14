@@ -4,7 +4,7 @@ from tensorflow.keras.layers import (
     Conv2D,
     Concatenate,
 )
-
+from tensorflow.keras.backend import clip
 
 
 def model_trio_down(
@@ -206,6 +206,7 @@ def model_trio_down(
         activation="relu",
         kernel_initializer=kernel_initializer,
         name=f"{name}_tail_output",
+        dtype="float32",
     )(model)
 
     return Model(
@@ -214,5 +215,5 @@ def model_trio_down(
             model_input_higher_02,
             model_input_model_lower,
         ],
-        outputs=output,
+        outputs=clip(output, min_value=0, max_value=100),
     )

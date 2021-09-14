@@ -30,7 +30,7 @@ from buteo.raster.clip import clip_raster, internal_clip_raster
 from buteo.raster.resample import internal_resample_raster
 from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
 from buteo.gdal_utils import ogr_bbox_intersects
-from buteo.machine_learning.ml_utils import Mish, mish, load_mish
+from buteo.machine_learning.ml_utils import Mish, mish, load_mish, tpe
 
 
 def reconstitute_raster(
@@ -136,6 +136,7 @@ def blocks_to_raster(
     generate_zero_offset: bool = True,
     merge_method: str = "median",
     output_array: bool = False,
+    dtype=None,
     verbose: int = 1,
 ) -> Union[str, np.ndarray]:
     """Recombines a series of blocks to a raster. OBS: Does not work if the patch
@@ -248,7 +249,7 @@ def blocks_to_raster(
                         metadata["width"],
                         blocks.shape[3],
                     ),
-                    dtype=metadata["datatype"],
+                    dtype=metadata["datatype"] if dtype is None else dtype,
                 ),
             )
 
@@ -1042,7 +1043,7 @@ def predict_raster(
     merge_method: str = "median",
     mirror: bool = False,
     rotate: bool = False,
-    custom_objects: Dict[str, Any] = {"Mish": Mish, "mish": mish},
+    custom_objects: Dict[str, Any] = {"Mish": Mish, "mish": mish, "tpe": tpe},
     target_raster: Optional[str] = None,
     output_size=128,
     dtype: str = "same",
@@ -1100,7 +1101,7 @@ def predict_raster(
     type_check(mirror, [bool], "mirror")
     type_check(rotate, [bool], "rotate")
     type_check(custom_objects, [dict], "custom_objects")
-    type_check(dtype, [str], "rotate", allow_none=True)
+    type_check(dtype, [str], "dtype", allow_none=True)
     type_check(batch_size, [int], "batch_size")
     type_check(overwrite, [bool], "overwrite")
     type_check(creation_options, [list], "creation_options")
@@ -1116,8 +1117,8 @@ def predict_raster(
     if verbose == 1:
         print("Loading model.")
 
-    if isinstance(model, str):  # , custom_objects=custom_objects
-        model_loaded = tf.keras.models.load_model(model)
+    if isinstance(model, str):
+        model_loaded = tf.keras.models.load_model(model, custom_objects=custom_objects)
     else:
         model_loaded = model
 
@@ -1211,7 +1212,6 @@ def predict_raster(
             size=src_tile_size,
             offsets=in_offsets,
             generate_border_patches=True,
-            # generate_border_patches=False,
             generate_grid_geom=False,
             verbose=verbose,
         )
@@ -1314,10 +1314,10 @@ def predict_raster(
             predictions,
             resampled,
             border_patches=True,
-            # border_patches=False,
             offsets=dst_offsets,
             merge_method=merge_method,
             output_array=True,
+            dtype="float32",
         )
     )
 
@@ -1342,17 +1342,16 @@ def predict_raster(
     else:
         raise ValueError(f"Unable to parse merge_method: {merge_method}")
 
-    if dtype == "same":
+    if dtype == "same" or dtype == None:
         predicted = array_to_raster(
             predicted.astype(rast_meta["datatype"]),
             reference=resampled,
         )
-    elif dtype is not None:
+    else:
         predicted = array_to_raster(
-            raster_to_array(predicted).astype(dtype),
+            predicted.astype(dtype),
             reference=resampled,
         )
-
     if out_path is None:
         return predicted
     else:

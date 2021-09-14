@@ -206,6 +206,7 @@ def model_trio_down(
         activation="relu",
         kernel_initializer=kernel_initializer,
         name=f"{name}_tail_output",
+        dtype="float32",
     )(model)
 
     return Model(

@@ -284,7 +284,7 @@ def scale_percentile(arr, percentile=98):
 
 # np.set_printoptions(suppress=True)
 def preprocess_optical(
-    arr, cutoff_low=0, cutoff_high=10000, target_low=-1, target_high=1
+    arr, cutoff_low=0, cutoff_high=8000, target_low=0, target_high=1
 ):
     clipped = np.where(
         arr > cutoff_high, cutoff_high, np.where(arr < cutoff_low, cutoff_low, arr)
@@ -295,18 +295,53 @@ def preprocess_optical(
     return ((val_a * clipped) + val_b).astype("float32")
 
 
-def preprocess_coh(arr, target_low=-1, target_high=1):
+def preprocess_coh(arr, target_low=0, target_high=1):
     return preprocess_optical(arr, 0, 1, target_low, target_high)
 
 
-# # Thresholds at 10000 and scales to 0 to 1
-# def preprocess_optical(arr, cutoff=10000):
-#     return np.true_divide(np.where(arr > cutoff, cutoff, arr), cutoff).astype("float32")
+def get_offsets(size):
+    high_mid = size // 2
+    high_low = high_mid // 2
+    high_high = high_mid + high_low
+
+    low_low = high_low - (high_low // 2)
+    low_mid = high_low
+    low_high = low_mid + low_low
+
+    high_row = [
+        (0, high_low),
+        (0, high_mid),
+        (0, high_high),
+        (high_low, high_low),
+        (high_mid, high_mid),
+        (high_high, high_high),
+        (high_low, 0),
+        (high_mid, 0),
+        (high_high, 0),
+    ]
+
+    low_row = [
+        (0, low_low),
+        (0, low_mid),
+        (0, low_high),
+        (low_low, low_low),
+        (low_mid, low_mid),
+        (low_high, low_high),
+        (low_low, 0),
+        (low_mid, 0),
+        (low_high, 0),
+    ]
+
+    return [
+        high_row,
+        high_row,
+        low_row,
+    ]
 
 
 # Converts to decibel, thresholds between -30db and 10db and scales to -1 to 1
 def preprocess_sar(
-    arr, convert_db=True, cutoff_low=-30, cutoff_high=15, target_low=-1, target_high=1
+    arr, convert_db=True, cutoff_low=-30, cutoff_high=15, target_low=0, target_high=1
 ):
     if convert_db:
         with np.errstate(divide="ignore", invalid="ignore"):
@@ -331,13 +366,32 @@ def preprocess_sar(
     return scaled
 
 
-def per_tile_error(y_true, y_pred):
-    return tf.math.reduce_mean(tf.math.abs(y_pred - y_true), axis=-1) * model_size
-
-
 def mse(y_pred, y_true):
     y_pred = tf.cast(y_pred, tf.float64)
     y_true = tf.cast(y_true, tf.float64)
-    y_pred = tf.nn.relu(y_pred)
+
+    # y_pred = tf.nn.relu(y_pred)
 
     return tf.math.reduce_mean(tf.math.squared_difference(y_pred, y_true))
+
+
+def log_cosh(y_pred, y_true):
+    y_pred = tf.cast(y_pred, tf.float64)
+    y_true = tf.cast(y_true, tf.float64)
+
+    y_pred = tf.nn.relu(y_pred)
+    return tf.losses.log_cosh(y_true, y_pred)
+
+
+def tpe(y_true, y_pred):
+    y_pred = tf.cast(y_pred, tf.float64)
+    y_true = tf.cast(y_true, tf.float64)
+
+    espilon = 1e-7
+    pred_sum = tf.math.reduce_sum(y_pred)
+    true_sum = tf.math.reduce_sum(y_true)
+    sdif = pred_sum - true_sum
+    part = (sdif / (true_sum + espilon)) * 100
+    clipped = tf.clip_by_value(part, -100.0, 100.0)
+
+    return clipped

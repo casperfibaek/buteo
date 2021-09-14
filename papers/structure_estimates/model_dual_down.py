@@ -171,6 +171,7 @@ def model_dual_down(
         activation="relu",
         kernel_initializer=kernel_initializer,
         name=f"{name}_tail_output",
+        dtype="float32",
     )(model)
 
     return Model(inputs=[model_input_rgbn, model_input_swir], outputs=output)
