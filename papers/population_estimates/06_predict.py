@@ -2,14 +2,21 @@ yellow_follow = "C:/Users/caspe/Desktop/buteo/"
 import sys
 import os
 
+from tensorflow.python.training.tracking.tracking import TrackableResource
+
 sys.path.append(yellow_follow)
 
 import numpy as np
 from glob import glob
 from osgeo import gdal
 from buteo.raster.io import stack_rasters, raster_to_array
-from buteo.machine_learning.patch_extraction import predict_raster
-from buteo.raster.io import raster_to_array, array_to_raster, stack_rasters_vrt
+from buteo.machine_learning.patch_extraction_v2 import predict_raster
+from buteo.raster.io import (
+    raster_to_array,
+    array_to_raster,
+    stack_rasters_vrt,
+    internal_raster_to_metadata,
+)
 from buteo.raster.clip import internal_clip_raster, clip_raster
 from buteo.machine_learning.ml_utils import (
     preprocess_optical,
@@ -21,12 +28,25 @@ from buteo.machine_learning.ml_utils import (
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/"
 vector_folder = folder + "vector/regions/"
 raster_folder = folder + "raster/"
-model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/ghana_04_01"
+model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/ghana_06_20"
+
 
 for region in glob(vector_folder + "id_*.gpkg"):
     region_name = os.path.splitext(os.path.basename(region))[0]
 
     print(f"Processing region: {region_name}")
+
+    if region_name in [
+        "id_1",
+        "id_10",
+        "id_11",
+        "id_12",
+        "id_13",
+        "id_14",
+        "id_15",
+        "id_16",
+    ]:
+        continue
 
     print("Clipping RESWIR.")
     b20m_clip = internal_clip_raster(
@@ -36,6 +56,7 @@ for region in glob(vector_folder + "id_*.gpkg"):
         all_touch=False,
         out_path="/vsimem/20m_clip.tif",
     )
+
     reswir = clip_raster(
         [
             raster_folder + "2021_B05_20m.tif",
@@ -135,14 +156,17 @@ for region in glob(vector_folder + "id_*.gpkg"):
 
     predict_raster(
         [rgbn_stacked, sar_stacked, reswir_stacked],
-        model,
-        target_raster=b10m_clip,
-        dtype="float32",
+        tile_size=[32, 32, 16],
+        output_tile_size=32,
+        model_path=model,
+        reference_raster=b10m_clip,
         out_path=folder + f"predictions/tmp/{outname}.tif",
-        offsets=get_offsets(32),
-        device="gpu",
+        offsets=[
+            get_offsets(32),
+            get_offsets(32),
+            get_offsets(16),
+        ],
         batch_size=1024,
-        output_size=32,
     )
 
     try:
@@ -158,14 +182,14 @@ for region in glob(vector_folder + "id_*.gpkg"):
         gdal.Unlink(reswir_stacked)
         gdal.Unlink(rgbn_stacked)
         gdal.Unlink(sar_stacked)
-        gdal.Unlink(b20m_clip)
         gdal.Unlink(b10m_clip)
     except:
         pass
 
+
 print("Creating prediction mosaic.")
 mosaic = stack_rasters_vrt(
-    glob(folder + f"predictions/tmp/*.tif"),
+    glob(folder + f"predictions/tmp/id_*.tif"),
     "/vsimem/vrt_predictions.vrt",
     seperate=False,
 )

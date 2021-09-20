@@ -304,38 +304,17 @@ def get_offsets(size):
     high_low = high_mid // 2
     high_high = high_mid + high_low
 
-    low_low = high_low - (high_low // 2)
-    low_mid = high_low
-    low_high = low_mid + low_low
-
-    high_row = [
-        (0, high_low),
-        (0, high_mid),
-        (0, high_high),
-        (high_low, high_low),
-        (high_mid, high_mid),
-        (high_high, high_high),
-        (high_low, 0),
-        (high_mid, 0),
-        (high_high, 0),
-    ]
-
-    low_row = [
-        (0, low_low),
-        (0, low_mid),
-        (0, low_high),
-        (low_low, low_low),
-        (low_mid, low_mid),
-        (low_high, low_high),
-        (low_low, 0),
-        (low_mid, 0),
-        (low_high, 0),
-    ]
-
     return [
-        high_row,
-        high_row,
-        low_row,
+        [0, 0],
+        [0, high_low],
+        [0, high_mid],
+        [0, high_high],
+        [high_low, high_low],
+        [high_mid, high_mid],
+        [high_high, high_high],
+        [high_low, 0],
+        [high_mid, 0],
+        [high_high, 0],
     ]
 
 

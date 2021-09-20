@@ -1205,7 +1205,15 @@ def predict_raster(
         use_raster = raster[index] if isinstance(raster, list) else raster
 
         if region is not None:
-            use_raster = clip_raster(use_raster, region)
+            use_raster = clip_raster(
+                use_raster, region, adjust_bbox=False, all_touch=False
+            )
+
+        # # check raster size here
+        # use_raster_meta = internal_raster_to_metadata(use_raster)
+        # import pdb
+
+        # pdb.set_trace()
 
         blocks, _ = extract_patches(
             use_raster,
@@ -1224,6 +1232,9 @@ def predict_raster(
             first_len = readied.shape[0]
         else:
             if readied.shape[0] != first_len:
+                import pdb
+
+                pdb.set_trace()
                 raise ValueError(
                     "Length of inputs do not match. Have you set the offsets in the correct order?"
                 )

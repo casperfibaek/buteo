@@ -23,7 +23,7 @@ np.set_printoptions(suppress=True)
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 mixed_precision.set_global_policy("mixed_float16")
 
-model_name = "ghana_06"
+model_name = "ghana_07"
 
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 outdir = folder + f"models/"
@@ -64,18 +64,18 @@ for idx in range(len(x_train)):
 
 y_train = y_train[shuffle_mask]
 
-# limit_mask = y_train.sum(axis=(1, 2))[:, 0] > 100
+limit_mask = y_train.sum(axis=(1, 2))[:, 0] > 100
 
-# for idx in range(len(x_train)):
-#     x_train[idx] = x_train[idx][limit_mask]
+for idx in range(len(x_train)):
+    x_train[idx] = x_train[idx][limit_mask]
 
-# y_train = y_train[limit_mask]
+y_train = y_train[limit_mask]
 
 lr = 0.0001
 min_delta = 0.005
 
 with tf.device("/device:GPU:0"):
-    epochs = [25, 10]
+    epochs = [35, 15]
     bs = [128, 256]
     inception_blocks = 3
     activation = "relu"
@@ -107,7 +107,7 @@ with tf.device("/device:GPU:0"):
     # print(model.summary())
 
     # transfer weights
-    donor_model_path = outdir + "ghana_05_14"
+    donor_model_path = outdir + "ghana_06_20"
     donor_model = tf.keras.models.load_model(
         donor_model_path, custom_objects={"tpe": tpe}
     )

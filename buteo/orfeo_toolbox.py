@@ -50,9 +50,9 @@ def execute_cli_function(command, name, quiet=False):
 
 
 def pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):
-    """ Pansharpen an image using the attributes
-        of another image. Beware that the two images
-        should be of the same size and position. """
+    """Pansharpen an image using the attributes
+    of another image. Beware that the two images
+    should be of the same size and position."""
 
     cli = "otbcli_Pansharpening"
 
@@ -105,8 +105,8 @@ def pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):
 
 
 def local_stats(in_raster, out_raster, options=None, band=None):
-    """ Computes local statistical moments on every pixel
-        in the selected channel of the input image """
+    """Computes local statistical moments on every pixel
+    in the selected channel of the input image"""
 
     cli = "otbcli_LocalStatisticExtraction"
 
@@ -141,7 +141,7 @@ def local_stats(in_raster, out_raster, options=None, band=None):
 
 
 def haralick(in_raster, out_raster, options=None, out_datatype="float", band=None):
-    """ Performs haralick texture extraction """
+    """Performs haralick texture extraction"""
 
     cli = "otbcli_HaralickTextureExtraction"
 
@@ -189,12 +189,12 @@ def haralick(in_raster, out_raster, options=None, out_datatype="float", band=Non
 
 
 def dimension_reduction(in_raster, out_raster, options=None, out_datatype=None):
-    """ Performs dimensionality reduction on input image.
-        PCA,NA-PCA,MAF,ICA methods are available.
-        It is also possible to compute the inverse transform
-        to reconstruct the image. It is also possible to
-        optionally export the transformation matrix
-        to a text file. """
+    """Performs dimensionality reduction on input image.
+    PCA,NA-PCA,MAF,ICA methods are available.
+    It is also possible to compute the inverse transform
+    to reconstruct the image. It is also possible to
+    optionally export the transformation matrix
+    to a text file."""
 
     cli = "otbcli_DimensionalityReduction"
 
@@ -231,10 +231,10 @@ def dimension_reduction(in_raster, out_raster, options=None, out_datatype=None):
 
 
 def concatenate_images(in_rasters, out_raster, ram=None, out_datatype=None):
-    """ This application performs images channels concatenation.
+    """This application performs images channels concatenation.
     It reads the input image list (single or multi-channel) and
     generates a single multi-channel image. The channel order
-    is the same as the list. """
+    is the same as the list."""
 
     cli = "otbcli_ConcatenateImages"
 
@@ -265,11 +265,11 @@ def concatenate_images(in_rasters, out_raster, ram=None, out_datatype=None):
 
 
 def split_images(in_raster, out_rasters, ram=None, out_datatype=None):
-    """ This application splits a N-bands image into N mono-band images.
-        The output images filename will be generated from the output parameter.
-        Thus, if the input image has 2 channels, and the user has set as
-        output parameter, outimage.tif, the generated images will be
-        outimage_0.tif and outimage_1.tif. """
+    """This application splits a N-bands image into N mono-band images.
+    The output images filename will be generated from the output parameter.
+    Thus, if the input image has 2 channels, and the user has set as
+    output parameter, outimage.tif, the generated images will be
+    outimage_0.tif and outimage_1.tif."""
 
     cli = "otbcli_SplitImage"
 
@@ -295,9 +295,9 @@ def split_images(in_raster, out_rasters, ram=None, out_datatype=None):
 
 
 def rescale(in_raster, out_raster, options=None, out_datatype="float"):
-    """ This application scales the given image pixel intensity between two given values.
-        By default min (resp. max) value is set to 0 (resp. 1).
-        Input minimum and maximum values is automatically computed for all image bands. """
+    """This application scales the given image pixel intensity between two given values.
+    By default min (resp. max) value is set to 0 (resp. 1).
+    Input minimum and maximum values is automatically computed for all image bands."""
 
     cli = "otbcli_Rescale"
 
@@ -348,7 +348,7 @@ def merge_rasters(
     pixel_width=None,
     pixel_height=None,
 ):
-    """ Creates a mosaic out of a series of images. Must be of the same projection """
+    """Creates a mosaic out of a series of images. Must be of the same projection"""
 
     cli = "otbcli_Mosaic"
 
@@ -420,8 +420,8 @@ def meanshift_segmentation(
     vector_minsize=1,
     tilesize=0,
 ):
-    """ Computes local statistical moments on every pixel
-        in the selected channel of the input image """
+    """Computes local statistical moments on every pixel
+    in the selected channel of the input image"""
 
     cli = "otbcli_Segmentation"
 
