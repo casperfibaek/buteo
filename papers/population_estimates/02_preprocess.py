@@ -22,7 +22,7 @@ def preprocess(folder, outdir, low=0, high=1, optical_top=8000):
     vv = folder + "VV_10m.npy"
     vh = folder + "VH_10m.npy"
 
-    label_area = folder + "label_area.npy"
+    label_area = folder + "label_area_10m.npy"
 
     rgbn = preprocess_optical(
         np.stack(

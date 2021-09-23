@@ -24,47 +24,56 @@ np.set_printoptions(suppress=True)
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 mixed_precision.set_global_policy("mixed_float16")
 
-model_name = "merge_extra_01"
+model_name = "check_ghana_01"
 
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 outdir = folder + f"models/"
-place = "dojo"
+# place = "dojo"
+place = "ghana"
 
 x_train = [
-    np.concatenate(
-        [
-            np.load(folder + f"{place}/patches/dar_RGBN.npy"),
-            np.load(folder + f"{place}/patches/kampala_RGBN.npy"),
-            np.load(folder + f"{place}/patches/kilimanjaro_RGBN.npy"),
-            np.load(folder + f"{place}/patches/mwanza_RGBN.npy"),
-        ]
-    ),
-    np.concatenate(
-        [
-            np.load(folder + f"{place}/patches/dar_SAR.npy"),
-            np.load(folder + f"{place}/patches/kampala_SAR.npy"),
-            np.load(folder + f"{place}/patches/kilimanjaro_SAR.npy"),
-            np.load(folder + f"{place}/patches/mwanza_SAR.npy"),
-        ]
-    ),
-    np.concatenate(
-        [
-            np.load(folder + f"{place}/patches/dar_RESWIR.npy"),
-            np.load(folder + f"{place}/patches/kampala_RESWIR.npy"),
-            np.load(folder + f"{place}/patches/kilimanjaro_RESWIR.npy"),
-            np.load(folder + f"{place}/patches/mwanza_RESWIR.npy"),
-        ]
-    ),
+    np.load(folder + f"{place}/patches/RGBN.npy"),
+    np.load(folder + f"{place}/patches/SAR.npy"),
+    np.load(folder + f"{place}/patches/RESWIR.npy"),
 ]
 
-y_train = np.concatenate(
-    [
-        np.load(folder + f"{place}/patches/dar_label_area.npy"),
-        np.load(folder + f"{place}/patches/kampala_label_area.npy"),
-        np.load(folder + f"{place}/patches/kilimanjaro_label_area.npy"),
-        np.load(folder + f"{place}/patches/mwanza_label_area.npy"),
-    ]
-)
+y_train = np.load(folder + f"{place}/patches/label_area.npy")
+
+# x_train = [
+#     np.concatenate(
+#         [
+#             np.load(folder + f"{place}/patches/dar_RGBN.npy"),
+#             np.load(folder + f"{place}/patches/kampala_RGBN.npy"),
+#             np.load(folder + f"{place}/patches/kilimanjaro_RGBN.npy"),
+#             np.load(folder + f"{place}/patches/mwanza_RGBN.npy"),
+#         ]
+#     ),
+#     np.concatenate(
+#         [
+#             np.load(folder + f"{place}/patches/dar_SAR.npy"),
+#             np.load(folder + f"{place}/patches/kampala_SAR.npy"),
+#             np.load(folder + f"{place}/patches/kilimanjaro_SAR.npy"),
+#             np.load(folder + f"{place}/patches/mwanza_SAR.npy"),
+#         ]
+#     ),
+#     np.concatenate(
+#         [
+#             np.load(folder + f"{place}/patches/dar_RESWIR.npy"),
+#             np.load(folder + f"{place}/patches/kampala_RESWIR.npy"),
+#             np.load(folder + f"{place}/patches/kilimanjaro_RESWIR.npy"),
+#             np.load(folder + f"{place}/patches/mwanza_RESWIR.npy"),
+#         ]
+#     ),
+# ]
+
+# y_train = np.concatenate(
+#     [
+#         np.load(folder + f"{place}/patches/dar_label_area.npy"),
+#         np.load(folder + f"{place}/patches/kampala_label_area.npy"),
+#         np.load(folder + f"{place}/patches/kilimanjaro_label_area.npy"),
+#         np.load(folder + f"{place}/patches/mwanza_label_area.npy"),
+#     ]
+# )
 
 shuffle_mask = np.random.permutation(y_train.shape[0])
 
@@ -72,6 +81,11 @@ for idx in range(len(x_train)):
     x_train[idx] = x_train[idx][shuffle_mask]
 
 y_train = y_train[shuffle_mask]
+
+for idx in range(len(x_train)):
+    x_train[idx] = x_train[idx][:200000]
+
+y_train = y_train[:200000]
 
 lr = 0.0001
 min_delta = 0.005
@@ -109,8 +123,10 @@ with tf.device("/device:GPU:0"):
     # print(model.summary())
 
     # transfer weights
-    donor_model_path = outdir + "big_model_dk_08"
-    donor_model = tf.keras.models.load_model(donor_model_path)
+    donor_model_path = outdir + "ghana_area_06_06"
+    donor_model = tf.keras.models.load_model(
+        donor_model_path, custom_objects={"tpe": tpe}
+    )
     model.set_weights(donor_model.get_weights())
     donor_model = None
 

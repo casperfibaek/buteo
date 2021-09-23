@@ -5,8 +5,8 @@ from buteo.machine_learning.patch_extraction import extract_patches
 from glob import glob
 
 # folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/uganda_kampala/"
-# folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/tanzania_dar/"
 # folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/tanzania_kilimanjaro/"
+# folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/tanzania_dar/"
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/tanzania_mwanza/"
 outdir = folder + "patches/raw/"
 tmpdir = folder + "tmp/"

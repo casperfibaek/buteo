@@ -1,7 +1,5 @@
-import sys, os
+import sys
 from glob import glob
-
-from numpy import dtype
 
 sys.path.append("../../")
 from buteo.vector.rasterize import rasterize_vector
@@ -31,13 +29,14 @@ def create_ground_truth(buildings, b4, output, size=0.4):
     )
 
 
-folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/tanzania_kilimanjaro/"
-valid_mask = folder + "vector/kilimanjaro_valid_01.gpkg"
-buildings = folder + "vector/kilimanjaro_buildings.gpkg"
+folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/uganda_kampala/"
+valid_mask = folder + "vector/kampala_mask.gpkg"
+buildings = folder + "vector/kampala_buildings.gpkg"
 
 clip_raster(
     glob(folder + "whole/*.tif"),
     clip_raster(folder + "whole/B04_10m.tif", valid_mask),
+    # clip_raster(folder + "whole/august_B04_10m.tif", valid_mask),
     all_touch=False,
     out_path=folder,
     postfix="",
@@ -46,12 +45,14 @@ clip_raster(
 create_valid_mask(
     valid_mask,
     folder + "B04_10m.tif",
+    # folder + "august_B04_10m.tif",
     folder + "validation_mask.tif",
 )
 
 create_ground_truth(
     buildings,
     folder + "B04_10m.tif",
+    # folder + "august_B04_10m.tif",
     folder + "label_area.tif",
     size=0.5,
 )

@@ -23,40 +23,27 @@ np.set_printoptions(suppress=True)
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 mixed_precision.set_global_policy("mixed_float16")
 
-model_name = "teacher_01"
+model_name = "big_model_dk_09"
 
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 outdir = folder + f"models/"
-place = "dojo"
+place = "denmark/patches/"
 
 x_train = [
-    np.load(folder + f"{place}/all_RGBN.npy"),
-    np.load(folder + f"{place}/all_SAR.npy"),
-    np.load(folder + f"{place}/all_RESWIR.npy"),
+    np.load(folder + f"{place}/extra_RGBN.npy"),
+    np.load(folder + f"{place}/extra_SAR.npy"),
+    np.load(folder + f"{place}/extra_RESWIR.npy"),
 ]
 
-y_train = np.load(folder + f"{place}/all_label_area.npy")
+y_train = np.load(folder + f"{place}/extra_label_area.npy")
 
-shuffle_mask = np.random.permutation(y_train.shape[0])
+# shuffle_mask = np.random.permutation(y_train.shape[0])
+shuffle_mask = np.load(folder + f"{place}/shuffle_mask.npy")
 
 for idx in range(len(x_train)):
     x_train[idx] = x_train[idx][shuffle_mask]
 
 y_train = y_train[shuffle_mask]
-
-# limit = 200000
-# val_limit = 25000
-
-# x_val = []
-# for idx in range(len(x_train)):
-#     x_val.append(x_train[idx][-val_limit:])
-
-# y_val = y_train[-val_limit:]
-
-# for idx in range(len(x_train)):
-#     x_train[idx] = x_train[idx][:limit]
-
-# y_train = y_train[:limit]
 
 lr = 0.0001
 min_delta = 0.005
@@ -65,11 +52,9 @@ with tf.device("/device:GPU:0"):
     epochs = [20, 10, 5]
     bs = [256, 128, 64]
     inception_blocks = 3
+    output_activation = "relu"
     activation = "relu"
     initializer = "glorot_normal"
-
-    # donor_model_path = outdir + "ghana_area_03_subset_31"
-    # model = tf.keras.models.load_model(donor_model_path, custom_objects={"tpe": tpe})
 
     model = model_trio_down(
         x_train[0].shape[1:],
@@ -77,6 +62,7 @@ with tf.device("/device:GPU:0"):
         x_train[2].shape[1:],
         kernel_initializer=initializer,
         activation=activation,
+        output_activation=output_activation,
         inception_blocks=inception_blocks,
         name=f"{model_name.lower()}",
     )
@@ -91,13 +77,11 @@ with tf.device("/device:GPU:0"):
     model.compile(
         optimizer=optimizer,
         loss="mse",
-        metrics=["mse", "mae", tpe],  # tpe
+        metrics=["mse", "mae", tpe],
     )
 
-    # print(model.summary())
-
     # transfer weights
-    donor_model_path = outdir + "ghana_area_06_06"
+    donor_model_path = folder + "denmark/models/big_model_dk_08"
     donor_model = tf.keras.models.load_model(
         donor_model_path, custom_objects={"tpe": tpe}
     )
@@ -114,8 +98,7 @@ with tf.device("/device:GPU:0"):
         model.fit(
             x=x_train,
             y=y_train,
-            validation_split=0.1,
-            # validation_data=(x_val, y_val),
+            validation_split=0.01,
             shuffle=True,
             epochs=use_epoch,
             initial_epoch=initial_epoch,
@@ -148,4 +131,4 @@ with tf.device("/device:GPU:0"):
 
     timing(start)
 
-# val_mse: 20.0623 - val_mae: 0.7800 - val_tpe: -3.0158
+    # loss: 16.8781 - mse: 16.8781 - mae: 0.7186

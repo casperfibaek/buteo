@@ -6,9 +6,13 @@ from buteo.raster.resample import internal_resample_raster
 from buteo.raster.clip import clip_raster
 from buteo.raster.io import raster_to_array, array_to_raster
 from buteo.raster.align import align_rasters
+from buteo.utils import progress
 from buteo.machine_learning.patch_extraction import extract_patches
 from glob import glob
+from osgeo import gdal
+
 import os
+import numpy as np
 
 # rasterize buildings @ 50cm, use grid as extent
 # resample to 10m, use summation
@@ -17,38 +21,57 @@ import os
 # preprocess rgbn, swir, sar
 
 folder = (
-    # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/analysis/ghana/vector/grid_cells/"
     "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/grid_cells/"
 )
 raster_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/"
 
-# for grid_cell in glob(folder + "grid_id_*.gpkg"):
-#     name = os.path.basename(grid_cell)
-#     number = os.path.splitext(name)[0].split("_")[-1]
+grids = glob(folder + "grid_id_*.gpkg")
 
-#     buildings = folder + "building_id_" + number + ".gpkg"
+for idx, grid_cell in enumerate(grids):
+    progress(idx, len(grids), "Rasterizing")
 
-#     rasterize_vector(
-#         buildings,
-#         0.2,
-#         out_path=f"/vsimem/fid_{number}_rasterized.tif",
-#         extent=grid_cell,
-#     )
+    name = os.path.basename(grid_cell)
+    number = os.path.splitext(name)[0].split("_")[-1]
 
-#     internal_resample_raster(
-#         f"/vsimem/fid_{number}_rasterized.tif",
-#         10.0,
-#         resample_alg="average",
-#         out_path=f"/vsimem/fid_{number}_resampled.tif",
-#     )
+    buildings = folder + "building_id_" + number + ".gpkg"
 
-#     array_to_raster(
-#         (raster_to_array(f"/vsimem/fid_{number}_resampled.tif") * 100).astype(
-#             "float32"
-#         ),
-#         reference=f"/vsimem/fid_{number}_resampled.tif",
-#         out_path=folder + f"fid_{number}_rasterized.tif",
-#     )
+    try:
+        rasterize_vector(
+            buildings,
+            0.2,
+            out_path=f"/vsimem/fid_{number}_rasterized.tif",
+            extent=grid_cell,
+        )
+    except:
+        rasterize_vector(
+            grid_cell,
+            0.2,
+            out_path=f"/vsimem/fid_{number}_rasterized.tif",
+            extent=grid_cell,
+            fill_value=0,
+            burn_value=0,
+        )
+
+    internal_resample_raster(
+        f"/vsimem/fid_{number}_rasterized.tif",
+        10.0,
+        resample_alg="average",
+        out_path=f"/vsimem/fid_{number}_resampled.tif",
+    )
+
+    array_to_raster(
+        (raster_to_array(f"/vsimem/fid_{number}_resampled.tif") * 100).astype(
+            "float32"
+        ),
+        reference=f"/vsimem/fid_{number}_resampled.tif",
+        out_path=folder + f"fid_{number}_rasterized.tif",
+    )
+
+    gdal.Unlink(f"/vsimem/fid_{number}_rasterized.tif")
+    gdal.Unlink(f"/vsimem/fid_{number}_resampled.tif")
+
+    progress(idx + 1, len(grids), "Rasterizing")
+
 
 for cell in glob(folder + "fid_*_rasterized.tif"):
     number = os.path.basename(os.path.basename(cell)).split("_")[1]
@@ -187,8 +210,6 @@ for cell in glob(folder + "fid_*_rasterized.tif"):
         verbose=1,
     )
 
-import numpy as np
-
 
 def sortKeyFunc(s):
     return int(os.path.basename(s).split("_")[0])
@@ -217,4 +238,4 @@ for index, key in enumerate(band_paths):
     else:
         loaded = np.concatenate([loaded, np.load(key)])
 
-np.save(folder + "patches/merged/AREA.npy", loaded)
+np.save(folder + "patches/merged/label_area.npy", loaded)
