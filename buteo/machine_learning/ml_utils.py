@@ -304,6 +304,8 @@ def get_offsets(size):
     high_low = high_mid // 2
     high_high = high_mid + high_low
 
+    tiny = high_low // 2
+
     return [
         [0, 0],
         [0, high_low],
@@ -311,6 +313,7 @@ def get_offsets(size):
         [0, high_high],
         [high_low, high_low],
         [high_mid, high_mid],
+        [high_mid - tiny, high_mid - tiny],
         [high_high, high_high],
         [high_low, 0],
         [high_mid, 0],
@@ -349,9 +352,23 @@ def mse(y_pred, y_true):
     y_pred = tf.cast(y_pred, tf.float64)
     y_true = tf.cast(y_true, tf.float64)
 
-    # y_pred = tf.nn.relu(y_pred)
-
     return tf.math.reduce_mean(tf.math.squared_difference(y_pred, y_true))
+
+
+def mse_biased(y_pred, y_true):
+    y_pred = tf.cast(y_pred, tf.float32)
+    y_true = tf.cast(y_true, tf.float32)
+    bias = tf.cast(1.50, tf.float32)
+
+    greater_one = tf.cast(tf.math.greater(y_true, y_pred), tf.float32)
+    greater_two = tf.cast(tf.math.greater_equal(y_pred, y_true), tf.float32)
+
+    # scale = (greater_one * bias) + greater_two
+    scale = (greater_two * bias) + greater_one
+
+    sqr_diff = ((y_pred - y_true) * scale) ** 2
+
+    return tf.math.reduce_mean(sqr_diff)
 
 
 def log_cosh(y_pred, y_true):
@@ -359,6 +376,7 @@ def log_cosh(y_pred, y_true):
     y_true = tf.cast(y_true, tf.float64)
 
     y_pred = tf.nn.relu(y_pred)
+
     return tf.losses.log_cosh(y_true, y_pred)
 
 

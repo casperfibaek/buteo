@@ -82,7 +82,8 @@ base_folder = (
     # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/uganda_kampala/patches/"
     # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/tanzania_dar/patches/"
     # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/tanzania_kilimanjaro/patches/"
-    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/patches/"
+    # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/patches/"
+    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/grid_cells_student/patches/merged/"
 )
 folder = base_folder + "raw/"
 outdir = base_folder

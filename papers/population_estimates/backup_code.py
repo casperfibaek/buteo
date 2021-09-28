@@ -1,10 +1,13 @@
 yellow_follow = "C:/Users/caspe/Desktop/buteo/"
 import sys
 
+from numpy.random import shuffle
+
 sys.path.append(yellow_follow)
 
 import os
 import numpy as np
+from glob import glob
 
 # from model_trio_down import model_trio_down
 
@@ -39,23 +42,25 @@ place = "dojo"
 
 noise = {
     "scale": 0.05,
-    "band": 0.02,
+    "band": 0.01,
     "pixel": 0.005,
 }
 
-# use_noise = True
-# prefix = "_noise"
+use_noise = True
+prefix = "_noise"
 
-use_noise = False
-prefix = ""
+# use_noise = False
+# prefix = ""
 
 y_label = np.concatenate(
     [
-        np.load(folder + f"{place}/ghana_label_area.npy"),
-        np.load(folder + f"{place}/aux_label_area.npy"),
-        np.load(folder + f"{place}/dk_reduced_label_area.npy"),
+        np.load(folder + f"{place}/ghana_balanced_label_area.npy"),
+        np.load(folder + f"{place}/aux_balanced_label_area.npy"),
+        np.load(folder + f"{place}/dk_reduced_label_volume.npy"),
     ]
 ).astype("float32")
+
+shuffle_mask = np.random.permutation(y_label.shape[0])
 
 # noise scale
 if use_noise:
@@ -63,13 +68,13 @@ if use_noise:
         "float32"
     )
 
-np.save(folder + f"{place}/all{prefix}_label_area.npy", y_label)
+np.save(folder + f"{place}/all{prefix}_label_area.npy", y_label[shuffle_mask])
 y_label = None
 
 rgbn = np.concatenate(
     [
-        np.load(folder + f"{place}/ghana_RGBN.npy"),
-        np.load(folder + f"{place}/aux_RGBN.npy"),
+        np.load(folder + f"{place}/ghana_balanced_RGBN.npy"),
+        np.load(folder + f"{place}/aux_balanced_RGBN.npy"),
         np.load(folder + f"{place}/dk_reduced_RGBN.npy"),
     ]
 ).astype("float32")
@@ -81,13 +86,13 @@ if use_noise:
     pixel_noise = np.random.normal(1.0, noise["pixel"], rgbn.shape).astype("float32")
     rgbn = rgbn * scale_noise * band_noise * pixel_noise
 
-np.save(folder + f"{place}/all{prefix}_RGBN.npy", rgbn.astype("float32"))
+np.save(folder + f"{place}/all{prefix}_RGBN.npy", rgbn[shuffle_mask].astype("float32"))
 rgbn = None
 
 sar = np.concatenate(
     [
-        np.load(folder + f"{place}/ghana_SAR.npy"),
-        np.load(folder + f"{place}/aux_SAR.npy"),
+        np.load(folder + f"{place}/ghana_balanced_SAR.npy"),
+        np.load(folder + f"{place}/aux_balanced_SAR.npy"),
         np.load(folder + f"{place}/dk_reduced_SAR.npy"),
     ]
 ).astype("float32")
@@ -99,13 +104,13 @@ if use_noise:
     pixel_noise = np.random.normal(1.0, noise["pixel"], sar.shape).astype("float32")
     sar = sar * scale_noise * band_noise * pixel_noise
 
-np.save(folder + f"{place}/all{prefix}_SAR.npy", sar.astype("float32"))
+np.save(folder + f"{place}/all{prefix}_SAR.npy", sar[shuffle_mask].astype("float32"))
 sar = None
 
 reswir = np.concatenate(
     [
-        np.load(folder + f"{place}/ghana_RESWIR.npy"),
-        np.load(folder + f"{place}/aux_RESWIR.npy"),
+        np.load(folder + f"{place}/ghana_balanced_RESWIR.npy"),
+        np.load(folder + f"{place}/aux_balanced_RESWIR.npy"),
         np.load(folder + f"{place}/dk_reduced_RESWIR.npy"),
     ]
 ).astype("float32")
@@ -117,7 +122,9 @@ if use_noise:
     pixel_noise = np.random.normal(1.0, noise["pixel"], reswir.shape).astype("float32")
     reswir = reswir * scale_noise * band_noise * pixel_noise
 
-np.save(folder + f"{place}/all{prefix}_RESWIR.npy", reswir.astype("float32"))
+np.save(
+    folder + f"{place}/all{prefix}_RESWIR.npy", reswir[shuffle_mask].astype("float32")
+)
 reswir = None
 
 
@@ -218,3 +225,137 @@ exit()
 #         * scale_noise[idx]
 #         * np.random.normal(1.0, 0.001, x_train[idx].shape)
 #     )
+
+# base_kept = np.load(folder + f"{place}/ghana_label_area.npy")
+# base = np.load(folder + f"{place}/dk_balanced_label_area.npy")
+# shuffle_mask = np.random.permutation(base.shape[0])
+
+# base = base[shuffle_mask]
+
+# zero_mask = (base.sum(axis=(1, 2)) == 0)[:, 0]
+# value_mask = (base.sum(axis=(1, 2)) > 0)[:, 0]
+# above_sum = ((base.sum(axis=(1, 2)) > 100)[:, 0]).sum()
+
+# zeros = shuffle_mask[zero_mask]
+# zeros = zeros[:above_sum]
+
+# values = shuffle_mask[value_mask]
+
+# base_new = np.concatenate([shuffle_mask[zeros], shuffle_mask[values]])
+# final_shuffle_mask = np.random.permutation(base_new.shape[0])
+# mask = shuffle_mask[final_shuffle_mask]
+
+# area_masked = np.load(folder + f"{place}/dk_balanced_label_area.npy")[:300000]
+# np.save(folder + f"{place}/dk_reduced_label_area.npy", area_masked)
+
+# volume_masked = np.load(folder + f"{place}/dk_balanced_label_volume.npy")[:300000]
+# np.save(folder + f"{place}/dk_reduced_label_volume.npy", volume_masked)
+
+# rgbn_masked = np.load(folder + f"{place}/dk_balanced_RGBN.npy")[:300000]
+# np.save(folder + f"{place}/dk_reduced_RGBN.npy", rgbn_masked)
+
+# sar_masked = np.load(folder + f"{place}/dk_balanced_SAR.npy")[:300000]
+# np.save(folder + f"{place}/dk_reduced_SAR.npy", sar_masked)
+
+# reswir_masked = np.load(folder + f"{place}/dk_balanced_RESWIR.npy")[:300000]
+# np.save(folder + f"{place}/dk_reduced_RESWIR.npy", reswir_masked)
+
+# y_label = np.concatenate(
+#     [
+#         np.load(folder + f"{place}/patches/dar_label_area.npy"),
+#         np.load(folder + f"{place}/patches/kampala_label_area.npy"),
+#         np.load(folder + f"{place}/patches/kilimanjaro_label_area.npy"),
+#         np.load(folder + f"{place}/patches/mwanza_label_area.npy"),
+#     ]
+# )
+
+# shuffle_mask = np.random.permutation(y_label.shape[0])
+
+# y_label = y_label[shuffle_mask]
+
+# rgbn = np.concatenate(
+#     [
+#         np.load(folder + f"{place}/patches/dar_RGBN.npy"),
+#         np.load(folder + f"{place}/patches/kampala_RGBN.npy"),
+#         np.load(folder + f"{place}/patches/kilimanjaro_RGBN.npy"),
+#         np.load(folder + f"{place}/patches/mwanza_RGBN.npy"),
+#     ]
+# )[shuffle_mask]
+
+# sar = np.concatenate(
+#     [
+#         np.load(folder + f"{place}/patches/dar_SAR.npy"),
+#         np.load(folder + f"{place}/patches/kampala_SAR.npy"),
+#         np.load(folder + f"{place}/patches/kilimanjaro_SAR.npy"),
+#         np.load(folder + f"{place}/patches/mwanza_SAR.npy"),
+#     ]
+# )[shuffle_mask]
+
+# reswir = np.concatenate(
+#     [
+#         np.load(folder + f"{place}/patches/dar_RESWIR.npy"),
+#         np.load(folder + f"{place}/patches/kampala_RESWIR.npy"),
+#         np.load(folder + f"{place}/patches/kilimanjaro_RESWIR.npy"),
+#         np.load(folder + f"{place}/patches/mwanza_RESWIR.npy"),
+#     ]
+# )[shuffle_mask]
+
+# np.save(folder + f"{place}/patches/aux_label_area.npy", y_label)
+# np.save(folder + f"{place}/patches/aux_RGBN.npy", rgbn)
+# np.save(folder + f"{place}/patches/aux_SAR.npy", sar)
+# np.save(folder + f"{place}/patches/aux_RESWIR.npy", reswir)
+
+
+# x_train_base = [
+#     np.load(folder + f"{place}/all_noise_RGBN.npy"),
+#     np.load(folder + f"{place}/all_noise_SAR.npy"),
+#     np.load(folder + f"{place}/all_noise_RESWIR.npy"),
+# ]
+
+# y_train_base = np.load(folder + f"{place}/all_noise_label_area.npy")
+
+# shuffle_mask = np.random.permutation(y_train_base.shape[0])
+
+# for idx in range(len(x_train_base)):
+#     x_train_base[idx] = x_train_base[idx][shuffle_mask]
+
+# y_train_base = y_train_base[shuffle_mask]
+
+# val_limit = 50000
+
+# x_val = []
+# for idx in range(len(x_train_base)):
+#     x_val.append(x_train_base[idx][-val_limit:])
+
+# y_val = y_train_base[-val_limit:]
+
+# half = int(y_train_base.shape[0] // 2)
+
+# x_train = []
+
+# for idx in range(len(x_train_base)):
+#     x_train.append(x_train_base[idx][:half])
+
+# y_train = y_train_base[:half]
+
+# np.save(folder + f"{place}/all_noise_half_start_RGBN.npy", x_train[0])
+# np.save(folder + f"{place}/all_noise_half_start_SAR.npy", x_train[1])
+# np.save(folder + f"{place}/all_noise_half_start_RESWIR.npy", x_train[2])
+# np.save(folder + f"{place}/all_noise_half_start_label_area.npy", y_train)
+
+# x_train = []
+
+# for idx in range(len(x_train_base)):
+#     x_train.append(x_train_base[idx][half:-val_limit])
+
+# y_train = y_train_base[half:-val_limit]
+
+# np.save(folder + f"{place}/all_noise_half_end_RGBN.npy", x_train[0])
+# np.save(folder + f"{place}/all_noise_half_end_SAR.npy", x_train[1])
+# np.save(folder + f"{place}/all_noise_half_end_RESWIR.npy", x_train[2])
+# np.save(folder + f"{place}/all_noise_half_end_label_area.npy", y_train)
+
+# np.save(folder + f"{place}/all_noise_half_val_RGBN.npy", x_val[0])
+# np.save(folder + f"{place}/all_noise_half_val_SAR.npy", x_val[1])
+# np.save(folder + f"{place}/all_noise_half_val_RESWIR.npy", x_val[2])
+# np.save(folder + f"{place}/all_noise_half_val_label_area.npy", y_val)

@@ -2,8 +2,6 @@ yellow_follow = "C:/Users/caspe/Desktop/buteo/"
 import sys
 import os
 
-from tensorflow.python.training.tracking.tracking import TrackableResource
-
 sys.path.append(yellow_follow)
 
 import numpy as np
@@ -15,7 +13,6 @@ from buteo.raster.io import (
     raster_to_array,
     array_to_raster,
     stack_rasters_vrt,
-    internal_raster_to_metadata,
 )
 from buteo.raster.clip import internal_clip_raster, clip_raster
 from buteo.machine_learning.ml_utils import (
@@ -28,7 +25,7 @@ from buteo.machine_learning.ml_utils import (
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/"
 vector_folder = folder + "vector/regions/"
 raster_folder = folder + "raster/"
-model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/ghana_06_20"
+model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/teacher_05_04"
 
 
 for region in glob(vector_folder + "id_*.gpkg"):
@@ -36,17 +33,8 @@ for region in glob(vector_folder + "id_*.gpkg"):
 
     print(f"Processing region: {region_name}")
 
-    if region_name in [
-        "id_1",
-        "id_10",
-        "id_11",
-        "id_12",
-        "id_13",
-        "id_14",
-        "id_15",
-        "id_16",
-    ]:
-        continue
+    # if region_name in []:
+    #     continue
 
     print("Clipping RESWIR.")
     b20m_clip = internal_clip_raster(
@@ -201,6 +189,13 @@ rounded = array_to_raster(
 internal_clip_raster(
     rounded,
     folder + "vector/ghana_buffered_1k.gpkg",
-    out_path=folder + "predictions/Ghana_uint8_v4.tif",
+    out_path=folder + "predictions/Ghana_uint8_v5_teacher.tif",
+    dst_nodata=255,
+)
+
+internal_clip_raster(
+    mosaic,
+    folder + "vector/ghana_buffered_1k.gpkg",
+    out_path=folder + "predictions/Ghana_float32_v5_teacher.tif",
     dst_nodata=255,
 )
