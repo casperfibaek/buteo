@@ -41,13 +41,13 @@ place = "dojo"
 # mask_dk = None
 
 noise = {
-    "scale": 0.05,
-    "band": 0.01,
-    "pixel": 0.005,
+    "scale": 0.075,
+    "band": 0.02,
+    "pixel": 0.01,
 }
 
 use_noise = True
-prefix = "_noise"
+prefix = "_noise2"
 
 # use_noise = False
 # prefix = ""

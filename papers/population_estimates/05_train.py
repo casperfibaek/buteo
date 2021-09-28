@@ -23,39 +23,47 @@ np.set_printoptions(suppress=True)
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 mixed_precision.set_global_policy("mixed_float16")
 
-model_name = "student_01"
+model_name = "student_02"
 
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 outdir = folder + f"models/"
 place = "dojo"
 
-# x_train = [
-#     np.concatenate(
-#         [
-#             np.load(folder + f"{place}/all_noise_RGBN.npy"),
-#             np.load(folder + f"{place}/teacher_RGBN.npy"),
-#         ]
-#     ),
-#     np.concatenate(
-#         [
-#             np.load(folder + f"{place}/all_noise_SAR.npy"),
-#             np.load(folder + f"{place}/teacher_SAR.npy"),
-#         ]
-#     ),
-#     np.concatenate(
-#         [
-#             np.load(folder + f"{place}/all_noise_RESWIR.npy"),
-#             np.load(folder + f"{place}/teacher_RESWIR.npy"),
-#         ]
-#     ),
-# ]
+x_train = [
+    np.concatenate(
+        [
+            np.load(folder + f"{place}/all_noise2_RGBN.npy"),
+            np.load(folder + f"{place}/teacher_RGBN.npy"),
+        ]
+    ),
+    np.concatenate(
+        [
+            np.load(folder + f"{place}/all_noise2_SAR.npy"),
+            np.load(folder + f"{place}/teacher_SAR.npy"),
+        ]
+    ),
+    np.concatenate(
+        [
+            np.load(folder + f"{place}/all_noise2_RESWIR.npy"),
+            np.load(folder + f"{place}/teacher_RESWIR.npy"),
+        ]
+    ),
+]
 
-# y_train = np.concatenate(
-#     [
-#         np.load(folder + f"{place}/all_noise_label_area.npy"),
-#         np.load(folder + f"{place}/teacher_label_area.npy"),
-#     ]
-# )
+y_train = np.concatenate(
+    [
+        np.load(folder + f"{place}/all_noise2_label_area.npy"),
+        np.load(folder + f"{place}/teacher_label_area.npy"),
+    ]
+)
+
+shuffle_mask = np.random.permutation(y_train.shape[0])
+
+for idx in range(len(x_train)):
+    x_train[idx] = x_train[idx][shuffle_mask]
+
+y_train = y_train[shuffle_mask]
+
 
 x_test = [
     np.load(folder + f"{place}/test_RGBN.npy"),
@@ -65,13 +73,6 @@ x_test = [
 
 y_test = np.load(folder + f"{place}/test_label_area.npy")
 
-# shuffle_mask = np.random.permutation(y_train.shape[0])
-
-# for idx in range(len(x_train)):
-#     x_train[idx] = x_train[idx][shuffle_mask]
-
-# y_train = y_train[shuffle_mask]
-
 # limit = y_train.shape[0] // 8
 
 # for idx in range(len(x_train)):
@@ -79,7 +80,7 @@ y_test = np.load(folder + f"{place}/test_label_area.npy")
 
 # y_train = y_train[:limit]
 
-lr = 0.0001
+lr = 0.00001
 min_delta = 0.005
 
 with tf.device("/device:GPU:0"):
@@ -90,7 +91,7 @@ with tf.device("/device:GPU:0"):
     activation = "relu"
     initializer = "glorot_normal"
 
-    donor_model_path = outdir + "student_01"
+    donor_model_path = outdir + "student_01_26"
     model = tf.keras.models.load_model(donor_model_path, custom_objects={"tpe": tpe})
 
     # model = model_trio_down(
@@ -137,8 +138,6 @@ with tf.device("/device:GPU:0"):
     model.evaluate(x=x_test, y=y_test, batch_size=1024)
     print("")
 
-    exit()
-
     for phase in range(len(bs)):
         use_epoch = np.cumsum(epochs)[phase]
         use_bs = bs[phase]
@@ -147,8 +146,8 @@ with tf.device("/device:GPU:0"):
         model.fit(
             x=x_train,
             y=y_train,
-            # validation_split=0.1,
-            validation_data=(x_test, y_test),
+            validation_split=0.1,
+            # validation_data=(x_test, y_test),
             shuffle=True,
             epochs=use_epoch,
             initial_epoch=initial_epoch,
