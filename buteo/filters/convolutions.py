@@ -309,3 +309,28 @@ if __name__ == "__main__":
     # pdb.set_trace()
 
     array_to_raster(mad, raster_path, out_path=folder + "2020_std_10m.tif")
+
+
+# band_last
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True)
+def interp_array(
+    arr,
+    min_vals,
+    max_vals,
+    min_vals_adj,
+    max_vals_adj,
+):
+    out_arr = np.empty_like(arr)
+    for img in prange(arr.shape[0]):
+        for band in range(arr.shape[3]):
+            min_val = min_vals[img, 0, 0, band]
+            min_val_adj = min_vals_adj[img, 0, 0, band]
+
+            max_val = max_vals[img, 0, 0, band]
+            max_val_adj = max_vals_adj[img, 0, 0, band]
+
+            out_arr[img, :, :, band] = np.interp(
+                arr[img, :, :, band], (min_val, max_val), (min_val_adj, max_val_adj)
+            )
+
+    return out_arr

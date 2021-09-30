@@ -67,10 +67,11 @@ def rasterize_vector(
     target_ds.SetProjection(source_meta["projection"])
 
     band = target_ds.GetRasterBand(1)
-    band.Fill(fill_value)
 
     if nodata_value is not None:
         band.SetNoDataValue(nodata_value)
+    else:
+        band.Fill(fill_value)
 
     options = []
     if all_touch == True:

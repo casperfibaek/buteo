@@ -23,9 +23,10 @@ from buteo.machine_learning.ml_utils import (
 )
 
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/"
-vector_folder = folder + "vector/grid_cells_student/"
+vector_folder = folder + "vector/grid_cells_student2/"
 raster_folder = folder + "raster/"
-model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/student_01_26"
+
+model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/student1"
 
 
 for region in glob(vector_folder + "grid_id_*.gpkg"):
@@ -137,7 +138,8 @@ for region in glob(vector_folder + "grid_id_*.gpkg"):
 
     print("Ready for predictions.")
 
-    outname = os.path.splitext(os.path.basename(region))[0]
+    number = os.path.splitext(os.path.basename(region))[0].split("_")[2]
+    outname = f"fid_{number}_rasterized.tif"
 
     predict_raster(
         [rgbn_stacked, sar_stacked, reswir_stacked],
@@ -145,7 +147,7 @@ for region in glob(vector_folder + "grid_id_*.gpkg"):
         output_tile_size=32,
         model_path=model,
         reference_raster=b10m_clip,
-        out_path=folder + f"predictions/student2/{outname}.tif",
+        out_path=vector_folder + outname,
         offsets=[
             get_offsets(32),
             get_offsets(32),
@@ -171,7 +173,7 @@ for region in glob(vector_folder + "grid_id_*.gpkg"):
     except:
         pass
 
-test_sites = glob(folder + "predictions/student2/*.tif")
+test_sites = glob(vector_folder + "fid_*_rasterized.tif")
 
 from buteo.raster.align import align_rasters
 from buteo.machine_learning.patch_extraction import extract_patches
@@ -179,7 +181,7 @@ from glob import glob
 from osgeo import gdal
 
 for cell in test_sites:
-    number = os.path.splitext(os.path.basename(cell))[0].split("_")[2]
+    number = os.path.splitext(os.path.basename(cell))[0].split("_")[1]
 
     clipped_rgbn = clip_raster(
         [
@@ -252,7 +254,7 @@ for cell in test_sites:
 
     extract_patches(
         m10,
-        out_dir=folder + "patches/",
+        out_dir=vector_folder + "patches/",
         prefix=number + "_",
         postfix="",
         size=32,
@@ -284,7 +286,7 @@ for cell in test_sites:
 
     path_np, path_geom = extract_patches(
         m20,
-        out_dir=folder + "patches/",
+        out_dir=vector_folder + "patches/",
         prefix=number + "_",
         postfix="",
         size=16,
@@ -319,6 +321,8 @@ def sortKeyFunc(s):
     return int(os.path.basename(s).split("_")[0])
 
 
+folder = vector_folder
+
 for band in ["B02", "B03", "B04", "B08", "B05", "B06", "B07", "B11", "B12", "VV", "VH"]:
     band_paths = glob(folder + f"patches/*2021_{band}*.npy")
     band_paths = sorted(band_paths, key=sortKeyFunc)
@@ -330,7 +334,12 @@ for band in ["B02", "B03", "B04", "B08", "B05", "B06", "B07", "B11", "B12", "VV"
         else:
             loaded = np.concatenate([loaded, np.load(key)])
 
-    np.save(folder + f"patches/merged/{band}.npy", loaded)
+    add_list = ["B05", "B06", "B07", "B11", "B12"]
+    addition = "10m"
+    if band in add_list:
+        addition = "20m"
+
+    np.save(folder + f"patches/merged/raw/{band}_{addition}.npy", loaded)
 
 band_paths = glob(folder + f"patches/*rasterized*.npy")
 band_paths = sorted(band_paths, key=sortKeyFunc)
@@ -342,4 +351,4 @@ for index, key in enumerate(band_paths):
     else:
         loaded = np.concatenate([loaded, np.load(key)])
 
-np.save(folder + "patches/merged/label_area.npy", loaded)
+np.save(folder + "patches/merged/raw/label_area.npy", loaded)

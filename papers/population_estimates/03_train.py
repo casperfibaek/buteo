@@ -14,7 +14,7 @@ from tensorflow.keras.callbacks import (
     ModelCheckpoint,
     EarlyStopping,
 )
-from buteo.machine_learning.ml_utils import create_step_decay, tpe, mse_biased
+from buteo.machine_learning.ml_utils import create_step_decay, tpe
 from buteo.utils import timing
 
 from model_trio_down import model_trio_down
@@ -23,7 +23,7 @@ np.set_printoptions(suppress=True)
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 mixed_precision.set_global_policy("mixed_float16")
 
-model_name = "student_02"
+model_name = "student2"
 
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 outdir = folder + f"models/"
@@ -33,19 +33,22 @@ x_train = [
     np.concatenate(
         [
             np.load(folder + f"{place}/all_noise2_RGBN.npy"),
-            np.load(folder + f"{place}/teacher_RGBN.npy"),
+            # np.load(folder + f"{place}/ghana_balanced_RGBN.npy"),
+            np.load(folder + f"{place}/student2_RGBN.npy"),
         ]
     ),
     np.concatenate(
         [
             np.load(folder + f"{place}/all_noise2_SAR.npy"),
-            np.load(folder + f"{place}/teacher_SAR.npy"),
+            # np.load(folder + f"{place}/ghana_balanced_SAR.npy"),
+            np.load(folder + f"{place}/student2_SAR.npy"),
         ]
     ),
     np.concatenate(
         [
             np.load(folder + f"{place}/all_noise2_RESWIR.npy"),
-            np.load(folder + f"{place}/teacher_RESWIR.npy"),
+            # np.load(folder + f"{place}/ghana_balanced_RESWIR.npy"),
+            np.load(folder + f"{place}/student2_RESWIR.npy"),
         ]
     ),
 ]
@@ -53,7 +56,8 @@ x_train = [
 y_train = np.concatenate(
     [
         np.load(folder + f"{place}/all_noise2_label_area.npy"),
-        np.load(folder + f"{place}/teacher_label_area.npy"),
+        # np.load(folder + f"{place}/ghana_balanced_label_area.npy"),
+        np.load(folder + f"{place}/student2_label_area.npy"),
     ]
 )
 
@@ -63,7 +67,6 @@ for idx in range(len(x_train)):
     x_train[idx] = x_train[idx][shuffle_mask]
 
 y_train = y_train[shuffle_mask]
-
 
 x_test = [
     np.load(folder + f"{place}/test_RGBN.npy"),
@@ -80,18 +83,18 @@ y_test = np.load(folder + f"{place}/test_label_area.npy")
 
 # y_train = y_train[:limit]
 
-lr = 0.00001
+lr = 0.0001
 min_delta = 0.005
 
 with tf.device("/device:GPU:0"):
-    epochs = [16, 8, 4, 2]
-    bs = [256, 128, 64, 32]
+    epochs = [20, 10, 5]
+    bs = [256, 128, 64]
     # bs = [16, 8, 4]
     inception_blocks = 3
     activation = "relu"
     initializer = "glorot_normal"
 
-    donor_model_path = outdir + "student_01_26"
+    donor_model_path = outdir + "student1"
     model = tf.keras.models.load_model(donor_model_path, custom_objects={"tpe": tpe})
 
     # model = model_trio_down(
@@ -113,14 +116,12 @@ with tf.device("/device:GPU:0"):
 
     model.compile(
         optimizer=optimizer,
-        # loss="log_cosh",
         loss="mse",
-        # loss=mse_biased,
         metrics=["mse", "mae", tpe],  # tpe
     )
 
-    # transfer weights
-    # donor_model_path = outdir + "teacher_06"
+    # # transfer weights
+    # donor_model_path = outdir + "student_v1_old"
     # donor_model = tf.keras.models.load_model(
     #     donor_model_path, custom_objects={"tpe": tpe}
     # )
@@ -147,7 +148,6 @@ with tf.device("/device:GPU:0"):
             x=x_train,
             y=y_train,
             validation_split=0.1,
-            # validation_data=(x_test, y_test),
             shuffle=True,
             epochs=use_epoch,
             initial_epoch=initial_epoch,
@@ -179,3 +179,6 @@ with tf.device("/device:GPU:0"):
     model.save(f"{outdir}{model_name.lower()}")
 
     timing(start)
+
+# teacher: mse: 104.7100 - mae: 3.4287 - tpe: 1.0075
+# student: mse: 97.1954 - mae: 3.3744 - tpe: -0.0915
