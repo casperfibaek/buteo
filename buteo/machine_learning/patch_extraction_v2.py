@@ -1,8 +1,9 @@
-from pdb import main
-import sys, os
+import sys
 
 sys.path.append("../../")
 import numpy as np
+
+np.set_printoptions(suppress=True)
 
 import tensorflow as tf
 from buteo.raster.io import raster_to_array, array_to_raster
@@ -53,7 +54,7 @@ def blocks_to_array(blocks, og_shape, tile_size, offset=[0, 0]) -> np.ndarray:
         tile_size,
         tile_size,
         blocks.shape[3],
-        blocks.shape[3],
+        1,
     )
 
     swap = reshape.swapaxes(1, 2)
@@ -64,10 +65,7 @@ def blocks_to_array(blocks, og_shape, tile_size, offset=[0, 0]) -> np.ndarray:
         blocks.shape[3],
     )
 
-    target[
-        offset[1] : cut_y,
-        offset[0] : cut_x,
-    ] = destination
+    target[offset[1] : cut_y, offset[0] : cut_x] = destination
 
     return target
 
@@ -82,6 +80,8 @@ def predict_raster(
     out_path=None,
     offsets=[[[0, 0]]],
     batch_size=32,
+    method="median",
+    scale_to_sum=False,
 ):
     print("Loading Model")
     model = tf.keras.models.load_model(model_path, custom_objects={"tpe": tpe})
@@ -110,7 +110,7 @@ def predict_raster(
 
         prediction = blocks_to_array(
             prediction_blocks,
-            reference_arr.shape,
+            (reference_arr.shape[0], reference_arr.shape[1], output_channels),
             output_tile_size,
             offset=offsets[0][offset_idx],
         )
@@ -160,6 +160,15 @@ def predict_raster(
     print("Merging predictions.")
 
     with np.errstate(invalid="ignore"):
-        predicted = np.nanmedian(predictions, axis=0).astype("float32")
+        if method == "mean":
+            predicted = np.nanmean(predictions, axis=0).astype("float32")
+        else:
+            predicted = np.nanmedian(predictions, axis=0).astype("float32")
+
+        if scale_to_sum:
+            predicted = predicted / np.reshape(
+                np.nansum(predicted, axis=2),
+                (predicted.shape[0], predicted.shape[1], 1),
+            )
 
     return array_to_raster(predicted, reference_raster, out_path)

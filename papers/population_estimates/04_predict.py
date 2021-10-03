@@ -25,7 +25,9 @@ from buteo.machine_learning.ml_utils import (
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/"
 vector_folder = folder + "vector/regions/"
 raster_folder = folder + "raster/"
-model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/teacher_05_04"
+model = (
+    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/volume_for_ghana_02"
+)
 
 
 for region in glob(vector_folder + "id_*.gpkg"):
@@ -33,8 +35,8 @@ for region in glob(vector_folder + "id_*.gpkg"):
 
     print(f"Processing region: {region_name}")
 
-    # if region_name in []:
-    #     continue
+    if region_name not in ["id_28"]:
+        continue
 
     print("Clipping RESWIR.")
     b20m_clip = internal_clip_raster(
@@ -155,6 +157,12 @@ for region in glob(vector_folder + "id_*.gpkg"):
             get_offsets(16),
         ],
         batch_size=1024,
+        # output_channels=4,
+        # method="mean",
+        # scale_to_sum=True,
+        output_channels=1,
+        method="median",
+        scale_to_sum=False,
     )
 
     try:
@@ -189,13 +197,13 @@ rounded = array_to_raster(
 internal_clip_raster(
     rounded,
     folder + "vector/ghana_buffered_1k.gpkg",
-    out_path=folder + "predictions/Ghana_uint8_v5_teacher.tif",
+    out_path=folder + "predictions/Ghana_uint8_v1_volume.tif",
     dst_nodata=255,
 )
 
 internal_clip_raster(
     mosaic,
     folder + "vector/ghana_buffered_1k.gpkg",
-    out_path=folder + "predictions/Ghana_float32_v5_teacher.tif",
+    out_path=folder + "predictions/Ghana_float32_v1_volume.tif",
     dst_nodata=255,
 )

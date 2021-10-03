@@ -7,8 +7,7 @@ from buteo.earth_observation.s2_utils import (
     unzip_files_to_folder,
 )
 
-# folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/uganda/s2/"
-folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/tanzania/satellite/S2/Dar_20210120/"
+folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/kumasi/"
 
 tmp = folder + "tmp/"
 raw = folder + "raw/"
@@ -16,8 +15,10 @@ dst = folder + "dst/"
 mos = folder + "mos/"
 
 tiles = [
-    "37MEN",
-    # "36NWF",
+    # "30NYM",
+    # "30NZM",
+    # "30NYN",
+    "30NXN",
 ]
 
 for tile in tiles:
@@ -33,12 +34,12 @@ for tile in tiles:
         dst,
         min_improvement=0.1,
         quality_threshold=110,
-        time_penalty=90,
-        max_time_delta=1000.0,
+        time_penalty=360,
+        max_time_delta=1500.0,
         max_images=10,
         harmonise=True,
         max_harmony=100,
-        ideal_date="20210520",
+        ideal_date="20210515",
         # use_image="20210226",
         process_bands=[
             {"size": "10m", "band": "B02"},
@@ -54,4 +55,4 @@ for tile in tiles:
         ],
     )
 
-join_s2_tiles(dst, mos, tmp, harmonisation=True, projection_to_match=32737)
+# join_s2_tiles(dst, mos, tmp, harmonisation=True, projection_to_match=32630)

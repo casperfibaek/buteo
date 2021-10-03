@@ -26,7 +26,7 @@ folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/"
 vector_folder = folder + "vector/grid_cells_student2/"
 raster_folder = folder + "raster/"
 
-model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/student1"
+model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/student2"
 
 
 for region in glob(vector_folder + "grid_id_*.gpkg"):

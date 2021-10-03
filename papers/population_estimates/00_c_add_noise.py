@@ -15,8 +15,10 @@ from buteo.filters.convolutions import interp_array
 np.set_printoptions(suppress=True)
 
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
-outdir = folder + f"models/"
-place = "dojo"
+# outdir = folder + f"models/"
+# place = "dojo"
+# place = "ghana/vector/classes/patches/merged/"
+place = "ghana/vector/volume_rasters/patches/merged/"
 
 # for val in range(3):
 #     num = str(val)
@@ -53,17 +55,55 @@ place = "dojo"
 
 # exit()
 
+# y_label = np.concatenate([
+#     np.load(folder + f"{place}/volume_clean_label_area.npy"),
+#     np.load(folder + f"{place}/volume_noise1_label_area.npy"),
+#     np.load(folder + f"{place}/volume_noise2_label_area.npy"),
+# ])
+
+# shuffle_mask = np.random.permutation(y_label.shape[0])
+
+# y_label = y_label[shuffle_mask]
+
+# rgbn = np.concatenate([
+#     np.load(folder + f"{place}/volume_clean_RGBN.npy"),
+#     np.load(folder + f"{place}/volume_noise1_RGBN.npy"),
+#     np.load(folder + f"{place}/volume_noise2_RGBN.npy"),
+# ])[shuffle_mask]
+
+# sar = np.concatenate([
+#     np.load(folder + f"{place}/volume_clean_SAR.npy"),
+#     np.load(folder + f"{place}/volume_noise1_SAR.npy"),
+#     np.load(folder + f"{place}/volume_noise2_SAR.npy"),
+# ])[shuffle_mask]
+
+# reswir = np.concatenate([
+#     np.load(folder + f"{place}/volume_clean_RESWIR.npy"),
+#     np.load(folder + f"{place}/volume_noise1_RESWIR.npy"),
+#     np.load(folder + f"{place}/volume_noise2_RESWIR.npy"),
+# ])[shuffle_mask]
+
+
+# np.save(folder + f"{place}/ghana_volume_label_area.npy", y_label)
+# np.save(folder + f"{place}/ghana_volume_RGBN.npy", rgbn)
+# np.save(folder + f"{place}/ghana_volume_SAR.npy", sar)
+# np.save(folder + f"{place}/ghana_volume_RESWIR.npy", reswir)
+
+
+# exit()
+
 noise = {
     "scale": 0.05,
     "contrast": 0.025,
     "band": 0.01,
     "pixel": 0.005,
+    "drop_threshold": 0.25,
 }
 
 # dk_version = "2"
 
 use_noise = True
-prefix = f"ghana_noise"
+prefix = f"volume_noise2"
 
 # use_noise = False
 # prefix = "_nonoise"
@@ -72,11 +112,13 @@ prefix = f"ghana_noise"
 y_label = np.concatenate(
     [
         # np.load(folder + f"{place}/ghana_balanced_label_area.npy"),
-        np.load(folder + f"{place}/patches/ghana_label_area.npy"),
+        # np.load(folder + f"{place}/patches/ghana_label_area.npy"),
+        # np.load(folder + f"{place}/class_clean_label_area.npy"),
+        np.load(folder + f"{place}/volume_clean_label_area.npy"),
         # np.load(folder + f"{place}/aux_balanced_label_area.npy"),
         # np.load(folder + f"{place}/dk_reduced{dk_version}_label_area.npy"),
     ]
-).astype("float32")
+)
 
 shuffle_mask = np.random.permutation(y_label.shape[0])
 
@@ -85,14 +127,17 @@ if use_noise:
     scale_noise = np.random.normal(1.0, noise["scale"], (len(y_label), 1, 1, 1)).astype(
         "float32"
     )
+    drop = np.random.rand(len(y_label)) > noise["drop_threshold"]
 
 np.save(folder + f"{place}/{prefix}_label_area.npy", y_label[shuffle_mask])
 y_label = None
 
 rgbn = np.concatenate(
     [
-        np.load(folder + f"{place}/patches/ghana_RGBN.npy"),
+        # np.load(folder + f"{place}/patches/ghana_RGBN.npy"),
         # np.load(folder + f"{place}/ghana_balanced_RGBN.npy"),
+        # np.load(folder + f"{place}/class_clean_RGBN.npy"),
+        np.load(folder + f"{place}/volume_clean_RGBN.npy"),
         # np.load(folder + f"{place}/aux_balanced_RGBN.npy"),
         # np.load(folder + f"{place}/dk_reduced{dk_version}_RGBN.npy"),
     ]
@@ -127,8 +172,10 @@ rgbn = None
 
 sar = np.concatenate(
     [
-        np.load(folder + f"{place}/patches/ghana_SAR.npy"),
+        # np.load(folder + f"{place}/patches/ghana_SAR.npy"),
         # np.load(folder + f"{place}/ghana_balanced_SAR.npy"),
+        # np.load(folder + f"{place}/class_clean_SAR.npy"),
+        np.load(folder + f"{place}/volume_clean_SAR.npy"),
         # np.load(folder + f"{place}/aux_balanced_SAR.npy"),
         # np.load(folder + f"{place}/dk_reduced{dk_version}_SAR.npy"),
     ]
@@ -163,8 +210,10 @@ sar = None
 
 reswir = np.concatenate(
     [
-        np.load(folder + f"{place}/patches/ghana_RESWIR.npy"),
+        # np.load(folder + f"{place}/patches/ghana_RESWIR.npy"),
         # np.load(folder + f"{place}/ghana_balanced_RESWIR.npy"),
+        np.load(folder + f"{place}/volume_clean_RESWIR.npy"),
+        # np.load(folder + f"{place}/class_clean_RESWIR.npy"),
         # np.load(folder + f"{place}/aux_balanced_RESWIR.npy"),
         # np.load(folder + f"{place}/dk_reduced{dk_version}_RESWIR.npy"),
     ]

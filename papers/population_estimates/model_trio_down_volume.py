@@ -1,23 +1,31 @@
+yellow_follow = "C:/Users/caspe/Desktop/buteo/"
+import sys
+
+sys.path.append(yellow_follow)
+
 from model_layers import inception_block, expansion_block, reduction_block
+import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import (
     Conv2D,
     Concatenate,
 )
+from model_trio_down import model_trio_down
+from buteo.machine_learning.ml_utils import tpe
 from tensorflow.keras.backend import clip
 
 
-def model_trio_down(
+def model_trio_down_volume(
     shape_higher_01,
     shape_higher_02,
     shape_lower,
+    donor_model_path,
     activation="relu",
     output_activation="relu",
     kernel_initializer="glorot_normal",
     sizes=[40, 48, 56],
     inception_blocks=3,
     name="denmark",
-    clip_end=True,
 ):
     model_input_higher_01 = Input(
         shape=shape_higher_01, name=f"{name}_trio_input_higher_01"
@@ -211,17 +219,7 @@ def model_trio_down(
         dtype="float32",
     )(model)
 
-    if clip_end:
-        return Model(
-            inputs=[
-                model_input_higher_01,
-                model_input_higher_02,
-                model_input_model_lower,
-            ],
-            outputs=clip(output, min_value=0, max_value=100),
-        )
-
-    return Model(
+    model = Model(
         inputs=[
             model_input_higher_01,
             model_input_higher_02,
@@ -229,3 +227,19 @@ def model_trio_down(
         ],
         outputs=output,
     )
+
+    # # transfer weights
+    donor_model = tf.keras.models.load_model(
+        donor_model_path, custom_objects={"tpe": tpe}
+    )
+
+    # version 2
+    # 37 is top of tail
+    # 12 is after first inception block of the tail
+    for idx, _ in enumerate(donor_model.layers[:-1]):
+        model.layers[idx].set_weights(donor_model.layers[idx].get_weights())
+
+    for idx, _ in enumerate(donor_model.layers[:-37]):
+        model.layers[idx].trainable = False
+
+    return model

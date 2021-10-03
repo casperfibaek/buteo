@@ -22,11 +22,13 @@ import numpy as np
 
 folder = (
     # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/grid_cells/"
-    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/grid_cells_student/"
+    # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/grid_cells_student/"
+    # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/classes/"
+    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/volume_rasters/"
 )
 raster_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/"
 
-y_pred = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/predictions/Ghana_float32_v5_teacher.tif"
+# y_pred = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/predictions/Ghana_float32_v5_teacher.tif"
 
 # grids = glob(folder + "grid_id_*.gpkg")
 
@@ -85,9 +87,15 @@ y_pred = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/prediction
 # progress(idx + 1, len(grids), "Rasterizing")
 
 
-for cell in glob(folder + "fid_*_rasterized.tif"):
-    number = os.path.basename(os.path.basename(cell)).split("_")[1]
-    vector_cell = folder + "grid_id_" + number + ".gpkg"
+# for cell in glob(folder + "fid_*_rasterized.tif"):
+# for cell in glob(folder + "class_*.tif"):
+for cell in glob(folder + "volume_*.tif"):
+    # number = os.path.basename(os.path.basename(cell)).split("_")[1]
+    number = os.path.splitext(os.path.basename(cell))[0]
+    number = number.split("_")[1]
+
+    # vector_cell = folder + "grid_id_" + number + ".gpkg"
+    vector_cell = cell
 
     clipped_rgbn = clip_raster(
         [
@@ -238,9 +246,15 @@ for band in ["B02", "B03", "B04", "B08", "B05", "B06", "B07", "B11", "B12", "VV"
         else:
             loaded = np.concatenate([loaded, np.load(key)])
 
-    np.save(folder + f"patches/merged/{band}.npy", loaded)
+    add_list = ["B05", "B06", "B07", "B11", "B12"]
+    addition = "10m"
+    if band in add_list:
+        addition = "20m"
 
-band_paths = glob(folder + f"patches/*rasterized*.npy")
+    np.save(folder + f"patches/merged/raw/{band}_{addition}.npy", loaded)
+
+# band_paths = glob(folder + f"patches/*rasterized*.npy")
+band_paths = glob(folder + f"patches/*volume*.npy")
 band_paths = sorted(band_paths, key=sortKeyFunc)
 
 # merge all in bob by band
@@ -250,4 +264,4 @@ for index, key in enumerate(band_paths):
     else:
         loaded = np.concatenate([loaded, np.load(key)])
 
-np.save(folder + "patches/merged/label_area.npy", loaded)
+np.save(folder + "patches/merged/raw/label_area_10m.npy", loaded)
