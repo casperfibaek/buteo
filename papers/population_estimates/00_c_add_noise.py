@@ -17,8 +17,8 @@ np.set_printoptions(suppress=True)
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 # outdir = folder + f"models/"
 # place = "dojo"
-# place = "ghana/vector/classes/patches/merged/"
-place = "ghana/vector/volume_rasters/patches/merged/"
+place = "ghana/vector/extra_west/patches/merged/"
+# place = "ghana/vector/grid_cells_v2/patches/merged/"
 
 # for val in range(3):
 #     num = str(val)
@@ -55,55 +55,63 @@ place = "ghana/vector/volume_rasters/patches/merged/"
 
 # exit()
 
-# y_label = np.concatenate([
-#     np.load(folder + f"{place}/volume_clean_label_area.npy"),
-#     np.load(folder + f"{place}/volume_noise1_label_area.npy"),
-#     np.load(folder + f"{place}/volume_noise2_label_area.npy"),
-# ])
+y_label = np.concatenate(
+    [
+        np.load(folder + f"{place}/label_area.npy"),
+        np.load(folder + f"{place}/noise1_label_area.npy"),
+        np.load(folder + f"{place}/noise2_label_area.npy"),
+    ]
+)
 
-# shuffle_mask = np.random.permutation(y_label.shape[0])
+shuffle_mask = np.random.permutation(y_label.shape[0])
 
-# y_label = y_label[shuffle_mask]
+y_label = y_label[shuffle_mask]
 
-# rgbn = np.concatenate([
-#     np.load(folder + f"{place}/volume_clean_RGBN.npy"),
-#     np.load(folder + f"{place}/volume_noise1_RGBN.npy"),
-#     np.load(folder + f"{place}/volume_noise2_RGBN.npy"),
-# ])[shuffle_mask]
+rgbn = np.concatenate(
+    [
+        np.load(folder + f"{place}/RGBN.npy"),
+        np.load(folder + f"{place}/noise1_RGBN.npy"),
+        np.load(folder + f"{place}/noise2_RGBN.npy"),
+    ]
+)[shuffle_mask]
 
-# sar = np.concatenate([
-#     np.load(folder + f"{place}/volume_clean_SAR.npy"),
-#     np.load(folder + f"{place}/volume_noise1_SAR.npy"),
-#     np.load(folder + f"{place}/volume_noise2_SAR.npy"),
-# ])[shuffle_mask]
+sar = np.concatenate(
+    [
+        np.load(folder + f"{place}/SAR.npy"),
+        np.load(folder + f"{place}/noise1_SAR.npy"),
+        np.load(folder + f"{place}/noise2_SAR.npy"),
+    ]
+)[shuffle_mask]
 
-# reswir = np.concatenate([
-#     np.load(folder + f"{place}/volume_clean_RESWIR.npy"),
-#     np.load(folder + f"{place}/volume_noise1_RESWIR.npy"),
-#     np.load(folder + f"{place}/volume_noise2_RESWIR.npy"),
-# ])[shuffle_mask]
-
-
-# np.save(folder + f"{place}/ghana_volume_label_area.npy", y_label)
-# np.save(folder + f"{place}/ghana_volume_RGBN.npy", rgbn)
-# np.save(folder + f"{place}/ghana_volume_SAR.npy", sar)
-# np.save(folder + f"{place}/ghana_volume_RESWIR.npy", reswir)
+reswir = np.concatenate(
+    [
+        np.load(folder + f"{place}/RESWIR.npy"),
+        np.load(folder + f"{place}/noise1_RESWIR.npy"),
+        np.load(folder + f"{place}/noise2_RESWIR.npy"),
+    ]
+)[shuffle_mask]
 
 
-# exit()
+np.save(folder + f"{place}/extra_building_label_class.npy", y_label)
+np.save(folder + f"{place}/extra_building_RGBN.npy", rgbn)
+np.save(folder + f"{place}/extra_building_SAR.npy", sar)
+np.save(folder + f"{place}/extra_building_RESWIR.npy", reswir)
+
+
+exit()
 
 noise = {
-    "scale": 0.05,
+    "scale": 0.075,
     "contrast": 0.025,
     "band": 0.01,
-    "pixel": 0.005,
-    "drop_threshold": 0.25,
+    "pixel": 0.01,
+    "drop_threshold": 0.00,
 }
 
 # dk_version = "2"
 
 use_noise = True
-prefix = f"volume_noise2"
+prefix = f"noise2"
 
 # use_noise = False
 # prefix = "_nonoise"
@@ -111,10 +119,11 @@ prefix = f"volume_noise2"
 
 y_label = np.concatenate(
     [
+        np.load(folder + f"{place}/label_area.npy"),
         # np.load(folder + f"{place}/ghana_balanced_label_area.npy"),
         # np.load(folder + f"{place}/patches/ghana_label_area.npy"),
-        # np.load(folder + f"{place}/class_clean_label_area.npy"),
-        np.load(folder + f"{place}/volume_clean_label_area.npy"),
+        # np.load(folder + f"{place}/class_balanced_label_class.npy"),
+        # np.load(folder + f"{place}/ghana_clean_v2_label_area.npy"),
         # np.load(folder + f"{place}/aux_balanced_label_area.npy"),
         # np.load(folder + f"{place}/dk_reduced{dk_version}_label_area.npy"),
     ]
@@ -127,17 +136,17 @@ if use_noise:
     scale_noise = np.random.normal(1.0, noise["scale"], (len(y_label), 1, 1, 1)).astype(
         "float32"
     )
-    drop = np.random.rand(len(y_label)) > noise["drop_threshold"]
 
 np.save(folder + f"{place}/{prefix}_label_area.npy", y_label[shuffle_mask])
 y_label = None
 
 rgbn = np.concatenate(
     [
+        np.load(folder + f"{place}/RGBN.npy"),
         # np.load(folder + f"{place}/patches/ghana_RGBN.npy"),
         # np.load(folder + f"{place}/ghana_balanced_RGBN.npy"),
         # np.load(folder + f"{place}/class_clean_RGBN.npy"),
-        np.load(folder + f"{place}/volume_clean_RGBN.npy"),
+        # np.load(folder + f"{place}/class_balanced_RGBN.npy"),
         # np.load(folder + f"{place}/aux_balanced_RGBN.npy"),
         # np.load(folder + f"{place}/dk_reduced{dk_version}_RGBN.npy"),
     ]
@@ -165,6 +174,9 @@ if use_noise:
     max_vals_adj = np.where(max_vals_adj <= min_vals_adj, max_vals, max_vals_adj)
 
     rgbn = interp_array(rgbn, min_vals, max_vals, min_vals_adj, max_vals_adj)
+    rgbn = rgbn * (
+        np.random.rand(rgbn.shape[0], 1, 1, rgbn.shape[3]) > noise["drop_threshold"]
+    )
 
 
 np.save(folder + f"{place}/{prefix}_RGBN.npy", rgbn[shuffle_mask].astype("float32"))
@@ -172,10 +184,11 @@ rgbn = None
 
 sar = np.concatenate(
     [
+        np.load(folder + f"{place}/SAR.npy"),
         # np.load(folder + f"{place}/patches/ghana_SAR.npy"),
         # np.load(folder + f"{place}/ghana_balanced_SAR.npy"),
         # np.load(folder + f"{place}/class_clean_SAR.npy"),
-        np.load(folder + f"{place}/volume_clean_SAR.npy"),
+        # np.load(folder + f"{place}/class_balanced_SAR.npy"),
         # np.load(folder + f"{place}/aux_balanced_SAR.npy"),
         # np.load(folder + f"{place}/dk_reduced{dk_version}_SAR.npy"),
     ]
@@ -203,6 +216,9 @@ if use_noise:
     max_vals_adj = np.where(max_vals_adj <= min_vals_adj, max_vals, max_vals_adj)
 
     sar = interp_array(sar, min_vals, max_vals, min_vals_adj, max_vals_adj)
+    sar = sar * (
+        np.random.rand(sar.shape[0], 1, 1, sar.shape[3]) > noise["drop_threshold"]
+    )
 
 
 np.save(folder + f"{place}/{prefix}_SAR.npy", sar[shuffle_mask].astype("float32"))
@@ -210,9 +226,10 @@ sar = None
 
 reswir = np.concatenate(
     [
+        np.load(folder + f"{place}/RESWIR.npy"),
         # np.load(folder + f"{place}/patches/ghana_RESWIR.npy"),
         # np.load(folder + f"{place}/ghana_balanced_RESWIR.npy"),
-        np.load(folder + f"{place}/volume_clean_RESWIR.npy"),
+        # np.load(folder + f"{place}/class_balanced_RESWIR.npy"),
         # np.load(folder + f"{place}/class_clean_RESWIR.npy"),
         # np.load(folder + f"{place}/aux_balanced_RESWIR.npy"),
         # np.load(folder + f"{place}/dk_reduced{dk_version}_RESWIR.npy"),
@@ -235,6 +252,9 @@ if use_noise:
     max_vals_adj = np.where(max_vals_adj <= min_vals_adj, max_vals, max_vals_adj)
 
     reswir = interp_array(reswir, min_vals, max_vals, min_vals_adj, max_vals_adj)
+    reswir = reswir * (
+        np.random.rand(reswir.shape[0], 1, 1, reswir.shape[3]) > noise["drop_threshold"]
+    )
 
 np.save(folder + f"{place}/{prefix}_RESWIR.npy", reswir[shuffle_mask].astype("float32"))
 reswir = None

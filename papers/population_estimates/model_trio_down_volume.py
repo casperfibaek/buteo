@@ -239,7 +239,7 @@ def model_trio_down_volume(
     for idx, _ in enumerate(donor_model.layers[:-1]):
         model.layers[idx].set_weights(donor_model.layers[idx].get_weights())
 
-    for idx, _ in enumerate(donor_model.layers[:-37]):
-        model.layers[idx].trainable = False
+    # for idx, _ in enumerate(donor_model.layers[:-37]):
+    #     model.layers[idx].trainable = False
 
     return model

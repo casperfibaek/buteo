@@ -5,6 +5,7 @@ from buteo.vector.io import internal_vector_to_metadata, open_vector
 from math import ceil
 from osgeo import gdal
 from uuid import uuid4
+from buteo.gdal_utils import numpy_to_gdal_datatype2, default_options
 
 
 def rasterize_vector(
@@ -13,6 +14,7 @@ def rasterize_vector(
     out_path=None,
     extent=None,
     all_touch=False,
+    dtype="uint8",
     optim="raster",
     band=1,
     fill_value=0,
@@ -55,7 +57,7 @@ def rasterize_vector(
             x_res,
             y_res,
             1,
-            gdal.GDT_Byte,
+            numpy_to_gdal_datatype2(dtype),
         )
     finally:
         gdal.SetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")
@@ -88,10 +90,16 @@ def rasterize_vector(
 
     if attribute is None:
         gdal.RasterizeLayer(
-            target_ds, [1], source_layer, burn_values=[burn_value], options=options
+            target_ds,
+            [1],
+            source_layer,
+            burn_values=[burn_value],
+            options=options,
         )
     else:
         options.append(f"ATTRIBUTE={attribute}")
-        gdal.RasterizeLayer(target_ds, [1], source_layer, options=options)
+        gdal.RasterizeLayer(
+            target_ds, [1], source_layer, options=default_options(options)
+        )
 
     return raster_fn

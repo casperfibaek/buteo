@@ -23,11 +23,9 @@ from buteo.machine_learning.ml_utils import (
 )
 
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/"
-vector_folder = folder + "vector/regions/"
-raster_folder = folder + "raster/"
-model = (
-    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/volume_for_ghana_02"
-)
+vector_folder = folder + "vector/regions/small/"
+raster_folder = folder + "raster_v2/"
+model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/class_04"
 
 
 for region in glob(vector_folder + "id_*.gpkg"):
@@ -35,8 +33,8 @@ for region in glob(vector_folder + "id_*.gpkg"):
 
     print(f"Processing region: {region_name}")
 
-    if region_name not in ["id_28"]:
-        continue
+    # if region_name in ["id_1", "id_10", "id_11"]:
+    #     continue
 
     print("Clipping RESWIR.")
     b20m_clip = internal_clip_raster(
@@ -157,12 +155,9 @@ for region in glob(vector_folder + "id_*.gpkg"):
             get_offsets(16),
         ],
         batch_size=1024,
-        # output_channels=4,
-        # method="mean",
-        # scale_to_sum=True,
-        output_channels=1,
+        output_channels=4,
+        scale_to_sum=True,
         method="median",
-        scale_to_sum=False,
     )
 
     try:
@@ -182,7 +177,6 @@ for region in glob(vector_folder + "id_*.gpkg"):
     except:
         pass
 
-
 print("Creating prediction mosaic.")
 mosaic = stack_rasters_vrt(
     glob(folder + f"predictions/tmp/id_*.tif"),
@@ -191,19 +185,25 @@ mosaic = stack_rasters_vrt(
 )
 mosaic = "/vsimem/vrt_predictions.vrt"
 
-rounded = array_to_raster(
-    np.clip(np.rint(raster_to_array(mosaic)), 0, 100).astype("uint8"), mosaic
-)
-internal_clip_raster(
-    rounded,
-    folder + "vector/ghana_buffered_1k.gpkg",
-    out_path=folder + "predictions/Ghana_uint8_v1_volume.tif",
-    dst_nodata=255,
-)
+# rounded = array_to_raster(
+#     np.clip(np.rint(raster_to_array(mosaic)), 0, 100).astype("uint8"), mosaic
+# )
+# internal_clip_raster(
+#     rounded,
+#     folder + "vector/ghana_buffered_1k.gpkg",
+#     out_path=folder + "predictions/Ghana_uint8_v9.tif",
+#     dst_nodata=255,
+# )
 
 internal_clip_raster(
     mosaic,
     folder + "vector/ghana_buffered_1k.gpkg",
-    out_path=folder + "predictions/Ghana_float32_v1_volume.tif",
-    dst_nodata=255,
+    out_path=folder + "predictions/Ghana_classification_float32_v2.tif",
+    dst_nodata=-9999.9,
 )
+
+
+# add conditional to epsilon
+# ((im2b1 * (im1b2 / ((im1b2 + im1b3 + im1b4) <= 0 ? 0.0000001 : im1b2 + im1b3 + im1b4))) / (im3b1 * 1.0)) +
+# ((im2b1 * (im1b3 / ((im1b2 + im1b3 + im1b4) <= 0 ? 0.0000001 : im1b2 + im1b3 + im1b4))) / (im3b1 * 2.0)) +
+# ((im2b1 * (im1b4 / ((im1b2 + im1b3 + im1b4) <= 0 ? 0.0000001 : im1b2 + im1b3 + im1b4))) / (im3b1 * 0.8))

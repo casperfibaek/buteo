@@ -23,10 +23,10 @@ import numpy as np
 folder = (
     # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/grid_cells/"
     # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/grid_cells_student/"
-    # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/classes/"
     "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/volume_rasters/"
+    # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/grid_cells_test/"
 )
-raster_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/"
+raster_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster_v2/"
 
 # y_pred = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/predictions/Ghana_float32_v5_teacher.tif"
 
@@ -38,53 +38,53 @@ raster_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/ras
 #     name = os.path.basename(grid_cell)
 #     number = os.path.splitext(name)[0].split("_")[-1]
 
-#     clip_raster(
-#         y_pred,
-#         grid_cell,
+#     # clip_raster(
+#     #     y_pred,
+#     #     grid_cell,
+#     #     out_path=folder + f"fid_{number}_rasterized.tif",
+#     #     all_touch=False,
+#     #     adjust_bbox=False,
+#     #     postfix="",
+#     # )
+
+#     buildings = folder + "building_id_" + number + ".gpkg"
+
+#     try:
+#         rasterize_vector(
+#             buildings,
+#             0.2,
+#             out_path=f"/vsimem/fid_{number}_rasterized.tif",
+#             extent=grid_cell,
+#         )
+#     except:
+#         rasterize_vector(
+#             grid_cell,
+#             0.2,
+#             out_path=f"/vsimem/fid_{number}_rasterized.tif",
+#             extent=grid_cell,
+#             fill_value=0,
+#             burn_value=0,
+#         )
+
+#     internal_resample_raster(
+#         f"/vsimem/fid_{number}_rasterized.tif",
+#         10.0,
+#         resample_alg="average",
+#         out_path=f"/vsimem/fid_{number}_resampled.tif",
+#     )
+
+#     array_to_raster(
+#         (raster_to_array(f"/vsimem/fid_{number}_resampled.tif") * 100).astype(
+#             "float32"
+#         ),
+#         reference=f"/vsimem/fid_{number}_resampled.tif",
 #         out_path=folder + f"fid_{number}_rasterized.tif",
-#         all_touch=False,
-#         adjust_bbox=False,
-#         postfix="",
 #     )
 
-# buildings = folder + "building_id_" + number + ".gpkg"
+#     gdal.Unlink(f"/vsimem/fid_{number}_rasterized.tif")
+#     gdal.Unlink(f"/vsimem/fid_{number}_resampled.tif")
 
-# try:
-#     rasterize_vector(
-#         buildings,
-#         0.2,
-#         out_path=f"/vsimem/fid_{number}_rasterized.tif",
-#         extent=grid_cell,
-#     )
-# except:
-#     rasterize_vector(
-#         grid_cell,
-#         0.2,
-#         out_path=f"/vsimem/fid_{number}_rasterized.tif",
-#         extent=grid_cell,
-#         fill_value=0,
-#         burn_value=0,
-#     )
-
-# internal_resample_raster(
-#     f"/vsimem/fid_{number}_rasterized.tif",
-#     10.0,
-#     resample_alg="average",
-#     out_path=f"/vsimem/fid_{number}_resampled.tif",
-# )
-
-# array_to_raster(
-#     (raster_to_array(f"/vsimem/fid_{number}_resampled.tif") * 100).astype(
-#         "float32"
-#     ),
-#     reference=f"/vsimem/fid_{number}_resampled.tif",
-#     out_path=folder + f"fid_{number}_rasterized.tif",
-# )
-
-# gdal.Unlink(f"/vsimem/fid_{number}_rasterized.tif")
-# gdal.Unlink(f"/vsimem/fid_{number}_resampled.tif")
-
-# progress(idx + 1, len(grids), "Rasterizing")
+#     progress(idx + 1, len(grids), "Rasterizing")
 
 
 # for cell in glob(folder + "fid_*_rasterized.tif"):
@@ -239,7 +239,7 @@ for band in ["B02", "B03", "B04", "B08", "B05", "B06", "B07", "B11", "B12", "VV"
     band_paths = glob(folder + f"patches/*2021_{band}*.npy")
     band_paths = sorted(band_paths, key=sortKeyFunc)
 
-    # merge all in bob by band
+    # merge all by band
     for index, key in enumerate(band_paths):
         if index == 0:
             loaded = np.load(key)
@@ -253,11 +253,11 @@ for band in ["B02", "B03", "B04", "B08", "B05", "B06", "B07", "B11", "B12", "VV"
 
     np.save(folder + f"patches/merged/raw/{band}_{addition}.npy", loaded)
 
-# band_paths = glob(folder + f"patches/*rasterized*.npy")
-band_paths = glob(folder + f"patches/*volume*.npy")
+band_paths = glob(folder + f"patches/*rasterized*.npy")
+# band_paths = glob(folder + f"patches/*class*.npy")
 band_paths = sorted(band_paths, key=sortKeyFunc)
 
-# merge all in bob by band
+# merge all by band
 for index, key in enumerate(band_paths):
     if index == 0:
         loaded = np.load(key)

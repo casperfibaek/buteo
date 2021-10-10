@@ -94,7 +94,7 @@ def predict_raster(
     for raster_idx, raster in enumerate(raster_list):
         read_rasters.append(raster_to_array(raster).astype("float32"))
 
-    progress(0, len(offsets[0]) + 1, "Predicting")
+    progress(0, len(offsets[0]) + 3, "Predicting")
     for offset_idx in range(len(offsets[0])):
         model_inputs = []
         for raster_idx, raster in enumerate(raster_list):
@@ -116,7 +116,7 @@ def predict_raster(
         )
         predictions.append(prediction)
 
-        progress(offset_idx + 1, len(offsets[0]) + 2, "Predicting")
+        progress(offset_idx + 1, len(offsets[0]) + 3, "Predicting")
 
     # Predict the border regions and add them as a layer
     with np.errstate(invalid="ignore"):
@@ -125,14 +125,18 @@ def predict_raster(
             * np.nan
         )
 
-    for idx, end in enumerate(["right", "bottom"]):
+    for end in ["right", "bottom", "corner"]:
         model_inputs = []
 
         for raster_idx, raster in enumerate(raster_list):
             if end == "right":
                 array = read_rasters[raster_idx][:, -tile_size[raster_idx] :]
-            else:
+            elif end == "bottom":
                 array = read_rasters[raster_idx][-tile_size[raster_idx] :, :]
+            elif end == "corner":
+                array = read_rasters[raster_idx][
+                    -tile_size[raster_idx] :, -tile_size[raster_idx] :
+                ]
 
             blocks = array_to_blocks(array, tile_size[raster_idx], offset=[0, 0])
 
@@ -140,9 +144,12 @@ def predict_raster(
 
         prediction_blocks = model.predict(model_inputs, batch_size, verbose=0)
 
-        target_shape = (reference_arr.shape[0], output_tile_size, output_channels)
-        if end == "bottom":
+        if end == "right":
+            target_shape = (reference_arr.shape[0], output_tile_size, output_channels)
+        elif end == "bottom":
             target_shape = (output_tile_size, reference_arr.shape[1], output_channels)
+        elif end == "corner":
+            target_shape = (output_tile_size, output_tile_size, output_channels)
 
         prediction = blocks_to_array(
             prediction_blocks, target_shape, output_tile_size, offset=[0, 0]
@@ -150,18 +157,28 @@ def predict_raster(
 
         if end == "right":
             borders[:, -output_tile_size:, 0:output_channels] = prediction
-        else:
+        elif end == "bottom":
             borders[-output_tile_size:, :, 0:output_channels] = prediction
+        elif end == "corner":
+            borders[
+                -output_tile_size:, -output_tile_size:, 0:output_channels
+            ] = prediction
 
-        progress(offset_idx + 1, len(offsets[0]) + idx + 1, "Predicting")
+        offset_idx += 1
+        progress(offset_idx + 1, len(offsets[0]) + 3, "Predicting")
 
     predictions.append(borders)
 
     print("Merging predictions.")
-
     with np.errstate(invalid="ignore"):
         if method == "mean":
             predicted = np.nanmean(predictions, axis=0).astype("float32")
+        elif method == "olympic" or method == "olympic_1":
+            sort = np.sort(predictions, axis=0)[1:-1]
+            predicted = np.nanmean(sort, axis=0).astype("float32")
+        elif method == "olympic_2":
+            sort = np.sort(predictions, axis=0)[2:-2]
+            predicted = np.nanmean(sort, axis=0).astype("float32")
         else:
             predicted = np.nanmedian(predictions, axis=0).astype("float32")
 

@@ -116,33 +116,37 @@ class Distiller(keras.Model):
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 outdir = folder + f"models/"
 place = "dojo"
-model_name = "distilled_01"
+model_name = "distilled_student_01"
 
 x_train = [
     np.concatenate(
         [
-            np.load(folder + f"{place}/all_nonoise_RGBN.npy"),
-            # np.load(folder + f"{place}/teacher2_RGBN.npy"),
+            np.load(folder + f"{place}/ghana_clean_v2_RGBN.npy"),
+            # np.load(folder + f"{place}/all_nonoise_RGBN.npy"),
+            # np.load(folder + f"{place}/student2_RGBN.npy"),
         ]
     ),
     np.concatenate(
         [
-            np.load(folder + f"{place}/all_nonoise_SAR.npy"),
-            # np.load(folder + f"{place}/teacher2_SAR.npy"),
+            np.load(folder + f"{place}/ghana_clean_v2_SAR.npy"),
+            # np.load(folder + f"{place}/all_nonoise_SAR.npy"),
+            # np.load(folder + f"{place}/student2_SAR.npy"),
         ]
     ),
     np.concatenate(
         [
-            np.load(folder + f"{place}/all_nonoise_RESWIR.npy"),
-            # np.load(folder + f"{place}/teacher2_RESWIR.npy"),
+            np.load(folder + f"{place}/ghana_clean_v2_RESWIR.npy"),
+            # np.load(folder + f"{place}/all_nonoise_RESWIR.npy"),
+            # np.load(folder + f"{place}/student2_RESWIR.npy"),
         ]
     ),
 ]
 
 y_train = np.concatenate(
     [
-        np.load(folder + f"{place}/all_nonoise_label_area.npy"),
-        # np.load(folder + f"{place}/teacher2_label_area.npy"),
+        np.load(folder + f"{place}/ghana_clean_v2_label_area.npy"),
+        # np.load(folder + f"{place}/all_nonoise_label_area.npy"),
+        # np.load(folder + f"{place}/student2_label_area.npy"),
     ]
 )
 
@@ -153,13 +157,20 @@ for idx in range(len(x_train)):
 
 y_train = y_train[shuffle_mask]
 
+# limit = y_train.shape[0] // 16
+
+# for idx in range(len(x_train)):
+#     x_train[idx] = x_train[idx][:limit]
+
+# y_train = y_train[:limit]
+
 x_test = [
-    np.load(folder + f"{place}/test_RGBN.npy"),
-    np.load(folder + f"{place}/test_SAR.npy"),
-    np.load(folder + f"{place}/test_RESWIR.npy"),
+    np.load(folder + f"{place}/test2_RGBN.npy"),
+    np.load(folder + f"{place}/test2_SAR.npy"),
+    np.load(folder + f"{place}/test2_RESWIR.npy"),
 ]
 
-y_test = np.load(folder + f"{place}/test_label_area.npy")
+y_test = np.load(folder + f"{place}/test2_label_area.npy")
 
 inception_blocks = 2
 activation = mish
@@ -175,7 +186,7 @@ student = model_trio_down(
     name=f"{model_name.lower()}",
 )
 
-teacher_path = "student_02_00"
+teacher_path = outdir + "student2_v3"
 teacher = tf.keras.models.load_model(teacher_path, custom_objects={"tpe": tpe})
 
 distiller = Distiller(student=student, teacher=teacher)
@@ -195,12 +206,15 @@ distiller.compile(
     temperature=10,
     optimizer=optimizer,
     metrics=["mse", "mae", tpe],  # tpe
-    student_loss_fn=tf.losses.log_cosh,
-    distillation_loss_fn=tf.losses.log_cosh,
+    # metrics=["mse"],
+    student_loss_fn=tf.losses.mse,
+    distillation_loss_fn=tf.losses.mse,
+    # distillation_loss_fn=tf.losses.log_cosh,
 )
 
-epochs = [20, 10, 5]
-bs = [256, 128, 64]
+epochs = [10]
+# bs = [64, 128, 256]
+bs = [256]
 
 start = time.time()
 
@@ -209,11 +223,20 @@ for phase in range(len(bs)):
     use_bs = bs[phase]
     initial_epoch = np.cumsum(epochs)[phase - 1] if phase != 0 else 0
 
+    batches_train = (y_train.shape[0] // use_bs) * use_bs
+    batches_test = (y_test.shape[0] // use_bs) * use_bs
+
+    use_x_test = []
+    use_x_train = []
+    for idx in range(len(x_train)):
+        use_x_train.append(x_train[idx][:batches_train])
+        use_x_test.append(x_test[idx][:batches_test])
+
     distiller.fit(
-        x=x_train,
-        y=y_train,
+        x=use_x_train,
+        y=y_train[:batches_train],
         # validation_split=0.1,
-        validation_data=(x_test, y_test),
+        validation_data=(use_x_test, y_test[:batches_test]),
         shuffle=True,
         epochs=use_epoch,
         initial_epoch=initial_epoch,
@@ -229,12 +252,12 @@ for phase in range(len(bs)):
                     epochs_per_drop=3,
                 )
             ),
-            ModelCheckpoint(
-                filepath=f"{outdir}{model_name.lower()}_" + "{epoch:02d}",
-                save_best_only=True,
-            ),
+            # ModelCheckpoint(
+            #     filepath=f"{outdir}{model_name.lower()}_" + "{epoch:02d}",
+            #     save_best_only=True,
+            # ),
             EarlyStopping(
-                monitor="val_loss",
+                monitor="val_student_loss",
                 patience=3,
                 min_delta=min_delta,
                 restore_best_weights=True,

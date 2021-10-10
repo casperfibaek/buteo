@@ -20,6 +20,9 @@ for raster in glob(raster_folder + "2021_B*.tif"):
     name = os.path.splitext(os.path.basename(raster))[0]
     name = name.split("_")[1] + "_" + name.split("_")[2]
 
+    if os.path.exists(dst_folder + "2021_" + name + ".tif"):
+        continue
+
     print(f"Processing: {name}")
 
     og_path = raster

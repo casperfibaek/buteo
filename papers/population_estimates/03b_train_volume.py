@@ -19,11 +19,13 @@ from buteo.utils import timing
 
 from model_trio_down_volume import model_trio_down_volume
 
+time.sleep(60 * 60 * 5)
+
 np.set_printoptions(suppress=True)
 os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
 mixed_precision.set_global_policy("mixed_float16")
 
-model_name = "volume_03"
+model_name = "volume_05"
 
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 outdir = folder + f"models/"
@@ -31,17 +33,21 @@ place = "dojo"
 
 dk_rgbn = np.load(folder + f"{place}/dk_balanced_RGBN.npy")
 gh_rgbn = np.load(folder + f"{place}/ghana_volume_RGBN.npy")
+gh2_rgbn = np.load(folder + f"{place}/volume_gh_RGBN.npy")
 
 dk_sar = np.load(folder + f"{place}/dk_balanced_SAR.npy")
 gh_sar = np.load(folder + f"{place}/ghana_volume_SAR.npy")
+gh2_sar = np.load(folder + f"{place}/volume_gh_SAR.npy")
 
 dk_reswir = np.load(folder + f"{place}/dk_balanced_RESWIR.npy")
 gh_reswir = np.load(folder + f"{place}/ghana_volume_RESWIR.npy")
+gh2_reswir = np.load(folder + f"{place}/volume_gh_RESWIR.npy")
 
 dk_label = np.load(folder + f"{place}/dk_balanced_label_volume.npy")
 gh_label = np.load(folder + f"{place}/ghana_volume_label_volume.npy")
+gh2_label = np.load(folder + f"{place}/volume_gh_label_volume.npy")
 
-train_limit = 100000
+train_limit = 1000000
 val_limit = 10000
 tst_limit = 20000
 
@@ -49,19 +55,22 @@ x_train = [
     np.concatenate(
         [
             dk_rgbn[:-tst_limit],
-            gh_rgbn,
+            # gh_rgbn,
+            gh2_rgbn,
         ]
     ),
     np.concatenate(
         [
             dk_sar[:-tst_limit],
-            gh_sar,
+            # gh_sar,
+            gh2_sar,
         ]
     ),
     np.concatenate(
         [
             dk_reswir[:-tst_limit],
-            gh_reswir,
+            # gh_reswir,
+            gh2_reswir,
         ]
     ),
 ]
@@ -69,7 +78,8 @@ x_train = [
 y_train = np.concatenate(
     [
         dk_label[:-tst_limit],
-        gh_label,
+        # gh_label,
+        gh2_label,
     ]
 )
 
@@ -102,12 +112,12 @@ for idx in range(len(x_train)):
 y_train = y_train[:train_limit]
 
 
-lr = 0.00001
+lr = 0.000001
 min_delta = 0.005
 
 with tf.device("/device:GPU:0"):
-    epochs = [2, 5, 5, 5, 10, 10]
-    bs = [8, 16, 32, 64, 128, 256]
+    epochs = [5, 5, 10]
+    bs = [64, 128, 256]
     # epochs = [2, 4]
     # bs = [16, 32]
     # epochs = [20, 10, 5]
@@ -122,20 +132,20 @@ with tf.device("/device:GPU:0"):
     # relu relu log_cosh
     # val_mse: 1186.1876 - val_mae: 4.2638 - val_tpe: -14.5024
 
-    donor_model_path = outdir + "volume_for_ghana_02"
-    # model = tf.keras.models.load_model(donor_model_path, custom_objects={"tpe": tpe})
+    donor_model_path = outdir + "volume_04"
+    model = tf.keras.models.load_model(donor_model_path, custom_objects={"tpe": tpe})
 
-    model = model_trio_down_volume(
-        x_train[0].shape[1:],
-        x_train[1].shape[1:],
-        x_train[2].shape[1:],
-        donor_model_path,
-        kernel_initializer=initializer,
-        output_activation=output_activation,
-        activation=activation,
-        inception_blocks=inception_blocks,
-        name=f"{model_name.lower()}",
-    )
+    # model = model_trio_down_volume(
+    #     x_train[0].shape[1:],
+    #     x_train[1].shape[1:],
+    #     x_train[2].shape[1:],
+    #     donor_model_path,
+    #     kernel_initializer=initializer,
+    #     output_activation=output_activation,
+    #     activation=activation,
+    #     inception_blocks=inception_blocks,
+    #     name=f"{model_name.lower()}",
+    # )
 
     optimizer = tf.keras.optimizers.Adam(
         learning_rate=lr,
@@ -149,6 +159,9 @@ with tf.device("/device:GPU:0"):
         loss="mse",
         metrics=["mse", "mae", tpe],  # tpe
     )
+
+    for idx, _ in enumerate(model.layers):
+        model.layers[idx].trainable = True
 
     start = time.time()
 
@@ -201,3 +214,6 @@ with tf.device("/device:GPU:0"):
 
 # volume_02
 # val_mse: 641.7850 - val_mae: 3.8456 - val_tpe: -2.8259
+
+# volume_03
+# val_loss: 746.9427 - val_mse: 746.9427 - val_mae: 4.0033 - val_tpe: -2.4683

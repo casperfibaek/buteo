@@ -342,7 +342,7 @@ def merge_rasters(
     out_datatype="uint16",
     tmp=".",
     ram=42000,
-    obt_path="C:/Program Files/OTB-7.2.0-Win64/",
+    obt_path="C:/Program Files/OTB-7.4.0-Win64/",
     harmonisation=False,
     nodata_value=0,
     pixel_width=None,
@@ -355,7 +355,7 @@ def merge_rasters(
     if options is None:
         options = {
             "comp.feather": "slim",
-            "comp.feather.slim.length": 2000,
+            "comp.feather.slim.length": 1000,
             "harmo.method": "band",
             "harmo.cost": "rmse",
             "interpolator": "linear",
@@ -402,6 +402,50 @@ def merge_rasters(
     os.system(cli_string)
 
     execute_cli_function(cli_string, name="merge rasters")
+
+    return os.path.abspath(out_raster)
+
+
+def obt_bandmath(
+    in_rasters,
+    expression,
+    out_raster,
+    band=None,
+    ram=42000,
+    out_datatype="float",
+    obt_path="C:/Program Files/OTB-7.4.0-Win64/",
+):
+    """Creates a mosaic out of a series of images. Must be of the same projection"""
+
+    cli = "otbcli_BandMath"
+
+    if band is not None:
+        band = f"&bands={band}"
+    else:
+        band = ""
+
+    cli_args = [
+        cli,
+        "-il",
+        " ".join(in_rasters),
+        "-out",
+        f'"{os.path.abspath(out_raster)}?{band}&gdal:co:COMPRESS=LZW&gdal:co:NUM_THREADS=ALL_CPUS&gdal:co:BIGTIFF=YES&gdal:co:TILED=YES"',
+        out_datatype,
+        "-ram",
+        str(ram),
+        f'-exp "{expression}"',
+    ]
+
+    cli_string = " ".join(cli_args)
+
+    os.environ["PATH"] += os.pathsep + f"{obt_path}bin"
+    os.environ["GDAL_DATA"] = os.pathsep + f"{obt_path}share/data"
+    os.environ["PROJ_LIB"] = os.pathsep + f"{obt_path}share/proj"
+    os.environ["OTB_APPLICATION_PATH"] = os.pathsep + f"{obt_path}lib/otb/applications"
+    os.environ["PYTHONPATH"] = os.pathsep + f"{obt_path}lib/python"
+    os.system(cli_string)
+
+    execute_cli_function(cli_string, name="band_math")
 
     return os.path.abspath(out_raster)
 

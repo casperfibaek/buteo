@@ -16,7 +16,7 @@ from buteo.utils import path_to_ext, is_number
 def raster_to_reference(
     raster: Union[str, gdal.Dataset], writeable: bool = False
 ) -> gdal.Dataset:
-    """ Takes a file path or a gdal.Dataset and opens it with
+    """Takes a file path or a gdal.Dataset and opens it with
         GDAL. Raises exception if the raster cannot be read.
 
     Args:
@@ -45,7 +45,7 @@ def raster_to_reference(
 def vector_to_reference(
     vector: Union[str, ogr.DataSource], writeable: bool = False
 ) -> ogr.DataSource:
-    """ Takes a file path or an ogr.DataSOurce and opens it with
+    """Takes a file path or an ogr.DataSOurce and opens it with
         OGR. Raises exception if the raster cannot be read.
 
     Args:
@@ -73,7 +73,7 @@ def vector_to_reference(
 
 
 def default_options(options: list) -> list:
-    """ Takes a list of GDAL options and adds the following
+    """Takes a list of GDAL options and adds the following
         defaults to it:
             "TILED=YES"
             "NUM_THREADS=ALL_CPUS"
@@ -108,7 +108,7 @@ def default_options(options: list) -> list:
 
 
 def path_to_driver(file_path: str) -> str:
-    """ Takes a file path and returns the GDAL driver matching
+    """Takes a file path and returns the GDAL driver matching
     the extension.
 
     Args:
@@ -151,7 +151,7 @@ def destroy_raster(raster: str) -> None:
 
 
 def is_raster(raster: Union[str, gdal.Dataset]) -> bool:
-    """ Takes a string or a gdal.Dataset and returns a boolean
+    """Takes a string or a gdal.Dataset and returns a boolean
     indicating if it is a valid raster.
 
     Args:
@@ -177,7 +177,7 @@ def is_raster(raster: Union[str, gdal.Dataset]) -> bool:
 
 
 def is_vector(vector: Union[str, ogr.DataSource]) -> bool:
-    """ Takes a string or an ogr.DataSource and returns a boolean
+    """Takes a string or an ogr.DataSource and returns a boolean
     indicating if it is a valid vector.
 
     Args:
@@ -209,7 +209,7 @@ def parse_projection(
     target: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int],
     return_wkt: bool = False,
 ) -> Union[osr.SpatialReference, str]:
-    """ Parses a gdal, ogr og osr data source and extraction the projection. If
+    """Parses a gdal, ogr og osr data source and extraction the projection. If
         a string is passed, it attempts to open it and return the projection as
         an osr.SpatialReference.
     Args:
@@ -410,9 +410,33 @@ def numpy_to_gdal_datatype(datatype):
         "float64": gdal.GDT_Float64,
     }
 
+    # print("WARNING: numpy to gdal datatype is deprecated.")
+
     if datatype.name in datatypes.keys():
         return datatypes[datatype.name]
     else:
+        return gdal.GDT_Float32
+
+
+def numpy_to_gdal_datatype2(datatype):
+    datatypes = {
+        "int8": gdal.GDT_Int16,
+        "int16": gdal.GDT_Int16,
+        "int32": gdal.GDT_Int32,
+        "int64": gdal.GDT_Int32,
+        "uint8": gdal.GDT_Byte,
+        "uint16": gdal.GDT_UInt16,
+        "uint32": gdal.GDT_UInt32,
+        "uint64": gdal.GDT_UInt32,
+        "float16": gdal.GDT_Float32,
+        "float32": gdal.GDT_Float32,
+        "float64": gdal.GDT_Float64,
+    }
+
+    if datatype in datatypes.keys():
+        return datatypes[datatype]
+    else:
+        print("warning: Unknown datatype. Defaulting to float32.")
         return gdal.GDT_Float32
 
 
@@ -686,7 +710,10 @@ def advanced_extents(
     extent_geojson_dict = {
         "type": "Feature",
         "properties": {},
-        "geometry": {"type": "Polygon", "coordinates": [coord_array],},
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [coord_array],
+        },
     }
     extent_geojson = json.dumps(extent_geojson_dict)
 
@@ -753,7 +780,7 @@ def reproject_extent(
     source_projection: osr.SpatialReference,
     target_projection: osr.SpatialReference,  # x_min, y_max, x_max, y_min
 ):
-    """ GDAL Format """
+    """GDAL Format"""
     if len(extent) != 4:
         raise ValueError("Invalid shape of extent.")
     if not isinstance(extent[0], float):
@@ -825,7 +852,10 @@ def to_array_list(variable: Any) -> List[Union[List, np.ndarray]]:
     return return_list
 
 
-def to_band_list(variable: Any, band_count: int,) -> List[int]:
+def to_band_list(
+    variable: Any,
+    band_count: int,
+) -> List[int]:
     return_list = []
     if not isinstance(variable, (int, float, list)):
         raise TypeError(f"Invalid type for band: {type(variable)}")
@@ -855,4 +885,3 @@ def to_band_list(variable: Any, band_count: int,) -> List[int]:
             return_list.append(int(variable))
 
     return return_list
-
