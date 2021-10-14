@@ -78,17 +78,14 @@ def cube_sphere_intersection_area(
         return (step * step * step) * np.sum(dist <= circle_radius)
 
 
-def create_circle_kernel(
-    kernel_size=5, circle_radius=5, round_val=5, remove_zero_weights=True
-):
+def create_circle_kernel(kernel_size=5, circle_radius=5, remove_zero_weights=True):
     tmp = np.zeros((kernel_size + 1, kernel_size + 1), dtype="float32")
     kernel = np.zeros((kernel_size * 2 + 1, kernel_size * 2 + 1), dtype="float32")
 
     for x in range(kernel_size + 1):
         for y in range(kernel_size + 1):
-            tmp[x][y] = round(
-                cube_sphere_intersection_area((0, x, y), (0, 0, 0), circle_radius),
-                round_val,
+            tmp[x][y] = cube_sphere_intersection_area(
+                (0, x, y), (0, 0, 0), circle_radius
             )
 
     tmp = np.fliplr(np.flipud(tmp))
@@ -100,7 +97,7 @@ def create_circle_kernel(
     weights = []
     for x in range(kernel.shape[0]):
         for y in range(kernel.shape[1]):
-            current_weight = round(kernel[x][y], round_val)
+            current_weight = kernel[x][y]
 
             if remove_zero_weights and current_weight == 0.0:
                 continue
@@ -120,7 +117,7 @@ def create_circle_kernel(
     return (
         kernel,
         np.array(idx_offsets, dtype=int),
-        np.round(np.array(weights, dtype=float), round_val),
+        np.array(weights, dtype=float),
     )
 
 

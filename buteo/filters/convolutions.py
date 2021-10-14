@@ -203,6 +203,13 @@ def convolve_3d(
             if operation == "sum":
                 result[x][y] = np.sum(np.multiply(hood_values, hood_weights))
 
+            if operation == "mean":
+                result[x][y] = (
+                    np.sum(np.multiply(hood_values, hood_weights))
+                    / np.sum(hood_weights)
+                    + 0.0000001
+                )
+
             elif operation == "quantile":
                 result[x][y] = hood_quantile(hood_values, hood_weights, quantile)
 
@@ -284,32 +291,6 @@ def filter_array(
         nodata_value=nodata_value,
         quantile=quantile,
     )
-
-
-if __name__ == "__main__":
-    yellow_follow = "C:/Users/caspe/Desktop/buteo/"
-    import sys
-
-    sys.path.append(yellow_follow)
-
-    from buteo.raster.io import raster_to_array, array_to_raster
-
-    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/bornholm/raster/"
-
-    raster_path = folder + "2020_B04_10m.tif"
-    mad = filter_array(
-        raster_to_array(raster_path, filled=True),
-        [3, 3, 1],
-        distance_calc="linear",
-        operation="standard_deviation",
-    )
-
-    # import pdb
-
-    # pdb.set_trace()
-
-    array_to_raster(mad, raster_path, out_path=folder + "2020_std_10m.tif")
-
 
 # band_last
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True)

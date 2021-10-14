@@ -253,7 +253,8 @@ for band in ["B02", "B03", "B04", "B08", "B05", "B06", "B07", "B11", "B12", "VV"
 
     np.save(folder + f"patches/merged/raw/{band}_{addition}.npy", loaded)
 
-band_paths = glob(folder + f"patches/*rasterized*.npy")
+# band_paths = glob(folder + f"patches/*rasterized*.npy")
+band_paths = glob(folder + f"patches/*volume*.npy")
 # band_paths = glob(folder + f"patches/*class*.npy")
 band_paths = sorted(band_paths, key=sortKeyFunc)
 
@@ -264,4 +265,4 @@ for index, key in enumerate(band_paths):
     else:
         loaded = np.concatenate([loaded, np.load(key)])
 
-np.save(folder + "patches/merged/raw/label_area_10m.npy", loaded)
+np.save(folder + "patches/merged/raw/label_volume_10m.npy", loaded)

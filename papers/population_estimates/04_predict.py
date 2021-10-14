@@ -1,6 +1,7 @@
 yellow_follow = "C:/Users/caspe/Desktop/buteo/"
 import sys
 import os
+import time
 
 sys.path.append(yellow_follow)
 
@@ -25,8 +26,9 @@ from buteo.machine_learning.ml_utils import (
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/"
 vector_folder = folder + "vector/regions/small/"
 raster_folder = folder + "raster_v2/"
-model = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/class_04"
-
+model = (
+    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/models/volume_for_ghana_04"
+)
 
 for region in glob(vector_folder + "id_*.gpkg"):
     region_name = os.path.splitext(os.path.basename(region))[0]
@@ -155,8 +157,8 @@ for region in glob(vector_folder + "id_*.gpkg"):
             get_offsets(16),
         ],
         batch_size=1024,
-        output_channels=4,
-        scale_to_sum=True,
+        output_channels=1,
+        scale_to_sum=False,
         method="median",
     )
 
@@ -185,20 +187,20 @@ mosaic = stack_rasters_vrt(
 )
 mosaic = "/vsimem/vrt_predictions.vrt"
 
-# rounded = array_to_raster(
-#     np.clip(np.rint(raster_to_array(mosaic)), 0, 100).astype("uint8"), mosaic
-# )
-# internal_clip_raster(
-#     rounded,
-#     folder + "vector/ghana_buffered_1k.gpkg",
-#     out_path=folder + "predictions/Ghana_uint8_v9.tif",
-#     dst_nodata=255,
-# )
+rounded = array_to_raster(
+    np.clip(np.rint(raster_to_array(mosaic)), 0, 8000).astype("uint16"), mosaic
+)
+internal_clip_raster(
+    rounded,
+    folder + "vector/ghana_buffered_1k.gpkg",
+    out_path=folder + "predictions/Ghana_volume_uint16_v5.tif",
+    dst_nodata=65535,
+)
 
 internal_clip_raster(
     mosaic,
     folder + "vector/ghana_buffered_1k.gpkg",
-    out_path=folder + "predictions/Ghana_classification_float32_v2.tif",
+    out_path=folder + "predictions/Ghana_volume_float32_v5.tif",
     dst_nodata=-9999.9,
 )
 

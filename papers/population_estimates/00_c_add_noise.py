@@ -17,7 +17,7 @@ np.set_printoptions(suppress=True)
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
 # outdir = folder + f"models/"
 # place = "dojo"
-place = "ghana/vector/extra_west/patches/merged/"
+place = "ghana/vector/volume_rasters/patches/merged/"
 # place = "ghana/vector/grid_cells_v2/patches/merged/"
 
 # for val in range(3):
@@ -55,53 +55,53 @@ place = "ghana/vector/extra_west/patches/merged/"
 
 # exit()
 
-y_label = np.concatenate(
-    [
-        np.load(folder + f"{place}/label_area.npy"),
-        np.load(folder + f"{place}/noise1_label_area.npy"),
-        np.load(folder + f"{place}/noise2_label_area.npy"),
-    ]
-)
+# y_label = np.concatenate(
+#     [
+#         np.load(folder + f"{place}/label_area.npy"),
+#         np.load(folder + f"{place}/noise1_label_area.npy"),
+#         np.load(folder + f"{place}/noise2_label_area.npy"),
+#     ]
+# )
 
-shuffle_mask = np.random.permutation(y_label.shape[0])
+# shuffle_mask = np.random.permutation(y_label.shape[0])
 
-y_label = y_label[shuffle_mask]
+# y_label = y_label[shuffle_mask]
 
-rgbn = np.concatenate(
-    [
-        np.load(folder + f"{place}/RGBN.npy"),
-        np.load(folder + f"{place}/noise1_RGBN.npy"),
-        np.load(folder + f"{place}/noise2_RGBN.npy"),
-    ]
-)[shuffle_mask]
+# rgbn = np.concatenate(
+#     [
+#         np.load(folder + f"{place}/RGBN.npy"),
+#         np.load(folder + f"{place}/noise1_RGBN.npy"),
+#         np.load(folder + f"{place}/noise2_RGBN.npy"),
+#     ]
+# )[shuffle_mask]
 
-sar = np.concatenate(
-    [
-        np.load(folder + f"{place}/SAR.npy"),
-        np.load(folder + f"{place}/noise1_SAR.npy"),
-        np.load(folder + f"{place}/noise2_SAR.npy"),
-    ]
-)[shuffle_mask]
+# sar = np.concatenate(
+#     [
+#         np.load(folder + f"{place}/SAR.npy"),
+#         np.load(folder + f"{place}/noise1_SAR.npy"),
+#         np.load(folder + f"{place}/noise2_SAR.npy"),
+#     ]
+# )[shuffle_mask]
 
-reswir = np.concatenate(
-    [
-        np.load(folder + f"{place}/RESWIR.npy"),
-        np.load(folder + f"{place}/noise1_RESWIR.npy"),
-        np.load(folder + f"{place}/noise2_RESWIR.npy"),
-    ]
-)[shuffle_mask]
-
-
-np.save(folder + f"{place}/extra_building_label_class.npy", y_label)
-np.save(folder + f"{place}/extra_building_RGBN.npy", rgbn)
-np.save(folder + f"{place}/extra_building_SAR.npy", sar)
-np.save(folder + f"{place}/extra_building_RESWIR.npy", reswir)
+# reswir = np.concatenate(
+#     [
+#         np.load(folder + f"{place}/RESWIR.npy"),
+#         np.load(folder + f"{place}/noise1_RESWIR.npy"),
+#         np.load(folder + f"{place}/noise2_RESWIR.npy"),
+#     ]
+# )[shuffle_mask]
 
 
-exit()
+# np.save(folder + f"{place}/extra_building_label_class.npy", y_label)
+# np.save(folder + f"{place}/extra_building_RGBN.npy", rgbn)
+# np.save(folder + f"{place}/extra_building_SAR.npy", sar)
+# np.save(folder + f"{place}/extra_building_RESWIR.npy", reswir)
+
+
+# exit()
 
 noise = {
-    "scale": 0.075,
+    "scale": 0.05,
     "contrast": 0.025,
     "band": 0.01,
     "pixel": 0.01,
@@ -110,8 +110,9 @@ noise = {
 
 # dk_version = "2"
 
+target = "volume"
 use_noise = True
-prefix = f"noise2"
+prefix = f"noise"
 
 # use_noise = False
 # prefix = "_nonoise"
@@ -119,7 +120,7 @@ prefix = f"noise2"
 
 y_label = np.concatenate(
     [
-        np.load(folder + f"{place}/label_area.npy"),
+        np.load(folder + f"{place}/volume_v3_label_volume.npy"),
         # np.load(folder + f"{place}/ghana_balanced_label_area.npy"),
         # np.load(folder + f"{place}/patches/ghana_label_area.npy"),
         # np.load(folder + f"{place}/class_balanced_label_class.npy"),
@@ -137,12 +138,12 @@ if use_noise:
         "float32"
     )
 
-np.save(folder + f"{place}/{prefix}_label_area.npy", y_label[shuffle_mask])
+np.save(folder + f"{place}/{prefix}_label_{target}.npy", y_label[shuffle_mask])
 y_label = None
 
 rgbn = np.concatenate(
     [
-        np.load(folder + f"{place}/RGBN.npy"),
+        np.load(folder + f"{place}/volume_v3_RGBN.npy"),
         # np.load(folder + f"{place}/patches/ghana_RGBN.npy"),
         # np.load(folder + f"{place}/ghana_balanced_RGBN.npy"),
         # np.load(folder + f"{place}/class_clean_RGBN.npy"),
@@ -184,7 +185,7 @@ rgbn = None
 
 sar = np.concatenate(
     [
-        np.load(folder + f"{place}/SAR.npy"),
+        np.load(folder + f"{place}/volume_v3_SAR.npy"),
         # np.load(folder + f"{place}/patches/ghana_SAR.npy"),
         # np.load(folder + f"{place}/ghana_balanced_SAR.npy"),
         # np.load(folder + f"{place}/class_clean_SAR.npy"),
@@ -226,7 +227,7 @@ sar = None
 
 reswir = np.concatenate(
     [
-        np.load(folder + f"{place}/RESWIR.npy"),
+        np.load(folder + f"{place}/volume_v3_RESWIR.npy"),
         # np.load(folder + f"{place}/patches/ghana_RESWIR.npy"),
         # np.load(folder + f"{place}/ghana_balanced_RESWIR.npy"),
         # np.load(folder + f"{place}/class_balanced_RESWIR.npy"),

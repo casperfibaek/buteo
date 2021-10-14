@@ -404,7 +404,7 @@ class SaveBestModel(tf.keras.callbacks.Callback):
             self.best = float("inf")
 
     def on_epoch_end(self, epoch, logs=None):
-        metric_value = logs[self.save_best_metric]
+        metric_value = abs(logs[self.save_best_metric])
         if self.max:
             if metric_value > self.best:
                 self.best = metric_value

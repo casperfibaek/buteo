@@ -28,12 +28,14 @@ def preprocess(
     vv = folder + "VV_10m.npy"
     vh = folder + "VH_10m.npy"
 
-    label_area = folder + "label_area_10m.npy"
+    target = "volume"
+
+    label_area = folder + f"label_{target}_10m.npy"
 
     area = np.load(label_area)
     shuffle_mask = np.random.permutation(area.shape[0])
 
-    np.save(outdir + "label_area", area[shuffle_mask])
+    np.save(outdir + f"label_{target}", area[shuffle_mask])
 
     rgbn = preprocess_optical(
         np.stack(
