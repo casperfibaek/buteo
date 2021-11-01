@@ -1,6 +1,7 @@
 import sys
 
 sys.path.append("../../")
+import os
 from osgeo import gdal, ogr
 from typing import Union, List, Optional
 from buteo.raster.io import internal_raster_to_metadata, ready_io_raster, open_raster
@@ -11,6 +12,7 @@ from buteo.vector.io import (
     internal_vector_to_metadata,
 )
 from buteo.utils import (
+    folder_exists,
     file_exists,
     remove_if_overwrite,
     type_check,
@@ -70,6 +72,11 @@ def internal_clip_raster(
     _, path_list = ready_io_raster(
         raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix, uuid=uuid
     )
+
+    if out_path is not None:
+        if "vsimem" not in out_path:
+            if not os.path.isdir(os.path.split(os.path.normpath(out_path))[0]):
+                raise ValueError(f"out_path folder does not exists: {out_path}")
 
     # Input is a vector.
     if is_vector(clip_geom):
@@ -197,7 +204,7 @@ def internal_clip_raster(
         gdal.PopErrorHandler()
 
     if clipped is None:
-        raise Exception("Geometries did not intersect.")
+        raise Exception("Error while clipping raster.")
 
     return out_name
 

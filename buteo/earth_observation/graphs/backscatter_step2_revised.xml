@@ -3,9 +3,7 @@
   <node id="Read">
     <operator>Read</operator>
     <sources/>
-    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
-      <file>${inputfile}</file>
-    </parameters>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement"/>
   </node>
   <node id="Terrain-Flattening">
     <operator>Terrain-Flattening</operator>
@@ -14,13 +12,13 @@
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
       <sourceBands/>
-      <demName>Copernicus 30m Global DEM</demName>
-      <!-- <demName>SRTM 1Sec HGT</demName> -->
-      <demResamplingMethod>BILINEAR_INTERPOLATION</demResamplingMethod>
+      <demName>SRTM 1Sec HGT</demName>
+      <demResamplingMethod>CUBIC_CONVOLUTION</demResamplingMethod>
       <externalDEMFile/>
       <externalDEMNoDataValue>0.0</externalDEMNoDataValue>
       <externalDEMApplyEGM>false</externalDEMApplyEGM>
       <outputSimulatedImage>false</outputSimulatedImage>
+      <outputSigma0>false</outputSigma0>
       <additionalOverlap>0.1</additionalOverlap>
       <oversamplingMultiple>1.5</oversamplingMultiple>
     </parameters>
@@ -49,13 +47,12 @@
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
       <sourceBands/>
-      <demName>Copernicus 30m Global DEM</demName>
-      <!-- <demName>SRTM 1Sec HGT</demName> -->
+      <demName>SRTM 1Sec HGT</demName>
       <externalDEMFile/>
       <externalDEMNoDataValue>0.0</externalDEMNoDataValue>
       <externalDEMApplyEGM>true</externalDEMApplyEGM>
-      <demResamplingMethod>BILINEAR_INTERPOLATION</demResamplingMethod>
-      <imgResamplingMethod>NEAREST_NEIGHBOUR</imgResamplingMethod>
+      <demResamplingMethod>CUBIC_CONVOLUTION</demResamplingMethod>
+      <imgResamplingMethod>BILINEAR_INTERPOLATION</imgResamplingMethod>
       <pixelSpacingInMeter>10.0</pixelSpacingInMeter>
       <pixelSpacingInDegree>8.983152841195215E-5</pixelSpacingInDegree>
       <mapProjection>AUTO:42001</mapProjection>
@@ -69,6 +66,7 @@
       <saveLocalIncidenceAngle>false</saveLocalIncidenceAngle>
       <saveProjectedLocalIncidenceAngle>false</saveProjectedLocalIncidenceAngle>
       <saveSelectedSourceBand>true</saveSelectedSourceBand>
+      <saveLayoverShadowMask>false</saveLayoverShadowMask>
       <outputComplex>false</outputComplex>
       <applyRadiometricNormalization>false</applyRadiometricNormalization>
       <saveSigmaNought>false</saveSigmaNought>
@@ -93,19 +91,19 @@
   <applicationData id="Presentation">
     <Description/>
     <node id="Read">
-      <displayPosition x="30.0" y="150.0"/>
+      <displayPosition x="10.0" y="10.0"/>
     </node>
     <node id="Terrain-Flattening">
-      <displayPosition x="120.0" y="150.0"/>
+      <displayPosition x="110.0" y="10.0"/>
     </node>
     <node id="Subset">
-      <displayPosition x="260.0" y="150.0"/>
+      <displayPosition x="210.0" y="10.0"/>
     </node>
     <node id="Terrain-Correction">
-      <displayPosition x="360.0" y="150.0"/>
+      <displayPosition x="310.0" y="10.0"/>
     </node>
     <node id="Write">
-      <displayPosition x="520.0" y="150.0"/>
+      <displayPosition x="410.0" y="10.0"/>
     </node>
   </applicationData>
 </graph>

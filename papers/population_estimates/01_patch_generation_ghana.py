@@ -1,4 +1,5 @@
 import sys
+from typing import Type
 
 sys.path.append("../../")
 from buteo.vector.rasterize import rasterize_vector
@@ -23,68 +24,77 @@ import numpy as np
 folder = (
     # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/grid_cells/"
     # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/grid_cells_student/"
-    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/volume_rasters/"
+    # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/volume_rasters/"
+    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/comparisions/"
     # "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/grid_cells_test/"
 )
-raster_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster_v2/"
+# raster_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster_v2/"
+predictions = (
+    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/results/ghana_area_float32.tif"
+)
+
+# folder2 = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/comparisions/prediction/"
 
 # y_pred = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/predictions/Ghana_float32_v5_teacher.tif"
 
-# grids = glob(folder + "grid_id_*.gpkg")
+grids = glob(folder + "grid_id_*.tif")
 
-# for idx, grid_cell in enumerate(grids):
-#     progress(idx, len(grids), "Rasterizing")
+for idx, grid_cell in enumerate(grids):
+    progress(idx, len(grids), "Rasterizing")
 
-#     name = os.path.basename(grid_cell)
-#     number = os.path.splitext(name)[0].split("_")[-1]
+    name = os.path.basename(grid_cell)
+    number = os.path.splitext(name)[0].split("_")[-1]
 
-#     # clip_raster(
-#     #     y_pred,
-#     #     grid_cell,
-#     #     out_path=folder + f"fid_{number}_rasterized.tif",
-#     #     all_touch=False,
-#     #     adjust_bbox=False,
-#     #     postfix="",
-#     # )
+    # clip_raster(
+    #     y_pred,
+    #     grid_cell,
+    #     out_path=folder + f"fid_{number}_rasterized.tif",
+    #     all_touch=False,
+    #     adjust_bbox=False,
+    #     postfix="",
+    # )
 
-#     buildings = folder + "building_id_" + number + ".gpkg"
+    buildings = folder + "building_id_" + number + ".gpkg"
 
-#     try:
-#         rasterize_vector(
-#             buildings,
-#             0.2,
-#             out_path=f"/vsimem/fid_{number}_rasterized.tif",
-#             extent=grid_cell,
-#         )
-#     except:
-#         rasterize_vector(
-#             grid_cell,
-#             0.2,
-#             out_path=f"/vsimem/fid_{number}_rasterized.tif",
-#             extent=grid_cell,
-#             fill_value=0,
-#             burn_value=0,
-#         )
+    try:
+        rasterize_vector(
+            buildings,
+            0.2,
+            out_path=f"/vsimem/fid_{number}_rasterized.tif",
+            extent=grid_cell,
+        )
+    except:
+        rasterize_vector(
+            grid_cell,
+            0.2,
+            out_path=f"/vsimem/fid_{number}_rasterized.tif",
+            extent=grid_cell,
+            fill_value=0,
+            burn_value=0,
+        )
 
-#     internal_resample_raster(
-#         f"/vsimem/fid_{number}_rasterized.tif",
-#         10.0,
-#         resample_alg="average",
-#         out_path=f"/vsimem/fid_{number}_resampled.tif",
-#     )
+    internal_resample_raster(
+        f"/vsimem/fid_{number}_rasterized.tif",
+        10.0,
+        resample_alg="average",
+        out_path=f"/vsimem/fid_{number}_resampled.tif",
+    )
 
-#     array_to_raster(
-#         (raster_to_array(f"/vsimem/fid_{number}_resampled.tif") * 100).astype(
-#             "float32"
-#         ),
-#         reference=f"/vsimem/fid_{number}_resampled.tif",
-#         out_path=folder + f"fid_{number}_rasterized.tif",
-#     )
+    array_to_raster(
+        (raster_to_array(f"/vsimem/fid_{number}_resampled.tif") * 100).astype(
+            "float32"
+        ),
+        reference=f"/vsimem/fid_{number}_resampled.tif",
+        # out_path=folder + f"fid_{number}_rasterized.tif",
+        out_path=folder + f"Google00_{number}.tif",
+    )
 
-#     gdal.Unlink(f"/vsimem/fid_{number}_rasterized.tif")
-#     gdal.Unlink(f"/vsimem/fid_{number}_resampled.tif")
+    gdal.Unlink(f"/vsimem/fid_{number}_rasterized.tif")
+    gdal.Unlink(f"/vsimem/fid_{number}_resampled.tif")
 
-#     progress(idx + 1, len(grids), "Rasterizing")
+    progress(idx + 1, len(grids), "Rasterizing")
+
+exit()
 
 
 # for cell in glob(folder + "fid_*_rasterized.tif"):

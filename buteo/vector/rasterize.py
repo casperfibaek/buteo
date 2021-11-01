@@ -7,6 +7,8 @@ from osgeo import gdal
 from uuid import uuid4
 from buteo.gdal_utils import numpy_to_gdal_datatype2, default_options
 
+# TODO: handle projections
+
 
 def rasterize_vector(
     vector,
