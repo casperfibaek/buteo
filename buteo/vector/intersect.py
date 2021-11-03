@@ -31,10 +31,10 @@ def internal_intersect_vector(
     add_index: bool = True,
     preserve_fid: bool = True,
     overwrite: bool = True,
-    return_bool: bool = False
+    return_bool: bool = False,
 ) -> str:
-    """ Clips a vector to a geometry.
- 
+    """Clips a vector to a geometry.
+
     Returns:
         A clipped ogr.Datasource or the path to one.
     """
@@ -74,8 +74,6 @@ def internal_intersect_vector(
 
     result = merged.ExecuteSQL(sql, dialect="SQLITE")
 
-    import pdb; pdb.set_trace()
-
     if return_bool:
         if result.GetFeatureCount() == 0:
             return False
@@ -107,14 +105,10 @@ def intersect_vector(
     process_layer: int = 0,
     process_layer_clip: int = 0,
     add_index: bool = True,
-    target_projection: Union[
-        str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int
-    ] = None,
     preserve_fid: bool = True,
     overwrite: bool = True,
 ) -> Union[List[str], str]:
-    """ Clips a vector to a geometry.
-    """
+    """Clips a vector to a geometry."""
     type_check(vector, [ogr.DataSource, str, list], "vector")
     type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
     type_check(out_path, [str], "out_path", allow_none=True)
@@ -122,12 +116,6 @@ def intersect_vector(
     type_check(process_layer, [int], "process_layer")
     type_check(process_layer_clip, [int], "process_layer_clip")
     type_check(add_index, [bool], "add_index")
-    type_check(
-        target_projection,
-        [str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int],
-        "target_projection",
-        allow_none=True,
-    )
     type_check(preserve_fid, [bool], "preserve_fid")
     type_check(overwrite, [bool], "overwrite")
 
@@ -144,7 +132,6 @@ def intersect_vector(
                 process_layer=process_layer,
                 process_layer_clip=process_layer_clip,
                 add_index=add_index,
-                target_projection=target_projection,
                 preserve_fid=preserve_fid,
                 overwrite=overwrite,
             )
@@ -154,18 +141,3 @@ def intersect_vector(
         return output[0]
 
     return output
-
-
-if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/test/"
-
-    vector = folder + "odense_grid.gpkg"
-    clip_geom = folder + "havnen.gpkg"
-    out_dir = folder + "out/"
-
-    intersect_vector(vector, clip_geom, out_path=out_dir + "intersected.gpkg")
-
-    import pdb
-
-    pdb.set_trace()
-

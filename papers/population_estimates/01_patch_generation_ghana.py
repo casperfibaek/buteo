@@ -94,8 +94,6 @@ for idx, grid_cell in enumerate(grids):
 
     progress(idx + 1, len(grids), "Rasterizing")
 
-exit()
-
 
 # for cell in glob(folder + "fid_*_rasterized.tif"):
 # for cell in glob(folder + "class_*.tif"):

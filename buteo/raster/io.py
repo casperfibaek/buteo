@@ -274,6 +274,9 @@ def internal_raster_to_metadata(
 
         metadata["extent_wkt"] = extended_extents["extent_wkt"]
         metadata["extent_datasource"] = extended_extents["extent_datasource"]
+        metadata["extent_datasource_path"] = metadata[
+            "extent_datasource"
+        ].GetDescription()
         metadata["extent_geom"] = extended_extents["extent_geom"]
         metadata["extent_latlng"] = extended_extents["extent_latlng"]
         metadata["extent_gdal_warp_latlng"] = extended_extents[
@@ -462,11 +465,18 @@ def rasters_are_aligned(
                 return False
             if meta["pixel_width"] != base["pixel_width"]:
                 if abs(meta["pixel_width"] - base["pixel_width"]) > threshold:
-                    print(base["name"] + " did not match " + meta["name"] + " pixel_width")
+                    print(
+                        base["name"] + " did not match " + meta["name"] + " pixel_width"
+                    )
                     return False
             if meta["pixel_height"] != base["pixel_height"]:
                 if abs(meta["pixel_height"] - base["pixel_height"]) > threshold:
-                    print(base["name"] + " did not match " + meta["name"] + " pixel_height")
+                    print(
+                        base["name"]
+                        + " did not match "
+                        + meta["name"]
+                        + " pixel_height"
+                    )
                     return False
             if meta["x_min"] != base["x_min"]:
                 if abs(meta["x_min"] - base["x_min"]) > threshold:
@@ -1234,4 +1244,3 @@ def create_raster(
     type_check(creation_options, [list], "creation_options")
 
     raise ValueError("Not yet implemented. Sorry")
-

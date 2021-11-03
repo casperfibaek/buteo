@@ -304,8 +304,6 @@ def get_offsets(size):
     high_low = high_mid // 2
     high_high = high_mid + high_low
 
-    tiny = high_low // 2
-
     return [
         [0, 0],
         [0, high_low],
@@ -314,7 +312,6 @@ def get_offsets(size):
         [high_low, high_low],
         [high_mid, high_mid],
         [high_high, high_high],
-        [high_mid - tiny, high_mid - tiny],
         [high_low, 0],
         [high_mid, 0],
         [high_high, 0],

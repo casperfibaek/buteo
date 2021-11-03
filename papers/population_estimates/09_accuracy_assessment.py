@@ -10,6 +10,7 @@ np.set_printoptions(suppress=True)
 from buteo.utils import progress
 from buteo.raster.io import raster_to_array, array_to_raster
 from buteo.raster.resample import resample_raster
+from buteo.raster.reproject import reproject_raster
 from buteo.raster.clip import clip_raster
 from sklearn.metrics import (
     mean_squared_error,
@@ -22,12 +23,25 @@ from sklearn.metrics import (
     recall_score,
 )
 
-folder = (
-    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/comparisons/"
-)
+folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/aux_files/"
+
+# for img in glob(folder + "gha_ppp*.tif"):
+#     name = os.path.splitext(os.path.basename(img))[0]
+#     arr = raster_to_array(img)
+#     arr.mask = arr == -99999.0
+#     arr = arr.filled(0)
+
+#     output = folder + "adj_" + name + ".tif"
+
+#     nullfix = array_to_raster(arr, img)
+
+#     reproject_raster(nullfix, 32630, output)
+
+
+# folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/vector/comparisons/resampled/"
 # folder2 = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/aux_files/"
 
-# base = folder2 + "GHL_S2_clipped.tif"
+# base = folder2 + "ESA_WorldCover_builtup_aligned.tif"
 # grids = glob(folder + "grid_id_*.tif")
 
 # for idx, grid_cell in enumerate(grids):
@@ -35,9 +49,19 @@ folder = (
 
 #     name = os.path.basename(grid_cell)
 #     number = os.path.splitext(name)[0].split("_")[-1]
-#     clip_raster(base, grid_cell, folder + f"/ghl_s2/ghls2_{number}.tif")
+#     clip_raster(base, grid_cell, folder + f"/ewc/ecw_{number}.tif")
 
 # exit()
+
+# for raster in glob(folder + "ghls2*.tif"):
+#     name = os.path.splitext(os.path.basename(raster))[0]
+#     resample_raster(
+#         raster,
+#         100,
+#         out_path=folder + f"resampled/{name}.tif",
+#         resample_alg="average",
+#         postfix="",
+#     )
 
 
 def print_result(number, name, pred, truth):
@@ -59,6 +83,7 @@ google_85_arr = []
 google_80_arr = []
 google_00_arr = []
 ghls2_arr = []
+ecw_arr = []
 
 for area in sorted(glob(folder + "ground_truth_*.tif")):
     name = os.path.splitext(os.path.basename(area))[0]
@@ -105,6 +130,11 @@ for area in sorted(glob(folder + "ground_truth_*.tif")):
     ghls2 = ghls2.filled(0)
     ghls2_arr.append(ghls2.flatten())
 
+    ecw = raster_to_array(f"{folder}ecw_{number}.tif")
+    ecw.mask = mask
+    ecw = ecw.filled(0)
+    ecw_arr.append(ecw.flatten())
+
     # print_result(number, "Prediction", pred, truth)
     # print_result(number, "OSM       ", osm, truth)
     # print_result(number, "Google 90 ", google_90, truth)
@@ -112,6 +142,7 @@ for area in sorted(glob(folder + "ground_truth_*.tif")):
     # print_result(number, "Google 80 ", google_80, truth)
     # print_result(number, "Google All", google_00, truth)
     # print_result(number, "GHSL S2   ", ghls2, truth)
+    # print_result(number, "ECW       ", ecw, truth)
 
 truth_c = np.concatenate(truth_arr)
 
@@ -121,7 +152,8 @@ print_result("100", "Google 90 ", np.concatenate(google_90_arr), truth_c)
 print_result("100", "Google 85 ", np.concatenate(google_85_arr), truth_c)
 print_result("100", "Google 80 ", np.concatenate(google_80_arr), truth_c)
 print_result("100", "Google All", np.concatenate(google_00_arr), truth_c)
-print_result("100", "GHSL S2   ", np.concatenate(ghls2_arr), truth_c)
+# print_result("100", "GHSL S2   ", np.concatenate(ghls2_arr), truth_c)
+# print_result("100", "ECW       ", np.concatenate(ecw_arr), truth_c)
 
 bin_truth = np.array(truth_c > 0.5, dtype="uint8")
 bin_pred = np.array(np.concatenate(pred_arr) > 0.5, dtype="uint8")
@@ -132,6 +164,7 @@ bin_google80 = np.array(np.concatenate(google_80_arr) > 0.5, dtype="uint8")
 bin_google00 = np.array(np.concatenate(google_00_arr) > 0.5, dtype="uint8")
 bin_ghls2 = np.array(np.concatenate(ghls2_arr) > 0, dtype="uint8")
 bin_ghls2_50 = np.array(np.concatenate(ghls2_arr) > 50, dtype="uint8")
+bin_ecw = np.array(np.concatenate(ecw_arr) > 0, dtype="uint8")
 
 
 def print_result_bin(name, _truth, _pred):
@@ -141,7 +174,7 @@ def print_result_bin(name, _truth, _pred):
     precision = round(precision_score(_truth, _pred), 3)
     recall = round(recall_score(_truth, _pred), 3)
     print(
-        f"{name} || Bal. Accuracy: {bacc} - Accuracy: {acc} - F1: {f1} - Precision: {precision} - Recall: {recall}"
+        f"{name} Binary || Bal. Accuracy: {bacc} - Accuracy: {acc} - F1: {f1} - Precision: {precision} - Recall: {recall}"
     )
 
 
@@ -153,3 +186,4 @@ print_result_bin("Google 80 ", bin_truth, bin_google80)
 print_result_bin("Google All", bin_truth, bin_google00)
 print_result_bin("GHLS2 > 0 ", bin_truth, bin_ghls2)
 print_result_bin("GHLS2 > 50", bin_truth, bin_ghls2_50)
+print_result_bin("ECW       ", bin_truth, bin_ecw)

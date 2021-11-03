@@ -798,6 +798,40 @@ def vector_add_index(
     return vector_list
 
 
+def vector_feature_to_layer(
+    vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource],
+    fid: int,
+    layer: int = 1,
+) -> List[str]:
+    """Adds a spatial index to the vector if it doesn't have one.
+
+    Args:
+        vector (list, path | vector): The vector to add the index to.
+
+    Returns:
+        A path to the original vector.
+    """
+    type_check(vector, [list, str, ogr.DataSource], "vector")
+
+    vector_list = to_vector_list(vector)
+
+    try:
+        for in_vector in vector_list:
+            metadata = internal_vector_to_metadata(in_vector)
+            ref = open_vector(in_vector)
+
+            for layer in metadata["layers"]:
+                name = layer["layer_name"]
+                geom = layer["column_geom"]
+
+                sql = f"SELECT CreateSpatialIndex('{name}', '{geom}') WHERE NOT EXISTS (SELECT HasSpatialIndex('{name}', '{geom}'));"
+                ref.ExecuteSQL(sql, dialect="SQLITE")
+    except:
+        raise Exception(f"Error while creating indices for {vector}")
+
+    return vector_list
+
+
 def internal_vector_add_shapes(
     vector: Union[str, ogr.DataSource],
     shapes: list = ["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
