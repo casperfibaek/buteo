@@ -263,7 +263,7 @@ def extract_patches(
                     array_to_raster(
                         labels_arr,
                         label_warp_path,
-                        out_path=f"{outdir}{prefix}{str(fid)}label{postfix}.tif",
+                        out_path=f"{outdir}{prefix}label_{str(fid)}{postfix}.tif",
                     )
 
             raster_clip_path = f"/vsimem/raster_{uuid4().int}_{str(idx)}_clipped.tif"
@@ -352,11 +352,6 @@ def extract_patches(
             gdal.Unlink(valid_path)
 
         if merge_output:
-
-            import pdb
-
-            pdb.set_trace()
-
             np.save(
                 f"{outdir}{prefix}{name}{postfix}.npy",
                 np.concatenate(list_extracted).filled(fill_value),
@@ -498,6 +493,8 @@ def predict_raster(
 
     return array_to_raster(predicted, reference_raster, out_path)
 
+
+# example:
 
 from glob import glob
 
