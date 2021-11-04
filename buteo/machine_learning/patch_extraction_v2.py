@@ -276,8 +276,9 @@ def extract_patches(
                     all_touch=False,
                     adjust_bbox=False,
                 )
-            except Exception:
+            except Exception as e:
                 print(f"Warning: {raster} did not intersect geom with fid: {fid}.")
+                print(e)
 
                 if label_geom is not None:
                     gdal.Unlink(label_clip_path)

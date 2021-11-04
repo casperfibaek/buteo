@@ -7,7 +7,6 @@ from buteo.utils import remove_if_overwrite, type_check
 from buteo.gdal_utils import (
     parse_projection,
     path_to_driver,
-    raster_to_reference,
     default_options,
     translate_resample_method,
     gdal_nodata_value_from_type,
@@ -33,8 +32,8 @@ def internal_reproject_raster(
     prefix: str = "",
     postfix: str = "_reprojected",
 ) -> str:
-    """ OBS: Internal. Single output.
-    
+    """OBS: Internal. Single output.
+
     Reproject a raster(s) to a target coordinate reference system.
     """
     type_check(raster, [str, gdal.Dataset], "raster")
@@ -120,7 +119,7 @@ def reproject_raster(
     prefix: str = "",
     postfix: str = "_reprojected",
 ) -> Union[List[Union[gdal.Dataset, str]], gdal.Dataset, str]:
-    """ Reproject a raster(s) to a target coordinate reference system.
+    """Reproject a raster(s) to a target coordinate reference system.
 
     Args:
         raster(s) (list, path | raster): The raster(s) to reproject.
@@ -137,7 +136,7 @@ def reproject_raster(
         are available:
             'nearest', 'bilinear', 'cubic', 'cubicSpline', 'lanczos', 'average',
             'mode', 'max', 'min', 'median', 'q1', 'q3', 'sum', 'rms'.
-        
+
         overwite (bool): Is it possible to overwrite the out_path if it exists.
 
         creation_options (list): A list of options for the GDAL creation. Only
