@@ -493,15 +493,3 @@ def predict_raster(
             )
 
     return array_to_raster(predicted, reference_raster, out_path)
-
-
-# example:
-
-from glob import glob
-
-folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/tanzania_dar/"
-rasters = glob(folder + "B0*_10m*.tif")
-vector = folder + "/vector/dar_test_geom.gpkg"
-label = folder + "vector/dar_buildings_01_test.gpkg"
-
-extract_patches(rasters, folder + "tmp/", zones=vector, options={"label_geom": label})
