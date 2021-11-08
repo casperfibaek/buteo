@@ -7,12 +7,12 @@ from buteo.earth_observation.s2_utils import (
     unzip_files_to_folder,
 )
 
+# Folder base
 folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/kumasi/"
 
-tmp = folder + "tmp/"
-raw = folder + "raw/"
-dst = folder + "dst/"
-mos = folder + "mos/"
+tmp = folder + "tmp/"  # temporary files, should be deleted afterwards
+raw = folder + "raw/"  # location of with S2 images in zipped .safe folders
+dst = folder + "dst/"  # destination folder of the cloud free tile
 
 tiles = [
     # "30NYM",
@@ -34,12 +34,12 @@ for tile in tiles:
         dst,
         min_improvement=0.1,
         quality_threshold=110,
-        time_penalty=360,
+        time_penalty=90,
         max_time_delta=1500.0,
         max_images=10,
         harmonise=True,
         max_harmony=100,
-        ideal_date="20210515",
+        # ideal_date="20210515",
         # use_image="20210226",
         process_bands=[
             {"size": "10m", "band": "B02"},
@@ -55,4 +55,8 @@ for tile in tiles:
         ],
     )
 
-# join_s2_tiles(dst, mos, tmp, harmonisation=True, projection_to_match=32630)
+# destination of the sentinel-2 mosaic if multiple input tiles are given
+# projection is the epsg code (epsg.io) of the output.
+mos = folder + "mos/"
+
+join_s2_tiles(dst, mos, tmp, harmonisation=True, projection_to_match=32630)
