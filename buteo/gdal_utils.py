@@ -193,9 +193,16 @@ def is_vector(vector: Union[str, ogr.DataSource]) -> bool:
         return True
 
     if isinstance(vector, str):
-
         gdal.PushErrorHandler("CPLQuietErrorHandler")
+
         ref = ogr.Open(vector, 0)
+        if ref is None:
+            extension = os.path.splitext(vector)[1][1:]
+
+            if extension == "memory" or "mem":
+                driver = ogr.GetDriverByName("Memory")
+                ref = driver.Open(vector)
+
         gdal.PopErrorHandler()
 
         if isinstance(ref, ogr.DataSource):

@@ -19,7 +19,6 @@ from buteo.raster.align import rasters_are_aligned, align_rasters
 from buteo.raster.clip import clip_raster
 from buteo.raster.resample import resample_raster
 from buteo.vector.io import vector_to_metadata, is_vector, open_vector
-from buteo.vector.clip import clip_vector
 from buteo.vector.intersect import intersect_vector
 from buteo.vector.attributes import vector_get_fids
 from buteo.vector.rasterize import rasterize_vector
@@ -94,23 +93,30 @@ def get_overlaps(arr, offsets, tile_size, border_check=True):
         arr_offsets.append(array_to_blocks(arr, tile_size, offset))
 
     if border_check:
+        found = False
+        border = None
         for end in ["right", "bottom", "corner"]:
             if end == "right" and (arr.shape[1] % tile_size) != 0:
+                found = True
                 border = arr[:, -tile_size:]
             elif end == "bottom" and (arr.shape[0] % tile_size) != 0:
+                found = True
                 border = arr[-tile_size:, :]
             elif (
                 end == "corner"
                 and ((arr.shape[1] % tile_size) != 0)
                 and ((arr.shape[1] % tile_size) != 0)
             ):
+                found = True
                 border = arr[-tile_size:, -tile_size:]
 
-            arr_offsets.append(array_to_blocks(border, tile_size, offset=[0, 0]))
+            if found:
+                arr_offsets.append(array_to_blocks(border, tile_size, offset=[0, 0]))
 
     return arr_offsets
 
 
+# todo: align with size
 def extract_patches(
     raster_list,
     outdir,
@@ -131,6 +137,9 @@ def extract_patches(
     label_geom = None if "label_geom" not in options else options["label_geom"]
     label_res = 0.2 if "label_res" not in options else options["label_res"]
     label_mult = 100 if "label_mult" not in options else options["label_mult"]
+    align_with_size = (
+        20 if "align_with_size" not in options else options["align_with_size"]
+    )
     zone_layer_id = 0 if "zone_layer_id" not in options else options["zone_layer_id"]
     fill_value = 0 if "fill_value" not in options else options["fill_value"]
     force_align = True if "force_align" not in options else options["force_align"]
@@ -186,6 +195,7 @@ def extract_patches(
 
     zones_ogr = open_vector(zones)
     zones_layer = zones_ogr.GetLayer(zone_layer_id)
+    featureDefn = zones_layer.GetLayerDefn()
     fids = vector_get_fids(zones_ogr, zone_layer_id)
 
     progress(0, len(fids) * len(raster_list), "processing fids")
@@ -201,6 +211,7 @@ def extract_patches(
 
         for fid in fids:
             feature = zones_layer.GetFeature(fid)
+            geom = feature.GetGeometryRef()
             fid_path = f"/vsimem/fid_mem_{uuid4().int}_{str(fid)}.shp"
             fid_ds = mem_driver.CreateDataSource(fid_path)
             fid_ds_lyr = fid_ds.CreateLayer(
@@ -208,16 +219,20 @@ def extract_patches(
                 geom_type=ogr.wkbPolygon,
                 srs=zones_layer_meta["projection_osr"],
             )
-            fid_ds_lyr.CreateFeature(feature.Clone())
+            copied_feature = ogr.Feature(featureDefn)
+            copied_feature.SetGeometry(geom)
+            fid_ds_lyr.CreateFeature(copied_feature)
+
+            fid_ds.FlushCache()
             fid_ds.SyncToDisk()
 
             valid_path = f"/vsimem/{prefix}validmask_{str(fid)}{postfix}.tif"
 
             rasterize_vector(
-                fid_ds,
+                fid_path,
                 pixel_size,
                 out_path=valid_path,
-                extent=fid_ds,
+                extent=fid_path,
             )
             valid_arr = raster_to_array(valid_path)
 
@@ -493,3 +508,14 @@ def predict_raster(
             )
 
     return array_to_raster(predicted, reference_raster, out_path)
+
+
+# example:
+from glob import glob
+
+folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/tanzania_dar/"
+rasters = glob(folder + "B0*_10m*.tif")
+vector = folder + "/vector/dar_test_geom.gpkg"
+label = folder + "vector/dar_buildings_01_test.gpkg"
+
+extract_patches(rasters, folder + "tmp/", zones=vector, options={"label_geom": label})
