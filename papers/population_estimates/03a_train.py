@@ -122,11 +122,11 @@ with tf.device("/device:GPU:0"):
     )
 
     # # transfer weights
-    # donor_model_path = outdir + "student2"
-    # donor_model = tf.keras.models.load_model(
-    #     donor_model_path, custom_objects={"tpe": tpe}
-    # )
-    # model.set_weights(donor_model.get_weights())
+    donor_model_path = outdir + "student2"
+    donor_model = tf.keras.models.load_model(
+        donor_model_path, custom_objects={"tpe": tpe}
+    )
+    model.set_weights(donor_model.get_weights())
     # donor_model = None
 
     start = time.time()

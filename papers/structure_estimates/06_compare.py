@@ -1,62 +1,126 @@
 yellow_follow = "C:/Users/caspe/Desktop/buteo/"
 import sys, os
-from token import DOUBLESTAR
 
 sys.path.append(yellow_follow)
 
-from buteo.raster.io import raster_to_array, array_to_raster
-from buteo.raster.clip import clip_raster
-from glob import glob
+from buteo.raster.io import array_to_raster, raster_to_array, raster_to_metadata
+from buteo.raster.resample import resample_raster
+from sklearn.metrics import (
+    mean_squared_error,
+    mean_absolute_error,
+    f1_score,
+    precision_score,
+    recall_score,
+    accuracy_score,
+    balanced_accuracy_score,
+)
 
 import numpy as np
 
-folder = "C:/Users/caspe/Desktop/paper_2_Structural_Volume/data/"
 
-predictions = folder + "predictions/"
+def round_to_decimals(x):
+    return f"{np.round(x, 4):.4f}"
 
-target = "people"
-truth_aarhus = raster_to_array(folder + f"raster/aarhus/label_{target}.tif")
-truth_holsterbro = raster_to_array(folder + f"raster/holsterbro/label_{target}.tif")
-truth_holsterbro = raster_to_array(folder + f"raster/holsterbro/label_{target}.tif")[
-    1:
-][:][:]
-truth_samsoe = raster_to_array(folder + f"raster/samsoe/label_{target}.tif")
 
-for pred_path in glob(predictions + f"big_model*.tif"):
-    name = os.path.splitext(os.path.basename(pred_path))[0]
-    pred = raster_to_array(pred_path)
+def metrics(truth, pred, name, resample=False, target=None):
+    if not isinstance(truth, list):
+        truth = [truth]
+    if not isinstance(pred, list):
+        pred = [pred]
 
-    if target not in name:
-        continue
+    if len(truth) != len(pred):
+        raise ValueError("Length of truth and pred must be equal")
+
+    processed_truth = []
+    processed_pred = []
+
+    for idx in range(len(truth)):
+        if (
+            raster_to_metadata(truth[idx])["size"]
+            != raster_to_metadata(pred[idx])["size"]
+        ):
+            print(f"{name} rasters are not the same size")
+            return
+
+        if resample:
+            truth[idx] = resample_raster(truth[idx], 100, resample_alg="sum")
+            pred[idx] = resample_raster(pred[idx], 100, resample_alg="sum")
+
+        arr_truth = raster_to_array(truth[idx])
+        arr_pred = raster_to_array(pred[idx])
+
+        mask = np.logical_or(arr_truth == -9999.0, arr_pred == -9999.0)
+
+        arr_truth.mask = mask
+        arr_pred.mask = mask
+
+        arr_truth = arr_truth.compressed()
+        arr_pred = arr_pred.compressed()
+
+        processed_truth.append(arr_truth.ravel())
+        processed_pred.append(arr_pred.ravel())
+
+    tarr = np.concatenate(processed_truth)
+    tarr = tarr.ravel()
+    parr = np.concatenate(processed_pred)
+    parr = parr.ravel()
+
+    mae = round_to_decimals(mean_absolute_error(tarr, parr))
+    mse = round_to_decimals(mean_squared_error(tarr, parr))
+    tpe = round_to_decimals(((np.sum(parr) - np.sum(tarr)) / np.sum(tarr)) * 100)
 
     if target == "people":
-        pred = pred / 100
+        tarr = np.array(tarr > 0.01, dtype=np.uint8)
+        parr = np.array(parr > 0.01, dtype=np.uint8)
+    else:
+        tarr = np.array(tarr >= 1.0, dtype=np.uint8)
+        parr = np.array(parr >= 1.0, dtype=np.uint8)
 
-    if "aarhus" in name:
-        truth = truth_aarhus
-    elif "holsterbro" in name:
-        truth = truth_holsterbro
-        pred = pred[1:][:][:]  # due the nodata row on top of raster.
-    elif "samsoe" in name:
-        truth = truth_samsoe
+    acc = round_to_decimals(accuracy_score(tarr, parr))
+    bacc = round_to_decimals(balanced_accuracy_score(tarr, parr))
+    prec = round_to_decimals(precision_score(tarr, parr))
+    rec = round_to_decimals(recall_score(tarr, parr))
+    f1 = round_to_decimals(f1_score(tarr, parr))
 
-    sum_dif = ((np.sum(pred) - np.sum(truth)) / np.sum(truth)) * 100
-    mae = np.mean(np.abs(pred - truth))
-    mse = np.mean(np.power(pred - truth, 2))
-    binary = (((np.rint(pred) == 0) == (np.rint(truth) == 0)).sum() / truth.size) * 100
+    adjust_name = name.ljust(10, " ")
 
-    # import pdb
+    print(f"{adjust_name} (reg) - MAE: {mae}, MSE: {mse}, TPE: {tpe}")
+    print(
+        f"{adjust_name} (bin) - ACC: {acc}, BACC: {bacc}, PREC: {prec}, REC: {rec}, F1: {f1}"
+    )
 
-    # pdb.set_trace()
 
-    print(name)
-    print("TSUM: " + str(np.sum(truth)))
-    print("PSUM: " + str(np.sum(pred)))
-    print("MAE:  " + str(round(mae, 4)))
-    print("MSE:  " + str(round(mse, 4)))
-    print("SUM:  " + str(round(sum_dif, 4)))
-    print("BIN:  " + str(round(binary, 4)))
-    print("")
+base = "C:/Users/caspe/Desktop/paper_2_Structural_Volume/data/"
+folder = base + "predictions/"
 
-# ("aarhus_area@1" > 0 AND "aarhus_area_32x32_9_overlaps@1" > 0) *
-# ((("aarhus_area_32x32_9_overlaps@1" - "aarhus_area@1") + 0.00000001) / ("aarhus_area@1" + 0.00000001)) + ("aarhus_area_32x32_9_overlaps@1" <  0.00000001 and "aarhus_area@1" >  0.00000001) * "aarhus_area@1" * -1
+target = "people"
+resample = True
+
+truth_aarhus = folder + f"aarhus_label_{target}.tif"
+truth_holsterbro = folder + f"holsterbro_label_{target}.tif"
+truth_samsoe = folder + f"samsoe_label_{target}.tif"
+
+pred_aarhus = folder + f"aarhus_prediction_{target}.tif"
+pred_holsterbro = folder + f"holsterbro_prediction_{target}.tif"
+pred_samsoe = folder + f"samsoe_prediction_{target}.tif"
+
+metrics(truth_aarhus, pred_aarhus, "Aarhus", resample=resample, target=target)
+metrics(
+    truth_holsterbro, pred_holsterbro, "Holsterbro", resample=resample, target=target
+)
+metrics(truth_samsoe, pred_samsoe, "Samsoe", resample=resample, target=target)
+metrics(
+    [
+        truth_aarhus,
+        truth_holsterbro,
+        truth_samsoe,
+    ],
+    [
+        pred_aarhus,
+        pred_holsterbro,
+        pred_samsoe,
+    ],
+    "All",
+    resample=resample,
+    target=target,
+)

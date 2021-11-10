@@ -316,6 +316,9 @@ def translate_resample_method(method):
         "rms": 14,
     }
 
+    if method == "sum":
+        return "sum"
+
     if method in methods:
         return methods[method]
     else:
