@@ -1,4 +1,5 @@
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 import math
 import numpy as np
 import pandas as pd
@@ -293,6 +294,10 @@ def preprocess_optical(
     val_b = target_high - (val_a * cutoff_high)
 
     return ((val_a * clipped) + val_b).astype("float32")
+
+
+def scale_to_range(arr, min, max):
+    return MinMaxScaler(feature_range=(min, max)).fit_transform(arr)
 
 
 def preprocess_coh(arr, target_low=0, target_high=1):
