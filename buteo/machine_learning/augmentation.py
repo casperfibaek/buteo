@@ -1,10 +1,8 @@
 import sys
 
-yellow_follow = "C:/Users/caspe/Desktop/buteo/"
-sys.path.append(yellow_follow)
+sys.path.append("../../")
 import numpy as np
 from buteo.filters.convolutions import interp_array
-from buteo.machine_learning.ml_utils import scale_to_range
 
 
 def image_augmentation(list_of_inputs, list_of_labels, shuffle=True, options=None):

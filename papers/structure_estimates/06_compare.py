@@ -93,8 +93,8 @@ def metrics(truth, pred, name, resample=False, target=None):
 base = "C:/Users/caspe/Desktop/paper_2_Structural_Volume/data/"
 folder = base + "predictions/"
 
-target = "people"
-resample = True
+target = "area"
+resample = False
 
 truth_aarhus = folder + f"aarhus_label_{target}.tif"
 truth_holsterbro = folder + f"holsterbro_label_{target}.tif"
@@ -124,3 +124,27 @@ metrics(
     resample=resample,
     target=target,
 )
+
+if target == "area":
+    print("")
+    truth_odense = folder + f"odense_label_{target}.tif"
+    truth_bornholm = folder + f"bornholm_label_{target}.tif"
+
+    pred_odense = folder + f"odense_prediction_{target}.tif"
+    pred_bornholm = folder + f"bornholm_prediction_{target}.tif"
+
+    metrics(truth_odense, pred_odense, "Odense", resample=resample, target=target)
+    metrics(truth_bornholm, pred_bornholm, "Bornholm", resample=resample, target=target)
+    metrics(
+        [
+            truth_odense,
+            truth_bornholm,
+        ],
+        [
+            pred_odense,
+            pred_bornholm,
+        ],
+        "All",
+        resample=resample,
+        target=target,
+    )

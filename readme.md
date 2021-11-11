@@ -72,8 +72,21 @@ esa-snap
 
 - finish filters library - kernel tests
 - update zonal statistics & parallelise vector math
-- remove dependencies: cython, senmosaic, pygeoprocessing
-- fix sentinel 2 mosaic tool
+- remove dependencies: sen1mosaic
 - create models for pansharpening, buildings and noise-reduction
 - generate examples
 - synthetic sentinel 2?
+
+# Functions todo
+
+raster_footprints
+raster_mosaic
+raster_proximity
+raster_hydrology
+raster_vectorize
+
+vector_grid
+vector_select
+vector_buffer_etc..
+
+machine_learning_extract_sample_points
