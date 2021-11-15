@@ -115,7 +115,9 @@ def download_s1(
 
     if len(download_products) > 0:
         print(f"Downloading {len(download_products)} files.")
-        download = api.download_all(download_products, directory_path=destination, checksum=False)
+        download = api.download_all(
+            download_products, directory_path=destination, checksum=False
+        )
 
         return download
     else:
@@ -223,11 +225,12 @@ def download_s2_tile(
             continue
 
         download_products[product] = dic
-    
 
     print(f"Downloading {len(download_products)} tiles")
 
-    download = api.download_all(download_products, directory_path=destination, checksum=False)
+    download = api.download_all(
+        download_products, directory_path=destination, checksum=False
+    )
 
     return download
 
@@ -296,8 +299,10 @@ def download_s2(
             cloudcoverpercentage=(0, clouds),
             producttype="S2MSI2A",
         )
-        
-    import pdb; pdb.set_trace()
+
+    import pdb
+
+    pdb.set_trace()
 
     download_products = OrderedDict()
 
@@ -390,7 +395,9 @@ def download_s2(
         if _iteration == 0:
             print(f"Downloading {len(download_products)} tiles")
 
-        download = api.download_all(download_products, directory_path=destination, checksum=False)
+        download = api.download_all(
+            download_products, directory_path=destination, checksum=False
+        )
 
     if iterate and clouds <= 100:
         if coverage < 0.975 or _added_images < min_images:
@@ -428,6 +435,8 @@ if __name__ == "__main__":
     # tiles = vector_get_attribute_table(folder + "s2_tiles_in_project_area.gpkg")
     # tiles = tiles["Name"].values.tolist()
 
+    tiles = [marcias tiles]
+
     # improve = [
     #     "32UPG",
     #     "32UPF",
@@ -438,24 +447,20 @@ if __name__ == "__main__":
     #     if tile not in improve:
     #         continue
 
-    download_s2_tile(
-        "casperfibaek",
-        "Goldfish12",
-        folder_s2 + "raw_2021/",
-        # footprint=folder + "coastal_tiles.gpkg",
-        tile="33UUA",
-        # date=("20200615", "20200815"),
-        date=("20210215", "20210510"),
-        # min_overlap=0.50,
-        # max_images=0,
-        clouds=10,
-    )
+    for tile in tiles:
 
+        download_s2_tile(
+            "casperfibaek",
+            "Goldfish12",
+            folder_s2 + "raw_2021/",
+            tile=tile,
+            date=("20210601", "20210701"),
+            clouds=10,
+        )
 
     # import pdb; pdb.set_trace()
 
     # download_s2
-
 
     # dst = folder + "sentinel1/raw_2021/"
     # vector = folder + "sentinel1/bornholm.gpkg"
@@ -463,15 +468,14 @@ if __name__ == "__main__":
     # # 2020 06 01 - 2020 08 01 (good dates: 0615-0701)
     # # 2021 02 15 - 2021 04 15
 
-    # avai = download_s1(
-    #     "casperfibaek2",
-    #     "Goldfish12",
-    #     vector,
-    #     dst,
-    #     date=("20210325", "20210425"), # 2021
-    #     # date=("20200601", "20200630"), # 2020
-    #     min_overlap=0.50,
-    # )
+    download_s1(
+        "casperfibaek2",
+        "Goldfish12",
+        vector_of_s2_tiles_in_project_area,
+        folder_s1 + "raw_2021/",
+        date=("20210607", "20210621"),
+        min_overlap=0.50,
+    )
 
     # import pdb
 

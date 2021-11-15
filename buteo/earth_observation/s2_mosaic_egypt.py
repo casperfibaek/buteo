@@ -542,57 +542,7 @@ if __name__ == "__main__":
     attributes = vector_get_attribute_table(vector)
     tiles = attributes["Name"].values.tolist()
 
-    # completed = [
-    #     '30NVM',
-    #     '30NWN',
-    #     '30NWP',
-    #     '30NXN',
-    #     '30NXP',
-    #     '30NYL',
-    #     '30NYM',
-    #     '30NVN',
-    #     '30NYP',
-    #     '30PWQ',
-    #     '30PWR',
-    #     '30PWS',
-    #     '30PWT',
-    #     '30PXQ',
-    #     '30PXR',
-    #     '30PXS',
-    #     '30PXT',
-    #     '30PYQ',
-    #     '30PYR',
-    #     '30PYS',
-    #     '30PYT',
-    #     '30PZQ',
-    #     '30PZR',
-    #     '30PZS',
-    #     '30PZT',
-    #     '30NZP',
-    #     '31PBK',
-    #     '31PBL',
-    #     '31PBM',
-    #     '31PBN',
-    #     '31NBJ',
-    #     '31NBH',
-    # ]
-
-    # all_tiles = [
-    #     '30NVL',
-    #     '30NWL',
-    #     '30NWM',
-    #     '30NXM',
-    #     '30NXL',
-    #     '30NZM',
-    #     '30NYN',
-    #     '30NZN',
-    #     '31NBG',
-    # ]
-
     for tile in tiles:
-
-        # if tile in completed:
-        #     continue
 
         unzipped = unzip_files_to_folder(
             get_tile_files_from_safe_zip(raw, tile),
@@ -633,3 +583,57 @@ if __name__ == "__main__":
                 rmtree(f)
             except:
                 pass
+
+tmp_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/tmp/"
+mosaic_folder = (
+    "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/tiles/"
+)
+dst_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/raster/"
+
+join_tiles(
+    mosaic_folder,
+    dst_folder,
+    tmp_folder,
+    prefix="2021_",
+    harmonisation=True,
+    pixel_height=10.0,
+    pixel_width=10.0,
+    nodata_value=0,
+    bands_to_process=[
+        "B02_10m",
+        "B03_10m",
+        "B04_10m",
+        "B08_10m",
+        # "B05_20m",
+        # "B06_20m",
+        # "B07_20m",
+        # "B8A_20m",
+        # "B11_20m",
+        # "B12_20m",
+    ],
+    projection_to_match=32635,  # utm30, wgs84
+)
+
+join_tiles(
+    mosaic_folder,
+    dst_folder,
+    tmp_folder,
+    prefix="2021_",
+    harmonisation=True,
+    pixel_height=20.0,
+    pixel_width=20.0,
+    nodata_value=0,
+    bands_to_process=[
+        # "B02_10m",
+        # "B03_10m",
+        # "B04_10m",
+        # "B08_10m",
+        "B05_20m",
+        "B06_20m",
+        "B07_20m",
+        "B8A_20m",
+        "B11_20m",
+        "B12_20m",
+    ],
+    projection_to_match=32635,  # utm30, wgs84
+)
