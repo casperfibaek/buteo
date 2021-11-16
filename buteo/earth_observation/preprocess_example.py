@@ -10,7 +10,7 @@ from buteo.earth_observation.s2_utils import (
 )
 from buteo.earth_observation.download import download_s2_tile, download_s1_tile
 from buteo.earth_observation.s2_mosaic import mosaic_tile_s2, join_s2_tiles
-from buteo.earth_observation.s1_mosaic import mosaic_s1
+from buteo.earth_observation.s1_mosaic import mosaic_s1, mosaic_s1
 from buteo.earth_observation.s1_preprocess import backscatter
 from buteo.utils import delete_files_in_folder, make_dir_if_not_exists
 from glob import glob
@@ -140,7 +140,8 @@ join_s2_tiles(
 
 delete_files_in_folder(folder_tmp)
 
-s2_mosaic_extent = folder_s2_mosaic + "B12_20m.tif"
+s2_mosaic_B12 = folder_s2_mosaic + "B12_20m.tif"
+s2_mosaic_B04 = folder_s2_mosaic + "B04_10m.tif"
 
 # Preprocess the sentinel 1 images
 zip_files_s1 = glob(folder_s1_raw + "*.zip")
@@ -150,7 +151,7 @@ for idx, image in enumerate(zip_files_s1):
             image,
             folder_tmp,
             folder_tmp,
-            extent=s2_mosaic_extent,
+            extent=s2_mosaic_B12,
             epsg=project_epsg,
             decibel=True,
         )
@@ -159,23 +160,11 @@ for idx, image in enumerate(zip_files_s1):
 
     print(f"Completed {idx+1}/{len(zip_files_s1)}")
 
-# Mosaic the sentinel 1 images, VV and VH sepearatly
+# Mosaic the sentinel 1 images
 mosaic_s1(
-    folder_tmp,
+    glob(folder_tmp + "*_Gamma0_VV.tif"),
+    glob(folder_tmp + "*_Gamma0_VH.tif"),
     folder_s1_mosaic,
     folder_tmp,
-    interest_area=project_area,
-    target_projection=project_epsg,
-    polarization="VV",
+    s2_mosaic_B04,
 )
-
-mosaic_s1(
-    folder_tmp,
-    folder_s1_mosaic,
-    folder_tmp,
-    interest_area=project_area,
-    target_projection=project_epsg,
-    polarization="VH",
-)
-
-# Maybe align is necessary.

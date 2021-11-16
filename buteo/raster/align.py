@@ -150,8 +150,12 @@ def align_rasters(
 
         # Set the target values.
         target_bounds = (x_min, y_min, x_max, y_max)
-        x_res = master_metadata["width"]
-        y_res = master_metadata["height"]
+        x_res = master_metadata["pixel_width"]
+        y_res = master_metadata["pixel_height"]
+        x_pixels = master_metadata["width"]
+        y_pixels = master_metadata["height"]
+        target_size = (x_res, y_res)
+
         target_in_pixels = False
 
     # We allow overwrite of parameters specifically set.

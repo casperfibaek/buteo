@@ -13,8 +13,10 @@ from buteo.raster.io import (
 from buteo.vector.io import internal_vector_to_metadata
 from buteo.gdal_utils import parse_projection, ogr_bbox_intersects
 from buteo.raster.align import rasters_are_aligned, align_rasters
+from buteo.raster.clip import clip_raster
+from buteo.raster.reproject import reproject_raster
 from buteo.filters.kernel_generator import create_kernel
-from buteo.utils import timing
+from buteo.utils import timing, progress
 from osgeo import gdal, osr
 from time import time
 import numpy as np
@@ -38,8 +40,8 @@ def s1_collapse(
     offsets,
     weights,
     quantile=0.5,
-    nodata=False,
-    nodata_value=0,
+    nodata=True,
+    nodata_value=-9999.0,
     weighted=True,
 ):
     x_adj = arr.shape[0] - 1
@@ -116,6 +118,126 @@ def name_to_date(path):
 
 
 def mosaic_s1(
+    vv_paths,
+    vh_paths,
+    folder_out,
+    folder_tmp,
+    master_raster,
+    nodata_value=-9999.0,
+):
+    preprocessed = vv_paths + vh_paths
+
+    clipped_vv = []
+    clipped_vh = []
+    for idx, img in enumerate(preprocessed):
+        progress(idx, len(preprocessed), "Clipping Rasters")
+        name = os.path.splitext(os.path.basename(img))[0] + "_clipped.tif"
+        clipped_raster = clip_raster(
+            reproject_raster(img, master_raster, copy_if_already_correct=False),
+            master_raster,
+            out_path=folder_tmp + name,
+            postfix="",
+            adjust_bbox=True,
+            all_touch=False,
+        )
+        if "Gamma0_VV" in name:
+            clipped_vv.append(clipped_raster)
+        else:
+            clipped_vh.append(clipped_raster)
+
+        progress(idx + 1, len(preprocessed), "Clipping Rasters")
+
+    kernel_size = 3
+    outpath_vv = None
+    outpath_vh = None
+
+    if len(vv_paths) > 0:
+        _kernel, offsets, weights = create_kernel(
+            (kernel_size, kernel_size, len(vv_paths)),
+            distance_calc="gaussian",
+            sigma=1,
+            spherical=True,
+            radius_method="ellipsoid",
+            offsets=True,
+            edge_weights=True,
+            normalised=True,
+            remove_zero_weights=True,
+        )
+
+        print("Aligning VV rasters to master")
+        arr_vv_aligned_rasters = align_rasters(
+            clipped_vv,
+            folder_tmp,
+            postfix="_aligned",
+            master=master_raster,
+        )
+        arr_vv_aligned = raster_to_array(arr_vv_aligned_rasters)
+
+        if not rasters_are_aligned(arr_vv_aligned_rasters):
+            raise Exception("Rasters not aligned")
+
+        print("Collapsing VV rasters")
+        arr_vv_collapsed = s1_collapse(
+            arr_vv_aligned,
+            offsets,
+            weights,
+            weighted=True,
+            nodata_value=nodata_value,
+            nodata=True,
+        )
+
+        print("Writing VV raster.")
+        outpath_vv = array_to_raster(
+            arr_vv_collapsed,
+            master_raster,
+            out_path=folder_out + "VV_10m.tif",
+        )
+
+    if len(vh_paths) > 0:
+        _kernel, offsets, weights = create_kernel(
+            (kernel_size, kernel_size, len(vh_paths)),
+            distance_calc="gaussian",
+            sigma=1,
+            spherical=True,
+            radius_method="ellipsoid",
+            offsets=True,
+            edge_weights=True,
+            normalised=True,
+            remove_zero_weights=True,
+        )
+        print("Aligning VH rasters to master")
+        arr_vh_aligned_rasters = align_rasters(
+            clipped_vh,
+            folder_tmp,
+            postfix="_aligned",
+            master=master_raster,
+        )
+        arr_vh_aligned = raster_to_array(arr_vh_aligned_rasters)
+
+        if not rasters_are_aligned(arr_vh_aligned_rasters):
+            raise Exception("Rasters not aligned")
+
+        print("Collapsing VH rasters")
+        arr_vh_collapsed = s1_collapse(
+            arr_vh_aligned,
+            offsets,
+            weights,
+            weighted=True,
+            nodata_value=nodata_value,
+            nodata=True,
+        )
+
+        print("Writing VH raster.")
+        outpath_vh = array_to_raster(
+            arr_vh_collapsed,
+            master_raster,
+            out_path=folder_out + "VH_10m.tif",
+        )
+
+    return (outpath_vv, outpath_vh)
+
+
+def mosaic_s1_old(
     folder,
     output_folder,
     tmp_folder,
