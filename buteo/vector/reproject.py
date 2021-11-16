@@ -117,13 +117,13 @@ def reproject_vector(
     copy_if_same: bool = False,
     overwrite: bool = True,
 ) -> Union[List[str], str]:
-    """ Reprojects a vector given a target projection.
+    """Reprojects a vector given a target projection.
 
     Args:
         vector (path | vector): The vector to reproject.
-        
+
         projection (str | int | vector | raster): The projection is infered from
-        the input. The input can be: WKT proj, EPSG proj, Proj, or read from a 
+        the input. The input can be: WKT proj, EPSG proj, Proj, or read from a
         vector or raster datasource either from path or in-memory.
 
     **kwargs:
@@ -161,6 +161,6 @@ def reproject_vector(
         )
 
     if isinstance(vector, list):
-        return output[0]
+        return output
 
-    return output
+    return output[0]

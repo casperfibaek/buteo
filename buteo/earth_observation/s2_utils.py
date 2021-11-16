@@ -5,8 +5,10 @@ import os
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 from buteo.vector.io import filter_vector
-from buteo.vector.intersect import internal_intersect_vector
+from buteo.vector.intersect import intersect_vector
+from buteo.vector.clip import clip_vector
 from buteo.vector.attributes import vector_get_attribute_table
+from buteo.vector.reproject import reproject_vector
 from datetime import datetime
 from glob import glob
 
@@ -41,7 +43,10 @@ def get_band_paths(safe_folder):
             "B12": None,
             "SCL": None,
         },
-        "QI": {"CLDPRB_20m": None, "CLDPRB_60m": None,},
+        "QI": {
+            "CLDPRB_20m": None,
+            "CLDPRB_60m": None,
+        },
     }
 
     assert os.path.isdir(safe_folder), f"Could not find folder: {safe_folder}"
@@ -262,7 +267,7 @@ def get_tilename_from_safe(safe_file):
 def get_adjacent_tiles(tile_name):
     tiles_path = "../../geometry/sentinel2_tiles_world.shp"
     geom = filter_vector(tiles_path, filter_where=("Name", tile_name))
-    intersected = internal_intersect_vector(tiles_path, geom)
+    intersected = intersect_vector(tiles_path, geom)
 
     attributes = vector_get_attribute_table(intersected)
 
@@ -319,12 +324,18 @@ def unzip_files_to_folder(files, dst_folder):
     return unzipped
 
 
-if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/test/s2_download/"
+def get_tiles_from_geom(geom, return_geom=False):
+    tiles_path = "../../geometry/sentinel2_tiles_world.shp"
 
-    bob = get_tile_files_from_safe(folder, "32VNH")
+    intersected = clip_vector(tiles_path, reproject_vector(geom, tiles_path))
 
-    import pdb
+    attributes = vector_get_attribute_table(intersected)
 
-    pdb.set_trace()
+    return attributes["Name"].values.tolist()
 
+
+def get_tile_geom_from_name(tile_name):
+    tiles_path = "../../geometry/sentinel2_tiles_world.shp"
+    geom = filter_vector(tiles_path, filter_where=("Name", tile_name))
+
+    return geom

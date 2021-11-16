@@ -1,12 +1,20 @@
 import os
 import sys
 import time
-from typing import Any
 import psutil
 import shutil
-import builtins
 import linecache
 import tracemalloc
+
+from typing import Any
+from glob import glob
+
+
+def make_dir_if_not_exists(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    
+    return path
 
 
 def display_top(snapshot, key_type="lineno", limit=3):
@@ -285,3 +293,11 @@ def type_check(
         )
 
     return False
+
+
+def delete_files_in_folder(folder):
+    for f in glob(folder + "*.*"):
+        try:
+            os.remove(f)
+        except:
+            pass

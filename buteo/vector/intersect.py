@@ -138,6 +138,6 @@ def intersect_vector(
         )
 
     if isinstance(vector, list):
-        return output[0]
+        return output
 
-    return output
+    return output[0]

@@ -115,7 +115,7 @@ def name_to_date(path):
     )
 
 
-def mosaic_sentinel1(
+def mosaic_s1(
     folder,
     output_folder,
     tmp_folder,
@@ -126,6 +126,7 @@ def mosaic_sentinel1(
     polarization="VV",
     epsilon: float = 1e-9,
     overlap=0.05,
+    nodata_value=-9999.0,
     target_size=[10.0, 10.0],
     kernel_size=3,
     max_images=0,
@@ -382,7 +383,7 @@ def mosaic_sentinel1(
             quantile=quantile,
             weighted=weighted,
             nodata=True,
-            nodata_value=0,
+            nodata_value=nodata_value,
         )
 
         merge_images = None
@@ -414,33 +415,3 @@ def mosaic_sentinel1(
         timing(start)
 
     return created_tiles
-
-
-if __name__ == "__main__":
-    data_folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/"
-    # folder = "/home/cfi/Desktop/sentinel1/"
-    folder = data_folder + "sentinel1/"
-    tiles = folder + "tiles/"
-    processed = folder + "mosaic_2021/"
-    tmp = folder + "tmp/"
-
-    area = folder + "errors/2021_VH_error.gpkg"
-
-    mosaic_sentinel1(
-        processed,
-        tiles,
-        tmp,
-        interest_area=area,
-        target_projection=area,
-        kernel_size=3,
-        overlap=0.00,
-        step_size=1.0,
-        quantile=0.5,
-        max_images=0,
-        weighted=True,
-        overwrite=False,
-        use_tiles=False,
-        high_memory=True,
-        polarization="VV",
-        prefix="2021_error_",
-    )

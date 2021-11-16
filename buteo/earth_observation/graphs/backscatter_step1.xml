@@ -18,10 +18,27 @@
       <continueOnFail>true</continueOnFail>
     </parameters>
   </node>
+    <node id="Subset">
+    <operator>Subset</operator>
+    <sources>
+      <sourceProduct refid="Apply-Orbit-File"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <sourceBands/>
+      <region>0,0,0,0</region>
+      <referenceBand/>
+      <geoRegion>${extent}</geoRegion>
+      <subSamplingX>1</subSamplingX>
+      <subSamplingY>1</subSamplingY>
+      <fullSwath>false</fullSwath>
+      <tiePointGridNames/>
+      <copyMetadata>true</copyMetadata>
+    </parameters>
+  </node>
   <node id="Remove-GRD-Border-Noise">
     <operator>Remove-GRD-Border-Noise</operator>
     <sources>
-      <sourceProduct refid="Apply-Orbit-File"/>
+      <sourceProduct refid="Subset"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
       <selectedPolarisations/>
@@ -76,6 +93,9 @@
     </node>
     <node id="Apply-Orbit-File">
       <displayPosition x="130.0" y="150.0"/>
+    </node>
+    <node id="Subset">
+      <displayPosition x="160.0" y="150.0"/>
     </node>
     <node id="Remove-GRD-Border-Noise">
       <displayPosition x="200.0" y="150.0"/>
