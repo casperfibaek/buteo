@@ -1,9 +1,9 @@
 yellow_follow = "C:/Users/caspe/Desktop/buteo/"
-import sys, os
+import sys
 
 sys.path.append(yellow_follow)
 
-from buteo.raster.io import array_to_raster, raster_to_array, raster_to_metadata
+from buteo.raster.io import raster_to_array, raster_to_metadata
 from buteo.raster.resample import resample_raster
 from sklearn.metrics import (
     mean_squared_error,
@@ -20,6 +20,10 @@ import numpy as np
 
 def round_to_decimals(x):
     return f"{np.round(x, 4):.4f}"
+
+
+def round_to_percent(x):
+    return f"{np.round(x, 2):.2f} %"
 
 
 def metrics(truth, pred, name, resample=False, target=None):
@@ -67,14 +71,54 @@ def metrics(truth, pred, name, resample=False, target=None):
 
     mae = round_to_decimals(mean_absolute_error(tarr, parr))
     mse = round_to_decimals(mean_squared_error(tarr, parr))
-    tpe = round_to_decimals(((np.sum(parr) - np.sum(tarr)) / np.sum(tarr)) * 100)
+    rsme = round_to_decimals(mean_squared_error(tarr, parr, squared=False))
+    tpe = round_to_percent(((np.sum(parr) - np.sum(tarr)) / np.sum(tarr)) * 100)
 
     if target == "people":
-        tarr = np.array(tarr > 0.01, dtype=np.uint8)
-        parr = np.array(parr > 0.01, dtype=np.uint8)
+        tarr_mask = tarr > 0.01
+        parr_mask = parr > 0.01
+        tarr = np.array(tarr_mask, dtype=np.uint8)
+        parr = np.array(parr_mask, dtype=np.uint8)
     else:
-        tarr = np.array(tarr >= 1.0, dtype=np.uint8)
-        parr = np.array(parr >= 1.0, dtype=np.uint8)
+        tarr_mask = tarr > 1.0
+        parr_mask = parr > 1.0
+        tarr = np.array(tarr_mask, dtype=np.uint8)
+        parr = np.array(parr_mask, dtype=np.uint8)
+
+    tarr_masked_pred = tarr[parr_mask].astype("float32")
+    parr_masked_pred = parr[parr_mask].astype("float32")
+    tarr_masked_truth = tarr[tarr_mask].astype("float32")
+    parr_masked_truth = parr[tarr_mask].astype("float32")
+
+    mae_pos = round_to_decimals(mean_absolute_error(tarr_masked_pred, parr_masked_pred))
+    mse_pos = round_to_decimals(mean_squared_error(tarr_masked_pred, parr_masked_pred))
+    rsme_pos = round_to_decimals(
+        mean_squared_error(tarr_masked_pred, parr_masked_pred, squared=False)
+    )
+    tpe_pos = round_to_percent(
+        (
+            (np.sum(parr_masked_pred) - np.sum(tarr_masked_pred))
+            / np.sum(tarr_masked_pred)
+        )
+        * 100
+    )
+
+    mae_neg = round_to_decimals(
+        mean_absolute_error(tarr_masked_truth, parr_masked_truth)
+    )
+    mse_neg = round_to_decimals(
+        mean_squared_error(tarr_masked_truth, parr_masked_truth)
+    )
+    rsme_neg = round_to_decimals(
+        mean_squared_error(tarr_masked_truth, parr_masked_truth, squared=False)
+    )
+    tpe_neg = round_to_percent(
+        (
+            (np.sum(parr_masked_truth) - np.sum(tarr_masked_truth))
+            / np.sum(tarr_masked_truth)
+        )
+        * 100
+    )
 
     acc = round_to_decimals(accuracy_score(tarr, parr))
     bacc = round_to_decimals(balanced_accuracy_score(tarr, parr))
@@ -84,67 +128,48 @@ def metrics(truth, pred, name, resample=False, target=None):
 
     adjust_name = name.ljust(10, " ")
 
-    print(f"{adjust_name} (reg) - MAE: {mae}, MSE: {mse}, TPE: {tpe}")
     print(
-        f"{adjust_name} (bin) - ACC: {acc}, BACC: {bacc}, PREC: {prec}, REC: {rec}, F1: {f1}"
+        f"{adjust_name} (regresion) - MAE: {mae}, MSE: {mse}, RMSE: {rsme}, TPE: {tpe}"
+    )
+    print(
+        f"{adjust_name} (reg_pred)  - MAE: {mae_pos}, MSE: {mse_pos}, RMSE: {rsme_pos}, TPE: {tpe_pos}"
+    )
+    print(
+        f"{adjust_name} (reg_true)  - MAE: {mae_neg}, MSE: {mse_neg}, RMSE: {rsme_neg}, TPE: {tpe_neg}"
+    )
+    print(
+        f"{adjust_name} (binary)    - ACC: {acc}, BACC: {bacc}, PREC: {prec}, REC: {rec}, F1: {f1}\n"
     )
 
 
-base = "C:/Users/caspe/Desktop/paper_2_Structural_Volume/data/"
-folder = base + "predictions/"
-
+folder = "C:/Users/caspe/Desktop/test_area/"
 target = "area"
 resample = False
 
-truth_aarhus = folder + f"aarhus_label_{target}.tif"
-truth_holsterbro = folder + f"holsterbro_label_{target}.tif"
-truth_samsoe = folder + f"samsoe_label_{target}.tif"
+truth_11 = folder + "11aa_label_area.tif"
+truth_12 = folder + "12aa_label_area.tif"
 
-pred_aarhus = folder + f"aarhus_prediction_{target}.tif"
-pred_holsterbro = folder + f"holsterbro_prediction_{target}.tif"
-pred_samsoe = folder + f"samsoe_prediction_{target}.tif"
+pred_11 = folder + "11aa_prediction_area.tif"
+pred_12 = folder + "12aa_prediction_area.tif"
 
-metrics(truth_aarhus, pred_aarhus, "Aarhus", resample=resample, target=target)
-metrics(
-    truth_holsterbro, pred_holsterbro, "Holsterbro", resample=resample, target=target
-)
-metrics(truth_samsoe, pred_samsoe, "Samsoe", resample=resample, target=target)
+
+if resample:
+    print("Pixel_size = 100")
+else:
+    print("Pixel_size = 10")
+
+metrics(truth_11, pred_11, "Site 11", resample=resample, target=target)
+metrics(truth_12, pred_12, "Site 12", resample=resample, target=target)
 metrics(
     [
-        truth_aarhus,
-        truth_holsterbro,
-        truth_samsoe,
+        truth_11,
+        truth_12,
     ],
     [
-        pred_aarhus,
-        pred_holsterbro,
-        pred_samsoe,
+        pred_11,
+        pred_12,
     ],
     "All",
     resample=resample,
     target=target,
 )
-
-if target == "area":
-    print("")
-    truth_odense = folder + f"odense_label_{target}.tif"
-    truth_bornholm = folder + f"bornholm_label_{target}.tif"
-
-    pred_odense = folder + f"odense_prediction_{target}.tif"
-    pred_bornholm = folder + f"bornholm_prediction_{target}.tif"
-
-    metrics(truth_odense, pred_odense, "Odense", resample=resample, target=target)
-    metrics(truth_bornholm, pred_bornholm, "Bornholm", resample=resample, target=target)
-    metrics(
-        [
-            truth_odense,
-            truth_bornholm,
-        ],
-        [
-            pred_odense,
-            pred_bornholm,
-        ],
-        "All",
-        resample=resample,
-        target=target,
-    )
