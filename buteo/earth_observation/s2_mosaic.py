@@ -475,6 +475,7 @@ def join_s2_tiles(
     pixel_height=None,
     bands_to_process=None,
     projection_to_match=25832,
+    clean=False,
 ):
     bands = (
         [
@@ -518,11 +519,12 @@ def join_s2_tiles(
 
         created.append(output)
 
-    tmp_files = glob(tmp_dir + "*.tif")
-    for f in tmp_files:
-        try:
-            os.remove(f)
-        except:
-            pass
+    if clean:
+        tmp_files = glob(tmp_dir + "*.tif")
+        for f in tmp_files:
+            try:
+                os.remove(f)
+            except:
+                pass
 
     return created

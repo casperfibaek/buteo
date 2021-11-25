@@ -258,6 +258,7 @@ def mosaic_s1_old(
     prefix="",
     postfix="",
     high_memory=True,
+    clean=False,
 ):
     start = time()
 
@@ -523,7 +524,7 @@ def mosaic_s1_old(
 
         created_tiles.append(tile_path)
 
-        if not high_memory:
+        if not high_memory and clean:
             tmp_files = glob(tmp_folder + "*.tif")
             for f in tmp_files:
                 try:
