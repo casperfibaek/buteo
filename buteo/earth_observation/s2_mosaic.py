@@ -1,5 +1,7 @@
 import sys
 
+from buteo.raster.reproject import reproject_raster
+
 sys.path.append("../../")
 
 import os
@@ -498,8 +500,16 @@ def join_s2_tiles(
     for band in bands:
         images = glob(mosaic_tile_folder + f"*_{band}.tif")
 
-        reprojected = match_projections(
-            images, projection_to_match, tmp_dir, dst_nodata=nodata_value
+        # reprojected = match_projections(
+        #     images, projection_to_match, tmp_dir, dst_nodata=nodata_value
+        # )
+
+        reprojected = reproject_raster(
+            images,
+            projection_to_match,
+            tmp_dir,
+            copy_if_already_correct=False,
+            dst_nodata=nodata_value,
         )
 
         if clip_geom is not None:
