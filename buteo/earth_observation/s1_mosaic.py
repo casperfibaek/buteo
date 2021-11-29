@@ -22,6 +22,7 @@ from time import time
 import numpy as np
 import os
 import datetime
+from uuid import uuid4
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
@@ -117,6 +118,99 @@ def name_to_date(path):
     )
 
 
+def process_aligned(
+    aligned_rasters, out_path, folder_tmp, chunks, master_raster, nodata_value
+):
+    kernel_size = 3
+
+    _kernel, offsets, weights = create_kernel(
+        (kernel_size, kernel_size, len(aligned_rasters)),
+        distance_calc="gaussian",
+        sigma=1,
+        spherical=True,
+        radius_method="ellipsoid",
+        offsets=True,
+        edge_weights=True,
+        normalised=True,
+        remove_zero_weights=True,
+    )
+
+    arr_aligned = raster_to_array(aligned_rasters)
+
+    if not rasters_are_aligned(aligned_rasters):
+        raise Exception("Rasters not aligned")
+
+    if chunks > 1:
+        chunks_list = []
+        print("Chunking rasters")
+
+        for chunk in range(chunks):
+            print(f"Chunk {chunk + 1} of {chunks}")
+            if chunk == 0:
+                chunk_start = 0
+            else:
+                chunk_start = chunk * arr_aligned.shape[0] // chunks
+
+            if chunk == chunks - 1:
+                chunk_end = arr_aligned.shape[0]
+            else:
+                chunk_end = (chunk + 1) * arr_aligned.shape[0] // chunks
+
+            arr_chunk = arr_aligned[chunk_start:chunk_end]
+
+            arr_collaped = s1_collapse(
+                arr_chunk,
+                offsets,
+                weights,
+                weighted=True,
+                nodata_value=nodata_value,
+                nodata=True,
+            )
+
+            chunk_path = folder_tmp + f"{uuid4()}_chunk_{chunk}.npy"
+            chunks_list.append(chunk_path)
+
+            np.save(chunk_path, arr_collaped)
+
+            arr_chunk = None
+            arr_collaped = None
+
+        print("Merging Chunks")
+        arr_aligned = None
+
+        merged = []
+        for chunk in chunks_list:
+            merged.append(np.load(chunk))
+
+        print("Writing raster.")
+        return array_to_raster(
+            np.concatenate(merged),
+            master_raster,
+            out_path=out_path,
+        )
+
+    else:
+
+        print("Collapsing rasters")
+        arr_collapsed = s1_collapse(
+            arr_aligned,
+            offsets,
+            weights,
+            weighted=True,
+            nodata_value=nodata_value,
+            nodata=True,
+        )
+
+        arr_aligned = None
+
+        print("Writing raster.")
+        return array_to_raster(
+            arr_collapsed,
+            master_raster,
+            out_path=out_path,
+        )
+
+
 def mosaic_s1(
     vv_paths,
     vh_paths,
@@ -124,6 +218,7 @@ def mosaic_s1(
     folder_tmp,
     master_raster,
     nodata_value=-9999.0,
+    chunks=1,
 ):
     preprocessed = vv_paths + vh_paths
 
@@ -151,96 +246,41 @@ def mosaic_s1(
         progress(idx + 1, len(preprocessed), "Clipping Rasters")
         gdal.Unlink(reprojected)
 
-    kernel_size = 3
-    outpath_vv = None
-    outpath_vh = None
+    print("Aligning VV rasters to master")
+    arr_vv_aligned_rasters = align_rasters(
+        clipped_vv,
+        folder_tmp,
+        postfix="_aligned",
+        master=master_raster,
+    )
 
-    if len(vv_paths) > 0:
-        _kernel, offsets, weights = create_kernel(
-            (kernel_size, kernel_size, len(vv_paths)),
-            distance_calc="gaussian",
-            sigma=1,
-            spherical=True,
-            radius_method="ellipsoid",
-            offsets=True,
-            edge_weights=True,
-            normalised=True,
-            remove_zero_weights=True,
-        )
+    print("Aligning VH rasters to master")
+    arr_vh_aligned_rasters = align_rasters(
+        clipped_vh,
+        folder_tmp,
+        postfix="_aligned",
+        master=master_raster,
+    )
 
-        print("Aligning VV rasters to master")
-        arr_vv_aligned_rasters = align_rasters(
-            clipped_vv,
-            folder_tmp,
-            postfix="_aligned",
-            master=master_raster,
-        )
-        arr_vv_aligned = raster_to_array(arr_vv_aligned_rasters)
+    print("Processing VV")
+    outpath_vv = process_aligned(
+        arr_vv_aligned_rasters,
+        folder_out + "VV_10m.tif",
+        folder_tmp,
+        chunks,
+        master_raster,
+        nodata_value,
+    )
 
-        if not rasters_are_aligned(arr_vv_aligned_rasters):
-            raise Exception("Rasters not aligned")
-
-        print("Collapsing VV rasters")
-        arr_vv_collapsed = s1_collapse(
-            arr_vv_aligned,
-            offsets,
-            weights,
-            weighted=True,
-            nodata_value=nodata_value,
-            nodata=True,
-        )
-
-        arr_vv_aligned = None
-
-        print("Writing VV raster.")
-        outpath_vv = array_to_raster(
-            arr_vv_collapsed,
-            master_raster,
-            out_path=folder_out + "VV_10m.tif",
-        )
-
-    if len(vh_paths) > 0:
-        _kernel, offsets, weights = create_kernel(
-            (kernel_size, kernel_size, len(vh_paths)),
-            distance_calc="gaussian",
-            sigma=1,
-            spherical=True,
-            radius_method="ellipsoid",
-            offsets=True,
-            edge_weights=True,
-            normalised=True,
-            remove_zero_weights=True,
-        )
-        print("Aligning VH rasters to master")
-        arr_vh_aligned_rasters = align_rasters(
-            clipped_vh,
-            folder_tmp,
-            postfix="_aligned",
-            master=master_raster,
-        )
-        arr_vh_aligned = raster_to_array(arr_vh_aligned_rasters)
-
-        if not rasters_are_aligned(arr_vh_aligned_rasters):
-            raise Exception("Rasters not aligned")
-
-        print("Collapsing VH rasters")
-        arr_vh_collapsed = s1_collapse(
-            arr_vh_aligned,
-            offsets,
-            weights,
-            weighted=True,
-            nodata_value=nodata_value,
-            nodata=True,
-        )
-
-        arr_vh_aligned = None
-
-        print("Writing VH raster.")
-        outpath_vh = array_to_raster(
-            arr_vh_collapsed,
-            master_raster,
-            out_path=folder_out + "VH_10m.tif",
-        )
+    print("Processing VH")
+    outpath_vh = process_aligned(
+        arr_vh_aligned_rasters,
+        folder_out + "VH_10m.tif",
+        folder_tmp,
+        chunks,
+        master_raster,
+        nodata_value,
+    )
 
     return (outpath_vv, outpath_vh)
 
