@@ -132,8 +132,11 @@ def mosaic_s1(
     for idx, img in enumerate(preprocessed):
         progress(idx, len(preprocessed), "Clipping Rasters")
         name = os.path.splitext(os.path.basename(img))[0] + "_clipped.tif"
+        reprojected = reproject_raster(
+            img, master_raster, copy_if_already_correct=False
+        )
         clipped_raster = clip_raster(
-            reproject_raster(img, master_raster, copy_if_already_correct=False),
+            reprojected,
             master_raster,
             out_path=folder_tmp + name,
             postfix="",
@@ -146,6 +149,7 @@ def mosaic_s1(
             clipped_vh.append(clipped_raster)
 
         progress(idx + 1, len(preprocessed), "Clipping Rasters")
+        gdal.Unlink(reprojected)
 
     kernel_size = 3
     outpath_vv = None
@@ -185,6 +189,8 @@ def mosaic_s1(
             nodata_value=nodata_value,
             nodata=True,
         )
+
+        arr_vv_aligned = None
 
         print("Writing VV raster.")
         outpath_vv = array_to_raster(
@@ -226,6 +232,8 @@ def mosaic_s1(
             nodata_value=nodata_value,
             nodata=True,
         )
+
+        arr_vh_aligned = None
 
         print("Writing VH raster.")
         outpath_vh = array_to_raster(
@@ -390,7 +398,7 @@ def mosaic_s1_old(
             continue
 
         overlapping_images = []
-        clipped_images_holder = []
+
         clipped_images = []
         for meta in used_metadatas:
             image_extent = meta["extent_ogr_latlng"]
