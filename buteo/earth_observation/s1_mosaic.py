@@ -9,6 +9,7 @@ from buteo.raster.io import (
     internal_raster_to_metadata,
     raster_to_array,
     array_to_raster,
+    rasters_intersect,
 )
 from buteo.vector.io import internal_vector_to_metadata
 from buteo.gdal_utils import parse_projection, ogr_bbox_intersects
@@ -230,6 +231,14 @@ def mosaic_s1(
         reprojected = reproject_raster(
             img, master_raster, copy_if_already_correct=False
         )
+
+        if not rasters_intersect(reprojected, master_raster):
+            print("")
+            print(f"{img} does not intersect {master_raster}, continuing\n")
+            progress(idx + 1, len(preprocessed), "Clipping Rasters")
+            gdal.Unlink(reprojected)
+            continue
+
         clipped_raster = clip_raster(
             reprojected,
             master_raster,
@@ -246,41 +255,46 @@ def mosaic_s1(
         progress(idx + 1, len(preprocessed), "Clipping Rasters")
         gdal.Unlink(reprojected)
 
-    print("Aligning VV rasters to master")
-    arr_vv_aligned_rasters = align_rasters(
-        clipped_vv,
-        folder_tmp,
-        postfix="_aligned",
-        master=master_raster,
-    )
+    outpath_vv = None
+    outpath_vh = None
 
-    print("Aligning VH rasters to master")
-    arr_vh_aligned_rasters = align_rasters(
-        clipped_vh,
-        folder_tmp,
-        postfix="_aligned",
-        master=master_raster,
-    )
+    if len(clipped_vv) > 0:
+        print("Aligning VV rasters to master")
+        arr_vv_aligned_rasters = align_rasters(
+            clipped_vv,
+            folder_tmp,
+            postfix="_aligned",
+            master=master_raster,
+        )
 
-    print("Processing VV")
-    outpath_vv = process_aligned(
-        arr_vv_aligned_rasters,
-        folder_out + "VV_10m.tif",
-        folder_tmp,
-        chunks,
-        master_raster,
-        nodata_value,
-    )
+        print("Processing VV")
+        outpath_vv = process_aligned(
+            arr_vv_aligned_rasters,
+            folder_out + "VV_10m.tif",
+            folder_tmp,
+            chunks,
+            master_raster,
+            nodata_value,
+        )
 
-    print("Processing VH")
-    outpath_vh = process_aligned(
-        arr_vh_aligned_rasters,
-        folder_out + "VH_10m.tif",
-        folder_tmp,
-        chunks,
-        master_raster,
-        nodata_value,
-    )
+    if len(clipped_vh) > 0:
+        print("Aligning VH rasters to master")
+        arr_vh_aligned_rasters = align_rasters(
+            clipped_vh,
+            folder_tmp,
+            postfix="_aligned",
+            master=master_raster,
+        )
+
+        print("Processing VH")
+        outpath_vh = process_aligned(
+            arr_vh_aligned_rasters,
+            folder_out + "VH_10m.tif",
+            folder_tmp,
+            chunks,
+            master_raster,
+            nodata_value,
+        )
 
     return (outpath_vv, outpath_vh)
 

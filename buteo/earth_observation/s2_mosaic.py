@@ -500,10 +500,6 @@ def join_s2_tiles(
     for band in bands:
         images = glob(mosaic_tile_folder + f"*_{band}.tif")
 
-        # reprojected = match_projections(
-        #     images, projection_to_match, tmp_dir, dst_nodata=nodata_value
-        # )
-
         reprojected = reproject_raster(
             images,
             projection_to_match,
