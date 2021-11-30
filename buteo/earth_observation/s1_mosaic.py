@@ -51,7 +51,10 @@ def s1_collapse(
     z_adj = (arr.shape[2] - 1) // 2
 
     hood_size = len(offsets)
-    result = np.zeros(arr.shape[:2], dtype="float32")
+    if nodata:
+        result = np.full(arr.shape[:2], nodata_value, dtype="float32")
+    else:
+        result = np.zeros(arr.shape[:2], dtype="float32")
 
     for x in prange(arr.shape[0]):
         for y in range(arr.shape[1]):
@@ -91,7 +94,7 @@ def s1_collapse(
 
                 value = arr[offset_x, offset_y, offset_z]
 
-                if outside or (nodata and nodata_value == value):
+                if outside or (nodata and value == nodata_value):
                     normalise = True
                     hood_weights[n] = 0
                 else:
@@ -117,6 +120,30 @@ def name_to_date(path):
     return datetime.datetime.strptime(timetag, "%Y%m%dT%H%M%S").replace(
         tzinfo=datetime.timezone.utc
     )
+
+
+def sort_rasters(rasters):
+    by_date = sorted(rasters, key=name_to_date)
+    copy = list(range(len(rasters)))
+    midpoint = len(rasters) // 2
+    copy[midpoint] = by_date[0]
+
+    add = 1
+    left = True
+    for idx, raster in enumerate(by_date):
+        if idx == 0:
+            continue
+
+        if left:
+            copy[midpoint - add] = raster
+            left = False
+        else:
+            copy[midpoint + add] = raster
+            left = True
+
+            add += 1
+
+    return copy
 
 
 def process_aligned(
@@ -160,7 +187,7 @@ def process_aligned(
 
             arr_chunk = arr_aligned[chunk_start:chunk_end]
 
-            arr_collaped = s1_collapse(
+            arr_collapsed = s1_collapse(
                 arr_chunk,
                 offsets,
                 weights,
@@ -172,10 +199,10 @@ def process_aligned(
             chunk_path = folder_tmp + f"{uuid4()}_chunk_{chunk}.npy"
             chunks_list.append(chunk_path)
 
-            np.save(chunk_path, arr_collaped)
+            np.save(chunk_path, arr_collapsed)
 
             arr_chunk = None
-            arr_collaped = None
+            arr_collapsed = None
 
         print("Merging Chunks")
         arr_aligned = None
@@ -184,7 +211,9 @@ def process_aligned(
         for chunk in chunks_list:
             merged.append(np.load(chunk))
 
-        merged = np.ma.concatenate(merged, axis=0)
+        merged = np.concatenate(merged)
+        merged = np.ma.masked_array(merged, mask=merged == nodata_value)
+        merged.fill_value = nodata_value
 
         print("Writing raster.")
         array_to_raster(
@@ -208,14 +237,21 @@ def process_aligned(
             nodata=True,
         )
 
+        arr_collapsed = np.ma.masked_array(
+            arr_collapsed, mask=arr_collapsed == nodata_value
+        )
+        arr_collapsed.fill_value = nodata_value
+
         arr_aligned = None
 
         print("Writing raster.")
-        return array_to_raster(
+        array_to_raster(
             arr_collapsed,
             master_raster,
             out_path=out_path,
         )
+
+        arr_collapsed = None
 
 
 def mosaic_s1(
@@ -235,7 +271,9 @@ def mosaic_s1(
         progress(idx, len(preprocessed), "Clipping Rasters")
         name = os.path.splitext(os.path.basename(img))[0] + "_clipped.tif"
         reprojected = reproject_raster(
-            img, master_raster, copy_if_already_correct=False
+            img,
+            master_raster,
+            copy_if_already_correct=False,
         )
 
         if not rasters_intersect(reprojected, master_raster):
@@ -303,3 +341,14 @@ def mosaic_s1(
         )
 
     return (outpath_vv, outpath_vh)
+
+
+s2_mosaic_b04 = "C:/Users/caspe/Desktop/test_area/S2_mosaic/B04_10m.tif"
+folder = "C:/Users/caspe/Desktop/test_area/tmp2/"
+vv_paths = sort_rasters(glob(folder + "*Gamma0_VV*.tif"))
+vh_paths = sort_rasters(glob(folder + "*Gamma0_VH*.tif"))
+
+out_dir = folder + "out/"
+tmp_dir = folder + "tmp/"
+
+mosaic_s1(vv_paths, vh_paths, out_dir, tmp_dir, s2_mosaic_b04, chunks=2)

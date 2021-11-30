@@ -66,8 +66,8 @@ for tile in project_tiles:
         onda_user,
         onda_pass,
         folder_s1_raw,
-        min_overlap=0.1,
         get_tile_geom_from_name(tile),
+        min_overlap=0.1,
         date=(project_start_s1, project_end_s1),
     )
 

@@ -711,7 +711,7 @@ def raster_to_array(
             if output_2d:
                 break
 
-    if output_2d:
+    if output_2d:       
         return np.dstack(layers)[:, :, 0]
 
     return np.dstack(layers)
