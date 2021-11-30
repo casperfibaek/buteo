@@ -700,10 +700,14 @@ def raster_to_array(
             else:
                 arr = band_ref.ReadAsArray()
 
-            if band_nodata_value is None and filled is False:
-                arr = np.ma.masked_invalid(arr)
-            elif filled is False:
-                arr = np.ma.masked_equal(arr, band_nodata_value)
+            if band_nodata_value is not None:
+                arr = np.ma.array(arr, mask=arr == band_nodata_value)
+                if filled:
+                    arr = arr.filled(band_nodata_value)
+                else:
+                    arr = np.ma.array(arr, mask=arr == band_nodata_value).filled(
+                        band_nodata_value
+                    )
 
             layers.append(arr)
 

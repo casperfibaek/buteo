@@ -1,6 +1,8 @@
 import sys
 import os
 
+from numpy import ModuleDeprecationWarning
+
 sys.path.append("../../")
 from buteo.earth_observation.s2_utils import (
     get_tiles_from_geom,
@@ -64,6 +66,7 @@ for tile in project_tiles:
         onda_user,
         onda_pass,
         folder_s1_raw,
+        min_overlap=0.1,
         get_tile_geom_from_name(tile),
         date=(project_start_s1, project_end_s1),
     )
@@ -81,7 +84,7 @@ for tile in project_tiles:
     mosaic_tile_s2(
         folder_tmp,
         tile,
-        folder_tmp,
+        folder_s2_mosaic,
         process_bands=[
             {"size": "10m", "band": "B02"},
             {"size": "10m", "band": "B03"},
@@ -104,7 +107,7 @@ for tile in project_tiles:
 # Merge the sentinel 2 mosaics 10m and 20m seperately
 join_s2_tiles(
     folder_tmp,
-    folder_s2_mosaic,
+    folder_raster,
     folder_tmp,
     harmonisation=True,
     pixel_height=10.0,
@@ -121,7 +124,7 @@ join_s2_tiles(
 
 join_s2_tiles(
     folder_tmp,
-    folder_s2_mosaic,
+    folder_raster,
     folder_tmp,
     harmonisation=True,
     pixel_height=20.0,
@@ -140,8 +143,8 @@ join_s2_tiles(
 
 delete_files_in_folder(folder_tmp)
 
-s2_mosaic_B12 = folder_s2_mosaic + "B12_20m.tif"
-s2_mosaic_B04 = folder_s2_mosaic + "B04_10m.tif"
+s2_mosaic_B12 = folder_raster + "B12_20m.tif"
+s2_mosaic_B04 = folder_raster + "B04_10m.tif"
 
 # Preprocess the sentinel 1 images
 zip_files_s1 = glob(folder_s1_raw + "*.zip")
@@ -149,7 +152,7 @@ for idx, image in enumerate(zip_files_s1):
     try:
         backscatter(
             image,
-            folder_tmp,
+            folder_s1_mosaic,
             folder_tmp,
             extent=s2_mosaic_B12,
             epsg=project_epsg,
@@ -162,9 +165,9 @@ for idx, image in enumerate(zip_files_s1):
 
 # Mosaic the sentinel 1 images
 mosaic_s1(
-    glob(folder_tmp + "*_Gamma0_VV.tif"),
-    glob(folder_tmp + "*_Gamma0_VH.tif"),
-    folder_s1_mosaic,
+    glob(folder_s1_mosaic + "*_Gamma0_VV.tif"),
+    glob(folder_s1_mosaic + "*_Gamma0_VH.tif"),
+    folder_raster,
     folder_tmp,
     s2_mosaic_B04,
 )
