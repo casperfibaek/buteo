@@ -343,12 +343,12 @@ def mosaic_s1(
     return (outpath_vv, outpath_vh)
 
 
-s2_mosaic_b04 = "C:/Users/caspe/Desktop/test_area/S2_mosaic/B04_10m.tif"
-folder = "C:/Users/caspe/Desktop/test_area/tmp2/"
-vv_paths = sort_rasters(glob(folder + "*Gamma0_VV*.tif"))
-vh_paths = sort_rasters(glob(folder + "*Gamma0_VH*.tif"))
+# s2_mosaic_b04 = "C:/Users/caspe/Desktop/test_area/S2_mosaic/B04_10m.tif"
+# folder = "C:/Users/caspe/Desktop/test_area/tmp2/"
+# vv_paths = sort_rasters(glob(folder + "*Gamma0_VV*.tif"))
+# vh_paths = sort_rasters(glob(folder + "*Gamma0_VH*.tif"))
 
-out_dir = folder + "out/"
-tmp_dir = folder + "tmp/"
+# out_dir = folder + "out/"
+# tmp_dir = folder + "tmp/"
 
-mosaic_s1(vv_paths, vh_paths, out_dir, tmp_dir, s2_mosaic_b04, chunks=2)
+# mosaic_s1(vv_paths, vh_paths, out_dir, tmp_dir, s2_mosaic_b04, chunks=2)
