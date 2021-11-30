@@ -3,23 +3,18 @@ import sys
 sys.path.append("..")
 sys.path.append("../../")
 
-from glob import glob
 from numba import jit, prange
 from buteo.raster.io import (
-    internal_raster_to_metadata,
     raster_to_array,
     array_to_raster,
     rasters_intersect,
 )
-from buteo.vector.io import internal_vector_to_metadata
-from buteo.gdal_utils import parse_projection, ogr_bbox_intersects
 from buteo.raster.align import rasters_are_aligned, align_rasters
 from buteo.raster.clip import clip_raster
 from buteo.raster.reproject import reproject_raster
 from buteo.filters.kernel_generator import create_kernel
-from buteo.utils import timing, progress
-from osgeo import gdal, osr
-from time import time
+from buteo.utils import progress
+from osgeo import gdal
 import numpy as np
 import os
 import datetime
@@ -225,33 +220,33 @@ def process_aligned(
         merged = None
         return out_path
 
-    else:
+    print("Collapsing rasters")
+    arr_collapsed = s1_collapse(
+        arr_aligned,
+        offsets,
+        weights,
+        weighted=True,
+        nodata_value=nodata_value,
+        nodata=True,
+    )
 
-        print("Collapsing rasters")
-        arr_collapsed = s1_collapse(
-            arr_aligned,
-            offsets,
-            weights,
-            weighted=True,
-            nodata_value=nodata_value,
-            nodata=True,
-        )
+    arr_collapsed = np.ma.masked_array(
+        arr_collapsed, mask=arr_collapsed == nodata_value
+    )
+    arr_collapsed.fill_value = nodata_value
 
-        arr_collapsed = np.ma.masked_array(
-            arr_collapsed, mask=arr_collapsed == nodata_value
-        )
-        arr_collapsed.fill_value = nodata_value
+    arr_aligned = None
 
-        arr_aligned = None
+    print("Writing raster.")
+    array_to_raster(
+        arr_collapsed,
+        master_raster,
+        out_path=out_path,
+    )
 
-        print("Writing raster.")
-        array_to_raster(
-            arr_collapsed,
-            master_raster,
-            out_path=out_path,
-        )
+    arr_collapsed = None
 
-        arr_collapsed = None
+    return out_path
 
 
 def mosaic_s1(
