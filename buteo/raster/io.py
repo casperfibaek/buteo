@@ -702,12 +702,9 @@ def raster_to_array(
 
             if band_nodata_value is not None:
                 arr = np.ma.array(arr, mask=arr == band_nodata_value)
+
                 if filled:
                     arr = arr.filled(band_nodata_value)
-                else:
-                    arr = np.ma.array(arr, mask=arr == band_nodata_value).filled(
-                        band_nodata_value
-                    )
 
             layers.append(arr)
 
