@@ -1,4 +1,3 @@
-from buteo.project_types import Number
 import sys
 
 sys.path.append("../../")
@@ -7,6 +6,7 @@ from typing import Union, List, Optional, Sequence
 from osgeo import gdal
 from buteo.project_types import Metadata_raster
 from buteo.utils import remove_if_overwrite, type_check
+from buteo.project_types import Number
 from buteo.gdal_utils import (
     is_raster,
     gdal_nodata_value_from_type,

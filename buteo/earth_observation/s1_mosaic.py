@@ -12,6 +12,7 @@ from buteo.raster.io import (
 from buteo.raster.align import rasters_are_aligned, align_rasters
 from buteo.raster.clip import clip_raster
 from buteo.raster.reproject import reproject_raster
+from buteo.raster.proximity import calc_proximity
 from buteo.filters.kernel_generator import create_kernel
 from buteo.utils import progress
 from osgeo import gdal
@@ -36,6 +37,7 @@ def s1_collapse(
     arr,
     offsets,
     weights,
+    feather_weights,
     quantile=0.5,
     nodata=True,
     nodata_value=-9999.0,
@@ -57,7 +59,8 @@ def s1_collapse(
             hood_values = np.zeros(hood_size, dtype="float32")
             hood_weights = np.zeros(hood_size, dtype="float32")
             weight_sum = np.array([0.0], dtype="float32")
-            normalise = False
+            # normalise = False
+            normalise = True
 
             for n in range(hood_size):
                 offset_x = x + offsets[n][0]
@@ -94,7 +97,7 @@ def s1_collapse(
                     hood_weights[n] = 0
                 else:
                     hood_values[n] = value
-                    weight = weights[n]
+                    weight = weights[n] * feather_weights[offset_x, offset_y, offset_z]
 
                     hood_weights[n] = weight
                     weight_sum[0] += weight
@@ -102,10 +105,11 @@ def s1_collapse(
             if normalise:
                 hood_weights = np.divide(hood_weights, weight_sum[0])
 
-            if weighted:
-                result[x, y] = hood_quantile(hood_values, hood_weights, quantile)
-            else:
-                result[x, y] = np.median(hood_values[np.nonzero(hood_weights)])
+            if weight_sum[0] > 0:
+                if weighted:
+                    result[x, y] = hood_quantile(hood_values, hood_weights, quantile)
+                else:
+                    result[x, y] = np.median(hood_values[np.nonzero(hood_weights)])
 
     return result
 
@@ -142,7 +146,13 @@ def sort_rasters(rasters):
 
 
 def process_aligned(
-    aligned_rasters, out_path, folder_tmp, chunks, master_raster, nodata_value
+    aligned_rasters,
+    out_path,
+    folder_tmp,
+    chunks,
+    master_raster,
+    nodata_value,
+    feather_weights=None,
 ):
     kernel_size = 3
 
@@ -160,6 +170,9 @@ def process_aligned(
 
     arr_aligned = raster_to_array(aligned_rasters)
     arr_aligned.mask = arr_aligned == nodata_value
+
+    if feather_weights is not None:
+        feather_weights_arr = raster_to_array(feather_weights)
 
     if not rasters_are_aligned(aligned_rasters):
         raise Exception("Rasters not aligned")
@@ -182,10 +195,16 @@ def process_aligned(
 
             arr_chunk = arr_aligned[chunk_start:chunk_end]
 
+            if feather_weights is not None:
+                weights_chunk = feather_weights_arr[chunk_start:chunk_end]
+            else:
+                weights_chunk = np.ones_like(arr_chunk)
+
             arr_collapsed = s1_collapse(
                 arr_chunk,
                 offsets,
                 weights,
+                weights_chunk,
                 weighted=True,
                 nodata_value=nodata_value,
                 nodata=True,
@@ -220,11 +239,17 @@ def process_aligned(
         merged = None
         return out_path
 
+    if feather_weights is not None:
+        weights_borders = feather_weights
+    else:
+        weights_borders = np.ones_like(arr_aligned)
+
     print("Collapsing rasters")
     arr_collapsed = s1_collapse(
         arr_aligned,
         offsets,
         weights,
+        weights_borders,
         weighted=True,
         nodata_value=nodata_value,
         nodata=True,
@@ -257,54 +282,80 @@ def mosaic_s1(
     master_raster,
     nodata_value=-9999.0,
     chunks=1,
+    feather_borders=True,
+    skip_completed=True,
 ):
     preprocessed = vv_paths + vh_paths
 
     clipped_vv = []
     clipped_vh = []
+
     for idx, img in enumerate(preprocessed):
         progress(idx, len(preprocessed), "Clipping Rasters")
         name = os.path.splitext(os.path.basename(img))[0] + "_clipped.tif"
-        reprojected = reproject_raster(
-            img,
-            master_raster,
-            copy_if_already_correct=False,
-        )
+        out_name_clip = folder_tmp + name
 
-        if not rasters_intersect(reprojected, master_raster):
-            print("")
-            print(f"{img} does not intersect {master_raster}, continuing\n")
-            progress(idx + 1, len(preprocessed), "Clipping Rasters")
-            gdal.Unlink(reprojected)
-            continue
+        if skip_completed and os.path.exists(out_name_clip):
+            clipped_raster = folder_tmp + name
+        else:
+            reprojected = reproject_raster(
+                img,
+                master_raster,
+                copy_if_already_correct=False,
+            )
 
-        clipped_raster = clip_raster(
-            reprojected,
-            master_raster,
-            out_path=folder_tmp + name,
-            postfix="",
-            adjust_bbox=True,
-            all_touch=False,
-        )
+            if not rasters_intersect(reprojected, master_raster):
+                print("")
+                print(f"{img} does not intersect {master_raster}, continuing\n")
+                progress(idx + 1, len(preprocessed), "Clipping Rasters")
+                gdal.Unlink(reprojected)
+                continue
+
+            clipped_raster = clip_raster(
+                reprojected,
+                master_raster,
+                out_path=folder_tmp + name,
+                postfix="",
+                adjust_bbox=True,
+                all_touch=False,
+            )
+
+        gdal.Unlink(reprojected)
+
         if "Gamma0_VV" in name:
             clipped_vv.append(clipped_raster)
         else:
             clipped_vh.append(clipped_raster)
 
         progress(idx + 1, len(preprocessed), "Clipping Rasters")
-        gdal.Unlink(reprojected)
 
     outpath_vv = None
     outpath_vh = None
+    arr_vv_aligned_rasters_feather = None
+    arr_vh_aligned_rasters_feather = None
 
     if len(clipped_vv) > 0:
         print("Aligning VV rasters to master")
+
         arr_vv_aligned_rasters = align_rasters(
             clipped_vv,
-            folder_tmp,
-            postfix="_aligned",
+            out_path=folder_tmp,
             master=master_raster,
+            skip_existing=skip_completed,
         )
+
+        if feather_borders:
+            print("Feathering VV rasters")
+            arr_vv_aligned_rasters_feather = calc_proximity(
+                arr_vv_aligned_rasters,
+                target_value=-9999.0,
+                out_path=folder_tmp,
+                max_dist=5000,
+                invert=False,
+                weighted=True,
+                add_border=True,
+                skip_existing=skip_completed,
+            )
 
         print("Processing VV")
         outpath_vv = process_aligned(
@@ -314,6 +365,7 @@ def mosaic_s1(
             chunks,
             master_raster,
             nodata_value,
+            feather_weights=arr_vv_aligned_rasters_feather,
         )
 
     if len(clipped_vh) > 0:
@@ -321,9 +373,20 @@ def mosaic_s1(
         arr_vh_aligned_rasters = align_rasters(
             clipped_vh,
             folder_tmp,
-            postfix="_aligned",
             master=master_raster,
         )
+
+        if feather_borders:
+            print("Feathering VH rasters")
+            arr_vh_aligned_rasters_feather = calc_proximity(
+                arr_vh_aligned_rasters,
+                target_value=-9999.0,
+                out_path=folder_tmp,
+                max_dist=5000,
+                invert=False,
+                weighted=True,
+                add_border=True,
+            )
 
         print("Processing VH")
         outpath_vh = process_aligned(
@@ -333,10 +396,13 @@ def mosaic_s1(
             chunks,
             master_raster,
             nodata_value,
+            feather_weights=arr_vh_aligned_rasters_feather,
         )
 
     return (outpath_vv, outpath_vh)
 
+
+# from glob import glob
 
 # s2_mosaic_b04 = "C:/Users/caspe/Desktop/test_area/S2_mosaic/B04_10m.tif"
 # folder = "C:/Users/caspe/Desktop/test_area/tmp2/"
@@ -346,4 +412,4 @@ def mosaic_s1(
 # out_dir = folder + "out/"
 # tmp_dir = folder + "tmp/"
 
-# mosaic_s1(vv_paths, vh_paths, out_dir, tmp_dir, s2_mosaic_b04, chunks=2)
+# mosaic_s1([], vh_paths, out_dir, tmp_dir, s2_mosaic_b04, chunks=2)

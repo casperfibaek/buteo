@@ -86,6 +86,7 @@ def align_rasters(
     prefix: str = "",
     postfix: str = "_aligned",
     ram=8000,
+    skip_existing=False,
 ) -> List[str]:
     type_check(rasters, [list], "rasters")
     type_check(out_path, [list, str], "out_path", allow_none=True)
@@ -357,6 +358,10 @@ def align_rasters(
 
         out_name = path_list[index]
         out_format = path_to_driver(out_name)
+
+        if skip_existing and os.path.exists(out_name):
+            return_list.append(out_name)
+            continue
 
         # Handle nodata.
         out_src_nodata = None

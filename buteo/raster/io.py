@@ -507,7 +507,7 @@ def rasters_are_aligned(
 
 def internal_raster_to_memory(
     raster: Union[str, gdal.Dataset],
-    memory_path: Optional[Union[str]] = None,
+    memory_path: Optional[str] = None,
     copy_if_already_in_memory: bool = False,
 ) -> str:
     """OBS: INTERNAL: Single output.
@@ -711,8 +711,14 @@ def raster_to_array(
             if output_2d:
                 break
 
-    if output_2d:       
+    if output_2d:
+        if band_nodata_value is not None and filled is False:
+            return np.ma.dstack(layers)[:, :, 0]
+
         return np.dstack(layers)[:, :, 0]
+
+    if band_nodata_value is not None and filled is False:
+        return np.ma.dstack(layers)
 
     return np.dstack(layers)
 
