@@ -338,14 +338,15 @@ def mosaic_s1(
                 all_touch=False,
             )
 
+            gdal.Unlink(reprojected)
+
         clipped.append(clipped_raster)
 
-        gdal.Unlink(reprojected)
         progress(idx + 1, len(preprocessed), "Clipping Rasters")
 
     arr_aligned_rasters_feather = None
 
-    print("Aligning VV rasters to master")
+    print("Aligning rasters to master")
 
     arr_aligned_rasters = align_rasters(
         clipped,
@@ -355,7 +356,7 @@ def mosaic_s1(
     )
 
     if feather_borders:
-        print("Feathering VV rasters")
+        print("Feathering rasters")
         arr_aligned_rasters_feather = calc_proximity(
             arr_aligned_rasters,
             target_value=-9999.0,
@@ -367,7 +368,7 @@ def mosaic_s1(
             skip_existing=skip_completed,
         )
 
-    print("Processing VV")
+    print("Processing")
     outpath = process_aligned(
         arr_aligned_rasters,
         out_path,
