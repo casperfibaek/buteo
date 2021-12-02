@@ -381,17 +381,16 @@ def mosaic_s1(
     return outpath
 
 
-from glob import glob
+# from glob import glob
 
 
-folder = "C:/Users/caspe/Desktop/test_area/tmp2/"
-# master = folder + "test_10m_v3.tif"
-master = "C:/Users/caspe/Desktop/test_area/S2_mosaic/B04_10m.tif"
-vv_paths = sort_rasters(glob(folder + "*Gamma0_VV*.tif"))
-vh_paths = sort_rasters(glob(folder + "*Gamma0_VH*.tif"))
+# folder = "C:/Users/caspe/Desktop/test_area/tmp2/"
+# master = "C:/Users/caspe/Desktop/test_area/S2_mosaic/B04_10m.tif"
+# vv_paths = sort_rasters(glob(folder + "*Gamma0_VV*.tif"))
+# vh_paths = sort_rasters(glob(folder + "*Gamma0_VH*.tif"))
 
-out_dir = folder + "out/"
-tmp_dir = folder + "tmp/"
+# out_dir = folder + "out/"
+# tmp_dir = folder + "tmp/"
 
 # mosaic_s1(
 #     vv_paths,
@@ -402,11 +401,11 @@ tmp_dir = folder + "tmp/"
 #     skip_completed=True,
 # )
 
-mosaic_s1(
-    vh_paths,
-    out_dir + "VH_10m.tif",
-    tmp_dir,
-    master,
-    chunks=5,
-    skip_completed=True,
-)
+# mosaic_s1(
+#     vh_paths,
+#     out_dir + "VH_10m.tif",
+#     tmp_dir,
+#     master,
+#     chunks=5,
+#     skip_completed=True,
+# )
