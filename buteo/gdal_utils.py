@@ -335,15 +335,15 @@ def numpy_fill_values(datatype):
         "uint16": 65535,
         "uint32": 4294967295,
         "uint64": 18446744073709551615,
-        "float16": -999999.9,
-        "float32": -999999.9,
-        "float64": -999999.9,
+        "float16": -9999.0,
+        "float32": -9999.0,
+        "float64": -9999.0,
     }
 
     if datatype in datatypes:
         return datatypes[datatype]
     else:
-        return 0
+        return -9999.0
 
 
 def gdal_nodata_value_from_type(gdal_datatype_raw):

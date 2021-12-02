@@ -19,6 +19,7 @@ from buteo.utils import (
     remove_if_overwrite,
     type_check,
     folder_exists,
+    list_is_all_the_same,
 )
 from buteo.gdal_utils import (
     advanced_extents,
@@ -30,6 +31,7 @@ from buteo.gdal_utils import (
     to_band_list,
     translate_resample_method,
     translate_datatypes,
+    numpy_fill_values,
 )
 
 
@@ -637,6 +639,7 @@ def raster_to_array(
         )
 
     layers = []
+    nodata_values = []
     for in_raster in internal_rasters:
         ref = open_raster(in_raster)
 
@@ -657,6 +660,8 @@ def raster_to_array(
         for band in internal_bands:
             band_ref = ref.GetRasterBand(band + 1)
             band_nodata_value = band_ref.GetNoDataValue()
+
+            nodata_values.append(band_nodata_value)
 
             if extent_pixels is not None:
                 arr = band_ref.ReadAsArray(
@@ -713,12 +718,27 @@ def raster_to_array(
 
     if output_2d:
         if band_nodata_value is not None and filled is False:
-            return np.ma.dstack(layers)[:, :, 0]
+            stacked = np.ma.dstack(layers)[:, :, 0]
+
+            if list_is_all_the_same(nodata_values):
+                stacked.fill_value = nodata_values[0]
+            else:
+                stacked.fill_value = numpy_fill_values(stacked.dtype)
+
+            return stacked
 
         return np.dstack(layers)[:, :, 0]
 
     if band_nodata_value is not None and filled is False:
-        return np.ma.dstack(layers)
+        stacked = np.ma.dstack(layers)
+        stacked.fill_value = numpy_fill_values(stacked.dtype)
+
+        if list_is_all_the_same(nodata_values):
+            stacked.fill_value = nodata_values[0]
+        else:
+            stacked.fill_value = numpy_fill_values(stacked.dtype)
+
+        return stacked
 
     return np.dstack(layers)
 
@@ -1214,7 +1234,7 @@ def copy_raster(
 
 def seperate_bands(
     raster: Union[str, gdal.Dataset],
-    out_names: Union[list] = None,
+    out_names: list = None,
     out_dir: Union[str, None] = None,
     overwrite: bool = True,
     opened: bool = False,

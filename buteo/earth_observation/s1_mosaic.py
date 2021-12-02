@@ -22,6 +22,37 @@ import datetime
 from uuid import uuid4
 
 
+def name_to_date(path):
+    timetag = os.path.basename(path).split("_")[5]
+    return datetime.datetime.strptime(timetag, "%Y%m%dT%H%M%S").replace(
+        tzinfo=datetime.timezone.utc
+    )
+
+
+def sort_rasters(rasters):
+    by_date = sorted(rasters, key=name_to_date)
+    copy = list(range(len(rasters)))
+    midpoint = len(rasters) // 2
+    copy[midpoint] = by_date[0]
+
+    add = 1
+    left = True
+    for idx, raster in enumerate(by_date):
+        if idx == 0:
+            continue
+
+        if left:
+            copy[midpoint - add] = raster
+            left = False
+        else:
+            copy[midpoint + add] = raster
+            left = True
+
+            add += 1
+
+    return copy
+
+
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_quantile(values, weights, quant):
     sort_mask = np.argsort(values)
@@ -59,8 +90,6 @@ def s1_collapse(
             hood_values = np.zeros(hood_size, dtype="float32")
             hood_weights = np.zeros(hood_size, dtype="float32")
             weight_sum = np.array([0.0], dtype="float32")
-            # normalise = False
-            normalise = True
 
             for n in range(hood_size):
                 offset_x = x + offsets[n][0]
@@ -93,17 +122,15 @@ def s1_collapse(
                 value = arr[offset_x, offset_y, offset_z]
 
                 if outside or (nodata and value == nodata_value):
-                    normalise = True
-                    hood_weights[n] = 0
-                else:
-                    hood_values[n] = value
-                    weight = weights[n] * feather_weights[offset_x, offset_y, offset_z]
+                    continue
 
-                    hood_weights[n] = weight
-                    weight_sum[0] += weight
+                hood_values[n] = value
+                weight = weights[n] * feather_weights[offset_x, offset_y, offset_z]
 
-            if normalise:
-                hood_weights = np.divide(hood_weights, weight_sum[0])
+                hood_weights[n] = weight
+                weight_sum[0] += weight
+
+            hood_weights = np.divide(hood_weights, weight_sum[0])
 
             if weight_sum[0] > 0:
                 if weighted:
@@ -112,37 +139,6 @@ def s1_collapse(
                     result[x, y] = np.median(hood_values[np.nonzero(hood_weights)])
 
     return result
-
-
-def name_to_date(path):
-    timetag = os.path.basename(path).split("_")[5]
-    return datetime.datetime.strptime(timetag, "%Y%m%dT%H%M%S").replace(
-        tzinfo=datetime.timezone.utc
-    )
-
-
-def sort_rasters(rasters):
-    by_date = sorted(rasters, key=name_to_date)
-    copy = list(range(len(rasters)))
-    midpoint = len(rasters) // 2
-    copy[midpoint] = by_date[0]
-
-    add = 1
-    left = True
-    for idx, raster in enumerate(by_date):
-        if idx == 0:
-            continue
-
-        if left:
-            copy[midpoint - add] = raster
-            left = False
-        else:
-            copy[midpoint + add] = raster
-            left = True
-
-            add += 1
-
-    return copy
 
 
 def process_aligned(
@@ -155,10 +151,11 @@ def process_aligned(
     feather_weights=None,
 ):
     kernel_size = 3
+    chunk_offset = kernel_size // 2
 
     _kernel, offsets, weights = create_kernel(
         (kernel_size, kernel_size, len(aligned_rasters)),
-        distance_calc="gaussian",
+        distance_calc=False,  # "gaussian"
         sigma=1,
         spherical=True,
         radius_method="ellipsoid",
@@ -169,7 +166,6 @@ def process_aligned(
     )
 
     arr_aligned = raster_to_array(aligned_rasters)
-    arr_aligned.mask = arr_aligned == nodata_value
 
     if feather_weights is not None:
         feather_weights_arr = raster_to_array(feather_weights)
@@ -181,17 +177,27 @@ def process_aligned(
         chunks_list = []
         print("Chunking rasters")
 
+        uids = uuid4()
+
         for chunk in range(chunks):
             print(f"Chunk {chunk + 1} of {chunks}")
+
+            cut_start = False
+            cut_end = False
+
             if chunk == 0:
                 chunk_start = 0
             else:
-                chunk_start = chunk * arr_aligned.shape[0] // chunks
+                chunk_start = (chunk * (arr_aligned.shape[0] // chunks)) - chunk_offset
+                cut_start = True
 
             if chunk == chunks - 1:
                 chunk_end = arr_aligned.shape[0]
             else:
-                chunk_end = (chunk + 1) * arr_aligned.shape[0] // chunks
+                chunk_end = (
+                    (chunk + 1) * (arr_aligned.shape[0] // chunks)
+                ) + chunk_offset
+                cut_end = True
 
             arr_chunk = arr_aligned[chunk_start:chunk_end]
 
@@ -200,6 +206,7 @@ def process_aligned(
             else:
                 weights_chunk = np.ones_like(arr_chunk)
 
+            print("    Collapsing...")
             arr_collapsed = s1_collapse(
                 arr_chunk,
                 offsets,
@@ -210,10 +217,17 @@ def process_aligned(
                 nodata=True,
             )
 
-            chunk_path = folder_tmp + f"{uuid4()}_chunk_{chunk}.npy"
+            offset_start = chunk_offset if cut_start else 0
+            offset_end = (
+                arr_collapsed.shape[0] - chunk_offset
+                if cut_end
+                else arr_collapsed.shape[0]
+            )
+
+            chunk_path = folder_tmp + f"{uids}_chunk_{chunk}.npy"
             chunks_list.append(chunk_path)
 
-            np.save(chunk_path, arr_collapsed)
+            np.save(chunk_path, arr_collapsed[offset_start:offset_end])
 
             arr_chunk = None
             arr_collapsed = None
@@ -275,20 +289,24 @@ def process_aligned(
 
 
 def mosaic_s1(
-    vv_paths,
-    vh_paths,
-    folder_out,
+    vv_or_vv_paths,
+    out_path,
     folder_tmp,
     master_raster,
     nodata_value=-9999.0,
     chunks=1,
     feather_borders=True,
-    skip_completed=True,
+    feather_distance=5000,
+    skip_completed=False,
 ):
-    preprocessed = vv_paths + vh_paths
+    if not isinstance(vv_or_vv_paths, list):
+        raise Exception("vv_or_vv_paths must be a list")
 
-    clipped_vv = []
-    clipped_vh = []
+    if len(vv_or_vv_paths) < 2:
+        raise Exception("vv_or_vv_paths must contain more than one file")
+
+    preprocessed = vv_or_vv_paths
+    clipped = []
 
     for idx, img in enumerate(preprocessed):
         progress(idx, len(preprocessed), "Clipping Rasters")
@@ -320,96 +338,75 @@ def mosaic_s1(
                 all_touch=False,
             )
 
+        clipped.append(clipped_raster)
+
         gdal.Unlink(reprojected)
-
-        if "Gamma0_VV" in name:
-            clipped_vv.append(clipped_raster)
-        else:
-            clipped_vh.append(clipped_raster)
-
         progress(idx + 1, len(preprocessed), "Clipping Rasters")
 
-    outpath_vv = None
-    outpath_vh = None
-    arr_vv_aligned_rasters_feather = None
-    arr_vh_aligned_rasters_feather = None
+    arr_aligned_rasters_feather = None
 
-    if len(clipped_vv) > 0:
-        print("Aligning VV rasters to master")
+    print("Aligning VV rasters to master")
 
-        arr_vv_aligned_rasters = align_rasters(
-            clipped_vv,
+    arr_aligned_rasters = align_rasters(
+        clipped,
+        out_path=folder_tmp,
+        master=master_raster,
+        skip_existing=skip_completed,
+    )
+
+    if feather_borders:
+        print("Feathering VV rasters")
+        arr_aligned_rasters_feather = calc_proximity(
+            arr_aligned_rasters,
+            target_value=-9999.0,
             out_path=folder_tmp,
-            master=master_raster,
+            max_dist=feather_distance,
+            invert=False,
+            weighted=True,
+            add_border=True,
             skip_existing=skip_completed,
         )
 
-        if feather_borders:
-            print("Feathering VV rasters")
-            arr_vv_aligned_rasters_feather = calc_proximity(
-                arr_vv_aligned_rasters,
-                target_value=-9999.0,
-                out_path=folder_tmp,
-                max_dist=5000,
-                invert=False,
-                weighted=True,
-                add_border=True,
-                skip_existing=skip_completed,
-            )
+    print("Processing VV")
+    outpath = process_aligned(
+        arr_aligned_rasters,
+        out_path,
+        folder_tmp,
+        chunks,
+        master_raster,
+        nodata_value,
+        feather_weights=arr_aligned_rasters_feather,
+    )
 
-        print("Processing VV")
-        outpath_vv = process_aligned(
-            arr_vv_aligned_rasters,
-            folder_out + "VV_10m.tif",
-            folder_tmp,
-            chunks,
-            master_raster,
-            nodata_value,
-            feather_weights=arr_vv_aligned_rasters_feather,
-        )
-
-    if len(clipped_vh) > 0:
-        print("Aligning VH rasters to master")
-        arr_vh_aligned_rasters = align_rasters(
-            clipped_vh,
-            folder_tmp,
-            master=master_raster,
-        )
-
-        if feather_borders:
-            print("Feathering VH rasters")
-            arr_vh_aligned_rasters_feather = calc_proximity(
-                arr_vh_aligned_rasters,
-                target_value=-9999.0,
-                out_path=folder_tmp,
-                max_dist=5000,
-                invert=False,
-                weighted=True,
-                add_border=True,
-            )
-
-        print("Processing VH")
-        outpath_vh = process_aligned(
-            arr_vh_aligned_rasters,
-            folder_out + "VH_10m.tif",
-            folder_tmp,
-            chunks,
-            master_raster,
-            nodata_value,
-            feather_weights=arr_vh_aligned_rasters_feather,
-        )
-
-    return (outpath_vv, outpath_vh)
+    return outpath
 
 
-# from glob import glob
+from glob import glob
 
-# s2_mosaic_b04 = "C:/Users/caspe/Desktop/test_area/S2_mosaic/B04_10m.tif"
-# folder = "C:/Users/caspe/Desktop/test_area/tmp2/"
-# vv_paths = sort_rasters(glob(folder + "*Gamma0_VV*.tif"))
-# vh_paths = sort_rasters(glob(folder + "*Gamma0_VH*.tif"))
 
-# out_dir = folder + "out/"
-# tmp_dir = folder + "tmp/"
+folder = "C:/Users/caspe/Desktop/test_area/tmp2/"
+# master = folder + "test_10m_v3.tif"
+master = "C:/Users/caspe/Desktop/test_area/S2_mosaic/B04_10m.tif"
+vv_paths = sort_rasters(glob(folder + "*Gamma0_VV*.tif"))
+vh_paths = sort_rasters(glob(folder + "*Gamma0_VH*.tif"))
 
-# mosaic_s1([], vh_paths, out_dir, tmp_dir, s2_mosaic_b04, chunks=2)
+out_dir = folder + "out/"
+tmp_dir = folder + "tmp/"
+
+# mosaic_s1(
+#     vv_paths,
+#     out_dir + "VV_10m.tif",
+#     tmp_dir,
+#     master,
+#     chunks=5,
+#     skip_completed=True,
+# )
+
+mosaic_s1(
+    vh_paths,
+    out_dir + "VH_10m.tif",
+    tmp_dir,
+    master,
+    chunks=5,
+    skip_completed=True,
+)

@@ -13,8 +13,20 @@ from glob import glob
 def make_dir_if_not_exists(path):
     if not os.path.exists(path):
         os.makedirs(path)
-    
+
     return path
+
+
+def list_is_all_the_same(list):
+    if not list:
+        return False
+
+    first = list[0]
+    for item in list:
+        if item != first:
+            return False
+
+    return True
 
 
 def display_top(snapshot, key_type="lineno", limit=3):
