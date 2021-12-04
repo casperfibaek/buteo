@@ -7,7 +7,6 @@ from osgeo import gdal, ogr, osr
 sys.path.append("../../")
 
 from buteo.raster.io import (
-    _raster_to_metadata,
     raster_to_metadata,
     rasters_are_aligned,
     ready_io_raster,
@@ -24,7 +23,7 @@ from buteo.gdal_utils import (
     raster_size_from_list,
     is_raster,
     is_vector,
-    path_to_driver,
+    path_to_driver_raster,
     default_options,
     gdal_nodata_value_from_type,
     translate_resample_method,
@@ -45,7 +44,7 @@ def match_projections(
     created = []
 
     for raster in rasters:
-        metadata = internal_raster_to_metadata(raster)
+        metadata = raster_to_metadata(raster)
         outname = out_dir + metadata["name"] + ".tif"
         created.append(outname)
 
@@ -139,13 +138,13 @@ def align_rasters(
     metadata: List[str] = []
 
     for raster in rasters:
-        meta = internal_raster_to_metadata(raster)
+        meta = raster_to_metadata(raster)
         metadata.append(meta)
         used_projections.append(meta["projection"])
 
     # If there is a master layer, copy information from that layer.
     if master is not None:
-        master_metadata = internal_raster_to_metadata(master)
+        master_metadata = raster_to_metadata(master)
 
         target_projection = master_metadata["projection_osr"]
         x_min, y_max, x_max, y_min = master_metadata["extent"]
@@ -196,7 +195,7 @@ def align_rasters(
             reprojected_target_size = internal_reproject_raster(
                 target_size, target_projection
             )
-            target_size_raster = internal_raster_to_metadata(reprojected_target_size)
+            target_size_raster = raster_to_metadata(reprojected_target_size)
 
             # Set the target values.
             x_res = target_size_raster["width"]
@@ -217,7 +216,7 @@ def align_rasters(
         for index, raster in enumerate(raster_list):
             # It is necessary to reproject each raster, as pixel height and width might be different after projection.
             reprojected = internal_reproject_raster(raster, target_projection)
-            target_size_raster = internal_raster_to_metadata(reprojected)
+            target_size_raster = raster_to_metadata(reprojected)
 
             # Add the pixel sizes to the numpy arrays
             x_res_arr[index] = target_size_raster["pixel_width"]
@@ -240,7 +239,7 @@ def align_rasters(
 
         # If the bounding box is a raster. Take the extent and reproject it to the target projection.
         elif is_raster(bounding_box):
-            reprojected_bbox_raster = internal_raster_to_metadata(
+            reprojected_bbox_raster = raster_to_metadata(
                 internal_reproject_raster(bounding_box, target_projection)
             )
 
@@ -271,7 +270,7 @@ def align_rasters(
                     reprojected_rasters = []
 
                     for raster in raster_list:
-                        raster_metadata = internal_raster_to_metadata(raster)
+                        raster_metadata = raster_to_metadata(raster)
 
                         if raster_metadata["projection_osr"].IsSame(target_projection):
                             reprojected_rasters.append(raster)
@@ -336,7 +335,7 @@ def align_rasters(
         reprojected_rasters = []
 
         for raster in raster_list:
-            raster_metadata = internal_raster_to_metadata(raster)
+            raster_metadata = raster_to_metadata(raster)
 
             # If the raster is already the correct projection, simply append the raster.
             if raster_metadata["projection_osr"].IsSame(target_projection):
@@ -355,10 +354,10 @@ def align_rasters(
     # This is the list of rasters to return. If output is not memory, it's a list of paths.
     return_list: List[str] = []
     for index, raster in enumerate(reprojected_rasters):
-        raster_metadata = internal_raster_to_metadata(raster)
+        raster_metadata = raster_to_metadata(raster)
 
         out_name = path_list[index]
-        out_format = path_to_driver(out_name)
+        out_format = path_to_driver_raster(out_name)
 
         if skip_existing and os.path.exists(out_name):
             return_list.append(out_name)

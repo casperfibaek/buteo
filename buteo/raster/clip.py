@@ -167,7 +167,7 @@ def internal_clip_raster(
             out_nodata = gdal_nodata_value_from_type(
                 raster_metadata["datatype_gdal_raw"]
             )
-        elif dst_nodata == None:
+        elif dst_nodata is None:
             out_nodata = None
         elif isinstance(dst_nodata, (int, float)):
             out_nodata = dst_nodata

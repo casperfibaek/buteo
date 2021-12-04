@@ -13,7 +13,6 @@ from buteo.gdal_utils import (
 )
 from buteo.raster.io import (
     open_raster,
-    default_options,
     raster_to_metadata,
 )
 
