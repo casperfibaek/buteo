@@ -1,15 +1,14 @@
-from numpy.ma import clip
-from buteo.raster.io import internal_raster_to_metadata, open_raster
-from buteo.vector.clip import internal_clip_vector
-from buteo.vector.io import internal_vector_to_metadata, open_vector
-from math import ceil
+import sys
 from osgeo import gdal
 from uuid import uuid4
+
+sys.path.append("../../")
+
+from buteo.vector.io import internal_vector_to_metadata, open_vector
 from buteo.gdal_utils import numpy_to_gdal_datatype2, default_options
 
+
 # TODO: handle projections
-
-
 def rasterize_vector(
     vector,
     pixel_size,

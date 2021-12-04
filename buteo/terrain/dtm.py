@@ -1,22 +1,21 @@
 import sys
-
-sys.path.append("../")
-sys.path.append("../../")
-import geopandas as gpd
-import numpy as np
-from buteo.vector.rasterize import rasterize_vector
-from buteo.vector.clip import clip_vector
-from buteo.raster.io import raster_to_array, array_to_raster, stack_rasters_vrt
-import sys
 import os
 import time
+import geopandas as gpd
+import numpy as np
 from zipfile import ZipFile
 from glob import glob
 from urllib import request
 
+sys.path.append("../")
+
+from buteo.raster.io import raster_to_array, array_to_raster, stack_rasters_vrt
+
+
+start_time = time.time()
+
 
 def reporthook(count, block_size, total_size):
-    # print('-------------------------', count)
     global start_time
     if count == 0:
         start_time = time.time()
@@ -164,7 +163,11 @@ def height_over_terrain(dsm_folder, dtm_folder, out_folder, tmp_folder):
 
 
 def volume_over_terrain(
-    tile_names, username, password, out_folder, tmp_folder,
+    tile_names,
+    username,
+    password,
+    out_folder,
+    tmp_folder,
 ):
     if not os.path.isdir(tmp_folder):
         raise Exception("Error: output directory does not exist.")
@@ -174,11 +177,6 @@ def volume_over_terrain(
     completed = 0
 
     for tile in tile_names:
-
-        # import pdb; pdb.set_trace()
-
-        if tile not in ['10km_613_56', '10km_633_55', '10km_633_56']:
-            continue
 
         base_path_DSM = f"ftp://{username}:{password}@ftp.kortforsyningen.dk/dhm_danmarks_hoejdemodel/DSM/"
         file_name_DSM = f'DSM_{tile.split("_", 1)[1]}_TIF_UTM32-ETRS89.zip'
@@ -235,45 +233,18 @@ def volume_over_terrain(
             vrt_name = out_folder + f"HOT_10km_{km10_tilename}.vrt"
 
             stack_rasters_vrt(
-                hot_files, seperate=False, out_path=vrt_name,
+                hot_files,
+                seperate=False,
+                out_path=vrt_name,
             )
 
         except:
-            import pdb; pdb.set_trace()
             print("Error while processing tile: {tile}")
             error_tiles.append(tile)
 
         finally:
             for f in glob(tmp_folder + "/*"):
                 os.remove(f)
-            
+
             completed += 1
             print(f"Completed: {completed}/{len(tile_names)} - {tile}")
-
-    import pdb
-
-    pdb.set_trace()
-
-
-# '/media/cfi/lts/terrain/hot/HOT_10km_633_55.vrt' is broken. please fix.
-# 613_56
-# 633_56
-# ['10km_613_56', '10km_633_55', '10km_633_56']
-
-if __name__ == "__main__":
-    from glob import glob
-    from buteo.raster.resample import resample_raster
-
-    base = "/media/cfi/lts/terrain/"
-    orto_folder = base + "orto/"
-
-    denmark = "/home/cfi/Desktop/buteo/geometry/Denmark_10km_grid.gpkg"
-
-    volume_over_terrain(
-        find_tile_names(denmark),
-        "casperfibaek",
-        "Goldfish12",
-        base + "hot_missing/",
-        base + "tmp/",
-    )
-

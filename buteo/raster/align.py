@@ -1,10 +1,11 @@
 import sys
-
-sys.path.append("../../")
-from typing import Union, List, Optional
-from osgeo import gdal, ogr, osr
 import os
 import numpy as np
+from typing import Union, List, Optional
+from osgeo import gdal, ogr, osr
+
+sys.path.append("../../")
+
 from buteo.raster.io import (
     internal_raster_to_metadata,
     raster_to_metadata,

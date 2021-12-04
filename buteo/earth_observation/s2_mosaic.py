@@ -1,17 +1,15 @@
 import sys
-
-from buteo.raster.reproject import reproject_raster
+import os
+import numpy as np
+import datetime
+from glob import glob
+from time import time
 
 sys.path.append("../../")
 
-import os
-import numpy as np
-from glob import glob
-from time import time
-import datetime
+from buteo.raster.reproject import reproject_raster
 from buteo.raster.resample import internal_resample_raster
 from buteo.raster.io import raster_to_array, array_to_raster
-from buteo.raster.align import match_projections
 from buteo.raster.clip import clip_raster
 from buteo.earth_observation.s2_utils import (
     get_tile_files_from_safe,

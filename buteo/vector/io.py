@@ -1,11 +1,11 @@
 import sys
-
-sys.path.append("../../")
 import os
 import numpy as np
 from uuid import uuid4
 from typing import Union, List, Dict, Optional, Any, Tuple
 from osgeo import ogr, osr, gdal
+
+sys.path.append("../../")
 
 from buteo.project_types import Metadata_vector_layer, Number, Metadata_vector
 from buteo.gdal_utils import (
@@ -480,6 +480,7 @@ def ready_io_vector(
     vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource],
     out_path: Optional[Union[List[str], str]],
     overwrite: bool = True,
+    add_uuid: bool = False,
     prefix: str = "",
     postfix: str = "",
 ) -> Tuple[List[str], List[str]]:
@@ -511,18 +512,21 @@ def ready_io_vector(
 
         name = metadata["name"]
 
+        if add_uuid:
+            uuid = uuid4().int
+        else:
+            uuid = ""
+
         if out_path is None:
-            path = f"/vsimem/{prefix}{name}{uuid4().int}{postfix}.gpkg"
+            path = f"/vsimem/{prefix}{name}{uuid}{postfix}.gpkg"
         elif isinstance(out_path, str):
             if folder_exists(out_path):
-                path = os.path.join(
-                    out_path, f"{prefix}{name}{uuid4().int}{postfix}.tif"
-                )
+                path = os.path.join(out_path, f"{prefix}{name}{uuid}{postfix}.tif")
             else:
                 path = out_path
         elif isinstance(out_path, list):
             if out_path[index] is None:
-                path = f"/vsimem/{prefix}{name}{uuid4().int}{postfix}.tif"
+                path = f"/vsimem/{prefix}{name}{uuid}{postfix}.tif"
             elif isinstance(out_path[index], str):
                 path = out_path[index]
             else:

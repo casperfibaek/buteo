@@ -1,9 +1,10 @@
 import sys
+import numpy as np
+from osgeo import gdal
+from typing import Union, List, Optional, Sequence
 
 sys.path.append("../../")
-import numpy as np
-from typing import Union, List, Optional, Sequence
-from osgeo import gdal
+
 from buteo.project_types import Metadata_raster
 from buteo.utils import remove_if_overwrite, type_check
 from buteo.project_types import Number
@@ -101,7 +102,6 @@ def raster_get_nodata_value(
         return nodata_values[0]
 
 
-# TODO: Revise this function. It
 def raster_set_nodata(
     raster: Union[List[Union[gdal.Dataset, str]], gdal.Dataset, str],
     dst_nodata: Union[float, int, str, list, None],
@@ -385,7 +385,7 @@ def raster_mask_values(
             remove_if_overwrite(out_name, overwrite)
 
             output_rasters.append(
-                array_to_raster(arr, internal_raster, out_path=out_name, opened=opened)
+                array_to_raster(arr, internal_raster, out_path=out_name)
             )
 
     if isinstance(raster, list):

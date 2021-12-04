@@ -1,12 +1,13 @@
 import sys
-
-sys.path.append("../../")
+import numpy as np
+import pandas as pd
 from osgeo import ogr
 from typing import Union
+
+sys.path.append("../../")
+
 from buteo.utils import type_check
 from buteo.vector.io import internal_vector_to_metadata, open_vector
-import pandas as pd
-import numpy as np
 
 
 def vector_get_attribute_table(
@@ -19,7 +20,9 @@ def vector_get_attribute_table(
     type_check(include_geom, [bool], "include_geom")
 
     ref = open_vector(vector)
-    metadata = internal_vector_to_metadata(ref, process_layer=process_layer, create_geometry=False)
+    metadata = internal_vector_to_metadata(
+        ref, process_layer=process_layer, create_geometry=False
+    )
 
     attribute_table_header = None
     feature_count = None

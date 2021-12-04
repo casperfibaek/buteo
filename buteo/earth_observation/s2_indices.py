@@ -72,4 +72,3 @@ def calc_indices(
                 "ndbi": ne.evaluate("(B11 - B08) / (B11 + B08)"),
             },
         )
-

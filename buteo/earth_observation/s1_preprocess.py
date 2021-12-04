@@ -1,24 +1,22 @@
 import sys
-
-from buteo.gdal_utils import is_raster, is_vector
-
-sys.path.append("..")
-sys.path.append("../../")
-
+import os
+import shutil
+import numpy as np
 from glob import glob
 from sys import platform
 from multiprocessing import cpu_count
+from concurrent.futures import ThreadPoolExecutor
+
+sys.path.append("../../")
+
 from buteo.raster.io import (
     raster_to_array,
     array_to_raster,
     raster_to_metadata,
 )
+from buteo.gdal_utils import is_raster, is_vector
 from buteo.vector.io import vector_to_metadata
 from buteo.earth_observation.s1_utils import find_gpt
-import os
-import numpy as np
-import shutil
-from concurrent.futures import ThreadPoolExecutor
 
 
 def backscatter_step1(

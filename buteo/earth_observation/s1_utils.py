@@ -39,6 +39,7 @@ def find_gpt(test_gpt_path):
     return gpt
 
 
+# TODO: wkt to ogr geometry
 def s1_kml_to_bbox(path_to_kml):
     root = ET.parse(path_to_kml).getroot()
     for elem in root.iter():
@@ -78,6 +79,7 @@ def s1_kml_to_bbox(path_to_kml):
     return footprint
 
 
+# TODO: get_metadata_from_zip
 def get_metadata(image_paths):
     images_obj = []
 

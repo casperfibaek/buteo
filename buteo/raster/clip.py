@@ -1,18 +1,17 @@
 import sys
-
-sys.path.append("../../")
 import os
 from osgeo import gdal, ogr
 from typing import Union, List, Optional
+
+sys.path.append("../../")
+
 from buteo.raster.io import internal_raster_to_metadata, ready_io_raster, open_raster
 from buteo.vector.io import (
-    get_vector_path,
     open_vector,
     internal_vector_to_memory,
     internal_vector_to_metadata,
 )
 from buteo.utils import (
-    folder_exists,
     file_exists,
     remove_if_overwrite,
     type_check,
@@ -322,19 +321,3 @@ def clip_raster(
         return output
 
     return output[0]
-
-
-if __name__ == "__main__":
-    from glob import glob
-
-    folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/ghana/"
-    clip_vect = folder + "2021_validity_mask.tif"
-
-    clip_raster(
-        glob(folder + "raster/*.tif"),
-        clip_vect,
-        folder + "raster/clipped/",
-        postfix="",
-        all_touch=False,
-        adjust_bbox=False,
-    )

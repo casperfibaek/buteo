@@ -1,9 +1,9 @@
 import sys
+import numpy as np
+from numba import jit, prange
 
 sys.path.append("../../")
 
-import numpy as np
-from numba import jit, prange
 from buteo.earth_observation.s2_utils import get_metadata
 from buteo.raster.io import raster_to_array
 from buteo.filters.kernel_generator import create_kernel

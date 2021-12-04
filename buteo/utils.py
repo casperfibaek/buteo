@@ -29,92 +29,6 @@ def list_is_all_the_same(list):
     return True
 
 
-def display_top(snapshot, key_type="lineno", limit=3):
-    # usage:
-
-    # Memory profiling
-    # from collections import Counter
-    # import tracemalloc
-    # from buteo.utils import display_top
-
-    # tracemalloc.start()
-    # counts = Counter()
-
-    # snapshot = tracemalloc.take_snapshot()
-    # display_top(snapshot)
-
-    # from https://stackoverflow.com/questions/552744/how-do-i-profile-memory-usage-in-python
-    snapshot = snapshot.filter_traces(
-        (
-            tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
-            tracemalloc.Filter(False, "<unknown>"),
-        )
-    )
-    top_stats = snapshot.statistics(key_type)
-
-    print("Top %s lines" % limit)
-    for index, stat in enumerate(top_stats[:limit], 1):
-        frame = stat.traceback[0]
-        # replace "/path/to/module/file.py" with "module/file.py"
-        filename = os.sep.join(frame.filename.split(os.sep)[-2:])
-        print(
-            "#%s: %s:%s: %.1f KiB" % (index, filename, frame.lineno, stat.size / 1024)
-        )
-        line = linecache.getline(frame.filename, frame.lineno).strip()
-        if line:
-            print("    %s" % line)
-
-    other = top_stats[limit:]
-    if other:
-        size = sum(stat.size for stat in other)
-        print("%s other: %.1f KiB" % (len(other), size / 1024))
-    total = sum(stat.size for stat in top_stats)
-    print("Total allocated size: %.1f KiB" % (total / 1024))
-
-
-def progress(count, total, name="Processing"):
-    sys.stdout.flush()
-
-    try:
-        bar_len = os.get_terminal_size().columns - 24
-    except:
-        bar_len = shutil.get_terminal_size().columns - 24
-
-    filled_len = int(round(bar_len * count / float(total)))
-    display_name = name[:10] + "..: "
-
-    bar = "█" * filled_len + "." * (bar_len - filled_len)
-
-    percents = round(100.0 * count / float(total), 1)
-
-    if percents >= 100.0:
-        percents = 100.0
-
-    if count == total:
-        sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
-        sys.stdout.flush()
-        print("")
-        return None
-    else:
-        sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
-        sys.stdout.flush()
-
-    return None
-
-
-def timing(before, print_msg=True):
-    after = time.time()
-    dif = after - before
-    hours = int(dif / 3600)
-    minutes = int((dif % 3600) / 60)
-    seconds = "{0:.2f}".format(dif % 60)
-    message = f"Processing took: {hours}h {minutes}m {seconds}s"
-    if print_msg:
-        print(message)
-
-    return message
-
-
 def path_to_ext(path):
     basename = os.path.basename(path)
     basesplit = os.path.splitext(basename)
@@ -173,6 +87,7 @@ def get_size(start_path=".", rough=True):
     for dirpath, _dirnames, filenames in os.walk(start_path):
         for f in filenames:
             fp = os.path.join(dirpath, f)
+
             # skip if it is symbolic link
             if not os.path.islink(fp):
                 total_size += os.path.getsize(fp)
@@ -313,3 +228,77 @@ def delete_files_in_folder(folder):
             os.remove(f)
         except:
             pass
+
+
+# Memory profiling
+# from https://stackoverflow.com/questions/552744/how-do-i-profile-memory-usage-in-python
+def display_top(snapshot, key_type="lineno", limit=3):
+    snapshot = snapshot.filter_traces(
+        (
+            tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+            tracemalloc.Filter(False, "<unknown>"),
+        )
+    )
+    top_stats = snapshot.statistics(key_type)
+
+    print("Top %s lines" % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        # replace "/path/to/module/file.py" with "module/file.py"
+        filename = os.sep.join(frame.filename.split(os.sep)[-2:])
+        print(
+            "#%s: %s:%s: %.1f KiB" % (index, filename, frame.lineno, stat.size / 1024)
+        )
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            print("    %s" % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        print("%s other: %.1f KiB" % (len(other), size / 1024))
+    total = sum(stat.size for stat in top_stats)
+    print("Total allocated size: %.1f KiB" % (total / 1024))
+
+
+def progress(count, total, name="Processing"):
+    sys.stdout.flush()
+
+    try:
+        bar_len = os.get_terminal_size().columns - 24
+    except:
+        bar_len = shutil.get_terminal_size().columns - 24
+
+    filled_len = int(round(bar_len * count / float(total)))
+    display_name = name[:10] + "..: "
+
+    bar = "█" * filled_len + "." * (bar_len - filled_len)
+
+    percents = round(100.0 * count / float(total), 1)
+
+    if percents >= 100.0:
+        percents = 100.0
+
+    if count == total:
+        sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
+        sys.stdout.flush()
+        print("")
+        return None
+    else:
+        sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
+        sys.stdout.flush()
+
+    return None
+
+
+def timing(before, print_msg=True):
+    after = time.time()
+    dif = after - before
+    hours = int(dif / 3600)
+    minutes = int((dif % 3600) / 60)
+    seconds = "{0:.2f}".format(dif % 60)
+    message = f"Processing took: {hours}h {minutes}m {seconds}s"
+    if print_msg:
+        print(message)
+
+    return message

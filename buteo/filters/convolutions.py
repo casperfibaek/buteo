@@ -1,10 +1,10 @@
 import sys
-
-sys.path.append("../../")
 import numpy as np
 from numba import jit, prange
+
+sys.path.append("../../")
+
 from buteo.filters.kernel_generator import create_kernel
-from buteo.filters.kernel_generator import create_circle_kernel
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
@@ -291,6 +291,7 @@ def filter_array(
         nodata_value=nodata_value,
         quantile=quantile,
     )
+
 
 # band_last
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True)

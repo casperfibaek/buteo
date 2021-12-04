@@ -1,9 +1,9 @@
 import sys
-
-sys.path.append("../../")
 from uuid import uuid4
 from typing import Union, List, Optional
 from osgeo import ogr
+
+sys.path.append("../../")
 
 from buteo.gdal_utils import path_to_driver
 from buteo.utils import path_to_ext, type_check
@@ -15,8 +15,7 @@ def merge_vectors(
     out_path: Optional[str] = None,
     preserve_fid: bool = True,
 ) -> str:
-    """ Merge vectors to a single geopackage.
-    """
+    """Merge vectors to a single geopackage."""
     type_check(vectors, [list], "vector")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(preserve_fid, [bool], "preserve_fid")
@@ -47,14 +46,3 @@ def merge_vectors(
     merged_ds.FlushCache()
 
     return out_target
-
-
-# TODO: Memory outputs, flips and mirrors - consider
-if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/test/"
-
-    vector = folder + "odense_grid.gpkg"
-    clip_geom = folder + "havnen.gpkg"
-    out_dir = folder + "out/"
-
-    bob = merge_vectors([vector, clip_geom])

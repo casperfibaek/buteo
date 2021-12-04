@@ -1,16 +1,11 @@
 import sys
+from typing import Union, List, Optional
+from osgeo import ogr, gdal
 
 sys.path.append("../../")
-from uuid import uuid4
-from typing import Union, List, Optional
-from osgeo import ogr, osr, gdal
 
-from buteo.gdal_utils import (
-    is_vector,
-    is_raster,
-    path_to_driver,
-)
 from buteo.utils import type_check
+from buteo.gdal_utils import path_to_driver
 from buteo.vector.io import (
     open_vector,
     ready_io_vector,

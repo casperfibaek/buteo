@@ -1,9 +1,10 @@
 import sys
-
-sys.path.append("../../")
 import numpy as np
 from numba import jit
 from osgeo import ogr
+
+sys.path.append("../../")
+
 from buteo.raster.io import raster_to_array, internal_raster_to_metadata
 from buteo.vector.rasterize import rasterize_vector
 from buteo.vector.reproject import internal_reproject_vector
@@ -11,7 +12,6 @@ from buteo.vector.io import (
     open_vector,
     internal_vector_to_memory,
     internal_vector_to_metadata,
-    internal_vector_to_disk,
 )
 from buteo.filters.stats import stats_to_ints, calculate_array_stats
 from buteo.utils import progress
@@ -348,29 +348,3 @@ def zonal_statistics(
         return vector
 
     return output_vector
-
-
-if __name__ == "__main__":
-    from buteo.raster.io import raster_to_array
-    from glob import glob
-
-    data_dir = "C:/Users/caspe/Desktop/geoai/data/"
-
-    images = glob(data_dir + "**/*B0*_10m.jp2")
-
-    zonal_statistics(
-        data_dir + "fields_selected.gpkg",
-        in_rasters=images,
-        output_vector=data_dir + "fields_selected_zonal.gpkg",
-        prefixes=[
-            "0629_b2_",
-            "0629_b3_",
-            "0629_b4_",
-            "0629_b8_",
-            "0724_b2_",
-            "0724_b3_",
-            "0724_b4_",
-            "0724_b8_",
-        ],
-        stats=["mean", "std", "min", "max"],
-    )

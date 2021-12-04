@@ -1,9 +1,10 @@
 import sys
-
-sys.path.append("../../")
+from osgeo import gdal
 from uuid import uuid4
 from typing import Union, Tuple, List, Optional
-from osgeo import gdal
+
+sys.path.append("../../")
+
 from buteo.project_types import Number
 from buteo.utils import remove_if_overwrite, is_number, type_check
 from buteo.gdal_utils import (
@@ -24,7 +25,7 @@ def shift_raster(
     overwrite: bool = True,
     creation_options: list = [],
 ) -> Union[gdal.Dataset, str]:
-    """ Shifts a raster in a given direction.
+    """Shifts a raster in a given direction.
 
     Returns:
         An in-memory raster. If an out_path is given the output is a string containing
@@ -106,14 +107,3 @@ def shift_raster(
         return out_path
     else:
         return shifted
-
-
-if __name__ == "__main__":
-    from buteo.raster.shift import shift_raster
-    from glob import glob
-
-    folder = "C:/Users/caspe/Desktop/paper_transfer_learning/data/sentinel2/"
-
-    for image in glob(folder + "spring*.tif"):
-        name = os.path.splitext(os.path.basename(image))[0]
-        shift_raster(image, (0.0, -10.0), folder + f"{name}_shifted.tif")

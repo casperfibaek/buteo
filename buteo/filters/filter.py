@@ -1,7 +1,8 @@
-import numpy as np
 import sys
+import numpy as np
 
 sys.path.append("../../")
+
 from buteo.filters.convolutions import filter_array
 from buteo.filters.kernel_generator import create_kernel
 

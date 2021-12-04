@@ -1,6 +1,8 @@
 import numpy as np
 from numba import jit
 
+# TODO: Use enums
+
 
 def stats_to_ints(names):
     ints = np.zeros(len(names), dtype="uint8")

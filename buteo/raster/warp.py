@@ -1,9 +1,10 @@
 import sys
+from uuid import uuid4
+from osgeo import gdal, osr, ogr
+from typing import Union, List, Optional, Tuple
 
 sys.path.append("../../")
-from typing import Union, List, Optional, Tuple
-from osgeo import gdal, osr, ogr
-from uuid import uuid4
+
 from buteo.project_types import Number
 from buteo.utils import remove_if_overwrite, file_exists, type_check
 from buteo.gdal_utils import (
@@ -133,13 +134,17 @@ def internal_warp_raster(
         # Check if projections match, otherwise reproject target geom.
         if not target_projection.IsSame(clip_projection):
             clip_metadata["extent"] = reproject_extent(
-                clip_metadata["extent"], clip_projection, target_projection,
+                clip_metadata["extent"],
+                clip_projection,
+                target_projection,
             )
 
         # The extent needs to be reprojected to the target.
         # this ensures that adjust_bbox works.
         x_min_og, y_max_og, x_max_og, y_min_og = reproject_extent(
-            raster_metadata["extent"], origin_projection, target_projection,
+            raster_metadata["extent"],
+            origin_projection,
+            target_projection,
         )
         output_bounds = (x_min_og, y_min_og, x_max_og, y_max_og)  # gdal_warp format
 
@@ -171,7 +176,8 @@ def internal_warp_raster(
             )
         elif not isinstance(clip_ds, str):
             clip_ds = vector_to_memory(
-                clip_ds, memory_path=f"clip_geom_{uuid4().int}.gpkg",
+                clip_ds,
+                memory_path=f"clip_geom_{uuid4().int}.gpkg",
             )
 
         if clip_ds is None:
@@ -248,11 +254,11 @@ def warp_raster(
     prefix: str = "",
     postfix: str = "_resampled",
 ) -> Union[List[str], str]:
-    """ Warps a raster into a target raster
+    """Warps a raster into a target raster
 
-        Please be aware that all_touch does not work if target_size is set.
-        If all_touch is required while resampling. Do it in two steps: 
-        resample -> warp or resample -> clip.
+    Please be aware that all_touch does not work if target_size is set.
+    If all_touch is required while resampling. Do it in two steps:
+    resample -> warp or resample -> clip.
     """
     type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(out_path, [list, str], "out_path", allow_none=True)

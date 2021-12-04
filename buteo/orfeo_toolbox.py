@@ -1,10 +1,9 @@
 import sys
-
-sys.path.append("../")
-
 import os
 import subprocess
 import time
+
+sys.path.append("../")
 
 from buteo.utils import progress
 from buteo.raster.io import raster_to_array

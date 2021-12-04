@@ -14,8 +14,7 @@
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
       <sourceBands/>
-      <!-- <demName>SRTM 1Sec HGT</demName> -->
-      <demName>Copernicus 30m Global DEM</demName>
+      <demName>SRTM 1Sec HGT</demName>
       <demResamplingMethod>BILINEAR_INTERPOLATION</demResamplingMethod>
       <externalDEMFile/>
       <externalDEMNoDataValue>0.0</externalDEMNoDataValue>
@@ -33,8 +32,7 @@
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
       <sourceBands/>
-      <!-- <demName>SRTM 1Sec HGT</demName> -->
-      <demName>Copernicus 30m Global DEM</demName>
+      <demName>SRTM 1Sec HGT</demName>
       <externalDEMFile/>
       <externalDEMNoDataValue>0.0</externalDEMNoDataValue>
       <externalDEMApplyEGM>true</externalDEMApplyEGM>
@@ -65,10 +63,30 @@
       <externalAuxFile/>
     </parameters>
   </node>
+  <node id="Speckle-Filter">
+    <operator>Speckle-Filter</operator>
+    <sources>
+      <sourceProduct refid="Terrain-Correction"/>
+    </sources>
+    <parameters class="com.bc.ceres.binding.dom.XppDomElement">
+      <sourceBands/>
+      <filter>Refined Lee</filter>
+      <filterSizeX>3</filterSizeX>
+      <filterSizeY>3</filterSizeY>
+      <dampingFactor>2</dampingFactor>
+      <estimateENL>true</estimateENL>
+      <enl>1.0</enl>
+      <numLooksStr>1</numLooksStr>
+      <windowSize>7x7</windowSize>
+      <targetWindowSizeStr>3x3</targetWindowSizeStr>
+      <sigmaStr>0.9</sigmaStr>
+      <anSize>50</anSize>
+    </parameters>
+  </node>
   <node id="Write">
     <operator>Write</operator>
     <sources>
-      <sourceProduct refid="Terrain-Correction"/>
+      <sourceProduct refid="Speckle-Filter"/>
     </sources>
     <parameters class="com.bc.ceres.binding.dom.XppDomElement">
       <file>${outputfile}</file>
@@ -84,6 +102,9 @@
       <displayPosition x="110.0" y="10.0"/>
     </node>
     <node id="Terrain-Correction">
+      <displayPosition x="210.0" y="10.0"/>
+    </node>
+    <node id="Speckle-Filter">
       <displayPosition x="310.0" y="10.0"/>
     </node>
     <node id="Write">

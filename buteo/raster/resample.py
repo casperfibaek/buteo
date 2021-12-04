@@ -1,8 +1,9 @@
 import sys
+from osgeo import gdal
+from typing import Union, List, Optional
 
 sys.path.append("../../")
-from typing import Union, List, Optional
-from osgeo import gdal
+
 from buteo.utils import (
     remove_if_overwrite,
     type_check,

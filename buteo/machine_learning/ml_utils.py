@@ -1,29 +1,11 @@
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
 import math
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.layers import Activation
 from tensorflow.keras.utils import get_custom_objects
-
-
-def plot_figures(figures, nrows=1, ncols=1, vmax=[1, 1000]):
-    """Plot a dictionary of figures.
-
-    Parameters
-    ----------
-    figures : <title, figure> dictionary
-    ncols : number of columns of subplots wanted in the display
-    nrows : number of rows of subplots wanted in the figure
-    """
-
-    _fig, axeslist = plt.subplots(ncols=ncols, nrows=nrows)
-    for ind, title in zip(range(len(figures)), figures):
-        axeslist.ravel()[ind].imshow(figures[title], vmin=0, vmax=vmax[ind])
-        axeslist.ravel()[ind].set_title(title)
-        axeslist.ravel()[ind].set_axis_off()
-    plt.tight_layout()  # optional
 
 
 def create_step_decay(learning_rate=0.001, drop_rate=0.5, epochs_per_drop=10):
@@ -219,6 +201,10 @@ def test_correlation(df: pd.DataFrame, cutoff: float = 0.75) -> np.ndarray:
     return to_drop
 
 
+def mish(inputs):
+    return inputs * tf.math.tanh(tf.math.softplus(inputs))
+
+
 class Mish(Activation):
     """
     Mish Activation Function.
@@ -238,10 +224,6 @@ class Mish(Activation):
         self.__name__ = "Mish"
 
 
-def mish(inputs):
-    return inputs * tf.math.tanh(tf.math.softplus(inputs))
-
-
 def load_mish():
     get_custom_objects().update({"Mish": Mish(mish)})
 
@@ -254,8 +236,8 @@ def mad_standard(arr):
     return ((arr - median) / madstd).astype("float32")
 
 
-def iqr_scale(arr, bottom=25, top=75):
-    q1, median, q3 = np.percentile(arr, [bottom, 50, top])
+def iqr_scale(arr):
+    q1, median, q3 = np.percentile(arr, [25, 50, 75])
 
     return ((arr - median) / (q3 - q1)).astype("float32")
 

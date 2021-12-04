@@ -1,9 +1,10 @@
 import sys
+import osgeo
+from typing import Union, Optional, List
+from osgeo import ogr, osr, gdal
 
 sys.path.append("../../")
-from typing import Union, Optional, List
-import osgeo
-from osgeo import ogr, osr, gdal
+
 from buteo.vector.io import (
     open_vector,
     get_vector_path,

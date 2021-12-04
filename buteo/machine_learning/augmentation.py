@@ -1,13 +1,14 @@
 import sys
+import numpy as np
 
 sys.path.append("../../")
-import numpy as np
+
 from buteo.filters.convolutions import interp_array
 
 
 def image_augmentation(list_of_inputs, list_of_labels, shuffle=True, options=None):
     """
-    Augment the input images with random rotations, flips, and noise.
+    Augment the input images with random flips, and noise.
     """
     if not isinstance(list_of_inputs, list):
         list_of_inputs = [list_of_inputs]

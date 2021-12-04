@@ -1,9 +1,13 @@
 import sys
+import os
+import datetime
+import numpy as np
+from numba import jit, prange
+from osgeo import gdal
+from uuid import uuid4
 
-sys.path.append("..")
 sys.path.append("../../")
 
-from numba import jit, prange
 from buteo.raster.io import (
     raster_to_array,
     array_to_raster,
@@ -15,11 +19,6 @@ from buteo.raster.reproject import reproject_raster
 from buteo.raster.proximity import calc_proximity
 from buteo.filters.kernel_generator import create_kernel
 from buteo.utils import progress
-from osgeo import gdal
-import numpy as np
-import os
-import datetime
-from uuid import uuid4
 
 
 def name_to_date(path):
@@ -380,33 +379,3 @@ def mosaic_s1(
     )
 
     return outpath
-
-
-# from glob import glob
-
-
-# folder = "C:/Users/caspe/Desktop/test_area/tmp2/"
-# master = "C:/Users/caspe/Desktop/test_area/S2_mosaic/B04_10m.tif"
-# vv_paths = sort_rasters(glob(folder + "*Gamma0_VV*.tif"))
-# vh_paths = sort_rasters(glob(folder + "*Gamma0_VH*.tif"))
-
-# out_dir = folder + "out/"
-# tmp_dir = folder + "tmp/"
-
-# mosaic_s1(
-#     vv_paths,
-#     out_dir + "VV_10m.tif",
-#     tmp_dir,
-#     master,
-#     chunks=5,
-#     skip_completed=True,
-# )
-
-# mosaic_s1(
-#     vh_paths,
-#     out_dir + "VH_10m.tif",
-#     tmp_dir,
-#     master,
-#     chunks=5,
-#     skip_completed=True,
-# )

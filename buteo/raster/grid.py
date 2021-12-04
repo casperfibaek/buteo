@@ -1,12 +1,11 @@
 import sys
-
-sys.path.append("../../")
 from uuid import uuid4
 from osgeo import gdal, ogr
 from typing import Union, Optional, Tuple, List
 
-from buteo.vector.io import open_vector, internal_vector_to_metadata
+sys.path.append("../../")
 
+from buteo.vector.io import open_vector, internal_vector_to_metadata
 from buteo.vector.intersect import intersect_vector
 from buteo.vector.reproject import reproject_vector
 from buteo.raster.clip import internal_clip_raster
@@ -24,22 +23,7 @@ from buteo.gdal_utils import (
 
 
 # TODO: raster_to_grid without geom.
-#   dset = gdal.Open(raster_path)
-
-# width = dset.RasterXSize
-# height = dset.RasterYSize
-
-# print(width,'x',height)
-
-# tilesize =5000
-
-# for i inrange(0, width, tilesize):
-# for j inrange(0, height, tilesize):
-#         w =min(i+tilesize, width) - i
-#         h =min(j+tilesize, height) - j
-#         gdaltranString ="gdal_translate -of GTIFF -srcwin "+str(i)+", "+str(j)+", "+str(w)+", " \
-# +str(h)+" "+ raster_path +" "+ path +"test_area"+"_"+str(i)+"_"+str(j)+".tif"
-#         os.system(gdaltranString)
+# TODO: split raster in to raster grid of x tiles
 
 
 def raster_to_grid(
@@ -53,7 +37,7 @@ def raster_to_grid(
     creation_options: list = [],
     verbose: int = 1,
 ) -> Union[List[str], Tuple[Optional[List[str]], Optional[str]]]:
-    """ Clips a raster to a grid. Generate .vrt.
+    """Clips a raster to a grid. Generate .vrt.
 
     Returns:
         The filepath for the newly created raster.
@@ -182,12 +166,3 @@ def raster_to_grid(
         return (generated, vrt_name)
 
     return generated
-
-
-if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/test/out/"
-
-    vector = folder + "denmark_10km_grid.gpkg"
-    raster = folder + "predicted_raster_32-16.tif"
-
-    raster_to_grid(raster, vector, folder + "snow/", use_field="KN10kmDK")

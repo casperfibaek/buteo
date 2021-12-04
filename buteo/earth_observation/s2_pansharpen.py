@@ -1,8 +1,11 @@
+import sys
 import os
-import numpy as np
-from lib.raster_io import raster_to_array, array_to_raster
-from lib.raster_resample import resample
-from lib.orfeo_toolbox import pansharpen
+
+sys.path.append("../../")
+
+from buteo.raster.io import raster_to_array, array_to_raster
+from buteo.raster.resample import resample_raster
+from buteo.orfeo_toolbox import pansharpen
 
 
 def super_sample_s2(
@@ -73,7 +76,7 @@ def super_sample_s2(
         )
 
         low_res_10m = raster_to_array(
-            resample(paths[band_x], reference_raster=paths[pseudo_band])
+            resample_raster(paths[band_x], reference_raster=paths[pseudo_band])
         ).astype("float32")
         resampled_path = os.path.join(
             out_folder, f"{prefix}{band_x}{suffix}_resampled.tif"

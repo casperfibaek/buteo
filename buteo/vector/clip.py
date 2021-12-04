@@ -1,9 +1,9 @@
 import sys
-
-sys.path.append("../../")
 from uuid import uuid4
 from typing import Union, Optional, List
 from osgeo import ogr, osr, gdal
+
+sys.path.append("../../")
 
 from buteo.gdal_utils import (
     is_vector,
@@ -119,6 +119,9 @@ def clip_vector(
         str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int
     ] = None,
     preserve_fid: bool = True,
+    prefix: str = "",
+    postfix: str = "",
+    add_uuid: bool = False,
 ) -> Union[List[str], str]:
     """Clips a vector to a geometry.
 
@@ -139,7 +142,9 @@ def clip_vector(
     )
     type_check(preserve_fid, [bool], "preserve_fid")
 
-    vector_list, path_list = ready_io_vector(vector, out_path)
+    vector_list, path_list = ready_io_vector(
+        vector, out_path, prefix=prefix, postfix=postfix, add_uuid=add_uuid
+    )
 
     output: List[str] = []
     for index, in_vector in enumerate(vector_list):

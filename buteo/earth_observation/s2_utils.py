@@ -1,16 +1,17 @@
 import sys
+import os
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from zipfile import ZipFile
+from glob import glob
 
 sys.path.append("../../")
-import os
-from zipfile import ZipFile
-import xml.etree.ElementTree as ET
+
 from buteo.vector.io import filter_vector
 from buteo.vector.intersect import intersect_vector
 from buteo.vector.clip import clip_vector
 from buteo.vector.attributes import vector_get_attribute_table
 from buteo.vector.reproject import reproject_vector
-from datetime import datetime
-from glob import glob
 
 
 def get_band_paths(safe_folder):

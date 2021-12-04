@@ -1,8 +1,8 @@
 import sys
-
-sys.path.append("../../")
 from typing import Union, Optional, List
 from osgeo import ogr
+
+sys.path.append("../../")
 
 from buteo.gdal_utils import path_to_driver
 from buteo.utils import overwrite_required, progress, remove_if_overwrite, type_check

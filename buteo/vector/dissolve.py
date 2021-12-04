@@ -1,10 +1,9 @@
 import sys
-
+from osgeo import ogr
 from mypy_extensions import TypedDict
+from typing import Union, List, Optional
 
 sys.path.append("../../")
-from typing import Union, List, Optional
-from osgeo import ogr
 
 from buteo.gdal_utils import path_to_driver
 from buteo.utils import type_check
@@ -24,8 +23,7 @@ def internal_dissolve_vector(
     add_index: bool = True,
     process_layer: int = -1,
 ) -> str:
-    """ Clips a vector to a geometry.
-    """
+    """Clips a vector to a geometry."""
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(attribute, [str], "attribute", allow_none=True)
     type_check(out_path, [str], "out_path", allow_none=True)
@@ -43,7 +41,8 @@ def internal_dissolve_vector(
     metadata = internal_vector_to_metadata(ref)
 
     Layer_info = TypedDict(
-        "Layer_info", {"name": str, "geom": str, "fields": List[str]},
+        "Layer_info",
+        {"name": str, "geom": str, "fields": List[str]},
     )
 
     layers: List[Layer_info] = []
@@ -105,7 +104,7 @@ def dissolve_vector(
     add_index: bool = True,
     process_layer: int = -1,
 ) -> Union[List[str], str]:
-    """ Clips a vector to a geometry.
+    """Clips a vector to a geometry.
     Args:
         vector (list of vectors | path | vector): The vectors(s) to clip.
 
@@ -144,12 +143,3 @@ def dissolve_vector(
         return output
 
     return output[0]
-
-
-if __name__ == "__main__":
-    folder = "C:/Users/caspe/Desktop/test/"
-
-    vector = folder + "walls_clip.gpkg"
-    out_dir = folder + "out/"
-
-    dissolve_vector(vector, attribute="tip", out_path=out_dir + "walls_dissolved.gpkg")

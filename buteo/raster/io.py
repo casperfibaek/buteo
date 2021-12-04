@@ -1,12 +1,13 @@
 import sys
+import os
+import numpy as np
 
-sys.path.append("../../")
+from math import ceil
 from uuid import uuid4
 from osgeo import gdal, osr, ogr
 from typing import Dict, Tuple, Union, List, Any, Optional
-from math import ceil
-import numpy as np
-import os
+
+sys.path.append("../../")
 
 from buteo.project_types import (
     Metadata_raster,
