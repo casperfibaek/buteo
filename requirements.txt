@@ -4,7 +4,7 @@ black==21.11b1
 click==8.0.3
 colorama==0.4.4
 future==0.18.2
-GDAL @ https://github.com/casperfibaek/buteo/raw/master/GDAL-3.3.3-cp310-cp310-win_amd64.whl
+GDAL @ https://github.com/casperfibaek/buteo/raw/master/wheels/GDAL-3.3.3-cp310-cp310-win_amd64.whl
 isort==5.10.1
 lazy-object-proxy==1.6.0
 mccabe==0.6.1
