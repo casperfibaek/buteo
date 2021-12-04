@@ -7,7 +7,7 @@ from osgeo import gdal, ogr, osr
 sys.path.append("../../")
 
 from buteo.raster.io import (
-    internal_raster_to_metadata,
+    _raster_to_metadata,
     raster_to_metadata,
     rasters_are_aligned,
     ready_io_raster,

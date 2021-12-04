@@ -20,7 +20,7 @@ from buteo.raster.io import (
     raster_to_metadata,
     array_to_raster,
     ready_io_raster,
-    to_raster_list,
+    get_raster_path,
 )
 
 
@@ -43,7 +43,7 @@ def raster_has_nodata_value(
     type_check(raster, [list, str, gdal.Dataset], "raster")
 
     nodata_values = []
-    rasters = to_raster_list(raster)
+    rasters = get_raster_path(raster, return_list=True)
 
     for internal_raster in rasters:
         if not is_raster(internal_raster):
@@ -80,7 +80,7 @@ def raster_get_nodata_value(
     """
     type_check(raster, [list, str, gdal.Dataset], "raster")
 
-    rasters = to_raster_list(raster)
+    rasters = get_raster_path(raster, return_list=True)
 
     nodata_values = []
     for internal_raster in rasters:

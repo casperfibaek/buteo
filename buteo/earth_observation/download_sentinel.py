@@ -16,8 +16,8 @@ from buteo.vector.io import internal_vector_to_metadata, filter_vector
 api_url = "https://apihub.copernicus.eu/apihub"
 
 
-def str_to_mb(str):
-    split = str.split(" ")
+def str_to_mb(string):
+    split = string.split(" ")
     val = split[0]
     typ = split[1]
 
@@ -28,7 +28,7 @@ def str_to_mb(str):
     elif typ == "KB":
         return 1.0
     else:
-        raise ValueError("Not MB or GB")
+        raise ValueError("Not MB, GB, or KB")
 
 
 def arr_str_to_mb(arr):
@@ -88,7 +88,7 @@ def list_available_s2(
     tiles=[],
     date=("20200601", "20210101"),
     clouds=20,
-    min_size=500,
+    min_size=300,
 ):
     api = SentinelAPI(username, password, api_url)
 

@@ -7,7 +7,7 @@ from uuid import uuid4
 sys.path.append("../../")
 from buteo.raster.io import (
     open_raster,
-    path_to_driver,
+    path_to_driver_raster,
     raster_to_array,
     array_to_raster,
     ready_io_raster,
@@ -67,7 +67,7 @@ def calc_proximity(
 
         src_band = in_raster.GetRasterBand(1)
 
-        driver_name = "GTiff" if out_path is None else path_to_driver(out_path)
+        driver_name = "GTiff" if out_path is None else path_to_driver_raster(out_path)
         if driver_name is None:
             raise ValueError(f"Unable to parse filetype from path: {out_path}")
 

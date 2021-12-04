@@ -9,7 +9,7 @@ from buteo.utils import (
     type_check,
 )
 from buteo.gdal_utils import (
-    path_to_driver,
+    path_to_driver_raster,
     default_options,
     translate_resample_method,
     gdal_nodata_value_from_type,
@@ -20,7 +20,7 @@ from buteo.raster.io import (
     open_raster,
     ready_io_raster,
     default_options,
-    internal_raster_to_metadata,
+    raster_to_metadata,
 )
 
 
@@ -58,7 +58,7 @@ def internal_resample_raster(
     )
 
     ref = open_raster(raster_list[0])
-    metadata = internal_raster_to_metadata(ref)
+    metadata = raster_to_metadata(ref)
     out_name = path_list[0]
 
     x_res, y_res, x_pixels, y_pixels = raster_size_from_list(
@@ -66,7 +66,7 @@ def internal_resample_raster(
     )
 
     out_creation_options = default_options(creation_options)
-    out_format = path_to_driver(out_name)
+    out_format = path_to_driver_raster(out_name)
 
     src_nodata = metadata["nodata_value"]
     out_nodata = None

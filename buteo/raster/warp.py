@@ -1,7 +1,10 @@
+"""
+This module is a wrapper around the gdalwarp command.
+"""
 import sys
 from uuid import uuid4
-from osgeo import gdal, osr, ogr
 from typing import Union, List, Optional, Tuple
+from osgeo import gdal, osr, ogr
 
 sys.path.append("../../")
 
@@ -9,7 +12,7 @@ from buteo.project_types import Number
 from buteo.utils import remove_if_overwrite, file_exists, type_check
 from buteo.gdal_utils import (
     parse_projection,
-    path_to_driver,
+    path_to_driver_raster,
     default_options,
     translate_resample_method,
     gdal_nodata_value_from_type,
@@ -22,7 +25,7 @@ from buteo.gdal_utils import (
 from buteo.raster.io import (
     open_raster,
     ready_io_raster,
-    internal_raster_to_metadata,
+    raster_to_metadata,
 )
 from buteo.vector.io import (
     open_vector,
@@ -31,7 +34,7 @@ from buteo.vector.io import (
 )
 
 
-def internal_warp_raster(
+def _warp_raster(
     raster: Union[str, gdal.Dataset],
     out_path: Optional[str] = None,
     projection: Optional[
@@ -45,50 +48,21 @@ def internal_warp_raster(
     all_touch: bool = True,
     adjust_bbox: bool = True,
     overwrite: bool = True,
-    creation_options: list = [],
+    creation_options: Union[list, None] = None,
     src_nodata: Union[str, int, float] = "infer",
     dst_nodata: Union[str, int, float] = "infer",
     layer_to_clip: int = 0,
     prefix: str = "",
     postfix: str = "_resampled",
 ) -> str:
-    type_check(raster, [str, gdal.Dataset], "raster")
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(
-        projection,
-        [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-        "projection",
-        allow_none=True,
-    )
-    type_check(clip_geom, [str, ogr.DataSource], "clip_geom", allow_none=True)
-    type_check(
-        target_size,
-        [tuple, int, float, str, gdal.Dataset],
-        "target_size",
-        allow_none=True,
-    )
-    """ Warps a raster into a target raster
-    """
-    type_check(target_in_pixels, [bool], "target_in_pixels")
-    type_check(resample_alg, [str], "resample_alg")
-    type_check(crop_to_geom, [bool], "crop_to_geom")
-    type_check(all_touch, [bool], "all_touch")
-    type_check(adjust_bbox, [bool], "adjust_bbox")
-    type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list], "creation_options")
-    type_check(src_nodata, [str, int, float], "src_nodata")
-    type_check(dst_nodata, [str, int, float], "dst_nodata")
-    type_check(layer_to_clip, [int], "layer_to_clip")
-    type_check(prefix, [str], "prefix")
-    type_check(postfix, [str], "postfix")
-
+    """WARNING: INTERNAL. DO NOT USE."""
     raster_list, path_list = ready_io_raster(
         raster, out_path, overwrite, prefix, postfix
     )
 
     origin = open_raster(raster_list[0])
     out_name = path_list[0]
-    raster_metadata = internal_raster_to_metadata(origin, create_geometry=True)
+    raster_metadata = raster_to_metadata(origin, create_geometry=True)
 
     # options
     warp_options = []
@@ -107,7 +81,7 @@ def internal_warp_raster(
     if clip_geom is not None:
         if is_raster(clip_geom):
             opened_raster = open_raster(clip_geom)
-            clip_metadata_raster = internal_raster_to_metadata(
+            clip_metadata_raster = raster_to_metadata(
                 opened_raster, create_geometry=True
             )
             clip_ds = clip_metadata_raster["extent_datasource"]
@@ -187,7 +161,7 @@ def internal_warp_raster(
         target_size, target_in_pixels
     )
 
-    out_format = path_to_driver(out_name)
+    out_format = path_to_driver_raster(out_name)
     out_creation_options = default_options(creation_options)
 
     # nodata
@@ -247,7 +221,7 @@ def warp_raster(
     all_touch: bool = True,
     adjust_bbox: bool = True,
     overwrite: bool = True,
-    creation_options: list = [],
+    creation_options: Union[list, None] = None,
     src_nodata: Union[str, int, float] = "infer",
     dst_nodata: Union[str, int, float] = "infer",
     layer_to_clip: int = 0,
@@ -281,12 +255,15 @@ def warp_raster(
     type_check(all_touch, [bool], "all_touch")
     type_check(adjust_bbox, [bool], "adjust_bbox")
     type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list], "creation_options")
+    type_check(creation_options, [list, None], "creation_options")
     type_check(src_nodata, [str, int, float], "src_nodata")
     type_check(dst_nodata, [str, int, float], "dst_nodata")
     type_check(layer_to_clip, [int], "layer_to_clip")
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
+
+    if creation_options is None:
+        creation_options = []
 
     raster_list, path_list = ready_io_raster(
         raster, out_path, overwrite, prefix, postfix
@@ -295,7 +272,7 @@ def warp_raster(
     output = []
     for index, in_raster in enumerate(raster_list):
         output.append(
-            internal_warp_raster(
+            _warp_raster(
                 in_raster,
                 out_path=path_list[index],
                 projection=projection,

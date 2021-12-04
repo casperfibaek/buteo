@@ -5,7 +5,7 @@ from typing import Union, List, Optional
 
 sys.path.append("../../")
 
-from buteo.raster.io import internal_raster_to_metadata, ready_io_raster, open_raster
+from buteo.raster.io import raster_to_metadata, ready_io_raster, open_raster
 from buteo.vector.io import (
     open_vector,
     internal_vector_to_memory,
@@ -21,7 +21,7 @@ from buteo.gdal_utils import (
     reproject_extent,
     is_raster,
     is_vector,
-    path_to_driver,
+    path_to_driver_raster,
     default_options,
     translate_resample_method,
     gdal_nodata_value_from_type,
@@ -93,7 +93,7 @@ def internal_clip_raster(
 
     # Input is a raster (use extent)
     elif is_raster(clip_geom):
-        clip_metadata = internal_raster_to_metadata(clip_geom, create_geometry=True)
+        clip_metadata = raster_to_metadata(clip_geom, create_geometry=True)
         clip_metadata["layer_count"] = 1
         clip_ds = clip_metadata["extent_datasource"].GetName()
     else:
@@ -120,7 +120,7 @@ def internal_clip_raster(
 
     origin_layer = open_raster(raster)
 
-    raster_metadata = internal_raster_to_metadata(raster)
+    raster_metadata = raster_to_metadata(raster)
     origin_projection = raster_metadata["projection_osr"]
     origin_extent = raster_metadata["extent"]
 
@@ -154,7 +154,7 @@ def internal_clip_raster(
 
     # formats
     out_name = path_list[0]
-    out_format = path_to_driver(out_name)
+    out_format = path_to_driver_raster(out_name)
     out_creation_options = default_options(creation_options)
 
     # nodata

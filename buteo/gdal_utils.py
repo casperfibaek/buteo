@@ -10,7 +10,13 @@ from buteo.project_types import (
     Expanded_extents,
     Number,
 )
-from buteo.utils import path_to_ext, is_number
+from buteo.utils import (
+    path_to_ext,
+    is_number,
+    type_check,
+    file_exists,
+    path_is_in_memory,
+)
 
 
 def raster_to_reference(
@@ -39,7 +45,7 @@ def raster_to_reference(
 
             return opened
     except:
-        raise Exception("Could not read input raster")
+        raise Exception("Could not read input raster") from None
 
 
 def vector_to_reference(
@@ -107,71 +113,104 @@ def default_options(options: list) -> list:
     return internal_options
 
 
-def path_to_driver(file_path: str) -> str:
-    """Takes a file path and returns the GDAL driver matching
-    the extension.
+def path_to_driver_raster(file_path: str, return_bool: bool = False) -> str:
+    """Takes a file path of a raster and returns the driver name."""
 
-    Args:
-        file_path (path): A file path string
+    raster_drivers = [
+        "tif",
+        "tiff",
+        "img",
+        "vrt",
+        "jp2",
+        "ecw,",
+    ]
 
-    Returns:
-        A string representing the GDAL Driver matching the
-        extension. If none is found, None is returned.
-    """
     ext = path_to_ext(file_path)
 
-    # Raster formats
-    if ext == ".tif" or ext == ".tiff":
+    if return_bool:
+        if ext in raster_drivers:
+            return True
+
+        return False
+
+    if ext == "tif" or ext == "tiff":
         return "GTiff"
-    elif ext == ".img":
+    elif ext == "img":
         return "HFA"
-    elif ext == ".jp2":
+    elif ext == "vrt":
+        return "VRT"
+    elif ext == "jp2":
         return "JP2ECW"
-    elif ext == ".ecw":
+    elif ext == "ecw":
         return "ECW"
 
-    # Vector formats
-    elif ext == ".shp":
+    raise ValueError(f"Unable to parse GDAL raster driver from path: {file_path}")
+
+
+def path_to_driver_vector(file_path: str, return_bool: bool = False) -> str:
+    """Takes a file path of a raster and returns the driver name."""
+
+    vector_drivers = [
+        "shp",
+        "gpkg",
+        "fgb",
+        "json",
+        "geojson",
+    ]
+
+    ext = path_to_ext(file_path)
+
+    if return_bool:
+        if ext in vector_drivers:
+            return True
+
+        return False
+
+    if ext == "shp":
         return "ESRI Shapefile"
-    elif ext == ".gpkg":
+    elif ext == "gpkg":
         return "GPKG"
-    elif ext == ".fgb":
+    elif ext == "fgb":
         return "FlatGeobuf"
-    elif ext == ".json" or ext == ".geojson":
+    elif ext == "json" or ext == "geojson":
         return "GeoJSON"
 
-    else:
-        raise ValueError(f"Unable to parse GDAL driver from path: {file_path}")
+    raise ValueError(f"Unable to parse GDAL vector driver from path: {file_path}")
 
 
 def destroy_raster(raster: str) -> None:
-    driver = gdal.GetDriverByName(path_to_driver(raster))
+    driver = gdal.GetDriverByName(path_to_driver_raster(raster))
     driver.Delete(raster)
     return None
 
 
-def is_raster(raster: Union[str, gdal.Dataset]) -> bool:
-    """Takes a string or a gdal.Dataset and returns a boolean
-    indicating if it is a valid raster.
+def is_raster(raster):
+    """Checks if a raster is valid.
 
     Args:
-        file_path (path | Dataset): A path to a raster or a GDAL dataframe.
+        raster (str | gdal.Dataset): A path to a raster or a GDAL dataframe.
 
     Returns:
-        A boolean. True if input is a valid raster, false otherwise.
+        A boolean.
     """
-    if isinstance(raster, gdal.Dataset):
-        return True
+    type_check(raster, [str, gdal.Dataset], "raster")
 
     if isinstance(raster, str):
+        if not file_exists(raster) and not path_is_in_memory(raster):
+            return False
 
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        ref = gdal.Open(raster, 0)
-        gdal.PopErrorHandler()
+        try:
+            opened = gdal.Open(raster, 0)
+        except:
+            return False
 
-        if isinstance(ref, gdal.Dataset):
-            ref = None
-            return True
+        if opened is None:
+            return False
+
+        return True
+
+    if isinstance(raster, gdal.Dataset):
+        return True
 
     return False
 

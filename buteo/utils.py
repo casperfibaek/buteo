@@ -17,12 +17,12 @@ def make_dir_if_not_exists(path):
     return path
 
 
-def list_is_all_the_same(list):
-    if not list:
+def list_is_all_the_same(lst):
+    if not isinstance(lst, list):
         return False
 
     first = list[0]
-    for item in list:
+    for item in lst:
         if item != first:
             return False
 
@@ -33,8 +33,9 @@ def path_to_ext(path):
     basename = os.path.basename(path)
     basesplit = os.path.splitext(basename)
     ext = basesplit[1]
+    ext_without_dot = ext[1:]
 
-    return ext
+    return ext_without_dot
 
 
 def path_to_name(path, with_ext=False):
@@ -54,6 +55,13 @@ def file_exists(path):
 
 def folder_exists(path):
     return os.path.isdir(path)
+
+
+def path_is_in_memory(path):
+    if isinstance(path, str) and path[:8] == "/vsimem/":
+        return True
+
+    return False
 
 
 def is_number(potential_number):
@@ -132,11 +140,11 @@ def step_ranges(steps):
     last = 0
     for num in range(0, len(steps)):
         step_size = steps[num]
-        id = num + 1
+        fid = num + 1
 
         start_stop.append(
             {
-                "id": id,
+                "id": fid,
                 "start": last,
                 "stop": last + step_size,
             }
@@ -153,7 +161,7 @@ def file_in_use(path):
             for item in process.open_files():
                 if path == item.path:
                     return True
-        except Exception:
+        except:
             pass
 
     return False

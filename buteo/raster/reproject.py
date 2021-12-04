@@ -7,7 +7,7 @@ sys.path.append("../../")
 from buteo.utils import remove_if_overwrite, type_check
 from buteo.gdal_utils import (
     parse_projection,
-    path_to_driver,
+    path_to_driver_raster,
     default_options,
     translate_resample_method,
     gdal_nodata_value_from_type,
@@ -17,7 +17,7 @@ from buteo.raster.io import (
     get_raster_path,
     open_raster,
     ready_io_raster,
-    internal_raster_to_metadata,
+    raster_to_metadata,
 )
 
 
@@ -57,10 +57,10 @@ def internal_reproject_raster(
     )
     out_name = path_list[0]
     ref = open_raster(raster_list[0])
-    metadata = internal_raster_to_metadata(ref)
+    metadata = raster_to_metadata(ref)
 
     out_creation_options = default_options(creation_options)
-    out_format = path_to_driver(out_name)
+    out_format = path_to_driver_raster(out_name)
 
     original_projection = parse_projection(ref)
     target_projection = parse_projection(projection)

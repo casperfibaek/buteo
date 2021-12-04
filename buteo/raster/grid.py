@@ -9,7 +9,7 @@ from buteo.vector.io import open_vector, internal_vector_to_metadata
 from buteo.vector.intersect import intersect_vector
 from buteo.vector.reproject import reproject_vector
 from buteo.raster.clip import internal_clip_raster
-from buteo.raster.io import open_raster, internal_raster_to_metadata, stack_rasters_vrt
+from buteo.raster.io import open_raster, raster_to_metadata, stack_rasters_vrt
 
 from buteo.utils import (
     path_to_ext,
@@ -52,7 +52,7 @@ def raster_to_grid(
 
     use_grid = open_vector(grid)
     grid_metadata = internal_vector_to_metadata(use_grid)
-    raster_metadata = internal_raster_to_metadata(raster, create_geometry=True)
+    raster_metadata = raster_to_metadata(raster, create_geometry=True)
 
     # Reproject raster if necessary.
     if not raster_metadata["projection_osr"].IsSame(grid_metadata["projection_osr"]):

@@ -8,13 +8,13 @@ sys.path.append("../../")
 from buteo.project_types import Number
 from buteo.utils import remove_if_overwrite, is_number, type_check
 from buteo.gdal_utils import (
-    path_to_driver,
+    path_to_driver_raster,
     default_options,
 )
 from buteo.raster.io import (
     open_raster,
     default_options,
-    internal_raster_to_metadata,
+    raster_to_metadata,
 )
 
 
@@ -38,7 +38,7 @@ def shift_raster(
     type_check(creation_options, [list], "creation_options")
 
     ref = open_raster(raster)
-    metadata = internal_raster_to_metadata(ref)
+    metadata = raster_to_metadata(ref)
 
     x_shift: float = 0.0
     y_shift: float = 0.0
@@ -71,7 +71,7 @@ def shift_raster(
     else:
         out_creation_options = default_options(creation_options)
         out_name = out_path
-        out_format = path_to_driver(out_path)
+        out_format = path_to_driver_raster(out_path)
 
     remove_if_overwrite(out_path, overwrite)
 

@@ -1,11 +1,17 @@
+"""
+This module does standard raster operations related to read and write.
+"""
+
+# TODO: copy_raster, seperate bands, expand stack_rasters_vrt, create_raster, delete raster
+
 import sys
 import os
-import numpy as np
-
 from math import ceil
 from uuid import uuid4
-from osgeo import gdal, osr, ogr
 from typing import Dict, Tuple, Union, List, Any, Optional
+
+import numpy as np
+from osgeo import gdal, osr, ogr
 
 sys.path.append("../../")
 
@@ -21,10 +27,12 @@ from buteo.utils import (
     type_check,
     folder_exists,
     list_is_all_the_same,
+    path_is_in_memory,
+    file_exists,
 )
 from buteo.gdal_utils import (
     advanced_extents,
-    path_to_driver,
+    path_to_driver_raster,
     is_raster,
     numpy_to_gdal_datatype,
     gdal_to_numpy_datatype,
@@ -36,23 +44,40 @@ from buteo.gdal_utils import (
 )
 
 
-# TODO: copy_raster
-# TODO: seperate_bands
-# TODO: expand stack_rasters_vrt
-# TODO: create_raster
-# TODO: assign_projection + link in reproject.py
-# TODO: delete_raster // clear memory
+def _open_raster(
+    raster,
+    writeable,
+) -> gdal.Dataset:
+    """INTERNAL. DO NOT USE."""
+    try:
+        opened = None
+        if isinstance(raster, str):
+            gdal.PushErrorHandler("CPLQuietErrorHandler")
+
+            opened = gdal.Open(raster, 1) if writeable else gdal.Open(raster, 0)
+
+            gdal.PopErrorHandler()
+        elif isinstance(raster, gdal.Dataset):
+            opened = raster
+        else:
+            raise Exception(f"Could not read input raster: {raster}")
+    except:
+        raise Exception(f"Could not read input raster: {raster}") from None
+
+    if opened is None:
+        raise Exception(f"Could not read input raster: {raster}")
+
+    return opened
 
 
 def open_raster(
-    raster: Union[str, gdal.Dataset],
-    convert_mem_driver: bool = True,
+    raster: Union[list[str, gdal.Dataset], str, gdal.Dataset],
     writeable: bool = True,
-) -> gdal.Dataset:
+) -> Union[list[gdal.Dataset], gdal.Dataset]:
     """Opens a raster to a gdal.Dataset class.
 
     Args:
-        raster (path | Dataset): A path to a raster or a GDAL dataframe.
+        raster (list | path | Dataset): A path to a raster or a GDAL dataframe.
 
         convert_mem_driver (bool): Converts MEM driver rasters to /vsimem/ Gtiffs.
 
@@ -61,111 +86,78 @@ def open_raster(
     Returns:
         A gdal.Dataset
     """
-    type_check(raster, [str, gdal.Dataset], "raster")
-    type_check(convert_mem_driver, [bool], "convert_mem_driver")
+    type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(writeable, [bool], "writeable")
 
+    return_list = []
+    if isinstance(raster, list):
+        input_list = raster
+    else:
+        input_list = [raster]
+
+    for readied_raster in input_list:
+        if isinstance(readied_raster, str):
+            if path_is_in_memory(readied_raster) or file_exists(readied_raster):
+                return_list.append(_open_raster(readied_raster, writeable))
+            else:
+                raise ValueError(f"Path does not exists: {readied_raster}")
+        elif isinstance(readied_raster, gdal.Dataset):
+            return_list.append(readied_raster)
+
+    if isinstance(raster, list):
+        return return_list
+
+    return return_list[0]
+
+
+def _get_raster_path(raster):
+    """INTERNAL. DO NOT USE."""
+    opened = open_raster(raster)
+
     try:
-        opened: Optional[gdal.Dataset] = None
-        if isinstance(raster, str):
-            gdal.PushErrorHandler("CPLQuietErrorHandler")
-            opened = gdal.Open(raster, 1) if writeable else gdal.Open(raster, 0)
-            gdal.PopErrorHandler()
-        elif isinstance(raster, gdal.Dataset):
-            opened = raster
-        else:
-            raise Exception(f"Could not read input raster: {raster}")
+        path = opened.GetDescription()
     except:
-        raise Exception(f"Could not read input raster: {raster}")
+        raise Exception(f"Could not read input raster: {raster}") from None
 
-    if opened is None:
-        raise Exception(f"Could not read input raster: {raster}")
-
-    if convert_mem_driver:
-        driver: gdal.Driver = opened.GetDriver()
-
-        if driver is None:
-            raise Exception("Unable to parse the driver of raster.")
-
-        driver_name: str = driver.ShortName
-
-        if driver_name == "MEM":
-            path = opened.GetDescription()
-            basename = os.path.basename(path)
-            name = os.path.splitext(basename)[0]
-            raster_name = f"/vsimem/{name}_{uuid4().int}.tif"
-            driver = gdal.GetDriverByName("GTiff")
-
-            opened = driver.CreateCopy(raster_name, opened, options=["BIGTIFF=YES"])
-
-    if opened is None:
-        raise Exception(f"Could not read input raster: {raster}")
-
-    return opened
+    return path
 
 
-def get_raster_path(raster: Union[str, gdal.Dataset]) -> str:
+def get_raster_path(
+    raster: Union[list[str, gdal.Dataset], str, gdal.Dataset], return_list=False
+) -> str:
     """Takes a string or a gdal.Dataset and returns its path.
 
     Args:
-        raster (path | Dataset): A path to a raster or a GDAL dataframe.
+        raster (list | path | Dataset): A path to a raster or a GDAL dataframe.
+
+        return_list (bool): If True, returns a list of paths.
 
     Returns:
         A string representing the path to the raster.
     """
-    type_check(raster, [str, gdal.Dataset], "raster")
+    type_check(raster, [list, str, gdal.Dataset], "raster")
 
-    opened = open_raster(raster, convert_mem_driver=True, writeable=False)
-    try:
-        path = str(opened.GetDescription())
-
-        if len(path) >= 8 and path[0:8] == "/vsimem/":
-            return path
-        elif os.path.exists(path):
-            return path
-        else:
-            raise Exception(f"Error while getting path from raster: {raster}")
-
-    except:
-        raise Exception(f"Error while getting path from raster: {raster}")
-
-
-def to_raster_list(variable: Any) -> List[str]:
-    """Reads a list of rasters and returns a list of paths to the rasters.
-
-    Args:
-        variable (list, path | Dataset): The rasters to generate paths for.
-
-    Returns:
-        A list of paths to the rasters.
-    """
-    return_list: List[str] = []
-    if isinstance(variable, list):
-        return_list = variable
+    return_list = []
+    if isinstance(raster, list):
+        input_list = raster
     else:
-        if not isinstance(variable, (str, gdal.Dataset)):
-            raise ValueError(f"Error in raster list: {variable}")
+        input_list = [raster]
 
-        return_list.append(get_raster_path(variable))
+    for readied_raster in input_list:
+        return_list.append(_get_raster_path(readied_raster))
 
-    if len(return_list) == 0:
-        raise ValueError("Empty raster list.")
+    if isinstance(raster, list) or return_list:
+        return return_list
 
-    return return_list
+    return return_list[0]
 
 
-def internal_raster_to_metadata(
-    raster: Union[str, gdal.Dataset],
-    create_geometry: bool = False,
+def _raster_to_metadata(
+    raster,
+    create_geometry=False,
 ) -> Metadata_raster:
-    """OBS: Internal. Single output.
-
-    Reads a raster from a string or a dataset and returns metadata.
-    """
-    type_check(raster, [str, gdal.Dataset], "raster")
-    type_check(create_geometry, [bool], "create_geometry")
-
-    dataset = open_raster(raster, convert_mem_driver=False)
+    """INTERNAL. DO NOT USE."""
+    dataset = open_raster(raster)
 
     raster_driver = dataset.GetDriver()
 
@@ -324,18 +316,21 @@ def raster_to_metadata(
     type_check(raster, [str, gdal.Dataset], "raster")
     type_check(create_geometry, [bool], "create_geometry")
 
-    rasters = to_raster_list(raster)
+    input_list = get_raster_path(raster, return_list=True)
+    return_list = []
 
-    metadatas: List[Metadata_raster] = []
-    for in_raster in rasters:
-        metadatas.append(
-            internal_raster_to_metadata(in_raster, create_geometry=create_geometry)
-        )
+    for readied_raster in input_list:
+        if is_raster(readied_raster):
+            return_list.append(
+                _raster_to_metadata(readied_raster, create_geometry=create_geometry)
+            )
+        else:
+            raise TypeError(f"Input: {readied_raster} is not a raster.")
 
     if isinstance(raster, list):
-        return metadatas
+        return return_list
 
-    return metadatas[0]
+    return return_list[0]
 
 
 def ready_io_raster(
@@ -346,13 +341,16 @@ def ready_io_raster(
     postfix: str = "",
     uuid: bool = True,
 ) -> Tuple[List[str], List[str]]:
+    """
+    Prepares a raster or a list of rasters for writing for writing.
+    """
     type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(out_path, [list, str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
 
-    raster_list = to_raster_list(raster)
+    raster_list = get_raster_path(raster, return_list=True)
 
     if isinstance(out_path, list):
         if len(raster_list) != len(out_path):
@@ -370,7 +368,7 @@ def ready_io_raster(
     # Generate output names
     path_list: List[str] = []
     for index, in_raster in enumerate(raster_list):
-        metadata = internal_raster_to_metadata(in_raster)
+        metadata = raster_to_metadata(in_raster)
 
         name = metadata["name"]
 
@@ -433,8 +431,6 @@ def rasters_are_aligned(
 
         return True
 
-    raster_list = to_raster_list(rasters)
-
     base: Metadata_raster_comp = {
         "projection": None,
         "pixel_width": None,
@@ -448,8 +444,8 @@ def rasters_are_aligned(
         "nodata_value": None,
     }
 
-    for index in range(len(raster_list)):
-        meta = internal_raster_to_metadata(raster_list[index])
+    for index, raster in enumerate(rasters):
+        meta = _raster_to_metadata(raster)
         if index == 0:
             base["name"] = meta["name"]
             base["projection"] = meta["projection"]
@@ -508,23 +504,21 @@ def rasters_are_aligned(
     return True
 
 
-def internal_raster_to_memory(
+def _raster_to_memory(
     raster: Union[str, gdal.Dataset],
     memory_path: Optional[str] = None,
     copy_if_already_in_memory: bool = False,
 ) -> str:
-    """OBS: INTERNAL: Single output.
-
-    Takes a file path or a gdal raster dataset and copies
-    it to memory.
-    """
-    type_check(raster, [str, gdal.Dataset], "raster")
-    type_check(memory_path, [str], "memory_path", allow_none=True)
+    """INTERNAL. DO NOT USE."""
 
     ref = open_raster(raster)
     path = get_raster_path(ref)
+    raster_driver = ref.GetDriver()
+    driver_name = raster_driver.ShortName
 
-    if not copy_if_already_in_memory and path[0:8] == "/vsimem/":
+    if not copy_if_already_in_memory and (
+        path[0:8] == "/vsimem/" or driver_name == "MEM"
+    ):
         return path
 
     options = []
@@ -535,7 +529,7 @@ def internal_raster_to_memory(
         else:
             raster_name = f"/vsimem/{memory_path}"
 
-        driver_name = path_to_driver(memory_path)
+        driver_name = path_to_driver_raster(memory_path)
         if driver_name is None:
             driver_name = "GTiff"
 
@@ -544,7 +538,7 @@ def internal_raster_to_memory(
 
         driver = gdal.GetDriverByName(driver_name)
     else:
-        metadata = internal_raster_to_metadata(ref)
+        metadata = raster_to_metadata(ref)
         name = metadata["name"]
         raster_name = f"/vsimem/{name}_{uuid4().int}.tif"
         driver = gdal.GetDriverByName("GTiff")
@@ -579,12 +573,12 @@ def raster_to_memory(
     type_check(memory_path, [list, str], "memory_path", allow_none=True)
 
     raster_list, out_paths = ready_io_raster(
-        raster, out_path=memory_path, overwrite=True  # type: ignore
+        raster, out_path=memory_path, overwrite=True
     )
 
     results: List[str] = []
     for index, in_raster in enumerate(raster_list):
-        result = internal_raster_to_memory(in_raster, memory_path=out_paths[index])
+        result = _raster_to_memory(in_raster, memory_path=out_paths[index])
 
         if not isinstance(result, dict):
             raise Exception(f"Error while parsing metadata for: {in_raster}")
@@ -632,7 +626,7 @@ def raster_to_array(
     type_check(filled, [bool], "filled")
     type_check(output_2d, [bool], "output_2d")
 
-    internal_rasters = to_raster_list(raster)
+    internal_rasters = get_raster_path(raster, return_list=True)
 
     if not rasters_are_aligned(internal_rasters, same_extent=True, same_dtype=False):
         raise ValueError(
@@ -644,7 +638,7 @@ def raster_to_array(
     for in_raster in internal_rasters:
         ref = open_raster(in_raster)
 
-        metadata = internal_raster_to_metadata(ref)
+        metadata = raster_to_metadata(ref)
 
         band_count = metadata["band_count"]
         raster_extent = metadata["extent_ogr"]
@@ -744,32 +738,16 @@ def raster_to_array(
     return np.dstack(layers)
 
 
-def internal_raster_to_disk(
-    raster: Union[str, gdal.Dataset],
-    out_path: str,
-    overwrite: bool = True,
-    creation_options: list = [],
+def _raster_to_disk(
+    raster,
+    out_path,
+    overwrite=True,
+    creation_options=None,
 ) -> str:
-    """OBS: INTERNAL: Single output.
-
-    Saves or copies a raster to disk. Can be used to change datatype.
-    Input is either a filepath to a raster or a GDAL.Dataset.
-    The driver is infered from the file extension.
-
-    """
-    type_check(raster, [str, gdal.Dataset], "raster")
-    type_check(out_path, [str], "out_path")
-    type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list], "creation_options")
-
-    if not os.path.dirname(os.path.abspath(out_path)):
-        raise ValueError(
-            f"Output folder does not exist. Please create first. {out_path}"
-        )
-
+    """WARNING: INTERNAL. DO NOT USE."""
     ref = open_raster(raster)
 
-    driver = gdal.GetDriverByName(path_to_driver(out_path))
+    driver = gdal.GetDriverByName(path_to_driver_raster(out_path))
 
     if driver is None:
         raise Exception(f"Error while parsing driver from extension: {out_path}")
@@ -784,7 +762,7 @@ def raster_to_disk(
     raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
     out_path: Union[List[str], str],
     overwrite: bool = True,
-    creation_options: list = [],
+    creation_options: Union[list, None] = None,
 ) -> Union[List[str], str]:
     """Saves or copies a raster to disk. Can be used to change datatype.
     Input is either a filepath to a raster or a GDAL.Dataset.
@@ -812,17 +790,25 @@ def raster_to_disk(
     type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(out_path, [list, str], "out_path")
     type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list], "creation_options")
+    type_check(creation_options, [list, None], "creation_options")
+
+    if creation_options is None:
+        creation_options = []
+
+    if not os.path.dirname(os.path.abspath(out_path)):
+        raise ValueError(
+            f"Output folder does not exist. Please create first. {out_path}"
+        )
 
     raster_list, path_list = ready_io_raster(raster, out_path, overwrite)
 
     output: List[str] = []
     for index, in_raster in enumerate(raster_list):
-        path = internal_raster_to_disk(
+        path = _raster_to_disk(
             in_raster,
             path_list[index],
             overwrite=overwrite,
-            creation_options=creation_options,
+            creation_options=default_options(creation_options),
         )
 
         output.append(path)
@@ -833,12 +819,12 @@ def raster_to_disk(
     return output[0]
 
 
-def internal_raster_set_datatype(
+def _raster_set_datatype(
     raster: Union[str, gdal.Dataset],
     dtype: str,
     out_path: Optional[str],
     overwrite: bool = True,
-    creation_options: list = [],
+    creation_options: Union[list, None] = None,
 ) -> str:
     """OBS: INTERNAL: Single output.
 
@@ -847,17 +833,17 @@ def internal_raster_set_datatype(
     type_check(raster, [str, gdal.Dataset], "raster")
     type_check(dtype, [str], "dtype")
     type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(creation_options, [list], "creation_options")
+    type_check(creation_options, [list, None], "creation_options")
 
     ref = open_raster(raster)
-    metadata = internal_raster_to_metadata(ref)
+    metadata = raster_to_metadata(ref)
 
     path = out_path
     if path is None:
         name = metadata["name"]
         path = f"/vsimem/{name}_{uuid4().int}.tif"
 
-    driver = gdal.GetDriverByName(path_to_driver(path))
+    driver = gdal.GetDriverByName(path_to_driver_raster(path))
 
     remove_if_overwrite(path, overwrite)
 
@@ -888,7 +874,7 @@ def raster_set_datatype(
     dtype: str,
     out_path: Optional[Union[List[str], str]],
     overwrite: bool = True,
-    creation_options: list = [],
+    creation_options: Union[list, None] = None,
 ) -> Union[List[str], str]:
     """Changes the datatype of a raster.
 
@@ -914,18 +900,18 @@ def raster_set_datatype(
     type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(dtype, [str], "dtype")
     type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(creation_options, [list], "creation_options")
+    type_check(creation_options, [list, None], "creation_options")
 
     raster_list, path_list = ready_io_raster(raster, out_path, overwrite)
 
     output = []
     for index, in_raster in enumerate(raster_list):
-        path = internal_raster_set_datatype(
+        path = _raster_set_datatype(
             in_raster,
             dtype,
             out_path=path_list[index],
             overwrite=overwrite,
-            creation_options=creation_options,
+            creation_options=default_options(creation_options),
         )
 
         output.append(path)
@@ -941,7 +927,7 @@ def array_to_raster(
     reference: Union[str, gdal.Dataset],
     out_path: Optional[str] = None,
     overwrite: bool = True,
-    creation_options: list = [],
+    creation_options: Union[list, None] = None,
 ) -> str:
     """Turns a numpy array into a GDAL dataset or exported
         as a raster using a reference raster.
@@ -975,7 +961,7 @@ def array_to_raster(
     type_check(reference, [str, gdal.Dataset], "reference")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list], "creation_options")
+    type_check(creation_options, [list, None], "creation_options")
 
     # Verify the numpy array
     if (
@@ -987,7 +973,7 @@ def array_to_raster(
         raise ValueError(f"Input array is invalid {array}")
 
     # Parse the driver
-    driver_name = "GTiff" if out_path is None else path_to_driver(out_path)
+    driver_name = "GTiff" if out_path is None else path_to_driver_raster(out_path)
     if driver_name is None:
         raise ValueError(f"Unable to parse filetype from path: {out_path}")
 
@@ -1002,7 +988,7 @@ def array_to_raster(
 
     overwrite_required(out_path, overwrite)
 
-    metadata = internal_raster_to_metadata(reference)
+    metadata = raster_to_metadata(reference)
 
     # Handle nodata
     input_nodata = None
@@ -1047,7 +1033,7 @@ def array_to_raster(
         else:
             band.WriteArray(array)
 
-        if metadata["nodata_value"] == None and input_nodata is not None:
+        if metadata["nodata_value"] is None and input_nodata is not None:
             band.SetNoDataValue(input_nodata)
 
     return output_name
@@ -1058,14 +1044,14 @@ def stack_rasters(
     out_path: Optional[str] = None,
     overwrite: bool = True,
     dtype: Optional[str] = None,
-    creation_options: list = [],
+    creation_options: Union[list, None] = None,
 ) -> str:
     """Stacks a list of rasters. Must be aligned."""
     type_check(rasters, [list], "rasters")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
     type_check(dtype, [str], "dtype", allow_none=True)
-    type_check(creation_options, [list], "creation_options")
+    type_check(creation_options, [list, None], "creation_options")
 
     if not rasters_are_aligned(rasters, same_extent=True):
         raise ValueError("Rasters are not aligned. Try running align_rasters.")
@@ -1073,13 +1059,13 @@ def stack_rasters(
     overwrite_required(out_path, overwrite)
 
     # Ensures that all the input rasters are valid.
-    raster_list = to_raster_list(rasters)
+    raster_list = get_raster_path(rasters, return_list=True)
 
     if out_path is not None and path_to_ext(out_path) == ".vrt":
         raise ValueError("Please use stack_rasters_vrt to create vrt files.")
 
     # Parse the driver
-    driver_name = "GTiff" if out_path is None else path_to_driver(out_path)
+    driver_name = "GTiff" if out_path is None else path_to_driver_raster(out_path)
     if driver_name is None:
         raise ValueError(f"Unable to parse filetype from path: {out_path}")
 
@@ -1093,7 +1079,7 @@ def stack_rasters(
     else:
         output_name = out_path
 
-    raster_dtype = internal_raster_to_metadata(raster_list[0])["datatype_gdal_raw"]
+    raster_dtype = raster_to_metadata(raster_list[0])["datatype_gdal_raw"]
 
     datatype = translate_datatypes(dtype) if dtype is not None else raster_dtype
 
@@ -1103,7 +1089,7 @@ def stack_rasters(
     total_bands = 0
     metadatas = []
     for raster in raster_list:
-        metadata = internal_raster_to_metadata(raster)
+        metadata = raster_to_metadata(raster)
         metadatas.append(metadata)
 
         nodata_value = metadata["nodata_value"]
@@ -1165,7 +1151,7 @@ def stack_rasters_vrt(
     resample_alg="nearest",
     options: tuple = (),
     overwrite: bool = True,
-    creation_options: list = [],
+    creation_options: Union[list, None] = None,
 ) -> str:
     """Stacks a list of rasters into a virtual rasters (.vrt)."""
     type_check(rasters, [list], "rasters")
@@ -1174,7 +1160,7 @@ def stack_rasters_vrt(
     type_check(resample_alg, [str], "resample_alg")
     type_check(options, [tuple], "options")
     type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list], "creation_options")
+    type_check(creation_options, [list, None], "creation_options")
 
     resample_algorithm = translate_resample_method(resample_alg)
     options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)
@@ -1192,8 +1178,8 @@ def rasters_intersect(
     type_check(raster1, [list, str, gdal.Dataset], "raster1")
     type_check(raster2, [list, str, gdal.Dataset], "raster2")
 
-    meta1 = internal_raster_to_metadata(raster1, create_geometry=True)
-    meta2 = internal_raster_to_metadata(raster2, create_geometry=True)
+    meta1 = raster_to_metadata(raster1, create_geometry=True)
+    meta2 = raster_to_metadata(raster2, create_geometry=True)
 
     return meta1["extent_geom_latlng"].Intersects(meta2["extent_geom_latlng"])
 
@@ -1206,8 +1192,8 @@ def rasters_intersection(
     type_check(raster1, [list, str, gdal.Dataset], "raster1")
     type_check(raster2, [list, str, gdal.Dataset], "raster2")
 
-    meta1 = internal_raster_to_metadata(raster1, create_geometry=True)
-    meta2 = internal_raster_to_metadata(raster2, create_geometry=True)
+    meta1 = raster_to_metadata(raster1, create_geometry=True)
+    meta2 = raster_to_metadata(raster2, create_geometry=True)
 
     return meta1["extent_geom_latlng"].Intersection(meta2["extent_geom_latlng"])
 
@@ -1217,7 +1203,7 @@ def copy_raster(
     out_path: Union[list, str],
     overwrite: bool = True,
     dtype: Union[str, None] = None,
-    creation_options: list = [],
+    creation_options: Union[list, None] = None,
     opened: bool = False,
 ) -> Union[list, str]:
     """Copies a raster to a path. Can be both memory and disk."""
@@ -1225,10 +1211,8 @@ def copy_raster(
     type_check(out_path, [list, str], "out_path")
     type_check(overwrite, [bool], "overwrite")
     type_check(dtype, [str], "dtype", allow_none=True)
-    type_check(creation_options, [list], "creation_options")
+    type_check(creation_options, [list, None], "creation_options")
     type_check(opened, [bool], "opened")
-
-    # rasters = to_raster_list(raster)
 
     raise ValueError("Not yet implemented. Sorry")
 
@@ -1241,7 +1225,7 @@ def seperate_bands(
     opened: bool = False,
     prefix: str = "",
     postfix: str = "_bandID",  # add automatically
-    creation_options: list = [],
+    creation_options: Union[list, None] = None,
 ) -> list:
     """Seperates the bands of a multiband raster."""
     type_check(raster, [str, gdal.Dataset], "raster")
@@ -1251,7 +1235,7 @@ def seperate_bands(
     type_check(opened, [bool], "opened")
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
-    type_check(creation_options, [list], "creation_options")
+    type_check(creation_options, [list, None], "creation_options")
 
     raise ValueError("Not yet implemented. Sorry")
 
@@ -1274,7 +1258,7 @@ def create_raster(
     nodata_value: Union[float, int, None] = None,
     overwrite: bool = True,
     opened: bool = False,
-    creation_options: list = [],
+    creation_options: Union[list, None] = None,
 ) -> Union[gdal.Dataset, str]:
     """Returns a new created raster initialised with some value."""
     type_check(out_path, [str], "out_path", allow_none=True)
@@ -1297,6 +1281,6 @@ def create_raster(
     type_check(nodata_value, [float, int], "nodata_value", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
     type_check(opened, [bool], "opened")
-    type_check(creation_options, [list], "creation_options")
+    type_check(creation_options, [list, None], "creation_options")
 
     raise ValueError("Not yet implemented. Sorry")
