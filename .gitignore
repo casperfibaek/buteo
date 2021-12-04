@@ -135,4 +135,6 @@ lib/credentials.py
 *.shm
 *.wal
 
-/buteo_env/
+/buteo_env
+/build
+/.vscode

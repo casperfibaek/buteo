@@ -1,17 +1,13 @@
-import sys
-
-sys.path.append("../")
-
 import PySimpleGUI as sg
-from globe_icon import globe_icon
+from gui_elements.globe_icon import globe_icon
 
-from buteo.raster.resample import resample
+from buteo.raster.resample import resample_raster
 
 sg.theme("Reddit")
 
 # GLOBALS
 called = 0
-description = "HELLO HOW ARE YOU?"
+description = "Default text.."
 
 functions = [
     "Align Rasters",
@@ -123,15 +119,20 @@ window = sg.Window(
 
 
 def callback_function1():
-    sg.popup("In Callback Function 1")
+    sg.popup("If this doesn't crash. GDAL and Proj4 are installed correctly.")
     print("In the callback function 1")
-    resample("", "", "", method="bilinear")
+    try:
+        resample_raster("", "")
+    except Exception as e:
+        print("Error:", e)
 
 
 def callback_function2(function_name):
     global description
     global called
-    description = f"You called {function_name}.\nI AM FINE, THANKS!\nThis function was called {called} times.\nNeat, huh?! HERE IS A FEW MORE LINES JUST TO PUSH THE BOTTOM TEXT A BIT LOWER..."
+    description = (
+        f"You called {function_name}.\nThis function was called {called} times."
+    )
     called += 1
     print("In the callback function 2")
 
@@ -151,4 +152,4 @@ while True:
 
 window.close()
 
-# pyinstaller -wF --clean --icon=globe_icon.ico function_selector.py
+# pyinstaller -wF --noconfirm --clean --noconsole --icon=./gui_elements/globe_icon.ico gui.py
