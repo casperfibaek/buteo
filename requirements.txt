@@ -1,25 +1,4 @@
-altgraph==0.17.2
-astroid==2.9.0
-black==21.11b1
-click==8.0.3
-colorama==0.4.4
-future==0.18.2
-GDAL @ https://github.com/casperfibaek/buteo/raw/master/wheels/GDAL-3.3.3-cp310-cp310-win_amd64.whl
-isort==5.10.1
-lazy-object-proxy==1.6.0
-mccabe==0.6.1
-mypy-extensions==0.4.3
-numpy==1.21.4
-pathspec==0.9.0
-pefile==2021.9.3
-platformdirs==2.4.0
-pyinstaller==4.7
-pyinstaller-hooks-contrib==2021.4
-pylint==2.12.2
-PySimpleGUI==4.55.1
-pywin32-ctypes==0.2.0
-regex==2021.11.10
-toml==0.10.2
-tomli==1.2.2
-typing_extensions==4.0.1
-wrapt==1.13.3
+GDAL @ file:///C:/Users/caspe/Desktop/buteo/wheels/GDAL-3.3.3-cp39-cp39-win_amd64.whl
+llvmlite==0.37.0
+numba==0.54.1
+numpy==1.20.3

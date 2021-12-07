@@ -4,7 +4,7 @@ from osgeo import ogr
 
 sys.path.append("../../")
 
-from buteo.gdal_utils import path_to_driver
+from buteo.gdal_utils import path_to_driver_vector
 from buteo.utils import overwrite_required, progress, remove_if_overwrite, type_check
 from buteo.vector.io import (
     internal_vector_to_metadata,
@@ -31,7 +31,7 @@ def internal_singlepart_to_multipart(
     ref = open_vector(vector_list[0])
     out_name = path_list[0]
 
-    out_format = path_to_driver(out_name)
+    out_format = path_to_driver_vector(out_name)
     driver = ogr.GetDriverByName(out_format)
     overwrite_required(out_name, overwrite)
 
@@ -82,7 +82,7 @@ def internal_multipart_to_singlepart(
     ref = open_vector(vector_list[0])
     out_name = path_list[0]
 
-    driver = ogr.GetDriverByName(path_to_driver(out_name))
+    driver = ogr.GetDriverByName(path_to_driver_vector(out_name))
 
     metadata = internal_vector_to_metadata(ref)
 

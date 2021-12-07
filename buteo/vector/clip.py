@@ -9,10 +9,10 @@ from buteo.gdal_utils import (
     is_vector,
     is_raster,
     parse_projection,
-    path_to_driver,
+    path_to_driver_vector,
 )
 from buteo.utils import type_check
-from buteo.raster.io import internal_raster_to_metadata
+from buteo.raster.io import raster_to_metadata
 from buteo.vector.io import (
     get_vector_path,
     internal_vector_to_memory,
@@ -58,7 +58,7 @@ def internal_clip_vector(
 
     if out_path is not None:
         out_target = out_path
-        out_format = path_to_driver(out_path)
+        out_format = path_to_driver_vector(out_path)
 
     options = []
 

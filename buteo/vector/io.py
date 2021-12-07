@@ -11,7 +11,7 @@ from buteo.project_types import Metadata_vector_layer, Number, Metadata_vector
 from buteo.gdal_utils import (
     is_vector,
     is_raster,
-    path_to_driver,
+    path_to_driver_vector,
     advanced_extents,
 )
 from buteo.utils import (
@@ -568,7 +568,7 @@ def internal_vector_to_memory(
             vector_name = memory_path
         else:
             vector_name = f"/vsimem/{memory_path}"
-        driver = ogr.GetDriverByName(path_to_driver(memory_path))
+        driver = ogr.GetDriverByName(path_to_driver_vector(memory_path))
     else:
         vector_name = f"/vsimem/{name}_{uuid4().int}.gpkg"
         driver = ogr.GetDriverByName("GPKG")
@@ -664,7 +664,7 @@ def internal_vector_to_disk(
             f"Output folder does not exist. Please create first. {out_path}"
         )
 
-    driver = ogr.GetDriverByName(path_to_driver(out_path))
+    driver = ogr.GetDriverByName(path_to_driver_vector(out_path))
 
     if driver is None:
         raise Exception(f"Error while parsing driver for: {vector}")

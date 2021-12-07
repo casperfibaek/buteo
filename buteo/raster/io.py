@@ -790,7 +790,7 @@ def raster_to_disk(
     type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(out_path, [list, str], "out_path")
     type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list, None], "creation_options")
+    type_check(creation_options, [list], "creation_options", allow_none=True)
 
     if creation_options is None:
         creation_options = []
@@ -833,7 +833,7 @@ def _raster_set_datatype(
     type_check(raster, [str, gdal.Dataset], "raster")
     type_check(dtype, [str], "dtype")
     type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(creation_options, [list, None], "creation_options")
+    type_check(creation_options, [list], "creation_options", allow_none=True)
 
     ref = open_raster(raster)
     metadata = raster_to_metadata(ref)
@@ -900,7 +900,7 @@ def raster_set_datatype(
     type_check(raster, [list, str, gdal.Dataset], "raster")
     type_check(dtype, [str], "dtype")
     type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(creation_options, [list, None], "creation_options")
+    type_check(creation_options, [list], "creation_options", allow_none=True)
 
     raster_list, path_list = ready_io_raster(raster, out_path, overwrite)
 
@@ -961,7 +961,7 @@ def array_to_raster(
     type_check(reference, [str, gdal.Dataset], "reference")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list, None], "creation_options")
+    type_check(creation_options, [list], "creation_options", allow_none=True)
 
     # Verify the numpy array
     if (
@@ -1051,7 +1051,7 @@ def stack_rasters(
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
     type_check(dtype, [str], "dtype", allow_none=True)
-    type_check(creation_options, [list, None], "creation_options")
+    type_check(creation_options, [list], "creation_options", allow_none=True)
 
     if not rasters_are_aligned(rasters, same_extent=True):
         raise ValueError("Rasters are not aligned. Try running align_rasters.")
@@ -1160,7 +1160,7 @@ def stack_rasters_vrt(
     type_check(resample_alg, [str], "resample_alg")
     type_check(options, [tuple], "options")
     type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list, None], "creation_options")
+    type_check(creation_options, [list], "creation_options", allow_none=True)
 
     resample_algorithm = translate_resample_method(resample_alg)
     options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)
@@ -1211,7 +1211,7 @@ def copy_raster(
     type_check(out_path, [list, str], "out_path")
     type_check(overwrite, [bool], "overwrite")
     type_check(dtype, [str], "dtype", allow_none=True)
-    type_check(creation_options, [list, None], "creation_options")
+    type_check(creation_options, [list], "creation_options", allow_none=True)
     type_check(opened, [bool], "opened")
 
     raise ValueError("Not yet implemented. Sorry")
@@ -1235,7 +1235,7 @@ def seperate_bands(
     type_check(opened, [bool], "opened")
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
-    type_check(creation_options, [list, None], "creation_options")
+    type_check(creation_options, [list], "creation_options", allow_none=True)
 
     raise ValueError("Not yet implemented. Sorry")
 
@@ -1281,6 +1281,6 @@ def create_raster(
     type_check(nodata_value, [float, int], "nodata_value", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
     type_check(opened, [bool], "opened")
-    type_check(creation_options, [list, None], "creation_options")
+    type_check(creation_options, [list], "creation_options", allow_none=True)
 
     raise ValueError("Not yet implemented. Sorry")

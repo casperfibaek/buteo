@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import psutil
 import shutil
 import linecache
 import tracemalloc
@@ -153,18 +152,6 @@ def step_ranges(steps):
         last += step_size
 
     return start_stop
-
-
-def file_in_use(path):
-    for process in psutil.process_iter():
-        try:
-            for item in process.open_files():
-                if path == item.path:
-                    return True
-        except:
-            pass
-
-    return False
 
 
 def type_check(

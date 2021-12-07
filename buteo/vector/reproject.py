@@ -13,7 +13,7 @@ from buteo.vector.io import (
     internal_vector_to_disk,
     ready_io_vector,
 )
-from buteo.gdal_utils import parse_projection, path_to_driver
+from buteo.gdal_utils import parse_projection, path_to_driver_vector
 from buteo.utils import remove_if_overwrite, type_check
 
 
@@ -63,7 +63,7 @@ def internal_reproject_vector(
 
     remove_if_overwrite(out_path, overwrite)
 
-    driver = ogr.GetDriverByName(path_to_driver(out_name))
+    driver = ogr.GetDriverByName(path_to_driver_vector(out_name))
     destination: ogr.DataSource = driver.CreateDataSource(out_name)
 
     for layer_idx in range(len(metadata["layers"])):

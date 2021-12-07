@@ -5,7 +5,7 @@ from typing import Union, List, Optional
 
 sys.path.append("../../")
 
-from buteo.gdal_utils import path_to_driver
+from buteo.gdal_utils import path_to_driver_vector
 from buteo.utils import type_check
 from buteo.vector.io import (
     open_vector,
@@ -33,7 +33,7 @@ def internal_dissolve_vector(
 
     vector_list, path_list = ready_io_vector(vector, out_path)
     out_name = path_list[0]
-    out_format = path_to_driver(out_name)
+    out_format = path_to_driver_vector(out_name)
 
     driver = ogr.GetDriverByName(out_format)
 

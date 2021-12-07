@@ -78,7 +78,7 @@ def vector_to_reference(
         raise Exception("Could not read input vector")
 
 
-def default_options(options: list) -> list:
+def default_options(options) -> list:
     """Takes a list of GDAL options and adds the following
         defaults to it:
             "TILED=YES"
@@ -95,6 +95,9 @@ def default_options(options: list) -> list:
         A list of strings with the default options for a GDAL
         raster.
     """
+    if options is None:
+        options = []
+
     internal_options = list(options)
 
     opt_str = " ".join(internal_options)

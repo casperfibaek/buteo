@@ -4,10 +4,9 @@ from numba import jit, prange
 
 sys.path.append("../../")
 
-from buteo.earth_observation.s2_utils import get_metadata
 from buteo.raster.io import raster_to_array, array_to_raster
 from buteo.filters.kernel_generator import create_kernel
-from buteo.raster.resample import internal_resample_raster
+from buteo.raster.resample import resample_raster
 from buteo.raster.align import align_rasters
 
 
@@ -41,7 +40,7 @@ def mad_pan(values, weights, median):
     error_model="numpy",
     cache=True,
 )
-def pansharpen_kernel(
+def pansharpen_filter(
     pan_band,
     target_band,
     offsets,
@@ -111,7 +110,7 @@ def pansharpen_kernel(
 
 
 def pansharpen(pan_path, tar_path, out_path):
-    target = internal_resample_raster(tar_path, pan_path, resample_alg="bilinear")
+    target = resample_raster(tar_path, pan_path, resample_alg="bilinear")
 
     aligned = align_rasters(target, master=pan_path)
     target = aligned[0]
@@ -125,5 +124,5 @@ def pansharpen(pan_path, tar_path, out_path):
         [5, 5], sigma=2, output_2d=True, offsets=True
     )
 
-    pan = pansharpen_kernel(pan_arr, tar_arr, offsets, weights.astype("float32"))
+    pan = pansharpen_filter(pan_arr, tar_arr, offsets, weights.astype("float32"))
     array_to_raster(pan, reference=target, out_path=out_path)

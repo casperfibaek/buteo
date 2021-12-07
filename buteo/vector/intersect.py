@@ -5,7 +5,7 @@ from osgeo import ogr, gdal
 sys.path.append("../../")
 
 from buteo.utils import type_check
-from buteo.gdal_utils import path_to_driver
+from buteo.gdal_utils import path_to_driver_vector
 from buteo.vector.io import (
     open_vector,
     ready_io_vector,
@@ -75,7 +75,7 @@ def internal_intersect_vector(
         else:
             return True
 
-    driver = ogr.GetDriverByName(path_to_driver(out_name))
+    driver = ogr.GetDriverByName(path_to_driver_vector(out_name))
     destination: ogr.DataSource = driver.CreateDataSource(out_name)
     destination.CopyLayer(result, vector_layername, ["OVERWRITE=YES"])
 
