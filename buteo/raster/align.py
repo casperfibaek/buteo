@@ -70,6 +70,7 @@ def align_rasters(
     rasters: List[Union[str, gdal.Dataset]],
     out_path: Optional[Union[List[str], str]] = None,
     master: Optional[Union[gdal.Dataset, str]] = None,
+    postfix: str = "_aligned",
     bounding_box: Union[
         str, gdal.Dataset, ogr.DataSource, list, tuple
     ] = "intersection",
@@ -84,7 +85,6 @@ def align_rasters(
     src_nodata: Optional[Union[str, int, float]] = "infer",
     dst_nodata: Optional[Union[str, int, float]] = "infer",
     prefix: str = "",
-    postfix: str = "_aligned",
     ram=8000,
     skip_existing=False,
 ) -> List[str]:

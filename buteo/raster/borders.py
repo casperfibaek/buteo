@@ -45,6 +45,8 @@ def add_border_to_raster(
 
     in_arr = raster_to_array(in_raster)
 
+    border_size = int(border_size)
+
     new_shape = (
         in_arr.shape[0] + (2 * border_size),
         in_arr.shape[1] + (2 * border_size),

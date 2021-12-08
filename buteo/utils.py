@@ -9,6 +9,32 @@ from typing import Any
 from glob import glob
 
 
+def is_float(value):
+    if isinstance(value, float):
+        return True
+    elif isinstance(value, str):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+
+def to_number(value):
+    if is_float(value):
+        return float(value)
+
+    return value
+
+
+def keys_to_args(dictionary):
+    args = []
+    for key in dictionary:
+        args.append(to_number(dictionary[key]))
+    return args
+
+
+
 def make_dir_if_not_exists(path):
     if not os.path.exists(path):
         os.makedirs(path)
