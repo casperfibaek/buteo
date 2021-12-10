@@ -1,5 +1,6 @@
 import sys
 import os
+import signal
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from zipfile import ZipFile
@@ -12,6 +13,34 @@ from buteo.vector.intersect import intersect_vector
 from buteo.vector.clip import clip_vector
 from buteo.vector.attributes import vector_get_attribute_table
 from buteo.vector.reproject import reproject_vector
+
+
+
+class TimeoutError(Exception):
+    def __init__(self, value = "Timed Out"):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+def timeout(seconds_before_timeout):
+    def decorate(f):
+        def handler(signum, frame):
+            raise TimeoutError()
+        def new_f(*args, **kwargs):
+            old = signal.signal(signal.SIGALRM, handler)
+            signal.alarm(seconds_before_timeout)
+            try:
+                result = f(*args, **kwargs)
+            finally:
+                # reinstall the old signal handler
+                signal.signal(signal.SIGALRM, old)
+                # cancel the alarm
+                # this line should be inside the "finally" block (per Sam Kortchmar)
+                signal.alarm(0)
+            return result
+        new_f.func_name = f.func_name
+        return new_f
+    return decorate
 
 
 def get_band_paths(safe_folder):

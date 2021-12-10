@@ -21,6 +21,7 @@ def add_border_to_raster(
     input_raster,
     out_path=None,
     border_size=1,
+    border_size_unit_px=True,
     border_value=0,
     overwrite: bool = True,
     creation_options: list = [],
@@ -45,20 +46,31 @@ def add_border_to_raster(
 
     in_arr = raster_to_array(in_raster)
 
-    border_size = int(border_size)
-
-    new_shape = (
-        in_arr.shape[0] + (2 * border_size),
-        in_arr.shape[1] + (2 * border_size),
-        in_arr.shape[2],
-    )
+    if border_size_unit_px:
+        border_size_y = border_size
+        border_size_x = border_size
+        new_shape = (
+            in_arr.shape[0] + (2 * border_size_y),
+            in_arr.shape[1] + (2 * border_size_x),
+            in_arr.shape[2],
+        )
+    else:
+        border_size_y = round(border_size / metadata["pixel_height"])
+        border_size_x = round(border_size / metadata["pixel_width"])
+        new_shape = (
+            in_arr.shape[0] + (2 * border_size_y),
+            in_arr.shape[1] + (2 * border_size_x),
+            in_arr.shape[2],
+        )
 
     new_arr = np.full(new_shape, border_value, dtype=in_arr.dtype)
-    new_arr[border_size:-border_size, border_size:-border_size, :] = in_arr
+    new_arr[border_size_y:-border_size_y, border_size_x:-border_size_x, :] = in_arr
 
     if isinstance(in_arr, np.ma.MaskedArray):
         mask = np.zeros(new_shape, dtype=bool)
-        mask[border_size:-border_size, border_size:-border_size, :] = in_arr.mask
+        mask[
+            border_size_y:-border_size_y, border_size_x:-border_size_x, :
+        ] = in_arr.mask
         new_arr = np.ma.array(new_arr, mask=mask)
         new_arr.fill_value = in_arr.fill_value
 
@@ -79,8 +91,8 @@ def add_border_to_raster(
     for i in og_transform:
         new_transform.append(i)
 
-    new_transform[0] -= border_size * og_transform[1]
-    new_transform[3] -= border_size * og_transform[5]
+    new_transform[0] -= border_size_x * og_transform[1]
+    new_transform[3] -= border_size_y * og_transform[5]
 
     dest_raster.SetGeoTransform(new_transform)
     dest_raster.SetProjection(in_raster.GetProjectionRef())

@@ -1,5 +1,6 @@
 import sys
 import os
+from tkinter.constants import E
 import requests
 import numpy as np
 from osgeo import ogr
@@ -11,9 +12,13 @@ from tqdm import tqdm
 sys.path.append("../../")
 
 from buteo.vector.io import internal_vector_to_metadata, filter_vector
+from buteo.raster.io import raster_to_metadata
+from buteo.gdal_utils import is_raster, is_vector
+from buteo.earth_observation.s2_utils import timeout
 
 
-api_url = "https://apihub.copernicus.eu/apihub"
+# api_url = "https://apihub.copernicus.eu/apihub"
+api_url = "http://apihub.copernicus.eu/apihub"
 
 
 def str_to_mb(string):
@@ -55,83 +60,6 @@ def download(url: str, out_path: str, auth=None):
             bar.update(size)
 
 
-def list_available_s1(
-    username,
-    password,
-    footprint=None,
-    date=("20201001", "20210101"),
-    orbitdirection="Ascending",  # Ascending, Descending
-    producttype="GRD",
-):
-    api = SentinelAPI(username, password, api_url)
-
-    geom = internal_vector_to_metadata(footprint, create_geometry=True)
-
-    products = api.query(
-        geom["extent_wkt_latlng"],
-        date=date,
-        platformname="Sentinel-1",
-        orbitdirection=orbitdirection,
-        producttype=producttype,
-        sensoroperationalmode="IW",
-    )
-
-    df = api.to_geodataframe(products)
-
-    return df
-
-
-def list_available_s2(
-    username,
-    password,
-    footprint=None,
-    tiles=[],
-    date=("20200601", "20210101"),
-    clouds=20,
-    min_size=300,
-):
-    api = SentinelAPI(username, password, api_url)
-
-    if footprint is None and len(tiles) == 0:
-        raise ValueError("Either footprint or tilesnames must be supplied.")
-
-    if len(tiles) > 0:
-        products = OrderedDict()
-
-        for tile in tiles:
-            geom = filter_vector(
-                "../../geometry/sentinel2_tiles_world.shp", filter_where=("Name", tile)
-            )
-
-            geom_meta = internal_vector_to_metadata(geom, create_geometry=True)
-
-            tile_products = api.query(
-                geom_meta["extent_wkt_latlng"],
-                date=date,
-                platformname="Sentinel-2",
-                cloudcoverpercentage=(0, clouds),
-                producttype="S2MSI2A",
-            )
-            products.update(tile_products)
-    else:
-        geom = internal_vector_to_metadata(footprint, create_geometry=True)
-
-        products = api.query(
-            geom["extent_wkt_latlng"],
-            date=date,
-            platformname="Sentinel-2",
-            cloudcoverpercentage=(0, clouds),
-            producttype="S2MSI2A",
-        )
-
-    df = api.to_geodataframe(products)
-
-    # reduce df to above min_size
-    dfs = df[arr_str_to_mb(df["size"].values) > min_size]
-
-    return dfs
-
-
 # Only Ascending imagery available over Africa.
 def download_s1_tile(
     scihub_username,
@@ -147,9 +75,12 @@ def download_s1_tile(
     sensoroperationalmode="IW",
     polarisationmode="VV VH",
 ):
-    api = SentinelAPI(scihub_username, scihub_password, api_url)
+    api = SentinelAPI(scihub_username, scihub_password, api_url, timeout=60)
 
-    geom = internal_vector_to_metadata(footprint, create_geometry=True)
+    if is_vector:
+        geom = internal_vector_to_metadata(footprint, create_geometry=True)
+    elif is_raster:
+        geom = raster_to_metadata(footprint, create_geometry=True)
 
     products = api.query(
         geom["extent_wkt_latlng"],
@@ -159,6 +90,7 @@ def download_s1_tile(
         producttype=producttype,
         sensoroperationalmode=sensoroperationalmode,
         polarisationmode=polarisationmode,
+        timeout=60,
     )
 
     download_products = OrderedDict()
@@ -221,43 +153,65 @@ def download_s2_tile(
     onda_username,
     onda_password,
     destination,
-    tile,
-    date=("20200601", "20210101"),
+    aoi_vector,
+    date_start="20200601",
+    date_end="20210101",
     clouds=10,
-    min_size=100,
+    tile=None,
 ):
-    api = SentinelAPI(scihub_username, scihub_password, api_url)
+    print("Downloading Sentinel-2 tiles")
+    try:
+        api = SentinelAPI(scihub_username, scihub_password, api_url, timeout=60)
+    except Exception as e:
+        print(e)
+        raise Exception("Error connecting to SciHub")
 
-    geom = filter_vector(
-        "../../geometry/sentinel2_tiles_world.shp", filter_where=("Name", tile)
-    )
+    if is_vector(aoi_vector):
+        geom = internal_vector_to_metadata(aoi_vector, create_geometry=True)
+    elif is_raster(aoi_vector):
+        geom = raster_to_metadata(aoi_vector, create_geometry=True)
 
-    geom_meta = internal_vector_to_metadata(geom, create_geometry=True)
-    geom_extent = geom_meta["extent_wkt_latlng"]
-
-    kw = {"raw": f"tileid:{tile} OR filename:*_T{tile}_*"}
+    geom_extent = geom["extent_wkt_latlng"]
 
     download_products = OrderedDict()
     download_ids = []
 
-    products = api.query(
-        geom_extent,
-        date=date,
-        platformname="Sentinel-2",
-        cloudcoverpercentage=(0, clouds),
-        producttype="S2MSI2A",
-        **kw,
-    )
+    date = (date_start, date_end)
+
+    if tile is not None and tile != "":
+        kw = {"raw": f"tileid:{tile} OR filename:*_T{tile}_*"}
+
+        try:
+            products = api.query(
+                date=date,
+                platformname="Sentinel-2",
+                cloudcoverpercentage=(0, clouds),
+                producttype="S2MSI2A",
+                timeout=60,
+                **kw,
+            )
+        except Exception as e:
+            print(e)
+            raise Exception("Error connecting to SciHub")
+    else:
+        try:
+            products = api.query(
+                geom_extent,
+                date=date,
+                platformname="Sentinel-2",
+                cloudcoverpercentage=(0, clouds),
+                producttype="S2MSI2A",
+            )
+
+        except Exception as e:
+            print(e)
+            raise Exception("Error connecting to SciHub")
 
     for product in products:
         dic = products[product]
 
         product_tile = dic["title"].split("_")[-2][1:]
-        if product_tile != tile:
-            continue
-
-        size = str_to_mb(dic["size"])
-        if size < min_size:
+        if (tile is not None and tile != "") and product_tile != tile:
             continue
 
         download_products[product] = dic

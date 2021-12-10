@@ -1,4 +1,4 @@
-import PySimpleGUI as sg
+import PySimpleGUIQt as sg
 
 
 def home_layout(functions):
@@ -22,14 +22,17 @@ def home_layout(functions):
                 sg.Listbox(
                     [str(i) for i in functions],
                     key="-FUNC-LIST-",
-                    size=(24, 20),
-                    pad=0,
+                    size_px=(300, None),
+                    pad=((0, 0), (0, 0)),
                     enable_events=True,
+                    # bind_return_key=True,
+                    # change_submits=True,
+                    default_values=[functions[0]],
                 )
             ]
         ],
-        size=(200, 370),
-        pad=0,
+        size=(300, None),
+        pad=((0, 0), (0, 0)),
     )
 
     col2 = sg.Column(
@@ -37,36 +40,44 @@ def home_layout(functions):
             [
                 sg.Multiline(
                     description,
-                    size=(38, 21),
+                    size_px=(None, None),
                     key="-DESC-",
                     disabled=True,
-                    no_scrollbar=True,
-                    border_width=None,
                     background_color=sg.theme_background_color(),
-                    pad=0,
+                    pad=((0, 0), (0, 0)),
                 )
             ],
             [
                 sg.Button(
                     "Open Function",
                     key="-BUTTON1-",
+                    size_px=(500, 60),
+                    pad=((0, 0), (10, 0)),
+                    bind_return_key=True,
                 )
             ],
         ],
-        size=[300, 370],
-        vertical_scroll_only=True,
-        element_justification="right",
-        pad=0,
+        size=(500, None),
+        element_justification="left",
+        pad=((0, 0), (0, 0)),
     )
+
+    base_layout = [
+        sg.Column(
+            [[col1, col2]],
+            size=(920, None),
+            pad=((0, 0), (0, 0)),
+            scrollable=True,
+            element_justification="left",
+        )
+    ]
 
     return [
         [
             sg.Menu(
                 menu_def,
                 tearoff=False,
-                pad=(200, 1),
-                background_color="white",
             )
         ],
-        [[col1, col2]],
+        base_layout,
     ]
