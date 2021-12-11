@@ -7,6 +7,7 @@ from osgeo import ogr
 from sentinelsat import SentinelAPI
 from collections import OrderedDict
 from requests.auth import HTTPBasicAuth
+
 from tqdm import tqdm
 
 sys.path.append("../../")
@@ -15,6 +16,7 @@ from buteo.vector.io import internal_vector_to_metadata, filter_vector
 from buteo.raster.io import raster_to_metadata
 from buteo.gdal_utils import is_raster, is_vector
 from buteo.earth_observation.s2_utils import timeout
+from buteo.utils import progress
 
 
 # api_url = "https://apihub.copernicus.eu/apihub"
@@ -45,19 +47,25 @@ def arr_str_to_mb(arr):
     return ret_arr
 
 
-def download(url: str, out_path: str, auth=None):
+def download(url: str, out_path: str, auth=None, verbose=False):
     resp = requests.get(url, stream=True, auth=auth)
     total = int(resp.headers.get("content-length", 0))
-    with open(out_path, "wb") as file, tqdm(
-        desc=".." + out_path[-40:],
-        total=total,
-        unit="iB",
-        unit_scale=True,
-        unit_divisor=1024,
-    ) as bar:
-        for data in resp.iter_content(chunk_size=1024):
-            size = file.write(data)
-            bar.update(size)
+
+    if verbose:
+        with open(out_path, "wb") as file, tqdm(
+            desc=".." + out_path[-40:],
+            total=total,
+            unit="iB",
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as bar:
+            for data in resp.iter_content(chunk_size=1024):
+                size = file.write(data)
+                bar.update(size)
+    else:
+        with open(out_path, "wb") as file:
+            for data in resp.iter_content(chunk_size=1024):
+                size = file.write(data)
 
 
 # Only Ascending imagery available over Africa.
@@ -232,9 +240,14 @@ def download_s2_tile(
         )
 
         try:
+            print(f"Downloading: {img_id}")
             download(
-                download_url, out_path, auth=HTTPBasicAuth(onda_username, onda_password)
+                download_url,
+                out_path,
+                auth=HTTPBasicAuth(onda_username, onda_password),
+                verbose=False,
             )
+            print(f"Downloaded: {img_id}")
 
             downloaded.append(out_path)
         except Exception as e:

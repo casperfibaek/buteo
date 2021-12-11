@@ -18,6 +18,10 @@ def add_slash_to_end(path):
     return path
 
 
+def flush(self):
+    pass
+
+
 def get_today_date():
     today = datetime.date.today()
     return (today.month, today.day, today.year)
@@ -118,11 +122,7 @@ def validate_type(input_type, input_value, name):
             valid = False
             message = f"{name}: {input_value} is not a valid string."
     elif input_type == "date_year":
-        if (
-            isinstance(input_value, str)
-            and len(input_value) >= 6
-            and len(input_value) <= 8
-        ):
+        if isinstance(input_value, str) and len(input_value) == 8:
             valid = True
             cast = input_value
         else:
@@ -135,6 +135,12 @@ def validate_type(input_type, input_value, name):
 def get_param_name(tool_params):
     for key in tool_params.keys():
         return key
+
+
+def get_default_date(target_param, window):
+    date_str = window[target_param].Get()
+
+    return (int(date_str[0:4]), int(date_str[4:6]), int(date_str[6:8]))
 
 
 default_texts = [
@@ -208,6 +214,9 @@ def layout_from_name(name):
         ).strftime("%Y%m%d")
 
         button_size = (16, 1.2)
+        input_size = (52, 1.2)
+        text_size = (24, 1.2)
+        input_pad = ((0, 0), (0, 0))
         param_input = None
         path_input = None
         if parameter_type == "file_browse":
@@ -219,10 +228,17 @@ def layout_from_name(name):
                 target=parameter_name,
             )
             path_input = sg.In(
-                default_text="Choose a file..",
+                default_text=default_texts[0],
                 key=parameter_name,
                 enable_events=True,
-                disabled=True,
+                disabled=False,
+                size=(
+                    input_size[0]
+                    - button_size[0]
+                    - (input_pad[0][0] + input_pad[0][1]),
+                    input_size[1],
+                ),
+                pad=input_pad,
             )
         elif parameter_type == "file_browse_multiple":
             param_input = sg.FilesBrowse(
@@ -233,10 +249,17 @@ def layout_from_name(name):
                 target=parameter_name,
             )
             path_input = sg.In(
-                default_text="Choose files..",
+                default_text=default_texts[1],
                 key=parameter_name,
                 enable_events=True,
-                disabled=True,
+                disabled=False,
+                size=(
+                    input_size[0]
+                    - button_size[0]
+                    - (input_pad[0][0] + input_pad[0][1]),
+                    input_size[1],
+                ),
+                pad=input_pad,
             )
         elif parameter_type == "file_save":
             param_input = sg.SaveAs(
@@ -248,10 +271,17 @@ def layout_from_name(name):
                 file_types=((default_extension, default_extension),),
             )
             path_input = sg.In(
-                default_text="Target file..",
+                default_text=default_texts[2],
                 key=parameter_name,
                 enable_events=True,
-                disabled=True,
+                disabled=False,
+                size=(
+                    input_size[0]
+                    - button_size[0]
+                    - (input_pad[0][0] + input_pad[0][1]),
+                    input_size[1],
+                ),
+                pad=input_pad,
             )
         elif parameter_type == "folder_save":
             param_input = sg.FolderBrowse(
@@ -262,18 +292,32 @@ def layout_from_name(name):
                 target=parameter_name,
             )
             path_input = sg.In(
-                default_text="Target folder..",
+                default_text=default_texts[3],
                 key=parameter_name,
                 enable_events=True,
-                disabled=True,
+                disabled=False,
+                size=(
+                    input_size[0]
+                    - button_size[0]
+                    - (input_pad[0][0] + input_pad[0][1]),
+                    input_size[1],
+                ),
+                pad=input_pad,
             )
-        elif parameter_type == "number" or parameter_type == "string":
+        elif (
+            parameter_type == "number"
+            or parameter_type == "string"
+            or parameter_type == "password"
+        ):
             param_input = sg.InputText(
                 key=parameter_name,
                 enable_events=True,
+                password_char="*" if parameter_type == "password" else "",
                 default_text=default,
                 tooltip=tooltip,
                 background_color="#f1f1f1",
+                size=input_size,
+                pad=input_pad,
             )
         elif parameter_type == "boolean":
             param_input = sg.Checkbox(
@@ -282,24 +326,27 @@ def layout_from_name(name):
                 enable_events=True,
                 default=default,
                 tooltip=tooltip,
-                pad=((0, 0), (0, 10)),
+                pad=((0, 0), (6, 0)),
             )
         elif parameter_type == "date_year":
-            param_input = sg.CalendarButton(
+            param_input = sg.Button(
                 "Date",
-                key=parameter_name + "_picker",
+                key="date_picker_" + parameter_name,
+                button_type=sg.BUTTON_TYPE_READ_FORM,
+                enable_events=True,
                 border_width=0,
                 tooltip=tooltip,
-                target=parameter_name,
+                bind_return_key=True,
                 size=button_size,
-                default_date_m_d_y=default_date,
             )
             path_input = sg.Input(
                 default_date_str,
                 key=parameter_name,
                 enable_events=True,
                 visible=True,
-                disabled=True,
+                disabled=False,
+                size=(input_size[0] - button_size[0], input_size[1]),
+                pad=input_pad,
             )
 
         if param_input is not None:
@@ -308,8 +355,9 @@ def layout_from_name(name):
                 tooltip=tooltip,
                 key=parameter_name + "_text",
                 background_color=sg.theme_background_color(),
-                size=(26, button_size[1]),
+                size=text_size,
                 pad=((0, 0), (0, 0)),
+                margins=(0, 0, 4, 0),
                 justification="right",
             )
             param_inputs = [param_input]
@@ -351,8 +399,9 @@ def layout_from_name(name):
             sg.Column(
                 [
                     [
-                        sg.Text("", size=(18, 1)),
+                        sg.Text("", size=(26, button_size[1])),
                         sg.Button("Run", size=button_size),
+                        sg.Text("", size=(1, button_size[1])),
                         sg.Exit(
                             "Exit",
                             size=button_size,
@@ -392,7 +441,7 @@ def layout_from_name(name):
     #             pad=((0, 0), (10, 10)),
     #             size_px=(None, 200),
     #             background_color="#f1f1f1",
-    #         )
+    #         ),
     #     ]
     # )
 
@@ -400,11 +449,13 @@ def layout_from_name(name):
         [
             sg.Column(
                 layout,
-                size=(800, None),
+                size=(910, None),
                 # pad=((0, 0), (0, 200)),
                 scrollable=True,
                 element_justification="left",
-            )
+                pad=((0, 0), (0, 0)),
+            ),
+            sg.Button("-THREAD-", visible=False),
         ]
     ]
 
