@@ -20,8 +20,8 @@ from buteo.utils import remove_if_overwrite
 def add_border_to_raster(
     input_raster,
     out_path=None,
-    border_size=1,
-    border_size_unit_px=True,
+    border_size=100,
+    border_size_unit="px",
     border_value=0,
     overwrite: bool = True,
     creation_options: list = [],
@@ -46,7 +46,7 @@ def add_border_to_raster(
 
     in_arr = raster_to_array(in_raster)
 
-    if border_size_unit_px:
+    if border_size_unit == "px":
         border_size_y = border_size
         border_size_x = border_size
         new_shape = (

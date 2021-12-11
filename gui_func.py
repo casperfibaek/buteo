@@ -8,6 +8,11 @@ def get_list_of_functions():
     return [i for i in tools.keys()]
 
 
+def get_first_key(dictionary):
+    for key in dictionary.keys():
+        return key
+
+
 def get_function_description(function_name):
     return tools[function_name]["description"]
 
@@ -46,7 +51,7 @@ def parse_date(date_str):
         return get_today_date()
 
 
-def validate_type(input_type, input_value, name):
+def validate_type(input_type, input_value, name, tool_name):
     valid = False
     cast = None
     message = ""
@@ -114,6 +119,31 @@ def validate_type(input_type, input_value, name):
             valid = False
             message = f"{name}: {input_value} is not a valid boolean."
 
+    elif input_type == "radio":
+        func_params = tools[tool_name]["parameters"]
+        definition = False
+        for func_param in func_params:
+            if name in func_param.keys():
+                definition = func_param[name]
+                break
+
+        if definition:
+            options = definition["options"]
+            for button in input_value:
+                if True in button.values():
+                    button_key = get_first_key(button)[len(name) + 1 :]
+                    break
+
+            for option in options:
+                if option["key"] == button_key:
+                    cast = option["value"]
+                    valid = True
+                    break
+
+        else:
+            valid = False
+            message = f"{name}: {input_value} is defined poorly in tools.."
+
     elif input_type == "string":
         if isinstance(input_value, str):
             valid = True
@@ -162,14 +192,23 @@ def validate_input(tool_name, parameters):
     for tool_params in tools[tool_name]["parameters"]:
         name = get_param_name(tool_params)
         input_type = tool_params[name]["type"]
-        input_value = parameters[name]
 
-        if input_value in default_texts:
+        if input_type == "radio":
+            input_value = []
+            for key in parameters.keys():
+                if name == key[: len(name)]:
+                    input_value.append({key: parameters[key]})
+        else:
+            input_value = parameters[name]
+
+        if isinstance(input_value, str) and input_value in default_texts:
             valid = False
             cast = None
             message = f"No file/folder selected for {name}."
         else:
-            valid, cast, message = validate_type(input_type, input_value, name)
+            valid, cast, message = validate_type(
+                input_type, input_value, name, tool_name
+            )
 
         ret_obj["valid"].append(valid)
         ret_obj["cast"].append(cast)
@@ -185,6 +224,7 @@ def layout_from_name(name):
 
     layout = []
 
+    radio_group_id = 1
     for parameter in tools[name]["parameters"]:
         parameter_name = list(parameter.keys())[0]
         parameter_type = parameter[parameter_name]["type"]
@@ -209,14 +249,19 @@ def layout_from_name(name):
         else:
             default_date = get_today_date()
 
+        if "display_name" in parameter[parameter_name]:
+            display_name = parameter[parameter_name]["display_name"]
+        else:
+            display_name = parameter_name
+
         default_date_str = datetime.datetime(
             default_date[2], default_date[0], default_date[1]
         ).strftime("%Y%m%d")
 
+        input_pad = ((0, 10), (0, 0))
         button_size = (16, 1.2)
-        input_size = (52, 1.2)
+        input_size = (54, 1.2)
         text_size = (24, 1.2)
-        input_pad = ((0, 0), (0, 0))
         param_input = None
         path_input = None
         if parameter_type == "file_browse":
@@ -232,12 +277,7 @@ def layout_from_name(name):
                 key=parameter_name,
                 enable_events=True,
                 disabled=False,
-                size=(
-                    input_size[0]
-                    - button_size[0]
-                    - (input_pad[0][0] + input_pad[0][1]),
-                    input_size[1],
-                ),
+                size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
         elif parameter_type == "file_browse_multiple":
@@ -253,12 +293,7 @@ def layout_from_name(name):
                 key=parameter_name,
                 enable_events=True,
                 disabled=False,
-                size=(
-                    input_size[0]
-                    - button_size[0]
-                    - (input_pad[0][0] + input_pad[0][1]),
-                    input_size[1],
-                ),
+                size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
         elif parameter_type == "file_save":
@@ -275,12 +310,7 @@ def layout_from_name(name):
                 key=parameter_name,
                 enable_events=True,
                 disabled=False,
-                size=(
-                    input_size[0]
-                    - button_size[0]
-                    - (input_pad[0][0] + input_pad[0][1]),
-                    input_size[1],
-                ),
+                size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
         elif parameter_type == "folder_save":
@@ -296,12 +326,7 @@ def layout_from_name(name):
                 key=parameter_name,
                 enable_events=True,
                 disabled=False,
-                size=(
-                    input_size[0]
-                    - button_size[0]
-                    - (input_pad[0][0] + input_pad[0][1]),
-                    input_size[1],
-                ),
+                size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
         elif (
@@ -328,13 +353,35 @@ def layout_from_name(name):
                 tooltip=tooltip,
                 pad=((0, 0), (6, 0)),
             )
+        elif parameter_type == "radio":
+            param_options = parameter[parameter_name]["options"]
+            param_input = []
+            for idx, option in enumerate(param_options):
+                if "default" in option.keys() and option["default"] == True:
+                    selected = True
+                else:
+                    selected = False
+
+                left_pad = 0 if idx == 0 else 16
+
+                param_input.append(
+                    sg.Radio(
+                        option["label"],
+                        radio_group_id,
+                        default=selected,
+                        key=parameter_name + "_" + option["key"],
+                        metadata=option["value"],
+                        pad=((left_pad, 0), (0, 0)),
+                    )
+                )
+            radio_group_id += 1
         elif parameter_type == "date_year":
             param_input = sg.Button(
                 "Date",
                 key="date_picker_" + parameter_name,
                 button_type=sg.BUTTON_TYPE_READ_FORM,
                 enable_events=True,
-                border_width=0,
+                # border_width=0,
                 tooltip=tooltip,
                 bind_return_key=True,
                 size=button_size,
@@ -345,13 +392,13 @@ def layout_from_name(name):
                 enable_events=True,
                 visible=True,
                 disabled=False,
-                size=(input_size[0] - button_size[0], input_size[1]),
+                size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
 
         if param_input is not None:
             param_text = sg.Text(
-                parameter_name,
+                display_name,
                 tooltip=tooltip,
                 key=parameter_name + "_text",
                 background_color=sg.theme_background_color(),
@@ -360,9 +407,13 @@ def layout_from_name(name):
                 margins=(0, 0, 4, 0),
                 justification="right",
             )
-            param_inputs = [param_input]
 
-            if path_input is not None:
+            if not isinstance(param_input, list):
+                param_inputs = [param_input]
+            else:
+                param_inputs = param_input
+
+            if parameter_type != "radio" and path_input is not None:
                 if parameter_type in [
                     "date_year",
                     "file_browse",

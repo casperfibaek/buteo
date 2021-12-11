@@ -60,7 +60,6 @@ def open_function(function_name):
     thread = None
     while True:
         event_func, values_func = window_func.read()
-        print(event_func, values_func)
 
         if event_func == "Exit" or event_func == sg.WIN_CLOSED or event_func is None:
             break
@@ -87,8 +86,11 @@ def open_function(function_name):
 
                     def long_operation_thread(window):
                         global thread_message
-                        buteo_return = buteo_function(*args)
-                        thread_message = buteo_return
+                        try:
+                            buteo_return = buteo_function(*args)
+                            thread_message = buteo_return
+                        except Exception as e:
+                            thread_message = e
                         window["-THREAD-"].click()
 
                         return buteo_return
@@ -140,8 +142,6 @@ def open_function(function_name):
 
 def select_function(function_name, window):
     description = get_function_description(function_name)
-
-    # window["-FUNC-LIST-"].update(default_values=[function_name])
     window["-DESC-"].update(value=description)
 
 
