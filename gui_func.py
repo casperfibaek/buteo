@@ -23,10 +23,6 @@ def add_slash_to_end(path):
     return path
 
 
-def flush(self):
-    pass
-
-
 def get_today_date():
     today = datetime.date.today()
     return (today.month, today.day, today.year)
@@ -144,7 +140,7 @@ def validate_type(input_type, input_value, name, tool_name):
             valid = False
             message = f"{name}: {input_value} is defined poorly in tools.."
 
-    elif input_type == "string":
+    elif input_type == "string" or "password":
         if isinstance(input_value, str):
             valid = True
             cast = input_value
@@ -486,22 +482,21 @@ def layout_from_name(name):
         ]
     )
 
-    # layout.append(
-    #     [
-    #         sg.Output(
-    #             pad=((0, 0), (10, 10)),
-    #             size_px=(None, 200),
-    #             background_color="#f1f1f1",
-    #         ),
-    #     ]
-    # )
+    layout.append(
+        [
+            sg.Output(
+                pad=((0, 0), (10, 10)),
+                size_px=(None, 200),
+                background_color="#f1f1f1",
+            ),
+        ]
+    )
 
     layout = [
         [
             sg.Column(
                 layout,
                 size=(910, None),
-                # pad=((0, 0), (0, 200)),
                 scrollable=True,
                 element_justification="left",
                 pad=((0, 0), (0, 0)),

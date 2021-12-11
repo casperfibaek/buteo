@@ -1,12 +1,11 @@
 import threading
-import time
 import PySimpleGUIQt as sg
 from PySimpleGUIQt.PySimpleGUIQt import (
     POPUP_BUTTONS_NO_BUTTONS,
 )
 from gui_elements.globe_icon import globe_icon
 from gui_elements.date_picker import popup_get_date
-from gui_base import home_layout
+from gui_elements.gui_base import home_layout
 from gui_func import (
     get_list_of_functions,
     layout_from_name,
@@ -205,4 +204,4 @@ while True:
 
 window.close()
 
-# pyinstaller -wF --noconfirm --clean --noconsole --icon=./gui_elements/globe_icon.ico gui.py
+# pyinstaller -D --noconfirm --clean --noconsole --icon=./gui_elements/globe_icon.ico gui.py

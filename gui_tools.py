@@ -1,6 +1,6 @@
-import datetime
 from buteo.raster.borders import add_border_to_raster
 from buteo.raster.align import align_rasters
+from buteo.raster.clip import clip_raster
 from buteo.earth_observation.download_sentinel import download_s2_tile
 
 
@@ -101,6 +101,103 @@ tools = {
             },
         ],
     },
+    "Clip Rasters": {
+        "description": "Clips rasters using a reference",
+        "function_path": clip_raster,
+        "parameters": [
+            {
+                "raster": {
+                    "display_name": "Input Rasters",
+                    "type": "file_browse_multiple",
+                    "tooltip": "The rasters to be clipped",
+                }
+            },
+            {
+                "clip_geom": {
+                    "display_name": "Clip Reference",
+                    "type": "file_browse",
+                    "tool_tip": "The reference to clip the raster. Can be a vector or another raster.",
+                }
+            },
+            {
+                "out_path": {
+                    "display_name": "Output Raster",
+                    "type": "folder_save",
+                    "tooltip": "The folder where the aligned rasters will be saved",
+                }
+            },
+            {
+                "resample_alg": {
+                    "display_name": "Resample Algorithm",
+                    "type": "radio",
+                    "tooltip": "The resampling algorithm to use when resampling the raster.",
+                    "options": [
+                        {
+                            "label": "Nearest",
+                            "key": "near",
+                            "value": "nearest",
+                            "default": True,
+                        },
+                        {
+                            "label": "Bilinear",
+                            "key": "bili",
+                            "value": "bilinear",
+                        },
+                        {
+                            "label": "Average",
+                            "key": "avg",
+                            "value": "average",
+                        },
+                        {
+                            "label": "Sum",
+                            "key": "sum",
+                            "value": "sum",
+                        },
+                    ],
+                }
+            },
+            {
+                "crop_to_geom": {
+                    "display_name": "Crop to Geometry",
+                    "type": "boolean",
+                    "default": True,
+                    "tooltip": "If true, the raster will be cropped to the geometry of the clip_geom.",
+                }
+            },
+            {
+                "adjust_bbox": {
+                    "display_name": "Adj. Bounding Box",
+                    "type": "boolean",
+                    "default": False,
+                    "tooltip": "if true, the bounding box of the raster will be adjusted to the extent of the reference.",
+                }
+            },
+            {
+                "all_touch": {
+                    "display_name": "All Touch",
+                    "type": "boolean",
+                    "default": False,
+                    "tooltip": "If true, all the pixels touching the reference will be included.",
+                }
+            },
+            {
+                "postfix": {
+                    "display_name": "Postfix",
+                    "type": "string",
+                    "default": "_clipped",
+                    "tooltip": "The postfix to be added to the output rasters.",
+                }
+            },
+            {
+                "prefix": {
+                    "display_name": "Prefix",
+                    "type": "string",
+                    "default": "",
+                    "tooltip": "The prefix to be added to the output rasters.",
+                }
+            },
+        ],
+    },
     "Download Sentinel 2": {
         "description": "Download Sentinel 2 data",
         "function_path": download_s2_tile,
@@ -186,14 +283,3 @@ tools = {
         ],
     },
 }
-
-# scihub_username,
-# scihub_password,
-# onda_username,
-# onda_password,
-# destination,
-# aoi_vector,
-# date_start="20200601",
-# date_end="20210101",
-# clouds=10,
-# min_size=100,

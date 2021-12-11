@@ -8,7 +8,7 @@ sys.path.append("../../")
 from buteo.vector.io import open_vector, internal_vector_to_metadata
 from buteo.vector.intersect import intersect_vector
 from buteo.vector.reproject import reproject_vector
-from buteo.raster.clip import internal_clip_raster
+from buteo.raster.clip import clip_raster
 from buteo.raster.io import open_raster, raster_to_metadata, stack_rasters_vrt
 
 from buteo.utils import (
@@ -143,7 +143,7 @@ def raster_to_grid(
         else:
             out_name = f"{out_dir}{name}_{fid}{filetype}"
 
-        internal_clip_raster(
+        clip_raster(
             ref,
             test_ds_path,
             out_path=out_name,

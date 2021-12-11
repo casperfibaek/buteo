@@ -29,7 +29,7 @@ from buteo.gdal_utils import (
 )
 
 
-def internal_clip_raster(
+def _clip_raster(
     raster: Union[str, gdal.Dataset],
     clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
     out_path: Optional[str] = None,
@@ -216,12 +216,12 @@ def clip_raster(
     crop_to_geom: bool = True,
     adjust_bbox: bool = True,
     all_touch: bool = True,
+    prefix: str = "",
+    postfix: str = "_clipped",
     overwrite: bool = True,
     creation_options: list = [],
     dst_nodata: Union[str, int, float] = "infer",
     layer_to_clip: int = 0,
-    prefix: str = "",
-    postfix: str = "_clipped",
     verbose: int = 1,
     uuid: bool = False,
     ram: int = 8000,
@@ -298,7 +298,7 @@ def clip_raster(
     output = []
     for index, in_raster in enumerate(raster_list):
         output.append(
-            internal_clip_raster(
+            _clip_raster(
                 in_raster,
                 clip_geom,
                 out_path=path_list[index],
