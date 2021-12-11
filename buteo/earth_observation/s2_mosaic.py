@@ -14,6 +14,7 @@ from buteo.raster.clip import clip_raster
 from buteo.earth_observation.s2_utils import (
     get_tile_files_from_safe,
     get_metadata,
+    get_all_tiles_in_folder,
 )
 from buteo.earth_observation.s2_quality_assessment import (
     assess_quality,
@@ -121,19 +122,19 @@ def harmonise_band(
 
 def mosaic_tile_s2(
     folder,
-    tile_name,
     out_folder,
+    tile_name=None,
+    ideal_date=None,
     max_time_delta=60.0,
-    time_penalty=7,
-    quality_threshold=105,
+    max_images=6,
     quality_to_update=5,
     min_improvement=0.5,
-    feather_dist=7,
-    ideal_date=None,
+    time_penalty=7,
+    feather_dist=11,
     use_image=None,
     harmonise=True,
     max_harmony=50,
-    max_images=6,
+    quality_threshold=105,
     output_scl=False,
     output_tracking=False,
     output_quality=False,
@@ -141,7 +142,10 @@ def mosaic_tile_s2(
 ):
     start = time()
 
-    tiles = get_tile_files_from_safe(folder, tile_name)
+    if tile_name is None:
+        tiles = get_all_tiles_in_folder(folder)
+    else:
+        tiles = get_tile_files_from_safe(folder, tile_name)
 
     print(f"Finding best image for tile: {tile_name}, {len(tiles)} candidates.")
 

@@ -140,6 +140,23 @@ def validate_type(input_type, input_value, name, tool_name):
             valid = False
             message = f"{name}: {input_value} is defined poorly in tools.."
 
+    elif input_type == "dropdown":
+        func_params = tools[tool_name]["parameters"]
+        definition = False
+        for func_param in func_params:
+            if name in func_param.keys():
+                definition = func_param[name]
+                break
+
+        if definition:
+            options = definition["options"]
+
+        for option in options:
+            if option["label"] == input_value:
+                cast = option["value"]
+                valid = True
+                break
+
     elif input_type == "string" or "password":
         if isinstance(input_value, str):
             valid = True
@@ -154,6 +171,9 @@ def validate_type(input_type, input_value, name, tool_name):
         else:
             valid = False
             message = f"{name}: {input_value} is not a valid date (yyyymmdd)."
+    else:
+        valid = False
+        message = f"{name}: {input_value} is not a valid type."
 
     return valid, cast, message
 
@@ -273,6 +293,7 @@ def layout_from_name(name):
                 key=parameter_name,
                 enable_events=True,
                 disabled=False,
+                tooltip=tooltip,
                 size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
@@ -289,6 +310,7 @@ def layout_from_name(name):
                 key=parameter_name,
                 enable_events=True,
                 disabled=False,
+                tooltip=tooltip,
                 size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
@@ -306,6 +328,7 @@ def layout_from_name(name):
                 key=parameter_name,
                 enable_events=True,
                 disabled=False,
+                tooltip=tooltip,
                 size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
@@ -322,6 +345,7 @@ def layout_from_name(name):
                 key=parameter_name,
                 enable_events=True,
                 disabled=False,
+                tooltip=tooltip,
                 size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
@@ -342,12 +366,34 @@ def layout_from_name(name):
             )
         elif parameter_type == "boolean":
             param_input = sg.Checkbox(
-                "True/False",
+                "",
                 key=parameter_name,
                 enable_events=True,
                 default=default,
                 tooltip=tooltip,
-                pad=((0, 0), (6, 0)),
+                pad=((0, 0), (8, 0)),
+            )
+        elif parameter_type == "dropdown":
+            param_options = parameter[parameter_name]["options"]
+
+            labels = []
+            selected = None
+            for idx, option in enumerate(param_options):
+                labels.append(option["label"])
+                if "default" in option.keys() and option["default"] == True:
+                    selected = option["label"]
+
+            param_input = sg.Combo(
+                labels,
+                default_value=selected,
+                key=parameter_name,
+                metadata=option["value"],
+                background_color="#f1f1f1",
+                readonly=True,
+                enable_events=True,
+                visible_items=10,
+                tooltip=tooltip,
+                size=(input_size[0] - button_size[0] - 1, input_size[1]),
             )
         elif parameter_type == "radio":
             param_options = parameter[parameter_name]["options"]
@@ -367,6 +413,7 @@ def layout_from_name(name):
                         default=selected,
                         key=parameter_name + "_" + option["key"],
                         metadata=option["value"],
+                        tooltip=tooltip,
                         pad=((left_pad, 0), (0, 0)),
                     )
                 )
@@ -377,7 +424,6 @@ def layout_from_name(name):
                 key="date_picker_" + parameter_name,
                 button_type=sg.BUTTON_TYPE_READ_FORM,
                 enable_events=True,
-                # border_width=0,
                 tooltip=tooltip,
                 bind_return_key=True,
                 size=button_size,
@@ -386,6 +432,7 @@ def layout_from_name(name):
                 default_date_str,
                 key=parameter_name,
                 enable_events=True,
+                tooltip=tooltip,
                 visible=True,
                 disabled=False,
                 size=(input_size[0] - button_size[0] - 1, input_size[1]),
@@ -496,7 +543,7 @@ def layout_from_name(name):
         [
             sg.Column(
                 layout,
-                size=(910, None),
+                size=(900, None),
                 scrollable=True,
                 element_justification="left",
                 pad=((0, 0), (0, 0)),

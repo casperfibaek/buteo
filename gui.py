@@ -44,7 +44,7 @@ def open_function(function_name):
         function_name,
         layout,
         resizable=True,
-        size=(1000, 1000),
+        size=(900, 1100),
         finalize=True,
         icon=globe_icon,
         element_justification="center",

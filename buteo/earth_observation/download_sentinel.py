@@ -165,6 +165,7 @@ def download_s2_tile(
     date_start="20200601",
     date_end="20210101",
     clouds=10,
+    producttype="S2MSI2A",
     tile=None,
 ):
     print("Downloading Sentinel-2 tiles")
@@ -208,7 +209,7 @@ def download_s2_tile(
                 date=date,
                 platformname="Sentinel-2",
                 cloudcoverpercentage=(0, clouds),
-                producttype="S2MSI2A",
+                producttype=producttype,
             )
 
         except Exception as e:

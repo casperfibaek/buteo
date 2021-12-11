@@ -2,6 +2,7 @@ from buteo.raster.borders import add_border_to_raster
 from buteo.raster.align import align_rasters
 from buteo.raster.clip import clip_raster
 from buteo.earth_observation.download_sentinel import download_s2_tile
+from buteo.earth_observation.s2_mosaic import mosaic_tile_s2
 
 
 tools = {
@@ -129,28 +130,24 @@ tools = {
             {
                 "resample_alg": {
                     "display_name": "Resample Algorithm",
-                    "type": "radio",
+                    "type": "dropdown",
                     "tooltip": "The resampling algorithm to use when resampling the raster.",
                     "options": [
                         {
                             "label": "Nearest",
-                            "key": "near",
                             "value": "nearest",
                             "default": True,
                         },
                         {
                             "label": "Bilinear",
-                            "key": "bili",
                             "value": "bilinear",
                         },
                         {
                             "label": "Average",
-                            "key": "avg",
                             "value": "average",
                         },
                         {
                             "label": "Sum",
-                            "key": "sum",
                             "value": "sum",
                         },
                     ],
@@ -198,7 +195,7 @@ tools = {
             },
         ],
     },
-    "Download Sentinel 2": {
+    "Sentinel 2 - Download": {
         "description": "Download Sentinel 2 data",
         "function_path": download_s2_tile,
         "parameters": [
@@ -273,12 +270,77 @@ tools = {
                 },
             },
             {
+                "producttype": {
+                    "display_name": "Process. Level",
+                    "type": "radio",
+                    "tooltip": "The processing level of the data to be downloaded.",
+                    "options": [
+                        {
+                            "label": "Level 2A",
+                            "key": "level2",
+                            "value": "S2MSI2A",
+                            "default": True,
+                        },
+                        {
+                            "label": "Level 1C",
+                            "key": "level1",
+                            "value": "S2MSI1C",
+                        },
+                    ],
+                }
+            },
+            {
                 "tile_id": {
                     "display_name": "Tile ID",
                     "type": "string",
                     "tooltip": "Optional. Specify a tile ID to download only one tile.",
                     "default": "",
                 }
+            },
+        ],
+    },
+    "Sentinel 2 - Mosaic": {
+        "description": "Mosaics tiles of Sentinel 2 data",
+        "function_path": mosaic_tile_s2,
+        "parameters": [
+            {
+                "s2_files_folder": {
+                    "display_name": "S2 Files Folder",
+                    "type": "folder_save",
+                    "tooltip": "The folder containing the Sentinel 2 files.",
+                }
+            },
+            {
+                "out_path": {
+                    "display_name": "Output Folder",
+                    "type": "folder_save",
+                    "tooltip": "The folder where the mosaic tiles will be saved.",
+                }
+            },
+            {
+                "ideal_date": {
+                    "display_name": "Ideal Date",
+                    "type": "date_year",
+                    "tooltip": "The start date of the data to be downloaded.",
+                    "tooltip": "The ideal central date for the mosaic.",
+                    "default_date": "days_ago_14",
+                },
+            },
+            {
+                "max_time_delta": {
+                    "display_name": "Time Delta (days)",
+                    "type": "number",
+                    "tooltip": "The maximum time delta in days allowed for included rasters.",
+                    "default": 60,
+                },
+            },
+            {
+                "max_images": {
+                    "display_name": "Maximum Images",
+                    "type": "number",
+                    "tooltip": "The maximum included images in a mosaic.",
+                    "default": 6,
+                },
             },
         ],
     },

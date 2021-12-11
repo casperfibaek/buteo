@@ -326,6 +326,20 @@ def get_tile_files_from_safe(safe_folder, tile_name):
     return tile_files
 
 
+def get_all_tiles_in_folder(folder):
+    files = glob(folder + "*.SAFE")
+
+    tiles = []
+    for file in files:
+        try:
+            tile = get_tilename_from_safe(file)
+            tiles.append(tile)
+        except:
+            pass
+
+    return list(set(tiles))
+
+
 def get_tile_files_from_safe_zip(safe_folder, tile_name):
     files = glob(safe_folder + "*.zip")
 
