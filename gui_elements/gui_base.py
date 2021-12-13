@@ -25,8 +25,6 @@ def home_layout(functions):
                     size_px=(300, None),
                     pad=((0, 0), (0, 0)),
                     enable_events=True,
-                    # bind_return_key=True,
-                    # change_submits=True,
                     default_values=[functions[0]],
                 )
             ]
@@ -43,7 +41,7 @@ def home_layout(functions):
                     size_px=(None, None),
                     key="-DESC-",
                     disabled=True,
-                    background_color=sg.theme_background_color(),
+                    background_color="#f1f1f1",
                     pad=((0, 0), (0, 0)),
                 )
             ],
@@ -54,6 +52,7 @@ def home_layout(functions):
                     size_px=(500, 60),
                     pad=((0, 0), (10, 0)),
                     bind_return_key=True,
+                    border_width=0,
                 )
             ],
         ],

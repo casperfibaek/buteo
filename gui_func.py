@@ -1,6 +1,12 @@
 import os
 import datetime
 import PySimpleGUIQt as sg
+from PySimpleGUIQt.PySimpleGUIQt import (
+    BUTTON_TYPE_BROWSE_FILE,
+    BUTTON_TYPE_BROWSE_FILES,
+    BUTTON_TYPE_SAVEAS_FILE,
+    BUTTON_TYPE_BROWSE_FOLDER,
+)
 from gui_tools import tools
 
 
@@ -47,10 +53,33 @@ def parse_date(date_str):
         return get_today_date()
 
 
+def get_param_name(tool_params):
+    for key in tool_params.keys():
+        return key
+
+
+def get_default_date(target_param, window):
+    date_str = window[target_param].Get()
+
+    return (int(date_str[0:4]), int(date_str[4:6]), int(date_str[6:8]))
+
+
 def validate_type(input_type, input_value, name, tool_name):
     valid = False
+    keyword = False
     cast = None
     message = ""
+
+    func_params = tools[tool_name]["parameters"]
+    definition = False
+    for func_param in func_params:
+        if name in func_param.keys():
+            definition = func_param[name]
+            break
+
+    if definition is not False and "keyword" in definition.keys():
+        keyword = definition["keyword"]
+
     if input_type == "file_browse":
         if isinstance(input_value, str) and os.path.isfile(input_value):
             valid = True
@@ -116,13 +145,6 @@ def validate_type(input_type, input_value, name, tool_name):
             message = f"{name}: {input_value} is not a valid boolean."
 
     elif input_type == "radio":
-        func_params = tools[tool_name]["parameters"]
-        definition = False
-        for func_param in func_params:
-            if name in func_param.keys():
-                definition = func_param[name]
-                break
-
         if definition:
             options = definition["options"]
             for button in input_value:
@@ -141,13 +163,6 @@ def validate_type(input_type, input_value, name, tool_name):
             message = f"{name}: {input_value} is defined poorly in tools.."
 
     elif input_type == "dropdown":
-        func_params = tools[tool_name]["parameters"]
-        definition = False
-        for func_param in func_params:
-            if name in func_param.keys():
-                definition = func_param[name]
-                break
-
         if definition:
             options = definition["options"]
 
@@ -156,6 +171,24 @@ def validate_type(input_type, input_value, name, tool_name):
                 cast = option["value"]
                 valid = True
                 break
+
+    elif input_type == "slider":
+        try:
+            cast = float(input_value)
+            if cast.is_integer():
+                cast = int(cast)
+
+            if "min_value" in definition.keys() and cast < definition["min_value"]:
+                valid = False
+                message = f"{name}: {input_value} is below the minimum value."
+            elif "max_value" in definition.keys() and cast > definition["max_value"]:
+                valid = False
+                message = f"{name}: {input_value} is above the maximum value."
+            else:
+                valid = True
+        except:
+            valid = False
+            message = f"{name}: {input_value} is not a valid number."
 
     elif input_type == "string" or "password":
         if isinstance(input_value, str):
@@ -175,18 +208,7 @@ def validate_type(input_type, input_value, name, tool_name):
         valid = False
         message = f"{name}: {input_value} is not a valid type."
 
-    return valid, cast, message
-
-
-def get_param_name(tool_params):
-    for key in tool_params.keys():
-        return key
-
-
-def get_default_date(target_param, window):
-    date_str = window[target_param].Get()
-
-    return (int(date_str[0:4]), int(date_str[4:6]), int(date_str[6:8]))
+    return valid, cast, message, keyword
 
 
 default_texts = [
@@ -200,7 +222,8 @@ default_texts = [
 def validate_input(tool_name, parameters):
     ret_obj = {
         "valid": [],
-        "cast": [],
+        "cast_args": [],
+        "cast_kwargs": {},
         "message": [],
         "names": [],
     }
@@ -221,15 +244,23 @@ def validate_input(tool_name, parameters):
             valid = False
             cast = None
             message = f"No file/folder selected for {name}."
+            keyword = False
         else:
-            valid, cast, message = validate_type(
-                input_type, input_value, name, tool_name
+            valid, cast, message, keyword = validate_type(
+                input_type,
+                input_value,
+                name,
+                tool_name,
             )
 
         ret_obj["valid"].append(valid)
-        ret_obj["cast"].append(cast)
         ret_obj["message"].append(message)
         ret_obj["names"].append(name)
+
+        if keyword:
+            ret_obj["cast_kwargs"][name] = cast
+        else:
+            ret_obj["cast_args"].append(cast)
 
     return ret_obj
 
@@ -280,9 +311,13 @@ def layout_from_name(name):
         text_size = (24, 1.2)
         param_input = None
         path_input = None
+        justification = "center"
         if parameter_type == "file_browse":
-            param_input = sg.FileBrowse(
+            param_input = sg.Button(
+                "Browse",
+                button_type=BUTTON_TYPE_BROWSE_FILE,
                 key=parameter_name + "_picker",
+                border_width=0,
                 enable_events=True,
                 size=button_size,
                 tooltip=tooltip,
@@ -291,6 +326,7 @@ def layout_from_name(name):
             path_input = sg.In(
                 default_text=default_texts[0],
                 key=parameter_name,
+                justification=justification,
                 enable_events=True,
                 disabled=False,
                 tooltip=tooltip,
@@ -298,9 +334,12 @@ def layout_from_name(name):
                 pad=input_pad,
             )
         elif parameter_type == "file_browse_multiple":
-            param_input = sg.FilesBrowse(
+            param_input = sg.Button(
+                "Browse",
+                button_type=BUTTON_TYPE_BROWSE_FILES,
                 key=parameter_name + "_picker",
                 enable_events=True,
+                border_width=0,
                 size=button_size,
                 tooltip=tooltip,
                 target=parameter_name,
@@ -311,11 +350,15 @@ def layout_from_name(name):
                 enable_events=True,
                 disabled=False,
                 tooltip=tooltip,
+                justification=justification,
                 size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
         elif parameter_type == "file_save":
-            param_input = sg.SaveAs(
+            param_input = sg.Button(
+                "Save As",
+                button_type=BUTTON_TYPE_SAVEAS_FILE,
+                border_width=0,
                 key=parameter_name + "_picker",
                 enable_events=True,
                 size=button_size,
@@ -329,11 +372,15 @@ def layout_from_name(name):
                 enable_events=True,
                 disabled=False,
                 tooltip=tooltip,
+                justification=justification,
                 size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
         elif parameter_type == "folder_save":
-            param_input = sg.FolderBrowse(
+            param_input = sg.Button(
+                "Browse",
+                button_type=BUTTON_TYPE_BROWSE_FOLDER,
+                border_width=0,
                 key=parameter_name + "_picker",
                 enable_events=True,
                 size=button_size,
@@ -346,6 +393,7 @@ def layout_from_name(name):
                 enable_events=True,
                 disabled=False,
                 tooltip=tooltip,
+                justification=justification,
                 size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
@@ -372,6 +420,48 @@ def layout_from_name(name):
                 default=default,
                 tooltip=tooltip,
                 pad=((0, 0), (8, 0)),
+            )
+        elif parameter_type == "slider":
+            param_args = parameter[parameter_name].keys()
+            min_value = (
+                parameter[parameter_name]["min_value"]
+                if "min_value" in param_args
+                else 0
+            )
+            max_value = (
+                parameter[parameter_name]["max_value"]
+                if "max_value" in param_args
+                else 100
+            )
+            default_value = (
+                parameter[parameter_name]["default"] if "default" in param_args else 50
+            )
+            step = parameter[parameter_name]["step"] if "step" in param_args else 1
+
+            if default < min_value or default > max_value:
+                default = min_value
+
+            param_input = sg.Slider(
+                range=(min_value, max_value),
+                orientation="h",
+                default_value=default_value,
+                enable_events=True,
+                tick_interval=step,
+                key="slider_" + parameter_name,
+                tooltip=tooltip,
+                size_px=(360, 38),
+                pad=input_pad,
+            )
+
+            path_input = sg.In(
+                default_text=default,
+                key=parameter_name,
+                enable_events=True,
+                disabled=False,
+                tooltip=tooltip,
+                size=button_size,
+                pad=input_pad,
+                justification=justification,
             )
         elif parameter_type == "dropdown":
             param_options = parameter[parameter_name]["options"]
@@ -426,6 +516,7 @@ def layout_from_name(name):
                 enable_events=True,
                 tooltip=tooltip,
                 bind_return_key=True,
+                border_width=0,
                 size=button_size,
             )
             path_input = sg.Input(
@@ -435,6 +526,7 @@ def layout_from_name(name):
                 tooltip=tooltip,
                 visible=True,
                 disabled=False,
+                justification=justification,
                 size=(input_size[0] - button_size[0] - 1, input_size[1]),
                 pad=input_pad,
             )
@@ -463,6 +555,7 @@ def layout_from_name(name):
                     "file_browse_multiple",
                     "folder_save",
                     "file_save",
+                    "slider",
                 ]:
                     param_inputs = [path_input, param_input]
                 else:
@@ -494,12 +587,20 @@ def layout_from_name(name):
                 [
                     [
                         sg.Text("", size=(26, button_size[1])),
-                        sg.Button("Run", size=button_size),
+                        sg.Button(
+                            "Run",
+                            size=button_size,
+                            key="-RUN-BUTTON-",
+                            visible=True,
+                            border_width=0,
+                        ),
                         sg.Text("", size=(1, button_size[1])),
-                        sg.Exit(
+                        sg.Button(
                             "Exit",
                             size=button_size,
-                            button_color=(sg.theme_background_color(), "firebrick"),
+                            button_color=(sg.theme_background_color(), "#B22222"),
+                            key="-EXIT-BUTTON-",
+                            border_width=0,
                         ),
                     ]
                 ],
@@ -509,35 +610,47 @@ def layout_from_name(name):
 
     layout.append(
         [
+            sg.Text("", size=(36, None)),
             sg.Text(
                 "Progress:",
                 key="-PROGRESS-TEXT-",
-                pad=((0, 0), (10, 0)),
+                pad=((20, 100), (0, 0)),
+            ),
+            sg.Column(
+                [
+                    [
+                        sg.ProgressBar(
+                            1,
+                            orientation="h",
+                            key="-PROGRESS-",
+                            pad=((0, 24), (0, 0)),
+                            size=(input_size[0] - 4, 36),
+                        ),
+                        sg.Button(
+                            "Cancel",
+                            key="-CANCEL-BUTTON-",
+                            button_color=(sg.theme_background_color(), "#d7a824"),
+                            border_width=0,
+                            size=button_size,
+                            pad=((10, 0), (0, 0)),
+                        ),
+                    ],
+                ],
+                pad=((10, 10), (0, 0)),
+                size=(520, 36),
             ),
         ]
     )
 
-    layout.append(
-        [
-            sg.ProgressBar(
-                1,
-                orientation="h",
-                size=(None, 20),
-                key="-PROGRESS-",
-                pad=((0, 0), (0, 10)),
-            )
-        ]
-    )
-
-    layout.append(
-        [
-            sg.Output(
-                pad=((0, 0), (10, 10)),
-                size_px=(None, 200),
-                background_color="#f1f1f1",
-            ),
-        ]
-    )
+    # layout.append(
+    #     [
+    #         sg.Output(
+    #             pad=((0, 0), (10, 10)),
+    #             size_px=(None, 200),
+    #             background_color="#f1f1f1",
+    #         ),
+    #     ]
+    # )
 
     layout = [
         [

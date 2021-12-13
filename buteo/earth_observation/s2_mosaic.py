@@ -1,7 +1,8 @@
 import sys
 import os
-import numpy as np
+import zipfile
 import datetime
+import numpy as np
 from glob import glob
 from time import time
 
@@ -120,13 +121,73 @@ def harmonise_band(
     return ret_arr
 
 
+def files_to_tiles(files):
+    tiles = []
+    for file in files:
+        basename = os.path.basename(file)
+        name, ext = os.path.splitext(basename)
+
+        try:
+            if ext == ".SAFE" or ext == ".zip":
+                tile_name = name.split("_")[-2][1:]
+                tiles.append(tile_name)
+            else:
+                raise Exception("Unknown file type: {}".format(file))
+        except:
+            raise Exception("Error while parsing file: {}".format(file))
+
+    tile_arr = []
+    tiles = set(tiles)
+    for tile in tiles:
+        tile_arr.append(tile)
+
+    return tile_arr
+
+
+def files_to_unzipped_paths(files, tmp_folder):
+    unzipped_paths = []
+    for file in files:
+        basename = os.path.basename(file)
+        name, ext = os.path.splitext(basename)
+        if ext == ".SAFE":
+            unzipped_paths.append(file)
+        elif ext == ".zip":
+            with zipfile.ZipFile(file, "r") as zip_ref:
+                zip_ref.extractall(tmp_folder)
+            unzipped_paths.append(os.path.join(tmp_folder, name))
+        else:
+            raise Exception("Unknown file type: {}".format(file))
+
+    return unzipped_paths
+
+
+def get_tile_files_from_paths(paths, tile):
+    tile_paths = []
+
+    try:
+        for path in paths:
+            basename = os.path.basename(path)
+            name, ext = os.path.splitext(basename)
+            if ext != ".SAFE":
+                raise Exception("Unknown file type: {}".format(path))
+
+            tile_name = name.split("_")[-2][1:]
+            if tile_name == tile:
+                tile_paths.append(path)
+    except:
+        raise Exception("Error while parsing file: {}".format(path))
+
+    return tile_paths
+
+
 def mosaic_tile_s2(
-    folder,
+    s2_files,
     out_folder,
-    tile_name=None,
+    tmp_folder,
     ideal_date=None,
     max_time_delta=60.0,
     max_images=6,
+    tile_name=None,
     quality_to_update=5,
     min_improvement=0.5,
     time_penalty=7,
@@ -139,330 +200,341 @@ def mosaic_tile_s2(
     output_tracking=False,
     output_quality=False,
     process_bands=None,
+    clean_tmp_folder=False,
 ):
     start = time()
 
-    if tile_name is None:
-        tiles = get_all_tiles_in_folder(folder)
-    else:
-        tiles = get_tile_files_from_safe(folder, tile_name)
+    tile_names = files_to_tiles(s2_files)
+    unzipped_paths = files_to_unzipped_paths(s2_files, tmp_folder)
 
-    print(f"Finding best image for tile: {tile_name}, {len(tiles)} candidates.")
+    created_images = []
+    for tile_name in tile_names:
+        tiles = get_tile_files_from_paths(unzipped_paths, tile_name)
 
-    metadatas = []
-    best_score = 0
-    best_idx = 0
-    best_date = None
-    best_time = 9999999999.9
+        metadatas = []
+        best_score = 0
+        best_idx = 0
+        best_date = None
+        best_time = 9999999999.9
 
-    for index, tile in enumerate(tiles):
-        metadata = get_metadata(tile)
-        quality = assess_quality(tile)
-        tile_score = np.average(quality)
-        metadata["quality_score"] = tile_score
-
-        if ideal_date is not None or use_image is not None:
-            comp_time = None
-            if use_image is not None:
-                comp_time = use_image
-            else:
-                comp_time = ideal_date
-
-            time_delta = abs(
-                (
-                    metadata["PRODUCT_STOP_TIME"]
-                    - datetime.datetime.strptime(comp_time, "%Y%m%d").replace(
-                        tzinfo=datetime.timezone.utc
-                    )
-                ).total_seconds()
-                / 86400
+        for index, tile in enumerate(tiles):
+            print(
+                f"Finding best image for tile: {tile_name}. {index + 1}/{len(tiles)} images"
             )
+            metadata = get_metadata(tile)
+            quality = assess_quality(tile)
+            tile_score = np.average(quality)
+            metadata["quality_score"] = tile_score
 
-        quality_adjustment = 1
-        if ideal_date is not None:
-            # 1 % reduction in quality for every x days.
-            quality_adjustment = (100 - time_delta / time_penalty) / 100
+            if ideal_date is not None or use_image is not None:
+                comp_time = None
+                if use_image is not None:
+                    comp_time = use_image
+                else:
+                    comp_time = ideal_date
 
-        if use_image:
-            if time_delta < best_time:
+                time_delta = abs(
+                    (
+                        metadata["PRODUCT_STOP_TIME"]
+                        - datetime.datetime.strptime(comp_time, "%Y%m%d").replace(
+                            tzinfo=datetime.timezone.utc
+                        )
+                    ).total_seconds()
+                    / 86400
+                )
+
+            quality_adjustment = 1
+            if ideal_date is not None:
+                # 1 % reduction in quality for every x days.
+                quality_adjustment = (100 - time_delta / time_penalty) / 100
+
+            if use_image:
+                if time_delta < best_time:
+                    best_score = tile_score
+                    best_idx = index
+                    best_date = metadata["PRODUCT_STOP_TIME"]
+                    best_time = time_delta
+            elif (tile_score * quality_adjustment) > best_score:
                 best_score = tile_score
                 best_idx = index
                 best_date = metadata["PRODUCT_STOP_TIME"]
-                best_time = time_delta
-        elif (tile_score * quality_adjustment) > best_score:
-            best_score = tile_score
-            best_idx = index
-            best_date = metadata["PRODUCT_STOP_TIME"]
 
-        metadata["quality"] = quality
-        metadatas.append(metadata)
+            metadata["quality"] = quality
+            metadatas.append(metadata)
 
-    print(
-        f"Best image found: {os.path.basename(tiles[best_idx])} @ {round(best_score, 3)}"
-    )
+        print(
+            f"Best image found: {os.path.basename(tiles[best_idx])} @ {round(best_score, 3)}"
+        )
 
-    metadatas_thresholded = []
-    print("Adjusting scores by temporal distance.")
-    for index, tile in enumerate(tiles):
-        metadata = metadatas[index]
-        recording_time = metadata["PRODUCT_STOP_TIME"]
+        metadatas_thresholded = []
+        print("Adjusting scores by temporal distance.")
+        for index, tile in enumerate(tiles):
+            metadata = metadatas[index]
+            recording_time = metadata["PRODUCT_STOP_TIME"]
 
-        time_delta = abs((best_date - recording_time).total_seconds() / 86400)
+            time_delta = abs((best_date - recording_time).total_seconds() / 86400)
 
-        # 1 % reduction in quality for every x days.
-        quality_adjustment = (100 - time_delta / time_penalty) / 100
+            # 1 % reduction in quality for every x days.
+            quality_adjustment = (100 - time_delta / time_penalty) / 100
 
-        metadatas[index]["quality"] = np.rint(
-            (metadatas[index]["quality"].astype("float32") * quality_adjustment)
-        ).astype("uint8")
-        metadatas[index]["quality_score"] = np.average(metadatas[index]["quality"])
+            metadatas[index]["quality"] = np.rint(
+                (metadatas[index]["quality"].astype("float32") * quality_adjustment)
+            ).astype("uint8")
+            metadatas[index]["quality_score"] = np.average(metadatas[index]["quality"])
 
-        if time_delta < max_time_delta:
-            metadatas_thresholded.append(metadatas[index])
+            if time_delta < max_time_delta:
+                metadatas_thresholded.append(metadatas[index])
 
-    # Ordering metadatas by quality
-    metadatas = metadatas_thresholded
-    metadatas = sorted(metadatas, key=lambda i: i["quality_score"], reverse=True)
+        # Ordering metadatas by quality
+        metadatas = metadatas_thresholded
+        metadatas = sorted(metadatas, key=lambda i: i["quality_score"], reverse=True)
 
-    # if central_images, move it to the front
-    if use_image is not None:
-        for index, meta in enumerate(metadatas):
-            if meta["PRODUCT_STOP_TIME"] == best_date:
-                metadatas.insert(0, metadatas.pop(index))
-                break
+        # if central_images, move it to the front
+        if use_image is not None:
+            for index, meta in enumerate(metadatas):
+                if meta["PRODUCT_STOP_TIME"] == best_date:
+                    metadatas.insert(0, metadatas.pop(index))
+                    break
 
-    scl_array = raster_to_array(
-        metadatas[0]["paths"]["20m"]["SCL"], filled=True, output_2d=True
-    )
-    tracking_array = np.zeros_like(scl_array, dtype="uint8")
+        scl_array = raster_to_array(
+            metadatas[0]["paths"]["20m"]["SCL"], filled=True, output_2d=True
+        )
+        tracking_array = np.zeros_like(scl_array, dtype="uint8")
 
-    current_valid_mask = erode_mask(scl_array != 0, feather_dist)
-    current_quality = metadatas[0]["quality"] * current_valid_mask
-    current_quality_score = np.average(current_quality)
+        current_valid_mask = erode_mask(scl_array != 0, feather_dist)
+        current_quality = metadatas[0]["quality"] * current_valid_mask
+        current_quality_score = np.average(current_quality)
 
-    print("Tracking..")
-    print(f"Current quality: {round(current_quality_score, 4)}")
-    used_images = [0]
-    tested_images = 1
-    while (
-        current_quality_score < quality_threshold
-        and len(used_images) < max_images
-        and tested_images < len(metadatas)
-    ):
+        print("Tracking..")
+        print(f"Current quality: {round(current_quality_score, 4)}")
+        used_images = [0]
+        tested_images = 1
+        while (
+            current_quality_score < quality_threshold
+            and len(used_images) < max_images
+            and tested_images < len(metadatas)
+        ):
 
-        best_idx = None
-        best_improvement = None
-        best_valid_sum = None
-        best_tile_quality = None
-        best_tile_scl = None
-        best_improvement_mask = None
+            best_idx = None
+            best_improvement = None
+            best_valid_sum = None
+            best_tile_quality = None
+            best_tile_scl = None
+            best_improvement_mask = None
 
-        first = True
-        for index, metadata in enumerate(metadatas):
-            if index in used_images:
-                continue
+            first = True
+            for index, metadata in enumerate(metadatas):
+                if index in used_images:
+                    continue
 
-            tile_quality = metadata["quality"]
-            tile_scl = raster_to_array(
-                metadata["paths"]["20m"]["SCL"], filled=True, output_2d=True
-            )
+                tile_quality = metadata["quality"]
+                tile_scl = raster_to_array(
+                    metadata["paths"]["20m"]["SCL"], filled=True, output_2d=True
+                )
 
-            valid_mask = erode_mask(tile_scl != 0, feather_dist)
+                valid_mask = erode_mask(tile_scl != 0, feather_dist)
 
-            improvement_mask = valid_mask & smooth_mask(
-                tile_quality > (current_quality * (1 + (quality_to_update / 100)))
-            )
-            improvement_percent = np.average(improvement_mask) * 100
+                improvement_mask = valid_mask & smooth_mask(
+                    tile_quality > (current_quality * (1 + (quality_to_update / 100)))
+                )
+                improvement_percent = np.average(improvement_mask) * 100
 
-            if first:
-                best_idx = index
-                best_improvement = improvement_percent
-                best_valid_sum = valid_mask.sum()
-                best_tile_quality = tile_quality
-                best_tile_scl = tile_scl
-                best_improvement_mask = improvement_mask
-                first = False
-            else:
-                if improvement_percent > best_improvement:
+                if first:
                     best_idx = index
                     best_improvement = improvement_percent
                     best_valid_sum = valid_mask.sum()
                     best_tile_quality = tile_quality
                     best_tile_scl = tile_scl
                     best_improvement_mask = improvement_mask
+                    first = False
+                else:
+                    if improvement_percent > best_improvement:
+                        best_idx = index
+                        best_improvement = improvement_percent
+                        best_valid_sum = valid_mask.sum()
+                        best_tile_quality = tile_quality
+                        best_tile_scl = tile_scl
+                        best_improvement_mask = improvement_mask
 
-        tile_quality = np.where(
-            best_improvement_mask, best_tile_quality, current_quality
-        )
-        tile_quality_score = np.average(tile_quality)
+            tile_quality = np.where(
+                best_improvement_mask, best_tile_quality, current_quality
+            )
+            tile_quality_score = np.average(tile_quality)
 
-        if (tile_quality_score - current_quality_score) < min_improvement and (
-            best_valid_sum <= current_valid_mask.sum()
-        ):
-            break
+            if (tile_quality_score - current_quality_score) < min_improvement and (
+                best_valid_sum <= current_valid_mask.sum()
+            ):
+                break
 
-        # Update tracking arrays
-        tracking_array = np.where(best_improvement_mask, best_idx, tracking_array)
-        scl_array = np.where(best_improvement_mask, best_tile_scl, scl_array)
-        current_quality = tile_quality
-        current_quality_score = tile_quality_score
-        used_images.append(best_idx)
-        tested_images += 1
+            # Update tracking arrays
+            tracking_array = np.where(best_improvement_mask, best_idx, tracking_array)
+            scl_array = np.where(best_improvement_mask, best_tile_scl, scl_array)
+            current_quality = tile_quality
+            current_quality_score = tile_quality_score
+            used_images.append(best_idx)
+            tested_images += 1
 
-        print(f"Current quality: {round(current_quality_score, 4)}")
+            print(f"Current quality: {round(current_quality_score, 4)}")
 
-    bands_to_process = (
-        [
-            {"size": "10m", "band": "B02"},
-            {"size": "10m", "band": "B03"},
-            {"size": "10m", "band": "B04"},
-            {"size": "20m", "band": "B05"},
-            {"size": "20m", "band": "B06"},
-            {"size": "20m", "band": "B07"},
-            {"size": "20m", "band": "B8A"},
-            {"size": "10m", "band": "B08"},
-            {"size": "20m", "band": "B11"},
-            {"size": "20m", "band": "B12"},
-        ]
-        if process_bands is None
-        else process_bands
-    )
-
-    if len(used_images) > 1:
-        print("Pre-calculating feathers")
-        tracking_20m = feather(
-            tracking_array, np.array(used_images, dtype="uint8"), feather_dist
-        )
-
-        tracking_10m = raster_to_array(
-            internal_resample_raster(
-                array_to_raster(
-                    tracking_20m, reference=metadatas[0]["paths"]["20m"]["SCL"]
-                ),
-                target_size=metadatas[0]["paths"]["10m"]["B04"],
-                resample_alg="average",
-            ),
-            filled=True,
+        bands_to_process = (
+            [
+                {"size": "10m", "band": "B02"},
+                {"size": "10m", "band": "B03"},
+                {"size": "10m", "band": "B04"},
+                {"size": "20m", "band": "B05"},
+                {"size": "20m", "band": "B06"},
+                {"size": "20m", "band": "B07"},
+                {"size": "20m", "band": "B8A"},
+                {"size": "10m", "band": "B08"},
+                {"size": "20m", "band": "B11"},
+                {"size": "20m", "band": "B12"},
+            ]
+            if process_bands is None
+            else process_bands
         )
 
-        tracking_60m = raster_to_array(
-            internal_resample_raster(
-                array_to_raster(
-                    tracking_20m, reference=metadatas[0]["paths"]["20m"]["SCL"]
-                ),
-                target_size=metadatas[0]["paths"]["60m"]["B04"],
-                resample_alg="average",
-            ),
-            filled=True,
-        )
-
-    created_images = []
-    print("Harmonising and merging tiles")
-    for pi, process_band in enumerate(bands_to_process):
-        size = process_band["size"]
-        name = process_band["band"]
-        tile_outname = out_folder + f"{tile_name}_{name}_{size}.tif"
-
-        print(f"Now processing {pi + 1}/{len(bands_to_process)}: {name} @ {size}")
-
-        out_arr = None
-
-        master_arr = None
-        master_quality = None
-        for index, image in enumerate(used_images):
-            metadata = metadatas[image]
-
-            band_arr = raster_to_array(
-                metadata["paths"][size][name], filled=True, output_2d=True
+        if len(used_images) > 1:
+            print("Pre-calculating feathers")
+            tracking_20m = feather(
+                tracking_array, np.array(used_images, dtype="uint8"), feather_dist
             )
 
-            if len(used_images) == 1:
-                out_arr = band_arr
-                continue
+            tracking_10m = raster_to_array(
+                internal_resample_raster(
+                    array_to_raster(
+                        tracking_20m, reference=metadatas[0]["paths"]["20m"]["SCL"]
+                    ),
+                    target_size=metadatas[0]["paths"]["10m"]["B04"],
+                    resample_alg="average",
+                ),
+                filled=True,
+            )
 
-            if harmonise and index == 0:
-                master_arr = resample_array(
-                    band_arr,
-                    metadata["paths"][size]["B04"],
-                    metadata["paths"]["60m"]["B04"],
+            tracking_60m = raster_to_array(
+                internal_resample_raster(
+                    array_to_raster(
+                        tracking_20m, reference=metadatas[0]["paths"]["20m"]["SCL"]
+                    ),
+                    target_size=metadatas[0]["paths"]["60m"]["B04"],
+                    resample_alg="average",
+                ),
+                filled=True,
+            )
+
+        print("Harmonising and merging tiles")
+        for pi, process_band in enumerate(bands_to_process):
+            size = process_band["size"]
+            name = process_band["band"]
+            tile_outname = out_folder + f"{tile_name}_{name}_{size}.tif"
+
+            print(f"Now processing {pi + 1}/{len(bands_to_process)}: {name} @ {size}")
+
+            out_arr = None
+
+            master_arr = None
+            master_quality = None
+            for index, image in enumerate(used_images):
+                metadata = metadatas[image]
+
+                band_arr = raster_to_array(
+                    metadata["paths"][size][name], filled=True, output_2d=True
                 )
-                master_quality = resample_array(
-                    metadata["quality"],
-                    metadata["paths"]["20m"]["SCL"],
-                    metadata["paths"]["60m"]["B04"],
-                )
 
-            if harmonise and index != 0:
+                if len(used_images) == 1:
+                    out_arr = band_arr
+                    continue
 
-                band_arr = harmonise_band(
-                    band_arr,
-                    metadata,
-                    size,
-                    name,
-                    master_arr,
-                    master_quality,
-                    max_harmony=max_harmony,
-                )
+                if harmonise and index == 0:
+                    master_arr = resample_array(
+                        band_arr,
+                        metadata["paths"][size]["B04"],
+                        metadata["paths"]["60m"]["B04"],
+                    )
+                    master_quality = resample_array(
+                        metadata["quality"],
+                        metadata["paths"]["20m"]["SCL"],
+                        metadata["paths"]["60m"]["B04"],
+                    )
 
-            feather_scale = None
+                if harmonise and index != 0:
+
+                    band_arr = harmonise_band(
+                        band_arr,
+                        metadata,
+                        size,
+                        name,
+                        master_arr,
+                        master_quality,
+                        max_harmony=max_harmony,
+                    )
+
+                feather_scale = None
+                if size == "10m":
+                    feather_scale = tracking_10m[:, :, index]
+                elif size == "20m":
+                    feather_scale = tracking_20m[:, :, index]
+                elif size == "60m":
+                    feather_scale = tracking_60m[:, :, index]
+                else:
+                    raise Exception("Unknown band size.")
+
+                if index == 0:
+                    out_arr = feather_scale * band_arr
+                else:
+                    out_arr += feather_scale * band_arr
+
+            ref = None
             if size == "10m":
-                feather_scale = tracking_10m[:, :, index]
+                ref = metadatas[0]["paths"]["10m"]["B04"]
             elif size == "20m":
-                feather_scale = tracking_20m[:, :, index]
+                ref = metadatas[0]["paths"]["20m"]["B04"]
             elif size == "60m":
-                feather_scale = tracking_60m[:, :, index]
-            else:
-                raise Exception("Unknown band size.")
+                ref = metadatas[0]["paths"]["60m"]["B04"]
 
-            if index == 0:
-                out_arr = feather_scale * band_arr
-            else:
-                out_arr += feather_scale * band_arr
+            created_images.append(tile_outname)
 
-        ref = None
-        if size == "10m":
-            ref = metadatas[0]["paths"]["10m"]["B04"]
-        elif size == "20m":
-            ref = metadatas[0]["paths"]["20m"]["B04"]
-        elif size == "60m":
-            ref = metadatas[0]["paths"]["60m"]["B04"]
+            array_to_raster(
+                np.rint(out_arr).astype("uint16"),
+                reference=ref,
+                out_path=tile_outname,
+            )
 
-        created_images.append(tile_outname)
+        if output_tracking:
+            tracking_outname = out_folder + f"{tile_name}_tracking_20m.tif"
+            created_images.append(tracking_outname)
+            array_to_raster(
+                tracking_array,
+                reference=metadatas[0]["paths"]["20m"]["SCL"],
+                out_path=tracking_outname,
+            )
 
-        array_to_raster(
-            np.rint(out_arr).astype("uint16"),
-            reference=ref,
-            out_path=tile_outname,
-        )
+        if output_scl:
+            scl_outname = out_folder + f"{tile_name}_SCL_20m.tif"
+            created_images.append(scl_outname)
+            array_to_raster(
+                scl_array,
+                reference=metadatas[0]["paths"]["20m"]["SCL"],
+                out_path=scl_outname,
+            )
 
-    if output_tracking:
-        tracking_outname = out_folder + f"{tile_name}_tracking_20m.tif"
-        created_images.append(tracking_outname)
-        array_to_raster(
-            tracking_array,
-            reference=metadatas[0]["paths"]["20m"]["SCL"],
-            out_path=tracking_outname,
-        )
+        if output_quality:
+            quality_outname = out_folder + f"{tile_name}_quality_20m.tif"
+            created_images.append(quality_outname)
+            array_to_raster(
+                current_quality,
+                reference=metadatas[0]["paths"]["20m"]["SCL"],
+                out_path=quality_outname,
+            )
 
-    if output_scl:
-        scl_outname = out_folder + f"{tile_name}_SCL_20m.tif"
-        created_images.append(scl_outname)
-        array_to_raster(
-            scl_array,
-            reference=metadatas[0]["paths"]["20m"]["SCL"],
-            out_path=scl_outname,
-        )
+        timing(start)
 
-    if output_quality:
-        quality_outname = out_folder + f"{tile_name}_quality_20m.tif"
-        created_images.append(quality_outname)
-        array_to_raster(
-            current_quality,
-            reference=metadatas[0]["paths"]["20m"]["SCL"],
-            out_path=quality_outname,
-        )
-
-    timing(start)
+    if clean_tmp_folder:
+        tmp_files = glob(tmp_folder + "*.tif")
+        for f in tmp_files:
+            try:
+                os.remove(f)
+            except:
+                pass
 
     return created_images
 

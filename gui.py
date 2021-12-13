@@ -18,6 +18,15 @@ KEY_UP_QT = "special 16777235"
 KEY_DOWN_QT = "special 16777237"
 KEY_ENTER_QT = "special 16777220"
 
+DEFAULT_MARGINS = (
+    0,
+    0,
+)  # For Qt, use a Column element with padding to get same effect as tkinter port
+DEFAULT_ELEMENT_PADDING = (0, 0)  # Padding between elements (row, col) in pixels
+DEFAULT_FONT = ("Helvetica", 10)
+DEFAULT_TEXT_JUSTIFICATION = "left"
+DEFAULT_BORDER_WIDTH = 0
+
 global thread
 global thread_message
 
@@ -57,14 +66,18 @@ def open_function(function_name):
     print("Opening function:", function_name)
 
     thread = None
+    run_clicked = False
     while True:
         event_func, values_func = window_func.read()
 
-        if event_func == "Exit" or event_func == sg.WIN_CLOSED or event_func is None:
+        if (
+            event_func == "-EXIT-BUTTON-"
+            or event_func == sg.WIN_CLOSED
+            or event_func is None
+        ):
             break
-        elif event_func == "Run":
-            progress_bar.UpdateBar(10, 100)
-            window_func["-PROGRESS-TEXT-"].update("Running..")
+        elif event_func == "-RUN-BUTTON-":
+            run_clicked = True
 
             try:
                 validation = validate_inputs(function_name, values_func, window_func)
@@ -81,40 +94,61 @@ def open_function(function_name):
                     )
                     progress_bar.UpdateBar(0, 100)
                 else:
-                    args = validation["cast"]
+                    args = validation["cast_args"]
+                    kwargs = validation["cast_kwargs"]
 
                     def long_operation_thread(window):
                         global thread_message
+
+                        buteo_return = None
                         try:
-                            buteo_return = buteo_function(*args)
+                            buteo_return = buteo_function(*args, **kwargs)
                             thread_message = buteo_return
                         except Exception as e:
-                            thread_message = e
+                            thread_message = ("Error", e)
                         window["-THREAD-"].click()
 
                         return buteo_return
 
-                thread = threading.Thread(
-                    target=long_operation_thread,
-                    args=(window_func,),
-                    daemon=True,
-                )
-                thread.start()
+                    progress_bar.UpdateBar(10, 100)
+                    window_func["-PROGRESS-TEXT-"].update("Running..")
+                    window_func["-RUN-BUTTON-"].update(
+                        button_color=(sg.theme_element_text_color(), "#999999")
+                    )
+
+                    thread = threading.Thread(
+                        target=long_operation_thread,
+                        args=(window_func,),
+                        daemon=True,
+                    )
+                    thread.start()
 
             except Exception as e:
                 progress_bar.UpdateBar(0, 100)
                 window_func["-PROGRESS-TEXT-"].update("Progress:")
+                window_func["-RUN-BUTTON-"].update(button_color=sg.theme_button_color())
+
                 sg.Popup("Error", str(e))
 
         elif event_func == "-THREAD-":
-            window_func["-PROGRESS-TEXT-"].update("Completed.")
-            progress_bar.UpdateBar(100, 100)
-            print(thread_message)
-            thread.join(timeout=0)
-            thread_message
+            try:
+                thread.join(timeout=0)
+                print(thread_message)
+            except:
+                print("Error joining thread")
+
+            if thread_message[0] == "Error":
+                sg.Popup("Error", str(thread_message[1]))
+                window_func["-PROGRESS-TEXT-"].update("Progress:")
+                progress_bar.UpdateBar(0, 100)
+            else:
+                window_func["-PROGRESS-TEXT-"].update("Completed.")
+                progress_bar.UpdateBar(100, 100)
+
+            window_func["-RUN-BUTTON-"].update(button_color=sg.theme_button_color())
         elif (
             isinstance(event_func, str)
-            and len(event_func) > 8
+            and len(event_func) > 12
             and event_func[:12] == "date_picker_"
         ):
             target_param = event_func[12:]
@@ -129,12 +163,23 @@ def open_function(function_name):
 
                 if date is not None:
                     window_func[event_func[12:]].update(value=date)
-                    validate_inputs(function_name, values_func, window_func)
+                    if run_clicked:
+                        validate_inputs(function_name, values_func, window_func)
             except Exception as e:
                 sg.Popup("Error", str(e))
 
+        elif (
+            isinstance(event_func, str)
+            and len(event_func) > len("slider_")
+            and event_func[: len("slider_")] == "slider_"
+        ):
+            target_param = event_func[len("slider_") :]
+            window_func[target_param].update(value=values_func[event_func])
+            if run_clicked:
+                validate_inputs(function_name, values_func, window_func)
         else:
-            validate_inputs(function_name, values_func, window_func)
+            if run_clicked:
+                validate_inputs(function_name, values_func, window_func)
 
     window_func.close()
 
@@ -158,6 +203,7 @@ window = sg.Window(
     icon=globe_icon,
     element_justification="center",
     return_keyboard_events=True,
+    border_depth=0,
 )
 
 select_function(available_functions[0], window)
@@ -204,4 +250,4 @@ while True:
 
 window.close()
 
-# pyinstaller -D --noconfirm --clean --noconsole --icon=./gui_elements/globe_icon.ico gui.py
+# pyinstaller -wF --noconfirm --clean --noconsole --icon=./gui_elements/globe_icon.ico gui.py

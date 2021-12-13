@@ -240,9 +240,9 @@ tools = {
             },
             {
                 "aoi_vector": {
-                    "display_name": "AOI Vector",
+                    "display_name": "AOI Reference",
                     "type": "file_browse",
-                    "tooltip": "The vector file containing the area of interest.",
+                    "tooltip": "The reference file containing the area of interest. Can be both a vector or raster.",
                 },
             },
             {
@@ -264,9 +264,12 @@ tools = {
             {
                 "cloud_cover": {
                     "display_name": "Cloud Cover",
-                    "type": "number",
+                    "type": "slider",
                     "tooltip": "The maximum cloud cover allowed for the data to be downloaded.",
                     "default": 20,
+                    "min_value": 0,
+                    "max_value": 100,
+                    "step": 1,
                 },
             },
             {
@@ -304,10 +307,10 @@ tools = {
         "function_path": mosaic_tile_s2,
         "parameters": [
             {
-                "s2_files_folder": {
-                    "display_name": "S2 Files Folder",
-                    "type": "folder_save",
-                    "tooltip": "The folder containing the Sentinel 2 files.",
+                "s2_files": {
+                    "display_name": "S2 Files",
+                    "type": "file_browse_multiple",
+                    "tooltip": "The Sentinel 2 files to be mosaicked (.zip or .safe).",
                 }
             },
             {
@@ -318,16 +321,24 @@ tools = {
                 }
             },
             {
+                "tmp_folder": {
+                    "display_name": "Temporary Folder",
+                    "type": "folder_save",
+                    "tooltip": "The folder where temporary files will be saved.",
+                }
+            },
+            {
                 "ideal_date": {
+                    "keyword": True,
                     "display_name": "Ideal Date",
                     "type": "date_year",
-                    "tooltip": "The start date of the data to be downloaded.",
                     "tooltip": "The ideal central date for the mosaic.",
                     "default_date": "days_ago_14",
                 },
             },
             {
                 "max_time_delta": {
+                    "keyword": True,
                     "display_name": "Time Delta (days)",
                     "type": "number",
                     "tooltip": "The maximum time delta in days allowed for included rasters.",
@@ -336,10 +347,20 @@ tools = {
             },
             {
                 "max_images": {
+                    "keyword": True,
                     "display_name": "Maximum Images",
                     "type": "number",
                     "tooltip": "The maximum included images in a mosaic.",
                     "default": 6,
+                },
+            },
+            {
+                "clean_tmp_folder": {
+                    "keyword": True,
+                    "display_name": "Clean Temp. Folder",
+                    "type": "boolean",
+                    "tooltip": "Clean the temporary folder after the mosaic is done.",
+                    "default": False,
                 },
             },
         ],
