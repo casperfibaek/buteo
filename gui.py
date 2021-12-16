@@ -1,3 +1,6 @@
+import os
+import ctypes
+import platform
 import threading
 import PySimpleGUIQt as sg
 from PySimpleGUIQt.PySimpleGUIQt import (
@@ -14,18 +17,17 @@ from gui_func import (
     get_default_date,
 )
 
+
 KEY_UP_QT = "special 16777235"
 KEY_DOWN_QT = "special 16777237"
 KEY_ENTER_QT = "special 16777220"
-
-DEFAULT_MARGINS = (
-    0,
-    0,
-)  # For Qt, use a Column element with padding to get same effect as tkinter port
-DEFAULT_ELEMENT_PADDING = (0, 0)  # Padding between elements (row, col) in pixels
+DEFAULT_MARGINS = (0, 0)
+DEFAULT_ELEMENT_PADDING = (0, 0)
 DEFAULT_FONT = ("Helvetica", 10)
 DEFAULT_TEXT_JUSTIFICATION = "left"
 DEFAULT_BORDER_WIDTH = 0
+
+# os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
 global thread
 global thread_message
@@ -137,7 +139,7 @@ def open_function(function_name):
             except:
                 print("Error joining thread")
 
-            if thread_message[0] == "Error":
+            if isinstance(thread_message, list) and thread_message[0] == "Error":
                 sg.Popup("Error", str(thread_message[1]))
                 window_func["-PROGRESS-TEXT-"].update("Progress:")
                 progress_bar.UpdateBar(0, 100)

@@ -3,6 +3,7 @@ from buteo.raster.align import align_rasters
 from buteo.raster.clip import clip_raster
 from buteo.earth_observation.download_sentinel import download_s2_tile
 from buteo.earth_observation.s2_mosaic import mosaic_tile_s2
+from buteo.machine_learning.patch_extraction import predict_raster
 
 
 tools = {
@@ -360,6 +361,116 @@ tools = {
                     "display_name": "Clean Temp. Folder",
                     "type": "boolean",
                     "tooltip": "Clean the temporary folder after the mosaic is done.",
+                    "default": False,
+                },
+            },
+        ],
+    },
+    "Predict Raster": {
+        "description": "Applies a deep learning model to a raster",
+        "function_path": predict_raster,
+        "parameters": [
+            {
+                "raster_list": {
+                    "display_name": "Raster Files",
+                    "type": "file_browse_multiple",
+                    "tooltip": "The input rasters for the model to use.",
+                }
+            },
+            {
+                "tile_size": {
+                    "keyword": True,
+                    "display_name": "Tile Sizes",
+                    "type": "string",
+                    "tooltip": "tile_sizes in the format: '32, 32, 16'",
+                    "default": "32, 32, 16",
+                }
+            },
+            {
+                "output_tile_size": {
+                    "keyword": True,
+                    "display_name": "Output Tile Size",
+                    "type": "number",
+                    "tooltip": "The tilesize of the output prediction raster.",
+                }
+            },
+            {
+                "output_channels": {
+                    "keyword": True,
+                    "display_name": "Output Channels",
+                    "type": "number",
+                    "tooltip": "The number of channels in the output prediction raster.",
+                    "default": 1,
+                },
+            },
+            {
+                "model_path": {
+                    "keyword": True,
+                    "display_name": "Path to Model",
+                    "type": "file_browse",
+                    "tooltip": "The deep learning model to use. (Tensorflow formats)",
+                },
+            },
+            {
+                "reference_raster": {
+                    "keyword": True,
+                    "display_name": "Reference Array",
+                    "type": "file_browse",
+                    "tooltip": "A reference raster for the output.",
+                },
+            },
+            {
+                "out_path": {
+                    "keyword": True,
+                    "display_name": "Out Path",
+                    "type": "file_save",
+                    "tooltip": "Where to save the output prediction raster.",
+                },
+            },
+            {
+                "offsets": {
+                    "keyword": True,
+                    "display_name": "Use Offsets",
+                    "type": "boolean",
+                    "tooltip": "Should offsets be used when making the prediction?",
+                    "default": True,
+                },
+            },
+            {
+                "batch_size": {
+                    "keyword": True,
+                    "display_name": "Batch Size",
+                    "type": "number",
+                    "tooltip": "The batch size to use when making the prediction.",
+                },
+            },
+            {
+                "method": {
+                    "keyword": True,
+                    "display_name": "Merge Method",
+                    "type": "radio",
+                    "tooltip": "Where to save the output prediction raster.",
+                    "options": [
+                        {
+                            "label": "Median",
+                            "key": "median",
+                            "value": "median",
+                            "default": True,
+                        },
+                        {
+                            "label": "Olympic",
+                            "key": "olympic",
+                            "value": "olympic",
+                        },
+                    ],
+                },
+            },
+            {
+                "scale_to_sum": {
+                    "keyword": True,
+                    "display_name": "Scale to sum",
+                    "type": "boolean",
+                    "tooltip": "Should the output be scaled to the sum predictions?",
                     "default": False,
                 },
             },

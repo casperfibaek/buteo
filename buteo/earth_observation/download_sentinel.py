@@ -1,9 +1,9 @@
 import sys
 import os
-from tkinter.constants import E
 import requests
 import numpy as np
 from osgeo import ogr
+from time import sleep
 from sentinelsat import SentinelAPI
 from collections import OrderedDict
 from requests.auth import HTTPBasicAuth
@@ -19,37 +19,42 @@ from buteo.earth_observation.s2_utils import timeout
 from buteo.utils import progress
 
 
-# api_url = "https://apihub.copernicus.eu/apihub"
-api_url = "http://apihub.copernicus.eu/apihub"
-
-
-def str_to_mb(string):
-    split = string.split(" ")
-    val = split[0]
-    typ = split[1]
-
-    if typ == "MB":
-        return float(val)
-    elif typ == "GB":
-        return float(val) * 1000
-    elif typ == "KB":
-        return 1.0
-    else:
-        raise ValueError("Not MB, GB, or KB")
-
-
-def arr_str_to_mb(arr):
-    ret_arr = np.empty(len(arr), dtype="float32")
-
-    for idx in range(len(arr)):
-        ret_arr[idx] = str_to_mb(arr[idx])
-
-    return ret_arr
-
-
-def download(url: str, out_path: str, auth=None, verbose=False):
+def get_content_size(url: str, auth=None):
     resp = requests.get(url, stream=True, auth=auth)
     total = int(resp.headers.get("content-length", 0))
+
+    return total
+
+
+def order(url, auth=None):
+    resp = requests.post(url, stream=True, auth=auth)
+
+    json = {}
+    try:
+        json = resp.json()
+        status = json["Status"]
+        status_message = json["StatusMessage"]
+        estimated_time = json["EstimatedTime"]
+
+        print(f"{status}: {status_message}")
+        print(f"Estimated ready time: {estimated_time}")
+    except Exception as e:
+        print(f"Error while ordering, {e}")
+
+    return json
+
+
+def download(url: str, out_path: str, auth=None, verbose=False, skip_if_exists=False):
+    resp = requests.get(url, stream=True, auth=auth)
+    total = int(resp.headers.get("content-length", 0))
+
+    if (
+        skip_if_exists
+        and (os.path.exists(out_path) and os.path.getsize(out_path) == total)
+        or total == 0
+    ):
+        print(f"Skipping {out_path}")
+        return
 
     if verbose:
         with open(out_path, "wb") as file, tqdm(
@@ -82,6 +87,7 @@ def download_s1_tile(
     producttype="GRD",
     sensoroperationalmode="IW",
     polarisationmode="VV VH",
+    api_url="https://apihub.copernicus.eu/apihub/",
 ):
     api = SentinelAPI(scihub_username, scihub_password, api_url, timeout=60)
 
@@ -103,6 +109,7 @@ def download_s1_tile(
 
     download_products = OrderedDict()
     download_ids = []
+    zero_contents = 0
 
     geom_footprint = ogr.CreateGeometryFromWkt(geom["extent_wkt_latlng"])
 
@@ -139,13 +146,28 @@ def download_s1_tile(
             download_url = f"https://catalogue.onda-dias.eu/dias-catalogue/Products({img_id})/$value"
 
             try:
-                download(
-                    download_url,
-                    out_path,
-                    auth=HTTPBasicAuth(onda_username, onda_password),
+                content_size = get_content_size(
+                    download_url, out_path, auth=(onda_username, onda_password)
                 )
+            except Exception as e:
+                print(f"Failed to get content size for {img_id}")
+                print(e)
+                continue
 
-                downloaded.append(out_path)
+            if content_size == 0:
+                zero_contents += 1
+                print(f"{img_id} requested from Archive but was not downloaded.")
+                continue
+
+            try:
+                if content_size > 0:
+                    download(
+                        download_url,
+                        out_path,
+                        auth=(onda_username, onda_password),
+                        verbose=True,
+                    )
+                    downloaded.append(img_id)
             except Exception as e:
                 print(f"Error downloading {img_id}: {e}")
 
@@ -167,6 +189,11 @@ def download_s2_tile(
     clouds=10,
     producttype="S2MSI2A",
     tile=None,
+    retry_count=10,
+    retry_wait_min=30,
+    retry_current=0,
+    retry_downloaded=[],
+    api_url="http://apihub.copernicus.eu/apihub",
 ):
     print("Downloading Sentinel-2 tiles")
     try:
@@ -228,30 +255,77 @@ def download_s2_tile(
 
     print(f"Downloading {len(download_products)} tiles")
 
-    downloaded = []
+    downloaded = [] + retry_downloaded
     for img_id in download_ids:
         out_path = destination + download_products[img_id]["filename"] + ".zip"
 
-        if os.path.exists(out_path):
-            print(f"Skipping {out_path}")
+        if out_path in downloaded:
             continue
 
+        # /footprint url for.
         download_url = (
             f"https://catalogue.onda-dias.eu/dias-catalogue/Products({img_id})/$value"
         )
 
         try:
-            print(f"Downloading: {img_id}")
-            download(
-                download_url,
-                out_path,
-                auth=HTTPBasicAuth(onda_username, onda_password),
-                verbose=False,
+            content_size = get_content_size(
+                download_url, auth=(onda_username, onda_password)
             )
-            print(f"Downloaded: {img_id}")
+        except Exception as e:
+            print(f"Failed to get content size for {img_id}")
+            print(e)
+            continue
 
-            downloaded.append(out_path)
+        try:
+            if content_size > 0:
+
+                if os.path.isfile(out_path) and content_size == os.path.getsize(
+                    out_path
+                ):
+                    downloaded.append(out_path)
+                    print(f"Skipping {img_id}")
+                else:
+                    print(f"Downloading: {img_id}")
+                    download(
+                        download_url,
+                        out_path,
+                        auth=HTTPBasicAuth(onda_username, onda_password),
+                        verbose=False,
+                        skip_if_exists=True,
+                    )
+
+                    downloaded.append(out_path)
+            else:
+                print("Requesting from archive. Not downloaded.")
+                order_url = f"https://catalogue.onda-dias.eu/dias-catalogue/Products({img_id})/Ens.Order"
+                order_response = order(order_url, auth=(onda_username, onda_password))
+
         except Exception as e:
             print(f"Error downloading {img_id}: {e}")
 
-    return downloaded
+    if len(downloaded) >= len(download_ids):
+        return downloaded
+    elif retry_current < retry_count:
+        print(
+            f"Retrying {retry_current}/{retry_count}. Sleeping for {retry_wait_min} minutes."
+        )
+        sleep(retry_wait_min * 60)
+        download_s2_tile(
+            scihub_username,
+            scihub_password,
+            onda_username,
+            onda_password,
+            destination,
+            aoi_vector,
+            date_start=date_start,
+            date_end=date_end,
+            clouds=clouds,
+            producttype=producttype,
+            tile=tile,
+            retry_count=retry_count,
+            retry_wait_min=retry_wait_min,
+            retry_current=retry_current + 1,
+            retry_downloaded=retry_downloaded + downloaded,
+        )
+    else:
+        return retry_downloaded + downloaded

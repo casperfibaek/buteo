@@ -73,9 +73,9 @@ def cube_sphere_intersection_area(
         overlap = intersections / zz.size
 
         return volume * overlap
-    else:
-        dist = np.linalg.norm(np.subtract(circle_center, coord_grid), axis=1)
-        return (step * step * step) * np.sum(dist <= circle_radius)
+    
+    dist = np.linalg.norm(np.subtract(circle_center, coord_grid), axis=1)
+    return (step * step * step) * np.sum(dist <= circle_radius)
 
 
 def create_circle_kernel(kernel_size=5, circle_radius=5, remove_zero_weights=True):

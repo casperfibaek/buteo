@@ -642,15 +642,15 @@ def layout_from_name(name):
         ]
     )
 
-    # layout.append(
-    #     [
-    #         sg.Output(
-    #             pad=((0, 0), (10, 10)),
-    #             size_px=(None, 200),
-    #             background_color="#f1f1f1",
-    #         ),
-    #     ]
-    # )
+    layout.append(
+        [
+            sg.Output(
+                pad=((0, 0), (10, 10)),
+                size_px=(None, 200),
+                background_color="#f1f1f1",
+            ),
+        ]
+    )
 
     layout = [
         [

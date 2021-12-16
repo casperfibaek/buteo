@@ -263,7 +263,6 @@ def popup_get_date(
 
     while True:  # Event Loop
         event, _values = window_date_picker.read()
-        print(event, _values)
         if event in (sg.WIN_CLOSED, "Cancel", None):
             if (
                 start_mon is not None

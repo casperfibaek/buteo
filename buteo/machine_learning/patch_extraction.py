@@ -405,7 +405,7 @@ def predict_raster(
     model_path="",
     reference_raster="",
     out_path=None,
-    offsets=[[[0, 0]]],
+    offsets=True,
     batch_size=32,
     method="median",
     scale_to_sum=False,
@@ -413,6 +413,15 @@ def predict_raster(
     print("Loading Model")
     model = tf.keras.models.load_model(model_path, custom_objects={"tpe": tpe})
     reference_arr = raster_to_array(reference_raster)
+
+    if offsets == False:
+        print(
+            "No offsets provided. Using offsets greatly increases accuracy. Please provide offsets."
+        )
+    else:
+        offsets = []
+        for val in tile_size:
+            offsets.append(get_offsets(val))
 
     predictions = []
     read_rasters = []
