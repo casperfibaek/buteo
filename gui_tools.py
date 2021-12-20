@@ -3,7 +3,9 @@ from buteo.raster.align import align_rasters
 from buteo.raster.clip import clip_raster
 from buteo.earth_observation.download_sentinel import download_s2_tile
 from buteo.earth_observation.s2_mosaic import mosaic_tile_s2
-from buteo.machine_learning.patch_extraction import predict_raster
+
+# from buteo.machine_learning.patch_extraction import predict_raster
+from buteo.filters.norm_rasters import norm_rasters
 
 
 tools = {
@@ -366,113 +368,242 @@ tools = {
             },
         ],
     },
-    "Predict Raster": {
-        "description": "Applies a deep learning model to a raster",
-        "function_path": predict_raster,
+    # "Predict Raster": {
+    #     "description": "Applies a deep learning model to a raster",
+    #     "function_path": predict_raster,
+    #     "parameters": [
+    #         {
+    #             "raster_list": {
+    #                 "display_name": "Raster Files",
+    #                 "type": "file_browse_multiple",
+    #                 "tooltip": "The input rasters for the model to use.",
+    #             }
+    #         },
+    #         {
+    #             "tile_size": {
+    #                 "keyword": True,
+    #                 "display_name": "Tile Sizes",
+    #                 "type": "string",
+    #                 "tooltip": "tile_sizes in the format: '32, 32, 16'",
+    #                 "default": "32, 32, 16",
+    #             }
+    #         },
+    #         {
+    #             "output_tile_size": {
+    #                 "keyword": True,
+    #                 "display_name": "Output Tile Size",
+    #                 "type": "number",
+    #                 "tooltip": "The tilesize of the output prediction raster.",
+    #                 "default": 32,
+    #             }
+    #         },
+    #         {
+    #             "output_channels": {
+    #                 "keyword": True,
+    #                 "display_name": "Output Channels",
+    #                 "type": "number",
+    #                 "tooltip": "The number of channels in the output prediction raster.",
+    #                 "default": 1,
+    #             },
+    #         },
+    #         {
+    #             "model_path": {
+    #                 "keyword": True,
+    #                 "display_name": "Path to Model",
+    #                 "type": "file_browse",
+    #                 "tooltip": "The deep learning model to use. (Tensorflow formats)",
+    #             },
+    #         },
+    #         {
+    #             "reference_raster": {
+    #                 "keyword": True,
+    #                 "display_name": "Reference Array",
+    #                 "type": "file_browse",
+    #                 "tooltip": "A reference raster for the output.",
+    #             },
+    #         },
+    #         {
+    #             "out_path": {
+    #                 "keyword": True,
+    #                 "display_name": "Out Path",
+    #                 "type": "file_save",
+    #                 "tooltip": "Where to save the output prediction raster.",
+    #             },
+    #         },
+    #         {
+    #             "offsets": {
+    #                 "keyword": True,
+    #                 "display_name": "Use Offsets",
+    #                 "type": "boolean",
+    #                 "tooltip": "Should offsets be used when making the prediction?",
+    #                 "default": True,
+    #             },
+    #         },
+    #         {
+    #             "batch_size": {
+    #                 "keyword": True,
+    #                 "display_name": "Batch Size",
+    #                 "type": "number",
+    #                 "tooltip": "The batch size to use when making the prediction.",
+    #                 "default": 64,
+    #             },
+    #         },
+    #         {
+    #             "method": {
+    #                 "keyword": True,
+    #                 "display_name": "Merge Method",
+    #                 "type": "radio",
+    #                 "tooltip": "Where to save the output prediction raster.",
+    #                 "options": [
+    #                     {
+    #                         "label": "Median",
+    #                         "key": "median",
+    #                         "value": "median",
+    #                         "default": True,
+    #                     },
+    #                     {
+    #                         "label": "Olympic",
+    #                         "key": "olympic",
+    #                         "value": "olympic",
+    #                     },
+    #                 ],
+    #             },
+    #         },
+    #         {
+    #             "scale_to_sum": {
+    #                 "keyword": True,
+    #                 "display_name": "Scale to sum",
+    #                 "type": "boolean",
+    #                 "tooltip": "Should the output be scaled to the sum predictions?",
+    #                 "default": False,
+    #             },
+    #         },
+    #     ],
+    # },
+    "Normalise Rasters": {
+        "description": "Normalises and splits rasters into bands",
+        "function_path": norm_rasters,
         "parameters": [
             {
-                "raster_list": {
+                "in_rasters": {
                     "display_name": "Raster Files",
                     "type": "file_browse_multiple",
-                    "tooltip": "The input rasters for the model to use.",
+                    "tooltip": "The raster files to be normalised.",
                 }
             },
             {
-                "tile_size": {
-                    "keyword": True,
-                    "display_name": "Tile Sizes",
-                    "type": "string",
-                    "tooltip": "tile_sizes in the format: '32, 32, 16'",
-                    "default": "32, 32, 16",
+                "out_folder": {
+                    "display_name": "Output Folder",
+                    "type": "folder_save",
+                    "tooltip": "The folder where the normalised rasters will be saved.",
                 }
-            },
-            {
-                "output_tile_size": {
-                    "keyword": True,
-                    "display_name": "Output Tile Size",
-                    "type": "number",
-                    "tooltip": "The tilesize of the output prediction raster.",
-                }
-            },
-            {
-                "output_channels": {
-                    "keyword": True,
-                    "display_name": "Output Channels",
-                    "type": "number",
-                    "tooltip": "The number of channels in the output prediction raster.",
-                    "default": 1,
-                },
-            },
-            {
-                "model_path": {
-                    "keyword": True,
-                    "display_name": "Path to Model",
-                    "type": "file_browse",
-                    "tooltip": "The deep learning model to use. (Tensorflow formats)",
-                },
-            },
-            {
-                "reference_raster": {
-                    "keyword": True,
-                    "display_name": "Reference Array",
-                    "type": "file_browse",
-                    "tooltip": "A reference raster for the output.",
-                },
-            },
-            {
-                "out_path": {
-                    "keyword": True,
-                    "display_name": "Out Path",
-                    "type": "file_save",
-                    "tooltip": "Where to save the output prediction raster.",
-                },
-            },
-            {
-                "offsets": {
-                    "keyword": True,
-                    "display_name": "Use Offsets",
-                    "type": "boolean",
-                    "tooltip": "Should offsets be used when making the prediction?",
-                    "default": True,
-                },
-            },
-            {
-                "batch_size": {
-                    "keyword": True,
-                    "display_name": "Batch Size",
-                    "type": "number",
-                    "tooltip": "The batch size to use when making the prediction.",
-                },
             },
             {
                 "method": {
                     "keyword": True,
-                    "display_name": "Merge Method",
-                    "type": "radio",
-                    "tooltip": "Where to save the output prediction raster.",
+                    "display_name": "Method",
+                    "type": "dropdown",
+                    "tooltip": "The normalisation method to use.",
                     "options": [
                         {
-                            "label": "Median",
-                            "key": "median",
-                            "value": "median",
+                            "label": "Normalise",
+                            "value": "normalise",
                             "default": True,
                         },
                         {
-                            "label": "Olympic",
-                            "key": "olympic",
-                            "value": "olympic",
+                            "label": "Standardise",
+                            "value": "standardise",
+                        },
+                        {
+                            "label": "Median Absolute Deviation",
+                            "value": "median_absolute_deviation",
+                        },
+                        {
+                            "label": "Robust 2 - 98",
+                            "value": "robust_98",
+                        },
+                        {
+                            "label": "Robust Quantile",
+                            "value": "robust_quantile",
+                        },
+                        {
+                            "label": "Range",
+                            "value": "range",
                         },
                     ],
+                }
+            },
+            {
+                "min_target": {
+                    "keyword": True,
+                    "display_name": "Target Minumum",
+                    "type": "number",
+                    "tooltip": "METHOD: Range.: The new minumum value for the target raster.",
+                    "default": 0,
                 },
             },
             {
-                "scale_to_sum": {
+                "max_target": {
                     "keyword": True,
-                    "display_name": "Scale to sum",
+                    "display_name": "Target Maximim",
+                    "type": "number",
+                    "tooltip": "METHOD: Range.: The new maximum value for the target raster.",
+                    "default": 10000,
+                },
+            },
+            {
+                "min_og": {
+                    "keyword": True,
+                    "display_name": "Original Minumum",
+                    "type": "number",
+                    "tooltip": "METHOD: Range.: The minumum of the original raster. if -9999 the nanmin() is used.",
+                    "default": -9999,
+                },
+            },
+            {
+                "max_og": {
+                    "keyword": True,
+                    "display_name": "Original Maximim",
+                    "type": "number",
+                    "tooltip": "METHOD: Range.: The maximum of the original raster. if -9999 the nanmax() is used.",
+                    "default": -9999,
+                },
+            },
+            {
+                "truncate": {
+                    "keyword": True,
+                    "display_name": "Truncate",
                     "type": "boolean",
-                    "tooltip": "Should the output be scaled to the sum predictions?",
+                    "tooltip": "Should the raster be truncated between the target min and max?",
+                    "default": True,
+                },
+            },
+            {
+                "split_bands": {
+                    "keyword": True,
+                    "display_name": "Split Bands",
+                    "type": "boolean",
+                    "tooltip": "Should the bands of the rasters be split in the output?",
                     "default": False,
                 },
+            },
+            {
+                "prefix": {
+                    "keyword": True,
+                    "display_name": "Prefix",
+                    "type": "string",
+                    "default": "",
+                    "tooltip": "The prefix to be added to the output rasters.",
+                }
+            },
+            {
+                "postfix": {
+                    "keyword": True,
+                    "display_name": "Postfix",
+                    "type": "string",
+                    "default": "",
+                    "tooltip": "The postfix to be added to the output rasters.",
+                }
             },
         ],
     },

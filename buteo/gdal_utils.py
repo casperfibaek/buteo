@@ -382,8 +382,12 @@ def numpy_fill_values(datatype):
         "float64": -9999.0,
     }
 
-    if datatype in datatypes:
-        return datatypes[datatype]
+    test_type = datatype
+    if isinstance(test_type, np.dtype):
+        test_type = test_type.name
+
+    if test_type in datatypes:
+        return datatypes[test_type]
     else:
         return -9999.0
 

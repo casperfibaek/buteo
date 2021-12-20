@@ -34,7 +34,6 @@ def keys_to_args(dictionary):
     return args
 
 
-
 def make_dir_if_not_exists(path):
     if not os.path.exists(path):
         os.makedirs(path)
@@ -46,7 +45,7 @@ def list_is_all_the_same(lst):
     if not isinstance(lst, list):
         return False
 
-    first = list[0]
+    first = lst[0]
     for item in lst:
         if item != first:
             return False

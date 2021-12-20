@@ -59,8 +59,8 @@ def standardise_filter(in_raster):
 
 
 def robust_scaler_filter(in_raster):
-    q1 = np.quantile(in_raster, 0.25)
-    q3 = np.quantile(in_raster, 0.75)
+    q1 = np.nanquantile(in_raster, 0.25)
+    q3 = np.nanquantile(in_raster, 0.75)
     iqr = q3 - q1
 
     return (in_raster - q1) / iqr

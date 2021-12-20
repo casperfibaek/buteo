@@ -726,7 +726,6 @@ def raster_to_array(
 
     if band_nodata_value is not None and filled is False:
         stacked = np.ma.dstack(layers)
-        stacked.fill_value = numpy_fill_values(stacked.dtype)
 
         if list_is_all_the_same(nodata_values):
             stacked.fill_value = nodata_values[0]

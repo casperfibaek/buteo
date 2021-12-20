@@ -1,4 +1,5 @@
 import os
+import inspect
 import datetime
 import PySimpleGUIQt as sg
 from PySimpleGUIQt.PySimpleGUIQt import (
@@ -70,6 +71,8 @@ def validate_type(input_type, input_value, name, tool_name):
     cast = None
     message = ""
 
+    func_keywords = inspect.getfullargspec(tools[tool_name]["function_path"]).args
+
     func_params = tools[tool_name]["parameters"]
     definition = False
     for func_param in func_params:
@@ -79,6 +82,11 @@ def validate_type(input_type, input_value, name, tool_name):
 
     if definition is not False and "keyword" in definition.keys():
         keyword = definition["keyword"]
+
+        if keyword and name not in func_keywords:
+            raise Exception(
+                f"{tool_name} has a keyword {name} that the function {tool_name} does not take."
+            )
 
     if input_type == "file_browse":
         if isinstance(input_value, str) and os.path.isfile(input_value):
@@ -642,15 +650,15 @@ def layout_from_name(name):
         ]
     )
 
-    layout.append(
-        [
-            sg.Output(
-                pad=((0, 0), (10, 10)),
-                size_px=(None, 200),
-                background_color="#f1f1f1",
-            ),
-        ]
-    )
+    # layout.append(
+    #     [
+    #         sg.Output(
+    #             pad=((0, 0), (10, 10)),
+    #             size_px=(None, 200),
+    #             background_color="#f1f1f1",
+    #         ),
+    #     ]
+    # )
 
     layout = [
         [
