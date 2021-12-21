@@ -25,7 +25,7 @@ tools = {
                     "display_name": "Output Raster",
                     "type": "file_save",
                     "tooltip": "The path to the output raster",
-                    "default_extension": "tif",
+                    "default_extension": [("GeoTiff", ".tif")],
                 }
             },
             {
@@ -508,7 +508,6 @@ tools = {
                         {
                             "label": "Normalise",
                             "value": "normalise",
-                            "default": True,
                         },
                         {
                             "label": "Standardise",
@@ -529,6 +528,7 @@ tools = {
                         {
                             "label": "Range",
                             "value": "range",
+                            "default": True,
                         },
                     ],
                 }
@@ -538,8 +538,9 @@ tools = {
                     "keyword": True,
                     "display_name": "Target Minumum",
                     "type": "number",
-                    "tooltip": "METHOD: Range.: The new minumum value for the target raster.",
+                    "tooltip": "The new minumum value for the target raster.",
                     "default": 0,
+                    "enabled_by": {"method": ["range", "normalise"]},
                 },
             },
             {
@@ -547,8 +548,9 @@ tools = {
                     "keyword": True,
                     "display_name": "Target Maximim",
                     "type": "number",
-                    "tooltip": "METHOD: Range.: The new maximum value for the target raster.",
-                    "default": 10000,
+                    "tooltip": "The new maximum value for the target raster.",
+                    "default": 1,
+                    "enabled_by": {"method": ["range", "normalise"]},
                 },
             },
             {
@@ -556,8 +558,9 @@ tools = {
                     "keyword": True,
                     "display_name": "Original Minumum",
                     "type": "number",
-                    "tooltip": "METHOD: Range.: The minumum of the original raster. if -9999 the nanmin() is used.",
+                    "tooltip": "The minumum of the original raster. if -9999 the nanmin() is used.",
                     "default": -9999,
+                    "enabled_by": {"method": ["range"]},
                 },
             },
             {
@@ -565,8 +568,9 @@ tools = {
                     "keyword": True,
                     "display_name": "Original Maximim",
                     "type": "number",
-                    "tooltip": "METHOD: Range.: The maximum of the original raster. if -9999 the nanmax() is used.",
+                    "tooltip": "The maximum of the original raster. if -9999 the nanmax() is used.",
                     "default": -9999,
+                    "enabled_by": {"method": ["range"]},
                 },
             },
             {

@@ -105,7 +105,7 @@ def norm_rasters(
     method="normalise",
     split_bands=False,
     min_target=0,
-    max_target=10000,
+    max_target=1,
     min_og=-9999,
     max_og=-9999,
     truncate=True,
@@ -123,7 +123,7 @@ def norm_rasters(
         raster = raster_to_array(in_raster)
 
         if method == "normalise":
-            normed = normalise_filter(raster)
+            normed = norm_to_range(raster, min_target, max_target, truncate=False)
         elif method == "standardise":
             normed = standardise_filter(raster)
         elif method == "median_absolute_deviation":

@@ -232,6 +232,7 @@ def validate_input(tool_name, parameters):
         "valid": [],
         "cast_args": [],
         "cast_kwargs": {},
+        "cast": [],
         "message": [],
         "names": [],
     }
@@ -270,7 +271,34 @@ def validate_input(tool_name, parameters):
         else:
             ret_obj["cast_args"].append(cast)
 
+        ret_obj["cast"].append(cast)
+
     return ret_obj
+
+
+def update_inputs(event, values, window, listeners, function_name):
+    validated = None
+    for listener in listeners:
+        if listener["enabled_by"] == event:
+            if validated is None:
+                validated = validate_input(function_name, values)
+
+            for idx in range(len(validated["names"])):
+                name = validated["names"][idx]
+                value = validated["cast"][idx]
+
+                if name != event:
+                    continue
+
+                param_name = listener["parameter"]
+                if value not in listener["values"]:
+                    window[param_name + "_col1"].Update(visible=False)
+                    window[param_name + "_col2"].Update(visible=False)
+                else:
+                    window[param_name + "_col1"].Update(visible=True)
+                    window[param_name + "_col2"].Update(visible=True)
+
+    window.refresh()
 
 
 def layout_from_name(name):
@@ -278,6 +306,7 @@ def layout_from_name(name):
         raise Exception("Tool not found")
 
     layout = []
+    listeners = []
 
     radio_group_id = 1
     for parameter in tools[name]["parameters"]:
@@ -297,7 +326,7 @@ def layout_from_name(name):
         if "default_extension" in parameter[parameter_name]:
             default_extension = parameter[parameter_name]["default_extension"]
         else:
-            default_extension = "*"
+            default_extension = [("*", "All Files")]
 
         if "default_date" in parameter[parameter_name]:
             default_date = parse_date(parameter[parameter_name]["default_date"])
@@ -308,6 +337,20 @@ def layout_from_name(name):
             display_name = parameter[parameter_name]["display_name"]
         else:
             display_name = parameter_name
+
+        if "enabled_by" in parameter[parameter_name]:
+            enabled_by = True
+            enabled_by_key = get_first_key(parameter[parameter_name]["enabled_by"])
+            enabled_by_val = parameter[parameter_name]["enabled_by"][enabled_by_key]
+            listeners.append(
+                {
+                    "parameter": parameter_name,
+                    "enabled_by": enabled_by_key,
+                    "values": enabled_by_val,
+                }
+            )
+        else:
+            enabled_by = False
 
         default_date_str = datetime.datetime(
             default_date[2], default_date[0], default_date[1]
@@ -372,7 +415,7 @@ def layout_from_name(name):
                 size=button_size,
                 tooltip=tooltip,
                 target=parameter_name,
-                file_types=((default_extension, default_extension),),
+                file_types=default_extension,
             )
             path_input = sg.In(
                 default_text=default_texts[2],
@@ -569,6 +612,44 @@ def layout_from_name(name):
                 else:
                     param_inputs = [param_input, path_input]
 
+            show_row = True
+            if enabled_by:
+                found = False
+                found_val = None
+                for param in tools[name]["parameters"]:
+                    if get_first_key(param) == enabled_by_key:
+                        found_keys = param[enabled_by_key]
+
+                        if "default" not in found_keys and "options" not in found_keys:
+                            raise Exception(
+                                f"No default value for {get_first_key(param)} required by 'enabled_by' on {parameter_name}"
+                            )
+
+                        if "options" in found_keys and "default" not in found_keys:
+                            found_default = False
+                            for option in found_keys["options"]:
+                                if "default" in option and option["default"] is True:
+                                    found_val = option["value"]
+                                    found_default = True
+
+                            if found_default is False:
+                                raise Exception(
+                                    f"No default value for {get_first_key(param)} required by 'enabled_by' on {parameter_name}"
+                                )
+                        else:
+                            found_val = found_keys["default"]
+
+                        found = True
+                        break
+
+                if found is False:
+                    raise Exception(
+                        f"No parameter found for 'enabled_by' on {parameter_name}. Searched for: {enabled_by_key}"
+                    )
+
+                if found_val not in enabled_by_val:
+                    show_row = False
+
             append = [
                 sg.Column(
                     [
@@ -577,6 +658,8 @@ def layout_from_name(name):
                     size=(120, 36),
                     pad=((0, 0), (0, 0)),
                     element_justification="r",
+                    visible=show_row,
+                    key=parameter_name + "_col1",
                 ),
                 sg.Column(
                     [
@@ -584,6 +667,8 @@ def layout_from_name(name):
                     ],
                     size=(260, 36),
                     pad=((0, 0), (0, 0)),
+                    visible=show_row,
+                    key=parameter_name + "_col2",
                 ),
             ]
 
@@ -673,4 +758,4 @@ def layout_from_name(name):
         ]
     ]
 
-    return (layout, tools[name]["function_path"])
+    return (layout, tools[name]["function_path"], listeners)
