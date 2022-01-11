@@ -339,7 +339,7 @@ def ready_io_raster(
     overwrite: bool = True,
     prefix: str = "",
     postfix: str = "",
-    uuid: bool = True,
+    uuid: bool = False,
 ) -> Tuple[List[str], List[str]]:
     """
     Prepares a raster or a list of rasters for writing for writing.
@@ -359,11 +359,23 @@ def ready_io_raster(
             )
 
     # Check if folder exists and is required.
-    if len(raster_list) > 1 and isinstance(out_path, str):
-        if not os.path.dirname(os.path.abspath(out_path)):
-            raise ValueError(
-                f"Output folder does not exist. Please create first. {out_path}"
-            )
+    test_out_path = [out_path] if not isinstance(out_path, list) else out_path
+    for path in test_out_path:
+        if isinstance(path, str):
+            if "vsimem" in path:
+                continue
+            if os.path.basename(path) == "" and not os.path.isdir(
+                os.path.abspath(path)
+            ):
+                raise ValueError(
+                    f"Output folder does not exist. Please create first. {path}"
+                )
+            elif os.path.dirname(path) == "" or not os.path.isdir(
+                os.path.dirname(path)
+            ):
+                raise ValueError(
+                    f"Output folder does not exist. Please create first. {os.path.dirname(path)}"
+                )
 
     # Generate output names
     path_list: List[str] = []

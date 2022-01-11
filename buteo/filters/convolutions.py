@@ -1,8 +1,10 @@
 import sys
-import numpy as np
-from numba import jit, prange
 
 sys.path.append("../../")
+
+
+import numpy as np
+from numba import jit, prange
 
 from buteo.filters.kernel_generator import create_kernel
 
@@ -254,9 +256,8 @@ def filter_array(
     operation="sum",
     kernel=None,
 ):
-    if len(arr.shape) == 3:
-        if len(shape) == 2:
-            shape = (arr.shape[0], shape[0], shape[1])
+    if len(arr.shape) == 3 and len(shape) != 3:
+        shape = (shape[0], shape[1], 1)
 
     if len(arr.shape) == 2:
         if len(shape) == 3:

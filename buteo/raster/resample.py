@@ -36,6 +36,7 @@ def internal_resample_raster(
     dst_nodata: Union[str, int, float] = "infer",
     prefix: str = "",
     postfix: str = "_resampled",
+    add_uuid: bool = False,
 ) -> str:
     """OBS: Internal. Single output.
 
@@ -54,7 +55,12 @@ def internal_resample_raster(
     type_check(postfix, [str], "postfix")
 
     raster_list, path_list = ready_io_raster(
-        raster, out_path, overwrite, prefix, postfix
+        raster,
+        out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        postfix=postfix,
+        uuid=add_uuid,
     )
 
     ref = open_raster(raster_list[0])
