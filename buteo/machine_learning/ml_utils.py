@@ -339,6 +339,14 @@ def mse(y_pred, y_true):
     return tf.math.reduce_mean(tf.math.squared_difference(y_pred, y_true))
 
 
+def mse_sumbias(y_pred, y_true, bias=0.5):
+    _mse = tf.math.reduce_mean(tf.math.squared_difference(y_pred, y_true))
+    _tpe = tf.math.abs(tf.math.reduce_sum(y_pred) - tf.math.reduce_sum(y_true))
+    tpe_biased = tf.math.pow(_tpe, bias)
+
+    return _mse + tpe_biased
+
+
 def mse_biased(y_pred, y_true):
     y_pred = tf.cast(y_pred, tf.float32)
     y_true = tf.cast(y_true, tf.float32)

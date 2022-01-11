@@ -22,7 +22,7 @@ from buteo.vector.io import vector_to_metadata, is_vector, open_vector
 from buteo.vector.intersect import intersect_vector
 from buteo.vector.attributes import vector_get_fids
 from buteo.vector.rasterize import rasterize_vector
-from buteo.machine_learning.ml_utils import tpe, get_offsets
+from buteo.machine_learning.ml_utils import tpe, get_offsets, mse_sumbias
 from buteo.utils import progress
 
 
@@ -411,7 +411,9 @@ def predict_raster(
     scale_to_sum=False,
 ):
     print("Loading Model")
-    model = tf.keras.models.load_model(model_path, custom_objects={"tpe": tpe})
+    model = tf.keras.models.load_model(
+        model_path, custom_objects={"tpe": tpe, "mse_sumbias": mse_sumbias}
+    )
     reference_arr = raster_to_array(reference_raster)
 
     if offsets == False:
