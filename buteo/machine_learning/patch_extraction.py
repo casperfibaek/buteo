@@ -434,22 +434,23 @@ def mad_collapse(predictions, default=0.0):
                 continue
 
             non_nan.sort()
+            non_nan_len = non_nan.shape[0]
             median = np.median(non_nan)
             mad = np.nanmedian(np.abs(median - non_nan))
 
             counts = np.zeros_like(non_nan)
             max_count = 0
 
-            for z in range(predictions.shape[2]):
-                upper_limit = predictions[x, y, z] + mad
-                lower_limit = predictions[x, y, z] - mad
+            for z in range(non_nan_len):
+                upper_limit = non_nan_len[x, y, z] + mad
+                lower_limit = non_nan_len[x, y, z] - mad
 
                 count = 0
 
-                for q in range(predictions.shape[2]):
+                for q in range(non_nan_len):
                     if (
-                        predictions[x, y, q] >= lower_limit
-                        and predictions[x, y, q] <= upper_limit
+                        non_nan_len[x, y, q] >= lower_limit
+                        and non_nan_len[x, y, q] <= upper_limit
                     ):
                         count += 1
                 counts[z] = count
@@ -458,17 +459,17 @@ def mad_collapse(predictions, default=0.0):
                     max_count = count
 
             current_item = 0
-            center_items = np.empty(predictions.shape[2] ** 2, dtype="float32")
-            center_items_weights = np.zeros(predictions.shape[2] ** 2, dtype="float32")
+            center_items = np.empty(non_nan_len ** 2, dtype="float32")
+            center_items_weights = np.zeros(non_nan_len ** 2, dtype="float32")
 
-            for z in range(predictions.shape[2]):
+            for z in range(non_nan_len):
                 if counts[z] == max_count:
-                    for q in range(predictions.shape[2]):
+                    for q in range(non_nan_len):
                         if (
-                            predictions[x, y, q] >= lower_limit
-                            and predictions[x, y, q] <= upper_limit
+                            non_nan_len[x, y, q] >= lower_limit
+                            and non_nan_len[x, y, q] <= upper_limit
                         ):
-                            center_items[current_item] = predictions[x, y, q]
+                            center_items[current_item] = non_nan_len[x, y, q]
                             center_items[current_item] = counts[q]
                             current_item += 1
 
