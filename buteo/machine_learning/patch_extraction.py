@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 from osgeo import ogr, gdal
 from uuid import uuid4
+from numba import jit
 
 sys.path.append("../../")
 
@@ -397,6 +398,87 @@ def extract_patches(
     return 1
 
 
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_quantile(values, weights, quant):
+    sort_mask = np.argsort(values)
+    sorted_data = values[sort_mask]
+    sorted_weights = weights[sort_mask]
+    cumsum = np.cumsum(sorted_weights)
+    intersect = (cumsum - 0.5 * sorted_weights) / cumsum[-1]
+    return np.interp(quant, intersect, sorted_data)
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def mad_collapse(predictions, default=0.0):
+    """
+    Collapses predictions using weighted median absolute deviation.
+
+    Parameters
+    ----------
+    predictions : ndarray
+        Array of predictions.
+
+    Returns
+    -------
+    ndarray
+        Collapsed predictions.
+    """
+
+    pred = np.zeros((predictions.shape[0], predictions.shape[1], 1), dtype=np.float32)
+
+    for x in range(predictions.shape[0]):
+        for y in range(predictions.shape[1]):
+            non_nan = predictions[x, y, :][np.isnan(predictions[x, y, :]) == False]
+            if non_nan.shape[0] == 0:
+                pred[x, y, 0] = default
+                continue
+
+            non_nan.sort()
+            median = np.median(non_nan)
+            mad = np.nanmedian(np.abs(median - non_nan))
+
+            counts = np.zeros_like(non_nan)
+            max_count = 0
+
+            for z in range(predictions.shape[2]):
+                upper_limit = predictions[x, y, z] + mad
+                lower_limit = predictions[x, y, z] - mad
+
+                count = 0
+
+                for q in range(predictions.shape[2]):
+                    if (
+                        predictions[x, y, q] >= lower_limit
+                        and predictions[x, y, q] <= upper_limit
+                    ):
+                        count += 1
+                counts[z] = count
+
+                if count > max_count:
+                    max_count = count
+
+            current_item = 0
+            center_items = np.empty(predictions.shape[2] ** 2, dtype="float32")
+            center_items_weights = np.zeros(predictions.shape[2] ** 2, dtype="float32")
+
+            for z in range(predictions.shape[2]):
+                if counts[z] == max_count:
+                    for q in range(predictions.shape[2]):
+                        if (
+                            predictions[x, y, q] >= lower_limit
+                            and predictions[x, y, q] <= upper_limit
+                        ):
+                            center_items[current_item] = predictions[x, y, q]
+                            center_items[current_item] = counts[q]
+                            current_item += 1
+
+            center_items = center_items[:current_item]
+            center_items_weights = center_items_weights[:current_item]
+            center_items_weights = center_items_weights / center_items_weights.sum()
+
+    return pred
+
+
 def predict_raster(
     raster_list,
     tile_size=[32],
@@ -517,6 +599,10 @@ def predict_raster(
         elif method == "olympic_2":
             sort = np.sort(predictions, axis=0)[2:-2]
             predicted = np.nanmean(sort, axis=0).astype("float32")
+        elif method == "mad":
+            predicted = mad_collapse(
+                np.concatenate(predictions, axis=2).astype("float32")
+            )
         else:
             predicted = np.nanmedian(predictions, axis=0).astype("float32")
 
