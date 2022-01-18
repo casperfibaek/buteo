@@ -475,6 +475,7 @@ def predict_raster(
     model_path="",
     reference_raster="",
     out_path=None,
+    out_path_variance=None,
     offsets=True,
     batch_size=32,
     method="median",
@@ -599,5 +600,10 @@ def predict_raster(
                 np.nansum(predicted, axis=2),
                 (predicted.shape[0], predicted.shape[1], 1),
             )
+
+    if out_path_variance is not None:
+        array_to_raster(
+            np.nanvar(predictions, axis=0), reference_raster, out_path_variance
+        )
 
     return array_to_raster(predicted, reference_raster, out_path)
