@@ -453,8 +453,10 @@ def mad_collapse(predictions, default=0.0):
                 upper_limit = non_nan[z] + mad
                 if counts[z] == max_count:
                     for q in range(non_nan_len):
-                        if non_nan[q] >= lower_limit and non_nan[q] <= upper_limit:
-                            center_items[current_item] = non_nan[x, y, q]
+                        if (
+                            non_nan[q] >= lower_limit and non_nan[q] <= upper_limit
+                        ) or q == z:
+                            center_items[current_item] = non_nan[q]
                             center_items_weights[current_item] = counts[q]
                             current_item += 1
 
