@@ -398,7 +398,7 @@ def extract_patches(
     return 1
 
 
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+@jit(nopython=True, nogil=True)
 def hood_quantile(values, weights, quant):
     sort_mask = np.argsort(values)
     sorted_data = values[sort_mask]
@@ -408,7 +408,7 @@ def hood_quantile(values, weights, quant):
     return np.interp(quant, intersect, sorted_data)
 
 
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+@jit(nopython=True, nogil=True)
 def count_within(values, lower_limit, upper_limit):
     copy = np.zeros_like(values)
 
@@ -426,7 +426,7 @@ def count_within(values, lower_limit, upper_limit):
     return copy, copy.max()
 
 
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+@jit(nopython=True, parallel=True, nogil=True)
 def mad_collapse(predictions, default=0.0):
     pred = np.zeros((predictions.shape[0], predictions.shape[1], 1), dtype=np.float32)
 
