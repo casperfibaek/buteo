@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 from osgeo import ogr, gdal
 from uuid import uuid4
-from numba import jit
+from numba import jit, prange
 
 sys.path.append("../../")
 
@@ -409,24 +409,28 @@ def hood_quantile(values, weights, quant):
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def count_within(values, lower_limit, upper_limit):
+    copy = np.zeros_like(values)
+
+    for x in range(values.shape[0]):
+        low = x - lower_limit
+        high = x + upper_limit
+
+        for y in range(x, values.shape[x]):
+            if y > high:  # its sorted, so we can break
+                break
+
+            if y >= low and y <= high:
+                copy[x, y] += 1
+
+    return copy, copy.max()
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def mad_collapse(predictions, default=0.0):
-    """
-    Collapses predictions using weighted median absolute deviation.
-
-    Parameters
-    ----------
-    predictions : ndarray
-        Array of predictions.
-
-    Returns
-    -------
-    ndarray
-        Collapsed predictions.
-    """
-
     pred = np.zeros((predictions.shape[0], predictions.shape[1], 1), dtype=np.float32)
 
-    for x in range(predictions.shape[0]):
+    for x in prange(predictions.shape[0]):
         for y in range(predictions.shape[1]):
             non_nan = predictions[x, y, :][np.isnan(predictions[x, y, :]) == False]
             if non_nan.shape[0] == 0:
@@ -438,25 +442,7 @@ def mad_collapse(predictions, default=0.0):
             median = np.median(non_nan)
             mad = np.nanmedian(np.abs(median - non_nan))
 
-            counts = np.zeros_like(non_nan)
-            max_count = 0
-
-            for z in range(non_nan_len):
-                upper_limit = non_nan_len[x, y, z] + mad
-                lower_limit = non_nan_len[x, y, z] - mad
-
-                count = 0
-
-                for q in range(non_nan_len):
-                    if (
-                        non_nan_len[x, y, q] >= lower_limit
-                        and non_nan_len[x, y, q] <= upper_limit
-                    ):
-                        count += 1
-                counts[z] = count
-
-                if count > max_count:
-                    max_count = count
+            counts, max_count = count_within(non_nan, mad, mad)
 
             current_item = 0
             center_items = np.empty(non_nan_len ** 2, dtype="float32")
@@ -465,17 +451,18 @@ def mad_collapse(predictions, default=0.0):
             for z in range(non_nan_len):
                 if counts[z] == max_count:
                     for q in range(non_nan_len):
-                        if (
-                            non_nan_len[x, y, q] >= lower_limit
-                            and non_nan_len[x, y, q] <= upper_limit
-                        ):
+                        if non_nan_len[x, y, q] >= (non_nan[z] - mad) and non_nan_len[
+                            x, y, q
+                        ] <= (non_nan[z] + mad):
                             center_items[current_item] = non_nan_len[x, y, q]
-                            center_items[current_item] = counts[q]
+                            center_items_weights[current_item] = counts[q]
                             current_item += 1
 
             center_items = center_items[:current_item]
             center_items_weights = center_items_weights[:current_item]
             center_items_weights = center_items_weights / center_items_weights.sum()
+
+            pred[x, y, 0] = hood_quantile(center_items, center_items_weights, 0.5)
 
     return pred
 
