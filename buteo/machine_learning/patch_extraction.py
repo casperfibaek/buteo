@@ -416,12 +416,12 @@ def count_within(values, lower_limit, upper_limit):
         low = values[x] - lower_limit
         high = values[x] + upper_limit
 
-        for values[y] in range(x, values.shape[x]):
+        for y in range(x, values.shape[0]):
             if values[y] > high:  # its sorted, so we can break
                 break
 
             if values[y] >= low and values[y] <= high:
-                copy[x, y] += 1
+                copy[x] += 1
 
     return copy, copy.max()
 
@@ -449,12 +449,12 @@ def mad_collapse(predictions, default=0.0):
             center_items_weights = np.zeros(non_nan_len ** 2, dtype="float32")
 
             for z in range(non_nan_len):
+                lower_limit = non_nan[z] - mad
+                upper_limit = non_nan[z] + mad
                 if counts[z] == max_count:
                     for q in range(non_nan_len):
-                        if non_nan_len[x, y, q] >= (non_nan[z] - mad) and non_nan_len[
-                            x, y, q
-                        ] <= (non_nan[z] + mad):
-                            center_items[current_item] = non_nan_len[x, y, q]
+                        if non_nan[q] >= lower_limit and non_nan[q] <= upper_limit:
+                            center_items[current_item] = non_nan[x, y, q]
                             center_items_weights[current_item] = counts[q]
                             current_item += 1
 
