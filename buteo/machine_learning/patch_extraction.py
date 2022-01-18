@@ -413,14 +413,14 @@ def count_within(values, lower_limit, upper_limit):
     copy = np.zeros_like(values)
 
     for x in range(values.shape[0]):
-        low = x - lower_limit
-        high = x + upper_limit
+        low = values[x] - lower_limit
+        high = values[x] + upper_limit
 
-        for y in range(x, values.shape[x]):
-            if y > high:  # its sorted, so we can break
+        for values[y] in range(x, values.shape[x]):
+            if values[y] > high:  # its sorted, so we can break
                 break
 
-            if y >= low and y <= high:
+            if values[y] >= low and values[y] <= high:
                 copy[x, y] += 1
 
     return copy, copy.max()
