@@ -398,35 +398,36 @@ def extract_patches(
     return 1
 
 
-@jit(nopython=True, nogil=True)
-def hood_quantile(values, weights, quant):
-    sort_mask = np.argsort(values)
-    sorted_data = values[sort_mask]
-    sorted_weights = weights[sort_mask]
-    cumsum = np.cumsum(sorted_weights)
-    intersect = (cumsum - 0.5 * sorted_weights) / cumsum[-1]
-    return np.interp(quant, intersect, sorted_data)
+@jit(nopython=True, parallel=True, nogil=True, inline="always", fast_math=True)
+def mad_selector(arr, bias=0.5):
+    mad = np.median(np.abs(np.median(arr) - arr)) * bias
+
+    best_obs = 0
+    best_mask = np.ones_like(arr, dtype=bool)
+    weights = np.zeros_like(arr)
+    for index, value in enumerate(arr):
+
+        # Values with one mad
+        mask = np.logical_and(arr >= value - mad, arr <= value + mad)
+        obs = mask.sum() - 1
+
+        if obs > best_obs:
+            best_obs = obs
+            best_mask = mask
+
+        weights[index] = obs
+
+    if best_obs == 0:
+        return np.median(arr)
+
+    # Scale weights and mask the values
+    final_weights = weights[best_mask] / weights[best_mask].sum()
+    final_values = arr[best_mask]
+
+    return np.sum(final_values * final_weights)
 
 
-@jit(nopython=True, nogil=True)
-def count_within(values, lower_limit, upper_limit):
-    copy = np.zeros_like(values)
-
-    for x in range(values.shape[0]):
-        low = values[x] - lower_limit
-        high = values[x] + upper_limit
-
-        for y in range(x, values.shape[0]):
-            if values[y] > high:  # its sorted, so we can break
-                break
-
-            if values[y] >= low and values[y] <= high:
-                copy[x] += 1
-
-    return copy, copy.max()
-
-
-@jit(nopython=True, parallel=True, nogil=True)
+@jit(nopython=True, parallel=True, nogil=True, inline="always", fast_math=True)
 def mad_collapse(predictions, default=0.0):
     pred = np.zeros((predictions.shape[0], predictions.shape[1], 1), dtype=np.float32)
 
@@ -437,34 +438,7 @@ def mad_collapse(predictions, default=0.0):
                 pred[x, y, 0] = default
                 continue
 
-            non_nan.sort()
-            non_nan_len = non_nan.shape[0]
-            median = np.median(non_nan)
-            mad = np.nanmedian(np.abs(median - non_nan))
-
-            counts, max_count = count_within(non_nan, mad, mad)
-
-            current_item = 0
-            center_items = np.empty(non_nan_len ** 2, dtype="float32")
-            center_items_weights = np.zeros(non_nan_len ** 2, dtype="float32")
-
-            for z in range(non_nan_len):
-                lower_limit = non_nan[z] - mad
-                upper_limit = non_nan[z] + mad
-                if counts[z] == max_count:
-                    for q in range(non_nan_len):
-                        if (
-                            non_nan[q] >= lower_limit and non_nan[q] <= upper_limit
-                        ) or q == z:
-                            center_items[current_item] = non_nan[q]
-                            center_items_weights[current_item] = counts[q]
-                            current_item += 1
-
-            center_items = center_items[:current_item]
-            center_items_weights = center_items_weights[:current_item]
-            center_items_weights = center_items_weights / center_items_weights.sum()
-
-            pred[x, y, 0] = hood_quantile(center_items, center_items_weights, 0.5)
+            pred[x, y, 0] = mad_selector(non_nan)
 
     return pred
 
@@ -605,7 +579,9 @@ def predict_raster(
 
     if out_path_variance is not None:
         array_to_raster(
-            np.nanvar(predictions, axis=0), reference_raster, out_path_variance
+            np.nanvar(np.concatenate(predictions, axis=2), axis=2),
+            reference=reference_raster,
+            out_path=out_path_variance,
         )
 
-    return array_to_raster(predicted, reference_raster, out_path)
+    return array_to_raster(predicted, reference=reference_raster, out_path=out_path)
