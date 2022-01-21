@@ -199,32 +199,24 @@ def predict_raster(
 
     print("Merging predictions.")
     with np.errstate(invalid="ignore"):
+        pred_readied = np.concatenate(predictions, axis=2).astype("float32")
         if method == "mean":
-            predicted = np.nanmean(predictions, axis=0).astype("float32")
+            predicted = np.nanmean(pred_readied)
         elif method == "olympic" or method == "olympic_1":
-            sort = np.sort(predictions, axis=0)[1:-1]
-            predicted = np.nanmean(sort, axis=0).astype("float32")
+            sort = np.sort(pred_readied)[1:-1]
+            predicted = np.nanmean(sort)
         elif method == "olympic_2":
-            sort = np.sort(predictions, axis=0)[2:-2]
-            predicted = np.nanmean(sort, axis=0).astype("float32")
+            sort = np.sort(pred_readied)[2:-2]
+            predicted = np.nanmean(sort)
         elif method == "mad":
-            predicted = mad_collapse(
-                np.concatenate(predictions, axis=2).astype("float32")
-            )
+            predicted = mad_collapse(pred_readied)
         else:
-            predicted = np.nanmedian(predictions, axis=0).astype("float32")
+            predicted = np.nanmedian(pred_readied)
 
         if scale_to_sum:
-            predicted = predicted / np.reshape(
-                np.nansum(predicted, axis=2),
-                (predicted.shape[0], predicted.shape[1], 1),
-            )
+            predicted = predicted / np.sum(predicted)
 
     if out_path_variance is not None:
-        array_to_raster(
-            np.nanvar(np.concatenate(predictions, axis=2), axis=2),
-            reference=reference_raster,
-            out_path=out_path_variance,
-        )
+        array_to_raster(np.nanvar(pred_readied), reference=reference_raster, out_path=out_path_variance)
 
     return array_to_raster(predicted, reference=reference_raster, out_path=out_path)
