@@ -1,14 +1,10 @@
 import sys
 import os
 import numpy as np
-import tensorflow as tf
 from osgeo import ogr, gdal
 from uuid import uuid4
-from numba import jit, prange
 
 sys.path.append("../../")
-
-np.set_printoptions(suppress=True)
 
 from buteo.raster.io import (
     raster_to_array,
@@ -23,100 +19,11 @@ from buteo.vector.io import vector_to_metadata, is_vector, open_vector
 from buteo.vector.intersect import intersect_vector
 from buteo.vector.attributes import vector_get_fids
 from buteo.vector.rasterize import rasterize_vector
-from buteo.machine_learning.ml_utils import tpe, get_offsets, mse_sumbias
+from buteo.machine_learning.ml_utils import get_offsets
+from buteo.machine_learning.patch_utils import get_overlaps
 from buteo.utils import progress
 
 
-def array_to_blocks(arr: np.ndarray, tile_size, offset=[0, 0]) -> np.ndarray:
-    blocks_y = (arr.shape[0] - offset[1]) // tile_size
-    blocks_x = (arr.shape[1] - offset[0]) // tile_size
-
-    cut_y = -((arr.shape[0] - offset[1]) % tile_size)
-    cut_x = -((arr.shape[1] - offset[0]) % tile_size)
-
-    cut_y = None if cut_y == 0 else cut_y
-    cut_x = None if cut_x == 0 else cut_x
-
-    reshaped = arr[offset[1] : cut_y, offset[0] : cut_x].reshape(
-        blocks_y,
-        tile_size,
-        blocks_x,
-        tile_size,
-        arr.shape[2],
-    )
-
-    swaped = reshaped.swapaxes(1, 2)
-    merge = swaped.reshape(-1, tile_size, tile_size, arr.shape[2])
-
-    return merge
-
-
-def blocks_to_array(blocks, og_shape, tile_size, offset=[0, 0]) -> np.ndarray:
-    with np.errstate(invalid="ignore"):
-        target = np.empty(og_shape) * np.nan
-
-    target_y = ((og_shape[0] - offset[1]) // tile_size) * tile_size
-    target_x = ((og_shape[1] - offset[0]) // tile_size) * tile_size
-
-    cut_y = -((og_shape[0] - offset[1]) % tile_size)
-    cut_x = -((og_shape[1] - offset[0]) % tile_size)
-
-    cut_x = None if cut_x == 0 else cut_x
-    cut_y = None if cut_y == 0 else cut_y
-
-    reshape = blocks.reshape(
-        target_y // tile_size,
-        target_x // tile_size,
-        tile_size,
-        tile_size,
-        blocks.shape[3],
-        1,
-    )
-
-    swap = reshape.swapaxes(1, 2)
-
-    destination = swap.reshape(
-        (target_y // tile_size) * tile_size,
-        (target_x // tile_size) * tile_size,
-        blocks.shape[3],
-    )
-
-    target[offset[1] : cut_y, offset[0] : cut_x] = destination
-
-    return target
-
-
-def get_overlaps(arr, offsets, tile_size, border_check=True):
-    arr_offsets = []
-
-    for offset in offsets:
-        arr_offsets.append(array_to_blocks(arr, tile_size, offset))
-
-    if border_check:
-        found = False
-        border = None
-        for end in ["right", "bottom", "corner"]:
-            if end == "right" and (arr.shape[1] % tile_size) != 0:
-                found = True
-                border = arr[:, -tile_size:]
-            elif end == "bottom" and (arr.shape[0] % tile_size) != 0:
-                found = True
-                border = arr[-tile_size:, :]
-            elif (
-                end == "corner"
-                and ((arr.shape[1] % tile_size) != 0)
-                and ((arr.shape[1] % tile_size) != 0)
-            ):
-                found = True
-                border = arr[-tile_size:, -tile_size:]
-
-            if found:
-                arr_offsets.append(array_to_blocks(border, tile_size, offset=[0, 0]))
-
-    return arr_offsets
-
-
-# todo: align with size
 def extract_patches(
     raster_list,
     outdir,
@@ -198,7 +105,7 @@ def extract_patches(
 
     zones_ogr = open_vector(zones)
     zones_layer = zones_ogr.GetLayer(options["zone_layer_id"])
-    featureDefn = zones_layer.GetLayerDefn()
+    feature_defn = zones_layer.GetLayerDefn()
     fids = vector_get_fids(zones_ogr, options["zone_layer_id"])
 
     progress(0, len(fids) * len(raster_list), "processing fids")
@@ -222,7 +129,7 @@ def extract_patches(
                 geom_type=ogr.wkbPolygon,
                 srs=zones_layer_meta["projection_osr"],
             )
-            copied_feature = ogr.Feature(featureDefn)
+            copied_feature = ogr.Feature(feature_defn)
             copied_feature.SetGeometry(geom)
             fid_ds_lyr.CreateFeature(copied_feature)
 
@@ -396,192 +303,3 @@ def extract_patches(
     progress(1, 1, "processing fids")
 
     return 1
-
-
-@jit(nopython=True, parallel=True, nogil=True, inline="always", fast_math=True)
-def mad_selector(arr, bias=0.5):
-    mad = np.median(np.abs(np.median(arr) - arr)) * bias
-
-    best_obs = 0
-    best_mask = np.ones_like(arr, dtype=bool)
-    weights = np.zeros_like(arr)
-    for index, value in enumerate(arr):
-
-        # Values with one mad
-        mask = np.logical_and(arr >= value - mad, arr <= value + mad)
-        obs = mask.sum() - 1
-
-        if obs > best_obs:
-            best_obs = obs
-            best_mask = mask
-
-        weights[index] = obs
-
-    if best_obs == 0:
-        return np.median(arr)
-
-    # Scale weights and mask the values
-    final_weights = weights[best_mask] / weights[best_mask].sum()
-    final_values = arr[best_mask]
-
-    return np.sum(final_values * final_weights)
-
-
-@jit(nopython=True, parallel=True, nogil=True, inline="always", fast_math=True)
-def mad_collapse(predictions, default=0.0):
-    pred = np.zeros((predictions.shape[0], predictions.shape[1], 1), dtype=np.float32)
-
-    for x in prange(predictions.shape[0]):
-        for y in range(predictions.shape[1]):
-            non_nan = predictions[x, y, :][np.isnan(predictions[x, y, :]) == False]
-            if non_nan.shape[0] == 0:
-                pred[x, y, 0] = default
-                continue
-
-            pred[x, y, 0] = mad_selector(non_nan)
-
-    return pred
-
-
-def predict_raster(
-    raster_list,
-    tile_size=[32],
-    output_tile_size=32,
-    output_channels=1,
-    model_path="",
-    reference_raster="",
-    out_path=None,
-    out_path_variance=None,
-    offsets=True,
-    batch_size=32,
-    method="median",
-    scale_to_sum=False,
-):
-    print("Loading Model")
-    model = tf.keras.models.load_model(
-        model_path, custom_objects={"tpe": tpe, "mse_sumbias": mse_sumbias}
-    )
-    reference_arr = raster_to_array(reference_raster)
-
-    if offsets == False:
-        print(
-            "No offsets provided. Using offsets greatly increases accuracy. Please provide offsets."
-        )
-    else:
-        offsets = []
-        for val in tile_size:
-            offsets.append(get_offsets(val))
-
-    predictions = []
-    read_rasters = []
-
-    print("Initialising rasters.")
-    for raster_idx, raster in enumerate(raster_list):
-        read_rasters.append(raster_to_array(raster).astype("float32"))
-
-    progress(0, len(offsets[0]) + 3, "Predicting")
-    for offset_idx in range(len(offsets[0])):
-        model_inputs = []
-        for raster_idx, raster in enumerate(raster_list):
-            array = read_rasters[raster_idx]
-
-            blocks = array_to_blocks(
-                array, tile_size[raster_idx], offset=offsets[raster_idx][offset_idx]
-            )
-
-            model_inputs.append(blocks)
-
-        prediction_blocks = model.predict(model_inputs, batch_size, verbose=0)
-
-        prediction = blocks_to_array(
-            prediction_blocks,
-            (reference_arr.shape[0], reference_arr.shape[1], output_channels),
-            output_tile_size,
-            offset=offsets[0][offset_idx],
-        )
-        predictions.append(prediction)
-
-        progress(offset_idx + 1, len(offsets[0]) + 3, "Predicting")
-
-    # Predict the border regions and add them as a layer
-    with np.errstate(invalid="ignore"):
-        borders = (
-            np.empty((reference_arr.shape[0], reference_arr.shape[1], output_channels))
-            * np.nan
-        )
-
-    for end in ["right", "bottom", "corner"]:
-        model_inputs = []
-
-        for raster_idx, raster in enumerate(raster_list):
-            if end == "right":
-                array = read_rasters[raster_idx][:, -tile_size[raster_idx] :]
-            elif end == "bottom":
-                array = read_rasters[raster_idx][-tile_size[raster_idx] :, :]
-            elif end == "corner":
-                array = read_rasters[raster_idx][
-                    -tile_size[raster_idx] :, -tile_size[raster_idx] :
-                ]
-
-            blocks = array_to_blocks(array, tile_size[raster_idx], offset=[0, 0])
-
-            model_inputs.append(blocks)
-
-        prediction_blocks = model.predict(model_inputs, batch_size, verbose=0)
-
-        if end == "right":
-            target_shape = (reference_arr.shape[0], output_tile_size, output_channels)
-        elif end == "bottom":
-            target_shape = (output_tile_size, reference_arr.shape[1], output_channels)
-        elif end == "corner":
-            target_shape = (output_tile_size, output_tile_size, output_channels)
-
-        prediction = blocks_to_array(
-            prediction_blocks, target_shape, output_tile_size, offset=[0, 0]
-        )
-
-        if end == "right":
-            borders[:, -output_tile_size:, 0:output_channels] = prediction
-        elif end == "bottom":
-            borders[-output_tile_size:, :, 0:output_channels] = prediction
-        elif end == "corner":
-            borders[
-                -output_tile_size:, -output_tile_size:, 0:output_channels
-            ] = prediction
-
-        offset_idx += 1
-        progress(offset_idx + 1, len(offsets[0]) + 3, "Predicting")
-
-    predictions.append(borders)
-
-    print("Merging predictions.")
-    with np.errstate(invalid="ignore"):
-        if method == "mean":
-            predicted = np.nanmean(predictions, axis=0).astype("float32")
-        elif method == "olympic" or method == "olympic_1":
-            sort = np.sort(predictions, axis=0)[1:-1]
-            predicted = np.nanmean(sort, axis=0).astype("float32")
-        elif method == "olympic_2":
-            sort = np.sort(predictions, axis=0)[2:-2]
-            predicted = np.nanmean(sort, axis=0).astype("float32")
-        elif method == "mad":
-            predicted = mad_collapse(
-                np.concatenate(predictions, axis=2).astype("float32")
-            )
-        else:
-            predicted = np.nanmedian(predictions, axis=0).astype("float32")
-
-        if scale_to_sum:
-            predicted = predicted / np.reshape(
-                np.nansum(predicted, axis=2),
-                (predicted.shape[0], predicted.shape[1], 1),
-            )
-
-    if out_path_variance is not None:
-        array_to_raster(
-            np.nanvar(np.concatenate(predictions, axis=2), axis=2),
-            reference=reference_raster,
-            out_path=out_path_variance,
-        )
-
-    return array_to_raster(predicted, reference=reference_raster, out_path=out_path)

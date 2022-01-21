@@ -4,7 +4,6 @@ from buteo.raster.clip import clip_raster
 from buteo.earth_observation.download_sentinel import download_s2_tile
 from buteo.earth_observation.s2_mosaic import mosaic_tile_s2
 
-# from buteo.machine_learning.patch_extraction import predict_raster
 from buteo.filters.norm_rasters import norm_rasters
 
 
