@@ -47,7 +47,7 @@ opt-einsum==3.3.0
 pandas==1.2.4
 pathspec==0.8.1
 pefile==2021.9.3
-Pillow==8.2.0
+Pillow==9.0.0
 promise==2.3
 protobuf==3.15.8
 psutil==5.8.0
