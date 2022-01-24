@@ -14,7 +14,7 @@ from buteo.machine_learning.patch_utils import array_to_blocks, blocks_to_array
 from buteo.utils import progress
 
 
-@jit(nopython=True, parallel=True, nogil=True, inline="always", fastmath=True)
+@jit(nopython=True, parallel=True, nogil=True, inline="always")
 def weighted_quantile(values, weights, quant):
     sort_mask = np.argsort(values)
     sorted_data = values[sort_mask]
@@ -24,9 +24,9 @@ def weighted_quantile(values, weights, quant):
     return np.interp(quant, intersect, sorted_data)
 
 
-@jit(nopython=True, parallel=True, nogil=True, inline="always", fastmath=True)
+@jit(nopython=True, parallel=True, nogil=True, inline="always")
 def values_within(values, limit):
-    weights = np.zeros_like(values, dtype="float32")
+    weights = np.zeros_like(values)
     best_mask = np.ones_like(values, dtype=np.bool_)
 
     max_observations = 0
@@ -59,8 +59,8 @@ def values_within(values, limit):
     return central_values, central_weights
 
 
-@jit(nopython=True, parallel=True, nogil=True, inline="always", fastmath=True)
-def mad_collapse(predictions, default=0.0, bias=1.0):
+@jit(nopython=True, parallel=True, nogil=True)
+def mad_interval_merging(predictions, default=0.0, bias=1.0):
     pred = np.zeros((predictions.shape[0], predictions.shape[1], 1), dtype=np.float32)
 
     for x in prange(predictions.shape[0]):
@@ -86,8 +86,11 @@ def mad_collapse(predictions, default=0.0, bias=1.0):
     return pred
 
 
+# Test for classification tasks.
 def predict_raster(
     raster_list,
+    /,
+    *,
     tile_size=[32],
     output_tile_size=32,
     output_channels=1,
@@ -209,7 +212,7 @@ def predict_raster(
             sort = np.sort(pred_readied)[2:-2]
             predicted = np.nanmean(sort)
         elif method == "mad":
-            predicted = mad_collapse(pred_readied)
+            predicted = mad_interval_merging(pred_readied)
         else:
             predicted = np.nanmedian(pred_readied)
 
@@ -217,6 +220,10 @@ def predict_raster(
             predicted = predicted / np.sum(predicted)
 
     if out_path_variance is not None:
-        array_to_raster(np.nanvar(pred_readied), reference=reference_raster, out_path=out_path_variance)
+        array_to_raster(
+            np.nanvar(pred_readied),
+            reference=reference_raster,
+            out_path=out_path_variance,
+        )
 
     return array_to_raster(predicted, reference=reference_raster, out_path=out_path)
