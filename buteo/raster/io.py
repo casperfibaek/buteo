@@ -1000,6 +1000,13 @@ def array_to_raster(
     overwrite_required(out_path, overwrite)
 
     metadata = raster_to_metadata(reference)
+    reference_nodata = metadata["nodata_value"]
+
+    # handle nodata. GDAL python throws error if conversion in not explicit.
+    if reference_nodata is not None:
+        reference_nodata = float(reference_nodata)
+        if (reference_nodata).is_integer() is True:
+            reference_nodata = int(reference_nodata)
 
     # Handle nodata
     input_nodata = None
@@ -1044,8 +1051,10 @@ def array_to_raster(
         else:
             band.WriteArray(array)
 
-        if metadata["nodata_value"] is None and input_nodata is not None:
+        if input_nodata is not None:
             band.SetNoDataValue(input_nodata)
+        elif reference_nodata is not None:
+            band.SetNoDataValue(reference_nodata)
 
     return output_name
 
