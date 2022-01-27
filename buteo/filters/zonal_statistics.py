@@ -5,9 +5,9 @@ from osgeo import ogr
 
 sys.path.append("../../")
 
-from buteo.raster.io import raster_to_array, internal_raster_to_metadata
+from buteo.raster.io import raster_to_array, raster_to_metadata
 from buteo.vector.rasterize import rasterize_vector
-from buteo.vector.reproject import internal_reproject_vector
+from buteo.vector.reproject import reproject_vector
 from buteo.vector.io import (
     open_vector,
     internal_vector_to_memory,
@@ -154,7 +154,7 @@ def zonal_statistics(
     stats_translated = stats_to_ints(stats)
 
     # Read the raster meta:
-    raster_metadata = internal_raster_to_metadata(in_rasters[0])
+    raster_metadata = raster_to_metadata(in_rasters[0])
 
     vector = None
     if output_vector is None:
@@ -168,9 +168,9 @@ def zonal_statistics(
     # Check that projections match
     if not vector_metadata["projection_osr"].IsSame(raster_metadata["projection_osr"]):
         if output_vector is None:
-            vector = internal_reproject_vector(in_vector, in_rasters[0])
+            vector = reproject_vector(in_vector, in_rasters[0])
         else:
-            vector_path = internal_reproject_vector(
+            vector_path = reproject_vector(
                 in_vector, in_rasters[0], output_vector
             )
             vector = open_vector(vector_path, writeable=True)

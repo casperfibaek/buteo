@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>buteo.utils API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>buteo.utils</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import os
+import sys
+import time
+import shutil
+import linecache
+import tracemalloc
+
+from typing import Any
+from glob import glob
+
+
+def is_float(value):
+    if isinstance(value, float):
+        return True
+    elif isinstance(value, str):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+
+
+def to_number(value):
+    if is_float(value):
+        return float(value)
+
+    return value
+
+
+def keys_to_args(dictionary):
+    args = []
+    for key in dictionary:
+        args.append(to_number(dictionary[key]))
+    return args
+
+
+def make_dir_if_not_exists(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    return path
+
+
+def list_is_all_the_same(lst):
+    if not isinstance(lst, list):
+        return False
+
+    first = lst[0]
+    for item in lst:
+        if item != first:
+            return False
+
+    return True
+
+
+def path_to_ext(path):
+    basename = os.path.basename(path)
+    basesplit = os.path.splitext(basename)
+    ext = basesplit[1]
+    ext_without_dot = ext[1:]
+
+    return ext_without_dot
+
+
+def path_to_name(path, with_ext=False):
+    basename = os.path.basename(path)
+    basesplit = os.path.splitext(basename)
+    name = basesplit[0]
+
+    if with_ext:
+        return basename
+
+    return name
+
+
+def file_exists(path):
+    return os.path.exists(path)
+
+
+def folder_exists(path):
+    return os.path.isdir(path)
+
+
+def path_is_in_memory(path):
+    if isinstance(path, str) and path[:8] == &#34;/vsimem/&#34;:
+        return True
+
+    return False
+
+
+def is_number(potential_number):
+    if isinstance(potential_number, float):
+        return True
+
+    if isinstance(potential_number, int):
+        return True
+
+    return False
+
+
+def overwrite_required(path, overwrite):
+    if path is not None:
+        exists = file_exists(path)
+        if exists and not overwrite:
+            raise Exception(f&#34;File: {path} already exists and overwrite is False.&#34;)
+
+
+def remove_if_overwrite(path, overwrite):
+    if path is not None:
+        exists = file_exists(path)
+        if exists and overwrite:
+            os.remove(path)
+        elif exists:
+            raise Exception(f&#34;File: {path} already exists and overwrite is False.&#34;)
+
+
+def get_size(start_path=&#34;.&#34;, rough=True):
+    total_size = 0
+    for dirpath, _dirnames, filenames in os.walk(start_path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+
+            # skip if it is symbolic link
+            if not os.path.islink(fp):
+                total_size += os.path.getsize(fp)
+    if rough is True:
+        return total_size &gt;&gt; 20
+    else:
+        return total_size
+
+
+def divide_steps(total, step):
+    steps = []
+    remainder = total % step
+    divided = int(total / step)
+    for _ in range(step):
+        if remainder &gt; 0:
+            steps.append(divided + 1)
+            remainder -= 1
+        else:
+            steps.append(divided)
+
+    return steps
+
+
+def divide_into_steps(arr, steps_length):
+    steps = divide_steps(len(arr), steps_length)
+
+    ret_arr = []
+    last = 0
+    count = 0
+    for x in steps:
+        count += 1
+        if count &gt; len(arr):
+            continue
+        ret_arr.append(arr[last : x + last])
+        last += x
+
+    return ret_arr
+
+
+def step_ranges(steps):
+    start_stop = []
+    last = 0
+    for num in range(0, len(steps)):
+        step_size = steps[num]
+        fid = num + 1
+
+        start_stop.append(
+            {
+                &#34;id&#34;: fid,
+                &#34;start&#34;: last,
+                &#34;stop&#34;: last + step_size,
+            }
+        )
+
+        last += step_size
+
+    return start_stop
+
+
+def type_check(
+    variable: Any,
+    types: list,
+    name: str = &#34;&#34;,
+    allow_none=False,
+    throw_error=True,
+) -&gt; bool:
+    &#34;&#34;&#34;
+        Utility function to type check the inputs of a function.
+
+    Args:
+        variable (any): The variable to typecheck
+
+        types (tuple): A tuple of type classes. e.g. int, float, etc.
+
+    **kwargs:
+        name (str): The name printed in the error string if an error is thrown.
+
+        allow_none (bool): Allow the type to be None
+
+        throw_error (bool): Should the function throw an error if the type
+        is wrong or return a boolean.
+
+    Returns:
+        A boolean indicating if the type is valid. If throw_error an error is
+        raised if the input is not a valid type.
+    &#34;&#34;&#34;
+
+    if variable is None:
+        if allow_none:
+            return True
+
+        if throw_error:
+            raise ValueError(
+                f&#34;Variable: {name} is type None when type None is not allowed.&#34;
+            )
+
+        return False
+
+    is_valid_type = isinstance(variable, tuple(types))
+
+    if is_valid_type:
+        return True
+
+    if allow_none and variable is None:
+        return True
+
+    type_names = []
+    valid_types = list(types)
+    if allow_none:
+        valid_types.append(None)
+
+    for t in valid_types:
+        type_names.append(t.__name__)
+
+    if throw_error:
+        raise ValueError(
+            f&#34;Variable: {name} must be type(s): {&#39; &#39;.join(type_names)} - Received type: {type(variable).__name__}, variable: {variable}&#34;
+        )
+
+    return False
+
+
+def delete_files_in_folder(folder):
+    for f in glob(folder + &#34;*.*&#34;):
+        try:
+            os.remove(f)
+        except:
+            pass
+
+
+# Memory profiling
+# from https://stackoverflow.com/questions/552744/how-do-i-profile-memory-usage-in-python
+def display_top(snapshot, key_type=&#34;lineno&#34;, limit=3):
+    snapshot = snapshot.filter_traces(
+        (
+            tracemalloc.Filter(False, &#34;&lt;frozen importlib._bootstrap&gt;&#34;),
+            tracemalloc.Filter(False, &#34;&lt;unknown&gt;&#34;),
+        )
+    )
+    top_stats = snapshot.statistics(key_type)
+
+    print(&#34;Top %s lines&#34; % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        # replace &#34;/path/to/module/file.py&#34; with &#34;module/file.py&#34;
+        filename = os.sep.join(frame.filename.split(os.sep)[-2:])
+        print(
+            &#34;#%s: %s:%s: %.1f KiB&#34; % (index, filename, frame.lineno, stat.size / 1024)
+        )
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            print(&#34;    %s&#34; % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        print(&#34;%s other: %.1f KiB&#34; % (len(other), size / 1024))
+    total = sum(stat.size for stat in top_stats)
+    print(&#34;Total allocated size: %.1f KiB&#34; % (total / 1024))
+
+
+def progress(count, total, name=&#34;Processing&#34;):
+    sys.stdout.flush()
+
+    try:
+        bar_len = os.get_terminal_size().columns - 24
+    except:
+        bar_len = shutil.get_terminal_size().columns - 24
+
+    filled_len = int(round(bar_len * count / float(total)))
+    display_name = name[:10] + &#34;..: &#34;
+
+    bar = &#34;█&#34; * filled_len + &#34;.&#34; * (bar_len - filled_len)
+
+    percents = round(100.0 * count / float(total), 1)
+
+    if percents &gt;= 100.0:
+        percents = 100.0
+
+    if count == total:
+        sys.stdout.write(f&#34;{display_name}[{bar}] {percents} %\r&#34;)
+        sys.stdout.flush()
+        print(&#34;&#34;)
+        return None
+    else:
+        sys.stdout.write(f&#34;{display_name}[{bar}] {percents} %\r&#34;)
+        sys.stdout.flush()
+
+    return None
+
+
+def timing(before, print_msg=True):
+    after = time.time()
+    dif = after - before
+    hours = int(dif / 3600)
+    minutes = int((dif % 3600) / 60)
+    seconds = &#34;{0:.2f}&#34;.format(dif % 60)
+    message = f&#34;Processing took: {hours}h {minutes}m {seconds}s&#34;
+    if print_msg:
+        print(message)
+
+    return message</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.utils.delete_files_in_folder"><code class="name flex">
+<span>def <span class="ident">delete_files_in_folder</span></span>(<span>folder)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def delete_files_in_folder(folder):
+    for f in glob(folder + &#34;*.*&#34;):
+        try:
+            os.remove(f)
+        except:
+            pass</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.display_top"><code class="name flex">
+<span>def <span class="ident">display_top</span></span>(<span>snapshot, key_type='lineno', limit=3)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def display_top(snapshot, key_type=&#34;lineno&#34;, limit=3):
+    snapshot = snapshot.filter_traces(
+        (
+            tracemalloc.Filter(False, &#34;&lt;frozen importlib._bootstrap&gt;&#34;),
+            tracemalloc.Filter(False, &#34;&lt;unknown&gt;&#34;),
+        )
+    )
+    top_stats = snapshot.statistics(key_type)
+
+    print(&#34;Top %s lines&#34; % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        # replace &#34;/path/to/module/file.py&#34; with &#34;module/file.py&#34;
+        filename = os.sep.join(frame.filename.split(os.sep)[-2:])
+        print(
+            &#34;#%s: %s:%s: %.1f KiB&#34; % (index, filename, frame.lineno, stat.size / 1024)
+        )
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            print(&#34;    %s&#34; % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        print(&#34;%s other: %.1f KiB&#34; % (len(other), size / 1024))
+    total = sum(stat.size for stat in top_stats)
+    print(&#34;Total allocated size: %.1f KiB&#34; % (total / 1024))</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.divide_into_steps"><code class="name flex">
+<span>def <span class="ident">divide_into_steps</span></span>(<span>arr, steps_length)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def divide_into_steps(arr, steps_length):
+    steps = divide_steps(len(arr), steps_length)
+
+    ret_arr = []
+    last = 0
+    count = 0
+    for x in steps:
+        count += 1
+        if count &gt; len(arr):
+            continue
+        ret_arr.append(arr[last : x + last])
+        last += x
+
+    return ret_arr</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.divide_steps"><code class="name flex">
+<span>def <span class="ident">divide_steps</span></span>(<span>total, step)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def divide_steps(total, step):
+    steps = []
+    remainder = total % step
+    divided = int(total / step)
+    for _ in range(step):
+        if remainder &gt; 0:
+            steps.append(divided + 1)
+            remainder -= 1
+        else:
+            steps.append(divided)
+
+    return steps</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.file_exists"><code class="name flex">
+<span>def <span class="ident">file_exists</span></span>(<span>path)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def file_exists(path):
+    return os.path.exists(path)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.folder_exists"><code class="name flex">
+<span>def <span class="ident">folder_exists</span></span>(<span>path)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def folder_exists(path):
+    return os.path.isdir(path)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.get_size"><code class="name flex">
+<span>def <span class="ident">get_size</span></span>(<span>start_path='.', rough=True)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_size(start_path=&#34;.&#34;, rough=True):
+    total_size = 0
+    for dirpath, _dirnames, filenames in os.walk(start_path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+
+            # skip if it is symbolic link
+            if not os.path.islink(fp):
+                total_size += os.path.getsize(fp)
+    if rough is True:
+        return total_size &gt;&gt; 20
+    else:
+        return total_size</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.is_float"><code class="name flex">
+<span>def <span class="ident">is_float</span></span>(<span>value)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_float(value):
+    if isinstance(value, float):
+        return True
+    elif isinstance(value, str):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.is_number"><code class="name flex">
+<span>def <span class="ident">is_number</span></span>(<span>potential_number)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_number(potential_number):
+    if isinstance(potential_number, float):
+        return True
+
+    if isinstance(potential_number, int):
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.keys_to_args"><code class="name flex">
+<span>def <span class="ident">keys_to_args</span></span>(<span>dictionary)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def keys_to_args(dictionary):
+    args = []
+    for key in dictionary:
+        args.append(to_number(dictionary[key]))
+    return args</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.list_is_all_the_same"><code class="name flex">
+<span>def <span class="ident">list_is_all_the_same</span></span>(<span>lst)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def list_is_all_the_same(lst):
+    if not isinstance(lst, list):
+        return False
+
+    first = lst[0]
+    for item in lst:
+        if item != first:
+            return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.make_dir_if_not_exists"><code class="name flex">
+<span>def <span class="ident">make_dir_if_not_exists</span></span>(<span>path)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def make_dir_if_not_exists(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    return path</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.overwrite_required"><code class="name flex">
+<span>def <span class="ident">overwrite_required</span></span>(<span>path, overwrite)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def overwrite_required(path, overwrite):
+    if path is not None:
+        exists = file_exists(path)
+        if exists and not overwrite:
+            raise Exception(f&#34;File: {path} already exists and overwrite is False.&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.path_is_in_memory"><code class="name flex">
+<span>def <span class="ident">path_is_in_memory</span></span>(<span>path)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def path_is_in_memory(path):
+    if isinstance(path, str) and path[:8] == &#34;/vsimem/&#34;:
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.path_to_ext"><code class="name flex">
+<span>def <span class="ident">path_to_ext</span></span>(<span>path)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def path_to_ext(path):
+    basename = os.path.basename(path)
+    basesplit = os.path.splitext(basename)
+    ext = basesplit[1]
+    ext_without_dot = ext[1:]
+
+    return ext_without_dot</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.path_to_name"><code class="name flex">
+<span>def <span class="ident">path_to_name</span></span>(<span>path, with_ext=False)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def path_to_name(path, with_ext=False):
+    basename = os.path.basename(path)
+    basesplit = os.path.splitext(basename)
+    name = basesplit[0]
+
+    if with_ext:
+        return basename
+
+    return name</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.progress"><code class="name flex">
+<span>def <span class="ident">progress</span></span>(<span>count, total, name='Processing')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def progress(count, total, name=&#34;Processing&#34;):
+    sys.stdout.flush()
+
+    try:
+        bar_len = os.get_terminal_size().columns - 24
+    except:
+        bar_len = shutil.get_terminal_size().columns - 24
+
+    filled_len = int(round(bar_len * count / float(total)))
+    display_name = name[:10] + &#34;..: &#34;
+
+    bar = &#34;█&#34; * filled_len + &#34;.&#34; * (bar_len - filled_len)
+
+    percents = round(100.0 * count / float(total), 1)
+
+    if percents &gt;= 100.0:
+        percents = 100.0
+
+    if count == total:
+        sys.stdout.write(f&#34;{display_name}[{bar}] {percents} %\r&#34;)
+        sys.stdout.flush()
+        print(&#34;&#34;)
+        return None
+    else:
+        sys.stdout.write(f&#34;{display_name}[{bar}] {percents} %\r&#34;)
+        sys.stdout.flush()
+
+    return None</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.remove_if_overwrite"><code class="name flex">
+<span>def <span class="ident">remove_if_overwrite</span></span>(<span>path, overwrite)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def remove_if_overwrite(path, overwrite):
+    if path is not None:
+        exists = file_exists(path)
+        if exists and overwrite:
+            os.remove(path)
+        elif exists:
+            raise Exception(f&#34;File: {path} already exists and overwrite is False.&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.step_ranges"><code class="name flex">
+<span>def <span class="ident">step_ranges</span></span>(<span>steps)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def step_ranges(steps):
+    start_stop = []
+    last = 0
+    for num in range(0, len(steps)):
+        step_size = steps[num]
+        fid = num + 1
+
+        start_stop.append(
+            {
+                &#34;id&#34;: fid,
+                &#34;start&#34;: last,
+                &#34;stop&#34;: last + step_size,
+            }
+        )
+
+        last += step_size
+
+    return start_stop</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.timing"><code class="name flex">
+<span>def <span class="ident">timing</span></span>(<span>before, print_msg=True)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def timing(before, print_msg=True):
+    after = time.time()
+    dif = after - before
+    hours = int(dif / 3600)
+    minutes = int((dif % 3600) / 60)
+    seconds = &#34;{0:.2f}&#34;.format(dif % 60)
+    message = f&#34;Processing took: {hours}h {minutes}m {seconds}s&#34;
+    if print_msg:
+        print(message)
+
+    return message</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.to_number"><code class="name flex">
+<span>def <span class="ident">to_number</span></span>(<span>value)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_number(value):
+    if is_float(value):
+        return float(value)
+
+    return value</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.type_check"><code class="name flex">
+<span>def <span class="ident">type_check</span></span>(<span>variable: Any, types: list, name: str = '', allow_none=False, throw_error=True) ‑> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Utility function to type check the inputs of a function.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>variable</code></strong> :&ensp;<code>any</code></dt>
+<dd>The variable to typecheck</dd>
+<dt><strong><code>types</code></strong> :&ensp;<code>tuple</code></dt>
+<dd>A tuple of type classes. e.g. int, float, etc.</dd>
+</dl>
+<p>**kwargs:
+name (str): The name printed in the error string if an error is thrown.</p>
+<pre><code>allow_none (bool): Allow the type to be None
+
+throw_error (bool): Should the function throw an error if the type
+is wrong or return a boolean.
+</code></pre>
+<h2 id="returns">Returns</h2>
+<p>A boolean indicating if the type is valid. If throw_error an error is
+raised if the input is not a valid type.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def type_check(
+    variable: Any,
+    types: list,
+    name: str = &#34;&#34;,
+    allow_none=False,
+    throw_error=True,
+) -&gt; bool:
+    &#34;&#34;&#34;
+        Utility function to type check the inputs of a function.
+
+    Args:
+        variable (any): The variable to typecheck
+
+        types (tuple): A tuple of type classes. e.g. int, float, etc.
+
+    **kwargs:
+        name (str): The name printed in the error string if an error is thrown.
+
+        allow_none (bool): Allow the type to be None
+
+        throw_error (bool): Should the function throw an error if the type
+        is wrong or return a boolean.
+
+    Returns:
+        A boolean indicating if the type is valid. If throw_error an error is
+        raised if the input is not a valid type.
+    &#34;&#34;&#34;
+
+    if variable is None:
+        if allow_none:
+            return True
+
+        if throw_error:
+            raise ValueError(
+                f&#34;Variable: {name} is type None when type None is not allowed.&#34;
+            )
+
+        return False
+
+    is_valid_type = isinstance(variable, tuple(types))
+
+    if is_valid_type:
+        return True
+
+    if allow_none and variable is None:
+        return True
+
+    type_names = []
+    valid_types = list(types)
+    if allow_none:
+        valid_types.append(None)
+
+    for t in valid_types:
+        type_names.append(t.__name__)
+
+    if throw_error:
+        raise ValueError(
+            f&#34;Variable: {name} must be type(s): {&#39; &#39;.join(type_names)} - Received type: {type(variable).__name__}, variable: {variable}&#34;
+        )
+
+    return False</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="buteo" href="index.html">buteo</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.utils.delete_files_in_folder" href="#buteo.utils.delete_files_in_folder">delete_files_in_folder</a></code></li>
+<li><code><a title="buteo.utils.display_top" href="#buteo.utils.display_top">display_top</a></code></li>
+<li><code><a title="buteo.utils.divide_into_steps" href="#buteo.utils.divide_into_steps">divide_into_steps</a></code></li>
+<li><code><a title="buteo.utils.divide_steps" href="#buteo.utils.divide_steps">divide_steps</a></code></li>
+<li><code><a title="buteo.utils.file_exists" href="#buteo.utils.file_exists">file_exists</a></code></li>
+<li><code><a title="buteo.utils.folder_exists" href="#buteo.utils.folder_exists">folder_exists</a></code></li>
+<li><code><a title="buteo.utils.get_size" href="#buteo.utils.get_size">get_size</a></code></li>
+<li><code><a title="buteo.utils.is_float" href="#buteo.utils.is_float">is_float</a></code></li>
+<li><code><a title="buteo.utils.is_number" href="#buteo.utils.is_number">is_number</a></code></li>
+<li><code><a title="buteo.utils.keys_to_args" href="#buteo.utils.keys_to_args">keys_to_args</a></code></li>
+<li><code><a title="buteo.utils.list_is_all_the_same" href="#buteo.utils.list_is_all_the_same">list_is_all_the_same</a></code></li>
+<li><code><a title="buteo.utils.make_dir_if_not_exists" href="#buteo.utils.make_dir_if_not_exists">make_dir_if_not_exists</a></code></li>
+<li><code><a title="buteo.utils.overwrite_required" href="#buteo.utils.overwrite_required">overwrite_required</a></code></li>
+<li><code><a title="buteo.utils.path_is_in_memory" href="#buteo.utils.path_is_in_memory">path_is_in_memory</a></code></li>
+<li><code><a title="buteo.utils.path_to_ext" href="#buteo.utils.path_to_ext">path_to_ext</a></code></li>
+<li><code><a title="buteo.utils.path_to_name" href="#buteo.utils.path_to_name">path_to_name</a></code></li>
+<li><code><a title="buteo.utils.progress" href="#buteo.utils.progress">progress</a></code></li>
+<li><code><a title="buteo.utils.remove_if_overwrite" href="#buteo.utils.remove_if_overwrite">remove_if_overwrite</a></code></li>
+<li><code><a title="buteo.utils.step_ranges" href="#buteo.utils.step_ranges">step_ranges</a></code></li>
+<li><code><a title="buteo.utils.timing" href="#buteo.utils.timing">timing</a></code></li>
+<li><code><a title="buteo.utils.to_number" href="#buteo.utils.to_number">to_number</a></code></li>
+<li><code><a title="buteo.utils.type_check" href="#buteo.utils.type_check">type_check</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

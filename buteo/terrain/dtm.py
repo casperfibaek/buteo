@@ -1,7 +1,7 @@
 import sys
 import os
 import time
-import geopandas as gpd
+
 import numpy as np
 from zipfile import ZipFile
 from glob import glob
@@ -14,6 +14,7 @@ from buteo.raster.io import raster_to_array, array_to_raster, stack_rasters_vrt
 
 start_time = time.time()
 
+# TODO: remove geopandas
 
 def reporthook(count, block_size, total_size):
     global start_time
@@ -37,6 +38,7 @@ def get_file(url, filename):
 
 
 def find_tile_names(path_to_geom):
+    import geopandas as gpd
     project_geom = gpd.read_file(path_to_geom)
     project_geom_wgs = project_geom.to_crs("EPSG:4326")
 

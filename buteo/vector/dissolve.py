@@ -42,7 +42,6 @@ def internal_dissolve_vector(
 
     Layer_info = TypedDict(
         "Layer_info",
-        {"name": str, "geom": str, "fields": List[str]},
     )
 
     layers: List[Layer_info] = []

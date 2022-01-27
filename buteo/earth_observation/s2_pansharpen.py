@@ -63,7 +63,7 @@ def super_sample_s2(
         bands_to_pansharpen.append("B8A")
 
     for band_x in bands_to_pansharpen:
-        if band_x is "B05":
+        if band_x == "B05":
             pseudo_band = "B04"
         else:
             pseudo_band = "B08"
