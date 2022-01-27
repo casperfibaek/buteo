@@ -10,24 +10,33 @@ def readme():
 
 
 setuptools.setup(
-    name="toolbox-creator-CFI",
-    version="0.0.30",
+    name="Buteo",
+    version="0.0.1",
     author="Casper Fibaek",
     author_email="casperfibaek@gmail.com",
-    description="Create a toolbox for your functions",
+    description="An Earth Observation toolbox for Python.",
     long_description=readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/casperfibaek/toolbox-gui",
+    url="https://github.com/casperfibaek/buteo",
     project_urls={
-        "Bug Tracker": "https://github.com/casperfibaek/toolbox-gui/issues",
+        "Bug Tracker": "https://github.com/casperfibaek/buteo/issues",
     },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 2 - Alpha",
     ],
-    packages=["toolbox_creator"],
-    install_requires=["PySimpleGUIQt==0.35.0"],
+    packages=["buteo"],
+    install_requires=[
+        "numpy",
+        "numba",
+        "pandas",
+        "sentinelsat",
+        "tqdm",
+    ],
     include_package_data=True,
 )
+
+# python -m build
+# python -m twine upload --repository testpypi dist/*

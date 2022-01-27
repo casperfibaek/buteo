@@ -1,5 +1,4 @@
 import numpy as np
-import numexpr as ne
 
 
 def calc_indices(
@@ -15,6 +14,8 @@ def calc_indices(
     B11=None,
     B12=None,
 ):
+    raise exception("Not implemented")
+
     if index == "chlre":  # Red Edge Chlorophyll Index
         return ne.evaluate("B05 / B08")
     elif index == "rendvi":  # Red Edge NDVI

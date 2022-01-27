@@ -2,10 +2,11 @@ import math
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.layers import Activation
 from tensorflow.keras.utils import get_custom_objects
+
+
+# TODO: Remove SKlearn
 
 
 def create_step_decay(learning_rate=0.001, drop_rate=0.5, epochs_per_drop=10):
@@ -102,6 +103,8 @@ def scale_to_01(X):
 
 # stratify a regression split
 def train_split_mask_regression(y, split=0.3, stratified=True):
+    from sklearn.model_selection import train_test_split
+
     if stratified is True:
         strats = np.digitize(y, np.percentile(y, [10, 20, 30, 40, 50, 60, 70, 80, 90]))
         indices = np.arange(0, len(strats), 1)
@@ -276,10 +279,6 @@ def preprocess_optical(
     val_b = target_high - (val_a * cutoff_high)
 
     return ((val_a * clipped) + val_b).astype("float32")
-
-
-def scale_to_range(arr, min, max):
-    return MinMaxScaler(feature_range=(min, max)).fit_transform(arr)
 
 
 def preprocess_coh(arr, target_low=0, target_high=1):

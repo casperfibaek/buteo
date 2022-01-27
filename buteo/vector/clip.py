@@ -72,7 +72,7 @@ def internal_clip_vector(
         else:
             geometry_to_clip = open_vector(clip_geom, layer=process_layer_clip)
     elif is_raster(clip_geom):
-        extent = internal_raster_to_metadata(clip_geom, create_geometry=True)[
+        extent = raster_to_metadata(clip_geom, create_geometry=True)[
             "extent_datasource"
         ]
         geometry_to_clip = internal_vector_to_memory(extent)

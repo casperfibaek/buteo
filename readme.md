@@ -58,11 +58,12 @@ The system is under active development and is not ready for public release. It i
 
 # Dependencies
 
-gdal
 numpy
 numba
 pandas
 sentinelsat
+tqdm
+gdal # install on your own
 
 optional:
 orfeo-toolbox
