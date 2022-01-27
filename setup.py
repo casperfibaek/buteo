@@ -40,3 +40,4 @@ setuptools.setup(
 
 # python -m build
 # python -m twine upload --repository testpypi dist/*
+# pdoc3 --html --output-dir docs --config show_source_code=False buteo
