@@ -1,3 +1,49 @@
+from doctest import master
+import sys
+from turtle import distance
+import numpy as np
+from osgeo import gdal
+
+
+sys.path.append("../")
+sys.path.append("../../")
+np.set_printoptions(suppress=True)
+
+from buteo.raster.resample import resample_raster
+from buteo.raster.io import raster_to_array, array_to_raster
+from buteo.filters.convolutions import filter_array
+from buteo.raster.align import align_rasters
+from buteo.raster.clip import clip_raster
+from buteo.raster.reproject import reproject_raster
+
+# TODO: remove geopandas
+# TODO: make sense of all of this.l
+
+# example
+folder = "D:/training_data_buteo/denmark_2021_Q2/"
+
+reference = resample_raster(folder + "B12_20m.tif", 40.0)
+dem = folder + "DK_COP30.tif"
+
+v1 = reproject_raster(dem, reference, postfix="")
+v2 = resample_raster(v1, 40.0, postfix="", resample_alg="average")
+v3 = align_rasters(v2, master=reference, postfix="")
+
+
+smoothed = array_to_raster(
+    filter_array(raster_to_array(v3), (5, 5), nodata_value=-9999, operation="median"),
+    reference=reference,
+    out_path=folder + "DK_COP30_20m_smoothed.tif",
+)
+
+slope_name = "/vsimem/v4_slope.tif"
+gdal.DEMProcessing(slope_name, smoothed, 'slope', options=[], slopeFormat="percent")
+array_to_raster((raster_to_array(slope_name) / 100.0).astype("float32"), reference=reference, out_path=folder+ "DK_COP30_20m_slope_smooth.tif")
+
+aspect_name = "/vsimem/v4_aspect.tif"
+gdal.DEMProcessing(aspect_name, smoothed, 'aspect', options=[])
+array_to_raster(raster_to_array(aspect_name).astype("float32"), reference=reference, out_path=folder+ "DK_COP30_20m_aspect_smooth.tif")
+
 import sys
 import os
 import time
@@ -14,7 +60,7 @@ from buteo.raster.io import raster_to_array, array_to_raster, stack_rasters_vrt
 
 start_time = time.time()
 
-# TODO: remove geopandas
+
 
 def reporthook(count, block_size, total_size):
     global start_time

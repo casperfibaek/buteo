@@ -1,10 +1,6 @@
 import math
 import numpy as np
 import pandas as pd
-import tensorflow as tf
-from tensorflow.keras.layers import Activation
-from tensorflow.keras.utils import get_custom_objects
-
 
 # TODO: Remove SKlearn
 
@@ -204,32 +200,6 @@ def test_correlation(df: pd.DataFrame, cutoff: float = 0.75) -> np.ndarray:
     return to_drop
 
 
-def mish(inputs):
-    return inputs * tf.math.tanh(tf.math.softplus(inputs))
-
-
-class Mish(Activation):
-    """
-    Mish Activation Function.
-    .. math::
-        mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + e^{x}))
-    Shape:
-        - Input: Arbitrary. Use the keyword argument `input_shape`
-        (tuple of integers, does not include the samples axis)
-        when using this layer as the first layer in a model.
-        - Output: Same shape as the input.
-    Examples:
-        >>> X = Activation('Mish', name="conv1_act")(X_input)
-    """
-
-    def __init__(self, activation, **kwargs):
-        super(Mish, self).__init__(activation, **kwargs)
-        self.__name__ = "Mish"
-
-
-def load_mish():
-    get_custom_objects().update({"Mish": Mish(mish)})
-
 
 def mad_standard(arr):
     median = np.median(arr)
@@ -329,79 +299,3 @@ def preprocess_sar(
     )
 
     return scaled
-
-
-def mse(y_pred, y_true):
-    y_pred = tf.cast(y_pred, tf.float64)
-    y_true = tf.cast(y_true, tf.float64)
-
-    return tf.math.reduce_mean(tf.math.squared_difference(y_pred, y_true))
-
-
-def mse_sumbias(y_pred, y_true, bias=0.5):
-    _mse = tf.math.reduce_mean(tf.math.squared_difference(y_pred, y_true))
-    _tpe = tf.math.abs(tf.math.reduce_sum(y_pred) - tf.math.reduce_sum(y_true))
-    tpe_biased = tf.math.pow(_tpe, bias)
-
-    return _mse + tpe_biased
-
-
-def mse_biased(y_pred, y_true):
-    y_pred = tf.cast(y_pred, tf.float32)
-    y_true = tf.cast(y_true, tf.float32)
-    bias = tf.cast(1.50, tf.float32)
-
-    greater_one = tf.cast(tf.math.greater(y_true, y_pred), tf.float32)
-    greater_two = tf.cast(tf.math.greater_equal(y_pred, y_true), tf.float32)
-
-    # scale = (greater_one * bias) + greater_two
-    scale = (greater_two * bias) + greater_one
-
-    sqr_diff = ((y_pred - y_true) * scale) ** 2
-
-    return tf.math.reduce_mean(sqr_diff)
-
-
-def log_cosh(y_pred, y_true):
-    y_pred = tf.cast(y_pred, tf.float64)
-    y_true = tf.cast(y_true, tf.float64)
-
-    y_pred = tf.nn.relu(y_pred)
-
-    return tf.losses.log_cosh(y_true, y_pred)
-
-
-def tpe(y_true, y_pred):
-    y_pred = tf.cast(y_pred, tf.float64)
-    y_true = tf.cast(y_true, tf.float64)
-
-    espilon = 1e-7
-    pred_sum = tf.math.reduce_sum(y_pred)
-    true_sum = tf.math.reduce_sum(y_true)
-    sdif = pred_sum - true_sum
-    part = (sdif / (true_sum + espilon)) * 100
-    clipped = tf.clip_by_value(part, -100.0, 100.0)
-
-    return clipped
-
-
-class SaveBestModel(tf.keras.callbacks.Callback):
-    def __init__(self, save_best_metric="val_loss", this_max=False):
-        self.save_best_metric = save_best_metric
-        self.max = this_max
-        if this_max:
-            self.best = float("-inf")
-        else:
-            self.best = float("inf")
-
-    def on_epoch_end(self, epoch, logs=None):
-        metric_value = abs(logs[self.save_best_metric])
-        if self.max:
-            if metric_value > self.best:
-                self.best = metric_value
-                self.best_weights = self.model.get_weights()
-
-        else:
-            if metric_value < self.best:
-                self.best = metric_value
-                self.best_weights = self.model.get_weights()

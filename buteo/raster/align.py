@@ -67,7 +67,8 @@ def match_projections(
 # TODO: Ensure that the xmin, ymax is always the same
 # https://github.com/scikit-image/scikit-image/blob/main/skimage/registration/_phase_cross_correlation.py#L109-L276
 def align_rasters(
-    rasters: List[Union[str, gdal.Dataset]],
+    rasters: Union[List[Union[gdal.Dataset, str]], str, gdal.Dataset],
+    *,
     out_path: Optional[Union[List[str], str]] = None,
     master: Optional[Union[gdal.Dataset, str]] = None,
     postfix: str = "_aligned",
@@ -88,7 +89,7 @@ def align_rasters(
     ram=8000,
     skip_existing=False,
 ) -> List[str]:
-    type_check(rasters, [list], "rasters")
+    type_check(rasters, [list, str, gdal.Dataset], "rasters")
     type_check(out_path, [list, str], "out_path", allow_none=True)
     type_check(master, [list, str], "master", allow_none=True)
     type_check(
@@ -113,6 +114,13 @@ def align_rasters(
     type_check(dst_nodata, [str, int, float], "dst_nodata", allow_none=True)
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
+
+    was_list = False
+
+    if isinstance(rasters, list):
+        was_list = True    
+    elif isinstance(rasters, str) or isinstance(rasters, gdal.Dataset):
+        rasters = [rasters]
 
     raster_list, path_list = ready_io_raster(
         rasters,
@@ -419,5 +427,8 @@ def align_rasters(
 
     if not rasters_are_aligned(return_list, same_extent=True):
         raise Exception("Error while aligning rasters. Output is not aligned")
+
+    if not was_list:
+        return return_list[0]
 
     return return_list
