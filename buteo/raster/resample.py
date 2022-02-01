@@ -43,17 +43,6 @@ def internal_resample_raster(
     Reprojects a raster given a target projection. Beware if your input is in
     latitude and longitude, you'll need to specify the target_size in degrees as well.
     """
-    type_check(raster, [str, gdal.Dataset], "raster")
-    type_check(target_size, [tuple, int, float, str, gdal.Dataset], "target_size")
-    type_check(target_in_pixels, [bool], "target_in_pixels")
-    type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(resample_alg, [str], "resample_alg")
-    type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list], "creation_options")
-    type_check(dst_nodata, [str, int, float], "dst_nodata")
-    type_check(prefix, [str], "prefix")
-    type_check(postfix, [str], "postfix")
-
     raster_list, path_list = ready_io_raster(
         raster,
         out_path,
@@ -168,7 +157,7 @@ def resample_raster(
     type_check(resample_alg, [str], "resample_alg")
     type_check(overwrite, [bool], "overwrite")
     type_check(creation_options, [list], "creation_options")
-    type_check(dst_nodata, [str, int, float], "dst_nodata")
+    type_check(dst_nodata, [str, int, float], "dst_nodata", allow_none=True)
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
 

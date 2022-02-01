@@ -37,12 +37,14 @@ def _clip_raster(
     crop_to_geom: bool = True,
     adjust_bbox: bool = True,
     all_touch: bool = True,
+    to_extent: bool = False,
     overwrite: bool = True,
     creation_options: list = [],
     dst_nodata: Union[str, int, float] = "infer",
+    src_nodata: Union[str, int, float] = "infer",
     layer_to_clip: int = 0,
     prefix: str = "",
-    postfix: str = "_clipped",
+    postfix: str = "",
     verbose: int = 1,
     uuid: bool = False,
     ram: int = 8000,
@@ -52,22 +54,6 @@ def _clip_raster(
     Clips a raster(s) using a vector geometry or the extents of
     a raster.
     """
-    type_check(raster, [str, gdal.Dataset], "raster")
-    type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_geom")
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(resample_alg, [str], "resample_alg")
-    type_check(crop_to_geom, [bool], "crop_to_geom")
-    type_check(adjust_bbox, [bool], "adjust_bbox")
-    type_check(all_touch, [bool], "all_touch")
-    type_check(dst_nodata, [str, int, float], "dst_nodata")
-    type_check(layer_to_clip, [int], "layer_to_clip")
-    type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list], "creation_options")
-    type_check(prefix, [str], "prefix")
-    type_check(postfix, [str], "postfix")
-    type_check(verbose, [int], "verbose")
-    type_check(uuid, [bool], "uuid")
-
     _, path_list = ready_io_raster(
         raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix, uuid=uuid
     )
@@ -82,10 +68,12 @@ def _clip_raster(
         clip_ds = open_vector(clip_geom)
 
         clip_metadata = internal_vector_to_metadata(
-            clip_ds, process_layer=layer_to_clip
+            clip_ds, process_layer=layer_to_clip, create_geometry=True,
         )
 
-        if clip_metadata["layer_count"] > 1:
+        if to_extent:
+            clip_ds = clip_metadata["extent_datasource"]
+        elif clip_metadata["layer_count"] > 1:
             clip_ds = internal_vector_to_memory(clip_ds, layer_to_extract=layer_to_clip)
 
         if isinstance(clip_ds, ogr.DataSource):
@@ -158,21 +146,23 @@ def _clip_raster(
     out_creation_options = default_options(creation_options)
 
     # nodata
-    src_nodata = raster_metadata["nodata_value"]
+    if src_nodata == "infer":
+        src_nodata = raster_metadata["nodata_value"]
+
     out_nodata = None
-    if src_nodata is not None:
-        out_nodata = src_nodata
-    else:
-        if dst_nodata == "infer":
+    if dst_nodata == "infer":
+        if src_nodata == "infer" and raster_metadata["nodata_value"] is not None:
+            out_nodata = raster_metadata["nodata_value"]
+        else:
             out_nodata = gdal_nodata_value_from_type(
                 raster_metadata["datatype_gdal_raw"]
             )
-        elif dst_nodata is None:
-            out_nodata = None
-        elif isinstance(dst_nodata, (int, float)):
-            out_nodata = dst_nodata
-        else:
-            raise ValueError(f"Unable to parse nodata_value: {dst_nodata}")
+    elif dst_nodata is None:
+        out_nodata = None
+    elif isinstance(dst_nodata, (int, float)):
+        out_nodata = dst_nodata
+    else:
+        raise ValueError(f"Unable to parse nodata_value: {dst_nodata}")
 
     # Removes file if it exists and overwrite is True.
     remove_if_overwrite(out_path, overwrite)
@@ -194,7 +184,7 @@ def _clip_raster(
         creationOptions=out_creation_options,
         warpMemoryLimit=ram,
         warpOptions=warp_options,
-        srcNodata=raster_metadata["nodata_value"],
+        srcNodata=src_nodata,
         dstNodata=out_nodata,
         multithread=True,
     )
@@ -216,11 +206,13 @@ def clip_raster(
     crop_to_geom: bool = True,
     adjust_bbox: bool = True,
     all_touch: bool = True,
+    to_extent: bool = False,
     prefix: str = "",
-    postfix: str = "_clipped",
+    postfix: str = "",
     overwrite: bool = True,
     creation_options: list = [],
     dst_nodata: Union[str, int, float] = "infer",
+    src_nodata: Union[str, int, float] = "infer",
     layer_to_clip: int = 0,
     verbose: int = 1,
     uuid: bool = False,
@@ -277,7 +269,9 @@ def clip_raster(
     type_check(crop_to_geom, [bool], "crop_to_geom")
     type_check(adjust_bbox, [bool], "adjust_bbox")
     type_check(all_touch, [bool], "all_touch")
-    type_check(dst_nodata, [str, int, float], "dst_nodata")
+    type_check(to_extent, [bool], "to_extent")
+    type_check(dst_nodata, [str, int, float], "dst_nodata", allow_none=True)
+    type_check(src_nodata, [str, int, float], "src_nodata", allow_none=True)
     type_check(layer_to_clip, [int], "layer_to_clip")
     type_check(overwrite, [bool], "overwrite")
     type_check(creation_options, [list], "creation_options")
@@ -306,7 +300,9 @@ def clip_raster(
                 crop_to_geom=crop_to_geom,
                 adjust_bbox=adjust_bbox,
                 all_touch=all_touch,
+                to_extent=to_extent,
                 dst_nodata=dst_nodata,
+                src_nodata=src_nodata,
                 layer_to_clip=layer_to_clip,
                 overwrite=overwrite,
                 creation_options=creation_options,

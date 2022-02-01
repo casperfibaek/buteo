@@ -938,6 +938,7 @@ def array_to_raster(
     reference: Union[str, gdal.Dataset],
     out_path: Optional[str] = None,
     overwrite: bool = True,
+    set_nodata: Union[int, float, str, None] = "pass",
     creation_options: Union[list, None] = None,
 ) -> str:
     """Turns a numpy array into a GDAL dataset or exported
@@ -972,6 +973,7 @@ def array_to_raster(
     type_check(reference, [str, gdal.Dataset], "reference")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
+    type_check(set_nodata, [int, float], "set_nodata", allow_none=True)
     type_check(creation_options, [list], "creation_options", allow_none=True)
 
     # Verify the numpy array
@@ -1051,7 +1053,10 @@ def array_to_raster(
         else:
             band.WriteArray(array)
 
-        if input_nodata is not None:
+        if set_nodata != "pass":
+            if set_nodata is not None:
+                band.SetNoDataValue(set_nodata)
+        elif input_nodata is not None:
             band.SetNoDataValue(input_nodata)
         elif reference_nodata is not None:
             band.SetNoDataValue(reference_nodata)
@@ -1171,6 +1176,7 @@ def stack_rasters_vrt(
     resample_alg="nearest",
     options: tuple = (),
     overwrite: bool = True,
+    reference: Optional[Union[str, gdal.Dataset]] = None,
     creation_options: Union[list, None] = None,
 ) -> str:
     """Stacks a list of rasters into a virtual rasters (.vrt)."""
@@ -1183,7 +1189,19 @@ def stack_rasters_vrt(
     type_check(creation_options, [list], "creation_options", allow_none=True)
 
     resample_algorithm = translate_resample_method(resample_alg)
-    options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)
+
+    if reference is not None:
+        meta = raster_to_metadata(reference)
+        options = gdal.BuildVRTOptions(
+            resampleAlg=resample_algorithm,
+            separate=seperate,
+            outputBounds=[meta["x_min"], meta["y_min"], meta["x_max"], meta["y_max"]],
+            xRes=meta["pixel_width"],
+            yRes=meta["pixel_height"],
+            targetAlignedPixels=True,
+        )
+    else:
+        options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)
 
     gdal.BuildVRT(out_path, rasters, options=options)
 

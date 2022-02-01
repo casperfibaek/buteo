@@ -4,6 +4,7 @@ from uuid import uuid4
 
 sys.path.append("../../")
 
+from buteo.raster.io import open_raster
 from buteo.vector.io import internal_vector_to_metadata, open_vector
 from buteo.gdal_utils import numpy_to_gdal_datatype2, default_options
 
@@ -37,15 +38,26 @@ def rasterize_vector(
     source_layer = source_ds.GetLayer()
     x_min, x_max, y_min, y_max = source_layer.GetExtent()
 
+    if isinstance(pixel_size, (gdal.Dataset, str)):
+        pixel_size_x = open_raster(pixel_size).GetGeoTransform()[1]
+        pixel_size_y = abs(open_raster(pixel_size).GetGeoTransform()[5])
+    elif isinstance(pixel_size, (int, float)):
+        pixel_size_x = pixel_size
+        pixel_size_y = pixel_size
+    elif isinstance(pixel_size, (list, tuple)):
+        pixel_size_x, pixel_size_y = pixel_size
+    else:
+        raise Exception("pixel_size must be either a gdal.Dataset or a tuple of (x, y)")
+
     # Create the destination data source
-    x_res = int((x_max - x_min) / pixel_size)
-    y_res = int((y_max - y_min) / pixel_size)
+    x_res = int((x_max - x_min) / pixel_size_x)
+    y_res = int((y_max - y_min) / pixel_size_y)
 
     if extent is not None:
         extent_vector = internal_vector_to_metadata(extent)
         extent_dict = extent_vector["extent_dict"]
-        x_res = int((extent_dict["right"] - extent_dict["left"]) / pixel_size)
-        y_res = int((extent_dict["top"] - extent_dict["bottom"]) / pixel_size)
+        x_res = int((extent_dict["right"] - extent_dict["left"]) / pixel_size_x)
+        y_res = int((extent_dict["top"] - extent_dict["bottom"]) / pixel_size_y)
         x_min = extent_dict["left"]
         y_max = extent_dict["top"]
 
@@ -66,7 +78,7 @@ def rasterize_vector(
     if target_ds is None:
         raise Exception("Unable to rasterize.")
 
-    target_ds.SetGeoTransform((x_min, pixel_size, 0, y_max, 0, -pixel_size))
+    target_ds.SetGeoTransform((x_min, pixel_size_x, 0, y_max, 0, -pixel_size_y))
     target_ds.SetProjection(source_meta["projection"])
 
     band = target_ds.GetRasterBand(1)

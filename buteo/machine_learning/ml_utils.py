@@ -240,7 +240,7 @@ def scale_percentile(arr, percentile=98):
 
 # np.set_printoptions(suppress=True)
 def preprocess_optical(
-    arr, cutoff_low=0, cutoff_high=8000, target_low=0, target_high=1
+    arr, cutoff_low=0, cutoff_high=10000, target_low=0, target_high=1
 ):
     clipped = np.where(
         arr > cutoff_high, cutoff_high, np.where(arr < cutoff_low, cutoff_low, arr)
@@ -276,7 +276,7 @@ def get_offsets(size):
 
 # Converts to decibel, thresholds between -30db and 10db and scales to -1 to 1
 def preprocess_sar(
-    arr, convert_db=True, cutoff_low=-30, cutoff_high=15, target_low=0, target_high=1
+    arr, convert_db=True, cutoff_low=-30, cutoff_high=20, target_low=0, target_high=1
 ):
     if convert_db:
         with np.errstate(divide="ignore", invalid="ignore"):

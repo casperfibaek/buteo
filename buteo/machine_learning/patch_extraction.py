@@ -11,6 +11,7 @@ from buteo.raster.io import (
     array_to_raster,
     is_raster,
     raster_to_metadata,
+    stack_rasters_vrt,
 )
 from buteo.raster.align import rasters_are_aligned, align_rasters
 from buteo.raster.clip import clip_raster
@@ -38,15 +39,13 @@ def extract_patches(
         "overlaps": True,
         "border_check": True,
         "merge_output": True,
-        "force_align": True,
-        "output_raster_labels": True,
-        "label_geom": None,
-        "label_res": 0.2,
-        "label_mult": 100,
+        "force_align": False,
+        "output_zone_masks": False,
+        "apply_mask": None,
+        "mask_reference": None,
         "tolerance": 0.0,
         "fill_value": 0,
         "zone_layer_id": 0,
-        "align_with_size": 20,
         "prefix": "",
         "postfix": "",
     }
@@ -59,6 +58,7 @@ def extract_patches(
                 raise ValueError(f"Invalid option: {key}")
             base_options[key] = options[key]
         options = base_options
+
 
     if zones is not None and not is_vector(zones):
         raise TypeError("Clip geom is invalid. Did you input a valid geometry?")
@@ -78,15 +78,14 @@ def extract_patches(
     if not rasters_are_aligned(raster_list, same_extent=True):
         if options["force_align"]:
             print(
-                "Rasters we not aligned. Realigning rasters due to force_align=True option."
+                "Rasters were not aligned. Realigning rasters due to force_align=True option."
             )
-            raster_list = align_rasters(raster_list)
+            raster_list = align_rasters(raster_list, postfix="")
         else:
             raise ValueError("Rasters in raster_list are not aligned.")
 
     offsets = get_offsets(tile_size) if options["overlaps"] else [[0, 0]]
     raster_metadata = raster_to_metadata(raster_list[0], create_geometry=True)
-    pixel_size = min(raster_metadata["pixel_height"], raster_metadata["pixel_width"])
 
     if zones is None:
         zones = raster_metadata["extent_datasource_path"]
@@ -111,13 +110,13 @@ def extract_patches(
     progress(0, len(fids) * len(raster_list), "processing fids")
     processed_fids = []
     processed = 0
-    labels_processed = False
+
+    outputs = []
 
     for idx, raster in enumerate(raster_list):
         name = os.path.splitext(os.path.basename(raster))[0]
         list_extracted = []
         list_masks = []
-        list_labels = []
 
         for fid in fids:
             feature = zones_layer.GetFeature(fid)
@@ -138,70 +137,58 @@ def extract_patches(
 
             valid_path = f"/vsimem/{options['prefix']}validmask_{str(fid)}{options['postfix']}.tif"
 
-            rasterize_vector(
-                fid_path,
-                pixel_size,
-                out_path=valid_path,
-                extent=fid_path,
-            )
-            valid_arr = raster_to_array(valid_path)
-
-            if options["label_geom"] is not None and fid not in processed_fids:
-                if not is_vector(options["label_geom"]):
-                    raise TypeError(
-                        "label geom is invalid. Did you input a valid geometry?"
-                    )
-
-                uuid = str(uuid4().int)
-
-                label_clip_path = f"/vsimem/fid_{uuid}_{str(fid)}_clipped.shp"
-                label_ras_path = f"/vsimem/fid_{uuid}_{str(fid)}_rasterized.tif"
-                label_warp_path = f"/vsimem/fid_{uuid}_{str(fid)}_resampled.tif"
-
-                intersect_vector(
-                    options["label_geom"], fid_ds, out_path=label_clip_path
+            if options["mask_reference"] is not None:
+                extent = clip_raster(
+                    options["mask_reference"],
+                    clip_geom=fid_path,
+                    adjust_bbox=True,
+                    all_touch=False,
+                    to_extent=True,
                 )
 
-                try:
-                    rasterize_vector(
-                        label_clip_path,
-                        options["label_res"],
-                        out_path=label_ras_path,
-                        extent=valid_path,
-                    )
-
-                except Exception:
-                    array_to_raster(
-                        np.zeros(valid_arr.shape, dtype="float32"),
-                        valid_path,
-                        out_path=label_ras_path,
-                    )
+                tmp_rasterized_vector = rasterize_vector(
+                    fid_path,
+                    options["mask_reference"],
+                    extent=extent,
+                )
 
                 resample_raster(
-                    label_ras_path,
-                    pixel_size,
-                    resample_alg="average",
-                    out_path=label_warp_path,
+                    tmp_rasterized_vector,
+                    target_size=raster,
+                    resample_alg="nearest",
+                    out_path=valid_path,
+                    postfix="",
                 )
 
-                labels_arr = (
-                    raster_to_array(label_warp_path) * options["label_mult"]
-                ).astype("float32")
+                gdal.Unlink(tmp_rasterized_vector)
+            else:
+                extent = clip_raster(
+                    raster,
+                    clip_geom=fid_path,
+                    adjust_bbox=True,
+                    all_touch=False,
+                    to_extent=True,
+                )
 
-                if options["output_raster_labels"]:
-                    array_to_raster(
-                        labels_arr,
-                        label_warp_path,
-                        out_path=f"{outdir}{options['prefix']}label_{str(fid)}{options['postfix']}.tif",
-                    )
+                rasterize_vector(
+                    fid_path,
+                    (raster_metadata["pixel_width"], raster_metadata["pixel_height"]),
+                    out_path=valid_path,
+                    extent=extent,
+                )           
+
+            gdal.Unlink(extent)
+            valid_arr = raster_to_array(valid_path)
+
+            uuid = str(uuid4().int)
 
             raster_clip_path = f"/vsimem/raster_{uuid}_{str(idx)}_clipped.tif"
 
             try:
                 clip_raster(
                     raster,
-                    valid_path,
-                    raster_clip_path,
+                    clip_geom=valid_path,
+                    out_path=raster_clip_path,
                     all_touch=False,
                     adjust_bbox=False,
                 )
@@ -209,10 +196,6 @@ def extract_patches(
                 print(f"Warning: {raster} did not intersect geom with fid: {fid}.")
                 print(e)
 
-                if options["label_geom"] is not None:
-                    gdal.Unlink(label_clip_path)
-                    gdal.Unlink(label_ras_path)
-                    gdal.Unlink(label_warp_path)
                 gdal.Unlink(fid_path)
 
                 continue
@@ -239,33 +222,19 @@ def extract_patches(
             arr = arr[valid_mask]
             valid_masked = valid_offsets[valid_mask]
 
-            if options["label_geom"] is not None and not labels_processed:
-                labels_masked = np.concatenate(
-                    get_overlaps(
-                        labels_arr, offsets, tile_size, options["border_check"]
-                    )
-                )[valid_mask]
-
             if options["merge_output"]:
                 list_extracted.append(arr)
                 list_masks.append(valid_masked)
 
-                if options["label_geom"] is not None and not labels_processed:
-                    list_labels.append(labels_masked)
             else:
-                np.save(
-                    f"{outdir}{options['prefix']}{str(fid)}_{name}{options['postfix']}.npy",
-                    arr.filled(options["fill_value"]),
-                )
+                out_path = f"{outdir}{options['prefix']}{str(fid)}_{name}{options['postfix']}.npy"
+                np.save(out_path, arr.filled(options["fill_value"]))
 
-                np.save(
-                    f"{outdir}{options['prefix']}{str(fid)}_mask_{name}{options['postfix']}.npy",
-                    valid_masked.filled(options["fill_value"]),
-                )
+                outputs.append(out_path)
 
-                if options["label_geom"] is not None and not labels_processed:
+                if options["output_zone_masks"]:
                     np.save(
-                        f"{outdir}{options['prefix']}{str(fid)}_label_{name}{options['postfix']}.npy",
+                        f"{outdir}{options['prefix']}{str(fid)}_mask_{name}{options['postfix']}.npy",
                         valid_masked.filled(options["fill_value"]),
                     )
 
@@ -276,30 +245,206 @@ def extract_patches(
             progress(processed, len(fids) * len(raster_list), "processing fids")
 
             if not options["merge_output"]:
-                gdal.Unlink(label_clip_path)
-                gdal.Unlink(label_ras_path)
-                gdal.Unlink(label_warp_path)
                 gdal.Unlink(fid_path)
 
             gdal.Unlink(valid_path)
 
         if options["merge_output"]:
-            np.save(
-                f"{outdir}{options['prefix']}{name}{options['postfix']}.npy",
-                np.ma.concatenate(list_extracted).filled(options["fill_value"]),
-            )
-            np.save(
-                f"{outdir}{options['prefix']}mask_{name}{options['postfix']}.npy",
-                np.ma.concatenate(list_masks).filled(options["fill_value"]),
-            )
 
-            if options["label_geom"] is not None and not labels_processed:
+            out_arr = np.ma.concatenate(list_extracted).filled(options["fill_value"])
+            out_path = f"{outdir}{options['prefix']}{name}{options['postfix']}.npy"
+
+            if options["apply_mask"] is None:
+                apply_mask = np.ones(out_arr.shape[0], dtype="bool")
+            else:
+                apply_mask = options["apply_mask"]
+
+            np.save(out_path, out_arr[apply_mask])
+            outputs.append(out_path)
+
+            if options["output_zone_masks"]:
                 np.save(
-                    f"{outdir}{options['prefix']}label_{name}{options['postfix']}.npy",
-                    np.ma.concatenate(list_labels).filled(options["fill_value"]),
+                    f"{outdir}{options['prefix']}mask_{name}{options['postfix']}.npy",
+                    np.ma.concatenate(list_masks).filled(options["fill_value"])[apply_mask],
                 )
-                labels_processed = True
 
-    progress(1, 1, "processing fids")
+    return outputs
 
-    return 1
+
+def rasterize_labels(
+    geom,
+    reference,
+    *,
+    class_attrib=None,
+    out_path=None,
+    resample_from=None,
+    resample_to=None,
+    resample_alg="average",
+    resample_scale=None,
+    align=True,
+    dtype="float32",
+    ras_dtype="uint8",
+):
+    if not is_vector(geom):
+        raise TypeError(
+            "label geom is invalid. Did you input a valid geometry?"
+        )
+
+    if resample_from is None and resample_to is None:
+        rasterized = rasterize_vector(
+            geom,
+            reference,
+            extent=reference,
+            attribute=class_attrib,
+            dtype=ras_dtype,
+        )
+    elif resample_from is not None and resample_to is None:
+        rasterized_01 = rasterize_vector(
+            geom,
+            resample_from,
+            extent=reference,
+            attribute=class_attrib,
+            dtype=ras_dtype,
+        )
+        rasterized = resample_raster(
+            rasterized_01,
+            reference,
+            resample_alg=resample_alg,
+            dtype=dtype,
+            dst_nodata=None,
+        )
+        gdal.Unlink(rasterized_01)
+    elif resample_from is None and resample_to is not None:
+        rasterized = rasterize_vector(
+            geom,
+            resample_to,
+            extent=reference,
+            attribute=class_attrib,
+            dtype=ras_dtype,
+        )
+    elif resample_from is not None and resample_to is not None:
+        rasterized_01 = rasterize_vector(
+            geom,
+            resample_from,
+            extent=reference,
+            attribute=class_attrib,
+            dtype=ras_dtype,
+        )
+        rasterized = resample_raster(
+            rasterized_01,
+            resample_to,
+            resample_alg=resample_alg,
+            dtype=dtype,
+            dst_nodata=None,
+        )
+        gdal.Unlink(rasterized_01)
+
+    if align:
+        aligned = align_rasters(rasterized, master=reference, dst_nodata=None)
+        gdal.Unlink(rasterized)
+        rasterized = aligned
+
+    arr = raster_to_array(rasterized)
+    if isinstance(arr, np.ma.MaskedArray):
+        arr.fill_value = 0
+        arr = arr.filled(0)
+
+    if resample_scale is not None:
+        return array_to_raster(arr * resample_scale, reference=reference, out_path=out_path, set_nodata=None)
+    else:
+        return array_to_raster(arr, reference=reference, out_path=out_path, set_nodata=None)
+
+
+def create_mask(geom, reference, out_path=None):
+    if not is_vector(geom):
+        raise TypeError(
+            "label geom is invalid. Did you input a valid geometry?"
+        )
+
+    mask = rasterize_vector(
+        geom,
+        reference,
+        out_path=out_path,
+        extent=reference,
+        attribute=None,
+        dtype="uint8",
+    )
+
+    return mask
+
+
+def create_labels(
+    geom,
+    reference, *,
+    out_path=None,
+    tmp_folder=None,
+    grid=None,
+    resample_from=0.2,
+    resample_scale=100.0,
+    round_label=None,
+):
+    label_stack = []
+
+    cells = [geom] if grid is None else grid
+    
+    for cell in cells:
+        name = os.path.splitext(os.path.basename(cell))[0]
+        bounds = clip_raster(
+            reference,
+            cell,
+            to_extent=True,
+            all_touch=False,
+            adjust_bbox=True,
+        )
+
+        labels = rasterize_labels(
+            geom,
+            bounds,
+            resample_from=resample_from,
+            resample_scale=resample_scale,
+        )
+        labels_set = array_to_raster(raster_to_array(labels), reference=labels, out_path=tmp_folder + f"{name}_labels_10m.tif", set_nodata=None)
+        label_stack.append(labels_set)
+        gdal.Unlink(labels)
+        gdal.Unlink(bounds)
+
+    stacked = stack_rasters_vrt(label_stack, tmp_folder + "labels_10m.vrt", seperate=False)
+
+    aligned = align_rasters(
+        stacked,
+        master=reference,
+        dst_nodata=None,
+    )
+
+    aligned_arr = raster_to_array(aligned)
+
+    gdal.Unlink(stacked)
+    gdal.Unlink(aligned)
+
+    if isinstance(aligned_arr, np.ma.MaskedArray):
+        aligned_arr.fill_value = 0
+        aligned_arr = aligned_arr.filled(0)
+    
+    if round_label is not None:
+        aligned_arr = np.round(aligned_arr, round_label)
+
+    array_to_raster(
+        aligned_arr,
+        reference=reference,
+        out_path=out_path,
+        set_nodata=None,
+    )
+
+    # clean
+    for tmp_label in label_stack:
+        try:
+            os.remove(tmp_label)
+        except:
+            pass
+
+    try:
+        os.remove(stacked)
+    except:
+        pass
+
+    return out_path
