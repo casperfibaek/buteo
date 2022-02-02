@@ -386,7 +386,7 @@ def create_labels(
     label_stack = []
 
     cells = [geom] if grid is None else grid
-    
+
     for cell in cells:
         name = os.path.splitext(os.path.basename(cell))[0]
         bounds = clip_raster(

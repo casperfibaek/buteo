@@ -4,17 +4,23 @@ sys.path.append("..")
 import numpy as np
 
 from glob import glob
-from buteo.raster.align import rasters_are_aligned
+from buteo.raster.align import align_rasters, rasters_are_aligned
 from buteo.raster.io import raster_to_metadata
 from buteo.raster.clip import clip_raster
 from buteo.machine_learning.patch_extraction import extract_patches, create_labels
 from buteo.machine_learning.ml_utils import preprocess_optical, preprocess_sar
 
-folder = "D:/training_data_buteo/tanzania_dar/"
+folder = "D:/training_data_buteo/bornholm_2021_Q2/"
 folder_tmp = "D:/training_data_buteo/tmp/"
 convert_sar_to_db = True
 
-reference = folder + "B12_20m.tif"
+# align_rasters(
+#     glob(folder + "V*_10m.tif"),
+#     master=folder + "B04_10m.tif",
+#     out_path=folder,
+# )
+
+# reference = folder + "B12_20m.tif"
 # clip_raster(
 #     glob(folder + "B*_10m.tif"),
 #     clip_geom=reference,
@@ -68,7 +74,7 @@ create_labels(
     out_path=folder + "labels_10m.tif",
     tmp_folder=folder_tmp,
     round_label=2,
-    resample_from=0.4,
+    resample_from=0.2,
 )
 
 print("Extracting 10m patches.")
@@ -156,7 +162,7 @@ sar = preprocess_sar(
 )
 
 print("Saving SAR.")
-np.savez_compressed(folder + "patches/SAR", reswir=sar[shuffle_mask])
+np.savez_compressed(folder + "patches/SAR", sar=sar[shuffle_mask])
 sar = None
 
 print("Compressing labels")
