@@ -95,6 +95,7 @@ def predict_raster(
     output_tile_size=32,
     output_channels=1,
     model_path="",
+    loaded_model=None,
     reference_raster="",
     out_path=None,
     out_path_variance=None,
@@ -103,10 +104,12 @@ def predict_raster(
     method="median",
     scale_to_sum=False,
 ):
-    print("Loading Model")
-    model = tf.keras.models.load_model(
-        model_path, custom_objects={"tpe": tpe, "mse_sumbias": mse_sumbias}
-    )
+    if loaded_model is None:
+        print("Loading Model")
+        model = tf.keras.models.load_model(model_path, custom_objects={"tpe": tpe })
+    else:
+        model = loaded_model
+
     reference_arr = raster_to_array(reference_raster)
 
     if offsets == False:

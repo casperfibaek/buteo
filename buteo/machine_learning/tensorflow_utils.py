@@ -39,19 +39,6 @@ def load_mish():
 
 
 class Mish(Activation):
-    """
-    Mish Activation Function.
-    .. math::
-        mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + e^{x}))
-    Shape:
-        - Input: Arbitrary. Use the keyword argument `input_shape`
-        (tuple of integers, does not include the samples axis)
-        when using this layer as the first layer in a model.
-        - Output: Same shape as the input.
-    Examples:
-        >>> X = Activation('Mish', name="conv1_act")(X_input)
-    """
-
     def __init__(self, activation, **kwargs):
         super(Mish, self).__init__(activation, **kwargs)
         self.__name__ = "Mish"
@@ -61,6 +48,8 @@ class SaveBestModel(tf.keras.callbacks.Callback):
     def __init__(self, save_best_metric="val_loss", this_max=False):
         self.save_best_metric = save_best_metric
         self.max = this_max
+        self.best_weights = self.model.get_weights()
+
         if this_max:
             self.best = float("-inf")
         else:
