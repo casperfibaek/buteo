@@ -190,7 +190,7 @@ for phase in range(len(fits)):
 
     print("Test dataset:")
     model.evaluate(x=x_test, y=y_test, batch_size=256)
-    model.save(f"{outdir}{model_name.lower()}_{str(use_epoch)}")
+    model.save(f"{outdir}{model_name.lower()}_{str(use_epoch + use_ie)}")
 
 print("Saving...")
 model.save(f"{outdir}{model_name.lower()}")
