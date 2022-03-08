@@ -81,7 +81,8 @@ def download_s1_tile(
     onda_password,
     destination,
     footprint,
-    date=("20200601", "20210101"),
+    date_start="20200601",
+    date_end="20210101",
     orbitdirection="ASCENDING",  # ASCENDING, DESCENDING
     min_overlap=0.50,
     producttype="GRD",
@@ -95,6 +96,8 @@ def download_s1_tile(
         geom = internal_vector_to_metadata(footprint, create_geometry=True)
     elif is_raster:
         geom = raster_to_metadata(footprint, create_geometry=True)
+
+    date = (date_start, date_end)
 
     products = api.query(
         geom["extent_wkt_latlng"],

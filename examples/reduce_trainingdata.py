@@ -2,60 +2,111 @@ import os
 import numpy as np
 
 
-main_folder = "C:/Users/caspe/Desktop/buteo_dataclip/ghana/"
-sub_folders = os.listdir(main_folder)
+folder = "D:/training_data_buteo/"
 
-labels = np.load(main_folder + "LABEL.npz")["label"]
-labels[labels < 0] = 0.0
-labels[labels > 100] = 100.0
+train_labels = np.concatenate([
+    np.load(folder + "egypt_train.npz")["labels"],
+    np.load(folder + "israel_palestine_train.npz")["labels"],
+]).shape[0]
 
-rgbn = np.load(main_folder + "RGBN.npz")["rgbn"]
-rgbn[rgbn < 0] = 0.0
-rgbn[rgbn > 1] = 1.0
-rgbn = (rgbn - rgbn.min()) / np.ptp(rgbn)
+shuffle_mask_train = np.random.permutation(train_labels)
 
-reswir = np.load(main_folder + "RESWIR.npz")["reswir"]
-reswir[reswir < 0] = 0.0
-reswir[reswir > 1] = 1.0
-reswir = (reswir - reswir.min()) / np.ptp(reswir)
-
-sar = np.load(main_folder + "SAR.npz")["sar"]
-sar = np.nan_to_num(sar, copy=False, nan=0.0)
-sar[sar < 0] = 0.0
-sar[sar > 1] = 1.0
-
-sar = (sar - sar.min()) / np.ptp(sar)
-
-shuffle_mask = np.random.permutation(labels.shape[0])
-labels = labels[shuffle_mask]
-rgbn = rgbn[shuffle_mask]
-reswir = reswir[shuffle_mask]
-sar = sar[shuffle_mask]
-
-test_size = labels.shape[0] // 10
-
-# labels = labels[:55000]
-# rgbn = rgbn[:55000]
-# reswir = reswir[:55000]
-# sar = sar[:55000]
-
-# test_size = 5000
-
-np.savez_compressed(
-    main_folder + "ghana_test.npz",
-    labels=labels[-test_size:],
-    rgbn=rgbn[-test_size:],
-    reswir=reswir[-test_size:],
-    sar=sar[-test_size:],
+medi_train = np.savez_compressed(
+    folder + "mediterranean_train.npz",
+    labels=np.concatenate([
+        np.load(folder + "egypt_train.npz")["labels"],
+        np.load(folder + "israel_palestine_train.npz")["labels"],
+    ])[shuffle_mask_train],
+    rgbn=np.concatenate([
+        np.load(folder + "egypt_train.npz")["rgbn"],
+        np.load(folder + "israel_palestine_train.npz")["rgbn"],
+    ])[shuffle_mask_train],
+    sar=np.concatenate([
+        np.load(folder + "egypt_train.npz")["sar"],
+        np.load(folder + "israel_palestine_train.npz")["sar"],
+    ])[shuffle_mask_train],
+    reswir=np.concatenate([
+        np.load(folder + "egypt_train.npz")["reswir"],
+        np.load(folder + "israel_palestine_train.npz")["reswir"],
+    ])[shuffle_mask_train],
 )
 
-np.savez_compressed(
-    main_folder + "ghana_train.npz",
-    labels=labels[:-test_size],
-    rgbn=rgbn[:-test_size],
-    reswir=reswir[:-test_size],
-    sar=sar[:-test_size],
+test_labels = np.concatenate([
+    np.load(folder + "egypt_test.npz")["labels"],
+    np.load(folder + "israel_palestine_test.npz")["labels"],
+]).shape[0]
+
+shuffle_mask_test = np.random.permutation(test_labels)
+
+medi_test = np.savez_compressed(
+    folder + "mediterranean_test.npz",
+    labels=np.concatenate([
+        np.load(folder + "egypt_test.npz")["labels"],
+        np.load(folder + "israel_palestine_test.npz")["labels"],
+    ])[shuffle_mask_test],
+    rgbn=np.concatenate([
+        np.load(folder + "egypt_test.npz")["rgbn"],
+        np.load(folder + "israel_palestine_test.npz")["rgbn"],
+    ])[shuffle_mask_test],
+    sar=np.concatenate([
+        np.load(folder + "egypt_test.npz")["sar"],
+        np.load(folder + "israel_palestine_test.npz")["sar"],
+    ])[shuffle_mask_test],
+    reswir=np.concatenate([
+        np.load(folder + "egypt_test.npz")["reswir"],
+        np.load(folder + "israel_palestine_test.npz")["reswir"],
+    ])[shuffle_mask_test],
 )
+
+# main_folder = "C:/Users/caspe/Desktop/buteo_dataclip/israel_palestine/"
+# sub_folders = os.listdir(main_folder)
+
+# # folder = "C:/Users/caspe/Desktop/paper_3_Transfer_Learning/data/bornholm/patches/"
+
+# labels = np.load(main_folder + "LABEL.npz")["label"]
+# labels[labels < 0] = 0.0
+# labels[labels > 100] = 100.0
+
+# rgbn = np.load(main_folder + "RGBN.npz")["rgbn"]
+# rgbn[rgbn < 0] = 0.0
+# rgbn[rgbn > 1] = 1.0
+# rgbn = (rgbn - rgbn.min()) / np.ptp(rgbn)
+
+# reswir = np.load(main_folder + "RESWIR.npz")["reswir"]
+# reswir[reswir < 0] = 0.0
+# reswir[reswir > 1] = 1.0
+# reswir = (reswir - reswir.min()) / np.ptp(reswir)
+
+# sar = np.load(main_folder + "SAR.npz")["sar"]
+# sar = np.nan_to_num(sar, copy=False, nan=0.0)
+# sar[sar < 0] = 0.0
+# sar[sar > 1] = 1.0
+
+# sar = (sar - sar.min()) / np.ptp(sar)
+
+# shuffle_mask = np.random.permutation(labels.shape[0])
+# labels = labels[shuffle_mask]
+# rgbn = rgbn[shuffle_mask]
+# reswir = reswir[shuffle_mask]
+# sar = sar[shuffle_mask]
+
+# test_size = labels.shape[0] // 10
+
+# np.savez_compressed(
+#     main_folder + "israel_palestine_test.npz",
+#     labels=labels[-test_size:],
+#     rgbn=rgbn[-test_size:],
+#     reswir=reswir[-test_size:],
+#     sar=sar[-test_size:],
+# )
+
+# np.savez_compressed(
+#     main_folder + "israel_palestine_train.npz",
+#     labels=labels[:-test_size],
+#     rgbn=rgbn[:-test_size],
+#     reswir=reswir[:-test_size],
+#     sar=sar[:-test_size],
+# )
 
 
 # shuffle_mask = None
@@ -119,13 +170,15 @@ np.savez_compressed(
 
 
 # for folder_name in sub_folders:
-#     if folder_name not in [
-#         "denmark_2021_Q2",
-#         "bornholm_2021_Q2",
-#     ]:
-#         continue
+#     # if folder_name not in [
+#     #     "denmark_2021_Q2",
+#     #     "bornholm_2021_Q2",
+#     # ]:
+#     #     continue
 
 #     folder = main_folder + folder_name + "/"
+#     if not os.path.isdir(folder):
+#         continue
 
 #     label = np.load(folder + "LABEL.npz")["label"]
 #     print(folder_name, label.shape[0])
