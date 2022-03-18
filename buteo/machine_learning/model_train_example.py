@@ -3,8 +3,8 @@ import os, gc
 import numpy as np
 import tensorflow as tf
 
-from utils import tpe, SaveBestModel, TimingCallback, OverfitProtection
 from model_base import create_model
+from tensorflow_utils import tpe, SaveBestModel, TimingCallback, OverfitProtection
 
 from tensorflow.python.keras.callbacks import EarlyStopping
 from tensorflow.python.keras.models import load_model
