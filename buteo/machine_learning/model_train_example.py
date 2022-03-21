@@ -132,7 +132,7 @@ print("Test dataset:")
 model.evaluate(x=x_test, y=y_test, batch_size=256)
 
 # This ensures that the weights of the best performing model is saved at the end
-save_best_model = SaveBestModel(save_best_metric=monitor)
+save_best_model = SaveBestModel(save_best_metric=monitor, initial_weights=model.get_weights())
 
 # Reduces the amount of total epochs by early stopping a new fit if it is not better than the previous fit.
 best_val_loss = val_loss

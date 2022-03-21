@@ -43,19 +43,21 @@ class Mish(Activation):
         super(Mish, self).__init__(activation, **kwargs)
         self.__name__ = "Mish"
 
-
+# From user2646087 @ GitHub
 class SaveBestModel(tf.keras.callbacks.Callback):
-    def __init__(self, save_best_metric="val_loss", this_max=False):
+    def __init__(self, save_best_metric="val_loss", this_max=False, initial_weights=None):
         self.save_best_metric = save_best_metric
         self.max = this_max
-        self.best_weights = self.model.get_weights()
+
+        if initial_weights is not None:
+            self.best_weights = initial_weights
 
         if this_max:
             self.best = float("-inf")
         else:
             self.best = float("inf")
 
-    def on_epoch_end(self, epoch, logs=None):
+    def on_epoch_end(self, _epoch, logs=None):
         metric_value = abs(logs[self.save_best_metric])
         if self.max:
             if metric_value > self.best:
