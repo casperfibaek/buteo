@@ -114,3 +114,11 @@ def invert_filter(in_raster):
     mi = np.nanmin(in_raster)
     ma = np.nanmax(in_raster)
     return ((ma - in_raster) + mi).astype(in_raster.dtype)
+
+
+def aspect_to_sincos(aspect_in_degrees):
+    r = aspect_in_degrees * np.pi / 180.
+    cos = (np.cos(r) + 1) / 2
+    sin = (np.sin(r) + 1) / 2
+
+    return np.array([cos, sin])

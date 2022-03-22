@@ -108,6 +108,7 @@ else:
         kernel_initializer=tf.keras.initializers.GlorotNormal(seed=42),
         inception_blocks=3,
         sizes=[48, 56, 64],
+        dropout_rate=0.1,
     )
 
     # model.summary()
