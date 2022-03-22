@@ -117,7 +117,7 @@ def invert_filter(in_raster):
 
 
 def aspect_to_sincos(aspect_in_degrees):
-    r = aspect_in_degrees * np.pi / 180.
+    r = (aspect_in_degrees * np.pi) / 180.0
     cos = (np.cos(r) + 1) / 2
     sin = (np.sin(r) + 1) / 2
 
