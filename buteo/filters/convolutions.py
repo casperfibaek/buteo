@@ -10,6 +10,16 @@ from buteo.filters.kernel_generator import create_kernel
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_max(values, weights):
+    return np.max(np.multiply(values, weights))
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_min(values, weights):
+    return np.min(np.multiply(values, weights))
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_summed(values, weights):
     return np.sum(np.multiply(values, weights))
 
@@ -145,7 +155,7 @@ def convolve_3d(
     z_adj = (arr.shape[2] - 1) // 2
 
     hood_size = len(offsets)
-    result = np.zeros(arr.shape[:2], dtype="float32")
+    result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype="float32")
     border = True if border == "valid" else False
 
     for x in prange(arr.shape[0]):
@@ -236,6 +246,12 @@ def convolve_3d(
 
             elif operation == "sigma_lee_mad":
                 result[x][y] = hood_sigma_lee_mad(hood_values, hood_weights)
+
+            elif operation == "min" or operation == "erode":
+                result[x][y] = hood_min(hood_values, hood_weights)
+
+            elif operation == "max" or operation == "dilate":
+                result[x][y] = hood_max(hood_values, hood_weights)
 
     return result
 

@@ -973,7 +973,7 @@ def array_to_raster(
     type_check(reference, [str, gdal.Dataset], "reference")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
-    type_check(set_nodata, [int, float], "set_nodata", allow_none=True)
+    type_check(set_nodata, [int, float, str], "set_nodata", allow_none=True)
     type_check(creation_options, [list], "creation_options", allow_none=True)
 
     # Verify the numpy array

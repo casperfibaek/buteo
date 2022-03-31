@@ -116,9 +116,14 @@ def invert_filter(in_raster):
     return ((ma - in_raster) + mi).astype(in_raster.dtype)
 
 
-def aspect_to_sincos(aspect_in_degrees):
+def aspect_to_sincos(aspect_in_degrees, return_values="both"):
     r = (aspect_in_degrees * np.pi) / 180.0
     cos = (np.cos(r) + 1) / 2
     sin = (np.sin(r) + 1) / 2
 
-    return np.array([cos, sin])
+    if return_values == "both":
+        return np.array([cos, sin])
+    elif return_values == "cos":
+        return np.array([cos])
+    elif return_values == "sin":
+        return np.array([sin])
