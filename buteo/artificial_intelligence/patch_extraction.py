@@ -20,8 +20,8 @@ from buteo.vector.io import vector_to_metadata, is_vector, open_vector
 from buteo.vector.intersect import intersect_vector
 from buteo.vector.attributes import vector_get_fids
 from buteo.vector.rasterize import rasterize_vector
-from buteo.machine_learning.ml_utils import get_offsets
-from buteo.machine_learning.patch_utils import get_overlaps
+from buteo.artificial_intelligence.ml_utils import get_offsets
+from buteo.artificial_intelligence.patch_utils import get_overlaps
 from buteo.utils import progress
 
 

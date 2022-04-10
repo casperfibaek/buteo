@@ -30,7 +30,7 @@ from buteo.raster.clip import clip_raster, internal_clip_raster
 from buteo.raster.resample import internal_resample_raster
 from buteo.utils import overwrite_required, remove_if_overwrite, progress, type_check
 from buteo.gdal_utils import ogr_bbox_intersects
-from buteo.machine_learning.ml_utils import Mish, mish, load_mish, tpe
+from buteo.artificial_intelligence.ml_utils import Mish, mish, load_mish, tpe
 
 
 def reconstitute_raster(

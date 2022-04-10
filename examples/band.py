@@ -19,7 +19,7 @@ from buteo.raster.io import (
     array_to_raster,
     stack_rasters_vrt,
 )
-from buteo.orfeo_toolbox import merge_rasters, obt_bandmath
+from buteo.orfeo_toolbox_bindings import merge_rasters, obt_bandmath
 from buteo.filters.convolutions import filter_array
 from buteo.filters.kernel_generator import create_circle_kernel
 

@@ -5,7 +5,7 @@ sys.path.append("../../")
 
 from buteo.raster.io import raster_to_array, array_to_raster
 from buteo.raster.resample import resample_raster
-from buteo.orfeo_toolbox import pansharpen
+from buteo.orfeo_toolbox_bindings import pansharpen
 
 
 def super_sample_s2(

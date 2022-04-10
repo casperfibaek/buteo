@@ -9,8 +9,8 @@ from buteo.raster.io import (
     raster_to_array,
     array_to_raster,
 )
-from buteo.machine_learning.ml_utils import tpe, get_offsets, mse_sumbias
-from buteo.machine_learning.patch_utils import array_to_blocks, blocks_to_array
+from buteo.artificial_intelligence.ml_utils import tpe, get_offsets, mse_sumbias
+from buteo.artificial_intelligence.patch_utils import array_to_blocks, blocks_to_array
 from buteo.utils import progress
 
 

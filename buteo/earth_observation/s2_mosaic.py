@@ -25,7 +25,7 @@ from buteo.earth_observation.s2_quality_assessment import (
 )
 from buteo.gdal_utils import destroy_raster
 from buteo.utils import timing
-from buteo.orfeo_toolbox import merge_rasters
+from buteo.orfeo_toolbox_bindings import merge_rasters
 
 
 def resample_array(arr, original_reference, target_reference, resample_alg="average"):

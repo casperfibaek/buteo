@@ -127,7 +127,7 @@ class OverfitProtection(tf.keras.callbacks.Callback):
         elif self.count != 0:
             self.count -= 1
         
-        if self.count >= 3:
+        if self.count >= self.patience:
             self.model.stop_training = True
 
             if self.verbose:

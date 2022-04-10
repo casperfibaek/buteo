@@ -7,8 +7,8 @@ from glob import glob
 from buteo.raster.align import align_rasters, rasters_are_aligned
 from buteo.raster.io import raster_to_metadata
 from buteo.raster.clip import clip_raster
-from buteo.machine_learning.patch_extraction import extract_patches, create_labels
-from buteo.machine_learning.ml_utils import preprocess_optical, preprocess_sar
+from buteo.artificial_intelligence.patch_extraction import extract_patches, create_labels
+from buteo.artificial_intelligence.ml_utils import preprocess_optical, preprocess_sar
 
 folder = "D:/training_data_buteo/bornholm_2021_Q2/"
 folder_tmp = "D:/training_data_buteo/tmp/"

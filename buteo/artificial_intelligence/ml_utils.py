@@ -239,8 +239,9 @@ def scale_percentile(arr, percentile=98):
 
 
 # np.set_printoptions(suppress=True)
+# Sentinel 2 data is 12 bit saved as 16 bit. Above 8192, the values are saturated.
 def preprocess_optical(
-    arr, cutoff_low=0, cutoff_high=10000, target_low=0, target_high=1
+    arr, cutoff_low=0, cutoff_high=8192, target_low=0, target_high=1
 ):
     clipped = np.where(
         arr > cutoff_high, cutoff_high, np.where(arr < cutoff_low, cutoff_low, arr)
