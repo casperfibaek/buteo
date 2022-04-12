@@ -13,6 +13,7 @@ def points_intersects_ellipsoid(ellipsoid, points, axis=1):
         return np.sum(np.sum(np.power(np.divide(points, ellipsoid), 2), axis=axis) <= 1)
 
 
+# TODO: Switch from brute-force to something more efficient
 def cube_sphere_intersection_area(
     cube_center,
     circle_center,
@@ -121,6 +122,7 @@ def create_circle_kernel(kernel_size=5, circle_radius=5, remove_zero_weights=Tru
     )
 
 
+# TODO: Add fractional kernels
 def create_kernel(
     shape,
     sigma=1,

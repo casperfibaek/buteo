@@ -277,10 +277,10 @@ def filter_array(
 
     if len(arr.shape) == 2:
         if len(shape) == 3:
-            if shape[0] != 1:
-                shape[0] = 1
+            if shape[2] != 1:
+                shape[2] = 1
         elif len(shape) == 2:
-            arr = arr[np.newaxis, :, :]
+            arr = arr[:, :, np.newaxis]
         else:
             raise ValueError("Unable to merge shape and array.")
 

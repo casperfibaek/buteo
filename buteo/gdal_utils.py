@@ -360,6 +360,10 @@ def translate_resample_method(method):
 
     if method == "sum":
         return "sum"
+    elif method == "max" or method == "maximum":
+        return "max"
+    elif method == "min" or method == "minimum":
+        return "min"
 
     if method in methods:
         return methods[method]
