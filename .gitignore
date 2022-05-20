@@ -135,6 +135,7 @@ lib/credentials.py
 *.wal
 
 /buteo_env
+/environment
 /buteo_dist
 /build
 /.vscode

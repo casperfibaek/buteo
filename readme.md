@@ -2,6 +2,8 @@
 
 The Buteo-Toolbox is a series of modules that ease the creation of Earth Observation Driven Spatial Decision Support Systems. The modules are located in the lib folder, geometry used for testing and clipping is located in geometry. In the examples folder there are jupyter notebooks that showcase analysis' done using the toolbox.
 
+Documentation available at: https://casperfibaek.github.io/buteo/
+
 There are modules are:
 
 ## raster
