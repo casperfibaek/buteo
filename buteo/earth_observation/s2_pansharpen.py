@@ -1,7 +1,14 @@
-import sys
-import os
+"""
+This module is used to super-sample S2 data to 10m resolution. Using pansharpening.
+Requires the orfeo toolbox.
 
-sys.path.append("../../")
+TODO:
+    - Remove reliance on Orfeo toolbox
+    - Add support a deep learning option.
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/earth_observation/s2_pansharpen.py
+import os
 
 from buteo.raster.io import raster_to_array, array_to_raster
 from buteo.raster.resample import resample_raster

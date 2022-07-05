@@ -1,14 +1,18 @@
-import sys
+"""
+This modules uses the sen2cor tool to generate the L2A products.
+
+TODO:
+    - Create versions for Windows and MacOS
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/earth_observation/s2_l2_process.py
 import os
 from glob import glob
 from shutil import rmtree
 
-sys.path.append("../../")
-
 from buteo.earth_observation.s2_utils import unzip_files_to_folder
 
 
-# TODO: Make version for Windows, MacOS
 def l2_process(
     l1_dir,
     tmp_dir,

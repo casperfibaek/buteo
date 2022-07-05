@@ -1,3 +1,11 @@
+"""
+This module provides functions to ease the preprocessing of Sentinel 1 data
+and finding the GPT tools.
+
+TODO:
+    - Improve documentation
+"""
+
 import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -6,37 +14,24 @@ from datetime import datetime
 def find_gpt(test_gpt_path):
     gpt = os.path.realpath(os.path.abspath(os.path.expanduser(test_gpt_path)))
     if not os.path.exists(gpt):
-        gpt = os.path.realpath(
-            os.path.abspath(os.path.expanduser("~/esa_snap/bin/gpt"))
-        )
-        if not os.path.exists(gpt):
-            gpt = os.path.realpath(
-                os.path.abspath(os.path.expanduser("~/snap/bin/gpt"))
-            )
-            if not os.path.exists(gpt):
-                gpt = os.path.realpath(
-                    os.path.abspath(os.path.expanduser("/opt/esa_snap/bin/gpt"))
-                )
-                if not os.path.exists(gpt):
-                    gpt = os.path.realpath(
-                        os.path.abspath(os.path.expanduser("/opt/snap/bin/gpt"))
-                    )
-                    if not os.path.exists(gpt):
-                        gpt = os.path.realpath(
-                            os.path.abspath(
-                                os.path.expanduser("C:/Program Files/snap/bin/gpt.exe")
-                            )
-                        )
+        possible_locations = [
+            "~/esa_snap/bin/gpt",
+            "~/snap/bin/gpt",
+            "/opt/esa_snap/bin/gpt",
+            "/opt/snap/bin/gpt",
+            "C:/Program Files/snap/bin/gpt.exe",
+            '"C:/Program Files/snap/bin/gpt.exe"',
+        ]
 
-                        if os.path.exists(gpt):
-                            gpt = '"C:/Program Files/snap/bin/gpt.exe"'
-                        else:
-                            if not os.path.exists(gpt):
-                                assert os.path.exists(
-                                    gpt
-                                ), "Graph processing tool not found."
+        for loc in possible_locations:
+            gpt = os.path.realpath(os.path.abspath(os.path.expanduser(loc)))
+            if os.path.exists(gpt):
+                return gpt
+        
+        assert os.path.exists(gpt), "Graph processing tool not found."
 
-    return gpt
+    else:
+        return gpt
 
 
 # TODO: wkt to ogr geometry

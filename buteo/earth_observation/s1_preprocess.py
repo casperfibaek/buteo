@@ -1,13 +1,20 @@
-import sys
+"""
+This module preprocesses Sentinel-1 data. Using SNAP GPT.
+
+TODO:
+    - Enable support for processing only VV or VH.
+    - Improve documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/earth_observation/download_sentinel.py
+from sys import platform
 import os
 import shutil
-import numpy as np
 from glob import glob
-from sys import platform
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 
-sys.path.append("../../")
+import numpy as np
 
 from buteo.raster.io import (
     raster_to_array,
@@ -209,7 +216,7 @@ def clear_tmp_folder(tmp_folder):
         tmp_files = glob(tmp_folder + "*.data")
         for f in tmp_files:
             shutil.rmtree(f)
-    except:
+    except Exception:
         print("Error while cleaning tmp files.")
 
 

@@ -1,12 +1,18 @@
-import sys
+"""
+This function provides a function to create mosaics from sentinel 1 images.
+
+TODO:
+    - Improve documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/earth_observation/download_sentinel.py
 import os
 import datetime
+from uuid import uuid4
+
 import numpy as np
 from numba import jit, prange
 from osgeo import gdal
-from uuid import uuid4
-
-sys.path.append("../../")
 
 from buteo.raster.io import (
     raster_to_array,
@@ -83,7 +89,7 @@ def s1_collapse(
     else:
         result = np.zeros(arr.shape[:2], dtype="float32")
 
-    for x in prange(arr.shape[0]):
+    for x in prange(arr.shape[0]): # pylint: disable=not-an-iterable
         for y in range(arr.shape[1]):
 
             hood_values = np.zeros(hood_size, dtype="float32")

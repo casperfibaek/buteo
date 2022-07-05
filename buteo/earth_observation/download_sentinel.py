@@ -1,22 +1,24 @@
-import sys
-import os
-import requests
-import numpy as np
-from osgeo import ogr
-from time import sleep
-from sentinelsat import SentinelAPI
-from collections import OrderedDict
-from requests.auth import HTTPBasicAuth
+"""
+This module is used to download Sentinel data from the Onda DIAS catalogue and ESA SciHub.
 
+TODO:
+    - Improve documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/earth_observation/download_sentinel.py
+import os
+from time import sleep
+from collections import OrderedDict
+
+import requests
+from osgeo import ogr
+from sentinelsat import SentinelAPI
+from requests.auth import HTTPBasicAuth
 from tqdm import tqdm
 
-sys.path.append("../../")
-
-from buteo.vector.io import internal_vector_to_metadata, filter_vector
+from buteo.vector.io import internal_vector_to_metadata
 from buteo.raster.io import raster_to_metadata
 from buteo.gdal_utils import is_raster, is_vector
-from buteo.earth_observation.s2_utils import timeout
-from buteo.utils import progress
 
 
 def get_content_size(url: str, auth=None):
@@ -92,9 +94,9 @@ def download_s1_tile(
 ):
     api = SentinelAPI(scihub_username, scihub_password, api_url, timeout=60)
 
-    if is_vector:
+    if is_vector(footprint):
         geom = internal_vector_to_metadata(footprint, create_geometry=True)
-    elif is_raster:
+    elif is_raster(footprint):
         geom = raster_to_metadata(footprint, create_geometry=True)
 
     date = (date_start, date_end)
@@ -150,7 +152,7 @@ def download_s1_tile(
 
             try:
                 content_size = get_content_size(
-                    download_url, out_path, auth=(onda_username, onda_password)
+                    download_url, auth=(onda_username, onda_password)
                 )
             except Exception as e:
                 print(f"Failed to get content size for {img_id}")

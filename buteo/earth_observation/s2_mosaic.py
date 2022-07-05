@@ -1,4 +1,12 @@
-import sys
+"""
+This module generates a mosaic of Sentinel-2 data.
+
+TODO:
+    - Improve documentation
+    - Test defaults
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/earth_observation/s2_l2_process.py
 import os
 import zipfile
 import datetime
@@ -6,17 +14,11 @@ import numpy as np
 from glob import glob
 from time import time
 
-sys.path.append("../../")
-
 from buteo.raster.reproject import reproject_raster
 from buteo.raster.resample import internal_resample_raster
 from buteo.raster.io import raster_to_array, array_to_raster
 from buteo.raster.clip import clip_raster
-from buteo.earth_observation.s2_utils import (
-    get_tile_files_from_safe,
-    get_metadata,
-    get_all_tiles_in_folder,
-)
+from buteo.earth_observation.s2_utils import get_metadata
 from buteo.earth_observation.s2_quality_assessment import (
     assess_quality,
     smooth_mask,

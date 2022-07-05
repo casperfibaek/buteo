@@ -368,7 +368,7 @@ def unzip_files_to_folder(files, dst_folder):
     return unzipped
 
 
-def get_tiles_from_geom(geom, return_geom=False):
+def get_tiles_from_geom(geom):
     tiles_path = "../../geometry/sentinel2_tiles_world.shp"
 
     intersected = clip_vector(tiles_path, reproject_vector(geom, tiles_path))
