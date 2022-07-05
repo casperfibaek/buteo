@@ -1,3 +1,10 @@
+"""
+This is the basic model design used in fibaek et al., 2022.
+
+TODO:
+    - add documentation
+"""
+
 from tensorflow.keras import Model, Input
 from tensorflow.keras.backend import clip
 from tensorflow.keras.layers import (

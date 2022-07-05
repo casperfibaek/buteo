@@ -1,7 +1,15 @@
+"""
+This module contains utility functions for the patch creation process.
+
+TODO:
+    - Improve documentation
+    - Change defaults to None and add checks
+"""
+
 import numpy as np
 
 
-def array_to_blocks(arr: np.ndarray, tile_size, offset=[0, 0]) -> np.ndarray:
+def array_to_blocks(arr, tile_size, offset=[0, 0]):
     blocks_y = (arr.shape[0] - offset[1]) // tile_size
     blocks_x = (arr.shape[1] - offset[0]) // tile_size
 
@@ -25,7 +33,7 @@ def array_to_blocks(arr: np.ndarray, tile_size, offset=[0, 0]) -> np.ndarray:
     return merge
 
 
-def blocks_to_array(blocks, og_shape, tile_size, offset=[0, 0]) -> np.ndarray:
+def blocks_to_array(blocks, og_shape, tile_size, offset=[0, 0]):
     with np.errstate(invalid="ignore"):
         target = np.empty(og_shape) * np.nan
 

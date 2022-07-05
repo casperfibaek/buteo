@@ -1,8 +1,15 @@
+"""
+This module provides a set of utility functions to ready data for training and testing.
+
+TODO:
+    - remove sklearn and pandas dependency
+    - add documentation
+"""
+
 import math
 import numpy as np
 import pandas as pd
-
-# TODO: Remove SKlearn
+from sklearn.model_selection import train_test_split
 
 
 def create_step_decay(learning_rate=0.001, drop_rate=0.5, epochs_per_drop=10):
@@ -99,8 +106,6 @@ def scale_to_01(X):
 
 # stratify a regression split
 def train_split_mask_regression(y, split=0.3, stratified=True):
-    from sklearn.model_selection import train_test_split
-
     if stratified is True:
         strats = np.digitize(y, np.percentile(y, [10, 20, 30, 40, 50, 60, 70, 80, 90]))
         indices = np.arange(0, len(strats), 1)

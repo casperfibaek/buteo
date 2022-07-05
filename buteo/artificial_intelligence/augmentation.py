@@ -1,14 +1,21 @@
-import sys
-import numpy as np
+"""
+This module contains functions for augmenting images that are
+uniquely suited to remote sensing imagery (e.g. satellite imagery).
 
-sys.path.append("../../")
+TODO:
+    - add documentation
+    - create more synthetic augmentations, projection artificats etc..
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/artificial_intelligence/augmentation.py
+import numpy as np
 
 from buteo.filters.convolutions import interp_array
 
 
 def image_augmentation(list_of_inputs, list_of_labels, shuffle=True, options=None):
     """
-    Augment the input images with random flips, and noise.
+    Augment the input images/patches with random flips, and noise.
     """
     if not isinstance(list_of_inputs, list):
         list_of_inputs = [list_of_inputs]

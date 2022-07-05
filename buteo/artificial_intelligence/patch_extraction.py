@@ -1,10 +1,18 @@
-import sys
+"""
+This module generates patches/tiles from a raster.
+
+TODO:
+    - Improve documentation
+    - Explain options
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/artificial_intelligence/patch_extraction.py
 import os
-import numpy as np
-from osgeo import ogr, gdal
 from uuid import uuid4
 
-sys.path.append("../../")
+import numpy as np
+from osgeo import ogr, gdal
+
 
 from buteo.raster.io import (
     raster_to_array,
@@ -17,7 +25,6 @@ from buteo.raster.align import rasters_are_aligned, align_rasters
 from buteo.raster.clip import clip_raster
 from buteo.raster.resample import resample_raster
 from buteo.vector.io import vector_to_metadata, is_vector, open_vector
-from buteo.vector.intersect import intersect_vector
 from buteo.vector.attributes import vector_get_fids
 from buteo.vector.rasterize import rasterize_vector
 from buteo.artificial_intelligence.ml_utils import get_offsets
@@ -192,9 +199,9 @@ def extract_patches(
                     all_touch=False,
                     adjust_bbox=False,
                 )
-            except Exception as e:
+            except Exception as error_message:
                 print(f"Warning: {raster} did not intersect geom with fid: {fid}.")
-                print(e)
+                print(error_message)
 
                 gdal.Unlink(fid_path)
 

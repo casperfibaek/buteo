@@ -1,5 +1,12 @@
-import tensorflow as tf
+"""
+This module provides utility functions for working with Tensorflow. Additional loss functions and overfit checks.
+
+TODO:
+    - Improve documentation
+"""
+
 from datetime import datetime
+import tensorflow as tf
 from tensorflow.keras.layers import Activation
 from tensorflow.keras.utils import get_custom_objects
 from tensorflow.keras.losses import mean_squared_error, mean_absolute_error

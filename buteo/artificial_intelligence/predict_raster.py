@@ -1,15 +1,22 @@
-import sys
+"""
+This module provides a function to easily predict a raster using a model.
+Uses a predefined set of preprocessing options and stacks the predictions.
+
+TODO:
+    - Improve documentation
+    - Explain functions
+    - Add tests
+
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/artificial_intelligence/predict_raster.py
+
 import numpy as np
 import tensorflow as tf
 from numba import jit, prange
 
-sys.path.append("../../")
-
-from buteo.raster.io import (
-    raster_to_array,
-    array_to_raster,
-)
-from buteo.artificial_intelligence.ml_utils import tpe, get_offsets
+from buteo.raster.io import raster_to_array, array_to_raster
+from buteo.artificial_intelligence.ml_utils import get_offsets
 from buteo.artificial_intelligence.patch_utils import array_to_blocks, blocks_to_array
 from buteo.utils import progress
 
@@ -63,7 +70,7 @@ def values_within(values, limit):
 def mad_interval_merging(predictions, default=0.0, bias=1.0):
     pred = np.zeros((predictions.shape[0], predictions.shape[1], 1), dtype=np.float32)
 
-    for x in prange(predictions.shape[0]):
+    for x in prange(predictions.shape[0]): # pylint: disable=not-an-iterable
         for y in range(predictions.shape[1]):
             non_nan = predictions[x, y, :][np.isnan(predictions[x, y, :]) == False]
             if non_nan.size == 0:
@@ -106,7 +113,7 @@ def predict_raster(
 ):
     if loaded_model is None:
         print("Loading Model")
-        model = tf.keras.models.load_model(model_path, custom_objects={"tpe": tpe })
+        model = tf.keras.models.load_model(model_path)
     else:
         model = loaded_model
 

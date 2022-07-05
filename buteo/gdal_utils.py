@@ -1,10 +1,10 @@
-import osgeo
 import os
 import json
-import numpy as np
-from osgeo import gdal, ogr, osr
 from typing import Sequence, Union, Any, List
 from uuid import uuid4
+
+import numpy as np
+from osgeo import gdal, ogr, osr
 
 from buteo.project_types import (
     Expanded_extents,
