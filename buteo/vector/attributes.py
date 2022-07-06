@@ -11,7 +11,7 @@ import numpy as np
 from typing import Union
 
 from osgeo import ogr
-import pandas as pd
+# import pandas as pd
 
 from buteo.utils import type_check
 from buteo.vector.io import internal_vector_to_metadata, open_vector
@@ -21,7 +21,7 @@ def vector_get_attribute_table(
     vector: Union[str, ogr.DataSource],
     process_layer: int = 0,
     include_geom: bool = False,
-) -> pd.DataFrame:
+):
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(process_layer, [int], "process_layer")
     type_check(include_geom, [bool], "include_geom")
@@ -59,9 +59,10 @@ def vector_get_attribute_table(
     if include_geom:
         attribute_table_header.append("geom")
 
-    df = pd.DataFrame(attribute_table, columns=attribute_table_header)
+    # df = pd.DataFrame(attribute_table, columns=attribute_table_header)
 
-    return df
+    # return df
+    return attribute_table
 
 
 def vector_get_fids(
