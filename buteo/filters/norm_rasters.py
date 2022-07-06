@@ -1,8 +1,14 @@
-import os
-import sys
-import numpy as np
+"""
+Normalise rasters as part of the preprocessing pipeline.
 
-sys.path.append("../../")
+TODO:
+    - Improve documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/filters/norm_rasters.py
+import os
+
+import numpy as np
 
 from buteo.raster.io import raster_to_array, array_to_raster
 
@@ -61,7 +67,7 @@ def normalise_filter(in_raster):
 
 
 def norm_to_range(
-    in_raster, min_target, max_target, min_og=-9999, max_og=-9999, truncate=True
+    in_raster, min_target, max_target, min_og=-99999, max_og=99999, truncate=True
 ):
 
     copy = in_raster.copy()

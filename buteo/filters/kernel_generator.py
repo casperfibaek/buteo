@@ -1,3 +1,12 @@
+"""
+Generate kernels and offets for a given kernel size. 
+
+TODO:
+    - Switch from brute force
+    - Fractional kernels
+    - Improve documentation
+"""
+
 import numpy as np
 
 

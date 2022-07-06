@@ -1,7 +1,15 @@
-import sys
-from osgeo import gdal, ogr, osr
+"""
+Module to vectorize rasters using the GDAL tools.
 
-sys.path.append("../../")
+TODO:
+    - Improve documentation
+    - Improve function
+    - Type check
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/raster/vectorize.py
+
+from osgeo import gdal, ogr
 
 from buteo.raster.io import open_raster, raster_to_metadata
 

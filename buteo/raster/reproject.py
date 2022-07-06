@@ -1,8 +1,17 @@
-import sys
-from osgeo import gdal, ogr, osr
+"""
+Module to reproject rasters to a target coordinate reference system.
+Can uses references from vector or other raster datasets.
+
+TODO:
+    - Remove typings
+    - Improve documentations
+    - Remove internal function.
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/raster/reproject.py
 from typing import Union, List, Optional
 
-sys.path.append("../../")
+from osgeo import gdal, ogr, osr
 
 from buteo.utils import remove_if_overwrite, type_check
 from buteo.gdal_utils import (
@@ -21,6 +30,7 @@ from buteo.raster.io import (
 )
 
 
+# format should be _
 def internal_reproject_raster(
     raster: Union[str, gdal.Dataset],
     projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],

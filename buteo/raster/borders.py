@@ -1,19 +1,24 @@
-import sys
-import numpy as np
-from osgeo import gdal
+"""
+Add borders to a raster.
+
+TODO:
+    - Improve documentation
+    - Add function for arrays
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/raster/borders.py
 from uuid import uuid4
 
-sys.path.append("../../")
+import numpy as np
+from osgeo import gdal
+
 from buteo.raster.io import (
     open_raster,
     path_to_driver_raster,
     raster_to_array,
     raster_to_metadata,
 )
-from buteo.gdal_utils import (
-    numpy_to_gdal_datatype,
-    default_options,
-)
+from buteo.gdal_utils import numpy_to_gdal_datatype, default_options
 from buteo.utils import remove_if_overwrite
 
 

@@ -1,8 +1,17 @@
-import sys
-from osgeo import gdal
+"""
+Module to resample rasters to a target resolution.
+Can uses references other raster datasets.
+
+TODO:
+    - Remove typings
+    - Improve documentations
+    - Remove internal function.
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/raster/resample.py
 from typing import Union, List, Optional
 
-sys.path.append("../../")
+from osgeo import gdal
 
 from buteo.utils import (
     remove_if_overwrite,

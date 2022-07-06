@@ -1,9 +1,15 @@
+"""
+Typings for project types.
+
+TODO:
+    - Improve the naming convention
+"""
+
 from osgeo import osr, ogr
-from typing import Dict, Tuple, Union, List, Any, Optional
-from typing import TypedDict
+from typing import Dict, Tuple, Union, List, Any, Optional, TypedDict
+
 
 Number = Union[float, int]
-
 
 Expanded_extents = TypedDict(
     "Expanded_extents",

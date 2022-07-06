@@ -1,10 +1,17 @@
-import sys
+"""
+Module to calculate the distance from a pixel value to other pixels.
+
+TODO:
+    - Improve documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/raster/proximity.py
 import os
-import numpy as np
-from osgeo import gdal
 from uuid import uuid4
 
-sys.path.append("../../")
+import numpy as np
+from osgeo import gdal
+
 from buteo.raster.io import (
     open_raster,
     path_to_driver_raster,

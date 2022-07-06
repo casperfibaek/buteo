@@ -1,8 +1,15 @@
-import sys
+"""
+Generates the different layers of the degurba filter on a population map.
 
-sys.path.append("../../")
+TODO:
+    - Finish workflow
+    - Improve documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/filters/degurba.py
 
 import numpy as np
+
 from buteo.raster.io import raster_to_array, array_to_raster, raster_to_metadata
 from buteo.raster.resample import resample_raster
 from buteo.raster.vectorize import vectorize_raster

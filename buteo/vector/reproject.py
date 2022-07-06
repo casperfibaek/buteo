@@ -1,9 +1,16 @@
-import sys
+"""
+Functions to reproject vectors. References can be both vector and raster.
+
+TODO:
+    - Improve documentation
+
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/vector/reproject.py
 import osgeo
 from typing import Union, Optional, List
-from osgeo import ogr, osr, gdal
 
-sys.path.append("../../")
+from osgeo import ogr, osr, gdal
 
 from buteo.vector.io import (
     open_vector,

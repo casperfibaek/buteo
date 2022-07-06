@@ -1,9 +1,17 @@
-import sys
-import numpy as np
-from osgeo import gdal
+"""
+A module to handle the various aspects of NODATA in raster files.
+
+TODO:
+    - raster_to_mask
+    - raster_invert_nodata
+    - Improve documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/raster/nodata.py
 from typing import Union, List, Optional, Sequence
 
-sys.path.append("../../")
+import numpy as np
+from osgeo import gdal
 
 from buteo.project_types import Metadata_raster
 from buteo.utils import remove_if_overwrite, type_check

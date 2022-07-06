@@ -1,10 +1,13 @@
 """
 This module does standard raster operations related to read and write.
+
+TODO:
+    - Copy, seperate, expand, create, delete
+    - Remove typings
+    - Documentation
 """
 
-# TODO: copy_raster, seperate bands, expand stack_rasters_vrt, create_raster, delete raster
-
-import sys
+import sys; sys.path.append("../../") # Path: buteo/raster/io.py
 import os
 from math import ceil
 from uuid import uuid4
@@ -12,8 +15,6 @@ from typing import Dict, Tuple, Union, List, Any, Optional
 
 import numpy as np
 from osgeo import gdal, osr, ogr
-
-sys.path.append("../../")
 
 from buteo.project_types import (
     Metadata_raster,

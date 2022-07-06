@@ -1,9 +1,15 @@
-import sys
-from osgeo import ogr
-from mypy_extensions import TypedDict
-from typing import Union, List, Optional
+"""
+Dissolve vectors by attributes or geometry.
 
-sys.path.append("../../")
+TODO:
+    - Improve documentation
+    - Remove internal step
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/vector/dissolve.py
+from typing import Dict, Union, List, Optional, TypedDict
+
+from osgeo import ogr
 
 from buteo.gdal_utils import path_to_driver_vector
 from buteo.utils import type_check
@@ -40,9 +46,7 @@ def internal_dissolve_vector(
     ref = open_vector(vector_list[0])
     metadata = internal_vector_to_metadata(ref)
 
-    Layer_info = TypedDict(
-        "Layer_info",
-    )
+    Layer_info = TypedDict("Layer_info", {"name": List[str], "geom": ogr.Layer, "fields": List[str]})
 
     layers: List[Layer_info] = []
 

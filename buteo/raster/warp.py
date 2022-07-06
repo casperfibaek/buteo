@@ -1,12 +1,16 @@
 """
-This module is a wrapper around the gdalwarp command.
+Wrapper around gdalwarp
+
+TODO:
+    - Improve documentation
+    - Remove internal function
+
 """
-import sys
+import sys; sys.path.append("../../") # Path: buteo/raster/warp.py
 from uuid import uuid4
 from typing import Union, List, Optional, Tuple
-from osgeo import gdal, osr, ogr
 
-sys.path.append("../../")
+from osgeo import gdal, osr, ogr
 
 from buteo.project_types import Number
 from buteo.utils import remove_if_overwrite, file_exists, type_check

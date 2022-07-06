@@ -1,9 +1,15 @@
-import sys
+"""
+Clips a raster using a vector geometry or the extents of a raster.
+
+TODO:
+    - Combine the internal and external functions.
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/raster/clip.py
 import os
-from osgeo import gdal, ogr
 from typing import Union, List, Optional
 
-sys.path.append("../../")
+from osgeo import gdal, ogr
 
 from buteo.raster.io import raster_to_metadata, ready_io_raster, open_raster
 from buteo.vector.io import (

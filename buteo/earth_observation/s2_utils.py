@@ -1,12 +1,17 @@
-import sys
+"""
+This module contains utility functions to work with sentinel 2 data.
+
+TODO: 
+    - Improve documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/earth_observation/s2_utils.py
 import os
 import signal
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from zipfile import ZipFile
 from glob import glob
-
-sys.path.append("../../")
 
 from buteo.vector.io import filter_vector
 from buteo.vector.intersect import intersect_vector
@@ -24,8 +29,10 @@ class TimeoutError(Exception):
 
 def timeout(seconds_before_timeout):
     def decorate(f):
-        def handler(signum, frame):
+        
+        def handler(_signum, _frame):
             raise TimeoutError()
+        
         def new_f(*args, **kwargs):
             old = signal.signal(signal.SIGALRM, handler)
             signal.alarm(seconds_before_timeout)
@@ -37,9 +44,12 @@ def timeout(seconds_before_timeout):
                 # cancel the alarm
                 # this line should be inside the "finally" block (per Sam Kortchmar)
                 signal.alarm(0)
+        
             return result
+
         new_f.func_name = f.func_name
         return new_f
+
     return decorate
 
 

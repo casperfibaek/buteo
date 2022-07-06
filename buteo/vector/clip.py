@@ -1,9 +1,16 @@
-import sys
+"""
+Clip vector files with other geometries. Can come from rasters or vectors.
+
+TODO:
+    - Improve documentation
+    - Remove internal step
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/vector/attributes.py
 from uuid import uuid4
 from typing import Union, Optional, List
-from osgeo import ogr, osr, gdal
 
-sys.path.append("../../")
+from osgeo import ogr, osr, gdal
 
 from buteo.gdal_utils import (
     is_vector,

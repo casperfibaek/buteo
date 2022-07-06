@@ -1,7 +1,16 @@
-import sys
-import numpy as np
+"""
+Various filters to apply to a raster.
 
-sys.path.append("../../")
+TODO:
+    - Integrate with the convolution filter
+    - Add morphological filters (use the one in examples)
+    - Add DEM filters
+    - Improve documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/filters/filters.py
+
+import numpy as np
 
 from buteo.filters.convolutions import filter_array
 from buteo.filters.kernel_generator import create_kernel
@@ -27,6 +36,13 @@ from buteo.filters.kernel_generator import create_kernel
 #     "mode",
 # ]
 
+# slope_name = "/vsimem/v4_slope.tif"
+# gdal.DEMProcessing(slope_name, smoothed, 'slope', options=[], slopeFormat="percent")
+# array_to_raster((raster_to_array(slope_name) / 100.0).astype("float32"), reference=reference, out_path=folder+ "DK_COP30_20m_slope_smooth.tif")
+
+# aspect_name = "/vsimem/v4_aspect.tif"
+# gdal.DEMProcessing(aspect_name, smoothed, 'aspect', options=[])
+# array_to_raster(raster_to_array(aspect_name).astype("float32"), reference=reference, out_path=folder+ "DK_COP30_20m_aspect_smooth.tif")
 
 def conv_filter(in_raster, kernel=None, filter="sum", iterations=1):
     _kernel = kernel if kernel != None else create_kernel()

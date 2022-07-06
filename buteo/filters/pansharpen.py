@@ -1,8 +1,16 @@
-import sys
+"""
+Pansharpens a target raster to a panchromatic raster using a kernel. 
+Uses MAD-Matching.
+
+TODO:
+    - Add testing
+    - Improve documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/filters/pansharpen.py
+
 import numpy as np
 from numba import jit, prange
-
-sys.path.append("../../")
 
 from buteo.raster.io import raster_to_array, array_to_raster
 from buteo.filters.kernel_generator import create_kernel

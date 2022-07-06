@@ -1,10 +1,17 @@
-import sys
+"""
+Tools for working with the attributes of vector files.
+
+TODO:
+    - Add filters and selections
+    - Improve documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/vector/attributes.py
 import numpy as np
-import pandas as pd
-from osgeo import ogr
 from typing import Union
 
-sys.path.append("../../")
+from osgeo import ogr
+import pandas as pd
 
 from buteo.utils import type_check
 from buteo.vector.io import internal_vector_to_metadata, open_vector

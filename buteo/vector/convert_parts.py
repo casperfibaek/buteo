@@ -1,8 +1,15 @@
-import sys
-from typing import Union, Optional, List
-from osgeo import ogr
+"""
+Convert geometries from multiparts and singleparts
 
-sys.path.append("../../")
+TODO:
+    - Improve documentation
+    - Remove internal step
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/vector/convert_parts.py
+from typing import Union, Optional, List
+
+from osgeo import ogr
 
 from buteo.gdal_utils import path_to_driver_vector
 from buteo.utils import overwrite_required, progress, remove_if_overwrite, type_check

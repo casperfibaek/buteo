@@ -1,9 +1,16 @@
-import sys
+"""
+Calculate zonal statistics from vector and raster files.
+
+TODO:
+    - Improve documentation
+
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/vector/zonal_statistics.py
 import numpy as np
+
 from numba import jit
 from osgeo import ogr
-
-sys.path.append("../../")
 
 from buteo.raster.io import raster_to_array, raster_to_metadata
 from buteo.vector.rasterize import rasterize_vector
@@ -13,7 +20,7 @@ from buteo.vector.io import (
     internal_vector_to_memory,
     internal_vector_to_metadata,
 )
-from buteo.filters.stats import stats_to_ints, calculate_array_stats
+from buteo.filters.stats import calculate_array_stats
 from buteo.utils import progress
 
 
@@ -149,9 +156,6 @@ def zonal_statistics(
 
     if len(stats) == 0:
         raise ValueError("Unable to parse statistics (stats).")
-
-    # Translate stats to integers
-    stats_translated = stats_to_ints(stats)
 
     # Read the raster meta:
     raster_metadata = raster_to_metadata(in_rasters[0])
@@ -329,7 +333,7 @@ def zonal_statistics(
                     cropped_raster, mask=rasterized_features[n], dtype="float32"
                 ).compressed()
                 zonal_stats = calculate_array_stats(
-                    raster_data_masked, stats_translated
+                    raster_data_masked, stats
                 )
 
                 for index, stat in enumerate(stats):

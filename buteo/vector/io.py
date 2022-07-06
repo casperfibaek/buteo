@@ -1,11 +1,26 @@
-import sys
+"""
+The basic module for interacting with vector data
+
+TODO:
+    - Improve documentation
+    - Remove internal step
+    - repair vector
+    - sanity checks: vectors_intersect, is_not_empty, does_vectors_match, match_vectors
+    - rasterize - with antialiasing/weights
+    - join by attribute + summary
+    - join by location + summary
+    - buffer, union, erase
+    - Multithreaded processing
+    - Rename layers function
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/vector/io.py
 import os
-import numpy as np
 from uuid import uuid4
 from typing import Union, List, Dict, Optional, Any, Tuple
-from osgeo import ogr, osr, gdal
 
-sys.path.append("../../")
+from osgeo import ogr, osr, gdal
+import numpy as np
 
 from buteo.project_types import Metadata_vector_layer, Number, Metadata_vector
 from buteo.gdal_utils import (
@@ -22,17 +37,6 @@ from buteo.utils import (
     folder_exists,
     folder_exists,
 )
-
-
-# TODO:
-#   - repair vector
-#   - sanity checks: vectors_intersect, is_not_empty, does_vectors_match, match_vectors
-#   - rasterize - with antialiasing/weights
-#   - join by attribute + summary
-#   - join by location + summary
-#   - buffer, union, erase
-#   - multithreaded processing
-#   - Rename layers function
 
 
 def open_vector(

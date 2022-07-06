@@ -1,9 +1,14 @@
-import sys
+"""
+Bindings to interact with the orfeo-toolbox in a more pythonic way.
+
+TODO:
+    - Documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/orfeo_toolbox_bindings.py
 import os
 import subprocess
 import time
-
-sys.path.append("../")
 
 from buteo.utils import progress
 from buteo.raster.io import raster_to_array

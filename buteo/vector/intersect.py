@@ -1,8 +1,16 @@
-import sys
-from typing import Union, List, Optional
-from osgeo import ogr, gdal
+"""
+Calculate intersections
 
-sys.path.append("../../")
+TODO:
+    - Improve documentation
+    - Remove internal step
+    - Add checks: Do geometries intersect?
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/vector/intersect.py
+from typing import Union, List, Optional
+
+from osgeo import ogr, gdal
 
 from buteo.utils import type_check
 from buteo.gdal_utils import path_to_driver_vector

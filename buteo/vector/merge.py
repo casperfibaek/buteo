@@ -1,9 +1,16 @@
-import sys
+"""
+Merges vectors into a single vector file.
+
+TODO:
+    - Improve documentation
+
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/vector/merge.py
 from uuid import uuid4
 from typing import Union, List, Optional
-from osgeo import ogr
 
-sys.path.append("../../")
+from osgeo import ogr
 
 from buteo.gdal_utils import path_to_driver_vector
 from buteo.utils import path_to_ext, type_check

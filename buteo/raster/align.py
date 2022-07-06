@@ -1,10 +1,18 @@
-import sys
-import os
-import numpy as np
-from typing import Union, List, Optional
-from osgeo import gdal, ogr, osr
+"""
+Functions to align a series of rasters to a master or a reference.
 
-sys.path.append("../../")
+TODO:
+    - Improve documentation
+    - Phase correlation?
+    - Remove the typings
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/raster/align.py
+import os
+from typing import Union, List, Optional
+
+import numpy as np
+from osgeo import gdal, ogr, osr
 
 from buteo.raster.io import (
     raster_to_metadata,

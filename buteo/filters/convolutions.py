@@ -1,7 +1,11 @@
-import sys
+"""
+2D and 3D convolutions on numpy arrays.
 
-sys.path.append("../../")
+TODO:
+    - Improve documentations and workflow. Merge kernel and offsets.
+"""
 
+import sys; sys.path.append("../../") # Path: buteo/filters/convolutions.py
 
 import numpy as np
 from numba import jit, prange

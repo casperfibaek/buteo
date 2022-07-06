@@ -1,15 +1,21 @@
-import sys
+"""
+Functions to rasterize vectors to rasters
+
+TODO:
+    - Improve documentation
+    - Add support for projections
+
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/vector/rasterize.py
 from osgeo import gdal
 from uuid import uuid4
-
-sys.path.append("../../")
 
 from buteo.raster.io import open_raster
 from buteo.vector.io import internal_vector_to_metadata, open_vector
 from buteo.gdal_utils import numpy_to_gdal_datatype2, default_options
 
 
-# TODO: handle projections
 def rasterize_vector(
     vector,
     pixel_size,

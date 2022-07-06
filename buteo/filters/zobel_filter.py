@@ -1,3 +1,11 @@
+"""
+    Implements a zobel filter on a 2D array.
+
+    TODO:
+    - Add documentation
+    - Add to filters.py
+"""
+
 import numpy as np
 from numba import jit, prange
 

@@ -1,8 +1,14 @@
-import sys
+"""
+This module provides a quality estimation for Sentinel-2 scenes.
+
+TODO:
+    - Improve documentation
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/earth_observation/s2_quality_assessment.py
+
 import numpy as np
 from numba import jit, prange
-
-sys.path.append("../../")
 
 from buteo.earth_observation.s2_utils import get_metadata
 from buteo.raster.io import raster_to_array

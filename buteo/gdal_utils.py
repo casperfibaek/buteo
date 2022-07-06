@@ -1,3 +1,10 @@
+"""
+Utilities for working with GDAL.
+
+TODO:
+    - Documentation
+"""
+
 import os
 import json
 from typing import Sequence, Union, Any, List

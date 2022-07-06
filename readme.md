@@ -56,7 +56,7 @@ There are modules are:
 - custom orfeo-toolbox python bindings
 - ESA snap GPT python bindings and graphs
 
-The system is under active development and is not ready for public release. It is being developed by NIRAS and Aalborg University.
+The system is under active development and is not ready for public release. It is being developed by ESA, NIRAS, and Aalborg University.
 
 # Dependencies
 
@@ -79,6 +79,8 @@ esa-snap
 - create models for pansharpening, buildings and noise-reduction
 - generate examples
 - synthetic sentinel 2?
+- Move deep learning / machine learning stuff in to seperate package (BUTEO & BUTEO_DL)
+- Add checks modules: raster_overlaps, all_rasters_intersect, etc...
 
 # Functions todo
 

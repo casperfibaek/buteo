@@ -1,7 +1,17 @@
-import sys
+"""
+Cut a rasters to a grid.
+
+TODO:
+    - Improve documentation
+    - Raster_to_grid without geom
+    - Split rasters into grid of x tiles
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/raster/grid.py
 from uuid import uuid4
-from osgeo import gdal, ogr
 from typing import Union, Optional, Tuple, List
+
+from osgeo import gdal, ogr
 
 sys.path.append("../../")
 
@@ -10,16 +20,8 @@ from buteo.vector.intersect import intersect_vector
 from buteo.vector.reproject import reproject_vector
 from buteo.raster.clip import clip_raster
 from buteo.raster.io import open_raster, raster_to_metadata, stack_rasters_vrt
-
-from buteo.utils import (
-    path_to_ext,
-    progress,
-    type_check,
-)
-from buteo.gdal_utils import (
-    ogr_bbox_intersects,
-    default_options,
-)
+from buteo.gdal_utils import ogr_bbox_intersects, default_options
+from buteo.utils import path_to_ext, progress, type_check
 
 
 # TODO: raster_to_grid without geom.

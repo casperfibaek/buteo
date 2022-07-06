@@ -1,20 +1,21 @@
-import sys
-from osgeo import gdal
+"""
+Module to shift a raster
+
+TODO:
+    - Remove typings
+    - Improve documentations
+"""
+
+import sys; sys.path.append("../../") # Path: buteo/raster/shift.py
 from uuid import uuid4
 from typing import Union, Tuple, List, Optional
 
-sys.path.append("../../")
+from osgeo import gdal
 
 from buteo.project_types import Number
 from buteo.utils import remove_if_overwrite, is_number, type_check
-from buteo.gdal_utils import (
-    path_to_driver_raster,
-    default_options,
-)
-from buteo.raster.io import (
-    open_raster,
-    raster_to_metadata,
-)
+from buteo.gdal_utils import path_to_driver_raster, default_options
+from buteo.raster.io import open_raster, raster_to_metadata
 
 
 def shift_raster(
@@ -27,7 +28,7 @@ def shift_raster(
     """Shifts a raster in a given direction.
 
     Returns:
-        An in-memory raster. If an out_path is given the output is a string containing
+        A raster. If an out_path is given the output is a string containing
         the path to the newly created raster.
     """
     type_check(raster, [list, str, gdal.Dataset], "raster")

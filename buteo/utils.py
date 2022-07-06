@@ -1,3 +1,10 @@
+"""
+Generic utility functions to make interacting with the toolbox easier.
+
+TODO:
+    - Documentation
+"""
+
 import os
 import sys
 import time
@@ -7,7 +14,6 @@ import tracemalloc
 
 from typing import Any
 from glob import glob
-
 
 def is_float(value):
     if isinstance(value, float):
