@@ -1,9 +1,11 @@
 package:
   name: buteo
-  version: "0.5.3"
+  version: "0.5.6"
 
 source:
-  path: setup.py
+  # path: setup.py
+  git_rev: "0.5.6"
+  git_url: https://github.com/casperfibaek/buteo.git
 
 build:
   number: 0
@@ -12,7 +14,7 @@ build:
 requirements:
   build:
     - python
-    - setuptools
+    # - setuptools
 
   run:
     - python

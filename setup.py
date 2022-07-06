@@ -11,7 +11,7 @@ def readme():
 
 setup(
     name="Buteo",
-    version="0.5.3",
+    version="0.5.6",
     author="Casper Fibaek",
     author_email="casperfibaek@gmail.com",
     description="A pythonic way of working with raster data",

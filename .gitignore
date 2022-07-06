@@ -141,3 +141,4 @@ lib/credentials.py
 /build
 /.vscode
 .vscode
+/builds/*
