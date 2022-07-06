@@ -1,10 +1,10 @@
 package:
   name: buteo
-  version: "0.5"
+  version: "0.5.0"
 
 source:
-  git_rev: 
-  git_url:
+  git_rev: base
+  git_url: https://github.com/casperfibaek/buteo.git
 
 requirements:
   build:
@@ -13,10 +13,16 @@ requirements:
 
   run:
     - python
+    - gdal
+    - numba
 
 test:
   imports:
-    -
+    - buteo
 
 about:
-  home:
+  home: https://github.com/casperfibaek/buteo/
+  license: MIT
+  license_familY: MIT
+  license_file: LICENSE
+  summary: "GIS-thonic way of working with raster and vector data."

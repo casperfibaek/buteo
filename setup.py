@@ -11,10 +11,10 @@ def readme():
 
 setuptools.setup(
     name="Buteo",
-    version="0.0.1",
+    version="0.5.0",
     author="Casper Fibaek",
     author_email="casperfibaek@gmail.com",
-    description="An Earth Observation toolbox for Python.",
+    description="A pythonic way of working with raster data",
     long_description=readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/casperfibaek/buteo",
@@ -29,11 +29,8 @@ setuptools.setup(
     ],
     packages=["buteo"],
     install_requires=[
-        "numpy",
+        "gdal",
         "numba",
-        "pandas",
-        "sentinelsat",
-        "tqdm",
     ],
     include_package_data=True,
 )
