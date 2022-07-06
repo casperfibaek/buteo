@@ -4,6 +4,7 @@ Generates the different layers of the degurba filter on a population map.
 TODO:
     - Finish workflow
     - Improve documentation
+    - Circular import error
 """
 
 import sys; sys.path.append("../../") # Path: buteo/filters/degurba.py
@@ -13,7 +14,7 @@ import numpy as np
 from buteo.raster.io import raster_to_array, array_to_raster, raster_to_metadata
 from buteo.raster.resample import resample_raster
 from buteo.raster.vectorize import vectorize_raster
-from buteo.vector.zonal_statistics import zonal_statistics
+# from buteo.vector.zonal_statistics import zonal_statistics
 from buteo.filters.convolutions import filter_array
 
 
@@ -57,9 +58,9 @@ def degurba_02(raster, out_path):
     tmp_high_res = array_to_raster(arr, raster)
     resampled = resample_raster(tmp_high_res, 1000, resample_alg="max")
     vectorized = vectorize_raster(resampled, out_path)
-    zones = zonal_statistics(vectorized, None, raster, stats=["sum"])
-
-    return zones
+    # zones = zonal_statistics(vectorized, None, raster, stats=["sum"])
+    return None
+    # return zones
 
 
 # folder = "C:/Users/caspe/Desktop/degurba_tests/"

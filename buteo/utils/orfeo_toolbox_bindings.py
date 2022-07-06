@@ -7,53 +7,12 @@ TODO:
 
 import sys; sys.path.append("../../") # Path: buteo/orfeo_toolbox_bindings.py
 import os
-import subprocess
-import time
 
-from buteo.utils.core import progress
+from buteo.utils.core import execute_cli_function
 from buteo.raster.io import raster_to_array
 
 
-def execute_cli_function(command, name, quiet=False):
-    process = subprocess.Popen(
-        command,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stdin=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-        universal_newlines=True,
-    )
-    try:
-        before = time.time()
-        for line in iter(process.stdout.readline, ""):
-            if "FATAL" in line:
-                raise RuntimeError(line)
-            elif "CRITICAL" in line:
-                raise RuntimeError(line)
-            elif "WARNING" in line:
-                continue
-            elif quiet is False:
-                if "INFO" in line:
-                    continue
-            try:
-                strip = line.strip()
-                if len(strip) != 0:
-                    part = strip.rsplit(":", 1)[1]
-                    percent = int(part.split("%")[0])
-                    progress(percent, 100, name)
-            except:
-                # print('runtime error')
-                if len(line.strip()) != 0:
-                    raise RuntimeError(line) from None
-
-    except:
-        print("Critical failure while performing Orfeo-Toolbox action.")
-        pass
-
-    print(f"{name} completed in {round(time.time() - before, 2)}s.")
-
-
-def pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):
+def otb_pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):
     """Pansharpen an image using the attributes
     of another image. Beware that the two images
     should be of the same size and position."""
@@ -108,7 +67,7 @@ def pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):
     return os.path.abspath(out_raster)
 
 
-def local_stats(in_raster, out_raster, options=None, band=None):
+def otb_local_stats(in_raster, out_raster, options=None, band=None):
     """Computes local statistical moments on every pixel
     in the selected channel of the input image"""
 
@@ -144,7 +103,7 @@ def local_stats(in_raster, out_raster, options=None, band=None):
     return os.path.abspath(out_raster)
 
 
-def haralick(in_raster, out_raster, options=None, out_datatype="float", band=None):
+def otb_haralick(in_raster, out_raster, options=None, out_datatype="float", band=None):
     """Performs haralick texture extraction"""
 
     cli = "otbcli_HaralickTextureExtraction"
@@ -192,7 +151,7 @@ def haralick(in_raster, out_raster, options=None, out_datatype="float", band=Non
     return os.path.abspath(out_raster)
 
 
-def dimension_reduction(in_raster, out_raster, options=None, out_datatype=None):
+def otb_dimension_reduction(in_raster, out_raster, options=None, out_datatype=None):
     """Performs dimensionality reduction on input image.
     PCA,NA-PCA,MAF,ICA methods are available.
     It is also possible to compute the inverse transform
@@ -234,7 +193,7 @@ def dimension_reduction(in_raster, out_raster, options=None, out_datatype=None):
     return os.path.abspath(out_raster)
 
 
-def concatenate_images(in_rasters, out_raster, ram=None, out_datatype=None):
+def otb_concatenate_images(in_rasters, out_raster, ram=None, out_datatype=None):
     """This application performs images channels concatenation.
     It reads the input image list (single or multi-channel) and
     generates a single multi-channel image. The channel order
@@ -268,7 +227,7 @@ def concatenate_images(in_rasters, out_raster, ram=None, out_datatype=None):
     return os.path.abspath(out_raster)
 
 
-def split_images(in_raster, out_rasters, ram=None, out_datatype=None):
+def otb_split_images(in_raster, out_rasters, ram=None, out_datatype=None):
     """This application splits a N-bands image into N mono-band images.
     The output images filename will be generated from the output parameter.
     Thus, if the input image has 2 channels, and the user has set as
@@ -298,7 +257,7 @@ def split_images(in_raster, out_rasters, ram=None, out_datatype=None):
     return out_rasters
 
 
-def rescale(in_raster, out_raster, options=None, out_datatype="float"):
+def otb_rescale(in_raster, out_raster, options=None, out_datatype="float"):
     """This application scales the given image pixel intensity between two given values.
     By default min (resp. max) value is set to 0 (resp. 1).
     Input minimum and maximum values is automatically computed for all image bands."""
@@ -338,7 +297,7 @@ def rescale(in_raster, out_raster, options=None, out_datatype="float"):
     return os.path.abspath(out_raster)
 
 
-def merge_rasters(
+def otb_merge_rasters(
     in_rasters,
     out_raster,
     options=None,
@@ -454,7 +413,7 @@ def obt_bandmath(
     return os.path.abspath(out_raster)
 
 
-def meanshift_segmentation(
+def otb_meanshift_segmentation(
     in_raster,
     out_geom,
     spatialr=5,

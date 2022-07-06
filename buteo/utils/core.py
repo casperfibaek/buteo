@@ -11,6 +11,7 @@ import time
 import shutil
 import linecache
 import tracemalloc
+import subprocess
 
 from typing import Any
 from glob import glob
@@ -330,3 +331,42 @@ def timing(before, print_msg=True):
         print(message)
 
     return message
+
+
+def execute_cli_function(command, name, quiet=False):
+    process = subprocess.Popen(
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stdin=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    )
+    try:
+        before = time.time()
+        for line in iter(process.stdout.readline, ""):
+            if "FATAL" in line:
+                raise RuntimeError(line)
+            elif "CRITICAL" in line:
+                raise RuntimeError(line)
+            elif "WARNING" in line:
+                continue
+            elif quiet is False:
+                if "INFO" in line:
+                    continue
+            try:
+                strip = line.strip()
+                if len(strip) != 0:
+                    part = strip.rsplit(":", 1)[1]
+                    percent = int(part.split("%")[0])
+                    progress(percent, 100, name)
+            except:
+                # print('runtime error')
+                if len(line.strip()) != 0:
+                    raise RuntimeError(line) from None
+
+    except:
+        print("Critical failure while performing Orfeo-Toolbox action.")
+        pass
+
+    print(f"{name} completed in {round(time.time() - before, 2)}s.")
