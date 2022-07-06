@@ -20,8 +20,8 @@ from buteo.vector.io import (
     internal_vector_to_disk,
     ready_io_vector,
 )
-from buteo.gdal_utils import parse_projection, path_to_driver_vector
-from buteo.utils import remove_if_overwrite, type_check
+from buteo.utils.gdal_utils import parse_projection, path_to_driver_vector
+from buteo.utils.core import remove_if_overwrite, type_check
 
 
 def internal_reproject_vector(

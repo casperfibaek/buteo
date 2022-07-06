@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>buteo.vector.reproject API documentation</title>
-<meta name="description" content="Functions to reproject vectors. References can be both vector and raster …" />
+<title>buteo.utils API documentation</title>
+<meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -19,48 +19,34 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>buteo.vector.reproject</code></h1>
+<h1 class="title">Module <code>buteo.utils</code></h1>
 </header>
 <section id="section-intro">
-<p>Functions to reproject vectors. References can be both vector and raster.</p>
-<h2 id="todo">Todo</h2>
-<ul>
-<li>Improve documentation</li>
-</ul>
 </section>
 <section>
-</section>
-<section>
-</section>
-<section>
-<h2 class="section-title" id="header-functions">Functions</h2>
+<h2 class="section-title" id="header-submodules">Sub-modules</h2>
 <dl>
-<dt id="buteo.vector.reproject.internal_reproject_vector"><code class="name flex">
-<span>def <span class="ident">internal_reproject_vector</span></span>(<span>vector: Union[str, osgeo.ogr.DataSource], projection: Union[int, str, osgeo.gdal.Dataset, osgeo.ogr.DataSource, osgeo.osr.SpatialReference], out_path: Optional[str] = None, copy_if_same: bool = False, overwrite: bool = True) ‑> str</span>
-</code></dt>
+<dt><code class="name"><a title="buteo.utils.core" href="core.html">buteo.utils.core</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Generic utility functions to make interacting with the toolbox easier …</p></div>
 </dd>
-<dt id="buteo.vector.reproject.reproject_vector"><code class="name flex">
-<span>def <span class="ident">reproject_vector</span></span>(<span>vector: Union[List[Union[str, osgeo.ogr.DataSource]], osgeo.ogr.DataSource, str], projection: Union[int, str, osgeo.gdal.Dataset, osgeo.ogr.DataSource, osgeo.osr.SpatialReference], out_path: Optional[str] = None, copy_if_same: bool = False, overwrite: bool = True) ‑> Union[List[str], str]</span>
-</code></dt>
+<dt><code class="name"><a title="buteo.utils.gdal_utils" href="gdal_utils.html">buteo.utils.gdal_utils</a></code></dt>
 <dd>
-<div class="desc"><p>Reprojects a vector given a target projection.</p>
-<h2 id="args">Args</h2>
-<p>vector (path | vector): The vector to reproject.</p>
-<p>projection (str | int | vector | raster): The projection is infered from
-the input. The input can be: WKT proj, EPSG proj, Proj, or read from a
-vector or raster datasource either from path or in-memory.
-**kwargs:
-out_path (path | None): The destination to save to. If None then
-the output is an in-memory raster.</p>
-<pre><code>overwite (bool): Is it possible to overwrite the out_path if it exists.
-</code></pre>
-<h2 id="returns">Returns</h2>
-<p>An in-memory vector. If an out_path is given, the output is a string containing
-the path to the newly created vecotr.</p></div>
+<div class="desc"><p>Utilities for working with GDAL …</p></div>
+</dd>
+<dt><code class="name"><a title="buteo.utils.orfeo_toolbox_bindings" href="orfeo_toolbox_bindings.html">buteo.utils.orfeo_toolbox_bindings</a></code></dt>
+<dd>
+<div class="desc"><p>Bindings to interact with the orfeo-toolbox in a more pythonic way …</p></div>
+</dd>
+<dt><code class="name"><a title="buteo.utils.project_types" href="project_types.html">buteo.utils.project_types</a></code></dt>
+<dd>
+<div class="desc"><p>Typings for project types …</p></div>
 </dd>
 </dl>
+</section>
+<section>
+</section>
+<section>
 </section>
 <section>
 </section>
@@ -73,13 +59,15 @@ the path to the newly created vecotr.</p></div>
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="buteo.vector" href="index.html">buteo.vector</a></code></li>
+<li><code><a title="buteo" href="../index.html">buteo</a></code></li>
 </ul>
 </li>
-<li><h3><a href="#header-functions">Functions</a></h3>
-<ul class="">
-<li><code><a title="buteo.vector.reproject.internal_reproject_vector" href="#buteo.vector.reproject.internal_reproject_vector">internal_reproject_vector</a></code></li>
-<li><code><a title="buteo.vector.reproject.reproject_vector" href="#buteo.vector.reproject.reproject_vector">reproject_vector</a></code></li>
+<li><h3><a href="#header-submodules">Sub-modules</a></h3>
+<ul>
+<li><code><a title="buteo.utils.core" href="core.html">buteo.utils.core</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils" href="gdal_utils.html">buteo.utils.gdal_utils</a></code></li>
+<li><code><a title="buteo.utils.orfeo_toolbox_bindings" href="orfeo_toolbox_bindings.html">buteo.utils.orfeo_toolbox_bindings</a></code></li>
+<li><code><a title="buteo.utils.project_types" href="project_types.html">buteo.utils.project_types</a></code></li>
 </ul>
 </li>
 </ul>

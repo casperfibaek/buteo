@@ -1,3 +1,4 @@
+from buteo.raster.io import raster_to_array
 import buteo
 from glob import glob
 
@@ -5,4 +6,6 @@ folder = "/home/casper/Desktop/data/sentinel2_images/S2B_MSIL2A_20220629T081609_
 
 img = glob(folder + "*.jp2")[0]
 
-buteo.raster.io.raster_to_array(img)
+bob = raster_to_array(img)
+
+import pdb; pdb.set_trace()

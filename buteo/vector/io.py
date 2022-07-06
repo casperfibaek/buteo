@@ -22,14 +22,14 @@ from typing import Union, List, Dict, Optional, Any, Tuple
 from osgeo import ogr, osr, gdal
 import numpy as np
 
-from buteo.project_types import Metadata_vector_layer, Number, Metadata_vector
-from buteo.gdal_utils import (
+from buteo.utils.project_types import Metadata_vector_layer, Number, Metadata_vector
+from buteo.utils.gdal_utils import (
     is_vector,
     is_raster,
     path_to_driver_vector,
     advanced_extents,
 )
-from buteo.utils import (
+from buteo.utils.core import (
     progress,
     remove_if_overwrite,
     overwrite_required,

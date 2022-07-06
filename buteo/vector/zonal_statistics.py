@@ -21,7 +21,7 @@ from buteo.vector.io import (
     internal_vector_to_metadata,
 )
 from buteo.filters.stats import calculate_array_stats
-from buteo.utils import progress
+from buteo.utils.core import progress
 
 
 @jit(nopython=True, nogil=True, fastmath=True, inline="always")

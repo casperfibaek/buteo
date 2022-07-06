@@ -12,13 +12,13 @@ from typing import Union, Optional, List
 
 from osgeo import ogr, osr, gdal
 
-from buteo.gdal_utils import (
+from buteo.utils.gdal_utils import (
     is_vector,
     is_raster,
     parse_projection,
     path_to_driver_vector,
 )
-from buteo.utils import type_check
+from buteo.utils.core import type_check
 from buteo.raster.io import raster_to_metadata
 from buteo.vector.io import (
     get_vector_path,

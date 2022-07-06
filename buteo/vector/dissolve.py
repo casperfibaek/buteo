@@ -11,8 +11,8 @@ from typing import Dict, Union, List, Optional, TypedDict
 
 from osgeo import ogr
 
-from buteo.gdal_utils import path_to_driver_vector
-from buteo.utils import type_check
+from buteo.utils.gdal_utils import path_to_driver_vector
+from buteo.utils.core import type_check
 from buteo.vector.io import (
     open_vector,
     ready_io_vector,

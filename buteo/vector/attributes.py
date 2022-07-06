@@ -13,7 +13,7 @@ from typing import Union
 from osgeo import ogr
 # import pandas as pd
 
-from buteo.utils import type_check
+from buteo.utils.core import type_check
 from buteo.vector.io import internal_vector_to_metadata, open_vector
 
 

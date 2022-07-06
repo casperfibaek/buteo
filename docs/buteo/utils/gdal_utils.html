@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>buteo.gdal_utils API documentation</title>
+<title>buteo.utils.gdal_utils API documentation</title>
 <meta name="description" content="Utilities for working with GDAL …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,7 +19,7 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>buteo.gdal_utils</code></h1>
+<h1 class="title">Module <code>buteo.utils.gdal_utils</code></h1>
 </header>
 <section id="section-intro">
 <p>Utilities for working with GDAL.</p>
@@ -35,31 +35,31 @@
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="buteo.gdal_utils.advanced_extents"><code class="name flex">
-<span>def <span class="ident">advanced_extents</span></span>(<span>extent_ogr: List[Union[float, int]], projection: osgeo.osr.SpatialReference) ‑> <a title="buteo.project_types.Expanded_extents" href="project_types.html#buteo.project_types.Expanded_extents">Expanded_extents</a></span>
+<dt id="buteo.utils.gdal_utils.advanced_extents"><code class="name flex">
+<span>def <span class="ident">advanced_extents</span></span>(<span>extent_ogr: List[Union[float, int]], projection: osgeo.osr.SpatialReference) ‑> <a title="buteo.utils.project_types.Expanded_extents" href="project_types.html#buteo.utils.project_types.Expanded_extents">Expanded_extents</a></span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.align_bbox"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.align_bbox"><code class="name flex">
 <span>def <span class="ident">align_bbox</span></span>(<span>extent_og, extent_ta, pixel_width, pixel_height, warp_format=True)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.bbox_to_pixel_offsets"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.bbox_to_pixel_offsets"><code class="name flex">
 <span>def <span class="ident">bbox_to_pixel_offsets</span></span>(<span>gt, bbox)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.create_geotransform"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.create_geotransform"><code class="name flex">
 <span>def <span class="ident">create_geotransform</span></span>(<span>geo_transform, extent)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.default_options"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.default_options"><code class="name flex">
 <span>def <span class="ident">default_options</span></span>(<span>options) ‑> list</span>
 </code></dt>
 <dd>
@@ -80,55 +80,55 @@ added.</p>
 <p>A list of strings with the default options for a GDAL
 raster.</p></div>
 </dd>
-<dt id="buteo.gdal_utils.destroy_raster"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.destroy_raster"><code class="name flex">
 <span>def <span class="ident">destroy_raster</span></span>(<span>raster: str) ‑> None</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.gdal_bbox_intersects"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.gdal_bbox_intersects"><code class="name flex">
 <span>def <span class="ident">gdal_bbox_intersects</span></span>(<span>bbox1: Sequence[Union[float, int]], bbox2: Sequence[Union[float, int]]) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.gdal_bbox_within"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.gdal_bbox_within"><code class="name flex">
 <span>def <span class="ident">gdal_bbox_within</span></span>(<span>bbox1: Sequence[Union[float, int]], bbox2: Sequence[Union[float, int]]) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.gdal_datatype_is_float"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.gdal_datatype_is_float"><code class="name flex">
 <span>def <span class="ident">gdal_datatype_is_float</span></span>(<span>datatype)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.gdal_nodata_value_from_type"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.gdal_nodata_value_from_type"><code class="name flex">
 <span>def <span class="ident">gdal_nodata_value_from_type</span></span>(<span>gdal_datatype_raw)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.gdal_to_numpy_datatype"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.gdal_to_numpy_datatype"><code class="name flex">
 <span>def <span class="ident">gdal_to_numpy_datatype</span></span>(<span>gdal_int)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.get_extent"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.get_extent"><code class="name flex">
 <span>def <span class="ident">get_extent</span></span>(<span>dataframe)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.get_intersection"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.get_intersection"><code class="name flex">
 <span>def <span class="ident">get_intersection</span></span>(<span>extent1, extent2)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.is_raster"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.is_raster"><code class="name flex">
 <span>def <span class="ident">is_raster</span></span>(<span>raster)</span>
 </code></dt>
 <dd>
@@ -138,7 +138,7 @@ raster.</p></div>
 <h2 id="returns">Returns</h2>
 <p>A boolean.</p></div>
 </dd>
-<dt id="buteo.gdal_utils.is_vector"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.is_vector"><code class="name flex">
 <span>def <span class="ident">is_vector</span></span>(<span>vector: Union[str, osgeo.ogr.DataSource]) ‑> bool</span>
 </code></dt>
 <dd>
@@ -149,38 +149,38 @@ indicating if it is a valid vector.</p>
 <h2 id="returns">Returns</h2>
 <p>A boolean. True if input is a valid vector, false otherwise.</p></div>
 </dd>
-<dt id="buteo.gdal_utils.numpy_fill_values"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.numpy_fill_values"><code class="name flex">
 <span>def <span class="ident">numpy_fill_values</span></span>(<span>datatype)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.numpy_to_gdal_datatype"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.numpy_to_gdal_datatype"><code class="name flex">
 <span>def <span class="ident">numpy_to_gdal_datatype</span></span>(<span>datatype)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.numpy_to_gdal_datatype2"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.numpy_to_gdal_datatype2"><code class="name flex">
 <span>def <span class="ident">numpy_to_gdal_datatype2</span></span>(<span>datatype)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.ogr_bbox_intersects"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.ogr_bbox_intersects"><code class="name flex">
 <span>def <span class="ident">ogr_bbox_intersects</span></span>(<span>bbox1: Sequence[Union[float, int]], bbox2: Sequence[Union[float, int]]) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.ogr_bbox_within"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.ogr_bbox_within"><code class="name flex">
 <span>def <span class="ident">ogr_bbox_within</span></span>(<span>bbox1: Sequence[Union[float, int]], bbox2: Sequence[Union[float, int]]) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.parse_projection"><code class="name flex">
-<span>def <span class="ident">parse_projection</span></span>(<span>target: Union[str, osgeo.ogr.DataSource, osgeo.gdal.Dataset, osgeo.osr.SpatialReference, int], return_wkt: bool = False) ‑> Union[osgeo.osr.SpatialReference, str]</span>
+<dt id="buteo.utils.gdal_utils.parse_projection"><code class="name flex">
+<span>def <span class="ident">parse_projection</span></span>(<span>target: Union[int, str, osgeo.gdal.Dataset, osgeo.ogr.DataSource, osgeo.osr.SpatialReference], return_wkt: bool = False) ‑> Union[osgeo.osr.SpatialReference, str]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Parses a gdal, ogr og osr data source and extraction the projection. If
@@ -195,25 +195,25 @@ instead of an osr.SpatialReference.</p>
 <p>An osr.SpatialReference matching the input. If return_wkt is true, WKT
 string representing the projection is returned.</p></div>
 </dd>
-<dt id="buteo.gdal_utils.path_to_driver_raster"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.path_to_driver_raster"><code class="name flex">
 <span>def <span class="ident">path_to_driver_raster</span></span>(<span>file_path: str, return_bool: bool = False) ‑> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Takes a file path of a raster and returns the driver name.</p></div>
 </dd>
-<dt id="buteo.gdal_utils.path_to_driver_vector"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.path_to_driver_vector"><code class="name flex">
 <span>def <span class="ident">path_to_driver_vector</span></span>(<span>file_path: str, return_bool: bool = False) ‑> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Takes a file path of a raster and returns the driver name.</p></div>
 </dd>
-<dt id="buteo.gdal_utils.raster_size_from_list"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.raster_size_from_list"><code class="name flex">
 <span>def <span class="ident">raster_size_from_list</span></span>(<span>target_size, target_in_pixels=False)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.raster_to_reference"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.raster_to_reference"><code class="name flex">
 <span>def <span class="ident">raster_to_reference</span></span>(<span>raster: Union[str, osgeo.gdal.Dataset], writeable: bool = False) ‑> osgeo.gdal.Dataset</span>
 </code></dt>
 <dd>
@@ -226,43 +226,43 @@ writeable (bool): Indicates if the opened raster be writeable.</p>
 <h2 id="returns">Returns</h2>
 <p>A GDAL.dataset of the input raster.</p></div>
 </dd>
-<dt id="buteo.gdal_utils.reproject_extent"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.reproject_extent"><code class="name flex">
 <span>def <span class="ident">reproject_extent</span></span>(<span>extent: Sequence[Union[float, int]], source_projection: osgeo.osr.SpatialReference, target_projection: osgeo.osr.SpatialReference)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>GDAL Format</p></div>
 </dd>
-<dt id="buteo.gdal_utils.to_array_list"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.to_array_list"><code class="name flex">
 <span>def <span class="ident">to_array_list</span></span>(<span>variable: Any) ‑> List[Union[List, numpy.ndarray]]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.to_band_list"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.to_band_list"><code class="name flex">
 <span>def <span class="ident">to_band_list</span></span>(<span>variable: Any, band_count: int) ‑> List[int]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.to_path_list"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.to_path_list"><code class="name flex">
 <span>def <span class="ident">to_path_list</span></span>(<span>variable: Any) ‑> List[str]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.translate_datatypes"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.translate_datatypes"><code class="name flex">
 <span>def <span class="ident">translate_datatypes</span></span>(<span>datatype)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.translate_resample_method"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.translate_resample_method"><code class="name flex">
 <span>def <span class="ident">translate_resample_method</span></span>(<span>method)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="buteo.gdal_utils.vector_to_reference"><code class="name flex">
+<dt id="buteo.utils.gdal_utils.vector_to_reference"><code class="name flex">
 <span>def <span class="ident">vector_to_reference</span></span>(<span>vector: Union[str, osgeo.ogr.DataSource], writeable: bool = False) ‑> osgeo.ogr.DataSource</span>
 </code></dt>
 <dd>
@@ -288,43 +288,43 @@ writeable (bool): Indicates if the opened vector be writeable.</p>
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="buteo" href="index.html">buteo</a></code></li>
+<li><code><a title="buteo.utils" href="index.html">buteo.utils</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="buteo.gdal_utils.advanced_extents" href="#buteo.gdal_utils.advanced_extents">advanced_extents</a></code></li>
-<li><code><a title="buteo.gdal_utils.align_bbox" href="#buteo.gdal_utils.align_bbox">align_bbox</a></code></li>
-<li><code><a title="buteo.gdal_utils.bbox_to_pixel_offsets" href="#buteo.gdal_utils.bbox_to_pixel_offsets">bbox_to_pixel_offsets</a></code></li>
-<li><code><a title="buteo.gdal_utils.create_geotransform" href="#buteo.gdal_utils.create_geotransform">create_geotransform</a></code></li>
-<li><code><a title="buteo.gdal_utils.default_options" href="#buteo.gdal_utils.default_options">default_options</a></code></li>
-<li><code><a title="buteo.gdal_utils.destroy_raster" href="#buteo.gdal_utils.destroy_raster">destroy_raster</a></code></li>
-<li><code><a title="buteo.gdal_utils.gdal_bbox_intersects" href="#buteo.gdal_utils.gdal_bbox_intersects">gdal_bbox_intersects</a></code></li>
-<li><code><a title="buteo.gdal_utils.gdal_bbox_within" href="#buteo.gdal_utils.gdal_bbox_within">gdal_bbox_within</a></code></li>
-<li><code><a title="buteo.gdal_utils.gdal_datatype_is_float" href="#buteo.gdal_utils.gdal_datatype_is_float">gdal_datatype_is_float</a></code></li>
-<li><code><a title="buteo.gdal_utils.gdal_nodata_value_from_type" href="#buteo.gdal_utils.gdal_nodata_value_from_type">gdal_nodata_value_from_type</a></code></li>
-<li><code><a title="buteo.gdal_utils.gdal_to_numpy_datatype" href="#buteo.gdal_utils.gdal_to_numpy_datatype">gdal_to_numpy_datatype</a></code></li>
-<li><code><a title="buteo.gdal_utils.get_extent" href="#buteo.gdal_utils.get_extent">get_extent</a></code></li>
-<li><code><a title="buteo.gdal_utils.get_intersection" href="#buteo.gdal_utils.get_intersection">get_intersection</a></code></li>
-<li><code><a title="buteo.gdal_utils.is_raster" href="#buteo.gdal_utils.is_raster">is_raster</a></code></li>
-<li><code><a title="buteo.gdal_utils.is_vector" href="#buteo.gdal_utils.is_vector">is_vector</a></code></li>
-<li><code><a title="buteo.gdal_utils.numpy_fill_values" href="#buteo.gdal_utils.numpy_fill_values">numpy_fill_values</a></code></li>
-<li><code><a title="buteo.gdal_utils.numpy_to_gdal_datatype" href="#buteo.gdal_utils.numpy_to_gdal_datatype">numpy_to_gdal_datatype</a></code></li>
-<li><code><a title="buteo.gdal_utils.numpy_to_gdal_datatype2" href="#buteo.gdal_utils.numpy_to_gdal_datatype2">numpy_to_gdal_datatype2</a></code></li>
-<li><code><a title="buteo.gdal_utils.ogr_bbox_intersects" href="#buteo.gdal_utils.ogr_bbox_intersects">ogr_bbox_intersects</a></code></li>
-<li><code><a title="buteo.gdal_utils.ogr_bbox_within" href="#buteo.gdal_utils.ogr_bbox_within">ogr_bbox_within</a></code></li>
-<li><code><a title="buteo.gdal_utils.parse_projection" href="#buteo.gdal_utils.parse_projection">parse_projection</a></code></li>
-<li><code><a title="buteo.gdal_utils.path_to_driver_raster" href="#buteo.gdal_utils.path_to_driver_raster">path_to_driver_raster</a></code></li>
-<li><code><a title="buteo.gdal_utils.path_to_driver_vector" href="#buteo.gdal_utils.path_to_driver_vector">path_to_driver_vector</a></code></li>
-<li><code><a title="buteo.gdal_utils.raster_size_from_list" href="#buteo.gdal_utils.raster_size_from_list">raster_size_from_list</a></code></li>
-<li><code><a title="buteo.gdal_utils.raster_to_reference" href="#buteo.gdal_utils.raster_to_reference">raster_to_reference</a></code></li>
-<li><code><a title="buteo.gdal_utils.reproject_extent" href="#buteo.gdal_utils.reproject_extent">reproject_extent</a></code></li>
-<li><code><a title="buteo.gdal_utils.to_array_list" href="#buteo.gdal_utils.to_array_list">to_array_list</a></code></li>
-<li><code><a title="buteo.gdal_utils.to_band_list" href="#buteo.gdal_utils.to_band_list">to_band_list</a></code></li>
-<li><code><a title="buteo.gdal_utils.to_path_list" href="#buteo.gdal_utils.to_path_list">to_path_list</a></code></li>
-<li><code><a title="buteo.gdal_utils.translate_datatypes" href="#buteo.gdal_utils.translate_datatypes">translate_datatypes</a></code></li>
-<li><code><a title="buteo.gdal_utils.translate_resample_method" href="#buteo.gdal_utils.translate_resample_method">translate_resample_method</a></code></li>
-<li><code><a title="buteo.gdal_utils.vector_to_reference" href="#buteo.gdal_utils.vector_to_reference">vector_to_reference</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.advanced_extents" href="#buteo.utils.gdal_utils.advanced_extents">advanced_extents</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.align_bbox" href="#buteo.utils.gdal_utils.align_bbox">align_bbox</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.bbox_to_pixel_offsets" href="#buteo.utils.gdal_utils.bbox_to_pixel_offsets">bbox_to_pixel_offsets</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.create_geotransform" href="#buteo.utils.gdal_utils.create_geotransform">create_geotransform</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.default_options" href="#buteo.utils.gdal_utils.default_options">default_options</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.destroy_raster" href="#buteo.utils.gdal_utils.destroy_raster">destroy_raster</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.gdal_bbox_intersects" href="#buteo.utils.gdal_utils.gdal_bbox_intersects">gdal_bbox_intersects</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.gdal_bbox_within" href="#buteo.utils.gdal_utils.gdal_bbox_within">gdal_bbox_within</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.gdal_datatype_is_float" href="#buteo.utils.gdal_utils.gdal_datatype_is_float">gdal_datatype_is_float</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.gdal_nodata_value_from_type" href="#buteo.utils.gdal_utils.gdal_nodata_value_from_type">gdal_nodata_value_from_type</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.gdal_to_numpy_datatype" href="#buteo.utils.gdal_utils.gdal_to_numpy_datatype">gdal_to_numpy_datatype</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.get_extent" href="#buteo.utils.gdal_utils.get_extent">get_extent</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.get_intersection" href="#buteo.utils.gdal_utils.get_intersection">get_intersection</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_raster" href="#buteo.utils.gdal_utils.is_raster">is_raster</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_vector" href="#buteo.utils.gdal_utils.is_vector">is_vector</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.numpy_fill_values" href="#buteo.utils.gdal_utils.numpy_fill_values">numpy_fill_values</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.numpy_to_gdal_datatype" href="#buteo.utils.gdal_utils.numpy_to_gdal_datatype">numpy_to_gdal_datatype</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.numpy_to_gdal_datatype2" href="#buteo.utils.gdal_utils.numpy_to_gdal_datatype2">numpy_to_gdal_datatype2</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.ogr_bbox_intersects" href="#buteo.utils.gdal_utils.ogr_bbox_intersects">ogr_bbox_intersects</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.ogr_bbox_within" href="#buteo.utils.gdal_utils.ogr_bbox_within">ogr_bbox_within</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.parse_projection" href="#buteo.utils.gdal_utils.parse_projection">parse_projection</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.path_to_driver_raster" href="#buteo.utils.gdal_utils.path_to_driver_raster">path_to_driver_raster</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.path_to_driver_vector" href="#buteo.utils.gdal_utils.path_to_driver_vector">path_to_driver_vector</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.raster_size_from_list" href="#buteo.utils.gdal_utils.raster_size_from_list">raster_size_from_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.raster_to_reference" href="#buteo.utils.gdal_utils.raster_to_reference">raster_to_reference</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.reproject_extent" href="#buteo.utils.gdal_utils.reproject_extent">reproject_extent</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.to_array_list" href="#buteo.utils.gdal_utils.to_array_list">to_array_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.to_band_list" href="#buteo.utils.gdal_utils.to_band_list">to_band_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.to_path_list" href="#buteo.utils.gdal_utils.to_path_list">to_path_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.translate_datatypes" href="#buteo.utils.gdal_utils.translate_datatypes">translate_datatypes</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.translate_resample_method" href="#buteo.utils.gdal_utils.translate_resample_method">translate_resample_method</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.vector_to_reference" href="#buteo.utils.gdal_utils.vector_to_reference">vector_to_reference</a></code></li>
 </ul>
 </li>
 </ul>

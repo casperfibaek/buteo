@@ -11,7 +11,7 @@ def readme():
 
 setup(
     name="Buteo",
-    version="0.5.6",
+    version="0.6.0",
     author="Casper Fibaek",
     author_email="casperfibaek@gmail.com",
     description="A pythonic way of working with raster data",
@@ -36,6 +36,4 @@ setup(
     include_package_data=True,
 )
 
-# python -m build
-# python -m twine upload --repository testpypi dist/*
 # pdoc3 --html --output-dir docs --config show_source_code=False buteo

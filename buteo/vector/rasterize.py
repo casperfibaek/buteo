@@ -13,7 +13,7 @@ from uuid import uuid4
 
 from buteo.raster.io import open_raster
 from buteo.vector.io import internal_vector_to_metadata, open_vector
-from buteo.gdal_utils import numpy_to_gdal_datatype2, default_options
+from buteo.utils.gdal_utils import numpy_to_gdal_datatype2, default_options
 
 
 def rasterize_vector(

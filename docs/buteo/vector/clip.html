@@ -37,7 +37,7 @@
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.vector.clip.clip_vector"><code class="name flex">
-<span>def <span class="ident">clip_vector</span></span>(<span>vector: Union[List[Union[str, osgeo.ogr.DataSource]], osgeo.ogr.DataSource, str], clip_geom: Union[str, osgeo.ogr.DataSource, osgeo.gdal.Dataset], out_path: str = None, process_layer: int = 0, process_layer_clip: int = 0, to_extent: bool = False, target_projection: Union[str, osgeo.ogr.DataSource, osgeo.gdal.Dataset, osgeo.osr.SpatialReference, int] = None, preserve_fid: bool = True, prefix: str = '', postfix: str = '', add_uuid: bool = False) ‑> Union[List[str], str]</span>
+<span>def <span class="ident">clip_vector</span></span>(<span>vector: Union[List[Union[str, osgeo.ogr.DataSource]], osgeo.ogr.DataSource, str], clip_geom: Union[str, osgeo.ogr.DataSource, osgeo.gdal.Dataset], out_path: str = None, process_layer: int = 0, process_layer_clip: int = 0, to_extent: bool = False, target_projection: Union[int, str, osgeo.gdal.Dataset, osgeo.ogr.DataSource, osgeo.osr.SpatialReference] = None, preserve_fid: bool = True, prefix: str = '', postfix: str = '', add_uuid: bool = False) ‑> Union[List[str], str]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Clips a vector to a geometry.</p>

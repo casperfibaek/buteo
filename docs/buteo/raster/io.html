@@ -76,7 +76,7 @@ newly created raster file.</p></div>
 <div class="desc"><p>Copies a raster to a path. Can be both memory and disk.</p></div>
 </dd>
 <dt id="buteo.raster.io.create_raster"><code class="name flex">
-<span>def <span class="ident">create_raster</span></span>(<span>out_path: Optional[str] = None, reference: Union[osgeo.gdal.Dataset, str, ForwardRef(None)] = None, top_left: Union[list, tuple, ForwardRef(None)] = None, height: Optional[int] = None, width: Optional[int] = None, pixel_height: Union[float, int, ForwardRef(None)] = None, pixel_width: Union[float, int, ForwardRef(None)] = None, projection: Union[str, osgeo.ogr.DataSource, osgeo.gdal.Dataset, osgeo.osr.SpatialReference, int, ForwardRef(None)] = None, extent: Optional[list] = None, dtype: Optional[str] = None, filled_with: Union[float, int, ForwardRef(None)] = 0, bands: int = 1, nodata_value: Union[float, int, ForwardRef(None)] = None, overwrite: bool = True, opened: bool = False, creation_options: Optional[list] = None) ‑> Union[str, osgeo.gdal.Dataset]</span>
+<span>def <span class="ident">create_raster</span></span>(<span>out_path: Optional[str] = None, reference: Union[str, osgeo.gdal.Dataset, ForwardRef(None)] = None, top_left: Union[list, tuple, ForwardRef(None)] = None, height: Optional[int] = None, width: Optional[int] = None, pixel_height: Union[int, float, ForwardRef(None)] = None, pixel_width: Union[int, float, ForwardRef(None)] = None, projection: Union[str, osgeo.ogr.DataSource, osgeo.gdal.Dataset, osgeo.osr.SpatialReference, int, ForwardRef(None)] = None, extent: Optional[list] = None, dtype: Optional[str] = None, filled_with: Union[int, float, ForwardRef(None)] = 0, bands: int = 1, nodata_value: Union[int, float, ForwardRef(None)] = None, overwrite: bool = True, opened: bool = False, creation_options: Optional[list] = None) ‑> Union[str, osgeo.gdal.Dataset]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns a new created raster initialised with some value.</p></div>
@@ -202,7 +202,7 @@ Example: raster_to_memory(clip_ref, "clip_geom.gpkg")
 <p>A gdal.Dataset copied into memory.</p></div>
 </dd>
 <dt id="buteo.raster.io.raster_to_metadata"><code class="name flex">
-<span>def <span class="ident">raster_to_metadata</span></span>(<span>raster: Union[List[Union[str, osgeo.gdal.Dataset]], str, osgeo.gdal.Dataset], create_geometry: bool = False) ‑> Union[<a title="buteo.project_types.Metadata_raster" href="../project_types.html#buteo.project_types.Metadata_raster">Metadata_raster</a>, List[<a title="buteo.project_types.Metadata_raster" href="../project_types.html#buteo.project_types.Metadata_raster">Metadata_raster</a>]]</span>
+<span>def <span class="ident">raster_to_metadata</span></span>(<span>raster: Union[List[Union[str, osgeo.gdal.Dataset]], str, osgeo.gdal.Dataset], create_geometry: bool = False) ‑> Union[<a title="buteo.utils.project_types.Metadata_raster" href="../utils/project_types.html#buteo.utils.project_types.Metadata_raster">Metadata_raster</a>, List[<a title="buteo.utils.project_types.Metadata_raster" href="../utils/project_types.html#buteo.utils.project_types.Metadata_raster">Metadata_raster</a>]]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Reads a raster from a list of rasters, string or a dataset and returns metadata.</p>
@@ -267,7 +267,7 @@ otherwise.</p></div>
 <div class="desc"><p>Stacks a list of rasters. Must be aligned.</p></div>
 </dd>
 <dt id="buteo.raster.io.stack_rasters_vrt"><code class="name flex">
-<span>def <span class="ident">stack_rasters_vrt</span></span>(<span>rasters, out_path: str, seperate: bool = True, resample_alg='nearest', options: tuple = (), overwrite: bool = True, reference: Union[osgeo.gdal.Dataset, str, ForwardRef(None)] = None, creation_options: Optional[list] = None) ‑> str</span>
+<span>def <span class="ident">stack_rasters_vrt</span></span>(<span>rasters, out_path: str, seperate: bool = True, resample_alg='nearest', options: tuple = (), overwrite: bool = True, reference: Union[str, osgeo.gdal.Dataset, ForwardRef(None)] = None, creation_options: Optional[list] = None) ‑> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Stacks a list of rasters into a virtual rasters (.vrt).</p></div>

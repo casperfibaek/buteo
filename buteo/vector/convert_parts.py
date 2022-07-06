@@ -11,8 +11,8 @@ from typing import Union, Optional, List
 
 from osgeo import ogr
 
-from buteo.gdal_utils import path_to_driver_vector
-from buteo.utils import overwrite_required, progress, remove_if_overwrite, type_check
+from buteo.utils.gdal_utils import path_to_driver_vector
+from buteo.utils.core import overwrite_required, progress, remove_if_overwrite, type_check
 from buteo.vector.io import (
     internal_vector_to_metadata,
     ready_io_vector,

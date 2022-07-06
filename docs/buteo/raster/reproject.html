@@ -40,14 +40,14 @@ Can uses references from vector or other raster datasets.</p>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.raster.reproject.internal_reproject_raster"><code class="name flex">
-<span>def <span class="ident">internal_reproject_raster</span></span>(<span>raster: Union[str, osgeo.gdal.Dataset], projection: Union[str, osgeo.ogr.DataSource, osgeo.gdal.Dataset, osgeo.osr.SpatialReference, int], out_path: Optional[str] = None, resample_alg: str = 'nearest', copy_if_already_correct: bool = True, overwrite: bool = True, creation_options: list = [], dst_nodata: Union[str, int, float] = 'infer', prefix: str = '', postfix: str = '_reprojected') ‑> str</span>
+<span>def <span class="ident">internal_reproject_raster</span></span>(<span>raster: Union[str, osgeo.gdal.Dataset], projection: Union[int, str, osgeo.gdal.Dataset, osgeo.ogr.DataSource, osgeo.osr.SpatialReference], out_path: Optional[str] = None, resample_alg: str = 'nearest', copy_if_already_correct: bool = True, overwrite: bool = True, creation_options: list = [], dst_nodata: Union[str, int, float] = 'infer', prefix: str = '', postfix: str = '_reprojected') ‑> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>OBS: Internal. Single output.</p>
 <p>Reproject a raster(s) to a target coordinate reference system.</p></div>
 </dd>
 <dt id="buteo.raster.reproject.reproject_raster"><code class="name flex">
-<span>def <span class="ident">reproject_raster</span></span>(<span>raster: Union[List[Union[str, osgeo.gdal.Dataset]], str, osgeo.gdal.Dataset], projection: Union[str, osgeo.ogr.DataSource, osgeo.gdal.Dataset, osgeo.osr.SpatialReference, int], out_path: Union[List[str], str, ForwardRef(None)] = None, resample_alg: str = 'nearest', copy_if_already_correct: bool = True, overwrite: bool = True, creation_options: list = [], dst_nodata: Union[str, int, float] = 'infer', prefix: str = '', postfix: str = '_reprojected') ‑> Union[List[Union[str, osgeo.gdal.Dataset]], str, osgeo.gdal.Dataset]</span>
+<span>def <span class="ident">reproject_raster</span></span>(<span>raster: Union[List[Union[str, osgeo.gdal.Dataset]], str, osgeo.gdal.Dataset], projection: Union[int, str, osgeo.gdal.Dataset, osgeo.ogr.DataSource, osgeo.osr.SpatialReference], out_path: Union[List[str], str, ForwardRef(None)] = None, resample_alg: str = 'nearest', copy_if_already_correct: bool = True, overwrite: bool = True, creation_options: list = [], dst_nodata: Union[str, int, float] = 'infer', prefix: str = '', postfix: str = '_reprojected') ‑> Union[List[Union[str, osgeo.gdal.Dataset]], str, osgeo.gdal.Dataset]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Reproject a raster(s) to a target coordinate reference system.</p>
