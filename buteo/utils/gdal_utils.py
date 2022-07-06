@@ -13,11 +13,11 @@ from uuid import uuid4
 import numpy as np
 from osgeo import gdal, ogr, osr
 
-from buteo.project_types import (
+from buteo.utils.project_types import (
     Expanded_extents,
     Number,
 )
-from buteo.utils import (
+from buteo.utils.core import (
     path_to_ext,
     is_number,
     type_check,

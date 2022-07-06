@@ -22,11 +22,11 @@ from buteo.raster.io import (
 from buteo.vector.io import internal_vector_to_metadata
 from buteo.raster.reproject import internal_reproject_raster
 from buteo.vector.reproject import internal_reproject_vector
-from buteo.utils import (
+from buteo.utils.core import (
     remove_if_overwrite,
     type_check,
 )
-from buteo.gdal_utils import (
+from buteo.utils.gdal_utils import (
     parse_projection,
     raster_size_from_list,
     is_raster,

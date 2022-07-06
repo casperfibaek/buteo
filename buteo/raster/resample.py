@@ -13,11 +13,11 @@ from typing import Union, List, Optional
 
 from osgeo import gdal
 
-from buteo.utils import (
+from buteo.utils.core import (
     remove_if_overwrite,
     type_check,
 )
-from buteo.gdal_utils import (
+from buteo.utils.gdal_utils import (
     path_to_driver_raster,
     default_options,
     translate_resample_method,

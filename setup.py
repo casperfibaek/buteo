@@ -27,7 +27,8 @@ setup(
         "Operating System :: OS Independent",
         "Development Status :: 2 - Alpha",
     ],
-    packages=find_packages('buteo', exclude=['test']),
+    packages=find_packages(),
+    zip_safe=True,
     install_requires=[
         # "gdal",
         # "numba",

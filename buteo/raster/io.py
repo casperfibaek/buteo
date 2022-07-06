@@ -16,12 +16,12 @@ from typing import Dict, Tuple, Union, List, Any, Optional
 import numpy as np
 from osgeo import gdal, osr, ogr
 
-from buteo.project_types import (
+from buteo.utils.project_types import (
     Metadata_raster,
     Metadata_raster_comp,
     Number,
 )
-from buteo.utils import (
+from buteo.utils.core import (
     overwrite_required,
     path_to_ext,
     remove_if_overwrite,
@@ -31,7 +31,7 @@ from buteo.utils import (
     path_is_in_memory,
     file_exists,
 )
-from buteo.gdal_utils import (
+from buteo.utils.gdal_utils import (
     advanced_extents,
     path_to_driver_raster,
     is_raster,

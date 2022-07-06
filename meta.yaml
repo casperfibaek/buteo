@@ -5,6 +5,10 @@ package:
 source:
   path: setup.py
 
+build:
+  number: 0
+  script: "$PYTHON -m pip install . --no-deps --ignore-installed -vv "
+
 requirements:
   build:
     - python

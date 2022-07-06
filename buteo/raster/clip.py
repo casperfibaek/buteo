@@ -17,12 +17,12 @@ from buteo.vector.io import (
     internal_vector_to_memory,
     internal_vector_to_metadata,
 )
-from buteo.utils import (
+from buteo.utils.core import (
     file_exists,
     remove_if_overwrite,
     type_check,
 )
-from buteo.gdal_utils import (
+from buteo.utils.gdal_utils import (
     gdal_bbox_intersects,
     reproject_extent,
     is_raster,

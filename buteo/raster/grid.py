@@ -20,8 +20,8 @@ from buteo.vector.intersect import intersect_vector
 from buteo.vector.reproject import reproject_vector
 from buteo.raster.clip import clip_raster
 from buteo.raster.io import open_raster, raster_to_metadata, stack_rasters_vrt
-from buteo.gdal_utils import ogr_bbox_intersects, default_options
-from buteo.utils import path_to_ext, progress, type_check
+from buteo.utils.gdal_utils import ogr_bbox_intersects, default_options
+from buteo.utils.core import path_to_ext, progress, type_check
 
 
 # TODO: raster_to_grid without geom.

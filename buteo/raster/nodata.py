@@ -13,10 +13,10 @@ from typing import Union, List, Optional, Sequence
 import numpy as np
 from osgeo import gdal
 
-from buteo.project_types import Metadata_raster
-from buteo.utils import remove_if_overwrite, type_check
-from buteo.project_types import Number
-from buteo.gdal_utils import (
+from buteo.utils.project_types import Metadata_raster
+from buteo.utils.core import remove_if_overwrite, type_check
+from buteo.utils.project_types import Number
+from buteo.utils.gdal_utils import (
     is_raster,
     gdal_nodata_value_from_type,
     raster_to_reference,

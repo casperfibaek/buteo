@@ -18,8 +18,8 @@ from buteo.raster.io import (
     raster_to_array,
     raster_to_metadata,
 )
-from buteo.gdal_utils import numpy_to_gdal_datatype, default_options
-from buteo.utils import remove_if_overwrite
+from buteo.utils.gdal_utils import numpy_to_gdal_datatype, default_options
+from buteo.utils.core import remove_if_overwrite
 
 
 def add_border_to_raster(

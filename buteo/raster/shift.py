@@ -12,9 +12,9 @@ from typing import Union, Tuple, List, Optional
 
 from osgeo import gdal
 
-from buteo.project_types import Number
-from buteo.utils import remove_if_overwrite, is_number, type_check
-from buteo.gdal_utils import path_to_driver_raster, default_options
+from buteo.utils.project_types import Number
+from buteo.utils.core import remove_if_overwrite, is_number, type_check
+from buteo.utils.gdal_utils import path_to_driver_raster, default_options
 from buteo.raster.io import open_raster, raster_to_metadata
 
 

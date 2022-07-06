@@ -10,7 +10,7 @@ import os
 import subprocess
 import time
 
-from buteo.utils import progress
+from buteo.utils.core import progress
 from buteo.raster.io import raster_to_array
 
 
