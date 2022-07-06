@@ -24,6 +24,8 @@ def is_float(value):
             return True
         except ValueError:
             return False
+    else:
+        return False
 
 
 def to_number(value):
