@@ -3,8 +3,7 @@ package:
   version: "0.5.3"
 
 source:
-  git_rev: 0.5.3
-  git_url: https://github.com/casperfibaek/buteo.git
+  path: setup.py
 
 requirements:
   build:
@@ -18,7 +17,7 @@ requirements:
 
 test:
   imports:
-    - buteo
+    - lib
 
 about:
   home: https://github.com/casperfibaek/buteo/
