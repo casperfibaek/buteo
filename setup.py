@@ -1,4 +1,4 @@
-import setuptools
+from setuptools import setup, find_packages
 
 
 def readme():
@@ -9,7 +9,7 @@ def readme():
         return ""
 
 
-setuptools.setup(
+setup(
     name="Buteo",
     version="0.5.3",
     author="Casper Fibaek",
@@ -27,10 +27,10 @@ setuptools.setup(
         "Operating System :: OS Independent",
         "Development Status :: 2 - Alpha",
     ],
-    packages=["buteo"],
+    packages=find_packages('buteo', exclude=['test']),
     install_requires=[
-        "gdal",
-        "numba",
+        # "gdal",
+        # "numba",
     ],
     include_package_data=True,
 )
