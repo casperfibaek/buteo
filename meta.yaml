@@ -1,9 +1,9 @@
 package:
   name: buteo
-  version: "0.5.2"
+  version: "0.5.3"
 
 source:
-  git_rev: base
+  git_rev: 0.5.3
   git_url: https://github.com/casperfibaek/buteo.git
 
 requirements:
