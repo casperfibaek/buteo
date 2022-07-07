@@ -1,84 +1,85 @@
 name: buteo
 channels:
-  - conda-forge
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
   - _openmp_mutex=5.1=1_gnu
-  - boost-cpp=1.70.0=ha2d47e9_1
+  - blas=1.0=mkl
   - bzip2=1.0.8=h7b6447c_0
-  - c-ares=1.18.1=h7f98852_0
-  - ca-certificates=2022.6.15=ha878542_0
+  - c-ares=1.18.1=h7f8727e_0
+  - ca-certificates=2022.4.26=h06a4308_0
   - cairo=1.16.0=h19f5f5c_2
-  - certifi=2022.6.15=py310hff52083_0
-  - cfitsio=3.470=hb418390_7
+  - certifi=2022.6.15=py310h06a4308_0
+  - cfitsio=3.470=h5893167_7
   - curl=7.82.0=h7f8727e_0
-  - expat=2.4.8=h27087fc_0
+  - expat=2.4.4=h295c915_0
   - fontconfig=2.13.1=h6c09931_0
-  - freetype=2.10.4=h0708190_1
-  - freexl=1.0.6=h7f98852_0
+  - freetype=2.11.0=h70c0345_0
+  - freexl=1.0.6=h27cfd23_0
   - gdal=3.4.1=py310h8f0303e_0
   - geos=3.8.0=he6710b0_0
   - geotiff=1.7.0=hd69d5b1_0
-  - giflib=5.2.1=h36c2ea0_2
+  - giflib=5.2.1=h7b6447c_0
   - glib=2.69.1=h4ff587b_1
   - hdf4=4.2.13=h3ca952b_2
-  - hdf5=1.10.6=nompi_h6a2412b_1114
-  - icu=58.2=hf484d3e_1000
-  - jpeg=9e=h166bdaf_1
-  - json-c=0.13.1=hbfbb72e_1002
+  - hdf5=1.10.6=h3ffc7dd_1
+  - icu=58.2=he6710b0_3
+  - intel-openmp=2021.4.0=h06a4308_3561
+  - jpeg=9e=h7f8727e_0
+  - json-c=0.13.1=h1bed415_0
   - kealib=1.4.14=hb50703a_1
-  - keyutils=1.6.1=h166bdaf_0
-  - krb5=1.19.3=h3790be6_0
+  - krb5=1.19.2=hac12032_0
   - ld_impl_linux-64=2.38=h1181459_1
-  - libblas=3.9.0=15_linux64_openblas
-  - libcblas=3.9.0=15_linux64_openblas
+  - libboost=1.73.0=h28710b8_12
   - libcurl=7.82.0=h0b77cf5_0
   - libdap4=3.19.1=h6ec2957_0
-  - libedit=3.1.20191231=he28a2e2_2
-  - libev=4.33=h516909a_1
+  - libedit=3.1.20210910=h7f8727e_0
+  - libev=4.33=h7f8727e_1
   - libffi=3.3=he6710b0_2
   - libgcc-ng=11.2.0=h1234567_1
   - libgdal=3.4.1=h05199a0_1
-  - libgfortran-ng=12.1.0=h69a702a_16
-  - libgfortran5=12.1.0=hdcd56e2_16
+  - libgfortran-ng=11.2.0=h00389a5_1
+  - libgfortran5=11.2.0=h1234567_1
   - libgomp=11.2.0=h1234567_1
-  - libkml=1.3.0=h4fcabce_1010
-  - liblapack=3.9.0=15_linux64_openblas
-  - libllvm11=11.1.0=hf817b99_2
+  - libkml=1.3.0=h7ecb851_5
+  - libllvm11=11.1.0=h3826bc1_1
   - libnetcdf=4.8.1=h42ceab0_1
   - libnghttp2=1.46.0=hce63b2e_0
-  - libopenblas=0.3.20=pthreads_h78a6416_0
-  - libpng=1.6.37=h21135ba_2
+  - libpng=1.6.37=hbc83047_0
   - libpq=12.9=h16c4e8d_3
   - libspatialite=4.3.0a=hbedb2dc_20
-  - libssh2=1.10.0=ha56f1ee_2
+  - libssh2=1.10.0=h8f2d780_0
   - libstdcxx-ng=11.2.0=h1234567_1
   - libtiff=4.2.0=h2818925_1
   - libuuid=1.0.3=h7f8727e_2
-  - libwebp-base=1.2.2=h7f98852_1
+  - libwebp-base=1.2.2=h7f8727e_0
   - libxcb=1.15=h7f8727e_0
   - libxml2=2.9.14=h74e7548_0
   - libzip=1.8.0=h5cef20c_0
   - llvmlite=0.38.0=py310h4ff587b_0
-  - lz4-c=1.9.3=h9c3ff4c_1
+  - lz4-c=1.9.3=h295c915_1
+  - mkl=2021.4.0=h06a4308_640
+  - mkl-service=2.4.0=py310h7f8727e_0
+  - mkl_fft=1.3.1=py310hd6ae3a3_0
+  - mkl_random=1.2.2=py310h00e6091_0
   - ncurses=6.3=h5eee18b_3
   - numba=0.55.1=py310h00e6091_0
-  - numpy=1.21.6=py310h45f3432_0
-  - openjpeg=2.3.1=hf7af979_3
+  - numpy=1.21.5=py310h1794996_3
+  - numpy-base=1.21.5=py310hcba007f_3
+  - openjpeg=2.4.0=h3ad879b_0
   - openssl=1.1.1p=h5eee18b_0
-  - pcre=8.45=h9c3ff4c_0
+  - pcre=8.45=h295c915_0
   - pip=21.2.4=py310h06a4308_0
-  - pixman=0.40.0=h36c2ea0_0
-  - poppler=0.89.0=h669c267_1
-  - poppler-data=0.4.11=hd8ed1ab_0
-  - proj=6.2.1=hc80f0dc_0
+  - pixman=0.40.0=h7f8727e_1
+  - poppler=0.81.0=h01f5e8b_2
+  - poppler-data=0.4.11=h06a4308_0
+  - proj=6.2.1=h05a3930_0
   - python=3.10.4=h12debd9_0
-  - python_abi=3.10=2_cp310
   - readline=8.1.2=h7f8727e_1
   - setuptools=61.2.0=py310h06a4308_0
+  - six=1.16.0=pyhd3eb1b0_1
   - sqlite=3.38.5=hc218d9a_0
-  - tbb=2021.5.0=h924138e_1
+  - tbb=2021.5.0=hd09550d_0
   - tiledb=2.3.3=h1132f93_2
   - tk=8.6.12=h1ccaba5_0
   - tzdata=2022a=hda174b7_0

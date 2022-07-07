@@ -1,10 +1,10 @@
 package:
   name: buteo
-  version: "0.6.5"
+  version: "0.6.6"
 
 source:
   # path: setup.py
-  git_rev: "0.6.5"
+  git_rev: "0.6.6"
   git_url: https://github.com/casperfibaek/buteo.git
 
 build:
