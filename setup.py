@@ -11,7 +11,7 @@ def readme():
 
 setup(
     name="Buteo",
-    version="0.6.2",
+    version="0.6.3",
     author="Casper Fibaek",
     author_email="casperfibaek@gmail.com",
     description="A pythonic way of working with raster data",
@@ -37,3 +37,4 @@ setup(
 )
 
 # pdoc3 --html --output-dir docs --config show_source_code=False buteo
+# conda build purge; conda build . --py 3.9 --py 3.10; bash build_script
