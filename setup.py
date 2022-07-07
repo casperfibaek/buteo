@@ -11,7 +11,7 @@ def readme():
 
 setup(
     name="Buteo",
-    version="0.6.4",
+    version="0.6.5",
     author="Casper Fibaek",
     author_email="casperfibaek@gmail.com",
     description="A pythonic way of working with raster data",
@@ -29,10 +29,7 @@ setup(
     ],
     packages=find_packages(),
     zip_safe=True,
-    install_requires=[
-        # "gdal",
-        # "numba",
-    ],
+    install_requires=[],
     include_package_data=True,
 )
 

@@ -1,10 +1,10 @@
 package:
   name: buteo
-  version: "0.6.4"
+  version: "0.6.5"
 
 source:
   # path: setup.py
-  git_rev: "0.6.4"
+  git_rev: "0.6.5"
   git_url: https://github.com/casperfibaek/buteo.git
 
 build:
@@ -18,8 +18,8 @@ requirements:
 
   run:
     - python
-    - conda-forge::gdal
-    - conda-forge::numba
+    - gdal
+    - numba
 
 test:
   imports:
