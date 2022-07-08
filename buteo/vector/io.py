@@ -143,8 +143,8 @@ def open_vector(
     if opened is None:
         raise Exception(f"Could not read input vector: {vector}")
 
-    driver: ogr.Driver = opened.GetDriver()
-    driver_name: str = driver.GetName()
+    driver = opened.GetDriver()
+    driver_name = driver.GetName()
 
     if driver is None:
         raise Exception("Unable to parse the driver of vector.")
