@@ -34,4 +34,4 @@ setup(
 )
 
 # pdoc3 --html --output-dir docs --config show_source_code=False buteo
-# conda build purge; conda build . --py 3.9 --py 3.10 -c conda-forge; bash build_script
+# conda build purge; python clean_build_folder.py; conda build . --py 3.9 --py 3.10 -c conda-forge; bash build_script
