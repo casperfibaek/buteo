@@ -26,10 +26,11 @@ def add_border_to_raster(
     input_raster,
     out_path=None,
     border_size=100,
+    *,
     border_size_unit="px",
     border_value=0,
-    overwrite: bool = True,
-    creation_options: list = [],
+    overwrite=True,
+    creation_options=[],
 ):
     in_raster = open_raster(input_raster)
     metadata = raster_to_metadata(in_raster)

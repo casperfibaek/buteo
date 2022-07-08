@@ -16,12 +16,10 @@ TODO:
 import sys; sys.path.append("../../") # Path: buteo/vector/io.py
 import os
 from uuid import uuid4
-from typing import Union, List, Dict, Optional, Any, Tuple
 
 from osgeo import ogr, osr, gdal
 import numpy as np
 
-from buteo.utils.project_types import Metadata_vector_layer, Number, Metadata_vector
 from buteo.utils.gdal_utils import (
     is_vector,
     is_raster,
@@ -34,17 +32,16 @@ from buteo.utils.core import (
     overwrite_required,
     type_check,
     folder_exists,
-    folder_exists,
 )
 
 
 def open_vector(
-    vector: Union[str, ogr.DataSource, gdal.Dataset],
-    convert_mem_driver: bool = True,
-    writeable: bool = True,
-    layer: int = -1,
-    where: tuple = (),
-) -> ogr.DataSource:
+    vector,
+    *,
+    convert_mem_driver=True,
+    writeable=True,
+    layer=-1,
+):
     """Opens a vector to an ogr.Datasource class.
 
     Args:
@@ -63,7 +60,7 @@ def open_vector(
     type_check(layer, [int], "layer")
 
     try:
-        opened: Optional[ogr.DataSource] = None
+        opened = None
         if is_vector(vector):
             gdal.PushErrorHandler("CPLQuietErrorHandler")
 
@@ -76,7 +73,7 @@ def open_vector(
 
             gdal.PopErrorHandler()
         elif is_raster(vector):
-            temp_opened: Optional[gdal.Dataset] = None
+            temp_opened = None
             if isinstance(vector, str):
                 gdal.PushErrorHandler("CPLQuietErrorHandler")
 
@@ -90,15 +87,15 @@ def open_vector(
             else:
                 raise Exception(f"Could not read input vector: {vector}")
 
-            projection: osr.SpatialReference = osr.SpatialReference()
+            projection = osr.SpatialReference()
             projection.ImportFromWkt(temp_opened.GetProjection())
-            transform: List[Number] = temp_opened.GetGeoTransform()
+            transform = temp_opened.GetGeoTransform()
 
-            width: int = temp_opened.RasterXSize
-            height: int = temp_opened.RasterYSize
+            width = temp_opened.RasterXSize
+            height = temp_opened.RasterYSize
 
-            x_min: Number = transform[0]
-            y_max: Number = transform[3]
+            x_min = transform[0]
+            y_max = transform[3]
 
             x_max = x_min + width * transform[1] + height * transform[2]  # Handle skew
             y_min = y_max + width * transform[4] + height * transform[5]  # Handle skew
@@ -180,7 +177,7 @@ def open_vector(
     return opened
 
 
-def get_vector_path(vector: Union[str, ogr.DataSource]) -> str:
+def get_vector_path(vector):
     """Takes a string or a ogr.Datasource and returns its path.
 
     Args:
@@ -209,7 +206,7 @@ def get_vector_path(vector: Union[str, ogr.DataSource]) -> str:
         raise Exception(f"Error while getting path from raster: {vector}")
 
 
-def to_vector_list(variable: Any) -> List[str]:
+def to_vector_list(variable):
     """Reads a list of vectors and returns a list of paths to the vectors.
 
     Args:
@@ -218,7 +215,7 @@ def to_vector_list(variable: Any) -> List[str]:
     Returns:
         A list of paths to the vectors.
     """
-    return_list: List[str] = []
+    return_list = []
     if isinstance(variable, list):
         return_list = variable
     else:
@@ -234,10 +231,11 @@ def to_vector_list(variable: Any) -> List[str]:
 
 
 def _vector_to_metadata(
-    vector: Union[ogr.DataSource, str],
-    process_layer: int = -1,
-    create_geometry: bool = True,
-) -> Metadata_vector:
+    vector,
+    *,
+    process_layer=-1,
+    create_geometry=True,
+):
     """OBS: Internal. Single output.
 
     Creates a dictionary with metadata about the vector layer.
@@ -246,26 +244,26 @@ def _vector_to_metadata(
     type_check(process_layer, [int], "process_layer")
     type_check(create_geometry, [bool], "create_geometry")
 
-    datasource: ogr.DataSource = open_vector(vector, convert_mem_driver=False)
+    datasource = open_vector(vector, convert_mem_driver=False)
 
-    vector_driver: ogr.Driver = datasource.GetDriver()
+    vector_driver = datasource.GetDriver()
 
-    path: str = datasource.GetDescription()
-    basename: str = os.path.basename(path)
-    name: str = os.path.splitext(basename)[0]
-    ext: str = os.path.splitext(basename)[1]
-    driver_name: str = vector_driver.GetName()
+    path = datasource.GetDescription()
+    basename = os.path.basename(path)
+    name = os.path.splitext(basename)[0]
+    ext = os.path.splitext(basename)[1]
+    driver_name = vector_driver.GetName()
 
-    in_memory: bool = False
+    in_memory = False
     if driver_name == "MEM":
         in_memory = True
     elif len(path) >= 8 and path[0:8] == "/vsimem/":
         in_memory = True
 
-    layer_count: int = datasource.GetLayerCount()
-    layers: List[Metadata_vector_layer] = []
+    layer_count = datasource.GetLayerCount()
+    layers = []
 
-    processed: bool = False
+    processed = False
 
     for layer_index in range(layer_count):
 
@@ -275,23 +273,23 @@ def _vector_to_metadata(
         layer: ogr.Layer = datasource.GetLayerByIndex(layer_index)
 
         x_min, x_max, y_min, y_max = layer.GetExtent()
-        layer_name: str = layer.GetName()
-        extent: List[Number] = [x_min, y_max, x_max, y_min]
-        extent_ogr: List[Number] = [x_min, x_max, y_min, y_max]
-        extent_dict: Dict[str, Number] = {
+        layer_name = layer.GetName()
+        extent = [x_min, y_max, x_max, y_min]
+        extent_ogr = [x_min, x_max, y_min, y_max]
+        extent_dict = {
             "left": x_min,
             "top": y_max,
             "right": x_max,
             "bottom": y_min,
         }
 
-        column_fid: str = layer.GetFIDColumn()
-        column_geom: str = layer.GetGeometryColumn()
+        column_fid = layer.GetFIDColumn()
+        column_geom = layer.GetGeometryColumn()
 
         if column_geom == "":
             column_geom = "geom"
 
-        feature_count: int = layer.GetFeatureCount()
+        feature_count = layer.GetFeatureCount()
 
         projection_osr = layer.GetSpatialRef()
         projection = layer.GetSpatialRef().ExportToWkt()
@@ -299,10 +297,10 @@ def _vector_to_metadata(
         if processed is False:
             ds_projection = projection
             ds_projection_osr = projection_osr
-            ds_x_min: Number = x_min
-            ds_x_max: Number = x_max
-            ds_y_min: Number = y_min
-            ds_y_max: Number = y_max
+            ds_x_min = x_min
+            ds_x_max = x_max
+            ds_y_min = y_min
+            ds_y_max = y_max
 
             processed = True
         else:
@@ -315,24 +313,24 @@ def _vector_to_metadata(
             if y_max > ds_y_max:
                 ds_y_max = y_max
 
-        layer_defn: ogr.FeatureDefn = layer.GetLayerDefn()
+        layer_defn = layer.GetLayerDefn()
 
-        geom_type_ogr: int = layer_defn.GetGeomType()
-        geom_type: str = ogr.GeometryTypeToName(layer_defn.GetGeomType())
+        geom_type_ogr = layer_defn.GetGeomType()
+        geom_type = ogr.GeometryTypeToName(layer_defn.GetGeomType())
 
-        field_count: int = layer_defn.GetFieldCount()
-        field_names: List[str] = []
-        field_types: List[str] = []
-        field_types_ogr: List[int] = []
+        field_count = layer_defn.GetFieldCount()
+        field_names = []
+        field_types = []
+        field_types_ogr = []
 
         for field_index in range(field_count):
-            field_defn: ogr.FieldDefn = layer_defn.GetFieldDefn(field_index)
+            field_defn = layer_defn.GetFieldDefn(field_index)
             field_names.append(field_defn.GetName())
             field_type = field_defn.GetType()
             field_types_ogr.append(field_type)
             field_types.append(field_defn.GetFieldTypeName(field_type))
 
-        layer_dict: Metadata_vector_layer = {
+        layer_dict = {
             "layer_name": layer_name,
             "x_min": x_min,
             "x_max": x_max,
@@ -368,17 +366,17 @@ def _vector_to_metadata(
 
         layers.append(layer_dict)
 
-    ds_extent: List[Number] = [ds_x_min, ds_y_max, ds_x_max, ds_y_min]
-    ds_extent_ogr: List[Number] = [ds_x_min, ds_x_max, ds_y_min, ds_y_max]
-    ds_extent_gdal_warp: List[Number] = [ds_x_min, ds_y_min, ds_x_max, ds_y_max]
-    ds_extent_dict: Dict[str, Number] = {
+    ds_extent = [ds_x_min, ds_y_max, ds_x_max, ds_y_min]
+    ds_extent_ogr = [ds_x_min, ds_x_max, ds_y_min, ds_y_max]
+    ds_extent_gdal_warp = [ds_x_min, ds_y_min, ds_x_max, ds_y_max]
+    ds_extent_dict = {
         "left": ds_x_min,
         "top": ds_y_max,
         "right": ds_x_max,
         "bottom": ds_y_min,
     }
 
-    metadata: Metadata_vector = {
+    metadata = {
         "path": path,
         "basename": basename,
         "name": name,
@@ -441,10 +439,11 @@ def _vector_to_metadata(
 
 
 def vector_to_metadata(
-    vector: Union[List[Union[str, ogr.DataSource]], Union[ogr.DataSource, str]],
-    process_layer: int = -1,
-    create_geometry: bool = True,
-) -> Union[List[Metadata_vector], Metadata_vector]:
+    vector,
+    *,
+    process_layer=-1,
+    create_geometry=True,
+):
     """Creates a dictionary with metadata about the vector layer.
 
     Args:
@@ -464,7 +463,7 @@ def vector_to_metadata(
 
     vector_list = to_vector_list(vector)
 
-    output: List[Metadata_vector] = []
+    output = []
 
     for in_vector in vector_list:
         output.append(
@@ -480,13 +479,14 @@ def vector_to_metadata(
 
 
 def ready_io_vector(
-    vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource],
-    out_path: Optional[Union[List[str], str]],
-    overwrite: bool = True,
-    add_uuid: bool = False,
-    prefix: str = "",
-    postfix: str = "",
-) -> Tuple[List[str], List[str]]:
+    vector,
+    out_path,
+    *,
+    overwrite=True,
+    add_uuid=False,
+    prefix="",
+    postfix="",
+):
     type_check(vector, [list, str, ogr.DataSource], "vector")
     type_check(out_path, [list, str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
@@ -509,7 +509,7 @@ def ready_io_vector(
             )
 
     # Generate output names
-    path_list: List[str] = []
+    path_list = []
     for index, in_vector in enumerate(vector_list):
         metadata = _vector_to_metadata(in_vector)
 
@@ -544,11 +544,12 @@ def ready_io_vector(
 
 
 def _vector_to_memory(
-    vector: Union[str, ogr.DataSource],
-    memory_path: Optional[str] = None,
-    copy_if_already_in_memory: bool = True,
-    layer_to_extract: int = -1,
-) -> str:
+    vector,
+    memory_path=None,
+    copy_if_already_in_memory=True,
+    *,
+    layer_to_extract=-1,
+):
     """OBS: Internal. Single output.
 
     Copies a vector source to memory.
@@ -592,11 +593,12 @@ def _vector_to_memory(
 
 
 def vector_to_memory(
-    vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource],
-    memory_path: Optional[Union[List[str], str]] = None,
-    copy_if_already_in_memory: bool = False,
-    layer_to_extract: int = -1,
-) -> Union[List[str], str]:
+    vector,
+    memory_path=None,
+    copy_if_already_in_memory=False,
+    *,
+    layer_to_extract=-1,
+):
     """Copies a vector source to memory.
 
     Args:
@@ -645,10 +647,11 @@ def vector_to_memory(
 
 
 def _vector_to_disk(
-    vector: Union[str, ogr.DataSource],
-    out_path: str,
-    overwrite: bool = True,
-) -> str:
+    vector,
+    out_path,
+    *,
+    overwrite=True,
+):
     """OBS: Internal. Single output.
 
     Copies a vector source to disk.
@@ -689,10 +692,11 @@ def _vector_to_disk(
 
 
 def vector_to_disk(
-    vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource],
-    out_path: Union[List[str], str],
-    overwrite: bool = True,
-) -> Union[List[str], str]:
+    vector,
+    out_path,
+    *,
+    overwrite=True,
+):
     """Copies a vector source to disk.
 
     Args:
@@ -773,9 +777,7 @@ def filter_vector(vector, filter_where, process_layer=0):
     return name
 
 
-def vector_add_index(
-    vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource]
-) -> List[str]:
+def vector_add_index(vector):
     """Adds a spatial index to the vector if it doesn't have one.
 
     Args:
@@ -805,11 +807,7 @@ def vector_add_index(
     return vector_list
 
 
-def vector_feature_to_layer(
-    vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource],
-    fid: int,
-    layer: int = 1,
-) -> List[str]:
+def vector_feature_to_layer(vector, layer=1):
     """Adds a spatial index to the vector if it doesn't have one.
 
     Args:
@@ -840,9 +838,9 @@ def vector_feature_to_layer(
 
 
 def _vector_add_shapes(
-    vector: Union[str, ogr.DataSource],
-    shapes: list = ["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
-) -> str:
+    vector,
+    shapes=["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
+):
     """OBS: Internal. Single output.
 
     Adds shape calculations to a vector such as area and perimeter.
@@ -932,9 +930,9 @@ def _vector_add_shapes(
 
 
 def vector_add_shapes(
-    vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource],
-    shapes: list = ["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
-) -> Union[List[str], str]:
+    vector,
+    shapes=["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
+):
     """Adds shape calculations to a vector such as area and perimeter.
         Can also add compactness measurements.
 

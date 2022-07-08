@@ -8,12 +8,10 @@ TODO:
 """
 
 import sys; sys.path.append("../../") # Path: buteo/raster/nodata.py
-from typing import Union, List, Optional, Sequence
 
 import numpy as np
 from osgeo import gdal
 
-from buteo.utils.project_types import Metadata_raster, Number
 from buteo.utils.core import remove_if_overwrite, type_check
 from buteo.utils.gdal_utils import (
     is_raster,
@@ -31,9 +29,7 @@ from buteo.raster.io import (
 )
 
 
-def raster_has_nodata_value(
-    raster: Union[List[Union[gdal.Dataset, str]], gdal.Dataset, str],
-) -> Union[bool, List[bool]]:
+def raster_has_nodata_value(raster):
     """Check if a raster or a list of rasters contain nodata values
 
     Args:
@@ -70,9 +66,7 @@ def raster_has_nodata_value(
         return nodata_values[0]
 
 
-def raster_get_nodata_value(
-    raster: Union[List[Union[gdal.Dataset, str]], gdal.Dataset, str],
-) -> Union[List[Optional[Number]], Optional[Number]]:
+def raster_get_nodata_value(raster):
     """Get the nodata value of a raster or a from a list of rasters.
 
     Args:
@@ -106,16 +100,17 @@ def raster_get_nodata_value(
 
 
 def raster_set_nodata(
-    raster: Union[List[Union[gdal.Dataset, str]], gdal.Dataset, str],
-    dst_nodata: Union[float, int, str, list, None],
-    out_path: Union[list, str, None] = None,
-    overwrite: bool = True,
-    in_place: bool = False,
-    prefix: str = "",
-    postfix: str = "_nodata_set",
-    opened: bool = False,
-    creation_options: list = [],
-) -> Union[list, gdal.Dataset, str]:
+    raster,
+    dst_nodata,
+    out_path=None,
+    *,
+    overwrite=True,
+    in_place=False,
+    prefix="",
+    postfix="_nodata_set",
+    opened=False,
+    creation_options=[],
+):
     """Sets all the nodata from a raster or a list of rasters.
 
     Args:
@@ -123,7 +118,8 @@ def raster_set_nodata(
 
         dst_nodata (float, int, str, None): The target nodata value. If 'infer' the nodata
         value is set based on the input datatype. A list of nodata values can be based matching
-        the amount of input rasters. If multiple nodata values should be set, use raster_mask_values.
+        the amount of input rasters. If multiple nodata values should be set,
+        use raster_mask_values.
 
     **kwargs:
         out_path (path | list | None): The destination of the changed rasters. If out_paths
@@ -149,9 +145,15 @@ def raster_set_nodata(
     type_check(opened, [bool], "opened")
     type_check(creation_options, [list], "creation_options")
 
-    rasters, out_names = ready_io_raster(raster, out_path, overwrite, prefix, postfix)
+    rasters, out_names = ready_io_raster(
+        raster,
+        out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        postfix=postfix,
+    )
 
-    rasters_metadata: List[Metadata_raster] = []
+    rasters_metadata = []
     internal_dst_nodata = None
 
     if isinstance(dst_nodata, str) and dst_nodata != "infer":
@@ -219,14 +221,15 @@ def raster_set_nodata(
 
 
 def raster_remove_nodata(
-    raster: Union[gdal.Dataset, str, list],
-    out_path: Union[str, Sequence[str], None] = None,
-    in_place: bool = False,
-    overwrite: bool = True,
-    prefix: str = "",
-    postfix: str = "_nodata_removed",
-    creation_options: list = [],
-) -> Union[gdal.Dataset, Sequence[gdal.Dataset], str, Sequence[str]]:
+    raster,
+    out_path=None,
+    *,
+    in_place=False,
+    overwrite=True,
+    prefix="",
+    postfix="_nodata_removed",
+    creation_options=[],
+):
     """Removes all the nodata from a raster or a list of rasters.
 
     Args:
@@ -261,23 +264,23 @@ def raster_remove_nodata(
 
 
 def raster_mask_values(
-    raster: Union[gdal.Dataset, str, list],
-    values_to_mask: list,
-    out_path: Union[list, str, None] = None,
-    include_original_nodata: bool = True,
-    dst_nodata: Union[float, int, str, list, None] = "infer",
-    in_place: bool = False,
-    overwrite: bool = True,
-    opened: bool = False,
-    prefix: str = "",
-    postfix: str = "_nodata_masked",
-    creation_options: list = [],
-) -> Union[list, gdal.Dataset, str]:
+    raster,
+    values_to_mask,
+    out_path=None,
+    *,
+    include_original_nodata=True,
+    dst_nodata="infer",
+    in_place=False,
+    overwrite=True,
+    opened=False,
+    prefix="",
+    postfix="_nodata_masked",
+    creation_options=[],
+):
     """Mask a raster with a list of values.
 
     Args:
         raster (path | raster | list): The raster(s) to retrieve nodata values from.
-
         values_to_mask (list): The list of values to mask in the raster(s)
 
     **kwargs:
@@ -286,7 +289,8 @@ def raster_mask_values(
 
         dst_nodata (float, int, str, None): The target nodata value. If 'infer' the nodata
         value is set based on the input datatype. A list of nodata values can be based matching
-        the amount of input rasters. If multiple nodata values should be set, use raster_mask_values.
+        the amount of input rasters. If multiple nodata values should be set,
+        use raster_mask_values.
 
         out_path (path | list | None): The destination of the changed rasters. If out_paths
         are specified, in_place is automatically set to False. The path can be a folder.
@@ -339,7 +343,7 @@ def raster_mask_values(
                 raise ValueError("If dst_nodata is a string it must be 'infer'")
 
     raster_list, out_names = ready_io_raster(
-        raster, out_path, overwrite, prefix, postfix
+        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix
     )
 
     output_rasters = []
@@ -370,8 +374,8 @@ def raster_mask_values(
         arr = raster_to_array(internal_raster, filled=True)
 
         mask = None
-        for index, mask_value in enumerate(mask_values):
-            if index == 0:
+        for idx, mask_value in enumerate(mask_values):
+            if idx == 0:
                 mask = arr == mask_value
             else:
                 mask = mask | arr == mask_value

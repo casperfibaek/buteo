@@ -8,19 +8,17 @@ TODO:
 
 import sys; sys.path.append("../../") # Path: buteo/vector/attributes.py
 import numpy as np
-from typing import Union
 
 from osgeo import ogr
-# import pandas as pd
 
 from buteo.utils.core import type_check
 from buteo.vector.io import _vector_to_metadata, open_vector
 
 
 def vector_get_attribute_table(
-    vector: Union[str, ogr.DataSource],
-    process_layer: int = 0,
-    include_geom: bool = False,
+    vector,
+    process_layer=0,
+    include_geom=False,
 ):
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(process_layer, [int], "process_layer")
@@ -65,9 +63,7 @@ def vector_get_attribute_table(
     return attribute_table
 
 
-def vector_get_fids(
-    vector: Union[str, ogr.DataSource], process_layer: int = 0
-) -> np.ndarray:
+def vector_get_fids(vector, process_layer=0):
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(process_layer, [int], "process_layer")
 

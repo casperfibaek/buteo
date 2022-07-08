@@ -7,7 +7,6 @@ TODO:
 """
 
 import sys; sys.path.append("../../") # Path: buteo/vector/convert_parts.py
-from typing import Union, Optional, List
 
 from osgeo import ogr
 
@@ -21,13 +20,14 @@ from buteo.vector.io import (
 )
 
 
-def internal_singlepart_to_multipart(
-    vector: Union[str, ogr.DataSource],
-    out_path: Optional[str] = None,
-    overwrite: bool = True,
-    add_index: bool = True,
-    process_layer: int = -1,
-) -> str:
+def _singlepart_to_multipart(
+    vector,
+    out_path=None,
+    *,
+    overwrite=True,
+    add_index=True,
+    process_layer=-1,
+):
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
@@ -68,15 +68,16 @@ def internal_singlepart_to_multipart(
     return out_name
 
 
-def internal_multipart_to_singlepart(
-    vector: Union[str, ogr.DataSource],
-    out_path: Optional[str] = None,
-    copy_attributes: bool = False,
-    overwrite: bool = True,
-    add_index: bool = True,
-    process_layer: int = -1,
-    verbose: int = 1,
-) -> str:
+def _multipart_to_singlepart(
+    vector,
+    out_path=None,
+    *,
+    copy_attributes=False,
+    overwrite=True,
+    add_index=True,
+    process_layer=-1,
+    verbose=1,
+):
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
@@ -207,12 +208,12 @@ def internal_multipart_to_singlepart(
 
 
 def singlepart_to_multipart(
-    vector: Union[List[Union[str, ogr.DataSource]], Union[str, ogr.DataSource]],
-    out_path: str = None,
-    overwrite: bool = True,
-    add_index: bool = True,
-    process_layer: int = -1,
-) -> Union[List[str], str]:
+    vector,
+    out_path=None,
+    overwrite=True,
+    add_index=True,
+    process_layer=-1,
+):
     type_check(vector, [list, str, ogr.DataSource], "vector")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(overwrite, [bool], "overwrite")
@@ -224,7 +225,7 @@ def singlepart_to_multipart(
     output = []
     for index, in_vector in enumerate(vector_list):
         output.append(
-            internal_singlepart_to_multipart(
+            _singlepart_to_multipart(
                 in_vector,
                 out_path=path_list[index],
                 overwrite=overwrite,
@@ -240,14 +241,15 @@ def singlepart_to_multipart(
 
 
 def multipart_to_singlepart(
-    vector: Union[List[Union[str, ogr.DataSource]], Union[str, ogr.DataSource]],
-    out_path: Optional[Union[List[str], str]] = None,
-    copy_attributes: bool = False,
-    overwrite: bool = True,
-    add_index: bool = True,
-    process_layer: int = -1,
-    verbose: int = 1,
-) -> Union[List[str], str]:
+    vector,
+    out_path=None,
+    *,
+    copy_attributes=False,
+    overwrite=True,
+    add_index=True,
+    process_layer=-1,
+    verbose=1,
+):
     type_check(vector, [ogr.DataSource, str, list], "vector")
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(copy_attributes, [bool], "copy_attributes")
@@ -261,7 +263,7 @@ def multipart_to_singlepart(
     output = []
     for index, in_vector in enumerate(vector_list):
         output.append(
-            internal_multipart_to_singlepart(
+            _multipart_to_singlepart(
                 in_vector,
                 out_path=path_list[index],
                 copy_attributes=copy_attributes,

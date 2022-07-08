@@ -7,16 +7,12 @@ TODO:
 
 import os
 import json
-from typing import Sequence, Union, Any, List
 from uuid import uuid4
 
 import numpy as np
+import osgeo
 from osgeo import gdal, ogr, osr
 
-from buteo.utils.project_types import (
-    Expanded_extents,
-    Number,
-)
 from buteo.utils.core import (
     path_to_ext,
     is_number,
@@ -26,9 +22,7 @@ from buteo.utils.core import (
 )
 
 
-def raster_to_reference(
-    raster: Union[str, gdal.Dataset], writeable: bool = False
-) -> gdal.Dataset:
+def raster_to_reference(raster, writeable=False):
     """Takes a file path or a gdal.Dataset and opens it with
         GDAL. Raises exception if the raster cannot be read.
 
@@ -55,9 +49,7 @@ def raster_to_reference(
         raise Exception("Could not read input raster") from None
 
 
-def vector_to_reference(
-    vector: Union[str, ogr.DataSource], writeable: bool = False
-) -> ogr.DataSource:
+def vector_to_reference(vector, writeable=False):
     """Takes a file path or an ogr.DataSOurce and opens it with
         OGR. Raises exception if the raster cannot be read.
 
@@ -85,7 +77,7 @@ def vector_to_reference(
         raise Exception("Could not read input vector")
 
 
-def default_options(options) -> list:
+def default_options(options):
     """Takes a list of GDAL options and adds the following
         defaults to it:
             "TILED=YES"
@@ -123,7 +115,7 @@ def default_options(options) -> list:
     return internal_options
 
 
-def path_to_driver_raster(file_path: str, return_bool: bool = False) -> str:
+def path_to_driver_raster(file_path, return_bool=False):
     """Takes a file path of a raster and returns the driver name."""
 
     raster_drivers = [
@@ -157,7 +149,7 @@ def path_to_driver_raster(file_path: str, return_bool: bool = False) -> str:
     raise ValueError(f"Unable to parse GDAL raster driver from path: {file_path}")
 
 
-def path_to_driver_vector(file_path: str, return_bool: bool = False) -> str:
+def path_to_driver_vector(file_path, return_bool=False):
     """Takes a file path of a raster and returns the driver name."""
 
     vector_drivers = [
@@ -188,7 +180,7 @@ def path_to_driver_vector(file_path: str, return_bool: bool = False) -> str:
     raise ValueError(f"Unable to parse GDAL vector driver from path: {file_path}")
 
 
-def destroy_raster(raster: str) -> None:
+def destroy_raster(raster):
     driver = gdal.GetDriverByName(path_to_driver_raster(raster))
     driver.Delete(raster)
     return None
@@ -225,7 +217,7 @@ def is_raster(raster):
     return False
 
 
-def is_vector(vector: Union[str, ogr.DataSource]) -> bool:
+def is_vector(vector):
     """Takes a string or an ogr.DataSource and returns a boolean
     indicating if it is a valid vector.
 
@@ -261,10 +253,7 @@ def is_vector(vector: Union[str, ogr.DataSource]) -> bool:
     return False
 
 
-def parse_projection(
-    target: Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int],
-    return_wkt: bool = False,
-) -> Union[osr.SpatialReference, str]:
+def parse_projection(target, return_wkt=False):
     """Parses a gdal, ogr og osr data source and extraction the projection. If
         a string is passed, it attempts to open it and return the projection as
         an osr.SpatialReference.
@@ -296,12 +285,12 @@ def parse_projection(
     elif isinstance(target, str):
         ref = gdal.Open(target, 0)
 
-        if ref != None:
+        if ref is not None:
             target_proj.ImportFromWkt(ref.GetProjection())
         else:
             ref = ogr.Open(target, 0)
 
-            if ref != None:
+            if ref is not None:
                 layer = ref.GetLayer()
                 target_proj = layer.GetSpatialRef()
             else:
@@ -320,7 +309,7 @@ def parse_projection(
     gdal.PopErrorHandler()
 
     if isinstance(target_proj, osr.SpatialReference):
-        if target_proj.GetName() == None:
+        if target_proj.GetName() is None:
             raise ValueError(err_msg)
 
         if return_wkt:
@@ -659,9 +648,7 @@ def align_bbox(extent_og, extent_ta, pixel_width, pixel_height, warp_format=True
     return (x_min, y_max, x_max, y_min)
 
 
-def advanced_extents(
-    extent_ogr: List[Number], projection: osr.SpatialReference
-) -> Expanded_extents:
+def advanced_extents(extent_ogr, projection):
     original_projection = projection
     target_projection = osr.SpatialReference()
     target_projection.ImportFromEPSG(4326)
@@ -784,7 +771,7 @@ def advanced_extents(
     }
     extent_geojson = json.dumps(extent_geojson_dict)
 
-    expanded_extents: Expanded_extents = {
+    expanded_extents = {
         "extent_wkt": extent_wkt,
         "extent_datasource": extent_ds,
         "extent_geom": extent_geom,
@@ -803,7 +790,7 @@ def advanced_extents(
 
 
 # x_min, x_max, y_min, y_max
-def ogr_bbox_within(bbox1: Sequence[Number], bbox2: Sequence[Number]) -> bool:
+def ogr_bbox_within(bbox1, bbox2):
     return (
         (bbox1[0] >= bbox2[0])
         and (bbox1[1] <= bbox2[1])
@@ -813,7 +800,7 @@ def ogr_bbox_within(bbox1: Sequence[Number], bbox2: Sequence[Number]) -> bool:
 
 
 # x_min, y_max, x_max, y_min
-def gdal_bbox_within(bbox1: Sequence[Number], bbox2: Sequence[Number]) -> bool:
+def gdal_bbox_within(bbox1, bbox2):
     return (
         (bbox1[0] >= bbox2[0])
         and (bbox1[1] <= bbox2[1])
@@ -823,7 +810,7 @@ def gdal_bbox_within(bbox1: Sequence[Number], bbox2: Sequence[Number]) -> bool:
 
 
 # x_min, x_max, y_min, y_max
-def ogr_bbox_intersects(bbox1: Sequence[Number], bbox2: Sequence[Number]) -> bool:
+def ogr_bbox_intersects(bbox1, bbox2):
     return (
         (bbox1[0] <= bbox2[1])
         and (bbox2[0] <= bbox1[1])
@@ -833,7 +820,7 @@ def ogr_bbox_intersects(bbox1: Sequence[Number], bbox2: Sequence[Number]) -> boo
 
 
 # x_min, y_max, x_max, y_min
-def gdal_bbox_intersects(bbox1: Sequence[Number], bbox2: Sequence[Number]) -> bool:
+def gdal_bbox_intersects(bbox1, bbox2):
     return (
         (bbox1[0] <= bbox2[2])
         and (bbox2[0] <= bbox1[2])
@@ -843,9 +830,9 @@ def gdal_bbox_intersects(bbox1: Sequence[Number], bbox2: Sequence[Number]) -> bo
 
 
 def reproject_extent(
-    extent: Sequence[Number],
-    source_projection: osr.SpatialReference,
-    target_projection: osr.SpatialReference,  # x_min, y_max, x_max, y_min
+    extent,
+    source_projection_osr,
+    target_projection_osr,  # x_min, y_max, x_max, y_min
 ):
     """GDAL Format"""
     if len(extent) != 4:
@@ -859,13 +846,13 @@ def reproject_extent(
     if not isinstance(extent[3], float):
         raise ValueError("y_min not float.")
 
-    if not isinstance(source_projection, osr.SpatialReference):
+    if not isinstance(source_projection_osr, osr.SpatialReference):
         raise ValueError("source_projection not a valid spatial reference.")
 
-    if not isinstance(target_projection, osr.SpatialReference):
+    if not isinstance(target_projection_osr, osr.SpatialReference):
         raise ValueError("target_projection not a valid spatial reference.")
 
-    tx = osr.CoordinateTransformation(source_projection, target_projection)
+    tx = osr.CoordinateTransformation(source_projection_osr, target_projection_osr)
 
     top_left = tx.TransformPoint(extent[0], extent[1])
     bottom_right = tx.TransformPoint(extent[2], extent[3])
@@ -879,7 +866,7 @@ def reproject_extent(
 
 
 # TODO: Verify folder exists.
-def to_path_list(variable: Any) -> List[str]:
+def to_path_list(variable):
     return_list = []
     if isinstance(variable, list):
         return_list = variable
@@ -896,7 +883,7 @@ def to_path_list(variable: Any) -> List[str]:
     return return_list
 
 
-def to_array_list(variable: Any) -> List[Union[List, np.ndarray]]:
+def to_array_list(variable):
     return_list = []
     if isinstance(variable, list):
         return_list = variable
@@ -920,9 +907,9 @@ def to_array_list(variable: Any) -> List[Union[List, np.ndarray]]:
 
 
 def to_band_list(
-    variable: Any,
-    band_count: int,
-) -> List[int]:
+    variable,
+    band_count,
+):
     return_list = []
     if not isinstance(variable, (int, float, list)):
         raise TypeError(f"Invalid type for band: {type(variable)}")

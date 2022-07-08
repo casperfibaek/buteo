@@ -13,7 +13,6 @@ import linecache
 import tracemalloc
 import subprocess
 
-from typing import Any
 from glob import glob
 
 def is_float(value):
@@ -189,12 +188,13 @@ def step_ranges(steps):
 
 
 def type_check(
-    variable: Any,
-    types: list,
-    name: str = "",
+    variable,
+    types,
+    name="",
+    *,
     allow_none=False,
     throw_error=True,
-) -> bool:
+):
     """
         Utility function to type check the inputs of a function.
 
@@ -301,7 +301,7 @@ def progress(count, total, name="Processing"):
     filled_len = int(round(bar_len * count / float(total)))
     display_name = name[:10] + "..: "
 
-    bar = "█" * filled_len + "." * (bar_len - filled_len)
+    progress_bar = "█" * filled_len + "." * (bar_len - filled_len)
 
     percents = round(100.0 * count / float(total), 1)
 
@@ -309,12 +309,12 @@ def progress(count, total, name="Processing"):
         percents = 100.0
 
     if count == total:
-        sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
+        sys.stdout.write(f"{display_name}[{progress_bar}] {percents} %\r")
         sys.stdout.flush()
         print("")
         return None
     else:
-        sys.stdout.write(f"{display_name}[{bar}] {percents} %\r")
+        sys.stdout.write(f"{display_name}[{progress_bar}] {percents} %\r")
         sys.stdout.flush()
 
     return None
@@ -367,6 +367,5 @@ def execute_cli_function(command, name, quiet=False):
 
     except:
         print("Critical failure while performing Orfeo-Toolbox action.")
-        pass
 
     print(f"{name} completed in {round(time.time() - before, 2)}s.")

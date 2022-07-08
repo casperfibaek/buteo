@@ -11,9 +11,9 @@ from .io import raster_to_array
 
 
 # Setup tests
-folder = "geometry_and_rasters/"
-s2_b04 = os.path.abspath(folder + "s2_b04.jp2")
-s2_tci = os.path.abspath(folder + "s2_tci.jp2")
+FOLDER = "geometry_and_rasters/"
+s2_b04 = os.path.abspath(FOLDER + "s2_b04.jp2")
+s2_tci = os.path.abspath(FOLDER + "s2_tci.jp2")
 
 
 def test_image_paths():

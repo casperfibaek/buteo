@@ -8,23 +8,22 @@ TODO:
 
 import sys; sys.path.append("../../") # Path: buteo/raster/shift.py
 from uuid import uuid4
-from typing import Union, Tuple, List, Optional
 
 from osgeo import gdal
 
-from buteo.utils.project_types import Number
 from buteo.utils.core import remove_if_overwrite, is_number, type_check
 from buteo.utils.gdal_utils import path_to_driver_raster, default_options
 from buteo.raster.io import open_raster, raster_to_metadata
 
 
 def shift_raster(
-    raster: Union[gdal.Dataset, str],
-    shift: Union[Number, Tuple[Number, Number], List[Number]],
-    out_path: Optional[str] = None,
-    overwrite: bool = True,
-    creation_options: list = [],
-) -> Union[gdal.Dataset, str]:
+    raster,
+    shift,
+    out_path=None,
+    *,
+    overwrite=True,
+    creation_options=[],
+):
     """Shifts a raster in a given direction.
 
     Returns:
@@ -40,8 +39,8 @@ def shift_raster(
     ref = open_raster(raster)
     metadata = raster_to_metadata(ref)
 
-    x_shift: float = 0.0
-    y_shift: float = 0.0
+    x_shift = 0.0
+    y_shift = 0.0
     if isinstance(shift, tuple) or isinstance(shift, list):
         if len(shift) == 1:
             if is_number(shift[0]):

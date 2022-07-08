@@ -9,7 +9,6 @@ TODO:
 
 import sys; sys.path.append("../../") # Path: buteo/raster/align.py
 import os
-from typing import Union, List, Optional
 
 import numpy as np
 from osgeo import gdal, ogr, osr
@@ -43,6 +42,7 @@ def match_projections(
     rasters,
     master,
     out_dir,
+    *,
     overwrite=False,
     dst_nodata="infer",
     copy_if_already_correct=True,
@@ -75,28 +75,24 @@ def match_projections(
 # TODO: Ensure that the xmin, ymax is always the same
 # https://github.com/scikit-image/scikit-image/blob/main/skimage/registration/_phase_cross_correlation.py#L109-L276
 def align_rasters(
-    rasters: Union[List[Union[gdal.Dataset, str]], str, gdal.Dataset],
+    rasters,
     *,
-    out_path: Optional[Union[List[str], str]] = None,
-    master: Optional[Union[gdal.Dataset, str]] = None,
-    postfix: str = "_aligned",
-    bounding_box: Union[
-        str, gdal.Dataset, ogr.DataSource, list, tuple
-    ] = "intersection",
-    resample_alg: str = "nearest",
-    target_size: Optional[Union[tuple, list, int, float, str, gdal.Dataset]] = None,
-    target_in_pixels: bool = False,
-    projection: Optional[
-        Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
-    ] = None,
-    overwrite: bool = True,
-    creation_options: list = [],
-    src_nodata: Optional[Union[str, int, float]] = "infer",
-    dst_nodata: Optional[Union[str, int, float]] = "infer",
-    prefix: str = "",
+    out_path=None,
+    master=None,
+    postfix="_aligned",
+    bounding_box="intersection",
+    resample_alg="nearest",
+    target_size=None,
+    target_in_pixels=False,
+    projection=None,
+    overwrite=True,
+    creation_options=[],
+    src_nodata="infer",
+    dst_nodata="infer",
+    prefix="",
     ram=8000,
     skip_existing=False,
-) -> List[str]:
+):
     type_check(rasters, [list, str, gdal.Dataset], "rasters")
     type_check(out_path, [list, str], "out_path", allow_none=True)
     type_check(master, [list, str], "master", allow_none=True)
@@ -126,7 +122,7 @@ def align_rasters(
     was_list = False
 
     if isinstance(rasters, list):
-        was_list = True    
+        was_list = True
     elif isinstance(rasters, str) or isinstance(rasters, gdal.Dataset):
         rasters = [rasters]
 
@@ -146,12 +142,12 @@ def align_rasters(
     target_projection = None
     target_bounds = None
 
-    reprojected_rasters: List[str] = []
+    reprojected_rasters = []
 
     # Read the metadata for each raster.
     # Catalogue the used projections, to choose the most common one if necessary.
-    used_projections: List[dict] = []
-    metadata: List[str] = []
+    used_projections = []
+    metadata = []
 
     for raster in rasters:
         meta = raster_to_metadata(raster)
@@ -184,7 +180,7 @@ def align_rasters(
     elif target_projection is None:
 
         # Sort and count the projections
-        projection_counter: dict = {}
+        projection_counter = {}
         for proj in used_projections:
             if proj in projection_counter:
                 projection_counter[proj] += 1
@@ -222,7 +218,8 @@ def align_rasters(
                 target_size, target_in_pixels
             )
 
-    # If nothing has been specified, we will infer the pixel_size based on the median of all input rasters.
+    # If nothing has been specified, we will infer the pixel_size based on
+    # the median of all input rasters.
     elif x_res is None and y_res is None and x_pixels is None and y_pixels is None:
 
         # Ready numpy arrays for insertion
@@ -230,7 +227,8 @@ def align_rasters(
         y_res_arr = np.empty(len(raster_list), dtype="float32")
 
         for index, raster in enumerate(raster_list):
-            # It is necessary to reproject each raster, as pixel height and width might be different after projection.
+            # It is necessary to reproject each raster, as pixel height and width
+            # might be different after projection.
             reprojected = _reproject_raster(raster, target_projection)
             target_size_raster = raster_to_metadata(reprojected)
 
@@ -247,13 +245,15 @@ def align_rasters(
 
     if target_bounds is None:
 
-        # If a bounding box is supplied, simply use that one. It must be in the target projection.
+        # If a bounding box is supplied, simply use that one.
+        # It must be in the target projection.
         if isinstance(bounding_box, (list, tuple)):
             if len(bounding_box) != 4:
                 raise ValueError("bounding_box as a list/tuple must have 4 values.")
             target_bounds = bounding_box
 
-        # If the bounding box is a raster. Take the extent and reproject it to the target projection.
+        # If the bounding box is a raster. Take the extent and
+        # reproject it to the target projection.
         elif is_raster(bounding_box):
             reprojected_bbox_raster = raster_to_metadata(
                 _reproject_raster(bounding_box, target_projection)
@@ -264,7 +264,8 @@ def align_rasters(
             # add to target values.
             target_bounds = (x_min, y_min, x_max, y_max)
 
-        # If the bounding box is a raster. Take the extent and reproject it to the target projection.
+        # If the bounding box is a raster. Take the extent and
+        # reproject it to the target projection.
         elif is_vector(bounding_box):
             reprojected_bbox_vector = _vector_to_metadata(
                 _reproject_vector(bounding_box, target_projection)
@@ -275,7 +276,8 @@ def align_rasters(
             # add to target values.
             target_bounds = (x_min, y_min, x_max, y_max)
 
-        # If the bounding box is a string, we either take the union or the intersection of all the
+        # If the bounding box is a string, we either take the union
+        # or the intersection of all the
         # bounding boxes of the input rasters.
         elif isinstance(bounding_box, str):
             if bounding_box == "intersection" or bounding_box == "union":
@@ -341,7 +343,7 @@ def align_rasters(
         else:
             raise ValueError(f"Unable to parse or infer target_bounds: {target_bounds}")
 
-    """ 
+    """
         If the rasters have not been reprojected, we reproject them now.
         The reprojection is necessary as warp has to be a two step process
         in order to align the rasters properly. This might not be necessary
@@ -368,7 +370,7 @@ def align_rasters(
         raise Exception("Error while preparing the target pixel size.")
 
     # This is the list of rasters to return. If output is not memory, it's a list of paths.
-    return_list: List[str] = []
+    return_list = []
     for index, raster in enumerate(reprojected_rasters):
         raster_metadata = raster_to_metadata(raster)
 
@@ -390,16 +392,16 @@ def align_rasters(
                     raster_metadata["datatype_gdal_raw"]
                 )
 
-        elif src_nodata == None:
+        elif src_nodata is None:
             out_src_nodata = None
         elif not isinstance(src_nodata, str):
             out_src_nodata = src_nodata
 
         if dst_nodata == "infer":
             out_dst_nodata = out_src_nodata
-        elif dst_nodata == False or dst_nodata == None:
+        elif dst_nodata is False or dst_nodata is None:
             out_dst_nodata = None
-        elif src_nodata == None:
+        elif src_nodata is None:
             out_dst_nodata = None
         elif not isinstance(dst_nodata, str):
             out_dst_nodata = dst_nodata
@@ -428,7 +430,7 @@ def align_rasters(
             warpMemoryLimit=ram,
         )
 
-        if warped == None:
+        if warped is None:
             raise Exception("Error while warping rasters.")
 
         return_list.append(out_name)

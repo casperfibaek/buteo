@@ -8,7 +8,6 @@ TODO:
 
 import sys; sys.path.append("../../") # Path: buteo/vector/reproject.py
 import osgeo
-from typing import Union, Optional, List
 
 from osgeo import ogr, osr, gdal
 
@@ -25,12 +24,13 @@ from buteo.utils.core import remove_if_overwrite, type_check
 
 
 def _reproject_vector(
-    vector: Union[str, ogr.DataSource],
-    projection: Union[str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
-    out_path: Optional[str] = None,
-    copy_if_same: bool = False,
-    overwrite: bool = True,
-) -> str:
+    vector,
+    projection,
+    out_path=None,
+    *,
+    copy_if_same=False,
+    overwrite=True,
+):
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(
         projection,
@@ -119,12 +119,13 @@ def _reproject_vector(
 
 
 def reproject_vector(
-    vector: Union[List[Union[str, ogr.DataSource]], Union[str, ogr.DataSource]],
-    projection: Union[str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
-    out_path: Optional[str] = None,
-    copy_if_same: bool = False,
-    overwrite: bool = True,
-) -> Union[List[str], str]:
+    vector,
+    projection,
+    out_path=None,
+    *,
+    copy_if_same=False,
+    overwrite=True,
+):
     """Reprojects a vector given a target projection.
 
     Args:

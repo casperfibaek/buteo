@@ -8,7 +8,6 @@ TODO:
 
 import sys; sys.path.append("../../") # Path: buteo/vector/attributes.py
 from uuid import uuid4
-from typing import Union, Optional, List
 
 from osgeo import ogr, osr, gdal
 
@@ -30,17 +29,16 @@ from buteo.vector.io import (
 
 
 def _clip_vector(
-    vector: Union[str, ogr.DataSource],
-    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
-    out_path: Optional[str] = None,
-    process_layer: int = 0,
-    process_layer_clip: int = 0,
-    to_extent: bool = False,
-    target_projection: Optional[
-        Union[str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int]
-    ] = None,
-    preserve_fid: bool = True,
-) -> str:
+    vector,
+    clip_geom,
+    out_path=None,
+    *,
+    process_layer=0,
+    process_layer_clip=0,
+    to_extent=False,
+    target_projection=None,
+    preserve_fid=True,
+):
     """Clips a vector to a geometry.
 
     Returns:
@@ -116,20 +114,19 @@ def _clip_vector(
 
 
 def clip_vector(
-    vector: Union[List[Union[str, ogr.DataSource]], Union[str, ogr.DataSource]],
-    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
-    out_path: str = None,
-    process_layer: int = 0,
-    process_layer_clip: int = 0,
-    to_extent: bool = False,
-    target_projection: Union[
-        str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int
-    ] = None,
-    preserve_fid: bool = True,
-    prefix: str = "",
-    postfix: str = "",
-    add_uuid: bool = False,
-) -> Union[List[str], str]:
+    vector,
+    clip_geom,
+    out_path=None,
+    *,
+    process_layer=0,
+    process_layer_clip=0,
+    to_extent=False,
+    target_projection=None,
+    preserve_fid=True,
+    prefix="",
+    postfix="",
+    add_uuid=False,
+):
     """Clips a vector to a geometry.
 
     Returns:
@@ -153,7 +150,7 @@ def clip_vector(
         vector, out_path, prefix=prefix, postfix=postfix, add_uuid=add_uuid
     )
 
-    output: List[str] = []
+    output = []
     for index, in_vector in enumerate(vector_list):
         output.append(
             _clip_vector(

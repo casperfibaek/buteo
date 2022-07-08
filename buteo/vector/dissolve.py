@@ -7,7 +7,6 @@ TODO:
 """
 
 import sys; sys.path.append("../../") # Path: buteo/vector/dissolve.py
-from typing import Dict, Union, List, Optional, TypedDict
 
 from osgeo import ogr
 
@@ -22,13 +21,14 @@ from buteo.vector.io import (
 
 
 def _dissolve_vector(
-    vector: Union[str, ogr.DataSource],
-    attribute: Optional[str] = None,
-    out_path: str = None,
-    overwrite: bool = True,
-    add_index: bool = True,
-    process_layer: int = -1,
-) -> str:
+    vector,
+    attribute=None,
+    out_path=None,
+    *,
+    overwrite=True,
+    add_index=True,
+    process_layer=-1,
+):
     """Clips a vector to a geometry."""
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(attribute, [str], "attribute", allow_none=True)
@@ -46,9 +46,7 @@ def _dissolve_vector(
     ref = open_vector(vector_list[0])
     metadata = _vector_to_metadata(ref)
 
-    Layer_info = TypedDict("Layer_info", {"name": List[str], "geom": ogr.Layer, "fields": List[str]})
-
-    layers: List[Layer_info] = []
+    layers = []
 
     if process_layer == -1:
         for index in range(len(metadata["layers"])):
@@ -100,13 +98,14 @@ def _dissolve_vector(
 
 
 def dissolve_vector(
-    vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource],
-    attribute: Optional[str] = None,
-    out_path: str = None,
-    overwrite: bool = True,
-    add_index: bool = True,
-    process_layer: int = -1,
-) -> Union[List[str], str]:
+    vector,
+    attribute=None,
+    out_path=None,
+    *,
+    overwrite=True,
+    add_index=True,
+    process_layer=-1,
+):
     """Clips a vector to a geometry.
     Args:
         vector (list of vectors | path | vector): The vectors(s) to clip.

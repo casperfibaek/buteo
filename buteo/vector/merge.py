@@ -8,7 +8,6 @@ TODO:
 
 import sys; sys.path.append("../../") # Path: buteo/vector/merge.py
 from uuid import uuid4
-from typing import Union, List, Optional
 
 from osgeo import ogr
 
@@ -18,10 +17,11 @@ from buteo.vector.io import open_vector, to_vector_list, _vector_to_metadata
 
 
 def merge_vectors(
-    vectors: List[Union[str, ogr.DataSource]],
-    out_path: Optional[str] = None,
-    preserve_fid: bool = True,
-) -> str:
+    vectors,
+    out_path=None,
+    *,
+    preserve_fid=True,
+):
     """Merge vectors to a single geopackage."""
     type_check(vectors, [list], "vector")
     type_check(out_path, [str], "out_path", allow_none=True)
@@ -40,7 +40,7 @@ def merge_vectors(
 
     driver = ogr.GetDriverByName(out_driver)
 
-    merged_ds: ogr.DataSource = driver.CreateDataSource(out_target)
+    merged_ds = driver.CreateDataSource(out_target)
 
     for vector in vector_list:
         ref = open_vector(vector)

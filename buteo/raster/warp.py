@@ -8,11 +8,9 @@ TODO:
 """
 import sys; sys.path.append("../../") # Path: buteo/raster/warp.py
 from uuid import uuid4
-from typing import Union, List, Optional, Tuple
 
 from osgeo import gdal, osr, ogr
 
-from buteo.utils.project_types import Number
 from buteo.utils.core import remove_if_overwrite, file_exists, type_check
 from buteo.utils.gdal_utils import (
     parse_projection,
@@ -39,29 +37,28 @@ from buteo.vector.io import (
 
 
 def _warp_raster(
-    raster: Union[str, gdal.Dataset],
-    out_path: Optional[str] = None,
-    projection: Optional[
-        Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
-    ] = None,
-    clip_geom: Optional[Union[str, ogr.DataSource]] = None,
-    target_size: Optional[Union[Tuple[Number], Number]] = None,
-    target_in_pixels: bool = False,
-    resample_alg: str = "nearest",
-    crop_to_geom: bool = True,
-    all_touch: bool = True,
-    adjust_bbox: bool = True,
-    overwrite: bool = True,
-    creation_options: Union[list, None] = None,
-    src_nodata: Union[str, int, float] = "infer",
-    dst_nodata: Union[str, int, float] = "infer",
-    layer_to_clip: int = 0,
-    prefix: str = "",
-    postfix: str = "_resampled",
-) -> str:
+    raster,
+    out_path=None,
+    *,
+    projection=None,
+    clip_geom=None,
+    target_size=None,
+    target_in_pixels=False,
+    resample_alg="nearest",
+    crop_to_geom=True,
+    all_touch=True,
+    adjust_bbox=True,
+    overwrite=True,
+    creation_options=None,
+    src_nodata="infer",
+    dst_nodata="infer",
+    layer_to_clip=0,
+    prefix="",
+    postfix="_resampled",
+):
     """WARNING: INTERNAL. DO NOT USE."""
     raster_list, path_list = ready_io_raster(
-        raster, out_path, overwrite, prefix, postfix
+        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix
     )
 
     origin = open_raster(raster_list[0])
@@ -212,26 +209,25 @@ def _warp_raster(
 
 
 def warp_raster(
-    raster: Union[List[Union[gdal.Dataset, str]], str, gdal.Dataset],
-    out_path: Optional[Union[List[str], str]] = None,
-    projection: Optional[
-        Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
-    ] = None,
-    clip_geom: Optional[Union[str, ogr.DataSource]] = None,
-    target_size: Optional[Union[Tuple[Number], Number]] = None,
-    target_in_pixels: bool = False,
-    resample_alg: str = "nearest",
-    crop_to_geom: bool = True,
-    all_touch: bool = True,
-    adjust_bbox: bool = True,
-    overwrite: bool = True,
-    creation_options: Union[list, None] = None,
-    src_nodata: Union[str, int, float] = "infer",
-    dst_nodata: Union[str, int, float] = "infer",
-    layer_to_clip: int = 0,
-    prefix: str = "",
-    postfix: str = "_resampled",
-) -> Union[List[str], str]:
+    raster,
+    out_path=None,
+    *,
+    projection=None,
+    clip_geom=None,
+    target_size=None,
+    target_in_pixels=False,
+    resample_alg="nearest",
+    crop_to_geom=True,
+    all_touch=True,
+    adjust_bbox=True,
+    overwrite=True,
+    creation_options=None,
+    src_nodata="infer",
+    dst_nodata="infer",
+    layer_to_clip=0,
+    prefix="",
+    postfix="_resampled",
+):
     """Warps a raster into a target raster
 
     Please be aware that all_touch does not work if target_size is set.
@@ -270,7 +266,7 @@ def warp_raster(
         creation_options = []
 
     raster_list, path_list = ready_io_raster(
-        raster, out_path, overwrite, prefix, postfix
+        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix
     )
 
     output = []

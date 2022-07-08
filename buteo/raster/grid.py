@@ -9,11 +9,8 @@ TODO:
 
 import sys; sys.path.append("../../") # Path: buteo/raster/grid.py
 from uuid import uuid4
-from typing import Union, Optional, Tuple, List
 
 from osgeo import gdal, ogr
-
-sys.path.append("../../")
 
 from buteo.vector.io import open_vector, _vector_to_metadata
 from buteo.vector.intersect import intersect_vector
@@ -25,16 +22,17 @@ from buteo.utils.core import path_to_ext, progress, type_check
 
 
 def raster_to_grid(
-    raster: Union[str, gdal.Dataset],
-    grid: Union[str, ogr.DataSource],
-    out_dir: str,
-    use_field: Optional[str] = None,
-    generate_vrt: bool = True,
-    overwrite: bool = True,
-    process_layer: int = 0,
-    creation_options: list = [],
-    verbose: int = 1,
-) -> Union[List[str], Tuple[Optional[List[str]], Optional[str]]]:
+    raster,
+    grid,
+    out_dir,
+    *,
+    use_field=None,
+    generate_vrt=True,
+    overwrite=True,
+    process_layer=0,
+    creation_options=[],
+    verbose=1,
+):
     """Clips a raster to a grid. Generate .vrt.
 
     Returns:

@@ -8,7 +8,6 @@ TODO:
 """
 
 import sys; sys.path.append("../../") # Path: buteo/vector/intersect.py
-from typing import Union, List, Optional
 
 from osgeo import ogr, gdal
 
@@ -25,17 +24,18 @@ from buteo.vector.merge import merge_vectors
 
 
 def _intersect_vector(
-    vector: Union[str, ogr.DataSource],
-    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
-    out_path: Optional[str] = None,
-    to_extent: bool = False,
-    process_layer: int = 0,
-    process_layer_clip: int = 0,
-    add_index: bool = True,
-    preserve_fid: bool = True,
-    overwrite: bool = True,
-    return_bool: bool = False,
-) -> str:
+    vector,
+    clip_geom,
+    out_path=None,
+    *,
+    to_extent=False,
+    process_layer=0,
+    process_layer_clip=0,
+    add_index=True,
+    preserve_fid=True,
+    overwrite=True,
+    return_bool=False,
+):
     """Clips a vector to a geometry.
 
     Returns:
@@ -96,21 +96,17 @@ def _intersect_vector(
 
 
 def intersect_vector(
-    vector: Union[List[Union[str, ogr.DataSource]], str, ogr.DataSource],
-    clip_geom: Union[
-        List[Union[str, ogr.DataSource, gdal.Dataset]],
-        gdal.Dataset,
-        ogr.DataSource,
-        str,
-    ],
-    out_path: str = None,
-    to_extent: bool = False,
-    process_layer: int = 0,
-    process_layer_clip: int = 0,
-    add_index: bool = True,
-    preserve_fid: bool = True,
-    overwrite: bool = True,
-) -> Union[List[str], str]:
+    vector,
+    clip_geom,
+    out_path=None,
+    *,
+    to_extent=False,
+    process_layer=0,
+    process_layer_clip=0,
+    add_index=True,
+    preserve_fid=True,
+    overwrite=True,
+):
     """Clips a vector to a geometry."""
     type_check(vector, [ogr.DataSource, str, list], "vector")
     type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")

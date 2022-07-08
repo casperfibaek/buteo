@@ -40,7 +40,7 @@ def calc_proximity(
     Calculate the proximity of input_raster to values
     """
     raster_list, path_list = ready_io_raster(
-        input_rasters, out_path, overwrite, postfix=postfix, uuid=uuid
+        input_rasters, out_path, overwrite=overwrite, postfix=postfix, uuid=uuid
     )
 
     output = []
@@ -99,8 +99,8 @@ def calc_proximity(
         gdal.ComputeProximity(
             src_band,
             dst_band,
-            [
-                f"VALUES='1'",
+            options=[
+                "VALUES='1'",
                 "DISTUNITS=GEO",
                 f"MAXDIST={max_dist}",
             ],

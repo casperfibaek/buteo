@@ -1,7 +1,10 @@
 """
 Calculate zonal statistics from vector and raster files.
 
+BROKEN
+
 TODO:
+    - Fix rasterize step
     - Improve documentation
 
 """
@@ -253,7 +256,7 @@ def zonal_statistics(
         try:
             raster_data = raster_to_array(
                 raster_value,
-                crop=[
+                extent_pixels=[
                     overlap_aligned_offset[0],
                     overlap_aligned_offset[1],
                     overlap_aligned_rasterized_size[0],
@@ -293,12 +296,14 @@ def zonal_statistics(
                     feature_aligned_rasterized_size,
                     feature_aligned_offset,
                 ) = align_extent(overlap_transform, feature_extent, overlap_size)
-                rasterized_vector = rasterize_vector(
-                    temp_vector_layer,
-                    feature_aligned_extent,
-                    feature_aligned_rasterized_size,
-                    raster_projection,
-                )
+
+                rasterized_vector = None
+                # rasterized_vector = rasterize_vector(
+                #     temp_vector_layer,
+                #     feature_aligned_extent,
+                #     feature_aligned_rasterized_size,
+                #     raster_projection,
+                # )
                 rasterized_features.append(rasterized_vector)
 
                 offsets[n] = feature_aligned_offset
@@ -312,7 +317,7 @@ def zonal_statistics(
             else:
                 cropped_raster = raster_to_array(
                     raster_value,
-                    crop=[
+                    extent_pixels=[
                         overlap_aligned_offset[0] + offsets[n][0],
                         overlap_aligned_offset[1] + offsets[n][1],
                         int(sizes[n][0]),

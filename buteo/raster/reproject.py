@@ -9,7 +9,6 @@ TODO:
 """
 
 import sys; sys.path.append("../../") # Path: buteo/raster/reproject.py
-from typing import Union, List, Optional
 
 from osgeo import gdal, ogr, osr
 
@@ -22,7 +21,6 @@ from buteo.utils.gdal_utils import (
     gdal_nodata_value_from_type,
 )
 from buteo.raster.io import (
-    default_options,
     get_raster_path,
     open_raster,
     ready_io_raster,
@@ -32,17 +30,18 @@ from buteo.raster.io import (
 
 # format should be _
 def _reproject_raster(
-    raster: Union[str, gdal.Dataset],
-    projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-    out_path: Optional[str] = None,
-    resample_alg: str = "nearest",
-    copy_if_already_correct: bool = True,
-    overwrite: bool = True,
-    creation_options: list = [],
-    dst_nodata: Union[str, int, float] = "infer",
-    prefix: str = "",
-    postfix: str = "_reprojected",
-) -> str:
+    raster,
+    projection,
+    out_path=None,
+    *,
+    resample_alg="nearest",
+    copy_if_already_correct=True,
+    overwrite=True,
+    creation_options=[],
+    dst_nodata="infer",
+    prefix="",
+    postfix="_reprojected",
+):
     """OBS: Internal. Single output.
 
     Reproject a raster(s) to a target coordinate reference system.
@@ -63,7 +62,7 @@ def _reproject_raster(
     type_check(postfix, [str], "postfix")
 
     raster_list, path_list = ready_io_raster(
-        raster, out_path, overwrite, prefix, postfix
+        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix
     )
     out_name = path_list[0]
     ref = open_raster(raster_list[0])
@@ -119,17 +118,18 @@ def _reproject_raster(
 
 
 def reproject_raster(
-    raster: Union[List[Union[gdal.Dataset, str]], str, gdal.Dataset],
-    projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-    out_path: Union[List[str], str, None] = None,
-    resample_alg: str = "nearest",
-    copy_if_already_correct: bool = True,
-    overwrite: bool = True,
-    creation_options: list = [],
-    dst_nodata: Union[str, int, float] = "infer",
-    prefix: str = "",
-    postfix: str = "_reprojected",
-) -> Union[List[Union[gdal.Dataset, str]], gdal.Dataset, str]:
+    raster,
+    projection,
+    out_path=None,
+    *,
+    resample_alg="nearest",
+    copy_if_already_correct=True,
+    overwrite=True,
+    creation_options=[],
+    dst_nodata="infer",
+    prefix="",
+    postfix="_reprojected",
+):
     """Reproject a raster(s) to a target coordinate reference system.
 
     Args:
@@ -180,7 +180,7 @@ def reproject_raster(
     type_check(postfix, [str], "postfix")
 
     raster_list, path_list = ready_io_raster(
-        raster, out_path, overwrite, prefix, postfix
+        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix
     )
 
     output = []

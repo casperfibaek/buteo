@@ -7,7 +7,6 @@ TODO:
 
 import sys; sys.path.append("../../") # Path: buteo/raster/clip.py
 import os
-from typing import Union, List, Optional
 
 from osgeo import gdal, ogr
 
@@ -36,25 +35,26 @@ from buteo.utils.gdal_utils import (
 
 
 def _clip_raster(
-    raster: Union[str, gdal.Dataset],
-    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
-    out_path: Optional[str] = None,
-    resample_alg: str = "nearest",
-    crop_to_geom: bool = True,
-    adjust_bbox: bool = True,
-    all_touch: bool = True,
-    to_extent: bool = False,
-    overwrite: bool = True,
-    creation_options: list = [],
-    dst_nodata: Union[str, int, float] = "infer",
-    src_nodata: Union[str, int, float] = "infer",
-    layer_to_clip: int = 0,
-    prefix: str = "",
-    postfix: str = "",
-    verbose: int = 1,
-    uuid: bool = False,
-    ram: int = 8000,
-) -> str:
+    raster,
+    clip_geom,
+    out_path,
+    *,
+    resample_alg="nearest",
+    crop_to_geom=True,
+    adjust_bbox=True,
+    all_touch=True,
+    to_extent=False,
+    overwrite=True,
+    creation_options=[],
+    dst_nodata="infer",
+    src_nodata="infer",
+    layer_to_clip=0,
+    prefix="",
+    postfix="",
+    verbose=1,
+    uuid=False,
+    ram=8000,
+):
     """OBS: Internal. Single output.
 
     Clips a raster(s) using a vector geometry or the extents of
@@ -205,25 +205,26 @@ def _clip_raster(
 
 
 def clip_raster(
-    raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
-    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
-    out_path: Union[List[str], str, None] = None,
-    resample_alg: str = "nearest",
-    crop_to_geom: bool = True,
-    adjust_bbox: bool = True,
-    all_touch: bool = True,
-    to_extent: bool = False,
-    prefix: str = "",
-    postfix: str = "",
-    overwrite: bool = True,
-    creation_options: list = [],
-    dst_nodata: Union[str, int, float] = "infer",
-    src_nodata: Union[str, int, float] = "infer",
-    layer_to_clip: int = 0,
-    verbose: int = 1,
-    uuid: bool = False,
-    ram: int = 8000,
-) -> Union[list, gdal.Dataset, str]:
+    raster,
+    clip_geom,
+    out_path=None,
+    *,
+    resample_alg="nearest",
+    crop_to_geom=True,
+    adjust_bbox=True,
+    all_touch=True,
+    to_extent=False,
+    prefix="",
+    postfix="",
+    overwrite=True,
+    creation_options=[],
+    dst_nodata="infer",
+    src_nodata="infer",
+    layer_to_clip=0,
+    verbose=1,
+    uuid=False,
+    ram=8000,
+):
     """Clips a raster(s) using a vector geometry or the extents of
         a raster.
 

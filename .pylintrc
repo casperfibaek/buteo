@@ -2,4 +2,7 @@
 
 disable=multiple-statements,
         wrong-import-position,
-        broad-except
+        broad-except,
+        dangerous-default-value,
+        missing-function-docstring,
+        isinstance-second-argument-not-valid-type

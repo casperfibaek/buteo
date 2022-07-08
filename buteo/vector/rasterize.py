@@ -8,8 +8,9 @@ TODO:
 """
 
 import sys; sys.path.append("../../") # Path: buteo/vector/rasterize.py
-from osgeo import gdal
 from uuid import uuid4
+
+from osgeo import gdal
 
 from buteo.raster.io import open_raster
 from buteo.vector.io import _vector_to_metadata, open_vector
@@ -20,6 +21,7 @@ def rasterize_vector(
     vector,
     pixel_size,
     out_path=None,
+    *,
     extent=None,
     all_touch=False,
     dtype="uint8",
@@ -95,7 +97,7 @@ def rasterize_vector(
         band.Fill(fill_value)
 
     options = []
-    if all_touch == True:
+    if all_touch is True:
         options.append("ALL_TOUCHED=TRUE")
     else:
         options.append("ALL_TOUCHED=FALSE")

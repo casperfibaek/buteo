@@ -9,7 +9,6 @@ TODO:
 """
 
 import sys; sys.path.append("../../") # Path: buteo/raster/resample.py
-from typing import Union, List, Optional
 
 from osgeo import gdal
 
@@ -28,25 +27,25 @@ from buteo.utils.gdal_utils import (
 from buteo.raster.io import (
     open_raster,
     ready_io_raster,
-    default_options,
     raster_to_metadata,
 )
 
 
 def _resample_raster(
-    raster: Union[str, gdal.Dataset],
-    target_size: Union[tuple, int, float, str, gdal.Dataset],
-    target_in_pixels: bool = False,
-    out_path: Optional[str] = None,
-    resample_alg: str = "nearest",
-    overwrite: bool = True,
-    creation_options: list = [],
+    raster,
+    target_size,
+    target_in_pixels,
+    out_path=None,
+    *,
+    resample_alg="nearest",
+    overwrite=True,
+    creation_options=[],
     dtype=None,
-    dst_nodata: Union[str, int, float] = "infer",
-    prefix: str = "",
-    postfix: str = "_resampled",
-    add_uuid: bool = False,
-) -> str:
+    dst_nodata="infer",
+    prefix="",
+    postfix="_resampled",
+    add_uuid=False,
+):
     """OBS: Internal. Single output.
 
     Reprojects a raster given a target projection. Beware if your input is in
@@ -109,18 +108,19 @@ def _resample_raster(
 
 
 def resample_raster(
-    raster: Union[List[Union[str, gdal.Dataset]], str, gdal.Dataset],
-    target_size: Union[tuple, int, float, str, gdal.Dataset],
-    target_in_pixels: bool = False,
-    out_path: Optional[Union[list, str]] = None,
-    resample_alg: str = "nearest",
-    overwrite: bool = True,
-    creation_options: list = [],
+    raster,
+    target_size,
+    target_in_pixels=False,
+    out_path=None,
+    *,
+    resample_alg="nearest",
+    overwrite=True,
+    creation_options=[],
     dtype=None,
-    dst_nodata: Union[str, int, float] = "infer",
-    prefix: str = "",
-    postfix: str = "_resampled",
-) -> Union[List[str], str]:
+    dst_nodata="infer",
+    prefix="",
+    postfix="_resampled",
+):
     """Reprojects a raster given a target projection. Beware if your input is in
         latitude and longitude, you'll need to specify the target_size in degrees as well.
 
@@ -171,7 +171,7 @@ def resample_raster(
     type_check(postfix, [str], "postfix")
 
     raster_list, path_list = ready_io_raster(
-        raster, out_path, overwrite, prefix, postfix
+        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix
     )
 
     resampled_rasters = []
