@@ -19,9 +19,9 @@ from buteo.raster.io import (
     rasters_are_aligned,
     ready_io_raster,
 )
-from buteo.vector.io import internal_vector_to_metadata
-from buteo.raster.reproject import internal_reproject_raster
-from buteo.vector.reproject import internal_reproject_vector
+from buteo.vector.io import _vector_to_metadata
+from buteo.raster.reproject import _reproject_raster
+from buteo.vector.reproject import _reproject_vector
 from buteo.utils.core import (
     remove_if_overwrite,
     type_check,
@@ -60,7 +60,7 @@ def match_projections(
             if not overwrite:
                 continue
 
-        internal_reproject_raster(
+        _reproject_raster(
             raster,
             target_projection,
             outname,
@@ -208,7 +208,7 @@ def align_rasters(
                 )
 
             # Reprojection is necessary to ensure the correct pixel_size
-            reprojected_target_size = internal_reproject_raster(
+            reprojected_target_size = _reproject_raster(
                 target_size, target_projection
             )
             target_size_raster = raster_to_metadata(reprojected_target_size)
@@ -231,7 +231,7 @@ def align_rasters(
 
         for index, raster in enumerate(raster_list):
             # It is necessary to reproject each raster, as pixel height and width might be different after projection.
-            reprojected = internal_reproject_raster(raster, target_projection)
+            reprojected = _reproject_raster(raster, target_projection)
             target_size_raster = raster_to_metadata(reprojected)
 
             # Add the pixel sizes to the numpy arrays
@@ -256,7 +256,7 @@ def align_rasters(
         # If the bounding box is a raster. Take the extent and reproject it to the target projection.
         elif is_raster(bounding_box):
             reprojected_bbox_raster = raster_to_metadata(
-                internal_reproject_raster(bounding_box, target_projection)
+                _reproject_raster(bounding_box, target_projection)
             )
 
             x_min, y_max, x_max, y_min = reprojected_bbox_raster["extent"]
@@ -266,8 +266,8 @@ def align_rasters(
 
         # If the bounding box is a raster. Take the extent and reproject it to the target projection.
         elif is_vector(bounding_box):
-            reprojected_bbox_vector = internal_vector_to_metadata(
-                internal_reproject_vector(bounding_box, target_projection)
+            reprojected_bbox_vector = _vector_to_metadata(
+                _reproject_vector(bounding_box, target_projection)
             )
 
             x_min, y_max, x_max, y_min = reprojected_bbox_vector["extent"]
@@ -291,7 +291,7 @@ def align_rasters(
                         if raster_metadata["projection_osr"].IsSame(target_projection):
                             reprojected_rasters.append(raster)
                         else:
-                            reprojected = internal_reproject_raster(
+                            reprojected = _reproject_raster(
                                 raster, target_projection
                             )
                             reprojected_rasters.append(reprojected)
@@ -357,7 +357,7 @@ def align_rasters(
             if raster_metadata["projection_osr"].IsSame(target_projection):
                 reprojected_rasters.append(raster)
             else:
-                reprojected = internal_reproject_raster(raster, target_projection)
+                reprojected = _reproject_raster(raster, target_projection)
                 reprojected_rasters.append(reprojected)
 
     # If any of the target values are still undefined. Throw an error!

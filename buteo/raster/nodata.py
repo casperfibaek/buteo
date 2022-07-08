@@ -13,9 +13,8 @@ from typing import Union, List, Optional, Sequence
 import numpy as np
 from osgeo import gdal
 
-from buteo.utils.project_types import Metadata_raster
+from buteo.utils.project_types import Metadata_raster, Number
 from buteo.utils.core import remove_if_overwrite, type_check
-from buteo.utils.project_types import Number
 from buteo.utils.gdal_utils import (
     is_raster,
     gdal_nodata_value_from_type,
@@ -30,10 +29,6 @@ from buteo.raster.io import (
     ready_io_raster,
     get_raster_path,
 )
-
-
-# TODO: raster_to_mask
-# TODO: raster_invert_nodata
 
 
 def raster_has_nodata_value(

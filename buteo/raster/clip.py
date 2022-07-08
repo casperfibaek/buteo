@@ -14,8 +14,8 @@ from osgeo import gdal, ogr
 from buteo.raster.io import raster_to_metadata, ready_io_raster, open_raster
 from buteo.vector.io import (
     open_vector,
-    internal_vector_to_memory,
-    internal_vector_to_metadata,
+    _vector_to_memory,
+    _vector_to_metadata,
 )
 from buteo.utils.core import (
     file_exists,
@@ -73,14 +73,14 @@ def _clip_raster(
     if is_vector(clip_geom):
         clip_ds = open_vector(clip_geom)
 
-        clip_metadata = internal_vector_to_metadata(
+        clip_metadata = _vector_to_metadata(
             clip_ds, process_layer=layer_to_clip, create_geometry=True,
         )
 
         if to_extent:
             clip_ds = clip_metadata["extent_datasource"]
         elif clip_metadata["layer_count"] > 1:
-            clip_ds = internal_vector_to_memory(clip_ds, layer_to_extract=layer_to_clip)
+            clip_ds = _vector_to_memory(clip_ds, layer_to_extract=layer_to_clip)
 
         if isinstance(clip_ds, ogr.DataSource):
             clip_ds = clip_ds.GetName()

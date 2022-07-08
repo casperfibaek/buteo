@@ -17,14 +17,14 @@ from buteo.utils.gdal_utils import path_to_driver_vector
 from buteo.vector.io import (
     open_vector,
     ready_io_vector,
-    internal_vector_to_metadata,
+    _vector_to_metadata,
     vector_add_index,
 )
-from buteo.vector.reproject import internal_reproject_vector
+from buteo.vector.reproject import _reproject_vector
 from buteo.vector.merge import merge_vectors
 
 
-def internal_intersect_vector(
+def _intersect_vector(
     vector: Union[str, ogr.DataSource],
     clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
     out_path: Optional[str] = None,
@@ -54,7 +54,7 @@ def internal_intersect_vector(
     _vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
     out_name = path_list[0]
 
-    match_projection = internal_reproject_vector(clip_geom, vector)
+    match_projection = _reproject_vector(clip_geom, vector)
     geometry_to_clip = open_vector(match_projection)
 
     merged = open_vector(merge_vectors([vector, match_projection]))
@@ -62,11 +62,11 @@ def internal_intersect_vector(
     if add_index:
         vector_add_index(merged)
 
-    vector_metadata = internal_vector_to_metadata(vector)
+    vector_metadata = _vector_to_metadata(vector)
     vector_layername = vector_metadata["layers"][process_layer]["layer_name"]
     vector_geom_col = vector_metadata["layers"][process_layer]["column_geom"]
 
-    clip_geom_metadata = internal_vector_to_metadata(geometry_to_clip)
+    clip_geom_metadata = _vector_to_metadata(geometry_to_clip)
     clip_geom_layername = clip_geom_metadata["layers"][process_layer_clip]["layer_name"]
     clip_geom_col = clip_geom_metadata["layers"][process_layer_clip]["column_geom"]
 
@@ -127,7 +127,7 @@ def intersect_vector(
     output = []
     for index, in_vector in enumerate(vector_list):
         output.append(
-            internal_intersect_vector(
+            _intersect_vector(
                 in_vector,
                 clip_geom,
                 out_path=path_list[index],

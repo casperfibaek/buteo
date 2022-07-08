@@ -31,7 +31,7 @@ from buteo.raster.io import (
 
 
 # format should be _
-def internal_reproject_raster(
+def _reproject_raster(
     raster: Union[str, gdal.Dataset],
     projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     out_path: Optional[str] = None,
@@ -186,7 +186,7 @@ def reproject_raster(
     output = []
     for index, in_raster in enumerate(raster_list):
         output.append(
-            internal_reproject_raster(
+            _reproject_raster(
                 in_raster,
                 projection,
                 out_path=path_list[index],

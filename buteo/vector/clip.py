@@ -22,14 +22,14 @@ from buteo.utils.core import type_check
 from buteo.raster.io import raster_to_metadata
 from buteo.vector.io import (
     get_vector_path,
-    internal_vector_to_memory,
-    internal_vector_to_metadata,
+    _vector_to_memory,
+    _vector_to_metadata,
     open_vector,
     ready_io_vector,
 )
 
 
-def internal_clip_vector(
+def _clip_vector(
     vector: Union[str, ogr.DataSource],
     clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
     out_path: Optional[str] = None,
@@ -72,21 +72,21 @@ def internal_clip_vector(
     geometry_to_clip = None
     if is_vector(clip_geom):
         if to_extent:
-            extent = internal_vector_to_metadata(clip_geom, create_geometry=True)[
+            extent = _vector_to_metadata(clip_geom, create_geometry=True)[
                 "extent_datasource"
             ]
-            geometry_to_clip = internal_vector_to_memory(extent)
+            geometry_to_clip = _vector_to_memory(extent)
         else:
             geometry_to_clip = open_vector(clip_geom, layer=process_layer_clip)
     elif is_raster(clip_geom):
         extent = raster_to_metadata(clip_geom, create_geometry=True)[
             "extent_datasource"
         ]
-        geometry_to_clip = internal_vector_to_memory(extent)
+        geometry_to_clip = _vector_to_memory(extent)
     else:
         raise ValueError(f"Invalid input in clip_geom, unable to parse: {clip_geom}")
 
-    clip_vector_path = internal_vector_to_metadata(geometry_to_clip)["path"]
+    clip_vector_path = _vector_to_metadata(geometry_to_clip)["path"]
     options.append(f"-clipsrc {clip_vector_path}")
 
     if preserve_fid:
@@ -156,7 +156,7 @@ def clip_vector(
     output: List[str] = []
     for index, in_vector in enumerate(vector_list):
         output.append(
-            internal_clip_vector(
+            _clip_vector(
                 in_vector,
                 clip_geom,
                 out_path=path_list[index],

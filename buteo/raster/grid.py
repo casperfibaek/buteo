@@ -15,17 +15,13 @@ from osgeo import gdal, ogr
 
 sys.path.append("../../")
 
-from buteo.vector.io import open_vector, internal_vector_to_metadata
+from buteo.vector.io import open_vector, _vector_to_metadata
 from buteo.vector.intersect import intersect_vector
 from buteo.vector.reproject import reproject_vector
 from buteo.raster.clip import clip_raster
 from buteo.raster.io import open_raster, raster_to_metadata, stack_rasters_vrt
 from buteo.utils.gdal_utils import ogr_bbox_intersects, default_options
 from buteo.utils.core import path_to_ext, progress, type_check
-
-
-# TODO: raster_to_grid without geom.
-# TODO: split raster in to raster grid of x tiles
 
 
 def raster_to_grid(
@@ -53,13 +49,13 @@ def raster_to_grid(
     type_check(verbose, [int], "verbose")
 
     use_grid = open_vector(grid)
-    grid_metadata = internal_vector_to_metadata(use_grid)
+    grid_metadata = _vector_to_metadata(use_grid)
     raster_metadata = raster_to_metadata(raster, create_geometry=True)
 
     # Reproject raster if necessary.
     if not raster_metadata["projection_osr"].IsSame(grid_metadata["projection_osr"]):
         use_grid = reproject_vector(grid, raster_metadata["projection_osr"])
-        grid_metadata = internal_vector_to_metadata(use_grid)
+        grid_metadata = _vector_to_metadata(use_grid)
 
         if not isinstance(grid_metadata, dict):
             raise Exception("Error while parsing metadata.")

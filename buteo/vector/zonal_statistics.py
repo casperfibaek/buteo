@@ -17,8 +17,8 @@ from buteo.vector.rasterize import rasterize_vector
 from buteo.vector.reproject import reproject_vector
 from buteo.vector.io import (
     open_vector,
-    internal_vector_to_memory,
-    internal_vector_to_metadata,
+    _vector_to_memory,
+    _vector_to_metadata,
 )
 from buteo.filters.stats import calculate_array_stats
 from buteo.utils.core import progress
@@ -164,9 +164,9 @@ def zonal_statistics(
     if output_vector is None:
         vector = open_vector(in_vector, writeable=True)
     else:
-        vector = internal_vector_to_memory(in_vector)
+        vector = _vector_to_memory(in_vector)
 
-    vector_metadata = internal_vector_to_metadata(vector)
+    vector_metadata = _vector_to_metadata(vector)
     vector_layer = vector.GetLayer()
 
     # Check that projections match
@@ -179,7 +179,7 @@ def zonal_statistics(
             )
             vector = open_vector(vector_path, writeable=True)
 
-        vector_metadata = internal_vector_to_metadata(vector)
+        vector_metadata = _vector_to_metadata(vector)
         vector_layer = vector.GetLayer()
 
     vector_projection = vector_metadata["projection_osr"]

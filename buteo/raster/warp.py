@@ -33,7 +33,7 @@ from buteo.raster.io import (
 )
 from buteo.vector.io import (
     open_vector,
-    internal_vector_to_metadata,
+    _vector_to_metadata,
     vector_to_memory,
 )
 
@@ -89,10 +89,10 @@ def _warp_raster(
                 opened_raster, create_geometry=True
             )
             clip_ds = clip_metadata_raster["extent_datasource"]
-            clip_metadata = internal_vector_to_metadata(clip_ds, create_geometry=True)
+            clip_metadata = _vector_to_metadata(clip_ds, create_geometry=True)
         elif is_vector(clip_geom):
             clip_ds = open_vector(clip_geom)
-            clip_metadata = internal_vector_to_metadata(clip_ds, create_geometry=True)
+            clip_metadata = _vector_to_metadata(clip_ds, create_geometry=True)
         else:
             if file_exists(clip_geom):
                 raise ValueError(f"Unable to parse clip geometry: {clip_geom}")

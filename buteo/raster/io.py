@@ -630,6 +630,12 @@ def raster_to_array(
         fashion eg. (1920x1080) instead of the default channel-last format
         (1920x1080x1)
 
+        extent (list): A list of [xmin, ymin, xmax, ymax] to use as the
+        extent of the raster. Uses coordinates
+
+        extent_pixels (list): A list of [xmin, ymin, xmax, ymax] to use as
+        the extent of the raster. Uses pixel offsets.
+
     Returns:
         A numpy array in the 3D channel-last format unless output_2D is
         specified.

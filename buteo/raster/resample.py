@@ -33,7 +33,7 @@ from buteo.raster.io import (
 )
 
 
-def internal_resample_raster(
+def _resample_raster(
     raster: Union[str, gdal.Dataset],
     target_size: Union[tuple, int, float, str, gdal.Dataset],
     target_in_pixels: bool = False,
@@ -177,7 +177,7 @@ def resample_raster(
     resampled_rasters = []
     for index, in_raster in enumerate(raster_list):
         resampled_rasters.append(
-            internal_resample_raster(
+            _resample_raster(
                 in_raster,
                 target_size,
                 target_in_pixels=target_in_pixels,

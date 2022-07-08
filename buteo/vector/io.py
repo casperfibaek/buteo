@@ -3,7 +3,6 @@ The basic module for interacting with vector data
 
 TODO:
     - Improve documentation
-    - Remove internal step
     - repair vector
     - sanity checks: vectors_intersect, is_not_empty, does_vectors_match, match_vectors
     - rasterize - with antialiasing/weights
@@ -234,7 +233,7 @@ def to_vector_list(variable: Any) -> List[str]:
     return return_list
 
 
-def internal_vector_to_metadata(
+def _vector_to_metadata(
     vector: Union[ogr.DataSource, str],
     process_layer: int = -1,
     create_geometry: bool = True,
@@ -469,7 +468,7 @@ def vector_to_metadata(
 
     for in_vector in vector_list:
         output.append(
-            internal_vector_to_metadata(
+            _vector_to_metadata(
                 in_vector, process_layer=process_layer, create_geometry=create_geometry
             )
         )
@@ -512,7 +511,7 @@ def ready_io_vector(
     # Generate output names
     path_list: List[str] = []
     for index, in_vector in enumerate(vector_list):
-        metadata = internal_vector_to_metadata(in_vector)
+        metadata = _vector_to_metadata(in_vector)
 
         name = metadata["name"]
 
@@ -544,7 +543,7 @@ def ready_io_vector(
     return (vector_list, path_list)
 
 
-def internal_vector_to_memory(
+def _vector_to_memory(
     vector: Union[str, ogr.DataSource],
     memory_path: Optional[str] = None,
     copy_if_already_in_memory: bool = True,
@@ -560,7 +559,7 @@ def internal_vector_to_memory(
 
     ref = open_vector(vector)
     path = get_vector_path(ref)
-    metadata = internal_vector_to_metadata(ref)
+    metadata = _vector_to_metadata(ref)
     name = metadata["name"]
 
     if not copy_if_already_in_memory and metadata["in_memory"]:
@@ -631,7 +630,7 @@ def vector_to_memory(
         path = path_list[index]
 
         output.append(
-            internal_vector_to_memory(
+            _vector_to_memory(
                 in_vector,
                 memory_path=path,
                 layer_to_extract=layer_to_extract,
@@ -645,7 +644,7 @@ def vector_to_memory(
     return output[0]
 
 
-def internal_vector_to_disk(
+def _vector_to_disk(
     vector: Union[str, ogr.DataSource],
     out_path: str,
     overwrite: bool = True,
@@ -661,7 +660,7 @@ def internal_vector_to_disk(
     overwrite_required(out_path, overwrite)
 
     datasource = open_vector(vector)
-    metadata = internal_vector_to_metadata(vector)
+    metadata = _vector_to_metadata(vector)
 
     if not os.path.dirname(os.path.abspath(out_path)):
         raise ValueError(
@@ -716,7 +715,7 @@ def vector_to_disk(
     output = []
     for index, in_vector in enumerate(vector_list):
         path = path_list[index]
-        output.append(internal_vector_to_disk(in_vector, path, overwrite=overwrite))
+        output.append(_vector_to_disk(in_vector, path, overwrite=overwrite))
 
     if isinstance(vector, list):
         return output
@@ -725,7 +724,7 @@ def vector_to_disk(
 
 
 def filter_vector(vector, filter_where, process_layer=0):
-    metadata = internal_vector_to_metadata(vector, create_geometry=False)
+    metadata = _vector_to_metadata(vector, create_geometry=False)
 
     name = f"/vsimem/{uuid4().int}_filtered.shp"
 
@@ -791,7 +790,7 @@ def vector_add_index(
 
     try:
         for in_vector in vector_list:
-            metadata = internal_vector_to_metadata(in_vector)
+            metadata = _vector_to_metadata(in_vector)
             ref = open_vector(in_vector)
 
             for layer in metadata["layers"]:
@@ -825,7 +824,7 @@ def vector_feature_to_layer(
 
     try:
         for in_vector in vector_list:
-            metadata = internal_vector_to_metadata(in_vector)
+            metadata = _vector_to_metadata(in_vector)
             ref = open_vector(in_vector)
 
             for layer in metadata["layers"]:
@@ -840,7 +839,7 @@ def vector_feature_to_layer(
     return vector_list
 
 
-def internal_vector_add_shapes(
+def _vector_add_shapes(
     vector: Union[str, ogr.DataSource],
     shapes: list = ["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
 ) -> str:
@@ -854,7 +853,7 @@ def internal_vector_add_shapes(
 
     datasource = open_vector(vector)
     out_path = get_vector_path(datasource)
-    metadata = internal_vector_to_metadata(datasource)
+    metadata = _vector_to_metadata(datasource)
 
     for index in range(metadata["layer_count"]):
         vector_current_fields = metadata["layers"][index]["field_names"]
@@ -961,7 +960,7 @@ def vector_add_shapes(
 
     output = []
     for in_vector in vector_list:
-        output.append(internal_vector_add_shapes(in_vector, shapes=shapes))
+        output.append(_vector_add_shapes(in_vector, shapes=shapes))
 
     if isinstance(vector, list):
         return output

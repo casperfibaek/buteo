@@ -14,7 +14,7 @@ from osgeo import ogr
 from buteo.utils.gdal_utils import path_to_driver_vector
 from buteo.utils.core import overwrite_required, progress, remove_if_overwrite, type_check
 from buteo.vector.io import (
-    internal_vector_to_metadata,
+    _vector_to_metadata,
     ready_io_vector,
     vector_add_index,
     open_vector,
@@ -42,7 +42,7 @@ def internal_singlepart_to_multipart(
     driver = ogr.GetDriverByName(out_format)
     overwrite_required(out_name, overwrite)
 
-    metadata = internal_vector_to_metadata(ref)
+    metadata = _vector_to_metadata(ref)
 
     remove_if_overwrite(out_name, overwrite)
 
@@ -91,7 +91,7 @@ def internal_multipart_to_singlepart(
 
     driver = ogr.GetDriverByName(path_to_driver_vector(out_name))
 
-    metadata = internal_vector_to_metadata(ref)
+    metadata = _vector_to_metadata(ref)
 
     remove_if_overwrite(out_name, overwrite)
 

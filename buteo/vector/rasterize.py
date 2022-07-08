@@ -12,7 +12,7 @@ from osgeo import gdal
 from uuid import uuid4
 
 from buteo.raster.io import open_raster
-from buteo.vector.io import internal_vector_to_metadata, open_vector
+from buteo.vector.io import _vector_to_metadata, open_vector
 from buteo.utils.gdal_utils import numpy_to_gdal_datatype2, default_options
 
 
@@ -40,7 +40,7 @@ def rasterize_vector(
 
     # Open the data source and read in the extent
     source_ds = open_vector(vector_fn)
-    source_meta = internal_vector_to_metadata(vector_fn)
+    source_meta = _vector_to_metadata(vector_fn)
     source_layer = source_ds.GetLayer()
     x_min, x_max, y_min, y_max = source_layer.GetExtent()
 
@@ -60,7 +60,7 @@ def rasterize_vector(
     y_res = int((y_max - y_min) / pixel_size_y)
 
     if extent is not None:
-        extent_vector = internal_vector_to_metadata(extent)
+        extent_vector = _vector_to_metadata(extent)
         extent_dict = extent_vector["extent_dict"]
         x_res = int((extent_dict["right"] - extent_dict["left"]) / pixel_size_x)
         y_res = int((extent_dict["top"] - extent_dict["bottom"]) / pixel_size_y)

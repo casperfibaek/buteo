@@ -16,12 +16,12 @@ from buteo.utils.core import type_check
 from buteo.vector.io import (
     open_vector,
     ready_io_vector,
-    internal_vector_to_metadata,
+    _vector_to_metadata,
     vector_add_index,
 )
 
 
-def internal_dissolve_vector(
+def _dissolve_vector(
     vector: Union[str, ogr.DataSource],
     attribute: Optional[str] = None,
     out_path: str = None,
@@ -44,7 +44,7 @@ def internal_dissolve_vector(
     driver = ogr.GetDriverByName(out_format)
 
     ref = open_vector(vector_list[0])
-    metadata = internal_vector_to_metadata(ref)
+    metadata = _vector_to_metadata(ref)
 
     Layer_info = TypedDict("Layer_info", {"name": List[str], "geom": ogr.Layer, "fields": List[str]})
 
@@ -132,7 +132,7 @@ def dissolve_vector(
     output = []
     for index, in_vector in enumerate(raster_list):
         output.append(
-            internal_dissolve_vector(
+            _dissolve_vector(
                 in_vector,
                 attribute=attribute,
                 out_path=path_list[index],

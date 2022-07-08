@@ -14,7 +14,7 @@ from osgeo import ogr
 
 from buteo.utils.gdal_utils import path_to_driver_vector
 from buteo.utils.core import path_to_ext, type_check
-from buteo.vector.io import open_vector, to_vector_list, internal_vector_to_metadata
+from buteo.vector.io import open_vector, to_vector_list, _vector_to_metadata
 
 
 def merge_vectors(
@@ -44,7 +44,7 @@ def merge_vectors(
 
     for vector in vector_list:
         ref = open_vector(vector)
-        metadata = internal_vector_to_metadata(ref)
+        metadata = _vector_to_metadata(ref)
 
         for layer in metadata["layers"]:
             name = layer["layer_name"]

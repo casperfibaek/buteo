@@ -15,16 +15,16 @@ from osgeo import ogr, osr, gdal
 from buteo.vector.io import (
     open_vector,
     get_vector_path,
-    internal_vector_to_memory,
-    internal_vector_to_metadata,
-    internal_vector_to_disk,
+    _vector_to_memory,
+    _vector_to_metadata,
+    _vector_to_disk,
     ready_io_vector,
 )
 from buteo.utils.gdal_utils import parse_projection, path_to_driver_vector
 from buteo.utils.core import remove_if_overwrite, type_check
 
 
-def internal_reproject_vector(
+def _reproject_vector(
     vector: Union[str, ogr.DataSource],
     projection: Union[str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
     out_path: Optional[str] = None,
@@ -43,7 +43,7 @@ def internal_reproject_vector(
 
     vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
     origin = open_vector(vector_list[0])
-    metadata = internal_vector_to_metadata(origin)
+    metadata = _vector_to_metadata(origin)
     out_name = path_list[0]
 
     origin_projection = metadata["projection_osr"]
@@ -55,9 +55,9 @@ def internal_reproject_vector(
     if origin_projection.IsSame(target_projection):
         if copy_if_same:
             if out_path is None:
-                return internal_vector_to_memory(origin)
+                return _vector_to_memory(origin)
 
-            return internal_vector_to_disk(origin, out_name)
+            return _vector_to_disk(origin, out_name)
         else:
             return get_vector_path(vector)
 
@@ -159,7 +159,7 @@ def reproject_vector(
     output = []
     for index, in_vector in enumerate(vector_list):
         output.append(
-            internal_reproject_vector(
+            _reproject_vector(
                 in_vector,
                 projection,
                 out_path=path_list[index],

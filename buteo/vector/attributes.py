@@ -14,7 +14,7 @@ from osgeo import ogr
 # import pandas as pd
 
 from buteo.utils.core import type_check
-from buteo.vector.io import internal_vector_to_metadata, open_vector
+from buteo.vector.io import _vector_to_metadata, open_vector
 
 
 def vector_get_attribute_table(
@@ -27,7 +27,7 @@ def vector_get_attribute_table(
     type_check(include_geom, [bool], "include_geom")
 
     ref = open_vector(vector)
-    metadata = internal_vector_to_metadata(
+    metadata = _vector_to_metadata(
         ref, process_layer=process_layer, create_geometry=False
     )
 
@@ -71,7 +71,7 @@ def vector_get_fids(
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(process_layer, [int], "process_layer")
 
-    metadata = internal_vector_to_metadata(vector)
+    metadata = _vector_to_metadata(vector)
     features = metadata["layers"][0]["feature_count"]
 
     ref = open_vector(vector)
