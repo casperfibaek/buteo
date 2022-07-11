@@ -1,9 +1,14 @@
-""" Build the anaconda package """
+"""
+Build the anaconda package
+
+TODO:
+    - Make the process parallel using threads. Should speed build times up significantly.
+"""
 import os
 import sys
-import regex
 from glob import glob
 
+import regex
 
 # Constants
 PLATFORMS = ["osx-64", "osx-arm64", "linux-64", "win-64"]
@@ -30,7 +35,7 @@ for arg in sys.argv:
 
     if "-update_only" in arg:
         update_only = True
-    
+
     if "-clean" in arg:
         clean = True
 
@@ -38,7 +43,7 @@ if found is False:
     raise Exception("Version not found. Please specify with --version=<version>")
 
 # Update setup.py
-with open('./setup.py', 'r') as setup_file :
+with open('./setup.py', 'r', encoding="utf-8") as setup_file :
     setup_file_data = setup_file.read()
 
 all_lines_setup = setup_file_data.splitlines()
@@ -49,12 +54,12 @@ for idx, val in enumerate(all_lines_setup):
         break
 
 # Write the file out again
-with open('./setup.py', 'w') as file:
+with open('./setup.py', 'w', encoding="utf-8") as file:
     file.write(setup_file_data)
 
 
 # Update meta.yaml
-with open('./meta.yaml', 'r') as meta_file :
+with open('./meta.yaml', 'r', encoding="utf-8") as meta_file :
     meta_file_data = meta_file.read()
 
 all_lines_meta = meta_file_data.splitlines()
@@ -67,7 +72,7 @@ for idx, val in enumerate(all_lines_meta):
         meta_file_data = meta_file_data.replace(val, f'  git_rev: "{VERSION}"')
 
 # Write the file out again
-with open('./meta.yaml', 'w') as file:
+with open('./meta.yaml', 'w', encoding="utf-8") as file:
     file.write(meta_file_data)
 
 if update_only:
