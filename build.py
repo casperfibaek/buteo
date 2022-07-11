@@ -1,15 +1,14 @@
 """ Build the anaconda package """
 import os
 import sys
+import regex
 from glob import glob
 
 
 # Constants
-PLATFORMS = ["osx-64","osx-arm64", "linux-64", "win-64"]
+PLATFORMS = ["osx-64", "osx-arm64", "linux-64", "win-64"]
 PYTHON = ["3.7", "3.8", "3.9", "3.10"]
 
-python_str = f"conda build . --py {' --py '.join(PYTHON)} -c conda-forge"
-platforms_str = " ".join(PLATFORMS)
 
 # Set up the build folder
 home = os.path.expanduser("~")
@@ -19,13 +18,21 @@ builds_glob = os.path.join(builds_folder, "**/*.tar.bz2")
 # Find version
 found = False
 update_only = False
+clean = False
 for arg in sys.argv:
     if "--version=" in arg:
         VERSION = arg.split("=")[1]
+        if len(VERSION.split(".")) != 3 or not regex.match(r'^\d+(\.\d+)*$', VERSION):
+            print("Version must be in the format x.y.z")
+            sys.exit(1)
+
         found = True
 
-    if "-u" in arg:
+    if "-update_only" in arg:
         update_only = True
+    
+    if "-clean" in arg:
+        clean = True
 
 if found is False:
     raise Exception("Version not found. Please specify with --version=<version>")
@@ -67,15 +74,26 @@ if update_only:
     print("Updating only")
     sys.exit(0)
 
-# Build
-for build in glob(builds_glob):
-    os.remove(build)
-    print(f"Removed {build}")
+# Clean previous builds
+if clean:
+    print("Cleaning build folder of previous builds")
+    for build in glob(builds_glob):
+        os.remove(build)
+        print(f"Removed {build}")
 
+# Build
+python_str = f"conda build {os. getcwd()} --py {' --py '.join(PYTHON)} -c conda-forge"
 os.system(python_str)
 
+# Convert to other platforms
 for build in glob(builds_glob):
-    os.system(f"conda convert --platform f{platforms_str} f{build} -o f{builds_folder}")
+    for platform in PLATFORMS:
+        convert_call = f"conda convert {build} --platform={platform} --output-dir={builds_folder}"
+        os.system(convert_call)
 
+# Upload to anaconda
 for build in glob(builds_glob):
-    os.system(f"anaconda upload f{build}")
+    upload_call = f"anaconda upload {build}"
+    os.system(upload_call)
+
+# python build.py --version=0.1.0 -clean
