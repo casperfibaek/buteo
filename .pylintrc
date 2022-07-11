@@ -5,4 +5,5 @@ disable=multiple-statements,
         broad-except,
         dangerous-default-value,
         missing-function-docstring,
-        isinstance-second-argument-not-valid-type
+        isinstance-second-argument-not-valid-type,
+        invalid-name
