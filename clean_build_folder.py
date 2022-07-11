@@ -11,7 +11,7 @@ for build in glob(builds_glob):
 
 os.system("conda build . --py 3.7 --py 3.8 --py 3.9 --py 3.10 -c conda-forge")
 
-platforms = ["osx-64","osx-arm64", "linux-32", "linux-64", "win-32", "win-64"]
+platforms = ["osx-64","osx-arm64", "linux-64", "win-64"]
 platforms_str = " ".join(platforms)
 
 for build in glob(builds_glob):

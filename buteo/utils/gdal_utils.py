@@ -920,7 +920,7 @@ def to_band_list(
         for val in variable:
             try:
                 band_int = int(val)
-            except:
+            except Exception:
                 raise ValueError(
                     f"List of bands contained non-valid band number: {val}"
                 )

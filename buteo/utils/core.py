@@ -170,9 +170,8 @@ def divide_into_steps(arr, steps_length):
 def step_ranges(steps):
     start_stop = []
     last = 0
-    for num in range(0, len(steps)):
-        step_size = steps[num]
-        fid = num + 1
+    for idx, step_size in enumerate(steps):
+        fid = idx + 1
 
         start_stop.append(
             {
@@ -252,11 +251,11 @@ def type_check(
 
 
 def delete_files_in_folder(folder):
-    for f in glob(folder + "*.*"):
+    for file in glob(folder + "*.*"):
         try:
-            os.remove(f)
-        except:
-            pass
+            os.remove(file)
+        except Exception:
+            print(f"Warning. Could not remove: {file}")
 
 
 # Memory profiling
@@ -295,7 +294,7 @@ def progress(count, total, name="Processing"):
 
     try:
         bar_len = os.get_terminal_size().columns - 24
-    except:
+    except Exception:
         bar_len = shutil.get_terminal_size().columns - 24
 
     filled_len = int(round(bar_len * count / float(total)))
@@ -360,12 +359,12 @@ def execute_cli_function(command, name, quiet=False):
                     part = strip.rsplit(":", 1)[1]
                     percent = int(part.split("%")[0])
                     progress(percent, 100, name)
-            except:
+            except Exception:
                 # print('runtime error')
                 if len(line.strip()) != 0:
                     raise RuntimeError(line) from None
 
-    except:
+    except Exception:
         print("Critical failure while performing Orfeo-Toolbox action.")
 
     print(f"{name} completed in {round(time.time() - before, 2)}s.")
