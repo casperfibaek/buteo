@@ -1,3 +1,4 @@
+""" Build the anaconda package """
 import os
 from glob import glob
 
