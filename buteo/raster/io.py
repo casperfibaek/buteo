@@ -1311,3 +1311,10 @@ def create_raster(
     type_check(creation_options, [list], "creation_options", allow_none=True)
 
     raise ValueError("Not yet implemented. Sorry")
+
+
+def delete_raster(raster):
+    """Deletes a raster."""
+    type_check(raster, [str, gdal.Dataset], "raster")
+
+    raise ValueError("Not yet implemented. Sorry")
