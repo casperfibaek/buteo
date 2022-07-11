@@ -11,8 +11,18 @@ from glob import glob
 import regex
 
 # Constants
-PLATFORMS = ["osx-64", "osx-arm64", "linux-64", "win-64"]
-PYTHON = ["3.7", "3.8", "3.9", "3.10"]
+PLATFORMS = [
+    # "osx-64",
+    # "osx-arm64",
+    "linux-64",
+    # "win-64",
+]
+PYTHON = [
+    # "3.7",
+    # "3.8",
+    "3.9",
+    # "3.10",
+]
 
 
 # Set up the build folder
@@ -23,6 +33,7 @@ builds_glob = os.path.join(builds_folder, "**/*.tar.bz2")
 # Find version
 found = False
 update_only = False
+forge = False
 clean = False
 for arg in sys.argv:
     if "--version=" in arg:
@@ -38,6 +49,9 @@ for arg in sys.argv:
 
     if "-clean" in arg:
         clean = True
+    
+    if "-forge" in arg:
+        forge = True
 
 if found is False:
     raise Exception("Version not found. Please specify with --version=<version>")
@@ -82,12 +96,18 @@ if update_only:
 # Clean previous builds
 if clean:
     print("Cleaning build folder of previous builds")
+
+    os.system("conda build purge")
+
     for build in glob(builds_glob):
         os.remove(build)
         print(f"Removed {build}")
 
 # Build
-python_str = f"conda build {os. getcwd()} --py {' --py '.join(PYTHON)} -c conda-forge"
+python_str = f"conda build {os. getcwd()} --py {' --py '.join(PYTHON)}"
+if forge:
+    python_str = python_str + " -c conda-forge"
+
 os.system(python_str)
 
 # Convert to other platforms
@@ -99,6 +119,7 @@ for build in glob(builds_glob):
 # Upload to anaconda
 for build in glob(builds_glob):
     upload_call = f"anaconda upload {build}"
+    import pdb; pdb.set_trace()
     os.system(upload_call)
 
 # python build.py --version=0.1.0 -clean
