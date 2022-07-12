@@ -2,6 +2,7 @@
 Clips a raster using a vector geometry or the extents of a raster.
 
 TODO:
+    - Handle projections
     - Combine the internal and external functions.
 """
 
@@ -103,7 +104,6 @@ def _clip_raster(
         raise ValueError(f"Unable to parse input clip geom: {clip_geom}")
 
     clip_projection = clip_metadata["projection_osr"]
-    clip_extent = clip_metadata["extent"]
 
     # options
     warp_options = []
@@ -127,7 +127,7 @@ def _clip_raster(
         )
 
     # Fast check: Does the extent of the two inputs overlap?
-    if not gdal_bbox_intersects(origin_extent, clip_extent):
+    if not gdal_bbox_intersects(origin_extent, clip_metadata["extent"]):
         raise Exception("Geometries did not intersect.")
 
     output_bounds = raster_metadata["extent_gdal_warp"]

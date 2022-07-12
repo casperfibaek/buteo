@@ -67,27 +67,26 @@ def normalise_filter(in_raster):
 
 
 def norm_to_range(
-    in_raster, min_target, max_target, min_og=-99999, max_og=99999, truncate=True
+    in_arr, min_target, max_target, min_og=-99999, max_og=99999, truncate=True
 ):
 
-    copy = in_raster.copy()
-    copy = copy.astype("float32")
+    copy = in_arr.copy()
 
-    for idx in range(in_raster.shape[2]):
+    for idx in range(in_arr.shape[2]):
         if min_og == -9999:
-            if isinstance(in_raster, np.ma.MaskedArray):
+            if isinstance(in_arr, np.ma.MaskedArray):
                 min_og = copy[:, :, idx].min()
             else:
-                min_og = in_raster.nanmin()
+                min_og = in_arr.nanmin()
 
         if max_og == -9999:
-            if isinstance(in_raster, np.ma.MaskedArray):
+            if isinstance(in_arr, np.ma.MaskedArray):
                 max_og = copy[:, :, idx].max()
             else:
-                max_og = in_raster.nanmax()
+                max_og = in_arr.nanmax()
 
         if truncate:
-            if isinstance(in_raster, np.ma.MaskedArray):
+            if isinstance(in_arr, np.ma.MaskedArray):
                 copy[:, :, idx] = np.ma.clip(copy[:, :, idx], min_og, max_og)
             else:
                 copy[:, :, idx] = np.clip(copy[:, :, idx], min_og, max_og)
@@ -96,9 +95,9 @@ def norm_to_range(
             copy[:, :, idx], (min_og, max_og), (min_target, max_target)
         )
 
-        if isinstance(in_raster, np.ma.MaskedArray):
+        if isinstance(in_arr, np.ma.MaskedArray):
             to_range = np.ma.masked_where(copy[:, :, idx].mask, to_range)
-            to_range.fill_value = in_raster.fill_value
+            to_range.fill_value = in_arr.fill_value
 
         copy[:, :, idx] = to_range
 
