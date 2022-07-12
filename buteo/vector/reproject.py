@@ -8,6 +8,7 @@ TODO:
 
 import sys; sys.path.append("../../") # Path: buteo/vector/reproject.py
 import osgeo
+import os
 
 from osgeo import ogr, osr, gdal
 
@@ -30,6 +31,8 @@ def _reproject_vector(
     *,
     copy_if_same=False,
     overwrite=True,
+    prefix="",
+    postfix="",
 ):
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(
@@ -45,6 +48,9 @@ def _reproject_vector(
     origin = open_vector(vector_list[0])
     metadata = _vector_to_metadata(origin)
     out_name = path_list[0]
+
+    namesplit = os.path.splitext(os.path.basename(out_name))
+    out_name = os.path.join(os.path.dirname(out_name), prefix + namesplit[0] + postfix + namesplit[1])
 
     origin_projection = metadata["projection_osr"]
     target_projection = parse_projection(projection)
@@ -125,6 +131,8 @@ def reproject_vector(
     *,
     copy_if_same=False,
     overwrite=True,
+    prefix="",
+    postfix="",
 ):
     """Reprojects a vector given a target projection.
 
@@ -166,6 +174,8 @@ def reproject_vector(
                 out_path=path_list[index],
                 copy_if_same=copy_if_same,
                 overwrite=overwrite,
+                prefix=prefix,
+                postfix=postfix,
             )
         )
 

@@ -21,7 +21,6 @@ from buteo.utils.core import (
     path_is_in_memory,
 )
 
-
 def raster_to_reference(raster, writeable=False):
     """Takes a file path or a gdal.Dataset and opens it with
         GDAL. Raises exception if the raster cannot be read.
@@ -195,15 +194,15 @@ def is_raster(raster):
     Returns:
         A boolean.
     """
-    type_check(raster, [str, gdal.Dataset], "raster")
-
     if isinstance(raster, str):
         if not file_exists(raster) and not path_is_in_memory(raster):
             return False
 
         try:
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
             opened = gdal.Open(raster, 0)
-        except:
+            gdal.PopErrorHandler()
+        except Exception:
             return False
 
         if opened is None:
