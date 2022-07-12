@@ -119,7 +119,6 @@ for build in glob(builds_glob):
 # Upload to anaconda
 for build in glob(builds_glob):
     upload_call = f"anaconda upload {build}"
-    import pdb; pdb.set_trace()
     os.system(upload_call)
 
 # python build.py --version=0.1.0 -clean
