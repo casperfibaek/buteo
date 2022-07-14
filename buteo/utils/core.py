@@ -9,7 +9,6 @@ import os
 import sys
 import time
 import shutil
-import subprocess
 from glob import glob
 
 
@@ -26,25 +25,17 @@ def is_float(value):
         return False
 
 
-def to_number(value):
-    if is_float(value):
-        return float(value)
-
-    return value
-
-
-def keys_to_args(dictionary):
-    args = []
-    for key in dictionary:
-        args.append(to_number(dictionary[key]))
-    return args
-
-
-def make_dir_if_not_exists(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
-
-    return path
+def is_int(value):
+    if isinstance(value, int):
+        return True
+    elif isinstance(value, str):
+        try:
+            int(value)
+            return True
+        except ValueError:
+            return False
+    else:
+        return False
 
 
 def list_is_all_the_same(lst):
@@ -57,26 +48,6 @@ def list_is_all_the_same(lst):
             return False
 
     return True
-
-
-def path_to_ext(path):
-    basename = os.path.basename(path)
-    basesplit = os.path.splitext(basename)
-    ext = basesplit[1]
-    ext_without_dot = ext[1:]
-
-    return ext_without_dot
-
-
-def path_to_name(path, with_ext=False):
-    basename = os.path.basename(path)
-    basesplit = os.path.splitext(basename)
-    name = basesplit[0]
-
-    if with_ext:
-        return basename
-
-    return name
 
 
 def file_exists(path):
@@ -102,6 +73,47 @@ def is_number(potential_number):
         return True
 
     return False
+
+
+def to_number(value):
+    if is_float(value):
+        return float(value)
+
+    return value
+
+
+def keys_to_args(dictionary):
+    args = []
+    for key in dictionary:
+        args.append(to_number(dictionary[key]))
+    return args
+
+
+def make_dir_if_not_exists(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    return path
+
+
+def path_to_ext(path):
+    basename = os.path.basename(path)
+    basesplit = os.path.splitext(basename)
+    ext = basesplit[1]
+    ext_without_dot = ext[1:]
+
+    return ext_without_dot
+
+
+def path_to_name(path, with_ext=False):
+    basename = os.path.basename(path)
+    basesplit = os.path.splitext(basename)
+    name = basesplit[0]
+
+    if with_ext:
+        return basename
+
+    return name
 
 
 def overwrite_required(path, overwrite):
@@ -291,47 +303,9 @@ def timing(before, print_msg=True):
     dif = after - before
     hours = int(dif / 3600)
     minutes = int((dif % 3600) / 60)
-    seconds = "{0:.2f}".format(dif % 60)
+    seconds = f"{dif % 60:.2f}"
     message = f"Processing took: {hours}h {minutes}m {seconds}s"
     if print_msg:
         print(message)
 
     return message
-
-
-def execute_cli_function(command, name, quiet=False):
-    process = subprocess.Popen(
-        command,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stdin=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-        universal_newlines=True,
-    )
-    try:
-        before = time.time()
-        for line in iter(process.stdout.readline, ""):
-            if "FATAL" in line:
-                raise RuntimeError(line)
-            elif "CRITICAL" in line:
-                raise RuntimeError(line)
-            elif "WARNING" in line:
-                continue
-            elif quiet is False:
-                if "INFO" in line:
-                    continue
-            try:
-                strip = line.strip()
-                if len(strip) != 0:
-                    part = strip.rsplit(":", 1)[1]
-                    percent = int(part.split("%")[0])
-                    progress(percent, 100, name)
-            except Exception:
-                # print('runtime error')
-                if len(line.strip()) != 0:
-                    raise RuntimeError(line) from None
-
-    except Exception:
-        print("Critical failure while performing Orfeo-Toolbox action.")
-
-    print(f"{name} completed in {round(time.time() - before, 2)}s.")

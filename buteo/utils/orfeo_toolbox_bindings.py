@@ -7,9 +7,48 @@ TODO:
 
 import sys; sys.path.append("../../") # Path: buteo/orfeo_toolbox_bindings.py
 import os
+import subprocess
+from time import time
 
-from buteo.utils.core import execute_cli_function
 from buteo.raster.io import raster_to_array
+from buteo.utils.core import progress
+
+
+def execute_cli_function(command, name, quiet=False):
+    process = subprocess.Popen(
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stdin=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    )
+    try:
+        before = time.time()
+        for line in iter(process.stdout.readline, ""):
+            if "FATAL" in line:
+                raise RuntimeError(line)
+            elif "CRITICAL" in line:
+                raise RuntimeError(line)
+            elif "WARNING" in line:
+                continue
+            elif quiet is False:
+                if "INFO" in line:
+                    continue
+            try:
+                strip = line.strip()
+                if len(strip) != 0:
+                    part = strip.rsplit(":", 1)[1]
+                    percent = int(part.split("%")[0])
+                    progress(percent, 100, name)
+            except Exception:
+                if len(line.strip()) != 0:
+                    raise RuntimeError(line) from None
+
+    except Exception:
+        print("Critical failure while performing Orfeo-Toolbox action.")
+
+    print(f"{name} completed in {round(time.time() - before, 2)}s.")
 
 
 def otb_pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):

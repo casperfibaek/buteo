@@ -180,6 +180,7 @@ def path_to_driver_vector(file_path, return_bool=False):
 def destroy_raster(raster):
     driver = gdal.GetDriverByName(path_to_driver_raster(raster))
     driver.Delete(raster)
+
     return None
 
 
@@ -589,20 +590,20 @@ def get_intersection(extent1, extent2):
     two_bottomLeftY = extent2[1]
     two_topRightY = extent2[3]
 
-    if two_bottomLeftX > one_topRightX:  # Too far east
+    if two_bottomLeftX > one_topRightX:     # Too far east
         return False
-    elif two_bottomLeftY > one_topRightY:  # Too far north
+    elif two_bottomLeftY > one_topRightY:   # Too far north
         return False
-    elif two_topRightX < one_bottomLeftX:  # Too far west
+    elif two_topRightX < one_bottomLeftX:   # Too far west
         return False
-    elif two_topRightY < one_bottomLeftY:  # Too far south
+    elif two_topRightY < one_bottomLeftY:   # Too far south
         return False
     else:
         return (
             max(one_bottomLeftX, two_bottomLeftX),  # minX of intersection
             max(one_bottomLeftY, two_bottomLeftY),  # minY of intersection
-            min(one_topRightX, two_topRightX),  # maxX of intersection
-            min(one_topRightY, two_topRightY),  # maxY of intersection
+            min(one_topRightX, two_topRightX),      # maxX of intersection
+            min(one_topRightY, two_topRightY),      # maxY of intersection
         )
 
 
