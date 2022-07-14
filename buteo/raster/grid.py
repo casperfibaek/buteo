@@ -48,7 +48,7 @@ def raster_to_grid(
 
     use_grid = open_vector(grid)
     grid_metadata = _vector_to_metadata(use_grid)
-    raster_metadata = raster_to_metadata(raster, create_geometry=True)
+    raster_metadata = raster_to_metadata(raster)
 
     # Reproject raster if necessary.
     if not raster_metadata["projection_osr"].IsSame(grid_metadata["projection_osr"]):
@@ -59,7 +59,7 @@ def raster_to_grid(
             raise Exception("Error while parsing metadata.")
 
     # Only use the polygons in the grid that intersect the extent of the raster.
-    use_grid = intersect_vector(use_grid, raster_metadata["extent_datasource"])
+    use_grid = intersect_vector(use_grid, raster_metadata["extent_datasource"]())
 
     ref = open_raster(raster)
     use_grid = open_vector(use_grid)

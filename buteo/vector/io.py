@@ -20,11 +20,12 @@ from uuid import uuid4
 from osgeo import ogr, osr, gdal
 import numpy as np
 
+from buteo.raster.io import _raster_to_metadata;
 from buteo.utils.gdal_utils import (
+    expand_extent,
     is_vector,
     is_raster,
     path_to_driver_vector,
-    advanced_extents,
 )
 from buteo.utils.core import (
     progress,
@@ -87,54 +88,9 @@ def open_vector(
             else:
                 raise Exception(f"Could not read input vector: {vector}")
 
-            projection = osr.SpatialReference()
-            projection.ImportFromWkt(temp_opened.GetProjection())
-            transform = temp_opened.GetGeoTransform()
+            raster_metadata = _raster_to_metadata(temp_opened)
+            opened = raster_metadata["get_extent_datasource"]()
 
-            width = temp_opened.RasterXSize
-            height = temp_opened.RasterYSize
-
-            x_min = transform[0]
-            y_max = transform[3]
-
-            x_max = x_min + width * transform[1] + height * transform[2]  # Handle skew
-            y_min = y_max + width * transform[4] + height * transform[5]  # Handle skew
-
-            bottom_left = [x_min, y_min]
-            top_left = [x_min, y_max]
-            top_right = [x_max, y_max]
-            bottom_right = [x_max, y_min]
-
-            coord_array = [
-                [bottom_left[1], bottom_left[0]],
-                [top_left[1], top_left[0]],
-                [top_right[1], top_right[0]],
-                [bottom_right[1], bottom_right[0]],
-                [bottom_left[1], bottom_left[0]],
-            ]
-
-            wkt_coords = ""
-            for coord in coord_array:
-                wkt_coords += f"{coord[1]} {coord[0]}, "
-            wkt_coords = wkt_coords[:-2]  # Remove the last ", "
-
-            extent_wkt = f"POLYGON (({wkt_coords}))"
-
-            extent_name = f"/vsimem/{uuid4().int}_extent.GPKG"
-
-            extent_driver = ogr.GetDriverByName("GPKG")
-            extent_ds = extent_driver.CreateDataSource(extent_name)
-            extent_layer = extent_ds.CreateLayer(
-                f"auto_extent_{uuid4().int}", projection, ogr.wkbPolygon
-            )
-
-            feature = ogr.Feature(extent_layer.GetLayerDefn())
-            extent_geom = ogr.CreateGeometryFromWkt(extent_wkt, projection)
-            feature.SetGeometry(extent_geom)
-            extent_layer.CreateFeature(feature)
-            feature = None
-
-            opened = extent_ds
         else:
             raise Exception(f"Could not read input vector: {vector}")
     except:
@@ -234,7 +190,6 @@ def _vector_to_metadata(
     vector,
     *,
     process_layer=-1,
-    create_geometry=True,
 ):
     """OBS: Internal. Single output.
 
@@ -242,7 +197,6 @@ def _vector_to_metadata(
     """
     type_check(vector, [str, ogr.DataSource], "vector")
     type_check(process_layer, [int], "process_layer")
-    type_check(create_geometry, [bool], "create_geometry")
 
     datasource = open_vector(vector, convert_mem_driver=False)
 
@@ -351,17 +305,15 @@ def _vector_to_metadata(
             "extent_ogr": extent_ogr,
             "extent_dict": extent_dict,
             "extent_wkt": None,
-            "extent_datasource": None,
-            "extent_geom": None,
             "extent_latlng": None,
             "extent_gdal_warp_latlng": None,
             "extent_ogr_latlng": None,
             "extent_dict_latlng": None,
             "extent_wkt_latlng": None,
-            "extent_datasource_latlng": None,
-            "extent_geom_latlng": None,
             "extent_geojson": None,
             "extent_geojson_dict": None,
+            "extent_datasource": None,
+            "extent_datasource_latlng": None,
         }
 
         layers.append(layer_dict)
@@ -375,6 +327,8 @@ def _vector_to_metadata(
         "right": ds_x_max,
         "bottom": ds_y_min,
     }
+
+    ds_expanded_extents = expand_extent(ds_extent_ogr, projection_osr)
 
     metadata = {
         "path": path,
@@ -394,72 +348,163 @@ def _vector_to_metadata(
         "layer_count": layer_count,
         "layers": layers,
         "extent": ds_extent,
+        "extent_dict": ds_extent_dict,
         "extent_ogr": ds_extent_ogr,
         "extent_gdal_warp": ds_extent_gdal_warp,
-        "extent_dict": ds_extent_dict,
-        "extent_wkt": None,
+        "extent_gdal_warp_latlng": ds_expanded_extents["extent_gdal_warp_latlng"],
+        "extent_wkt": ds_expanded_extents["extent_wkt"],
+        "extent_latlng": ds_expanded_extents["extent_latlng"],
+        "extent_ogr_latlng": ds_expanded_extents["extent_ogr_latlng"],
+        "extent_dict_latlng": ds_expanded_extents["extent_dict_latlng"],
+        "extent_wkt_latlng": ds_expanded_extents["extent_wkt_latlng"],
+        "extent_geojson": ds_expanded_extents["extent_geojson"],
+        "extent_geojson_dict": ds_expanded_extents["extent_geojson_dict"],
         "extent_datasource": None,
-        "extent_geom": None,
-        "extent_latlng": None,
-        "extent_gdal_warp_latlng": None,
-        "extent_ogr_latlng": None,
-        "extent_dict_latlng": None,
-        "extent_wkt_latlng": None,
         "extent_datasource_latlng": None,
-        "extent_geom_latlng": None,
-        "extent_geojson": None,
-        "extent_geojson_dict": None,
     }
 
-    if create_geometry:
-        proj = projection_osr if ds_projection_osr is None else ds_projection_osr
-        # Combined extents
-        extended_extents = advanced_extents(ds_extent_ogr, proj)
+    def ds_get_extent_datasource():
+        extent_name = f"/vsimem/{name}_{uuid4().int}_extent.gpkg"
 
-        for key, value in extended_extents.items():
-            metadata[key] = value  # type: ignore
+        driver = ogr.GetDriverByName("GPKG")
+        extent_ds = driver.CreateDataSource(extent_name)
+        layer = extent_ds.CreateLayer(
+            "extent_ogr", ds_projection_osr, ogr.wkbPolygon
+        )
 
-        # Individual layer extents
-        for layer_index in range(layer_count):
-            layer_dict = layers[layer_index]
-            extended_extents_layer = advanced_extents(
-                layer_dict["extent_ogr"], layer_dict["projection_osr"]
-            )
+        feature = ogr.Feature(layer.GetLayerDefn())
+        extent_geom = ogr.CreateGeometryFromWkt(metadata["extent_wkt"], ds_projection_osr)
+        feature.SetGeometry(extent_geom)
+        layer.CreateFeature(feature)
 
-            for key, value in extended_extents_layer.items():
-                metadata[key] = value  # type: ignore
+        feature = None
+        layer.SyncToDisk()
 
-        extent_datasource_layer = metadata["extent_datasource"].GetLayer()
-        extent_datasource_layer.SyncToDisk()
+        return extent_name
 
-        extent_datasource_latlng_layer = metadata["extent_datasource_latlng"].GetLayer()
-        extent_datasource_latlng_layer.SyncToDisk()
+
+    def ds_get_extent_datasource_latlng():
+        extent_latlng_name = f"/vsimem/{name}_{uuid4().int}_extent_latlng.gpkg"
+
+        target_projection = osr.SpatialReference()
+        target_projection.ImportFromEPSG(4326)
+
+        driver = ogr.GetDriverByName("GPKG")
+        extent_ds_latlng = driver.CreateDataSource(extent_latlng_name)
+        layer = extent_ds_latlng.CreateLayer(
+            "extent_latlng", target_projection, ogr.wkbPolygon
+        )
+
+        feature = ogr.Feature(layer.GetLayerDefn())
+        extent_geom_latlng = ogr.CreateGeometryFromWkt(metadata["extent_wkt_latlng"], target_projection)
+        feature.SetGeometry(extent_geom_latlng)
+        layer.CreateFeature(feature)
+
+        feature = None
+        layer.SyncToDisk()
+
+        return extent_latlng_name
+
+    def ds_get_extent_geom():
+        return ogr.CreateGeometryFromWkt(metadata["extent_wkt"], ds_projection_osr)
+    
+
+    def ds_get_extent_geom_latlng():
+        target_projection = osr.SpatialReference()
+        target_projection.ImportFromEPSG(4326)
+        return ogr.CreateGeometryFromWkt(metadata["extent_wkt_latlng"], target_projection)
+
+
+    metadata["extent_datasource"] = ds_get_extent_datasource
+    metadata["extent_datasource_latlng"] = ds_get_extent_datasource_latlng
+    metadata["extent_geom"] = ds_get_extent_geom
+    metadata["extent_geom_latlng"] = ds_get_extent_geom_latlng
+
+    # Individual layer extents
+    for layer_index in range(layer_count):
+        layer_dict = layers[layer_index]
+
+        layer_expanded_extents = expand_extent(layer_dict["extent_ogr"], projection_osr)
+
+
+        for key, value in layer_expanded_extents.items():
+            layers[layer_index][key] = value
+
+            def layer_get_extent_datasource():
+                extent_name = f"/vsimem/{name}_l{layer_index}_{uuid4().int}_extent.fgb"
+
+                driver = ogr.GetDriverByName("FlatGeobuf")
+                extent_ds = driver.CreateDataSource(extent_name)
+                layer = extent_ds.CreateLayer(
+                    "extent_ogr", ds_projection_osr, ogr.wkbPolygon
+                )
+
+                feature = ogr.Feature(layer.GetLayerDefn())
+                extent_geom = ogr.CreateGeometryFromWkt(layers[layer_index]["extent_wkt"], ds_projection_osr)
+                feature.SetGeometry(extent_geom)
+                layer.CreateFeature(feature)
+
+                feature = None
+                layer.SyncToDisk()
+
+                return extent_name
+
+
+            def layer_get_extent_datasource_latlng():
+                extent_latlng_name = f"/vsimem/{name}_l{layer_index}_{uuid4().int}_extent_latlng.fgb"
+
+                target_projection = osr.SpatialReference()
+                target_projection.ImportFromEPSG(4326)
+
+                driver = ogr.GetDriverByName("FlatGeobuf")
+                extent_ds_latlng = driver.CreateDataSource(extent_latlng_name)
+                layer = extent_ds_latlng.CreateLayer(
+                    "extent_latlng", target_projection, ogr.wkbPolygon
+                )
+
+                feature = ogr.Feature(layer.GetLayerDefn())
+                extent_geom_latlng = ogr.CreateGeometryFromWkt(layers[layer_index]["extent_wkt_latlng"], target_projection)
+                feature.SetGeometry(extent_geom_latlng)
+                layer.CreateFeature(feature)
+
+                feature = None
+                layer.SyncToDisk()
+
+                return extent_latlng_name
+
+
+            def layer_get_extent_geom():
+                return ogr.CreateGeometryFromWkt(layers[layer_index]["extent_wkt"], ds_projection_osr)
+            
+
+            def layer_get_extent_geom_latlng():
+                target_projection = osr.SpatialReference()
+                target_projection.ImportFromEPSG(4326)
+                return ogr.CreateGeometryFromWkt(layers[layer_index]["extent_wkt_latlng"], target_projection)
+
+
+            layers[layer_index]["extent_datasource"] = layer_get_extent_datasource
+            layers[layer_index]["extent_datasource_latlng"] = layer_get_extent_datasource_latlng
+            layers[layer_index]["extent_geom"] = layer_get_extent_geom
+            layers[layer_index]["extent_geom_latlng"] = layer_get_extent_geom_latlng
 
     return metadata
 
 
 def vector_to_metadata(
     vector,
-    *,
     process_layer=-1,
-    create_geometry=True,
 ):
     """Creates a dictionary with metadata about the vector layer.
 
     Args:
         vector (path | DataSource): The vector to analyse.
 
-    **kwargs:
-        create_geometry (bool): Should the metadata include a
-            footprint of the raster in wgs84. Requires a reprojection
-            check do not use it if not required and performance is important.
-
     Returns:
         A dictionary containing the metadata.
     """
     type_check(vector, [list, str, ogr.DataSource], "vector")
     type_check(process_layer, [int], "process_layer")
-    type_check(create_geometry, [bool], "create_geometry")
 
     vector_list = to_vector_list(vector)
 
@@ -467,9 +512,7 @@ def vector_to_metadata(
 
     for in_vector in vector_list:
         output.append(
-            _vector_to_metadata(
-                in_vector, process_layer=process_layer, create_geometry=create_geometry
-            )
+            _vector_to_metadata(in_vector, process_layer=process_layer)
         )
 
     if isinstance(vector, list):
@@ -728,7 +771,7 @@ def vector_to_disk(
 
 
 def filter_vector(vector, filter_where, process_layer=0):
-    metadata = _vector_to_metadata(vector, create_geometry=False)
+    metadata = _vector_to_metadata(vector)
 
     name = f"/vsimem/{uuid4().int}_filtered.shp"
 

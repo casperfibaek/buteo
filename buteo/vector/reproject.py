@@ -7,9 +7,9 @@ TODO:
 """
 
 import sys; sys.path.append("../../") # Path: buteo/vector/reproject.py
-import osgeo
 import os
 
+import osgeo
 from osgeo import ogr, osr, gdal
 
 from buteo.vector.io import (

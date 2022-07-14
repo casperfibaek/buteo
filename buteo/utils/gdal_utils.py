@@ -7,7 +7,6 @@ TODO:
 
 import os
 import json
-from uuid import uuid4
 
 import numpy as np
 import osgeo
@@ -16,7 +15,6 @@ from osgeo import gdal, ogr, osr
 from buteo.utils.core import (
     path_to_ext,
     is_number,
-    type_check,
     file_exists,
     path_is_in_memory,
 )
@@ -185,6 +183,49 @@ def destroy_raster(raster):
     return None
 
 
+def is_in_memory(raster_or_vector):
+    """
+    Check if vector is in memory
+    """
+    if isinstance(raster_or_vector, str):
+        if raster_or_vector.startswith("/vsimem/"):
+            return True
+
+        return False
+
+    elif isinstance(raster_or_vector, ogr.DataSource) or isinstance(raster_or_vector, gdal.Dataset):
+        if raster_or_vector.GetDriver().ShortName == "MEM":
+            return True
+        
+        if raster_or_vector.GetDriver().ShortName == "Memory":
+            return True
+
+        if raster_or_vector.GetDriver().ShortName == "VirtualMem":
+            return True
+        
+        if raster_or_vector.GetDriver().ShortName == "VirtualOGR":
+            return True
+
+        if raster_or_vector.GetDescription().startswith("/vsimem/"):
+            return True
+        
+        return False
+
+    else:
+        raise TypeError("vector_or_raster must be a string, ogr.DataSource, or gdal.Dataset")
+
+
+def delete_if_in_memory(raster_or_vector):
+    """
+    Delete raster or vector if it is in memory
+    """
+    if is_in_memory(raster_or_vector):
+        if isinstance(raster_or_vector, str):
+            gdal.Unlink(raster_or_vector)
+        else:
+            raster_or_vector.Destroy()
+
+
 def is_raster(raster):
     """Checks if a raster is valid.
 
@@ -317,6 +358,30 @@ def parse_projection(target, return_wkt=False):
         return target_proj
     else:
         raise ValueError(err_msg)
+
+
+def clear_if_in_memory(raster):
+    """ Unlinks a raster or vector if it is in memory.
+
+    Args:
+        raster (str): A path to a raster.
+
+    Returns:
+        A boolean. True if the raster was cleared, false otherwise.
+    """
+    if path_is_in_memory(raster):
+        gdal.Dataset.__del__(gdal.Open(raster, 0))
+        return True
+
+    return False
+
+
+def clear_gdal_memory():
+    """ Clears all gdal memory. """
+    datasets = [ds.name for ds in gdal.listdir('/vsimem')]
+
+    for dataset in datasets:
+        gdal.Unlink(dataset)    
 
 
 def bbox_to_pixel_offsets(gt, bbox):
@@ -647,16 +712,19 @@ def align_bbox(extent_og, extent_ta, pixel_width, pixel_height, warp_format=True
     return (x_min, y_max, x_max, y_min)
 
 
-def advanced_extents(extent_ogr, projection):
-    original_projection = projection
+def expand_extent(extent_ogr, projection):
+    x_min, x_max, y_min, y_max = extent_ogr
+
+    original_projection = osr.SpatialReference()
+    original_projection.ImportFromWkt(projection.ExportToWkt())
+
+    # unsafe. 
     target_projection = osr.SpatialReference()
     target_projection.ImportFromEPSG(4326)
 
     if int(osgeo.__version__[0]) >= 3:
         original_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         target_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-
-    x_min, x_max, y_min, y_max = extent_ogr
 
     bottom_left = [x_min, y_min]
     top_left = [x_min, y_max]
@@ -677,20 +745,6 @@ def advanced_extents(extent_ogr, projection):
     wkt_coords = wkt_coords[:-2]  # Remove the last ", "
 
     extent_wkt = f"POLYGON (({wkt_coords}))"
-
-    extent_name = f"/vsimem/{uuid4().int}_extent.shp"
-
-    driver = ogr.GetDriverByName("ESRI Shapefile")
-    extent_ds = driver.CreateDataSource(extent_name)
-    layer = extent_ds.CreateLayer(
-        extent_name + "_layer", original_projection, ogr.wkbPolygon
-    )
-
-    feature = ogr.Feature(layer.GetLayerDefn())
-    extent_geom = ogr.CreateGeometryFromWkt(extent_wkt, original_projection)
-    feature.SetGeometry(extent_geom)
-    layer.CreateFeature(feature)
-    feature = None
 
     if not original_projection.IsSame(target_projection):
         tx = osr.CoordinateTransformation(original_projection, target_projection)
@@ -744,21 +798,6 @@ def advanced_extents(extent_ogr, projection):
 
     extent_wkt_latlng = f"POLYGON (({wkt_coords}))"
 
-    # Create an OGR Datasource in memory with the extent
-    extent_name = f"/vsimem/{uuid4().int}_extent_latlng.shp"
-
-    driver = ogr.GetDriverByName("ESRI Shapefile")
-    extent_ds_latlng = driver.CreateDataSource(extent_name)
-    layer = extent_ds_latlng.CreateLayer(
-        extent_name + "_layer", target_projection, ogr.wkbPolygon
-    )
-
-    feature = ogr.Feature(layer.GetLayerDefn())
-    extent_geom_latlng = ogr.CreateGeometryFromWkt(extent_wkt_latlng, target_projection)
-    feature.SetGeometry(extent_geom_latlng)
-    layer.CreateFeature(feature)
-    feature = None
-
     # We don't define a geojson in the original projection as geojson is usually expected to be latlng.
     extent_geojson_dict = {
         "type": "Feature",
@@ -770,22 +809,16 @@ def advanced_extents(extent_ogr, projection):
     }
     extent_geojson = json.dumps(extent_geojson_dict)
 
-    expanded_extents = {
+    return {
         "extent_wkt": extent_wkt,
-        "extent_datasource": extent_ds,
-        "extent_geom": extent_geom,
         "extent_latlng": extent_latlng,
         "extent_gdal_warp_latlng": extent_gdal_warp_latlng,
         "extent_ogr_latlng": extent_ogr_latlng,
         "extent_dict_latlng": extent_dict_latlng,
         "extent_wkt_latlng": extent_wkt_latlng,
-        "extent_datasource_latlng": extent_ds_latlng,
-        "extent_geom_latlng": extent_geom_latlng,
         "extent_geojson": extent_geojson,
         "extent_geojson_dict": extent_geojson_dict,
     }
-
-    return expanded_extents
 
 
 # x_min, x_max, y_min, y_max

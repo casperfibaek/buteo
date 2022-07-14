@@ -27,7 +27,7 @@ from buteo.utils.gdal_utils import (
 from buteo.raster.io import (
     open_raster,
     ready_io_raster,
-    raster_to_metadata,
+    _raster_to_metadata,
 )
 from buteo.vector.io import (
     open_vector,
@@ -63,7 +63,7 @@ def _warp_raster(
 
     origin = open_raster(raster_list[0])
     out_name = path_list[0]
-    raster_metadata = raster_to_metadata(origin, create_geometry=True)
+    raster_metadata = _raster_to_metadata(origin)
 
     # options
     warp_options = []
@@ -72,8 +72,8 @@ def _warp_raster(
     else:
         warp_options.append("CUTLINE_ALL_TOUCHED=FALSE")
 
-    origin_projection: osr.SpatialReference = raster_metadata["projection_osr"]
-    origin_extent: ogr.Geometry = raster_metadata["extent_geom_latlng"]
+    origin_projection = raster_metadata["projection_osr"]
+    origin_extent = raster_metadata["extent_geom_latlng"]() # pylint: disable=not-callable
 
     target_projection = origin_projection
     if projection is not None:
@@ -82,14 +82,12 @@ def _warp_raster(
     if clip_geom is not None:
         if is_raster(clip_geom):
             opened_raster = open_raster(clip_geom)
-            clip_metadata_raster = raster_to_metadata(
-                opened_raster, create_geometry=True
-            )
-            clip_ds = clip_metadata_raster["extent_datasource"]
-            clip_metadata = _vector_to_metadata(clip_ds, create_geometry=True)
+            clip_metadata_raster = _raster_to_metadata(opened_raster)
+            clip_ds = clip_metadata_raster["extent_datasource"]() # pylint: disable=not-callable
+            clip_metadata = _vector_to_metadata(clip_ds)
         elif is_vector(clip_geom):
             clip_ds = open_vector(clip_geom)
-            clip_metadata = _vector_to_metadata(clip_ds, create_geometry=True)
+            clip_metadata = _vector_to_metadata(clip_ds)
         else:
             if file_exists(clip_geom):
                 raise ValueError(f"Unable to parse clip geometry: {clip_geom}")
@@ -100,7 +98,7 @@ def _warp_raster(
             raise ValueError("Requested an unable layer_to_clip.")
 
         clip_projection = clip_metadata["projection_osr"]
-        clip_extent = clip_metadata["extent_geom_latlng"]
+        clip_extent = clip_metadata["extent_geom_latlng"]() # pylint: disable=not-callable
 
         # Fast check: Does the extent of the two inputs overlap?
         if not origin_extent.Intersects(clip_extent):

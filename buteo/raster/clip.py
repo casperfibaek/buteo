@@ -11,17 +11,10 @@ import os
 
 from osgeo import gdal, ogr
 
-from buteo.raster.io import raster_to_metadata, ready_io_raster, open_raster
-from buteo.vector.io import (
-    open_vector,
-    _vector_to_memory,
-    _vector_to_metadata,
-)
-from buteo.utils.core import (
-    file_exists,
-    remove_if_overwrite,
-    type_check,
-)
+from buteo.raster.io import _raster_to_metadata, ready_io_raster, open_raster
+from buteo.vector.io import open_vector, _vector_to_memory, _vector_to_metadata
+from buteo.vector.reproject import _reproject_vector
+from buteo.utils.core import file_exists, remove_if_overwrite, type_check
 from buteo.utils.gdal_utils import (
     gdal_bbox_intersects,
     reproject_extent,
@@ -32,6 +25,7 @@ from buteo.utils.gdal_utils import (
     translate_resample_method,
     gdal_nodata_value_from_type,
     align_bbox,
+    delete_if_in_memory,
 )
 
 
@@ -61,6 +55,7 @@ def _clip_raster(
     Clips a raster(s) using a vector geometry or the extents of
     a raster.
     """
+
     _, path_list = ready_io_raster(
         raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix, uuid=uuid
     )
@@ -70,16 +65,19 @@ def _clip_raster(
             if not os.path.isdir(os.path.split(os.path.normpath(out_path))[0]):
                 raise ValueError(f"out_path folder does not exists: {out_path}")
 
+    clip_ds = None
+
     # Input is a vector.
     if is_vector(clip_geom):
         clip_ds = open_vector(clip_geom)
 
         clip_metadata = _vector_to_metadata(
-            clip_ds, process_layer=layer_to_clip, create_geometry=True,
+            clip_ds, process_layer=layer_to_clip,
         )
 
         if to_extent:
-            clip_ds = clip_metadata["extent_datasource"]
+            clip_ds = clip_metadata["extent_datasource"]() # pylint: disable=not-callable
+
         elif clip_metadata["layer_count"] > 1:
             clip_ds = _vector_to_memory(clip_ds, layer_to_extract=layer_to_clip)
 
@@ -88,9 +86,10 @@ def _clip_raster(
 
     # Input is a raster (use extent)
     elif is_raster(clip_geom):
-        clip_metadata = raster_to_metadata(clip_geom, create_geometry=True)
+        clip_metadata = _raster_to_metadata(clip_geom)
         clip_metadata["layer_count"] = 1
-        clip_ds = clip_metadata["extent_datasource"].GetName()
+        clip_ds = clip_metadata["extent_datasource"]() # pylint: disable=not-callable
+    
     else:
         if file_exists(clip_geom):
             raise ValueError(f"Unable to parse clip geometry: {clip_geom}")
@@ -114,12 +113,14 @@ def _clip_raster(
 
     origin_layer = open_raster(raster)
 
-    raster_metadata = raster_to_metadata(raster)
+    raster_metadata = _raster_to_metadata(raster)
     origin_projection = raster_metadata["projection_osr"]
     origin_extent = raster_metadata["extent"]
 
     # Check if projections match, otherwise reproject target geom.
+    reprojection_needed = False
     if not origin_projection.IsSame(clip_projection):
+        reprojection_needed = True
         clip_metadata["extent"] = reproject_extent(
             clip_metadata["extent"],
             clip_projection,
@@ -129,6 +130,11 @@ def _clip_raster(
     # Fast check: Does the extent of the two inputs overlap?
     if not gdal_bbox_intersects(origin_extent, clip_metadata["extent"]):
         raise Exception("Geometries did not intersect.")
+
+    if reprojection_needed:
+        clip_new = _reproject_vector(clip_ds, origin_projection)
+        delete_if_in_memory(clip_ds)
+        clip_ds = clip_new
 
     output_bounds = raster_metadata["extent_gdal_warp"]
 
@@ -194,6 +200,8 @@ def _clip_raster(
         dstNodata=out_nodata,
         multithread=True,
     )
+
+    delete_if_in_memory(clip_ds)
 
     if verbose == 0:
         gdal.PopErrorHandler()

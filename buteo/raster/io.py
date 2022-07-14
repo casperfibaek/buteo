@@ -26,7 +26,7 @@ from buteo.utils.core import (
     file_exists,
 )
 from buteo.utils.gdal_utils import (
-    advanced_extents,
+    expand_extent,
     path_to_driver_raster,
     is_raster,
     numpy_to_gdal_datatype,
@@ -139,7 +139,7 @@ def get_raster_path(raster, return_list=False):
     return the_return_list[0]
 
 
-def _raster_to_metadata(raster, *, create_geometry=False):
+def _raster_to_metadata(raster):
     """INTERNAL. DO NOT USE."""
     dataset = open_raster(raster)
 
@@ -202,6 +202,10 @@ def _raster_to_metadata(raster, *, create_geometry=False):
         "bottom": y_min,
     }
 
+    x_min, x_max, y_min, y_max = extent_ogr
+
+    expanded_extents = expand_extent(extent_ogr, projection_osr)
+
     metadata = {
         "path": path,
         "basename": basename,
@@ -231,71 +235,94 @@ def _raster_to_metadata(raster, *, create_geometry=False):
         "is_raster": True,
         "is_vector": False,
         "extent": extent,
+        "extent_dict": extent_dict,
         "extent_ogr": extent_ogr,
         "extent_gdal_warp": extent_gdal_warp,
-        "extent_dict": extent_dict,
-        "extent_wkt": None,
+        "extent_gdal_warp_latlng": expanded_extents["extent_gdal_warp_latlng"],
+        "extent_wkt": expanded_extents["extent_wkt"],
+        "extent_latlng": expanded_extents["extent_latlng"],
+        "extent_ogr_latlng": expanded_extents["extent_ogr_latlng"],
+        "extent_dict_latlng": expanded_extents["extent_dict_latlng"],
+        "extent_wkt_latlng": expanded_extents["extent_wkt_latlng"],
+        "extent_geojson_dict": expanded_extents["extent_wkt_latlng"],
+        "extent_geojson": expanded_extents["extent_geojson"],
         "extent_datasource": None,
-        "extent_geom": None,
-        "extent_latlng": None,
-        "extent_gdal_warp_latlng": None,
-        "extent_ogr_latlng": None,
-        "extent_dict_latlng": None,
-        "extent_wkt_latlng": None,
         "extent_datasource_latlng": None,
         "extent_geom_latlng": None,
-        "extent_geojson": None,
-        "extent_geojson_dict": None,
+        "extent_geom": None,
     }
 
-    if create_geometry:
-        extended_extents = advanced_extents(extent_ogr, projection_osr)
+    def get_extent_datasource():
+        extent_name = f"/vsimem/{name}_{uuid4().int}_extent.gpkg"
 
-        metadata["extent_wkt"] = extended_extents["extent_wkt"]
-        metadata["extent_datasource"] = extended_extents["extent_datasource"]
-        metadata["extent_datasource_path"] = metadata[
-            "extent_datasource"
-        ].GetDescription()
-        metadata["extent_geom"] = extended_extents["extent_geom"]
-        metadata["extent_latlng"] = extended_extents["extent_latlng"]
-        metadata["extent_gdal_warp_latlng"] = extended_extents[
-            "extent_gdal_warp_latlng"
-        ]
-        metadata["extent_ogr_latlng"] = extended_extents["extent_ogr_latlng"]
-        metadata["extent_dict_latlng"] = extended_extents["extent_dict_latlng"]
-        metadata["extent_wkt_latlng"] = extended_extents["extent_wkt_latlng"]
-        metadata["extent_datasource_latlng"] = extended_extents[
-            "extent_datasource_latlng"
-        ]
-        metadata["extent_geom_latlng"] = extended_extents["extent_geom_latlng"]
-        metadata["extent_geojson"] = extended_extents["extent_geojson"]
-        metadata["extent_geojson_dict"] = extended_extents["extent_geojson_dict"]
+        driver = ogr.GetDriverByName("GPKG")
+        extent_ds = driver.CreateDataSource(extent_name)
+        layer = extent_ds.CreateLayer(
+            "extent_ogr", original_projection, ogr.wkbPolygon
+        )
 
-        extent_datasource_layer = metadata["extent_datasource"].GetLayer()
-        extent_datasource_layer.SyncToDisk()
+        feature = ogr.Feature(layer.GetLayerDefn())
+        extent_geom = ogr.CreateGeometryFromWkt(metadata["extent_wkt"], original_projection)
+        feature.SetGeometry(extent_geom)
+        layer.CreateFeature(feature)
 
-        extent_datasource_latlng_layer = metadata["extent_datasource_latlng"].GetLayer()
-        extent_datasource_latlng_layer.SyncToDisk()
+        feature = None
+        layer.SyncToDisk()
+
+        return extent_name
+
+
+    def get_extent_datasource_latlng():
+        extent_latlng_name = f"/vsimem/{name}_{uuid4().int}_extent_latlng.gpkg"
+
+        target_projection = osr.SpatialReference()
+        target_projection.ImportFromEPSG(4326)
+
+        driver = ogr.GetDriverByName("GPKG")
+        extent_ds_latlng = driver.CreateDataSource(extent_latlng_name)
+        layer = extent_ds_latlng.CreateLayer(
+            "extent_latlng", target_projection, ogr.wkbPolygon
+        )
+
+        feature = ogr.Feature(layer.GetLayerDefn())
+        extent_geom_latlng = ogr.CreateGeometryFromWkt(metadata["extent_wkt_latlng"], target_projection)
+        feature.SetGeometry(extent_geom_latlng)
+        layer.CreateFeature(feature)
+
+        feature = None
+        layer.SyncToDisk()
+
+        return extent_latlng_name
+
+
+    def get_extent_geom():
+        return ogr.CreateGeometryFromWkt(metadata["extent_wkt"], original_projection)
+    
+
+    def get_extent_geom_latlng():
+        target_projection = osr.SpatialReference()
+        target_projection.ImportFromEPSG(4326)
+        return ogr.CreateGeometryFromWkt(metadata["extent_wkt_latlng"], target_projection)
+
+
+    metadata["extent_datasource"] = get_extent_datasource
+    metadata["extent_datasource_latlng"] = get_extent_datasource_latlng
+    metadata["extent_geom"] = get_extent_geom
+    metadata["extent_geom_latlng"] = get_extent_geom_latlng
 
     return metadata
 
 
-def raster_to_metadata(raster, *, create_geometry=False):
+def raster_to_metadata(raster):
     """Reads a raster from a list of rasters, string or a dataset and returns metadata.
 
     Args:
         raster (list, path | Dataset): The raster to calculate metadata for.
 
-    **kwargs:
-        create_geometry (bool): If False footprints of the raster is calculated, including
-        in latlng (wgs84). Requires a reprojection check. Do not use if not required
-        and performance is essential. Produces geojsons as well.
-
     Returns:
         A dictionary containing metadata about the raster.
     """
     type_check(raster, [str, gdal.Dataset], "raster")
-    type_check(create_geometry, [bool], "create_geometry")
 
     input_list = get_raster_path(raster, return_list=True)
     return_list = []
@@ -303,7 +330,7 @@ def raster_to_metadata(raster, *, create_geometry=False):
     for readied_raster in input_list:
         if is_raster(readied_raster):
             return_list.append(
-                _raster_to_metadata(readied_raster, create_geometry=create_geometry)
+                _raster_to_metadata(readied_raster)
             )
         else:
             raise TypeError(f"Input: {readied_raster} is not a raster.")
@@ -331,6 +358,7 @@ def ready_io_raster(
     type_check(overwrite, [bool], "overwrite")
     type_check(prefix, [str], "prefix")
     type_check(postfix, [str], "postfix")
+
 
     raster_list = get_raster_path(raster, return_list=True)
 
@@ -1208,8 +1236,8 @@ def rasters_intersect(raster1, raster2):
     type_check(raster1, [list, str, gdal.Dataset], "raster1")
     type_check(raster2, [list, str, gdal.Dataset], "raster2")
 
-    meta1 = raster_to_metadata(raster1, create_geometry=True)
-    meta2 = raster_to_metadata(raster2, create_geometry=True)
+    meta1 = raster_to_metadata(raster1)
+    meta2 = raster_to_metadata(raster2)
 
     return meta1["extent_geom_latlng"].Intersects(meta2["extent_geom_latlng"])
 
@@ -1219,8 +1247,8 @@ def rasters_intersection(raster1, raster2):
     type_check(raster1, [list, str, gdal.Dataset], "raster1")
     type_check(raster2, [list, str, gdal.Dataset], "raster2")
 
-    meta1 = raster_to_metadata(raster1, create_geometry=True)
-    meta2 = raster_to_metadata(raster2, create_geometry=True)
+    meta1 = raster_to_metadata(raster1)
+    meta2 = raster_to_metadata(raster2)
 
     return meta1["extent_geom_latlng"].Intersection(meta2["extent_geom_latlng"])
 
