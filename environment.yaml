@@ -66,9 +66,9 @@ dependencies:
   - numba=0.55.1=py310h00e6091_0
   - numpy=1.21.6=py310h45f3432_0
   - openjpeg=2.3.1=hf7af979_3
-  - openssl=1.1.1p=h5eee18b_0
+  - openssl=1.1.1q=h7f8727e_0
   - pcre=8.45=h9c3ff4c_0
-  - pip=21.2.4=py310h06a4308_0
+  - pip=22.1.2=py310h06a4308_0
   - pixman=0.40.0=h36c2ea0_0
   - poppler=0.89.0=h669c267_1
   - poppler-data=0.4.11=hd8ed1ab_0

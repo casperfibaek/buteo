@@ -39,29 +39,6 @@ from buteo.utils.gdal_utils import (
 )
 
 
-def _open_raster(raster, writeable):
-    """INTERNAL. DO NOT USE."""
-    try:
-        opened = None
-        if isinstance(raster, str):
-            gdal.PushErrorHandler("CPLQuietErrorHandler")
-
-            opened = gdal.Open(raster, 1) if writeable else gdal.Open(raster, 0)
-
-            gdal.PopErrorHandler()
-        elif isinstance(raster, gdal.Dataset):
-            opened = raster
-        else:
-            raise Exception(f"Could not read input raster: {raster}")
-    except:
-        raise Exception(f"Could not read input raster: {raster}") from None
-
-    if opened is None:
-        raise Exception(f"Could not read input raster: {raster}")
-
-    return opened
-
-
 def open_raster(raster, *, writeable=True):
     """Opens a raster to a gdal.Dataset class.
 
@@ -87,11 +64,30 @@ def open_raster(raster, *, writeable=True):
     for readied_raster in input_list:
         if isinstance(readied_raster, str):
             if path_is_in_memory(readied_raster) or file_exists(readied_raster):
-                return_list.append(_open_raster(readied_raster, writeable))
-            else:
-                raise ValueError(f"Path does not exists: {readied_raster}")
-        elif isinstance(readied_raster, gdal.Dataset):
-            return_list.append(readied_raster)
+                opened = None
+
+                try:
+                    if isinstance(raster, str):
+                        gdal.PushErrorHandler("CPLQuietErrorHandler")
+
+                        opened = gdal.Open(raster, 1) if writeable else gdal.Open(raster, 0)
+
+                        gdal.PopErrorHandler()
+                    elif isinstance(raster, gdal.Dataset):
+                        opened = raster
+                    else:
+                        raise Exception(f"Could not read input raster: {raster}")
+                except:
+                    raise Exception(f"Could not read input raster: {raster}") from None
+
+                if opened is None:
+                    raise Exception(f"Could not read input raster: {raster}")
+
+                    return_list.append(opened)
+                else:
+                    raise ValueError(f"Path does not exists: {readied_raster}")
+            elif isinstance(readied_raster, gdal.Dataset):
+                return_list.append(readied_raster)
 
     if isinstance(raster, list):
         return return_list

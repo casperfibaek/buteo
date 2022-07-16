@@ -16,7 +16,6 @@ from buteo.utils.core import remove_if_overwrite, type_check
 from buteo.utils.gdal_utils import (
     is_raster,
     gdal_nodata_value_from_type,
-    raster_to_reference,
 )
 from buteo.raster.io import (
     raster_to_array,
@@ -202,15 +201,16 @@ def raster_set_nodata(
                 raster_band.SetNodataValue(internal_dst_nodata)
                 raster_band = None
         else:
+            raster_mem = None
+
             if out_path is None:
                 raster_mem = raster_to_memory(internal_raster)
-                raster_mem_ref = raster_to_reference(raster_mem)
             else:
                 remove_if_overwrite(out_names[index], overwrite)
                 raster_mem = raster_to_disk(internal_raster, out_names[index])
-                raster_mem_ref = raster_to_reference(raster_mem)
 
             for band in range(raster_metadata["bands"]):
+                raster_mem_ref = open_raster(raster_mem)
                 raster_band = raster_mem_ref.GetRasterBand(band + 1)
                 raster_band.SetNodataValue(internal_dst_nodata)
 

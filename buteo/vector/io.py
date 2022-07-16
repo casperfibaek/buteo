@@ -60,8 +60,8 @@ def open_vector(
     type_check(writeable, [bool], "writeable")
     type_check(layer, [int], "layer")
 
+    opened = None
     try:
-        opened = None
         if is_vector(vector):
             gdal.PushErrorHandler("CPLQuietErrorHandler")
 
@@ -224,7 +224,7 @@ def _vector_to_metadata(
         if process_layer != -1 and layer_index != process_layer:
             continue
 
-        layer: ogr.Layer = datasource.GetLayerByIndex(layer_index)
+        layer = datasource.GetLayerByIndex(layer_index)
 
         x_min, x_max, y_min, y_max = layer.GetExtent()
         layer_name = layer.GetName()
