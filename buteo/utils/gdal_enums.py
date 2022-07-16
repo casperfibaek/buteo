@@ -1,3 +1,35 @@
+"""
+### GDAL Enum Functions ###
+
+Functions to translate between GDAL and Numpy datatypes.
+"""
+
+# External
+from osgeo import gdal
+
+
+valid_raster_driver_extensions = ["tif", "tiff", "img", "vrt", "jp2", "ecw"]
+valid_vector_driver_extensions = ["shp", "geojson", "json", "gpkg", "kml", "kmz", "fgb", "gml", "gpx"]
+valid_driver_extensions = valid_raster_driver_extensions + valid_vector_driver_extensions
+
+
+def convert_extension_to_driver(ext):
+    assert ext in valid_driver_extensions, f"Invalid extension: {ext}"
+
+    if ext == "tif" or ext == "tiff":
+        return "GTiff"
+    elif ext == "img":
+        return "HFA"
+    elif ext == "vrt":
+        return "VRT"
+    elif ext == "jp2":
+        return "JP2ECW"
+    elif ext == "ecw":
+        return "ECW"
+
+    raise Exception("Unknown extension: " + ext)
+
+
 def translate_resample_method(method):
     methods = {
         "nearest": 0,

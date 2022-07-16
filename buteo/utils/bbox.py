@@ -1,5 +1,6 @@
 """
 ### Bounding box utility functions ###
+
 Various utility functions to work with bounding boxes and gdal.
 
 There are two different formats for bounding boxes used by GDAL:</br>
@@ -22,7 +23,7 @@ from uuid import uuid4
 from osgeo import ogr, osr, gdal
 
 # Internal
-from core import is_number, get_unix_seconds_as_str # pylint: disable=import-error
+from buteo.utils.core import is_number, get_unix_seconds_as_str
 
 
 

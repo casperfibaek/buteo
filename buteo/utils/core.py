@@ -1,5 +1,6 @@
 """
 ### Generic utility functions ###
+
 Functions that make interacting with the toolbox easier.
 """
 
@@ -47,6 +48,43 @@ def is_float(value):
         return False
 
 
+def is_path_is_in_memory(path):
+    """
+    Check if a path is in memory.
+
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+
+    ## Returns:
+    (_bool_): **True** if the path is in memory, **False** otherwise.
+    """
+    assert isinstance(path, str), "path must be a string."
+
+    if path.startswith("/vsimem"):
+        return True
+
+    return False
+
+
+def is_number(potential_number):
+    """
+    Check if variable is a number.
+
+    ## Args:
+    `potential_number` (_any_): The variable to check. </br>
+
+    ## Returns:
+    (_bool_): **True** if the variable is a number, **False** otherwise.
+    """
+    if isinstance(potential_number, float):
+        return True
+
+    if isinstance(potential_number, int):
+        return True
+
+    return False
+
+
 def is_int(value):
     """
     Check if a value is an integer. If it is a string, try to convert it to an integer.
@@ -69,7 +107,7 @@ def is_int(value):
         return False
 
 
-def list_is_all_the_same(lst):
+def is_list_all_the_same(lst):
     """
     Check if a list contains all the same elements.
 
@@ -166,41 +204,25 @@ def delete_folder(folder):
     return True
 
 
-def path_is_in_memory(path):
+def delete_file(file):
     """
-    Check if a path is in memory.
+    Delete a File
 
     ## Args:
-    `path` (_str_): The path to the file. </br>
+    `file` (_str_): The path to the file.
 
     ## Returns:
-    (_bool_): **True** if the path is in memory, **False** otherwise.
+    (_bool_): **True** if the file was deleted, **False** otherwise.
     """
-    assert isinstance(path, str), "path must be a string."
+    assert isinstance(file, str), "file must be a string."
+    assert file_exists(file), "file must exist."
 
-    if path.startswith("/vsimem"):
-        return True
+    os.remove(file)
 
-    return False
+    if file_exists(file):
+        return False
 
-
-def is_number(potential_number):
-    """
-    Check if variable is a number.
-
-    ## Args:
-    `potential_number` (_any_): The variable to check. </br>
-
-    ## Returns:
-    (_bool_): **True** if the variable is a number, **False** otherwise.
-    """
-    if isinstance(potential_number, float):
-        return True
-
-    if isinstance(potential_number, int):
-        return True
-
-    return False
+    return True
 
 
 def to_number(value):
@@ -249,7 +271,7 @@ def path_to_ext(path, with_dot=False):
     `path` (_str_): The path to the file. </br>
 
     ## Kwargs:
-    `with_dot` (_bool_): If True, return the extension with a dot. (**default**: `False`) </br>
+    `with_dot` (_bool_): If True, return the extension with a dot. (**Default**: `False`) </br>
 
     ## Returns:
     (_str_): The extension of the file. (_without the dot_)
@@ -278,7 +300,7 @@ def path_to_name(path, with_ext=False):
     `path` (_str_): The path to the file. </br>
 
     ## Kwargs:
-    `with_ext` (_bool_): If True, return the name with the extension. (**default**: `False`) </br>
+    `with_ext` (_bool_): If True, return the name with the extension. (**Default**: `False`) </br>
 
     ## Returns:
     (_str_): The name of the file. (_with- or without the extension_)
@@ -350,8 +372,8 @@ def get_size(start_path=".", rough=True):
     Get the size of a folder.
 
     ## Kwargs:
-    `start_path` (_str_): The path to the folder. (**default**: `"."`) </br>
-    `rough` (_bool_): If True, return a rough estimate. (**default**: `True`) </br>
+    `start_path` (_str_): The path to the folder. (**Default**: `"."`) </br>
+    `rough` (_bool_): If True, return a rough estimate. (**Default**: `True`) </br>
 
     ## Returns:
     (_int_): The size of the folder.
@@ -477,9 +499,9 @@ def type_check(
     `types` (_tuple_): The types to check against. `(float, int, ...)` </br>
 
     ## Kargs:
-    `name` (_str_): The name printed in the error string if an error is thrown. (**default**: `""`)</br>
-    `allow_none` (_bool_): If True, allow type to be `None`. (**default**: `False`) </br>
-    `throw_error` (_bool_): If True, raise an error if the type is not correct. (**default**: `True`)</br>
+    `name` (_str_): The name printed in the error string if an error is thrown. (**Default**: `""`)</br>
+    `allow_none` (_bool_): If True, allow type to be `None`. (**Default**: `False`) </br>
+    `throw_error` (_bool_): If True, raise an error if the type is not correct. (**Default**: `True`)</br>
 
     ## Returns:
     (_bool_): A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.
@@ -529,7 +551,7 @@ def progress(count, total, name="Processing"):
     `total` (_int_): The total count. </br>
 
     ## Kwargs:
-    `name` (_str_): The name to show in the progress bar. (**default**: `"Processing"`) </br>
+    `name` (_str_): The name to show in the progress bar. (**Default**: `"Processing"`) </br>
 
     ## Returns:
     (_None_): Returns None.
@@ -575,7 +597,7 @@ def timing(before, print_msg=True):
     `before` (_datetime_): The time to compare. </br>
 
     ## Kwargs:
-    `print_msg` (_bool_): If True, print the time elapsed. (**default**: `True`) </br>
+    `print_msg` (_bool_): If True, print the time elapsed. (**Default**: `True`) </br>
 
     ```python
     >>> before = datetime.now()
@@ -588,9 +610,11 @@ def timing(before, print_msg=True):
 
     after = time.time()
     dif = after - before
+
     hours = int(dif / 3600)
     minutes = int((dif % 3600) / 60)
     seconds = f"{dif % 60:.2f}"
+
     message = f"Processing took: {hours}h {minutes}m {seconds}s"
 
     if print_msg:
