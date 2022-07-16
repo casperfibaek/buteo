@@ -20,9 +20,9 @@ from uuid import uuid4
 from osgeo import ogr, osr, gdal
 import numpy as np
 
-from buteo.raster.io import _raster_to_metadata;
+from buteo.raster.io import _raster_to_metadata
+from buteo.utils.bbox import additional_bboxes
 from buteo.utils.gdal_utils import (
-    expand_extent,
     is_vector,
     is_raster,
     path_to_driver_vector,
@@ -328,7 +328,7 @@ def _vector_to_metadata(
         "bottom": ds_y_min,
     }
 
-    ds_expanded_extents = expand_extent(ds_extent_ogr, projection_osr)
+    ds_expanded_extents = additional_bboxes(ds_extent_ogr, projection_osr)
 
     metadata = {
         "path": path,

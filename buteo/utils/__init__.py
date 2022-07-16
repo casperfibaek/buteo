@@ -1,3 +1,4 @@
 from .core import *
+from .bbox import *
 from .gdal_utils import *
-from .orfeo_toolbox_bindings import *
+from .gdal_enums import *

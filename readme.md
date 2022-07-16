@@ -6,6 +6,8 @@ Documentation available at: https://casperfibaek.github.io/buteo/
 
 There are modules are:
 
+pdoc3 ./buteo/utils/bbox.py -o ./docs --html -f
+
 ## raster
 
 - read and verify a raster or a list of rasters

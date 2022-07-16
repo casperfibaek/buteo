@@ -1,18 +1,18 @@
 """
+### Bounding box utility functions ###
 Various utility functions to work with bounding boxes and gdal.
 
-GDAL uses two different formats.
-    WARP: x_min, y_min, x_max, y_max
-    OGR: x_min, x_max, y_min, y_max - x, y
+There are two different formats for bounding boxes used by GDAL:</br>
+WARP: `[x_min, y_min, x_max, y_max]`</br>
+OGR:  `[x_min, x_max, y_min, y_max]`</br>
 
-If nothing else is stated, the OGR format is used.
+_If nothing else is stated, the OGR format is used._
 
-The GDAL geotransform is a list of six parameters:
-    x_min, pixel_width, row_skew, y_max, column_skew, pixel_height (negative for north-up)
+The GDAL geotransform is a list of six parameters:</br>
+`x_min, pixel_width, row_skew, y_max, column_skew, pixel_height (negative for north-up)`
 
 TODO:
-    - create tests
-
+    * create tests
 """
 
 # Standard library
@@ -22,19 +22,21 @@ from uuid import uuid4
 from osgeo import ogr, osr, gdal
 
 # Internal
-from .core import is_number
+from core import is_number, get_unix_seconds_as_str # pylint: disable=import-error
+
 
 
 def is_valid_bbox(bbox_ogr):
     """
-    ### Description:
     Checks if a bbox is valid.
-    A valid bbox has the form: `[x_min, x_max, y_min, y_max]`
 
-    ### Args:
-    `bbox_ogx`: An OGR formatted bbox.
+    A valid ogr formatted bbox has the form:
+    `[x_min, x_max, y_min, y_max]`
 
-    ### Returns:
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox.
+
+    ## Returns:
     **True** if the bbox is valid, **False** otherwise.
     """
     if not isinstance(bbox_ogr, list):
@@ -57,14 +59,17 @@ def is_valid_bbox(bbox_ogr):
 
 def is_valid_geotransform(geotransform):
     """
-    ### Description:
     Checks if a geotransform is valid.
-    A valid geotransform has the form: `[x_min, pixel_width, row_skew, y_max, column_skew, pixel_height]`
+    
+    A valid geotransform has the form:
+    ```python
+    [x_min, pixel_width, row_skew, y_max, column_skew, pixel_height]
+    ```
 
-    ### Args:
-    `geotransform`: A GDAL formatted geotransform.
+    ## Args:
+    `geotransform` (_list_ || _tuple_): A GDAL formatted geotransform.
 
-    ### Returns:
+    ## Returns:
     **True** if the geotransform is valid, **False** otherwise.
     """
     if not isinstance(geotransform, (list, tuple)):
@@ -82,17 +87,15 @@ def is_valid_geotransform(geotransform):
 
 def ensure_negative(number):
     """
-    ### Description:
     Ensures that a valid is negative. If the number is positive, it is made negative.
 
-    ### Args:
-    `number`: A float or int number.
+    ## Args:
+    `number` (_int_ || _float_): A float or int number.
 
-    ### Returns:
-    The same number made **negative** if necesary.
+    ## Returns:
+    (_int_ || _float_): The same number made **negative** if necesary.
     """
-    assert is_number(number), \
-        f"number must be a number. Received: {number}"
+    assert is_number(number), f"number must be a number. Received: {number}"
 
     if number <= 0:
         return -number
@@ -102,15 +105,21 @@ def ensure_negative(number):
 
 def get_pixel_offsets(geotransform, bbox_ogr):
     """
-    The pixels offsets for a bbox and a geotransform.
+    Get the pixels offsets for a bbox and a geotransform.
 
-    Returns [x1, y1, xsize, ysize]
+    ## Args:
+    `geotransform` (_list_ || _tuple_): A GDAL GeoTransform.
+    `bbox_ogr` (_list_): An OGR formatted bbox.
 
+    ## Returns:
+    (_list_): A list of pixel offsets. `[x_start, y_start, x_size, y_size]`
     """
-    assert is_valid_geotransform(geotransform), \
-        f"geotransform must be a list of length six. Received: {geotransform}."
-    assert is_valid_bbox(bbox_ogr), \
-        f"bbox_ogr must be a valid ogr style bbox. Received: {bbox_ogr}."
+    assert is_valid_geotransform(
+        geotransform
+    ), f"geotransform must be a list of length six. Received: {geotransform}."
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f"bbox_ogr must be a valid OGR formatted bbox. Received: {bbox_ogr}."
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
@@ -128,18 +137,27 @@ def get_pixel_offsets(geotransform, bbox_ogr):
     x_size = x_2 - x_1
     y_size = y_2 - y_1
 
-    return [x_1, y_1, x_size, y_size]
+    x_start = x_1
+    y_start = y_1
+
+    return [x_start, y_start, x_size, y_size]
 
 
 def get_bbox_from_geotransform(geotransform, raster_x_size, raster_y_size):
     """
-    Gets an ogr bounding box from a gdal raster dataframe.
-    OGR format: x_min, x_max, y_min, y_max
+    Get an OGR bounding box from a geotransform and raster sizes.
 
-    Returns [x_min, x_max, y_min, y_max]
+    ## Args:
+    `geotransform` (_list_ || _tuple_): A GDAL GeoTransform.
+    `raster_x_size` (_int_): The number of pixels in the x direction.
+    `raster_y_size` (_int_): The number of pixels in the y direction.
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
     """
-    assert is_valid_geotransform(geotransform), \
-        f"geotransform was not a valid geotransform. Received: {geotransform}"
+    assert is_valid_geotransform(
+        geotransform
+    ), f"geotransform was not a valid geotransform. Received: {geotransform}"
 
     x_min, pixel_width, _row_skew, y_max, _column_skew, pixel_height = geotransform
 
@@ -151,13 +169,17 @@ def get_bbox_from_geotransform(geotransform, raster_x_size, raster_y_size):
 
 def get_bbox_from_raster(raster_dataframe):
     """
-    Gets an ogr bounding box from a gdal raster dataframe.
-    OGR format: x_min, x_max, y_min, y_max
+    Gets an OGR bounding box from a GDAL raster dataframe.
 
-    Returns [x_min, y_min, x_max, y_max]
+    ## Args:
+    `raster_dataframe` (_gdal.DataFrame_): A GDAL raster dataframe.
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
     """
-    assert isinstance(raster_dataframe, gdal.Dataset), \
-        f"raster_dataframe was not a gdal.Datasource. Received: {raster_dataframe}"
+    assert isinstance(
+        raster_dataframe, gdal.Dataset
+    ), f"raster_dataframe was not a gdal.Datasource. Received: {raster_dataframe}"
 
     bbox = get_bbox_from_geotransform(
         raster_dataframe.GetGeoTransform(),
@@ -170,18 +192,23 @@ def get_bbox_from_raster(raster_dataframe):
 
 def get_bbox_from_vector(vector_dataframe):
     """
-    Gets an ogr bounding box from a gdal vector dataframe.
-    OGR format: x_min, x_max, y_min, y_max
+    Gets an OGR bounding box from an OGR dataframe.
 
-    Returns [x_min, x_max, y_min, y_max]
+    ## Args:
+    `vector_dataframe` (_ogr.DataSource_): An OGR vector dataframe.
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
     """
-    assert isinstance(vector_dataframe, ogr.DataSource), \
-        f"vector_dataframe was not a valid ogr.DataSource. Received: {vector_dataframe}"
+    assert isinstance(
+        vector_dataframe, ogr.DataSource
+    ), f"vector_dataframe was not a valid ogr.DataSource. Received: {vector_dataframe}"
 
     layer_count = vector_dataframe.GetLayerCount()
 
-    assert layer_count > 0, \
-        f"vector_dataframe did not contain any layers. Received: {vector_dataframe}"
+    assert (
+        layer_count > 0
+    ), f"vector_dataframe did not contain any layers. Received: {vector_dataframe}"
 
     x_min = None
     x_max = None
@@ -212,27 +239,69 @@ def get_bbox_from_vector(vector_dataframe):
 
 def get_bbox_from_vector_layer(vector_layer):
     """
-    Gets an ogr bounding box from a gdal vector layer.
-    OGR format: x_min, x_max, y_min, y_max
+    Gets an OGR bounding box from an OGR dataframe layer.
 
-    Returns [x_min, x_max, y_min, y_max]
+    ## Args:
+    `vector_layer` (_ogr.Layer_): An OGR vector dataframe layer.
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
     """
-    assert isinstance(vector_layer, ogr.Layer), \
-        f"vector_layer was not a valid ogr.Layer. Received: {vector_layer}"
+    assert isinstance(
+        vector_layer, ogr.Layer
+    ), f"vector_layer was not a valid ogr.Layer. Received: {vector_layer}"
 
     x_min, x_max, y_min, y_max = vector_layer.GetExtent()
 
     return [x_min, x_max, y_min, y_max]
 
 
+def get_sub_geotransform(geotransform, bbox_ogr):
+    """
+    Create a GeoTransform and the raster sizes for an OGR formatted bbox.
+
+    ## Args:
+    `geotransform` (_list_): A GDAL geotransform.
+    `bbox_ogr` (_list_): An OGR formatted bbox.
+
+    ## Returns:
+    (_dict_): { "Transform": _list_, "RasterXSize": _int_, "RasterYSize": _int_ }
+    """
+    assert is_valid_geotransform(
+        geotransform
+    ), f"geotransform must be a valid geotransform. Received: {geotransform}."
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+    pixel_width = geotransform[1]
+    pixel_height = geotransform[5]
+
+    raster_x_size = round((x_max - x_min) / pixel_width)
+    raster_y_size = round((y_max - y_min) / pixel_height)
+
+    return {
+        "Transform": [x_min, pixel_width, 0, y_max, 0, ensure_negative(pixel_height)],
+        "RasterXSize": abs(raster_x_size),
+        "RasterYSize": abs(raster_y_size),
+    }
+
+
 def convert_bbox_to_geom(bbox_ogr):
     """
-    Converts an OGR formatted bbox to a GDAL geom.
+    Convert an OGR bounding box to ogr.Geometry.</br>
+    `[x_min, x_max, y_min, y_max] -> ogr.Geometry`
 
-    [x_min, x_max, y_min, y_max] -> ogr.Geometry.Polygon
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox.
+
+    ## Returns:
+    (_ogr.Geometry_): An OGR geometry.
     """
-    assert is_valid_bbox(bbox_ogr), \
-        f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
@@ -249,14 +318,42 @@ def convert_bbox_to_geom(bbox_ogr):
     return geom
 
 
+def convert_geom_to_bbox(geom):
+    """
+    Convert an ogr.Geometry to an OGR bounding box.</br>
+    `ogr.Geometry -> [x_min, x_max, y_min, y_max]`
+
+    ## Args:
+    `geom` (_ogr.Geometry_): An OGR geometry.
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    """
+    assert isinstance(
+        geom, ogr.Geometry
+    ), f"geom was not a valid ogr.Geometry. Received: {geom}"
+
+    bbox_ogr = geom.GetEnvelope()
+
+    return bbox_ogr  # [x_min, x_max, y_min, y_max]
+
+
 def convert_bbox_to_geotransform(bbox_ogr, raster_x_size, raster_y_size):
     """
-    Converts an OGR formatted bbox to a GDAL geotransform.
+    Convert an OGR formatted bounding box to a GDAL GeoTransform.</br>
+    `[x_min, x_max, y_min, y_max] -> [x_min, pixel_width, x_skew, y_max, y_skew, pixel_height]`
 
-    [x_min, x_max, y_min, y_max] -> [x_min, pixel_width, 0, y_max, 0, pixel_height]
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox.
+    `raster_x_size` (_int_): The number of pixels in the x direction.
+    `raster_y_size` (_int_): The number of pixels in the y direction.
+
+    ## Returns:
+    (_list_): A GDAL GeoTransform. `[x_min, pixel_width, x_skew, y_max, y_skew, pixel_height]`
     """
-    assert is_valid_bbox(bbox_ogr), \
-        f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
@@ -268,28 +365,20 @@ def convert_bbox_to_geotransform(bbox_ogr, raster_x_size, raster_y_size):
     return [origin_x, pixel_width, 0, origin_y, 0, ensure_negative(pixel_height)]
 
 
-def convert_geom_to_bbox(geom):
-    """
-    Converts a GDAL geom to an OGR formatted bbox.
-
-    ogr.Geometry.Polygon -> [x_min, x_max, y_min, y_max]
-    """
-    assert isinstance(geom, ogr.Geometry), \
-        f"geom was not a valid ogr.Geometry. Received: {geom}"
-
-    bbox_ogr = geom.GetEnvelope()
-
-    return bbox_ogr # [x_min, x_max, y_min, y_max]
-
-
 def convert_ogr_bbox_to_gdal_bbox(bbox_ogr):
     """
-    Converts an OGR formatted bbox to a GDAL formatted one.
+    Converts an OGR formatted bbox to a GDAL formatted one.</br>
+    `[x_min, x_max, y_min, y_max] -> [x_min, y_min, x_max, y_max]`
 
-    [x_min, x_max, y_min, y_max] -> [x_min, y_min, x_max, y_max]
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox.
+
+    ## Returns:
+    (_list_): A GDAL formatted bbox. `[x_min, y_min, x_max, y_max]`
     """
-    assert is_valid_bbox(bbox_ogr), \
-        f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
@@ -298,12 +387,18 @@ def convert_ogr_bbox_to_gdal_bbox(bbox_ogr):
 
 def convert_gdal_bbox_to_ogr_bbox(bbox_gdal):
     """
-    Converts an GDAL formatted bbox to an OGR formatted one.
+    Converts a GDAL formatted bbox to an OGR formatted one.</br>
+    `[x_min, y_min, x_max, y_max] -> [x_min, x_max, y_min, y_max]`
 
-    [x_min, y_min, x_max, y_max] -> [x_min, x_max, y_min, y_max]
+    ## Args:
+    `bbox_gdal` (_list_): A GDAL formatted bbox.
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
     """
-    assert isinstance(bbox_gdal, list) and len(bbox_gdal) == 4, \
-        f"bbox_gdal must be a list of length four. Received: {bbox_gdal}."
+    assert (
+        isinstance(bbox_gdal, list) and len(bbox_gdal) == 4
+    ), f"bbox_gdal must be a list of length four. Received: {bbox_gdal}."
 
     x_min, y_min, x_max, y_max = bbox_gdal
 
@@ -312,12 +407,18 @@ def convert_gdal_bbox_to_ogr_bbox(bbox_gdal):
 
 def convert_bbox_to_wkt(bbox_ogr):
     """
-    Converts an OGR formatted bbox to a WKT string.
+    Converts an OGR formatted bbox to a WKT string.</br>
+    `[x_min, x_max, y_min, y_max] -> WKT`
 
-    [x_min, x_max, y_min, y_max] -> WKT
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox.
+
+    ## Returns:
+    (_str_): A WKT Polygon string. `POLYGON ((...))`
     """
-    assert is_valid_bbox(bbox_ogr), \
-        f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
@@ -328,12 +429,18 @@ def convert_bbox_to_wkt(bbox_ogr):
 
 def convert_bbox_to_geojson(bbox_ogr):
     """
-    Converts an OGR formatted bbox to a GeoJSON string.
+    Converts an OGR formatted bbox to a GeoJson dictionary.</br>
+    `[x_min, x_max, y_min, y_max] -> GeoJson`
 
-    [x_min, x_max, y_min, y_max] -> GeoJSON
+    ## Args:
+    `bbox_ogr` (_list_): an OGR formatted bbox.
+
+    ## Returns:
+    (_dict_): A GeoJson Dictionary. `{ "type": "Polygon", "coordinates": [ ... ] }`
     """
-    assert is_valid_bbox(bbox_ogr), \
-        f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
@@ -345,9 +452,9 @@ def convert_bbox_to_geojson(bbox_ogr):
                 [x_max, y_min],
                 [x_max, y_max],
                 [x_min, y_max],
-                [x_min, y_min]
+                [x_min, y_min],
             ]
-        ]
+        ],
     }
 
     return geojson
@@ -355,25 +462,31 @@ def convert_bbox_to_geojson(bbox_ogr):
 
 def convert_bbox_to_vector(bbox_ogr, projection_osr):
     """
-    Converts an OGR formatted bbox to an ogr.datasource path in memory.
+    Converts an OGR formatted bbox to an in-memory vector.</br>
+    _Vectors are stored in /vsimem/ as .fgb files._</br>
+    **OBS**: Layers should be manually cleared when no longer used.
 
-    OBS: Remember to clear layer when no longer in use.
+    ## Args:
+    `bbox_ogr` (_list_): an OGR formatted bbox.
+    `projection_osr` (_osr.SpatialReference_): The projection of the vector.
+
+    ## Returns:
+    (_ogr.DataSource_): The bounding box as a vector.
     """
-    assert is_valid_bbox(bbox_ogr), \
-        f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
-
-    assert isinstance(projection_osr, osr.SpatialReference), \
-        f"projection_osr not a valid spatial reference. Recieved: {projection_osr}"
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
+    assert isinstance(
+        projection_osr, osr.SpatialReference
+    ), f"projection_osr not a valid spatial reference. Recieved: {projection_osr}"
 
     geom = convert_bbox_to_geom(bbox_ogr)
 
     driver = ogr.GetDriverByName("FlatGeobuf")
-    extent_name = f"/vsimem/{uuid4().int}_extent.fgb"
+    extent_name = f"/vsimem/{get_unix_seconds_as_str()}_{uuid4().int}_extent.fgb"
     extent_ds = driver.CreateDataSource(extent_name)
 
-    layer = extent_ds.CreateLayer(
-        "extent_ogr", projection_osr, ogr.wkbPolygon
-    )
+    layer = extent_ds.CreateLayer("extent_ogr", projection_osr, ogr.wkbPolygon)
 
     feature = ogr.Feature(layer.GetLayerDefn())
     feature.SetGeometry(geom)
@@ -385,41 +498,23 @@ def convert_bbox_to_vector(bbox_ogr, projection_osr):
     return extent_name
 
 
-def get_sub_geotransform(geotransform, bbox_ogr):
-    """
-    Creates a geotransform for the bounding box.
-
-    returns a dictionary with a geotransform and raster sizes.
-    """
-    assert is_valid_geotransform(geotransform), \
-        f"geotransform must be a valid geotransform. Received: {geotransform}."
-    assert is_valid_bbox(bbox_ogr), \
-        f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
-
-    x_min, x_max, y_min, y_max = bbox_ogr
-    pixel_width = geotransform[1]
-    pixel_height = geotransform[5]
-
-    raster_x_size = round((x_max - x_min) / pixel_width)
-    raster_y_size = round((y_max - y_min) / pixel_height)
-
-    return {
-        "Transform": [x_min, pixel_width, 0, y_max, 0, ensure_negative(pixel_height)],
-        "RasterXSize": abs(raster_x_size),
-        "RasterYSize": abs(raster_y_size),
-    }
-
-
 def bboxes_intersect(bbox1_ogr, bbox2_ogr):
     """
-    Checks if two bounding boxes intersects.
+    Checks if two OGR formatted bboxes intersect.
 
-    returns a dictionary with a geotransform and raster sizes.
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox.
+    `bbox2_ogr` (_list_): An OGR formatted bbox.
+
+    ## Returns:
+    (_bool_): **True** if the bboxes intersect, **False** otherwise.
     """
-    assert is_valid_bbox(bbox1_ogr), \
-        f"bbox1_ogr was not a valid bbox. Received: {bbox1_ogr}"
-    assert is_valid_bbox(bbox2_ogr), \
-        f"bbox1_ogr was not a valid bbox. Received: {bbox2_ogr}"
+    assert is_valid_bbox(
+        bbox1_ogr
+    ), f"bbox1_ogr was not a valid bbox. Received: {bbox1_ogr}"
+    assert is_valid_bbox(
+        bbox2_ogr
+    ), f"bbox1_ogr was not a valid bbox. Received: {bbox2_ogr}"
 
     bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
     bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
@@ -441,20 +536,27 @@ def bboxes_intersect(bbox1_ogr, bbox2_ogr):
 
 def bboxes_within(bbox1_ogr, bbox2_ogr):
     """
-    Checks if two bounding boxes intersects.
+    Checks if one OGR formatted bbox is within another.
 
-    returns a dictionary with a geotransform and raster sizes.
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox.
+    `bbox2_ogr` (_list_): An OGR formatted bbox.
+
+    ## Returns:
+    (_bool_): **True** if the bbox is within the other, **False** otherwise.
     """
-    assert isinstance(bbox1_ogr, list) and len(bbox1_ogr) == 4, \
-        f"bbox1_ogr must be a list of length four. Received: {bbox1_ogr}."
-    assert isinstance(bbox2_ogr, list) and len(bbox2_ogr) == 4, \
-        f"bbox2_ogr must be a list of length four. Received: {bbox2_ogr}."
+    assert is_valid_bbox(
+        bbox1_ogr
+    ), f"bbox1_ogr was not a valid bbox. Received: {bbox1_ogr}"
+    assert is_valid_bbox(
+        bbox2_ogr
+    ), f"bbox1_ogr was not a valid bbox. Received: {bbox2_ogr}"
 
     bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
     bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
 
     return (
-            (bbox1_x_min >= bbox2_x_min)
+        (bbox1_x_min >= bbox2_x_min)
         and (bbox1_x_max <= bbox2_x_max)
         and (bbox1_y_min >= bbox2_y_min)
         and (bbox1_y_max <= bbox2_y_max)
@@ -463,13 +565,18 @@ def bboxes_within(bbox1_ogr, bbox2_ogr):
 
 def get_intersection_bboxes(bbox1_ogr, bbox2_ogr):
     """
-    Get the intersection of two bounding boxes.
-    Throws an error if no intersection is found
+    Get the intersection of two OGR formatted bboxes.
 
-    Returns an ogr bounding box of the intersection.
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox.
+    `bbox2_ogr` (_list_): An OGR formatted bbox.
+
+    ## Returns:
+    (_list_): An OGR formatted bbox of the intersection. `[x_min, x_max, y_min, y_max]`
     """
-    assert bboxes_intersect(bbox1_ogr, bbox2_ogr), \
-        "The two bounding boxes do not intersect."
+    assert bboxes_intersect(
+        bbox1_ogr, bbox2_ogr
+    ), "The two bounding boxes do not intersect."
 
     bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
     bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
@@ -484,14 +591,23 @@ def get_intersection_bboxes(bbox1_ogr, bbox2_ogr):
 
 def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
     """
-    Aligns two bounding boxes, so the pixel inside are aligned.
+    Aligns two OGR formatted bboxes to a pixel size.
 
-    Returns an ogr bounding box.
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox.
+    `bbox2_ogr` (_list_): An OGR formatted bbox.
+    `pixel_width` (_float_ || _int_): The width of the pixel.
+    `pixel_height` (_float_ || _int_): The height of the pixel.
+
+    ## Returns:
+    (_list_): An OGR formatted bbox of the alignment. `[x_min, x_max, y_min, y_max]`
     """
-    assert isinstance(bbox1_ogr, list) and len(bbox1_ogr) == 4, \
-        f"bbox1_ogr must be a list of length four. Received: {bbox1_ogr}."
-    assert isinstance(bbox2_ogr, list) and len(bbox2_ogr) == 4, \
-        f"bbox2_ogr must be a list of length four. Received: {bbox2_ogr}."
+    assert (
+        isinstance(bbox1_ogr, list) and len(bbox1_ogr) == 4
+    ), f"bbox1_ogr must be a list of length four. Received: {bbox1_ogr}."
+    assert (
+        isinstance(bbox2_ogr, list) and len(bbox2_ogr) == 4
+    ), f"bbox2_ogr must be a list of length four. Received: {bbox2_ogr}."
 
     bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
     bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
@@ -511,23 +627,30 @@ def reproject_bbox(
     target_projection_osr,
 ):
     """
-    Reprojects a bounding box from one projection to another.
+    Reprojects an OGR formatted bbox.
 
-    Returns an ogr bounding box.
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox.
+    `source_projection_osr` (_osr.SpatialReference_): The source projection.
+    `target_projection_osr` (_osr.SpatialReference_): The target projection.
+
+    ## Returns:
+    (_list_): An OGR formatted reprojected bbox. `[x_min, x_max, y_min, y_max]`
     """
-    assert is_valid_bbox(bbox_ogr), \
-        f"Invalid bbox. Received: {bbox_ogr}."
-
-    assert isinstance(source_projection_osr, osr.SpatialReference), \
-        f"source_projection not a valid spatial reference. Recieved: {source_projection_osr}"
-
-    assert isinstance(target_projection_osr, osr.SpatialReference), \
-        f"target_projection not a valid spatial reference. Recieved: {target_projection_osr}"
+    assert is_valid_bbox(bbox_ogr), f"Invalid bbox. Received: {bbox_ogr}."
+    assert isinstance(
+        source_projection_osr, osr.SpatialReference
+    ), f"source_projection not a valid spatial reference. Recieved: {source_projection_osr}"
+    assert isinstance(
+        target_projection_osr, osr.SpatialReference
+    ), f"target_projection not a valid spatial reference. Recieved: {target_projection_osr}"
 
     if source_projection_osr.IsSame(target_projection_osr):
         return bbox_ogr
 
-    transformer = osr.CoordinateTransformation(source_projection_osr, target_projection_osr)
+    transformer = osr.CoordinateTransformation(
+        source_projection_osr, target_projection_osr
+    )
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
@@ -537,16 +660,31 @@ def reproject_bbox(
     return transformed_x_min, transformed_x_max, transformed_y_min, transformed_y_max
 
 
-
 def additional_bboxes(bbox_ogr, projection_osr):
     """
     This is an internal utility functions for metadata generation. Takes a standard
     OGR bounding box and returns a list of variations of bounding boxes.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox.
+    `projection_osr` (_osr.SpatialReference_): The projection.
+
+    ## Returns:
+    (_dict_): A dictionary of the added bboxes. Contains the following keys:
+    `bbox_latlng`: The bbox in latlng coordinates.
+    `bbox_wkt`: The bbox in WKT format.
+    `bbox_wkt_latlng`: The bbox in WKT format in latlng coordinates.
+    `bbox_geom`: The bbox in ogr.Geometry format.
+    `bbox_geom_latlng`: The bbox in ogr.Geometry format in latlng coordinates.
+    `bbox_gdal`: The bbox in GDAL format.
+    `bbox_gdal_latlng`: The bbox in GDAL format in latlng coordinates.
+    `bbox_dict`: The bbox in a dictionary format. { "x_min": x_min, ... }
+    `bbox_dict_latlng`: The bbox in a dictionary format in latlng coordinates.
     """
-    assert is_valid_bbox(bbox_ogr), \
-        f"Invalid bbox. Received: {bbox_ogr}."
-    assert isinstance(projection_osr, osr.SpatialReference), \
-        f"source_projection not a valid spatial reference. Recieved: {projection_osr}"
+    assert is_valid_bbox(bbox_ogr), f"Invalid bbox. Received: {bbox_ogr}."
+    assert isinstance(
+        projection_osr, osr.SpatialReference
+    ), f"source_projection not a valid spatial reference. Recieved: {projection_osr}"
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
@@ -559,6 +697,9 @@ def additional_bboxes(bbox_ogr, projection_osr):
     bbox_ogr_latlng = reproject_bbox(bbox_ogr, original_projection, latlng_projection)
     latlng_x_min, latlng_x_max, latlng_y_min, latlng_y_max = bbox_ogr_latlng
 
+    bbox_geom = convert_bbox_to_geom(bbox_ogr)
+    bbox_geom_latlng = convert_bbox_to_geom(bbox_ogr_latlng)
+
     bbox_wkt = convert_bbox_to_wkt(bbox_ogr)
     bbox_wkt_latlng = convert_bbox_to_wkt(bbox_ogr_latlng)
 
@@ -566,11 +707,16 @@ def additional_bboxes(bbox_ogr, projection_osr):
         "bbox_latlng": bbox_ogr_latlng,
         "bbox_wkt": bbox_wkt,
         "bbox_wkt_latlng": bbox_wkt_latlng,
-        "bbox_warp": convert_ogr_bbox_to_gdal_bbox(bbox_ogr),
-        "bbox_warp_latlng": convert_ogr_bbox_to_gdal_bbox(bbox_ogr_latlng),
-        "bbox_dict": { "x_min": x_min, "x_max": x_max, "y_min": y_min, "y_max": y_max },
-        "bbox_dict_latlng": { "x_min": latlng_x_min, "x_max": latlng_x_max, "y_min": latlng_y_min, "y_max": latlng_y_max },
+        "bbox_geom": bbox_geom,
+        "bbox_geom_latlng": bbox_geom_latlng,
+        "bbox_gdal": convert_ogr_bbox_to_gdal_bbox(bbox_ogr),
+        "bbox_gdal_latlng": convert_ogr_bbox_to_gdal_bbox(bbox_ogr_latlng),
+        "bbox_dict": {"x_min": x_min, "x_max": x_max, "y_min": y_min, "y_max": y_max},
+        "bbox_dict_latlng": {
+            "x_min": latlng_x_min,
+            "x_max": latlng_x_max,
+            "y_min": latlng_y_min,
+            "y_max": latlng_y_max,
+        },
         "bbox_geojson": convert_bbox_to_geojson(bbox_ogr_latlng),
     }
-
-print("bob")

@@ -25,14 +25,16 @@ from buteo.utils.core import (
     path_is_in_memory,
     file_exists,
 )
+from buteo.utils.bbox import additional_bboxes, convert_bbox_to_vector
 from buteo.utils.gdal_utils import (
-    expand_extent,
     path_to_driver_raster,
     is_raster,
-    numpy_to_gdal_datatype,
-    gdal_to_numpy_datatype,
     default_options,
     to_band_list,
+)
+from buteo.utils.gdal_enums import (
+    numpy_to_gdal_datatype,
+    gdal_to_numpy_datatype,
     translate_resample_method,
     translate_datatypes,
     numpy_fill_values,
@@ -143,15 +145,16 @@ def _raster_to_metadata(raster):
 
     path = dataset.GetDescription()
     basename = os.path.basename(path)
-    name = os.path.splitext(basename)[0]
-    ext = os.path.splitext(basename)[1]
+    split_path = os.path.splitext(basename)
+    name = split_path[0]
+    ext = split_path[1]
 
     driver = raster_driver.ShortName
 
     in_memory = False
     if driver == "MEM":
         in_memory = True
-    elif len(path) >= 8 and path[0:8] == "/vsimem/":
+    elif path.startswith("/vsimem"):
         in_memory = True
 
     transform = dataset.GetGeoTransform()
@@ -185,22 +188,11 @@ def _raster_to_metadata(raster):
     datatype = gdal_to_numpy_datatype(band0.DataType)
 
     nodata_value = band0.GetNoDataValue()
-    has_nodata = True if nodata_value is not None else False
+    has_nodata = nodata_value is not None
 
-    extent = [x_min, y_max, x_max, y_min]
-    extent_ogr = [x_min, x_max, y_min, y_max]
-    extent_gdal_warp = [x_min, y_min, x_max, y_max]
+    bbox_ogr = [x_min, x_max, y_min, y_max]
 
-    extent_dict = {
-        "left": x_min,
-        "top": y_max,
-        "right": x_max,
-        "bottom": y_min,
-    }
-
-    x_min, x_max, y_min, y_max = extent_ogr
-
-    expanded_extents = expand_extent(extent_ogr, projection_osr)
+    bboxes = additional_bboxes(bbox_ogr, original_projection)
 
     metadata = {
         "path": path,
@@ -230,81 +222,26 @@ def _raster_to_metadata(raster):
         "has_nodata": has_nodata,
         "is_raster": True,
         "is_vector": False,
-        "extent": extent,
-        "extent_dict": extent_dict,
-        "extent_ogr": extent_ogr,
-        "extent_gdal_warp": extent_gdal_warp,
-        "extent_gdal_warp_latlng": expanded_extents["extent_gdal_warp_latlng"],
-        "extent_wkt": expanded_extents["extent_wkt"],
-        "extent_latlng": expanded_extents["extent_latlng"],
-        "extent_ogr_latlng": expanded_extents["extent_ogr_latlng"],
-        "extent_dict_latlng": expanded_extents["extent_dict_latlng"],
-        "extent_wkt_latlng": expanded_extents["extent_wkt_latlng"],
-        "extent_geojson_dict": expanded_extents["extent_wkt_latlng"],
-        "extent_geojson": expanded_extents["extent_geojson"],
-        "extent_datasource": None,
-        "extent_datasource_latlng": None,
-        "extent_geom_latlng": None,
-        "extent_geom": None,
+        "bbox": bbox_ogr,
     }
 
-    def get_extent_datasource():
-        extent_name = f"/vsimem/{name}_{uuid4().int}_extent.gpkg"
-
-        driver = ogr.GetDriverByName("GPKG")
-        extent_ds = driver.CreateDataSource(extent_name)
-        layer = extent_ds.CreateLayer(
-            "extent_ogr", original_projection, ogr.wkbPolygon
-        )
-
-        feature = ogr.Feature(layer.GetLayerDefn())
-        extent_geom = ogr.CreateGeometryFromWkt(metadata["extent_wkt"], original_projection)
-        feature.SetGeometry(extent_geom)
-        layer.CreateFeature(feature)
-
-        feature = None
-        layer.SyncToDisk()
-
-        return extent_name
+    for key, value in bboxes.items():
+        metadata[key] = value
 
 
-    def get_extent_datasource_latlng():
-        extent_latlng_name = f"/vsimem/{name}_{uuid4().int}_extent_latlng.gpkg"
-
-        target_projection = osr.SpatialReference()
-        target_projection.ImportFromEPSG(4326)
-
-        driver = ogr.GetDriverByName("GPKG")
-        extent_ds_latlng = driver.CreateDataSource(extent_latlng_name)
-        layer = extent_ds_latlng.CreateLayer(
-            "extent_latlng", target_projection, ogr.wkbPolygon
-        )
-
-        feature = ogr.Feature(layer.GetLayerDefn())
-        extent_geom_latlng = ogr.CreateGeometryFromWkt(metadata["extent_wkt_latlng"], target_projection)
-        feature.SetGeometry(extent_geom_latlng)
-        layer.CreateFeature(feature)
-
-        feature = None
-        layer.SyncToDisk()
-
-        return extent_latlng_name
+    def get_bbox_as_vector():
+        return convert_bbox_to_vector(bbox_ogr, original_projection)
 
 
-    def get_extent_geom():
-        return ogr.CreateGeometryFromWkt(metadata["extent_wkt"], original_projection)
-    
+    def get_bbox_as_vector_latlng():
+        projection_latlng = osr.SpatialReference()
+        projection_latlng.ImportFromEPSG(4326)
 
-    def get_extent_geom_latlng():
-        target_projection = osr.SpatialReference()
-        target_projection.ImportFromEPSG(4326)
-        return ogr.CreateGeometryFromWkt(metadata["extent_wkt_latlng"], target_projection)
+        return convert_bbox_to_vector(metadata["bbox_latlng"],  projection_latlng)
 
 
-    metadata["extent_datasource"] = get_extent_datasource
-    metadata["extent_datasource_latlng"] = get_extent_datasource_latlng
-    metadata["extent_geom"] = get_extent_geom
-    metadata["extent_geom_latlng"] = get_extent_geom_latlng
+    metadata["get_bbox_vector"] = get_bbox_as_vector
+    metadata["get_bbox_vector_latlng"] = get_bbox_as_vector_latlng
 
     return metadata
 

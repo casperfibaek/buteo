@@ -18,9 +18,6 @@ from buteo.utils.core import (
 )
 
 
-# is vector_empty
-# is raster_empty
-
 
 def default_options(options):
     """Takes a list of GDAL options and adds the following

@@ -12,6 +12,10 @@ import shutil
 from glob import glob
 
 
+def get_unix_seconds_as_str():
+    return str(int(time.time()))
+
+
 def is_float(value):
     if isinstance(value, float):
         return True
