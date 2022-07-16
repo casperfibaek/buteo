@@ -34,7 +34,7 @@ def is_valid_bbox(bbox_ogr):
     `[x_min, x_max, y_min, y_max]`
 
     ## Args:
-    `bbox_ogr` (_list_): An OGR formatted bbox.
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
 
     ## Returns:
     **True** if the bbox is valid, **False** otherwise.
@@ -90,7 +90,7 @@ def ensure_negative(number):
     Ensures that a valid is negative. If the number is positive, it is made negative.
 
     ## Args:
-    `number` (_int_ || _float_): A float or int number.
+    `number` (_int_ || _float_): A float or int number. </br>
 
     ## Returns:
     (_int_ || _float_): The same number made **negative** if necesary.
@@ -108,8 +108,8 @@ def get_pixel_offsets(geotransform, bbox_ogr):
     Get the pixels offsets for a bbox and a geotransform.
 
     ## Args:
-    `geotransform` (_list_ || _tuple_): A GDAL GeoTransform.
-    `bbox_ogr` (_list_): An OGR formatted bbox.
+    `geotransform` (_list_ || _tuple_): A GDAL GeoTransform. </br>
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
 
     ## Returns:
     (_list_): A list of pixel offsets. `[x_start, y_start, x_size, y_size]`
@@ -148,9 +148,9 @@ def get_bbox_from_geotransform(geotransform, raster_x_size, raster_y_size):
     Get an OGR bounding box from a geotransform and raster sizes.
 
     ## Args:
-    `geotransform` (_list_ || _tuple_): A GDAL GeoTransform.
-    `raster_x_size` (_int_): The number of pixels in the x direction.
-    `raster_y_size` (_int_): The number of pixels in the y direction.
+    `geotransform` (_list_ || _tuple_): A GDAL GeoTransform. </br>
+    `raster_x_size` (_int_): The number of pixels in the x direction. </br>
+    `raster_y_size` (_int_): The number of pixels in the y direction. </br>
 
     ## Returns:
     (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
@@ -172,7 +172,7 @@ def get_bbox_from_raster(raster_dataframe):
     Gets an OGR bounding box from a GDAL raster dataframe.
 
     ## Args:
-    `raster_dataframe` (_gdal.DataFrame_): A GDAL raster dataframe.
+    `raster_dataframe` (_gdal.DataFrame_): A GDAL raster dataframe. </br>
 
     ## Returns:
     (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
@@ -195,7 +195,7 @@ def get_bbox_from_vector(vector_dataframe):
     Gets an OGR bounding box from an OGR dataframe.
 
     ## Args:
-    `vector_dataframe` (_ogr.DataSource_): An OGR vector dataframe.
+    `vector_dataframe` (_ogr.DataSource_): An OGR vector dataframe. </br>
 
     ## Returns:
     (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
@@ -242,7 +242,7 @@ def get_bbox_from_vector_layer(vector_layer):
     Gets an OGR bounding box from an OGR dataframe layer.
 
     ## Args:
-    `vector_layer` (_ogr.Layer_): An OGR vector dataframe layer.
+    `vector_layer` (_ogr.Layer_): An OGR vector dataframe layer. </br>
 
     ## Returns:
     (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
@@ -261,8 +261,8 @@ def get_sub_geotransform(geotransform, bbox_ogr):
     Create a GeoTransform and the raster sizes for an OGR formatted bbox.
 
     ## Args:
-    `geotransform` (_list_): A GDAL geotransform.
-    `bbox_ogr` (_list_): An OGR formatted bbox.
+    `geotransform` (_list_): A GDAL geotransform. </br>
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
 
     ## Returns:
     (_dict_): { "Transform": _list_, "RasterXSize": _int_, "RasterYSize": _int_ }
@@ -294,7 +294,7 @@ def convert_bbox_to_geom(bbox_ogr):
     `[x_min, x_max, y_min, y_max] -> ogr.Geometry`
 
     ## Args:
-    `bbox_ogr` (_list_): An OGR formatted bbox.
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
 
     ## Returns:
     (_ogr.Geometry_): An OGR geometry.
@@ -324,7 +324,7 @@ def convert_geom_to_bbox(geom):
     `ogr.Geometry -> [x_min, x_max, y_min, y_max]`
 
     ## Args:
-    `geom` (_ogr.Geometry_): An OGR geometry.
+    `geom` (_ogr.Geometry_): An OGR geometry. </br>
 
     ## Returns:
     (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
@@ -344,9 +344,9 @@ def convert_bbox_to_geotransform(bbox_ogr, raster_x_size, raster_y_size):
     `[x_min, x_max, y_min, y_max] -> [x_min, pixel_width, x_skew, y_max, y_skew, pixel_height]`
 
     ## Args:
-    `bbox_ogr` (_list_): An OGR formatted bbox.
-    `raster_x_size` (_int_): The number of pixels in the x direction.
-    `raster_y_size` (_int_): The number of pixels in the y direction.
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
+    `raster_x_size` (_int_): The number of pixels in the x direction. </br>
+    `raster_y_size` (_int_): The number of pixels in the y direction. </br>
 
     ## Returns:
     (_list_): A GDAL GeoTransform. `[x_min, pixel_width, x_skew, y_max, y_skew, pixel_height]`
@@ -371,7 +371,7 @@ def convert_ogr_bbox_to_gdal_bbox(bbox_ogr):
     `[x_min, x_max, y_min, y_max] -> [x_min, y_min, x_max, y_max]`
 
     ## Args:
-    `bbox_ogr` (_list_): An OGR formatted bbox.
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
 
     ## Returns:
     (_list_): A GDAL formatted bbox. `[x_min, y_min, x_max, y_max]`
@@ -391,7 +391,7 @@ def convert_gdal_bbox_to_ogr_bbox(bbox_gdal):
     `[x_min, y_min, x_max, y_max] -> [x_min, x_max, y_min, y_max]`
 
     ## Args:
-    `bbox_gdal` (_list_): A GDAL formatted bbox.
+    `bbox_gdal` (_list_): A GDAL formatted bbox. </br>
 
     ## Returns:
     (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
@@ -411,7 +411,7 @@ def convert_bbox_to_wkt(bbox_ogr):
     `[x_min, x_max, y_min, y_max] -> WKT`
 
     ## Args:
-    `bbox_ogr` (_list_): An OGR formatted bbox.
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
 
     ## Returns:
     (_str_): A WKT Polygon string. `POLYGON ((...))`
@@ -433,7 +433,7 @@ def convert_bbox_to_geojson(bbox_ogr):
     `[x_min, x_max, y_min, y_max] -> GeoJson`
 
     ## Args:
-    `bbox_ogr` (_list_): an OGR formatted bbox.
+    `bbox_ogr` (_list_): an OGR formatted bbox. </br>
 
     ## Returns:
     (_dict_): A GeoJson Dictionary. `{ "type": "Polygon", "coordinates": [ ... ] }`
@@ -467,8 +467,8 @@ def convert_bbox_to_vector(bbox_ogr, projection_osr):
     **OBS**: Layers should be manually cleared when no longer used.
 
     ## Args:
-    `bbox_ogr` (_list_): an OGR formatted bbox.
-    `projection_osr` (_osr.SpatialReference_): The projection of the vector.
+    `bbox_ogr` (_list_): an OGR formatted bbox. </br>
+    `projection_osr` (_osr.SpatialReference_): The projection of the vector. </br>
 
     ## Returns:
     (_ogr.DataSource_): The bounding box as a vector.
@@ -503,8 +503,8 @@ def bboxes_intersect(bbox1_ogr, bbox2_ogr):
     Checks if two OGR formatted bboxes intersect.
 
     ## Args:
-    `bbox1_ogr` (_list_): An OGR formatted bbox.
-    `bbox2_ogr` (_list_): An OGR formatted bbox.
+    `bbox1_ogr` (_list_): An OGR formatted bbox. </br>
+    `bbox2_ogr` (_list_): An OGR formatted bbox. </br>
 
     ## Returns:
     (_bool_): **True** if the bboxes intersect, **False** otherwise.
@@ -539,8 +539,8 @@ def bboxes_within(bbox1_ogr, bbox2_ogr):
     Checks if one OGR formatted bbox is within another.
 
     ## Args:
-    `bbox1_ogr` (_list_): An OGR formatted bbox.
-    `bbox2_ogr` (_list_): An OGR formatted bbox.
+    `bbox1_ogr` (_list_): An OGR formatted bbox. </br>
+    `bbox2_ogr` (_list_): An OGR formatted bbox. </br>
 
     ## Returns:
     (_bool_): **True** if the bbox is within the other, **False** otherwise.
@@ -568,8 +568,8 @@ def get_intersection_bboxes(bbox1_ogr, bbox2_ogr):
     Get the intersection of two OGR formatted bboxes.
 
     ## Args:
-    `bbox1_ogr` (_list_): An OGR formatted bbox.
-    `bbox2_ogr` (_list_): An OGR formatted bbox.
+    `bbox1_ogr` (_list_): An OGR formatted bbox. </br>
+    `bbox2_ogr` (_list_): An OGR formatted bbox. </br>
 
     ## Returns:
     (_list_): An OGR formatted bbox of the intersection. `[x_min, x_max, y_min, y_max]`
@@ -594,10 +594,10 @@ def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
     Aligns two OGR formatted bboxes to a pixel size.
 
     ## Args:
-    `bbox1_ogr` (_list_): An OGR formatted bbox.
-    `bbox2_ogr` (_list_): An OGR formatted bbox.
-    `pixel_width` (_float_ || _int_): The width of the pixel.
-    `pixel_height` (_float_ || _int_): The height of the pixel.
+    `bbox1_ogr` (_list_): An OGR formatted bbox. </br>
+    `bbox2_ogr` (_list_): An OGR formatted bbox. </br>
+    `pixel_width` (_float_ || _int_): The width of the pixel. </br>
+    `pixel_height` (_float_ || _int_): The height of the pixel. </br>
 
     ## Returns:
     (_list_): An OGR formatted bbox of the alignment. `[x_min, x_max, y_min, y_max]`
@@ -630,9 +630,9 @@ def reproject_bbox(
     Reprojects an OGR formatted bbox.
 
     ## Args:
-    `bbox_ogr` (_list_): An OGR formatted bbox.
-    `source_projection_osr` (_osr.SpatialReference_): The source projection.
-    `target_projection_osr` (_osr.SpatialReference_): The target projection.
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
+    `source_projection_osr` (_osr.SpatialReference_): The source projection. </br>
+    `target_projection_osr` (_osr.SpatialReference_): The target projection. </br>
 
     ## Returns:
     (_list_): An OGR formatted reprojected bbox. `[x_min, x_max, y_min, y_max]`
@@ -662,24 +662,24 @@ def reproject_bbox(
 
 def additional_bboxes(bbox_ogr, projection_osr):
     """
-    This is an internal utility functions for metadata generation. Takes a standard
+    This is an internal utility function for metadata generation. It takes a standard
     OGR bounding box and returns a list of variations of bounding boxes.
 
     ## Args:
-    `bbox_ogr` (_list_): An OGR formatted bbox.
-    `projection_osr` (_osr.SpatialReference_): The projection.
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
+    `projection_osr` (_osr.SpatialReference_): The projection. </br>
 
     ## Returns:
-    (_dict_): A dictionary of the added bboxes. Contains the following keys:
-    `bbox_latlng`: The bbox in latlng coordinates.
-    `bbox_wkt`: The bbox in WKT format.
-    `bbox_wkt_latlng`: The bbox in WKT format in latlng coordinates.
-    `bbox_geom`: The bbox in ogr.Geometry format.
-    `bbox_geom_latlng`: The bbox in ogr.Geometry format in latlng coordinates.
-    `bbox_gdal`: The bbox in GDAL format.
-    `bbox_gdal_latlng`: The bbox in GDAL format in latlng coordinates.
-    `bbox_dict`: The bbox in a dictionary format. { "x_min": x_min, ... }
-    `bbox_dict_latlng`: The bbox in a dictionary format in latlng coordinates.
+    (_dict_): A dictionary of the added bboxes. Contains the following keys: </br>
+    `bbox_latlng`: The bbox in latlng coordinates. </br>
+    `bbox_wkt`: The bbox in WKT format. </br>
+    `bbox_wkt_latlng`: The bbox in WKT format in latlng coordinates. </br>
+    `bbox_geom`: The bbox in ogr.Geometry format. </br>
+    `bbox_geom_latlng`: The bbox in ogr.Geometry format in latlng coordinates. </br>
+    `bbox_gdal`: The bbox in GDAL format. </br>
+    `bbox_gdal_latlng`: The bbox in GDAL format in latlng coordinates. </br>
+    `bbox_dict`: The bbox in a dictionary format. { "x_min": x_min, ... } </br>
+    `bbox_dict_latlng`: The bbox in a dictionary format in latlng coordinates. </br>
     """
     assert is_valid_bbox(bbox_ogr), f"Invalid bbox. Received: {bbox_ogr}."
     assert isinstance(
