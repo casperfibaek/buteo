@@ -134,7 +134,7 @@ def is_in_memory(raster_or_vector):
     Check if vector is in memory
     """
     if isinstance(raster_or_vector, str):
-        if raster_or_vector.startswith("/vsimem/"):
+        if raster_or_vector.startswith("/vsimem"):
             return True
 
         return False

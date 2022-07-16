@@ -1,22 +1,40 @@
 """
-Generic utility functions to make interacting with the toolbox easier.
-
-TODO:
-    - Documentation
+### Generic utility functions ###
+Functions that make interacting with the toolbox easier.
 """
 
+# Standard Library
 import os
 import sys
 import time
 import shutil
 from glob import glob
+from datetime import datetime
+
+# External
+from osgeo import gdal
 
 
 def get_unix_seconds_as_str():
+    """
+    Get a string of the current UNIX time in seconds.
+
+    ## Returns:
+    (_str_): A string of the current UNIX time in seconds.
+    """
     return str(int(time.time()))
 
 
 def is_float(value):
+    """
+    Check if a value is a float. If it is a string, try to convert it to a float.
+
+    ## Args:
+    `value` (_any_): The value to check.
+
+    ## Returns:
+    (_bool_): **True** if the value is a float, **False** otherwise.
+    """
     if isinstance(value, float):
         return True
     elif isinstance(value, str):
@@ -30,6 +48,15 @@ def is_float(value):
 
 
 def is_int(value):
+    """
+    Check if a value is an integer. If it is a string, try to convert it to an integer.
+
+    ## Args:
+    `value` (_any_): The value to check. </br>
+
+    ## Returns:
+    (_bool_): **True** if the value is an integer, **False** otherwise.
+    """
     if isinstance(value, int):
         return True
     elif isinstance(value, str):
@@ -43,11 +70,22 @@ def is_int(value):
 
 
 def list_is_all_the_same(lst):
-    if not isinstance(lst, list):
-        return False
+    """
+    Check if a list contains all the same elements.
+
+    ## Args:
+    `lst` (_list_): The list to check. </br>
+
+    ## Returns:
+    (_bool_): **True** if the list contains all the same elements, **False** otherwise.
+    """
+    assert isinstance(lst, list), "lst must be a list."
 
     first = lst[0]
-    for item in lst:
+    for idx, item in enumerate(lst):
+        if idx == 0:
+            continue
+
         if item != first:
             return False
 
@@ -55,21 +93,107 @@ def list_is_all_the_same(lst):
 
 
 def file_exists(path):
-    return os.path.exists(path)
+    """
+    Check if a file exists. Also checks vsimem.
+
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+
+    ## Returns:
+    (_bool_): **True** if the file exists, **False** otherwise.
+    """
+    assert isinstance(path, str), "path must be a string."
+
+    if os.path.exists(path):
+        return True
+
+    if path in gdal.listdir('/vsimem'):
+        return True
+
+    return False
 
 
 def folder_exists(path):
+    """
+    Check if a folder exists.
+
+    ## Args:
+    `path` (_str_): The path to the folder. </br>
+
+    ## Returns:
+    (_bool_): **True** if the folder exists, **False** otherwise.
+    """
     return os.path.isdir(path)
 
 
+def delete_files_in_folder(folder):
+    """
+    Delete all files in a folder. Does not remove subfolders.
+
+    ## Args:
+    `folder` (_str_): The path to the folder. </br>
+
+    ## Returns:
+    (_bool_): **True** if the files were deleted, throws exception otherwise..
+    """
+    assert isinstance(folder, str), "folder must be a string."
+    assert folder_exists(folder), "folder must exist."
+
+    for file in glob(folder + "*.*"):
+        try:
+            os.remove(file)
+        except Exception:
+            print(f"Warning. Could not remove: {file}")
+
+    return True
+
+
+def delete_folder(folder):
+    """
+    Delete a folder.
+
+    ## Args:
+    `folder` (_str_): The path to the folder. </br>
+
+    ## Returns:
+    (_bool_): **True** if the folder was deleted, **False** otherwise.
+    """
+    assert isinstance(folder, str), "folder must be a string."
+    assert folder_exists(folder), "folder must exist."
+
+    shutil.rmtree(folder)
+
+    return True
+
+
 def path_is_in_memory(path):
-    if isinstance(path, str) and path[:8] == "/vsimem/":
+    """
+    Check if a path is in memory.
+
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+
+    ## Returns:
+    (_bool_): **True** if the path is in memory, **False** otherwise.
+    """
+    assert isinstance(path, str), "path must be a string."
+
+    if path.startswith("/vsimem"):
         return True
 
     return False
 
 
 def is_number(potential_number):
+    """
+    Check if variable is a number.
+
+    ## Args:
+    `potential_number` (_any_): The variable to check. </br>
+
+    ## Returns:
+    (_bool_): **True** if the variable is a number, **False** otherwise.
+    """
     if isinstance(potential_number, float):
         return True
 
@@ -80,36 +204,88 @@ def is_number(potential_number):
 
 
 def to_number(value):
+    """
+    Convert a value to a number.
+
+    ## Args:
+    `value` (_any_): The value to convert.
+
+    ## Returns:
+    (_float_): The value converted to a number.
+    """
+    assert isinstance(value, (str, int, float)), "value must be a string, integer or float."
+    if is_number(value):
+        return value
+
     if is_float(value):
         return float(value)
 
-    return value
-
-
-def keys_to_args(dictionary):
-    args = []
-    for key in dictionary:
-        args.append(to_number(dictionary[key]))
-    return args
+    raise Exception(f"Could not convert {value} to a number.")
 
 
 def make_dir_if_not_exists(path):
-    if not os.path.exists(path):
+    """
+    Make a directory if it doesn't exist.
+
+    ## Args:
+    `path` (_str_): The path to the directory. </br>
+
+    ## Returns:
+    (_str_): The path to the created directory.
+    """
+    assert isinstance(path, str), "path must be a string."
+
+    if not folder_exists(path):
         os.makedirs(path)
 
     return path
 
 
-def path_to_ext(path):
+def path_to_ext(path, with_dot=False):
+    """
+    Get the extension of a file.
+
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+
+    ## Kwargs:
+    `with_dot` (_bool_): If True, return the extension with a dot. (**default**: `False`) </br>
+
+    ## Returns:
+    (_str_): The extension of the file. (_without the dot_)
+    """
+    assert isinstance(path, str), "path must be a string."
+    assert isinstance(with_dot, bool), "with_dot must be a boolean."
+
     basename = os.path.basename(path)
     basesplit = os.path.splitext(basename)
     ext = basesplit[1]
-    ext_without_dot = ext[1:]
 
-    return ext_without_dot
+    if ext == "" or len(ext) == 1:
+        raise Exception(f"File: {path} has no extension.")
+
+    if with_dot:
+        return ext
+
+    return ext[1:]
 
 
 def path_to_name(path, with_ext=False):
+    """
+    Get the name of a file.
+
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+
+    ## Kwargs:
+    `with_ext` (_bool_): If True, return the name with the extension. (**default**: `False`) </br>
+
+    ## Returns:
+    (_str_): The name of the file. (_with- or without the extension_)
+    """
+    assert isinstance(path, str), "path must be a string."
+    assert isinstance(with_ext, bool), "with_ext must be a boolean."
+
     basename = os.path.basename(path)
     basesplit = os.path.splitext(basename)
     name = basesplit[0]
@@ -121,22 +297,69 @@ def path_to_name(path, with_ext=False):
 
 
 def overwrite_required(path, overwrite):
-    if path is not None:
-        exists = file_exists(path)
-        if exists and not overwrite:
-            raise Exception(f"File: {path} already exists and overwrite is False.")
+    """
+    Check if an overwrite is required. Raises an exception if the file exists and overwrite is False.
 
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+    `overwrite` (_bool_): If True, overwrite is required. </br>
+
+    ## Returns:
+    (_bool_): **True** if the file exists and overwrite is True or if the file does not exist.
+
+    ## Raises:
+    (_exception_): If the file exists and overwrite is False.
+    """
+    assert isinstance(path, str), "path must be a string."
+    assert isinstance(overwrite, bool), "overwrite must be a boolean."
+
+    exists = file_exists(path)
+    if exists and not overwrite:
+        raise Exception(f"File: {path} already exists and overwrite is False.")
+
+    return True
 
 def remove_if_overwrite(path, overwrite):
-    if path is not None:
-        exists = file_exists(path)
-        if exists and overwrite:
-            os.remove(path)
-        elif exists:
-            raise Exception(f"File: {path} already exists and overwrite is False.")
+    """
+    Remove a file if it exists and overwrite is True.
+
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+    `overwrite` (_bool_): If True, overwrite is required. </br>
+
+    ## Returns:
+    (_bool_): **True** if the file exists and overwrite is True or if the file does not exist.
+
+    ## Raises:
+    (_exception_): If the file exists and overwrite is False.
+    """
+    assert isinstance(path, str), "path must be a string."
+    assert isinstance(overwrite, bool), "overwrite must be a boolean."
+
+    exists = file_exists(path)
+    if exists and overwrite:
+        os.remove(path)
+    elif exists:
+        raise Exception(f"File: {path} already exists and overwrite is False.")
+
+    return True
 
 
 def get_size(start_path=".", rough=True):
+    """
+    Get the size of a folder.
+
+    ## Kwargs:
+    `start_path` (_str_): The path to the folder. (**default**: `"."`) </br>
+    `rough` (_bool_): If True, return a rough estimate. (**default**: `True`) </br>
+
+    ## Returns:
+    (_int_): The size of the folder.
+    """
+    assert isinstance(start_path, str), "start_path must be a string."
+    assert folder_exists(start_path), "start_path must exist."
+    assert isinstance(rough, bool), "rough must be a boolean."
+
     total_size = 0
     for dirpath, _dirnames, filenames in os.walk(start_path):
         for f in filenames:
@@ -145,13 +368,27 @@ def get_size(start_path=".", rough=True):
             # skip if it is symbolic link
             if not os.path.islink(fp):
                 total_size += os.path.getsize(fp)
+
     if rough is True:
         return total_size >> 20
-    else:
-        return total_size
+
+    return total_size
 
 
-def divide_steps(total, step):
+def divide_into_steps(total, step):
+    """
+    Divide a number into steps.
+
+    ## Args:
+    `total` (_int_): The total number. </br>
+    `step` (_int_): The step size. </br>
+
+    ## Returns:
+    (_list_): The list of steps.
+    """
+    assert isinstance(total, int), "total must be an integer."
+    assert isinstance(step, int), "step must be an integer."
+
     steps = []
     remainder = total % step
     divided = int(total / step)
@@ -165,8 +402,21 @@ def divide_steps(total, step):
     return steps
 
 
-def divide_into_steps(arr, steps_length):
-    steps = divide_steps(len(arr), steps_length)
+def divide_arr_into_steps(arr, steps_length):
+    """
+    Divide an array into steps.
+
+    ## Args:
+    `arr` (_list_): The array. </br>
+    `steps_length` (_int_): The length of each step. </br>
+
+    ## Returns:
+    (_list_): An array divided into steps.
+    """
+    assert isinstance(arr, list), "arr must be a list."
+    assert isinstance(steps_length, int), "steps_length must be an integer."
+
+    steps = divide_into_steps(len(arr), steps_length)
 
     ret_arr = []
     last = 0
@@ -181,10 +431,21 @@ def divide_into_steps(arr, steps_length):
     return ret_arr
 
 
-def step_ranges(steps):
+def step_ranges(arr_with_steps):
+    """
+    Get the ranges of each step.
+
+    ## Args:
+    `arr_with_steps` (_list_): The array with steps. </br>
+
+    ## Returns:
+    (_dict_): A dictionary of type: `{ "id": _int_, "start": _int_, "stop": _int_}`.
+    """
+    assert isinstance(arr_with_steps, list), "arr_with_steps must be a list."
+
     start_stop = []
     last = 0
-    for idx, step_size in enumerate(steps):
+    for idx, step_size in enumerate(arr_with_steps):
         fid = idx + 1
 
         start_stop.append(
@@ -209,24 +470,19 @@ def type_check(
     throw_error=True,
 ):
     """
-        Utility function to type check the inputs of a function.
+    Utility function to type check the inputs of a function.
 
-    Args:
-        variable (any): The variable to typecheck
+    ## Args:
+    `variable` (_any_): The variable to check. </br>
+    `types` (_tuple_): The types to check against. `(float, int, ...)` </br>
 
-        types (tuple): A tuple of type classes. e.g. int, float, etc.
+    ## Kargs:
+    `name` (_str_): The name printed in the error string if an error is thrown. (**default**: `""`)</br>
+    `allow_none` (_bool_): If True, allow type to be `None`. (**default**: `False`) </br>
+    `throw_error` (_bool_): If True, raise an error if the type is not correct. (**default**: `True`)</br>
 
-    **kwargs:
-        name (str): The name printed in the error string if an error is thrown.
-
-        allow_none (bool): Allow the type to be None
-
-        throw_error (bool): Should the function throw an error if the type
-        is wrong or return a boolean.
-
-    Returns:
-        A boolean indicating if the type is valid. If throw_error an error is
-        raised if the input is not a valid type.
+    ## Returns:
+    (_bool_): A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.
     """
 
     if variable is None:
@@ -264,15 +520,24 @@ def type_check(
     return False
 
 
-def delete_files_in_folder(folder):
-    for file in glob(folder + "*.*"):
-        try:
-            os.remove(file)
-        except Exception:
-            print(f"Warning. Could not remove: {file}")
-
-
 def progress(count, total, name="Processing"):
+    """
+    Print a progress bar.
+
+    ## Args:
+    `count` (_int_): The current count. </br>
+    `total` (_int_): The total count. </br>
+
+    ## Kwargs:
+    `name` (_str_): The name to show in the progress bar. (**default**: `"Processing"`) </br>
+
+    ## Returns:
+    (_None_): Returns None.
+    """
+    assert isinstance(count, int), "count must be an integer."
+    assert isinstance(total, int), "total must be an integer."
+    assert isinstance(name, str), "name must be a string."
+
     sys.stdout.flush()
 
     try:
@@ -303,12 +568,31 @@ def progress(count, total, name="Processing"):
 
 
 def timing(before, print_msg=True):
+    """
+    Get the time elapsed since the given time.
+
+    ## Args:
+    `before` (_datetime_): The time to compare. </br>
+
+    ## Kwargs:
+    `print_msg` (_bool_): If True, print the time elapsed. (**default**: `True`) </br>
+
+    ```python
+    >>> before = datetime.now()
+    >>> long_running_calculation()
+    >>> timing(before)
+    >>> Processing took: 1h 1m 1s
+    ```
+    """
+    assert isinstance(before, datetime), "before must be a datetime object."
+
     after = time.time()
     dif = after - before
     hours = int(dif / 3600)
     minutes = int((dif % 3600) / 60)
     seconds = f"{dif % 60:.2f}"
     message = f"Processing took: {hours}h {minutes}m {seconds}s"
+
     if print_msg:
         print(message)
 

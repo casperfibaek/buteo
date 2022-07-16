@@ -30,14 +30,14 @@ def is_valid_bbox(bbox_ogr):
     """
     Checks if a bbox is valid.
 
-    A valid ogr formatted bbox has the form:
+    A valid ogr formatted bbox has the form: </br>
     `[x_min, x_max, y_min, y_max]`
 
     ## Args:
     `bbox_ogr` (_list_): An OGR formatted bbox. </br>
 
     ## Returns:
-    **True** if the bbox is valid, **False** otherwise.
+    (_bool_): **True** if the bbox is valid, **False** otherwise.
     """
     if not isinstance(bbox_ogr, list):
         return False
@@ -60,17 +60,15 @@ def is_valid_bbox(bbox_ogr):
 def is_valid_geotransform(geotransform):
     """
     Checks if a geotransform is valid.
-    
-    A valid geotransform has the form:
-    ```python
-    [x_min, pixel_width, row_skew, y_max, column_skew, pixel_height]
-    ```
+
+    A valid geotransform has the form: </br>
+    `[x_min, pixel_width, row_skew, y_max, column_skew, pixel_height]`
 
     ## Args:
     `geotransform` (_list_ || _tuple_): A GDAL formatted geotransform.
 
     ## Returns:
-    **True** if the geotransform is valid, **False** otherwise.
+    (_bool_): **True** if the geotransform is valid, **False** otherwise.
     """
     if not isinstance(geotransform, (list, tuple)):
         return False
