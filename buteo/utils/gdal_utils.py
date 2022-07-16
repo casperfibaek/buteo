@@ -15,21 +15,20 @@ import numpy as np
 from osgeo import gdal, ogr, osr
 
 # Internal
-from .core import (
-    delete_file,
+from buteo.utils.core import (
     is_number,
+    is_path_in_memory,
     file_exists,
-    path_is_in_memory,
-    path_to_ext,
-    delete_file,
     folder_exists,
+    path_to_ext,
     path_to_folder,
+    delete_file,
 )
-from .gdal_enums import (
+from buteo.utils.gdal_enums import (
     convert_extension_to_driver,
-    valid_driver_extensions,
-    valid_raster_extensions,
-    valid_vector_extensions,
+    get_valid_driver_extensions,
+    get_valid_raster_driver_extensions,
+    get_valid_vector_driver_extensions,
 )
 
 
@@ -88,7 +87,7 @@ def is_valid_datatype(file_path):
 
     ext = path_to_ext(file_path)
 
-    if ext in valid_driver_extensions:
+    if ext in get_valid_driver_extensions():
         return True
 
     return False
@@ -108,7 +107,7 @@ def is_valid_raster_datatype(file_path):
 
     ext = path_to_ext(file_path)
 
-    if ext in valid_raster_extensions:
+    if ext in get_valid_raster_driver_extensions():
         return True
 
     return False
@@ -128,7 +127,7 @@ def is_valid_vector_datatype(file_path):
 
     ext = path_to_ext(file_path)
 
-    if ext in valid_vector_extensions:
+    if ext in get_valid_vector_driver_extensions():
         return True
 
     return False
@@ -365,7 +364,7 @@ def is_raster(potential_raster, empty_is_invalid=True):
     (_bool_): **True** if the variable is a valid raster, **False** otherwise.
     """
     if isinstance(potential_raster, str):
-        if not file_exists(potential_raster) and not path_is_in_memory(potential_raster):
+        if not file_exists(potential_raster) and not is_path_in_memory(potential_raster):
             return False
 
         try:

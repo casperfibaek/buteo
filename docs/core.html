@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>core API documentation</title>
-<meta name="description" content="Generic utility functions ###
-Generic utility functions to make interacting with the toolbox easier." />
+<meta name="description" content="Generic utility functions ### …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -24,14 +23,15 @@ Generic utility functions to make interacting with the toolbox easier." />
 </header>
 <section id="section-intro">
 <h3 id="generic-utility-functions">Generic utility functions</h3>
-<p>Generic utility functions to make interacting with the toolbox easier.</p>
+<p>Functions that make interacting with the toolbox easier.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">&#34;&#34;&#34;
 ### Generic utility functions ###
-Generic utility functions to make interacting with the toolbox easier.
+
+Functions that make interacting with the toolbox easier.
 &#34;&#34;&#34;
 
 # Standard Library
@@ -78,6 +78,43 @@ def is_float(value):
         return False
 
 
+def is_path_in_memory(path):
+    &#34;&#34;&#34;
+    Check if a path is in memory.
+
+    ## Args:
+    `path` (_str_): The path to the file. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the path is in memory, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(path, str), &#34;path must be a string.&#34;
+
+    if path.startswith(&#34;/vsimem&#34;):
+        return True
+
+    return False
+
+
+def is_number(potential_number):
+    &#34;&#34;&#34;
+    Check if variable is a number.
+
+    ## Args:
+    `potential_number` (_any_): The variable to check. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the variable is a number, **False** otherwise.
+    &#34;&#34;&#34;
+    if isinstance(potential_number, float):
+        return True
+
+    if isinstance(potential_number, int):
+        return True
+
+    return False
+
+
 def is_int(value):
     &#34;&#34;&#34;
     Check if a value is an integer. If it is a string, try to convert it to an integer.
@@ -100,7 +137,7 @@ def is_int(value):
         return False
 
 
-def list_is_all_the_same(lst):
+def is_list_all_the_same(lst):
     &#34;&#34;&#34;
     Check if a list contains all the same elements.
 
@@ -197,41 +234,25 @@ def delete_folder(folder):
     return True
 
 
-def path_is_in_memory(path):
+def delete_file(file):
     &#34;&#34;&#34;
-    Check if a path is in memory.
+    Delete a File
 
     ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    `file` (_str_): The path to the file.
 
     ## Returns:
-    (_bool_): **True** if the path is in memory, **False** otherwise.
+    (_bool_): **True** if the file was deleted, **False** otherwise.
     &#34;&#34;&#34;
-    assert isinstance(path, str), &#34;path must be a string.&#34;
+    assert isinstance(file, str), &#34;file must be a string.&#34;
+    assert file_exists(file), &#34;file must exist.&#34;
 
-    if path.startswith(&#34;/vsimem&#34;):
-        return True
+    os.remove(file)
 
-    return False
+    if file_exists(file):
+        return False
 
-
-def is_number(potential_number):
-    &#34;&#34;&#34;
-    Check if variable is a number.
-
-    ## Args:
-    `potential_number` (_any_): The variable to check. &lt;/br&gt;
-
-    ## Returns:
-    (_bool_): **True** if the variable is a number, **False** otherwise.
-    &#34;&#34;&#34;
-    if isinstance(potential_number, float):
-        return True
-
-    if isinstance(potential_number, int):
-        return True
-
-    return False
+    return True
 
 
 def to_number(value):
@@ -280,7 +301,7 @@ def path_to_ext(path, with_dot=False):
     `path` (_str_): The path to the file. &lt;/br&gt;
 
     ## Kwargs:
-    `with_dot` (_bool_): If True, return the extension with a dot. (**default**: `False`) &lt;/br&gt;
+    `with_dot` (_bool_): If True, return the extension with a dot. (**Default**: `False`) &lt;/br&gt;
 
     ## Returns:
     (_str_): The extension of the file. (_without the dot_)
@@ -301,6 +322,21 @@ def path_to_ext(path, with_dot=False):
     return ext[1:]
 
 
+def path_to_folder(path):
+    &#34;&#34;&#34;
+    Get the folder of a file.
+
+    ## Args:
+    `path` (_str_): The path to the file. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The folder of the file.
+    &#34;&#34;&#34;
+    assert isinstance(path, str), &#34;path must be a string.&#34;
+
+    return os.path.dirname(path)
+
+
 def path_to_name(path, with_ext=False):
     &#34;&#34;&#34;
     Get the name of a file.
@@ -309,7 +345,7 @@ def path_to_name(path, with_ext=False):
     `path` (_str_): The path to the file. &lt;/br&gt;
 
     ## Kwargs:
-    `with_ext` (_bool_): If True, return the name with the extension. (**default**: `False`) &lt;/br&gt;
+    `with_ext` (_bool_): If True, return the name with the extension. (**Default**: `False`) &lt;/br&gt;
 
     ## Returns:
     (_str_): The name of the file. (_with- or without the extension_)
@@ -339,7 +375,7 @@ def overwrite_required(path, overwrite):
     (_bool_): **True** if the file exists and overwrite is True or if the file does not exist.
 
     ## Raises:
-    `(_exception_)`: If the file exists and overwrite is False.
+    (_exception_): If the file exists and overwrite is False.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
     assert isinstance(overwrite, bool), &#34;overwrite must be a boolean.&#34;
@@ -349,6 +385,7 @@ def overwrite_required(path, overwrite):
         raise Exception(f&#34;File: {path} already exists and overwrite is False.&#34;)
 
     return True
+
 
 def remove_if_overwrite(path, overwrite):
     &#34;&#34;&#34;
@@ -362,7 +399,7 @@ def remove_if_overwrite(path, overwrite):
     (_bool_): **True** if the file exists and overwrite is True or if the file does not exist.
 
     ## Raises:
-    `(_exception_)`: If the file exists and overwrite is False.
+    (_exception_): If the file exists and overwrite is False.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
     assert isinstance(overwrite, bool), &#34;overwrite must be a boolean.&#34;
@@ -381,8 +418,8 @@ def get_size(start_path=&#34;.&#34;, rough=True):
     Get the size of a folder.
 
     ## Kwargs:
-    `start_path` (_str_): The path to the folder. (**default**: `&#34;.&#34;`) &lt;/br&gt;
-    `rough` (_bool_): If True, return a rough estimate. (**default**: `True`) &lt;/br&gt;
+    `start_path` (_str_): The path to the folder. (**Default**: `&#34;.&#34;`) &lt;/br&gt;
+    `rough` (_bool_): If True, return a rough estimate. (**Default**: `True`) &lt;/br&gt;
 
     ## Returns:
     (_int_): The size of the folder.
@@ -508,9 +545,9 @@ def type_check(
     `types` (_tuple_): The types to check against. `(float, int, ...)` &lt;/br&gt;
 
     ## Kargs:
-    `name` (_str_): The name printed in the error string if an error is thrown. (**default**: `&#34;&#34;`)&lt;/br&gt;
-    `allow_none` (_bool_): If True, allow type to be `None`. (**default**: `False`) &lt;/br&gt;
-    `throw_error` (_bool_): If True, raise an error if the type is not correct. (**default**: `True`)&lt;/br&gt;
+    `name` (_str_): The name printed in the error string if an error is thrown. (**Default**: `&#34;&#34;`)&lt;/br&gt;
+    `allow_none` (_bool_): If True, allow type to be `None`. (**Default**: `False`) &lt;/br&gt;
+    `throw_error` (_bool_): If True, raise an error if the type is not correct. (**Default**: `True`)&lt;/br&gt;
 
     ## Returns:
     (_bool_): A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.
@@ -560,7 +597,7 @@ def progress(count, total, name=&#34;Processing&#34;):
     `total` (_int_): The total count. &lt;/br&gt;
 
     ## Kwargs:
-    `name` (_str_): The name to show in the progress bar. (**default**: `&#34;Processing&#34;`) &lt;/br&gt;
+    `name` (_str_): The name to show in the progress bar. (**Default**: `&#34;Processing&#34;`) &lt;/br&gt;
 
     ## Returns:
     (_None_): Returns None.
@@ -606,7 +643,7 @@ def timing(before, print_msg=True):
     `before` (_datetime_): The time to compare. &lt;/br&gt;
 
     ## Kwargs:
-    `print_msg` (_bool_): If True, print the time elapsed. (**default**: `True`) &lt;/br&gt;
+    `print_msg` (_bool_): If True, print the time elapsed. (**Default**: `True`) &lt;/br&gt;
 
     ```python
     &gt;&gt;&gt; before = datetime.now()
@@ -619,9 +656,11 @@ def timing(before, print_msg=True):
 
     after = time.time()
     dif = after - before
+
     hours = int(dif / 3600)
     minutes = int((dif % 3600) / 60)
     seconds = f&#34;{dif % 60:.2f}&#34;
+
     message = f&#34;Processing took: {hours}h {minutes}m {seconds}s&#34;
 
     if print_msg:
@@ -637,6 +676,40 @@ def timing(before, print_msg=True):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="core.delete_file"><code class="name flex">
+<span>def <span class="ident">delete_file</span></span>(<span>file)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete a File</p>
+<h2 id="args">Args:</h2>
+<p><code>file</code> (<em>str</em>): The path to the file.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the file was deleted, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def delete_file(file):
+    &#34;&#34;&#34;
+    Delete a File
+
+    ## Args:
+    `file` (_str_): The path to the file.
+
+    ## Returns:
+    (_bool_): **True** if the file was deleted, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(file, str), &#34;file must be a string.&#34;
+    assert file_exists(file), &#34;file must exist.&#34;
+
+    os.remove(file)
+
+    if file_exists(file):
+        return False
+
+    return True</code></pre>
+</details>
+</dd>
 <dt id="core.delete_files_in_folder"><code class="name flex">
 <span>def <span class="ident">delete_files_in_folder</span></span>(<span>folder)</span>
 </code></dt>
@@ -853,8 +926,8 @@ def timing(before, print_msg=True):
 <dd>
 <div class="desc"><p>Get the size of a folder.</p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>start_path</code> (<em>str</em>): The path to the folder. (<strong>default</strong>: <code>"."</code>) </br>
-<code>rough</code> (<em>bool</em>): If True, return a rough estimate. (<strong>default</strong>: <code>True</code>) </br></p>
+<p><code>start_path</code> (<em>str</em>): The path to the folder. (<strong>Default</strong>: <code>"."</code>) </br>
+<code>rough</code> (<em>bool</em>): If True, return a rough estimate. (<strong>Default</strong>: <code>True</code>) </br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>int</em>): The size of the folder.</p></div>
 <details class="source">
@@ -866,8 +939,8 @@ def timing(before, print_msg=True):
     Get the size of a folder.
 
     ## Kwargs:
-    `start_path` (_str_): The path to the folder. (**default**: `&#34;.&#34;`) &lt;/br&gt;
-    `rough` (_bool_): If True, return a rough estimate. (**default**: `True`) &lt;/br&gt;
+    `start_path` (_str_): The path to the folder. (**Default**: `&#34;.&#34;`) &lt;/br&gt;
+    `rough` (_bool_): If True, return a rough estimate. (**Default**: `True`) &lt;/br&gt;
 
     ## Returns:
     (_int_): The size of the folder.
@@ -982,6 +1055,42 @@ def timing(before, print_msg=True):
         return False</code></pre>
 </details>
 </dd>
+<dt id="core.is_list_all_the_same"><code class="name flex">
+<span>def <span class="ident">is_list_all_the_same</span></span>(<span>lst)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a list contains all the same elements.</p>
+<h2 id="args">Args:</h2>
+<p><code>lst</code> (<em>list</em>): The list to check. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the list contains all the same elements, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_list_all_the_same(lst):
+    &#34;&#34;&#34;
+    Check if a list contains all the same elements.
+
+    ## Args:
+    `lst` (_list_): The list to check. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the list contains all the same elements, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(lst, list), &#34;lst must be a list.&#34;
+
+    first = lst[0]
+    for idx, item in enumerate(lst):
+        if idx == 0:
+            continue
+
+        if item != first:
+            return False
+
+    return True</code></pre>
+</details>
+</dd>
 <dt id="core.is_number"><code class="name flex">
 <span>def <span class="ident">is_number</span></span>(<span>potential_number)</span>
 </code></dt>
@@ -1014,40 +1123,35 @@ def timing(before, print_msg=True):
     return False</code></pre>
 </details>
 </dd>
-<dt id="core.list_is_all_the_same"><code class="name flex">
-<span>def <span class="ident">list_is_all_the_same</span></span>(<span>lst)</span>
+<dt id="core.is_path_in_memory"><code class="name flex">
+<span>def <span class="ident">is_path_in_memory</span></span>(<span>path)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Check if a list contains all the same elements.</p>
+<div class="desc"><p>Check if a path is in memory.</p>
 <h2 id="args">Args:</h2>
-<p><code>lst</code> (<em>list</em>): The list to check. </br></p>
+<p><code>path</code> (<em>str</em>): The path to the file. </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the list contains all the same elements, <strong>False</strong> otherwise.</p></div>
+<p>(<em>bool</em>): <strong>True</strong> if the path is in memory, <strong>False</strong> otherwise.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def list_is_all_the_same(lst):
+<pre><code class="python">def is_path_in_memory(path):
     &#34;&#34;&#34;
-    Check if a list contains all the same elements.
+    Check if a path is in memory.
 
     ## Args:
-    `lst` (_list_): The list to check. &lt;/br&gt;
+    `path` (_str_): The path to the file. &lt;/br&gt;
 
     ## Returns:
-    (_bool_): **True** if the list contains all the same elements, **False** otherwise.
+    (_bool_): **True** if the path is in memory, **False** otherwise.
     &#34;&#34;&#34;
-    assert isinstance(lst, list), &#34;lst must be a list.&#34;
+    assert isinstance(path, str), &#34;path must be a string.&#34;
 
-    first = lst[0]
-    for idx, item in enumerate(lst):
-        if idx == 0:
-            continue
+    if path.startswith(&#34;/vsimem&#34;):
+        return True
 
-        if item != first:
-            return False
-
-    return True</code></pre>
+    return False</code></pre>
 </details>
 </dd>
 <dt id="core.make_dir_if_not_exists"><code class="name flex">
@@ -1092,7 +1196,7 @@ def timing(before, print_msg=True):
 <h2 id="returns">Returns:</h2>
 <p>(<em>bool</em>): <strong>True</strong> if the file exists and overwrite is True or if the file does not exist.</p>
 <h2 id="raises">Raises:</h2>
-<p><code>(_exception_)</code>: If the file exists and overwrite is False.</p></div>
+<p>(<em>exception</em>): If the file exists and overwrite is False.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1109,7 +1213,7 @@ def timing(before, print_msg=True):
     (_bool_): **True** if the file exists and overwrite is True or if the file does not exist.
 
     ## Raises:
-    `(_exception_)`: If the file exists and overwrite is False.
+    (_exception_): If the file exists and overwrite is False.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
     assert isinstance(overwrite, bool), &#34;overwrite must be a boolean.&#34;
@@ -1121,37 +1225,6 @@ def timing(before, print_msg=True):
     return True</code></pre>
 </details>
 </dd>
-<dt id="core.path_is_in_memory"><code class="name flex">
-<span>def <span class="ident">path_is_in_memory</span></span>(<span>path)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Check if a path is in memory.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the file. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the path is in memory, <strong>False</strong> otherwise.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def path_is_in_memory(path):
-    &#34;&#34;&#34;
-    Check if a path is in memory.
-
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
-
-    ## Returns:
-    (_bool_): **True** if the path is in memory, **False** otherwise.
-    &#34;&#34;&#34;
-    assert isinstance(path, str), &#34;path must be a string.&#34;
-
-    if path.startswith(&#34;/vsimem&#34;):
-        return True
-
-    return False</code></pre>
-</details>
-</dd>
 <dt id="core.path_to_ext"><code class="name flex">
 <span>def <span class="ident">path_to_ext</span></span>(<span>path, with_dot=False)</span>
 </code></dt>
@@ -1160,7 +1233,7 @@ def timing(before, print_msg=True):
 <h2 id="args">Args:</h2>
 <p><code>path</code> (<em>str</em>): The path to the file. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>with_dot</code> (<em>bool</em>): If True, return the extension with a dot. (<strong>default</strong>: <code>False</code>) </br></p>
+<p><code>with_dot</code> (<em>bool</em>): If True, return the extension with a dot. (<strong>Default</strong>: <code>False</code>) </br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>str</em>): The extension of the file. (<em>without the dot</em>)</p></div>
 <details class="source">
@@ -1175,7 +1248,7 @@ def timing(before, print_msg=True):
     `path` (_str_): The path to the file. &lt;/br&gt;
 
     ## Kwargs:
-    `with_dot` (_bool_): If True, return the extension with a dot. (**default**: `False`) &lt;/br&gt;
+    `with_dot` (_bool_): If True, return the extension with a dot. (**Default**: `False`) &lt;/br&gt;
 
     ## Returns:
     (_str_): The extension of the file. (_without the dot_)
@@ -1196,6 +1269,34 @@ def timing(before, print_msg=True):
     return ext[1:]</code></pre>
 </details>
 </dd>
+<dt id="core.path_to_folder"><code class="name flex">
+<span>def <span class="ident">path_to_folder</span></span>(<span>path)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the folder of a file.</p>
+<h2 id="args">Args:</h2>
+<p><code>path</code> (<em>str</em>): The path to the file. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The folder of the file.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def path_to_folder(path):
+    &#34;&#34;&#34;
+    Get the folder of a file.
+
+    ## Args:
+    `path` (_str_): The path to the file. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The folder of the file.
+    &#34;&#34;&#34;
+    assert isinstance(path, str), &#34;path must be a string.&#34;
+
+    return os.path.dirname(path)</code></pre>
+</details>
+</dd>
 <dt id="core.path_to_name"><code class="name flex">
 <span>def <span class="ident">path_to_name</span></span>(<span>path, with_ext=False)</span>
 </code></dt>
@@ -1204,7 +1305,7 @@ def timing(before, print_msg=True):
 <h2 id="args">Args:</h2>
 <p><code>path</code> (<em>str</em>): The path to the file. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>with_ext</code> (<em>bool</em>): If True, return the name with the extension. (<strong>default</strong>: <code>False</code>) </br></p>
+<p><code>with_ext</code> (<em>bool</em>): If True, return the name with the extension. (<strong>Default</strong>: <code>False</code>) </br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>str</em>): The name of the file. (<em>with- or without the extension</em>)</p></div>
 <details class="source">
@@ -1219,7 +1320,7 @@ def timing(before, print_msg=True):
     `path` (_str_): The path to the file. &lt;/br&gt;
 
     ## Kwargs:
-    `with_ext` (_bool_): If True, return the name with the extension. (**default**: `False`) &lt;/br&gt;
+    `with_ext` (_bool_): If True, return the name with the extension. (**Default**: `False`) &lt;/br&gt;
 
     ## Returns:
     (_str_): The name of the file. (_with- or without the extension_)
@@ -1246,7 +1347,7 @@ def timing(before, print_msg=True):
 <p><code>count</code> (<em>int</em>): The current count. </br>
 <code>total</code> (<em>int</em>): The total count. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>name</code> (<em>str</em>): The name to show in the progress bar. (<strong>default</strong>: <code>"Processing"</code>) </br></p>
+<p><code>name</code> (<em>str</em>): The name to show in the progress bar. (<strong>Default</strong>: <code>"Processing"</code>) </br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>None</em>): Returns None.</p></div>
 <details class="source">
@@ -1262,7 +1363,7 @@ def timing(before, print_msg=True):
     `total` (_int_): The total count. &lt;/br&gt;
 
     ## Kwargs:
-    `name` (_str_): The name to show in the progress bar. (**default**: `&#34;Processing&#34;`) &lt;/br&gt;
+    `name` (_str_): The name to show in the progress bar. (**Default**: `&#34;Processing&#34;`) &lt;/br&gt;
 
     ## Returns:
     (_None_): Returns None.
@@ -1311,7 +1412,7 @@ def timing(before, print_msg=True):
 <h2 id="returns">Returns:</h2>
 <p>(<em>bool</em>): <strong>True</strong> if the file exists and overwrite is True or if the file does not exist.</p>
 <h2 id="raises">Raises:</h2>
-<p><code>(_exception_)</code>: If the file exists and overwrite is False.</p></div>
+<p>(<em>exception</em>): If the file exists and overwrite is False.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1328,7 +1429,7 @@ def timing(before, print_msg=True):
     (_bool_): **True** if the file exists and overwrite is True or if the file does not exist.
 
     ## Raises:
-    `(_exception_)`: If the file exists and overwrite is False.
+    (_exception_): If the file exists and overwrite is False.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
     assert isinstance(overwrite, bool), &#34;overwrite must be a boolean.&#34;
@@ -1393,7 +1494,7 @@ def timing(before, print_msg=True):
 <h2 id="args">Args:</h2>
 <p><code>before</code> (<em>datetime</em>): The time to compare. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>print_msg</code> (<em>bool</em>): If True, print the time elapsed. (<strong>default</strong>: <code>True</code>) </br></p>
+<p><code>print_msg</code> (<em>bool</em>): If True, print the time elapsed. (<strong>Default</strong>: <code>True</code>) </br></p>
 <pre><code class="language-python">&gt;&gt;&gt; before = datetime.now()
 &gt;&gt;&gt; long_running_calculation()
 &gt;&gt;&gt; timing(before)
@@ -1411,7 +1512,7 @@ def timing(before, print_msg=True):
     `before` (_datetime_): The time to compare. &lt;/br&gt;
 
     ## Kwargs:
-    `print_msg` (_bool_): If True, print the time elapsed. (**default**: `True`) &lt;/br&gt;
+    `print_msg` (_bool_): If True, print the time elapsed. (**Default**: `True`) &lt;/br&gt;
 
     ```python
     &gt;&gt;&gt; before = datetime.now()
@@ -1424,9 +1525,11 @@ def timing(before, print_msg=True):
 
     after = time.time()
     dif = after - before
+
     hours = int(dif / 3600)
     minutes = int((dif % 3600) / 60)
     seconds = f&#34;{dif % 60:.2f}&#34;
+
     message = f&#34;Processing took: {hours}h {minutes}m {seconds}s&#34;
 
     if print_msg:
@@ -1477,9 +1580,9 @@ def timing(before, print_msg=True):
 <p><code>variable</code> (<em>any</em>): The variable to check. </br>
 <code>types</code> (<em>tuple</em>): The types to check against. <code>(float, int, &hellip;)</code> </br></p>
 <h2 id="kargs">Kargs:</h2>
-<p><code>name</code> (<em>str</em>): The name printed in the error string if an error is thrown. (<strong>default</strong>: <code>""</code>)</br>
-<code>allow_none</code> (<em>bool</em>): If True, allow type to be <code>None</code>. (<strong>default</strong>: <code>False</code>) </br>
-<code>throw_error</code> (<em>bool</em>): If True, raise an error if the type is not correct. (<strong>default</strong>: <code>True</code>)</br></p>
+<p><code>name</code> (<em>str</em>): The name printed in the error string if an error is thrown. (<strong>Default</strong>: <code>""</code>)</br>
+<code>allow_none</code> (<em>bool</em>): If True, allow type to be <code>None</code>. (<strong>Default</strong>: <code>False</code>) </br>
+<code>throw_error</code> (<em>bool</em>): If True, raise an error if the type is not correct. (<strong>Default</strong>: <code>True</code>)</br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>bool</em>): A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.</p></div>
 <details class="source">
@@ -1502,9 +1605,9 @@ def timing(before, print_msg=True):
     `types` (_tuple_): The types to check against. `(float, int, ...)` &lt;/br&gt;
 
     ## Kargs:
-    `name` (_str_): The name printed in the error string if an error is thrown. (**default**: `&#34;&#34;`)&lt;/br&gt;
-    `allow_none` (_bool_): If True, allow type to be `None`. (**default**: `False`) &lt;/br&gt;
-    `throw_error` (_bool_): If True, raise an error if the type is not correct. (**default**: `True`)&lt;/br&gt;
+    `name` (_str_): The name printed in the error string if an error is thrown. (**Default**: `&#34;&#34;`)&lt;/br&gt;
+    `allow_none` (_bool_): If True, allow type to be `None`. (**Default**: `False`) &lt;/br&gt;
+    `throw_error` (_bool_): If True, raise an error if the type is not correct. (**Default**: `True`)&lt;/br&gt;
 
     ## Returns:
     (_bool_): A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.
@@ -1560,6 +1663,7 @@ def timing(before, print_msg=True):
 <ul id="index">
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
+<li><code><a title="core.delete_file" href="#core.delete_file">delete_file</a></code></li>
 <li><code><a title="core.delete_files_in_folder" href="#core.delete_files_in_folder">delete_files_in_folder</a></code></li>
 <li><code><a title="core.delete_folder" href="#core.delete_folder">delete_folder</a></code></li>
 <li><code><a title="core.divide_arr_into_steps" href="#core.divide_arr_into_steps">divide_arr_into_steps</a></code></li>
@@ -1570,12 +1674,13 @@ def timing(before, print_msg=True):
 <li><code><a title="core.get_unix_seconds_as_str" href="#core.get_unix_seconds_as_str">get_unix_seconds_as_str</a></code></li>
 <li><code><a title="core.is_float" href="#core.is_float">is_float</a></code></li>
 <li><code><a title="core.is_int" href="#core.is_int">is_int</a></code></li>
+<li><code><a title="core.is_list_all_the_same" href="#core.is_list_all_the_same">is_list_all_the_same</a></code></li>
 <li><code><a title="core.is_number" href="#core.is_number">is_number</a></code></li>
-<li><code><a title="core.list_is_all_the_same" href="#core.list_is_all_the_same">list_is_all_the_same</a></code></li>
+<li><code><a title="core.is_path_in_memory" href="#core.is_path_in_memory">is_path_in_memory</a></code></li>
 <li><code><a title="core.make_dir_if_not_exists" href="#core.make_dir_if_not_exists">make_dir_if_not_exists</a></code></li>
 <li><code><a title="core.overwrite_required" href="#core.overwrite_required">overwrite_required</a></code></li>
-<li><code><a title="core.path_is_in_memory" href="#core.path_is_in_memory">path_is_in_memory</a></code></li>
 <li><code><a title="core.path_to_ext" href="#core.path_to_ext">path_to_ext</a></code></li>
+<li><code><a title="core.path_to_folder" href="#core.path_to_folder">path_to_folder</a></code></li>
 <li><code><a title="core.path_to_name" href="#core.path_to_name">path_to_name</a></code></li>
 <li><code><a title="core.progress" href="#core.progress">progress</a></code></li>
 <li><code><a title="core.remove_if_overwrite" href="#core.remove_if_overwrite">remove_if_overwrite</a></code></li>

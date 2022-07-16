@@ -5,16 +5,29 @@ Functions to translate between GDAL and Numpy datatypes.
 """
 
 # External
+import numpy as np
 from osgeo import gdal
 
 
 valid_raster_driver_extensions = ["tif", "tiff", "img", "vrt", "jp2", "ecw"]
 valid_vector_driver_extensions = ["shp", "geojson", "json", "gpkg", "kml", "kmz", "fgb", "gml", "gpx"]
-valid_driver_extensions = valid_raster_driver_extensions + valid_vector_driver_extensions
 
 
+def get_valid_raster_driver_extensions():
+    return valid_raster_driver_extensions
+
+
+def get_valid_vector_driver_extensions():
+    return valid_vector_driver_extensions
+
+
+def get_valid_driver_extensions():
+    return valid_raster_driver_extensions + valid_vector_driver_extensions
+
+
+# TODO: add vector sources here..
 def convert_extension_to_driver(ext):
-    assert ext in valid_driver_extensions, f"Invalid extension: {ext}"
+    assert ext in get_valid_driver_extensions(), f"Invalid extension: {ext}"
 
     if ext == "tif" or ext == "tiff":
         return "GTiff"
@@ -168,26 +181,26 @@ def numpy_to_gdal_datatype(datatype):
         return gdal.GDT_Float32
 
 
-def numpy_to_gdal_datatype2(datatype):
-    datatypes = {
-        "int8": gdal.GDT_Int16,
-        "int16": gdal.GDT_Int16,
-        "int32": gdal.GDT_Int32,
-        "int64": gdal.GDT_Int32,
-        "uint8": gdal.GDT_Byte,
-        "uint16": gdal.GDT_UInt16,
-        "uint32": gdal.GDT_UInt32,
-        "uint64": gdal.GDT_UInt32,
-        "float16": gdal.GDT_Float32,
-        "float32": gdal.GDT_Float32,
-        "float64": gdal.GDT_Float64,
-    }
+# def numpy_to_gdal_datatype2(datatype):
+#     datatypes = {
+#         "int8": gdal.GDT_Int16,
+#         "int16": gdal.GDT_Int16,
+#         "int32": gdal.GDT_Int32,
+#         "int64": gdal.GDT_Int32,
+#         "uint8": gdal.GDT_Byte,
+#         "uint16": gdal.GDT_UInt16,
+#         "uint32": gdal.GDT_UInt32,
+#         "uint64": gdal.GDT_UInt32,
+#         "float16": gdal.GDT_Float32,
+#         "float32": gdal.GDT_Float32,
+#         "float64": gdal.GDT_Float64,
+#     }
 
-    if datatype in datatypes.keys():
-        return datatypes[datatype]
-    else:
-        print("warning: Unknown datatype. Defaulting to float32.")
-        return gdal.GDT_Float32
+#     if datatype in datatypes.keys():
+#         return datatypes[datatype]
+#     else:
+#         print("warning: Unknown datatype. Defaulting to float32.")
+#         return gdal.GDT_Float32
 
 
 def gdal_datatype_is_float(datatype):

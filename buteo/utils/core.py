@@ -48,7 +48,7 @@ def is_float(value):
         return False
 
 
-def is_path_is_in_memory(path):
+def is_path_in_memory(path):
     """
     Check if a path is in memory.
 

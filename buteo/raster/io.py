@@ -16,20 +16,20 @@ import numpy as np
 from osgeo import gdal, osr, ogr
 
 from buteo.utils.core import (
+    is_path_in_memory,
     overwrite_required,
     path_to_ext,
     remove_if_overwrite,
     type_check,
     folder_exists,
-    list_is_all_the_same,
-    path_is_in_memory,
+    is_list_all_the_same,
     file_exists,
 )
 from buteo.utils.bbox import additional_bboxes, convert_bbox_to_vector
 from buteo.utils.gdal_utils import (
     path_to_driver_raster,
     is_raster,
-    default_options,
+    default_creation_options,
     to_band_list,
 )
 from buteo.utils.gdal_enums import (
@@ -65,7 +65,7 @@ def open_raster(raster, *, writeable=True):
 
     for readied_raster in input_list:
         if isinstance(readied_raster, str):
-            if path_is_in_memory(readied_raster) or file_exists(readied_raster):
+            if is_path_in_memory(readied_raster) or file_exists(readied_raster):
                 opened = None
 
                 try:
@@ -84,8 +84,6 @@ def open_raster(raster, *, writeable=True):
 
                 if opened is None:
                     raise Exception(f"Could not read input raster: {raster}")
-
-                    return_list.append(opened)
                 else:
                     raise ValueError(f"Path does not exists: {readied_raster}")
             elif isinstance(readied_raster, gdal.Dataset):
@@ -676,7 +674,7 @@ def raster_to_array(
         if band_nodata_value is not None and filled is False:
             stacked = np.ma.dstack(layers)[:, :, 0]
 
-            if list_is_all_the_same(nodata_values):
+            if is_list_all_the_same(nodata_values):
                 stacked.fill_value = nodata_values[0]
             else:
                 stacked.fill_value = numpy_fill_values(stacked.dtype)
@@ -688,7 +686,7 @@ def raster_to_array(
     if band_nodata_value is not None and filled is False:
         stacked = np.ma.dstack(layers)
 
-        if list_is_all_the_same(nodata_values):
+        if is_list_all_the_same(nodata_values):
             stacked.fill_value = nodata_values[0]
         else:
             stacked.fill_value = numpy_fill_values(stacked.dtype)
@@ -770,7 +768,7 @@ def raster_to_disk(
             in_raster,
             path_list[index],
             overwrite=overwrite,
-            creation_options=default_options(creation_options),
+            creation_options=default_creation_options(creation_options),
         )
 
         output.append(path)
@@ -816,7 +814,7 @@ def _raster_set_datatype(
         metadata["width"],
         metadata["band_count"],
         translate_datatypes(dtype),
-        default_options(creation_options),
+        default_creation_options(creation_options),
     )
 
     copy.SetProjection(metadata["projection"])
@@ -875,7 +873,7 @@ def raster_set_datatype(
             dtype,
             out_path=path_list[index],
             overwrite=overwrite,
-            creation_options=default_options(creation_options),
+            creation_options=default_creation_options(creation_options),
         )
 
         output.append(path)
@@ -994,7 +992,7 @@ def array_to_raster(
         array.shape[0],
         bands,
         destination_dtype,
-        default_options(creation_options),
+        default_creation_options(creation_options),
     )
 
     destination.SetProjection(metadata["projection"])
@@ -1099,7 +1097,7 @@ def stack_rasters(
         metadatas[0]["height"],
         total_bands,
         datatype,
-        default_options(creation_options),
+        default_creation_options(creation_options),
     )
 
     destination.SetProjection(metadatas[0]["projection"])
