@@ -292,6 +292,21 @@ def path_to_ext(path, with_dot=False):
     return ext[1:]
 
 
+def path_to_folder(path):
+    """
+    Get the folder of a file.
+
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+
+    ## Returns:
+    (_str_): The folder of the file.
+    """
+    assert isinstance(path, str), "path must be a string."
+
+    return os.path.dirname(path)
+
+
 def path_to_name(path, with_ext=False):
     """
     Get the name of a file.
@@ -340,6 +355,7 @@ def overwrite_required(path, overwrite):
         raise Exception(f"File: {path} already exists and overwrite is False.")
 
     return True
+
 
 def remove_if_overwrite(path, overwrite):
     """
