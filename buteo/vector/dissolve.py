@@ -11,8 +11,8 @@ import sys; sys.path.append("../../") # Path: buteo/vector/dissolve.py
 from osgeo import ogr
 
 from buteo.utils.gdal_utils import path_to_driver_vector
-from buteo.utils.core import type_check
-from buteo.vector.io import (
+from buteo.utils.core_utils import type_check
+from buteo.vector.core_vector import (
     open_vector,
     ready_io_vector,
     _vector_to_metadata,

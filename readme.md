@@ -6,7 +6,7 @@ Documentation available at: https://casperfibaek.github.io/buteo/
 
 There are modules are:
 
-pdoc3 ./buteo/utils/gdal_utils.py -o ./docs --html -f
+pdoc3 ./buteo/raster/io.py -o ./docs --html -f
 
 ## raster
 

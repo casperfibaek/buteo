@@ -12,13 +12,13 @@ from uuid import uuid4
 
 from osgeo import gdal, ogr
 
-from buteo.vector.io import open_vector, _vector_to_metadata
+from buteo.vector.core_vector import open_vector, _vector_to_metadata
 from buteo.vector.intersect import intersect_vector
 from buteo.vector.reproject import reproject_vector
 from buteo.raster.clip import clip_raster
-from buteo.raster.io import open_raster, raster_to_metadata, stack_rasters_vrt
+from buteo.raster.core_raster import open_raster, raster_to_metadata, stack_rasters_vrt
 from buteo.utils.gdal_utils import ogr_bbox_intersects, default_options
-from buteo.utils.core import path_to_ext, progress, type_check
+from buteo.utils.core_utils import path_to_ext, progress, type_check
 
 
 def raster_to_grid(

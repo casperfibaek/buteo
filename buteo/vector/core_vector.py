@@ -20,14 +20,14 @@ from uuid import uuid4
 from osgeo import ogr, osr, gdal
 import numpy as np
 
-from buteo.raster.io import _raster_to_metadata
-from buteo.utils.bbox import additional_bboxes
+from buteo.raster.core_raster import _raster_to_metadata
+from buteo.utils.bbox_utils import additional_bboxes
 from buteo.utils.gdal_utils import (
     is_vector,
     is_raster,
     path_to_driver_vector,
 )
-from buteo.utils.core import (
+from buteo.utils.core_utils import (
     progress,
     remove_if_overwrite,
     overwrite_required,
@@ -407,7 +407,7 @@ def _vector_to_metadata(
 
     def ds_get_extent_geom():
         return ogr.CreateGeometryFromWkt(metadata["extent_wkt"], ds_projection_osr)
-    
+
 
     def ds_get_extent_geom_latlng():
         target_projection = osr.SpatialReference()
@@ -475,7 +475,7 @@ def _vector_to_metadata(
 
             def layer_get_extent_geom():
                 return ogr.CreateGeometryFromWkt(layers[layer_index]["extent_wkt"], ds_projection_osr)
-            
+
 
             def layer_get_extent_geom_latlng():
                 target_projection = osr.SpatialReference()
@@ -778,8 +778,8 @@ def filter_vector(vector, filter_where, process_layer=0):
     projection = metadata["projection_osr"]
 
     driver = ogr.GetDriverByName("ESRI Shapefile")
-    ds = driver.CreateDataSource(name)
-    og_ds = open_vector(vector)
+    datasource = driver.CreateDataSource(name)
+    datasource_og = open_vector(vector)
 
     added = 0
 
@@ -795,8 +795,8 @@ def filter_vector(vector, filter_where, process_layer=0):
 
         geom_type = metadata["layers"][index]["geom_type_ogr"]
 
-        og_layer = og_ds.GetLayer(index)
-        ds_layer = ds.CreateLayer(f"filtered_{uuid4().int}", projection, geom_type)
+        og_layer = datasource_og.GetLayer(index)
+        ds_layer = datasource.CreateLayer(f"filtered_{uuid4().int}", projection, geom_type)
 
         found_match = False
         for _ in range(features):

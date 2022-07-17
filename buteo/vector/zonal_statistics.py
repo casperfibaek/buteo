@@ -15,16 +15,16 @@ import numpy as np
 from numba import jit
 from osgeo import ogr
 
-from buteo.raster.io import raster_to_array, raster_to_metadata
+from buteo.raster.core_raster import raster_to_array, raster_to_metadata
 from buteo.vector.rasterize import rasterize_vector
 from buteo.vector.reproject import reproject_vector
-from buteo.vector.io import (
+from buteo.vector.core_vector import (
     open_vector,
     _vector_to_memory,
     _vector_to_metadata,
 )
 from buteo.filters.stats import calculate_array_stats
-from buteo.utils.core import progress
+from buteo.utils.core_utils import progress
 
 
 @jit(nopython=True, nogil=True, fastmath=True, inline="always")
@@ -256,7 +256,7 @@ def zonal_statistics(
         try:
             raster_data = raster_to_array(
                 raster_value,
-                extent_pixels=[
+                pixel_offsets=[
                     overlap_aligned_offset[0],
                     overlap_aligned_offset[1],
                     overlap_aligned_rasterized_size[0],
@@ -317,7 +317,7 @@ def zonal_statistics(
             else:
                 cropped_raster = raster_to_array(
                     raster_value,
-                    extent_pixels=[
+                    pixel_offsets=[
                         overlap_aligned_offset[0] + offsets[n][0],
                         overlap_aligned_offset[1] + offsets[n][1],
                         int(sizes[n][0]),

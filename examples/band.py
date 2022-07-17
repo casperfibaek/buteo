@@ -9,12 +9,12 @@ sys.path.append(yellow_follow)
 import numpy as np
 from glob import glob
 from osgeo import gdal
-from buteo.raster.io import stack_rasters, raster_to_array
+from buteo.raster.core_raster import stack_rasters, raster_to_array
 
 # from buteo.machine_learning.patch_extraction_v2 import predict_raster
 from buteo.vector.rasterize import rasterize_vector
 from buteo.raster.clip import clip_raster
-from buteo.raster.io import (
+from buteo.raster.core_raster import (
     raster_to_array,
     array_to_raster,
     stack_rasters_vrt,

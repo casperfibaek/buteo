@@ -11,10 +11,10 @@ import os
 
 from osgeo import gdal, ogr
 
-from buteo.raster.io import _raster_to_metadata, ready_io_raster, open_raster
-from buteo.vector.io import open_vector, _vector_to_memory, _vector_to_metadata
+from buteo.raster.core_raster import _raster_to_metadata, ready_io_raster, open_raster
+from buteo.vector.core_vector import open_vector, _vector_to_memory, _vector_to_metadata
 from buteo.vector.reproject import _reproject_vector
-from buteo.utils.core import file_exists, remove_if_overwrite, type_check
+from buteo.utils.core_utils import file_exists, remove_if_overwrite, type_check
 from buteo.utils.gdal_utils import (
     gdal_bbox_intersects,
     reproject_extent,
@@ -57,7 +57,7 @@ def _clip_raster(
     """
 
     _, path_list = ready_io_raster(
-        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix, uuid=uuid
+        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix, add_uuid=uuid
     )
 
     if out_path is not None:
@@ -301,7 +301,7 @@ def clip_raster(
         overwrite=overwrite,
         prefix=prefix,
         postfix=postfix,
-        uuid=uuid,
+        add_uuid=uuid,
     )
 
     output = []

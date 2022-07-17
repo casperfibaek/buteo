@@ -11,8 +11,8 @@ import numpy as np
 
 from osgeo import ogr
 
-from buteo.utils.core import type_check
-from buteo.vector.io import _vector_to_metadata, open_vector
+from buteo.utils.core_utils import type_check
+from buteo.vector.core_vector import _vector_to_metadata, open_vector
 
 
 def vector_get_attribute_table(

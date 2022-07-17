@@ -11,7 +11,7 @@ import sys; sys.path.append("../../") # Path: buteo/raster/vectorize.py
 
 from osgeo import gdal, ogr
 
-from buteo.raster.io import open_raster, raster_to_metadata
+from buteo.raster.core_raster import open_raster, raster_to_metadata
 
 
 def vectorize_raster(raster, out_path_shp, band=1):

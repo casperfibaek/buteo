@@ -17,9 +17,9 @@ from buteo.utils.gdal_utils import (
     parse_projection,
     path_to_driver_vector,
 )
-from buteo.utils.core import type_check
-from buteo.raster.io import _raster_to_metadata
-from buteo.vector.io import (
+from buteo.utils.core_utils import type_check
+from buteo.raster.core_raster import _raster_to_metadata
+from buteo.vector.core_vector import (
     get_vector_path,
     _vector_to_metadata,
     open_vector,

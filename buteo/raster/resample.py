@@ -12,7 +12,7 @@ import sys; sys.path.append("../../") # Path: buteo/raster/resample.py
 
 from osgeo import gdal
 
-from buteo.utils.core import (
+from buteo.utils.core_utils import (
     remove_if_overwrite,
     type_check,
 )
@@ -24,7 +24,7 @@ from buteo.utils.gdal_utils import (
     raster_size_from_list,
     translate_datatypes,
 )
-from buteo.raster.io import (
+from buteo.raster.core_raster import (
     open_raster,
     ready_io_raster,
     raster_to_metadata,
@@ -57,7 +57,7 @@ def _resample_raster(
         overwrite=overwrite,
         prefix=prefix,
         postfix=postfix,
-        uuid=add_uuid,
+        add_uuid=add_uuid,
     )
 
     ref = open_raster(raster_list[0])

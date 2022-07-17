@@ -1,5 +1,5 @@
 
-from buteo.raster.io import raster_to_array, array_to_raster
+from buteo.raster.core_raster import raster_to_array, array_to_raster
 from buteo.filters.convolutions import filter_array
 
 folder = "C:/Users/caspe/Desktop/marcia/"

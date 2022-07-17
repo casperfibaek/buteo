@@ -11,9 +11,9 @@ from uuid import uuid4
 
 from osgeo import gdal
 
-from buteo.utils.core import remove_if_overwrite, is_number, type_check
+from buteo.utils.core_utils import remove_if_overwrite, is_number, type_check
 from buteo.utils.gdal_utils import path_to_driver_raster, default_options
-from buteo.raster.io import open_raster, raster_to_metadata
+from buteo.raster.core_raster import open_raster, raster_to_metadata
 
 
 def shift_raster(

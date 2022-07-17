@@ -12,7 +12,7 @@ import os
 import osgeo
 from osgeo import ogr, osr, gdal
 
-from buteo.vector.io import (
+from buteo.vector.core_vector import (
     open_vector,
     get_vector_path,
     _vector_to_memory,
@@ -21,7 +21,7 @@ from buteo.vector.io import (
     ready_io_vector,
 )
 from buteo.utils.gdal_utils import parse_projection, path_to_driver_vector
-from buteo.utils.core import remove_if_overwrite, type_check
+from buteo.utils.core_utils import remove_if_overwrite, type_check
 
 
 def _reproject_vector(

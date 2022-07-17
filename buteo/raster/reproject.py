@@ -12,7 +12,7 @@ import sys; sys.path.append("../../") # Path: buteo/raster/reproject.py
 
 from osgeo import gdal, ogr, osr
 
-from buteo.utils.core import remove_if_overwrite, type_check
+from buteo.utils.core_utils import remove_if_overwrite, type_check
 from buteo.utils.gdal_utils import (
     parse_projection,
     path_to_driver_raster,
@@ -20,7 +20,7 @@ from buteo.utils.gdal_utils import (
     translate_resample_method,
     gdal_nodata_value_from_type,
 )
-from buteo.raster.io import (
+from buteo.raster.core_raster import (
     get_raster_path,
     open_raster,
     ready_io_raster,

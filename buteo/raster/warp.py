@@ -11,7 +11,7 @@ from uuid import uuid4
 
 from osgeo import gdal, osr, ogr
 
-from buteo.utils.core import remove_if_overwrite, file_exists, type_check
+from buteo.utils.core_utils import remove_if_overwrite, file_exists, type_check
 from buteo.utils.gdal_utils import (
     parse_projection,
     path_to_driver_raster,
@@ -24,12 +24,12 @@ from buteo.utils.gdal_utils import (
     align_bbox,
     reproject_extent,
 )
-from buteo.raster.io import (
+from buteo.raster.core_raster import (
     open_raster,
     ready_io_raster,
     _raster_to_metadata,
 )
-from buteo.vector.io import (
+from buteo.vector.core_vector import (
     open_vector,
     _vector_to_metadata,
     vector_to_memory,

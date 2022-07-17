@@ -12,8 +12,8 @@ from uuid import uuid4
 
 from osgeo import gdal
 
-from buteo.raster.io import open_raster
-from buteo.vector.io import _vector_to_metadata, open_vector
+from buteo.raster.core_raster import open_raster
+from buteo.vector.core_vector import _vector_to_metadata, open_vector
 from buteo.utils.gdal_utils import numpy_to_gdal_datatype2, default_options
 
 

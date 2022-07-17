@@ -13,15 +13,15 @@ import os
 import numpy as np
 from osgeo import gdal, ogr, osr
 
-from buteo.raster.io import (
+from buteo.raster.core_raster import (
     raster_to_metadata,
     rasters_are_aligned,
     ready_io_raster,
 )
-from buteo.vector.io import _vector_to_metadata
+from buteo.vector.core_vector import _vector_to_metadata
 from buteo.raster.reproject import _reproject_raster
 from buteo.vector.reproject import _reproject_vector
-from buteo.utils.core import (
+from buteo.utils.core_utils import (
     remove_if_overwrite,
     type_check,
 )
@@ -132,7 +132,7 @@ def align_rasters(
         overwrite=overwrite,
         prefix=prefix,
         postfix=postfix,
-        uuid=False,
+        add_uuid=False,
     )
 
     x_pixels = None

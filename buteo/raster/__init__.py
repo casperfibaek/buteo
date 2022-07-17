@@ -1,4 +1,4 @@
-from .io import *
+from .core_raster import *
 from .clip import *
 from .align import *
 from .borders import *

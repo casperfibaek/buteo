@@ -10,6 +10,7 @@ import sys
 import time
 import shutil
 from glob import glob
+from uuid import uuid4
 from datetime import datetime
 
 # External
@@ -129,6 +130,22 @@ def is_list_all_the_same(lst):
             return False
 
     return True
+
+
+def ensure_list(variable_or_list):
+    """
+    Ensure that a variable is a list.
+
+    ## Args:
+    `variable_or_list` (_any_): The variable to check. </br>
+
+    ## Returns:
+    (_list_): The variable as a list.
+    """
+    if isinstance(variable_or_list, list):
+        return variable_or_list
+
+    return [variable_or_list]
 
 
 def file_exists(path):
@@ -382,6 +399,64 @@ def remove_if_overwrite(path, overwrite):
         raise Exception(f"File: {path} already exists and overwrite is False.")
 
     return True
+
+
+def get_path(path, *, prefix="", suffix="", add_uuid=True, folder=None):
+    """
+    Gets a basename from a string in the format: </br>
+    `prefix_basename_time_uuid_suffix.ext`
+
+    ## Args:
+    `path` (_str_): The path to the original file. </br>
+
+    ## Kwargs:
+    `prefix` (_str_): The prefix to add to the memory path. (**Default**: `""`) </br>
+    `suffix` (_str_): The suffix to add to the memory path. (**Default**: `""`) </br>
+    `add_uuid` (_bool_): If True, add a uuid to the memory path. (**Default**: `True`) </br>
+
+    ## Returns:
+    (_str_): A string of the current UNIX time in seconds.
+    """
+    assert isinstance(path, str), "path must be a string."
+    assert path.startswith("/vsimem") or folder_exists(path_to_folder(path)), "path must exist or be in-memory."
+
+    base = os.path.basename(path)
+    split = os.path.splitext(base)
+
+    uuid = ""
+    if add_uuid:
+        uuid = f"{get_unix_seconds_as_str()}_{str(uuid4())}"
+
+    basename = f"{prefix}{split[0]}{uuid}{suffix}{split[1]}"
+
+    if folder is not None:
+        target_folder = path_to_folder(folder)
+
+        if not folder_exists(path_to_folder(folder)):
+            raise ValueError(f"Folder: {folder} does not exist.")
+
+        return os.path.join(target_folder, basename)
+
+    return basename
+
+
+def get_memory_path(path, *, prefix="", suffix="", add_uuid=True):
+    """
+    Gets a memory path from a string in the format: </br>
+    `/vsimem/prefix_basename_time_uuid_suffix.ext`
+
+    ## Args:
+    `path` (_str_): The path to the original file. </br>
+
+    ## Kwargs:
+    `prefix` (_str_): The prefix to add to the memory path. (**Default**: `""`) </br>
+    `suffix` (_str_): The suffix to add to the memory path. (**Default**: `""`) </br>
+    `add_uuid` (_bool_): If True, add a uuid to the memory path. (**Default**: `True`) </br>
+
+    ## Returns:
+    (_str_): A string to the memory path. `/vsimem/prefix_basename_time_uuid_suffix.ext`
+    """
+    return f"/vsimem/{get_path(path, prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=None)}"
 
 
 def get_size(start_path=".", rough=True):

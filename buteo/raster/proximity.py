@@ -12,7 +12,7 @@ from uuid import uuid4
 import numpy as np
 from osgeo import gdal
 
-from buteo.raster.io import (
+from buteo.raster.core_raster import (
     open_raster,
     path_to_driver_raster,
     raster_to_array,
@@ -40,7 +40,7 @@ def calc_proximity(
     Calculate the proximity of input_raster to values
     """
     raster_list, path_list = ready_io_raster(
-        input_rasters, out_path, overwrite=overwrite, postfix=postfix, uuid=uuid
+        input_rasters, out_path, overwrite=overwrite, postfix=postfix, add_uuid=uuid
     )
 
     output = []

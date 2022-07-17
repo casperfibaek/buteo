@@ -12,14 +12,14 @@ from uuid import uuid4
 import numpy as np
 from osgeo import gdal
 
-from buteo.raster.io import (
+from buteo.raster.core_raster import (
     open_raster,
     path_to_driver_raster,
     raster_to_array,
     raster_to_metadata,
 )
 from buteo.utils.gdal_utils import numpy_to_gdal_datatype, default_options
-from buteo.utils.core import remove_if_overwrite
+from buteo.utils.core_utils import remove_if_overwrite
 
 
 def add_border_to_raster(

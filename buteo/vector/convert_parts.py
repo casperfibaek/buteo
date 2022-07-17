@@ -11,8 +11,8 @@ import sys; sys.path.append("../../") # Path: buteo/vector/convert_parts.py
 from osgeo import ogr
 
 from buteo.utils.gdal_utils import path_to_driver_vector
-from buteo.utils.core import overwrite_required, progress, remove_if_overwrite, type_check
-from buteo.vector.io import (
+from buteo.utils.core_utils import overwrite_required, progress, remove_if_overwrite, type_check
+from buteo.vector.core_vector import (
     _vector_to_metadata,
     ready_io_vector,
     vector_add_index,

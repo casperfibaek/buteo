@@ -17,13 +17,14 @@ TODO:
 """
 
 # Standard library
+import sys; sys.path.append("../../")
 from uuid import uuid4
 
 # External
 from osgeo import ogr, osr, gdal
 
 # Internal
-import core
+from buteo.utils import core_utils
 
 
 
@@ -47,7 +48,7 @@ def is_valid_bbox(bbox_ogr):
         return False
 
     for val in bbox_ogr:
-        if not core.is_number(val):
+        if not core_utils.is_number(val):
             return False
 
     x_min, x_max, y_min, y_max = bbox_ogr
@@ -78,7 +79,7 @@ def is_valid_geotransform(geotransform):
         return False
 
     for val in geotransform:
-        if not core.is_number(val):
+        if not core_utils.is_number(val):
             return False
 
     return True
@@ -94,7 +95,7 @@ def ensure_negative(number):
     ## Returns:
     (_int_ || _float_): The same number made **negative** if necesary.
     """
-    assert core.is_number(number), f"number must be a number. Received: {number}"
+    assert core_utils.is_number(number), f"number must be a number. Received: {number}"
 
     if number <= 0:
         return -number
@@ -482,7 +483,7 @@ def convert_bbox_to_vector(bbox_ogr, projection_osr):
     geom = convert_bbox_to_geom(bbox_ogr)
 
     driver = ogr.GetDriverByName("FlatGeobuf")
-    extent_name = f"/vsimem/{core.get_unix_seconds_as_str()}_{uuid4().int}_extent.fgb"
+    extent_name = f"/vsimem/{core_utils.get_unix_seconds_as_str()}_{uuid4().int}_extent.fgb"
     extent_ds = driver.CreateDataSource(extent_name)
 
     layer = extent_ds.CreateLayer("extent_ogr", projection_osr, ogr.wkbPolygon)

@@ -7,7 +7,7 @@ import os
 import numpy as np
 
 # Local dependencies
-from .io import raster_to_array
+from .core_raster import raster_to_array
 
 
 # Setup tests

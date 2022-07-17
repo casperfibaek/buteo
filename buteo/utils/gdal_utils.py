@@ -8,19 +8,20 @@ TODO:
 """
 
 # Standard Library
+import sys; sys.path.append("../../")
 import os
 
 # External
 import numpy as np
 from osgeo import gdal, ogr, osr
+from buteo.utils.core_utils import get_memory_path
 
 # Internal
-import core
-import gdal_enums
+from buteo.utils import core_utils, gdal_enums
 
 
 
-def default_creation_options(options):
+def default_creation_options(options=None):
     """
     Takes a list of GDAL creation options and adds the following defaults to it if their not specified: </br>
 
@@ -31,8 +32,8 @@ def default_creation_options(options):
 
     If any of the options are already specified, they are not added.
 
-    ## Args:
-    `options` (_list_ || None): The GDAL creation options to add to.
+    ## Kwargs:
+    `options` (_list_ || None): The GDAL creation options to add to. (Default: **None**)
 
     ## Returns:
     (_list_): A list containing the default values.
@@ -72,7 +73,7 @@ def is_valid_datatype(file_path):
     """
     assert isinstance(file_path, str), "file_path must be a string."
 
-    ext = core.path_to_ext(file_path)
+    ext = core_utils.path_to_ext(file_path)
 
     if ext in gdal_enums.get_valid_driver_extensions():
         return True
@@ -92,7 +93,7 @@ def is_valid_raster_datatype(file_path):
     """
     assert isinstance(file_path, str), "file_path must be a string."
 
-    ext = core.path_to_ext(file_path)
+    ext = core_utils.path_to_ext(file_path)
 
     if ext in gdal_enums.get_valid_raster_driver_extensions():
         return True
@@ -112,7 +113,7 @@ def is_valid_vector_datatype(file_path):
     """
     assert isinstance(file_path, str), "file_path must be a string."
 
-    ext = core.path_to_ext(file_path)
+    ext = core_utils.path_to_ext(file_path)
 
     if ext in gdal_enums.get_valid_vector_driver_extensions():
         return True
@@ -135,7 +136,7 @@ def path_to_driver(file_path):
     """
     assert isinstance(file_path, str), "file_path must be a string."
 
-    ext = core.path_to_ext(file_path)
+    ext = core_utils.path_to_ext(file_path)
 
     if is_valid_datatype(file_path):
         return gdal_enums.convert_extension_to_driver(ext)
@@ -158,7 +159,7 @@ def path_to_driver_vector(file_path):
     """
     assert isinstance(file_path, str), "file_path must be a string."
 
-    ext = core.path_to_ext(file_path)
+    ext = core_utils.path_to_ext(file_path)
 
     if is_valid_vector_datatype(file_path):
         return gdal_enums.convert_extension_to_driver(ext)
@@ -181,7 +182,7 @@ def path_to_driver_raster(file_path):
     """
     assert isinstance(file_path, str), "file_path must be a string."
 
-    ext = core.path_to_ext(file_path)
+    ext = core_utils.path_to_ext(file_path)
 
     if is_valid_raster_datatype(file_path):
         return gdal_enums.convert_extension_to_driver(ext)
@@ -271,10 +272,10 @@ def delete_raster_or_vector(raster_or_vector):
     driver = gdal.GetDriverByName(driver_shortname)
     driver.Delete(raster_or_vector)
 
-    if not core.file_exists(raster_or_vector):
+    if not core_utils.file_exists(raster_or_vector):
         return True
 
-    return core.delete_file(raster_or_vector)
+    return core_utils.delete_file(raster_or_vector)
 
 
 def is_raster_empty(raster):
@@ -338,7 +339,7 @@ def clear_gdal_memory():
         gdal.Unlink(dataset)
 
 
-def is_raster(potential_raster, empty_is_invalid=True):
+def is_raster(potential_raster, *, empty_is_invalid=True):
     """Checks if a variable is a valid raster.
 
     ## Args:
@@ -351,7 +352,7 @@ def is_raster(potential_raster, empty_is_invalid=True):
     (_bool_): **True** if the variable is a valid raster, **False** otherwise.
     """
     if isinstance(potential_raster, str):
-        if not core.file_exists(potential_raster) and not core.is_path_in_memory(potential_raster):
+        if not core_utils.file_exists(potential_raster) and not core_utils.is_path_in_memory(potential_raster):
             return False
 
         try:
@@ -377,6 +378,29 @@ def is_raster(potential_raster, empty_is_invalid=True):
         return True
 
     return False
+
+
+def is_raster_list(potential_raster_list, *, empty_is_invalid=True):
+    """
+    Checks if a variable is a valid list of rasters.
+
+    ## Args:
+    `potential_raster_list` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty raster is considered invalid. (Default: **True**)
+    """
+    if not isinstance(potential_raster_list, list):
+        return False
+
+    if len(potential_raster_list) == 0:
+        return False
+
+    for element in potential_raster_list:
+        if not is_raster(element, empty_is_invalid=empty_is_invalid):
+            return False
+
+    return True
 
 
 def is_vector(potential_vector, empty_is_invalid=True):
@@ -422,7 +446,62 @@ def is_vector(potential_vector, empty_is_invalid=True):
     return False
 
 
-def parse_projection(projection, return_wkt=False):
+def is_vector_list(potential_vector_list, *, empty_is_invalid=True):
+    """
+    Checks if a variable is a valid list of vectors.
+
+    ## Args:
+    `potential_vector_list` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty vector is considered invalid. (Default: **True**)
+    """
+    if not isinstance(potential_vector_list, list):
+        return False
+
+    if len(potential_vector_list) == 0:
+        return False
+
+    for element in potential_vector_list:
+        if not is_vector(element, empty_is_invalid=empty_is_invalid):
+            return False
+
+    return True
+
+
+def convert_geom_to_vector(geom):
+    """
+    Converts a geometry to a vector.
+
+    ## Args:
+    `geom` (_ogr.Geometry_): The geometry to convert.
+
+    ## Kwargs:
+    `layer_name` (_str_): The name of the layer. (Default: **"geom"**)
+    `add_uuid` (_bool_): If **True**, a UUID will be added to the layer. (Default: **True**)
+
+    ## Returns:
+    (_ogr.DataSource_): The vector.
+    """
+    assert isinstance(geom, ogr.Geometry), "geom must be an ogr.Geometry."
+
+    path = get_memory_path("converted_geom.fgb")
+    driver = path_to_driver_vector(path)
+
+    vector = driver.CreateDataSource(path)
+
+    layer = vector.CreateLayer("converted_geom", geom.GetSpatialReference(), geom.GetGeometryType())
+
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometry(geom)
+
+    layer.CreateFeature(feature)
+    feature.Destroy()
+
+    return vector
+
+
+def parse_projection(projection, *, return_wkt=False):
     """
     Parses a gdal, ogr og osr data source and extraction the projection. If
     a string or int is passed, it attempts to open it and return the projection as
@@ -493,7 +572,7 @@ def parse_projection(projection, return_wkt=False):
 
 
 
-def parse_raster_size(target, target_in_pixels=False):
+def parse_raster_size(target, *, target_in_pixels=False):
     """
     Parses the raster size from either a list of numbers or a GDAL raster.
 
@@ -533,7 +612,7 @@ def parse_raster_size(target, target_in_pixels=False):
     elif target_in_pixels:
         if isinstance(target, tuple) or isinstance(target, list):
             if len(target) == 1:
-                if core.is_number(target[0]):
+                if core_utils.is_number(target[0]):
                     x_pixels = int(target[0])
                     y_pixels = int(target[0])
                 else:
@@ -541,12 +620,12 @@ def parse_raster_size(target, target_in_pixels=False):
                         "target_size_pixels is not a number or a list/tuple of numbers."
                     )
             elif len(target) == 2:
-                if core.is_number(target[0]) and core.is_number(target[1]):
+                if core_utils.is_number(target[0]) and core_utils.is_number(target[1]):
                     x_pixels = int(target[0])
                     y_pixels = int(target[1])
             else:
                 raise ValueError("target_size_pixels is either empty or larger than 2.")
-        elif core.is_number(target):
+        elif core_utils.is_number(target):
             x_pixels = int(target)
             y_pixels = int(target)
         else:
@@ -557,7 +636,7 @@ def parse_raster_size(target, target_in_pixels=False):
     else:
         if isinstance(target, tuple) or isinstance(target, list):
             if len(target) == 1:
-                if core.is_number(target[0]):
+                if core_utils.is_number(target[0]):
                     x_res = float(target[0])
                     y_res = float(target[0])
                 else:
@@ -565,12 +644,12 @@ def parse_raster_size(target, target_in_pixels=False):
                         "target_size is not a number or a list/tuple of numbers."
                     )
             elif len(target) == 2:
-                if core.is_number(target[0]) and core.is_number(target[1]):
+                if core_utils.is_number(target[0]) and core_utils.is_number(target[1]):
                     x_res = float(target[0])
                     y_res = float(target[1])
             else:
                 raise ValueError("target_size is either empty or larger than 2.")
-        elif core.is_number(target):
+        elif core_utils.is_number(target):
             x_res = float(target)
             y_res = float(target)
         else:
@@ -603,7 +682,7 @@ def to_path_list(str_or_list_of_str):
         if not isinstance(path, str):
             raise ValueError(f"Invalid string in path list: {str_or_list_of_str}")
 
-        if not core.folder_exists(core.path_to_folder(path)):
+        if not core_utils.folder_exists(core_utils.path_to_folder(path)):
             raise ValueError(f"Invalid path in path list: {path}")
 
     return return_list
@@ -628,7 +707,7 @@ def to_array_list(array_or_list_of_array):
 
     for array in return_list:
         if not isinstance(array, np.ndarray):
-            if isinstance(array, str) and core.file_exists(array):
+            if isinstance(array, str) and core_utils.file_exists(array):
                 try:
                     _ = np.load(array)
                 except:

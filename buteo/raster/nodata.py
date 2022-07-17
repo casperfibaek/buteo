@@ -12,12 +12,12 @@ import sys; sys.path.append("../../") # Path: buteo/raster/nodata.py
 import numpy as np
 from osgeo import gdal
 
-from buteo.utils.core import remove_if_overwrite, type_check
+from buteo.utils.core_utils import remove_if_overwrite, type_check
 from buteo.utils.gdal_utils import (
     is_raster,
     gdal_nodata_value_from_type,
 )
-from buteo.raster.io import (
+from buteo.raster.core_raster import (
     raster_to_array,
     raster_to_disk,
     raster_to_memory,
