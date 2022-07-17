@@ -16,6 +16,7 @@ from datetime import datetime
 from osgeo import gdal
 
 
+
 def get_unix_seconds_as_str():
     """
     Get a string of the current UNIX time in seconds.
@@ -400,12 +401,11 @@ def get_size(start_path=".", rough=True):
 
     total_size = 0
     for dirpath, _dirnames, filenames in os.walk(start_path):
-        for f in filenames:
-            fp = os.path.join(dirpath, f)
+        for file in filenames:
+            file_path = os.path.join(dirpath, file)
 
-            # skip if it is symbolic link
-            if not os.path.islink(fp):
-                total_size += os.path.getsize(fp)
+            if not os.path.islink(file_path): # skip if symbolic link
+                total_size += os.path.getsize(file_path)
 
     if rough is True:
         return total_size >> 20
@@ -459,12 +459,12 @@ def divide_arr_into_steps(arr, steps_length):
     ret_arr = []
     last = 0
     count = 0
-    for x in steps:
+    for step in steps:
         count += 1
         if count > len(arr):
             continue
-        ret_arr.append(arr[last : x + last])
-        last += x
+        ret_arr.append(arr[last : step + last])
+        last += step
 
     return ret_arr
 
@@ -547,8 +547,8 @@ def type_check(
     if allow_none:
         valid_types.append(None)
 
-    for t in valid_types:
-        type_names.append(t.__name__)
+    for valid_type in valid_types:
+        type_names.append(valid_type.__name__)
 
     if throw_error:
         raise ValueError(

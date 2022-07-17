@@ -1,7 +1,7 @@
 """
 ### GDAL Enum Functions ###
 
-Functions to translate between GDAL and Numpy datatypes.
+Functions to translate between **GDAL** and **NumPy** datatypes.
 """
 
 # External
@@ -9,156 +9,275 @@ import numpy as np
 from osgeo import gdal
 
 
-valid_raster_driver_extensions = ["tif", "tiff", "img", "vrt", "jp2", "ecw"]
-valid_vector_driver_extensions = ["shp", "geojson", "json", "gpkg", "kml", "kmz", "fgb", "gml", "gpx"]
+
+def get_available_drivers():
+    """
+    Returns a list of **all** available drivers.
+
+    ## Returns:
+    (_list_): List of dicts available drivers. Each dict has the following keys: </br>
+    `short_name`: **String** of driver short name (e.g. GTiff). </br>
+    `long_name`: **String** of driver long name (e.g. GeoTiff). </br>
+    `extension`: **String** of driver extension (e.g. tif). **OBS**: Can be an empty string. </br>
+    """
+    raster_drivers = []
+    vector_drivers = []
+
+    for i in range(0, gdal.GetDriverCount()):
+        driver = gdal.GetDriver(i)
+        metadata = driver.GetMetadata_Dict()
+
+        info = {
+            "short_name": driver.ShortName,
+            "long_name": driver.LongName,
+            "extension": driver.GetMetadataItem(gdal.DMD_EXTENSIONS),
+        }
+
+        if 'DCAP_RASTER' in metadata:
+            raster_drivers.append(info)
+
+        if 'DCAP_VECTOR' in metadata:
+            vector_drivers.append(info)
+
+    return (raster_drivers, vector_drivers)
+
 
 
 def get_valid_raster_driver_extensions():
+    """
+    Returns a list of valid raster driver extensions.
+
+    ## Returns:
+    (_list_): List of valid raster driver extensions.
+    """
+    available_raster_drivers, _available_vector_drivers = get_available_drivers()
+
+    valid_raster_driver_extensions = []
+
+    for driver in available_raster_drivers:
+        if driver["extension"] != "" or len(driver["extension"]) > 0:
+            valid_raster_driver_extensions.append(driver["extension"])
+
     return valid_raster_driver_extensions
 
 
 def get_valid_vector_driver_extensions():
+    """
+    Returns a list of valid vector driver extensions.
+
+    ## Returns:
+    (_list_): List of valid vector driver extensions.
+    """
+    _available_raster_drivers, available_vector_drivers = get_available_drivers()
+
+    valid_vector_driver_extensions = []
+
+    for driver in available_vector_drivers:
+        if driver["extension"] != "" or len(driver["extension"]) > 0:
+            valid_vector_driver_extensions.append(driver["extension"])
+
     return valid_vector_driver_extensions
 
 
 def get_valid_driver_extensions():
-    return valid_raster_driver_extensions + valid_vector_driver_extensions
+    """
+    Returns a list of all valid driver extensions (**GDAL** + **OGR**).
+
+    ## Returns:
+    (_list_): List of all valid driver extensions.
+    """
+    available_raster_drivers, available_vector_drivers = get_available_drivers()
+
+    valid_driver_extensions = []
+
+    for driver in available_raster_drivers + available_vector_drivers:
+        if driver["extension"] != "" or len(driver["extension"]) > 0:
+            valid_driver_extensions.append(driver["extension"])
+
+    return valid_driver_extensions
 
 
-# TODO: add vector sources here..
-def convert_extension_to_driver(ext):
-    assert ext in get_valid_driver_extensions(), f"Invalid extension: {ext}"
+def is_valid_driver_extension(ext):
+    """
+    Checks if a file extension is a valid **GDAL** or **OGR** driver extension.
 
-    if ext == "tif" or ext == "tiff":
-        return "GTiff"
-    elif ext == "img":
-        return "HFA"
-    elif ext == "vrt":
-        return "VRT"
-    elif ext == "jp2":
-        return "JP2ECW"
-    elif ext == "ecw":
-        return "ECW"
+    ## Args:
+    ext (_str_): The file extension.
 
-    raise Exception("Unknown extension: " + ext)
+    ## Returns:
+    (_bool_): **True** if valid, **False** otherwise.
+    """
+    assert isinstance(ext, str), "Extension must be a string."
+    assert len(ext) > 0, "Extension must be a non-empty string."
+
+    return ext in get_valid_driver_extensions()
+
+
+def is_valid_raster_driver_extension(ext):
+    """
+    Checks if a raster file extension is a valid **GDAL** driver extension.
+
+    ## Args:
+    ext (_str_): The file extension.
+
+    ## Returns:
+    (_bool_): **True** if valid, **False** otherwise.
+    """
+    assert isinstance(ext, str), "Extension must be a string."
+    assert len(ext) > 0, "Extension must be a non-empty string."
+
+    return ext in get_valid_raster_driver_extensions()
+
+
+def is_valid_vector_driver_extension(ext):
+    """
+    Checks if a vector file extension is a valid **OGR** driver extension.
+
+    ## Args:
+    ext (_str_): The file extension.
+
+    ## Returns:
+    (_bool_): **True** if valid, **False** otherwise.
+    """
+    assert isinstance(ext, str), "Extension must be a string."
+    assert len(ext) > 0, "Extension must be a non-empty string."
+
+    return ext in get_valid_vector_driver_extensions()
+
+
+def convert_raster_extension_to_driver_shortname(ext):
+    """
+    Converts a raster file extension to a **GDAL** driver short_name name.
+
+    ## Args:
+    ext (_str_): The file extension.
+
+    ## Returns:
+    (_str_): The driver short_name (e.g. GTiff).
+    """
+    assert is_valid_raster_driver_extension(ext), f"Invalid extension: {ext}"
+
+    raster_drivers, _vector_drivers = get_available_drivers()
+
+    for driver in raster_drivers:
+        if driver["extension"] == ext:
+            return driver["short_name"]
+    
+    raise RuntimeError(f"Invalid extension: {ext}")
+
+
+def convert_vector_extension_to_driver_shortname(ext):
+    """
+    Converts a vector file extension to an **OGR** driver short_name name.
+
+    ## Args:
+    ext (_str_): The file extension.
+
+    ## Returns:
+    (_str_): The driver short_name (e.g. GPKG).
+    """
+    assert is_valid_vector_driver_extension(ext), f"Invalid extension: {ext}"
+
+    _raster_drivers, vector_drivers = get_available_drivers()
+
+    for driver in vector_drivers:
+        if driver["extension"] == ext:
+            return driver["short_name"]
+    
+    raise RuntimeError(f"Invalid extension: {ext}")
 
 
 def translate_resample_method(method):
-    methods = {
-        "nearest": 0,
-        "bilinear": 1,
-        "cubic": 2,
-        "cubicSpline": 3,
-        "lanczos": 4,
-        "average": 5,
-        "mode": 6,
-        "max": 8,
-        "min": 9,
-        "median": 10,
-        "q1": 11,
-        "q3": 12,
-        "sum": 13,
-        "rms": 14,
-    }
+    """
+    Translate a string of a resampling method to a **GDAL** integer (e.g. `gdal.GRA_NearestNeighbour`).
 
-    if method == "sum":
-        return "sum"
-    elif method == "max" or method == "maximum":
-        return "max"
-    elif method == "min" or method == "minimum":
-        return "min"
+    ## Args:
+    method (_str_): The resampling method.
+
+    ## Returns:
+    (_int_): The **GDAL** resampling integer (e.g. `"nearest"=1`).
+    """
+    assert isinstance(method, str), "method must be a string."
+    assert len(method) > 0, "method must be a non-empty string."
+
+    methods = {
+        "nearest": gdal.GRA_NearestNeighbour,
+        "bilinear": gdal.GRA_Bilinear,
+        "cubic": gdal.GRA_Cubic,
+        "cubic_spline": gdal.GRA_CubicSpline,
+        "cubicspline": gdal.GRA_CubicSpline,
+        "lanczos": gdal.GRA_Lanczos,
+        "average": gdal.GRA_Average,
+        "mean": gdal.GRA_Average,
+        "mode": gdal.GRA_Mode,
+        "max": gdal.GRA_Max,
+        "maximum": gdal.GRA_Max,
+        "min": gdal.GRA_Min,
+        "minimum": gdal.GRA_Min,
+        "median": gdal.GRA_Med,
+        "med": gdal.GRA_Med,
+        "q1": gdal.GRA_Q1,
+        "Q1": gdal.GRA_Q1,
+        "q3": gdal.GRA_Q3,
+        "Q3": gdal.GRA_Q3,
+        "sum": gdal.GRA_RMS,
+        "rms": gdal.GRA_RMS,
+        "RMS": gdal.GRA_RMS,
+    }
 
     if method in methods:
         return methods[method]
-    else:
-        return 0
+
+    raise ValueError("Unknown resample method: " + method)
 
 
-def numpy_fill_values(datatype):
+def translate_gdal_dtype_to_str(gdal_datatype_int):
+    """
+    Translates the **GDAL** datatype integer into a string. Can be used by **NumPy**.
+
+    ## Args:
+    (_gdal_datatype_int_): The **GDAL** datatype integer.
+
+    ## Returns:
+    (_str_): The translated string (e.g. `0="uint8"`)
+    """
+    assert isinstance(gdal_datatype_int, int), f"gdal_datatype must be an integer. Received: {gdal_datatype_int}"
+
     datatypes = {
-        "int8": -127,
-        "int16": -32767,
-        "int32": -2147483647,
-        "int64": -9223372036854775807,
-        "uint8": 255,
-        "uint16": 65535,
-        "uint32": 4294967295,
-        "uint64": 18446744073709551615,
-        "float16": -9999.0,
-        "float32": -9999.0,
-        "float64": -9999.0,
+        str(gdal.GDT_Byte): "uint8",
+        str(gdal.GDT_Int16): "int16",
+        str(gdal.GDT_Int32): "int32",
+        str(gdal.GDT_UInt16): "uint16",
+        str(gdal.GDT_UInt32): "uint32",
+        str(gdal.GDT_Float32): "float32",
+        str(gdal.GDT_Float64): "float64",
+        str(gdal.GDT_CFloat32): "cfloat32",
+        str(gdal.GDT_CFloat64): "cfloat64",
+        str(gdal.GDT_CInt16): "cint16",
+        str(gdal.GDT_CInt32): "cint32",
     }
 
-    test_type = datatype
-    if isinstance(test_type, np.dtype):
-        test_type = test_type.name
+    dtype_str = str(gdal_datatype_int)
+    for key in datatypes:
+        if dtype_str == key:
+            return datatypes[dtype_str]
 
-    if test_type in datatypes:
-        return datatypes[test_type]
-    else:
-        return -9999.0
+    raise ValueError(f"Could not translate the datatype: {gdal_datatype_int}")
 
 
-def gdal_nodata_value_from_type(gdal_datatype_raw):
-    if gdal_datatype_raw == 0:
-        return 0
-    elif gdal_datatype_raw == 1:
-        return 255
-    elif gdal_datatype_raw == 2:
-        return 65535
-    elif gdal_datatype_raw == 3:
-        return -32767
-    elif gdal_datatype_raw == 4:
-        return 4294967295
-    elif gdal_datatype_raw == 5:
-        return -2147483647
-    elif gdal_datatype_raw == 6:
-        return -9999.0
-    elif gdal_datatype_raw == 7:
-        return -9999.0
-    else:
-        return 0
+def translate_str_to_gdal_dtype(dtype_str):
+    """
+    Translates the datatype string into a **GDAL** datatype integer. Can be used by **GDAL**.
 
+    ## Args:
+    (_dtype_str_): The datatype string (e.g. "float32").
 
-def translate_datatypes(datatype):
-    datatypes = {
-        "byte": 1,
-        "uint16": 2,
-        "int16": 3,
-        "uint32": 4,
-        "int32": 5,
-        "float32": 6,
-        "float64": 7,
-        "cint16": 8,
-        "cint32": 9,
-        "cfloat32": 10,
-        "cfloat64": 11,
-    }
+    ## Returns:
+    (_int_): The translated integer (e.g. `"uint8"=0`)
+    """
+    assert isinstance(dtype_str, str), "dtype_str must be a string."
+    assert len(dtype_str) > 0, "dtype_str must be a non-empty string."
 
-    if datatype in datatypes.keys():
-        return datatypes[datatype]
-    else:
-        return 6
-
-
-def gdal_to_numpy_datatype(gdal_int):
-    datatypes = {
-        "1": "uint8",
-        "2": "uint16",
-        "3": "int16",
-        "4": "uint32",
-        "5": "int32",
-        "6": "float32",
-        "7": "float64",
-        "8": "cint16",
-        "9": "cint32",
-        "10": "cfloat32",
-        "11": "cfloat64",
-    }
-    return datatypes[str(gdal_int)]
-
-
-def numpy_to_gdal_datatype(datatype):
     datatypes = {
         "int8": gdal.GDT_Int16,
         "int16": gdal.GDT_Int16,
@@ -171,41 +290,75 @@ def numpy_to_gdal_datatype(datatype):
         "float16": gdal.GDT_Float32,
         "float32": gdal.GDT_Float32,
         "float64": gdal.GDT_Float64,
+        "cfloat32": gdal.GDT_CFloat32,
+        "cfloat64": gdal.GDT_CFloat64,
+        "cint16": gdal.GDT_CInt16,
+        "cint32": gdal.GDT_CInt32,
     }
 
-    # print("WARNING: numpy to gdal datatype is deprecated.")
+    for key in datatypes:
+        if dtype_str == key:
+            return datatypes[dtype_str]
 
-    if datatype.name in datatypes.keys():
-        return datatypes[datatype.name]
-    else:
-        return gdal.GDT_Float32
-
-
-# def numpy_to_gdal_datatype2(datatype):
-#     datatypes = {
-#         "int8": gdal.GDT_Int16,
-#         "int16": gdal.GDT_Int16,
-#         "int32": gdal.GDT_Int32,
-#         "int64": gdal.GDT_Int32,
-#         "uint8": gdal.GDT_Byte,
-#         "uint16": gdal.GDT_UInt16,
-#         "uint32": gdal.GDT_UInt32,
-#         "uint64": gdal.GDT_UInt32,
-#         "float16": gdal.GDT_Float32,
-#         "float32": gdal.GDT_Float32,
-#         "float64": gdal.GDT_Float64,
-#     }
-
-#     if datatype in datatypes.keys():
-#         return datatypes[datatype]
-#     else:
-#         print("warning: Unknown datatype. Defaulting to float32.")
-#         return gdal.GDT_Float32
+    raise ValueError(f"Could not translate the datatype: {dtype_str}")
 
 
-def gdal_datatype_is_float(datatype):
-    floats = [6, 7, 10, 11]
-    if datatype in floats:
+def get_default_nodata_value(dtype):
+    """
+    Returns the default fill value for masked numpy arrays.
+
+    ## Args:
+    numpy_dtype (_numpy.dtype_ || _str_ || _int_): The dtype.
+
+    ## Returns:
+    (_float_ || _int_): The default fill value.
+    """
+    assert isinstance(dtype, (np.dtype, str, int)), "numpy_dtype must be a numpy.dtype or string."
+
+    datatypes = {
+        "int8": -127,
+        "int16": -32767,
+        "int32": -2147483647,
+        "int64": -9223372036854775807,
+        "uint8": 255,
+        "uint16": 65535,
+        "uint32": 4294967295,
+        "uint64": 18446744073709551615,
+        "float16": -9999.0,
+        "float32": -9999.0,
+        "float64": -9999.0,
+        "cfloat32": -9999.0,
+        "cfloat64": -9999.0,
+    }
+
+    test_type = dtype
+    if isinstance(dtype, np.dtype):
+        test_type = test_type.name
+    elif isinstance(dtype, int):
+        test_type = translate_gdal_dtype_to_str(dtype)
+
+    if test_type in datatypes:
+        return datatypes[test_type]
+
+    raise ValueError("Unknown numpy datatype: " + test_type)
+
+
+def is_gdal_datatype_a_float(gdal_dtype):
+    """
+    Checks if a **GDAL** datatype integer is a floating datatype: </br>
+    `(Float32, Float64, cFloat32, cFloat64)`
+
+    ## Args:
+    (_int_): The **GDAL** datatype integer.
+
+    ## Returns:
+    (_bool_): **True** if datatype is a float, otherwise **False**.
+    """
+    assert isinstance(gdal_dtype, int), f"gdal_dtype must be an integer. Received: {gdal_dtype}"
+
+    floats = [gdal.GDT_Float32, gdal.GDT_Float64, gdal.GDT_CFloat32, gdal.GDT_CFloat64]
+
+    if gdal_dtype in floats:
         return True
-    else:
-        return False
+
+    return False

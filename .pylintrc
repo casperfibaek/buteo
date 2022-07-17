@@ -1,10 +1,8 @@
 [MESSAGES CONTROL]
 
 disable=multiple-statements,
+        import-error,
         wrong-import-position,
         broad-except,
-        dangerous-default-value,
-        missing-function-docstring,
         isinstance-second-argument-not-valid-type,
-        invalid-name,
         line-too-long
