@@ -333,9 +333,9 @@ def convert_geom_to_bbox(geom):
         geom, ogr.Geometry
     ), f"geom was not a valid ogr.Geometry. Received: {geom}"
 
-    bbox_ogr = geom.GetEnvelope()
+    bbox_ogr = geom.GetEnvelope() # [x_min, x_max, y_min, y_max]
 
-    return bbox_ogr  # [x_min, x_max, y_min, y_max]
+    return bbox_ogr
 
 
 def convert_bbox_to_geotransform(bbox_ogr, raster_x_size, raster_y_size):

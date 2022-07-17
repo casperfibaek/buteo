@@ -35,7 +35,7 @@ def _reproject_raster(
     out_path=None,
     *,
     resample_alg="nearest",
-    copy_if_already_correct=True,
+    copy_if_same=True,
     overwrite=True,
     creation_options=[],
     dst_nodata="infer",
@@ -54,7 +54,7 @@ def _reproject_raster(
     )
     type_check(out_path, [str], "out_path", allow_none=True)
     type_check(resample_alg, [str], "resample_alg")
-    type_check(copy_if_already_correct, [bool], "copy_if_already_correct")
+    type_check(copy_if_same, [bool], "copy_if_already_correct")
     type_check(overwrite, [bool], "overwrite")
     type_check(creation_options, [list], "creation_options")
     type_check(dst_nodata, [str, int, float], "dst_nodata")
@@ -81,7 +81,7 @@ def _reproject_raster(
         raise Exception("Error while parsing target projection.")
 
     if original_projection.IsSame(target_projection):
-        if not copy_if_already_correct:
+        if not copy_if_same:
             return get_raster_path(ref)
 
     src_nodata = metadata["nodata_value"]
@@ -123,7 +123,7 @@ def reproject_raster(
     out_path=None,
     *,
     resample_alg="nearest",
-    copy_if_already_correct=True,
+    copy_if_same=True,
     overwrite=True,
     creation_options=[],
     dst_nodata="infer",
@@ -191,7 +191,7 @@ def reproject_raster(
                 projection,
                 out_path=path_list[index],
                 resample_alg=resample_alg,
-                copy_if_already_correct=copy_if_already_correct,
+                copy_if_same=copy_if_same,
                 overwrite=overwrite,
                 creation_options=creation_options,
                 dst_nodata=dst_nodata,
