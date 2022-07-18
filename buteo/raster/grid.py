@@ -1,24 +1,28 @@
 """
-Cut a rasters to a grid.
+### Create grids from rasters.  ###
+
+Cut rasters to grids. Use vectors or rasters as grids.
 
 TODO:
-    - Improve documentation
-    - Raster_to_grid without geom
-    - Split rasters into grid of x tiles
+    * raster_to_grid without geom.
+    * split rasters into grid of x tiles.
 """
 
-import sys; sys.path.append("../../") # Path: buteo/raster/grid.py
+# Standard library
+import sys; sys.path.append("../../")
 from uuid import uuid4
 
+# External
 from osgeo import gdal, ogr
 
-from buteo.vector.core_vector import open_vector, _vector_to_metadata
-from buteo.vector.intersect import intersect_vector
-from buteo.vector.reproject import reproject_vector
-from buteo.raster.clip import clip_raster
-from buteo.raster.core_raster import open_raster, raster_to_metadata, stack_rasters_vrt
-from buteo.utils.gdal_utils import ogr_bbox_intersects, default_options
-from buteo.utils.core_utils import path_to_ext, progress, type_check
+# Internal
+from buteo.utils import bbox_utils, core_utils, gdal_utils
+from buteo.raster import core_raster
+from buteo.raster.clip import _clip_raster
+from buteo.vector import core_vector
+from buteo.vector.intersect import _intersect_vector
+from buteo.vector.reproject import _reproject_vector
+
 
 
 def raster_to_grid(
@@ -30,44 +34,58 @@ def raster_to_grid(
     generate_vrt=True,
     overwrite=True,
     process_layer=0,
-    creation_options=[],
-    verbose=1,
+    creation_options=None,
+    verbose=0,
 ):
-    """Clips a raster to a grid. Generate .vrt.
-
-    Returns:
-        The filepath for the newly created raster.
     """
-    type_check(raster, [str, gdal.Dataset], "raster")
-    type_check(grid, [str, ogr.DataSource], "grid")
-    type_check(out_dir, [str], "out_dir")
-    type_check(overwrite, [bool], "overwrite")
-    type_check(process_layer, [int], "process_layer")
-    type_check(creation_options, [list], "creation_options")
-    type_check(verbose, [int], "verbose")
+    Clips a raster to a grid. Generate .vrt.
 
-    use_grid = open_vector(grid)
-    grid_metadata = _vector_to_metadata(use_grid)
-    raster_metadata = raster_to_metadata(raster)
+    ## Args:
+    `raster` (_str_ || _gdal.DataSet_): The input raster. </br>
+    `grid` (_str_ || ogr.DataSource): The grid to use. </br>
+    `out_dir` (_str_): The output directory. </br>
+
+    ## Kwargs:
+    `use_field` (_str_ || _None_): A field to use to name the grid cells. </br>
+    `generate_vrt` (_bool_): If **True**, the output raster will be a .vrt. </br>
+    `overwrite` (_bool_): If **True**, the output raster will be overwritten. </br>
+    `process_layer` (_int_): The layer from the grid to process. </br>
+    `creation_options` (_list_ || _None_): Creation options for the output raster. </br>
+    `verbose` (_int_): The verbosity level. </br>
+
+    ## Returns:
+    (_str_): The filepath for the newly created raster.
+    """
+    core_utils.type_check(raster, [str, gdal.Dataset], "raster")
+    core_utils.type_check(grid, [str, ogr.DataSource], "grid")
+    core_utils.type_check(out_dir, [str], "out_dir")
+    core_utils.type_check(overwrite, [bool], "overwrite")
+    core_utils.type_check(process_layer, [int], "process_layer")
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
+    core_utils.type_check(verbose, [int], "verbose")
+
+    use_grid = core_vector.open_vector(grid)
+    grid_metadata = core_vector._vector_to_metadata(use_grid)
+    raster_metadata = core_raster.raster_to_metadata(raster)
 
     # Reproject raster if necessary.
     if not raster_metadata["projection_osr"].IsSame(grid_metadata["projection_osr"]):
-        use_grid = reproject_vector(grid, raster_metadata["projection_osr"])
-        grid_metadata = _vector_to_metadata(use_grid)
+        use_grid = _reproject_vector(grid, raster_metadata["projection_osr"])
+        grid_metadata = core_vector._vector_to_metadata(use_grid)
 
         if not isinstance(grid_metadata, dict):
             raise Exception("Error while parsing metadata.")
 
     # Only use the polygons in the grid that intersect the extent of the raster.
-    use_grid = intersect_vector(use_grid, raster_metadata["extent_datasource"]())
+    use_grid = _intersect_vector(use_grid, raster_metadata["extent_datasource"]())
 
-    ref = open_raster(raster)
-    use_grid = open_vector(use_grid)
+    ref = core_raster._open_raster(raster)
+    use_grid = core_vector.open_vector(use_grid)
 
     layer = use_grid.GetLayer(process_layer)
     feature_count = layer.GetFeatureCount()
-    raster_extent = raster_metadata["extent_ogr"]
-    filetype = path_to_ext(raster)
+    raster_extent = raster_metadata["bbox"]
+    filetype = core_utils.path_to_ext(raster)
     name = raster_metadata["name"]
     geom_type = grid_metadata["layers"][process_layer]["geom_type_ogr"]
 
@@ -91,7 +109,7 @@ def raster_to_grid(
         feature = layer.GetNextFeature()
         geom = feature.GetGeometryRef()
 
-        if not ogr_bbox_intersects(raster_extent, geom.GetEnvelope()):
+        if not bbox_utils.bboxes_intersect(raster_extent, geom.GetEnvelope()):
             continue
 
         intersections += 1
@@ -114,11 +132,11 @@ def raster_to_grid(
         feature = layer.GetNextFeature()
         geom = feature.GetGeometryRef()
 
-        if not ogr_bbox_intersects(raster_extent, geom.GetEnvelope()):
+        if not bbox_utils.bboxes_intersect(raster_extent, geom.GetEnvelope()):
             continue
 
         if verbose == 1:
-            progress(clipped, intersections - 1, "clip_grid")
+            core_utils.progress(clipped, intersections - 1, "clip_grid")
 
         fid = feature.GetFID()
 
@@ -139,16 +157,16 @@ def raster_to_grid(
         else:
             out_name = f"{out_dir}{name}_{fid}{filetype}"
 
-        clip_raster(
+        _clip_raster(
             ref,
             test_ds_path,
             out_path=out_name,
             adjust_bbox=True,
             crop_to_geom=True,
             all_touch=False,
-            postfix="",
+            suffix="",
             prefix="",
-            creation_options=default_options(creation_options),
+            creation_options=gdal_utils.default_creation_options(creation_options),
             verbose=0,
         )
 
@@ -157,7 +175,7 @@ def raster_to_grid(
 
     if generate_vrt:
         vrt_name = f"{out_dir}{name}.vrt"
-        stack_rasters_vrt(generated, vrt_name, seperate=False)
+        core_raster.stack_rasters_vrt(generated, vrt_name, seperate=False)
 
         return (generated, vrt_name)
 

@@ -180,13 +180,12 @@ def add_border_to_raster(
             creation_options=creation_options,
         )
 
-    if isinstance(raster, str):
-        raster = [raster]
+    raster_list = core_utils.ensure_list(raster)
 
     if out_path is None:
         out_path = gdal_utils.create_memory_path("raster_proximity.tif", add_uuid=True)
 
-    for raster_path in raster:
+    for raster_path in raster_list:
         _add_border_to_raster(
             raster_path,
             out_path=out_path,

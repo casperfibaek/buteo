@@ -1,56 +1,44 @@
 """
+### Handle nodata values in rasters. ###
+
 A module to handle the various aspects of NODATA in raster files.
 
 TODO:
-    - raster_to_mask
-    - raster_invert_nodata
-    - Improve documentation
+    * raster_to_mask
+    * raster_invert_nodata
 """
 
-import sys; sys.path.append("../../") # Path: buteo/raster/nodata.py
+# Standard library
+import sys; sys.path.append("../../")
 
+# External
 import numpy as np
 from osgeo import gdal
 
-from buteo.utils.core_utils import remove_if_overwrite, type_check
-from buteo.utils.gdal_utils import (
-    is_raster,
-    gdal_nodata_value_from_type,
-)
-from buteo.raster.core_raster import (
-    raster_to_array,
-    raster_to_disk,
-    raster_to_memory,
-    raster_to_metadata,
-    array_to_raster,
-    ready_io_raster,
-    get_raster_path,
-)
+# Internal
+from buteo.utils import core_utils, gdal_utils, gdal_enums
+from buteo.raster import core_raster
+
 
 
 def raster_has_nodata_value(raster):
-    """Check if a raster or a list of rasters contain nodata values
-
-    Args:
-        raster (path | raster | list): The raster(s) to check for nodata values.
-
-    Returns:
-        True if input raster has nodata values. If a list is the input, the output
-        is a list of booleans indicating if the input raster has nodata values.
     """
-    type_check(raster, [list, str, gdal.Dataset], "raster")
+    Check if a raster or a list of rasters contain nodata values
+
+    ## Args:
+    `raster` (_str_ || _gdal.Dataset_, _list_): The raster to check for nodata values.
+
+    ## Returns:
+    (_bool_): **True** if the raster or list of rasters contain nodata values.
+    """
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+
+    rasters = gdal_utils.get_path_from_dataset(core_utils.ensure_list(raster))
+    assert gdal_utils.is_raster_list(raster), f"List contains invalid rasters. {raster}"
 
     nodata_values = []
-    rasters = get_raster_path(raster, return_list=True)
-
     for internal_raster in rasters:
-        if not is_raster(internal_raster):
-            raise ValueError(f"Input raster is invalid: {internal_raster}")
-
-        raster_metadata = raster_to_metadata(internal_raster)
-
-        if not isinstance(raster_metadata, dict):
-            raise Exception("Metadata is in the wrong format.")
+        raster_metadata = core_raster._raster_to_metadata(internal_raster)
 
         raster_nodata = raster_metadata["nodata_value"]
 
@@ -61,32 +49,28 @@ def raster_has_nodata_value(raster):
 
     if isinstance(raster, list):
         return nodata_values
-    else:
-        return nodata_values[0]
+    
+    return nodata_values[0]
 
 
 def raster_get_nodata_value(raster):
-    """Get the nodata value of a raster or a from a list of rasters.
-
-    Args:
-        raster (path | raster | list): The raster(s) to retrieve nodata values from.
-
-    Returns:
-        Returns the nodata value from a raster or a list of rasters
     """
-    type_check(raster, [list, str, gdal.Dataset], "raster")
+    Get the nodata value of a raster or a list of rasters.
 
-    rasters = get_raster_path(raster, return_list=True)
+    ## Args:
+    `raster` (_str_ || _gdal.Dataset_, _list_): The raster(s) to get nodata values from.
+
+    ## Returns:
+    (_float_ || _int_ || _list_): The nodata value(s) of the raster(s).
+    """
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+
+    rasters = gdal_utils.get_path_from_dataset(core_utils.ensure_list(raster))
+    assert gdal_utils.is_raster_list(raster), f"List contains invalid rasters. {raster}"
 
     nodata_values = []
     for internal_raster in rasters:
-        if not is_raster(internal_raster):
-            raise ValueError(f"Input raster is invalid: {internal_raster}")
-
-        raster_metadata = raster_to_metadata(internal_raster)
-
-        if not isinstance(raster_metadata, dict):
-            raise Exception("Metadata is in the wrong format.")
+        raster_metadata = core_raster._raster_to_metadata(internal_raster)
 
         raster_nodata = raster_metadata["nodata_value"]
 
@@ -106,7 +90,7 @@ def raster_set_nodata(
     overwrite=True,
     in_place=False,
     prefix="",
-    postfix="_nodata_set",
+    suffix="_nodata_set",
     opened=False,
     creation_options=[],
 ):
@@ -135,21 +119,22 @@ def raster_set_nodata(
         changed orignal is returned, otherwise a copied memory raster or the path to the
         generated raster is outputted.
     """
-    type_check(raster, [list, str, gdal.Dataset], "raster")
-    type_check(dst_nodata, [float, int, str, list], "dst_nodata", allow_none=True)
-    type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(overwrite, [bool], "overwrite")
-    type_check(prefix, [str], "prefix")
-    type_check(postfix, [str], "postfix")
-    type_check(opened, [bool], "opened")
-    type_check(creation_options, [list], "creation_options")
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    core_utils.type_check(dst_nodata, [float, int, str, list, None], "dst_nodata")
+    core_utils.type_check(out_path, [list, str, None], "out_path")
+    core_utils.type_check(overwrite, [bool], "overwrite")
+    core_utils.type_check(prefix, [str], "prefix")
+    core_utils.type_check(suffix, [str], "postfix")
+    core_utils.type_check(opened, [bool], "opened")
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
 
-    rasters, out_names = ready_io_raster(
-        raster,
+    raster_list = core_utils.ensure_list(raster)
+    path_list = core_utils.generate_output_paths(
+        raster_list,
         out_path,
-        overwrite=overwrite,
         prefix=prefix,
-        postfix=postfix,
+        suffix=suffix,
+        overwrite=overwrite,
     )
 
     rasters_metadata = []
@@ -173,11 +158,11 @@ def raster_set_nodata(
 
     output_rasters = []
 
-    for index, internal_raster in enumerate(rasters):
+    for index, internal_raster in enumerate(raster_list):
 
         raster_metadata = None
         if len(rasters_metadata) == 0:
-            raster_metadata = raster_to_metadata(internal_raster)
+            raster_metadata = core_raster._raster_to_metadata(internal_raster)
 
             if not isinstance(raster_metadata, dict):
                 raise Exception("Metadata is in the wrong format.")
@@ -187,7 +172,7 @@ def raster_set_nodata(
             raster_metadata = rasters_metadata[index]
 
         if dst_nodata == "infer":
-            internal_dst_nodata = gdal_nodata_value_from_type(
+            internal_dst_nodata = gdal_enums.translate_gdal_dtype_to_str(
                 raster_metadata["dtype_gdal_raw"]
             )
         elif isinstance(dst_nodata, list):
@@ -204,13 +189,13 @@ def raster_set_nodata(
             raster_mem = None
 
             if out_path is None:
-                raster_mem = raster_to_memory(internal_raster)
+                raster_mem = gdal_utils.save_dataset_to_memory(internal_raster)
             else:
-                remove_if_overwrite(out_names[index], overwrite)
-                raster_mem = raster_to_disk(internal_raster, out_names[index])
+                core_utils.remove_if_required(path_list[index], overwrite)
+                raster_mem = gdal_utils.save_dataset_to_disk(internal_raster, path_list[index])
 
             for band in range(raster_metadata["bands"]):
-                raster_mem_ref = open_raster(raster_mem)
+                raster_mem_ref = core_raster._open_raster(raster_mem)
                 raster_band = raster_mem_ref.GetRasterBand(band + 1)
                 raster_band.SetNodataValue(internal_dst_nodata)
 
@@ -228,7 +213,7 @@ def raster_remove_nodata(
     overwrite=True,
     prefix="",
     postfix="_nodata_removed",
-    creation_options=[],
+    creation_options=None,
 ):
     """Removes all the nodata from a raster or a list of rasters.
 
@@ -258,7 +243,7 @@ def raster_remove_nodata(
         in_place=in_place,
         overwrite=overwrite,
         prefix=prefix,
-        postfix=postfix,
+        suffix=postfix,
         creation_options=creation_options,
     )
 
@@ -306,17 +291,17 @@ def raster_mask_values(
         changed orignal is returned, otherwise a copied memory raster or the path to the
         generated raster is outputted.
     """
-    type_check(raster, [list, str, gdal.Dataset], "raster")
-    type_check(values_to_mask, [list], "values_to_mask")
-    type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(include_original_nodata, [bool], "include_original_nodata")
-    type_check(dst_nodata, [float, int, str, list], "dst_nodata", allow_none=True)
-    type_check(in_place, [bool], "in_place")
-    type_check(overwrite, [bool], "overwrite")
-    type_check(prefix, [str], "prefix")
-    type_check(postfix, [str], "postfix")
-    type_check(opened, [bool], "opened")
-    type_check(creation_options, [list], "creation_options")
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    core_utils.type_check(values_to_mask, [[int, float, None]], "values_to_mask")
+    core_utils.type_check(out_path, [[str], str, None], "out_path")
+    core_utils.type_check(include_original_nodata, [bool], "include_original_nodata")
+    core_utils.type_check(dst_nodata, [float, int, str, [float, int, str, None], None], "dst_nodata")
+    core_utils.type_check(in_place, [bool], "in_place")
+    core_utils.type_check(overwrite, [bool], "overwrite")
+    core_utils.type_check(prefix, [str], "prefix")
+    core_utils.type_check(postfix, [str], "postfix")
+    core_utils.type_check(opened, [bool], "opened")
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
 
     rasters_metadata = []
     internal_in_place = in_place if out_path is None else False

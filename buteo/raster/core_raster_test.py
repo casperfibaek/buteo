@@ -24,6 +24,7 @@ def test_image_paths():
 
 # Start tests
 def test_raster_to_array():
+    """Test: Convert raster to array"""
     b04_arr = raster_to_array(s2_b04)
     tci_arr = raster_to_array(s2_tci)
 

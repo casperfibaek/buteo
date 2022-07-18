@@ -38,15 +38,18 @@ def _clip_raster(
     src_nodata="infer",
     layer_to_clip=0,
     prefix="",
-    postfix="",
+    suffix="",
     verbose=1,
-    uuid=False,
+    add_uuid=False,
     ram="auto",
 ):
     """ INTERNAL. """
-
-    _, path_list = bob(
-        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix, add_uuid=uuid
+    path_list = core_utils.generate_output_paths(
+        raster,
+        out_path=out_path,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
     )
 
     if out_path is not None:
@@ -206,89 +209,88 @@ def clip_raster(
     *,
     resample_alg="nearest",
     crop_to_geom=True,
-    adjust_bbox=True,
-    all_touch=True,
+    adjust_bbox=False,
+    all_touch=False,
     to_extent=False,
     prefix="",
-    postfix="",
+    suffix="",
     overwrite=True,
-    creation_options=[],
+    creation_options=None,
     dst_nodata="infer",
     src_nodata="infer",
     layer_to_clip=0,
-    verbose=1,
-    uuid=False,
-    ram=8000,
+    verbose=0,
+    add_uuid=False,
+    ram="auto",
 ):
-    """Clips a raster(s) using a vector geometry or the extents of
-        a raster.
-
-    Args:
-        raster(s) (list, path | raster): The raster(s) to clip.
-
-        clip_geom (path | vector | raster): The geometry to use to clip
-        the raster
-
-    **kwargs:
-        out_path (list, path | None): The destination to save to. If None then
-        the output is an in-memory raster.
-
-        resample_alg (str): The algorithm to resample the raster. The following
-        are available:
-            'nearest', 'bilinear', 'cubic', 'cubicSpline', 'lanczos', 'average',
-            'mode', 'max', 'min', 'median', 'q1', 'q3', 'sum', 'rms'.
-
-        crop_to_geom (bool): Should the extent of the raster be clipped
-        to the extent of the clipping geometry.
-
-        all_touch (bool): Should all the pixels touched by the clipped
-        geometry be included or only those which centre lie within the
-        geometry.
-
-        overwite (bool): Is it possible to overwrite the out_path if it exists.
-
-        creation_options (list): A list of options for the GDAL creation. Only
-        used if an out_path is specified. Defaults are:
-            "TILED=YES"
-            "NUM_THREADS=ALL_CPUS"
-            "BIGG_TIF=YES"
-            "COMPRESS=LZW"
-
-        dst_nodata (str | int | float): If dst_nodata is 'infer' the destination nodata
-        is the src_nodata if one exists, otherwise it's automatically chosen based
-        on the datatype. If an int or a float is given, it is used as the output nodata.
-
-        layer_to_clip (int): The layer in the input vector to use for clipping.
-
-    Returns:
-        An in-memory raster. If an out_path is given the output is a string containing
-        the path to the newly created raster.
     """
-    core_utils.type_check(raster, [list, str, gdal.Dataset], "raster")
+    Clips a raster(s) using a vector geometry or the extents of a raster.
+
+    ## Args:
+    `raster` (_list_ || _str_ || _gdal.Dataset_): The raster(s) to clip. </br>
+    `clip_geom` (_str_ || _ogr.DataSource_ || _gdal.Dataset_): The geometry to use to clip the raster </br>
+
+    ## Kwargs:
+    `out_path` (_str_ || _list_ || _None_): The path(s) to save the clipped raster to. If None a memory raster is created. (Default: **None**)</br>
+    `resample_alg` (_str_): The resampling algorithm to use. The following are available: (Default: **nearest**) </br>
+        * `nearest`: Nearest neighbour.
+        * `bilinear`: Bilinear.
+        * `cubic`: Cubic.
+        * `cubicspline`: Cubic spline.
+        * `lanczos`: Lanczos.
+        * `average`: Average.
+        * `mode`: Mode.
+        * `max`: Max.
+        * `min`: Min.
+        * `median`: Median.
+        * `q1`: Quartile 1
+        * `q3`: Quartile 3
+        * `sum`: Sum
+        * `rms`: Root Mean Squared
+    `crop_to_geom` (_bool_): If True, the output raster will be cropped to the extent of the clip geometry. (Default: **True**)</br>
+    `adjust_bbox` (_bool_): If True, the output raster have its bbox adjusted to match the clip geometry. (Default: **False**)</br>
+    `all_touch` (_bool_): If true all pixels touching the clipping geometry will be included. (Default: **False**)</br>
+    `to_extent` (_bool_): If True, the output raster will be cropped to the extent of the clip geometry. (Default: **False**)</br>
+    `prefix` (_str_): The prefix to use for the output raster. (Default: **""**)</br>
+    `suffix` (_str_): The suffix to use for the output raster. (Default: **""**)</br>
+    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**)</br>
+    `creation_options` (_list_ || _None_): A list of creation options to pass to gdal. (Default: **[]**)</br>
+    `dst_nodata` (_int_ || _float_ || _None_): The nodata value to use for the output raster. (Default: **infer**)</br>
+    `src_nodata` (_int_ || _float_ || _None_): The nodata value to use for the input raster. (Default: **infer**)</br>
+    `layer_to_clip` (_int_): The layer ID in the vector to use for clipping. (Default: **0**)</br>
+    `verbose` (_int_): The verbosity level. (Default: **0**)</br>
+    `add_uuid` (_bool_): If True, a UUID will be added to the output raster. (Default: **False**)</br>
+    `ram` (_str_): The amount of RAM to use for the operation. (Default: **auto**)</br>
+
+    ## Returns:
+    (_str_ || _list_): A string or list of strings representing the path(s) to the clipped raster(s).
+    """
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_geom")
-    core_utils.type_check(out_path, [list, str], "out_path", allow_none=True)
+    core_utils.type_check(out_path, [[str], str, None], "out_path")
     core_utils.type_check(resample_alg, [str], "resample_alg")
     core_utils.type_check(crop_to_geom, [bool], "crop_to_geom")
     core_utils.type_check(adjust_bbox, [bool], "adjust_bbox")
     core_utils.type_check(all_touch, [bool], "all_touch")
     core_utils.type_check(to_extent, [bool], "to_extent")
-    core_utils.type_check(dst_nodata, [str, int, float], "dst_nodata", allow_none=True)
-    core_utils.type_check(src_nodata, [str, int, float], "src_nodata", allow_none=True)
+    core_utils.type_check(dst_nodata, [str, int, float, None], "dst_nodata")
+    core_utils.type_check(src_nodata, [str, int, float, None], "src_nodata")
     core_utils.type_check(layer_to_clip, [int], "layer_to_clip")
     core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(creation_options, [list], "creation_options")
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
     core_utils.type_check(prefix, [str], "prefix")
-    core_utils.type_check(postfix, [str], "postfix")
+    core_utils.type_check(suffix, [str], "postfix")
     core_utils.type_check(verbose, [int], "verbose")
-    core_utils.type_check(uuid, [bool], "uuid")
+    core_utils.type_check(add_uuid, [bool], "uuid")
 
-    raster_list, path_list = bob(
-        raster,
-        out_path,
-        overwrite=overwrite,
+    raster_list = core_utils.ensure_list(raster)
+    path_list = core_utils.generate_output_paths(
+        raster_list,
+        out_path=out_path,
         prefix=prefix,
-        postfix=postfix,
-        add_uuid=uuid,
+        postfix=suffix,
+        add_uuid=add_uuid,
+        overwrite=overwrite,
     )
 
     output = []
@@ -309,9 +311,9 @@ def clip_raster(
                 overwrite=overwrite,
                 creation_options=creation_options,
                 prefix=prefix,
-                postfix=postfix,
+                suffix=suffix,
                 verbose=verbose,
-                ram=ram,
+                ram=core_utils.get_dynamic_memory_limit_bytes(ram),
             )
         )
 
