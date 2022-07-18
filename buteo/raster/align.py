@@ -97,7 +97,7 @@ def align_rasters(
     dst_nodata="infer",
     prefix="",
     suffix="_aligned",
-    ram=8000,
+    ram="auto",
 ):
     """
     Aligns a series of rasters to a master raster or specified requirements.
@@ -120,7 +120,8 @@ def align_rasters(
     `dst_nodata` (_str_ || _int_ || _float_ || _None_): The destination dataset of the align sets. (Default: **"infer"**) </br>
     `prefix`: (_str_): Prefix to add to the output rasters. (Default: **""**) </br>
     `suffix`: (_str_): Suffix to add to the output rasters. (Default: **""**) </br>
-    `ram`: (_int_): The ram available to **GDAL** for the processing. (Default: **8000**) </br>
+    `ram`: (_int_ || _str_): The ram available to **GDAL** for the processing in MB or percentage.
+    If auto 80% of available ram is allowed. (Default: **auto**) </br>
 
     ## Return:
     (_list_): A list of paths to the aligned rasters.
@@ -455,7 +456,7 @@ def align_rasters(
             targetAlignedPixels=False,
             cropToCutline=False,
             multithread=True,
-            warpMemoryLimit=ram,
+            warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
         )
 
         if warped is None:

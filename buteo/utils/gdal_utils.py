@@ -688,6 +688,46 @@ def to_path_list(str_or_list_of_str):
     return return_list
 
 
+def get_gdalwarp_ram_limit(limit_in_mb):
+    """
+    Converts a RAM limit to a GDALWarp RAM limit.
+
+    ## Args:
+    `limit` (_str_ || _int_): The RAM limit to convert. Can be auto, a percentage "80%" or a number in MB.
+
+    ## Returns:
+    (_int_): The GDALWarp RAM limit in bytes.
+    """
+    assert isinstance(limit_in_mb, (str, int)), "limit must be a string or integer."
+
+    min_ram = 1000000
+    limit = min_ram
+
+    if isinstance(limit_in_mb, str):
+        if limit_in_mb.lower() == "auto":
+            return core_utils.get_dynamic_memory_limit_bytes()
+        else:
+            if "%" not in limit_in_mb:
+                raise ValueError(f"Invalid limit: {limit_in_mb}")
+
+            limit_in_percentage = limit_in_mb.replace("%", "")
+            limit_in_percentage = int(limit_in_percentage)
+
+            if limit_in_percentage <= 0 or limit_in_percentage > 100:
+                raise ValueError(f"Invalid limit: {limit_in_mb}")
+
+            limit = core_utils.get_percentage_of_total_ram_mb(limit_in_percentage) * (1024 ** 2)
+
+            if limit > min_ram:
+                return limit
+
+    if limit > min_ram:
+        return int(limit_in_mb * (1024 ** 2))
+
+    return min_ram
+
+
+
 def to_array_list(array_or_list_of_array):
     """
     Converts a numpy array or list of numpy arrays to a list of arrays.

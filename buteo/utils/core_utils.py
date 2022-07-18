@@ -9,6 +9,7 @@ import os
 import sys
 import time
 import shutil
+import psutil
 from glob import glob
 from uuid import uuid4
 from datetime import datetime
@@ -712,3 +713,75 @@ def timing(before, print_msg=True):
         print(message)
 
     return message
+
+
+def get_available_ram_mb():
+    """
+    Get the available RAM in MB.
+
+    ## Returns:
+    (_float_): The available RAM in MB.
+    """
+    return psutil.virtual_memory().available / (1024 ** 2)
+
+
+def get_total_ram_mb():
+    """
+    Get the total RAM in MB.
+
+    ## Returns:
+    (_float_): The total RAM in MB.
+    """
+    return psutil.virtual_memory().total / (1024 ** 2)
+
+
+def get_percentage_of_available_ram_mb(percentage):
+    """
+    Get the available RAM in MB.
+
+    ## Args:
+    `percentage` (_float_): The percentage of available RAM to return. </br>
+
+    ## Returns:
+    (_float_): The available RAM in MB.
+    """
+    return round(get_available_ram_mb() * (percentage / 100.0), 3)
+
+
+def get_percentage_of_total_ram_mb(percentage):
+    """
+    Get the total RAM in MB.
+
+    ## Args:
+    `percentage` (_float_): The percentage of total RAM to return. </br>
+
+    ## Returns:
+    (_float_): The total RAM in MB.
+    """
+    return round(get_total_ram_mb() * (percentage / 100.0), 3)
+
+
+def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, available=True):
+    """
+    Returns a dynamic memory limit taking into account total memory and CPU cores.
+
+    ## Args:
+    `percentage` (_int_): The percentage of the total memory to use. (Default: **80**)
+
+    ## Returns:
+    (_int_): The dynamic memory limit in bytes.
+    """
+    assert isinstance(percentage, int), "percentage must be an integer."
+    assert percentage > 0.0 and percentage <= 100.0, "percentage must be > 0 and <= 100."
+
+    dyn_limit = min_bytes
+
+    if available:
+        dyn_limit = round(psutil.virtual_memory().available * (percentage / 100.0), 0)
+    else:
+        dyn_limit = round(psutil.virtual_memory().total * (percentage / 100.0), 0)
+
+    if dyn_limit < min_bytes:
+        dyn_limit = min_bytes
+
+    return int(dyn_limit)
