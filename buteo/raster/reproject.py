@@ -1,34 +1,22 @@
 """
+### Reproject rasters. ###
+
 Module to reproject rasters to a target coordinate reference system.
 Can uses references from vector or other raster datasets.
-
-TODO:
-    - Remove typings
-    - Improve documentations
-    - Remove internal function.
 """
 
-import sys; sys.path.append("../../") # Path: buteo/raster/reproject.py
+# Standard library
+import sys; sys.path.append("../../")
 
+# External
 from osgeo import gdal, ogr, osr
 
-from buteo.utils.core_utils import remove_if_overwrite, type_check
-from buteo.utils.gdal_utils import (
-    parse_projection,
-    path_to_driver_raster,
-    default_options,
-    translate_resample_method,
-    gdal_nodata_value_from_type,
-)
-from buteo.raster.core_raster import (
-    get_raster_path,
-    open_raster,
-    ready_io_raster,
-    raster_to_metadata,
-)
+# Internal
+from buteo.utils import core_utils, gdal_utils, gdal_enums
+from buteo.raster import core_raster
 
 
-# format should be _
+
 def _reproject_raster(
     raster,
     projection,
@@ -37,42 +25,32 @@ def _reproject_raster(
     resample_alg="nearest",
     copy_if_same=True,
     overwrite=True,
-    creation_options=[],
+    creation_options=None,
     dst_nodata="infer",
     prefix="",
-    postfix="_reprojected",
+    suffix="",
+    add_uuid=False,
 ):
-    """OBS: Internal. Single output.
-
-    Reproject a raster(s) to a target coordinate reference system.
-    """
-    type_check(raster, [str, gdal.Dataset], "raster")
-    type_check(
-        projection,
-        [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-        "projection",
+    """ Internal. """
+    raster_list = core_utils.ensure_list(raster)
+    path_list = core_utils.generate_output_paths(
+        raster_list,
+        out_path=out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
     )
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(resample_alg, [str], "resample_alg")
-    type_check(copy_if_same, [bool], "copy_if_already_correct")
-    type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list], "creation_options")
-    type_check(dst_nodata, [str, int, float], "dst_nodata")
-    type_check(prefix, [str], "prefix")
-    type_check(postfix, [str], "postfix")
 
-    raster_list, path_list = ready_io_raster(
-        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix
-    )
     out_name = path_list[0]
-    ref = open_raster(raster_list[0])
-    metadata = raster_to_metadata(ref)
+    ref = core_raster._open_raster(raster_list[0])
+    metadata = core_raster._raster_to_metadata(ref)
 
-    out_creation_options = default_options(creation_options)
-    out_format = path_to_driver_raster(out_name)
+    out_creation_options = gdal_utils.default_creation_options(creation_options)
+    out_format = gdal_utils.path_to_driver_raster(out_name)
 
-    original_projection = parse_projection(ref)
-    target_projection = parse_projection(projection)
+    original_projection = gdal_utils.parse_projection(ref)
+    target_projection = gdal_utils.parse_projection(projection)
 
     if not isinstance(original_projection, osr.SpatialReference):
         raise Exception("Error while parsing input projection.")
@@ -82,7 +60,7 @@ def _reproject_raster(
 
     if original_projection.IsSame(target_projection):
         if not copy_if_same:
-            return get_raster_path(ref)
+            return gdal_utils.get_path_from_dataset(ref)
 
     src_nodata = metadata["nodata_value"]
     out_nodata = None
@@ -90,13 +68,13 @@ def _reproject_raster(
         out_nodata = src_nodata
     else:
         if dst_nodata == "infer":
-            out_nodata = gdal_nodata_value_from_type(metadata["datatype_gdal_raw"])
+            out_nodata = gdal_enums.translate_gdal_dtype_to_str(metadata["datatype_gdal_raw"])
         elif isinstance(dst_nodata, str):
             raise TypeError(f"dst_nodata is in a wrong format: {dst_nodata}")
         else:
             out_nodata = dst_nodata
 
-    remove_if_overwrite(out_path, overwrite)
+    core_utils.remove_if_required(out_path, overwrite)
 
     reprojected = gdal.Warp(
         out_name,
@@ -104,7 +82,7 @@ def _reproject_raster(
         format=out_format,
         srcSRS=original_projection,
         dstSRS=target_projection,
-        resampleAlg=translate_resample_method(resample_alg),
+        resampleAlg=gdal_enums.translate_resample_method(resample_alg),
         creationOptions=out_creation_options,
         srcNodata=metadata["nodata_value"],
         dstNodata=out_nodata,
@@ -125,62 +103,54 @@ def reproject_raster(
     resample_alg="nearest",
     copy_if_same=True,
     overwrite=True,
-    creation_options=[],
+    creation_options=None,
     dst_nodata="infer",
     prefix="",
-    postfix="_reprojected",
+    suffix="_reprojected",
+    add_uuid=False,
 ):
-    """Reproject a raster(s) to a target coordinate reference system.
-
-    Args:
-        raster(s) (list, path | raster): The raster(s) to reproject.
-
-        projection (str | int | vector | raster): The projection is infered from
-        the input. The input can be: WKT proj, EPSG proj, Proj, osr proj, or read
-        from a vector or raster datasource either from path or in-memory.
-
-    **kwargs:
-        out_path (list, path | None): The destination to save to. If None then
-        the output is an in-memory raster.
-
-        resample_alg (str): The algorithm to resample the raster. The following
-        are available:
-            'nearest', 'bilinear', 'cubic', 'cubicSpline', 'lanczos', 'average',
-            'mode', 'max', 'min', 'median', 'q1', 'q3', 'sum', 'rms'.
-
-        overwite (bool): Is it possible to overwrite the out_path if it exists.
-
-        creation_options (list): A list of options for the GDAL creation. Only
-        used if an out_path is specified. Defaults are:
-            "TILED=YES"
-            "NUM_THREADS=ALL_CPUS"
-            "BIGG_TIF=YES"
-            "COMPRESS=LZW"
-
-        dst_nodata (str | int | float): If dst_nodata is 'infer' the destination nodata
-        is the src_nodata if one exists, otherwise it's automatically chosen based
-        on the datatype. If an int or a float is given, it is used as the output nodata.
-
-    Returns:
-        An in-memory raster. If an out_path is given the output is a string containing
-        the path to the newly created raster.
     """
-    type_check(raster, [list, str, gdal.Dataset], "raster")
-    type_check(
-        projection,
-        [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-        "projection",
-    )
-    type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(resample_alg, [str], "resample_alg")
-    type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list], "creation_options")
-    type_check(dst_nodata, [str, int, float], "dst_nodata")
-    type_check(prefix, [str], "prefix")
-    type_check(postfix, [str], "postfix")
+    Reproject a raster(s) to a target coordinate reference system.
 
-    raster_list, path_list = ready_io_raster(
-        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix
+    ## Args:
+    `raster` (_str_ || _list_ || _gdal.Dataset): The raster(s) to reproject. </br>
+    `projection` (_str_ || _int_ || _ogr.DataSource_ || _gdal.Dataset_): The projection is infered from
+    the input. The input can be: WKT proj, EPSG proj, Proj, osr proj, or read
+    from a vector or raster datasource either from path or in-memory. </br>
+
+    ## Kwargs:
+    `out_path` (_str_ || _None_): The output path. If not provided, the output path is inferred from the input. (Default: **None**) </br>
+    `resample_alg` (_str_): The resampling algorithm. (Default: **nearest**) </br>
+    `copy_if_same` (_bool_): If the input and output projections are the same, copy the input raster to the output path. (Default: **True**) </br>
+    `overwrite` (_bool_): If the output path already exists, overwrite it. (Default: **True**) </br>
+    `creation_options` (_list_ || _None_): A list of creation options for the output raster. (Default: **None**) </br>
+    `dst_nodata` (_str_ || _int_ || _float_): The nodata value for the output raster. (Default: **infer**) </br>
+    `prefix` (_str_): The prefix to add to the output path. (Default: **""**) </br>
+    `suffix` (_str_): The suffix to add to the output path. (Default: **"_reprojected"**) </br>
+    `add_uuid` (_bool_): If True, add a UUID to the output path. (Default: **False**) </br>
+
+    ## Returns:
+    (_str_ || _list_) The output path(s) of the reprojected raster(s).
+    """
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    core_utils.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
+    core_utils.type_check(out_path, [list, str, None], "out_path")
+    core_utils.type_check(resample_alg, [str], "resample_alg")
+    core_utils.type_check(overwrite, [bool], "overwrite")
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
+    core_utils.type_check(dst_nodata, [str, int, float], "dst_nodata")
+    core_utils.type_check(prefix, [str], "prefix")
+    core_utils.type_check(suffix, [str], "postfix")
+    core_utils.type_check(add_uuid, [bool], "add_uuid")
+
+    raster_list = core_utils.ensure_list(raster)
+    path_list = core_utils.generate_output_paths(
+        raster_list,
+        out_path=out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
     )
 
     output = []
@@ -196,7 +166,7 @@ def reproject_raster(
                 creation_options=creation_options,
                 dst_nodata=dst_nodata,
                 prefix=prefix,
-                postfix=postfix,
+                suffix=suffix,
             )
         )
 
