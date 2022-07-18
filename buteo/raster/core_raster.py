@@ -20,6 +20,7 @@ from osgeo import gdal, osr
 from buteo.utils import bbox_utils, core_utils, gdal_utils, gdal_enums
 
 
+
 def _open_raster(raster, *, writeable=True):
     """ **INTERNAL**. """
     assert isinstance(raster, (gdal.Dataset, str)), "raster must be a string or a gdal.Dataset"
@@ -58,7 +59,7 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     ## Returns:
     (_gdal.Dataset_ || _list__): A gdal.Dataset or a list of gdal.Datasets.
     """
-    core_utils.type_check(raster, [list, str, gdal.Dataset], "raster")
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(writeable, [bool], "writeable")
 
     if not allow_lists and isinstance(raster, list):
@@ -75,57 +76,6 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
             list_return.append(_open_raster(in_raster, writeable=writeable))
         except Exception:
             raise ValueError(f"Could not open raster: {in_raster}") from None
-
-    if isinstance(raster, list):
-        return list_return
-
-    return list_return[0]
-
-
-def _get_raster_path(raster):
-    """ **INTERNAL**. """
-    assert isinstance(raster, (gdal.Dataset, str)), "raster must be a string or a gdal.Dataset"
-
-    opened = _open_raster(raster)
-
-    try:
-        path = opened.GetDescription()
-    except Exception:
-        raise ValueError(f"Could not read input raster: {raster}") from None
-
-    return path
-
-
-def get_raster_path(raster, *, allow_lists=True):
-    """
-    Takes a raster path or a gdal.Dataset and returns its path if it is a valid raster.
-
-    ## Args:
-    `raster`(_gdal.Dataset_ || _str_ || _list__): A GDAL dataframe or a path to a raster. </br>
-
-    ## Kwargs:
-    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
-    a single raster is allowed. (Default: **True**) </br>
-
-    ## Returns:
-    (_str_ || _list_): A string or list of strings representing the path(s) to the raster(s).
-    """
-    core_utils.type_check(raster, [list, str, gdal.Dataset], "raster")
-
-    if not allow_lists and isinstance(raster, list):
-        raise ValueError("Input raster must be a single raster.")
-
-    if not allow_lists:
-        return _get_raster_path(raster)
-
-    list_input = core_utils.ensure_list(raster)
-    list_return = []
-
-    for in_raster in list_input:
-        try:
-            list_return.append(_get_raster_path(in_raster))
-        except Exception:
-            raise ValueError(f"Could not get raster path: {in_raster}") from None
 
     if isinstance(raster, list):
         return list_return
@@ -253,7 +203,7 @@ def raster_to_metadata(raster, *, allow_lists=True):
     ## Returns:
     (_dict_ || _list_): A dictionary or list of dictionaries containing metadata.
     """
-    core_utils.type_check(raster, [str, gdal.Dataset], "raster")
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
     if not allow_lists and isinstance(raster, list):
         raise ValueError("Input raster must be a single raster.")
@@ -274,106 +224,6 @@ def raster_to_metadata(raster, *, allow_lists=True):
         return list_return
 
     return list_return[0]
-
-
-def ready_io_raster(
-    raster,
-    out_path=None,
-    *,
-    overwrite=True,
-    prefix="",
-    suffix="",
-    add_uuid=False,
-):
-    """
-    Prepares a raster or a list of rasters for writing. Generates output paths. If no output paths are
-    specified, the rasters are written to memory. If a folder is given, the output directory is chosen
-    are the input filenames remain the same. If a specific path is used it must be the same length as the
-    input.
-
-    ## Args:
-    `raster` (_gdal.Dataset_ || _str_ || _list__): A GDAL dataframe, a path to a raster or a list of same. </br>
-
-    ## Kwargs:
-    `out_path` (_str_ || _None_): A path to a directory to write the raster to. (Default: **None**). </br>
-    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). </br>
-    `prefix` (_str_): A string to prepend to the output filename. (Default: **""**). </br>
-    `suffix` (_str_): A string to append to the output filename. (Default: **""**). </br>
-    `uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). </br>
-
-    ## Returns:
-    (_str_ || _list_): A path to the output raster or a list of paths.
-    """
-    core_utils.type_check(raster, [list, str, gdal.Dataset], "raster")
-    core_utils.type_check(out_path, [list, str], "out_path", allow_none=True)
-    core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(prefix, [str], "prefix")
-    core_utils.type_check(suffix, [str], "suffix")
-    core_utils.type_check(add_uuid, [str], "uuid")
-
-    raster_list = get_raster_path(core_utils.ensure_list(raster))
-
-    if isinstance(out_path, list) and len(raster_list) != len(out_path):
-        raise ValueError(
-            "The length of raster_list must equal the length of the out_path"
-        )
-
-    # Check if folder exists and is required.
-    test_out_path = [out_path] if not isinstance(out_path, list) else out_path
-    for path in test_out_path:
-        if isinstance(path, str):
-            if "vsimem" in path:
-                continue
-            if os.path.basename(path) == "" and not os.path.isdir(
-                os.path.abspath(path)
-            ):
-                raise ValueError(
-                    f"Output folder does not exist. Please create first. {path}"
-                )
-            elif os.path.dirname(path) == "" or not os.path.isdir(
-                os.path.dirname(path)
-            ):
-                raise ValueError(
-                    f"Output folder does not exist. Please create first. {os.path.dirname(path)}"
-                )
-
-    # Generate output names
-    path_list = []
-    for index, in_raster in enumerate(raster_list):
-        metadata = raster_to_metadata(in_raster)
-
-        name = metadata["name"]
-
-        path = ""
-        if out_path is None:
-            path = core_utils.get_memory_path(name, prefix=prefix, suffix=suffix, add_uuid=add_uuid)
-
-        elif isinstance(out_path, str):
-            if core_utils.folder_exists(out_path):
-                path = core_utils.get_path(name, prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=out_path)
-            elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
-                path = out_path
-            else:
-                raise ValueError(f"Unable to parse out_path: {out_path}")
-
-        elif isinstance(out_path, list):
-            if out_path[index] is None:
-                path = core_utils.get_memory_path(name, prefix=prefix, suffix=suffix, add_uuid=add_uuid)
-            elif isinstance(out_path[index], str):
-                path = out_path[index]
-            else:
-                raise ValueError(f"Unable to parse out_path: {out_path}")
-
-        else:
-            raise ValueError(f"Unable to parse out_path: {out_path}")
-
-        core_utils.overwrite_required(path, overwrite)
-        path_list.append(path)
-
-    path_originals = raster_list
-    path_destinations = path_list
-
-    return (path_originals, path_destinations)
 
 
 def rasters_are_aligned(
@@ -400,7 +250,7 @@ def rasters_are_aligned(
     ## Returns:
     (_bool_): **True** if rasters and aligned and optional parameters are True, **False** otherwise.
     """
-    core_utils.type_check(rasters, [list], "rasters")
+    core_utils.type_check(rasters, [[str, gdal.Dataset]], "rasters")
     core_utils.type_check(same_extent, [bool], "same_extent")
     core_utils.type_check(same_dtype, [bool], "same_dtype")
     core_utils.type_check(same_nodata, [bool], "same_nodata")
@@ -484,90 +334,6 @@ def rasters_are_aligned(
     return True
 
 
-def _copy_raster_to_memory(
-    raster,
-    *,
-    copy_if_in_memory=False,
-    prefix="",
-    suffix="",
-    add_uuid=True,
-):
-    """ **INTERNAL**. """
-    assert isinstance(raster, (str, gdal.Dataset)), f"raster must be a string or gdal.Dataset. Received: {raster}"
-
-    ref = _open_raster(raster)
-    path = _get_raster_path(ref)
-
-    if not copy_if_in_memory and gdal_utils.is_in_memory(path):
-        return path
-
-    mem_path = core_utils.get_memory_path(path, prefix=prefix, suffix=suffix, add_uuid=add_uuid)
-
-    driver = gdal.GetDriverByName("GTiff")
-    driver.CreateCopy(mem_path, ref, options=gdal_utils.default_creation_options())
-
-    return mem_path
-
-
-def copy_raster_to_memory(
-    raster,
-    *,
-    copy_if_in_memory=False,
-    prefix="",
-    suffix="",
-    add_uuid=True,
-    allow_lists=True,
-):
-    """
-    Takes a file path or a gdal raster dataset and copies it to memory.
-
-    ## Args:
-    `file_path` (_str_ || _gdal.Dataset_ || _list_): A path to a raster, a GDAL dataframe or list of same.
-
-    ## Kwargs:
-    `copy_if_in_memory` (_bool_): If **True** it copies the raster, even if it is already in memory. </br> (Default: **False**)
-    `prefix` (_str_): A prefix to add to the raster name. </br> (Default: **""**)
-    `suffix` (_str_): A suffix to add to the raster name. </br> (Default: **""**)
-    `add_uuid` (_bool_): If True, a UUID is added to the raster name. </br> (Default: **True**)
-    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
-    a single raster is allowed. (Default: **True**) </br>
-
-    ## Returns:
-    (_gdal.Dataset_ || _list_): A path to a gdal.Dataset in memory or list of same.
-    """
-    core_utils.type_check(raster, [list, str, gdal.Dataset], "raster")
-
-    if not allow_lists and isinstance(raster, list):
-        raise ValueError("Input raster must be a single raster.")
-
-    if not allow_lists:
-        return _copy_raster_to_memory(raster, copy_if_in_memory=copy_if_in_memory, prefix=prefix, suffix=suffix, add_uuid=add_uuid)
-
-    input_list = core_utils.ensure_list(raster)
-    output = []
-
-    assert gdal_utils.is_raster_list(input_list), f"Invalid rasters in list. Received: {raster}"
-
-    for in_raster in input_list:
-        try:
-            output.append(
-                _copy_raster_to_memory(
-                    in_raster,
-                    copy_if_in_memory=copy_if_in_memory,
-                    prefix=prefix,
-                    suffix=suffix,
-                    add_uuid=add_uuid,
-                )
-            )
-        except Exception:
-            raise ValueError(f"Could not copy raster to memory: {in_raster}") from None
-
-    if not isinstance(raster, list):
-        return output[0]
-
-    return output
-
-
 def raster_to_array(
     raster,
     *,
@@ -605,12 +371,19 @@ def raster_to_array(
     (_np.ndarray_): A numpy array in the 3D channel-last format unless output_2D is
     specified. </br>
     """
-    core_utils.type_check(raster, [list, str, gdal.Dataset], "raster")
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(bands, [int, list], "bands")
     core_utils.type_check(filled, [bool], "filled")
     core_utils.type_check(output_2d, [bool], "output_2d")
+    core_utils.type_check(bbox, [list, None], "bbox")
+    core_utils.type_check(pixel_offsets, [list, None], "pixel_offsets")
 
-    internal_rasters = get_raster_path(core_utils.ensure_list(raster), allow_lists=True)
+    internal_rasters = core_utils.ensure_list(raster)
+
+    if not gdal_utils.is_raster_list(internal_rasters):
+        raise ValueError(f"An input raster is invalid. {internal_rasters}")
+
+    internal_rasters = gdal_utils.get_path_from_dataset_list(internal_rasters, dataset_type="raster")
 
     if not rasters_are_aligned(internal_rasters, same_extent=True, same_dtype=False):
         raise ValueError(
@@ -694,106 +467,6 @@ def raster_to_array(
     return np.dstack(layers)
 
 
-def _raster_to_disk(
-    raster,
-    out_path,
-    *,
-    overwrite=True,
-    creation_options=None,
-):
-    """ **INTERNAL**. """
-    assert isinstance(raster, (str, gdal.Dataset)), "raster must be a string or a GDAL.Dataset."
-    assert isinstance(out_path, str), "out_path must be a string."
-    assert len(out_path) > 0, "out_path must be a non-empty string."
-
-    ref = None
-
-    if gdal_utils.is_raster(raster):
-        ref = open_raster(raster)
-    else:
-        raise ValueError(f"Unable to open input raster: {raster}")
-
-    if not core_utils.folder_exists(core_utils.path_to_folder(out_path)):
-        raise ValueError(f"The output folder does not exist: {out_path}")
-
-    driver_name = gdal_utils.path_to_driver_raster(out_path)
-    driver = gdal.GetDriverByName(driver_name)
-
-    if driver is None:
-        raise ValueError(f"Unable to get driver for raster: {raster}")
-
-    use_path = out_path
-    if core_utils.folder_exists(out_path):
-        use_path = os.path.join(out_path, os.path.basename(get_raster_path(ref)))
-
-    core_utils.overwrite_required(out_path, overwrite)
-
-    driver.CreateCopy(use_path, ref, options=gdal_utils.default_creation_options(creation_options))
-
-    return out_path
-
-
-def raster_to_disk(
-    raster,
-    out_path,
-    *,
-    overwrite=True,
-    allow_lists=True,
-    creation_options=None,
-):
-    """
-    Saves or copies a raster to disk. Can be used to change datatype.
-    Input is either a filepath to a raster or a GDAL.Dataset.
-    The driver is infered from the file extension.
-
-    ## Args:
-    `raster` (_str_ || _gdal.Dataset_ || _list_): The raster to save to disk. </br>
-    `out_path` (_path_ || _list_): The destination to save to. </br>
-
-    ## Kwargs:
-    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) </br>
-    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
-    a single raster is allowed. </br> (Default: **True**)
-    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: </br>
-        * "TILED=YES"
-        * "NUM_THREADS=ALL_CPUS"
-        * "BIGG_TIF=YES"
-        * "COMPRESS=LZW"
-
-    ## Returns:
-    (_str_): The filepath for the newly created raster.
-    """
-    core_utils.type_check(raster, [list, str, gdal.Dataset], "raster")
-    core_utils.type_check(out_path, [list, str], "out_path")
-    core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(allow_lists, [bool], "allow_lists")
-    core_utils.type_check(creation_options, [list], "creation_options", allow_none=True)
-
-    if not allow_lists and isinstance(raster, list):
-        raise ValueError("Input raster must be a single raster.")
-
-    if not allow_lists:
-        return _raster_to_disk(raster, out_path, overwrite=overwrite, creation_options=creation_options)
-
-    output = []
-    raster_list, path_list = ready_io_raster(core_utils.ensure_list(raster), out_path, overwrite=overwrite)
-
-    for index, in_raster in enumerate(raster_list):
-        path = _raster_to_disk(
-            in_raster,
-            out_path=path_list[index],
-            overwrite=overwrite,
-            creation_options=gdal_utils.default_creation_options(creation_options),
-        )
-
-        output.append(path)
-
-    if isinstance(raster, list):
-        return output
-
-    return output[0]
-
-
 def _raster_set_datatype(
     raster,
     dtype_str,
@@ -815,10 +488,10 @@ def _raster_set_datatype(
 
     path = ""
     if out_path is None:
-        path = core_utils.get_memory_path(out_path)
+        path = gdal_utils.create_memory_path(metadata["basename"], add_uuid=True)
 
     elif core_utils.folder_exists(out_path):
-        path = os.path.join(out_path, os.path.basename(get_raster_path(ref)))
+        path = os.path.join(out_path, os.path.basename(gdal_utils.get_path_from_dataset(ref)))
 
     elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
         path = out_path
@@ -886,14 +559,29 @@ def raster_set_datatype(
     ## Returns:
     (_str_ || _list_): The filepath or list of filepaths to the newly created raster(s).
     """
-    core_utils.type_check(raster, [list, str, gdal.Dataset], "raster")
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(dtype, [str], "dtype")
-    core_utils.type_check(out_path, [list, str], "out_path", allow_none=True)
+    core_utils.type_check(out_path, [list, str, None], "out_path")
     core_utils.type_check(overwrite, [bool], "overwrite")
     core_utils.type_check(allow_lists, [bool], "allow_lists")
-    core_utils.type_check(creation_options, [list], "creation_options", allow_none=True)
+    core_utils.type_check(creation_options, [list, None], "creation_options")
 
-    raster_list, path_list = ready_io_raster(raster, out_path, overwrite=overwrite)
+    if not allow_lists:
+        if isinstance(raster, list):
+            raise ValueError("allow_lists is False, but the input raster is a list.")
+
+        return _raster_set_datatype(
+            raster,
+            dtype,
+            out_path=out_path,
+            overwrite=overwrite,
+            creation_options=creation_options,
+        )
+
+    add_uuid = out_path is None
+
+    raster_list = core_utils.ensure_list(raster)
+    path_list = core_utils.generate_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
 
     output = []
     for index, in_raster in enumerate(raster_list):
@@ -948,10 +636,10 @@ def array_to_raster(
     """
     core_utils.type_check(array, [np.ndarray, np.ma.MaskedArray], "array")
     core_utils.type_check(reference, [str, gdal.Dataset], "reference")
-    core_utils.type_check(out_path, [str], "out_path", allow_none=True)
+    core_utils.type_check(out_path, [str, None], "out_path")
     core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(set_nodata, [int, float, str], "set_nodata", allow_none=True)
-    core_utils.type_check(creation_options, [list], "creation_options", allow_none=True)
+    core_utils.type_check(set_nodata, [int, float, str, None], "set_nodata")
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
 
     # Verify the numpy array
     if (
@@ -1005,7 +693,7 @@ def array_to_raster(
 
     output_name = None
     if out_path is None:
-        output_name = core_utils.get_memory_path("array_to_raster.tif", add_uuid=True)
+        output_name = gdal_utils.create_memory_path("array_to_raster.tif", add_uuid=True)
     else:
         output_name = out_path
 
@@ -1070,11 +758,13 @@ def stack_rasters(
     ## Returns:
     (_str_ || _list_): The filepath(s) to the newly created raster(s).
     """
-    core_utils.type_check(rasters, [list], "rasters")
-    core_utils.type_check(out_path, [str], "out_path", allow_none=True)
+    core_utils.type_check(rasters, [[str, gdal.Dataset]], "rasters")
+    core_utils.type_check(out_path, [str, None], "out_path")
     core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(dtype, [str], "dtype", allow_none=True)
-    core_utils.type_check(creation_options, [list], "creation_options", allow_none=True)
+    core_utils.type_check(dtype, [str, None], "dtype")
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
+
+    assert gdal_utils.is_raster_list(rasters), "Input rasters must be a list of rasters."
 
     if not rasters_are_aligned(rasters, same_extent=True):
         raise ValueError("Rasters are not aligned. Try running align_rasters.")
@@ -1082,7 +772,7 @@ def stack_rasters(
     core_utils.overwrite_required(out_path, overwrite)
 
     # Ensures that all the input rasters are valid.
-    raster_list = get_raster_path(core_utils.ensure_list(rasters))
+    raster_list = gdal_utils.get_path_from_dataset_list(rasters)
 
     if out_path is not None and core_utils.path_to_ext(out_path) == ".vrt":
         raise ValueError("Please use stack_rasters_vrt to create vrt files.")
@@ -1098,7 +788,7 @@ def stack_rasters(
 
     output_name = None
     if out_path is None:
-        output_name = core_utils.get_memory_path("stack_rasters.tif", add_uuid=True)
+        output_name = gdal_utils.create_memory_path("stack_rasters.tif", add_uuid=True)
     else:
         output_name = out_path
 
@@ -1202,13 +892,13 @@ def stack_rasters_vrt(
     ## Returns:
     (_str_): The filepath to the newly created VRT raster.
     """
-    core_utils.type_check(rasters, [list], "rasters")
+    core_utils.type_check(rasters, [[str, gdal.Dataset]], "rasters")
     core_utils.type_check(out_path, [str], "out_path")
     core_utils.type_check(seperate, [bool], "seperate")
     core_utils.type_check(resample_alg, [str], "resample_alg")
     core_utils.type_check(options, [tuple], "options")
     core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(creation_options, [list], "creation_options", allow_none=True)
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
 
     resample_algorithm = gdal_enums.translate_resample_method(resample_alg)
 
@@ -1241,7 +931,7 @@ def rasters_intersect(raster1, raster2):
     ## Returns:
     (_bool_): If the rasters intersect.
     """
-    core_utils.type_check(raster1, [list, str, gdal.Dataset], "raster1")
+    core_utils.type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], "raster1")
     core_utils.type_check(raster2, [list, str, gdal.Dataset], "raster2")
 
     meta1 = raster_to_metadata(raster1)
@@ -1261,8 +951,8 @@ def rasters_intersection(raster1, raster2):
     ## Returns:
     (_ogr.DataSource_): The latlng intersection of the two rasters.
     """
-    core_utils.type_check(raster1, [list, str, gdal.Dataset], "raster1")
-    core_utils.type_check(raster2, [list, str, gdal.Dataset], "raster2")
+    core_utils.type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], "raster1")
+    core_utils.type_check(raster2, [str, gdal.Dataset, [str, gdal.Dataset]], "raster2")
 
     if not rasters_intersect(raster1, raster2):
         raise ValueError("Rasters do not intersect.")
@@ -1286,8 +976,8 @@ def get_overlap_fraction(raster1, raster2):
     ## Returns:
     (_float_): A value representing the degree of overlap **(0-1)**
     """
-    core_utils.type_check(raster1, [list, str, gdal.Dataset], "raster1")
-    core_utils.type_check(raster2, [list, str, gdal.Dataset], "raster2")
+    core_utils.type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], "raster1")
+    core_utils.type_check(raster2, [str, gdal.Dataset, [str, gdal.Dataset]], "raster2")
 
     if not rasters_intersect(raster1, raster2):
         raise ValueError("Rasters do not intersect.")

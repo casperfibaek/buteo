@@ -55,16 +55,20 @@ def match_raster_projections(
     """
     assert isinstance(rasters, list), "rasters must be a list."
     assert isinstance(master, (str, gdal.Dataset, ogr.DataSource)), "master must be a string, gdal.Dataset, or ogr.DataSource."
+    assert gdal_utils.is_raster_list(rasters), "rasters must be a list of rasters."
 
     try:
         target_projection = gdal_utils.parse_projection(master)
     except Exception:
         raise ValueError(f"Unable to parse projection from master. Received: {master}") from None
 
-    output = []
-    raster_list, path_list = core_raster.ready_io_raster(rasters, out_path, overwrite=overwrite)
+    add_uuid = out_path is None
 
-    for index, in_raster in enumerate(raster_list):
+    path_list = core_utils.generate_output_paths(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid)
+
+    output = []
+
+    for index, in_raster in enumerate(rasters):
         path = _reproject_raster(
             in_raster,
             target_projection,
@@ -125,37 +129,27 @@ def align_rasters(
 
     ## Return:
     (_list_): A list of paths to the aligned rasters.
-
     """
-    core_utils.type_check(rasters, [list, str, gdal.Dataset], "rasters")
-    core_utils.type_check(out_path, [list, str], "out_path", allow_none=True)
-    core_utils.type_check(master, [list, str], "master", allow_none=True)
+    core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
+    core_utils.type_check(out_path, [str, None, [str]], "out_path")
+    core_utils.type_check(master, [str, [str], None], "master")
     core_utils.type_check(bounding_box, [str, gdal.Dataset, ogr.DataSource, list, tuple], "bounding_box")
     core_utils.type_check(resample_alg, [str], "resample_alg")
-    core_utils.type_check(target_size, [tuple, list, int, float, str, gdal.Dataset], "target_size", allow_none=True)
-    core_utils.type_check(target_in_pixels, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "target_in_pixels", allow_none=True)
+    core_utils.type_check(target_size, [tuple, list, int, float, str, gdal.Dataset, None], "target_size")
+    core_utils.type_check(target_in_pixels, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference, None], "target_in_pixels")
     core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(creation_options, [list], "creation_options", allow_none=True)
-    core_utils.type_check(src_nodata, [str, int, float], "src_nodata", allow_none=True)
-    core_utils.type_check(dst_nodata, [str, int, float], "dst_nodata", allow_none=True)
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
+    core_utils.type_check(src_nodata, [str, int, float, None], "src_nodata")
+    core_utils.type_check(dst_nodata, [str, int, float, None], "dst_nodata")
     core_utils.type_check(prefix, [str], "prefix")
     core_utils.type_check(suffix, [str], "suffix")
 
-    was_list = False
+    assert gdal_utils.is_raster_list(rasters), "rasters must be a list of rasters."
 
-    if isinstance(rasters, list):
-        was_list = True
-    elif isinstance(rasters, (str, gdal.Dataset)):
-        rasters = [rasters]
+    add_uuid = out_path is None
 
-    raster_list, path_list = core_raster.ready_io_raster(
-        rasters,
-        out_path,
-        overwrite=overwrite,
-        prefix=prefix,
-        postfix=suffix,
-        add_uuid=False,
-    )
+    raster_list = core_utils.ensure_list(rasters)
+    path_list = core_utils.generate_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
 
     x_pixels = None
     y_pixels = None
@@ -182,10 +176,10 @@ def align_rasters(
         master_metadata = core_raster.raster_to_metadata(master)
 
         target_projection = master_metadata["projection_osr"]
-        x_min, y_max, x_max, y_min = master_metadata["extent"]
+        x_min, x_max, y_min, y_max = master_metadata["bbox"]
 
         # Set the target values.
-        target_bounds = (x_min, y_min, x_max, y_max)
+        target_bounds = (x_min, x_max, y_min, y_max)
         x_res = master_metadata["pixel_width"]
         y_res = master_metadata["pixel_height"]
         x_pixels = master_metadata["width"]
@@ -278,7 +272,7 @@ def align_rasters(
         if isinstance(bounding_box, (list, tuple)):
             if len(bounding_box) != 4:
                 raise ValueError("bounding_box as a list/tuple must have 4 values.")
-            target_bounds = bounding_box
+            target_bounds = list(bounding_box)
 
         # If the bounding box is a raster. Take the extent and
         # reproject it to the target projection.
@@ -288,10 +282,10 @@ def align_rasters(
             gdal_utils.delete_if_in_memory(raster_bbox_reproject)
             raster_bbox_reproject = None
 
-            x_min, y_max, x_max, y_min = reprojected_bbox_raster["extent"]
+            x_min, x_max, y_min, y_max = reprojected_bbox_raster["bbox"]
 
             # add to target values.
-            target_bounds = (x_min, y_min, x_max, y_max)
+            target_bounds = [x_min, x_max, y_min, y_max]
 
         # If the bounding box is a raster. Take the extent and
         # reproject it to the target projection.
@@ -301,10 +295,10 @@ def align_rasters(
             gdal_utils.delete_if_in_memory(vector_bbox_reproject)
             vector_bbox_reproject = None
 
-            x_min, y_max, x_max, y_min = reprojected_bbox_vector["extent"]
+            x_min, x_max, y_min, y_max = reprojected_bbox_vector["bbox"]
 
             # add to target values.
-            target_bounds = (x_min, y_min, x_max, y_max)
+            target_bounds = [x_min, x_max, y_min, y_max]
 
         # If the bounding box is a string, we either take the union
         # or the intersection of all the
@@ -333,38 +327,40 @@ def align_rasters(
                     reprojected_raster_metadata = dict(
                         core_raster.raster_to_metadata(reprojected_raster)
                     )
-                    extents.append(reprojected_raster_metadata["extent"])
+                    extents.append(reprojected_raster_metadata["bbox"])
 
                 # Placeholder values
-                x_min, y_max, x_max, y_min = extents[0]
+                x_min, x_max, y_min, y_max = extents[0]
 
                 # Loop the extents. Narrowing if intersection, expanding if union.
                 for index, extent in enumerate(extents):
                     if index == 0:
                         continue
 
+                    b_x_min, b_x_max, b_y_min, b_y_max = extent
+
                     if bounding_box == "intersection":
-                        if extent[0] > x_min:
-                            x_min = extent[0]
-                        if extent[1] < y_max:
-                            y_max = extent[1]
-                        if extent[2] < x_max:
-                            x_max = extent[2]
-                        if extent[3] > y_min:
-                            y_min = extent[3]
+                        if b_x_min > x_min:
+                            x_min = b_x_min
+                        if b_x_max < x_max:
+                            x_max = b_x_max
+                        if b_y_min > y_min:
+                            y_min = b_y_min
+                        if b_y_max < y_max:
+                            y_max = b_y_max
 
                     elif bounding_box == "union":
-                        if extent[0] < x_min:
-                            x_min = extent[0]
-                        if extent[1] > y_max:
-                            y_max = extent[1]
-                        if extent[2] > x_max:
-                            x_max = extent[2]
-                        if extent[3] < y_min:
-                            y_min = extent[3]
+                        if b_x_min < x_min:
+                            x_min = b_x_min
+                        if b_x_max > y_max:
+                            y_max = b_x_max
+                        if y_min > x_max:
+                            x_max = y_min
+                        if y_max < y_min:
+                            y_min = y_max
 
                 # Add to target values.
-                target_bounds = (x_min, y_min, x_max, y_max)
+                target_bounds = [x_min, x_max, y_min, y_max]
 
             else:
                 raise ValueError(
@@ -447,7 +443,7 @@ def align_rasters(
             width=x_pixels,
             height=y_pixels,
             dstSRS=target_projection,
-            outputBounds=target_bounds,
+            outputBounds=bbox_utils.convert_ogr_bbox_to_gdal_bbox(target_bounds),
             format=out_format,
             resampleAlg=gdal_enums.translate_resample_method(resample_alg),
             creationOptions=gdal_utils.default_creation_options(creation_options),
@@ -471,7 +467,7 @@ def align_rasters(
     if not core_raster.rasters_are_aligned(return_list, same_extent=True):
         raise Exception("Error while aligning rasters. Output is not aligned")
 
-    if not was_list:
-        return return_list[0]
+    if isinstance(rasters, list):
+        return return_list
 
-    return return_list
+    return return_list[0]

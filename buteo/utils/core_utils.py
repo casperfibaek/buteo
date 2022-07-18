@@ -9,12 +9,12 @@ import os
 import sys
 import time
 import shutil
-import psutil
 from glob import glob
 from uuid import uuid4
 from datetime import datetime
 
 # External
+import psutil
 from osgeo import gdal
 
 
@@ -49,24 +49,6 @@ def is_float(value):
             return False
     else:
         return False
-
-
-def is_path_in_memory(path):
-    """
-    Check if a path is in memory.
-
-    ## Args:
-    `path` (_str_): The path to the file. </br>
-
-    ## Returns:
-    (_bool_): **True** if the path is in memory, **False** otherwise.
-    """
-    assert isinstance(path, str), "path must be a string."
-
-    if path.startswith("/vsimem"):
-        return True
-
-    return False
 
 
 def is_number(potential_number):
@@ -326,83 +308,131 @@ def path_to_folder(path):
     return os.path.dirname(path)
 
 
-def path_to_name(path, with_ext=False):
+def is_valid_file_path(path):
     """
-    Get the name of a file.
+    Check if a path has an extension.
+
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+
+    ## Returns:
+    (_bool_): **True** if the path has an extension, **False** otherwise.
+    """
+    if not isinstance(path, str):
+        return False
+
+    ext = os.path.splitext(path)[1]
+
+    if ext == "" or ext == ".":
+        return False
+
+    if path.startswith("/vsimem/"):
+        return True
+
+    if not folder_exists(path_to_folder(path)):
+        return False
+
+    return True
+
+
+def is_valid_output_path(path, *, overwrite=True):
+    """
+    Check if an output path is valid.
 
     ## Args:
     `path` (_str_): The path to the file. </br>
 
     ## Kwargs:
-    `with_ext` (_bool_): If True, return the name with the extension. (**Default**: `False`) </br>
+    `overwrite` (_bool_): **True** if the file should be overwritten, **False** otherwise. </br>
 
     ## Returns:
-    (_str_): The name of the file. (_with- or without the extension_)
+    (_bool_): **True** if the output path is valid, **False** otherwise.
     """
-    assert isinstance(path, str), "path must be a string."
-    assert isinstance(with_ext, bool), "with_ext must be a boolean."
+    if not is_valid_file_path(path):
+        return False
 
-    basename = os.path.basename(path)
-    basesplit = os.path.splitext(basename)
-    name = basesplit[0]
+    if file_exists(path):
+        if overwrite:
+            return True
 
-    if with_ext:
-        return basename
-
-    return name
-
-
-def overwrite_required(path, overwrite):
-    """
-    Check if an overwrite is required. Raises an exception if the file exists and overwrite is False.
-
-    ## Args:
-    `path` (_str_): The path to the file. </br>
-    `overwrite` (_bool_): If True, overwrite is required. </br>
-
-    ## Returns:
-    (_bool_): **True** if the file exists and overwrite is True or if the file does not exist.
-
-    ## Raises:
-    (_exception_): If the file exists and overwrite is False.
-    """
-    assert isinstance(path, str), "path must be a string."
-    assert isinstance(overwrite, bool), "overwrite must be a boolean."
-
-    exists = file_exists(path)
-    if exists and not overwrite:
-        raise Exception(f"File: {path} already exists and overwrite is False.")
+        return False
 
     return True
 
 
-def remove_if_overwrite(path, overwrite):
+def is_valid_output_path_list(output_list, *, overwrite=True):
     """
-    Remove a file if it exists and overwrite is True.
+    Check if a list of output paths are valid.
 
     ## Args:
-    `path` (_str_): The path to the file. </br>
-    `overwrite` (_bool_): If True, overwrite is required. </br>
+    `output_list` (_list_): The list of paths to the files. </br>
+
+    ## Kwargs:
+    `overwrite` (_bool_): **True** if the file should be overwritten, **False** otherwise. </br>
 
     ## Returns:
-    (_bool_): **True** if the file exists and overwrite is True or if the file does not exist.
-
-    ## Raises:
-    (_exception_): If the file exists and overwrite is False.
+    (_bool_): **True** if the list of output paths are valid, **False** otherwise.
     """
-    assert isinstance(path, str), "path must be a string."
-    assert isinstance(overwrite, bool), "overwrite must be a boolean."
+    if not isinstance(output_list, list):
+        return False
 
-    exists = file_exists(path)
-    if exists and overwrite:
-        os.remove(path)
-    elif exists:
-        raise Exception(f"File: {path} already exists and overwrite is False.")
+    if len(output_list) == 0:
+        return False
+
+    for path in output_list:
+        if not is_valid_output_path(path, overwrite=overwrite):
+            return False
 
     return True
 
 
-def get_path(path, *, prefix="", suffix="", add_uuid=True, folder=None):
+def remove_if_required(path, overwrite):
+    """
+    Remove a file if overwrite is True.
+
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+    `remove` (_bool_): If True, remove the file. </br>
+
+    ## Returns:
+    (_bool_): **True** if the file was removed, **False** otherwise.
+    """
+    assert is_valid_output_path(path), f"path must be a valid output path. {path}"
+
+    if overwrite and path.startswith("/vsimem/"):
+        gdal.Unlink(path)
+        return True
+
+    if overwrite and os.path.exists(path):
+        try:
+            os.remove(path)
+            return True
+        except:
+            raise RuntimeError(f"Error while deleting file: {path}") from None
+
+    return False
+
+
+def remove_if_required_list(output_list, overwrite):
+    """
+    Remove a list of files if overwrite is True.
+
+    ## Args:
+    `output_list` (_list_): The list of paths to the files. </br>
+    `remove` (_bool_): If True, remove the files. </br>
+
+    ## Returns:
+    (_bool_): **True** if the files were removed, **False** otherwise.
+    """
+    assert is_valid_output_path_list(output_list), f"output_list must be a valid output path list. {output_list}"
+
+    for path in output_list:
+        remove_if_required(path, overwrite)
+
+    return True
+
+
+def get_augmented_path(path, *, prefix="", suffix="", add_uuid=True, folder=None):
     """
     Gets a basename from a string in the format: </br>
     `prefix_basename_time_uuid_suffix.ext`
@@ -439,25 +469,6 @@ def get_path(path, *, prefix="", suffix="", add_uuid=True, folder=None):
         return os.path.join(target_folder, basename)
 
     return basename
-
-
-def get_memory_path(path, *, prefix="", suffix="", add_uuid=True):
-    """
-    Gets a memory path from a string in the format: </br>
-    `/vsimem/prefix_basename_time_uuid_suffix.ext`
-
-    ## Args:
-    `path` (_str_): The path to the original file. </br>
-
-    ## Kwargs:
-    `prefix` (_str_): The prefix to add to the memory path. (**Default**: `""`) </br>
-    `suffix` (_str_): The suffix to add to the memory path. (**Default**: `""`) </br>
-    `add_uuid` (_bool_): If True, add a uuid to the memory path. (**Default**: `True`) </br>
-
-    ## Returns:
-    (_str_): A string to the memory path. `/vsimem/prefix_basename_time_uuid_suffix.ext`
-    """
-    return f"/vsimem/{get_path(path, prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=None)}"
 
 
 def get_size(start_path=".", rough=True):
@@ -575,12 +586,37 @@ def step_ranges(arr_with_steps):
     return start_stop
 
 
+def recursive_check_type_list_none_or_tuple(potential_type):
+    """
+    Recursively check if a type, list or tuple.
+
+    ## Args:
+    `potential_type` (_any_): The variable to test. </br>
+
+    ## Returns:
+    (_bool_): **True** if a type, list or tuple, **False** otherwise.
+    """
+    if isinstance(potential_type, type(None)):
+        return True
+
+    if isinstance(potential_type, type):
+        return True
+
+    if isinstance(potential_type, (list, tuple)):
+        for item in potential_type:
+            if not recursive_check_type_list_none_or_tuple(item):
+                return False
+
+        return True
+
+    return False
+
+
 def type_check(
     variable,
     types,
     name="",
     *,
-    allow_none=False,
     throw_error=True,
 ):
     """
@@ -592,43 +628,49 @@ def type_check(
 
     ## Kargs:
     `name` (_str_): The name printed in the error string if an error is thrown. (**Default**: `""`)</br>
-    `allow_none` (_bool_): If True, allow type to be `None`. (**Default**: `False`) </br>
     `throw_error` (_bool_): If True, raise an error if the type is not correct. (**Default**: `True`)</br>
 
     ## Returns:
     (_bool_): A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.
     """
+    assert isinstance(types, list), "types must be a list."
+    assert isinstance(name, str), "name must be a string."
+    assert recursive_check_type_list_none_or_tuple(types), f"types must be a type, list, None, or tuple. not: {types}"
 
-    if variable is None:
-        if allow_none:
+    valid_types = []
+    for valid_type in types:
+        if valid_type is None:
+            valid_types.append(type(None))
+        elif isinstance(valid_type, type):
+            valid_types.append(valid_type)
+        elif isinstance(valid_type, (list, tuple)):
+            valid_types.append(valid_type)
+        else:
+            raise ValueError(f"Invalid type: {valid_type}")
+
+    if isinstance(variable, (list, tuple)):
+        found = []
+        for valid_type in valid_types:
+            if not isinstance(valid_type, (list, tuple)):
+                continue
+
+            for item in variable:
+                if type_check(item, valid_type, name, throw_error=throw_error):
+                    found.append(True)
+
+        if len(found) == len(variable):
             return True
+    else:
+        for valid_type in valid_types:
+            if isinstance(valid_type, (list, tuple)):
+                continue
 
-        if throw_error:
-            raise ValueError(
-                f"Variable: {name} is type None when type None is not allowed."
-            )
-
-        return False
-
-    is_valid_type = isinstance(variable, tuple(types))
-
-    if is_valid_type:
-        return True
-
-    if allow_none and variable is None:
-        return True
-
-    type_names = []
-    valid_types = list(types)
-    if allow_none:
-        valid_types.append(None)
-
-    for valid_type in valid_types:
-        type_names.append(valid_type.__name__)
+            if isinstance(variable, valid_type):
+                return True
 
     if throw_error:
         raise ValueError(
-            f"Variable: {name} must be type(s): {' '.join(type_names)} - Received type: {type(variable).__name__}, variable: {variable}"
+            f"The type of variable {name} is not valid. Expected: {types}, got: {type(variable)}"
         )
 
     return False
@@ -715,52 +757,6 @@ def timing(before, print_msg=True):
     return message
 
 
-def get_available_ram_mb():
-    """
-    Get the available RAM in MB.
-
-    ## Returns:
-    (_float_): The available RAM in MB.
-    """
-    return psutil.virtual_memory().available / (1024 ** 2)
-
-
-def get_total_ram_mb():
-    """
-    Get the total RAM in MB.
-
-    ## Returns:
-    (_float_): The total RAM in MB.
-    """
-    return psutil.virtual_memory().total / (1024 ** 2)
-
-
-def get_percentage_of_available_ram_mb(percentage):
-    """
-    Get the available RAM in MB.
-
-    ## Args:
-    `percentage` (_float_): The percentage of available RAM to return. </br>
-
-    ## Returns:
-    (_float_): The available RAM in MB.
-    """
-    return round(get_available_ram_mb() * (percentage / 100.0), 3)
-
-
-def get_percentage_of_total_ram_mb(percentage):
-    """
-    Get the total RAM in MB.
-
-    ## Args:
-    `percentage` (_float_): The percentage of total RAM to return. </br>
-
-    ## Returns:
-    (_float_): The total RAM in MB.
-    """
-    return round(get_total_ram_mb() * (percentage / 100.0), 3)
-
-
 def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, available=True):
     """
     Returns a dynamic memory limit taking into account total memory and CPU cores.
@@ -785,3 +781,69 @@ def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, availa
         dyn_limit = min_bytes
 
     return int(dyn_limit)
+
+
+def generate_output_paths(
+    dataset_path,
+    out_path=None,
+    *,
+    overwrite=True,
+    prefix="",
+    suffix="",
+    add_uuid=False,
+):
+    """
+    Prepares a raster or a list of rasters for writing. Generates output paths. If no output paths are
+    specified, the rasters are written to memory. If a folder is given, the output directory is chosen
+    are the input filenames remain the same. If a specific path is used it must be the same length as the
+    input.
+
+    ## Args:
+    `raster` (_gdal.Dataset_ || _str_ || _list__): A **GDAL** dataframe, a path to a raster or a list of same. </br>
+
+    ## Kwargs:
+    `out_path` (_str_ || _None_): A path to a directory to write the raster to. (Default: **None**). </br>
+    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). </br>
+    `prefix` (_str_): A string to prepend to the output filename. (Default: **""**). </br>
+    `suffix` (_str_): A string to append to the output filename. (Default: **""**). </br>
+    `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). </br>
+
+    ## Returns:
+    (_str_ || _list_): A path to the output raster or a list of paths.
+    """
+    assert isinstance(dataset_path, (str, list)), "dataset_path must be a string or a list of strings."
+    assert isinstance(out_path, (str, type(None))), "out_path must be a string or None."
+
+    paths_input = ensure_list(dataset_path)
+
+    assert len(paths_input) > 0, "dataset_path must contain at least one path."
+
+    if isinstance(out_path, list):
+        assert len(out_path) == len(paths_input), "out_path must be the same length as dataset_path if a list is provided."
+        assert is_valid_output_path_list(out_path, overwrite=overwrite), "out_path must be a list of valid output paths."
+
+    output = []
+
+    for index, path in enumerate(paths_input):
+        aug_path = None
+
+        if isinstance(out_path, list):
+            if isinstance(out_path, str):
+                aug_path = out_path[index]
+            else:
+                raise ValueError("out_path must be a string or a list of strings.")
+        elif folder_exists(out_path):
+            aug_path = get_augmented_path(os.path.basename(path), prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=out_path)
+        elif out_path is None:
+            aug_path = get_augmented_path(os.path.basename(path), prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder="/vsimem/")
+        else:
+            raise ValueError("out_path must be a valid path or a list of valid paths.")
+
+        output.append(aug_path)
+
+    assert is_valid_output_path_list(output, overwrite=overwrite), f"Error while generating outputs. They are invalid: {output}"
+
+    if isinstance(out_path, list):
+        return output
+
+    return output[0]

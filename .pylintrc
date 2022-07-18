@@ -5,4 +5,5 @@ disable=multiple-statements,
         wrong-import-position,
         broad-except,
         isinstance-second-argument-not-valid-type,
-        line-too-long
+        line-too-long,
+        protected-access,

@@ -5,6 +5,7 @@ These functions are used to interact with basic GDAL objects.
 
 TODO:
     * Should file_path_lists be able to handle mixed inputs?
+    * Make delete_raster_or_vector and the like accept a list of file paths?
 """
 
 # Standard Library
@@ -14,7 +15,6 @@ import os
 # External
 import numpy as np
 from osgeo import gdal, ogr, osr
-from buteo.utils.core_utils import get_memory_path
 
 # Internal
 from buteo.utils import core_utils, gdal_enums
@@ -38,7 +38,7 @@ def default_creation_options(options=None):
     ## Returns:
     (_list_): A list containing the default values.
     """
-    assert isinstance(options, (list, None)), "Options must be a list or None."
+    assert isinstance(options, (list, type(None))), "Options must be a list or None."
 
     if options is None:
         options = []
@@ -203,22 +203,23 @@ def is_in_memory(raster_or_vector):
     assert isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)), "raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource."
 
     if isinstance(raster_or_vector, str):
-        if raster_or_vector.startswith("/vsimem"):
+        if raster_or_vector.startswith("/vsimem/"):
             return True
 
         return False
 
     elif isinstance(raster_or_vector, (gdal.Dataset, ogr.DataSource)):
-        if raster_or_vector.GetDriver().ShortName == "MEM":
+        driver_short_name = raster_or_vector.GetDriver().ShortName
+        if driver_short_name== "MEM":
             return True
 
-        if raster_or_vector.GetDriver().ShortName == "Memory":
+        if driver_short_name == "Memory":
             return True
 
-        if raster_or_vector.GetDriver().ShortName == "VirtualMem":
+        if driver_short_name == "VirtualMem":
             return True
 
-        if raster_or_vector.GetDriver().ShortName == "VirtualOGR":
+        if driver_short_name == "VirtualOGR":
             return True
 
         if raster_or_vector.GetDescription().startswith("/vsimem/"):
@@ -339,6 +340,24 @@ def clear_gdal_memory():
         gdal.Unlink(dataset)
 
 
+def is_path_in_memory(path):
+    """
+    Check if a path is in memory.
+
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+
+    ## Returns:
+    (_bool_): **True** if the path is in memory, **False** otherwise.
+    """
+    core_utils.is_valid_file_path(path)
+
+    if path.startswith("/vsimem"):
+        return True
+
+    return False
+
+
 def is_raster(potential_raster, *, empty_is_invalid=True):
     """Checks if a variable is a valid raster.
 
@@ -352,7 +371,7 @@ def is_raster(potential_raster, *, empty_is_invalid=True):
     (_bool_): **True** if the variable is a valid raster, **False** otherwise.
     """
     if isinstance(potential_raster, str):
-        if not core_utils.file_exists(potential_raster) and not core_utils.is_path_in_memory(potential_raster):
+        if not core_utils.file_exists(potential_raster) and not is_path_in_memory(potential_raster):
             return False
 
         try:
@@ -367,6 +386,8 @@ def is_raster(potential_raster, *, empty_is_invalid=True):
 
         if empty_is_invalid and is_raster_empty(opened):
             return False
+
+        opened = None
 
         return True
 
@@ -469,6 +490,148 @@ def is_vector_list(potential_vector_list, *, empty_is_invalid=True):
     return True
 
 
+def is_raster_or_vector(potential_raster_or_vector, *, empty_is_invalid=True):
+    """
+    Checks if a variable is a valid raster or vector.
+
+    ## Args:
+    `potential_raster_or_vector` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty raster or vector is considered invalid. (Default: **True**)
+    """
+    if is_raster(potential_raster_or_vector, empty_is_invalid=empty_is_invalid):
+        return True
+
+    if is_vector(potential_raster_or_vector, empty_is_invalid=empty_is_invalid):
+        return True
+
+    return False
+
+
+def is_raster_or_vector_list(potential_raster_or_vector_list, *, empty_is_invalid=True):
+    """
+    Checks if a variable is a valid list of rasters or vectors.
+
+    ## Args:
+    `potential_raster_or_vector_list` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty raster or vector is considered invalid. (Default: **True**)
+    """
+    if not isinstance(potential_raster_or_vector_list, list):
+        return False
+
+    if len(potential_raster_or_vector_list) == 0:
+        return False
+
+    for element in potential_raster_or_vector_list:
+        if not is_raster_or_vector(element, empty_is_invalid=empty_is_invalid):
+            return False
+
+    return True
+
+
+def create_memory_path(path, *, prefix="", suffix="", add_uuid=True):
+    """
+    Gets a memory path from a string in the format: </br>
+    `/vsimem/prefix_basename_time_uuid_suffix.ext`
+
+    ## Args:
+    `path` (_str_): The path to the original file. </br>
+
+    ## Kwargs:
+    `prefix` (_str_): The prefix to add to the memory path. (**Default**: `""`) </br>
+    `suffix` (_str_): The suffix to add to the memory path. (**Default**: `""`) </br>
+    `add_uuid` (_bool_): If True, add a uuid to the memory path. (**Default**: `True`) </br>
+
+    ## Returns:
+    (_str_): A string to the memory path. `/vsimem/prefix_basename_time_uuid_suffix.ext`
+    """
+    return f"/vsimem/{core_utils.get_augmented_path(path, prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=None)}"
+
+
+def get_path_from_dataset(dataset, *, dataset_type=None):
+    """
+    Gets the path from a datasets. Can be vector or raster, string or opened.
+
+    ## Args:
+    `dataset` (_str_ || _gdal.Dataset_ || _ogr.DataSource_): The dataset.
+
+    ## Kwargs:
+    `dataset_type` (_str_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
+
+    ## Returns:
+    (_list_): The path to the dataset.
+    """
+    if (dataset_type == "raster" or dataset_type is None) and is_raster(dataset, empty_is_invalid=False):
+        if isinstance(dataset, str):
+            raster = gdal.Open(dataset, 0)
+        elif isinstance(dataset, gdal.Dataset):
+            raster = dataset
+        else:
+            raise Exception(f"Could not read input raster: {raster}")
+
+        path = raster.GetDescription()
+        raster = None
+
+        return path
+
+    if (dataset_type == "vector" or dataset_type is None) and is_vector(dataset, empty_is_invalid=False):
+        if isinstance(dataset, str):
+            vector = ogr.Open(dataset, 0)
+        elif isinstance(dataset, ogr.DataSource):
+            vector = dataset
+        else:
+            raise Exception(f"Could not read input vector: {vector}")
+
+        path = vector.GetDescription()
+        vector = None
+
+        return path
+
+    raise ValueError("The dataset is not a raster or vector.")
+
+
+def get_path_from_dataset_list(datasets, *, allow_mixed=False, dataset_type=None):
+    """
+    Gets the paths from a list of datasets.
+
+    ## Args:
+    `datasets` (_list_): The list of datasets.
+
+    ## Kwargs:
+    `allow_mixed` (_bool_): If True, allow mixed raster/vector datasets. (**Default**: `False`) </br>
+    `dataset_type` (_str_ || _None_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
+
+    ## Returns:
+    (_list_): A list of paths.
+    """
+    assert isinstance(datasets, list), "The datasets must be a list."
+    assert isinstance(dataset_type, (str, type(None))), "The dataset_type must be 'raster', 'vector', or None."
+
+    rasters = False
+    vectors = False
+
+    outputs = []
+    for dataset in datasets:
+        if (dataset_type == "raster" or dataset_type is None) and is_raster(dataset, empty_is_invalid=False):
+            dataset_type = "raster"
+            rasters = True
+        elif (dataset_type == "vector" or dataset_type is None) and is_vector(dataset, empty_is_invalid=False):
+            dataset_type = "vector"
+            vectors = True
+        else:
+            raise ValueError(f"The dataset is not a raster or vector. {dataset}")
+
+        if rasters and vectors and not allow_mixed:
+            raise ValueError("The datasets cannot be vectors and rasters mixed.")
+
+        outputs.append(get_path_from_dataset(dataset, dataset_type=dataset_type))
+
+    return outputs
+
+
 def convert_geom_to_vector(geom):
     """
     Converts a geometry to a vector.
@@ -485,7 +648,7 @@ def convert_geom_to_vector(geom):
     """
     assert isinstance(geom, ogr.Geometry), "geom must be an ogr.Geometry."
 
-    path = get_memory_path("converted_geom.fgb")
+    path = create_memory_path("converted_geom.fgb", add_uuid=True)
     driver = path_to_driver_vector(path)
 
     vector = driver.CreateDataSource(path)
@@ -569,7 +732,6 @@ def parse_projection(projection, *, return_wkt=False):
         return target_proj
     else:
         raise ValueError(err_msg)
-
 
 
 def parse_raster_size(target, *, target_in_pixels=False):
@@ -661,33 +823,6 @@ def parse_raster_size(target, *, target_in_pixels=False):
     return x_res, y_res, x_pixels, y_pixels
 
 
-def to_path_list(str_or_list_of_str):
-    """
-    Converts a string or list of strings to a list of paths.
-
-    ## Args:
-    `str_or_list_of_str` (_str_ || _list_): The string or list of strings to convert to a list of paths.
-
-    ## Returns:
-    (_list_): The list of paths.
-    """
-    assert isinstance(str_or_list_of_str, (str, list)), "str_or_list_of_str must be a string or list of strings."
-
-    return_list = [str_or_list_of_str] if isinstance(str_or_list_of_str, str) else str_or_list_of_str
-
-    if len(return_list) == 0:
-        raise ValueError("Empty array list.")
-
-    for path in return_list:
-        if not isinstance(path, str):
-            raise ValueError(f"Invalid string in path list: {str_or_list_of_str}")
-
-        if not core_utils.folder_exists(core_utils.path_to_folder(path)):
-            raise ValueError(f"Invalid path in path list: {path}")
-
-    return return_list
-
-
 def get_gdalwarp_ram_limit(limit_in_mb):
     """
     Converts a RAM limit to a GDALWarp RAM limit.
@@ -725,7 +860,6 @@ def get_gdalwarp_ram_limit(limit_in_mb):
         return int(limit_in_mb * (1024 ** 2))
 
     return min_ram
-
 
 
 def to_array_list(array_or_list_of_array):
@@ -766,8 +900,8 @@ def to_band_list(
     Converts a band number or list of band numbers to a list of band numbers.
 
     ## Args:
-    `band_number` (_int_ || _float_ || _list_): The band number or list of band numbers to convert to a list of band numbers.
-    `band_count` (_int_): The number of bands in the raster.
+    `band_number` (_int_ || _float_ || _list_): The band number or list of band numbers to convert to a list of band numbers. </br>
+    `band_count` (_int_): The number of bands in the raster. </br>
 
     ## Returns:
     (_list_): The list of band numbers.
@@ -802,3 +936,115 @@ def to_band_list(
             return_list.append(int(band_number))
 
     return return_list
+
+
+def save_dataset_to_disk(
+    dataset,
+    out_path,
+    *,
+    overwrite=True,
+    creation_options=None,
+    prefix="",
+    suffix="",
+    add_uuid=False,
+):
+    """
+    Writes a dataset to disk. Can be a raster or a vector.
+
+    ## Args:
+    `dataset` (_str_ || _gdal.Dataset_ || _ogr.DataSource_ || _list_): The dataset(s) to save. </br>
+    `out_path` (_str_ || _list_): The path(s) to save the dataset(s) to. </br>
+
+    ## Kwargs:
+    `overwrite` (_bool_): Whether to overwrite the file if it already exists. (Default: **True**) </br>
+    `creation_options` (_list_ || _None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) </br>
+    `prefix` (_str_): A prefix to add to the file name. (Default: **""**) </br>
+    `suffix` (_str_): A suffix to add to the file name. (Default: **""**) </br>
+    `add_uuid` (_bool_): Whether to add a UUID to the file name. (Default: **False**) </br>
+    """
+    datasets = core_utils.ensure_list(dataset)
+    datasets_paths = get_path_from_dataset_list(datasets, allow_mixed=True)
+    out_paths = core_utils.generate_output_paths(datasets_paths, out_path, prefix=prefix, suffix=suffix, add_uuid=add_uuid)
+
+    options = None
+
+    for index, dataset_ in enumerate(datasets):
+        opened_dataset = None
+        dataset_type = None
+
+        if is_raster(dataset_):
+            options = default_creation_options(creation_options)
+            dataset_type = "raster"
+            if isinstance(dataset_, str):
+                opened_dataset = gdal.Open(dataset_, 0)
+            elif isinstance(dataset_, gdal.Dataset):
+                opened_dataset = dataset_
+            else:
+                raise Exception(f"Could not read input raster: {dataset_}")
+
+        elif is_vector(dataset_):
+            dataset_type = "vector"
+            if isinstance(dataset_, str):
+                opened_dataset = ogr.Open(dataset_, 0)
+            elif isinstance(dataset_, ogr.DataSource):
+                opened_dataset = dataset_
+            else:
+                raise Exception(f"Could not read input vector: {dataset_}")
+
+        else:
+            raise Exception(f"Invalid dataset type: {dataset_}")
+
+        driver_destination = None
+
+        if dataset_type == "raster":
+            driver_destination = gdal.GetDriverByName(path_to_driver_raster(out_paths[index]))
+        else:
+            driver_destination = ogr.GetDriverByName(path_to_driver_vector(out_paths[index]))
+
+        assert driver_destination is not None, "Could not get driver for output dataset."
+
+        core_utils.remove_if_required(out_paths[index], overwrite)
+
+        driver_destination.CreateCopy(
+            out_path[index],
+            opened_dataset,
+            options=options,
+        )
+
+    if isinstance(dataset, list):
+        return out_paths[0]
+
+    return out_paths
+
+
+def save_dataset_to_memory(
+    dataset,
+    *,
+    overwrite=True,
+    creation_options=None,
+    prefix="",
+    suffix="",
+    add_uuid=True,
+):
+    """
+    Writes a dataset to memory. Can be a raster or a vector.
+
+    ## Args:
+    `dataset` (_str_ || _gdal.Dataset_ || _ogr.DataSource_ || _list_): The dataset(s) to save. </br>
+
+    ## Kwargs:
+    `overwrite` (_bool_): Whether to overwrite the file if it already exists. (Default: **True**) </br>
+    `creation_options` (_list_ || _None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) </br>
+    `prefix` (_str_): A prefix to add to the file name. (Default: **""**) </br>
+    `suffix` (_str_): A suffix to add to the file name. (Default: **""**) </br>
+    `add_uuid` (_bool_): Whether to add a UUID to the file name. (Default: **True**) </br>
+    """
+    return save_dataset_to_disk(
+        dataset,
+        out_path=None,
+        overwrite=overwrite,
+        creation_options=creation_options,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )

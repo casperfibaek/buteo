@@ -151,7 +151,7 @@ def reproject_raster(
         overwite (bool): Is it possible to overwrite the out_path if it exists.
 
         creation_options (list): A list of options for the GDAL creation. Only
-        used if an outpath is specified. Defaults are:
+        used if an out_path is specified. Defaults are:
             "TILED=YES"
             "NUM_THREADS=ALL_CPUS"
             "BIGG_TIF=YES"
