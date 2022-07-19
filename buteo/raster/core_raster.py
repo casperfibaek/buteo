@@ -49,7 +49,7 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     a list is returned with the opened raster.
 
     ## Args:
-    `raster` (_gdal.Dataset_ | _str_ | _list__): A path to a raster or a GDAL dataframe. </br>
+    `raster` (_gdal.Dataset_|_str_|_list__): A path to a raster or a GDAL dataframe. </br>
 
     ## Kwargs:
     `writeable` (_bool_): If True, the raster is opened in write mode. (Default: **True**) </br>
@@ -57,7 +57,7 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     a single raster is allowed. (Default: **True**) </br>
 
     ## Returns:
-    (_gdal.Dataset_ | _list__): A gdal.Dataset or a list of gdal.Datasets.
+    (_gdal.Dataset_|_list__): A gdal.Dataset or a list of gdal.Datasets.
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(writeable, [bool], "writeable")
@@ -194,14 +194,14 @@ def raster_to_metadata(raster, *, allow_lists=True):
     Reads a raster from a list of rasters, string or a dataset and returns metadata.
 
     ## Args:
-    `raster` (_gdal.Dataset_ | _str_ | _list__): A GDAL dataframe or a path to a raster. </br>
+    `raster` (_gdal.Dataset_|_str_|_list__): A GDAL dataframe or a path to a raster. </br>
 
     ## Kwargs:
     `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
     a single raster is allowed. (Default: **True**) </br>
 
     ## Returns:
-    (_dict_ | _list_): A dictionary or list of dictionaries containing metadata.
+    (_dict_|_list_): A dictionary or list of dictionaries containing metadata.
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
@@ -347,10 +347,10 @@ def raster_to_array(
     Turns a path to a raster(s) or a GDAL.Dataset(s) into a **NumPy** array(s).
 
     ## Args:
-    (_gdal.Dataset_ | _str_ | _list_): The raster(s) to convert.
+    (_gdal.Dataset_|_str_|_list_): The raster(s) to convert.
 
     ## Kwargs:
-    `bands` (_list_ | _str_ | _int_): The bands from the raster to turn
+    `bands` (_list_|_str_|_int_): The bands from the raster to turn
     into a numpy array. Can be "all", "ALL", a list of ints or a
     single int. </br>
 
@@ -542,11 +542,11 @@ def raster_set_datatype(
     Changes the datatype of a raster.
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster to change the datatype of. </br>
+    `raster` (_str_|_gdal.Dataset_|_list_): The raster to change the datatype of. </br>
     `dtype` (_str_): The new datatype. </br>
 
     ## Kwargs:
-    `out_path` (_path_ | _list_): The destination to save to. (Default: **None**)</br>
+    `out_path` (_path_|_list_): The destination to save to. (Default: **None**)</br>
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) </br>
     `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only single rasters
     are allowed. (Default: **True**) </br>
@@ -557,7 +557,7 @@ def raster_set_datatype(
         * "COMPRESS=LZW"
 
     ## Returns:
-    (_str_ | _list_): The filepath or list of filepaths to the newly created raster(s).
+    (_str_|_list_): The filepath or list of filepaths to the newly created raster(s).
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(dtype, [str], "dtype")
@@ -616,12 +616,12 @@ def array_to_raster(
 
     ## Args:
     `array` (_np.ndarray_): The numpy array to convert. </br>
-    `reference` (_str_ | _gdal.Dataset_): The reference raster to use for the output. </br>
+    `reference` (_str_|_gdal.Dataset_): The reference raster to use for the output. </br>
 
     ## Kwargs:
     `out_path` (_path_): The destination to save to. (Default: **None**)</br>
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) </br>
-    `set_nodata` (_bool_ | _float_ | _int_): Can be set to: (Default: **auto**)</br>
+    `set_nodata` (_bool_|_float_|_int_): Can be set to: (Default: **auto**)</br>
         * **"ref"**: The nodata value will be the same as the reference raster. </br>
         * **"arr"**: The nodata value will be the same as the **NumPy** array. </br>
         * **"value"**: The nodata value will be the value provided. </br>
@@ -756,7 +756,7 @@ def stack_rasters(
         * "COMPRESS=LZW"
 
     ## Returns:
-    (_str_ | _list_): The filepath(s) to the newly created raster(s).
+    (_str_|_list_): The filepath(s) to the newly created raster(s).
     """
     core_utils.type_check(rasters, [[str, gdal.Dataset]], "rasters")
     core_utils.type_check(out_path, [str, None], "out_path")
@@ -925,8 +925,8 @@ def rasters_intersect(raster1, raster2):
     Checks if two rasters intersect using their latlong boundaries.
 
     ## Args:
-    `raster1` (_str_ | gdal.Dataset): The first raster. </br>
-    `raster2` (_str_ | gdal.Dataset): The second raster. </br>
+    `raster1` (_str_|gdal.Dataset): The first raster. </br>
+    `raster2` (_str_|gdal.Dataset): The second raster. </br>
 
     ## Returns:
     (_bool_): If the rasters intersect.
@@ -945,8 +945,8 @@ def rasters_intersection(raster1, raster2):
     Get the latlng intersection of two rasters.
 
     ## Args:
-    `raster1` (_str_ | gdal.Dataset): The first raster. </br>
-    `raster2` (_str_ | gdal.Dataset): The second raster. </br>
+    `raster1` (_str_|gdal.Dataset): The first raster. </br>
+    `raster2` (_str_|gdal.Dataset): The second raster. </br>
 
     ## Returns:
     (_ogr.DataSource_): The latlng intersection of the two rasters.
@@ -970,8 +970,8 @@ def get_overlap_fraction(raster1, raster2):
     Get the fraction of the overlap between two rasters. (e.g. 0.9 for mostly overlapping rasters)
 
     ## Args:
-    `raster1` (_str_ | gdal.Dataset): The master raster. </br>
-    `raster2` (_str_ | gdal.Dataset): The test raster. </br>
+    `raster1` (_str_|gdal.Dataset): The master raster. </br>
+    `raster2` (_str_|gdal.Dataset): The test raster. </br>
 
     ## Returns:
     (_float_): A value representing the degree of overlap **(0-1)**

@@ -61,7 +61,7 @@ def raster_has_nodata_value(raster):
     Check if a raster or a list of rasters contain nodata values
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_, _list_): The raster to check for nodata values.
+    `raster` (_str_|_gdal.Dataset_, _list_): The raster to check for nodata values.
 
     ## Returns:
     (_bool_): **True** if the raster or list of rasters contain nodata values.
@@ -93,10 +93,10 @@ def raster_get_nodata_value(raster):
     Get the nodata value of a raster or a list of rasters.
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_, _list_): The raster(s) to get nodata values from.
+    `raster` (_str_|_gdal.Dataset_, _list_): The raster(s) to get nodata values from.
 
     ## Returns:
-    (_float_ | _int_ | _list_): The nodata value(s) of the raster(s).
+    (_float_|_int_|_list_): The nodata value(s) of the raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
 
@@ -132,14 +132,14 @@ def raster_set_nodata(
     Sets all the nodata for raster(s) to a value.
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster(s) to set nodata values for. &lt;/br&gt;
-    `dst_nodata` (_float_ | _int_ | _str_ | _None_): The target nodata value. If &#39;infer&#39; the nodata
+    `raster` (_str_|_gdal.Dataset_|_list_): The raster(s) to set nodata values for. &lt;/br&gt;
+    `dst_nodata` (_float_|_int_|_str_|_None_): The target nodata value. If &#39;infer&#39; the nodata
         value is set based on the input datatype. A list of nodata values can be based matching
         the amount of input rasters. If multiple nodata values should be set,
         use raster_mask_values. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_ | _list_ | _None_): The destination of the changed rasters. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_|_list_|_None_): The destination of the changed rasters. (Default: **None**) &lt;/br&gt;
     `overwrite` (_bool_): Should the rasters be overwritten if they already exist? (Default: **True**) &lt;/br&gt;
     `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) &lt;/br&gt;
     `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
@@ -147,7 +147,7 @@ def raster_set_nodata(
     `creation_options` (_list_): Creation options for the output rasters. (Default: **None**) &lt;/br&gt;
 
     ## Returns:
-    (_str_ | _list_): Returns the rasters with nodata set. If in_place is True a reference to the
+    (_str_|_list_): Returns the rasters with nodata set. If in_place is True a reference to the
     changed orignal is returned, otherwise a copied memory raster or the path to the
     generated raster is outputted.
     &#34;&#34;&#34;
@@ -250,10 +250,10 @@ def raster_remove_nodata(
     Removes all the nodata from a raster or a list of rasters.
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster(s) to remove nodata values for. &lt;/br&gt;
+    `raster` (_str_|_gdal.Dataset_|_list_): The raster(s) to remove nodata values for. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_ | _list_ | _None_): The destination of the changed rasters. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_|_list_|_None_): The destination of the changed rasters. (Default: **None**) &lt;/br&gt;
     `overwrite` (_bool_): Should the rasters be overwritten if they already exist? (Default: **True**) &lt;/br&gt;
     `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) &lt;/br&gt;
     `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
@@ -261,7 +261,7 @@ def raster_remove_nodata(
     `creation_options` (_list_): Creation options for the output rasters. (Default: **None**) &lt;/br&gt;
 
     ## Returns:
-    (_str_ | _list_): Returns the rasters with nodata removed. If in_place is True a reference to the
+    (_str_|_list_): Returns the rasters with nodata removed. If in_place is True a reference to the
     changed orignal is returned, otherwise a copied memory raster or the path to the
     generated raster is outputted.
     &#34;&#34;&#34;
@@ -296,25 +296,25 @@ def raster_mask_values(
     Mask a raster with a list of values.
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster(s) to mask. &lt;/br&gt;
+    `raster` (_str_|_gdal.Dataset_|_list_): The raster(s) to mask. &lt;/br&gt;
     `values_to_mask` (_list_): The values to mask. &lt;/br&gt;
 
     ## Kwargs:
     `include_original_nodata` (_bool_): Should the nodata_value of the input raster be added
     to the list of masked values? (Default: **True**) &lt;/br&gt;
-    `dst_nodata` (_float_ | _int_ | _str_ | _list_): The nodata value to use for the output raster.
+    `dst_nodata` (_float_|_int_|_str_|_list_): The nodata value to use for the output raster.
     If infer, the nodata_value from the input raster is used. (Default: **&#34;infer&#34;**) &lt;/br&gt;
-    `out_path` (_str_ | _list_ | _None_): The destination of the changed rasters.
+    `out_path` (_str_|_list_|_None_): The destination of the changed rasters.
     If out_paths are specified, in_place is automatically set to False. The path can be a folder. (Default: **None**)&lt;/br&gt;
     `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) &lt;/br&gt;
     `overwrite` (_bool_): If the output path exists already, should it be overwritten? (Default: **True**)&lt;/br&gt;
     `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): Suffix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): Should a uuid be added to the output path? (Default: **False**) &lt;/br&gt;
-    `creation_options` (_list_ | _None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;
+    `creation_options` (_list_|_None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;
 
     Returns:
-    (_str_ | _list_): Returns the rasters with nodata removed. If in_place is True a reference to the
+    (_str_|_list_): Returns the rasters with nodata removed. If in_place is True a reference to the
     changed orignal is returned, otherwise a copied memory raster or the path to the
     generated raster is outputted.
     &#34;&#34;&#34;
@@ -396,7 +396,7 @@ def raster_mask_values(
             if idx == 0:
                 mask = arr == mask_value
             else:
-                mask = mask | arr == mask_value
+                mask = mask|arr == mask_value
 
         arr = np.ma.masked_array(arr, mask=mask, fill_value=internal_dst_nodata)
 
@@ -432,9 +432,9 @@ def raster_mask_values(
 <dd>
 <div class="desc"><p>Get the nodata value of a raster or a list of rasters.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>str</em> | <em>gdal.Dataset</em>, <em>list</em>): The raster(s) to get nodata values from.</p>
+<p><code>raster</code> (<em>str</em>|<em>gdal.Dataset</em>, <em>list</em>): The raster(s) to get nodata values from.</p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>float</em> | <em>int</em> | <em>list</em>): The nodata value(s) of the raster(s).</p></div>
+<p>(<em>float</em>|<em>int</em>|<em>list</em>): The nodata value(s) of the raster(s).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -444,10 +444,10 @@ def raster_mask_values(
     Get the nodata value of a raster or a list of rasters.
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_, _list_): The raster(s) to get nodata values from.
+    `raster` (_str_|_gdal.Dataset_, _list_): The raster(s) to get nodata values from.
 
     ## Returns:
-    (_float_ | _int_ | _list_): The nodata value(s) of the raster(s).
+    (_float_|_int_|_list_): The nodata value(s) of the raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
 
@@ -474,7 +474,7 @@ def raster_mask_values(
 <dd>
 <div class="desc"><p>Check if a raster or a list of rasters contain nodata values</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>str</em> | <em>gdal.Dataset</em>, <em>list</em>): The raster to check for nodata values.</p>
+<p><code>raster</code> (<em>str</em>|<em>gdal.Dataset</em>, <em>list</em>): The raster to check for nodata values.</p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>bool</em>): <strong>True</strong> if the raster or list of rasters contain nodata values.</p></div>
 <details class="source">
@@ -486,7 +486,7 @@ def raster_mask_values(
     Check if a raster or a list of rasters contain nodata values
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_, _list_): The raster to check for nodata values.
+    `raster` (_str_|_gdal.Dataset_, _list_): The raster to check for nodata values.
 
     ## Returns:
     (_bool_): **True** if the raster or list of rasters contain nodata values.
@@ -519,23 +519,23 @@ def raster_mask_values(
 <dd>
 <div class="desc"><p>Mask a raster with a list of values.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>str</em> | <em>gdal.Dataset</em> | <em>list</em>): The raster(s) to mask. </br>
+<p><code>raster</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>list</em>): The raster(s) to mask. </br>
 <code>values_to_mask</code> (<em>list</em>): The values to mask. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>include_original_nodata</code> (<em>bool</em>): Should the nodata_value of the input raster be added
 to the list of masked values? (Default: <strong>True</strong>) </br>
-<code>dst_nodata</code> (<em>float</em> | <em>int</em> | <em>str</em> | <em>list</em>): The nodata value to use for the output raster.
+<code>dst_nodata</code> (<em>float</em>|<em>int</em>|<em>str</em>|<em>list</em>): The nodata value to use for the output raster.
 If infer, the nodata_value from the input raster is used. (Default: <strong>"infer"</strong>) </br>
-<code>out_path</code> (<em>str</em> | <em>list</em> | <em>None</em>): The destination of the changed rasters.
+<code>out_path</code> (<em>str</em>|<em>list</em>|<em>None</em>): The destination of the changed rasters.
 If out_paths are specified, in_place is automatically set to False. The path can be a folder. (Default: <strong>None</strong>)</br>
 <code>in_place</code> (<em>bool</em>): Should the rasters be changed in_place or copied? (Default: <strong>False</strong>) </br>
 <code>overwrite</code> (<em>bool</em>): If the output path exists already, should it be overwritten? (Default: <strong>True</strong>)</br>
 <code>prefix</code> (<em>str</em>): Prefix to add to the output. (Default: <strong>""</strong>) </br>
 <code>suffix</code> (<em>str</em>): Suffix to add to the output. (Default: <strong>""</strong>) </br>
 <code>add_uuid</code> (<em>bool</em>): Should a uuid be added to the output path? (Default: <strong>False</strong>) </br>
-<code>creation_options</code> (<em>list</em> | <em>None</em>): The GDAL creation options to be passed. (Default: <strong>None</strong>) </br></p>
+<code>creation_options</code> (<em>list</em>|<em>None</em>): The GDAL creation options to be passed. (Default: <strong>None</strong>) </br></p>
 <p>Returns:
-(<em>str</em> | <em>list</em>): Returns the rasters with nodata removed. If in_place is True a reference to the
+(<em>str</em>|<em>list</em>): Returns the rasters with nodata removed. If in_place is True a reference to the
 changed orignal is returned, otherwise a copied memory raster or the path to the
 generated raster is outputted.</p></div>
 <details class="source">
@@ -560,25 +560,25 @@ generated raster is outputted.</p></div>
     Mask a raster with a list of values.
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster(s) to mask. &lt;/br&gt;
+    `raster` (_str_|_gdal.Dataset_|_list_): The raster(s) to mask. &lt;/br&gt;
     `values_to_mask` (_list_): The values to mask. &lt;/br&gt;
 
     ## Kwargs:
     `include_original_nodata` (_bool_): Should the nodata_value of the input raster be added
     to the list of masked values? (Default: **True**) &lt;/br&gt;
-    `dst_nodata` (_float_ | _int_ | _str_ | _list_): The nodata value to use for the output raster.
+    `dst_nodata` (_float_|_int_|_str_|_list_): The nodata value to use for the output raster.
     If infer, the nodata_value from the input raster is used. (Default: **&#34;infer&#34;**) &lt;/br&gt;
-    `out_path` (_str_ | _list_ | _None_): The destination of the changed rasters.
+    `out_path` (_str_|_list_|_None_): The destination of the changed rasters.
     If out_paths are specified, in_place is automatically set to False. The path can be a folder. (Default: **None**)&lt;/br&gt;
     `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) &lt;/br&gt;
     `overwrite` (_bool_): If the output path exists already, should it be overwritten? (Default: **True**)&lt;/br&gt;
     `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): Suffix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): Should a uuid be added to the output path? (Default: **False**) &lt;/br&gt;
-    `creation_options` (_list_ | _None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;
+    `creation_options` (_list_|_None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;
 
     Returns:
-    (_str_ | _list_): Returns the rasters with nodata removed. If in_place is True a reference to the
+    (_str_|_list_): Returns the rasters with nodata removed. If in_place is True a reference to the
     changed orignal is returned, otherwise a copied memory raster or the path to the
     generated raster is outputted.
     &#34;&#34;&#34;
@@ -660,7 +660,7 @@ generated raster is outputted.</p></div>
             if idx == 0:
                 mask = arr == mask_value
             else:
-                mask = mask | arr == mask_value
+                mask = mask|arr == mask_value
 
         arr = np.ma.masked_array(arr, mask=mask, fill_value=internal_dst_nodata)
 
@@ -689,16 +689,16 @@ generated raster is outputted.</p></div>
 <dd>
 <div class="desc"><p>Removes all the nodata from a raster or a list of rasters.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>str</em> | <em>gdal.Dataset</em> | <em>list</em>): The raster(s) to remove nodata values for. </br></p>
+<p><code>raster</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>list</em>): The raster(s) to remove nodata values for. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em> | <em>list</em> | <em>None</em>): The destination of the changed rasters. (Default: <strong>None</strong>) </br>
+<p><code>out_path</code> (<em>str</em>|<em>list</em>|<em>None</em>): The destination of the changed rasters. (Default: <strong>None</strong>) </br>
 <code>overwrite</code> (<em>bool</em>): Should the rasters be overwritten if they already exist? (Default: <strong>True</strong>) </br>
 <code>in_place</code> (<em>bool</em>): Should the rasters be changed in_place or copied? (Default: <strong>False</strong>) </br>
 <code>prefix</code> (<em>str</em>): Prefix to add to the output. (Default: <strong>""</strong>) </br>
 <code>suffix</code> (<em>str</em>): Suffix to add to the output. (Default: <strong>"_nodata_removed"</strong>) </br>
 <code>creation_options</code> (<em>list</em>): Creation options for the output rasters. (Default: <strong>None</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em> | <em>list</em>): Returns the rasters with nodata removed. If in_place is True a reference to the
+<p>(<em>str</em>|<em>list</em>): Returns the rasters with nodata removed. If in_place is True a reference to the
 changed orignal is returned, otherwise a copied memory raster or the path to the
 generated raster is outputted.</p></div>
 <details class="source">
@@ -719,10 +719,10 @@ generated raster is outputted.</p></div>
     Removes all the nodata from a raster or a list of rasters.
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster(s) to remove nodata values for. &lt;/br&gt;
+    `raster` (_str_|_gdal.Dataset_|_list_): The raster(s) to remove nodata values for. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_ | _list_ | _None_): The destination of the changed rasters. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_|_list_|_None_): The destination of the changed rasters. (Default: **None**) &lt;/br&gt;
     `overwrite` (_bool_): Should the rasters be overwritten if they already exist? (Default: **True**) &lt;/br&gt;
     `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) &lt;/br&gt;
     `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
@@ -730,7 +730,7 @@ generated raster is outputted.</p></div>
     `creation_options` (_list_): Creation options for the output rasters. (Default: **None**) &lt;/br&gt;
 
     ## Returns:
-    (_str_ | _list_): Returns the rasters with nodata removed. If in_place is True a reference to the
+    (_str_|_list_): Returns the rasters with nodata removed. If in_place is True a reference to the
     changed orignal is returned, otherwise a copied memory raster or the path to the
     generated raster is outputted.
     &#34;&#34;&#34;
@@ -753,20 +753,20 @@ generated raster is outputted.</p></div>
 <dd>
 <div class="desc"><p>Sets all the nodata for raster(s) to a value.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>str</em> | <em>gdal.Dataset</em> | <em>list</em>): The raster(s) to set nodata values for. </br>
-<code>dst_nodata</code> (<em>float</em> | <em>int</em> | <em>str</em> | <em>None</em>): The target nodata value. If 'infer' the nodata
+<p><code>raster</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>list</em>): The raster(s) to set nodata values for. </br>
+<code>dst_nodata</code> (<em>float</em>|<em>int</em>|<em>str</em>|<em>None</em>): The target nodata value. If 'infer' the nodata
 value is set based on the input datatype. A list of nodata values can be based matching
 the amount of input rasters. If multiple nodata values should be set,
 use raster_mask_values. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em> | <em>list</em> | <em>None</em>): The destination of the changed rasters. (Default: <strong>None</strong>) </br>
+<p><code>out_path</code> (<em>str</em>|<em>list</em>|<em>None</em>): The destination of the changed rasters. (Default: <strong>None</strong>) </br>
 <code>overwrite</code> (<em>bool</em>): Should the rasters be overwritten if they already exist? (Default: <strong>True</strong>) </br>
 <code>in_place</code> (<em>bool</em>): Should the rasters be changed in_place or copied? (Default: <strong>False</strong>) </br>
 <code>prefix</code> (<em>str</em>): Prefix to add to the output. (Default: <strong>""</strong>) </br>
 <code>suffix</code> (<em>str): Suffix to add to the output. (Default: <strong>""</strong>) </br>
 <code>creation_options</code> (_list</em>): Creation options for the output rasters. (Default: <strong>None</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em> | <em>list</em>): Returns the rasters with nodata set. If in_place is True a reference to the
+<p>(<em>str</em>|<em>list</em>): Returns the rasters with nodata set. If in_place is True a reference to the
 changed orignal is returned, otherwise a copied memory raster or the path to the
 generated raster is outputted.</p></div>
 <details class="source">
@@ -788,14 +788,14 @@ generated raster is outputted.</p></div>
     Sets all the nodata for raster(s) to a value.
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster(s) to set nodata values for. &lt;/br&gt;
-    `dst_nodata` (_float_ | _int_ | _str_ | _None_): The target nodata value. If &#39;infer&#39; the nodata
+    `raster` (_str_|_gdal.Dataset_|_list_): The raster(s) to set nodata values for. &lt;/br&gt;
+    `dst_nodata` (_float_|_int_|_str_|_None_): The target nodata value. If &#39;infer&#39; the nodata
         value is set based on the input datatype. A list of nodata values can be based matching
         the amount of input rasters. If multiple nodata values should be set,
         use raster_mask_values. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_ | _list_ | _None_): The destination of the changed rasters. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_|_list_|_None_): The destination of the changed rasters. (Default: **None**) &lt;/br&gt;
     `overwrite` (_bool_): Should the rasters be overwritten if they already exist? (Default: **True**) &lt;/br&gt;
     `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) &lt;/br&gt;
     `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
@@ -803,7 +803,7 @@ generated raster is outputted.</p></div>
     `creation_options` (_list_): Creation options for the output rasters. (Default: **None**) &lt;/br&gt;
 
     ## Returns:
-    (_str_ | _list_): Returns the rasters with nodata set. If in_place is True a reference to the
+    (_str_|_list_): Returns the rasters with nodata set. If in_place is True a reference to the
     changed orignal is returned, otherwise a copied memory raster or the path to the
     generated raster is outputted.
     &#34;&#34;&#34;

@@ -103,11 +103,11 @@ def intersect_vector(
     Clips a vector to a geometry.
 
     ## Args:
-    `vector` (_str_ | _ogr.DataSource_ | _list_): The vector(s) to intersect. </br>
-    `clip_geom` (_str_ | _ogr.Geometry_): The geometry to intersect the vector(s) with. </br>
+    `vector` (_str_|_ogr.DataSource_|_list_): The vector(s) to intersect. </br>
+    `clip_geom` (_str_|_ogr.Geometry_): The geometry to intersect the vector(s) with. </br>
 
     ## Kwargs:
-    `out_path` (_str_ | _list_ | _None_): The path(s) to save the clipped vector(s) to. (Default: **None**) </br>
+    `out_path` (_str_|_list_|_None_): The path(s) to save the clipped vector(s) to. (Default: **None**) </br>
     `process_layer` (_int_): The layer to process in the vector(s). (Default: **0**) </br>
     `process_layer_clip` (_int_): The layer to process in the clip geometry. (Default: **0**) </br>
     `add_index` (_bool_): Add a geospatial index to the vector(s). (Default: **True**) </br>
@@ -118,7 +118,7 @@ def intersect_vector(
     `allow_lists` (_bool_): Allow the input to be a list of vectors. (Default: **True**) </br>
 
     ## Returns:
-    (_str_ | _list_): The path(s) to the clipped vector(s).
+    (_str_|_list_): The path(s) to the clipped vector(s).
     """
     core_utils.type_check(vector, [ogr.DataSource, str, list], "vector")
     core_utils.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")

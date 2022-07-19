@@ -133,14 +133,14 @@ def reproject_vector(
     """Reprojects a vector given a target projection.
 
     Args:
-        vector (path | vector): The vector to reproject.
+        vector (path|vector): The vector to reproject.
 
-        projection (str | int | vector | raster): The projection is infered from
+        projection (str|int|vector|raster): The projection is infered from
         the input. The input can be: WKT proj, EPSG proj, Proj, or read from a
         vector or raster datasource either from path or in-memory.
 
     **kwargs:
-        out_path (path | None): The destination to save to. If None then
+        out_path (path|None): The destination to save to. If None then
         the output is an in-memory raster.
 
         overwite (bool): Is it possible to overwrite the out_path if it exists.

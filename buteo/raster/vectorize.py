@@ -64,17 +64,17 @@ def vectorize_raster(
     best on integer rasters.
 
     ## Args:
-    `raster` (_str_ | _list_ | _gdal.Dataset_): The raster(s) to vectorize.
+    `raster` (_str_|_list_|_gdal.Dataset_): The raster(s) to vectorize.
 
     ## Kwargs:
-    `out_path` (_str_ | _list_ | _None_): The path(s) to save the vectorized raster(s) to. (Default: **None**) </br>
+    `out_path` (_str_|_list_|_None_): The path(s) to save the vectorized raster(s) to. (Default: **None**) </br>
     `band` (_int_): The band to vectorize. (Default: **1**) </br>
     `prefix` (_str_): The prefix to be added to the output raster name. (Default: **""**) </br>
     `suffix` (_str_): The suffix to be added to the output raster name. (Default: **""**) </br>
     `add_uuid` (_bool_): If True, a unique identifier will be added to the output raster name. (Default: **False**) </br>
 
     ## Returns:
-    (_str_ | _list_): The path(s) to the vectorized raster(s).
+    (_str_|_list_): The path(s) to the vectorized raster(s).
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(out_path, [str, [str], None], "out_path")

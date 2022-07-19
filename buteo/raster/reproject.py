@@ -113,24 +113,24 @@ def reproject_raster(
     Reproject a raster(s) to a target coordinate reference system.
 
     ## Args:
-    `raster` (_str_ | _list_ | _gdal.Dataset): The raster(s) to reproject. </br>
-    `projection` (_str_ | _int_ | _ogr.DataSource_ | _gdal.Dataset_): The projection is infered from
+    `raster` (_str_|_list_|_gdal.Dataset): The raster(s) to reproject. </br>
+    `projection` (_str_|_int_|_ogr.DataSource_|_gdal.Dataset_): The projection is infered from
     the input. The input can be: WKT proj, EPSG proj, Proj, osr proj, or read
     from a vector or raster datasource either from path or in-memory. </br>
 
     ## Kwargs:
-    `out_path` (_str_ | _None_): The output path. If not provided, the output path is inferred from the input. (Default: **None**) </br>
+    `out_path` (_str_|_None_): The output path. If not provided, the output path is inferred from the input. (Default: **None**) </br>
     `resample_alg` (_str_): The resampling algorithm. (Default: **nearest**) </br>
     `copy_if_same` (_bool_): If the input and output projections are the same, copy the input raster to the output path. (Default: **True**) </br>
     `overwrite` (_bool_): If the output path already exists, overwrite it. (Default: **True**) </br>
-    `creation_options` (_list_ | _None_): A list of creation options for the output raster. (Default: **None**) </br>
-    `dst_nodata` (_str_ | _int_ | _float_): The nodata value for the output raster. (Default: **infer**) </br>
+    `creation_options` (_list_|_None_): A list of creation options for the output raster. (Default: **None**) </br>
+    `dst_nodata` (_str_|_int_|_float_): The nodata value for the output raster. (Default: **infer**) </br>
     `prefix` (_str_): The prefix to add to the output path. (Default: **""**) </br>
     `suffix` (_str_): The suffix to add to the output path. (Default: **"_reprojected"**) </br>
     `add_uuid` (_bool_): If True, add a UUID to the output path. (Default: **False**) </br>
 
     ## Returns:
-    (_str_ | _list_): The output path(s) of the reprojected raster(s).
+    (_str_|_list_): The output path(s) of the reprojected raster(s).
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")

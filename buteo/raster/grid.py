@@ -41,16 +41,16 @@ def raster_to_grid(
     Clips a raster to a grid. Generate .vrt.
 
     ## Args:
-    `raster` (_str_ | _gdal.DataSet_): The input raster. </br>
-    `grid` (_str_ | ogr.DataSource): The grid to use. </br>
+    `raster` (_str_|_gdal.DataSet_): The input raster. </br>
+    `grid` (_str_|ogr.DataSource): The grid to use. </br>
     `out_dir` (_str_): The output directory. </br>
 
     ## Kwargs:
-    `use_field` (_str_ | _None_): A field to use to name the grid cells. </br>
+    `use_field` (_str_|_None_): A field to use to name the grid cells. </br>
     `generate_vrt` (_bool_): If **True**, the output raster will be a .vrt. </br>
     `overwrite` (_bool_): If **True**, the output raster will be overwritten. </br>
     `process_layer` (_int_): The layer from the grid to process. </br>
-    `creation_options` (_list_ | _None_): Creation options for the output raster. </br>
+    `creation_options` (_list_|_None_): Creation options for the output raster. </br>
     `verbose` (_int_): The verbosity level. </br>
 
     ## Returns:

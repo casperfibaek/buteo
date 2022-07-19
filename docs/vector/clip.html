@@ -131,13 +131,13 @@ def clip_vector(
     Clips a vector to a geometry.
 
     ## Args:
-    `vector` (_str_ | _ogr.DataSource_ | _list_): Vector(s) to clip. &lt;/br&gt;
-    `clip_geom` (_str_ | _ogr.Geometry_): Vector to clip with. &lt;/br&gt;
+    `vector` (_str_|_ogr.DataSource_|_list_): Vector(s) to clip. &lt;/br&gt;
+    `clip_geom` (_str_|_ogr.Geometry_): Vector to clip with. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_ | _None_): Output path. If None, memory rasters are created. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_|_None_): Output path. If None, memory rasters are created. (Default: **None**) &lt;/br&gt;
     `to_extent` (_bool_): Clip to extent. (Default: **False**) &lt;/br&gt;
-    `target_projection` (_str_ | _ogr.DataSource_ | _gdal.Dataset_ | _osr.SpatialReference_ | _int_ | _None_): Target projection. (Default: **None**) &lt;/br&gt;
+    `target_projection` (_str_|_ogr.DataSource_|_gdal.Dataset_|_osr.SpatialReference_|_int_|_None_): Target projection. (Default: **None**) &lt;/br&gt;
     `preserve_fid` (_bool_): Preserve fid. (Default: **True**) &lt;/br&gt;
     `prefix` (_str_): Prefix to add to the output path. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): Suffix to add to the output path. (Default: **&#34;&#34;**) &lt;/br&gt;
@@ -146,7 +146,7 @@ def clip_vector(
     `overwrite` (_bool_): Overwrite output if it already exists. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_str_ | _list_): Output path(s) of clipped vector(s).
+    (_str_|_list_): Output path(s) of clipped vector(s).
     &#34;&#34;&#34;
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], &#34;vector&#34;)
     core_utils.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], &#34;clip_geom&#34;)
@@ -207,12 +207,12 @@ def clip_vector(
 <dd>
 <div class="desc"><p>Clips a vector to a geometry.</p>
 <h2 id="args">Args:</h2>
-<p><code>vector</code> (<em>str</em> | <em>ogr.DataSource</em> | <em>list</em>): Vector(s) to clip. </br>
-<code>clip_geom</code> (<em>str</em> | <em>ogr.Geometry</em>): Vector to clip with. </br></p>
+<p><code>vector</code> (<em>str</em>|<em>ogr.DataSource</em>|<em>list</em>): Vector(s) to clip. </br>
+<code>clip_geom</code> (<em>str</em>|<em>ogr.Geometry</em>): Vector to clip with. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em> | <em>None</em>): Output path. If None, memory rasters are created. (Default: <strong>None</strong>) </br>
+<p><code>out_path</code> (<em>str</em>|<em>None</em>): Output path. If None, memory rasters are created. (Default: <strong>None</strong>) </br>
 <code>to_extent</code> (<em>bool</em>): Clip to extent. (Default: <strong>False</strong>) </br>
-<code>target_projection</code> (<em>str</em> | <em>ogr.DataSource</em> | <em>gdal.Dataset</em> | <em>osr.SpatialReference</em> | <em>int</em> | <em>None</em>): Target projection. (Default: <strong>None</strong>) </br>
+<code>target_projection</code> (<em>str</em>|<em>ogr.DataSource</em>|<em>gdal.Dataset</em>|<em>osr.SpatialReference</em>|<em>int</em>|<em>None</em>): Target projection. (Default: <strong>None</strong>) </br>
 <code>preserve_fid</code> (<em>bool</em>): Preserve fid. (Default: <strong>True</strong>) </br>
 <code>prefix</code> (<em>str</em>): Prefix to add to the output path. (Default: <strong>""</strong>) </br>
 <code>suffix</code> (<em>str</em>): Suffix to add to the output path. (Default: <strong>""</strong>) </br>
@@ -220,7 +220,7 @@ def clip_vector(
 <code>allow_lists</code> (<em>bool</em>): Allow lists of vectors as input. (Default: <strong>True</strong>) </br>
 <code>overwrite</code> (<em>bool</em>): Overwrite output if it already exists. (Default: <strong>True</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em> | <em>list</em>): Output path(s) of clipped vector(s).</p></div>
+<p>(<em>str</em>|<em>list</em>): Output path(s) of clipped vector(s).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -243,13 +243,13 @@ def clip_vector(
     Clips a vector to a geometry.
 
     ## Args:
-    `vector` (_str_ | _ogr.DataSource_ | _list_): Vector(s) to clip. &lt;/br&gt;
-    `clip_geom` (_str_ | _ogr.Geometry_): Vector to clip with. &lt;/br&gt;
+    `vector` (_str_|_ogr.DataSource_|_list_): Vector(s) to clip. &lt;/br&gt;
+    `clip_geom` (_str_|_ogr.Geometry_): Vector to clip with. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_ | _None_): Output path. If None, memory rasters are created. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_|_None_): Output path. If None, memory rasters are created. (Default: **None**) &lt;/br&gt;
     `to_extent` (_bool_): Clip to extent. (Default: **False**) &lt;/br&gt;
-    `target_projection` (_str_ | _ogr.DataSource_ | _gdal.Dataset_ | _osr.SpatialReference_ | _int_ | _None_): Target projection. (Default: **None**) &lt;/br&gt;
+    `target_projection` (_str_|_ogr.DataSource_|_gdal.Dataset_|_osr.SpatialReference_|_int_|_None_): Target projection. (Default: **None**) &lt;/br&gt;
     `preserve_fid` (_bool_): Preserve fid. (Default: **True**) &lt;/br&gt;
     `prefix` (_str_): Prefix to add to the output path. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): Suffix to add to the output path. (Default: **&#34;&#34;**) &lt;/br&gt;
@@ -258,7 +258,7 @@ def clip_vector(
     `overwrite` (_bool_): Overwrite output if it already exists. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_str_ | _list_): Output path(s) of clipped vector(s).
+    (_str_|_list_): Output path(s) of clipped vector(s).
     &#34;&#34;&#34;
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], &#34;vector&#34;)
     core_utils.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], &#34;clip_geom&#34;)

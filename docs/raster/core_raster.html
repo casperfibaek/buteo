@@ -84,7 +84,7 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     a list is returned with the opened raster.
 
     ## Args:
-    `raster` (_gdal.Dataset_ | _str_ | _list__): A path to a raster or a GDAL dataframe. &lt;/br&gt;
+    `raster` (_gdal.Dataset_|_str_|_list__): A path to a raster or a GDAL dataframe. &lt;/br&gt;
 
     ## Kwargs:
     `writeable` (_bool_): If True, the raster is opened in write mode. (Default: **True**) &lt;/br&gt;
@@ -92,7 +92,7 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     a single raster is allowed. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_gdal.Dataset_ | _list__): A gdal.Dataset or a list of gdal.Datasets.
+    (_gdal.Dataset_|_list__): A gdal.Dataset or a list of gdal.Datasets.
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(writeable, [bool], &#34;writeable&#34;)
@@ -229,14 +229,14 @@ def raster_to_metadata(raster, *, allow_lists=True):
     Reads a raster from a list of rasters, string or a dataset and returns metadata.
 
     ## Args:
-    `raster` (_gdal.Dataset_ | _str_ | _list__): A GDAL dataframe or a path to a raster. &lt;/br&gt;
+    `raster` (_gdal.Dataset_|_str_|_list__): A GDAL dataframe or a path to a raster. &lt;/br&gt;
 
     ## Kwargs:
     `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
     a single raster is allowed. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_dict_ | _list_): A dictionary or list of dictionaries containing metadata.
+    (_dict_|_list_): A dictionary or list of dictionaries containing metadata.
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
 
@@ -382,10 +382,10 @@ def raster_to_array(
     Turns a path to a raster(s) or a GDAL.Dataset(s) into a **NumPy** array(s).
 
     ## Args:
-    (_gdal.Dataset_ | _str_ | _list_): The raster(s) to convert.
+    (_gdal.Dataset_|_str_|_list_): The raster(s) to convert.
 
     ## Kwargs:
-    `bands` (_list_ | _str_ | _int_): The bands from the raster to turn
+    `bands` (_list_|_str_|_int_): The bands from the raster to turn
     into a numpy array. Can be &#34;all&#34;, &#34;ALL&#34;, a list of ints or a
     single int. &lt;/br&gt;
 
@@ -577,11 +577,11 @@ def raster_set_datatype(
     Changes the datatype of a raster.
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster to change the datatype of. &lt;/br&gt;
+    `raster` (_str_|_gdal.Dataset_|_list_): The raster to change the datatype of. &lt;/br&gt;
     `dtype` (_str_): The new datatype. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_path_ | _list_): The destination to save to. (Default: **None**)&lt;/br&gt;
+    `out_path` (_path_|_list_): The destination to save to. (Default: **None**)&lt;/br&gt;
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
     `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only single rasters
     are allowed. (Default: **True**) &lt;/br&gt;
@@ -592,7 +592,7 @@ def raster_set_datatype(
         * &#34;COMPRESS=LZW&#34;
 
     ## Returns:
-    (_str_ | _list_): The filepath or list of filepaths to the newly created raster(s).
+    (_str_|_list_): The filepath or list of filepaths to the newly created raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(dtype, [str], &#34;dtype&#34;)
@@ -651,12 +651,12 @@ def array_to_raster(
 
     ## Args:
     `array` (_np.ndarray_): The numpy array to convert. &lt;/br&gt;
-    `reference` (_str_ | _gdal.Dataset_): The reference raster to use for the output. &lt;/br&gt;
+    `reference` (_str_|_gdal.Dataset_): The reference raster to use for the output. &lt;/br&gt;
 
     ## Kwargs:
     `out_path` (_path_): The destination to save to. (Default: **None**)&lt;/br&gt;
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
-    `set_nodata` (_bool_ | _float_ | _int_): Can be set to: (Default: **auto**)&lt;/br&gt;
+    `set_nodata` (_bool_|_float_|_int_): Can be set to: (Default: **auto**)&lt;/br&gt;
         * **&#34;ref&#34;**: The nodata value will be the same as the reference raster. &lt;/br&gt;
         * **&#34;arr&#34;**: The nodata value will be the same as the **NumPy** array. &lt;/br&gt;
         * **&#34;value&#34;**: The nodata value will be the value provided. &lt;/br&gt;
@@ -791,7 +791,7 @@ def stack_rasters(
         * &#34;COMPRESS=LZW&#34;
 
     ## Returns:
-    (_str_ | _list_): The filepath(s) to the newly created raster(s).
+    (_str_|_list_): The filepath(s) to the newly created raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(rasters, [[str, gdal.Dataset]], &#34;rasters&#34;)
     core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)
@@ -960,8 +960,8 @@ def rasters_intersect(raster1, raster2):
     Checks if two rasters intersect using their latlong boundaries.
 
     ## Args:
-    `raster1` (_str_ | gdal.Dataset): The first raster. &lt;/br&gt;
-    `raster2` (_str_ | gdal.Dataset): The second raster. &lt;/br&gt;
+    `raster1` (_str_|gdal.Dataset): The first raster. &lt;/br&gt;
+    `raster2` (_str_|gdal.Dataset): The second raster. &lt;/br&gt;
 
     ## Returns:
     (_bool_): If the rasters intersect.
@@ -980,8 +980,8 @@ def rasters_intersection(raster1, raster2):
     Get the latlng intersection of two rasters.
 
     ## Args:
-    `raster1` (_str_ | gdal.Dataset): The first raster. &lt;/br&gt;
-    `raster2` (_str_ | gdal.Dataset): The second raster. &lt;/br&gt;
+    `raster1` (_str_|gdal.Dataset): The first raster. &lt;/br&gt;
+    `raster2` (_str_|gdal.Dataset): The second raster. &lt;/br&gt;
 
     ## Returns:
     (_ogr.DataSource_): The latlng intersection of the two rasters.
@@ -1005,8 +1005,8 @@ def get_overlap_fraction(raster1, raster2):
     Get the fraction of the overlap between two rasters. (e.g. 0.9 for mostly overlapping rasters)
 
     ## Args:
-    `raster1` (_str_ | gdal.Dataset): The master raster. &lt;/br&gt;
-    `raster2` (_str_ | gdal.Dataset): The test raster. &lt;/br&gt;
+    `raster1` (_str_|gdal.Dataset): The master raster. &lt;/br&gt;
+    `raster2` (_str_|gdal.Dataset): The test raster. &lt;/br&gt;
 
     ## Returns:
     (_float_): A value representing the degree of overlap **(0-1)**
@@ -1042,11 +1042,11 @@ def get_overlap_fraction(raster1, raster2):
 as a raster using a reference raster.</p>
 <h2 id="args">Args:</h2>
 <p><code>array</code> (<em>np.ndarray</em>): The numpy array to convert. </br>
-<code>reference</code> (<em>str</em> | <em>gdal.Dataset</em>): The reference raster to use for the output. </br></p>
+<code>reference</code> (<em>str</em>|<em>gdal.Dataset</em>): The reference raster to use for the output. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>out_path</code> (<em>path</em>): The destination to save to. (Default: <strong>None</strong>)</br>
 <code>overwrite</code> (<em>bool</em>): If the file exists, should it be overwritten? (Default: <strong>True</strong>) </br>
-<code>set_nodata</code> (<em>bool</em> | <em>float</em> | <em>int</em>): Can be set to: (Default: <strong>auto</strong>)</br>
+<code>set_nodata</code> (<em>bool</em>|<em>float</em>|<em>int</em>): Can be set to: (Default: <strong>auto</strong>)</br>
 * <strong>"ref"</strong>: The nodata value will be the same as the reference raster. </br>
 * <strong>"arr"</strong>: The nodata value will be the same as the <strong>NumPy</strong> array. </br>
 * <strong>"value"</strong>: The nodata value will be the value provided. </br>
@@ -1076,12 +1076,12 @@ as a raster using a reference raster.</p>
 
     ## Args:
     `array` (_np.ndarray_): The numpy array to convert. &lt;/br&gt;
-    `reference` (_str_ | _gdal.Dataset_): The reference raster to use for the output. &lt;/br&gt;
+    `reference` (_str_|_gdal.Dataset_): The reference raster to use for the output. &lt;/br&gt;
 
     ## Kwargs:
     `out_path` (_path_): The destination to save to. (Default: **None**)&lt;/br&gt;
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
-    `set_nodata` (_bool_ | _float_ | _int_): Can be set to: (Default: **auto**)&lt;/br&gt;
+    `set_nodata` (_bool_|_float_|_int_): Can be set to: (Default: **auto**)&lt;/br&gt;
         * **&#34;ref&#34;**: The nodata value will be the same as the reference raster. &lt;/br&gt;
         * **&#34;arr&#34;**: The nodata value will be the same as the **NumPy** array. &lt;/br&gt;
         * **&#34;value&#34;**: The nodata value will be the value provided. &lt;/br&gt;
@@ -1197,8 +1197,8 @@ as a raster using a reference raster.</p>
 <dd>
 <div class="desc"><p>Get the fraction of the overlap between two rasters. (e.g. 0.9 for mostly overlapping rasters)</p>
 <h2 id="args">Args:</h2>
-<p><code>raster1</code> (<em>str</em> | gdal.Dataset): The master raster. </br>
-<code>raster2</code> (<em>str</em> | gdal.Dataset): The test raster. </br></p>
+<p><code>raster1</code> (<em>str</em>|gdal.Dataset): The master raster. </br>
+<code>raster2</code> (<em>str</em>|gdal.Dataset): The test raster. </br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>float</em>): A value representing the degree of overlap <strong>(0-1)</strong></p></div>
 <details class="source">
@@ -1210,8 +1210,8 @@ as a raster using a reference raster.</p>
     Get the fraction of the overlap between two rasters. (e.g. 0.9 for mostly overlapping rasters)
 
     ## Args:
-    `raster1` (_str_ | gdal.Dataset): The master raster. &lt;/br&gt;
-    `raster2` (_str_ | gdal.Dataset): The test raster. &lt;/br&gt;
+    `raster1` (_str_|gdal.Dataset): The master raster. &lt;/br&gt;
+    `raster2` (_str_|gdal.Dataset): The test raster. &lt;/br&gt;
 
     ## Returns:
     (_float_): A value representing the degree of overlap **(0-1)**
@@ -1240,13 +1240,13 @@ as a raster using a reference raster.</p>
 gdal.Dataset is passed it is returned. Supports lists. If a list is passed
 a list is returned with the opened raster.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>gdal.Dataset</em> | <em>str</em> | _list__): A path to a raster or a GDAL dataframe. </br></p>
+<p><code>raster</code> (<em>gdal.Dataset</em>|<em>str</em>|_list__): A path to a raster or a GDAL dataframe. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>writeable</code> (<em>bool</em>): If True, the raster is opened in write mode. (Default: <strong>True</strong>) </br>
 <code>allow_lists</code> (<em>bool</em>): If True, the input can be a list of rasters. Otherwise, only
 a single raster is allowed. (Default: <strong>True</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>gdal.Dataset</em> | _list__): A gdal.Dataset or a list of gdal.Datasets.</p></div>
+<p>(<em>gdal.Dataset</em>|_list__): A gdal.Dataset or a list of gdal.Datasets.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1258,7 +1258,7 @@ a single raster is allowed. (Default: <strong>True</strong>) </br></p>
     a list is returned with the opened raster.
 
     ## Args:
-    `raster` (_gdal.Dataset_ | _str_ | _list__): A path to a raster or a GDAL dataframe. &lt;/br&gt;
+    `raster` (_gdal.Dataset_|_str_|_list__): A path to a raster or a GDAL dataframe. &lt;/br&gt;
 
     ## Kwargs:
     `writeable` (_bool_): If True, the raster is opened in write mode. (Default: **True**) &lt;/br&gt;
@@ -1266,7 +1266,7 @@ a single raster is allowed. (Default: <strong>True</strong>) </br></p>
     a single raster is allowed. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_gdal.Dataset_ | _list__): A gdal.Dataset or a list of gdal.Datasets.
+    (_gdal.Dataset_|_list__): A gdal.Dataset or a list of gdal.Datasets.
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(writeable, [bool], &#34;writeable&#34;)
@@ -1299,10 +1299,10 @@ a single raster is allowed. (Default: <strong>True</strong>) </br></p>
 <dd>
 <div class="desc"><p>Changes the datatype of a raster.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>str</em> | <em>gdal.Dataset</em> | <em>list</em>): The raster to change the datatype of. </br>
+<p><code>raster</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>list</em>): The raster to change the datatype of. </br>
 <code>dtype</code> (<em>str</em>): The new datatype. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>path</em> | <em>list</em>): The destination to save to. (Default: <strong>None</strong>)</br>
+<p><code>out_path</code> (<em>path</em>|<em>list</em>): The destination to save to. (Default: <strong>None</strong>)</br>
 <code>overwrite</code> (<em>bool</em>): If the file exists, should it be overwritten? (Default: <strong>True</strong>) </br>
 <code>allow_lists</code> (<em>bool</em>): If True, the input can be a list of rasters. Otherwise, only single rasters
 are allowed. (Default: <strong>True</strong>) </br>
@@ -1312,7 +1312,7 @@ are allowed. (Default: <strong>True</strong>) </br>
 * "BIGG_TIF=YES"
 * "COMPRESS=LZW"</p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em> | <em>list</em>): The filepath or list of filepaths to the newly created raster(s).</p></div>
+<p>(<em>str</em>|<em>list</em>): The filepath or list of filepaths to the newly created raster(s).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1330,11 +1330,11 @@ are allowed. (Default: <strong>True</strong>) </br>
     Changes the datatype of a raster.
 
     ## Args:
-    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster to change the datatype of. &lt;/br&gt;
+    `raster` (_str_|_gdal.Dataset_|_list_): The raster to change the datatype of. &lt;/br&gt;
     `dtype` (_str_): The new datatype. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_path_ | _list_): The destination to save to. (Default: **None**)&lt;/br&gt;
+    `out_path` (_path_|_list_): The destination to save to. (Default: **None**)&lt;/br&gt;
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
     `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only single rasters
     are allowed. (Default: **True**) &lt;/br&gt;
@@ -1345,7 +1345,7 @@ are allowed. (Default: <strong>True</strong>) </br>
         * &#34;COMPRESS=LZW&#34;
 
     ## Returns:
-    (_str_ | _list_): The filepath or list of filepaths to the newly created raster(s).
+    (_str_|_list_): The filepath or list of filepaths to the newly created raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(dtype, [str], &#34;dtype&#34;)
@@ -1395,9 +1395,9 @@ are allowed. (Default: <strong>True</strong>) </br>
 <dd>
 <div class="desc"><p>Turns a path to a raster(s) or a GDAL.Dataset(s) into a <strong>NumPy</strong> array(s).</p>
 <h2 id="args">Args:</h2>
-<p>(<em>gdal.Dataset</em> | <em>str</em> | <em>list</em>): The raster(s) to convert.</p>
+<p>(<em>gdal.Dataset</em>|<em>str</em>|<em>list</em>): The raster(s) to convert.</p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>bands</code> (<em>list</em> | <em>str</em> | <em>int</em>): The bands from the raster to turn
+<p><code>bands</code> (<em>list</em>|<em>str</em>|<em>int</em>): The bands from the raster to turn
 into a numpy array. Can be "all", "ALL", a list of ints or a
 single int. </br></p>
 <p><code>filled</code> (<em>bool</em>): If the array contains nodata values. Should the
@@ -1429,10 +1429,10 @@ specified. </br></p></div>
     Turns a path to a raster(s) or a GDAL.Dataset(s) into a **NumPy** array(s).
 
     ## Args:
-    (_gdal.Dataset_ | _str_ | _list_): The raster(s) to convert.
+    (_gdal.Dataset_|_str_|_list_): The raster(s) to convert.
 
     ## Kwargs:
-    `bands` (_list_ | _str_ | _int_): The bands from the raster to turn
+    `bands` (_list_|_str_|_int_): The bands from the raster to turn
     into a numpy array. Can be &#34;all&#34;, &#34;ALL&#34;, a list of ints or a
     single int. &lt;/br&gt;
 
@@ -1555,12 +1555,12 @@ specified. </br></p></div>
 <dd>
 <div class="desc"><p>Reads a raster from a list of rasters, string or a dataset and returns metadata.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>gdal.Dataset</em> | <em>str</em> | _list__): A GDAL dataframe or a path to a raster. </br></p>
+<p><code>raster</code> (<em>gdal.Dataset</em>|<em>str</em>|_list__): A GDAL dataframe or a path to a raster. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>allow_lists</code> (<em>bool</em>): If True, the input can be a list of rasters. Otherwise, only
 a single raster is allowed. (Default: <strong>True</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>dict</em> | <em>list</em>): A dictionary or list of dictionaries containing metadata.</p></div>
+<p>(<em>dict</em>|<em>list</em>): A dictionary or list of dictionaries containing metadata.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1570,14 +1570,14 @@ a single raster is allowed. (Default: <strong>True</strong>) </br></p>
     Reads a raster from a list of rasters, string or a dataset and returns metadata.
 
     ## Args:
-    `raster` (_gdal.Dataset_ | _str_ | _list__): A GDAL dataframe or a path to a raster. &lt;/br&gt;
+    `raster` (_gdal.Dataset_|_str_|_list__): A GDAL dataframe or a path to a raster. &lt;/br&gt;
 
     ## Kwargs:
     `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
     a single raster is allowed. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_dict_ | _list_): A dictionary or list of dictionaries containing metadata.
+    (_dict_|_list_): A dictionary or list of dictionaries containing metadata.
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
 
@@ -1735,8 +1735,8 @@ refering to the dataset. </br></p>
 <dd>
 <div class="desc"><p>Checks if two rasters intersect using their latlong boundaries.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster1</code> (<em>str</em> | gdal.Dataset): The first raster. </br>
-<code>raster2</code> (<em>str</em> | gdal.Dataset): The second raster. </br></p>
+<p><code>raster1</code> (<em>str</em>|gdal.Dataset): The first raster. </br>
+<code>raster2</code> (<em>str</em>|gdal.Dataset): The second raster. </br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>bool</em>): If the rasters intersect.</p></div>
 <details class="source">
@@ -1748,8 +1748,8 @@ refering to the dataset. </br></p>
     Checks if two rasters intersect using their latlong boundaries.
 
     ## Args:
-    `raster1` (_str_ | gdal.Dataset): The first raster. &lt;/br&gt;
-    `raster2` (_str_ | gdal.Dataset): The second raster. &lt;/br&gt;
+    `raster1` (_str_|gdal.Dataset): The first raster. &lt;/br&gt;
+    `raster2` (_str_|gdal.Dataset): The second raster. &lt;/br&gt;
 
     ## Returns:
     (_bool_): If the rasters intersect.
@@ -1769,8 +1769,8 @@ refering to the dataset. </br></p>
 <dd>
 <div class="desc"><p>Get the latlng intersection of two rasters.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster1</code> (<em>str</em> | gdal.Dataset): The first raster. </br>
-<code>raster2</code> (<em>str</em> | gdal.Dataset): The second raster. </br></p>
+<p><code>raster1</code> (<em>str</em>|gdal.Dataset): The first raster. </br>
+<code>raster2</code> (<em>str</em>|gdal.Dataset): The second raster. </br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>ogr.DataSource</em>): The latlng intersection of the two rasters.</p></div>
 <details class="source">
@@ -1782,8 +1782,8 @@ refering to the dataset. </br></p>
     Get the latlng intersection of two rasters.
 
     ## Args:
-    `raster1` (_str_ | gdal.Dataset): The first raster. &lt;/br&gt;
-    `raster2` (_str_ | gdal.Dataset): The second raster. &lt;/br&gt;
+    `raster1` (_str_|gdal.Dataset): The first raster. &lt;/br&gt;
+    `raster2` (_str_|gdal.Dataset): The second raster. &lt;/br&gt;
 
     ## Returns:
     (_ogr.DataSource_): The latlng intersection of the two rasters.
@@ -1819,7 +1819,7 @@ refering to the dataset. </br></p>
 * "BIGG_TIF=YES"
 * "COMPRESS=LZW"</p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em> | <em>list</em>): The filepath(s) to the newly created raster(s).</p></div>
+<p>(<em>str</em>|<em>list</em>): The filepath(s) to the newly created raster(s).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1849,7 +1849,7 @@ refering to the dataset. </br></p>
         * &#34;COMPRESS=LZW&#34;
 
     ## Returns:
-    (_str_ | _list_): The filepath(s) to the newly created raster(s).
+    (_str_|_list_): The filepath(s) to the newly created raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(rasters, [[str, gdal.Dataset]], &#34;rasters&#34;)
     core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)

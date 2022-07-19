@@ -793,23 +793,23 @@ def create_output_paths(
     add_uuid=False,
 ):
     """
-    Prepares a raster or a list of rasters for writing. Generates output paths. If no output paths are
+    Prepares a raster|vector or a list of rasters|vectors for writing. Generates output paths. If no output paths are
     specified, the rasters are written to memory. If a folder is given, the output directory is chosen
     are the input filenames remain the same. If a specific path is used it must be the same length as the
     input.
 
     ## Args:
-    `raster` (_gdal.Dataset_ | _str_ | _list__): A **GDAL** dataframe, a path to a raster or a list of same. </br>
+    `dataset_path` (_gdal.Dataset_|_ogr.DataSource_|_str_|_list__): A **GDAL** or **OGR** dataframe, a path to a raster or a list of same. </br>
 
     ## Kwargs:
-    `out_path` (_str_ | _None_): A path to a directory to write the raster to. (Default: **None**). </br>
+    `out_path` (_str_|_None_): A path to a directory to write the raster to. (Default: **None**). </br>
     `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). </br>
     `prefix` (_str_): A string to prepend to the output filename. (Default: **""**). </br>
     `suffix` (_str_): A string to append to the output filename. (Default: **""**). </br>
     `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). </br>
 
     ## Returns:
-    (_str_ | _list_): A path to the output raster or a list of paths.
+    (_str_|_list_): A path to the output raster or a list of paths.
     """
     assert isinstance(dataset_path, (str, list)), "dataset_path must be a string or a list of strings."
     assert isinstance(out_path, (str, type(None))), "out_path must be a string or None."

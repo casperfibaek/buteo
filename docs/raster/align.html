@@ -78,10 +78,10 @@ def match_raster_projections(
 
     ## Args:
     `rasters` (_list_): A list of rasters to match. &lt;/br&gt;
-    `master` (_str_ | _gdal.Dataset_ | _ogr.DataSource_): Path to the master raster or vector. &lt;/br&gt;
+    `master` (_str_|_gdal.Dataset_|_ogr.DataSource_): Path to the master raster or vector. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_ | _list_): Paths to the output. If not provided, the output will be in-memory rasters. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_|_list_): Paths to the output. If not provided, the output will be in-memory rasters. (Default: **None**) &lt;/br&gt;
     `overwrite` (_bool_): If True, existing rasters will be overwritten. (Default: **False**) &lt;/br&gt;
     `dst_nodata` (_str_): Value to use for no-data pixels. If not provided, the value will be transfered from the original. (Default: **&#34;infer&#34;**) &lt;/br&gt;
     `copy_if_already_correct` (_bool_): If True, the raster will be copied if it is already in the correct projection. (Default: **True**) &lt;/br&gt;
@@ -147,21 +147,21 @@ def align_rasters(
     `rasters` (_list_): A list of rasters to align. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_ | _list_): Paths to the output. If not provided, the output will be in-memory rasters. (Default: **None**) &lt;/br&gt;
-    `master` (_str_ | _gdal.Dataset_ | _ogr.DataSource_): Path to the master raster or vector. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_|_list_): Paths to the output. If not provided, the output will be in-memory rasters. (Default: **None**) &lt;/br&gt;
+    `master` (_str_|_gdal.Dataset_|_ogr.DataSource_): Path to the master raster or vector. (Default: **None**) &lt;/br&gt;
     `suffix` (_str_): Suffix to append to the output raster. (Default: **&#34;_aligned&#34;**) &lt;/br&gt;
     `bounding_box` (_str_): Method to use for aligning the rasters. Can be either &#34;intersection&#34; or &#34;union&#34;. (Default: **&#34;intersection&#34;**) &lt;/br&gt;
     `resample_alg` (_str_): Resampling algorithm to use. (Default: **nearest**) &lt;/br&gt;
-    `target_size` (_list_ | _gdal.Dataset_ | _ogr.DataSource_): Target size of the output raster. (Default: **None**) &lt;/br&gt;
+    `target_size` (_list_|_gdal.Dataset_|_ogr.DataSource_): Target size of the output raster. (Default: **None**) &lt;/br&gt;
     `target_in_pixels` (_bool_): If True, the target size will be in pixels. (Default: **False**) &lt;/br&gt;
-    `projection` (_str_ | _gdal.Dataset_ | _ogr.DataSource_): Projection to use for the output raster. (Default: **None**) &lt;/br&gt;
+    `projection` (_str_|_gdal.Dataset_|_ogr.DataSource_): Projection to use for the output raster. (Default: **None**) &lt;/br&gt;
     `overwrite` (_bool_): If **True**, existing rasters will be overwritten. (Default: **True**) &lt;/br&gt;
     `creation_options` (_list_): List of creation options to pass to the output raster. (Default: **None**) &lt;/br&gt;
-    `src_nodata` (_str_ | _int_ | _float_ | _None_): The source dataset of the align sets. (Default: **&#34;infer&#34;**) &lt;/br&gt;
-    `dst_nodata` (_str_ | _int_ | _float_ | _None_): The destination dataset of the align sets. (Default: **&#34;infer&#34;**) &lt;/br&gt;
+    `src_nodata` (_str_|_int_|_float_|_None_): The source dataset of the align sets. (Default: **&#34;infer&#34;**) &lt;/br&gt;
+    `dst_nodata` (_str_|_int_|_float_|_None_): The destination dataset of the align sets. (Default: **&#34;infer&#34;**) &lt;/br&gt;
     `prefix`: (_str_): Prefix to add to the output rasters. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix`: (_str_): Suffix to add to the output rasters. (Default: **&#34;&#34;**) &lt;/br&gt;
-    `ram`: (_int_ | _str_): The ram available to **GDAL** for the processing in MB or percentage.
+    `ram`: (_int_|_str_): The ram available to **GDAL** for the processing in MB or percentage.
     If auto 80% of available ram is allowed. (Default: **auto**) &lt;/br&gt;
 
     ## Return:
@@ -525,21 +525,21 @@ def align_rasters(
 <h2 id="args">Args:</h2>
 <p><code>rasters</code> (<em>list</em>): A list of rasters to align. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em> | <em>list</em>): Paths to the output. If not provided, the output will be in-memory rasters. (Default: <strong>None</strong>) </br>
-<code>master</code> (<em>str</em> | <em>gdal.Dataset</em> | <em>ogr.DataSource</em>): Path to the master raster or vector. (Default: <strong>None</strong>) </br>
+<p><code>out_path</code> (<em>str</em>|<em>list</em>): Paths to the output. If not provided, the output will be in-memory rasters. (Default: <strong>None</strong>) </br>
+<code>master</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>ogr.DataSource</em>): Path to the master raster or vector. (Default: <strong>None</strong>) </br>
 <code>suffix</code> (<em>str</em>): Suffix to append to the output raster. (Default: <strong>"_aligned"</strong>) </br>
 <code>bounding_box</code> (<em>str</em>): Method to use for aligning the rasters. Can be either "intersection" or "union". (Default: <strong>"intersection"</strong>) </br>
 <code>resample_alg</code> (<em>str</em>): Resampling algorithm to use. (Default: <strong>nearest</strong>) </br>
-<code>target_size</code> (<em>list</em> | <em>gdal.Dataset</em> | <em>ogr.DataSource</em>): Target size of the output raster. (Default: <strong>None</strong>) </br>
+<code>target_size</code> (<em>list</em>|<em>gdal.Dataset</em>|<em>ogr.DataSource</em>): Target size of the output raster. (Default: <strong>None</strong>) </br>
 <code>target_in_pixels</code> (<em>bool</em>): If True, the target size will be in pixels. (Default: <strong>False</strong>) </br>
-<code>projection</code> (<em>str</em> | <em>gdal.Dataset</em> | <em>ogr.DataSource</em>): Projection to use for the output raster. (Default: <strong>None</strong>) </br>
+<code>projection</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>ogr.DataSource</em>): Projection to use for the output raster. (Default: <strong>None</strong>) </br>
 <code>overwrite</code> (<em>bool</em>): If <strong>True</strong>, existing rasters will be overwritten. (Default: <strong>True</strong>) </br>
 <code>creation_options</code> (<em>list</em>): List of creation options to pass to the output raster. (Default: <strong>None</strong>) </br>
-<code>src_nodata</code> (<em>str</em> | <em>int</em> | <em>float</em> | <em>None</em>): The source dataset of the align sets. (Default: <strong>"infer"</strong>) </br>
-<code>dst_nodata</code> (<em>str</em> | <em>int</em> | <em>float</em> | <em>None</em>): The destination dataset of the align sets. (Default: <strong>"infer"</strong>) </br>
+<code>src_nodata</code> (<em>str</em>|<em>int</em>|<em>float</em>|<em>None</em>): The source dataset of the align sets. (Default: <strong>"infer"</strong>) </br>
+<code>dst_nodata</code> (<em>str</em>|<em>int</em>|<em>float</em>|<em>None</em>): The destination dataset of the align sets. (Default: <strong>"infer"</strong>) </br>
 <code>prefix</code>: (<em>str</em>): Prefix to add to the output rasters. (Default: <strong>""</strong>) </br>
 <code>suffix</code>: (<em>str</em>): Suffix to add to the output rasters. (Default: <strong>""</strong>) </br>
-<code>ram</code>: (<em>int</em> | <em>str</em>): The ram available to <strong>GDAL</strong> for the processing in MB or percentage.
+<code>ram</code>: (<em>int</em>|<em>str</em>): The ram available to <strong>GDAL</strong> for the processing in MB or percentage.
 If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br></p>
 <h2 id="return">Return:</h2>
 <p>(<em>list</em>): A list of paths to the aligned rasters.</p></div>
@@ -572,21 +572,21 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
     `rasters` (_list_): A list of rasters to align. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_ | _list_): Paths to the output. If not provided, the output will be in-memory rasters. (Default: **None**) &lt;/br&gt;
-    `master` (_str_ | _gdal.Dataset_ | _ogr.DataSource_): Path to the master raster or vector. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_|_list_): Paths to the output. If not provided, the output will be in-memory rasters. (Default: **None**) &lt;/br&gt;
+    `master` (_str_|_gdal.Dataset_|_ogr.DataSource_): Path to the master raster or vector. (Default: **None**) &lt;/br&gt;
     `suffix` (_str_): Suffix to append to the output raster. (Default: **&#34;_aligned&#34;**) &lt;/br&gt;
     `bounding_box` (_str_): Method to use for aligning the rasters. Can be either &#34;intersection&#34; or &#34;union&#34;. (Default: **&#34;intersection&#34;**) &lt;/br&gt;
     `resample_alg` (_str_): Resampling algorithm to use. (Default: **nearest**) &lt;/br&gt;
-    `target_size` (_list_ | _gdal.Dataset_ | _ogr.DataSource_): Target size of the output raster. (Default: **None**) &lt;/br&gt;
+    `target_size` (_list_|_gdal.Dataset_|_ogr.DataSource_): Target size of the output raster. (Default: **None**) &lt;/br&gt;
     `target_in_pixels` (_bool_): If True, the target size will be in pixels. (Default: **False**) &lt;/br&gt;
-    `projection` (_str_ | _gdal.Dataset_ | _ogr.DataSource_): Projection to use for the output raster. (Default: **None**) &lt;/br&gt;
+    `projection` (_str_|_gdal.Dataset_|_ogr.DataSource_): Projection to use for the output raster. (Default: **None**) &lt;/br&gt;
     `overwrite` (_bool_): If **True**, existing rasters will be overwritten. (Default: **True**) &lt;/br&gt;
     `creation_options` (_list_): List of creation options to pass to the output raster. (Default: **None**) &lt;/br&gt;
-    `src_nodata` (_str_ | _int_ | _float_ | _None_): The source dataset of the align sets. (Default: **&#34;infer&#34;**) &lt;/br&gt;
-    `dst_nodata` (_str_ | _int_ | _float_ | _None_): The destination dataset of the align sets. (Default: **&#34;infer&#34;**) &lt;/br&gt;
+    `src_nodata` (_str_|_int_|_float_|_None_): The source dataset of the align sets. (Default: **&#34;infer&#34;**) &lt;/br&gt;
+    `dst_nodata` (_str_|_int_|_float_|_None_): The destination dataset of the align sets. (Default: **&#34;infer&#34;**) &lt;/br&gt;
     `prefix`: (_str_): Prefix to add to the output rasters. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix`: (_str_): Suffix to add to the output rasters. (Default: **&#34;&#34;**) &lt;/br&gt;
-    `ram`: (_int_ | _str_): The ram available to **GDAL** for the processing in MB or percentage.
+    `ram`: (_int_|_str_): The ram available to **GDAL** for the processing in MB or percentage.
     If auto 80% of available ram is allowed. (Default: **auto**) &lt;/br&gt;
 
     ## Return:
@@ -943,9 +943,9 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
 an <strong>OGR</strong> layer or a <strong>GDAL</strong> layer.</p>
 <h2 id="args">Args:</h2>
 <p><code>rasters</code> (<em>list</em>): A list of rasters to match. </br>
-<code>master</code> (<em>str</em> | <em>gdal.Dataset</em> | <em>ogr.DataSource</em>): Path to the master raster or vector. </br></p>
+<code>master</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>ogr.DataSource</em>): Path to the master raster or vector. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em> | <em>list</em>): Paths to the output. If not provided, the output will be in-memory rasters. (Default: <strong>None</strong>) </br>
+<p><code>out_path</code> (<em>str</em>|<em>list</em>): Paths to the output. If not provided, the output will be in-memory rasters. (Default: <strong>None</strong>) </br>
 <code>overwrite</code> (<em>bool</em>): If True, existing rasters will be overwritten. (Default: <strong>False</strong>) </br>
 <code>dst_nodata</code> (<em>str</em>): Value to use for no-data pixels. If not provided, the value will be transfered from the original. (Default: <strong>"infer"</strong>) </br>
 <code>copy_if_already_correct</code> (<em>bool</em>): If True, the raster will be copied if it is already in the correct projection. (Default: <strong>True</strong>) </br>
@@ -972,10 +972,10 @@ an <strong>OGR</strong> layer or a <strong>GDAL</strong> layer.</p>
 
     ## Args:
     `rasters` (_list_): A list of rasters to match. &lt;/br&gt;
-    `master` (_str_ | _gdal.Dataset_ | _ogr.DataSource_): Path to the master raster or vector. &lt;/br&gt;
+    `master` (_str_|_gdal.Dataset_|_ogr.DataSource_): Path to the master raster or vector. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_ | _list_): Paths to the output. If not provided, the output will be in-memory rasters. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_|_list_): Paths to the output. If not provided, the output will be in-memory rasters. (Default: **None**) &lt;/br&gt;
     `overwrite` (_bool_): If True, existing rasters will be overwritten. (Default: **False**) &lt;/br&gt;
     `dst_nodata` (_str_): Value to use for no-data pixels. If not provided, the value will be transfered from the original. (Default: **&#34;infer&#34;**) &lt;/br&gt;
     `copy_if_already_correct` (_bool_): If True, the raster will be copied if it is already in the correct projection. (Default: **True**) &lt;/br&gt;

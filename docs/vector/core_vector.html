@@ -120,7 +120,7 @@ def open_vector(
     Opens a vector to an ogr.Datasource class.
 
     ## Args:
-    `vector` (_str_ | _ogr.DataSource_ | _gdal.Dataset_): The vector to open. If a
+    `vector` (_str_|_ogr.DataSource_|_gdal.Dataset_): The vector to open. If a
     raster is supplied the bounding box is opened as a vector. &lt;/br&gt;
 
     ## Kwargs:
@@ -129,7 +129,7 @@ def open_vector(
     `allow_lists` (_bool_): If True, the input can be a list of vectors. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_ogr.DataSource_ | _list_): The opened vector(s).
+    (_ogr.DataSource_|_list_): The opened vector(s).
     &#34;&#34;&#34;
     core_utils.type_check(vector, [str, ogr.DataSource, gdal.Dataset, [str, ogr.DataSource, gdal.Dataset]], &#34;vector&#34;)
     core_utils.type_check(writeable, [bool], &#34;writeable&#34;)
@@ -312,13 +312,13 @@ def vector_to_metadata(vector, *, allow_lists=True):
     Creates a dictionary with metadata about the vector layer.
 
     ## Args:
-    `vector` (_ogr.DataSource_ | _str_ | _list_): A vector layer(s) or path(s) to a vector file.
+    `vector` (_ogr.DataSource_|_str_|_list_): A vector layer(s) or path(s) to a vector file.
 
     ## Kwargs:
     `allow_lists` (_bool_): If **True**, vector can be a list of vector layers or paths. If `False`, `vector` must be a single vector layer or path. (default: **True**)
 
     ## Returns:
-    (_dict_ | _list_) A dictionary with metadata about the vector layer(s) or a list of dictionaries with metadata about the vector layer(s).
+    (_dict_|_list_) A dictionary with metadata about the vector layer(s) or a list of dictionaries with metadata about the vector layer(s).
     &#34;&#34;&#34;
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], &#34;vector&#34;)
     core_utils.type_check(allow_lists, [bool], &#34;allow_lists&#34;)
@@ -424,7 +424,7 @@ def filter_vector(
     Filters a vector using its attribute table and a function.
 
     ## Args:
-    `vector` (_ogr.DataSource_ | _str_ | _list_): A vector layer(s) or path(s) to a vector file.
+    `vector` (_ogr.DataSource_|_str_|_list_): A vector layer(s) or path(s) to a vector file.
     `filter_function` (_function_): A function that takes a dictionary of attributes and returns a boolean.
 
     ## Kwargs:
@@ -437,7 +437,7 @@ def filter_vector(
     `overwrite` (_bool_): If **True**, the output vector file will be overwritten if it already exists. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_str_ | _list_): Path(s) to the output vector file(s).
+    (_str_|_list_): Path(s) to the output vector file(s).
     &#34;&#34;&#34;
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], &#34;vector&#34;)
     core_utils.type_check(filter_function, [type(lambda: True)], &#34;filter_function&#34;)
@@ -485,13 +485,13 @@ def vector_add_index(vector, allow_lists=True):
     Adds a spatial index to the vector in place, if it doesn&#39;t have one.
 
     ## Args:
-    (_ogr.DataSource_ | _str_ | _list_): A vector layer(s) or path(s) to add indices to.
+    (_ogr.DataSource_|_str_|_list_): A vector layer(s) or path(s) to add indices to.
 
     ## Kwargs:
     `allow_lists` (_bool_): If **True**, vector can be a list of vector layers or paths. If `False`, `vector` must be a single vector layer or path. (default: **True**)
 
     ## Returns:
-    (_str_ | _list_): Path(s) to the input rasters.
+    (_str_|_list_): Path(s) to the input rasters.
     &#34;&#34;&#34;
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], &#34;vector&#34;)
 
@@ -631,10 +631,10 @@ def vector_add_shapes_in_place(vector, *, shapes=None, prefix=&#34;&#34;, allow_
     Can also add compactness measurements.
 
     ## Args:
-    `vector` (_str_ | _ogr.DataSource_ | _list_): Vector layer(s) or path(s) to vector layer(s).
+    `vector` (_str_|_ogr.DataSource_|_list_): Vector layer(s) or path(s) to vector layer(s).
 
     ## Kwargs:
-    `shapes` (_list_ | _None_): The shapes to calculate. The following a possible: &lt;/br&gt;
+    `shapes` (_list_|_None_): The shapes to calculate. The following a possible: &lt;/br&gt;
         * Area          (In same unit as projection)
         * Perimeter     (In same unit as projection)
         * IPQ           (0-1) given as (4*Pi*Area)/(Perimeter ** 2)
@@ -647,7 +647,7 @@ def vector_add_shapes_in_place(vector, *, shapes=None, prefix=&#34;&#34;, allow_
     `verbose` (_bool_): If True, will print progress.
 
     ## Returns:
-    (_str_ | _list_): Path(s) to the original rasters that have been augmented in place.
+    (_str_|_list_): Path(s) to the original rasters that have been augmented in place.
 
     Returns:
         Either the path to the updated vector or a list of the input vectors.
@@ -740,7 +740,7 @@ def vector_get_attribute_table(
 <dd>
 <div class="desc"><p>Filters a vector using its attribute table and a function.</p>
 <h2 id="args">Args:</h2>
-<p><code>vector</code> (<em>ogr.DataSource</em> | <em>str</em> | <em>list</em>): A vector layer(s) or path(s) to a vector file.
+<p><code>vector</code> (<em>ogr.DataSource</em>|<em>str</em>|<em>list</em>): A vector layer(s) or path(s) to a vector file.
 <code>filter_function</code> (<em>function</em>): A function that takes a dictionary of attributes and returns a boolean.</p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>out_path</code> (<em>str</em>): Path to the output vector file. If <code>None</code>, a memory vector will be created. (Default: <strong>None</strong>) </br>
@@ -751,7 +751,7 @@ def vector_get_attribute_table(
 <code>add_uuid</code> (<em>bool</em>): If <strong>True</strong>, a UUID will be added to the output vector file. (Default: <strong>False</strong>) </br>
 <code>overwrite</code> (<em>bool</em>): If <strong>True</strong>, the output vector file will be overwritten if it already exists. (Default: <strong>True</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em> | <em>list</em>): Path(s) to the output vector file(s).</p></div>
+<p>(<em>str</em>|<em>list</em>): Path(s) to the output vector file(s).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -772,7 +772,7 @@ def vector_get_attribute_table(
     Filters a vector using its attribute table and a function.
 
     ## Args:
-    `vector` (_ogr.DataSource_ | _str_ | _list_): A vector layer(s) or path(s) to a vector file.
+    `vector` (_ogr.DataSource_|_str_|_list_): A vector layer(s) or path(s) to a vector file.
     `filter_function` (_function_): A function that takes a dictionary of attributes and returns a boolean.
 
     ## Kwargs:
@@ -785,7 +785,7 @@ def vector_get_attribute_table(
     `overwrite` (_bool_): If **True**, the output vector file will be overwritten if it already exists. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_str_ | _list_): Path(s) to the output vector file(s).
+    (_str_|_list_): Path(s) to the output vector file(s).
     &#34;&#34;&#34;
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], &#34;vector&#34;)
     core_utils.type_check(filter_function, [type(lambda: True)], &#34;filter_function&#34;)
@@ -834,14 +834,14 @@ def vector_get_attribute_table(
 <dd>
 <div class="desc"><p>Opens a vector to an ogr.Datasource class.</p>
 <h2 id="args">Args:</h2>
-<p><code>vector</code> (<em>str</em> | <em>ogr.DataSource</em> | <em>gdal.Dataset</em>): The vector to open. If a
+<p><code>vector</code> (<em>str</em>|<em>ogr.DataSource</em>|<em>gdal.Dataset</em>): The vector to open. If a
 raster is supplied the bounding box is opened as a vector. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>writeable</code> (<em>bool</em>): If True, the vector is opened in write mode. (Default: <strong>True</strong>) </br>
 <code>allow_raster</code> (<em>bool</em>): If True, a raster will be opened as a vector bounding box. (Default: <strong>True</strong>) </br>
 <code>allow_lists</code> (<em>bool</em>): If True, the input can be a list of vectors. (Default: <strong>True</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>ogr.DataSource</em> | <em>list</em>): The opened vector(s).</p></div>
+<p>(<em>ogr.DataSource</em>|<em>list</em>): The opened vector(s).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -857,7 +857,7 @@ raster is supplied the bounding box is opened as a vector. </br></p>
     Opens a vector to an ogr.Datasource class.
 
     ## Args:
-    `vector` (_str_ | _ogr.DataSource_ | _gdal.Dataset_): The vector to open. If a
+    `vector` (_str_|_ogr.DataSource_|_gdal.Dataset_): The vector to open. If a
     raster is supplied the bounding box is opened as a vector. &lt;/br&gt;
 
     ## Kwargs:
@@ -866,7 +866,7 @@ raster is supplied the bounding box is opened as a vector. </br></p>
     `allow_lists` (_bool_): If True, the input can be a list of vectors. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_ogr.DataSource_ | _list_): The opened vector(s).
+    (_ogr.DataSource_|_list_): The opened vector(s).
     &#34;&#34;&#34;
     core_utils.type_check(vector, [str, ogr.DataSource, gdal.Dataset, [str, ogr.DataSource, gdal.Dataset]], &#34;vector&#34;)
     core_utils.type_check(writeable, [bool], &#34;writeable&#34;)
@@ -892,11 +892,11 @@ raster is supplied the bounding box is opened as a vector. </br></p>
 <dd>
 <div class="desc"><p>Adds a spatial index to the vector in place, if it doesn't have one.</p>
 <h2 id="args">Args:</h2>
-<p>(<em>ogr.DataSource</em> | <em>str</em> | <em>list</em>): A vector layer(s) or path(s) to add indices to.</p>
+<p>(<em>ogr.DataSource</em>|<em>str</em>|<em>list</em>): A vector layer(s) or path(s) to add indices to.</p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>allow_lists</code> (<em>bool</em>): If <strong>True</strong>, vector can be a list of vector layers or paths. If <code>False</code>, <code>vector</code> must be a single vector layer or path. (default: <strong>True</strong>)</p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em> | <em>list</em>): Path(s) to the input rasters.</p></div>
+<p>(<em>str</em>|<em>list</em>): Path(s) to the input rasters.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -906,13 +906,13 @@ raster is supplied the bounding box is opened as a vector. </br></p>
     Adds a spatial index to the vector in place, if it doesn&#39;t have one.
 
     ## Args:
-    (_ogr.DataSource_ | _str_ | _list_): A vector layer(s) or path(s) to add indices to.
+    (_ogr.DataSource_|_str_|_list_): A vector layer(s) or path(s) to add indices to.
 
     ## Kwargs:
     `allow_lists` (_bool_): If **True**, vector can be a list of vector layers or paths. If `False`, `vector` must be a single vector layer or path. (default: **True**)
 
     ## Returns:
-    (_str_ | _list_): Path(s) to the input rasters.
+    (_str_|_list_): Path(s) to the input rasters.
     &#34;&#34;&#34;
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], &#34;vector&#34;)
 
@@ -953,9 +953,9 @@ raster is supplied the bounding box is opened as a vector. </br></p>
 <div class="desc"><p>Adds shape calculations to a vector such as area and perimeter.
 Can also add compactness measurements.</p>
 <h2 id="args">Args:</h2>
-<p><code>vector</code> (<em>str</em> | <em>ogr.DataSource</em> | <em>list</em>): Vector layer(s) or path(s) to vector layer(s).</p>
+<p><code>vector</code> (<em>str</em>|<em>ogr.DataSource</em>|<em>list</em>): Vector layer(s) or path(s) to vector layer(s).</p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>shapes</code> (<em>list</em> | <em>None</em>): The shapes to calculate. The following a possible: </br>
+<p><code>shapes</code> (<em>list</em>|<em>None</em>): The shapes to calculate. The following a possible: </br>
 * Area
 (In same unit as projection)
 * Perimeter
@@ -973,7 +973,7 @@ The default is all shapes. </br>
 <code>allow_lists</code> (<em>bool</em>): If True, will accept a list of vectors. If False, will raise an error if a list is passed.
 <code>verbose</code> (<em>bool</em>): If True, will print progress.</p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em> | <em>list</em>): Path(s) to the original rasters that have been augmented in place.</p>
+<p>(<em>str</em>|<em>list</em>): Path(s) to the original rasters that have been augmented in place.</p>
 <h2 id="returns_1">Returns</h2>
 <p>Either the path to the updated vector or a list of the input vectors.</p></div>
 <details class="source">
@@ -986,10 +986,10 @@ The default is all shapes. </br>
     Can also add compactness measurements.
 
     ## Args:
-    `vector` (_str_ | _ogr.DataSource_ | _list_): Vector layer(s) or path(s) to vector layer(s).
+    `vector` (_str_|_ogr.DataSource_|_list_): Vector layer(s) or path(s) to vector layer(s).
 
     ## Kwargs:
-    `shapes` (_list_ | _None_): The shapes to calculate. The following a possible: &lt;/br&gt;
+    `shapes` (_list_|_None_): The shapes to calculate. The following a possible: &lt;/br&gt;
         * Area          (In same unit as projection)
         * Perimeter     (In same unit as projection)
         * IPQ           (0-1) given as (4*Pi*Area)/(Perimeter ** 2)
@@ -1002,7 +1002,7 @@ The default is all shapes. </br>
     `verbose` (_bool_): If True, will print progress.
 
     ## Returns:
-    (_str_ | _list_): Path(s) to the original rasters that have been augmented in place.
+    (_str_|_list_): Path(s) to the original rasters that have been augmented in place.
 
     Returns:
         Either the path to the updated vector or a list of the input vectors.
@@ -1097,11 +1097,11 @@ The default is all shapes. </br>
 <dd>
 <div class="desc"><p>Creates a dictionary with metadata about the vector layer.</p>
 <h2 id="args">Args:</h2>
-<p><code>vector</code> (<em>ogr.DataSource</em> | <em>str</em> | <em>list</em>): A vector layer(s) or path(s) to a vector file.</p>
+<p><code>vector</code> (<em>ogr.DataSource</em>|<em>str</em>|<em>list</em>): A vector layer(s) or path(s) to a vector file.</p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>allow_lists</code> (<em>bool</em>): If <strong>True</strong>, vector can be a list of vector layers or paths. If <code>False</code>, <code>vector</code> must be a single vector layer or path. (default: <strong>True</strong>)</p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>dict</em> | <em>list</em>) A dictionary with metadata about the vector layer(s) or a list of dictionaries with metadata about the vector layer(s).</p></div>
+<p>(<em>dict</em>|<em>list</em>) A dictionary with metadata about the vector layer(s) or a list of dictionaries with metadata about the vector layer(s).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1111,13 +1111,13 @@ The default is all shapes. </br>
     Creates a dictionary with metadata about the vector layer.
 
     ## Args:
-    `vector` (_ogr.DataSource_ | _str_ | _list_): A vector layer(s) or path(s) to a vector file.
+    `vector` (_ogr.DataSource_|_str_|_list_): A vector layer(s) or path(s) to a vector file.
 
     ## Kwargs:
     `allow_lists` (_bool_): If **True**, vector can be a list of vector layers or paths. If `False`, `vector` must be a single vector layer or path. (default: **True**)
 
     ## Returns:
-    (_dict_ | _list_) A dictionary with metadata about the vector layer(s) or a list of dictionaries with metadata about the vector layer(s).
+    (_dict_|_list_) A dictionary with metadata about the vector layer(s) or a list of dictionaries with metadata about the vector layer(s).
     &#34;&#34;&#34;
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], &#34;vector&#34;)
     core_utils.type_check(allow_lists, [bool], &#34;allow_lists&#34;)

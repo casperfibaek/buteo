@@ -240,20 +240,20 @@ def warp_raster(
     resample -&gt; warp or resample -&gt; clip.
 
     ## Args:
-    `raster` (_str_ | _list_ | _gdal.Dataset_): The raster(s) to warp.
+    `raster` (_str_|_list_|_gdal.Dataset_): The raster(s) to warp.
 
     ## Kwargs:
-    `out_path` (_str_ | _list_ | _None_): The path to the output raster(s). If not set, a memory raster is created. (Default: **None**) &lt;/br&gt;
-    `projection` (_str_ | _osr.SpatialReference_ | _gdal.Dataset_ | _ogr.DataSource_): The projection of the output raster. If not set, the projection of the input raster is used. (Default: **None**) &lt;/br&gt;
-    `clip_geom` (_str_ | _gdal.Dataset_ | _ogr.DataSource_): The geometry to clip the raster to. (Default: **None**) &lt;/br&gt;
-    `target_size` (_tuple_ | _None_): The target size of the output raster. If not set, the size of the input raster is used. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_|_list_|_None_): The path to the output raster(s). If not set, a memory raster is created. (Default: **None**) &lt;/br&gt;
+    `projection` (_str_|_osr.SpatialReference_|_gdal.Dataset_|_ogr.DataSource_): The projection of the output raster. If not set, the projection of the input raster is used. (Default: **None**) &lt;/br&gt;
+    `clip_geom` (_str_|_gdal.Dataset_|_ogr.DataSource_): The geometry to clip the raster to. (Default: **None**) &lt;/br&gt;
+    `target_size` (_tuple_|_None_): The target size of the output raster. If not set, the size of the input raster is used. (Default: **None**) &lt;/br&gt;
     `target_in_pixels` (_bool_): If True, the target size is in pixels. If False, the target size is in map units. (Default: **False**) &lt;/br&gt;
     `resample_alg` (_str_): The resampling algorithm. (Default: **nearest**) &lt;/br&gt;
     `crop_to_geom` (_bool_): If True, the output raster is cropped to the extent of the clip geometry. (Default: **True**) &lt;/br&gt;
     `all_touch` (_bool_): If True, all pixels touching the clipping geometry is included. (Default: **False**) &lt;/br&gt;
     `adjust_bbox` (_bool_): If True, the bounding box of the output raster is adjusted to align with the clipping geometry. (Default: **False**) &lt;/br&gt;
-    `src_nodata` (_str_ | _int_ | _float_ | _None_): The nodata value of the input raster. If not set, the nodata value of the input raster is used. (Default: **infer**) &lt;/br&gt;
-    `dst_nodata` (_str_ | _int_ | _float_ | _None_): The nodata value of the output raster. If not set, the nodata value of the input raster is used. (Default: **infer**) &lt;/br&gt;
+    `src_nodata` (_str_|_int_|_float_|_None_): The nodata value of the input raster. If not set, the nodata value of the input raster is used. (Default: **infer**) &lt;/br&gt;
+    `dst_nodata` (_str_|_int_|_float_|_None_): The nodata value of the output raster. If not set, the nodata value of the input raster is used. (Default: **infer**) &lt;/br&gt;
     `layer_to_clip` (_int_): The layer to clip the raster to. (Default: **0**) &lt;/br&gt;
     `prefix` (_str_): The prefix of the output raster. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): The suffix of the output raster. (Default: **&#34;_resampled&#34;**) &lt;/br&gt;
@@ -262,7 +262,7 @@ def warp_raster(
     `creation_options` (_list_): The creation options of the output raster. (Default: **None**) &lt;/br&gt;
 
     ## Returns:
-    (_str_ | _list_): The path to the warped output raster(s).
+    (_str_|_list_): The path to the warped output raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(out_path, [str, [str], None], &#34;out_path&#34;)
@@ -339,19 +339,19 @@ def warp_raster(
 If all_touch is required while resampling. Do it in two steps:
 resample -&gt; warp or resample -&gt; clip.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>str</em> | <em>list</em> | <em>gdal.Dataset</em>): The raster(s) to warp.</p>
+<p><code>raster</code> (<em>str</em>|<em>list</em>|<em>gdal.Dataset</em>): The raster(s) to warp.</p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em> | <em>list</em> | <em>None</em>): The path to the output raster(s). If not set, a memory raster is created. (Default: <strong>None</strong>) </br>
-<code>projection</code> (<em>str</em> | <em>osr.SpatialReference</em> | <em>gdal.Dataset</em> | <em>ogr.DataSource</em>): The projection of the output raster. If not set, the projection of the input raster is used. (Default: <strong>None</strong>) </br>
-<code>clip_geom</code> (<em>str</em> | <em>gdal.Dataset</em> | <em>ogr.DataSource</em>): The geometry to clip the raster to. (Default: <strong>None</strong>) </br>
-<code>target_size</code> (<em>tuple</em> | <em>None</em>): The target size of the output raster. If not set, the size of the input raster is used. (Default: <strong>None</strong>) </br>
+<p><code>out_path</code> (<em>str</em>|<em>list</em>|<em>None</em>): The path to the output raster(s). If not set, a memory raster is created. (Default: <strong>None</strong>) </br>
+<code>projection</code> (<em>str</em>|<em>osr.SpatialReference</em>|<em>gdal.Dataset</em>|<em>ogr.DataSource</em>): The projection of the output raster. If not set, the projection of the input raster is used. (Default: <strong>None</strong>) </br>
+<code>clip_geom</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>ogr.DataSource</em>): The geometry to clip the raster to. (Default: <strong>None</strong>) </br>
+<code>target_size</code> (<em>tuple</em>|<em>None</em>): The target size of the output raster. If not set, the size of the input raster is used. (Default: <strong>None</strong>) </br>
 <code>target_in_pixels</code> (<em>bool</em>): If True, the target size is in pixels. If False, the target size is in map units. (Default: <strong>False</strong>) </br>
 <code>resample_alg</code> (<em>str</em>): The resampling algorithm. (Default: <strong>nearest</strong>) </br>
 <code>crop_to_geom</code> (<em>bool</em>): If True, the output raster is cropped to the extent of the clip geometry. (Default: <strong>True</strong>) </br>
 <code>all_touch</code> (<em>bool</em>): If True, all pixels touching the clipping geometry is included. (Default: <strong>False</strong>) </br>
 <code>adjust_bbox</code> (<em>bool</em>): If True, the bounding box of the output raster is adjusted to align with the clipping geometry. (Default: <strong>False</strong>) </br>
-<code>src_nodata</code> (<em>str</em> | <em>int</em> | <em>float</em> | <em>None</em>): The nodata value of the input raster. If not set, the nodata value of the input raster is used. (Default: <strong>infer</strong>) </br>
-<code>dst_nodata</code> (<em>str</em> | <em>int</em> | <em>float</em> | <em>None</em>): The nodata value of the output raster. If not set, the nodata value of the input raster is used. (Default: <strong>infer</strong>) </br>
+<code>src_nodata</code> (<em>str</em>|<em>int</em>|<em>float</em>|<em>None</em>): The nodata value of the input raster. If not set, the nodata value of the input raster is used. (Default: <strong>infer</strong>) </br>
+<code>dst_nodata</code> (<em>str</em>|<em>int</em>|<em>float</em>|<em>None</em>): The nodata value of the output raster. If not set, the nodata value of the input raster is used. (Default: <strong>infer</strong>) </br>
 <code>layer_to_clip</code> (<em>int</em>): The layer to clip the raster to. (Default: <strong>0</strong>) </br>
 <code>prefix</code> (<em>str</em>): The prefix of the output raster. (Default: <strong>""</strong>) </br>
 <code>suffix</code> (<em>str</em>): The suffix of the output raster. (Default: <strong>"_resampled"</strong>) </br>
@@ -359,7 +359,7 @@ resample -&gt; warp or resample -&gt; clip.</p>
 <code>overwrite</code> (<em>bool</em>): If True, the output raster is overwritten if it already exists. (Default: <strong>True</strong>) </br>
 <code>creation_options</code> (<em>list</em>): The creation options of the output raster. (Default: <strong>None</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em> | <em>list</em>): The path to the warped output raster(s).</p></div>
+<p>(<em>str</em>|<em>list</em>): The path to the warped output raster(s).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -393,20 +393,20 @@ resample -&gt; warp or resample -&gt; clip.</p>
     resample -&gt; warp or resample -&gt; clip.
 
     ## Args:
-    `raster` (_str_ | _list_ | _gdal.Dataset_): The raster(s) to warp.
+    `raster` (_str_|_list_|_gdal.Dataset_): The raster(s) to warp.
 
     ## Kwargs:
-    `out_path` (_str_ | _list_ | _None_): The path to the output raster(s). If not set, a memory raster is created. (Default: **None**) &lt;/br&gt;
-    `projection` (_str_ | _osr.SpatialReference_ | _gdal.Dataset_ | _ogr.DataSource_): The projection of the output raster. If not set, the projection of the input raster is used. (Default: **None**) &lt;/br&gt;
-    `clip_geom` (_str_ | _gdal.Dataset_ | _ogr.DataSource_): The geometry to clip the raster to. (Default: **None**) &lt;/br&gt;
-    `target_size` (_tuple_ | _None_): The target size of the output raster. If not set, the size of the input raster is used. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_|_list_|_None_): The path to the output raster(s). If not set, a memory raster is created. (Default: **None**) &lt;/br&gt;
+    `projection` (_str_|_osr.SpatialReference_|_gdal.Dataset_|_ogr.DataSource_): The projection of the output raster. If not set, the projection of the input raster is used. (Default: **None**) &lt;/br&gt;
+    `clip_geom` (_str_|_gdal.Dataset_|_ogr.DataSource_): The geometry to clip the raster to. (Default: **None**) &lt;/br&gt;
+    `target_size` (_tuple_|_None_): The target size of the output raster. If not set, the size of the input raster is used. (Default: **None**) &lt;/br&gt;
     `target_in_pixels` (_bool_): If True, the target size is in pixels. If False, the target size is in map units. (Default: **False**) &lt;/br&gt;
     `resample_alg` (_str_): The resampling algorithm. (Default: **nearest**) &lt;/br&gt;
     `crop_to_geom` (_bool_): If True, the output raster is cropped to the extent of the clip geometry. (Default: **True**) &lt;/br&gt;
     `all_touch` (_bool_): If True, all pixels touching the clipping geometry is included. (Default: **False**) &lt;/br&gt;
     `adjust_bbox` (_bool_): If True, the bounding box of the output raster is adjusted to align with the clipping geometry. (Default: **False**) &lt;/br&gt;
-    `src_nodata` (_str_ | _int_ | _float_ | _None_): The nodata value of the input raster. If not set, the nodata value of the input raster is used. (Default: **infer**) &lt;/br&gt;
-    `dst_nodata` (_str_ | _int_ | _float_ | _None_): The nodata value of the output raster. If not set, the nodata value of the input raster is used. (Default: **infer**) &lt;/br&gt;
+    `src_nodata` (_str_|_int_|_float_|_None_): The nodata value of the input raster. If not set, the nodata value of the input raster is used. (Default: **infer**) &lt;/br&gt;
+    `dst_nodata` (_str_|_int_|_float_|_None_): The nodata value of the output raster. If not set, the nodata value of the input raster is used. (Default: **infer**) &lt;/br&gt;
     `layer_to_clip` (_int_): The layer to clip the raster to. (Default: **0**) &lt;/br&gt;
     `prefix` (_str_): The prefix of the output raster. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): The suffix of the output raster. (Default: **&#34;_resampled&#34;**) &lt;/br&gt;
@@ -415,7 +415,7 @@ resample -&gt; warp or resample -&gt; clip.</p>
     `creation_options` (_list_): The creation options of the output raster. (Default: **None**) &lt;/br&gt;
 
     ## Returns:
-    (_str_ | _list_): The path to the warped output raster(s).
+    (_str_|_list_): The path to the warped output raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(out_path, [str, [str], None], &#34;out_path&#34;)

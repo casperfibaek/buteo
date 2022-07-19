@@ -72,23 +72,23 @@ def calc_proximity(
     `input_rasters` (_list_): A list of rasters to use as input. &lt;/br&gt;
 
     ## Kwargs:
-    `target_value` (_int_ | _float_): The value to use as target. (Default: **1**) &lt;/br&gt;
+    `target_value` (_int_|_float_): The value to use as target. (Default: **1**) &lt;/br&gt;
     `unit` (_str_): The unit to use for the distance. GEO or PIXEL. (Default: **&#34;GEO&#34;**) &lt;/br&gt;
-    `out_path` (_str_ | _None_ | _list_): The output path. (Default: **None**) &lt;/br&gt;
-    `max_dist` (_int_ | _float_): The maximum distance to use. (Default: **1000**) &lt;/br&gt;
+    `out_path` (_str_|_None_|_list_): The output path. (Default: **None**) &lt;/br&gt;
+    `max_dist` (_int_|_float_): The maximum distance to use. (Default: **1000**) &lt;/br&gt;
     `add_border` (_bool_): If **True**, a border will be added to the raster. (Default: **False**) &lt;/br&gt;
-    `border_value` (_int_ | _float_): The value to use for the border. (Default: **0**) &lt;/br&gt;
+    `border_value` (_int_|_float_): The value to use for the border. (Default: **0**) &lt;/br&gt;
     `weighted` (_bool_): If **True**, the distance will be divided by the max distance. (Default: **False**) &lt;/br&gt;
     `invert` (_bool_): If **True**, the target will be inversed. (Default: **False**) &lt;/br&gt;
     `return_array` (_bool_): If **True** a NumPy array will be returned instead of a raster. (Default: **False**) &lt;/br&gt;
     `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): Suffix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): Should a uuid be added to the output path? (Default: **False**) &lt;/br&gt;
-    `creation_options` (_list_ | _None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;
+    `creation_options` (_list_|_None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;
     `overwrite` (_bool_): If the output path exists already, should it be overwritten? (Default: **True**)&lt;/br&gt;
 
     ## Returns:
-    (_str_ | _np.ndarray_): A path to a raster with the calculate proximity, or a numpy array with the data.
+    (_str_|_np.ndarray_): A path to a raster with the calculate proximity, or a numpy array with the data.
     &#34;&#34;&#34;
     core_utils.type_check(input_rasters, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;input_rasters&#34;)
     core_utils.type_check(target_value, [int, float], &#34;target_value&#34;)
@@ -222,22 +222,22 @@ def calc_proximity(
 <h2 id="args">Args:</h2>
 <p><code>input_rasters</code> (<em>list</em>): A list of rasters to use as input. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>target_value</code> (<em>int</em> | <em>float</em>): The value to use as target. (Default: <strong>1</strong>) </br>
+<p><code>target_value</code> (<em>int</em>|<em>float</em>): The value to use as target. (Default: <strong>1</strong>) </br>
 <code>unit</code> (<em>str</em>): The unit to use for the distance. GEO or PIXEL. (Default: <strong>"GEO"</strong>) </br>
-<code>out_path</code> (<em>str</em> | <em>None</em> | <em>list</em>): The output path. (Default: <strong>None</strong>) </br>
-<code>max_dist</code> (<em>int</em> | <em>float</em>): The maximum distance to use. (Default: <strong>1000</strong>) </br>
+<code>out_path</code> (<em>str</em>|<em>None</em>|<em>list</em>): The output path. (Default: <strong>None</strong>) </br>
+<code>max_dist</code> (<em>int</em>|<em>float</em>): The maximum distance to use. (Default: <strong>1000</strong>) </br>
 <code>add_border</code> (<em>bool</em>): If <strong>True</strong>, a border will be added to the raster. (Default: <strong>False</strong>) </br>
-<code>border_value</code> (<em>int</em> | <em>float</em>): The value to use for the border. (Default: <strong>0</strong>) </br>
+<code>border_value</code> (<em>int</em>|<em>float</em>): The value to use for the border. (Default: <strong>0</strong>) </br>
 <code>weighted</code> (<em>bool</em>): If <strong>True</strong>, the distance will be divided by the max distance. (Default: <strong>False</strong>) </br>
 <code>invert</code> (<em>bool</em>): If <strong>True</strong>, the target will be inversed. (Default: <strong>False</strong>) </br>
 <code>return_array</code> (<em>bool</em>): If <strong>True</strong> a NumPy array will be returned instead of a raster. (Default: <strong>False</strong>) </br>
 <code>prefix</code> (<em>str</em>): Prefix to add to the output. (Default: <strong>""</strong>) </br>
 <code>suffix</code> (<em>str</em>): Suffix to add to the output. (Default: <strong>""</strong>) </br>
 <code>add_uuid</code> (<em>bool</em>): Should a uuid be added to the output path? (Default: <strong>False</strong>) </br>
-<code>creation_options</code> (<em>list</em> | <em>None</em>): The GDAL creation options to be passed. (Default: <strong>None</strong>) </br>
+<code>creation_options</code> (<em>list</em>|<em>None</em>): The GDAL creation options to be passed. (Default: <strong>None</strong>) </br>
 <code>overwrite</code> (<em>bool</em>): If the output path exists already, should it be overwritten? (Default: <strong>True</strong>)</br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em> | <em>np.ndarray</em>): A path to a raster with the calculate proximity, or a numpy array with the data.</p></div>
+<p>(<em>str</em>|<em>np.ndarray</em>): A path to a raster with the calculate proximity, or a numpy array with the data.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -265,23 +265,23 @@ def calc_proximity(
     `input_rasters` (_list_): A list of rasters to use as input. &lt;/br&gt;
 
     ## Kwargs:
-    `target_value` (_int_ | _float_): The value to use as target. (Default: **1**) &lt;/br&gt;
+    `target_value` (_int_|_float_): The value to use as target. (Default: **1**) &lt;/br&gt;
     `unit` (_str_): The unit to use for the distance. GEO or PIXEL. (Default: **&#34;GEO&#34;**) &lt;/br&gt;
-    `out_path` (_str_ | _None_ | _list_): The output path. (Default: **None**) &lt;/br&gt;
-    `max_dist` (_int_ | _float_): The maximum distance to use. (Default: **1000**) &lt;/br&gt;
+    `out_path` (_str_|_None_|_list_): The output path. (Default: **None**) &lt;/br&gt;
+    `max_dist` (_int_|_float_): The maximum distance to use. (Default: **1000**) &lt;/br&gt;
     `add_border` (_bool_): If **True**, a border will be added to the raster. (Default: **False**) &lt;/br&gt;
-    `border_value` (_int_ | _float_): The value to use for the border. (Default: **0**) &lt;/br&gt;
+    `border_value` (_int_|_float_): The value to use for the border. (Default: **0**) &lt;/br&gt;
     `weighted` (_bool_): If **True**, the distance will be divided by the max distance. (Default: **False**) &lt;/br&gt;
     `invert` (_bool_): If **True**, the target will be inversed. (Default: **False**) &lt;/br&gt;
     `return_array` (_bool_): If **True** a NumPy array will be returned instead of a raster. (Default: **False**) &lt;/br&gt;
     `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): Suffix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): Should a uuid be added to the output path? (Default: **False**) &lt;/br&gt;
-    `creation_options` (_list_ | _None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;
+    `creation_options` (_list_|_None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;
     `overwrite` (_bool_): If the output path exists already, should it be overwritten? (Default: **True**)&lt;/br&gt;
 
     ## Returns:
-    (_str_ | _np.ndarray_): A path to a raster with the calculate proximity, or a numpy array with the data.
+    (_str_|_np.ndarray_): A path to a raster with the calculate proximity, or a numpy array with the data.
     &#34;&#34;&#34;
     core_utils.type_check(input_rasters, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;input_rasters&#34;)
     core_utils.type_check(target_value, [int, float], &#34;target_value&#34;)
