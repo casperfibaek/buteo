@@ -1,241 +1,145 @@
 """
+### Basic IO functions for working with Vectprs ###
+
 The basic module for interacting with vector data
 
 TODO:
-    - Improve documentation
-    - repair vector
-    - sanity checks: vectors_intersect, is_not_empty, does_vectors_match, match_vectors
-    - rasterize - with antialiasing/weights
-    - join by attribute + summary
-    - join by location + summary
-    - buffer, union, erase
-    - Multithreaded processing
-    - Rename layers function
+    * more attribute functions.
+    * repair vector
+    * sanity checks: vectors_intersect, is_not_empty, does_vectors_match, match_vectors
+    * rasterize - antialiasing and weights
+    * join by attribute, location, summary
+    * buffer, union, erase, etc..
 """
 
-import sys; sys.path.append("../../") # Path: buteo/vector/io.py
+# Standard library
+import sys; sys.path.append("../../")
 import os
-from uuid import uuid4
 
-from osgeo import ogr, osr, gdal
+# External
 import numpy as np
+from osgeo import ogr, gdal, osr
 
-from buteo.raster.core_raster import _raster_to_metadata
-from buteo.utils.bbox_utils import additional_bboxes
-from buteo.utils.gdal_utils import (
-    is_vector,
-    is_raster,
-    path_to_driver_vector,
-)
-from buteo.utils.core_utils import (
-    progress,
-    remove_if_overwrite,
-    overwrite_required,
-    type_check,
-    folder_exists,
-)
+# Internal
+from buteo.utils import bbox_utils, core_utils, gdal_utils
 
 
-def open_vector(
-    vector,
-    *,
-    convert_mem_driver=True,
-    writeable=True,
-    layer=-1,
-):
-    """Opens a vector to an ogr.Datasource class.
-
-    Args:
-        vector (path | datasource): A path to a vector or a ogr datasource.
-
-        convert_mem_driver (bool): Converts MEM driver vectors to /vsimem/ geopackage.
-
-        writable (bool): Should the opened raster be writeable.
-
-    Returns:
-        A gdal.Dataset
-    """
-    type_check(vector, [str, ogr.DataSource, gdal.Dataset], "vector")
-    type_check(convert_mem_driver, [bool], "convert_mem_driver")
-    type_check(writeable, [bool], "writeable")
-    type_check(layer, [int], "layer")
+def _open_vector(vector, *, writeable=True, allow_raster=True):
+    """ Internal. """
+    assert isinstance(vector, (str, ogr.DataSource)), "vector must be a path or a DataSource"
 
     opened = None
-    try:
-        if is_vector(vector):
+    if gdal_utils.is_vector(vector):
+        if isinstance(vector, str):
             gdal.PushErrorHandler("CPLQuietErrorHandler")
-
-            if isinstance(vector, str):
-                opened = ogr.Open(vector, 1) if writeable else ogr.Open(vector, 0)
-            elif isinstance(vector, ogr.DataSource):
-                opened = vector
-            else:
-                raise Exception(f"Could not read input vector: {vector}")
-
+            opened = ogr.Open(vector, gdal.GF_Write) if writeable else ogr.Open(vector, gdal.GF_Read)
             gdal.PopErrorHandler()
-        elif is_raster(vector):
-            temp_opened = None
-            if isinstance(vector, str):
-                gdal.PushErrorHandler("CPLQuietErrorHandler")
-
-                temp_opened = (
-                    gdal.Open(vector, 1) if writeable else gdal.Open(vector, 0)
-                )
-
-                gdal.PopErrorHandler()
-            elif isinstance(vector, gdal.Dataset):
-                temp_opened = vector
-            else:
-                raise Exception(f"Could not read input vector: {vector}")
-
-            raster_metadata = _raster_to_metadata(temp_opened)
-            opened = raster_metadata["get_extent_datasource"]()
-
+        elif isinstance(vector, ogr.DataSource):
+            opened = vector
         else:
             raise Exception(f"Could not read input vector: {vector}")
-    except:
+
+    elif allow_raster and gdal_utils.is_raster(vector):
+        if isinstance(vector, str):
+            gdal.PushErrorHandler("CPLQuietErrorHandler")
+            opened = gdal.Open(vector, gdal.GF_Write) if writeable else ogr.Open(vector, gdal.GF_Read)
+            gdal.PopErrorHandler()
+        elif isinstance(vector, gdal.Dataset):
+            opened = vector
+        else:
+            raise Exception(f"Could not read input vector: {vector}")
+
+        bbox = bbox_utils.get_bbox_from_geotransform(
+            opened.GetGeoTransform(),
+            opened.RasterXSize,
+            opened.RasterYSize,
+        )
+
+        projection_wkt = opened.GetProjection()
+        projection_osr = osr.SpatialReference()
+        projection_osr.ImportFromWkt(projection_wkt)
+
+        opened = bbox_utils.convert_bbox_to_vector(bbox, projection_osr)
+
+    else:
         raise Exception(f"Could not read input vector: {vector}")
 
     if opened is None:
         raise Exception(f"Could not read input vector: {vector}")
 
-    driver = opened.GetDriver()
-    driver_name = driver.GetName()
-
-    if driver is None:
-        raise Exception("Unable to parse the driver of vector.")
-
-    if layer != -1:
-        layer_count = opened.GetLayerCount()
-
-        if layer > layer_count - 1:
-            raise Exception(f"Requested a non-existing layer: {layer}")
-
-        if layer_count > 1:
-            driver_name = "Memory"
-
-    if convert_mem_driver and driver_name == "Memory":
-        path = opened.GetDescription()
-        basename = os.path.basename(path)
-        name = os.path.splitext(basename)[0]
-        raster_name = f"/vsimem/{name}_{uuid4().int}.gpkg"
-        driver = gdal.GetDriverByName("GPKG")
-
-        if layer != -1:
-            opened = driver.CreateDataSource(raster_name)
-            orignal_layer = opened.GetLayerByIndex(layer)
-            opened.CopyLayer(
-                orignal_layer, orignal_layer.GetDescription(), ["OVERWRITE=YES"]
-            )
-        else:
-            opened = driver.CreateCopy(raster_name, opened)
-
     return opened
 
 
-def get_vector_path(vector):
-    """Takes a string or a ogr.Datasource and returns its path.
-
-    Args:
-        vector (path | Dataset): A path to a vector or an ogr.Datasource.
-
-    Returns:
-        A string representing the path to the vector.
-    """
-    if isinstance(vector, str) and (len(vector) >= 8 and vector[0:8]) == "/vsimem/":
-        return vector
-
-    type_check(vector, [str, ogr.DataSource], "vector")
-
-    opened = open_vector(vector, convert_mem_driver=True, writeable=False)
-    try:
-        path = str(opened.GetDescription())
-
-        if len(path) >= 8 and path[0:8] == "/vsimem/":
-            return path
-        elif os.path.exists(path):
-            return path
-        else:
-            raise Exception(f"Error while getting path from raster: {vector}")
-
-    except:
-        raise Exception(f"Error while getting path from raster: {vector}")
-
-
-def to_vector_list(variable):
-    """Reads a list of vectors and returns a list of paths to the vectors.
-
-    Args:
-        variable (list, path | Dataset): The vectors to generate paths for.
-
-    Returns:
-        A list of paths to the vectors.
-    """
-    return_list = []
-    if isinstance(variable, list):
-        return_list = variable
-    else:
-        if not isinstance(variable, (str, ogr.DataSource)):
-            raise ValueError(f"Error in vector list: {variable}")
-
-        return_list.append(get_vector_path(variable))
-
-    if len(return_list) == 0:
-        raise ValueError("Empty vector list.")
-
-    return return_list
-
-
-def _vector_to_metadata(
+def open_vector(
     vector,
     *,
-    process_layer=-1,
+    writeable=True,
+    allow_raster=True,
+    allow_lists=True,
 ):
-    """OBS: Internal. Single output.
-
-    Creates a dictionary with metadata about the vector layer.
     """
-    type_check(vector, [str, ogr.DataSource], "vector")
-    type_check(process_layer, [int], "process_layer")
+    Opens a vector to an ogr.Datasource class.
 
-    datasource = open_vector(vector, convert_mem_driver=False)
+    ## Args:
+    `vector` (_str_ || _ogr.DataSource_ || _gdal.Dataset_): The vector to open. If a
+    raster is supplied the bounding box is opened as a vector. </br>
+
+    ## Kwargs:
+    `writeable` (_bool_): If True, the vector is opened in write mode. (Default: **True**) </br>
+    `allow_raster` (_bool_): If True, a raster will be opened as a vector bounding box. (Default: **True**) </br>
+    `allow_lists` (_bool_): If True, the input can be a list of vectors. (Default: **True**) </br>
+
+    ## Returns:
+    (_ogr.DataSource_ || _list_): The opened vector(s).
+    """
+    core_utils.type_check(vector, [str, ogr.DataSource, gdal.Dataset, [str, ogr.DataSource, gdal.Dataset]], "vector")
+    core_utils.type_check(writeable, [bool], "writeable")
+
+    if isinstance(vector, list) and not allow_lists:
+        raise ValueError("Cannot open a list of vectors when allow_list is False.")
+
+    vectors = core_utils.ensure_list(vector)
+
+    output = []
+    for element in vectors:
+        output.append(_open_vector(element, writeable=writeable, allow_raster=allow_raster))
+
+    if isinstance(vector, list):
+        return output
+
+    return output[0]
+
+
+def _vector_to_metadata(vector):
+    """ Internal. """
+    assert isinstance(vector, (str, ogr.DataSource)), "vector must be a path or a DataSource"
+
+    datasource = _open_vector(vector)
 
     vector_driver = datasource.GetDriver()
 
     path = datasource.GetDescription()
     basename = os.path.basename(path)
-    name = os.path.splitext(basename)[0]
-    ext = os.path.splitext(basename)[1]
-    driver_name = vector_driver.GetName()
+    split_path = os.path.split(basename)
+    name = split_path[0]
+    ext = split_path[1]
 
-    in_memory = False
-    if driver_name == "MEM":
-        in_memory = True
-    elif len(path) >= 8 and path[0:8] == "/vsimem/":
-        in_memory = True
+    driver = vector_driver.ShortName
+
+    in_memory = gdal_utils.is_in_memory(datasource)
 
     layer_count = datasource.GetLayerCount()
     layers = []
 
-    processed = False
-
+    vector_bbox = None
     for layer_index in range(layer_count):
-
-        if process_layer != -1 and layer_index != process_layer:
-            continue
-
         layer = datasource.GetLayerByIndex(layer_index)
 
         x_min, x_max, y_min, y_max = layer.GetExtent()
+        layer_bbox = [x_min, x_max, y_min, y_max]
+        vector_bbox = layer_bbox
+
         layer_name = layer.GetName()
-        extent = [x_min, y_max, x_max, y_min]
-        extent_ogr = [x_min, x_max, y_min, y_max]
-        extent_dict = {
-            "left": x_min,
-            "top": y_max,
-            "right": x_max,
-            "bottom": y_min,
-        }
 
         column_fid = layer.GetFIDColumn()
         column_geom = layer.GetGeometryColumn()
@@ -246,26 +150,18 @@ def _vector_to_metadata(
         feature_count = layer.GetFeatureCount()
 
         projection_osr = layer.GetSpatialRef()
-        projection = layer.GetSpatialRef().ExportToWkt()
+        projection_wkt = layer.GetSpatialRef().ExportToWkt()
 
-        if processed is False:
-            ds_projection = projection
-            ds_projection_osr = projection_osr
-            ds_x_min = x_min
-            ds_x_max = x_max
-            ds_y_min = y_min
-            ds_y_max = y_max
-
-            processed = True
-        else:
-            if x_min < ds_x_min:
-                ds_x_min = x_min
-            if x_max > ds_x_max:
-                ds_x_max = x_max
-            if y_min < ds_y_min:
-                ds_y_min = y_min
-            if y_max > ds_y_max:
-                ds_y_max = y_max
+        if layer_index > 0:
+            v_x_min, v_x_max, v_y_min, v_y_max = vector_bbox
+            if x_min < v_x_min:
+                vector_bbox[0] = x_min
+            if x_max > v_x_max:
+                vector_bbox[1] = x_max
+            if y_min < v_y_min:
+                vector_bbox[2] = y_min
+            if y_max > v_y_max:
+                vector_bbox[3] = y_max
 
         layer_defn = layer.GetLayerDefn()
 
@@ -293,7 +189,7 @@ def _vector_to_metadata(
             "column_fid": column_fid,
             "column_geom": column_geom,
             "feature_count": feature_count,
-            "projection": projection,
+            "projection_wkt": projection_wkt,
             "projection_osr": projection_osr,
             "geom_type": geom_type,
             "geom_type_ogr": geom_type_ogr,
@@ -301,34 +197,33 @@ def _vector_to_metadata(
             "field_names": field_names,
             "field_types": field_types,
             "field_types_ogr": field_types_ogr,
-            "extent": extent,
-            "extent_ogr": extent_ogr,
-            "extent_dict": extent_dict,
-            "extent_wkt": None,
-            "extent_latlng": None,
-            "extent_gdal_warp_latlng": None,
-            "extent_ogr_latlng": None,
-            "extent_dict_latlng": None,
-            "extent_wkt_latlng": None,
-            "extent_geojson": None,
-            "extent_geojson_dict": None,
-            "extent_datasource": None,
-            "extent_datasource_latlng": None,
+            "is_raster": False,
+            "is_vector": True,
+            "bbox": layer_bbox,
         }
 
+        layer_bboxes = bbox_utils.additional_bboxes(layer_bbox, projection_osr)
+
+        for key, value in layer_bboxes.items():
+            layer_dict[key] = value
+
+
+        ## MOVE TO A SINGLE FUNCTION
+        def get_bbox_as_vector_layer():
+            return bbox_utils.convert_bbox_to_vector(layer_bbox, projection_osr) # pylint: disable=cell-var-from-loop
+
+
+        def get_bbox_as_vector_latlng_layer():
+            projection_osr_latlng = osr.SpatialReference()
+            projection_osr_latlng.ImportFromEPSG(4326)
+
+            return bbox_utils.convert_bbox_to_vector(layer_dict["bbox_latlng"], projection_osr_latlng)  # pylint: disable=cell-var-from-loop
+
+
+        layer_dict["get_bbox_vector"] = get_bbox_as_vector_layer
+        layer_dict["get_bbox_vector_latlng"] = get_bbox_as_vector_latlng_layer
+
         layers.append(layer_dict)
-
-    ds_extent = [ds_x_min, ds_y_max, ds_x_max, ds_y_min]
-    ds_extent_ogr = [ds_x_min, ds_x_max, ds_y_min, ds_y_max]
-    ds_extent_gdal_warp = [ds_x_min, ds_y_min, ds_x_max, ds_y_max]
-    ds_extent_dict = {
-        "left": ds_x_min,
-        "top": ds_y_max,
-        "right": ds_x_max,
-        "bottom": ds_y_min,
-    }
-
-    ds_expanded_extents = additional_bboxes(ds_extent_ogr, projection_osr)
 
     metadata = {
         "path": path,
@@ -336,184 +231,71 @@ def _vector_to_metadata(
         "name": name,
         "ext": ext,
         "in_memory": in_memory,
-        "projection": ds_projection,
-        "projection_osr": ds_projection_osr,
-        "driver": driver_name,
-        "x_min": ds_x_min,
-        "y_max": ds_y_max,
-        "x_max": ds_x_max,
-        "y_min": ds_y_min,
+        "projection_wkt": projection_wkt,
+        "projection_osr": projection_osr,
+        "driver": driver,
+        "x_min": vector_bbox[0],
+        "x_max": vector_bbox[1],
+        "y_min": vector_bbox[2],
+        "y_max": vector_bbox[3],
         "is_vector": True,
         "is_raster": False,
         "layer_count": layer_count,
         "layers": layers,
-        "extent": ds_extent,
-        "extent_dict": ds_extent_dict,
-        "extent_ogr": ds_extent_ogr,
-        "extent_gdal_warp": ds_extent_gdal_warp,
-        "extent_gdal_warp_latlng": ds_expanded_extents["extent_gdal_warp_latlng"],
-        "extent_wkt": ds_expanded_extents["extent_wkt"],
-        "extent_latlng": ds_expanded_extents["extent_latlng"],
-        "extent_ogr_latlng": ds_expanded_extents["extent_ogr_latlng"],
-        "extent_dict_latlng": ds_expanded_extents["extent_dict_latlng"],
-        "extent_wkt_latlng": ds_expanded_extents["extent_wkt_latlng"],
-        "extent_geojson": ds_expanded_extents["extent_geojson"],
-        "extent_geojson_dict": ds_expanded_extents["extent_geojson_dict"],
-        "extent_datasource": None,
-        "extent_datasource_latlng": None,
+        "extent": vector_bbox,
     }
 
-    def ds_get_extent_datasource():
-        extent_name = f"/vsimem/{name}_{uuid4().int}_extent.gpkg"
+    vector_bboxes = bbox_utils.additional_bboxes(vector_bbox, projection_osr)
 
-        driver = ogr.GetDriverByName("GPKG")
-        extent_ds = driver.CreateDataSource(extent_name)
-        layer = extent_ds.CreateLayer(
-            "extent_ogr", ds_projection_osr, ogr.wkbPolygon
-        )
-
-        feature = ogr.Feature(layer.GetLayerDefn())
-        extent_geom = ogr.CreateGeometryFromWkt(metadata["extent_wkt"], ds_projection_osr)
-        feature.SetGeometry(extent_geom)
-        layer.CreateFeature(feature)
-
-        feature = None
-        layer.SyncToDisk()
-
-        return extent_name
+    for key, value in vector_bboxes.items():
+        metadata[key] = value
 
 
-    def ds_get_extent_datasource_latlng():
-        extent_latlng_name = f"/vsimem/{name}_{uuid4().int}_extent_latlng.gpkg"
-
-        target_projection = osr.SpatialReference()
-        target_projection.ImportFromEPSG(4326)
-
-        driver = ogr.GetDriverByName("GPKG")
-        extent_ds_latlng = driver.CreateDataSource(extent_latlng_name)
-        layer = extent_ds_latlng.CreateLayer(
-            "extent_latlng", target_projection, ogr.wkbPolygon
-        )
-
-        feature = ogr.Feature(layer.GetLayerDefn())
-        extent_geom_latlng = ogr.CreateGeometryFromWkt(metadata["extent_wkt_latlng"], target_projection)
-        feature.SetGeometry(extent_geom_latlng)
-        layer.CreateFeature(feature)
-
-        feature = None
-        layer.SyncToDisk()
-
-        return extent_latlng_name
-
-    def ds_get_extent_geom():
-        return ogr.CreateGeometryFromWkt(metadata["extent_wkt"], ds_projection_osr)
+    def get_bbox_as_vector():
+        return bbox_utils.convert_bbox_to_vector(vector_bbox, projection_osr) # pylint: disable=cell-var-from-loop
 
 
-    def ds_get_extent_geom_latlng():
-        target_projection = osr.SpatialReference()
-        target_projection.ImportFromEPSG(4326)
-        return ogr.CreateGeometryFromWkt(metadata["extent_wkt_latlng"], target_projection)
+    def get_bbox_as_vector_latlng():
+        projection_osr_latlng = osr.SpatialReference()
+        projection_osr_latlng.ImportFromEPSG(4326)
+
+        return bbox_utils.convert_bbox_to_vector(metadata["bbox_latlng"], projection_osr_latlng)  # pylint: disable=cell-var-from-loop
 
 
-    metadata["extent_datasource"] = ds_get_extent_datasource
-    metadata["extent_datasource_latlng"] = ds_get_extent_datasource_latlng
-    metadata["extent_geom"] = ds_get_extent_geom
-    metadata["extent_geom_latlng"] = ds_get_extent_geom_latlng
-
-    # Individual layer extents
-    for layer_index in range(layer_count):
-        layer_dict = layers[layer_index]
-
-        layer_expanded_extents = expand_extent(layer_dict["extent_ogr"], projection_osr)
-
-
-        for key, value in layer_expanded_extents.items():
-            layers[layer_index][key] = value
-
-            def layer_get_extent_datasource():
-                extent_name = f"/vsimem/{name}_l{layer_index}_{uuid4().int}_extent.fgb"
-
-                driver = ogr.GetDriverByName("FlatGeobuf")
-                extent_ds = driver.CreateDataSource(extent_name)
-                layer = extent_ds.CreateLayer(
-                    "extent_ogr", ds_projection_osr, ogr.wkbPolygon
-                )
-
-                feature = ogr.Feature(layer.GetLayerDefn())
-                extent_geom = ogr.CreateGeometryFromWkt(layers[layer_index]["extent_wkt"], ds_projection_osr)
-                feature.SetGeometry(extent_geom)
-                layer.CreateFeature(feature)
-
-                feature = None
-                layer.SyncToDisk()
-
-                return extent_name
-
-
-            def layer_get_extent_datasource_latlng():
-                extent_latlng_name = f"/vsimem/{name}_l{layer_index}_{uuid4().int}_extent_latlng.fgb"
-
-                target_projection = osr.SpatialReference()
-                target_projection.ImportFromEPSG(4326)
-
-                driver = ogr.GetDriverByName("FlatGeobuf")
-                extent_ds_latlng = driver.CreateDataSource(extent_latlng_name)
-                layer = extent_ds_latlng.CreateLayer(
-                    "extent_latlng", target_projection, ogr.wkbPolygon
-                )
-
-                feature = ogr.Feature(layer.GetLayerDefn())
-                extent_geom_latlng = ogr.CreateGeometryFromWkt(layers[layer_index]["extent_wkt_latlng"], target_projection)
-                feature.SetGeometry(extent_geom_latlng)
-                layer.CreateFeature(feature)
-
-                feature = None
-                layer.SyncToDisk()
-
-                return extent_latlng_name
-
-
-            def layer_get_extent_geom():
-                return ogr.CreateGeometryFromWkt(layers[layer_index]["extent_wkt"], ds_projection_osr)
-
-
-            def layer_get_extent_geom_latlng():
-                target_projection = osr.SpatialReference()
-                target_projection.ImportFromEPSG(4326)
-                return ogr.CreateGeometryFromWkt(layers[layer_index]["extent_wkt_latlng"], target_projection)
-
-
-            layers[layer_index]["extent_datasource"] = layer_get_extent_datasource
-            layers[layer_index]["extent_datasource_latlng"] = layer_get_extent_datasource_latlng
-            layers[layer_index]["extent_geom"] = layer_get_extent_geom
-            layers[layer_index]["extent_geom_latlng"] = layer_get_extent_geom_latlng
+    metadata["get_bbox_vector"] = get_bbox_as_vector
+    metadata["get_bbox_vector_latlng"] = get_bbox_as_vector_latlng
 
     return metadata
 
 
-def vector_to_metadata(
-    vector,
-    process_layer=-1,
-):
-    """Creates a dictionary with metadata about the vector layer.
-
-    Args:
-        vector (path | DataSource): The vector to analyse.
-
-    Returns:
-        A dictionary containing the metadata.
+def vector_to_metadata(vector, *, allow_lists=True):
     """
-    type_check(vector, [list, str, ogr.DataSource], "vector")
-    type_check(process_layer, [int], "process_layer")
+    Creates a dictionary with metadata about the vector layer.
 
-    vector_list = to_vector_list(vector)
+    ## Args:
+    `vector` (_ogr.DataSource_ || _str_ || _list_): A vector layer(s) or path(s) to a vector file.
+
+    ## Kwargs:
+    `allow_lists` (_bool_): If **True**, vector can be a list of vector layers or paths. If `False`, `vector` must be a single vector layer or path. (default: **True**)
+
+    ## Returns:
+    (_dict_ || _list_) A dictionary with metadata about the vector layer(s) or a list of dictionaries with metadata about the vector layer(s).
+    """
+    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    core_utils.type_check(allow_lists, [bool], "allow_lists")
+
+    if isinstance(vector, list) and not allow_lists:
+        raise ValueError("The vector parameter cannot be a list when allow_lists is False.")
+
+    vector_list = core_utils.ensure_list(vector)
+
+    if not gdal_utils.is_vector_list(vector_list):
+        raise ValueError("The vector parameter must be a list of vector layers.")
 
     output = []
 
     for in_vector in vector_list:
-        output.append(
-            _vector_to_metadata(in_vector, process_layer=process_layer)
-        )
+        output.append(_vector_to_metadata(in_vector))
 
     if isinstance(vector, list):
         return output
@@ -521,248 +303,137 @@ def vector_to_metadata(
     return output[0]
 
 
-def ready_io_vector(
+def _filter_vector(
     vector,
-    out_path,
+    filter_function,
+    out_path=None,
     *,
-    overwrite=True,
-    add_uuid=False,
+    process_layer=-1,
     prefix="",
-    postfix="",
-):
-    type_check(vector, [list, str, ogr.DataSource], "vector")
-    type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(overwrite, [bool], "overwrite")
-    type_check(prefix, [str], "prefix")
-    type_check(postfix, [str], "postfix")
-
-    vector_list = to_vector_list(vector)
-
-    if isinstance(out_path, list):
-        if len(vector_list) != len(out_path):
-            raise ValueError(
-                "The length of vector_list must equal the length of the out_path"
-            )
-
-    # Check if folder exists and is required.
-    if len(vector_list) > 1 and isinstance(out_path, str):
-        if not os.path.dirname(os.path.abspath(out_path)):
-            raise ValueError(
-                f"Output folder does not exist. Please create first. {out_path}"
-            )
-
-    # Generate output names
-    path_list = []
-    for index, in_vector in enumerate(vector_list):
-        metadata = _vector_to_metadata(in_vector)
-
-        name = metadata["name"]
-
-        if add_uuid:
-            uuid = uuid4().int
-        else:
-            uuid = ""
-
-        if out_path is None:
-            path = f"/vsimem/{prefix}{name}{uuid}{postfix}.gpkg"
-        elif isinstance(out_path, str):
-            if folder_exists(out_path):
-                path = os.path.join(out_path, f"{prefix}{name}{uuid}{postfix}.tif")
-            else:
-                path = out_path
-        elif isinstance(out_path, list):
-            if out_path[index] is None:
-                path = f"/vsimem/{prefix}{name}{uuid}{postfix}.tif"
-            elif isinstance(out_path[index], str):
-                path = out_path[index]
-            else:
-                raise ValueError(f"Unable to parse out_path: {out_path}")
-        else:
-            raise ValueError(f"Unable to parse out_path: {out_path}")
-
-        overwrite_required(path, overwrite)
-        path_list.append(path)
-
-    return (vector_list, path_list)
-
-
-def _vector_to_memory(
-    vector,
-    memory_path=None,
-    copy_if_already_in_memory=True,
-    *,
-    layer_to_extract=-1,
-):
-    """OBS: Internal. Single output.
-
-    Copies a vector source to memory.
-    """
-    type_check(vector, [str, ogr.DataSource], "vector")
-    type_check(memory_path, [str], "memory_path", allow_none=True)
-    type_check(layer_to_extract, [int], "layer_to_extract")
-
-    ref = open_vector(vector)
-    path = get_vector_path(ref)
-    metadata = _vector_to_metadata(ref)
-    name = metadata["name"]
-
-    if not copy_if_already_in_memory and metadata["in_memory"]:
-        if layer_to_extract == -1:
-            return path
-
-    if memory_path is not None:
-        if memory_path[0:8] == "/vsimem/":
-            vector_name = memory_path
-        else:
-            vector_name = f"/vsimem/{memory_path}"
-        driver = ogr.GetDriverByName(path_to_driver_vector(memory_path))
-    else:
-        vector_name = f"/vsimem/{name}_{uuid4().int}.gpkg"
-        driver = ogr.GetDriverByName("GPKG")
-
-    if driver is None:
-        raise Exception(f"Error while parsing driver for: {vector}")
-
-    copy = driver.CreateDataSource(vector_name)
-
-    for layer_idx in range(metadata["layer_count"]):
-        if layer_to_extract is not None and layer_idx != layer_to_extract:
-            continue
-
-        layername = metadata["layers"][layer_idx]["layer_name"]
-        copy.CopyLayer(ref.GetLayer(layer_idx), layername, ["OVERWRITE=YES"])
-
-    return vector_name
-
-
-def vector_to_memory(
-    vector,
-    memory_path=None,
-    copy_if_already_in_memory=False,
-    *,
-    layer_to_extract=-1,
-):
-    """Copies a vector source to memory.
-
-    Args:
-        vector (list | path | DataSource): The vector to copy to memory
-
-    **kwargs:
-        memory_path (str | None): If a path is provided, uses the
-        appropriate driver and uses the VSIMEM gdal system.
-        Example: vector_to_memory(clip_ref.tif, "clip_geom.gpkg")
-        /vsimem/ is autumatically added.
-
-        layer_to_extract (int | None): The layer in the vector to copy.
-        if None is specified, all layers are copied.
-
-        opened (bool): If a memory path is specified, the default is
-        to return a path. If open is supplied. The vector is opened
-        before returning.
-
-    Returns:
-        An in-memory ogr.DataSource. If a memory path was provided a
-        string for the in-memory location is returned.
-    """
-    type_check(vector, [list, str, ogr.DataSource], "vector")
-    type_check(memory_path, [list, str], "memory_pathout_path", allow_none=True)
-    type_check(layer_to_extract, [int], "layer_to_extract")
-
-    vector_list, path_list = ready_io_vector(vector, memory_path)
-
-    output = []
-    for index, in_vector in enumerate(vector_list):
-        path = path_list[index]
-
-        output.append(
-            _vector_to_memory(
-                in_vector,
-                memory_path=path,
-                layer_to_extract=layer_to_extract,
-                copy_if_already_in_memory=copy_if_already_in_memory,
-            )
-        )
-
-    if isinstance(vector, list):
-        return output
-
-    return output[0]
-
-
-def _vector_to_disk(
-    vector,
-    out_path,
-    *,
+    suffix="",
     overwrite=True,
 ):
-    """OBS: Internal. Single output.
+    """ Internal. """
+    assert isinstance(vector, (str, ogr.DataSource)), "vector must be a string or an ogr.DataSource object."
+    assert isinstance(filter_function, (type(lambda: True))), "filter_function must be a function."
 
-    Copies a vector source to disk.
-    """
-    type_check(vector, [str, ogr.DataSource], "vector")
-    type_check(out_path, [str], "out_path")
-    type_check(overwrite, [bool], "overwrite")
-
-    overwrite_required(out_path, overwrite)
-
-    datasource = open_vector(vector)
     metadata = _vector_to_metadata(vector)
 
-    if not os.path.dirname(os.path.abspath(out_path)):
-        raise ValueError(
-            f"Output folder does not exist. Please create first. {out_path}"
+    if out_path is None:
+        out_path = gdal_utils.create_memory_path(
+            gdal_utils.get_path_from_dataset(vector),
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=True,
         )
 
-    driver = ogr.GetDriverByName(path_to_driver_vector(out_path))
+    assert core_utils.is_valid_output_path(out_path, overwrite=overwrite), f"out_path is not a valid output path. {out_path}"
 
-    if driver is None:
-        raise Exception(f"Error while parsing driver for: {vector}")
+    projection = metadata["projection_osr"]
 
-    remove_if_overwrite(out_path, overwrite)
+    driver = gdal_utils.path_to_driver_vector(out_path)
 
-    copy = driver.CreateDataSource(out_path)
+    datasource_destination = driver.CreateDataSource(out_path)
+    datasource_original = open_vector(vector)
 
-    for layer_idx in range(metadata["layer_count"]):
-        layer_name = metadata["layers"][layer_idx]["layer_name"]
-        copy.CopyLayer(
-            datasource.GetLayer(layer_idx), str(layer_name), ["OVERWRITE=YES"]
-        )
+    for i, _layer in enumerate(metadata["layers"]):
+        if process_layer != -1 and i != process_layer:
+            continue
 
-    # Flush to disk
-    copy = None
+        features = metadata["layers"][i]["feature_count"]
+        field_names = metadata["layers"][i]["field_names"]
+
+        geom_type = metadata["layers"][i]["geom_type_ogr"]
+
+        layer_original = datasource_original.GetLayer(i)
+        layer_destination = datasource_destination.CreateLayer(layer_original.GetName(), projection, geom_type)
+
+        for feature in range(features):
+            feature = layer_original.GetNextFeature()
+
+            field_values = []
+            for field in field_names:
+                field_values.append(feature.GetField(field))
+
+            field_dict = {}
+            for j, value in enumerate(field_values):
+                field_dict[field_names[j]] = value
+
+            if filter_function(field_dict):
+                layer_destination.CreateFeature(feature.Clone())
+
+        layer_destination.SyncToDisk()
+        layer_destination.ResetReading()
+        layer_destination = None
 
     return out_path
 
 
-def vector_to_disk(
+def filter_vector(
     vector,
-    out_path,
+    filter_function,
     *,
+    out_path=None,
+    process_layer=-1,
+    allow_lists=True,
+    prefix="",
+    suffix="",
+    add_uuid=False,
     overwrite=True,
 ):
-    """Copies a vector source to disk.
-
-    Args:
-        vector (path | DataSource): The vector to copy to disk
-
-        out_path (path): The destination to save to.
-
-    **kwargs:
-        overwite (bool): Is it possible to overwrite the out_path if it exists.
-
-    Returns:
-        An path to the created vector.
     """
-    type_check(vector, [str, ogr.DataSource], "vector")
-    type_check(out_path, [str], "out_path")
-    type_check(overwrite, [bool], "overwrite")
+    Filters a vector using its attribute table and a function.
 
-    vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
+    ## Args:
+    `vector` (_ogr.DataSource_ || _str_ || _list_): A vector layer(s) or path(s) to a vector file.
+    `filter_function` (_function_): A function that takes a dictionary of attributes and returns a boolean.
+
+    ## Kwargs:
+    `out_path` (_str_): Path to the output vector file. If `None`, a memory vector will be created. (Default: **None**) </br>
+    `process_layer` (_int_): The index of the layer to process. If `-1`, all layers will be processed. (Default: **-1**) </br>
+    `allow_lists` (_bool_): If **True**, vector can be a list of vector layers or paths. If `False`, `vector` must be a single vector layer or path. (default: **True**) </br>
+    `prefix` (_str_): A prefix to add to the output vector file. (Default: **""**) </br>
+    `suffix` (_str_): A suffix to add to the output vector file. (Default: **""**) </br>
+    `add_uuid` (_bool_): If **True**, a UUID will be added to the output vector file. (Default: **False**) </br>
+    `overwrite` (_bool_): If **True**, the output vector file will be overwritten if it already exists. (Default: **True**) </br>
+
+    ## Returns:
+    (_str_ || _list_): Path(s) to the output vector file(s).
+    """
+    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    core_utils.type_check(filter_function, [type(lambda: True)], "filter_function")
+    core_utils.type_check(process_layer, [int], "process_layer")
+    core_utils.type_check(allow_lists, [bool], "allow_lists")
+
+    if isinstance(vector, list) and not allow_lists:
+        raise ValueError("The vector parameter cannot be a list when allow_lists is False.")
+
+    vector_list = core_utils.ensure_list(vector)
+
+    if not gdal_utils.is_vector_list(vector_list):
+        raise ValueError("The vector parameter must be a list of vector layers.")
+
+    path_list = core_utils.create_output_paths(
+        vector_list,
+        out_path=out_path,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        overwrite=overwrite,
+    )
 
     output = []
-    for index, in_vector in enumerate(vector_list):
-        path = path_list[index]
-        output.append(_vector_to_disk(in_vector, path, overwrite=overwrite))
+
+    for index, in_vector in vector_list:
+        output.append(_filter_vector(
+            in_vector,
+            filter_function,
+            out_path=path_list[index],
+            process_layer=process_layer,
+            prefix=prefix,
+            suffix=suffix,
+            overwrite=overwrite,
+        ))
 
     if isinstance(vector, list):
         return output
@@ -770,73 +441,35 @@ def vector_to_disk(
     return output[0]
 
 
-def filter_vector(vector, filter_where, process_layer=0):
-    metadata = _vector_to_metadata(vector)
-
-    name = f"/vsimem/{uuid4().int}_filtered.shp"
-
-    projection = metadata["projection_osr"]
-
-    driver = ogr.GetDriverByName("ESRI Shapefile")
-    datasource = driver.CreateDataSource(name)
-    datasource_og = open_vector(vector)
-
-    added = 0
-
-    for index, _layer in enumerate(metadata["layers"]):
-        if index != process_layer:
-            continue
-
-        features = metadata["layers"][index]["feature_count"]
-        field_names = metadata["layers"][index]["field_names"]
-
-        if filter_where[0] not in field_names:
-            continue
-
-        geom_type = metadata["layers"][index]["geom_type_ogr"]
-
-        og_layer = datasource_og.GetLayer(index)
-        ds_layer = datasource.CreateLayer(f"filtered_{uuid4().int}", projection, geom_type)
-
-        found_match = False
-        for _ in range(features):
-            feature = og_layer.GetNextFeature()
-
-            field_val = feature.GetField(filter_where[0])
-
-            if field_val == filter_where[1]:
-                ds_layer.CreateFeature(feature.Clone())
-
-                found_match = True
-
-        ds_layer.SyncToDisk()
-
-        if found_match:
-            added += 1
-
-    if added == 0:
-        raise ValueError("No matches found.")
-
-    return name
-
-
-def vector_add_index(vector):
-    """Adds a spatial index to the vector if it doesn't have one.
-
-    Args:
-        vector (list, path | vector): The vector to add the index to.
-
-    Returns:
-        A path to the original vector.
+def vector_add_index(vector, allow_lists=True):
     """
-    type_check(vector, [list, str, ogr.DataSource], "vector")
+    Adds a spatial index to the vector in place, if it doesn't have one.
 
-    vector_list = to_vector_list(vector)
+    ## Args:
+    (_ogr.DataSource_ || _str_ || _list_): A vector layer(s) or path(s) to add indices to.
+
+    ## Kwargs:
+    `allow_lists` (_bool_): If **True**, vector can be a list of vector layers or paths. If `False`, `vector` must be a single vector layer or path. (default: **True**)
+
+    ## Returns:
+    (_str_ || _list_): Path(s) to the input rasters.
+    """
+    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+
+    if isinstance(vector, list) and not allow_lists:
+        raise ValueError("The vector parameter cannot be a list when allow_lists is False.")
+
+    vector_list = core_utils.ensure_list(vector)
+
+    if not gdal_utils.is_vector_list(vector_list):
+        raise ValueError("The vector parameter must be a list of vector layers.")
+
+    output = gdal_utils.get_path_from_dataset_list(vector_list)
 
     try:
         for in_vector in vector_list:
             metadata = _vector_to_metadata(in_vector)
-            ref = open_vector(in_vector)
+            ref = _open_vector(in_vector)
 
             for layer in metadata["layers"]:
                 name = layer["layer_name"]
@@ -845,55 +478,31 @@ def vector_add_index(vector):
                 sql = f"SELECT CreateSpatialIndex('{name}', '{geom}') WHERE NOT EXISTS (SELECT HasSpatialIndex('{name}', '{geom}'));"
                 ref.ExecuteSQL(sql, dialect="SQLITE")
     except:
-        raise Exception(f"Error while creating indices for {vector}")
+        raise Exception(f"Error while creating indices for {vector}") from None
 
-    return vector_list
+    if isinstance(vector, list):
+        return output
 
-
-def vector_feature_to_layer(vector, layer=1):
-    """Adds a spatial index to the vector if it doesn't have one.
-
-    Args:
-        vector (list, path | vector): The vector to add the index to.
-
-    Returns:
-        A path to the original vector.
-    """
-    type_check(vector, [list, str, ogr.DataSource], "vector")
-
-    vector_list = to_vector_list(vector)
-
-    try:
-        for in_vector in vector_list:
-            metadata = _vector_to_metadata(in_vector)
-            ref = open_vector(in_vector)
-
-            for layer in metadata["layers"]:
-                name = layer["layer_name"]
-                geom = layer["column_geom"]
-
-                sql = f"SELECT CreateSpatialIndex('{name}', '{geom}') WHERE NOT EXISTS (SELECT HasSpatialIndex('{name}', '{geom}'));"
-                ref.ExecuteSQL(sql, dialect="SQLITE")
-    except:
-        raise Exception(f"Error while creating indices for {vector}")
-
-    return vector_list
+    return output[0]
 
 
-def _vector_add_shapes(
-    vector,
-    shapes=["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
-):
-    """OBS: Internal. Single output.
+def _vector_add_shapes_in_place(vector, *, shapes=None, prefix="", verbose=False):
+    """ Internal. """
+    assert isinstance(vector, (ogr.DataSource, str)), "vector must be a vector layer or path to one."
+    assert isinstance(shapes, (list, tuple)) or shapes is None, "shapes must be a list of shapes."
+    assert isinstance(prefix, str), "prefix must be a string."
 
-    Adds shape calculations to a vector such as area and perimeter.
-    Can also add compactness measurements.
-    """
-    type_check(vector, [str, ogr.DataSource], "vector")
-    type_check(shapes, [list], "shapes")
+    all_shapes = ["area", "perimeter", "ipq", "hull", "compactness", "centroid"]
 
-    datasource = open_vector(vector)
-    out_path = get_vector_path(datasource)
+    if shapes is None:
+        shapes = all_shapes
+    else:
+        for shape in shapes:
+            if shape not in all_shapes:
+                raise ValueError(f"{shape} is not a valid shape.")
+
+    datasource = _open_vector(vector)
+    out_path = gdal_utils.get_path_from_dataset(datasource, dataset_type="vector")
     metadata = _vector_to_metadata(datasource)
 
     for index in range(metadata["layer_count"]):
@@ -906,24 +515,28 @@ def _vector_add_shapes(
         for attribute in shapes:
             if attribute == "centroid":
                 if "centroid_x" not in vector_current_fields:
-                    field_defn = ogr.FieldDefn("centroid_x", ogr.OFTReal)
+                    field_defn = ogr.FieldDefn(f"{prefix}centroid_x", ogr.OFTReal)
                     vector_layer.CreateField(field_defn)
 
                 if "centroid_y" not in vector_current_fields:
-                    field_defn = ogr.FieldDefn("centroid_y", ogr.OFTReal)
+                    field_defn = ogr.FieldDefn(f"{prefix}centroid_y", ogr.OFTReal)
                     vector_layer.CreateField(field_defn)
 
             elif attribute not in vector_current_fields:
-                field_defn = ogr.FieldDefn(attribute, ogr.OFTReal)
+                field_defn = ogr.FieldDefn(f"{prefix}{attribute}", ogr.OFTReal)
                 vector_layer.CreateField(field_defn)
 
         vector_feature_count = vector_layer.GetFeatureCount()
+
+        if verbose:
+            core_utils.progress(0, vector_feature_count, name="shape")
+
         for i in range(vector_feature_count):
             vector_feature = vector_layer.GetNextFeature()
 
             try:
                 vector_geom = vector_feature.GetGeometryRef()
-            except:
+            except Exception:
                 vector_geom.Buffer(0)
                 Warning("Invalid geometry at : ", i)
 
@@ -940,8 +553,8 @@ def _vector_add_shapes(
                     vector_ipq = (4 * np.pi * vector_area) / vector_perimeter ** 2
 
             if "centroid" in shapes:
-                vector_feature.SetField("centroid_x", centroid.GetX())
-                vector_feature.SetField("centroid_y", centroid.GetY())
+                vector_feature.SetField(f"{prefix}centroid_x", centroid.GetX())
+                vector_feature.SetField(f"{prefix}centroid_y", centroid.GetY())
 
             if "hull" in shapes or "compact" in shapes:
                 vector_hull = vector_geom.ConvexHull()
@@ -951,59 +564,125 @@ def _vector_add_shapes(
                 compactness = np.sqrt(float(hull_ratio) * float(vector_ipq))
 
             if "area" in shapes:
-                vector_feature.SetField("area", vector_area)
+                vector_feature.SetField(f"{prefix}area", vector_area)
             if "perimeter" in shapes:
-                vector_feature.SetField("perimeter", vector_perimeter)
+                vector_feature.SetField(f"{prefix}perimeter", vector_perimeter)
             if "ipq" in shapes:
-                vector_feature.SetField("ipq", vector_ipq)
+                vector_feature.SetField(f"{prefix}ipq", vector_ipq)
             if "hull" in shapes:
-                vector_feature.SetField("hull_area", hull_area)
-                vector_feature.SetField("hull_peri", hull_peri)
-                vector_feature.SetField("hull_ratio", hull_ratio)
+                vector_feature.SetField(f"{prefix}hull_area", hull_area)
+                vector_feature.SetField(f"{prefix}hull_peri", hull_peri)
+                vector_feature.SetField(f"{prefix}hull_ratio", hull_ratio)
             if "compact" in shapes:
-                vector_feature.SetField("compact", compactness)
+                vector_feature.SetField(f"{prefix}compact", compactness)
 
             vector_layer.SetFeature(vector_feature)
 
-            progress(i, vector_feature_count, name="shape")
+            if verbose:
+                core_utils.progress(i, vector_feature_count, name="shape")
 
         vector_layer.CommitTransaction()
 
     return out_path
 
 
-def vector_add_shapes(
-    vector,
-    shapes=["area", "perimeter", "ipq", "hull", "compactness", "centroid"],
-):
-    """Adds shape calculations to a vector such as area and perimeter.
-        Can also add compactness measurements.
+def vector_add_shapes_in_place(vector, *, shapes=None, prefix="", allow_lists=True, verbose=False):
+    """
+    Adds shape calculations to a vector such as area and perimeter.
+    Can also add compactness measurements.
 
-    Args:
-        vector (path | vector): The vector to add shapes to.
+    ## Args:
+    `vector` (_str_ || _ogr.DataSource_ || _list_): Vector layer(s) or path(s) to vector layer(s).
 
-    **kwargs:
-        shapes (list): The shapes to calculate. The following a possible:
-            * Area          (In same unit as projection)
-            * Perimeter     (In same unit as projection)
-            * IPQ           (0-1) given as (4*Pi*Area)/(Perimeter ** 2)
-            * Hull Area     (The area of the convex hull. Same unit as projection)
-            * Compactness   (0-1) given as sqrt((area / hull_area) * ipq)
-            * Centroid      (Coordinate of X and Y)
+    ## Kwargs:
+    `shapes` (_list_ || _None_): The shapes to calculate. The following a possible: </br>
+        * Area          (In same unit as projection)
+        * Perimeter     (In same unit as projection)
+        * IPQ           (0-1) given as (4*Pi*Area)/(Perimeter ** 2)
+        * Hull Area     (The area of the convex hull. Same unit as projection)
+        * Compactness   (0-1) given as sqrt((area / hull_area) * ipq)
+        * Centroid      (Coordinate of X and Y)
+    The default is all shapes. </br>
+    `prefix` (_str_): Prefix to add to the field names.
+    `allow_lists` (_bool_): If True, will accept a list of vectors. If False, will raise an error if a list is passed.
+    `verbose` (_bool_): If True, will print progress.
+
+    ## Returns:
+    (_str_ || _list_): Path(s) to the original rasters that have been augmented in place.
 
     Returns:
         Either the path to the updated vector or a list of the input vectors.
     """
-    type_check(vector, [list, str, ogr.DataSource], "vector")
-    type_check(shapes, [list], "shapes")
+    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    core_utils.type_check(shapes, [[str], None], "shapes")
 
-    vector_list = to_vector_list(vector)
+    if not allow_lists and isinstance(vector, list):
+        raise ValueError("Lists of vectors are not supported when allow_list is False.")
 
-    output = []
+    vector_list = core_utils.ensure_list(vector)
+    output = gdal_utils.get_path_from_dataset_list(vector_list)
+
     for in_vector in vector_list:
-        output.append(_vector_add_shapes(in_vector, shapes=shapes))
+        output.append(_vector_add_shapes_in_place(
+            in_vector,
+            shapes=shapes,
+            prefix=prefix,
+            verbose=verbose,
+        ))
 
     if isinstance(vector, list):
         return output
 
     return output[0]
+
+
+def vector_get_attribute_table(
+    vector,
+    process_layer=-1,
+    include_fids=False,
+    include_geometry=False,
+    include_attributes=True,
+    allow_lists=True,
+):
+    """
+    Get the attribute table(s) of a vector.
+    """
+    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    core_utils.type_check(process_layer, [int], "process_layer")
+    core_utils.type_check(include_fids, [bool], "include_fids")
+    core_utils.type_check(include_geometry, [bool], "include_geometry")
+    core_utils.type_check(include_attributes, [bool], "include_attributes")
+    core_utils.type_check(allow_lists, [bool], "allow_lists")
+
+    ref = open_vector(vector)
+    metadata = _vector_to_metadata(ref)
+
+    attribute_table_header = None
+    feature_count = None
+
+    attribute_table_header = metadata["layers"][process_layer]["field_names"]
+    feature_count = metadata["layers"][process_layer]["feature_count"]
+
+    attribute_table = []
+
+    layer = ref.GetLayer(process_layer)
+
+    for _ in range(feature_count):
+        feature = layer.GetNextFeature()
+        attributes = [feature.GetFID()]
+
+        for field_name in attribute_table_header:
+            attributes.append(feature.GetField(field_name))
+
+        if include_geometry:
+            geom_defn = feature.GetGeometryRef()
+            attributes.append(geom_defn.ExportToIsoWkt())
+
+        attribute_table.append(attributes)
+
+    attribute_table_header.insert(0, "fid")
+
+    if include_geometry:
+        attribute_table_header.append("geom")
+
+    return attribute_table

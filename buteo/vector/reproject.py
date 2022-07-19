@@ -1,27 +1,21 @@
 """
+### Reproject vectors. ###
+
 Functions to reproject vectors. References can be both vector and raster.
-
-TODO:
-    - Improve documentation
-
 """
 
-import sys; sys.path.append("../../") # Path: buteo/vector/reproject.py
+# Standard library
+import sys; sys.path.append("../../")
 import os
 
+# External
 import osgeo
-from osgeo import ogr, osr, gdal
+from osgeo import gdal, osr, ogr
 
-from buteo.vector.core_vector import (
-    open_vector,
-    get_vector_path,
-    _vector_to_memory,
-    _vector_to_metadata,
-    _vector_to_disk,
-    ready_io_vector,
-)
-from buteo.utils.gdal_utils import parse_projection, path_to_driver_vector
-from buteo.utils.core_utils import remove_if_overwrite, type_check
+# Internal
+from buteo.utils import gdal_utils, core_utils
+from buteo.vector import core_vector
+
 
 
 def _reproject_vector(
@@ -32,28 +26,28 @@ def _reproject_vector(
     copy_if_same=False,
     overwrite=True,
     prefix="",
-    postfix="",
+    suffix="",
 ):
-    type_check(vector, [str, ogr.DataSource], "vector")
-    type_check(
-        projection,
-        [str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
-        "projection",
-    )
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(copy_if_same, [bool], "copy_if_same")
-    type_check(overwrite, [bool], "overwrite")
+    """ Internal. """
+    assert isinstance(vector, (ogr.DataSource, str)), "Invalid vector input"
+    assert gdal_utils.is_vector(vector), "Invalid vector input"
 
-    vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
-    origin = open_vector(vector_list[0])
-    metadata = _vector_to_metadata(origin)
-    out_name = path_list[0]
+    origin = core_vector._open_vector(vector)
+    out_name = out_path
+    if out_path is None:
+        out_name = gdal_utils.create_memory_path(
+            gdal_utils.get_path_from_dataset(vector),
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=True,
+        )
 
+    metadata = core_vector._vector_to_metadata(origin)
     namesplit = os.path.splitext(os.path.basename(out_name))
-    out_name = os.path.join(os.path.dirname(out_name), prefix + namesplit[0] + postfix + namesplit[1])
+    out_name = os.path.join(os.path.dirname(out_name), prefix + namesplit[0] + suffix + namesplit[1])
 
     origin_projection = metadata["projection_osr"]
-    target_projection = parse_projection(projection)
+    target_projection = gdal_utils.parse_projection(projection)
 
     if not isinstance(target_projection, osr.SpatialReference):
         raise Exception("Error ")
@@ -61,11 +55,11 @@ def _reproject_vector(
     if origin_projection.IsSame(target_projection):
         if copy_if_same:
             if out_path is None:
-                return _vector_to_memory(origin)
+                return gdal_utils.save_dataset_to_memory(origin)
 
-            return _vector_to_disk(origin, out_name)
+            return gdal_utils.save_dataset_to_disk(origin, out_name)
         else:
-            return get_vector_path(vector)
+            return gdal_utils.get_path_from_dataset(vector)
 
     # GDAL 3 changes axis order: https://github.com/OSGeo/gdal/issues/1546
     if int(osgeo.__version__[0]) >= 3:
@@ -74,9 +68,9 @@ def _reproject_vector(
 
     coord_trans = osr.CoordinateTransformation(origin_projection, target_projection)
 
-    remove_if_overwrite(out_path, overwrite)
+    core_utils.remove_if_required(out_path, overwrite)
 
-    driver = ogr.GetDriverByName(path_to_driver_vector(out_name))
+    driver = ogr.GetDriverByName(gdal_utils.path_to_driver_vector(out_name))
     destination: ogr.DataSource = driver.CreateDataSource(out_name)
 
     for layer_idx in range(len(metadata["layers"])):
@@ -130,9 +124,11 @@ def reproject_vector(
     out_path=None,
     *,
     copy_if_same=False,
-    overwrite=True,
     prefix="",
-    postfix="",
+    suffix="",
+    add_uuid=False,
+    allow_lists=True,
+    overwrite=True,
 ):
     """Reprojects a vector given a target projection.
 
@@ -153,17 +149,32 @@ def reproject_vector(
         An in-memory vector. If an out_path is given, the output is a string containing
         the path to the newly created vecotr.
     """
-    type_check(vector, [str, ogr.DataSource], "vector")
-    type_check(
-        projection,
-        [str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference],
-        "projection",
-    )
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(copy_if_same, [bool], "copy_if_same")
-    type_check(overwrite, [bool], "overwrite")
+    core_utils.type_check(vector, [str, ogr.DataSource], "vector")
+    core_utils.type_check(projection, [str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference], "projection")
+    core_utils.type_check(out_path, [str, [str], None], "out_path")
+    core_utils.type_check(copy_if_same, [bool], "copy_if_same")
+    core_utils.type_check(prefix, [str], "prefix")
+    core_utils.type_check(suffix, [str], "suffix")
+    core_utils.type_check(add_uuid, [bool], "add_uuid")
+    core_utils.type_check(allow_lists, [bool], "allow_lists")
+    core_utils.type_check(overwrite, [bool], "overwrite")
 
-    vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
+    if not allow_lists and isinstance(vector, list):
+        raise ValueError("Lists are not allowed when allow_lists is False.")
+
+    vector_list = core_utils.ensure_list(vector)
+
+    assert gdal_utils.is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
+
+    path_list = core_utils.create_output_paths(
+        vector_list,
+        out_path=out_path,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )
+
+    assert core_utils.is_valid_output_paths(path_list, overwrite=overwrite), "Invalid output path generated."
 
     output = []
     for index, in_vector in enumerate(vector_list):
@@ -175,7 +186,7 @@ def reproject_vector(
                 copy_if_same=copy_if_same,
                 overwrite=overwrite,
                 prefix=prefix,
-                postfix=postfix,
+                suffix=suffix,
             )
         )
 

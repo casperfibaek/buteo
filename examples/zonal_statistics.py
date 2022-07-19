@@ -23,7 +23,7 @@ from buteo.vector.core_vector import (
     _vector_to_memory,
     _vector_to_metadata,
 )
-from buteo.filters.stats import calculate_array_stats
+from buteo.vector.zonal_statistics_stats import calculate_array_stats
 from buteo.utils.core_utils import progress
 
 
@@ -146,8 +146,15 @@ def zonal_statistics(
     output_vector=None,
     in_rasters=[],
     prefixes=[],
-    stats=["mean", "med", "std"],
+    stats=None,
 ):
+    """
+    ZonalStatistics.
+    """
+    default_stats = ["mean", "med", "std"]
+
+    if stats is None:
+        stats = default_stats
 
     if len(prefixes) != 0:
         if len(in_rasters) != len(prefixes):

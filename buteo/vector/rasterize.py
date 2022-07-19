@@ -1,20 +1,23 @@
 """
-Functions to rasterize vectors to rasters
+### Rasterize vectors. ###
+
+Functions to rasterize vectors to rasters.
 
 TODO:
-    - Improve documentation
-    - Add support for projections
-
+    * Add support for projections
 """
 
-import sys; sys.path.append("../../") # Path: buteo/vector/rasterize.py
-from uuid import uuid4
+# Standard library
+import sys; sys.path.append("../../")
 
+# External
 from osgeo import gdal
 
-from buteo.raster.core_raster import open_raster
-from buteo.vector.core_vector import _vector_to_metadata, open_vector
-from buteo.utils.gdal_utils import numpy_to_gdal_datatype2, default_options
+# Internal
+from buteo.utils import gdal_utils, gdal_enums
+from buteo.vector import core_vector
+from buteo.raster import core_raster
+
 
 
 def rasterize_vector(
@@ -33,22 +36,47 @@ def rasterize_vector(
     burn_value=1,
     attribute=None,
 ):
+    """
+    Rasterize a vector to a raster.
+
+    ## Args:
+    `vector` (_str_ || _ogr.DataSource): The vector to rasterize. </br>
+    `pixel_size` (_float_ || _int_): The pixel size of the raster. </br>
+
+    ## Kwargs:
+    `out_path` (_str_ || _None_): Path to output raster. (Default: **None**) </br>
+    `extent` (_list_ || _None_): Extent of raster. (Default: **None**) </br>
+    `all_touch` (_bool_): All touch? (Default: **False**) </br>
+    `dtype` (_str_): Data type of raster. (Default: **"uint8"**) </br>
+    `optim` (_str_): Optimization for raster or vector? (Default: **"raster"**) </br>
+    `band` (_int_): Band to rasterize. (Default: **1**) </br>
+    `fill_value` (_int_ || _float_): Fill value. (Default: **0**) </br>
+    `nodata_value` (_int_ || _float_ || _None_): Nodata value. (Default: **None**) </br>
+    `check_memory` (_bool_): Check memory? (Default: **True**) </br>
+    `burn_value` (_int_ || _float_): Value to burn. (Default: **1**) </br>
+    `attribute` (_str_ || _None_): Attribute to burn. (Default: **None**)
+
+    ## Returns:
+    (_str_): Path to output raster.
+    """
     vector_fn = vector
 
     if out_path is None:
-        raster_fn = f"/vsimem/{str(uuid4())}.tif"
-    else:
-        raster_fn = out_path
+        out_path = gdal_utils.create_memory_path(
+            gdal_utils.get_path_from_dataset(vector),
+            add_uuid=True,
+            suffix="_rasterized",
+        )
 
     # Open the data source and read in the extent
-    source_ds = open_vector(vector_fn)
-    source_meta = _vector_to_metadata(vector_fn)
+    source_ds = core_vector._open_vector(vector_fn)
+    source_meta = core_vector._vector_to_metadata(vector_fn)
     source_layer = source_ds.GetLayer()
     x_min, x_max, y_min, y_max = source_layer.GetExtent()
 
     if isinstance(pixel_size, (gdal.Dataset, str)):
-        pixel_size_x = open_raster(pixel_size).GetGeoTransform()[1]
-        pixel_size_y = abs(open_raster(pixel_size).GetGeoTransform()[5])
+        pixel_size_x = core_raster._open_raster(pixel_size).GetGeoTransform()[1]
+        pixel_size_y = abs(core_raster._open_raster(pixel_size).GetGeoTransform()[5])
     elif isinstance(pixel_size, (int, float)):
         pixel_size_x = pixel_size
         pixel_size_y = pixel_size
@@ -62,7 +90,7 @@ def rasterize_vector(
     y_res = int((y_max - y_min) / pixel_size_y)
 
     if extent is not None:
-        extent_vector = _vector_to_metadata(extent)
+        extent_vector = core_vector._vector_to_metadata(extent)
         extent_dict = extent_vector["extent_dict"]
         x_res = int((extent_dict["right"] - extent_dict["left"]) / pixel_size_x)
         y_res = int((extent_dict["top"] - extent_dict["bottom"]) / pixel_size_y)
@@ -74,11 +102,11 @@ def rasterize_vector(
 
     try:
         target_ds = gdal.GetDriverByName("GTiff").Create(
-            raster_fn,
+            out_path,
             x_res,
             y_res,
             1,
-            numpy_to_gdal_datatype2(dtype),
+            gdal_enums.translate_str_to_gdal_dtype(dtype),
         )
     finally:
         gdal.SetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")
@@ -120,7 +148,7 @@ def rasterize_vector(
     else:
         options.append(f"ATTRIBUTE={attribute}")
         gdal.RasterizeLayer(
-            target_ds, [1], source_layer, options=default_options(options)
+            target_ds, [1], source_layer, options=gdal_utils.default_creation_options(options)
         )
 
-    return raster_fn
+    return out_path

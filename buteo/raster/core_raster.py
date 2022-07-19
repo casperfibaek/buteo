@@ -31,15 +31,15 @@ def _open_raster(raster, *, writeable=True):
     if gdal_utils.is_in_memory(raster) or core_utils.file_exists(raster):
 
         gdal.PushErrorHandler("CPLQuietErrorHandler")
-        opened = gdal.Open(raster, 1) if writeable else gdal.Open(raster, 0)
+        opened = gdal.Open(raster, gdal.GF_Write) if writeable else gdal.Open(raster, gdal.GF_Read)
         gdal.PopErrorHandler()
 
         if not isinstance(opened, gdal.Dataset):
             raise ValueError(f"Input raster is not readable. Received: {raster}")
 
         return opened
-    else:
-        raise ValueError(f"Input raster does not exists. Received: {raster}")
+
+    raise ValueError(f"Input raster does not exists. Received: {raster}")
 
 
 def open_raster(raster, *, writeable=True, allow_lists=True):
@@ -61,6 +61,7 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(writeable, [bool], "writeable")
+    core_utils.type_check(allow_lists, [bool], "allow_lists")
 
     if not allow_lists and isinstance(raster, list):
         raise ValueError("Input raster must be a single raster.")
@@ -84,7 +85,7 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
 
 
 def _raster_to_metadata(raster):
-    """ **INTERNAL**. """
+    """ Internal. """
     assert isinstance(raster, (str, gdal.Dataset))
 
     dataset = open_raster(raster)
@@ -170,7 +171,6 @@ def _raster_to_metadata(raster):
 
     for key, value in bboxes.items():
         metadata[key] = value
-
 
     def get_bbox_as_vector():
         return bbox_utils.convert_bbox_to_vector(bbox_ogr, projection_osr)

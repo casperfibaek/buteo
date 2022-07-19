@@ -1,23 +1,19 @@
 """
-Convert geometries from multiparts and singleparts
+### Convert geometry composition. ###
 
-TODO:
-    - Improve documentation
-    - Remove internal step
+Convert geometries from multiparts and singleparts and vice versa.
 """
 
-import sys; sys.path.append("../../") # Path: buteo/vector/convert_parts.py
+# Standard library
+import sys; sys.path.append("../../")
 
+# External
 from osgeo import ogr
 
-from buteo.utils.gdal_utils import path_to_driver_vector
-from buteo.utils.core_utils import overwrite_required, progress, remove_if_overwrite, type_check
-from buteo.vector.core_vector import (
-    _vector_to_metadata,
-    ready_io_vector,
-    vector_add_index,
-    open_vector,
-)
+# Internal
+from buteo.utils import core_utils, gdal_utils
+from buteo.vector import core_vector
+
 
 
 def _singlepart_to_multipart(
@@ -28,25 +24,24 @@ def _singlepart_to_multipart(
     add_index=True,
     process_layer=-1,
 ):
-    type_check(vector, [str, ogr.DataSource], "vector")
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(overwrite, [bool], "overwrite")
-    type_check(add_index, [bool], "add_index")
-    type_check(process_layer, [int], "process_layer")
+    """ Internal. """
+    assert isinstance(vector, (ogr.DataSource, str)), "Invalid input vector"
+    assert gdal_utils.is_vector(vector), "Invalid input vector"
 
-    vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
-    ref = open_vector(vector_list[0])
-    out_name = path_list[0]
+    if out_path is None:
+        out_path = gdal_utils.create_memory_path(gdal_utils.get_path_from_dataset(vector), add_uuid=True)
 
-    out_format = path_to_driver_vector(out_name)
+    assert core_utils.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path"
+
+    ref = core_vector._open_vector(vector)
+
+    out_format = gdal_utils.get_path_from_dataset(out_path, dataset_type="vector")
     driver = ogr.GetDriverByName(out_format)
-    overwrite_required(out_name, overwrite)
 
-    metadata = _vector_to_metadata(ref)
+    core_utils.remove_if_required(out_path, overwrite)
 
-    remove_if_overwrite(out_name, overwrite)
-
-    destination: ogr.DataSource = driver.CreateDataSource(out_name)
+    metadata = core_vector._vector_to_metadata(ref)
+    destination = driver.CreateDataSource(out_path)
 
     for index, layer_meta in enumerate(metadata["layers"]):
         if process_layer != -1 and index != process_layer:
@@ -61,11 +56,11 @@ def _singlepart_to_multipart(
         destination.CopyLayer(result, name, ["OVERWRITE=YES"])
 
     if add_index:
-        vector_add_index(destination)
+        core_vector.vector_add_index(destination)
 
     destination.FlushCache()
 
-    return out_name
+    return out_path
 
 
 def _multipart_to_singlepart(
@@ -76,27 +71,29 @@ def _multipart_to_singlepart(
     overwrite=True,
     add_index=True,
     process_layer=-1,
-    verbose=1,
+    verbose=False,
 ):
-    type_check(vector, [str, ogr.DataSource], "vector")
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(overwrite, [bool], "overwrite")
-    type_check(add_index, [bool], "add_index")
-    type_check(process_layer, [int], "process_layer")
-    type_check(verbose, [int], "verbose")
+    """ Internal. """
+    assert isinstance(vector, (ogr.DataSource, str)), "Invalid input vector"
+    assert gdal_utils.is_vector(vector), "Invalid input vector"
 
-    vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
+    if out_path is None:
+        out_path = gdal_utils.create_memory_path(gdal_utils.get_path_from_dataset(vector), add_uuid=True)
 
-    ref = open_vector(vector_list[0])
-    out_name = path_list[0]
+    assert core_utils.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path"
 
-    driver = ogr.GetDriverByName(path_to_driver_vector(out_name))
+    ref = core_vector._open_vector(vector)
 
-    metadata = _vector_to_metadata(ref)
+    out_format = gdal_utils.get_path_from_dataset(out_path, dataset_type="vector")
+    driver = ogr.GetDriverByName(out_format)
 
-    remove_if_overwrite(out_name, overwrite)
+    core_utils.remove_if_required(out_path, overwrite)
 
-    destination = driver.CreateDataSource(out_name)
+    metadata = core_vector._vector_to_metadata(ref)
+
+    core_utils.remove_if_required(out_path, overwrite)
+
+    destination = driver.CreateDataSource(out_path)
 
     for index, layer_meta in enumerate(metadata["layers"]):
         if process_layer != -1 and index != process_layer:
@@ -198,29 +195,70 @@ def _multipart_to_singlepart(
 
                 destination_layer.CreateFeature(out_feat)
 
-            if verbose == 1:
-                progress(_, feature_count - 1, "Splitting.")
+            if verbose:
+                core_utils.progress(_, feature_count - 1, "Splitting.")
 
     if add_index:
-        vector_add_index(destination)
+        core_vector.vector_add_index(destination)
 
-    return out_name
+    return out_path
 
 
 def singlepart_to_multipart(
     vector,
     out_path=None,
-    overwrite=True,
     add_index=True,
     process_layer=-1,
+    prefix="",
+    suffix="",
+    add_uuid=False,
+    overwrite=True,
+    allow_lists=True,
 ):
-    type_check(vector, [list, str, ogr.DataSource], "vector")
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(overwrite, [bool], "overwrite")
-    type_check(add_index, [bool], "add_index")
-    type_check(process_layer, [int], "process_layer")
+    """
+    Converts a singlepart vector to multipart.
 
-    vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
+    ## Args:
+    `vector` (_str_ || _ogr.DataSource_ || _list_): The vector(s) to convert. </br>
+
+    ## Kvargs:
+    `out_path` (_str_ || _None_): The path(s) to the output vector. If None a memory output is produced. (Default: **None**) </br>
+    `add_index` (_bool_): Add an geospatial index to the output vector. (Default: **True**) </br>
+    `process_layer` (_int_): The layer index to process. (Default: **-1**) </br>
+    `prefix` (_str_): The prefix to add to the layer name. (Default: **""**) </br>
+    `suffix` (_str_): The suffix to add to the layer name. (Default: **""**) </br>
+    `add_uuid` (_bool_): Add a UUID field to the output vector. (Default: **False**) </br>
+    `overwrite` (_bool_): Overwrite the output vector if it already exists. (Default: **True**) </br>
+    `allow_lists` (_bool_): Allow the input to be a list of vectors. (Default: **True**) </br>
+
+    ## Returns:
+    (_str_ || _list_): The path(s) to the output vector.
+    """
+    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    core_utils.type_check(out_path, [str, [str], None], "out_path")
+    core_utils.type_check(overwrite, [bool], "overwrite")
+    core_utils.type_check(add_index, [bool], "add_index")
+    core_utils.type_check(process_layer, [int], "process_layer")
+    core_utils.type_check(prefix, [str], "prefix")
+    core_utils.type_check(suffix, [str], "suffix")
+    core_utils.type_check(add_uuid, [bool], "add_uuid")
+    core_utils.type_check(allow_lists, [bool], "allow_lists")
+
+    if not allow_lists and isinstance(vector, list):
+        raise ValueError("Vector cannot be a list when allow_lists is False.")
+
+    vector_list = core_utils.ensure_list(vector)
+
+    assert gdal_utils.is_vector_list(vector_list), f"Vector is not a list of vectors. {vector_list}"
+
+    path_list = core_utils.create_output_paths(
+        vector_list,
+        out_path=out_path,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        overwrite=overwrite,
+    )
 
     output = []
     for index, in_vector in enumerate(vector_list):
@@ -244,21 +282,60 @@ def multipart_to_singlepart(
     vector,
     out_path=None,
     *,
-    copy_attributes=False,
     overwrite=True,
     add_index=True,
     process_layer=-1,
-    verbose=1,
+    verbose=False,
+    prefix="",
+    suffix="",
+    add_uuid=False,
+    allow_lists=True,
 ):
-    type_check(vector, [ogr.DataSource, str, list], "vector")
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(copy_attributes, [bool], "copy_attributes")
-    type_check(overwrite, [bool], "overwrite")
-    type_check(add_index, [bool], "add_index")
-    type_check(process_layer, [int], "process_layer")
-    type_check(verbose, [int], "verbose")
+    """
+    Converts a multipart vector to singlepart.
 
-    vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
+    ## Args:
+    `vector` (_str_ || _ogr.DataSource_ || _list_): The vector(s) to convert. </br>
+
+    ## Kvargs:
+    `out_path` (_str_ || _None_): The path(s) to the output vector. If None a memory output is produced. (Default: **None**) </br>
+    `overwrite` (_bool_): Overwrite the output vector if it already exists. (Default: **True**) </br>
+    `add_index` (_bool_): Add an geospatial index to the output vector. (Default: **True**) </br>
+    `process_layer` (_int_): The layer index to process. (Default: **-1**) </br>
+    `verbose` (_bool_): Print progress. (Default: **False**) </br>
+    `prefix` (_str_): The prefix to add to the layer name. (Default: **""**) </br>
+    `suffix` (_str_): The suffix to add to the layer name. (Default: **""**) </br>
+    `add_uuid` (_bool_): Add a UUID field to the output vector. (Default: **False**) </br>
+    `allow_lists` (_bool_): Allow the input to be a list of vectors. (Default: **True**) </br>
+
+    ## Returns:
+    (_str_ || _list_): The path(s) to the output vector.
+    """
+    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    core_utils.type_check(out_path, [str, [str], None], "out_path")
+    core_utils.type_check(overwrite, [bool], "overwrite")
+    core_utils.type_check(add_index, [bool], "add_index")
+    core_utils.type_check(process_layer, [int], "process_layer")
+    core_utils.type_check(prefix, [str], "prefix")
+    core_utils.type_check(suffix, [str], "suffix")
+    core_utils.type_check(add_uuid, [bool], "add_uuid")
+    core_utils.type_check(allow_lists, [bool], "allow_lists")
+
+    if not allow_lists and isinstance(vector, list):
+        raise ValueError("Vector cannot be a list when allow_lists is False.")
+
+    vector_list = core_utils.ensure_list(vector)
+
+    assert gdal_utils.is_vector_list(vector_list), f"Vector is not a list of vectors. {vector_list}"
+
+    path_list = core_utils.create_output_paths(
+        vector_list,
+        out_path=out_path,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        overwrite=overwrite,
+    )
 
     output = []
     for index, in_vector in enumerate(vector_list):
@@ -266,7 +343,6 @@ def multipart_to_singlepart(
             _multipart_to_singlepart(
                 in_vector,
                 out_path=path_list[index],
-                copy_attributes=copy_attributes,
                 overwrite=overwrite,
                 add_index=add_index,
                 process_layer=process_layer,

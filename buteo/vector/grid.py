@@ -6,4 +6,5 @@ TODO:
 """
 
 def create_grid():
+    """ Not implemented."""
     raise Exception("Not implemented")

@@ -1,23 +1,19 @@
 """
-Dissolve vectors by attributes or geometry.
+### Dissolve vector geometries. ###
 
-TODO:
-    - Improve documentation
-    - Remove internal step
+Dissolve vectors by attributes or geometry.
 """
 
-import sys; sys.path.append("../../") # Path: buteo/vector/dissolve.py
+# Standard library
+import sys; sys.path.append("../../")
 
+# External
 from osgeo import ogr
 
-from buteo.utils.gdal_utils import path_to_driver_vector
-from buteo.utils.core_utils import type_check
-from buteo.vector.core_vector import (
-    open_vector,
-    ready_io_vector,
-    _vector_to_metadata,
-    vector_add_index,
-)
+# Internal
+from buteo.utils import core_utils, gdal_utils
+from buteo.vector import core_vector
+
 
 
 def _dissolve_vector(
@@ -29,22 +25,27 @@ def _dissolve_vector(
     add_index=True,
     process_layer=-1,
 ):
-    """Clips a vector to a geometry."""
-    type_check(vector, [str, ogr.DataSource], "vector")
-    type_check(attribute, [str], "attribute", allow_none=True)
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(overwrite, [bool], "overwrite")
-    type_check(add_index, [bool], "add_index")
-    type_check(process_layer, [int], "process_layer")
+    """ Internal. """
+    assert isinstance(vector, ogr.DataSource), "Invalid input vector"
 
-    vector_list, path_list = ready_io_vector(vector, out_path)
-    out_name = path_list[0]
-    out_format = path_to_driver_vector(out_name)
+    vector_list = core_utils.ensure_list(vector)
+
+    if out_path is None:
+        out_path = gdal_utils.create_memory_path(
+            gdal_utils.get_path_from_dataset(vector),
+            prefix="",
+            suffix="_dissolve",
+            add_uuid=True,
+        )
+
+    assert core_utils.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path"
+
+    out_format = gdal_utils.path_to_driver_vector(out_path)
 
     driver = ogr.GetDriverByName(out_format)
 
-    ref = open_vector(vector_list[0])
-    metadata = _vector_to_metadata(ref)
+    ref = core_vector._open_vector(vector_list[0])
+    metadata = core_vector._vector_to_metadata(ref)
 
     layers = []
 
@@ -66,7 +67,9 @@ def _dissolve_vector(
             }
         )
 
-    destination: ogr.DataSource = driver.CreateDataSource(out_name)
+    core_utils.remove_if_required(out_path, overwrite=overwrite)
+
+    destination = driver.CreateDataSource(out_path)
 
     # Check if attribute table is valid
     for index in range(len(metadata["layers"])):
@@ -90,11 +93,11 @@ def _dissolve_vector(
         destination.CopyLayer(result, name, ["OVERWRITE=YES"])
 
     if add_index:
-        vector_add_index(destination)
+        core_vector.vector_add_index(destination)
 
     destination.FlushCache()
 
-    return out_name
+    return out_path
 
 
 def dissolve_vector(
@@ -102,9 +105,13 @@ def dissolve_vector(
     attribute=None,
     out_path=None,
     *,
-    overwrite=True,
     add_index=True,
     process_layer=-1,
+    prefix="",
+    suffix="",
+    add_uuid=False,
+    overwrite=True,
+    allow_lists=True,
 ):
     """Clips a vector to a geometry.
     Args:
@@ -119,17 +126,36 @@ def dissolve_vector(
     Returns:
         A clipped ogr.Datasource or the path to one.
     """
-    type_check(vector, [ogr.DataSource, str, list], "vector")
-    type_check(attribute, [str], "attribute", allow_none=True)
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(overwrite, [bool], "overwrite")
-    type_check(add_index, [bool], "add_index")
-    type_check(process_layer, [int], "process_layer")
+    core_utils.type_check(vector, [ogr.DataSource, str, [str, ogr.DataSource]], "vector")
+    core_utils.type_check(attribute, [str, None], "attribute")
+    core_utils.type_check(out_path, [str, [str], None], "out_path")
+    core_utils.type_check(add_index, [bool], "add_index")
+    core_utils.type_check(process_layer, [int], "process_layer")
+    core_utils.type_check(prefix, [str], "prefix")
+    core_utils.type_check(suffix, [str], "suffix")
+    core_utils.type_check(add_uuid, [bool], "add_uuid")
+    core_utils.type_check(overwrite, [bool], "overwrite")
+    core_utils.type_check(allow_lists, [bool], "allow_lists")
 
-    raster_list, path_list = ready_io_vector(vector, out_path)
+    if not allow_lists and isinstance(vector, list):
+        raise ValueError("Lists are not allowed when allow_lists is False.")
+
+    vector_list = core_utils.ensure_list(vector)
+
+    assert gdal_utils.is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
+
+    path_list = core_utils.create_output_paths(
+        vector_list,
+        out_path=out_path,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )
+
+    assert core_utils.is_valid_output_paths(path_list, overwrite=overwrite), "Invalid output path generated."
 
     output = []
-    for index, in_vector in enumerate(raster_list):
+    for index, in_vector in enumerate(vector_list):
         output.append(
             _dissolve_vector(
                 in_vector,

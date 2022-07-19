@@ -1,26 +1,24 @@
 """
-Calculate intersections
+### Calculate intersections ###
+
+Calculate and tests the intersections between geometries.
 
 TODO:
-    - Improve documentation
-    - Remove internal step
-    - Add checks: Do geometries intersect?
+    * Add boolean checks for intersections.
 """
 
-import sys; sys.path.append("../../") # Path: buteo/vector/intersect.py
+# Standard library
+import sys; sys.path.append("../../")
 
+# External
 from osgeo import ogr, gdal
 
-from buteo.utils.core_utils import type_check
-from buteo.utils.gdal_utils import path_to_driver_vector
-from buteo.vector.core_vector import (
-    open_vector,
-    ready_io_vector,
-    _vector_to_metadata,
-    vector_add_index,
-)
+# Internal
+from buteo.utils import core_utils, gdal_utils
+from buteo.vector import core_vector
 from buteo.vector.reproject import _reproject_vector
 from buteo.vector.merge import merge_vectors
+
 
 
 def _intersect_vector(
@@ -28,45 +26,37 @@ def _intersect_vector(
     clip_geom,
     out_path=None,
     *,
-    to_extent=False,
     process_layer=0,
     process_layer_clip=0,
     add_index=True,
-    preserve_fid=True,
     overwrite=True,
     return_bool=False,
 ):
-    """Clips a vector to a geometry.
+    """ Internal. """
+    assert isinstance(vector, ogr.DataSource), f"Invalid input vector: {vector}"
+    assert gdal_utils.is_vector(vector), f"Invalid input vector: {vector}"
 
-    Returns:
-        A clipped ogr.Datasource or the path to one.
-    """
-    type_check(vector, [ogr.DataSource, str, list], "vector")
-    type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(to_extent, [bool], "to_extent")
-    type_check(process_layer, [int], "process_layer")
-    type_check(process_layer_clip, [int], "process_layer_clip")
-    type_check(add_index, [bool], "add_index")
-    type_check(preserve_fid, [bool], "preserve_fid")
-    type_check(overwrite, [bool], "overwrite")
+    if out_path is None:
+        out_path = gdal_utils.create_memory_path(
+            gdal_utils.get_path_from_dataset(vector),
+            add_uuid=True,
+        )
 
-    _vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
-    out_name = path_list[0]
+    assert core_utils.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path."
 
     match_projection = _reproject_vector(clip_geom, vector)
-    geometry_to_clip = open_vector(match_projection)
+    geometry_to_clip = core_vector._open_vector(match_projection)
 
-    merged = open_vector(merge_vectors([vector, match_projection]))
+    merged = core_vector._open_vector(merge_vectors([vector, match_projection]))
 
     if add_index:
-        vector_add_index(merged)
+        core_vector.vector_add_index(merged)
 
-    vector_metadata = _vector_to_metadata(vector)
+    vector_metadata = core_vector._vector_to_metadata(vector)
     vector_layername = vector_metadata["layers"][process_layer]["layer_name"]
     vector_geom_col = vector_metadata["layers"][process_layer]["column_geom"]
 
-    clip_geom_metadata = _vector_to_metadata(geometry_to_clip)
+    clip_geom_metadata = core_vector._vector_to_metadata(geometry_to_clip)
     clip_geom_layername = clip_geom_metadata["layers"][process_layer_clip]["layer_name"]
     clip_geom_col = clip_geom_metadata["layers"][process_layer_clip]["column_geom"]
 
@@ -83,8 +73,8 @@ def _intersect_vector(
         else:
             return True
 
-    driver = ogr.GetDriverByName(path_to_driver_vector(out_name))
-    destination: ogr.DataSource = driver.CreateDataSource(out_name)
+    driver = ogr.GetDriverByName(gdal_utils.path_to_driver_vector(out_path))
+    destination: ogr.DataSource = driver.CreateDataSource(out_path)
     destination.CopyLayer(result, vector_layername, ["OVERWRITE=YES"])
 
     if destination is None:
@@ -92,7 +82,7 @@ def _intersect_vector(
 
     destination.FlushCache()
 
-    return out_name
+    return out_path
 
 
 def intersect_vector(
@@ -100,25 +90,64 @@ def intersect_vector(
     clip_geom,
     out_path=None,
     *,
-    to_extent=False,
     process_layer=0,
     process_layer_clip=0,
     add_index=True,
-    preserve_fid=True,
     overwrite=True,
+    prefix="",
+    suffix="",
+    add_uuid=False,
+    allow_lists=True,
 ):
-    """Clips a vector to a geometry."""
-    type_check(vector, [ogr.DataSource, str, list], "vector")
-    type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(to_extent, [bool], "to_extent")
-    type_check(process_layer, [int], "process_layer")
-    type_check(process_layer_clip, [int], "process_layer_clip")
-    type_check(add_index, [bool], "add_index")
-    type_check(preserve_fid, [bool], "preserve_fid")
-    type_check(overwrite, [bool], "overwrite")
+    """
+    Clips a vector to a geometry.
 
-    vector_list, path_list = ready_io_vector(vector, out_path, overwrite=overwrite)
+    ## Args:
+    `vector` (_str_ || _ogr.DataSource_ || _list_): The vector(s) to intersect. </br>
+    `clip_geom` (_str_ || _ogr.Geometry_): The geometry to intersect the vector(s) with. </br>
+
+    ## Kwargs:
+    `out_path` (_str_ || _list_ || _None_): The path(s) to save the clipped vector(s) to. (Default: **None**) </br>
+    `process_layer` (_int_): The layer to process in the vector(s). (Default: **0**) </br>
+    `process_layer_clip` (_int_): The layer to process in the clip geometry. (Default: **0**) </br>
+    `add_index` (_bool_): Add a geospatial index to the vector(s). (Default: **True**) </br>
+    `overwrite` (_bool_): Overwrite the output vector(s) if they already exist. (Default: **True**) </br>
+    `prefix` (_str_): A prefix to add to the output vector(s). (Default: **""**) </br>
+    `suffix` (_str_): A suffix to add to the output vector(s). (Default: **""**) </br>
+    `add_uuid` (_bool_): Add a UUID to the output vector(s). (Default: **False**) </br>
+    `allow_lists` (_bool_): Allow the input to be a list of vectors. (Default: **True**) </br>
+
+    ## Returns:
+    (_str_ || _list_): The path(s) to the clipped vector(s).
+    """
+    core_utils.type_check(vector, [ogr.DataSource, str, list], "vector")
+    core_utils.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
+    core_utils.type_check(out_path, [str], "out_path", allow_none=True)
+    core_utils.type_check(process_layer, [int], "process_layer")
+    core_utils.type_check(process_layer_clip, [int], "process_layer_clip")
+    core_utils.type_check(add_index, [bool], "add_index")
+    core_utils.type_check(overwrite, [bool], "overwrite")
+    core_utils.type_check(prefix, [str], "prefix")
+    core_utils.type_check(suffix, [str], "suffix")
+    core_utils.type_check(add_uuid, [bool], "add_uuid")
+    core_utils.type_check(allow_lists, [bool], "allow_lists")
+
+    if not allow_lists and isinstance(vector, list):
+        raise ValueError("Lists are not allowed when allow_lists is False.")
+
+    vector_list = core_utils.ensure_list(vector)
+
+    assert gdal_utils.is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
+
+    path_list = core_utils.create_output_paths(
+        vector_list,
+        out_path=out_path,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )
+
+    assert core_utils.is_valid_output_paths(path_list, overwrite=overwrite), "Invalid output path generated."
 
     output = []
     for index, in_vector in enumerate(vector_list):
@@ -127,12 +156,11 @@ def intersect_vector(
                 in_vector,
                 clip_geom,
                 out_path=path_list[index],
-                to_extent=to_extent,
                 process_layer=process_layer,
                 process_layer_clip=process_layer_clip,
                 add_index=add_index,
-                preserve_fid=preserve_fid,
                 overwrite=overwrite,
+                return_bool=False,
             )
         )
 

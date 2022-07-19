@@ -1,19 +1,22 @@
 """
+### Merge vectors. ###
+
 Merges vectors into a single vector file.
 
 TODO:
-    - Improve documentation
-
+    * Add things like .vrt files. (already in core_vector...)
 """
 
-import sys; sys.path.append("../../") # Path: buteo/vector/merge.py
-from uuid import uuid4
+# Standard library
+import sys; sys.path.append("../../")
 
+# External
 from osgeo import ogr
 
-from buteo.utils.gdal_utils import path_to_driver_vector
-from buteo.utils.core_utils import path_to_ext, type_check
-from buteo.vector.core_vector import open_vector, to_vector_list, _vector_to_metadata
+# Internal
+from buteo.utils import core_utils, gdal_utils
+from buteo.vector import core_vector
+
 
 
 def merge_vectors(
@@ -22,29 +25,42 @@ def merge_vectors(
     *,
     preserve_fid=True,
 ):
-    """Merge vectors to a single geopackage."""
-    type_check(vectors, [list], "vector")
-    type_check(out_path, [str], "out_path", allow_none=True)
-    type_check(preserve_fid, [bool], "preserve_fid")
+    """
+    Merge vectors to a single geopackage.
 
-    vector_list = to_vector_list(vectors)
+    ## Args:
+    `vectors` (_list_): List of vectors to merge.
 
-    out_driver = "GPKG"
-    out_format = ".gpkg"
-    out_target = f"/vsimem/clipped_{uuid4().int}{out_format}"
+    ## Kwargs:
+    `out_path` (_str_): Path to output vector. (Default: **None**) </br>
+    `preserve_fid` (_bool_): Preserve FIDs? (Default: **True**)
 
-    if out_path is not None:
-        out_target = out_path
-        out_driver = path_to_driver_vector(out_path)
-        out_format = path_to_ext(out_path)
+    ## Returns:
+    (_str_): Path to output vector.
+    """
+    core_utils.type_check(vectors, [[str, ogr.DataSource]], "vector")
+    core_utils.type_check(out_path, [str, [str], None], "out_path")
+    core_utils.type_check(preserve_fid, [bool], "preserve_fid")
 
-    driver = ogr.GetDriverByName(out_driver)
+    vector_list = core_utils.ensure_list(vectors)
 
-    merged_ds = driver.CreateDataSource(out_target)
+    assert gdal_utils.is_vector_list(vector_list), "Invalid input vector list"
+
+    if out_path is None:
+        out_path = gdal_utils.create_memory_path(
+            gdal_utils.get_path_from_dataset(vector_list[0]),
+            prefix="",
+            suffix="_merged",
+            add_uuid=True,
+        )
+
+    driver = ogr.GetDriverByName(gdal_utils.path_to_driver_vector(out_path))
+
+    merged_ds = driver.CreateDataSource(out_path)
 
     for vector in vector_list:
-        ref = open_vector(vector)
-        metadata = _vector_to_metadata(ref)
+        ref = core_vector._open_vector(vector)
+        metadata = core_vector._vector_to_metadata(ref)
 
         for layer in metadata["layers"]:
             name = layer["layer_name"]
@@ -52,4 +68,4 @@ def merge_vectors(
 
     merged_ds.FlushCache()
 
-    return out_target
+    return out_path
