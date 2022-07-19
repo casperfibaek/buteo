@@ -125,7 +125,7 @@ def raster_set_nodata(
     core_utils.type_check(creation_options, [[str], None], "creation_options")
 
     raster_list = core_utils.ensure_list(raster)
-    path_list = core_utils.generate_output_paths(
+    path_list = core_utils.create_output_paths(
         raster_list,
         out_path,
         prefix=prefix,
@@ -319,7 +319,7 @@ def raster_mask_values(
                 raise ValueError("If dst_nodata is a string it must be 'infer'")
 
     raster_list = core_utils.ensure_list(raster)
-    out_paths = core_utils.generate_output_paths(
+    out_paths = core_utils.create_output_paths(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,

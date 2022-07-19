@@ -755,9 +755,6 @@ def parse_raster_size(target, *, target_in_pixels=False):
     x_pixels = None
     y_pixels = None
 
-    if target is None:
-        return x_res, y_res, x_pixels, y_pixels
-
     if isinstance(target, (gdal.Dataset, str)):
         reference = (
             target
@@ -964,7 +961,7 @@ def save_dataset_to_disk(
     """
     datasets = core_utils.ensure_list(dataset)
     datasets_paths = get_path_from_dataset_list(datasets, allow_mixed=True)
-    out_paths = core_utils.generate_output_paths(datasets_paths, out_path, prefix=prefix, suffix=suffix, add_uuid=add_uuid)
+    out_paths = core_utils.create_output_paths(datasets_paths, out_path, prefix=prefix, suffix=suffix, add_uuid=add_uuid)
 
     options = None
 

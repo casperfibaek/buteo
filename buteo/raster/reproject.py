@@ -33,7 +33,7 @@ def _reproject_raster(
 ):
     """ Internal. """
     raster_list = core_utils.ensure_list(raster)
-    path_list = core_utils.generate_output_paths(
+    path_list = core_utils.create_output_paths(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,
@@ -130,7 +130,7 @@ def reproject_raster(
     `add_uuid` (_bool_): If True, add a UUID to the output path. (Default: **False**) </br>
 
     ## Returns:
-    (_str_ || _list_) The output path(s) of the reprojected raster(s).
+    (_str_ || _list_): The output path(s) of the reprojected raster(s).
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
@@ -144,7 +144,7 @@ def reproject_raster(
     core_utils.type_check(add_uuid, [bool], "add_uuid")
 
     raster_list = core_utils.ensure_list(raster)
-    path_list = core_utils.generate_output_paths(
+    path_list = core_utils.create_output_paths(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,

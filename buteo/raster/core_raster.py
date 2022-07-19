@@ -581,7 +581,7 @@ def raster_set_datatype(
     add_uuid = out_path is None
 
     raster_list = core_utils.ensure_list(raster)
-    path_list = core_utils.generate_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = core_utils.create_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
 
     output = []
     for index, in_raster in enumerate(raster_list):

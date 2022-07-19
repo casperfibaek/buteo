@@ -783,7 +783,7 @@ def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, availa
     return int(dyn_limit)
 
 
-def generate_output_paths(
+def create_output_paths(
     dataset_path,
     out_path=None,
     *,

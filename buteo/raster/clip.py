@@ -44,7 +44,7 @@ def _clip_raster(
     ram="auto",
 ):
     """ INTERNAL. """
-    path_list = core_utils.generate_output_paths(
+    path_list = core_utils.create_output_paths(
         raster,
         out_path=out_path,
         prefix=prefix,
@@ -284,7 +284,7 @@ def clip_raster(
     core_utils.type_check(add_uuid, [bool], "uuid")
 
     raster_list = core_utils.ensure_list(raster)
-    path_list = core_utils.generate_output_paths(
+    path_list = core_utils.create_output_paths(
         raster_list,
         out_path=out_path,
         prefix=prefix,

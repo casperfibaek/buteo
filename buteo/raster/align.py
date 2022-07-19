@@ -64,7 +64,7 @@ def match_raster_projections(
 
     add_uuid = out_path is None
 
-    path_list = core_utils.generate_output_paths(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = core_utils.create_output_paths(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid)
 
     output = []
 
@@ -149,7 +149,7 @@ def align_rasters(
     add_uuid = out_path is None
 
     raster_list = core_utils.ensure_list(rasters)
-    path_list = core_utils.generate_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = core_utils.create_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
 
     x_pixels = None
     y_pixels = None

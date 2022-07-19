@@ -1,88 +1,59 @@
 """
-Module to shift a raster
+### Shift rasters. ###
 
-TODO:
-    - Remove typings
-    - Improve documentations
+Module to shift the location of rasters in geographic coordinates.
 """
 
-import sys; sys.path.append("../../") # Path: buteo/raster/shift.py
-from uuid import uuid4
+# Standard library
+import sys; sys.path.append("../../")
 
+# External
 from osgeo import gdal
 
-from buteo.utils.core_utils import remove_if_overwrite, is_number, type_check
-from buteo.utils.gdal_utils import path_to_driver_raster, default_options
-from buteo.raster.core_raster import open_raster, raster_to_metadata
+# Internal
+from buteo.utils import core_utils, gdal_utils
+from buteo.raster import core_raster
 
 
-def shift_raster(
+
+def _shift_raster(
     raster,
-    shift,
+    shift_list,
     out_path=None,
     *,
     overwrite=True,
-    creation_options=[],
+    creation_options=None,
 ):
-    """Shifts a raster in a given direction.
+    """ Internal. """
+    assert isinstance(shift_list, (list, tuple)), f"shift_list must be a list or a tuple. {shift_list}"
+    assert len(shift_list) == 2, f"shift_list must be a list or tuple with len 2 (x_shift, y_shift): {shift_list}"
 
-    Returns:
-        A raster. If an out_path is given the output is a string containing
-        the path to the newly created raster.
-    """
-    type_check(raster, [list, str, gdal.Dataset], "raster")
-    type_check(shift, [tuple, list], "shift")
-    type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list], "creation_options")
+    for shift in shift_list:
+        assert isinstance(shift, (int, float)), f"shift must be an int or a float: {shift}"
 
-    ref = open_raster(raster)
-    metadata = raster_to_metadata(ref)
+    ref = core_raster._open_raster(raster)
+    metadata = core_raster._raster_to_metadata(ref)
 
-    x_shift = 0.0
-    y_shift = 0.0
-    if isinstance(shift, tuple) or isinstance(shift, list):
-        if len(shift) == 1:
-            if is_number(shift[0]):
-                x_shift = float(shift[0])
-                y_shift = float(shift[0])
-            else:
-                raise ValueError("shift is not a number or a list/tuple of numbers.")
-        elif len(shift) == 2:
-            if is_number(shift[0]) and is_number(shift[1]):
-                x_shift = float(shift[0])
-                y_shift = float(shift[1])
-        else:
-            raise ValueError("shift is either empty or larger than 2.")
-    elif is_number(shift):
-        x_shift = float(shift)
-        y_shift = float(shift)
-    else:
-        raise ValueError("shift is invalid.")
+    x_shift, y_shift = shift_list
 
-    out_name = None
-    out_format = None
-    out_creation_options = []
     if out_path is None:
         raster_name = metadata["basename"]
-        out_name = f"/vsimem/{raster_name}_{uuid4().int}_resampled.tif"
-        out_format = "GTiff"
+        out_path = gdal_utils.create_memory_path(raster_name, add_uuid=True)
     else:
-        out_creation_options = default_options(creation_options)
-        out_name = out_path
-        out_format = path_to_driver_raster(out_path)
+        if not core_utils.is_valid_output_path(out_path, overwrite=overwrite):
+            raise ValueError(f"out_path is not a valid output path: {out_path}")
 
-    remove_if_overwrite(out_path, overwrite)
+    core_utils.remove_if_required(out_path, overwrite)
 
-    driver = gdal.GetDriverByName(out_format)
+    driver = gdal.GetDriverByName(gdal_utils.path_to_driver_raster(out_path))
 
     shifted = driver.Create(
-        out_name,  # Location of the saved raster, ignored if driver is memory.
+        out_path,  # Location of the saved raster, ignored if driver is memory.
         metadata["width"],  # Dataframe width in pixels (e.g. 1920px).
         metadata["height"],  # Dataframe height in pixels (e.g. 1280px).
         metadata["band_count"],  # The number of bands required.
         metadata["datatype_gdal_raw"],  # Datatype of the destination.
-        out_creation_options,
+        gdal_utils.default_creation_options(creation_options),
     )
 
     new_transform = list(metadata["transform"])
@@ -106,3 +77,69 @@ def shift_raster(
         return out_path
     else:
         return shifted
+
+
+def shift_raster(
+    raster,
+    shift_list,
+    out_path=None,
+    *,
+    overwrite=True,
+    prefix="",
+    suffix="",
+    add_uuid=False,
+    creation_options=None,
+):
+    """
+    Shifts a raster in a given direction.
+
+    ## Args:
+    `raster` (_str_ || _list_ || _gdal.Dataset_): The raster(s) to be shifted. </br>
+    `shift_list` (_list_ || _tuple_): The shift in x and y direction. </br>
+
+    ## Kwargs:
+    `out_path` (_str_ || _list_ || _None_): The path to the output raster. If None, the raster is
+    created in memory. (Default: **None**)</br>
+    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**) </br>
+    `prefix` (_str_): The prefix to be added to the output raster name. (Default: **""**) </br>
+    `suffix` (_str_): The suffix to be added to the output raster name. (Default: **""**) </br>
+    `add_uuid` (_bool_): If True, a unique identifier will be added to the output raster name. (Default: **False**) </br>
+    `creation_options` (_list_ || _None_): The creation options to be used when creating the output. (Default: **None**) </br>
+
+    ## Returns:
+    (_str_ || _list_): The path(s) to the shifted raster(s).
+    """
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    core_utils.type_check(shift_list, [[tuple, list]], "shift_list")
+    core_utils.type_check(out_path, [str, [str], None], "out_path")
+    core_utils.type_check(overwrite, [bool], "overwrite")
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
+
+    raster_list = core_utils.ensure_list(raster)
+    assert gdal_utils.is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
+
+    path_list = core_utils.create_output_paths(
+        raster_list,
+        out_path=out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )
+
+    shifted_rasters = []
+    for index, in_raster in enumerate(raster_list):
+        shifted_rasters.append(
+            _shift_raster(
+                in_raster,
+                shift_list,
+                out_path=path_list[index],
+                overwrite=overwrite,
+                creation_options=creation_options,
+            )
+        )
+
+    if isinstance(raster, list):
+        return shifted_rasters
+
+    return shifted_rasters[0]

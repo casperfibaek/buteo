@@ -1,34 +1,20 @@
 """
-Module to resample rasters to a target resolution.
-Can uses references other raster datasets.
+### Resample rasters. ###
 
-TODO:
-    - Remove typings
-    - Improve documentations
-    - Remove internal function.
+Module to resample rasters to a target resolution.
+Can uses references from vector or other raster datasets.
 """
 
-import sys; sys.path.append("../../") # Path: buteo/raster/resample.py
+# Standard library
+import sys; sys.path.append("../../")
 
+# External
 from osgeo import gdal
 
-from buteo.utils.core_utils import (
-    remove_if_overwrite,
-    type_check,
-)
-from buteo.utils.gdal_utils import (
-    path_to_driver_raster,
-    default_options,
-    translate_resample_method,
-    gdal_nodata_value_from_type,
-    raster_size_from_list,
-    translate_datatypes,
-)
-from buteo.raster.core_raster import (
-    open_raster,
-    ready_io_raster,
-    raster_to_metadata,
-)
+# Internal
+from buteo.utils import core_utils, gdal_utils, gdal_enums
+from buteo.raster import core_raster
+
 
 
 def _resample_raster(
@@ -39,37 +25,34 @@ def _resample_raster(
     *,
     resample_alg="nearest",
     overwrite=True,
-    creation_options=[],
+    creation_options=None,
     dtype=None,
     dst_nodata="infer",
     prefix="",
-    postfix="_resampled",
+    suffix="_resampled",
     add_uuid=False,
 ):
-    """OBS: Internal. Single output.
-
-    Reprojects a raster given a target projection. Beware if your input is in
-    latitude and longitude, you'll need to specify the target_size in degrees as well.
-    """
-    raster_list, path_list = ready_io_raster(
-        raster,
-        out_path,
+    """ Internal. """
+    raster_list = core_utils.ensure_list(raster)
+    path_list = core_utils.create_output_paths(
+        raster_list,
+        out_path=out_path,
         overwrite=overwrite,
         prefix=prefix,
-        postfix=postfix,
+        suffix=suffix,
         add_uuid=add_uuid,
     )
 
-    ref = open_raster(raster_list[0])
-    metadata = raster_to_metadata(ref)
+    ref = core_raster._open_raster(raster_list[0])
+    metadata = core_raster._raster_to_metadata(ref)
     out_name = path_list[0]
 
-    x_res, y_res, x_pixels, y_pixels = raster_size_from_list(
-        target_size, target_in_pixels
+
+    x_res, y_res, x_pixels, y_pixels = gdal_utils.parse_raster_size(
+        target_size, target_in_pixels=target_in_pixels
     )
 
-    out_creation_options = default_options(creation_options)
-    out_format = path_to_driver_raster(out_name)
+    out_format = gdal_utils.path_to_driver_raster(out_name)
 
     src_nodata = metadata["nodata_value"]
     out_nodata = None
@@ -77,13 +60,13 @@ def _resample_raster(
         out_nodata = src_nodata
     else:
         if dst_nodata == "infer":
-            out_nodata = gdal_nodata_value_from_type(metadata["datatype_gdal_raw"])
-        elif isinstance(dst_nodata, str):
-            raise TypeError(f"dst_nodata is in a wrong format: {dst_nodata}")
-        else:
+            out_nodata = src_nodata
+        elif isinstance(dst_nodata, (int, float)):
             out_nodata = dst_nodata
+        else:
+            raise TypeError(f"dst_nodata is in a wrong format: {dst_nodata}")
 
-    remove_if_overwrite(out_path, overwrite)
+    core_utils.remove_if_required(out_path, overwrite)
 
     resampled = gdal.Warp(
         out_name,
@@ -93,9 +76,9 @@ def _resample_raster(
         xRes=x_res,
         yRes=y_res,
         format=out_format,
-        outputType=translate_datatypes(dtype),
-        resampleAlg=translate_resample_method(resample_alg),
-        creationOptions=out_creation_options,
+        outputType=gdal_enums.translate_str_to_gdal_dtype(dtype),
+        resampleAlg=gdal_enums.translate_resample_method(resample_alg),
+        creationOptions=gdal_utils.default_creation_options(creation_options),
         srcNodata=metadata["nodata_value"],
         dstNodata=out_nodata,
         multithread=True,
@@ -114,64 +97,62 @@ def resample_raster(
     out_path=None,
     *,
     resample_alg="nearest",
-    overwrite=True,
-    creation_options=[],
+    creation_options=None,
     dtype=None,
     dst_nodata="infer",
     prefix="",
-    postfix="_resampled",
+    suffix="",
+    add_uuid=False,
+    overwrite=True,
 ):
-    """Reprojects a raster given a target projection. Beware if your input is in
-        latitude and longitude, you'll need to specify the target_size in degrees as well.
-
-    Args:
-        raster (list, path | raster): The raster to reproject.
-
-        target_size (str | int | vector | raster): The target resolution of the
-        raster. In the same unit as the projection of the raster.
-        It's better to reproject to a projected coordinate system for resampling.
-        If a raster is the target_size the function will read the pixel size from
-        that raster.
-
-    **kwargs:
-        out_path (path | None): The destination to save to. If None then
-        the output is an in-memory raster.
-
-        resample_alg (str): The algorithm to resample the raster. The following
-        are available:
-            'nearest', 'bilinear', 'cubic', 'cubicSpline', 'lanczos', 'average',
-            'mode', 'max', 'min', 'median', 'q1', 'q3', 'sum', 'rms'.
-
-        overwite (bool): Is it possible to overwrite the out_path if it exists.
-
-        creation_options (list): A list of options for the GDAL creation. Only
-        used if an out_path is specified. Defaults are:
-            "TILED=YES"
-            "NUM_THREADS=ALL_CPUS"
-            "BIGG_TIF=YES"
-            "COMPRESS=LZW"
-
-        dst_nodata (str | int | float): If dst_nodata is 'infer' the destination nodata
-        is the src_nodata if one exists, otherwise it's automatically chosen based
-        on the datatype. If an int or a float is given, it is used as the output nodata.
-
-    Returns:
-        An in-memory raster. If an out_path is given the output is a string containing
-        the path to the newly created raster.
     """
-    type_check(raster, [list, str, gdal.Dataset], "raster")
-    type_check(target_size, [tuple, int, float, str, gdal.Dataset], "target_size")
-    type_check(target_in_pixels, [bool], "target_in_pixels")
-    type_check(out_path, [list, str], "out_path", allow_none=True)
-    type_check(resample_alg, [str], "resample_alg")
-    type_check(overwrite, [bool], "overwrite")
-    type_check(creation_options, [list], "creation_options")
-    type_check(dst_nodata, [str, int, float], "dst_nodata", allow_none=True)
-    type_check(prefix, [str], "prefix")
-    type_check(postfix, [str], "postfix")
+    Reprojects raster(s) given a target projection. </br>
+    **Beware** if your input is in latitude and longitude, you'll need to specify the target_size in degrees as well.
 
-    raster_list, path_list = ready_io_raster(
-        raster, out_path, overwrite=overwrite, prefix=prefix, postfix=postfix
+    ## Args:
+    `raster` (_str_ || _list_ || _gdal.Dataset): The raster(s) to reproject. </br>
+    `target_size` (_str_ || _int_ || _ogr.DataSource_ || _gdal.Dataset_): The target resolution of the
+    raster. In the same unit as the projection of the raster.
+    It's better to reproject to a projected coordinate system for resampling.
+    If a raster is the target_size the function will read the pixel size from
+    that raster. </br>
+
+    ## Kwargs:
+    `target_in_pixels` (_bool_): If True, the target_size will be interpreted as the number of pixels. (Default: **False**) </br>
+    `out_path` (_str_ || _None_): The output path. If not provided, the output path is inferred from the input. (Default: **None**) </br>
+    `resample_alg` (_str_): The resampling algorithm. (Default: **nearest**) </br>
+    `copy_if_same` (_bool_): If the input and output projections are the same, copy the input raster to the output path. (Default: **True**) </br>
+    `overwrite` (_bool_): If the output path already exists, overwrite it. (Default: **True**) </br>
+    `creation_options` (_list_ || _None_): A list of creation options for the output raster. (Default: **None**) </br>
+    `dst_nodata` (_str_ || _int_ || _float_): The nodata value for the output raster. (Default: **infer**) </br>
+    `prefix` (_str_): The prefix to add to the output path. (Default: **""**) </br>
+    `suffix` (_str_): The suffix to add to the output path. (Default: **"_reprojected"**) </br>
+    `add_uuid` (_bool_): If True, add a UUID to the output path. (Default: **False**) </br>
+
+    ## Returns:
+    (_str_ || _list_): The output path(s) of the resampled raster(s).
+    """
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    core_utils.type_check(target_size, [tuple, [int, float], int, float, str, gdal.Dataset], "target_size")
+    core_utils.type_check(target_in_pixels, [bool], "target_in_pixels")
+    core_utils.type_check(out_path, [str, [str], None], "out_path")
+    core_utils.type_check(resample_alg, [str], "resample_alg")
+    core_utils.type_check(overwrite, [bool], "overwrite")
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
+    core_utils.type_check(dst_nodata, [str, int, float, None], "dst_nodata")
+    core_utils.type_check(prefix, [str], "prefix")
+    core_utils.type_check(suffix, [str], "postfix")
+
+    raster_list = core_utils.ensure_list(raster)
+    assert gdal_utils.is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
+
+    path_list = core_utils.create_output_paths(
+        raster_list,
+        out_path=out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
     )
 
     resampled_rasters = []
@@ -188,7 +169,7 @@ def resample_raster(
                 dtype=dtype,
                 dst_nodata=dst_nodata,
                 prefix=prefix,
-                postfix=postfix,
+                suffix=suffix,
             )
         )
 
