@@ -1,11 +1,14 @@
+""" Build script for pip and conda package. """
+
 from setuptools import setup, find_packages
 
 VERSION = "0.7.2"
 
 def readme():
+    """ Generate readme file. """
     try:
-        with open("README.md") as f:
-            return f.read()
+        with open("./readme.md", encoding="utf8") as file:
+            return file.read()
     except IOError:
         return ""
 
