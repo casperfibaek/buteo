@@ -166,18 +166,18 @@ def add_border_to_raster(
     Add a border to a raster.
 
     ## Args:
-    `input_raster` (_str_|_gdal.DataSet_): The input raster.
+    `input_raster` (_str_/_gdal.DataSet_): The input raster.
 
     ## Kwargs:
-    `out_path` (_str_|_None_): The output path. If **None** the output will be a memory raster. &lt;/br&gt;
+    `out_path` (_str_/_None_): The output path. If **None** the output will be a memory raster. &lt;/br&gt;
     `border_size` (_int_): The size of the border. &lt;/br&gt;
     `border_size_unit` (_str_): The unit of the border size. &lt;/br&gt;
     `border_value` (_int_): The value of the border. &lt;/br&gt;
     `overwrite` (_bool_): If **True**, the output raster will be overwritten. &lt;/br&gt;
-    `creation_options` (_list_|_None_): Creation options for the output raster. &lt;/br&gt;
+    `creation_options` (_list_/_None_): Creation options for the output raster. &lt;/br&gt;
 
     ## Returns:
-    `out_raster` (_str_|_gdal.DataSet_): The output raster with added borders.
+    `out_raster` (_str_/_gdal.DataSet_): The output raster with added borders.
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)
@@ -233,16 +233,16 @@ def add_border_to_raster(
 <dd>
 <div class="desc"><p>Add a border to a raster.</p>
 <h2 id="args">Args:</h2>
-<p><code>input_raster</code> (<em>str</em>|<em>gdal.DataSet</em>): The input raster.</p>
+<p><code>input_raster</code> (<em>str</em>/<em>gdal.DataSet</em>): The input raster.</p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em>|<em>None</em>): The output path. If <strong>None</strong> the output will be a memory raster. </br>
+<p><code>out_path</code> (<em>str</em>/<em>None</em>): The output path. If <strong>None</strong> the output will be a memory raster. </br>
 <code>border_size</code> (<em>int</em>): The size of the border. </br>
 <code>border_size_unit</code> (<em>str</em>): The unit of the border size. </br>
 <code>border_value</code> (<em>int</em>): The value of the border. </br>
 <code>overwrite</code> (<em>bool</em>): If <strong>True</strong>, the output raster will be overwritten. </br>
-<code>creation_options</code> (<em>list</em>|<em>None</em>): Creation options for the output raster. </br></p>
+<code>creation_options</code> (<em>list</em>/<em>None</em>): Creation options for the output raster. </br></p>
 <h2 id="returns">Returns:</h2>
-<p><code>out_raster</code> (<em>str</em>|<em>gdal.DataSet</em>): The output raster with added borders.</p></div>
+<p><code>out_raster</code> (<em>str</em>/<em>gdal.DataSet</em>): The output raster with added borders.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -262,18 +262,18 @@ def add_border_to_raster(
     Add a border to a raster.
 
     ## Args:
-    `input_raster` (_str_|_gdal.DataSet_): The input raster.
+    `input_raster` (_str_/_gdal.DataSet_): The input raster.
 
     ## Kwargs:
-    `out_path` (_str_|_None_): The output path. If **None** the output will be a memory raster. &lt;/br&gt;
+    `out_path` (_str_/_None_): The output path. If **None** the output will be a memory raster. &lt;/br&gt;
     `border_size` (_int_): The size of the border. &lt;/br&gt;
     `border_size_unit` (_str_): The unit of the border size. &lt;/br&gt;
     `border_value` (_int_): The value of the border. &lt;/br&gt;
     `overwrite` (_bool_): If **True**, the output raster will be overwritten. &lt;/br&gt;
-    `creation_options` (_list_|_None_): Creation options for the output raster. &lt;/br&gt;
+    `creation_options` (_list_/_None_): Creation options for the output raster. &lt;/br&gt;
 
     ## Returns:
-    `out_raster` (_str_|_gdal.DataSet_): The output raster with added borders.
+    `out_raster` (_str_/_gdal.DataSet_): The output raster with added borders.
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)

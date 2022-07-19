@@ -42,23 +42,23 @@ def calc_proximity(
     `input_rasters` (_list_): A list of rasters to use as input. </br>
 
     ## Kwargs:
-    `target_value` (_int_|_float_): The value to use as target. (Default: **1**) </br>
+    `target_value` (_int_/_float_): The value to use as target. (Default: **1**) </br>
     `unit` (_str_): The unit to use for the distance. GEO or PIXEL. (Default: **"GEO"**) </br>
-    `out_path` (_str_|_None_|_list_): The output path. (Default: **None**) </br>
-    `max_dist` (_int_|_float_): The maximum distance to use. (Default: **1000**) </br>
+    `out_path` (_str_/_None_/_list_): The output path. (Default: **None**) </br>
+    `max_dist` (_int_/_float_): The maximum distance to use. (Default: **1000**) </br>
     `add_border` (_bool_): If **True**, a border will be added to the raster. (Default: **False**) </br>
-    `border_value` (_int_|_float_): The value to use for the border. (Default: **0**) </br>
+    `border_value` (_int_/_float_): The value to use for the border. (Default: **0**) </br>
     `weighted` (_bool_): If **True**, the distance will be divided by the max distance. (Default: **False**) </br>
     `invert` (_bool_): If **True**, the target will be inversed. (Default: **False**) </br>
     `return_array` (_bool_): If **True** a NumPy array will be returned instead of a raster. (Default: **False**) </br>
     `prefix` (_str_): Prefix to add to the output. (Default: **""**) </br>
     `suffix` (_str_): Suffix to add to the output. (Default: **""**) </br>
     `add_uuid` (_bool_): Should a uuid be added to the output path? (Default: **False**) </br>
-    `creation_options` (_list_|_None_): The GDAL creation options to be passed. (Default: **None**) </br>
+    `creation_options` (_list_/_None_): The GDAL creation options to be passed. (Default: **None**) </br>
     `overwrite` (_bool_): If the output path exists already, should it be overwritten? (Default: **True**)</br>
 
     ## Returns:
-    (_str_|_np.ndarray_): A path to a raster with the calculate proximity, or a numpy array with the data.
+    (_str_/_np.ndarray_): A path to a raster with the calculate proximity, or a numpy array with the data.
     """
     core_utils.type_check(input_rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "input_rasters")
     core_utils.type_check(target_value, [int, float], "target_value")

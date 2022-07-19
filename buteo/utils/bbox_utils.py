@@ -67,7 +67,7 @@ def is_valid_geotransform(geotransform):
     `[x_min, pixel_width, row_skew, y_max, column_skew, pixel_height]`
 
     ## Args:
-    `geotransform` (_list_|_tuple_): A GDAL formatted geotransform.
+    `geotransform` (_list_/_tuple_): A GDAL formatted geotransform.
 
     ## Returns:
     (_bool_): **True** if the geotransform is valid, **False** otherwise.
@@ -90,10 +90,10 @@ def ensure_negative(number):
     Ensures that a valid is negative. If the number is positive, it is made negative.
 
     ## Args:
-    `number` (_int_|_float_): A float or int number. </br>
+    `number` (_int_/_float_): A float or int number. </br>
 
     ## Returns:
-    (_int_|_float_): The same number made **negative** if necesary.
+    (_int_/_float_): The same number made **negative** if necesary.
     """
     assert core_utils.is_number(number), f"number must be a number. Received: {number}"
 
@@ -108,7 +108,7 @@ def get_pixel_offsets(geotransform, bbox_ogr):
     Get the pixels offsets for a bbox and a geotransform.
 
     ## Args:
-    `geotransform` (_list_|_tuple_): A GDAL GeoTransform. </br>
+    `geotransform` (_list_/_tuple_): A GDAL GeoTransform. </br>
     `bbox_ogr` (_list_): An OGR formatted bbox. </br>
 
     ## Returns:
@@ -148,7 +148,7 @@ def get_bbox_from_geotransform(geotransform, raster_x_size, raster_y_size):
     Get an OGR bounding box from a geotransform and raster sizes.
 
     ## Args:
-    `geotransform` (_list_|_tuple_): A GDAL GeoTransform. </br>
+    `geotransform` (_list_/_tuple_): A GDAL GeoTransform. </br>
     `raster_x_size` (_int_): The number of pixels in the x direction. </br>
     `raster_y_size` (_int_): The number of pixels in the y direction. </br>
 
@@ -596,8 +596,8 @@ def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
     ## Args:
     `bbox1_ogr` (_list_): An OGR formatted bbox. </br>
     `bbox2_ogr` (_list_): An OGR formatted bbox. </br>
-    `pixel_width` (_float_|_int_): The width of the pixel. </br>
-    `pixel_height` (_float_|_int_): The height of the pixel. </br>
+    `pixel_width` (_float_/_int_): The width of the pixel. </br>
+    `pixel_height` (_float_/_int_): The height of the pixel. </br>
 
     ## Returns:
     (_list_): An OGR formatted bbox of the alignment. `[x_min, x_max, y_min, y_max]`

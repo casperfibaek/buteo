@@ -219,10 +219,10 @@ def singlepart_to_multipart(
     Converts a singlepart vector to multipart.
 
     ## Args:
-    `vector` (_str_|_ogr.DataSource_|_list_): The vector(s) to convert. </br>
+    `vector` (_str_/_ogr.DataSource_/_list_): The vector(s) to convert. </br>
 
     ## Kvargs:
-    `out_path` (_str_|_None_): The path(s) to the output vector. If None a memory output is produced. (Default: **None**) </br>
+    `out_path` (_str_/_None_): The path(s) to the output vector. If None a memory output is produced. (Default: **None**) </br>
     `add_index` (_bool_): Add an geospatial index to the output vector. (Default: **True**) </br>
     `process_layer` (_int_): The layer index to process. (Default: **-1**) </br>
     `prefix` (_str_): The prefix to add to the layer name. (Default: **""**) </br>
@@ -232,7 +232,7 @@ def singlepart_to_multipart(
     `allow_lists` (_bool_): Allow the input to be a list of vectors. (Default: **True**) </br>
 
     ## Returns:
-    (_str_|_list_): The path(s) to the output vector.
+    (_str_/_list_): The path(s) to the output vector.
     """
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
     core_utils.type_check(out_path, [str, [str], None], "out_path")
@@ -295,10 +295,10 @@ def multipart_to_singlepart(
     Converts a multipart vector to singlepart.
 
     ## Args:
-    `vector` (_str_|_ogr.DataSource_|_list_): The vector(s) to convert. </br>
+    `vector` (_str_/_ogr.DataSource_/_list_): The vector(s) to convert. </br>
 
     ## Kvargs:
-    `out_path` (_str_|_None_): The path(s) to the output vector. If None a memory output is produced. (Default: **None**) </br>
+    `out_path` (_str_/_None_): The path(s) to the output vector. If None a memory output is produced. (Default: **None**) </br>
     `overwrite` (_bool_): Overwrite the output vector if it already exists. (Default: **True**) </br>
     `add_index` (_bool_): Add an geospatial index to the output vector. (Default: **True**) </br>
     `process_layer` (_int_): The layer index to process. (Default: **-1**) </br>
@@ -309,7 +309,7 @@ def multipart_to_singlepart(
     `allow_lists` (_bool_): Allow the input to be a list of vectors. (Default: **True**) </br>
 
     ## Returns:
-    (_str_|_list_): The path(s) to the output vector.
+    (_str_/_list_): The path(s) to the output vector.
     """
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
     core_utils.type_check(out_path, [str, [str], None], "out_path")

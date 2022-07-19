@@ -823,23 +823,23 @@ def create_output_paths(
     add_uuid=False,
 ):
     &#34;&#34;&#34;
-    Prepares a raster|vector or a list of rasters|vectors for writing. Generates output paths. If no output paths are
+    Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
     specified, the rasters are written to memory. If a folder is given, the output directory is chosen
     are the input filenames remain the same. If a specific path is used it must be the same length as the
     input.
 
     ## Args:
-    `dataset_path` (_gdal.Dataset_|_ogr.DataSource_|_str_|_list__): A **GDAL** or **OGR** dataframe, a path to a raster or a list of same. &lt;/br&gt;
+    `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_/_list__): A **GDAL** or **OGR** dataframe, a path to a raster or a list of same. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_|_None_): A path to a directory to write the raster to. (Default: **None**). &lt;/br&gt;
+    `out_path` (_str_/_None_): A path to a directory to write the raster to. (Default: **None**). &lt;/br&gt;
     `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). &lt;/br&gt;
     `prefix` (_str_): A string to prepend to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
     `suffix` (_str_): A string to append to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
     `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). &lt;/br&gt;
 
     ## Returns:
-    (_str_|_list_): A path to the output raster or a list of paths.
+    (_str_/_list_): A path to the output raster or a list of paths.
     &#34;&#34;&#34;
     assert isinstance(dataset_path, (str, list)), &#34;dataset_path must be a string or a list of strings.&#34;
     assert isinstance(out_path, (str, type(None))), &#34;out_path must be a string or None.&#34;
@@ -890,20 +890,20 @@ def create_output_paths(
 <span>def <span class="ident">create_output_paths</span></span>(<span>dataset_path, out_path=None, *, overwrite=True, prefix='', suffix='', add_uuid=False)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Prepares a raster|vector or a list of rasters|vectors for writing. Generates output paths. If no output paths are
+<div class="desc"><p>Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
 specified, the rasters are written to memory. If a folder is given, the output directory is chosen
 are the input filenames remain the same. If a specific path is used it must be the same length as the
 input.</p>
 <h2 id="args">Args:</h2>
-<p><code>dataset_path</code> (<em>gdal.Dataset</em>|<em>ogr.DataSource</em>|<em>str</em>|_list__): A <strong>GDAL</strong> or <strong>OGR</strong> dataframe, a path to a raster or a list of same. </br></p>
+<p><code>dataset_path</code> (<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>str</em>/_list__): A <strong>GDAL</strong> or <strong>OGR</strong> dataframe, a path to a raster or a list of same. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em>|<em>None</em>): A path to a directory to write the raster to. (Default: <strong>None</strong>). </br>
+<p><code>out_path</code> (<em>str</em>/<em>None</em>): A path to a directory to write the raster to. (Default: <strong>None</strong>). </br>
 <code>overwrite</code> (<em>bool</em>): If True, the output raster will be overwritten if it already exists. (Default: <strong>True</strong>). </br>
 <code>prefix</code> (<em>str</em>): A string to prepend to the output filename. (Default: <strong>""</strong>). </br>
 <code>suffix</code> (<em>str</em>): A string to append to the output filename. (Default: <strong>""</strong>). </br>
 <code>add_uuid</code> (<em>bool</em>): If True, a UUID will be added to the output filename. (Default: <strong>False</strong>). </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em>|<em>list</em>): A path to the output raster or a list of paths.</p></div>
+<p>(<em>str</em>/<em>list</em>): A path to the output raster or a list of paths.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -918,23 +918,23 @@ input.</p>
     add_uuid=False,
 ):
     &#34;&#34;&#34;
-    Prepares a raster|vector or a list of rasters|vectors for writing. Generates output paths. If no output paths are
+    Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
     specified, the rasters are written to memory. If a folder is given, the output directory is chosen
     are the input filenames remain the same. If a specific path is used it must be the same length as the
     input.
 
     ## Args:
-    `dataset_path` (_gdal.Dataset_|_ogr.DataSource_|_str_|_list__): A **GDAL** or **OGR** dataframe, a path to a raster or a list of same. &lt;/br&gt;
+    `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_/_list__): A **GDAL** or **OGR** dataframe, a path to a raster or a list of same. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_|_None_): A path to a directory to write the raster to. (Default: **None**). &lt;/br&gt;
+    `out_path` (_str_/_None_): A path to a directory to write the raster to. (Default: **None**). &lt;/br&gt;
     `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). &lt;/br&gt;
     `prefix` (_str_): A string to prepend to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
     `suffix` (_str_): A string to append to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
     `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). &lt;/br&gt;
 
     ## Returns:
-    (_str_|_list_): A path to the output raster or a list of paths.
+    (_str_/_list_): A path to the output raster or a list of paths.
     &#34;&#34;&#34;
     assert isinstance(dataset_path, (str, list)), &#34;dataset_path must be a string or a list of strings.&#34;
     assert isinstance(out_path, (str, type(None))), &#34;out_path must be a string or None.&#34;

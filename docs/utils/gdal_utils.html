@@ -68,7 +68,7 @@ def default_creation_options(options=None):
     If any of the options are already specified, they are not added.
 
     ## Kwargs:
-    `options` (_list_|None): The GDAL creation options to add to. (Default: **None**)
+    `options` (_list_/None): The GDAL creation options to add to. (Default: **None**)
 
     ## Returns:
     (_list_): A list containing the default values.
@@ -230,7 +230,7 @@ def is_in_memory(raster_or_vector):
     Check if vector is in memory
 
     ## Args:
-    `raster_or_vector` (_str_|_gdal.Dataset_|ogr.DataSource): The vector or raster to check.
+    `raster_or_vector` (_str_/_gdal.Dataset_/ogr.DataSource): The vector or raster to check.
 
     ## Returns:
     (_bool_): **True** if the vector is in memory, **False** otherwise.
@@ -271,7 +271,7 @@ def delete_if_in_memory(raster_or_vector):
     Delete raster or vector if it is in memory
 
     ## Args:
-    `raster_or_vector` (_str_|_gdal.Dataset_|_ogr.DataSource_): The vector or raster to check.
+    `raster_or_vector` (_str_/_gdal.Dataset_/_ogr.DataSource_): The vector or raster to check.
 
     ## Returns:
     (_bool_): **True** if the vector is deleted, **False** otherwise.
@@ -294,7 +294,7 @@ def delete_raster_or_vector(raster_or_vector):
     Delete raster or vector. Can be used on both in memory and on disk.
 
     ## Args:
-    `raster_or_vector` (_str_|_gdal.Dataset_|_ogr.DataSource_): The vector or raster to check.
+    `raster_or_vector` (_str_/_gdal.Dataset_/_ogr.DataSource_): The vector or raster to check.
 
     ## Returns:
     (_bool_): **True** if the file is deleted, **False** otherwise.
@@ -591,7 +591,7 @@ def get_path_from_dataset(dataset, *, dataset_type=None):
     Gets the path from a datasets. Can be vector or raster, string or opened.
 
     ## Args:
-    `dataset` (_str_|_gdal.Dataset_|_ogr.DataSource_): The dataset.
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_): The dataset.
 
     ## Kwargs:
     `dataset_type` (_str_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
@@ -637,7 +637,7 @@ def get_path_from_dataset_list(datasets, *, allow_mixed=False, dataset_type=None
 
     ## Kwargs:
     `allow_mixed` (_bool_): If True, allow mixed raster/vector datasets. (**Default**: `False`) &lt;/br&gt;
-    `dataset_type` (_str_|_None_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
+    `dataset_type` (_str_/_None_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
 
     ## Returns:
     (_list_): A list of paths.
@@ -706,7 +706,7 @@ def parse_projection(projection, *, return_wkt=False):
     an osr.SpatialReference.
 
     ## Args:
-    `projection` (_str_|_int_|_gdal.Dataset_|_ogr.DataSource_|_osr.SpatialReference_): The projection to parse.
+    `projection` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The projection to parse.
 
     ## Kwargs:
     `return_wkt` (_bool_): If **True** the projection will be returned as a WKT string, otherwise an osr.SpatialReference is returned. (Default: **False**)
@@ -860,7 +860,7 @@ def get_gdalwarp_ram_limit(limit_in_mb):
     Converts a RAM limit to a GDALWarp RAM limit.
 
     ## Args:
-    `limit` (_str_|_int_): The RAM limit to convert. Can be auto, a percentage &#34;80%&#34; or a number in MB.
+    `limit` (_str_/_int_): The RAM limit to convert. Can be auto, a percentage &#34;80%&#34; or a number in MB.
 
     ## Returns:
     (_int_): The GDALWarp RAM limit in bytes.
@@ -899,7 +899,7 @@ def to_array_list(array_or_list_of_array):
     Converts a numpy array or list of numpy arrays to a list of arrays.
 
     ## Args:
-    `array_or_list_of_array` (_numpy.ndarray_|_list_|_str_): The numpy array or list of numpy arrays to convert to a list of arrays.
+    `array_or_list_of_array` (_numpy.ndarray_/_list_/_str_): The numpy array or list of numpy arrays to convert to a list of arrays.
 
     ## Returns:
     (_list_): The list of arrays.
@@ -932,7 +932,7 @@ def to_band_list(
     Converts a band number or list of band numbers to a list of band numbers.
 
     ## Args:
-    `band_number` (_int_|_float_|_list_): The band number or list of band numbers to convert to a list of band numbers. &lt;/br&gt;
+    `band_number` (_int_/_float_/_list_): The band number or list of band numbers to convert to a list of band numbers. &lt;/br&gt;
     `band_count` (_int_): The number of bands in the raster. &lt;/br&gt;
 
     ## Returns:
@@ -984,12 +984,12 @@ def save_dataset_to_disk(
     Writes a dataset to disk. Can be a raster or a vector.
 
     ## Args:
-    `dataset` (_str_|_gdal.Dataset_|_ogr.DataSource_|_list_): The dataset(s) to save. &lt;/br&gt;
-    `out_path` (_str_|_list_): The path(s) to save the dataset(s) to. &lt;/br&gt;
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_/_list_): The dataset(s) to save. &lt;/br&gt;
+    `out_path` (_str_/_list_): The path(s) to save the dataset(s) to. &lt;/br&gt;
 
     ## Kwargs:
     `overwrite` (_bool_): Whether to overwrite the file if it already exists. (Default: **True**) &lt;/br&gt;
-    `creation_options` (_list_|_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) &lt;/br&gt;
+    `creation_options` (_list_/_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) &lt;/br&gt;
     `prefix` (_str_): A prefix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): A suffix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): Whether to add a UUID to the file name. (Default: **False**) &lt;/br&gt;
@@ -1062,11 +1062,11 @@ def save_dataset_to_memory(
     Writes a dataset to memory. Can be a raster or a vector.
 
     ## Args:
-    `dataset` (_str_|_gdal.Dataset_|_ogr.DataSource_|_list_): The dataset(s) to save. &lt;/br&gt;
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_/_list_): The dataset(s) to save. &lt;/br&gt;
 
     ## Kwargs:
     `overwrite` (_bool_): Whether to overwrite the file if it already exists. (Default: **True**) &lt;/br&gt;
-    `creation_options` (_list_|_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) &lt;/br&gt;
+    `creation_options` (_list_/_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) &lt;/br&gt;
     `prefix` (_str_): A prefix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): A suffix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): Whether to add a UUID to the file name. (Default: **True**) &lt;/br&gt;
@@ -1204,7 +1204,7 @@ def save_dataset_to_memory(
 </ul>
 <p>If any of the options are already specified, they are not added.</p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>options</code> (<em>list</em>|None): The GDAL creation options to add to. (Default: <strong>None</strong>)</p>
+<p><code>options</code> (<em>list</em>/None): The GDAL creation options to add to. (Default: <strong>None</strong>)</p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>list</em>): A list containing the default values.</p></div>
 <details class="source">
@@ -1223,7 +1223,7 @@ def save_dataset_to_memory(
     If any of the options are already specified, they are not added.
 
     ## Kwargs:
-    `options` (_list_|None): The GDAL creation options to add to. (Default: **None**)
+    `options` (_list_/None): The GDAL creation options to add to. (Default: **None**)
 
     ## Returns:
     (_list_): A list containing the default values.
@@ -1257,7 +1257,7 @@ def save_dataset_to_memory(
 <dd>
 <div class="desc"><p>Delete raster or vector if it is in memory</p>
 <h2 id="args">Args:</h2>
-<p><code>raster_or_vector</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>ogr.DataSource</em>): The vector or raster to check.</p>
+<p><code>raster_or_vector</code> (<em>str</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>): The vector or raster to check.</p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>bool</em>): <strong>True</strong> if the vector is deleted, <strong>False</strong> otherwise.</p></div>
 <details class="source">
@@ -1269,7 +1269,7 @@ def save_dataset_to_memory(
     Delete raster or vector if it is in memory
 
     ## Args:
-    `raster_or_vector` (_str_|_gdal.Dataset_|_ogr.DataSource_): The vector or raster to check.
+    `raster_or_vector` (_str_/_gdal.Dataset_/_ogr.DataSource_): The vector or raster to check.
 
     ## Returns:
     (_bool_): **True** if the vector is deleted, **False** otherwise.
@@ -1293,7 +1293,7 @@ def save_dataset_to_memory(
 <dd>
 <div class="desc"><p>Delete raster or vector. Can be used on both in memory and on disk.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster_or_vector</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>ogr.DataSource</em>): The vector or raster to check.</p>
+<p><code>raster_or_vector</code> (<em>str</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>): The vector or raster to check.</p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>bool</em>): <strong>True</strong> if the file is deleted, <strong>False</strong> otherwise.</p></div>
 <details class="source">
@@ -1305,7 +1305,7 @@ def save_dataset_to_memory(
     Delete raster or vector. Can be used on both in memory and on disk.
 
     ## Args:
-    `raster_or_vector` (_str_|_gdal.Dataset_|_ogr.DataSource_): The vector or raster to check.
+    `raster_or_vector` (_str_/_gdal.Dataset_/_ogr.DataSource_): The vector or raster to check.
 
     ## Returns:
     (_bool_): **True** if the file is deleted, **False** otherwise.
@@ -1331,7 +1331,7 @@ def save_dataset_to_memory(
 <dd>
 <div class="desc"><p>Converts a RAM limit to a GDALWarp RAM limit.</p>
 <h2 id="args">Args:</h2>
-<p><code>limit</code> (<em>str</em>|<em>int</em>): The RAM limit to convert. Can be auto, a percentage "80%" or a number in MB.</p>
+<p><code>limit</code> (<em>str</em>/<em>int</em>): The RAM limit to convert. Can be auto, a percentage "80%" or a number in MB.</p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>int</em>): The GDALWarp RAM limit in bytes.</p></div>
 <details class="source">
@@ -1343,7 +1343,7 @@ def save_dataset_to_memory(
     Converts a RAM limit to a GDALWarp RAM limit.
 
     ## Args:
-    `limit` (_str_|_int_): The RAM limit to convert. Can be auto, a percentage &#34;80%&#34; or a number in MB.
+    `limit` (_str_/_int_): The RAM limit to convert. Can be auto, a percentage &#34;80%&#34; or a number in MB.
 
     ## Returns:
     (_int_): The GDALWarp RAM limit in bytes.
@@ -1383,7 +1383,7 @@ def save_dataset_to_memory(
 <dd>
 <div class="desc"><p>Gets the path from a datasets. Can be vector or raster, string or opened.</p>
 <h2 id="args">Args:</h2>
-<p><code>dataset</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>ogr.DataSource</em>): The dataset.</p>
+<p><code>dataset</code> (<em>str</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>): The dataset.</p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>dataset_type</code> (<em>str</em>): The type of dataset. If not specified, it is guessed. (<strong>Default</strong>: <code>None</code>)</p>
 <h2 id="returns">Returns:</h2>
@@ -1397,7 +1397,7 @@ def save_dataset_to_memory(
     Gets the path from a datasets. Can be vector or raster, string or opened.
 
     ## Args:
-    `dataset` (_str_|_gdal.Dataset_|_ogr.DataSource_): The dataset.
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_): The dataset.
 
     ## Kwargs:
     `dataset_type` (_str_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
@@ -1443,7 +1443,7 @@ def save_dataset_to_memory(
 <p><code>datasets</code> (<em>list</em>): The list of datasets.</p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>allow_mixed</code> (<em>bool</em>): If True, allow mixed raster/vector datasets. (<strong>Default</strong>: <code>False</code>) </br>
-<code>dataset_type</code> (<em>str</em>|<em>None</em>): The type of dataset. If not specified, it is guessed. (<strong>Default</strong>: <code>None</code>)</p>
+<code>dataset_type</code> (<em>str</em>/<em>None</em>): The type of dataset. If not specified, it is guessed. (<strong>Default</strong>: <code>None</code>)</p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>list</em>): A list of paths.</p></div>
 <details class="source">
@@ -1459,7 +1459,7 @@ def save_dataset_to_memory(
 
     ## Kwargs:
     `allow_mixed` (_bool_): If True, allow mixed raster/vector datasets. (**Default**: `False`) &lt;/br&gt;
-    `dataset_type` (_str_|_None_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
+    `dataset_type` (_str_/_None_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
 
     ## Returns:
     (_list_): A list of paths.
@@ -1495,7 +1495,7 @@ def save_dataset_to_memory(
 <dd>
 <div class="desc"><p>Check if vector is in memory</p>
 <h2 id="args">Args:</h2>
-<p><code>raster_or_vector</code> (<em>str</em>|<em>gdal.Dataset</em>|ogr.DataSource): The vector or raster to check.</p>
+<p><code>raster_or_vector</code> (<em>str</em>/<em>gdal.Dataset</em>/ogr.DataSource): The vector or raster to check.</p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>bool</em>): <strong>True</strong> if the vector is in memory, <strong>False</strong> otherwise.</p></div>
 <details class="source">
@@ -1507,7 +1507,7 @@ def save_dataset_to_memory(
     Check if vector is in memory
 
     ## Args:
-    `raster_or_vector` (_str_|_gdal.Dataset_|ogr.DataSource): The vector or raster to check.
+    `raster_or_vector` (_str_/_gdal.Dataset_/ogr.DataSource): The vector or raster to check.
 
     ## Returns:
     (_bool_): **True** if the vector is in memory, **False** otherwise.
@@ -2016,7 +2016,7 @@ def save_dataset_to_memory(
 a string or int is passed, it attempts to open it and return the projection as
 an osr.SpatialReference.</p>
 <h2 id="args">Args:</h2>
-<p><code>projection</code> (<em>str</em>|<em>int</em>|<em>gdal.Dataset</em>|<em>ogr.DataSource</em>|<em>osr.SpatialReference</em>): The projection to parse.</p>
+<p><code>projection</code> (<em>str</em>/<em>int</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>osr.SpatialReference</em>): The projection to parse.</p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>return_wkt</code> (<em>bool</em>): If <strong>True</strong> the projection will be returned as a WKT string, otherwise an osr.SpatialReference is returned. (Default: <strong>False</strong>)</p></div>
 <details class="source">
@@ -2030,7 +2030,7 @@ an osr.SpatialReference.</p>
     an osr.SpatialReference.
 
     ## Args:
-    `projection` (_str_|_int_|_gdal.Dataset_|_ogr.DataSource_|_osr.SpatialReference_): The projection to parse.
+    `projection` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The projection to parse.
 
     ## Kwargs:
     `return_wkt` (_bool_): If **True** the projection will be returned as a WKT string, otherwise an osr.SpatialReference is returned. (Default: **False**)
@@ -2314,11 +2314,11 @@ an osr.SpatialReference.</p>
 <dd>
 <div class="desc"><p>Writes a dataset to disk. Can be a raster or a vector.</p>
 <h2 id="args">Args:</h2>
-<p><code>dataset</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>ogr.DataSource</em>|<em>list</em>): The dataset(s) to save. </br>
-<code>out_path</code> (<em>str</em>|<em>list</em>): The path(s) to save the dataset(s) to. </br></p>
+<p><code>dataset</code> (<em>str</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>list</em>): The dataset(s) to save. </br>
+<code>out_path</code> (<em>str</em>/<em>list</em>): The path(s) to save the dataset(s) to. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>overwrite</code> (<em>bool</em>): Whether to overwrite the file if it already exists. (Default: <strong>True</strong>) </br>
-<code>creation_options</code> (<em>list</em>|<em>None</em>): A list of creation options to pass to GDAL if saving as raster. (Default: <strong>True</strong>) </br>
+<code>creation_options</code> (<em>list</em>/<em>None</em>): A list of creation options to pass to GDAL if saving as raster. (Default: <strong>True</strong>) </br>
 <code>prefix</code> (<em>str</em>): A prefix to add to the file name. (Default: <strong>""</strong>) </br>
 <code>suffix</code> (<em>str</em>): A suffix to add to the file name. (Default: <strong>""</strong>) </br>
 <code>add_uuid</code> (<em>bool</em>): Whether to add a UUID to the file name. (Default: <strong>False</strong>) </br></p></div>
@@ -2340,12 +2340,12 @@ an osr.SpatialReference.</p>
     Writes a dataset to disk. Can be a raster or a vector.
 
     ## Args:
-    `dataset` (_str_|_gdal.Dataset_|_ogr.DataSource_|_list_): The dataset(s) to save. &lt;/br&gt;
-    `out_path` (_str_|_list_): The path(s) to save the dataset(s) to. &lt;/br&gt;
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_/_list_): The dataset(s) to save. &lt;/br&gt;
+    `out_path` (_str_/_list_): The path(s) to save the dataset(s) to. &lt;/br&gt;
 
     ## Kwargs:
     `overwrite` (_bool_): Whether to overwrite the file if it already exists. (Default: **True**) &lt;/br&gt;
-    `creation_options` (_list_|_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) &lt;/br&gt;
+    `creation_options` (_list_/_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) &lt;/br&gt;
     `prefix` (_str_): A prefix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): A suffix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): Whether to add a UUID to the file name. (Default: **False**) &lt;/br&gt;
@@ -2411,10 +2411,10 @@ an osr.SpatialReference.</p>
 <dd>
 <div class="desc"><p>Writes a dataset to memory. Can be a raster or a vector.</p>
 <h2 id="args">Args:</h2>
-<p><code>dataset</code> (<em>str</em>|<em>gdal.Dataset</em>|<em>ogr.DataSource</em>|<em>list</em>): The dataset(s) to save. </br></p>
+<p><code>dataset</code> (<em>str</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>list</em>): The dataset(s) to save. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>overwrite</code> (<em>bool</em>): Whether to overwrite the file if it already exists. (Default: <strong>True</strong>) </br>
-<code>creation_options</code> (<em>list</em>|<em>None</em>): A list of creation options to pass to GDAL if saving as raster. (Default: <strong>True</strong>) </br>
+<code>creation_options</code> (<em>list</em>/<em>None</em>): A list of creation options to pass to GDAL if saving as raster. (Default: <strong>True</strong>) </br>
 <code>prefix</code> (<em>str</em>): A prefix to add to the file name. (Default: <strong>""</strong>) </br>
 <code>suffix</code> (<em>str</em>): A suffix to add to the file name. (Default: <strong>""</strong>) </br>
 <code>add_uuid</code> (<em>bool</em>): Whether to add a UUID to the file name. (Default: <strong>True</strong>) </br></p></div>
@@ -2435,11 +2435,11 @@ an osr.SpatialReference.</p>
     Writes a dataset to memory. Can be a raster or a vector.
 
     ## Args:
-    `dataset` (_str_|_gdal.Dataset_|_ogr.DataSource_|_list_): The dataset(s) to save. &lt;/br&gt;
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_/_list_): The dataset(s) to save. &lt;/br&gt;
 
     ## Kwargs:
     `overwrite` (_bool_): Whether to overwrite the file if it already exists. (Default: **True**) &lt;/br&gt;
-    `creation_options` (_list_|_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) &lt;/br&gt;
+    `creation_options` (_list_/_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) &lt;/br&gt;
     `prefix` (_str_): A prefix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): A suffix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): Whether to add a UUID to the file name. (Default: **True**) &lt;/br&gt;
@@ -2461,7 +2461,7 @@ an osr.SpatialReference.</p>
 <dd>
 <div class="desc"><p>Converts a numpy array or list of numpy arrays to a list of arrays.</p>
 <h2 id="args">Args:</h2>
-<p><code>array_or_list_of_array</code> (<em>numpy.ndarray</em>|<em>list</em>|<em>str</em>): The numpy array or list of numpy arrays to convert to a list of arrays.</p>
+<p><code>array_or_list_of_array</code> (<em>numpy.ndarray</em>/<em>list</em>/<em>str</em>): The numpy array or list of numpy arrays to convert to a list of arrays.</p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>list</em>): The list of arrays.</p></div>
 <details class="source">
@@ -2473,7 +2473,7 @@ an osr.SpatialReference.</p>
     Converts a numpy array or list of numpy arrays to a list of arrays.
 
     ## Args:
-    `array_or_list_of_array` (_numpy.ndarray_|_list_|_str_): The numpy array or list of numpy arrays to convert to a list of arrays.
+    `array_or_list_of_array` (_numpy.ndarray_/_list_/_str_): The numpy array or list of numpy arrays to convert to a list of arrays.
 
     ## Returns:
     (_list_): The list of arrays.
@@ -2504,7 +2504,7 @@ an osr.SpatialReference.</p>
 <dd>
 <div class="desc"><p>Converts a band number or list of band numbers to a list of band numbers.</p>
 <h2 id="args">Args:</h2>
-<p><code>band_number</code> (<em>int</em>|<em>float</em>|<em>list</em>): The band number or list of band numbers to convert to a list of band numbers. </br>
+<p><code>band_number</code> (<em>int</em>/<em>float</em>/<em>list</em>): The band number or list of band numbers to convert to a list of band numbers. </br>
 <code>band_count</code> (<em>int</em>): The number of bands in the raster. </br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>list</em>): The list of band numbers.</p></div>
@@ -2520,7 +2520,7 @@ an osr.SpatialReference.</p>
     Converts a band number or list of band numbers to a list of band numbers.
 
     ## Args:
-    `band_number` (_int_|_float_|_list_): The band number or list of band numbers to convert to a list of band numbers. &lt;/br&gt;
+    `band_number` (_int_/_float_/_list_): The band number or list of band numbers to convert to a list of band numbers. &lt;/br&gt;
     `band_count` (_int_): The number of bands in the raster. &lt;/br&gt;
 
     ## Returns:

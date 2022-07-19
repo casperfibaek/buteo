@@ -124,20 +124,20 @@ def shift_raster(
     Shifts a raster in a given direction.
 
     ## Args:
-    `raster` (_str_|_list_|_gdal.Dataset_): The raster(s) to be shifted. &lt;/br&gt;
-    `shift_list` (_list_|_tuple_): The shift in x and y direction. &lt;/br&gt;
+    `raster` (_str_/_list_/_gdal.Dataset_): The raster(s) to be shifted. &lt;/br&gt;
+    `shift_list` (_list_/_tuple_): The shift in x and y direction. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_|_list_|_None_): The path to the output raster. If None, the raster is
+    `out_path` (_str_/_list_/_None_): The path to the output raster. If None, the raster is
     created in memory. (Default: **None**)&lt;/br&gt;
     `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**) &lt;/br&gt;
     `prefix` (_str_): The prefix to be added to the output raster name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): The suffix to be added to the output raster name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): If True, a unique identifier will be added to the output raster name. (Default: **False**) &lt;/br&gt;
-    `creation_options` (_list_|_None_): The creation options to be used when creating the output. (Default: **None**) &lt;/br&gt;
+    `creation_options` (_list_/_None_): The creation options to be used when creating the output. (Default: **None**) &lt;/br&gt;
 
     ## Returns:
-    (_str_|_list_): The path(s) to the shifted raster(s).
+    (_str_/_list_): The path(s) to the shifted raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(shift_list, [[tuple, list]], &#34;shift_list&#34;)
@@ -188,18 +188,18 @@ def shift_raster(
 <dd>
 <div class="desc"><p>Shifts a raster in a given direction.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>str</em>|<em>list</em>|<em>gdal.Dataset</em>): The raster(s) to be shifted. </br>
-<code>shift_list</code> (<em>list</em>|<em>tuple</em>): The shift in x and y direction. </br></p>
+<p><code>raster</code> (<em>str</em>/<em>list</em>/<em>gdal.Dataset</em>): The raster(s) to be shifted. </br>
+<code>shift_list</code> (<em>list</em>/<em>tuple</em>): The shift in x and y direction. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em>|<em>list</em>|<em>None</em>): The path to the output raster. If None, the raster is
+<p><code>out_path</code> (<em>str</em>/<em>list</em>/<em>None</em>): The path to the output raster. If None, the raster is
 created in memory. (Default: <strong>None</strong>)</br>
 <code>overwrite</code> (<em>bool</em>): If True, the output raster will be overwritten if it already exists. (Default: <strong>True</strong>) </br>
 <code>prefix</code> (<em>str</em>): The prefix to be added to the output raster name. (Default: <strong>""</strong>) </br>
 <code>suffix</code> (<em>str</em>): The suffix to be added to the output raster name. (Default: <strong>""</strong>) </br>
 <code>add_uuid</code> (<em>bool</em>): If True, a unique identifier will be added to the output raster name. (Default: <strong>False</strong>) </br>
-<code>creation_options</code> (<em>list</em>|<em>None</em>): The creation options to be used when creating the output. (Default: <strong>None</strong>) </br></p>
+<code>creation_options</code> (<em>list</em>/<em>None</em>): The creation options to be used when creating the output. (Default: <strong>None</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em>|<em>list</em>): The path(s) to the shifted raster(s).</p></div>
+<p>(<em>str</em>/<em>list</em>): The path(s) to the shifted raster(s).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -219,20 +219,20 @@ created in memory. (Default: <strong>None</strong>)</br>
     Shifts a raster in a given direction.
 
     ## Args:
-    `raster` (_str_|_list_|_gdal.Dataset_): The raster(s) to be shifted. &lt;/br&gt;
-    `shift_list` (_list_|_tuple_): The shift in x and y direction. &lt;/br&gt;
+    `raster` (_str_/_list_/_gdal.Dataset_): The raster(s) to be shifted. &lt;/br&gt;
+    `shift_list` (_list_/_tuple_): The shift in x and y direction. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_|_list_|_None_): The path to the output raster. If None, the raster is
+    `out_path` (_str_/_list_/_None_): The path to the output raster. If None, the raster is
     created in memory. (Default: **None**)&lt;/br&gt;
     `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**) &lt;/br&gt;
     `prefix` (_str_): The prefix to be added to the output raster name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): The suffix to be added to the output raster name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): If True, a unique identifier will be added to the output raster name. (Default: **False**) &lt;/br&gt;
-    `creation_options` (_list_|_None_): The creation options to be used when creating the output. (Default: **None**) &lt;/br&gt;
+    `creation_options` (_list_/_None_): The creation options to be used when creating the output. (Default: **None**) &lt;/br&gt;
 
     ## Returns:
-    (_str_|_list_): The path(s) to the shifted raster(s).
+    (_str_/_list_): The path(s) to the shifted raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(shift_list, [[tuple, list]], &#34;shift_list&#34;)

@@ -94,17 +94,17 @@ def vectorize_raster(
     best on integer rasters.
 
     ## Args:
-    `raster` (_str_|_list_|_gdal.Dataset_): The raster(s) to vectorize.
+    `raster` (_str_/_list_/_gdal.Dataset_): The raster(s) to vectorize.
 
     ## Kwargs:
-    `out_path` (_str_|_list_|_None_): The path(s) to save the vectorized raster(s) to. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_/_list_/_None_): The path(s) to save the vectorized raster(s) to. (Default: **None**) &lt;/br&gt;
     `band` (_int_): The band to vectorize. (Default: **1**) &lt;/br&gt;
     `prefix` (_str_): The prefix to be added to the output raster name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): The suffix to be added to the output raster name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): If True, a unique identifier will be added to the output raster name. (Default: **False**) &lt;/br&gt;
 
     ## Returns:
-    (_str_|_list_): The path(s) to the vectorized raster(s).
+    (_str_/_list_): The path(s) to the vectorized raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(out_path, [str, [str], None], &#34;out_path&#34;)
@@ -156,15 +156,15 @@ def vectorize_raster(
 <div class="desc"><p>Vectorizes a raster by turning it into polygons per unique value. Works
 best on integer rasters.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>str</em>|<em>list</em>|<em>gdal.Dataset</em>): The raster(s) to vectorize.</p>
+<p><code>raster</code> (<em>str</em>/<em>list</em>/<em>gdal.Dataset</em>): The raster(s) to vectorize.</p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em>|<em>list</em>|<em>None</em>): The path(s) to save the vectorized raster(s) to. (Default: <strong>None</strong>) </br>
+<p><code>out_path</code> (<em>str</em>/<em>list</em>/<em>None</em>): The path(s) to save the vectorized raster(s) to. (Default: <strong>None</strong>) </br>
 <code>band</code> (<em>int</em>): The band to vectorize. (Default: <strong>1</strong>) </br>
 <code>prefix</code> (<em>str</em>): The prefix to be added to the output raster name. (Default: <strong>""</strong>) </br>
 <code>suffix</code> (<em>str</em>): The suffix to be added to the output raster name. (Default: <strong>""</strong>) </br>
 <code>add_uuid</code> (<em>bool</em>): If True, a unique identifier will be added to the output raster name. (Default: <strong>False</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em>|<em>list</em>): The path(s) to the vectorized raster(s).</p></div>
+<p>(<em>str</em>/<em>list</em>): The path(s) to the vectorized raster(s).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -184,17 +184,17 @@ best on integer rasters.</p>
     best on integer rasters.
 
     ## Args:
-    `raster` (_str_|_list_|_gdal.Dataset_): The raster(s) to vectorize.
+    `raster` (_str_/_list_/_gdal.Dataset_): The raster(s) to vectorize.
 
     ## Kwargs:
-    `out_path` (_str_|_list_|_None_): The path(s) to save the vectorized raster(s) to. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_/_list_/_None_): The path(s) to save the vectorized raster(s) to. (Default: **None**) &lt;/br&gt;
     `band` (_int_): The band to vectorize. (Default: **1**) &lt;/br&gt;
     `prefix` (_str_): The prefix to be added to the output raster name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): The suffix to be added to the output raster name. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): If True, a unique identifier will be added to the output raster name. (Default: **False**) &lt;/br&gt;
 
     ## Returns:
-    (_str_|_list_): The path(s) to the vectorized raster(s).
+    (_str_/_list_): The path(s) to the vectorized raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(out_path, [str, [str], None], &#34;out_path&#34;)

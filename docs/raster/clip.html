@@ -262,11 +262,11 @@ def clip_raster(
     Clips a raster(s) using a vector geometry or the extents of a raster.
 
     ## Args:
-    `raster` (_list_|_str_|_gdal.Dataset_): The raster(s) to clip. &lt;/br&gt;
-    `clip_geom` (_str_|_ogr.DataSource_|_gdal.Dataset_): The geometry to use to clip the raster &lt;/br&gt;
+    `raster` (_list_/_str_/_gdal.Dataset_): The raster(s) to clip. &lt;/br&gt;
+    `clip_geom` (_str_/_ogr.DataSource_/_gdal.Dataset_): The geometry to use to clip the raster &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_|_list_|_None_): The path(s) to save the clipped raster to. If None a memory raster is created. (Default: **None**)&lt;/br&gt;
+    `out_path` (_str_/_list_/_None_): The path(s) to save the clipped raster to. If None a memory raster is created. (Default: **None**)&lt;/br&gt;
     `resample_alg` (_str_): The resampling algorithm to use. The following are available: (Default: **nearest**) &lt;/br&gt;
         * `nearest`: Nearest neighbour.
         * `bilinear`: Bilinear.
@@ -289,16 +289,16 @@ def clip_raster(
     `prefix` (_str_): The prefix to use for the output raster. (Default: **&#34;&#34;**)&lt;/br&gt;
     `suffix` (_str_): The suffix to use for the output raster. (Default: **&#34;&#34;**)&lt;/br&gt;
     `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**)&lt;/br&gt;
-    `creation_options` (_list_|_None_): A list of creation options to pass to gdal. (Default: **[]**)&lt;/br&gt;
-    `dst_nodata` (_int_|_float_|_None_): The nodata value to use for the output raster. (Default: **infer**)&lt;/br&gt;
-    `src_nodata` (_int_|_float_|_None_): The nodata value to use for the input raster. (Default: **infer**)&lt;/br&gt;
+    `creation_options` (_list_/_None_): A list of creation options to pass to gdal. (Default: **[]**)&lt;/br&gt;
+    `dst_nodata` (_int_/_float_/_None_): The nodata value to use for the output raster. (Default: **infer**)&lt;/br&gt;
+    `src_nodata` (_int_/_float_/_None_): The nodata value to use for the input raster. (Default: **infer**)&lt;/br&gt;
     `layer_to_clip` (_int_): The layer ID in the vector to use for clipping. (Default: **0**)&lt;/br&gt;
     `verbose` (_int_): The verbosity level. (Default: **0**)&lt;/br&gt;
     `add_uuid` (_bool_): If True, a UUID will be added to the output raster. (Default: **False**)&lt;/br&gt;
     `ram` (_str_): The amount of RAM to use for the operation. (Default: **auto**)&lt;/br&gt;
 
     ## Returns:
-    (_str_|_list_): A string or list of strings representing the path(s) to the clipped raster(s).
+    (_str_/_list_): A string or list of strings representing the path(s) to the clipped raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], &#34;clip_geom&#34;)
@@ -371,10 +371,10 @@ def clip_raster(
 <dd>
 <div class="desc"><p>Clips a raster(s) using a vector geometry or the extents of a raster.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>list</em>|<em>str</em>|<em>gdal.Dataset</em>): The raster(s) to clip. </br>
-<code>clip_geom</code> (<em>str</em>|<em>ogr.DataSource</em>|<em>gdal.Dataset</em>): The geometry to use to clip the raster </br></p>
+<p><code>raster</code> (<em>list</em>/<em>str</em>/<em>gdal.Dataset</em>): The raster(s) to clip. </br>
+<code>clip_geom</code> (<em>str</em>/<em>ogr.DataSource</em>/<em>gdal.Dataset</em>): The geometry to use to clip the raster </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em>|<em>list</em>|<em>None</em>): The path(s) to save the clipped raster to. If None a memory raster is created. (Default: <strong>None</strong>)</br>
+<p><code>out_path</code> (<em>str</em>/<em>list</em>/<em>None</em>): The path(s) to save the clipped raster to. If None a memory raster is created. (Default: <strong>None</strong>)</br>
 <code>resample_alg</code> (<em>str</em>): The resampling algorithm to use. The following are available: (Default: <strong>nearest</strong>) </br>
 * <code>nearest</code>: Nearest neighbour.
 * <code>bilinear</code>: Bilinear.
@@ -397,15 +397,15 @@ def clip_raster(
 <code>prefix</code> (<em>str</em>): The prefix to use for the output raster. (Default: <strong>""</strong>)</br>
 <code>suffix</code> (<em>str</em>): The suffix to use for the output raster. (Default: <strong>""</strong>)</br>
 <code>overwrite</code> (<em>bool</em>): If True, the output raster will be overwritten if it already exists. (Default: <strong>True</strong>)</br>
-<code>creation_options</code> (<em>list</em>|<em>None</em>): A list of creation options to pass to gdal. (Default: <strong>[]</strong>)</br>
-<code>dst_nodata</code> (<em>int</em>|<em>float</em>|<em>None</em>): The nodata value to use for the output raster. (Default: <strong>infer</strong>)</br>
-<code>src_nodata</code> (<em>int</em>|<em>float</em>|<em>None</em>): The nodata value to use for the input raster. (Default: <strong>infer</strong>)</br>
+<code>creation_options</code> (<em>list</em>/<em>None</em>): A list of creation options to pass to gdal. (Default: <strong>[]</strong>)</br>
+<code>dst_nodata</code> (<em>int</em>/<em>float</em>/<em>None</em>): The nodata value to use for the output raster. (Default: <strong>infer</strong>)</br>
+<code>src_nodata</code> (<em>int</em>/<em>float</em>/<em>None</em>): The nodata value to use for the input raster. (Default: <strong>infer</strong>)</br>
 <code>layer_to_clip</code> (<em>int</em>): The layer ID in the vector to use for clipping. (Default: <strong>0</strong>)</br>
 <code>verbose</code> (<em>int</em>): The verbosity level. (Default: <strong>0</strong>)</br>
 <code>add_uuid</code> (<em>bool</em>): If True, a UUID will be added to the output raster. (Default: <strong>False</strong>)</br>
 <code>ram</code> (<em>str</em>): The amount of RAM to use for the operation. (Default: <strong>auto</strong>)</br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em>|<em>list</em>): A string or list of strings representing the path(s) to the clipped raster(s).</p></div>
+<p>(<em>str</em>/<em>list</em>): A string or list of strings representing the path(s) to the clipped raster(s).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -435,11 +435,11 @@ def clip_raster(
     Clips a raster(s) using a vector geometry or the extents of a raster.
 
     ## Args:
-    `raster` (_list_|_str_|_gdal.Dataset_): The raster(s) to clip. &lt;/br&gt;
-    `clip_geom` (_str_|_ogr.DataSource_|_gdal.Dataset_): The geometry to use to clip the raster &lt;/br&gt;
+    `raster` (_list_/_str_/_gdal.Dataset_): The raster(s) to clip. &lt;/br&gt;
+    `clip_geom` (_str_/_ogr.DataSource_/_gdal.Dataset_): The geometry to use to clip the raster &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_|_list_|_None_): The path(s) to save the clipped raster to. If None a memory raster is created. (Default: **None**)&lt;/br&gt;
+    `out_path` (_str_/_list_/_None_): The path(s) to save the clipped raster to. If None a memory raster is created. (Default: **None**)&lt;/br&gt;
     `resample_alg` (_str_): The resampling algorithm to use. The following are available: (Default: **nearest**) &lt;/br&gt;
         * `nearest`: Nearest neighbour.
         * `bilinear`: Bilinear.
@@ -462,16 +462,16 @@ def clip_raster(
     `prefix` (_str_): The prefix to use for the output raster. (Default: **&#34;&#34;**)&lt;/br&gt;
     `suffix` (_str_): The suffix to use for the output raster. (Default: **&#34;&#34;**)&lt;/br&gt;
     `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**)&lt;/br&gt;
-    `creation_options` (_list_|_None_): A list of creation options to pass to gdal. (Default: **[]**)&lt;/br&gt;
-    `dst_nodata` (_int_|_float_|_None_): The nodata value to use for the output raster. (Default: **infer**)&lt;/br&gt;
-    `src_nodata` (_int_|_float_|_None_): The nodata value to use for the input raster. (Default: **infer**)&lt;/br&gt;
+    `creation_options` (_list_/_None_): A list of creation options to pass to gdal. (Default: **[]**)&lt;/br&gt;
+    `dst_nodata` (_int_/_float_/_None_): The nodata value to use for the output raster. (Default: **infer**)&lt;/br&gt;
+    `src_nodata` (_int_/_float_/_None_): The nodata value to use for the input raster. (Default: **infer**)&lt;/br&gt;
     `layer_to_clip` (_int_): The layer ID in the vector to use for clipping. (Default: **0**)&lt;/br&gt;
     `verbose` (_int_): The verbosity level. (Default: **0**)&lt;/br&gt;
     `add_uuid` (_bool_): If True, a UUID will be added to the output raster. (Default: **False**)&lt;/br&gt;
     `ram` (_str_): The amount of RAM to use for the operation. (Default: **auto**)&lt;/br&gt;
 
     ## Returns:
-    (_str_|_list_): A string or list of strings representing the path(s) to the clipped raster(s).
+    (_str_/_list_): A string or list of strings representing the path(s) to the clipped raster(s).
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], &#34;clip_geom&#34;)

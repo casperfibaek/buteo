@@ -108,7 +108,7 @@ def is_valid_geotransform(geotransform):
     `[x_min, pixel_width, row_skew, y_max, column_skew, pixel_height]`
 
     ## Args:
-    `geotransform` (_list_|_tuple_): A GDAL formatted geotransform.
+    `geotransform` (_list_/_tuple_): A GDAL formatted geotransform.
 
     ## Returns:
     (_bool_): **True** if the geotransform is valid, **False** otherwise.
@@ -131,10 +131,10 @@ def ensure_negative(number):
     Ensures that a valid is negative. If the number is positive, it is made negative.
 
     ## Args:
-    `number` (_int_|_float_): A float or int number. &lt;/br&gt;
+    `number` (_int_/_float_): A float or int number. &lt;/br&gt;
 
     ## Returns:
-    (_int_|_float_): The same number made **negative** if necesary.
+    (_int_/_float_): The same number made **negative** if necesary.
     &#34;&#34;&#34;
     assert core_utils.is_number(number), f&#34;number must be a number. Received: {number}&#34;
 
@@ -149,7 +149,7 @@ def get_pixel_offsets(geotransform, bbox_ogr):
     Get the pixels offsets for a bbox and a geotransform.
 
     ## Args:
-    `geotransform` (_list_|_tuple_): A GDAL GeoTransform. &lt;/br&gt;
+    `geotransform` (_list_/_tuple_): A GDAL GeoTransform. &lt;/br&gt;
     `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
 
     ## Returns:
@@ -189,7 +189,7 @@ def get_bbox_from_geotransform(geotransform, raster_x_size, raster_y_size):
     Get an OGR bounding box from a geotransform and raster sizes.
 
     ## Args:
-    `geotransform` (_list_|_tuple_): A GDAL GeoTransform. &lt;/br&gt;
+    `geotransform` (_list_/_tuple_): A GDAL GeoTransform. &lt;/br&gt;
     `raster_x_size` (_int_): The number of pixels in the x direction. &lt;/br&gt;
     `raster_y_size` (_int_): The number of pixels in the y direction. &lt;/br&gt;
 
@@ -637,8 +637,8 @@ def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
     ## Args:
     `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
     `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
-    `pixel_width` (_float_|_int_): The width of the pixel. &lt;/br&gt;
-    `pixel_height` (_float_|_int_): The height of the pixel. &lt;/br&gt;
+    `pixel_width` (_float_/_int_): The width of the pixel. &lt;/br&gt;
+    `pixel_height` (_float_/_int_): The height of the pixel. &lt;/br&gt;
 
     ## Returns:
     (_list_): An OGR formatted bbox of the alignment. `[x_min, x_max, y_min, y_max]`
@@ -864,8 +864,8 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 <h2 id="args">Args:</h2>
 <p><code>bbox1_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
 <code>bbox2_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
-<code>pixel_width</code> (<em>float</em>|<em>int</em>): The width of the pixel. </br>
-<code>pixel_height</code> (<em>float</em>|<em>int</em>): The height of the pixel. </br></p>
+<code>pixel_width</code> (<em>float</em>/<em>int</em>): The width of the pixel. </br>
+<code>pixel_height</code> (<em>float</em>/<em>int</em>): The height of the pixel. </br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>list</em>): An OGR formatted bbox of the alignment. <code>[x_min, x_max, y_min, y_max]</code></p></div>
 <details class="source">
@@ -879,8 +879,8 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     ## Args:
     `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
     `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
-    `pixel_width` (_float_|_int_): The width of the pixel. &lt;/br&gt;
-    `pixel_height` (_float_|_int_): The height of the pixel. &lt;/br&gt;
+    `pixel_width` (_float_/_int_): The width of the pixel. &lt;/br&gt;
+    `pixel_height` (_float_/_int_): The height of the pixel. &lt;/br&gt;
 
     ## Returns:
     (_list_): An OGR formatted bbox of the alignment. `[x_min, x_max, y_min, y_max]`
@@ -1329,9 +1329,9 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 <dd>
 <div class="desc"><p>Ensures that a valid is negative. If the number is positive, it is made negative.</p>
 <h2 id="args">Args:</h2>
-<p><code>number</code> (<em>int</em>|<em>float</em>): A float or int number. </br></p>
+<p><code>number</code> (<em>int</em>/<em>float</em>): A float or int number. </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>int</em>|<em>float</em>): The same number made <strong>negative</strong> if necesary.</p></div>
+<p>(<em>int</em>/<em>float</em>): The same number made <strong>negative</strong> if necesary.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1341,10 +1341,10 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     Ensures that a valid is negative. If the number is positive, it is made negative.
 
     ## Args:
-    `number` (_int_|_float_): A float or int number. &lt;/br&gt;
+    `number` (_int_/_float_): A float or int number. &lt;/br&gt;
 
     ## Returns:
-    (_int_|_float_): The same number made **negative** if necesary.
+    (_int_/_float_): The same number made **negative** if necesary.
     &#34;&#34;&#34;
     assert core_utils.is_number(number), f&#34;number must be a number. Received: {number}&#34;
 
@@ -1360,7 +1360,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 <dd>
 <div class="desc"><p>Get an OGR bounding box from a geotransform and raster sizes.</p>
 <h2 id="args">Args:</h2>
-<p><code>geotransform</code> (<em>list</em>|<em>tuple</em>): A GDAL GeoTransform. </br>
+<p><code>geotransform</code> (<em>list</em>/<em>tuple</em>): A GDAL GeoTransform. </br>
 <code>raster_x_size</code> (<em>int</em>): The number of pixels in the x direction. </br>
 <code>raster_y_size</code> (<em>int</em>): The number of pixels in the y direction. </br></p>
 <h2 id="returns">Returns:</h2>
@@ -1374,7 +1374,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     Get an OGR bounding box from a geotransform and raster sizes.
 
     ## Args:
-    `geotransform` (_list_|_tuple_): A GDAL GeoTransform. &lt;/br&gt;
+    `geotransform` (_list_/_tuple_): A GDAL GeoTransform. &lt;/br&gt;
     `raster_x_size` (_int_): The number of pixels in the x direction. &lt;/br&gt;
     `raster_y_size` (_int_): The number of pixels in the y direction. &lt;/br&gt;
 
@@ -1567,7 +1567,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 <dd>
 <div class="desc"><p>Get the pixels offsets for a bbox and a geotransform.</p>
 <h2 id="args">Args:</h2>
-<p><code>geotransform</code> (<em>list</em>|<em>tuple</em>): A GDAL GeoTransform. </br>
+<p><code>geotransform</code> (<em>list</em>/<em>tuple</em>): A GDAL GeoTransform. </br>
 <code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>list</em>): A list of pixel offsets. <code>[x_start, y_start, x_size, y_size]</code></p></div>
@@ -1580,7 +1580,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     Get the pixels offsets for a bbox and a geotransform.
 
     ## Args:
-    `geotransform` (_list_|_tuple_): A GDAL GeoTransform. &lt;/br&gt;
+    `geotransform` (_list_/_tuple_): A GDAL GeoTransform. &lt;/br&gt;
     `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
 
     ## Returns:
@@ -1715,7 +1715,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 <p>A valid geotransform has the form: </br>
 <code>[x_min, pixel_width, row_skew, y_max, column_skew, pixel_height]</code></p>
 <h2 id="args">Args:</h2>
-<p><code>geotransform</code> (<em>list</em>|<em>tuple</em>): A GDAL formatted geotransform.</p>
+<p><code>geotransform</code> (<em>list</em>/<em>tuple</em>): A GDAL formatted geotransform.</p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>bool</em>): <strong>True</strong> if the geotransform is valid, <strong>False</strong> otherwise.</p></div>
 <details class="source">
@@ -1730,7 +1730,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     `[x_min, pixel_width, row_skew, y_max, column_skew, pixel_height]`
 
     ## Args:
-    `geotransform` (_list_|_tuple_): A GDAL formatted geotransform.
+    `geotransform` (_list_/_tuple_): A GDAL formatted geotransform.
 
     ## Returns:
     (_bool_): **True** if the geotransform is valid, **False** otherwise.

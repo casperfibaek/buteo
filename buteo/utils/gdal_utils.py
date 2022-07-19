@@ -33,7 +33,7 @@ def default_creation_options(options=None):
     If any of the options are already specified, they are not added.
 
     ## Kwargs:
-    `options` (_list_|None): The GDAL creation options to add to. (Default: **None**)
+    `options` (_list_/None): The GDAL creation options to add to. (Default: **None**)
 
     ## Returns:
     (_list_): A list containing the default values.
@@ -195,7 +195,7 @@ def is_in_memory(raster_or_vector):
     Check if vector is in memory
 
     ## Args:
-    `raster_or_vector` (_str_|_gdal.Dataset_|ogr.DataSource): The vector or raster to check.
+    `raster_or_vector` (_str_/_gdal.Dataset_/ogr.DataSource): The vector or raster to check.
 
     ## Returns:
     (_bool_): **True** if the vector is in memory, **False** otherwise.
@@ -236,7 +236,7 @@ def delete_if_in_memory(raster_or_vector):
     Delete raster or vector if it is in memory
 
     ## Args:
-    `raster_or_vector` (_str_|_gdal.Dataset_|_ogr.DataSource_): The vector or raster to check.
+    `raster_or_vector` (_str_/_gdal.Dataset_/_ogr.DataSource_): The vector or raster to check.
 
     ## Returns:
     (_bool_): **True** if the vector is deleted, **False** otherwise.
@@ -259,7 +259,7 @@ def delete_raster_or_vector(raster_or_vector):
     Delete raster or vector. Can be used on both in memory and on disk.
 
     ## Args:
-    `raster_or_vector` (_str_|_gdal.Dataset_|_ogr.DataSource_): The vector or raster to check.
+    `raster_or_vector` (_str_/_gdal.Dataset_/_ogr.DataSource_): The vector or raster to check.
 
     ## Returns:
     (_bool_): **True** if the file is deleted, **False** otherwise.
@@ -556,7 +556,7 @@ def get_path_from_dataset(dataset, *, dataset_type=None):
     Gets the path from a datasets. Can be vector or raster, string or opened.
 
     ## Args:
-    `dataset` (_str_|_gdal.Dataset_|_ogr.DataSource_): The dataset.
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_): The dataset.
 
     ## Kwargs:
     `dataset_type` (_str_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
@@ -602,7 +602,7 @@ def get_path_from_dataset_list(datasets, *, allow_mixed=False, dataset_type=None
 
     ## Kwargs:
     `allow_mixed` (_bool_): If True, allow mixed raster/vector datasets. (**Default**: `False`) </br>
-    `dataset_type` (_str_|_None_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
+    `dataset_type` (_str_/_None_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
 
     ## Returns:
     (_list_): A list of paths.
@@ -671,7 +671,7 @@ def parse_projection(projection, *, return_wkt=False):
     an osr.SpatialReference.
 
     ## Args:
-    `projection` (_str_|_int_|_gdal.Dataset_|_ogr.DataSource_|_osr.SpatialReference_): The projection to parse.
+    `projection` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The projection to parse.
 
     ## Kwargs:
     `return_wkt` (_bool_): If **True** the projection will be returned as a WKT string, otherwise an osr.SpatialReference is returned. (Default: **False**)
@@ -825,7 +825,7 @@ def get_gdalwarp_ram_limit(limit_in_mb):
     Converts a RAM limit to a GDALWarp RAM limit.
 
     ## Args:
-    `limit` (_str_|_int_): The RAM limit to convert. Can be auto, a percentage "80%" or a number in MB.
+    `limit` (_str_/_int_): The RAM limit to convert. Can be auto, a percentage "80%" or a number in MB.
 
     ## Returns:
     (_int_): The GDALWarp RAM limit in bytes.
@@ -864,7 +864,7 @@ def to_array_list(array_or_list_of_array):
     Converts a numpy array or list of numpy arrays to a list of arrays.
 
     ## Args:
-    `array_or_list_of_array` (_numpy.ndarray_|_list_|_str_): The numpy array or list of numpy arrays to convert to a list of arrays.
+    `array_or_list_of_array` (_numpy.ndarray_/_list_/_str_): The numpy array or list of numpy arrays to convert to a list of arrays.
 
     ## Returns:
     (_list_): The list of arrays.
@@ -897,7 +897,7 @@ def to_band_list(
     Converts a band number or list of band numbers to a list of band numbers.
 
     ## Args:
-    `band_number` (_int_|_float_|_list_): The band number or list of band numbers to convert to a list of band numbers. </br>
+    `band_number` (_int_/_float_/_list_): The band number or list of band numbers to convert to a list of band numbers. </br>
     `band_count` (_int_): The number of bands in the raster. </br>
 
     ## Returns:
@@ -949,12 +949,12 @@ def save_dataset_to_disk(
     Writes a dataset to disk. Can be a raster or a vector.
 
     ## Args:
-    `dataset` (_str_|_gdal.Dataset_|_ogr.DataSource_|_list_): The dataset(s) to save. </br>
-    `out_path` (_str_|_list_): The path(s) to save the dataset(s) to. </br>
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_/_list_): The dataset(s) to save. </br>
+    `out_path` (_str_/_list_): The path(s) to save the dataset(s) to. </br>
 
     ## Kwargs:
     `overwrite` (_bool_): Whether to overwrite the file if it already exists. (Default: **True**) </br>
-    `creation_options` (_list_|_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) </br>
+    `creation_options` (_list_/_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) </br>
     `prefix` (_str_): A prefix to add to the file name. (Default: **""**) </br>
     `suffix` (_str_): A suffix to add to the file name. (Default: **""**) </br>
     `add_uuid` (_bool_): Whether to add a UUID to the file name. (Default: **False**) </br>
@@ -1027,11 +1027,11 @@ def save_dataset_to_memory(
     Writes a dataset to memory. Can be a raster or a vector.
 
     ## Args:
-    `dataset` (_str_|_gdal.Dataset_|_ogr.DataSource_|_list_): The dataset(s) to save. </br>
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_/_list_): The dataset(s) to save. </br>
 
     ## Kwargs:
     `overwrite` (_bool_): Whether to overwrite the file if it already exists. (Default: **True**) </br>
-    `creation_options` (_list_|_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) </br>
+    `creation_options` (_list_/_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) </br>
     `prefix` (_str_): A prefix to add to the file name. (Default: **""**) </br>
     `suffix` (_str_): A suffix to add to the file name. (Default: **""**) </br>
     `add_uuid` (_bool_): Whether to add a UUID to the file name. (Default: **True**) </br>

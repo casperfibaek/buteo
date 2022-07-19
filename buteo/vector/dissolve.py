@@ -115,9 +115,9 @@ def dissolve_vector(
 ):
     """Clips a vector to a geometry.
     Args:
-        vector (list of vectors|path|vector): The vectors(s) to clip.
+        vector (list of vectors/path/vector): The vectors(s) to clip.
 
-        clip_geom (list of geom|path|vector|rasters): The geometry to use
+        clip_geom (list of geom/path/vector/rasters): The geometry to use
         for the clipping
 
     **kwargs:

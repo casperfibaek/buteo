@@ -137,11 +137,11 @@ def intersect_vector(
     Clips a vector to a geometry.
 
     ## Args:
-    `vector` (_str_|_ogr.DataSource_|_list_): The vector(s) to intersect. &lt;/br&gt;
-    `clip_geom` (_str_|_ogr.Geometry_): The geometry to intersect the vector(s) with. &lt;/br&gt;
+    `vector` (_str_/_ogr.DataSource_/_list_): The vector(s) to intersect. &lt;/br&gt;
+    `clip_geom` (_str_/_ogr.Geometry_): The geometry to intersect the vector(s) with. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_|_list_|_None_): The path(s) to save the clipped vector(s) to. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_/_list_/_None_): The path(s) to save the clipped vector(s) to. (Default: **None**) &lt;/br&gt;
     `process_layer` (_int_): The layer to process in the vector(s). (Default: **0**) &lt;/br&gt;
     `process_layer_clip` (_int_): The layer to process in the clip geometry. (Default: **0**) &lt;/br&gt;
     `add_index` (_bool_): Add a geospatial index to the vector(s). (Default: **True**) &lt;/br&gt;
@@ -152,7 +152,7 @@ def intersect_vector(
     `allow_lists` (_bool_): Allow the input to be a list of vectors. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_str_|_list_): The path(s) to the clipped vector(s).
+    (_str_/_list_): The path(s) to the clipped vector(s).
     &#34;&#34;&#34;
     core_utils.type_check(vector, [ogr.DataSource, str, list], &#34;vector&#34;)
     core_utils.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], &#34;clip_geom&#34;)
@@ -217,10 +217,10 @@ def intersect_vector(
 <dd>
 <div class="desc"><p>Clips a vector to a geometry.</p>
 <h2 id="args">Args:</h2>
-<p><code>vector</code> (<em>str</em>|<em>ogr.DataSource</em>|<em>list</em>): The vector(s) to intersect. </br>
-<code>clip_geom</code> (<em>str</em>|<em>ogr.Geometry</em>): The geometry to intersect the vector(s) with. </br></p>
+<p><code>vector</code> (<em>str</em>/<em>ogr.DataSource</em>/<em>list</em>): The vector(s) to intersect. </br>
+<code>clip_geom</code> (<em>str</em>/<em>ogr.Geometry</em>): The geometry to intersect the vector(s) with. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em>|<em>list</em>|<em>None</em>): The path(s) to save the clipped vector(s) to. (Default: <strong>None</strong>) </br>
+<p><code>out_path</code> (<em>str</em>/<em>list</em>/<em>None</em>): The path(s) to save the clipped vector(s) to. (Default: <strong>None</strong>) </br>
 <code>process_layer</code> (<em>int</em>): The layer to process in the vector(s). (Default: <strong>0</strong>) </br>
 <code>process_layer_clip</code> (<em>int</em>): The layer to process in the clip geometry. (Default: <strong>0</strong>) </br>
 <code>add_index</code> (<em>bool</em>): Add a geospatial index to the vector(s). (Default: <strong>True</strong>) </br>
@@ -230,7 +230,7 @@ def intersect_vector(
 <code>add_uuid</code> (<em>bool</em>): Add a UUID to the output vector(s). (Default: <strong>False</strong>) </br>
 <code>allow_lists</code> (<em>bool</em>): Allow the input to be a list of vectors. (Default: <strong>True</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em>|<em>list</em>): The path(s) to the clipped vector(s).</p></div>
+<p>(<em>str</em>/<em>list</em>): The path(s) to the clipped vector(s).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -253,11 +253,11 @@ def intersect_vector(
     Clips a vector to a geometry.
 
     ## Args:
-    `vector` (_str_|_ogr.DataSource_|_list_): The vector(s) to intersect. &lt;/br&gt;
-    `clip_geom` (_str_|_ogr.Geometry_): The geometry to intersect the vector(s) with. &lt;/br&gt;
+    `vector` (_str_/_ogr.DataSource_/_list_): The vector(s) to intersect. &lt;/br&gt;
+    `clip_geom` (_str_/_ogr.Geometry_): The geometry to intersect the vector(s) with. &lt;/br&gt;
 
     ## Kwargs:
-    `out_path` (_str_|_list_|_None_): The path(s) to save the clipped vector(s) to. (Default: **None**) &lt;/br&gt;
+    `out_path` (_str_/_list_/_None_): The path(s) to save the clipped vector(s) to. (Default: **None**) &lt;/br&gt;
     `process_layer` (_int_): The layer to process in the vector(s). (Default: **0**) &lt;/br&gt;
     `process_layer_clip` (_int_): The layer to process in the clip geometry. (Default: **0**) &lt;/br&gt;
     `add_index` (_bool_): Add a geospatial index to the vector(s). (Default: **True**) &lt;/br&gt;
@@ -268,7 +268,7 @@ def intersect_vector(
     `allow_lists` (_bool_): Allow the input to be a list of vectors. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_str_|_list_): The path(s) to the clipped vector(s).
+    (_str_/_list_): The path(s) to the clipped vector(s).
     &#34;&#34;&#34;
     core_utils.type_check(vector, [ogr.DataSource, str, list], &#34;vector&#34;)
     core_utils.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], &#34;clip_geom&#34;)

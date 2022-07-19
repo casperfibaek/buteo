@@ -26,7 +26,7 @@ def raster_has_nodata_value(raster):
     Check if a raster or a list of rasters contain nodata values
 
     ## Args:
-    `raster` (_str_|_gdal.Dataset_, _list_): The raster to check for nodata values.
+    `raster` (_str_/_gdal.Dataset_, _list_): The raster to check for nodata values.
 
     ## Returns:
     (_bool_): **True** if the raster or list of rasters contain nodata values.
@@ -58,10 +58,10 @@ def raster_get_nodata_value(raster):
     Get the nodata value of a raster or a list of rasters.
 
     ## Args:
-    `raster` (_str_|_gdal.Dataset_, _list_): The raster(s) to get nodata values from.
+    `raster` (_str_/_gdal.Dataset_, _list_): The raster(s) to get nodata values from.
 
     ## Returns:
-    (_float_|_int_|_list_): The nodata value(s) of the raster(s).
+    (_float_/_int_/_list_): The nodata value(s) of the raster(s).
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
@@ -97,14 +97,14 @@ def raster_set_nodata(
     Sets all the nodata for raster(s) to a value.
 
     ## Args:
-    `raster` (_str_|_gdal.Dataset_|_list_): The raster(s) to set nodata values for. </br>
-    `dst_nodata` (_float_|_int_|_str_|_None_): The target nodata value. If 'infer' the nodata
+    `raster` (_str_/_gdal.Dataset_/_list_): The raster(s) to set nodata values for. </br>
+    `dst_nodata` (_float_/_int_/_str_/_None_): The target nodata value. If 'infer' the nodata
         value is set based on the input datatype. A list of nodata values can be based matching
         the amount of input rasters. If multiple nodata values should be set,
         use raster_mask_values. </br>
 
     ## Kwargs:
-    `out_path` (_str_|_list_|_None_): The destination of the changed rasters. (Default: **None**) </br>
+    `out_path` (_str_/_list_/_None_): The destination of the changed rasters. (Default: **None**) </br>
     `overwrite` (_bool_): Should the rasters be overwritten if they already exist? (Default: **True**) </br>
     `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) </br>
     `prefix` (_str_): Prefix to add to the output. (Default: **""**) </br>
@@ -112,7 +112,7 @@ def raster_set_nodata(
     `creation_options` (_list_): Creation options for the output rasters. (Default: **None**) </br>
 
     ## Returns:
-    (_str_|_list_): Returns the rasters with nodata set. If in_place is True a reference to the
+    (_str_/_list_): Returns the rasters with nodata set. If in_place is True a reference to the
     changed orignal is returned, otherwise a copied memory raster or the path to the
     generated raster is outputted.
     """
@@ -215,10 +215,10 @@ def raster_remove_nodata(
     Removes all the nodata from a raster or a list of rasters.
 
     ## Args:
-    `raster` (_str_|_gdal.Dataset_|_list_): The raster(s) to remove nodata values for. </br>
+    `raster` (_str_/_gdal.Dataset_/_list_): The raster(s) to remove nodata values for. </br>
 
     ## Kwargs:
-    `out_path` (_str_|_list_|_None_): The destination of the changed rasters. (Default: **None**) </br>
+    `out_path` (_str_/_list_/_None_): The destination of the changed rasters. (Default: **None**) </br>
     `overwrite` (_bool_): Should the rasters be overwritten if they already exist? (Default: **True**) </br>
     `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) </br>
     `prefix` (_str_): Prefix to add to the output. (Default: **""**) </br>
@@ -226,7 +226,7 @@ def raster_remove_nodata(
     `creation_options` (_list_): Creation options for the output rasters. (Default: **None**) </br>
 
     ## Returns:
-    (_str_|_list_): Returns the rasters with nodata removed. If in_place is True a reference to the
+    (_str_/_list_): Returns the rasters with nodata removed. If in_place is True a reference to the
     changed orignal is returned, otherwise a copied memory raster or the path to the
     generated raster is outputted.
     """
@@ -261,25 +261,25 @@ def raster_mask_values(
     Mask a raster with a list of values.
 
     ## Args:
-    `raster` (_str_|_gdal.Dataset_|_list_): The raster(s) to mask. </br>
+    `raster` (_str_/_gdal.Dataset_/_list_): The raster(s) to mask. </br>
     `values_to_mask` (_list_): The values to mask. </br>
 
     ## Kwargs:
     `include_original_nodata` (_bool_): Should the nodata_value of the input raster be added
     to the list of masked values? (Default: **True**) </br>
-    `dst_nodata` (_float_|_int_|_str_|_list_): The nodata value to use for the output raster.
+    `dst_nodata` (_float_/_int_/_str_/_list_): The nodata value to use for the output raster.
     If infer, the nodata_value from the input raster is used. (Default: **"infer"**) </br>
-    `out_path` (_str_|_list_|_None_): The destination of the changed rasters.
+    `out_path` (_str_/_list_/_None_): The destination of the changed rasters.
     If out_paths are specified, in_place is automatically set to False. The path can be a folder. (Default: **None**)</br>
     `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) </br>
     `overwrite` (_bool_): If the output path exists already, should it be overwritten? (Default: **True**)</br>
     `prefix` (_str_): Prefix to add to the output. (Default: **""**) </br>
     `suffix` (_str_): Suffix to add to the output. (Default: **""**) </br>
     `add_uuid` (_bool_): Should a uuid be added to the output path? (Default: **False**) </br>
-    `creation_options` (_list_|_None_): The GDAL creation options to be passed. (Default: **None**) </br>
+    `creation_options` (_list_/_None_): The GDAL creation options to be passed. (Default: **None**) </br>
 
     Returns:
-    (_str_|_list_): Returns the rasters with nodata removed. If in_place is True a reference to the
+    (_str_/_list_): Returns the rasters with nodata removed. If in_place is True a reference to the
     changed orignal is returned, otherwise a copied memory raster or the path to the
     generated raster is outputted.
     """
@@ -361,7 +361,7 @@ def raster_mask_values(
             if idx == 0:
                 mask = arr == mask_value
             else:
-                mask = mask|arr == mask_value
+                mask = mask/arr == mask_value
 
         arr = np.ma.masked_array(arr, mask=mask, fill_value=internal_dst_nodata)
 
