@@ -49,7 +49,7 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     a list is returned with the opened raster.
 
     ## Args:
-    `raster` (_gdal.Dataset_/_str_/_list__): A path to a raster or a GDAL dataframe. </br>
+    `raster` (_gdal.Dataset_/_str_/_list_): A path to a raster or a GDAL dataframe. </br>
 
     ## Kwargs:
     `writeable` (_bool_): If True, the raster is opened in write mode. (Default: **True**) </br>
@@ -57,7 +57,7 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     a single raster is allowed. (Default: **True**) </br>
 
     ## Returns:
-    (_gdal.Dataset_/_list__): A gdal.Dataset or a list of gdal.Datasets.
+    (_gdal.Dataset_/_list_): A gdal.Dataset or a list of gdal.Datasets.
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(writeable, [bool], "writeable")
@@ -194,7 +194,7 @@ def raster_to_metadata(raster, *, allow_lists=True):
     Reads a raster from a list of rasters, string or a dataset and returns metadata.
 
     ## Args:
-    `raster` (_gdal.Dataset_/_str_/_list__): A GDAL dataframe or a path to a raster. </br>
+    `raster` (_gdal.Dataset_/_str_/_list_): A GDAL dataframe or a path to a raster. </br>
 
     ## Kwargs:
     `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only

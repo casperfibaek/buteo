@@ -84,7 +84,7 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     a list is returned with the opened raster.
 
     ## Args:
-    `raster` (_gdal.Dataset_/_str_/_list__): A path to a raster or a GDAL dataframe. &lt;/br&gt;
+    `raster` (_gdal.Dataset_/_str_/_list_): A path to a raster or a GDAL dataframe. &lt;/br&gt;
 
     ## Kwargs:
     `writeable` (_bool_): If True, the raster is opened in write mode. (Default: **True**) &lt;/br&gt;
@@ -92,7 +92,7 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     a single raster is allowed. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_gdal.Dataset_/_list__): A gdal.Dataset or a list of gdal.Datasets.
+    (_gdal.Dataset_/_list_): A gdal.Dataset or a list of gdal.Datasets.
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(writeable, [bool], &#34;writeable&#34;)
@@ -229,7 +229,7 @@ def raster_to_metadata(raster, *, allow_lists=True):
     Reads a raster from a list of rasters, string or a dataset and returns metadata.
 
     ## Args:
-    `raster` (_gdal.Dataset_/_str_/_list__): A GDAL dataframe or a path to a raster. &lt;/br&gt;
+    `raster` (_gdal.Dataset_/_str_/_list_): A GDAL dataframe or a path to a raster. &lt;/br&gt;
 
     ## Kwargs:
     `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
@@ -1240,13 +1240,13 @@ as a raster using a reference raster.</p>
 gdal.Dataset is passed it is returned. Supports lists. If a list is passed
 a list is returned with the opened raster.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>gdal.Dataset</em>/<em>str</em>/_list__): A path to a raster or a GDAL dataframe. </br></p>
+<p><code>raster</code> (<em>gdal.Dataset</em>/<em>str</em>/<em>list</em>): A path to a raster or a GDAL dataframe. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>writeable</code> (<em>bool</em>): If True, the raster is opened in write mode. (Default: <strong>True</strong>) </br>
 <code>allow_lists</code> (<em>bool</em>): If True, the input can be a list of rasters. Otherwise, only
 a single raster is allowed. (Default: <strong>True</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>gdal.Dataset</em>/_list__): A gdal.Dataset or a list of gdal.Datasets.</p></div>
+<p>(<em>gdal.Dataset</em>/<em>list</em>): A gdal.Dataset or a list of gdal.Datasets.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1258,7 +1258,7 @@ a single raster is allowed. (Default: <strong>True</strong>) </br></p>
     a list is returned with the opened raster.
 
     ## Args:
-    `raster` (_gdal.Dataset_/_str_/_list__): A path to a raster or a GDAL dataframe. &lt;/br&gt;
+    `raster` (_gdal.Dataset_/_str_/_list_): A path to a raster or a GDAL dataframe. &lt;/br&gt;
 
     ## Kwargs:
     `writeable` (_bool_): If True, the raster is opened in write mode. (Default: **True**) &lt;/br&gt;
@@ -1266,7 +1266,7 @@ a single raster is allowed. (Default: <strong>True</strong>) </br></p>
     a single raster is allowed. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
-    (_gdal.Dataset_/_list__): A gdal.Dataset or a list of gdal.Datasets.
+    (_gdal.Dataset_/_list_): A gdal.Dataset or a list of gdal.Datasets.
     &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
     core_utils.type_check(writeable, [bool], &#34;writeable&#34;)
@@ -1555,7 +1555,7 @@ specified. </br></p></div>
 <dd>
 <div class="desc"><p>Reads a raster from a list of rasters, string or a dataset and returns metadata.</p>
 <h2 id="args">Args:</h2>
-<p><code>raster</code> (<em>gdal.Dataset</em>/<em>str</em>/_list__): A GDAL dataframe or a path to a raster. </br></p>
+<p><code>raster</code> (<em>gdal.Dataset</em>/<em>str</em>/<em>list</em>): A GDAL dataframe or a path to a raster. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>allow_lists</code> (<em>bool</em>): If True, the input can be a list of rasters. Otherwise, only
 a single raster is allowed. (Default: <strong>True</strong>) </br></p>
@@ -1570,7 +1570,7 @@ a single raster is allowed. (Default: <strong>True</strong>) </br></p>
     Reads a raster from a list of rasters, string or a dataset and returns metadata.
 
     ## Args:
-    `raster` (_gdal.Dataset_/_str_/_list__): A GDAL dataframe or a path to a raster. &lt;/br&gt;
+    `raster` (_gdal.Dataset_/_str_/_list_): A GDAL dataframe or a path to a raster. &lt;/br&gt;
 
     ## Kwargs:
     `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
