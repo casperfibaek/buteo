@@ -32,23 +32,7 @@ def _add_border_to_raster(
     overwrite=True,
     creation_options=None,
 ):
-    """
-    Add a border to a raster.
-
-    ## Args:
-    `input_raster` (_str_ || _gdal.DataSet_): The input raster.
-
-    ## Kwargs:
-    `out_path` (_str_ || _None_): The output path. If **None** the output will be a memory raster.
-    `border_size` (_int_): The size of the border.
-    `border_size_unit` (_str_): The unit of the border size.
-    `border_value` (_int_): The value of the border.
-    `overwrite` (_bool_): If **True**, the output raster will be overwritten.
-    `creation_options` (_list_ || _None_): Creation options for the output raster.
-
-    ## Returns:
-    `out_raster` (_str_ || _gdal.DataSet_): The output raster with added borders.
-    """
+    """ Internal. """
     in_raster = core_raster.open_raster(raster)
     metadata = core_raster.raster_to_metadata(in_raster)
 
@@ -145,18 +129,18 @@ def add_border_to_raster(
     Add a border to a raster.
 
     ## Args:
-    `input_raster` (_str_ || _gdal.DataSet_): The input raster.
+    `input_raster` (_str_ | _gdal.DataSet_): The input raster.
 
     ## Kwargs:
-    `out_path` (_str_ || _None_): The output path. If **None** the output will be a memory raster.
-    `border_size` (_int_): The size of the border.
-    `border_size_unit` (_str_): The unit of the border size.
-    `border_value` (_int_): The value of the border.
-    `overwrite` (_bool_): If **True**, the output raster will be overwritten.
-    `creation_options` (_list_ || _None_): Creation options for the output raster.
+    `out_path` (_str_ | _None_): The output path. If **None** the output will be a memory raster. </br>
+    `border_size` (_int_): The size of the border. </br>
+    `border_size_unit` (_str_): The unit of the border size. </br>
+    `border_value` (_int_): The value of the border. </br>
+    `overwrite` (_bool_): If **True**, the output raster will be overwritten. </br>
+    `creation_options` (_list_ | _None_): Creation options for the output raster. </br>
 
     ## Returns:
-    `out_raster` (_str_ || _gdal.DataSet_): The output raster with added borders.
+    `out_raster` (_str_ | _gdal.DataSet_): The output raster with added borders.
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(out_path, [str, None], "out_path")

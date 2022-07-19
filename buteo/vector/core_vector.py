@@ -81,7 +81,7 @@ def open_vector(
     Opens a vector to an ogr.Datasource class.
 
     ## Args:
-    `vector` (_str_ || _ogr.DataSource_ || _gdal.Dataset_): The vector to open. If a
+    `vector` (_str_ | _ogr.DataSource_ | _gdal.Dataset_): The vector to open. If a
     raster is supplied the bounding box is opened as a vector. </br>
 
     ## Kwargs:
@@ -90,7 +90,7 @@ def open_vector(
     `allow_lists` (_bool_): If True, the input can be a list of vectors. (Default: **True**) </br>
 
     ## Returns:
-    (_ogr.DataSource_ || _list_): The opened vector(s).
+    (_ogr.DataSource_ | _list_): The opened vector(s).
     """
     core_utils.type_check(vector, [str, ogr.DataSource, gdal.Dataset, [str, ogr.DataSource, gdal.Dataset]], "vector")
     core_utils.type_check(writeable, [bool], "writeable")
@@ -273,13 +273,13 @@ def vector_to_metadata(vector, *, allow_lists=True):
     Creates a dictionary with metadata about the vector layer.
 
     ## Args:
-    `vector` (_ogr.DataSource_ || _str_ || _list_): A vector layer(s) or path(s) to a vector file.
+    `vector` (_ogr.DataSource_ | _str_ | _list_): A vector layer(s) or path(s) to a vector file.
 
     ## Kwargs:
     `allow_lists` (_bool_): If **True**, vector can be a list of vector layers or paths. If `False`, `vector` must be a single vector layer or path. (default: **True**)
 
     ## Returns:
-    (_dict_ || _list_) A dictionary with metadata about the vector layer(s) or a list of dictionaries with metadata about the vector layer(s).
+    (_dict_ | _list_) A dictionary with metadata about the vector layer(s) or a list of dictionaries with metadata about the vector layer(s).
     """
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
     core_utils.type_check(allow_lists, [bool], "allow_lists")
@@ -385,7 +385,7 @@ def filter_vector(
     Filters a vector using its attribute table and a function.
 
     ## Args:
-    `vector` (_ogr.DataSource_ || _str_ || _list_): A vector layer(s) or path(s) to a vector file.
+    `vector` (_ogr.DataSource_ | _str_ | _list_): A vector layer(s) or path(s) to a vector file.
     `filter_function` (_function_): A function that takes a dictionary of attributes and returns a boolean.
 
     ## Kwargs:
@@ -398,7 +398,7 @@ def filter_vector(
     `overwrite` (_bool_): If **True**, the output vector file will be overwritten if it already exists. (Default: **True**) </br>
 
     ## Returns:
-    (_str_ || _list_): Path(s) to the output vector file(s).
+    (_str_ | _list_): Path(s) to the output vector file(s).
     """
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
     core_utils.type_check(filter_function, [type(lambda: True)], "filter_function")
@@ -446,13 +446,13 @@ def vector_add_index(vector, allow_lists=True):
     Adds a spatial index to the vector in place, if it doesn't have one.
 
     ## Args:
-    (_ogr.DataSource_ || _str_ || _list_): A vector layer(s) or path(s) to add indices to.
+    (_ogr.DataSource_ | _str_ | _list_): A vector layer(s) or path(s) to add indices to.
 
     ## Kwargs:
     `allow_lists` (_bool_): If **True**, vector can be a list of vector layers or paths. If `False`, `vector` must be a single vector layer or path. (default: **True**)
 
     ## Returns:
-    (_str_ || _list_): Path(s) to the input rasters.
+    (_str_ | _list_): Path(s) to the input rasters.
     """
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
 
@@ -592,10 +592,10 @@ def vector_add_shapes_in_place(vector, *, shapes=None, prefix="", allow_lists=Tr
     Can also add compactness measurements.
 
     ## Args:
-    `vector` (_str_ || _ogr.DataSource_ || _list_): Vector layer(s) or path(s) to vector layer(s).
+    `vector` (_str_ | _ogr.DataSource_ | _list_): Vector layer(s) or path(s) to vector layer(s).
 
     ## Kwargs:
-    `shapes` (_list_ || _None_): The shapes to calculate. The following a possible: </br>
+    `shapes` (_list_ | _None_): The shapes to calculate. The following a possible: </br>
         * Area          (In same unit as projection)
         * Perimeter     (In same unit as projection)
         * IPQ           (0-1) given as (4*Pi*Area)/(Perimeter ** 2)
@@ -608,7 +608,7 @@ def vector_add_shapes_in_place(vector, *, shapes=None, prefix="", allow_lists=Tr
     `verbose` (_bool_): If True, will print progress.
 
     ## Returns:
-    (_str_ || _list_): Path(s) to the original rasters that have been augmented in place.
+    (_str_ | _list_): Path(s) to the original rasters that have been augmented in place.
 
     Returns:
         Either the path to the updated vector or a list of the input vectors.

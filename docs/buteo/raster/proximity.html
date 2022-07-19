@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>buteo.raster.proximity API documentation</title>
+<meta name="description" content="Calculate distances on a raster. ### …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>buteo.raster.proximity</code></h1>
+</header>
+<section id="section-intro">
+<h3 id="calculate-distances-on-a-raster">Calculate distances on a raster.</h3>
+<p>Module to calculate the distance from a pixel value to other pixels.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+### Calculate distances on a raster. ###
+
+Module to calculate the distance from a pixel value to other pixels.
+&#34;&#34;&#34;
+
+# Standard library
+import sys; sys.path.append(&#34;../../&#34;)
+from uuid import uuid4
+
+# External
+import numpy as np
+from osgeo import gdal
+
+# Internal
+from buteo.utils import core_utils, gdal_utils
+from buteo.raster import core_raster
+from buteo.raster.borders import add_border_to_raster
+
+
+
+def calc_proximity(
+    input_rasters,
+    target_value=1,
+    unit=&#34;GEO&#34;,
+    out_path=None,
+    max_dist=1000,
+    add_border=False,
+    border_value=0,
+    weighted=False,
+    invert=False,
+    return_array=False,
+    prefix=&#34;&#34;,
+    suffix=&#34;_proximity&#34;,
+    add_uuid=False,
+    overwrite=True,
+):
+    &#34;&#34;&#34;
+    Calculate the proximity of input_raster to values
+
+    ## Args:
+    `input_rasters` (_list_): A list of rasters to use as input. &lt;/br&gt;
+
+    ## Kwargs:
+    `target_value` (_int_ | _float_): The value to use as target. (Default: **1**) &lt;/br&gt;
+    `unit` (_str_): The unit to use for the distance. GEO or PIXEL. (Default: **&#34;GEO&#34;**) &lt;/br&gt;
+    `out_path` (_str_ | _None_ | _list_): The output path. (Default: **None**) &lt;/br&gt;
+    `max_dist` (_int_ | _float_): The maximum distance to use. (Default: **1000**) &lt;/br&gt;
+    `add_border` (_bool_): If **True**, a border will be added to the raster. (Default: **False**) &lt;/br&gt;
+    `border_value` (_int_ | _float_): The value to use for the border. (Default: **0**) &lt;/br&gt;
+    `weighted` (_bool_): If **True**, the distance will be divided by the max distance. (Default: **False**) &lt;/br&gt;
+    `invert` (_bool_): If **True**, the target will be inversed. (Default: **False**) &lt;/br&gt;
+    `return_array` (_bool_): If **True** a NumPy array will be returned instead of a raster. (Default: **False**) &lt;/br&gt;
+    `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `suffix` (_str_): Suffix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `add_uuid` (_bool_): Should a uuid be added to the output path? (Default: **False**) &lt;/br&gt;
+    `creation_options` (_list_ | _None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;
+    `overwrite` (_bool_): If the output path exists already, should it be overwritten? (Default: **True**)&lt;/br&gt;
+
+    ## Returns:
+    (_str_ | _np.ndarray_): A path to a raster with the calculate proximity, or a numpy array with the data.
+    &#34;&#34;&#34;
+    core_utils.type_check(input_rasters, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;input_rasters&#34;)
+    core_utils.type_check(target_value, [int, float], &#34;target_value&#34;)
+    core_utils.type_check(out_path, [str, [str], None], &#34;out_path&#34;)
+    core_utils.type_check(max_dist, [int, float], &#34;max_dist&#34;)
+    core_utils.type_check(add_border, [bool], &#34;add_border&#34;)
+    core_utils.type_check(border_value, [int, float], &#34;border_value&#34;)
+    core_utils.type_check(weighted, [bool], &#34;weighted&#34;)
+    core_utils.type_check(invert, [bool], &#34;invert&#34;)
+    core_utils.type_check(return_array, [bool], &#34;return_array&#34;)
+    core_utils.type_check(prefix, [str], &#34;prefix&#34;)
+    core_utils.type_check(suffix, [str], &#34;suffix&#34;)
+    core_utils.type_check(add_uuid, [bool], &#34;add_uuid&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+
+    raster_list = core_utils.ensure_list(input_rasters)
+    path_list = core_utils.create_output_paths(
+        raster_list,
+        out_path=out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )
+
+    output = []
+    for index, input_raster in enumerate(raster_list):
+        out_path = path_list[index]
+
+        in_arr = core_raster.raster_to_array(input_raster, filled=True)
+        bin_arr = (in_arr != target_value).astype(&#34;uint8&#34;)
+        bin_raster = core_raster.array_to_raster(bin_arr, reference=input_raster)
+
+        in_raster = core_raster._open_raster(bin_raster)
+        in_raster_path = bin_raster
+
+        if add_border:
+            border_size = 1
+            border_raster = add_border_to_raster(
+                in_raster,
+                border_size=border_size,
+                border_value=border_value,
+                overwrite=True,
+            )
+
+            in_raster = core_raster._open_raster(border_raster)
+
+            gdal.Unlink(in_raster_path)
+            in_raster_path = border_raster
+
+        src_band = in_raster.GetRasterBand(1)
+
+        driver_name = &#34;GTiff&#34; if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+        if driver_name is None:
+            raise ValueError(f&#34;Unable to parse filetype from path: {out_path}&#34;)
+
+        driver = gdal.GetDriverByName(driver_name)
+        if driver is None:
+            raise ValueError(f&#34;Error while creating driver from extension: {out_path}&#34;)
+
+        mem_path = f&#34;/vsimem/raster_proximity_tmp_{uuid4().int}.tif&#34;
+
+        dest_raster = driver.Create(
+            mem_path,
+            in_raster.RasterXSize,
+            in_raster.RasterYSize,
+            1,
+            gdal.GetDataTypeByName(&#34;Float32&#34;),
+        )
+
+        dest_raster.SetGeoTransform(in_raster.GetGeoTransform())
+        dest_raster.SetProjection(in_raster.GetProjectionRef())
+        dst_band = dest_raster.GetRasterBand(1)
+
+        gdal.ComputeProximity(
+            src_band,
+            dst_band,
+            options=[
+                &#34;VALUES=&#39;1&#39;&#34;,
+                f&#34;DISTUNITS={unit}&#34;,
+                f&#34;MAXDIST={max_dist}&#34;,
+            ],
+        )
+
+        dst_arr = dst_band.ReadAsArray()
+        gdal.Unlink(mem_path)
+        gdal.Unlink(in_raster_path)
+
+        dst_arr = np.where(dst_arr &gt; max_dist, max_dist, dst_arr)
+
+        if invert:
+            dst_arr = max_dist - dst_arr
+
+        if weighted:
+            dst_arr = dst_arr / max_dist
+
+        if add_border:
+            dst_arr = dst_arr[border_size:-border_size, border_size:-border_size]
+
+        src_band = None
+        dst_band = None
+        in_raster = None
+        dest_raster = None
+
+        if return_array:
+            output.append(dst_arr)
+        else:
+            core_raster.array_to_raster(dst_arr, reference=input_raster, out_path=out_path)
+            output.append(out_path)
+
+        dst_arr = None
+
+    if isinstance(input_rasters, list):
+        return output
+
+    return output[0]</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.raster.proximity.calc_proximity"><code class="name flex">
+<span>def <span class="ident">calc_proximity</span></span>(<span>input_rasters, target_value=1, unit='GEO', out_path=None, max_dist=1000, add_border=False, border_value=0, weighted=False, invert=False, return_array=False, prefix='', suffix='_proximity', add_uuid=False, overwrite=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate the proximity of input_raster to values</p>
+<h2 id="args">Args:</h2>
+<p><code>input_rasters</code> (<em>list</em>): A list of rasters to use as input. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>target_value</code> (<em>int</em> | <em>float</em>): The value to use as target. (Default: <strong>1</strong>) </br>
+<code>unit</code> (<em>str</em>): The unit to use for the distance. GEO or PIXEL. (Default: <strong>"GEO"</strong>) </br>
+<code>out_path</code> (<em>str</em> | <em>None</em> | <em>list</em>): The output path. (Default: <strong>None</strong>) </br>
+<code>max_dist</code> (<em>int</em> | <em>float</em>): The maximum distance to use. (Default: <strong>1000</strong>) </br>
+<code>add_border</code> (<em>bool</em>): If <strong>True</strong>, a border will be added to the raster. (Default: <strong>False</strong>) </br>
+<code>border_value</code> (<em>int</em> | <em>float</em>): The value to use for the border. (Default: <strong>0</strong>) </br>
+<code>weighted</code> (<em>bool</em>): If <strong>True</strong>, the distance will be divided by the max distance. (Default: <strong>False</strong>) </br>
+<code>invert</code> (<em>bool</em>): If <strong>True</strong>, the target will be inversed. (Default: <strong>False</strong>) </br>
+<code>return_array</code> (<em>bool</em>): If <strong>True</strong> a NumPy array will be returned instead of a raster. (Default: <strong>False</strong>) </br>
+<code>prefix</code> (<em>str</em>): Prefix to add to the output. (Default: <strong>""</strong>) </br>
+<code>suffix</code> (<em>str</em>): Suffix to add to the output. (Default: <strong>""</strong>) </br>
+<code>add_uuid</code> (<em>bool</em>): Should a uuid be added to the output path? (Default: <strong>False</strong>) </br>
+<code>creation_options</code> (<em>list</em> | <em>None</em>): The GDAL creation options to be passed. (Default: <strong>None</strong>) </br>
+<code>overwrite</code> (<em>bool</em>): If the output path exists already, should it be overwritten? (Default: <strong>True</strong>)</br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em> | <em>np.ndarray</em>): A path to a raster with the calculate proximity, or a numpy array with the data.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calc_proximity(
+    input_rasters,
+    target_value=1,
+    unit=&#34;GEO&#34;,
+    out_path=None,
+    max_dist=1000,
+    add_border=False,
+    border_value=0,
+    weighted=False,
+    invert=False,
+    return_array=False,
+    prefix=&#34;&#34;,
+    suffix=&#34;_proximity&#34;,
+    add_uuid=False,
+    overwrite=True,
+):
+    &#34;&#34;&#34;
+    Calculate the proximity of input_raster to values
+
+    ## Args:
+    `input_rasters` (_list_): A list of rasters to use as input. &lt;/br&gt;
+
+    ## Kwargs:
+    `target_value` (_int_ | _float_): The value to use as target. (Default: **1**) &lt;/br&gt;
+    `unit` (_str_): The unit to use for the distance. GEO or PIXEL. (Default: **&#34;GEO&#34;**) &lt;/br&gt;
+    `out_path` (_str_ | _None_ | _list_): The output path. (Default: **None**) &lt;/br&gt;
+    `max_dist` (_int_ | _float_): The maximum distance to use. (Default: **1000**) &lt;/br&gt;
+    `add_border` (_bool_): If **True**, a border will be added to the raster. (Default: **False**) &lt;/br&gt;
+    `border_value` (_int_ | _float_): The value to use for the border. (Default: **0**) &lt;/br&gt;
+    `weighted` (_bool_): If **True**, the distance will be divided by the max distance. (Default: **False**) &lt;/br&gt;
+    `invert` (_bool_): If **True**, the target will be inversed. (Default: **False**) &lt;/br&gt;
+    `return_array` (_bool_): If **True** a NumPy array will be returned instead of a raster. (Default: **False**) &lt;/br&gt;
+    `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `suffix` (_str_): Suffix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `add_uuid` (_bool_): Should a uuid be added to the output path? (Default: **False**) &lt;/br&gt;
+    `creation_options` (_list_ | _None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;
+    `overwrite` (_bool_): If the output path exists already, should it be overwritten? (Default: **True**)&lt;/br&gt;
+
+    ## Returns:
+    (_str_ | _np.ndarray_): A path to a raster with the calculate proximity, or a numpy array with the data.
+    &#34;&#34;&#34;
+    core_utils.type_check(input_rasters, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;input_rasters&#34;)
+    core_utils.type_check(target_value, [int, float], &#34;target_value&#34;)
+    core_utils.type_check(out_path, [str, [str], None], &#34;out_path&#34;)
+    core_utils.type_check(max_dist, [int, float], &#34;max_dist&#34;)
+    core_utils.type_check(add_border, [bool], &#34;add_border&#34;)
+    core_utils.type_check(border_value, [int, float], &#34;border_value&#34;)
+    core_utils.type_check(weighted, [bool], &#34;weighted&#34;)
+    core_utils.type_check(invert, [bool], &#34;invert&#34;)
+    core_utils.type_check(return_array, [bool], &#34;return_array&#34;)
+    core_utils.type_check(prefix, [str], &#34;prefix&#34;)
+    core_utils.type_check(suffix, [str], &#34;suffix&#34;)
+    core_utils.type_check(add_uuid, [bool], &#34;add_uuid&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+
+    raster_list = core_utils.ensure_list(input_rasters)
+    path_list = core_utils.create_output_paths(
+        raster_list,
+        out_path=out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )
+
+    output = []
+    for index, input_raster in enumerate(raster_list):
+        out_path = path_list[index]
+
+        in_arr = core_raster.raster_to_array(input_raster, filled=True)
+        bin_arr = (in_arr != target_value).astype(&#34;uint8&#34;)
+        bin_raster = core_raster.array_to_raster(bin_arr, reference=input_raster)
+
+        in_raster = core_raster._open_raster(bin_raster)
+        in_raster_path = bin_raster
+
+        if add_border:
+            border_size = 1
+            border_raster = add_border_to_raster(
+                in_raster,
+                border_size=border_size,
+                border_value=border_value,
+                overwrite=True,
+            )
+
+            in_raster = core_raster._open_raster(border_raster)
+
+            gdal.Unlink(in_raster_path)
+            in_raster_path = border_raster
+
+        src_band = in_raster.GetRasterBand(1)
+
+        driver_name = &#34;GTiff&#34; if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+        if driver_name is None:
+            raise ValueError(f&#34;Unable to parse filetype from path: {out_path}&#34;)
+
+        driver = gdal.GetDriverByName(driver_name)
+        if driver is None:
+            raise ValueError(f&#34;Error while creating driver from extension: {out_path}&#34;)
+
+        mem_path = f&#34;/vsimem/raster_proximity_tmp_{uuid4().int}.tif&#34;
+
+        dest_raster = driver.Create(
+            mem_path,
+            in_raster.RasterXSize,
+            in_raster.RasterYSize,
+            1,
+            gdal.GetDataTypeByName(&#34;Float32&#34;),
+        )
+
+        dest_raster.SetGeoTransform(in_raster.GetGeoTransform())
+        dest_raster.SetProjection(in_raster.GetProjectionRef())
+        dst_band = dest_raster.GetRasterBand(1)
+
+        gdal.ComputeProximity(
+            src_band,
+            dst_band,
+            options=[
+                &#34;VALUES=&#39;1&#39;&#34;,
+                f&#34;DISTUNITS={unit}&#34;,
+                f&#34;MAXDIST={max_dist}&#34;,
+            ],
+        )
+
+        dst_arr = dst_band.ReadAsArray()
+        gdal.Unlink(mem_path)
+        gdal.Unlink(in_raster_path)
+
+        dst_arr = np.where(dst_arr &gt; max_dist, max_dist, dst_arr)
+
+        if invert:
+            dst_arr = max_dist - dst_arr
+
+        if weighted:
+            dst_arr = dst_arr / max_dist
+
+        if add_border:
+            dst_arr = dst_arr[border_size:-border_size, border_size:-border_size]
+
+        src_band = None
+        dst_band = None
+        in_raster = None
+        dest_raster = None
+
+        if return_array:
+            output.append(dst_arr)
+        else:
+            core_raster.array_to_raster(dst_arr, reference=input_raster, out_path=out_path)
+            output.append(out_path)
+
+        dst_arr = None
+
+    if isinstance(input_rasters, list):
+        return output
+
+    return output[0]</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul>
+<li><a href="#calculate-distances-on-a-raster">Calculate distances on a raster.</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="buteo.raster" href="index.html">buteo.raster</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.raster.proximity.calc_proximity" href="#buteo.raster.proximity.calc_proximity">calc_proximity</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

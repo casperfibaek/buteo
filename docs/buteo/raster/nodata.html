@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>buteo.raster.nodata API documentation</title>
+<meta name="description" content="Handle nodata values in rasters. ### …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>buteo.raster.nodata</code></h1>
+</header>
+<section id="section-intro">
+<h3 id="handle-nodata-values-in-rasters">Handle nodata values in rasters.</h3>
+<p>A module to handle the various aspects of NODATA in raster files.</p>
+<h2 id="todo">Todo</h2>
+<ul>
+<li>raster_to_mask</li>
+<li>raster_invert_nodata</li>
+</ul>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+### Handle nodata values in rasters. ###
+
+A module to handle the various aspects of NODATA in raster files.
+
+TODO:
+    * raster_to_mask
+    * raster_invert_nodata
+&#34;&#34;&#34;
+
+# Standard library
+import sys; sys.path.append(&#34;../../&#34;)
+
+# External
+import numpy as np
+from osgeo import gdal
+
+# Internal
+from buteo.utils import core_utils, gdal_utils, gdal_enums
+from buteo.raster import core_raster
+
+
+
+def raster_has_nodata_value(raster):
+    &#34;&#34;&#34;
+    Check if a raster or a list of rasters contain nodata values
+
+    ## Args:
+    `raster` (_str_ | _gdal.Dataset_, _list_): The raster to check for nodata values.
+
+    ## Returns:
+    (_bool_): **True** if the raster or list of rasters contain nodata values.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+
+    rasters = gdal_utils.get_path_from_dataset(core_utils.ensure_list(raster))
+    assert gdal_utils.is_raster_list(raster), f&#34;List contains invalid rasters. {raster}&#34;
+
+    nodata_values = []
+    for internal_raster in rasters:
+        raster_metadata = core_raster._raster_to_metadata(internal_raster)
+
+        raster_nodata = raster_metadata[&#34;nodata_value&#34;]
+
+        if raster_nodata is not None:
+            nodata_values.append(True)
+        else:
+            nodata_values.append(False)
+
+    if isinstance(raster, list):
+        return nodata_values
+
+    return nodata_values[0]
+
+
+def raster_get_nodata_value(raster):
+    &#34;&#34;&#34;
+    Get the nodata value of a raster or a list of rasters.
+
+    ## Args:
+    `raster` (_str_ | _gdal.Dataset_, _list_): The raster(s) to get nodata values from.
+
+    ## Returns:
+    (_float_ | _int_ | _list_): The nodata value(s) of the raster(s).
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+
+    rasters = gdal_utils.get_path_from_dataset(core_utils.ensure_list(raster))
+    assert gdal_utils.is_raster_list(raster), f&#34;List contains invalid rasters. {raster}&#34;
+
+    nodata_values = []
+    for internal_raster in rasters:
+        raster_metadata = core_raster._raster_to_metadata(internal_raster)
+
+        raster_nodata = raster_metadata[&#34;nodata_value&#34;]
+
+        nodata_values.append(raster_nodata)
+
+    if isinstance(raster, list):
+        return nodata_values
+    else:
+        return nodata_values[0]
+
+
+def raster_set_nodata(
+    raster,
+    dst_nodata,
+    out_path=None,
+    *,
+    overwrite=True,
+    in_place=False,
+    prefix=&#34;&#34;,
+    suffix=&#34;_nodata_set&#34;,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Sets all the nodata for raster(s) to a value.
+
+    ## Args:
+    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster(s) to set nodata values for. &lt;/br&gt;
+    `dst_nodata` (_float_ | _int_ | _str_ | _None_): The target nodata value. If &#39;infer&#39; the nodata
+        value is set based on the input datatype. A list of nodata values can be based matching
+        the amount of input rasters. If multiple nodata values should be set,
+        use raster_mask_values. &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_str_ | _list_ | _None_): The destination of the changed rasters. (Default: **None**) &lt;/br&gt;
+    `overwrite` (_bool_): Should the rasters be overwritten if they already exist? (Default: **True**) &lt;/br&gt;
+    `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) &lt;/br&gt;
+    `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `suffix` (_str): Suffix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `creation_options` (_list_): Creation options for the output rasters. (Default: **None**) &lt;/br&gt;
+
+    ## Returns:
+    (_str_ | _list_): Returns the rasters with nodata set. If in_place is True a reference to the
+    changed orignal is returned, otherwise a copied memory raster or the path to the
+    generated raster is outputted.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(dst_nodata, [float, int, str, list, None], &#34;dst_nodata&#34;)
+    core_utils.type_check(out_path, [list, str, None], &#34;out_path&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(prefix, [str], &#34;prefix&#34;)
+    core_utils.type_check(suffix, [str], &#34;postfix&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+
+    raster_list = core_utils.ensure_list(raster)
+    path_list = core_utils.create_output_paths(
+        raster_list,
+        out_path,
+        prefix=prefix,
+        suffix=suffix,
+        overwrite=overwrite,
+    )
+
+    rasters_metadata = []
+    internal_dst_nodata = None
+
+    if isinstance(dst_nodata, str) and dst_nodata != &#34;infer&#34;:
+        raise ValueError(f&#34;Invalid dst_nodata value. {dst_nodata}&#34;)
+
+    if isinstance(dst_nodata, list):
+        if not isinstance(raster, list) or len(dst_nodata) != len(raster):
+            raise ValueError(
+                &#34;If dst_nodata is a list, raster must also be a list of equal length.&#34;
+            )
+
+        for value in dst_nodata:
+            if isinstance(value, (float, int, str, None)):
+                raise ValueError(&#34;Invalid type in dst_nodata list.&#34;)
+
+            if isinstance(value, str) and value != &#34;infer&#34;:
+                raise ValueError(&#34;If dst_nodata is a string it must be &#39;infer&#39;&#34;)
+
+    output_rasters = []
+
+    for index, internal_raster in enumerate(raster_list):
+
+        raster_metadata = None
+        if len(rasters_metadata) == 0:
+            raster_metadata = core_raster._raster_to_metadata(internal_raster)
+
+            if not isinstance(raster_metadata, dict):
+                raise Exception(&#34;Metadata is in the wrong format.&#34;)
+
+            rasters_metadata.append(raster_metadata)
+        else:
+            raster_metadata = rasters_metadata[index]
+
+        if dst_nodata == &#34;infer&#34;:
+            internal_dst_nodata = gdal_enums.translate_gdal_dtype_to_str(
+                raster_metadata[&#34;dtype_gdal_raw&#34;]
+            )
+        elif isinstance(dst_nodata, list):
+            internal_dst_nodata = dst_nodata[index]
+        else:
+            internal_dst_nodata = dst_nodata
+
+        if in_place:
+            for band in range(raster_metadata[&#34;bands&#34;]):
+                raster_band = internal_raster.GetRasterBand(band + 1)
+                raster_band.SetNodataValue(internal_dst_nodata)
+                raster_band = None
+        else:
+            raster_mem = None
+
+            if out_path is None:
+                raster_mem = gdal_utils.save_dataset_to_memory(internal_raster)
+            else:
+                core_utils.remove_if_required(path_list[index], overwrite)
+                raster_mem = gdal_utils.save_dataset_to_disk(internal_raster, path_list[index], creation_options=creation_options)
+
+            for band in range(raster_metadata[&#34;bands&#34;]):
+                raster_mem_ref = core_raster._open_raster(raster_mem)
+                raster_band = raster_mem_ref.GetRasterBand(band + 1)
+                raster_band.SetNodataValue(internal_dst_nodata)
+
+    if isinstance(raster, list):
+        return output_rasters
+
+    return output_rasters[0]
+
+
+def raster_remove_nodata(
+    raster,
+    out_path=None,
+    *,
+    overwrite=True,
+    in_place=False,
+    prefix=&#34;&#34;,
+    suffix=&#34;_nodata_removed&#34;,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Removes all the nodata from a raster or a list of rasters.
+
+    ## Args:
+    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster(s) to remove nodata values for. &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_str_ | _list_ | _None_): The destination of the changed rasters. (Default: **None**) &lt;/br&gt;
+    `overwrite` (_bool_): Should the rasters be overwritten if they already exist? (Default: **True**) &lt;/br&gt;
+    `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) &lt;/br&gt;
+    `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `suffix` (_str_): Suffix to add to the output. (Default: **&#34;_nodata_removed&#34;**) &lt;/br&gt;
+    `creation_options` (_list_): Creation options for the output rasters. (Default: **None**) &lt;/br&gt;
+
+    ## Returns:
+    (_str_ | _list_): Returns the rasters with nodata removed. If in_place is True a reference to the
+    changed orignal is returned, otherwise a copied memory raster or the path to the
+    generated raster is outputted.
+    &#34;&#34;&#34;
+
+    return raster_set_nodata(
+        raster,
+        dst_nodata=None,
+        out_path=out_path,
+        in_place=in_place,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        creation_options=creation_options,
+    )
+
+
+def raster_mask_values(
+    raster,
+    values_to_mask,
+    out_path=None,
+    *,
+    include_original_nodata=True,
+    dst_nodata=&#34;infer&#34;,
+    in_place=False,
+    overwrite=True,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    add_uuid=False,
+    creation_options=[],
+):
+    &#34;&#34;&#34;
+    Mask a raster with a list of values.
+
+    ## Args:
+    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster(s) to mask. &lt;/br&gt;
+    `values_to_mask` (_list_): The values to mask. &lt;/br&gt;
+
+    ## Kwargs:
+    `include_original_nodata` (_bool_): Should the nodata_value of the input raster be added
+    to the list of masked values? (Default: **True**) &lt;/br&gt;
+    `dst_nodata` (_float_ | _int_ | _str_ | _list_): The nodata value to use for the output raster.
+    If infer, the nodata_value from the input raster is used. (Default: **&#34;infer&#34;**) &lt;/br&gt;
+    `out_path` (_str_ | _list_ | _None_): The destination of the changed rasters.
+    If out_paths are specified, in_place is automatically set to False. The path can be a folder. (Default: **None**)&lt;/br&gt;
+    `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) &lt;/br&gt;
+    `overwrite` (_bool_): If the output path exists already, should it be overwritten? (Default: **True**)&lt;/br&gt;
+    `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `suffix` (_str_): Suffix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `add_uuid` (_bool_): Should a uuid be added to the output path? (Default: **False**) &lt;/br&gt;
+    `creation_options` (_list_ | _None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;
+
+    Returns:
+    (_str_ | _list_): Returns the rasters with nodata removed. If in_place is True a reference to the
+    changed orignal is returned, otherwise a copied memory raster or the path to the
+    generated raster is outputted.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(values_to_mask, [[int, float, None]], &#34;values_to_mask&#34;)
+    core_utils.type_check(out_path, [[str], str, None], &#34;out_path&#34;)
+    core_utils.type_check(include_original_nodata, [bool], &#34;include_original_nodata&#34;)
+    core_utils.type_check(dst_nodata, [float, int, str, [float, int, str, None], None], &#34;dst_nodata&#34;)
+    core_utils.type_check(in_place, [bool], &#34;in_place&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(prefix, [str], &#34;prefix&#34;)
+    core_utils.type_check(suffix, [str], &#34;postfix&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+
+    rasters_metadata = []
+    internal_in_place = in_place if out_path is None else False
+    internal_dst_nodata = None
+
+    for value in values_to_mask:
+        if not isinstance(value, (int, float)):
+            raise ValueError(&#34;Values in values_to_mask must be ints or floats&#34;)
+
+    if isinstance(dst_nodata, str) and dst_nodata != &#34;infer&#34;:
+        raise ValueError(f&#34;Invalid dst_nodata value. {dst_nodata}&#34;)
+
+    if isinstance(dst_nodata, list):
+        if not isinstance(raster, list) or len(dst_nodata) != len(raster):
+            raise ValueError(
+                &#34;If dst_nodata is a list, raster must also be a list of equal length.&#34;
+            )
+
+        for value in dst_nodata:
+            if isinstance(value, (float, int, str, None)):
+                raise ValueError(&#34;Invalid type in dst_nodata list.&#34;)
+
+            if isinstance(value, str) and value != &#34;infer&#34;:
+                raise ValueError(&#34;If dst_nodata is a string it must be &#39;infer&#39;&#34;)
+
+    raster_list = core_utils.ensure_list(raster)
+    out_paths = core_utils.create_output_paths(
+        raster_list,
+        out_path=out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )
+
+
+    output_rasters = []
+
+    for index, internal_raster in enumerate(raster_list):
+
+        raster_metadata = None
+        if len(rasters_metadata) == 0:
+            raster_metadata = core_raster._raster_to_metadata(internal_raster)
+            rasters_metadata.append(raster_metadata)
+        else:
+            raster_metadata = rasters_metadata[index]
+
+        if dst_nodata == &#34;infer&#34;:
+            internal_dst_nodata = gdal_enums.translate_gdal_dtype_to_str(
+                raster_metadata[&#34;dtype_gdal_raw&#34;]
+            )
+        elif isinstance(dst_nodata, list):
+            internal_dst_nodata = dst_nodata[index]
+        else:
+            internal_dst_nodata = dst_nodata
+
+        mask_values = list(values_to_mask)
+        if include_original_nodata:
+            if raster_metadata[&#34;nodata_value&#34;] is not None:
+                mask_values.append(raster_metadata[&#34;nodata_value&#34;])
+
+        arr = core_raster.raster_to_array(internal_raster, filled=True)
+
+        mask = None
+        for idx, mask_value in enumerate(mask_values):
+            if idx == 0:
+                mask = arr == mask_value
+            else:
+                mask = mask | arr == mask_value
+
+        arr = np.ma.masked_array(arr, mask=mask, fill_value=internal_dst_nodata)
+
+        if internal_in_place:
+            for band in range(raster_metadata[&#34;bands&#34;]):
+                raster_band = internal_raster.GetRasterBand(band + 1)
+                raster_band.WriteArray(arr[:, :, band])
+                raster_band = None
+        else:
+            out_name = out_paths[index]
+            core_utils.remove_if_required(out_name, overwrite)
+
+            output_rasters.append(
+                core_raster.array_to_raster(arr, internal_raster, out_path=out_name)
+            )
+
+    if isinstance(raster, list):
+        return output_rasters
+
+    return output_rasters[0]</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.raster.nodata.raster_get_nodata_value"><code class="name flex">
+<span>def <span class="ident">raster_get_nodata_value</span></span>(<span>raster)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the nodata value of a raster or a list of rasters.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster</code> (<em>str</em> | <em>gdal.Dataset</em>, <em>list</em>): The raster(s) to get nodata values from.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>float</em> | <em>int</em> | <em>list</em>): The nodata value(s) of the raster(s).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def raster_get_nodata_value(raster):
+    &#34;&#34;&#34;
+    Get the nodata value of a raster or a list of rasters.
+
+    ## Args:
+    `raster` (_str_ | _gdal.Dataset_, _list_): The raster(s) to get nodata values from.
+
+    ## Returns:
+    (_float_ | _int_ | _list_): The nodata value(s) of the raster(s).
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+
+    rasters = gdal_utils.get_path_from_dataset(core_utils.ensure_list(raster))
+    assert gdal_utils.is_raster_list(raster), f&#34;List contains invalid rasters. {raster}&#34;
+
+    nodata_values = []
+    for internal_raster in rasters:
+        raster_metadata = core_raster._raster_to_metadata(internal_raster)
+
+        raster_nodata = raster_metadata[&#34;nodata_value&#34;]
+
+        nodata_values.append(raster_nodata)
+
+    if isinstance(raster, list):
+        return nodata_values
+    else:
+        return nodata_values[0]</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.nodata.raster_has_nodata_value"><code class="name flex">
+<span>def <span class="ident">raster_has_nodata_value</span></span>(<span>raster)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a raster or a list of rasters contain nodata values</p>
+<h2 id="args">Args:</h2>
+<p><code>raster</code> (<em>str</em> | <em>gdal.Dataset</em>, <em>list</em>): The raster to check for nodata values.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the raster or list of rasters contain nodata values.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def raster_has_nodata_value(raster):
+    &#34;&#34;&#34;
+    Check if a raster or a list of rasters contain nodata values
+
+    ## Args:
+    `raster` (_str_ | _gdal.Dataset_, _list_): The raster to check for nodata values.
+
+    ## Returns:
+    (_bool_): **True** if the raster or list of rasters contain nodata values.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+
+    rasters = gdal_utils.get_path_from_dataset(core_utils.ensure_list(raster))
+    assert gdal_utils.is_raster_list(raster), f&#34;List contains invalid rasters. {raster}&#34;
+
+    nodata_values = []
+    for internal_raster in rasters:
+        raster_metadata = core_raster._raster_to_metadata(internal_raster)
+
+        raster_nodata = raster_metadata[&#34;nodata_value&#34;]
+
+        if raster_nodata is not None:
+            nodata_values.append(True)
+        else:
+            nodata_values.append(False)
+
+    if isinstance(raster, list):
+        return nodata_values
+
+    return nodata_values[0]</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.nodata.raster_mask_values"><code class="name flex">
+<span>def <span class="ident">raster_mask_values</span></span>(<span>raster, values_to_mask, out_path=None, *, include_original_nodata=True, dst_nodata='infer', in_place=False, overwrite=True, prefix='', suffix='', add_uuid=False, creation_options=[])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Mask a raster with a list of values.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster</code> (<em>str</em> | <em>gdal.Dataset</em> | <em>list</em>): The raster(s) to mask. </br>
+<code>values_to_mask</code> (<em>list</em>): The values to mask. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>include_original_nodata</code> (<em>bool</em>): Should the nodata_value of the input raster be added
+to the list of masked values? (Default: <strong>True</strong>) </br>
+<code>dst_nodata</code> (<em>float</em> | <em>int</em> | <em>str</em> | <em>list</em>): The nodata value to use for the output raster.
+If infer, the nodata_value from the input raster is used. (Default: <strong>"infer"</strong>) </br>
+<code>out_path</code> (<em>str</em> | <em>list</em> | <em>None</em>): The destination of the changed rasters.
+If out_paths are specified, in_place is automatically set to False. The path can be a folder. (Default: <strong>None</strong>)</br>
+<code>in_place</code> (<em>bool</em>): Should the rasters be changed in_place or copied? (Default: <strong>False</strong>) </br>
+<code>overwrite</code> (<em>bool</em>): If the output path exists already, should it be overwritten? (Default: <strong>True</strong>)</br>
+<code>prefix</code> (<em>str</em>): Prefix to add to the output. (Default: <strong>""</strong>) </br>
+<code>suffix</code> (<em>str</em>): Suffix to add to the output. (Default: <strong>""</strong>) </br>
+<code>add_uuid</code> (<em>bool</em>): Should a uuid be added to the output path? (Default: <strong>False</strong>) </br>
+<code>creation_options</code> (<em>list</em> | <em>None</em>): The GDAL creation options to be passed. (Default: <strong>None</strong>) </br></p>
+<p>Returns:
+(<em>str</em> | <em>list</em>): Returns the rasters with nodata removed. If in_place is True a reference to the
+changed orignal is returned, otherwise a copied memory raster or the path to the
+generated raster is outputted.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def raster_mask_values(
+    raster,
+    values_to_mask,
+    out_path=None,
+    *,
+    include_original_nodata=True,
+    dst_nodata=&#34;infer&#34;,
+    in_place=False,
+    overwrite=True,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    add_uuid=False,
+    creation_options=[],
+):
+    &#34;&#34;&#34;
+    Mask a raster with a list of values.
+
+    ## Args:
+    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster(s) to mask. &lt;/br&gt;
+    `values_to_mask` (_list_): The values to mask. &lt;/br&gt;
+
+    ## Kwargs:
+    `include_original_nodata` (_bool_): Should the nodata_value of the input raster be added
+    to the list of masked values? (Default: **True**) &lt;/br&gt;
+    `dst_nodata` (_float_ | _int_ | _str_ | _list_): The nodata value to use for the output raster.
+    If infer, the nodata_value from the input raster is used. (Default: **&#34;infer&#34;**) &lt;/br&gt;
+    `out_path` (_str_ | _list_ | _None_): The destination of the changed rasters.
+    If out_paths are specified, in_place is automatically set to False. The path can be a folder. (Default: **None**)&lt;/br&gt;
+    `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) &lt;/br&gt;
+    `overwrite` (_bool_): If the output path exists already, should it be overwritten? (Default: **True**)&lt;/br&gt;
+    `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `suffix` (_str_): Suffix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `add_uuid` (_bool_): Should a uuid be added to the output path? (Default: **False**) &lt;/br&gt;
+    `creation_options` (_list_ | _None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;
+
+    Returns:
+    (_str_ | _list_): Returns the rasters with nodata removed. If in_place is True a reference to the
+    changed orignal is returned, otherwise a copied memory raster or the path to the
+    generated raster is outputted.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(values_to_mask, [[int, float, None]], &#34;values_to_mask&#34;)
+    core_utils.type_check(out_path, [[str], str, None], &#34;out_path&#34;)
+    core_utils.type_check(include_original_nodata, [bool], &#34;include_original_nodata&#34;)
+    core_utils.type_check(dst_nodata, [float, int, str, [float, int, str, None], None], &#34;dst_nodata&#34;)
+    core_utils.type_check(in_place, [bool], &#34;in_place&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(prefix, [str], &#34;prefix&#34;)
+    core_utils.type_check(suffix, [str], &#34;postfix&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+
+    rasters_metadata = []
+    internal_in_place = in_place if out_path is None else False
+    internal_dst_nodata = None
+
+    for value in values_to_mask:
+        if not isinstance(value, (int, float)):
+            raise ValueError(&#34;Values in values_to_mask must be ints or floats&#34;)
+
+    if isinstance(dst_nodata, str) and dst_nodata != &#34;infer&#34;:
+        raise ValueError(f&#34;Invalid dst_nodata value. {dst_nodata}&#34;)
+
+    if isinstance(dst_nodata, list):
+        if not isinstance(raster, list) or len(dst_nodata) != len(raster):
+            raise ValueError(
+                &#34;If dst_nodata is a list, raster must also be a list of equal length.&#34;
+            )
+
+        for value in dst_nodata:
+            if isinstance(value, (float, int, str, None)):
+                raise ValueError(&#34;Invalid type in dst_nodata list.&#34;)
+
+            if isinstance(value, str) and value != &#34;infer&#34;:
+                raise ValueError(&#34;If dst_nodata is a string it must be &#39;infer&#39;&#34;)
+
+    raster_list = core_utils.ensure_list(raster)
+    out_paths = core_utils.create_output_paths(
+        raster_list,
+        out_path=out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )
+
+
+    output_rasters = []
+
+    for index, internal_raster in enumerate(raster_list):
+
+        raster_metadata = None
+        if len(rasters_metadata) == 0:
+            raster_metadata = core_raster._raster_to_metadata(internal_raster)
+            rasters_metadata.append(raster_metadata)
+        else:
+            raster_metadata = rasters_metadata[index]
+
+        if dst_nodata == &#34;infer&#34;:
+            internal_dst_nodata = gdal_enums.translate_gdal_dtype_to_str(
+                raster_metadata[&#34;dtype_gdal_raw&#34;]
+            )
+        elif isinstance(dst_nodata, list):
+            internal_dst_nodata = dst_nodata[index]
+        else:
+            internal_dst_nodata = dst_nodata
+
+        mask_values = list(values_to_mask)
+        if include_original_nodata:
+            if raster_metadata[&#34;nodata_value&#34;] is not None:
+                mask_values.append(raster_metadata[&#34;nodata_value&#34;])
+
+        arr = core_raster.raster_to_array(internal_raster, filled=True)
+
+        mask = None
+        for idx, mask_value in enumerate(mask_values):
+            if idx == 0:
+                mask = arr == mask_value
+            else:
+                mask = mask | arr == mask_value
+
+        arr = np.ma.masked_array(arr, mask=mask, fill_value=internal_dst_nodata)
+
+        if internal_in_place:
+            for band in range(raster_metadata[&#34;bands&#34;]):
+                raster_band = internal_raster.GetRasterBand(band + 1)
+                raster_band.WriteArray(arr[:, :, band])
+                raster_band = None
+        else:
+            out_name = out_paths[index]
+            core_utils.remove_if_required(out_name, overwrite)
+
+            output_rasters.append(
+                core_raster.array_to_raster(arr, internal_raster, out_path=out_name)
+            )
+
+    if isinstance(raster, list):
+        return output_rasters
+
+    return output_rasters[0]</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.nodata.raster_remove_nodata"><code class="name flex">
+<span>def <span class="ident">raster_remove_nodata</span></span>(<span>raster, out_path=None, *, overwrite=True, in_place=False, prefix='', suffix='_nodata_removed', creation_options=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Removes all the nodata from a raster or a list of rasters.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster</code> (<em>str</em> | <em>gdal.Dataset</em> | <em>list</em>): The raster(s) to remove nodata values for. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>out_path</code> (<em>str</em> | <em>list</em> | <em>None</em>): The destination of the changed rasters. (Default: <strong>None</strong>) </br>
+<code>overwrite</code> (<em>bool</em>): Should the rasters be overwritten if they already exist? (Default: <strong>True</strong>) </br>
+<code>in_place</code> (<em>bool</em>): Should the rasters be changed in_place or copied? (Default: <strong>False</strong>) </br>
+<code>prefix</code> (<em>str</em>): Prefix to add to the output. (Default: <strong>""</strong>) </br>
+<code>suffix</code> (<em>str</em>): Suffix to add to the output. (Default: <strong>"_nodata_removed"</strong>) </br>
+<code>creation_options</code> (<em>list</em>): Creation options for the output rasters. (Default: <strong>None</strong>) </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em> | <em>list</em>): Returns the rasters with nodata removed. If in_place is True a reference to the
+changed orignal is returned, otherwise a copied memory raster or the path to the
+generated raster is outputted.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def raster_remove_nodata(
+    raster,
+    out_path=None,
+    *,
+    overwrite=True,
+    in_place=False,
+    prefix=&#34;&#34;,
+    suffix=&#34;_nodata_removed&#34;,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Removes all the nodata from a raster or a list of rasters.
+
+    ## Args:
+    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster(s) to remove nodata values for. &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_str_ | _list_ | _None_): The destination of the changed rasters. (Default: **None**) &lt;/br&gt;
+    `overwrite` (_bool_): Should the rasters be overwritten if they already exist? (Default: **True**) &lt;/br&gt;
+    `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) &lt;/br&gt;
+    `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `suffix` (_str_): Suffix to add to the output. (Default: **&#34;_nodata_removed&#34;**) &lt;/br&gt;
+    `creation_options` (_list_): Creation options for the output rasters. (Default: **None**) &lt;/br&gt;
+
+    ## Returns:
+    (_str_ | _list_): Returns the rasters with nodata removed. If in_place is True a reference to the
+    changed orignal is returned, otherwise a copied memory raster or the path to the
+    generated raster is outputted.
+    &#34;&#34;&#34;
+
+    return raster_set_nodata(
+        raster,
+        dst_nodata=None,
+        out_path=out_path,
+        in_place=in_place,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        creation_options=creation_options,
+    )</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.nodata.raster_set_nodata"><code class="name flex">
+<span>def <span class="ident">raster_set_nodata</span></span>(<span>raster, dst_nodata, out_path=None, *, overwrite=True, in_place=False, prefix='', suffix='_nodata_set', creation_options=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Sets all the nodata for raster(s) to a value.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster</code> (<em>str</em> | <em>gdal.Dataset</em> | <em>list</em>): The raster(s) to set nodata values for. </br>
+<code>dst_nodata</code> (<em>float</em> | <em>int</em> | <em>str</em> | <em>None</em>): The target nodata value. If 'infer' the nodata
+value is set based on the input datatype. A list of nodata values can be based matching
+the amount of input rasters. If multiple nodata values should be set,
+use raster_mask_values. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>out_path</code> (<em>str</em> | <em>list</em> | <em>None</em>): The destination of the changed rasters. (Default: <strong>None</strong>) </br>
+<code>overwrite</code> (<em>bool</em>): Should the rasters be overwritten if they already exist? (Default: <strong>True</strong>) </br>
+<code>in_place</code> (<em>bool</em>): Should the rasters be changed in_place or copied? (Default: <strong>False</strong>) </br>
+<code>prefix</code> (<em>str</em>): Prefix to add to the output. (Default: <strong>""</strong>) </br>
+<code>suffix</code> (<em>str): Suffix to add to the output. (Default: <strong>""</strong>) </br>
+<code>creation_options</code> (_list</em>): Creation options for the output rasters. (Default: <strong>None</strong>) </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em> | <em>list</em>): Returns the rasters with nodata set. If in_place is True a reference to the
+changed orignal is returned, otherwise a copied memory raster or the path to the
+generated raster is outputted.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def raster_set_nodata(
+    raster,
+    dst_nodata,
+    out_path=None,
+    *,
+    overwrite=True,
+    in_place=False,
+    prefix=&#34;&#34;,
+    suffix=&#34;_nodata_set&#34;,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Sets all the nodata for raster(s) to a value.
+
+    ## Args:
+    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster(s) to set nodata values for. &lt;/br&gt;
+    `dst_nodata` (_float_ | _int_ | _str_ | _None_): The target nodata value. If &#39;infer&#39; the nodata
+        value is set based on the input datatype. A list of nodata values can be based matching
+        the amount of input rasters. If multiple nodata values should be set,
+        use raster_mask_values. &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_str_ | _list_ | _None_): The destination of the changed rasters. (Default: **None**) &lt;/br&gt;
+    `overwrite` (_bool_): Should the rasters be overwritten if they already exist? (Default: **True**) &lt;/br&gt;
+    `in_place` (_bool_): Should the rasters be changed in_place or copied? (Default: **False**) &lt;/br&gt;
+    `prefix` (_str_): Prefix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `suffix` (_str): Suffix to add to the output. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `creation_options` (_list_): Creation options for the output rasters. (Default: **None**) &lt;/br&gt;
+
+    ## Returns:
+    (_str_ | _list_): Returns the rasters with nodata set. If in_place is True a reference to the
+    changed orignal is returned, otherwise a copied memory raster or the path to the
+    generated raster is outputted.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(dst_nodata, [float, int, str, list, None], &#34;dst_nodata&#34;)
+    core_utils.type_check(out_path, [list, str, None], &#34;out_path&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(prefix, [str], &#34;prefix&#34;)
+    core_utils.type_check(suffix, [str], &#34;postfix&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+
+    raster_list = core_utils.ensure_list(raster)
+    path_list = core_utils.create_output_paths(
+        raster_list,
+        out_path,
+        prefix=prefix,
+        suffix=suffix,
+        overwrite=overwrite,
+    )
+
+    rasters_metadata = []
+    internal_dst_nodata = None
+
+    if isinstance(dst_nodata, str) and dst_nodata != &#34;infer&#34;:
+        raise ValueError(f&#34;Invalid dst_nodata value. {dst_nodata}&#34;)
+
+    if isinstance(dst_nodata, list):
+        if not isinstance(raster, list) or len(dst_nodata) != len(raster):
+            raise ValueError(
+                &#34;If dst_nodata is a list, raster must also be a list of equal length.&#34;
+            )
+
+        for value in dst_nodata:
+            if isinstance(value, (float, int, str, None)):
+                raise ValueError(&#34;Invalid type in dst_nodata list.&#34;)
+
+            if isinstance(value, str) and value != &#34;infer&#34;:
+                raise ValueError(&#34;If dst_nodata is a string it must be &#39;infer&#39;&#34;)
+
+    output_rasters = []
+
+    for index, internal_raster in enumerate(raster_list):
+
+        raster_metadata = None
+        if len(rasters_metadata) == 0:
+            raster_metadata = core_raster._raster_to_metadata(internal_raster)
+
+            if not isinstance(raster_metadata, dict):
+                raise Exception(&#34;Metadata is in the wrong format.&#34;)
+
+            rasters_metadata.append(raster_metadata)
+        else:
+            raster_metadata = rasters_metadata[index]
+
+        if dst_nodata == &#34;infer&#34;:
+            internal_dst_nodata = gdal_enums.translate_gdal_dtype_to_str(
+                raster_metadata[&#34;dtype_gdal_raw&#34;]
+            )
+        elif isinstance(dst_nodata, list):
+            internal_dst_nodata = dst_nodata[index]
+        else:
+            internal_dst_nodata = dst_nodata
+
+        if in_place:
+            for band in range(raster_metadata[&#34;bands&#34;]):
+                raster_band = internal_raster.GetRasterBand(band + 1)
+                raster_band.SetNodataValue(internal_dst_nodata)
+                raster_band = None
+        else:
+            raster_mem = None
+
+            if out_path is None:
+                raster_mem = gdal_utils.save_dataset_to_memory(internal_raster)
+            else:
+                core_utils.remove_if_required(path_list[index], overwrite)
+                raster_mem = gdal_utils.save_dataset_to_disk(internal_raster, path_list[index], creation_options=creation_options)
+
+            for band in range(raster_metadata[&#34;bands&#34;]):
+                raster_mem_ref = core_raster._open_raster(raster_mem)
+                raster_band = raster_mem_ref.GetRasterBand(band + 1)
+                raster_band.SetNodataValue(internal_dst_nodata)
+
+    if isinstance(raster, list):
+        return output_rasters
+
+    return output_rasters[0]</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul>
+<li><a href="#handle-nodata-values-in-rasters">Handle nodata values in rasters.</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="buteo.raster" href="index.html">buteo.raster</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.raster.nodata.raster_get_nodata_value" href="#buteo.raster.nodata.raster_get_nodata_value">raster_get_nodata_value</a></code></li>
+<li><code><a title="buteo.raster.nodata.raster_has_nodata_value" href="#buteo.raster.nodata.raster_has_nodata_value">raster_has_nodata_value</a></code></li>
+<li><code><a title="buteo.raster.nodata.raster_mask_values" href="#buteo.raster.nodata.raster_mask_values">raster_mask_values</a></code></li>
+<li><code><a title="buteo.raster.nodata.raster_remove_nodata" href="#buteo.raster.nodata.raster_remove_nodata">raster_remove_nodata</a></code></li>
+<li><code><a title="buteo.raster.nodata.raster_set_nodata" href="#buteo.raster.nodata.raster_set_nodata">raster_set_nodata</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

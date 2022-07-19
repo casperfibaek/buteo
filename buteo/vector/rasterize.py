@@ -40,21 +40,21 @@ def rasterize_vector(
     Rasterize a vector to a raster.
 
     ## Args:
-    `vector` (_str_ || _ogr.DataSource): The vector to rasterize. </br>
-    `pixel_size` (_float_ || _int_): The pixel size of the raster. </br>
+    `vector` (_str_ | _ogr.DataSource): The vector to rasterize. </br>
+    `pixel_size` (_float_ | _int_): The pixel size of the raster. </br>
 
     ## Kwargs:
-    `out_path` (_str_ || _None_): Path to output raster. (Default: **None**) </br>
-    `extent` (_list_ || _None_): Extent of raster. (Default: **None**) </br>
+    `out_path` (_str_ | _None_): Path to output raster. (Default: **None**) </br>
+    `extent` (_list_ | _None_): Extent of raster. (Default: **None**) </br>
     `all_touch` (_bool_): All touch? (Default: **False**) </br>
     `dtype` (_str_): Data type of raster. (Default: **"uint8"**) </br>
     `optim` (_str_): Optimization for raster or vector? (Default: **"raster"**) </br>
     `band` (_int_): Band to rasterize. (Default: **1**) </br>
-    `fill_value` (_int_ || _float_): Fill value. (Default: **0**) </br>
-    `nodata_value` (_int_ || _float_ || _None_): Nodata value. (Default: **None**) </br>
+    `fill_value` (_int_ | _float_): Fill value. (Default: **0**) </br>
+    `nodata_value` (_int_ | _float_ | _None_): Nodata value. (Default: **None**) </br>
     `check_memory` (_bool_): Check memory? (Default: **True**) </br>
-    `burn_value` (_int_ || _float_): Value to burn. (Default: **1**) </br>
-    `attribute` (_str_ || _None_): Attribute to burn. (Default: **None**)
+    `burn_value` (_int_ | _float_): Value to burn. (Default: **1**) </br>
+    `attribute` (_str_ | _None_): Attribute to burn. (Default: **None**)
 
     ## Returns:
     (_str_): Path to output raster.

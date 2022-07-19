@@ -308,10 +308,10 @@ def get_default_nodata_value(dtype):
     Returns the default fill value for masked numpy arrays.
 
     ## Args:
-    `dtype` (_numpy.dtype_ || _str_ || _int_): The dtype. </br>
+    `dtype` (_numpy.dtype_ | _str_ | _int_): The dtype. </br>
 
     ## Returns:
-    (_float_ || _int_): The default fill value.
+    (_float_ | _int_): The default fill value.
     """
     assert isinstance(dtype, (np.dtype, str, int)), "numpy_dtype must be a numpy.dtype or string."
 

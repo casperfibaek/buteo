@@ -1,5 +1,5 @@
 """
-The utilities modules. Imports the submodules.
+Various utility functions to work with the underlying systems.
 """
 from .core_utils import *
 from .bbox_utils import *

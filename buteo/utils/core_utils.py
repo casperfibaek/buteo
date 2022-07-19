@@ -799,17 +799,17 @@ def create_output_paths(
     input.
 
     ## Args:
-    `raster` (_gdal.Dataset_ || _str_ || _list__): A **GDAL** dataframe, a path to a raster or a list of same. </br>
+    `raster` (_gdal.Dataset_ | _str_ | _list__): A **GDAL** dataframe, a path to a raster or a list of same. </br>
 
     ## Kwargs:
-    `out_path` (_str_ || _None_): A path to a directory to write the raster to. (Default: **None**). </br>
+    `out_path` (_str_ | _None_): A path to a directory to write the raster to. (Default: **None**). </br>
     `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). </br>
     `prefix` (_str_): A string to prepend to the output filename. (Default: **""**). </br>
     `suffix` (_str_): A string to append to the output filename. (Default: **""**). </br>
     `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). </br>
 
     ## Returns:
-    (_str_ || _list_): A path to the output raster or a list of paths.
+    (_str_ | _list_): A path to the output raster or a list of paths.
     """
     assert isinstance(dataset_path, (str, list)), "dataset_path must be a string or a list of strings."
     assert isinstance(out_path, (str, type(None))), "out_path must be a string or None."

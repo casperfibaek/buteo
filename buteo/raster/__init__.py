@@ -1,3 +1,6 @@
+"""
+Make simple work of raster analysis!
+"""
 from .core_raster import *
 from .clip import *
 from .align import *

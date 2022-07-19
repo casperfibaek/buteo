@@ -1,0 +1,2081 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>buteo.raster.core_raster API documentation</title>
+<meta name="description" content="Basic IO functions for working with Rasters ### …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>buteo.raster.core_raster</code></h1>
+</header>
+<section id="section-intro">
+<h3 id="basic-io-functions-for-working-with-rasters">Basic IO functions for working with Rasters</h3>
+<p>This module does standard raster operations related to read, write, and metadata.</p>
+<h2 id="todo">Todo</h2>
+<ul>
+<li>Copy, seperate, expand, create, delete</li>
+<li>Refactor logic in ready_io_raster</li>
+</ul>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+### Basic IO functions for working with Rasters ###
+
+This module does standard raster operations related to read, write, and metadata.
+
+TODO:
+    * Copy, seperate, expand, create, delete
+    * Refactor logic in ready_io_raster
+&#34;&#34;&#34;
+
+# Standard library
+import sys; sys.path.append(&#34;../../&#34;)
+import os
+
+# External
+import numpy as np
+from osgeo import gdal, osr
+
+# Internal
+from buteo.utils import bbox_utils, core_utils, gdal_utils, gdal_enums
+
+
+
+def _open_raster(raster, *, writeable=True):
+    &#34;&#34;&#34; **INTERNAL**. &#34;&#34;&#34;
+    assert isinstance(raster, (gdal.Dataset, str)), &#34;raster must be a string or a gdal.Dataset&#34;
+
+    if isinstance(raster, gdal.Dataset):
+        return raster
+
+    if gdal_utils.is_in_memory(raster) or core_utils.file_exists(raster):
+
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(raster, gdal.GF_Write) if writeable else gdal.Open(raster, gdal.GF_Read)
+        gdal.PopErrorHandler()
+
+        if not isinstance(opened, gdal.Dataset):
+            raise ValueError(f&#34;Input raster is not readable. Received: {raster}&#34;)
+
+        return opened
+
+    raise ValueError(f&#34;Input raster does not exists. Received: {raster}&#34;)
+
+
+def open_raster(raster, *, writeable=True, allow_lists=True):
+    &#34;&#34;&#34;
+    Opens a raster from a path to a raster. Can be in-memory or local. If a
+    gdal.Dataset is passed it is returned. Supports lists. If a list is passed
+    a list is returned with the opened raster.
+
+    ## Args:
+    `raster` (_gdal.Dataset_ | _str_ | _list__): A path to a raster or a GDAL dataframe. &lt;/br&gt;
+
+    ## Kwargs:
+    `writeable` (_bool_): If True, the raster is opened in write mode. (Default: **True**) &lt;/br&gt;
+    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
+    a single raster is allowed. (Default: **True**) &lt;/br&gt;
+
+    ## Returns:
+    (_gdal.Dataset_ | _list__): A gdal.Dataset or a list of gdal.Datasets.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(writeable, [bool], &#34;writeable&#34;)
+    core_utils.type_check(allow_lists, [bool], &#34;allow_lists&#34;)
+
+    if not allow_lists and isinstance(raster, list):
+        raise ValueError(&#34;Input raster must be a single raster.&#34;)
+
+    if not allow_lists:
+        return _open_raster(raster, writeable=writeable)
+
+    list_input = core_utils.ensure_list(raster)
+    list_return = []
+
+    for in_raster in list_input:
+        try:
+            list_return.append(_open_raster(in_raster, writeable=writeable))
+        except Exception:
+            raise ValueError(f&#34;Could not open raster: {in_raster}&#34;) from None
+
+    if isinstance(raster, list):
+        return list_return
+
+    return list_return[0]
+
+
+def _raster_to_metadata(raster):
+    &#34;&#34;&#34; Internal. &#34;&#34;&#34;
+    assert isinstance(raster, (str, gdal.Dataset))
+
+    dataset = open_raster(raster)
+
+    raster_driver = dataset.GetDriver()
+
+    path = dataset.GetDescription()
+    basename = os.path.basename(path)
+    split_path = os.path.splitext(basename)
+    name = split_path[0]
+    ext = split_path[1]
+
+    driver = raster_driver.ShortName
+
+    in_memory = gdal_utils.is_in_memory(raster)
+
+    transform = dataset.GetGeoTransform()
+
+    projection_wkt = dataset.GetProjection()
+    projection_osr = osr.SpatialReference()
+    projection_osr.ImportFromWkt(projection_wkt)
+
+    width = dataset.RasterXSize
+    height = dataset.RasterYSize
+    band_count = dataset.RasterCount
+
+    size = [dataset.RasterXSize, dataset.RasterYSize]
+    shape = (width, height, band_count)
+
+    pixel_width = abs(transform[1])
+    pixel_height = abs(transform[5])
+
+    x_min = transform[0]
+    y_max = transform[3]
+
+    x_max = x_min + width * transform[1] + height * transform[2]  # Handle skew
+    y_min = y_max + width * transform[4] + height * transform[5]  # Handle skew
+
+    band0 = dataset.GetRasterBand(1)
+
+    datatype_gdal_raw = band0.DataType
+    datatype_gdal = gdal.GetDataTypeName(datatype_gdal_raw)
+
+    datatype = gdal_enums.translate_gdal_dtype_to_str(datatype_gdal_raw)
+
+    nodata_value = band0.GetNoDataValue()
+    has_nodata = nodata_value is not None
+
+    bbox_ogr = [x_min, x_max, y_min, y_max]
+
+    bboxes = bbox_utils.additional_bboxes(bbox_ogr, projection_osr)
+
+    metadata = {
+        &#34;path&#34;: path,
+        &#34;basename&#34;: basename,
+        &#34;name&#34;: name,
+        &#34;ext&#34;: ext,
+        &#34;transform&#34;: transform,
+        &#34;in_memory&#34;: in_memory,
+        &#34;projection_wkt&#34;: projection_wkt,
+        &#34;projection_osr&#34;: projection_osr,
+        &#34;width&#34;: width,
+        &#34;height&#34;: height,
+        &#34;band_count&#34;: band_count,
+        &#34;driver&#34;: driver,
+        &#34;size&#34;: size,
+        &#34;shape&#34;: shape,
+        &#34;pixel_width&#34;: pixel_width,
+        &#34;pixel_height&#34;: pixel_height,
+        &#34;x_min&#34;: x_min,
+        &#34;y_max&#34;: y_max,
+        &#34;x_max&#34;: x_max,
+        &#34;y_min&#34;: y_min,
+        &#34;datatype&#34;: datatype,
+        &#34;datatype_gdal&#34;: datatype_gdal,
+        &#34;datatype_gdal_raw&#34;: datatype_gdal_raw,
+        &#34;nodata_value&#34;: nodata_value,
+        &#34;has_nodata&#34;: has_nodata,
+        &#34;is_raster&#34;: True,
+        &#34;is_vector&#34;: False,
+        &#34;bbox&#34;: bbox_ogr,
+    }
+
+    for key, value in bboxes.items():
+        metadata[key] = value
+
+    def get_bbox_as_vector():
+        return bbox_utils.convert_bbox_to_vector(bbox_ogr, projection_osr)
+
+
+    def get_bbox_as_vector_latlng():
+        projection_osr_latlng = osr.SpatialReference()
+        projection_osr_latlng.ImportFromEPSG(4326)
+
+        return bbox_utils.convert_bbox_to_vector(metadata[&#34;bbox_latlng&#34;], projection_osr_latlng)
+
+
+    metadata[&#34;get_bbox_vector&#34;] = get_bbox_as_vector
+    metadata[&#34;get_bbox_vector_latlng&#34;] = get_bbox_as_vector_latlng
+
+    return metadata
+
+
+def raster_to_metadata(raster, *, allow_lists=True):
+    &#34;&#34;&#34;
+    Reads a raster from a list of rasters, string or a dataset and returns metadata.
+
+    ## Args:
+    `raster` (_gdal.Dataset_ | _str_ | _list__): A GDAL dataframe or a path to a raster. &lt;/br&gt;
+
+    ## Kwargs:
+    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
+    a single raster is allowed. (Default: **True**) &lt;/br&gt;
+
+    ## Returns:
+    (_dict_ | _list_): A dictionary or list of dictionaries containing metadata.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+
+    if not allow_lists and isinstance(raster, list):
+        raise ValueError(&#34;Input raster must be a single raster.&#34;)
+
+    if not allow_lists:
+        return _raster_to_metadata(raster)
+
+    list_input = core_utils.ensure_list(raster)
+    list_return = []
+
+    for in_raster in list_input:
+        try:
+            list_return.append(_raster_to_metadata(in_raster))
+        except Exception:
+            raise ValueError(f&#34;Could not open raster: {in_raster}&#34;) from None
+
+    if isinstance(raster, list):
+        return list_return
+
+    return list_return[0]
+
+
+def rasters_are_aligned(
+    rasters,
+    *,
+    same_extent=False,
+    same_dtype=False,
+    same_nodata=False,
+    threshold=0.001,
+):
+    &#34;&#34;&#34;
+    Verifies if a list of rasters are aligned.
+
+    ## Args:
+    `rasters` (_list_): A list of raster, either in gdal.Dataset or a string
+    refering to the dataset. &lt;/br&gt;
+
+    ## Kwargs:
+    `same_extent` (_bool_): Should all the rasters have the same extent? (Default: **False**). &lt;/br&gt;
+    `same_dtype` (_bool_): Should all the rasters have the same data type? (Default: **False**)
+    `same_dtype` (_bool_): Should all the rasters have the same data nodata value? (Default: **False**). &lt;/br&gt;
+    `threshold` (_float_): The threshold for the difference between the rasters. (Default: **0.001**). &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if rasters and aligned and optional parameters are True, **False** otherwise.
+    &#34;&#34;&#34;
+    core_utils.type_check(rasters, [[str, gdal.Dataset]], &#34;rasters&#34;)
+    core_utils.type_check(same_extent, [bool], &#34;same_extent&#34;)
+    core_utils.type_check(same_dtype, [bool], &#34;same_dtype&#34;)
+    core_utils.type_check(same_nodata, [bool], &#34;same_nodata&#34;)
+
+    if len(rasters) == 1:
+        if not gdal_utils.is_raster(rasters[0]):
+            raise ValueError(f&#34;Input raster is invalid. {rasters[0]}&#34;)
+
+        return True
+
+    base = {
+        &#34;projection&#34;: None,
+        &#34;pixel_width&#34;: None,
+        &#34;pixel_height&#34;: None,
+        &#34;x_min&#34;: None,
+        &#34;y_max&#34;: None,
+        &#34;transform&#34;: None,
+        &#34;width&#34;: None,
+        &#34;height&#34;: None,
+        &#34;datatype&#34;: None,
+        &#34;nodata_value&#34;: None,
+    }
+
+    for index, raster in enumerate(rasters):
+        meta = _raster_to_metadata(raster)
+        if index == 0:
+            base[&#34;name&#34;] = meta[&#34;name&#34;]
+            base[&#34;projection&#34;] = meta[&#34;projection&#34;]
+            base[&#34;pixel_width&#34;] = meta[&#34;pixel_width&#34;]
+            base[&#34;pixel_height&#34;] = meta[&#34;pixel_height&#34;]
+            base[&#34;x_min&#34;] = meta[&#34;x_min&#34;]
+            base[&#34;y_max&#34;] = meta[&#34;y_max&#34;]
+            base[&#34;transform&#34;] = meta[&#34;transform&#34;]
+            base[&#34;width&#34;] = meta[&#34;width&#34;]
+            base[&#34;height&#34;] = meta[&#34;height&#34;]
+            base[&#34;datatype&#34;] = meta[&#34;datatype&#34;]
+            base[&#34;nodata_value&#34;] = meta[&#34;nodata_value&#34;]
+        else:
+            if meta[&#34;projection&#34;] != base[&#34;projection&#34;]:
+                print(base[&#34;name&#34;] + &#34; did not match &#34; + meta[&#34;name&#34;] + &#34; projection&#34;)
+                return False
+            if meta[&#34;pixel_width&#34;] != base[&#34;pixel_width&#34;]:
+                if abs(meta[&#34;pixel_width&#34;] - base[&#34;pixel_width&#34;]) &gt; threshold:
+                    print(
+                        base[&#34;name&#34;] + &#34; did not match &#34; + meta[&#34;name&#34;] + &#34; pixel_width&#34;
+                    )
+                    return False
+            if meta[&#34;pixel_height&#34;] != base[&#34;pixel_height&#34;]:
+                if abs(meta[&#34;pixel_height&#34;] - base[&#34;pixel_height&#34;]) &gt; threshold:
+                    print(
+                        base[&#34;name&#34;]
+                        + &#34; did not match &#34;
+                        + meta[&#34;name&#34;]
+                        + &#34; pixel_height&#34;
+                    )
+                    return False
+            if meta[&#34;x_min&#34;] != base[&#34;x_min&#34;]:
+                if abs(meta[&#34;x_min&#34;] - base[&#34;x_min&#34;]) &gt; threshold:
+                    print(base[&#34;name&#34;] + &#34; did not match &#34; + meta[&#34;name&#34;] + &#34; x_min&#34;)
+                    return False
+            if meta[&#34;y_max&#34;] != base[&#34;y_max&#34;]:
+                if abs(meta[&#34;y_max&#34;] - base[&#34;y_max&#34;]) &gt; threshold:
+                    print(base[&#34;name&#34;] + &#34; did not match &#34; + meta[&#34;name&#34;] + &#34; y_max&#34;)
+                    return False
+            if same_extent:
+                if meta[&#34;transform&#34;] != base[&#34;transform&#34;]:
+                    return False
+                if meta[&#34;height&#34;] != base[&#34;height&#34;]:
+                    return False
+                if meta[&#34;width&#34;] != base[&#34;width&#34;]:
+                    return False
+
+            if same_dtype:
+                if meta[&#34;datatype&#34;] != base[&#34;datatype&#34;]:
+                    return False
+
+            if same_nodata:
+                if meta[&#34;nodata_value&#34;] != base[&#34;nodata_value&#34;]:
+                    return False
+
+    return True
+
+
+def raster_to_array(
+    raster,
+    *,
+    bands=-1,
+    filled=False,
+    output_2d=False,
+    bbox=None,
+    pixel_offsets=None,
+):
+    &#34;&#34;&#34;
+    Turns a path to a raster(s) or a GDAL.Dataset(s) into a **NumPy** array(s).
+
+    ## Args:
+    (_gdal.Dataset_ | _str_ | _list_): The raster(s) to convert.
+
+    ## Kwargs:
+    `bands` (_list_ | _str_ | _int_): The bands from the raster to turn
+    into a numpy array. Can be &#34;all&#34;, &#34;ALL&#34;, a list of ints or a
+    single int. &lt;/br&gt;
+
+    `filled` (_bool_): If the array contains nodata values. Should the
+    resulting array be a filled numpy array or a masked array? &lt;/br&gt;
+
+    `output_2d` (_bool_): If True, returns only the first band in a 2D
+    fashion eg. (1920x1080) instead of the default channel-last format
+    (1920x1080x1) &lt;/br&gt;
+
+    `bbox` (_list_): A list of `[xmin, xmax, ymin, ymax]` to use as the
+    extent of the raster. Uses coordinates and the **OGR** format. &lt;/br&gt;
+
+    `pixel_offsets` (_list_): A list of [x_offset, y_offset, x_size, y_size] to use as
+    the extent of the raster. Uses pixel offsets and the **OGR** format. &lt;/br&gt;
+
+    ## Returns:
+    (_np.ndarray_): A numpy array in the 3D channel-last format unless output_2D is
+    specified. &lt;/br&gt;
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(bands, [int, list], &#34;bands&#34;)
+    core_utils.type_check(filled, [bool], &#34;filled&#34;)
+    core_utils.type_check(output_2d, [bool], &#34;output_2d&#34;)
+    core_utils.type_check(bbox, [list, None], &#34;bbox&#34;)
+    core_utils.type_check(pixel_offsets, [list, None], &#34;pixel_offsets&#34;)
+
+    internal_rasters = core_utils.ensure_list(raster)
+
+    if not gdal_utils.is_raster_list(internal_rasters):
+        raise ValueError(f&#34;An input raster is invalid. {internal_rasters}&#34;)
+
+    internal_rasters = gdal_utils.get_path_from_dataset_list(internal_rasters, dataset_type=&#34;raster&#34;)
+
+    if not rasters_are_aligned(internal_rasters, same_extent=True, same_dtype=False):
+        raise ValueError(
+            &#34;Cannot merge rasters that are not aligned, have dissimilar extent or dtype.&#34;
+        )
+
+    layers = []
+    nodata_values = []
+    for in_raster in internal_rasters:
+
+        if not gdal_utils.is_raster(in_raster):
+            raise ValueError(f&#34;Invalid raster: {in_raster}&#34;)
+
+        ref = open_raster(in_raster)
+
+        metadata = raster_to_metadata(ref)
+        band_count = metadata[&#34;band_count&#34;]
+
+        if band_count == 0:
+            raise ValueError(&#34;The input raster does not have any valid bands.&#34;)
+
+        internal_bands = gdal_utils.to_band_list(bands, metadata[&#34;band_count&#34;])
+
+        for band in internal_bands:
+            band_ref = ref.GetRasterBand(band + 1)
+            band_nodata_value = band_ref.GetNoDataValue()
+
+            nodata_values.append(band_nodata_value)
+
+            if pixel_offsets is not None:
+                arr = band_ref.ReadAsArray(
+                    pixel_offsets[0], # x_offset
+                    pixel_offsets[1], # y_offset
+                    pixel_offsets[2], # x_size
+                    pixel_offsets[3], # y_size
+                )
+            elif bbox is not None:
+                if not bbox_utils.bboxes_intersect(metadata[&#34;extent_ogr&#34;], bbox):
+                    raise ValueError(&#34;Extent is outside of raster.&#34;)
+
+                x_offset, y_offset, x_size, y_size = bbox_utils.get_pixel_offsets(metadata[&#34;transform&#34;], bbox)
+
+                arr = band_ref.ReadAsArray(x_offset, y_offset, x_size, y_size)
+            else:
+                arr = band_ref.ReadAsArray()
+
+            if band_nodata_value is not None:
+                arr = np.ma.array(arr, mask=arr == band_nodata_value)
+
+                if filled:
+                    arr = arr.filled(band_nodata_value)
+
+            layers.append(arr)
+
+            if output_2d:
+                break
+
+    if output_2d:
+        if band_nodata_value is not None and filled is False:
+            stacked = np.ma.dstack(layers)[:, :, 0]
+
+            if core_utils.is_list_all_the_same(nodata_values):
+                stacked.fill_value = nodata_values[0]
+            else:
+                stacked.fill_value = gdal_enums.get_default_nodata_value(stacked.dtype)
+
+            return stacked
+
+        return np.dstack(layers)[:, :, 0]
+
+    if band_nodata_value is not None and filled is False:
+        stacked = np.ma.dstack(layers)
+
+        if core_utils.is_list_all_the_same(nodata_values):
+            stacked.fill_value = nodata_values[0]
+        else:
+            stacked.fill_value = gdal_enums.get_default_nodata_value(stacked.dtype)
+
+        return stacked
+
+    return np.dstack(layers)
+
+
+def _raster_set_datatype(
+    raster,
+    dtype_str,
+    out_path=None,
+    *,
+    overwrite=True,
+    creation_options=None,
+):
+    &#34;&#34;&#34; **INTERNAL**. &#34;&#34;&#34;
+    assert isinstance(raster, (str, gdal.Dataset)), &#34;raster must be a string or a GDAL.Dataset.&#34;
+    assert isinstance(dtype_str, str), &#34;dtype_str must be a string.&#34;
+    assert len(dtype_str) &gt; 0, &#34;dtype_str must be a non-empty string.&#34;
+
+    if not gdal_utils.is_raster(raster):
+        raise ValueError(f&#34;Unable to open input raster: {raster}&#34;)
+
+    ref = open_raster(raster)
+    metadata = raster_to_metadata(ref)
+
+    path = &#34;&#34;
+    if out_path is None:
+        path = gdal_utils.create_memory_path(metadata[&#34;basename&#34;], add_uuid=True)
+
+    elif core_utils.folder_exists(out_path):
+        path = os.path.join(out_path, os.path.basename(gdal_utils.get_path_from_dataset(ref)))
+
+    elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
+        path = out_path
+
+    else:
+        raise ValueError(f&#34;Unable to find output folder: {out_path}&#34;)
+
+    driver_name = gdal_utils.path_to_driver_raster(path)
+    driver = gdal.GetDriverByName(driver_name)
+
+    if driver is None:
+        raise ValueError(f&#34;Unable to get driver for raster: {raster}&#34;)
+
+    core_utils.remove_if_overwrite(path, overwrite)
+
+    copy = driver.Create(
+        path,
+        metadata[&#34;height&#34;],
+        metadata[&#34;width&#34;],
+        metadata[&#34;band_count&#34;],
+        gdal_enums.translate_str_to_gdal_dtype(dtype_str),
+        gdal_utils.default_creation_options(creation_options),
+    )
+
+    copy.SetProjection(metadata[&#34;projection&#34;])
+    copy.SetGeoTransform(metadata[&#34;transform&#34;])
+
+    array = raster_to_array(ref)
+
+    for band_idx in range(metadata[&#34;band_count&#34;]):
+        band = copy.GetRasterBand(band_idx + 1)
+        band.WriteArray(array[:, :, band_idx])
+        band.SetNoDataValue(metadata[&#34;nodata_value&#34;])
+
+    return path
+
+
+def raster_set_datatype(
+    raster,
+    dtype,
+    out_path=None,
+    *,
+    overwrite=True,
+    allow_lists=True,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Changes the datatype of a raster.
+
+    ## Args:
+    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster to change the datatype of. &lt;/br&gt;
+    `dtype` (_str_): The new datatype. &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_path_ | _list_): The destination to save to. (Default: **None**)&lt;/br&gt;
+    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
+    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only single rasters
+    are allowed. (Default: **True**) &lt;/br&gt;
+    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
+        * &#34;TILED=YES&#34;
+        * &#34;NUM_THREADS=ALL_CPUS&#34;
+        * &#34;BIGG_TIF=YES&#34;
+        * &#34;COMPRESS=LZW&#34;
+
+    ## Returns:
+    (_str_ | _list_): The filepath or list of filepaths to the newly created raster(s).
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(dtype, [str], &#34;dtype&#34;)
+    core_utils.type_check(out_path, [list, str, None], &#34;out_path&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(allow_lists, [bool], &#34;allow_lists&#34;)
+    core_utils.type_check(creation_options, [list, None], &#34;creation_options&#34;)
+
+    if not allow_lists:
+        if isinstance(raster, list):
+            raise ValueError(&#34;allow_lists is False, but the input raster is a list.&#34;)
+
+        return _raster_set_datatype(
+            raster,
+            dtype,
+            out_path=out_path,
+            overwrite=overwrite,
+            creation_options=creation_options,
+        )
+
+    add_uuid = out_path is None
+
+    raster_list = core_utils.ensure_list(raster)
+    path_list = core_utils.create_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+
+    output = []
+    for index, in_raster in enumerate(raster_list):
+        path = _raster_set_datatype(
+            in_raster,
+            dtype,
+            out_path=path_list[index],
+            overwrite=overwrite,
+            creation_options=gdal_utils.default_creation_options(creation_options),
+        )
+
+        output.append(path)
+
+    if isinstance(raster, list):
+        return output
+
+    return output[0]
+
+
+def array_to_raster(
+    array,
+    reference,
+    out_path=None,
+    *,
+    overwrite=True,
+    set_nodata=&#34;arr&#34;,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Turns a **NumPy** array into a **GDAL** dataset or exported
+    as a raster using a reference raster.
+
+    ## Args:
+    `array` (_np.ndarray_): The numpy array to convert. &lt;/br&gt;
+    `reference` (_str_ | _gdal.Dataset_): The reference raster to use for the output. &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_path_): The destination to save to. (Default: **None**)&lt;/br&gt;
+    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
+    `set_nodata` (_bool_ | _float_ | _int_): Can be set to: (Default: **auto**)&lt;/br&gt;
+        * **&#34;ref&#34;**: The nodata value will be the same as the reference raster. &lt;/br&gt;
+        * **&#34;arr&#34;**: The nodata value will be the same as the **NumPy** array. &lt;/br&gt;
+        * **&#34;value&#34;**: The nodata value will be the value provided. &lt;/br&gt;
+    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
+        * &#34;TILED=YES&#34;
+        * &#34;NUM_THREADS=ALL_CPUS&#34;
+        * &#34;BIGG_TIF=YES&#34;
+        * &#34;COMPRESS=LZW&#34;
+
+    ## Returns:
+    (_str_): The filepath to the newly created raster(s).
+    &#34;&#34;&#34;
+    core_utils.type_check(array, [np.ndarray, np.ma.MaskedArray], &#34;array&#34;)
+    core_utils.type_check(reference, [str, gdal.Dataset], &#34;reference&#34;)
+    core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(set_nodata, [int, float, str, None], &#34;set_nodata&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+
+    # Verify the numpy array
+    if (
+        not isinstance(array, (np.ndarray, np.ma.MaskedArray))
+        or array.size == 0
+        or array.ndim &lt; 2
+        or array.ndim &gt; 3
+    ):
+        raise ValueError(f&#34;Input array is invalid {array}&#34;)
+
+    if set_nodata != &#34;arr&#34; and set_nodata != &#34;ref&#34;:
+        core_utils.type_check(set_nodata, [int, float], &#34;set_nodata&#34;)
+
+    # Parse the driver
+    driver_name = &#34;GTiff&#34; if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+    if driver_name is None:
+        raise ValueError(f&#34;Unable to parse filetype from path: {out_path}&#34;)
+
+    driver = gdal.GetDriverByName(driver_name)
+    if driver is None:
+        raise ValueError(f&#34;Error while creating driver from extension: {out_path}&#34;)
+
+    # How many bands?
+    bands = 1
+    if array.ndim == 3:
+        bands = array.shape[2]
+
+    core_utils.overwrite_required(out_path, overwrite)
+
+    metadata = raster_to_metadata(reference)
+    reference_nodata = metadata[&#34;nodata_value&#34;]
+
+    # handle nodata. GDAL python throws error if conversion in not explicit.
+    if reference_nodata is not None:
+        reference_nodata = float(reference_nodata)
+        if (reference_nodata).is_integer() is True:
+            reference_nodata = int(reference_nodata)
+
+    # Handle nodata
+    input_nodata = None
+    if np.ma.is_masked(array) is True:
+        input_nodata = array.get_fill_value()  # type: ignore (because it&#39;s a masked array.)
+
+    destination_dtype = gdal_enums.translate_str_to_gdal_dtype(array.dtype)
+
+    # Weird double issue with GDAL and numpy. Cast to float or int
+    if input_nodata is not None:
+        input_nodata = float(input_nodata)
+        if (input_nodata).is_integer() is True:
+            input_nodata = int(input_nodata)
+
+    output_name = None
+    if out_path is None:
+        output_name = gdal_utils.create_memory_path(&#34;array_to_raster.tif&#34;, add_uuid=True)
+    else:
+        output_name = out_path
+
+    if metadata[&#34;width&#34;] != array.shape[1] or metadata[&#34;height&#34;] != array.shape[0]:
+        print(&#34;WARNING: Input array and raster are not of equal size.&#34;)
+
+    core_utils.remove_if_overwrite(out_path, overwrite)
+
+    destination = driver.Create(
+        output_name,
+        array.shape[1],
+        array.shape[0],
+        bands,
+        destination_dtype,
+        gdal_utils.default_creation_options(creation_options),
+    )
+
+    destination.SetProjection(metadata[&#34;projection&#34;])
+    destination.SetGeoTransform(metadata[&#34;transform&#34;])
+
+    for band_idx in range(bands):
+        band = destination.GetRasterBand(band_idx + 1)
+        if bands &gt; 1 or array.ndim == 3:
+            band.WriteArray(array[:, :, band_idx])
+        else:
+            band.WriteArray(array)
+
+        if set_nodata != &#34;ref&#34;:
+            band.SetNoDataValue(reference_nodata)
+        elif set_nodata == &#34;arr&#34;:
+            band.SetNoDataValue(input_nodata)
+        else:
+            band.SetNoDataValue(set_nodata)
+
+    return output_name
+
+
+def stack_rasters(
+    rasters,
+    out_path=None,
+    *,
+    overwrite=True,
+    dtype=None,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Stacks a list of rasters. Must be aligned.
+
+    ## Args:
+    `rasters` (_list_): List of rasters to stack. &lt;/br&gt;
+
+    ## Kwargs
+    `out_path` (_str_): The destination to save to. (Default: **None**)&lt;/br&gt;
+    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
+    `dtype` (_str_): The data type of the output raster. (Default: **None**)&lt;/br&gt;
+    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
+        * &#34;TILED=YES&#34;
+        * &#34;NUM_THREADS=ALL_CPUS&#34;
+        * &#34;BIGG_TIF=YES&#34;
+        * &#34;COMPRESS=LZW&#34;
+
+    ## Returns:
+    (_str_ | _list_): The filepath(s) to the newly created raster(s).
+    &#34;&#34;&#34;
+    core_utils.type_check(rasters, [[str, gdal.Dataset]], &#34;rasters&#34;)
+    core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(dtype, [str, None], &#34;dtype&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+
+    assert gdal_utils.is_raster_list(rasters), &#34;Input rasters must be a list of rasters.&#34;
+
+    if not rasters_are_aligned(rasters, same_extent=True):
+        raise ValueError(&#34;Rasters are not aligned. Try running align_rasters.&#34;)
+
+    core_utils.overwrite_required(out_path, overwrite)
+
+    # Ensures that all the input rasters are valid.
+    raster_list = gdal_utils.get_path_from_dataset_list(rasters)
+
+    if out_path is not None and core_utils.path_to_ext(out_path) == &#34;.vrt&#34;:
+        raise ValueError(&#34;Please use stack_rasters_vrt to create vrt files.&#34;)
+
+    # Parse the driver
+    driver_name = &#34;GTiff&#34; if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+    if driver_name is None:
+        raise ValueError(f&#34;Unable to parse filetype from path: {out_path}&#34;)
+
+    driver = gdal.GetDriverByName(driver_name)
+    if driver is None:
+        raise ValueError(f&#34;Error while creating driver from extension: {out_path}&#34;)
+
+    output_name = None
+    if out_path is None:
+        output_name = gdal_utils.create_memory_path(&#34;stack_rasters.tif&#34;, add_uuid=True)
+    else:
+        output_name = out_path
+
+    raster_dtype = raster_to_metadata(raster_list[0])[&#34;datatype_gdal_raw&#34;]
+
+    datatype = raster_dtype
+    if dtype is not None:
+        datatype = gdal_enums.translate_str_to_gdal_dtype(dtype)
+
+    nodata_values = []
+    nodata_missmatch = False
+    nodata_value = None
+    total_bands = 0
+    metadatas = []
+    for raster in raster_list:
+        metadata = raster_to_metadata(raster)
+        metadatas.append(metadata)
+
+        nodata_value = metadata[&#34;nodata_value&#34;]
+        total_bands += metadata[&#34;band_count&#34;]
+
+        if nodata_missmatch is False:
+            for ndv in nodata_values:
+                if nodata_missmatch:
+                    continue
+
+                if metadata[&#34;nodata_value&#34;] != ndv:
+                    print(
+                        &#34;WARNING: NoDataValues of input rasters do not match. Removing nodata.&#34;
+                    )
+                    nodata_missmatch = True
+
+        nodata_values.append(metadata[&#34;nodata_value&#34;])
+
+    if nodata_missmatch:
+        nodata_value = None
+
+    core_utils.remove_if_overwrite(out_path, overwrite)
+
+    destination = driver.Create(
+        output_name,
+        metadatas[0][&#34;width&#34;],
+        metadatas[0][&#34;height&#34;],
+        total_bands,
+        datatype,
+        gdal_utils.default_creation_options(creation_options),
+    )
+
+    destination.SetProjection(metadatas[0][&#34;projection&#34;])
+    destination.SetGeoTransform(metadatas[0][&#34;transform&#34;])
+
+    bands_added = 0
+    for index, raster in enumerate(raster_list):
+        metadata = metadatas[index]
+        band_count = metadata[&#34;band_count&#34;]
+
+        array = raster_to_array(raster)
+
+        for band_idx in range(band_count):
+            dst_band = destination.GetRasterBand(bands_added + 1)
+            dst_band.WriteArray(array[:, :, band_idx])
+
+            if nodata_value is not None:
+                dst_band.SetNoDataValue(nodata_value)
+
+            bands_added += 1
+
+    return output_name
+
+
+def stack_rasters_vrt(
+    rasters,
+    out_path,
+    seperate=True,
+    *,
+    resample_alg=&#34;nearest&#34;,
+    options=(),
+    overwrite=True,
+    reference=None,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Stacks a list of rasters into a virtual rasters (.vrt).
+
+    ## Args:
+    `rasters` (_list_): List of rasters to stack. &lt;/br&gt;
+    `out_path` (_str_): The destination to save to. &lt;/br&gt;
+
+    ## Kwargs:
+    `seperate` (_bool_): If the raster bands should be seperated. (Default: **True**) &lt;/br&gt;
+    `resample_alg` (_str_): The resampling algorithm to use. (Default: **nearest**) &lt;/br&gt;
+    `options` (_list_): List of VRT options for GDAL. (Default: **()** &lt;/br&gt;
+    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
+    `reference` (_str_): The reference raster to use. (Default: **None**) &lt;/br&gt;
+    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
+        * &#34;TILED=YES&#34;
+        * &#34;NUM_THREADS=ALL_CPUS&#34;
+        * &#34;BIGG_TIF=YES&#34;
+        * &#34;COMPRESS=LZW&#34;
+
+    ## Returns:
+    (_str_): The filepath to the newly created VRT raster.
+    &#34;&#34;&#34;
+    core_utils.type_check(rasters, [[str, gdal.Dataset]], &#34;rasters&#34;)
+    core_utils.type_check(out_path, [str], &#34;out_path&#34;)
+    core_utils.type_check(seperate, [bool], &#34;seperate&#34;)
+    core_utils.type_check(resample_alg, [str], &#34;resample_alg&#34;)
+    core_utils.type_check(options, [tuple], &#34;options&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+
+    resample_algorithm = gdal_enums.translate_resample_method(resample_alg)
+
+    if reference is not None:
+        meta = raster_to_metadata(reference)
+        options = gdal.BuildVRTOptions(
+            resampleAlg=resample_algorithm,
+            separate=seperate,
+            outputBounds=[meta[&#34;x_min&#34;], meta[&#34;y_min&#34;], meta[&#34;x_max&#34;], meta[&#34;y_max&#34;]],
+            xRes=meta[&#34;pixel_width&#34;],
+            yRes=meta[&#34;pixel_height&#34;],
+            targetAlignedPixels=True,
+        )
+    else:
+        options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)
+
+    gdal.BuildVRT(out_path, rasters, options=options)
+
+    return out_path
+
+
+def rasters_intersect(raster1, raster2):
+    &#34;&#34;&#34;
+    Checks if two rasters intersect using their latlong boundaries.
+
+    ## Args:
+    `raster1` (_str_ | gdal.Dataset): The first raster. &lt;/br&gt;
+    `raster2` (_str_ | gdal.Dataset): The second raster. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): If the rasters intersect.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster1&#34;)
+    core_utils.type_check(raster2, [list, str, gdal.Dataset], &#34;raster2&#34;)
+
+    meta1 = raster_to_metadata(raster1)
+    meta2 = raster_to_metadata(raster2)
+
+    return meta1[&#34;bbox_geom_latlng&#34;].Intersects(meta2[&#34;bbox_geom_latlng&#34;])
+
+
+def rasters_intersection(raster1, raster2):
+    &#34;&#34;&#34;
+    Get the latlng intersection of two rasters.
+
+    ## Args:
+    `raster1` (_str_ | gdal.Dataset): The first raster. &lt;/br&gt;
+    `raster2` (_str_ | gdal.Dataset): The second raster. &lt;/br&gt;
+
+    ## Returns:
+    (_ogr.DataSource_): The latlng intersection of the two rasters.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster1&#34;)
+    core_utils.type_check(raster2, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster2&#34;)
+
+    if not rasters_intersect(raster1, raster2):
+        raise ValueError(&#34;Rasters do not intersect.&#34;)
+
+    meta1 = raster_to_metadata(raster1)
+    meta2 = raster_to_metadata(raster2)
+
+    intersection = meta1[&#34;bbox_geom_latlng&#34;].Intersection(meta2[&#34;bbox_geom_latlng&#34;])
+
+    return gdal_utils.convert_geom_to_vector(intersection)
+
+
+def get_overlap_fraction(raster1, raster2):
+    &#34;&#34;&#34;
+    Get the fraction of the overlap between two rasters. (e.g. 0.9 for mostly overlapping rasters)
+
+    ## Args:
+    `raster1` (_str_ | gdal.Dataset): The master raster. &lt;/br&gt;
+    `raster2` (_str_ | gdal.Dataset): The test raster. &lt;/br&gt;
+
+    ## Returns:
+    (_float_): A value representing the degree of overlap **(0-1)**
+    &#34;&#34;&#34;
+    core_utils.type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster1&#34;)
+    core_utils.type_check(raster2, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster2&#34;)
+
+    if not rasters_intersect(raster1, raster2):
+        raise ValueError(&#34;Rasters do not intersect.&#34;)
+
+    meta1 = raster_to_metadata(raster1)[&#34;bbox_geom_latlng&#34;]
+    meta2 = raster_to_metadata(raster2)[&#34;bbox_geom_latlng&#34;]
+
+    intersection = meta1[&#34;bbox_geom_latlng&#34;].Intersection(meta2[&#34;bbox_geom_latlng&#34;])
+
+    overlap = meta1.GetArea() / intersection.GetArea()
+
+    return overlap</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.raster.core_raster.array_to_raster"><code class="name flex">
+<span>def <span class="ident">array_to_raster</span></span>(<span>array, reference, out_path=None, *, overwrite=True, set_nodata='arr', creation_options=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Turns a <strong>NumPy</strong> array into a <strong>GDAL</strong> dataset or exported
+as a raster using a reference raster.</p>
+<h2 id="args">Args:</h2>
+<p><code>array</code> (<em>np.ndarray</em>): The numpy array to convert. </br>
+<code>reference</code> (<em>str</em> | <em>gdal.Dataset</em>): The reference raster to use for the output. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>out_path</code> (<em>path</em>): The destination to save to. (Default: <strong>None</strong>)</br>
+<code>overwrite</code> (<em>bool</em>): If the file exists, should it be overwritten? (Default: <strong>True</strong>) </br>
+<code>set_nodata</code> (<em>bool</em> | <em>float</em> | <em>int</em>): Can be set to: (Default: <strong>auto</strong>)</br>
+* <strong>"ref"</strong>: The nodata value will be the same as the reference raster. </br>
+* <strong>"arr"</strong>: The nodata value will be the same as the <strong>NumPy</strong> array. </br>
+* <strong>"value"</strong>: The nodata value will be the value provided. </br>
+<code>creation_options</code> (<em>list</em>): List of <strong>GDAL</strong> creation options. Defaults are: </br>
+* "TILED=YES"
+* "NUM_THREADS=ALL_CPUS"
+* "BIGG_TIF=YES"
+* "COMPRESS=LZW"</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The filepath to the newly created raster(s).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def array_to_raster(
+    array,
+    reference,
+    out_path=None,
+    *,
+    overwrite=True,
+    set_nodata=&#34;arr&#34;,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Turns a **NumPy** array into a **GDAL** dataset or exported
+    as a raster using a reference raster.
+
+    ## Args:
+    `array` (_np.ndarray_): The numpy array to convert. &lt;/br&gt;
+    `reference` (_str_ | _gdal.Dataset_): The reference raster to use for the output. &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_path_): The destination to save to. (Default: **None**)&lt;/br&gt;
+    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
+    `set_nodata` (_bool_ | _float_ | _int_): Can be set to: (Default: **auto**)&lt;/br&gt;
+        * **&#34;ref&#34;**: The nodata value will be the same as the reference raster. &lt;/br&gt;
+        * **&#34;arr&#34;**: The nodata value will be the same as the **NumPy** array. &lt;/br&gt;
+        * **&#34;value&#34;**: The nodata value will be the value provided. &lt;/br&gt;
+    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
+        * &#34;TILED=YES&#34;
+        * &#34;NUM_THREADS=ALL_CPUS&#34;
+        * &#34;BIGG_TIF=YES&#34;
+        * &#34;COMPRESS=LZW&#34;
+
+    ## Returns:
+    (_str_): The filepath to the newly created raster(s).
+    &#34;&#34;&#34;
+    core_utils.type_check(array, [np.ndarray, np.ma.MaskedArray], &#34;array&#34;)
+    core_utils.type_check(reference, [str, gdal.Dataset], &#34;reference&#34;)
+    core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(set_nodata, [int, float, str, None], &#34;set_nodata&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+
+    # Verify the numpy array
+    if (
+        not isinstance(array, (np.ndarray, np.ma.MaskedArray))
+        or array.size == 0
+        or array.ndim &lt; 2
+        or array.ndim &gt; 3
+    ):
+        raise ValueError(f&#34;Input array is invalid {array}&#34;)
+
+    if set_nodata != &#34;arr&#34; and set_nodata != &#34;ref&#34;:
+        core_utils.type_check(set_nodata, [int, float], &#34;set_nodata&#34;)
+
+    # Parse the driver
+    driver_name = &#34;GTiff&#34; if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+    if driver_name is None:
+        raise ValueError(f&#34;Unable to parse filetype from path: {out_path}&#34;)
+
+    driver = gdal.GetDriverByName(driver_name)
+    if driver is None:
+        raise ValueError(f&#34;Error while creating driver from extension: {out_path}&#34;)
+
+    # How many bands?
+    bands = 1
+    if array.ndim == 3:
+        bands = array.shape[2]
+
+    core_utils.overwrite_required(out_path, overwrite)
+
+    metadata = raster_to_metadata(reference)
+    reference_nodata = metadata[&#34;nodata_value&#34;]
+
+    # handle nodata. GDAL python throws error if conversion in not explicit.
+    if reference_nodata is not None:
+        reference_nodata = float(reference_nodata)
+        if (reference_nodata).is_integer() is True:
+            reference_nodata = int(reference_nodata)
+
+    # Handle nodata
+    input_nodata = None
+    if np.ma.is_masked(array) is True:
+        input_nodata = array.get_fill_value()  # type: ignore (because it&#39;s a masked array.)
+
+    destination_dtype = gdal_enums.translate_str_to_gdal_dtype(array.dtype)
+
+    # Weird double issue with GDAL and numpy. Cast to float or int
+    if input_nodata is not None:
+        input_nodata = float(input_nodata)
+        if (input_nodata).is_integer() is True:
+            input_nodata = int(input_nodata)
+
+    output_name = None
+    if out_path is None:
+        output_name = gdal_utils.create_memory_path(&#34;array_to_raster.tif&#34;, add_uuid=True)
+    else:
+        output_name = out_path
+
+    if metadata[&#34;width&#34;] != array.shape[1] or metadata[&#34;height&#34;] != array.shape[0]:
+        print(&#34;WARNING: Input array and raster are not of equal size.&#34;)
+
+    core_utils.remove_if_overwrite(out_path, overwrite)
+
+    destination = driver.Create(
+        output_name,
+        array.shape[1],
+        array.shape[0],
+        bands,
+        destination_dtype,
+        gdal_utils.default_creation_options(creation_options),
+    )
+
+    destination.SetProjection(metadata[&#34;projection&#34;])
+    destination.SetGeoTransform(metadata[&#34;transform&#34;])
+
+    for band_idx in range(bands):
+        band = destination.GetRasterBand(band_idx + 1)
+        if bands &gt; 1 or array.ndim == 3:
+            band.WriteArray(array[:, :, band_idx])
+        else:
+            band.WriteArray(array)
+
+        if set_nodata != &#34;ref&#34;:
+            band.SetNoDataValue(reference_nodata)
+        elif set_nodata == &#34;arr&#34;:
+            band.SetNoDataValue(input_nodata)
+        else:
+            band.SetNoDataValue(set_nodata)
+
+    return output_name</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.get_overlap_fraction"><code class="name flex">
+<span>def <span class="ident">get_overlap_fraction</span></span>(<span>raster1, raster2)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the fraction of the overlap between two rasters. (e.g. 0.9 for mostly overlapping rasters)</p>
+<h2 id="args">Args:</h2>
+<p><code>raster1</code> (<em>str</em> | gdal.Dataset): The master raster. </br>
+<code>raster2</code> (<em>str</em> | gdal.Dataset): The test raster. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>float</em>): A value representing the degree of overlap <strong>(0-1)</strong></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_overlap_fraction(raster1, raster2):
+    &#34;&#34;&#34;
+    Get the fraction of the overlap between two rasters. (e.g. 0.9 for mostly overlapping rasters)
+
+    ## Args:
+    `raster1` (_str_ | gdal.Dataset): The master raster. &lt;/br&gt;
+    `raster2` (_str_ | gdal.Dataset): The test raster. &lt;/br&gt;
+
+    ## Returns:
+    (_float_): A value representing the degree of overlap **(0-1)**
+    &#34;&#34;&#34;
+    core_utils.type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster1&#34;)
+    core_utils.type_check(raster2, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster2&#34;)
+
+    if not rasters_intersect(raster1, raster2):
+        raise ValueError(&#34;Rasters do not intersect.&#34;)
+
+    meta1 = raster_to_metadata(raster1)[&#34;bbox_geom_latlng&#34;]
+    meta2 = raster_to_metadata(raster2)[&#34;bbox_geom_latlng&#34;]
+
+    intersection = meta1[&#34;bbox_geom_latlng&#34;].Intersection(meta2[&#34;bbox_geom_latlng&#34;])
+
+    overlap = meta1.GetArea() / intersection.GetArea()
+
+    return overlap</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.open_raster"><code class="name flex">
+<span>def <span class="ident">open_raster</span></span>(<span>raster, *, writeable=True, allow_lists=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Opens a raster from a path to a raster. Can be in-memory or local. If a
+gdal.Dataset is passed it is returned. Supports lists. If a list is passed
+a list is returned with the opened raster.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster</code> (<em>gdal.Dataset</em> | <em>str</em> | _list__): A path to a raster or a GDAL dataframe. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>writeable</code> (<em>bool</em>): If True, the raster is opened in write mode. (Default: <strong>True</strong>) </br>
+<code>allow_lists</code> (<em>bool</em>): If True, the input can be a list of rasters. Otherwise, only
+a single raster is allowed. (Default: <strong>True</strong>) </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>gdal.Dataset</em> | _list__): A gdal.Dataset or a list of gdal.Datasets.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def open_raster(raster, *, writeable=True, allow_lists=True):
+    &#34;&#34;&#34;
+    Opens a raster from a path to a raster. Can be in-memory or local. If a
+    gdal.Dataset is passed it is returned. Supports lists. If a list is passed
+    a list is returned with the opened raster.
+
+    ## Args:
+    `raster` (_gdal.Dataset_ | _str_ | _list__): A path to a raster or a GDAL dataframe. &lt;/br&gt;
+
+    ## Kwargs:
+    `writeable` (_bool_): If True, the raster is opened in write mode. (Default: **True**) &lt;/br&gt;
+    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
+    a single raster is allowed. (Default: **True**) &lt;/br&gt;
+
+    ## Returns:
+    (_gdal.Dataset_ | _list__): A gdal.Dataset or a list of gdal.Datasets.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(writeable, [bool], &#34;writeable&#34;)
+    core_utils.type_check(allow_lists, [bool], &#34;allow_lists&#34;)
+
+    if not allow_lists and isinstance(raster, list):
+        raise ValueError(&#34;Input raster must be a single raster.&#34;)
+
+    if not allow_lists:
+        return _open_raster(raster, writeable=writeable)
+
+    list_input = core_utils.ensure_list(raster)
+    list_return = []
+
+    for in_raster in list_input:
+        try:
+            list_return.append(_open_raster(in_raster, writeable=writeable))
+        except Exception:
+            raise ValueError(f&#34;Could not open raster: {in_raster}&#34;) from None
+
+    if isinstance(raster, list):
+        return list_return
+
+    return list_return[0]</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.raster_set_datatype"><code class="name flex">
+<span>def <span class="ident">raster_set_datatype</span></span>(<span>raster, dtype, out_path=None, *, overwrite=True, allow_lists=True, creation_options=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Changes the datatype of a raster.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster</code> (<em>str</em> | <em>gdal.Dataset</em> | <em>list</em>): The raster to change the datatype of. </br>
+<code>dtype</code> (<em>str</em>): The new datatype. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>out_path</code> (<em>path</em> | <em>list</em>): The destination to save to. (Default: <strong>None</strong>)</br>
+<code>overwrite</code> (<em>bool</em>): If the file exists, should it be overwritten? (Default: <strong>True</strong>) </br>
+<code>allow_lists</code> (<em>bool</em>): If True, the input can be a list of rasters. Otherwise, only single rasters
+are allowed. (Default: <strong>True</strong>) </br>
+<code>creation_options</code> (<em>list</em>): List of <strong>GDAL</strong> creation options. Defaults are: </br>
+* "TILED=YES"
+* "NUM_THREADS=ALL_CPUS"
+* "BIGG_TIF=YES"
+* "COMPRESS=LZW"</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em> | <em>list</em>): The filepath or list of filepaths to the newly created raster(s).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def raster_set_datatype(
+    raster,
+    dtype,
+    out_path=None,
+    *,
+    overwrite=True,
+    allow_lists=True,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Changes the datatype of a raster.
+
+    ## Args:
+    `raster` (_str_ | _gdal.Dataset_ | _list_): The raster to change the datatype of. &lt;/br&gt;
+    `dtype` (_str_): The new datatype. &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_path_ | _list_): The destination to save to. (Default: **None**)&lt;/br&gt;
+    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
+    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only single rasters
+    are allowed. (Default: **True**) &lt;/br&gt;
+    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
+        * &#34;TILED=YES&#34;
+        * &#34;NUM_THREADS=ALL_CPUS&#34;
+        * &#34;BIGG_TIF=YES&#34;
+        * &#34;COMPRESS=LZW&#34;
+
+    ## Returns:
+    (_str_ | _list_): The filepath or list of filepaths to the newly created raster(s).
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(dtype, [str], &#34;dtype&#34;)
+    core_utils.type_check(out_path, [list, str, None], &#34;out_path&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(allow_lists, [bool], &#34;allow_lists&#34;)
+    core_utils.type_check(creation_options, [list, None], &#34;creation_options&#34;)
+
+    if not allow_lists:
+        if isinstance(raster, list):
+            raise ValueError(&#34;allow_lists is False, but the input raster is a list.&#34;)
+
+        return _raster_set_datatype(
+            raster,
+            dtype,
+            out_path=out_path,
+            overwrite=overwrite,
+            creation_options=creation_options,
+        )
+
+    add_uuid = out_path is None
+
+    raster_list = core_utils.ensure_list(raster)
+    path_list = core_utils.create_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+
+    output = []
+    for index, in_raster in enumerate(raster_list):
+        path = _raster_set_datatype(
+            in_raster,
+            dtype,
+            out_path=path_list[index],
+            overwrite=overwrite,
+            creation_options=gdal_utils.default_creation_options(creation_options),
+        )
+
+        output.append(path)
+
+    if isinstance(raster, list):
+        return output
+
+    return output[0]</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.raster_to_array"><code class="name flex">
+<span>def <span class="ident">raster_to_array</span></span>(<span>raster, *, bands=-1, filled=False, output_2d=False, bbox=None, pixel_offsets=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Turns a path to a raster(s) or a GDAL.Dataset(s) into a <strong>NumPy</strong> array(s).</p>
+<h2 id="args">Args:</h2>
+<p>(<em>gdal.Dataset</em> | <em>str</em> | <em>list</em>): The raster(s) to convert.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>bands</code> (<em>list</em> | <em>str</em> | <em>int</em>): The bands from the raster to turn
+into a numpy array. Can be "all", "ALL", a list of ints or a
+single int. </br></p>
+<p><code>filled</code> (<em>bool</em>): If the array contains nodata values. Should the
+resulting array be a filled numpy array or a masked array? </br></p>
+<p><code>output_2d</code> (<em>bool</em>): If True, returns only the first band in a 2D
+fashion eg. (1920x1080) instead of the default channel-last format
+(1920x1080x1) </br></p>
+<p><code>bbox</code> (<em>list</em>): A list of <code>[xmin, xmax, ymin, ymax]</code> to use as the
+extent of the raster. Uses coordinates and the <strong>OGR</strong> format. </br></p>
+<p><code>pixel_offsets</code> (<em>list</em>): A list of [x_offset, y_offset, x_size, y_size] to use as
+the extent of the raster. Uses pixel offsets and the <strong>OGR</strong> format. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>np.ndarray</em>): A numpy array in the 3D channel-last format unless output_2D is
+specified. </br></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def raster_to_array(
+    raster,
+    *,
+    bands=-1,
+    filled=False,
+    output_2d=False,
+    bbox=None,
+    pixel_offsets=None,
+):
+    &#34;&#34;&#34;
+    Turns a path to a raster(s) or a GDAL.Dataset(s) into a **NumPy** array(s).
+
+    ## Args:
+    (_gdal.Dataset_ | _str_ | _list_): The raster(s) to convert.
+
+    ## Kwargs:
+    `bands` (_list_ | _str_ | _int_): The bands from the raster to turn
+    into a numpy array. Can be &#34;all&#34;, &#34;ALL&#34;, a list of ints or a
+    single int. &lt;/br&gt;
+
+    `filled` (_bool_): If the array contains nodata values. Should the
+    resulting array be a filled numpy array or a masked array? &lt;/br&gt;
+
+    `output_2d` (_bool_): If True, returns only the first band in a 2D
+    fashion eg. (1920x1080) instead of the default channel-last format
+    (1920x1080x1) &lt;/br&gt;
+
+    `bbox` (_list_): A list of `[xmin, xmax, ymin, ymax]` to use as the
+    extent of the raster. Uses coordinates and the **OGR** format. &lt;/br&gt;
+
+    `pixel_offsets` (_list_): A list of [x_offset, y_offset, x_size, y_size] to use as
+    the extent of the raster. Uses pixel offsets and the **OGR** format. &lt;/br&gt;
+
+    ## Returns:
+    (_np.ndarray_): A numpy array in the 3D channel-last format unless output_2D is
+    specified. &lt;/br&gt;
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(bands, [int, list], &#34;bands&#34;)
+    core_utils.type_check(filled, [bool], &#34;filled&#34;)
+    core_utils.type_check(output_2d, [bool], &#34;output_2d&#34;)
+    core_utils.type_check(bbox, [list, None], &#34;bbox&#34;)
+    core_utils.type_check(pixel_offsets, [list, None], &#34;pixel_offsets&#34;)
+
+    internal_rasters = core_utils.ensure_list(raster)
+
+    if not gdal_utils.is_raster_list(internal_rasters):
+        raise ValueError(f&#34;An input raster is invalid. {internal_rasters}&#34;)
+
+    internal_rasters = gdal_utils.get_path_from_dataset_list(internal_rasters, dataset_type=&#34;raster&#34;)
+
+    if not rasters_are_aligned(internal_rasters, same_extent=True, same_dtype=False):
+        raise ValueError(
+            &#34;Cannot merge rasters that are not aligned, have dissimilar extent or dtype.&#34;
+        )
+
+    layers = []
+    nodata_values = []
+    for in_raster in internal_rasters:
+
+        if not gdal_utils.is_raster(in_raster):
+            raise ValueError(f&#34;Invalid raster: {in_raster}&#34;)
+
+        ref = open_raster(in_raster)
+
+        metadata = raster_to_metadata(ref)
+        band_count = metadata[&#34;band_count&#34;]
+
+        if band_count == 0:
+            raise ValueError(&#34;The input raster does not have any valid bands.&#34;)
+
+        internal_bands = gdal_utils.to_band_list(bands, metadata[&#34;band_count&#34;])
+
+        for band in internal_bands:
+            band_ref = ref.GetRasterBand(band + 1)
+            band_nodata_value = band_ref.GetNoDataValue()
+
+            nodata_values.append(band_nodata_value)
+
+            if pixel_offsets is not None:
+                arr = band_ref.ReadAsArray(
+                    pixel_offsets[0], # x_offset
+                    pixel_offsets[1], # y_offset
+                    pixel_offsets[2], # x_size
+                    pixel_offsets[3], # y_size
+                )
+            elif bbox is not None:
+                if not bbox_utils.bboxes_intersect(metadata[&#34;extent_ogr&#34;], bbox):
+                    raise ValueError(&#34;Extent is outside of raster.&#34;)
+
+                x_offset, y_offset, x_size, y_size = bbox_utils.get_pixel_offsets(metadata[&#34;transform&#34;], bbox)
+
+                arr = band_ref.ReadAsArray(x_offset, y_offset, x_size, y_size)
+            else:
+                arr = band_ref.ReadAsArray()
+
+            if band_nodata_value is not None:
+                arr = np.ma.array(arr, mask=arr == band_nodata_value)
+
+                if filled:
+                    arr = arr.filled(band_nodata_value)
+
+            layers.append(arr)
+
+            if output_2d:
+                break
+
+    if output_2d:
+        if band_nodata_value is not None and filled is False:
+            stacked = np.ma.dstack(layers)[:, :, 0]
+
+            if core_utils.is_list_all_the_same(nodata_values):
+                stacked.fill_value = nodata_values[0]
+            else:
+                stacked.fill_value = gdal_enums.get_default_nodata_value(stacked.dtype)
+
+            return stacked
+
+        return np.dstack(layers)[:, :, 0]
+
+    if band_nodata_value is not None and filled is False:
+        stacked = np.ma.dstack(layers)
+
+        if core_utils.is_list_all_the_same(nodata_values):
+            stacked.fill_value = nodata_values[0]
+        else:
+            stacked.fill_value = gdal_enums.get_default_nodata_value(stacked.dtype)
+
+        return stacked
+
+    return np.dstack(layers)</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.raster_to_metadata"><code class="name flex">
+<span>def <span class="ident">raster_to_metadata</span></span>(<span>raster, *, allow_lists=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Reads a raster from a list of rasters, string or a dataset and returns metadata.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster</code> (<em>gdal.Dataset</em> | <em>str</em> | _list__): A GDAL dataframe or a path to a raster. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>allow_lists</code> (<em>bool</em>): If True, the input can be a list of rasters. Otherwise, only
+a single raster is allowed. (Default: <strong>True</strong>) </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>dict</em> | <em>list</em>): A dictionary or list of dictionaries containing metadata.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def raster_to_metadata(raster, *, allow_lists=True):
+    &#34;&#34;&#34;
+    Reads a raster from a list of rasters, string or a dataset and returns metadata.
+
+    ## Args:
+    `raster` (_gdal.Dataset_ | _str_ | _list__): A GDAL dataframe or a path to a raster. &lt;/br&gt;
+
+    ## Kwargs:
+    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
+    a single raster is allowed. (Default: **True**) &lt;/br&gt;
+
+    ## Returns:
+    (_dict_ | _list_): A dictionary or list of dictionaries containing metadata.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+
+    if not allow_lists and isinstance(raster, list):
+        raise ValueError(&#34;Input raster must be a single raster.&#34;)
+
+    if not allow_lists:
+        return _raster_to_metadata(raster)
+
+    list_input = core_utils.ensure_list(raster)
+    list_return = []
+
+    for in_raster in list_input:
+        try:
+            list_return.append(_raster_to_metadata(in_raster))
+        except Exception:
+            raise ValueError(f&#34;Could not open raster: {in_raster}&#34;) from None
+
+    if isinstance(raster, list):
+        return list_return
+
+    return list_return[0]</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.rasters_are_aligned"><code class="name flex">
+<span>def <span class="ident">rasters_are_aligned</span></span>(<span>rasters, *, same_extent=False, same_dtype=False, same_nodata=False, threshold=0.001)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Verifies if a list of rasters are aligned.</p>
+<h2 id="args">Args:</h2>
+<p><code>rasters</code> (<em>list</em>): A list of raster, either in gdal.Dataset or a string
+refering to the dataset. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>same_extent</code> (<em>bool</em>): Should all the rasters have the same extent? (Default: <strong>False</strong>). </br>
+<code>same_dtype</code> (<em>bool</em>): Should all the rasters have the same data type? (Default: <strong>False</strong>)
+<code>same_dtype</code> (<em>bool</em>): Should all the rasters have the same data nodata value? (Default: <strong>False</strong>). </br>
+<code>threshold</code> (<em>float</em>): The threshold for the difference between the rasters. (Default: <strong>0.001</strong>). </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if rasters and aligned and optional parameters are True, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rasters_are_aligned(
+    rasters,
+    *,
+    same_extent=False,
+    same_dtype=False,
+    same_nodata=False,
+    threshold=0.001,
+):
+    &#34;&#34;&#34;
+    Verifies if a list of rasters are aligned.
+
+    ## Args:
+    `rasters` (_list_): A list of raster, either in gdal.Dataset or a string
+    refering to the dataset. &lt;/br&gt;
+
+    ## Kwargs:
+    `same_extent` (_bool_): Should all the rasters have the same extent? (Default: **False**). &lt;/br&gt;
+    `same_dtype` (_bool_): Should all the rasters have the same data type? (Default: **False**)
+    `same_dtype` (_bool_): Should all the rasters have the same data nodata value? (Default: **False**). &lt;/br&gt;
+    `threshold` (_float_): The threshold for the difference between the rasters. (Default: **0.001**). &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if rasters and aligned and optional parameters are True, **False** otherwise.
+    &#34;&#34;&#34;
+    core_utils.type_check(rasters, [[str, gdal.Dataset]], &#34;rasters&#34;)
+    core_utils.type_check(same_extent, [bool], &#34;same_extent&#34;)
+    core_utils.type_check(same_dtype, [bool], &#34;same_dtype&#34;)
+    core_utils.type_check(same_nodata, [bool], &#34;same_nodata&#34;)
+
+    if len(rasters) == 1:
+        if not gdal_utils.is_raster(rasters[0]):
+            raise ValueError(f&#34;Input raster is invalid. {rasters[0]}&#34;)
+
+        return True
+
+    base = {
+        &#34;projection&#34;: None,
+        &#34;pixel_width&#34;: None,
+        &#34;pixel_height&#34;: None,
+        &#34;x_min&#34;: None,
+        &#34;y_max&#34;: None,
+        &#34;transform&#34;: None,
+        &#34;width&#34;: None,
+        &#34;height&#34;: None,
+        &#34;datatype&#34;: None,
+        &#34;nodata_value&#34;: None,
+    }
+
+    for index, raster in enumerate(rasters):
+        meta = _raster_to_metadata(raster)
+        if index == 0:
+            base[&#34;name&#34;] = meta[&#34;name&#34;]
+            base[&#34;projection&#34;] = meta[&#34;projection&#34;]
+            base[&#34;pixel_width&#34;] = meta[&#34;pixel_width&#34;]
+            base[&#34;pixel_height&#34;] = meta[&#34;pixel_height&#34;]
+            base[&#34;x_min&#34;] = meta[&#34;x_min&#34;]
+            base[&#34;y_max&#34;] = meta[&#34;y_max&#34;]
+            base[&#34;transform&#34;] = meta[&#34;transform&#34;]
+            base[&#34;width&#34;] = meta[&#34;width&#34;]
+            base[&#34;height&#34;] = meta[&#34;height&#34;]
+            base[&#34;datatype&#34;] = meta[&#34;datatype&#34;]
+            base[&#34;nodata_value&#34;] = meta[&#34;nodata_value&#34;]
+        else:
+            if meta[&#34;projection&#34;] != base[&#34;projection&#34;]:
+                print(base[&#34;name&#34;] + &#34; did not match &#34; + meta[&#34;name&#34;] + &#34; projection&#34;)
+                return False
+            if meta[&#34;pixel_width&#34;] != base[&#34;pixel_width&#34;]:
+                if abs(meta[&#34;pixel_width&#34;] - base[&#34;pixel_width&#34;]) &gt; threshold:
+                    print(
+                        base[&#34;name&#34;] + &#34; did not match &#34; + meta[&#34;name&#34;] + &#34; pixel_width&#34;
+                    )
+                    return False
+            if meta[&#34;pixel_height&#34;] != base[&#34;pixel_height&#34;]:
+                if abs(meta[&#34;pixel_height&#34;] - base[&#34;pixel_height&#34;]) &gt; threshold:
+                    print(
+                        base[&#34;name&#34;]
+                        + &#34; did not match &#34;
+                        + meta[&#34;name&#34;]
+                        + &#34; pixel_height&#34;
+                    )
+                    return False
+            if meta[&#34;x_min&#34;] != base[&#34;x_min&#34;]:
+                if abs(meta[&#34;x_min&#34;] - base[&#34;x_min&#34;]) &gt; threshold:
+                    print(base[&#34;name&#34;] + &#34; did not match &#34; + meta[&#34;name&#34;] + &#34; x_min&#34;)
+                    return False
+            if meta[&#34;y_max&#34;] != base[&#34;y_max&#34;]:
+                if abs(meta[&#34;y_max&#34;] - base[&#34;y_max&#34;]) &gt; threshold:
+                    print(base[&#34;name&#34;] + &#34; did not match &#34; + meta[&#34;name&#34;] + &#34; y_max&#34;)
+                    return False
+            if same_extent:
+                if meta[&#34;transform&#34;] != base[&#34;transform&#34;]:
+                    return False
+                if meta[&#34;height&#34;] != base[&#34;height&#34;]:
+                    return False
+                if meta[&#34;width&#34;] != base[&#34;width&#34;]:
+                    return False
+
+            if same_dtype:
+                if meta[&#34;datatype&#34;] != base[&#34;datatype&#34;]:
+                    return False
+
+            if same_nodata:
+                if meta[&#34;nodata_value&#34;] != base[&#34;nodata_value&#34;]:
+                    return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.rasters_intersect"><code class="name flex">
+<span>def <span class="ident">rasters_intersect</span></span>(<span>raster1, raster2)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if two rasters intersect using their latlong boundaries.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster1</code> (<em>str</em> | gdal.Dataset): The first raster. </br>
+<code>raster2</code> (<em>str</em> | gdal.Dataset): The second raster. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): If the rasters intersect.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rasters_intersect(raster1, raster2):
+    &#34;&#34;&#34;
+    Checks if two rasters intersect using their latlong boundaries.
+
+    ## Args:
+    `raster1` (_str_ | gdal.Dataset): The first raster. &lt;/br&gt;
+    `raster2` (_str_ | gdal.Dataset): The second raster. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): If the rasters intersect.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster1&#34;)
+    core_utils.type_check(raster2, [list, str, gdal.Dataset], &#34;raster2&#34;)
+
+    meta1 = raster_to_metadata(raster1)
+    meta2 = raster_to_metadata(raster2)
+
+    return meta1[&#34;bbox_geom_latlng&#34;].Intersects(meta2[&#34;bbox_geom_latlng&#34;])</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.rasters_intersection"><code class="name flex">
+<span>def <span class="ident">rasters_intersection</span></span>(<span>raster1, raster2)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the latlng intersection of two rasters.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster1</code> (<em>str</em> | gdal.Dataset): The first raster. </br>
+<code>raster2</code> (<em>str</em> | gdal.Dataset): The second raster. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>ogr.DataSource</em>): The latlng intersection of the two rasters.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rasters_intersection(raster1, raster2):
+    &#34;&#34;&#34;
+    Get the latlng intersection of two rasters.
+
+    ## Args:
+    `raster1` (_str_ | gdal.Dataset): The first raster. &lt;/br&gt;
+    `raster2` (_str_ | gdal.Dataset): The second raster. &lt;/br&gt;
+
+    ## Returns:
+    (_ogr.DataSource_): The latlng intersection of the two rasters.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster1&#34;)
+    core_utils.type_check(raster2, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster2&#34;)
+
+    if not rasters_intersect(raster1, raster2):
+        raise ValueError(&#34;Rasters do not intersect.&#34;)
+
+    meta1 = raster_to_metadata(raster1)
+    meta2 = raster_to_metadata(raster2)
+
+    intersection = meta1[&#34;bbox_geom_latlng&#34;].Intersection(meta2[&#34;bbox_geom_latlng&#34;])
+
+    return gdal_utils.convert_geom_to_vector(intersection)</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.stack_rasters"><code class="name flex">
+<span>def <span class="ident">stack_rasters</span></span>(<span>rasters, out_path=None, *, overwrite=True, dtype=None, creation_options=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Stacks a list of rasters. Must be aligned.</p>
+<h2 id="args">Args:</h2>
+<p><code>rasters</code> (<em>list</em>): List of rasters to stack. </br></p>
+<h2 id="kwargs">Kwargs</h2>
+<p><code>out_path</code> (<em>str</em>): The destination to save to. (Default: <strong>None</strong>)</br>
+<code>overwrite</code> (<em>bool</em>): If the file exists, should it be overwritten? (Default: <strong>True</strong>) </br>
+<code>dtype</code> (<em>str</em>): The data type of the output raster. (Default: <strong>None</strong>)</br>
+<code>creation_options</code> (<em>list</em>): List of <strong>GDAL</strong> creation options. Defaults are: </br>
+* "TILED=YES"
+* "NUM_THREADS=ALL_CPUS"
+* "BIGG_TIF=YES"
+* "COMPRESS=LZW"</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em> | <em>list</em>): The filepath(s) to the newly created raster(s).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stack_rasters(
+    rasters,
+    out_path=None,
+    *,
+    overwrite=True,
+    dtype=None,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Stacks a list of rasters. Must be aligned.
+
+    ## Args:
+    `rasters` (_list_): List of rasters to stack. &lt;/br&gt;
+
+    ## Kwargs
+    `out_path` (_str_): The destination to save to. (Default: **None**)&lt;/br&gt;
+    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
+    `dtype` (_str_): The data type of the output raster. (Default: **None**)&lt;/br&gt;
+    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
+        * &#34;TILED=YES&#34;
+        * &#34;NUM_THREADS=ALL_CPUS&#34;
+        * &#34;BIGG_TIF=YES&#34;
+        * &#34;COMPRESS=LZW&#34;
+
+    ## Returns:
+    (_str_ | _list_): The filepath(s) to the newly created raster(s).
+    &#34;&#34;&#34;
+    core_utils.type_check(rasters, [[str, gdal.Dataset]], &#34;rasters&#34;)
+    core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(dtype, [str, None], &#34;dtype&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+
+    assert gdal_utils.is_raster_list(rasters), &#34;Input rasters must be a list of rasters.&#34;
+
+    if not rasters_are_aligned(rasters, same_extent=True):
+        raise ValueError(&#34;Rasters are not aligned. Try running align_rasters.&#34;)
+
+    core_utils.overwrite_required(out_path, overwrite)
+
+    # Ensures that all the input rasters are valid.
+    raster_list = gdal_utils.get_path_from_dataset_list(rasters)
+
+    if out_path is not None and core_utils.path_to_ext(out_path) == &#34;.vrt&#34;:
+        raise ValueError(&#34;Please use stack_rasters_vrt to create vrt files.&#34;)
+
+    # Parse the driver
+    driver_name = &#34;GTiff&#34; if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+    if driver_name is None:
+        raise ValueError(f&#34;Unable to parse filetype from path: {out_path}&#34;)
+
+    driver = gdal.GetDriverByName(driver_name)
+    if driver is None:
+        raise ValueError(f&#34;Error while creating driver from extension: {out_path}&#34;)
+
+    output_name = None
+    if out_path is None:
+        output_name = gdal_utils.create_memory_path(&#34;stack_rasters.tif&#34;, add_uuid=True)
+    else:
+        output_name = out_path
+
+    raster_dtype = raster_to_metadata(raster_list[0])[&#34;datatype_gdal_raw&#34;]
+
+    datatype = raster_dtype
+    if dtype is not None:
+        datatype = gdal_enums.translate_str_to_gdal_dtype(dtype)
+
+    nodata_values = []
+    nodata_missmatch = False
+    nodata_value = None
+    total_bands = 0
+    metadatas = []
+    for raster in raster_list:
+        metadata = raster_to_metadata(raster)
+        metadatas.append(metadata)
+
+        nodata_value = metadata[&#34;nodata_value&#34;]
+        total_bands += metadata[&#34;band_count&#34;]
+
+        if nodata_missmatch is False:
+            for ndv in nodata_values:
+                if nodata_missmatch:
+                    continue
+
+                if metadata[&#34;nodata_value&#34;] != ndv:
+                    print(
+                        &#34;WARNING: NoDataValues of input rasters do not match. Removing nodata.&#34;
+                    )
+                    nodata_missmatch = True
+
+        nodata_values.append(metadata[&#34;nodata_value&#34;])
+
+    if nodata_missmatch:
+        nodata_value = None
+
+    core_utils.remove_if_overwrite(out_path, overwrite)
+
+    destination = driver.Create(
+        output_name,
+        metadatas[0][&#34;width&#34;],
+        metadatas[0][&#34;height&#34;],
+        total_bands,
+        datatype,
+        gdal_utils.default_creation_options(creation_options),
+    )
+
+    destination.SetProjection(metadatas[0][&#34;projection&#34;])
+    destination.SetGeoTransform(metadatas[0][&#34;transform&#34;])
+
+    bands_added = 0
+    for index, raster in enumerate(raster_list):
+        metadata = metadatas[index]
+        band_count = metadata[&#34;band_count&#34;]
+
+        array = raster_to_array(raster)
+
+        for band_idx in range(band_count):
+            dst_band = destination.GetRasterBand(bands_added + 1)
+            dst_band.WriteArray(array[:, :, band_idx])
+
+            if nodata_value is not None:
+                dst_band.SetNoDataValue(nodata_value)
+
+            bands_added += 1
+
+    return output_name</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.stack_rasters_vrt"><code class="name flex">
+<span>def <span class="ident">stack_rasters_vrt</span></span>(<span>rasters, out_path, seperate=True, *, resample_alg='nearest', options=(), overwrite=True, reference=None, creation_options=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Stacks a list of rasters into a virtual rasters (.vrt).</p>
+<h2 id="args">Args:</h2>
+<p><code>rasters</code> (<em>list</em>): List of rasters to stack. </br>
+<code>out_path</code> (<em>str</em>): The destination to save to. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>seperate</code> (<em>bool</em>): If the raster bands should be seperated. (Default: <strong>True</strong>) </br>
+<code>resample_alg</code> (<em>str</em>): The resampling algorithm to use. (Default: <strong>nearest</strong>) </br>
+<code>options</code> (<em>list</em>): List of VRT options for GDAL. (Default: <strong>()</strong> </br>
+<code>overwrite</code> (<em>bool</em>): If the file exists, should it be overwritten? (Default: <strong>True</strong>) </br>
+<code>reference</code> (<em>str</em>): The reference raster to use. (Default: <strong>None</strong>) </br>
+<code>creation_options</code> (<em>list</em>): List of <strong>GDAL</strong> creation options. Defaults are: </br>
+* "TILED=YES"
+* "NUM_THREADS=ALL_CPUS"
+* "BIGG_TIF=YES"
+* "COMPRESS=LZW"</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The filepath to the newly created VRT raster.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stack_rasters_vrt(
+    rasters,
+    out_path,
+    seperate=True,
+    *,
+    resample_alg=&#34;nearest&#34;,
+    options=(),
+    overwrite=True,
+    reference=None,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Stacks a list of rasters into a virtual rasters (.vrt).
+
+    ## Args:
+    `rasters` (_list_): List of rasters to stack. &lt;/br&gt;
+    `out_path` (_str_): The destination to save to. &lt;/br&gt;
+
+    ## Kwargs:
+    `seperate` (_bool_): If the raster bands should be seperated. (Default: **True**) &lt;/br&gt;
+    `resample_alg` (_str_): The resampling algorithm to use. (Default: **nearest**) &lt;/br&gt;
+    `options` (_list_): List of VRT options for GDAL. (Default: **()** &lt;/br&gt;
+    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
+    `reference` (_str_): The reference raster to use. (Default: **None**) &lt;/br&gt;
+    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
+        * &#34;TILED=YES&#34;
+        * &#34;NUM_THREADS=ALL_CPUS&#34;
+        * &#34;BIGG_TIF=YES&#34;
+        * &#34;COMPRESS=LZW&#34;
+
+    ## Returns:
+    (_str_): The filepath to the newly created VRT raster.
+    &#34;&#34;&#34;
+    core_utils.type_check(rasters, [[str, gdal.Dataset]], &#34;rasters&#34;)
+    core_utils.type_check(out_path, [str], &#34;out_path&#34;)
+    core_utils.type_check(seperate, [bool], &#34;seperate&#34;)
+    core_utils.type_check(resample_alg, [str], &#34;resample_alg&#34;)
+    core_utils.type_check(options, [tuple], &#34;options&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+
+    resample_algorithm = gdal_enums.translate_resample_method(resample_alg)
+
+    if reference is not None:
+        meta = raster_to_metadata(reference)
+        options = gdal.BuildVRTOptions(
+            resampleAlg=resample_algorithm,
+            separate=seperate,
+            outputBounds=[meta[&#34;x_min&#34;], meta[&#34;y_min&#34;], meta[&#34;x_max&#34;], meta[&#34;y_max&#34;]],
+            xRes=meta[&#34;pixel_width&#34;],
+            yRes=meta[&#34;pixel_height&#34;],
+            targetAlignedPixels=True,
+        )
+    else:
+        options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)
+
+    gdal.BuildVRT(out_path, rasters, options=options)
+
+    return out_path</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul>
+<li><a href="#basic-io-functions-for-working-with-rasters">Basic IO functions for working with Rasters</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="buteo.raster" href="index.html">buteo.raster</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.raster.core_raster.array_to_raster" href="#buteo.raster.core_raster.array_to_raster">array_to_raster</a></code></li>
+<li><code><a title="buteo.raster.core_raster.get_overlap_fraction" href="#buteo.raster.core_raster.get_overlap_fraction">get_overlap_fraction</a></code></li>
+<li><code><a title="buteo.raster.core_raster.open_raster" href="#buteo.raster.core_raster.open_raster">open_raster</a></code></li>
+<li><code><a title="buteo.raster.core_raster.raster_set_datatype" href="#buteo.raster.core_raster.raster_set_datatype">raster_set_datatype</a></code></li>
+<li><code><a title="buteo.raster.core_raster.raster_to_array" href="#buteo.raster.core_raster.raster_to_array">raster_to_array</a></code></li>
+<li><code><a title="buteo.raster.core_raster.raster_to_metadata" href="#buteo.raster.core_raster.raster_to_metadata">raster_to_metadata</a></code></li>
+<li><code><a title="buteo.raster.core_raster.rasters_are_aligned" href="#buteo.raster.core_raster.rasters_are_aligned">rasters_are_aligned</a></code></li>
+<li><code><a title="buteo.raster.core_raster.rasters_intersect" href="#buteo.raster.core_raster.rasters_intersect">rasters_intersect</a></code></li>
+<li><code><a title="buteo.raster.core_raster.rasters_intersection" href="#buteo.raster.core_raster.rasters_intersection">rasters_intersection</a></code></li>
+<li><code><a title="buteo.raster.core_raster.stack_rasters" href="#buteo.raster.core_raster.stack_rasters">stack_rasters</a></code></li>
+<li><code><a title="buteo.raster.core_raster.stack_rasters_vrt" href="#buteo.raster.core_raster.stack_rasters_vrt">stack_rasters_vrt</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

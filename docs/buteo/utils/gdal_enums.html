@@ -1,0 +1,978 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>buteo.utils.gdal_enums API documentation</title>
+<meta name="description" content="GDAL Enum Functions ### …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>buteo.utils.gdal_enums</code></h1>
+</header>
+<section id="section-intro">
+<h3 id="gdal-enum-functions">GDAL Enum Functions</h3>
+<p>Functions to translate between <strong>GDAL</strong> and <strong>NumPy</strong> datatypes.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+### GDAL Enum Functions ###
+
+Functions to translate between **GDAL** and **NumPy** datatypes.
+&#34;&#34;&#34;
+
+# External
+import numpy as np
+from osgeo import gdal
+
+
+
+def get_available_drivers():
+    &#34;&#34;&#34;
+    Returns a list of **all** available drivers.
+
+    ## Returns:
+    (_list_): List of dicts available drivers. Each dict has the following keys: &lt;/br&gt;
+    `short_name`: **String** of driver short name (e.g. GTiff). &lt;/br&gt;
+    `long_name`: **String** of driver long name (e.g. GeoTiff). &lt;/br&gt;
+    `extension`: **String** of driver extension (e.g. tif). **OBS**: Can be an empty string. &lt;/br&gt;
+    &#34;&#34;&#34;
+    raster_drivers = []
+    vector_drivers = []
+
+    for i in range(0, gdal.GetDriverCount()):
+        driver = gdal.GetDriver(i)
+        metadata = driver.GetMetadata_Dict()
+
+        info = {
+            &#34;short_name&#34;: driver.ShortName,
+            &#34;long_name&#34;: driver.LongName,
+            &#34;extension&#34;: driver.GetMetadataItem(gdal.DMD_EXTENSIONS),
+        }
+
+        if &#39;DCAP_RASTER&#39; in metadata:
+            raster_drivers.append(info)
+
+        if &#39;DCAP_VECTOR&#39; in metadata:
+            vector_drivers.append(info)
+
+    return (raster_drivers, vector_drivers)
+
+
+
+def get_valid_raster_driver_extensions():
+    &#34;&#34;&#34;
+    Returns a list of valid raster driver extensions.
+
+    ## Returns:
+    (_list_): List of valid raster driver extensions.
+    &#34;&#34;&#34;
+    available_raster_drivers, _available_vector_drivers = get_available_drivers()
+
+    valid_raster_driver_extensions = []
+
+    for driver in available_raster_drivers:
+        if driver[&#34;extension&#34;] != &#34;&#34; or len(driver[&#34;extension&#34;]) &gt; 0:
+            valid_raster_driver_extensions.append(driver[&#34;extension&#34;])
+
+    return valid_raster_driver_extensions
+
+
+def get_valid_vector_driver_extensions():
+    &#34;&#34;&#34;
+    Returns a list of valid vector driver extensions.
+
+    ## Returns:
+    (_list_): List of valid vector driver extensions.
+    &#34;&#34;&#34;
+    _available_raster_drivers, available_vector_drivers = get_available_drivers()
+
+    valid_vector_driver_extensions = []
+
+    for driver in available_vector_drivers:
+        if driver[&#34;extension&#34;] != &#34;&#34; or len(driver[&#34;extension&#34;]) &gt; 0:
+            valid_vector_driver_extensions.append(driver[&#34;extension&#34;])
+
+    return valid_vector_driver_extensions
+
+
+def get_valid_driver_extensions():
+    &#34;&#34;&#34;
+    Returns a list of all valid driver extensions (**GDAL** + **OGR**).
+
+    ## Returns:
+    (_list_): List of all valid driver extensions.
+    &#34;&#34;&#34;
+    available_raster_drivers, available_vector_drivers = get_available_drivers()
+
+    valid_driver_extensions = []
+
+    for driver in available_raster_drivers + available_vector_drivers:
+        if driver[&#34;extension&#34;] != &#34;&#34; or len(driver[&#34;extension&#34;]) &gt; 0:
+            valid_driver_extensions.append(driver[&#34;extension&#34;])
+
+    return valid_driver_extensions
+
+
+def is_valid_driver_extension(ext):
+    &#34;&#34;&#34;
+    Checks if a file extension is a valid **GDAL** or **OGR** driver extension.
+
+    ## Args:
+    `ext` (_str_): The file extension. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if valid, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(ext, str), &#34;Extension must be a string.&#34;
+    assert len(ext) &gt; 0, &#34;Extension must be a non-empty string.&#34;
+
+    return ext in get_valid_driver_extensions()
+
+
+def is_valid_raster_driver_extension(ext):
+    &#34;&#34;&#34;
+    Checks if a raster file extension is a valid **GDAL** driver extension.
+
+    ## Args:
+    `ext` (_str_): The file extension. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if valid, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(ext, str), &#34;Extension must be a string.&#34;
+    assert len(ext) &gt; 0, &#34;Extension must be a non-empty string.&#34;
+
+    return ext in get_valid_raster_driver_extensions()
+
+
+def is_valid_vector_driver_extension(ext):
+    &#34;&#34;&#34;
+    Checks if a vector file extension is a valid **OGR** driver extension.
+
+    ## Args:
+    `ext` (_str_): The file extension. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if valid, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(ext, str), &#34;Extension must be a string.&#34;
+    assert len(ext) &gt; 0, &#34;Extension must be a non-empty string.&#34;
+
+    return ext in get_valid_vector_driver_extensions()
+
+
+def convert_raster_extension_to_driver_shortname(ext):
+    &#34;&#34;&#34;
+    Converts a raster file extension to a **GDAL** driver short_name name.
+
+    ## Args:
+    `ext` (_str_): The file extension. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The driver short_name (e.g. GTiff).
+    &#34;&#34;&#34;
+    assert is_valid_raster_driver_extension(ext), f&#34;Invalid extension: {ext}&#34;
+
+    raster_drivers, _vector_drivers = get_available_drivers()
+
+    for driver in raster_drivers:
+        if driver[&#34;extension&#34;] == ext:
+            return driver[&#34;short_name&#34;]
+
+    raise RuntimeError(f&#34;Invalid extension: {ext}&#34;)
+
+
+def convert_vector_extension_to_driver_shortname(ext):
+    &#34;&#34;&#34;
+    Converts a vector file extension to an **OGR** driver short_name name.
+
+    ## Args:
+    `ext` (_str_): The file extension. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The driver short_name (e.g. GPKG).
+    &#34;&#34;&#34;
+    assert is_valid_vector_driver_extension(ext), f&#34;Invalid extension: {ext}&#34;
+
+    _raster_drivers, vector_drivers = get_available_drivers()
+
+    for driver in vector_drivers:
+        if driver[&#34;extension&#34;] == ext:
+            return driver[&#34;short_name&#34;]
+
+    raise RuntimeError(f&#34;Invalid extension: {ext}&#34;)
+
+
+def translate_resample_method(method):
+    &#34;&#34;&#34;
+    Translate a string of a resampling method to a **GDAL** integer (e.g. `gdal.GRA_NearestNeighbour`).
+
+    ## Args:
+    `method` (_str_): The resampling method. &lt;/br&gt;
+
+    ## Returns:
+    (_int_): The **GDAL** resampling integer (e.g. `&#34;nearest&#34;=1`).
+    &#34;&#34;&#34;
+    assert isinstance(method, str), &#34;method must be a string.&#34;
+    assert len(method) &gt; 0, &#34;method must be a non-empty string.&#34;
+
+    methods = {
+        &#34;nearest&#34;: gdal.GRA_NearestNeighbour,
+        &#34;bilinear&#34;: gdal.GRA_Bilinear,
+        &#34;cubic&#34;: gdal.GRA_Cubic,
+        &#34;cubic_spline&#34;: gdal.GRA_CubicSpline,
+        &#34;cubicspline&#34;: gdal.GRA_CubicSpline,
+        &#34;lanczos&#34;: gdal.GRA_Lanczos,
+        &#34;average&#34;: gdal.GRA_Average,
+        &#34;mean&#34;: gdal.GRA_Average,
+        &#34;mode&#34;: gdal.GRA_Mode,
+        &#34;max&#34;: gdal.GRA_Max,
+        &#34;maximum&#34;: gdal.GRA_Max,
+        &#34;min&#34;: gdal.GRA_Min,
+        &#34;minimum&#34;: gdal.GRA_Min,
+        &#34;median&#34;: gdal.GRA_Med,
+        &#34;med&#34;: gdal.GRA_Med,
+        &#34;q1&#34;: gdal.GRA_Q1,
+        &#34;Q1&#34;: gdal.GRA_Q1,
+        &#34;q3&#34;: gdal.GRA_Q3,
+        &#34;Q3&#34;: gdal.GRA_Q3,
+        &#34;sum&#34;: gdal.GRA_RMS,
+        &#34;rms&#34;: gdal.GRA_RMS,
+        &#34;RMS&#34;: gdal.GRA_RMS,
+    }
+
+    if method in methods:
+        return methods[method]
+
+    raise ValueError(&#34;Unknown resample method: &#34; + method)
+
+
+def translate_gdal_dtype_to_str(gdal_datatype_int):
+    &#34;&#34;&#34;
+    Translates the **GDAL** datatype integer into a string. Can be used by **NumPy**.
+
+    ## Args:
+    `gdal_datatype_int` (_gdal_datatype_int_): The **GDAL** datatype integer. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The translated string (e.g. `0=&#34;uint8&#34;`)
+    &#34;&#34;&#34;
+    assert isinstance(gdal_datatype_int, int), f&#34;gdal_datatype must be an integer. Received: {gdal_datatype_int}&#34;
+
+    datatypes = {
+        str(gdal.GDT_Byte): &#34;uint8&#34;,
+        str(gdal.GDT_Int16): &#34;int16&#34;,
+        str(gdal.GDT_Int32): &#34;int32&#34;,
+        str(gdal.GDT_UInt16): &#34;uint16&#34;,
+        str(gdal.GDT_UInt32): &#34;uint32&#34;,
+        str(gdal.GDT_Float32): &#34;float32&#34;,
+        str(gdal.GDT_Float64): &#34;float64&#34;,
+        str(gdal.GDT_CFloat32): &#34;cfloat32&#34;,
+        str(gdal.GDT_CFloat64): &#34;cfloat64&#34;,
+        str(gdal.GDT_CInt16): &#34;cint16&#34;,
+        str(gdal.GDT_CInt32): &#34;cint32&#34;,
+    }
+
+    dtype_str = str(gdal_datatype_int)
+    for key in datatypes:
+        if dtype_str == key:
+            return datatypes[dtype_str]
+
+    raise ValueError(f&#34;Could not translate the datatype: {gdal_datatype_int}&#34;)
+
+
+def translate_str_to_gdal_dtype(dtype_str):
+    &#34;&#34;&#34;
+    Translates the datatype string into a **GDAL** datatype integer. Can be used by **GDAL**.
+
+    ## Args:
+    `dtype_str` (_dtype_str_): The datatype string (e.g. &#34;float32&#34;). &lt;/br&gt;
+
+    ## Returns:
+    (_int_): The translated integer (e.g. `&#34;uint8&#34;=0`)
+    &#34;&#34;&#34;
+    assert isinstance(dtype_str, str), &#34;dtype_str must be a string.&#34;
+    assert len(dtype_str) &gt; 0, &#34;dtype_str must be a non-empty string.&#34;
+
+    datatypes = {
+        &#34;int8&#34;: gdal.GDT_Int16,
+        &#34;int16&#34;: gdal.GDT_Int16,
+        &#34;int32&#34;: gdal.GDT_Int32,
+        &#34;int64&#34;: gdal.GDT_Int32,
+        &#34;uint8&#34;: gdal.GDT_Byte,
+        &#34;uint16&#34;: gdal.GDT_UInt16,
+        &#34;uint32&#34;: gdal.GDT_UInt32,
+        &#34;uint64&#34;: gdal.GDT_UInt32,
+        &#34;float16&#34;: gdal.GDT_Float32,
+        &#34;float32&#34;: gdal.GDT_Float32,
+        &#34;float64&#34;: gdal.GDT_Float64,
+        &#34;cfloat32&#34;: gdal.GDT_CFloat32,
+        &#34;cfloat64&#34;: gdal.GDT_CFloat64,
+        &#34;cint16&#34;: gdal.GDT_CInt16,
+        &#34;cint32&#34;: gdal.GDT_CInt32,
+    }
+
+    for key in datatypes:
+        if dtype_str == key:
+            return datatypes[dtype_str]
+
+    raise ValueError(f&#34;Could not translate the datatype: {dtype_str}&#34;)
+
+
+def get_default_nodata_value(dtype):
+    &#34;&#34;&#34;
+    Returns the default fill value for masked numpy arrays.
+
+    ## Args:
+    `dtype` (_numpy.dtype_ | _str_ | _int_): The dtype. &lt;/br&gt;
+
+    ## Returns:
+    (_float_ | _int_): The default fill value.
+    &#34;&#34;&#34;
+    assert isinstance(dtype, (np.dtype, str, int)), &#34;numpy_dtype must be a numpy.dtype or string.&#34;
+
+    datatypes = {
+        &#34;int8&#34;: -127,
+        &#34;int16&#34;: -32767,
+        &#34;int32&#34;: -2147483647,
+        &#34;int64&#34;: -9223372036854775807,
+        &#34;uint8&#34;: 255,
+        &#34;uint16&#34;: 65535,
+        &#34;uint32&#34;: 4294967295,
+        &#34;uint64&#34;: 18446744073709551615,
+        &#34;float16&#34;: -9999.0,
+        &#34;float32&#34;: -9999.0,
+        &#34;float64&#34;: -9999.0,
+        &#34;cfloat32&#34;: -9999.0,
+        &#34;cfloat64&#34;: -9999.0,
+    }
+
+    test_type = dtype
+    if isinstance(dtype, np.dtype):
+        test_type = test_type.name
+    elif isinstance(dtype, int):
+        test_type = translate_gdal_dtype_to_str(dtype)
+
+    if test_type in datatypes:
+        return datatypes[test_type]
+
+    raise ValueError(&#34;Unknown numpy datatype: &#34; + test_type)
+
+
+def is_gdal_datatype_a_float(gdal_dtype):
+    &#34;&#34;&#34;
+    Checks if a **GDAL** datatype integer is a floating datatype: &lt;/br&gt;
+    `(Float32, Float64, cFloat32, cFloat64)`
+
+    ## Args:
+    `gdal_dtype` (_int_): The **GDAL** datatype integer. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if datatype is a float, otherwise **False**.
+    &#34;&#34;&#34;
+    assert isinstance(gdal_dtype, int), f&#34;gdal_dtype must be an integer. Received: {gdal_dtype}&#34;
+
+    floats = [gdal.GDT_Float32, gdal.GDT_Float64, gdal.GDT_CFloat32, gdal.GDT_CFloat64]
+
+    if gdal_dtype in floats:
+        return True
+
+    return False</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.utils.gdal_enums.convert_raster_extension_to_driver_shortname"><code class="name flex">
+<span>def <span class="ident">convert_raster_extension_to_driver_shortname</span></span>(<span>ext)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts a raster file extension to a <strong>GDAL</strong> driver short_name name.</p>
+<h2 id="args">Args:</h2>
+<p><code>ext</code> (<em>str</em>): The file extension. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The driver short_name (e.g. GTiff).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_raster_extension_to_driver_shortname(ext):
+    &#34;&#34;&#34;
+    Converts a raster file extension to a **GDAL** driver short_name name.
+
+    ## Args:
+    `ext` (_str_): The file extension. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The driver short_name (e.g. GTiff).
+    &#34;&#34;&#34;
+    assert is_valid_raster_driver_extension(ext), f&#34;Invalid extension: {ext}&#34;
+
+    raster_drivers, _vector_drivers = get_available_drivers()
+
+    for driver in raster_drivers:
+        if driver[&#34;extension&#34;] == ext:
+            return driver[&#34;short_name&#34;]
+
+    raise RuntimeError(f&#34;Invalid extension: {ext}&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.convert_vector_extension_to_driver_shortname"><code class="name flex">
+<span>def <span class="ident">convert_vector_extension_to_driver_shortname</span></span>(<span>ext)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts a vector file extension to an <strong>OGR</strong> driver short_name name.</p>
+<h2 id="args">Args:</h2>
+<p><code>ext</code> (<em>str</em>): The file extension. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The driver short_name (e.g. GPKG).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_vector_extension_to_driver_shortname(ext):
+    &#34;&#34;&#34;
+    Converts a vector file extension to an **OGR** driver short_name name.
+
+    ## Args:
+    `ext` (_str_): The file extension. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The driver short_name (e.g. GPKG).
+    &#34;&#34;&#34;
+    assert is_valid_vector_driver_extension(ext), f&#34;Invalid extension: {ext}&#34;
+
+    _raster_drivers, vector_drivers = get_available_drivers()
+
+    for driver in vector_drivers:
+        if driver[&#34;extension&#34;] == ext:
+            return driver[&#34;short_name&#34;]
+
+    raise RuntimeError(f&#34;Invalid extension: {ext}&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.get_available_drivers"><code class="name flex">
+<span>def <span class="ident">get_available_drivers</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a list of <strong>all</strong> available drivers.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): List of dicts available drivers. Each dict has the following keys: </br>
+<code>short_name</code>: <strong>String</strong> of driver short name (e.g. GTiff). </br>
+<code>long_name</code>: <strong>String</strong> of driver long name (e.g. GeoTiff). </br>
+<code>extension</code>: <strong>String</strong> of driver extension (e.g. tif). <strong>OBS</strong>: Can be an empty string. </br></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_available_drivers():
+    &#34;&#34;&#34;
+    Returns a list of **all** available drivers.
+
+    ## Returns:
+    (_list_): List of dicts available drivers. Each dict has the following keys: &lt;/br&gt;
+    `short_name`: **String** of driver short name (e.g. GTiff). &lt;/br&gt;
+    `long_name`: **String** of driver long name (e.g. GeoTiff). &lt;/br&gt;
+    `extension`: **String** of driver extension (e.g. tif). **OBS**: Can be an empty string. &lt;/br&gt;
+    &#34;&#34;&#34;
+    raster_drivers = []
+    vector_drivers = []
+
+    for i in range(0, gdal.GetDriverCount()):
+        driver = gdal.GetDriver(i)
+        metadata = driver.GetMetadata_Dict()
+
+        info = {
+            &#34;short_name&#34;: driver.ShortName,
+            &#34;long_name&#34;: driver.LongName,
+            &#34;extension&#34;: driver.GetMetadataItem(gdal.DMD_EXTENSIONS),
+        }
+
+        if &#39;DCAP_RASTER&#39; in metadata:
+            raster_drivers.append(info)
+
+        if &#39;DCAP_VECTOR&#39; in metadata:
+            vector_drivers.append(info)
+
+    return (raster_drivers, vector_drivers)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.get_default_nodata_value"><code class="name flex">
+<span>def <span class="ident">get_default_nodata_value</span></span>(<span>dtype)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the default fill value for masked numpy arrays.</p>
+<h2 id="args">Args:</h2>
+<p><code>dtype</code> (<em>numpy.dtype</em> | <em>str</em> | <em>int</em>): The dtype. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>float</em> | <em>int</em>): The default fill value.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_default_nodata_value(dtype):
+    &#34;&#34;&#34;
+    Returns the default fill value for masked numpy arrays.
+
+    ## Args:
+    `dtype` (_numpy.dtype_ | _str_ | _int_): The dtype. &lt;/br&gt;
+
+    ## Returns:
+    (_float_ | _int_): The default fill value.
+    &#34;&#34;&#34;
+    assert isinstance(dtype, (np.dtype, str, int)), &#34;numpy_dtype must be a numpy.dtype or string.&#34;
+
+    datatypes = {
+        &#34;int8&#34;: -127,
+        &#34;int16&#34;: -32767,
+        &#34;int32&#34;: -2147483647,
+        &#34;int64&#34;: -9223372036854775807,
+        &#34;uint8&#34;: 255,
+        &#34;uint16&#34;: 65535,
+        &#34;uint32&#34;: 4294967295,
+        &#34;uint64&#34;: 18446744073709551615,
+        &#34;float16&#34;: -9999.0,
+        &#34;float32&#34;: -9999.0,
+        &#34;float64&#34;: -9999.0,
+        &#34;cfloat32&#34;: -9999.0,
+        &#34;cfloat64&#34;: -9999.0,
+    }
+
+    test_type = dtype
+    if isinstance(dtype, np.dtype):
+        test_type = test_type.name
+    elif isinstance(dtype, int):
+        test_type = translate_gdal_dtype_to_str(dtype)
+
+    if test_type in datatypes:
+        return datatypes[test_type]
+
+    raise ValueError(&#34;Unknown numpy datatype: &#34; + test_type)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.get_valid_driver_extensions"><code class="name flex">
+<span>def <span class="ident">get_valid_driver_extensions</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a list of all valid driver extensions (<strong>GDAL</strong> + <strong>OGR</strong>).</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): List of all valid driver extensions.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_valid_driver_extensions():
+    &#34;&#34;&#34;
+    Returns a list of all valid driver extensions (**GDAL** + **OGR**).
+
+    ## Returns:
+    (_list_): List of all valid driver extensions.
+    &#34;&#34;&#34;
+    available_raster_drivers, available_vector_drivers = get_available_drivers()
+
+    valid_driver_extensions = []
+
+    for driver in available_raster_drivers + available_vector_drivers:
+        if driver[&#34;extension&#34;] != &#34;&#34; or len(driver[&#34;extension&#34;]) &gt; 0:
+            valid_driver_extensions.append(driver[&#34;extension&#34;])
+
+    return valid_driver_extensions</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.get_valid_raster_driver_extensions"><code class="name flex">
+<span>def <span class="ident">get_valid_raster_driver_extensions</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a list of valid raster driver extensions.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): List of valid raster driver extensions.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_valid_raster_driver_extensions():
+    &#34;&#34;&#34;
+    Returns a list of valid raster driver extensions.
+
+    ## Returns:
+    (_list_): List of valid raster driver extensions.
+    &#34;&#34;&#34;
+    available_raster_drivers, _available_vector_drivers = get_available_drivers()
+
+    valid_raster_driver_extensions = []
+
+    for driver in available_raster_drivers:
+        if driver[&#34;extension&#34;] != &#34;&#34; or len(driver[&#34;extension&#34;]) &gt; 0:
+            valid_raster_driver_extensions.append(driver[&#34;extension&#34;])
+
+    return valid_raster_driver_extensions</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.get_valid_vector_driver_extensions"><code class="name flex">
+<span>def <span class="ident">get_valid_vector_driver_extensions</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a list of valid vector driver extensions.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): List of valid vector driver extensions.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_valid_vector_driver_extensions():
+    &#34;&#34;&#34;
+    Returns a list of valid vector driver extensions.
+
+    ## Returns:
+    (_list_): List of valid vector driver extensions.
+    &#34;&#34;&#34;
+    _available_raster_drivers, available_vector_drivers = get_available_drivers()
+
+    valid_vector_driver_extensions = []
+
+    for driver in available_vector_drivers:
+        if driver[&#34;extension&#34;] != &#34;&#34; or len(driver[&#34;extension&#34;]) &gt; 0:
+            valid_vector_driver_extensions.append(driver[&#34;extension&#34;])
+
+    return valid_vector_driver_extensions</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.is_gdal_datatype_a_float"><code class="name flex">
+<span>def <span class="ident">is_gdal_datatype_a_float</span></span>(<span>gdal_dtype)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a <strong>GDAL</strong> datatype integer is a floating datatype: </br>
+<code>(Float32, Float64, cFloat32, cFloat64)</code></p>
+<h2 id="args">Args:</h2>
+<p><code>gdal_dtype</code> (<em>int</em>): The <strong>GDAL</strong> datatype integer. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if datatype is a float, otherwise <strong>False</strong>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_gdal_datatype_a_float(gdal_dtype):
+    &#34;&#34;&#34;
+    Checks if a **GDAL** datatype integer is a floating datatype: &lt;/br&gt;
+    `(Float32, Float64, cFloat32, cFloat64)`
+
+    ## Args:
+    `gdal_dtype` (_int_): The **GDAL** datatype integer. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if datatype is a float, otherwise **False**.
+    &#34;&#34;&#34;
+    assert isinstance(gdal_dtype, int), f&#34;gdal_dtype must be an integer. Received: {gdal_dtype}&#34;
+
+    floats = [gdal.GDT_Float32, gdal.GDT_Float64, gdal.GDT_CFloat32, gdal.GDT_CFloat64]
+
+    if gdal_dtype in floats:
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.is_valid_driver_extension"><code class="name flex">
+<span>def <span class="ident">is_valid_driver_extension</span></span>(<span>ext)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a file extension is a valid <strong>GDAL</strong> or <strong>OGR</strong> driver extension.</p>
+<h2 id="args">Args:</h2>
+<p><code>ext</code> (<em>str</em>): The file extension. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if valid, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_valid_driver_extension(ext):
+    &#34;&#34;&#34;
+    Checks if a file extension is a valid **GDAL** or **OGR** driver extension.
+
+    ## Args:
+    `ext` (_str_): The file extension. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if valid, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(ext, str), &#34;Extension must be a string.&#34;
+    assert len(ext) &gt; 0, &#34;Extension must be a non-empty string.&#34;
+
+    return ext in get_valid_driver_extensions()</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.is_valid_raster_driver_extension"><code class="name flex">
+<span>def <span class="ident">is_valid_raster_driver_extension</span></span>(<span>ext)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a raster file extension is a valid <strong>GDAL</strong> driver extension.</p>
+<h2 id="args">Args:</h2>
+<p><code>ext</code> (<em>str</em>): The file extension. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if valid, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_valid_raster_driver_extension(ext):
+    &#34;&#34;&#34;
+    Checks if a raster file extension is a valid **GDAL** driver extension.
+
+    ## Args:
+    `ext` (_str_): The file extension. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if valid, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(ext, str), &#34;Extension must be a string.&#34;
+    assert len(ext) &gt; 0, &#34;Extension must be a non-empty string.&#34;
+
+    return ext in get_valid_raster_driver_extensions()</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.is_valid_vector_driver_extension"><code class="name flex">
+<span>def <span class="ident">is_valid_vector_driver_extension</span></span>(<span>ext)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a vector file extension is a valid <strong>OGR</strong> driver extension.</p>
+<h2 id="args">Args:</h2>
+<p><code>ext</code> (<em>str</em>): The file extension. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if valid, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_valid_vector_driver_extension(ext):
+    &#34;&#34;&#34;
+    Checks if a vector file extension is a valid **OGR** driver extension.
+
+    ## Args:
+    `ext` (_str_): The file extension. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if valid, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(ext, str), &#34;Extension must be a string.&#34;
+    assert len(ext) &gt; 0, &#34;Extension must be a non-empty string.&#34;
+
+    return ext in get_valid_vector_driver_extensions()</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.translate_gdal_dtype_to_str"><code class="name flex">
+<span>def <span class="ident">translate_gdal_dtype_to_str</span></span>(<span>gdal_datatype_int)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Translates the <strong>GDAL</strong> datatype integer into a string. Can be used by <strong>NumPy</strong>.</p>
+<h2 id="args">Args:</h2>
+<p><code>gdal_datatype_int</code> (<em>gdal_datatype_int</em>): The <strong>GDAL</strong> datatype integer. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The translated string (e.g. <code>0="uint8"</code>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def translate_gdal_dtype_to_str(gdal_datatype_int):
+    &#34;&#34;&#34;
+    Translates the **GDAL** datatype integer into a string. Can be used by **NumPy**.
+
+    ## Args:
+    `gdal_datatype_int` (_gdal_datatype_int_): The **GDAL** datatype integer. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The translated string (e.g. `0=&#34;uint8&#34;`)
+    &#34;&#34;&#34;
+    assert isinstance(gdal_datatype_int, int), f&#34;gdal_datatype must be an integer. Received: {gdal_datatype_int}&#34;
+
+    datatypes = {
+        str(gdal.GDT_Byte): &#34;uint8&#34;,
+        str(gdal.GDT_Int16): &#34;int16&#34;,
+        str(gdal.GDT_Int32): &#34;int32&#34;,
+        str(gdal.GDT_UInt16): &#34;uint16&#34;,
+        str(gdal.GDT_UInt32): &#34;uint32&#34;,
+        str(gdal.GDT_Float32): &#34;float32&#34;,
+        str(gdal.GDT_Float64): &#34;float64&#34;,
+        str(gdal.GDT_CFloat32): &#34;cfloat32&#34;,
+        str(gdal.GDT_CFloat64): &#34;cfloat64&#34;,
+        str(gdal.GDT_CInt16): &#34;cint16&#34;,
+        str(gdal.GDT_CInt32): &#34;cint32&#34;,
+    }
+
+    dtype_str = str(gdal_datatype_int)
+    for key in datatypes:
+        if dtype_str == key:
+            return datatypes[dtype_str]
+
+    raise ValueError(f&#34;Could not translate the datatype: {gdal_datatype_int}&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.translate_resample_method"><code class="name flex">
+<span>def <span class="ident">translate_resample_method</span></span>(<span>method)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Translate a string of a resampling method to a <strong>GDAL</strong> integer (e.g. <code>gdal.GRA_NearestNeighbour</code>).</p>
+<h2 id="args">Args:</h2>
+<p><code>method</code> (<em>str</em>): The resampling method. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>int</em>): The <strong>GDAL</strong> resampling integer (e.g. <code>"nearest"=1</code>).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def translate_resample_method(method):
+    &#34;&#34;&#34;
+    Translate a string of a resampling method to a **GDAL** integer (e.g. `gdal.GRA_NearestNeighbour`).
+
+    ## Args:
+    `method` (_str_): The resampling method. &lt;/br&gt;
+
+    ## Returns:
+    (_int_): The **GDAL** resampling integer (e.g. `&#34;nearest&#34;=1`).
+    &#34;&#34;&#34;
+    assert isinstance(method, str), &#34;method must be a string.&#34;
+    assert len(method) &gt; 0, &#34;method must be a non-empty string.&#34;
+
+    methods = {
+        &#34;nearest&#34;: gdal.GRA_NearestNeighbour,
+        &#34;bilinear&#34;: gdal.GRA_Bilinear,
+        &#34;cubic&#34;: gdal.GRA_Cubic,
+        &#34;cubic_spline&#34;: gdal.GRA_CubicSpline,
+        &#34;cubicspline&#34;: gdal.GRA_CubicSpline,
+        &#34;lanczos&#34;: gdal.GRA_Lanczos,
+        &#34;average&#34;: gdal.GRA_Average,
+        &#34;mean&#34;: gdal.GRA_Average,
+        &#34;mode&#34;: gdal.GRA_Mode,
+        &#34;max&#34;: gdal.GRA_Max,
+        &#34;maximum&#34;: gdal.GRA_Max,
+        &#34;min&#34;: gdal.GRA_Min,
+        &#34;minimum&#34;: gdal.GRA_Min,
+        &#34;median&#34;: gdal.GRA_Med,
+        &#34;med&#34;: gdal.GRA_Med,
+        &#34;q1&#34;: gdal.GRA_Q1,
+        &#34;Q1&#34;: gdal.GRA_Q1,
+        &#34;q3&#34;: gdal.GRA_Q3,
+        &#34;Q3&#34;: gdal.GRA_Q3,
+        &#34;sum&#34;: gdal.GRA_RMS,
+        &#34;rms&#34;: gdal.GRA_RMS,
+        &#34;RMS&#34;: gdal.GRA_RMS,
+    }
+
+    if method in methods:
+        return methods[method]
+
+    raise ValueError(&#34;Unknown resample method: &#34; + method)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_enums.translate_str_to_gdal_dtype"><code class="name flex">
+<span>def <span class="ident">translate_str_to_gdal_dtype</span></span>(<span>dtype_str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Translates the datatype string into a <strong>GDAL</strong> datatype integer. Can be used by <strong>GDAL</strong>.</p>
+<h2 id="args">Args:</h2>
+<p><code>dtype_str</code> (<em>dtype_str</em>): The datatype string (e.g. "float32"). </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>int</em>): The translated integer (e.g. <code>"uint8"=0</code>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def translate_str_to_gdal_dtype(dtype_str):
+    &#34;&#34;&#34;
+    Translates the datatype string into a **GDAL** datatype integer. Can be used by **GDAL**.
+
+    ## Args:
+    `dtype_str` (_dtype_str_): The datatype string (e.g. &#34;float32&#34;). &lt;/br&gt;
+
+    ## Returns:
+    (_int_): The translated integer (e.g. `&#34;uint8&#34;=0`)
+    &#34;&#34;&#34;
+    assert isinstance(dtype_str, str), &#34;dtype_str must be a string.&#34;
+    assert len(dtype_str) &gt; 0, &#34;dtype_str must be a non-empty string.&#34;
+
+    datatypes = {
+        &#34;int8&#34;: gdal.GDT_Int16,
+        &#34;int16&#34;: gdal.GDT_Int16,
+        &#34;int32&#34;: gdal.GDT_Int32,
+        &#34;int64&#34;: gdal.GDT_Int32,
+        &#34;uint8&#34;: gdal.GDT_Byte,
+        &#34;uint16&#34;: gdal.GDT_UInt16,
+        &#34;uint32&#34;: gdal.GDT_UInt32,
+        &#34;uint64&#34;: gdal.GDT_UInt32,
+        &#34;float16&#34;: gdal.GDT_Float32,
+        &#34;float32&#34;: gdal.GDT_Float32,
+        &#34;float64&#34;: gdal.GDT_Float64,
+        &#34;cfloat32&#34;: gdal.GDT_CFloat32,
+        &#34;cfloat64&#34;: gdal.GDT_CFloat64,
+        &#34;cint16&#34;: gdal.GDT_CInt16,
+        &#34;cint32&#34;: gdal.GDT_CInt32,
+    }
+
+    for key in datatypes:
+        if dtype_str == key:
+            return datatypes[dtype_str]
+
+    raise ValueError(f&#34;Could not translate the datatype: {dtype_str}&#34;)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul>
+<li><a href="#gdal-enum-functions">GDAL Enum Functions</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="buteo.utils" href="index.html">buteo.utils</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.utils.gdal_enums.convert_raster_extension_to_driver_shortname" href="#buteo.utils.gdal_enums.convert_raster_extension_to_driver_shortname">convert_raster_extension_to_driver_shortname</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.convert_vector_extension_to_driver_shortname" href="#buteo.utils.gdal_enums.convert_vector_extension_to_driver_shortname">convert_vector_extension_to_driver_shortname</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.get_available_drivers" href="#buteo.utils.gdal_enums.get_available_drivers">get_available_drivers</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.get_default_nodata_value" href="#buteo.utils.gdal_enums.get_default_nodata_value">get_default_nodata_value</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.get_valid_driver_extensions" href="#buteo.utils.gdal_enums.get_valid_driver_extensions">get_valid_driver_extensions</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.get_valid_raster_driver_extensions" href="#buteo.utils.gdal_enums.get_valid_raster_driver_extensions">get_valid_raster_driver_extensions</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.get_valid_vector_driver_extensions" href="#buteo.utils.gdal_enums.get_valid_vector_driver_extensions">get_valid_vector_driver_extensions</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.is_gdal_datatype_a_float" href="#buteo.utils.gdal_enums.is_gdal_datatype_a_float">is_gdal_datatype_a_float</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.is_valid_driver_extension" href="#buteo.utils.gdal_enums.is_valid_driver_extension">is_valid_driver_extension</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.is_valid_raster_driver_extension" href="#buteo.utils.gdal_enums.is_valid_raster_driver_extension">is_valid_raster_driver_extension</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.is_valid_vector_driver_extension" href="#buteo.utils.gdal_enums.is_valid_vector_driver_extension">is_valid_vector_driver_extension</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.translate_gdal_dtype_to_str" href="#buteo.utils.gdal_enums.translate_gdal_dtype_to_str">translate_gdal_dtype_to_str</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.translate_resample_method" href="#buteo.utils.gdal_enums.translate_resample_method">translate_resample_method</a></code></li>
+<li><code><a title="buteo.utils.gdal_enums.translate_str_to_gdal_dtype" href="#buteo.utils.gdal_enums.translate_str_to_gdal_dtype">translate_str_to_gdal_dtype</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
