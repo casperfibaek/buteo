@@ -7,7 +7,7 @@ import os
 import numpy as np
 
 # Local dependencies
-from .core_raster import raster_to_array
+from ..buteo.raster.core_raster import raster_to_array
 
 
 # Setup tests
