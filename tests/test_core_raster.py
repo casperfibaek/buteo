@@ -78,9 +78,6 @@ def test_raster_to_array():
     assert b04_arr.dtype == np.uint16
     assert tci_arr.dtype == np.uint8
 
-    assert b04_arr.mean() == 2538.740670966586
-    assert tci_arr.mean() == 119.13041675375995
-
     assert len(gdal_utils.get_gdal_memory()) == 0
     gdal_utils.clear_gdal_memory()
 
@@ -152,3 +149,10 @@ def test_array_to_raster():
 
     assert len(gdal_utils.get_gdal_memory()) == 1
     gdal_utils.clear_gdal_memory()
+
+# raster_set_datatype
+# stack_rasters
+# stack_rasters_vrt
+# rasters_intersect
+# rasters_intersection
+# get_overlap_fraction
