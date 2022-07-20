@@ -275,7 +275,11 @@ def translate_str_to_gdal_dtype(dtype_str):
     ## Returns:
     (_int_): The translated integer (e.g. `"uint8"=0`)
     """
-    assert isinstance(dtype_str, str), "dtype_str must be a string."
+    assert isinstance(dtype_str, (np.dtype, str)), "dtype_str must be a string or numpy dtype."
+
+    if isinstance(dtype_str, np.dtype):
+        dtype_str = dtype_str.name
+
     assert len(dtype_str) > 0, "dtype_str must be a non-empty string."
 
     datatypes = {

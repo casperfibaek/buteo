@@ -388,17 +388,13 @@ def raster_to_array(
     `bands` (_list_/_str_/_int_): The bands from the raster to turn
     into a numpy array. Can be &#34;all&#34;, &#34;ALL&#34;, a list of ints or a
     single int. &lt;/br&gt;
-
     `filled` (_bool_): If the array contains nodata values. Should the
     resulting array be a filled numpy array or a masked array? &lt;/br&gt;
-
     `output_2d` (_bool_): If True, returns only the first band in a 2D
     fashion eg. (1920x1080) instead of the default channel-last format
     (1920x1080x1) &lt;/br&gt;
-
     `bbox` (_list_): A list of `[xmin, xmax, ymin, ymax]` to use as the
     extent of the raster. Uses coordinates and the **OGR** format. &lt;/br&gt;
-
     `pixel_offsets` (_list_): A list of [x_offset, y_offset, x_size, y_size] to use as
     the extent of the raster. Uses pixel offsets and the **OGR** format. &lt;/br&gt;
 
@@ -657,14 +653,14 @@ def array_to_raster(
     `out_path` (_path_): The destination to save to. (Default: **None**)&lt;/br&gt;
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
     `set_nodata` (_bool_/_float_/_int_): Can be set to: (Default: **auto**)&lt;/br&gt;
-        * **&#34;ref&#34;**: The nodata value will be the same as the reference raster. &lt;/br&gt;
-        * **&#34;arr&#34;**: The nodata value will be the same as the **NumPy** array. &lt;/br&gt;
-        * **&#34;value&#34;**: The nodata value will be the value provided. &lt;/br&gt;
+    &amp;emsp; • **&#34;ref&#34;**: The nodata value will be the same as the reference raster. &lt;/br&gt;
+    &amp;emsp; • **&#34;arr&#34;**: The nodata value will be the same as the **NumPy** array. &lt;/br&gt;
+    &amp;emsp; • **&#34;value&#34;**: The nodata value will be the value provided. &lt;/br&gt;
     `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
-        * &#34;TILED=YES&#34;
-        * &#34;NUM_THREADS=ALL_CPUS&#34;
-        * &#34;BIGG_TIF=YES&#34;
-        * &#34;COMPRESS=LZW&#34;
+    &amp;emsp; • &#34;TILED=YES&#34;
+    &amp;emsp; • &#34;NUM_THREADS=ALL_CPUS&#34;
+    &amp;emsp; • &#34;BIGG_TIF=YES&#34;
+    &amp;emsp; • &#34;COMPRESS=LZW&#34;
 
     ## Returns:
     (_str_): The filepath to the newly created raster(s).
@@ -785,10 +781,10 @@ def stack_rasters(
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
     `dtype` (_str_): The data type of the output raster. (Default: **None**)&lt;/br&gt;
     `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
-        * &#34;TILED=YES&#34;
-        * &#34;NUM_THREADS=ALL_CPUS&#34;
-        * &#34;BIGG_TIF=YES&#34;
-        * &#34;COMPRESS=LZW&#34;
+    &amp;emsp; • &#34;TILED=YES&#34;
+    &amp;emsp; • &#34;NUM_THREADS=ALL_CPUS&#34;
+    &amp;emsp; • &#34;BIGG_TIF=YES&#34;
+    &amp;emsp; • &#34;COMPRESS=LZW&#34;
 
     ## Returns:
     (_str_/_list_): The filepath(s) to the newly created raster(s).
@@ -919,10 +915,10 @@ def stack_rasters_vrt(
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
     `reference` (_str_): The reference raster to use. (Default: **None**) &lt;/br&gt;
     `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
-        * &#34;TILED=YES&#34;
-        * &#34;NUM_THREADS=ALL_CPUS&#34;
-        * &#34;BIGG_TIF=YES&#34;
-        * &#34;COMPRESS=LZW&#34;
+    * &amp;emsp; • &#34;TILED=YES&#34;
+    * &amp;emsp; • &#34;NUM_THREADS=ALL_CPUS&#34;
+    * &amp;emsp; • &#34;BIGG_TIF=YES&#34;
+    * &amp;emsp; • &#34;COMPRESS=LZW&#34;
 
     ## Returns:
     (_str_): The filepath to the newly created VRT raster.
@@ -1047,14 +1043,14 @@ as a raster using a reference raster.</p>
 <p><code>out_path</code> (<em>path</em>): The destination to save to. (Default: <strong>None</strong>)</br>
 <code>overwrite</code> (<em>bool</em>): If the file exists, should it be overwritten? (Default: <strong>True</strong>) </br>
 <code>set_nodata</code> (<em>bool</em>/<em>float</em>/<em>int</em>): Can be set to: (Default: <strong>auto</strong>)</br>
-* <strong>"ref"</strong>: The nodata value will be the same as the reference raster. </br>
-* <strong>"arr"</strong>: The nodata value will be the same as the <strong>NumPy</strong> array. </br>
-* <strong>"value"</strong>: The nodata value will be the value provided. </br>
+&emsp; • <strong>"ref"</strong>: The nodata value will be the same as the reference raster. </br>
+&emsp; • <strong>"arr"</strong>: The nodata value will be the same as the <strong>NumPy</strong> array. </br>
+&emsp; • <strong>"value"</strong>: The nodata value will be the value provided. </br>
 <code>creation_options</code> (<em>list</em>): List of <strong>GDAL</strong> creation options. Defaults are: </br>
-* "TILED=YES"
-* "NUM_THREADS=ALL_CPUS"
-* "BIGG_TIF=YES"
-* "COMPRESS=LZW"</p>
+&emsp; • "TILED=YES"
+&emsp; • "NUM_THREADS=ALL_CPUS"
+&emsp; • "BIGG_TIF=YES"
+&emsp; • "COMPRESS=LZW"</p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>str</em>): The filepath to the newly created raster(s).</p></div>
 <details class="source">
@@ -1082,14 +1078,14 @@ as a raster using a reference raster.</p>
     `out_path` (_path_): The destination to save to. (Default: **None**)&lt;/br&gt;
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
     `set_nodata` (_bool_/_float_/_int_): Can be set to: (Default: **auto**)&lt;/br&gt;
-        * **&#34;ref&#34;**: The nodata value will be the same as the reference raster. &lt;/br&gt;
-        * **&#34;arr&#34;**: The nodata value will be the same as the **NumPy** array. &lt;/br&gt;
-        * **&#34;value&#34;**: The nodata value will be the value provided. &lt;/br&gt;
+    &amp;emsp; • **&#34;ref&#34;**: The nodata value will be the same as the reference raster. &lt;/br&gt;
+    &amp;emsp; • **&#34;arr&#34;**: The nodata value will be the same as the **NumPy** array. &lt;/br&gt;
+    &amp;emsp; • **&#34;value&#34;**: The nodata value will be the value provided. &lt;/br&gt;
     `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
-        * &#34;TILED=YES&#34;
-        * &#34;NUM_THREADS=ALL_CPUS&#34;
-        * &#34;BIGG_TIF=YES&#34;
-        * &#34;COMPRESS=LZW&#34;
+    &amp;emsp; • &#34;TILED=YES&#34;
+    &amp;emsp; • &#34;NUM_THREADS=ALL_CPUS&#34;
+    &amp;emsp; • &#34;BIGG_TIF=YES&#34;
+    &amp;emsp; • &#34;COMPRESS=LZW&#34;
 
     ## Returns:
     (_str_): The filepath to the newly created raster(s).
@@ -1399,15 +1395,15 @@ are allowed. (Default: <strong>True</strong>) </br>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>bands</code> (<em>list</em>/<em>str</em>/<em>int</em>): The bands from the raster to turn
 into a numpy array. Can be "all", "ALL", a list of ints or a
-single int. </br></p>
-<p><code>filled</code> (<em>bool</em>): If the array contains nodata values. Should the
-resulting array be a filled numpy array or a masked array? </br></p>
-<p><code>output_2d</code> (<em>bool</em>): If True, returns only the first band in a 2D
+single int. </br>
+<code>filled</code> (<em>bool</em>): If the array contains nodata values. Should the
+resulting array be a filled numpy array or a masked array? </br>
+<code>output_2d</code> (<em>bool</em>): If True, returns only the first band in a 2D
 fashion eg. (1920x1080) instead of the default channel-last format
-(1920x1080x1) </br></p>
-<p><code>bbox</code> (<em>list</em>): A list of <code>[xmin, xmax, ymin, ymax]</code> to use as the
-extent of the raster. Uses coordinates and the <strong>OGR</strong> format. </br></p>
-<p><code>pixel_offsets</code> (<em>list</em>): A list of [x_offset, y_offset, x_size, y_size] to use as
+(1920x1080x1) </br>
+<code>bbox</code> (<em>list</em>): A list of <code>[xmin, xmax, ymin, ymax]</code> to use as the
+extent of the raster. Uses coordinates and the <strong>OGR</strong> format. </br>
+<code>pixel_offsets</code> (<em>list</em>): A list of [x_offset, y_offset, x_size, y_size] to use as
 the extent of the raster. Uses pixel offsets and the <strong>OGR</strong> format. </br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>np.ndarray</em>): A numpy array in the 3D channel-last format unless output_2D is
@@ -1435,17 +1431,13 @@ specified. </br></p></div>
     `bands` (_list_/_str_/_int_): The bands from the raster to turn
     into a numpy array. Can be &#34;all&#34;, &#34;ALL&#34;, a list of ints or a
     single int. &lt;/br&gt;
-
     `filled` (_bool_): If the array contains nodata values. Should the
     resulting array be a filled numpy array or a masked array? &lt;/br&gt;
-
     `output_2d` (_bool_): If True, returns only the first band in a 2D
     fashion eg. (1920x1080) instead of the default channel-last format
     (1920x1080x1) &lt;/br&gt;
-
     `bbox` (_list_): A list of `[xmin, xmax, ymin, ymax]` to use as the
     extent of the raster. Uses coordinates and the **OGR** format. &lt;/br&gt;
-
     `pixel_offsets` (_list_): A list of [x_offset, y_offset, x_size, y_size] to use as
     the extent of the raster. Uses pixel offsets and the **OGR** format. &lt;/br&gt;
 
@@ -1814,10 +1806,10 @@ refering to the dataset. </br></p>
 <code>overwrite</code> (<em>bool</em>): If the file exists, should it be overwritten? (Default: <strong>True</strong>) </br>
 <code>dtype</code> (<em>str</em>): The data type of the output raster. (Default: <strong>None</strong>)</br>
 <code>creation_options</code> (<em>list</em>): List of <strong>GDAL</strong> creation options. Defaults are: </br>
-* "TILED=YES"
-* "NUM_THREADS=ALL_CPUS"
-* "BIGG_TIF=YES"
-* "COMPRESS=LZW"</p>
+&emsp; • "TILED=YES"
+&emsp; • "NUM_THREADS=ALL_CPUS"
+&emsp; • "BIGG_TIF=YES"
+&emsp; • "COMPRESS=LZW"</p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>str</em>/<em>list</em>): The filepath(s) to the newly created raster(s).</p></div>
 <details class="source">
@@ -1843,10 +1835,10 @@ refering to the dataset. </br></p>
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
     `dtype` (_str_): The data type of the output raster. (Default: **None**)&lt;/br&gt;
     `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
-        * &#34;TILED=YES&#34;
-        * &#34;NUM_THREADS=ALL_CPUS&#34;
-        * &#34;BIGG_TIF=YES&#34;
-        * &#34;COMPRESS=LZW&#34;
+    &amp;emsp; • &#34;TILED=YES&#34;
+    &amp;emsp; • &#34;NUM_THREADS=ALL_CPUS&#34;
+    &amp;emsp; • &#34;BIGG_TIF=YES&#34;
+    &amp;emsp; • &#34;COMPRESS=LZW&#34;
 
     ## Returns:
     (_str_/_list_): The filepath(s) to the newly created raster(s).
@@ -1967,10 +1959,10 @@ refering to the dataset. </br></p>
 <code>overwrite</code> (<em>bool</em>): If the file exists, should it be overwritten? (Default: <strong>True</strong>) </br>
 <code>reference</code> (<em>str</em>): The reference raster to use. (Default: <strong>None</strong>) </br>
 <code>creation_options</code> (<em>list</em>): List of <strong>GDAL</strong> creation options. Defaults are: </br>
-* "TILED=YES"
-* "NUM_THREADS=ALL_CPUS"
-* "BIGG_TIF=YES"
-* "COMPRESS=LZW"</p>
+* &emsp; • "TILED=YES"
+* &emsp; • "NUM_THREADS=ALL_CPUS"
+* &emsp; • "BIGG_TIF=YES"
+* &emsp; • "COMPRESS=LZW"</p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>str</em>): The filepath to the newly created VRT raster.</p></div>
 <details class="source">
@@ -2002,10 +1994,10 @@ refering to the dataset. </br></p>
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
     `reference` (_str_): The reference raster to use. (Default: **None**) &lt;/br&gt;
     `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
-        * &#34;TILED=YES&#34;
-        * &#34;NUM_THREADS=ALL_CPUS&#34;
-        * &#34;BIGG_TIF=YES&#34;
-        * &#34;COMPRESS=LZW&#34;
+    * &amp;emsp; • &#34;TILED=YES&#34;
+    * &amp;emsp; • &#34;NUM_THREADS=ALL_CPUS&#34;
+    * &amp;emsp; • &#34;BIGG_TIF=YES&#34;
+    * &amp;emsp; • &#34;COMPRESS=LZW&#34;
 
     ## Returns:
     (_str_): The filepath to the newly created VRT raster.

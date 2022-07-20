@@ -654,10 +654,15 @@ def reproject_bbox(
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
-    transformed_x_min, transformed_y_min = transformer.TransformPoint(x_min, y_min)
-    transformed_x_max, transformed_y_max = transformer.TransformPoint(x_max, y_max)
+    transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(x_min, y_min)
+    transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(x_max, y_max)
 
-    return transformed_x_min, transformed_x_max, transformed_y_min, transformed_y_max
+    return [
+        transformed_x_min,
+        transformed_x_max,
+        transformed_y_min,
+        transformed_y_max,
+    ]
 
 
 def additional_bboxes(bbox_ogr, projection_osr):

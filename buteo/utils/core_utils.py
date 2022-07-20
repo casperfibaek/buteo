@@ -435,7 +435,7 @@ def remove_if_required_list(output_list, overwrite):
 def get_augmented_path(path, *, prefix="", suffix="", add_uuid=True, folder=None):
     """
     Gets a basename from a string in the format: </br>
-    `prefix_basename_time_uuid_suffix.ext`
+    `dir/prefix_basename_time_uuid_suffix.ext`
 
     ## Args:
     `path` (_str_): The path to the original file. </br>
@@ -449,14 +449,14 @@ def get_augmented_path(path, *, prefix="", suffix="", add_uuid=True, folder=None
     (_str_): A string of the current UNIX time in seconds.
     """
     assert isinstance(path, str), "path must be a string."
-    assert path.startswith("/vsimem") or folder_exists(path_to_folder(path)), "path must exist or be in-memory."
+    assert path.startswith("/vsimem") or folder_exists(path_to_folder(path)), f"path must exist or be in-memory. Received: {path}"
 
     base = os.path.basename(path)
     split = os.path.splitext(base)
 
     uuid = ""
     if add_uuid:
-        uuid = f"{get_unix_seconds_as_str()}_{str(uuid4())}"
+        uuid = f"_{get_unix_seconds_as_str()}_{str(uuid4())}"
 
     basename = f"{prefix}{split[0]}{uuid}{suffix}{split[1]}"
 
@@ -468,7 +468,7 @@ def get_augmented_path(path, *, prefix="", suffix="", add_uuid=True, folder=None
 
         return os.path.join(target_folder, basename)
 
-    return basename
+    return os.path.join(os.path.dirname(path), basename)
 
 
 def get_size(start_path=".", rough=True):
@@ -674,6 +674,26 @@ def type_check(
         )
 
     return False
+
+
+def is_list_all_val(arr, val):
+    """
+    Check if a list is all a value. This also considers type.
+
+    ## Args:
+    `arr` (_list_): The list to check. </br>
+    `val` (_any_): The value to check against. </br>
+
+    ## Returns:
+    (_bool_): **True** if all elements are x, **False** otherwise.
+    """
+    assert isinstance(arr, list), "arr must be a list."
+
+    for item in arr:
+        if not isinstance(val, type(item)) or item != val:
+            return False
+
+    return True
 
 
 def progress(count, total, name="Processing"):

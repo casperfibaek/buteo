@@ -232,21 +232,21 @@ def clip_raster(
 
     ## Kwargs:
     `out_path` (_str_/_list_/_None_): The path(s) to save the clipped raster to. If None a memory raster is created. (Default: **None**)</br>
-    `resample_alg` (_str_): The resampling algorithm to use. The following are available: (Default: **nearest**) </br>
-        * `nearest`: Nearest neighbour.
-        * `bilinear`: Bilinear.
-        * `cubic`: Cubic.
-        * `cubicspline`: Cubic spline.
-        * `lanczos`: Lanczos.
-        * `average`: Average.
-        * `mode`: Mode.
-        * `max`: Max.
-        * `min`: Min.
-        * `median`: Median.
-        * `q1`: Quartile 1
-        * `q3`: Quartile 3
-        * `sum`: Sum
-        * `rms`: Root Mean Squared
+    `resample_alg` (_str_): The resampling algorithm to use. (Default: **nearest**) </br>
+    &emsp; • **nearest**: Nearest neighbour. </br>
+    &emsp; • **bilinear**: Bilinear. </br>
+    &emsp; • **cubic**: Cubic. </br>
+    &emsp; • **cubicspline**: Cubic spline. </br>
+    &emsp; • **lanczos**: Lanczos. </br>
+    &emsp; • **average**: Average. </br>
+    &emsp; • **mode**: Mode. </br>
+    &emsp; • **max**: Max. </br>
+    &emsp; • **min**: Min. </br>
+    &emsp; • **median**: Median. </br>
+    &emsp; • **q1**: Quartile 1 </br>
+    &emsp; • **q3**: Quartile 3 </br>
+    &emsp; • **sum**: Sum </br>
+    &emsp; • **rms**: Root Mean Squared </br>
     `crop_to_geom` (_bool_): If True, the output raster will be cropped to the extent of the clip geometry. (Default: **True**)</br>
     `adjust_bbox` (_bool_): If True, the output raster have its bbox adjusted to match the clip geometry. (Default: **False**)</br>
     `all_touch` (_bool_): If true all pixels touching the clipping geometry will be included. (Default: **False**)</br>
@@ -254,7 +254,7 @@ def clip_raster(
     `prefix` (_str_): The prefix to use for the output raster. (Default: **""**)</br>
     `suffix` (_str_): The suffix to use for the output raster. (Default: **""**)</br>
     `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**)</br>
-    `creation_options` (_list_/_None_): A list of creation options to pass to gdal. (Default: **[]**)</br>
+    `creation_options` (_list_/_None_): A list of creation options to pass to gdal. (Default: **None**)</br>
     `dst_nodata` (_int_/_float_/_None_): The nodata value to use for the output raster. (Default: **infer**)</br>
     `src_nodata` (_int_/_float_/_None_): The nodata value to use for the input raster. (Default: **infer**)</br>
     `layer_to_clip` (_int_): The layer ID in the vector to use for clipping. (Default: **0**)</br>

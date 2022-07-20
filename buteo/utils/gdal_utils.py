@@ -292,12 +292,12 @@ def is_raster_empty(raster):
     assert isinstance(raster, gdal.Dataset), "raster must be a gdal.Dataset."
 
     if raster.RasterCount == 0:
-        return False
+        return True
 
     if raster.RasterXSize == 0 or raster.RasterYSize == 0:
-        return False
+        return True
 
-    return True
+    return False
 
 
 def is_vector_empty(vector):
@@ -332,12 +332,26 @@ def is_vector_empty(vector):
     return True
 
 
+def get_gdal_memory():
+    """ Get at list of all active memory layers in GDAL. """
+    datasets = [ds.name for ds in gdal.listdir('/vsimem')]
+    return datasets
+
+
 def clear_gdal_memory():
     """ Clears all gdal memory. """
-    datasets = [ds.name for ds in gdal.listdir('/vsimem')]
+    memory = get_gdal_memory()
 
-    for dataset in datasets:
+    for dataset in memory:
         gdal.Unlink(dataset)
+
+
+def gdal_print_memory():
+    """ Prints all gdal memory. """
+    memory = get_gdal_memory()
+
+    for dataset in memory:
+        print(dataset)
 
 
 def is_path_in_memory(path):
@@ -370,6 +384,7 @@ def is_raster(potential_raster, *, empty_is_invalid=True):
     ## Returns:
     (_bool_): **True** if the variable is a valid raster, **False** otherwise.
     """
+
     if isinstance(potential_raster, str):
         if not core_utils.file_exists(potential_raster) and not is_path_in_memory(potential_raster):
             return False
@@ -548,7 +563,19 @@ def create_memory_path(path, *, prefix="", suffix="", add_uuid=True):
     ## Returns:
     (_str_): A string to the memory path. `/vsimem/prefix_basename_time_uuid_suffix.ext`
     """
-    return f"/vsimem/{core_utils.get_augmented_path(path, prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=None)}"
+    assert isinstance(path, str), f"path must be a string. Received: {path}"
+    assert len(path) > 0, f"path must not be empty. Received: {path}"
+    assert not path.startswith("/vsimem"), f"path must not already be in memory. Received: {path}"
+
+    basename = os.path.basename(path)
+
+    return core_utils.get_augmented_path(
+        f"/vsimem/{basename}",
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        folder=None,
+    )
 
 
 def get_path_from_dataset(dataset, *, dataset_type=None):

@@ -267,21 +267,21 @@ def clip_raster(
 
     ## Kwargs:
     `out_path` (_str_/_list_/_None_): The path(s) to save the clipped raster to. If None a memory raster is created. (Default: **None**)&lt;/br&gt;
-    `resample_alg` (_str_): The resampling algorithm to use. The following are available: (Default: **nearest**) &lt;/br&gt;
-        * `nearest`: Nearest neighbour.
-        * `bilinear`: Bilinear.
-        * `cubic`: Cubic.
-        * `cubicspline`: Cubic spline.
-        * `lanczos`: Lanczos.
-        * `average`: Average.
-        * `mode`: Mode.
-        * `max`: Max.
-        * `min`: Min.
-        * `median`: Median.
-        * `q1`: Quartile 1
-        * `q3`: Quartile 3
-        * `sum`: Sum
-        * `rms`: Root Mean Squared
+    `resample_alg` (_str_): The resampling algorithm to use. (Default: **nearest**) &lt;/br&gt;
+    &amp;emsp; • **nearest**: Nearest neighbour. &lt;/br&gt;
+    &amp;emsp; • **bilinear**: Bilinear. &lt;/br&gt;
+    &amp;emsp; • **cubic**: Cubic. &lt;/br&gt;
+    &amp;emsp; • **cubicspline**: Cubic spline. &lt;/br&gt;
+    &amp;emsp; • **lanczos**: Lanczos. &lt;/br&gt;
+    &amp;emsp; • **average**: Average. &lt;/br&gt;
+    &amp;emsp; • **mode**: Mode. &lt;/br&gt;
+    &amp;emsp; • **max**: Max. &lt;/br&gt;
+    &amp;emsp; • **min**: Min. &lt;/br&gt;
+    &amp;emsp; • **median**: Median. &lt;/br&gt;
+    &amp;emsp; • **q1**: Quartile 1 &lt;/br&gt;
+    &amp;emsp; • **q3**: Quartile 3 &lt;/br&gt;
+    &amp;emsp; • **sum**: Sum &lt;/br&gt;
+    &amp;emsp; • **rms**: Root Mean Squared &lt;/br&gt;
     `crop_to_geom` (_bool_): If True, the output raster will be cropped to the extent of the clip geometry. (Default: **True**)&lt;/br&gt;
     `adjust_bbox` (_bool_): If True, the output raster have its bbox adjusted to match the clip geometry. (Default: **False**)&lt;/br&gt;
     `all_touch` (_bool_): If true all pixels touching the clipping geometry will be included. (Default: **False**)&lt;/br&gt;
@@ -289,7 +289,7 @@ def clip_raster(
     `prefix` (_str_): The prefix to use for the output raster. (Default: **&#34;&#34;**)&lt;/br&gt;
     `suffix` (_str_): The suffix to use for the output raster. (Default: **&#34;&#34;**)&lt;/br&gt;
     `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**)&lt;/br&gt;
-    `creation_options` (_list_/_None_): A list of creation options to pass to gdal. (Default: **[]**)&lt;/br&gt;
+    `creation_options` (_list_/_None_): A list of creation options to pass to gdal. (Default: **None**)&lt;/br&gt;
     `dst_nodata` (_int_/_float_/_None_): The nodata value to use for the output raster. (Default: **infer**)&lt;/br&gt;
     `src_nodata` (_int_/_float_/_None_): The nodata value to use for the input raster. (Default: **infer**)&lt;/br&gt;
     `layer_to_clip` (_int_): The layer ID in the vector to use for clipping. (Default: **0**)&lt;/br&gt;
@@ -375,21 +375,21 @@ def clip_raster(
 <code>clip_geom</code> (<em>str</em>/<em>ogr.DataSource</em>/<em>gdal.Dataset</em>): The geometry to use to clip the raster </br></p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>out_path</code> (<em>str</em>/<em>list</em>/<em>None</em>): The path(s) to save the clipped raster to. If None a memory raster is created. (Default: <strong>None</strong>)</br>
-<code>resample_alg</code> (<em>str</em>): The resampling algorithm to use. The following are available: (Default: <strong>nearest</strong>) </br>
-* <code>nearest</code>: Nearest neighbour.
-* <code>bilinear</code>: Bilinear.
-* <code>cubic</code>: Cubic.
-* <code>cubicspline</code>: Cubic spline.
-* <code>lanczos</code>: Lanczos.
-* <code>average</code>: Average.
-* <code>mode</code>: Mode.
-* <code>max</code>: Max.
-* <code>min</code>: Min.
-* <code>median</code>: Median.
-* <code>q1</code>: Quartile 1
-* <code>q3</code>: Quartile 3
-* <code>sum</code>: Sum
-* <code>rms</code>: Root Mean Squared
+<code>resample_alg</code> (<em>str</em>): The resampling algorithm to use. (Default: <strong>nearest</strong>) </br>
+&emsp; • <strong>nearest</strong>: Nearest neighbour. </br>
+&emsp; • <strong>bilinear</strong>: Bilinear. </br>
+&emsp; • <strong>cubic</strong>: Cubic. </br>
+&emsp; • <strong>cubicspline</strong>: Cubic spline. </br>
+&emsp; • <strong>lanczos</strong>: Lanczos. </br>
+&emsp; • <strong>average</strong>: Average. </br>
+&emsp; • <strong>mode</strong>: Mode. </br>
+&emsp; • <strong>max</strong>: Max. </br>
+&emsp; • <strong>min</strong>: Min. </br>
+&emsp; • <strong>median</strong>: Median. </br>
+&emsp; • <strong>q1</strong>: Quartile 1 </br>
+&emsp; • <strong>q3</strong>: Quartile 3 </br>
+&emsp; • <strong>sum</strong>: Sum </br>
+&emsp; • <strong>rms</strong>: Root Mean Squared </br>
 <code>crop_to_geom</code> (<em>bool</em>): If True, the output raster will be cropped to the extent of the clip geometry. (Default: <strong>True</strong>)</br>
 <code>adjust_bbox</code> (<em>bool</em>): If True, the output raster have its bbox adjusted to match the clip geometry. (Default: <strong>False</strong>)</br>
 <code>all_touch</code> (<em>bool</em>): If true all pixels touching the clipping geometry will be included. (Default: <strong>False</strong>)</br>
@@ -397,7 +397,7 @@ def clip_raster(
 <code>prefix</code> (<em>str</em>): The prefix to use for the output raster. (Default: <strong>""</strong>)</br>
 <code>suffix</code> (<em>str</em>): The suffix to use for the output raster. (Default: <strong>""</strong>)</br>
 <code>overwrite</code> (<em>bool</em>): If True, the output raster will be overwritten if it already exists. (Default: <strong>True</strong>)</br>
-<code>creation_options</code> (<em>list</em>/<em>None</em>): A list of creation options to pass to gdal. (Default: <strong>[]</strong>)</br>
+<code>creation_options</code> (<em>list</em>/<em>None</em>): A list of creation options to pass to gdal. (Default: <strong>None</strong>)</br>
 <code>dst_nodata</code> (<em>int</em>/<em>float</em>/<em>None</em>): The nodata value to use for the output raster. (Default: <strong>infer</strong>)</br>
 <code>src_nodata</code> (<em>int</em>/<em>float</em>/<em>None</em>): The nodata value to use for the input raster. (Default: <strong>infer</strong>)</br>
 <code>layer_to_clip</code> (<em>int</em>): The layer ID in the vector to use for clipping. (Default: <strong>0</strong>)</br>
@@ -440,21 +440,21 @@ def clip_raster(
 
     ## Kwargs:
     `out_path` (_str_/_list_/_None_): The path(s) to save the clipped raster to. If None a memory raster is created. (Default: **None**)&lt;/br&gt;
-    `resample_alg` (_str_): The resampling algorithm to use. The following are available: (Default: **nearest**) &lt;/br&gt;
-        * `nearest`: Nearest neighbour.
-        * `bilinear`: Bilinear.
-        * `cubic`: Cubic.
-        * `cubicspline`: Cubic spline.
-        * `lanczos`: Lanczos.
-        * `average`: Average.
-        * `mode`: Mode.
-        * `max`: Max.
-        * `min`: Min.
-        * `median`: Median.
-        * `q1`: Quartile 1
-        * `q3`: Quartile 3
-        * `sum`: Sum
-        * `rms`: Root Mean Squared
+    `resample_alg` (_str_): The resampling algorithm to use. (Default: **nearest**) &lt;/br&gt;
+    &amp;emsp; • **nearest**: Nearest neighbour. &lt;/br&gt;
+    &amp;emsp; • **bilinear**: Bilinear. &lt;/br&gt;
+    &amp;emsp; • **cubic**: Cubic. &lt;/br&gt;
+    &amp;emsp; • **cubicspline**: Cubic spline. &lt;/br&gt;
+    &amp;emsp; • **lanczos**: Lanczos. &lt;/br&gt;
+    &amp;emsp; • **average**: Average. &lt;/br&gt;
+    &amp;emsp; • **mode**: Mode. &lt;/br&gt;
+    &amp;emsp; • **max**: Max. &lt;/br&gt;
+    &amp;emsp; • **min**: Min. &lt;/br&gt;
+    &amp;emsp; • **median**: Median. &lt;/br&gt;
+    &amp;emsp; • **q1**: Quartile 1 &lt;/br&gt;
+    &amp;emsp; • **q3**: Quartile 3 &lt;/br&gt;
+    &amp;emsp; • **sum**: Sum &lt;/br&gt;
+    &amp;emsp; • **rms**: Root Mean Squared &lt;/br&gt;
     `crop_to_geom` (_bool_): If True, the output raster will be cropped to the extent of the clip geometry. (Default: **True**)&lt;/br&gt;
     `adjust_bbox` (_bool_): If True, the output raster have its bbox adjusted to match the clip geometry. (Default: **False**)&lt;/br&gt;
     `all_touch` (_bool_): If true all pixels touching the clipping geometry will be included. (Default: **False**)&lt;/br&gt;
@@ -462,7 +462,7 @@ def clip_raster(
     `prefix` (_str_): The prefix to use for the output raster. (Default: **&#34;&#34;**)&lt;/br&gt;
     `suffix` (_str_): The suffix to use for the output raster. (Default: **&#34;&#34;**)&lt;/br&gt;
     `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**)&lt;/br&gt;
-    `creation_options` (_list_/_None_): A list of creation options to pass to gdal. (Default: **[]**)&lt;/br&gt;
+    `creation_options` (_list_/_None_): A list of creation options to pass to gdal. (Default: **None**)&lt;/br&gt;
     `dst_nodata` (_int_/_float_/_None_): The nodata value to use for the output raster. (Default: **infer**)&lt;/br&gt;
     `src_nodata` (_int_/_float_/_None_): The nodata value to use for the input raster. (Default: **infer**)&lt;/br&gt;
     `layer_to_clip` (_int_): The layer ID in the vector to use for clipping. (Default: **0**)&lt;/br&gt;

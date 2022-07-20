@@ -215,10 +215,7 @@ def raster_to_metadata(raster, *, allow_lists=True):
     list_return = []
 
     for in_raster in list_input:
-        try:
-            list_return.append(_raster_to_metadata(in_raster))
-        except Exception:
-            raise ValueError(f"Could not open raster: {in_raster}") from None
+        list_return.append(_raster_to_metadata(in_raster))
 
     if isinstance(raster, list):
         return list_return
@@ -272,13 +269,15 @@ def rasters_are_aligned(
         "height": None,
         "datatype": None,
         "nodata_value": None,
+        "projection_wkt": None,
+        "projection_osr": None,
     }
 
     for index, raster in enumerate(rasters):
         meta = _raster_to_metadata(raster)
         if index == 0:
             base["name"] = meta["name"]
-            base["projection"] = meta["projection"]
+            base["projection_wkt"] = meta["projection_wkt"]
             base["pixel_width"] = meta["pixel_width"]
             base["pixel_height"] = meta["pixel_height"]
             base["x_min"] = meta["x_min"]
@@ -289,9 +288,12 @@ def rasters_are_aligned(
             base["datatype"] = meta["datatype"]
             base["nodata_value"] = meta["nodata_value"]
         else:
-            if meta["projection"] != base["projection"]:
-                print(base["name"] + " did not match " + meta["name"] + " projection")
-                return False
+            if meta["projection_wkt"] != base["projection_wkt"]:
+                if meta["projection_osr"].IsSame(base["projection_osr"]):
+                    print("WARNING: " + base["name"] + " has the same projection as " + meta["name"] + " but they are written differently in WKT format. Consider using the same definition.")
+                else:
+                    print(base["name"] + " did not match " + meta["name"] + " projection")
+                    return False
             if meta["pixel_width"] != base["pixel_width"]:
                 if abs(meta["pixel_width"] - base["pixel_width"]) > threshold:
                     print(
@@ -339,9 +341,10 @@ def raster_to_array(
     *,
     bands=-1,
     filled=False,
-    output_2d=False,
     bbox=None,
     pixel_offsets=None,
+    stack=True,
+    split=False,
 ):
     """
     Turns a path to a raster(s) or a GDAL.Dataset(s) into a **NumPy** array(s).
@@ -353,19 +356,15 @@ def raster_to_array(
     `bands` (_list_/_str_/_int_): The bands from the raster to turn
     into a numpy array. Can be "all", "ALL", a list of ints or a
     single int. </br>
-
     `filled` (_bool_): If the array contains nodata values. Should the
     resulting array be a filled numpy array or a masked array? </br>
-
-    `output_2d` (_bool_): If True, returns only the first band in a 2D
-    fashion eg. (1920x1080) instead of the default channel-last format
-    (1920x1080x1) </br>
-
     `bbox` (_list_): A list of `[xmin, xmax, ymin, ymax]` to use as the
     extent of the raster. Uses coordinates and the **OGR** format. </br>
-
     `pixel_offsets` (_list_): A list of [x_offset, y_offset, x_size, y_size] to use as
     the extent of the raster. Uses pixel offsets and the **OGR** format. </br>
+    `stack` (_bool_): If True, stacks the input rasters into a single array. Only works if
+    the rasters are aligned. (Default: **True**) </br>
+    `split` (_bool_): If True, splits the bands of the input rasters into seperate arrays. (Default: **False**)
 
     ## Returns:
     (_np.ndarray_): A numpy array in the 3D channel-last format unless output_2D is
@@ -374,9 +373,10 @@ def raster_to_array(
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(bands, [int, list], "bands")
     core_utils.type_check(filled, [bool], "filled")
-    core_utils.type_check(output_2d, [bool], "output_2d")
     core_utils.type_check(bbox, [list, None], "bbox")
     core_utils.type_check(pixel_offsets, [list, None], "pixel_offsets")
+    core_utils.type_check(stack, [bool], "stack")
+    core_utils.type_check(split, [bool], "split")
 
     internal_rasters = core_utils.ensure_list(raster)
 
@@ -385,9 +385,9 @@ def raster_to_array(
 
     internal_rasters = gdal_utils.get_path_from_dataset_list(internal_rasters, dataset_type="raster")
 
-    if not rasters_are_aligned(internal_rasters, same_extent=True, same_dtype=False):
+    if stack and not rasters_are_aligned(internal_rasters, same_extent=True, same_dtype=False):
         raise ValueError(
-            "Cannot merge rasters that are not aligned, have dissimilar extent or dtype."
+            "Cannot merge rasters that are not aligned, have dissimilar extent or dtype, when stack=True."
         )
 
     layers = []
@@ -401,6 +401,7 @@ def raster_to_array(
 
         metadata = raster_to_metadata(ref)
         band_count = metadata["band_count"]
+        band_arrs = []
 
         if band_count == 0:
             raise ValueError("The input raster does not have any valid bands.")
@@ -432,39 +433,46 @@ def raster_to_array(
 
             if band_nodata_value is not None:
                 arr = np.ma.array(arr, mask=arr == band_nodata_value)
+                arr.fill_value = band_nodata_value
 
                 if filled:
                     arr = arr.filled(band_nodata_value)
 
-            layers.append(arr)
+            band_arrs.append(arr)
 
-            if output_2d:
-                break
-
-    if output_2d:
-        if band_nodata_value is not None and filled is False:
-            stacked = np.ma.dstack(layers)[:, :, 0]
-
-            if core_utils.is_list_all_the_same(nodata_values):
-                stacked.fill_value = nodata_values[0]
-            else:
-                stacked.fill_value = gdal_enums.get_default_nodata_value(stacked.dtype)
-
-            return stacked
-
-        return np.dstack(layers)[:, :, 0]
-
-    if band_nodata_value is not None and filled is False:
-        stacked = np.ma.dstack(layers)
-
-        if core_utils.is_list_all_the_same(nodata_values):
-            stacked.fill_value = nodata_values[0]
+        if split:
+            layers.append(band_arrs)
+        elif band_nodata_value is None:
+            layers.append(np.dstack(band_arrs))
         else:
-            stacked.fill_value = gdal_enums.get_default_nodata_value(stacked.dtype)
+            layers.append(np.ma.dstack(band_arrs))
 
-        return stacked
 
-    return np.dstack(layers)
+    if split:
+        if stack:
+            return layers
+
+        output = []
+        for layer in layers:
+            for band in layer:
+                output.append(band)
+
+        return output
+
+    if not core_utils.is_list_all_the_same(nodata_values):
+        fill_value = gdal_enums.get_default_nodata_value(layers[0].dtype)
+        for idx, layer in enumerate(layers):
+            layer[idx].fill_value = fill_value
+
+    output = layers
+
+    if stack:
+        if core_utils.is_list_all_val(nodata_values, None):
+            output = np.dstack(layers)
+        else:
+            output = np.ma.dstack(layers)
+
+    return output
 
 
 def _raster_set_datatype(
@@ -603,11 +611,12 @@ def raster_set_datatype(
 
 def array_to_raster(
     array,
+    *,
     reference,
     out_path=None,
-    *,
-    overwrite=True,
     set_nodata="arr",
+    allow_mismatches=False,
+    overwrite=True,
     creation_options=None,
 ):
     """
@@ -620,16 +629,17 @@ def array_to_raster(
 
     ## Kwargs:
     `out_path` (_path_): The destination to save to. (Default: **None**)</br>
+    `set_nodata` (_bool_/_float_/_int_): Can be set to: (Default: **arr**)</br>
+    `allow_mismatches` (_bool_): If True, the array can have a different shape than the reference raster.
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) </br>
-    `set_nodata` (_bool_/_float_/_int_): Can be set to: (Default: **auto**)</br>
-        * **"ref"**: The nodata value will be the same as the reference raster. </br>
-        * **"arr"**: The nodata value will be the same as the **NumPy** array. </br>
-        * **"value"**: The nodata value will be the value provided. </br>
+    &emsp; • **"arr"**: The nodata value will be the same as the **NumPy** array. </br>
+    &emsp; • **"ref"**: The nodata value will be the same as the reference raster. </br>
+    &emsp; • **"value"**: The nodata value will be the value provided. </br>
     `creation_options` (_list_): List of **GDAL** creation options. Defaults are: </br>
-        * "TILED=YES"
-        * "NUM_THREADS=ALL_CPUS"
-        * "BIGG_TIF=YES"
-        * "COMPRESS=LZW"
+    &emsp; • "TILED=YES" </br>
+    &emsp; • "NUM_THREADS=ALL_CPUS" </br>
+    &emsp; • "BIGG_TIF=YES" </br>
+    &emsp; • "COMPRESS=LZW" </br>
 
     ## Returns:
     (_str_): The filepath to the newly created raster(s).
@@ -667,7 +677,13 @@ def array_to_raster(
     if array.ndim == 3:
         bands = array.shape[2]
 
-    core_utils.overwrite_required(out_path, overwrite)
+    output_name = None
+    if out_path is None:
+        output_name = gdal_utils.create_memory_path("array_to_raster.tif", add_uuid=True)
+    else:
+        output_name = out_path
+
+    core_utils.remove_if_required(output_name, overwrite)
 
     metadata = raster_to_metadata(reference)
     reference_nodata = metadata["nodata_value"]
@@ -691,16 +707,12 @@ def array_to_raster(
         if (input_nodata).is_integer() is True:
             input_nodata = int(input_nodata)
 
-    output_name = None
-    if out_path is None:
-        output_name = gdal_utils.create_memory_path("array_to_raster.tif", add_uuid=True)
-    else:
-        output_name = out_path
 
     if metadata["width"] != array.shape[1] or metadata["height"] != array.shape[0]:
-        print("WARNING: Input array and raster are not of equal size.")
+        if not allow_mismatches:
+            raise ValueError(f"Input array and raster are not of equal size. Array: {array.shape[:2]} Raster: {metadata['width'], metadata['height']}")
 
-    core_utils.remove_if_overwrite(out_path, overwrite)
+        print("WARNING: Input array and raster are not of equal size.")
 
     destination = driver.Create(
         output_name,
@@ -711,7 +723,7 @@ def array_to_raster(
         gdal_utils.default_creation_options(creation_options),
     )
 
-    destination.SetProjection(metadata["projection"])
+    destination.SetProjection(metadata["projection_wkt"])
     destination.SetGeoTransform(metadata["transform"])
 
     for band_idx in range(bands):
@@ -721,11 +733,11 @@ def array_to_raster(
         else:
             band.WriteArray(array)
 
-        if set_nodata != "ref":
+        if set_nodata == "ref" and reference_nodata is not None:
             band.SetNoDataValue(reference_nodata)
-        elif set_nodata == "arr":
+        elif set_nodata == "arr" and input_nodata is not None:
             band.SetNoDataValue(input_nodata)
-        else:
+        elif isinstance(set_nodata, (int, float)):
             band.SetNoDataValue(set_nodata)
 
     return output_name
@@ -750,10 +762,10 @@ def stack_rasters(
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) </br>
     `dtype` (_str_): The data type of the output raster. (Default: **None**)</br>
     `creation_options` (_list_): List of **GDAL** creation options. Defaults are: </br>
-        * "TILED=YES"
-        * "NUM_THREADS=ALL_CPUS"
-        * "BIGG_TIF=YES"
-        * "COMPRESS=LZW"
+    &emsp; • "TILED=YES" </br>
+    &emsp; • "NUM_THREADS=ALL_CPUS" </br>
+    &emsp; • "BIGG_TIF=YES" </br>
+    &emsp; • "COMPRESS=LZW" </br>
 
     ## Returns:
     (_str_/_list_): The filepath(s) to the newly created raster(s).
@@ -769,7 +781,7 @@ def stack_rasters(
     if not rasters_are_aligned(rasters, same_extent=True):
         raise ValueError("Rasters are not aligned. Try running align_rasters.")
 
-    core_utils.overwrite_required(out_path, overwrite)
+    core_utils.remove_if_required(out_path, overwrite)
 
     # Ensures that all the input rasters are valid.
     raster_list = gdal_utils.get_path_from_dataset_list(rasters)
@@ -884,10 +896,10 @@ def stack_rasters_vrt(
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) </br>
     `reference` (_str_): The reference raster to use. (Default: **None**) </br>
     `creation_options` (_list_): List of **GDAL** creation options. Defaults are: </br>
-        * "TILED=YES"
-        * "NUM_THREADS=ALL_CPUS"
-        * "BIGG_TIF=YES"
-        * "COMPRESS=LZW"
+    * &emsp; • "TILED=YES"
+    * &emsp; • "NUM_THREADS=ALL_CPUS"
+    * &emsp; • "BIGG_TIF=YES"
+    * &emsp; • "COMPRESS=LZW"
 
     ## Returns:
     (_str_): The filepath to the newly created VRT raster.
