@@ -16,21 +16,22 @@ from buteo.utils import gdal_utils
 # Setup tests
 FOLDER = "geometry_and_rasters/"
 s2_b04 = os.path.abspath(FOLDER + "s2_b04.jp2")
-s2_tci = os.path.abspath(FOLDER + "s2_tci.jp2")
-s2_mis = os.path.abspath(FOLDER + "s2_b04_beirut_misaligned.tif")
+s2_b04_subset = os.path.abspath(FOLDER + "s2_b04_beirut_misaligned.tif")
+s2_rgb = os.path.abspath(FOLDER + "s2_tci.jp2")
+
 vector_file = os.path.abspath(FOLDER + "beirut_city_utm36.gpkg")
 
 
 def test_image_paths():
     """Meta-test: Test if image paths are correct"""
     assert os.path.isfile(s2_b04)
-    assert os.path.isfile(s2_tci)
+    assert os.path.isfile(s2_rgb)
 
 
 def test_read_image():
     """Test: Read images"""
     b04 = core_raster._open_raster(s2_b04)
-    tci = core_raster._open_raster(s2_tci)
+    tci = core_raster._open_raster(s2_rgb)
 
     assert isinstance(b04, gdal.Dataset)
     assert isinstance(tci, gdal.Dataset)
@@ -47,7 +48,7 @@ def test_read_image():
 
 def test_read_multiple():
     """Test: Read multiple images"""
-    rasters = [s2_b04, s2_tci]
+    rasters = [s2_b04, s2_rgb]
 
     # Should not be able to open multiple files with the internal version.
     with pytest.raises(Exception):
@@ -67,7 +68,7 @@ def test_read_multiple():
 def test_raster_to_array():
     """Test: Convert raster to array"""
     b04_arr = core_raster.raster_to_array(s2_b04)
-    tci_arr = core_raster.raster_to_array(s2_tci)
+    tci_arr = core_raster.raster_to_array(s2_rgb)
 
     assert isinstance(b04_arr, np.ndarray)
     assert isinstance(tci_arr, np.ndarray)
@@ -84,8 +85,8 @@ def test_raster_to_array():
 
 def test_raster_to_array_multiple():
     """Test: Open multiple rasters as array(s). """
-    rasters = [s2_b04, s2_tci]
-    raster_misaligned = [s2_mis]
+    rasters = [s2_b04, s2_rgb]
+    raster_misaligned = [s2_b04_subset]
     arr = core_raster.raster_to_array(rasters)
 
     assert isinstance(arr, np.ndarray)
@@ -123,10 +124,10 @@ def test_raster_to_array_multiple():
 def test_array_to_raster():
     """Test: Convert array to raster"""
     arr = core_raster.raster_to_array(s2_b04)
-    ref = s2_tci
+    ref = s2_rgb
     ref_opened = core_raster._open_raster(ref)
     bad_ref = "/vsimem/not_a_real_path.tif"
-    ref_mis = s2_mis
+    ref_mis = s2_b04_subset
 
     assert isinstance(arr, np.ndarray)
     assert isinstance(ref, str)
