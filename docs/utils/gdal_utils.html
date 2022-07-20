@@ -327,12 +327,12 @@ def is_raster_empty(raster):
     assert isinstance(raster, gdal.Dataset), &#34;raster must be a gdal.Dataset.&#34;
 
     if raster.RasterCount == 0:
-        return False
+        return True
 
     if raster.RasterXSize == 0 or raster.RasterYSize == 0:
-        return False
+        return True
 
-    return True
+    return False
 
 
 def is_vector_empty(vector):
@@ -367,12 +367,26 @@ def is_vector_empty(vector):
     return True
 
 
+def get_gdal_memory():
+    &#34;&#34;&#34; Get at list of all active memory layers in GDAL. &#34;&#34;&#34;
+    datasets = [ds.name for ds in gdal.listdir(&#39;/vsimem&#39;)]
+    return datasets
+
+
 def clear_gdal_memory():
     &#34;&#34;&#34; Clears all gdal memory. &#34;&#34;&#34;
-    datasets = [ds.name for ds in gdal.listdir(&#39;/vsimem&#39;)]
+    memory = get_gdal_memory()
 
-    for dataset in datasets:
+    for dataset in memory:
         gdal.Unlink(dataset)
+
+
+def gdal_print_memory():
+    &#34;&#34;&#34; Prints all gdal memory. &#34;&#34;&#34;
+    memory = get_gdal_memory()
+
+    for dataset in memory:
+        print(dataset)
 
 
 def is_path_in_memory(path):
@@ -405,6 +419,7 @@ def is_raster(potential_raster, *, empty_is_invalid=True):
     ## Returns:
     (_bool_): **True** if the variable is a valid raster, **False** otherwise.
     &#34;&#34;&#34;
+
     if isinstance(potential_raster, str):
         if not core_utils.file_exists(potential_raster) and not is_path_in_memory(potential_raster):
             return False
@@ -583,7 +598,19 @@ def create_memory_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=T
     ## Returns:
     (_str_): A string to the memory path. `/vsimem/prefix_basename_time_uuid_suffix.ext`
     &#34;&#34;&#34;
-    return f&#34;/vsimem/{core_utils.get_augmented_path(path, prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=None)}&#34;
+    assert isinstance(path, str), f&#34;path must be a string. Received: {path}&#34;
+    assert len(path) &gt; 0, f&#34;path must not be empty. Received: {path}&#34;
+    assert not path.startswith(&#34;/vsimem&#34;), f&#34;path must not already be in memory. Received: {path}&#34;
+
+    basename = os.path.basename(path)
+
+    return core_utils.get_augmented_path(
+        f&#34;/vsimem/{basename}&#34;,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        folder=None,
+    )
 
 
 def get_path_from_dataset(dataset, *, dataset_type=None):
@@ -1100,9 +1127,9 @@ def save_dataset_to_memory(
 </summary>
 <pre><code class="python">def clear_gdal_memory():
     &#34;&#34;&#34; Clears all gdal memory. &#34;&#34;&#34;
-    datasets = [ds.name for ds in gdal.listdir(&#39;/vsimem&#39;)]
+    memory = get_gdal_memory()
 
-    for dataset in datasets:
+    for dataset in memory:
         gdal.Unlink(dataset)</code></pre>
 </details>
 </dd>
@@ -1188,7 +1215,19 @@ def save_dataset_to_memory(
     ## Returns:
     (_str_): A string to the memory path. `/vsimem/prefix_basename_time_uuid_suffix.ext`
     &#34;&#34;&#34;
-    return f&#34;/vsimem/{core_utils.get_augmented_path(path, prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=None)}&#34;</code></pre>
+    assert isinstance(path, str), f&#34;path must be a string. Received: {path}&#34;
+    assert len(path) &gt; 0, f&#34;path must not be empty. Received: {path}&#34;
+    assert not path.startswith(&#34;/vsimem&#34;), f&#34;path must not already be in memory. Received: {path}&#34;
+
+    basename = os.path.basename(path)
+
+    return core_utils.get_augmented_path(
+        f&#34;/vsimem/{basename}&#34;,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        folder=None,
+    )</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.gdal_utils.default_creation_options"><code class="name flex">
@@ -1323,6 +1362,38 @@ def save_dataset_to_memory(
         return True
 
     return core_utils.delete_file(raster_or_vector)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.gdal_print_memory"><code class="name flex">
+<span>def <span class="ident">gdal_print_memory</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Prints all gdal memory.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def gdal_print_memory():
+    &#34;&#34;&#34; Prints all gdal memory. &#34;&#34;&#34;
+    memory = get_gdal_memory()
+
+    for dataset in memory:
+        print(dataset)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.get_gdal_memory"><code class="name flex">
+<span>def <span class="ident">get_gdal_memory</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get at list of all active memory layers in GDAL.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_gdal_memory():
+    &#34;&#34;&#34; Get at list of all active memory layers in GDAL. &#34;&#34;&#34;
+    datasets = [ds.name for ds in gdal.listdir(&#39;/vsimem&#39;)]
+    return datasets</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.gdal_utils.get_gdalwarp_ram_limit"><code class="name flex">
@@ -1601,6 +1672,7 @@ def save_dataset_to_memory(
     ## Returns:
     (_bool_): **True** if the variable is a valid raster, **False** otherwise.
     &#34;&#34;&#34;
+
     if isinstance(potential_raster, str):
         if not core_utils.file_exists(potential_raster) and not is_path_in_memory(potential_raster):
             return False
@@ -1658,12 +1730,12 @@ def save_dataset_to_memory(
     assert isinstance(raster, gdal.Dataset), &#34;raster must be a gdal.Dataset.&#34;
 
     if raster.RasterCount == 0:
-        return False
+        return True
 
     if raster.RasterXSize == 0 or raster.RasterYSize == 0:
-        return False
+        return True
 
-    return True</code></pre>
+    return False</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.gdal_utils.is_raster_list"><code class="name flex">
@@ -2584,6 +2656,8 @@ an osr.SpatialReference.</p>
 <li><code><a title="buteo.utils.gdal_utils.default_creation_options" href="#buteo.utils.gdal_utils.default_creation_options">default_creation_options</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.delete_if_in_memory" href="#buteo.utils.gdal_utils.delete_if_in_memory">delete_if_in_memory</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.delete_raster_or_vector" href="#buteo.utils.gdal_utils.delete_raster_or_vector">delete_raster_or_vector</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.gdal_print_memory" href="#buteo.utils.gdal_utils.gdal_print_memory">gdal_print_memory</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.get_gdal_memory" href="#buteo.utils.gdal_utils.get_gdal_memory">get_gdal_memory</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.get_gdalwarp_ram_limit" href="#buteo.utils.gdal_utils.get_gdalwarp_ram_limit">get_gdalwarp_ram_limit</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.get_path_from_dataset" href="#buteo.utils.gdal_utils.get_path_from_dataset">get_path_from_dataset</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.get_path_from_dataset_list" href="#buteo.utils.gdal_utils.get_path_from_dataset_list">get_path_from_dataset_list</a></code></li>

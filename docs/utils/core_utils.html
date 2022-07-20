@@ -465,7 +465,7 @@ def remove_if_required_list(output_list, overwrite):
 def get_augmented_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=True, folder=None):
     &#34;&#34;&#34;
     Gets a basename from a string in the format: &lt;/br&gt;
-    `prefix_basename_time_uuid_suffix.ext`
+    `dir/prefix_basename_time_uuid_suffix.ext`
 
     ## Args:
     `path` (_str_): The path to the original file. &lt;/br&gt;
@@ -479,14 +479,14 @@ def get_augmented_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=T
     (_str_): A string of the current UNIX time in seconds.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
-    assert path.startswith(&#34;/vsimem&#34;) or folder_exists(path_to_folder(path)), &#34;path must exist or be in-memory.&#34;
+    assert path.startswith(&#34;/vsimem&#34;) or folder_exists(path_to_folder(path)), f&#34;path must exist or be in-memory. Received: {path}&#34;
 
     base = os.path.basename(path)
     split = os.path.splitext(base)
 
     uuid = &#34;&#34;
     if add_uuid:
-        uuid = f&#34;{get_unix_seconds_as_str()}_{str(uuid4())}&#34;
+        uuid = f&#34;_{get_unix_seconds_as_str()}_{str(uuid4())}&#34;
 
     basename = f&#34;{prefix}{split[0]}{uuid}{suffix}{split[1]}&#34;
 
@@ -498,7 +498,7 @@ def get_augmented_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=T
 
         return os.path.join(target_folder, basename)
 
-    return basename
+    return os.path.join(os.path.dirname(path), basename)
 
 
 def get_size(start_path=&#34;.&#34;, rough=True):
@@ -704,6 +704,26 @@ def type_check(
         )
 
     return False
+
+
+def is_list_all_val(arr, val):
+    &#34;&#34;&#34;
+    Check if a list is all a value. This also considers type.
+
+    ## Args:
+    `arr` (_list_): The list to check. &lt;/br&gt;
+    `val` (_any_): The value to check against. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if all elements are x, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(arr, list), &#34;arr must be a list.&#34;
+
+    for item in arr:
+        if not isinstance(val, type(item)) or item != val:
+            return False
+
+    return True
 
 
 def progress(count, total, name=&#34;Processing&#34;):
@@ -1252,7 +1272,7 @@ input.</p>
 </code></dt>
 <dd>
 <div class="desc"><p>Gets a basename from a string in the format: </br>
-<code>prefix_basename_time_uuid_suffix.ext</code></p>
+<code>dir/prefix_basename_time_uuid_suffix.ext</code></p>
 <h2 id="args">Args:</h2>
 <p><code>path</code> (<em>str</em>): The path to the original file. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
@@ -1268,7 +1288,7 @@ input.</p>
 <pre><code class="python">def get_augmented_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=True, folder=None):
     &#34;&#34;&#34;
     Gets a basename from a string in the format: &lt;/br&gt;
-    `prefix_basename_time_uuid_suffix.ext`
+    `dir/prefix_basename_time_uuid_suffix.ext`
 
     ## Args:
     `path` (_str_): The path to the original file. &lt;/br&gt;
@@ -1282,14 +1302,14 @@ input.</p>
     (_str_): A string of the current UNIX time in seconds.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
-    assert path.startswith(&#34;/vsimem&#34;) or folder_exists(path_to_folder(path)), &#34;path must exist or be in-memory.&#34;
+    assert path.startswith(&#34;/vsimem&#34;) or folder_exists(path_to_folder(path)), f&#34;path must exist or be in-memory. Received: {path}&#34;
 
     base = os.path.basename(path)
     split = os.path.splitext(base)
 
     uuid = &#34;&#34;
     if add_uuid:
-        uuid = f&#34;{get_unix_seconds_as_str()}_{str(uuid4())}&#34;
+        uuid = f&#34;_{get_unix_seconds_as_str()}_{str(uuid4())}&#34;
 
     basename = f&#34;{prefix}{split[0]}{uuid}{suffix}{split[1]}&#34;
 
@@ -1301,7 +1321,7 @@ input.</p>
 
         return os.path.join(target_folder, basename)
 
-    return basename</code></pre>
+    return os.path.join(os.path.dirname(path), basename)</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.get_dynamic_memory_limit_bytes"><code class="name flex">
@@ -1508,6 +1528,40 @@ input.</p>
             continue
 
         if item != first:
+            return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.core_utils.is_list_all_val"><code class="name flex">
+<span>def <span class="ident">is_list_all_val</span></span>(<span>arr, val)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a list is all a value. This also considers type.</p>
+<h2 id="args">Args:</h2>
+<p><code>arr</code> (<em>list</em>): The list to check. </br>
+<code>val</code> (<em>any</em>): The value to check against. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if all elements are x, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_list_all_val(arr, val):
+    &#34;&#34;&#34;
+    Check if a list is all a value. This also considers type.
+
+    ## Args:
+    `arr` (_list_): The list to check. &lt;/br&gt;
+    `val` (_any_): The value to check against. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if all elements are x, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(arr, list), &#34;arr must be a list.&#34;
+
+    for item in arr:
+        if not isinstance(val, type(item)) or item != val:
             return False
 
     return True</code></pre>
@@ -2190,6 +2244,7 @@ input.</p>
 <li><code><a title="buteo.utils.core_utils.is_float" href="#buteo.utils.core_utils.is_float">is_float</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_int" href="#buteo.utils.core_utils.is_int">is_int</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_list_all_the_same" href="#buteo.utils.core_utils.is_list_all_the_same">is_list_all_the_same</a></code></li>
+<li><code><a title="buteo.utils.core_utils.is_list_all_val" href="#buteo.utils.core_utils.is_list_all_val">is_list_all_val</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_number" href="#buteo.utils.core_utils.is_number">is_number</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_valid_file_path" href="#buteo.utils.core_utils.is_valid_file_path">is_valid_file_path</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_valid_output_path" href="#buteo.utils.core_utils.is_valid_output_path">is_valid_output_path</a></code></li>

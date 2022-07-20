@@ -305,7 +305,11 @@ def translate_str_to_gdal_dtype(dtype_str):
     ## Returns:
     (_int_): The translated integer (e.g. `&#34;uint8&#34;=0`)
     &#34;&#34;&#34;
-    assert isinstance(dtype_str, str), &#34;dtype_str must be a string.&#34;
+    assert isinstance(dtype_str, (np.dtype, str)), &#34;dtype_str must be a string or numpy dtype.&#34;
+
+    if isinstance(dtype_str, np.dtype):
+        dtype_str = dtype_str.name
+
     assert len(dtype_str) &gt; 0, &#34;dtype_str must be a non-empty string.&#34;
 
     datatypes = {
@@ -904,7 +908,11 @@ def is_gdal_datatype_a_float(gdal_dtype):
     ## Returns:
     (_int_): The translated integer (e.g. `&#34;uint8&#34;=0`)
     &#34;&#34;&#34;
-    assert isinstance(dtype_str, str), &#34;dtype_str must be a string.&#34;
+    assert isinstance(dtype_str, (np.dtype, str)), &#34;dtype_str must be a string or numpy dtype.&#34;
+
+    if isinstance(dtype_str, np.dtype):
+        dtype_str = dtype_str.name
+
     assert len(dtype_str) &gt; 0, &#34;dtype_str must be a non-empty string.&#34;
 
     datatypes = {
