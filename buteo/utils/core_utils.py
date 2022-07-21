@@ -163,7 +163,13 @@ def folder_exists(path):
     (_bool_): **True** if the folder exists, **False** otherwise.
     """
     if isinstance(path, str):
-        return os.path.isdir(path)
+        abs_dir = os.path.isdir(path)
+        if abs_dir:
+            return True
+
+        abs_dir = os.path.isdir(os.path.abspath(path))
+        if abs_dir:
+            return True
 
     return False
 
@@ -308,7 +314,7 @@ def path_to_folder(path):
     """
     assert isinstance(path, str), "path must be a string."
 
-    return os.path.dirname(path)
+    return os.path.dirname(os.path.abspath(path))
 
 
 def change_path_ext(path, target_ext):
@@ -479,7 +485,7 @@ def get_augmented_path(path, *, prefix="", suffix="", add_uuid=True, folder=None
     assert isinstance(folder, (type(None), str)), "folder must be None or a string"
 
     if folder is not None:
-        path = os.path.join(folder, path)
+        path = os.path.join(folder, os.path.basename(path))
 
         if not path.startswith("/vsimem") and not folder_exists(path_to_folder(folder)):
             raise ValueError(f"Folder: {folder} does not exist.")

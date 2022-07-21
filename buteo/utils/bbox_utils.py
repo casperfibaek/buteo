@@ -4,8 +4,8 @@
 Various utility functions to work with bounding boxes and gdal.
 
 There are two different formats for bounding boxes used by GDAL:</br>
-WARP: `[x_min, y_min, x_max, y_max]`</br>
 OGR:  `[x_min, x_max, y_min, y_max]`</br>
+WARP: `[x_min, y_min, x_max, y_max]`</br>
 
 _If nothing else is stated, the OGR format is used._
 
