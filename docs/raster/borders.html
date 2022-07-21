@@ -118,7 +118,7 @@ def _add_border_to_raster(
         new_arr = np.ma.array(new_arr, mask=mask)
         new_arr.fill_value = in_arr.fill_value
 
-    core_utils.remove_if_overwrite(out_path, overwrite)
+    core_utils.remove_if_required(out_path, overwrite)
 
     dest_raster = driver.Create(
         output_name,

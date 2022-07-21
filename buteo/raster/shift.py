@@ -61,7 +61,7 @@ def _shift_raster(
     new_transform[3] += y_shift
 
     shifted.SetGeoTransform(new_transform)
-    shifted.SetProjection(metadata["projection"])
+    shifted.SetProjection(metadata["projection_wkt"])
 
     src_nodata = metadata["nodata_value"]
 
@@ -118,7 +118,7 @@ def shift_raster(
     raster_list = core_utils.ensure_list(raster)
     assert gdal_utils.is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
 
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,

@@ -192,7 +192,10 @@ def folder_exists(path):
     ## Returns:
     (_bool_): **True** if the folder exists, **False** otherwise.
     &#34;&#34;&#34;
-    return os.path.isdir(path)
+    if isinstance(path, str):
+        return os.path.isdir(path)
+
+    return False
 
 
 def delete_files_in_folder(folder):
@@ -338,6 +341,30 @@ def path_to_folder(path):
     return os.path.dirname(path)
 
 
+def change_path_ext(path, target_ext):
+    &#34;&#34;&#34;
+    Change the extension of a file.
+
+    ## Args:
+    `path` (_str_): The path to the file. &lt;/br&gt;
+    `target_ext` (_str_): The new extension. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The path to the file with the new extension.
+    &#34;&#34;&#34;
+    assert isinstance(path, str), &#34;path must be a string.&#34;
+    assert isinstance(target_ext, str), &#34;target_ext must be a string.&#34;
+
+    basename = os.path.basename(path)
+    basesplit = os.path.splitext(basename)
+    ext = basesplit[1]
+
+    if ext == &#34;&#34; or len(ext) == 1:
+        raise Exception(f&#34;File: {path} has no extension.&#34;)
+
+    return os.path.join(os.path.dirname(path), f&#34;{basesplit[0]}.{target_ext}&#34;)
+
+
 def is_valid_file_path(path):
     &#34;&#34;&#34;
     Check if a path has an extension.
@@ -479,7 +506,15 @@ def get_augmented_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=T
     (_str_): A string of the current UNIX time in seconds.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
-    assert path.startswith(&#34;/vsimem&#34;) or folder_exists(path_to_folder(path)), f&#34;path must exist or be in-memory. Received: {path}&#34;
+    assert isinstance(folder, (type(None), str)), &#34;folder must be None or a string&#34;
+
+    if folder is not None:
+        path = os.path.join(folder, path)
+
+        if not path.startswith(&#34;/vsimem&#34;) and not folder_exists(path_to_folder(folder)):
+            raise ValueError(f&#34;Folder: {folder} does not exist.&#34;)
+
+    assert path.startswith(&#34;/vsimem&#34;) or folder_exists(path_to_folder(path)), f&#34;destination folder must exist or be in-memory. Received: {path}&#34;
 
     base = os.path.basename(path)
     split = os.path.splitext(base)
@@ -490,15 +525,9 @@ def get_augmented_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=T
 
     basename = f&#34;{prefix}{split[0]}{uuid}{suffix}{split[1]}&#34;
 
-    if folder is not None:
-        target_folder = path_to_folder(folder)
+    out_path = os.path.join(os.path.dirname(path), basename)
 
-        if not folder_exists(path_to_folder(folder)):
-            raise ValueError(f&#34;Folder: {folder} does not exist.&#34;)
-
-        return os.path.join(target_folder, basename)
-
-    return os.path.join(os.path.dirname(path), basename)
+    return out_path
 
 
 def get_size(start_path=&#34;.&#34;, rough=True):
@@ -833,70 +862,42 @@ def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, availa
     return int(dyn_limit)
 
 
-def create_output_paths(
-    dataset_path,
-    out_path=None,
-    *,
-    overwrite=True,
-    prefix=&#34;&#34;,
-    suffix=&#34;&#34;,
-    add_uuid=False,
-):
+def is_str_a_glob(test_str):
     &#34;&#34;&#34;
-    Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
-    specified, the rasters are written to memory. If a folder is given, the output directory is chosen
-    are the input filenames remain the same. If a specific path is used it must be the same length as the
-    input.
+    Check if a string is a glob.
 
     ## Args:
-    `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_/_list__): A **GDAL** or **OGR** dataframe, a path to a raster or a list of same. &lt;/br&gt;
-
-    ## Kwargs:
-    `out_path` (_str_/_None_): A path to a directory to write the raster to. (Default: **None**). &lt;/br&gt;
-    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). &lt;/br&gt;
-    `prefix` (_str_): A string to prepend to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
-    `suffix` (_str_): A string to append to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
-    `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). &lt;/br&gt;
+    `test_str` (_str_): The string to check.
 
     ## Returns:
-    (_str_/_list_): A path to the output raster or a list of paths.
+    (_bool_): **True** if the string is a glob, **False** otherwise.
     &#34;&#34;&#34;
-    assert isinstance(dataset_path, (str, list)), &#34;dataset_path must be a string or a list of strings.&#34;
-    assert isinstance(out_path, (str, type(None))), &#34;out_path must be a string or None.&#34;
+    if not isinstance(test_str, str):
+        return False
 
-    paths_input = ensure_list(dataset_path)
+    if len(test_str) &lt; 6:
+        return False
 
-    assert len(paths_input) &gt; 0, &#34;dataset_path must contain at least one path.&#34;
+    if test_str[-5:] == &#34;:glob&#34;:
+        return True
 
-    if isinstance(out_path, list):
-        assert len(out_path) == len(paths_input), &#34;out_path must be the same length as dataset_path if a list is provided.&#34;
-        assert is_valid_output_path_list(out_path, overwrite=overwrite), &#34;out_path must be a list of valid output paths.&#34;
+    return False
 
-    output = []
 
-    for index, path in enumerate(paths_input):
-        aug_path = None
+def parse_glob_path(test_str):
+    &#34;&#34;&#34;
+    Parses a string containing a glob path.
 
-        if isinstance(out_path, list):
-            if isinstance(out_path, str):
-                aug_path = out_path[index]
-            else:
-                raise ValueError(&#34;out_path must be a string or a list of strings.&#34;)
-        elif folder_exists(out_path):
-            aug_path = get_augmented_path(os.path.basename(path), prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=out_path)
-        elif out_path is None:
-            aug_path = get_augmented_path(os.path.basename(path), prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=&#34;/vsimem/&#34;)
-        else:
-            raise ValueError(&#34;out_path must be a valid path or a list of valid paths.&#34;)
+    ## Args:
+    `test_str` (_str_): The string to parse the pattern from.
 
-        output.append(aug_path)
+    ## Returns:
+    (_list_): A list of the matching paths.
+    &#34;&#34;&#34;
+    assert is_str_a_glob(test_str), &#34;test_str must be a glob path.&#34;
+    pre_glob = test_str[:-5]
 
-    assert is_valid_output_path_list(output, overwrite=overwrite), f&#34;Error while generating outputs. They are invalid: {output}&#34;
-
-    if isinstance(out_path, list):
-        return output
-
-    return output[0]</code></pre>
+    return glob(pre_glob)</code></pre>
 </details>
 </section>
 <section>
@@ -906,92 +907,42 @@ def create_output_paths(
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="buteo.utils.core_utils.create_output_paths"><code class="name flex">
-<span>def <span class="ident">create_output_paths</span></span>(<span>dataset_path, out_path=None, *, overwrite=True, prefix='', suffix='', add_uuid=False)</span>
+<dt id="buteo.utils.core_utils.change_path_ext"><code class="name flex">
+<span>def <span class="ident">change_path_ext</span></span>(<span>path, target_ext)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
-specified, the rasters are written to memory. If a folder is given, the output directory is chosen
-are the input filenames remain the same. If a specific path is used it must be the same length as the
-input.</p>
+<div class="desc"><p>Change the extension of a file.</p>
 <h2 id="args">Args:</h2>
-<p><code>dataset_path</code> (<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>str</em>/_list__): A <strong>GDAL</strong> or <strong>OGR</strong> dataframe, a path to a raster or a list of same. </br></p>
-<h2 id="kwargs">Kwargs:</h2>
-<p><code>out_path</code> (<em>str</em>/<em>None</em>): A path to a directory to write the raster to. (Default: <strong>None</strong>). </br>
-<code>overwrite</code> (<em>bool</em>): If True, the output raster will be overwritten if it already exists. (Default: <strong>True</strong>). </br>
-<code>prefix</code> (<em>str</em>): A string to prepend to the output filename. (Default: <strong>""</strong>). </br>
-<code>suffix</code> (<em>str</em>): A string to append to the output filename. (Default: <strong>""</strong>). </br>
-<code>add_uuid</code> (<em>bool</em>): If True, a UUID will be added to the output filename. (Default: <strong>False</strong>). </br></p>
+<p><code>path</code> (<em>str</em>): The path to the file. </br>
+<code>target_ext</code> (<em>str</em>): The new extension. </br></p>
 <h2 id="returns">Returns:</h2>
-<p>(<em>str</em>/<em>list</em>): A path to the output raster or a list of paths.</p></div>
+<p>(<em>str</em>): The path to the file with the new extension.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def create_output_paths(
-    dataset_path,
-    out_path=None,
-    *,
-    overwrite=True,
-    prefix=&#34;&#34;,
-    suffix=&#34;&#34;,
-    add_uuid=False,
-):
+<pre><code class="python">def change_path_ext(path, target_ext):
     &#34;&#34;&#34;
-    Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
-    specified, the rasters are written to memory. If a folder is given, the output directory is chosen
-    are the input filenames remain the same. If a specific path is used it must be the same length as the
-    input.
+    Change the extension of a file.
 
     ## Args:
-    `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_/_list__): A **GDAL** or **OGR** dataframe, a path to a raster or a list of same. &lt;/br&gt;
-
-    ## Kwargs:
-    `out_path` (_str_/_None_): A path to a directory to write the raster to. (Default: **None**). &lt;/br&gt;
-    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). &lt;/br&gt;
-    `prefix` (_str_): A string to prepend to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
-    `suffix` (_str_): A string to append to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
-    `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). &lt;/br&gt;
+    `path` (_str_): The path to the file. &lt;/br&gt;
+    `target_ext` (_str_): The new extension. &lt;/br&gt;
 
     ## Returns:
-    (_str_/_list_): A path to the output raster or a list of paths.
+    (_str_): The path to the file with the new extension.
     &#34;&#34;&#34;
-    assert isinstance(dataset_path, (str, list)), &#34;dataset_path must be a string or a list of strings.&#34;
-    assert isinstance(out_path, (str, type(None))), &#34;out_path must be a string or None.&#34;
+    assert isinstance(path, str), &#34;path must be a string.&#34;
+    assert isinstance(target_ext, str), &#34;target_ext must be a string.&#34;
 
-    paths_input = ensure_list(dataset_path)
+    basename = os.path.basename(path)
+    basesplit = os.path.splitext(basename)
+    ext = basesplit[1]
 
-    assert len(paths_input) &gt; 0, &#34;dataset_path must contain at least one path.&#34;
+    if ext == &#34;&#34; or len(ext) == 1:
+        raise Exception(f&#34;File: {path} has no extension.&#34;)
 
-    if isinstance(out_path, list):
-        assert len(out_path) == len(paths_input), &#34;out_path must be the same length as dataset_path if a list is provided.&#34;
-        assert is_valid_output_path_list(out_path, overwrite=overwrite), &#34;out_path must be a list of valid output paths.&#34;
-
-    output = []
-
-    for index, path in enumerate(paths_input):
-        aug_path = None
-
-        if isinstance(out_path, list):
-            if isinstance(out_path, str):
-                aug_path = out_path[index]
-            else:
-                raise ValueError(&#34;out_path must be a string or a list of strings.&#34;)
-        elif folder_exists(out_path):
-            aug_path = get_augmented_path(os.path.basename(path), prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=out_path)
-        elif out_path is None:
-            aug_path = get_augmented_path(os.path.basename(path), prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=&#34;/vsimem/&#34;)
-        else:
-            raise ValueError(&#34;out_path must be a valid path or a list of valid paths.&#34;)
-
-        output.append(aug_path)
-
-    assert is_valid_output_path_list(output, overwrite=overwrite), f&#34;Error while generating outputs. They are invalid: {output}&#34;
-
-    if isinstance(out_path, list):
-        return output
-
-    return output[0]</code></pre>
+    return os.path.join(os.path.dirname(path), f&#34;{basesplit[0]}.{target_ext}&#34;)</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.delete_file"><code class="name flex">
@@ -1264,7 +1215,10 @@ input.</p>
     ## Returns:
     (_bool_): **True** if the folder exists, **False** otherwise.
     &#34;&#34;&#34;
-    return os.path.isdir(path)</code></pre>
+    if isinstance(path, str):
+        return os.path.isdir(path)
+
+    return False</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.get_augmented_path"><code class="name flex">
@@ -1302,7 +1256,15 @@ input.</p>
     (_str_): A string of the current UNIX time in seconds.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
-    assert path.startswith(&#34;/vsimem&#34;) or folder_exists(path_to_folder(path)), f&#34;path must exist or be in-memory. Received: {path}&#34;
+    assert isinstance(folder, (type(None), str)), &#34;folder must be None or a string&#34;
+
+    if folder is not None:
+        path = os.path.join(folder, path)
+
+        if not path.startswith(&#34;/vsimem&#34;) and not folder_exists(path_to_folder(folder)):
+            raise ValueError(f&#34;Folder: {folder} does not exist.&#34;)
+
+    assert path.startswith(&#34;/vsimem&#34;) or folder_exists(path_to_folder(path)), f&#34;destination folder must exist or be in-memory. Received: {path}&#34;
 
     base = os.path.basename(path)
     split = os.path.splitext(base)
@@ -1313,15 +1275,9 @@ input.</p>
 
     basename = f&#34;{prefix}{split[0]}{uuid}{suffix}{split[1]}&#34;
 
-    if folder is not None:
-        target_folder = path_to_folder(folder)
+    out_path = os.path.join(os.path.dirname(path), basename)
 
-        if not folder_exists(path_to_folder(folder)):
-            raise ValueError(f&#34;Folder: {folder} does not exist.&#34;)
-
-        return os.path.join(target_folder, basename)
-
-    return os.path.join(os.path.dirname(path), basename)</code></pre>
+    return out_path</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.get_dynamic_memory_limit_bytes"><code class="name flex">
@@ -1599,6 +1555,41 @@ input.</p>
     return False</code></pre>
 </details>
 </dd>
+<dt id="buteo.utils.core_utils.is_str_a_glob"><code class="name flex">
+<span>def <span class="ident">is_str_a_glob</span></span>(<span>test_str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a string is a glob.</p>
+<h2 id="args">Args:</h2>
+<p><code>test_str</code> (<em>str</em>): The string to check.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the string is a glob, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_str_a_glob(test_str):
+    &#34;&#34;&#34;
+    Check if a string is a glob.
+
+    ## Args:
+    `test_str` (_str_): The string to check.
+
+    ## Returns:
+    (_bool_): **True** if the string is a glob, **False** otherwise.
+    &#34;&#34;&#34;
+    if not isinstance(test_str, str):
+        return False
+
+    if len(test_str) &lt; 6:
+        return False
+
+    if test_str[-5:] == &#34;:glob&#34;:
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
 <dt id="buteo.utils.core_utils.is_valid_file_path"><code class="name flex">
 <span>def <span class="ident">is_valid_file_path</span></span>(<span>path)</span>
 </code></dt>
@@ -1749,6 +1740,35 @@ input.</p>
         os.makedirs(path)
 
     return path</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.core_utils.parse_glob_path"><code class="name flex">
+<span>def <span class="ident">parse_glob_path</span></span>(<span>test_str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Parses a string containing a glob path.</p>
+<h2 id="args">Args:</h2>
+<p><code>test_str</code> (<em>str</em>): The string to parse the pattern from.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): A list of the matching paths.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def parse_glob_path(test_str):
+    &#34;&#34;&#34;
+    Parses a string containing a glob path.
+
+    ## Args:
+    `test_str` (_str_): The string to parse the pattern from.
+
+    ## Returns:
+    (_list_): A list of the matching paths.
+    &#34;&#34;&#34;
+    assert is_str_a_glob(test_str), &#34;test_str must be a glob path.&#34;
+    pre_glob = test_str[:-5]
+
+    return glob(pre_glob)</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.path_to_ext"><code class="name flex">
@@ -2228,7 +2248,7 @@ input.</p>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="buteo.utils.core_utils.create_output_paths" href="#buteo.utils.core_utils.create_output_paths">create_output_paths</a></code></li>
+<li><code><a title="buteo.utils.core_utils.change_path_ext" href="#buteo.utils.core_utils.change_path_ext">change_path_ext</a></code></li>
 <li><code><a title="buteo.utils.core_utils.delete_file" href="#buteo.utils.core_utils.delete_file">delete_file</a></code></li>
 <li><code><a title="buteo.utils.core_utils.delete_files_in_folder" href="#buteo.utils.core_utils.delete_files_in_folder">delete_files_in_folder</a></code></li>
 <li><code><a title="buteo.utils.core_utils.delete_folder" href="#buteo.utils.core_utils.delete_folder">delete_folder</a></code></li>
@@ -2246,10 +2266,12 @@ input.</p>
 <li><code><a title="buteo.utils.core_utils.is_list_all_the_same" href="#buteo.utils.core_utils.is_list_all_the_same">is_list_all_the_same</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_list_all_val" href="#buteo.utils.core_utils.is_list_all_val">is_list_all_val</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_number" href="#buteo.utils.core_utils.is_number">is_number</a></code></li>
+<li><code><a title="buteo.utils.core_utils.is_str_a_glob" href="#buteo.utils.core_utils.is_str_a_glob">is_str_a_glob</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_valid_file_path" href="#buteo.utils.core_utils.is_valid_file_path">is_valid_file_path</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_valid_output_path" href="#buteo.utils.core_utils.is_valid_output_path">is_valid_output_path</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_valid_output_path_list" href="#buteo.utils.core_utils.is_valid_output_path_list">is_valid_output_path_list</a></code></li>
 <li><code><a title="buteo.utils.core_utils.make_dir_if_not_exists" href="#buteo.utils.core_utils.make_dir_if_not_exists">make_dir_if_not_exists</a></code></li>
+<li><code><a title="buteo.utils.core_utils.parse_glob_path" href="#buteo.utils.core_utils.parse_glob_path">parse_glob_path</a></code></li>
 <li><code><a title="buteo.utils.core_utils.path_to_ext" href="#buteo.utils.core_utils.path_to_ext">path_to_ext</a></code></li>
 <li><code><a title="buteo.utils.core_utils.path_to_folder" href="#buteo.utils.core_utils.path_to_folder">path_to_folder</a></code></li>
 <li><code><a title="buteo.utils.core_utils.progress" href="#buteo.utils.core_utils.progress">progress</a></code></li>

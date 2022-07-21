@@ -138,8 +138,8 @@ def path_to_driver(file_path):
 
     ext = core_utils.path_to_ext(file_path)
 
-    if is_valid_datatype(file_path):
-        return gdal_enums.convert_extension_to_driver(ext)
+    if is_valid_datatype(ext):
+        return gdal_enums.convert_extension_to_driver_shortname(ext)
 
     raise ValueError(f"Unable to parse GDAL or OGR driver from path: {file_path}")
 
@@ -162,7 +162,7 @@ def path_to_driver_vector(file_path):
     ext = core_utils.path_to_ext(file_path)
 
     if is_valid_vector_datatype(file_path):
-        return gdal_enums.convert_extension_to_driver(ext)
+        return gdal_enums.convert_vector_extension_to_driver_shortname(ext)
 
     raise ValueError(f"Unable to parse GDAL or OGR driver from path: {file_path}")
 
@@ -185,7 +185,7 @@ def path_to_driver_raster(file_path):
     ext = core_utils.path_to_ext(file_path)
 
     if is_valid_raster_datatype(file_path):
-        return gdal_enums.convert_extension_to_driver(ext)
+        return gdal_enums.convert_raster_extension_to_driver_shortname(ext)
 
     raise ValueError(f"Unable to parse GDAL or OGR driver from path: {file_path}")
 
@@ -344,6 +344,25 @@ def clear_gdal_memory():
 
     for dataset in memory:
         gdal.Unlink(dataset)
+
+    if len(get_gdal_memory()) != 0:
+        for dataset in get_gdal_memory():
+            opened = None
+            mem_path = "/vsimem/" + dataset
+            if is_raster(mem_path):
+                opened = gdal.Open(mem_path)
+            elif is_raster(mem_path):
+                opened = ogr.Open(mem_path)
+            else:
+                raise ValueError(f"Unable to open dataset: {mem_path}")
+            driver = opened.GetDriver()
+            driver.Delete(dataset)
+
+            opened = None
+            driver = None
+
+    if len(get_gdal_memory()) != 0:
+        print("Failed to clear all GDAL memory.")
 
 
 def gdal_print_memory():
@@ -676,8 +695,8 @@ def convert_geom_to_vector(geom):
     assert isinstance(geom, ogr.Geometry), "geom must be an ogr.Geometry."
 
     path = create_memory_path("converted_geom.fgb", add_uuid=True)
-    driver = path_to_driver_vector(path)
 
+    driver = ogr.GetDriverByName(path_to_driver_vector(path))
     vector = driver.CreateDataSource(path)
 
     layer = vector.CreateLayer("converted_geom", geom.GetSpatialReference(), geom.GetGeometryType())
@@ -962,6 +981,136 @@ def to_band_list(
     return return_list
 
 
+def create_output_path(
+    dataset_path,
+    out_path=None,
+    *,
+    overwrite=True,
+    prefix="",
+    suffix="",
+    add_uuid=False,
+):
+    """
+    Prepares a raster/vector for writing. Generates an output path. If no output path is
+    specified, the raster is written to memory. If a folder is given, the output directory is chosen
+    is the input filename. If a specific path is used it must be the same length as the
+    input.
+
+    ## Args:
+    `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_): A **GDAL** or **OGR** dataframe, a name (with extension) of a raster </br>
+
+    ## Kwargs:
+    `out_path` (_str_/_None_): A path to a directory to write the raster to. (Default: **None**). </br>
+    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). </br>
+    `prefix` (_str_): A string to prepend to the output filename. (Default: **""**). </br>
+    `suffix` (_str_): A string to append to the output filename. (Default: **""**). </br>
+    `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). </br>
+
+    ## Returns:
+    (_str_): A path to the output raster or a list of paths.
+    """
+    assert isinstance(dataset_path, (str)), "dataset_path must be a string or a list of strings."
+    assert len(dataset_path) > 0, "dataset_path must be a path of len larger than 0."
+    assert isinstance(out_path, (str, type(None))), "out_path must be a string or None."
+
+    if out_path is not None:
+        assert core_utils.is_valid_output_path(out_path, overwrite=overwrite), "out_path must be a valid output path or None."
+
+    aug_path = None
+    if out_path is None:
+
+        # Not all drivers are support in memory. So if nothing is specified,
+        # we'll convert to tif and fgb for memory files.
+
+        og_path = get_path_from_dataset(dataset_path)
+        og_ext = core_utils.path_to_ext(og_path)
+
+        if gdal_enums.is_valid_raster_driver_extension(og_ext):
+            og_path = os.path.basename(core_utils.change_path_ext(og_path, "tif"))
+
+        elif gdal_enums.is_valid_vector_driver_extension(og_ext):
+            og_path = os.path.basename(core_utils.change_path_ext(og_path, "fgb"))
+
+        aug_path = core_utils.get_augmented_path(
+            og_path,
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            folder="/vsimem/",
+        )
+    elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
+        aug_path = core_utils.get_augmented_path(
+            os.path.basename(dataset_path),
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            folder=core_utils.path_to_folder(out_path),
+        )
+    else:
+        raise ValueError("out_path must be a valid path or a list of valid paths.")
+
+    assert core_utils.is_valid_output_path(aug_path, overwrite=overwrite), f"Error while generating output. It is invalid: {aug_path}"
+
+    return aug_path
+
+
+def create_output_path_list(
+    dataset_path,
+    out_path=None,
+    *,
+    overwrite=True,
+    prefix="",
+    suffix="",
+    add_uuid=False,
+):
+    """
+    Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
+    specified, the rasters are written to memory. If a folder is given, the output directory is chosen
+    are the input filenames remain the same. If a specific path is used it must be the same length as the
+    input.
+
+    ## Args:
+    `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_/_list__): A **GDAL** or **OGR** dataframe, a path to a raster or a list of same. </br>
+
+    ## Kwargs:
+    `out_path` (_str_/_None_): A path to a directory to write the raster to. (Default: **None**). </br>
+    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). </br>
+    `prefix` (_str_): A string to prepend to the output filename. (Default: **""**). </br>
+    `suffix` (_str_): A string to append to the output filename. (Default: **""**). </br>
+    `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). </br>
+
+    ## Returns:
+    (_str_/_list_): A path to the output raster or a list of paths.
+    """
+    assert isinstance(dataset_path, (list)), "dataset_path must be a string or a list of strings."
+    assert isinstance(out_path, (str, type(None))), "out_path must be a string or None."
+
+    assert len(dataset_path) > 0, "dataset_path must contain at least one path."
+
+    if isinstance(out_path, list):
+        assert len(out_path) == len(dataset_path), "out_path must be the same length as dataset_path if a list is provided."
+        assert core_utils.is_valid_output_path_list(out_path, overwrite=overwrite), "out_path must be a list of valid output paths."
+
+    output = []
+    out_path = core_utils.ensure_list(out_path)
+    if len(out_path) != len(dataset_path):
+        out_path = out_path * len(dataset_path)
+
+    for index, path in enumerate(dataset_path):
+        output.append(create_output_path(
+            path,
+            out_path=out_path[index],
+            overwrite=overwrite,
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+        ))
+
+    assert core_utils.is_valid_output_path_list(output, overwrite=overwrite), f"Error while generating outputs. They are invalid: {output}"
+
+    return output
+
+
 def save_dataset_to_disk(
     dataset,
     out_path,
@@ -988,7 +1137,7 @@ def save_dataset_to_disk(
     """
     datasets = core_utils.ensure_list(dataset)
     datasets_paths = get_path_from_dataset_list(datasets, allow_mixed=True)
-    out_paths = core_utils.create_output_paths(datasets_paths, out_path, prefix=prefix, suffix=suffix, add_uuid=add_uuid)
+    out_paths = create_output_path_list(datasets_paths, out_path, prefix=prefix, suffix=suffix, add_uuid=add_uuid)
 
     options = None
 

@@ -413,7 +413,7 @@ def filter_vector(
     if not gdal_utils.is_vector_list(vector_list):
         raise ValueError("The vector parameter must be a list of vector layers.")
 
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         vector_list,
         out_path=out_path,
         prefix=prefix,

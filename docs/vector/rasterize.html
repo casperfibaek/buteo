@@ -149,7 +149,7 @@ def rasterize_vector(
         raise Exception(&#34;Unable to rasterize.&#34;)
 
     target_ds.SetGeoTransform((x_min, pixel_size_x, 0, y_max, 0, -pixel_size_y))
-    target_ds.SetProjection(source_meta[&#34;projection&#34;])
+    target_ds.SetProjection(source_meta[&#34;projection_wkt&#34;])
 
     band = target_ds.GetRasterBand(1)
 
@@ -316,7 +316,7 @@ def rasterize_vector(
         raise Exception(&#34;Unable to rasterize.&#34;)
 
     target_ds.SetGeoTransform((x_min, pixel_size_x, 0, y_max, 0, -pixel_size_y))
-    target_ds.SetProjection(source_meta[&#34;projection&#34;])
+    target_ds.SetProjection(source_meta[&#34;projection_wkt&#34;])
 
     band = target_ds.GetRasterBand(1)
 

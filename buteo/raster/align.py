@@ -64,7 +64,7 @@ def match_raster_projections(
 
     add_uuid = out_path is None
 
-    path_list = core_utils.create_output_paths(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid)
 
     output = []
 
@@ -149,7 +149,7 @@ def align_rasters(
     add_uuid = out_path is None
 
     raster_list = core_utils.ensure_list(rasters)
-    path_list = core_utils.create_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
 
     x_pixels = None
     y_pixels = None
@@ -169,7 +169,7 @@ def align_rasters(
     for raster in rasters:
         meta = core_raster.raster_to_metadata(raster)
         metadata.append(meta)
-        used_projections.append(meta["projection"])
+        used_projections.append(meta["projection_wkt"])
 
     # If there is a master layer, copy information from that layer.
     if master is not None:
@@ -432,7 +432,7 @@ def align_rasters(
             out_dst_nodata = dst_nodata
 
         # Removes file if it exists and overwrite is True.
-        core_utils.remove_if_overwrite(out_name, overwrite)
+        core_utils.remove_if_required(out_name, overwrite)
 
         # Hand over to gdal.Warp to do the heavy lifting!
         warped = gdal.Warp(

@@ -193,7 +193,7 @@ def zonal_statistics(
         vector_layer = vector.GetLayer()
 
     vector_projection = vector_metadata["projection_osr"]
-    raster_projection = raster_metadata["projection"]
+    raster_projection = raster_metadata["projection_osr"]
 
     # Read raster data in overlap
     raster_transform = np.array(raster_metadata["transform"], dtype=np.float32)

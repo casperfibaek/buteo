@@ -44,8 +44,8 @@ def _clip_raster(
     ram="auto",
 ):
     """ INTERNAL. """
-    path_list = core_utils.create_output_paths(
-        raster,
+    path_list = gdal_utils.create_output_path_list(
+        core_utils.ensure_list(raster),
         out_path=out_path,
         prefix=prefix,
         suffix=suffix,
@@ -167,7 +167,7 @@ def _clip_raster(
         raise ValueError(f"Unable to parse nodata_value: {dst_nodata}")
 
     # Removes file if it exists and overwrite is True.
-    core_utils.remove_if_overwrite(out_path, overwrite)
+    core_utils.remove_if_required(out_path, overwrite)
 
     if verbose == 0:
         gdal.PushErrorHandler("CPLQuietErrorHandler")
@@ -284,7 +284,7 @@ def clip_raster(
     core_utils.type_check(add_uuid, [bool], "uuid")
 
     raster_list = core_utils.ensure_list(raster)
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         raster_list,
         out_path=out_path,
         prefix=prefix,

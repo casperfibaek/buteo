@@ -253,7 +253,7 @@ def warp_raster(
     core_utils.type_check(creation_options, [[str], None], "creation_options")
 
     raster_list = core_utils.ensure_list(raster)
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         raster_list,
         out_path=out_path,
         prefix=prefix,

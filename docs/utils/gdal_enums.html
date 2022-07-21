@@ -57,17 +57,24 @@ def get_available_drivers():
         driver = gdal.GetDriver(i)
         metadata = driver.GetMetadata_Dict()
 
-        info = {
-            &#34;short_name&#34;: driver.ShortName,
-            &#34;long_name&#34;: driver.LongName,
-            &#34;extension&#34;: driver.GetMetadataItem(gdal.DMD_EXTENSIONS),
-        }
+        extensions = driver.GetMetadataItem(gdal.DMD_EXTENSIONS)
+        if extensions is not None:
+            extensions = extensions.split(&#34; &#34;)
+        else:
+            extensions = [None]
 
-        if &#39;DCAP_RASTER&#39; in metadata:
-            raster_drivers.append(info)
+        for ext in extensions:
+            info = {
+                &#34;short_name&#34;: driver.ShortName,
+                &#34;long_name&#34;: driver.LongName,
+                &#34;extension&#34;: ext,
+            }
 
-        if &#39;DCAP_VECTOR&#39; in metadata:
-            vector_drivers.append(info)
+            if &#39;DCAP_RASTER&#39; in metadata:
+                raster_drivers.append(info)
+
+            if &#39;DCAP_VECTOR&#39; in metadata:
+                vector_drivers.append(info)
 
     return (raster_drivers, vector_drivers)
 
@@ -190,6 +197,27 @@ def convert_raster_extension_to_driver_shortname(ext):
     raster_drivers, _vector_drivers = get_available_drivers()
 
     for driver in raster_drivers:
+        if driver[&#34;extension&#34;] == ext:
+            return driver[&#34;short_name&#34;]
+
+    raise RuntimeError(f&#34;Invalid extension: {ext}&#34;)
+
+
+def convert_extension_to_driver_shortname(ext):
+    &#34;&#34;&#34;
+    Converts a file extension to an **OGR** or **GDAL** driver short_name name.
+
+    ## Args:
+    `ext` (_str_): The file extension. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The driver short_name (e.g. GPKG or GTiff).
+    &#34;&#34;&#34;
+    assert is_valid_vector_driver_extension(ext) or is_valid_raster_driver_extension(ext), f&#34;Invalid extension: {ext}&#34;
+
+    raster_drivers, vector_drivers = get_available_drivers()
+
+    for driver in raster_drivers + vector_drivers:
         if driver[&#34;extension&#34;] == ext:
             return driver[&#34;short_name&#34;]
 
@@ -405,6 +433,40 @@ def is_gdal_datatype_a_float(gdal_dtype):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="buteo.utils.gdal_enums.convert_extension_to_driver_shortname"><code class="name flex">
+<span>def <span class="ident">convert_extension_to_driver_shortname</span></span>(<span>ext)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts a file extension to an <strong>OGR</strong> or <strong>GDAL</strong> driver short_name name.</p>
+<h2 id="args">Args:</h2>
+<p><code>ext</code> (<em>str</em>): The file extension. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The driver short_name (e.g. GPKG or GTiff).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_extension_to_driver_shortname(ext):
+    &#34;&#34;&#34;
+    Converts a file extension to an **OGR** or **GDAL** driver short_name name.
+
+    ## Args:
+    `ext` (_str_): The file extension. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The driver short_name (e.g. GPKG or GTiff).
+    &#34;&#34;&#34;
+    assert is_valid_vector_driver_extension(ext) or is_valid_raster_driver_extension(ext), f&#34;Invalid extension: {ext}&#34;
+
+    raster_drivers, vector_drivers = get_available_drivers()
+
+    for driver in raster_drivers + vector_drivers:
+        if driver[&#34;extension&#34;] == ext:
+            return driver[&#34;short_name&#34;]
+
+    raise RuntimeError(f&#34;Invalid extension: {ext}&#34;)</code></pre>
+</details>
+</dd>
 <dt id="buteo.utils.gdal_enums.convert_raster_extension_to_driver_shortname"><code class="name flex">
 <span>def <span class="ident">convert_raster_extension_to_driver_shortname</span></span>(<span>ext)</span>
 </code></dt>
@@ -504,17 +566,24 @@ def is_gdal_datatype_a_float(gdal_dtype):
         driver = gdal.GetDriver(i)
         metadata = driver.GetMetadata_Dict()
 
-        info = {
-            &#34;short_name&#34;: driver.ShortName,
-            &#34;long_name&#34;: driver.LongName,
-            &#34;extension&#34;: driver.GetMetadataItem(gdal.DMD_EXTENSIONS),
-        }
+        extensions = driver.GetMetadataItem(gdal.DMD_EXTENSIONS)
+        if extensions is not None:
+            extensions = extensions.split(&#34; &#34;)
+        else:
+            extensions = [None]
 
-        if &#39;DCAP_RASTER&#39; in metadata:
-            raster_drivers.append(info)
+        for ext in extensions:
+            info = {
+                &#34;short_name&#34;: driver.ShortName,
+                &#34;long_name&#34;: driver.LongName,
+                &#34;extension&#34;: ext,
+            }
 
-        if &#39;DCAP_VECTOR&#39; in metadata:
-            vector_drivers.append(info)
+            if &#39;DCAP_RASTER&#39; in metadata:
+                raster_drivers.append(info)
+
+            if &#39;DCAP_VECTOR&#39; in metadata:
+                vector_drivers.append(info)
 
     return (raster_drivers, vector_drivers)</code></pre>
 </details>
@@ -960,6 +1029,7 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
+<li><code><a title="buteo.utils.gdal_enums.convert_extension_to_driver_shortname" href="#buteo.utils.gdal_enums.convert_extension_to_driver_shortname">convert_extension_to_driver_shortname</a></code></li>
 <li><code><a title="buteo.utils.gdal_enums.convert_raster_extension_to_driver_shortname" href="#buteo.utils.gdal_enums.convert_raster_extension_to_driver_shortname">convert_raster_extension_to_driver_shortname</a></code></li>
 <li><code><a title="buteo.utils.gdal_enums.convert_vector_extension_to_driver_shortname" href="#buteo.utils.gdal_enums.convert_vector_extension_to_driver_shortname">convert_vector_extension_to_driver_shortname</a></code></li>
 <li><code><a title="buteo.utils.gdal_enums.get_available_drivers" href="#buteo.utils.gdal_enums.get_available_drivers">get_available_drivers</a></code></li>

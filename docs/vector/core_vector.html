@@ -452,7 +452,7 @@ def filter_vector(
     if not gdal_utils.is_vector_list(vector_list):
         raise ValueError(&#34;The vector parameter must be a list of vector layers.&#34;)
 
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         vector_list,
         out_path=out_path,
         prefix=prefix,
@@ -800,7 +800,7 @@ def vector_get_attribute_table(
     if not gdal_utils.is_vector_list(vector_list):
         raise ValueError(&#34;The vector parameter must be a list of vector layers.&#34;)
 
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         vector_list,
         out_path=out_path,
         prefix=prefix,

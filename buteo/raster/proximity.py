@@ -75,7 +75,7 @@ def calc_proximity(
     core_utils.type_check(overwrite, [bool], "overwrite")
 
     raster_list = core_utils.ensure_list(input_rasters)
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,

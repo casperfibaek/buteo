@@ -27,17 +27,24 @@ def get_available_drivers():
         driver = gdal.GetDriver(i)
         metadata = driver.GetMetadata_Dict()
 
-        info = {
-            "short_name": driver.ShortName,
-            "long_name": driver.LongName,
-            "extension": driver.GetMetadataItem(gdal.DMD_EXTENSIONS),
-        }
+        extensions = driver.GetMetadataItem(gdal.DMD_EXTENSIONS)
+        if extensions is not None:
+            extensions = extensions.split(" ")
+        else:
+            extensions = [None]
 
-        if 'DCAP_RASTER' in metadata:
-            raster_drivers.append(info)
+        for ext in extensions:
+            info = {
+                "short_name": driver.ShortName,
+                "long_name": driver.LongName,
+                "extension": ext,
+            }
 
-        if 'DCAP_VECTOR' in metadata:
-            vector_drivers.append(info)
+            if 'DCAP_RASTER' in metadata:
+                raster_drivers.append(info)
+
+            if 'DCAP_VECTOR' in metadata:
+                vector_drivers.append(info)
 
     return (raster_drivers, vector_drivers)
 
@@ -160,6 +167,27 @@ def convert_raster_extension_to_driver_shortname(ext):
     raster_drivers, _vector_drivers = get_available_drivers()
 
     for driver in raster_drivers:
+        if driver["extension"] == ext:
+            return driver["short_name"]
+
+    raise RuntimeError(f"Invalid extension: {ext}")
+
+
+def convert_extension_to_driver_shortname(ext):
+    """
+    Converts a file extension to an **OGR** or **GDAL** driver short_name name.
+
+    ## Args:
+    `ext` (_str_): The file extension. </br>
+
+    ## Returns:
+    (_str_): The driver short_name (e.g. GPKG or GTiff).
+    """
+    assert is_valid_vector_driver_extension(ext) or is_valid_raster_driver_extension(ext), f"Invalid extension: {ext}"
+
+    raster_drivers, vector_drivers = get_available_drivers()
+
+    for driver in raster_drivers + vector_drivers:
         if driver["extension"] == ext:
             return driver["short_name"]
 

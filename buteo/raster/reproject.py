@@ -33,7 +33,7 @@ def _reproject_raster(
 ):
     """ Internal. """
     raster_list = core_utils.ensure_list(raster)
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,
@@ -144,7 +144,7 @@ def reproject_raster(
     core_utils.type_check(add_uuid, [bool], "add_uuid")
 
     raster_list = core_utils.ensure_list(raster)
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,

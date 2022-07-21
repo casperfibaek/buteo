@@ -144,7 +144,7 @@ def dissolve_vector(
 
     assert gdal_utils.is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
 
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         vector_list,
         out_path=out_path,
         prefix=prefix,

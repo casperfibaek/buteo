@@ -87,7 +87,7 @@ def vectorize_raster(
     raster_list = core_utils.ensure_list(raster)
     assert gdal_utils.is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
 
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,

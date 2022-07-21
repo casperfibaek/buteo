@@ -101,7 +101,7 @@ def match_raster_projections(
 
     add_uuid = out_path is None
 
-    path_list = core_utils.create_output_paths(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid)
 
     output = []
 
@@ -186,7 +186,7 @@ def align_rasters(
     add_uuid = out_path is None
 
     raster_list = core_utils.ensure_list(rasters)
-    path_list = core_utils.create_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
 
     x_pixels = None
     y_pixels = None
@@ -206,7 +206,7 @@ def align_rasters(
     for raster in rasters:
         meta = core_raster.raster_to_metadata(raster)
         metadata.append(meta)
-        used_projections.append(meta[&#34;projection&#34;])
+        used_projections.append(meta[&#34;projection_wkt&#34;])
 
     # If there is a master layer, copy information from that layer.
     if master is not None:
@@ -469,7 +469,7 @@ def align_rasters(
             out_dst_nodata = dst_nodata
 
         # Removes file if it exists and overwrite is True.
-        core_utils.remove_if_overwrite(out_name, overwrite)
+        core_utils.remove_if_required(out_name, overwrite)
 
         # Hand over to gdal.Warp to do the heavy lifting!
         warped = gdal.Warp(
@@ -611,7 +611,7 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
     add_uuid = out_path is None
 
     raster_list = core_utils.ensure_list(rasters)
-    path_list = core_utils.create_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
 
     x_pixels = None
     y_pixels = None
@@ -631,7 +631,7 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
     for raster in rasters:
         meta = core_raster.raster_to_metadata(raster)
         metadata.append(meta)
-        used_projections.append(meta[&#34;projection&#34;])
+        used_projections.append(meta[&#34;projection_wkt&#34;])
 
     # If there is a master layer, copy information from that layer.
     if master is not None:
@@ -894,7 +894,7 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
             out_dst_nodata = dst_nodata
 
         # Removes file if it exists and overwrite is True.
-        core_utils.remove_if_overwrite(out_name, overwrite)
+        core_utils.remove_if_required(out_name, overwrite)
 
         # Hand over to gdal.Warp to do the heavy lifting!
         warped = gdal.Warp(
@@ -995,7 +995,7 @@ an <strong>OGR</strong> layer or a <strong>GDAL</strong> layer.</p>
 
     add_uuid = out_path is None
 
-    path_list = core_utils.create_output_paths(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid)
 
     output = []
 

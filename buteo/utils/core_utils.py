@@ -162,7 +162,10 @@ def folder_exists(path):
     ## Returns:
     (_bool_): **True** if the folder exists, **False** otherwise.
     """
-    return os.path.isdir(path)
+    if isinstance(path, str):
+        return os.path.isdir(path)
+
+    return False
 
 
 def delete_files_in_folder(folder):
@@ -308,6 +311,30 @@ def path_to_folder(path):
     return os.path.dirname(path)
 
 
+def change_path_ext(path, target_ext):
+    """
+    Change the extension of a file.
+
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+    `target_ext` (_str_): The new extension. </br>
+
+    ## Returns:
+    (_str_): The path to the file with the new extension.
+    """
+    assert isinstance(path, str), "path must be a string."
+    assert isinstance(target_ext, str), "target_ext must be a string."
+
+    basename = os.path.basename(path)
+    basesplit = os.path.splitext(basename)
+    ext = basesplit[1]
+
+    if ext == "" or len(ext) == 1:
+        raise Exception(f"File: {path} has no extension.")
+
+    return os.path.join(os.path.dirname(path), f"{basesplit[0]}.{target_ext}")
+
+
 def is_valid_file_path(path):
     """
     Check if a path has an extension.
@@ -449,7 +476,15 @@ def get_augmented_path(path, *, prefix="", suffix="", add_uuid=True, folder=None
     (_str_): A string of the current UNIX time in seconds.
     """
     assert isinstance(path, str), "path must be a string."
-    assert path.startswith("/vsimem") or folder_exists(path_to_folder(path)), f"path must exist or be in-memory. Received: {path}"
+    assert isinstance(folder, (type(None), str)), "folder must be None or a string"
+
+    if folder is not None:
+        path = os.path.join(folder, path)
+
+        if not path.startswith("/vsimem") and not folder_exists(path_to_folder(folder)):
+            raise ValueError(f"Folder: {folder} does not exist.")
+
+    assert path.startswith("/vsimem") or folder_exists(path_to_folder(path)), f"destination folder must exist or be in-memory. Received: {path}"
 
     base = os.path.basename(path)
     split = os.path.splitext(base)
@@ -460,15 +495,9 @@ def get_augmented_path(path, *, prefix="", suffix="", add_uuid=True, folder=None
 
     basename = f"{prefix}{split[0]}{uuid}{suffix}{split[1]}"
 
-    if folder is not None:
-        target_folder = path_to_folder(folder)
+    out_path = os.path.join(os.path.dirname(path), basename)
 
-        if not folder_exists(path_to_folder(folder)):
-            raise ValueError(f"Folder: {folder} does not exist.")
-
-        return os.path.join(target_folder, basename)
-
-    return os.path.join(os.path.dirname(path), basename)
+    return out_path
 
 
 def get_size(start_path=".", rough=True):
@@ -803,67 +832,39 @@ def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, availa
     return int(dyn_limit)
 
 
-def create_output_paths(
-    dataset_path,
-    out_path=None,
-    *,
-    overwrite=True,
-    prefix="",
-    suffix="",
-    add_uuid=False,
-):
+def is_str_a_glob(test_str):
     """
-    Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
-    specified, the rasters are written to memory. If a folder is given, the output directory is chosen
-    are the input filenames remain the same. If a specific path is used it must be the same length as the
-    input.
+    Check if a string is a glob.
 
     ## Args:
-    `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_/_list__): A **GDAL** or **OGR** dataframe, a path to a raster or a list of same. </br>
-
-    ## Kwargs:
-    `out_path` (_str_/_None_): A path to a directory to write the raster to. (Default: **None**). </br>
-    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). </br>
-    `prefix` (_str_): A string to prepend to the output filename. (Default: **""**). </br>
-    `suffix` (_str_): A string to append to the output filename. (Default: **""**). </br>
-    `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). </br>
+    `test_str` (_str_): The string to check.
 
     ## Returns:
-    (_str_/_list_): A path to the output raster or a list of paths.
+    (_bool_): **True** if the string is a glob, **False** otherwise.
     """
-    assert isinstance(dataset_path, (str, list)), "dataset_path must be a string or a list of strings."
-    assert isinstance(out_path, (str, type(None))), "out_path must be a string or None."
+    if not isinstance(test_str, str):
+        return False
 
-    paths_input = ensure_list(dataset_path)
+    if len(test_str) < 6:
+        return False
 
-    assert len(paths_input) > 0, "dataset_path must contain at least one path."
+    if test_str[-5:] == ":glob":
+        return True
 
-    if isinstance(out_path, list):
-        assert len(out_path) == len(paths_input), "out_path must be the same length as dataset_path if a list is provided."
-        assert is_valid_output_path_list(out_path, overwrite=overwrite), "out_path must be a list of valid output paths."
+    return False
 
-    output = []
 
-    for index, path in enumerate(paths_input):
-        aug_path = None
+def parse_glob_path(test_str):
+    """
+    Parses a string containing a glob path.
 
-        if isinstance(out_path, list):
-            if isinstance(out_path, str):
-                aug_path = out_path[index]
-            else:
-                raise ValueError("out_path must be a string or a list of strings.")
-        elif folder_exists(out_path):
-            aug_path = get_augmented_path(os.path.basename(path), prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder=out_path)
-        elif out_path is None:
-            aug_path = get_augmented_path(os.path.basename(path), prefix=prefix, suffix=suffix, add_uuid=add_uuid, folder="/vsimem/")
-        else:
-            raise ValueError("out_path must be a valid path or a list of valid paths.")
+    ## Args:
+    `test_str` (_str_): The string to parse the pattern from.
 
-        output.append(aug_path)
+    ## Returns:
+    (_list_): A list of the matching paths.
+    """
+    assert is_str_a_glob(test_str), "test_str must be a glob path."
+    pre_glob = test_str[:-5]
 
-    assert is_valid_output_path_list(output, overwrite=overwrite), f"Error while generating outputs. They are invalid: {output}"
-
-    if isinstance(out_path, list):
-        return output
-
-    return output[0]
+    return glob(pre_glob)

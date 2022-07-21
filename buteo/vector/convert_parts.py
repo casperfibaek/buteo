@@ -251,7 +251,7 @@ def singlepart_to_multipart(
 
     assert gdal_utils.is_vector_list(vector_list), f"Vector is not a list of vectors. {vector_list}"
 
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         vector_list,
         out_path=out_path,
         prefix=prefix,
@@ -328,7 +328,7 @@ def multipart_to_singlepart(
 
     assert gdal_utils.is_vector_list(vector_list), f"Vector is not a list of vectors. {vector_list}"
 
-    path_list = core_utils.create_output_paths(
+    path_list = gdal_utils.create_output_path_list(
         vector_list,
         out_path=out_path,
         prefix=prefix,

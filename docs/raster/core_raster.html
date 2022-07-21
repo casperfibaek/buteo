@@ -482,6 +482,7 @@ def raster_to_array(
         else:
             layers.append(np.ma.dstack(band_arrs))
 
+        ref = None
 
     if split:
         if stack:
@@ -508,140 +509,6 @@ def raster_to_array(
             output = np.ma.dstack(layers)
 
     return output
-
-
-def _raster_set_datatype(
-    raster,
-    dtype_str,
-    out_path=None,
-    *,
-    overwrite=True,
-    creation_options=None,
-):
-    &#34;&#34;&#34; **INTERNAL**. &#34;&#34;&#34;
-    assert isinstance(raster, (str, gdal.Dataset)), &#34;raster must be a string or a GDAL.Dataset.&#34;
-    assert isinstance(dtype_str, str), &#34;dtype_str must be a string.&#34;
-    assert len(dtype_str) &gt; 0, &#34;dtype_str must be a non-empty string.&#34;
-
-    if not gdal_utils.is_raster(raster):
-        raise ValueError(f&#34;Unable to open input raster: {raster}&#34;)
-
-    ref = open_raster(raster)
-    metadata = raster_to_metadata(ref)
-
-    path = &#34;&#34;
-    if out_path is None:
-        path = gdal_utils.create_memory_path(metadata[&#34;basename&#34;], add_uuid=True)
-
-    elif core_utils.folder_exists(out_path):
-        path = os.path.join(out_path, os.path.basename(gdal_utils.get_path_from_dataset(ref)))
-
-    elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
-        path = out_path
-
-    else:
-        raise ValueError(f&#34;Unable to find output folder: {out_path}&#34;)
-
-    driver_name = gdal_utils.path_to_driver_raster(path)
-    driver = gdal.GetDriverByName(driver_name)
-
-    if driver is None:
-        raise ValueError(f&#34;Unable to get driver for raster: {raster}&#34;)
-
-    core_utils.remove_if_overwrite(path, overwrite)
-
-    copy = driver.Create(
-        path,
-        metadata[&#34;height&#34;],
-        metadata[&#34;width&#34;],
-        metadata[&#34;band_count&#34;],
-        gdal_enums.translate_str_to_gdal_dtype(dtype_str),
-        gdal_utils.default_creation_options(creation_options),
-    )
-
-    copy.SetProjection(metadata[&#34;projection&#34;])
-    copy.SetGeoTransform(metadata[&#34;transform&#34;])
-
-    array = raster_to_array(ref)
-
-    for band_idx in range(metadata[&#34;band_count&#34;]):
-        band = copy.GetRasterBand(band_idx + 1)
-        band.WriteArray(array[:, :, band_idx])
-        band.SetNoDataValue(metadata[&#34;nodata_value&#34;])
-
-    return path
-
-
-def raster_set_datatype(
-    raster,
-    dtype,
-    out_path=None,
-    *,
-    overwrite=True,
-    allow_lists=True,
-    creation_options=None,
-):
-    &#34;&#34;&#34;
-    Changes the datatype of a raster.
-
-    ## Args:
-    `raster` (_str_/_gdal.Dataset_/_list_): The raster to change the datatype of. &lt;/br&gt;
-    `dtype` (_str_): The new datatype. &lt;/br&gt;
-
-    ## Kwargs:
-    `out_path` (_path_/_list_): The destination to save to. (Default: **None**)&lt;/br&gt;
-    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
-    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only single rasters
-    are allowed. (Default: **True**) &lt;/br&gt;
-    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
-        * &#34;TILED=YES&#34;
-        * &#34;NUM_THREADS=ALL_CPUS&#34;
-        * &#34;BIGG_TIF=YES&#34;
-        * &#34;COMPRESS=LZW&#34;
-
-    ## Returns:
-    (_str_/_list_): The filepath or list of filepaths to the newly created raster(s).
-    &#34;&#34;&#34;
-    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
-    core_utils.type_check(dtype, [str], &#34;dtype&#34;)
-    core_utils.type_check(out_path, [list, str, None], &#34;out_path&#34;)
-    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
-    core_utils.type_check(allow_lists, [bool], &#34;allow_lists&#34;)
-    core_utils.type_check(creation_options, [list, None], &#34;creation_options&#34;)
-
-    if not allow_lists:
-        if isinstance(raster, list):
-            raise ValueError(&#34;allow_lists is False, but the input raster is a list.&#34;)
-
-        return _raster_set_datatype(
-            raster,
-            dtype,
-            out_path=out_path,
-            overwrite=overwrite,
-            creation_options=creation_options,
-        )
-
-    add_uuid = out_path is None
-
-    raster_list = core_utils.ensure_list(raster)
-    path_list = core_utils.create_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
-
-    output = []
-    for index, in_raster in enumerate(raster_list):
-        path = _raster_set_datatype(
-            in_raster,
-            dtype,
-            out_path=path_list[index],
-            overwrite=overwrite,
-            creation_options=gdal_utils.default_creation_options(creation_options),
-        )
-
-        output.append(path)
-
-    if isinstance(raster, list):
-        return output
-
-    return output[0]
 
 
 def array_to_raster(
@@ -775,7 +642,155 @@ def array_to_raster(
         elif isinstance(set_nodata, (int, float)):
             band.SetNoDataValue(set_nodata)
 
+    destination.FlushCache()
+    destination = None
+
     return output_name
+
+
+def _raster_set_datatype(
+    raster,
+    dtype_str,
+    out_path=None,
+    *,
+    overwrite=True,
+    creation_options=None,
+):
+    &#34;&#34;&#34; **INTERNAL**. &#34;&#34;&#34;
+    assert isinstance(raster, (str, gdal.Dataset)), &#34;raster must be a string or a GDAL.Dataset.&#34;
+    assert isinstance(dtype_str, str), &#34;dtype_str must be a string.&#34;
+    assert len(dtype_str) &gt; 0, &#34;dtype_str must be a non-empty string.&#34;
+
+    if not gdal_utils.is_raster(raster):
+        raise ValueError(f&#34;Unable to open input raster: {raster}&#34;)
+
+    ref = open_raster(raster)
+    metadata = raster_to_metadata(ref)
+
+    path = &#34;&#34;
+    if out_path is None:
+        path = gdal_utils.create_memory_path(metadata[&#34;basename&#34;], add_uuid=True)
+
+    elif core_utils.folder_exists(out_path):
+        path = os.path.join(out_path, os.path.basename(gdal_utils.get_path_from_dataset(ref)))
+
+    elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
+        path = out_path
+
+    elif gdal_utils.is_path_in_memory(out_path):
+        path = out_path
+
+    else:
+        raise ValueError(f&#34;Unable to find output folder: {out_path}&#34;)
+
+    driver_name = gdal_utils.path_to_driver_raster(path)
+    driver = gdal.GetDriverByName(driver_name)
+
+    if driver is None:
+        raise ValueError(f&#34;Unable to get driver for raster: {raster}&#34;)
+
+    core_utils.remove_if_required(path, overwrite)
+
+    copy = driver.Create(
+        path,
+        metadata[&#34;height&#34;],
+        metadata[&#34;width&#34;],
+        metadata[&#34;band_count&#34;],
+        gdal_enums.translate_str_to_gdal_dtype(dtype_str),
+        gdal_utils.default_creation_options(creation_options),
+    )
+
+    if copy is None:
+        raise ValueError(f&#34;Unable to create output raster: {path}&#34;)
+
+    copy.SetProjection(metadata[&#34;projection_wkt&#34;])
+    copy.SetGeoTransform(metadata[&#34;transform&#34;])
+
+    array = raster_to_array(ref)
+
+    for band_idx in range(metadata[&#34;band_count&#34;]):
+        band = copy.GetRasterBand(band_idx + 1)
+        band.WriteArray(array[:, :, band_idx])
+
+        if metadata[&#34;nodata_value&#34;] is not None:
+            band.SetNoDataValue(metadata[&#34;nodata_value&#34;])
+
+    ref = None
+
+    return path
+
+
+def raster_set_datatype(
+    raster,
+    dtype,
+    out_path=None,
+    *,
+    overwrite=True,
+    allow_lists=True,
+    creation_options=None,
+):
+    &#34;&#34;&#34;
+    Changes the datatype of a raster.
+
+    ## Args:
+    `raster` (_str_/_gdal.Dataset_/_list_): The raster to change the datatype of. &lt;/br&gt;
+    `dtype` (_str_): The new datatype. &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_path_/_list_): The destination to save to. (Default: **None**)&lt;/br&gt;
+    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
+    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only single rasters
+    are allowed. (Default: **True**) &lt;/br&gt;
+    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
+        * &#34;TILED=YES&#34;
+        * &#34;NUM_THREADS=ALL_CPUS&#34;
+        * &#34;BIGG_TIF=YES&#34;
+        * &#34;COMPRESS=LZW&#34;
+
+    ## Returns:
+    (_str_/_list_): The filepath or list of filepaths to the newly created raster(s).
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(dtype, [str], &#34;dtype&#34;)
+    core_utils.type_check(out_path, [list, str, None], &#34;out_path&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(allow_lists, [bool], &#34;allow_lists&#34;)
+    core_utils.type_check(creation_options, [list, None], &#34;creation_options&#34;)
+
+    if not allow_lists:
+        if isinstance(raster, list):
+            raise ValueError(&#34;allow_lists is False, but the input raster is a list.&#34;)
+
+        return _raster_set_datatype(
+            raster,
+            dtype,
+            out_path=out_path,
+            overwrite=overwrite,
+            creation_options=creation_options,
+        )
+
+    add_uuid = out_path is None
+
+    raster_list = core_utils.ensure_list(raster)
+    path_list = gdal_utils.create_output_path_list(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+
+    output = []
+    for index, in_raster in enumerate(raster_list):
+        path = _raster_set_datatype(
+            in_raster,
+            dtype,
+            out_path=path_list[index],
+            overwrite=overwrite,
+            creation_options=gdal_utils.default_creation_options(creation_options),
+        )
+
+        output.append(path)
+
+    if isinstance(raster, list):
+        return output
+
+    return output[0]
+
 
 
 def stack_rasters(
@@ -793,7 +808,7 @@ def stack_rasters(
     `rasters` (_list_): List of rasters to stack. &lt;/br&gt;
 
     ## Kwargs
-    `out_path` (_str_): The destination to save to. (Default: **None**)&lt;/br&gt;
+    `out_path` (_str_/_None_): The destination to save to. (Default: **None**)&lt;/br&gt;
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
     `dtype` (_str_): The data type of the output raster. (Default: **None**)&lt;/br&gt;
     `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
@@ -816,8 +831,6 @@ def stack_rasters(
     if not rasters_are_aligned(rasters, same_extent=True):
         raise ValueError(&#34;Rasters are not aligned. Try running align_rasters.&#34;)
 
-    core_utils.remove_if_required(out_path, overwrite)
-
     # Ensures that all the input rasters are valid.
     raster_list = gdal_utils.get_path_from_dataset_list(rasters)
 
@@ -838,6 +851,8 @@ def stack_rasters(
         output_name = gdal_utils.create_memory_path(&#34;stack_rasters.tif&#34;, add_uuid=True)
     else:
         output_name = out_path
+
+    core_utils.remove_if_required(output_name, overwrite)
 
     raster_dtype = raster_to_metadata(raster_list[0])[&#34;datatype_gdal_raw&#34;]
 
@@ -873,8 +888,6 @@ def stack_rasters(
     if nodata_missmatch:
         nodata_value = None
 
-    core_utils.remove_if_overwrite(out_path, overwrite)
-
     destination = driver.Create(
         output_name,
         metadatas[0][&#34;width&#34;],
@@ -884,7 +897,7 @@ def stack_rasters(
         gdal_utils.default_creation_options(creation_options),
     )
 
-    destination.SetProjection(metadatas[0][&#34;projection&#34;])
+    destination.SetProjection(metadatas[0][&#34;projection_wkt&#34;])
     destination.SetGeoTransform(metadatas[0][&#34;transform&#34;])
 
     bands_added = 0
@@ -912,7 +925,7 @@ def stack_rasters_vrt(
     seperate=True,
     *,
     resample_alg=&#34;nearest&#34;,
-    options=(),
+    options=None,
     overwrite=True,
     reference=None,
     creation_options=None,
@@ -943,7 +956,7 @@ def stack_rasters_vrt(
     core_utils.type_check(out_path, [str], &#34;out_path&#34;)
     core_utils.type_check(seperate, [bool], &#34;seperate&#34;)
     core_utils.type_check(resample_alg, [str], &#34;resample_alg&#34;)
-    core_utils.type_check(options, [tuple], &#34;options&#34;)
+    core_utils.type_check(options, [tuple, None], &#34;options&#34;)
     core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
     core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
 
@@ -954,7 +967,7 @@ def stack_rasters_vrt(
         options = gdal.BuildVRTOptions(
             resampleAlg=resample_algorithm,
             separate=seperate,
-            outputBounds=[meta[&#34;x_min&#34;], meta[&#34;y_min&#34;], meta[&#34;x_max&#34;], meta[&#34;y_max&#34;]],
+            outputBounds=bbox_utils.convert_ogr_bbox_to_gdal_bbox(meta[&#34;bbox&#34;]),
             xRes=meta[&#34;pixel_width&#34;],
             yRes=meta[&#34;pixel_height&#34;],
             targetAlignedPixels=True,
@@ -962,7 +975,13 @@ def stack_rasters_vrt(
     else:
         options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)
 
-    gdal.BuildVRT(out_path, rasters, options=options)
+    if options is None:
+        options = ()
+
+    vrt = gdal.BuildVRT(out_path, rasters, options=options)
+
+    if vrt is None:
+        raise ValueError(f&#34;Error while creating VRT from rasters: {rasters}&#34;)
 
     return out_path
 
@@ -1027,14 +1046,17 @@ def get_overlap_fraction(raster1, raster2):
     core_utils.type_check(raster2, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster2&#34;)
 
     if not rasters_intersect(raster1, raster2):
-        raise ValueError(&#34;Rasters do not intersect.&#34;)
+        return 0.0
 
     meta1 = raster_to_metadata(raster1)[&#34;bbox_geom_latlng&#34;]
     meta2 = raster_to_metadata(raster2)[&#34;bbox_geom_latlng&#34;]
 
-    intersection = meta1[&#34;bbox_geom_latlng&#34;].Intersection(meta2[&#34;bbox_geom_latlng&#34;])
+    try:
+        intersection = meta1.Intersection(meta2)
+    except Exception:
+        return 0.0
 
-    overlap = meta1.GetArea() / intersection.GetArea()
+    overlap = intersection.GetArea() / meta1.GetArea()
 
     return overlap</code></pre>
 </details>
@@ -1205,6 +1227,9 @@ as a raster using a reference raster.</p>
         elif isinstance(set_nodata, (int, float)):
             band.SetNoDataValue(set_nodata)
 
+    destination.FlushCache()
+    destination = None
+
     return output_name</code></pre>
 </details>
 </dd>
@@ -1237,14 +1262,17 @@ as a raster using a reference raster.</p>
     core_utils.type_check(raster2, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster2&#34;)
 
     if not rasters_intersect(raster1, raster2):
-        raise ValueError(&#34;Rasters do not intersect.&#34;)
+        return 0.0
 
     meta1 = raster_to_metadata(raster1)[&#34;bbox_geom_latlng&#34;]
     meta2 = raster_to_metadata(raster2)[&#34;bbox_geom_latlng&#34;]
 
-    intersection = meta1[&#34;bbox_geom_latlng&#34;].Intersection(meta2[&#34;bbox_geom_latlng&#34;])
+    try:
+        intersection = meta1.Intersection(meta2)
+    except Exception:
+        return 0.0
 
-    overlap = meta1.GetArea() / intersection.GetArea()
+    overlap = intersection.GetArea() / meta1.GetArea()
 
     return overlap</code></pre>
 </details>
@@ -1386,7 +1414,7 @@ are allowed. (Default: <strong>True</strong>) </br>
     add_uuid = out_path is None
 
     raster_list = core_utils.ensure_list(raster)
-    path_list = core_utils.create_output_paths(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
 
     output = []
     for index, in_raster in enumerate(raster_list):
@@ -1544,6 +1572,7 @@ specified. </br></p></div>
         else:
             layers.append(np.ma.dstack(band_arrs))
 
+        ref = None
 
     if split:
         if stack:
@@ -1835,7 +1864,7 @@ refering to the dataset. </br></p>
 <h2 id="args">Args:</h2>
 <p><code>rasters</code> (<em>list</em>): List of rasters to stack. </br></p>
 <h2 id="kwargs">Kwargs</h2>
-<p><code>out_path</code> (<em>str</em>): The destination to save to. (Default: <strong>None</strong>)</br>
+<p><code>out_path</code> (<em>str</em>/<em>None</em>): The destination to save to. (Default: <strong>None</strong>)</br>
 <code>overwrite</code> (<em>bool</em>): If the file exists, should it be overwritten? (Default: <strong>True</strong>) </br>
 <code>dtype</code> (<em>str</em>): The data type of the output raster. (Default: <strong>None</strong>)</br>
 <code>creation_options</code> (<em>list</em>): List of <strong>GDAL</strong> creation options. Defaults are: </br>
@@ -1864,7 +1893,7 @@ refering to the dataset. </br></p>
     `rasters` (_list_): List of rasters to stack. &lt;/br&gt;
 
     ## Kwargs
-    `out_path` (_str_): The destination to save to. (Default: **None**)&lt;/br&gt;
+    `out_path` (_str_/_None_): The destination to save to. (Default: **None**)&lt;/br&gt;
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
     `dtype` (_str_): The data type of the output raster. (Default: **None**)&lt;/br&gt;
     `creation_options` (_list_): List of **GDAL** creation options. Defaults are: &lt;/br&gt;
@@ -1887,8 +1916,6 @@ refering to the dataset. </br></p>
     if not rasters_are_aligned(rasters, same_extent=True):
         raise ValueError(&#34;Rasters are not aligned. Try running align_rasters.&#34;)
 
-    core_utils.remove_if_required(out_path, overwrite)
-
     # Ensures that all the input rasters are valid.
     raster_list = gdal_utils.get_path_from_dataset_list(rasters)
 
@@ -1909,6 +1936,8 @@ refering to the dataset. </br></p>
         output_name = gdal_utils.create_memory_path(&#34;stack_rasters.tif&#34;, add_uuid=True)
     else:
         output_name = out_path
+
+    core_utils.remove_if_required(output_name, overwrite)
 
     raster_dtype = raster_to_metadata(raster_list[0])[&#34;datatype_gdal_raw&#34;]
 
@@ -1944,8 +1973,6 @@ refering to the dataset. </br></p>
     if nodata_missmatch:
         nodata_value = None
 
-    core_utils.remove_if_overwrite(out_path, overwrite)
-
     destination = driver.Create(
         output_name,
         metadatas[0][&#34;width&#34;],
@@ -1955,7 +1982,7 @@ refering to the dataset. </br></p>
         gdal_utils.default_creation_options(creation_options),
     )
 
-    destination.SetProjection(metadatas[0][&#34;projection&#34;])
+    destination.SetProjection(metadatas[0][&#34;projection_wkt&#34;])
     destination.SetGeoTransform(metadatas[0][&#34;transform&#34;])
 
     bands_added = 0
@@ -1978,7 +2005,7 @@ refering to the dataset. </br></p>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.stack_rasters_vrt"><code class="name flex">
-<span>def <span class="ident">stack_rasters_vrt</span></span>(<span>rasters, out_path, seperate=True, *, resample_alg='nearest', options=(), overwrite=True, reference=None, creation_options=None)</span>
+<span>def <span class="ident">stack_rasters_vrt</span></span>(<span>rasters, out_path, seperate=True, *, resample_alg='nearest', options=None, overwrite=True, reference=None, creation_options=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Stacks a list of rasters into a virtual rasters (.vrt).</p>
@@ -2008,7 +2035,7 @@ refering to the dataset. </br></p>
     seperate=True,
     *,
     resample_alg=&#34;nearest&#34;,
-    options=(),
+    options=None,
     overwrite=True,
     reference=None,
     creation_options=None,
@@ -2039,7 +2066,7 @@ refering to the dataset. </br></p>
     core_utils.type_check(out_path, [str], &#34;out_path&#34;)
     core_utils.type_check(seperate, [bool], &#34;seperate&#34;)
     core_utils.type_check(resample_alg, [str], &#34;resample_alg&#34;)
-    core_utils.type_check(options, [tuple], &#34;options&#34;)
+    core_utils.type_check(options, [tuple, None], &#34;options&#34;)
     core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
     core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
 
@@ -2050,7 +2077,7 @@ refering to the dataset. </br></p>
         options = gdal.BuildVRTOptions(
             resampleAlg=resample_algorithm,
             separate=seperate,
-            outputBounds=[meta[&#34;x_min&#34;], meta[&#34;y_min&#34;], meta[&#34;x_max&#34;], meta[&#34;y_max&#34;]],
+            outputBounds=bbox_utils.convert_ogr_bbox_to_gdal_bbox(meta[&#34;bbox&#34;]),
             xRes=meta[&#34;pixel_width&#34;],
             yRes=meta[&#34;pixel_height&#34;],
             targetAlignedPixels=True,
@@ -2058,7 +2085,13 @@ refering to the dataset. </br></p>
     else:
         options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)
 
-    gdal.BuildVRT(out_path, rasters, options=options)
+    if options is None:
+        options = ()
+
+    vrt = gdal.BuildVRT(out_path, rasters, options=options)
+
+    if vrt is None:
+        raise ValueError(f&#34;Error while creating VRT from rasters: {rasters}&#34;)
 
     return out_path</code></pre>
 </details>
