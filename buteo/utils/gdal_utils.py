@@ -269,6 +269,28 @@ def delete_if_in_memory(raster_or_vector):
     return False
 
 
+def delete_if_in_memory_list(list_of_raster_or_vectors):
+    """
+    Deletes a list of raster or vector if they are in memory
+
+    ## Args:
+    `list_of_raster_or_vectors` (_list_): The vector(s) or raster(s) to check.
+
+    ## Returns:
+    (_bool_): **True** if they were all deleted, **False** otherwise.
+    """
+    assert isinstance(list_of_raster_or_vectors, list), "list_of_raster_or_vectors must be a list."
+
+    deleted = []
+    for raster_or_vector in list_of_raster_or_vectors:
+        deleted.append(delete_if_in_memory(raster_or_vector))
+
+    if any(deleted):
+        return True
+
+    return False
+
+
 def delete_raster_or_vector(raster_or_vector):
     """
     Delete raster or vector. Can be used on both in memory and on disk.
@@ -1034,9 +1056,8 @@ def create_output_path(
 ):
     """
     Prepares a raster/vector for writing. Generates an output path. If no output path is
-    specified, the raster is written to memory. If a folder is given, the output directory is chosen
-    is the input filename. If a specific path is used it must be the same length as the
-    input.
+    specified, the raster is written to memory. If a folder is given, that output directory is used
+    along with the input filename.
 
     ## Args:
     `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_): A **GDAL** or **OGR** dataframe, a name (with extension) of a raster </br>
@@ -1115,8 +1136,8 @@ def create_output_path_list(
 ):
     """
     Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
-    specified, the rasters are written to memory. If a folder is given, the output directory is chosen
-    are the input filenames remain the same. If a specific path is used it must be the same length as the
+    specified, the rasters are written to memory. If a folder is given, the output directory is chosen,
+    the input filenames remain the same. If a specific path is used it must be the same length as the
     input.
 
     ## Args:

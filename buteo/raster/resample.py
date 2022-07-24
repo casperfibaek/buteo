@@ -33,9 +33,10 @@ def _resample_raster(
     add_uuid=False,
 ):
     """ Internal. """
-    raster_list = core_utils.ensure_list(raster)
-    path_list = gdal_utils.create_output_path_list(
-        raster_list,
+    assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
+
+    out_path = gdal_utils.create_output_path(
+        raster,
         out_path=out_path,
         overwrite=overwrite,
         prefix=prefix,
@@ -43,35 +44,30 @@ def _resample_raster(
         add_uuid=add_uuid,
     )
 
-    ref = core_raster._open_raster(raster_list[0])
+    ref = core_raster._open_raster(raster)
     metadata = core_raster._raster_to_metadata(ref)
-    out_name = path_list[0]
 
     x_res, y_res, x_pixels, y_pixels = gdal_utils.parse_raster_size(
         target_size, target_in_pixels=target_in_pixels
     )
 
-    out_format = gdal_utils.path_to_driver_raster(out_name)
+    out_format = gdal_utils.path_to_driver_raster(out_path)
 
     src_nodata = metadata["nodata_value"]
     out_nodata = None
-    if src_nodata is not None:
-        out_nodata = src_nodata
+    if dst_nodata == "infer":
+        dst_nodata = src_nodata
     else:
-        if dst_nodata == "infer":
-            out_nodata = src_nodata
-        elif isinstance(dst_nodata, (int, float)):
-            out_nodata = dst_nodata
-        else:
-            raise TypeError(f"dst_nodata is in a wrong format: {dst_nodata}")
+        assert isinstance(dst_nodata, (int, float, type(None))), "dst_nodata must be an int, float, 'infer', or 'None'"
+        out_nodata = dst_nodata
 
     if dtype is None:
         dtype = metadata["datatype"]
 
-    core_utils.remove_if_required(out_name, overwrite)
+    core_utils.remove_if_required(out_path, overwrite)
 
     resampled = gdal.Warp(
-        out_name,
+        out_path,
         ref,
         width=x_pixels,
         height=y_pixels,
@@ -87,9 +83,9 @@ def _resample_raster(
     )
 
     if resampled is None:
-        raise Exception(f"Error while resampling raster: {out_name}")
+        raise Exception(f"Error while resampling raster: {out_path}")
 
-    return out_name
+    return out_path
 
 
 def resample_raster(
@@ -142,8 +138,12 @@ def resample_raster(
     core_utils.type_check(overwrite, [bool], "overwrite")
     core_utils.type_check(creation_options, [[str], None], "creation_options")
     core_utils.type_check(dst_nodata, [str, int, float, None], "dst_nodata")
+    core_utils.type_check(dtype, [str, None], "dtype")
     core_utils.type_check(prefix, [str], "prefix")
     core_utils.type_check(suffix, [str], "postfix")
+
+    if core_utils.is_str_a_glob(raster):
+        raster = core_utils.parse_glob_path(raster)
 
     raster_list = core_utils.ensure_list(raster)
     assert gdal_utils.is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
