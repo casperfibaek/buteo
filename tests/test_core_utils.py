@@ -59,13 +59,16 @@ def test_get_augmented_path():
     """Test: Path augmentation """
     path1 = "./tests/geometry_and_rasters/img1.tif"
     path2 = "img2.tif"
-    path3 = "./bob/img3"
+    path3 = "./bob/img3.jp2"
+    path4 = "./img4.tif"
     folder = "./geometry_and_rasters/"
 
     aug1 = core_utils.get_augmented_path(path1, prefix="1_", suffix="_1", add_uuid=False, folder=folder)
     aug2 = core_utils.get_augmented_path(path2, prefix="2_", suffix="_2", add_uuid=False, folder=None)
     aug3 = core_utils.get_augmented_path(path3, prefix="3_", suffix="_3", add_uuid=False, folder=folder)
+    aug4 = core_utils.get_augmented_path(path4, prefix="4_", suffix="_4", add_uuid=False, folder=None)
 
-    assert aug1 == './geometry_and_rasters/1_img1_1.tif'
-    assert aug2 == '2_img2_2.tif'
-    assert aug3 == './geometry_and_rasters/3_img3_3'
+    assert os.path.basename(aug1) == '1_img1_1.tif'
+    assert os.path.basename(aug2) == '2_img2_2.tif'
+    assert os.path.basename(aug3) == '3_img3_3.jp2'
+    assert os.path.basename(aug4) == '4_img4_4.tif'

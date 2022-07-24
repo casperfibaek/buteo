@@ -20,9 +20,9 @@ from buteo.raster import core_raster
 def _resample_raster(
     raster,
     target_size,
-    target_in_pixels,
     out_path=None,
     *,
+    target_in_pixels=False,
     resample_alg="nearest",
     overwrite=True,
     creation_options=None,
@@ -47,7 +47,6 @@ def _resample_raster(
     metadata = core_raster._raster_to_metadata(ref)
     out_name = path_list[0]
 
-
     x_res, y_res, x_pixels, y_pixels = gdal_utils.parse_raster_size(
         target_size, target_in_pixels=target_in_pixels
     )
@@ -66,7 +65,10 @@ def _resample_raster(
         else:
             raise TypeError(f"dst_nodata is in a wrong format: {dst_nodata}")
 
-    core_utils.remove_if_required(out_path, overwrite)
+    if dtype is None:
+        dtype = metadata["datatype"]
+
+    core_utils.remove_if_required(out_name, overwrite)
 
     resampled = gdal.Warp(
         out_name,
@@ -93,9 +95,9 @@ def _resample_raster(
 def resample_raster(
     raster,
     target_size,
-    target_in_pixels=False,
     out_path=None,
     *,
+    target_in_pixels=False,
     resample_alg="nearest",
     creation_options=None,
     dtype=None,

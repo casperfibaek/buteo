@@ -124,7 +124,7 @@ def _vector_to_metadata(vector):
     name = split_path[0]
     ext = split_path[1]
 
-    driver = vector_driver.ShortName
+    driver = vector_driver.GetName()
 
     in_memory = gdal_utils.is_in_memory(datasource)
 

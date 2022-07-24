@@ -12,10 +12,13 @@ import shutil
 from glob import glob
 from uuid import uuid4
 from datetime import datetime
+from pathlib import PurePosixPath
 
 # External
 import psutil
 from osgeo import gdal
+
+from buteo.utils.gdal_enums import get_valid_raster_driver_extensions, get_valid_vector_driver_extensions
 
 
 
@@ -146,7 +149,7 @@ def file_exists(path):
     if os.path.exists(path):
         return True
 
-    if path in gdal.listdir('/vsimem'):
+    if path in gdal.listdir("/vsimem"):
         return True
 
     return False
@@ -341,9 +344,37 @@ def change_path_ext(path, target_ext):
     return os.path.join(os.path.dirname(path), f"{basesplit[0]}.{target_ext}")
 
 
-def is_valid_file_path(path):
+
+def is_valid_mem_path(path):
     """
-    Check if a path has an extension.
+    Check if a path is a valid memory path that has an extension.
+
+    ## Args:
+    `path` (_str_): The path to test. </br>
+
+    ## Returns:
+    (_bool_): **True** if path is a valid memory path, **False** otherwise.
+    """
+    if not isinstance(path, str):
+        return False
+
+    if len(path) < len("/vsimem/x"):
+        return False
+
+    ext = os.path.splitext(path)[1]
+
+    if ext == "" or ext == ".":
+        return False
+
+    if path.startswith("/vsimem"):
+        return True
+
+    return False
+
+
+def is_valid_non_memory_path(path):
+    """
+    Check if a path is valid, not in memory, and has an extension.
 
     ## Args:
     `path` (_str_): The path to the file. </br>
@@ -359,13 +390,29 @@ def is_valid_file_path(path):
     if ext == "" or ext == ".":
         return False
 
-    if path.startswith("/vsimem/"):
-        return True
-
     if not folder_exists(path_to_folder(path)):
         return False
 
+    if is_valid_mem_path(path):
+        return False
+
     return True
+
+
+def is_valid_file_path(path):
+    """
+    Check if a path is valid and has an extension. Path can be in memory.
+
+    ## Args:
+    `path` (_str_): The path to the file. </br>
+
+    ## Returns:
+    (_bool_): **True** if the path has an extension, **False** otherwise.
+    """
+    if is_valid_mem_path(path) or is_valid_non_memory_path(path):
+        return True
+
+    return False
 
 
 def is_valid_output_path(path, *, overwrite=True):
@@ -432,7 +479,7 @@ def remove_if_required(path, overwrite):
     """
     assert is_valid_output_path(path), f"path must be a valid output path. {path}"
 
-    if overwrite and path.startswith("/vsimem/"):
+    if overwrite and path.startswith(f"{os.sep}vsimem"):
         gdal.Unlink(path)
         return True
 
@@ -483,25 +530,45 @@ def get_augmented_path(path, *, prefix="", suffix="", add_uuid=True, folder=None
     """
     assert isinstance(path, str), "path must be a string."
     assert isinstance(folder, (type(None), str)), "folder must be None or a string"
+    assert len(os.path.splitext(os.path.basename(path))[1]) > 1, f"Path must have an extension. {path}"
+
+    if os.path.basename(os.path.abspath(path)) == path:
+        path = PurePosixPath("/vsimem", path).as_posix()
 
     if folder is not None:
-        path = os.path.join(folder, os.path.basename(path))
 
-        if not path.startswith("/vsimem") and not folder_exists(path_to_folder(folder)):
+        if folder.startswith("/vsimem"):
+            path = PurePosixPath("/vsimem", os.path.basename(path)).as_posix()
+        else:
+            assert folder_exists(folder), f"folder must exist. {folder}"
+            path = os.path.join(folder, os.path.basename(path))
+
+        if not path.startswith(f"{os.sep}vsimem") and not folder_exists(path_to_folder(folder)):
             raise ValueError(f"Folder: {folder} does not exist.")
 
-    assert path.startswith("/vsimem") or folder_exists(path_to_folder(path)), f"destination folder must exist or be in-memory. Received: {path}"
+    assert is_valid_file_path(path), f"path must be a valid file path. {path}"
 
     base = os.path.basename(path)
-    split = os.path.splitext(base)
+    split = list(os.path.splitext(base))
 
     uuid = ""
     if add_uuid:
         uuid = f"_{get_unix_seconds_as_str()}_{str(uuid4())}"
 
+    if is_valid_mem_path(path):
+        if split[1][1:] in get_valid_raster_driver_extensions():
+            split[1] = ".tif"
+        elif split[1][1:] in get_valid_vector_driver_extensions():
+            split[1] = ".fgb"
+        else:
+            raise ValueError("Unable to parse file extension as valid datasource.")
+
     basename = f"{prefix}{split[0]}{uuid}{suffix}{split[1]}"
 
-    out_path = os.path.join(os.path.dirname(path), basename)
+    if is_valid_mem_path(path):
+        out_path = PurePosixPath("/vsimem", basename).as_posix()
+    else:
+        out_path = os.path.join(os.path.dirname(os.path.abspath(path)), basename)
 
     return out_path
 

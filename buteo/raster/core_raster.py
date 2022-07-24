@@ -642,7 +642,7 @@ def _raster_set_datatype(
     elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
         path = out_path
 
-    elif gdal_utils.is_path_in_memory(out_path):
+    elif core_utils.is_valid_mem_path(out_path):
         path = out_path
 
     else:

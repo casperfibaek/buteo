@@ -10,6 +10,7 @@ TODO:
 
 # Standard Library
 import sys; sys.path.append("../../")
+from pathlib import PurePosixPath
 import os
 
 # External
@@ -203,13 +204,19 @@ def is_in_memory(raster_or_vector):
     assert isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)), "raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource."
 
     if isinstance(raster_or_vector, str):
-        if raster_or_vector.startswith("/vsimem/"):
+        if core_utils.is_valid_mem_path(raster_or_vector):
             return True
 
         return False
 
     elif isinstance(raster_or_vector, (gdal.Dataset, ogr.DataSource)):
-        driver_short_name = raster_or_vector.GetDriver().ShortName
+        driver = raster_or_vector.GetDriver()
+        driver_short_name = None
+        try:
+            driver_short_name = driver.GetName()
+        except Exception:
+            driver_short_name = driver.ShortName
+
         if driver_short_name== "MEM":
             return True
 
@@ -222,7 +229,7 @@ def is_in_memory(raster_or_vector):
         if driver_short_name == "VirtualOGR":
             return True
 
-        if raster_or_vector.GetDescription().startswith("/vsimem/"):
+        if core_utils.is_valid_mem_path(raster_or_vector.GetDescription()):
             return True
 
         return False
@@ -241,15 +248,23 @@ def delete_if_in_memory(raster_or_vector):
     ## Returns:
     (_bool_): **True** if the vector is deleted, **False** otherwise.
     """
-    assert isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)), "raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource."
+    if not isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)):
+        return False
+
+    path = get_path_from_dataset(raster_or_vector)
 
     if is_in_memory(raster_or_vector):
         if isinstance(raster_or_vector, str):
             gdal.Unlink(raster_or_vector)
         else:
             raster_or_vector.Destroy()
+            raster_or_vector = None
 
-        return True
+            gdal.Unlink(path)
+
+        datasets = [ds.name for ds in gdal.listdir("/vsimem")]
+        if path not in datasets:
+            return True
 
     return False
 
@@ -324,7 +339,7 @@ def is_vector_empty(vector):
             feature_count = layer.GetFeatureCount()
 
             for feature in range(0, feature_count):
-                feature = layer.GetFeature(feature)
+                feature = layer.GetNextFeature()
 
                 if feature.GetGeometryRef() is not None:
                     return False
@@ -334,7 +349,7 @@ def is_vector_empty(vector):
 
 def get_gdal_memory():
     """ Get at list of all active memory layers in GDAL. """
-    datasets = [ds.name for ds in gdal.listdir('/vsimem')]
+    datasets = [ds.name for ds in gdal.listdir("/vsimem")]
     return datasets
 
 
@@ -348,7 +363,7 @@ def clear_gdal_memory():
     if len(get_gdal_memory()) != 0:
         for dataset in get_gdal_memory():
             opened = None
-            mem_path = "/vsimem/" + dataset
+            mem_path = PurePosixPath("/vsimem", dataset).as_posix()
             if is_raster(mem_path):
                 opened = gdal.Open(mem_path)
             elif is_raster(mem_path):
@@ -373,24 +388,6 @@ def gdal_print_memory():
         print(dataset)
 
 
-def is_path_in_memory(path):
-    """
-    Check if a path is in memory.
-
-    ## Args:
-    `path` (_str_): The path to the file. </br>
-
-    ## Returns:
-    (_bool_): **True** if the path is in memory, **False** otherwise.
-    """
-    core_utils.is_valid_file_path(path)
-
-    if path.startswith("/vsimem"):
-        return True
-
-    return False
-
-
 def is_raster(potential_raster, *, empty_is_invalid=True):
     """Checks if a variable is a valid raster.
 
@@ -405,7 +402,7 @@ def is_raster(potential_raster, *, empty_is_invalid=True):
     """
 
     if isinstance(potential_raster, str):
-        if not core_utils.file_exists(potential_raster) and not is_path_in_memory(potential_raster):
+        if not core_utils.file_exists(potential_raster) and not core_utils.is_valid_mem_path(potential_raster):
             return False
 
         try:
@@ -584,12 +581,12 @@ def create_memory_path(path, *, prefix="", suffix="", add_uuid=True):
     """
     assert isinstance(path, str), f"path must be a string. Received: {path}"
     assert len(path) > 0, f"path must not be empty. Received: {path}"
-    assert not path.startswith("/vsimem"), f"path must not already be in memory. Received: {path}"
+    assert not core_utils.is_valid_mem_path(path), f"path must not be a valid memory path. Received: {path}"
 
     basename = os.path.basename(path)
 
     return core_utils.get_augmented_path(
-        f"/vsimem/{basename}",
+        PurePosixPath("/vsimem", basename).as_posix(),
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
@@ -741,22 +738,19 @@ def parse_projection(projection, *, return_wkt=False):
         target_proj = projection
 
     elif isinstance(projection, str):
-        ref = gdal.Open(projection, 0)
-
-        if ref is not None:
+        if is_raster(projection):
+            ref = gdal.Open(projection, 0)
             target_proj.ImportFromWkt(ref.GetProjection())
-        else:
+        elif is_vector(projection):
             ref = ogr.Open(projection, 0)
-
-            if ref is not None:
-                layer = ref.GetLayer()
-                target_proj = layer.GetSpatialRef()
-            else:
-                code = target_proj.ImportFromWkt(projection)
+            layer = ref.GetLayer()
+            target_proj = layer.GetSpatialRef()
+        else:
+            code = target_proj.ImportFromWkt(projection)
+            if code != 0:
+                code = target_proj.ImportFromProj4(projection)
                 if code != 0:
-                    code = target_proj.ImportFromProj4(projection)
-                    if code != 0:
-                        raise ValueError(err_msg)
+                    raise ValueError(err_msg)
 
     elif isinstance(projection, int):
         code = target_proj.ImportFromEPSG(projection)
@@ -778,6 +772,54 @@ def parse_projection(projection, *, return_wkt=False):
         return target_proj
     else:
         raise ValueError(err_msg)
+
+
+def projections_match(source1, source2):
+    """
+    Tests if two projection sources have the same projection.
+
+    ## Args:
+    `source1` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The first projection to parse.
+    `source1` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The second projection to parse.
+
+    ## Returns:
+    (_bool_): **True** if the projections match, **False** otherwise.
+    """
+    proj1 = parse_projection(source1)
+    proj2 = parse_projection(source2)
+
+    if proj1.IsSame(proj2):
+        return True
+    elif proj1.ExportToProj4() == proj2.ExportToProj4():
+        return True
+
+    return False
+
+
+def projections_match_list(list_of_projection_sources):
+    """
+    Tests if a list of projection sources all have the same projection.
+
+    ## Args:
+    `list_of_projection_sources` (_list_): A list of projections to test.
+
+    ## Returns:
+    (_bool_): **True** if the projections match, **False** otherwise.
+    """
+    assert isinstance(list_of_projection_sources, list), "list_of_projection_sources must be a list."
+    assert len(list_of_projection_sources) > 1, "The list 'list_of_projection_sources' must be a list of len > 1"
+
+    first = None
+    for index, source in enumerate(list_of_projection_sources):
+        if index == 0:
+            first = parse_projection(source)
+        else:
+            compare = parse_projection(source)
+
+            if not first.IsSame(compare) and first.ExportToProj4() != compare.ExportToProj4():
+                return False
+
+    return True
 
 
 def parse_raster_size(target, *, target_in_pixels=False):
@@ -1036,7 +1078,7 @@ def create_output_path(
             prefix=prefix,
             suffix=suffix,
             add_uuid=add_uuid,
-            folder="/vsimem/",
+            folder="/vsimem",
         )
     elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
         aug_path = core_utils.get_augmented_path(
@@ -1045,6 +1087,14 @@ def create_output_path(
             suffix=suffix,
             add_uuid=add_uuid,
             folder=core_utils.path_to_folder(out_path),
+        )
+    elif core_utils.is_valid_mem_path(out_path):
+        aug_path = core_utils.get_augmented_path(
+            os.path.basename(dataset_path),
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            folder="/vsimem",
         )
     else:
         raise ValueError("out_path must be a valid path or a list of valid paths.")

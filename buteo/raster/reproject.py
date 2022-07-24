@@ -74,7 +74,7 @@ def _reproject_raster(
         else:
             out_nodata = dst_nodata
 
-    core_utils.remove_if_required(out_path, overwrite)
+    core_utils.remove_if_required(out_name, overwrite)
 
     reprojected = gdal.Warp(
         out_name,
@@ -92,6 +92,11 @@ def _reproject_raster(
     if reprojected is None:
         raise Exception(f"Error while reprojecting raster: {raster}")
 
+    opened = core_raster.open_raster(out_name)
+    opened.SetProjection = target_projection.ExportToWkt()
+    opened.FlushCache()
+    opened = None
+
     return out_name
 
 
@@ -106,7 +111,7 @@ def reproject_raster(
     creation_options=None,
     dst_nodata="infer",
     prefix="",
-    suffix="_reprojected",
+    suffix="",
     add_uuid=False,
 ):
     """
