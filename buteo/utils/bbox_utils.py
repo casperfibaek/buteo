@@ -59,6 +59,29 @@ def is_valid_bbox(bbox_ogr):
     return True
 
 
+def is_valid_bbox_latlng(bbox_ogr_latlng):
+    """
+    Checks if a bbox is valid and latlng.
+
+    A valid ogr formatted bbox has the form: </br>
+    `[x_min, x_max, y_min, y_max]`
+
+    ## Args:
+    `bbox_ogr_latlng` (_list_): An OGR formatted bbox. </br>
+
+    ## Returns:
+    (_bool_): **True** if the bbox is valid, **False** otherwise.
+    """
+    if not is_valid_bbox(bbox_ogr_latlng):
+        return False
+    
+    x_min, x_max, y_min, y_max = bbox_ogr_latlng
+    if x_min < -180 or x_max > 180 or y_min < -90 or y_max > 90:
+        return False
+
+    return True
+
+
 def is_valid_geotransform(geotransform):
     """
     Checks if a geotransform is valid.
@@ -587,6 +610,106 @@ def get_intersection_bboxes(bbox1_ogr, bbox2_ogr):
         max(bbox1_y_min, bbox2_y_min),
         min(bbox1_y_max, bbox2_y_max),
     )
+
+
+def get_union_bboxes(bbox1_ogr, bbox2_ogr):
+    """
+    Get the union of two OGR formatted bboxes.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. </br>
+    `bbox2_ogr` (_list_): An OGR formatted bbox. </br>
+
+    ## Returns:
+    (_list_): An OGR formatted bbox of the union. `[x_min, x_max, y_min, y_max]`
+    """
+    assert is_valid_bbox(
+        bbox1_ogr
+    ), f"bbox1_ogr was not a valid bbox. Received: {bbox1_ogr}"
+    assert is_valid_bbox(
+        bbox2_ogr
+    ), f"bbox1_ogr was not a valid bbox. Received: {bbox2_ogr}"
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    return (
+        min(bbox1_x_min, bbox2_x_min),
+        max(bbox1_x_max, bbox2_x_max),
+        min(bbox1_y_min, bbox2_y_min),
+        max(bbox1_y_max, bbox2_y_max),
+    )
+
+
+def get_utm_zone_from_bbox(bbox_ogr_latlng):
+    """
+    Get the UTM zone from an OGR formatted bbox.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
+
+    ## Returns:
+    (_str_): The UTM zone.
+    """
+    assert is_valid_bbox(
+        bbox_ogr_latlng
+    ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr_latlng}"
+    assert is_valid_bbox_latlng(bbox_ogr_latlng), "Bbox is not in latlng format."
+
+    bbox_x_min, bbox_x_max, bbox_y_min, bbox_y_max = bbox_ogr_latlng
+
+    mid_lng = (bbox_x_min + bbox_x_max) / 2
+    mid_lat = (bbox_y_min + bbox_y_max) / 2
+
+    zone = ((mid_lng + 180) / 6)
+    zone = str(round((mid_lng + 180) / 6) + 1.0)
+    n_or_s = "+south " if mid_lat < 0 else ""
+
+    return f"+proj=utm +zone={zone} +ellps=WGS84 {n_or_s}+datum=WGS84 +units=m +no_defs "
+
+
+def get_utm_zone_from_dataset(dataset):
+    """
+    Get the UTM zone from a GDAL dataset.
+
+    ## Args:
+    `dataset` (_obj_): A GDAL dataset. </br>
+
+    ## Returns:
+    (_str_): The UTM zone.
+    """
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), "dataset was not a valid dataset."
+
+    bbox = None
+    if isinstance(dataset, gdal.Dataset):
+        bbox = get_bbox_from_raster(dataset)
+    elif isinstance(dataset, ogr.DataSource):
+        bbox = get_bbox_from_vector(dataset)
+    else:
+        opened = None
+        try:
+            opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+            bbox = get_bbox_from_raster(opened)
+        except Exception as raster_open_error:
+            try:
+                opened = ogr.Open(dataset, 0)
+                bbox = get_bbox_from_vector(opened)
+            except Exception as _vector_open_error:
+                raise Exception(f"Could not open dataset: {dataset}") from raster_open_error
+
+        if opened is None:
+            raise ValueError(f"Could not open dataset: {dataset}")
+
+    return get_utm_zone_from_bbox(bbox)
+
+
+path1 = "/home/casper/Desktop/buteo/geometry_and_rasters/balbek_utm36.gpkg"
+path2 = "/home/casper/Desktop/buteo/geometry_and_rasters/s2_b04_baalbeck.tif"
+
+b1 = get_utm_zone_from_dataset(path1)
+b2 = get_utm_zone_from_dataset(path2)
+
+import pdb; pdb.set_trace()
 
 
 def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
