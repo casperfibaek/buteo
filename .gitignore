@@ -142,3 +142,5 @@ lib/credentials.py
 /.vscode
 .vscode
 /builds/*
+*.gpkg-shm
+*.gpkg-wal

@@ -422,7 +422,6 @@ def is_raster(potential_raster, *, empty_is_invalid=True):
     ## Returns:
     (_bool_): **True** if the variable is a valid raster, **False** otherwise.
     """
-
     if isinstance(potential_raster, str):
         if not core_utils.file_exists(potential_raster) and not core_utils.is_valid_mem_path(potential_raster):
             return False

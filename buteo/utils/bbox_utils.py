@@ -74,7 +74,7 @@ def is_valid_bbox_latlng(bbox_ogr_latlng):
     """
     if not is_valid_bbox(bbox_ogr_latlng):
         return False
-    
+
     x_min, x_max, y_min, y_max = bbox_ogr_latlng
     if x_min < -180 or x_max > 180 or y_min < -90 or y_max > 90:
         return False
@@ -279,6 +279,40 @@ def get_bbox_from_vector_layer(vector_layer):
     return [x_min, x_max, y_min, y_max]
 
 
+def get_bbox_from_dataset(dataset):
+    """
+    Get the bbox from a dataset.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource): A dataset or dataset path. </br>
+
+    ## Returns:
+    (_list_): The bounding box in ogr format: [x_min, x_max, y_min, y_max].
+    """
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), "DataSet must be a string, ogr.DataSource, or gdal.Dataset."
+
+    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+
+    if opened is None:
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
+        opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+
+        if opened is None:
+            opened = ogr.Open(dataset, gdal.GA_ReadOnly)
+
+        gdal.PopErrorHandler()
+        if opened is None:
+            raise Exception(f"Could not open dataset. {dataset}")
+
+    if isinstance(opened, gdal.Dataset):
+        return get_bbox_from_raster(opened)
+
+    if isinstance(opened, ogr.DataSource):
+        return get_bbox_from_vector(opened)
+
+    raise Exception(f"Could not get bbox from dataset. {dataset}")
+
+
 def get_sub_geotransform(geotransform, bbox_ogr):
     """
     Create a GeoTransform and the raster sizes for an OGR formatted bbox.
@@ -356,7 +390,7 @@ def convert_geom_to_bbox(geom):
         geom, ogr.Geometry
     ), f"geom was not a valid ogr.Geometry. Received: {geom}"
 
-    bbox_ogr = geom.GetEnvelope() # [x_min, x_max, y_min, y_max]
+    bbox_ogr = list(geom.GetEnvelope()) # [x_min, x_max, y_min, y_max]
 
     return bbox_ogr
 
@@ -604,12 +638,12 @@ def get_intersection_bboxes(bbox1_ogr, bbox2_ogr):
     bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
     bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
 
-    return (
+    return [
         max(bbox1_x_min, bbox2_x_min),
         min(bbox1_x_max, bbox2_x_max),
         max(bbox1_y_min, bbox2_y_min),
         min(bbox1_y_max, bbox2_y_max),
-    )
+    ]
 
 
 def get_union_bboxes(bbox1_ogr, bbox2_ogr):
@@ -633,83 +667,102 @@ def get_union_bboxes(bbox1_ogr, bbox2_ogr):
     bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
     bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
 
-    return (
+    return [
         min(bbox1_x_min, bbox2_x_min),
         max(bbox1_x_max, bbox2_x_max),
         min(bbox1_y_min, bbox2_y_min),
         max(bbox1_y_max, bbox2_y_max),
-    )
+    ]
 
 
-def get_utm_zone_from_bbox(bbox_ogr_latlng):
+def get_projection_from_raster(raster):
     """
-    Get the UTM zone from an OGR formatted bbox.
+    Get the projection from a raster.
 
     ## Args:
-    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
+    `raster` (_str_/_gdal.Dataset_): A raster or raster path. </br>
 
     ## Returns:
-    (_str_): The UTM zone.
+    (_osr.SpatialReference_): The projection in OSR format.
     """
-    assert is_valid_bbox(
-        bbox_ogr_latlng
-    ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr_latlng}"
-    assert is_valid_bbox_latlng(bbox_ogr_latlng), "Bbox is not in latlng format."
-
-    bbox_x_min, bbox_x_max, bbox_y_min, bbox_y_max = bbox_ogr_latlng
-
-    mid_lng = (bbox_x_min + bbox_x_max) / 2
-    mid_lat = (bbox_y_min + bbox_y_max) / 2
-
-    zone = ((mid_lng + 180) / 6)
-    zone = str(round((mid_lng + 180) / 6) + 1.0)
-    n_or_s = "+south " if mid_lat < 0 else ""
-
-    return f"+proj=utm +zone={zone} +ellps=WGS84 {n_or_s}+datum=WGS84 +units=m +no_defs "
-
-
-def get_utm_zone_from_dataset(dataset):
-    """
-    Get the UTM zone from a GDAL dataset.
-
-    ## Args:
-    `dataset` (_obj_): A GDAL dataset. </br>
-
-    ## Returns:
-    (_str_): The UTM zone.
-    """
-    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), "dataset was not a valid dataset."
-
-    bbox = None
-    if isinstance(dataset, gdal.Dataset):
-        bbox = get_bbox_from_raster(dataset)
-    elif isinstance(dataset, ogr.DataSource):
-        bbox = get_bbox_from_vector(dataset)
+    opened = None
+    if isinstance(raster, gdal.Dataset):
+        opened = raster
     else:
-        opened = None
-        try:
-            opened = gdal.Open(dataset, gdal.GA_ReadOnly)
-            bbox = get_bbox_from_raster(opened)
-        except Exception as raster_open_error:
-            try:
-                opened = ogr.Open(dataset, 0)
-                bbox = get_bbox_from_vector(opened)
-            except Exception as _vector_open_error:
-                raise Exception(f"Could not open dataset: {dataset}") from raster_open_error
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
+        opened = gdal.Open(raster, gdal.GA_ReadOnly)
+        gdal.PopErrorHandler()
+
+    if opened is None:
+        raise Exception(f"Could not open raster. {raster}")
+
+    projection = osr.SpatialReference()
+    projection.ImportFromWkt(opened.GetProjection())
+    opened = None
+
+    return projection
+
+
+def get_projection_from_vector(vector):
+    """
+    Get the projection from a vector.
+
+    ## Args:
+    `vector` (_str_/_gdal.Dataset_): A vector or vector path. </br>
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    """
+    opened = None
+    if isinstance(vector, ogr.DataSource):
+        opened = vector
+    else:
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
+        opened = ogr.Open(vector, gdal.GA_ReadOnly)
+        gdal.PopErrorHandler()
+
+    if opened is None:
+        raise Exception(f"Could not open vector. {vector}")
+
+    layer = opened.GetLayer()
+    projection = layer.GetSpatialRef()
+    opened = None
+
+    return projection
+
+
+def get_projection_from_dataset(dataset):
+    """
+    Get the projection from a dataset.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource): A dataset or dataset path. </br>
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    """
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), "DataSet must be a string, ogr.DataSource, or gdal.Dataset."
+
+    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+
+    if opened is None:
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
+        opened = gdal.Open(dataset, gdal.GA_ReadOnly)
 
         if opened is None:
-            raise ValueError(f"Could not open dataset: {dataset}")
+            opened = ogr.Open(dataset, gdal.GA_ReadOnly)
 
-    return get_utm_zone_from_bbox(bbox)
+        gdal.PopErrorHandler()
+        if opened is None:
+            raise Exception(f"Could not open dataset. {dataset}")
 
+    if isinstance(opened, gdal.Dataset):
+        return get_projection_from_raster(opened)
 
-path1 = "/home/casper/Desktop/buteo/geometry_and_rasters/balbek_utm36.gpkg"
-path2 = "/home/casper/Desktop/buteo/geometry_and_rasters/s2_b04_baalbeck.tif"
+    if isinstance(opened, ogr.DataSource):
+        return get_projection_from_vector(opened)
 
-b1 = get_utm_zone_from_dataset(path1)
-b2 = get_utm_zone_from_dataset(path2)
-
-import pdb; pdb.set_trace()
+    raise Exception(f"Could not get projection from dataset. {dataset}")
 
 
 def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
@@ -786,6 +839,113 @@ def reproject_bbox(
         transformed_y_min,
         transformed_y_max,
     ]
+
+
+def get_utm_zone_from_bbox(bbox_ogr_latlng):
+    """
+    Get the UTM zone from an OGR formatted bbox.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
+
+    ## Returns:
+    (_osr.SpatialReference_): The UTM zone projection.
+    """
+    assert is_valid_bbox(
+        bbox_ogr_latlng
+    ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr_latlng}"
+    assert is_valid_bbox_latlng(bbox_ogr_latlng), "Bbox is not in latlng format."
+
+    bbox_x_min, bbox_x_max, bbox_y_min, bbox_y_max = bbox_ogr_latlng
+
+    mid_lng = (bbox_x_min + bbox_x_max) / 2
+    mid_lat = (bbox_y_min + bbox_y_max) / 2
+
+    zone = round(((mid_lng + 180) / 6) + 1)
+    n_or_s = "S" if mid_lat < 0 else "N"
+    false_northing = "10000000" if n_or_s == "S" else "0"
+    central_meridian = str(round(((zone * 6) - 180) - 3))
+    epsg = f"32{'7' if n_or_s == 'S' else '6'}{str(zone)}"
+
+    wkt = f"""
+        PROJCS["WGS 84 / UTM zone {str(zone)}{n_or_s}",
+        GEOGCS["WGS 84",
+            DATUM["WGS_1984",
+                SPHEROID["WGS 84",6378137,298.257223563,
+                    AUTHORITY["EPSG","7030"]],
+                AUTHORITY["EPSG","6326"]],
+            PRIMEM["Greenwich",0,
+                AUTHORITY["EPSG","8901"]],
+            UNIT["degree",0.0174532925199433,
+                AUTHORITY["EPSG","9122"]],
+            AUTHORITY["EPSG","4326"]],
+        PROJECTION["Transverse_Mercator"],
+        PARAMETER["latitude_of_origin",0],
+        PARAMETER["central_meridian",{central_meridian}],
+        PARAMETER["scale_factor",0.9996],
+        PARAMETER["false_easting",500000],
+        PARAMETER["false_northing",{false_northing}],
+        UNIT["metre",1,
+            AUTHORITY["EPSG","9001"]],
+        AXIS["Easting",EAST],
+        AXIS["Northing",NORTH],
+        AUTHORITY["EPSG","{epsg}"]]
+    """
+    projection = osr.SpatialReference()
+    projection.ImportFromWkt(wkt)
+
+    return projection
+
+
+def get_utm_zone_from_dataset(dataset):
+    """
+    Get the UTM zone from a GDAL dataset.
+
+    ## Args:
+    `dataset` (_obj_): A GDAL dataset. </br>
+
+    ## Returns:
+    (_str_): The UTM zone.
+    """
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), "dataset was not a valid dataset."
+
+    bbox = get_bbox_from_dataset(dataset)
+    source_projection = get_projection_from_dataset(dataset)
+    target_projection = osr.SpatialReference(); target_projection.ImportFromEPSG(4326)
+
+    bbox = reproject_bbox(bbox, source_projection, target_projection)
+    utm_zone = get_utm_zone_from_bbox(bbox)
+
+    return utm_zone
+
+
+def get_utm_zone_from_dataset_list(datasets):
+    """
+    Get the UTM zone from a list of GDAL datasets.
+
+    ## Args:
+    `datasets` (_list_): A list of GDAL datasets. </br>
+
+    ## Returns:
+    (_str_): The UTM zone.
+    """
+    assert isinstance(datasets, list), "datasets was not a valid list."
+
+    latlng_bboxes = []
+    latlng_proj = osr.SpatialReference(); latlng_proj.ImportFromEPSG(4326)
+
+    for dataset in datasets:
+        bbox = get_bbox_from_dataset(dataset)
+        projection = get_projection_from_dataset(dataset)
+        latlng_bboxes.append(reproject_bbox(bbox, projection, latlng_proj))
+
+    union_bbox = latlng_bboxes[0]
+    for bbox in latlng_bboxes[1:]:
+        union_bbox = get_union_bboxes(union_bbox, bbox)
+
+    utm_zone = get_utm_zone_from_bbox(union_bbox)
+
+    return utm_zone
 
 
 def additional_bboxes(bbox_ogr, projection_osr):
