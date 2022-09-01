@@ -10,7 +10,7 @@ Documentation available at: https://casperfibaek.github.io/buteo/
 
 **Installation** </br>
 `conda install buteo --channel casperfibaek` </br>
-`pip install -i https://test.pypi.org/simple/ buteo` </br>
+`pip install buteo` </br>
 
 **Quickstart**
 ```python
@@ -121,4 +121,4 @@ vector_buffer_etc..
 
 machine_learning_extract_sample_points
 
-python -m build; python -m twine upload --repository testpypi dist/*
+python -m build; python -m twine upload dist/*

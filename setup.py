@@ -15,7 +15,7 @@ def readme():
 
 setup(
     name="Buteo",
-    version=VERSION, # This will get overwritten by the build.py script
+    version=VERSION,
     author="Casper Fibaek",
     author_email="casperfibaek@gmail.com",
     description="A pythonic way of working with raster data",

@@ -12,16 +12,16 @@ import regex
 
 # Constants
 PLATFORMS = [
-    # "osx-64",
-    # "osx-arm64",
+    "osx-64",
+    "osx-arm64",
     "linux-64",
-    # "win-64",
+    "win-64",
 ]
 PYTHON = [
-    # "3.7",
-    # "3.8",
+    "3.7",
+    "3.8",
     "3.9",
-    # "3.10",
+    "3.10",
 ]
 
 
@@ -49,7 +49,7 @@ for arg in sys.argv:
 
     if "-clean" in arg:
         clean = True
-    
+
     if "-forge" in arg:
         forge = True
 
