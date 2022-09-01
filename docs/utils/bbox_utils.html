@@ -100,6 +100,29 @@ def is_valid_bbox(bbox_ogr):
     return True
 
 
+def is_valid_bbox_latlng(bbox_ogr_latlng):
+    &#34;&#34;&#34;
+    Checks if a bbox is valid and latlng.
+
+    A valid ogr formatted bbox has the form: &lt;/br&gt;
+    `[x_min, x_max, y_min, y_max]`
+
+    ## Args:
+    `bbox_ogr_latlng` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the bbox is valid, **False** otherwise.
+    &#34;&#34;&#34;
+    if not is_valid_bbox(bbox_ogr_latlng):
+        return False
+
+    x_min, x_max, y_min, y_max = bbox_ogr_latlng
+    if x_min &lt; -180 or x_max &gt; 180 or y_min &lt; -90 or y_max &gt; 90:
+        return False
+
+    return True
+
+
 def is_valid_geotransform(geotransform):
     &#34;&#34;&#34;
     Checks if a geotransform is valid.
@@ -297,6 +320,40 @@ def get_bbox_from_vector_layer(vector_layer):
     return [x_min, x_max, y_min, y_max]
 
 
+def get_bbox_from_dataset(dataset):
+    &#34;&#34;&#34;
+    Get the bbox from a dataset.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource): A dataset or dataset path. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): The bounding box in ogr format: [x_min, x_max, y_min, y_max].
+    &#34;&#34;&#34;
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), &#34;DataSet must be a string, ogr.DataSource, or gdal.Dataset.&#34;
+
+    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+
+    if opened is None:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+
+        if opened is None:
+            opened = ogr.Open(dataset, gdal.GA_ReadOnly)
+
+        gdal.PopErrorHandler()
+        if opened is None:
+            raise Exception(f&#34;Could not open dataset. {dataset}&#34;)
+
+    if isinstance(opened, gdal.Dataset):
+        return get_bbox_from_raster(opened)
+
+    if isinstance(opened, ogr.DataSource):
+        return get_bbox_from_vector(opened)
+
+    raise Exception(f&#34;Could not get bbox from dataset. {dataset}&#34;)
+
+
 def get_sub_geotransform(geotransform, bbox_ogr):
     &#34;&#34;&#34;
     Create a GeoTransform and the raster sizes for an OGR formatted bbox.
@@ -374,7 +431,7 @@ def convert_geom_to_bbox(geom):
         geom, ogr.Geometry
     ), f&#34;geom was not a valid ogr.Geometry. Received: {geom}&#34;
 
-    bbox_ogr = geom.GetEnvelope() # [x_min, x_max, y_min, y_max]
+    bbox_ogr = list(geom.GetEnvelope()) # [x_min, x_max, y_min, y_max]
 
     return bbox_ogr
 
@@ -622,12 +679,131 @@ def get_intersection_bboxes(bbox1_ogr, bbox2_ogr):
     bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
     bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
 
-    return (
+    return [
         max(bbox1_x_min, bbox2_x_min),
         min(bbox1_x_max, bbox2_x_max),
         max(bbox1_y_min, bbox2_y_min),
         min(bbox1_y_max, bbox2_y_max),
-    )
+    ]
+
+
+def get_union_bboxes(bbox1_ogr, bbox2_ogr):
+    &#34;&#34;&#34;
+    Get the union of two OGR formatted bboxes.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox of the union. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox1_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox1_ogr}&#34;
+    assert is_valid_bbox(
+        bbox2_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox2_ogr}&#34;
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    return [
+        min(bbox1_x_min, bbox2_x_min),
+        max(bbox1_x_max, bbox2_x_max),
+        min(bbox1_y_min, bbox2_y_min),
+        max(bbox1_y_max, bbox2_y_max),
+    ]
+
+
+def get_projection_from_raster(raster):
+    &#34;&#34;&#34;
+    Get the projection from a raster.
+
+    ## Args:
+    `raster` (_str_/_gdal.Dataset_): A raster or raster path. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    &#34;&#34;&#34;
+    opened = None
+    if isinstance(raster, gdal.Dataset):
+        opened = raster
+    else:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(raster, gdal.GA_ReadOnly)
+        gdal.PopErrorHandler()
+
+    if opened is None:
+        raise Exception(f&#34;Could not open raster. {raster}&#34;)
+
+    projection = osr.SpatialReference()
+    projection.ImportFromWkt(opened.GetProjection())
+    opened = None
+
+    return projection
+
+
+def get_projection_from_vector(vector):
+    &#34;&#34;&#34;
+    Get the projection from a vector.
+
+    ## Args:
+    `vector` (_str_/_gdal.Dataset_): A vector or vector path. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    &#34;&#34;&#34;
+    opened = None
+    if isinstance(vector, ogr.DataSource):
+        opened = vector
+    else:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = ogr.Open(vector, gdal.GA_ReadOnly)
+        gdal.PopErrorHandler()
+
+    if opened is None:
+        raise Exception(f&#34;Could not open vector. {vector}&#34;)
+
+    layer = opened.GetLayer()
+    projection = layer.GetSpatialRef()
+    opened = None
+
+    return projection
+
+
+def get_projection_from_dataset(dataset):
+    &#34;&#34;&#34;
+    Get the projection from a dataset.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource): A dataset or dataset path. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    &#34;&#34;&#34;
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), &#34;DataSet must be a string, ogr.DataSource, or gdal.Dataset.&#34;
+
+    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+
+    if opened is None:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+
+        if opened is None:
+            opened = ogr.Open(dataset, gdal.GA_ReadOnly)
+
+        gdal.PopErrorHandler()
+        if opened is None:
+            raise Exception(f&#34;Could not open dataset. {dataset}&#34;)
+
+    if isinstance(opened, gdal.Dataset):
+        return get_projection_from_raster(opened)
+
+    if isinstance(opened, ogr.DataSource):
+        return get_projection_from_vector(opened)
+
+    raise Exception(f&#34;Could not get projection from dataset. {dataset}&#34;)
 
 
 def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
@@ -704,6 +880,113 @@ def reproject_bbox(
         transformed_y_min,
         transformed_y_max,
     ]
+
+
+def get_utm_zone_from_bbox(bbox_ogr_latlng):
+    &#34;&#34;&#34;
+    Get the UTM zone from an OGR formatted bbox.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The UTM zone projection.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr_latlng
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr_latlng}&#34;
+    assert is_valid_bbox_latlng(bbox_ogr_latlng), &#34;Bbox is not in latlng format.&#34;
+
+    bbox_x_min, bbox_x_max, bbox_y_min, bbox_y_max = bbox_ogr_latlng
+
+    mid_lng = (bbox_x_min + bbox_x_max) / 2
+    mid_lat = (bbox_y_min + bbox_y_max) / 2
+
+    zone = round(((mid_lng + 180) / 6) + 1)
+    n_or_s = &#34;S&#34; if mid_lat &lt; 0 else &#34;N&#34;
+    false_northing = &#34;10000000&#34; if n_or_s == &#34;S&#34; else &#34;0&#34;
+    central_meridian = str(round(((zone * 6) - 180) - 3))
+    epsg = f&#34;32{&#39;7&#39; if n_or_s == &#39;S&#39; else &#39;6&#39;}{str(zone)}&#34;
+
+    wkt = f&#34;&#34;&#34;
+        PROJCS[&#34;WGS 84 / UTM zone {str(zone)}{n_or_s}&#34;,
+        GEOGCS[&#34;WGS 84&#34;,
+            DATUM[&#34;WGS_1984&#34;,
+                SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563,
+                    AUTHORITY[&#34;EPSG&#34;,&#34;7030&#34;]],
+                AUTHORITY[&#34;EPSG&#34;,&#34;6326&#34;]],
+            PRIMEM[&#34;Greenwich&#34;,0,
+                AUTHORITY[&#34;EPSG&#34;,&#34;8901&#34;]],
+            UNIT[&#34;degree&#34;,0.0174532925199433,
+                AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],
+            AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]],
+        PROJECTION[&#34;Transverse_Mercator&#34;],
+        PARAMETER[&#34;latitude_of_origin&#34;,0],
+        PARAMETER[&#34;central_meridian&#34;,{central_meridian}],
+        PARAMETER[&#34;scale_factor&#34;,0.9996],
+        PARAMETER[&#34;false_easting&#34;,500000],
+        PARAMETER[&#34;false_northing&#34;,{false_northing}],
+        UNIT[&#34;metre&#34;,1,
+            AUTHORITY[&#34;EPSG&#34;,&#34;9001&#34;]],
+        AXIS[&#34;Easting&#34;,EAST],
+        AXIS[&#34;Northing&#34;,NORTH],
+        AUTHORITY[&#34;EPSG&#34;,&#34;{epsg}&#34;]]
+    &#34;&#34;&#34;
+    projection = osr.SpatialReference()
+    projection.ImportFromWkt(wkt)
+
+    return projection
+
+
+def get_utm_zone_from_dataset(dataset):
+    &#34;&#34;&#34;
+    Get the UTM zone from a GDAL dataset.
+
+    ## Args:
+    `dataset` (_obj_): A GDAL dataset. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The UTM zone.
+    &#34;&#34;&#34;
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), &#34;dataset was not a valid dataset.&#34;
+
+    bbox = get_bbox_from_dataset(dataset)
+    source_projection = get_projection_from_dataset(dataset)
+    target_projection = osr.SpatialReference(); target_projection.ImportFromEPSG(4326)
+
+    bbox = reproject_bbox(bbox, source_projection, target_projection)
+    utm_zone = get_utm_zone_from_bbox(bbox)
+
+    return utm_zone
+
+
+def get_utm_zone_from_dataset_list(datasets):
+    &#34;&#34;&#34;
+    Get the UTM zone from a list of GDAL datasets.
+
+    ## Args:
+    `datasets` (_list_): A list of GDAL datasets. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The UTM zone.
+    &#34;&#34;&#34;
+    assert isinstance(datasets, list), &#34;datasets was not a valid list.&#34;
+
+    latlng_bboxes = []
+    latlng_proj = osr.SpatialReference(); latlng_proj.ImportFromEPSG(4326)
+
+    for dataset in datasets:
+        bbox = get_bbox_from_dataset(dataset)
+        projection = get_projection_from_dataset(dataset)
+        latlng_bboxes.append(reproject_bbox(bbox, projection, latlng_proj))
+
+    union_bbox = latlng_bboxes[0]
+    for bbox in latlng_bboxes[1:]:
+        union_bbox = get_union_bboxes(union_bbox, bbox)
+
+    utm_zone = get_utm_zone_from_bbox(union_bbox)
+
+    return utm_zone
 
 
 def additional_bboxes(bbox_ogr, projection_osr):
@@ -1289,7 +1572,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
         geom, ogr.Geometry
     ), f&#34;geom was not a valid ogr.Geometry. Received: {geom}&#34;
 
-    bbox_ogr = geom.GetEnvelope() # [x_min, x_max, y_min, y_max]
+    bbox_ogr = list(geom.GetEnvelope()) # [x_min, x_max, y_min, y_max]
 
     return bbox_ogr</code></pre>
 </details>
@@ -1357,6 +1640,53 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
         return -number
 
     return number</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_bbox_from_dataset"><code class="name flex">
+<span>def <span class="ident">get_bbox_from_dataset</span></span>(<span>dataset)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the bbox from a dataset.</p>
+<h2 id="args">Args:</h2>
+<p><code>dataset</code> (<em>str</em>/<em>gdal.Dataset</em>/_ogr.DataSource): A dataset or dataset path. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): The bounding box in ogr format: [x_min, x_max, y_min, y_max].</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_bbox_from_dataset(dataset):
+    &#34;&#34;&#34;
+    Get the bbox from a dataset.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource): A dataset or dataset path. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): The bounding box in ogr format: [x_min, x_max, y_min, y_max].
+    &#34;&#34;&#34;
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), &#34;DataSet must be a string, ogr.DataSource, or gdal.Dataset.&#34;
+
+    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+
+    if opened is None:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+
+        if opened is None:
+            opened = ogr.Open(dataset, gdal.GA_ReadOnly)
+
+        gdal.PopErrorHandler()
+        if opened is None:
+            raise Exception(f&#34;Could not open dataset. {dataset}&#34;)
+
+    if isinstance(opened, gdal.Dataset):
+        return get_bbox_from_raster(opened)
+
+    if isinstance(opened, ogr.DataSource):
+        return get_bbox_from_vector(opened)
+
+    raise Exception(f&#34;Could not get bbox from dataset. {dataset}&#34;)</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.bbox_utils.get_bbox_from_geotransform"><code class="name flex">
@@ -1558,12 +1888,12 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
     bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
 
-    return (
+    return [
         max(bbox1_x_min, bbox2_x_min),
         min(bbox1_x_max, bbox2_x_max),
         max(bbox1_y_min, bbox2_y_min),
         min(bbox1_y_max, bbox2_y_max),
-    )</code></pre>
+    ]</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.bbox_utils.get_pixel_offsets"><code class="name flex">
@@ -1620,6 +1950,135 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     return [x_start, y_start, x_size, y_size]</code></pre>
 </details>
 </dd>
+<dt id="buteo.utils.bbox_utils.get_projection_from_dataset"><code class="name flex">
+<span>def <span class="ident">get_projection_from_dataset</span></span>(<span>dataset)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the projection from a dataset.</p>
+<h2 id="args">Args:</h2>
+<p><code>dataset</code> (<em>str</em>/<em>gdal.Dataset</em>/_ogr.DataSource): A dataset or dataset path. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>osr.SpatialReference</em>): The projection in OSR format.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_projection_from_dataset(dataset):
+    &#34;&#34;&#34;
+    Get the projection from a dataset.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource): A dataset or dataset path. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    &#34;&#34;&#34;
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), &#34;DataSet must be a string, ogr.DataSource, or gdal.Dataset.&#34;
+
+    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+
+    if opened is None:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+
+        if opened is None:
+            opened = ogr.Open(dataset, gdal.GA_ReadOnly)
+
+        gdal.PopErrorHandler()
+        if opened is None:
+            raise Exception(f&#34;Could not open dataset. {dataset}&#34;)
+
+    if isinstance(opened, gdal.Dataset):
+        return get_projection_from_raster(opened)
+
+    if isinstance(opened, ogr.DataSource):
+        return get_projection_from_vector(opened)
+
+    raise Exception(f&#34;Could not get projection from dataset. {dataset}&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_projection_from_raster"><code class="name flex">
+<span>def <span class="ident">get_projection_from_raster</span></span>(<span>raster)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the projection from a raster.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster</code> (<em>str</em>/<em>gdal.Dataset</em>): A raster or raster path. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>osr.SpatialReference</em>): The projection in OSR format.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_projection_from_raster(raster):
+    &#34;&#34;&#34;
+    Get the projection from a raster.
+
+    ## Args:
+    `raster` (_str_/_gdal.Dataset_): A raster or raster path. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    &#34;&#34;&#34;
+    opened = None
+    if isinstance(raster, gdal.Dataset):
+        opened = raster
+    else:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(raster, gdal.GA_ReadOnly)
+        gdal.PopErrorHandler()
+
+    if opened is None:
+        raise Exception(f&#34;Could not open raster. {raster}&#34;)
+
+    projection = osr.SpatialReference()
+    projection.ImportFromWkt(opened.GetProjection())
+    opened = None
+
+    return projection</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_projection_from_vector"><code class="name flex">
+<span>def <span class="ident">get_projection_from_vector</span></span>(<span>vector)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the projection from a vector.</p>
+<h2 id="args">Args:</h2>
+<p><code>vector</code> (<em>str</em>/<em>gdal.Dataset</em>): A vector or vector path. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>osr.SpatialReference</em>): The projection in OSR format.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_projection_from_vector(vector):
+    &#34;&#34;&#34;
+    Get the projection from a vector.
+
+    ## Args:
+    `vector` (_str_/_gdal.Dataset_): A vector or vector path. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    &#34;&#34;&#34;
+    opened = None
+    if isinstance(vector, ogr.DataSource):
+        opened = vector
+    else:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = ogr.Open(vector, gdal.GA_ReadOnly)
+        gdal.PopErrorHandler()
+
+    if opened is None:
+        raise Exception(f&#34;Could not open vector. {vector}&#34;)
+
+    layer = opened.GetLayer()
+    projection = layer.GetSpatialRef()
+    opened = None
+
+    return projection</code></pre>
+</details>
+</dd>
 <dt id="buteo.utils.bbox_utils.get_sub_geotransform"><code class="name flex">
 <span>def <span class="ident">get_sub_geotransform</span></span>(<span>geotransform, bbox_ogr)</span>
 </code></dt>
@@ -1666,6 +2125,195 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     }</code></pre>
 </details>
 </dd>
+<dt id="buteo.utils.bbox_utils.get_union_bboxes"><code class="name flex">
+<span>def <span class="ident">get_union_bboxes</span></span>(<span>bbox1_ogr, bbox2_ogr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the union of two OGR formatted bboxes.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox1_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
+<code>bbox2_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): An OGR formatted bbox of the union. <code>[x_min, x_max, y_min, y_max]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_union_bboxes(bbox1_ogr, bbox2_ogr):
+    &#34;&#34;&#34;
+    Get the union of two OGR formatted bboxes.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox of the union. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox1_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox1_ogr}&#34;
+    assert is_valid_bbox(
+        bbox2_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox2_ogr}&#34;
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    return [
+        min(bbox1_x_min, bbox2_x_min),
+        max(bbox1_x_max, bbox2_x_max),
+        min(bbox1_y_min, bbox2_y_min),
+        max(bbox1_y_max, bbox2_y_max),
+    ]</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_utm_zone_from_bbox"><code class="name flex">
+<span>def <span class="ident">get_utm_zone_from_bbox</span></span>(<span>bbox_ogr_latlng)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the UTM zone from an OGR formatted bbox.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>osr.SpatialReference</em>): The UTM zone projection.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_utm_zone_from_bbox(bbox_ogr_latlng):
+    &#34;&#34;&#34;
+    Get the UTM zone from an OGR formatted bbox.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The UTM zone projection.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr_latlng
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr_latlng}&#34;
+    assert is_valid_bbox_latlng(bbox_ogr_latlng), &#34;Bbox is not in latlng format.&#34;
+
+    bbox_x_min, bbox_x_max, bbox_y_min, bbox_y_max = bbox_ogr_latlng
+
+    mid_lng = (bbox_x_min + bbox_x_max) / 2
+    mid_lat = (bbox_y_min + bbox_y_max) / 2
+
+    zone = round(((mid_lng + 180) / 6) + 1)
+    n_or_s = &#34;S&#34; if mid_lat &lt; 0 else &#34;N&#34;
+    false_northing = &#34;10000000&#34; if n_or_s == &#34;S&#34; else &#34;0&#34;
+    central_meridian = str(round(((zone * 6) - 180) - 3))
+    epsg = f&#34;32{&#39;7&#39; if n_or_s == &#39;S&#39; else &#39;6&#39;}{str(zone)}&#34;
+
+    wkt = f&#34;&#34;&#34;
+        PROJCS[&#34;WGS 84 / UTM zone {str(zone)}{n_or_s}&#34;,
+        GEOGCS[&#34;WGS 84&#34;,
+            DATUM[&#34;WGS_1984&#34;,
+                SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563,
+                    AUTHORITY[&#34;EPSG&#34;,&#34;7030&#34;]],
+                AUTHORITY[&#34;EPSG&#34;,&#34;6326&#34;]],
+            PRIMEM[&#34;Greenwich&#34;,0,
+                AUTHORITY[&#34;EPSG&#34;,&#34;8901&#34;]],
+            UNIT[&#34;degree&#34;,0.0174532925199433,
+                AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],
+            AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]],
+        PROJECTION[&#34;Transverse_Mercator&#34;],
+        PARAMETER[&#34;latitude_of_origin&#34;,0],
+        PARAMETER[&#34;central_meridian&#34;,{central_meridian}],
+        PARAMETER[&#34;scale_factor&#34;,0.9996],
+        PARAMETER[&#34;false_easting&#34;,500000],
+        PARAMETER[&#34;false_northing&#34;,{false_northing}],
+        UNIT[&#34;metre&#34;,1,
+            AUTHORITY[&#34;EPSG&#34;,&#34;9001&#34;]],
+        AXIS[&#34;Easting&#34;,EAST],
+        AXIS[&#34;Northing&#34;,NORTH],
+        AUTHORITY[&#34;EPSG&#34;,&#34;{epsg}&#34;]]
+    &#34;&#34;&#34;
+    projection = osr.SpatialReference()
+    projection.ImportFromWkt(wkt)
+
+    return projection</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_utm_zone_from_dataset"><code class="name flex">
+<span>def <span class="ident">get_utm_zone_from_dataset</span></span>(<span>dataset)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the UTM zone from a GDAL dataset.</p>
+<h2 id="args">Args:</h2>
+<p><code>dataset</code> (<em>obj</em>): A GDAL dataset. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The UTM zone.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_utm_zone_from_dataset(dataset):
+    &#34;&#34;&#34;
+    Get the UTM zone from a GDAL dataset.
+
+    ## Args:
+    `dataset` (_obj_): A GDAL dataset. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The UTM zone.
+    &#34;&#34;&#34;
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), &#34;dataset was not a valid dataset.&#34;
+
+    bbox = get_bbox_from_dataset(dataset)
+    source_projection = get_projection_from_dataset(dataset)
+    target_projection = osr.SpatialReference(); target_projection.ImportFromEPSG(4326)
+
+    bbox = reproject_bbox(bbox, source_projection, target_projection)
+    utm_zone = get_utm_zone_from_bbox(bbox)
+
+    return utm_zone</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_utm_zone_from_dataset_list"><code class="name flex">
+<span>def <span class="ident">get_utm_zone_from_dataset_list</span></span>(<span>datasets)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the UTM zone from a list of GDAL datasets.</p>
+<h2 id="args">Args:</h2>
+<p><code>datasets</code> (<em>list</em>): A list of GDAL datasets. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The UTM zone.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_utm_zone_from_dataset_list(datasets):
+    &#34;&#34;&#34;
+    Get the UTM zone from a list of GDAL datasets.
+
+    ## Args:
+    `datasets` (_list_): A list of GDAL datasets. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The UTM zone.
+    &#34;&#34;&#34;
+    assert isinstance(datasets, list), &#34;datasets was not a valid list.&#34;
+
+    latlng_bboxes = []
+    latlng_proj = osr.SpatialReference(); latlng_proj.ImportFromEPSG(4326)
+
+    for dataset in datasets:
+        bbox = get_bbox_from_dataset(dataset)
+        projection = get_projection_from_dataset(dataset)
+        latlng_bboxes.append(reproject_bbox(bbox, projection, latlng_proj))
+
+    union_bbox = latlng_bboxes[0]
+    for bbox in latlng_bboxes[1:]:
+        union_bbox = get_union_bboxes(union_bbox, bbox)
+
+    utm_zone = get_utm_zone_from_bbox(union_bbox)
+
+    return utm_zone</code></pre>
+</details>
+</dd>
 <dt id="buteo.utils.bbox_utils.is_valid_bbox"><code class="name flex">
 <span>def <span class="ident">is_valid_bbox</span></span>(<span>bbox_ogr)</span>
 </code></dt>
@@ -1707,6 +2355,44 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     x_min, x_max, y_min, y_max = bbox_ogr
 
     if x_min &gt; x_max or y_min &gt; y_max:
+        return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.is_valid_bbox_latlng"><code class="name flex">
+<span>def <span class="ident">is_valid_bbox_latlng</span></span>(<span>bbox_ogr_latlng)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a bbox is valid and latlng.</p>
+<p>A valid ogr formatted bbox has the form: </br>
+<code>[x_min, x_max, y_min, y_max]</code></p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr_latlng</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the bbox is valid, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_valid_bbox_latlng(bbox_ogr_latlng):
+    &#34;&#34;&#34;
+    Checks if a bbox is valid and latlng.
+
+    A valid ogr formatted bbox has the form: &lt;/br&gt;
+    `[x_min, x_max, y_min, y_max]`
+
+    ## Args:
+    `bbox_ogr_latlng` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the bbox is valid, **False** otherwise.
+    &#34;&#34;&#34;
+    if not is_valid_bbox(bbox_ogr_latlng):
+        return False
+
+    x_min, x_max, y_min, y_max = bbox_ogr_latlng
+    if x_min &lt; -180 or x_max &gt; 180 or y_min &lt; -90 or y_max &gt; 90:
         return False
 
     return True</code></pre>
@@ -1845,14 +2531,23 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 <li><code><a title="buteo.utils.bbox_utils.convert_geom_to_bbox" href="#buteo.utils.bbox_utils.convert_geom_to_bbox">convert_geom_to_bbox</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.convert_ogr_bbox_to_gdal_bbox" href="#buteo.utils.bbox_utils.convert_ogr_bbox_to_gdal_bbox">convert_ogr_bbox_to_gdal_bbox</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.ensure_negative" href="#buteo.utils.bbox_utils.ensure_negative">ensure_negative</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_bbox_from_dataset" href="#buteo.utils.bbox_utils.get_bbox_from_dataset">get_bbox_from_dataset</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.get_bbox_from_geotransform" href="#buteo.utils.bbox_utils.get_bbox_from_geotransform">get_bbox_from_geotransform</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.get_bbox_from_raster" href="#buteo.utils.bbox_utils.get_bbox_from_raster">get_bbox_from_raster</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.get_bbox_from_vector" href="#buteo.utils.bbox_utils.get_bbox_from_vector">get_bbox_from_vector</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.get_bbox_from_vector_layer" href="#buteo.utils.bbox_utils.get_bbox_from_vector_layer">get_bbox_from_vector_layer</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.get_intersection_bboxes" href="#buteo.utils.bbox_utils.get_intersection_bboxes">get_intersection_bboxes</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.get_pixel_offsets" href="#buteo.utils.bbox_utils.get_pixel_offsets">get_pixel_offsets</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_projection_from_dataset" href="#buteo.utils.bbox_utils.get_projection_from_dataset">get_projection_from_dataset</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_projection_from_raster" href="#buteo.utils.bbox_utils.get_projection_from_raster">get_projection_from_raster</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_projection_from_vector" href="#buteo.utils.bbox_utils.get_projection_from_vector">get_projection_from_vector</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.get_sub_geotransform" href="#buteo.utils.bbox_utils.get_sub_geotransform">get_sub_geotransform</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_union_bboxes" href="#buteo.utils.bbox_utils.get_union_bboxes">get_union_bboxes</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_utm_zone_from_bbox" href="#buteo.utils.bbox_utils.get_utm_zone_from_bbox">get_utm_zone_from_bbox</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_utm_zone_from_dataset" href="#buteo.utils.bbox_utils.get_utm_zone_from_dataset">get_utm_zone_from_dataset</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_utm_zone_from_dataset_list" href="#buteo.utils.bbox_utils.get_utm_zone_from_dataset_list">get_utm_zone_from_dataset_list</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.is_valid_bbox" href="#buteo.utils.bbox_utils.is_valid_bbox">is_valid_bbox</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.is_valid_bbox_latlng" href="#buteo.utils.bbox_utils.is_valid_bbox_latlng">is_valid_bbox_latlng</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.is_valid_geotransform" href="#buteo.utils.bbox_utils.is_valid_geotransform">is_valid_geotransform</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.reproject_bbox" href="#buteo.utils.bbox_utils.reproject_bbox">reproject_bbox</a></code></li>
 </ul>

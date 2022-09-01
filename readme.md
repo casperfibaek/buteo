@@ -4,10 +4,36 @@ The Buteo-Toolbox is a series of modules that ease the creation of Earth Observa
 
 Documentation available at: https://casperfibaek.github.io/buteo/
 
-There are modules are:
+**Dependencies** </br>
+`numpy` (https://numpy.org/) </br>
+`gdal` (https://gdal.org/) </br>
 
-pdoc3 ./buteo/raster/io.py -o ./docs --html -f
-pdoc3 ./buteo -o ./docs --html -f
+**Installation** </br>
+`conda install buteo --channel casperfibaek` </br>
+`pip install -i https://test.pypi.org/simple/ buteo` </br>
+
+**Quickstart**
+```python
+from glob import glob
+from buteo.raster import reproject_raster
+
+vector_file_with_correct_projection = 'path/to/vector/file.gpkg'
+raster_files_with_wrong_projection = glob('path/to/raster/files/*.tif')
+
+outdir = 'path/to/output/dir'
+
+result = reproject_raster(
+    raster_files_with_wrong_projection,
+    vector_file_with_correct_projection,
+    out_path=outdir
+)
+
+result
+>>> [path/to/output/dir/file1.tif, path/to/output/dir/file2.tif, ...]
+```
+
+
+Modules:
 
 ## raster
 
@@ -94,3 +120,5 @@ vector_select
 vector_buffer_etc..
 
 machine_learning_extract_sample_points
+
+python -m build; python -m twine upload --repository testpypi dist/*

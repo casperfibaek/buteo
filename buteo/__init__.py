@@ -7,6 +7,7 @@
 
 **Installation** </br>
 `conda install buteo --channel casperfibaek` </br>
+`pip install -i https://test.pypi.org/simple/ buteo` </br>
 
 **Quickstart**
 ```python

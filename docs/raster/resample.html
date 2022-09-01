@@ -51,9 +51,9 @@ from buteo.raster import core_raster
 def _resample_raster(
     raster,
     target_size,
-    target_in_pixels,
     out_path=None,
     *,
+    target_in_pixels=False,
     resample_alg=&#34;nearest&#34;,
     overwrite=True,
     creation_options=None,
@@ -64,9 +64,10 @@ def _resample_raster(
     add_uuid=False,
 ):
     &#34;&#34;&#34; Internal. &#34;&#34;&#34;
-    raster_list = core_utils.ensure_list(raster)
-    path_list = gdal_utils.create_output_path_list(
-        raster_list,
+    assert isinstance(raster, (gdal.Dataset, str)), f&#34;The input raster must be in the form of a str or a gdal.Dataset: {raster}&#34;
+
+    out_path = gdal_utils.create_output_path(
+        raster,
         out_path=out_path,
         overwrite=overwrite,
         prefix=prefix,
@@ -74,33 +75,30 @@ def _resample_raster(
         add_uuid=add_uuid,
     )
 
-    ref = core_raster._open_raster(raster_list[0])
+    ref = core_raster._open_raster(raster)
     metadata = core_raster._raster_to_metadata(ref)
-    out_name = path_list[0]
-
 
     x_res, y_res, x_pixels, y_pixels = gdal_utils.parse_raster_size(
         target_size, target_in_pixels=target_in_pixels
     )
 
-    out_format = gdal_utils.path_to_driver_raster(out_name)
+    out_format = gdal_utils.path_to_driver_raster(out_path)
 
     src_nodata = metadata[&#34;nodata_value&#34;]
     out_nodata = None
-    if src_nodata is not None:
-        out_nodata = src_nodata
+    if dst_nodata == &#34;infer&#34;:
+        dst_nodata = src_nodata
     else:
-        if dst_nodata == &#34;infer&#34;:
-            out_nodata = src_nodata
-        elif isinstance(dst_nodata, (int, float)):
-            out_nodata = dst_nodata
-        else:
-            raise TypeError(f&#34;dst_nodata is in a wrong format: {dst_nodata}&#34;)
+        assert isinstance(dst_nodata, (int, float, type(None))), &#34;dst_nodata must be an int, float, &#39;infer&#39;, or &#39;None&#39;&#34;
+        out_nodata = dst_nodata
+
+    if dtype is None:
+        dtype = metadata[&#34;datatype&#34;]
 
     core_utils.remove_if_required(out_path, overwrite)
 
     resampled = gdal.Warp(
-        out_name,
+        out_path,
         ref,
         width=x_pixels,
         height=y_pixels,
@@ -116,17 +114,17 @@ def _resample_raster(
     )
 
     if resampled is None:
-        raise Exception(f&#34;Error while resampling raster: {out_name}&#34;)
+        raise Exception(f&#34;Error while resampling raster: {out_path}&#34;)
 
-    return out_name
+    return out_path
 
 
 def resample_raster(
     raster,
     target_size,
-    target_in_pixels=False,
     out_path=None,
     *,
+    target_in_pixels=False,
     resample_alg=&#34;nearest&#34;,
     creation_options=None,
     dtype=None,
@@ -171,8 +169,12 @@ def resample_raster(
     core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
     core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
     core_utils.type_check(dst_nodata, [str, int, float, None], &#34;dst_nodata&#34;)
+    core_utils.type_check(dtype, [str, None], &#34;dtype&#34;)
     core_utils.type_check(prefix, [str], &#34;prefix&#34;)
     core_utils.type_check(suffix, [str], &#34;postfix&#34;)
+
+    if core_utils.is_str_a_glob(raster):
+        raster = core_utils.parse_glob_path(raster)
 
     raster_list = core_utils.ensure_list(raster)
     assert gdal_utils.is_raster_list(raster_list), f&#34;Invalid raster in raster list: {raster_list}&#34;
@@ -218,7 +220,7 @@ def resample_raster(
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.raster.resample.resample_raster"><code class="name flex">
-<span>def <span class="ident">resample_raster</span></span>(<span>raster, target_size, target_in_pixels=False, out_path=None, *, resample_alg='nearest', creation_options=None, dtype=None, dst_nodata='infer', prefix='', suffix='', add_uuid=False, overwrite=True)</span>
+<span>def <span class="ident">resample_raster</span></span>(<span>raster, target_size, out_path=None, *, target_in_pixels=False, resample_alg='nearest', creation_options=None, dtype=None, dst_nodata='infer', prefix='', suffix='', add_uuid=False, overwrite=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Reprojects raster(s) given a target projection. </br>
@@ -250,9 +252,9 @@ that raster. </br></p>
 <pre><code class="python">def resample_raster(
     raster,
     target_size,
-    target_in_pixels=False,
     out_path=None,
     *,
+    target_in_pixels=False,
     resample_alg=&#34;nearest&#34;,
     creation_options=None,
     dtype=None,
@@ -297,8 +299,12 @@ that raster. </br></p>
     core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
     core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
     core_utils.type_check(dst_nodata, [str, int, float, None], &#34;dst_nodata&#34;)
+    core_utils.type_check(dtype, [str, None], &#34;dtype&#34;)
     core_utils.type_check(prefix, [str], &#34;prefix&#34;)
     core_utils.type_check(suffix, [str], &#34;postfix&#34;)
+
+    if core_utils.is_str_a_glob(raster):
+        raster = core_utils.parse_glob_path(raster)
 
     raster_list = core_utils.ensure_list(raster)
     assert gdal_utils.is_raster_list(raster_list), f&#34;Invalid raster in raster list: {raster_list}&#34;

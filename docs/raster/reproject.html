@@ -58,14 +58,16 @@ def _reproject_raster(
     overwrite=True,
     creation_options=None,
     dst_nodata=&#34;infer&#34;,
+    dtype=None,
     prefix=&#34;&#34;,
     suffix=&#34;&#34;,
     add_uuid=False,
 ):
     &#34;&#34;&#34; Internal. &#34;&#34;&#34;
-    raster_list = core_utils.ensure_list(raster)
-    path_list = gdal_utils.create_output_path_list(
-        raster_list,
+    assert isinstance(raster, (gdal.Dataset, str)), f&#34;The input raster must be in the form of a str or a gdal.Dataset: {raster}&#34;
+
+    out_path = gdal_utils.create_output_path(
+        raster,
         out_path=out_path,
         overwrite=overwrite,
         prefix=prefix,
@@ -73,12 +75,10 @@ def _reproject_raster(
         add_uuid=add_uuid,
     )
 
-    out_name = path_list[0]
-    ref = core_raster._open_raster(raster_list[0])
+    ref = core_raster._open_raster(raster)
     metadata = core_raster._raster_to_metadata(ref)
 
-    out_creation_options = gdal_utils.default_creation_options(creation_options)
-    out_format = gdal_utils.path_to_driver_raster(out_name)
+    out_format = gdal_utils.path_to_driver_raster(out_path)
 
     original_projection = gdal_utils.parse_projection(ref)
     target_projection = gdal_utils.parse_projection(projection)
@@ -89,33 +89,33 @@ def _reproject_raster(
     if not isinstance(target_projection, osr.SpatialReference):
         raise Exception(&#34;Error while parsing target projection.&#34;)
 
-    if original_projection.IsSame(target_projection):
-        if not copy_if_same:
-            return gdal_utils.get_path_from_dataset(ref)
+    # The input is already in the correct projection.
+    if not copy_if_same and gdal_utils.projections_match(original_projection, target_projection):
+        return gdal_utils.get_path_from_dataset(ref)
 
     src_nodata = metadata[&#34;nodata_value&#34;]
     out_nodata = None
-    if src_nodata is not None:
-        out_nodata = src_nodata
+    if dst_nodata == &#34;infer&#34;:
+        dst_nodata = src_nodata
     else:
-        if dst_nodata == &#34;infer&#34;:
-            out_nodata = gdal_enums.translate_gdal_dtype_to_str(metadata[&#34;datatype_gdal_raw&#34;])
-        elif isinstance(dst_nodata, str):
-            raise TypeError(f&#34;dst_nodata is in a wrong format: {dst_nodata}&#34;)
-        else:
-            out_nodata = dst_nodata
+        assert isinstance(dst_nodata, (int, float, type(None))), &#34;dst_nodata must be an int, float, &#39;infer&#39;, or &#39;None&#39;&#34;
+        out_nodata = dst_nodata
+
+    if dtype is None:
+        dtype = metadata[&#34;datatype&#34;]
 
     core_utils.remove_if_required(out_path, overwrite)
 
     reprojected = gdal.Warp(
-        out_name,
+        out_path,
         ref,
         format=out_format,
         srcSRS=original_projection,
         dstSRS=target_projection,
         resampleAlg=gdal_enums.translate_resample_method(resample_alg),
-        creationOptions=out_creation_options,
-        srcNodata=metadata[&#34;nodata_value&#34;],
+        outputType=gdal_enums.translate_str_to_gdal_dtype(dtype),
+        creationOptions=gdal_utils.default_creation_options(creation_options),
+        srcNodata=src_nodata,
         dstNodata=out_nodata,
         multithread=True,
     )
@@ -123,7 +123,7 @@ def _reproject_raster(
     if reprojected is None:
         raise Exception(f&#34;Error while reprojecting raster: {raster}&#34;)
 
-    return out_name
+    return out_path
 
 
 def reproject_raster(
@@ -136,8 +136,9 @@ def reproject_raster(
     overwrite=True,
     creation_options=None,
     dst_nodata=&#34;infer&#34;,
+    dtype=None,
     prefix=&#34;&#34;,
-    suffix=&#34;_reprojected&#34;,
+    suffix=&#34;&#34;,
     add_uuid=False,
 ):
     &#34;&#34;&#34;
@@ -170,11 +171,18 @@ def reproject_raster(
     core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
     core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
     core_utils.type_check(dst_nodata, [str, int, float], &#34;dst_nodata&#34;)
+    core_utils.type_check(dtype, [str, None], &#34;dtype&#34;)
     core_utils.type_check(prefix, [str], &#34;prefix&#34;)
     core_utils.type_check(suffix, [str], &#34;postfix&#34;)
     core_utils.type_check(add_uuid, [bool], &#34;add_uuid&#34;)
 
+    if core_utils.is_str_a_glob(raster):
+        raster = core_utils.parse_glob_path(raster)
+
     raster_list = core_utils.ensure_list(raster)
+
+    assert gdal_utils.is_raster_list(raster_list), f&#34;The input raster(s) contains invalid elements: {raster_list}&#34;
+
     path_list = gdal_utils.create_output_path_list(
         raster_list,
         out_path=out_path,
@@ -196,6 +204,7 @@ def reproject_raster(
                 overwrite=overwrite,
                 creation_options=creation_options,
                 dst_nodata=dst_nodata,
+                dtype=dtype,
                 prefix=prefix,
                 suffix=suffix,
             )
@@ -215,7 +224,7 @@ def reproject_raster(
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.raster.reproject.reproject_raster"><code class="name flex">
-<span>def <span class="ident">reproject_raster</span></span>(<span>raster, projection, out_path=None, *, resample_alg='nearest', copy_if_same=True, overwrite=True, creation_options=None, dst_nodata='infer', prefix='', suffix='_reprojected', add_uuid=False)</span>
+<span>def <span class="ident">reproject_raster</span></span>(<span>raster, projection, out_path=None, *, resample_alg='nearest', copy_if_same=True, overwrite=True, creation_options=None, dst_nodata='infer', dtype=None, prefix='', suffix='', add_uuid=False)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Reproject a raster(s) to a target coordinate reference system.</p>
@@ -250,8 +259,9 @@ from a vector or raster datasource either from path or in-memory. </br></p>
     overwrite=True,
     creation_options=None,
     dst_nodata=&#34;infer&#34;,
+    dtype=None,
     prefix=&#34;&#34;,
-    suffix=&#34;_reprojected&#34;,
+    suffix=&#34;&#34;,
     add_uuid=False,
 ):
     &#34;&#34;&#34;
@@ -284,11 +294,18 @@ from a vector or raster datasource either from path or in-memory. </br></p>
     core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
     core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
     core_utils.type_check(dst_nodata, [str, int, float], &#34;dst_nodata&#34;)
+    core_utils.type_check(dtype, [str, None], &#34;dtype&#34;)
     core_utils.type_check(prefix, [str], &#34;prefix&#34;)
     core_utils.type_check(suffix, [str], &#34;postfix&#34;)
     core_utils.type_check(add_uuid, [bool], &#34;add_uuid&#34;)
 
+    if core_utils.is_str_a_glob(raster):
+        raster = core_utils.parse_glob_path(raster)
+
     raster_list = core_utils.ensure_list(raster)
+
+    assert gdal_utils.is_raster_list(raster_list), f&#34;The input raster(s) contains invalid elements: {raster_list}&#34;
+
     path_list = gdal_utils.create_output_path_list(
         raster_list,
         out_path=out_path,
@@ -310,6 +327,7 @@ from a vector or raster datasource either from path or in-memory. </br></p>
                 overwrite=overwrite,
                 creation_options=creation_options,
                 dst_nodata=dst_nodata,
+                dtype=dtype,
                 prefix=prefix,
                 suffix=suffix,
             )

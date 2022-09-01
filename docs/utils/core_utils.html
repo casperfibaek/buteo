@@ -42,10 +42,13 @@ import shutil
 from glob import glob
 from uuid import uuid4
 from datetime import datetime
+from pathlib import PurePosixPath
 
 # External
 import psutil
 from osgeo import gdal
+
+from buteo.utils.gdal_enums import get_valid_raster_driver_extensions, get_valid_vector_driver_extensions
 
 
 
@@ -176,7 +179,7 @@ def file_exists(path):
     if os.path.exists(path):
         return True
 
-    if path in gdal.listdir(&#39;/vsimem&#39;):
+    if path in gdal.listdir(&#34;/vsimem&#34;):
         return True
 
     return False
@@ -371,9 +374,37 @@ def change_path_ext(path, target_ext):
     return os.path.join(os.path.dirname(path), f&#34;{basesplit[0]}.{target_ext}&#34;)
 
 
-def is_valid_file_path(path):
+
+def is_valid_mem_path(path):
     &#34;&#34;&#34;
-    Check if a path has an extension.
+    Check if a path is a valid memory path that has an extension.
+
+    ## Args:
+    `path` (_str_): The path to test. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if path is a valid memory path, **False** otherwise.
+    &#34;&#34;&#34;
+    if not isinstance(path, str):
+        return False
+
+    if len(path) &lt; len(&#34;/vsimem/x&#34;):
+        return False
+
+    ext = os.path.splitext(path)[1]
+
+    if ext == &#34;&#34; or ext == &#34;.&#34;:
+        return False
+
+    if path.startswith(&#34;/vsimem&#34;):
+        return True
+
+    return False
+
+
+def is_valid_non_memory_path(path):
+    &#34;&#34;&#34;
+    Check if a path is valid, not in memory, and has an extension.
 
     ## Args:
     `path` (_str_): The path to the file. &lt;/br&gt;
@@ -389,13 +420,29 @@ def is_valid_file_path(path):
     if ext == &#34;&#34; or ext == &#34;.&#34;:
         return False
 
-    if path.startswith(&#34;/vsimem/&#34;):
-        return True
-
     if not folder_exists(path_to_folder(path)):
         return False
 
+    if is_valid_mem_path(path):
+        return False
+
     return True
+
+
+def is_valid_file_path(path):
+    &#34;&#34;&#34;
+    Check if a path is valid and has an extension. Path can be in memory.
+
+    ## Args:
+    `path` (_str_): The path to the file. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the path has an extension, **False** otherwise.
+    &#34;&#34;&#34;
+    if is_valid_mem_path(path) or is_valid_non_memory_path(path):
+        return True
+
+    return False
 
 
 def is_valid_output_path(path, *, overwrite=True):
@@ -462,7 +509,7 @@ def remove_if_required(path, overwrite):
     &#34;&#34;&#34;
     assert is_valid_output_path(path), f&#34;path must be a valid output path. {path}&#34;
 
-    if overwrite and path.startswith(&#34;/vsimem/&#34;):
+    if overwrite and path.startswith(f&#34;{os.sep}vsimem&#34;):
         gdal.Unlink(path)
         return True
 
@@ -513,25 +560,45 @@ def get_augmented_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=T
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
     assert isinstance(folder, (type(None), str)), &#34;folder must be None or a string&#34;
+    assert len(os.path.splitext(os.path.basename(path))[1]) &gt; 1, f&#34;Path must have an extension. {path}&#34;
+
+    if os.path.basename(os.path.abspath(path)) == path:
+        path = PurePosixPath(&#34;/vsimem&#34;, path).as_posix()
 
     if folder is not None:
-        path = os.path.join(folder, os.path.basename(path))
 
-        if not path.startswith(&#34;/vsimem&#34;) and not folder_exists(path_to_folder(folder)):
+        if folder.startswith(&#34;/vsimem&#34;):
+            path = PurePosixPath(&#34;/vsimem&#34;, os.path.basename(path)).as_posix()
+        else:
+            assert folder_exists(folder), f&#34;folder must exist. {folder}&#34;
+            path = os.path.join(folder, os.path.basename(path))
+
+        if not path.startswith(f&#34;{os.sep}vsimem&#34;) and not folder_exists(path_to_folder(folder)):
             raise ValueError(f&#34;Folder: {folder} does not exist.&#34;)
 
-    assert path.startswith(&#34;/vsimem&#34;) or folder_exists(path_to_folder(path)), f&#34;destination folder must exist or be in-memory. Received: {path}&#34;
+    assert is_valid_file_path(path), f&#34;path must be a valid file path. {path}&#34;
 
     base = os.path.basename(path)
-    split = os.path.splitext(base)
+    split = list(os.path.splitext(base))
 
     uuid = &#34;&#34;
     if add_uuid:
         uuid = f&#34;_{get_unix_seconds_as_str()}_{str(uuid4())}&#34;
 
+    if is_valid_mem_path(path):
+        if split[1][1:] in get_valid_raster_driver_extensions():
+            split[1] = &#34;.tif&#34;
+        elif split[1][1:] in get_valid_vector_driver_extensions():
+            split[1] = &#34;.fgb&#34;
+        else:
+            raise ValueError(&#34;Unable to parse file extension as valid datasource.&#34;)
+
     basename = f&#34;{prefix}{split[0]}{uuid}{suffix}{split[1]}&#34;
 
-    out_path = os.path.join(os.path.dirname(path), basename)
+    if is_valid_mem_path(path):
+        out_path = PurePosixPath(&#34;/vsimem&#34;, basename).as_posix()
+    else:
+        out_path = os.path.join(os.path.dirname(os.path.abspath(path)), basename)
 
     return out_path
 
@@ -1192,7 +1259,7 @@ def parse_glob_path(test_str):
     if os.path.exists(path):
         return True
 
-    if path in gdal.listdir(&#39;/vsimem&#39;):
+    if path in gdal.listdir(&#34;/vsimem&#34;):
         return True
 
     return False</code></pre>
@@ -1269,25 +1336,45 @@ def parse_glob_path(test_str):
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
     assert isinstance(folder, (type(None), str)), &#34;folder must be None or a string&#34;
+    assert len(os.path.splitext(os.path.basename(path))[1]) &gt; 1, f&#34;Path must have an extension. {path}&#34;
+
+    if os.path.basename(os.path.abspath(path)) == path:
+        path = PurePosixPath(&#34;/vsimem&#34;, path).as_posix()
 
     if folder is not None:
-        path = os.path.join(folder, os.path.basename(path))
 
-        if not path.startswith(&#34;/vsimem&#34;) and not folder_exists(path_to_folder(folder)):
+        if folder.startswith(&#34;/vsimem&#34;):
+            path = PurePosixPath(&#34;/vsimem&#34;, os.path.basename(path)).as_posix()
+        else:
+            assert folder_exists(folder), f&#34;folder must exist. {folder}&#34;
+            path = os.path.join(folder, os.path.basename(path))
+
+        if not path.startswith(f&#34;{os.sep}vsimem&#34;) and not folder_exists(path_to_folder(folder)):
             raise ValueError(f&#34;Folder: {folder} does not exist.&#34;)
 
-    assert path.startswith(&#34;/vsimem&#34;) or folder_exists(path_to_folder(path)), f&#34;destination folder must exist or be in-memory. Received: {path}&#34;
+    assert is_valid_file_path(path), f&#34;path must be a valid file path. {path}&#34;
 
     base = os.path.basename(path)
-    split = os.path.splitext(base)
+    split = list(os.path.splitext(base))
 
     uuid = &#34;&#34;
     if add_uuid:
         uuid = f&#34;_{get_unix_seconds_as_str()}_{str(uuid4())}&#34;
 
+    if is_valid_mem_path(path):
+        if split[1][1:] in get_valid_raster_driver_extensions():
+            split[1] = &#34;.tif&#34;
+        elif split[1][1:] in get_valid_vector_driver_extensions():
+            split[1] = &#34;.fgb&#34;
+        else:
+            raise ValueError(&#34;Unable to parse file extension as valid datasource.&#34;)
+
     basename = f&#34;{prefix}{split[0]}{uuid}{suffix}{split[1]}&#34;
 
-    out_path = os.path.join(os.path.dirname(path), basename)
+    if is_valid_mem_path(path):
+        out_path = PurePosixPath(&#34;/vsimem&#34;, basename).as_posix()
+    else:
+        out_path = os.path.join(os.path.dirname(os.path.abspath(path)), basename)
 
     return out_path</code></pre>
 </details>
@@ -1606,7 +1693,7 @@ def parse_glob_path(test_str):
 <span>def <span class="ident">is_valid_file_path</span></span>(<span>path)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Check if a path has an extension.</p>
+<div class="desc"><p>Check if a path is valid and has an extension. Path can be in memory.</p>
 <h2 id="args">Args:</h2>
 <p><code>path</code> (<em>str</em>): The path to the file. </br></p>
 <h2 id="returns">Returns:</h2>
@@ -1617,7 +1704,76 @@ def parse_glob_path(test_str):
 </summary>
 <pre><code class="python">def is_valid_file_path(path):
     &#34;&#34;&#34;
-    Check if a path has an extension.
+    Check if a path is valid and has an extension. Path can be in memory.
+
+    ## Args:
+    `path` (_str_): The path to the file. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the path has an extension, **False** otherwise.
+    &#34;&#34;&#34;
+    if is_valid_mem_path(path) or is_valid_non_memory_path(path):
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.core_utils.is_valid_mem_path"><code class="name flex">
+<span>def <span class="ident">is_valid_mem_path</span></span>(<span>path)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a path is a valid memory path that has an extension.</p>
+<h2 id="args">Args:</h2>
+<p><code>path</code> (<em>str</em>): The path to test. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if path is a valid memory path, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_valid_mem_path(path):
+    &#34;&#34;&#34;
+    Check if a path is a valid memory path that has an extension.
+
+    ## Args:
+    `path` (_str_): The path to test. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if path is a valid memory path, **False** otherwise.
+    &#34;&#34;&#34;
+    if not isinstance(path, str):
+        return False
+
+    if len(path) &lt; len(&#34;/vsimem/x&#34;):
+        return False
+
+    ext = os.path.splitext(path)[1]
+
+    if ext == &#34;&#34; or ext == &#34;.&#34;:
+        return False
+
+    if path.startswith(&#34;/vsimem&#34;):
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.core_utils.is_valid_non_memory_path"><code class="name flex">
+<span>def <span class="ident">is_valid_non_memory_path</span></span>(<span>path)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a path is valid, not in memory, and has an extension.</p>
+<h2 id="args">Args:</h2>
+<p><code>path</code> (<em>str</em>): The path to the file. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the path has an extension, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_valid_non_memory_path(path):
+    &#34;&#34;&#34;
+    Check if a path is valid, not in memory, and has an extension.
 
     ## Args:
     `path` (_str_): The path to the file. &lt;/br&gt;
@@ -1633,10 +1789,10 @@ def parse_glob_path(test_str):
     if ext == &#34;&#34; or ext == &#34;.&#34;:
         return False
 
-    if path.startswith(&#34;/vsimem/&#34;):
-        return True
-
     if not folder_exists(path_to_folder(path)):
+        return False
+
+    if is_valid_mem_path(path):
         return False
 
     return True</code></pre>
@@ -1984,7 +2140,7 @@ def parse_glob_path(test_str):
     &#34;&#34;&#34;
     assert is_valid_output_path(path), f&#34;path must be a valid output path. {path}&#34;
 
-    if overwrite and path.startswith(&#34;/vsimem/&#34;):
+    if overwrite and path.startswith(f&#34;{os.sep}vsimem&#34;):
         gdal.Unlink(path)
         return True
 
@@ -2280,6 +2436,8 @@ def parse_glob_path(test_str):
 <li><code><a title="buteo.utils.core_utils.is_number" href="#buteo.utils.core_utils.is_number">is_number</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_str_a_glob" href="#buteo.utils.core_utils.is_str_a_glob">is_str_a_glob</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_valid_file_path" href="#buteo.utils.core_utils.is_valid_file_path">is_valid_file_path</a></code></li>
+<li><code><a title="buteo.utils.core_utils.is_valid_mem_path" href="#buteo.utils.core_utils.is_valid_mem_path">is_valid_mem_path</a></code></li>
+<li><code><a title="buteo.utils.core_utils.is_valid_non_memory_path" href="#buteo.utils.core_utils.is_valid_non_memory_path">is_valid_non_memory_path</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_valid_output_path" href="#buteo.utils.core_utils.is_valid_output_path">is_valid_output_path</a></code></li>
 <li><code><a title="buteo.utils.core_utils.is_valid_output_path_list" href="#buteo.utils.core_utils.is_valid_output_path_list">is_valid_output_path_list</a></code></li>
 <li><code><a title="buteo.utils.core_utils.make_dir_if_not_exists" href="#buteo.utils.core_utils.make_dir_if_not_exists">make_dir_if_not_exists</a></code></li>

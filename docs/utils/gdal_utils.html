@@ -45,6 +45,7 @@ TODO:
 
 # Standard Library
 import sys; sys.path.append(&#34;../../&#34;)
+from pathlib import PurePosixPath
 import os
 
 # External
@@ -238,13 +239,19 @@ def is_in_memory(raster_or_vector):
     assert isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)), &#34;raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource.&#34;
 
     if isinstance(raster_or_vector, str):
-        if raster_or_vector.startswith(&#34;/vsimem/&#34;):
+        if core_utils.is_valid_mem_path(raster_or_vector):
             return True
 
         return False
 
     elif isinstance(raster_or_vector, (gdal.Dataset, ogr.DataSource)):
-        driver_short_name = raster_or_vector.GetDriver().ShortName
+        driver = raster_or_vector.GetDriver()
+        driver_short_name = None
+        try:
+            driver_short_name = driver.GetName()
+        except Exception:
+            driver_short_name = driver.ShortName
+
         if driver_short_name== &#34;MEM&#34;:
             return True
 
@@ -257,7 +264,7 @@ def is_in_memory(raster_or_vector):
         if driver_short_name == &#34;VirtualOGR&#34;:
             return True
 
-        if raster_or_vector.GetDescription().startswith(&#34;/vsimem/&#34;):
+        if core_utils.is_valid_mem_path(raster_or_vector.GetDescription()):
             return True
 
         return False
@@ -276,14 +283,44 @@ def delete_if_in_memory(raster_or_vector):
     ## Returns:
     (_bool_): **True** if the vector is deleted, **False** otherwise.
     &#34;&#34;&#34;
-    assert isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)), &#34;raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource.&#34;
+    if not isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)):
+        return False
+
+    path = get_path_from_dataset(raster_or_vector)
 
     if is_in_memory(raster_or_vector):
         if isinstance(raster_or_vector, str):
             gdal.Unlink(raster_or_vector)
         else:
             raster_or_vector.Destroy()
+            raster_or_vector = None
 
+            gdal.Unlink(path)
+
+        datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
+        if path not in datasets:
+            return True
+
+    return False
+
+
+def delete_if_in_memory_list(list_of_raster_or_vectors):
+    &#34;&#34;&#34;
+    Deletes a list of raster or vector if they are in memory
+
+    ## Args:
+    `list_of_raster_or_vectors` (_list_): The vector(s) or raster(s) to check.
+
+    ## Returns:
+    (_bool_): **True** if they were all deleted, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(list_of_raster_or_vectors, list), &#34;list_of_raster_or_vectors must be a list.&#34;
+
+    deleted = []
+    for raster_or_vector in list_of_raster_or_vectors:
+        deleted.append(delete_if_in_memory(raster_or_vector))
+
+    if any(deleted):
         return True
 
     return False
@@ -359,7 +396,7 @@ def is_vector_empty(vector):
             feature_count = layer.GetFeatureCount()
 
             for feature in range(0, feature_count):
-                feature = layer.GetFeature(feature)
+                feature = layer.GetNextFeature()
 
                 if feature.GetGeometryRef() is not None:
                     return False
@@ -369,7 +406,7 @@ def is_vector_empty(vector):
 
 def get_gdal_memory():
     &#34;&#34;&#34; Get at list of all active memory layers in GDAL. &#34;&#34;&#34;
-    datasets = [ds.name for ds in gdal.listdir(&#39;/vsimem&#39;)]
+    datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
     return datasets
 
 
@@ -383,7 +420,7 @@ def clear_gdal_memory():
     if len(get_gdal_memory()) != 0:
         for dataset in get_gdal_memory():
             opened = None
-            mem_path = &#34;/vsimem/&#34; + dataset
+            mem_path = PurePosixPath(&#34;/vsimem&#34;, dataset).as_posix()
             if is_raster(mem_path):
                 opened = gdal.Open(mem_path)
             elif is_raster(mem_path):
@@ -408,24 +445,6 @@ def gdal_print_memory():
         print(dataset)
 
 
-def is_path_in_memory(path):
-    &#34;&#34;&#34;
-    Check if a path is in memory.
-
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
-
-    ## Returns:
-    (_bool_): **True** if the path is in memory, **False** otherwise.
-    &#34;&#34;&#34;
-    core_utils.is_valid_file_path(path)
-
-    if path.startswith(&#34;/vsimem&#34;):
-        return True
-
-    return False
-
-
 def is_raster(potential_raster, *, empty_is_invalid=True):
     &#34;&#34;&#34;Checks if a variable is a valid raster.
 
@@ -438,9 +457,8 @@ def is_raster(potential_raster, *, empty_is_invalid=True):
     ## Returns:
     (_bool_): **True** if the variable is a valid raster, **False** otherwise.
     &#34;&#34;&#34;
-
     if isinstance(potential_raster, str):
-        if not core_utils.file_exists(potential_raster) and not is_path_in_memory(potential_raster):
+        if not core_utils.file_exists(potential_raster) and not core_utils.is_valid_mem_path(potential_raster):
             return False
 
         try:
@@ -619,12 +637,12 @@ def create_memory_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=T
     &#34;&#34;&#34;
     assert isinstance(path, str), f&#34;path must be a string. Received: {path}&#34;
     assert len(path) &gt; 0, f&#34;path must not be empty. Received: {path}&#34;
-    assert not path.startswith(&#34;/vsimem&#34;), f&#34;path must not already be in memory. Received: {path}&#34;
+    assert not core_utils.is_valid_mem_path(path), f&#34;path must not be a valid memory path. Received: {path}&#34;
 
     basename = os.path.basename(path)
 
     return core_utils.get_augmented_path(
-        f&#34;/vsimem/{basename}&#34;,
+        PurePosixPath(&#34;/vsimem&#34;, basename).as_posix(),
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
@@ -776,22 +794,19 @@ def parse_projection(projection, *, return_wkt=False):
         target_proj = projection
 
     elif isinstance(projection, str):
-        ref = gdal.Open(projection, 0)
-
-        if ref is not None:
+        if is_raster(projection):
+            ref = gdal.Open(projection, 0)
             target_proj.ImportFromWkt(ref.GetProjection())
-        else:
+        elif is_vector(projection):
             ref = ogr.Open(projection, 0)
-
-            if ref is not None:
-                layer = ref.GetLayer()
-                target_proj = layer.GetSpatialRef()
-            else:
-                code = target_proj.ImportFromWkt(projection)
+            layer = ref.GetLayer()
+            target_proj = layer.GetSpatialRef()
+        else:
+            code = target_proj.ImportFromWkt(projection)
+            if code != 0:
+                code = target_proj.ImportFromProj4(projection)
                 if code != 0:
-                    code = target_proj.ImportFromProj4(projection)
-                    if code != 0:
-                        raise ValueError(err_msg)
+                    raise ValueError(err_msg)
 
     elif isinstance(projection, int):
         code = target_proj.ImportFromEPSG(projection)
@@ -813,6 +828,54 @@ def parse_projection(projection, *, return_wkt=False):
         return target_proj
     else:
         raise ValueError(err_msg)
+
+
+def projections_match(source1, source2):
+    &#34;&#34;&#34;
+    Tests if two projection sources have the same projection.
+
+    ## Args:
+    `source1` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The first projection to parse.
+    `source1` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The second projection to parse.
+
+    ## Returns:
+    (_bool_): **True** if the projections match, **False** otherwise.
+    &#34;&#34;&#34;
+    proj1 = parse_projection(source1)
+    proj2 = parse_projection(source2)
+
+    if proj1.IsSame(proj2):
+        return True
+    elif proj1.ExportToProj4() == proj2.ExportToProj4():
+        return True
+
+    return False
+
+
+def projections_match_list(list_of_projection_sources):
+    &#34;&#34;&#34;
+    Tests if a list of projection sources all have the same projection.
+
+    ## Args:
+    `list_of_projection_sources` (_list_): A list of projections to test.
+
+    ## Returns:
+    (_bool_): **True** if the projections match, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(list_of_projection_sources, list), &#34;list_of_projection_sources must be a list.&#34;
+    assert len(list_of_projection_sources) &gt; 1, &#34;The list &#39;list_of_projection_sources&#39; must be a list of len &gt; 1&#34;
+
+    first = None
+    for index, source in enumerate(list_of_projection_sources):
+        if index == 0:
+            first = parse_projection(source)
+        else:
+            compare = parse_projection(source)
+
+            if not first.IsSame(compare) and first.ExportToProj4() != compare.ExportToProj4():
+                return False
+
+    return True
 
 
 def parse_raster_size(target, *, target_in_pixels=False):
@@ -1027,9 +1090,8 @@ def create_output_path(
 ):
     &#34;&#34;&#34;
     Prepares a raster/vector for writing. Generates an output path. If no output path is
-    specified, the raster is written to memory. If a folder is given, the output directory is chosen
-    is the input filename. If a specific path is used it must be the same length as the
-    input.
+    specified, the raster is written to memory. If a folder is given, that output directory is used
+    along with the input filename.
 
     ## Args:
     `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_): A **GDAL** or **OGR** dataframe, a name (with extension) of a raster &lt;/br&gt;
@@ -1071,7 +1133,7 @@ def create_output_path(
             prefix=prefix,
             suffix=suffix,
             add_uuid=add_uuid,
-            folder=&#34;/vsimem/&#34;,
+            folder=&#34;/vsimem&#34;,
         )
     elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
         aug_path = core_utils.get_augmented_path(
@@ -1080,6 +1142,14 @@ def create_output_path(
             suffix=suffix,
             add_uuid=add_uuid,
             folder=core_utils.path_to_folder(out_path),
+        )
+    elif core_utils.is_valid_mem_path(out_path):
+        aug_path = core_utils.get_augmented_path(
+            os.path.basename(dataset_path),
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            folder=&#34;/vsimem&#34;,
         )
     else:
         raise ValueError(&#34;out_path must be a valid path or a list of valid paths.&#34;)
@@ -1100,8 +1170,8 @@ def create_output_path_list(
 ):
     &#34;&#34;&#34;
     Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
-    specified, the rasters are written to memory. If a folder is given, the output directory is chosen
-    are the input filenames remain the same. If a specific path is used it must be the same length as the
+    specified, the rasters are written to memory. If a folder is given, the output directory is chosen,
+    the input filenames remain the same. If a specific path is used it must be the same length as the
     input.
 
     ## Args:
@@ -1284,7 +1354,7 @@ def save_dataset_to_memory(
     if len(get_gdal_memory()) != 0:
         for dataset in get_gdal_memory():
             opened = None
-            mem_path = &#34;/vsimem/&#34; + dataset
+            mem_path = PurePosixPath(&#34;/vsimem&#34;, dataset).as_posix()
             if is_raster(mem_path):
                 opened = gdal.Open(mem_path)
             elif is_raster(mem_path):
@@ -1385,12 +1455,12 @@ def save_dataset_to_memory(
     &#34;&#34;&#34;
     assert isinstance(path, str), f&#34;path must be a string. Received: {path}&#34;
     assert len(path) &gt; 0, f&#34;path must not be empty. Received: {path}&#34;
-    assert not path.startswith(&#34;/vsimem&#34;), f&#34;path must not already be in memory. Received: {path}&#34;
+    assert not core_utils.is_valid_mem_path(path), f&#34;path must not be a valid memory path. Received: {path}&#34;
 
     basename = os.path.basename(path)
 
     return core_utils.get_augmented_path(
-        f&#34;/vsimem/{basename}&#34;,
+        PurePosixPath(&#34;/vsimem&#34;, basename).as_posix(),
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
@@ -1403,9 +1473,8 @@ def save_dataset_to_memory(
 </code></dt>
 <dd>
 <div class="desc"><p>Prepares a raster/vector for writing. Generates an output path. If no output path is
-specified, the raster is written to memory. If a folder is given, the output directory is chosen
-is the input filename. If a specific path is used it must be the same length as the
-input.</p>
+specified, the raster is written to memory. If a folder is given, that output directory is used
+along with the input filename.</p>
 <h2 id="args">Args:</h2>
 <p><code>dataset_path</code> (<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>str</em>): A <strong>GDAL</strong> or <strong>OGR</strong> dataframe, a name (with extension) of a raster </br></p>
 <h2 id="kwargs">Kwargs:</h2>
@@ -1431,9 +1500,8 @@ input.</p>
 ):
     &#34;&#34;&#34;
     Prepares a raster/vector for writing. Generates an output path. If no output path is
-    specified, the raster is written to memory. If a folder is given, the output directory is chosen
-    is the input filename. If a specific path is used it must be the same length as the
-    input.
+    specified, the raster is written to memory. If a folder is given, that output directory is used
+    along with the input filename.
 
     ## Args:
     `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_): A **GDAL** or **OGR** dataframe, a name (with extension) of a raster &lt;/br&gt;
@@ -1475,7 +1543,7 @@ input.</p>
             prefix=prefix,
             suffix=suffix,
             add_uuid=add_uuid,
-            folder=&#34;/vsimem/&#34;,
+            folder=&#34;/vsimem&#34;,
         )
     elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
         aug_path = core_utils.get_augmented_path(
@@ -1484,6 +1552,14 @@ input.</p>
             suffix=suffix,
             add_uuid=add_uuid,
             folder=core_utils.path_to_folder(out_path),
+        )
+    elif core_utils.is_valid_mem_path(out_path):
+        aug_path = core_utils.get_augmented_path(
+            os.path.basename(dataset_path),
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            folder=&#34;/vsimem&#34;,
         )
     else:
         raise ValueError(&#34;out_path must be a valid path or a list of valid paths.&#34;)
@@ -1498,8 +1574,8 @@ input.</p>
 </code></dt>
 <dd>
 <div class="desc"><p>Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
-specified, the rasters are written to memory. If a folder is given, the output directory is chosen
-are the input filenames remain the same. If a specific path is used it must be the same length as the
+specified, the rasters are written to memory. If a folder is given, the output directory is chosen,
+the input filenames remain the same. If a specific path is used it must be the same length as the
 input.</p>
 <h2 id="args">Args:</h2>
 <p><code>dataset_path</code> (<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>str</em>/_list__): A <strong>GDAL</strong> or <strong>OGR</strong> dataframe, a path to a raster or a list of same. </br></p>
@@ -1526,8 +1602,8 @@ input.</p>
 ):
     &#34;&#34;&#34;
     Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
-    specified, the rasters are written to memory. If a folder is given, the output directory is chosen
-    are the input filenames remain the same. If a specific path is used it must be the same length as the
+    specified, the rasters are written to memory. If a folder is given, the output directory is chosen,
+    the input filenames remain the same. If a specific path is used it must be the same length as the
     input.
 
     ## Args:
@@ -1655,14 +1731,57 @@ input.</p>
     ## Returns:
     (_bool_): **True** if the vector is deleted, **False** otherwise.
     &#34;&#34;&#34;
-    assert isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)), &#34;raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource.&#34;
+    if not isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)):
+        return False
+
+    path = get_path_from_dataset(raster_or_vector)
 
     if is_in_memory(raster_or_vector):
         if isinstance(raster_or_vector, str):
             gdal.Unlink(raster_or_vector)
         else:
             raster_or_vector.Destroy()
+            raster_or_vector = None
 
+            gdal.Unlink(path)
+
+        datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
+        if path not in datasets:
+            return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.delete_if_in_memory_list"><code class="name flex">
+<span>def <span class="ident">delete_if_in_memory_list</span></span>(<span>list_of_raster_or_vectors)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Deletes a list of raster or vector if they are in memory</p>
+<h2 id="args">Args:</h2>
+<p><code>list_of_raster_or_vectors</code> (<em>list</em>): The vector(s) or raster(s) to check.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if they were all deleted, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def delete_if_in_memory_list(list_of_raster_or_vectors):
+    &#34;&#34;&#34;
+    Deletes a list of raster or vector if they are in memory
+
+    ## Args:
+    `list_of_raster_or_vectors` (_list_): The vector(s) or raster(s) to check.
+
+    ## Returns:
+    (_bool_): **True** if they were all deleted, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(list_of_raster_or_vectors, list), &#34;list_of_raster_or_vectors must be a list.&#34;
+
+    deleted = []
+    for raster_or_vector in list_of_raster_or_vectors:
+        deleted.append(delete_if_in_memory(raster_or_vector))
+
+    if any(deleted):
         return True
 
     return False</code></pre>
@@ -1734,7 +1853,7 @@ input.</p>
 </summary>
 <pre><code class="python">def get_gdal_memory():
     &#34;&#34;&#34; Get at list of all active memory layers in GDAL. &#34;&#34;&#34;
-    datasets = [ds.name for ds in gdal.listdir(&#39;/vsimem&#39;)]
+    datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
     return datasets</code></pre>
 </details>
 </dd>
@@ -1928,13 +2047,19 @@ input.</p>
     assert isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)), &#34;raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource.&#34;
 
     if isinstance(raster_or_vector, str):
-        if raster_or_vector.startswith(&#34;/vsimem/&#34;):
+        if core_utils.is_valid_mem_path(raster_or_vector):
             return True
 
         return False
 
     elif isinstance(raster_or_vector, (gdal.Dataset, ogr.DataSource)):
-        driver_short_name = raster_or_vector.GetDriver().ShortName
+        driver = raster_or_vector.GetDriver()
+        driver_short_name = None
+        try:
+            driver_short_name = driver.GetName()
+        except Exception:
+            driver_short_name = driver.ShortName
+
         if driver_short_name== &#34;MEM&#34;:
             return True
 
@@ -1947,44 +2072,13 @@ input.</p>
         if driver_short_name == &#34;VirtualOGR&#34;:
             return True
 
-        if raster_or_vector.GetDescription().startswith(&#34;/vsimem/&#34;):
+        if core_utils.is_valid_mem_path(raster_or_vector.GetDescription()):
             return True
 
         return False
 
     else:
         raise TypeError(&#34;vector_or_raster must be a string, ogr.DataSource, or gdal.Dataset&#34;)</code></pre>
-</details>
-</dd>
-<dt id="buteo.utils.gdal_utils.is_path_in_memory"><code class="name flex">
-<span>def <span class="ident">is_path_in_memory</span></span>(<span>path)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Check if a path is in memory.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the file. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the path is in memory, <strong>False</strong> otherwise.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def is_path_in_memory(path):
-    &#34;&#34;&#34;
-    Check if a path is in memory.
-
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
-
-    ## Returns:
-    (_bool_): **True** if the path is in memory, **False** otherwise.
-    &#34;&#34;&#34;
-    core_utils.is_valid_file_path(path)
-
-    if path.startswith(&#34;/vsimem&#34;):
-        return True
-
-    return False</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.gdal_utils.is_raster"><code class="name flex">
@@ -2014,9 +2108,8 @@ input.</p>
     ## Returns:
     (_bool_): **True** if the variable is a valid raster, **False** otherwise.
     &#34;&#34;&#34;
-
     if isinstance(potential_raster, str):
-        if not core_utils.file_exists(potential_raster) and not is_path_in_memory(potential_raster):
+        if not core_utils.file_exists(potential_raster) and not core_utils.is_valid_mem_path(potential_raster):
             return False
 
         try:
@@ -2378,7 +2471,7 @@ input.</p>
             feature_count = layer.GetFeatureCount()
 
             for feature in range(0, feature_count):
-                feature = layer.GetFeature(feature)
+                feature = layer.GetNextFeature()
 
                 if feature.GetGeometryRef() is not None:
                     return False
@@ -2468,22 +2561,19 @@ an osr.SpatialReference.</p>
         target_proj = projection
 
     elif isinstance(projection, str):
-        ref = gdal.Open(projection, 0)
-
-        if ref is not None:
+        if is_raster(projection):
+            ref = gdal.Open(projection, 0)
             target_proj.ImportFromWkt(ref.GetProjection())
-        else:
+        elif is_vector(projection):
             ref = ogr.Open(projection, 0)
-
-            if ref is not None:
-                layer = ref.GetLayer()
-                target_proj = layer.GetSpatialRef()
-            else:
-                code = target_proj.ImportFromWkt(projection)
+            layer = ref.GetLayer()
+            target_proj = layer.GetSpatialRef()
+        else:
+            code = target_proj.ImportFromWkt(projection)
+            if code != 0:
+                code = target_proj.ImportFromProj4(projection)
                 if code != 0:
-                    code = target_proj.ImportFromProj4(projection)
-                    if code != 0:
-                        raise ValueError(err_msg)
+                    raise ValueError(err_msg)
 
     elif isinstance(projection, int):
         code = target_proj.ImportFromEPSG(projection)
@@ -2720,6 +2810,81 @@ an osr.SpatialReference.</p>
         return gdal_enums.convert_vector_extension_to_driver_shortname(ext)
 
     raise ValueError(f&#34;Unable to parse GDAL or OGR driver from path: {file_path}&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.projections_match"><code class="name flex">
+<span>def <span class="ident">projections_match</span></span>(<span>source1, source2)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Tests if two projection sources have the same projection.</p>
+<h2 id="args">Args:</h2>
+<p><code>source1</code> (<em>str</em>/<em>int</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>osr.SpatialReference</em>): The first projection to parse.
+<code>source1</code> (<em>str</em>/<em>int</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>osr.SpatialReference</em>): The second projection to parse.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the projections match, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def projections_match(source1, source2):
+    &#34;&#34;&#34;
+    Tests if two projection sources have the same projection.
+
+    ## Args:
+    `source1` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The first projection to parse.
+    `source1` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The second projection to parse.
+
+    ## Returns:
+    (_bool_): **True** if the projections match, **False** otherwise.
+    &#34;&#34;&#34;
+    proj1 = parse_projection(source1)
+    proj2 = parse_projection(source2)
+
+    if proj1.IsSame(proj2):
+        return True
+    elif proj1.ExportToProj4() == proj2.ExportToProj4():
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.projections_match_list"><code class="name flex">
+<span>def <span class="ident">projections_match_list</span></span>(<span>list_of_projection_sources)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Tests if a list of projection sources all have the same projection.</p>
+<h2 id="args">Args:</h2>
+<p><code>list_of_projection_sources</code> (<em>list</em>): A list of projections to test.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the projections match, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def projections_match_list(list_of_projection_sources):
+    &#34;&#34;&#34;
+    Tests if a list of projection sources all have the same projection.
+
+    ## Args:
+    `list_of_projection_sources` (_list_): A list of projections to test.
+
+    ## Returns:
+    (_bool_): **True** if the projections match, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(list_of_projection_sources, list), &#34;list_of_projection_sources must be a list.&#34;
+    assert len(list_of_projection_sources) &gt; 1, &#34;The list &#39;list_of_projection_sources&#39; must be a list of len &gt; 1&#34;
+
+    first = None
+    for index, source in enumerate(list_of_projection_sources):
+        if index == 0:
+            first = parse_projection(source)
+        else:
+            compare = parse_projection(source)
+
+            if not first.IsSame(compare) and first.ExportToProj4() != compare.ExportToProj4():
+                return False
+
+    return True</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.gdal_utils.save_dataset_to_disk"><code class="name flex">
@@ -2999,6 +3164,7 @@ an osr.SpatialReference.</p>
 <li><code><a title="buteo.utils.gdal_utils.create_output_path_list" href="#buteo.utils.gdal_utils.create_output_path_list">create_output_path_list</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.default_creation_options" href="#buteo.utils.gdal_utils.default_creation_options">default_creation_options</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.delete_if_in_memory" href="#buteo.utils.gdal_utils.delete_if_in_memory">delete_if_in_memory</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.delete_if_in_memory_list" href="#buteo.utils.gdal_utils.delete_if_in_memory_list">delete_if_in_memory_list</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.delete_raster_or_vector" href="#buteo.utils.gdal_utils.delete_raster_or_vector">delete_raster_or_vector</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.gdal_print_memory" href="#buteo.utils.gdal_utils.gdal_print_memory">gdal_print_memory</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.get_gdal_memory" href="#buteo.utils.gdal_utils.get_gdal_memory">get_gdal_memory</a></code></li>
@@ -3006,7 +3172,6 @@ an osr.SpatialReference.</p>
 <li><code><a title="buteo.utils.gdal_utils.get_path_from_dataset" href="#buteo.utils.gdal_utils.get_path_from_dataset">get_path_from_dataset</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.get_path_from_dataset_list" href="#buteo.utils.gdal_utils.get_path_from_dataset_list">get_path_from_dataset_list</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.is_in_memory" href="#buteo.utils.gdal_utils.is_in_memory">is_in_memory</a></code></li>
-<li><code><a title="buteo.utils.gdal_utils.is_path_in_memory" href="#buteo.utils.gdal_utils.is_path_in_memory">is_path_in_memory</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.is_raster" href="#buteo.utils.gdal_utils.is_raster">is_raster</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.is_raster_empty" href="#buteo.utils.gdal_utils.is_raster_empty">is_raster_empty</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.is_raster_list" href="#buteo.utils.gdal_utils.is_raster_list">is_raster_list</a></code></li>
@@ -3023,6 +3188,8 @@ an osr.SpatialReference.</p>
 <li><code><a title="buteo.utils.gdal_utils.path_to_driver" href="#buteo.utils.gdal_utils.path_to_driver">path_to_driver</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.path_to_driver_raster" href="#buteo.utils.gdal_utils.path_to_driver_raster">path_to_driver_raster</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.path_to_driver_vector" href="#buteo.utils.gdal_utils.path_to_driver_vector">path_to_driver_vector</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.projections_match" href="#buteo.utils.gdal_utils.projections_match">projections_match</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.projections_match_list" href="#buteo.utils.gdal_utils.projections_match_list">projections_match_list</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.save_dataset_to_disk" href="#buteo.utils.gdal_utils.save_dataset_to_disk">save_dataset_to_disk</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.save_dataset_to_memory" href="#buteo.utils.gdal_utils.save_dataset_to_memory">save_dataset_to_memory</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.to_array_list" href="#buteo.utils.gdal_utils.to_array_list">to_array_list</a></code></li>
