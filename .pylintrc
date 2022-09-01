@@ -7,3 +7,4 @@ disable=multiple-statements,
         isinstance-second-argument-not-valid-type,
         line-too-long,
         protected-access,
+        not-an-iterable
