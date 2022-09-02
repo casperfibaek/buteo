@@ -9,8 +9,8 @@ Documentation available at: https://casperfibaek.github.io/buteo/
 `gdal` (https://gdal.org/) </br>
 
 **Installation** </br>
-`conda install buteo --channel casperfibaek` </br>
 `pip install buteo` </br>
+`conda install buteo --channel casperfibaek` </br>
 
 **Quickstart**
 ```python
@@ -78,7 +78,6 @@ Modules:
 - machine learning utilities library: rotate images, add noise etc..
 - model for building extraction for sentinel 1 and 2
 - model for pansharpening sentinel 2
-- model for noise reduction sentinel 1
 
 ## extra
 

@@ -5,10 +5,6 @@ package:
 source:
   path: ./
 
-# source:
-  git_rev: "0.7.4"
-#   git_url: https://github.com/casperfibaek/buteo.git
-
 build:
   number: 0
   script: "$PYTHON -m pip install . --no-deps --ignore-installed -vv "
@@ -30,6 +26,6 @@ test:
 about:
   home: https://github.com/casperfibaek/buteo/
   license: MIT
-  license_familY: MIT
+  license_family: MIT
   license_file: LICENSE
   summary: "GIS-thonic way of working with raster and vector data."
