@@ -80,7 +80,7 @@ def get_kernel(
     multi_dimensional_center=0,
     spherical=False,
     distance_weight=None,
-    distance_decay=0.25,
+    distance_decay=0.2,
     distance_sigma=1,
 ):
     """ Get a square kernel for convolutions.
@@ -92,6 +92,9 @@ def get_kernel(
     assert isinstance(size, int), "Kernel must be an integer."
     assert depth >= 1, "Depth must be a positive integer"
     assert isinstance(depth, int), "Depth must be an integer."
+
+    if distance_weight is False:
+        distance_weight = None
 
     quadrant = np.zeros((1 + size // 2, 1 + size // 2, depth), dtype="float32")
 
@@ -162,13 +165,17 @@ def get_kernel(
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_max(values, weights):
     "Get the weighted maximum"
-    return np.max(np.multiply(values, weights))
+    idx = np.argmax(np.multiply(values, weights))
+    return values[idx]
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_min(values, weights):
     "Get the weighted minimum"
-    return np.min(np.multiply(values, weights))
+    max_val = values.max()
+    adjusted_values = np.where(weights == 0.0, max_val, values)
+    idx = np.argmin(np.divide(adjusted_values, weights + 1e-7))
+    return values[idx]
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
@@ -196,18 +203,23 @@ def hood_standard_deviation(values, weights):
     return np.sqrt(variance)
 
 
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True)
-def convolve_array(arr, offsets, weights, method="sum", nodata=False, nodata_value=-9999.9):
+# @jit(nopython=True, parallel=True, nogil=True)
+def convolve_array(arr, offsets, weights, method="sum", nodata=False, nodata_value=-9999.9, pad=False, pad_size=1, pad_type="edge"):
     """ Convolve an image with a function. """
+
+    if pad:
+        arr = np.pad(arr, pad_size, mode=pad_type)
+
     x_adj = arr.shape[0] - 1
     y_adj = arr.shape[1] - 1
     z_adj = (arr.shape[2] - 1) // 2
 
     hood_size = len(offsets)
+
     result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype="float32")
 
     for idx_x in prange(arr.shape[0]):
-        for idx_y in range(arr.shape[1]):
+        for idx_y in prange(arr.shape[1]):
 
             hood_values = np.zeros(hood_size, dtype="float32")
             hood_weights = np.zeros(hood_size, dtype="float32")
@@ -257,7 +269,7 @@ def convolve_array(arr, offsets, weights, method="sum", nodata=False, nodata_val
                     hood_weights[idx_n] = weight
                     weight_sum[0] += weight
 
-            if normalise:
+            if normalise and weight_sum[0] > 0.0:
                 hood_weights = np.divide(hood_weights, weight_sum[0])
 
             if method == "sum":
@@ -272,5 +284,12 @@ def convolve_array(arr, offsets, weights, method="sum", nodata=False, nodata_val
                 result[idx_x, idx_y, 0] = hood_standard_deviation(hood_values, hood_weights)
             else:
                 raise ValueError("Unknown method passed to convolver")
+
+    if pad:
+        return result[
+            pad_size:-pad_size,
+            pad_size:-pad_size,
+            :,
+        ]
 
     return result

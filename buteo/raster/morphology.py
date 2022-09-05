@@ -6,20 +6,62 @@
 import sys; sys.path.append("../../")
 
 # Internal
-from buteo.raster.core_raster import raster_to_array, array_to_raster
 from buteo.raster.convolution import get_kernel, convolve_array
 
 
-kernel, weights, offsets  = get_kernel(5, 3, spherical=True, normalise=False)
-import pdb; pdb.set_trace()
+def morph_erode(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+    """ Erode an array by taking the local minimum. """
+
+    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    return convolve_array(arr, offsets, weights, method="min")
 
 
-def erode_array(arr, size, spherical=True):
-    kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=True, normalise=False)
+def morph_dilate(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+    """ Dilate an array by taking the local maximum. """
 
-# Erode: local minimum
-# Dilate: local maximum
-# Open: Erode -> Dilate
-# Close: Dilate -> Close
-# Hats
-# Textures
+    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    return convolve_array(arr, offsets, weights, method="max")
+
+
+def morph_open(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+    """ Perform the open mortholigical operation on an array. """
+
+    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    eroded = convolve_array(arr, offsets, weights, method="min")
+    return convolve_array(eroded, offsets, weights, method="max")
+
+
+def morph_close(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+    """ Perform the close morphological operation on an array. """
+
+    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    dilate = convolve_array(arr, offsets, weights, method="max")
+    return convolve_array(dilate, offsets, weights, method="min")
+
+
+def morph_tophat(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+    """ Perform the top_hat morphological operation on the array. """
+
+    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    eroded = convolve_array(arr, offsets, weights, method="min")
+    opened = convolve_array(eroded, offsets, weights, method="max")
+    return arr - opened
+
+
+def morph_bothat(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+    """ Perform the bottom_hat morphological operation on the array. """
+
+    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    dilated = convolve_array(arr, offsets, weights, method="max")
+    closed = convolve_array(dilated, offsets, weights, method="min")
+    return closed - arr
+
+
+def morph_difference(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+    """ Perform the difference morphological operation on the array. """
+
+    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    erode = convolve_array(arr, offsets, weights, method="min")
+    dilate = convolve_array(arr, offsets, weights, method="max")
+
+    return dilate - erode
