@@ -17,6 +17,7 @@ DEFAULT_WEIGHT = None
 DEFAULT_DECAY = 0.2
 DEFAULT_SIGMA = 1.0
 
+
 def adjust_kernel(
     kernel,
     spherical=DEFAULT_SPHERICAL,
@@ -43,11 +44,18 @@ def adjust_kernel(
         kernel_post = np.abs(kernel).sum()
 
         kernel = kernel * (kernel_pre / kernel_post)
-    
+
     return kernel
 
 
-def get_sobel_kernel(size=3, scale=1, spherical=DEFAULT_SPHERICAL, distance_weight=DEFAULT_WEIGHT, distance_decay=DEFAULT_DECAY, distance_sigma=DEFAULT_SIGMA):
+def get_sobel_kernel(
+    size=3,
+    scale=1,
+    spherical=DEFAULT_SPHERICAL,
+    distance_weight=DEFAULT_WEIGHT,
+    distance_decay=DEFAULT_DECAY,
+    distance_sigma=DEFAULT_SIGMA,
+):
     """ Get a sobel kernel of arbitrary size. """
 
     assert size % 2 != 0
@@ -66,8 +74,20 @@ def get_sobel_kernel(size=3, scale=1, spherical=DEFAULT_SPHERICAL, distance_weig
     gx = gx * scale
     gy = gy * scale
 
-    gx = adjust_kernel(gx, spherical=spherical, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
-    gy = adjust_kernel(gy, spherical=spherical, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    gx = adjust_kernel(
+        gx,
+        spherical=spherical,
+        distance_weight=distance_weight,
+        distance_decay=distance_decay,
+        distance_sigma=distance_sigma,
+    )
+    gy = adjust_kernel(
+        gy,
+        spherical=spherical,
+        distance_weight=distance_weight,
+        distance_decay=distance_decay,
+        distance_sigma=distance_sigma,
+    )
 
     weights_x = []
     weights_y = []
@@ -109,7 +129,13 @@ def get_sobel_kernel(size=3, scale=1, spherical=DEFAULT_SPHERICAL, distance_weig
     )
 
 
-def get_roberts_prewitt_kernel(roberts=True, spherical=DEFAULT_SPHERICAL, distance_weight=DEFAULT_WEIGHT, distance_decay=DEFAULT_DECAY, distance_sigma=DEFAULT_SIGMA):
+def get_roberts_prewitt_kernel(
+    roberts=True,
+    spherical=DEFAULT_SPHERICAL,
+    distance_weight=DEFAULT_WEIGHT,
+    distance_decay=DEFAULT_DECAY,
+    distance_sigma=DEFAULT_SIGMA,
+):
     """ Get a roberts cross or prewitt kernel, only available for size 2x2 and 3x3 """
 
     if roberts:
@@ -137,8 +163,20 @@ def get_roberts_prewitt_kernel(roberts=True, spherical=DEFAULT_SPHERICAL, distan
             [-1,-1,-1 ],
         ])[:, :, np.newaxis]
 
-    gx = adjust_kernel(gx, spherical=spherical, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
-    gy = adjust_kernel(gy, spherical=spherical, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    gx = adjust_kernel(
+        gx,
+        spherical=spherical,
+        distance_weight=distance_weight,
+        distance_decay=distance_decay,
+        distance_sigma=distance_sigma,
+    )
+    gy = adjust_kernel(
+        gy,
+        spherical=spherical,
+        distance_weight=distance_weight,
+        distance_decay=distance_decay,
+        distance_sigma=distance_sigma,
+    )
 
     weights_x = []
     weights_y = []
@@ -180,21 +218,21 @@ def get_roberts_prewitt_kernel(roberts=True, spherical=DEFAULT_SPHERICAL, distan
     )
 
 
-def get_roberts_kernel(spherical=DEFAULT_SPHERICAL, distance_weight=DEFAULT_WEIGHT, distance_decay=DEFAULT_DECAY, distance_sigma=DEFAULT_SIGMA):
-    """ Get a roberts cross kernel (2x2) """
-
-    return get_roberts_prewitt_kernel(roberts=True, spherical=spherical, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
-
-
-def get_prewitt_kernel(spherical=DEFAULT_SPHERICAL, distance_weight=DEFAULT_WEIGHT, distance_decay=DEFAULT_DECAY, distance_sigma=DEFAULT_SIGMA):
-    """ Get a prewitt kernel (3x3) """
-
-    return get_roberts_prewitt_kernel(roberts=False, spherical=spherical, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
-
-
-def edge_detection(arr, method, filter_size=3, spherical=DEFAULT_SPHERICAL, distance_weight=DEFAULT_WEIGHT, distance_decay=DEFAULT_DECAY, distance_sigma=DEFAULT_SIGMA, scale=1.0, merge_results=True, gradient_output=False, nodata=False, nodata_value=-9999.9):
+def edge_detection(
+    arr,
+    method,
+    filter_size=3,
+    spherical=DEFAULT_SPHERICAL,
+    distance_weight=DEFAULT_WEIGHT,
+    distance_decay=DEFAULT_DECAY,
+    distance_sigma=DEFAULT_SIGMA,
+    scale=1.0,
+    merge_results=True,
+    gradient_output=False,
+    nodata=False,
+    nodata_value=-9999.9,
+):
     """ Perform an detection method. """
-
 
     if method == "sobel":
         gx, gy = get_sobel_kernel(
@@ -206,14 +244,16 @@ def edge_detection(arr, method, filter_size=3, spherical=DEFAULT_SPHERICAL, dist
             distance_sigma=distance_sigma,
         )
     elif method == "roberts":
-        gx, gy = get_roberts_kernel(
+        gx, gy = get_roberts_prewitt_kernel(
+            roberts=True,
             spherical=spherical,
             distance_weight=distance_weight,
             distance_decay=distance_decay,
             distance_sigma=distance_sigma,
         )
     elif method == "prewitt":
-        gx, gy = get_prewitt_kernel(
+        gx, gy = get_roberts_prewitt_kernel(
+            roberts=False,
             spherical=spherical,
             distance_weight=distance_weight,
             distance_decay=distance_decay,
