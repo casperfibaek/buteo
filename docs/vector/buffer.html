@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>buteo.vector.clip API documentation</title>
+<title>buteo.vector.buffer API documentation</title>
 <meta name="description" content="Clip vectors to other geometries ### …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,7 +19,7 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>buteo.vector.clip</code></h1>
+<h1 class="title">Module <code>buteo.vector.buffer</code></h1>
 </header>
 <section id="section-intro">
 <h3 id="clip-vectors-to-other-geometries">Clip vectors to other geometries</h3>
@@ -38,89 +38,61 @@ Clip vector files with other geometries. Can come from rasters or vectors.
 import sys; sys.path.append(&#34;../../&#34;)
 
 # External
-from osgeo import ogr, gdal, osr
+from osgeo import ogr
 
 # Internal
-from buteo.utils import core_utils, gdal_utils
-from buteo.raster import core_raster
+from buteo.utils import gdal_utils, core_utils
 from buteo.vector import core_vector
 
 
-
-def _clip_vector(
-    vector,
-    clip_geom,
-    out_path=None,
-    *,
-    to_extent=False,
-    target_projection=None,
-    preserve_fid=True,
-):
+def _buffer_vector(vector, distance, out_path=None):
     &#34;&#34;&#34; Internal. &#34;&#34;&#34;
     if out_path is None:
         out_path = gdal_utils.create_memory_path(
             gdal_utils.get_path_from_dataset(vector),
             prefix=&#34;&#34;,
-            suffix=&#34;_clip&#34;,
+            suffix=&#34;_buffer&#34;,
             add_uuid=True,
         )
 
     assert core_utils.is_valid_output_path(out_path), &#34;Invalid output path&#34;
 
-    out_format = gdal_utils.get_path_from_dataset(out_path)
+    read = core_vector.open_vector(vector)
 
-    options = []
+    driver = ogr.GetDriverByName(gdal_utils.path_to_driver_vector(out_path))
+    destination = driver.CreateDataSource(out_path)
 
-    geometry_to_clip = None
-    if gdal_utils.is_vector(clip_geom):
-        if to_extent:
-            extent = core_vector._vector_to_metadata(clip_geom)[&#34;get_bbox_vector&#34;]() # pylint: disable=not-callable
-            geometry_to_clip = extent
+    vector_metadata = core_vector._vector_to_metadata(read)
+
+    for layer_idx in range(0, len(vector_metadata[&#34;layers&#34;])):
+        layer_name = vector_metadata[&#34;layers&#34;][layer_idx][&#34;layer_name&#34;]
+        vector_layer = read.GetLayer(layer_name)
+        destination.CopyLayer(vector_layer, layer_name, [&#34;OVERWRITE=YES&#34;])
+
+        field_names = vector_metadata[&#34;layers&#34;][layer_idx][&#34;field_names&#34;]
+        if isinstance(distance, str):
+            if distance not in field_names:
+                raise ValueError(f&#34;Attribute to buffer by not in vector field names: {distance} not in {field_names}&#34;)
+
+            sql = f&#34;update {layer_name} set geom=ST_Buffer(geom, {layer_name}.{distance})&#34;
         else:
-            geometry_to_clip = core_vector._open_vector(clip_geom)
-    elif gdal_utils.is_raster(clip_geom):
-        extent = core_raster._raster_to_metadata(clip_geom)[&#34;get_bbox_vector&#34;]() # pylint: disable=not-callable
-        geometry_to_clip = extent
-    else:
-        raise ValueError(f&#34;Invalid input in clip_geom, unable to parse: {clip_geom}&#34;)
+            sql = f&#34;update {layer_name} set geom=ST_Buffer(geom, {distance})&#34;
 
-    clip_vector_path = core_vector._vector_to_metadata(geometry_to_clip)[&#34;path&#34;]
-    options.append(f&#34;-clipsrc {clip_vector_path}&#34;)
+        destination.ExecuteSQL(sql, dialect=&#34;SQLITE&#34;)
 
-    if preserve_fid:
-        options.append(&#34;-preserve_fid&#34;)
-    else:
-        options.append(&#34;-unsetFid&#34;)
+    if destination is None:
+        raise Exception(&#34;Error while running intersect.&#34;)
 
-    out_projection = None
-    if target_projection is not None:
-        out_projection = gdal_utils.parse_projection(target_projection, return_wkt=True)
-        options.append(f&#34;-t_srs {out_projection}&#34;)
+    destination.FlushCache()
 
-    origin = core_vector._open_vector(vector)
-
-    # dst  # src
-    success = gdal.VectorTranslate(
-        out_path,
-        gdal_utils.get_path_from_dataset(origin),
-        format=out_format,
-        options=&#34; &#34;.join(options),
-    )
-
-    if success != 0:
-        return out_path
-    else:
-        raise Exception(&#34;Error while clipping geometry.&#34;)
+    return out_path
 
 
-def clip_vector(
+def buffer_vector(
     vector,
-    clip_geom,
+    distance,
     out_path=None,
     *,
-    to_extent=False,
-    target_projection=None,
-    preserve_fid=True,
     prefix=&#34;&#34;,
     suffix=&#34;&#34;,
     add_uuid=False,
@@ -128,17 +100,14 @@ def clip_vector(
     overwrite=True,
 ):
     &#34;&#34;&#34;
-    Clips a vector to a geometry.
+    Buffers a vector with a fixed distance
 
     ## Args:
-    `vector` (_str_/_ogr.DataSource_/_list_): Vector(s) to clip. &lt;/br&gt;
-    `clip_geom` (_str_/_ogr.Geometry_): Vector to clip with. &lt;/br&gt;
+    `vector` (_str_/_ogr.DataSource_/_list_): Vector(s) to buffer. &lt;/br&gt;
+    `distance` (_int_/_float_/_str_): The distance to buffer with. If string, uses the attribute of that name. &lt;/br&gt;
 
     ## Kwargs:
     `out_path` (_str_/_None_): Output path. If None, memory vectors are created. (Default: **None**) &lt;/br&gt;
-    `to_extent` (_bool_): Clip to extent. (Default: **False**) &lt;/br&gt;
-    `target_projection` (_str_/_ogr.DataSource_/_gdal.Dataset_/_osr.SpatialReference_/_int_/_None_): Target projection. (Default: **None**) &lt;/br&gt;
-    `preserve_fid` (_bool_): Preserve fid. (Default: **True**) &lt;/br&gt;
     `prefix` (_str_): Prefix to add to the output path. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): Suffix to add to the output path. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): Add UUID to the output path. (Default: **False**) &lt;/br&gt;
@@ -149,11 +118,8 @@ def clip_vector(
     (_str_/_list_): Output path(s) of clipped vector(s).
     &#34;&#34;&#34;
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], &#34;vector&#34;)
-    core_utils.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], &#34;clip_geom&#34;)
+    core_utils.type_check(distance, [int, float, str], &#34;distance&#34;)
     core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)
-    core_utils.type_check(to_extent, [bool], &#34;to_extent&#34;)
-    core_utils.type_check(target_projection, [str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int, None], &#34;target_projection&#34;)
-    core_utils.type_check(preserve_fid, [bool], &#34;preserve_fid&#34;)
     core_utils.type_check(prefix, [str], &#34;prefix&#34;)
     core_utils.type_check(suffix, [str], &#34;suffix&#34;)
     core_utils.type_check(add_uuid, [bool], &#34;add_uuid&#34;)
@@ -178,13 +144,10 @@ def clip_vector(
     output = []
     for index, in_vector in enumerate(vector_list):
         output.append(
-            _clip_vector(
+            _buffer_vector(
                 in_vector,
-                clip_geom,
+                distance,
                 out_path=path_list[index],
-                to_extent=to_extent,
-                target_projection=target_projection,
-                preserve_fid=preserve_fid,
             )
         )
 
@@ -201,19 +164,16 @@ def clip_vector(
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="buteo.vector.clip.clip_vector"><code class="name flex">
-<span>def <span class="ident">clip_vector</span></span>(<span>vector, clip_geom, out_path=None, *, to_extent=False, target_projection=None, preserve_fid=True, prefix='', suffix='', add_uuid=False, allow_lists=True, overwrite=True)</span>
+<dt id="buteo.vector.buffer.buffer_vector"><code class="name flex">
+<span>def <span class="ident">buffer_vector</span></span>(<span>vector, distance, out_path=None, *, prefix='', suffix='', add_uuid=False, allow_lists=True, overwrite=True)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Clips a vector to a geometry.</p>
+<div class="desc"><p>Buffers a vector with a fixed distance</p>
 <h2 id="args">Args:</h2>
-<p><code>vector</code> (<em>str</em>/<em>ogr.DataSource</em>/<em>list</em>): Vector(s) to clip. </br>
-<code>clip_geom</code> (<em>str</em>/<em>ogr.Geometry</em>): Vector to clip with. </br></p>
+<p><code>vector</code> (<em>str</em>/<em>ogr.DataSource</em>/<em>list</em>): Vector(s) to buffer. </br>
+<code>distance</code> (<em>int</em>/<em>float</em>/<em>str</em>): The distance to buffer with. If string, uses the attribute of that name. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>out_path</code> (<em>str</em>/<em>None</em>): Output path. If None, memory vectors are created. (Default: <strong>None</strong>) </br>
-<code>to_extent</code> (<em>bool</em>): Clip to extent. (Default: <strong>False</strong>) </br>
-<code>target_projection</code> (<em>str</em>/<em>ogr.DataSource</em>/<em>gdal.Dataset</em>/<em>osr.SpatialReference</em>/<em>int</em>/<em>None</em>): Target projection. (Default: <strong>None</strong>) </br>
-<code>preserve_fid</code> (<em>bool</em>): Preserve fid. (Default: <strong>True</strong>) </br>
 <code>prefix</code> (<em>str</em>): Prefix to add to the output path. (Default: <strong>""</strong>) </br>
 <code>suffix</code> (<em>str</em>): Suffix to add to the output path. (Default: <strong>""</strong>) </br>
 <code>add_uuid</code> (<em>bool</em>): Add UUID to the output path. (Default: <strong>False</strong>) </br>
@@ -225,14 +185,11 @@ def clip_vector(
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def clip_vector(
+<pre><code class="python">def buffer_vector(
     vector,
-    clip_geom,
+    distance,
     out_path=None,
     *,
-    to_extent=False,
-    target_projection=None,
-    preserve_fid=True,
     prefix=&#34;&#34;,
     suffix=&#34;&#34;,
     add_uuid=False,
@@ -240,17 +197,14 @@ def clip_vector(
     overwrite=True,
 ):
     &#34;&#34;&#34;
-    Clips a vector to a geometry.
+    Buffers a vector with a fixed distance
 
     ## Args:
-    `vector` (_str_/_ogr.DataSource_/_list_): Vector(s) to clip. &lt;/br&gt;
-    `clip_geom` (_str_/_ogr.Geometry_): Vector to clip with. &lt;/br&gt;
+    `vector` (_str_/_ogr.DataSource_/_list_): Vector(s) to buffer. &lt;/br&gt;
+    `distance` (_int_/_float_/_str_): The distance to buffer with. If string, uses the attribute of that name. &lt;/br&gt;
 
     ## Kwargs:
     `out_path` (_str_/_None_): Output path. If None, memory vectors are created. (Default: **None**) &lt;/br&gt;
-    `to_extent` (_bool_): Clip to extent. (Default: **False**) &lt;/br&gt;
-    `target_projection` (_str_/_ogr.DataSource_/_gdal.Dataset_/_osr.SpatialReference_/_int_/_None_): Target projection. (Default: **None**) &lt;/br&gt;
-    `preserve_fid` (_bool_): Preserve fid. (Default: **True**) &lt;/br&gt;
     `prefix` (_str_): Prefix to add to the output path. (Default: **&#34;&#34;**) &lt;/br&gt;
     `suffix` (_str_): Suffix to add to the output path. (Default: **&#34;&#34;**) &lt;/br&gt;
     `add_uuid` (_bool_): Add UUID to the output path. (Default: **False**) &lt;/br&gt;
@@ -261,11 +215,8 @@ def clip_vector(
     (_str_/_list_): Output path(s) of clipped vector(s).
     &#34;&#34;&#34;
     core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], &#34;vector&#34;)
-    core_utils.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], &#34;clip_geom&#34;)
+    core_utils.type_check(distance, [int, float, str], &#34;distance&#34;)
     core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)
-    core_utils.type_check(to_extent, [bool], &#34;to_extent&#34;)
-    core_utils.type_check(target_projection, [str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int, None], &#34;target_projection&#34;)
-    core_utils.type_check(preserve_fid, [bool], &#34;preserve_fid&#34;)
     core_utils.type_check(prefix, [str], &#34;prefix&#34;)
     core_utils.type_check(suffix, [str], &#34;suffix&#34;)
     core_utils.type_check(add_uuid, [bool], &#34;add_uuid&#34;)
@@ -290,13 +241,10 @@ def clip_vector(
     output = []
     for index, in_vector in enumerate(vector_list):
         output.append(
-            _clip_vector(
+            _buffer_vector(
                 in_vector,
-                clip_geom,
+                distance,
                 out_path=path_list[index],
-                to_extent=to_extent,
-                target_projection=target_projection,
-                preserve_fid=preserve_fid,
             )
         )
 
@@ -326,7 +274,7 @@ def clip_vector(
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="buteo.vector.clip.clip_vector" href="#buteo.vector.clip.clip_vector">clip_vector</a></code></li>
+<li><code><a title="buteo.vector.buffer.buffer_vector" href="#buteo.vector.buffer.buffer_vector">buffer_vector</a></code></li>
 </ul>
 </li>
 </ul>

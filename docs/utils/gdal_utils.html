@@ -226,6 +226,16 @@ def path_to_driver_raster(file_path):
     raise ValueError(f&#34;Unable to parse GDAL or OGR driver from path: {file_path}&#34;)
 
 
+def get_gdal_memory():
+    &#34;&#34;&#34; Get at list of all active memory layers in GDAL. &#34;&#34;&#34;
+    try:
+        datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
+    except: # pylint: disable=bare-except
+        datasets = [ds.name for ds in gdal.ReadDir(&#34;/vsimem&#34;)]
+
+    return datasets
+
+
 def is_in_memory(raster_or_vector):
     &#34;&#34;&#34;
     Check if vector is in memory
@@ -297,7 +307,7 @@ def delete_if_in_memory(raster_or_vector):
 
             gdal.Unlink(path)
 
-        datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
+        datasets = get_gdal_memory()
         if path not in datasets:
             return True
 
@@ -402,12 +412,6 @@ def is_vector_empty(vector):
                     return False
 
     return True
-
-
-def get_gdal_memory():
-    &#34;&#34;&#34; Get at list of all active memory layers in GDAL. &#34;&#34;&#34;
-    datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
-    return datasets
 
 
 def clear_gdal_memory():
@@ -806,7 +810,11 @@ def parse_projection(projection, *, return_wkt=False):
             if code != 0:
                 code = target_proj.ImportFromProj4(projection)
                 if code != 0:
-                    raise ValueError(err_msg)
+                    if projection.startswith(&#34;EPSG:&#34;) or projection.startswith(&#34;epsg:&#34;):
+                        epsg_code = int(projection.split(&#34;:&#34;)[1])
+                        code = target_proj.ImportFromEPSG(epsg_code)
+                        if code != 0:
+                            raise ValueError(err_msg)
 
     elif isinstance(projection, int):
         code = target_proj.ImportFromEPSG(projection)
@@ -924,8 +932,8 @@ def parse_raster_size(target, *, target_in_pixels=False):
                     )
             elif len(target) == 2:
                 if core_utils.is_number(target[0]) and core_utils.is_number(target[1]):
-                    x_pixels = int(target[0])
-                    y_pixels = int(target[1])
+                    x_pixels = int(target[1])
+                    y_pixels = int(target[0])
             else:
                 raise ValueError(&#34;target_size_pixels is either empty or larger than 2.&#34;)
         elif core_utils.is_number(target):
@@ -1189,6 +1197,9 @@ def create_output_path_list(
     &#34;&#34;&#34;
     assert isinstance(dataset_path, (list)), &#34;dataset_path must be a string or a list of strings.&#34;
     assert isinstance(out_path, (str, type(None))), &#34;out_path must be a string or None.&#34;
+
+    if isinstance(out_path, str) and core_utils.is_str_a_glob(out_path):
+        dataset_path = core_utils.parse_glob_path(out_path)
 
     assert len(dataset_path) &gt; 0, &#34;dataset_path must contain at least one path.&#34;
 
@@ -1622,6 +1633,9 @@ input.</p>
     assert isinstance(dataset_path, (list)), &#34;dataset_path must be a string or a list of strings.&#34;
     assert isinstance(out_path, (str, type(None))), &#34;out_path must be a string or None.&#34;
 
+    if isinstance(out_path, str) and core_utils.is_str_a_glob(out_path):
+        dataset_path = core_utils.parse_glob_path(out_path)
+
     assert len(dataset_path) &gt; 0, &#34;dataset_path must contain at least one path.&#34;
 
     if isinstance(out_path, list):
@@ -1745,7 +1759,7 @@ input.</p>
 
             gdal.Unlink(path)
 
-        datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
+        datasets = get_gdal_memory()
         if path not in datasets:
             return True
 
@@ -1853,7 +1867,11 @@ input.</p>
 </summary>
 <pre><code class="python">def get_gdal_memory():
     &#34;&#34;&#34; Get at list of all active memory layers in GDAL. &#34;&#34;&#34;
-    datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
+    try:
+        datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
+    except: # pylint: disable=bare-except
+        datasets = [ds.name for ds in gdal.ReadDir(&#34;/vsimem&#34;)]
+
     return datasets</code></pre>
 </details>
 </dd>
@@ -2573,7 +2591,11 @@ an osr.SpatialReference.</p>
             if code != 0:
                 code = target_proj.ImportFromProj4(projection)
                 if code != 0:
-                    raise ValueError(err_msg)
+                    if projection.startswith(&#34;EPSG:&#34;) or projection.startswith(&#34;epsg:&#34;):
+                        epsg_code = int(projection.split(&#34;:&#34;)[1])
+                        code = target_proj.ImportFromEPSG(epsg_code)
+                        if code != 0:
+                            raise ValueError(err_msg)
 
     elif isinstance(projection, int):
         code = target_proj.ImportFromEPSG(projection)
@@ -2658,8 +2680,8 @@ an osr.SpatialReference.</p>
                     )
             elif len(target) == 2:
                 if core_utils.is_number(target[0]) and core_utils.is_number(target[1]):
-                    x_pixels = int(target[0])
-                    y_pixels = int(target[1])
+                    x_pixels = int(target[1])
+                    y_pixels = int(target[0])
             else:
                 raise ValueError(&#34;target_size_pixels is either empty or larger than 2.&#34;)
         elif core_utils.is_number(target):

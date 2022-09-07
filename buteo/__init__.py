@@ -6,8 +6,8 @@
 `gdal` (https://gdal.org/) </br>
 
 **Installation** </br>
+`pip install buteo` </br>
 `conda install buteo --channel casperfibaek` </br>
-`pip install -i https://test.pypi.org/simple/ buteo` </br>
 
 **Quickstart**
 ```python
@@ -15,7 +15,7 @@ from glob import glob
 from buteo.raster import reproject_raster
 
 vector_file_with_correct_projection = 'path/to/vector/file.gpkg'
-raster_files_with_wrong_projection = glob('path/to/raster/files/*.tif')
+raster_files_with_wrong_projection = 'path/to/raster/files/*.tif:glob'
 
 outdir = 'path/to/output/dir'
 

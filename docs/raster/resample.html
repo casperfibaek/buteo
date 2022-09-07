@@ -41,6 +41,7 @@ import sys; sys.path.append(&#34;../../&#34;)
 
 # External
 from osgeo import gdal
+import numpy as np
 
 # Internal
 from buteo.utils import core_utils, gdal_utils, gdal_enums
@@ -209,7 +210,26 @@ def resample_raster(
     if isinstance(raster, list):
         return resampled_rasters
 
-    return resampled_rasters[0]</code></pre>
+    return resampled_rasters[0]
+
+
+def resample_array(arr, target_shape_pixels, resample_alg=&#34;nearest&#34;):
+    &#34;&#34;&#34; Resample a numpy array using the GDAL algorithms. &#34;&#34;&#34;
+    core_utils.type_check(arr, [np.ndarray, np.ma.MaskedArray], &#34;arr&#34;)
+    core_utils.type_check(target_shape_pixels, [tuple, [int, float]], &#34;target_shape_pixels&#34;)
+    core_utils.type_check(resample_alg, [str], &#34;resample_alg&#34;)
+
+    if len(target_shape_pixels) &gt; 2:
+        target_shape_pixels = target_shape_pixels[:2]
+
+    arr_as_raster = core_raster.create_raster_from_array(arr)
+    resampled = _resample_raster(arr_as_raster, target_shape_pixels, target_in_pixels=True, resample_alg=resample_alg)
+    out_arr = core_raster.raster_to_array(resampled)
+
+    gdal_utils.delete_if_in_memory(arr_as_raster)
+    gdal_utils.delete_if_in_memory(resampled)
+
+    return out_arr</code></pre>
 </details>
 </section>
 <section>
@@ -219,6 +239,34 @@ def resample_raster(
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="buteo.raster.resample.resample_array"><code class="name flex">
+<span>def <span class="ident">resample_array</span></span>(<span>arr, target_shape_pixels, resample_alg='nearest')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Resample a numpy array using the GDAL algorithms.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def resample_array(arr, target_shape_pixels, resample_alg=&#34;nearest&#34;):
+    &#34;&#34;&#34; Resample a numpy array using the GDAL algorithms. &#34;&#34;&#34;
+    core_utils.type_check(arr, [np.ndarray, np.ma.MaskedArray], &#34;arr&#34;)
+    core_utils.type_check(target_shape_pixels, [tuple, [int, float]], &#34;target_shape_pixels&#34;)
+    core_utils.type_check(resample_alg, [str], &#34;resample_alg&#34;)
+
+    if len(target_shape_pixels) &gt; 2:
+        target_shape_pixels = target_shape_pixels[:2]
+
+    arr_as_raster = core_raster.create_raster_from_array(arr)
+    resampled = _resample_raster(arr_as_raster, target_shape_pixels, target_in_pixels=True, resample_alg=resample_alg)
+    out_arr = core_raster.raster_to_array(resampled)
+
+    gdal_utils.delete_if_in_memory(arr_as_raster)
+    gdal_utils.delete_if_in_memory(resampled)
+
+    return out_arr</code></pre>
+</details>
+</dd>
 <dt id="buteo.raster.resample.resample_raster"><code class="name flex">
 <span>def <span class="ident">resample_raster</span></span>(<span>raster, target_size, out_path=None, *, target_in_pixels=False, resample_alg='nearest', creation_options=None, dtype=None, dst_nodata='infer', prefix='', suffix='', add_uuid=False, overwrite=True)</span>
 </code></dt>
@@ -362,6 +410,7 @@ that raster. </br></p>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
+<li><code><a title="buteo.raster.resample.resample_array" href="#buteo.raster.resample.resample_array">resample_array</a></code></li>
 <li><code><a title="buteo.raster.resample.resample_raster" href="#buteo.raster.resample.resample_raster">resample_raster</a></code></li>
 </ul>
 </li>

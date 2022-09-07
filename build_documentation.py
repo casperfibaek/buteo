@@ -11,6 +11,8 @@ from glob import glob
 # Clean documentation folder
 shutil.rmtree('./docs/', ignore_errors=True)
 
+os.mkdir("./docs/")
+
 # Build documentation
 os.system("pdoc3 ./buteo -o ./docs --html -f")
 

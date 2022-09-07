@@ -49,7 +49,7 @@ import os
 
 # External
 import numpy as np
-from osgeo import gdal, osr
+from osgeo import gdal, osr, ogr
 
 # Internal
 from buteo.utils import bbox_utils, core_utils, gdal_utils, gdal_enums
@@ -1058,7 +1058,78 @@ def get_overlap_fraction(raster1, raster2):
 
     overlap = intersection.GetArea() / meta1.GetArea()
 
-    return overlap</code></pre>
+    return overlap
+
+
+def create_raster_from_array(arr, out_path=None, pixel_size=10.0, x_min=0.0, y_max=0.0, projection=&#34;EPSG:3857&#34;, creation_options=None, overwrite=True):
+    &#34;&#34;&#34; Create a raster from a numpy array. &#34;&#34;&#34;
+    core_utils.type_check(arr, [np.ndarray, np.ma.MaskedArray], &#34;arr&#34;)
+    core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)
+    core_utils.type_check(pixel_size, [int, float, [int, float]], &#34;pixel_size&#34;)
+    core_utils.type_check(x_min, [int, float], &#34;x_min&#34;)
+    core_utils.type_check(y_max, [int, float], &#34;y_max&#34;)
+    core_utils.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], &#34;projection&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+
+    assert arr.ndim == 2 or arr.ndim == 3, &#34;Array must be 2 or 3 dimensional (3rd dimension considered bands.)&#34;
+
+    if arr.ndim == 2:
+        arr = arr[:, :, np.newaxis]
+
+    # Parse the driver
+    driver_name = &#34;GTiff&#34; if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+    if driver_name is None:
+        raise ValueError(f&#34;Unable to parse filetype from path: {out_path}&#34;)
+
+    driver = gdal.GetDriverByName(driver_name)
+    if driver is None:
+        raise ValueError(f&#34;Error while creating driver from extension: {out_path}&#34;)
+
+    output_name = None
+    if out_path is None:
+        output_name = gdal_utils.create_memory_path(&#34;raster_from_array.tif&#34;, add_uuid=True)
+    else:
+        output_name = out_path
+
+    core_utils.remove_if_required(output_name, overwrite)
+
+    height = arr.shape[0]
+    width = arr.shape[1]
+    bands = arr.shape[2]
+
+    destination = driver.Create(
+        output_name,
+        width,
+        height,
+        bands,
+        gdal_enums.translate_str_to_gdal_dtype(arr.dtype.name),
+        gdal_utils.default_creation_options(creation_options),
+    )
+
+    parsed_projection = gdal_utils.parse_projection(projection, return_wkt=True)
+
+    destination.SetProjection(parsed_projection)
+
+    pixel_width = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[0]
+    pixel_height = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[1]
+
+    transform = [x_min, pixel_width, 0, y_max, 0, -pixel_height] # negative for north-up
+
+    destination.SetGeoTransform(transform)
+
+    nodata = None
+    if isinstance(arr, np.ma.MaskedArray):
+        nodata = arr.fill_value
+
+    for idx in range(0, bands):
+        dst_band = destination.GetRasterBand(idx + 1)
+        dst_band.WriteArray(arr[:, :, idx])
+
+        if nodata is not None:
+            dst_band.SetNoDataValue(nodata)
+
+    return output_name</code></pre>
 </details>
 </section>
 <section>
@@ -1229,6 +1300,86 @@ as a raster using a reference raster.</p>
 
     destination.FlushCache()
     destination = None
+
+    return output_name</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.create_raster_from_array"><code class="name flex">
+<span>def <span class="ident">create_raster_from_array</span></span>(<span>arr, out_path=None, pixel_size=10.0, x_min=0.0, y_max=0.0, projection='EPSG:3857', creation_options=None, overwrite=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a raster from a numpy array.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_raster_from_array(arr, out_path=None, pixel_size=10.0, x_min=0.0, y_max=0.0, projection=&#34;EPSG:3857&#34;, creation_options=None, overwrite=True):
+    &#34;&#34;&#34; Create a raster from a numpy array. &#34;&#34;&#34;
+    core_utils.type_check(arr, [np.ndarray, np.ma.MaskedArray], &#34;arr&#34;)
+    core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)
+    core_utils.type_check(pixel_size, [int, float, [int, float]], &#34;pixel_size&#34;)
+    core_utils.type_check(x_min, [int, float], &#34;x_min&#34;)
+    core_utils.type_check(y_max, [int, float], &#34;y_max&#34;)
+    core_utils.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], &#34;projection&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+
+    assert arr.ndim == 2 or arr.ndim == 3, &#34;Array must be 2 or 3 dimensional (3rd dimension considered bands.)&#34;
+
+    if arr.ndim == 2:
+        arr = arr[:, :, np.newaxis]
+
+    # Parse the driver
+    driver_name = &#34;GTiff&#34; if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+    if driver_name is None:
+        raise ValueError(f&#34;Unable to parse filetype from path: {out_path}&#34;)
+
+    driver = gdal.GetDriverByName(driver_name)
+    if driver is None:
+        raise ValueError(f&#34;Error while creating driver from extension: {out_path}&#34;)
+
+    output_name = None
+    if out_path is None:
+        output_name = gdal_utils.create_memory_path(&#34;raster_from_array.tif&#34;, add_uuid=True)
+    else:
+        output_name = out_path
+
+    core_utils.remove_if_required(output_name, overwrite)
+
+    height = arr.shape[0]
+    width = arr.shape[1]
+    bands = arr.shape[2]
+
+    destination = driver.Create(
+        output_name,
+        width,
+        height,
+        bands,
+        gdal_enums.translate_str_to_gdal_dtype(arr.dtype.name),
+        gdal_utils.default_creation_options(creation_options),
+    )
+
+    parsed_projection = gdal_utils.parse_projection(projection, return_wkt=True)
+
+    destination.SetProjection(parsed_projection)
+
+    pixel_width = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[0]
+    pixel_height = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[1]
+
+    transform = [x_min, pixel_width, 0, y_max, 0, -pixel_height] # negative for north-up
+
+    destination.SetGeoTransform(transform)
+
+    nodata = None
+    if isinstance(arr, np.ma.MaskedArray):
+        nodata = arr.fill_value
+
+    for idx in range(0, bands):
+        dst_band = destination.GetRasterBand(idx + 1)
+        dst_band.WriteArray(arr[:, :, idx])
+
+        if nodata is not None:
+            dst_band.SetNoDataValue(nodata)
 
     return output_name</code></pre>
 </details>
@@ -2117,6 +2268,7 @@ refering to the dataset. </br></p>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="buteo.raster.core_raster.array_to_raster" href="#buteo.raster.core_raster.array_to_raster">array_to_raster</a></code></li>
+<li><code><a title="buteo.raster.core_raster.create_raster_from_array" href="#buteo.raster.core_raster.create_raster_from_array">create_raster_from_array</a></code></li>
 <li><code><a title="buteo.raster.core_raster.get_overlap_fraction" href="#buteo.raster.core_raster.get_overlap_fraction">get_overlap_fraction</a></code></li>
 <li><code><a title="buteo.raster.core_raster.open_raster" href="#buteo.raster.core_raster.open_raster">open_raster</a></code></li>
 <li><code><a title="buteo.raster.core_raster.raster_set_datatype" href="#buteo.raster.core_raster.raster_set_datatype">raster_set_datatype</a></code></li>
