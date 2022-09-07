@@ -1163,6 +1163,9 @@ def create_output_path_list(
     assert isinstance(dataset_path, (list)), "dataset_path must be a string or a list of strings."
     assert isinstance(out_path, (str, type(None))), "out_path must be a string or None."
 
+    if isinstance(out_path, str) and core_utils.is_str_a_glob(out_path):
+        dataset_path = core_utils.parse_glob_path(out_path)
+
     assert len(dataset_path) > 0, "dataset_path must contain at least one path."
 
     if isinstance(out_path, list):

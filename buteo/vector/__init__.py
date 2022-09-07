@@ -10,3 +10,4 @@ from .intersect import *
 from .merge import *
 from .rasterize import *
 from .reproject import *
+from .buffer import *

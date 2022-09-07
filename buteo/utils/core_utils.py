@@ -118,22 +118,6 @@ def is_list_all_the_same(lst):
     return True
 
 
-def ensure_list(variable_or_list):
-    """
-    Ensure that a variable is a list.
-
-    ## Args:
-    `variable_or_list` (_any_): The variable to check. </br>
-
-    ## Returns:
-    (_list_): The variable as a list.
-    """
-    if isinstance(variable_or_list, list):
-        return variable_or_list
-
-    return [variable_or_list]
-
-
 def file_exists(path):
     """
     Check if a file exists. Also checks vsimem.
@@ -941,3 +925,22 @@ def parse_glob_path(test_str):
     pre_glob = test_str[:-5]
 
     return glob(pre_glob)
+
+
+def ensure_list(variable_or_list):
+    """
+    Ensure that a variable is a list.
+
+    ## Args:
+    `variable_or_list` (_any_): The variable to check. </br>
+
+    ## Returns:
+    (_list_): The variable as a list.
+    """
+    if isinstance(variable_or_list, str) and is_str_a_glob(variable_or_list):
+        return parse_glob_path(variable_or_list)
+
+    if isinstance(variable_or_list, list):
+        return variable_or_list
+
+    return [variable_or_list]

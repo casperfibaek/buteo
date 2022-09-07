@@ -105,7 +105,7 @@ def clip_vector(
     `clip_geom` (_str_/_ogr.Geometry_): Vector to clip with. </br>
 
     ## Kwargs:
-    `out_path` (_str_/_None_): Output path. If None, memory rasters are created. (Default: **None**) </br>
+    `out_path` (_str_/_None_): Output path. If None, memory vectors are created. (Default: **None**) </br>
     `to_extent` (_bool_): Clip to extent. (Default: **False**) </br>
     `target_projection` (_str_/_ogr.DataSource_/_gdal.Dataset_/_osr.SpatialReference_/_int_/_None_): Target projection. (Default: **None**) </br>
     `preserve_fid` (_bool_): Preserve fid. (Default: **True**) </br>

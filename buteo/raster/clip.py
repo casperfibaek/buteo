@@ -288,7 +288,7 @@ def clip_raster(
         raster_list,
         out_path=out_path,
         prefix=prefix,
-        postfix=suffix,
+        suffix=suffix,
         add_uuid=add_uuid,
         overwrite=overwrite,
     )
