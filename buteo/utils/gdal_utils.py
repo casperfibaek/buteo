@@ -191,6 +191,16 @@ def path_to_driver_raster(file_path):
     raise ValueError(f"Unable to parse GDAL or OGR driver from path: {file_path}")
 
 
+def get_gdal_memory():
+    """ Get at list of all active memory layers in GDAL. """
+    try:
+        datasets = [ds.name for ds in gdal.listdir("/vsimem")]
+    except: # pylint: disable=bare-except
+        datasets = [ds.name for ds in gdal.ReadDir("/vsimem")]
+
+    return datasets
+
+
 def is_in_memory(raster_or_vector):
     """
     Check if vector is in memory
@@ -262,7 +272,7 @@ def delete_if_in_memory(raster_or_vector):
 
             gdal.Unlink(path)
 
-        datasets = [ds.name for ds in gdal.listdir("/vsimem")]
+        datasets = get_gdal_memory()
         if path not in datasets:
             return True
 
@@ -367,12 +377,6 @@ def is_vector_empty(vector):
                     return False
 
     return True
-
-
-def get_gdal_memory():
-    """ Get at list of all active memory layers in GDAL. """
-    datasets = [ds.name for ds in gdal.listdir("/vsimem")]
-    return datasets
 
 
 def clear_gdal_memory():
