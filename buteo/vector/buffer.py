@@ -70,7 +70,7 @@ def buffer_vector(
     overwrite=True,
 ):
     """
-    Buffers a vector with a fixed distance
+    Buffers a vector with a fixed distance or an attribute.
 
     ## Args:
     `vector` (_str_/_ogr.DataSource_/_list_): Vector(s) to buffer. </br>
