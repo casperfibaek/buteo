@@ -10,6 +10,7 @@ import sys; sys.path.append("../../")
 
 # External
 from osgeo import gdal
+import numpy as np
 
 # Internal
 from buteo.utils import core_utils, gdal_utils, gdal_enums
@@ -179,3 +180,22 @@ def resample_raster(
         return resampled_rasters
 
     return resampled_rasters[0]
+
+
+def resample_array(arr, target_shape_pixels, resample_alg="nearest"):
+    """ Resample a numpy array using the GDAL algorithms. """
+    core_utils.type_check(arr, [np.ndarray, np.ma.MaskedArray], "arr")
+    core_utils.type_check(target_shape_pixels, [tuple, [int, float]], "target_shape_pixels")
+    core_utils.type_check(resample_alg, [str], "resample_alg")
+
+    if len(target_shape_pixels) > 2:
+        target_shape_pixels = target_shape_pixels[:2]
+
+    arr_as_raster = core_raster.create_raster_from_array(arr)
+    resampled = _resample_raster(arr_as_raster, target_shape_pixels, target_in_pixels=True, resample_alg=resample_alg)
+    out_arr = core_raster.raster_to_array(resampled)
+
+    gdal_utils.delete_if_in_memory(arr_as_raster)
+    gdal_utils.delete_if_in_memory(resampled)
+
+    return out_arr

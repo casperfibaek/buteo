@@ -14,7 +14,7 @@ import os
 
 # External
 import numpy as np
-from osgeo import gdal, osr
+from osgeo import gdal, osr, ogr
 
 # Internal
 from buteo.utils import bbox_utils, core_utils, gdal_utils, gdal_enums
@@ -1024,3 +1024,74 @@ def get_overlap_fraction(raster1, raster2):
     overlap = intersection.GetArea() / meta1.GetArea()
 
     return overlap
+
+
+def create_raster_from_array(arr, out_path=None, pixel_size=10.0, x_min=0.0, y_max=0.0, projection="EPSG:3857", creation_options=None, overwrite=True):
+    """ Create a raster from a numpy array. """
+    core_utils.type_check(arr, [np.ndarray, np.ma.MaskedArray], "arr")
+    core_utils.type_check(out_path, [str, None], "out_path")
+    core_utils.type_check(pixel_size, [int, float, [int, float]], "pixel_size")
+    core_utils.type_check(x_min, [int, float], "x_min")
+    core_utils.type_check(y_max, [int, float], "y_max")
+    core_utils.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
+    core_utils.type_check(overwrite, [bool], "overwrite")
+
+    assert arr.ndim == 2 or arr.ndim == 3, "Array must be 2 or 3 dimensional (3rd dimension considered bands.)"
+
+    if arr.ndim == 2:
+        arr = arr[:, :, np.newaxis]
+
+    # Parse the driver
+    driver_name = "GTiff" if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+    if driver_name is None:
+        raise ValueError(f"Unable to parse filetype from path: {out_path}")
+
+    driver = gdal.GetDriverByName(driver_name)
+    if driver is None:
+        raise ValueError(f"Error while creating driver from extension: {out_path}")
+
+    output_name = None
+    if out_path is None:
+        output_name = gdal_utils.create_memory_path("raster_from_array.tif", add_uuid=True)
+    else:
+        output_name = out_path
+
+    core_utils.remove_if_required(output_name, overwrite)
+
+    height = arr.shape[0]
+    width = arr.shape[1]
+    bands = arr.shape[2]
+
+    destination = driver.Create(
+        output_name,
+        width,
+        height,
+        bands,
+        gdal_enums.translate_str_to_gdal_dtype(arr.dtype.name),
+        gdal_utils.default_creation_options(creation_options),
+    )
+
+    parsed_projection = gdal_utils.parse_projection(projection, return_wkt=True)
+
+    destination.SetProjection(parsed_projection)
+
+    pixel_width = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[0]
+    pixel_height = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[1]
+
+    transform = [x_min, pixel_width, 0, y_max, 0, -pixel_height] # negative for north-up
+
+    destination.SetGeoTransform(transform)
+
+    nodata = None
+    if isinstance(arr, np.ma.MaskedArray):
+        nodata = arr.fill_value
+
+    for idx in range(0, bands):
+        dst_band = destination.GetRasterBand(idx + 1)
+        dst_band.WriteArray(arr[:, :, idx])
+
+        if nodata is not None:
+            dst_band.SetNoDataValue(nodata)
+
+    return output_name

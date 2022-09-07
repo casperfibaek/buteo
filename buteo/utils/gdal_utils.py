@@ -771,7 +771,11 @@ def parse_projection(projection, *, return_wkt=False):
             if code != 0:
                 code = target_proj.ImportFromProj4(projection)
                 if code != 0:
-                    raise ValueError(err_msg)
+                    if projection.startswith("EPSG:") or projection.startswith("epsg:"):
+                        epsg_code = int(projection.split(":")[1])
+                        code = target_proj.ImportFromEPSG(epsg_code)
+                        if code != 0:
+                            raise ValueError(err_msg)
 
     elif isinstance(projection, int):
         code = target_proj.ImportFromEPSG(projection)
@@ -889,8 +893,8 @@ def parse_raster_size(target, *, target_in_pixels=False):
                     )
             elif len(target) == 2:
                 if core_utils.is_number(target[0]) and core_utils.is_number(target[1]):
-                    x_pixels = int(target[0])
-                    y_pixels = int(target[1])
+                    x_pixels = int(target[1])
+                    y_pixels = int(target[0])
             else:
                 raise ValueError("target_size_pixels is either empty or larger than 2.")
         elif core_utils.is_number(target):

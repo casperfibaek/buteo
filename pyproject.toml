@@ -17,6 +17,10 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+  "numba>=0.56",
+  "psutil>=5.9.2",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/casperfibaek/buteo"
