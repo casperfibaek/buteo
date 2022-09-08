@@ -164,14 +164,14 @@ def get_kernel(
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_max(values, weights):
-    "Get the weighted maximum"
+    """ Get the weighted maximum """
     idx = np.argmax(np.multiply(values, weights))
     return values[idx]
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_min(values, weights):
-    "Get the weighted minimum"
+    """ Get the weighted minimum """
     max_val = values.max()
     adjusted_values = np.where(weights == 0.0, max_val, values)
     idx = np.argmin(np.divide(adjusted_values, weights + 1e-7))
@@ -180,19 +180,58 @@ def hood_min(values, weights):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_sum(values, weights):
-    "Get the weighted sum"
+    """ Get the weighted sum """
     return np.sum(np.multiply(values, weights))
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_contrast(values, weights):
+    """ Get the local contrast """
+    max_val = values.max()
+    adjusted_values = np.where(weights == 0.0, max_val, values)
+    local_min = np.min(np.divide(adjusted_values, weights + 1e-7))
+    local_max = np.max(np.multiply(values, weights))
+
+    return np.abs(local_max - local_min)
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_quantile(values, weights, quant):
-    "Get the weighted median"
+    """ Get the weighted median """
     sort_mask = np.argsort(values)
     sorted_data = values[sort_mask]
     sorted_weights = weights[sort_mask]
     cumsum = np.cumsum(sorted_weights)
     intersect = (cumsum - 0.5 * sorted_weights) / cumsum[-1]
     return np.interp(quant, intersect, sorted_data)
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_median_absolute_deviation(values, weights):
+    """ Get the median absolute deviation """
+    median = hood_quantile(values, weights, 0.5)
+    absdeviation = np.abs(np.subtract(values, median))
+    return hood_quantile(absdeviation, weights, 0.5)
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_z_score(values, weights):
+    """ Get the local z score """
+    center_idx = len(values) // 2
+    center = values[center_idx]
+    std = hood_standard_deviation(values, weights)
+    mean = hood_sum(values, weights)
+
+    return (center - mean) / std
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_z_score_mad(values, weights):
+    """ Get the local z score calculated around the MAD """
+    center_idx = len(values) // 2
+    center = values[center_idx]
+    mad_std = hood_median_absolute_deviation(values, weights) * 1.4826
+    median = hood_quantile(values, weights, 0.5)
+
+    return (center - median) / mad_std
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
@@ -203,12 +242,30 @@ def hood_standard_deviation(values, weights):
     return np.sqrt(variance)
 
 
-# @jit(nopython=True, parallel=True, nogil=True)
-def convolve_array(arr, offsets, weights, method="sum", nodata=False, nodata_value=-9999.9, pad=False, pad_size=1, pad_type="edge"):
+@jit(nopython=True, nogil=True, fastmath=True)
+def convolve_array(arr, offsets, weights, method="sum", nodata=False, nodata_value=-9999.9, pad=False, pad_size=1):
     """ Convolve an image with a function. """
 
+    # Edge-padding
     if pad:
-        arr = np.pad(arr, pad_size, mode=pad_type)
+        # Core
+        arr_padded = np.zeros((arr.shape[0] + int(pad_size * 2), arr.shape[1] + int(pad_size * 2), arr.shape[2]), dtype=arr.dtype)
+        arr_padded[pad_size:-pad_size, pad_size:-pad_size, :] = arr
+
+        # Corners
+        arr_padded[0:pad_size, 0:pad_size, :] = arr[ 0,  0, :]
+        arr_padded[-pad_size:, -pad_size:, :] = arr[-1, -1, :]
+        arr_padded[0:pad_size, -pad_size:, :] = arr[ 0, -1, :]
+        arr_padded[-pad_size:, 0:pad_size, :] = arr[-1,  0, :]
+
+        # Sides
+        for idx in range(0, pad_size):
+            arr_padded[idx, pad_size:-pad_size, :] = arr[ 0,  :, :]
+            arr_padded[-(idx + 1):, pad_size:-pad_size, :] = arr[-1,  :, :]
+            arr_padded[pad_size:-pad_size, -(idx + 1), :] = arr[ :, -1, :]
+            arr_padded[pad_size:-pad_size, idx, :] = arr[ :,  0, :]
+
+        arr = arr_padded
 
     x_adj = arr.shape[0] - 1
     y_adj = arr.shape[1] - 1
@@ -278,10 +335,14 @@ def convolve_array(arr, offsets, weights, method="sum", nodata=False, nodata_val
                 result[idx_x, idx_y, 0] = hood_max(hood_values, hood_weights)
             elif method == "min":
                 result[idx_x, idx_y, 0] = hood_min(hood_values, hood_weights)
+            elif method == "contrast":
+                result[idx_x, idx_y, 0] = hood_contrast(hood_values, hood_weights)
             elif method == "median":
                 result[idx_x, idx_y, 0] = hood_quantile(hood_values, hood_weights, 0.5)
             elif method == "std":
                 result[idx_x, idx_y, 0] = hood_standard_deviation(hood_values, hood_weights)
+            elif method == "mad":
+                result[idx_x, idx_y, 0] = hood_median_absolute_deviation(hood_values, hood_weights)
             else:
                 raise ValueError("Unknown method passed to convolver")
 
