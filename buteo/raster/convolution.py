@@ -261,7 +261,7 @@ def hood_sigma_lee(values, weights):
     ks = k_to_size(values.size)
 
     while passed < ks and attempts < 5:
-        for idx in range(len(values)):
+        for idx, _val in enumerate(values):
             if values[idx] >= std * sigma_mult and values[idx] <= -std * sigma_mult:
                 selected_values[idx] = values[idx]
                 selected_weights[idx] = weights[idx]
