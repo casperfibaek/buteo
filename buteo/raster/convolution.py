@@ -84,7 +84,7 @@ def get_kernel(
     distance_sigma=1,
 ):
     """ Get a square kernel for convolutions.
-        returns: kernel, weights, offsets
+        returns: kernel, weights, offsets.
     """
 
     assert size >= 3, "Kernel must have atleast size 3."
@@ -164,14 +164,14 @@ def get_kernel(
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_max(values, weights):
-    """ Get the weighted maximum """
+    """ Get the weighted maximum. """
     idx = np.argmax(np.multiply(values, weights))
     return values[idx]
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_min(values, weights):
-    """ Get the weighted minimum """
+    """ Get the weighted minimum. """
     max_val = values.max()
     adjusted_values = np.where(weights == 0.0, max_val, values)
     idx = np.argmin(np.divide(adjusted_values, weights + 1e-7))
@@ -180,13 +180,13 @@ def hood_min(values, weights):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_sum(values, weights):
-    """ Get the weighted sum """
+    """ Get the weighted sum. """
     return np.sum(np.multiply(values, weights))
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_contrast(values, weights):
-    """ Get the local contrast """
+    """ Get the local contrast. """
     max_val = values.max()
     adjusted_values = np.where(weights == 0.0, max_val, values)
     local_min = np.min(np.divide(adjusted_values, weights + 1e-7))
@@ -196,7 +196,7 @@ def hood_contrast(values, weights):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_quantile(values, weights, quant):
-    """ Get the weighted median """
+    """ Get the weighted median. """
     sort_mask = np.argsort(values)
     sorted_data = values[sort_mask]
     sorted_weights = weights[sort_mask]
@@ -215,7 +215,7 @@ def hood_median_absolute_deviation(values, weights):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_z_score(values, weights):
-    """ Get the local z score """
+    """ Get the local z score ."""
     center_idx = len(values) // 2
     center = values[center_idx]
     std = hood_standard_deviation(values, weights)
@@ -225,7 +225,7 @@ def hood_z_score(values, weights):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_z_score_mad(values, weights):
-    """ Get the local z score calculated around the MAD """
+    """ Get the local z score calculated around the MAD. """
     center_idx = len(values) // 2
     center = values[center_idx]
     mad_std = hood_median_absolute_deviation(values, weights) * 1.4826
@@ -236,10 +236,51 @@ def hood_z_score_mad(values, weights):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_standard_deviation(values, weights):
-    "Get the weighted standard deviation"
+    "Get the weighted standard deviation. "
     summed = hood_sum(values, weights)
     variance = np.sum(np.multiply(np.power(np.subtract(values, summed), 2), weights))
     return np.sqrt(variance)
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def k_to_size(size):
+    """ Preprocess Sigma Lee limits. """
+    return int(np.rint(-0.0000837834 * size ** 2 + 0.045469 * size + 0.805733))
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_sigma_lee(values, weights):
+    """ Sigma lee SAR filte. """
+    std = hood_standard_deviation(values, weights)
+    selected_values = np.zeros_like(values)
+    selected_weights = np.zeros_like(weights)
+
+    sigma_mult = 1
+    passed = 0
+    attempts = 0
+    ks = k_to_size(values.size)
+
+    while passed < ks and attempts < 5:
+        for idx in range(len(values)):
+            if values[idx] >= std * sigma_mult and values[idx] <= -std * sigma_mult:
+                selected_values[idx] = values[idx]
+                selected_weights[idx] = weights[idx]
+                passed += 1
+
+        sigma_mult += 1
+        attempts += 1
+
+    if passed < ks:
+        return hood_sum(values, weights)
+
+    sum_of_weights = np.sum(selected_weights)
+
+    if sum_of_weights == 0:
+        return 0
+
+    selected_weights = np.divide(selected_weights, sum_of_weights)
+
+    return hood_sum(selected_values, selected_weights)
 
 
 @jit(nopython=True, nogil=True, fastmath=True)
@@ -343,6 +384,8 @@ def convolve_array(arr, offsets, weights, method="sum", nodata=False, nodata_val
                 result[idx_x, idx_y, 0] = hood_standard_deviation(hood_values, hood_weights)
             elif method == "mad":
                 result[idx_x, idx_y, 0] = hood_median_absolute_deviation(hood_values, hood_weights)
+            elif method == "sigma_lee":
+                result[idx_x, idx_y, 0] = hood_sigma_lee(hood_values, hood_weights)
             else:
                 raise ValueError("Unknown method passed to convolver")
 
