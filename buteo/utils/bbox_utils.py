@@ -521,7 +521,7 @@ def convert_bbox_to_geojson(bbox_ogr):
 def convert_bbox_to_vector(bbox_ogr, projection_osr):
     """
     Converts an OGR formatted bbox to an in-memory vector.</br>
-    _Vectors are stored in /vsimem/ as .fgb files._</br>
+    _Vectors are stored in /vsimem/ as .gpkg files._</br>
     **OBS**: Layers should be manually cleared when no longer used.
 
     ## Args:
@@ -540,8 +540,8 @@ def convert_bbox_to_vector(bbox_ogr, projection_osr):
 
     geom = convert_bbox_to_geom(bbox_ogr)
 
-    driver = ogr.GetDriverByName("FlatGeobuf")
-    extent_name = f"/vsimem/{core_utils.get_unix_seconds_as_str()}_{uuid4().int}_extent.fgb"
+    driver = ogr.GetDriverByName("GPKG")
+    extent_name = f"/vsimem/{core_utils.get_unix_seconds_as_str()}_{uuid4().int}_extent.gpkg"
     extent_ds = driver.CreateDataSource(extent_name)
 
     layer = extent_ds.CreateLayer("extent_ogr", projection_osr, ogr.wkbPolygon)

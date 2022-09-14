@@ -543,7 +543,7 @@ def get_augmented_path(path, *, prefix="", suffix="", add_uuid=True, folder=None
         if split[1][1:] in get_valid_raster_driver_extensions():
             split[1] = ".tif"
         elif split[1][1:] in get_valid_vector_driver_extensions():
-            split[1] = ".fgb"
+            split[1] = ".gpkg"
         else:
             raise ValueError("Unable to parse file extension as valid datasource.")
 

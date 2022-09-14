@@ -716,7 +716,7 @@ def convert_geom_to_vector(geom):
     """
     assert isinstance(geom, ogr.Geometry), "geom must be an ogr.Geometry."
 
-    path = create_memory_path("converted_geom.fgb", add_uuid=True)
+    path = create_memory_path("converted_geom.gpkg", add_uuid=True)
 
     driver = ogr.GetDriverByName(path_to_driver_vector(path))
     vector = driver.CreateDataSource(path)
@@ -1099,7 +1099,7 @@ def create_output_path(
             og_path = os.path.basename(core_utils.change_path_ext(og_path, "tif"))
 
         elif gdal_enums.is_valid_vector_driver_extension(og_ext):
-            og_path = os.path.basename(core_utils.change_path_ext(og_path, "fgb"))
+            og_path = os.path.basename(core_utils.change_path_ext(og_path, "shp"))
 
         aug_path = core_utils.get_augmented_path(
             og_path,
