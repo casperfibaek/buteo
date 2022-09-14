@@ -841,9 +841,8 @@ def reproject_bbox(
     ]
 
 
-def get_utm_zone_from_bbox(bbox_ogr_latlng):
-    """
-    Get the UTM zone from an OGR formatted bbox.
+def get_utm_zone_from_latlng(latlng, return_name=False):
+    """ Get the UTM ZONE from a latlng list.
 
     ## Args:
     `bbox_ogr` (_list_): An OGR formatted bbox. </br>
@@ -851,18 +850,14 @@ def get_utm_zone_from_bbox(bbox_ogr_latlng):
     ## Returns:
     (_osr.SpatialReference_): The UTM zone projection.
     """
-    assert is_valid_bbox(
-        bbox_ogr_latlng
-    ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr_latlng}"
-    assert is_valid_bbox_latlng(bbox_ogr_latlng), "Bbox is not in latlng format."
+    assert isinstance(latlng, list), "latlng must be in the form of a list."
 
-    bbox_x_min, bbox_x_max, bbox_y_min, bbox_y_max = bbox_ogr_latlng
+    zone = round(((latlng[1] + 180) / 6) + 1)
+    n_or_s = "S" if latlng[0] < 0 else "N"
 
-    mid_lng = (bbox_x_min + bbox_x_max) / 2
-    mid_lat = (bbox_y_min + bbox_y_max) / 2
+    if return_name:
+        return f"UTM_{zone}_{n_or_s}"
 
-    zone = round(((mid_lng + 180) / 6) + 1)
-    n_or_s = "S" if mid_lat < 0 else "N"
     false_northing = "10000000" if n_or_s == "S" else "0"
     central_meridian = str(round(((zone * 6) - 180) - 3))
     epsg = f"32{'7' if n_or_s == 'S' else '6'}{str(zone)}"
@@ -895,6 +890,29 @@ def get_utm_zone_from_bbox(bbox_ogr_latlng):
     projection.ImportFromWkt(wkt)
 
     return projection
+
+
+def get_utm_zone_from_bbox(bbox_ogr_latlng):
+    """
+    Get the UTM zone from an OGR formatted bbox.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
+
+    ## Returns:
+    (_osr.SpatialReference_): The UTM zone projection.
+    """
+    assert is_valid_bbox(
+        bbox_ogr_latlng
+    ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr_latlng}"
+    assert is_valid_bbox_latlng(bbox_ogr_latlng), "Bbox is not in latlng format."
+
+    bbox_x_min, bbox_x_max, bbox_y_min, bbox_y_max = bbox_ogr_latlng
+
+    mid_lng = (bbox_x_min + bbox_x_max) / 2
+    mid_lat = (bbox_y_min + bbox_y_max) / 2
+
+    return get_utm_zone_from_latlng([mid_lat, mid_lng])
 
 
 def get_utm_zone_from_dataset(dataset):
