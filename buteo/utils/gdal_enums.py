@@ -63,6 +63,9 @@ def get_valid_raster_driver_extensions():
 
     for driver in available_raster_drivers:
         if driver["extension"] != "" or len(driver["extension"]) > 0:
+
+            if driver["extension"] == "gpkg": continue
+
             valid_raster_driver_extensions.append(driver["extension"])
 
     return valid_raster_driver_extensions
@@ -227,31 +230,44 @@ def translate_resample_method(method):
     """
     assert isinstance(method, str), "method must be a string."
     assert len(method) > 0, "method must be a non-empty string."
-
-    methods = {
-        "nearest": gdal.GRA_NearestNeighbour,
-        "bilinear": gdal.GRA_Bilinear,
-        "cubic": gdal.GRA_Cubic,
-        "cubic_spline": gdal.GRA_CubicSpline,
-        "cubicspline": gdal.GRA_CubicSpline,
-        "lanczos": gdal.GRA_Lanczos,
-        "average": gdal.GRA_Average,
-        "mean": gdal.GRA_Average,
-        "mode": gdal.GRA_Mode,
-        "max": gdal.GRA_Max,
-        "maximum": gdal.GRA_Max,
-        "min": gdal.GRA_Min,
-        "minimum": gdal.GRA_Min,
-        "median": gdal.GRA_Med,
-        "med": gdal.GRA_Med,
-        "q1": gdal.GRA_Q1,
-        "Q1": gdal.GRA_Q1,
-        "q3": gdal.GRA_Q3,
-        "Q3": gdal.GRA_Q3,
-        "sum": gdal.GRA_RMS,
-        "rms": gdal.GRA_RMS,
-        "RMS": gdal.GRA_RMS,
-    }
+    try:
+        methods = {
+            "nearest": gdal.GRA_NearestNeighbour,
+            "bilinear": gdal.GRA_Bilinear,
+            "cubic": gdal.GRA_Cubic,
+            "cubic_spline": gdal.GRA_CubicSpline,
+            "cubicspline": gdal.GRA_CubicSpline,
+            "lanczos": gdal.GRA_Lanczos,
+            "average": gdal.GRA_Average,
+            "mean": gdal.GRA_Average,
+            "mode": gdal.GRA_Mode,
+            "max": gdal.GRA_Max,
+            "maximum": gdal.GRA_Max,
+            "min": gdal.GRA_Min,
+            "minimum": gdal.GRA_Min,
+            "median": gdal.GRA_Med,
+            "med": gdal.GRA_Med,
+            "q1": gdal.GRA_Q1,
+            "Q1": gdal.GRA_Q1,
+            "q3": gdal.GRA_Q3,
+            "Q3": gdal.GRA_Q3,
+            "sum": gdal.GRA_RMS,
+            "rms": gdal.GRA_RMS,
+            "RMS": gdal.GRA_RMS,
+        }
+    except: # pylint: disable=bare-except
+        print("Warning: Old version of GDAL running, only a subset of resampling methods are supported.")
+        methods = {
+            "nearest": gdal.GRA_NearestNeighbour,
+            "bilinear": gdal.GRA_Bilinear,
+            "cubic": gdal.GRA_Cubic,
+            "cubic_spline": gdal.GRA_CubicSpline,
+            "cubicspline": gdal.GRA_CubicSpline,
+            "lanczos": gdal.GRA_Lanczos,
+            "average": gdal.GRA_Average,
+            "mean": gdal.GRA_Average,
+            "mode": gdal.GRA_Mode,
+        }
 
     if method in methods:
         return methods[method]

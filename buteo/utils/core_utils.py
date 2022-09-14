@@ -133,8 +133,11 @@ def file_exists(path):
     if os.path.exists(path):
         return True
 
-    if path in gdal.listdir("/vsimem"):
-        return True
+    try:
+        if path in gdal.listdir("/vsimem"):
+            return True
+    except:  # pylint: disable=bare-except
+        pass
 
     return False
 

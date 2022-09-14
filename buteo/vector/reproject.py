@@ -34,6 +34,7 @@ def _reproject_vector(
 
     origin = core_vector._open_vector(vector)
     out_name = out_path
+
     if out_path is None:
         out_name = gdal_utils.create_memory_path(
             gdal_utils.get_path_from_dataset(vector),
@@ -95,6 +96,10 @@ def _reproject_vector(
         # Loop through the input features
         for _ in range(origin_layer.GetFeatureCount()):
             feature = origin_layer.GetNextFeature()
+
+            if feature is None:
+                continue
+
             geom = feature.GetGeometryRef()
             geom.Transform(coord_trans)
 
@@ -166,6 +171,7 @@ def reproject_vector(
 
     assert gdal_utils.is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
 
+
     path_list = gdal_utils.create_output_path_list(
         vector_list,
         out_path=out_path,
@@ -174,7 +180,7 @@ def reproject_vector(
         add_uuid=add_uuid,
     )
 
-    assert core_utils.is_valid_output_paths(path_list, overwrite=overwrite), "Invalid output path generated."
+    assert core_utils.is_valid_output_path_list(path_list, overwrite=overwrite), "Invalid output path generated."
 
     output = []
     for index, in_vector in enumerate(vector_list):

@@ -606,7 +606,9 @@ def create_memory_path(path, *, prefix="", suffix="", add_uuid=True):
     """
     assert isinstance(path, str), f"path must be a string. Received: {path}"
     assert len(path) > 0, f"path must not be empty. Received: {path}"
-    assert not core_utils.is_valid_mem_path(path), f"path must not be a valid memory path. Received: {path}"
+
+    if core_utils.is_valid_mem_path(path):
+        add_uuid = True
 
     basename = os.path.basename(path)
 
@@ -1099,7 +1101,7 @@ def create_output_path(
             og_path = os.path.basename(core_utils.change_path_ext(og_path, "tif"))
 
         elif gdal_enums.is_valid_vector_driver_extension(og_ext):
-            og_path = os.path.basename(core_utils.change_path_ext(og_path, "shp"))
+            og_path = os.path.basename(core_utils.change_path_ext(og_path, "gpkg"))
 
         aug_path = core_utils.get_augmented_path(
             og_path,
@@ -1110,7 +1112,7 @@ def create_output_path(
         )
     elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
         aug_path = core_utils.get_augmented_path(
-            os.path.basename(dataset_path),
+            os.path.basename(out_path),
             prefix=prefix,
             suffix=suffix,
             add_uuid=add_uuid,

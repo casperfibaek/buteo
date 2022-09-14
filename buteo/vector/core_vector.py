@@ -59,7 +59,8 @@ def _open_vector(vector, *, writeable=True, allow_raster=True):
         projection_osr = osr.SpatialReference()
         projection_osr.ImportFromWkt(projection_wkt)
 
-        opened = bbox_utils.convert_bbox_to_vector(bbox, projection_osr)
+        vector_bbox = bbox_utils.convert_bbox_to_vector(bbox, projection_osr)
+        opened = ogr.Open(vector_bbox, gdal.GF_Write) if writeable else ogr.Open(vector_bbox, gdal.GF_Read)
 
     else:
         raise Exception(f"Could not read input vector: {vector}")

@@ -10,8 +10,12 @@ TODO:
 # Standard library
 import sys; sys.path.append("../../")
 
+from buteo.raster.reproject import reproject_raster
+from buteo.vector.reproject import reproject_vector
+
+
 # External
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 # Internal
 from buteo.utils import gdal_utils, gdal_enums
@@ -26,6 +30,7 @@ def rasterize_vector(
     out_path=None,
     *,
     extent=None,
+    projection=None,
     all_touch=False,
     dtype="uint8",
     optim="raster",
@@ -68,6 +73,29 @@ def rasterize_vector(
             suffix="_rasterized",
         )
 
+    if projection is not None:
+        projection = gdal_utils.parse_projection(projection)
+
+        vector_fn = reproject_vector(vector, projection)
+
+        if isinstance(extent, (gdal.Dataset, ogr.DataSource)):
+            if gdal_utils.is_raster(extent):
+                extent = reproject_raster(extent, projection, add_uuid=True, suffix="_reprojected")
+            else:
+                extent = reproject_vector(extent, projection, add_uuid=True, suffix="_reprojected")
+
+        if isinstance(pixel_size, (gdal.Dataset, ogr.DataSource)):
+            if gdal_utils.is_raster(pixel_size):
+                pixel_size = reproject_raster(pixel_size, projection, add_uuid=True, suffix="_reprojected")
+            else:
+                pixel_size = reproject_vector(pixel_size, projection, add_uuid=True, suffix="_reprojected")
+
+    if projection is None and isinstance(pixel_size, (gdal.Dataset, ogr.DataSource)):
+        if extent is not None:
+            extent = reproject_raster(extent, pixel_size, add_uuid=True, suffix="_reprojected")
+
+        vector_fn = reproject_vector(vector, pixel_size, add_uuid=True, suffix="_reprojected")
+
     # Open the data source and read in the extent
     source_ds = core_vector._open_vector(vector_fn)
     source_meta = core_vector._vector_to_metadata(vector_fn)
@@ -91,11 +119,11 @@ def rasterize_vector(
 
     if extent is not None:
         extent_vector = core_vector._vector_to_metadata(extent)
-        extent_dict = extent_vector["extent_dict"]
-        x_res = int((extent_dict["right"] - extent_dict["left"]) / pixel_size_x)
-        y_res = int((extent_dict["top"] - extent_dict["bottom"]) / pixel_size_y)
-        x_min = extent_dict["left"]
-        y_max = extent_dict["top"]
+        extent_dict = extent_vector["bbox_dict"]
+        x_res = int((extent_dict["x_max"] - extent_dict["x_min"]) / abs(pixel_size_x))
+        y_res = int((extent_dict["y_max"] - extent_dict["y_min"]) / abs(pixel_size_y))
+        x_min = extent_dict["x_min"]
+        y_max = extent_dict["y_max"]
 
     if check_memory is False:
         gdal.SetConfigOption("CHECK_DISK_FREE_SPACE", "FALSE")
@@ -114,7 +142,7 @@ def rasterize_vector(
     if target_ds is None:
         raise Exception("Unable to rasterize.")
 
-    target_ds.SetGeoTransform((x_min, pixel_size_x, 0, y_max, 0, -pixel_size_y))
+    target_ds.SetGeoTransform((x_min, pixel_size_x, 0, y_max, 0, -1 * abs(pixel_size_y)))
     target_ds.SetProjection(source_meta["projection_wkt"])
 
     band = target_ds.GetRasterBand(1)
