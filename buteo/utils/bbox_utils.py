@@ -21,6 +21,7 @@ import sys; sys.path.append("../../")
 from uuid import uuid4
 
 # External
+import numpy as np
 from osgeo import ogr, osr, gdal
 
 # Internal
@@ -830,8 +831,8 @@ def reproject_bbox(
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
-    transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(x_min, y_min)
-    transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(x_max, y_max)
+    transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min))
+    transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max))
 
     return [
         transformed_x_min,
@@ -850,7 +851,7 @@ def get_utm_zone_from_latlng(latlng, return_name=False):
     ## Returns:
     (_osr.SpatialReference_): The UTM zone projection.
     """
-    assert isinstance(latlng, list), "latlng must be in the form of a list."
+    assert isinstance(latlng, (list, np.ndarray)), "latlng must be in the form of a list."
 
     zone = round(((latlng[1] + 180) / 6) + 1)
     n_or_s = "S" if latlng[0] < 0 else "N"
@@ -947,7 +948,7 @@ def get_utm_zone_from_dataset_list(datasets):
     ## Returns:
     (_str_): The UTM zone.
     """
-    assert isinstance(datasets, list), "datasets was not a valid list."
+    assert isinstance(datasets, (list, np.ndarray)), "datasets was not a valid list."
 
     latlng_bboxes = []
     latlng_proj = osr.SpatialReference(); latlng_proj.ImportFromEPSG(4326)
@@ -967,7 +968,7 @@ def get_utm_zone_from_dataset_list(datasets):
 
 
 def reproject_latlng_point_to_utm(latlng):
-    """ Converts a latlng point into an UTM point. 
+    """ Converts a latlng point into an UTM point.
 
         Takes point in [lat, lng], returns [utm_x, utm_y].
     """
@@ -978,7 +979,7 @@ def reproject_latlng_point_to_utm(latlng):
         source_projection, target_projection
     )
 
-    utm_x, utm_y, _utm_z = transformer.TransformPoint(latlng[0], latlng[1])
+    utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
 
     return [utm_x, utm_y]
 
