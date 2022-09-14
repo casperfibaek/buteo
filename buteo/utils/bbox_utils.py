@@ -544,6 +544,11 @@ def convert_bbox_to_vector(bbox_ogr, projection_osr):
     extent_name = f"/vsimem/{core_utils.get_unix_seconds_as_str()}_{uuid4().int}_extent.gpkg"
     extent_ds = driver.CreateDataSource(extent_name)
 
+    if extent_ds is None:
+        core_utils.make_dir_if_not_exists("./tmp")
+        extent_name = f"./tmp/{core_utils.get_unix_seconds_as_str()}_{uuid4().int}_extent.gpkg"
+        extent_ds = driver.CreateDataSource(extent_name)
+
     layer = extent_ds.CreateLayer("extent_ogr", projection_osr, ogr.wkbPolygon)
 
     feature = ogr.Feature(layer.GetLayerDefn())
