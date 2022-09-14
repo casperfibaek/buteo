@@ -196,7 +196,7 @@ def get_gdal_memory():
     try:
         datasets = [ds.name for ds in gdal.listdir("/vsimem")]
     except: # pylint: disable=bare-except
-        datasets = [ds.name for ds in gdal.ReadDir("/vsimem")]
+        datasets = ["/vsimem/" + ds for ds in gdal.ReadDir("/vsimem")]
 
     return datasets
 
