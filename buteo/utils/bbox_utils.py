@@ -966,6 +966,23 @@ def get_utm_zone_from_dataset_list(datasets):
     return utm_zone
 
 
+def reproject_latlng_point_to_utm(latlng):
+    """ Converts a latlng point into an UTM point. 
+
+        Takes point in [lat, lng], returns [utm_x, utm_y].
+    """
+    source_projection = osr.SpatialReference(); source_projection.ImportFromEPSG(4326)
+    target_projection = get_utm_zone_from_latlng(latlng)
+
+    transformer = osr.CoordinateTransformation(
+        source_projection, target_projection
+    )
+
+    utm_x, utm_y, _utm_z = transformer.TransformPoint(latlng[0], latlng[1])
+
+    return [utm_x, utm_y]
+
+
 def additional_bboxes(bbox_ogr, projection_osr):
     """
     This is an internal utility function for metadata generation. It takes a standard
