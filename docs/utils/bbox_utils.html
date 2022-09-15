@@ -62,6 +62,7 @@ import sys; sys.path.append(&#34;../../&#34;)
 from uuid import uuid4
 
 # External
+import numpy as np
 from osgeo import ogr, osr, gdal
 
 # Internal
@@ -561,7 +562,7 @@ def convert_bbox_to_geojson(bbox_ogr):
 def convert_bbox_to_vector(bbox_ogr, projection_osr):
     &#34;&#34;&#34;
     Converts an OGR formatted bbox to an in-memory vector.&lt;/br&gt;
-    _Vectors are stored in /vsimem/ as .fgb files._&lt;/br&gt;
+    _Vectors are stored in /vsimem/ as .gpkg files._&lt;/br&gt;
     **OBS**: Layers should be manually cleared when no longer used.
 
     ## Args:
@@ -580,8 +581,9 @@ def convert_bbox_to_vector(bbox_ogr, projection_osr):
 
     geom = convert_bbox_to_geom(bbox_ogr)
 
-    driver = ogr.GetDriverByName(&#34;FlatGeobuf&#34;)
-    extent_name = f&#34;/vsimem/{core_utils.get_unix_seconds_as_str()}_{uuid4().int}_extent.fgb&#34;
+    driver = ogr.GetDriverByName(&#34;GPKG&#34;)
+    extent_name = f&#34;/vsimem/{core_utils.get_unix_seconds_as_str()}_{uuid4().int}_extent.gpkg&#34;
+
     extent_ds = driver.CreateDataSource(extent_name)
 
     layer = extent_ds.CreateLayer(&#34;extent_ogr&#34;, projection_osr, ogr.wkbPolygon)
@@ -871,8 +873,8 @@ def reproject_bbox(
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
-    transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(x_min, y_min)
-    transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(x_max, y_max)
+    transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min))
+    transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max))
 
     return [
         transformed_x_min,
@@ -882,9 +884,8 @@ def reproject_bbox(
     ]
 
 
-def get_utm_zone_from_bbox(bbox_ogr_latlng):
-    &#34;&#34;&#34;
-    Get the UTM zone from an OGR formatted bbox.
+def get_utm_zone_from_latlng(latlng, return_epsg=False):
+    &#34;&#34;&#34; Get the UTM ZONE from a latlng list.
 
     ## Args:
     `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
@@ -892,21 +893,18 @@ def get_utm_zone_from_bbox(bbox_ogr_latlng):
     ## Returns:
     (_osr.SpatialReference_): The UTM zone projection.
     &#34;&#34;&#34;
-    assert is_valid_bbox(
-        bbox_ogr_latlng
-    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr_latlng}&#34;
-    assert is_valid_bbox_latlng(bbox_ogr_latlng), &#34;Bbox is not in latlng format.&#34;
+    assert isinstance(latlng, (list, np.ndarray)), &#34;latlng must be in the form of a list.&#34;
 
-    bbox_x_min, bbox_x_max, bbox_y_min, bbox_y_max = bbox_ogr_latlng
+    zone = round(((latlng[1] + 180) / 6) + 1)
+    n_or_s = &#34;S&#34; if latlng[0] &lt; 0 else &#34;N&#34;
 
-    mid_lng = (bbox_x_min + bbox_x_max) / 2
-    mid_lat = (bbox_y_min + bbox_y_max) / 2
 
-    zone = round(((mid_lng + 180) / 6) + 1)
-    n_or_s = &#34;S&#34; if mid_lat &lt; 0 else &#34;N&#34;
     false_northing = &#34;10000000&#34; if n_or_s == &#34;S&#34; else &#34;0&#34;
     central_meridian = str(round(((zone * 6) - 180) - 3))
     epsg = f&#34;32{&#39;7&#39; if n_or_s == &#39;S&#39; else &#39;6&#39;}{str(zone)}&#34;
+
+    if return_epsg:
+        return epsg
 
     wkt = f&#34;&#34;&#34;
         PROJCS[&#34;WGS 84 / UTM zone {str(zone)}{n_or_s}&#34;,
@@ -936,6 +934,29 @@ def get_utm_zone_from_bbox(bbox_ogr_latlng):
     projection.ImportFromWkt(wkt)
 
     return projection
+
+
+def get_utm_zone_from_bbox(bbox_ogr_latlng):
+    &#34;&#34;&#34;
+    Get the UTM zone from an OGR formatted bbox.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The UTM zone projection.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr_latlng
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr_latlng}&#34;
+    assert is_valid_bbox_latlng(bbox_ogr_latlng), &#34;Bbox is not in latlng format.&#34;
+
+    bbox_x_min, bbox_x_max, bbox_y_min, bbox_y_max = bbox_ogr_latlng
+
+    mid_lng = (bbox_x_min + bbox_x_max) / 2
+    mid_lat = (bbox_y_min + bbox_y_max) / 2
+
+    return get_utm_zone_from_latlng([mid_lat, mid_lng])
 
 
 def get_utm_zone_from_dataset(dataset):
@@ -970,7 +991,7 @@ def get_utm_zone_from_dataset_list(datasets):
     ## Returns:
     (_str_): The UTM zone.
     &#34;&#34;&#34;
-    assert isinstance(datasets, list), &#34;datasets was not a valid list.&#34;
+    assert isinstance(datasets, (list, np.ndarray)), &#34;datasets was not a valid list.&#34;
 
     latlng_bboxes = []
     latlng_proj = osr.SpatialReference(); latlng_proj.ImportFromEPSG(4326)
@@ -987,6 +1008,23 @@ def get_utm_zone_from_dataset_list(datasets):
     utm_zone = get_utm_zone_from_bbox(union_bbox)
 
     return utm_zone
+
+
+def reproject_latlng_point_to_utm(latlng):
+    &#34;&#34;&#34; Converts a latlng point into an UTM point.
+
+        Takes point in [lat, lng], returns [utm_x, utm_y].
+    &#34;&#34;&#34;
+    source_projection = osr.SpatialReference(); source_projection.ImportFromEPSG(4326)
+    target_projection = get_utm_zone_from_latlng(latlng)
+
+    transformer = osr.CoordinateTransformation(
+        source_projection, target_projection
+    )
+
+    utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
+
+    return [utm_x, utm_y]
 
 
 def additional_bboxes(bbox_ogr, projection_osr):
@@ -1424,7 +1462,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 </code></dt>
 <dd>
 <div class="desc"><p>Converts an OGR formatted bbox to an in-memory vector.</br>
-<em>Vectors are stored in /vsimem/ as .fgb files.</em></br>
+<em>Vectors are stored in /vsimem/ as .gpkg files.</em></br>
 <strong>OBS</strong>: Layers should be manually cleared when no longer used.</p>
 <h2 id="args">Args:</h2>
 <p><code>bbox_ogr</code> (<em>list</em>): an OGR formatted bbox. </br>
@@ -1438,7 +1476,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 <pre><code class="python">def convert_bbox_to_vector(bbox_ogr, projection_osr):
     &#34;&#34;&#34;
     Converts an OGR formatted bbox to an in-memory vector.&lt;/br&gt;
-    _Vectors are stored in /vsimem/ as .fgb files._&lt;/br&gt;
+    _Vectors are stored in /vsimem/ as .gpkg files._&lt;/br&gt;
     **OBS**: Layers should be manually cleared when no longer used.
 
     ## Args:
@@ -1457,8 +1495,9 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 
     geom = convert_bbox_to_geom(bbox_ogr)
 
-    driver = ogr.GetDriverByName(&#34;FlatGeobuf&#34;)
-    extent_name = f&#34;/vsimem/{core_utils.get_unix_seconds_as_str()}_{uuid4().int}_extent.fgb&#34;
+    driver = ogr.GetDriverByName(&#34;GPKG&#34;)
+    extent_name = f&#34;/vsimem/{core_utils.get_unix_seconds_as_str()}_{uuid4().int}_extent.gpkg&#34;
+
     extent_ds = driver.CreateDataSource(extent_name)
 
     layer = extent_ds.CreateLayer(&#34;extent_ogr&#34;, projection_osr, ogr.wkbPolygon)
@@ -2201,40 +2240,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     mid_lng = (bbox_x_min + bbox_x_max) / 2
     mid_lat = (bbox_y_min + bbox_y_max) / 2
 
-    zone = round(((mid_lng + 180) / 6) + 1)
-    n_or_s = &#34;S&#34; if mid_lat &lt; 0 else &#34;N&#34;
-    false_northing = &#34;10000000&#34; if n_or_s == &#34;S&#34; else &#34;0&#34;
-    central_meridian = str(round(((zone * 6) - 180) - 3))
-    epsg = f&#34;32{&#39;7&#39; if n_or_s == &#39;S&#39; else &#39;6&#39;}{str(zone)}&#34;
-
-    wkt = f&#34;&#34;&#34;
-        PROJCS[&#34;WGS 84 / UTM zone {str(zone)}{n_or_s}&#34;,
-        GEOGCS[&#34;WGS 84&#34;,
-            DATUM[&#34;WGS_1984&#34;,
-                SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563,
-                    AUTHORITY[&#34;EPSG&#34;,&#34;7030&#34;]],
-                AUTHORITY[&#34;EPSG&#34;,&#34;6326&#34;]],
-            PRIMEM[&#34;Greenwich&#34;,0,
-                AUTHORITY[&#34;EPSG&#34;,&#34;8901&#34;]],
-            UNIT[&#34;degree&#34;,0.0174532925199433,
-                AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],
-            AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]],
-        PROJECTION[&#34;Transverse_Mercator&#34;],
-        PARAMETER[&#34;latitude_of_origin&#34;,0],
-        PARAMETER[&#34;central_meridian&#34;,{central_meridian}],
-        PARAMETER[&#34;scale_factor&#34;,0.9996],
-        PARAMETER[&#34;false_easting&#34;,500000],
-        PARAMETER[&#34;false_northing&#34;,{false_northing}],
-        UNIT[&#34;metre&#34;,1,
-            AUTHORITY[&#34;EPSG&#34;,&#34;9001&#34;]],
-        AXIS[&#34;Easting&#34;,EAST],
-        AXIS[&#34;Northing&#34;,NORTH],
-        AUTHORITY[&#34;EPSG&#34;,&#34;{epsg}&#34;]]
-    &#34;&#34;&#34;
-    projection = osr.SpatialReference()
-    projection.ImportFromWkt(wkt)
-
-    return projection</code></pre>
+    return get_utm_zone_from_latlng([mid_lat, mid_lng])</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.bbox_utils.get_utm_zone_from_dataset"><code class="name flex">
@@ -2295,7 +2301,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     ## Returns:
     (_str_): The UTM zone.
     &#34;&#34;&#34;
-    assert isinstance(datasets, list), &#34;datasets was not a valid list.&#34;
+    assert isinstance(datasets, (list, np.ndarray)), &#34;datasets was not a valid list.&#34;
 
     latlng_bboxes = []
     latlng_proj = osr.SpatialReference(); latlng_proj.ImportFromEPSG(4326)
@@ -2312,6 +2318,71 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     utm_zone = get_utm_zone_from_bbox(union_bbox)
 
     return utm_zone</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_utm_zone_from_latlng"><code class="name flex">
+<span>def <span class="ident">get_utm_zone_from_latlng</span></span>(<span>latlng, return_epsg=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the UTM ZONE from a latlng list.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>osr.SpatialReference</em>): The UTM zone projection.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_utm_zone_from_latlng(latlng, return_epsg=False):
+    &#34;&#34;&#34; Get the UTM ZONE from a latlng list.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The UTM zone projection.
+    &#34;&#34;&#34;
+    assert isinstance(latlng, (list, np.ndarray)), &#34;latlng must be in the form of a list.&#34;
+
+    zone = round(((latlng[1] + 180) / 6) + 1)
+    n_or_s = &#34;S&#34; if latlng[0] &lt; 0 else &#34;N&#34;
+
+
+    false_northing = &#34;10000000&#34; if n_or_s == &#34;S&#34; else &#34;0&#34;
+    central_meridian = str(round(((zone * 6) - 180) - 3))
+    epsg = f&#34;32{&#39;7&#39; if n_or_s == &#39;S&#39; else &#39;6&#39;}{str(zone)}&#34;
+
+    if return_epsg:
+        return epsg
+
+    wkt = f&#34;&#34;&#34;
+        PROJCS[&#34;WGS 84 / UTM zone {str(zone)}{n_or_s}&#34;,
+        GEOGCS[&#34;WGS 84&#34;,
+            DATUM[&#34;WGS_1984&#34;,
+                SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563,
+                    AUTHORITY[&#34;EPSG&#34;,&#34;7030&#34;]],
+                AUTHORITY[&#34;EPSG&#34;,&#34;6326&#34;]],
+            PRIMEM[&#34;Greenwich&#34;,0,
+                AUTHORITY[&#34;EPSG&#34;,&#34;8901&#34;]],
+            UNIT[&#34;degree&#34;,0.0174532925199433,
+                AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],
+            AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]],
+        PROJECTION[&#34;Transverse_Mercator&#34;],
+        PARAMETER[&#34;latitude_of_origin&#34;,0],
+        PARAMETER[&#34;central_meridian&#34;,{central_meridian}],
+        PARAMETER[&#34;scale_factor&#34;,0.9996],
+        PARAMETER[&#34;false_easting&#34;,500000],
+        PARAMETER[&#34;false_northing&#34;,{false_northing}],
+        UNIT[&#34;metre&#34;,1,
+            AUTHORITY[&#34;EPSG&#34;,&#34;9001&#34;]],
+        AXIS[&#34;Easting&#34;,EAST],
+        AXIS[&#34;Northing&#34;,NORTH],
+        AUTHORITY[&#34;EPSG&#34;,&#34;{epsg}&#34;]]
+    &#34;&#34;&#34;
+    projection = osr.SpatialReference()
+    projection.ImportFromWkt(wkt)
+
+    return projection</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.bbox_utils.is_valid_bbox"><code class="name flex">
@@ -2487,8 +2558,8 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
-    transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(x_min, y_min)
-    transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(x_max, y_max)
+    transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min))
+    transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max))
 
     return [
         transformed_x_min,
@@ -2496,6 +2567,33 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
         transformed_y_min,
         transformed_y_max,
     ]</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.reproject_latlng_point_to_utm"><code class="name flex">
+<span>def <span class="ident">reproject_latlng_point_to_utm</span></span>(<span>latlng)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts a latlng point into an UTM point.</p>
+<p>Takes point in [lat, lng], returns [utm_x, utm_y].</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reproject_latlng_point_to_utm(latlng):
+    &#34;&#34;&#34; Converts a latlng point into an UTM point.
+
+        Takes point in [lat, lng], returns [utm_x, utm_y].
+    &#34;&#34;&#34;
+    source_projection = osr.SpatialReference(); source_projection.ImportFromEPSG(4326)
+    target_projection = get_utm_zone_from_latlng(latlng)
+
+    transformer = osr.CoordinateTransformation(
+        source_projection, target_projection
+    )
+
+    utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
+
+    return [utm_x, utm_y]</code></pre>
 </details>
 </dd>
 </dl>
@@ -2546,10 +2644,12 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 <li><code><a title="buteo.utils.bbox_utils.get_utm_zone_from_bbox" href="#buteo.utils.bbox_utils.get_utm_zone_from_bbox">get_utm_zone_from_bbox</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.get_utm_zone_from_dataset" href="#buteo.utils.bbox_utils.get_utm_zone_from_dataset">get_utm_zone_from_dataset</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.get_utm_zone_from_dataset_list" href="#buteo.utils.bbox_utils.get_utm_zone_from_dataset_list">get_utm_zone_from_dataset_list</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_utm_zone_from_latlng" href="#buteo.utils.bbox_utils.get_utm_zone_from_latlng">get_utm_zone_from_latlng</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.is_valid_bbox" href="#buteo.utils.bbox_utils.is_valid_bbox">is_valid_bbox</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.is_valid_bbox_latlng" href="#buteo.utils.bbox_utils.is_valid_bbox_latlng">is_valid_bbox_latlng</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.is_valid_geotransform" href="#buteo.utils.bbox_utils.is_valid_geotransform">is_valid_geotransform</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.reproject_bbox" href="#buteo.utils.bbox_utils.reproject_bbox">reproject_bbox</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.reproject_latlng_point_to_utm" href="#buteo.utils.bbox_utils.reproject_latlng_point_to_utm">reproject_latlng_point_to_utm</a></code></li>
 </ul>
 </li>
 </ul>

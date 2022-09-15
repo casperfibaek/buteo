@@ -39,58 +39,60 @@ import sys; sys.path.append(&#34;../../&#34;)
 from buteo.raster.convolution import get_kernel, convolve_array
 
 
-def morph_erode(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+def morph_erode(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Erode an array by taking the local minimum. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     return convolve_array(arr, offsets, weights, method=&#34;min&#34;)
 
 
-def morph_dilate(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+def morph_dilate(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Dilate an array by taking the local maximum. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     return convolve_array(arr, offsets, weights, method=&#34;max&#34;)
 
 
-def morph_open(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+def morph_open(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Perform the open mortholigical operation on an array. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     eroded = convolve_array(arr, offsets, weights, method=&#34;min&#34;)
     return convolve_array(eroded, offsets, weights, method=&#34;max&#34;)
 
 
-def morph_close(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+def morph_close(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Perform the close morphological operation on an array. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     dilate = convolve_array(arr, offsets, weights, method=&#34;max&#34;)
     return convolve_array(dilate, offsets, weights, method=&#34;min&#34;)
 
 
-def morph_tophat(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+def morph_tophat(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Perform the top_hat morphological operation on the array. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     eroded = convolve_array(arr, offsets, weights, method=&#34;min&#34;)
     opened = convolve_array(eroded, offsets, weights, method=&#34;max&#34;)
-    return arr - opened
+    # return arr - opened
+    return arr / opened
 
 
-def morph_bothat(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+def morph_bothat(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Perform the bottom_hat morphological operation on the array. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     dilated = convolve_array(arr, offsets, weights, method=&#34;max&#34;)
     closed = convolve_array(dilated, offsets, weights, method=&#34;min&#34;)
-    return closed - arr
+    # return closed - arr
+    return closed / arr
 
 
-def morph_difference(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+def morph_difference(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Perform the difference morphological operation on the array. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     erode = convolve_array(arr, offsets, weights, method=&#34;min&#34;)
     dilate = convolve_array(arr, offsets, weights, method=&#34;max&#34;)
 
@@ -105,7 +107,7 @@ def morph_difference(arr, size=5, spherical=False, distance_weight=False, distan
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.raster.morphology.morph_bothat"><code class="name flex">
-<span>def <span class="ident">morph_bothat</span></span>(<span>arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
+<span>def <span class="ident">morph_bothat</span></span>(<span>arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Perform the bottom_hat morphological operation on the array.</p></div>
@@ -113,17 +115,18 @@ def morph_difference(arr, size=5, spherical=False, distance_weight=False, distan
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def morph_bothat(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+<pre><code class="python">def morph_bothat(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Perform the bottom_hat morphological operation on the array. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     dilated = convolve_array(arr, offsets, weights, method=&#34;max&#34;)
     closed = convolve_array(dilated, offsets, weights, method=&#34;min&#34;)
-    return closed - arr</code></pre>
+    # return closed - arr
+    return closed / arr</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.morphology.morph_close"><code class="name flex">
-<span>def <span class="ident">morph_close</span></span>(<span>arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
+<span>def <span class="ident">morph_close</span></span>(<span>arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Perform the close morphological operation on an array.</p></div>
@@ -131,16 +134,16 @@ def morph_difference(arr, size=5, spherical=False, distance_weight=False, distan
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def morph_close(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+<pre><code class="python">def morph_close(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Perform the close morphological operation on an array. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     dilate = convolve_array(arr, offsets, weights, method=&#34;max&#34;)
     return convolve_array(dilate, offsets, weights, method=&#34;min&#34;)</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.morphology.morph_difference"><code class="name flex">
-<span>def <span class="ident">morph_difference</span></span>(<span>arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
+<span>def <span class="ident">morph_difference</span></span>(<span>arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Perform the difference morphological operation on the array.</p></div>
@@ -148,10 +151,10 @@ def morph_difference(arr, size=5, spherical=False, distance_weight=False, distan
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def morph_difference(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+<pre><code class="python">def morph_difference(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Perform the difference morphological operation on the array. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     erode = convolve_array(arr, offsets, weights, method=&#34;min&#34;)
     dilate = convolve_array(arr, offsets, weights, method=&#34;max&#34;)
 
@@ -159,7 +162,7 @@ def morph_difference(arr, size=5, spherical=False, distance_weight=False, distan
 </details>
 </dd>
 <dt id="buteo.raster.morphology.morph_dilate"><code class="name flex">
-<span>def <span class="ident">morph_dilate</span></span>(<span>arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
+<span>def <span class="ident">morph_dilate</span></span>(<span>arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Dilate an array by taking the local maximum.</p></div>
@@ -167,15 +170,15 @@ def morph_difference(arr, size=5, spherical=False, distance_weight=False, distan
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def morph_dilate(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+<pre><code class="python">def morph_dilate(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Dilate an array by taking the local maximum. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     return convolve_array(arr, offsets, weights, method=&#34;max&#34;)</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.morphology.morph_erode"><code class="name flex">
-<span>def <span class="ident">morph_erode</span></span>(<span>arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
+<span>def <span class="ident">morph_erode</span></span>(<span>arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Erode an array by taking the local minimum.</p></div>
@@ -183,15 +186,15 @@ def morph_difference(arr, size=5, spherical=False, distance_weight=False, distan
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def morph_erode(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+<pre><code class="python">def morph_erode(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Erode an array by taking the local minimum. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     return convolve_array(arr, offsets, weights, method=&#34;min&#34;)</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.morphology.morph_open"><code class="name flex">
-<span>def <span class="ident">morph_open</span></span>(<span>arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
+<span>def <span class="ident">morph_open</span></span>(<span>arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Perform the open mortholigical operation on an array.</p></div>
@@ -199,16 +202,16 @@ def morph_difference(arr, size=5, spherical=False, distance_weight=False, distan
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def morph_open(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+<pre><code class="python">def morph_open(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Perform the open mortholigical operation on an array. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     eroded = convolve_array(arr, offsets, weights, method=&#34;min&#34;)
     return convolve_array(eroded, offsets, weights, method=&#34;max&#34;)</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.morphology.morph_tophat"><code class="name flex">
-<span>def <span class="ident">morph_tophat</span></span>(<span>arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
+<span>def <span class="ident">morph_tophat</span></span>(<span>arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Perform the top_hat morphological operation on the array.</p></div>
@@ -216,13 +219,14 @@ def morph_difference(arr, size=5, spherical=False, distance_weight=False, distan
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def morph_tophat(arr, size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
+<pre><code class="python">def morph_tophat(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):
     &#34;&#34;&#34; Perform the top_hat morphological operation on the array. &#34;&#34;&#34;
 
-    _kernel, weights, offsets = get_kernel(size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
+    _kernel, weights, offsets = get_kernel(filter_size, arr.shape[-1], spherical=spherical, normalise=False, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma)
     eroded = convolve_array(arr, offsets, weights, method=&#34;min&#34;)
     opened = convolve_array(eroded, offsets, weights, method=&#34;max&#34;)
-    return arr - opened</code></pre>
+    # return arr - opened
+    return arr / opened</code></pre>
 </details>
 </dd>
 </dl>

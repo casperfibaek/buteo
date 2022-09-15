@@ -119,6 +119,16 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     return list_return[0]
 
 
+def get_projection(raster, wkt=True):
+    &#34;&#34;&#34; Gets the projection as WKT from a dataset. Path or gdal.Dataset. &#34;&#34;&#34;
+    dataset = open_raster(raster)
+
+    if wkt:
+        return dataset.GetProjectionRef()
+    else:
+        return dataset.GetProjection()
+
+
 def _raster_to_metadata(raster):
     &#34;&#34;&#34; Internal. &#34;&#34;&#34;
     assert isinstance(raster, (str, gdal.Dataset))
@@ -630,6 +640,8 @@ def array_to_raster(
 
     for band_idx in range(bands):
         band = destination.GetRasterBand(band_idx + 1)
+        band.SetColorInterpretation(gdal.GCI_Undefined)
+
         if bands &gt; 1 or array.ndim == 3:
             band.WriteArray(array[:, :, band_idx])
         else:
@@ -1286,6 +1298,8 @@ as a raster using a reference raster.</p>
 
     for band_idx in range(bands):
         band = destination.GetRasterBand(band_idx + 1)
+        band.SetColorInterpretation(gdal.GCI_Undefined)
+
         if bands &gt; 1 or array.ndim == 3:
             band.WriteArray(array[:, :, band_idx])
         else:
@@ -1426,6 +1440,25 @@ as a raster using a reference raster.</p>
     overlap = intersection.GetArea() / meta1.GetArea()
 
     return overlap</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.get_projection"><code class="name flex">
+<span>def <span class="ident">get_projection</span></span>(<span>raster, wkt=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gets the projection as WKT from a dataset. Path or gdal.Dataset.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_projection(raster, wkt=True):
+    &#34;&#34;&#34; Gets the projection as WKT from a dataset. Path or gdal.Dataset. &#34;&#34;&#34;
+    dataset = open_raster(raster)
+
+    if wkt:
+        return dataset.GetProjectionRef()
+    else:
+        return dataset.GetProjection()</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.open_raster"><code class="name flex">
@@ -2270,6 +2303,7 @@ refering to the dataset. </br></p>
 <li><code><a title="buteo.raster.core_raster.array_to_raster" href="#buteo.raster.core_raster.array_to_raster">array_to_raster</a></code></li>
 <li><code><a title="buteo.raster.core_raster.create_raster_from_array" href="#buteo.raster.core_raster.create_raster_from_array">create_raster_from_array</a></code></li>
 <li><code><a title="buteo.raster.core_raster.get_overlap_fraction" href="#buteo.raster.core_raster.get_overlap_fraction">get_overlap_fraction</a></code></li>
+<li><code><a title="buteo.raster.core_raster.get_projection" href="#buteo.raster.core_raster.get_projection">get_projection</a></code></li>
 <li><code><a title="buteo.raster.core_raster.open_raster" href="#buteo.raster.core_raster.open_raster">open_raster</a></code></li>
 <li><code><a title="buteo.raster.core_raster.raster_set_datatype" href="#buteo.raster.core_raster.raster_set_datatype">raster_set_datatype</a></code></li>
 <li><code><a title="buteo.raster.core_raster.raster_to_array" href="#buteo.raster.core_raster.raster_to_array">raster_to_array</a></code></li>

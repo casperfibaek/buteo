@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>buteo.raster.textures API documentation</title>
-<meta name="description" content="TODO" />
+<meta name="description" content="Perform morphological operations on arrays and rasters.
+###" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,12 +23,46 @@
 <h1 class="title">Module <code>buteo.raster.textures</code></h1>
 </header>
 <section id="section-intro">
-<p>TODO</p>
+<h3 id="perform-morphological-operations-on-arrays-and-rasters">Perform morphological operations on arrays and rasters.</h3>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#34;&#34;&#34; TODO &#34;&#34;&#34;</code></pre>
+<pre><code class="python">&#34;&#34;&#34;
+### Perform morphological operations on arrays and rasters.  ###
+&#34;&#34;&#34;
+
+# Standard library
+import sys; sys.path.append(&#34;../../&#34;)
+
+# Internal
+from buteo.raster.convolution import convolve_array, get_kernel
+
+
+def texture_local_variance(img, filter_size=5, spherical=False):
+    &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
+    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical)
+    std = convolve_array(img, offsets, weights, &#34;std&#34;)
+
+    return std
+
+
+def texture_local_median(img, filter_size=5, spherical=False):
+    &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
+    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical)
+    median = convolve_array(img, offsets, weights, &#34;median&#34;)
+
+    return median
+
+
+def texture_hole_dif(img, filter_size=5, spherical=False):
+    &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
+    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical, hole=True)
+    hole = convolve_array(img, offsets, weights, &#34;sum&#34;)
+
+    hole_dif = img / hole
+
+    return hole_dif</code></pre>
 </details>
 </section>
 <section>
@@ -35,6 +70,62 @@
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.raster.textures.texture_hole_dif"><code class="name flex">
+<span>def <span class="ident">texture_hole_dif</span></span>(<span>img, filter_size=5, spherical=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a variance texture layer</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def texture_hole_dif(img, filter_size=5, spherical=False):
+    &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
+    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical, hole=True)
+    hole = convolve_array(img, offsets, weights, &#34;sum&#34;)
+
+    hole_dif = img / hole
+
+    return hole_dif</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.textures.texture_local_median"><code class="name flex">
+<span>def <span class="ident">texture_local_median</span></span>(<span>img, filter_size=5, spherical=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a variance texture layer</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def texture_local_median(img, filter_size=5, spherical=False):
+    &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
+    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical)
+    median = convolve_array(img, offsets, weights, &#34;median&#34;)
+
+    return median</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.textures.texture_local_variance"><code class="name flex">
+<span>def <span class="ident">texture_local_variance</span></span>(<span>img, filter_size=5, spherical=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a variance texture layer</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def texture_local_variance(img, filter_size=5, spherical=False):
+    &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
+    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical)
+    std = convolve_array(img, offsets, weights, &#34;std&#34;)
+
+    return std</code></pre>
+</details>
+</dd>
+</dl>
 </section>
 <section>
 </section>
@@ -42,12 +133,21 @@
 <nav id="sidebar">
 <h1>Index</h1>
 <div class="toc">
-<ul></ul>
+<ul>
+<li><a href="#perform-morphological-operations-on-arrays-and-rasters">Perform morphological operations on arrays and rasters.</a></li>
+</ul>
 </div>
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
 <li><code><a title="buteo.raster" href="index.html">buteo.raster</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.raster.textures.texture_hole_dif" href="#buteo.raster.textures.texture_hole_dif">texture_hole_dif</a></code></li>
+<li><code><a title="buteo.raster.textures.texture_local_median" href="#buteo.raster.textures.texture_local_median">texture_local_median</a></code></li>
+<li><code><a title="buteo.raster.textures.texture_local_variance" href="#buteo.raster.textures.texture_local_variance">texture_local_variance</a></code></li>
 </ul>
 </li>
 </ul>

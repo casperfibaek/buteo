@@ -159,7 +159,7 @@ def raster_to_grid(
         print(&#34;Warning: Found 0 intersections. Returning empty list.&#34;)
         return ([], None)
 
-    driver = ogr.GetDriverByName(&#34;FlatGeoBuf&#34;)
+    driver = ogr.GetDriverByName(&#34;GPKG&#34;)
 
     clipped = 0
     for _ in range(feature_count):
@@ -175,7 +175,7 @@ def raster_to_grid(
 
         fid = feature.GetFID()
 
-        test_ds_path = f&#34;/vsimem/grid_{uuid4().int}.fgb&#34;
+        test_ds_path = f&#34;/vsimem/grid_{uuid4().int}.gpkg&#34;
         test_ds = driver.CreateDataSource(test_ds_path)
         test_ds_lyr = test_ds.CreateLayer(
             &#34;mem_layer_grid&#34;,
@@ -344,7 +344,7 @@ def raster_to_grid(
         print(&#34;Warning: Found 0 intersections. Returning empty list.&#34;)
         return ([], None)
 
-    driver = ogr.GetDriverByName(&#34;FlatGeoBuf&#34;)
+    driver = ogr.GetDriverByName(&#34;GPKG&#34;)
 
     clipped = 0
     for _ in range(feature_count):
@@ -360,7 +360,7 @@ def raster_to_grid(
 
         fid = feature.GetFID()
 
-        test_ds_path = f&#34;/vsimem/grid_{uuid4().int}.fgb&#34;
+        test_ds_path = f&#34;/vsimem/grid_{uuid4().int}.gpkg&#34;
         test_ds = driver.CreateDataSource(test_ds_path)
         test_ds_lyr = test_ds.CreateLayer(
             &#34;mem_layer_grid&#34;,

@@ -231,7 +231,7 @@ def get_gdal_memory():
     try:
         datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
     except: # pylint: disable=bare-except
-        datasets = [ds.name for ds in gdal.ReadDir(&#34;/vsimem&#34;)]
+        datasets = [&#34;/vsimem/&#34; + ds for ds in gdal.ReadDir(&#34;/vsimem&#34;)]
 
     return datasets
 
@@ -296,7 +296,10 @@ def delete_if_in_memory(raster_or_vector):
     if not isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)):
         return False
 
-    path = get_path_from_dataset(raster_or_vector)
+    if not isinstance(raster_or_vector, str):
+        path = get_path_from_dataset(raster_or_vector)
+    else:
+        path = raster_or_vector
 
     if is_in_memory(raster_or_vector):
         if isinstance(raster_or_vector, str):
@@ -414,41 +417,6 @@ def is_vector_empty(vector):
     return True
 
 
-def clear_gdal_memory():
-    &#34;&#34;&#34; Clears all gdal memory. &#34;&#34;&#34;
-    memory = get_gdal_memory()
-
-    for dataset in memory:
-        gdal.Unlink(dataset)
-
-    if len(get_gdal_memory()) != 0:
-        for dataset in get_gdal_memory():
-            opened = None
-            mem_path = PurePosixPath(&#34;/vsimem&#34;, dataset).as_posix()
-            if is_raster(mem_path):
-                opened = gdal.Open(mem_path)
-            elif is_raster(mem_path):
-                opened = ogr.Open(mem_path)
-            else:
-                raise ValueError(f&#34;Unable to open dataset: {mem_path}&#34;)
-            driver = opened.GetDriver()
-            driver.Delete(dataset)
-
-            opened = None
-            driver = None
-
-    if len(get_gdal_memory()) != 0:
-        print(&#34;Failed to clear all GDAL memory.&#34;)
-
-
-def gdal_print_memory():
-    &#34;&#34;&#34; Prints all gdal memory. &#34;&#34;&#34;
-    memory = get_gdal_memory()
-
-    for dataset in memory:
-        print(dataset)
-
-
 def is_raster(potential_raster, *, empty_is_invalid=True):
     &#34;&#34;&#34;Checks if a variable is a valid raster.
 
@@ -531,6 +499,8 @@ def is_vector(potential_vector, empty_is_invalid=True):
     if isinstance(potential_vector, ogr.DataSource):
 
         if empty_is_invalid and is_vector_empty(potential_vector):
+            print(f&#34;Vector: {potential_vector} was empty.&#34;)
+
             return False
 
         return True
@@ -623,6 +593,42 @@ def is_raster_or_vector_list(potential_raster_or_vector_list, *, empty_is_invali
     return True
 
 
+def clear_gdal_memory():
+    &#34;&#34;&#34; Clears all gdal memory. &#34;&#34;&#34;
+    memory = get_gdal_memory()
+
+    for dataset in memory:
+        gdal.Unlink(dataset)
+
+    if len(get_gdal_memory()) != 0:
+        for dataset in get_gdal_memory():
+            opened = None
+            mem_path = PurePosixPath(&#34;/vsimem&#34;, dataset).as_posix()
+            if is_raster(mem_path):
+                opened = gdal.Open(mem_path)
+            elif is_raster(mem_path):
+                opened = ogr.Open(mem_path)
+            else:
+                print(f&#34;Unable to open dataset: {mem_path}&#34;)
+                continue
+            driver = opened.GetDriver()
+            driver.Delete(dataset)
+
+            opened = None
+            driver = None
+
+    if len(get_gdal_memory()) != 0:
+        print(&#34;Failed to clear all GDAL memory.&#34;)
+
+
+def gdal_print_memory():
+    &#34;&#34;&#34; Prints all gdal memory. &#34;&#34;&#34;
+    memory = get_gdal_memory()
+
+    for dataset in memory:
+        print(dataset)
+
+
 def create_memory_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=True):
     &#34;&#34;&#34;
     Gets a memory path from a string in the format: &lt;/br&gt;
@@ -641,7 +647,9 @@ def create_memory_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=T
     &#34;&#34;&#34;
     assert isinstance(path, str), f&#34;path must be a string. Received: {path}&#34;
     assert len(path) &gt; 0, f&#34;path must not be empty. Received: {path}&#34;
-    assert not core_utils.is_valid_mem_path(path), f&#34;path must not be a valid memory path. Received: {path}&#34;
+
+    if core_utils.is_valid_mem_path(path):
+        add_uuid = True
 
     basename = os.path.basename(path)
 
@@ -751,7 +759,7 @@ def convert_geom_to_vector(geom):
     &#34;&#34;&#34;
     assert isinstance(geom, ogr.Geometry), &#34;geom must be an ogr.Geometry.&#34;
 
-    path = create_memory_path(&#34;converted_geom.fgb&#34;, add_uuid=True)
+    path = create_memory_path(&#34;converted_geom.gpkg&#34;, add_uuid=True)
 
     driver = ogr.GetDriverByName(path_to_driver_vector(path))
     vector = driver.CreateDataSource(path)
@@ -827,8 +835,6 @@ def parse_projection(projection, *, return_wkt=False):
     gdal.PopErrorHandler()
 
     if isinstance(target_proj, osr.SpatialReference):
-        if target_proj.GetName() is None:
-            raise ValueError(err_msg)
 
         if return_wkt:
             return target_proj.ExportToWkt()
@@ -1134,7 +1140,7 @@ def create_output_path(
             og_path = os.path.basename(core_utils.change_path_ext(og_path, &#34;tif&#34;))
 
         elif gdal_enums.is_valid_vector_driver_extension(og_ext):
-            og_path = os.path.basename(core_utils.change_path_ext(og_path, &#34;fgb&#34;))
+            og_path = os.path.basename(core_utils.change_path_ext(og_path, &#34;gpkg&#34;))
 
         aug_path = core_utils.get_augmented_path(
             og_path,
@@ -1145,7 +1151,7 @@ def create_output_path(
         )
     elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
         aug_path = core_utils.get_augmented_path(
-            os.path.basename(dataset_path),
+            os.path.basename(out_path),
             prefix=prefix,
             suffix=suffix,
             add_uuid=add_uuid,
@@ -1371,7 +1377,8 @@ def save_dataset_to_memory(
             elif is_raster(mem_path):
                 opened = ogr.Open(mem_path)
             else:
-                raise ValueError(f&#34;Unable to open dataset: {mem_path}&#34;)
+                print(f&#34;Unable to open dataset: {mem_path}&#34;)
+                continue
             driver = opened.GetDriver()
             driver.Delete(dataset)
 
@@ -1414,7 +1421,7 @@ def save_dataset_to_memory(
     &#34;&#34;&#34;
     assert isinstance(geom, ogr.Geometry), &#34;geom must be an ogr.Geometry.&#34;
 
-    path = create_memory_path(&#34;converted_geom.fgb&#34;, add_uuid=True)
+    path = create_memory_path(&#34;converted_geom.gpkg&#34;, add_uuid=True)
 
     driver = ogr.GetDriverByName(path_to_driver_vector(path))
     vector = driver.CreateDataSource(path)
@@ -1466,7 +1473,9 @@ def save_dataset_to_memory(
     &#34;&#34;&#34;
     assert isinstance(path, str), f&#34;path must be a string. Received: {path}&#34;
     assert len(path) &gt; 0, f&#34;path must not be empty. Received: {path}&#34;
-    assert not core_utils.is_valid_mem_path(path), f&#34;path must not be a valid memory path. Received: {path}&#34;
+
+    if core_utils.is_valid_mem_path(path):
+        add_uuid = True
 
     basename = os.path.basename(path)
 
@@ -1547,7 +1556,7 @@ along with the input filename.</p>
             og_path = os.path.basename(core_utils.change_path_ext(og_path, &#34;tif&#34;))
 
         elif gdal_enums.is_valid_vector_driver_extension(og_ext):
-            og_path = os.path.basename(core_utils.change_path_ext(og_path, &#34;fgb&#34;))
+            og_path = os.path.basename(core_utils.change_path_ext(og_path, &#34;gpkg&#34;))
 
         aug_path = core_utils.get_augmented_path(
             og_path,
@@ -1558,7 +1567,7 @@ along with the input filename.</p>
         )
     elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
         aug_path = core_utils.get_augmented_path(
-            os.path.basename(dataset_path),
+            os.path.basename(out_path),
             prefix=prefix,
             suffix=suffix,
             add_uuid=add_uuid,
@@ -1748,7 +1757,10 @@ input.</p>
     if not isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)):
         return False
 
-    path = get_path_from_dataset(raster_or_vector)
+    if not isinstance(raster_or_vector, str):
+        path = get_path_from_dataset(raster_or_vector)
+    else:
+        path = raster_or_vector
 
     if is_in_memory(raster_or_vector):
         if isinstance(raster_or_vector, str):
@@ -1870,7 +1882,7 @@ input.</p>
     try:
         datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
     except: # pylint: disable=bare-except
-        datasets = [ds.name for ds in gdal.ReadDir(&#34;/vsimem&#34;)]
+        datasets = [&#34;/vsimem/&#34; + ds for ds in gdal.ReadDir(&#34;/vsimem&#34;)]
 
     return datasets</code></pre>
 </details>
@@ -2425,6 +2437,8 @@ input.</p>
     if isinstance(potential_vector, ogr.DataSource):
 
         if empty_is_invalid and is_vector_empty(potential_vector):
+            print(f&#34;Vector: {potential_vector} was empty.&#34;)
+
             return False
 
         return True
@@ -2608,8 +2622,6 @@ an osr.SpatialReference.</p>
     gdal.PopErrorHandler()
 
     if isinstance(target_proj, osr.SpatialReference):
-        if target_proj.GetName() is None:
-            raise ValueError(err_msg)
 
         if return_wkt:
             return target_proj.ExportToWkt()
