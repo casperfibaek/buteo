@@ -14,6 +14,7 @@ from osgeo import ogr, gdal, osr
 from buteo.utils import core_utils, gdal_utils
 from buteo.raster import core_raster
 from buteo.vector import core_vector
+from buteo.vector.reproject import _reproject_vector
 
 
 
@@ -27,9 +28,12 @@ def _clip_vector(
     preserve_fid=True,
 ):
     """ Internal. """
+
+    input_path = gdal_utils.get_path_from_dataset(vector)
+
     if out_path is None:
         out_path = gdal_utils.create_memory_path(
-            gdal_utils.get_path_from_dataset(vector),
+            input_path,
             prefix="",
             suffix="_clip",
             add_uuid=True,
@@ -37,25 +41,35 @@ def _clip_vector(
 
     assert core_utils.is_valid_output_path(out_path), "Invalid output path"
 
-    out_format = gdal_utils.get_path_from_dataset(out_path)
-
     options = []
 
+    clear_memory = False
     geometry_to_clip = None
     if gdal_utils.is_vector(clip_geom):
         if to_extent:
             extent = core_vector._vector_to_metadata(clip_geom)["get_bbox_vector"]() # pylint: disable=not-callable
             geometry_to_clip = extent
+            clear_memory = True
         else:
             geometry_to_clip = core_vector._open_vector(clip_geom)
     elif gdal_utils.is_raster(clip_geom):
         extent = core_raster._raster_to_metadata(clip_geom)["get_bbox_vector"]() # pylint: disable=not-callable
         geometry_to_clip = extent
+        clear_memory = True
     else:
         raise ValueError(f"Invalid input in clip_geom, unable to parse: {clip_geom}")
 
-    clip_vector_path = core_vector._vector_to_metadata(geometry_to_clip)["path"]
-    options.append(f"-clipsrc {clip_vector_path}")
+    clip_vector_path = gdal_utils.get_path_from_dataset(geometry_to_clip)
+    clip_vector_reprojected = _reproject_vector(clip_vector_path, vector)
+
+    if clear_memory:
+        gdal_utils.delete_if_in_memory(clip_vector_path)
+
+    x_min, x_max, y_min, y_max = core_vector._vector_to_metadata(clip_vector_reprojected)["extent"]
+
+    options.append(f'-spat {x_min} {y_min} {x_max} {y_max}')
+
+    options.append(f'-clipsrc "{clip_vector_reprojected}"')
 
     if preserve_fid:
         options.append("-preserve_fid")
@@ -64,18 +78,20 @@ def _clip_vector(
 
     out_projection = None
     if target_projection is not None:
-        out_projection = gdal_utils.parse_projection(target_projection, return_wkt=True)
-        options.append(f"-t_srs {out_projection}")
+        out_projection = gdal_utils.parse_projection(target_projection)
+        wkt = out_projection.ExportToProj4()
 
-    origin = core_vector._open_vector(vector)
+        options.append(f'-t_srs "{wkt}"')
 
     # dst  # src
     success = gdal.VectorTranslate(
         out_path,
-        gdal_utils.get_path_from_dataset(origin),
-        format=out_format,
+        input_path,
+        format=gdal_utils.path_to_driver_vector(out_path),
         options=" ".join(options),
     )
+
+    gdal_utils.delete_if_in_memory(clip_vector_reprojected)
 
     if success != 0:
         return out_path

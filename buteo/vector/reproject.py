@@ -6,16 +6,12 @@ Functions to reproject vectors. References can be both vector and raster.
 
 # Standard library
 import sys; sys.path.append("../../")
-import os
 
 # External
-import osgeo
 from osgeo import gdal, osr, ogr
 
 # Internal
 from buteo.utils import gdal_utils, core_utils
-from buteo.vector import core_vector
-
 
 
 def _reproject_vector(
@@ -23,8 +19,6 @@ def _reproject_vector(
     projection,
     out_path=None,
     *,
-    copy_if_same=False,
-    overwrite=True,
     prefix="",
     suffix="",
 ):
@@ -32,95 +26,33 @@ def _reproject_vector(
     assert isinstance(vector, (ogr.DataSource, str)), "Invalid vector input"
     assert gdal_utils.is_vector(vector), "Invalid vector input"
 
-    origin = core_vector._open_vector(vector)
-    out_name = out_path
+    in_path = gdal_utils.get_path_from_dataset(vector)
 
     if out_path is None:
-        out_name = gdal_utils.create_memory_path(
+        out_path = gdal_utils.create_memory_path(
             gdal_utils.get_path_from_dataset(vector),
             prefix=prefix,
             suffix=suffix,
             add_uuid=True,
         )
 
-    metadata = core_vector._vector_to_metadata(origin)
-    namesplit = os.path.splitext(os.path.basename(out_name))
-    out_name = os.path.join(os.path.dirname(out_name), prefix + namesplit[0] + suffix + namesplit[1])
-
-    origin_projection = metadata["projection_osr"]
+    options = []
     target_projection = gdal_utils.parse_projection(projection)
+    wkt = target_projection.ExportToWkt().replace(" ", "\\")
 
-    if not isinstance(target_projection, osr.SpatialReference):
-        raise Exception("Error ")
+    options.append(f'-t_srs "{wkt}"')
 
-    if origin_projection.IsSame(target_projection):
-        if copy_if_same:
-            if out_path is None:
-                return gdal_utils.save_dataset_to_memory(origin)
+    success = gdal.VectorTranslate(
+        out_path,
+        in_path,
+        format=gdal_utils.path_to_driver_vector(out_path),
+        options=" ".join(options),
+    )
 
-            return gdal_utils.save_dataset_to_disk(origin, out_name)
-        else:
-            return gdal_utils.get_path_from_dataset(vector)
-
-    # GDAL 3 changes axis order: https://github.com/OSGeo/gdal/issues/1546
-    if int(osgeo.__version__[0]) >= 3:
-        origin_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-        target_projection.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-
-    coord_trans = osr.CoordinateTransformation(origin_projection, target_projection)
-
-    core_utils.remove_if_required(out_path, overwrite)
-
-    driver = ogr.GetDriverByName(gdal_utils.path_to_driver_vector(out_name))
-    destination: ogr.DataSource = driver.CreateDataSource(out_name)
-
-    for layer_idx in range(len(metadata["layers"])):
-        origin_layer = origin.GetLayerByIndex(layer_idx)
-        origin_layer_defn = origin_layer.GetLayerDefn()
-
-        layer_dict = metadata["layers"][layer_idx]
-        layer_name = layer_dict["layer_name"]
-        layer_geom_type = layer_dict["geom_type_ogr"]
-
-        destination_layer = destination.CreateLayer(
-            layer_name, target_projection, layer_geom_type
-        )
-        destination_layer_defn = destination_layer.GetLayerDefn()
-
-        # Copy field definitions
-        origin_layer_defn = origin_layer.GetLayerDefn()
-        for i in range(0, origin_layer_defn.GetFieldCount()):
-            field_defn = origin_layer_defn.GetFieldDefn(i)
-            destination_layer.CreateField(field_defn)
-
-        # Loop through the input features
-        for _ in range(origin_layer.GetFeatureCount()):
-            feature = origin_layer.GetNextFeature()
-
-            if feature is None:
-                continue
-
-            geom = feature.GetGeometryRef()
-            geom.Transform(coord_trans)
-
-            new_feature = ogr.Feature(destination_layer_defn)
-            new_feature.SetGeometry(geom)
-
-            # Copy field values
-            for i in range(0, destination_layer_defn.GetFieldCount()):
-                new_feature.SetField(
-                    destination_layer_defn.GetFieldDefn(i).GetNameRef(),
-                    feature.GetField(i),
-                )
-
-            destination_layer.CreateFeature(new_feature)
-
-        destination_layer.ResetReading()
-        destination_layer = None
-
-    destination.FlushCache()
-
-    return out_name
+    if success != 0:
+        return out_path
+    else:
+        raise Exception("Error while clipping geometry.")
 
 
 def reproject_vector(
@@ -178,6 +110,7 @@ def reproject_vector(
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
+        overwrite=overwrite,
     )
 
     assert core_utils.is_valid_output_path_list(path_list, overwrite=overwrite), "Invalid output path generated."
@@ -189,8 +122,6 @@ def reproject_vector(
                 in_vector,
                 projection,
                 out_path=path_list[index],
-                copy_if_same=copy_if_same,
-                overwrite=overwrite,
                 prefix=prefix,
                 suffix=suffix,
             )

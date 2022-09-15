@@ -395,7 +395,8 @@ def clear_gdal_memory():
             elif is_raster(mem_path):
                 opened = ogr.Open(mem_path)
             else:
-                raise ValueError(f"Unable to open dataset: {mem_path}")
+                print(f"Unable to open dataset: {mem_path}")
+                continue
             driver = opened.GetDriver()
             driver.Delete(dataset)
 
@@ -496,6 +497,8 @@ def is_vector(potential_vector, empty_is_invalid=True):
     if isinstance(potential_vector, ogr.DataSource):
 
         if empty_is_invalid and is_vector_empty(potential_vector):
+            print(f"Vector: {potential_vector} was empty.")
+
             return False
 
         return True
