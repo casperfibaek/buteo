@@ -84,6 +84,16 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     return list_return[0]
 
 
+def get_projection(raster, wkt=True):
+    """ Gets the projection as WKT from a dataset. Path or gdal.Dataset. """
+    dataset = open_raster(raster)
+    
+    if wkt:
+        return dataset.GetProjectionRef()
+    else:
+        return dataset.GetProjection()
+
+
 def _raster_to_metadata(raster):
     """ Internal. """
     assert isinstance(raster, (str, gdal.Dataset))
