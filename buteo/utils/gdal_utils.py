@@ -261,7 +261,10 @@ def delete_if_in_memory(raster_or_vector):
     if not isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)):
         return False
 
-    path = get_path_from_dataset(raster_or_vector)
+    if not isinstance(raster_or_vector, str):
+        path = get_path_from_dataset(raster_or_vector)
+    else:
+        path = raster_or_vector
 
     if is_in_memory(raster_or_vector):
         if isinstance(raster_or_vector, str):
