@@ -11,15 +11,14 @@
 
 **Quickstart**
 ```python
-from glob import glob
-from buteo.raster import reproject_raster
+import buteo as beo
 
-vector_file_with_correct_projection = 'path/to/vector/file.gpkg'
-raster_files_with_wrong_projection = 'path/to/raster/files/*.tif:glob'
+vector_file_correct_projection = 'path/to/vector/file.gpkg'
+raster_files_wrong_projection = 'path/to/raster/files/*.tif:glob' # <-- built-in glob support
 
 outdir = 'path/to/output/dir'
 
-result = reproject_raster(
+result = beo.reproject_raster(
     raster_files_with_wrong_projection,
     vector_file_with_correct_projection,
     out_path=outdir
@@ -33,3 +32,5 @@ result
 from .utils import *
 from .raster import *
 from .vector import *
+
+__version__ = "0.7.32"

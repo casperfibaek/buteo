@@ -30,15 +30,14 @@
 <code>pip install <a title="buteo" href="#buteo">buteo</a></code> </br>
 <code>conda install buteo --channel casperfibaek</code> </br></p>
 <p><strong>Quickstart</strong></p>
-<pre><code class="language-python">from glob import glob
-from buteo.raster import reproject_raster
+<pre><code class="language-python">import buteo as beo
 
-vector_file_with_correct_projection = 'path/to/vector/file.gpkg'
-raster_files_with_wrong_projection = 'path/to/raster/files/*.tif:glob'
+vector_file_correct_projection = 'path/to/vector/file.gpkg'
+raster_files_wrong_projection = 'path/to/raster/files/*.tif:glob' # &lt;-- built-in glob support
 
 outdir = 'path/to/output/dir'
 
-result = reproject_raster(
+result = beo.reproject_raster(
     raster_files_with_wrong_projection,
     vector_file_with_correct_projection,
     out_path=outdir
@@ -64,15 +63,14 @@ result
 
 **Quickstart**
 ```python
-from glob import glob
-from buteo.raster import reproject_raster
+import buteo as beo
 
-vector_file_with_correct_projection = &#39;path/to/vector/file.gpkg&#39;
-raster_files_with_wrong_projection = &#39;path/to/raster/files/*.tif:glob&#39;
+vector_file_correct_projection = &#39;path/to/vector/file.gpkg&#39;
+raster_files_wrong_projection = &#39;path/to/raster/files/*.tif:glob&#39; # &lt;-- built-in glob support
 
 outdir = &#39;path/to/output/dir&#39;
 
-result = reproject_raster(
+result = beo.reproject_raster(
     raster_files_with_wrong_projection,
     vector_file_with_correct_projection,
     out_path=outdir
@@ -85,7 +83,9 @@ result
 
 from .utils import *
 from .raster import *
-from .vector import *</code></pre>
+from .vector import *
+
+__version__ = &#34;0.7.32&#34;</code></pre>
 </details>
 </section>
 <section>
