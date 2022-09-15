@@ -595,6 +595,8 @@ def array_to_raster(
 
     for band_idx in range(bands):
         band = destination.GetRasterBand(band_idx + 1)
+        band.SetColorInterpretation(gdal.GCI_Undefined)
+
         if bands > 1 or array.ndim == 3:
             band.WriteArray(array[:, :, band_idx])
         else:
