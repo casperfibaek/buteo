@@ -37,8 +37,7 @@ def _reproject_vector(
         )
 
     options = []
-    target_projection = gdal_utils.parse_projection(projection)
-    wkt = target_projection.ExportToWkt().replace(" ", "\\")
+    wkt = gdal_utils.parse_projection(projection, return_wkt=True).replace(" ", "\\")
 
     options.append(f'-t_srs "{wkt}"')
 

@@ -76,10 +76,8 @@ def _clip_vector(
     else:
         options.append("-unsetFid")
 
-    out_projection = None
     if target_projection is not None:
-        out_projection = gdal_utils.parse_projection(target_projection)
-        wkt = out_projection.ExportToProj4()
+        wkt = gdal_utils.parse_projection(target_projection, return_wkt=True).replace(" ", "\\")
 
         options.append(f'-t_srs "{wkt}"')
 

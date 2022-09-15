@@ -379,42 +379,6 @@ def is_vector_empty(vector):
     return True
 
 
-def clear_gdal_memory():
-    """ Clears all gdal memory. """
-    memory = get_gdal_memory()
-
-    for dataset in memory:
-        gdal.Unlink(dataset)
-
-    if len(get_gdal_memory()) != 0:
-        for dataset in get_gdal_memory():
-            opened = None
-            mem_path = PurePosixPath("/vsimem", dataset).as_posix()
-            if is_raster(mem_path):
-                opened = gdal.Open(mem_path)
-            elif is_raster(mem_path):
-                opened = ogr.Open(mem_path)
-            else:
-                print(f"Unable to open dataset: {mem_path}")
-                continue
-            driver = opened.GetDriver()
-            driver.Delete(dataset)
-
-            opened = None
-            driver = None
-
-    if len(get_gdal_memory()) != 0:
-        print("Failed to clear all GDAL memory.")
-
-
-def gdal_print_memory():
-    """ Prints all gdal memory. """
-    memory = get_gdal_memory()
-
-    for dataset in memory:
-        print(dataset)
-
-
 def is_raster(potential_raster, *, empty_is_invalid=True):
     """Checks if a variable is a valid raster.
 
@@ -589,6 +553,42 @@ def is_raster_or_vector_list(potential_raster_or_vector_list, *, empty_is_invali
             return False
 
     return True
+
+
+def clear_gdal_memory():
+    """ Clears all gdal memory. """
+    memory = get_gdal_memory()
+
+    for dataset in memory:
+        gdal.Unlink(dataset)
+
+    if len(get_gdal_memory()) != 0:
+        for dataset in get_gdal_memory():
+            opened = None
+            mem_path = PurePosixPath("/vsimem", dataset).as_posix()
+            if is_raster(mem_path):
+                opened = gdal.Open(mem_path)
+            elif is_raster(mem_path):
+                opened = ogr.Open(mem_path)
+            else:
+                print(f"Unable to open dataset: {mem_path}")
+                continue
+            driver = opened.GetDriver()
+            driver.Delete(dataset)
+
+            opened = None
+            driver = None
+
+    if len(get_gdal_memory()) != 0:
+        print("Failed to clear all GDAL memory.")
+
+
+def gdal_print_memory():
+    """ Prints all gdal memory. """
+    memory = get_gdal_memory()
+
+    for dataset in memory:
+        print(dataset)
 
 
 def create_memory_path(path, *, prefix="", suffix="", add_uuid=True):
@@ -797,8 +797,6 @@ def parse_projection(projection, *, return_wkt=False):
     gdal.PopErrorHandler()
 
     if isinstance(target_proj, osr.SpatialReference):
-        if target_proj.GetName() is None:
-            raise ValueError(err_msg)
 
         if return_wkt:
             return target_proj.ExportToWkt()
