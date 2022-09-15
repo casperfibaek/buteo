@@ -863,7 +863,7 @@ def get_utm_zone_from_latlng(latlng, return_epsg=False):
     epsg = f"32{'7' if n_or_s == 'S' else '6'}{str(zone)}"
 
     if return_epsg:
-        return f"UTM_{zone}_{n_or_s}"
+        return epsg
 
     wkt = f"""
         PROJCS["WGS 84 / UTM zone {str(zone)}{n_or_s}",
