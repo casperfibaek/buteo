@@ -843,7 +843,7 @@ def reproject_bbox(
     ]
 
 
-def get_utm_zone_from_latlng(latlng, return_name=False):
+def get_utm_zone_from_latlng(latlng, return_epsg=False):
     """ Get the UTM ZONE from a latlng list.
 
     ## Args:
@@ -857,12 +857,13 @@ def get_utm_zone_from_latlng(latlng, return_name=False):
     zone = round(((latlng[1] + 180) / 6) + 1)
     n_or_s = "S" if latlng[0] < 0 else "N"
 
-    if return_name:
-        return f"UTM_{zone}_{n_or_s}"
 
     false_northing = "10000000" if n_or_s == "S" else "0"
     central_meridian = str(round(((zone * 6) - 180) - 3))
     epsg = f"32{'7' if n_or_s == 'S' else '6'}{str(zone)}"
+
+    if return_epsg:
+        return f"UTM_{zone}_{n_or_s}"
 
     wkt = f"""
         PROJCS["WGS 84 / UTM zone {str(zone)}{n_or_s}",
