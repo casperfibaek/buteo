@@ -854,6 +854,8 @@ def get_utm_zone_from_latlng(latlng, return_epsg=False):
     """
     assert isinstance(latlng, (list, np.ndarray)), "latlng must be in the form of a list."
 
+    
+
     zone = round(((latlng[1] + 180) / 6) + 1)
     n_or_s = "S" if latlng[0] < 0 else "N"
 
