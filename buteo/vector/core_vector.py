@@ -540,7 +540,7 @@ def _vector_add_shapes_in_place(vector, *, shapes=None, prefix="", verbose=False
             try:
                 vector_geom = vector_feature.GetGeometryRef()
             except Exception:
-                vector_geom.Buffer(0)
+                # vector_geom.Buffer(0)
                 Warning("Invalid geometry at : ", i)
 
             if vector_geom is None:
