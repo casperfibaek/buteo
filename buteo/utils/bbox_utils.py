@@ -836,6 +836,7 @@ def reproject_bbox(
         transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(x_min, y_min)
         transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(x_max, y_max)
     except: # pylint: disable=bare-except
+        import pdb; pdb.set_trace()
         transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min))
         transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max))
 
@@ -992,7 +993,7 @@ def reproject_latlng_point_to_utm(latlng):
 
     try:
         utm_x, utm_y, _utm_z = transformer.TransformPoint(latlng[0], latlng[1])
-    except: # pylint: disable=no-member
+    except: # pylint: disable=bare-except
         utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
 
     return [utm_x, utm_y]

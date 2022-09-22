@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-VERSION = "0.7.38"
+VERSION = "0.7.39"
 
 def readme():
     """ Generate readme file. """
