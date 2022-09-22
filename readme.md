@@ -33,9 +33,9 @@ result
 ```
 
 ## Example colabs
-[![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/create_labels_from_osm_data.ipynb) **Create labels from OpenStreetMap data** </br>
+[![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/create_labels_from_osm_data.ipynb){:target="_blank"} **Create labels from OpenStreetMap data** </br>
 
-[![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/rocket_example.ipynb) **Automatically clean geospatial data** </br>
+[![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/rocket_example.ipynb){:target="_blank"} **Automatically clean geospatial data** </br>
 
 </br>
 
