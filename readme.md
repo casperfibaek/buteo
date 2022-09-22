@@ -32,6 +32,9 @@ result
 >>> [path/to/output/dir/file1.tif, path/to/output/dir/file2.tif, ...]
 ```
 
+TODO:
+    More examples
+    Rocketry miksus example.
 
 Modules:
 
