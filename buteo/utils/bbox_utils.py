@@ -832,8 +832,8 @@ def reproject_bbox(
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
-    transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min))
-    transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max))
+    transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min), 0.0)
+    transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max), 0.0)
 
     return [
         transformed_x_min,
@@ -983,7 +983,7 @@ def reproject_latlng_point_to_utm(latlng):
         source_projection, target_projection
     )
 
-    utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
+    utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1], 0.0))
 
     return [utm_x, utm_y]
 
