@@ -24,10 +24,6 @@
 <section id="section-intro">
 <h3 id="calculate-intersections">Calculate intersections</h3>
 <p>Calculate and tests the intersections between geometries.</p>
-<h2 id="todo">Todo</h2>
-<ul>
-<li>Add boolean checks for intersections.</li>
-</ul>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -36,9 +32,6 @@
 ### Calculate intersections ###
 
 Calculate and tests the intersections between geometries.
-
-TODO:
-    * Add boolean checks for intersections.
 &#34;&#34;&#34;
 
 # Standard library
@@ -52,7 +45,6 @@ from buteo.utils import core_utils, gdal_utils
 from buteo.vector import core_vector
 from buteo.vector.reproject import _reproject_vector
 from buteo.vector.merge import merge_vectors
-
 
 
 def _intersect_vector(

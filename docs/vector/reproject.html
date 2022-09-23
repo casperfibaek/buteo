@@ -48,6 +48,7 @@ def _reproject_vector(
     vector,
     projection,
     out_path=None,
+    copy_if_same=False,
     *,
     prefix=&#34;&#34;,
     suffix=&#34;&#34;,
@@ -55,6 +56,13 @@ def _reproject_vector(
     &#34;&#34;&#34; Internal. &#34;&#34;&#34;
     assert isinstance(vector, (ogr.DataSource, str)), &#34;Invalid vector input&#34;
     assert gdal_utils.is_vector(vector), &#34;Invalid vector input&#34;
+
+    # The input is already in the correct projection.
+    if not copy_if_same:
+        original_projection = gdal_utils.parse_projection(vector)
+
+        if gdal_utils.projections_match(original_projection, projection):
+            return gdal_utils.get_path_from_dataset(vector)
 
     in_path = gdal_utils.get_path_from_dataset(vector)
 
@@ -99,17 +107,19 @@ def reproject_vector(
     &#34;&#34;&#34;Reprojects a vector given a target projection.
 
     Args:
-        vector (path/vector): The vector to reproject.
+        vector (_path_/_vector_): The vector to reproject.
 
-        projection (str/int/vector/raster): The projection is infered from
+        projection (_str_/_int_/_vector_/_raster_): The projection is infered from
         the input. The input can be: WKT proj, EPSG proj, Proj, or read from a
         vector or raster datasource either from path or in-memory.
 
     **kwargs:
-        out_path (path/None): The destination to save to. If None then
+        out_path (_path_/_None_): The destination to save to. If None then
         the output is an in-memory raster.
 
-        overwite (bool): Is it possible to overwrite the out_path if it exists.
+        copy_if_same (_bool_): Create a copy, even if the projections are the same.
+
+        overwite (_bool_): Is it possible to overwrite the out_path if it exists.
 
     Returns:
         An in-memory vector. If an out_path is given, the output is a string containing
@@ -153,6 +163,7 @@ def reproject_vector(
                 out_path=path_list[index],
                 prefix=prefix,
                 suffix=suffix,
+                copy_if_same=copy_if_same,
             )
         )
 
@@ -175,14 +186,16 @@ def reproject_vector(
 <dd>
 <div class="desc"><p>Reprojects a vector given a target projection.</p>
 <h2 id="args">Args</h2>
-<p>vector (path/vector): The vector to reproject.</p>
-<p>projection (str/int/vector/raster): The projection is infered from
+<p>vector (<em>path</em>/<em>vector</em>): The vector to reproject.</p>
+<p>projection (<em>str</em>/<em>int</em>/<em>vector</em>/<em>raster</em>): The projection is infered from
 the input. The input can be: WKT proj, EPSG proj, Proj, or read from a
 vector or raster datasource either from path or in-memory.
 **kwargs:
-out_path (path/None): The destination to save to. If None then
+out_path (<em>path</em>/<em>None</em>): The destination to save to. If None then
 the output is an in-memory raster.</p>
-<pre><code>overwite (bool): Is it possible to overwrite the out_path if it exists.
+<pre><code>copy_if_same (_bool_): Create a copy, even if the projections are the same.
+
+overwite (_bool_): Is it possible to overwrite the out_path if it exists.
 </code></pre>
 <h2 id="returns">Returns</h2>
 <p>An in-memory vector. If an out_path is given, the output is a string containing
@@ -206,17 +219,19 @@ the path to the newly created vecotr.</p></div>
     &#34;&#34;&#34;Reprojects a vector given a target projection.
 
     Args:
-        vector (path/vector): The vector to reproject.
+        vector (_path_/_vector_): The vector to reproject.
 
-        projection (str/int/vector/raster): The projection is infered from
+        projection (_str_/_int_/_vector_/_raster_): The projection is infered from
         the input. The input can be: WKT proj, EPSG proj, Proj, or read from a
         vector or raster datasource either from path or in-memory.
 
     **kwargs:
-        out_path (path/None): The destination to save to. If None then
+        out_path (_path_/_None_): The destination to save to. If None then
         the output is an in-memory raster.
 
-        overwite (bool): Is it possible to overwrite the out_path if it exists.
+        copy_if_same (_bool_): Create a copy, even if the projections are the same.
+
+        overwite (_bool_): Is it possible to overwrite the out_path if it exists.
 
     Returns:
         An in-memory vector. If an out_path is given, the output is a string containing
@@ -260,6 +275,7 @@ the path to the newly created vecotr.</p></div>
                 out_path=path_list[index],
                 prefix=prefix,
                 suffix=suffix,
+                copy_if_same=copy_if_same,
             )
         )
 
