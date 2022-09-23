@@ -14,21 +14,20 @@ Documentation available at: https://casperfibaek.github.io/buteo/
 
 **Quickstart**
 ```python
-from glob import glob
-from buteo.raster import reproject_raster
+import buteo as beo
 
-vector_file_with_correct_projection = 'path/to/vector/file.gpkg'
-raster_files_with_wrong_projection = glob('path/to/raster/files/*.tif')
+vector_file_correct_projection = "path/to/vector/file.gpkg"
+raster_files_wrong_projection = "path/to/raster/files/*.tif:glob"
 
 outdir = 'path/to/output/dir'
 
-result = reproject_raster(
+paths_to_reprojected_rasters = beo.reproject_raster(
     raster_files_with_wrong_projection,
     vector_file_with_correct_projection,
     out_path=outdir
 )
 
-result
+paths_to_reprojected_rasters
 >>> [path/to/output/dir/file1.tif, path/to/output/dir/file2.tif, ...]
 ```
 

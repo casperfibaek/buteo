@@ -32,21 +32,20 @@
 <code>pip install <a title="buteo" href="#buteo">buteo</a></code> </br>
 <code>conda install buteo --channel casperfibaek</code> </br></p>
 <p><strong>Quickstart</strong></p>
-<pre><code class="language-python">from glob import glob
-from buteo.raster import reproject_raster
+<pre><code class="language-python">import buteo as beo
 
-vector_file_with_correct_projection = 'path/to/vector/file.gpkg'
-raster_files_with_wrong_projection = glob('path/to/raster/files/*.tif')
+vector_file_correct_projection = &quot;path/to/vector/file.gpkg&quot;
+raster_files_wrong_projection = &quot;path/to/raster/files/*.tif:glob&quot;
 
 outdir = 'path/to/output/dir'
 
-result = reproject_raster(
+paths_to_reprojected_rasters = beo.reproject_raster(
     raster_files_with_wrong_projection,
     vector_file_with_correct_projection,
     out_path=outdir
 )
 
-result
+paths_to_reprojected_rasters
 &gt;&gt;&gt; [path/to/output/dir/file1.tif, path/to/output/dir/file2.tif, ...]
 </code></pre>
 <p></br></p>
@@ -172,24 +171,22 @@ Documentation available at: https://casperfibaek.github.io/buteo/
 
 **Quickstart**
 ```python
-from glob import glob
-from buteo.raster import reproject_raster
+import buteo as beo
 
-vector_file_with_correct_projection = &#39;path/to/vector/file.gpkg&#39;
-raster_files_with_wrong_projection = glob(&#39;path/to/raster/files/*.tif&#39;)
+vector_file_correct_projection = &#34;path/to/vector/file.gpkg&#34;
+raster_files_wrong_projection = &#34;path/to/raster/files/*.tif:glob&#34;
 
 outdir = &#39;path/to/output/dir&#39;
 
-result = reproject_raster(
+paths_to_reprojected_rasters = beo.reproject_raster(
     raster_files_with_wrong_projection,
     vector_file_with_correct_projection,
     out_path=outdir
 )
 
-result
+paths_to_reprojected_rasters
 &gt;&gt;&gt; [path/to/output/dir/file1.tif, path/to/output/dir/file2.tif, ...]
 ```
-
 &lt;/br&gt;
 
 | Example Colabs                        |                                                                                                                                                                                                    |
