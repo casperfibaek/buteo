@@ -1,8 +1,5 @@
 """
 Build the anaconda package
-
-TODO:
-    - Make the process parallel using threads. Should speed build times up significantly.
 """
 import os
 import shutil

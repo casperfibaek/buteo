@@ -3,12 +3,9 @@
 
 Functions to add or remove borders from rasters.
 Useful for warped satellite images and for proximity searching.
-
-TODO:
-    * Remove near black borders
-    * Add functions for rasters. (e.g. add_border_to_array)
-    * Support multiple rasters (create internal version)
 """
+
+# TODO: Remove near black borders.
 
 # Standard library
 import sys; sys.path.append("../../")

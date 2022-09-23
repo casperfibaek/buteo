@@ -2,9 +2,6 @@
 ### Merge vectors. ###
 
 Merges vectors into a single vector file.
-
-TODO:
-    * Add things like .vrt files. (already in core_vector...)
 """
 
 # Standard library

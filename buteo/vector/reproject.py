@@ -18,6 +18,7 @@ def _reproject_vector(
     vector,
     projection,
     out_path=None,
+    copy_if_same=False,
     *,
     prefix="",
     suffix="",
@@ -25,6 +26,13 @@ def _reproject_vector(
     """ Internal. """
     assert isinstance(vector, (ogr.DataSource, str)), "Invalid vector input"
     assert gdal_utils.is_vector(vector), "Invalid vector input"
+
+    # The input is already in the correct projection.
+    if not copy_if_same:
+        original_projection = gdal_utils.parse_projection(vector)
+
+        if gdal_utils.projections_match(original_projection, projection):
+            return gdal_utils.get_path_from_dataset(vector)
 
     in_path = gdal_utils.get_path_from_dataset(vector)
 
@@ -69,17 +77,19 @@ def reproject_vector(
     """Reprojects a vector given a target projection.
 
     Args:
-        vector (path/vector): The vector to reproject.
+        vector (_path_/_vector_): The vector to reproject.
 
-        projection (str/int/vector/raster): The projection is infered from
+        projection (_str_/_int_/_vector_/_raster_): The projection is infered from
         the input. The input can be: WKT proj, EPSG proj, Proj, or read from a
         vector or raster datasource either from path or in-memory.
 
     **kwargs:
-        out_path (path/None): The destination to save to. If None then
+        out_path (_path_/_None_): The destination to save to. If None then
         the output is an in-memory raster.
 
-        overwite (bool): Is it possible to overwrite the out_path if it exists.
+        copy_if_same (_bool_): Create a copy, even if the projections are the same.
+
+        overwite (_bool_): Is it possible to overwrite the out_path if it exists.
 
     Returns:
         An in-memory vector. If an out_path is given, the output is a string containing
@@ -123,6 +133,7 @@ def reproject_vector(
                 out_path=path_list[index],
                 prefix=prefix,
                 suffix=suffix,
+                copy_if_same=copy_if_same,
             )
         )
 

@@ -2,9 +2,6 @@
 ### Calculate intersections ###
 
 Calculate and tests the intersections between geometries.
-
-TODO:
-    * Add boolean checks for intersections.
 """
 
 # Standard library
@@ -18,7 +15,6 @@ from buteo.utils import core_utils, gdal_utils
 from buteo.vector import core_vector
 from buteo.vector.reproject import _reproject_vector
 from buteo.vector.merge import merge_vectors
-
 
 
 def _intersect_vector(

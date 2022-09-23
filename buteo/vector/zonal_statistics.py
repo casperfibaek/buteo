@@ -3,9 +3,7 @@
 
 # BROKEN
 
-# TODO:
-#     - Fix rasterize step
-#     - Improve documentation
+# TODO: Fix zonal_statistics (implementation broken by 0.7)
 
 # """
 

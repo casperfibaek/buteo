@@ -2,11 +2,10 @@
 ### Create grids from rasters.  ###
 
 Cut rasters to grids. Use vectors or rasters as grids.
-
-TODO:
-    * raster_to_grid without geom.
-    * split rasters into grid of x tiles.
 """
+
+# TODO: Split rasters into grid of x tiles.
+# TODO: raster_to_grid without geom.
 
 # Standard library
 import sys; sys.path.append("../../")

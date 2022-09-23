@@ -2,10 +2,6 @@
 ### Clip rasters ###
 
 Clips a raster using a vector geometry or the extents of a raster.
-
-TODO:
-    * Handle projections
-    * Refactor clip_ds part.
 """
 
 # Standard library

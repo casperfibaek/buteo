@@ -2,15 +2,15 @@
 ### Basic IO functions for working with Vectprs ###
 
 The basic module for interacting with vector data
-
-TODO:
-    * more attribute functions.
-    * repair vector
-    * sanity checks: vectors_intersect, is_not_empty, does_vectors_match, match_vectors
-    * rasterize - antialiasing and weights
-    * join by attribute, location, summary
-    * buffer, union, erase, etc..
 """
+
+# TODO: More attribute functions
+# TODO: Repair vector functions
+# TODO: Sanity checks
+# TODO: Joins (by attribute, location, summary, etc..)
+# TODO: Union, Erase, ..
+# TODO: Sampling functions
+# TODO: Vector intersects, etc..
 
 # Standard library
 import sys; sys.path.append("../../")

@@ -2,11 +2,10 @@
 ### Handle nodata values in rasters. ###
 
 A module to handle the various aspects of NODATA in raster files.
-
-TODO:
-    * raster_to_mask
-    * raster_invert_nodata
 """
+
+# TODO: raster_to_mask
+# TODO: raster_invert_nodata
 
 # Standard library
 import sys; sys.path.append("../../")

@@ -2,11 +2,9 @@
 ### Basic IO functions for working with Rasters ###
 
 This module does standard raster operations related to read, write, and metadata.
-
-TODO:
-    * Copy, seperate, expand, create, delete
-    * Refactor logic in ready_io_raster
 """
+
+# TODO: Copy, seperate, expand, create, delete
 
 # Standard library
 import sys; sys.path.append("../../")

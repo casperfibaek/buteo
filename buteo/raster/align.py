@@ -2,13 +2,11 @@
 ### Align rasters ###
 
 Functions to align a series of rasters to a master or a reference.
-
-TODO:
-    * Fix if not all a reprojected, paths are incorrect.
-    * phase_cross_correlation
-    * Ensure get_pixel_offsets works as planned.
-    * Fix RAM limits to be dynamic % of available RAM.
 """
+
+# TODO: Fix if not all a reprojected, paths are incorrect.
+# TODO: phase_cross_correlation
+# TODO: Ensure get_pixel_offsets works as planned.
 
 # Standard library
 import sys; sys.path.append("../../")
@@ -23,6 +21,7 @@ from buteo.raster import core_raster
 from buteo.vector import core_vector
 from buteo.raster.reproject import _reproject_raster
 from buteo.vector.reproject import _reproject_vector
+
 
 
 def match_raster_projections(
@@ -290,7 +289,7 @@ def align_rasters(
         # If the bounding box is a raster. Take the extent and
         # reproject it to the target projection.
         elif gdal_utils.is_vector(bounding_box):
-            vector_bbox_reproject = _reproject_vector(bounding_box, target_projection, copy_if_same=False)
+            vector_bbox_reproject = _reproject_vector(bounding_box, target_projection)
             reprojected_bbox_vector = core_vector._vector_to_metadata(vector_bbox_reproject) # pylint: disable=protected-access
             gdal_utils.delete_if_in_memory(vector_bbox_reproject)
             vector_bbox_reproject = None

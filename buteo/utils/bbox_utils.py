@@ -11,9 +11,6 @@ _If nothing else is stated, the OGR format is used._
 
 The GDAL geotransform is a list of six parameters:</br>
 `x_min, pixel_width, row_skew, y_max, column_skew, pixel_height (negative for north-up)`
-
-TODO:
-    * create tests
 """
 
 # Standard library
