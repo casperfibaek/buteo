@@ -6,16 +6,17 @@ TODO:
 """
 import os
 import sys
+import yaml
 from glob import glob
 
-import regex
 
 # Constants
 PLATFORMS = [
-    "osx-64",
-    "osx-arm64",
-    "linux-64",
-    "win-64",
+    "noarch",
+    # "osx-64",
+    # "osx-arm64",
+    # "linux-64",
+    # "win-64",
 ]
 PYTHON = [
     "3.7",
@@ -24,37 +25,31 @@ PYTHON = [
     "3.10",
 ]
 
+with open("./meta.yaml", "r", encoding="latin1") as stream:
+    try:
+        meta = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
+
+VERSION = meta["package"]["version"]
 
 # Set up the build folder
 home = os.path.expanduser("~")
 builds_folder = os.path.abspath(home + "/anaconda3/conda-bld/")
 builds_glob = os.path.join(builds_folder, "**/*.tar.bz2")
 
-# Find version
-found = False
 update_only = False
 forge = False
 clean = False
-for arg in sys.argv:
-    if "--version=" in arg:
-        VERSION = arg.split("=")[1]
-        if len(VERSION.split(".")) != 3 or not regex.match(r'^\d+(\.\d+)*$', VERSION):
-            print("Version must be in the format x.y.z")
-            sys.exit(1)
 
-        found = True
+if "-update_only" in sys.argv:
+    update_only = True
 
-    if "-update_only" in arg:
-        update_only = True
+if "-clean" in sys.argv:
+    clean = True
 
-    if "-clean" in arg:
-        clean = True
-
-    if "-forge" in arg:
-        forge = True
-
-if found is False:
-    raise Exception("Version not found. Please specify with --version=<version>")
+if "-forge" in sys.argv:
+    forge = True
 
 # Update setup.py
 with open('./setup.py', 'r', encoding="utf-8") as setup_file :
@@ -103,12 +98,18 @@ if clean:
         os.remove(build)
         print(f"Removed {build}")
 
+# Rename pyproject.toml to ensure it is not used (Why would this be necessary?..)
+os.rename("./pyproject.toml", "./_pyproject.toml")
+
 # Build
 python_str = f"conda build {os. getcwd()} --py {' --py '.join(PYTHON)}"
 if forge:
     python_str = python_str + " -c conda-forge"
 
 os.system(python_str)
+
+# Rename pyproject back to its original name.
+os.rename("./_pyproject.toml", "./pyproject.toml")
 
 # Convert to other platforms
 for build in glob(builds_glob):
@@ -120,5 +121,3 @@ for build in glob(builds_glob):
 for build in glob(builds_glob):
     upload_call = f"anaconda upload {build}"
     os.system(upload_call)
-
-# python build.py --version=0.1.0 -clean

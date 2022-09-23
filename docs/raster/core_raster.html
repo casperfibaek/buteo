@@ -223,7 +223,8 @@ def _raster_to_metadata(raster):
 
     def get_bbox_as_vector_latlng():
         projection_osr_latlng = osr.SpatialReference()
-        projection_osr_latlng.ImportFromEPSG(4326)
+        # projection_osr_latlng.ImportFromEPSG(4326)
+        projection_osr_latlng.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
 
         return bbox_utils.convert_bbox_to_vector(metadata[&#34;bbox_latlng&#34;], projection_osr_latlng)
 

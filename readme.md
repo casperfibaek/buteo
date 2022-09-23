@@ -126,4 +126,6 @@ vector_buffer_etc..
 
 machine_learning_extract_sample_points
 
-python -m build; python -m twine upload dist/*
+python -m run_tests; python -m build_documentation;
+python -m build; python -m twine upload dist/*;
+python -m build_anaconda -forge -clean;

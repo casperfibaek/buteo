@@ -14,4 +14,4 @@ else:
 if RUN_TESTS == "all":
     os.system("python -m pytest tests/")
 else:
-    os.system(f"python -m pytest tests/{RUN_TESTS}.py")
+    os.system(f"python -m pytest tests/{RUN_TESTS}")

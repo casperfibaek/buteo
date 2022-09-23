@@ -871,10 +871,16 @@ def reproject_bbox(
         source_projection_osr, target_projection_osr
     )
 
+    transformer = osr.CoordinateTransformation(source_projection_osr, target_projection_osr)
+
     x_min, x_max, y_min, y_max = bbox_ogr
 
-    transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min))
-    transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max))
+    try:
+        transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(x_min, y_min)
+        transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(x_max, y_max)
+    except: # pylint: disable=bare-except
+        transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min))
+        transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max))
 
     return [
         transformed_x_min,
@@ -897,7 +903,6 @@ def get_utm_zone_from_latlng(latlng, return_epsg=False):
 
     zone = round(((latlng[1] + 180) / 6) + 1)
     n_or_s = &#34;S&#34; if latlng[0] &lt; 0 else &#34;N&#34;
-
 
     false_northing = &#34;10000000&#34; if n_or_s == &#34;S&#34; else &#34;0&#34;
     central_meridian = str(round(((zone * 6) - 180) - 3))
@@ -973,7 +978,9 @@ def get_utm_zone_from_dataset(dataset):
 
     bbox = get_bbox_from_dataset(dataset)
     source_projection = get_projection_from_dataset(dataset)
-    target_projection = osr.SpatialReference(); target_projection.ImportFromEPSG(4326)
+    target_projection = osr.SpatialReference()
+    # target_projection.ImportFromEPSG(4326)
+    target_projection.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
 
     bbox = reproject_bbox(bbox, source_projection, target_projection)
     utm_zone = get_utm_zone_from_bbox(bbox)
@@ -994,7 +1001,9 @@ def get_utm_zone_from_dataset_list(datasets):
     assert isinstance(datasets, (list, np.ndarray)), &#34;datasets was not a valid list.&#34;
 
     latlng_bboxes = []
-    latlng_proj = osr.SpatialReference(); latlng_proj.ImportFromEPSG(4326)
+    latlng_proj = osr.SpatialReference()
+    # latlng_proj.ImportFromEPSG(4326)
+    latlng_proj.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
 
     for dataset in datasets:
         bbox = get_bbox_from_dataset(dataset)
@@ -1015,14 +1024,19 @@ def reproject_latlng_point_to_utm(latlng):
 
         Takes point in [lat, lng], returns [utm_x, utm_y].
     &#34;&#34;&#34;
-    source_projection = osr.SpatialReference(); source_projection.ImportFromEPSG(4326)
+    source_projection = osr.SpatialReference()
+    # source_projection.ImportFromEPSG(4326)
+    source_projection.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
     target_projection = get_utm_zone_from_latlng(latlng)
 
     transformer = osr.CoordinateTransformation(
         source_projection, target_projection
     )
 
-    utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
+    try:
+        utm_x, utm_y, _utm_z = transformer.TransformPoint(latlng[0], latlng[1])
+    except: # pylint: disable=bare-except
+        utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
 
     return [utm_x, utm_y]
 
@@ -1059,7 +1073,8 @@ def additional_bboxes(bbox_ogr, projection_osr):
     original_projection.ImportFromWkt(projection_osr.ExportToWkt())
 
     latlng_projection = osr.SpatialReference()
-    latlng_projection.ImportFromEPSG(4326)
+    # latlng_projection.ImportFromEPSG(4326)
+    latlng_projection.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
 
     bbox_ogr_latlng = reproject_bbox(bbox_ogr, original_projection, latlng_projection)
     latlng_x_min, latlng_x_max, latlng_y_min, latlng_y_max = bbox_ogr_latlng
@@ -1152,7 +1167,8 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     original_projection.ImportFromWkt(projection_osr.ExportToWkt())
 
     latlng_projection = osr.SpatialReference()
-    latlng_projection.ImportFromEPSG(4326)
+    # latlng_projection.ImportFromEPSG(4326)
+    latlng_projection.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
 
     bbox_ogr_latlng = reproject_bbox(bbox_ogr, original_projection, latlng_projection)
     latlng_x_min, latlng_x_max, latlng_y_min, latlng_y_max = bbox_ogr_latlng
@@ -2270,7 +2286,9 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 
     bbox = get_bbox_from_dataset(dataset)
     source_projection = get_projection_from_dataset(dataset)
-    target_projection = osr.SpatialReference(); target_projection.ImportFromEPSG(4326)
+    target_projection = osr.SpatialReference()
+    # target_projection.ImportFromEPSG(4326)
+    target_projection.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
 
     bbox = reproject_bbox(bbox, source_projection, target_projection)
     utm_zone = get_utm_zone_from_bbox(bbox)
@@ -2304,7 +2322,9 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     assert isinstance(datasets, (list, np.ndarray)), &#34;datasets was not a valid list.&#34;
 
     latlng_bboxes = []
-    latlng_proj = osr.SpatialReference(); latlng_proj.ImportFromEPSG(4326)
+    latlng_proj = osr.SpatialReference()
+    # latlng_proj.ImportFromEPSG(4326)
+    latlng_proj.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
 
     for dataset in datasets:
         bbox = get_bbox_from_dataset(dataset)
@@ -2346,7 +2366,6 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 
     zone = round(((latlng[1] + 180) / 6) + 1)
     n_or_s = &#34;S&#34; if latlng[0] &lt; 0 else &#34;N&#34;
-
 
     false_northing = &#34;10000000&#34; if n_or_s == &#34;S&#34; else &#34;0&#34;
     central_meridian = str(round(((zone * 6) - 180) - 3))
@@ -2556,10 +2575,16 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
         source_projection_osr, target_projection_osr
     )
 
+    transformer = osr.CoordinateTransformation(source_projection_osr, target_projection_osr)
+
     x_min, x_max, y_min, y_max = bbox_ogr
 
-    transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min))
-    transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max))
+    try:
+        transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(x_min, y_min)
+        transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(x_max, y_max)
+    except: # pylint: disable=bare-except
+        transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min))
+        transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max))
 
     return [
         transformed_x_min,
@@ -2584,14 +2609,19 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 
         Takes point in [lat, lng], returns [utm_x, utm_y].
     &#34;&#34;&#34;
-    source_projection = osr.SpatialReference(); source_projection.ImportFromEPSG(4326)
+    source_projection = osr.SpatialReference()
+    # source_projection.ImportFromEPSG(4326)
+    source_projection.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
     target_projection = get_utm_zone_from_latlng(latlng)
 
     transformer = osr.CoordinateTransformation(
         source_projection, target_projection
     )
 
-    utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
+    try:
+        utm_x, utm_y, _utm_z = transformer.TransformPoint(latlng[0], latlng[1])
+    except: # pylint: disable=bare-except
+        utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
 
     return [utm_x, utm_y]</code></pre>
 </details>
