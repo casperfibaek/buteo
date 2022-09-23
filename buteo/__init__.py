@@ -3,6 +3,8 @@
 
 The Buteo-Toolbox is a series of modules that ease the creation of Earth Observation Driven Spatial Decision Support Systems. The modules are located in the lib folder, geometry used for testing and clipping is located in geometry. In the examples folder there are jupyter notebooks that showcase analysis' done using the toolbox.
 
+Documentation available at: https://casperfibaek.github.io/buteo/
+
 **Dependencies** </br>
 `numpy` (https://numpy.org/) </br>
 `gdal` (https://gdal.org/) </br>
@@ -31,10 +33,12 @@ result
 >>> [path/to/output/dir/file1.tif, path/to/output/dir/file2.tif, ...]
 ```
 
-## Example colabs
-|:---------------------------------------------	|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
-| ***Create labels from OpenStreetMap data*** 	| [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/create_labels_from_osm_data.ipynb) 	|
-| ***Automatically clean geospatial data***   	| [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/rocket_example.ipynb)              	|
+</br>
+
+| Example Colabs                        |                                                                                                                                                                                                    |
+|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Create labels from OpenStreetMap data | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/create_labels_from_osm_data.ipynb) |
+| Automatically clean geospatial data   | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/rocket_example.ipynb)              |
 
 </br>
 
