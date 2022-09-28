@@ -25,6 +25,12 @@ def texture_local_median(img, filter_size=5, spherical=False):
     return median
 
 
+def texture_local_blur(img, filter_size=5, spherical=False):
+    """ Create a variance texture layer"""
+    _kernel, weights, offsets = get_kernel(filter_size, distance_weight="linear", spherical=spherical, hole=False)
+    return convolve_array(img, offsets, weights, "sum")
+
+
 def texture_hole_dif(img, filter_size=5, spherical=False):
     """ Create a variance texture layer"""
     _kernel, weights, offsets = get_kernel(filter_size, distance_weight="linear", spherical=spherical, hole=True)

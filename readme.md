@@ -19,7 +19,7 @@ import buteo as beo
 vector_file_correct_projection = "path/to/vector/file.gpkg"
 raster_files_wrong_projection = "path/to/raster/files/*.tif:glob"
 
-outdir = 'path/to/output/dir'
+outdir = "path/to/output/dir"
 
 paths_to_reprojected_rasters = beo.reproject_raster(
     raster_files_with_wrong_projection,
