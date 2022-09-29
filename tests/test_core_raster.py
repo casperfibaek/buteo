@@ -11,7 +11,7 @@ import pytest
 from osgeo import gdal, ogr
 
 # Internal
-from buteo.raster import core_raster
+from buteo.raster import core_raster, clip_raster
 from buteo.utils import gdal_utils
 
 # Setup tests

@@ -178,7 +178,7 @@ def _clip_raster(
         cutlineDSName=clip_ds,
         cropToCutline=False,
         creationOptions=out_creation_options,
-        warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
+        # warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
         warpOptions=warp_options,
         srcNodata=src_nodata,
         dstNodata=out_nodata,

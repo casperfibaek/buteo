@@ -451,7 +451,7 @@ def align_rasters(
             targetAlignedPixels=False,
             cropToCutline=False,
             multithread=True,
-            warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
+            # warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
         )
 
         if warped is None:
