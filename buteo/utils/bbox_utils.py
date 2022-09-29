@@ -581,10 +581,10 @@ def bboxes_intersect(bbox1_ogr, bbox2_ogr):
     if bbox2_y_min > bbox1_y_max:
         return False
 
-    if bbox2_x_max > bbox1_x_min:
+    if bbox2_x_max < bbox1_x_min:
         return False
 
-    if bbox2_y_max > bbox1_y_min:
+    if bbox2_y_max < bbox1_y_min:
         return False
 
     return True
