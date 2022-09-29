@@ -55,6 +55,12 @@ def texture_local_median(img, filter_size=5, spherical=False):
     return median
 
 
+def texture_local_blur(img, filter_size=5, spherical=False):
+    &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
+    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical, hole=False)
+    return convolve_array(img, offsets, weights, &#34;sum&#34;)
+
+
 def texture_hole_dif(img, filter_size=5, spherical=False):
     &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
     _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical, hole=True)
@@ -89,6 +95,21 @@ def texture_hole_dif(img, filter_size=5, spherical=False):
     hole_dif = img / hole
 
     return hole_dif</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.textures.texture_local_blur"><code class="name flex">
+<span>def <span class="ident">texture_local_blur</span></span>(<span>img, filter_size=5, spherical=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a variance texture layer</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def texture_local_blur(img, filter_size=5, spherical=False):
+    &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
+    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical, hole=False)
+    return convolve_array(img, offsets, weights, &#34;sum&#34;)</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.textures.texture_local_median"><code class="name flex">
@@ -146,6 +167,7 @@ def texture_hole_dif(img, filter_size=5, spherical=False):
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="buteo.raster.textures.texture_hole_dif" href="#buteo.raster.textures.texture_hole_dif">texture_hole_dif</a></code></li>
+<li><code><a title="buteo.raster.textures.texture_local_blur" href="#buteo.raster.textures.texture_local_blur">texture_local_blur</a></code></li>
 <li><code><a title="buteo.raster.textures.texture_local_median" href="#buteo.raster.textures.texture_local_median">texture_local_median</a></code></li>
 <li><code><a title="buteo.raster.textures.texture_local_variance" href="#buteo.raster.textures.texture_local_variance">texture_local_variance</a></code></li>
 </ul>
