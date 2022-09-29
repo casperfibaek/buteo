@@ -1,10 +1,10 @@
 [build-system]
-requires = ["flit_core>=3.7.1", "numba>=0.56.2", "psutil>=5.9.2", "PyYAML>=6.0"]
+requires = ["flit_core>=3.7.1", "numba>=0.56.2", "psutil>=5.4.8", "PyYAML>=6.0"]
 build-backend = "flit_core.buildapi"
 
 [project]
 name = "buteo"
-version = "0.7.47"
+version = "0.7.48"
 authors = [
   { name="Casper Fibaek", email="casperfibaek@gmail.com" },
 ]
