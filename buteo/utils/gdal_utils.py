@@ -960,7 +960,7 @@ def get_gdalwarp_ram_limit(limit_in_mb):
 
     if isinstance(limit_in_mb, str):
         if limit_in_mb.lower() == "auto":
-            return core_utils.get_dynamic_memory_limit_bytes()
+            return core_utils.get_dynamic_memory_limit_bytes(percentage=80.0)
         else:
             if "%" not in limit_in_mb:
                 raise ValueError(f"Invalid limit: {limit_in_mb}")

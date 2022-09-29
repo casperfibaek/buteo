@@ -876,7 +876,11 @@ def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, availa
     ## Returns:
     (_int_): The dynamic memory limit in bytes.
     """
-    assert isinstance(percentage, int), "percentage must be an integer."
+    assert isinstance(percentage, (int, str, float)), "percentage must be an integer."
+
+    if percentage == "auto" or percentage is None:
+        percentage = 80.0
+
     assert percentage > 0.0 and percentage <= 100.0, "percentage must be > 0 and <= 100."
 
     dyn_limit = min_bytes
