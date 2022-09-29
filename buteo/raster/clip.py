@@ -59,9 +59,7 @@ def _clip_raster(
     if gdal_utils.is_vector(clip_geom):
         clip_ds = core_vector._open_vector(clip_geom)
 
-        clip_metadata = core_vector._vector_to_metadata(
-            clip_ds, process_layer=layer_to_clip,
-        )
+        clip_metadata = core_vector._vector_to_metadata(clip_ds)
 
         if to_extent:
             clip_ds = clip_metadata["get_bbox_vector"]() # pylint: disable=not-callable
