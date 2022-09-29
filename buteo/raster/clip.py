@@ -309,7 +309,7 @@ def clip_raster(
                 prefix=prefix,
                 suffix=suffix,
                 verbose=verbose,
-                ram=core_utils.get_dynamic_memory_limit_bytes(ram),
+                ram=ram,
             )
         )
 
