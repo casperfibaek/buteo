@@ -201,6 +201,7 @@ def _vector_to_metadata(vector):
             "is_raster": False,
             "is_vector": True,
             "bbox": layer_bbox,
+            "extent": layer_bbox,
         }
 
         layer_bboxes = bbox_utils.additional_bboxes(layer_bbox, projection_osr)
@@ -245,6 +246,7 @@ def _vector_to_metadata(vector):
         "layer_count": layer_count,
         "layers": layers,
         "extent": vector_bbox,
+        "bbox": vector_bbox,
     }
 
     vector_bboxes = bbox_utils.additional_bboxes(vector_bbox, projection_osr)

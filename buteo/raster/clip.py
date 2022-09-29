@@ -113,7 +113,7 @@ def _clip_raster(
         )
 
     # Fast check: Does the extent of the two inputs overlap?
-    if not bbox_utils.bboxes_intersect(raster_metadata["bbox"], clip_metadata["bbox"]):
+    if not bbox_utils.bboxes_intersect(raster_metadata["bbox_latlng"], clip_metadata["bbox_latlng"]):
         raise Exception("Geometries did not intersect.")
 
     if reprojection_needed:

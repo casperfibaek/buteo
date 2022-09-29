@@ -89,9 +89,7 @@ def _clip_raster(
     if gdal_utils.is_vector(clip_geom):
         clip_ds = core_vector._open_vector(clip_geom)
 
-        clip_metadata = core_vector._vector_to_metadata(
-            clip_ds, process_layer=layer_to_clip,
-        )
+        clip_metadata = core_vector._vector_to_metadata(clip_ds)
 
         if to_extent:
             clip_ds = clip_metadata[&#34;get_bbox_vector&#34;]() # pylint: disable=not-callable
@@ -145,7 +143,7 @@ def _clip_raster(
         )
 
     # Fast check: Does the extent of the two inputs overlap?
-    if not bbox_utils.bboxes_intersect(raster_metadata[&#34;bbox&#34;], clip_metadata[&#34;bbox&#34;]):
+    if not bbox_utils.bboxes_intersect(raster_metadata[&#34;bbox_latlng&#34;], clip_metadata[&#34;bbox_latlng&#34;]):
         raise Exception(&#34;Geometries did not intersect.&#34;)
 
     if reprojection_needed:

@@ -175,6 +175,7 @@ def _raster_to_metadata(raster):
         "is_raster": True,
         "is_vector": False,
         "bbox": bbox_ogr,
+        "extent": bbox_ogr,
     }
 
     for key, value in bboxes.items():
