@@ -105,8 +105,10 @@ def _clip_raster(
     if not bbox_utils.bboxes_intersect(raster_metadata["bbox_latlng"], clip_metadata["bbox_latlng"]):
         raise Exception("Geometries did not intersect.")
 
-    clip_ds = _reproject_vector(clip_ds, origin_projection)
-    clip_metadata = core_vector._vector_to_metadata(clip_ds)
+    if not origin_projection.IsSame(clip_metadata["projection_osr"]):
+        clip_ds = _reproject_vector(clip_ds, origin_projection)
+        clip_metadata = core_vector._vector_to_metadata(clip_ds)
+        memory_files.append(clip_ds)
 
     output_bounds = raster_metadata["bbox"]
 
@@ -165,14 +167,14 @@ def _clip_raster(
         cutlineDSName=clip_ds,
         cropToCutline=False,
         creationOptions=out_creation_options,
-        warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
+        # warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
         warpOptions=warp_options,
         srcNodata=src_nodata,
         dstNodata=out_nodata,
         multithread=True,
     )
 
-    gdal_utils.delete_if_in_memory(clip_ds)
+    gdal_utils.gdal_utils.delete_if_in_memory_list(memory_files)
 
     if verbose == 0:
         gdal.PopErrorHandler()
