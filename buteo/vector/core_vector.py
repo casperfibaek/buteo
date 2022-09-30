@@ -691,3 +691,41 @@ def vector_get_attribute_table(
         attribute_table_header.append("geom")
 
     return attribute_table
+
+
+def vector_filter_layer(
+    vector,
+    layer_name_or_idx,
+    out_path=None,
+    prefix="",
+    suffix="_layer",
+    add_uuid=False,
+    overwrite=True,
+):
+    """ Filters a multi-layer vector source to a single layer. """
+    ref = open_vector(vector)
+    meta = vector_to_metadata(ref, allow_lists=False)
+
+    out_path = gdal_utils.create_output_path(
+        meta["path"],
+        out_path=out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )
+
+    if isinstance(layer_name_or_idx, int):
+        layer = ref.GetLayerByIndex(layer_name_or_idx)
+    elif isinstance(layer_name_or_idx, str):
+        layer = ref.GetLayer(layer_name_or_idx)
+    else:
+        raise Exception("Wrong datatype for layer selection")
+
+    driver = gdal_utils.path_to_driver_vector(out_path)
+
+    destination = driver.CreateDataSource(out_path)
+    destination.CopyLayer(layer, layer.GetName(), ["OVERWRITE=YES"])
+    destination.FlushCache()
+
+    return out_path
