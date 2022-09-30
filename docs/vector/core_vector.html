@@ -720,7 +720,45 @@ def vector_get_attribute_table(
     if include_geometry:
         attribute_table_header.append(&#34;geom&#34;)
 
-    return attribute_table</code></pre>
+    return attribute_table
+
+
+def vector_filter_layer(
+    vector,
+    layer_name_or_idx,
+    out_path=None,
+    prefix=&#34;&#34;,
+    suffix=&#34;_layer&#34;,
+    add_uuid=False,
+    overwrite=True,
+):
+    &#34;&#34;&#34; Filters a multi-layer vector source to a single layer. &#34;&#34;&#34;
+    ref = open_vector(vector)
+    meta = vector_to_metadata(ref, allow_lists=False)
+
+    out_path = gdal_utils.create_output_path(
+        meta[&#34;path&#34;],
+        out_path=out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )
+
+    if isinstance(layer_name_or_idx, int):
+        layer = ref.GetLayerByIndex(layer_name_or_idx)
+    elif isinstance(layer_name_or_idx, str):
+        layer = ref.GetLayer(layer_name_or_idx)
+    else:
+        raise Exception(&#34;Wrong datatype for layer selection&#34;)
+
+    driver = gdal_utils.path_to_driver_vector(out_path)
+
+    destination = driver.CreateDataSource(out_path)
+    destination.CopyLayer(layer, layer.GetName(), [&#34;OVERWRITE=YES&#34;])
+    destination.FlushCache()
+
+    return out_path</code></pre>
 </details>
 </section>
 <section>
@@ -1026,6 +1064,53 @@ The default is all shapes. </br>
     return output[0]</code></pre>
 </details>
 </dd>
+<dt id="buteo.vector.core_vector.vector_filter_layer"><code class="name flex">
+<span>def <span class="ident">vector_filter_layer</span></span>(<span>vector, layer_name_or_idx, out_path=None, prefix='', suffix='_layer', add_uuid=False, overwrite=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Filters a multi-layer vector source to a single layer.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def vector_filter_layer(
+    vector,
+    layer_name_or_idx,
+    out_path=None,
+    prefix=&#34;&#34;,
+    suffix=&#34;_layer&#34;,
+    add_uuid=False,
+    overwrite=True,
+):
+    &#34;&#34;&#34; Filters a multi-layer vector source to a single layer. &#34;&#34;&#34;
+    ref = open_vector(vector)
+    meta = vector_to_metadata(ref, allow_lists=False)
+
+    out_path = gdal_utils.create_output_path(
+        meta[&#34;path&#34;],
+        out_path=out_path,
+        overwrite=overwrite,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )
+
+    if isinstance(layer_name_or_idx, int):
+        layer = ref.GetLayerByIndex(layer_name_or_idx)
+    elif isinstance(layer_name_or_idx, str):
+        layer = ref.GetLayer(layer_name_or_idx)
+    else:
+        raise Exception(&#34;Wrong datatype for layer selection&#34;)
+
+    driver = gdal_utils.path_to_driver_vector(out_path)
+
+    destination = driver.CreateDataSource(out_path)
+    destination.CopyLayer(layer, layer.GetName(), [&#34;OVERWRITE=YES&#34;])
+    destination.FlushCache()
+
+    return out_path</code></pre>
+</details>
+</dd>
 <dt id="buteo.vector.core_vector.vector_get_attribute_table"><code class="name flex">
 <span>def <span class="ident">vector_get_attribute_table</span></span>(<span>vector, process_layer=-1, include_fids=False, include_geometry=False, include_attributes=True, allow_lists=True)</span>
 </code></dt>
@@ -1161,6 +1246,7 @@ The default is all shapes. </br>
 <li><code><a title="buteo.vector.core_vector.open_vector" href="#buteo.vector.core_vector.open_vector">open_vector</a></code></li>
 <li><code><a title="buteo.vector.core_vector.vector_add_index" href="#buteo.vector.core_vector.vector_add_index">vector_add_index</a></code></li>
 <li><code><a title="buteo.vector.core_vector.vector_add_shapes_in_place" href="#buteo.vector.core_vector.vector_add_shapes_in_place">vector_add_shapes_in_place</a></code></li>
+<li><code><a title="buteo.vector.core_vector.vector_filter_layer" href="#buteo.vector.core_vector.vector_filter_layer">vector_filter_layer</a></code></li>
 <li><code><a title="buteo.vector.core_vector.vector_get_attribute_table" href="#buteo.vector.core_vector.vector_get_attribute_table">vector_get_attribute_table</a></code></li>
 <li><code><a title="buteo.vector.core_vector.vector_to_metadata" href="#buteo.vector.core_vector.vector_to_metadata">vector_to_metadata</a></code></li>
 </ul>

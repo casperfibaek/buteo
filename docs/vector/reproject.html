@@ -52,6 +52,7 @@ def _reproject_vector(
     *,
     prefix=&#34;&#34;,
     suffix=&#34;&#34;,
+    add_uuid=False,
 ):
     &#34;&#34;&#34; Internal. &#34;&#34;&#34;
     assert isinstance(vector, (ogr.DataSource, str)), &#34;Invalid vector input&#34;
@@ -71,7 +72,7 @@ def _reproject_vector(
             gdal_utils.get_path_from_dataset(vector),
             prefix=prefix,
             suffix=suffix,
-            add_uuid=True,
+            add_uuid=add_uuid,
         )
 
     options = []
@@ -163,6 +164,7 @@ def reproject_vector(
                 out_path=path_list[index],
                 prefix=prefix,
                 suffix=suffix,
+                add_uuid=add_uuid,
                 copy_if_same=copy_if_same,
             )
         )
@@ -275,6 +277,7 @@ the path to the newly created vecotr.</p></div>
                 out_path=path_list[index],
                 prefix=prefix,
                 suffix=suffix,
+                add_uuid=add_uuid,
                 copy_if_same=copy_if_same,
             )
         )

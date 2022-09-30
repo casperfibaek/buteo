@@ -39,32 +39,32 @@ import sys; sys.path.append(&#34;../../&#34;)
 from buteo.raster.convolution import convolve_array, get_kernel
 
 
-def texture_local_variance(img, filter_size=5, spherical=False):
+def texture_local_variance(img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0):
     &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
     _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical)
-    std = convolve_array(img, offsets, weights, &#34;std&#34;)
+    std = convolve_array(img, offsets, weights, &#34;std&#34;, nodata=nodata, nodata_value=nodata_value)
 
     return std
 
 
-def texture_local_median(img, filter_size=5, spherical=False):
+def texture_local_median(img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0):
     &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
     _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical)
-    median = convolve_array(img, offsets, weights, &#34;median&#34;)
+    median = convolve_array(img, offsets, weights, &#34;median&#34;, nodata=nodata, nodata_value=nodata_value)
 
     return median
 
 
-def texture_local_blur(img, filter_size=5, spherical=False):
+def texture_local_blur(img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0):
     &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
     _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical, hole=False)
-    return convolve_array(img, offsets, weights, &#34;sum&#34;)
+    return convolve_array(img, offsets, weights, &#34;sum&#34;, nodata=nodata, nodata_value=nodata_value)
 
 
-def texture_hole_dif(img, filter_size=5, spherical=False):
+def texture_hole_dif(img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0):
     &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
     _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical, hole=True)
-    hole = convolve_array(img, offsets, weights, &#34;sum&#34;)
+    hole = convolve_array(img, offsets, weights, &#34;sum&#34;, nodata=nodata, nodata_value=nodata_value)
 
     hole_dif = img / hole
 
@@ -79,7 +79,7 @@ def texture_hole_dif(img, filter_size=5, spherical=False):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.raster.textures.texture_hole_dif"><code class="name flex">
-<span>def <span class="ident">texture_hole_dif</span></span>(<span>img, filter_size=5, spherical=False)</span>
+<span>def <span class="ident">texture_hole_dif</span></span>(<span>img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Create a variance texture layer</p></div>
@@ -87,10 +87,10 @@ def texture_hole_dif(img, filter_size=5, spherical=False):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def texture_hole_dif(img, filter_size=5, spherical=False):
+<pre><code class="python">def texture_hole_dif(img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0):
     &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
     _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical, hole=True)
-    hole = convolve_array(img, offsets, weights, &#34;sum&#34;)
+    hole = convolve_array(img, offsets, weights, &#34;sum&#34;, nodata=nodata, nodata_value=nodata_value)
 
     hole_dif = img / hole
 
@@ -98,7 +98,7 @@ def texture_hole_dif(img, filter_size=5, spherical=False):
 </details>
 </dd>
 <dt id="buteo.raster.textures.texture_local_blur"><code class="name flex">
-<span>def <span class="ident">texture_local_blur</span></span>(<span>img, filter_size=5, spherical=False)</span>
+<span>def <span class="ident">texture_local_blur</span></span>(<span>img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Create a variance texture layer</p></div>
@@ -106,14 +106,14 @@ def texture_hole_dif(img, filter_size=5, spherical=False):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def texture_local_blur(img, filter_size=5, spherical=False):
+<pre><code class="python">def texture_local_blur(img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0):
     &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
     _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical, hole=False)
-    return convolve_array(img, offsets, weights, &#34;sum&#34;)</code></pre>
+    return convolve_array(img, offsets, weights, &#34;sum&#34;, nodata=nodata, nodata_value=nodata_value)</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.textures.texture_local_median"><code class="name flex">
-<span>def <span class="ident">texture_local_median</span></span>(<span>img, filter_size=5, spherical=False)</span>
+<span>def <span class="ident">texture_local_median</span></span>(<span>img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Create a variance texture layer</p></div>
@@ -121,16 +121,16 @@ def texture_hole_dif(img, filter_size=5, spherical=False):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def texture_local_median(img, filter_size=5, spherical=False):
+<pre><code class="python">def texture_local_median(img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0):
     &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
     _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical)
-    median = convolve_array(img, offsets, weights, &#34;median&#34;)
+    median = convolve_array(img, offsets, weights, &#34;median&#34;, nodata=nodata, nodata_value=nodata_value)
 
     return median</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.textures.texture_local_variance"><code class="name flex">
-<span>def <span class="ident">texture_local_variance</span></span>(<span>img, filter_size=5, spherical=False)</span>
+<span>def <span class="ident">texture_local_variance</span></span>(<span>img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Create a variance texture layer</p></div>
@@ -138,10 +138,10 @@ def texture_hole_dif(img, filter_size=5, spherical=False):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def texture_local_variance(img, filter_size=5, spherical=False):
+<pre><code class="python">def texture_local_variance(img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0):
     &#34;&#34;&#34; Create a variance texture layer&#34;&#34;&#34;
     _kernel, weights, offsets = get_kernel(filter_size, distance_weight=&#34;linear&#34;, spherical=spherical)
-    std = convolve_array(img, offsets, weights, &#34;std&#34;)
+    std = convolve_array(img, offsets, weights, &#34;std&#34;, nodata=nodata, nodata_value=nodata_value)
 
     return std</code></pre>
 </details>

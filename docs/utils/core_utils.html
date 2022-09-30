@@ -906,7 +906,11 @@ def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, availa
     ## Returns:
     (_int_): The dynamic memory limit in bytes.
     &#34;&#34;&#34;
-    assert isinstance(percentage, int), &#34;percentage must be an integer.&#34;
+    assert isinstance(percentage, (int, str, float)), &#34;percentage must be an integer.&#34;
+
+    if percentage == &#34;auto&#34; or percentage is None:
+        percentage = 80.0
+
     assert percentage &gt; 0.0 and percentage &lt;= 100.0, &#34;percentage must be &gt; 0 and &lt;= 100.&#34;
 
     dyn_limit = min_bytes
@@ -1414,7 +1418,11 @@ def ensure_list(variable_or_list):
     ## Returns:
     (_int_): The dynamic memory limit in bytes.
     &#34;&#34;&#34;
-    assert isinstance(percentage, int), &#34;percentage must be an integer.&#34;
+    assert isinstance(percentage, (int, str, float)), &#34;percentage must be an integer.&#34;
+
+    if percentage == &#34;auto&#34; or percentage is None:
+        percentage = 80.0
+
     assert percentage &gt; 0.0 and percentage &lt;= 100.0, &#34;percentage must be &gt; 0 and &lt;= 100.&#34;
 
     dyn_limit = min_bytes

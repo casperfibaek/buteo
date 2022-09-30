@@ -85,17 +85,22 @@ def _clip_raster(
 
     clip_ds = None
 
+    memory_files = []
+
     # Input is a vector.
     if gdal_utils.is_vector(clip_geom):
         clip_ds = core_vector._open_vector(clip_geom)
 
+        # TODO: Fix potential memory leak
+        if clip_ds.GetLayerCount() &gt; 1:
+            clip_ds = core_vector.vector_filter_layer(clip_ds, layer_name_or_idx=layer_to_clip, add_uuid=True)
+            memory_files.append(clip_ds)
+
         clip_metadata = core_vector._vector_to_metadata(clip_ds)
 
         if to_extent:
-            clip_ds = clip_metadata[&#34;get_bbox_vector&#34;]() # pylint: disable=not-callable
-
-        elif clip_metadata[&#34;layer_count&#34;] &gt; 1:
-            clip_ds = core_vector._vector_to_memory(clip_ds, layer_to_extract=layer_to_clip)
+            clip_ds = bbox_utils.convert_bbox_to_vector(clip_metadata[&#34;bbox&#34;], clip_metadata[&#34;projection_osr&#34;])
+            memory_files.append(clip_ds)
 
         if isinstance(clip_ds, ogr.DataSource):
             clip_ds = clip_ds.GetName()
@@ -103,22 +108,16 @@ def _clip_raster(
     # Input is a raster (use extent)
     elif gdal_utils.is_raster(clip_geom):
         clip_metadata = core_raster._raster_to_metadata(clip_geom)
-        clip_metadata[&#34;layer_count&#34;] = 1
-        clip_ds = clip_metadata[&#34;get_bbox_vector&#34;]() # pylint: disable=not-callable
-
+        clip_ds = bbox_utils.convert_bbox_to_vector(clip_metadata[&#34;bbox&#34;], clip_metadata[&#34;projection_osr&#34;])
+        memory_files.append(clip_ds)
     else:
         if core_utils.file_exists(clip_geom):
             raise ValueError(f&#34;Unable to parse clip geometry: {clip_geom}&#34;)
         else:
             raise ValueError(f&#34;Unable to locate clip geometry {clip_geom}&#34;)
 
-    if layer_to_clip &gt; (clip_metadata[&#34;layer_count&#34;] - 1):
-        raise ValueError(&#34;Requested an unable layer_to_clip.&#34;)
-
     if clip_ds is None:
         raise ValueError(f&#34;Unable to parse input clip geom: {clip_geom}&#34;)
-
-    clip_projection = clip_metadata[&#34;projection_osr&#34;]
 
     # options
     warp_options = []
@@ -132,24 +131,14 @@ def _clip_raster(
     raster_metadata = core_raster._raster_to_metadata(raster)
     origin_projection = raster_metadata[&#34;projection_osr&#34;]
 
-    # Check if projections match, otherwise reproject target geom.
-    reprojection_needed = False
-    if not origin_projection.IsSame(clip_projection):
-        reprojection_needed = True
-        clip_metadata[&#34;bbox&#34;] = bbox_utils.reproject_bbox(
-            clip_metadata[&#34;bbox&#34;],
-            clip_projection,
-            origin_projection,
-        )
-
     # Fast check: Does the extent of the two inputs overlap?
     if not bbox_utils.bboxes_intersect(raster_metadata[&#34;bbox_latlng&#34;], clip_metadata[&#34;bbox_latlng&#34;]):
         raise Exception(&#34;Geometries did not intersect.&#34;)
 
-    if reprojection_needed:
-        clip_new = _reproject_vector(clip_ds, origin_projection)
-        gdal_utils.delete_if_in_memory(clip_ds)
-        clip_ds = clip_new
+    if not origin_projection.IsSame(clip_metadata[&#34;projection_osr&#34;]):
+        clip_ds = _reproject_vector(clip_ds, origin_projection)
+        clip_metadata = core_vector._vector_to_metadata(clip_ds)
+        memory_files.append(clip_ds)
 
     output_bounds = raster_metadata[&#34;bbox&#34;]
 
@@ -162,7 +151,6 @@ def _clip_raster(
                 raster_metadata[&#34;pixel_width&#34;],
                 raster_metadata[&#34;pixel_height&#34;],
             )
-
         else:
             output_bounds = clip_metadata[&#34;bbox&#34;]
 
@@ -202,7 +190,7 @@ def _clip_raster(
         format=out_format,
         resampleAlg=gdal_enums.translate_resample_method(resample_alg),
         targetAlignedPixels=False,
-        outputBounds=output_bounds,
+        outputBounds=bbox_utils.convert_ogr_bbox_to_gdal_bbox(output_bounds),
         xRes=raster_metadata[&#34;pixel_width&#34;],
         yRes=raster_metadata[&#34;pixel_height&#34;],
         cutlineDSName=clip_ds,
@@ -215,7 +203,7 @@ def _clip_raster(
         multithread=True,
     )
 
-    gdal_utils.delete_if_in_memory(clip_ds)
+    gdal_utils.delete_if_in_memory_list(memory_files)
 
     if verbose == 0:
         gdal.PopErrorHandler()
@@ -281,7 +269,7 @@ def clip_raster(
     `creation_options` (_list_/_None_): A list of creation options to pass to gdal. (Default: **None**)&lt;/br&gt;
     `dst_nodata` (_int_/_float_/_None_): The nodata value to use for the output raster. (Default: **infer**)&lt;/br&gt;
     `src_nodata` (_int_/_float_/_None_): The nodata value to use for the input raster. (Default: **infer**)&lt;/br&gt;
-    `layer_to_clip` (_int_): The layer ID in the vector to use for clipping. (Default: **0**)&lt;/br&gt;
+    `layer_to_clip` (_int_/_str_): The layer ID or name in the vector to use for clipping. (Default: **0**)&lt;/br&gt;
     `verbose` (_int_): The verbosity level. (Default: **0**)&lt;/br&gt;
     `add_uuid` (_bool_): If True, a UUID will be added to the output raster. (Default: **False**)&lt;/br&gt;
     `ram` (_str_): The amount of RAM to use for the operation. (Default: **auto**)&lt;/br&gt;
@@ -389,7 +377,7 @@ def clip_raster(
 <code>creation_options</code> (<em>list</em>/<em>None</em>): A list of creation options to pass to gdal. (Default: <strong>None</strong>)</br>
 <code>dst_nodata</code> (<em>int</em>/<em>float</em>/<em>None</em>): The nodata value to use for the output raster. (Default: <strong>infer</strong>)</br>
 <code>src_nodata</code> (<em>int</em>/<em>float</em>/<em>None</em>): The nodata value to use for the input raster. (Default: <strong>infer</strong>)</br>
-<code>layer_to_clip</code> (<em>int</em>): The layer ID in the vector to use for clipping. (Default: <strong>0</strong>)</br>
+<code>layer_to_clip</code> (<em>int</em>/<em>str</em>): The layer ID or name in the vector to use for clipping. (Default: <strong>0</strong>)</br>
 <code>verbose</code> (<em>int</em>): The verbosity level. (Default: <strong>0</strong>)</br>
 <code>add_uuid</code> (<em>bool</em>): If True, a UUID will be added to the output raster. (Default: <strong>False</strong>)</br>
 <code>ram</code> (<em>str</em>): The amount of RAM to use for the operation. (Default: <strong>auto</strong>)</br></p>
@@ -454,7 +442,7 @@ def clip_raster(
     `creation_options` (_list_/_None_): A list of creation options to pass to gdal. (Default: **None**)&lt;/br&gt;
     `dst_nodata` (_int_/_float_/_None_): The nodata value to use for the output raster. (Default: **infer**)&lt;/br&gt;
     `src_nodata` (_int_/_float_/_None_): The nodata value to use for the input raster. (Default: **infer**)&lt;/br&gt;
-    `layer_to_clip` (_int_): The layer ID in the vector to use for clipping. (Default: **0**)&lt;/br&gt;
+    `layer_to_clip` (_int_/_str_): The layer ID or name in the vector to use for clipping. (Default: **0**)&lt;/br&gt;
     `verbose` (_int_): The verbosity level. (Default: **0**)&lt;/br&gt;
     `add_uuid` (_bool_): If True, a UUID will be added to the output raster. (Default: **False**)&lt;/br&gt;
     `ram` (_str_): The amount of RAM to use for the operation. (Default: **auto**)&lt;/br&gt;
