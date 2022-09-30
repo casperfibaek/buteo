@@ -106,7 +106,7 @@ def _clip_raster(
         raise Exception("Geometries did not intersect.")
 
     clip_ds = _reproject_vector(clip_ds, origin_projection)
-    clip_metadata = core_raster._raster_to_metadata(clip_ds)
+    clip_metadata = core_vector._vector_to_metadata(clip_ds)
 
     output_bounds = raster_metadata["bbox"]
 
