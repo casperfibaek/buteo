@@ -121,7 +121,6 @@ def _clip_raster(
                 raster_metadata["pixel_width"],
                 raster_metadata["pixel_height"],
             )
-
         else:
             output_bounds = clip_metadata["bbox"]
 
@@ -155,21 +154,19 @@ def _clip_raster(
     if verbose == 0:
         gdal.PushErrorHandler("CPLQuietErrorHandler")
 
-    gdal.UseExceptions()
-
     clipped = gdal.Warp(
         out_name,
         origin_layer,
         format=out_format,
         resampleAlg=gdal_enums.translate_resample_method(resample_alg),
         targetAlignedPixels=False,
-        outputBounds=output_bounds,
+        outputBounds=bbox_utils.convert_ogr_bbox_to_gdal_bbox(output_bounds),
         xRes=raster_metadata["pixel_width"],
         yRes=raster_metadata["pixel_height"],
         cutlineDSName=clip_ds,
         cropToCutline=False,
         creationOptions=out_creation_options,
-        # warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
+        warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
         warpOptions=warp_options,
         srcNodata=src_nodata,
         dstNodata=out_nodata,

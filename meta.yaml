@@ -1,6 +1,6 @@
 package:
   name: buteo
-  version: "0.7.59"
+  version: "0.7.61"
 
 source:
   path: ./
