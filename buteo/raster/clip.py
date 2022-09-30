@@ -155,6 +155,8 @@ def _clip_raster(
     if verbose == 0:
         gdal.PushErrorHandler("CPLQuietErrorHandler")
 
+    gdal.UseExceptions()
+
     clipped = gdal.Warp(
         out_name,
         origin_layer,
@@ -174,7 +176,7 @@ def _clip_raster(
         multithread=True,
     )
 
-    gdal_utils.gdal_utils.delete_if_in_memory_list(memory_files)
+    gdal_utils.delete_if_in_memory_list(memory_files)
 
     if verbose == 0:
         gdal.PopErrorHandler()
