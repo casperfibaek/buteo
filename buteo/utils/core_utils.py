@@ -134,8 +134,15 @@ def file_exists(path):
         return True
 
     try:
-        if path in gdal.listdir("/vsimem"):
-            return True
+        if hasattr(gdal, "listdir"):
+            if path in gdal.listdir("/vsimem"):
+                return True
+        elif hasattr(gdal, "ReadDir"):
+            paths = ["/vsimem/" + ds for ds in gdal.ReadDir("/vsimem")]
+            if path in paths:
+                return True
+        else:
+            print("Warning, unable to access vsimem.")
     except:  # pylint: disable=bare-except
         pass
 

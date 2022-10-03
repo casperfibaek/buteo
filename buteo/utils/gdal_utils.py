@@ -193,10 +193,13 @@ def path_to_driver_raster(file_path):
 
 def get_gdal_memory():
     """ Get at list of all active memory layers in GDAL. """
-    try:
+    if hasattr(gdal, "listdir"):
         datasets = [ds.name for ds in gdal.listdir("/vsimem")]
-    except: # pylint: disable=bare-except
+    elif hasattr(gdal, "ReadDir"):
         datasets = ["/vsimem/" + ds for ds in gdal.ReadDir("/vsimem")]
+    else:
+        print("Warning: Unable to clear gdal_memory due to GDAL version.")
+        return []
 
     return datasets
 
