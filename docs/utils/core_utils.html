@@ -164,8 +164,15 @@ def file_exists(path):
         return True
 
     try:
-        if path in gdal.listdir(&#34;/vsimem&#34;):
-            return True
+        if hasattr(gdal, &#34;listdir&#34;):
+            if path in gdal.listdir(&#34;/vsimem&#34;):
+                return True
+        elif hasattr(gdal, &#34;ReadDir&#34;):
+            paths = [&#34;/vsimem/&#34; + ds for ds in gdal.ReadDir(&#34;/vsimem&#34;)]
+            if path in paths:
+                return True
+        else:
+            print(&#34;Warning, unable to access vsimem.&#34;)
     except:  # pylint: disable=bare-except
         pass
 
@@ -1273,8 +1280,15 @@ def ensure_list(variable_or_list):
         return True
 
     try:
-        if path in gdal.listdir(&#34;/vsimem&#34;):
-            return True
+        if hasattr(gdal, &#34;listdir&#34;):
+            if path in gdal.listdir(&#34;/vsimem&#34;):
+                return True
+        elif hasattr(gdal, &#34;ReadDir&#34;):
+            paths = [&#34;/vsimem/&#34; + ds for ds in gdal.ReadDir(&#34;/vsimem&#34;)]
+            if path in paths:
+                return True
+        else:
+            print(&#34;Warning, unable to access vsimem.&#34;)
     except:  # pylint: disable=bare-except
         pass
 

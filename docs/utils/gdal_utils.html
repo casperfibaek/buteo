@@ -228,10 +228,13 @@ def path_to_driver_raster(file_path):
 
 def get_gdal_memory():
     &#34;&#34;&#34; Get at list of all active memory layers in GDAL. &#34;&#34;&#34;
-    try:
+    if hasattr(gdal, &#34;listdir&#34;):
         datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
-    except: # pylint: disable=bare-except
+    elif hasattr(gdal, &#34;ReadDir&#34;):
         datasets = [&#34;/vsimem/&#34; + ds for ds in gdal.ReadDir(&#34;/vsimem&#34;)]
+    else:
+        print(&#34;Warning: Unable to clear gdal_memory due to GDAL version.&#34;)
+        return []
 
     return datasets
 
@@ -1879,10 +1882,13 @@ input.</p>
 </summary>
 <pre><code class="python">def get_gdal_memory():
     &#34;&#34;&#34; Get at list of all active memory layers in GDAL. &#34;&#34;&#34;
-    try:
+    if hasattr(gdal, &#34;listdir&#34;):
         datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
-    except: # pylint: disable=bare-except
+    elif hasattr(gdal, &#34;ReadDir&#34;):
         datasets = [&#34;/vsimem/&#34; + ds for ds in gdal.ReadDir(&#34;/vsimem&#34;)]
+    else:
+        print(&#34;Warning: Unable to clear gdal_memory due to GDAL version.&#34;)
+        return []
 
     return datasets</code></pre>
 </details>
