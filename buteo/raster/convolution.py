@@ -279,21 +279,21 @@ def hood_sigma_lee(values, weights):
 
     return hood_sum(selected_values, selected_weights)
 
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_match_mean(primary, secondary, center_value, weights):
-    """ Match the local means of two arrays. """
-    if weights.sum() <= 0.0:
-        return 0.0
+# @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+# def hood_match_mean(primary, secondary, center_value, weights):
+#     """ Match the local means of two arrays. """
+#     if weights.sum() <= 0.0:
+#         return 0.0
 
-    average_primary = np.average(primary, weights=weights)
-    average_secondary = np.average(secondary, weights=weights)
+#     average_primary = np.average(primary, weights=weights)
+#     average_secondary = np.average(secondary, weights=weights)
 
-    if average_secondary == 0.0:
-        return 0.0
+#     if average_secondary == 0.0:
+#         return 0.0
 
-    ratio = average_secondary / average_primary
+#     ratio = average_secondary / average_primary
 
-    return ratio * center_value
+#     return ratio * center_value
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
@@ -320,15 +320,25 @@ def pad_array(arr, pad_size=1):
 
 
 @jit(nopython=True, nogil=True, fastmath=True)
-def convolve_array(arr, offsets, weights, method="sum", additional_array=None, nodata=False, nodata_value=-9999.9, pad=False, pad_size=1):
+def convolve_array(
+    arr,
+    offsets,
+    weights,
+    method="sum",
+    # additional_array=None,
+    nodata=False,
+    nodata_value=-9999.9,
+    pad=False,
+    pad_size=1,
+):
     """ Convolve an image with a function. """
 
     # Edge-padding
     if pad:
         arr = pad_array(arr, pad_size=pad_size)
 
-        if additional_array is not None:
-            additional_array = pad_array(additional_array, pad_size=1)
+        # if additional_array is not None:
+        #     additional_array = pad_array(additional_array, pad_size=1)
 
     x_adj = arr.shape[0] - 1
     y_adj = arr.shape[1] - 1
@@ -336,7 +346,7 @@ def convolve_array(arr, offsets, weights, method="sum", additional_array=None, n
 
     hood_size = len(offsets)
 
-    two_arrays = True if additional_array is not None else False
+    # two_arrays = True if additional_array is not None else False
 
     result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype="float32")
 
@@ -345,8 +355,8 @@ def convolve_array(arr, offsets, weights, method="sum", additional_array=None, n
 
             hood_values = np.zeros(hood_size, dtype="float32")
 
-            if two_arrays:
-                secondary_hood_values = np.zeros(hood_size, dtype="float32")
+            # if two_arrays:
+            #     secondary_hood_values = np.zeros(hood_size, dtype="float32")
 
             hood_weights = np.zeros(hood_size, dtype="float32")
             weight_sum = np.array([0.0], dtype="float32")
@@ -392,8 +402,8 @@ def convolve_array(arr, offsets, weights, method="sum", additional_array=None, n
                 else:
                     hood_values[idx_n] = value
 
-                    if two_arrays:
-                        secondary_hood_values[idx_n] = additional_array[offset_x, offset_y, offset_z]
+                    # if two_arrays:
+                    #     secondary_hood_values[idx_n] = additional_array[offset_x, offset_y, offset_z]
 
                     weight = weights[idx_n]
 
@@ -423,8 +433,8 @@ def convolve_array(arr, offsets, weights, method="sum", additional_array=None, n
                 result[idx_x, idx_y, 0] = hood_z_score_mad(hood_values, center_value, hood_weights)
             elif method == "sigma_lee":
                 result[idx_x, idx_y, 0] = hood_sigma_lee(hood_values, hood_weights)
-            elif method == "match_mean":
-                result[idx_x, idx_y, 0] = hood_match_mean(hood_values, secondary_hood_values, center_value, hood_weights)
+            # elif method == "match_mean":
+            #     result[idx_x, idx_y, 0] = hood_match_mean(hood_values, secondary_hood_values, center_value, hood_weights)
             else:
                 raise ValueError("Unknown method passed to convolver")
 
