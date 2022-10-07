@@ -18,7 +18,7 @@ def weight_distance(arr, method, decay, sigma, center, spherical, radius):
     if normed == 0.0:
         weight = 1.0
 
-    if method is None:
+    if method is None or method == "none" or method == "":
         weight = 1.0
     elif method == "linear":
         weight = np.power((1 - decay), normed)
@@ -214,24 +214,21 @@ def hood_median_absolute_deviation(values, weights):
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_z_score(values, weights):
+def hood_z_score(values, center_value, weights):
     """ Get the local z score ."""
-    center_idx = len(values) // 2
-    center = values[center_idx]
     std = hood_standard_deviation(values, weights)
     mean = hood_sum(values, weights)
 
-    return (center - mean) / std
+    return (center_value - mean) / std
+
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_z_score_mad(values, weights):
+def hood_z_score_mad(values, center_value, weights):
     """ Get the local z score calculated around the MAD. """
-    center_idx = len(values) // 2
-    center = values[center_idx]
     mad_std = hood_median_absolute_deviation(values, weights) * 1.4826
     median = hood_quantile(values, weights, 0.5)
 
-    return (center - median) / mad_std
+    return (center_value - median) / mad_std
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
@@ -282,31 +279,56 @@ def hood_sigma_lee(values, weights):
 
     return hood_sum(selected_values, selected_weights)
 
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_match_mean(primary, secondary, center_value, weights):
+    """ Match the local means of two arrays. """
+    if weights.sum() <= 0.0:
+        return 0.0
+
+    average_primary = np.average(primary, weights=weights)
+    average_secondary = np.average(secondary, weights=weights)
+
+    if average_secondary == 0.0:
+        return 0.0
+
+    ratio = average_secondary / average_primary
+
+    return ratio * center_value
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def pad_array(arr, pad_size=1):
+    """ Pad an array using SAME """
+    # Core
+    arr_padded = np.zeros((arr.shape[0] + int(pad_size * 2), arr.shape[1] + int(pad_size * 2), arr.shape[2]), dtype=arr.dtype)
+    arr_padded[pad_size:-pad_size, pad_size:-pad_size, :] = arr
+
+    # Corners
+    arr_padded[0:pad_size, 0:pad_size, :] = arr[ 0,  0, :]
+    arr_padded[-pad_size:, -pad_size:, :] = arr[-1, -1, :]
+    arr_padded[0:pad_size, -pad_size:, :] = arr[ 0, -1, :]
+    arr_padded[-pad_size:, 0:pad_size, :] = arr[-1,  0, :]
+
+    # Sides
+    for idx in range(0, pad_size):
+        arr_padded[idx, pad_size:-pad_size, :] = arr[ 0,  :, :]
+        arr_padded[-(idx + 1):, pad_size:-pad_size, :] = arr[-1,  :, :]
+        arr_padded[pad_size:-pad_size, -(idx + 1), :] = arr[ :, -1, :]
+        arr_padded[pad_size:-pad_size, idx, :] = arr[ :,  0, :]
+
+    return arr_padded
+
 
 @jit(nopython=True, nogil=True, fastmath=True)
-def convolve_array(arr, offsets, weights, method="sum", nodata=False, nodata_value=-9999.9, pad=False, pad_size=1):
+def convolve_array(arr, offsets, weights, method="sum", additional_array=None, nodata=False, nodata_value=-9999.9, pad=False, pad_size=1):
     """ Convolve an image with a function. """
 
     # Edge-padding
     if pad:
-        # Core
-        arr_padded = np.zeros((arr.shape[0] + int(pad_size * 2), arr.shape[1] + int(pad_size * 2), arr.shape[2]), dtype=arr.dtype)
-        arr_padded[pad_size:-pad_size, pad_size:-pad_size, :] = arr
+        arr = pad_array(arr, pad_size=pad_size)
 
-        # Corners
-        arr_padded[0:pad_size, 0:pad_size, :] = arr[ 0,  0, :]
-        arr_padded[-pad_size:, -pad_size:, :] = arr[-1, -1, :]
-        arr_padded[0:pad_size, -pad_size:, :] = arr[ 0, -1, :]
-        arr_padded[-pad_size:, 0:pad_size, :] = arr[-1,  0, :]
-
-        # Sides
-        for idx in range(0, pad_size):
-            arr_padded[idx, pad_size:-pad_size, :] = arr[ 0,  :, :]
-            arr_padded[-(idx + 1):, pad_size:-pad_size, :] = arr[-1,  :, :]
-            arr_padded[pad_size:-pad_size, -(idx + 1), :] = arr[ :, -1, :]
-            arr_padded[pad_size:-pad_size, idx, :] = arr[ :,  0, :]
-
-        arr = arr_padded
+        if additional_array is not None:
+            additional_array = pad_array(additional_array, pad_size=1)
 
     x_adj = arr.shape[0] - 1
     y_adj = arr.shape[1] - 1
@@ -314,14 +336,21 @@ def convolve_array(arr, offsets, weights, method="sum", nodata=False, nodata_val
 
     hood_size = len(offsets)
 
+    two_arrays = True if additional_array is not None else False
+
     result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype="float32")
 
     for idx_x in prange(arr.shape[0]):
         for idx_y in prange(arr.shape[1]):
 
             hood_values = np.zeros(hood_size, dtype="float32")
+
+            if two_arrays:
+                secondary_hood_values = np.zeros(hood_size, dtype="float32")
+
             hood_weights = np.zeros(hood_size, dtype="float32")
             weight_sum = np.array([0.0], dtype="float32")
+            center_value = arr[idx_x, idx_y, 0]
             normalise = False
 
             for idx_n in range(hood_size):
@@ -362,6 +391,10 @@ def convolve_array(arr, offsets, weights, method="sum", nodata=False, nodata_val
                     hood_weights[idx_n] = 0
                 else:
                     hood_values[idx_n] = value
+
+                    if two_arrays:
+                        secondary_hood_values[idx_n] = additional_array[offset_x, offset_y, offset_z]
+
                     weight = weights[idx_n]
 
                     hood_weights[idx_n] = weight
@@ -384,8 +417,14 @@ def convolve_array(arr, offsets, weights, method="sum", nodata=False, nodata_val
                 result[idx_x, idx_y, 0] = hood_standard_deviation(hood_values, hood_weights)
             elif method == "mad":
                 result[idx_x, idx_y, 0] = hood_median_absolute_deviation(hood_values, hood_weights)
+            elif method == "z_score":
+                result[idx_x, idx_y, 0] = hood_z_score(hood_values, center_value, hood_weights)
+            elif method == "z_score_mad":
+                result[idx_x, idx_y, 0] = hood_z_score_mad(hood_values, center_value, hood_weights)
             elif method == "sigma_lee":
                 result[idx_x, idx_y, 0] = hood_sigma_lee(hood_values, hood_weights)
+            elif method == "match_mean":
+                result[idx_x, idx_y, 0] = hood_match_mean(hood_values, secondary_hood_values, center_value, hood_weights)
             else:
                 raise ValueError("Unknown method passed to convolver")
 

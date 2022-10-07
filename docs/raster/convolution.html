@@ -48,7 +48,7 @@ def weight_distance(arr, method, decay, sigma, center, spherical, radius):
     if normed == 0.0:
         weight = 1.0
 
-    if method is None:
+    if method is None or method == &#34;none&#34; or method == &#34;&#34;:
         weight = 1.0
     elif method == &#34;linear&#34;:
         weight = np.power((1 - decay), normed)
@@ -244,24 +244,21 @@ def hood_median_absolute_deviation(values, weights):
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
-def hood_z_score(values, weights):
+def hood_z_score(values, center_value, weights):
     &#34;&#34;&#34; Get the local z score .&#34;&#34;&#34;
-    center_idx = len(values) // 2
-    center = values[center_idx]
     std = hood_standard_deviation(values, weights)
     mean = hood_sum(values, weights)
 
-    return (center - mean) / std
+    return (center_value - mean) / std
+
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
-def hood_z_score_mad(values, weights):
+def hood_z_score_mad(values, center_value, weights):
     &#34;&#34;&#34; Get the local z score calculated around the MAD. &#34;&#34;&#34;
-    center_idx = len(values) // 2
-    center = values[center_idx]
     mad_std = hood_median_absolute_deviation(values, weights) * 1.4826
     median = hood_quantile(values, weights, 0.5)
 
-    return (center - median) / mad_std
+    return (center_value - median) / mad_std
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
@@ -312,31 +309,56 @@ def hood_sigma_lee(values, weights):
 
     return hood_sum(selected_values, selected_weights)
 
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def hood_match_mean(primary, secondary, center_value, weights):
+    &#34;&#34;&#34; Match the local means of two arrays. &#34;&#34;&#34;
+    if weights.sum() &lt;= 0.0:
+        return 0.0
+
+    average_primary = np.average(primary, weights=weights)
+    average_secondary = np.average(secondary, weights=weights)
+
+    if average_secondary == 0.0:
+        return 0.0
+
+    ratio = average_secondary / average_primary
+
+    return ratio * center_value
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def pad_array(arr, pad_size=1):
+    &#34;&#34;&#34; Pad an array using SAME &#34;&#34;&#34;
+    # Core
+    arr_padded = np.zeros((arr.shape[0] + int(pad_size * 2), arr.shape[1] + int(pad_size * 2), arr.shape[2]), dtype=arr.dtype)
+    arr_padded[pad_size:-pad_size, pad_size:-pad_size, :] = arr
+
+    # Corners
+    arr_padded[0:pad_size, 0:pad_size, :] = arr[ 0,  0, :]
+    arr_padded[-pad_size:, -pad_size:, :] = arr[-1, -1, :]
+    arr_padded[0:pad_size, -pad_size:, :] = arr[ 0, -1, :]
+    arr_padded[-pad_size:, 0:pad_size, :] = arr[-1,  0, :]
+
+    # Sides
+    for idx in range(0, pad_size):
+        arr_padded[idx, pad_size:-pad_size, :] = arr[ 0,  :, :]
+        arr_padded[-(idx + 1):, pad_size:-pad_size, :] = arr[-1,  :, :]
+        arr_padded[pad_size:-pad_size, -(idx + 1), :] = arr[ :, -1, :]
+        arr_padded[pad_size:-pad_size, idx, :] = arr[ :,  0, :]
+
+    return arr_padded
+
 
 @jit(nopython=True, nogil=True, fastmath=True)
-def convolve_array(arr, offsets, weights, method=&#34;sum&#34;, nodata=False, nodata_value=-9999.9, pad=False, pad_size=1):
+def convolve_array(arr, offsets, weights, method=&#34;sum&#34;, additional_array=None, nodata=False, nodata_value=-9999.9, pad=False, pad_size=1):
     &#34;&#34;&#34; Convolve an image with a function. &#34;&#34;&#34;
 
     # Edge-padding
     if pad:
-        # Core
-        arr_padded = np.zeros((arr.shape[0] + int(pad_size * 2), arr.shape[1] + int(pad_size * 2), arr.shape[2]), dtype=arr.dtype)
-        arr_padded[pad_size:-pad_size, pad_size:-pad_size, :] = arr
+        arr = pad_array(arr, pad_size=pad_size)
 
-        # Corners
-        arr_padded[0:pad_size, 0:pad_size, :] = arr[ 0,  0, :]
-        arr_padded[-pad_size:, -pad_size:, :] = arr[-1, -1, :]
-        arr_padded[0:pad_size, -pad_size:, :] = arr[ 0, -1, :]
-        arr_padded[-pad_size:, 0:pad_size, :] = arr[-1,  0, :]
-
-        # Sides
-        for idx in range(0, pad_size):
-            arr_padded[idx, pad_size:-pad_size, :] = arr[ 0,  :, :]
-            arr_padded[-(idx + 1):, pad_size:-pad_size, :] = arr[-1,  :, :]
-            arr_padded[pad_size:-pad_size, -(idx + 1), :] = arr[ :, -1, :]
-            arr_padded[pad_size:-pad_size, idx, :] = arr[ :,  0, :]
-
-        arr = arr_padded
+        if additional_array is not None:
+            additional_array = pad_array(additional_array, pad_size=1)
 
     x_adj = arr.shape[0] - 1
     y_adj = arr.shape[1] - 1
@@ -344,14 +366,21 @@ def convolve_array(arr, offsets, weights, method=&#34;sum&#34;, nodata=False, no
 
     hood_size = len(offsets)
 
+    two_arrays = True if additional_array is not None else False
+
     result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype=&#34;float32&#34;)
 
     for idx_x in prange(arr.shape[0]):
         for idx_y in prange(arr.shape[1]):
 
             hood_values = np.zeros(hood_size, dtype=&#34;float32&#34;)
+
+            if two_arrays:
+                secondary_hood_values = np.zeros(hood_size, dtype=&#34;float32&#34;)
+
             hood_weights = np.zeros(hood_size, dtype=&#34;float32&#34;)
             weight_sum = np.array([0.0], dtype=&#34;float32&#34;)
+            center_value = arr[idx_x, idx_y, 0]
             normalise = False
 
             for idx_n in range(hood_size):
@@ -392,6 +421,10 @@ def convolve_array(arr, offsets, weights, method=&#34;sum&#34;, nodata=False, no
                     hood_weights[idx_n] = 0
                 else:
                     hood_values[idx_n] = value
+
+                    if two_arrays:
+                        secondary_hood_values[idx_n] = additional_array[offset_x, offset_y, offset_z]
+
                     weight = weights[idx_n]
 
                     hood_weights[idx_n] = weight
@@ -414,8 +447,14 @@ def convolve_array(arr, offsets, weights, method=&#34;sum&#34;, nodata=False, no
                 result[idx_x, idx_y, 0] = hood_standard_deviation(hood_values, hood_weights)
             elif method == &#34;mad&#34;:
                 result[idx_x, idx_y, 0] = hood_median_absolute_deviation(hood_values, hood_weights)
+            elif method == &#34;z_score&#34;:
+                result[idx_x, idx_y, 0] = hood_z_score(hood_values, center_value, hood_weights)
+            elif method == &#34;z_score_mad&#34;:
+                result[idx_x, idx_y, 0] = hood_z_score_mad(hood_values, center_value, hood_weights)
             elif method == &#34;sigma_lee&#34;:
                 result[idx_x, idx_y, 0] = hood_sigma_lee(hood_values, hood_weights)
+            elif method == &#34;match_mean&#34;:
+                result[idx_x, idx_y, 0] = hood_match_mean(hood_values, secondary_hood_values, center_value, hood_weights)
             else:
                 raise ValueError(&#34;Unknown method passed to convolver&#34;)
 
@@ -437,7 +476,7 @@ def convolve_array(arr, offsets, weights, method=&#34;sum&#34;, nodata=False, no
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.raster.convolution.convolve_array"><code class="name flex">
-<span>def <span class="ident">convolve_array</span></span>(<span>arr, offsets, weights, method='sum', nodata=False, nodata_value=-9999.9, pad=False, pad_size=1)</span>
+<span>def <span class="ident">convolve_array</span></span>(<span>arr, offsets, weights, method='sum', additional_array=None, nodata=False, nodata_value=-9999.9, pad=False, pad_size=1)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convolve an image with a function.</p></div>
@@ -446,29 +485,15 @@ def convolve_array(arr, offsets, weights, method=&#34;sum&#34;, nodata=False, no
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@jit(nopython=True, nogil=True, fastmath=True)
-def convolve_array(arr, offsets, weights, method=&#34;sum&#34;, nodata=False, nodata_value=-9999.9, pad=False, pad_size=1):
+def convolve_array(arr, offsets, weights, method=&#34;sum&#34;, additional_array=None, nodata=False, nodata_value=-9999.9, pad=False, pad_size=1):
     &#34;&#34;&#34; Convolve an image with a function. &#34;&#34;&#34;
 
     # Edge-padding
     if pad:
-        # Core
-        arr_padded = np.zeros((arr.shape[0] + int(pad_size * 2), arr.shape[1] + int(pad_size * 2), arr.shape[2]), dtype=arr.dtype)
-        arr_padded[pad_size:-pad_size, pad_size:-pad_size, :] = arr
+        arr = pad_array(arr, pad_size=pad_size)
 
-        # Corners
-        arr_padded[0:pad_size, 0:pad_size, :] = arr[ 0,  0, :]
-        arr_padded[-pad_size:, -pad_size:, :] = arr[-1, -1, :]
-        arr_padded[0:pad_size, -pad_size:, :] = arr[ 0, -1, :]
-        arr_padded[-pad_size:, 0:pad_size, :] = arr[-1,  0, :]
-
-        # Sides
-        for idx in range(0, pad_size):
-            arr_padded[idx, pad_size:-pad_size, :] = arr[ 0,  :, :]
-            arr_padded[-(idx + 1):, pad_size:-pad_size, :] = arr[-1,  :, :]
-            arr_padded[pad_size:-pad_size, -(idx + 1), :] = arr[ :, -1, :]
-            arr_padded[pad_size:-pad_size, idx, :] = arr[ :,  0, :]
-
-        arr = arr_padded
+        if additional_array is not None:
+            additional_array = pad_array(additional_array, pad_size=1)
 
     x_adj = arr.shape[0] - 1
     y_adj = arr.shape[1] - 1
@@ -476,14 +501,21 @@ def convolve_array(arr, offsets, weights, method=&#34;sum&#34;, nodata=False, no
 
     hood_size = len(offsets)
 
+    two_arrays = True if additional_array is not None else False
+
     result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype=&#34;float32&#34;)
 
     for idx_x in prange(arr.shape[0]):
         for idx_y in prange(arr.shape[1]):
 
             hood_values = np.zeros(hood_size, dtype=&#34;float32&#34;)
+
+            if two_arrays:
+                secondary_hood_values = np.zeros(hood_size, dtype=&#34;float32&#34;)
+
             hood_weights = np.zeros(hood_size, dtype=&#34;float32&#34;)
             weight_sum = np.array([0.0], dtype=&#34;float32&#34;)
+            center_value = arr[idx_x, idx_y, 0]
             normalise = False
 
             for idx_n in range(hood_size):
@@ -524,6 +556,10 @@ def convolve_array(arr, offsets, weights, method=&#34;sum&#34;, nodata=False, no
                     hood_weights[idx_n] = 0
                 else:
                     hood_values[idx_n] = value
+
+                    if two_arrays:
+                        secondary_hood_values[idx_n] = additional_array[offset_x, offset_y, offset_z]
+
                     weight = weights[idx_n]
 
                     hood_weights[idx_n] = weight
@@ -546,8 +582,14 @@ def convolve_array(arr, offsets, weights, method=&#34;sum&#34;, nodata=False, no
                 result[idx_x, idx_y, 0] = hood_standard_deviation(hood_values, hood_weights)
             elif method == &#34;mad&#34;:
                 result[idx_x, idx_y, 0] = hood_median_absolute_deviation(hood_values, hood_weights)
+            elif method == &#34;z_score&#34;:
+                result[idx_x, idx_y, 0] = hood_z_score(hood_values, center_value, hood_weights)
+            elif method == &#34;z_score_mad&#34;:
+                result[idx_x, idx_y, 0] = hood_z_score_mad(hood_values, center_value, hood_weights)
             elif method == &#34;sigma_lee&#34;:
                 result[idx_x, idx_y, 0] = hood_sigma_lee(hood_values, hood_weights)
+            elif method == &#34;match_mean&#34;:
+                result[idx_x, idx_y, 0] = hood_match_mean(hood_values, secondary_hood_values, center_value, hood_weights)
             else:
                 raise ValueError(&#34;Unknown method passed to convolver&#34;)
 
@@ -681,6 +723,32 @@ def hood_contrast(values, weights):
     local_max = np.max(np.multiply(values, weights))
 
     return np.abs(local_max - local_min)</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.convolution.hood_match_mean"><code class="name flex">
+<span>def <span class="ident">hood_match_mean</span></span>(<span>primary, secondary, center_value, weights)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Match the local means of two arrays.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def hood_match_mean(primary, secondary, center_value, weights):
+    &#34;&#34;&#34; Match the local means of two arrays. &#34;&#34;&#34;
+    if weights.sum() &lt;= 0.0:
+        return 0.0
+
+    average_primary = np.average(primary, weights=weights)
+    average_secondary = np.average(secondary, weights=weights)
+
+    if average_secondary == 0.0:
+        return 0.0
+
+    ratio = average_secondary / average_primary
+
+    return ratio * center_value</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.convolution.hood_max"><code class="name flex">
@@ -831,7 +899,7 @@ def hood_sum(values, weights):
 </details>
 </dd>
 <dt id="buteo.raster.convolution.hood_z_score"><code class="name flex">
-<span>def <span class="ident">hood_z_score</span></span>(<span>values, weights)</span>
+<span>def <span class="ident">hood_z_score</span></span>(<span>values, center_value, weights)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the local z score .</p></div>
@@ -840,18 +908,16 @@ def hood_sum(values, weights):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
-def hood_z_score(values, weights):
+def hood_z_score(values, center_value, weights):
     &#34;&#34;&#34; Get the local z score .&#34;&#34;&#34;
-    center_idx = len(values) // 2
-    center = values[center_idx]
     std = hood_standard_deviation(values, weights)
     mean = hood_sum(values, weights)
 
-    return (center - mean) / std</code></pre>
+    return (center_value - mean) / std</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.convolution.hood_z_score_mad"><code class="name flex">
-<span>def <span class="ident">hood_z_score_mad</span></span>(<span>values, weights)</span>
+<span>def <span class="ident">hood_z_score_mad</span></span>(<span>values, center_value, weights)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the local z score calculated around the MAD.</p></div>
@@ -860,14 +926,12 @@ def hood_z_score(values, weights):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
-def hood_z_score_mad(values, weights):
+def hood_z_score_mad(values, center_value, weights):
     &#34;&#34;&#34; Get the local z score calculated around the MAD. &#34;&#34;&#34;
-    center_idx = len(values) // 2
-    center = values[center_idx]
     mad_std = hood_median_absolute_deviation(values, weights) * 1.4826
     median = hood_quantile(values, weights, 0.5)
 
-    return (center - median) / mad_std</code></pre>
+    return (center_value - median) / mad_std</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.convolution.k_to_size"><code class="name flex">
@@ -883,6 +947,38 @@ def hood_z_score_mad(values, weights):
 def k_to_size(size):
     &#34;&#34;&#34; Preprocess Sigma Lee limits. &#34;&#34;&#34;
     return int(np.rint(-0.0000837834 * size ** 2 + 0.045469 * size + 0.805733))</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.convolution.pad_array"><code class="name flex">
+<span>def <span class="ident">pad_array</span></span>(<span>arr, pad_size=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Pad an array using SAME</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def pad_array(arr, pad_size=1):
+    &#34;&#34;&#34; Pad an array using SAME &#34;&#34;&#34;
+    # Core
+    arr_padded = np.zeros((arr.shape[0] + int(pad_size * 2), arr.shape[1] + int(pad_size * 2), arr.shape[2]), dtype=arr.dtype)
+    arr_padded[pad_size:-pad_size, pad_size:-pad_size, :] = arr
+
+    # Corners
+    arr_padded[0:pad_size, 0:pad_size, :] = arr[ 0,  0, :]
+    arr_padded[-pad_size:, -pad_size:, :] = arr[-1, -1, :]
+    arr_padded[0:pad_size, -pad_size:, :] = arr[ 0, -1, :]
+    arr_padded[-pad_size:, 0:pad_size, :] = arr[-1,  0, :]
+
+    # Sides
+    for idx in range(0, pad_size):
+        arr_padded[idx, pad_size:-pad_size, :] = arr[ 0,  :, :]
+        arr_padded[-(idx + 1):, pad_size:-pad_size, :] = arr[-1,  :, :]
+        arr_padded[pad_size:-pad_size, -(idx + 1), :] = arr[ :, -1, :]
+        arr_padded[pad_size:-pad_size, idx, :] = arr[ :,  0, :]
+
+    return arr_padded</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.convolution.rotate_kernel"><code class="name flex">
@@ -933,7 +1029,7 @@ def k_to_size(size):
     if normed == 0.0:
         weight = 1.0
 
-    if method is None:
+    if method is None or method == &#34;none&#34; or method == &#34;&#34;:
         weight = 1.0
     elif method == &#34;linear&#34;:
         weight = np.power((1 - decay), normed)
@@ -989,6 +1085,7 @@ def k_to_size(size):
 <li><code><a title="buteo.raster.convolution.convolve_array" href="#buteo.raster.convolution.convolve_array">convolve_array</a></code></li>
 <li><code><a title="buteo.raster.convolution.get_kernel" href="#buteo.raster.convolution.get_kernel">get_kernel</a></code></li>
 <li><code><a title="buteo.raster.convolution.hood_contrast" href="#buteo.raster.convolution.hood_contrast">hood_contrast</a></code></li>
+<li><code><a title="buteo.raster.convolution.hood_match_mean" href="#buteo.raster.convolution.hood_match_mean">hood_match_mean</a></code></li>
 <li><code><a title="buteo.raster.convolution.hood_max" href="#buteo.raster.convolution.hood_max">hood_max</a></code></li>
 <li><code><a title="buteo.raster.convolution.hood_median_absolute_deviation" href="#buteo.raster.convolution.hood_median_absolute_deviation">hood_median_absolute_deviation</a></code></li>
 <li><code><a title="buteo.raster.convolution.hood_min" href="#buteo.raster.convolution.hood_min">hood_min</a></code></li>
@@ -999,6 +1096,7 @@ def k_to_size(size):
 <li><code><a title="buteo.raster.convolution.hood_z_score" href="#buteo.raster.convolution.hood_z_score">hood_z_score</a></code></li>
 <li><code><a title="buteo.raster.convolution.hood_z_score_mad" href="#buteo.raster.convolution.hood_z_score_mad">hood_z_score_mad</a></code></li>
 <li><code><a title="buteo.raster.convolution.k_to_size" href="#buteo.raster.convolution.k_to_size">k_to_size</a></code></li>
+<li><code><a title="buteo.raster.convolution.pad_array" href="#buteo.raster.convolution.pad_array">pad_array</a></code></li>
 <li><code><a title="buteo.raster.convolution.rotate_kernel" href="#buteo.raster.convolution.rotate_kernel">rotate_kernel</a></code></li>
 <li><code><a title="buteo.raster.convolution.weight_distance" href="#buteo.raster.convolution.weight_distance">weight_distance</a></code></li>
 </ul>
