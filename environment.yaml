@@ -41,4 +41,5 @@ dependencies:
     - psutil==5.9.2
     - py==1.11.0
     - pytest==7.1.3
+    - pyyaml==6.0
 prefix: C:\ProgramData\Anaconda3\envs\buteo-dev
