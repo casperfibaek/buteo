@@ -26,6 +26,7 @@ def _clip_vector(
     to_extent=False,
     target_projection=None,
     preserve_fid=True,
+    promote_to_multi=True,
 ):
     """ Internal. """
 
@@ -67,9 +68,12 @@ def _clip_vector(
 
     x_min, x_max, y_min, y_max = core_vector._vector_to_metadata(clip_vector_reprojected)["extent"]
 
-    options.append(f'-spat {x_min} {y_min} {x_max} {y_max}')
+    options.append(f"-spat {x_min} {y_min} {x_max} {y_max}")
 
     options.append(f'-clipsrc "{clip_vector_reprojected}"')
+
+    if promote_to_multi:
+        options.append("-nlt PROMOTE_TO_MULTI")
 
     if preserve_fid:
         options.append("-preserve_fid")
@@ -110,6 +114,7 @@ def clip_vector(
     add_uuid=False,
     allow_lists=True,
     overwrite=True,
+    promote_to_multi=True,
 ):
     """
     Clips a vector to a geometry.
@@ -128,6 +133,7 @@ def clip_vector(
     `add_uuid` (_bool_): Add UUID to the output path. (Default: **False**) </br>
     `allow_lists` (_bool_): Allow lists of vectors as input. (Default: **True**) </br>
     `overwrite` (_bool_): Overwrite output if it already exists. (Default: **True**) </br>
+    `promote_to_multi` (_bool_): Should POLYGON by promoted to MULTIPOLYGON.. (Default: **True**) </br>
 
     ## Returns:
     (_str_/_list_): Output path(s) of clipped vector(s).
@@ -169,6 +175,7 @@ def clip_vector(
                 to_extent=to_extent,
                 target_projection=target_projection,
                 preserve_fid=preserve_fid,
+                promote_to_multi=promote_to_multi,
             )
         )
 

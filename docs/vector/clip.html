@@ -56,6 +56,7 @@ def _clip_vector(
     to_extent=False,
     target_projection=None,
     preserve_fid=True,
+    promote_to_multi=True,
 ):
     &#34;&#34;&#34; Internal. &#34;&#34;&#34;
 
@@ -97,9 +98,12 @@ def _clip_vector(
 
     x_min, x_max, y_min, y_max = core_vector._vector_to_metadata(clip_vector_reprojected)[&#34;extent&#34;]
 
-    options.append(f&#39;-spat {x_min} {y_min} {x_max} {y_max}&#39;)
+    options.append(f&#34;-spat {x_min} {y_min} {x_max} {y_max}&#34;)
 
     options.append(f&#39;-clipsrc &#34;{clip_vector_reprojected}&#34;&#39;)
+
+    if promote_to_multi:
+        options.append(&#34;-nlt PROMOTE_TO_MULTI&#34;)
 
     if preserve_fid:
         options.append(&#34;-preserve_fid&#34;)
@@ -140,6 +144,7 @@ def clip_vector(
     add_uuid=False,
     allow_lists=True,
     overwrite=True,
+    promote_to_multi=True,
 ):
     &#34;&#34;&#34;
     Clips a vector to a geometry.
@@ -158,6 +163,7 @@ def clip_vector(
     `add_uuid` (_bool_): Add UUID to the output path. (Default: **False**) &lt;/br&gt;
     `allow_lists` (_bool_): Allow lists of vectors as input. (Default: **True**) &lt;/br&gt;
     `overwrite` (_bool_): Overwrite output if it already exists. (Default: **True**) &lt;/br&gt;
+    `promote_to_multi` (_bool_): Should POLYGON by promoted to MULTIPOLYGON.. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
     (_str_/_list_): Output path(s) of clipped vector(s).
@@ -199,6 +205,7 @@ def clip_vector(
                 to_extent=to_extent,
                 target_projection=target_projection,
                 preserve_fid=preserve_fid,
+                promote_to_multi=promote_to_multi,
             )
         )
 
@@ -216,7 +223,7 @@ def clip_vector(
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.vector.clip.clip_vector"><code class="name flex">
-<span>def <span class="ident">clip_vector</span></span>(<span>vector, clip_geom, out_path=None, *, to_extent=False, target_projection=None, preserve_fid=True, prefix='', suffix='', add_uuid=False, allow_lists=True, overwrite=True)</span>
+<span>def <span class="ident">clip_vector</span></span>(<span>vector, clip_geom, out_path=None, *, to_extent=False, target_projection=None, preserve_fid=True, prefix='', suffix='', add_uuid=False, allow_lists=True, overwrite=True, promote_to_multi=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Clips a vector to a geometry.</p>
@@ -232,7 +239,8 @@ def clip_vector(
 <code>suffix</code> (<em>str</em>): Suffix to add to the output path. (Default: <strong>""</strong>) </br>
 <code>add_uuid</code> (<em>bool</em>): Add UUID to the output path. (Default: <strong>False</strong>) </br>
 <code>allow_lists</code> (<em>bool</em>): Allow lists of vectors as input. (Default: <strong>True</strong>) </br>
-<code>overwrite</code> (<em>bool</em>): Overwrite output if it already exists. (Default: <strong>True</strong>) </br></p>
+<code>overwrite</code> (<em>bool</em>): Overwrite output if it already exists. (Default: <strong>True</strong>) </br>
+<code>promote_to_multi</code> (<em>bool</em>): Should POLYGON by promoted to MULTIPOLYGON.. (Default: <strong>True</strong>) </br></p>
 <h2 id="returns">Returns:</h2>
 <p>(<em>str</em>/<em>list</em>): Output path(s) of clipped vector(s).</p></div>
 <details class="source">
@@ -252,6 +260,7 @@ def clip_vector(
     add_uuid=False,
     allow_lists=True,
     overwrite=True,
+    promote_to_multi=True,
 ):
     &#34;&#34;&#34;
     Clips a vector to a geometry.
@@ -270,6 +279,7 @@ def clip_vector(
     `add_uuid` (_bool_): Add UUID to the output path. (Default: **False**) &lt;/br&gt;
     `allow_lists` (_bool_): Allow lists of vectors as input. (Default: **True**) &lt;/br&gt;
     `overwrite` (_bool_): Overwrite output if it already exists. (Default: **True**) &lt;/br&gt;
+    `promote_to_multi` (_bool_): Should POLYGON by promoted to MULTIPOLYGON.. (Default: **True**) &lt;/br&gt;
 
     ## Returns:
     (_str_/_list_): Output path(s) of clipped vector(s).
@@ -311,6 +321,7 @@ def clip_vector(
                 to_extent=to_extent,
                 target_projection=target_projection,
                 preserve_fid=preserve_fid,
+                promote_to_multi=promote_to_multi,
             )
         )
 
