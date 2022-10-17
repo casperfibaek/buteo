@@ -130,6 +130,35 @@ def texture_local_blur(img, filter_size=5, spherical=False, nodata=False, nodata
     return convolve_array(img, offsets, weights, &#34;sum&#34;, nodata=nodata, nodata_value=nodata_value)
 
 
+def texture_local_mode(img, filter_size=5, spherical=True, nodata=False, nodata_value=9999.0, distance_weight=&#34;none&#34;, distance_decay=0.2, distance_sigma=1):
+    &#34;&#34;&#34;
+    Apply a mode filter. Default is a circular filter with no distance decay.
+
+    ## Args:
+    `arr` (_np.ndarray_): The array on which to calculate the filter.\n
+
+    ## Kwargs:
+    `filter_size` (_int_): The size of the kernel to use. filter_size x filter_size. (Default: **5**)\n
+    `spherical` (_bool_): If True, the filter applied will be weighted by a circle (Default: **False**)\n
+    `nodata` (_bool_): Does the array contain nodata and should the values be left? (Default: **False**)\n
+    `nodata_value` (_bool_): If nodata is True, what value is nodata. (Default: **9999.9**)\n
+    `distance_weight` (_str_): How should the distance from the center be treated: (Default: **&#34;linear&#34;**)\n
+        * `&#34;none&#34;`: no distance weighing will be done.\n
+        * `&#34;linear&#34;`: np.power((1 - decay), normed).\n
+        * `&#34;sqrt&#34;`: np.power(np.sqrt((1 - decay)), normed).\n
+        * `&#34;power&#34;`: np.power(np.power((1 - decay), 2), normed).\n
+        * `&#34;log&#34;`: np.log(normed + 2).\n
+        * `&#34;gaussian&#34;`: np.exp(-(np.power(normed, 2)) / (2 * np.power(sigma, 2))).\n
+    `distance_decay` (_float_): Rate of distance decay. (Default: **0.2**)\n
+    `distance_sigma` (_float_): The sigma to use for gaussian decay. (Default: **1.0**)\n
+
+    ## Returns:
+    (_np.ndarray_): The filtered array.
+    &#34;&#34;&#34;
+    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma, spherical=spherical)
+    return convolve_array(img, offsets, weights, &#34;mode&#34;, nodata=nodata, nodata_value=nodata_value)
+
+
 def texture_hole_dif(img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0, distance_weight=&#34;linear&#34;, distance_decay=0.2, distance_sigma=1):
     &#34;&#34;&#34;
     Create a &#39;hole&#39; filter, representing the difference between a pixel and its surrounding neighbourhood.
@@ -368,6 +397,68 @@ def texture_hole_dif(img, filter_size=5, spherical=False, nodata=False, nodata_v
     return median</code></pre>
 </details>
 </dd>
+<dt id="buteo.raster.textures.texture_local_mode"><code class="name flex">
+<span>def <span class="ident">texture_local_mode</span></span>(<span>img, filter_size=5, spherical=True, nodata=False, nodata_value=9999.0, distance_weight='none', distance_decay=0.2, distance_sigma=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Apply a mode filter. Default is a circular filter with no distance decay.</p>
+<h2 id="args">Args:</h2>
+<p><code>arr</code> (<em>np.ndarray</em>): The array on which to calculate the filter.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>filter_size</code> (<em>int</em>): The size of the kernel to use. filter_size x filter_size. (Default: <strong>5</strong>)</p>
+<p><code>spherical</code> (<em>bool</em>): If True, the filter applied will be weighted by a circle (Default: <strong>False</strong>)</p>
+<p><code>nodata</code> (<em>bool</em>): Does the array contain nodata and should the values be left? (Default: <strong>False</strong>)</p>
+<p><code>nodata_value</code> (<em>bool</em>): If nodata is True, what value is nodata. (Default: <strong>9999.9</strong>)</p>
+<p><code>distance_weight</code> (<em>str</em>): How should the distance from the center be treated: (Default: <strong>"linear"</strong>)</p>
+<pre><code>* `"none"`: no distance weighing will be done.
+
+* `"linear"`: np.power((1 - decay), normed).
+
+* `"sqrt"`: np.power(np.sqrt((1 - decay)), normed).
+
+* `"power"`: np.power(np.power((1 - decay), 2), normed).
+
+* `"log"`: np.log(normed + 2).
+
+* `"gaussian"`: np.exp(-(np.power(normed, 2)) / (2 * np.power(sigma, 2))).
+</code></pre>
+<p><code>distance_decay</code> (<em>float</em>): Rate of distance decay. (Default: <strong>0.2</strong>)</p>
+<p><code>distance_sigma</code> (<em>float</em>): The sigma to use for gaussian decay. (Default: <strong>1.0</strong>)</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>np.ndarray</em>): The filtered array.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def texture_local_mode(img, filter_size=5, spherical=True, nodata=False, nodata_value=9999.0, distance_weight=&#34;none&#34;, distance_decay=0.2, distance_sigma=1):
+    &#34;&#34;&#34;
+    Apply a mode filter. Default is a circular filter with no distance decay.
+
+    ## Args:
+    `arr` (_np.ndarray_): The array on which to calculate the filter.\n
+
+    ## Kwargs:
+    `filter_size` (_int_): The size of the kernel to use. filter_size x filter_size. (Default: **5**)\n
+    `spherical` (_bool_): If True, the filter applied will be weighted by a circle (Default: **False**)\n
+    `nodata` (_bool_): Does the array contain nodata and should the values be left? (Default: **False**)\n
+    `nodata_value` (_bool_): If nodata is True, what value is nodata. (Default: **9999.9**)\n
+    `distance_weight` (_str_): How should the distance from the center be treated: (Default: **&#34;linear&#34;**)\n
+        * `&#34;none&#34;`: no distance weighing will be done.\n
+        * `&#34;linear&#34;`: np.power((1 - decay), normed).\n
+        * `&#34;sqrt&#34;`: np.power(np.sqrt((1 - decay)), normed).\n
+        * `&#34;power&#34;`: np.power(np.power((1 - decay), 2), normed).\n
+        * `&#34;log&#34;`: np.log(normed + 2).\n
+        * `&#34;gaussian&#34;`: np.exp(-(np.power(normed, 2)) / (2 * np.power(sigma, 2))).\n
+    `distance_decay` (_float_): Rate of distance decay. (Default: **0.2**)\n
+    `distance_sigma` (_float_): The sigma to use for gaussian decay. (Default: **1.0**)\n
+
+    ## Returns:
+    (_np.ndarray_): The filtered array.
+    &#34;&#34;&#34;
+    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma, spherical=spherical)
+    return convolve_array(img, offsets, weights, &#34;mode&#34;, nodata=nodata, nodata_value=nodata_value)</code></pre>
+</details>
+</dd>
 <dt id="buteo.raster.textures.texture_local_variance"><code class="name flex">
 <span>def <span class="ident">texture_local_variance</span></span>(<span>arr, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0, distance_weight='linear', distance_decay=0.2, distance_sigma=1)</span>
 </code></dt>
@@ -455,6 +546,7 @@ def texture_hole_dif(img, filter_size=5, spherical=False, nodata=False, nodata_v
 <li><code><a title="buteo.raster.textures.texture_hole_dif" href="#buteo.raster.textures.texture_hole_dif">texture_hole_dif</a></code></li>
 <li><code><a title="buteo.raster.textures.texture_local_blur" href="#buteo.raster.textures.texture_local_blur">texture_local_blur</a></code></li>
 <li><code><a title="buteo.raster.textures.texture_local_median" href="#buteo.raster.textures.texture_local_median">texture_local_median</a></code></li>
+<li><code><a title="buteo.raster.textures.texture_local_mode" href="#buteo.raster.textures.texture_local_mode">texture_local_mode</a></code></li>
 <li><code><a title="buteo.raster.textures.texture_local_variance" href="#buteo.raster.textures.texture_local_variance">texture_local_variance</a></code></li>
 </ul>
 </li>

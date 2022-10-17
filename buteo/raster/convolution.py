@@ -185,6 +185,28 @@ def hood_sum(values, weights):
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def hood_mode(values, weights):
+    """ Get the weighted sum. """
+    values_ints = np.rint(values)
+    unique = np.unique(values_ints)
+
+    most_occured_value = 0
+    most_occured_weight = -9999.9
+
+    for unique_value in prange(unique):
+        cum_weight = 0
+        for idx in range(values.shape[0]):
+            if values_ints[idx] == unique_value:
+                cum_weight += weights[idx]
+
+        if cum_weight > most_occured_weight:
+            most_occured_weight = cum_weight
+            most_occured_value = unique_value
+
+    return most_occured_value
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def hood_contrast(values, weights):
     """ Get the local contrast. """
     max_val = values.max()
@@ -415,6 +437,8 @@ def convolve_array(
 
             if method == "sum":
                 result[idx_x, idx_y, 0] = hood_sum(hood_values, hood_weights)
+            elif method == "mode":
+                result[idx_x, idx_y, 0] = hood_mode(hood_values, hood_weights)
             elif method == "max":
                 result[idx_x, idx_y, 0] = hood_max(hood_values, hood_weights)
             elif method == "min":

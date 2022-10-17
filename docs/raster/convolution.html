@@ -215,6 +215,28 @@ def hood_sum(values, weights):
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def hood_mode(values, weights):
+    &#34;&#34;&#34; Get the weighted sum. &#34;&#34;&#34;
+    values_ints = np.rint(values)
+    unique = np.unique(values_ints)
+
+    most_occured_value = 0
+    most_occured_weight = -9999.9
+
+    for unique_value in prange(unique):
+        cum_weight = 0
+        for idx in range(values.shape[0]):
+            if values_ints[idx] == unique_value:
+                cum_weight += weights[idx]
+
+        if cum_weight &gt; most_occured_weight:
+            most_occured_weight = cum_weight
+            most_occured_value = unique_value
+
+    return most_occured_value
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
 def hood_contrast(values, weights):
     &#34;&#34;&#34; Get the local contrast. &#34;&#34;&#34;
     max_val = values.max()
@@ -445,6 +467,8 @@ def convolve_array(
 
             if method == &#34;sum&#34;:
                 result[idx_x, idx_y, 0] = hood_sum(hood_values, hood_weights)
+            elif method == &#34;mode&#34;:
+                result[idx_x, idx_y, 0] = hood_mode(hood_values, hood_weights)
             elif method == &#34;max&#34;:
                 result[idx_x, idx_y, 0] = hood_max(hood_values, hood_weights)
             elif method == &#34;min&#34;:
@@ -590,6 +614,8 @@ def convolve_array(
 
             if method == &#34;sum&#34;:
                 result[idx_x, idx_y, 0] = hood_sum(hood_values, hood_weights)
+            elif method == &#34;mode&#34;:
+                result[idx_x, idx_y, 0] = hood_mode(hood_values, hood_weights)
             elif method == &#34;max&#34;:
                 result[idx_x, idx_y, 0] = hood_max(hood_values, hood_weights)
             elif method == &#34;min&#34;:
@@ -794,6 +820,37 @@ def hood_min(values, weights):
     adjusted_values = np.where(weights == 0.0, max_val, values)
     idx = np.argmin(np.divide(adjusted_values, weights + 1e-7))
     return values[idx]</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.convolution.hood_mode"><code class="name flex">
+<span>def <span class="ident">hood_mode</span></span>(<span>values, weights)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the weighted sum.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def hood_mode(values, weights):
+    &#34;&#34;&#34; Get the weighted sum. &#34;&#34;&#34;
+    values_ints = np.rint(values)
+    unique = np.unique(values_ints)
+
+    most_occured_value = 0
+    most_occured_weight = -9999.9
+
+    for unique_value in prange(unique):
+        cum_weight = 0
+        for idx in range(values.shape[0]):
+            if values_ints[idx] == unique_value:
+                cum_weight += weights[idx]
+
+        if cum_weight &gt; most_occured_weight:
+            most_occured_weight = cum_weight
+            most_occured_value = unique_value
+
+    return most_occured_value</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.convolution.hood_quantile"><code class="name flex">
@@ -1082,6 +1139,7 @@ def pad_array(arr, pad_size=1):
 <li><code><a title="buteo.raster.convolution.hood_max" href="#buteo.raster.convolution.hood_max">hood_max</a></code></li>
 <li><code><a title="buteo.raster.convolution.hood_median_absolute_deviation" href="#buteo.raster.convolution.hood_median_absolute_deviation">hood_median_absolute_deviation</a></code></li>
 <li><code><a title="buteo.raster.convolution.hood_min" href="#buteo.raster.convolution.hood_min">hood_min</a></code></li>
+<li><code><a title="buteo.raster.convolution.hood_mode" href="#buteo.raster.convolution.hood_mode">hood_mode</a></code></li>
 <li><code><a title="buteo.raster.convolution.hood_quantile" href="#buteo.raster.convolution.hood_quantile">hood_quantile</a></code></li>
 <li><code><a title="buteo.raster.convolution.hood_sigma_lee" href="#buteo.raster.convolution.hood_sigma_lee">hood_sigma_lee</a></code></li>
 <li><code><a title="buteo.raster.convolution.hood_standard_deviation" href="#buteo.raster.convolution.hood_standard_deviation">hood_standard_deviation</a></code></li>
