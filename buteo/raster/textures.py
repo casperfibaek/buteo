@@ -160,9 +160,3 @@ def texture_hole_dif(img, filter_size=5, spherical=False, nodata=False, nodata_v
     hole_dif = img / hole
 
     return hole_dif
-
-# def texture_local_mean_match(img1, img2, filter_size=11, spherical=True, nodata=False, nodata_value=9999.0):
-#     """ Match the local mean of two images. """
-#     _kernel, weights, offsets = get_kernel(filter_size, distance_weight=None, spherical=spherical)
-
-#     return convolve_array(img1, offsets, weights, method="match_mean", additional_array=img2, nodata=nodata, nodata_value=nodata_value)

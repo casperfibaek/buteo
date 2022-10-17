@@ -193,7 +193,7 @@ def hood_mode(values, weights):
     most_occured_value = 0
     most_occured_weight = -9999.9
 
-    for unique_value in prange(unique):
+    for unique_value in unique:
         cum_weight = 0
         for idx in range(values.shape[0]):
             if values_ints[idx] == unique_value:
