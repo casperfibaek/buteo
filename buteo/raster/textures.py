@@ -9,7 +9,16 @@ import sys; sys.path.append("../../")
 from buteo.raster.convolution import convolve_array, get_kernel
 
 
-def texture_local_variance(arr, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0, distance_weight="linear", distance_decay=0.2, distance_sigma=1):
+def texture_local_variance(
+    arr,
+    filter_size=5,
+    spherical=False,
+    nodata=False,
+    nodata_value=9999.0,
+    distance_weight="linear",
+    distance_decay=0.2,
+    distance_sigma=1,
+):
     """
     Create a variance texture layer.
 
@@ -34,13 +43,36 @@ def texture_local_variance(arr, filter_size=5, spherical=False, nodata=False, no
     ## Returns:
     (_np.ndarray_): The filtered array.
     """
-    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma, spherical=spherical)
-    std = convolve_array(arr, offsets, weights, "std", nodata=nodata, nodata_value=nodata_value)
+    _kernel, weights, offsets = get_kernel(
+        filter_size,
+        distance_weight=distance_weight,
+        distance_decay=distance_decay,
+        distance_sigma=distance_sigma,
+        spherical=spherical,
+    )
+
+    std = convolve_array(
+        arr,
+        offsets,
+        weights,
+        "std",
+        nodata=nodata,
+        nodata_value=nodata_value,
+    )
 
     return std
 
 
-def texture_local_median(img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0, distance_weight="linear", distance_decay=0.2, distance_sigma=1):
+def texture_local_median(
+    arr,
+    filter_size=5,
+    spherical=False,
+    nodata=False,
+    nodata_value=9999.0,
+    distance_weight="linear",
+    distance_decay=0.2,
+    distance_sigma=1,
+):
     """
     Create a median filtered array.
 
@@ -65,13 +97,36 @@ def texture_local_median(img, filter_size=5, spherical=False, nodata=False, noda
     ## Returns:
     (_np.ndarray_): The filtered array.
     """
-    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma, spherical=spherical)
-    median = convolve_array(img, offsets, weights, "median", nodata=nodata, nodata_value=nodata_value)
+    _kernel, weights, offsets = get_kernel(
+        filter_size,
+        distance_weight=distance_weight,
+        distance_decay=distance_decay,
+        distance_sigma=distance_sigma,
+        spherical=spherical,
+    )
+
+    median = convolve_array(
+        arr,
+        offsets,
+        weights,
+        "median",
+        nodata=nodata,
+        nodata_value=nodata_value,
+    )
 
     return median
 
 
-def texture_local_blur(img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0, distance_weight="linear", distance_decay=0.2, distance_sigma=1):
+def texture_local_blur(
+    arr,
+    filter_size=5,
+    spherical=False,
+    nodata=False,
+    nodata_value=9999.0,
+    distance_weight="linear",
+    distance_decay=0.2,
+    distance_sigma=1,
+):
     """
     Apply a blurring filter. Default is a square linear distance weighted blur.
 
@@ -96,11 +151,34 @@ def texture_local_blur(img, filter_size=5, spherical=False, nodata=False, nodata
     ## Returns:
     (_np.ndarray_): The filtered array.
     """
-    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma, spherical=spherical)
-    return convolve_array(img, offsets, weights, "sum", nodata=nodata, nodata_value=nodata_value)
+    _kernel, weights, offsets = get_kernel(
+        filter_size,
+        distance_weight=distance_weight,
+        distance_decay=distance_decay,
+        distance_sigma=distance_sigma,
+        spherical=spherical,
+    )
+
+    return convolve_array(
+        arr,
+        offsets,
+        weights,
+        "sum",
+        nodata=nodata,
+        nodata_value=nodata_value,
+    )
 
 
-def texture_local_mode(img, filter_size=5, spherical=True, nodata=False, nodata_value=9999.0, distance_weight="none", distance_decay=0.2, distance_sigma=1):
+def texture_local_mode(
+    arr,
+    filter_size=5,
+    spherical=True,
+    nodata=False,
+    nodata_value=9999.0,
+    distance_weight="none",
+    distance_decay=0.2,
+    distance_sigma=1,
+):
     """
     Apply a mode filter. Default is a circular filter with no distance decay.
 
@@ -125,11 +203,34 @@ def texture_local_mode(img, filter_size=5, spherical=True, nodata=False, nodata_
     ## Returns:
     (_np.ndarray_): The filtered array.
     """
-    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma, spherical=spherical)
-    return convolve_array(img, offsets, weights, "mode", nodata=nodata, nodata_value=nodata_value)
+    _kernel, weights, offsets = get_kernel(
+        filter_size,
+        distance_weight=distance_weight,
+        distance_decay=distance_decay,
+        distance_sigma=distance_sigma,
+        spherical=spherical,
+    )
+
+    return convolve_array(
+        arr,
+        offsets,
+        weights,
+        "mode",
+        nodata=nodata,
+        nodata_value=nodata_value,
+    )
 
 
-def texture_hole_dif(img, filter_size=5, spherical=False, nodata=False, nodata_value=9999.0, distance_weight="linear", distance_decay=0.2, distance_sigma=1):
+def texture_hole_dif(
+    arr,
+    filter_size=5,
+    spherical=False,
+    nodata=False,
+    nodata_value=9999.0,
+    distance_weight="linear",
+    distance_decay=0.2,
+    distance_sigma=1,
+):
     """
     Create a 'hole' filter, representing the difference between a pixel and its surrounding neighbourhood.
 
@@ -154,9 +255,24 @@ def texture_hole_dif(img, filter_size=5, spherical=False, nodata=False, nodata_v
     ## Returns:
     (_np.ndarray_): The filtered array.
     """
-    _kernel, weights, offsets = get_kernel(filter_size, distance_weight=distance_weight, distance_decay=distance_decay, distance_sigma=distance_sigma, spherical=spherical, hole=True)
-    hole = convolve_array(img, offsets, weights, "sum", nodata=nodata, nodata_value=nodata_value)
+    _kernel, weights, offsets = get_kernel(
+        filter_size,
+        distance_weight=distance_weight,
+        distance_decay=distance_decay,
+        distance_sigma=distance_sigma,
+        spherical=spherical,
+        hole=True,
+    )
 
-    hole_dif = img / hole
+    hole = convolve_array(
+        arr,
+        offsets,
+        weights,
+        "sum",
+        nodata=nodata,
+        nodata_value=nodata_value,
+    )
+
+    hole_dif = arr / hole
 
     return hole_dif
