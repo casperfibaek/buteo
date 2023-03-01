@@ -714,9 +714,10 @@ def type_check(
     name="",
     *,
     throw_error=True,
+    simple=True,
 ):
     """
-    Utility function to type check the inputs of a function.
+    Utility function to type check the inputs of a function. Check two levels down.
 
     ## Args:
     `variable` (_any_): The variable to check. </br>
@@ -729,9 +730,11 @@ def type_check(
     ## Returns:
     (_bool_): A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.
     """
-    assert isinstance(types, list), "types must be a list."
     assert isinstance(name, str), "name must be a string."
     assert recursive_check_type_list_none_or_tuple(types), f"types must be a type, list, None, or tuple. not: {types}"
+
+    if not isinstance(types, (list, tuple)):
+        types = [types]
 
     valid_types = []
     for valid_type in types:
@@ -744,32 +747,108 @@ def type_check(
         else:
             raise ValueError(f"Invalid type: {valid_type}")
 
-    if isinstance(variable, (list, tuple)):
-        found = []
+    if not isinstance(variable, (list, tuple)):
+        sublist_valid_types = []
         for valid_type in valid_types:
             if not isinstance(valid_type, (list, tuple)):
-                continue
+                sublist_valid_types.append(valid_type)
 
-            for item in variable:
-                if type_check(item, valid_type, name, throw_error=throw_error):
-                    found.append(True)
-
-        if len(found) == len(variable):
-            return True
-    else:
-        for valid_type in valid_types:
-            if isinstance(valid_type, (list, tuple)):
-                continue
-
+        for valid_type in sublist_valid_types:
             if isinstance(variable, valid_type):
                 return True
 
+    if type(variable) in valid_types:
+        return True
+
+    type_list = [type(val) for val in valid_types]
+
+    if isinstance(variable, list) and type([]) in type_list:
+        for sublist in valid_types:
+            if not isinstance(sublist, list):
+                continue
+
+            if len(sublist) == 0:
+                return True
+
+            found = 0
+            for item in variable:
+                if type(item) in sublist:
+                    found += 1
+
+            if found == len(variable):
+                return True
+
+    if isinstance(variable, tuple) and type(()) in type_list:
+        for sublist in valid_types:
+            if not isinstance(sublist, tuple):
+                continue
+
+            if len(sublist) == 0:
+                return True
+
+            found = 0
+            for item in variable:
+                if type(item) in sublist:
+                    found += 1
+
+            if found == len(variable):
+                return True
     if throw_error:
         raise ValueError(
             f"The type of variable {name} is not valid. Expected: {types}, got: {type(variable)}"
         )
 
     return False
+
+
+def split_into_offsets(shape, offsets_x=2, offsets_y=2):
+    """ Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed. """
+    width = shape[0]
+    height = shape[1]
+
+    x_remainder = width % offsets_x
+    y_remainder = height % offsets_y
+
+    x_offsets = [0]
+    x_sizes = []
+    for _ in range((offsets_x - 1)):
+        x_offsets.append(x_offsets[-1] + (width // offsets_x))
+    x_offsets[-1] -= x_remainder
+
+    for idx, _ in enumerate(x_offsets):
+        if idx == len(x_offsets) - 1:
+            x_sizes.append(width - x_offsets[idx])
+        elif idx == 0:
+            x_sizes.append(x_offsets[1])
+        else:
+            x_sizes.append(x_offsets[idx + 1] - x_offsets[idx])
+
+    y_offsets = [0]
+    y_sizes = []
+    for _ in range((offsets_y - 1)):
+        y_offsets.append(y_offsets[-1] + (height // offsets_y))
+    y_offsets[-1] -= y_remainder
+
+    for idx, _ in enumerate(y_offsets):
+        if idx == len(y_offsets) - 1:
+            y_sizes.append(height - y_offsets[idx])
+        elif idx == 0:
+            y_sizes.append(y_offsets[1])
+        else:
+            y_sizes.append(y_offsets[idx + 1] - y_offsets[idx])
+
+    offsets = []
+
+    for idx_col, _ in enumerate(y_offsets):
+        for idx_row, _ in enumerate(x_offsets):
+            offsets.append([
+                x_offsets[idx_row],
+                y_offsets[idx_col],
+                x_sizes[idx_row],
+                y_sizes[idx_col],
+            ])
+
+    return offsets
 
 
 def is_list_all_val(arr, val):

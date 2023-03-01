@@ -10,6 +10,7 @@ import os
 
 # External
 from osgeo import gdal, ogr
+import numpy as np
 
 # Internal
 from buteo.raster import core_raster
@@ -102,7 +103,8 @@ def _clip_raster(
     origin_projection = raster_metadata["projection_osr"]
 
     # Fast check: Does the extent of the two inputs overlap?
-    if not bbox_utils.bboxes_intersect(raster_metadata["bbox_latlng"], clip_metadata["bbox_latlng"]):
+    has_inf = True in [np.isinf(val) for val in raster_metadata["bbox_latlng"]]
+    if not has_inf and not bbox_utils.bboxes_intersect(raster_metadata["bbox_latlng"], clip_metadata["bbox_latlng"]):
         raise Exception("Geometries did not intersect.")
 
     if not origin_projection.IsSame(clip_metadata["projection_osr"]):

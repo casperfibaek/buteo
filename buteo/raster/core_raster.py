@@ -493,6 +493,7 @@ def array_to_raster(
     out_path=None,
     set_nodata="arr",
     allow_mismatches=False,
+    pixel_offsets=None,
     overwrite=True,
     creation_options=None,
 ):
@@ -525,6 +526,8 @@ def array_to_raster(
     core_utils.type_check(reference, [str, gdal.Dataset], "reference")
     core_utils.type_check(out_path, [str, None], "out_path")
     core_utils.type_check(overwrite, [bool], "overwrite")
+    core_utils.type_check(pixel_offsets, [[int, float], None], "pixel_offsets")
+    core_utils.type_check(allow_mismatches, [bool], "allow_mismatches")
     core_utils.type_check(set_nodata, [int, float, str, None], "set_nodata")
     core_utils.type_check(creation_options, [[str], None], "creation_options")
 
@@ -585,11 +588,30 @@ def array_to_raster(
             input_nodata = int(input_nodata)
 
 
-    if metadata["width"] != array.shape[1] or metadata["height"] != array.shape[0]:
+    if (metadata["width"] != array.shape[1] or metadata["height"] != array.shape[0]) and pixel_offsets is None:
         if not allow_mismatches:
             raise ValueError(f"Input array and raster are not of equal size. Array: {array.shape[:2]} Raster: {metadata['width'], metadata['height']}")
 
         print("WARNING: Input array and raster are not of equal size.")
+
+    if pixel_offsets is not None:
+        if len(pixel_offsets) != 2 and len(pixel_offsets) != 4:
+            raise ValueError(f"Pixel offsets must be a list of two or four values. {pixel_offsets}")
+
+        if len(pixel_offsets) == 4:
+            if array.ndim == 3:
+                array = array[:pixel_offsets[3], :pixel_offsets[2]:, :] # numpy is col, row order
+            else:
+                array = array[:pixel_offsets[3], :pixel_offsets[2]]
+
+        metadata["transform"] = (
+            metadata["transform"][0] + (pixel_offsets[0] * metadata["pixel_width"]),
+            metadata["transform"][1],
+            metadata["transform"][2],
+            metadata["transform"][3] - (pixel_offsets[1] * metadata["pixel_height"]),
+            metadata["transform"][4],
+            metadata["transform"][5],
+        )
 
     destination = driver.Create(
         output_name,

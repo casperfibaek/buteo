@@ -51,6 +51,9 @@ def is_valid_bbox(bbox_ogr):
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
+    if True in [np.isinf(val) for val in bbox_ogr]:
+        return True
+
     if x_min > x_max or y_min > y_max:
         return False
 
