@@ -291,7 +291,7 @@ def path_to_ext(path, with_dot=False):
     ext = basesplit[1]
 
     if ext == "" or len(ext) == 1:
-        raise Exception(f"File: {path} has no extension.")
+        raise Exception (f"File: {path} has no extension.")
 
     if with_dot:
         return ext
@@ -714,7 +714,6 @@ def type_check(
     name="",
     *,
     throw_error=True,
-    simple=True,
 ):
     """
     Utility function to type check the inputs of a function. Check two levels down.
@@ -937,8 +936,8 @@ def timing(before, print_msg=True):
     """
     assert isinstance(before, datetime), "before must be a datetime object."
 
-    after = time.time()
-    dif = after - before
+    after = datetime.now()
+    dif = (after - before).total_seconds()
 
     hours = int(dif / 3600)
     minutes = int((dif % 3600) / 60)
