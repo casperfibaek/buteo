@@ -1071,7 +1071,7 @@ def create_raster_from_array(arr, out_path=None, pixel_size=10.0, x_min=0.0, y_m
     core_utils.type_check(creation_options, [[str], None], "creation_options")
     core_utils.type_check(overwrite, [bool], "overwrite")
 
-    assert arr.ndim == 2 or arr.ndim == 3, "Array must be 2 or 3 dimensional (3rd dimension considered bands.)"
+    assert arr.ndim in [2, 3], "Array must be 2 or 3 dimensional (3rd dimension considered bands.)"
 
     if arr.ndim == 2:
         arr = arr[:, :, np.newaxis]

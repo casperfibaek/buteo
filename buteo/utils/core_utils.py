@@ -1036,3 +1036,4 @@ def ensure_list(variable_or_list):
         return variable_or_list
 
     return [variable_or_list]
+

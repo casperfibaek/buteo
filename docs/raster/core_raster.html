@@ -1099,7 +1099,7 @@ def create_raster_from_array(arr, out_path=None, pixel_size=10.0, x_min=0.0, y_m
     core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
     core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
 
-    assert arr.ndim == 2 or arr.ndim == 3, &#34;Array must be 2 or 3 dimensional (3rd dimension considered bands.)&#34;
+    assert arr.ndim in [2, 3], &#34;Array must be 2 or 3 dimensional (3rd dimension considered bands.)&#34;
 
     if arr.ndim == 2:
         arr = arr[:, :, np.newaxis]
@@ -1375,7 +1375,7 @@ as a raster using a reference raster.</p>
     core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
     core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
 
-    assert arr.ndim == 2 or arr.ndim == 3, &#34;Array must be 2 or 3 dimensional (3rd dimension considered bands.)&#34;
+    assert arr.ndim in [2, 3], &#34;Array must be 2 or 3 dimensional (3rd dimension considered bands.)&#34;
 
     if arr.ndim == 2:
         arr = arr[:, :, np.newaxis]

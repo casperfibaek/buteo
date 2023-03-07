@@ -319,7 +319,7 @@ def path_to_ext(path, with_dot=False):
     ext = basesplit[1]
 
     if ext == &#34;&#34; or len(ext) == 1:
-        raise Exception(f&#34;File: {path} has no extension.&#34;)
+        raise Exception (f&#34;File: {path} has no extension.&#34;)
 
     if with_dot:
         return ext
@@ -742,7 +742,6 @@ def type_check(
     name=&#34;&#34;,
     *,
     throw_error=True,
-    simple=True,
 ):
     &#34;&#34;&#34;
     Utility function to type check the inputs of a function. Check two levels down.
@@ -965,8 +964,8 @@ def timing(before, print_msg=True):
     &#34;&#34;&#34;
     assert isinstance(before, datetime), &#34;before must be a datetime object.&#34;
 
-    after = time.time()
-    dif = after - before
+    after = datetime.now()
+    dif = (after - before).total_seconds()
 
     hours = int(dif / 3600)
     minutes = int((dif % 3600) / 60)
@@ -2086,7 +2085,7 @@ def ensure_list(variable_or_list):
     ext = basesplit[1]
 
     if ext == &#34;&#34; or len(ext) == 1:
-        raise Exception(f&#34;File: {path} has no extension.&#34;)
+        raise Exception (f&#34;File: {path} has no extension.&#34;)
 
     if with_dot:
         return ext
@@ -2437,8 +2436,8 @@ def ensure_list(variable_or_list):
     &#34;&#34;&#34;
     assert isinstance(before, datetime), &#34;before must be a datetime object.&#34;
 
-    after = time.time()
-    dif = after - before
+    after = datetime.now()
+    dif = (after - before).total_seconds()
 
     hours = int(dif / 3600)
     minutes = int((dif % 3600) / 60)
@@ -2486,7 +2485,7 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.type_check"><code class="name flex">
-<span>def <span class="ident">type_check</span></span>(<span>variable, types, name='', *, throw_error=True, simple=True)</span>
+<span>def <span class="ident">type_check</span></span>(<span>variable, types, name='', *, throw_error=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Utility function to type check the inputs of a function. Check two levels down.</p>
@@ -2508,7 +2507,6 @@ def ensure_list(variable_or_list):
     name=&#34;&#34;,
     *,
     throw_error=True,
-    simple=True,
 ):
     &#34;&#34;&#34;
     Utility function to type check the inputs of a function. Check two levels down.
