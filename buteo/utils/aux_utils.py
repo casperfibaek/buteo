@@ -112,3 +112,23 @@ def decode_latlngs(encoded_latlngs):
     """ Decode multiple latitude and longitude values. """
     latlngs = np.apply_along_axis(decode_latlng, 1, encoded_latlngs)
     return latlngs
+
+def channel_first_to_last(arr):
+    """ Converts a numpy array from channel first to channel last format. """
+    if arr.ndim != 3:
+        raise ValueError("Input array should be 3-dimensional with shape (channels, height, width)")
+
+    # Swap the axes to change from channel first to channel last format
+    arr = np.transpose(arr, (1, 2, 0))
+
+    return arr
+
+def channel_last_to_first(arr):
+    """ Converts a numpy array from channel last to channel first format. """
+    if arr.ndim != 3:
+        raise ValueError("Input array should be 3-dimensional with shape (height, width, channels)")
+
+    # Swap the axes to change from channel last to channel first format
+    arr = np.transpose(arr, (2, 0, 1))
+
+    return arr
