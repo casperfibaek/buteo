@@ -6,8 +6,11 @@ Functions that make interacting with the toolbox easier.
 
 # External
 import numpy as np
+from numba import jit, prange
 
 
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def encode_latitude(lat):
     """ Latitude goes from -90 to 90 """
     lat_adj = lat + 90.0
@@ -18,7 +21,7 @@ def encode_latitude(lat):
 
     return np.array([encoded_sin, encoded_cos], dtype=np.float32)
 
-
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def encode_longitude(lng):
     """ Longitude goes from -180 to 180 """
     lng_adj = lng + 180.0
@@ -29,7 +32,46 @@ def encode_longitude(lng):
 
     return np.array([encoded_sin, encoded_cos], dtype=np.float32)
 
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def encode_latlng(latlng):
+    """
+    Encode latitude and longitude values to be used as input to the model.
+    """
+    lat = latlng[0]
+    lng = latlng[1]
 
+    encoded_lat = encode_latitude(lat)
+    encoded_lng = encode_longitude(lng)
+
+    return np.concatenate((encoded_lat, encoded_lng)).astype(np.float32)
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
+def encode_latlngs(latlngs):
+    """ Encode multiple latitude and longitude values. """
+    if latlngs.ndim == 1:
+        encoded_latlngs = np.apply_along_axis(encode_latlng, 0, latlngs)
+    elif latlngs.ndim == 2:
+        encoded_latlngs = np.apply_along_axis(encode_latlng, 1, latlngs)
+    elif latlngs.ndim == 3:
+        rows = latlngs.shape[0]
+        cols = latlngs.shape[1]
+
+        output_shape = (rows, cols, 4)
+        encoded_latlngs = np.zeros(output_shape, dtype=np.float32)
+
+        for i in prange(rows):
+            for j in range(cols):
+                latlng = latlngs[i, j]
+                encoded_latlngs[i, j] = encode_latlng(latlng)
+    else:
+        raise ValueError(
+            f"The input array must have 1, 2 or 3 dimensions, not {latlngs.ndim}"
+        )
+
+    return encoded_latlngs
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def decode_latitude(encoded_sin, encoded_cos):
     """
     Decode encoded latitude values to the original latitude value.
@@ -53,7 +95,7 @@ def decode_latitude(encoded_sin, encoded_cos):
 
     return lat
 
-
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def decode_longitude(encoded_sin, encoded_cos):
     """
     Decode encoded longitude values to the original longitude value.
@@ -79,19 +121,7 @@ def decode_longitude(encoded_sin, encoded_cos):
     return lng
 
 
-def encode_latlng(latlng):
-    """
-    Encode latitude and longitude values to be used as input to the model.
-    """
-    lat = latlng[0]
-    lng = latlng[1]
-
-    encoded_lat = encode_latitude(lat)
-    encoded_lng = encode_longitude(lng)
-
-    return np.concatenate([encoded_lat, encoded_lng]).astype(np.float32)
-
-
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def decode_latlng(encoded_latlng):
     """
     Decode encoded latitude and longitude values to the original values.
@@ -101,13 +131,7 @@ def decode_latlng(encoded_latlng):
 
     return np.array([lat, lng], dtype=np.float32)
 
-
-def encode_latlngs(latlngs):
-    """ Encode multiple latitude and longitude values. """
-    encoded_latlngs = np.apply_along_axis(encode_latlng, 1, latlngs)
-    return encoded_latlngs
-
-
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def decode_latlngs(encoded_latlngs):
     """ Decode multiple latitude and longitude values. """
     latlngs = np.apply_along_axis(decode_latlng, 1, encoded_latlngs)
@@ -130,5 +154,14 @@ def channel_last_to_first(arr):
 
     # Swap the axes to change from channel last to channel first format
     arr = np.transpose(arr, (2, 0, 1))
+
+    return arr
+
+def scale_to_range(arr, min_val, max_val):
+    """ Scales the values in the input array to the specified range. """
+
+    # Scale the values in the array to the specified range
+    arr = (arr - arr.min()) / (arr.max() - arr.min())
+    arr = (max_val - min_val) * arr + min_val
 
     return arr

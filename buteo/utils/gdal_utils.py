@@ -1069,6 +1069,7 @@ def create_output_path(
     prefix="",
     suffix="",
     add_uuid=False,
+    ext=None,
 ):
     """
     Prepares a raster/vector for writing. Generates an output path. If no output path is
@@ -1093,7 +1094,7 @@ def create_output_path(
     assert isinstance(out_path, (str, type(None))), "out_path must be a string or None."
 
     if out_path is not None:
-        assert core_utils.is_valid_output_path(out_path, overwrite=overwrite), "out_path must be a valid output path or None."
+        assert core_utils.is_valid_output_path(out_path, overwrite=overwrite) or core_utils.folder_exists(out_path), "out_path must be a valid output path or None."
 
     aug_path = None
     if out_path is None:
@@ -1118,8 +1119,12 @@ def create_output_path(
             folder="/vsimem",
         )
     elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
+        name = os.path.basename(dataset_path)
+        ext = os.path.basename(dataset_path).split(".")[1]
+        outname = f"{prefix}{name.split('.')[0]}{suffix}.{ext}"
+
         aug_path = core_utils.get_augmented_path(
-            os.path.basename(out_path),
+            outname,
             prefix=prefix,
             suffix=suffix,
             add_uuid=add_uuid,
@@ -1149,6 +1154,7 @@ def create_output_path_list(
     prefix="",
     suffix="",
     add_uuid=False,
+    ext=None,
 ):
     """
     Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
@@ -1194,6 +1200,7 @@ def create_output_path_list(
             prefix=prefix,
             suffix=suffix,
             add_uuid=add_uuid,
+            ext=ext,
         ))
 
     assert core_utils.is_valid_output_path_list(output, overwrite=overwrite), f"Error while generating outputs. They are invalid: {output}"

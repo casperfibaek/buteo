@@ -1132,7 +1132,7 @@ def create_raster_from_array(arr, out_path=None, pixel_size=10.0, x_min=0.0, y_m
 
 
 def create_grid_with_coordinates(raster):
-    """Create a grid of coordinates from a raster. """
+    """Create a grid of coordinates from a raster. Format is (x, y, xy). """
     core_utils.type_check(raster, [str, gdal.Dataset], "raster")
 
     meta = raster_to_metadata(raster)

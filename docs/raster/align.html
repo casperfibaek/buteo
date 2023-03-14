@@ -32,7 +32,7 @@
 Functions to align a series of rasters to a master or a reference.
 &#34;&#34;&#34;
 
-# TODO: Fix if not all a reprojected, paths are incorrect.
+# TODO: Fix if not all a reprojected, paths/names are incorrect.
 # TODO: phase_cross_correlation
 # TODO: Ensure get_pixel_offsets works as planned.
 
@@ -80,8 +80,10 @@ def match_raster_projections(
     ## Returns:
     (_list_): A list of reprojected input rasters with the correct projection.
     &#34;&#34;&#34;
-    assert isinstance(rasters, list), &#34;rasters must be a list.&#34;
-    assert isinstance(master, (str, gdal.Dataset, ogr.DataSource)), &#34;master must be a string, gdal.Dataset, or ogr.DataSource.&#34;
+    if isinstance(rasters, str):
+        rasters = [rasters]
+
+    assert isinstance(master, (str, gdal.Dataset, ogr.DataSource)), &#34;master must be a string, gdal.Dataset, or ogr.DataSource.&#34;    
     assert gdal_utils.is_raster_list(rasters), &#34;rasters must be a list of rasters.&#34;
 
     try:
@@ -91,7 +93,7 @@ def match_raster_projections(
 
     add_uuid = out_path is None
 
-    path_list = gdal_utils.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid, ext=&#34;.tif&#34;)
 
     output = []
 
@@ -171,12 +173,23 @@ def align_rasters(
     core_utils.type_check(prefix, [str], &#34;prefix&#34;)
     core_utils.type_check(suffix, [str], &#34;suffix&#34;)
 
-    assert gdal_utils.is_raster_list(rasters), &#34;rasters must be a list of rasters.&#34;
+    if isinstance(rasters, str):
+        rasters = [rasters]
+
+    assert gdal_utils.is_raster_list(rasters), &#34;rasters must be a single raster or a list of rasters.&#34;
 
     add_uuid = out_path is None
 
     raster_list = core_utils.ensure_list(rasters)
-    path_list = gdal_utils.create_output_path_list(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(
+        raster_list,
+        out_path,
+        overwrite=overwrite,
+        add_uuid=add_uuid,
+        ext=&#34;.tif&#34;,
+        prefix=prefix,
+        suffix=suffix,
+    )
 
     x_pixels = None
     y_pixels = None
@@ -238,7 +251,7 @@ def align_rasters(
 
         target_projection = gdal_utils.parse_projection(most_common_projection[0])
 
-    if target_size is not None:
+    if target_size is not None and master is None:
 
         # If a raster is input, use it&#39;s pixel size as target values.
         if isinstance(target_size, (gdal.Dataset, str)):
@@ -299,7 +312,8 @@ def align_rasters(
         if isinstance(bounding_box, (list, tuple)):
             if len(bounding_box) != 4:
                 raise ValueError(&#34;bounding_box as a list/tuple must have 4 values.&#34;)
-            target_bounds = list(bounding_box)
+            
+            target_bounds = [x for x in bounding_box]
 
         # If the bounding box is a raster. Take the extent and
         # reproject it to the target projection.
@@ -416,7 +430,7 @@ def align_rasters(
             else:
                 reprojected = _reproject_raster(raster, target_projection)
                 reprojected_rasters.append(reprojected)
-                paths_to_unlink.append(core_raster.get_raster_path(reprojected))
+                paths_to_unlink.append(gdal_utils.get_path_from_dataset(reprojected))
 
     # If any of the target values are still undefined. Throw an error!
     if target_projection is None or target_bounds is None:
@@ -596,12 +610,23 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
     core_utils.type_check(prefix, [str], &#34;prefix&#34;)
     core_utils.type_check(suffix, [str], &#34;suffix&#34;)
 
-    assert gdal_utils.is_raster_list(rasters), &#34;rasters must be a list of rasters.&#34;
+    if isinstance(rasters, str):
+        rasters = [rasters]
+
+    assert gdal_utils.is_raster_list(rasters), &#34;rasters must be a single raster or a list of rasters.&#34;
 
     add_uuid = out_path is None
 
     raster_list = core_utils.ensure_list(rasters)
-    path_list = gdal_utils.create_output_path_list(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(
+        raster_list,
+        out_path,
+        overwrite=overwrite,
+        add_uuid=add_uuid,
+        ext=&#34;.tif&#34;,
+        prefix=prefix,
+        suffix=suffix,
+    )
 
     x_pixels = None
     y_pixels = None
@@ -663,7 +688,7 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
 
         target_projection = gdal_utils.parse_projection(most_common_projection[0])
 
-    if target_size is not None:
+    if target_size is not None and master is None:
 
         # If a raster is input, use it&#39;s pixel size as target values.
         if isinstance(target_size, (gdal.Dataset, str)):
@@ -724,7 +749,8 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
         if isinstance(bounding_box, (list, tuple)):
             if len(bounding_box) != 4:
                 raise ValueError(&#34;bounding_box as a list/tuple must have 4 values.&#34;)
-            target_bounds = list(bounding_box)
+            
+            target_bounds = [x for x in bounding_box]
 
         # If the bounding box is a raster. Take the extent and
         # reproject it to the target projection.
@@ -841,7 +867,7 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
             else:
                 reprojected = _reproject_raster(raster, target_projection)
                 reprojected_rasters.append(reprojected)
-                paths_to_unlink.append(core_raster.get_raster_path(reprojected))
+                paths_to_unlink.append(gdal_utils.get_path_from_dataset(reprojected))
 
     # If any of the target values are still undefined. Throw an error!
     if target_projection is None or target_bounds is None:
@@ -974,8 +1000,10 @@ an <strong>OGR</strong> layer or a <strong>GDAL</strong> layer.</p>
     ## Returns:
     (_list_): A list of reprojected input rasters with the correct projection.
     &#34;&#34;&#34;
-    assert isinstance(rasters, list), &#34;rasters must be a list.&#34;
-    assert isinstance(master, (str, gdal.Dataset, ogr.DataSource)), &#34;master must be a string, gdal.Dataset, or ogr.DataSource.&#34;
+    if isinstance(rasters, str):
+        rasters = [rasters]
+
+    assert isinstance(master, (str, gdal.Dataset, ogr.DataSource)), &#34;master must be a string, gdal.Dataset, or ogr.DataSource.&#34;    
     assert gdal_utils.is_raster_list(rasters), &#34;rasters must be a list of rasters.&#34;
 
     try:
@@ -985,7 +1013,7 @@ an <strong>OGR</strong> layer or a <strong>GDAL</strong> layer.</p>
 
     add_uuid = out_path is None
 
-    path_list = gdal_utils.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid, ext=&#34;.tif&#34;)
 
     output = []
 

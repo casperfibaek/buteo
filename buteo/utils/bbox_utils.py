@@ -434,6 +434,9 @@ def convert_ogr_bbox_to_gdal_bbox(bbox_ogr):
     ## Returns:
     (_list_): A GDAL formatted bbox. `[x_min, y_min, x_max, y_max]`
     """
+    if isinstance(bbox_ogr, tuple):
+        bbox_ogr = [val for val in bbox_ogr]
+
     assert is_valid_bbox(
         bbox_ogr
     ), f"bbox_ogr was not a valid bbox. Received: {bbox_ogr}"
@@ -454,6 +457,9 @@ def convert_gdal_bbox_to_ogr_bbox(bbox_gdal):
     ## Returns:
     (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
     """
+    if isinstance(bbox_ogr, tuple):
+        bbox_ogr = [val for val in bbox_ogr]
+
     assert (
         isinstance(bbox_gdal, list) and len(bbox_gdal) == 4
     ), f"bbox_gdal must be a list of length four. Received: {bbox_gdal}."

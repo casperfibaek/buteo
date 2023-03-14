@@ -34,8 +34,11 @@ Functions that make interacting with the toolbox easier.
 
 # External
 import numpy as np
+from numba import jit, prange
 
 
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
 def encode_latitude(lat):
     &#34;&#34;&#34; Latitude goes from -90 to 90 &#34;&#34;&#34;
     lat_adj = lat + 90.0
@@ -46,7 +49,7 @@ def encode_latitude(lat):
 
     return np.array([encoded_sin, encoded_cos], dtype=np.float32)
 
-
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
 def encode_longitude(lng):
     &#34;&#34;&#34; Longitude goes from -180 to 180 &#34;&#34;&#34;
     lng_adj = lng + 180.0
@@ -57,7 +60,46 @@ def encode_longitude(lng):
 
     return np.array([encoded_sin, encoded_cos], dtype=np.float32)
 
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def encode_latlng(latlng):
+    &#34;&#34;&#34;
+    Encode latitude and longitude values to be used as input to the model.
+    &#34;&#34;&#34;
+    lat = latlng[0]
+    lng = latlng[1]
 
+    encoded_lat = encode_latitude(lat)
+    encoded_lng = encode_longitude(lng)
+
+    return np.concatenate((encoded_lat, encoded_lng)).astype(np.float32)
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def encode_latlngs(latlngs):
+    &#34;&#34;&#34; Encode multiple latitude and longitude values. &#34;&#34;&#34;
+    if latlngs.ndim == 1:
+        encoded_latlngs = np.apply_along_axis(encode_latlng, 0, latlngs)
+    elif latlngs.ndim == 2:
+        encoded_latlngs = np.apply_along_axis(encode_latlng, 1, latlngs)
+    elif latlngs.ndim == 3:
+        rows = latlngs.shape[0]
+        cols = latlngs.shape[1]
+
+        output_shape = (rows, cols, 4)
+        encoded_latlngs = np.zeros(output_shape, dtype=np.float32)
+
+        for i in prange(rows):
+            for j in range(cols):
+                latlng = latlngs[i, j]
+                encoded_latlngs[i, j] = encode_latlng(latlng)
+    else:
+        raise ValueError(
+            f&#34;The input array must have 1, 2 or 3 dimensions, not {latlngs.ndim}&#34;
+        )
+
+    return encoded_latlngs
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
 def decode_latitude(encoded_sin, encoded_cos):
     &#34;&#34;&#34;
     Decode encoded latitude values to the original latitude value.
@@ -81,7 +123,7 @@ def decode_latitude(encoded_sin, encoded_cos):
 
     return lat
 
-
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
 def decode_longitude(encoded_sin, encoded_cos):
     &#34;&#34;&#34;
     Decode encoded longitude values to the original longitude value.
@@ -107,19 +149,7 @@ def decode_longitude(encoded_sin, encoded_cos):
     return lng
 
 
-def encode_latlng(latlng):
-    &#34;&#34;&#34;
-    Encode latitude and longitude values to be used as input to the model.
-    &#34;&#34;&#34;
-    lat = latlng[0]
-    lng = latlng[1]
-
-    encoded_lat = encode_latitude(lat)
-    encoded_lng = encode_longitude(lng)
-
-    return np.concatenate([encoded_lat, encoded_lng]).astype(np.float32)
-
-
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
 def decode_latlng(encoded_latlng):
     &#34;&#34;&#34;
     Decode encoded latitude and longitude values to the original values.
@@ -129,17 +159,40 @@ def decode_latlng(encoded_latlng):
 
     return np.array([lat, lng], dtype=np.float32)
 
-
-def encode_latlngs(latlngs):
-    &#34;&#34;&#34; Encode multiple latitude and longitude values. &#34;&#34;&#34;
-    encoded_latlngs = np.apply_along_axis(encode_latlng, 1, latlngs)
-    return encoded_latlngs
-
-
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
 def decode_latlngs(encoded_latlngs):
     &#34;&#34;&#34; Decode multiple latitude and longitude values. &#34;&#34;&#34;
     latlngs = np.apply_along_axis(decode_latlng, 1, encoded_latlngs)
-    return latlngs</code></pre>
+    return latlngs
+
+def channel_first_to_last(arr):
+    &#34;&#34;&#34; Converts a numpy array from channel first to channel last format. &#34;&#34;&#34;
+    if arr.ndim != 3:
+        raise ValueError(&#34;Input array should be 3-dimensional with shape (channels, height, width)&#34;)
+
+    # Swap the axes to change from channel first to channel last format
+    arr = np.transpose(arr, (1, 2, 0))
+
+    return arr
+
+def channel_last_to_first(arr):
+    &#34;&#34;&#34; Converts a numpy array from channel last to channel first format. &#34;&#34;&#34;
+    if arr.ndim != 3:
+        raise ValueError(&#34;Input array should be 3-dimensional with shape (height, width, channels)&#34;)
+
+    # Swap the axes to change from channel last to channel first format
+    arr = np.transpose(arr, (2, 0, 1))
+
+    return arr
+
+def scale_to_range(arr, min_val, max_val):
+    &#34;&#34;&#34; Scales the values in the input array to the specified range. &#34;&#34;&#34;
+
+    # Scale the values in the array to the specified range
+    arr = (arr - arr.min()) / (arr.max() - arr.min())
+    arr = (max_val - min_val) * arr + min_val
+
+    return arr</code></pre>
 </details>
 </section>
 <section>
@@ -149,6 +202,46 @@ def decode_latlngs(encoded_latlngs):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="buteo.utils.aux_utils.channel_first_to_last"><code class="name flex">
+<span>def <span class="ident">channel_first_to_last</span></span>(<span>arr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts a numpy array from channel first to channel last format.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def channel_first_to_last(arr):
+    &#34;&#34;&#34; Converts a numpy array from channel first to channel last format. &#34;&#34;&#34;
+    if arr.ndim != 3:
+        raise ValueError(&#34;Input array should be 3-dimensional with shape (channels, height, width)&#34;)
+
+    # Swap the axes to change from channel first to channel last format
+    arr = np.transpose(arr, (1, 2, 0))
+
+    return arr</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.aux_utils.channel_last_to_first"><code class="name flex">
+<span>def <span class="ident">channel_last_to_first</span></span>(<span>arr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts a numpy array from channel last to channel first format.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def channel_last_to_first(arr):
+    &#34;&#34;&#34; Converts a numpy array from channel last to channel first format. &#34;&#34;&#34;
+    if arr.ndim != 3:
+        raise ValueError(&#34;Input array should be 3-dimensional with shape (height, width, channels)&#34;)
+
+    # Swap the axes to change from channel last to channel first format
+    arr = np.transpose(arr, (2, 0, 1))
+
+    return arr</code></pre>
+</details>
+</dd>
 <dt id="buteo.utils.aux_utils.decode_latitude"><code class="name flex">
 <span>def <span class="ident">decode_latitude</span></span>(<span>encoded_sin, encoded_cos)</span>
 </code></dt>
@@ -158,7 +251,8 @@ def decode_latlngs(encoded_latlngs):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def decode_latitude(encoded_sin, encoded_cos):
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def decode_latitude(encoded_sin, encoded_cos):
     &#34;&#34;&#34;
     Decode encoded latitude values to the original latitude value.
     &#34;&#34;&#34;
@@ -191,7 +285,8 @@ def decode_latlngs(encoded_latlngs):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def decode_latlng(encoded_latlng):
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def decode_latlng(encoded_latlng):
     &#34;&#34;&#34;
     Decode encoded latitude and longitude values to the original values.
     &#34;&#34;&#34;
@@ -210,7 +305,8 @@ def decode_latlngs(encoded_latlngs):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def decode_latlngs(encoded_latlngs):
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def decode_latlngs(encoded_latlngs):
     &#34;&#34;&#34; Decode multiple latitude and longitude values. &#34;&#34;&#34;
     latlngs = np.apply_along_axis(decode_latlng, 1, encoded_latlngs)
     return latlngs</code></pre>
@@ -225,7 +321,8 @@ def decode_latlngs(encoded_latlngs):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def decode_longitude(encoded_sin, encoded_cos):
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def decode_longitude(encoded_sin, encoded_cos):
     &#34;&#34;&#34;
     Decode encoded longitude values to the original longitude value.
     &#34;&#34;&#34;
@@ -259,7 +356,8 @@ def decode_latlngs(encoded_latlngs):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def encode_latitude(lat):
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def encode_latitude(lat):
     &#34;&#34;&#34; Latitude goes from -90 to 90 &#34;&#34;&#34;
     lat_adj = lat + 90.0
     lat_max = 180
@@ -279,7 +377,8 @@ def decode_latlngs(encoded_latlngs):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def encode_latlng(latlng):
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def encode_latlng(latlng):
     &#34;&#34;&#34;
     Encode latitude and longitude values to be used as input to the model.
     &#34;&#34;&#34;
@@ -289,7 +388,7 @@ def decode_latlngs(encoded_latlngs):
     encoded_lat = encode_latitude(lat)
     encoded_lng = encode_longitude(lng)
 
-    return np.concatenate([encoded_lat, encoded_lng]).astype(np.float32)</code></pre>
+    return np.concatenate((encoded_lat, encoded_lng)).astype(np.float32)</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.aux_utils.encode_latlngs"><code class="name flex">
@@ -301,9 +400,29 @@ def decode_latlngs(encoded_latlngs):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def encode_latlngs(latlngs):
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def encode_latlngs(latlngs):
     &#34;&#34;&#34; Encode multiple latitude and longitude values. &#34;&#34;&#34;
-    encoded_latlngs = np.apply_along_axis(encode_latlng, 1, latlngs)
+    if latlngs.ndim == 1:
+        encoded_latlngs = np.apply_along_axis(encode_latlng, 0, latlngs)
+    elif latlngs.ndim == 2:
+        encoded_latlngs = np.apply_along_axis(encode_latlng, 1, latlngs)
+    elif latlngs.ndim == 3:
+        rows = latlngs.shape[0]
+        cols = latlngs.shape[1]
+
+        output_shape = (rows, cols, 4)
+        encoded_latlngs = np.zeros(output_shape, dtype=np.float32)
+
+        for i in prange(rows):
+            for j in range(cols):
+                latlng = latlngs[i, j]
+                encoded_latlngs[i, j] = encode_latlng(latlng)
+    else:
+        raise ValueError(
+            f&#34;The input array must have 1, 2 or 3 dimensions, not {latlngs.ndim}&#34;
+        )
+
     return encoded_latlngs</code></pre>
 </details>
 </dd>
@@ -316,7 +435,8 @@ def decode_latlngs(encoded_latlngs):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def encode_longitude(lng):
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def encode_longitude(lng):
     &#34;&#34;&#34; Longitude goes from -180 to 180 &#34;&#34;&#34;
     lng_adj = lng + 180.0
     lng_max = 360
@@ -325,6 +445,25 @@ def decode_latlngs(encoded_latlngs):
     encoded_cos = ((np.cos(2 * np.pi * (lng_adj / lng_max)) + 1)) / 2.0
 
     return np.array([encoded_sin, encoded_cos], dtype=np.float32)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.aux_utils.scale_to_range"><code class="name flex">
+<span>def <span class="ident">scale_to_range</span></span>(<span>arr, min_val, max_val)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Scales the values in the input array to the specified range.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def scale_to_range(arr, min_val, max_val):
+    &#34;&#34;&#34; Scales the values in the input array to the specified range. &#34;&#34;&#34;
+
+    # Scale the values in the array to the specified range
+    arr = (arr - arr.min()) / (arr.max() - arr.min())
+    arr = (max_val - min_val) * arr + min_val
+
+    return arr</code></pre>
 </details>
 </dd>
 </dl>
@@ -346,7 +485,9 @@ def decode_latlngs(encoded_latlngs):
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
-<ul class="two-column">
+<ul class="">
+<li><code><a title="buteo.utils.aux_utils.channel_first_to_last" href="#buteo.utils.aux_utils.channel_first_to_last">channel_first_to_last</a></code></li>
+<li><code><a title="buteo.utils.aux_utils.channel_last_to_first" href="#buteo.utils.aux_utils.channel_last_to_first">channel_last_to_first</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.decode_latitude" href="#buteo.utils.aux_utils.decode_latitude">decode_latitude</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.decode_latlng" href="#buteo.utils.aux_utils.decode_latlng">decode_latlng</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.decode_latlngs" href="#buteo.utils.aux_utils.decode_latlngs">decode_latlngs</a></code></li>
@@ -355,6 +496,7 @@ def decode_latlngs(encoded_latlngs):
 <li><code><a title="buteo.utils.aux_utils.encode_latlng" href="#buteo.utils.aux_utils.encode_latlng">encode_latlng</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.encode_latlngs" href="#buteo.utils.aux_utils.encode_latlngs">encode_latlngs</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.encode_longitude" href="#buteo.utils.aux_utils.encode_longitude">encode_longitude</a></code></li>
+<li><code><a title="buteo.utils.aux_utils.scale_to_range" href="#buteo.utils.aux_utils.scale_to_range">scale_to_range</a></code></li>
 </ul>
 </li>
 </ul>

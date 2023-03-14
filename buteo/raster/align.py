@@ -4,7 +4,7 @@
 Functions to align a series of rasters to a master or a reference.
 """
 
-# TODO: Fix if not all a reprojected, paths are incorrect.
+# TODO: Fix if not all a reprojected, paths/names are incorrect.
 # TODO: phase_cross_correlation
 # TODO: Ensure get_pixel_offsets works as planned.
 
@@ -52,8 +52,10 @@ def match_raster_projections(
     ## Returns:
     (_list_): A list of reprojected input rasters with the correct projection.
     """
-    assert isinstance(rasters, list), "rasters must be a list."
-    assert isinstance(master, (str, gdal.Dataset, ogr.DataSource)), "master must be a string, gdal.Dataset, or ogr.DataSource."
+    if isinstance(rasters, str):
+        rasters = [rasters]
+
+    assert isinstance(master, (str, gdal.Dataset, ogr.DataSource)), "master must be a string, gdal.Dataset, or ogr.DataSource."    
     assert gdal_utils.is_raster_list(rasters), "rasters must be a list of rasters."
 
     try:
@@ -63,7 +65,7 @@ def match_raster_projections(
 
     add_uuid = out_path is None
 
-    path_list = gdal_utils.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid, ext=".tif")
 
     output = []
 
@@ -143,12 +145,23 @@ def align_rasters(
     core_utils.type_check(prefix, [str], "prefix")
     core_utils.type_check(suffix, [str], "suffix")
 
-    assert gdal_utils.is_raster_list(rasters), "rasters must be a list of rasters."
+    if isinstance(rasters, str):
+        rasters = [rasters]
+
+    assert gdal_utils.is_raster_list(rasters), "rasters must be a single raster or a list of rasters."
 
     add_uuid = out_path is None
 
     raster_list = core_utils.ensure_list(rasters)
-    path_list = gdal_utils.create_output_path_list(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = gdal_utils.create_output_path_list(
+        raster_list,
+        out_path,
+        overwrite=overwrite,
+        add_uuid=add_uuid,
+        ext=".tif",
+        prefix=prefix,
+        suffix=suffix,
+    )
 
     x_pixels = None
     y_pixels = None
@@ -210,7 +223,7 @@ def align_rasters(
 
         target_projection = gdal_utils.parse_projection(most_common_projection[0])
 
-    if target_size is not None:
+    if target_size is not None and master is None:
 
         # If a raster is input, use it's pixel size as target values.
         if isinstance(target_size, (gdal.Dataset, str)):
@@ -271,7 +284,8 @@ def align_rasters(
         if isinstance(bounding_box, (list, tuple)):
             if len(bounding_box) != 4:
                 raise ValueError("bounding_box as a list/tuple must have 4 values.")
-            target_bounds = list(bounding_box)
+            
+            target_bounds = [x for x in bounding_box]
 
         # If the bounding box is a raster. Take the extent and
         # reproject it to the target projection.
@@ -388,7 +402,7 @@ def align_rasters(
             else:
                 reprojected = _reproject_raster(raster, target_projection)
                 reprojected_rasters.append(reprojected)
-                paths_to_unlink.append(core_raster.get_raster_path(reprojected))
+                paths_to_unlink.append(gdal_utils.get_path_from_dataset(reprojected))
 
     # If any of the target values are still undefined. Throw an error!
     if target_projection is None or target_bounds is None:
