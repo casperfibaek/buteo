@@ -41,6 +41,7 @@ import os
 # External
 import numpy as np
 from osgeo import gdal, osr, ogr
+from osgeo_utils.samples import validate_cloud_optimized_geotiff
 
 # Internal
 from buteo.utils import bbox_utils, core_utils, gdal_utils, gdal_enums
@@ -1184,7 +1185,36 @@ def create_grid_with_coordinates(raster):
     xx, yy = np.meshgrid(x_vals, y_vals)
     grid = np.dstack((xx, yy))
 
-    return grid</code></pre>
+    return grid
+
+
+def is_cog(raster):
+    &#34;&#34;&#34;Check if a raster is a Cloud Optimized GeoTIFF. &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset], &#34;raster&#34;)
+
+    raster = _open_raster(raster)
+
+    if not validate_cloud_optimized_geotiff.validate(raster):
+        return False
+
+    return True
+
+
+# def translate_to_cog(raster, out_path):
+#     &#34;&#34;&#34;Translate a raster to a Cloud Optimized GeoTIFF. &#34;&#34;&#34;
+#     core_utils.type_check(raster, [str, gdal.Dataset], &#34;raster&#34;)
+#     core_utils.type_check(out_path, [str], &#34;out_path&#34;)
+
+#     raster = _open_raster(raster)
+
+#     if not is_cog(out_path):
+#         driver = gdal.GetDriverByName(&#34;COG&#34;)
+#         out_ds = driver.CreateCopy(out_path, raster, options=[&#34;TILED=YES&#34;, &#34;COMPRESS=DEFLATE&#34;, &#34;COPY_SRC_OVERVIEWS=YES&#34;])
+#         gdal.BuildOverviews(out_path, &#34;NEAREST&#34;, overviewlist=[2, 4, 8, 16, 32, 64, 128, 256, 512, 1024])
+
+#         gdal.Translate(out_path, raster, creationOptions=[&#34;TILED=YES&#34;, &#34;COMPRESS=DEFLATE&#34;, &#34;COPY_SRC_OVERVIEWS=YES&#34;])
+
+#     return out_path</code></pre>
 </details>
 </section>
 <section>
@@ -1561,6 +1591,27 @@ as a raster using a reference raster.</p>
         return dataset.GetProjectionRef()
     else:
         return dataset.GetProjection()</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.is_cog"><code class="name flex">
+<span>def <span class="ident">is_cog</span></span>(<span>raster)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a raster is a Cloud Optimized GeoTIFF.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_cog(raster):
+    &#34;&#34;&#34;Check if a raster is a Cloud Optimized GeoTIFF. &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset], &#34;raster&#34;)
+
+    raster = _open_raster(raster)
+
+    if not validate_cloud_optimized_geotiff.validate(raster):
+        return False
+
+    return True</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.open_raster"><code class="name flex">
@@ -2407,6 +2458,7 @@ refering to the dataset. </br></p>
 <li><code><a title="buteo.raster.core_raster.create_raster_from_array" href="#buteo.raster.core_raster.create_raster_from_array">create_raster_from_array</a></code></li>
 <li><code><a title="buteo.raster.core_raster.get_overlap_fraction" href="#buteo.raster.core_raster.get_overlap_fraction">get_overlap_fraction</a></code></li>
 <li><code><a title="buteo.raster.core_raster.get_projection" href="#buteo.raster.core_raster.get_projection">get_projection</a></code></li>
+<li><code><a title="buteo.raster.core_raster.is_cog" href="#buteo.raster.core_raster.is_cog">is_cog</a></code></li>
 <li><code><a title="buteo.raster.core_raster.open_raster" href="#buteo.raster.core_raster.open_raster">open_raster</a></code></li>
 <li><code><a title="buteo.raster.core_raster.raster_set_datatype" href="#buteo.raster.core_raster.raster_set_datatype">raster_set_datatype</a></code></li>
 <li><code><a title="buteo.raster.core_raster.raster_to_array" href="#buteo.raster.core_raster.raster_to_array">raster_to_array</a></code></li>

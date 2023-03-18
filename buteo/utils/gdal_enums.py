@@ -332,6 +332,7 @@ def translate_str_to_gdal_dtype(dtype_str):
         "int32": gdal.GDT_Int32,
         "int64": gdal.GDT_Int32,
         "uint8": gdal.GDT_Byte,
+        'bool': gdal.GDT_Byte,
         "uint16": gdal.GDT_UInt16,
         "uint32": gdal.GDT_UInt32,
         "uint64": gdal.GDT_UInt32,

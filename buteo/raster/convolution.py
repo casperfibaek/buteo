@@ -341,7 +341,7 @@ def pad_array(arr, pad_size=1):
     return arr_padded
 
 
-@jit(nopython=True, nogil=True, fastmath=True)
+@jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
 def convolve_array(
     arr,
     offsets,

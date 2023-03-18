@@ -13,6 +13,7 @@ import os
 # External
 import numpy as np
 from osgeo import gdal, osr, ogr
+from osgeo_utils.samples import validate_cloud_optimized_geotiff
 
 # Internal
 from buteo.utils import bbox_utils, core_utils, gdal_utils, gdal_enums
@@ -1157,3 +1158,32 @@ def create_grid_with_coordinates(raster):
     grid = np.dstack((xx, yy))
 
     return grid
+
+
+def is_cog(raster):
+    """Check if a raster is a Cloud Optimized GeoTIFF. """
+    core_utils.type_check(raster, [str, gdal.Dataset], "raster")
+
+    raster = _open_raster(raster)
+
+    if not validate_cloud_optimized_geotiff.validate(raster):
+        return False
+
+    return True
+
+
+# def translate_to_cog(raster, out_path):
+#     """Translate a raster to a Cloud Optimized GeoTIFF. """
+#     core_utils.type_check(raster, [str, gdal.Dataset], "raster")
+#     core_utils.type_check(out_path, [str], "out_path")
+
+#     raster = _open_raster(raster)
+
+#     if not is_cog(out_path):
+#         driver = gdal.GetDriverByName("COG")
+#         out_ds = driver.CreateCopy(out_path, raster, options=["TILED=YES", "COMPRESS=DEFLATE", "COPY_SRC_OVERVIEWS=YES"])
+#         gdal.BuildOverviews(out_path, "NEAREST", overviewlist=[2, 4, 8, 16, 32, 64, 128, 256, 512, 1024])
+
+#         gdal.Translate(out_path, raster, creationOptions=["TILED=YES", "COMPRESS=DEFLATE", "COPY_SRC_OVERVIEWS=YES"])
+
+#     return out_path
