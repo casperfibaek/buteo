@@ -418,6 +418,9 @@ def is_valid_non_memory_path(path):
     if is_valid_mem_path(path):
         return False
 
+    if os.path.isdir(path):
+        return False
+
     return True
 
 
@@ -826,56 +829,6 @@ def type_check(
         )
 
     return False
-
-
-def split_into_offsets(shape, offsets_x=2, offsets_y=2):
-    &#34;&#34;&#34; Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed. &#34;&#34;&#34;
-    width = shape[0]
-    height = shape[1]
-
-    x_remainder = width % offsets_x
-    y_remainder = height % offsets_y
-
-    x_offsets = [0]
-    x_sizes = []
-    for _ in range((offsets_x - 1)):
-        x_offsets.append(x_offsets[-1] + (width // offsets_x))
-    x_offsets[-1] -= x_remainder
-
-    for idx, _ in enumerate(x_offsets):
-        if idx == len(x_offsets) - 1:
-            x_sizes.append(width - x_offsets[idx])
-        elif idx == 0:
-            x_sizes.append(x_offsets[1])
-        else:
-            x_sizes.append(x_offsets[idx + 1] - x_offsets[idx])
-
-    y_offsets = [0]
-    y_sizes = []
-    for _ in range((offsets_y - 1)):
-        y_offsets.append(y_offsets[-1] + (height // offsets_y))
-    y_offsets[-1] -= y_remainder
-
-    for idx, _ in enumerate(y_offsets):
-        if idx == len(y_offsets) - 1:
-            y_sizes.append(height - y_offsets[idx])
-        elif idx == 0:
-            y_sizes.append(y_offsets[1])
-        else:
-            y_sizes.append(y_offsets[idx + 1] - y_offsets[idx])
-
-    offsets = []
-
-    for idx_col, _ in enumerate(y_offsets):
-        for idx_row, _ in enumerate(x_offsets):
-            offsets.append([
-                x_offsets[idx_row],
-                y_offsets[idx_col],
-                x_sizes[idx_row],
-                y_sizes[idx_col],
-            ])
-
-    return offsets
 
 
 def is_list_all_val(arr, val):
@@ -1905,6 +1858,9 @@ def ensure_list(variable_or_list):
     if is_valid_mem_path(path):
         return False
 
+    if os.path.isdir(path):
+        return False
+
     return True</code></pre>
 </details>
 </dd>
@@ -2297,65 +2253,6 @@ def ensure_list(variable_or_list):
     return True</code></pre>
 </details>
 </dd>
-<dt id="buteo.utils.core_utils.split_into_offsets"><code class="name flex">
-<span>def <span class="ident">split_into_offsets</span></span>(<span>shape, offsets_x=2, offsets_y=2)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def split_into_offsets(shape, offsets_x=2, offsets_y=2):
-    &#34;&#34;&#34; Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed. &#34;&#34;&#34;
-    width = shape[0]
-    height = shape[1]
-
-    x_remainder = width % offsets_x
-    y_remainder = height % offsets_y
-
-    x_offsets = [0]
-    x_sizes = []
-    for _ in range((offsets_x - 1)):
-        x_offsets.append(x_offsets[-1] + (width // offsets_x))
-    x_offsets[-1] -= x_remainder
-
-    for idx, _ in enumerate(x_offsets):
-        if idx == len(x_offsets) - 1:
-            x_sizes.append(width - x_offsets[idx])
-        elif idx == 0:
-            x_sizes.append(x_offsets[1])
-        else:
-            x_sizes.append(x_offsets[idx + 1] - x_offsets[idx])
-
-    y_offsets = [0]
-    y_sizes = []
-    for _ in range((offsets_y - 1)):
-        y_offsets.append(y_offsets[-1] + (height // offsets_y))
-    y_offsets[-1] -= y_remainder
-
-    for idx, _ in enumerate(y_offsets):
-        if idx == len(y_offsets) - 1:
-            y_sizes.append(height - y_offsets[idx])
-        elif idx == 0:
-            y_sizes.append(y_offsets[1])
-        else:
-            y_sizes.append(y_offsets[idx + 1] - y_offsets[idx])
-
-    offsets = []
-
-    for idx_col, _ in enumerate(y_offsets):
-        for idx_row, _ in enumerate(x_offsets):
-            offsets.append([
-                x_offsets[idx_row],
-                y_offsets[idx_col],
-                x_sizes[idx_row],
-                y_sizes[idx_col],
-            ])
-
-    return offsets</code></pre>
-</details>
-</dd>
 <dt id="buteo.utils.core_utils.step_ranges"><code class="name flex">
 <span>def <span class="ident">step_ranges</span></span>(<span>arr_with_steps)</span>
 </code></dt>
@@ -2645,7 +2542,6 @@ def ensure_list(variable_or_list):
 <li><code><a title="buteo.utils.core_utils.recursive_check_type_list_none_or_tuple" href="#buteo.utils.core_utils.recursive_check_type_list_none_or_tuple">recursive_check_type_list_none_or_tuple</a></code></li>
 <li><code><a title="buteo.utils.core_utils.remove_if_required" href="#buteo.utils.core_utils.remove_if_required">remove_if_required</a></code></li>
 <li><code><a title="buteo.utils.core_utils.remove_if_required_list" href="#buteo.utils.core_utils.remove_if_required_list">remove_if_required_list</a></code></li>
-<li><code><a title="buteo.utils.core_utils.split_into_offsets" href="#buteo.utils.core_utils.split_into_offsets">split_into_offsets</a></code></li>
 <li><code><a title="buteo.utils.core_utils.step_ranges" href="#buteo.utils.core_utils.step_ranges">step_ranges</a></code></li>
 <li><code><a title="buteo.utils.core_utils.timing" href="#buteo.utils.core_utils.timing">timing</a></code></li>
 <li><code><a title="buteo.utils.core_utils.to_number" href="#buteo.utils.core_utils.to_number">to_number</a></code></li>

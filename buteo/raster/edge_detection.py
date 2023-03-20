@@ -9,7 +9,7 @@ import sys; sys.path.append("../../")
 import numpy as np
 
 # Internal
-from buteo.raster.convolution import convolve_array, get_kernel
+from buteo.raster.convolution import convolve_array, get_kernel, pad_array_view
 
 
 DEFAULT_SPHERICAL = False
@@ -266,9 +266,11 @@ def edge_detection(
     _kernel_y, weights_y, offsets_y = gy
 
     pad_size = filter_size // 2
-    gx = convolve_array(arr, offsets=offsets_x, weights=weights_x, method="sum", nodata=nodata, nodata_value=nodata_value, pad=True, pad_size=pad_size)
-    gy = convolve_array(arr, offsets=offsets_y, weights=weights_y, method="sum", nodata=nodata, nodata_value=nodata_value, pad=True, pad_size=pad_size)
-
+    arr_padded = pad_array_view(arr, pad_size)
+    gx = convolve_array(arr_padded, offsets=offsets_x, weights=weights_x, method="sum", nodata=nodata, nodata_value=nodata_value)
+    gx = gx[pad_size:-pad_size, pad_size:-pad_size, :]
+    gy = convolve_array(arr_padded, offsets=offsets_y, weights=weights_y, method="sum", nodata=nodata, nodata_value=nodata_value)
+    gy = gy[pad_size:-pad_size, pad_size:-pad_size, :]
     if gradient_output:
         grad_mag = np.sqrt(np.add(np.power(gx, 2), np.power(gy, 2)))
         grad_dir = np.arctan(np.true_divide(gx, gy, where=gy!=0))

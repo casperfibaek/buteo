@@ -390,6 +390,9 @@ def is_valid_non_memory_path(path):
     if is_valid_mem_path(path):
         return False
 
+    if os.path.isdir(path):
+        return False
+
     return True
 
 
@@ -800,56 +803,6 @@ def type_check(
     return False
 
 
-def split_into_offsets(shape, offsets_x=2, offsets_y=2):
-    """ Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed. """
-    width = shape[0]
-    height = shape[1]
-
-    x_remainder = width % offsets_x
-    y_remainder = height % offsets_y
-
-    x_offsets = [0]
-    x_sizes = []
-    for _ in range((offsets_x - 1)):
-        x_offsets.append(x_offsets[-1] + (width // offsets_x))
-    x_offsets[-1] -= x_remainder
-
-    for idx, _ in enumerate(x_offsets):
-        if idx == len(x_offsets) - 1:
-            x_sizes.append(width - x_offsets[idx])
-        elif idx == 0:
-            x_sizes.append(x_offsets[1])
-        else:
-            x_sizes.append(x_offsets[idx + 1] - x_offsets[idx])
-
-    y_offsets = [0]
-    y_sizes = []
-    for _ in range((offsets_y - 1)):
-        y_offsets.append(y_offsets[-1] + (height // offsets_y))
-    y_offsets[-1] -= y_remainder
-
-    for idx, _ in enumerate(y_offsets):
-        if idx == len(y_offsets) - 1:
-            y_sizes.append(height - y_offsets[idx])
-        elif idx == 0:
-            y_sizes.append(y_offsets[1])
-        else:
-            y_sizes.append(y_offsets[idx + 1] - y_offsets[idx])
-
-    offsets = []
-
-    for idx_col, _ in enumerate(y_offsets):
-        for idx_row, _ in enumerate(x_offsets):
-            offsets.append([
-                x_offsets[idx_row],
-                y_offsets[idx_col],
-                x_sizes[idx_row],
-                y_sizes[idx_col],
-            ])
-
-    return offsets
-
-
 def is_list_all_val(arr, val):
     """
     Check if a list is all a value. This also considers type.
@@ -1036,4 +989,3 @@ def ensure_list(variable_or_list):
         return variable_or_list
 
     return [variable_or_list]
-

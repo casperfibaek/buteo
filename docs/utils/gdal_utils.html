@@ -484,6 +484,26 @@ def is_raster_list(potential_raster_list, *, empty_is_invalid=True):
     return True
 
 
+def is_path_list(potential_path_list, allow_none=False):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid list of paths.
+    &#34;&#34;&#34;
+
+    if not isinstance(potential_path_list, list):
+        return False
+
+    if len(potential_path_list) == 0:
+        return False
+
+    for element in potential_path_list:
+        if element is None and not allow_none:
+            return False
+        
+        if not core_utils.is_valid_output_path(element) and not os.path.isdir(element):
+            return False
+
+    return True
+
 def is_vector(potential_vector, empty_is_invalid=True):
     &#34;&#34;&#34;
     Checks if a variable is a valid vector.
@@ -1132,7 +1152,7 @@ def create_output_path(
     aug_path = None
     if out_path is None:
 
-        # Not all drivers are support in memory. So if nothing is specified,
+        # Not all drivers are supported in memory. So if nothing is specified,
         # we&#39;ll convert to tif and fgb for memory files.
 
         og_path = get_path_from_dataset(dataset_path)
@@ -1152,17 +1172,31 @@ def create_output_path(
             folder=&#34;/vsimem&#34;,
         )
     elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
-        name = os.path.basename(dataset_path)
-        ext = os.path.basename(dataset_path).split(&#34;.&#34;)[1]
-        outname = f&#34;{prefix}{name.split(&#39;.&#39;)[0]}{suffix}.{ext}&#34;
 
-        aug_path = core_utils.get_augmented_path(
-            outname,
-            prefix=prefix,
-            suffix=suffix,
-            add_uuid=add_uuid,
-            folder=core_utils.path_to_folder(out_path),
-        )
+        if os.path.isdir(out_path):
+            name = os.path.basename(dataset_path)
+            ext = os.path.basename(dataset_path).split(&#34;.&#34;)[1]
+            outname = f&#34;{prefix}{name.split(&#39;.&#39;)[0]}{suffix}.{ext}&#34;
+
+            aug_path = core_utils.get_augmented_path(
+                outname,
+                prefix=prefix,
+                suffix=suffix,
+                add_uuid=add_uuid,
+                folder=core_utils.path_to_folder(out_path),
+            )
+        else:
+            name = os.path.basename(out_path)
+            ext = os.path.basename(out_path).split(&#34;.&#34;)[1]
+            outname = f&#34;{prefix}{name.split(&#39;.&#39;)[0]}{suffix}.{ext}&#34;
+
+            aug_path = core_utils.get_augmented_path(
+                outname,
+                prefix=prefix,
+                suffix=suffix,
+                add_uuid=add_uuid,
+                folder=core_utils.path_to_folder(out_path),
+            )
     elif core_utils.is_valid_mem_path(out_path):
         aug_path = core_utils.get_augmented_path(
             os.path.basename(dataset_path),
@@ -1209,7 +1243,7 @@ def create_output_path_list(
     (_str_/_list_): A path to the output raster or a list of paths.
     &#34;&#34;&#34;
     assert isinstance(dataset_path, (list)), &#34;dataset_path must be a string or a list of strings.&#34;
-    assert isinstance(out_path, (str, type(None))), &#34;out_path must be a string or None.&#34;
+    assert isinstance(out_path, (str, type(None), list)), &#34;out_path must be a string or None.&#34;
 
     if isinstance(out_path, str) and core_utils.is_str_a_glob(out_path):
         dataset_path = core_utils.parse_glob_path(out_path)
@@ -1555,7 +1589,7 @@ along with the input filename.</p>
     aug_path = None
     if out_path is None:
 
-        # Not all drivers are support in memory. So if nothing is specified,
+        # Not all drivers are supported in memory. So if nothing is specified,
         # we&#39;ll convert to tif and fgb for memory files.
 
         og_path = get_path_from_dataset(dataset_path)
@@ -1575,17 +1609,31 @@ along with the input filename.</p>
             folder=&#34;/vsimem&#34;,
         )
     elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
-        name = os.path.basename(dataset_path)
-        ext = os.path.basename(dataset_path).split(&#34;.&#34;)[1]
-        outname = f&#34;{prefix}{name.split(&#39;.&#39;)[0]}{suffix}.{ext}&#34;
 
-        aug_path = core_utils.get_augmented_path(
-            outname,
-            prefix=prefix,
-            suffix=suffix,
-            add_uuid=add_uuid,
-            folder=core_utils.path_to_folder(out_path),
-        )
+        if os.path.isdir(out_path):
+            name = os.path.basename(dataset_path)
+            ext = os.path.basename(dataset_path).split(&#34;.&#34;)[1]
+            outname = f&#34;{prefix}{name.split(&#39;.&#39;)[0]}{suffix}.{ext}&#34;
+
+            aug_path = core_utils.get_augmented_path(
+                outname,
+                prefix=prefix,
+                suffix=suffix,
+                add_uuid=add_uuid,
+                folder=core_utils.path_to_folder(out_path),
+            )
+        else:
+            name = os.path.basename(out_path)
+            ext = os.path.basename(out_path).split(&#34;.&#34;)[1]
+            outname = f&#34;{prefix}{name.split(&#39;.&#39;)[0]}{suffix}.{ext}&#34;
+
+            aug_path = core_utils.get_augmented_path(
+                outname,
+                prefix=prefix,
+                suffix=suffix,
+                add_uuid=add_uuid,
+                folder=core_utils.path_to_folder(out_path),
+            )
     elif core_utils.is_valid_mem_path(out_path):
         aug_path = core_utils.get_augmented_path(
             os.path.basename(dataset_path),
@@ -1654,7 +1702,7 @@ input.</p>
     (_str_/_list_): A path to the output raster or a list of paths.
     &#34;&#34;&#34;
     assert isinstance(dataset_path, (list)), &#34;dataset_path must be a string or a list of strings.&#34;
-    assert isinstance(out_path, (str, type(None))), &#34;out_path must be a string or None.&#34;
+    assert isinstance(out_path, (str, type(None), list)), &#34;out_path must be a string or None.&#34;
 
     if isinstance(out_path, str) and core_utils.is_str_a_glob(out_path):
         dataset_path = core_utils.parse_glob_path(out_path)
@@ -2127,6 +2175,36 @@ input.</p>
 
     else:
         raise TypeError(&#34;vector_or_raster must be a string, ogr.DataSource, or gdal.Dataset&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_path_list"><code class="name flex">
+<span>def <span class="ident">is_path_list</span></span>(<span>potential_path_list, allow_none=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a variable is a valid list of paths.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_path_list(potential_path_list, allow_none=False):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid list of paths.
+    &#34;&#34;&#34;
+
+    if not isinstance(potential_path_list, list):
+        return False
+
+    if len(potential_path_list) == 0:
+        return False
+
+    for element in potential_path_list:
+        if element is None and not allow_none:
+            return False
+        
+        if not core_utils.is_valid_output_path(element) and not os.path.isdir(element):
+            return False
+
+    return True</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.gdal_utils.is_raster"><code class="name flex">
@@ -3224,6 +3302,7 @@ an osr.SpatialReference.</p>
 <li><code><a title="buteo.utils.gdal_utils.get_path_from_dataset" href="#buteo.utils.gdal_utils.get_path_from_dataset">get_path_from_dataset</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.get_path_from_dataset_list" href="#buteo.utils.gdal_utils.get_path_from_dataset_list">get_path_from_dataset_list</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.is_in_memory" href="#buteo.utils.gdal_utils.is_in_memory">is_in_memory</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_path_list" href="#buteo.utils.gdal_utils.is_path_list">is_path_list</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.is_raster" href="#buteo.utils.gdal_utils.is_raster">is_raster</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.is_raster_empty" href="#buteo.utils.gdal_utils.is_raster_empty">is_raster_empty</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.is_raster_list" href="#buteo.utils.gdal_utils.is_raster_list">is_raster_list</a></code></li>

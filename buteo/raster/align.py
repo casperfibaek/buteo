@@ -101,7 +101,7 @@ def align_rasters(
     src_nodata="infer",
     dst_nodata="infer",
     prefix="",
-    suffix="_aligned",
+    suffix="",
     ram="auto",
 ):
     """
@@ -145,14 +145,12 @@ def align_rasters(
     core_utils.type_check(prefix, [str], "prefix")
     core_utils.type_check(suffix, [str], "suffix")
 
-    if isinstance(rasters, str):
-        rasters = [rasters]
-
-    assert gdal_utils.is_raster_list(rasters), "rasters must be a single raster or a list of rasters."
-
-    add_uuid = out_path is None
-
     raster_list = core_utils.ensure_list(rasters)
+
+    assert gdal_utils.is_raster_list(raster_list), "rasters must be a single raster or a list of rasters."
+
+    add_uuid = True if out_path is None else False
+
     path_list = gdal_utils.create_output_path_list(
         raster_list,
         out_path,
@@ -178,7 +176,7 @@ def align_rasters(
     used_projections = []
     metadata = []
 
-    for raster in rasters:
+    for raster in raster_list:
         meta = core_raster.raster_to_metadata(raster)
         metadata.append(meta)
         used_projections.append(meta["projection_wkt"])
@@ -284,7 +282,7 @@ def align_rasters(
         if isinstance(bounding_box, (list, tuple)):
             if len(bounding_box) != 4:
                 raise ValueError("bounding_box as a list/tuple must have 4 values.")
-            
+
             target_bounds = [x for x in bounding_box]
 
         # If the bounding box is a raster. Take the extent and

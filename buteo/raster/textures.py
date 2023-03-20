@@ -5,9 +5,12 @@
 # Standard library
 import sys; sys.path.append("../../")
 
-# Internal
-from buteo.raster.convolution import convolve_array, get_kernel
+# External
+import numpy as np
 
+# Internal
+from buteo.raster.convolution import convolve_array, get_kernel, METHOD_ENUMS
+from buteo.utils import type_check
 
 def texture_local_variance(
     arr,
@@ -43,6 +46,17 @@ def texture_local_variance(
     ## Returns:
     (_np.ndarray_): The filtered array.
     """
+    type_check(arr, [np.ndarray], "arr")
+    type_check(filter_size, [int], "filter_size")
+    type_check(spherical, [bool], "spherical")
+    type_check(nodata, [bool], "nodata")
+    type_check(nodata_value, [int, float], "nodata_value")
+    type_check(distance_weight, [str], "distance_weight")
+    type_check(distance_decay, [int, float], "distance_decay")
+    type_check(distance_sigma, [int, float], "distance_sigma")
+
+    assert filter_size % 2 == 1, "Filter size must be odd."
+
     _kernel, weights, offsets = get_kernel(
         filter_size,
         distance_weight=distance_weight,
@@ -55,7 +69,7 @@ def texture_local_variance(
         arr,
         offsets,
         weights,
-        "std",
+        METHOD_ENUMS["std"],
         nodata=nodata,
         nodata_value=nodata_value,
     )
@@ -97,6 +111,17 @@ def texture_local_median(
     ## Returns:
     (_np.ndarray_): The filtered array.
     """
+    type_check(arr, [np.ndarray], "arr")
+    type_check(filter_size, [int], "filter_size")
+    type_check(spherical, [bool], "spherical")
+    type_check(nodata, [bool], "nodata")
+    type_check(nodata_value, [int, float], "nodata_value")
+    type_check(distance_weight, [str], "distance_weight")
+    type_check(distance_decay, [int, float], "distance_decay")
+    type_check(distance_sigma, [int, float], "distance_sigma")
+
+    assert filter_size % 2 == 1, "Filter size must be odd."
+    
     _kernel, weights, offsets = get_kernel(
         filter_size,
         distance_weight=distance_weight,
@@ -109,7 +134,7 @@ def texture_local_median(
         arr,
         offsets,
         weights,
-        "median",
+        METHOD_ENUMS["median"],
         nodata=nodata,
         nodata_value=nodata_value,
     )
@@ -151,6 +176,17 @@ def texture_local_blur(
     ## Returns:
     (_np.ndarray_): The filtered array.
     """
+    type_check(arr, [np.ndarray], "arr")
+    type_check(filter_size, [int], "filter_size")
+    type_check(spherical, [bool], "spherical")
+    type_check(nodata, [bool], "nodata")
+    type_check(nodata_value, [int, float], "nodata_value")
+    type_check(distance_weight, [str], "distance_weight")
+    type_check(distance_decay, [int, float], "distance_decay")
+    type_check(distance_sigma, [int, float], "distance_sigma")
+
+    assert filter_size % 2 == 1, "Filter size must be odd."
+    
     _kernel, weights, offsets = get_kernel(
         filter_size,
         distance_weight=distance_weight,
@@ -163,7 +199,7 @@ def texture_local_blur(
         arr,
         offsets,
         weights,
-        "sum",
+        METHOD_ENUMS["sum"],
         nodata=nodata,
         nodata_value=nodata_value,
     )
@@ -203,6 +239,18 @@ def texture_local_mode(
     ## Returns:
     (_np.ndarray_): The filtered array.
     """
+
+    type_check(arr, [np.ndarray], "arr")
+    type_check(filter_size, [int], "filter_size")
+    type_check(spherical, [bool], "spherical")
+    type_check(nodata, [bool], "nodata")
+    type_check(nodata_value, [int, float], "nodata_value")
+    type_check(distance_weight, [str], "distance_weight")
+    type_check(distance_decay, [int, float], "distance_decay")
+    type_check(distance_sigma, [int, float], "distance_sigma")
+
+    assert filter_size % 2 == 1, "Filter size must be odd."
+    
     _kernel, weights, offsets = get_kernel(
         filter_size,
         distance_weight=distance_weight,
@@ -215,7 +263,7 @@ def texture_local_mode(
         arr,
         offsets,
         weights,
-        "mode",
+        METHOD_ENUMS["mode"],
         nodata=nodata,
         nodata_value=nodata_value,
     )
@@ -255,6 +303,19 @@ def texture_hole_dif(
     ## Returns:
     (_np.ndarray_): The filtered array.
     """
+
+    type_check(arr, [np.ndarray], "arr")
+    type_check(filter_size, [int], "filter_size")
+    type_check(spherical, [bool], "spherical")
+    type_check(nodata, [bool], "nodata")
+    type_check(nodata_value, [int, float], "nodata_value")
+    type_check(distance_weight, [str], "distance_weight")
+    type_check(distance_decay, [int, float], "distance_decay")
+    type_check(distance_sigma, [int, float], "distance_sigma")
+
+    assert filter_size % 2 == 1, "Filter size must be odd."
+
+
     _kernel, weights, offsets = get_kernel(
         filter_size,
         distance_weight=distance_weight,
@@ -268,7 +329,7 @@ def texture_hole_dif(
         arr,
         offsets,
         weights,
-        "sum",
+        METHOD_ENUMS["sum"],
         nodata=nodata,
         nodata_value=nodata_value,
     )

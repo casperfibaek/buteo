@@ -179,6 +179,107 @@ def create_grid(range_rows, range_cols):
 
     return rows_grid, cols_grid
 
+
+# def split_into_offsets(shape, offsets_x=2, offsets_y=2, overlap_x=0, overlap_y=0):
+#     """ Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed. """
+#     width = shape[0]
+#     height = shape[1]
+
+#     x_remainder = width % offsets_x
+#     y_remainder = height % offsets_y
+
+#     x_offsets = [0]
+#     x_sizes = []
+#     for _ in range((offsets_x - 1)):
+#         x_offsets.append(x_offsets[-1] + (width // offsets_x))
+#     x_offsets[-1] -= x_remainder
+
+#     for idx, _ in enumerate(x_offsets):
+#         if idx == len(x_offsets) - 1:
+#             x_sizes.append(width - x_offsets[idx])
+#         elif idx == 0:
+#             x_sizes.append(x_offsets[1])
+#         else:
+#             x_sizes.append(x_offsets[idx + 1] - x_offsets[idx])
+
+#     y_offsets = [0]
+#     y_sizes = []
+#     for _ in range((offsets_y - 1)):
+#         y_offsets.append(y_offsets[-1] + (height // offsets_y))
+#     y_offsets[-1] -= y_remainder
+
+#     for idx, _ in enumerate(y_offsets):
+#         if idx == len(y_offsets) - 1:
+#             y_sizes.append(height - y_offsets[idx])
+#         elif idx == 0:
+#             y_sizes.append(y_offsets[1])
+#         else:
+#             y_sizes.append(y_offsets[idx + 1] - y_offsets[idx])
+
+#     offsets = []
+
+#     for idx_col, _ in enumerate(y_offsets):
+#         for idx_row, _ in enumerate(x_offsets):
+#             offsets.append([
+#                 x_offsets[idx_row],
+#                 y_offsets[idx_col],
+#                 x_sizes[idx_row],
+#                 y_sizes[idx_col],
+#             ])
+
+#     return offsets
+
+
+def split_into_offsets(shape, offsets_x=2, offsets_y=2, overlap_x=0, overlap_y=0):
+    """ Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed. """
+    width = shape[0]
+    height = shape[1]
+
+    x_remainder = width % offsets_x
+    y_remainder = height % offsets_y
+
+    x_offsets = [0]
+    x_sizes = []
+    for _ in range(offsets_x - 1):
+        x_offsets.append(x_offsets[-1] + (width // offsets_x) - overlap_x)
+    x_offsets[-1] -= x_remainder
+
+    for idx, _ in enumerate(x_offsets):
+        if idx == len(x_offsets) - 1:
+            x_sizes.append(width - x_offsets[idx])
+        elif idx == 0:
+            x_sizes.append(x_offsets[1] + overlap_x)
+        else:
+            x_sizes.append(x_offsets[idx + 1] - x_offsets[idx] + overlap_x)
+
+    y_offsets = [0]
+    y_sizes = []
+    for _ in range(offsets_y - 1):
+        y_offsets.append(y_offsets[-1] + (height // offsets_y) - overlap_y)
+    y_offsets[-1] -= y_remainder
+
+    for idx, _ in enumerate(y_offsets):
+        if idx == len(y_offsets) - 1:
+            y_sizes.append(height - y_offsets[idx])
+        elif idx == 0:
+            y_sizes.append(y_offsets[1] + overlap_y)
+        else:
+            y_sizes.append(y_offsets[idx + 1] - y_offsets[idx] + overlap_y)
+
+    offsets = []
+
+    for idx_col, _ in enumerate(y_offsets):
+        for idx_row, _ in enumerate(x_offsets):
+            offsets.append([
+                x_offsets[idx_row],
+                y_offsets[idx_col],
+                x_sizes[idx_row],
+                y_sizes[idx_col],
+            ])
+
+    return offsets
+
+
 @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
 def calculate_pixel_distances(array, target=1, maximum_distance=None, pixel_width=1, pixel_height=1):
     """ Calculate the distance from each pixel to the nearest target pixel. """

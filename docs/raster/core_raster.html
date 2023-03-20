@@ -953,6 +953,9 @@ def stack_rasters_vrt(
     seperate=True,
     *,
     resample_alg=&#34;nearest&#34;,
+    srcNodata=None,
+    VRTNodata=None,
+    hideNodata=None,
     options=None,
     overwrite=True,
     reference=None,
@@ -968,6 +971,9 @@ def stack_rasters_vrt(
     ## Kwargs:
     `seperate` (_bool_): If the raster bands should be seperated. (Default: **True**) &lt;/br&gt;
     `resample_alg` (_str_): The resampling algorithm to use. (Default: **nearest**) &lt;/br&gt;
+    `srcNodata` (_float_): The nodata value to use. (Default: **None**) &lt;/br&gt;
+    `VRTNodata` (_float_): The nodata value to use. (Default: **None**) &lt;/br&gt;
+    `hideNodata` (_bool_): If the nodata value should be hidden. (Default: **None**) &lt;/br&gt;
     `options` (_list_): List of VRT options for GDAL. (Default: **()** &lt;/br&gt;
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
     `reference` (_str_): The reference raster to use. (Default: **None**) &lt;/br&gt;
@@ -999,6 +1005,9 @@ def stack_rasters_vrt(
             xRes=meta[&#34;pixel_width&#34;],
             yRes=meta[&#34;pixel_height&#34;],
             targetAlignedPixels=True,
+            srcNodata=srcNodata,
+            VRTNodata=VRTNodata,
+            hideNodata=hideNodata,
         )
     else:
         options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)
@@ -2342,7 +2351,7 @@ refering to the dataset. </br></p>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.stack_rasters_vrt"><code class="name flex">
-<span>def <span class="ident">stack_rasters_vrt</span></span>(<span>rasters, out_path, seperate=True, *, resample_alg='nearest', options=None, overwrite=True, reference=None, creation_options=None)</span>
+<span>def <span class="ident">stack_rasters_vrt</span></span>(<span>rasters, out_path, seperate=True, *, resample_alg='nearest', srcNodata=None, VRTNodata=None, hideNodata=None, options=None, overwrite=True, reference=None, creation_options=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Stacks a list of rasters into a virtual rasters (.vrt).</p>
@@ -2352,6 +2361,9 @@ refering to the dataset. </br></p>
 <h2 id="kwargs">Kwargs:</h2>
 <p><code>seperate</code> (<em>bool</em>): If the raster bands should be seperated. (Default: <strong>True</strong>) </br>
 <code>resample_alg</code> (<em>str</em>): The resampling algorithm to use. (Default: <strong>nearest</strong>) </br>
+<code>srcNodata</code> (<em>float</em>): The nodata value to use. (Default: <strong>None</strong>) </br>
+<code>VRTNodata</code> (<em>float</em>): The nodata value to use. (Default: <strong>None</strong>) </br>
+<code>hideNodata</code> (<em>bool</em>): If the nodata value should be hidden. (Default: <strong>None</strong>) </br>
 <code>options</code> (<em>list</em>): List of VRT options for GDAL. (Default: <strong>()</strong> </br>
 <code>overwrite</code> (<em>bool</em>): If the file exists, should it be overwritten? (Default: <strong>True</strong>) </br>
 <code>reference</code> (<em>str</em>): The reference raster to use. (Default: <strong>None</strong>) </br>
@@ -2372,6 +2384,9 @@ refering to the dataset. </br></p>
     seperate=True,
     *,
     resample_alg=&#34;nearest&#34;,
+    srcNodata=None,
+    VRTNodata=None,
+    hideNodata=None,
     options=None,
     overwrite=True,
     reference=None,
@@ -2387,6 +2402,9 @@ refering to the dataset. </br></p>
     ## Kwargs:
     `seperate` (_bool_): If the raster bands should be seperated. (Default: **True**) &lt;/br&gt;
     `resample_alg` (_str_): The resampling algorithm to use. (Default: **nearest**) &lt;/br&gt;
+    `srcNodata` (_float_): The nodata value to use. (Default: **None**) &lt;/br&gt;
+    `VRTNodata` (_float_): The nodata value to use. (Default: **None**) &lt;/br&gt;
+    `hideNodata` (_bool_): If the nodata value should be hidden. (Default: **None**) &lt;/br&gt;
     `options` (_list_): List of VRT options for GDAL. (Default: **()** &lt;/br&gt;
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) &lt;/br&gt;
     `reference` (_str_): The reference raster to use. (Default: **None**) &lt;/br&gt;
@@ -2418,6 +2436,9 @@ refering to the dataset. </br></p>
             xRes=meta[&#34;pixel_width&#34;],
             yRes=meta[&#34;pixel_height&#34;],
             targetAlignedPixels=True,
+            srcNodata=srcNodata,
+            VRTNodata=VRTNodata,
+            hideNodata=hideNodata,
         )
     else:
         options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)

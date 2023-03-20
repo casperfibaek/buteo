@@ -925,6 +925,9 @@ def stack_rasters_vrt(
     seperate=True,
     *,
     resample_alg="nearest",
+    srcNodata=None,
+    VRTNodata=None,
+    hideNodata=None,
     options=None,
     overwrite=True,
     reference=None,
@@ -940,6 +943,9 @@ def stack_rasters_vrt(
     ## Kwargs:
     `seperate` (_bool_): If the raster bands should be seperated. (Default: **True**) </br>
     `resample_alg` (_str_): The resampling algorithm to use. (Default: **nearest**) </br>
+    `srcNodata` (_float_): The nodata value to use. (Default: **None**) </br>
+    `VRTNodata` (_float_): The nodata value to use. (Default: **None**) </br>
+    `hideNodata` (_bool_): If the nodata value should be hidden. (Default: **None**) </br>
     `options` (_list_): List of VRT options for GDAL. (Default: **()** </br>
     `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) </br>
     `reference` (_str_): The reference raster to use. (Default: **None**) </br>
@@ -971,6 +977,9 @@ def stack_rasters_vrt(
             xRes=meta["pixel_width"],
             yRes=meta["pixel_height"],
             targetAlignedPixels=True,
+            srcNodata=srcNodata,
+            VRTNodata=VRTNodata,
+            hideNodata=hideNodata,
         )
     else:
         options = gdal.BuildVRTOptions(resampleAlg=resample_algorithm, separate=seperate)

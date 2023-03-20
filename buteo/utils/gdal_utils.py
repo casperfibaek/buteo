@@ -451,6 +451,26 @@ def is_raster_list(potential_raster_list, *, empty_is_invalid=True):
     return True
 
 
+def is_path_list(potential_path_list, allow_none=False):
+    """
+    Checks if a variable is a valid list of paths.
+    """
+
+    if not isinstance(potential_path_list, list):
+        return False
+
+    if len(potential_path_list) == 0:
+        return False
+
+    for element in potential_path_list:
+        if element is None and not allow_none:
+            return False
+        
+        if not core_utils.is_valid_output_path(element) and not os.path.isdir(element):
+            return False
+
+    return True
+
 def is_vector(potential_vector, empty_is_invalid=True):
     """
     Checks if a variable is a valid vector.
@@ -1099,7 +1119,7 @@ def create_output_path(
     aug_path = None
     if out_path is None:
 
-        # Not all drivers are support in memory. So if nothing is specified,
+        # Not all drivers are supported in memory. So if nothing is specified,
         # we'll convert to tif and fgb for memory files.
 
         og_path = get_path_from_dataset(dataset_path)
@@ -1119,17 +1139,31 @@ def create_output_path(
             folder="/vsimem",
         )
     elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
-        name = os.path.basename(dataset_path)
-        ext = os.path.basename(dataset_path).split(".")[1]
-        outname = f"{prefix}{name.split('.')[0]}{suffix}.{ext}"
 
-        aug_path = core_utils.get_augmented_path(
-            outname,
-            prefix=prefix,
-            suffix=suffix,
-            add_uuid=add_uuid,
-            folder=core_utils.path_to_folder(out_path),
-        )
+        if os.path.isdir(out_path):
+            name = os.path.basename(dataset_path)
+            ext = os.path.basename(dataset_path).split(".")[1]
+            outname = f"{prefix}{name.split('.')[0]}{suffix}.{ext}"
+
+            aug_path = core_utils.get_augmented_path(
+                outname,
+                prefix=prefix,
+                suffix=suffix,
+                add_uuid=add_uuid,
+                folder=core_utils.path_to_folder(out_path),
+            )
+        else:
+            name = os.path.basename(out_path)
+            ext = os.path.basename(out_path).split(".")[1]
+            outname = f"{prefix}{name.split('.')[0]}{suffix}.{ext}"
+
+            aug_path = core_utils.get_augmented_path(
+                outname,
+                prefix=prefix,
+                suffix=suffix,
+                add_uuid=add_uuid,
+                folder=core_utils.path_to_folder(out_path),
+            )
     elif core_utils.is_valid_mem_path(out_path):
         aug_path = core_utils.get_augmented_path(
             os.path.basename(dataset_path),
@@ -1176,7 +1210,7 @@ def create_output_path_list(
     (_str_/_list_): A path to the output raster or a list of paths.
     """
     assert isinstance(dataset_path, (list)), "dataset_path must be a string or a list of strings."
-    assert isinstance(out_path, (str, type(None))), "out_path must be a string or None."
+    assert isinstance(out_path, (str, type(None), list)), "out_path must be a string or None."
 
     if isinstance(out_path, str) and core_utils.is_str_a_glob(out_path):
         dataset_path = core_utils.parse_glob_path(out_path)

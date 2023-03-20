@@ -129,7 +129,7 @@ def align_rasters(
     src_nodata=&#34;infer&#34;,
     dst_nodata=&#34;infer&#34;,
     prefix=&#34;&#34;,
-    suffix=&#34;_aligned&#34;,
+    suffix=&#34;&#34;,
     ram=&#34;auto&#34;,
 ):
     &#34;&#34;&#34;
@@ -173,14 +173,12 @@ def align_rasters(
     core_utils.type_check(prefix, [str], &#34;prefix&#34;)
     core_utils.type_check(suffix, [str], &#34;suffix&#34;)
 
-    if isinstance(rasters, str):
-        rasters = [rasters]
-
-    assert gdal_utils.is_raster_list(rasters), &#34;rasters must be a single raster or a list of rasters.&#34;
-
-    add_uuid = out_path is None
-
     raster_list = core_utils.ensure_list(rasters)
+
+    assert gdal_utils.is_raster_list(raster_list), &#34;rasters must be a single raster or a list of rasters.&#34;
+
+    add_uuid = True if out_path is None else False
+
     path_list = gdal_utils.create_output_path_list(
         raster_list,
         out_path,
@@ -206,7 +204,7 @@ def align_rasters(
     used_projections = []
     metadata = []
 
-    for raster in rasters:
+    for raster in raster_list:
         meta = core_raster.raster_to_metadata(raster)
         metadata.append(meta)
         used_projections.append(meta[&#34;projection_wkt&#34;])
@@ -312,7 +310,7 @@ def align_rasters(
         if isinstance(bounding_box, (list, tuple)):
             if len(bounding_box) != 4:
                 raise ValueError(&#34;bounding_box as a list/tuple must have 4 values.&#34;)
-            
+
             target_bounds = [x for x in bounding_box]
 
         # If the bounding box is a raster. Take the extent and
@@ -522,7 +520,7 @@ def align_rasters(
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.raster.align.align_rasters"><code class="name flex">
-<span>def <span class="ident">align_rasters</span></span>(<span>rasters, *, out_path=None, master=None, bounding_box='intersection', resample_alg='nearest', target_size=None, target_in_pixels=False, projection=None, overwrite=True, creation_options=None, src_nodata='infer', dst_nodata='infer', prefix='', suffix='_aligned', ram='auto')</span>
+<span>def <span class="ident">align_rasters</span></span>(<span>rasters, *, out_path=None, master=None, bounding_box='intersection', resample_alg='nearest', target_size=None, target_in_pixels=False, projection=None, overwrite=True, creation_options=None, src_nodata='infer', dst_nodata='infer', prefix='', suffix='', ram='auto')</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Aligns a series of rasters to a master raster or specified requirements.</p>
@@ -566,7 +564,7 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
     src_nodata=&#34;infer&#34;,
     dst_nodata=&#34;infer&#34;,
     prefix=&#34;&#34;,
-    suffix=&#34;_aligned&#34;,
+    suffix=&#34;&#34;,
     ram=&#34;auto&#34;,
 ):
     &#34;&#34;&#34;
@@ -610,14 +608,12 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
     core_utils.type_check(prefix, [str], &#34;prefix&#34;)
     core_utils.type_check(suffix, [str], &#34;suffix&#34;)
 
-    if isinstance(rasters, str):
-        rasters = [rasters]
-
-    assert gdal_utils.is_raster_list(rasters), &#34;rasters must be a single raster or a list of rasters.&#34;
-
-    add_uuid = out_path is None
-
     raster_list = core_utils.ensure_list(rasters)
+
+    assert gdal_utils.is_raster_list(raster_list), &#34;rasters must be a single raster or a list of rasters.&#34;
+
+    add_uuid = True if out_path is None else False
+
     path_list = gdal_utils.create_output_path_list(
         raster_list,
         out_path,
@@ -643,7 +639,7 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
     used_projections = []
     metadata = []
 
-    for raster in rasters:
+    for raster in raster_list:
         meta = core_raster.raster_to_metadata(raster)
         metadata.append(meta)
         used_projections.append(meta[&#34;projection_wkt&#34;])
@@ -749,7 +745,7 @@ If auto 80% of available ram is allowed. (Default: <strong>auto</strong>) </br><
         if isinstance(bounding_box, (list, tuple)):
             if len(bounding_box) != 4:
                 raise ValueError(&#34;bounding_box as a list/tuple must have 4 values.&#34;)
-            
+
             target_bounds = [x for x in bounding_box]
 
         # If the bounding box is a raster. Take the extent and
