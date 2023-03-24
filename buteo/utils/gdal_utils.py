@@ -763,6 +763,55 @@ def convert_geom_to_vector(geom):
     return vector
 
 
+def import_esri_projection(esri_code):
+    """ Imports a projection from an ESRI code. """
+
+    # ESRI:54009 is equivalent to EPSG:3785
+    if esri_code == "ESRI:54009":
+        wkt_code = """
+        PROJCRS["World_Mollweide",
+            BASEGEOGCRS["WGS 84",
+                DATUM["World Geodetic System 1984",
+                    ELLIPSOID["WGS 84",6378137,298.257223563,
+                        LENGTHUNIT["metre",1]]],
+                PRIMEM["Greenwich",0,
+                    ANGLEUNIT["Degree",0.0174532925199433]]],
+            CONVERSION["World_Mollweide",
+                METHOD["Mollweide"],
+                PARAMETER["Longitude of natural origin",0,
+                    ANGLEUNIT["Degree",0.0174532925199433],
+                    ID["EPSG",8802]],
+                PARAMETER["False easting",0,
+                    LENGTHUNIT["metre",1],
+                    ID["EPSG",8806]],
+                PARAMETER["False northing",0,
+                    LENGTHUNIT["metre",1],
+                    ID["EPSG",8807]]],
+            CS[Cartesian,2],
+                AXIS["(E)",east,
+                    ORDER[1],
+                    LENGTHUNIT["metre",1]],
+                AXIS["(N)",north,
+                    ORDER[2],
+                    LENGTHUNIT["metre",1]],
+            USAGE[
+                SCOPE["Not known."],
+                AREA["World."],
+                BBOX[-90,-180,90,180]],
+            ID["ESRI",54009]]
+        """
+    else:
+        raise ValueError("Unknown ESRI code")
+
+    # Create a spatial reference object
+    spatial_ref = osr.SpatialReference()
+
+    # Import the EPSG code
+    spatial_ref.ImportFromWkt(wkt_code)
+
+    return spatial_ref.ExportToWkt()
+
+
 def parse_projection(projection, *, return_wkt=False):
     """
     Parses a gdal, ogr og osr data source and extraction the projection. If
@@ -809,6 +858,12 @@ def parse_projection(projection, *, return_wkt=False):
                     if projection.startswith("EPSG:") or projection.startswith("epsg:"):
                         epsg_code = int(projection.split(":")[1])
                         code = target_proj.ImportFromEPSG(epsg_code)
+                        if code != 0:
+                            raise ValueError(err_msg)
+                    elif projection.startswith("ESRI:") or projection.startswith("esri:"):
+                        wkt_code = import_esri_projection(projection)
+
+                        code = target_proj.ImportFromWkt(wkt_code)
                         if code != 0:
                             raise ValueError(err_msg)
 

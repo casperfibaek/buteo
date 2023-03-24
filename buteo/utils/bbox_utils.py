@@ -22,8 +22,7 @@ import numpy as np
 from osgeo import ogr, osr, gdal
 
 # Internal
-from buteo.utils import core_utils
-
+from buteo.utils import core_utils, gdal_utils
 
 
 def is_valid_bbox(bbox_ogr):
@@ -149,20 +148,13 @@ def get_pixel_offsets(geotransform, bbox_ogr):
 
     origin_x = geotransform[0]
     origin_y = geotransform[3]
-    pixel_width = abs(geotransform[1])
-    pixel_height = abs(geotransform[5])
+    pixel_width = geotransform[1]
+    pixel_height = geotransform[5]
 
-    x_1 = int((x_min - origin_x) / pixel_width)
-    x_2 = int((x_max - origin_x) / pixel_width) + 1
-
-    y_1 = int((y_max - origin_y) / pixel_height)
-    y_2 = int((y_min - origin_y) / pixel_height) + 1
-
-    x_size = x_2 - x_1
-    y_size = y_2 - y_1
-
-    x_start = x_1
-    y_start = y_1
+    x_start = int(np.rint((x_min - origin_x) / pixel_width))
+    y_start = int(np.rint((y_max - origin_y) / pixel_height))
+    x_size = int(np.rint((x_max - x_min) / pixel_width))
+    y_size = int(np.rint((y_min - y_max) / pixel_height))
 
     return [x_start, y_start, x_size, y_size]
 
@@ -807,8 +799,8 @@ def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
 
 def reproject_bbox(
     bbox_ogr,
-    source_projection_osr,
-    target_projection_osr,
+    source_projection,
+    target_projection,
 ):
     """
     Reprojects an OGR formatted bbox.
@@ -822,21 +814,14 @@ def reproject_bbox(
     (_list_): An OGR formatted reprojected bbox. `[x_min, x_max, y_min, y_max]`
     """
     assert is_valid_bbox(bbox_ogr), f"Invalid bbox. Received: {bbox_ogr}."
-    assert isinstance(
-        source_projection_osr, osr.SpatialReference
-    ), f"source_projection not a valid spatial reference. Recieved: {source_projection_osr}"
-    assert isinstance(
-        target_projection_osr, osr.SpatialReference
-    ), f"target_projection not a valid spatial reference. Recieved: {target_projection_osr}"
 
-    if source_projection_osr.IsSame(target_projection_osr):
+    src_proj = gdal_utils.parse_projection(source_projection)
+    dst_proj = gdal_utils.parse_projection(target_projection)
+
+    if gdal_utils.projections_match(src_proj, dst_proj):
         return bbox_ogr
 
-    transformer = osr.CoordinateTransformation(
-        source_projection_osr, target_projection_osr
-    )
-
-    transformer = osr.CoordinateTransformation(source_projection_osr, target_projection_osr)
+    transformer = osr.CoordinateTransformation(src_proj, dst_proj)
 
     x_min, x_max, y_min, y_max = bbox_ogr
 

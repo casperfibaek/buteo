@@ -433,7 +433,7 @@ def raster_to_array(
                     pixel_offsets[3], # y_size
                 )
             elif bbox is not None:
-                if not bbox_utils.bboxes_intersect(metadata["extent_ogr"], bbox):
+                if not bbox_utils.bboxes_intersect(metadata["bbox"], bbox):
                     raise ValueError("Extent is outside of raster.")
 
                 x_offset, y_offset, x_size, y_size = bbox_utils.get_pixel_offsets(metadata["transform"], bbox)

@@ -165,6 +165,45 @@ def decode_latlngs(encoded_latlngs):
     latlngs = np.apply_along_axis(decode_latlng, 1, encoded_latlngs)
     return latlngs
 
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def encode_width(lng, lng_max):
+    &#34;&#34;&#34; Longitude goes from -180 to 180 &#34;&#34;&#34;
+
+    encoded_sin = ((np.sin(2 * np.pi * (lng / lng_max)) + 1)) / 2.0
+    encoded_cos = ((np.cos(2 * np.pi * (lng / lng_max)) + 1)) / 2.0
+
+    return np.array([encoded_sin, encoded_cos], dtype=np.float32)
+
+
+@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def encode_arr_position(arr):
+    &#34;&#34;&#34; Fast encoding of coordinates where the width is cyclical. &#34;&#34;&#34;
+    result = np.zeros((arr.shape[0], arr.shape[1], 3), dtype=np.float32)
+
+    col_end = arr.shape[0] - 1
+    row_end = arr.shape[1] - 1
+
+    col_range = np.arange(0, arr.shape[0]).astype(np.float32)
+    row_range = np.arange(0, arr.shape[1]).astype(np.float32)
+
+    col_encoded = np.zeros((col_range.shape[0], 1), dtype=np.float32)
+    row_encoded = np.zeros((row_range.shape[0], 2), dtype=np.float32)
+
+    for col in prange(col_range.shape[0]):
+        col_encoded[col, :] = col_range[col] / col_end
+
+    for row in prange(row_range.shape[0]):
+        row_encoded[row, :] = encode_width(row_range[row], row_end)
+
+    for col in prange(arr.shape[0]):
+        for row in range(arr.shape[1]):
+            result[col, row, 0] = row_encoded[row, 0]
+            result[col, row, 1] = row_encoded[row, 1]
+            result[col, row, 2] = col_encoded[col, 0]
+
+    return result
+
 def channel_first_to_last(arr):
     &#34;&#34;&#34; Converts a numpy array from channel first to channel last format. &#34;&#34;&#34;
     if arr.ndim != 3:
@@ -206,56 +245,6 @@ def create_grid(range_rows, range_cols):
             rows_grid[i, j] = range_cols[i]
 
     return rows_grid, cols_grid
-
-
-# def split_into_offsets(shape, offsets_x=2, offsets_y=2, overlap_x=0, overlap_y=0):
-#     &#34;&#34;&#34; Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed. &#34;&#34;&#34;
-#     width = shape[0]
-#     height = shape[1]
-
-#     x_remainder = width % offsets_x
-#     y_remainder = height % offsets_y
-
-#     x_offsets = [0]
-#     x_sizes = []
-#     for _ in range((offsets_x - 1)):
-#         x_offsets.append(x_offsets[-1] + (width // offsets_x))
-#     x_offsets[-1] -= x_remainder
-
-#     for idx, _ in enumerate(x_offsets):
-#         if idx == len(x_offsets) - 1:
-#             x_sizes.append(width - x_offsets[idx])
-#         elif idx == 0:
-#             x_sizes.append(x_offsets[1])
-#         else:
-#             x_sizes.append(x_offsets[idx + 1] - x_offsets[idx])
-
-#     y_offsets = [0]
-#     y_sizes = []
-#     for _ in range((offsets_y - 1)):
-#         y_offsets.append(y_offsets[-1] + (height // offsets_y))
-#     y_offsets[-1] -= y_remainder
-
-#     for idx, _ in enumerate(y_offsets):
-#         if idx == len(y_offsets) - 1:
-#             y_sizes.append(height - y_offsets[idx])
-#         elif idx == 0:
-#             y_sizes.append(y_offsets[1])
-#         else:
-#             y_sizes.append(y_offsets[idx + 1] - y_offsets[idx])
-
-#     offsets = []
-
-#     for idx_col, _ in enumerate(y_offsets):
-#         for idx_row, _ in enumerate(x_offsets):
-#             offsets.append([
-#                 x_offsets[idx_row],
-#                 y_offsets[idx_col],
-#                 x_sizes[idx_row],
-#                 y_sizes[idx_col],
-#             ])
-
-#     return offsets
 
 
 def split_into_offsets(shape, offsets_x=2, offsets_y=2, overlap_x=0, overlap_y=0):
@@ -693,6 +682,44 @@ def decode_longitude(encoded_sin, encoded_cos):
     return lng</code></pre>
 </details>
 </dd>
+<dt id="buteo.utils.aux_utils.encode_arr_position"><code class="name flex">
+<span>def <span class="ident">encode_arr_position</span></span>(<span>arr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Fast encoding of coordinates where the width is cyclical.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def encode_arr_position(arr):
+    &#34;&#34;&#34; Fast encoding of coordinates where the width is cyclical. &#34;&#34;&#34;
+    result = np.zeros((arr.shape[0], arr.shape[1], 3), dtype=np.float32)
+
+    col_end = arr.shape[0] - 1
+    row_end = arr.shape[1] - 1
+
+    col_range = np.arange(0, arr.shape[0]).astype(np.float32)
+    row_range = np.arange(0, arr.shape[1]).astype(np.float32)
+
+    col_encoded = np.zeros((col_range.shape[0], 1), dtype=np.float32)
+    row_encoded = np.zeros((row_range.shape[0], 2), dtype=np.float32)
+
+    for col in prange(col_range.shape[0]):
+        col_encoded[col, :] = col_range[col] / col_end
+
+    for row in prange(row_range.shape[0]):
+        row_encoded[row, :] = encode_width(row_range[row], row_end)
+
+    for col in prange(arr.shape[0]):
+        for row in range(arr.shape[1]):
+            result[col, row, 0] = row_encoded[row, 0]
+            result[col, row, 1] = row_encoded[row, 1]
+            result[col, row, 2] = col_encoded[col, 0]
+
+    return result</code></pre>
+</details>
+</dd>
 <dt id="buteo.utils.aux_utils.encode_latitude"><code class="name flex">
 <span>def <span class="ident">encode_latitude</span></span>(<span>lat)</span>
 </code></dt>
@@ -789,6 +816,25 @@ def encode_longitude(lng):
 
     encoded_sin = ((np.sin(2 * np.pi * (lng_adj / lng_max)) + 1)) / 2.0
     encoded_cos = ((np.cos(2 * np.pi * (lng_adj / lng_max)) + 1)) / 2.0
+
+    return np.array([encoded_sin, encoded_cos], dtype=np.float32)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.aux_utils.encode_width"><code class="name flex">
+<span>def <span class="ident">encode_width</span></span>(<span>lng, lng_max)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Longitude goes from -180 to 180</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#34;always&#34;)
+def encode_width(lng, lng_max):
+    &#34;&#34;&#34; Longitude goes from -180 to 180 &#34;&#34;&#34;
+
+    encoded_sin = ((np.sin(2 * np.pi * (lng / lng_max)) + 1)) / 2.0
+    encoded_cos = ((np.cos(2 * np.pi * (lng / lng_max)) + 1)) / 2.0
 
     return np.array([encoded_sin, encoded_cos], dtype=np.float32)</code></pre>
 </details>
@@ -988,10 +1034,12 @@ def fill_nodata_with_nearest_average(array, nodata_value, mask=None, max_iterati
 <li><code><a title="buteo.utils.aux_utils.decode_latlng" href="#buteo.utils.aux_utils.decode_latlng">decode_latlng</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.decode_latlngs" href="#buteo.utils.aux_utils.decode_latlngs">decode_latlngs</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.decode_longitude" href="#buteo.utils.aux_utils.decode_longitude">decode_longitude</a></code></li>
+<li><code><a title="buteo.utils.aux_utils.encode_arr_position" href="#buteo.utils.aux_utils.encode_arr_position">encode_arr_position</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.encode_latitude" href="#buteo.utils.aux_utils.encode_latitude">encode_latitude</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.encode_latlng" href="#buteo.utils.aux_utils.encode_latlng">encode_latlng</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.encode_latlngs" href="#buteo.utils.aux_utils.encode_latlngs">encode_latlngs</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.encode_longitude" href="#buteo.utils.aux_utils.encode_longitude">encode_longitude</a></code></li>
+<li><code><a title="buteo.utils.aux_utils.encode_width" href="#buteo.utils.aux_utils.encode_width">encode_width</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.fill_nodata_with_nearest_average" href="#buteo.utils.aux_utils.fill_nodata_with_nearest_average">fill_nodata_with_nearest_average</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.scale_to_range" href="#buteo.utils.aux_utils.scale_to_range">scale_to_range</a></code></li>
 <li><code><a title="buteo.utils.aux_utils.split_into_offsets" href="#buteo.utils.aux_utils.split_into_offsets">split_into_offsets</a></code></li>

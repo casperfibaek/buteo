@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "buteo"
-version = "0.8.7"
+version = "0.8.8"
 authors = [
   { name="Casper Fibaek", email="casperfibaek@gmail.com" },
 ]

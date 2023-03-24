@@ -796,6 +796,55 @@ def convert_geom_to_vector(geom):
     return vector
 
 
+def import_esri_projection(esri_code):
+    &#34;&#34;&#34; Imports a projection from an ESRI code. &#34;&#34;&#34;
+
+    # ESRI:54009 is equivalent to EPSG:3785
+    if esri_code == &#34;ESRI:54009&#34;:
+        wkt_code = &#34;&#34;&#34;
+        PROJCRS[&#34;World_Mollweide&#34;,
+            BASEGEOGCRS[&#34;WGS 84&#34;,
+                DATUM[&#34;World Geodetic System 1984&#34;,
+                    ELLIPSOID[&#34;WGS 84&#34;,6378137,298.257223563,
+                        LENGTHUNIT[&#34;metre&#34;,1]]],
+                PRIMEM[&#34;Greenwich&#34;,0,
+                    ANGLEUNIT[&#34;Degree&#34;,0.0174532925199433]]],
+            CONVERSION[&#34;World_Mollweide&#34;,
+                METHOD[&#34;Mollweide&#34;],
+                PARAMETER[&#34;Longitude of natural origin&#34;,0,
+                    ANGLEUNIT[&#34;Degree&#34;,0.0174532925199433],
+                    ID[&#34;EPSG&#34;,8802]],
+                PARAMETER[&#34;False easting&#34;,0,
+                    LENGTHUNIT[&#34;metre&#34;,1],
+                    ID[&#34;EPSG&#34;,8806]],
+                PARAMETER[&#34;False northing&#34;,0,
+                    LENGTHUNIT[&#34;metre&#34;,1],
+                    ID[&#34;EPSG&#34;,8807]]],
+            CS[Cartesian,2],
+                AXIS[&#34;(E)&#34;,east,
+                    ORDER[1],
+                    LENGTHUNIT[&#34;metre&#34;,1]],
+                AXIS[&#34;(N)&#34;,north,
+                    ORDER[2],
+                    LENGTHUNIT[&#34;metre&#34;,1]],
+            USAGE[
+                SCOPE[&#34;Not known.&#34;],
+                AREA[&#34;World.&#34;],
+                BBOX[-90,-180,90,180]],
+            ID[&#34;ESRI&#34;,54009]]
+        &#34;&#34;&#34;
+    else:
+        raise ValueError(&#34;Unknown ESRI code&#34;)
+
+    # Create a spatial reference object
+    spatial_ref = osr.SpatialReference()
+
+    # Import the EPSG code
+    spatial_ref.ImportFromWkt(wkt_code)
+
+    return spatial_ref.ExportToWkt()
+
+
 def parse_projection(projection, *, return_wkt=False):
     &#34;&#34;&#34;
     Parses a gdal, ogr og osr data source and extraction the projection. If
@@ -842,6 +891,12 @@ def parse_projection(projection, *, return_wkt=False):
                     if projection.startswith(&#34;EPSG:&#34;) or projection.startswith(&#34;epsg:&#34;):
                         epsg_code = int(projection.split(&#34;:&#34;)[1])
                         code = target_proj.ImportFromEPSG(epsg_code)
+                        if code != 0:
+                            raise ValueError(err_msg)
+                    elif projection.startswith(&#34;ESRI:&#34;) or projection.startswith(&#34;esri:&#34;):
+                        wkt_code = import_esri_projection(projection)
+
+                        code = target_proj.ImportFromWkt(wkt_code)
                         if code != 0:
                             raise ValueError(err_msg)
 
@@ -2117,6 +2172,64 @@ input.</p>
     return outputs</code></pre>
 </details>
 </dd>
+<dt id="buteo.utils.gdal_utils.import_esri_projection"><code class="name flex">
+<span>def <span class="ident">import_esri_projection</span></span>(<span>esri_code)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Imports a projection from an ESRI code.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def import_esri_projection(esri_code):
+    &#34;&#34;&#34; Imports a projection from an ESRI code. &#34;&#34;&#34;
+
+    # ESRI:54009 is equivalent to EPSG:3785
+    if esri_code == &#34;ESRI:54009&#34;:
+        wkt_code = &#34;&#34;&#34;
+        PROJCRS[&#34;World_Mollweide&#34;,
+            BASEGEOGCRS[&#34;WGS 84&#34;,
+                DATUM[&#34;World Geodetic System 1984&#34;,
+                    ELLIPSOID[&#34;WGS 84&#34;,6378137,298.257223563,
+                        LENGTHUNIT[&#34;metre&#34;,1]]],
+                PRIMEM[&#34;Greenwich&#34;,0,
+                    ANGLEUNIT[&#34;Degree&#34;,0.0174532925199433]]],
+            CONVERSION[&#34;World_Mollweide&#34;,
+                METHOD[&#34;Mollweide&#34;],
+                PARAMETER[&#34;Longitude of natural origin&#34;,0,
+                    ANGLEUNIT[&#34;Degree&#34;,0.0174532925199433],
+                    ID[&#34;EPSG&#34;,8802]],
+                PARAMETER[&#34;False easting&#34;,0,
+                    LENGTHUNIT[&#34;metre&#34;,1],
+                    ID[&#34;EPSG&#34;,8806]],
+                PARAMETER[&#34;False northing&#34;,0,
+                    LENGTHUNIT[&#34;metre&#34;,1],
+                    ID[&#34;EPSG&#34;,8807]]],
+            CS[Cartesian,2],
+                AXIS[&#34;(E)&#34;,east,
+                    ORDER[1],
+                    LENGTHUNIT[&#34;metre&#34;,1]],
+                AXIS[&#34;(N)&#34;,north,
+                    ORDER[2],
+                    LENGTHUNIT[&#34;metre&#34;,1]],
+            USAGE[
+                SCOPE[&#34;Not known.&#34;],
+                AREA[&#34;World.&#34;],
+                BBOX[-90,-180,90,180]],
+            ID[&#34;ESRI&#34;,54009]]
+        &#34;&#34;&#34;
+    else:
+        raise ValueError(&#34;Unknown ESRI code&#34;)
+
+    # Create a spatial reference object
+    spatial_ref = osr.SpatialReference()
+
+    # Import the EPSG code
+    spatial_ref.ImportFromWkt(wkt_code)
+
+    return spatial_ref.ExportToWkt()</code></pre>
+</details>
+</dd>
 <dt id="buteo.utils.gdal_utils.is_in_memory"><code class="name flex">
 <span>def <span class="ident">is_in_memory</span></span>(<span>raster_or_vector)</span>
 </code></dt>
@@ -2704,6 +2817,12 @@ an osr.SpatialReference.</p>
                     if projection.startswith(&#34;EPSG:&#34;) or projection.startswith(&#34;epsg:&#34;):
                         epsg_code = int(projection.split(&#34;:&#34;)[1])
                         code = target_proj.ImportFromEPSG(epsg_code)
+                        if code != 0:
+                            raise ValueError(err_msg)
+                    elif projection.startswith(&#34;ESRI:&#34;) or projection.startswith(&#34;esri:&#34;):
+                        wkt_code = import_esri_projection(projection)
+
+                        code = target_proj.ImportFromWkt(wkt_code)
                         if code != 0:
                             raise ValueError(err_msg)
 
@@ -3301,6 +3420,7 @@ an osr.SpatialReference.</p>
 <li><code><a title="buteo.utils.gdal_utils.get_gdalwarp_ram_limit" href="#buteo.utils.gdal_utils.get_gdalwarp_ram_limit">get_gdalwarp_ram_limit</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.get_path_from_dataset" href="#buteo.utils.gdal_utils.get_path_from_dataset">get_path_from_dataset</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.get_path_from_dataset_list" href="#buteo.utils.gdal_utils.get_path_from_dataset_list">get_path_from_dataset_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.import_esri_projection" href="#buteo.utils.gdal_utils.import_esri_projection">import_esri_projection</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.is_in_memory" href="#buteo.utils.gdal_utils.is_in_memory">is_in_memory</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.is_path_list" href="#buteo.utils.gdal_utils.is_path_list">is_path_list</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.is_raster" href="#buteo.utils.gdal_utils.is_raster">is_raster</a></code></li>
