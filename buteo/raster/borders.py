@@ -125,19 +125,24 @@ def add_border_to_raster(
     """
     Add a border to a raster.
 
-    ## Args:
-    `input_raster` (_str_/_gdal.DataSet_): The input raster.
+    Args:
+        input_raster (str/gdal.DataSet): The input raster.
 
-    ## Kwargs:
-    `out_path` (_str_/_None_): The output path. If **None** the output will be a memory raster. </br>
-    `border_size` (_int_): The size of the border. </br>
-    `border_size_unit` (_str_): The unit of the border size. </br>
-    `border_value` (_int_): The value of the border. </br>
-    `overwrite` (_bool_): If **True**, the output raster will be overwritten. </br>
-    `creation_options` (_list_/_None_): Creation options for the output raster. </br>
+    Keyword Args:
+        out_path (str/None, default=None): The output path. If None, the output
+            will be a memory raster.
+        border_size (int, default=100): The size of the border.
+        border_size_unit (str, default='px'): The unit of the border size.
+        border_value (int, default=0): The value of the border.
+        overwrite (bool, default=True): If True, the output raster will be
+            overwritten.
+        allow_lists (bool, default=True): If True, lists of rasters will be
+            allowed.
+        creation_options (list/None, default=None): Creation options for the
+            output raster.
 
-    ## Returns:
-    `out_raster` (_str_/_gdal.DataSet_): The output raster with added borders.
+    Returns:
+        str/gdal.DataSet: The output raster with added borders.
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(out_path, [str, None], "out_path")

@@ -54,10 +54,16 @@ def default_creation_options(options=None):
         internal_options.append("NUM_THREADS=ALL_CPUS")
 
     if "BIGTIFF" not in opt_str:
-        internal_options.append("BIGTIFF=YES")
+        internal_options.append("BIGTIFF=IF_SAFER")
 
     if "COMPRESS" not in opt_str:
         internal_options.append("COMPRESS=LZW")
+
+    if "BLOCKXSIZE" not in opt_str:
+        internal_options.append("BLOCKXSIZE=256")
+
+    if "BLOCKYSIZE" not in opt_str:
+        internal_options.append("BLOCKYSIZE=256")
 
     return internal_options
 
@@ -465,7 +471,7 @@ def is_path_list(potential_path_list, allow_none=False):
     for element in potential_path_list:
         if element is None and not allow_none:
             return False
-        
+
         if not core_utils.is_valid_output_path(element) and not os.path.isdir(element):
             return False
 

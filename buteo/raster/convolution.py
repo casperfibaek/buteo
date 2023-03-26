@@ -5,11 +5,39 @@
 # External
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
-from numba import jit, prange, njit
+from numba import jit, prange
 
 
-def weight_distance(arr, method, decay, sigma, center, spherical, radius):
-    """ Weight the kernel by distance. """
+def weight_distance(
+    arr,
+    method=None,
+    decay=0.2,
+    sigma=1.0,
+    center=0.0,
+    spherical=False,
+    radius=3.0,
+):
+    """
+    Weights the kernel by distance using various methods.
+
+    Args:
+        arr (numpy.ndarray): The input array.
+        method (str, default=None): The weighting method to use.
+            "none": No weighting (default).
+            "linear": Linear decay.
+            "sqrt": Square root decay.
+            "power": Power decay.
+            "log": Logarithmic decay.
+            "gaussian": Gaussian decay.
+        decay (float, default=0.2): The decay rate for the `linear`, `sqrt`, and `power` methods.
+        sigma (float, default=1.0): The standard deviation for the Gaussian method.
+        center (float, default=0.0): The center of the array.
+        spherical (bool, default=False): If True, adjust weights based on the radius.
+        radius (float, default=3.0): The radius for spherical adjustments.
+
+    Returns:
+        float: The computed weight.
+    """
 
     if center == 0.0:
         normed = np.linalg.norm(arr)
@@ -53,7 +81,15 @@ def weight_distance(arr, method, decay, sigma, center, spherical, radius):
 
 
 def rotate_kernel(bottom_right):
-    """ Create a whole kernel from a quadrant. """
+    """
+    Creates a whole kernel from a quadrant.
+
+    Args:
+        bottom_right (numpy.ndarray): The bottom-right quadrant of the kernel.
+
+    Returns:
+        numpy.ndarray: The complete kernel generated from the given quadrant.
+    """
 
     size = ((bottom_right.shape[0] - 1) * 2) + 1
     depth = bottom_right.shape[2]
@@ -63,10 +99,7 @@ def rotate_kernel(bottom_right):
     lower_left = np.fliplr(bottom_right)
     top_left = np.flipud(lower_left)
 
-    kernel[size // 2:, size // 2:, :] = bottom_right
-    kernel[:1 + -size // 2, :1 + -size // 2, :] = top_left
-    kernel[1 + size // 2:, :size // 2, :] = lower_left[1:, :-1, :]
-    kernel[:size // 2, 1 + size // 2:, :] = top_right[:-1, 1:, :]
+    kernel = np.block([[top_left, top_right], [lower_left, bottom_right]])
 
     return kernel
 
@@ -84,8 +117,25 @@ def get_kernel(
     distance_decay=0.2,
     distance_sigma=1,
 ):
-    """ Get a square kernel for convolutions.
-        returns: kernel, weights, offsets.
+    """
+    Generates a square kernel for convolutions.
+
+    Args:
+        size (int): Size of the kernel (must be odd).
+        depth (int, default=1): Depth of the kernel.
+        hole (bool, default=False): Create a hole in the center of the kernel.
+        inverted (bool, default=False): Invert the kernel values.
+        normalise (bool, default=True): Normalize the kernel values.
+        multi_dimensional (bool, default=False): Consider the kernel multi-dimensional.
+        multi_dimensional_center (int, default=0): Center of the
+            multi-dimensional kernel.
+        spherical (bool, default=False): Consider the kernel spherical.
+        distance_weight (str or None, default=None): Distance weighting method.
+        distance_decay (float, default=0.2): Distance decay factor.
+        distance_sigma (float, default=1): Distance sigma for Gaussian distance weighting.
+
+    Returns:
+        tuple: A tuple containing the kernel, weights, and offsets.
     """
 
     assert size >= 3, "Kernel must have atleast size 3."
@@ -281,9 +331,9 @@ def hood_sigma_lee(values, weights):
     ks = k_to_size(values.size)
 
     while passed < ks and attempts < 5:
-        for idx, _val in enumerate(values):
-            if values[idx] >= std * sigma_mult and values[idx] <= -std * sigma_mult:
-                selected_values[idx] = values[idx]
+        for idx, val in np.ndenumerate(values):
+            if val >= std * sigma_mult or val <= -std * sigma_mult:
+                selected_values[idx] = val
                 selected_weights[idx] = weights[idx]
                 passed += 1
 
@@ -305,7 +355,19 @@ def hood_sigma_lee(values, weights):
 
 @jit(nopython=True, nogil=True)
 def pad_array_view(arr, pad_size=1):
-    """ Create a padded view of an array using SAME padding."""
+    """
+    Create a padded view of an array using SAME padding.
+
+    Args:
+        arr (numpy.ndarray): The input array to be padded.
+2
+    Keyword Args:
+        pad_size (int, default=1): The number of padding elements to add
+            to each side of the array. Default is 1.
+
+    Returns:
+        numpy.ndarray: A padded view of the input array.
+    """
     # Get original array shape and strides
     shape = arr.shape
     strides = arr.strides
@@ -371,7 +433,35 @@ def convolve_array(
     nodata=False,
     nodata_value=-9999.9,
 ):
-    """ Convolve an image with a function. """
+    """
+    Convolve an image with a function.
+
+    Args:
+        arr (numpy.ndarray): The input array to convolve.
+        offsets (list of tuples): The list of offsets for the neighborhood
+            used in the convolution.
+        weights (list): The list of weights used in the convolution.
+
+    Keyword Args:
+        method (int, default=1): The method to use for the convolution.
+            1: hood_sum
+            2: hood_mode
+            3: hood_max
+            4: hood_min
+            5: hood_contrast
+            6: hood_quantile
+            7: hood_standard_deviation
+            8: hood_median_absolute_deviation
+            9: hood_z_score
+            10: hood_z_score_mad
+            11: hood_sigma_lee
+        nodata (bool, default=False): If True, nodata values are considered
+            in the convolution.
+        nodata_value (float, default=-9999.9): The value representing nodata.
+
+    Returns:
+        numpy.ndarray: The convolved array.
+    """
     x_adj = arr.shape[0] - 1
     y_adj = arr.shape[1] - 1
     z_adj = (arr.shape[2] - 1) // 2

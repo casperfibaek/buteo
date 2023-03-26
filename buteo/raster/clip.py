@@ -49,10 +49,10 @@ def _clip_raster(
         add_uuid=add_uuid,
     )
 
-    if out_path is not None:
+    if out_path is not None and isinstance(out_path, str):
         if "vsimem" not in out_path:
             if not os.path.isdir(os.path.split(os.path.normpath(out_path))[0]):
-                raise ValueError(f"out_path folder does not exists: {out_path}")
+                raise ValueError(f"out_path folder does not exist: {out_path}")
 
     clip_ds = None
 
@@ -105,7 +105,7 @@ def _clip_raster(
     # Fast check: Does the extent of the two inputs overlap?
     has_inf = True in [np.isinf(val) for val in raster_metadata["bbox_latlng"]]
     if not has_inf and not bbox_utils.bboxes_intersect(raster_metadata["bbox_latlng"], clip_metadata["bbox_latlng"]):
-        raise Exception("Geometries did not intersect.")
+        raise ValueError(f"Geometries of {raster} and {clip_geom} did not intersect.")
 
     if not origin_projection.IsSame(clip_metadata["projection_osr"]):
         clip_ds = _reproject_vector(clip_ds, origin_projection)
@@ -134,7 +134,7 @@ def _clip_raster(
     # nodata
     if src_nodata == "infer":
         src_nodata = raster_metadata["nodata_value"]
-    elif isinstance(src_nodata, (int, float, None)):
+    elif isinstance(src_nodata, (int, float)) or src_nodata is None:
         src_nodata = float(src_nodata)
     else:
         raise ValueError(f"src_nodata must be an int, float or None: {src_nodata}")
@@ -145,7 +145,7 @@ def _clip_raster(
             out_nodata = raster_metadata["nodata_value"]
         else:
             out_nodata = gdal_enums.get_default_nodata_value(raster_metadata["datatype_gdal_raw"])
-    elif isinstance(dst_nodata, (int, float, None)):
+    elif isinstance(dst_nodata, (int, float)) or dst_nodata is None:
         out_nodata = dst_nodata
     else:
         raise ValueError(f"Unable to parse nodata_value: {dst_nodata}")
@@ -181,7 +181,7 @@ def _clip_raster(
         gdal.PopErrorHandler()
 
     if clipped is None:
-        raise Exception("Error while clipping raster.")
+        raise ValueError("Error while clipping raster.")
 
     return out_name
 
@@ -210,44 +210,45 @@ def clip_raster(
     """
     Clips a raster(s) using a vector geometry or the extents of a raster.
 
-    ## Args:
-    `raster` (_list_/_str_/_gdal.Dataset_): The raster(s) to clip. </br>
-    `clip_geom` (_str_/_ogr.DataSource_/_gdal.Dataset_): The geometry to use to clip the raster </br>
+    Args:
+        raster (list/str/gdal.Dataset): The raster(s) to clip.
+        clip_geom (str/ogr.DataSource/gdal.Dataset): The geometry to use to
+            clip the raster.
 
-    ## Kwargs:
-    `out_path` (_str_/_list_/_None_): The path(s) to save the clipped raster to. If None a memory raster is created. (Default: **None**)</br>
-    `resample_alg` (_str_): The resampling algorithm to use. (Default: **nearest**) </br>
-    &emsp; • **nearest**: Nearest neighbour. </br>
-    &emsp; • **bilinear**: Bilinear. </br>
-    &emsp; • **cubic**: Cubic. </br>
-    &emsp; • **cubicspline**: Cubic spline. </br>
-    &emsp; • **lanczos**: Lanczos. </br>
-    &emsp; • **average**: Average. </br>
-    &emsp; • **mode**: Mode. </br>
-    &emsp; • **max**: Max. </br>
-    &emsp; • **min**: Min. </br>
-    &emsp; • **median**: Median. </br>
-    &emsp; • **q1**: Quartile 1 </br>
-    &emsp; • **q3**: Quartile 3 </br>
-    &emsp; • **sum**: Sum </br>
-    &emsp; • **rms**: Root Mean Squared </br>
-    `crop_to_geom` (_bool_): If True, the output raster will be cropped to the extent of the clip geometry. (Default: **True**)</br>
-    `adjust_bbox` (_bool_): If True, the output raster have its bbox adjusted to match the clip geometry. (Default: **False**)</br>
-    `all_touch` (_bool_): If true all pixels touching the clipping geometry will be included. (Default: **False**)</br>
-    `to_extent` (_bool_): If True, the output raster will be cropped to the extent of the clip geometry. (Default: **False**)</br>
-    `prefix` (_str_): The prefix to use for the output raster. (Default: **""**)</br>
-    `suffix` (_str_): The suffix to use for the output raster. (Default: **""**)</br>
-    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**)</br>
-    `creation_options` (_list_/_None_): A list of creation options to pass to gdal. (Default: **None**)</br>
-    `dst_nodata` (_int_/_float_/_None_): The nodata value to use for the output raster. (Default: **infer**)</br>
-    `src_nodata` (_int_/_float_/_None_): The nodata value to use for the input raster. (Default: **infer**)</br>
-    `layer_to_clip` (_int_/_str_): The layer ID or name in the vector to use for clipping. (Default: **0**)</br>
-    `verbose` (_int_): The verbosity level. (Default: **0**)</br>
-    `add_uuid` (_bool_): If True, a UUID will be added to the output raster. (Default: **False**)</br>
-    `ram` (_str_): The amount of RAM to use for the operation. (Default: **auto**)</br>
+    Keyword Args:
+        out_path (str/list/None, default=None): The path(s) to save the
+            clipped raster to. If None, a memory raster is created.
+        resample_alg (str, default="nearest"): The resampling algorithm to use.
+            Options include: nearest, bilinear, cubic, cubicspline, lanczos, average,
+                mode, max, min, median, q1, q3, sum, rms.
+        crop_to_geom (bool, default=True): If True, the output raster will be
+            cropped to the extent of the clip geometry.
+        adjust_bbox (bool, default=False): If True, the output raster will have its
+            bbox adjusted to match the clip geometry.
+        all_touch (bool, default=False): If true, all pixels touching the
+            clipping geometry will be included.
+        to_extent (bool, default=False): If True, the output raster will be
+            cropped to the extent of the clip geometry.
+        prefix (str, default=""): The prefix to use for the output raster.
+        suffix (str, default=""): The suffix to use for the output raster.
+        overwrite (bool, default=True): If True, the output raster will be
+            overwritten if it already exists.
+        creation_options (list/None, default=None): A list of creation options
+            to pass to gdal.
+        dst_nodata (int/float/None, default="infer"): The nodata value to use for
+            the output raster.
+        src_nodata (int/float/None, default="infer"): The nodata value to use for
+            the input raster.
+        layer_to_clip (int/str, default=0): The layer ID or name in the
+            vector to use for clipping.
+        verbose (int, default=0): The verbosity level.
+        add_uuid (bool, default=False): If True, a UUID will be added to the
+            output raster.
+        ram (str, default="auto"): The amount of RAM to use for the operation.
 
-    ## Returns:
-    (_str_/_list_): A string or list of strings representing the path(s) to the clipped raster(s).
+    Returns:
+        str/list: A string or list of strings representing the path(s) to
+            the clipped raster(s).
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_geom")

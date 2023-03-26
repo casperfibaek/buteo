@@ -44,26 +44,27 @@ def _open_raster(raster, *, writeable=True):
 def open_raster(raster, *, writeable=True, allow_lists=True):
     """
     Opens a raster from a path to a raster. Can be in-memory or local. If a
-    gdal.Dataset is passed it is returned. Supports lists. If a list is passed
+    gdal.Dataset is passed, it is returned. Supports lists. If a list is passed,
     a list is returned with the opened raster.
 
-    ## Args:
-    `raster` (_gdal.Dataset_/_str_/_list_): A path to a raster or a GDAL dataframe. </br>
+    Args:
+        raster (gdal.Dataset/str/list): A path to a raster or a GDAL dataframe.
 
-    ## Kwargs:
-    `writeable` (_bool_): If True, the raster is opened in write mode. (Default: **True**) </br>
-    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
-    a single raster is allowed. (Default: **True**) </br>
+    Keyword Args:
+        writeable (bool, default=True): If True, the raster is opened in write mode. Default is True.
+        allow_lists (bool, default=True): If True, the input can be a list of rasters. Otherwise,
+            only a single raster is allowed. Default is True.
 
-    ## Returns:
-    (_gdal.Dataset_/_list_): A gdal.Dataset or a list of gdal.Datasets.
+    Returns:
+        gdal.Dataset/list: A gdal.Dataset or a list of gdal.Datasets.
     """
+
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(writeable, [bool], "writeable")
     core_utils.type_check(allow_lists, [bool], "allow_lists")
 
-    if not allow_lists and isinstance(raster, list):
-        raise ValueError("Input raster must be a single raster.")
+    if not allow_lists and isinstance(raster, (list, tuple)):
+        raise ValueError("Input raster must be a single raster. Not a list or tuple.")
 
     if not allow_lists:
         return _open_raster(raster, writeable=writeable)
@@ -84,7 +85,19 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
 
 
 def get_projection(raster, wkt=True):
-    """ Gets the projection as WKT from a dataset. Path or gdal.Dataset. """
+    """
+    Gets the projection from a dataset, either as WKT or in another format.
+    The input can be a path or a gdal.Dataset.
+
+    Args:
+        raster (str/gdal.Dataset): A path to a raster or a gdal.Dataset.
+
+    Keyword Args:
+        wkt (bool, default=True): If True, returns the projection as WKT.
+
+    Returns:
+        str: The projection of the input raster in the specified format.
+    """
     dataset = open_raster(raster)
 
     if wkt:
@@ -188,7 +201,6 @@ def _raster_to_metadata(raster):
 
     def get_bbox_as_vector_latlng():
         projection_osr_latlng = osr.SpatialReference()
-        # projection_osr_latlng.ImportFromEPSG(4326)
         projection_osr_latlng.ImportFromWkt('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]')
 
         return bbox_utils.convert_bbox_to_vector(metadata["bbox_latlng"], projection_osr_latlng)
@@ -202,18 +214,22 @@ def _raster_to_metadata(raster):
 
 def raster_to_metadata(raster, *, allow_lists=True):
     """
-    Reads a raster from a list of rasters, string or a dataset and returns metadata.
+    Reads metadata from a raster dataset or a list of raster datasets, and returns a dictionary or a list of dictionaries
+    containing metadata information for each raster.
 
-    ## Args:
-    `raster` (_gdal.Dataset_/_str_/_list_): A GDAL dataframe or a path to a raster. </br>
+    Args:
+        raster (str/gdal.Dataset/list): A path to a raster or a gdal.Dataset,
+            or a list of paths to rasters.
 
-    ## Kwargs:
-    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only
-    a single raster is allowed. (Default: **True**) </br>
+    Keyword Args:
+        allow_lists (bool, default=True): If True, allows the input to be a
+            list of rasters. Otherwise, only a single raster is allowed.
 
-    ## Returns:
-    (_dict_/_list_): A dictionary or list of dictionaries containing metadata.
+    Returns:
+        dict/list of dict: A dictionary or a list of dictionaries containing
+            metadata information for each raster.
     """
+
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
     if not allow_lists and isinstance(raster, list):
@@ -243,20 +259,24 @@ def rasters_are_aligned(
     threshold=0.001,
 ):
     """
-    Verifies if a list of rasters are aligned.
+    Verifies whether a list of rasters are aligned.
 
-    ## Args:
-    `rasters` (_list_): A list of raster, either in gdal.Dataset or a string
-    refering to the dataset. </br>
+    Args:
+        rasters (list): A list of rasters, either in gdal.Dataset or a string
+            referring to the dataset.
 
-    ## Kwargs:
-    `same_extent` (_bool_): Should all the rasters have the same extent? (Default: **False**). </br>
-    `same_dtype` (_bool_): Should all the rasters have the same data type? (Default: **False**)
-    `same_dtype` (_bool_): Should all the rasters have the same data nodata value? (Default: **False**). </br>
-    `threshold` (_float_): The threshold for the difference between the rasters. (Default: **0.001**). </br>
+    Keyword Args:
+        same_extent (bool, default=False): If True, all the rasters should have
+            the same extent.
+        same_dtype (bool, default=False): If True, all the rasters should have
+            the same data type.
+        same_nodata (bool, default=False): If True, all the rasters should have
+            the same nodata value.
+        threshold (float, default=0.001): The threshold for the difference between
+            the rasters.
 
-    ## Returns:
-    (_bool_): **True** if rasters and aligned and optional parameters are True, **False** otherwise.
+    Returns:
+        bool: True if rasters are aligned and optional parameters are True, False otherwise.
     """
     core_utils.type_check(rasters, [[str, gdal.Dataset]], "rasters")
     core_utils.type_check(same_extent, [bool], "same_extent")
@@ -347,47 +367,146 @@ def rasters_are_aligned(
     return True
 
 
+def raster_has_nodata(raster):
+    """
+    Verifies whether a raster has any nodata values.
+
+    Args:
+        raster (str): A raster, either in gdal.Dataset or a string
+            referring to the dataset.
+
+    Returns:
+        bool: True if raster has nodata values, False otherwise.
+    """
+    core_utils.type_check(raster, [str, gdal.Dataset], "raster")
+
+    ref = open_raster(raster)
+    band_count = ref.RasterCount
+    for band in range(1, band_count + 1):
+        band_ref = ref.GetRasterBand(band)
+        if band_ref.GetNoDataValue() is not None:
+            ref = None
+
+            return True
+
+    ref = None
+    return False
+
+
+def rasters_have_nodata(rasters):
+    """
+    Verifies whether a list of rasters have any nodata values.
+
+    Args:
+        rasters (list): A list of rasters, either in gdal.Dataset or a string
+    """
+    core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+
+    internal_rasters = core_utils.ensure_list(rasters)
+    assert gdal_utils.is_raster_list(internal_rasters), "Invalid raster list."
+
+    has_nodata = False
+    for in_raster in internal_rasters:
+        if raster_has_nodata(in_raster):
+            has_nodata = True
+            break
+
+    return has_nodata
+
+
+def rasters_have_same_nodata(rasters):
+    """
+    Verifies whether a list of rasters have the same nodata values.
+
+    Args:
+        rasters (list): A list of rasters, either in gdal.Dataset or a string
+    """
+    core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+
+    internal_rasters = core_utils.ensure_list(rasters)
+    assert gdal_utils.is_raster_list(internal_rasters), "Invalid raster list."
+
+    nodata_values = []
+    for in_raster in internal_rasters:
+        ref = open_raster(in_raster)
+        band_count = ref.RasterCount
+        for band in range(1, band_count + 1):
+            band_ref = ref.GetRasterBand(band)
+            nodata_values.append(band_ref.GetNoDataValue())
+
+        ref = None
+
+    return len(set(nodata_values)) == 1
+
+
+def get_first_nodata_value(raster):
+    """
+    Gets the first nodata value from a raster.
+
+    Args:
+        raster (str/gdal.Dataset): The raster to get the nodata value from.
+    """
+    core_utils.type_check(raster, [str, gdal.Dataset], "raster")
+
+    nodata = None
+
+    ref = open_raster(raster)
+    band_count = ref.RasterCount
+    for band in range(1, band_count + 1):
+        band_ref = ref.GetRasterBand(band)
+        nodata_value = band_ref.GetNoDataValue()
+        if nodata_value is not None:
+            nodata = nodata_value
+            break
+
+    ref = None
+    return nodata
+
+
+# TODO: Start here
 def raster_to_array(
     raster,
     *,
-    bands=-1,
+    bands='all',
+    masked="auto",
     filled=False,
+    fill_value=None,
     bbox=None,
     pixel_offsets=None,
-    stack=True,
-    split=False,
 ):
     """
-    Turns a path to a raster(s) or a GDAL.Dataset(s) into a **NumPy** array(s).
+    Turns a path to a raster(s) or a GDAL.Dataset(s) into a NumPy array(s).
 
-    ## Args:
-    (_gdal.Dataset_/_str_/_list_): The raster(s) to convert.
+    Args:
+        raster (gdal.Dataset/str/list): The raster(s) to convert.
 
-    ## Kwargs:
-    `bands` (_list_/_str_/_int_): The bands from the raster to turn
-    into a numpy array. Can be "all", "ALL", a list of ints or a
-    single int. </br>
-    `filled` (_bool_): If the array contains nodata values. Should the
-    resulting array be a filled numpy array or a masked array? </br>
-    `bbox` (_list_): A list of `[xmin, xmax, ymin, ymax]` to use as the
-    extent of the raster. Uses coordinates and the **OGR** format. </br>
-    `pixel_offsets` (_list_): A list of [x_offset, y_offset, x_size, y_size] to use as
-    the extent of the raster. Uses pixel offsets and the **OGR** format. </br>
-    `stack` (_bool_): If True, stacks the input rasters into a single array. Only works if
-    the rasters are aligned. (Default: **True**) </br>
-    `split` (_bool_): If True, splits the bands of the input rasters into seperate arrays. (Default: **False**)
+    Keyword Args:
+        bands (list/str/int, default="all"): The bands from the raster to turn into
+            a numpy array. Can be "all", an int, or a list of integers,
+            or a single integer.
+        masked (bool, default="auto"): If the array contains nodata values, should
+            the resulting array be a masked numpy array or a numpy array? If
+            "auto", the array will be masked, only if the raster has nodata values.
+        filled (bool, default=False): If the array contains nodata values, should
+            the resulting array be a filled numpy array or a masked array?
+        fill_value (int/float, default=None): The value to fill the array with if
+            filled is True. If None, the nodata value of the raster is used.
+        bbox (list, default=None): A list of `[xmin, xmax, ymin, ymax]` to use as
+            the extent of the raster. Uses coordinates and the OGR format.
+        pixel_offsets (list, default=None): A list of
+            `[x_offset, y_offset, x_size, y_size]` to use as the extent of the
+            raster. Uses pixel offsets and the OGR format.
 
-    ## Returns:
-    (_np.ndarray_): A numpy array in the 3D channel-last format unless output_2D is
-    specified. </br>
+    Returns:
+        np.ndarray: A numpy array in the 3D channel-last format unless output_2D is specified.
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    core_utils.type_check(bands, [int, list], "bands")
+    core_utils.type_check(bands, [int, [int], str], "bands")
     core_utils.type_check(filled, [bool], "filled")
+    core_utils.type_check(fill_value, [int, float, None], "fill_value")
+    core_utils.type_check(masked, [bool, str], "masked")
     core_utils.type_check(bbox, [list, None], "bbox")
     core_utils.type_check(pixel_offsets, [list, None], "pixel_offsets")
-    core_utils.type_check(stack, [bool], "stack")
-    core_utils.type_check(split, [bool], "split")
 
     internal_rasters = core_utils.ensure_list(raster)
 
@@ -396,34 +515,67 @@ def raster_to_array(
 
     internal_rasters = gdal_utils.get_path_from_dataset_list(internal_rasters, dataset_type="raster")
 
-    if stack and not rasters_are_aligned(internal_rasters, same_extent=True, same_dtype=False):
+    if len(internal_rasters > 1) and not rasters_are_aligned(internal_rasters, same_extent=True, same_dtype=False):
         raise ValueError(
             "Cannot merge rasters that are not aligned, have dissimilar extent or dtype, when stack=True."
         )
 
-    layers = []
-    nodata_values = []
-    for in_raster in internal_rasters:
+    metadata = raster_to_metadata(internal_rasters[0])
+    dtype = metadata["dtype"]
+    shape = metadata["shape"]
 
-        if not gdal_utils.is_raster(in_raster):
-            raise ValueError(f"Invalid raster: {in_raster}")
+    output_shape = (shape[0], shape[1], len(internal_rasters) * shape[2])
+
+    if masked == "auto":
+        has_nodata = rasters_have_nodata(internal_rasters)
+        if has_nodata:
+            masked = True
+        else:
+            masked = False
+
+    if masked:
+        output_arr = np.ma.empty(output_shape, dtype=dtype)
+    else:
+        output_arr = np.empty(output_shape, dtype=dtype)
+
+    output_nodata_value = None
+    if masked or filled:
+        output_nodata_value = get_first_nodata_value(internal_rasters[0])
+
+        if output_nodata_value is None:
+            output_nodata_value = np.nan
+
+        if filled and fill_value is None:
+            fill_value = output_nodata_value
+
+    if masked:
+        output_arr.mask = True
+
+        if filled:
+            output_arr.fill_value = fill_value
+        else:
+            output_arr.fill_value = output_nodata_value
+
+
+    band_idx = 0
+    for in_raster in internal_rasters:
 
         ref = open_raster(in_raster)
 
         metadata = raster_to_metadata(ref)
         band_count = metadata["band_count"]
-        band_arrs = []
 
         if band_count == 0:
             raise ValueError("The input raster does not have any valid bands.")
+
+        if bands == "all":
+            bands = -1
 
         internal_bands = gdal_utils.to_band_list(bands, metadata["band_count"])
 
         for band in internal_bands:
             band_ref = ref.GetRasterBand(band + 1)
             band_nodata_value = band_ref.GetNoDataValue()
-
-            nodata_values.append(band_nodata_value)
 
             if pixel_offsets is not None:
                 arr = band_ref.ReadAsArray(
@@ -442,51 +594,26 @@ def raster_to_array(
             else:
                 arr = band_ref.ReadAsArray()
 
-            if band_nodata_value is not None:
-                arr = np.ma.array(arr, mask=arr == band_nodata_value)
-                arr.fill_value = band_nodata_value
+            if masked or filled:
+                if band_nodata_value is not None:
+                    masked_arr = np.ma.array(arr, mask=arr == band_nodata_value, copy=False)
+                    masked_arr.fill_value = output_nodata_value
 
-                if filled:
-                    arr = arr.filled(band_nodata_value)
+                    if filled:
+                        arr = np.ma.getdata(masked_arr.filled(fill_value))
+                    else:
+                        arr = masked_arr
 
-            band_arrs.append(arr)
+            output_arr[:, :, band_idx] = arr
 
-        if split:
-            layers.append(band_arrs)
-        elif band_nodata_value is None:
-            layers.append(np.dstack(band_arrs))
-        else:
-            layers.append(np.ma.dstack(band_arrs))
+            band_idx += 1
 
         ref = None
 
-    if split:
-        if stack:
-            return layers
-
-        output = []
-        for layer in layers:
-            for band in layer:
-                output.append(band)
-
-        return output
-
-    if not core_utils.is_list_all_the_same(nodata_values):
-        fill_value = gdal_enums.get_default_nodata_value(layers[0].dtype)
-        for idx, layer in enumerate(layers):
-            layer[idx].fill_value = fill_value
-
-    output = layers
-
-    if stack:
-        if core_utils.is_list_all_val(nodata_values, None):
-            output = np.dstack(layers)
-        else:
-            output = np.ma.dstack(layers)
-
-    return output
+    return output_arr
 
 
+# TODO: Add bounding box support
 def array_to_raster(
     array,
     *,
@@ -499,29 +626,30 @@ def array_to_raster(
     creation_options=None,
 ):
     """
-    Turns a **NumPy** array into a **GDAL** dataset or exported
+    Turns a NumPy array into a GDAL dataset or exported
     as a raster using a reference raster.
 
-    ## Args:
-    `array` (_np.ndarray_): The numpy array to convert. </br>
-    `reference` (_str_/_gdal.Dataset_): The reference raster to use for the output. </br>
+    Args:
+        array (np.ndarray): The numpy array to convert.
+        reference (str/gdal.Dataset): The reference raster to use for the output.
 
-    ## Kwargs:
-    `out_path` (_path_): The destination to save to. (Default: **None**)</br>
-    `set_nodata` (_bool_/_float_/_int_): Can be set to: (Default: **arr**)</br>
-    `allow_mismatches` (_bool_): If True, the array can have a different shape than the reference raster.
-    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) </br>
-    &emsp; • **"arr"**: The nodata value will be the same as the **NumPy** array. </br>
-    &emsp; • **"ref"**: The nodata value will be the same as the reference raster. </br>
-    &emsp; • **"value"**: The nodata value will be the value provided. </br>
-    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: </br>
-    &emsp; • "TILED=YES" </br>
-    &emsp; • "NUM_THREADS=ALL_CPUS" </br>
-    &emsp; • "BIGG_TIF=YES" </br>
-    &emsp; • "COMPRESS=LZW" </br>
+    Keyword Args:
+        out_path (path, default=None): The destination to save to.
+        set_nodata (bool/float/int, default="arr"): Can be set to
+            • "arr": The nodata value will be the same as the NumPy array.
+            • "ref": The nodata value will be the same as the reference raster.
+            • value: The nodata value will be the value provided.
+        allow_mismatches (bool, default=False): If True, the array can have a
+            different shape than the reference raster.
+        pixel_offsets (list, default=None): If provided, the array will be
+            written to the reference raster at the specified pixel offsets.
+        overwrite (bool, default=True): If the file exists, should it be
+            overwritten?
+        creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
+            "BIGTIFF=YES", "COMPRESS=LZW"]): List of GDAL creation options.
 
-    ## Returns:
-    (_str_): The filepath to the newly created raster(s).
+    Returns:
+        str: The filepath to the newly created raster(s).
     """
     core_utils.type_check(array, [np.ndarray, np.ma.MaskedArray], "array")
     core_utils.type_check(reference, [str, gdal.Dataset], "reference")

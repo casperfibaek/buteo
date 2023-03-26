@@ -6,7 +6,6 @@ Functions to align a series of rasters to a master or a reference.
 
 # TODO: Fix if not all a reprojected, paths/names are incorrect.
 # TODO: phase_cross_correlation
-# TODO: Ensure get_pixel_offsets works as planned.
 
 # Standard library
 import sys; sys.path.append("../../")
@@ -29,33 +28,40 @@ def match_raster_projections(
     master,
     *,
     out_path=None,
-    overwrite=False,
+    overwrite=True,
     dst_nodata="infer",
     copy_if_already_correct=True,
     creation_options=None,
 ):
     """
-    Match a raster or list of rasters to a master layer. The master can be either
-    an **OGR** layer or a **GDAL** layer.
+    Match a raster or list of rasters to a master layer. The master can be
+    either an OGR layer or a GDAL layer.
 
-    ## Args:
-    `rasters` (_list_): A list of rasters to match. </br>
-    `master` (_str_/_gdal.Dataset_/_ogr.DataSource_): Path to the master raster or vector. </br>
+    Args:
+        rasters (list): A list of rasters to match.
+        master (str/gdal.Dataset/ogr.DataSource): Path to the master raster
+            or vector.
 
-    ## Kwargs:
-    `out_path` (_str_/_list_): Paths to the output. If not provided, the output will be in-memory rasters. (Default: **None**) </br>
-    `overwrite` (_bool_): If True, existing rasters will be overwritten. (Default: **False**) </br>
-    `dst_nodata` (_str_): Value to use for no-data pixels. If not provided, the value will be transfered from the original. (Default: **"infer"**) </br>
-    `copy_if_already_correct` (_bool_): If True, the raster will be copied if it is already in the correct projection. (Default: **True**) </br>
-    `creation_options` (_list_): List of creation options to pass to the output raster. (Default: **None**) </br>
+    Keyword Args:
+        out_path (str/list, default=None): Paths to the output. If not provided,
+            the output will be in-memory rasters.
+        overwrite (bool, default=True): If True, existing rasters will be
+            overwritten.
+        dst_nodata (str, default='infer'): Value to use for no-data pixels. If not
+            provided, the value will be transfered from the original.
+        copy_if_already_correct (bool, default=True): If True, the raster will be
+            copied if it is already in the correct projection.
+        creation_options (list, default=None): List of creation options to pass
+            to the output raster.
 
-    ## Returns:
-    (_list_): A list of reprojected input rasters with the correct projection.
+    Returns:
+        list: A list of reprojected input rasters with the correct projection.
     """
-    if isinstance(rasters, str):
-        rasters = [rasters]
+    core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
+    core_utils.type_check(master, [str, gdal.Dataset, ogr.DataSource], "master")
 
-    assert isinstance(master, (str, gdal.Dataset, ogr.DataSource)), "master must be a string, gdal.Dataset, or ogr.DataSource."    
+    rasters = core_utils.ensure_list(rasters)
+
     assert gdal_utils.is_raster_list(rasters), "rasters must be a list of rasters."
 
     try:
@@ -107,29 +113,38 @@ def align_rasters(
     """
     Aligns a series of rasters to a master raster or specified requirements.
 
-    ## Args:
-    `rasters` (_list_): A list of rasters to align. </br>
+    Args:
+        rasters (list): A list of rasters to align.
 
-    ## Kwargs:
-    `out_path` (_str_/_list_): Paths to the output. If not provided, the output will be in-memory rasters. (Default: **None**) </br>
-    `master` (_str_/_gdal.Dataset_/_ogr.DataSource_): Path to the master raster or vector. (Default: **None**) </br>
-    `suffix` (_str_): Suffix to append to the output raster. (Default: **"_aligned"**) </br>
-    `bounding_box` (_str_): Method to use for aligning the rasters. Can be either "intersection" or "union". (Default: **"intersection"**) </br>
-    `resample_alg` (_str_): Resampling algorithm to use. (Default: **nearest**) </br>
-    `target_size` (_list_/_gdal.Dataset_/_ogr.DataSource_): Target size of the output raster. (Default: **None**) </br>
-    `target_in_pixels` (_bool_): If True, the target size will be in pixels. (Default: **False**) </br>
-    `projection` (_str_/_gdal.Dataset_/_ogr.DataSource_): Projection to use for the output raster. (Default: **None**) </br>
-    `overwrite` (_bool_): If **True**, existing rasters will be overwritten. (Default: **True**) </br>
-    `creation_options` (_list_): List of creation options to pass to the output raster. (Default: **None**) </br>
-    `src_nodata` (_str_/_int_/_float_/_None_): The source dataset of the align sets. (Default: **"infer"**) </br>
-    `dst_nodata` (_str_/_int_/_float_/_None_): The destination dataset of the align sets. (Default: **"infer"**) </br>
-    `prefix`: (_str_): Prefix to add to the output rasters. (Default: **""**) </br>
-    `suffix`: (_str_): Suffix to add to the output rasters. (Default: **""**) </br>
-    `ram`: (_int_/_str_): The ram available to **GDAL** for the processing in MB or percentage.
-    If auto 80% of available ram is allowed. (Default: **auto**) </br>
+    Keyword Args:
+        out_path (str/list, default=None): Paths to the output. If not provided,
+            the output will be in-memory rasters.
+        master (str/gdal.Dataset/ogr.DataSource, default=None): Path to the
+            master raster or vector.
+        bounding_box (str, default="intersection"): Method to use for aligning the
+            rasters. Can be either "intersection" or "union".
+        resample_alg (str, default="nearest"): Resampling algorithm to use.
+        target_size (list/gdal.Dataset/ogr.DataSource, default=None): Target size
+            of the output raster.
+        target_in_pixels (bool, default=False): If True, the target size will be
+            in pixels.
+        projection (str/gdal.Dataset/ogr.DataSource, default=None): Projection to
+            use for the output raster.
+        overwrite (bool, default=True): If True, existing rasters will be
+            overwritten.
+        creation_options (list, default=None): List of creation options to pass to
+            the output raster.
+        src_nodata (str/int/float/None, default="infer"): The source dataset of the
+            align sets.
+        dst_nodata (str/int/float/None, default="infer"): The destination dataset of
+            the align sets.
+        prefix (str, default=""): Prefix to add to the output rasters.
+        suffix (str, default=""): Suffix to append to the output raster.
+        ram (int/str, default="auto"): The ram available to GDAL for the processing
+            in MB or percentage. If auto, 80% of available ram is allowed.
 
-    ## Return:
-    (_list_): A list of paths to the aligned rasters.
+    Returns:
+        list: A list of paths to the aligned rasters.
     """
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
     core_utils.type_check(out_path, [str, None, [str]], "out_path")
@@ -243,9 +258,8 @@ def align_rasters(
             x_res = target_size_raster["width"]
             y_res = target_size_raster["height"]
         else:
-            # If a list, tuple, int or float is passed. Turn them into target values.
-            x_res, y_res, x_pixels, y_pixels = bbox_utils.get_pixel_offsets(
-                target_size, target_in_pixels
+            raise NotImplementedError(
+                "target_size must be a raster or a tuple of pixel size."
             )
 
     # If nothing has been specified, we will infer the pixel_size based on
@@ -404,10 +418,10 @@ def align_rasters(
 
     # If any of the target values are still undefined. Throw an error!
     if target_projection is None or target_bounds is None:
-        raise Exception("Error while preparing the target projection or bounds.")
+        raise ValueError("Error while preparing the target projection or bounds.")
 
     if x_res is None and y_res is None and x_pixels is None and y_pixels is None:
-        raise Exception("Error while preparing the target pixel size.")
+        raise ValueError("Error while preparing the target pixel size.")
 
     # This is the list of rasters to return. If output is not memory, it's a list of paths.
     return_list = []
@@ -463,11 +477,11 @@ def align_rasters(
             targetAlignedPixels=False,
             cropToCutline=False,
             multithread=True,
-            # warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
+            warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
         )
 
         if warped is None:
-            raise Exception("Error while warping rasters.")
+            raise ValueError("Error while warping rasters.")
 
         return_list.append(out_name)
 
@@ -476,7 +490,7 @@ def align_rasters(
         gdal_utils.delete_if_in_memory(mem_path)
 
     if not core_raster.rasters_are_aligned(return_list, same_extent=True):
-        raise Exception("Error while aligning rasters. Output is not aligned")
+        raise ValueError("Error while aligning rasters. Output is not aligned")
 
     if isinstance(rasters, list):
         return return_list
