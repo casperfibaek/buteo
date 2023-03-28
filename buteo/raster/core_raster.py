@@ -13,7 +13,6 @@ import os
 # External
 import numpy as np
 from osgeo import gdal, osr, ogr
-from osgeo_utils.samples import validate_cloud_optimized_geotiff
 
 # Internal
 from buteo.utils import bbox_utils, core_utils, gdal_utils, gdal_enums
@@ -35,6 +34,13 @@ def _open_raster(raster, *, writeable=True):
 
         if not isinstance(opened, gdal.Dataset):
             raise ValueError(f"Input raster is not readable. Received: {raster}")
+
+        if opened.GetDescription() == "":
+            opened.SetDescription(raster)
+
+        if opened.GetProjectionRef() == "":
+            opened.SetProjection(gdal_utils.get_default_projection())
+            print(f"WARNING: Input raster {raster} has no projection. Setting to default: EPSG:4326.")
 
         return opened
 
@@ -102,13 +108,13 @@ def get_projection(raster, wkt=True):
 
     if wkt:
         return dataset.GetProjectionRef()
-    else:
-        return dataset.GetProjection()
+
+    return dataset.GetProjection()
 
 
 def _raster_to_metadata(raster):
     """ Internal. """
-    assert isinstance(raster, (str, gdal.Dataset))
+    core_utils.type_check(raster, [str, gdal.Dataset], "raster")
 
     dataset = open_raster(raster)
 
@@ -135,7 +141,7 @@ def _raster_to_metadata(raster):
     band_count = dataset.RasterCount
 
     size = [dataset.RasterXSize, dataset.RasterYSize]
-    shape = (width, height, band_count)
+    shape = (height, width, band_count)
 
     pixel_width = abs(transform[1])
     pixel_height = abs(transform[5])
@@ -181,6 +187,9 @@ def _raster_to_metadata(raster):
         "y_max": y_max,
         "x_max": x_max,
         "y_min": y_min,
+        "dtype": datatype,
+        "dtype_gdal": datatype_gdal,
+        "dtype_gdal_raw": datatype_gdal_raw,
         "datatype": datatype,
         "datatype_gdal": datatype_gdal,
         "datatype_gdal_raw": datatype_gdal_raw,
@@ -200,8 +209,9 @@ def _raster_to_metadata(raster):
 
 
     def get_bbox_as_vector_latlng():
+        latlng_wkt = gdal_utils.get_default_projection()
         projection_osr_latlng = osr.SpatialReference()
-        projection_osr_latlng.ImportFromWkt('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]')
+        projection_osr_latlng.ImportFromWkt(latlng_wkt)
 
         return bbox_utils.convert_bbox_to_vector(metadata["bbox_latlng"], projection_osr_latlng)
 
@@ -253,7 +263,7 @@ def raster_to_metadata(raster, *, allow_lists=True):
 def rasters_are_aligned(
     rasters,
     *,
-    same_extent=False,
+    same_extent=True,
     same_dtype=False,
     same_nodata=False,
     threshold=0.001,
@@ -266,7 +276,7 @@ def rasters_are_aligned(
             referring to the dataset.
 
     Keyword Args:
-        same_extent (bool, default=False): If True, all the rasters should have
+        same_extent (bool, default=True): If True, all the rasters should have
             the same extent.
         same_dtype (bool, default=False): If True, all the rasters should have
             the same data type.
@@ -309,6 +319,7 @@ def rasters_are_aligned(
         if index == 0:
             base["name"] = meta["name"]
             base["projection_wkt"] = meta["projection_wkt"]
+            base["projection_osr"] = meta["projection_osr"]
             base["pixel_width"] = meta["pixel_width"]
             base["pixel_height"] = meta["pixel_height"]
             base["x_min"] = meta["x_min"]
@@ -463,7 +474,6 @@ def get_first_nodata_value(raster):
     return nodata
 
 
-# TODO: Start here
 def raster_to_array(
     raster,
     *,
@@ -475,22 +485,21 @@ def raster_to_array(
     pixel_offsets=None,
 ):
     """
-    Turns a path to a raster(s) or a GDAL.Dataset(s) into a NumPy array(s).
+    Converts a raster or a list of rasters into a NumPy array.
 
     Args:
-        raster (gdal.Dataset/str/list): The raster(s) to convert.
+        raster (gdal.Dataset/str/list): Raster(s) to convert.
 
     Keyword Args:
-        bands (list/str/int, default="all"): The bands from the raster to turn into
-            a numpy array. Can be "all", an int, or a list of integers,
-            or a single integer.
-        masked (bool, default="auto"): If the array contains nodata values, should
-            the resulting array be a masked numpy array or a numpy array? If
-            "auto", the array will be masked, only if the raster has nodata values.
-        filled (bool, default=False): If the array contains nodata values, should
-            the resulting array be a filled numpy array or a masked array?
-        fill_value (int/float, default=None): The value to fill the array with if
-            filled is True. If None, the nodata value of the raster is used.
+        bands (list/str/int, default="all"): Bands from the raster to convert to a numpy array.
+            Can be "all", an int, or a list of integers, or a single integer.
+        masked (bool/str, default="auto"): If the array contains nodata values, determines whether
+            the resulting array should be a masked numpy array or a regular numpy array. If "auto",
+            the array will be masked only if the raster has nodata values.
+        filled (bool, default=False): If the array contains nodata values, determines whether
+            the resulting array should be a filled numpy array or a masked array.
+        fill_value (int/float, default=None): Value to fill the array with if filled is True.
+            If None, the nodata value of the raster is used.
         bbox (list, default=None): A list of `[xmin, xmax, ymin, ymax]` to use as
             the extent of the raster. Uses coordinates and the OGR format.
         pixel_offsets (list, default=None): A list of
@@ -498,7 +507,7 @@ def raster_to_array(
             raster. Uses pixel offsets and the OGR format.
 
     Returns:
-        np.ndarray: A numpy array in the 3D channel-last format unless output_2D is specified.
+        np.ndarray: A numpy array in the 3D channel-last format.
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(bands, [int, [int], str], "bands")
@@ -508,6 +517,12 @@ def raster_to_array(
     core_utils.type_check(bbox, [list, None], "bbox")
     core_utils.type_check(pixel_offsets, [list, None], "pixel_offsets")
 
+    if masked not in ["auto", True, False]:
+        raise ValueError(f"masked must be 'auto', True, or False. {masked} was provided.")
+
+    if bbox is not None and pixel_offsets is not None:
+        raise ValueError("Cannot use both bbox and pixel_offsets.")
+
     internal_rasters = core_utils.ensure_list(raster)
 
     if not gdal_utils.is_raster_list(internal_rasters):
@@ -515,28 +530,43 @@ def raster_to_array(
 
     internal_rasters = gdal_utils.get_path_from_dataset_list(internal_rasters, dataset_type="raster")
 
-    if len(internal_rasters > 1) and not rasters_are_aligned(internal_rasters, same_extent=True, same_dtype=False):
+    if len(internal_rasters) > 1 and not rasters_are_aligned(internal_rasters, same_extent=True, same_dtype=False):
         raise ValueError(
             "Cannot merge rasters that are not aligned, have dissimilar extent or dtype, when stack=True."
         )
 
+    # Read metadata
     metadata = raster_to_metadata(internal_rasters[0])
     dtype = metadata["dtype"]
     shape = metadata["shape"]
 
-    output_shape = (shape[0], shape[1], len(internal_rasters) * shape[2])
+    # Determine output shape
+    x_offset, y_offset, x_size, y_size = 0, 0, shape[1], shape[0]
 
+    if pixel_offsets is not None:
+        x_offset, y_offset, x_size, y_size = pixel_offsets
+
+        if x_offset < 0 or y_offset < 0:
+            raise ValueError("Pixel offsets cannot be negative.")
+
+        if x_offset + x_size > shape[1] or y_offset + y_size > shape[0]:
+            raise ValueError("Pixel offsets are outside of raster.")
+
+    elif bbox is not None:
+        if not bbox_utils.bboxes_intersect(metadata["bbox"], bbox):
+            raise ValueError("Extent is outside of raster.")
+
+        x_offset, y_offset, x_size, y_size = bbox_utils.get_pixel_offsets(metadata["transform"], bbox)
+
+    output_shape = (y_size, x_size, len(internal_rasters) * shape[2])
+
+    # Determine nodata and value
     if masked == "auto":
         has_nodata = rasters_have_nodata(internal_rasters)
         if has_nodata:
             masked = True
         else:
             masked = False
-
-    if masked:
-        output_arr = np.ma.empty(output_shape, dtype=dtype)
-    else:
-        output_arr = np.empty(output_shape, dtype=dtype)
 
     output_nodata_value = None
     if masked or filled:
@@ -548,13 +578,17 @@ def raster_to_array(
         if filled and fill_value is None:
             fill_value = output_nodata_value
 
+    # Create output array
     if masked:
+        output_arr = np.ma.empty(output_shape, dtype=dtype)
         output_arr.mask = True
 
         if filled:
             output_arr.fill_value = fill_value
         else:
             output_arr.fill_value = output_nodata_value
+    else:
+        output_arr = np.empty(output_shape, dtype=dtype)
 
 
     band_idx = 0
@@ -577,22 +611,13 @@ def raster_to_array(
             band_ref = ref.GetRasterBand(band + 1)
             band_nodata_value = band_ref.GetNoDataValue()
 
-            if pixel_offsets is not None:
-                arr = band_ref.ReadAsArray(
-                    pixel_offsets[0], # x_offset
-                    pixel_offsets[1], # y_offset
-                    pixel_offsets[2], # x_size
-                    pixel_offsets[3], # y_size
-                )
-            elif bbox is not None:
-                if not bbox_utils.bboxes_intersect(metadata["bbox"], bbox):
-                    raise ValueError("Extent is outside of raster.")
-
-                x_offset, y_offset, x_size, y_size = bbox_utils.get_pixel_offsets(metadata["transform"], bbox)
-
+            if pixel_offsets is not None or bbox is not None:
                 arr = band_ref.ReadAsArray(x_offset, y_offset, x_size, y_size)
             else:
                 arr = band_ref.ReadAsArray()
+
+            if arr.shape[0] == 0 or arr.shape[1] == 0:
+                raise RuntimeWarning("The output data has no rows or columns.")
 
             if masked or filled:
                 if band_nodata_value is not None:
@@ -613,7 +638,6 @@ def raster_to_array(
     return output_arr
 
 
-# TODO: Add bounding box support
 def array_to_raster(
     array,
     *,
@@ -622,6 +646,7 @@ def array_to_raster(
     set_nodata="arr",
     allow_mismatches=False,
     pixel_offsets=None,
+    bbox=None,
     overwrite=True,
     creation_options=None,
 ):
@@ -643,6 +668,10 @@ def array_to_raster(
             different shape than the reference raster.
         pixel_offsets (list, default=None): If provided, the array will be
             written to the reference raster at the specified pixel offsets.
+            The list should be in the format [x_offset, y_offset, x_size, y_size].
+        bbox (list, default=None): If provided, the array will be written to
+            the reference raster at the specified bounding box.
+            The list should be in the format [min_x, min_y, max_x, max_y].
         overwrite (bool, default=True): If the file exists, should it be
             overwritten?
         creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
@@ -662,15 +691,21 @@ def array_to_raster(
 
     # Verify the numpy array
     if (
-        not isinstance(array, (np.ndarray, np.ma.MaskedArray))
-        or array.size == 0
+        array.size == 0
         or array.ndim < 2
         or array.ndim > 3
     ):
         raise ValueError(f"Input array is invalid {array}")
 
-    if set_nodata != "arr" and set_nodata != "ref":
+    if set_nodata not in ["arr", "ref"]:
         core_utils.type_check(set_nodata, [int, float], "set_nodata")
+
+    if pixel_offsets is not None:
+        if len(pixel_offsets) != 4:
+            raise ValueError("pixel_offsets must be a list of 4 values.")
+
+    if pixel_offsets is not None and bbox is not None:
+        raise ValueError("pixel_offsets and bbox cannot be used together.")
 
     # Parse the driver
     driver_name = "GTiff" if out_path is None else gdal_utils.path_to_driver_raster(out_path)
@@ -716,28 +751,28 @@ def array_to_raster(
         if (input_nodata).is_integer() is True:
             input_nodata = int(input_nodata)
 
-
-    if (metadata["width"] != array.shape[1] or metadata["height"] != array.shape[0]) and pixel_offsets is None:
+    if (metadata["width"] != array.shape[1] or metadata["height"] != array.shape[0]) and pixel_offsets is None and bbox is None:
         if not allow_mismatches:
             raise ValueError(f"Input array and raster are not of equal size. Array: {array.shape[:2]} Raster: {metadata['width'], metadata['height']}")
 
         print("WARNING: Input array and raster are not of equal size.")
 
-    if pixel_offsets is not None:
-        if len(pixel_offsets) != 2 and len(pixel_offsets) != 4:
-            raise ValueError(f"Pixel offsets must be a list of two or four values. {pixel_offsets}")
+    if bbox is not None:
+        pixel_offsets = bbox_utils.get_pixel_offsets(metadata["transform"], bbox)
 
-        if len(pixel_offsets) == 4:
-            if array.ndim == 3:
-                array = array[:pixel_offsets[3], :pixel_offsets[2]:, :] # numpy is col, row order
-            else:
-                array = array[:pixel_offsets[3], :pixel_offsets[2]]
+    if pixel_offsets is not None:
+        x_offset, y_offset, x_size, y_size = pixel_offsets
+
+        if array.ndim == 3:
+            array = array[:y_size, :x_size:, :] # numpy is col, row order
+        else:
+            array = array[:y_size, x_size]
 
         metadata["transform"] = (
-            metadata["transform"][0] + (pixel_offsets[0] * metadata["pixel_width"]),
+            metadata["transform"][0] + (x_offset * metadata["pixel_width"]),
             metadata["transform"][1],
             metadata["transform"][2],
-            metadata["transform"][3] - (pixel_offsets[1] * metadata["pixel_height"]),
+            metadata["transform"][3] - (y_offset * metadata["pixel_height"]),
             metadata["transform"][4],
             metadata["transform"][5],
         )
@@ -819,6 +854,9 @@ def _raster_set_datatype(
 
     core_utils.remove_if_required(path, overwrite)
 
+    if isinstance(dtype_str, str):
+        dtype_str = dtype_str.lower()
+
     copy = driver.Create(
         path,
         metadata["height"],
@@ -858,25 +896,28 @@ def raster_set_datatype(
     creation_options=None,
 ):
     """
-    Changes the datatype of a raster.
+    Converts the datatype of a raster.
 
-    ## Args:
-    `raster` (_str_/_gdal.Dataset_/_list_): The raster to change the datatype of. </br>
-    `dtype` (_str_): The new datatype. </br>
+    Args:
+        raster (str/gdal.Dataset/list): The input raster(s) for which the
+            datatype will be changed.
+        dtype (str): The target datatype for the output raster(s).
 
-    ## Kwargs:
-    `out_path` (_path_/_list_): The destination to save to. (Default: **None**)</br>
-    `overwrite` (_bool_): If the file exists, should it be overwritten? (Default: **True**) </br>
-    `allow_lists` (_bool_): If True, the input can be a list of rasters. Otherwise, only single rasters
-    are allowed. (Default: **True**) </br>
-    `creation_options` (_list_): List of **GDAL** creation options. Defaults are: </br>
-        * "TILED=YES"
-        * "NUM_THREADS=ALL_CPUS"
-        * "BIGG_TIF=YES"
-        * "COMPRESS=LZW"
+    Keyword Args:
+        out_path (path/list, default=None): The output location for the
+            processed raster(s).
+        overwrite (bool, default=True): Determines whether to overwrite
+            existing files with the same name.
+        allow_lists (bool, default=True): Allows processing multiple
+            rasters as a list. If set to False, only single rasters are
+            accepted.
+        creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
+            "BIGTIFF=YES", "COMPRESS=LZW"]): A list of GDAL creation options
+            for the output raster(s).
 
-    ## Returns:
-    (_str_/_list_): The filepath or list of filepaths to the newly created raster(s).
+    Returns:
+        str/list: The filepath(s) of the newly created raster(s) with
+            the specified datatype.
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(dtype, [str], "dtype")
@@ -942,7 +983,7 @@ def stack_rasters(
     `creation_options` (_list_): List of **GDAL** creation options. Defaults are: </br>
     &emsp; • "TILED=YES" </br>
     &emsp; • "NUM_THREADS=ALL_CPUS" </br>
-    &emsp; • "BIGG_TIF=YES" </br>
+    &emsp; • "BIG_TIFF=YES" </br>
     &emsp; • "COMPRESS=LZW" </br>
 
     ## Returns:
@@ -1198,7 +1239,16 @@ def get_overlap_fraction(raster1, raster2):
     return overlap
 
 
-def create_raster_from_array(arr, out_path=None, pixel_size=10.0, x_min=0.0, y_max=0.0, projection="EPSG:3857", creation_options=None, overwrite=True):
+def create_raster_from_array(
+    arr,
+    out_path=None,
+    pixel_size=10.0,
+    x_min=0.0,
+    y_max=0.0,
+    projection="EPSG:3857",
+    creation_options=None,
+    overwrite=True,
+):
     """ Create a raster from a numpy array. """
     core_utils.type_check(arr, [np.ndarray, np.ma.MaskedArray], "arr")
     core_utils.type_check(out_path, [str, None], "out_path")
@@ -1295,32 +1345,3 @@ def create_grid_with_coordinates(raster):
     grid = np.dstack((xx, yy))
 
     return grid
-
-
-def is_cog(raster):
-    """Check if a raster is a Cloud Optimized GeoTIFF. """
-    core_utils.type_check(raster, [str, gdal.Dataset], "raster")
-
-    raster = _open_raster(raster)
-
-    if not validate_cloud_optimized_geotiff.validate(raster):
-        return False
-
-    return True
-
-
-# def translate_to_cog(raster, out_path):
-#     """Translate a raster to a Cloud Optimized GeoTIFF. """
-#     core_utils.type_check(raster, [str, gdal.Dataset], "raster")
-#     core_utils.type_check(out_path, [str], "out_path")
-
-#     raster = _open_raster(raster)
-
-#     if not is_cog(out_path):
-#         driver = gdal.GetDriverByName("COG")
-#         out_ds = driver.CreateCopy(out_path, raster, options=["TILED=YES", "COMPRESS=DEFLATE", "COPY_SRC_OVERVIEWS=YES"])
-#         gdal.BuildOverviews(out_path, "NEAREST", overviewlist=[2, 4, 8, 16, 32, 64, 128, 256, 512, 1024])
-
-#         gdal.Translate(out_path, raster, creationOptions=["TILED=YES", "COMPRESS=DEFLATE", "COPY_SRC_OVERVIEWS=YES"])
-
-#     return out_path

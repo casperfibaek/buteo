@@ -186,7 +186,7 @@ def texture_local_blur(
     type_check(distance_sigma, [int, float], "distance_sigma")
 
     assert filter_size % 2 == 1, "Filter size must be odd."
-    
+
     _kernel, weights, offsets = get_kernel(
         filter_size,
         distance_weight=distance_weight,

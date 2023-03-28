@@ -144,3 +144,4 @@ lib/credentials.py
 /builds/*
 *.gpkg-shm
 *.gpkg-wal
+./geometry_and_rassters/*.xml

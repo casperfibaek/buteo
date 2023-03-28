@@ -68,6 +68,19 @@ def default_creation_options(options=None):
     return internal_options
 
 
+def get_default_projection():
+    """
+    Get the default projection for a new raster.
+
+    ## Returns:
+    (_str_): The default projection.
+    """
+    epsg_4326_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
+
+    return epsg_4326_wkt
+
+
+
 def is_valid_datatype(file_path):
     """
     Check if a file path has a valid GDAL or OGR driver.
