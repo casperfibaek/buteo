@@ -173,7 +173,7 @@ def raster_to_grid(
 
     if generate_vrt:
         vrt_name = f"{out_dir}{name}.vrt"
-        core_raster.stack_rasters_vrt(generated, vrt_name, seperate=False)
+        core_raster.stack_rasters_vrt(generated, vrt_name, separate=False)
 
         return (generated, vrt_name)
 

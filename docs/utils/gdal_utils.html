@@ -87,12 +87,31 @@ def default_creation_options(options=None):
         internal_options.append(&#34;NUM_THREADS=ALL_CPUS&#34;)
 
     if &#34;BIGTIFF&#34; not in opt_str:
-        internal_options.append(&#34;BIGTIFF=YES&#34;)
+        internal_options.append(&#34;BIGTIFF=IF_SAFER&#34;)
 
     if &#34;COMPRESS&#34; not in opt_str:
         internal_options.append(&#34;COMPRESS=LZW&#34;)
 
+    if &#34;BLOCKXSIZE&#34; not in opt_str:
+        internal_options.append(&#34;BLOCKXSIZE=256&#34;)
+
+    if &#34;BLOCKYSIZE&#34; not in opt_str:
+        internal_options.append(&#34;BLOCKYSIZE=256&#34;)
+
     return internal_options
+
+
+def get_default_projection():
+    &#34;&#34;&#34;
+    Get the default projection for a new raster.
+
+    ## Returns:
+    (_str_): The default projection.
+    &#34;&#34;&#34;
+    epsg_4326_wkt = &#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;
+
+    return epsg_4326_wkt
+
 
 
 def is_valid_datatype(file_path):
@@ -498,7 +517,7 @@ def is_path_list(potential_path_list, allow_none=False):
     for element in potential_path_list:
         if element is None and not allow_none:
             return False
-        
+
         if not core_utils.is_valid_output_path(element) and not os.path.isdir(element):
             return False
 
@@ -1841,10 +1860,16 @@ input.</p>
         internal_options.append(&#34;NUM_THREADS=ALL_CPUS&#34;)
 
     if &#34;BIGTIFF&#34; not in opt_str:
-        internal_options.append(&#34;BIGTIFF=YES&#34;)
+        internal_options.append(&#34;BIGTIFF=IF_SAFER&#34;)
 
     if &#34;COMPRESS&#34; not in opt_str:
         internal_options.append(&#34;COMPRESS=LZW&#34;)
+
+    if &#34;BLOCKXSIZE&#34; not in opt_str:
+        internal_options.append(&#34;BLOCKXSIZE=256&#34;)
+
+    if &#34;BLOCKYSIZE&#34; not in opt_str:
+        internal_options.append(&#34;BLOCKYSIZE=256&#34;)
 
     return internal_options</code></pre>
 </details>
@@ -1984,6 +2009,29 @@ input.</p>
 
     for dataset in memory:
         print(dataset)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.get_default_projection"><code class="name flex">
+<span>def <span class="ident">get_default_projection</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the default projection for a new raster.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The default projection.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_default_projection():
+    &#34;&#34;&#34;
+    Get the default projection for a new raster.
+
+    ## Returns:
+    (_str_): The default projection.
+    &#34;&#34;&#34;
+    epsg_4326_wkt = &#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;
+
+    return epsg_4326_wkt</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.gdal_utils.get_gdal_memory"><code class="name flex">
@@ -2313,7 +2361,7 @@ input.</p>
     for element in potential_path_list:
         if element is None and not allow_none:
             return False
-        
+
         if not core_utils.is_valid_output_path(element) and not os.path.isdir(element):
             return False
 
@@ -3416,6 +3464,7 @@ an osr.SpatialReference.</p>
 <li><code><a title="buteo.utils.gdal_utils.delete_if_in_memory_list" href="#buteo.utils.gdal_utils.delete_if_in_memory_list">delete_if_in_memory_list</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.delete_raster_or_vector" href="#buteo.utils.gdal_utils.delete_raster_or_vector">delete_raster_or_vector</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.gdal_print_memory" href="#buteo.utils.gdal_utils.gdal_print_memory">gdal_print_memory</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.get_default_projection" href="#buteo.utils.gdal_utils.get_default_projection">get_default_projection</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.get_gdal_memory" href="#buteo.utils.gdal_utils.get_gdal_memory">get_gdal_memory</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.get_gdalwarp_ram_limit" href="#buteo.utils.gdal_utils.get_gdalwarp_ram_limit">get_gdalwarp_ram_limit</a></code></li>
 <li><code><a title="buteo.utils.gdal_utils.get_path_from_dataset" href="#buteo.utils.gdal_utils.get_path_from_dataset">get_path_from_dataset</a></code></li>

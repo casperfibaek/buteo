@@ -249,8 +249,8 @@ def create_grid(range_rows, range_cols):
 
 def split_into_offsets(shape, offsets_x=2, offsets_y=2, overlap_x=0, overlap_y=0):
     &#34;&#34;&#34; Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed. &#34;&#34;&#34;
-    width = shape[0]
-    height = shape[1]
+    height = shape[0]
+    width = shape[1]
 
     x_remainder = width % offsets_x
     y_remainder = height % offsets_y
@@ -958,8 +958,8 @@ def fill_nodata_with_nearest_average(array, nodata_value, mask=None, max_iterati
 </summary>
 <pre><code class="python">def split_into_offsets(shape, offsets_x=2, offsets_y=2, overlap_x=0, overlap_y=0):
     &#34;&#34;&#34; Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed. &#34;&#34;&#34;
-    width = shape[0]
-    height = shape[1]
+    height = shape[0]
+    width = shape[1]
 
     x_remainder = width % offsets_x
     y_remainder = height % offsets_y

@@ -324,6 +324,8 @@ def translate_str_to_gdal_dtype(dtype_str):
     if isinstance(dtype_str, np.dtype):
         dtype_str = dtype_str.name
 
+    dtype_str = dtype_str.lower()
+
     assert len(dtype_str) > 0, "dtype_str must be a non-empty string."
 
     datatypes = {
@@ -386,10 +388,54 @@ def get_default_nodata_value(dtype):
     elif isinstance(dtype, int):
         test_type = translate_gdal_dtype_to_str(dtype)
 
+    test_type = test_type.lower()
+
     if test_type in datatypes:
         return datatypes[test_type]
 
     raise ValueError("Unknown numpy datatype: " + test_type)
+
+
+def get_range_for_numpy_datatype(numpy_dtype):
+    """ Returns the range for a given numpy datatype. """
+
+    datatypes = {
+        "int8": (-128, 127),
+        "int16": (-32768, 32767),
+        "int32": (-2147483648, 2147483647),
+        "int64": (-9223372036854775808, 9223372036854775807),
+        "uint8": (0, 255),
+        "uint16": (0, 65535),
+        "uint32": (0, 4294967295),
+        "uint64": (0, 18446744073709551615),
+        "float16": (-6.1e+4, 6.1e+4),
+        "bfloat16": (-3.4e+38, 3.4e+38),
+        "float32": (-3.4e+38, 3.4e+38),
+        "float64": (-1.8e+308, 1.8e+308),
+        "cfloat32": (-3.4e+38, 3.4e+38),
+        "cfloat64": (-1.8e+308, 1.8e+308),
+    }
+
+    test_type = numpy_dtype
+    if isinstance(numpy_dtype, np.dtype):
+        test_type = test_type.name
+    elif isinstance(numpy_dtype, int):
+        test_type = translate_gdal_dtype_to_str(numpy_dtype)
+
+    if test_type in datatypes:
+        return datatypes[test_type]
+
+    raise ValueError("Unknown numpy datatype: " + test_type)
+
+
+def value_is_within_datatype_range(value, numpy_dtype):
+    """ Checks if a value is within the range of a numpy datatype. """
+    if value is np.nan:
+        return True
+
+    min_val, max_val = get_range_for_numpy_datatype(numpy_dtype)
+
+    return min_val <= value <= max_val
 
 
 def is_gdal_datatype_a_float(gdal_dtype):

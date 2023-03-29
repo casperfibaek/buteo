@@ -214,7 +214,7 @@ def texture_local_blur(
     type_check(distance_sigma, [int, float], &#34;distance_sigma&#34;)
 
     assert filter_size % 2 == 1, &#34;Filter size must be odd.&#34;
-    
+
     _kernel, weights, offsets = get_kernel(
         filter_size,
         distance_weight=distance_weight,
@@ -554,7 +554,7 @@ def texture_hole_dif(
     type_check(distance_sigma, [int, float], &#34;distance_sigma&#34;)
 
     assert filter_size % 2 == 1, &#34;Filter size must be odd.&#34;
-    
+
     _kernel, weights, offsets = get_kernel(
         filter_size,
         distance_weight=distance_weight,

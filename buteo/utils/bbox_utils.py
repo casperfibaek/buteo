@@ -356,6 +356,7 @@ def convert_bbox_to_geom(bbox_ogr):
     x_min, x_max, y_min, y_max = bbox_ogr
 
     ring = ogr.Geometry(ogr.wkbLinearRing)
+
     ring.AddPoint(x_min, y_min)
     ring.AddPoint(x_max, y_min)
     ring.AddPoint(x_max, y_max)
@@ -694,7 +695,7 @@ def get_projection_from_raster(raster):
         gdal.PopErrorHandler()
 
     if opened is None:
-        raise Exception(f"Could not open raster. {raster}")
+        raise RuntimeError(f"Could not open raster. {raster}")
 
     projection = osr.SpatialReference()
     projection.ImportFromWkt(opened.GetProjection())
@@ -722,7 +723,7 @@ def get_projection_from_vector(vector):
         gdal.PopErrorHandler()
 
     if opened is None:
-        raise Exception(f"Could not open vector. {vector}")
+        raise RuntimeError(f"Could not open vector. {vector}")
 
     layer = opened.GetLayer()
     projection = layer.GetSpatialRef()
@@ -754,7 +755,7 @@ def get_projection_from_dataset(dataset):
 
         gdal.PopErrorHandler()
         if opened is None:
-            raise Exception(f"Could not open dataset. {dataset}")
+            raise RuntimeError(f"Could not open dataset. {dataset}")
 
     if isinstance(opened, gdal.Dataset):
         return get_projection_from_raster(opened)
@@ -762,7 +763,7 @@ def get_projection_from_dataset(dataset):
     if isinstance(opened, ogr.DataSource):
         return get_projection_from_vector(opened)
 
-    raise Exception(f"Could not get projection from dataset. {dataset}")
+    raise RuntimeError(f"Could not get projection from dataset. {dataset}")
 
 
 def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
@@ -801,6 +802,7 @@ def reproject_bbox(
     bbox_ogr,
     source_projection,
     target_projection,
+    envelope=True,
 ):
     """
     Reprojects an OGR formatted bbox.
@@ -825,12 +827,26 @@ def reproject_bbox(
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
+    p1 = [x_min, y_min]
+    p2 = [x_max, y_min]
+    p3 = [x_max, y_max]
+    p4 = [x_min, y_max]
+
     try:
-        transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(x_min, y_min)
-        transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(x_max, y_max)
-    except: # pylint: disable=bare-except
-        transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min))
-        transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max))
+        p1t = transformer.TransformPoint(p1[0], p1[1])
+        p2t = transformer.TransformPoint(p2[0], p2[1])
+        p3t = transformer.TransformPoint(p3[0], p3[1])
+        p4t = transformer.TransformPoint(p4[0], p4[1])
+    except RuntimeError:
+        p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
+        p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
+        p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
+        p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+
+    transformed_x_min = min(p1t[0], p2t[0], p3t[0], p4t[0])
+    transformed_x_max = max(p1t[0], p2t[0], p3t[0], p4t[0])
+    transformed_y_min = min(p1t[1], p2t[1], p3t[1], p4t[1])
+    transformed_y_max = max(p1t[1], p2t[1], p3t[1], p4t[1])
 
     return [
         transformed_x_min,
@@ -991,6 +1007,55 @@ def reproject_latlng_point_to_utm(latlng):
     return [utm_x, utm_y]
 
 
+def geometry_latlng_from_bbox(bbox_ogr, projection_osr, latlng_projection_osr):
+    """ 
+    This is an internal utility function for metadata generation. It takes a standard
+    OGR bounding box and the geometry of the source dataset in latlng and returns a
+    geometry in the source dataset's projection. This is important as, as when 
+    reprojecting to latlng, you might get a skewed bounding box. This function returns
+    the skewed bounds in latlng, which is what you want for overlap checks across
+    projections.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. </br>
+    `projection_osr` (_osr.SpatialReference_): The projection. </br>
+    `latlng_projection` (_osr.SpatialReference_): The latlng projection. </br>
+
+    ## Returns:
+    (_ogr.Geometry_): The geometry in the source dataset's projection.
+    """
+    transformer = osr.CoordinateTransformation(projection_osr, latlng_projection_osr)
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    p1 = [x_min, y_min]
+    p2 = [x_max, y_min]
+    p3 = [x_max, y_max]
+    p4 = [x_min, y_max]
+
+    try:
+        p1t = transformer.TransformPoint(p1[0], p1[1])
+        p2t = transformer.TransformPoint(p2[0], p2[1])
+        p3t = transformer.TransformPoint(p3[0], p3[1])
+        p4t = transformer.TransformPoint(p4[0], p4[1])
+    except RuntimeError:
+        p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
+        p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
+        p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
+        p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    ring.AddPoint(p1t[0], p1t[1])
+    ring.AddPoint(p2t[0], p2t[1])
+    ring.AddPoint(p3t[0], p3t[1])
+    ring.AddPoint(p4t[0], p4t[1])
+    ring.AddPoint(p1t[0], p1t[1])
+    polygon = ogr.Geometry(ogr.wkbPolygon)
+    polygon.AddGeometry(ring)
+
+    return polygon
+
+
 def additional_bboxes(bbox_ogr, projection_osr):
     """
     This is an internal utility function for metadata generation. It takes a standard
@@ -1023,14 +1088,16 @@ def additional_bboxes(bbox_ogr, projection_osr):
     original_projection.ImportFromWkt(projection_osr.ExportToWkt())
 
     latlng_projection = osr.SpatialReference()
-    # latlng_projection.ImportFromEPSG(4326)
-    latlng_projection.ImportFromWkt('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]')
+    wgs84_wkt = gdal_utils.get_default_projection()
+    latlng_projection.ImportFromWkt(wgs84_wkt)
 
     bbox_ogr_latlng = reproject_bbox(bbox_ogr, original_projection, latlng_projection)
     latlng_x_min, latlng_x_max, latlng_y_min, latlng_y_max = bbox_ogr_latlng
 
     bbox_geom = convert_bbox_to_geom(bbox_ogr)
     bbox_geom_latlng = convert_bbox_to_geom(bbox_ogr_latlng)
+    geom = bbox_geom
+    geom_latlng = geometry_latlng_from_bbox(bbox_ogr, original_projection, latlng_projection)
 
     bbox_wkt = convert_bbox_to_wkt(bbox_ogr)
     bbox_wkt_latlng = convert_bbox_to_wkt(bbox_ogr_latlng)
@@ -1051,4 +1118,6 @@ def additional_bboxes(bbox_ogr, projection_osr):
             "y_max": latlng_y_max,
         },
         "bbox_geojson": convert_bbox_to_geojson(bbox_ogr_latlng),
+        "geom": geom,
+        "geom_latlng": geom_latlng,
     }

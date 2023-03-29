@@ -391,6 +391,7 @@ def convert_bbox_to_geom(bbox_ogr):
     x_min, x_max, y_min, y_max = bbox_ogr
 
     ring = ogr.Geometry(ogr.wkbLinearRing)
+
     ring.AddPoint(x_min, y_min)
     ring.AddPoint(x_max, y_min)
     ring.AddPoint(x_max, y_max)
@@ -729,7 +730,7 @@ def get_projection_from_raster(raster):
         gdal.PopErrorHandler()
 
     if opened is None:
-        raise Exception(f&#34;Could not open raster. {raster}&#34;)
+        raise RuntimeError(f&#34;Could not open raster. {raster}&#34;)
 
     projection = osr.SpatialReference()
     projection.ImportFromWkt(opened.GetProjection())
@@ -757,7 +758,7 @@ def get_projection_from_vector(vector):
         gdal.PopErrorHandler()
 
     if opened is None:
-        raise Exception(f&#34;Could not open vector. {vector}&#34;)
+        raise RuntimeError(f&#34;Could not open vector. {vector}&#34;)
 
     layer = opened.GetLayer()
     projection = layer.GetSpatialRef()
@@ -789,7 +790,7 @@ def get_projection_from_dataset(dataset):
 
         gdal.PopErrorHandler()
         if opened is None:
-            raise Exception(f&#34;Could not open dataset. {dataset}&#34;)
+            raise RuntimeError(f&#34;Could not open dataset. {dataset}&#34;)
 
     if isinstance(opened, gdal.Dataset):
         return get_projection_from_raster(opened)
@@ -797,7 +798,7 @@ def get_projection_from_dataset(dataset):
     if isinstance(opened, ogr.DataSource):
         return get_projection_from_vector(opened)
 
-    raise Exception(f&#34;Could not get projection from dataset. {dataset}&#34;)
+    raise RuntimeError(f&#34;Could not get projection from dataset. {dataset}&#34;)
 
 
 def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
@@ -836,6 +837,7 @@ def reproject_bbox(
     bbox_ogr,
     source_projection,
     target_projection,
+    envelope=True,
 ):
     &#34;&#34;&#34;
     Reprojects an OGR formatted bbox.
@@ -860,12 +862,26 @@ def reproject_bbox(
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
+    p1 = [x_min, y_min]
+    p2 = [x_max, y_min]
+    p3 = [x_max, y_max]
+    p4 = [x_min, y_max]
+
     try:
-        transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(x_min, y_min)
-        transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(x_max, y_max)
-    except: # pylint: disable=bare-except
-        transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min))
-        transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max))
+        p1t = transformer.TransformPoint(p1[0], p1[1])
+        p2t = transformer.TransformPoint(p2[0], p2[1])
+        p3t = transformer.TransformPoint(p3[0], p3[1])
+        p4t = transformer.TransformPoint(p4[0], p4[1])
+    except RuntimeError:
+        p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
+        p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
+        p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
+        p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+
+    transformed_x_min = min(p1t[0], p2t[0], p3t[0], p4t[0])
+    transformed_x_max = max(p1t[0], p2t[0], p3t[0], p4t[0])
+    transformed_y_min = min(p1t[1], p2t[1], p3t[1], p4t[1])
+    transformed_y_max = max(p1t[1], p2t[1], p3t[1], p4t[1])
 
     return [
         transformed_x_min,
@@ -1026,6 +1042,55 @@ def reproject_latlng_point_to_utm(latlng):
     return [utm_x, utm_y]
 
 
+def geometry_latlng_from_bbox(bbox_ogr, projection_osr, latlng_projection_osr):
+    &#34;&#34;&#34; 
+    This is an internal utility function for metadata generation. It takes a standard
+    OGR bounding box and the geometry of the source dataset in latlng and returns a
+    geometry in the source dataset&#39;s projection. This is important as, as when 
+    reprojecting to latlng, you might get a skewed bounding box. This function returns
+    the skewed bounds in latlng, which is what you want for overlap checks across
+    projections.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `projection_osr` (_osr.SpatialReference_): The projection. &lt;/br&gt;
+    `latlng_projection` (_osr.SpatialReference_): The latlng projection. &lt;/br&gt;
+
+    ## Returns:
+    (_ogr.Geometry_): The geometry in the source dataset&#39;s projection.
+    &#34;&#34;&#34;
+    transformer = osr.CoordinateTransformation(projection_osr, latlng_projection_osr)
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    p1 = [x_min, y_min]
+    p2 = [x_max, y_min]
+    p3 = [x_max, y_max]
+    p4 = [x_min, y_max]
+
+    try:
+        p1t = transformer.TransformPoint(p1[0], p1[1])
+        p2t = transformer.TransformPoint(p2[0], p2[1])
+        p3t = transformer.TransformPoint(p3[0], p3[1])
+        p4t = transformer.TransformPoint(p4[0], p4[1])
+    except RuntimeError:
+        p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
+        p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
+        p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
+        p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    ring.AddPoint(p1t[0], p1t[1])
+    ring.AddPoint(p2t[0], p2t[1])
+    ring.AddPoint(p3t[0], p3t[1])
+    ring.AddPoint(p4t[0], p4t[1])
+    ring.AddPoint(p1t[0], p1t[1])
+    polygon = ogr.Geometry(ogr.wkbPolygon)
+    polygon.AddGeometry(ring)
+
+    return polygon
+
+
 def additional_bboxes(bbox_ogr, projection_osr):
     &#34;&#34;&#34;
     This is an internal utility function for metadata generation. It takes a standard
@@ -1058,14 +1123,16 @@ def additional_bboxes(bbox_ogr, projection_osr):
     original_projection.ImportFromWkt(projection_osr.ExportToWkt())
 
     latlng_projection = osr.SpatialReference()
-    # latlng_projection.ImportFromEPSG(4326)
-    latlng_projection.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
+    wgs84_wkt = gdal_utils.get_default_projection()
+    latlng_projection.ImportFromWkt(wgs84_wkt)
 
     bbox_ogr_latlng = reproject_bbox(bbox_ogr, original_projection, latlng_projection)
     latlng_x_min, latlng_x_max, latlng_y_min, latlng_y_max = bbox_ogr_latlng
 
     bbox_geom = convert_bbox_to_geom(bbox_ogr)
     bbox_geom_latlng = convert_bbox_to_geom(bbox_ogr_latlng)
+    geom = bbox_geom
+    geom_latlng = geometry_latlng_from_bbox(bbox_ogr, original_projection, latlng_projection)
 
     bbox_wkt = convert_bbox_to_wkt(bbox_ogr)
     bbox_wkt_latlng = convert_bbox_to_wkt(bbox_ogr_latlng)
@@ -1086,6 +1153,8 @@ def additional_bboxes(bbox_ogr, projection_osr):
             &#34;y_max&#34;: latlng_y_max,
         },
         &#34;bbox_geojson&#34;: convert_bbox_to_geojson(bbox_ogr_latlng),
+        &#34;geom&#34;: geom,
+        &#34;geom_latlng&#34;: geom_latlng,
     }</code></pre>
 </details>
 </section>
@@ -1152,14 +1221,16 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     original_projection.ImportFromWkt(projection_osr.ExportToWkt())
 
     latlng_projection = osr.SpatialReference()
-    # latlng_projection.ImportFromEPSG(4326)
-    latlng_projection.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
+    wgs84_wkt = gdal_utils.get_default_projection()
+    latlng_projection.ImportFromWkt(wgs84_wkt)
 
     bbox_ogr_latlng = reproject_bbox(bbox_ogr, original_projection, latlng_projection)
     latlng_x_min, latlng_x_max, latlng_y_min, latlng_y_max = bbox_ogr_latlng
 
     bbox_geom = convert_bbox_to_geom(bbox_ogr)
     bbox_geom_latlng = convert_bbox_to_geom(bbox_ogr_latlng)
+    geom = bbox_geom
+    geom_latlng = geometry_latlng_from_bbox(bbox_ogr, original_projection, latlng_projection)
 
     bbox_wkt = convert_bbox_to_wkt(bbox_ogr)
     bbox_wkt_latlng = convert_bbox_to_wkt(bbox_ogr_latlng)
@@ -1180,6 +1251,8 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
             &#34;y_max&#34;: latlng_y_max,
         },
         &#34;bbox_geojson&#34;: convert_bbox_to_geojson(bbox_ogr_latlng),
+        &#34;geom&#34;: geom,
+        &#34;geom_latlng&#34;: geom_latlng,
     }</code></pre>
 </details>
 </dd>
@@ -1403,6 +1476,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     x_min, x_max, y_min, y_max = bbox_ogr
 
     ring = ogr.Geometry(ogr.wkbLinearRing)
+
     ring.AddPoint(x_min, y_min)
     ring.AddPoint(x_max, y_min)
     ring.AddPoint(x_max, y_max)
@@ -1686,6 +1760,75 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
         return -number
 
     return number</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.geometry_latlng_from_bbox"><code class="name flex">
+<span>def <span class="ident">geometry_latlng_from_bbox</span></span>(<span>bbox_ogr, projection_osr, latlng_projection_osr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is an internal utility function for metadata generation. It takes a standard
+OGR bounding box and the geometry of the source dataset in latlng and returns a
+geometry in the source dataset's projection. This is important as, as when
+reprojecting to latlng, you might get a skewed bounding box. This function returns
+the skewed bounds in latlng, which is what you want for overlap checks across
+projections.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
+<code>projection_osr</code> (<em>osr.SpatialReference</em>): The projection. </br>
+<code>latlng_projection</code> (<em>osr.SpatialReference</em>): The latlng projection. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>ogr.Geometry</em>): The geometry in the source dataset's projection.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def geometry_latlng_from_bbox(bbox_ogr, projection_osr, latlng_projection_osr):
+    &#34;&#34;&#34; 
+    This is an internal utility function for metadata generation. It takes a standard
+    OGR bounding box and the geometry of the source dataset in latlng and returns a
+    geometry in the source dataset&#39;s projection. This is important as, as when 
+    reprojecting to latlng, you might get a skewed bounding box. This function returns
+    the skewed bounds in latlng, which is what you want for overlap checks across
+    projections.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `projection_osr` (_osr.SpatialReference_): The projection. &lt;/br&gt;
+    `latlng_projection` (_osr.SpatialReference_): The latlng projection. &lt;/br&gt;
+
+    ## Returns:
+    (_ogr.Geometry_): The geometry in the source dataset&#39;s projection.
+    &#34;&#34;&#34;
+    transformer = osr.CoordinateTransformation(projection_osr, latlng_projection_osr)
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    p1 = [x_min, y_min]
+    p2 = [x_max, y_min]
+    p3 = [x_max, y_max]
+    p4 = [x_min, y_max]
+
+    try:
+        p1t = transformer.TransformPoint(p1[0], p1[1])
+        p2t = transformer.TransformPoint(p2[0], p2[1])
+        p3t = transformer.TransformPoint(p3[0], p3[1])
+        p4t = transformer.TransformPoint(p4[0], p4[1])
+    except RuntimeError:
+        p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
+        p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
+        p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
+        p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    ring.AddPoint(p1t[0], p1t[1])
+    ring.AddPoint(p2t[0], p2t[1])
+    ring.AddPoint(p3t[0], p3t[1])
+    ring.AddPoint(p4t[0], p4t[1])
+    ring.AddPoint(p1t[0], p1t[1])
+    polygon = ogr.Geometry(ogr.wkbPolygon)
+    polygon.AddGeometry(ring)
+
+    return polygon</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.bbox_utils.get_bbox_from_dataset"><code class="name flex">
@@ -2025,7 +2168,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 
         gdal.PopErrorHandler()
         if opened is None:
-            raise Exception(f&#34;Could not open dataset. {dataset}&#34;)
+            raise RuntimeError(f&#34;Could not open dataset. {dataset}&#34;)
 
     if isinstance(opened, gdal.Dataset):
         return get_projection_from_raster(opened)
@@ -2033,7 +2176,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     if isinstance(opened, ogr.DataSource):
         return get_projection_from_vector(opened)
 
-    raise Exception(f&#34;Could not get projection from dataset. {dataset}&#34;)</code></pre>
+    raise RuntimeError(f&#34;Could not get projection from dataset. {dataset}&#34;)</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.bbox_utils.get_projection_from_raster"><code class="name flex">
@@ -2068,7 +2211,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
         gdal.PopErrorHandler()
 
     if opened is None:
-        raise Exception(f&#34;Could not open raster. {raster}&#34;)
+        raise RuntimeError(f&#34;Could not open raster. {raster}&#34;)
 
     projection = osr.SpatialReference()
     projection.ImportFromWkt(opened.GetProjection())
@@ -2109,7 +2252,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
         gdal.PopErrorHandler()
 
     if opened is None:
-        raise Exception(f&#34;Could not open vector. {vector}&#34;)
+        raise RuntimeError(f&#34;Could not open vector. {vector}&#34;)
 
     layer = opened.GetLayer()
     projection = layer.GetSpatialRef()
@@ -2517,7 +2660,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 </details>
 </dd>
 <dt id="buteo.utils.bbox_utils.reproject_bbox"><code class="name flex">
-<span>def <span class="ident">reproject_bbox</span></span>(<span>bbox_ogr, source_projection, target_projection)</span>
+<span>def <span class="ident">reproject_bbox</span></span>(<span>bbox_ogr, source_projection, target_projection, envelope=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Reprojects an OGR formatted bbox.</p>
@@ -2535,6 +2678,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
     bbox_ogr,
     source_projection,
     target_projection,
+    envelope=True,
 ):
     &#34;&#34;&#34;
     Reprojects an OGR formatted bbox.
@@ -2559,12 +2703,26 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
+    p1 = [x_min, y_min]
+    p2 = [x_max, y_min]
+    p3 = [x_max, y_max]
+    p4 = [x_min, y_max]
+
     try:
-        transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(x_min, y_min)
-        transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(x_max, y_max)
-    except: # pylint: disable=bare-except
-        transformed_x_min, transformed_y_min, _z = transformer.TransformPoint(float(x_min), float(y_min))
-        transformed_x_max, transformed_y_max, _z = transformer.TransformPoint(float(x_max), float(y_max))
+        p1t = transformer.TransformPoint(p1[0], p1[1])
+        p2t = transformer.TransformPoint(p2[0], p2[1])
+        p3t = transformer.TransformPoint(p3[0], p3[1])
+        p4t = transformer.TransformPoint(p4[0], p4[1])
+    except RuntimeError:
+        p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
+        p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
+        p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
+        p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+
+    transformed_x_min = min(p1t[0], p2t[0], p3t[0], p4t[0])
+    transformed_x_max = max(p1t[0], p2t[0], p3t[0], p4t[0])
+    transformed_y_min = min(p1t[1], p2t[1], p3t[1], p4t[1])
+    transformed_y_max = max(p1t[1], p2t[1], p3t[1], p4t[1])
 
     return [
         transformed_x_min,
@@ -2639,6 +2797,7 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 <li><code><a title="buteo.utils.bbox_utils.convert_geom_to_bbox" href="#buteo.utils.bbox_utils.convert_geom_to_bbox">convert_geom_to_bbox</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.convert_ogr_bbox_to_gdal_bbox" href="#buteo.utils.bbox_utils.convert_ogr_bbox_to_gdal_bbox">convert_ogr_bbox_to_gdal_bbox</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.ensure_negative" href="#buteo.utils.bbox_utils.ensure_negative">ensure_negative</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.geometry_latlng_from_bbox" href="#buteo.utils.bbox_utils.geometry_latlng_from_bbox">geometry_latlng_from_bbox</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.get_bbox_from_dataset" href="#buteo.utils.bbox_utils.get_bbox_from_dataset">get_bbox_from_dataset</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.get_bbox_from_geotransform" href="#buteo.utils.bbox_utils.get_bbox_from_geotransform">get_bbox_from_geotransform</a></code></li>
 <li><code><a title="buteo.utils.bbox_utils.get_bbox_from_raster" href="#buteo.utils.bbox_utils.get_bbox_from_raster">get_bbox_from_raster</a></code></li>
