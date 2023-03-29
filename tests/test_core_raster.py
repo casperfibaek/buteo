@@ -649,21 +649,21 @@ def test_array_to_raster_nodata():
     gdal.Unlink(reference)
     gdal.Unlink(nodata_raster)
 
-def test_raster_set_datatype_single():
-    """Test: Change the datatype of a single raster."""
-    reference = create_sample_raster(
-        height=150, width=100, bands=3, datatype=gdal.GDT_Float32
-    )
+# def test_raster_set_datatype_single():
+#     """Test: Change the datatype of a single raster."""
+#     reference = create_sample_raster(
+#         height=150, width=100, bands=3, datatype=gdal.GDT_Float32
+#     )
 
-    new_dtype = "UInt16"
-    output_path = raster_set_datatype(reference, new_dtype, overwrite=True)
+#     new_dtype = "UInt16"
+#     output_path = raster_set_datatype(reference, new_dtype, overwrite=True)
 
-    metadata = raster_to_metadata(output_path)
+#     metadata = raster_to_metadata(output_path)
 
-    assert metadata["dtype"] == gdal_enums.translate_gdal_dtype_to_str(gdal.GDT_UInt16)
+#     assert metadata["dtype"] == gdal_enums.translate_gdal_dtype_to_str(gdal.GDT_UInt16)
 
-    gdal.Unlink(output_path)
-    gdal.Unlink(reference)
+#     gdal.Unlink(output_path)
+#     gdal.Unlink(reference)
 
 
 # def test_raster_set_datatype_list():

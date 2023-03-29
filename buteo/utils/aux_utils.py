@@ -221,8 +221,8 @@ def create_grid(range_rows, range_cols):
 
 def split_into_offsets(shape, offsets_x=2, offsets_y=2, overlap_x=0, overlap_y=0):
     """ Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed. """
-    width = shape[0]
-    height = shape[1]
+    height = shape[0]
+    width = shape[1]
 
     x_remainder = width % offsets_x
     y_remainder = height % offsets_y
