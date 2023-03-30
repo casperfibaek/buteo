@@ -330,7 +330,7 @@ def get_bbox_from_dataset(dataset):
 
         gdal.PopErrorHandler()
         if opened is None:
-            raise Exception(f&#34;Could not open dataset. {dataset}&#34;)
+            raise RuntimeError(f&#34;Could not open dataset. {dataset}&#34;)
 
     if isinstance(opened, gdal.Dataset):
         return get_bbox_from_raster(opened)
@@ -338,7 +338,7 @@ def get_bbox_from_dataset(dataset):
     if isinstance(opened, ogr.DataSource):
         return get_bbox_from_vector(opened)
 
-    raise Exception(f&#34;Could not get bbox from dataset. {dataset}&#34;)
+    raise RuntimeError(f&#34;Could not get bbox from dataset. {dataset}&#34;)
 
 
 def get_sub_geotransform(geotransform, bbox_ogr):
@@ -803,7 +803,8 @@ def get_projection_from_dataset(dataset):
 
 def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
     &#34;&#34;&#34;
-    Aligns two OGR formatted bboxes to a pixel size.
+    Aligns two OGR formatted bboxes to a pixel size. Output is an augmented version
+    of bbox2.
 
     ## Args:
     `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
@@ -837,7 +838,6 @@ def reproject_bbox(
     bbox_ogr,
     source_projection,
     target_projection,
-    envelope=True,
 ):
     &#34;&#34;&#34;
     Reprojects an OGR formatted bbox.
@@ -1153,6 +1153,8 @@ def additional_bboxes(bbox_ogr, projection_osr):
             &#34;y_max&#34;: latlng_y_max,
         },
         &#34;bbox_geojson&#34;: convert_bbox_to_geojson(bbox_ogr_latlng),
+        &#34;area_latlng&#34;: geom_latlng.GetArea(),
+        &#34;area&#34;: geom.GetArea(),
         &#34;geom&#34;: geom,
         &#34;geom_latlng&#34;: geom_latlng,
     }</code></pre>
@@ -1251,6 +1253,8 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
             &#34;y_max&#34;: latlng_y_max,
         },
         &#34;bbox_geojson&#34;: convert_bbox_to_geojson(bbox_ogr_latlng),
+        &#34;area_latlng&#34;: geom_latlng.GetArea(),
+        &#34;area&#34;: geom.GetArea(),
         &#34;geom&#34;: geom,
         &#34;geom_latlng&#34;: geom_latlng,
     }</code></pre>
@@ -1260,7 +1264,8 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 <span>def <span class="ident">align_bboxes_to_pixel_size</span></span>(<span>bbox1_ogr, bbox2_ogr, pixel_width, pixel_height)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Aligns two OGR formatted bboxes to a pixel size.</p>
+<div class="desc"><p>Aligns two OGR formatted bboxes to a pixel size. Output is an augmented version
+of bbox2.</p>
 <h2 id="args">Args:</h2>
 <p><code>bbox1_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
 <code>bbox2_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
@@ -1274,7 +1279,8 @@ OGR bounding box and returns a list of variations of bounding boxes.</p>
 </summary>
 <pre><code class="python">def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
     &#34;&#34;&#34;
-    Aligns two OGR formatted bboxes to a pixel size.
+    Aligns two OGR formatted bboxes to a pixel size. Output is an augmented version
+    of bbox2.
 
     ## Args:
     `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
@@ -1867,7 +1873,7 @@ projections.</p>
 
         gdal.PopErrorHandler()
         if opened is None:
-            raise Exception(f&#34;Could not open dataset. {dataset}&#34;)
+            raise RuntimeError(f&#34;Could not open dataset. {dataset}&#34;)
 
     if isinstance(opened, gdal.Dataset):
         return get_bbox_from_raster(opened)
@@ -1875,7 +1881,7 @@ projections.</p>
     if isinstance(opened, ogr.DataSource):
         return get_bbox_from_vector(opened)
 
-    raise Exception(f&#34;Could not get bbox from dataset. {dataset}&#34;)</code></pre>
+    raise RuntimeError(f&#34;Could not get bbox from dataset. {dataset}&#34;)</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.bbox_utils.get_bbox_from_geotransform"><code class="name flex">
@@ -2660,7 +2666,7 @@ projections.</p>
 </details>
 </dd>
 <dt id="buteo.utils.bbox_utils.reproject_bbox"><code class="name flex">
-<span>def <span class="ident">reproject_bbox</span></span>(<span>bbox_ogr, source_projection, target_projection, envelope=True)</span>
+<span>def <span class="ident">reproject_bbox</span></span>(<span>bbox_ogr, source_projection, target_projection)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Reprojects an OGR formatted bbox.</p>
@@ -2678,7 +2684,6 @@ projections.</p>
     bbox_ogr,
     source_projection,
     target_projection,
-    envelope=True,
 ):
     &#34;&#34;&#34;
     Reprojects an OGR formatted bbox.

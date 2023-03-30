@@ -50,7 +50,11 @@ from buteo.utils import bbox_utils, core_utils, gdal_utils, gdal_enums
 
 
 
-def _open_raster(raster, *, writeable=True):
+def _open_raster(
+    raster: Union[str, gdal.Dataset],
+    *,
+    writeable: bool = True,
+) -&gt; gdal.Dataset:
     &#34;&#34;&#34; **INTERNAL**. &#34;&#34;&#34;
     assert isinstance(raster, (gdal.Dataset, str)), &#34;raster must be a string or a gdal.Dataset&#34;
 
@@ -78,7 +82,12 @@ def _open_raster(raster, *, writeable=True):
     raise ValueError(f&#34;Input raster does not exists. Received: {raster}&#34;)
 
 
-def open_raster(raster, *, writeable=True, allow_lists=True):
+def open_raster(
+    raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+    *,
+    writeable=True,
+    allow_lists=True,
+) -&gt; Union[gdal.Dataset, List[gdal.Dataset]]:
     &#34;&#34;&#34;
     Opens a raster from a path to a raster. Can be in-memory or local. If a
     gdal.Dataset is passed, it is returned. Supports lists. If a list is passed,
@@ -121,9 +130,12 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     return list_return[0]
 
 
-def get_projection(raster, wkt=True):
+def get_projection(
+    raster: Union[str, gdal.Dataset],
+    wkt: bool = True,
+) -&gt; str:
     &#34;&#34;&#34;
-    Gets the projection from a dataset, either as WKT or in another format.
+    Gets the projection from a dataset, either as WKT or osr.
     The input can be a path or a gdal.Dataset.
 
     Args:
@@ -143,7 +155,9 @@ def get_projection(raster, wkt=True):
     return dataset.GetProjection()
 
 
-def _raster_to_metadata(raster):
+def _raster_to_metadata(
+    raster: Union[str, gdal.Dataset],
+) -&gt; dict:
     &#34;&#34;&#34; Internal. &#34;&#34;&#34;
     core_utils.type_check(raster, [str, gdal.Dataset], &#34;raster&#34;)
 
@@ -252,7 +266,11 @@ def _raster_to_metadata(raster):
     return metadata
 
 
-def raster_to_metadata(raster, *, allow_lists=True):
+def raster_to_metadata(
+    raster: Union[str, gdal.Dataset, List[str], List[gdal.Dataset]],
+    *,
+    allow_lists: bool = True,
+) -&gt; Union[dict, List[dict]]:
     &#34;&#34;&#34;
     Reads metadata from a raster dataset or a list of raster datasets, and returns a dictionary or a list of dictionaries
     containing metadata information for each raster.
@@ -291,13 +309,13 @@ def raster_to_metadata(raster, *, allow_lists=True):
 
 
 def rasters_are_aligned(
-    rasters,
+    rasters: List[Union[str, gdal.Dataset]],
     *,
-    same_extent=True,
-    same_dtype=False,
-    same_nodata=False,
-    threshold=0.001,
-):
+    same_extent: bool = True,
+    same_dtype: bool = False,
+    same_nodata: bool = False,
+    threshold: float = 0.001,
+) -&gt; bool:
     &#34;&#34;&#34;
     Verifies whether a list of rasters are aligned.
 
@@ -408,7 +426,9 @@ def rasters_are_aligned(
     return True
 
 
-def raster_has_nodata(raster):
+def raster_has_nodata(
+    raster: Union[str, gdal.Dataset],
+) -&gt; bool:
     &#34;&#34;&#34;
     Verifies whether a raster has any nodata values.
 
@@ -434,7 +454,9 @@ def raster_has_nodata(raster):
     return False
 
 
-def rasters_have_nodata(rasters):
+def rasters_have_nodata(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+) -&gt; bool:
     &#34;&#34;&#34;
     Verifies whether a list of rasters have any nodata values.
 
@@ -455,7 +477,9 @@ def rasters_have_nodata(rasters):
     return has_nodata
 
 
-def rasters_have_same_nodata(rasters):
+def rasters_have_same_nodata(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+) -&gt; bool:
     &#34;&#34;&#34;
     Verifies whether a list of rasters have the same nodata values.
 
@@ -480,7 +504,9 @@ def rasters_have_same_nodata(rasters):
     return len(set(nodata_values)) == 1
 
 
-def get_first_nodata_value(raster):
+def get_first_nodata_value(
+    raster: Union[float, int, None],
+):
     &#34;&#34;&#34;
     Gets the first nodata value from a raster.
 
@@ -504,7 +530,9 @@ def get_first_nodata_value(raster):
     return nodata
 
 
-def count_bands_in_rasters(rasters):
+def count_bands_in_rasters(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
+) -&gt; int:
     &#34;&#34;&#34;
     Counts the number of bands in a list of rasters.
 
@@ -529,15 +557,15 @@ def count_bands_in_rasters(rasters):
 
 
 def raster_to_array(
-    raster,
+    raster: Union[gdal.Dataset, str, List[Union[str, gdal.Dataset]]],
     *,
-    bands=&#39;all&#39;,
-    masked=&#34;auto&#34;,
-    filled=False,
-    fill_value=None,
-    bbox=None,
-    pixel_offsets=None,
-):
+    bands: Union[List[int], str, int] = &#39;all&#39;,
+    masked: Union[bool, str] = &#34;auto&#34;,
+    filled: bool = False,
+    fill_value: Optional[Union[int, float]] = None,
+    bbox: Optional[List[float]] = None,
+    pixel_offsets: Optional[List[int]] = None,
+) -&gt; np.ndarray:
     &#34;&#34;&#34;
     Converts a raster or a list of rasters into a NumPy array.
 
@@ -612,7 +640,15 @@ def raster_to_array(
 
         x_offset, y_offset, x_size, y_size = bbox_utils.get_pixel_offsets(metadata[&#34;transform&#34;], bbox)
 
-    output_shape = (y_size, x_size, len(internal_rasters) * shape[2])
+    if (isinstance(bands, str) and bands.lower() == &#34;all&#34;) or bands == -1:
+        output_shape = (y_size, x_size, len(internal_rasters) * shape[2])
+    else:
+        channels = 0
+        for in_raster in internal_rasters:
+            internal_bands = gdal_utils.to_band_list(bands, raster_to_metadata(in_raster)[&#34;band_count&#34;])
+            channels += len(internal_bands)
+
+        output_shape = (y_size, x_size, channels)
 
     # Determine nodata and value
     if masked == &#34;auto&#34;:
@@ -662,7 +698,7 @@ def raster_to_array(
         internal_bands = gdal_utils.to_band_list(bands, metadata[&#34;band_count&#34;])
 
         for band in internal_bands:
-            band_ref = ref.GetRasterBand(band + 1)
+            band_ref = ref.GetRasterBand(band)
             band_nodata_value = band_ref.GetNoDataValue()
 
             if pixel_offsets is not None or bbox is not None:
@@ -693,17 +729,17 @@ def raster_to_array(
 
 
 def array_to_raster(
-    array,
+    array: np.ndarray,
     *,
-    reference,
-    out_path=None,
-    set_nodata=&#34;arr&#34;,
-    allow_mismatches=False,
-    pixel_offsets=None,
-    bbox=None,
-    overwrite=True,
-    creation_options=None,
-):
+    reference: Union[str, gdal.Dataset],
+    out_path: Optional[str] = None,
+    set_nodata: Union[bool, float, int, str] = &#34;arr&#34;,
+    allow_mismatches: bool = False,
+    pixel_offsets: Optional[List[Union[int, float]]] = None,
+    bbox: Optional[List[float]] = None,
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
+) -&gt; str:
     &#34;&#34;&#34;
     Turns a NumPy array into a GDAL dataset or exported
     as a raster using a reference raster.
@@ -866,17 +902,18 @@ def array_to_raster(
 
 
 def _raster_set_datatype(
-    raster,
-    dtype_str,
-    out_path=None,
+    raster: Union[str, gdal.Dataset],
+    dtype_str: str,
+    out_path: Optional[str] = None,
     *,
-    overwrite=True,
-    creation_options=None,
-):
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
+) -&gt; str:
     &#34;&#34;&#34; **INTERNAL**. &#34;&#34;&#34;
     assert isinstance(raster, (str, gdal.Dataset)), &#34;raster must be a string or a GDAL.Dataset.&#34;
     assert isinstance(dtype_str, str), &#34;dtype_str must be a string.&#34;
     assert len(dtype_str) &gt; 0, &#34;dtype_str must be a non-empty string.&#34;
+    assert out_path is None or isinstance(out_path, str), &#34;out_path must be a string.&#34;
 
     if not gdal_utils.is_raster(raster):
         raise ValueError(f&#34;Unable to open input raster: {raster}&#34;)
@@ -955,14 +992,14 @@ def _raster_set_datatype(
 
 
 def raster_set_datatype(
-    raster,
-    dtype,
-    out_path=None,
+    raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+    dtype: str,
+    out_path: Optional[Union[str, List[str]]] = None,
     *,
-    overwrite=True,
-    allow_lists=True,
-    creation_options=None,
-):
+    overwrite: bool = True,
+    allow_lists: bool = True,
+    creation_options: Optional[List[str]] = None,
+) -&gt; Union[str, List[str]]:
     &#34;&#34;&#34;
     Converts the datatype of a raster.
 
@@ -1176,7 +1213,7 @@ def stack_rasters_vrt(
     overwrite: bool = True,
     reference: Optional[str] = None,
     creation_options: Optional[List[str]] = None,
-):
+) -&gt; str:
     &#34;&#34;&#34;
     Stacks a list of rasters into a virtual raster (.vrt).
 
@@ -1316,7 +1353,7 @@ def rasters_intersection(
     raster1: Union[str, gdal.Dataset],
     raster2: Union[str, gdal.Dataset],
     return_as_vector: bool = False,
-) -&gt; bool:
+) -&gt; Union[ogr.Geometry, ogr.DataSource]:
     &#34;&#34;&#34;
     Gets the latlng intersection of two rasters.
 
@@ -1350,7 +1387,7 @@ def rasters_intersection(
 def get_overlap_fraction(
     raster1: Union[str, gdal.Dataset],
     raster2: Union[str, gdal.Dataset],
-):
+) -&gt; float:
     &#34;&#34;&#34;
     Get the fraction of the overlap between two rasters.
     (e.g. 0.9 for mostly overlapping rasters)
@@ -1379,6 +1416,98 @@ def get_overlap_fraction(
     overlap = intersection.GetArea() / geom_1.GetArea()
 
     return overlap
+
+
+def create_empty_raster(
+    out_path: Union[str, None] = None,
+    width: int = 100,
+    height: int = 100,
+    pixel_size: Union[Union[float, int], List[Union[float, int]]] = 10.0,
+    bands: int = 1,
+    dtype: str = &#34;uint8&#34;,
+    x_min: Union[float, int] = 0.0,
+    y_max: Union[float, int] = 0.0,
+    nodata_value: Union[float, int, None] = None,
+    projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference] = &#34;EPSG:3857&#34;,
+    creation_options: Union[List[str], None] = None,
+    overwrite: bool = True,
+) -&gt; str:
+    &#34;&#34;&#34; Create an empty raster.
+    
+    Keyword Args:
+        out_path (str, default=None): The output path. If None, a temporary file will be created.
+        width (int, default=100): The width of the raster in pixels.
+        height (int, default=100): The height of the raster in pixels.
+        pixel_size (int/float/list/tuple, default=10.0): The pixel size in units of the projection.
+        bands (int, default=1): The number of bands in the raster.
+        dtype (str, default=&#34;uint8&#34;): The data type of the raster.
+        x_min (int/float, default=0.0): The x coordinate of the top left corner of the raster.
+        y_max (int/float, default=0.0): The y coordinate of the top left corner of the raster.
+        nodata_value (int/float/None, default=None): The nodata value of the raster.
+        projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference, default=&#34;EPSG:3857&#34;): The projection of the raster.
+        creation_options (list, default=None): A list of creation options.
+        overwrite (bool, default=True): If True, overwrite the output file if it exists.
+
+    Returns:
+        str: The path to the output raster.
+    &#34;&#34;&#34;
+    core_utils.type_check(out_path, [str, type(None)], &#34;out_path&#34;)
+    core_utils.type_check(width, int, &#34;width&#34;)
+    core_utils.type_check(height, int, &#34;height&#34;)
+    core_utils.type_check(pixel_size, [int, float, list, tuple], &#34;pixel_size&#34;)
+    core_utils.type_check(bands, int, &#34;bands&#34;)
+    core_utils.type_check(dtype, str, &#34;dtype&#34;)
+    core_utils.type_check(x_min, [int, float], &#34;x_min&#34;)
+    core_utils.type_check(y_max, [int, float], &#34;y_max&#34;)
+    core_utils.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], &#34;projection&#34;)
+    core_utils.type_check(creation_options, [list, type(None)], &#34;creation_options&#34;)
+    core_utils.type_check(overwrite, bool, &#34;overwrite&#34;)
+
+     # Parse the driver
+    driver_name = &#34;GTiff&#34; if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+    if driver_name is None:
+        raise ValueError(f&#34;Unable to parse filetype from path: {out_path}&#34;)
+
+    driver = gdal.GetDriverByName(driver_name)
+    if driver is None:
+        raise ValueError(f&#34;Error while creating driver from extension: {out_path}&#34;)
+
+    output_name = None
+    if out_path is None:
+        output_name = gdal_utils.create_memory_path(&#34;raster_from_array.tif&#34;, add_uuid=True)
+    else:
+        output_name = out_path
+
+    core_utils.remove_if_required(output_name, overwrite)
+
+    destination = driver.Create(
+        output_name,
+        width,
+        height,
+        bands,
+        gdal_enums.translate_str_to_gdal_dtype(dtype),
+        gdal_utils.default_creation_options(creation_options),
+    )
+
+    parsed_projection = gdal_utils.parse_projection(projection, return_wkt=True)
+
+    destination.SetProjection(parsed_projection)
+
+    pixel_width = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[0]
+    pixel_height = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[1]
+
+    transform = [x_min, pixel_width, 0, y_max, 0, -pixel_height] # negative for north-up
+
+    destination.SetGeoTransform(transform)
+
+    if nodata_value is not None:
+        for band in range(1, bands + 1):
+            destination.GetRasterBand(band).SetNoDataValue(nodata_value)
+
+    destination.FlushCache()
+    destination = None
+
+    return output_name
 
 
 def create_raster_from_array(
@@ -1519,7 +1648,7 @@ def create_grid_with_coordinates(
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.raster.core_raster.array_to_raster"><code class="name flex">
-<span>def <span class="ident">array_to_raster</span></span>(<span>array, *, reference, out_path=None, set_nodata='arr', allow_mismatches=False, pixel_offsets=None, bbox=None, overwrite=True, creation_options=None)</span>
+<span>def <span class="ident">array_to_raster</span></span>(<span>array: numpy.ndarray, *, reference: Union[str, osgeo.gdal.Dataset], out_path: Optional[str] = None, set_nodata: Union[bool, float, int, str] = 'arr', allow_mismatches: bool = False, pixel_offsets: Optional[List[Union[int, float]]] = None, bbox: Optional[List[float]] = None, overwrite: bool = True, creation_options: Optional[List[str]] = None) -> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Turns a NumPy array into a GDAL dataset or exported
@@ -1558,17 +1687,17 @@ creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def array_to_raster(
-    array,
+    array: np.ndarray,
     *,
-    reference,
-    out_path=None,
-    set_nodata=&#34;arr&#34;,
-    allow_mismatches=False,
-    pixel_offsets=None,
-    bbox=None,
-    overwrite=True,
-    creation_options=None,
-):
+    reference: Union[str, gdal.Dataset],
+    out_path: Optional[str] = None,
+    set_nodata: Union[bool, float, int, str] = &#34;arr&#34;,
+    allow_mismatches: bool = False,
+    pixel_offsets: Optional[List[Union[int, float]]] = None,
+    bbox: Optional[List[float]] = None,
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
+) -&gt; str:
     &#34;&#34;&#34;
     Turns a NumPy array into a GDAL dataset or exported
     as a raster using a reference raster.
@@ -1731,7 +1860,7 @@ creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.count_bands_in_rasters"><code class="name flex">
-<span>def <span class="ident">count_bands_in_rasters</span></span>(<span>rasters)</span>
+<span>def <span class="ident">count_bands_in_rasters</span></span>(<span>rasters: Union[str, osgeo.gdal.Dataset, List[Union[str, osgeo.gdal.Dataset]]]) -> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Counts the number of bands in a list of rasters.</p>
@@ -1749,7 +1878,9 @@ creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def count_bands_in_rasters(rasters):
+<pre><code class="python">def count_bands_in_rasters(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
+) -&gt; int:
     &#34;&#34;&#34;
     Counts the number of bands in a list of rasters.
 
@@ -1771,6 +1902,125 @@ creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
         ref = None
 
     return band_count</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.create_empty_raster"><code class="name flex">
+<span>def <span class="ident">create_empty_raster</span></span>(<span>out_path: Optional[str] = None, width: int = 100, height: int = 100, pixel_size: Union[float, int, List[Union[int, float]]] = 10.0, bands: int = 1, dtype: str = 'uint8', x_min: Union[float, int] = 0.0, y_max: Union[float, int] = 0.0, nodata_value: Union[float, int, NoneType] = None, projection: Union[int, str, osgeo.gdal.Dataset, osgeo.ogr.DataSource, osgeo.osr.SpatialReference] = 'EPSG:3857', creation_options: Optional[List[str]] = None, overwrite: bool = True) -> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create an empty raster.</p>
+<p>Keyword Args:
+out_path (str, default=None): The output path. If None, a temporary file will be created.
+width (int, default=100): The width of the raster in pixels.
+height (int, default=100): The height of the raster in pixels.
+pixel_size (int/float/list/tuple, default=10.0): The pixel size in units of the projection.
+bands (int, default=1): The number of bands in the raster.
+dtype (str, default="uint8"): The data type of the raster.
+x_min (int/float, default=0.0): The x coordinate of the top left corner of the raster.
+y_max (int/float, default=0.0): The y coordinate of the top left corner of the raster.
+nodata_value (int/float/None, default=None): The nodata value of the raster.
+projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference, default="EPSG:3857"): The projection of the raster.
+creation_options (list, default=None): A list of creation options.
+overwrite (bool, default=True): If True, overwrite the output file if it exists.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>The path to the output raster.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_empty_raster(
+    out_path: Union[str, None] = None,
+    width: int = 100,
+    height: int = 100,
+    pixel_size: Union[Union[float, int], List[Union[float, int]]] = 10.0,
+    bands: int = 1,
+    dtype: str = &#34;uint8&#34;,
+    x_min: Union[float, int] = 0.0,
+    y_max: Union[float, int] = 0.0,
+    nodata_value: Union[float, int, None] = None,
+    projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference] = &#34;EPSG:3857&#34;,
+    creation_options: Union[List[str], None] = None,
+    overwrite: bool = True,
+) -&gt; str:
+    &#34;&#34;&#34; Create an empty raster.
+    
+    Keyword Args:
+        out_path (str, default=None): The output path. If None, a temporary file will be created.
+        width (int, default=100): The width of the raster in pixels.
+        height (int, default=100): The height of the raster in pixels.
+        pixel_size (int/float/list/tuple, default=10.0): The pixel size in units of the projection.
+        bands (int, default=1): The number of bands in the raster.
+        dtype (str, default=&#34;uint8&#34;): The data type of the raster.
+        x_min (int/float, default=0.0): The x coordinate of the top left corner of the raster.
+        y_max (int/float, default=0.0): The y coordinate of the top left corner of the raster.
+        nodata_value (int/float/None, default=None): The nodata value of the raster.
+        projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference, default=&#34;EPSG:3857&#34;): The projection of the raster.
+        creation_options (list, default=None): A list of creation options.
+        overwrite (bool, default=True): If True, overwrite the output file if it exists.
+
+    Returns:
+        str: The path to the output raster.
+    &#34;&#34;&#34;
+    core_utils.type_check(out_path, [str, type(None)], &#34;out_path&#34;)
+    core_utils.type_check(width, int, &#34;width&#34;)
+    core_utils.type_check(height, int, &#34;height&#34;)
+    core_utils.type_check(pixel_size, [int, float, list, tuple], &#34;pixel_size&#34;)
+    core_utils.type_check(bands, int, &#34;bands&#34;)
+    core_utils.type_check(dtype, str, &#34;dtype&#34;)
+    core_utils.type_check(x_min, [int, float], &#34;x_min&#34;)
+    core_utils.type_check(y_max, [int, float], &#34;y_max&#34;)
+    core_utils.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], &#34;projection&#34;)
+    core_utils.type_check(creation_options, [list, type(None)], &#34;creation_options&#34;)
+    core_utils.type_check(overwrite, bool, &#34;overwrite&#34;)
+
+     # Parse the driver
+    driver_name = &#34;GTiff&#34; if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+    if driver_name is None:
+        raise ValueError(f&#34;Unable to parse filetype from path: {out_path}&#34;)
+
+    driver = gdal.GetDriverByName(driver_name)
+    if driver is None:
+        raise ValueError(f&#34;Error while creating driver from extension: {out_path}&#34;)
+
+    output_name = None
+    if out_path is None:
+        output_name = gdal_utils.create_memory_path(&#34;raster_from_array.tif&#34;, add_uuid=True)
+    else:
+        output_name = out_path
+
+    core_utils.remove_if_required(output_name, overwrite)
+
+    destination = driver.Create(
+        output_name,
+        width,
+        height,
+        bands,
+        gdal_enums.translate_str_to_gdal_dtype(dtype),
+        gdal_utils.default_creation_options(creation_options),
+    )
+
+    parsed_projection = gdal_utils.parse_projection(projection, return_wkt=True)
+
+    destination.SetProjection(parsed_projection)
+
+    pixel_width = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[0]
+    pixel_height = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[1]
+
+    transform = [x_min, pixel_width, 0, y_max, 0, -pixel_height] # negative for north-up
+
+    destination.SetGeoTransform(transform)
+
+    if nodata_value is not None:
+        for band in range(1, bands + 1):
+            destination.GetRasterBand(band).SetNoDataValue(nodata_value)
+
+    destination.FlushCache()
+    destination = None
+
+    return output_name</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.create_grid_with_coordinates"><code class="name flex">
@@ -1828,7 +2078,7 @@ creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.create_raster_from_array"><code class="name flex">
-<span>def <span class="ident">create_raster_from_array</span></span>(<span>arr: numpy.ndarray, out_path: str = None, pixel_size: Union[float, int, List[Union[float, int]]] = 10.0, x_min: Union[float, int] = 0.0, y_max: Union[float, int] = 0.0, projection: Union[int, str, osgeo.gdal.Dataset, osgeo.ogr.DataSource, osgeo.osr.SpatialReference] = 'EPSG:3857', creation_options: Optional[List[str]] = None, overwrite: bool = True) -> str</span>
+<span>def <span class="ident">create_raster_from_array</span></span>(<span>arr: numpy.ndarray, out_path: str = None, pixel_size: Union[float, int, List[Union[int, float]]] = 10.0, x_min: Union[float, int] = 0.0, y_max: Union[float, int] = 0.0, projection: Union[int, str, osgeo.gdal.Dataset, osgeo.ogr.DataSource, osgeo.osr.SpatialReference] = 'EPSG:3857', creation_options: Optional[List[str]] = None, overwrite: bool = True) -> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Create a raster from a numpy array.</p>
@@ -1943,7 +2193,7 @@ overwrite (bool, default=True): If True, the output raster will be overwritten i
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.get_first_nodata_value"><code class="name flex">
-<span>def <span class="ident">get_first_nodata_value</span></span>(<span>raster)</span>
+<span>def <span class="ident">get_first_nodata_value</span></span>(<span>raster: Union[float, int, NoneType])</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Gets the first nodata value from a raster.</p>
@@ -1953,7 +2203,9 @@ overwrite (bool, default=True): If True, the output raster will be overwritten i
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_first_nodata_value(raster):
+<pre><code class="python">def get_first_nodata_value(
+    raster: Union[float, int, None],
+):
     &#34;&#34;&#34;
     Gets the first nodata value from a raster.
 
@@ -1978,7 +2230,7 @@ overwrite (bool, default=True): If True, the output raster will be overwritten i
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.get_overlap_fraction"><code class="name flex">
-<span>def <span class="ident">get_overlap_fraction</span></span>(<span>raster1: Union[str, osgeo.gdal.Dataset], raster2: Union[str, osgeo.gdal.Dataset])</span>
+<span>def <span class="ident">get_overlap_fraction</span></span>(<span>raster1: Union[str, osgeo.gdal.Dataset], raster2: Union[str, osgeo.gdal.Dataset]) -> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the fraction of the overlap between two rasters.
@@ -1998,7 +2250,7 @@ raster2 (str/gdal.Dataset): The second raster.</p>
 <pre><code class="python">def get_overlap_fraction(
     raster1: Union[str, gdal.Dataset],
     raster2: Union[str, gdal.Dataset],
-):
+) -&gt; float:
     &#34;&#34;&#34;
     Get the fraction of the overlap between two rasters.
     (e.g. 0.9 for mostly overlapping rasters)
@@ -2030,10 +2282,10 @@ raster2 (str/gdal.Dataset): The second raster.</p>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.get_projection"><code class="name flex">
-<span>def <span class="ident">get_projection</span></span>(<span>raster, wkt=True)</span>
+<span>def <span class="ident">get_projection</span></span>(<span>raster: Union[str, osgeo.gdal.Dataset], wkt: bool = True) -> str</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Gets the projection from a dataset, either as WKT or in another format.
+<div class="desc"><p>Gets the projection from a dataset, either as WKT or osr.
 The input can be a path or a gdal.Dataset.</p>
 <h2 id="args">Args</h2>
 <p>raster (str/gdal.Dataset): A path to a raster or a gdal.Dataset.
@@ -2048,9 +2300,12 @@ wkt (bool, default=True): If True, returns the projection as WKT.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_projection(raster, wkt=True):
+<pre><code class="python">def get_projection(
+    raster: Union[str, gdal.Dataset],
+    wkt: bool = True,
+) -&gt; str:
     &#34;&#34;&#34;
-    Gets the projection from a dataset, either as WKT or in another format.
+    Gets the projection from a dataset, either as WKT or osr.
     The input can be a path or a gdal.Dataset.
 
     Args:
@@ -2071,7 +2326,7 @@ wkt (bool, default=True): If True, returns the projection as WKT.</p>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.open_raster"><code class="name flex">
-<span>def <span class="ident">open_raster</span></span>(<span>raster, *, writeable=True, allow_lists=True)</span>
+<span>def <span class="ident">open_raster</span></span>(<span>raster: Union[str, osgeo.gdal.Dataset, List[Union[str, osgeo.gdal.Dataset]]], *, writeable=True, allow_lists=True) -> Union[osgeo.gdal.Dataset, List[osgeo.gdal.Dataset]]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Opens a raster from a path to a raster. Can be in-memory or local. If a
@@ -2089,7 +2344,12 @@ only a single raster is allowed. Default is True.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def open_raster(raster, *, writeable=True, allow_lists=True):
+<pre><code class="python">def open_raster(
+    raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+    *,
+    writeable=True,
+    allow_lists=True,
+) -&gt; Union[gdal.Dataset, List[gdal.Dataset]]:
     &#34;&#34;&#34;
     Opens a raster from a path to a raster. Can be in-memory or local. If a
     gdal.Dataset is passed, it is returned. Supports lists. If a list is passed,
@@ -2133,7 +2393,7 @@ only a single raster is allowed. Default is True.</p>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.raster_has_nodata"><code class="name flex">
-<span>def <span class="ident">raster_has_nodata</span></span>(<span>raster)</span>
+<span>def <span class="ident">raster_has_nodata</span></span>(<span>raster: Union[str, osgeo.gdal.Dataset]) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Verifies whether a raster has any nodata values.</p>
@@ -2152,7 +2412,9 @@ referring to the dataset.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def raster_has_nodata(raster):
+<pre><code class="python">def raster_has_nodata(
+    raster: Union[str, gdal.Dataset],
+) -&gt; bool:
     &#34;&#34;&#34;
     Verifies whether a raster has any nodata values.
 
@@ -2179,7 +2441,7 @@ referring to the dataset.</dd>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.raster_set_datatype"><code class="name flex">
-<span>def <span class="ident">raster_set_datatype</span></span>(<span>raster, dtype, out_path=None, *, overwrite=True, allow_lists=True, creation_options=None)</span>
+<span>def <span class="ident">raster_set_datatype</span></span>(<span>raster: Union[str, osgeo.gdal.Dataset, List[Union[str, osgeo.gdal.Dataset]]], dtype: str, out_path: Union[str, List[str], NoneType] = None, *, overwrite: bool = True, allow_lists: bool = True, creation_options: Optional[List[str]] = None) -> Union[str, List[str]]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Converts the datatype of a raster.</p>
@@ -2211,14 +2473,14 @@ for the output raster(s).</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def raster_set_datatype(
-    raster,
-    dtype,
-    out_path=None,
+    raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+    dtype: str,
+    out_path: Optional[Union[str, List[str]]] = None,
     *,
-    overwrite=True,
-    allow_lists=True,
-    creation_options=None,
-):
+    overwrite: bool = True,
+    allow_lists: bool = True,
+    creation_options: Optional[List[str]] = None,
+) -&gt; Union[str, List[str]]:
     &#34;&#34;&#34;
     Converts the datatype of a raster.
 
@@ -2286,7 +2548,7 @@ for the output raster(s).</p>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.raster_to_array"><code class="name flex">
-<span>def <span class="ident">raster_to_array</span></span>(<span>raster, *, bands='all', masked='auto', filled=False, fill_value=None, bbox=None, pixel_offsets=None)</span>
+<span>def <span class="ident">raster_to_array</span></span>(<span>raster: Union[osgeo.gdal.Dataset, str, List[Union[str, osgeo.gdal.Dataset]]], *, bands: Union[List[int], str, int] = 'all', masked: Union[bool, str] = 'auto', filled: bool = False, fill_value: Union[int, float, NoneType] = None, bbox: Optional[List[float]] = None, pixel_offsets: Optional[List[int]] = None) -> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Converts a raster or a list of rasters into a NumPy array.</p>
@@ -2317,15 +2579,15 @@ raster. Uses pixel offsets and the OGR format.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def raster_to_array(
-    raster,
+    raster: Union[gdal.Dataset, str, List[Union[str, gdal.Dataset]]],
     *,
-    bands=&#39;all&#39;,
-    masked=&#34;auto&#34;,
-    filled=False,
-    fill_value=None,
-    bbox=None,
-    pixel_offsets=None,
-):
+    bands: Union[List[int], str, int] = &#39;all&#39;,
+    masked: Union[bool, str] = &#34;auto&#34;,
+    filled: bool = False,
+    fill_value: Optional[Union[int, float]] = None,
+    bbox: Optional[List[float]] = None,
+    pixel_offsets: Optional[List[int]] = None,
+) -&gt; np.ndarray:
     &#34;&#34;&#34;
     Converts a raster or a list of rasters into a NumPy array.
 
@@ -2400,7 +2662,15 @@ raster. Uses pixel offsets and the OGR format.</p>
 
         x_offset, y_offset, x_size, y_size = bbox_utils.get_pixel_offsets(metadata[&#34;transform&#34;], bbox)
 
-    output_shape = (y_size, x_size, len(internal_rasters) * shape[2])
+    if (isinstance(bands, str) and bands.lower() == &#34;all&#34;) or bands == -1:
+        output_shape = (y_size, x_size, len(internal_rasters) * shape[2])
+    else:
+        channels = 0
+        for in_raster in internal_rasters:
+            internal_bands = gdal_utils.to_band_list(bands, raster_to_metadata(in_raster)[&#34;band_count&#34;])
+            channels += len(internal_bands)
+
+        output_shape = (y_size, x_size, channels)
 
     # Determine nodata and value
     if masked == &#34;auto&#34;:
@@ -2450,7 +2720,7 @@ raster. Uses pixel offsets and the OGR format.</p>
         internal_bands = gdal_utils.to_band_list(bands, metadata[&#34;band_count&#34;])
 
         for band in internal_bands:
-            band_ref = ref.GetRasterBand(band + 1)
+            band_ref = ref.GetRasterBand(band)
             band_nodata_value = band_ref.GetNoDataValue()
 
             if pixel_offsets is not None or bbox is not None:
@@ -2481,7 +2751,7 @@ raster. Uses pixel offsets and the OGR format.</p>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.raster_to_metadata"><code class="name flex">
-<span>def <span class="ident">raster_to_metadata</span></span>(<span>raster, *, allow_lists=True)</span>
+<span>def <span class="ident">raster_to_metadata</span></span>(<span>raster: Union[str, osgeo.gdal.Dataset, List[str], List[osgeo.gdal.Dataset]], *, allow_lists: bool = True) -> Union[dict, List[dict]]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Reads metadata from a raster dataset or a list of raster datasets, and returns a dictionary or a list of dictionaries
@@ -2501,7 +2771,11 @@ list of rasters. Otherwise, only a single raster is allowed.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def raster_to_metadata(raster, *, allow_lists=True):
+<pre><code class="python">def raster_to_metadata(
+    raster: Union[str, gdal.Dataset, List[str], List[gdal.Dataset]],
+    *,
+    allow_lists: bool = True,
+) -&gt; Union[dict, List[dict]]:
     &#34;&#34;&#34;
     Reads metadata from a raster dataset or a list of raster datasets, and returns a dictionary or a list of dictionaries
     containing metadata information for each raster.
@@ -2540,7 +2814,7 @@ list of rasters. Otherwise, only a single raster is allowed.</p>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.rasters_are_aligned"><code class="name flex">
-<span>def <span class="ident">rasters_are_aligned</span></span>(<span>rasters, *, same_extent=True, same_dtype=False, same_nodata=False, threshold=0.001)</span>
+<span>def <span class="ident">rasters_are_aligned</span></span>(<span>rasters: List[Union[str, osgeo.gdal.Dataset]], *, same_extent: bool = True, same_dtype: bool = False, same_nodata: bool = False, threshold: float = 0.001) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Verifies whether a list of rasters are aligned.</p>
@@ -2569,13 +2843,13 @@ the rasters.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def rasters_are_aligned(
-    rasters,
+    rasters: List[Union[str, gdal.Dataset]],
     *,
-    same_extent=True,
-    same_dtype=False,
-    same_nodata=False,
-    threshold=0.001,
-):
+    same_extent: bool = True,
+    same_dtype: bool = False,
+    same_nodata: bool = False,
+    threshold: float = 0.001,
+) -&gt; bool:
     &#34;&#34;&#34;
     Verifies whether a list of rasters are aligned.
 
@@ -2687,7 +2961,7 @@ the rasters.</p>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.rasters_have_nodata"><code class="name flex">
-<span>def <span class="ident">rasters_have_nodata</span></span>(<span>rasters)</span>
+<span>def <span class="ident">rasters_have_nodata</span></span>(<span>rasters: Union[str, osgeo.gdal.Dataset, List[Union[str, osgeo.gdal.Dataset]]]) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Verifies whether a list of rasters have any nodata values.</p>
@@ -2700,7 +2974,9 @@ the rasters.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rasters_have_nodata(rasters):
+<pre><code class="python">def rasters_have_nodata(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+) -&gt; bool:
     &#34;&#34;&#34;
     Verifies whether a list of rasters have any nodata values.
 
@@ -2722,7 +2998,7 @@ the rasters.</p>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.rasters_have_same_nodata"><code class="name flex">
-<span>def <span class="ident">rasters_have_same_nodata</span></span>(<span>rasters)</span>
+<span>def <span class="ident">rasters_have_same_nodata</span></span>(<span>rasters: Union[str, osgeo.gdal.Dataset, List[Union[str, osgeo.gdal.Dataset]]]) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Verifies whether a list of rasters have the same nodata values.</p>
@@ -2735,7 +3011,9 @@ the rasters.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rasters_have_same_nodata(rasters):
+<pre><code class="python">def rasters_have_same_nodata(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+) -&gt; bool:
     &#34;&#34;&#34;
     Verifies whether a list of rasters have the same nodata values.
 
@@ -2801,7 +3079,7 @@ raster2 (str/gdal.Dataset): The second raster.</p>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.rasters_intersection"><code class="name flex">
-<span>def <span class="ident">rasters_intersection</span></span>(<span>raster1: Union[str, osgeo.gdal.Dataset], raster2: Union[str, osgeo.gdal.Dataset], return_as_vector: bool = False) -> bool</span>
+<span>def <span class="ident">rasters_intersection</span></span>(<span>raster1: Union[str, osgeo.gdal.Dataset], raster2: Union[str, osgeo.gdal.Dataset], return_as_vector: bool = False) -> Union[osgeo.ogr.Geometry, osgeo.ogr.DataSource]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Gets the latlng intersection of two rasters.</p>
@@ -2823,7 +3101,7 @@ return_as_vector (bool, default=False): If True, the intersection will be return
     raster1: Union[str, gdal.Dataset],
     raster2: Union[str, gdal.Dataset],
     return_as_vector: bool = False,
-) -&gt; bool:
+) -&gt; Union[ogr.Geometry, ogr.DataSource]:
     &#34;&#34;&#34;
     Gets the latlng intersection of two rasters.
 
@@ -3012,7 +3290,7 @@ A list of GDAL creation options for the output raster.</p>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.stack_rasters_vrt"><code class="name flex">
-<span>def <span class="ident">stack_rasters_vrt</span></span>(<span>rasters: List[Union[str, osgeo.gdal.Dataset]], out_path: str, separate: bool = True, *, resample_alg: str = 'nearest', nodata_src: Optional[float] = None, nodata_VRT: Optional[float] = None, nodata_hide: Optional[bool] = None, options: Optional[list] = None, overwrite: bool = True, reference: Optional[str] = None, creation_options: Optional[List[str]] = None)</span>
+<span>def <span class="ident">stack_rasters_vrt</span></span>(<span>rasters: List[Union[str, osgeo.gdal.Dataset]], out_path: str, separate: bool = True, *, resample_alg: str = 'nearest', nodata_src: Optional[float] = None, nodata_VRT: Optional[float] = None, nodata_hide: Optional[bool] = None, options: Optional[list] = None, overwrite: bool = True, reference: Optional[str] = None, creation_options: Optional[List[str]] = None) -> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Stacks a list of rasters into a virtual raster (.vrt).</p>
@@ -3057,7 +3335,7 @@ A list of GDAL creation options for the output raster.</p>
     overwrite: bool = True,
     reference: Optional[str] = None,
     creation_options: Optional[List[str]] = None,
-):
+) -&gt; str:
     &#34;&#34;&#34;
     Stacks a list of rasters into a virtual raster (.vrt).
 
@@ -3192,6 +3470,7 @@ A list of GDAL creation options for the output raster.</p>
 <ul class="">
 <li><code><a title="buteo.raster.core_raster.array_to_raster" href="#buteo.raster.core_raster.array_to_raster">array_to_raster</a></code></li>
 <li><code><a title="buteo.raster.core_raster.count_bands_in_rasters" href="#buteo.raster.core_raster.count_bands_in_rasters">count_bands_in_rasters</a></code></li>
+<li><code><a title="buteo.raster.core_raster.create_empty_raster" href="#buteo.raster.core_raster.create_empty_raster">create_empty_raster</a></code></li>
 <li><code><a title="buteo.raster.core_raster.create_grid_with_coordinates" href="#buteo.raster.core_raster.create_grid_with_coordinates">create_grid_with_coordinates</a></code></li>
 <li><code><a title="buteo.raster.core_raster.create_raster_from_array" href="#buteo.raster.core_raster.create_raster_from_array">create_raster_from_array</a></code></li>
 <li><code><a title="buteo.raster.core_raster.get_first_nodata_value" href="#buteo.raster.core_raster.get_first_nodata_value">get_first_nodata_value</a></code></li>

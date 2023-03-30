@@ -295,7 +295,7 @@ def get_bbox_from_dataset(dataset):
 
         gdal.PopErrorHandler()
         if opened is None:
-            raise Exception(f"Could not open dataset. {dataset}")
+            raise RuntimeError(f"Could not open dataset. {dataset}")
 
     if isinstance(opened, gdal.Dataset):
         return get_bbox_from_raster(opened)
@@ -303,7 +303,7 @@ def get_bbox_from_dataset(dataset):
     if isinstance(opened, ogr.DataSource):
         return get_bbox_from_vector(opened)
 
-    raise Exception(f"Could not get bbox from dataset. {dataset}")
+    raise RuntimeError(f"Could not get bbox from dataset. {dataset}")
 
 
 def get_sub_geotransform(geotransform, bbox_ogr):
@@ -768,7 +768,8 @@ def get_projection_from_dataset(dataset):
 
 def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
     """
-    Aligns two OGR formatted bboxes to a pixel size.
+    Aligns two OGR formatted bboxes to a pixel size. Output is an augmented version
+    of bbox2.
 
     ## Args:
     `bbox1_ogr` (_list_): An OGR formatted bbox. </br>
@@ -802,7 +803,6 @@ def reproject_bbox(
     bbox_ogr,
     source_projection,
     target_projection,
-    envelope=True,
 ):
     """
     Reprojects an OGR formatted bbox.
@@ -1118,6 +1118,8 @@ def additional_bboxes(bbox_ogr, projection_osr):
             "y_max": latlng_y_max,
         },
         "bbox_geojson": convert_bbox_to_geojson(bbox_ogr_latlng),
+        "area_latlng": geom_latlng.GetArea(),
+        "area": geom.GetArea(),
         "geom": geom,
         "geom_latlng": geom_latlng,
     }

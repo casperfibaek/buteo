@@ -72,14 +72,15 @@ def is_float(value):
     &#34;&#34;&#34;
     if isinstance(value, float):
         return True
-    elif isinstance(value, str):
+
+    if isinstance(value, str):
         try:
             float(value)
             return True
         except ValueError:
             return False
-    else:
-        return False
+
+    return False
 
 
 def is_number(potential_number):
@@ -113,14 +114,15 @@ def is_int(value):
     &#34;&#34;&#34;
     if isinstance(value, int):
         return True
-    elif isinstance(value, str):
+
+    if isinstance(value, str):
         try:
             int(value)
             return True
         except ValueError:
             return False
-    else:
-        return False
+
+    return False
 
 
 def is_list_all_the_same(lst):
@@ -277,7 +279,7 @@ def to_number(value):
     if is_float(value):
         return float(value)
 
-    raise Exception(f&#34;Could not convert {value} to a number.&#34;)
+    raise RuntimeError(f&#34;Could not convert {value} to a number.&#34;)
 
 
 def make_dir_if_not_exists(path):
@@ -319,7 +321,7 @@ def path_to_ext(path, with_dot=False):
     ext = basesplit[1]
 
     if ext == &#34;&#34; or len(ext) == 1:
-        raise Exception (f&#34;File: {path} has no extension.&#34;)
+        raise RuntimeError (f&#34;File: {path} has no extension.&#34;)
 
     if with_dot:
         return ext
@@ -361,7 +363,7 @@ def change_path_ext(path, target_ext):
     ext = basesplit[1]
 
     if ext == &#34;&#34; or len(ext) == 1:
-        raise Exception(f&#34;File: {path} has no extension.&#34;)
+        raise RuntimeError(f&#34;File: {path} has no extension.&#34;)
 
     return os.path.join(os.path.dirname(path), f&#34;{basesplit[0]}.{target_ext}&#34;)
 
@@ -409,7 +411,7 @@ def is_valid_non_memory_path(path):
 
     ext = os.path.splitext(path)[1]
 
-    if ext == &#34;&#34; or ext == &#34;.&#34;:
+    if ext in [&#34;&#34;, &#34;.&#34;, &#34;/&#34;]:
         return False
 
     if not folder_exists(path_to_folder(path)):
@@ -1059,7 +1061,7 @@ def ensure_list(variable_or_list):
     ext = basesplit[1]
 
     if ext == &#34;&#34; or len(ext) == 1:
-        raise Exception(f&#34;File: {path} has no extension.&#34;)
+        raise RuntimeError(f&#34;File: {path} has no extension.&#34;)
 
     return os.path.join(os.path.dirname(path), f&#34;{basesplit[0]}.{target_ext}&#34;)</code></pre>
 </details>
@@ -1570,14 +1572,15 @@ def ensure_list(variable_or_list):
     &#34;&#34;&#34;
     if isinstance(value, float):
         return True
-    elif isinstance(value, str):
+
+    if isinstance(value, str):
         try:
             float(value)
             return True
         except ValueError:
             return False
-    else:
-        return False</code></pre>
+
+    return False</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_int"><code class="name flex">
@@ -1605,14 +1608,15 @@ def ensure_list(variable_or_list):
     &#34;&#34;&#34;
     if isinstance(value, int):
         return True
-    elif isinstance(value, str):
+
+    if isinstance(value, str):
         try:
             int(value)
             return True
         except ValueError:
             return False
-    else:
-        return False</code></pre>
+
+    return False</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_list_all_the_same"><code class="name flex">
@@ -1849,7 +1853,7 @@ def ensure_list(variable_or_list):
 
     ext = os.path.splitext(path)[1]
 
-    if ext == &#34;&#34; or ext == &#34;.&#34;:
+    if ext in [&#34;&#34;, &#34;.&#34;, &#34;/&#34;]:
         return False
 
     if not folder_exists(path_to_folder(path)):
@@ -2041,7 +2045,7 @@ def ensure_list(variable_or_list):
     ext = basesplit[1]
 
     if ext == &#34;&#34; or len(ext) == 1:
-        raise Exception (f&#34;File: {path} has no extension.&#34;)
+        raise RuntimeError (f&#34;File: {path} has no extension.&#34;)
 
     if with_dot:
         return ext
@@ -2378,7 +2382,7 @@ def ensure_list(variable_or_list):
     if is_float(value):
         return float(value)
 
-    raise Exception(f&#34;Could not convert {value} to a number.&#34;)</code></pre>
+    raise RuntimeError(f&#34;Could not convert {value} to a number.&#34;)</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.type_check"><code class="name flex">

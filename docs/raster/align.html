@@ -32,165 +32,347 @@
 Functions to align a series of rasters to a master or a reference.
 &#34;&#34;&#34;
 
-# TODO: Fix if not all a reprojected, paths/names are incorrect.
 # TODO: phase_cross_correlation
 
 # Standard library
 import sys; sys.path.append(&#34;../../&#34;)
+from typing import List, Union, Optional
+from uuid import uuid4
 
 # External
-import numpy as np
-from osgeo import gdal, ogr, osr
+from osgeo import gdal
 
 # Internal
 from buteo.utils import core_utils, gdal_enums, gdal_utils, bbox_utils
 from buteo.raster import core_raster
-from buteo.vector import core_vector
-from buteo.raster.reproject import _reproject_raster
-from buteo.vector.reproject import _reproject_vector
+from buteo.raster.reproject import reproject_raster, match_raster_projections
 
 
-
-def match_raster_projections(
-    rasters,
-    master,
+def align_rasters_to_reference(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+    reference: Union[str, gdal.Dataset],
     *,
-    out_path=None,
+    out_path: Optional[Union[str, List[str]]] = None,
+    resample_alg: str = &#34;nearest&#34;,
+    target_nodata: Optional[Union[int, float]] = None,
     overwrite=True,
-    dst_nodata=&#34;infer&#34;,
-    copy_if_already_correct=True,
-    creation_options=None,
-):
+    creation_options: Optional[List[str]] = None,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    ram=&#34;auto&#34;,
+) -&gt; List[str]:
     &#34;&#34;&#34;
-    Match a raster or list of rasters to a master layer. The master can be
-    either an OGR layer or a GDAL layer.
+    Aligns a series of rasters to a reference.
 
     Args:
-        rasters (list): A list of rasters to match.
-        master (str/gdal.Dataset/ogr.DataSource): Path to the master raster
+        rasters (list): A list of rasters to align.
+        reference (str/gdal.Dataset): Path to the reference raster
             or vector.
 
     Keyword Args:
         out_path (str/list, default=None): Paths to the output. If not provided,
             the output will be in-memory rasters.
-        overwrite (bool, default=True): If True, existing rasters will be
-            overwritten.
-        dst_nodata (str, default=&#39;infer&#39;): Value to use for no-data pixels. If not
-            provided, the value will be transfered from the original.
-        copy_if_already_correct (bool, default=True): If True, the raster will be
-            copied if it is already in the correct projection.
-        creation_options (list, default=None): List of creation options to pass
-            to the output raster.
-
-    Returns:
-        list: A list of reprojected input rasters with the correct projection.
+        resample_alg (str, default=&#34;nearest&#34;): Resampling algorithm to use.
+        target_nodata (int/float, default=None): Nodata value to use for the
+            output rasters.
+        overwrite (bool, default=True): Overwrite existing files.
+        creation_options (list, default=None): List of creation options.
+        prefix (str, default=&#34;&#34;): Prefix to add to the output file name.
+        suffix (str, default=&#34;&#34;): Suffix to add to the output file name.
+        ram (int/str, default=&#34;auto&#34;): Amount of RAM to use in MB. If &#34;auto&#34;,
+            the amount of RAM will be determined automatically.
     &#34;&#34;&#34;
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;rasters&#34;)
-    core_utils.type_check(master, [str, gdal.Dataset, ogr.DataSource], &#34;master&#34;)
+    core_utils.type_check(reference, [str, gdal.Dataset], &#34;reference&#34;)
+    core_utils.type_check(out_path, [str, None, [str]], &#34;out_path&#34;)
+    core_utils.type_check(resample_alg, [str], &#34;resample_alg&#34;)
+    core_utils.type_check(target_nodata, [int, float, None], &#34;target_nodata&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+    core_utils.type_check(prefix, [str], &#34;prefix&#34;)
+    core_utils.type_check(suffix, [str], &#34;suffix&#34;)
+    core_utils.type_check(ram, [int, str], &#34;ram&#34;)
 
-    rasters = core_utils.ensure_list(rasters)
+    rasters_list = core_utils.ensure_list(rasters)
+    assert gdal_utils.is_raster_or_vector(reference), &#34;Reference must be a raster or vector.&#34;
 
-    assert gdal_utils.is_raster_list(rasters), &#34;rasters must be a list of rasters.&#34;
+    add_uuid = True if out_path is None else False
 
-    try:
-        target_projection = gdal_utils.parse_projection(master)
-    except Exception:
-        raise ValueError(f&#34;Unable to parse projection from master. Received: {master}&#34;) from None
-
-    add_uuid = out_path is None
-
-    path_list = gdal_utils.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid, ext=&#34;.tif&#34;)
-
-    output = []
-
-    for index, in_raster in enumerate(rasters):
-        path = _reproject_raster(
-            in_raster,
-            target_projection,
-            out_path=path_list[index],
-            overwrite=overwrite,
-            copy_if_same=copy_if_already_correct,
-            dst_nodata=dst_nodata,
-            creation_options=gdal_utils.default_creation_options(creation_options),
+    # Verify that all of the rasters overlap the reference
+    for raster in rasters_list:
+        assert core_raster.rasters_intersect(raster, reference), (
+            f&#34;Raster: {gdal_utils.get_path_from_dataset(raster)} does not intersect reference.&#34;
         )
 
-        output.append(path)
+    path_list = gdal_utils.create_output_path_list(
+        rasters_list,
+        out_path,
+        overwrite=overwrite,
+        add_uuid=add_uuid,
+        ext=&#34;.tif&#34;,
+        prefix=prefix,
+        suffix=suffix,
+    )
 
-    return output
+    creation_options = gdal_utils.default_creation_options(creation_options)
 
+    reference_metadata = core_raster.raster_to_metadata(reference)
+
+    target_projection = reference_metadata[&#34;projection_osr&#34;]
+    reference_bbox = reference_metadata[&#34;bbox&#34;]
+    x_min, _, _, y_max = reference_bbox
+
+    # Set the target values.
+    x_res = reference_metadata[&#34;pixel_width&#34;]
+    y_res = reference_metadata[&#34;pixel_height&#34;]
+    x_pixels = reference_metadata[&#34;width&#34;]
+    y_pixels = reference_metadata[&#34;height&#34;]
+
+    # Reproject the rasters to the reference projection.
+    for idx, raster in enumerate(rasters_list):
+        raster_metadata = core_raster.raster_to_metadata(raster)
+        raster_path = gdal_utils.get_path_from_dataset(raster)
+
+        raster_reprojected = None
+        raster_projection = raster_metadata[&#34;projection_osr&#34;]
+        if not gdal_utils.projections_match(raster_projection, target_projection):
+            raster_reprojected = reproject_raster(
+                raster_path,
+                target_projection,
+                out_path=None,
+                resample_alg=resample_alg,
+                creation_options=creation_options,
+                prefix=&#34;tmp_reprojection_&#34;,
+                add_uuid=True,
+            )
+            raster_ds = core_raster.open_raster(raster_reprojected)
+        else:
+            raster_ds = core_raster.open_raster(raster_path)
+
+        destination_ds = core_raster.create_empty_raster(
+            out_path=path_list[idx],
+            width=x_pixels,
+            height=y_pixels,
+            pixel_size=(x_res, y_res),
+            x_min=x_min,
+            y_max=y_max,
+            dtype=raster_metadata[&#34;dtype&#34;],
+            bands=raster_metadata[&#34;band_count&#34;],
+            nodata_value=target_nodata,
+            projection=target_projection,
+            creation_options=creation_options,
+            overwrite=overwrite,
+        )
+
+        destination_ds = core_raster.open_raster(destination_ds)
+
+        warp_options = gdal.WarpOptions(
+            resampleAlg=gdal_enums.translate_resample_method(resample_alg),
+            multithread=True,
+            outputBounds=bbox_utils.convert_ogr_bbox_to_gdal_bbox(reference_bbox),
+            warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
+        )
+
+        warped = gdal.Warp(destination_ds, raster_ds, options=warp_options)
+
+        if raster_reprojected is not None:
+            gdal_utils.delete_if_in_memory(raster_reprojected)
+
+        destination_ds.FlushCache()
+        destination_ds = None
+
+        if warped is None:
+            raise ValueError(&#34;Error while warping rasters.&#34;)
+
+    return path_list
+
+
+def find_best_reference(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+    method: str,
+) -&gt; str:
+    &#34;&#34;&#34; Find the best reference raster for aligning a list of rasters.
+    
+    Args:
+        rasters (str/list): List of rasters to align.
+        method (str): Bounding box method to use for finding the best reference.
+            Options include: &#34;reference&#34;, &#34;intersection&#34;, and &#34;union&#34;.
+    Returns:
+        str: Path to the best reference raster.
+    &#34;&#34;&#34;
+    core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;rasters&#34;)
+    core_utils.type_check(method, [str], &#34;method&#34;)
+
+    rasters_list = core_utils.ensure_list(rasters)
+    assert method in [&#34;reference&#34;, &#34;intersection&#34;, &#34;union&#34;], (
+        f&#34;Invalid bounding_box: {method}. Options include: reference, intersection, and union.&#34;
+    )
+
+    assert gdal_utils.is_raster_list(rasters_list), &#34;All rasters must be raster datasets.&#34;
+
+    if len(rasters_list) == 1:
+        return rasters_list[0]
+
+    # Count intersections
+    most_intersections = 0
+    intersections_arr = []
+    for idx_i, raster_i in enumerate(rasters_list):
+        intersections = 0
+        for idx_j, raster_j in enumerate(rasters_list):
+            if idx_i == idx_j:
+                continue
+
+            # Uses the latlng bounding box to determine if the rasters intersect.
+            intersection = core_raster.rasters_intersect(raster_i, raster_j)
+
+            if intersection:
+                intersections += 1
+
+        if intersections &gt; most_intersections:
+            most_intersections = intersections
+
+        intersections_arr.append(intersections)
+
+    # Find the raster with the most intersections.
+    largest_area = 0.0
+    largest_area_idx = 0
+    for idx, intersection in enumerate(intersections_arr):
+        if intersection == most_intersections:
+            raster = rasters_list[idx]
+            raster_metadata = core_raster.raster_to_metadata(raster)
+            raster_area = raster_metadata[&#34;area_latlng&#34;]
+
+            if raster_area &gt; largest_area:
+                largest_area = raster_area
+                largest_area_idx = idx
+
+    best_reference = gdal_utils.get_path_from_dataset(rasters_list[largest_area_idx])
+
+    input_path_list = []
+    for raster in rasters_list:
+        input_path_list.append(gdal_utils.get_path_from_dataset(raster))
+
+    all_other_rasters = []
+    for raster_path in input_path_list:
+        if raster_path == best_reference:
+            continue
+
+        all_other_rasters.append(raster_path)
+
+    for raster in all_other_rasters:
+        assert core_raster.rasters_intersect(best_reference, raster), (
+            f&#34;Rasters {best_reference} and {raster} do not intersect.&#34;
+        )
+
+    if method == &#34;reference&#34;:
+        return best_reference
+
+    matched_rasters = match_raster_projections(
+        all_other_rasters,
+        best_reference,
+        copy_if_already_correct=False,
+    )
+
+    best_reference_meta = core_raster.raster_to_metadata(best_reference)
+
+    best_geom = best_reference_meta[&#34;geom&#34;]
+    for raster_path in matched_rasters:
+        raster_meta = core_raster.raster_to_metadata(raster_path)
+        raster_geom = raster_meta[&#34;geom&#34;]
+
+        if not raster_geom.Intersects(best_geom):
+            raise ValueError(
+                f&#34;Raster {raster_path} did not intersect. Consider not using bbox=&#39;intersection&#39;&#34;
+            )
+
+        if method == &#34;union&#34;:
+            best_geom = raster_geom.Union(best_geom)
+        else:
+            best_geom = raster_geom.Intersection(best_geom)
+
+    bbox_best_geom = best_geom.GetEnvelope()
+
+    for raster_path in matched_rasters:
+        if raster_path not in input_path_list:
+            gdal_utils.delete_if_in_memory(raster_path)
+
+    outbox_bbox = bbox_utils.align_bboxes_to_pixel_size(
+        best_reference_meta[&#34;bbox&#34;],
+        bbox_best_geom,
+        best_reference_meta[&#34;pixel_width&#34;],
+        best_reference_meta[&#34;pixel_height&#34;],
+    )
+
+    creation_options = gdal_utils.default_creation_options()
+
+    width = int(round((outbox_bbox[1] - outbox_bbox[0]) / best_reference_meta[&#34;pixel_width&#34;]))
+    height = int(round((outbox_bbox[3] - outbox_bbox[2]) / best_reference_meta[&#34;pixel_height&#34;]))
+
+    out_path = core_raster.create_empty_raster(
+        out_path=f&#34;/vsimem/intersection_union_{uuid4().int}.tif&#34;,
+        width=width,
+        height=height,
+        pixel_width=best_reference_meta[&#34;pixel_width&#34;],
+        pixel_height=best_reference_meta[&#34;pixel_height&#34;],
+        bands=1,
+        dtype=best_reference_meta[&#34;dtype&#34;],
+        x_min=outbox_bbox[0],
+        y_max=outbox_bbox[3],
+        projection=best_reference_meta[&#34;projection&#34;],
+        creation_options=creation_options,
+    )
+
+    return out_path
 
 
 def align_rasters(
-    rasters,
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     *,
-    out_path=None,
-    master=None,
-    bounding_box=&#34;intersection&#34;,
-    resample_alg=&#34;nearest&#34;,
-    target_size=None,
-    target_in_pixels=False,
-    projection=None,
-    overwrite=True,
-    creation_options=None,
-    src_nodata=&#34;infer&#34;,
-    dst_nodata=&#34;infer&#34;,
+    out_path: Optional[Union[str, List[str]]] = None,
+    reference: Optional[Union[str, gdal.Dataset]] = None,
+    method: str = &#34;reference&#34;,
+    target_nodata: Optional[Union[int, float]] = None,
+    resample_alg: str = &#34;nearest&#34;,
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
     prefix=&#34;&#34;,
     suffix=&#34;&#34;,
-    ram=&#34;auto&#34;,
-):
-    &#34;&#34;&#34;
-    Aligns a series of rasters to a master raster or specified requirements.
-
+    ram: Union[int, str] = &#34;auto&#34;,
+) -&gt; List[str]:
+    &#34;&#34;&#34; Aligns rasters either to a reference raster or to each other using the
+    one of three methods: reference, intersection, or union.
+    
     Args:
-        rasters (list): A list of rasters to align.
+        rasters (Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]): The rasters to align.
 
     Keyword Args:
-        out_path (str/list, default=None): Paths to the output. If not provided,
-            the output will be in-memory rasters.
-        master (str/gdal.Dataset/ogr.DataSource, default=None): Path to the
-            master raster or vector.
-        bounding_box (str, default=&#34;intersection&#34;): Method to use for aligning the
-            rasters. Can be either &#34;intersection&#34; or &#34;union&#34;.
-        resample_alg (str, default=&#34;nearest&#34;): Resampling algorithm to use.
-        target_size (list/gdal.Dataset/ogr.DataSource, default=None): Target size
-            of the output raster.
-        target_in_pixels (bool, default=False): If True, the target size will be
-            in pixels.
-        projection (str/gdal.Dataset/ogr.DataSource, default=None): Projection to
-            use for the output raster.
-        overwrite (bool, default=True): If True, existing rasters will be
-            overwritten.
-        creation_options (list, default=None): List of creation options to pass to
-            the output raster.
-        src_nodata (str/int/float/None, default=&#34;infer&#34;): The source dataset of the
-            align sets.
-        dst_nodata (str/int/float/None, default=&#34;infer&#34;): The destination dataset of
-            the align sets.
-        prefix (str, default=&#34;&#34;): Prefix to add to the output rasters.
-        suffix (str, default=&#34;&#34;): Suffix to append to the output raster.
-        ram (int/str, default=&#34;auto&#34;): The ram available to GDAL for the processing
-            in MB or percentage. If auto, 80% of available ram is allowed.
-
-    Returns:
-        list: A list of paths to the aligned rasters.
+        out_path (Optional[Union[str, List[str]]], optional): The output path(s). Defaults to None.
+        reference (Optional[Union[str, gdal.Dataset]], optional): The reference raster to align to. Defaults to None.
+        method (str, optional): The method to use. Defaults to &#34;reference&#34; [reference, intersection, union].
+        resample_alg (str, optional): The resampling algorithm to use. Defaults to &#34;nearest&#34;.
+        overwrite (bool, optional): Whether to overwrite existing files. Defaults to True.
+        creation_options (Optional[List[str]], optional): The creation options to use. Defaults to None.
+        prefix (str, optional): The prefix to add to the output file name. Defaults to &#34;&#34;.
+        suffix (str, optional): The suffix to add to the output file name. Defaults to &#34;&#34;.
+        ram (int/str, default=&#34;auto&#34;): Amount of RAM to use in MB. If &#34;auto&#34;,
+            the amount of RAM will be determined automatically.
     &#34;&#34;&#34;
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;rasters&#34;)
     core_utils.type_check(out_path, [str, None, [str]], &#34;out_path&#34;)
-    core_utils.type_check(master, [str, [str], None], &#34;master&#34;)
-    core_utils.type_check(bounding_box, [str, gdal.Dataset, ogr.DataSource, list, tuple], &#34;bounding_box&#34;)
+    core_utils.type_check(reference, [str, [str], None], &#34;reference&#34;)
+    core_utils.type_check(method, [str], &#34;method&#34;)
+    core_utils.type_check(target_nodata, [int, float, None], &#34;target_nodata&#34;)
     core_utils.type_check(resample_alg, [str], &#34;resample_alg&#34;)
-    core_utils.type_check(target_size, [tuple, list, int, float, str, gdal.Dataset, None], &#34;target_size&#34;)
-    core_utils.type_check(target_in_pixels, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference, None], &#34;target_in_pixels&#34;)
     core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
     core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
-    core_utils.type_check(src_nodata, [str, int, float, None], &#34;src_nodata&#34;)
-    core_utils.type_check(dst_nodata, [str, int, float, None], &#34;dst_nodata&#34;)
     core_utils.type_check(prefix, [str], &#34;prefix&#34;)
     core_utils.type_check(suffix, [str], &#34;suffix&#34;)
+    core_utils.type_check(ram, [int, str], &#34;ram&#34;)
 
     raster_list = core_utils.ensure_list(rasters)
 
     assert gdal_utils.is_raster_list(raster_list), &#34;rasters must be a single raster or a list of rasters.&#34;
+    assert method in [&#34;reference&#34;, &#34;intersection&#34;, &#34;union&#34;], &#34;method must be one of reference, intersection, or union.&#34;
 
     add_uuid = True if out_path is None else False
 
@@ -204,326 +386,23 @@ def align_rasters(
         suffix=suffix,
     )
 
-    x_pixels = None
-    y_pixels = None
-    x_res = None
-    y_res = None
-    target_projection = None
-    target_bounds = None
-
-    reprojected_rasters = []
-    paths_to_unlink = []
-
-    # Read the metadata for each raster.
-    # Catalogue the used projections, to choose the most common one if necessary.
-    used_projections = []
-    metadata = []
-
-    for raster in raster_list:
-        meta = core_raster.raster_to_metadata(raster)
-        metadata.append(meta)
-        used_projections.append(meta[&#34;projection_wkt&#34;])
-
-    # If there is a master layer, copy information from that layer.
-    if master is not None:
-        master_metadata = core_raster.raster_to_metadata(master)
-
-        target_projection = master_metadata[&#34;projection_osr&#34;]
-        x_min, x_max, y_min, y_max = master_metadata[&#34;bbox&#34;]
-
-        # Set the target values.
-        target_bounds = (x_min, x_max, y_min, y_max)
-        x_res = master_metadata[&#34;pixel_width&#34;]
-        y_res = master_metadata[&#34;pixel_height&#34;]
-        x_pixels = master_metadata[&#34;width&#34;]
-        y_pixels = master_metadata[&#34;height&#34;]
-        target_size = (x_res, y_res)
-
-        target_in_pixels = False
-
-    # We allow overwrite of parameters specifically set.
-    # Handle projection
-    if projection is not None:
-        target_projection = gdal_utils.parse_projection(projection)
-
-    # If no projection is specified, other from master or parameters. The most common one is chosen.
-    elif target_projection is None:
-
-        # Sort and count the projections
-        projection_counter = {}
-        for proj in used_projections:
-            if proj in projection_counter:
-                projection_counter[proj] += 1
-            else:
-                projection_counter[proj] = 1
-
-        # Choose most common projection
-        most_common_projection = sorted(
-            projection_counter, key=projection_counter.get, reverse=True
-        )
-
-        target_projection = gdal_utils.parse_projection(most_common_projection[0])
-
-    if target_size is not None and master is None:
-
-        # If a raster is input, use it&#39;s pixel size as target values.
-        if isinstance(target_size, (gdal.Dataset, str)):
-            if isinstance(target_size, str) and not gdal_utils.is_raster(target_size):
-                raise ValueError(
-                    f&#34;Unable to parse the raster used for target_size: {target_size}&#34;
-                )
-
-            # Reprojection is necessary to ensure the correct pixel_size
-            reprojected_target_size = _reproject_raster(
-                target_size, target_projection
-            )
-            target_size_raster = core_raster.raster_to_metadata(reprojected_target_size)
-
-            gdal_utils.delete_if_in_memory(reprojected_target_size)
-            reprojected_target_size = None
-
-            # Set the target values.
-            x_res = target_size_raster[&#34;width&#34;]
-            y_res = target_size_raster[&#34;height&#34;]
-        else:
-            raise NotImplementedError(
-                &#34;target_size must be a raster or a tuple of pixel size.&#34;
-            )
-
-    # If nothing has been specified, we will infer the pixel_size based on
-    # the median of all input rasters.
-    elif x_res is None and y_res is None and x_pixels is None and y_pixels is None:
-
-        # Ready numpy arrays for insertion
-        x_res_arr = np.empty(len(raster_list), dtype=&#34;float32&#34;)
-        y_res_arr = np.empty(len(raster_list), dtype=&#34;float32&#34;)
-
-        for index, raster in enumerate(raster_list):
-            # It is necessary to reproject each raster, as pixel height and width
-            # might be different after projection.
-            reprojected = _reproject_raster(raster, target_projection, copy_if_same=False)
-            target_size_raster = core_raster.raster_to_metadata(reprojected)
-
-            paths_to_unlink.append(core_raster.get_raster_path(reprojected))
-
-            # Add the pixel sizes to the numpy arrays
-            x_res_arr[index] = target_size_raster[&#34;pixel_width&#34;]
-            y_res_arr[index] = target_size_raster[&#34;pixel_height&#34;]
-
-            # Keep track of the reprojected arrays so we only reproject rasters once.
-            reprojected_rasters.append(reprojected)
-
-        # Use the median values of pixel sizes as target values.
-        x_res = np.median(x_res_arr)
-        y_res = np.median(y_res_arr)
-
-    if target_bounds is None:
-
-        # If a bounding box is supplied, simply use that one.
-        # It must be in the target projection.
-        if isinstance(bounding_box, (list, tuple)):
-            if len(bounding_box) != 4:
-                raise ValueError(&#34;bounding_box as a list/tuple must have 4 values.&#34;)
-
-            target_bounds = [x for x in bounding_box]
-
-        # If the bounding box is a raster. Take the extent and
-        # reproject it to the target projection.
-        elif gdal_utils.is_raster(bounding_box):
-            raster_bbox_reproject = _reproject_raster(bounding_box, target_projection, copy_if_same=False)
-            reprojected_bbox_raster = core_raster.raster_to_metadata(raster_bbox_reproject)
-            gdal_utils.delete_if_in_memory(raster_bbox_reproject)
-            raster_bbox_reproject = None
-
-            x_min, x_max, y_min, y_max = reprojected_bbox_raster[&#34;bbox&#34;]
-
-            # add to target values.
-            target_bounds = [x_min, x_max, y_min, y_max]
-
-        # If the bounding box is a raster. Take the extent and
-        # reproject it to the target projection.
-        elif gdal_utils.is_vector(bounding_box):
-            vector_bbox_reproject = _reproject_vector(bounding_box, target_projection)
-            reprojected_bbox_vector = core_vector._vector_to_metadata(vector_bbox_reproject) # pylint: disable=protected-access
-            gdal_utils.delete_if_in_memory(vector_bbox_reproject)
-            vector_bbox_reproject = None
-
-            x_min, x_max, y_min, y_max = reprojected_bbox_vector[&#34;bbox&#34;]
-
-            # add to target values.
-            target_bounds = [x_min, x_max, y_min, y_max]
-
-        # If the bounding box is a string, we either take the union
-        # or the intersection of all the
-        # bounding boxes of the input rasters.
-        elif isinstance(bounding_box, str):
-            if bounding_box == &#34;intersection&#34; or bounding_box == &#34;union&#34;:
-                extents = []
-
-                # If the rasters have not been reprojected, reproject them now.
-                if len(reprojected_rasters) != len(raster_list):
-                    reprojected_rasters = []
-
-                    for raster in raster_list:
-                        raster_metadata = core_raster.raster_to_metadata(raster)
-
-                        if raster_metadata[&#34;projection_osr&#34;].IsSame(target_projection):
-                            reprojected_rasters.append(raster)
-                        else:
-                            reprojected = _reproject_raster(
-                                raster, target_projection
-                            )
-                            reprojected_rasters.append(reprojected)
-
-                # Add the extents of the reprojected rasters to the extents list.
-                for reprojected_raster in reprojected_rasters:
-                    reprojected_raster_metadata = dict(
-                        core_raster.raster_to_metadata(reprojected_raster)
-                    )
-                    extents.append(reprojected_raster_metadata[&#34;bbox&#34;])
-
-                # Placeholder values
-                x_min, x_max, y_min, y_max = extents[0]
-
-                # Loop the extents. Narrowing if intersection, expanding if union.
-                for index, extent in enumerate(extents):
-                    if index == 0:
-                        continue
-
-                    b_x_min, b_x_max, b_y_min, b_y_max = extent
-
-                    if bounding_box == &#34;intersection&#34;:
-                        if b_x_min &gt; x_min:
-                            x_min = b_x_min
-                        if b_x_max &lt; x_max:
-                            x_max = b_x_max
-                        if b_y_min &gt; y_min:
-                            y_min = b_y_min
-                        if b_y_max &lt; y_max:
-                            y_max = b_y_max
-
-                    elif bounding_box == &#34;union&#34;:
-                        if b_x_min &lt; x_min:
-                            x_min = b_x_min
-                        if b_x_max &gt; y_max:
-                            y_max = b_x_max
-                        if y_min &gt; x_max:
-                            x_max = y_min
-                        if y_max &lt; y_min:
-                            y_min = y_max
-
-                # Add to target values.
-                target_bounds = [x_min, x_max, y_min, y_max]
-
-            else:
-                raise ValueError(
-                    f&#34;Unable to parse or infer target_bounds: {target_bounds}&#34;
-                )
-        else:
-            raise ValueError(f&#34;Unable to parse or infer target_bounds: {target_bounds}&#34;)
-
-    # If the rasters have not been reprojected, we reproject them now.
-    # The reprojection is necessary as warp has to be a two step process
-    # in order to align the rasters properly. This might not be necessary
-    # in a future version of gdal.
-
-    if len(reprojected_rasters) != len(raster_list):
-        for raster in reprojected_rasters:
-            gdal_utils.delete_if_in_memory(raster)
-
-        reprojected_rasters = []
-
-        for raster in raster_list:
-            raster_metadata = core_raster.raster_to_metadata(raster)
-
-            # If the raster is already the correct projection, simply append the raster.
-            if raster_metadata[&#34;projection_osr&#34;].IsSame(target_projection):
-                reprojected_rasters.append(raster)
-            else:
-                reprojected = _reproject_raster(raster, target_projection)
-                reprojected_rasters.append(reprojected)
-                paths_to_unlink.append(gdal_utils.get_path_from_dataset(reprojected))
-
-    # If any of the target values are still undefined. Throw an error!
-    if target_projection is None or target_bounds is None:
-        raise ValueError(&#34;Error while preparing the target projection or bounds.&#34;)
-
-    if x_res is None and y_res is None and x_pixels is None and y_pixels is None:
-        raise ValueError(&#34;Error while preparing the target pixel size.&#34;)
-
-    # This is the list of rasters to return. If output is not memory, it&#39;s a list of paths.
-    return_list = []
-    for index, raster in enumerate(reprojected_rasters):
-        raster_metadata = core_raster.raster_to_metadata(raster)
-
-        out_name = path_list[index]
-        out_format = gdal_utils.path_to_driver_raster(out_name)
-
-        # Handle nodata.
-        out_src_nodata = None
-        out_dst_nodata = None
-        if src_nodata == &#34;infer&#34;:
-            out_src_nodata = raster_metadata[&#34;nodata_value&#34;]
-
-            if out_src_nodata is None:
-                out_src_nodata = gdal_enums.translate_gdal_dtype_to_str(
-                    raster_metadata[&#34;datatype_gdal_raw&#34;]
-                )
-
-        elif src_nodata is None:
-            out_src_nodata = None
-        elif not isinstance(src_nodata, str):
-            out_src_nodata = src_nodata
-
-        if dst_nodata == &#34;infer&#34;:
-            out_dst_nodata = out_src_nodata
-        elif dst_nodata is False or dst_nodata is None:
-            out_dst_nodata = None
-        elif src_nodata is None:
-            out_dst_nodata = None
-        elif not isinstance(dst_nodata, str):
-            out_dst_nodata = dst_nodata
-
-        # Removes file if it exists and overwrite is True.
-        core_utils.remove_if_required(out_name, overwrite)
-
-        # Hand over to gdal.Warp to do the heavy lifting!
-        warped = gdal.Warp(
-            out_name,
-            raster,
-            xRes=x_res,
-            yRes=y_res,
-            width=x_pixels,
-            height=y_pixels,
-            dstSRS=target_projection,
-            outputBounds=bbox_utils.convert_ogr_bbox_to_gdal_bbox(target_bounds),
-            format=out_format,
-            resampleAlg=gdal_enums.translate_resample_method(resample_alg),
-            creationOptions=gdal_utils.default_creation_options(creation_options),
-            srcNodata=out_src_nodata,
-            dstNodata=out_dst_nodata,
-            targetAlignedPixels=False,
-            cropToCutline=False,
-            multithread=True,
-            warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
-        )
-
-        if warped is None:
-            raise ValueError(&#34;Error while warping rasters.&#34;)
-
-        return_list.append(out_name)
-
-    # Remove the reprojected rasters if they are in memory.
-    for mem_path in paths_to_unlink:
-        gdal_utils.delete_if_in_memory(mem_path)
-
-    if not core_raster.rasters_are_aligned(return_list, same_extent=True):
-        raise ValueError(&#34;Error while aligning rasters. Output is not aligned&#34;)
-
-    if isinstance(rasters, list):
-        return return_list
-
-    return return_list[0]</code></pre>
+    if reference is None:
+        reference = find_best_reference(raster_list, method)
+
+    aligned = align_rasters_to_reference(
+        raster_list,
+        reference,
+        out_path=path_list,
+        resample_alg=resample_alg,
+        target_nodata=target_nodata,
+        overwrite=overwrite,
+        creation_options=creation_options,
+        suffix=suffix,
+        prefix=prefix,
+        ram=ram,
+    )
+
+    return aligned</code></pre>
 </details>
 </section>
 <section>
@@ -534,121 +413,79 @@ def align_rasters(
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.raster.align.align_rasters"><code class="name flex">
-<span>def <span class="ident">align_rasters</span></span>(<span>rasters, *, out_path=None, master=None, bounding_box='intersection', resample_alg='nearest', target_size=None, target_in_pixels=False, projection=None, overwrite=True, creation_options=None, src_nodata='infer', dst_nodata='infer', prefix='', suffix='', ram='auto')</span>
+<span>def <span class="ident">align_rasters</span></span>(<span>rasters: Union[str, osgeo.gdal.Dataset, List[Union[str, osgeo.gdal.Dataset]]], *, out_path: Union[str, List[str], NoneType] = None, reference: Union[str, osgeo.gdal.Dataset, NoneType] = None, method: str = 'reference', target_nodata: Union[int, float, NoneType] = None, resample_alg: str = 'nearest', overwrite: bool = True, creation_options: Optional[List[str]] = None, prefix='', suffix='', ram: Union[int, str] = 'auto') -> List[str]</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Aligns a series of rasters to a master raster or specified requirements.</p>
+<div class="desc"><p>Aligns rasters either to a reference raster or to each other using the
+one of three methods: reference, intersection, or union.</p>
 <h2 id="args">Args</h2>
 <dl>
-<dt><strong><code>rasters</code></strong> :&ensp;<code>list</code></dt>
-<dd>A list of rasters to align.</dd>
+<dt><strong><code>rasters</code></strong> :&ensp;<code>Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]</code></dt>
+<dd>The rasters to align.</dd>
 </dl>
 <p>Keyword Args:
-out_path (str/list, default=None): Paths to the output. If not provided,
-the output will be in-memory rasters.
-master (str/gdal.Dataset/ogr.DataSource, default=None): Path to the
-master raster or vector.
-bounding_box (str, default="intersection"): Method to use for aligning the
-rasters. Can be either "intersection" or "union".
-resample_alg (str, default="nearest"): Resampling algorithm to use.
-target_size (list/gdal.Dataset/ogr.DataSource, default=None): Target size
-of the output raster.
-target_in_pixels (bool, default=False): If True, the target size will be
-in pixels.
-projection (str/gdal.Dataset/ogr.DataSource, default=None): Projection to
-use for the output raster.
-overwrite (bool, default=True): If True, existing rasters will be
-overwritten.
-creation_options (list, default=None): List of creation options to pass to
-the output raster.
-src_nodata (str/int/float/None, default="infer"): The source dataset of the
-align sets.
-dst_nodata (str/int/float/None, default="infer"): The destination dataset of
-the align sets.
-prefix (str, default=""): Prefix to add to the output rasters.
-suffix (str, default=""): Suffix to append to the output raster.
-ram (int/str, default="auto"): The ram available to GDAL for the processing
-in MB or percentage. If auto, 80% of available ram is allowed.</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>list</code></dt>
-<dd>A list of paths to the aligned rasters.</dd>
-</dl></div>
+out_path (Optional[Union[str, List[str]]], optional): The output path(s). Defaults to None.
+reference (Optional[Union[str, gdal.Dataset]], optional): The reference raster to align to. Defaults to None.
+method (str, optional): The method to use. Defaults to "reference" [reference, intersection, union].
+resample_alg (str, optional): The resampling algorithm to use. Defaults to "nearest".
+overwrite (bool, optional): Whether to overwrite existing files. Defaults to True.
+creation_options (Optional[List[str]], optional): The creation options to use. Defaults to None.
+prefix (str, optional): The prefix to add to the output file name. Defaults to "".
+suffix (str, optional): The suffix to add to the output file name. Defaults to "".
+ram (int/str, default="auto"): Amount of RAM to use in MB. If "auto",
+the amount of RAM will be determined automatically.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def align_rasters(
-    rasters,
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     *,
-    out_path=None,
-    master=None,
-    bounding_box=&#34;intersection&#34;,
-    resample_alg=&#34;nearest&#34;,
-    target_size=None,
-    target_in_pixels=False,
-    projection=None,
-    overwrite=True,
-    creation_options=None,
-    src_nodata=&#34;infer&#34;,
-    dst_nodata=&#34;infer&#34;,
+    out_path: Optional[Union[str, List[str]]] = None,
+    reference: Optional[Union[str, gdal.Dataset]] = None,
+    method: str = &#34;reference&#34;,
+    target_nodata: Optional[Union[int, float]] = None,
+    resample_alg: str = &#34;nearest&#34;,
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
     prefix=&#34;&#34;,
     suffix=&#34;&#34;,
-    ram=&#34;auto&#34;,
-):
-    &#34;&#34;&#34;
-    Aligns a series of rasters to a master raster or specified requirements.
-
+    ram: Union[int, str] = &#34;auto&#34;,
+) -&gt; List[str]:
+    &#34;&#34;&#34; Aligns rasters either to a reference raster or to each other using the
+    one of three methods: reference, intersection, or union.
+    
     Args:
-        rasters (list): A list of rasters to align.
+        rasters (Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]): The rasters to align.
 
     Keyword Args:
-        out_path (str/list, default=None): Paths to the output. If not provided,
-            the output will be in-memory rasters.
-        master (str/gdal.Dataset/ogr.DataSource, default=None): Path to the
-            master raster or vector.
-        bounding_box (str, default=&#34;intersection&#34;): Method to use for aligning the
-            rasters. Can be either &#34;intersection&#34; or &#34;union&#34;.
-        resample_alg (str, default=&#34;nearest&#34;): Resampling algorithm to use.
-        target_size (list/gdal.Dataset/ogr.DataSource, default=None): Target size
-            of the output raster.
-        target_in_pixels (bool, default=False): If True, the target size will be
-            in pixels.
-        projection (str/gdal.Dataset/ogr.DataSource, default=None): Projection to
-            use for the output raster.
-        overwrite (bool, default=True): If True, existing rasters will be
-            overwritten.
-        creation_options (list, default=None): List of creation options to pass to
-            the output raster.
-        src_nodata (str/int/float/None, default=&#34;infer&#34;): The source dataset of the
-            align sets.
-        dst_nodata (str/int/float/None, default=&#34;infer&#34;): The destination dataset of
-            the align sets.
-        prefix (str, default=&#34;&#34;): Prefix to add to the output rasters.
-        suffix (str, default=&#34;&#34;): Suffix to append to the output raster.
-        ram (int/str, default=&#34;auto&#34;): The ram available to GDAL for the processing
-            in MB or percentage. If auto, 80% of available ram is allowed.
-
-    Returns:
-        list: A list of paths to the aligned rasters.
+        out_path (Optional[Union[str, List[str]]], optional): The output path(s). Defaults to None.
+        reference (Optional[Union[str, gdal.Dataset]], optional): The reference raster to align to. Defaults to None.
+        method (str, optional): The method to use. Defaults to &#34;reference&#34; [reference, intersection, union].
+        resample_alg (str, optional): The resampling algorithm to use. Defaults to &#34;nearest&#34;.
+        overwrite (bool, optional): Whether to overwrite existing files. Defaults to True.
+        creation_options (Optional[List[str]], optional): The creation options to use. Defaults to None.
+        prefix (str, optional): The prefix to add to the output file name. Defaults to &#34;&#34;.
+        suffix (str, optional): The suffix to add to the output file name. Defaults to &#34;&#34;.
+        ram (int/str, default=&#34;auto&#34;): Amount of RAM to use in MB. If &#34;auto&#34;,
+            the amount of RAM will be determined automatically.
     &#34;&#34;&#34;
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;rasters&#34;)
     core_utils.type_check(out_path, [str, None, [str]], &#34;out_path&#34;)
-    core_utils.type_check(master, [str, [str], None], &#34;master&#34;)
-    core_utils.type_check(bounding_box, [str, gdal.Dataset, ogr.DataSource, list, tuple], &#34;bounding_box&#34;)
+    core_utils.type_check(reference, [str, [str], None], &#34;reference&#34;)
+    core_utils.type_check(method, [str], &#34;method&#34;)
+    core_utils.type_check(target_nodata, [int, float, None], &#34;target_nodata&#34;)
     core_utils.type_check(resample_alg, [str], &#34;resample_alg&#34;)
-    core_utils.type_check(target_size, [tuple, list, int, float, str, gdal.Dataset, None], &#34;target_size&#34;)
-    core_utils.type_check(target_in_pixels, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference, None], &#34;target_in_pixels&#34;)
     core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
     core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
-    core_utils.type_check(src_nodata, [str, int, float, None], &#34;src_nodata&#34;)
-    core_utils.type_check(dst_nodata, [str, int, float, None], &#34;dst_nodata&#34;)
     core_utils.type_check(prefix, [str], &#34;prefix&#34;)
     core_utils.type_check(suffix, [str], &#34;suffix&#34;)
+    core_utils.type_check(ram, [int, str], &#34;ram&#34;)
 
     raster_list = core_utils.ensure_list(rasters)
 
     assert gdal_utils.is_raster_list(raster_list), &#34;rasters must be a single raster or a list of rasters.&#34;
+    assert method in [&#34;reference&#34;, &#34;intersection&#34;, &#34;union&#34;], &#34;method must be one of reference, intersection, or union.&#34;
 
     add_uuid = True if out_path is None else False
 
@@ -662,427 +499,349 @@ in MB or percentage. If auto, 80% of available ram is allowed.</p>
         suffix=suffix,
     )
 
-    x_pixels = None
-    y_pixels = None
-    x_res = None
-    y_res = None
-    target_projection = None
-    target_bounds = None
-
-    reprojected_rasters = []
-    paths_to_unlink = []
-
-    # Read the metadata for each raster.
-    # Catalogue the used projections, to choose the most common one if necessary.
-    used_projections = []
-    metadata = []
-
-    for raster in raster_list:
-        meta = core_raster.raster_to_metadata(raster)
-        metadata.append(meta)
-        used_projections.append(meta[&#34;projection_wkt&#34;])
-
-    # If there is a master layer, copy information from that layer.
-    if master is not None:
-        master_metadata = core_raster.raster_to_metadata(master)
-
-        target_projection = master_metadata[&#34;projection_osr&#34;]
-        x_min, x_max, y_min, y_max = master_metadata[&#34;bbox&#34;]
-
-        # Set the target values.
-        target_bounds = (x_min, x_max, y_min, y_max)
-        x_res = master_metadata[&#34;pixel_width&#34;]
-        y_res = master_metadata[&#34;pixel_height&#34;]
-        x_pixels = master_metadata[&#34;width&#34;]
-        y_pixels = master_metadata[&#34;height&#34;]
-        target_size = (x_res, y_res)
-
-        target_in_pixels = False
-
-    # We allow overwrite of parameters specifically set.
-    # Handle projection
-    if projection is not None:
-        target_projection = gdal_utils.parse_projection(projection)
-
-    # If no projection is specified, other from master or parameters. The most common one is chosen.
-    elif target_projection is None:
-
-        # Sort and count the projections
-        projection_counter = {}
-        for proj in used_projections:
-            if proj in projection_counter:
-                projection_counter[proj] += 1
-            else:
-                projection_counter[proj] = 1
-
-        # Choose most common projection
-        most_common_projection = sorted(
-            projection_counter, key=projection_counter.get, reverse=True
-        )
-
-        target_projection = gdal_utils.parse_projection(most_common_projection[0])
-
-    if target_size is not None and master is None:
-
-        # If a raster is input, use it&#39;s pixel size as target values.
-        if isinstance(target_size, (gdal.Dataset, str)):
-            if isinstance(target_size, str) and not gdal_utils.is_raster(target_size):
-                raise ValueError(
-                    f&#34;Unable to parse the raster used for target_size: {target_size}&#34;
-                )
-
-            # Reprojection is necessary to ensure the correct pixel_size
-            reprojected_target_size = _reproject_raster(
-                target_size, target_projection
-            )
-            target_size_raster = core_raster.raster_to_metadata(reprojected_target_size)
-
-            gdal_utils.delete_if_in_memory(reprojected_target_size)
-            reprojected_target_size = None
-
-            # Set the target values.
-            x_res = target_size_raster[&#34;width&#34;]
-            y_res = target_size_raster[&#34;height&#34;]
-        else:
-            raise NotImplementedError(
-                &#34;target_size must be a raster or a tuple of pixel size.&#34;
-            )
-
-    # If nothing has been specified, we will infer the pixel_size based on
-    # the median of all input rasters.
-    elif x_res is None and y_res is None and x_pixels is None and y_pixels is None:
-
-        # Ready numpy arrays for insertion
-        x_res_arr = np.empty(len(raster_list), dtype=&#34;float32&#34;)
-        y_res_arr = np.empty(len(raster_list), dtype=&#34;float32&#34;)
-
-        for index, raster in enumerate(raster_list):
-            # It is necessary to reproject each raster, as pixel height and width
-            # might be different after projection.
-            reprojected = _reproject_raster(raster, target_projection, copy_if_same=False)
-            target_size_raster = core_raster.raster_to_metadata(reprojected)
-
-            paths_to_unlink.append(core_raster.get_raster_path(reprojected))
-
-            # Add the pixel sizes to the numpy arrays
-            x_res_arr[index] = target_size_raster[&#34;pixel_width&#34;]
-            y_res_arr[index] = target_size_raster[&#34;pixel_height&#34;]
-
-            # Keep track of the reprojected arrays so we only reproject rasters once.
-            reprojected_rasters.append(reprojected)
-
-        # Use the median values of pixel sizes as target values.
-        x_res = np.median(x_res_arr)
-        y_res = np.median(y_res_arr)
-
-    if target_bounds is None:
-
-        # If a bounding box is supplied, simply use that one.
-        # It must be in the target projection.
-        if isinstance(bounding_box, (list, tuple)):
-            if len(bounding_box) != 4:
-                raise ValueError(&#34;bounding_box as a list/tuple must have 4 values.&#34;)
-
-            target_bounds = [x for x in bounding_box]
-
-        # If the bounding box is a raster. Take the extent and
-        # reproject it to the target projection.
-        elif gdal_utils.is_raster(bounding_box):
-            raster_bbox_reproject = _reproject_raster(bounding_box, target_projection, copy_if_same=False)
-            reprojected_bbox_raster = core_raster.raster_to_metadata(raster_bbox_reproject)
-            gdal_utils.delete_if_in_memory(raster_bbox_reproject)
-            raster_bbox_reproject = None
-
-            x_min, x_max, y_min, y_max = reprojected_bbox_raster[&#34;bbox&#34;]
-
-            # add to target values.
-            target_bounds = [x_min, x_max, y_min, y_max]
-
-        # If the bounding box is a raster. Take the extent and
-        # reproject it to the target projection.
-        elif gdal_utils.is_vector(bounding_box):
-            vector_bbox_reproject = _reproject_vector(bounding_box, target_projection)
-            reprojected_bbox_vector = core_vector._vector_to_metadata(vector_bbox_reproject) # pylint: disable=protected-access
-            gdal_utils.delete_if_in_memory(vector_bbox_reproject)
-            vector_bbox_reproject = None
-
-            x_min, x_max, y_min, y_max = reprojected_bbox_vector[&#34;bbox&#34;]
-
-            # add to target values.
-            target_bounds = [x_min, x_max, y_min, y_max]
-
-        # If the bounding box is a string, we either take the union
-        # or the intersection of all the
-        # bounding boxes of the input rasters.
-        elif isinstance(bounding_box, str):
-            if bounding_box == &#34;intersection&#34; or bounding_box == &#34;union&#34;:
-                extents = []
-
-                # If the rasters have not been reprojected, reproject them now.
-                if len(reprojected_rasters) != len(raster_list):
-                    reprojected_rasters = []
-
-                    for raster in raster_list:
-                        raster_metadata = core_raster.raster_to_metadata(raster)
-
-                        if raster_metadata[&#34;projection_osr&#34;].IsSame(target_projection):
-                            reprojected_rasters.append(raster)
-                        else:
-                            reprojected = _reproject_raster(
-                                raster, target_projection
-                            )
-                            reprojected_rasters.append(reprojected)
-
-                # Add the extents of the reprojected rasters to the extents list.
-                for reprojected_raster in reprojected_rasters:
-                    reprojected_raster_metadata = dict(
-                        core_raster.raster_to_metadata(reprojected_raster)
-                    )
-                    extents.append(reprojected_raster_metadata[&#34;bbox&#34;])
-
-                # Placeholder values
-                x_min, x_max, y_min, y_max = extents[0]
-
-                # Loop the extents. Narrowing if intersection, expanding if union.
-                for index, extent in enumerate(extents):
-                    if index == 0:
-                        continue
-
-                    b_x_min, b_x_max, b_y_min, b_y_max = extent
-
-                    if bounding_box == &#34;intersection&#34;:
-                        if b_x_min &gt; x_min:
-                            x_min = b_x_min
-                        if b_x_max &lt; x_max:
-                            x_max = b_x_max
-                        if b_y_min &gt; y_min:
-                            y_min = b_y_min
-                        if b_y_max &lt; y_max:
-                            y_max = b_y_max
-
-                    elif bounding_box == &#34;union&#34;:
-                        if b_x_min &lt; x_min:
-                            x_min = b_x_min
-                        if b_x_max &gt; y_max:
-                            y_max = b_x_max
-                        if y_min &gt; x_max:
-                            x_max = y_min
-                        if y_max &lt; y_min:
-                            y_min = y_max
-
-                # Add to target values.
-                target_bounds = [x_min, x_max, y_min, y_max]
-
-            else:
-                raise ValueError(
-                    f&#34;Unable to parse or infer target_bounds: {target_bounds}&#34;
-                )
-        else:
-            raise ValueError(f&#34;Unable to parse or infer target_bounds: {target_bounds}&#34;)
-
-    # If the rasters have not been reprojected, we reproject them now.
-    # The reprojection is necessary as warp has to be a two step process
-    # in order to align the rasters properly. This might not be necessary
-    # in a future version of gdal.
-
-    if len(reprojected_rasters) != len(raster_list):
-        for raster in reprojected_rasters:
-            gdal_utils.delete_if_in_memory(raster)
-
-        reprojected_rasters = []
-
-        for raster in raster_list:
-            raster_metadata = core_raster.raster_to_metadata(raster)
-
-            # If the raster is already the correct projection, simply append the raster.
-            if raster_metadata[&#34;projection_osr&#34;].IsSame(target_projection):
-                reprojected_rasters.append(raster)
-            else:
-                reprojected = _reproject_raster(raster, target_projection)
-                reprojected_rasters.append(reprojected)
-                paths_to_unlink.append(gdal_utils.get_path_from_dataset(reprojected))
-
-    # If any of the target values are still undefined. Throw an error!
-    if target_projection is None or target_bounds is None:
-        raise ValueError(&#34;Error while preparing the target projection or bounds.&#34;)
-
-    if x_res is None and y_res is None and x_pixels is None and y_pixels is None:
-        raise ValueError(&#34;Error while preparing the target pixel size.&#34;)
-
-    # This is the list of rasters to return. If output is not memory, it&#39;s a list of paths.
-    return_list = []
-    for index, raster in enumerate(reprojected_rasters):
-        raster_metadata = core_raster.raster_to_metadata(raster)
-
-        out_name = path_list[index]
-        out_format = gdal_utils.path_to_driver_raster(out_name)
-
-        # Handle nodata.
-        out_src_nodata = None
-        out_dst_nodata = None
-        if src_nodata == &#34;infer&#34;:
-            out_src_nodata = raster_metadata[&#34;nodata_value&#34;]
-
-            if out_src_nodata is None:
-                out_src_nodata = gdal_enums.translate_gdal_dtype_to_str(
-                    raster_metadata[&#34;datatype_gdal_raw&#34;]
-                )
-
-        elif src_nodata is None:
-            out_src_nodata = None
-        elif not isinstance(src_nodata, str):
-            out_src_nodata = src_nodata
-
-        if dst_nodata == &#34;infer&#34;:
-            out_dst_nodata = out_src_nodata
-        elif dst_nodata is False or dst_nodata is None:
-            out_dst_nodata = None
-        elif src_nodata is None:
-            out_dst_nodata = None
-        elif not isinstance(dst_nodata, str):
-            out_dst_nodata = dst_nodata
-
-        # Removes file if it exists and overwrite is True.
-        core_utils.remove_if_required(out_name, overwrite)
-
-        # Hand over to gdal.Warp to do the heavy lifting!
-        warped = gdal.Warp(
-            out_name,
-            raster,
-            xRes=x_res,
-            yRes=y_res,
-            width=x_pixels,
-            height=y_pixels,
-            dstSRS=target_projection,
-            outputBounds=bbox_utils.convert_ogr_bbox_to_gdal_bbox(target_bounds),
-            format=out_format,
-            resampleAlg=gdal_enums.translate_resample_method(resample_alg),
-            creationOptions=gdal_utils.default_creation_options(creation_options),
-            srcNodata=out_src_nodata,
-            dstNodata=out_dst_nodata,
-            targetAlignedPixels=False,
-            cropToCutline=False,
-            multithread=True,
-            warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
-        )
-
-        if warped is None:
-            raise ValueError(&#34;Error while warping rasters.&#34;)
-
-        return_list.append(out_name)
-
-    # Remove the reprojected rasters if they are in memory.
-    for mem_path in paths_to_unlink:
-        gdal_utils.delete_if_in_memory(mem_path)
-
-    if not core_raster.rasters_are_aligned(return_list, same_extent=True):
-        raise ValueError(&#34;Error while aligning rasters. Output is not aligned&#34;)
-
-    if isinstance(rasters, list):
-        return return_list
-
-    return return_list[0]</code></pre>
+    if reference is None:
+        reference = find_best_reference(raster_list, method)
+
+    aligned = align_rasters_to_reference(
+        raster_list,
+        reference,
+        out_path=path_list,
+        resample_alg=resample_alg,
+        target_nodata=target_nodata,
+        overwrite=overwrite,
+        creation_options=creation_options,
+        suffix=suffix,
+        prefix=prefix,
+        ram=ram,
+    )
+
+    return aligned</code></pre>
 </details>
 </dd>
-<dt id="buteo.raster.align.match_raster_projections"><code class="name flex">
-<span>def <span class="ident">match_raster_projections</span></span>(<span>rasters, master, *, out_path=None, overwrite=True, dst_nodata='infer', copy_if_already_correct=True, creation_options=None)</span>
+<dt id="buteo.raster.align.align_rasters_to_reference"><code class="name flex">
+<span>def <span class="ident">align_rasters_to_reference</span></span>(<span>rasters: Union[str, osgeo.gdal.Dataset, List[Union[str, osgeo.gdal.Dataset]]], reference: Union[str, osgeo.gdal.Dataset], *, out_path: Union[str, List[str], NoneType] = None, resample_alg: str = 'nearest', target_nodata: Union[int, float, NoneType] = None, overwrite=True, creation_options: Optional[List[str]] = None, prefix='', suffix='', ram='auto') -> List[str]</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Match a raster or list of rasters to a master layer. The master can be
-either an OGR layer or a GDAL layer.</p>
+<div class="desc"><p>Aligns a series of rasters to a reference.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>rasters</code></strong> :&ensp;<code>list</code></dt>
-<dd>A list of rasters to match.</dd>
+<dd>A list of rasters to align.</dd>
 </dl>
-<p>master (str/gdal.Dataset/ogr.DataSource): Path to the master raster
+<p>reference (str/gdal.Dataset): Path to the reference raster
 or vector.
 Keyword Args:
 out_path (str/list, default=None): Paths to the output. If not provided,
 the output will be in-memory rasters.
-overwrite (bool, default=True): If True, existing rasters will be
-overwritten.
-dst_nodata (str, default='infer'): Value to use for no-data pixels. If not
-provided, the value will be transfered from the original.
-copy_if_already_correct (bool, default=True): If True, the raster will be
-copied if it is already in the correct projection.
-creation_options (list, default=None): List of creation options to pass
-to the output raster.</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>list</code></dt>
-<dd>A list of reprojected input rasters with the correct projection.</dd>
-</dl></div>
+resample_alg (str, default="nearest"): Resampling algorithm to use.
+target_nodata (int/float, default=None): Nodata value to use for the
+output rasters.
+overwrite (bool, default=True): Overwrite existing files.
+creation_options (list, default=None): List of creation options.
+prefix (str, default=""): Prefix to add to the output file name.
+suffix (str, default=""): Suffix to add to the output file name.
+ram (int/str, default="auto"): Amount of RAM to use in MB. If "auto",
+the amount of RAM will be determined automatically.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def match_raster_projections(
-    rasters,
-    master,
+<pre><code class="python">def align_rasters_to_reference(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+    reference: Union[str, gdal.Dataset],
     *,
-    out_path=None,
+    out_path: Optional[Union[str, List[str]]] = None,
+    resample_alg: str = &#34;nearest&#34;,
+    target_nodata: Optional[Union[int, float]] = None,
     overwrite=True,
-    dst_nodata=&#34;infer&#34;,
-    copy_if_already_correct=True,
-    creation_options=None,
-):
+    creation_options: Optional[List[str]] = None,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    ram=&#34;auto&#34;,
+) -&gt; List[str]:
     &#34;&#34;&#34;
-    Match a raster or list of rasters to a master layer. The master can be
-    either an OGR layer or a GDAL layer.
+    Aligns a series of rasters to a reference.
 
     Args:
-        rasters (list): A list of rasters to match.
-        master (str/gdal.Dataset/ogr.DataSource): Path to the master raster
+        rasters (list): A list of rasters to align.
+        reference (str/gdal.Dataset): Path to the reference raster
             or vector.
 
     Keyword Args:
         out_path (str/list, default=None): Paths to the output. If not provided,
             the output will be in-memory rasters.
-        overwrite (bool, default=True): If True, existing rasters will be
-            overwritten.
-        dst_nodata (str, default=&#39;infer&#39;): Value to use for no-data pixels. If not
-            provided, the value will be transfered from the original.
-        copy_if_already_correct (bool, default=True): If True, the raster will be
-            copied if it is already in the correct projection.
-        creation_options (list, default=None): List of creation options to pass
-            to the output raster.
-
-    Returns:
-        list: A list of reprojected input rasters with the correct projection.
+        resample_alg (str, default=&#34;nearest&#34;): Resampling algorithm to use.
+        target_nodata (int/float, default=None): Nodata value to use for the
+            output rasters.
+        overwrite (bool, default=True): Overwrite existing files.
+        creation_options (list, default=None): List of creation options.
+        prefix (str, default=&#34;&#34;): Prefix to add to the output file name.
+        suffix (str, default=&#34;&#34;): Suffix to add to the output file name.
+        ram (int/str, default=&#34;auto&#34;): Amount of RAM to use in MB. If &#34;auto&#34;,
+            the amount of RAM will be determined automatically.
     &#34;&#34;&#34;
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;rasters&#34;)
-    core_utils.type_check(master, [str, gdal.Dataset, ogr.DataSource], &#34;master&#34;)
+    core_utils.type_check(reference, [str, gdal.Dataset], &#34;reference&#34;)
+    core_utils.type_check(out_path, [str, None, [str]], &#34;out_path&#34;)
+    core_utils.type_check(resample_alg, [str], &#34;resample_alg&#34;)
+    core_utils.type_check(target_nodata, [int, float, None], &#34;target_nodata&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+    core_utils.type_check(prefix, [str], &#34;prefix&#34;)
+    core_utils.type_check(suffix, [str], &#34;suffix&#34;)
+    core_utils.type_check(ram, [int, str], &#34;ram&#34;)
 
-    rasters = core_utils.ensure_list(rasters)
+    rasters_list = core_utils.ensure_list(rasters)
+    assert gdal_utils.is_raster_or_vector(reference), &#34;Reference must be a raster or vector.&#34;
 
-    assert gdal_utils.is_raster_list(rasters), &#34;rasters must be a list of rasters.&#34;
+    add_uuid = True if out_path is None else False
 
-    try:
-        target_projection = gdal_utils.parse_projection(master)
-    except Exception:
-        raise ValueError(f&#34;Unable to parse projection from master. Received: {master}&#34;) from None
-
-    add_uuid = out_path is None
-
-    path_list = gdal_utils.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid, ext=&#34;.tif&#34;)
-
-    output = []
-
-    for index, in_raster in enumerate(rasters):
-        path = _reproject_raster(
-            in_raster,
-            target_projection,
-            out_path=path_list[index],
-            overwrite=overwrite,
-            copy_if_same=copy_if_already_correct,
-            dst_nodata=dst_nodata,
-            creation_options=gdal_utils.default_creation_options(creation_options),
+    # Verify that all of the rasters overlap the reference
+    for raster in rasters_list:
+        assert core_raster.rasters_intersect(raster, reference), (
+            f&#34;Raster: {gdal_utils.get_path_from_dataset(raster)} does not intersect reference.&#34;
         )
 
-        output.append(path)
+    path_list = gdal_utils.create_output_path_list(
+        rasters_list,
+        out_path,
+        overwrite=overwrite,
+        add_uuid=add_uuid,
+        ext=&#34;.tif&#34;,
+        prefix=prefix,
+        suffix=suffix,
+    )
 
-    return output</code></pre>
+    creation_options = gdal_utils.default_creation_options(creation_options)
+
+    reference_metadata = core_raster.raster_to_metadata(reference)
+
+    target_projection = reference_metadata[&#34;projection_osr&#34;]
+    reference_bbox = reference_metadata[&#34;bbox&#34;]
+    x_min, _, _, y_max = reference_bbox
+
+    # Set the target values.
+    x_res = reference_metadata[&#34;pixel_width&#34;]
+    y_res = reference_metadata[&#34;pixel_height&#34;]
+    x_pixels = reference_metadata[&#34;width&#34;]
+    y_pixels = reference_metadata[&#34;height&#34;]
+
+    # Reproject the rasters to the reference projection.
+    for idx, raster in enumerate(rasters_list):
+        raster_metadata = core_raster.raster_to_metadata(raster)
+        raster_path = gdal_utils.get_path_from_dataset(raster)
+
+        raster_reprojected = None
+        raster_projection = raster_metadata[&#34;projection_osr&#34;]
+        if not gdal_utils.projections_match(raster_projection, target_projection):
+            raster_reprojected = reproject_raster(
+                raster_path,
+                target_projection,
+                out_path=None,
+                resample_alg=resample_alg,
+                creation_options=creation_options,
+                prefix=&#34;tmp_reprojection_&#34;,
+                add_uuid=True,
+            )
+            raster_ds = core_raster.open_raster(raster_reprojected)
+        else:
+            raster_ds = core_raster.open_raster(raster_path)
+
+        destination_ds = core_raster.create_empty_raster(
+            out_path=path_list[idx],
+            width=x_pixels,
+            height=y_pixels,
+            pixel_size=(x_res, y_res),
+            x_min=x_min,
+            y_max=y_max,
+            dtype=raster_metadata[&#34;dtype&#34;],
+            bands=raster_metadata[&#34;band_count&#34;],
+            nodata_value=target_nodata,
+            projection=target_projection,
+            creation_options=creation_options,
+            overwrite=overwrite,
+        )
+
+        destination_ds = core_raster.open_raster(destination_ds)
+
+        warp_options = gdal.WarpOptions(
+            resampleAlg=gdal_enums.translate_resample_method(resample_alg),
+            multithread=True,
+            outputBounds=bbox_utils.convert_ogr_bbox_to_gdal_bbox(reference_bbox),
+            warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
+        )
+
+        warped = gdal.Warp(destination_ds, raster_ds, options=warp_options)
+
+        if raster_reprojected is not None:
+            gdal_utils.delete_if_in_memory(raster_reprojected)
+
+        destination_ds.FlushCache()
+        destination_ds = None
+
+        if warped is None:
+            raise ValueError(&#34;Error while warping rasters.&#34;)
+
+    return path_list</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.align.find_best_reference"><code class="name flex">
+<span>def <span class="ident">find_best_reference</span></span>(<span>rasters: Union[str, osgeo.gdal.Dataset, List[Union[str, osgeo.gdal.Dataset]]], method: str) -> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Find the best reference raster for aligning a list of rasters.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt>rasters (str/list): List of rasters to align.</dt>
+<dt><strong><code>method</code></strong> :&ensp;<code>str</code></dt>
+<dd>Bounding box method to use for finding the best reference.
+Options include: "reference", "intersection", and "union".</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>Path to the best reference raster.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def find_best_reference(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+    method: str,
+) -&gt; str:
+    &#34;&#34;&#34; Find the best reference raster for aligning a list of rasters.
+    
+    Args:
+        rasters (str/list): List of rasters to align.
+        method (str): Bounding box method to use for finding the best reference.
+            Options include: &#34;reference&#34;, &#34;intersection&#34;, and &#34;union&#34;.
+    Returns:
+        str: Path to the best reference raster.
+    &#34;&#34;&#34;
+    core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;rasters&#34;)
+    core_utils.type_check(method, [str], &#34;method&#34;)
+
+    rasters_list = core_utils.ensure_list(rasters)
+    assert method in [&#34;reference&#34;, &#34;intersection&#34;, &#34;union&#34;], (
+        f&#34;Invalid bounding_box: {method}. Options include: reference, intersection, and union.&#34;
+    )
+
+    assert gdal_utils.is_raster_list(rasters_list), &#34;All rasters must be raster datasets.&#34;
+
+    if len(rasters_list) == 1:
+        return rasters_list[0]
+
+    # Count intersections
+    most_intersections = 0
+    intersections_arr = []
+    for idx_i, raster_i in enumerate(rasters_list):
+        intersections = 0
+        for idx_j, raster_j in enumerate(rasters_list):
+            if idx_i == idx_j:
+                continue
+
+            # Uses the latlng bounding box to determine if the rasters intersect.
+            intersection = core_raster.rasters_intersect(raster_i, raster_j)
+
+            if intersection:
+                intersections += 1
+
+        if intersections &gt; most_intersections:
+            most_intersections = intersections
+
+        intersections_arr.append(intersections)
+
+    # Find the raster with the most intersections.
+    largest_area = 0.0
+    largest_area_idx = 0
+    for idx, intersection in enumerate(intersections_arr):
+        if intersection == most_intersections:
+            raster = rasters_list[idx]
+            raster_metadata = core_raster.raster_to_metadata(raster)
+            raster_area = raster_metadata[&#34;area_latlng&#34;]
+
+            if raster_area &gt; largest_area:
+                largest_area = raster_area
+                largest_area_idx = idx
+
+    best_reference = gdal_utils.get_path_from_dataset(rasters_list[largest_area_idx])
+
+    input_path_list = []
+    for raster in rasters_list:
+        input_path_list.append(gdal_utils.get_path_from_dataset(raster))
+
+    all_other_rasters = []
+    for raster_path in input_path_list:
+        if raster_path == best_reference:
+            continue
+
+        all_other_rasters.append(raster_path)
+
+    for raster in all_other_rasters:
+        assert core_raster.rasters_intersect(best_reference, raster), (
+            f&#34;Rasters {best_reference} and {raster} do not intersect.&#34;
+        )
+
+    if method == &#34;reference&#34;:
+        return best_reference
+
+    matched_rasters = match_raster_projections(
+        all_other_rasters,
+        best_reference,
+        copy_if_already_correct=False,
+    )
+
+    best_reference_meta = core_raster.raster_to_metadata(best_reference)
+
+    best_geom = best_reference_meta[&#34;geom&#34;]
+    for raster_path in matched_rasters:
+        raster_meta = core_raster.raster_to_metadata(raster_path)
+        raster_geom = raster_meta[&#34;geom&#34;]
+
+        if not raster_geom.Intersects(best_geom):
+            raise ValueError(
+                f&#34;Raster {raster_path} did not intersect. Consider not using bbox=&#39;intersection&#39;&#34;
+            )
+
+        if method == &#34;union&#34;:
+            best_geom = raster_geom.Union(best_geom)
+        else:
+            best_geom = raster_geom.Intersection(best_geom)
+
+    bbox_best_geom = best_geom.GetEnvelope()
+
+    for raster_path in matched_rasters:
+        if raster_path not in input_path_list:
+            gdal_utils.delete_if_in_memory(raster_path)
+
+    outbox_bbox = bbox_utils.align_bboxes_to_pixel_size(
+        best_reference_meta[&#34;bbox&#34;],
+        bbox_best_geom,
+        best_reference_meta[&#34;pixel_width&#34;],
+        best_reference_meta[&#34;pixel_height&#34;],
+    )
+
+    creation_options = gdal_utils.default_creation_options()
+
+    width = int(round((outbox_bbox[1] - outbox_bbox[0]) / best_reference_meta[&#34;pixel_width&#34;]))
+    height = int(round((outbox_bbox[3] - outbox_bbox[2]) / best_reference_meta[&#34;pixel_height&#34;]))
+
+    out_path = core_raster.create_empty_raster(
+        out_path=f&#34;/vsimem/intersection_union_{uuid4().int}.tif&#34;,
+        width=width,
+        height=height,
+        pixel_width=best_reference_meta[&#34;pixel_width&#34;],
+        pixel_height=best_reference_meta[&#34;pixel_height&#34;],
+        bands=1,
+        dtype=best_reference_meta[&#34;dtype&#34;],
+        x_min=outbox_bbox[0],
+        y_max=outbox_bbox[3],
+        projection=best_reference_meta[&#34;projection&#34;],
+        creation_options=creation_options,
+    )
+
+    return out_path</code></pre>
 </details>
 </dd>
 </dl>
@@ -1106,7 +865,8 @@ to the output raster.</p>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="buteo.raster.align.align_rasters" href="#buteo.raster.align.align_rasters">align_rasters</a></code></li>
-<li><code><a title="buteo.raster.align.match_raster_projections" href="#buteo.raster.align.match_raster_projections">match_raster_projections</a></code></li>
+<li><code><a title="buteo.raster.align.align_rasters_to_reference" href="#buteo.raster.align.align_rasters_to_reference">align_rasters_to_reference</a></code></li>
+<li><code><a title="buteo.raster.align.find_best_reference" href="#buteo.raster.align.find_best_reference">find_best_reference</a></code></li>
 </ul>
 </li>
 </ul>

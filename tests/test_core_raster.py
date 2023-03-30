@@ -566,6 +566,60 @@ def test_raster_to_array_nodata_false():
     assert not np.ma.isMaskedArray(array)
 
 
+def test_raster_to_array_multibands():
+    """ Test: Convert raster to array. """
+    raster = create_sample_raster(bands=3)
+
+    array = raster_to_array(raster)
+
+    assert array.shape == (10, 10, 3)
+    gdal.Unlink(raster)
+
+
+def test_raster_to_array_multibands_extract_single():
+    """ Test: Convert raster to array. """
+    raster = create_sample_raster(bands=3)
+
+    array = raster_to_array(raster, bands=[1])
+    array_all = raster_to_array(raster)
+
+    assert array.shape == (10, 10, 1)
+    assert array_all.shape == (10, 10, 3)
+
+    assert np.all(array == array_all[:, :, 0:1])
+
+    gdal.Unlink(raster)
+
+def test_raster_to_array_multibands_extract_two():
+    """ Test: Convert raster to array. """
+    raster = create_sample_raster(bands=3)
+
+    array_all = raster_to_array(raster)
+    array = raster_to_array(raster, bands=[2, 3])
+
+    assert array.shape == (10, 10, 2)
+    assert array_all.shape == (10, 10, 3)
+
+    assert np.all(array == array_all[:, :, 1:3])
+
+    gdal.Unlink(raster)
+
+
+def test_raster_to_array_multibands_extract_two_2():
+    """ Test: Convert raster to array. """
+    raster = create_sample_raster(bands=3)
+
+    array_all = raster_to_array(raster)
+    array = raster_to_array(raster, bands=[1, 3])
+
+    assert array.shape == (10, 10, 2)
+    assert array_all.shape == (10, 10, 3)
+
+    assert np.all(array == array_all[:, :, [0, 2]])
+
+    gdal.Unlink(raster)
+
+
 # ARRAY_TO_RASTER
 def test_array_to_raster_simple_case_3D():
     """ Test: Convert array to raster. """

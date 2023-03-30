@@ -22,7 +22,11 @@ from buteo.utils import bbox_utils, core_utils, gdal_utils, gdal_enums
 
 
 
-def _open_raster(raster, *, writeable=True):
+def _open_raster(
+    raster: Union[str, gdal.Dataset],
+    *,
+    writeable: bool = True,
+) -> gdal.Dataset:
     """ **INTERNAL**. """
     assert isinstance(raster, (gdal.Dataset, str)), "raster must be a string or a gdal.Dataset"
 
@@ -50,7 +54,12 @@ def _open_raster(raster, *, writeable=True):
     raise ValueError(f"Input raster does not exists. Received: {raster}")
 
 
-def open_raster(raster, *, writeable=True, allow_lists=True):
+def open_raster(
+    raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+    *,
+    writeable=True,
+    allow_lists=True,
+) -> Union[gdal.Dataset, List[gdal.Dataset]]:
     """
     Opens a raster from a path to a raster. Can be in-memory or local. If a
     gdal.Dataset is passed, it is returned. Supports lists. If a list is passed,
@@ -93,9 +102,12 @@ def open_raster(raster, *, writeable=True, allow_lists=True):
     return list_return[0]
 
 
-def get_projection(raster, wkt=True):
+def get_projection(
+    raster: Union[str, gdal.Dataset],
+    wkt: bool = True,
+) -> str:
     """
-    Gets the projection from a dataset, either as WKT or in another format.
+    Gets the projection from a dataset, either as WKT or osr.
     The input can be a path or a gdal.Dataset.
 
     Args:
@@ -115,7 +127,9 @@ def get_projection(raster, wkt=True):
     return dataset.GetProjection()
 
 
-def _raster_to_metadata(raster):
+def _raster_to_metadata(
+    raster: Union[str, gdal.Dataset],
+) -> dict:
     """ Internal. """
     core_utils.type_check(raster, [str, gdal.Dataset], "raster")
 
@@ -224,7 +238,11 @@ def _raster_to_metadata(raster):
     return metadata
 
 
-def raster_to_metadata(raster, *, allow_lists=True):
+def raster_to_metadata(
+    raster: Union[str, gdal.Dataset, List[str], List[gdal.Dataset]],
+    *,
+    allow_lists: bool = True,
+) -> Union[dict, List[dict]]:
     """
     Reads metadata from a raster dataset or a list of raster datasets, and returns a dictionary or a list of dictionaries
     containing metadata information for each raster.
@@ -263,13 +281,13 @@ def raster_to_metadata(raster, *, allow_lists=True):
 
 
 def rasters_are_aligned(
-    rasters,
+    rasters: List[Union[str, gdal.Dataset]],
     *,
-    same_extent=True,
-    same_dtype=False,
-    same_nodata=False,
-    threshold=0.001,
-):
+    same_extent: bool = True,
+    same_dtype: bool = False,
+    same_nodata: bool = False,
+    threshold: float = 0.001,
+) -> bool:
     """
     Verifies whether a list of rasters are aligned.
 
@@ -380,7 +398,9 @@ def rasters_are_aligned(
     return True
 
 
-def raster_has_nodata(raster):
+def raster_has_nodata(
+    raster: Union[str, gdal.Dataset],
+) -> bool:
     """
     Verifies whether a raster has any nodata values.
 
@@ -406,7 +426,9 @@ def raster_has_nodata(raster):
     return False
 
 
-def rasters_have_nodata(rasters):
+def rasters_have_nodata(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+) -> bool:
     """
     Verifies whether a list of rasters have any nodata values.
 
@@ -427,7 +449,9 @@ def rasters_have_nodata(rasters):
     return has_nodata
 
 
-def rasters_have_same_nodata(rasters):
+def rasters_have_same_nodata(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+) -> bool:
     """
     Verifies whether a list of rasters have the same nodata values.
 
@@ -452,7 +476,9 @@ def rasters_have_same_nodata(rasters):
     return len(set(nodata_values)) == 1
 
 
-def get_first_nodata_value(raster):
+def get_first_nodata_value(
+    raster: Union[float, int, None],
+):
     """
     Gets the first nodata value from a raster.
 
@@ -476,7 +502,9 @@ def get_first_nodata_value(raster):
     return nodata
 
 
-def count_bands_in_rasters(rasters):
+def count_bands_in_rasters(
+    rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
+) -> int:
     """
     Counts the number of bands in a list of rasters.
 
@@ -501,15 +529,15 @@ def count_bands_in_rasters(rasters):
 
 
 def raster_to_array(
-    raster,
+    raster: Union[gdal.Dataset, str, List[Union[str, gdal.Dataset]]],
     *,
-    bands='all',
-    masked="auto",
-    filled=False,
-    fill_value=None,
-    bbox=None,
-    pixel_offsets=None,
-):
+    bands: Union[List[int], str, int] = 'all',
+    masked: Union[bool, str] = "auto",
+    filled: bool = False,
+    fill_value: Optional[Union[int, float]] = None,
+    bbox: Optional[List[float]] = None,
+    pixel_offsets: Optional[List[int]] = None,
+) -> np.ndarray:
     """
     Converts a raster or a list of rasters into a NumPy array.
 
@@ -584,7 +612,15 @@ def raster_to_array(
 
         x_offset, y_offset, x_size, y_size = bbox_utils.get_pixel_offsets(metadata["transform"], bbox)
 
-    output_shape = (y_size, x_size, len(internal_rasters) * shape[2])
+    if (isinstance(bands, str) and bands.lower() == "all") or bands == -1:
+        output_shape = (y_size, x_size, len(internal_rasters) * shape[2])
+    else:
+        channels = 0
+        for in_raster in internal_rasters:
+            internal_bands = gdal_utils.to_band_list(bands, raster_to_metadata(in_raster)["band_count"])
+            channels += len(internal_bands)
+
+        output_shape = (y_size, x_size, channels)
 
     # Determine nodata and value
     if masked == "auto":
@@ -634,7 +670,7 @@ def raster_to_array(
         internal_bands = gdal_utils.to_band_list(bands, metadata["band_count"])
 
         for band in internal_bands:
-            band_ref = ref.GetRasterBand(band + 1)
+            band_ref = ref.GetRasterBand(band)
             band_nodata_value = band_ref.GetNoDataValue()
 
             if pixel_offsets is not None or bbox is not None:
@@ -665,17 +701,17 @@ def raster_to_array(
 
 
 def array_to_raster(
-    array,
+    array: np.ndarray,
     *,
-    reference,
-    out_path=None,
-    set_nodata="arr",
-    allow_mismatches=False,
-    pixel_offsets=None,
-    bbox=None,
-    overwrite=True,
-    creation_options=None,
-):
+    reference: Union[str, gdal.Dataset],
+    out_path: Optional[str] = None,
+    set_nodata: Union[bool, float, int, str] = "arr",
+    allow_mismatches: bool = False,
+    pixel_offsets: Optional[List[Union[int, float]]] = None,
+    bbox: Optional[List[float]] = None,
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
+) -> str:
     """
     Turns a NumPy array into a GDAL dataset or exported
     as a raster using a reference raster.
@@ -838,17 +874,18 @@ def array_to_raster(
 
 
 def _raster_set_datatype(
-    raster,
-    dtype_str,
-    out_path=None,
+    raster: Union[str, gdal.Dataset],
+    dtype_str: str,
+    out_path: Optional[str] = None,
     *,
-    overwrite=True,
-    creation_options=None,
-):
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
+) -> str:
     """ **INTERNAL**. """
     assert isinstance(raster, (str, gdal.Dataset)), "raster must be a string or a GDAL.Dataset."
     assert isinstance(dtype_str, str), "dtype_str must be a string."
     assert len(dtype_str) > 0, "dtype_str must be a non-empty string."
+    assert out_path is None or isinstance(out_path, str), "out_path must be a string."
 
     if not gdal_utils.is_raster(raster):
         raise ValueError(f"Unable to open input raster: {raster}")
@@ -927,14 +964,14 @@ def _raster_set_datatype(
 
 
 def raster_set_datatype(
-    raster,
-    dtype,
-    out_path=None,
+    raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+    dtype: str,
+    out_path: Optional[Union[str, List[str]]] = None,
     *,
-    overwrite=True,
-    allow_lists=True,
-    creation_options=None,
-):
+    overwrite: bool = True,
+    allow_lists: bool = True,
+    creation_options: Optional[List[str]] = None,
+) -> Union[str, List[str]]:
     """
     Converts the datatype of a raster.
 
@@ -1148,7 +1185,7 @@ def stack_rasters_vrt(
     overwrite: bool = True,
     reference: Optional[str] = None,
     creation_options: Optional[List[str]] = None,
-):
+) -> str:
     """
     Stacks a list of rasters into a virtual raster (.vrt).
 
@@ -1288,7 +1325,7 @@ def rasters_intersection(
     raster1: Union[str, gdal.Dataset],
     raster2: Union[str, gdal.Dataset],
     return_as_vector: bool = False,
-) -> bool:
+) -> Union[ogr.Geometry, ogr.DataSource]:
     """
     Gets the latlng intersection of two rasters.
 
@@ -1322,7 +1359,7 @@ def rasters_intersection(
 def get_overlap_fraction(
     raster1: Union[str, gdal.Dataset],
     raster2: Union[str, gdal.Dataset],
-):
+) -> float:
     """
     Get the fraction of the overlap between two rasters.
     (e.g. 0.9 for mostly overlapping rasters)
@@ -1351,6 +1388,98 @@ def get_overlap_fraction(
     overlap = intersection.GetArea() / geom_1.GetArea()
 
     return overlap
+
+
+def create_empty_raster(
+    out_path: Union[str, None] = None,
+    width: int = 100,
+    height: int = 100,
+    pixel_size: Union[Union[float, int], List[Union[float, int]]] = 10.0,
+    bands: int = 1,
+    dtype: str = "uint8",
+    x_min: Union[float, int] = 0.0,
+    y_max: Union[float, int] = 0.0,
+    nodata_value: Union[float, int, None] = None,
+    projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference] = "EPSG:3857",
+    creation_options: Union[List[str], None] = None,
+    overwrite: bool = True,
+) -> str:
+    """ Create an empty raster.
+    
+    Keyword Args:
+        out_path (str, default=None): The output path. If None, a temporary file will be created.
+        width (int, default=100): The width of the raster in pixels.
+        height (int, default=100): The height of the raster in pixels.
+        pixel_size (int/float/list/tuple, default=10.0): The pixel size in units of the projection.
+        bands (int, default=1): The number of bands in the raster.
+        dtype (str, default="uint8"): The data type of the raster.
+        x_min (int/float, default=0.0): The x coordinate of the top left corner of the raster.
+        y_max (int/float, default=0.0): The y coordinate of the top left corner of the raster.
+        nodata_value (int/float/None, default=None): The nodata value of the raster.
+        projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference, default="EPSG:3857"): The projection of the raster.
+        creation_options (list, default=None): A list of creation options.
+        overwrite (bool, default=True): If True, overwrite the output file if it exists.
+
+    Returns:
+        str: The path to the output raster.
+    """
+    core_utils.type_check(out_path, [str, type(None)], "out_path")
+    core_utils.type_check(width, int, "width")
+    core_utils.type_check(height, int, "height")
+    core_utils.type_check(pixel_size, [int, float, list, tuple], "pixel_size")
+    core_utils.type_check(bands, int, "bands")
+    core_utils.type_check(dtype, str, "dtype")
+    core_utils.type_check(x_min, [int, float], "x_min")
+    core_utils.type_check(y_max, [int, float], "y_max")
+    core_utils.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
+    core_utils.type_check(creation_options, [list, type(None)], "creation_options")
+    core_utils.type_check(overwrite, bool, "overwrite")
+
+     # Parse the driver
+    driver_name = "GTiff" if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+    if driver_name is None:
+        raise ValueError(f"Unable to parse filetype from path: {out_path}")
+
+    driver = gdal.GetDriverByName(driver_name)
+    if driver is None:
+        raise ValueError(f"Error while creating driver from extension: {out_path}")
+
+    output_name = None
+    if out_path is None:
+        output_name = gdal_utils.create_memory_path("raster_from_array.tif", add_uuid=True)
+    else:
+        output_name = out_path
+
+    core_utils.remove_if_required(output_name, overwrite)
+
+    destination = driver.Create(
+        output_name,
+        width,
+        height,
+        bands,
+        gdal_enums.translate_str_to_gdal_dtype(dtype),
+        gdal_utils.default_creation_options(creation_options),
+    )
+
+    parsed_projection = gdal_utils.parse_projection(projection, return_wkt=True)
+
+    destination.SetProjection(parsed_projection)
+
+    pixel_width = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[0]
+    pixel_height = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[1]
+
+    transform = [x_min, pixel_width, 0, y_max, 0, -pixel_height] # negative for north-up
+
+    destination.SetGeoTransform(transform)
+
+    if nodata_value is not None:
+        for band in range(1, bands + 1):
+            destination.GetRasterBand(band).SetNoDataValue(nodata_value)
+
+    destination.FlushCache()
+    destination = None
+
+    return output_name
 
 
 def create_raster_from_array(

@@ -116,7 +116,7 @@ def _warp_raster(
 
         # Fast check: Does the extent of the two inputs overlap?
         if not origin_extent.Intersects(clip_extent):
-            raise Exception(&#34;Clipping geometry did not intersect raster.&#34;)
+            raise RuntimeError(&#34;Clipping geometry did not intersect raster.&#34;)
 
         # Check if projections match, otherwise reproject target geom.
         if not target_projection.IsSame(clip_projection):
@@ -204,7 +204,7 @@ def _warp_raster(
     )
 
     if warped is None:
-        raise Exception(f&#34;Error while warping raster: {raster}&#34;)
+        raise RuntimeError(f&#34;Error while warping raster: {raster}&#34;)
 
     return out_path
 

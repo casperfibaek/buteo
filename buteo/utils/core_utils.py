@@ -44,14 +44,15 @@ def is_float(value):
     """
     if isinstance(value, float):
         return True
-    elif isinstance(value, str):
+
+    if isinstance(value, str):
         try:
             float(value)
             return True
         except ValueError:
             return False
-    else:
-        return False
+
+    return False
 
 
 def is_number(potential_number):
@@ -85,14 +86,15 @@ def is_int(value):
     """
     if isinstance(value, int):
         return True
-    elif isinstance(value, str):
+
+    if isinstance(value, str):
         try:
             int(value)
             return True
         except ValueError:
             return False
-    else:
-        return False
+
+    return False
 
 
 def is_list_all_the_same(lst):
@@ -249,7 +251,7 @@ def to_number(value):
     if is_float(value):
         return float(value)
 
-    raise Exception(f"Could not convert {value} to a number.")
+    raise RuntimeError(f"Could not convert {value} to a number.")
 
 
 def make_dir_if_not_exists(path):
@@ -291,7 +293,7 @@ def path_to_ext(path, with_dot=False):
     ext = basesplit[1]
 
     if ext == "" or len(ext) == 1:
-        raise Exception (f"File: {path} has no extension.")
+        raise RuntimeError (f"File: {path} has no extension.")
 
     if with_dot:
         return ext
@@ -333,7 +335,7 @@ def change_path_ext(path, target_ext):
     ext = basesplit[1]
 
     if ext == "" or len(ext) == 1:
-        raise Exception(f"File: {path} has no extension.")
+        raise RuntimeError(f"File: {path} has no extension.")
 
     return os.path.join(os.path.dirname(path), f"{basesplit[0]}.{target_ext}")
 
@@ -381,7 +383,7 @@ def is_valid_non_memory_path(path):
 
     ext = os.path.splitext(path)[1]
 
-    if ext == "" or ext == ".":
+    if ext in ["", ".", "/"]:
         return False
 
     if not folder_exists(path_to_folder(path)):

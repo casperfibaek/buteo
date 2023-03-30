@@ -721,7 +721,7 @@ def get_path_from_dataset(dataset, *, dataset_type=None):
         elif isinstance(dataset, gdal.Dataset):
             raster = dataset
         else:
-            raise Exception(f&#34;Could not read input raster: {raster}&#34;)
+            raise RuntimeError(f&#34;Could not read input raster: {raster}&#34;)
 
         path = raster.GetDescription()
         raster = None
@@ -734,7 +734,7 @@ def get_path_from_dataset(dataset, *, dataset_type=None):
         elif isinstance(dataset, ogr.DataSource):
             vector = dataset
         else:
-            raise Exception(f&#34;Could not read input vector: {vector}&#34;)
+            raise RuntimeError(f&#34;Could not read input vector: {vector}&#34;)
 
         path = vector.GetDescription()
         vector = None
@@ -1172,13 +1172,13 @@ def to_band_list(
                     f&#34;List of bands contained non-valid band number: {val}&#34;
                 ) from None
 
-            if band_int &gt; band_count - 1:
+            if band_int &gt; band_count:
                 raise ValueError(&#34;Requested a higher band that is available in raster.&#34;)
             else:
                 return_list.append(band_int)
     elif band_number == -1:
         for val in range(band_count):
-            return_list.append(val)
+            return_list.append(val + 1)
     else:
         if band_number &gt; band_count + 1:
             raise ValueError(&#34;Requested a higher band that is available in raster.&#34;)
@@ -1216,7 +1216,7 @@ def create_output_path(
     ## Returns:
     (_str_): A path to the output raster or a list of paths.
     &#34;&#34;&#34;
-    assert isinstance(dataset_path, (str)), &#34;dataset_path must be a string or a list of strings.&#34;
+    assert isinstance(dataset_path, (str, gdal.Dataset, ogr.DataSource, [str, gdal.Dataset, ogr.DataSource])), &#34;dataset_path must be a string or a list of strings.&#34;
     assert len(dataset_path) &gt; 0, &#34;dataset_path must be a path of len larger than 0.&#34;
     assert isinstance(out_path, (str, type(None))), &#34;out_path must be a string or None.&#34;
 
@@ -1324,6 +1324,8 @@ def create_output_path_list(
 
     assert len(dataset_path) &gt; 0, &#34;dataset_path must contain at least one path.&#34;
 
+    dataset_path = [get_path_from_dataset(path) for path in dataset_path]
+
     if isinstance(out_path, list):
         assert len(out_path) == len(dataset_path), &#34;out_path must be the same length as dataset_path if a list is provided.&#34;
         assert core_utils.is_valid_output_path_list(out_path, overwrite=overwrite), &#34;out_path must be a list of valid output paths.&#34;
@@ -1391,7 +1393,7 @@ def save_dataset_to_disk(
             elif isinstance(dataset_, gdal.Dataset):
                 opened_dataset = dataset_
             else:
-                raise Exception(f&#34;Could not read input raster: {dataset_}&#34;)
+                raise RuntimeError(f&#34;Could not read input raster: {dataset_}&#34;)
 
         elif is_vector(dataset_):
             dataset_type = &#34;vector&#34;
@@ -1400,10 +1402,10 @@ def save_dataset_to_disk(
             elif isinstance(dataset_, ogr.DataSource):
                 opened_dataset = dataset_
             else:
-                raise Exception(f&#34;Could not read input vector: {dataset_}&#34;)
+                raise RuntimeError(f&#34;Could not read input vector: {dataset_}&#34;)
 
         else:
-            raise Exception(f&#34;Invalid dataset type: {dataset_}&#34;)
+            raise RuntimeError(f&#34;Invalid dataset type: {dataset_}&#34;)
 
         driver_destination = None
 
@@ -1653,7 +1655,7 @@ along with the input filename.</p>
     ## Returns:
     (_str_): A path to the output raster or a list of paths.
     &#34;&#34;&#34;
-    assert isinstance(dataset_path, (str)), &#34;dataset_path must be a string or a list of strings.&#34;
+    assert isinstance(dataset_path, (str, gdal.Dataset, ogr.DataSource, [str, gdal.Dataset, ogr.DataSource])), &#34;dataset_path must be a string or a list of strings.&#34;
     assert len(dataset_path) &gt; 0, &#34;dataset_path must be a path of len larger than 0.&#34;
     assert isinstance(out_path, (str, type(None))), &#34;out_path must be a string or None.&#34;
 
@@ -1782,6 +1784,8 @@ input.</p>
         dataset_path = core_utils.parse_glob_path(out_path)
 
     assert len(dataset_path) &gt; 0, &#34;dataset_path must contain at least one path.&#34;
+
+    dataset_path = [get_path_from_dataset(path) for path in dataset_path]
 
     if isinstance(out_path, list):
         assert len(out_path) == len(dataset_path), &#34;out_path must be the same length as dataset_path if a list is provided.&#34;
@@ -2142,7 +2146,7 @@ input.</p>
         elif isinstance(dataset, gdal.Dataset):
             raster = dataset
         else:
-            raise Exception(f&#34;Could not read input raster: {raster}&#34;)
+            raise RuntimeError(f&#34;Could not read input raster: {raster}&#34;)
 
         path = raster.GetDescription()
         raster = None
@@ -2155,7 +2159,7 @@ input.</p>
         elif isinstance(dataset, ogr.DataSource):
             vector = dataset
         else:
-            raise Exception(f&#34;Could not read input vector: {vector}&#34;)
+            raise RuntimeError(f&#34;Could not read input vector: {vector}&#34;)
 
         path = vector.GetDescription()
         vector = None
@@ -3244,7 +3248,7 @@ an osr.SpatialReference.</p>
             elif isinstance(dataset_, gdal.Dataset):
                 opened_dataset = dataset_
             else:
-                raise Exception(f&#34;Could not read input raster: {dataset_}&#34;)
+                raise RuntimeError(f&#34;Could not read input raster: {dataset_}&#34;)
 
         elif is_vector(dataset_):
             dataset_type = &#34;vector&#34;
@@ -3253,10 +3257,10 @@ an osr.SpatialReference.</p>
             elif isinstance(dataset_, ogr.DataSource):
                 opened_dataset = dataset_
             else:
-                raise Exception(f&#34;Could not read input vector: {dataset_}&#34;)
+                raise RuntimeError(f&#34;Could not read input vector: {dataset_}&#34;)
 
         else:
-            raise Exception(f&#34;Invalid dataset type: {dataset_}&#34;)
+            raise RuntimeError(f&#34;Invalid dataset type: {dataset_}&#34;)
 
         driver_destination = None
 
@@ -3418,13 +3422,13 @@ an osr.SpatialReference.</p>
                     f&#34;List of bands contained non-valid band number: {val}&#34;
                 ) from None
 
-            if band_int &gt; band_count - 1:
+            if band_int &gt; band_count:
                 raise ValueError(&#34;Requested a higher band that is available in raster.&#34;)
             else:
                 return_list.append(band_int)
     elif band_number == -1:
         for val in range(band_count):
-            return_list.append(val)
+            return_list.append(val + 1)
     else:
         if band_number &gt; band_count + 1:
             raise ValueError(&#34;Requested a higher band that is available in raster.&#34;)
