@@ -328,6 +328,9 @@ def align_rasters(
         suffix (str, optional): The suffix to add to the output file name. Defaults to "".
         ram (int/str, default="auto"): Amount of RAM to use in MB. If "auto",
             the amount of RAM will be determined automatically.
+    
+    Returns:
+        List[str]: The aligned rasters.
     """
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
     core_utils.type_check(out_path, [str, None, [str]], "out_path")

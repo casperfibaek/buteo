@@ -13,6 +13,9 @@ from glob import glob
 from uuid import uuid4
 from datetime import datetime
 from pathlib import PurePosixPath
+from typing import Any, Union, List, Optional, Dict, Tuple
+from warnings import warn
+
 
 # External
 import psutil
@@ -22,25 +25,25 @@ from buteo.utils.gdal_enums import get_valid_raster_driver_extensions, get_valid
 
 
 
-def get_unix_seconds_as_str():
+def get_unix_seconds_as_str() -> str:
     """
     Get a string of the current UNIX time in seconds.
 
-    ## Returns:
-    (_str_): A string of the current UNIX time in seconds.
+    Returns:
+        str: A string of the current UNIX time in seconds.
     """
     return str(int(time.time()))
 
 
-def is_float(value):
+def is_float(value: Any) -> bool:
     """
     Check if a value is a float. If it is a string, try to convert it to a float.
 
-    ## Args:
-    `value` (_any_): The value to check.
+    Args:
+        value (any): The value to check.
 
-    ## Returns:
-    (_bool_): **True** if the value is a float, **False** otherwise.
+    Returns:
+        bool: True if the value is a float, False otherwise.
     """
     if isinstance(value, float):
         return True
@@ -49,21 +52,22 @@ def is_float(value):
         try:
             float(value)
             return True
+
         except ValueError:
             return False
 
     return False
 
 
-def is_number(potential_number):
+def is_number(potential_number: Any) -> bool:
     """
     Check if variable is a number.
 
-    ## Args:
-    `potential_number` (_any_): The variable to check. </br>
+    Args:
+        potential_number (any): The variable to check.
 
-    ## Returns:
-    (_bool_): **True** if the variable is a number, **False** otherwise.
+    Returns:
+        bool: True if the variable is a number, False otherwise.
     """
     if isinstance(potential_number, float):
         return True
@@ -74,15 +78,15 @@ def is_number(potential_number):
     return False
 
 
-def is_int(value):
+def is_int(value: Any) -> bool:
     """
     Check if a value is an integer. If it is a string, try to convert it to an integer.
 
-    ## Args:
-    `value` (_any_): The value to check. </br>
+    Args:
+        value (any): The value to check.
 
-    ## Returns:
-    (_bool_): **True** if the value is an integer, **False** otherwise.
+    Returns:
+        bool: True if the variable is an int, False otherwise.
     """
     if isinstance(value, int):
         return True
@@ -97,17 +101,20 @@ def is_int(value):
     return False
 
 
-def is_list_all_the_same(lst):
+def is_list_all_the_same(lst: list) -> bool:
     """
     Check if a list contains all the same elements.
 
-    ## Args:
-    `lst` (_list_): The list to check. </br>
+    Args:
+        lst (list): The list to check.
 
-    ## Returns:
-    (_bool_): **True** if the list contains all the same elements, **False** otherwise.
+    Returns:
+        bool: True if the list contains all the same elements, False otherwise.
     """
     assert isinstance(lst, list), "lst must be a list."
+
+    if len(lst) == 0:
+        return True
 
     first = lst[0]
     for idx, item in enumerate(lst):
@@ -120,17 +127,18 @@ def is_list_all_the_same(lst):
     return True
 
 
-def file_exists(path):
+def file_exists(path: str) -> bool:
     """
     Check if a file exists. Also checks vsimem.
 
-    ## Args:
-    `path` (_str_): The path to the file. </br>
+    Args:
+        path (str): The path to the file.
 
-    ## Returns:
-    (_bool_): **True** if the file exists, **False** otherwise.
+    Returns:
+        bool: True if the file exists, False otherwise.
     """
-    assert isinstance(path, str), "path must be a string."
+    if not isinstance(path, str):
+        return False
 
     if os.path.exists(path):
         return True
@@ -145,21 +153,21 @@ def file_exists(path):
                 return True
         else:
             print("Warning, unable to access vsimem.")
-    except:  # pylint: disable=bare-except
+    except AssertionError:
         pass
 
     return False
 
 
-def folder_exists(path):
+def folder_exists(path: str) -> bool:
     """
     Check if a folder exists.
 
-    ## Args:
-    `path` (_str_): The path to the folder. </br>
+    Args:
+        path (str): The path to the folder.
 
-    ## Returns:
-    (_bool_): **True** if the folder exists, **False** otherwise.
+    Returns:
+        bool: True if the folder exists, False otherwise.
     """
     if isinstance(path, str):
         abs_dir = os.path.isdir(path)
@@ -173,15 +181,15 @@ def folder_exists(path):
     return False
 
 
-def delete_files_in_folder(folder):
+def delete_files_in_folder(folder: str) -> bool:
     """
     Delete all files in a folder. Does not remove subfolders.
 
-    ## Args:
-    `folder` (_str_): The path to the folder. </br>
+    Args:
+        folder (str): The path to the folder.
 
-    ## Returns:
-    (_bool_): **True** if the files were deleted, throws exception otherwise..
+    Returns:
+        bool: True if the files were deleted, raises warning otherwise.
     """
     assert isinstance(folder, str), "folder must be a string."
     assert folder_exists(folder), "folder must exist."
@@ -190,38 +198,41 @@ def delete_files_in_folder(folder):
         try:
             os.remove(file)
         except Exception:
-            print(f"Warning. Could not remove: {file}")
+            warn(f"Warning. Could not remove: {file}", UserWarning)
 
     return True
 
 
-def delete_folder(folder):
+def delete_folder(folder: str) -> bool:
     """
     Delete a folder.
 
-    ## Args:
-    `folder` (_str_): The path to the folder. </br>
+    Args:
+        folder (str): The path to the folder.
 
-    ## Returns:
-    (_bool_): **True** if the folder was deleted, **False** otherwise.
+    Returns:
+        bool: True if the folder was deleted, False otherwise.
     """
     assert isinstance(folder, str), "folder must be a string."
     assert folder_exists(folder), "folder must exist."
 
-    shutil.rmtree(folder)
+    try:
+        shutil.rmtree(folder)
+    except RuntimeError:
+        warn(f"Warning. Could not remove: {folder}", UserWarning)
 
     return True
 
 
-def delete_file(file):
+def delete_file(file: str) -> bool:
     """
     Delete a File
 
-    ## Args:
-    `file` (_str_): The path to the file.
+    Args:
+        file (str): The path to the file.
 
-    ## Returns:
-    (_bool_): **True** if the file was deleted, **False** otherwise.
+    Returns:
+        bool: True if the file was deleted, False otherwise.
     """
     assert isinstance(file, str), "file must be a string."
     assert file_exists(file), "file must exist."
@@ -234,56 +245,62 @@ def delete_file(file):
     return True
 
 
-def to_number(value):
+def to_number(variable):
     """
-    Convert a value to a number.
+    Attempts to convert a variable to a number.
 
-    ## Args:
-    `value` (_any_): The value to convert.
+    Args:
+        variable (any): The value to convert.
 
-    ## Returns:
-    (_float_): The value converted to a number.
+    Returns:
+        (float): The value converted to a number.
     """
-    assert isinstance(value, (str, int, float)), "value must be a string, integer or float."
-    if is_number(value):
-        return value
+    assert isinstance(variable, (str, int, float)), "value must be a string, integer or float."
+    if is_number(variable):
+        return variable
 
-    if is_float(value):
-        return float(value)
+    if is_float(variable):
+        return float(variable)
 
-    raise RuntimeError(f"Could not convert {value} to a number.")
+    raise RuntimeError(f"Could not convert {variable} to a number.")
 
 
-def make_dir_if_not_exists(path):
+def make_dir_if_not_exists(path: str) -> str:
     """
     Make a directory if it doesn't exist.
 
-    ## Args:
-    `path` (_str_): The path to the directory. </br>
+    Args:
+        path (str): The path to the directory.
 
-    ## Returns:
-    (_str_): The path to the created directory.
+    Returns:
+        (str): The path to the created directory.
     """
     assert isinstance(path, str), "path must be a string."
 
     if not folder_exists(path):
         os.makedirs(path)
+    
+    if not folder_exists(path):
+        raise RuntimeError(f"Could not create directory: {path}")
 
     return path
 
 
-def path_to_ext(path, with_dot=False):
+def path_to_ext(
+    path: str,
+    with_dot: bool = False,
+):
     """
-    Get the extension of a file.
+    Get the extension of a file. If the file has no extension, raise an error.
 
-    ## Args:
-    `path` (_str_): The path to the file. </br>
+    Args:
+        path (str): The path to the file.
 
-    ## Kwargs:
-    `with_dot` (_bool_): If True, return the extension with a dot. (**Default**: `False`) </br>
+    Kwargs:
+        with_dot (bool = False): If True, return the extension with a dot.
 
-    ## Returns:
-    (_str_): The extension of the file. (_without the dot_)
+    Returns:
+        str: The extension of the file.
     """
     assert isinstance(path, str), "path must be a string."
     assert isinstance(with_dot, bool), "with_dot must be a boolean."
@@ -301,35 +318,41 @@ def path_to_ext(path, with_dot=False):
     return ext[1:]
 
 
-def path_to_folder(path):
+def path_to_folder(path: str) -> str:
     """
     Get the folder of a file.
 
-    ## Args:
-    `path` (_str_): The path to the file. </br>
+    Args:
+        path (str): The path to the file.
 
-    ## Returns:
-    (_str_): The folder of the file.
+    Returns:
+        str: The folder of the file.
     """
     assert isinstance(path, str), "path must be a string."
 
-    return os.path.dirname(os.path.abspath(path))
+    dir_path = os.path.dirname(os.path.abspath(path))
+
+    return dir_path
 
 
-def change_path_ext(path, target_ext):
+def change_path_ext(
+    path: str,
+    target_ext: str,
+) -> str:
     """
     Change the extension of a file.
 
-    ## Args:
-    `path` (_str_): The path to the file. </br>
-    `target_ext` (_str_): The new extension. </br>
+    Args:
+        path (str): The path to the file.
+        target_ext (str): The new extension.
 
-    ## Returns:
-    (_str_): The path to the file with the new extension.
+    Returns:
+        str: The path to the file with the new extension.
     """
     assert isinstance(path, str), "path must be a string."
     assert isinstance(target_ext, str), "target_ext must be a string."
 
+    target_ext = target_ext.lstrip('.')
     basename = os.path.basename(path)
     basesplit = os.path.splitext(basename)
     ext = basesplit[1]
@@ -341,15 +364,15 @@ def change_path_ext(path, target_ext):
 
 
 
-def is_valid_mem_path(path):
+def is_valid_mem_path(path: str) -> bool:
     """
     Check if a path is a valid memory path that has an extension.
 
-    ## Args:
-    `path` (_str_): The path to test. </br>
+    Args:
+        path (str): The path to test.
 
-    ## Returns:
-    (_bool_): **True** if path is a valid memory path, **False** otherwise.
+    Returns:
+        bool: True if path is a valid memory path, False otherwise.
     """
     if not isinstance(path, str):
         return False
@@ -368,15 +391,15 @@ def is_valid_mem_path(path):
     return False
 
 
-def is_valid_non_memory_path(path):
+def is_valid_non_memory_path(path: str) -> bool:
     """
     Check if a path is valid, not in memory, and has an extension.
 
-    ## Args:
-    `path` (_str_): The path to the file. </br>
+    Args:
+        path (str): The path to the file.
 
-    ## Returns:
-    (_bool_): **True** if the path has an extension, **False** otherwise.
+    Returns:
+        bool: True if the path has an extension, False otherwise.
     """
     if not isinstance(path, str):
         return False
@@ -398,15 +421,15 @@ def is_valid_non_memory_path(path):
     return True
 
 
-def is_valid_file_path(path):
+def is_valid_file_path(path: str) -> bool:
     """
     Check if a path is valid and has an extension. Path can be in memory.
 
-    ## Args:
-    `path` (_str_): The path to the file. </br>
+    Args:
+        path (str): The path to the file.
 
-    ## Returns:
-    (_bool_): **True** if the path has an extension, **False** otherwise.
+    Returns:
+        bool: True if the path has an extension, False otherwise.
     """
     if is_valid_mem_path(path) or is_valid_non_memory_path(path):
         return True
@@ -414,18 +437,18 @@ def is_valid_file_path(path):
     return False
 
 
-def is_valid_output_path(path, *, overwrite=True):
+def is_valid_output_path(path: str, *, overwrite: bool = True) -> bool:
     """
     Check if an output path is valid.
 
-    ## Args:
-    `path` (_str_): The path to the file. </br>
+    Args:
+        path (str): The path to the file.
 
-    ## Kwargs:
-    `overwrite` (_bool_): **True** if the file should be overwritten, **False** otherwise. </br>
+    Keyword Args:
+        overwrite (bool = True): True if the file should be overwritten, False otherwise.
 
-    ## Returns:
-    (_bool_): **True** if the output path is valid, **False** otherwise.
+    Returns:
+        bool: True if the output path is valid, False otherwise.
     """
     if not is_valid_file_path(path):
         return False
@@ -439,18 +462,18 @@ def is_valid_output_path(path, *, overwrite=True):
     return True
 
 
-def is_valid_output_path_list(output_list, *, overwrite=True):
+def is_valid_output_path_list(output_list: List[str], *, overwrite: bool = True) -> bool:
     """
     Check if a list of output paths are valid.
 
-    ## Args:
-    `output_list` (_list_): The list of paths to the files. </br>
+    Args:
+        output_list (list): The list of paths to the files.
 
-    ## Kwargs:
-    `overwrite` (_bool_): **True** if the file should be overwritten, **False** otherwise. </br>
+    Keyword Args:
+        overwrite (bool = True): True if the file should be overwritten, False otherwise.
 
-    ## Returns:
-    (_bool_): **True** if the list of output paths are valid, **False** otherwise.
+    Returns:
+        bool: True if the list of output paths are valid, False otherwise.
     """
     if not isinstance(output_list, list):
         return False
@@ -465,16 +488,16 @@ def is_valid_output_path_list(output_list, *, overwrite=True):
     return True
 
 
-def remove_if_required(path, overwrite):
+def remove_if_required(path: str, overwrite: bool = True) -> bool:
     """
     Remove a file if overwrite is True.
 
-    ## Args:
-    `path` (_str_): The path to the file. </br>
-    `remove` (_bool_): If True, remove the file. </br>
+    Args:
+        path (str): The path to the file.
+        overwrite (bool = True): If True, overwrite the file.
 
-    ## Returns:
-    (_bool_): **True** if the file was removed, **False** otherwise.
+    Returns:
+        bool: True if the file was removed, False otherwise.
     """
     assert is_valid_output_path(path), f"path must be a valid output path. {path}"
 
@@ -492,16 +515,16 @@ def remove_if_required(path, overwrite):
     return False
 
 
-def remove_if_required_list(output_list, overwrite):
+def remove_if_required_list(output_list: List[str], overwrite: bool) -> bool:
     """
     Remove a list of files if overwrite is True.
 
-    ## Args:
-    `output_list` (_list_): The list of paths to the files. </br>
-    `remove` (_bool_): If True, remove the files. </br>
+    Args:
+        output_list (list): The list of paths to the files.
+        overwrite (bool): If True, overwrite the files.
 
-    ## Returns:
-    (_bool_): **True** if the files were removed, **False** otherwise.
+    Returns:
+        bool: True if the files were removed, False otherwise.
     """
     assert is_valid_output_path_list(output_list), f"output_list must be a valid output path list. {output_list}"
 
@@ -511,21 +534,29 @@ def remove_if_required_list(output_list, overwrite):
     return True
 
 
-def get_augmented_path(path, *, prefix="", suffix="", add_uuid=True, folder=None):
+def get_augmented_path(
+    path: str,
+    *,
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = True,
+    folder: Optional[str] = None,
+) -> str:
     """
-    Gets a basename from a string in the format: </br>
+    Gets a basename from a string in the format:
     `dir/prefix_basename_time_uuid_suffix.ext`
 
-    ## Args:
-    `path` (_str_): The path to the original file. </br>
+    Args:
+        path (str): The path to the original file.
 
-    ## Kwargs:
-    `prefix` (_str_): The prefix to add to the memory path. (**Default**: `""`) </br>
-    `suffix` (_str_): The suffix to add to the memory path. (**Default**: `""`) </br>
-    `add_uuid` (_bool_): If True, add a uuid to the memory path. (**Default**: `True`) </br>
+    Keyword Args:
+        prefix (str = ""): The prefix to add to the memory path.
+        suffix (str = ""): The suffix to add to the memory path.
+        add_uuid (bool = True): If True, add a uuid to the memory path.
+        folder (str = None): The folder to save the file in.
 
-    ## Returns:
-    (_str_): A string of the current UNIX time in seconds.
+    Returns:
+        str: A string of the current UNIX time in seconds.
     """
     assert isinstance(path, str), "path must be a string."
     assert isinstance(folder, (type(None), str)), "folder must be None or a string"
@@ -572,16 +603,19 @@ def get_augmented_path(path, *, prefix="", suffix="", add_uuid=True, folder=None
     return out_path
 
 
-def get_size(start_path=".", rough=True):
+def get_size(
+    start_path: str = ".",
+    rough: bool = True,
+) -> int:
     """
     Get the size of a folder.
 
-    ## Kwargs:
-    `start_path` (_str_): The path to the folder. (**Default**: `"."`) </br>
-    `rough` (_bool_): If True, return a rough estimate. (**Default**: `True`) </br>
+    Keyword Args:
+        start_path (str = "."): The path to the folder.
+        rough (bool = True): If True, return a rough estimate.
 
-    ## Returns:
-    (_int_): The size of the folder.
+    Returns:
+        int: The size of the folder.
     """
     assert isinstance(start_path, str), "start_path must be a string."
     assert folder_exists(start_path), "start_path must exist."
@@ -601,16 +635,19 @@ def get_size(start_path=".", rough=True):
     return total_size
 
 
-def divide_into_steps(total, step):
+def divide_into_steps(
+    total: int,
+    step: int,
+):
     """
     Divide a number into steps.
 
-    ## Args:
-    `total` (_int_): The total number. </br>
-    `step` (_int_): The step size. </br>
+    Args:
+        total int: The total number.
+        step int: The step size.
 
-    ## Returns:
-    (_list_): The list of steps.
+    Returns:
+        list: The list of steps.
     """
     assert isinstance(total, int), "total must be an integer."
     assert isinstance(step, int), "step must be an integer."
@@ -628,16 +665,19 @@ def divide_into_steps(total, step):
     return steps
 
 
-def divide_arr_into_steps(arr, steps_length):
+def divide_arr_into_steps(
+    arr: List[Any],
+    steps_length: int,
+) -> List[List[Any]]:
     """
     Divide an array into steps.
 
-    ## Args:
-    `arr` (_list_): The array. </br>
-    `steps_length` (_int_): The length of each step. </br>
+    Args:
+        arr (list): The array.
+        steps_length (int): The length of each step.
 
-    ## Returns:
-    (_list_): An array divided into steps.
+    Returns:
+        list: An array divided into steps.
     """
     assert isinstance(arr, list), "arr must be a list."
     assert isinstance(steps_length, int), "steps_length must be an integer."
@@ -657,15 +697,17 @@ def divide_arr_into_steps(arr, steps_length):
     return ret_arr
 
 
-def step_ranges(arr_with_steps):
+def step_ranges(
+    arr_with_steps: List[List[Any]],
+) -> List[Dict[str, int]]:
     """
     Get the ranges of each step.
 
-    ## Args:
-    `arr_with_steps` (_list_): The array with steps. </br>
+    Args:
+        arr_with_steps (list): The array with steps.
 
-    ## Returns:
-    (_dict_): A dictionary of type: `{ "id": _int_, "start": _int_, "stop": _int_}`.
+    Returns:
+        list: A list of dictionaries of type: { "id": int, "start": int, "stop": int}.
     """
     assert isinstance(arr_with_steps, list), "arr_with_steps must be a list."
 
@@ -687,15 +729,15 @@ def step_ranges(arr_with_steps):
     return start_stop
 
 
-def recursive_check_type_list_none_or_tuple(potential_type):
+def recursive_check_type_list_none_or_tuple(potential_type: Any) -> bool:
     """
     Recursively check if a type, list or tuple.
 
-    ## Args:
-    `potential_type` (_any_): The variable to test. </br>
+    Args:
+        potential_type (any): The variable to test.
 
-    ## Returns:
-    (_bool_): **True** if a type, list or tuple, **False** otherwise.
+    Returns:
+        bool: True if a type, list, or tuple, False otherwise.
     """
     if isinstance(potential_type, type(None)):
         return True
@@ -714,25 +756,25 @@ def recursive_check_type_list_none_or_tuple(potential_type):
 
 
 def type_check(
-    variable,
-    types,
-    name="",
+    variable: Any,
+    types: Tuple[type, ...],
+    name: str = "",
     *,
-    throw_error=True,
-):
+    throw_error: bool = True,
+) -> bool:
     """
     Utility function to type check the inputs of a function. Check two levels down.
 
-    ## Args:
-    `variable` (_any_): The variable to check. </br>
-    `types` (_tuple_): The types to check against. `(float, int, ...)` </br>
+    Args:
+        variable (any): The variable to check.
+        types (tuple): The types to check against. (float, int, ...)
 
-    ## Kargs:
-    `name` (_str_): The name printed in the error string if an error is thrown. (**Default**: `""`)</br>
-    `throw_error` (_bool_): If True, raise an error if the type is not correct. (**Default**: `True`)</br>
+    Keyword Args:
+        name (str = ""): The name printed in the error string if an error is thrown.
+        throw_error (bool = True): If True, raise an error if the type is not correct.
 
-    ## Returns:
-    (_bool_): A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.
+    Returns:
+        bool: A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.
     """
     assert isinstance(name, str), "name must be a string."
     assert recursive_check_type_list_none_or_tuple(types), f"types must be a type, list, None, or tuple. not: {types}"
@@ -805,16 +847,19 @@ def type_check(
     return False
 
 
-def is_list_all_val(arr, val):
+def is_list_all_val(
+    arr: List[Any],
+    val: Any,
+) -> bool:
     """
     Check if a list is all a value. This also considers type.
 
-    ## Args:
-    `arr` (_list_): The list to check. </br>
-    `val` (_any_): The value to check against. </br>
+    Args:
+        arr (list): The list to check.
+        val (any): The value to check against.
 
-    ## Returns:
-    (_bool_): **True** if all elements are x, **False** otherwise.
+    Returns:
+        bool: True if all elements are x, False otherwise.
     """
     assert isinstance(arr, list), "arr must be a list."
 
@@ -825,19 +870,23 @@ def is_list_all_val(arr, val):
     return True
 
 
-def progress(count, total, name="Processing"):
+def progress(
+    count: int,
+    total: int,
+    name: str = "Processing",
+) -> None:
     """
     Print a progress bar.
 
-    ## Args:
-    `count` (_int_): The current count. </br>
-    `total` (_int_): The total count. </br>
+    Args:
+        count (int): The current count.
+        total (int): The total count.
 
-    ## Kwargs:
-    `name` (_str_): The name to show in the progress bar. (**Default**: `"Processing"`) </br>
+    Keyword Args:
+        name (str = "Processing"): The name to show in the progress bar. Default: "Processing".
 
-    ## Returns:
-    (_None_): Returns None.
+    Returns:
+        None.
     """
     assert isinstance(count, int), "count must be an integer."
     assert isinstance(total, int), "total must be an integer."
@@ -872,22 +921,21 @@ def progress(count, total, name="Processing"):
     return None
 
 
-def timing(before, print_msg=True):
+def timing(
+    before: datetime,
+    print_msg: bool = True,
+) -> None:
     """
     Get the time elapsed since the given time.
 
-    ## Args:
-    `before` (_datetime_): The time to compare. </br>
+    Args:
+        before (datetime): The time to compare.
 
-    ## Kwargs:
-    `print_msg` (_bool_): If True, print the time elapsed. (**Default**: `True`) </br>
+    Keyword Args:
+        print_msg (bool = True): If True, print the time elapsed.
 
-    ```python
-    >>> before = datetime.now()
-    >>> long_running_calculation()
-    >>> timing(before)
-    >>> Processing took: 1h 1m 1s
-    ```
+    Returns:
+        None.
     """
     assert isinstance(before, datetime), "before must be a datetime object."
 
@@ -906,15 +954,22 @@ def timing(before, print_msg=True):
     return message
 
 
-def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, available=True):
+def get_dynamic_memory_limit_bytes(
+    *,
+    percentage: float = 80.0,
+    min_bytes: int = 1000000,
+    available: bool = True,
+) -> int:
     """
     Returns a dynamic memory limit taking into account total memory and CPU cores.
 
-    ## Args:
-    `percentage` (_int_): The percentage of the total memory to use. (Default: **80**)
+    Keyword Args:
+        percentage (float = 80.0): The percentage of the total memory to use.
+        min_bytes (int = 1000000): The minimum number of bytes to be returned.
+        available (bool = True): If True, consider available memory instead of total memory.
 
-    ## Returns:
-    (_int_): The dynamic memory limit in bytes.
+    Returns:
+        int: The dynamic memory limit in bytes.
     """
     assert isinstance(percentage, (int, str, float)), "percentage must be an integer."
 
@@ -936,15 +991,15 @@ def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, availa
     return int(dyn_limit)
 
 
-def is_str_a_glob(test_str):
+def is_str_a_glob(test_str: str) -> bool:
     """
     Check if a string is a glob.
 
-    ## Args:
-    `test_str` (_str_): The string to check.
+    Args:
+        test_str (str): The string to check.
 
-    ## Returns:
-    (_bool_): **True** if the string is a glob, **False** otherwise.
+    Returns:
+        bool: True if the string is a glob, False otherwise.
     """
     if not isinstance(test_str, str):
         return False
@@ -958,15 +1013,17 @@ def is_str_a_glob(test_str):
     return False
 
 
-def parse_glob_path(test_str):
+def parse_glob_path(
+    test_str: str,
+) -> List[str]:
     """
     Parses a string containing a glob path.
 
-    ## Args:
-    `test_str` (_str_): The string to parse the pattern from.
+    Args:
+        test_str (str): The string to parse the pattern from.
 
-    ## Returns:
-    (_list_): A list of the matching paths.
+    Returns:
+        list: A list of the matching paths.
     """
     assert is_str_a_glob(test_str), "test_str must be a glob path."
     pre_glob = test_str[:-5]
@@ -974,15 +1031,17 @@ def parse_glob_path(test_str):
     return glob(pre_glob)
 
 
-def ensure_list(variable_or_list):
+def ensure_list(
+    variable_or_list: Union[List, Any],
+) -> List[Any]:
     """
     Ensure that a variable is a list.
 
-    ## Args:
-    `variable_or_list` (_any_): The variable to check. </br>
+    Args:
+        variable_or_list (any): The variable to check.
 
-    ## Returns:
-    (_list_): The variable as a list.
+    Returns:
+        list: The variable as a list.
     """
     if isinstance(variable_or_list, str) and is_str_a_glob(variable_or_list):
         return parse_glob_path(variable_or_list)

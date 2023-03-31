@@ -17,7 +17,7 @@ setup(
     version=VERSION,
     author="Casper Fibaek",
     author_email="casperfibaek@gmail.com",
-    description="A pythonic way of working with raster data",
+    description="Geospatial Analysis Meets AI",
     long_description=readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/casperfibaek/buteo",
