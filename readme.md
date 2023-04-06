@@ -55,15 +55,44 @@ stacked_numpy_arrays = beo.raster_to_array(
     paths_to_aligned_rasters_in_memory,
 )
 
-paths_to_patches_in_memory = beo.get_patches(
+patches = beo.array_to_patches(
     path_to_stacked_numpy_arrays,
     256,
-    offsets=3,
+    offsets_y=3,
+    offsets_x=3,
 )
 
 # patches_nr, height, width, channels
-paths_to_patches_in_memory
+patches
 >>> np.ndarray([10000, 256, 256, 9])
+```
+
+```python
+import buteo as beo
+
+# Predict a raster using a model
+
+RASTER_PATH = "path/to/raster/raster.tif"
+RASTER_OUT_PATH = "path/to/raster/raster_pred.tif"
+
+array = beo.raster_to_array(RASTER_PATH)
+
+callback = model.predict # from pytorch, keras, etc..
+
+# Predict the raster using overlaps, and borders.
+# Merge using different methods. (median, mad, mean, mode, ...)
+predicted = predict_array(
+    array,
+    callback,
+    tile_size=256,
+)
+
+# Write the predicted raster to disk
+beo.array_to_raster(
+    predicted,
+    reference=RASTER_PATH,
+    out_path=RASTER_OUT_PATH,
+)
 ```
 
 </br>

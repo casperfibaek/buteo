@@ -356,6 +356,9 @@ def align_rasters(
         suffix (str, optional): The suffix to add to the output file name. Defaults to &#34;&#34;.
         ram (int/str, default=&#34;auto&#34;): Amount of RAM to use in MB. If &#34;auto&#34;,
             the amount of RAM will be determined automatically.
+    
+    Returns:
+        List[str]: The aligned rasters.
     &#34;&#34;&#34;
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;rasters&#34;)
     core_utils.type_check(out_path, [str, None, [str]], &#34;out_path&#34;)
@@ -433,7 +436,12 @@ creation_options (Optional[List[str]], optional): The creation options to use. D
 prefix (str, optional): The prefix to add to the output file name. Defaults to "".
 suffix (str, optional): The suffix to add to the output file name. Defaults to "".
 ram (int/str, default="auto"): Amount of RAM to use in MB. If "auto",
-the amount of RAM will be determined automatically.</p></div>
+the amount of RAM will be determined automatically.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List[str]</code></dt>
+<dd>The aligned rasters.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -469,6 +477,9 @@ the amount of RAM will be determined automatically.</p></div>
         suffix (str, optional): The suffix to add to the output file name. Defaults to &#34;&#34;.
         ram (int/str, default=&#34;auto&#34;): Amount of RAM to use in MB. If &#34;auto&#34;,
             the amount of RAM will be determined automatically.
+    
+    Returns:
+        List[str]: The aligned rasters.
     &#34;&#34;&#34;
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;rasters&#34;)
     core_utils.type_check(out_path, [str, None, [str]], &#34;out_path&#34;)

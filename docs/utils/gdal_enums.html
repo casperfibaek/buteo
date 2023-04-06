@@ -35,18 +35,19 @@ Functions to translate between **GDAL** and **NumPy** datatypes.
 # External
 import numpy as np
 from osgeo import gdal
+from typing import List, Tuple, Union, Dict
 
 
 
-def get_available_drivers():
+def get_available_drivers() -&gt; List[Dict[str, str]]:
     &#34;&#34;&#34;
-    Returns a list of **all** available drivers.
+    Returns a list of all available drivers.
 
-    ## Returns:
-    (_list_): List of dicts available drivers. Each dict has the following keys: &lt;/br&gt;
-    `short_name`: **String** of driver short name (e.g. GTiff). &lt;/br&gt;
-    `long_name`: **String** of driver long name (e.g. GeoTiff). &lt;/br&gt;
-    `extension`: **String** of driver extension (e.g. tif). **OBS**: Can be an empty string. &lt;/br&gt;
+    Returns:
+        List[Dict[str, str]]: List of dicts containing available drivers. Each dict has the following keys:
+            - &#39;short_name&#39; (str): Driver short name (e.g. GTiff).
+            - &#39;long_name&#39; (str): Driver long name (e.g. GeoTiff).
+            - &#39;extension&#39; (str): Driver file extension (e.g. tif). Note: Can be an empty string.
     &#34;&#34;&#34;
     raster_drivers = []
     vector_drivers = []
@@ -77,13 +78,12 @@ def get_available_drivers():
     return (raster_drivers, vector_drivers)
 
 
-
-def get_valid_raster_driver_extensions():
+def get_valid_raster_driver_extensions() -&gt; List[str]:
     &#34;&#34;&#34;
     Returns a list of valid raster driver extensions.
 
-    ## Returns:
-    (_list_): List of valid raster driver extensions.
+    Returns:
+        list: List of valid raster driver extensions.
     &#34;&#34;&#34;
     available_raster_drivers, _available_vector_drivers = get_available_drivers()
 
@@ -99,12 +99,12 @@ def get_valid_raster_driver_extensions():
     return valid_raster_driver_extensions
 
 
-def get_valid_vector_driver_extensions():
+def get_valid_vector_driver_extensions() -&gt; List[str]:
     &#34;&#34;&#34;
     Returns a list of valid vector driver extensions.
 
-    ## Returns:
-    (_list_): List of valid vector driver extensions.
+    Returns:
+        list: List of valid vector driver extensions.
     &#34;&#34;&#34;
     _available_raster_drivers, available_vector_drivers = get_available_drivers()
 
@@ -117,12 +117,12 @@ def get_valid_vector_driver_extensions():
     return valid_vector_driver_extensions
 
 
-def get_valid_driver_extensions():
+def get_valid_driver_extensions() -&gt; List[str]:
     &#34;&#34;&#34;
     Returns a list of all valid driver extensions (**GDAL** + **OGR**).
 
-    ## Returns:
-    (_list_): List of all valid driver extensions.
+    Returns:
+        list: List of all valid driver extensions.
     &#34;&#34;&#34;
     available_raster_drivers, available_vector_drivers = get_available_drivers()
 
@@ -135,15 +135,15 @@ def get_valid_driver_extensions():
     return valid_driver_extensions
 
 
-def is_valid_driver_extension(ext):
+def is_valid_driver_extension(ext: str) -&gt; bool:
     &#34;&#34;&#34;
-    Checks if a file extension is a valid **GDAL** or **OGR** driver extension.
+    Checks if a file extension is a valid GDAL or OGR driver extension.
 
-    ## Args:
-    `ext` (_str_): The file extension. &lt;/br&gt;
+    Args:
+        ext (str): The file extension.
 
-    ## Returns:
-    (_bool_): **True** if valid, **False** otherwise.
+    Returns:
+        bool: True if valid, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(ext, str), &#34;Extension must be a string.&#34;
     assert len(ext) &gt; 0, &#34;Extension must be a non-empty string.&#34;
@@ -151,15 +151,15 @@ def is_valid_driver_extension(ext):
     return ext in get_valid_driver_extensions()
 
 
-def is_valid_raster_driver_extension(ext):
+def is_valid_raster_driver_extension(ext: str) -&gt; bool:
     &#34;&#34;&#34;
-    Checks if a raster file extension is a valid **GDAL** driver extension.
+    Checks if a raster file extension is a valid GDAL driver extension.
 
-    ## Args:
-    `ext` (_str_): The file extension. &lt;/br&gt;
+    Args:
+        ext (str): The file extension.
 
-    ## Returns:
-    (_bool_): **True** if valid, **False** otherwise.
+    Returns:
+        bool: True if valid, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(ext, str), &#34;Extension must be a string.&#34;
     assert len(ext) &gt; 0, &#34;Extension must be a non-empty string.&#34;
@@ -167,15 +167,15 @@ def is_valid_raster_driver_extension(ext):
     return ext in get_valid_raster_driver_extensions()
 
 
-def is_valid_vector_driver_extension(ext):
+def is_valid_vector_driver_extension(ext: str) -&gt; bool:
     &#34;&#34;&#34;
     Checks if a vector file extension is a valid **OGR** driver extension.
 
-    ## Args:
-    `ext` (_str_): The file extension. &lt;/br&gt;
+    Args:
+        ext (str): The file extension.
 
-    ## Returns:
-    (_bool_): **True** if valid, **False** otherwise.
+    Returns:
+        bool: True if valid, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(ext, str), &#34;Extension must be a string.&#34;
     assert len(ext) &gt; 0, &#34;Extension must be a non-empty string.&#34;
@@ -183,15 +183,15 @@ def is_valid_vector_driver_extension(ext):
     return ext in get_valid_vector_driver_extensions()
 
 
-def convert_raster_extension_to_driver_shortname(ext):
+def convert_raster_extension_to_driver_shortname(ext: str) -&gt; str:
     &#34;&#34;&#34;
-    Converts a raster file extension to a **GDAL** driver short_name name.
+    Converts a raster file extension to a GDAL driver short name.
 
-    ## Args:
-    `ext` (_str_): The file extension. &lt;/br&gt;
+    Args:
+        ext (str): The file extension.
 
-    ## Returns:
-    (_str_): The driver short_name (e.g. GTiff).
+    Returns:
+        str: The GDAL driver short name (e.g. &#34;GTiff&#34;).
     &#34;&#34;&#34;
     assert is_valid_raster_driver_extension(ext), f&#34;Invalid extension: {ext}&#34;
 
@@ -204,15 +204,15 @@ def convert_raster_extension_to_driver_shortname(ext):
     raise RuntimeError(f&#34;Invalid extension: {ext}&#34;)
 
 
-def convert_extension_to_driver_shortname(ext):
+def convert_extension_to_driver_shortname(ext: str) -&gt; str:
     &#34;&#34;&#34;
-    Converts a file extension to an **OGR** or **GDAL** driver short_name name.
+    Converts a file extension to a driver short name for either OGR or GDAL.
 
-    ## Args:
-    `ext` (_str_): The file extension. &lt;/br&gt;
+    Args:
+        ext (str): The file extension.
 
-    ## Returns:
-    (_str_): The driver short_name (e.g. GPKG or GTiff).
+    Returns:
+        str: The driver short name (e.g. GPKG or GTiff).
     &#34;&#34;&#34;
     assert is_valid_vector_driver_extension(ext) or is_valid_raster_driver_extension(ext), f&#34;Invalid extension: {ext}&#34;
 
@@ -225,15 +225,15 @@ def convert_extension_to_driver_shortname(ext):
     raise RuntimeError(f&#34;Invalid extension: {ext}&#34;)
 
 
-def convert_vector_extension_to_driver_shortname(ext):
+def convert_vector_extension_to_driver_shortname(ext: str) -&gt; str:
     &#34;&#34;&#34;
     Converts a vector file extension to an **OGR** driver short_name name.
 
-    ## Args:
-    `ext` (_str_): The file extension. &lt;/br&gt;
+    Args:
+        ext (str): The file extension.
 
-    ## Returns:
-    (_str_): The driver short_name (e.g. GPKG).
+    Returns:
+        str: The driver short_name (e.g. GPKG).
     &#34;&#34;&#34;
     assert is_valid_vector_driver_extension(ext), f&#34;Invalid extension: {ext}&#34;
 
@@ -246,15 +246,15 @@ def convert_vector_extension_to_driver_shortname(ext):
     raise RuntimeError(f&#34;Invalid extension: {ext}&#34;)
 
 
-def translate_resample_method(method):
+def translate_resample_method(method: str) -&gt; int:
     &#34;&#34;&#34;
-    Translate a string of a resampling method to a **GDAL** integer (e.g. `gdal.GRA_NearestNeighbour`).
+    Translate a string of a resampling method to a GDAL integer (e.g. gdal.GRA_NearestNeighbour).
 
-    ## Args:
-    `method` (_str_): The resampling method. &lt;/br&gt;
+    Args:
+        method (str): The resampling method.
 
-    ## Returns:
-    (_int_): The **GDAL** resampling integer (e.g. `&#34;nearest&#34;=1`).
+    Returns:
+        int: The GDAL resampling integer (e.g. &#34;nearest&#34;=1).
     &#34;&#34;&#34;
     assert isinstance(method, str), &#34;method must be a string.&#34;
     assert len(method) &gt; 0, &#34;method must be a non-empty string.&#34;
@@ -303,15 +303,15 @@ def translate_resample_method(method):
     raise ValueError(&#34;Unknown resample method: &#34; + method)
 
 
-def translate_gdal_dtype_to_str(gdal_datatype_int):
+def translate_gdal_dtype_to_str(gdal_datatype_int: int) -&gt; str:
     &#34;&#34;&#34;
     Translates the **GDAL** datatype integer into a string. Can be used by **NumPy**.
 
-    ## Args:
-    `gdal_datatype_int` (_gdal_datatype_int_): The **GDAL** datatype integer. &lt;/br&gt;
+    Args:
+        gdal_datatype_int (int): The **GDAL** datatype integer.
 
-    ## Returns:
-    (_str_): The translated string (e.g. `0=&#34;uint8&#34;`)
+    Returns:
+        str: The translated string (e.g. `0=&#34;uint8&#34;`)
     &#34;&#34;&#34;
     assert isinstance(gdal_datatype_int, int), f&#34;gdal_datatype must be an integer. Received: {gdal_datatype_int}&#34;
 
@@ -337,15 +337,15 @@ def translate_gdal_dtype_to_str(gdal_datatype_int):
     raise ValueError(f&#34;Could not translate the datatype: {gdal_datatype_int}&#34;)
 
 
-def translate_str_to_gdal_dtype(dtype_str):
+def translate_str_to_gdal_dtype(dtype_str: str) -&gt; int:
     &#34;&#34;&#34;
     Translates the datatype string into a **GDAL** datatype integer. Can be used by **GDAL**.
 
-    ## Args:
-    `dtype_str` (_dtype_str_): The datatype string (e.g. &#34;float32&#34;). &lt;/br&gt;
+    Args:
+    - dtype_str (str): The datatype string (e.g. &#34;float32&#34;).
 
-    ## Returns:
-    (_int_): The translated integer (e.g. `&#34;uint8&#34;=0`)
+    Returns:
+    - int: The **GDAL** datatype integer corresponding to the input datatype string (e.g. `&#34;uint8&#34;=1`).
     &#34;&#34;&#34;
     assert isinstance(dtype_str, (np.dtype, str)), &#34;dtype_str must be a string or numpy dtype.&#34;
 
@@ -382,15 +382,16 @@ def translate_str_to_gdal_dtype(dtype_str):
     raise ValueError(f&#34;Could not translate the datatype: {dtype_str}&#34;)
 
 
-def get_default_nodata_value(dtype):
+def get_default_nodata_value(dtype: Union[np.dtype, str, int]) -&gt; Union[float, int]:
     &#34;&#34;&#34;
     Returns the default fill value for masked numpy arrays.
 
-    ## Args:
-    `dtype` (_numpy.dtype_/_str_/_int_): The dtype. &lt;/br&gt;
+    Args:
+        dtype: The data type of the array, can be either a numpy dtype object, a string representing a
+            data type (e.g. &#39;float32&#39;) or an integer representing a numpy data type (e.g. 5 for &#39;float32&#39;).
 
-    ## Returns:
-    (_float_/_int_): The default fill value.
+    Returns:
+        The default fill value for the given data type.
     &#34;&#34;&#34;
     assert isinstance(dtype, (np.dtype, str, int)), &#34;numpy_dtype must be a numpy.dtype or string.&#34;
 
@@ -424,8 +425,16 @@ def get_default_nodata_value(dtype):
     raise ValueError(&#34;Unknown numpy datatype: &#34; + test_type)
 
 
-def get_range_for_numpy_datatype(numpy_dtype):
-    &#34;&#34;&#34; Returns the range for a given numpy datatype. &#34;&#34;&#34;
+def get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype]) -&gt; Tuple[Union[int, float], Union[int, float]]:
+    &#34;&#34;&#34;
+    Returns the range of values that can be represented by a given numpy dtype.
+
+    Args:
+        numpy_dtype (str/np.dtype): The numpy dtype.
+
+    Returns:
+        tuple: (min_value, max_value) that can be represented by the numpy dtype.
+    &#34;&#34;&#34;
 
     datatypes = {
         &#34;int8&#34;: (-128, 127),
@@ -456,8 +465,20 @@ def get_range_for_numpy_datatype(numpy_dtype):
     raise ValueError(&#34;Unknown numpy datatype: &#34; + test_type)
 
 
-def value_is_within_datatype_range(value, numpy_dtype):
-    &#34;&#34;&#34; Checks if a value is within the range of a numpy datatype. &#34;&#34;&#34;
+def value_is_within_datatype_range(
+    value: Union[int, float],
+    numpy_dtype: Union[str, np.dtype],
+) -&gt; bool:
+    &#34;&#34;&#34;
+    Checks if a value is within the range of a numpy datatype.
+
+    Args:
+        value (int/float): The value to check.
+        numpy_dtype (str/np.dtype): The numpy dtype.
+
+    Returns:
+        bool: True if the value is within the range of the numpy dtype, False otherwise.
+    &#34;&#34;&#34;
     if value is np.nan:
         return True
 
@@ -466,16 +487,16 @@ def value_is_within_datatype_range(value, numpy_dtype):
     return min_val &lt;= value &lt;= max_val
 
 
-def is_gdal_datatype_a_float(gdal_dtype):
+def is_gdal_datatype_a_float(gdal_dtype: int) -&gt; bool:
     &#34;&#34;&#34;
-    Checks if a **GDAL** datatype integer is a floating datatype: &lt;/br&gt;
-    `(Float32, Float64, cFloat32, cFloat64)`
+    Checks if a GDAL datatype integer is a floating-point datatype:
+    (Float32, Float64, cFloat32, cFloat64)
 
-    ## Args:
-    `gdal_dtype` (_int_): The **GDAL** datatype integer. &lt;/br&gt;
+    Args:
+        gdal_dtype (int): The GDAL datatype integer.
 
-    ## Returns:
-    (_bool_): **True** if datatype is a float, otherwise **False**.
+    Returns:
+        bool: True if the datatype is a float, otherwise False.
     &#34;&#34;&#34;
     assert isinstance(gdal_dtype, int), f&#34;gdal_dtype must be an integer. Received: {gdal_dtype}&#34;
 
@@ -495,27 +516,33 @@ def is_gdal_datatype_a_float(gdal_dtype):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.utils.gdal_enums.convert_extension_to_driver_shortname"><code class="name flex">
-<span>def <span class="ident">convert_extension_to_driver_shortname</span></span>(<span>ext)</span>
+<span>def <span class="ident">convert_extension_to_driver_shortname</span></span>(<span>ext: str) -> str</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Converts a file extension to an <strong>OGR</strong> or <strong>GDAL</strong> driver short_name name.</p>
-<h2 id="args">Args:</h2>
-<p><code>ext</code> (<em>str</em>): The file extension. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>str</em>): The driver short_name (e.g. GPKG or GTiff).</p></div>
+<div class="desc"><p>Converts a file extension to a driver short name for either OGR or GDAL.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>ext</code></strong> :&ensp;<code>str</code></dt>
+<dd>The file extension.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>The driver short name (e.g. GPKG or GTiff).</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def convert_extension_to_driver_shortname(ext):
+<pre><code class="python">def convert_extension_to_driver_shortname(ext: str) -&gt; str:
     &#34;&#34;&#34;
-    Converts a file extension to an **OGR** or **GDAL** driver short_name name.
+    Converts a file extension to a driver short name for either OGR or GDAL.
 
-    ## Args:
-    `ext` (_str_): The file extension. &lt;/br&gt;
+    Args:
+        ext (str): The file extension.
 
-    ## Returns:
-    (_str_): The driver short_name (e.g. GPKG or GTiff).
+    Returns:
+        str: The driver short name (e.g. GPKG or GTiff).
     &#34;&#34;&#34;
     assert is_valid_vector_driver_extension(ext) or is_valid_raster_driver_extension(ext), f&#34;Invalid extension: {ext}&#34;
 
@@ -529,27 +556,33 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.convert_raster_extension_to_driver_shortname"><code class="name flex">
-<span>def <span class="ident">convert_raster_extension_to_driver_shortname</span></span>(<span>ext)</span>
+<span>def <span class="ident">convert_raster_extension_to_driver_shortname</span></span>(<span>ext: str) -> str</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Converts a raster file extension to a <strong>GDAL</strong> driver short_name name.</p>
-<h2 id="args">Args:</h2>
-<p><code>ext</code> (<em>str</em>): The file extension. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>str</em>): The driver short_name (e.g. GTiff).</p></div>
+<div class="desc"><p>Converts a raster file extension to a GDAL driver short name.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>ext</code></strong> :&ensp;<code>str</code></dt>
+<dd>The file extension.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>The GDAL driver short name (e.g. "GTiff").</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def convert_raster_extension_to_driver_shortname(ext):
+<pre><code class="python">def convert_raster_extension_to_driver_shortname(ext: str) -&gt; str:
     &#34;&#34;&#34;
-    Converts a raster file extension to a **GDAL** driver short_name name.
+    Converts a raster file extension to a GDAL driver short name.
 
-    ## Args:
-    `ext` (_str_): The file extension. &lt;/br&gt;
+    Args:
+        ext (str): The file extension.
 
-    ## Returns:
-    (_str_): The driver short_name (e.g. GTiff).
+    Returns:
+        str: The GDAL driver short name (e.g. &#34;GTiff&#34;).
     &#34;&#34;&#34;
     assert is_valid_raster_driver_extension(ext), f&#34;Invalid extension: {ext}&#34;
 
@@ -563,27 +596,33 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.convert_vector_extension_to_driver_shortname"><code class="name flex">
-<span>def <span class="ident">convert_vector_extension_to_driver_shortname</span></span>(<span>ext)</span>
+<span>def <span class="ident">convert_vector_extension_to_driver_shortname</span></span>(<span>ext: str) -> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Converts a vector file extension to an <strong>OGR</strong> driver short_name name.</p>
-<h2 id="args">Args:</h2>
-<p><code>ext</code> (<em>str</em>): The file extension. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>str</em>): The driver short_name (e.g. GPKG).</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>ext</code></strong> :&ensp;<code>str</code></dt>
+<dd>The file extension.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>The driver short_name (e.g. GPKG).</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def convert_vector_extension_to_driver_shortname(ext):
+<pre><code class="python">def convert_vector_extension_to_driver_shortname(ext: str) -&gt; str:
     &#34;&#34;&#34;
     Converts a vector file extension to an **OGR** driver short_name name.
 
-    ## Args:
-    `ext` (_str_): The file extension. &lt;/br&gt;
+    Args:
+        ext (str): The file extension.
 
-    ## Returns:
-    (_str_): The driver short_name (e.g. GPKG).
+    Returns:
+        str: The driver short_name (e.g. GPKG).
     &#34;&#34;&#34;
     assert is_valid_vector_driver_extension(ext), f&#34;Invalid extension: {ext}&#34;
 
@@ -597,28 +636,31 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.get_available_drivers"><code class="name flex">
-<span>def <span class="ident">get_available_drivers</span></span>(<span>)</span>
+<span>def <span class="ident">get_available_drivers</span></span>(<span>) -> List[Dict[str, str]]</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Returns a list of <strong>all</strong> available drivers.</p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>list</em>): List of dicts available drivers. Each dict has the following keys: </br>
-<code>short_name</code>: <strong>String</strong> of driver short name (e.g. GTiff). </br>
-<code>long_name</code>: <strong>String</strong> of driver long name (e.g. GeoTiff). </br>
-<code>extension</code>: <strong>String</strong> of driver extension (e.g. tif). <strong>OBS</strong>: Can be an empty string. </br></p></div>
+<div class="desc"><p>Returns a list of all available drivers.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List[Dict[str, str]]</code></dt>
+<dd>List of dicts containing available drivers. Each dict has the following keys:
+- 'short_name' (str): Driver short name (e.g. GTiff).
+- 'long_name' (str): Driver long name (e.g. GeoTiff).
+- 'extension' (str): Driver file extension (e.g. tif). Note: Can be an empty string.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_available_drivers():
+<pre><code class="python">def get_available_drivers() -&gt; List[Dict[str, str]]:
     &#34;&#34;&#34;
-    Returns a list of **all** available drivers.
+    Returns a list of all available drivers.
 
-    ## Returns:
-    (_list_): List of dicts available drivers. Each dict has the following keys: &lt;/br&gt;
-    `short_name`: **String** of driver short name (e.g. GTiff). &lt;/br&gt;
-    `long_name`: **String** of driver long name (e.g. GeoTiff). &lt;/br&gt;
-    `extension`: **String** of driver extension (e.g. tif). **OBS**: Can be an empty string. &lt;/br&gt;
+    Returns:
+        List[Dict[str, str]]: List of dicts containing available drivers. Each dict has the following keys:
+            - &#39;short_name&#39; (str): Driver short name (e.g. GTiff).
+            - &#39;long_name&#39; (str): Driver long name (e.g. GeoTiff).
+            - &#39;extension&#39; (str): Driver file extension (e.g. tif). Note: Can be an empty string.
     &#34;&#34;&#34;
     raster_drivers = []
     vector_drivers = []
@@ -650,27 +692,32 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.get_default_nodata_value"><code class="name flex">
-<span>def <span class="ident">get_default_nodata_value</span></span>(<span>dtype)</span>
+<span>def <span class="ident">get_default_nodata_value</span></span>(<span>dtype: Union[numpy.dtype, str, int]) -> Union[float, int]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the default fill value for masked numpy arrays.</p>
-<h2 id="args">Args:</h2>
-<p><code>dtype</code> (<em>numpy.dtype</em>/<em>str</em>/<em>int</em>): The dtype. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>float</em>/<em>int</em>): The default fill value.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>dtype</code></strong></dt>
+<dd>The data type of the array, can be either a numpy dtype object, a string representing a
+data type (e.g. 'float32') or an integer representing a numpy data type (e.g. 5 for 'float32').</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>The default fill value for the given data type.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_default_nodata_value(dtype):
+<pre><code class="python">def get_default_nodata_value(dtype: Union[np.dtype, str, int]) -&gt; Union[float, int]:
     &#34;&#34;&#34;
     Returns the default fill value for masked numpy arrays.
 
-    ## Args:
-    `dtype` (_numpy.dtype_/_str_/_int_): The dtype. &lt;/br&gt;
+    Args:
+        dtype: The data type of the array, can be either a numpy dtype object, a string representing a
+            data type (e.g. &#39;float32&#39;) or an integer representing a numpy data type (e.g. 5 for &#39;float32&#39;).
 
-    ## Returns:
-    (_float_/_int_): The default fill value.
+    Returns:
+        The default fill value for the given data type.
     &#34;&#34;&#34;
     assert isinstance(dtype, (np.dtype, str, int)), &#34;numpy_dtype must be a numpy.dtype or string.&#34;
 
@@ -705,16 +752,31 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.get_range_for_numpy_datatype"><code class="name flex">
-<span>def <span class="ident">get_range_for_numpy_datatype</span></span>(<span>numpy_dtype)</span>
+<span>def <span class="ident">get_range_for_numpy_datatype</span></span>(<span>numpy_dtype: Union[str, numpy.dtype]) -> Tuple[Union[int, float], Union[int, float]]</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Returns the range for a given numpy datatype.</p></div>
+<div class="desc"><p>Returns the range of values that can be represented by a given numpy dtype.</p>
+<h2 id="args">Args</h2>
+<p>numpy_dtype (str/np.dtype): The numpy dtype.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>tuple</code></dt>
+<dd>(min_value, max_value) that can be represented by the numpy dtype.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_range_for_numpy_datatype(numpy_dtype):
-    &#34;&#34;&#34; Returns the range for a given numpy datatype. &#34;&#34;&#34;
+<pre><code class="python">def get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype]) -&gt; Tuple[Union[int, float], Union[int, float]]:
+    &#34;&#34;&#34;
+    Returns the range of values that can be represented by a given numpy dtype.
+
+    Args:
+        numpy_dtype (str/np.dtype): The numpy dtype.
+
+    Returns:
+        tuple: (min_value, max_value) that can be represented by the numpy dtype.
+    &#34;&#34;&#34;
 
     datatypes = {
         &#34;int8&#34;: (-128, 127),
@@ -746,22 +808,25 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.get_valid_driver_extensions"><code class="name flex">
-<span>def <span class="ident">get_valid_driver_extensions</span></span>(<span>)</span>
+<span>def <span class="ident">get_valid_driver_extensions</span></span>(<span>) -> List[str]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns a list of all valid driver extensions (<strong>GDAL</strong> + <strong>OGR</strong>).</p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>list</em>): List of all valid driver extensions.</p></div>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>List of all valid driver extensions.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_valid_driver_extensions():
+<pre><code class="python">def get_valid_driver_extensions() -&gt; List[str]:
     &#34;&#34;&#34;
     Returns a list of all valid driver extensions (**GDAL** + **OGR**).
 
-    ## Returns:
-    (_list_): List of all valid driver extensions.
+    Returns:
+        list: List of all valid driver extensions.
     &#34;&#34;&#34;
     available_raster_drivers, available_vector_drivers = get_available_drivers()
 
@@ -775,22 +840,25 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.get_valid_raster_driver_extensions"><code class="name flex">
-<span>def <span class="ident">get_valid_raster_driver_extensions</span></span>(<span>)</span>
+<span>def <span class="ident">get_valid_raster_driver_extensions</span></span>(<span>) -> List[str]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns a list of valid raster driver extensions.</p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>list</em>): List of valid raster driver extensions.</p></div>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>List of valid raster driver extensions.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_valid_raster_driver_extensions():
+<pre><code class="python">def get_valid_raster_driver_extensions() -&gt; List[str]:
     &#34;&#34;&#34;
     Returns a list of valid raster driver extensions.
 
-    ## Returns:
-    (_list_): List of valid raster driver extensions.
+    Returns:
+        list: List of valid raster driver extensions.
     &#34;&#34;&#34;
     available_raster_drivers, _available_vector_drivers = get_available_drivers()
 
@@ -807,22 +875,25 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.get_valid_vector_driver_extensions"><code class="name flex">
-<span>def <span class="ident">get_valid_vector_driver_extensions</span></span>(<span>)</span>
+<span>def <span class="ident">get_valid_vector_driver_extensions</span></span>(<span>) -> List[str]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns a list of valid vector driver extensions.</p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>list</em>): List of valid vector driver extensions.</p></div>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>List of valid vector driver extensions.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_valid_vector_driver_extensions():
+<pre><code class="python">def get_valid_vector_driver_extensions() -&gt; List[str]:
     &#34;&#34;&#34;
     Returns a list of valid vector driver extensions.
 
-    ## Returns:
-    (_list_): List of valid vector driver extensions.
+    Returns:
+        list: List of valid vector driver extensions.
     &#34;&#34;&#34;
     _available_raster_drivers, available_vector_drivers = get_available_drivers()
 
@@ -836,29 +907,35 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.is_gdal_datatype_a_float"><code class="name flex">
-<span>def <span class="ident">is_gdal_datatype_a_float</span></span>(<span>gdal_dtype)</span>
+<span>def <span class="ident">is_gdal_datatype_a_float</span></span>(<span>gdal_dtype: int) -> bool</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Checks if a <strong>GDAL</strong> datatype integer is a floating datatype: </br>
-<code>(Float32, Float64, cFloat32, cFloat64)</code></p>
-<h2 id="args">Args:</h2>
-<p><code>gdal_dtype</code> (<em>int</em>): The <strong>GDAL</strong> datatype integer. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if datatype is a float, otherwise <strong>False</strong>.</p></div>
+<div class="desc"><p>Checks if a GDAL datatype integer is a floating-point datatype:
+(Float32, Float64, cFloat32, cFloat64)</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>gdal_dtype</code></strong> :&ensp;<code>int</code></dt>
+<dd>The GDAL datatype integer.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the datatype is a float, otherwise False.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_gdal_datatype_a_float(gdal_dtype):
+<pre><code class="python">def is_gdal_datatype_a_float(gdal_dtype: int) -&gt; bool:
     &#34;&#34;&#34;
-    Checks if a **GDAL** datatype integer is a floating datatype: &lt;/br&gt;
-    `(Float32, Float64, cFloat32, cFloat64)`
+    Checks if a GDAL datatype integer is a floating-point datatype:
+    (Float32, Float64, cFloat32, cFloat64)
 
-    ## Args:
-    `gdal_dtype` (_int_): The **GDAL** datatype integer. &lt;/br&gt;
+    Args:
+        gdal_dtype (int): The GDAL datatype integer.
 
-    ## Returns:
-    (_bool_): **True** if datatype is a float, otherwise **False**.
+    Returns:
+        bool: True if the datatype is a float, otherwise False.
     &#34;&#34;&#34;
     assert isinstance(gdal_dtype, int), f&#34;gdal_dtype must be an integer. Received: {gdal_dtype}&#34;
 
@@ -871,27 +948,33 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.is_valid_driver_extension"><code class="name flex">
-<span>def <span class="ident">is_valid_driver_extension</span></span>(<span>ext)</span>
+<span>def <span class="ident">is_valid_driver_extension</span></span>(<span>ext: str) -> bool</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Checks if a file extension is a valid <strong>GDAL</strong> or <strong>OGR</strong> driver extension.</p>
-<h2 id="args">Args:</h2>
-<p><code>ext</code> (<em>str</em>): The file extension. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if valid, <strong>False</strong> otherwise.</p></div>
+<div class="desc"><p>Checks if a file extension is a valid GDAL or OGR driver extension.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>ext</code></strong> :&ensp;<code>str</code></dt>
+<dd>The file extension.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if valid, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_valid_driver_extension(ext):
+<pre><code class="python">def is_valid_driver_extension(ext: str) -&gt; bool:
     &#34;&#34;&#34;
-    Checks if a file extension is a valid **GDAL** or **OGR** driver extension.
+    Checks if a file extension is a valid GDAL or OGR driver extension.
 
-    ## Args:
-    `ext` (_str_): The file extension. &lt;/br&gt;
+    Args:
+        ext (str): The file extension.
 
-    ## Returns:
-    (_bool_): **True** if valid, **False** otherwise.
+    Returns:
+        bool: True if valid, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(ext, str), &#34;Extension must be a string.&#34;
     assert len(ext) &gt; 0, &#34;Extension must be a non-empty string.&#34;
@@ -900,27 +983,33 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.is_valid_raster_driver_extension"><code class="name flex">
-<span>def <span class="ident">is_valid_raster_driver_extension</span></span>(<span>ext)</span>
+<span>def <span class="ident">is_valid_raster_driver_extension</span></span>(<span>ext: str) -> bool</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Checks if a raster file extension is a valid <strong>GDAL</strong> driver extension.</p>
-<h2 id="args">Args:</h2>
-<p><code>ext</code> (<em>str</em>): The file extension. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if valid, <strong>False</strong> otherwise.</p></div>
+<div class="desc"><p>Checks if a raster file extension is a valid GDAL driver extension.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>ext</code></strong> :&ensp;<code>str</code></dt>
+<dd>The file extension.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if valid, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_valid_raster_driver_extension(ext):
+<pre><code class="python">def is_valid_raster_driver_extension(ext: str) -&gt; bool:
     &#34;&#34;&#34;
-    Checks if a raster file extension is a valid **GDAL** driver extension.
+    Checks if a raster file extension is a valid GDAL driver extension.
 
-    ## Args:
-    `ext` (_str_): The file extension. &lt;/br&gt;
+    Args:
+        ext (str): The file extension.
 
-    ## Returns:
-    (_bool_): **True** if valid, **False** otherwise.
+    Returns:
+        bool: True if valid, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(ext, str), &#34;Extension must be a string.&#34;
     assert len(ext) &gt; 0, &#34;Extension must be a non-empty string.&#34;
@@ -929,27 +1018,33 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.is_valid_vector_driver_extension"><code class="name flex">
-<span>def <span class="ident">is_valid_vector_driver_extension</span></span>(<span>ext)</span>
+<span>def <span class="ident">is_valid_vector_driver_extension</span></span>(<span>ext: str) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if a vector file extension is a valid <strong>OGR</strong> driver extension.</p>
-<h2 id="args">Args:</h2>
-<p><code>ext</code> (<em>str</em>): The file extension. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if valid, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>ext</code></strong> :&ensp;<code>str</code></dt>
+<dd>The file extension.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if valid, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_valid_vector_driver_extension(ext):
+<pre><code class="python">def is_valid_vector_driver_extension(ext: str) -&gt; bool:
     &#34;&#34;&#34;
     Checks if a vector file extension is a valid **OGR** driver extension.
 
-    ## Args:
-    `ext` (_str_): The file extension. &lt;/br&gt;
+    Args:
+        ext (str): The file extension.
 
-    ## Returns:
-    (_bool_): **True** if valid, **False** otherwise.
+    Returns:
+        bool: True if valid, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(ext, str), &#34;Extension must be a string.&#34;
     assert len(ext) &gt; 0, &#34;Extension must be a non-empty string.&#34;
@@ -958,27 +1053,33 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.translate_gdal_dtype_to_str"><code class="name flex">
-<span>def <span class="ident">translate_gdal_dtype_to_str</span></span>(<span>gdal_datatype_int)</span>
+<span>def <span class="ident">translate_gdal_dtype_to_str</span></span>(<span>gdal_datatype_int: int) -> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Translates the <strong>GDAL</strong> datatype integer into a string. Can be used by <strong>NumPy</strong>.</p>
-<h2 id="args">Args:</h2>
-<p><code>gdal_datatype_int</code> (<em>gdal_datatype_int</em>): The <strong>GDAL</strong> datatype integer. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>str</em>): The translated string (e.g. <code>0="uint8"</code>)</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>gdal_datatype_int</code></strong> :&ensp;<code>int</code></dt>
+<dd>The <strong>GDAL</strong> datatype integer.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>The translated string (e.g. <code>0="uint8"</code>)</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def translate_gdal_dtype_to_str(gdal_datatype_int):
+<pre><code class="python">def translate_gdal_dtype_to_str(gdal_datatype_int: int) -&gt; str:
     &#34;&#34;&#34;
     Translates the **GDAL** datatype integer into a string. Can be used by **NumPy**.
 
-    ## Args:
-    `gdal_datatype_int` (_gdal_datatype_int_): The **GDAL** datatype integer. &lt;/br&gt;
+    Args:
+        gdal_datatype_int (int): The **GDAL** datatype integer.
 
-    ## Returns:
-    (_str_): The translated string (e.g. `0=&#34;uint8&#34;`)
+    Returns:
+        str: The translated string (e.g. `0=&#34;uint8&#34;`)
     &#34;&#34;&#34;
     assert isinstance(gdal_datatype_int, int), f&#34;gdal_datatype must be an integer. Received: {gdal_datatype_int}&#34;
 
@@ -1005,27 +1106,33 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.translate_resample_method"><code class="name flex">
-<span>def <span class="ident">translate_resample_method</span></span>(<span>method)</span>
+<span>def <span class="ident">translate_resample_method</span></span>(<span>method: str) -> int</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Translate a string of a resampling method to a <strong>GDAL</strong> integer (e.g. <code>gdal.GRA_NearestNeighbour</code>).</p>
-<h2 id="args">Args:</h2>
-<p><code>method</code> (<em>str</em>): The resampling method. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>int</em>): The <strong>GDAL</strong> resampling integer (e.g. <code>"nearest"=1</code>).</p></div>
+<div class="desc"><p>Translate a string of a resampling method to a GDAL integer (e.g. gdal.GRA_NearestNeighbour).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>method</code></strong> :&ensp;<code>str</code></dt>
+<dd>The resampling method.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>The GDAL resampling integer (e.g. "nearest"=1).</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def translate_resample_method(method):
+<pre><code class="python">def translate_resample_method(method: str) -&gt; int:
     &#34;&#34;&#34;
-    Translate a string of a resampling method to a **GDAL** integer (e.g. `gdal.GRA_NearestNeighbour`).
+    Translate a string of a resampling method to a GDAL integer (e.g. gdal.GRA_NearestNeighbour).
 
-    ## Args:
-    `method` (_str_): The resampling method. &lt;/br&gt;
+    Args:
+        method (str): The resampling method.
 
-    ## Returns:
-    (_int_): The **GDAL** resampling integer (e.g. `&#34;nearest&#34;=1`).
+    Returns:
+        int: The GDAL resampling integer (e.g. &#34;nearest&#34;=1).
     &#34;&#34;&#34;
     assert isinstance(method, str), &#34;method must be a string.&#34;
     assert len(method) &gt; 0, &#34;method must be a non-empty string.&#34;
@@ -1075,27 +1182,27 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.translate_str_to_gdal_dtype"><code class="name flex">
-<span>def <span class="ident">translate_str_to_gdal_dtype</span></span>(<span>dtype_str)</span>
+<span>def <span class="ident">translate_str_to_gdal_dtype</span></span>(<span>dtype_str: str) -> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Translates the datatype string into a <strong>GDAL</strong> datatype integer. Can be used by <strong>GDAL</strong>.</p>
-<h2 id="args">Args:</h2>
-<p><code>dtype_str</code> (<em>dtype_str</em>): The datatype string (e.g. "float32"). </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>int</em>): The translated integer (e.g. <code>"uint8"=0</code>)</p></div>
+<p>Args:
+- dtype_str (str): The datatype string (e.g. "float32").</p>
+<p>Returns:
+- int: The <strong>GDAL</strong> datatype integer corresponding to the input datatype string (e.g. <code>"uint8"=1</code>).</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def translate_str_to_gdal_dtype(dtype_str):
+<pre><code class="python">def translate_str_to_gdal_dtype(dtype_str: str) -&gt; int:
     &#34;&#34;&#34;
     Translates the datatype string into a **GDAL** datatype integer. Can be used by **GDAL**.
 
-    ## Args:
-    `dtype_str` (_dtype_str_): The datatype string (e.g. &#34;float32&#34;). &lt;/br&gt;
+    Args:
+    - dtype_str (str): The datatype string (e.g. &#34;float32&#34;).
 
-    ## Returns:
-    (_int_): The translated integer (e.g. `&#34;uint8&#34;=0`)
+    Returns:
+    - int: The **GDAL** datatype integer corresponding to the input datatype string (e.g. `&#34;uint8&#34;=1`).
     &#34;&#34;&#34;
     assert isinstance(dtype_str, (np.dtype, str)), &#34;dtype_str must be a string or numpy dtype.&#34;
 
@@ -1133,16 +1240,36 @@ def is_gdal_datatype_a_float(gdal_dtype):
 </details>
 </dd>
 <dt id="buteo.utils.gdal_enums.value_is_within_datatype_range"><code class="name flex">
-<span>def <span class="ident">value_is_within_datatype_range</span></span>(<span>value, numpy_dtype)</span>
+<span>def <span class="ident">value_is_within_datatype_range</span></span>(<span>value: Union[int, float], numpy_dtype: Union[str, numpy.dtype]) -> bool</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Checks if a value is within the range of a numpy datatype.</p></div>
+<div class="desc"><p>Checks if a value is within the range of a numpy datatype.</p>
+<h2 id="args">Args</h2>
+<p>value (int/float): The value to check.
+numpy_dtype (str/np.dtype): The numpy dtype.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the value is within the range of the numpy dtype, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def value_is_within_datatype_range(value, numpy_dtype):
-    &#34;&#34;&#34; Checks if a value is within the range of a numpy datatype. &#34;&#34;&#34;
+<pre><code class="python">def value_is_within_datatype_range(
+    value: Union[int, float],
+    numpy_dtype: Union[str, np.dtype],
+) -&gt; bool:
+    &#34;&#34;&#34;
+    Checks if a value is within the range of a numpy datatype.
+
+    Args:
+        value (int/float): The value to check.
+        numpy_dtype (str/np.dtype): The numpy dtype.
+
+    Returns:
+        bool: True if the value is within the range of the numpy dtype, False otherwise.
+    &#34;&#34;&#34;
     if value is np.nan:
         return True
 

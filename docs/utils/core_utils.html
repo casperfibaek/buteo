@@ -41,6 +41,9 @@ from glob import glob
 from uuid import uuid4
 from datetime import datetime
 from pathlib import PurePosixPath
+from typing import Any, Union, List, Optional, Dict, Tuple
+from warnings import warn
+
 
 # External
 import psutil
@@ -50,25 +53,25 @@ from buteo.utils.gdal_enums import get_valid_raster_driver_extensions, get_valid
 
 
 
-def get_unix_seconds_as_str():
+def get_unix_seconds_as_str() -&gt; str:
     &#34;&#34;&#34;
     Get a string of the current UNIX time in seconds.
 
-    ## Returns:
-    (_str_): A string of the current UNIX time in seconds.
+    Returns:
+        str: A string of the current UNIX time in seconds.
     &#34;&#34;&#34;
     return str(int(time.time()))
 
 
-def is_float(value):
+def is_float(value: Any) -&gt; bool:
     &#34;&#34;&#34;
     Check if a value is a float. If it is a string, try to convert it to a float.
 
-    ## Args:
-    `value` (_any_): The value to check.
+    Args:
+        value (any): The value to check.
 
-    ## Returns:
-    (_bool_): **True** if the value is a float, **False** otherwise.
+    Returns:
+        bool: True if the value is a float, False otherwise.
     &#34;&#34;&#34;
     if isinstance(value, float):
         return True
@@ -77,21 +80,22 @@ def is_float(value):
         try:
             float(value)
             return True
+
         except ValueError:
             return False
 
     return False
 
 
-def is_number(potential_number):
+def is_number(potential_number: Any) -&gt; bool:
     &#34;&#34;&#34;
     Check if variable is a number.
 
-    ## Args:
-    `potential_number` (_any_): The variable to check. &lt;/br&gt;
+    Args:
+        potential_number (any): The variable to check.
 
-    ## Returns:
-    (_bool_): **True** if the variable is a number, **False** otherwise.
+    Returns:
+        bool: True if the variable is a number, False otherwise.
     &#34;&#34;&#34;
     if isinstance(potential_number, float):
         return True
@@ -102,15 +106,15 @@ def is_number(potential_number):
     return False
 
 
-def is_int(value):
+def is_int(value: Any) -&gt; bool:
     &#34;&#34;&#34;
     Check if a value is an integer. If it is a string, try to convert it to an integer.
 
-    ## Args:
-    `value` (_any_): The value to check. &lt;/br&gt;
+    Args:
+        value (any): The value to check.
 
-    ## Returns:
-    (_bool_): **True** if the value is an integer, **False** otherwise.
+    Returns:
+        bool: True if the variable is an int, False otherwise.
     &#34;&#34;&#34;
     if isinstance(value, int):
         return True
@@ -125,17 +129,20 @@ def is_int(value):
     return False
 
 
-def is_list_all_the_same(lst):
+def is_list_all_the_same(lst: list) -&gt; bool:
     &#34;&#34;&#34;
     Check if a list contains all the same elements.
 
-    ## Args:
-    `lst` (_list_): The list to check. &lt;/br&gt;
+    Args:
+        lst (list): The list to check.
 
-    ## Returns:
-    (_bool_): **True** if the list contains all the same elements, **False** otherwise.
+    Returns:
+        bool: True if the list contains all the same elements, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(lst, list), &#34;lst must be a list.&#34;
+
+    if len(lst) == 0:
+        return True
 
     first = lst[0]
     for idx, item in enumerate(lst):
@@ -148,17 +155,18 @@ def is_list_all_the_same(lst):
     return True
 
 
-def file_exists(path):
+def file_exists(path: str) -&gt; bool:
     &#34;&#34;&#34;
     Check if a file exists. Also checks vsimem.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
 
-    ## Returns:
-    (_bool_): **True** if the file exists, **False** otherwise.
+    Returns:
+        bool: True if the file exists, False otherwise.
     &#34;&#34;&#34;
-    assert isinstance(path, str), &#34;path must be a string.&#34;
+    if not isinstance(path, str):
+        return False
 
     if os.path.exists(path):
         return True
@@ -173,21 +181,21 @@ def file_exists(path):
                 return True
         else:
             print(&#34;Warning, unable to access vsimem.&#34;)
-    except:  # pylint: disable=bare-except
+    except AssertionError:
         pass
 
     return False
 
 
-def folder_exists(path):
+def folder_exists(path: str) -&gt; bool:
     &#34;&#34;&#34;
     Check if a folder exists.
 
-    ## Args:
-    `path` (_str_): The path to the folder. &lt;/br&gt;
+    Args:
+        path (str): The path to the folder.
 
-    ## Returns:
-    (_bool_): **True** if the folder exists, **False** otherwise.
+    Returns:
+        bool: True if the folder exists, False otherwise.
     &#34;&#34;&#34;
     if isinstance(path, str):
         abs_dir = os.path.isdir(path)
@@ -201,15 +209,15 @@ def folder_exists(path):
     return False
 
 
-def delete_files_in_folder(folder):
+def delete_files_in_folder(folder: str) -&gt; bool:
     &#34;&#34;&#34;
     Delete all files in a folder. Does not remove subfolders.
 
-    ## Args:
-    `folder` (_str_): The path to the folder. &lt;/br&gt;
+    Args:
+        folder (str): The path to the folder.
 
-    ## Returns:
-    (_bool_): **True** if the files were deleted, throws exception otherwise..
+    Returns:
+        bool: True if the files were deleted, raises warning otherwise.
     &#34;&#34;&#34;
     assert isinstance(folder, str), &#34;folder must be a string.&#34;
     assert folder_exists(folder), &#34;folder must exist.&#34;
@@ -218,38 +226,41 @@ def delete_files_in_folder(folder):
         try:
             os.remove(file)
         except Exception:
-            print(f&#34;Warning. Could not remove: {file}&#34;)
+            warn(f&#34;Warning. Could not remove: {file}&#34;, UserWarning)
 
     return True
 
 
-def delete_folder(folder):
+def delete_folder(folder: str) -&gt; bool:
     &#34;&#34;&#34;
     Delete a folder.
 
-    ## Args:
-    `folder` (_str_): The path to the folder. &lt;/br&gt;
+    Args:
+        folder (str): The path to the folder.
 
-    ## Returns:
-    (_bool_): **True** if the folder was deleted, **False** otherwise.
+    Returns:
+        bool: True if the folder was deleted, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(folder, str), &#34;folder must be a string.&#34;
     assert folder_exists(folder), &#34;folder must exist.&#34;
 
-    shutil.rmtree(folder)
+    try:
+        shutil.rmtree(folder)
+    except RuntimeError:
+        warn(f&#34;Warning. Could not remove: {folder}&#34;, UserWarning)
 
     return True
 
 
-def delete_file(file):
+def delete_file(file: str) -&gt; bool:
     &#34;&#34;&#34;
     Delete a File
 
-    ## Args:
-    `file` (_str_): The path to the file.
+    Args:
+        file (str): The path to the file.
 
-    ## Returns:
-    (_bool_): **True** if the file was deleted, **False** otherwise.
+    Returns:
+        bool: True if the file was deleted, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(file, str), &#34;file must be a string.&#34;
     assert file_exists(file), &#34;file must exist.&#34;
@@ -262,56 +273,62 @@ def delete_file(file):
     return True
 
 
-def to_number(value):
+def to_number(variable):
     &#34;&#34;&#34;
-    Convert a value to a number.
+    Attempts to convert a variable to a number.
 
-    ## Args:
-    `value` (_any_): The value to convert.
+    Args:
+        variable (any): The value to convert.
 
-    ## Returns:
-    (_float_): The value converted to a number.
+    Returns:
+        (float): The value converted to a number.
     &#34;&#34;&#34;
-    assert isinstance(value, (str, int, float)), &#34;value must be a string, integer or float.&#34;
-    if is_number(value):
-        return value
+    assert isinstance(variable, (str, int, float)), &#34;value must be a string, integer or float.&#34;
+    if is_number(variable):
+        return variable
 
-    if is_float(value):
-        return float(value)
+    if is_float(variable):
+        return float(variable)
 
-    raise RuntimeError(f&#34;Could not convert {value} to a number.&#34;)
+    raise RuntimeError(f&#34;Could not convert {variable} to a number.&#34;)
 
 
-def make_dir_if_not_exists(path):
+def make_dir_if_not_exists(path: str) -&gt; str:
     &#34;&#34;&#34;
     Make a directory if it doesn&#39;t exist.
 
-    ## Args:
-    `path` (_str_): The path to the directory. &lt;/br&gt;
+    Args:
+        path (str): The path to the directory.
 
-    ## Returns:
-    (_str_): The path to the created directory.
+    Returns:
+        (str): The path to the created directory.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
 
     if not folder_exists(path):
         os.makedirs(path)
+    
+    if not folder_exists(path):
+        raise RuntimeError(f&#34;Could not create directory: {path}&#34;)
 
     return path
 
 
-def path_to_ext(path, with_dot=False):
+def path_to_ext(
+    path: str,
+    with_dot: bool = False,
+):
     &#34;&#34;&#34;
-    Get the extension of a file.
+    Get the extension of a file. If the file has no extension, raise an error.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
 
-    ## Kwargs:
-    `with_dot` (_bool_): If True, return the extension with a dot. (**Default**: `False`) &lt;/br&gt;
+    Kwargs:
+        with_dot (bool = False): If True, return the extension with a dot.
 
-    ## Returns:
-    (_str_): The extension of the file. (_without the dot_)
+    Returns:
+        str: The extension of the file.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
     assert isinstance(with_dot, bool), &#34;with_dot must be a boolean.&#34;
@@ -329,35 +346,41 @@ def path_to_ext(path, with_dot=False):
     return ext[1:]
 
 
-def path_to_folder(path):
+def path_to_folder(path: str) -&gt; str:
     &#34;&#34;&#34;
     Get the folder of a file.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
 
-    ## Returns:
-    (_str_): The folder of the file.
+    Returns:
+        str: The folder of the file.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
 
-    return os.path.dirname(os.path.abspath(path))
+    dir_path = os.path.dirname(os.path.abspath(path))
+
+    return dir_path
 
 
-def change_path_ext(path, target_ext):
+def change_path_ext(
+    path: str,
+    target_ext: str,
+) -&gt; str:
     &#34;&#34;&#34;
     Change the extension of a file.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
-    `target_ext` (_str_): The new extension. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
+        target_ext (str): The new extension.
 
-    ## Returns:
-    (_str_): The path to the file with the new extension.
+    Returns:
+        str: The path to the file with the new extension.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
     assert isinstance(target_ext, str), &#34;target_ext must be a string.&#34;
 
+    target_ext = target_ext.lstrip(&#39;.&#39;)
     basename = os.path.basename(path)
     basesplit = os.path.splitext(basename)
     ext = basesplit[1]
@@ -369,15 +392,15 @@ def change_path_ext(path, target_ext):
 
 
 
-def is_valid_mem_path(path):
+def is_valid_mem_path(path: str) -&gt; bool:
     &#34;&#34;&#34;
     Check if a path is a valid memory path that has an extension.
 
-    ## Args:
-    `path` (_str_): The path to test. &lt;/br&gt;
+    Args:
+        path (str): The path to test.
 
-    ## Returns:
-    (_bool_): **True** if path is a valid memory path, **False** otherwise.
+    Returns:
+        bool: True if path is a valid memory path, False otherwise.
     &#34;&#34;&#34;
     if not isinstance(path, str):
         return False
@@ -396,15 +419,15 @@ def is_valid_mem_path(path):
     return False
 
 
-def is_valid_non_memory_path(path):
+def is_valid_non_memory_path(path: str) -&gt; bool:
     &#34;&#34;&#34;
     Check if a path is valid, not in memory, and has an extension.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
 
-    ## Returns:
-    (_bool_): **True** if the path has an extension, **False** otherwise.
+    Returns:
+        bool: True if the path has an extension, False otherwise.
     &#34;&#34;&#34;
     if not isinstance(path, str):
         return False
@@ -426,15 +449,15 @@ def is_valid_non_memory_path(path):
     return True
 
 
-def is_valid_file_path(path):
+def is_valid_file_path(path: str) -&gt; bool:
     &#34;&#34;&#34;
     Check if a path is valid and has an extension. Path can be in memory.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
 
-    ## Returns:
-    (_bool_): **True** if the path has an extension, **False** otherwise.
+    Returns:
+        bool: True if the path has an extension, False otherwise.
     &#34;&#34;&#34;
     if is_valid_mem_path(path) or is_valid_non_memory_path(path):
         return True
@@ -442,18 +465,18 @@ def is_valid_file_path(path):
     return False
 
 
-def is_valid_output_path(path, *, overwrite=True):
+def is_valid_output_path(path: str, *, overwrite: bool = True) -&gt; bool:
     &#34;&#34;&#34;
     Check if an output path is valid.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
 
-    ## Kwargs:
-    `overwrite` (_bool_): **True** if the file should be overwritten, **False** otherwise. &lt;/br&gt;
+    Keyword Args:
+        overwrite (bool = True): True if the file should be overwritten, False otherwise.
 
-    ## Returns:
-    (_bool_): **True** if the output path is valid, **False** otherwise.
+    Returns:
+        bool: True if the output path is valid, False otherwise.
     &#34;&#34;&#34;
     if not is_valid_file_path(path):
         return False
@@ -467,18 +490,18 @@ def is_valid_output_path(path, *, overwrite=True):
     return True
 
 
-def is_valid_output_path_list(output_list, *, overwrite=True):
+def is_valid_output_path_list(output_list: List[str], *, overwrite: bool = True) -&gt; bool:
     &#34;&#34;&#34;
     Check if a list of output paths are valid.
 
-    ## Args:
-    `output_list` (_list_): The list of paths to the files. &lt;/br&gt;
+    Args:
+        output_list (list): The list of paths to the files.
 
-    ## Kwargs:
-    `overwrite` (_bool_): **True** if the file should be overwritten, **False** otherwise. &lt;/br&gt;
+    Keyword Args:
+        overwrite (bool = True): True if the file should be overwritten, False otherwise.
 
-    ## Returns:
-    (_bool_): **True** if the list of output paths are valid, **False** otherwise.
+    Returns:
+        bool: True if the list of output paths are valid, False otherwise.
     &#34;&#34;&#34;
     if not isinstance(output_list, list):
         return False
@@ -493,16 +516,16 @@ def is_valid_output_path_list(output_list, *, overwrite=True):
     return True
 
 
-def remove_if_required(path, overwrite):
+def remove_if_required(path: str, overwrite: bool = True) -&gt; bool:
     &#34;&#34;&#34;
     Remove a file if overwrite is True.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
-    `remove` (_bool_): If True, remove the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
+        overwrite (bool = True): If True, overwrite the file.
 
-    ## Returns:
-    (_bool_): **True** if the file was removed, **False** otherwise.
+    Returns:
+        bool: True if the file was removed, False otherwise.
     &#34;&#34;&#34;
     assert is_valid_output_path(path), f&#34;path must be a valid output path. {path}&#34;
 
@@ -520,16 +543,16 @@ def remove_if_required(path, overwrite):
     return False
 
 
-def remove_if_required_list(output_list, overwrite):
+def remove_if_required_list(output_list: List[str], overwrite: bool) -&gt; bool:
     &#34;&#34;&#34;
     Remove a list of files if overwrite is True.
 
-    ## Args:
-    `output_list` (_list_): The list of paths to the files. &lt;/br&gt;
-    `remove` (_bool_): If True, remove the files. &lt;/br&gt;
+    Args:
+        output_list (list): The list of paths to the files.
+        overwrite (bool): If True, overwrite the files.
 
-    ## Returns:
-    (_bool_): **True** if the files were removed, **False** otherwise.
+    Returns:
+        bool: True if the files were removed, False otherwise.
     &#34;&#34;&#34;
     assert is_valid_output_path_list(output_list), f&#34;output_list must be a valid output path list. {output_list}&#34;
 
@@ -539,21 +562,29 @@ def remove_if_required_list(output_list, overwrite):
     return True
 
 
-def get_augmented_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=True, folder=None):
+def get_augmented_path(
+    path: str,
+    *,
+    prefix: str = &#34;&#34;,
+    suffix: str = &#34;&#34;,
+    add_uuid: bool = True,
+    folder: Optional[str] = None,
+) -&gt; str:
     &#34;&#34;&#34;
-    Gets a basename from a string in the format: &lt;/br&gt;
+    Gets a basename from a string in the format:
     `dir/prefix_basename_time_uuid_suffix.ext`
 
-    ## Args:
-    `path` (_str_): The path to the original file. &lt;/br&gt;
+    Args:
+        path (str): The path to the original file.
 
-    ## Kwargs:
-    `prefix` (_str_): The prefix to add to the memory path. (**Default**: `&#34;&#34;`) &lt;/br&gt;
-    `suffix` (_str_): The suffix to add to the memory path. (**Default**: `&#34;&#34;`) &lt;/br&gt;
-    `add_uuid` (_bool_): If True, add a uuid to the memory path. (**Default**: `True`) &lt;/br&gt;
+    Keyword Args:
+        prefix (str = &#34;&#34;): The prefix to add to the memory path.
+        suffix (str = &#34;&#34;): The suffix to add to the memory path.
+        add_uuid (bool = True): If True, add a uuid to the memory path.
+        folder (str = None): The folder to save the file in.
 
-    ## Returns:
-    (_str_): A string of the current UNIX time in seconds.
+    Returns:
+        str: A string of the current UNIX time in seconds.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
     assert isinstance(folder, (type(None), str)), &#34;folder must be None or a string&#34;
@@ -600,16 +631,19 @@ def get_augmented_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=T
     return out_path
 
 
-def get_size(start_path=&#34;.&#34;, rough=True):
+def get_size(
+    start_path: str = &#34;.&#34;,
+    rough: bool = True,
+) -&gt; int:
     &#34;&#34;&#34;
     Get the size of a folder.
 
-    ## Kwargs:
-    `start_path` (_str_): The path to the folder. (**Default**: `&#34;.&#34;`) &lt;/br&gt;
-    `rough` (_bool_): If True, return a rough estimate. (**Default**: `True`) &lt;/br&gt;
+    Keyword Args:
+        start_path (str = &#34;.&#34;): The path to the folder.
+        rough (bool = True): If True, return a rough estimate.
 
-    ## Returns:
-    (_int_): The size of the folder.
+    Returns:
+        int: The size of the folder.
     &#34;&#34;&#34;
     assert isinstance(start_path, str), &#34;start_path must be a string.&#34;
     assert folder_exists(start_path), &#34;start_path must exist.&#34;
@@ -629,16 +663,19 @@ def get_size(start_path=&#34;.&#34;, rough=True):
     return total_size
 
 
-def divide_into_steps(total, step):
+def divide_into_steps(
+    total: int,
+    step: int,
+):
     &#34;&#34;&#34;
     Divide a number into steps.
 
-    ## Args:
-    `total` (_int_): The total number. &lt;/br&gt;
-    `step` (_int_): The step size. &lt;/br&gt;
+    Args:
+        total int: The total number.
+        step int: The step size.
 
-    ## Returns:
-    (_list_): The list of steps.
+    Returns:
+        list: The list of steps.
     &#34;&#34;&#34;
     assert isinstance(total, int), &#34;total must be an integer.&#34;
     assert isinstance(step, int), &#34;step must be an integer.&#34;
@@ -656,16 +693,19 @@ def divide_into_steps(total, step):
     return steps
 
 
-def divide_arr_into_steps(arr, steps_length):
+def divide_arr_into_steps(
+    arr: List[Any],
+    steps_length: int,
+) -&gt; List[List[Any]]:
     &#34;&#34;&#34;
     Divide an array into steps.
 
-    ## Args:
-    `arr` (_list_): The array. &lt;/br&gt;
-    `steps_length` (_int_): The length of each step. &lt;/br&gt;
+    Args:
+        arr (list): The array.
+        steps_length (int): The length of each step.
 
-    ## Returns:
-    (_list_): An array divided into steps.
+    Returns:
+        list: An array divided into steps.
     &#34;&#34;&#34;
     assert isinstance(arr, list), &#34;arr must be a list.&#34;
     assert isinstance(steps_length, int), &#34;steps_length must be an integer.&#34;
@@ -685,15 +725,17 @@ def divide_arr_into_steps(arr, steps_length):
     return ret_arr
 
 
-def step_ranges(arr_with_steps):
+def step_ranges(
+    arr_with_steps: List[List[Any]],
+) -&gt; List[Dict[str, int]]:
     &#34;&#34;&#34;
     Get the ranges of each step.
 
-    ## Args:
-    `arr_with_steps` (_list_): The array with steps. &lt;/br&gt;
+    Args:
+        arr_with_steps (list): The array with steps.
 
-    ## Returns:
-    (_dict_): A dictionary of type: `{ &#34;id&#34;: _int_, &#34;start&#34;: _int_, &#34;stop&#34;: _int_}`.
+    Returns:
+        list: A list of dictionaries of type: { &#34;id&#34;: int, &#34;start&#34;: int, &#34;stop&#34;: int}.
     &#34;&#34;&#34;
     assert isinstance(arr_with_steps, list), &#34;arr_with_steps must be a list.&#34;
 
@@ -715,15 +757,15 @@ def step_ranges(arr_with_steps):
     return start_stop
 
 
-def recursive_check_type_list_none_or_tuple(potential_type):
+def recursive_check_type_list_none_or_tuple(potential_type: Any) -&gt; bool:
     &#34;&#34;&#34;
     Recursively check if a type, list or tuple.
 
-    ## Args:
-    `potential_type` (_any_): The variable to test. &lt;/br&gt;
+    Args:
+        potential_type (any): The variable to test.
 
-    ## Returns:
-    (_bool_): **True** if a type, list or tuple, **False** otherwise.
+    Returns:
+        bool: True if a type, list, or tuple, False otherwise.
     &#34;&#34;&#34;
     if isinstance(potential_type, type(None)):
         return True
@@ -742,25 +784,25 @@ def recursive_check_type_list_none_or_tuple(potential_type):
 
 
 def type_check(
-    variable,
-    types,
-    name=&#34;&#34;,
+    variable: Any,
+    types: Tuple[type, ...],
+    name: str = &#34;&#34;,
     *,
-    throw_error=True,
-):
+    throw_error: bool = True,
+) -&gt; bool:
     &#34;&#34;&#34;
     Utility function to type check the inputs of a function. Check two levels down.
 
-    ## Args:
-    `variable` (_any_): The variable to check. &lt;/br&gt;
-    `types` (_tuple_): The types to check against. `(float, int, ...)` &lt;/br&gt;
+    Args:
+        variable (any): The variable to check.
+        types (tuple): The types to check against. (float, int, ...)
 
-    ## Kargs:
-    `name` (_str_): The name printed in the error string if an error is thrown. (**Default**: `&#34;&#34;`)&lt;/br&gt;
-    `throw_error` (_bool_): If True, raise an error if the type is not correct. (**Default**: `True`)&lt;/br&gt;
+    Keyword Args:
+        name (str = &#34;&#34;): The name printed in the error string if an error is thrown.
+        throw_error (bool = True): If True, raise an error if the type is not correct.
 
-    ## Returns:
-    (_bool_): A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.
+    Returns:
+        bool: A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.
     &#34;&#34;&#34;
     assert isinstance(name, str), &#34;name must be a string.&#34;
     assert recursive_check_type_list_none_or_tuple(types), f&#34;types must be a type, list, None, or tuple. not: {types}&#34;
@@ -833,16 +875,19 @@ def type_check(
     return False
 
 
-def is_list_all_val(arr, val):
+def is_list_all_val(
+    arr: List[Any],
+    val: Any,
+) -&gt; bool:
     &#34;&#34;&#34;
     Check if a list is all a value. This also considers type.
 
-    ## Args:
-    `arr` (_list_): The list to check. &lt;/br&gt;
-    `val` (_any_): The value to check against. &lt;/br&gt;
+    Args:
+        arr (list): The list to check.
+        val (any): The value to check against.
 
-    ## Returns:
-    (_bool_): **True** if all elements are x, **False** otherwise.
+    Returns:
+        bool: True if all elements are x, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(arr, list), &#34;arr must be a list.&#34;
 
@@ -853,19 +898,23 @@ def is_list_all_val(arr, val):
     return True
 
 
-def progress(count, total, name=&#34;Processing&#34;):
+def progress(
+    count: int,
+    total: int,
+    name: str = &#34;Processing&#34;,
+) -&gt; None:
     &#34;&#34;&#34;
     Print a progress bar.
 
-    ## Args:
-    `count` (_int_): The current count. &lt;/br&gt;
-    `total` (_int_): The total count. &lt;/br&gt;
+    Args:
+        count (int): The current count.
+        total (int): The total count.
 
-    ## Kwargs:
-    `name` (_str_): The name to show in the progress bar. (**Default**: `&#34;Processing&#34;`) &lt;/br&gt;
+    Keyword Args:
+        name (str = &#34;Processing&#34;): The name to show in the progress bar. Default: &#34;Processing&#34;.
 
-    ## Returns:
-    (_None_): Returns None.
+    Returns:
+        None.
     &#34;&#34;&#34;
     assert isinstance(count, int), &#34;count must be an integer.&#34;
     assert isinstance(total, int), &#34;total must be an integer.&#34;
@@ -900,22 +949,21 @@ def progress(count, total, name=&#34;Processing&#34;):
     return None
 
 
-def timing(before, print_msg=True):
+def timing(
+    before: datetime,
+    print_msg: bool = True,
+) -&gt; None:
     &#34;&#34;&#34;
     Get the time elapsed since the given time.
 
-    ## Args:
-    `before` (_datetime_): The time to compare. &lt;/br&gt;
+    Args:
+        before (datetime): The time to compare.
 
-    ## Kwargs:
-    `print_msg` (_bool_): If True, print the time elapsed. (**Default**: `True`) &lt;/br&gt;
+    Keyword Args:
+        print_msg (bool = True): If True, print the time elapsed.
 
-    ```python
-    &gt;&gt;&gt; before = datetime.now()
-    &gt;&gt;&gt; long_running_calculation()
-    &gt;&gt;&gt; timing(before)
-    &gt;&gt;&gt; Processing took: 1h 1m 1s
-    ```
+    Returns:
+        None.
     &#34;&#34;&#34;
     assert isinstance(before, datetime), &#34;before must be a datetime object.&#34;
 
@@ -934,15 +982,22 @@ def timing(before, print_msg=True):
     return message
 
 
-def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, available=True):
+def get_dynamic_memory_limit_bytes(
+    *,
+    percentage: float = 80.0,
+    min_bytes: int = 1000000,
+    available: bool = True,
+) -&gt; int:
     &#34;&#34;&#34;
     Returns a dynamic memory limit taking into account total memory and CPU cores.
 
-    ## Args:
-    `percentage` (_int_): The percentage of the total memory to use. (Default: **80**)
+    Keyword Args:
+        percentage (float = 80.0): The percentage of the total memory to use.
+        min_bytes (int = 1000000): The minimum number of bytes to be returned.
+        available (bool = True): If True, consider available memory instead of total memory.
 
-    ## Returns:
-    (_int_): The dynamic memory limit in bytes.
+    Returns:
+        int: The dynamic memory limit in bytes.
     &#34;&#34;&#34;
     assert isinstance(percentage, (int, str, float)), &#34;percentage must be an integer.&#34;
 
@@ -964,15 +1019,15 @@ def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, availa
     return int(dyn_limit)
 
 
-def is_str_a_glob(test_str):
+def is_str_a_glob(test_str: str) -&gt; bool:
     &#34;&#34;&#34;
     Check if a string is a glob.
 
-    ## Args:
-    `test_str` (_str_): The string to check.
+    Args:
+        test_str (str): The string to check.
 
-    ## Returns:
-    (_bool_): **True** if the string is a glob, **False** otherwise.
+    Returns:
+        bool: True if the string is a glob, False otherwise.
     &#34;&#34;&#34;
     if not isinstance(test_str, str):
         return False
@@ -986,15 +1041,17 @@ def is_str_a_glob(test_str):
     return False
 
 
-def parse_glob_path(test_str):
+def parse_glob_path(
+    test_str: str,
+) -&gt; List[str]:
     &#34;&#34;&#34;
     Parses a string containing a glob path.
 
-    ## Args:
-    `test_str` (_str_): The string to parse the pattern from.
+    Args:
+        test_str (str): The string to parse the pattern from.
 
-    ## Returns:
-    (_list_): A list of the matching paths.
+    Returns:
+        list: A list of the matching paths.
     &#34;&#34;&#34;
     assert is_str_a_glob(test_str), &#34;test_str must be a glob path.&#34;
     pre_glob = test_str[:-5]
@@ -1002,15 +1059,17 @@ def parse_glob_path(test_str):
     return glob(pre_glob)
 
 
-def ensure_list(variable_or_list):
+def ensure_list(
+    variable_or_list: Union[List, Any],
+) -&gt; List[Any]:
     &#34;&#34;&#34;
     Ensure that a variable is a list.
 
-    ## Args:
-    `variable_or_list` (_any_): The variable to check. &lt;/br&gt;
+    Args:
+        variable_or_list (any): The variable to check.
 
-    ## Returns:
-    (_list_): The variable as a list.
+    Returns:
+        list: The variable as a list.
     &#34;&#34;&#34;
     if isinstance(variable_or_list, str) and is_str_a_glob(variable_or_list):
         return parse_glob_path(variable_or_list)
@@ -1029,33 +1088,44 @@ def ensure_list(variable_or_list):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="buteo.utils.core_utils.change_path_ext"><code class="name flex">
-<span>def <span class="ident">change_path_ext</span></span>(<span>path, target_ext)</span>
+<span>def <span class="ident">change_path_ext</span></span>(<span>path: str, target_ext: str) -> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Change the extension of a file.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the file. </br>
-<code>target_ext</code> (<em>str</em>): The new extension. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>str</em>): The path to the file with the new extension.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the file.</dd>
+<dt><strong><code>target_ext</code></strong> :&ensp;<code>str</code></dt>
+<dd>The new extension.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>The path to the file with the new extension.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def change_path_ext(path, target_ext):
+<pre><code class="python">def change_path_ext(
+    path: str,
+    target_ext: str,
+) -&gt; str:
     &#34;&#34;&#34;
     Change the extension of a file.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
-    `target_ext` (_str_): The new extension. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
+        target_ext (str): The new extension.
 
-    ## Returns:
-    (_str_): The path to the file with the new extension.
+    Returns:
+        str: The path to the file with the new extension.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
     assert isinstance(target_ext, str), &#34;target_ext must be a string.&#34;
 
+    target_ext = target_ext.lstrip(&#39;.&#39;)
     basename = os.path.basename(path)
     basesplit = os.path.splitext(basename)
     ext = basesplit[1]
@@ -1067,27 +1137,33 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.delete_file"><code class="name flex">
-<span>def <span class="ident">delete_file</span></span>(<span>file)</span>
+<span>def <span class="ident">delete_file</span></span>(<span>file: str) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Delete a File</p>
-<h2 id="args">Args:</h2>
-<p><code>file</code> (<em>str</em>): The path to the file.</p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the file was deleted, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>file</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the file.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the file was deleted, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def delete_file(file):
+<pre><code class="python">def delete_file(file: str) -&gt; bool:
     &#34;&#34;&#34;
     Delete a File
 
-    ## Args:
-    `file` (_str_): The path to the file.
+    Args:
+        file (str): The path to the file.
 
-    ## Returns:
-    (_bool_): **True** if the file was deleted, **False** otherwise.
+    Returns:
+        bool: True if the file was deleted, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(file, str), &#34;file must be a string.&#34;
     assert file_exists(file), &#34;file must exist.&#34;
@@ -1101,27 +1177,33 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.delete_files_in_folder"><code class="name flex">
-<span>def <span class="ident">delete_files_in_folder</span></span>(<span>folder)</span>
+<span>def <span class="ident">delete_files_in_folder</span></span>(<span>folder: str) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Delete all files in a folder. Does not remove subfolders.</p>
-<h2 id="args">Args:</h2>
-<p><code>folder</code> (<em>str</em>): The path to the folder. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the files were deleted, throws exception otherwise..</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>folder</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the folder.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the files were deleted, raises warning otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def delete_files_in_folder(folder):
+<pre><code class="python">def delete_files_in_folder(folder: str) -&gt; bool:
     &#34;&#34;&#34;
     Delete all files in a folder. Does not remove subfolders.
 
-    ## Args:
-    `folder` (_str_): The path to the folder. &lt;/br&gt;
+    Args:
+        folder (str): The path to the folder.
 
-    ## Returns:
-    (_bool_): **True** if the files were deleted, throws exception otherwise..
+    Returns:
+        bool: True if the files were deleted, raises warning otherwise.
     &#34;&#34;&#34;
     assert isinstance(folder, str), &#34;folder must be a string.&#34;
     assert folder_exists(folder), &#34;folder must exist.&#34;
@@ -1130,66 +1212,85 @@ def ensure_list(variable_or_list):
         try:
             os.remove(file)
         except Exception:
-            print(f&#34;Warning. Could not remove: {file}&#34;)
+            warn(f&#34;Warning. Could not remove: {file}&#34;, UserWarning)
 
     return True</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.delete_folder"><code class="name flex">
-<span>def <span class="ident">delete_folder</span></span>(<span>folder)</span>
+<span>def <span class="ident">delete_folder</span></span>(<span>folder: str) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Delete a folder.</p>
-<h2 id="args">Args:</h2>
-<p><code>folder</code> (<em>str</em>): The path to the folder. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the folder was deleted, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>folder</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the folder.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the folder was deleted, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def delete_folder(folder):
+<pre><code class="python">def delete_folder(folder: str) -&gt; bool:
     &#34;&#34;&#34;
     Delete a folder.
 
-    ## Args:
-    `folder` (_str_): The path to the folder. &lt;/br&gt;
+    Args:
+        folder (str): The path to the folder.
 
-    ## Returns:
-    (_bool_): **True** if the folder was deleted, **False** otherwise.
+    Returns:
+        bool: True if the folder was deleted, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(folder, str), &#34;folder must be a string.&#34;
     assert folder_exists(folder), &#34;folder must exist.&#34;
 
-    shutil.rmtree(folder)
+    try:
+        shutil.rmtree(folder)
+    except RuntimeError:
+        warn(f&#34;Warning. Could not remove: {folder}&#34;, UserWarning)
 
     return True</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.divide_arr_into_steps"><code class="name flex">
-<span>def <span class="ident">divide_arr_into_steps</span></span>(<span>arr, steps_length)</span>
+<span>def <span class="ident">divide_arr_into_steps</span></span>(<span>arr: List[Any], steps_length: int) -> List[List[Any]]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Divide an array into steps.</p>
-<h2 id="args">Args:</h2>
-<p><code>arr</code> (<em>list</em>): The array. </br>
-<code>steps_length</code> (<em>int</em>): The length of each step. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>list</em>): An array divided into steps.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>arr</code></strong> :&ensp;<code>list</code></dt>
+<dd>The array.</dd>
+<dt><strong><code>steps_length</code></strong> :&ensp;<code>int</code></dt>
+<dd>The length of each step.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>An array divided into steps.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def divide_arr_into_steps(arr, steps_length):
+<pre><code class="python">def divide_arr_into_steps(
+    arr: List[Any],
+    steps_length: int,
+) -&gt; List[List[Any]]:
     &#34;&#34;&#34;
     Divide an array into steps.
 
-    ## Args:
-    `arr` (_list_): The array. &lt;/br&gt;
-    `steps_length` (_int_): The length of each step. &lt;/br&gt;
+    Args:
+        arr (list): The array.
+        steps_length (int): The length of each step.
 
-    ## Returns:
-    (_list_): An array divided into steps.
+    Returns:
+        list: An array divided into steps.
     &#34;&#34;&#34;
     assert isinstance(arr, list), &#34;arr must be a list.&#34;
     assert isinstance(steps_length, int), &#34;steps_length must be an integer.&#34;
@@ -1210,29 +1311,35 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.divide_into_steps"><code class="name flex">
-<span>def <span class="ident">divide_into_steps</span></span>(<span>total, step)</span>
+<span>def <span class="ident">divide_into_steps</span></span>(<span>total: int, step: int)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Divide a number into steps.</p>
-<h2 id="args">Args:</h2>
-<p><code>total</code> (<em>int</em>): The total number. </br>
-<code>step</code> (<em>int</em>): The step size. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>list</em>): The list of steps.</p></div>
+<h2 id="args">Args</h2>
+<p>total int: The total number.
+step int: The step size.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>The list of steps.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def divide_into_steps(total, step):
+<pre><code class="python">def divide_into_steps(
+    total: int,
+    step: int,
+):
     &#34;&#34;&#34;
     Divide a number into steps.
 
-    ## Args:
-    `total` (_int_): The total number. &lt;/br&gt;
-    `step` (_int_): The step size. &lt;/br&gt;
+    Args:
+        total int: The total number.
+        step int: The step size.
 
-    ## Returns:
-    (_list_): The list of steps.
+    Returns:
+        list: The list of steps.
     &#34;&#34;&#34;
     assert isinstance(total, int), &#34;total must be an integer.&#34;
     assert isinstance(step, int), &#34;step must be an integer.&#34;
@@ -1251,27 +1358,35 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.ensure_list"><code class="name flex">
-<span>def <span class="ident">ensure_list</span></span>(<span>variable_or_list)</span>
+<span>def <span class="ident">ensure_list</span></span>(<span>variable_or_list: Union[List, Any]) -> List[Any]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Ensure that a variable is a list.</p>
-<h2 id="args">Args:</h2>
-<p><code>variable_or_list</code> (<em>any</em>): The variable to check. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>list</em>): The variable as a list.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>variable_or_list</code></strong> :&ensp;<code>any</code></dt>
+<dd>The variable to check.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>The variable as a list.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def ensure_list(variable_or_list):
+<pre><code class="python">def ensure_list(
+    variable_or_list: Union[List, Any],
+) -&gt; List[Any]:
     &#34;&#34;&#34;
     Ensure that a variable is a list.
 
-    ## Args:
-    `variable_or_list` (_any_): The variable to check. &lt;/br&gt;
+    Args:
+        variable_or_list (any): The variable to check.
 
-    ## Returns:
-    (_list_): The variable as a list.
+    Returns:
+        list: The variable as a list.
     &#34;&#34;&#34;
     if isinstance(variable_or_list, str) and is_str_a_glob(variable_or_list):
         return parse_glob_path(variable_or_list)
@@ -1283,29 +1398,36 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.file_exists"><code class="name flex">
-<span>def <span class="ident">file_exists</span></span>(<span>path)</span>
+<span>def <span class="ident">file_exists</span></span>(<span>path: str) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if a file exists. Also checks vsimem.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the file. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the file exists, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the file.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the file exists, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def file_exists(path):
+<pre><code class="python">def file_exists(path: str) -&gt; bool:
     &#34;&#34;&#34;
     Check if a file exists. Also checks vsimem.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
 
-    ## Returns:
-    (_bool_): **True** if the file exists, **False** otherwise.
+    Returns:
+        bool: True if the file exists, False otherwise.
     &#34;&#34;&#34;
-    assert isinstance(path, str), &#34;path must be a string.&#34;
+    if not isinstance(path, str):
+        return False
 
     if os.path.exists(path):
         return True
@@ -1320,34 +1442,40 @@ def ensure_list(variable_or_list):
                 return True
         else:
             print(&#34;Warning, unable to access vsimem.&#34;)
-    except:  # pylint: disable=bare-except
+    except AssertionError:
         pass
 
     return False</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.folder_exists"><code class="name flex">
-<span>def <span class="ident">folder_exists</span></span>(<span>path)</span>
+<span>def <span class="ident">folder_exists</span></span>(<span>path: str) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if a folder exists.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the folder. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the folder exists, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the folder.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the folder exists, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def folder_exists(path):
+<pre><code class="python">def folder_exists(path: str) -&gt; bool:
     &#34;&#34;&#34;
     Check if a folder exists.
 
-    ## Args:
-    `path` (_str_): The path to the folder. &lt;/br&gt;
+    Args:
+        path (str): The path to the folder.
 
-    ## Returns:
-    (_bool_): **True** if the folder exists, **False** otherwise.
+    Returns:
+        bool: True if the folder exists, False otherwise.
     &#34;&#34;&#34;
     if isinstance(path, str):
         abs_dir = os.path.isdir(path)
@@ -1362,38 +1490,53 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.get_augmented_path"><code class="name flex">
-<span>def <span class="ident">get_augmented_path</span></span>(<span>path, *, prefix='', suffix='', add_uuid=True, folder=None)</span>
+<span>def <span class="ident">get_augmented_path</span></span>(<span>path: str, *, prefix: str = '', suffix: str = '', add_uuid: bool = True, folder: Optional[str] = None) -> str</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Gets a basename from a string in the format: </br>
+<div class="desc"><p>Gets a basename from a string in the format:
 <code>dir/prefix_basename_time_uuid_suffix.ext</code></p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the original file. </br></p>
-<h2 id="kwargs">Kwargs:</h2>
-<p><code>prefix</code> (<em>str</em>): The prefix to add to the memory path. (<strong>Default</strong>: <code>""</code>) </br>
-<code>suffix</code> (<em>str</em>): The suffix to add to the memory path. (<strong>Default</strong>: <code>""</code>) </br>
-<code>add_uuid</code> (<em>bool</em>): If True, add a uuid to the memory path. (<strong>Default</strong>: <code>True</code>) </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>str</em>): A string of the current UNIX time in seconds.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the original file.</dd>
+</dl>
+<p>Keyword Args:
+prefix (str = ""): The prefix to add to the memory path.
+suffix (str = ""): The suffix to add to the memory path.
+add_uuid (bool = True): If True, add a uuid to the memory path.
+folder (str = None): The folder to save the file in.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>A string of the current UNIX time in seconds.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_augmented_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=True, folder=None):
+<pre><code class="python">def get_augmented_path(
+    path: str,
+    *,
+    prefix: str = &#34;&#34;,
+    suffix: str = &#34;&#34;,
+    add_uuid: bool = True,
+    folder: Optional[str] = None,
+) -&gt; str:
     &#34;&#34;&#34;
-    Gets a basename from a string in the format: &lt;/br&gt;
+    Gets a basename from a string in the format:
     `dir/prefix_basename_time_uuid_suffix.ext`
 
-    ## Args:
-    `path` (_str_): The path to the original file. &lt;/br&gt;
+    Args:
+        path (str): The path to the original file.
 
-    ## Kwargs:
-    `prefix` (_str_): The prefix to add to the memory path. (**Default**: `&#34;&#34;`) &lt;/br&gt;
-    `suffix` (_str_): The suffix to add to the memory path. (**Default**: `&#34;&#34;`) &lt;/br&gt;
-    `add_uuid` (_bool_): If True, add a uuid to the memory path. (**Default**: `True`) &lt;/br&gt;
+    Keyword Args:
+        prefix (str = &#34;&#34;): The prefix to add to the memory path.
+        suffix (str = &#34;&#34;): The suffix to add to the memory path.
+        add_uuid (bool = True): If True, add a uuid to the memory path.
+        folder (str = None): The folder to save the file in.
 
-    ## Returns:
-    (_str_): A string of the current UNIX time in seconds.
+    Returns:
+        str: A string of the current UNIX time in seconds.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
     assert isinstance(folder, (type(None), str)), &#34;folder must be None or a string&#34;
@@ -1441,27 +1584,39 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.get_dynamic_memory_limit_bytes"><code class="name flex">
-<span>def <span class="ident">get_dynamic_memory_limit_bytes</span></span>(<span>*, percentage=80.0, min_bytes=1000000, available=True)</span>
+<span>def <span class="ident">get_dynamic_memory_limit_bytes</span></span>(<span>*, percentage: float = 80.0, min_bytes: int = 1000000, available: bool = True) -> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns a dynamic memory limit taking into account total memory and CPU cores.</p>
-<h2 id="args">Args:</h2>
-<p><code>percentage</code> (<em>int</em>): The percentage of the total memory to use. (Default: <strong>80</strong>)</p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>int</em>): The dynamic memory limit in bytes.</p></div>
+<p>Keyword Args:
+percentage (float = 80.0): The percentage of the total memory to use.
+min_bytes (int = 1000000): The minimum number of bytes to be returned.
+available (bool = True): If True, consider available memory instead of total memory.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>The dynamic memory limit in bytes.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_dynamic_memory_limit_bytes(*, percentage=80.0, min_bytes=1000000, available=True):
+<pre><code class="python">def get_dynamic_memory_limit_bytes(
+    *,
+    percentage: float = 80.0,
+    min_bytes: int = 1000000,
+    available: bool = True,
+) -&gt; int:
     &#34;&#34;&#34;
     Returns a dynamic memory limit taking into account total memory and CPU cores.
 
-    ## Args:
-    `percentage` (_int_): The percentage of the total memory to use. (Default: **80**)
+    Keyword Args:
+        percentage (float = 80.0): The percentage of the total memory to use.
+        min_bytes (int = 1000000): The minimum number of bytes to be returned.
+        available (bool = True): If True, consider available memory instead of total memory.
 
-    ## Returns:
-    (_int_): The dynamic memory limit in bytes.
+    Returns:
+        int: The dynamic memory limit in bytes.
     &#34;&#34;&#34;
     assert isinstance(percentage, (int, str, float)), &#34;percentage must be an integer.&#34;
 
@@ -1484,29 +1639,35 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.get_size"><code class="name flex">
-<span>def <span class="ident">get_size</span></span>(<span>start_path='.', rough=True)</span>
+<span>def <span class="ident">get_size</span></span>(<span>start_path: str = '.', rough: bool = True) -> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the size of a folder.</p>
-<h2 id="kwargs">Kwargs:</h2>
-<p><code>start_path</code> (<em>str</em>): The path to the folder. (<strong>Default</strong>: <code>"."</code>) </br>
-<code>rough</code> (<em>bool</em>): If True, return a rough estimate. (<strong>Default</strong>: <code>True</code>) </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>int</em>): The size of the folder.</p></div>
+<p>Keyword Args:
+start_path (str = "."): The path to the folder.
+rough (bool = True): If True, return a rough estimate.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>The size of the folder.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_size(start_path=&#34;.&#34;, rough=True):
+<pre><code class="python">def get_size(
+    start_path: str = &#34;.&#34;,
+    rough: bool = True,
+) -&gt; int:
     &#34;&#34;&#34;
     Get the size of a folder.
 
-    ## Kwargs:
-    `start_path` (_str_): The path to the folder. (**Default**: `&#34;.&#34;`) &lt;/br&gt;
-    `rough` (_bool_): If True, return a rough estimate. (**Default**: `True`) &lt;/br&gt;
+    Keyword Args:
+        start_path (str = &#34;.&#34;): The path to the folder.
+        rough (bool = True): If True, return a rough estimate.
 
-    ## Returns:
-    (_int_): The size of the folder.
+    Returns:
+        int: The size of the folder.
     &#34;&#34;&#34;
     assert isinstance(start_path, str), &#34;start_path must be a string.&#34;
     assert folder_exists(start_path), &#34;start_path must exist.&#34;
@@ -1527,48 +1688,57 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.get_unix_seconds_as_str"><code class="name flex">
-<span>def <span class="ident">get_unix_seconds_as_str</span></span>(<span>)</span>
+<span>def <span class="ident">get_unix_seconds_as_str</span></span>(<span>) -> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get a string of the current UNIX time in seconds.</p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>str</em>): A string of the current UNIX time in seconds.</p></div>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>A string of the current UNIX time in seconds.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_unix_seconds_as_str():
+<pre><code class="python">def get_unix_seconds_as_str() -&gt; str:
     &#34;&#34;&#34;
     Get a string of the current UNIX time in seconds.
 
-    ## Returns:
-    (_str_): A string of the current UNIX time in seconds.
+    Returns:
+        str: A string of the current UNIX time in seconds.
     &#34;&#34;&#34;
     return str(int(time.time()))</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_float"><code class="name flex">
-<span>def <span class="ident">is_float</span></span>(<span>value)</span>
+<span>def <span class="ident">is_float</span></span>(<span>value: Any) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if a value is a float. If it is a string, try to convert it to a float.</p>
-<h2 id="args">Args:</h2>
-<p><code>value</code> (<em>any</em>): The value to check.</p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the value is a float, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>any</code></dt>
+<dd>The value to check.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the value is a float, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_float(value):
+<pre><code class="python">def is_float(value: Any) -&gt; bool:
     &#34;&#34;&#34;
     Check if a value is a float. If it is a string, try to convert it to a float.
 
-    ## Args:
-    `value` (_any_): The value to check.
+    Args:
+        value (any): The value to check.
 
-    ## Returns:
-    (_bool_): **True** if the value is a float, **False** otherwise.
+    Returns:
+        bool: True if the value is a float, False otherwise.
     &#34;&#34;&#34;
     if isinstance(value, float):
         return True
@@ -1577,6 +1747,7 @@ def ensure_list(variable_or_list):
         try:
             float(value)
             return True
+
         except ValueError:
             return False
 
@@ -1584,27 +1755,33 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_int"><code class="name flex">
-<span>def <span class="ident">is_int</span></span>(<span>value)</span>
+<span>def <span class="ident">is_int</span></span>(<span>value: Any) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if a value is an integer. If it is a string, try to convert it to an integer.</p>
-<h2 id="args">Args:</h2>
-<p><code>value</code> (<em>any</em>): The value to check. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the value is an integer, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>any</code></dt>
+<dd>The value to check.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the variable is an int, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_int(value):
+<pre><code class="python">def is_int(value: Any) -&gt; bool:
     &#34;&#34;&#34;
     Check if a value is an integer. If it is a string, try to convert it to an integer.
 
-    ## Args:
-    `value` (_any_): The value to check. &lt;/br&gt;
+    Args:
+        value (any): The value to check.
 
-    ## Returns:
-    (_bool_): **True** if the value is an integer, **False** otherwise.
+    Returns:
+        bool: True if the variable is an int, False otherwise.
     &#34;&#34;&#34;
     if isinstance(value, int):
         return True
@@ -1620,29 +1797,38 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_list_all_the_same"><code class="name flex">
-<span>def <span class="ident">is_list_all_the_same</span></span>(<span>lst)</span>
+<span>def <span class="ident">is_list_all_the_same</span></span>(<span>lst: list) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if a list contains all the same elements.</p>
-<h2 id="args">Args:</h2>
-<p><code>lst</code> (<em>list</em>): The list to check. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the list contains all the same elements, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>lst</code></strong> :&ensp;<code>list</code></dt>
+<dd>The list to check.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the list contains all the same elements, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_list_all_the_same(lst):
+<pre><code class="python">def is_list_all_the_same(lst: list) -&gt; bool:
     &#34;&#34;&#34;
     Check if a list contains all the same elements.
 
-    ## Args:
-    `lst` (_list_): The list to check. &lt;/br&gt;
+    Args:
+        lst (list): The list to check.
 
-    ## Returns:
-    (_bool_): **True** if the list contains all the same elements, **False** otherwise.
+    Returns:
+        bool: True if the list contains all the same elements, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(lst, list), &#34;lst must be a list.&#34;
+
+    if len(lst) == 0:
+        return True
 
     first = lst[0]
     for idx, item in enumerate(lst):
@@ -1656,29 +1842,39 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_list_all_val"><code class="name flex">
-<span>def <span class="ident">is_list_all_val</span></span>(<span>arr, val)</span>
+<span>def <span class="ident">is_list_all_val</span></span>(<span>arr: List[Any], val: Any) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if a list is all a value. This also considers type.</p>
-<h2 id="args">Args:</h2>
-<p><code>arr</code> (<em>list</em>): The list to check. </br>
-<code>val</code> (<em>any</em>): The value to check against. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if all elements are x, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>arr</code></strong> :&ensp;<code>list</code></dt>
+<dd>The list to check.</dd>
+<dt><strong><code>val</code></strong> :&ensp;<code>any</code></dt>
+<dd>The value to check against.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if all elements are x, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_list_all_val(arr, val):
+<pre><code class="python">def is_list_all_val(
+    arr: List[Any],
+    val: Any,
+) -&gt; bool:
     &#34;&#34;&#34;
     Check if a list is all a value. This also considers type.
 
-    ## Args:
-    `arr` (_list_): The list to check. &lt;/br&gt;
-    `val` (_any_): The value to check against. &lt;/br&gt;
+    Args:
+        arr (list): The list to check.
+        val (any): The value to check against.
 
-    ## Returns:
-    (_bool_): **True** if all elements are x, **False** otherwise.
+    Returns:
+        bool: True if all elements are x, False otherwise.
     &#34;&#34;&#34;
     assert isinstance(arr, list), &#34;arr must be a list.&#34;
 
@@ -1690,27 +1886,33 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_number"><code class="name flex">
-<span>def <span class="ident">is_number</span></span>(<span>potential_number)</span>
+<span>def <span class="ident">is_number</span></span>(<span>potential_number: Any) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if variable is a number.</p>
-<h2 id="args">Args:</h2>
-<p><code>potential_number</code> (<em>any</em>): The variable to check. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the variable is a number, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>potential_number</code></strong> :&ensp;<code>any</code></dt>
+<dd>The variable to check.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the variable is a number, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_number(potential_number):
+<pre><code class="python">def is_number(potential_number: Any) -&gt; bool:
     &#34;&#34;&#34;
     Check if variable is a number.
 
-    ## Args:
-    `potential_number` (_any_): The variable to check. &lt;/br&gt;
+    Args:
+        potential_number (any): The variable to check.
 
-    ## Returns:
-    (_bool_): **True** if the variable is a number, **False** otherwise.
+    Returns:
+        bool: True if the variable is a number, False otherwise.
     &#34;&#34;&#34;
     if isinstance(potential_number, float):
         return True
@@ -1722,27 +1924,33 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_str_a_glob"><code class="name flex">
-<span>def <span class="ident">is_str_a_glob</span></span>(<span>test_str)</span>
+<span>def <span class="ident">is_str_a_glob</span></span>(<span>test_str: str) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if a string is a glob.</p>
-<h2 id="args">Args:</h2>
-<p><code>test_str</code> (<em>str</em>): The string to check.</p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the string is a glob, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>test_str</code></strong> :&ensp;<code>str</code></dt>
+<dd>The string to check.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the string is a glob, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_str_a_glob(test_str):
+<pre><code class="python">def is_str_a_glob(test_str: str) -&gt; bool:
     &#34;&#34;&#34;
     Check if a string is a glob.
 
-    ## Args:
-    `test_str` (_str_): The string to check.
+    Args:
+        test_str (str): The string to check.
 
-    ## Returns:
-    (_bool_): **True** if the string is a glob, **False** otherwise.
+    Returns:
+        bool: True if the string is a glob, False otherwise.
     &#34;&#34;&#34;
     if not isinstance(test_str, str):
         return False
@@ -1757,27 +1965,33 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_valid_file_path"><code class="name flex">
-<span>def <span class="ident">is_valid_file_path</span></span>(<span>path)</span>
+<span>def <span class="ident">is_valid_file_path</span></span>(<span>path: str) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if a path is valid and has an extension. Path can be in memory.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the file. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the path has an extension, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the file.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the path has an extension, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_valid_file_path(path):
+<pre><code class="python">def is_valid_file_path(path: str) -&gt; bool:
     &#34;&#34;&#34;
     Check if a path is valid and has an extension. Path can be in memory.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
 
-    ## Returns:
-    (_bool_): **True** if the path has an extension, **False** otherwise.
+    Returns:
+        bool: True if the path has an extension, False otherwise.
     &#34;&#34;&#34;
     if is_valid_mem_path(path) or is_valid_non_memory_path(path):
         return True
@@ -1786,27 +2000,33 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_valid_mem_path"><code class="name flex">
-<span>def <span class="ident">is_valid_mem_path</span></span>(<span>path)</span>
+<span>def <span class="ident">is_valid_mem_path</span></span>(<span>path: str) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if a path is a valid memory path that has an extension.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to test. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if path is a valid memory path, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to test.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if path is a valid memory path, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_valid_mem_path(path):
+<pre><code class="python">def is_valid_mem_path(path: str) -&gt; bool:
     &#34;&#34;&#34;
     Check if a path is a valid memory path that has an extension.
 
-    ## Args:
-    `path` (_str_): The path to test. &lt;/br&gt;
+    Args:
+        path (str): The path to test.
 
-    ## Returns:
-    (_bool_): **True** if path is a valid memory path, **False** otherwise.
+    Returns:
+        bool: True if path is a valid memory path, False otherwise.
     &#34;&#34;&#34;
     if not isinstance(path, str):
         return False
@@ -1826,27 +2046,33 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_valid_non_memory_path"><code class="name flex">
-<span>def <span class="ident">is_valid_non_memory_path</span></span>(<span>path)</span>
+<span>def <span class="ident">is_valid_non_memory_path</span></span>(<span>path: str) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if a path is valid, not in memory, and has an extension.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the file. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the path has an extension, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the file.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the path has an extension, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_valid_non_memory_path(path):
+<pre><code class="python">def is_valid_non_memory_path(path: str) -&gt; bool:
     &#34;&#34;&#34;
     Check if a path is valid, not in memory, and has an extension.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
 
-    ## Returns:
-    (_bool_): **True** if the path has an extension, **False** otherwise.
+    Returns:
+        bool: True if the path has an extension, False otherwise.
     &#34;&#34;&#34;
     if not isinstance(path, str):
         return False
@@ -1869,32 +2095,38 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_valid_output_path"><code class="name flex">
-<span>def <span class="ident">is_valid_output_path</span></span>(<span>path, *, overwrite=True)</span>
+<span>def <span class="ident">is_valid_output_path</span></span>(<span>path: str, *, overwrite: bool = True) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if an output path is valid.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the file. </br></p>
-<h2 id="kwargs">Kwargs:</h2>
-<p><code>overwrite</code> (<em>bool</em>): <strong>True</strong> if the file should be overwritten, <strong>False</strong> otherwise. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the output path is valid, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the file.</dd>
+</dl>
+<p>Keyword Args:
+overwrite (bool = True): True if the file should be overwritten, False otherwise.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the output path is valid, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_valid_output_path(path, *, overwrite=True):
+<pre><code class="python">def is_valid_output_path(path: str, *, overwrite: bool = True) -&gt; bool:
     &#34;&#34;&#34;
     Check if an output path is valid.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
 
-    ## Kwargs:
-    `overwrite` (_bool_): **True** if the file should be overwritten, **False** otherwise. &lt;/br&gt;
+    Keyword Args:
+        overwrite (bool = True): True if the file should be overwritten, False otherwise.
 
-    ## Returns:
-    (_bool_): **True** if the output path is valid, **False** otherwise.
+    Returns:
+        bool: True if the output path is valid, False otherwise.
     &#34;&#34;&#34;
     if not is_valid_file_path(path):
         return False
@@ -1909,32 +2141,38 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.is_valid_output_path_list"><code class="name flex">
-<span>def <span class="ident">is_valid_output_path_list</span></span>(<span>output_list, *, overwrite=True)</span>
+<span>def <span class="ident">is_valid_output_path_list</span></span>(<span>output_list: List[str], *, overwrite: bool = True) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Check if a list of output paths are valid.</p>
-<h2 id="args">Args:</h2>
-<p><code>output_list</code> (<em>list</em>): The list of paths to the files. </br></p>
-<h2 id="kwargs">Kwargs:</h2>
-<p><code>overwrite</code> (<em>bool</em>): <strong>True</strong> if the file should be overwritten, <strong>False</strong> otherwise. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the list of output paths are valid, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>output_list</code></strong> :&ensp;<code>list</code></dt>
+<dd>The list of paths to the files.</dd>
+</dl>
+<p>Keyword Args:
+overwrite (bool = True): True if the file should be overwritten, False otherwise.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the list of output paths are valid, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_valid_output_path_list(output_list, *, overwrite=True):
+<pre><code class="python">def is_valid_output_path_list(output_list: List[str], *, overwrite: bool = True) -&gt; bool:
     &#34;&#34;&#34;
     Check if a list of output paths are valid.
 
-    ## Args:
-    `output_list` (_list_): The list of paths to the files. &lt;/br&gt;
+    Args:
+        output_list (list): The list of paths to the files.
 
-    ## Kwargs:
-    `overwrite` (_bool_): **True** if the file should be overwritten, **False** otherwise. &lt;/br&gt;
+    Keyword Args:
+        overwrite (bool = True): True if the file should be overwritten, False otherwise.
 
-    ## Returns:
-    (_bool_): **True** if the list of output paths are valid, **False** otherwise.
+    Returns:
+        bool: True if the list of output paths are valid, False otherwise.
     &#34;&#34;&#34;
     if not isinstance(output_list, list):
         return False
@@ -1950,58 +2188,72 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.make_dir_if_not_exists"><code class="name flex">
-<span>def <span class="ident">make_dir_if_not_exists</span></span>(<span>path)</span>
+<span>def <span class="ident">make_dir_if_not_exists</span></span>(<span>path: str) -> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Make a directory if it doesn't exist.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the directory. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>str</em>): The path to the created directory.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the directory.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>(str): The path to the created directory.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def make_dir_if_not_exists(path):
+<pre><code class="python">def make_dir_if_not_exists(path: str) -&gt; str:
     &#34;&#34;&#34;
     Make a directory if it doesn&#39;t exist.
 
-    ## Args:
-    `path` (_str_): The path to the directory. &lt;/br&gt;
+    Args:
+        path (str): The path to the directory.
 
-    ## Returns:
-    (_str_): The path to the created directory.
+    Returns:
+        (str): The path to the created directory.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
 
     if not folder_exists(path):
         os.makedirs(path)
+    
+    if not folder_exists(path):
+        raise RuntimeError(f&#34;Could not create directory: {path}&#34;)
 
     return path</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.parse_glob_path"><code class="name flex">
-<span>def <span class="ident">parse_glob_path</span></span>(<span>test_str)</span>
+<span>def <span class="ident">parse_glob_path</span></span>(<span>test_str: str) -> List[str]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Parses a string containing a glob path.</p>
-<h2 id="args">Args:</h2>
-<p><code>test_str</code> (<em>str</em>): The string to parse the pattern from.</p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>list</em>): A list of the matching paths.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>test_str</code></strong> :&ensp;<code>str</code></dt>
+<dd>The string to parse the pattern from.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>A list of the matching paths.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def parse_glob_path(test_str):
+<pre><code class="python">def parse_glob_path(
+    test_str: str,
+) -&gt; List[str]:
     &#34;&#34;&#34;
     Parses a string containing a glob path.
 
-    ## Args:
-    `test_str` (_str_): The string to parse the pattern from.
+    Args:
+        test_str (str): The string to parse the pattern from.
 
-    ## Returns:
-    (_list_): A list of the matching paths.
+    Returns:
+        list: A list of the matching paths.
     &#34;&#34;&#34;
     assert is_str_a_glob(test_str), &#34;test_str must be a glob path.&#34;
     pre_glob = test_str[:-5]
@@ -2010,32 +2262,41 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.path_to_ext"><code class="name flex">
-<span>def <span class="ident">path_to_ext</span></span>(<span>path, with_dot=False)</span>
+<span>def <span class="ident">path_to_ext</span></span>(<span>path: str, with_dot: bool = False)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Get the extension of a file.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the file. </br></p>
-<h2 id="kwargs">Kwargs:</h2>
-<p><code>with_dot</code> (<em>bool</em>): If True, return the extension with a dot. (<strong>Default</strong>: <code>False</code>) </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>str</em>): The extension of the file. (<em>without the dot</em>)</p></div>
+<div class="desc"><p>Get the extension of a file. If the file has no extension, raise an error.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the file.</dd>
+</dl>
+<h2 id="kwargs">Kwargs</h2>
+<p>with_dot (bool = False): If True, return the extension with a dot.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>The extension of the file.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def path_to_ext(path, with_dot=False):
+<pre><code class="python">def path_to_ext(
+    path: str,
+    with_dot: bool = False,
+):
     &#34;&#34;&#34;
-    Get the extension of a file.
+    Get the extension of a file. If the file has no extension, raise an error.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
 
-    ## Kwargs:
-    `with_dot` (_bool_): If True, return the extension with a dot. (**Default**: `False`) &lt;/br&gt;
+    Kwargs:
+        with_dot (bool = False): If True, return the extension with a dot.
 
-    ## Returns:
-    (_str_): The extension of the file. (_without the dot_)
+    Returns:
+        str: The extension of the file.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
     assert isinstance(with_dot, bool), &#34;with_dot must be a boolean.&#34;
@@ -2054,62 +2315,78 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.path_to_folder"><code class="name flex">
-<span>def <span class="ident">path_to_folder</span></span>(<span>path)</span>
+<span>def <span class="ident">path_to_folder</span></span>(<span>path: str) -> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the folder of a file.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the file. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>str</em>): The folder of the file.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the file.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>The folder of the file.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def path_to_folder(path):
+<pre><code class="python">def path_to_folder(path: str) -&gt; str:
     &#34;&#34;&#34;
     Get the folder of a file.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
 
-    ## Returns:
-    (_str_): The folder of the file.
+    Returns:
+        str: The folder of the file.
     &#34;&#34;&#34;
     assert isinstance(path, str), &#34;path must be a string.&#34;
 
-    return os.path.dirname(os.path.abspath(path))</code></pre>
+    dir_path = os.path.dirname(os.path.abspath(path))
+
+    return dir_path</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.progress"><code class="name flex">
-<span>def <span class="ident">progress</span></span>(<span>count, total, name='Processing')</span>
+<span>def <span class="ident">progress</span></span>(<span>count: int, total: int, name: str = 'Processing') -> NoneType</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Print a progress bar.</p>
-<h2 id="args">Args:</h2>
-<p><code>count</code> (<em>int</em>): The current count. </br>
-<code>total</code> (<em>int</em>): The total count. </br></p>
-<h2 id="kwargs">Kwargs:</h2>
-<p><code>name</code> (<em>str</em>): The name to show in the progress bar. (<strong>Default</strong>: <code>"Processing"</code>) </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>None</em>): Returns None.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>count</code></strong> :&ensp;<code>int</code></dt>
+<dd>The current count.</dd>
+<dt><strong><code>total</code></strong> :&ensp;<code>int</code></dt>
+<dd>The total count.</dd>
+</dl>
+<p>Keyword Args:
+name (str = "Processing"): The name to show in the progress bar. Default: "Processing".</p>
+<h2 id="returns">Returns</h2>
+<p>None.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def progress(count, total, name=&#34;Processing&#34;):
+<pre><code class="python">def progress(
+    count: int,
+    total: int,
+    name: str = &#34;Processing&#34;,
+) -&gt; None:
     &#34;&#34;&#34;
     Print a progress bar.
 
-    ## Args:
-    `count` (_int_): The current count. &lt;/br&gt;
-    `total` (_int_): The total count. &lt;/br&gt;
+    Args:
+        count (int): The current count.
+        total (int): The total count.
 
-    ## Kwargs:
-    `name` (_str_): The name to show in the progress bar. (**Default**: `&#34;Processing&#34;`) &lt;/br&gt;
+    Keyword Args:
+        name (str = &#34;Processing&#34;): The name to show in the progress bar. Default: &#34;Processing&#34;.
 
-    ## Returns:
-    (_None_): Returns None.
+    Returns:
+        None.
     &#34;&#34;&#34;
     assert isinstance(count, int), &#34;count must be an integer.&#34;
     assert isinstance(total, int), &#34;total must be an integer.&#34;
@@ -2145,27 +2422,33 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.recursive_check_type_list_none_or_tuple"><code class="name flex">
-<span>def <span class="ident">recursive_check_type_list_none_or_tuple</span></span>(<span>potential_type)</span>
+<span>def <span class="ident">recursive_check_type_list_none_or_tuple</span></span>(<span>potential_type: Any) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Recursively check if a type, list or tuple.</p>
-<h2 id="args">Args:</h2>
-<p><code>potential_type</code> (<em>any</em>): The variable to test. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if a type, list or tuple, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>potential_type</code></strong> :&ensp;<code>any</code></dt>
+<dd>The variable to test.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if a type, list, or tuple, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def recursive_check_type_list_none_or_tuple(potential_type):
+<pre><code class="python">def recursive_check_type_list_none_or_tuple(potential_type: Any) -&gt; bool:
     &#34;&#34;&#34;
     Recursively check if a type, list or tuple.
 
-    ## Args:
-    `potential_type` (_any_): The variable to test. &lt;/br&gt;
+    Args:
+        potential_type (any): The variable to test.
 
-    ## Returns:
-    (_bool_): **True** if a type, list or tuple, **False** otherwise.
+    Returns:
+        bool: True if a type, list, or tuple, False otherwise.
     &#34;&#34;&#34;
     if isinstance(potential_type, type(None)):
         return True
@@ -2184,29 +2467,36 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.remove_if_required"><code class="name flex">
-<span>def <span class="ident">remove_if_required</span></span>(<span>path, overwrite)</span>
+<span>def <span class="ident">remove_if_required</span></span>(<span>path: str, overwrite: bool = True) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Remove a file if overwrite is True.</p>
-<h2 id="args">Args:</h2>
-<p><code>path</code> (<em>str</em>): The path to the file. </br>
-<code>remove</code> (<em>bool</em>): If True, remove the file. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the file was removed, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the file.</dd>
+<dt><strong><code>overwrite</code></strong> :&ensp;<code>bool = True</code></dt>
+<dd>If True, overwrite the file.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the file was removed, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def remove_if_required(path, overwrite):
+<pre><code class="python">def remove_if_required(path: str, overwrite: bool = True) -&gt; bool:
     &#34;&#34;&#34;
     Remove a file if overwrite is True.
 
-    ## Args:
-    `path` (_str_): The path to the file. &lt;/br&gt;
-    `remove` (_bool_): If True, remove the file. &lt;/br&gt;
+    Args:
+        path (str): The path to the file.
+        overwrite (bool = True): If True, overwrite the file.
 
-    ## Returns:
-    (_bool_): **True** if the file was removed, **False** otherwise.
+    Returns:
+        bool: True if the file was removed, False otherwise.
     &#34;&#34;&#34;
     assert is_valid_output_path(path), f&#34;path must be a valid output path. {path}&#34;
 
@@ -2225,29 +2515,36 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.remove_if_required_list"><code class="name flex">
-<span>def <span class="ident">remove_if_required_list</span></span>(<span>output_list, overwrite)</span>
+<span>def <span class="ident">remove_if_required_list</span></span>(<span>output_list: List[str], overwrite: bool) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Remove a list of files if overwrite is True.</p>
-<h2 id="args">Args:</h2>
-<p><code>output_list</code> (<em>list</em>): The list of paths to the files. </br>
-<code>remove</code> (<em>bool</em>): If True, remove the files. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): <strong>True</strong> if the files were removed, <strong>False</strong> otherwise.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>output_list</code></strong> :&ensp;<code>list</code></dt>
+<dd>The list of paths to the files.</dd>
+<dt><strong><code>overwrite</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True, overwrite the files.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the files were removed, False otherwise.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def remove_if_required_list(output_list, overwrite):
+<pre><code class="python">def remove_if_required_list(output_list: List[str], overwrite: bool) -&gt; bool:
     &#34;&#34;&#34;
     Remove a list of files if overwrite is True.
 
-    ## Args:
-    `output_list` (_list_): The list of paths to the files. &lt;/br&gt;
-    `remove` (_bool_): If True, remove the files. &lt;/br&gt;
+    Args:
+        output_list (list): The list of paths to the files.
+        overwrite (bool): If True, overwrite the files.
 
-    ## Returns:
-    (_bool_): **True** if the files were removed, **False** otherwise.
+    Returns:
+        bool: True if the files were removed, False otherwise.
     &#34;&#34;&#34;
     assert is_valid_output_path_list(output_list), f&#34;output_list must be a valid output path list. {output_list}&#34;
 
@@ -2258,27 +2555,35 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.step_ranges"><code class="name flex">
-<span>def <span class="ident">step_ranges</span></span>(<span>arr_with_steps)</span>
+<span>def <span class="ident">step_ranges</span></span>(<span>arr_with_steps: List[List[Any]]) -> List[Dict[str, int]]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the ranges of each step.</p>
-<h2 id="args">Args:</h2>
-<p><code>arr_with_steps</code> (<em>list</em>): The array with steps. </br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>dict</em>): A dictionary of type: <code>{ "id": _int_, "start": _int_, "stop": _int_}</code>.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>arr_with_steps</code></strong> :&ensp;<code>list</code></dt>
+<dd>The array with steps.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>A list of dictionaries of type: { "id": int, "start": int, "stop": int}.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def step_ranges(arr_with_steps):
+<pre><code class="python">def step_ranges(
+    arr_with_steps: List[List[Any]],
+) -&gt; List[Dict[str, int]]:
     &#34;&#34;&#34;
     Get the ranges of each step.
 
-    ## Args:
-    `arr_with_steps` (_list_): The array with steps. &lt;/br&gt;
+    Args:
+        arr_with_steps (list): The array with steps.
 
-    ## Returns:
-    (_dict_): A dictionary of type: `{ &#34;id&#34;: _int_, &#34;start&#34;: _int_, &#34;stop&#34;: _int_}`.
+    Returns:
+        list: A list of dictionaries of type: { &#34;id&#34;: int, &#34;start&#34;: int, &#34;stop&#34;: int}.
     &#34;&#34;&#34;
     assert isinstance(arr_with_steps, list), &#34;arr_with_steps must be a list.&#34;
 
@@ -2301,39 +2606,38 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.timing"><code class="name flex">
-<span>def <span class="ident">timing</span></span>(<span>before, print_msg=True)</span>
+<span>def <span class="ident">timing</span></span>(<span>before: datetime.datetime, print_msg: bool = True) -> NoneType</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the time elapsed since the given time.</p>
-<h2 id="args">Args:</h2>
-<p><code>before</code> (<em>datetime</em>): The time to compare. </br></p>
-<h2 id="kwargs">Kwargs:</h2>
-<p><code>print_msg</code> (<em>bool</em>): If True, print the time elapsed. (<strong>Default</strong>: <code>True</code>) </br></p>
-<pre><code class="language-python">&gt;&gt;&gt; before = datetime.now()
-&gt;&gt;&gt; long_running_calculation()
-&gt;&gt;&gt; timing(before)
-&gt;&gt;&gt; Processing took: 1h 1m 1s
-</code></pre></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>before</code></strong> :&ensp;<code>datetime</code></dt>
+<dd>The time to compare.</dd>
+</dl>
+<p>Keyword Args:
+print_msg (bool = True): If True, print the time elapsed.</p>
+<h2 id="returns">Returns</h2>
+<p>None.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def timing(before, print_msg=True):
+<pre><code class="python">def timing(
+    before: datetime,
+    print_msg: bool = True,
+) -&gt; None:
     &#34;&#34;&#34;
     Get the time elapsed since the given time.
 
-    ## Args:
-    `before` (_datetime_): The time to compare. &lt;/br&gt;
+    Args:
+        before (datetime): The time to compare.
 
-    ## Kwargs:
-    `print_msg` (_bool_): If True, print the time elapsed. (**Default**: `True`) &lt;/br&gt;
+    Keyword Args:
+        print_msg (bool = True): If True, print the time elapsed.
 
-    ```python
-    &gt;&gt;&gt; before = datetime.now()
-    &gt;&gt;&gt; long_running_calculation()
-    &gt;&gt;&gt; timing(before)
-    &gt;&gt;&gt; Processing took: 1h 1m 1s
-    ```
+    Returns:
+        None.
     &#34;&#34;&#34;
     assert isinstance(before, datetime), &#34;before must be a datetime object.&#34;
 
@@ -2353,75 +2657,85 @@ def ensure_list(variable_or_list):
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.to_number"><code class="name flex">
-<span>def <span class="ident">to_number</span></span>(<span>value)</span>
+<span>def <span class="ident">to_number</span></span>(<span>variable)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Convert a value to a number.</p>
-<h2 id="args">Args:</h2>
-<p><code>value</code> (<em>any</em>): The value to convert.</p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>float</em>): The value converted to a number.</p></div>
+<div class="desc"><p>Attempts to convert a variable to a number.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>variable</code></strong> :&ensp;<code>any</code></dt>
+<dd>The value to convert.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>(float): The value converted to a number.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def to_number(value):
+<pre><code class="python">def to_number(variable):
     &#34;&#34;&#34;
-    Convert a value to a number.
+    Attempts to convert a variable to a number.
 
-    ## Args:
-    `value` (_any_): The value to convert.
+    Args:
+        variable (any): The value to convert.
 
-    ## Returns:
-    (_float_): The value converted to a number.
+    Returns:
+        (float): The value converted to a number.
     &#34;&#34;&#34;
-    assert isinstance(value, (str, int, float)), &#34;value must be a string, integer or float.&#34;
-    if is_number(value):
-        return value
+    assert isinstance(variable, (str, int, float)), &#34;value must be a string, integer or float.&#34;
+    if is_number(variable):
+        return variable
 
-    if is_float(value):
-        return float(value)
+    if is_float(variable):
+        return float(variable)
 
-    raise RuntimeError(f&#34;Could not convert {value} to a number.&#34;)</code></pre>
+    raise RuntimeError(f&#34;Could not convert {variable} to a number.&#34;)</code></pre>
 </details>
 </dd>
 <dt id="buteo.utils.core_utils.type_check"><code class="name flex">
-<span>def <span class="ident">type_check</span></span>(<span>variable, types, name='', *, throw_error=True)</span>
+<span>def <span class="ident">type_check</span></span>(<span>variable: Any, types: Tuple[type, ...], name: str = '', *, throw_error: bool = True) -> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Utility function to type check the inputs of a function. Check two levels down.</p>
-<h2 id="args">Args:</h2>
-<p><code>variable</code> (<em>any</em>): The variable to check. </br>
-<code>types</code> (<em>tuple</em>): The types to check against. <code>(float, int, &hellip;)</code> </br></p>
-<h2 id="kargs">Kargs:</h2>
-<p><code>name</code> (<em>str</em>): The name printed in the error string if an error is thrown. (<strong>Default</strong>: <code>""</code>)</br>
-<code>throw_error</code> (<em>bool</em>): If True, raise an error if the type is not correct. (<strong>Default</strong>: <code>True</code>)</br></p>
-<h2 id="returns">Returns:</h2>
-<p>(<em>bool</em>): A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.</p></div>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>variable</code></strong> :&ensp;<code>any</code></dt>
+<dd>The variable to check.</dd>
+<dt><strong><code>types</code></strong> :&ensp;<code>tuple</code></dt>
+<dd>The types to check against. (float, int, &hellip;)</dd>
+</dl>
+<p>Keyword Args:
+name (str = ""): The name printed in the error string if an error is thrown.
+throw_error (bool = True): If True, raise an error if the type is not correct.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def type_check(
-    variable,
-    types,
-    name=&#34;&#34;,
+    variable: Any,
+    types: Tuple[type, ...],
+    name: str = &#34;&#34;,
     *,
-    throw_error=True,
-):
+    throw_error: bool = True,
+) -&gt; bool:
     &#34;&#34;&#34;
     Utility function to type check the inputs of a function. Check two levels down.
 
-    ## Args:
-    `variable` (_any_): The variable to check. &lt;/br&gt;
-    `types` (_tuple_): The types to check against. `(float, int, ...)` &lt;/br&gt;
+    Args:
+        variable (any): The variable to check.
+        types (tuple): The types to check against. (float, int, ...)
 
-    ## Kargs:
-    `name` (_str_): The name printed in the error string if an error is thrown. (**Default**: `&#34;&#34;`)&lt;/br&gt;
-    `throw_error` (_bool_): If True, raise an error if the type is not correct. (**Default**: `True`)&lt;/br&gt;
+    Keyword Args:
+        name (str = &#34;&#34;): The name printed in the error string if an error is thrown.
+        throw_error (bool = True): If True, raise an error if the type is not correct.
 
-    ## Returns:
-    (_bool_): A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.
+    Returns:
+        bool: A boolean indicating if the type is valid. If throw_error an error is raised if the input is not a valid type.
     &#34;&#34;&#34;
     assert isinstance(name, str), &#34;name must be a string.&#34;
     assert recursive_check_type_list_none_or_tuple(types), f&#34;types must be a type, list, None, or tuple. not: {types}&#34;
