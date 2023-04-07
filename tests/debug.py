@@ -1,17 +1,13 @@
 # Standard library
 import sys; sys.path.append("../")
 
-import os
-
 # Standard library
 import os
-from typing import Tuple
 
 # External
 import numpy as np
 from glob import glob
 import seaborn as sns
-from numba import jit, prange
 
 from buteo.raster import raster_to_array, array_to_raster, raster_to_metadata, stack_rasters_vrt, stack_rasters
 from buteo.utils import split_into_offsets, hsl_to_rgb, rgb_to_hsl
