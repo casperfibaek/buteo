@@ -105,31 +105,32 @@ def resample_raster(
     overwrite=True,
 ):
     """
-    Reprojects raster(s) given a target projection. </br>
+    Resampled raster(s) given a target size. </br>
     **Beware** if your input is in latitude and longitude, you'll need to specify the target_size in degrees as well.
 
-    ## Args:
-    `raster` (_str_/_list_/_gdal.Dataset): The raster(s) to reproject. </br>
-    `target_size` (_str_/_int_/_ogr.DataSource_/_gdal.Dataset_): The target resolution of the
-    raster. In the same unit as the projection of the raster.
-    It's better to reproject to a projected coordinate system for resampling.
-    If a raster is the target_size the function will read the pixel size from
-    that raster. </br>
+    Args:
+        raster (str/list/gdal.Dataset): The input raster(s) to resample.
+        target_size (str/int/ogr.DataSource/gdal.Dataset): The desired resolution for the resampled raster(s),
+            in the same unit as the raster projection. For better resampling results, reproject to a projected
+            coordinate system first. If a raster is provided as the target_size, the function will read the pixel
+            size from that raster.
 
-    ## Kwargs:
-    `target_in_pixels` (_bool_): If True, the target_size will be interpreted as the number of pixels. (Default: **False**) </br>
-    `out_path` (_str_/_None_): The output path. If not provided, the output path is inferred from the input. (Default: **None**) </br>
-    `resample_alg` (_str_): The resampling algorithm. (Default: **nearest**) </br>
-    `copy_if_same` (_bool_): If the input and output projections are the same, copy the input raster to the output path. (Default: **True**) </br>
-    `overwrite` (_bool_): If the output path already exists, overwrite it. (Default: **True**) </br>
-    `creation_options` (_list_/_None_): A list of creation options for the output raster. (Default: **None**) </br>
-    `dst_nodata` (_str_/_int_/_float_): The nodata value for the output raster. (Default: **infer**) </br>
-    `prefix` (_str_): The prefix to add to the output path. (Default: **""**) </br>
-    `suffix` (_str_): The suffix to add to the output path. (Default: **"_reprojected"**) </br>
-    `add_uuid` (_bool_): If True, add a UUID to the output path. (Default: **False**) </br>
+    Keyword Args:
+        target_in_pixels (bool, default=False): If True, interprets target_size as the number of pixels.
+        out_path (str/None, default=None): The output path for the resampled raster(s). If not provided, the output
+            path is inferred from the input raster(s).
+        resample_alg (str, default="nearest"): The resampling algorithm to use.
+        copy_if_same (bool, default=True): If input and output projections are the same, copies the input raster
+            to the output path.
+        overwrite (bool, default=True): If the output path already exists, overwrites it.
+        creation_options (list/None, default=None): A list of creation options for the output raster(s).
+        dst_nodata (str/int/float, default="infer"): The nodata value for the output raster(s).
+        prefix (str, default=""): The prefix to add to the output path.
+        suffix (str, default="_reprojected"): The suffix to add to the output path.
+        add_uuid (bool, default=False): If True, adds a UUID to the output path.
 
-    ## Returns:
-    (_str_/_list_): The output path(s) of the resampled raster(s).
+    Returns:
+        str/list: The output path(s) of the resampled raster(s).
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(target_size, [tuple, [int, float], int, float, str, gdal.Dataset], "target_size")

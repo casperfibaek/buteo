@@ -23,6 +23,7 @@ from buteo.raster.patches import (
     patches_to_array_single,
     array_to_patches,
     predict_array,
+    predict_array_pixel,
 )
 
 
@@ -507,3 +508,16 @@ def test_predict_array_merge_method_mode():
     predicted_array = predict_array(arr, dummy_callback, tile_size, offsets_y, offsets_x, merge_method="mode")
 
     assert predicted_array.shape == arr.shape
+
+def dummy_callback_pixel(arr: np.ndarray) -> np.ndarray:
+    """ A simple dummy callback function that returns the input array squared. """
+    return arr * 3
+
+def test_predict_array_pixel():
+    """ Test the predict_array_pixel function to ensure it returns an array of the same shape as input. """
+    arr = np.rint(np.random.rand(64, 64, 3) * 100)
+
+    arr_pred = predict_array_pixel(arr, dummy_callback_pixel)
+
+    assert arr_pred.shape == arr.shape, f"Expected shape {arr.shape}, but got {arr_pred.shape}"
+    assert np.allclose(arr_pred, arr * 3)

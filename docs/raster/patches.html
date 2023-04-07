@@ -762,12 +762,33 @@ def predict_array(
         predictions = merge_weighted_mad(predictions, predictions_weights)
     elif merge_method == &#34;median&#34;:
         predictions = merge_weighted_median(predictions, predictions_weights)
-    elif merge_method == &#34;mean&#34; or merge_method == &#34;average&#34;:
+    elif merge_method in [&#34;mean&#34;, &#34;average&#34;, &#34;avg&#34;]:
         predictions = merge_weighted_average(predictions, predictions_weights)
     elif merge_method == &#34;mode&#34;:
         predictions = merge_weighted_mode(predictions, predictions_weights)
 
-    return predictions</code></pre>
+    return predictions
+
+
+def predict_array_pixel(
+    arr: np.ndarray,
+    callback: Callable[[np.ndarray], np.ndarray],
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; 
+    Predicts an array pixel by pixel.
+
+    Args:
+        arr (np.ndarray): A numpy array to be divided into patches.
+        callback (function): The callback function to be used for prediction. The callback function
+            must take a numpy array as input and return a numpy array as output.
+    &#34;&#34;&#34;
+    assert len(arr.shape) == 3, &#34;Array must be 3D&#34;
+
+    reshaped = arr.reshape((arr.shape[0] * arr.shape[1], arr.shape[2]))
+    predicted = callback(reshaped)
+    predicted = predicted.reshape((arr.shape[0], arr.shape[1], predicted.shape[-1]))
+
+    return predicted</code></pre>
 </details>
 </section>
 <section>
@@ -1809,12 +1830,50 @@ adjust this to your maximum convolution kernel size.</p>
         predictions = merge_weighted_mad(predictions, predictions_weights)
     elif merge_method == &#34;median&#34;:
         predictions = merge_weighted_median(predictions, predictions_weights)
-    elif merge_method == &#34;mean&#34; or merge_method == &#34;average&#34;:
+    elif merge_method in [&#34;mean&#34;, &#34;average&#34;, &#34;avg&#34;]:
         predictions = merge_weighted_average(predictions, predictions_weights)
     elif merge_method == &#34;mode&#34;:
         predictions = merge_weighted_mode(predictions, predictions_weights)
 
     return predictions</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.patches.predict_array_pixel"><code class="name flex">
+<span>def <span class="ident">predict_array_pixel</span></span>(<span>arr: numpy.ndarray, callback: Callable[[numpy.ndarray], numpy.ndarray]) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Predicts an array pixel by pixel.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>arr</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>A numpy array to be divided into patches.</dd>
+<dt><strong><code>callback</code></strong> :&ensp;<code>function</code></dt>
+<dd>The callback function to be used for prediction. The callback function
+must take a numpy array as input and return a numpy array as output.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def predict_array_pixel(
+    arr: np.ndarray,
+    callback: Callable[[np.ndarray], np.ndarray],
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; 
+    Predicts an array pixel by pixel.
+
+    Args:
+        arr (np.ndarray): A numpy array to be divided into patches.
+        callback (function): The callback function to be used for prediction. The callback function
+            must take a numpy array as input and return a numpy array as output.
+    &#34;&#34;&#34;
+    assert len(arr.shape) == 3, &#34;Array must be 3D&#34;
+
+    reshaped = arr.reshape((arr.shape[0] * arr.shape[1], arr.shape[2]))
+    predicted = callback(reshaped)
+    predicted = predicted.reshape((arr.shape[0], arr.shape[1], predicted.shape[-1]))
+
+    return predicted</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.patches.unique_values"><code class="name flex">
@@ -1889,6 +1948,7 @@ def unique_values(arr: np.ndarray) -&gt; np.ndarray:
 <li><code><a title="buteo.raster.patches.patches_to_array_single" href="#buteo.raster.patches.patches_to_array_single">patches_to_array_single</a></code></li>
 <li><code><a title="buteo.raster.patches.patches_to_weights" href="#buteo.raster.patches.patches_to_weights">patches_to_weights</a></code></li>
 <li><code><a title="buteo.raster.patches.predict_array" href="#buteo.raster.patches.predict_array">predict_array</a></code></li>
+<li><code><a title="buteo.raster.patches.predict_array_pixel" href="#buteo.raster.patches.predict_array_pixel">predict_array_pixel</a></code></li>
 <li><code><a title="buteo.raster.patches.unique_values" href="#buteo.raster.patches.unique_values">unique_values</a></code></li>
 </ul>
 </li>

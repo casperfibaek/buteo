@@ -498,7 +498,7 @@ def single_hsl_to_rgb(
     return r, g, b
 
 
-@jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
+# @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
 def hsl_to_rgb(hsl_array: np.ndarray) -&gt; np.ndarray:
     &#34;&#34;&#34;
     Convert an HSL array to an RGB array.
@@ -518,10 +518,7 @@ def hsl_to_rgb(hsl_array: np.ndarray) -&gt; np.ndarray:
     rgb_array = np.empty(shape, dtype=np.float32)
     for i in prange(shape[0]):
         for j in range(shape[1]):
-            if hsl_array.ndim == 3:
-                h, s, l = hsl_array[i, j, 0]
-            else:
-                h, s, l = hsl_array[i, j]
+            h, s, l = hsl_array[i, j]
 
             r, g, b = single_hsl_to_rgb(h, s, l)
 
@@ -1094,8 +1091,7 @@ def fill_nodata_with_nearest_average(array, nodata_value, mask=None, max_iterati
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">@jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
-def hsl_to_rgb(hsl_array: np.ndarray) -&gt; np.ndarray:
+<pre><code class="python">def hsl_to_rgb(hsl_array: np.ndarray) -&gt; np.ndarray:
     &#34;&#34;&#34;
     Convert an HSL array to an RGB array.
 
@@ -1114,10 +1110,7 @@ def hsl_to_rgb(hsl_array: np.ndarray) -&gt; np.ndarray:
     rgb_array = np.empty(shape, dtype=np.float32)
     for i in prange(shape[0]):
         for j in range(shape[1]):
-            if hsl_array.ndim == 3:
-                h, s, l = hsl_array[i, j, 0]
-            else:
-                h, s, l = hsl_array[i, j]
+            h, s, l = hsl_array[i, j]
 
             r, g, b = single_hsl_to_rgb(h, s, l)
 

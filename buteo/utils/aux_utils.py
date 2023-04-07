@@ -470,7 +470,7 @@ def single_hsl_to_rgb(
     return r, g, b
 
 
-@jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
+# @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
 def hsl_to_rgb(hsl_array: np.ndarray) -> np.ndarray:
     """
     Convert an HSL array to an RGB array.
@@ -490,10 +490,7 @@ def hsl_to_rgb(hsl_array: np.ndarray) -> np.ndarray:
     rgb_array = np.empty(shape, dtype=np.float32)
     for i in prange(shape[0]):
         for j in range(shape[1]):
-            if hsl_array.ndim == 3:
-                h, s, l = hsl_array[i, j, 0]
-            else:
-                h, s, l = hsl_array[i, j]
+            h, s, l = hsl_array[i, j]
 
             r, g, b = single_hsl_to_rgb(h, s, l)
 

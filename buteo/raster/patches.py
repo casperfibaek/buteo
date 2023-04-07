@@ -735,9 +735,30 @@ def predict_array(
         predictions = merge_weighted_mad(predictions, predictions_weights)
     elif merge_method == "median":
         predictions = merge_weighted_median(predictions, predictions_weights)
-    elif merge_method == "mean" or merge_method == "average":
+    elif merge_method in ["mean", "average", "avg"]:
         predictions = merge_weighted_average(predictions, predictions_weights)
     elif merge_method == "mode":
         predictions = merge_weighted_mode(predictions, predictions_weights)
 
     return predictions
+
+
+def predict_array_pixel(
+    arr: np.ndarray,
+    callback: Callable[[np.ndarray], np.ndarray],
+) -> np.ndarray:
+    """ 
+    Predicts an array pixel by pixel.
+
+    Args:
+        arr (np.ndarray): A numpy array to be divided into patches.
+        callback (function): The callback function to be used for prediction. The callback function
+            must take a numpy array as input and return a numpy array as output.
+    """
+    assert len(arr.shape) == 3, "Array must be 3D"
+
+    reshaped = arr.reshape((arr.shape[0] * arr.shape[1], arr.shape[2]))
+    predicted = callback(reshaped)
+    predicted = predicted.reshape((arr.shape[0], arr.shape[1], predicted.shape[-1]))
+
+    return predicted
