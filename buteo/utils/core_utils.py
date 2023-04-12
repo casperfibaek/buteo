@@ -16,12 +16,13 @@ from pathlib import PurePosixPath
 from typing import Any, Union, List, Optional, Dict, Tuple
 from warnings import warn
 
+# Internal
+from buteo.utils.gdal_enums import get_valid_raster_driver_extensions, get_valid_vector_driver_extensions
 
 # External
 import psutil
+import numpy as np
 from osgeo import gdal
-
-from buteo.utils.gdal_enums import get_valid_raster_driver_extensions, get_valid_vector_driver_extensions
 
 
 
@@ -366,7 +367,7 @@ def change_path_ext(
 
 def is_valid_mem_path(path: str) -> bool:
     """
-    Check if a path is a valid memory path that has an extension.
+    Check if a path is a valid memory path that has an extension. vsizip also works.
 
     Args:
         path (str): The path to test.
@@ -385,7 +386,7 @@ def is_valid_mem_path(path: str) -> bool:
     if ext == "" or ext == ".":
         return False
 
-    if path.startswith("/vsimem"):
+    if path.startswith("/vsimem") or path.startswith("/vsizip"):
         return True
 
     return False
@@ -1050,3 +1051,32 @@ def ensure_list(
         return variable_or_list
 
     return [variable_or_list]
+
+
+def all_arrays_are_same_size(
+    list_of_arrays: List[np.ndarray],
+) -> bool:
+    """
+    Check if all arrays in a list are the same size.
+
+    Args:
+        list_of_arrays (list): The list of numpy arrays to check.
+
+    Returns:
+        bool: True if all arrays are the same size, False otherwise.
+    """
+    assert isinstance(list_of_arrays, list), "list_of_arrays must be a list."
+
+    for arr in list_of_arrays:
+        assert isinstance(arr, np.ndarray), "list_of_arrays must be a list of arrays."
+
+    if len(list_of_arrays) == 0:
+        return True
+
+    shape = list_of_arrays[0].shape
+
+    for arr in list_of_arrays:
+        if arr.shape != shape:
+            return False
+
+    return True

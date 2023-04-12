@@ -2,21 +2,27 @@
 ### Perform convolutions on arrays.  ###
 """
 
+# Standard Library
+from typing import List, Tuple, Optional
+
+# Internal
+from buteo.utils import core_utils
+from buteo.raster.convolution_funcs import *
+
 # External
 import numpy as np
-from numpy.lib.stride_tricks import as_strided
 from numba import jit, prange
 
 
 def weight_distance(
-    arr,
-    method=None,
-    decay=0.2,
-    sigma=1.0,
-    center=0.0,
-    spherical=False,
-    radius=3.0,
-):
+    arr: np.ndarray,
+    method: Optional[str] = None,
+    decay: float = 0.2,
+    sigma: float = 1.0,
+    center: float = 0.0,
+    spherical: bool = False,
+    radius: float = 3.0,
+) -> float:
     """
     Weights the kernel by distance using various methods.
 
@@ -45,42 +51,42 @@ def weight_distance(
         normed = np.linalg.norm(arr - np.array([0, 0, center]))
 
     if normed == 0.0:
-        weight = 1.0
+        weights = 1.0
 
     if method is None or method == "none" or method == "":
-        weight = 1.0
+        weights = 1.0
     elif method == "linear":
-        weight = np.power((1 - decay), normed)
+        weights = np.power((1 - decay), normed)
     elif method == "sqrt":
-        weight = np.power(np.sqrt((1 - decay)), normed)
+        weights = np.power(np.sqrt((1 - decay)), normed)
     elif method == "power":
-        weight = np.power(np.power((1 - decay), 2), normed)
+        weights = np.power(np.power((1 - decay), 2), normed)
     elif method == "log":
-        weight = np.log(normed + 2)
+        weights = np.log(normed + 2) # +2 to avoid log(0)
     elif method == "gaussian":
-        weight = np.exp(-(np.power(normed, 2)) / (2 * np.power(sigma, 2)))
+        weights = np.exp(-(np.power(normed, 2)) / (2 * np.power(sigma, 2)))
     else:
-        raise ValueError("Unable to parse parameters distance_calc.")
+        raise ValueError("Unable to parse parameters for weight_distance.")
 
     if spherical:
         sqrt_2 = np.sqrt(2)
         half_sqrt_2 = np.divide(sqrt_2, 2)
 
-        if normed > (radius - half_sqrt_2) and normed < (radius + half_sqrt_2):
-            adjustment = sqrt_2 / normed
-        elif normed > (radius - half_sqrt_2):
-            adjustment = 0.0
-        elif normed < (radius + half_sqrt_2):
-            adjustment = 1.0
-        else:
-            adjustment = 1.0
+        if normed > radius + half_sqrt_2:
+            return 0.0
+        elif normed < radius - half_sqrt_2:
+            return 1.0
 
-        return weight * adjustment
+        dist_min = radius - half_sqrt_2
+        dist_max = radius + half_sqrt_2
 
-    return weight
+        normed = 1 - np.interp(normed, [dist_min, dist_max], [0, 1])
+        return weights * normed
+
+    return weights
 
 
-def rotate_kernel(bottom_right):
+def rotate_kernel(bottom_right: np.ndarray) -> np.ndarray:
     """
     Creates a whole kernel from a quadrant.
 
@@ -90,7 +96,6 @@ def rotate_kernel(bottom_right):
     Returns:
         numpy.ndarray: The complete kernel generated from the given quadrant.
     """
-
     size = ((bottom_right.shape[0] - 1) * 2) + 1
     depth = bottom_right.shape[2]
     kernel = np.zeros((size, size, depth), dtype="float32")
@@ -99,24 +104,27 @@ def rotate_kernel(bottom_right):
     lower_left = np.fliplr(bottom_right)
     top_left = np.flipud(lower_left)
 
-    kernel = np.block([[top_left, top_right], [lower_left, bottom_right]])
+    kernel[size // 2:, size // 2:, :] = bottom_right
+    kernel[:1 + -size // 2, :1 + -size // 2, :] = top_left
+    kernel[1 + size // 2:, :size // 2, :] = lower_left[1:, :-1, :]
+    kernel[:size // 2, 1 + size // 2:, :] = top_right[:-1, 1:, :]
 
     return kernel
 
 
 def get_kernel(
-    size,
-    depth=1,
-    hole=False,
-    inverted=False,
-    normalise=True,
-    multi_dimensional=False,
-    multi_dimensional_center=0,
-    spherical=False,
-    distance_weight=None,
-    distance_decay=0.2,
-    distance_sigma=1,
-):
+    size: int,
+    depth: int = 1,
+    hole: bool = False,
+    inverted: bool = False,
+    normalise: bool = True,
+    multi_dimensional: bool = False,
+    multi_dimensional_center: int = 0,
+    spherical: bool = False,
+    distance_weight: Optional[str] = None,
+    distance_decay: float = 0.2,
+    distance_sigma: float = 1,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Generates a square kernel for convolutions.
 
@@ -137,7 +145,6 @@ def get_kernel(
     Returns:
         tuple: A tuple containing the kernel, weights, and offsets.
     """
-
     assert size >= 3, "Kernel must have atleast size 3."
     assert size % 2 != 0, "Kernel must be an uneven size."
     assert isinstance(size, int), "Kernel must be an integer."
@@ -162,10 +169,11 @@ def get_kernel(
                     sigma=distance_sigma,
                     center=multi_dimensional_center,
                     spherical=spherical,
-                    radius=size // 2,
+                    radius=size / 2,
                 )
 
                 quadrant[idx_x, idx_y, idx_z] = weighted
+
     if hole:
         for idx_z in range(0, quadrant.shape[2]):
             quadrant[0, 0, idx_z] = 0
@@ -213,208 +221,59 @@ def get_kernel(
     return kernel, np.array(weights, dtype="float32"), np.array(offsets, dtype=int)
 
 
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_max(values, weights):
-    """ Get the weighted maximum. """
-    idx = np.argmax(np.multiply(values, weights))
-    return values[idx]
-
-
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_min(values, weights):
-    """ Get the weighted minimum. """
-    max_val = values.max()
-    adjusted_values = np.where(weights == 0.0, max_val, values)
-    idx = np.argmin(np.divide(adjusted_values, weights + 1e-7))
-    return values[idx]
-
-
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_sum(values, weights):
-    """ Get the weighted sum. """
-    return np.sum(np.multiply(values, weights))
-
-
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_mode(values, weights):
-    """ Get the weighted sum. """
-    values_ints = np.rint(values)
-    unique = np.unique(values_ints)
-
-    most_occured_value = 0
-    most_occured_weight = -9999.9
-
-    for unique_value in unique:
-        cum_weight = 0
-        for idx in range(values.shape[0]):
-            if values_ints[idx] == unique_value:
-                cum_weight += weights[idx]
-
-        if cum_weight > most_occured_weight:
-            most_occured_weight = cum_weight
-            most_occured_value = unique_value
-
-    return most_occured_value
-
-
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_contrast(values, weights):
-    """ Get the local contrast. """
-    max_val = values.max()
-    adjusted_values = np.where(weights == 0.0, max_val, values)
-    local_min = np.min(np.divide(adjusted_values, weights + 1e-7))
-    local_max = np.max(np.multiply(values, weights))
-
-    return np.abs(local_max - local_min)
-
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_quantile(values, weights, quant):
-    """ Get the weighted median. """
-    sort_mask = np.argsort(values)
-    sorted_data = values[sort_mask]
-    sorted_weights = weights[sort_mask]
-    cumsum = np.cumsum(sorted_weights)
-    intersect = (cumsum - 0.5 * sorted_weights) / cumsum[-1]
-    return np.interp(quant, intersect, sorted_data)
-
-
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_median_absolute_deviation(values, weights):
-    """ Get the median absolute deviation """
-    median = hood_quantile(values, weights, 0.5)
-    absdeviation = np.abs(np.subtract(values, median))
-    return hood_quantile(absdeviation, weights, 0.5)
-
-
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_z_score(values, center_value, weights):
-    """ Get the local z score ."""
-    std = hood_standard_deviation(values, weights)
-    mean = hood_sum(values, weights)
-
-    return (center_value - mean) / std
-
-
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_z_score_mad(values, center_value, weights):
-    """ Get the local z score calculated around the MAD. """
-    mad_std = hood_median_absolute_deviation(values, weights) * 1.4826
-    median = hood_quantile(values, weights, 0.5)
-
-    return (center_value - median) / mad_std
-
-
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_standard_deviation(values, weights):
-    "Get the weighted standard deviation. "
-    summed = hood_sum(values, weights)
-    variance = np.sum(np.multiply(np.power(np.subtract(values, summed), 2), weights))
-    return np.sqrt(variance)
-
-
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def k_to_size(size):
-    """ Preprocess Sigma Lee limits. """
-    return int(np.rint(-0.0000837834 * size ** 2 + 0.045469 * size + 0.805733))
-
-
-@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
-def hood_sigma_lee(values, weights):
-    """ Sigma lee SAR filter. """
-    std = hood_standard_deviation(values, weights)
-    selected_values = np.zeros_like(values)
-    selected_weights = np.zeros_like(weights)
-
-    sigma_mult = 1
-    passed = 0
-    attempts = 0
-    ks = k_to_size(values.size)
-
-    while passed < ks and attempts < 5:
-        for idx, val in np.ndenumerate(values):
-            if val >= std * sigma_mult or val <= -std * sigma_mult:
-                selected_values[idx] = val
-                selected_weights[idx] = weights[idx]
-                passed += 1
-
-        sigma_mult += 1
-        attempts += 1
-
-    if passed < ks:
-        return hood_sum(values, weights)
-
-    sum_of_weights = np.sum(selected_weights)
-
-    if sum_of_weights == 0:
-        return 0
-
-    selected_weights = np.divide(selected_weights, sum_of_weights)
-
-    return hood_sum(selected_values, selected_weights)
-
-
-@jit(nopython=True, nogil=True)
-def pad_array_view(arr, pad_size=1):
+def pad_array(
+    arr: np.ndarray,
+    pad_size: int = 1,
+    method: str = "same",
+    constant_value: Union[float, int] = 0.0,
+) -> np.ndarray:
     """
     Create a padded view of an array using SAME padding.
 
     Args:
         arr (numpy.ndarray): The input array to be padded.
-2
+
     Keyword Args:
         pad_size (int, default=1): The number of padding elements to add
             to each side of the array. Default is 1.
+        method (str, default="same"): The padding method to use. Default
+            is "same". Other options are "edge" and "constant".
+        constant_value (int, default=None): The constant value to use
+            when padding with "constant". Default is 0.
 
     Returns:
         numpy.ndarray: A padded view of the input array.
     """
-    # Get original array shape and strides
-    shape = arr.shape
-    strides = arr.strides
+    core_utils.type_check(arr, [np.ndarray], "arr")
+    core_utils.type_check(pad_size, [int], "pad_size")
+    core_utils.type_check(method, [str], "method")
 
-    # Compute new shape and strides for the padded view
-    new_shape = (shape[0] + 2 * pad_size, shape[1] + 2 * pad_size, shape[2])
-    new_strides = (strides[0], strides[1], strides[2])
+    assert pad_size >= 0, "pad_size must be a non-negative integer"
+    assert method in ["same", "SAME", "edge", "EDGE"], "method must be one of ['same', 'SAME', 'constant', 'CONSTANT']"
 
-    # Create the padded view using as_strided
-    padded_view = as_strided(arr, shape=new_shape, strides=new_strides)
-
-    # Pad the edges using the SAME padding
-    padded_view[:pad_size, :, :] = padded_view[pad_size:pad_size + 1, :, :]
-    padded_view[-pad_size:, :, :] = padded_view[-pad_size - 1:-pad_size, :, :]
-    padded_view[:, :pad_size, :] = padded_view[:, pad_size:pad_size + 1, :]
-    padded_view[:, -pad_size:, :] = padded_view[:, -pad_size - 1:-pad_size, :]
+    if method in ["same", "SAME"]:
+        padded_view = np.pad(
+            arr,
+            pad_width=((pad_size, pad_size), (pad_size, pad_size), (0, 0)),
+            mode='edge',
+        )
+    elif method in ["constant", "CONSTANT"]:
+        padded_view = np.pad(
+            arr,
+            pad_width=((pad_size, pad_size), (pad_size, pad_size), (0, 0)),
+            mode='constant',
+            constant_values=constant_value,
+        )
 
     return padded_view
-
-
-@jit(nopython=True, nogil=True)
-def pad_array(arr, pad_size=1):
-    """ Pad an array using SAME """
-    # Core
-    arr_padded = np.zeros((arr.shape[0] + int(pad_size * 2), arr.shape[1] + int(pad_size * 2), arr.shape[2]), dtype=arr.dtype)
-    arr_padded[pad_size:-pad_size, pad_size:-pad_size, :] = arr
-
-    # Corners
-    arr_padded[0:pad_size, 0:pad_size, :] = arr[ 0,  0, :]
-    arr_padded[-pad_size:, -pad_size:, :] = arr[-1, -1, :]
-    arr_padded[0:pad_size, -pad_size:, :] = arr[ 0, -1, :]
-    arr_padded[-pad_size:, 0:pad_size, :] = arr[-1,  0, :]
-
-    # Sides
-    for idx in range(0, pad_size):
-        arr_padded[idx, pad_size:-pad_size, :] = arr[ 0,  :, :]
-        arr_padded[-(idx + 1):, pad_size:-pad_size, :] = arr[-1,  :, :]
-        arr_padded[pad_size:-pad_size, -(idx + 1), :] = arr[ :, -1, :]
-        arr_padded[pad_size:-pad_size, idx, :] = arr[ :,  0, :]
-
-    return arr_padded
 
 METHOD_ENUMS = {
     "sum": 1,
     "mode": 2,
     "max": 3,
+    "dilate": 3,
     "min": 4,
+    "erode": 4,
     "contrast": 5,
     "median": 6,
     "std": 7,
@@ -422,17 +281,214 @@ METHOD_ENUMS = {
     "z_score": 9,
     "z_score_mad": 10,
     "sigma_lee": 11,
+    "quantile": 12,
+    "occurrances": 13,
+    "feather": 14,
 }
 
+
+@jit(nopython=True, nogil=False, fastmath=True, cache=True)
+def hood_to_value(method, values, weights, nodata_value=-9999.9, center_value=0, value=0.5):
+    """ Convert a array of values and weights to a single value using a given method. """
+    if method == 1:
+        return hood_sum(values, weights)
+    elif method == 2:
+        return hood_mode(values, weights)
+    elif method == 3:
+        return hood_max(values, weights)
+    elif method == 4:
+        return hood_min(values, weights)
+    elif method == 5:
+        return hood_contrast(values, weights)
+    elif method == 6:
+        return hood_quantile(values, weights, 0.5)
+    elif method == 7:
+        return hood_standard_deviation(values, weights)
+    elif method == 8:
+        return hood_median_absolute_deviation(values, weights)
+    elif method == 9:
+        return hood_z_score(values, weights, center_value)
+    elif method == 10:
+        return hood_z_score_mad(values, weights, center_value)
+    elif method == 11:
+        return hood_sigma_lee(values, weights)
+    elif method == 12:
+        return hood_quantile(values, weights, value)
+    elif method == 13:
+        return hood_count_occurances(values, weights, value, normalise=False)
+    elif method == 14:
+        return hood_count_occurances(values, weights, value, normalise=True)
+    else:
+        return nodata_value
+
+
+
 @jit(nopython=True, parallel=True, nogil=False, fastmath=True, cache=True)
+def _convolve_array_collapse(
+    arr: np.ndarray,
+    offsets: List[Tuple[int, int, int]],
+    weights: List[float],
+    method: int = 1,
+    nodata: bool = False,
+    nodata_value: float = -9999.9,
+    normalise_edges: bool = True,
+    value: Union[int, float] = 0.5,
+) -> np.ndarray:
+    """
+    Internal. Convolve an array using a set of offsets and weights.
+    """
+    result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype="float32")
+    hood_size = len(offsets)
+
+    if arr.shape[2] == 1:
+        idx_center = 0
+    else:
+        idx_center = int(np.ceil((arr.shape[2] / 2) - 1))
+
+    for idx_y in prange(0, arr.shape[0]):
+        for idx_x in range(0, arr.shape[1]):
+
+            center_value = arr[idx_y, idx_x, idx_center]
+
+            if nodata and arr[idx_y, idx_x] == nodata_value:
+                result[idx_y, idx_x] = nodata_value
+                continue
+
+            hood_normalise = False
+            hood_values = np.zeros(hood_size, dtype="float32")
+            hood_weights = np.zeros(hood_size, dtype="float32")
+            hood_count = 0
+
+            for idx_h in range(0, hood_size):
+                hood_x = idx_x + offsets[idx_h][0]
+                hood_y = idx_y + offsets[idx_h][1]
+                hood_z = offsets[idx_h][2]
+
+                if hood_x < 0 or hood_x >= arr.shape[1]:
+                    if normalise_edges:
+                        hood_normalise = True
+                    continue
+
+                if hood_y < 0 or hood_y >= arr.shape[0]:
+                    if normalise_edges:
+                        hood_normalise = True
+                    continue
+
+                if hood_z < 0 or hood_z >= arr.shape[2]:
+                    if normalise_edges:
+                        hood_normalise = True
+                    continue
+
+                if nodata and arr[hood_y, hood_x, hood_z] == nodata_value:
+                    if normalise_edges:
+                        hood_normalise = True
+                    continue
+
+                hood_values[hood_count] = arr[hood_y, hood_x, hood_z]
+                hood_weights[hood_count] = weights[idx_h]
+                hood_count += 1
+
+            if hood_count == 0:
+                result[idx_y, idx_x] = nodata_value
+                continue
+
+            hood_values = hood_values[:hood_count]
+            hood_weights = hood_weights[:hood_count]
+
+            if hood_normalise:
+                hood_weights /= np.sum(hood_weights)
+
+            result[idx_y, idx_x, 0] = hood_to_value(method, hood_values, hood_weights, nodata_value, center_value, value)
+
+    return result
+
+
+@jit(nopython=True, parallel=True, nogil=False, fastmath=True, cache=True)
+def _convolve_array(
+    arr: np.ndarray,
+    offsets: List[Tuple[int, int, int]],
+    weights: List[float],
+    method: int = 1,
+    nodata: bool = False,
+    nodata_value: float = -9999.9,
+    normalise_edges: bool = True,
+    value: Union[int, float, None] = None,
+) -> np.ndarray:
+    """
+    Internal. Convolve an array using a set of offsets and weights.
+    """
+    result = np.zeros((arr.shape[0], arr.shape[1], arr.shape[2]), dtype="float32")
+    hood_size = len(offsets)
+
+    for idx_y in prange(0, arr.shape[0]):
+        for idx_x in range(0, arr.shape[1]):
+            for idx_z in range(0, arr.shape[2]):
+
+                center_value = arr[idx_y, idx_x, idx_z]
+                hood_normalise = False
+                hood_values = np.zeros(hood_size, dtype="float32")
+                hood_weights = np.zeros(hood_size, dtype="float32")
+                hood_count = 0
+
+                if nodata and arr[idx_y, idx_x, idx_z] == nodata_value:
+                    result[idx_y, idx_x, idx_z] = nodata_value
+                    continue
+
+                for idx_h in range(0, hood_size):
+                    hood_x = idx_x + offsets[idx_h][0]
+                    hood_y = idx_y + offsets[idx_h][1]
+                    hood_z = idx_z + offsets[idx_h][2]
+
+                    if hood_x < 0 or hood_x >= arr.shape[1]:
+                        if normalise_edges:
+                            hood_normalise = True
+                        continue
+
+                    if hood_y < 0 or hood_y >= arr.shape[0]:
+                        if normalise_edges:
+                            hood_normalise = True
+                        continue
+
+                    if hood_z < 0 or hood_z >= arr.shape[2]:
+                        if normalise_edges:
+                            hood_normalise = True
+                        continue
+
+                    if nodata and arr[hood_y, hood_x, hood_z] == nodata_value:
+                        if normalise_edges:
+                            hood_normalise = True
+                        continue
+
+                    hood_values[hood_count] = arr[hood_y, hood_x, hood_z]
+                    hood_weights[hood_count] = weights[idx_h]
+                    hood_count += 1
+
+                if hood_count == 0:
+                    result[idx_y, idx_x, idx_z] = nodata_value
+                    continue
+
+                hood_values = hood_values[:hood_count]
+                hood_weights = hood_weights[:hood_count]
+
+                if hood_normalise:
+                    hood_weights /= np.sum(hood_weights)
+
+                result[idx_y, idx_x, idx_z] = hood_to_value(method, hood_values, hood_weights, nodata_value, center_value, value)
+
+    return result
+
+
 def convolve_array(
-    arr,
-    offsets,
-    weights,
-    method=1,
-    nodata=False,
-    nodata_value=-9999.9,
-):
+    arr: np.ndarray,
+    offsets: np.ndarray,
+    weights: np.ndarray,
+    method: int = 1,
+    nodata: bool = False,
+    nodata_value: float = -9999.9,
+    normalise_edges: bool = True,
+    collapse: bool = False,
+    value: Union[int, float, None] = None,
+) -> np.ndarray:
     """
     Convolve an image with a function.
 
@@ -443,7 +499,7 @@ def convolve_array(
         weights (list): The list of weights used in the convolution.
 
     Keyword Args:
-        method (int, default=1): The method to use for the convolution.
+        method (int=1): The method to use for the convolution.
             1: hood_sum
             2: hood_mode
             3: hood_max
@@ -455,101 +511,62 @@ def convolve_array(
             9: hood_z_score
             10: hood_z_score_mad
             11: hood_sigma_lee
-        nodata (bool, default=False): If True, nodata values are considered
+        nodata (bool=False): If True, nodata values are considered
             in the convolution.
-        nodata_value (float, default=-9999.9): The value representing nodata.
+        nodata_value (float=-9999.9): The value representing nodata.
+        normalise_edges (bool=True): If True, the weights at the edges
+            are normalised to sum to one. Only relavant for border pixels.
+            Use false, if you are interested in the sum, otherwise you likely
+            want to use True.
+        collapse (bool=False): If True, the convolution results in a (height, width, 1)
+            array. Otherwise, the convolution results in a (height, width, depth) applied
+            channelwise.
+        value (Union[int, float, None]=None): If not None, the value to use for the convolution.
+            depending on the method specified.
+
 
     Returns:
         numpy.ndarray: The convolved array.
     """
-    x_adj = arr.shape[0] - 1
-    y_adj = arr.shape[1] - 1
-    z_adj = (arr.shape[2] - 1) // 2
+    core_utils.type_check(arr, [np.ndarray], "arr")
+    core_utils.type_check(offsets, [np.ndarray], "offsets")
+    core_utils.type_check(weights, [np.ndarray], "weights")
+    core_utils.type_check(method, [int], "method")
+    core_utils.type_check(nodata, [bool], "nodata")
+    core_utils.type_check(nodata_value, [float], "nodata_value")
+    core_utils.type_check(normalise_edges, [bool], "normalise_edges")
+    core_utils.type_check(collapse, [bool], "collapse")
+    core_utils.type_check(value, [int, float, type(None)], "value")
 
-    hood_size = len(offsets)
+    assert len(offsets) == len(weights), "offsets and weights must be the same length"
+    assert method in range(1, len(METHOD_ENUMS)), "method must be between 1 and 11"
+    assert arr.ndim in [2, 3], "arr must be 2 or 3 dimensional"
 
-    result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype="float32")
+    if value is None:
+        value = 0.5
 
-    for idx_x in prange(arr.shape[0]):
-        for idx_y in range(arr.shape[1]):
+    if arr.ndim == 2:
+        arr = arr[:, :, np.newaxis]
 
-            hood_values = np.zeros(hood_size, dtype="float32")
+    if collapse:
+        return _convolve_array_collapse(
+            arr,
+            offsets,
+            weights,
+            method=method,
+            nodata=nodata,
+            nodata_value=nodata_value,
+            normalise_edges=normalise_edges,
+            value=value,
+        )
 
-            hood_weights = np.zeros(hood_size, dtype="float32")
-            weight_sum = np.array([0.0], dtype="float32")
-            center_value = np.float32(arr[idx_x, idx_y, 0])
-            normalise = False
-
-            for idx_n in range(hood_size):
-                offset_x = idx_x + offsets[idx_n][0]
-                offset_y = idx_y + offsets[idx_n][1]
-                offset_z = offsets[idx_n][2]
-
-                outside = False
-
-                if offset_z < -z_adj:
-                    offset_z = -z_adj
-                    outside = True
-                elif offset_z > z_adj:
-                    offset_z = z_adj
-                    outside = True
-
-                if offset_x < 0:
-                    offset_x = 0
-                    outside = True
-                elif offset_x > x_adj:
-                    offset_x = x_adj
-                    outside = True
-
-                if offset_y < 0:
-                    offset_y = 0
-                    outside = True
-                elif offset_y > y_adj:
-                    offset_y = y_adj
-                    outside = True
-
-                value = np.float32(arr[offset_x, offset_y, offset_z])
-
-                if outside is True:
-                    normalise = True
-                    hood_weights[idx_n] = 0
-                elif nodata and value == nodata_value:
-                    normalise = True
-                    hood_weights[idx_n] = 0
-                else:
-                    hood_values[idx_n] = value
-
-                    weight = weights[idx_n]
-
-                    hood_weights[idx_n] = weight
-                    weight_sum[0] += weight
-
-            if normalise and weight_sum[0] > 0.0:
-                hood_weights = np.true_divide(hood_weights, weight_sum[0])
-
-            if method == 1:
-                result[idx_x, idx_y, 0] = hood_sum(hood_values, hood_weights)
-            elif method == 2:
-                result[idx_x, idx_y, 0] = hood_mode(hood_values, hood_weights)
-            elif method == 3:
-                result[idx_x, idx_y, 0] = hood_max(hood_values, hood_weights)
-            elif method == 4:
-                result[idx_x, idx_y, 0] = hood_min(hood_values, hood_weights)
-            elif method == 5:
-                result[idx_x, idx_y, 0] = hood_contrast(hood_values, hood_weights)
-            elif method == 6:
-                result[idx_x, idx_y, 0] = hood_quantile(hood_values, hood_weights, 0.5)
-            elif method == 7:
-                result[idx_x, idx_y, 0] = hood_standard_deviation(hood_values, hood_weights)
-            elif method == 8:
-                result[idx_x, idx_y, 0] = hood_median_absolute_deviation(hood_values, hood_weights)
-            elif method == 9:
-                result[idx_x, idx_y, 0] = hood_z_score(hood_values, center_value, hood_weights)
-            elif method == 10:
-                result[idx_x, idx_y, 0] = hood_z_score_mad(hood_values, center_value, hood_weights)
-            elif method == 11:
-                result[idx_x, idx_y, 0] = hood_sigma_lee(hood_values, hood_weights)
-            else:
-                result[idx_x, idx_y, 0] = nodata_value
-
-    return result
+    return _convolve_array(
+        arr,
+        offsets,
+        weights,
+        method=method,
+        nodata=nodata,
+        nodata_value=nodata_value,
+        normalise_edges=normalise_edges,
+        value=value,
+    )

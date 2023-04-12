@@ -152,6 +152,118 @@ def merge_weighted_average(
 
     return ret_arr
 
+@jit(nopython=True, parallel=True, nogil=True)
+def merge_weighted_minmax(
+    arr: np.ndarray,
+    arr_weight: np.ndarray,
+    method="max",
+) -> np.ndarray:
+    """
+    Calculate the weighted min or max of a multi-dimensional array along the last axis.
+    
+    Args:
+        arr (np.ndarray): The input array.
+        arr_weight (np.ndarray): The weight array with the same shape as the input array.
+    
+    Returns:
+        np.ndarray: A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the weighted min or max.
+    """
+    ret_arr = np.empty((arr.shape[1], arr.shape[2], arr.shape[3]), dtype="float32")
+    ret_arr[:] = np.nan
+
+    minmax = 0
+    if method == "min":
+        minmax = 1
+
+    # Iterate through the input array
+    for idx_y in prange(arr.shape[1]):
+        for idx_x in range(arr.shape[2]):
+            for idx_band in range(arr.shape[3]):
+
+                # Flatten the input and weight arrays
+                values = arr[:, idx_y, idx_x, idx_band].flatten()
+                weights = arr_weight[:, idx_y, idx_x, 0].flatten()
+
+                nan_mask = np.where(~np.isnan(values))[0]
+
+                if len(nan_mask) == 0:
+                    continue
+
+                values = values[nan_mask]
+                weights = weights[nan_mask]
+
+                weighted = values * weights
+
+                if minmax == 0: # max
+                    index = np.nanargmax(weighted)
+                else:
+                    index = np.nanargmin(weighted)
+
+                value = values[index]
+
+                # Calculate the weighted average and store it in the result array
+                ret_arr[idx_y, idx_x, idx_band] = value
+
+    return ret_arr
+
+
+@jit(nopython=True, parallel=True, nogil=True)
+def merge_weighted_olympic(
+    arr: np.ndarray,
+    arr_weight: np.ndarray,
+    level: int = 1,
+) -> np.ndarray:
+    """
+    Calculate the olympic value of a multi-dimensional array along the last axis.
+    Using olympic sort, the highest and lowest values are removed from the calculation.
+    If level is 1, then the highest and loweest values are removed. If the level is 2,
+    then the 2 highest and lowest values are removed, and so on.
+    
+    Args:
+        arr (np.ndarray): The input array.
+        arr_weight (np.ndarray): The weight array with the same shape as the input array.
+    
+    Returns:
+        np.ndarray: A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the olympic value.
+    """
+    ret_arr = np.empty((arr.shape[1], arr.shape[2], arr.shape[3]), dtype="float32")
+    ret_arr[:] = np.nan
+
+    required = int((level * 2) + 1)
+
+    # Iterate through the input array
+    for idx_y in prange(arr.shape[1]):
+        for idx_x in range(arr.shape[2]):
+            for idx_band in range(arr.shape[3]):
+
+                # Flatten the input and weight arrays
+                values = arr[:, idx_y, idx_x, idx_band].flatten()
+                weights = arr_weight[:, idx_y, idx_x, 0].flatten()
+
+                nan_mask = np.where(~np.isnan(values))[0]
+
+                if len(nan_mask) == 0:
+                    continue
+
+                values = values[nan_mask]
+                weights = weights[nan_mask]
+
+                if len(values) < required: # Take the average of all
+                    value = np.mean(values)
+                elif len(values) == required: # Take the middle value
+                    value = np.sort(values)[level]
+                else:
+                    sort_olympic = np.argsort(values)[level:-level]
+                    sort_weights = weights[sort_olympic] / np.sum(weights[sort_olympic])
+                    sort_values = values[sort_olympic]
+
+                    value = np.sum(sort_values * sort_weights)
+
+                # Calculate the weighted average and store it in the result array
+                ret_arr[idx_y, idx_x, idx_band] = value
+
+    return ret_arr
+
 
 @jit(nopython=True, parallel=True, nogil=True)
 def merge_weighted_mad(
@@ -681,7 +793,7 @@ def predict_array(
         offsets_x (int=1): The desired number of offsets to be calculated in the x dimension.
         border_check (bool=True): Whether or not to include border patches.
         merge_method (str="median"): The method to use for merging the patches. Valid methods
-        are ['mad', 'median', 'mean', 'mode']
+        are ['mad', 'median', 'mean', 'mode', "min", "max", "olympic1", "olympic2"]
         edge_weighted (bool=True): Whether or not to weight the edges patches of patches less
             than the central parts.
         edge_distance (int=3): The distance from the edge to be weighted less. Usually good to
@@ -739,6 +851,14 @@ def predict_array(
         predictions = merge_weighted_average(predictions, predictions_weights)
     elif merge_method == "mode":
         predictions = merge_weighted_mode(predictions, predictions_weights)
+    elif merge_method == "max":
+        predictions = merge_weighted_minmax(predictions, predictions_weights, "max")
+    elif merge_method == "min":
+        predictions = merge_weighted_minmax(predictions, predictions_weights, "min")
+    elif merge_method == "olympic1":
+        predictions = merge_weighted_olympic(predictions, predictions_weights, 1)
+    elif merge_method == "olympic2":
+        predictions = merge_weighted_olympic(predictions, predictions_weights, 2)
 
     return predictions
 

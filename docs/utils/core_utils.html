@@ -44,12 +44,13 @@ from pathlib import PurePosixPath
 from typing import Any, Union, List, Optional, Dict, Tuple
 from warnings import warn
 
+# Internal
+from buteo.utils.gdal_enums import get_valid_raster_driver_extensions, get_valid_vector_driver_extensions
 
 # External
 import psutil
+import numpy as np
 from osgeo import gdal
-
-from buteo.utils.gdal_enums import get_valid_raster_driver_extensions, get_valid_vector_driver_extensions
 
 
 
@@ -394,7 +395,7 @@ def change_path_ext(
 
 def is_valid_mem_path(path: str) -&gt; bool:
     &#34;&#34;&#34;
-    Check if a path is a valid memory path that has an extension.
+    Check if a path is a valid memory path that has an extension. vsizip also works.
 
     Args:
         path (str): The path to test.
@@ -413,7 +414,7 @@ def is_valid_mem_path(path: str) -&gt; bool:
     if ext == &#34;&#34; or ext == &#34;.&#34;:
         return False
 
-    if path.startswith(&#34;/vsimem&#34;):
+    if path.startswith(&#34;/vsimem&#34;) or path.startswith(&#34;/vsizip&#34;):
         return True
 
     return False
@@ -1077,7 +1078,36 @@ def ensure_list(
     if isinstance(variable_or_list, list):
         return variable_or_list
 
-    return [variable_or_list]</code></pre>
+    return [variable_or_list]
+
+
+def all_arrays_are_same_size(
+    list_of_arrays: List[np.ndarray],
+) -&gt; bool:
+    &#34;&#34;&#34;
+    Check if all arrays in a list are the same size.
+
+    Args:
+        list_of_arrays (list): The list of numpy arrays to check.
+
+    Returns:
+        bool: True if all arrays are the same size, False otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(list_of_arrays, list), &#34;list_of_arrays must be a list.&#34;
+
+    for arr in list_of_arrays:
+        assert isinstance(arr, np.ndarray), &#34;list_of_arrays must be a list of arrays.&#34;
+
+    if len(list_of_arrays) == 0:
+        return True
+
+    shape = list_of_arrays[0].shape
+
+    for arr in list_of_arrays:
+        if arr.shape != shape:
+            return False
+
+    return True</code></pre>
 </details>
 </section>
 <section>
@@ -1087,6 +1117,54 @@ def ensure_list(
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="buteo.utils.core_utils.all_arrays_are_same_size"><code class="name flex">
+<span>def <span class="ident">all_arrays_are_same_size</span></span>(<span>list_of_arrays: List[numpy.ndarray]) -> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if all arrays in a list are the same size.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>list_of_arrays</code></strong> :&ensp;<code>list</code></dt>
+<dd>The list of numpy arrays to check.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if all arrays are the same size, False otherwise.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def all_arrays_are_same_size(
+    list_of_arrays: List[np.ndarray],
+) -&gt; bool:
+    &#34;&#34;&#34;
+    Check if all arrays in a list are the same size.
+
+    Args:
+        list_of_arrays (list): The list of numpy arrays to check.
+
+    Returns:
+        bool: True if all arrays are the same size, False otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(list_of_arrays, list), &#34;list_of_arrays must be a list.&#34;
+
+    for arr in list_of_arrays:
+        assert isinstance(arr, np.ndarray), &#34;list_of_arrays must be a list of arrays.&#34;
+
+    if len(list_of_arrays) == 0:
+        return True
+
+    shape = list_of_arrays[0].shape
+
+    for arr in list_of_arrays:
+        if arr.shape != shape:
+            return False
+
+    return True</code></pre>
+</details>
+</dd>
 <dt id="buteo.utils.core_utils.change_path_ext"><code class="name flex">
 <span>def <span class="ident">change_path_ext</span></span>(<span>path: str, target_ext: str) -> str</span>
 </code></dt>
@@ -2003,7 +2081,7 @@ rough (bool = True): If True, return a rough estimate.</p>
 <span>def <span class="ident">is_valid_mem_path</span></span>(<span>path: str) -> bool</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Check if a path is a valid memory path that has an extension.</p>
+<div class="desc"><p>Check if a path is a valid memory path that has an extension. vsizip also works.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
@@ -2020,7 +2098,7 @@ rough (bool = True): If True, return a rough estimate.</p>
 </summary>
 <pre><code class="python">def is_valid_mem_path(path: str) -&gt; bool:
     &#34;&#34;&#34;
-    Check if a path is a valid memory path that has an extension.
+    Check if a path is a valid memory path that has an extension. vsizip also works.
 
     Args:
         path (str): The path to test.
@@ -2039,7 +2117,7 @@ rough (bool = True): If True, return a rough estimate.</p>
     if ext == &#34;&#34; or ext == &#34;.&#34;:
         return False
 
-    if path.startswith(&#34;/vsimem&#34;):
+    if path.startswith(&#34;/vsimem&#34;) or path.startswith(&#34;/vsizip&#34;):
         return True
 
     return False</code></pre>
@@ -2828,6 +2906,7 @@ throw_error (bool = True): If True, raise an error if the type is not correct.</
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
+<li><code><a title="buteo.utils.core_utils.all_arrays_are_same_size" href="#buteo.utils.core_utils.all_arrays_are_same_size">all_arrays_are_same_size</a></code></li>
 <li><code><a title="buteo.utils.core_utils.change_path_ext" href="#buteo.utils.core_utils.change_path_ext">change_path_ext</a></code></li>
 <li><code><a title="buteo.utils.core_utils.delete_file" href="#buteo.utils.core_utils.delete_file">delete_file</a></code></li>
 <li><code><a title="buteo.utils.core_utils.delete_files_in_folder" href="#buteo.utils.core_utils.delete_files_in_folder">delete_files_in_folder</a></code></li>

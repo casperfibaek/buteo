@@ -139,3 +139,5 @@ python -m build_anaconda -forge -clean;
 from .utils import *
 from .raster import *
 from .vector import *
+from .eo import *
+from .ai import *

@@ -9,7 +9,7 @@ import sys; sys.path.append("../../")
 import numpy as np
 
 # Internal
-from buteo.raster.convolution import convolve_array, get_kernel, pad_array_view
+from buteo.raster.convolution import convolve_array, get_kernel, pad_array
 
 
 DEFAULT_SPHERICAL = False

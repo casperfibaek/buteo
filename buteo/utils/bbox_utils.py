@@ -832,6 +832,7 @@ def reproject_bbox(
     p3 = [x_max, y_max]
     p4 = [x_min, y_max]
 
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
     try:
         p1t = transformer.TransformPoint(p1[0], p1[1])
         p2t = transformer.TransformPoint(p2[0], p2[1])
@@ -842,6 +843,7 @@ def reproject_bbox(
         p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
         p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
         p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+    gdal.PopErrorHandler()
 
     transformed_x_min = min(p1t[0], p2t[0], p3t[0], p4t[0])
     transformed_x_max = max(p1t[0], p2t[0], p3t[0], p4t[0])
@@ -991,8 +993,8 @@ def reproject_latlng_point_to_utm(latlng):
         Takes point in [lat, lng], returns [utm_x, utm_y].
     """
     source_projection = osr.SpatialReference()
-    # source_projection.ImportFromEPSG(4326)
-    source_projection.ImportFromWkt('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]')
+    source_projection_wkt = gdal_utils.get_default_projection()
+    source_projection.ImportFromWkt(source_projection_wkt)
     target_projection = get_utm_zone_from_latlng(latlng)
 
     transformer = osr.CoordinateTransformation(
@@ -1033,6 +1035,7 @@ def geometry_latlng_from_bbox(bbox_ogr, projection_osr, latlng_projection_osr):
     p3 = [x_max, y_max]
     p4 = [x_min, y_max]
 
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
     try:
         p1t = transformer.TransformPoint(p1[0], p1[1])
         p2t = transformer.TransformPoint(p2[0], p2[1])
@@ -1043,6 +1046,7 @@ def geometry_latlng_from_bbox(bbox_ogr, projection_osr, latlng_projection_osr):
         p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
         p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
         p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+    gdal.PopErrorHandler()
 
     ring = ogr.Geometry(ogr.wkbLinearRing)
     ring.AddPoint(p1t[0], p1t[1])
@@ -1092,12 +1096,29 @@ def additional_bboxes(bbox_ogr, projection_osr):
     latlng_projection.ImportFromWkt(wgs84_wkt)
 
     bbox_ogr_latlng = reproject_bbox(bbox_ogr, original_projection, latlng_projection)
+
+    world = False
+    if np.isinf(bbox_ogr_latlng).any():
+        world = True
+    if np.isinf(bbox_ogr_latlng[0]):
+        bbox_ogr_latlng[0] = -179.999999
+    if np.isinf(bbox_ogr_latlng[1]):
+        bbox_ogr_latlng[1] = 180.0
+    if np.isinf(bbox_ogr_latlng[2]):
+        bbox_ogr_latlng[2] = -89.999999
+    if np.isinf(bbox_ogr_latlng[3]):
+        bbox_ogr_latlng[3] = 90.0
+
     latlng_x_min, latlng_x_max, latlng_y_min, latlng_y_max = bbox_ogr_latlng
 
     bbox_geom = convert_bbox_to_geom(bbox_ogr)
     bbox_geom_latlng = convert_bbox_to_geom(bbox_ogr_latlng)
     geom = bbox_geom
-    geom_latlng = geometry_latlng_from_bbox(bbox_ogr, original_projection, latlng_projection)
+
+    if world:
+        geom_latlng = bbox_geom_latlng
+    else:
+        geom_latlng = geometry_latlng_from_bbox(bbox_ogr, original_projection, latlng_projection)
 
     bbox_wkt = convert_bbox_to_wkt(bbox_ogr)
     bbox_wkt_latlng = convert_bbox_to_wkt(bbox_ogr_latlng)

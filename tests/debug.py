@@ -19,6 +19,7 @@ raster_mask = os.path.join(FOLDER, "mask_land_54009_500m.tif")
 metadata = raster_to_metadata(raster)
 offsets = split_into_offsets(metadata["shape"], 3, 3)
 
+
 generated_images = []
 
 for idx, offset in enumerate(offsets):

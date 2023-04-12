@@ -33,6 +33,9 @@ def _open_raster(
     if isinstance(raster, gdal.Dataset):
         return raster
 
+    if isinstance(raster, str) and raster.startswith("/vsizip/"):
+        writeable = False
+
     if gdal_utils.is_in_memory(raster) or core_utils.file_exists(raster):
 
         gdal.PushErrorHandler("CPLQuietErrorHandler")
@@ -1610,3 +1613,34 @@ def create_grid_with_coordinates(
     grid = np.dstack((xx, yy))
 
     return grid
+
+
+# TODO: Implement
+def mosaic_rasters(
+    raster_paths: Union[str, List[str]],
+    out_path: str = None,
+    creation_options: Union[List[str], None] = None,
+    overwrite: bool = True,
+) -> str:
+    """ NOT YET IMPLEMENTED: Mosaic a list of rasters into a single raster.
+
+    Args:
+        raster_paths (str/list): The list of rasters to mosaic.
+    
+    Keyword Args:
+        out_path (str, default=None): The output path. If None, a temporary file will be created.
+        creation_options (list, default=None): The creation options for the output raster.
+        overwrite (bool, default=True): If True, the output raster will be overwritten if it already exists.
+    """
+    core_utils.type_check(raster_paths, [str, [str]], "raster_paths")
+    core_utils.type_check(out_path, [str, None], "out_path")
+    core_utils.type_check(creation_options, [[str], None], "creation_options")
+    core_utils.type_check(overwrite, [bool], "overwrite")
+
+    if isinstance(raster_paths, str):
+        raster_paths = [raster_paths]
+
+    raster_paths = [gdal_utils.path_to_memory(raster_path) for raster_path in raster_paths]
+
+    # Parse the driver
+    return

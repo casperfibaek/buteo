@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>buteo.ai.augmentation API documentation</title>
+<meta name="description" content="This module contains functions for augmenting images that are
+suited to remote sensing imagery …" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>buteo.ai.augmentation</code></h1>
+</header>
+<section id="section-intro">
+<p>This module contains functions for augmenting images that are
+suited to remote sensing imagery.</p>
+<p>Random rotations at 90 degrees intervals are applied to the image.
+Random noise (gaussian) is added to the image.
+Channel-wise</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+This module contains functions for augmenting images that are
+suited to remote sensing imagery.
+
+Random rotations at 90 degrees intervals are applied to the image.
+Random noise (gaussian) is added to the image.
+    Channel-wise
+&#34;&#34;&#34;
+# Standard library
+from typing import Optional, Tuple
+
+# External
+import numpy as np
+
+
+def augmentation_rotation(
+    X: np.ndarray,
+    y: Optional[np.ndarray] = None,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Randomly rotate the image by 90 degrees intervals. Images
+    can be (channels, height, width) or (height, width, channels).
+
+    Args:
+        X (np.ndarray): The image to rotate.
+        y (Optional[np.ndarray], optional): The label to rotate. Defaults to None.
+
+    Keyword Args:
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The rotated image and optionally the label.
+    &#34;&#34;&#34;
+    random_k = np.random.randint(1, 5)
+
+    if channel_last:
+        X_rot = np.rot90(X, k=random_k, axes=(0, 1))
+    else:
+        X_rot = np.rot90(X, k=random_k, axes=(1, 2))
+
+    if y is None:
+        return X_rot
+
+    if channel_last:
+        y_rot = np.rot90(y, k=random_k, axes=(0, 1))
+    else:
+        y_rot = np.rot90(y, k=random_k, axes=(1, 2))
+
+    return X_rot, y_rot
+
+
+def augmentation_rotation_batch(
+    X: np.ndarray,
+    y: Optional[np.ndarray] = None,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Randomly rotates images in a batch by 90 degrees intervals. Images
+    can be (batch, channels, height, width) or (batch, height, width, channels).
+
+    Args:
+        X (np.ndarray): The batch of images to rotate.
+        y (Optional[np.ndarray], optional): The batch of labels to rotate. Defaults to None.
+    
+    Keyword Args:
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The rotated images and optionally labels.
+    &#34;&#34;&#34;
+    X_rot = np.zeros_like(X, dtype=X.dtype)
+
+    if y is not None:
+        y_rot = np.zeros_like(y, dtype=y.dtype)
+    else:
+        y_rot = None
+
+    for i in range(X.shape[0]):
+        if y is None:
+            X_rot[i] = augmentation_rotation(X[i], channel_last=channel_last)
+        else:
+            X_rot[i], y_rot[i] = augmentation_rotation(X[i], y[i], channel_last)
+
+    if y_rot is None:
+        return X_rot
+
+    return X_rot, y_rot
+
+
+def augmentation_mirror(
+    X: np.ndarray,
+    y: Optional[np.ndarray] = None,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Randomly mirrors the image. Images can be (channels, height, width) or (height, width, channels).
+
+    Args:
+        X (np.ndarray): The image to mirror.
+        y (Optional[np.ndarray], optional): The label to mirror. Defaults to None.
+
+    Keyword Args:
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The mirrored image and optionally the label.
+    &#34;&#34;&#34;
+    random_k = np.random.randint(0, 3)
+
+    if random_k == 0:
+
+        if y is not None:
+            return X, y
+        return X
+
+    flipped_x = X.copy()
+    flipped_y = None
+
+    axis = 1 if channel_last else 2
+    axis = axis - 1 if random_k == 2 else axis
+
+    flipped_x = np.flip(X, axis=axis)
+
+    if y is not None:
+        flipped_y = np.flip(y, axis=axis)
+        return flipped_x, flipped_y
+
+    return flipped_x
+
+
+def augmentation_mirror_batch(
+    X: np.ndarray,
+    y: Optional[np.ndarray] = None,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Randomly mirrors images in a batch. Images can be (batch, channels, height, width) or (batch, height, width, channels).
+
+    Args:
+        X (np.ndarray): The batch of images to mirror.
+        y (Optional[np.ndarray], optional): The batch of labels to mirror. Defaults to None.
+    
+    Keyword Args:
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The mirrored images and optionally labels.
+    &#34;&#34;&#34;
+    X_mirror = np.zeros_like(X, dtype=X.dtype)
+
+    if y is not None:
+        y_mirror = np.zeros_like(y, dtype=y.dtype)
+    else:
+        y_mirror = None
+
+    for i in range(X.shape[0]):
+        if y is None:
+            X_mirror[i] = augmentation_mirror(X[i], channel_last=channel_last)
+        else:
+            X_mirror[i], y_mirror[i] = augmentation_mirror(X[i], y[i], channel_last)
+
+    if y_mirror is None:
+        return X_mirror
+
+    return X_mirror, y_mirror
+
+
+def augmentation_pixel_noise(
+    X: np.ndarray,
+    amount: float = 0.025,
+    additive: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Adds random noise seperately to each channel of the image. The noise works
+    for both channel first and last images.
+    input should be (height, width, channels) or (channels, height, width).
+
+    Args:
+        X (np.ndarray): The image to add noise to.
+    
+    Keyword Args:
+        amount (float=0.01): The amount of noise to add.
+        additive (bool=True): Whether to add or multiply the noise.
+
+    Returns:
+        np.ndarray: The noisy image.
+    &#34;&#34;&#34;
+    if additive:
+        noise = X + np.random.normal(0, amount, X.shape)
+    else:
+        noise = X * np.random.normal(1, amount, X.shape)
+
+    return noise
+
+
+def augmentation_pixel_noise_batch(
+    X: np.ndarray,
+    amount: float = 0.025,
+    additive: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Adds random noise seperately to each channel of the batch of images. The noise works
+    for both channel first and last images.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to add noise to.
+    
+    Keyword Args:
+        amount (float=0.01): The amount of noise to add.
+        additive (bool=True): Whether to add or multiply the noise.
+
+    Returns:
+        np.ndarray: The noisy batch of images.
+    &#34;&#34;&#34;
+    return augmentation_pixel_noise(X, amount, additive)
+
+
+def augmentation_channel_scale(
+    X: np.ndarray,
+    amount: float = 0.025,
+    additive: bool = False,
+    channel_last: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Scales the channels of the image seperately by a fixed amount.
+    input should be (height, width, channels) or (channels, height, width).
+
+    Args:
+        X (np.ndarray): The image to scale the channels of.
+    
+    Keyword Args:
+        amount (float=0.01): The amount to scale the channels by.
+        additive (bool=False): Whether to add or multiply the scaling.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        np.ndarray: The scaled image.
+    &#34;&#34;&#34;
+    x = X.copy()
+
+    if channel_last:
+        for i in range(X.shape[2]):
+
+            random_amount = np.random.uniform(-amount, amount)
+            if additive:
+                x[:, :, i] += random_amount
+            else:
+                x[:, :, i] *= random_amount
+    else:
+        for i in range(X.shape[0]):
+            random_amount = np.random.uniform(-amount, amount)
+            if additive:
+                x[i, :, :] += random_amount
+            else:
+                x[i, :, :] *= random_amount
+
+    return x
+
+
+def augmentation_channel_scale_batch(
+    X: np.ndarray,
+    amount: float = 0.025,
+    additive: bool = False,
+    channel_last: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Scales the channels of the batch of images seperately by a fixed amount.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to scale the channels of.
+    
+    Keyword Args:
+        amount (float=0.01): The amount to scale the channels by.
+        additive (bool=False): Whether to add or multiply the scaling.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        np.ndarray: The scaled batch of images.
+    &#34;&#34;&#34;
+    X_scaled = np.zeros_like(X, dtype=X.dtype)
+
+    for i in range(X.shape[0]):
+        X_scaled[i] = augmentation_channel_scale(X[i], amount, additive, channel_last)
+
+    return X_scaled
+
+
+def augmentation_contrast(
+    X: np.ndarray,
+    contrast_factor: float = 0.025,
+    channel_last: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Changes the contrast of an image by a random amount, seperately for each channel.
+    input should be (height, width, channels) or (channels, height, width).
+
+    Args:
+        X (np.ndarray): The image to change the contrast of.
+    
+    Keyword Args:
+        contrast_factor (float=0.01): The amount to change the contrast by.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        np.ndarray: The contrast changed image.
+    &#34;&#34;&#34;
+    x = X.copy()
+
+    if channel_last:
+        mean_pixel = np.mean(X, axis=(0, 1))
+    else:
+        mean_pixel = np.mean(X, axis=(1, 2))
+
+    if channel_last:
+        for i in range(X.shape[2]):
+            x[:, :, i] = (x[:, :, i] - mean_pixel[i]) * (1 + contrast_factor) + mean_pixel[i]
+    else:
+        for i in range(X.shape[0]):
+            x[i, :, :] = (x[i, :, :] - mean_pixel[i]) * (1 + contrast_factor) + mean_pixel[i]
+
+    return x
+
+
+def augmentation_contrast_batch(
+    X: np.ndarray,
+    contrast_factor: float = 0.025,
+    channel_last: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Changes the contrast of a batch of images by a random amount, seperately for each channel.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to change the contrast of.
+    
+    Keyword Args:
+        contrast_factor (float=0.01): The amount to change the contrast by.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        np.ndarray: The contrast changed batch of images.
+    &#34;&#34;&#34;
+    X_contrast = np.zeros_like(X, dtype=X.dtype)
+
+    for i in range(X.shape[0]):
+        X_contrast[i] = augmentation_contrast(X[i], contrast_factor, channel_last)
+
+    return X_contrast</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.ai.augmentation.augmentation_channel_scale"><code class="name flex">
+<span>def <span class="ident">augmentation_channel_scale</span></span>(<span>X: numpy.ndarray, amount: float = 0.025, additive: bool = False, channel_last: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Scales the channels of the image seperately by a fixed amount.
+input should be (height, width, channels) or (channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The image to scale the channels of.</dd>
+</dl>
+<p>Keyword Args:
+amount (float=0.01): The amount to scale the channels by.
+additive (bool=False): Whether to add or multiply the scaling.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The scaled image.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def augmentation_channel_scale(
+    X: np.ndarray,
+    amount: float = 0.025,
+    additive: bool = False,
+    channel_last: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Scales the channels of the image seperately by a fixed amount.
+    input should be (height, width, channels) or (channels, height, width).
+
+    Args:
+        X (np.ndarray): The image to scale the channels of.
+    
+    Keyword Args:
+        amount (float=0.01): The amount to scale the channels by.
+        additive (bool=False): Whether to add or multiply the scaling.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        np.ndarray: The scaled image.
+    &#34;&#34;&#34;
+    x = X.copy()
+
+    if channel_last:
+        for i in range(X.shape[2]):
+
+            random_amount = np.random.uniform(-amount, amount)
+            if additive:
+                x[:, :, i] += random_amount
+            else:
+                x[:, :, i] *= random_amount
+    else:
+        for i in range(X.shape[0]):
+            random_amount = np.random.uniform(-amount, amount)
+            if additive:
+                x[i, :, :] += random_amount
+            else:
+                x[i, :, :] *= random_amount
+
+    return x</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation.augmentation_channel_scale_batch"><code class="name flex">
+<span>def <span class="ident">augmentation_channel_scale_batch</span></span>(<span>X: numpy.ndarray, amount: float = 0.025, additive: bool = False, channel_last: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Scales the channels of the batch of images seperately by a fixed amount.
+input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to scale the channels of.</dd>
+</dl>
+<p>Keyword Args:
+amount (float=0.01): The amount to scale the channels by.
+additive (bool=False): Whether to add or multiply the scaling.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The scaled batch of images.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def augmentation_channel_scale_batch(
+    X: np.ndarray,
+    amount: float = 0.025,
+    additive: bool = False,
+    channel_last: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Scales the channels of the batch of images seperately by a fixed amount.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to scale the channels of.
+    
+    Keyword Args:
+        amount (float=0.01): The amount to scale the channels by.
+        additive (bool=False): Whether to add or multiply the scaling.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        np.ndarray: The scaled batch of images.
+    &#34;&#34;&#34;
+    X_scaled = np.zeros_like(X, dtype=X.dtype)
+
+    for i in range(X.shape[0]):
+        X_scaled[i] = augmentation_channel_scale(X[i], amount, additive, channel_last)
+
+    return X_scaled</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation.augmentation_contrast"><code class="name flex">
+<span>def <span class="ident">augmentation_contrast</span></span>(<span>X: numpy.ndarray, contrast_factor: float = 0.025, channel_last: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Changes the contrast of an image by a random amount, seperately for each channel.
+input should be (height, width, channels) or (channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The image to change the contrast of.</dd>
+</dl>
+<p>Keyword Args:
+contrast_factor (float=0.01): The amount to change the contrast by.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The contrast changed image.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def augmentation_contrast(
+    X: np.ndarray,
+    contrast_factor: float = 0.025,
+    channel_last: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Changes the contrast of an image by a random amount, seperately for each channel.
+    input should be (height, width, channels) or (channels, height, width).
+
+    Args:
+        X (np.ndarray): The image to change the contrast of.
+    
+    Keyword Args:
+        contrast_factor (float=0.01): The amount to change the contrast by.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        np.ndarray: The contrast changed image.
+    &#34;&#34;&#34;
+    x = X.copy()
+
+    if channel_last:
+        mean_pixel = np.mean(X, axis=(0, 1))
+    else:
+        mean_pixel = np.mean(X, axis=(1, 2))
+
+    if channel_last:
+        for i in range(X.shape[2]):
+            x[:, :, i] = (x[:, :, i] - mean_pixel[i]) * (1 + contrast_factor) + mean_pixel[i]
+    else:
+        for i in range(X.shape[0]):
+            x[i, :, :] = (x[i, :, :] - mean_pixel[i]) * (1 + contrast_factor) + mean_pixel[i]
+
+    return x</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation.augmentation_contrast_batch"><code class="name flex">
+<span>def <span class="ident">augmentation_contrast_batch</span></span>(<span>X: numpy.ndarray, contrast_factor: float = 0.025, channel_last: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Changes the contrast of a batch of images by a random amount, seperately for each channel.
+input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to change the contrast of.</dd>
+</dl>
+<p>Keyword Args:
+contrast_factor (float=0.01): The amount to change the contrast by.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The contrast changed batch of images.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def augmentation_contrast_batch(
+    X: np.ndarray,
+    contrast_factor: float = 0.025,
+    channel_last: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Changes the contrast of a batch of images by a random amount, seperately for each channel.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to change the contrast of.
+    
+    Keyword Args:
+        contrast_factor (float=0.01): The amount to change the contrast by.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        np.ndarray: The contrast changed batch of images.
+    &#34;&#34;&#34;
+    X_contrast = np.zeros_like(X, dtype=X.dtype)
+
+    for i in range(X.shape[0]):
+        X_contrast[i] = augmentation_contrast(X[i], contrast_factor, channel_last)
+
+    return X_contrast</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation.augmentation_mirror"><code class="name flex">
+<span>def <span class="ident">augmentation_mirror</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray] = None, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Randomly mirrors the image. Images can be (channels, height, width) or (height, width, channels).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The image to mirror.</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>Optional[np.ndarray]</code>, optional</dt>
+<dd>The label to mirror. Defaults to None.</dd>
+</dl>
+<p>Keyword Args:
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[np.ndarray, Optional[np.ndarray]]</code></dt>
+<dd>The mirrored image and optionally the label.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def augmentation_mirror(
+    X: np.ndarray,
+    y: Optional[np.ndarray] = None,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Randomly mirrors the image. Images can be (channels, height, width) or (height, width, channels).
+
+    Args:
+        X (np.ndarray): The image to mirror.
+        y (Optional[np.ndarray], optional): The label to mirror. Defaults to None.
+
+    Keyword Args:
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The mirrored image and optionally the label.
+    &#34;&#34;&#34;
+    random_k = np.random.randint(0, 3)
+
+    if random_k == 0:
+
+        if y is not None:
+            return X, y
+        return X
+
+    flipped_x = X.copy()
+    flipped_y = None
+
+    axis = 1 if channel_last else 2
+    axis = axis - 1 if random_k == 2 else axis
+
+    flipped_x = np.flip(X, axis=axis)
+
+    if y is not None:
+        flipped_y = np.flip(y, axis=axis)
+        return flipped_x, flipped_y
+
+    return flipped_x</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation.augmentation_mirror_batch"><code class="name flex">
+<span>def <span class="ident">augmentation_mirror_batch</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray] = None, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Randomly mirrors images in a batch. Images can be (batch, channels, height, width) or (batch, height, width, channels).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to mirror.</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>Optional[np.ndarray]</code>, optional</dt>
+<dd>The batch of labels to mirror. Defaults to None.</dd>
+</dl>
+<p>Keyword Args:
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[np.ndarray, Optional[np.ndarray]]</code></dt>
+<dd>The mirrored images and optionally labels.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def augmentation_mirror_batch(
+    X: np.ndarray,
+    y: Optional[np.ndarray] = None,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Randomly mirrors images in a batch. Images can be (batch, channels, height, width) or (batch, height, width, channels).
+
+    Args:
+        X (np.ndarray): The batch of images to mirror.
+        y (Optional[np.ndarray], optional): The batch of labels to mirror. Defaults to None.
+    
+    Keyword Args:
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The mirrored images and optionally labels.
+    &#34;&#34;&#34;
+    X_mirror = np.zeros_like(X, dtype=X.dtype)
+
+    if y is not None:
+        y_mirror = np.zeros_like(y, dtype=y.dtype)
+    else:
+        y_mirror = None
+
+    for i in range(X.shape[0]):
+        if y is None:
+            X_mirror[i] = augmentation_mirror(X[i], channel_last=channel_last)
+        else:
+            X_mirror[i], y_mirror[i] = augmentation_mirror(X[i], y[i], channel_last)
+
+    if y_mirror is None:
+        return X_mirror
+
+    return X_mirror, y_mirror</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation.augmentation_pixel_noise"><code class="name flex">
+<span>def <span class="ident">augmentation_pixel_noise</span></span>(<span>X: numpy.ndarray, amount: float = 0.025, additive: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Adds random noise seperately to each channel of the image. The noise works
+for both channel first and last images.
+input should be (height, width, channels) or (channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The image to add noise to.</dd>
+</dl>
+<p>Keyword Args:
+amount (float=0.01): The amount of noise to add.
+additive (bool=True): Whether to add or multiply the noise.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The noisy image.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def augmentation_pixel_noise(
+    X: np.ndarray,
+    amount: float = 0.025,
+    additive: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Adds random noise seperately to each channel of the image. The noise works
+    for both channel first and last images.
+    input should be (height, width, channels) or (channels, height, width).
+
+    Args:
+        X (np.ndarray): The image to add noise to.
+    
+    Keyword Args:
+        amount (float=0.01): The amount of noise to add.
+        additive (bool=True): Whether to add or multiply the noise.
+
+    Returns:
+        np.ndarray: The noisy image.
+    &#34;&#34;&#34;
+    if additive:
+        noise = X + np.random.normal(0, amount, X.shape)
+    else:
+        noise = X * np.random.normal(1, amount, X.shape)
+
+    return noise</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation.augmentation_pixel_noise_batch"><code class="name flex">
+<span>def <span class="ident">augmentation_pixel_noise_batch</span></span>(<span>X: numpy.ndarray, amount: float = 0.025, additive: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Adds random noise seperately to each channel of the batch of images. The noise works
+for both channel first and last images.
+input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to add noise to.</dd>
+</dl>
+<p>Keyword Args:
+amount (float=0.01): The amount of noise to add.
+additive (bool=True): Whether to add or multiply the noise.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The noisy batch of images.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def augmentation_pixel_noise_batch(
+    X: np.ndarray,
+    amount: float = 0.025,
+    additive: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Adds random noise seperately to each channel of the batch of images. The noise works
+    for both channel first and last images.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to add noise to.
+    
+    Keyword Args:
+        amount (float=0.01): The amount of noise to add.
+        additive (bool=True): Whether to add or multiply the noise.
+
+    Returns:
+        np.ndarray: The noisy batch of images.
+    &#34;&#34;&#34;
+    return augmentation_pixel_noise(X, amount, additive)</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation.augmentation_rotation"><code class="name flex">
+<span>def <span class="ident">augmentation_rotation</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray] = None, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Randomly rotate the image by 90 degrees intervals. Images
+can be (channels, height, width) or (height, width, channels).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The image to rotate.</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>Optional[np.ndarray]</code>, optional</dt>
+<dd>The label to rotate. Defaults to None.</dd>
+</dl>
+<p>Keyword Args:
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[np.ndarray, Optional[np.ndarray]]</code></dt>
+<dd>The rotated image and optionally the label.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def augmentation_rotation(
+    X: np.ndarray,
+    y: Optional[np.ndarray] = None,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Randomly rotate the image by 90 degrees intervals. Images
+    can be (channels, height, width) or (height, width, channels).
+
+    Args:
+        X (np.ndarray): The image to rotate.
+        y (Optional[np.ndarray], optional): The label to rotate. Defaults to None.
+
+    Keyword Args:
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The rotated image and optionally the label.
+    &#34;&#34;&#34;
+    random_k = np.random.randint(1, 5)
+
+    if channel_last:
+        X_rot = np.rot90(X, k=random_k, axes=(0, 1))
+    else:
+        X_rot = np.rot90(X, k=random_k, axes=(1, 2))
+
+    if y is None:
+        return X_rot
+
+    if channel_last:
+        y_rot = np.rot90(y, k=random_k, axes=(0, 1))
+    else:
+        y_rot = np.rot90(y, k=random_k, axes=(1, 2))
+
+    return X_rot, y_rot</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation.augmentation_rotation_batch"><code class="name flex">
+<span>def <span class="ident">augmentation_rotation_batch</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray] = None, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Randomly rotates images in a batch by 90 degrees intervals. Images
+can be (batch, channels, height, width) or (batch, height, width, channels).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to rotate.</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>Optional[np.ndarray]</code>, optional</dt>
+<dd>The batch of labels to rotate. Defaults to None.</dd>
+</dl>
+<p>Keyword Args:
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[np.ndarray, Optional[np.ndarray]]</code></dt>
+<dd>The rotated images and optionally labels.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def augmentation_rotation_batch(
+    X: np.ndarray,
+    y: Optional[np.ndarray] = None,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Randomly rotates images in a batch by 90 degrees intervals. Images
+    can be (batch, channels, height, width) or (batch, height, width, channels).
+
+    Args:
+        X (np.ndarray): The batch of images to rotate.
+        y (Optional[np.ndarray], optional): The batch of labels to rotate. Defaults to None.
+    
+    Keyword Args:
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The rotated images and optionally labels.
+    &#34;&#34;&#34;
+    X_rot = np.zeros_like(X, dtype=X.dtype)
+
+    if y is not None:
+        y_rot = np.zeros_like(y, dtype=y.dtype)
+    else:
+        y_rot = None
+
+    for i in range(X.shape[0]):
+        if y is None:
+            X_rot[i] = augmentation_rotation(X[i], channel_last=channel_last)
+        else:
+            X_rot[i], y_rot[i] = augmentation_rotation(X[i], y[i], channel_last)
+
+    if y_rot is None:
+        return X_rot
+
+    return X_rot, y_rot</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="buteo.ai" href="index.html">buteo.ai</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.ai.augmentation.augmentation_channel_scale" href="#buteo.ai.augmentation.augmentation_channel_scale">augmentation_channel_scale</a></code></li>
+<li><code><a title="buteo.ai.augmentation.augmentation_channel_scale_batch" href="#buteo.ai.augmentation.augmentation_channel_scale_batch">augmentation_channel_scale_batch</a></code></li>
+<li><code><a title="buteo.ai.augmentation.augmentation_contrast" href="#buteo.ai.augmentation.augmentation_contrast">augmentation_contrast</a></code></li>
+<li><code><a title="buteo.ai.augmentation.augmentation_contrast_batch" href="#buteo.ai.augmentation.augmentation_contrast_batch">augmentation_contrast_batch</a></code></li>
+<li><code><a title="buteo.ai.augmentation.augmentation_mirror" href="#buteo.ai.augmentation.augmentation_mirror">augmentation_mirror</a></code></li>
+<li><code><a title="buteo.ai.augmentation.augmentation_mirror_batch" href="#buteo.ai.augmentation.augmentation_mirror_batch">augmentation_mirror_batch</a></code></li>
+<li><code><a title="buteo.ai.augmentation.augmentation_pixel_noise" href="#buteo.ai.augmentation.augmentation_pixel_noise">augmentation_pixel_noise</a></code></li>
+<li><code><a title="buteo.ai.augmentation.augmentation_pixel_noise_batch" href="#buteo.ai.augmentation.augmentation_pixel_noise_batch">augmentation_pixel_noise_batch</a></code></li>
+<li><code><a title="buteo.ai.augmentation.augmentation_rotation" href="#buteo.ai.augmentation.augmentation_rotation">augmentation_rotation</a></code></li>
+<li><code><a title="buteo.ai.augmentation.augmentation_rotation_batch" href="#buteo.ai.augmentation.augmentation_rotation_batch">augmentation_rotation_batch</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

@@ -61,6 +61,9 @@ def _open_raster(
     if isinstance(raster, gdal.Dataset):
         return raster
 
+    if isinstance(raster, str) and raster.startswith(&#34;/vsizip/&#34;):
+        writeable = False
+
     if gdal_utils.is_in_memory(raster) or core_utils.file_exists(raster):
 
         gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
@@ -1637,7 +1640,38 @@ def create_grid_with_coordinates(
     xx, yy = np.meshgrid(x_vals, y_vals)
     grid = np.dstack((xx, yy))
 
-    return grid</code></pre>
+    return grid
+
+
+# TODO: Implement
+def mosaic_rasters(
+    raster_paths: Union[str, List[str]],
+    out_path: str = None,
+    creation_options: Union[List[str], None] = None,
+    overwrite: bool = True,
+) -&gt; str:
+    &#34;&#34;&#34; NOT YET IMPLEMENTED: Mosaic a list of rasters into a single raster.
+
+    Args:
+        raster_paths (str/list): The list of rasters to mosaic.
+    
+    Keyword Args:
+        out_path (str, default=None): The output path. If None, a temporary file will be created.
+        creation_options (list, default=None): The creation options for the output raster.
+        overwrite (bool, default=True): If True, the output raster will be overwritten if it already exists.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster_paths, [str, [str]], &#34;raster_paths&#34;)
+    core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+
+    if isinstance(raster_paths, str):
+        raster_paths = [raster_paths]
+
+    raster_paths = [gdal_utils.path_to_memory(raster_path) for raster_path in raster_paths]
+
+    # Parse the driver
+    return</code></pre>
 </details>
 </section>
 <section>
@@ -2323,6 +2357,51 @@ wkt (bool, default=True): If True, returns the projection as WKT.</p>
         return dataset.GetProjectionRef()
 
     return dataset.GetProjection()</code></pre>
+</details>
+</dd>
+<dt id="buteo.raster.core_raster.mosaic_rasters"><code class="name flex">
+<span>def <span class="ident">mosaic_rasters</span></span>(<span>raster_paths: Union[str, List[str]], out_path: str = None, creation_options: Optional[List[str]] = None, overwrite: bool = True) -> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>NOT YET IMPLEMENTED: Mosaic a list of rasters into a single raster.</p>
+<h2 id="args">Args</h2>
+<p>raster_paths (str/list): The list of rasters to mosaic.
+Keyword Args:
+out_path (str, default=None): The output path. If None, a temporary file will be created.
+creation_options (list, default=None): The creation options for the output raster.
+overwrite (bool, default=True): If True, the output raster will be overwritten if it already exists.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mosaic_rasters(
+    raster_paths: Union[str, List[str]],
+    out_path: str = None,
+    creation_options: Union[List[str], None] = None,
+    overwrite: bool = True,
+) -&gt; str:
+    &#34;&#34;&#34; NOT YET IMPLEMENTED: Mosaic a list of rasters into a single raster.
+
+    Args:
+        raster_paths (str/list): The list of rasters to mosaic.
+    
+    Keyword Args:
+        out_path (str, default=None): The output path. If None, a temporary file will be created.
+        creation_options (list, default=None): The creation options for the output raster.
+        overwrite (bool, default=True): If True, the output raster will be overwritten if it already exists.
+    &#34;&#34;&#34;
+    core_utils.type_check(raster_paths, [str, [str]], &#34;raster_paths&#34;)
+    core_utils.type_check(out_path, [str, None], &#34;out_path&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+
+    if isinstance(raster_paths, str):
+        raster_paths = [raster_paths]
+
+    raster_paths = [gdal_utils.path_to_memory(raster_path) for raster_path in raster_paths]
+
+    # Parse the driver
+    return</code></pre>
 </details>
 </dd>
 <dt id="buteo.raster.core_raster.open_raster"><code class="name flex">
@@ -3476,6 +3555,7 @@ A list of GDAL creation options for the output raster.</p>
 <li><code><a title="buteo.raster.core_raster.get_first_nodata_value" href="#buteo.raster.core_raster.get_first_nodata_value">get_first_nodata_value</a></code></li>
 <li><code><a title="buteo.raster.core_raster.get_overlap_fraction" href="#buteo.raster.core_raster.get_overlap_fraction">get_overlap_fraction</a></code></li>
 <li><code><a title="buteo.raster.core_raster.get_projection" href="#buteo.raster.core_raster.get_projection">get_projection</a></code></li>
+<li><code><a title="buteo.raster.core_raster.mosaic_rasters" href="#buteo.raster.core_raster.mosaic_rasters">mosaic_rasters</a></code></li>
 <li><code><a title="buteo.raster.core_raster.open_raster" href="#buteo.raster.core_raster.open_raster">open_raster</a></code></li>
 <li><code><a title="buteo.raster.core_raster.raster_has_nodata" href="#buteo.raster.core_raster.raster_has_nodata">raster_has_nodata</a></code></li>
 <li><code><a title="buteo.raster.core_raster.raster_set_datatype" href="#buteo.raster.core_raster.raster_set_datatype">raster_set_datatype</a></code></li>

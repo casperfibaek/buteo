@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>buteo.eo.s2_utils API documentation</title>
+<meta name="description" content="This module contains utility functions to work with sentinel 2 data." />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>buteo.eo.s2_utils</code></h1>
+</header>
+<section id="section-intro">
+<p>This module contains utility functions to work with sentinel 2 data.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+This module contains utility functions to work with sentinel 2 data.
+&#34;&#34;&#34;
+
+# Standard library
+import sys; sys.path.append(&#34;../../&#34;)
+import os
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from zipfile import ZipFile
+from glob import glob
+
+# Internal
+from buteo.raster import raster_to_array
+
+
+def s2_l2a_get_bands(
+    zip_or_safe_folder: str,
+    zipfile: bool = True,
+) -&gt; dict:
+    &#34;&#34;&#34; Get the bands from a sentinel 2 L2A product.
+    
+    Args:
+        zip_or_safe_folder (str): Path to the zip file or SAFE folder.
+    
+    Key Args:
+        zipfile (bool=True): If True, the zip file is used. If False, the SAFE folder is used.
+
+    Returns:
+        dict: Dictionary with the bands.
+    &#34;&#34;&#34;
+    bands = {
+        &#34;10m&#34;: {&#34;B02&#34;: None, &#34;B03&#34;: None, &#34;B04&#34;: None, &#34;B08&#34;: None, &#34;AOT&#34;: None},
+        &#34;20m&#34;: {
+            &#34;B02&#34;: None,
+            &#34;B03&#34;: None,
+            &#34;B04&#34;: None,
+            &#34;B05&#34;: None,
+            &#34;B06&#34;: None,
+            &#34;B07&#34;: None,
+            &#34;B8A&#34;: None,
+            &#34;B11&#34;: None,
+            &#34;B12&#34;: None,
+            &#34;SCL&#34;: None,
+            &#34;AOT&#34;: None,
+        },
+        &#34;60m&#34;: {
+            &#34;B01&#34;: None,
+            &#34;B02&#34;: None,
+            &#34;B03&#34;: None,
+            &#34;B04&#34;: None,
+            &#34;B05&#34;: None,
+            &#34;B06&#34;: None,
+            &#34;B07&#34;: None,
+            &#34;B8A&#34;: None,
+            &#34;B09&#34;: None,
+            &#34;B11&#34;: None,
+            &#34;B12&#34;: None,
+            &#34;SCL&#34;: None,
+        },
+        &#34;QI&#34;: {
+            &#34;CLDPRB_20m&#34;: None,
+            &#34;CLDPRB_60m&#34;: None,
+        },
+    }
+
+    if zipfile:
+        assert os.path.isfile(zip_or_safe_folder), f&#34;Could not find file: {zip_or_safe_folder}&#34;
+    else:
+        assert os.path.isdir(zip_or_safe_folder), f&#34;Could not find folder: {zip_or_safe_folder}&#34;
+
+    prepend = &#34;&#34;
+    if zipfile:
+        archive = ZipFile(zip_or_safe_folder, &#34;r&#34;)
+        prepend = f&#34;/vsizip/{zip_or_safe_folder}/&#34;
+
+        bands[&#34;QI&#34;][&#34;CLDPRB_20m&#34;] = prepend + [name for name in archive.namelist() if name.endswith(&#34;MSK_CLDPRB_20m.jp2&#34;)][0]
+        bands[&#34;QI&#34;][&#34;CLDPRB_60m&#34;] = prepend + [name for name in archive.namelist() if name.endswith(&#34;MSK_CLDPRB_60m.jp2&#34;)][0]
+    else:
+        bands[&#34;QI&#34;][&#34;CLDPRB_20m&#34;] = prepend + glob(f&#34;{zip_or_safe_folder}/GRANULE/*/QI_DATA/MSK_CLDPRB_20m.jp2&#34;)[0]
+        bands[&#34;QI&#34;][&#34;CLDPRB_60m&#34;] = prepend + glob(f&#34;{zip_or_safe_folder}/GRANULE/*/QI_DATA/MSK_CLDPRB_60m.jp2&#34;)[0]
+
+    if zipfile:
+        bands_10m = [name for name in archive.namelist() if name.endswith(&#34;_10m.jp2&#34;)]
+    else:
+        bands_10m = glob(f&#34;{zip_or_safe_folder}/GRANULE/*/IMG_DATA/R10m/*_???_*.jp2&#34;)
+
+    for band in bands_10m:
+        basename = os.path.basename(band)
+        band_name = basename.split(&#34;_&#34;)[2]
+        if band_name == &#34;B02&#34;:
+            bands[&#34;10m&#34;][&#34;B02&#34;] = prepend + band
+        if band_name == &#34;B03&#34;:
+            bands[&#34;10m&#34;][&#34;B03&#34;] = prepend + band
+        if band_name == &#34;B04&#34;:
+            bands[&#34;10m&#34;][&#34;B04&#34;] = prepend + band
+        if band_name == &#34;B08&#34;:
+            bands[&#34;10m&#34;][&#34;B08&#34;] = prepend + band
+        if band_name == &#34;AOT&#34;:
+            bands[&#34;10m&#34;][&#34;AOT&#34;] = prepend + band
+
+    if zipfile:
+        bands_20m = [name for name in archive.namelist() if name.endswith(&#34;_20m.jp2&#34;)]
+    else:
+        bands_20m = glob(f&#34;{zip_or_safe_folder}/GRANULE/*/IMG_DATA/R20m/*.jp2&#34;)
+    for band in bands_20m:
+        basename = os.path.basename(band)
+        band_name = basename.split(&#34;_&#34;)[2]
+        if band_name == &#34;B02&#34;:
+            bands[&#34;20m&#34;][&#34;B02&#34;] = prepend + band
+        if band_name == &#34;B03&#34;:
+            bands[&#34;20m&#34;][&#34;B03&#34;] = prepend + band
+        if band_name == &#34;B04&#34;:
+            bands[&#34;20m&#34;][&#34;B04&#34;] = prepend + band
+        if band_name == &#34;B05&#34;:
+            bands[&#34;20m&#34;][&#34;B05&#34;] = prepend + band
+        if band_name == &#34;B06&#34;:
+            bands[&#34;20m&#34;][&#34;B06&#34;] = prepend + band
+        if band_name == &#34;B07&#34;:
+            bands[&#34;20m&#34;][&#34;B07&#34;] = prepend + band
+        if band_name == &#34;B8A&#34;:
+            bands[&#34;20m&#34;][&#34;B8A&#34;] = prepend + band
+        if band_name == &#34;B09&#34;:
+            bands[&#34;20m&#34;][&#34;B09&#34;] = prepend + band
+        if band_name == &#34;B11&#34;:
+            bands[&#34;20m&#34;][&#34;B11&#34;] = prepend + band
+        if band_name == &#34;B12&#34;:
+            bands[&#34;20m&#34;][&#34;B12&#34;] = prepend + band
+        if band_name == &#34;SCL&#34;:
+            bands[&#34;20m&#34;][&#34;SCL&#34;] = prepend + band
+        if band_name == &#34;AOT&#34;:
+            bands[&#34;20m&#34;][&#34;AOT&#34;] = prepend + band
+
+    if zipfile:
+        bands_60m = [name for name in archive.namelist() if name.endswith(&#34;_60m.jp2&#34;)]
+    else:
+        bands_60m = glob(f&#34;{zip_or_safe_folder}/GRANULE/*/IMG_DATA/R60m/*_???_*.jp2&#34;)
+    for band in bands_60m:
+        basename = os.path.basename(band)
+        band_name = basename.split(&#34;_&#34;)[2]
+        if band_name == &#34;B01&#34;:
+            bands[&#34;60m&#34;][&#34;B01&#34;] = prepend + band
+        if band_name == &#34;B02&#34;:
+            bands[&#34;60m&#34;][&#34;B02&#34;] = prepend + band
+        if band_name == &#34;B03&#34;:
+            bands[&#34;60m&#34;][&#34;B03&#34;] = prepend + band
+        if band_name == &#34;B04&#34;:
+            bands[&#34;60m&#34;][&#34;B04&#34;] = prepend + band
+        if band_name == &#34;B05&#34;:
+            bands[&#34;60m&#34;][&#34;B05&#34;] = prepend + band
+        if band_name == &#34;B06&#34;:
+            bands[&#34;60m&#34;][&#34;B06&#34;] = prepend + band
+        if band_name == &#34;B07&#34;:
+            bands[&#34;60m&#34;][&#34;B07&#34;] = prepend + band
+        if band_name == &#34;B8A&#34;:
+            bands[&#34;60m&#34;][&#34;B8A&#34;] = prepend + band
+        if band_name == &#34;B09&#34;:
+            bands[&#34;60m&#34;][&#34;B09&#34;] = prepend + band
+        if band_name == &#34;B11&#34;:
+            bands[&#34;60m&#34;][&#34;B11&#34;] = prepend + band
+        if band_name == &#34;B12&#34;:
+            bands[&#34;60m&#34;][&#34;B12&#34;] = prepend + band
+        if band_name == &#34;SCL&#34;:
+            bands[&#34;60m&#34;][&#34;SCL&#34;] = prepend + band
+        if band_name == &#34;AOT&#34;:
+            bands[&#34;60m&#34;][&#34;AOT&#34;] = prepend + band
+
+    for key_i, value_i in bands.items():
+        for key_j, value_j in value_i.items():
+            current_band = value_j
+            assert (
+                current_band is not None
+            ), f&#34;{key_i} - {key_j} was not found. Verify the folders. Was the decompression interrupted?&#34;
+
+    return bands
+
+
+def s2_l2a_get_metadata(
+    zip_or_safe_folder: str,
+    zipfile: bool = True,
+) -&gt; dict:
+    &#34;&#34;&#34; Get metadata from the SAFE folder or the zip file.
+    
+    Args:
+        zip_or_safe_folder (str): Path to the zip file or the SAFE folder.
+    
+    Keyword Args:
+        zipfile (bool): If True, the zip file is used. If False, the SAFE folder is used.
+    
+    Returns:
+        dict: Dictionary with the metadata.
+    &#34;&#34;&#34;
+    metadata = {
+        &#34;PRODUCT_START_TIME&#34;: None,
+        &#34;PRODUCT_STOP_TIME&#34;: None,
+        &#34;PRODUCT_URI&#34;: None,
+        &#34;PROCESSING_LEVEL&#34;: None,
+        &#34;PRODUCT_TYPE&#34;: None,
+        &#34;PROCESSING_BASELINE&#34;: None,
+        &#34;GENERATION_TIME&#34;: None,
+        &#34;SPACECRAFT_NAME&#34;: None,
+        &#34;DATATAKE_SENSING_START&#34;: None,
+        &#34;SENSING_ORBIT_NUMBER&#34;: None,
+        &#34;SENSING_ORBIT_DIRECTION&#34;: None,
+        &#34;EXT_POS_LIST&#34;: None,
+        &#34;Cloud_Coverage_Assessment&#34;: None,
+        &#34;NODATA_PIXEL_PERCENTAGE&#34;: None,
+        &#34;SATURATED_DEFECTIVE_PIXEL_PERCENTAGE&#34;: None,
+        &#34;DARK_FEATURES_PERCENTAGE&#34;: None,
+        &#34;CLOUD_SHADOW_PERCENTAGE&#34;: None,
+        &#34;VEGETATION_PERCENTAGE&#34;: None,
+        &#34;NOT_VEGETATED_PERCENTAGE&#34;: None,
+        &#34;WATER_PERCENTAGE&#34;: None,
+        &#34;UNCLASSIFIED_PERCENTAGE&#34;: None,
+        &#34;MEDIUM_PROBA_CLOUDS_PERCENTAGE&#34;: None,
+        &#34;HIGH_PROBA_CLOUDS_PERCENTAGE&#34;: None,
+        &#34;THIN_CIRRUS_PERCENTAGE&#34;: None,
+        &#34;SNOW_ICE_PERCENTAGE&#34;: None,
+        &#34;ZENITH_ANGLE&#34;: None,
+        &#34;AZIMUTH_ANGLE&#34;: None,
+        &#34;SUN_ELEVATION&#34;: None,
+        &#34;folder&#34;: zip_or_safe_folder,
+        &#34;gains&#34;: {},
+    }
+
+    if zipfile:
+        archive = ZipFile(zip_or_safe_folder, &#34;r&#34;)
+
+        meta_xml_path = [name for name in archive.namelist() if name.endswith(&#34;MTD_MSIL2A.xml&#34;)][0]
+        meta_solar_path = [name for name in archive.namelist() if name.endswith(&#34;MTD_TL.xml&#34;)][0]
+
+        meta_xml = archive.open(meta_xml_path)
+        meta_solar = archive.open(meta_solar_path)
+    else:
+        meta_xml = os.path.join(zip_or_safe_folder, &#34;MTD_MSIL2A.xml&#34;)
+        meta_solar = glob(zip_or_safe_folder + &#34;/GRANULE/*/MTD_TL.xml&#34;)[0]
+
+        assert os.path.isfile(meta_xml), f&#34;{zip_or_safe_folder} did not contain a valid metadata file.&#34;
+        assert os.path.isfile(meta_solar), f&#34;{meta_solar} did not contain a valid metadata file.&#34;
+
+    # Parse the xml tree and add metadata
+    root = ET.parse(meta_xml).getroot()
+    for elem in root.iter():
+        if elem.tag in metadata:
+            try:
+                metadata[elem.tag] = float(elem.text)  # Number?
+            except ValueError:
+                try:
+                    metadata[elem.tag] = datetime.strptime(
+                        elem.text, &#34;%Y-%m-%dT%H:%M:%S.%f%z&#34;
+                    )  # Date?
+                except ValueError:
+                    metadata[elem.tag] = elem.text
+
+        if elem.tag == &#34;PHYSICAL_GAINS&#34;:
+            if elem.attrib[&#34;bandId&#34;] == &#34;0&#34;:
+                metadata[&#34;gains&#34;][&#34;B01&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;1&#34;:
+                metadata[&#34;gains&#34;][&#34;B02&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;2&#34;:
+                metadata[&#34;gains&#34;][&#34;B03&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;3&#34;:
+                metadata[&#34;gains&#34;][&#34;B04&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;4&#34;:
+                metadata[&#34;gains&#34;][&#34;B05&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;5&#34;:
+                metadata[&#34;gains&#34;][&#34;B06&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;6&#34;:
+                metadata[&#34;gains&#34;][&#34;B07&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;7&#34;:
+                metadata[&#34;gains&#34;][&#34;B08&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;8&#34;:
+                metadata[&#34;gains&#34;][&#34;B8A&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;9&#34;:
+                metadata[&#34;gains&#34;][&#34;B09&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;10&#34;:
+                metadata[&#34;gains&#34;][&#34;B10&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;11&#34;:
+                metadata[&#34;gains&#34;][&#34;B11&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;12&#34;:
+                metadata[&#34;gains&#34;][&#34;B12&#34;] = float(elem.text)
+
+    # Parse the xml tree and add metadata
+    root = ET.parse(meta_solar).getroot()
+    for elem in root.iter():
+        if elem.tag == &#34;Mean_Sun_Angle&#34;:
+            metadata[&#34;ZENITH_ANGLE&#34;] = float(elem.find(&#34;ZENITH_ANGLE&#34;).text)
+            metadata[&#34;SUN_ELEVATION&#34;] = 90 - metadata[&#34;ZENITH_ANGLE&#34;]
+            metadata[&#34;AZIMUTH_ANGLE&#34;] = float(elem.find(&#34;AZIMUTH_ANGLE&#34;).text)
+
+    # Did we get all the metadata?
+    for name, value in metadata.items():
+        assert value is not None, f&#34;Input metatadata file invalid. {value}&#34;
+
+    metadata[&#34;INVALID&#34;] = (
+        metadata[&#34;NODATA_PIXEL_PERCENTAGE&#34;]
+        + metadata[&#34;SATURATED_DEFECTIVE_PIXEL_PERCENTAGE&#34;]
+        + metadata[&#34;CLOUD_SHADOW_PERCENTAGE&#34;]
+        + metadata[&#34;MEDIUM_PROBA_CLOUDS_PERCENTAGE&#34;]
+        + metadata[&#34;HIGH_PROBA_CLOUDS_PERCENTAGE&#34;]
+        + metadata[&#34;THIN_CIRRUS_PERCENTAGE&#34;]
+        + metadata[&#34;SNOW_ICE_PERCENTAGE&#34;]
+        + metadata[&#34;DARK_FEATURES_PERCENTAGE&#34;]
+    )
+
+    metadata[&#34;timestamp&#34;] = float(metadata[&#34;DATATAKE_SENSING_START&#34;].timestamp())
+
+    metadata[&#34;paths&#34;] = s2_l2a_get_bands(zip_or_safe_folder, zipfile=zipfile)
+
+    def get_bands(bands=&#34;10m&#34;):
+        if bands == &#34;10m&#34;:
+            paths = [metadata[&#34;paths&#34;][&#34;10m&#34;][band] for band in [&#34;B02&#34;, &#34;B03&#34;, &#34;B04&#34;, &#34;B08&#34;]]
+        elif bands == &#34;20m&#34;:
+            paths = [metadata[&#34;paths&#34;][&#34;20m&#34;][band] for band in [&#34;B05&#34;, &#34;B06&#34;, &#34;B07&#34;, &#34;B8A&#34;, &#34;B11&#34;, &#34;B12&#34;]]
+        elif bands == &#34;60m&#34;:
+            paths = [metadata[&#34;paths&#34;][&#34;60m&#34;][band] for band in [&#34;B01&#34;, &#34;B09&#34;]]
+        elif bands == &#34;scl_20m&#34;:
+            paths = [metadata[&#34;paths&#34;][&#34;20m&#34;][&#34;SCL&#34;]]
+        elif bands == &#34;cld_prb_20m&#34;:
+            paths = [metadata[&#34;paths&#34;][&#34;QI&#34;][&#34;CLDPRB_20m&#34;]]
+
+        read_files = raster_to_array(paths)
+
+        return read_files
+
+    metadata[&#34;bands_10m&#34;] = lambda : get_bands(bands=&#34;10m&#34;)
+    metadata[&#34;bands_20m&#34;] = lambda : get_bands(bands=&#34;20m&#34;)
+    metadata[&#34;bands_60m&#34;] = lambda : get_bands(bands=&#34;60m&#34;)
+    metadata[&#34;bands_scl_20m&#34;] = lambda : get_bands(bands=&#34;scl_20m&#34;)
+    metadata[&#34;bands_cld_prb_20m&#34;] = lambda : get_bands(bands=&#34;cld_prb_20m&#34;)
+
+    return metadata</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.eo.s2_utils.s2_l2a_get_bands"><code class="name flex">
+<span>def <span class="ident">s2_l2a_get_bands</span></span>(<span>zip_or_safe_folder: str, zipfile: bool = True) -> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the bands from a sentinel 2 L2A product.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>zip_or_safe_folder</code></strong> :&ensp;<code>str</code></dt>
+<dd>Path to the zip file or SAFE folder.</dd>
+</dl>
+<p>Key Args:
+zipfile (bool=True): If True, the zip file is used. If False, the SAFE folder is used.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>dict</code></dt>
+<dd>Dictionary with the bands.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def s2_l2a_get_bands(
+    zip_or_safe_folder: str,
+    zipfile: bool = True,
+) -&gt; dict:
+    &#34;&#34;&#34; Get the bands from a sentinel 2 L2A product.
+    
+    Args:
+        zip_or_safe_folder (str): Path to the zip file or SAFE folder.
+    
+    Key Args:
+        zipfile (bool=True): If True, the zip file is used. If False, the SAFE folder is used.
+
+    Returns:
+        dict: Dictionary with the bands.
+    &#34;&#34;&#34;
+    bands = {
+        &#34;10m&#34;: {&#34;B02&#34;: None, &#34;B03&#34;: None, &#34;B04&#34;: None, &#34;B08&#34;: None, &#34;AOT&#34;: None},
+        &#34;20m&#34;: {
+            &#34;B02&#34;: None,
+            &#34;B03&#34;: None,
+            &#34;B04&#34;: None,
+            &#34;B05&#34;: None,
+            &#34;B06&#34;: None,
+            &#34;B07&#34;: None,
+            &#34;B8A&#34;: None,
+            &#34;B11&#34;: None,
+            &#34;B12&#34;: None,
+            &#34;SCL&#34;: None,
+            &#34;AOT&#34;: None,
+        },
+        &#34;60m&#34;: {
+            &#34;B01&#34;: None,
+            &#34;B02&#34;: None,
+            &#34;B03&#34;: None,
+            &#34;B04&#34;: None,
+            &#34;B05&#34;: None,
+            &#34;B06&#34;: None,
+            &#34;B07&#34;: None,
+            &#34;B8A&#34;: None,
+            &#34;B09&#34;: None,
+            &#34;B11&#34;: None,
+            &#34;B12&#34;: None,
+            &#34;SCL&#34;: None,
+        },
+        &#34;QI&#34;: {
+            &#34;CLDPRB_20m&#34;: None,
+            &#34;CLDPRB_60m&#34;: None,
+        },
+    }
+
+    if zipfile:
+        assert os.path.isfile(zip_or_safe_folder), f&#34;Could not find file: {zip_or_safe_folder}&#34;
+    else:
+        assert os.path.isdir(zip_or_safe_folder), f&#34;Could not find folder: {zip_or_safe_folder}&#34;
+
+    prepend = &#34;&#34;
+    if zipfile:
+        archive = ZipFile(zip_or_safe_folder, &#34;r&#34;)
+        prepend = f&#34;/vsizip/{zip_or_safe_folder}/&#34;
+
+        bands[&#34;QI&#34;][&#34;CLDPRB_20m&#34;] = prepend + [name for name in archive.namelist() if name.endswith(&#34;MSK_CLDPRB_20m.jp2&#34;)][0]
+        bands[&#34;QI&#34;][&#34;CLDPRB_60m&#34;] = prepend + [name for name in archive.namelist() if name.endswith(&#34;MSK_CLDPRB_60m.jp2&#34;)][0]
+    else:
+        bands[&#34;QI&#34;][&#34;CLDPRB_20m&#34;] = prepend + glob(f&#34;{zip_or_safe_folder}/GRANULE/*/QI_DATA/MSK_CLDPRB_20m.jp2&#34;)[0]
+        bands[&#34;QI&#34;][&#34;CLDPRB_60m&#34;] = prepend + glob(f&#34;{zip_or_safe_folder}/GRANULE/*/QI_DATA/MSK_CLDPRB_60m.jp2&#34;)[0]
+
+    if zipfile:
+        bands_10m = [name for name in archive.namelist() if name.endswith(&#34;_10m.jp2&#34;)]
+    else:
+        bands_10m = glob(f&#34;{zip_or_safe_folder}/GRANULE/*/IMG_DATA/R10m/*_???_*.jp2&#34;)
+
+    for band in bands_10m:
+        basename = os.path.basename(band)
+        band_name = basename.split(&#34;_&#34;)[2]
+        if band_name == &#34;B02&#34;:
+            bands[&#34;10m&#34;][&#34;B02&#34;] = prepend + band
+        if band_name == &#34;B03&#34;:
+            bands[&#34;10m&#34;][&#34;B03&#34;] = prepend + band
+        if band_name == &#34;B04&#34;:
+            bands[&#34;10m&#34;][&#34;B04&#34;] = prepend + band
+        if band_name == &#34;B08&#34;:
+            bands[&#34;10m&#34;][&#34;B08&#34;] = prepend + band
+        if band_name == &#34;AOT&#34;:
+            bands[&#34;10m&#34;][&#34;AOT&#34;] = prepend + band
+
+    if zipfile:
+        bands_20m = [name for name in archive.namelist() if name.endswith(&#34;_20m.jp2&#34;)]
+    else:
+        bands_20m = glob(f&#34;{zip_or_safe_folder}/GRANULE/*/IMG_DATA/R20m/*.jp2&#34;)
+    for band in bands_20m:
+        basename = os.path.basename(band)
+        band_name = basename.split(&#34;_&#34;)[2]
+        if band_name == &#34;B02&#34;:
+            bands[&#34;20m&#34;][&#34;B02&#34;] = prepend + band
+        if band_name == &#34;B03&#34;:
+            bands[&#34;20m&#34;][&#34;B03&#34;] = prepend + band
+        if band_name == &#34;B04&#34;:
+            bands[&#34;20m&#34;][&#34;B04&#34;] = prepend + band
+        if band_name == &#34;B05&#34;:
+            bands[&#34;20m&#34;][&#34;B05&#34;] = prepend + band
+        if band_name == &#34;B06&#34;:
+            bands[&#34;20m&#34;][&#34;B06&#34;] = prepend + band
+        if band_name == &#34;B07&#34;:
+            bands[&#34;20m&#34;][&#34;B07&#34;] = prepend + band
+        if band_name == &#34;B8A&#34;:
+            bands[&#34;20m&#34;][&#34;B8A&#34;] = prepend + band
+        if band_name == &#34;B09&#34;:
+            bands[&#34;20m&#34;][&#34;B09&#34;] = prepend + band
+        if band_name == &#34;B11&#34;:
+            bands[&#34;20m&#34;][&#34;B11&#34;] = prepend + band
+        if band_name == &#34;B12&#34;:
+            bands[&#34;20m&#34;][&#34;B12&#34;] = prepend + band
+        if band_name == &#34;SCL&#34;:
+            bands[&#34;20m&#34;][&#34;SCL&#34;] = prepend + band
+        if band_name == &#34;AOT&#34;:
+            bands[&#34;20m&#34;][&#34;AOT&#34;] = prepend + band
+
+    if zipfile:
+        bands_60m = [name for name in archive.namelist() if name.endswith(&#34;_60m.jp2&#34;)]
+    else:
+        bands_60m = glob(f&#34;{zip_or_safe_folder}/GRANULE/*/IMG_DATA/R60m/*_???_*.jp2&#34;)
+    for band in bands_60m:
+        basename = os.path.basename(band)
+        band_name = basename.split(&#34;_&#34;)[2]
+        if band_name == &#34;B01&#34;:
+            bands[&#34;60m&#34;][&#34;B01&#34;] = prepend + band
+        if band_name == &#34;B02&#34;:
+            bands[&#34;60m&#34;][&#34;B02&#34;] = prepend + band
+        if band_name == &#34;B03&#34;:
+            bands[&#34;60m&#34;][&#34;B03&#34;] = prepend + band
+        if band_name == &#34;B04&#34;:
+            bands[&#34;60m&#34;][&#34;B04&#34;] = prepend + band
+        if band_name == &#34;B05&#34;:
+            bands[&#34;60m&#34;][&#34;B05&#34;] = prepend + band
+        if band_name == &#34;B06&#34;:
+            bands[&#34;60m&#34;][&#34;B06&#34;] = prepend + band
+        if band_name == &#34;B07&#34;:
+            bands[&#34;60m&#34;][&#34;B07&#34;] = prepend + band
+        if band_name == &#34;B8A&#34;:
+            bands[&#34;60m&#34;][&#34;B8A&#34;] = prepend + band
+        if band_name == &#34;B09&#34;:
+            bands[&#34;60m&#34;][&#34;B09&#34;] = prepend + band
+        if band_name == &#34;B11&#34;:
+            bands[&#34;60m&#34;][&#34;B11&#34;] = prepend + band
+        if band_name == &#34;B12&#34;:
+            bands[&#34;60m&#34;][&#34;B12&#34;] = prepend + band
+        if band_name == &#34;SCL&#34;:
+            bands[&#34;60m&#34;][&#34;SCL&#34;] = prepend + band
+        if band_name == &#34;AOT&#34;:
+            bands[&#34;60m&#34;][&#34;AOT&#34;] = prepend + band
+
+    for key_i, value_i in bands.items():
+        for key_j, value_j in value_i.items():
+            current_band = value_j
+            assert (
+                current_band is not None
+            ), f&#34;{key_i} - {key_j} was not found. Verify the folders. Was the decompression interrupted?&#34;
+
+    return bands</code></pre>
+</details>
+</dd>
+<dt id="buteo.eo.s2_utils.s2_l2a_get_metadata"><code class="name flex">
+<span>def <span class="ident">s2_l2a_get_metadata</span></span>(<span>zip_or_safe_folder: str, zipfile: bool = True) -> dict</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get metadata from the SAFE folder or the zip file.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>zip_or_safe_folder</code></strong> :&ensp;<code>str</code></dt>
+<dd>Path to the zip file or the SAFE folder.</dd>
+</dl>
+<p>Keyword Args:
+zipfile (bool): If True, the zip file is used. If False, the SAFE folder is used.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>dict</code></dt>
+<dd>Dictionary with the metadata.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def s2_l2a_get_metadata(
+    zip_or_safe_folder: str,
+    zipfile: bool = True,
+) -&gt; dict:
+    &#34;&#34;&#34; Get metadata from the SAFE folder or the zip file.
+    
+    Args:
+        zip_or_safe_folder (str): Path to the zip file or the SAFE folder.
+    
+    Keyword Args:
+        zipfile (bool): If True, the zip file is used. If False, the SAFE folder is used.
+    
+    Returns:
+        dict: Dictionary with the metadata.
+    &#34;&#34;&#34;
+    metadata = {
+        &#34;PRODUCT_START_TIME&#34;: None,
+        &#34;PRODUCT_STOP_TIME&#34;: None,
+        &#34;PRODUCT_URI&#34;: None,
+        &#34;PROCESSING_LEVEL&#34;: None,
+        &#34;PRODUCT_TYPE&#34;: None,
+        &#34;PROCESSING_BASELINE&#34;: None,
+        &#34;GENERATION_TIME&#34;: None,
+        &#34;SPACECRAFT_NAME&#34;: None,
+        &#34;DATATAKE_SENSING_START&#34;: None,
+        &#34;SENSING_ORBIT_NUMBER&#34;: None,
+        &#34;SENSING_ORBIT_DIRECTION&#34;: None,
+        &#34;EXT_POS_LIST&#34;: None,
+        &#34;Cloud_Coverage_Assessment&#34;: None,
+        &#34;NODATA_PIXEL_PERCENTAGE&#34;: None,
+        &#34;SATURATED_DEFECTIVE_PIXEL_PERCENTAGE&#34;: None,
+        &#34;DARK_FEATURES_PERCENTAGE&#34;: None,
+        &#34;CLOUD_SHADOW_PERCENTAGE&#34;: None,
+        &#34;VEGETATION_PERCENTAGE&#34;: None,
+        &#34;NOT_VEGETATED_PERCENTAGE&#34;: None,
+        &#34;WATER_PERCENTAGE&#34;: None,
+        &#34;UNCLASSIFIED_PERCENTAGE&#34;: None,
+        &#34;MEDIUM_PROBA_CLOUDS_PERCENTAGE&#34;: None,
+        &#34;HIGH_PROBA_CLOUDS_PERCENTAGE&#34;: None,
+        &#34;THIN_CIRRUS_PERCENTAGE&#34;: None,
+        &#34;SNOW_ICE_PERCENTAGE&#34;: None,
+        &#34;ZENITH_ANGLE&#34;: None,
+        &#34;AZIMUTH_ANGLE&#34;: None,
+        &#34;SUN_ELEVATION&#34;: None,
+        &#34;folder&#34;: zip_or_safe_folder,
+        &#34;gains&#34;: {},
+    }
+
+    if zipfile:
+        archive = ZipFile(zip_or_safe_folder, &#34;r&#34;)
+
+        meta_xml_path = [name for name in archive.namelist() if name.endswith(&#34;MTD_MSIL2A.xml&#34;)][0]
+        meta_solar_path = [name for name in archive.namelist() if name.endswith(&#34;MTD_TL.xml&#34;)][0]
+
+        meta_xml = archive.open(meta_xml_path)
+        meta_solar = archive.open(meta_solar_path)
+    else:
+        meta_xml = os.path.join(zip_or_safe_folder, &#34;MTD_MSIL2A.xml&#34;)
+        meta_solar = glob(zip_or_safe_folder + &#34;/GRANULE/*/MTD_TL.xml&#34;)[0]
+
+        assert os.path.isfile(meta_xml), f&#34;{zip_or_safe_folder} did not contain a valid metadata file.&#34;
+        assert os.path.isfile(meta_solar), f&#34;{meta_solar} did not contain a valid metadata file.&#34;
+
+    # Parse the xml tree and add metadata
+    root = ET.parse(meta_xml).getroot()
+    for elem in root.iter():
+        if elem.tag in metadata:
+            try:
+                metadata[elem.tag] = float(elem.text)  # Number?
+            except ValueError:
+                try:
+                    metadata[elem.tag] = datetime.strptime(
+                        elem.text, &#34;%Y-%m-%dT%H:%M:%S.%f%z&#34;
+                    )  # Date?
+                except ValueError:
+                    metadata[elem.tag] = elem.text
+
+        if elem.tag == &#34;PHYSICAL_GAINS&#34;:
+            if elem.attrib[&#34;bandId&#34;] == &#34;0&#34;:
+                metadata[&#34;gains&#34;][&#34;B01&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;1&#34;:
+                metadata[&#34;gains&#34;][&#34;B02&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;2&#34;:
+                metadata[&#34;gains&#34;][&#34;B03&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;3&#34;:
+                metadata[&#34;gains&#34;][&#34;B04&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;4&#34;:
+                metadata[&#34;gains&#34;][&#34;B05&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;5&#34;:
+                metadata[&#34;gains&#34;][&#34;B06&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;6&#34;:
+                metadata[&#34;gains&#34;][&#34;B07&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;7&#34;:
+                metadata[&#34;gains&#34;][&#34;B08&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;8&#34;:
+                metadata[&#34;gains&#34;][&#34;B8A&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;9&#34;:
+                metadata[&#34;gains&#34;][&#34;B09&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;10&#34;:
+                metadata[&#34;gains&#34;][&#34;B10&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;11&#34;:
+                metadata[&#34;gains&#34;][&#34;B11&#34;] = float(elem.text)
+            if elem.attrib[&#34;bandId&#34;] == &#34;12&#34;:
+                metadata[&#34;gains&#34;][&#34;B12&#34;] = float(elem.text)
+
+    # Parse the xml tree and add metadata
+    root = ET.parse(meta_solar).getroot()
+    for elem in root.iter():
+        if elem.tag == &#34;Mean_Sun_Angle&#34;:
+            metadata[&#34;ZENITH_ANGLE&#34;] = float(elem.find(&#34;ZENITH_ANGLE&#34;).text)
+            metadata[&#34;SUN_ELEVATION&#34;] = 90 - metadata[&#34;ZENITH_ANGLE&#34;]
+            metadata[&#34;AZIMUTH_ANGLE&#34;] = float(elem.find(&#34;AZIMUTH_ANGLE&#34;).text)
+
+    # Did we get all the metadata?
+    for name, value in metadata.items():
+        assert value is not None, f&#34;Input metatadata file invalid. {value}&#34;
+
+    metadata[&#34;INVALID&#34;] = (
+        metadata[&#34;NODATA_PIXEL_PERCENTAGE&#34;]
+        + metadata[&#34;SATURATED_DEFECTIVE_PIXEL_PERCENTAGE&#34;]
+        + metadata[&#34;CLOUD_SHADOW_PERCENTAGE&#34;]
+        + metadata[&#34;MEDIUM_PROBA_CLOUDS_PERCENTAGE&#34;]
+        + metadata[&#34;HIGH_PROBA_CLOUDS_PERCENTAGE&#34;]
+        + metadata[&#34;THIN_CIRRUS_PERCENTAGE&#34;]
+        + metadata[&#34;SNOW_ICE_PERCENTAGE&#34;]
+        + metadata[&#34;DARK_FEATURES_PERCENTAGE&#34;]
+    )
+
+    metadata[&#34;timestamp&#34;] = float(metadata[&#34;DATATAKE_SENSING_START&#34;].timestamp())
+
+    metadata[&#34;paths&#34;] = s2_l2a_get_bands(zip_or_safe_folder, zipfile=zipfile)
+
+    def get_bands(bands=&#34;10m&#34;):
+        if bands == &#34;10m&#34;:
+            paths = [metadata[&#34;paths&#34;][&#34;10m&#34;][band] for band in [&#34;B02&#34;, &#34;B03&#34;, &#34;B04&#34;, &#34;B08&#34;]]
+        elif bands == &#34;20m&#34;:
+            paths = [metadata[&#34;paths&#34;][&#34;20m&#34;][band] for band in [&#34;B05&#34;, &#34;B06&#34;, &#34;B07&#34;, &#34;B8A&#34;, &#34;B11&#34;, &#34;B12&#34;]]
+        elif bands == &#34;60m&#34;:
+            paths = [metadata[&#34;paths&#34;][&#34;60m&#34;][band] for band in [&#34;B01&#34;, &#34;B09&#34;]]
+        elif bands == &#34;scl_20m&#34;:
+            paths = [metadata[&#34;paths&#34;][&#34;20m&#34;][&#34;SCL&#34;]]
+        elif bands == &#34;cld_prb_20m&#34;:
+            paths = [metadata[&#34;paths&#34;][&#34;QI&#34;][&#34;CLDPRB_20m&#34;]]
+
+        read_files = raster_to_array(paths)
+
+        return read_files
+
+    metadata[&#34;bands_10m&#34;] = lambda : get_bands(bands=&#34;10m&#34;)
+    metadata[&#34;bands_20m&#34;] = lambda : get_bands(bands=&#34;20m&#34;)
+    metadata[&#34;bands_60m&#34;] = lambda : get_bands(bands=&#34;60m&#34;)
+    metadata[&#34;bands_scl_20m&#34;] = lambda : get_bands(bands=&#34;scl_20m&#34;)
+    metadata[&#34;bands_cld_prb_20m&#34;] = lambda : get_bands(bands=&#34;cld_prb_20m&#34;)
+
+    return metadata</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="buteo.eo" href="index.html">buteo.eo</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.eo.s2_utils.s2_l2a_get_bands" href="#buteo.eo.s2_utils.s2_l2a_get_bands">s2_l2a_get_bands</a></code></li>
+<li><code><a title="buteo.eo.s2_utils.s2_l2a_get_metadata" href="#buteo.eo.s2_utils.s2_l2a_get_metadata">s2_l2a_get_metadata</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
