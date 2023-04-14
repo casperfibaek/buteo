@@ -3,9 +3,9 @@
 disable=multiple-statements,
         import-error,
         wrong-import-position,
-        broad-except,
         isinstance-second-argument-not-valid-type,
-        line-too-long,
         protected-access,
         not-an-iterable,
-        invalid-name
+        invalid-name,
+        line-too-long,
+        too-many-lines

@@ -193,7 +193,7 @@ def rotate_90(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """ Rotate an array 90 degrees clockwise.
+    """ Rotate a 3D array 90 degrees clockwise.
     
     Args:
         arr (np.ndarray): The array to rotate.
@@ -215,7 +215,7 @@ def rotate_180(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """ Rotate an array 180 degrees clockwise.
+    """ Rotate a 3D array 180 degrees clockwise.
 
     Args:
         arr (np.ndarray): The array to rotate.
@@ -238,7 +238,7 @@ def rotate_270(
     channel_last: bool = True
 ) -> np.ndarray:
     """ 
-    Rotate an array 270 degrees clockwise.
+    Rotate a 3D image array 270 degrees clockwise.
 
     Args:
         arr (np.ndarray): The array to rotate.
@@ -1163,7 +1163,7 @@ def apply_augmentations(
     *,
     augmentations: Optional[List[dict]] = None,
     channel_last: bool = True,
-) -> Tuple(np.ndarray, Optional[np.ndarray]):
+) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
     Apply a list of augmentations to a batch of images.
     
@@ -1437,3 +1437,67 @@ def augmentation_generator(
         )
 
         yield batch_augmented_x, batch_augmented_y
+
+
+class AugmentationDataset:
+    """
+    A dataset that applies augmentations to the data.
+
+    Args:
+        X (np.ndarray): The data to augment.
+
+    Keyword Args:
+        y (np.ndarray): The labels for the data.
+        batch_size (int): The size of the batches to generate.
+        augmentations (list): The augmentations to apply.
+        shuffle (bool): Whether to shuffle the data before generating batches.
+            and whenever the dataset is iterated over.
+        seed (int): The seed to use for shuffling.
+        channel_last (bool): Whether the data is in channel last format.
+    
+    Returns:
+        A dataset yielding batches of augmented data. For Pytorch,
+            convert the batches to tensors before ingestion.
+    """
+    def __init__(
+        self,
+        X: np.ndarray,
+        *,
+        y: Optional[np.ndarray] = None,
+        batch_size: int = 64,
+        augmentations: Optional[List[dict]] = None,
+        shuffle: bool = True,
+        seed: Optional[int] = None,
+        channel_last: bool = True,
+    ):
+        self.X = X
+        self.y = y
+        self.batch_size = batch_size
+        self.augmentations = augmentations
+        self.shuffle = shuffle
+        self.seed = seed
+        self.channel_last = channel_last
+        self.generator = None
+
+    def __iter__(self):
+        self.generator = augmentation_generator(
+            self.X,
+            y=self.y,
+            batch_size=self.batch_size,
+            augmentations=self.augmentations,
+            shuffle=self.shuffle,
+            seed=self.seed,
+            channel_last=self.channel_last,
+        )
+        return self
+
+    def __next__(self):
+        try:
+            return next(self.generator)
+        except StopIteration as e:
+            raise StopIteration from e
+
+    def __len__(self):
+        num_batches = (self.X.shape[0] + self.batch_size - 1) // self.batch_size
+
+        return num_batches

@@ -1,0 +1,2880 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>buteo.utils.bbox_utils API documentation</title>
+<meta name="description" content="Bounding box utility functions ### …" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>buteo.utils.bbox_utils</code></h1>
+</header>
+<section id="section-intro">
+<h3 id="bounding-box-utility-functions">Bounding box utility functions</h3>
+<p>Various utility functions to work with bounding boxes and gdal.</p>
+<p>There are two different formats for bounding boxes used by GDAL:</br>
+OGR:
+<code>[x_min, x_max, y_min, y_max]</code></br>
+WARP: <code>[x_min, y_min, x_max, y_max]</code></br></p>
+<p><em>If nothing else is stated, the OGR format is used.</em></p>
+<p>The GDAL geotransform is a list of six parameters:</br>
+<code>x_min, pixel_width, row_skew, y_max, column_skew, pixel_height (negative for north-up)</code></p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+### Bounding box utility functions ###
+
+Various utility functions to work with bounding boxes and gdal.
+
+There are two different formats for bounding boxes used by GDAL:&lt;/br&gt;
+OGR:  `[x_min, x_max, y_min, y_max]`&lt;/br&gt;
+WARP: `[x_min, y_min, x_max, y_max]`&lt;/br&gt;
+
+_If nothing else is stated, the OGR format is used._
+
+The GDAL geotransform is a list of six parameters:&lt;/br&gt;
+`x_min, pixel_width, row_skew, y_max, column_skew, pixel_height (negative for north-up)`
+&#34;&#34;&#34;
+
+# Standard library
+import sys; sys.path.append(&#34;../../&#34;)
+from uuid import uuid4
+
+# External
+import numpy as np
+from osgeo import ogr, osr, gdal
+
+# Internal
+from buteo.utils import core_utils, gdal_utils
+
+
+def is_valid_bbox(bbox_ogr):
+    &#34;&#34;&#34;
+    Checks if a bbox is valid.
+
+    A valid ogr formatted bbox has the form: &lt;/br&gt;
+    `[x_min, x_max, y_min, y_max]`
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the bbox is valid, **False** otherwise.
+    &#34;&#34;&#34;
+    if not isinstance(bbox_ogr, list):
+        return False
+
+    if len(bbox_ogr) != 4:
+        return False
+
+    for val in bbox_ogr:
+        if not core_utils.is_number(val):
+            return False
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    if True in [np.isinf(val) for val in bbox_ogr]:
+        return True
+
+    if x_min &gt; x_max or y_min &gt; y_max:
+        return False
+
+    return True
+
+
+def is_valid_bbox_latlng(bbox_ogr_latlng):
+    &#34;&#34;&#34;
+    Checks if a bbox is valid and latlng.
+
+    A valid ogr formatted bbox has the form: &lt;/br&gt;
+    `[x_min, x_max, y_min, y_max]`
+
+    ## Args:
+    `bbox_ogr_latlng` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the bbox is valid, **False** otherwise.
+    &#34;&#34;&#34;
+    if not is_valid_bbox(bbox_ogr_latlng):
+        return False
+
+    x_min, x_max, y_min, y_max = bbox_ogr_latlng
+    if x_min &lt; -180 or x_max &gt; 180 or y_min &lt; -90 or y_max &gt; 90:
+        return False
+
+    return True
+
+
+def is_valid_geotransform(geotransform):
+    &#34;&#34;&#34;
+    Checks if a geotransform is valid.
+
+    A valid geotransform has the form: &lt;/br&gt;
+    `[x_min, pixel_width, row_skew, y_max, column_skew, pixel_height]`
+
+    ## Args:
+    `geotransform` (_list_/_tuple_): A GDAL formatted geotransform.
+
+    ## Returns:
+    (_bool_): **True** if the geotransform is valid, **False** otherwise.
+    &#34;&#34;&#34;
+    if not isinstance(geotransform, (list, tuple)):
+        return False
+
+    if len(geotransform) != 6:
+        return False
+
+    for val in geotransform:
+        if not core_utils.is_number(val):
+            return False
+
+    return True
+
+
+def ensure_negative(number):
+    &#34;&#34;&#34;
+    Ensures that a valid is negative. If the number is positive, it is made negative.
+
+    ## Args:
+    `number` (_int_/_float_): A float or int number. &lt;/br&gt;
+
+    ## Returns:
+    (_int_/_float_): The same number made **negative** if necesary.
+    &#34;&#34;&#34;
+    assert core_utils.is_number(number), f&#34;number must be a number. Received: {number}&#34;
+
+    if number &lt;= 0:
+        return -number
+
+    return number
+
+
+def get_pixel_offsets(geotransform, bbox_ogr):
+    &#34;&#34;&#34;
+    Get the pixels offsets for a bbox and a geotransform.
+
+    ## Args:
+    `geotransform` (_list_/_tuple_): A GDAL GeoTransform. &lt;/br&gt;
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): A list of pixel offsets. `[x_start, y_start, x_size, y_size]`
+    &#34;&#34;&#34;
+    assert is_valid_geotransform(
+        geotransform
+    ), f&#34;geotransform must be a list of length six. Received: {geotransform}.&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr must be a valid OGR formatted bbox. Received: {bbox_ogr}.&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    origin_x = geotransform[0]
+    origin_y = geotransform[3]
+    pixel_width = geotransform[1]
+    pixel_height = geotransform[5]
+
+    x_start = int(np.rint((x_min - origin_x) / pixel_width))
+    y_start = int(np.rint((y_max - origin_y) / pixel_height))
+    x_size = int(np.rint((x_max - x_min) / pixel_width))
+    y_size = int(np.rint((y_min - y_max) / pixel_height))
+
+    return [x_start, y_start, x_size, y_size]
+
+
+def get_bbox_from_geotransform(geotransform, raster_x_size, raster_y_size):
+    &#34;&#34;&#34;
+    Get an OGR bounding box from a geotransform and raster sizes.
+
+    ## Args:
+    `geotransform` (_list_/_tuple_): A GDAL GeoTransform. &lt;/br&gt;
+    `raster_x_size` (_int_): The number of pixels in the x direction. &lt;/br&gt;
+    `raster_y_size` (_int_): The number of pixels in the y direction. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert is_valid_geotransform(
+        geotransform
+    ), f&#34;geotransform was not a valid geotransform. Received: {geotransform}&#34;
+
+    x_min, pixel_width, _row_skew, y_max, _column_skew, pixel_height = geotransform
+
+    x_max = x_min + (raster_x_size * pixel_width)
+    y_min = y_max + (raster_y_size * pixel_height)
+
+    return [x_min, x_max, y_min, y_max]
+
+
+def get_bbox_from_raster(raster_dataframe):
+    &#34;&#34;&#34;
+    Gets an OGR bounding box from a GDAL raster dataframe.
+
+    ## Args:
+    `raster_dataframe` (_gdal.DataFrame_): A GDAL raster dataframe. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert isinstance(
+        raster_dataframe, gdal.Dataset
+    ), f&#34;raster_dataframe was not a gdal.Datasource. Received: {raster_dataframe}&#34;
+
+    bbox = get_bbox_from_geotransform(
+        raster_dataframe.GetGeoTransform(),
+        raster_dataframe.RasterXSize,
+        raster_dataframe.RasterYSize,
+    )
+
+    return bbox
+
+
+def get_bbox_from_vector(vector_dataframe):
+    &#34;&#34;&#34;
+    Gets an OGR bounding box from an OGR dataframe.
+
+    ## Args:
+    `vector_dataframe` (_ogr.DataSource_): An OGR vector dataframe. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert isinstance(
+        vector_dataframe, ogr.DataSource
+    ), f&#34;vector_dataframe was not a valid ogr.DataSource. Received: {vector_dataframe}&#34;
+
+    layer_count = vector_dataframe.GetLayerCount()
+
+    assert (
+        layer_count &gt; 0
+    ), f&#34;vector_dataframe did not contain any layers. Received: {vector_dataframe}&#34;
+
+    x_min = None
+    x_max = None
+    y_min = None
+    y_max = None
+
+    for layer_index in range(layer_count):
+        layer = vector_dataframe.GetLayerByIndex(layer_index)
+        layer_x_min, layer_x_max, layer_y_min, layer_y_max = layer.GetExtent()
+
+        if layer_index == 0:
+            x_min = layer_x_min
+            x_max = layer_x_max
+            y_min = layer_y_min
+            y_max = layer_y_max
+        else:
+            if layer_x_min &lt; x_min:
+                x_min = layer_x_min
+            if layer_x_max &gt; x_max:
+                x_max = layer_x_max
+            if layer_y_min &lt; y_min:
+                y_min = layer_y_min
+            if layer_y_max &gt; y_max:
+                y_max = layer_y_max
+
+    return [x_min, x_max, y_min, y_max]
+
+
+def get_bbox_from_vector_layer(vector_layer):
+    &#34;&#34;&#34;
+    Gets an OGR bounding box from an OGR dataframe layer.
+
+    ## Args:
+    `vector_layer` (_ogr.Layer_): An OGR vector dataframe layer. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert isinstance(
+        vector_layer, ogr.Layer
+    ), f&#34;vector_layer was not a valid ogr.Layer. Received: {vector_layer}&#34;
+
+    x_min, x_max, y_min, y_max = vector_layer.GetExtent()
+
+    return [x_min, x_max, y_min, y_max]
+
+
+def get_bbox_from_dataset(dataset):
+    &#34;&#34;&#34;
+    Get the bbox from a dataset.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource): A dataset or dataset path. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): The bounding box in ogr format: [x_min, x_max, y_min, y_max].
+    &#34;&#34;&#34;
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), &#34;DataSet must be a string, ogr.DataSource, or gdal.Dataset.&#34;
+
+    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+
+    if opened is None:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+
+        if opened is None:
+            opened = ogr.Open(dataset, gdal.GA_ReadOnly)
+
+        gdal.PopErrorHandler()
+        if opened is None:
+            raise RuntimeError(f&#34;Could not open dataset. {dataset}&#34;)
+
+    if isinstance(opened, gdal.Dataset):
+        return get_bbox_from_raster(opened)
+
+    if isinstance(opened, ogr.DataSource):
+        return get_bbox_from_vector(opened)
+
+    raise RuntimeError(f&#34;Could not get bbox from dataset. {dataset}&#34;)
+
+
+def get_sub_geotransform(geotransform, bbox_ogr):
+    &#34;&#34;&#34;
+    Create a GeoTransform and the raster sizes for an OGR formatted bbox.
+
+    ## Args:
+    `geotransform` (_list_): A GDAL geotransform. &lt;/br&gt;
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_dict_): { &#34;Transform&#34;: _list_, &#34;RasterXSize&#34;: _int_, &#34;RasterYSize&#34;: _int_ }
+    &#34;&#34;&#34;
+    assert is_valid_geotransform(
+        geotransform
+    ), f&#34;geotransform must be a valid geotransform. Received: {geotransform}.&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+    pixel_width = geotransform[1]
+    pixel_height = geotransform[5]
+
+    raster_x_size = round((x_max - x_min) / pixel_width)
+    raster_y_size = round((y_max - y_min) / pixel_height)
+
+    return {
+        &#34;Transform&#34;: [x_min, pixel_width, 0, y_max, 0, ensure_negative(pixel_height)],
+        &#34;RasterXSize&#34;: abs(raster_x_size),
+        &#34;RasterYSize&#34;: abs(raster_y_size),
+    }
+
+
+def convert_bbox_to_geom(bbox_ogr):
+    &#34;&#34;&#34;
+    Convert an OGR bounding box to ogr.Geometry.&lt;/br&gt;
+    `[x_min, x_max, y_min, y_max] -&gt; ogr.Geometry`
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_ogr.Geometry_): An OGR geometry.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+
+    ring.AddPoint(x_min, y_min)
+    ring.AddPoint(x_max, y_min)
+    ring.AddPoint(x_max, y_max)
+    ring.AddPoint(x_min, y_max)
+    ring.AddPoint(x_min, y_min)
+
+    geom = ogr.Geometry(ogr.wkbPolygon)
+    geom.AddGeometry(ring)
+
+    return geom
+
+
+def convert_geom_to_bbox(geom):
+    &#34;&#34;&#34;
+    Convert an ogr.Geometry to an OGR bounding box.&lt;/br&gt;
+    `ogr.Geometry -&gt; [x_min, x_max, y_min, y_max]`
+
+    ## Args:
+    `geom` (_ogr.Geometry_): An OGR geometry. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert isinstance(
+        geom, ogr.Geometry
+    ), f&#34;geom was not a valid ogr.Geometry. Received: {geom}&#34;
+
+    bbox_ogr = list(geom.GetEnvelope()) # [x_min, x_max, y_min, y_max]
+
+    return bbox_ogr
+
+
+def convert_bbox_to_geotransform(bbox_ogr, raster_x_size, raster_y_size):
+    &#34;&#34;&#34;
+    Convert an OGR formatted bounding box to a GDAL GeoTransform.&lt;/br&gt;
+    `[x_min, x_max, y_min, y_max] -&gt; [x_min, pixel_width, x_skew, y_max, y_skew, pixel_height]`
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `raster_x_size` (_int_): The number of pixels in the x direction. &lt;/br&gt;
+    `raster_y_size` (_int_): The number of pixels in the y direction. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): A GDAL GeoTransform. `[x_min, pixel_width, x_skew, y_max, y_skew, pixel_height]`
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    origin_x = x_min
+    origin_y = y_max
+    pixel_width = (x_max - x_min) / raster_x_size
+    pixel_height = (y_max - y_min) / raster_y_size
+
+    return [origin_x, pixel_width, 0, origin_y, 0, ensure_negative(pixel_height)]
+
+
+def convert_ogr_bbox_to_gdal_bbox(bbox_ogr):
+    &#34;&#34;&#34;
+    Converts an OGR formatted bbox to a GDAL formatted one.&lt;/br&gt;
+    `[x_min, x_max, y_min, y_max] -&gt; [x_min, y_min, x_max, y_max]`
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): A GDAL formatted bbox. `[x_min, y_min, x_max, y_max]`
+    &#34;&#34;&#34;
+    if isinstance(bbox_ogr, tuple):
+        bbox_ogr = [val for val in bbox_ogr]
+
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    return [x_min, y_min, x_max, y_max]
+
+
+def convert_gdal_bbox_to_ogr_bbox(bbox_gdal):
+    &#34;&#34;&#34;
+    Converts a GDAL formatted bbox to an OGR formatted one.&lt;/br&gt;
+    `[x_min, y_min, x_max, y_max] -&gt; [x_min, x_max, y_min, y_max]`
+
+    ## Args:
+    `bbox_gdal` (_list_): A GDAL formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    if isinstance(bbox_ogr, tuple):
+        bbox_ogr = [val for val in bbox_ogr]
+
+    assert (
+        isinstance(bbox_gdal, list) and len(bbox_gdal) == 4
+    ), f&#34;bbox_gdal must be a list of length four. Received: {bbox_gdal}.&#34;
+
+    x_min, y_min, x_max, y_max = bbox_gdal
+
+    return [x_min, x_max, y_min, y_max]
+
+
+def convert_bbox_to_wkt(bbox_ogr):
+    &#34;&#34;&#34;
+    Converts an OGR formatted bbox to a WKT string.&lt;/br&gt;
+    `[x_min, x_max, y_min, y_max] -&gt; WKT`
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): A WKT Polygon string. `POLYGON ((...))`
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    wkt = f&#34;POLYGON (({x_min} {y_min}, {x_max} {y_min}, {x_max} {y_max}, {x_min} {y_max}, {x_min} {y_min}))&#34;
+
+    return wkt
+
+
+def convert_bbox_to_geojson(bbox_ogr):
+    &#34;&#34;&#34;
+    Converts an OGR formatted bbox to a GeoJson dictionary.&lt;/br&gt;
+    `[x_min, x_max, y_min, y_max] -&gt; GeoJson`
+
+    ## Args:
+    `bbox_ogr` (_list_): an OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_dict_): A GeoJson Dictionary. `{ &#34;type&#34;: &#34;Polygon&#34;, &#34;coordinates&#34;: [ ... ] }`
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    geojson = {
+        &#34;type&#34;: &#34;Polygon&#34;,
+        &#34;coordinates&#34;: [
+            [
+                [x_min, y_min],
+                [x_max, y_min],
+                [x_max, y_max],
+                [x_min, y_max],
+                [x_min, y_min],
+            ]
+        ],
+    }
+
+    return geojson
+
+
+def convert_bbox_to_vector(bbox_ogr, projection_osr):
+    &#34;&#34;&#34;
+    Converts an OGR formatted bbox to an in-memory vector.&lt;/br&gt;
+    _Vectors are stored in /vsimem/ as .gpkg files._&lt;/br&gt;
+    **OBS**: Layers should be manually cleared when no longer used.
+
+    ## Args:
+    `bbox_ogr` (_list_): an OGR formatted bbox. &lt;/br&gt;
+    `projection_osr` (_osr.SpatialReference_): The projection of the vector. &lt;/br&gt;
+
+    ## Returns:
+    (_ogr.DataSource_): The bounding box as a vector.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+    assert isinstance(
+        projection_osr, osr.SpatialReference
+    ), f&#34;projection_osr not a valid spatial reference. Recieved: {projection_osr}&#34;
+
+    geom = convert_bbox_to_geom(bbox_ogr)
+
+    driver = ogr.GetDriverByName(&#34;GPKG&#34;)
+    extent_name = f&#34;/vsimem/{core_utils.get_unix_seconds_as_str()}_{uuid4().int}_extent.gpkg&#34;
+
+    extent_ds = driver.CreateDataSource(extent_name)
+
+    layer = extent_ds.CreateLayer(&#34;extent_ogr&#34;, projection_osr, ogr.wkbPolygon)
+
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometry(geom)
+    layer.CreateFeature(feature)
+
+    feature = None
+    layer.SyncToDisk()
+
+    return extent_name
+
+
+def bboxes_intersect(bbox1_ogr, bbox2_ogr):
+    &#34;&#34;&#34;
+    Checks if two OGR formatted bboxes intersect.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the bboxes intersect, **False** otherwise.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox1_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox1_ogr}&#34;
+    assert is_valid_bbox(
+        bbox2_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox2_ogr}&#34;
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    if bbox2_x_min &gt; bbox1_x_max:
+        return False
+
+    if bbox2_y_min &gt; bbox1_y_max:
+        return False
+
+    if bbox2_x_max &lt; bbox1_x_min:
+        return False
+
+    if bbox2_y_max &lt; bbox1_y_min:
+        return False
+
+    return True
+
+
+def bboxes_within(bbox1_ogr, bbox2_ogr):
+    &#34;&#34;&#34;
+    Checks if one OGR formatted bbox is within another.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the bbox is within the other, **False** otherwise.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox1_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox1_ogr}&#34;
+    assert is_valid_bbox(
+        bbox2_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox2_ogr}&#34;
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    return (
+        (bbox1_x_min &gt;= bbox2_x_min)
+        and (bbox1_x_max &lt;= bbox2_x_max)
+        and (bbox1_y_min &gt;= bbox2_y_min)
+        and (bbox1_y_max &lt;= bbox2_y_max)
+    )
+
+
+def get_intersection_bboxes(bbox1_ogr, bbox2_ogr):
+    &#34;&#34;&#34;
+    Get the intersection of two OGR formatted bboxes.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox of the intersection. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert bboxes_intersect(
+        bbox1_ogr, bbox2_ogr
+    ), &#34;The two bounding boxes do not intersect.&#34;
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    return [
+        max(bbox1_x_min, bbox2_x_min),
+        min(bbox1_x_max, bbox2_x_max),
+        max(bbox1_y_min, bbox2_y_min),
+        min(bbox1_y_max, bbox2_y_max),
+    ]
+
+
+def get_union_bboxes(bbox1_ogr, bbox2_ogr):
+    &#34;&#34;&#34;
+    Get the union of two OGR formatted bboxes.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox of the union. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox1_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox1_ogr}&#34;
+    assert is_valid_bbox(
+        bbox2_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox2_ogr}&#34;
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    return [
+        min(bbox1_x_min, bbox2_x_min),
+        max(bbox1_x_max, bbox2_x_max),
+        min(bbox1_y_min, bbox2_y_min),
+        max(bbox1_y_max, bbox2_y_max),
+    ]
+
+
+def get_projection_from_raster(raster):
+    &#34;&#34;&#34;
+    Get the projection from a raster.
+
+    ## Args:
+    `raster` (_str_/_gdal.Dataset_): A raster or raster path. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    &#34;&#34;&#34;
+    opened = None
+    if isinstance(raster, gdal.Dataset):
+        opened = raster
+    else:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(raster, gdal.GA_ReadOnly)
+        gdal.PopErrorHandler()
+
+    if opened is None:
+        raise RuntimeError(f&#34;Could not open raster. {raster}&#34;)
+
+    projection = osr.SpatialReference()
+    projection.ImportFromWkt(opened.GetProjection())
+    opened = None
+
+    return projection
+
+
+def get_projection_from_vector(vector):
+    &#34;&#34;&#34;
+    Get the projection from a vector.
+
+    ## Args:
+    `vector` (_str_/_gdal.Dataset_): A vector or vector path. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    &#34;&#34;&#34;
+    opened = None
+    if isinstance(vector, ogr.DataSource):
+        opened = vector
+    else:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = ogr.Open(vector, gdal.GA_ReadOnly)
+        gdal.PopErrorHandler()
+
+    if opened is None:
+        raise RuntimeError(f&#34;Could not open vector. {vector}&#34;)
+
+    layer = opened.GetLayer()
+    projection = layer.GetSpatialRef()
+    opened = None
+
+    return projection
+
+
+def get_projection_from_dataset(dataset):
+    &#34;&#34;&#34;
+    Get the projection from a dataset.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource): A dataset or dataset path. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    &#34;&#34;&#34;
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), &#34;DataSet must be a string, ogr.DataSource, or gdal.Dataset.&#34;
+
+    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+
+    if opened is None:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+
+        if opened is None:
+            opened = ogr.Open(dataset, gdal.GA_ReadOnly)
+
+        gdal.PopErrorHandler()
+        if opened is None:
+            raise RuntimeError(f&#34;Could not open dataset. {dataset}&#34;)
+
+    if isinstance(opened, gdal.Dataset):
+        return get_projection_from_raster(opened)
+
+    if isinstance(opened, ogr.DataSource):
+        return get_projection_from_vector(opened)
+
+    raise RuntimeError(f&#34;Could not get projection from dataset. {dataset}&#34;)
+
+
+def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
+    &#34;&#34;&#34;
+    Aligns two OGR formatted bboxes to a pixel size. Output is an augmented version
+    of bbox2.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `pixel_width` (_float_/_int_): The width of the pixel. &lt;/br&gt;
+    `pixel_height` (_float_/_int_): The height of the pixel. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox of the alignment. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert (
+        isinstance(bbox1_ogr, list) and len(bbox1_ogr) == 4
+    ), f&#34;bbox1_ogr must be a list of length four. Received: {bbox1_ogr}.&#34;
+    assert (
+        isinstance(bbox2_ogr, list) and len(bbox2_ogr) == 4
+    ), f&#34;bbox2_ogr must be a list of length four. Received: {bbox2_ogr}.&#34;
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    x_min = bbox2_x_min - ((bbox2_x_min - bbox1_x_min) % pixel_width)
+    x_max = bbox2_x_max + ((bbox1_x_max - bbox2_x_max) % pixel_width)
+
+    y_min = bbox2_y_min - ((bbox2_y_min - bbox1_y_min) % abs(pixel_height))
+    y_max = bbox2_y_max + ((bbox1_y_max - bbox2_y_max) % abs(pixel_height))
+
+    return x_min, x_max, y_min, y_max
+
+
+def reproject_bbox(
+    bbox_ogr,
+    source_projection,
+    target_projection,
+):
+    &#34;&#34;&#34;
+    Reprojects an OGR formatted bbox.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `source_projection_osr` (_osr.SpatialReference_): The source projection. &lt;/br&gt;
+    `target_projection_osr` (_osr.SpatialReference_): The target projection. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted reprojected bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert is_valid_bbox(bbox_ogr), f&#34;Invalid bbox. Received: {bbox_ogr}.&#34;
+
+    src_proj = gdal_utils.parse_projection(source_projection)
+    dst_proj = gdal_utils.parse_projection(target_projection)
+
+    if gdal_utils.projections_match(src_proj, dst_proj):
+        return bbox_ogr
+
+    transformer = osr.CoordinateTransformation(src_proj, dst_proj)
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    p1 = [x_min, y_min]
+    p2 = [x_max, y_min]
+    p3 = [x_max, y_max]
+    p4 = [x_min, y_max]
+
+    gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+    try:
+        p1t = transformer.TransformPoint(p1[0], p1[1])
+        p2t = transformer.TransformPoint(p2[0], p2[1])
+        p3t = transformer.TransformPoint(p3[0], p3[1])
+        p4t = transformer.TransformPoint(p4[0], p4[1])
+    except RuntimeError:
+        p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
+        p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
+        p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
+        p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+    gdal.PopErrorHandler()
+
+    transformed_x_min = min(p1t[0], p2t[0], p3t[0], p4t[0])
+    transformed_x_max = max(p1t[0], p2t[0], p3t[0], p4t[0])
+    transformed_y_min = min(p1t[1], p2t[1], p3t[1], p4t[1])
+    transformed_y_max = max(p1t[1], p2t[1], p3t[1], p4t[1])
+
+    return [
+        transformed_x_min,
+        transformed_x_max,
+        transformed_y_min,
+        transformed_y_max,
+    ]
+
+
+def get_utm_zone_from_latlng(latlng, return_epsg=False):
+    &#34;&#34;&#34; Get the UTM ZONE from a latlng list.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The UTM zone projection.
+    &#34;&#34;&#34;
+    assert isinstance(latlng, (list, np.ndarray)), &#34;latlng must be in the form of a list.&#34;
+
+    zone = round(((latlng[1] + 180) / 6) + 1)
+    n_or_s = &#34;S&#34; if latlng[0] &lt; 0 else &#34;N&#34;
+
+    false_northing = &#34;10000000&#34; if n_or_s == &#34;S&#34; else &#34;0&#34;
+    central_meridian = str(round(((zone * 6) - 180) - 3))
+    epsg = f&#34;32{&#39;7&#39; if n_or_s == &#39;S&#39; else &#39;6&#39;}{str(zone)}&#34;
+
+    if return_epsg:
+        return epsg
+
+    wkt = f&#34;&#34;&#34;
+        PROJCS[&#34;WGS 84 / UTM zone {str(zone)}{n_or_s}&#34;,
+        GEOGCS[&#34;WGS 84&#34;,
+            DATUM[&#34;WGS_1984&#34;,
+                SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563,
+                    AUTHORITY[&#34;EPSG&#34;,&#34;7030&#34;]],
+                AUTHORITY[&#34;EPSG&#34;,&#34;6326&#34;]],
+            PRIMEM[&#34;Greenwich&#34;,0,
+                AUTHORITY[&#34;EPSG&#34;,&#34;8901&#34;]],
+            UNIT[&#34;degree&#34;,0.0174532925199433,
+                AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],
+            AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]],
+        PROJECTION[&#34;Transverse_Mercator&#34;],
+        PARAMETER[&#34;latitude_of_origin&#34;,0],
+        PARAMETER[&#34;central_meridian&#34;,{central_meridian}],
+        PARAMETER[&#34;scale_factor&#34;,0.9996],
+        PARAMETER[&#34;false_easting&#34;,500000],
+        PARAMETER[&#34;false_northing&#34;,{false_northing}],
+        UNIT[&#34;metre&#34;,1,
+            AUTHORITY[&#34;EPSG&#34;,&#34;9001&#34;]],
+        AXIS[&#34;Easting&#34;,EAST],
+        AXIS[&#34;Northing&#34;,NORTH],
+        AUTHORITY[&#34;EPSG&#34;,&#34;{epsg}&#34;]]
+    &#34;&#34;&#34;
+    projection = osr.SpatialReference()
+    projection.ImportFromWkt(wkt)
+
+    return projection
+
+
+def get_utm_zone_from_bbox(bbox_ogr_latlng):
+    &#34;&#34;&#34;
+    Get the UTM zone from an OGR formatted bbox.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The UTM zone projection.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr_latlng
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr_latlng}&#34;
+    assert is_valid_bbox_latlng(bbox_ogr_latlng), &#34;Bbox is not in latlng format.&#34;
+
+    bbox_x_min, bbox_x_max, bbox_y_min, bbox_y_max = bbox_ogr_latlng
+
+    mid_lng = (bbox_x_min + bbox_x_max) / 2
+    mid_lat = (bbox_y_min + bbox_y_max) / 2
+
+    return get_utm_zone_from_latlng([mid_lat, mid_lng])
+
+
+def get_utm_zone_from_dataset(dataset):
+    &#34;&#34;&#34;
+    Get the UTM zone from a GDAL dataset.
+
+    ## Args:
+    `dataset` (_obj_): A GDAL dataset. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The UTM zone.
+    &#34;&#34;&#34;
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), &#34;dataset was not a valid dataset.&#34;
+
+    bbox = get_bbox_from_dataset(dataset)
+    source_projection = get_projection_from_dataset(dataset)
+    target_projection = osr.SpatialReference()
+    # target_projection.ImportFromEPSG(4326)
+    target_projection.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
+
+    bbox = reproject_bbox(bbox, source_projection, target_projection)
+    utm_zone = get_utm_zone_from_bbox(bbox)
+
+    return utm_zone
+
+
+def get_utm_zone_from_dataset_list(datasets):
+    &#34;&#34;&#34;
+    Get the UTM zone from a list of GDAL datasets.
+
+    ## Args:
+    `datasets` (_list_): A list of GDAL datasets. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The UTM zone.
+    &#34;&#34;&#34;
+    assert isinstance(datasets, (list, np.ndarray)), &#34;datasets was not a valid list.&#34;
+
+    latlng_bboxes = []
+    latlng_proj = osr.SpatialReference()
+    # latlng_proj.ImportFromEPSG(4326)
+    latlng_proj.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
+
+    for dataset in datasets:
+        bbox = get_bbox_from_dataset(dataset)
+        projection = get_projection_from_dataset(dataset)
+        latlng_bboxes.append(reproject_bbox(bbox, projection, latlng_proj))
+
+    union_bbox = latlng_bboxes[0]
+    for bbox in latlng_bboxes[1:]:
+        union_bbox = get_union_bboxes(union_bbox, bbox)
+
+    utm_zone = get_utm_zone_from_bbox(union_bbox)
+
+    return utm_zone
+
+
+def reproject_latlng_point_to_utm(latlng):
+    &#34;&#34;&#34; Converts a latlng point into an UTM point.
+
+        Takes point in [lat, lng], returns [utm_x, utm_y].
+    &#34;&#34;&#34;
+    source_projection = osr.SpatialReference()
+    source_projection_wkt = gdal_utils.get_default_projection()
+    source_projection.ImportFromWkt(source_projection_wkt)
+    target_projection = get_utm_zone_from_latlng(latlng)
+
+    transformer = osr.CoordinateTransformation(
+        source_projection, target_projection
+    )
+
+    try:
+        utm_x, utm_y, _utm_z = transformer.TransformPoint(latlng[0], latlng[1])
+    except: # pylint: disable=bare-except
+        utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
+
+    return [utm_x, utm_y]
+
+
+def geometry_latlng_from_bbox(bbox_ogr, projection_osr, latlng_projection_osr):
+    &#34;&#34;&#34; 
+    This is an internal utility function for metadata generation. It takes a standard
+    OGR bounding box and the geometry of the source dataset in latlng and returns a
+    geometry in the source dataset&#39;s projection. This is important as, as when 
+    reprojecting to latlng, you might get a skewed bounding box. This function returns
+    the skewed bounds in latlng, which is what you want for overlap checks across
+    projections.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `projection_osr` (_osr.SpatialReference_): The projection. &lt;/br&gt;
+    `latlng_projection` (_osr.SpatialReference_): The latlng projection. &lt;/br&gt;
+
+    ## Returns:
+    (_ogr.Geometry_): The geometry in the source dataset&#39;s projection.
+    &#34;&#34;&#34;
+    transformer = osr.CoordinateTransformation(projection_osr, latlng_projection_osr)
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    p1 = [x_min, y_min]
+    p2 = [x_max, y_min]
+    p3 = [x_max, y_max]
+    p4 = [x_min, y_max]
+
+    gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+    try:
+        p1t = transformer.TransformPoint(p1[0], p1[1])
+        p2t = transformer.TransformPoint(p2[0], p2[1])
+        p3t = transformer.TransformPoint(p3[0], p3[1])
+        p4t = transformer.TransformPoint(p4[0], p4[1])
+    except RuntimeError:
+        p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
+        p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
+        p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
+        p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+    gdal.PopErrorHandler()
+
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    ring.AddPoint(p1t[0], p1t[1])
+    ring.AddPoint(p2t[0], p2t[1])
+    ring.AddPoint(p3t[0], p3t[1])
+    ring.AddPoint(p4t[0], p4t[1])
+    ring.AddPoint(p1t[0], p1t[1])
+    polygon = ogr.Geometry(ogr.wkbPolygon)
+    polygon.AddGeometry(ring)
+
+    return polygon
+
+
+def additional_bboxes(bbox_ogr, projection_osr):
+    &#34;&#34;&#34;
+    This is an internal utility function for metadata generation. It takes a standard
+    OGR bounding box and returns a list of variations of bounding boxes.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `projection_osr` (_osr.SpatialReference_): The projection. &lt;/br&gt;
+
+    ## Returns:
+    (_dict_): A dictionary of the added bboxes. Contains the following keys: &lt;/br&gt;
+    `bbox_latlng`: The bbox in latlng coordinates. &lt;/br&gt;
+    `bbox_wkt`: The bbox in WKT format. &lt;/br&gt;
+    `bbox_wkt_latlng`: The bbox in WKT format in latlng coordinates. &lt;/br&gt;
+    `bbox_geom`: The bbox in ogr.Geometry format. &lt;/br&gt;
+    `bbox_geom_latlng`: The bbox in ogr.Geometry format in latlng coordinates. &lt;/br&gt;
+    `bbox_gdal`: The bbox in GDAL format. &lt;/br&gt;
+    `bbox_gdal_latlng`: The bbox in GDAL format in latlng coordinates. &lt;/br&gt;
+    `bbox_dict`: The bbox in a dictionary format. { &#34;x_min&#34;: x_min, ... } &lt;/br&gt;
+    `bbox_dict_latlng`: The bbox in a dictionary format in latlng coordinates. &lt;/br&gt;
+    &#34;&#34;&#34;
+    assert is_valid_bbox(bbox_ogr), f&#34;Invalid bbox. Received: {bbox_ogr}.&#34;
+    assert isinstance(
+        projection_osr, osr.SpatialReference
+    ), f&#34;source_projection not a valid spatial reference. Recieved: {projection_osr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    original_projection = osr.SpatialReference()
+    original_projection.ImportFromWkt(projection_osr.ExportToWkt())
+
+    latlng_projection = osr.SpatialReference()
+    wgs84_wkt = gdal_utils.get_default_projection()
+    latlng_projection.ImportFromWkt(wgs84_wkt)
+
+    bbox_ogr_latlng = reproject_bbox(bbox_ogr, original_projection, latlng_projection)
+
+    world = False
+    if np.isinf(bbox_ogr_latlng).any():
+        world = True
+    if np.isinf(bbox_ogr_latlng[0]):
+        bbox_ogr_latlng[0] = -179.999999
+    if np.isinf(bbox_ogr_latlng[1]):
+        bbox_ogr_latlng[1] = 180.0
+    if np.isinf(bbox_ogr_latlng[2]):
+        bbox_ogr_latlng[2] = -89.999999
+    if np.isinf(bbox_ogr_latlng[3]):
+        bbox_ogr_latlng[3] = 90.0
+
+    latlng_x_min, latlng_x_max, latlng_y_min, latlng_y_max = bbox_ogr_latlng
+
+    bbox_geom = convert_bbox_to_geom(bbox_ogr)
+    bbox_geom_latlng = convert_bbox_to_geom(bbox_ogr_latlng)
+    geom = bbox_geom
+
+    if world:
+        geom_latlng = bbox_geom_latlng
+    else:
+        geom_latlng = geometry_latlng_from_bbox(bbox_ogr, original_projection, latlng_projection)
+
+    bbox_wkt = convert_bbox_to_wkt(bbox_ogr)
+    bbox_wkt_latlng = convert_bbox_to_wkt(bbox_ogr_latlng)
+
+    return {
+        &#34;bbox_latlng&#34;: bbox_ogr_latlng,
+        &#34;bbox_wkt&#34;: bbox_wkt,
+        &#34;bbox_wkt_latlng&#34;: bbox_wkt_latlng,
+        &#34;bbox_geom&#34;: bbox_geom,
+        &#34;bbox_geom_latlng&#34;: bbox_geom_latlng,
+        &#34;bbox_gdal&#34;: convert_ogr_bbox_to_gdal_bbox(bbox_ogr),
+        &#34;bbox_gdal_latlng&#34;: convert_ogr_bbox_to_gdal_bbox(bbox_ogr_latlng),
+        &#34;bbox_dict&#34;: {&#34;x_min&#34;: x_min, &#34;x_max&#34;: x_max, &#34;y_min&#34;: y_min, &#34;y_max&#34;: y_max},
+        &#34;bbox_dict_latlng&#34;: {
+            &#34;x_min&#34;: latlng_x_min,
+            &#34;x_max&#34;: latlng_x_max,
+            &#34;y_min&#34;: latlng_y_min,
+            &#34;y_max&#34;: latlng_y_max,
+        },
+        &#34;bbox_geojson&#34;: convert_bbox_to_geojson(bbox_ogr_latlng),
+        &#34;area_latlng&#34;: geom_latlng.GetArea(),
+        &#34;area&#34;: geom.GetArea(),
+        &#34;geom&#34;: geom,
+        &#34;geom_latlng&#34;: geom_latlng,
+    }</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.utils.bbox_utils.additional_bboxes"><code class="name flex">
+<span>def <span class="ident">additional_bboxes</span></span>(<span>bbox_ogr, projection_osr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is an internal utility function for metadata generation. It takes a standard
+OGR bounding box and returns a list of variations of bounding boxes.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
+<code>projection_osr</code> (<em>osr.SpatialReference</em>): The projection. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>dict</em>): A dictionary of the added bboxes. Contains the following keys: </br>
+<code>bbox_latlng</code>: The bbox in latlng coordinates. </br>
+<code>bbox_wkt</code>: The bbox in WKT format. </br>
+<code>bbox_wkt_latlng</code>: The bbox in WKT format in latlng coordinates. </br>
+<code>bbox_geom</code>: The bbox in ogr.Geometry format. </br>
+<code>bbox_geom_latlng</code>: The bbox in ogr.Geometry format in latlng coordinates. </br>
+<code>bbox_gdal</code>: The bbox in GDAL format. </br>
+<code>bbox_gdal_latlng</code>: The bbox in GDAL format in latlng coordinates. </br>
+<code>bbox_dict</code>: The bbox in a dictionary format. { "x_min": x_min, &hellip; } </br>
+<code>bbox_dict_latlng</code>: The bbox in a dictionary format in latlng coordinates. </br></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def additional_bboxes(bbox_ogr, projection_osr):
+    &#34;&#34;&#34;
+    This is an internal utility function for metadata generation. It takes a standard
+    OGR bounding box and returns a list of variations of bounding boxes.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `projection_osr` (_osr.SpatialReference_): The projection. &lt;/br&gt;
+
+    ## Returns:
+    (_dict_): A dictionary of the added bboxes. Contains the following keys: &lt;/br&gt;
+    `bbox_latlng`: The bbox in latlng coordinates. &lt;/br&gt;
+    `bbox_wkt`: The bbox in WKT format. &lt;/br&gt;
+    `bbox_wkt_latlng`: The bbox in WKT format in latlng coordinates. &lt;/br&gt;
+    `bbox_geom`: The bbox in ogr.Geometry format. &lt;/br&gt;
+    `bbox_geom_latlng`: The bbox in ogr.Geometry format in latlng coordinates. &lt;/br&gt;
+    `bbox_gdal`: The bbox in GDAL format. &lt;/br&gt;
+    `bbox_gdal_latlng`: The bbox in GDAL format in latlng coordinates. &lt;/br&gt;
+    `bbox_dict`: The bbox in a dictionary format. { &#34;x_min&#34;: x_min, ... } &lt;/br&gt;
+    `bbox_dict_latlng`: The bbox in a dictionary format in latlng coordinates. &lt;/br&gt;
+    &#34;&#34;&#34;
+    assert is_valid_bbox(bbox_ogr), f&#34;Invalid bbox. Received: {bbox_ogr}.&#34;
+    assert isinstance(
+        projection_osr, osr.SpatialReference
+    ), f&#34;source_projection not a valid spatial reference. Recieved: {projection_osr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    original_projection = osr.SpatialReference()
+    original_projection.ImportFromWkt(projection_osr.ExportToWkt())
+
+    latlng_projection = osr.SpatialReference()
+    wgs84_wkt = gdal_utils.get_default_projection()
+    latlng_projection.ImportFromWkt(wgs84_wkt)
+
+    bbox_ogr_latlng = reproject_bbox(bbox_ogr, original_projection, latlng_projection)
+
+    world = False
+    if np.isinf(bbox_ogr_latlng).any():
+        world = True
+    if np.isinf(bbox_ogr_latlng[0]):
+        bbox_ogr_latlng[0] = -179.999999
+    if np.isinf(bbox_ogr_latlng[1]):
+        bbox_ogr_latlng[1] = 180.0
+    if np.isinf(bbox_ogr_latlng[2]):
+        bbox_ogr_latlng[2] = -89.999999
+    if np.isinf(bbox_ogr_latlng[3]):
+        bbox_ogr_latlng[3] = 90.0
+
+    latlng_x_min, latlng_x_max, latlng_y_min, latlng_y_max = bbox_ogr_latlng
+
+    bbox_geom = convert_bbox_to_geom(bbox_ogr)
+    bbox_geom_latlng = convert_bbox_to_geom(bbox_ogr_latlng)
+    geom = bbox_geom
+
+    if world:
+        geom_latlng = bbox_geom_latlng
+    else:
+        geom_latlng = geometry_latlng_from_bbox(bbox_ogr, original_projection, latlng_projection)
+
+    bbox_wkt = convert_bbox_to_wkt(bbox_ogr)
+    bbox_wkt_latlng = convert_bbox_to_wkt(bbox_ogr_latlng)
+
+    return {
+        &#34;bbox_latlng&#34;: bbox_ogr_latlng,
+        &#34;bbox_wkt&#34;: bbox_wkt,
+        &#34;bbox_wkt_latlng&#34;: bbox_wkt_latlng,
+        &#34;bbox_geom&#34;: bbox_geom,
+        &#34;bbox_geom_latlng&#34;: bbox_geom_latlng,
+        &#34;bbox_gdal&#34;: convert_ogr_bbox_to_gdal_bbox(bbox_ogr),
+        &#34;bbox_gdal_latlng&#34;: convert_ogr_bbox_to_gdal_bbox(bbox_ogr_latlng),
+        &#34;bbox_dict&#34;: {&#34;x_min&#34;: x_min, &#34;x_max&#34;: x_max, &#34;y_min&#34;: y_min, &#34;y_max&#34;: y_max},
+        &#34;bbox_dict_latlng&#34;: {
+            &#34;x_min&#34;: latlng_x_min,
+            &#34;x_max&#34;: latlng_x_max,
+            &#34;y_min&#34;: latlng_y_min,
+            &#34;y_max&#34;: latlng_y_max,
+        },
+        &#34;bbox_geojson&#34;: convert_bbox_to_geojson(bbox_ogr_latlng),
+        &#34;area_latlng&#34;: geom_latlng.GetArea(),
+        &#34;area&#34;: geom.GetArea(),
+        &#34;geom&#34;: geom,
+        &#34;geom_latlng&#34;: geom_latlng,
+    }</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.align_bboxes_to_pixel_size"><code class="name flex">
+<span>def <span class="ident">align_bboxes_to_pixel_size</span></span>(<span>bbox1_ogr, bbox2_ogr, pixel_width, pixel_height)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Aligns two OGR formatted bboxes to a pixel size. Output is an augmented version
+of bbox2.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox1_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
+<code>bbox2_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
+<code>pixel_width</code> (<em>float</em>/<em>int</em>): The width of the pixel. </br>
+<code>pixel_height</code> (<em>float</em>/<em>int</em>): The height of the pixel. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): An OGR formatted bbox of the alignment. <code>[x_min, x_max, y_min, y_max]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def align_bboxes_to_pixel_size(bbox1_ogr, bbox2_ogr, pixel_width, pixel_height):
+    &#34;&#34;&#34;
+    Aligns two OGR formatted bboxes to a pixel size. Output is an augmented version
+    of bbox2.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `pixel_width` (_float_/_int_): The width of the pixel. &lt;/br&gt;
+    `pixel_height` (_float_/_int_): The height of the pixel. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox of the alignment. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert (
+        isinstance(bbox1_ogr, list) and len(bbox1_ogr) == 4
+    ), f&#34;bbox1_ogr must be a list of length four. Received: {bbox1_ogr}.&#34;
+    assert (
+        isinstance(bbox2_ogr, list) and len(bbox2_ogr) == 4
+    ), f&#34;bbox2_ogr must be a list of length four. Received: {bbox2_ogr}.&#34;
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    x_min = bbox2_x_min - ((bbox2_x_min - bbox1_x_min) % pixel_width)
+    x_max = bbox2_x_max + ((bbox1_x_max - bbox2_x_max) % pixel_width)
+
+    y_min = bbox2_y_min - ((bbox2_y_min - bbox1_y_min) % abs(pixel_height))
+    y_max = bbox2_y_max + ((bbox1_y_max - bbox2_y_max) % abs(pixel_height))
+
+    return x_min, x_max, y_min, y_max</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.bboxes_intersect"><code class="name flex">
+<span>def <span class="ident">bboxes_intersect</span></span>(<span>bbox1_ogr, bbox2_ogr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if two OGR formatted bboxes intersect.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox1_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
+<code>bbox2_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the bboxes intersect, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def bboxes_intersect(bbox1_ogr, bbox2_ogr):
+    &#34;&#34;&#34;
+    Checks if two OGR formatted bboxes intersect.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the bboxes intersect, **False** otherwise.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox1_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox1_ogr}&#34;
+    assert is_valid_bbox(
+        bbox2_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox2_ogr}&#34;
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    if bbox2_x_min &gt; bbox1_x_max:
+        return False
+
+    if bbox2_y_min &gt; bbox1_y_max:
+        return False
+
+    if bbox2_x_max &lt; bbox1_x_min:
+        return False
+
+    if bbox2_y_max &lt; bbox1_y_min:
+        return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.bboxes_within"><code class="name flex">
+<span>def <span class="ident">bboxes_within</span></span>(<span>bbox1_ogr, bbox2_ogr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if one OGR formatted bbox is within another.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox1_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
+<code>bbox2_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the bbox is within the other, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def bboxes_within(bbox1_ogr, bbox2_ogr):
+    &#34;&#34;&#34;
+    Checks if one OGR formatted bbox is within another.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the bbox is within the other, **False** otherwise.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox1_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox1_ogr}&#34;
+    assert is_valid_bbox(
+        bbox2_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox2_ogr}&#34;
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    return (
+        (bbox1_x_min &gt;= bbox2_x_min)
+        and (bbox1_x_max &lt;= bbox2_x_max)
+        and (bbox1_y_min &gt;= bbox2_y_min)
+        and (bbox1_y_max &lt;= bbox2_y_max)
+    )</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.convert_bbox_to_geojson"><code class="name flex">
+<span>def <span class="ident">convert_bbox_to_geojson</span></span>(<span>bbox_ogr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts an OGR formatted bbox to a GeoJson dictionary.</br>
+<code>[x_min, x_max, y_min, y_max] -&gt; GeoJson</code></p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): an OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>dict</em>): A GeoJson Dictionary. <code>{ "type": "Polygon", "coordinates": [ ... ] }</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_bbox_to_geojson(bbox_ogr):
+    &#34;&#34;&#34;
+    Converts an OGR formatted bbox to a GeoJson dictionary.&lt;/br&gt;
+    `[x_min, x_max, y_min, y_max] -&gt; GeoJson`
+
+    ## Args:
+    `bbox_ogr` (_list_): an OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_dict_): A GeoJson Dictionary. `{ &#34;type&#34;: &#34;Polygon&#34;, &#34;coordinates&#34;: [ ... ] }`
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    geojson = {
+        &#34;type&#34;: &#34;Polygon&#34;,
+        &#34;coordinates&#34;: [
+            [
+                [x_min, y_min],
+                [x_max, y_min],
+                [x_max, y_max],
+                [x_min, y_max],
+                [x_min, y_min],
+            ]
+        ],
+    }
+
+    return geojson</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.convert_bbox_to_geom"><code class="name flex">
+<span>def <span class="ident">convert_bbox_to_geom</span></span>(<span>bbox_ogr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert an OGR bounding box to ogr.Geometry.</br>
+<code>[x_min, x_max, y_min, y_max] -&gt; ogr.Geometry</code></p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>ogr.Geometry</em>): An OGR geometry.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_bbox_to_geom(bbox_ogr):
+    &#34;&#34;&#34;
+    Convert an OGR bounding box to ogr.Geometry.&lt;/br&gt;
+    `[x_min, x_max, y_min, y_max] -&gt; ogr.Geometry`
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_ogr.Geometry_): An OGR geometry.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+
+    ring.AddPoint(x_min, y_min)
+    ring.AddPoint(x_max, y_min)
+    ring.AddPoint(x_max, y_max)
+    ring.AddPoint(x_min, y_max)
+    ring.AddPoint(x_min, y_min)
+
+    geom = ogr.Geometry(ogr.wkbPolygon)
+    geom.AddGeometry(ring)
+
+    return geom</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.convert_bbox_to_geotransform"><code class="name flex">
+<span>def <span class="ident">convert_bbox_to_geotransform</span></span>(<span>bbox_ogr, raster_x_size, raster_y_size)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert an OGR formatted bounding box to a GDAL GeoTransform.</br>
+<code>[x_min, x_max, y_min, y_max] -&gt; [x_min, pixel_width, x_skew, y_max, y_skew, pixel_height]</code></p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
+<code>raster_x_size</code> (<em>int</em>): The number of pixels in the x direction. </br>
+<code>raster_y_size</code> (<em>int</em>): The number of pixels in the y direction. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): A GDAL GeoTransform. <code>[x_min, pixel_width, x_skew, y_max, y_skew, pixel_height]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_bbox_to_geotransform(bbox_ogr, raster_x_size, raster_y_size):
+    &#34;&#34;&#34;
+    Convert an OGR formatted bounding box to a GDAL GeoTransform.&lt;/br&gt;
+    `[x_min, x_max, y_min, y_max] -&gt; [x_min, pixel_width, x_skew, y_max, y_skew, pixel_height]`
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `raster_x_size` (_int_): The number of pixels in the x direction. &lt;/br&gt;
+    `raster_y_size` (_int_): The number of pixels in the y direction. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): A GDAL GeoTransform. `[x_min, pixel_width, x_skew, y_max, y_skew, pixel_height]`
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    origin_x = x_min
+    origin_y = y_max
+    pixel_width = (x_max - x_min) / raster_x_size
+    pixel_height = (y_max - y_min) / raster_y_size
+
+    return [origin_x, pixel_width, 0, origin_y, 0, ensure_negative(pixel_height)]</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.convert_bbox_to_vector"><code class="name flex">
+<span>def <span class="ident">convert_bbox_to_vector</span></span>(<span>bbox_ogr, projection_osr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts an OGR formatted bbox to an in-memory vector.</br>
+<em>Vectors are stored in /vsimem/ as .gpkg files.</em></br>
+<strong>OBS</strong>: Layers should be manually cleared when no longer used.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): an OGR formatted bbox. </br>
+<code>projection_osr</code> (<em>osr.SpatialReference</em>): The projection of the vector. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>ogr.DataSource</em>): The bounding box as a vector.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_bbox_to_vector(bbox_ogr, projection_osr):
+    &#34;&#34;&#34;
+    Converts an OGR formatted bbox to an in-memory vector.&lt;/br&gt;
+    _Vectors are stored in /vsimem/ as .gpkg files._&lt;/br&gt;
+    **OBS**: Layers should be manually cleared when no longer used.
+
+    ## Args:
+    `bbox_ogr` (_list_): an OGR formatted bbox. &lt;/br&gt;
+    `projection_osr` (_osr.SpatialReference_): The projection of the vector. &lt;/br&gt;
+
+    ## Returns:
+    (_ogr.DataSource_): The bounding box as a vector.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+    assert isinstance(
+        projection_osr, osr.SpatialReference
+    ), f&#34;projection_osr not a valid spatial reference. Recieved: {projection_osr}&#34;
+
+    geom = convert_bbox_to_geom(bbox_ogr)
+
+    driver = ogr.GetDriverByName(&#34;GPKG&#34;)
+    extent_name = f&#34;/vsimem/{core_utils.get_unix_seconds_as_str()}_{uuid4().int}_extent.gpkg&#34;
+
+    extent_ds = driver.CreateDataSource(extent_name)
+
+    layer = extent_ds.CreateLayer(&#34;extent_ogr&#34;, projection_osr, ogr.wkbPolygon)
+
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometry(geom)
+    layer.CreateFeature(feature)
+
+    feature = None
+    layer.SyncToDisk()
+
+    return extent_name</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.convert_bbox_to_wkt"><code class="name flex">
+<span>def <span class="ident">convert_bbox_to_wkt</span></span>(<span>bbox_ogr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts an OGR formatted bbox to a WKT string.</br>
+<code>[x_min, x_max, y_min, y_max] -&gt; WKT</code></p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): A WKT Polygon string. <code>POLYGON ((&hellip;))</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_bbox_to_wkt(bbox_ogr):
+    &#34;&#34;&#34;
+    Converts an OGR formatted bbox to a WKT string.&lt;/br&gt;
+    `[x_min, x_max, y_min, y_max] -&gt; WKT`
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): A WKT Polygon string. `POLYGON ((...))`
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    wkt = f&#34;POLYGON (({x_min} {y_min}, {x_max} {y_min}, {x_max} {y_max}, {x_min} {y_max}, {x_min} {y_min}))&#34;
+
+    return wkt</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.convert_gdal_bbox_to_ogr_bbox"><code class="name flex">
+<span>def <span class="ident">convert_gdal_bbox_to_ogr_bbox</span></span>(<span>bbox_gdal)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts a GDAL formatted bbox to an OGR formatted one.</br>
+<code>[x_min, y_min, x_max, y_max] -&gt; [x_min, x_max, y_min, y_max]</code></p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_gdal</code> (<em>list</em>): A GDAL formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): An OGR formatted bbox. <code>[x_min, x_max, y_min, y_max]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_gdal_bbox_to_ogr_bbox(bbox_gdal):
+    &#34;&#34;&#34;
+    Converts a GDAL formatted bbox to an OGR formatted one.&lt;/br&gt;
+    `[x_min, y_min, x_max, y_max] -&gt; [x_min, x_max, y_min, y_max]`
+
+    ## Args:
+    `bbox_gdal` (_list_): A GDAL formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    if isinstance(bbox_ogr, tuple):
+        bbox_ogr = [val for val in bbox_ogr]
+
+    assert (
+        isinstance(bbox_gdal, list) and len(bbox_gdal) == 4
+    ), f&#34;bbox_gdal must be a list of length four. Received: {bbox_gdal}.&#34;
+
+    x_min, y_min, x_max, y_max = bbox_gdal
+
+    return [x_min, x_max, y_min, y_max]</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.convert_geom_to_bbox"><code class="name flex">
+<span>def <span class="ident">convert_geom_to_bbox</span></span>(<span>geom)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert an ogr.Geometry to an OGR bounding box.</br>
+<code>ogr.Geometry -&gt; [x_min, x_max, y_min, y_max]</code></p>
+<h2 id="args">Args:</h2>
+<p><code>geom</code> (<em>ogr.Geometry</em>): An OGR geometry. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): An OGR formatted bbox. <code>[x_min, x_max, y_min, y_max]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_geom_to_bbox(geom):
+    &#34;&#34;&#34;
+    Convert an ogr.Geometry to an OGR bounding box.&lt;/br&gt;
+    `ogr.Geometry -&gt; [x_min, x_max, y_min, y_max]`
+
+    ## Args:
+    `geom` (_ogr.Geometry_): An OGR geometry. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert isinstance(
+        geom, ogr.Geometry
+    ), f&#34;geom was not a valid ogr.Geometry. Received: {geom}&#34;
+
+    bbox_ogr = list(geom.GetEnvelope()) # [x_min, x_max, y_min, y_max]
+
+    return bbox_ogr</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.convert_ogr_bbox_to_gdal_bbox"><code class="name flex">
+<span>def <span class="ident">convert_ogr_bbox_to_gdal_bbox</span></span>(<span>bbox_ogr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts an OGR formatted bbox to a GDAL formatted one.</br>
+<code>[x_min, x_max, y_min, y_max] -&gt; [x_min, y_min, x_max, y_max]</code></p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): A GDAL formatted bbox. <code>[x_min, y_min, x_max, y_max]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_ogr_bbox_to_gdal_bbox(bbox_ogr):
+    &#34;&#34;&#34;
+    Converts an OGR formatted bbox to a GDAL formatted one.&lt;/br&gt;
+    `[x_min, x_max, y_min, y_max] -&gt; [x_min, y_min, x_max, y_max]`
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): A GDAL formatted bbox. `[x_min, y_min, x_max, y_max]`
+    &#34;&#34;&#34;
+    if isinstance(bbox_ogr, tuple):
+        bbox_ogr = [val for val in bbox_ogr]
+
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    return [x_min, y_min, x_max, y_max]</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.ensure_negative"><code class="name flex">
+<span>def <span class="ident">ensure_negative</span></span>(<span>number)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Ensures that a valid is negative. If the number is positive, it is made negative.</p>
+<h2 id="args">Args:</h2>
+<p><code>number</code> (<em>int</em>/<em>float</em>): A float or int number. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>int</em>/<em>float</em>): The same number made <strong>negative</strong> if necesary.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ensure_negative(number):
+    &#34;&#34;&#34;
+    Ensures that a valid is negative. If the number is positive, it is made negative.
+
+    ## Args:
+    `number` (_int_/_float_): A float or int number. &lt;/br&gt;
+
+    ## Returns:
+    (_int_/_float_): The same number made **negative** if necesary.
+    &#34;&#34;&#34;
+    assert core_utils.is_number(number), f&#34;number must be a number. Received: {number}&#34;
+
+    if number &lt;= 0:
+        return -number
+
+    return number</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.geometry_latlng_from_bbox"><code class="name flex">
+<span>def <span class="ident">geometry_latlng_from_bbox</span></span>(<span>bbox_ogr, projection_osr, latlng_projection_osr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is an internal utility function for metadata generation. It takes a standard
+OGR bounding box and the geometry of the source dataset in latlng and returns a
+geometry in the source dataset's projection. This is important as, as when
+reprojecting to latlng, you might get a skewed bounding box. This function returns
+the skewed bounds in latlng, which is what you want for overlap checks across
+projections.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
+<code>projection_osr</code> (<em>osr.SpatialReference</em>): The projection. </br>
+<code>latlng_projection</code> (<em>osr.SpatialReference</em>): The latlng projection. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>ogr.Geometry</em>): The geometry in the source dataset's projection.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def geometry_latlng_from_bbox(bbox_ogr, projection_osr, latlng_projection_osr):
+    &#34;&#34;&#34; 
+    This is an internal utility function for metadata generation. It takes a standard
+    OGR bounding box and the geometry of the source dataset in latlng and returns a
+    geometry in the source dataset&#39;s projection. This is important as, as when 
+    reprojecting to latlng, you might get a skewed bounding box. This function returns
+    the skewed bounds in latlng, which is what you want for overlap checks across
+    projections.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `projection_osr` (_osr.SpatialReference_): The projection. &lt;/br&gt;
+    `latlng_projection` (_osr.SpatialReference_): The latlng projection. &lt;/br&gt;
+
+    ## Returns:
+    (_ogr.Geometry_): The geometry in the source dataset&#39;s projection.
+    &#34;&#34;&#34;
+    transformer = osr.CoordinateTransformation(projection_osr, latlng_projection_osr)
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    p1 = [x_min, y_min]
+    p2 = [x_max, y_min]
+    p3 = [x_max, y_max]
+    p4 = [x_min, y_max]
+
+    gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+    try:
+        p1t = transformer.TransformPoint(p1[0], p1[1])
+        p2t = transformer.TransformPoint(p2[0], p2[1])
+        p3t = transformer.TransformPoint(p3[0], p3[1])
+        p4t = transformer.TransformPoint(p4[0], p4[1])
+    except RuntimeError:
+        p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
+        p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
+        p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
+        p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+    gdal.PopErrorHandler()
+
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    ring.AddPoint(p1t[0], p1t[1])
+    ring.AddPoint(p2t[0], p2t[1])
+    ring.AddPoint(p3t[0], p3t[1])
+    ring.AddPoint(p4t[0], p4t[1])
+    ring.AddPoint(p1t[0], p1t[1])
+    polygon = ogr.Geometry(ogr.wkbPolygon)
+    polygon.AddGeometry(ring)
+
+    return polygon</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_bbox_from_dataset"><code class="name flex">
+<span>def <span class="ident">get_bbox_from_dataset</span></span>(<span>dataset)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the bbox from a dataset.</p>
+<h2 id="args">Args:</h2>
+<p><code>dataset</code> (<em>str</em>/<em>gdal.Dataset</em>/_ogr.DataSource): A dataset or dataset path. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): The bounding box in ogr format: [x_min, x_max, y_min, y_max].</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_bbox_from_dataset(dataset):
+    &#34;&#34;&#34;
+    Get the bbox from a dataset.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource): A dataset or dataset path. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): The bounding box in ogr format: [x_min, x_max, y_min, y_max].
+    &#34;&#34;&#34;
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), &#34;DataSet must be a string, ogr.DataSource, or gdal.Dataset.&#34;
+
+    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+
+    if opened is None:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+
+        if opened is None:
+            opened = ogr.Open(dataset, gdal.GA_ReadOnly)
+
+        gdal.PopErrorHandler()
+        if opened is None:
+            raise RuntimeError(f&#34;Could not open dataset. {dataset}&#34;)
+
+    if isinstance(opened, gdal.Dataset):
+        return get_bbox_from_raster(opened)
+
+    if isinstance(opened, ogr.DataSource):
+        return get_bbox_from_vector(opened)
+
+    raise RuntimeError(f&#34;Could not get bbox from dataset. {dataset}&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_bbox_from_geotransform"><code class="name flex">
+<span>def <span class="ident">get_bbox_from_geotransform</span></span>(<span>geotransform, raster_x_size, raster_y_size)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get an OGR bounding box from a geotransform and raster sizes.</p>
+<h2 id="args">Args:</h2>
+<p><code>geotransform</code> (<em>list</em>/<em>tuple</em>): A GDAL GeoTransform. </br>
+<code>raster_x_size</code> (<em>int</em>): The number of pixels in the x direction. </br>
+<code>raster_y_size</code> (<em>int</em>): The number of pixels in the y direction. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): An OGR formatted bbox. <code>[x_min, x_max, y_min, y_max]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_bbox_from_geotransform(geotransform, raster_x_size, raster_y_size):
+    &#34;&#34;&#34;
+    Get an OGR bounding box from a geotransform and raster sizes.
+
+    ## Args:
+    `geotransform` (_list_/_tuple_): A GDAL GeoTransform. &lt;/br&gt;
+    `raster_x_size` (_int_): The number of pixels in the x direction. &lt;/br&gt;
+    `raster_y_size` (_int_): The number of pixels in the y direction. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert is_valid_geotransform(
+        geotransform
+    ), f&#34;geotransform was not a valid geotransform. Received: {geotransform}&#34;
+
+    x_min, pixel_width, _row_skew, y_max, _column_skew, pixel_height = geotransform
+
+    x_max = x_min + (raster_x_size * pixel_width)
+    y_min = y_max + (raster_y_size * pixel_height)
+
+    return [x_min, x_max, y_min, y_max]</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_bbox_from_raster"><code class="name flex">
+<span>def <span class="ident">get_bbox_from_raster</span></span>(<span>raster_dataframe)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gets an OGR bounding box from a GDAL raster dataframe.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster_dataframe</code> (<em>gdal.DataFrame</em>): A GDAL raster dataframe. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): An OGR formatted bbox. <code>[x_min, x_max, y_min, y_max]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_bbox_from_raster(raster_dataframe):
+    &#34;&#34;&#34;
+    Gets an OGR bounding box from a GDAL raster dataframe.
+
+    ## Args:
+    `raster_dataframe` (_gdal.DataFrame_): A GDAL raster dataframe. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert isinstance(
+        raster_dataframe, gdal.Dataset
+    ), f&#34;raster_dataframe was not a gdal.Datasource. Received: {raster_dataframe}&#34;
+
+    bbox = get_bbox_from_geotransform(
+        raster_dataframe.GetGeoTransform(),
+        raster_dataframe.RasterXSize,
+        raster_dataframe.RasterYSize,
+    )
+
+    return bbox</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_bbox_from_vector"><code class="name flex">
+<span>def <span class="ident">get_bbox_from_vector</span></span>(<span>vector_dataframe)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gets an OGR bounding box from an OGR dataframe.</p>
+<h2 id="args">Args:</h2>
+<p><code>vector_dataframe</code> (<em>ogr.DataSource</em>): An OGR vector dataframe. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): An OGR formatted bbox. <code>[x_min, x_max, y_min, y_max]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_bbox_from_vector(vector_dataframe):
+    &#34;&#34;&#34;
+    Gets an OGR bounding box from an OGR dataframe.
+
+    ## Args:
+    `vector_dataframe` (_ogr.DataSource_): An OGR vector dataframe. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert isinstance(
+        vector_dataframe, ogr.DataSource
+    ), f&#34;vector_dataframe was not a valid ogr.DataSource. Received: {vector_dataframe}&#34;
+
+    layer_count = vector_dataframe.GetLayerCount()
+
+    assert (
+        layer_count &gt; 0
+    ), f&#34;vector_dataframe did not contain any layers. Received: {vector_dataframe}&#34;
+
+    x_min = None
+    x_max = None
+    y_min = None
+    y_max = None
+
+    for layer_index in range(layer_count):
+        layer = vector_dataframe.GetLayerByIndex(layer_index)
+        layer_x_min, layer_x_max, layer_y_min, layer_y_max = layer.GetExtent()
+
+        if layer_index == 0:
+            x_min = layer_x_min
+            x_max = layer_x_max
+            y_min = layer_y_min
+            y_max = layer_y_max
+        else:
+            if layer_x_min &lt; x_min:
+                x_min = layer_x_min
+            if layer_x_max &gt; x_max:
+                x_max = layer_x_max
+            if layer_y_min &lt; y_min:
+                y_min = layer_y_min
+            if layer_y_max &gt; y_max:
+                y_max = layer_y_max
+
+    return [x_min, x_max, y_min, y_max]</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_bbox_from_vector_layer"><code class="name flex">
+<span>def <span class="ident">get_bbox_from_vector_layer</span></span>(<span>vector_layer)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gets an OGR bounding box from an OGR dataframe layer.</p>
+<h2 id="args">Args:</h2>
+<p><code>vector_layer</code> (<em>ogr.Layer</em>): An OGR vector dataframe layer. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): An OGR formatted bbox. <code>[x_min, x_max, y_min, y_max]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_bbox_from_vector_layer(vector_layer):
+    &#34;&#34;&#34;
+    Gets an OGR bounding box from an OGR dataframe layer.
+
+    ## Args:
+    `vector_layer` (_ogr.Layer_): An OGR vector dataframe layer. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert isinstance(
+        vector_layer, ogr.Layer
+    ), f&#34;vector_layer was not a valid ogr.Layer. Received: {vector_layer}&#34;
+
+    x_min, x_max, y_min, y_max = vector_layer.GetExtent()
+
+    return [x_min, x_max, y_min, y_max]</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_intersection_bboxes"><code class="name flex">
+<span>def <span class="ident">get_intersection_bboxes</span></span>(<span>bbox1_ogr, bbox2_ogr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the intersection of two OGR formatted bboxes.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox1_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
+<code>bbox2_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): An OGR formatted bbox of the intersection. <code>[x_min, x_max, y_min, y_max]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_intersection_bboxes(bbox1_ogr, bbox2_ogr):
+    &#34;&#34;&#34;
+    Get the intersection of two OGR formatted bboxes.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox of the intersection. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert bboxes_intersect(
+        bbox1_ogr, bbox2_ogr
+    ), &#34;The two bounding boxes do not intersect.&#34;
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    return [
+        max(bbox1_x_min, bbox2_x_min),
+        min(bbox1_x_max, bbox2_x_max),
+        max(bbox1_y_min, bbox2_y_min),
+        min(bbox1_y_max, bbox2_y_max),
+    ]</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_pixel_offsets"><code class="name flex">
+<span>def <span class="ident">get_pixel_offsets</span></span>(<span>geotransform, bbox_ogr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the pixels offsets for a bbox and a geotransform.</p>
+<h2 id="args">Args:</h2>
+<p><code>geotransform</code> (<em>list</em>/<em>tuple</em>): A GDAL GeoTransform. </br>
+<code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): A list of pixel offsets. <code>[x_start, y_start, x_size, y_size]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_pixel_offsets(geotransform, bbox_ogr):
+    &#34;&#34;&#34;
+    Get the pixels offsets for a bbox and a geotransform.
+
+    ## Args:
+    `geotransform` (_list_/_tuple_): A GDAL GeoTransform. &lt;/br&gt;
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): A list of pixel offsets. `[x_start, y_start, x_size, y_size]`
+    &#34;&#34;&#34;
+    assert is_valid_geotransform(
+        geotransform
+    ), f&#34;geotransform must be a list of length six. Received: {geotransform}.&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr must be a valid OGR formatted bbox. Received: {bbox_ogr}.&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    origin_x = geotransform[0]
+    origin_y = geotransform[3]
+    pixel_width = geotransform[1]
+    pixel_height = geotransform[5]
+
+    x_start = int(np.rint((x_min - origin_x) / pixel_width))
+    y_start = int(np.rint((y_max - origin_y) / pixel_height))
+    x_size = int(np.rint((x_max - x_min) / pixel_width))
+    y_size = int(np.rint((y_min - y_max) / pixel_height))
+
+    return [x_start, y_start, x_size, y_size]</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_projection_from_dataset"><code class="name flex">
+<span>def <span class="ident">get_projection_from_dataset</span></span>(<span>dataset)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the projection from a dataset.</p>
+<h2 id="args">Args:</h2>
+<p><code>dataset</code> (<em>str</em>/<em>gdal.Dataset</em>/_ogr.DataSource): A dataset or dataset path. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>osr.SpatialReference</em>): The projection in OSR format.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_projection_from_dataset(dataset):
+    &#34;&#34;&#34;
+    Get the projection from a dataset.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource): A dataset or dataset path. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    &#34;&#34;&#34;
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), &#34;DataSet must be a string, ogr.DataSource, or gdal.Dataset.&#34;
+
+    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+
+    if opened is None:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+
+        if opened is None:
+            opened = ogr.Open(dataset, gdal.GA_ReadOnly)
+
+        gdal.PopErrorHandler()
+        if opened is None:
+            raise RuntimeError(f&#34;Could not open dataset. {dataset}&#34;)
+
+    if isinstance(opened, gdal.Dataset):
+        return get_projection_from_raster(opened)
+
+    if isinstance(opened, ogr.DataSource):
+        return get_projection_from_vector(opened)
+
+    raise RuntimeError(f&#34;Could not get projection from dataset. {dataset}&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_projection_from_raster"><code class="name flex">
+<span>def <span class="ident">get_projection_from_raster</span></span>(<span>raster)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the projection from a raster.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster</code> (<em>str</em>/<em>gdal.Dataset</em>): A raster or raster path. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>osr.SpatialReference</em>): The projection in OSR format.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_projection_from_raster(raster):
+    &#34;&#34;&#34;
+    Get the projection from a raster.
+
+    ## Args:
+    `raster` (_str_/_gdal.Dataset_): A raster or raster path. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    &#34;&#34;&#34;
+    opened = None
+    if isinstance(raster, gdal.Dataset):
+        opened = raster
+    else:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = gdal.Open(raster, gdal.GA_ReadOnly)
+        gdal.PopErrorHandler()
+
+    if opened is None:
+        raise RuntimeError(f&#34;Could not open raster. {raster}&#34;)
+
+    projection = osr.SpatialReference()
+    projection.ImportFromWkt(opened.GetProjection())
+    opened = None
+
+    return projection</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_projection_from_vector"><code class="name flex">
+<span>def <span class="ident">get_projection_from_vector</span></span>(<span>vector)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the projection from a vector.</p>
+<h2 id="args">Args:</h2>
+<p><code>vector</code> (<em>str</em>/<em>gdal.Dataset</em>): A vector or vector path. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>osr.SpatialReference</em>): The projection in OSR format.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_projection_from_vector(vector):
+    &#34;&#34;&#34;
+    Get the projection from a vector.
+
+    ## Args:
+    `vector` (_str_/_gdal.Dataset_): A vector or vector path. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The projection in OSR format.
+    &#34;&#34;&#34;
+    opened = None
+    if isinstance(vector, ogr.DataSource):
+        opened = vector
+    else:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+        opened = ogr.Open(vector, gdal.GA_ReadOnly)
+        gdal.PopErrorHandler()
+
+    if opened is None:
+        raise RuntimeError(f&#34;Could not open vector. {vector}&#34;)
+
+    layer = opened.GetLayer()
+    projection = layer.GetSpatialRef()
+    opened = None
+
+    return projection</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_sub_geotransform"><code class="name flex">
+<span>def <span class="ident">get_sub_geotransform</span></span>(<span>geotransform, bbox_ogr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a GeoTransform and the raster sizes for an OGR formatted bbox.</p>
+<h2 id="args">Args:</h2>
+<p><code>geotransform</code> (<em>list</em>): A GDAL geotransform. </br>
+<code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>dict</em>): { "Transform": <em>list</em>, "RasterXSize": <em>int</em>, "RasterYSize": <em>int</em> }</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_sub_geotransform(geotransform, bbox_ogr):
+    &#34;&#34;&#34;
+    Create a GeoTransform and the raster sizes for an OGR formatted bbox.
+
+    ## Args:
+    `geotransform` (_list_): A GDAL geotransform. &lt;/br&gt;
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_dict_): { &#34;Transform&#34;: _list_, &#34;RasterXSize&#34;: _int_, &#34;RasterYSize&#34;: _int_ }
+    &#34;&#34;&#34;
+    assert is_valid_geotransform(
+        geotransform
+    ), f&#34;geotransform must be a valid geotransform. Received: {geotransform}.&#34;
+    assert is_valid_bbox(
+        bbox_ogr
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr}&#34;
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+    pixel_width = geotransform[1]
+    pixel_height = geotransform[5]
+
+    raster_x_size = round((x_max - x_min) / pixel_width)
+    raster_y_size = round((y_max - y_min) / pixel_height)
+
+    return {
+        &#34;Transform&#34;: [x_min, pixel_width, 0, y_max, 0, ensure_negative(pixel_height)],
+        &#34;RasterXSize&#34;: abs(raster_x_size),
+        &#34;RasterYSize&#34;: abs(raster_y_size),
+    }</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_union_bboxes"><code class="name flex">
+<span>def <span class="ident">get_union_bboxes</span></span>(<span>bbox1_ogr, bbox2_ogr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the union of two OGR formatted bboxes.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox1_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
+<code>bbox2_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): An OGR formatted bbox of the union. <code>[x_min, x_max, y_min, y_max]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_union_bboxes(bbox1_ogr, bbox2_ogr):
+    &#34;&#34;&#34;
+    Get the union of two OGR formatted bboxes.
+
+    ## Args:
+    `bbox1_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `bbox2_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted bbox of the union. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox1_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox1_ogr}&#34;
+    assert is_valid_bbox(
+        bbox2_ogr
+    ), f&#34;bbox1_ogr was not a valid bbox. Received: {bbox2_ogr}&#34;
+
+    bbox1_x_min, bbox1_x_max, bbox1_y_min, bbox1_y_max = bbox1_ogr
+    bbox2_x_min, bbox2_x_max, bbox2_y_min, bbox2_y_max = bbox2_ogr
+
+    return [
+        min(bbox1_x_min, bbox2_x_min),
+        max(bbox1_x_max, bbox2_x_max),
+        min(bbox1_y_min, bbox2_y_min),
+        max(bbox1_y_max, bbox2_y_max),
+    ]</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_utm_zone_from_bbox"><code class="name flex">
+<span>def <span class="ident">get_utm_zone_from_bbox</span></span>(<span>bbox_ogr_latlng)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the UTM zone from an OGR formatted bbox.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>osr.SpatialReference</em>): The UTM zone projection.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_utm_zone_from_bbox(bbox_ogr_latlng):
+    &#34;&#34;&#34;
+    Get the UTM zone from an OGR formatted bbox.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The UTM zone projection.
+    &#34;&#34;&#34;
+    assert is_valid_bbox(
+        bbox_ogr_latlng
+    ), f&#34;bbox_ogr was not a valid bbox. Received: {bbox_ogr_latlng}&#34;
+    assert is_valid_bbox_latlng(bbox_ogr_latlng), &#34;Bbox is not in latlng format.&#34;
+
+    bbox_x_min, bbox_x_max, bbox_y_min, bbox_y_max = bbox_ogr_latlng
+
+    mid_lng = (bbox_x_min + bbox_x_max) / 2
+    mid_lat = (bbox_y_min + bbox_y_max) / 2
+
+    return get_utm_zone_from_latlng([mid_lat, mid_lng])</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_utm_zone_from_dataset"><code class="name flex">
+<span>def <span class="ident">get_utm_zone_from_dataset</span></span>(<span>dataset)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the UTM zone from a GDAL dataset.</p>
+<h2 id="args">Args:</h2>
+<p><code>dataset</code> (<em>obj</em>): A GDAL dataset. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The UTM zone.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_utm_zone_from_dataset(dataset):
+    &#34;&#34;&#34;
+    Get the UTM zone from a GDAL dataset.
+
+    ## Args:
+    `dataset` (_obj_): A GDAL dataset. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The UTM zone.
+    &#34;&#34;&#34;
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), &#34;dataset was not a valid dataset.&#34;
+
+    bbox = get_bbox_from_dataset(dataset)
+    source_projection = get_projection_from_dataset(dataset)
+    target_projection = osr.SpatialReference()
+    # target_projection.ImportFromEPSG(4326)
+    target_projection.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
+
+    bbox = reproject_bbox(bbox, source_projection, target_projection)
+    utm_zone = get_utm_zone_from_bbox(bbox)
+
+    return utm_zone</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_utm_zone_from_dataset_list"><code class="name flex">
+<span>def <span class="ident">get_utm_zone_from_dataset_list</span></span>(<span>datasets)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the UTM zone from a list of GDAL datasets.</p>
+<h2 id="args">Args:</h2>
+<p><code>datasets</code> (<em>list</em>): A list of GDAL datasets. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The UTM zone.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_utm_zone_from_dataset_list(datasets):
+    &#34;&#34;&#34;
+    Get the UTM zone from a list of GDAL datasets.
+
+    ## Args:
+    `datasets` (_list_): A list of GDAL datasets. &lt;/br&gt;
+
+    ## Returns:
+    (_str_): The UTM zone.
+    &#34;&#34;&#34;
+    assert isinstance(datasets, (list, np.ndarray)), &#34;datasets was not a valid list.&#34;
+
+    latlng_bboxes = []
+    latlng_proj = osr.SpatialReference()
+    # latlng_proj.ImportFromEPSG(4326)
+    latlng_proj.ImportFromWkt(&#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;)
+
+    for dataset in datasets:
+        bbox = get_bbox_from_dataset(dataset)
+        projection = get_projection_from_dataset(dataset)
+        latlng_bboxes.append(reproject_bbox(bbox, projection, latlng_proj))
+
+    union_bbox = latlng_bboxes[0]
+    for bbox in latlng_bboxes[1:]:
+        union_bbox = get_union_bboxes(union_bbox, bbox)
+
+    utm_zone = get_utm_zone_from_bbox(union_bbox)
+
+    return utm_zone</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.get_utm_zone_from_latlng"><code class="name flex">
+<span>def <span class="ident">get_utm_zone_from_latlng</span></span>(<span>latlng, return_epsg=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the UTM ZONE from a latlng list.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>osr.SpatialReference</em>): The UTM zone projection.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_utm_zone_from_latlng(latlng, return_epsg=False):
+    &#34;&#34;&#34; Get the UTM ZONE from a latlng list.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_osr.SpatialReference_): The UTM zone projection.
+    &#34;&#34;&#34;
+    assert isinstance(latlng, (list, np.ndarray)), &#34;latlng must be in the form of a list.&#34;
+
+    zone = round(((latlng[1] + 180) / 6) + 1)
+    n_or_s = &#34;S&#34; if latlng[0] &lt; 0 else &#34;N&#34;
+
+    false_northing = &#34;10000000&#34; if n_or_s == &#34;S&#34; else &#34;0&#34;
+    central_meridian = str(round(((zone * 6) - 180) - 3))
+    epsg = f&#34;32{&#39;7&#39; if n_or_s == &#39;S&#39; else &#39;6&#39;}{str(zone)}&#34;
+
+    if return_epsg:
+        return epsg
+
+    wkt = f&#34;&#34;&#34;
+        PROJCS[&#34;WGS 84 / UTM zone {str(zone)}{n_or_s}&#34;,
+        GEOGCS[&#34;WGS 84&#34;,
+            DATUM[&#34;WGS_1984&#34;,
+                SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563,
+                    AUTHORITY[&#34;EPSG&#34;,&#34;7030&#34;]],
+                AUTHORITY[&#34;EPSG&#34;,&#34;6326&#34;]],
+            PRIMEM[&#34;Greenwich&#34;,0,
+                AUTHORITY[&#34;EPSG&#34;,&#34;8901&#34;]],
+            UNIT[&#34;degree&#34;,0.0174532925199433,
+                AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],
+            AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]],
+        PROJECTION[&#34;Transverse_Mercator&#34;],
+        PARAMETER[&#34;latitude_of_origin&#34;,0],
+        PARAMETER[&#34;central_meridian&#34;,{central_meridian}],
+        PARAMETER[&#34;scale_factor&#34;,0.9996],
+        PARAMETER[&#34;false_easting&#34;,500000],
+        PARAMETER[&#34;false_northing&#34;,{false_northing}],
+        UNIT[&#34;metre&#34;,1,
+            AUTHORITY[&#34;EPSG&#34;,&#34;9001&#34;]],
+        AXIS[&#34;Easting&#34;,EAST],
+        AXIS[&#34;Northing&#34;,NORTH],
+        AUTHORITY[&#34;EPSG&#34;,&#34;{epsg}&#34;]]
+    &#34;&#34;&#34;
+    projection = osr.SpatialReference()
+    projection.ImportFromWkt(wkt)
+
+    return projection</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.is_valid_bbox"><code class="name flex">
+<span>def <span class="ident">is_valid_bbox</span></span>(<span>bbox_ogr)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a bbox is valid.</p>
+<p>A valid ogr formatted bbox has the form: </br>
+<code>[x_min, x_max, y_min, y_max]</code></p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the bbox is valid, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_valid_bbox(bbox_ogr):
+    &#34;&#34;&#34;
+    Checks if a bbox is valid.
+
+    A valid ogr formatted bbox has the form: &lt;/br&gt;
+    `[x_min, x_max, y_min, y_max]`
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the bbox is valid, **False** otherwise.
+    &#34;&#34;&#34;
+    if not isinstance(bbox_ogr, list):
+        return False
+
+    if len(bbox_ogr) != 4:
+        return False
+
+    for val in bbox_ogr:
+        if not core_utils.is_number(val):
+            return False
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    if True in [np.isinf(val) for val in bbox_ogr]:
+        return True
+
+    if x_min &gt; x_max or y_min &gt; y_max:
+        return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.is_valid_bbox_latlng"><code class="name flex">
+<span>def <span class="ident">is_valid_bbox_latlng</span></span>(<span>bbox_ogr_latlng)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a bbox is valid and latlng.</p>
+<p>A valid ogr formatted bbox has the form: </br>
+<code>[x_min, x_max, y_min, y_max]</code></p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr_latlng</code> (<em>list</em>): An OGR formatted bbox. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the bbox is valid, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_valid_bbox_latlng(bbox_ogr_latlng):
+    &#34;&#34;&#34;
+    Checks if a bbox is valid and latlng.
+
+    A valid ogr formatted bbox has the form: &lt;/br&gt;
+    `[x_min, x_max, y_min, y_max]`
+
+    ## Args:
+    `bbox_ogr_latlng` (_list_): An OGR formatted bbox. &lt;/br&gt;
+
+    ## Returns:
+    (_bool_): **True** if the bbox is valid, **False** otherwise.
+    &#34;&#34;&#34;
+    if not is_valid_bbox(bbox_ogr_latlng):
+        return False
+
+    x_min, x_max, y_min, y_max = bbox_ogr_latlng
+    if x_min &lt; -180 or x_max &gt; 180 or y_min &lt; -90 or y_max &gt; 90:
+        return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.is_valid_geotransform"><code class="name flex">
+<span>def <span class="ident">is_valid_geotransform</span></span>(<span>geotransform)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a geotransform is valid.</p>
+<p>A valid geotransform has the form: </br>
+<code>[x_min, pixel_width, row_skew, y_max, column_skew, pixel_height]</code></p>
+<h2 id="args">Args:</h2>
+<p><code>geotransform</code> (<em>list</em>/<em>tuple</em>): A GDAL formatted geotransform.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the geotransform is valid, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_valid_geotransform(geotransform):
+    &#34;&#34;&#34;
+    Checks if a geotransform is valid.
+
+    A valid geotransform has the form: &lt;/br&gt;
+    `[x_min, pixel_width, row_skew, y_max, column_skew, pixel_height]`
+
+    ## Args:
+    `geotransform` (_list_/_tuple_): A GDAL formatted geotransform.
+
+    ## Returns:
+    (_bool_): **True** if the geotransform is valid, **False** otherwise.
+    &#34;&#34;&#34;
+    if not isinstance(geotransform, (list, tuple)):
+        return False
+
+    if len(geotransform) != 6:
+        return False
+
+    for val in geotransform:
+        if not core_utils.is_number(val):
+            return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.reproject_bbox"><code class="name flex">
+<span>def <span class="ident">reproject_bbox</span></span>(<span>bbox_ogr, source_projection, target_projection)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Reprojects an OGR formatted bbox.</p>
+<h2 id="args">Args:</h2>
+<p><code>bbox_ogr</code> (<em>list</em>): An OGR formatted bbox. </br>
+<code>source_projection_osr</code> (<em>osr.SpatialReference</em>): The source projection. </br>
+<code>target_projection_osr</code> (<em>osr.SpatialReference</em>): The target projection. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): An OGR formatted reprojected bbox. <code>[x_min, x_max, y_min, y_max]</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reproject_bbox(
+    bbox_ogr,
+    source_projection,
+    target_projection,
+):
+    &#34;&#34;&#34;
+    Reprojects an OGR formatted bbox.
+
+    ## Args:
+    `bbox_ogr` (_list_): An OGR formatted bbox. &lt;/br&gt;
+    `source_projection_osr` (_osr.SpatialReference_): The source projection. &lt;/br&gt;
+    `target_projection_osr` (_osr.SpatialReference_): The target projection. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): An OGR formatted reprojected bbox. `[x_min, x_max, y_min, y_max]`
+    &#34;&#34;&#34;
+    assert is_valid_bbox(bbox_ogr), f&#34;Invalid bbox. Received: {bbox_ogr}.&#34;
+
+    src_proj = gdal_utils.parse_projection(source_projection)
+    dst_proj = gdal_utils.parse_projection(target_projection)
+
+    if gdal_utils.projections_match(src_proj, dst_proj):
+        return bbox_ogr
+
+    transformer = osr.CoordinateTransformation(src_proj, dst_proj)
+
+    x_min, x_max, y_min, y_max = bbox_ogr
+
+    p1 = [x_min, y_min]
+    p2 = [x_max, y_min]
+    p3 = [x_max, y_max]
+    p4 = [x_min, y_max]
+
+    gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+    try:
+        p1t = transformer.TransformPoint(p1[0], p1[1])
+        p2t = transformer.TransformPoint(p2[0], p2[1])
+        p3t = transformer.TransformPoint(p3[0], p3[1])
+        p4t = transformer.TransformPoint(p4[0], p4[1])
+    except RuntimeError:
+        p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
+        p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
+        p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
+        p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+    gdal.PopErrorHandler()
+
+    transformed_x_min = min(p1t[0], p2t[0], p3t[0], p4t[0])
+    transformed_x_max = max(p1t[0], p2t[0], p3t[0], p4t[0])
+    transformed_y_min = min(p1t[1], p2t[1], p3t[1], p4t[1])
+    transformed_y_max = max(p1t[1], p2t[1], p3t[1], p4t[1])
+
+    return [
+        transformed_x_min,
+        transformed_x_max,
+        transformed_y_min,
+        transformed_y_max,
+    ]</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.bbox_utils.reproject_latlng_point_to_utm"><code class="name flex">
+<span>def <span class="ident">reproject_latlng_point_to_utm</span></span>(<span>latlng)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts a latlng point into an UTM point.</p>
+<p>Takes point in [lat, lng], returns [utm_x, utm_y].</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reproject_latlng_point_to_utm(latlng):
+    &#34;&#34;&#34; Converts a latlng point into an UTM point.
+
+        Takes point in [lat, lng], returns [utm_x, utm_y].
+    &#34;&#34;&#34;
+    source_projection = osr.SpatialReference()
+    source_projection_wkt = gdal_utils.get_default_projection()
+    source_projection.ImportFromWkt(source_projection_wkt)
+    target_projection = get_utm_zone_from_latlng(latlng)
+
+    transformer = osr.CoordinateTransformation(
+        source_projection, target_projection
+    )
+
+    try:
+        utm_x, utm_y, _utm_z = transformer.TransformPoint(latlng[0], latlng[1])
+    except: # pylint: disable=bare-except
+        utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
+
+    return [utm_x, utm_y]</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul>
+<li><a href="#bounding-box-utility-functions">Bounding box utility functions</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="buteo.utils" href="index.html">buteo.utils</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.utils.bbox_utils.additional_bboxes" href="#buteo.utils.bbox_utils.additional_bboxes">additional_bboxes</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.align_bboxes_to_pixel_size" href="#buteo.utils.bbox_utils.align_bboxes_to_pixel_size">align_bboxes_to_pixel_size</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.bboxes_intersect" href="#buteo.utils.bbox_utils.bboxes_intersect">bboxes_intersect</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.bboxes_within" href="#buteo.utils.bbox_utils.bboxes_within">bboxes_within</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.convert_bbox_to_geojson" href="#buteo.utils.bbox_utils.convert_bbox_to_geojson">convert_bbox_to_geojson</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.convert_bbox_to_geom" href="#buteo.utils.bbox_utils.convert_bbox_to_geom">convert_bbox_to_geom</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.convert_bbox_to_geotransform" href="#buteo.utils.bbox_utils.convert_bbox_to_geotransform">convert_bbox_to_geotransform</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.convert_bbox_to_vector" href="#buteo.utils.bbox_utils.convert_bbox_to_vector">convert_bbox_to_vector</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.convert_bbox_to_wkt" href="#buteo.utils.bbox_utils.convert_bbox_to_wkt">convert_bbox_to_wkt</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.convert_gdal_bbox_to_ogr_bbox" href="#buteo.utils.bbox_utils.convert_gdal_bbox_to_ogr_bbox">convert_gdal_bbox_to_ogr_bbox</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.convert_geom_to_bbox" href="#buteo.utils.bbox_utils.convert_geom_to_bbox">convert_geom_to_bbox</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.convert_ogr_bbox_to_gdal_bbox" href="#buteo.utils.bbox_utils.convert_ogr_bbox_to_gdal_bbox">convert_ogr_bbox_to_gdal_bbox</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.ensure_negative" href="#buteo.utils.bbox_utils.ensure_negative">ensure_negative</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.geometry_latlng_from_bbox" href="#buteo.utils.bbox_utils.geometry_latlng_from_bbox">geometry_latlng_from_bbox</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_bbox_from_dataset" href="#buteo.utils.bbox_utils.get_bbox_from_dataset">get_bbox_from_dataset</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_bbox_from_geotransform" href="#buteo.utils.bbox_utils.get_bbox_from_geotransform">get_bbox_from_geotransform</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_bbox_from_raster" href="#buteo.utils.bbox_utils.get_bbox_from_raster">get_bbox_from_raster</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_bbox_from_vector" href="#buteo.utils.bbox_utils.get_bbox_from_vector">get_bbox_from_vector</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_bbox_from_vector_layer" href="#buteo.utils.bbox_utils.get_bbox_from_vector_layer">get_bbox_from_vector_layer</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_intersection_bboxes" href="#buteo.utils.bbox_utils.get_intersection_bboxes">get_intersection_bboxes</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_pixel_offsets" href="#buteo.utils.bbox_utils.get_pixel_offsets">get_pixel_offsets</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_projection_from_dataset" href="#buteo.utils.bbox_utils.get_projection_from_dataset">get_projection_from_dataset</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_projection_from_raster" href="#buteo.utils.bbox_utils.get_projection_from_raster">get_projection_from_raster</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_projection_from_vector" href="#buteo.utils.bbox_utils.get_projection_from_vector">get_projection_from_vector</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_sub_geotransform" href="#buteo.utils.bbox_utils.get_sub_geotransform">get_sub_geotransform</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_union_bboxes" href="#buteo.utils.bbox_utils.get_union_bboxes">get_union_bboxes</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_utm_zone_from_bbox" href="#buteo.utils.bbox_utils.get_utm_zone_from_bbox">get_utm_zone_from_bbox</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_utm_zone_from_dataset" href="#buteo.utils.bbox_utils.get_utm_zone_from_dataset">get_utm_zone_from_dataset</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_utm_zone_from_dataset_list" href="#buteo.utils.bbox_utils.get_utm_zone_from_dataset_list">get_utm_zone_from_dataset_list</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.get_utm_zone_from_latlng" href="#buteo.utils.bbox_utils.get_utm_zone_from_latlng">get_utm_zone_from_latlng</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.is_valid_bbox" href="#buteo.utils.bbox_utils.is_valid_bbox">is_valid_bbox</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.is_valid_bbox_latlng" href="#buteo.utils.bbox_utils.is_valid_bbox_latlng">is_valid_bbox_latlng</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.is_valid_geotransform" href="#buteo.utils.bbox_utils.is_valid_geotransform">is_valid_geotransform</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.reproject_bbox" href="#buteo.utils.bbox_utils.reproject_bbox">reproject_bbox</a></code></li>
+<li><code><a title="buteo.utils.bbox_utils.reproject_latlng_point_to_utm" href="#buteo.utils.bbox_utils.reproject_latlng_point_to_utm">reproject_latlng_point_to_utm</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

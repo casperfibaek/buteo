@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>buteo.raster.clip API documentation</title>
+<meta name="description" content="Clip rasters ### …" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>buteo.raster.clip</code></h1>
+</header>
+<section id="section-intro">
+<h3 id="clip-rasters">Clip rasters</h3>
+<p>Clips a raster using a vector geometry or the extents of a raster.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+### Clip rasters ###
+
+Clips a raster using a vector geometry or the extents of a raster.
+&#34;&#34;&#34;
+
+# Standard library
+import sys; sys.path.append(&#34;../../&#34;)
+import os
+
+# External
+from osgeo import gdal, ogr
+import numpy as np
+
+# Internal
+from buteo.raster import core_raster
+from buteo.vector import core_vector
+from buteo.utils import gdal_utils, core_utils, bbox_utils, gdal_enums
+from buteo.vector.reproject import _reproject_vector
+
+
+def _clip_raster(
+    raster,
+    clip_geom,
+    out_path,
+    *,
+    resample_alg=&#34;nearest&#34;,
+    crop_to_geom=True,
+    adjust_bbox=True,
+    all_touch=True,
+    to_extent=False,
+    overwrite=True,
+    creation_options=None,
+    dst_nodata=&#34;infer&#34;,
+    src_nodata=&#34;infer&#34;,
+    layer_to_clip=0,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    verbose=1,
+    add_uuid=False,
+    ram=&#34;auto&#34;,
+):
+    &#34;&#34;&#34; INTERNAL. &#34;&#34;&#34;
+    path_list = gdal_utils.create_output_path_list(
+        core_utils.ensure_list(raster),
+        out_path=out_path,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )
+
+    if out_path is not None and isinstance(out_path, str):
+        if &#34;vsimem&#34; not in out_path:
+            if not os.path.isdir(os.path.split(os.path.normpath(out_path))[0]):
+                raise ValueError(f&#34;out_path folder does not exist: {out_path}&#34;)
+
+    clip_ds = None
+
+    memory_files = []
+
+    # Input is a vector.
+    if gdal_utils.is_vector(clip_geom):
+        clip_ds = core_vector._open_vector(clip_geom)
+
+        # TODO: Fix potential memory leak
+        if clip_ds.GetLayerCount() &gt; 1:
+            clip_ds = core_vector.vector_filter_layer(clip_ds, layer_name_or_idx=layer_to_clip, add_uuid=True)
+            memory_files.append(clip_ds)
+
+        clip_metadata = core_vector._vector_to_metadata(clip_ds)
+
+        if to_extent:
+            clip_ds = bbox_utils.convert_bbox_to_vector(clip_metadata[&#34;bbox&#34;], clip_metadata[&#34;projection_osr&#34;])
+            memory_files.append(clip_ds)
+
+        if isinstance(clip_ds, ogr.DataSource):
+            clip_ds = clip_ds.GetName()
+
+    # Input is a raster (use extent)
+    elif gdal_utils.is_raster(clip_geom):
+        clip_metadata = core_raster._raster_to_metadata(clip_geom)
+        clip_ds = bbox_utils.convert_bbox_to_vector(clip_metadata[&#34;bbox&#34;], clip_metadata[&#34;projection_osr&#34;])
+        memory_files.append(clip_ds)
+    else:
+        if core_utils.file_exists(clip_geom):
+            raise ValueError(f&#34;Unable to parse clip geometry: {clip_geom}&#34;)
+        else:
+            raise ValueError(f&#34;Unable to locate clip geometry {clip_geom}&#34;)
+
+    if clip_ds is None:
+        raise ValueError(f&#34;Unable to parse input clip geom: {clip_geom}&#34;)
+
+    # options
+    warp_options = []
+    if all_touch:
+        warp_options.append(&#34;CUTLINE_ALL_TOUCHED=TRUE&#34;)
+    else:
+        warp_options.append(&#34;CUTLINE_ALL_TOUCHED=FALSE&#34;)
+
+    origin_layer = core_raster.open_raster(raster)
+
+    raster_metadata = core_raster._raster_to_metadata(raster)
+    origin_projection = raster_metadata[&#34;projection_osr&#34;]
+
+    # Fast check: Does the extent of the two inputs overlap?
+    has_inf = True in [np.isinf(val) for val in raster_metadata[&#34;bbox_latlng&#34;]]
+    if not has_inf and not bbox_utils.bboxes_intersect(raster_metadata[&#34;bbox_latlng&#34;], clip_metadata[&#34;bbox_latlng&#34;]):
+        raise ValueError(f&#34;Geometries of {raster} and {clip_geom} did not intersect.&#34;)
+
+    if not origin_projection.IsSame(clip_metadata[&#34;projection_osr&#34;]):
+        clip_ds = _reproject_vector(clip_ds, origin_projection)
+        clip_metadata = core_vector._vector_to_metadata(clip_ds)
+        memory_files.append(clip_ds)
+
+    output_bounds = raster_metadata[&#34;bbox&#34;]
+
+    if crop_to_geom:
+
+        if adjust_bbox:
+            output_bounds = bbox_utils.align_bboxes_to_pixel_size(
+                raster_metadata[&#34;bbox&#34;],
+                clip_metadata[&#34;bbox&#34;],
+                raster_metadata[&#34;pixel_width&#34;],
+                raster_metadata[&#34;pixel_height&#34;],
+            )
+        else:
+            output_bounds = clip_metadata[&#34;bbox&#34;]
+
+    # formats
+    out_name = path_list[0]
+    out_format = gdal_utils.path_to_driver_raster(out_name)
+    out_creation_options = gdal_utils.default_creation_options(creation_options)
+
+    # nodata
+    if src_nodata == &#34;infer&#34;:
+        src_nodata = raster_metadata[&#34;nodata_value&#34;]
+    elif isinstance(src_nodata, (int, float)) or src_nodata is None:
+        src_nodata = float(src_nodata)
+    else:
+        raise ValueError(f&#34;src_nodata must be an int, float or None: {src_nodata}&#34;)
+
+    out_nodata = None
+    if dst_nodata == &#34;infer&#34;:
+        if src_nodata == &#34;infer&#34;:
+            out_nodata = raster_metadata[&#34;nodata_value&#34;]
+        else:
+            out_nodata = gdal_enums.get_default_nodata_value(raster_metadata[&#34;datatype_gdal_raw&#34;])
+    elif isinstance(dst_nodata, (int, float)) or dst_nodata is None:
+        out_nodata = dst_nodata
+    else:
+        raise ValueError(f&#34;Unable to parse nodata_value: {dst_nodata}&#34;)
+
+    # Removes file if it exists and overwrite is True.
+    core_utils.remove_if_required(out_path, overwrite)
+
+    if verbose == 0:
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+
+    clipped = gdal.Warp(
+        out_name,
+        origin_layer,
+        format=out_format,
+        resampleAlg=gdal_enums.translate_resample_method(resample_alg),
+        targetAlignedPixels=False,
+        outputBounds=bbox_utils.convert_ogr_bbox_to_gdal_bbox(output_bounds),
+        xRes=raster_metadata[&#34;pixel_width&#34;],
+        yRes=raster_metadata[&#34;pixel_height&#34;],
+        cutlineDSName=clip_ds,
+        cropToCutline=False,
+        creationOptions=out_creation_options,
+        warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
+        warpOptions=warp_options,
+        srcNodata=src_nodata,
+        dstNodata=out_nodata,
+        multithread=True,
+    )
+
+    gdal_utils.delete_if_in_memory_list(memory_files)
+
+    if verbose == 0:
+        gdal.PopErrorHandler()
+
+    if clipped is None:
+        raise ValueError(&#34;Error while clipping raster.&#34;)
+
+    return out_name
+
+
+def clip_raster(
+    raster,
+    clip_geom,
+    out_path=None,
+    *,
+    resample_alg=&#34;nearest&#34;,
+    crop_to_geom=True,
+    adjust_bbox=False,
+    all_touch=False,
+    to_extent=False,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    overwrite=True,
+    creation_options=None,
+    dst_nodata=&#34;infer&#34;,
+    src_nodata=&#34;infer&#34;,
+    layer_to_clip=0,
+    verbose=0,
+    add_uuid=False,
+    ram=&#34;auto&#34;,
+):
+    &#34;&#34;&#34;
+    Clips a raster(s) using a vector geometry or the extents of a raster.
+
+    Args:
+        raster (list/str/gdal.Dataset): The raster(s) to clip.
+        clip_geom (str/ogr.DataSource/gdal.Dataset): The geometry to use to
+            clip the raster.
+
+    Keyword Args:
+        out_path (str/list/None, default=None): The path(s) to save the
+            clipped raster to. If None, a memory raster is created.
+        resample_alg (str, default=&#34;nearest&#34;): The resampling algorithm to use.
+            Options include: nearest, bilinear, cubic, cubicspline, lanczos, average,
+                mode, max, min, median, q1, q3, sum, rms.
+        crop_to_geom (bool, default=True): If True, the output raster will be
+            cropped to the extent of the clip geometry.
+        adjust_bbox (bool, default=False): If True, the output raster will have its
+            bbox adjusted to match the clip geometry.
+        all_touch (bool, default=False): If true, all pixels touching the
+            clipping geometry will be included.
+        to_extent (bool, default=False): If True, the output raster will be
+            cropped to the extent of the clip geometry.
+        prefix (str, default=&#34;&#34;): The prefix to use for the output raster.
+        suffix (str, default=&#34;&#34;): The suffix to use for the output raster.
+        overwrite (bool, default=True): If True, the output raster will be
+            overwritten if it already exists.
+        creation_options (list/None, default=None): A list of creation options
+            to pass to gdal.
+        dst_nodata (int/float/None, default=&#34;infer&#34;): The nodata value to use for
+            the output raster.
+        src_nodata (int/float/None, default=&#34;infer&#34;): The nodata value to use for
+            the input raster.
+        layer_to_clip (int/str, default=0): The layer ID or name in the
+            vector to use for clipping.
+        verbose (int, default=0): The verbosity level.
+        add_uuid (bool, default=False): If True, a UUID will be added to the
+            output raster.
+        ram (str, default=&#34;auto&#34;): The amount of RAM to use for the operation.
+
+    Returns:
+        str/list: A string or list of strings representing the path(s) to
+            the clipped raster(s).
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], &#34;clip_geom&#34;)
+    core_utils.type_check(out_path, [[str], str, None], &#34;out_path&#34;)
+    core_utils.type_check(resample_alg, [str], &#34;resample_alg&#34;)
+    core_utils.type_check(crop_to_geom, [bool], &#34;crop_to_geom&#34;)
+    core_utils.type_check(adjust_bbox, [bool], &#34;adjust_bbox&#34;)
+    core_utils.type_check(all_touch, [bool], &#34;all_touch&#34;)
+    core_utils.type_check(to_extent, [bool], &#34;to_extent&#34;)
+    core_utils.type_check(dst_nodata, [str, int, float, None], &#34;dst_nodata&#34;)
+    core_utils.type_check(src_nodata, [str, int, float, None], &#34;src_nodata&#34;)
+    core_utils.type_check(layer_to_clip, [int], &#34;layer_to_clip&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+    core_utils.type_check(prefix, [str], &#34;prefix&#34;)
+    core_utils.type_check(suffix, [str], &#34;postfix&#34;)
+    core_utils.type_check(verbose, [int], &#34;verbose&#34;)
+    core_utils.type_check(add_uuid, [bool], &#34;uuid&#34;)
+
+    raster_list = core_utils.ensure_list(raster)
+    path_list = gdal_utils.create_output_path_list(
+        raster_list,
+        out_path=out_path,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        overwrite=overwrite,
+    )
+
+    output = []
+    for index, in_raster in enumerate(raster_list):
+        output.append(
+            _clip_raster(
+                in_raster,
+                clip_geom,
+                out_path=path_list[index],
+                resample_alg=resample_alg,
+                crop_to_geom=crop_to_geom,
+                adjust_bbox=adjust_bbox,
+                all_touch=all_touch,
+                to_extent=to_extent,
+                dst_nodata=dst_nodata,
+                src_nodata=src_nodata,
+                layer_to_clip=layer_to_clip,
+                overwrite=overwrite,
+                creation_options=creation_options,
+                prefix=prefix,
+                suffix=suffix,
+                verbose=verbose,
+                ram=ram,
+            )
+        )
+
+    if isinstance(raster, list):
+        return output
+
+    return output[0]</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.raster.clip.clip_raster"><code class="name flex">
+<span>def <span class="ident">clip_raster</span></span>(<span>raster, clip_geom, out_path=None, *, resample_alg='nearest', crop_to_geom=True, adjust_bbox=False, all_touch=False, to_extent=False, prefix='', suffix='', overwrite=True, creation_options=None, dst_nodata='infer', src_nodata='infer', layer_to_clip=0, verbose=0, add_uuid=False, ram='auto')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Clips a raster(s) using a vector geometry or the extents of a raster.</p>
+<h2 id="args">Args</h2>
+<p>raster (list/str/gdal.Dataset): The raster(s) to clip.
+clip_geom (str/ogr.DataSource/gdal.Dataset): The geometry to use to
+clip the raster.
+Keyword Args:
+out_path (str/list/None, default=None): The path(s) to save the
+clipped raster to. If None, a memory raster is created.
+resample_alg (str, default="nearest"): The resampling algorithm to use.
+Options include: nearest, bilinear, cubic, cubicspline, lanczos, average,
+mode, max, min, median, q1, q3, sum, rms.
+crop_to_geom (bool, default=True): If True, the output raster will be
+cropped to the extent of the clip geometry.
+adjust_bbox (bool, default=False): If True, the output raster will have its
+bbox adjusted to match the clip geometry.
+all_touch (bool, default=False): If true, all pixels touching the
+clipping geometry will be included.
+to_extent (bool, default=False): If True, the output raster will be
+cropped to the extent of the clip geometry.
+prefix (str, default=""): The prefix to use for the output raster.
+suffix (str, default=""): The suffix to use for the output raster.
+overwrite (bool, default=True): If True, the output raster will be
+overwritten if it already exists.
+creation_options (list/None, default=None): A list of creation options
+to pass to gdal.
+dst_nodata (int/float/None, default="infer"): The nodata value to use for
+the output raster.
+src_nodata (int/float/None, default="infer"): The nodata value to use for
+the input raster.
+layer_to_clip (int/str, default=0): The layer ID or name in the
+vector to use for clipping.
+verbose (int, default=0): The verbosity level.
+add_uuid (bool, default=False): If True, a UUID will be added to the
+output raster.
+ram (str, default="auto"): The amount of RAM to use for the operation.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str/list: A string</code> or <code>list</code> of <code>strings representing the path(s) to</code></dt>
+<dd>the clipped raster(s).</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def clip_raster(
+    raster,
+    clip_geom,
+    out_path=None,
+    *,
+    resample_alg=&#34;nearest&#34;,
+    crop_to_geom=True,
+    adjust_bbox=False,
+    all_touch=False,
+    to_extent=False,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    overwrite=True,
+    creation_options=None,
+    dst_nodata=&#34;infer&#34;,
+    src_nodata=&#34;infer&#34;,
+    layer_to_clip=0,
+    verbose=0,
+    add_uuid=False,
+    ram=&#34;auto&#34;,
+):
+    &#34;&#34;&#34;
+    Clips a raster(s) using a vector geometry or the extents of a raster.
+
+    Args:
+        raster (list/str/gdal.Dataset): The raster(s) to clip.
+        clip_geom (str/ogr.DataSource/gdal.Dataset): The geometry to use to
+            clip the raster.
+
+    Keyword Args:
+        out_path (str/list/None, default=None): The path(s) to save the
+            clipped raster to. If None, a memory raster is created.
+        resample_alg (str, default=&#34;nearest&#34;): The resampling algorithm to use.
+            Options include: nearest, bilinear, cubic, cubicspline, lanczos, average,
+                mode, max, min, median, q1, q3, sum, rms.
+        crop_to_geom (bool, default=True): If True, the output raster will be
+            cropped to the extent of the clip geometry.
+        adjust_bbox (bool, default=False): If True, the output raster will have its
+            bbox adjusted to match the clip geometry.
+        all_touch (bool, default=False): If true, all pixels touching the
+            clipping geometry will be included.
+        to_extent (bool, default=False): If True, the output raster will be
+            cropped to the extent of the clip geometry.
+        prefix (str, default=&#34;&#34;): The prefix to use for the output raster.
+        suffix (str, default=&#34;&#34;): The suffix to use for the output raster.
+        overwrite (bool, default=True): If True, the output raster will be
+            overwritten if it already exists.
+        creation_options (list/None, default=None): A list of creation options
+            to pass to gdal.
+        dst_nodata (int/float/None, default=&#34;infer&#34;): The nodata value to use for
+            the output raster.
+        src_nodata (int/float/None, default=&#34;infer&#34;): The nodata value to use for
+            the input raster.
+        layer_to_clip (int/str, default=0): The layer ID or name in the
+            vector to use for clipping.
+        verbose (int, default=0): The verbosity level.
+        add_uuid (bool, default=False): If True, a UUID will be added to the
+            output raster.
+        ram (str, default=&#34;auto&#34;): The amount of RAM to use for the operation.
+
+    Returns:
+        str/list: A string or list of strings representing the path(s) to
+            the clipped raster(s).
+    &#34;&#34;&#34;
+    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], &#34;raster&#34;)
+    core_utils.type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], &#34;clip_geom&#34;)
+    core_utils.type_check(out_path, [[str], str, None], &#34;out_path&#34;)
+    core_utils.type_check(resample_alg, [str], &#34;resample_alg&#34;)
+    core_utils.type_check(crop_to_geom, [bool], &#34;crop_to_geom&#34;)
+    core_utils.type_check(adjust_bbox, [bool], &#34;adjust_bbox&#34;)
+    core_utils.type_check(all_touch, [bool], &#34;all_touch&#34;)
+    core_utils.type_check(to_extent, [bool], &#34;to_extent&#34;)
+    core_utils.type_check(dst_nodata, [str, int, float, None], &#34;dst_nodata&#34;)
+    core_utils.type_check(src_nodata, [str, int, float, None], &#34;src_nodata&#34;)
+    core_utils.type_check(layer_to_clip, [int], &#34;layer_to_clip&#34;)
+    core_utils.type_check(overwrite, [bool], &#34;overwrite&#34;)
+    core_utils.type_check(creation_options, [[str], None], &#34;creation_options&#34;)
+    core_utils.type_check(prefix, [str], &#34;prefix&#34;)
+    core_utils.type_check(suffix, [str], &#34;postfix&#34;)
+    core_utils.type_check(verbose, [int], &#34;verbose&#34;)
+    core_utils.type_check(add_uuid, [bool], &#34;uuid&#34;)
+
+    raster_list = core_utils.ensure_list(raster)
+    path_list = gdal_utils.create_output_path_list(
+        raster_list,
+        out_path=out_path,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        overwrite=overwrite,
+    )
+
+    output = []
+    for index, in_raster in enumerate(raster_list):
+        output.append(
+            _clip_raster(
+                in_raster,
+                clip_geom,
+                out_path=path_list[index],
+                resample_alg=resample_alg,
+                crop_to_geom=crop_to_geom,
+                adjust_bbox=adjust_bbox,
+                all_touch=all_touch,
+                to_extent=to_extent,
+                dst_nodata=dst_nodata,
+                src_nodata=src_nodata,
+                layer_to_clip=layer_to_clip,
+                overwrite=overwrite,
+                creation_options=creation_options,
+                prefix=prefix,
+                suffix=suffix,
+                verbose=verbose,
+                ram=ram,
+            )
+        )
+
+    if isinstance(raster, list):
+        return output
+
+    return output[0]</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul>
+<li><a href="#clip-rasters">Clip rasters</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="buteo.raster" href="index.html">buteo.raster</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.raster.clip.clip_raster" href="#buteo.raster.clip.clip_raster">clip_raster</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

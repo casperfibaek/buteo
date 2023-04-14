@@ -1,0 +1,3512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>buteo.utils.gdal_utils API documentation</title>
+<meta name="description" content="Utility functions to work with GDAL ### …" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>buteo.utils.gdal_utils</code></h1>
+</header>
+<section id="section-intro">
+<h3 id="utility-functions-to-work-with-gdal">Utility functions to work with GDAL</h3>
+<p>These functions are used to interact with basic GDAL objects.</p>
+<h2 id="todo">Todo</h2>
+<ul>
+<li>Should file_path_lists be able to handle mixed inputs?</li>
+<li>Make delete_raster_or_vector and the like accept a list of file paths?</li>
+</ul>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+### Utility functions to work with GDAL ###
+
+These functions are used to interact with basic GDAL objects.
+
+TODO:
+    * Should file_path_lists be able to handle mixed inputs?
+    * Make delete_raster_or_vector and the like accept a list of file paths?
+&#34;&#34;&#34;
+
+# Standard Library
+import sys; sys.path.append(&#34;../../&#34;)
+from pathlib import PurePosixPath
+import os
+
+# External
+import numpy as np
+from osgeo import gdal, ogr, osr
+
+# Internal
+from buteo.utils import core_utils, gdal_enums
+
+
+
+def default_creation_options(options=None):
+    &#34;&#34;&#34;
+    Takes a list of GDAL creation options and adds the following defaults to it if their not specified: &lt;/br&gt;
+
+    * `&#34;TILED=YES&#34;`
+    * `&#34;NUM_THREADS=ALL_CPUS&#34;`
+    * `&#34;BIGG_TIF=YES&#34;`
+    * `&#34;COMPRESS=LZW&#34;`
+
+    If any of the options are already specified, they are not added.
+
+    ## Kwargs:
+    `options` (_list_/None): The GDAL creation options to add to. (Default: **None**)
+
+    ## Returns:
+    (_list_): A list containing the default values.
+    &#34;&#34;&#34;
+    assert isinstance(options, (list, type(None))), &#34;Options must be a list or None.&#34;
+
+    if options is None:
+        options = []
+
+    internal_options = list(options)
+
+    opt_str = &#34; &#34;.join(internal_options)
+    if &#34;TILED&#34; not in opt_str:
+        internal_options.append(&#34;TILED=YES&#34;)
+
+    if &#34;NUM_THREADS&#34; not in opt_str:
+        internal_options.append(&#34;NUM_THREADS=ALL_CPUS&#34;)
+
+    if &#34;BIGTIFF&#34; not in opt_str:
+        internal_options.append(&#34;BIGTIFF=IF_SAFER&#34;)
+
+    if &#34;COMPRESS&#34; not in opt_str:
+        internal_options.append(&#34;COMPRESS=LZW&#34;)
+
+    if &#34;BLOCKXSIZE&#34; not in opt_str:
+        internal_options.append(&#34;BLOCKXSIZE=256&#34;)
+
+    if &#34;BLOCKYSIZE&#34; not in opt_str:
+        internal_options.append(&#34;BLOCKYSIZE=256&#34;)
+
+    return internal_options
+
+
+def get_default_projection():
+    &#34;&#34;&#34;
+    Get the default projection for a new raster.
+
+    ## Returns:
+    (_str_): The default projection.
+    &#34;&#34;&#34;
+    epsg_4326_wkt = &#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;
+
+    return epsg_4326_wkt
+
+
+
+def is_valid_datatype(file_path):
+    &#34;&#34;&#34;
+    Check if a file path has a valid GDAL or OGR driver.
+
+    ## Args:
+    `file_path` (_str_): The file path to check.
+
+    ## Returns:
+    (_bool_): **True** if the file path is a valid GDAL or OGR driver, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(file_path, str), &#34;file_path must be a string.&#34;
+
+    ext = core_utils.path_to_ext(file_path)
+
+    if ext in gdal_enums.get_valid_driver_extensions():
+        return True
+
+    return False
+
+
+def is_valid_raster_datatype(file_path):
+    &#34;&#34;&#34;
+    Check if a file path has a valid GDAL driver.
+
+    ## Args:
+    `file_path` (_str_): The file path to check.
+
+    ## Returns:
+    (_bool_): **True** if the file path is a valid GDAL Raster driver, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(file_path, str), &#34;file_path must be a string.&#34;
+
+    ext = core_utils.path_to_ext(file_path)
+
+    if ext in gdal_enums.get_valid_raster_driver_extensions():
+        return True
+
+    return False
+
+
+def is_valid_vector_datatype(file_path):
+    &#34;&#34;&#34;
+    Check if a file path has a valid OGR driver.
+
+    ## Args:
+    `file_path` (_str_): The file path to check.
+
+    ## Returns:
+    (_bool_): **True** if the file path is a valid OGR Vector driver, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(file_path, str), &#34;file_path must be a string.&#34;
+
+    ext = core_utils.path_to_ext(file_path)
+
+    if ext in gdal_enums.get_valid_vector_driver_extensions():
+        return True
+
+    return False
+
+
+def path_to_driver(file_path):
+    &#34;&#34;&#34;
+    Convert a file path to a GDAL or OGR driver ShortName (e.g. &#34;GTiff&#34; for &#34;new_york.tif&#34;)
+
+    ## Args:
+    `file_path` (_str_): The file path to convert.
+
+    ## Returns:
+    (_str_): The GDAL or OGR driver ShortName.
+
+    ## Raises:
+    `ValueError`: If the file path is not a valid GDAL or OGR driver.
+    &#34;&#34;&#34;
+    assert isinstance(file_path, str), &#34;file_path must be a string.&#34;
+
+    ext = core_utils.path_to_ext(file_path)
+
+    if is_valid_datatype(ext):
+        return gdal_enums.convert_extension_to_driver_shortname(ext)
+
+    raise ValueError(f&#34;Unable to parse GDAL or OGR driver from path: {file_path}&#34;)
+
+
+def path_to_driver_vector(file_path):
+    &#34;&#34;&#34;
+    Convert a file path to an OGR driver ShortName (e.g. &#34;FlatGeoBuf&#34; for &#34;new_york.fgb&#34;)
+
+    ## Args:
+    `file_path` (_str_): The file path to convert.
+
+    ## Returns:
+    (_str_): The OGR driver ShortName.
+
+    ## Raises:
+    `ValueError`: If the file path is not a valid OGR driver.
+    &#34;&#34;&#34;
+    assert isinstance(file_path, str), &#34;file_path must be a string.&#34;
+
+    ext = core_utils.path_to_ext(file_path)
+
+    if is_valid_vector_datatype(file_path):
+        return gdal_enums.convert_vector_extension_to_driver_shortname(ext)
+
+    raise ValueError(f&#34;Unable to parse GDAL or OGR driver from path: {file_path}&#34;)
+
+
+def path_to_driver_raster(file_path):
+    &#34;&#34;&#34;
+    Convert a file path to a GDAL driver ShortName (e.g. &#34;GTiff&#34; for &#34;new_york.tif&#34;)
+
+    ## Args:
+    `file_path` (_str_): The file path to convert.
+
+    ## Returns:
+    (_str_): The GDAL driver ShortName.
+
+    ## Raises:
+    `ValueError`: If the file path is not a valid GDAL driver.
+    &#34;&#34;&#34;
+    assert isinstance(file_path, str), &#34;file_path must be a string.&#34;
+
+    ext = core_utils.path_to_ext(file_path)
+
+    if is_valid_raster_datatype(file_path):
+        return gdal_enums.convert_raster_extension_to_driver_shortname(ext)
+
+    raise ValueError(f&#34;Unable to parse GDAL or OGR driver from path: {file_path}&#34;)
+
+
+def get_gdal_memory():
+    &#34;&#34;&#34; Get at list of all active memory layers in GDAL. &#34;&#34;&#34;
+    if hasattr(gdal, &#34;listdir&#34;):
+        datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
+    elif hasattr(gdal, &#34;ReadDir&#34;):
+        datasets = [&#34;/vsimem/&#34; + ds for ds in gdal.ReadDir(&#34;/vsimem&#34;)]
+    else:
+        print(&#34;Warning: Unable to clear gdal_memory due to GDAL version.&#34;)
+        return []
+
+    return datasets
+
+
+def is_in_memory(raster_or_vector):
+    &#34;&#34;&#34;
+    Check if vector is in memory
+
+    ## Args:
+    `raster_or_vector` (_str_/_gdal.Dataset_/ogr.DataSource): The vector or raster to check.
+
+    ## Returns:
+    (_bool_): **True** if the vector is in memory, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)), &#34;raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource.&#34;
+
+    if isinstance(raster_or_vector, str):
+        if core_utils.is_valid_mem_path(raster_or_vector):
+            return True
+
+        return False
+
+    elif isinstance(raster_or_vector, (gdal.Dataset, ogr.DataSource)):
+        driver = raster_or_vector.GetDriver()
+        driver_short_name = None
+        try:
+            driver_short_name = driver.GetName()
+        except Exception:
+            driver_short_name = driver.ShortName
+
+        if driver_short_name== &#34;MEM&#34;:
+            return True
+
+        if driver_short_name == &#34;Memory&#34;:
+            return True
+
+        if driver_short_name == &#34;VirtualMem&#34;:
+            return True
+
+        if driver_short_name == &#34;VirtualOGR&#34;:
+            return True
+
+        if core_utils.is_valid_mem_path(raster_or_vector.GetDescription()):
+            return True
+
+        return False
+
+    else:
+        raise TypeError(&#34;vector_or_raster must be a string, ogr.DataSource, or gdal.Dataset&#34;)
+
+
+def delete_if_in_memory(raster_or_vector):
+    &#34;&#34;&#34;
+    Delete raster or vector if it is in memory
+
+    ## Args:
+    `raster_or_vector` (_str_/_gdal.Dataset_/_ogr.DataSource_): The vector or raster to check.
+
+    ## Returns:
+    (_bool_): **True** if the vector is deleted, **False** otherwise.
+    &#34;&#34;&#34;
+    if not isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)):
+        return False
+
+    if not isinstance(raster_or_vector, str):
+        path = get_path_from_dataset(raster_or_vector)
+    else:
+        path = raster_or_vector
+
+    if is_in_memory(raster_or_vector):
+        if isinstance(raster_or_vector, str):
+            gdal.Unlink(raster_or_vector)
+        else:
+            raster_or_vector.Destroy()
+            raster_or_vector = None
+
+            gdal.Unlink(path)
+
+        datasets = get_gdal_memory()
+        if path not in datasets:
+            return True
+
+    return False
+
+
+def delete_if_in_memory_list(list_of_raster_or_vectors):
+    &#34;&#34;&#34;
+    Deletes a list of raster or vector if they are in memory
+
+    ## Args:
+    `list_of_raster_or_vectors` (_list_): The vector(s) or raster(s) to check.
+
+    ## Returns:
+    (_bool_): **True** if they were all deleted, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(list_of_raster_or_vectors, list), &#34;list_of_raster_or_vectors must be a list.&#34;
+
+    deleted = []
+    for raster_or_vector in list_of_raster_or_vectors:
+        deleted.append(delete_if_in_memory(raster_or_vector))
+
+    if any(deleted):
+        return True
+
+    return False
+
+
+def delete_raster_or_vector(raster_or_vector):
+    &#34;&#34;&#34;
+    Delete raster or vector. Can be used on both in memory and on disk.
+
+    ## Args:
+    `raster_or_vector` (_str_/_gdal.Dataset_/_ogr.DataSource_): The vector or raster to check.
+
+    ## Returns:
+    (_bool_): **True** if the file is deleted, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)), &#34;raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource.&#34;
+
+    if delete_if_in_memory(raster_or_vector):
+        return True
+
+    driver_shortname = path_to_driver(raster_or_vector)
+    driver = gdal.GetDriverByName(driver_shortname)
+    driver.Delete(raster_or_vector)
+
+    if not core_utils.file_exists(raster_or_vector):
+        return True
+
+    return core_utils.delete_file(raster_or_vector)
+
+
+def is_raster_empty(raster):
+    &#34;&#34;&#34;
+    Check if a raster has bands or zero width and zero height.
+
+    ## Args:
+    `raster` (_gdal.Dataset_): The raster to check.
+
+    ## Returns:
+    (_bool_): **True** if the raster has bands, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(raster, gdal.Dataset), &#34;raster must be a gdal.Dataset.&#34;
+
+    if raster.RasterCount == 0:
+        return True
+
+    if raster.RasterXSize == 0 or raster.RasterYSize == 0:
+        return True
+
+    return False
+
+
+def is_vector_empty(vector):
+    &#34;&#34;&#34;
+    Check if a vector has features with geometries
+
+    ## Args:
+    `vector` (_ogr.DataSource_): The vector to check.
+
+    ## Returns:
+    (_bool_): **True** if the vector has features, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(vector, ogr.DataSource), &#34;vector must be an ogr.DataSource.&#34;
+
+    layer_count = vector.GetLayerCount()
+
+    if layer_count == 0:
+        return True
+
+    for layer in range(0, layer_count):
+        layer = vector.GetLayerByIndex(layer)
+
+        if layer.GetFeatureCount() &gt; 0:
+            feature_count = layer.GetFeatureCount()
+
+            for feature in range(0, feature_count):
+                feature = layer.GetNextFeature()
+
+                if feature.GetGeometryRef() is not None:
+                    return False
+
+    return True
+
+
+def is_raster(potential_raster, *, empty_is_invalid=True):
+    &#34;&#34;&#34;Checks if a variable is a valid raster.
+
+    ## Args:
+    `potential_raster` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty raster is considered invalid. (Default: **True**)
+
+    ## Returns:
+    (_bool_): **True** if the variable is a valid raster, **False** otherwise.
+    &#34;&#34;&#34;
+    if isinstance(potential_raster, str):
+        if not core_utils.file_exists(potential_raster) and not core_utils.is_valid_mem_path(potential_raster):
+            return False
+
+        try:
+            gdal.PushErrorHandler(&#39;CPLQuietErrorHandler&#39;)
+            opened = gdal.Open(potential_raster, 0)
+            gdal.PopErrorHandler()
+        except Exception:
+            return False
+
+        if opened is None:
+            return False
+
+        if empty_is_invalid and is_raster_empty(opened):
+            return False
+
+        opened = None
+
+        return True
+
+    if isinstance(potential_raster, gdal.Dataset):
+
+        if empty_is_invalid and is_raster_empty(potential_raster):
+            return False
+
+        return True
+
+    return False
+
+
+def is_raster_list(potential_raster_list, *, empty_is_invalid=True):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid list of rasters.
+
+    ## Args:
+    `potential_raster_list` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty raster is considered invalid. (Default: **True**)
+    &#34;&#34;&#34;
+    if not isinstance(potential_raster_list, list):
+        return False
+
+    if len(potential_raster_list) == 0:
+        return False
+
+    for element in potential_raster_list:
+        if not is_raster(element, empty_is_invalid=empty_is_invalid):
+            return False
+
+    return True
+
+
+def is_path_list(potential_path_list, allow_none=False):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid list of paths.
+    &#34;&#34;&#34;
+
+    if not isinstance(potential_path_list, list):
+        return False
+
+    if len(potential_path_list) == 0:
+        return False
+
+    for element in potential_path_list:
+        if element is None and not allow_none:
+            return False
+
+        if not core_utils.is_valid_output_path(element) and not os.path.isdir(element):
+            return False
+
+    return True
+
+def is_vector(potential_vector, empty_is_invalid=True):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid vector.
+
+    ## Args:
+    `potential_vector` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty vector is considered invalid. (Default: **True**)
+
+    ## Returns:
+    (_bool_): **True** if the variable is a valid vector, **False** otherwise.
+    &#34;&#34;&#34;
+    if isinstance(potential_vector, ogr.DataSource):
+
+        if empty_is_invalid and is_vector_empty(potential_vector):
+            print(f&#34;Vector: {potential_vector} was empty.&#34;)
+
+            return False
+
+        return True
+
+    if isinstance(potential_vector, str):
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+
+        opened = ogr.Open(potential_vector, 0)
+        if opened is None:
+            extension = os.path.splitext(potential_vector)[1][1:]
+
+            if extension == &#34;memory&#34; or &#34;mem&#34;:
+                driver = ogr.GetDriverByName(&#34;Memory&#34;)
+                opened = driver.Open(potential_vector)
+
+        gdal.PopErrorHandler()
+
+        if isinstance(opened, ogr.DataSource):
+
+            if empty_is_invalid and is_vector_empty(opened):
+                return False
+
+            return True
+
+    return False
+
+
+def is_vector_list(potential_vector_list, *, empty_is_invalid=True):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid list of vectors.
+
+    ## Args:
+    `potential_vector_list` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty vector is considered invalid. (Default: **True**)
+    &#34;&#34;&#34;
+    if not isinstance(potential_vector_list, list):
+        return False
+
+    if len(potential_vector_list) == 0:
+        return False
+
+    for element in potential_vector_list:
+        if not is_vector(element, empty_is_invalid=empty_is_invalid):
+            return False
+
+    return True
+
+
+def is_raster_or_vector(potential_raster_or_vector, *, empty_is_invalid=True):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid raster or vector.
+
+    ## Args:
+    `potential_raster_or_vector` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty raster or vector is considered invalid. (Default: **True**)
+    &#34;&#34;&#34;
+    if is_raster(potential_raster_or_vector, empty_is_invalid=empty_is_invalid):
+        return True
+
+    if is_vector(potential_raster_or_vector, empty_is_invalid=empty_is_invalid):
+        return True
+
+    return False
+
+
+def is_raster_or_vector_list(potential_raster_or_vector_list, *, empty_is_invalid=True):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid list of rasters or vectors.
+
+    ## Args:
+    `potential_raster_or_vector_list` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty raster or vector is considered invalid. (Default: **True**)
+    &#34;&#34;&#34;
+    if not isinstance(potential_raster_or_vector_list, list):
+        return False
+
+    if len(potential_raster_or_vector_list) == 0:
+        return False
+
+    for element in potential_raster_or_vector_list:
+        if not is_raster_or_vector(element, empty_is_invalid=empty_is_invalid):
+            return False
+
+    return True
+
+
+def clear_gdal_memory():
+    &#34;&#34;&#34; Clears all gdal memory. &#34;&#34;&#34;
+    memory = get_gdal_memory()
+
+    for dataset in memory:
+        gdal.Unlink(dataset)
+
+    if len(get_gdal_memory()) != 0:
+        for dataset in get_gdal_memory():
+            opened = None
+            mem_path = PurePosixPath(&#34;/vsimem&#34;, dataset).as_posix()
+            if is_raster(mem_path):
+                opened = gdal.Open(mem_path)
+            elif is_raster(mem_path):
+                opened = ogr.Open(mem_path)
+            else:
+                print(f&#34;Unable to open dataset: {mem_path}&#34;)
+                continue
+            driver = opened.GetDriver()
+            driver.Delete(dataset)
+
+            opened = None
+            driver = None
+
+    if len(get_gdal_memory()) != 0:
+        print(&#34;Failed to clear all GDAL memory.&#34;)
+
+
+def gdal_print_memory():
+    &#34;&#34;&#34; Prints all gdal memory. &#34;&#34;&#34;
+    memory = get_gdal_memory()
+
+    for dataset in memory:
+        print(dataset)
+
+
+def create_memory_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=True):
+    &#34;&#34;&#34;
+    Gets a memory path from a string in the format: &lt;/br&gt;
+    `/vsimem/prefix_basename_time_uuid_suffix.ext`
+
+    ## Args:
+    `path` (_str_): The path to the original file. &lt;/br&gt;
+
+    ## Kwargs:
+    `prefix` (_str_): The prefix to add to the memory path. (**Default**: `&#34;&#34;`) &lt;/br&gt;
+    `suffix` (_str_): The suffix to add to the memory path. (**Default**: `&#34;&#34;`) &lt;/br&gt;
+    `add_uuid` (_bool_): If True, add a uuid to the memory path. (**Default**: `True`) &lt;/br&gt;
+
+    ## Returns:
+    (_str_): A string to the memory path. `/vsimem/prefix_basename_time_uuid_suffix.ext`
+    &#34;&#34;&#34;
+    assert isinstance(path, str), f&#34;path must be a string. Received: {path}&#34;
+    assert len(path) &gt; 0, f&#34;path must not be empty. Received: {path}&#34;
+
+    if core_utils.is_valid_mem_path(path):
+        add_uuid = True
+
+    basename = os.path.basename(path)
+
+    return core_utils.get_augmented_path(
+        PurePosixPath(&#34;/vsimem&#34;, basename).as_posix(),
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        folder=None,
+    )
+
+
+def get_path_from_dataset(dataset, *, dataset_type=None):
+    &#34;&#34;&#34;
+    Gets the path from a datasets. Can be vector or raster, string or opened.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_): The dataset.
+
+    ## Kwargs:
+    `dataset_type` (_str_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
+
+    ## Returns:
+    (_list_): The path to the dataset.
+    &#34;&#34;&#34;
+    if (dataset_type == &#34;raster&#34; or dataset_type is None) and is_raster(dataset, empty_is_invalid=False):
+        if isinstance(dataset, str):
+            raster = gdal.Open(dataset, 0)
+        elif isinstance(dataset, gdal.Dataset):
+            raster = dataset
+        else:
+            raise RuntimeError(f&#34;Could not read input raster: {raster}&#34;)
+
+        path = raster.GetDescription()
+        raster = None
+
+        return path
+
+    if (dataset_type == &#34;vector&#34; or dataset_type is None) and is_vector(dataset, empty_is_invalid=False):
+        if isinstance(dataset, str):
+            vector = ogr.Open(dataset, 0)
+        elif isinstance(dataset, ogr.DataSource):
+            vector = dataset
+        else:
+            raise RuntimeError(f&#34;Could not read input vector: {vector}&#34;)
+
+        path = vector.GetDescription()
+        vector = None
+
+        return path
+
+    raise ValueError(&#34;The dataset is not a raster or vector.&#34;)
+
+
+def get_path_from_dataset_list(datasets, *, allow_mixed=False, dataset_type=None):
+    &#34;&#34;&#34;
+    Gets the paths from a list of datasets.
+
+    ## Args:
+    `datasets` (_list_): The list of datasets.
+
+    ## Kwargs:
+    `allow_mixed` (_bool_): If True, allow mixed raster/vector datasets. (**Default**: `False`) &lt;/br&gt;
+    `dataset_type` (_str_/_None_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
+
+    ## Returns:
+    (_list_): A list of paths.
+    &#34;&#34;&#34;
+    assert isinstance(datasets, list), &#34;The datasets must be a list.&#34;
+    assert isinstance(dataset_type, (str, type(None))), &#34;The dataset_type must be &#39;raster&#39;, &#39;vector&#39;, or None.&#34;
+
+    rasters = False
+    vectors = False
+
+    outputs = []
+    for dataset in datasets:
+        if (dataset_type == &#34;raster&#34; or dataset_type is None) and is_raster(dataset, empty_is_invalid=False):
+            dataset_type = &#34;raster&#34;
+            rasters = True
+        elif (dataset_type == &#34;vector&#34; or dataset_type is None) and is_vector(dataset, empty_is_invalid=False):
+            dataset_type = &#34;vector&#34;
+            vectors = True
+        else:
+            raise ValueError(f&#34;The dataset is not a raster or vector. {dataset}&#34;)
+
+        if rasters and vectors and not allow_mixed:
+            raise ValueError(&#34;The datasets cannot be vectors and rasters mixed.&#34;)
+
+        outputs.append(get_path_from_dataset(dataset, dataset_type=dataset_type))
+
+    return outputs
+
+
+def convert_geom_to_vector(geom):
+    &#34;&#34;&#34;
+    Converts a geometry to a vector.
+
+    ## Args:
+    `geom` (_ogr.Geometry_): The geometry to convert.
+
+    ## Kwargs:
+    `layer_name` (_str_): The name of the layer. (Default: **&#34;geom&#34;**)
+    `add_uuid` (_bool_): If **True**, a UUID will be added to the layer. (Default: **True**)
+
+    ## Returns:
+    (_ogr.DataSource_): The vector.
+    &#34;&#34;&#34;
+    assert isinstance(geom, ogr.Geometry), &#34;geom must be an ogr.Geometry.&#34;
+
+    path = create_memory_path(&#34;converted_geom.gpkg&#34;, add_uuid=True)
+
+    driver = ogr.GetDriverByName(path_to_driver_vector(path))
+    vector = driver.CreateDataSource(path)
+
+    layer = vector.CreateLayer(&#34;converted_geom&#34;, geom.GetSpatialReference(), geom.GetGeometryType())
+
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometry(geom)
+
+    layer.CreateFeature(feature)
+    feature.Destroy()
+
+    return vector
+
+
+def import_esri_projection(esri_code):
+    &#34;&#34;&#34; Imports a projection from an ESRI code. &#34;&#34;&#34;
+
+    # ESRI:54009 is equivalent to EPSG:3785
+    if esri_code == &#34;ESRI:54009&#34;:
+        wkt_code = &#34;&#34;&#34;
+        PROJCRS[&#34;World_Mollweide&#34;,
+            BASEGEOGCRS[&#34;WGS 84&#34;,
+                DATUM[&#34;World Geodetic System 1984&#34;,
+                    ELLIPSOID[&#34;WGS 84&#34;,6378137,298.257223563,
+                        LENGTHUNIT[&#34;metre&#34;,1]]],
+                PRIMEM[&#34;Greenwich&#34;,0,
+                    ANGLEUNIT[&#34;Degree&#34;,0.0174532925199433]]],
+            CONVERSION[&#34;World_Mollweide&#34;,
+                METHOD[&#34;Mollweide&#34;],
+                PARAMETER[&#34;Longitude of natural origin&#34;,0,
+                    ANGLEUNIT[&#34;Degree&#34;,0.0174532925199433],
+                    ID[&#34;EPSG&#34;,8802]],
+                PARAMETER[&#34;False easting&#34;,0,
+                    LENGTHUNIT[&#34;metre&#34;,1],
+                    ID[&#34;EPSG&#34;,8806]],
+                PARAMETER[&#34;False northing&#34;,0,
+                    LENGTHUNIT[&#34;metre&#34;,1],
+                    ID[&#34;EPSG&#34;,8807]]],
+            CS[Cartesian,2],
+                AXIS[&#34;(E)&#34;,east,
+                    ORDER[1],
+                    LENGTHUNIT[&#34;metre&#34;,1]],
+                AXIS[&#34;(N)&#34;,north,
+                    ORDER[2],
+                    LENGTHUNIT[&#34;metre&#34;,1]],
+            USAGE[
+                SCOPE[&#34;Not known.&#34;],
+                AREA[&#34;World.&#34;],
+                BBOX[-90,-180,90,180]],
+            ID[&#34;ESRI&#34;,54009]]
+        &#34;&#34;&#34;
+    else:
+        raise ValueError(&#34;Unknown ESRI code&#34;)
+
+    # Create a spatial reference object
+    spatial_ref = osr.SpatialReference()
+
+    # Import the EPSG code
+    spatial_ref.ImportFromWkt(wkt_code)
+
+    return spatial_ref.ExportToWkt()
+
+
+def parse_projection(projection, *, return_wkt=False):
+    &#34;&#34;&#34;
+    Parses a gdal, ogr og osr data source and extraction the projection. If
+    a string or int is passed, it attempts to open it and return the projection as
+    an osr.SpatialReference.
+
+    ## Args:
+    `projection` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The projection to parse.
+
+    ## Kwargs:
+    `return_wkt` (_bool_): If **True** the projection will be returned as a WKT string, otherwise an osr.SpatialReference is returned. (Default: **False**)
+    &#34;&#34;&#34;
+    assert isinstance(projection, (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)), &#34;projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference.&#34;
+
+    err_msg = f&#34;Unable to parse target projection: {projection}&#34;
+    target_proj = osr.SpatialReference()
+
+    # Suppress gdal errors and handle them ourselves.
+    gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+
+    if isinstance(projection, ogr.DataSource):
+        layer = projection.GetLayer()
+        target_proj = layer.GetSpatialRef()
+
+    elif isinstance(projection, gdal.Dataset):
+        target_proj.ImportFromWkt(projection.GetProjection())
+
+    elif isinstance(projection, osr.SpatialReference):
+        target_proj = projection
+
+    elif isinstance(projection, str):
+        if is_raster(projection):
+            ref = gdal.Open(projection, 0)
+            target_proj.ImportFromWkt(ref.GetProjection())
+        elif is_vector(projection):
+            ref = ogr.Open(projection, 0)
+            layer = ref.GetLayer()
+            target_proj = layer.GetSpatialRef()
+        else:
+            code = target_proj.ImportFromWkt(projection)
+            if code != 0:
+                code = target_proj.ImportFromProj4(projection)
+                if code != 0:
+                    if projection.startswith(&#34;EPSG:&#34;) or projection.startswith(&#34;epsg:&#34;):
+                        epsg_code = int(projection.split(&#34;:&#34;)[1])
+                        code = target_proj.ImportFromEPSG(epsg_code)
+                        if code != 0:
+                            raise ValueError(err_msg)
+                    elif projection.startswith(&#34;ESRI:&#34;) or projection.startswith(&#34;esri:&#34;):
+                        wkt_code = import_esri_projection(projection)
+
+                        code = target_proj.ImportFromWkt(wkt_code)
+                        if code != 0:
+                            raise ValueError(err_msg)
+
+    elif isinstance(projection, int):
+        code = target_proj.ImportFromEPSG(projection)
+        if code != 0:
+            raise ValueError(err_msg)
+
+    else:
+        raise ValueError(err_msg)
+
+    gdal.PopErrorHandler()
+
+    if isinstance(target_proj, osr.SpatialReference):
+
+        if return_wkt:
+            return target_proj.ExportToWkt()
+
+        return target_proj
+    else:
+        raise ValueError(err_msg)
+
+
+def projections_match(source1, source2):
+    &#34;&#34;&#34;
+    Tests if two projection sources have the same projection.
+
+    ## Args:
+    `source1` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The first projection to parse.
+    `source1` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The second projection to parse.
+
+    ## Returns:
+    (_bool_): **True** if the projections match, **False** otherwise.
+    &#34;&#34;&#34;
+    proj1 = parse_projection(source1)
+    proj2 = parse_projection(source2)
+
+    if proj1.IsSame(proj2):
+        return True
+    elif proj1.ExportToProj4() == proj2.ExportToProj4():
+        return True
+
+    return False
+
+
+def projections_match_list(list_of_projection_sources):
+    &#34;&#34;&#34;
+    Tests if a list of projection sources all have the same projection.
+
+    ## Args:
+    `list_of_projection_sources` (_list_): A list of projections to test.
+
+    ## Returns:
+    (_bool_): **True** if the projections match, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(list_of_projection_sources, list), &#34;list_of_projection_sources must be a list.&#34;
+    assert len(list_of_projection_sources) &gt; 1, &#34;The list &#39;list_of_projection_sources&#39; must be a list of len &gt; 1&#34;
+
+    first = None
+    for index, source in enumerate(list_of_projection_sources):
+        if index == 0:
+            first = parse_projection(source)
+        else:
+            compare = parse_projection(source)
+
+            if not first.IsSame(compare) and first.ExportToProj4() != compare.ExportToProj4():
+                return False
+
+    return True
+
+
+def parse_raster_size(target, *, target_in_pixels=False):
+    &#34;&#34;&#34;
+    Parses the raster size from either a list of numbers or a GDAL raster.
+
+    ## Args:
+    `target_size` (_any_): The target to parse raster_size from.
+
+    ## Kwargs:
+    `target_in_pixels` (_bool_): If **True**, the target size is in pixels, otherwise it is in the rasters_units. (Default: **False**)
+
+    ## Returns:
+    (_tuple_): The raster size in the form of: `(x_res, y_res, x_size, y_size)`.
+    &#34;&#34;&#34;
+    assert target is not None, &#34;target_size cannot be None.&#34;
+
+    x_res = None
+    y_res = None
+
+    x_pixels = None
+    y_pixels = None
+
+    if isinstance(target, (gdal.Dataset, str)):
+        reference = (
+            target
+            if isinstance(target, gdal.Dataset)
+            else gdal.Open(target, 0)
+        )
+
+        transform = reference.GetGeoTransform()
+        reference = None
+
+        x_res = transform[1]
+        y_res = abs(transform[5])
+
+    elif target_in_pixels:
+        if isinstance(target, tuple) or isinstance(target, list):
+            if len(target) == 1:
+                if core_utils.is_number(target[0]):
+                    x_pixels = int(target[0])
+                    y_pixels = int(target[0])
+                else:
+                    raise ValueError(
+                        &#34;target_size_pixels is not a number or a list/tuple of numbers.&#34;
+                    )
+            elif len(target) == 2:
+                if core_utils.is_number(target[0]) and core_utils.is_number(target[1]):
+                    x_pixels = int(target[1])
+                    y_pixels = int(target[0])
+            else:
+                raise ValueError(&#34;target_size_pixels is either empty or larger than 2.&#34;)
+        elif core_utils.is_number(target):
+            x_pixels = int(target)
+            y_pixels = int(target)
+        else:
+            raise ValueError(&#34;target_size_pixels is invalid.&#34;)
+
+        x_res = None
+        y_res = None
+    else:
+        if isinstance(target, tuple) or isinstance(target, list):
+            if len(target) == 1:
+                if core_utils.is_number(target[0]):
+                    x_res = float(target[0])
+                    y_res = float(target[0])
+                else:
+                    raise ValueError(
+                        &#34;target_size is not a number or a list/tuple of numbers.&#34;
+                    )
+            elif len(target) == 2:
+                if core_utils.is_number(target[0]) and core_utils.is_number(target[1]):
+                    x_res = float(target[0])
+                    y_res = float(target[1])
+            else:
+                raise ValueError(&#34;target_size is either empty or larger than 2.&#34;)
+        elif core_utils.is_number(target):
+            x_res = float(target)
+            y_res = float(target)
+        else:
+            raise ValueError(&#34;target_size is invalid.&#34;)
+
+        x_pixels = None
+        y_pixels = None
+
+    return x_res, y_res, x_pixels, y_pixels
+
+
+def get_gdalwarp_ram_limit(limit_in_mb):
+    &#34;&#34;&#34;
+    Converts a RAM limit to a GDALWarp RAM limit.
+
+    ## Args:
+    `limit` (_str_/_int_): The RAM limit to convert. Can be auto, a percentage &#34;80%&#34; or a number in MB.
+
+    ## Returns:
+    (_int_): The GDALWarp RAM limit in bytes.
+    &#34;&#34;&#34;
+    assert isinstance(limit_in_mb, (str, int)), &#34;limit must be a string or integer.&#34;
+
+    min_ram = 1000000
+    limit = min_ram
+
+    if isinstance(limit_in_mb, str):
+        if limit_in_mb.lower() == &#34;auto&#34;:
+            return core_utils.get_dynamic_memory_limit_bytes(percentage=80.0)
+        else:
+            if &#34;%&#34; not in limit_in_mb:
+                raise ValueError(f&#34;Invalid limit: {limit_in_mb}&#34;)
+
+            limit_in_percentage = limit_in_mb.replace(&#34;%&#34;, &#34;&#34;)
+            limit_in_percentage = int(limit_in_percentage)
+
+            if limit_in_percentage &lt;= 0 or limit_in_percentage &gt; 100:
+                raise ValueError(f&#34;Invalid limit: {limit_in_mb}&#34;)
+
+            limit = core_utils.get_percentage_of_total_ram_mb(limit_in_percentage) * (1024 ** 2)
+
+            if limit &gt; min_ram:
+                return limit
+
+    if limit &gt; min_ram:
+        return int(limit_in_mb * (1024 ** 2))
+
+    return min_ram
+
+
+def to_array_list(array_or_list_of_array):
+    &#34;&#34;&#34;
+    Converts a numpy array or list of numpy arrays to a list of arrays.
+
+    ## Args:
+    `array_or_list_of_array` (_numpy.ndarray_/_list_/_str_): The numpy array or list of numpy arrays to convert to a list of arrays.
+
+    ## Returns:
+    (_list_): The list of arrays.
+    &#34;&#34;&#34;
+    assert isinstance(array_or_list_of_array, (np.ndarray, list, str)), &#34;array_or_list_of_array must be a numpy array, list of numpy arrays, or string.&#34;
+
+    return_list = [array_or_list_of_array] if isinstance(array_or_list_of_array, np.ndarray) else array_or_list_of_array
+
+    if len(return_list) == 0:
+        raise ValueError(&#34;Empty array list.&#34;)
+
+    for array in return_list:
+        if not isinstance(array, np.ndarray):
+            if isinstance(array, str) and core_utils.file_exists(array):
+                try:
+                    _ = np.load(array)
+                except:
+                    raise ValueError(f&#34;Invalid array in list: {array}&#34;) from None
+        else:
+            raise ValueError(f&#34;Invalid array in list: {array}&#34;)
+
+    return return_list
+
+
+def to_band_list(
+    band_number,
+    band_count,
+):
+    &#34;&#34;&#34;
+    Converts a band number or list of band numbers to a list of band numbers.
+
+    ## Args:
+    `band_number` (_int_/_float_/_list_): The band number or list of band numbers to convert to a list of band numbers. &lt;/br&gt;
+    `band_count` (_int_): The number of bands in the raster. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): The list of band numbers.
+    &#34;&#34;&#34;
+
+    return_list = []
+    if not isinstance(band_number, (int, float, list)):
+        raise TypeError(f&#34;Invalid type for band: {type(band_number)}&#34;)
+
+    if isinstance(band_number, list):
+        if len(band_number) == 0:
+            raise ValueError(&#34;Provided list of bands is empty.&#34;)
+        for val in band_number:
+            try:
+                band_int = int(val)
+            except Exception:
+                raise ValueError(
+                    f&#34;List of bands contained non-valid band number: {val}&#34;
+                ) from None
+
+            if band_int &gt; band_count:
+                raise ValueError(&#34;Requested a higher band that is available in raster.&#34;)
+            else:
+                return_list.append(band_int)
+    elif band_number == -1:
+        for val in range(band_count):
+            return_list.append(val + 1)
+    else:
+        if band_number &gt; band_count + 1:
+            raise ValueError(&#34;Requested a higher band that is available in raster.&#34;)
+        else:
+            return_list.append(int(band_number))
+
+    return return_list
+
+
+def create_output_path(
+    dataset_path,
+    out_path=None,
+    *,
+    overwrite=True,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    add_uuid=False,
+    ext=None,
+):
+    &#34;&#34;&#34;
+    Prepares a raster/vector for writing. Generates an output path. If no output path is
+    specified, the raster is written to memory. If a folder is given, that output directory is used
+    along with the input filename.
+
+    ## Args:
+    `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_): A **GDAL** or **OGR** dataframe, a name (with extension) of a raster &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_str_/_None_): A path to a directory to write the raster to. (Default: **None**). &lt;/br&gt;
+    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). &lt;/br&gt;
+    `prefix` (_str_): A string to prepend to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
+    `suffix` (_str_): A string to append to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
+    `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). &lt;/br&gt;
+
+    ## Returns:
+    (_str_): A path to the output raster or a list of paths.
+    &#34;&#34;&#34;
+    assert isinstance(dataset_path, (str, gdal.Dataset, ogr.DataSource, [str, gdal.Dataset, ogr.DataSource])), &#34;dataset_path must be a string or a list of strings.&#34;
+    assert len(dataset_path) &gt; 0, &#34;dataset_path must be a path of len larger than 0.&#34;
+    assert isinstance(out_path, (str, type(None))), &#34;out_path must be a string or None.&#34;
+
+    if out_path is not None:
+        assert core_utils.is_valid_output_path(out_path, overwrite=overwrite) or core_utils.folder_exists(out_path), &#34;out_path must be a valid output path or None.&#34;
+
+    aug_path = None
+    if out_path is None:
+
+        # Not all drivers are supported in memory. So if nothing is specified,
+        # we&#39;ll convert to tif and fgb for memory files.
+
+        og_path = get_path_from_dataset(dataset_path)
+        og_ext = core_utils.path_to_ext(og_path)
+
+        if gdal_enums.is_valid_raster_driver_extension(og_ext):
+            og_path = os.path.basename(core_utils.change_path_ext(og_path, &#34;tif&#34;))
+
+        elif gdal_enums.is_valid_vector_driver_extension(og_ext):
+            og_path = os.path.basename(core_utils.change_path_ext(og_path, &#34;gpkg&#34;))
+
+        aug_path = core_utils.get_augmented_path(
+            og_path,
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            folder=&#34;/vsimem&#34;,
+        )
+    elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
+
+        if os.path.isdir(out_path):
+            name = os.path.basename(dataset_path)
+            ext = os.path.basename(dataset_path).split(&#34;.&#34;)[1]
+            outname = f&#34;{prefix}{name.split(&#39;.&#39;)[0]}{suffix}.{ext}&#34;
+
+            aug_path = core_utils.get_augmented_path(
+                outname,
+                prefix=prefix,
+                suffix=suffix,
+                add_uuid=add_uuid,
+                folder=core_utils.path_to_folder(out_path),
+            )
+        else:
+            name = os.path.basename(out_path)
+            ext = os.path.basename(out_path).split(&#34;.&#34;)[1]
+            outname = f&#34;{prefix}{name.split(&#39;.&#39;)[0]}{suffix}.{ext}&#34;
+
+            aug_path = core_utils.get_augmented_path(
+                outname,
+                prefix=prefix,
+                suffix=suffix,
+                add_uuid=add_uuid,
+                folder=core_utils.path_to_folder(out_path),
+            )
+    elif core_utils.is_valid_mem_path(out_path):
+        aug_path = core_utils.get_augmented_path(
+            os.path.basename(dataset_path),
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            folder=&#34;/vsimem&#34;,
+        )
+    else:
+        raise ValueError(&#34;out_path must be a valid path or a list of valid paths.&#34;)
+
+    assert core_utils.is_valid_output_path(aug_path, overwrite=overwrite), f&#34;Error while generating output. It is invalid: {aug_path}&#34;
+
+    return aug_path
+
+
+def create_output_path_list(
+    dataset_path,
+    out_path=None,
+    *,
+    overwrite=True,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    add_uuid=False,
+    ext=None,
+):
+    &#34;&#34;&#34;
+    Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
+    specified, the rasters are written to memory. If a folder is given, the output directory is chosen,
+    the input filenames remain the same. If a specific path is used it must be the same length as the
+    input.
+
+    ## Args:
+    `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_/_list__): A **GDAL** or **OGR** dataframe, a path to a raster or a list of same. &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_str_/_None_): A path to a directory to write the raster to. (Default: **None**). &lt;/br&gt;
+    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). &lt;/br&gt;
+    `prefix` (_str_): A string to prepend to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
+    `suffix` (_str_): A string to append to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
+    `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). &lt;/br&gt;
+
+    ## Returns:
+    (_str_/_list_): A path to the output raster or a list of paths.
+    &#34;&#34;&#34;
+    assert isinstance(dataset_path, (list)), &#34;dataset_path must be a string or a list of strings.&#34;
+    assert isinstance(out_path, (str, type(None), list)), &#34;out_path must be a string or None.&#34;
+
+    if isinstance(out_path, str) and core_utils.is_str_a_glob(out_path):
+        dataset_path = core_utils.parse_glob_path(out_path)
+
+    assert len(dataset_path) &gt; 0, &#34;dataset_path must contain at least one path.&#34;
+
+    dataset_path = [get_path_from_dataset(path) for path in dataset_path]
+
+    if isinstance(out_path, list):
+        assert len(out_path) == len(dataset_path), &#34;out_path must be the same length as dataset_path if a list is provided.&#34;
+        assert core_utils.is_valid_output_path_list(out_path, overwrite=overwrite), &#34;out_path must be a list of valid output paths.&#34;
+
+    output = []
+    out_path = core_utils.ensure_list(out_path)
+    if len(out_path) != len(dataset_path):
+        out_path = out_path * len(dataset_path)
+
+    for index, path in enumerate(dataset_path):
+        output.append(create_output_path(
+            path,
+            out_path=out_path[index],
+            overwrite=overwrite,
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            ext=ext,
+        ))
+
+    assert core_utils.is_valid_output_path_list(output, overwrite=overwrite), f&#34;Error while generating outputs. They are invalid: {output}&#34;
+
+    return output
+
+
+def save_dataset_to_disk(
+    dataset,
+    out_path,
+    *,
+    overwrite=True,
+    creation_options=None,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    add_uuid=False,
+):
+    &#34;&#34;&#34;
+    Writes a dataset to disk. Can be a raster or a vector.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_/_list_): The dataset(s) to save. &lt;/br&gt;
+    `out_path` (_str_/_list_): The path(s) to save the dataset(s) to. &lt;/br&gt;
+
+    ## Kwargs:
+    `overwrite` (_bool_): Whether to overwrite the file if it already exists. (Default: **True**) &lt;/br&gt;
+    `creation_options` (_list_/_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) &lt;/br&gt;
+    `prefix` (_str_): A prefix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `suffix` (_str_): A suffix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `add_uuid` (_bool_): Whether to add a UUID to the file name. (Default: **False**) &lt;/br&gt;
+    &#34;&#34;&#34;
+    datasets = core_utils.ensure_list(dataset)
+    datasets_paths = get_path_from_dataset_list(datasets, allow_mixed=True)
+    out_paths = create_output_path_list(datasets_paths, out_path, prefix=prefix, suffix=suffix, add_uuid=add_uuid)
+
+    options = None
+
+    for index, dataset_ in enumerate(datasets):
+        opened_dataset = None
+        dataset_type = None
+
+        if is_raster(dataset_):
+            options = default_creation_options(creation_options)
+            dataset_type = &#34;raster&#34;
+            if isinstance(dataset_, str):
+                opened_dataset = gdal.Open(dataset_, 0)
+            elif isinstance(dataset_, gdal.Dataset):
+                opened_dataset = dataset_
+            else:
+                raise RuntimeError(f&#34;Could not read input raster: {dataset_}&#34;)
+
+        elif is_vector(dataset_):
+            dataset_type = &#34;vector&#34;
+            if isinstance(dataset_, str):
+                opened_dataset = ogr.Open(dataset_, 0)
+            elif isinstance(dataset_, ogr.DataSource):
+                opened_dataset = dataset_
+            else:
+                raise RuntimeError(f&#34;Could not read input vector: {dataset_}&#34;)
+
+        else:
+            raise RuntimeError(f&#34;Invalid dataset type: {dataset_}&#34;)
+
+        driver_destination = None
+
+        if dataset_type == &#34;raster&#34;:
+            driver_destination = gdal.GetDriverByName(path_to_driver_raster(out_paths[index]))
+        else:
+            driver_destination = ogr.GetDriverByName(path_to_driver_vector(out_paths[index]))
+
+        assert driver_destination is not None, &#34;Could not get driver for output dataset.&#34;
+
+        core_utils.remove_if_required(out_paths[index], overwrite)
+
+        driver_destination.CreateCopy(
+            out_path[index],
+            opened_dataset,
+            options=options,
+        )
+
+    if isinstance(dataset, list):
+        return out_paths[0]
+
+    return out_paths
+
+
+def save_dataset_to_memory(
+    dataset,
+    *,
+    overwrite=True,
+    creation_options=None,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    add_uuid=True,
+):
+    &#34;&#34;&#34;
+    Writes a dataset to memory. Can be a raster or a vector.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_/_list_): The dataset(s) to save. &lt;/br&gt;
+
+    ## Kwargs:
+    `overwrite` (_bool_): Whether to overwrite the file if it already exists. (Default: **True**) &lt;/br&gt;
+    `creation_options` (_list_/_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) &lt;/br&gt;
+    `prefix` (_str_): A prefix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `suffix` (_str_): A suffix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `add_uuid` (_bool_): Whether to add a UUID to the file name. (Default: **True**) &lt;/br&gt;
+    &#34;&#34;&#34;
+    return save_dataset_to_disk(
+        dataset,
+        out_path=None,
+        overwrite=overwrite,
+        creation_options=creation_options,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.utils.gdal_utils.clear_gdal_memory"><code class="name flex">
+<span>def <span class="ident">clear_gdal_memory</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Clears all gdal memory.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def clear_gdal_memory():
+    &#34;&#34;&#34; Clears all gdal memory. &#34;&#34;&#34;
+    memory = get_gdal_memory()
+
+    for dataset in memory:
+        gdal.Unlink(dataset)
+
+    if len(get_gdal_memory()) != 0:
+        for dataset in get_gdal_memory():
+            opened = None
+            mem_path = PurePosixPath(&#34;/vsimem&#34;, dataset).as_posix()
+            if is_raster(mem_path):
+                opened = gdal.Open(mem_path)
+            elif is_raster(mem_path):
+                opened = ogr.Open(mem_path)
+            else:
+                print(f&#34;Unable to open dataset: {mem_path}&#34;)
+                continue
+            driver = opened.GetDriver()
+            driver.Delete(dataset)
+
+            opened = None
+            driver = None
+
+    if len(get_gdal_memory()) != 0:
+        print(&#34;Failed to clear all GDAL memory.&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.convert_geom_to_vector"><code class="name flex">
+<span>def <span class="ident">convert_geom_to_vector</span></span>(<span>geom)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts a geometry to a vector.</p>
+<h2 id="args">Args:</h2>
+<p><code>geom</code> (<em>ogr.Geometry</em>): The geometry to convert.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>layer_name</code> (<em>str</em>): The name of the layer. (Default: <strong>"geom"</strong>)
+<code>add_uuid</code> (<em>bool</em>): If <strong>True</strong>, a UUID will be added to the layer. (Default: <strong>True</strong>)</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>ogr.DataSource</em>): The vector.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def convert_geom_to_vector(geom):
+    &#34;&#34;&#34;
+    Converts a geometry to a vector.
+
+    ## Args:
+    `geom` (_ogr.Geometry_): The geometry to convert.
+
+    ## Kwargs:
+    `layer_name` (_str_): The name of the layer. (Default: **&#34;geom&#34;**)
+    `add_uuid` (_bool_): If **True**, a UUID will be added to the layer. (Default: **True**)
+
+    ## Returns:
+    (_ogr.DataSource_): The vector.
+    &#34;&#34;&#34;
+    assert isinstance(geom, ogr.Geometry), &#34;geom must be an ogr.Geometry.&#34;
+
+    path = create_memory_path(&#34;converted_geom.gpkg&#34;, add_uuid=True)
+
+    driver = ogr.GetDriverByName(path_to_driver_vector(path))
+    vector = driver.CreateDataSource(path)
+
+    layer = vector.CreateLayer(&#34;converted_geom&#34;, geom.GetSpatialReference(), geom.GetGeometryType())
+
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometry(geom)
+
+    layer.CreateFeature(feature)
+    feature.Destroy()
+
+    return vector</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.create_memory_path"><code class="name flex">
+<span>def <span class="ident">create_memory_path</span></span>(<span>path, *, prefix='', suffix='', add_uuid=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gets a memory path from a string in the format: </br>
+<code>/vsimem/prefix_basename_time_uuid_suffix.ext</code></p>
+<h2 id="args">Args:</h2>
+<p><code>path</code> (<em>str</em>): The path to the original file. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>prefix</code> (<em>str</em>): The prefix to add to the memory path. (<strong>Default</strong>: <code>""</code>) </br>
+<code>suffix</code> (<em>str</em>): The suffix to add to the memory path. (<strong>Default</strong>: <code>""</code>) </br>
+<code>add_uuid</code> (<em>bool</em>): If True, add a uuid to the memory path. (<strong>Default</strong>: <code>True</code>) </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): A string to the memory path. <code>/vsimem/prefix_basename_time_uuid_suffix.ext</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_memory_path(path, *, prefix=&#34;&#34;, suffix=&#34;&#34;, add_uuid=True):
+    &#34;&#34;&#34;
+    Gets a memory path from a string in the format: &lt;/br&gt;
+    `/vsimem/prefix_basename_time_uuid_suffix.ext`
+
+    ## Args:
+    `path` (_str_): The path to the original file. &lt;/br&gt;
+
+    ## Kwargs:
+    `prefix` (_str_): The prefix to add to the memory path. (**Default**: `&#34;&#34;`) &lt;/br&gt;
+    `suffix` (_str_): The suffix to add to the memory path. (**Default**: `&#34;&#34;`) &lt;/br&gt;
+    `add_uuid` (_bool_): If True, add a uuid to the memory path. (**Default**: `True`) &lt;/br&gt;
+
+    ## Returns:
+    (_str_): A string to the memory path. `/vsimem/prefix_basename_time_uuid_suffix.ext`
+    &#34;&#34;&#34;
+    assert isinstance(path, str), f&#34;path must be a string. Received: {path}&#34;
+    assert len(path) &gt; 0, f&#34;path must not be empty. Received: {path}&#34;
+
+    if core_utils.is_valid_mem_path(path):
+        add_uuid = True
+
+    basename = os.path.basename(path)
+
+    return core_utils.get_augmented_path(
+        PurePosixPath(&#34;/vsimem&#34;, basename).as_posix(),
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        folder=None,
+    )</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.create_output_path"><code class="name flex">
+<span>def <span class="ident">create_output_path</span></span>(<span>dataset_path, out_path=None, *, overwrite=True, prefix='', suffix='', add_uuid=False, ext=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Prepares a raster/vector for writing. Generates an output path. If no output path is
+specified, the raster is written to memory. If a folder is given, that output directory is used
+along with the input filename.</p>
+<h2 id="args">Args:</h2>
+<p><code>dataset_path</code> (<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>str</em>): A <strong>GDAL</strong> or <strong>OGR</strong> dataframe, a name (with extension) of a raster </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>out_path</code> (<em>str</em>/<em>None</em>): A path to a directory to write the raster to. (Default: <strong>None</strong>). </br>
+<code>overwrite</code> (<em>bool</em>): If True, the output raster will be overwritten if it already exists. (Default: <strong>True</strong>). </br>
+<code>prefix</code> (<em>str</em>): A string to prepend to the output filename. (Default: <strong>""</strong>). </br>
+<code>suffix</code> (<em>str</em>): A string to append to the output filename. (Default: <strong>""</strong>). </br>
+<code>add_uuid</code> (<em>bool</em>): If True, a UUID will be added to the output filename. (Default: <strong>False</strong>). </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): A path to the output raster or a list of paths.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_output_path(
+    dataset_path,
+    out_path=None,
+    *,
+    overwrite=True,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    add_uuid=False,
+    ext=None,
+):
+    &#34;&#34;&#34;
+    Prepares a raster/vector for writing. Generates an output path. If no output path is
+    specified, the raster is written to memory. If a folder is given, that output directory is used
+    along with the input filename.
+
+    ## Args:
+    `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_): A **GDAL** or **OGR** dataframe, a name (with extension) of a raster &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_str_/_None_): A path to a directory to write the raster to. (Default: **None**). &lt;/br&gt;
+    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). &lt;/br&gt;
+    `prefix` (_str_): A string to prepend to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
+    `suffix` (_str_): A string to append to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
+    `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). &lt;/br&gt;
+
+    ## Returns:
+    (_str_): A path to the output raster or a list of paths.
+    &#34;&#34;&#34;
+    assert isinstance(dataset_path, (str, gdal.Dataset, ogr.DataSource, [str, gdal.Dataset, ogr.DataSource])), &#34;dataset_path must be a string or a list of strings.&#34;
+    assert len(dataset_path) &gt; 0, &#34;dataset_path must be a path of len larger than 0.&#34;
+    assert isinstance(out_path, (str, type(None))), &#34;out_path must be a string or None.&#34;
+
+    if out_path is not None:
+        assert core_utils.is_valid_output_path(out_path, overwrite=overwrite) or core_utils.folder_exists(out_path), &#34;out_path must be a valid output path or None.&#34;
+
+    aug_path = None
+    if out_path is None:
+
+        # Not all drivers are supported in memory. So if nothing is specified,
+        # we&#39;ll convert to tif and fgb for memory files.
+
+        og_path = get_path_from_dataset(dataset_path)
+        og_ext = core_utils.path_to_ext(og_path)
+
+        if gdal_enums.is_valid_raster_driver_extension(og_ext):
+            og_path = os.path.basename(core_utils.change_path_ext(og_path, &#34;tif&#34;))
+
+        elif gdal_enums.is_valid_vector_driver_extension(og_ext):
+            og_path = os.path.basename(core_utils.change_path_ext(og_path, &#34;gpkg&#34;))
+
+        aug_path = core_utils.get_augmented_path(
+            og_path,
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            folder=&#34;/vsimem&#34;,
+        )
+    elif core_utils.folder_exists(core_utils.path_to_folder(out_path)):
+
+        if os.path.isdir(out_path):
+            name = os.path.basename(dataset_path)
+            ext = os.path.basename(dataset_path).split(&#34;.&#34;)[1]
+            outname = f&#34;{prefix}{name.split(&#39;.&#39;)[0]}{suffix}.{ext}&#34;
+
+            aug_path = core_utils.get_augmented_path(
+                outname,
+                prefix=prefix,
+                suffix=suffix,
+                add_uuid=add_uuid,
+                folder=core_utils.path_to_folder(out_path),
+            )
+        else:
+            name = os.path.basename(out_path)
+            ext = os.path.basename(out_path).split(&#34;.&#34;)[1]
+            outname = f&#34;{prefix}{name.split(&#39;.&#39;)[0]}{suffix}.{ext}&#34;
+
+            aug_path = core_utils.get_augmented_path(
+                outname,
+                prefix=prefix,
+                suffix=suffix,
+                add_uuid=add_uuid,
+                folder=core_utils.path_to_folder(out_path),
+            )
+    elif core_utils.is_valid_mem_path(out_path):
+        aug_path = core_utils.get_augmented_path(
+            os.path.basename(dataset_path),
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            folder=&#34;/vsimem&#34;,
+        )
+    else:
+        raise ValueError(&#34;out_path must be a valid path or a list of valid paths.&#34;)
+
+    assert core_utils.is_valid_output_path(aug_path, overwrite=overwrite), f&#34;Error while generating output. It is invalid: {aug_path}&#34;
+
+    return aug_path</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.create_output_path_list"><code class="name flex">
+<span>def <span class="ident">create_output_path_list</span></span>(<span>dataset_path, out_path=None, *, overwrite=True, prefix='', suffix='', add_uuid=False, ext=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
+specified, the rasters are written to memory. If a folder is given, the output directory is chosen,
+the input filenames remain the same. If a specific path is used it must be the same length as the
+input.</p>
+<h2 id="args">Args:</h2>
+<p><code>dataset_path</code> (<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>str</em>/_list__): A <strong>GDAL</strong> or <strong>OGR</strong> dataframe, a path to a raster or a list of same. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>out_path</code> (<em>str</em>/<em>None</em>): A path to a directory to write the raster to. (Default: <strong>None</strong>). </br>
+<code>overwrite</code> (<em>bool</em>): If True, the output raster will be overwritten if it already exists. (Default: <strong>True</strong>). </br>
+<code>prefix</code> (<em>str</em>): A string to prepend to the output filename. (Default: <strong>""</strong>). </br>
+<code>suffix</code> (<em>str</em>): A string to append to the output filename. (Default: <strong>""</strong>). </br>
+<code>add_uuid</code> (<em>bool</em>): If True, a UUID will be added to the output filename. (Default: <strong>False</strong>). </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>/<em>list</em>): A path to the output raster or a list of paths.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def create_output_path_list(
+    dataset_path,
+    out_path=None,
+    *,
+    overwrite=True,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    add_uuid=False,
+    ext=None,
+):
+    &#34;&#34;&#34;
+    Prepares a raster/vector or a list of rasters/vectors for writing. Generates output paths. If no output paths are
+    specified, the rasters are written to memory. If a folder is given, the output directory is chosen,
+    the input filenames remain the same. If a specific path is used it must be the same length as the
+    input.
+
+    ## Args:
+    `dataset_path` (_gdal.Dataset_/_ogr.DataSource_/_str_/_list__): A **GDAL** or **OGR** dataframe, a path to a raster or a list of same. &lt;/br&gt;
+
+    ## Kwargs:
+    `out_path` (_str_/_None_): A path to a directory to write the raster to. (Default: **None**). &lt;/br&gt;
+    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**). &lt;/br&gt;
+    `prefix` (_str_): A string to prepend to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
+    `suffix` (_str_): A string to append to the output filename. (Default: **&#34;&#34;**). &lt;/br&gt;
+    `add_uuid` (_bool_): If True, a UUID will be added to the output filename. (Default: **False**). &lt;/br&gt;
+
+    ## Returns:
+    (_str_/_list_): A path to the output raster or a list of paths.
+    &#34;&#34;&#34;
+    assert isinstance(dataset_path, (list)), &#34;dataset_path must be a string or a list of strings.&#34;
+    assert isinstance(out_path, (str, type(None), list)), &#34;out_path must be a string or None.&#34;
+
+    if isinstance(out_path, str) and core_utils.is_str_a_glob(out_path):
+        dataset_path = core_utils.parse_glob_path(out_path)
+
+    assert len(dataset_path) &gt; 0, &#34;dataset_path must contain at least one path.&#34;
+
+    dataset_path = [get_path_from_dataset(path) for path in dataset_path]
+
+    if isinstance(out_path, list):
+        assert len(out_path) == len(dataset_path), &#34;out_path must be the same length as dataset_path if a list is provided.&#34;
+        assert core_utils.is_valid_output_path_list(out_path, overwrite=overwrite), &#34;out_path must be a list of valid output paths.&#34;
+
+    output = []
+    out_path = core_utils.ensure_list(out_path)
+    if len(out_path) != len(dataset_path):
+        out_path = out_path * len(dataset_path)
+
+    for index, path in enumerate(dataset_path):
+        output.append(create_output_path(
+            path,
+            out_path=out_path[index],
+            overwrite=overwrite,
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            ext=ext,
+        ))
+
+    assert core_utils.is_valid_output_path_list(output, overwrite=overwrite), f&#34;Error while generating outputs. They are invalid: {output}&#34;
+
+    return output</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.default_creation_options"><code class="name flex">
+<span>def <span class="ident">default_creation_options</span></span>(<span>options=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Takes a list of GDAL creation options and adds the following defaults to it if their not specified: </br></p>
+<ul>
+<li><code>"TILED=YES"</code></li>
+<li><code>"NUM_THREADS=ALL_CPUS"</code></li>
+<li><code>"BIGG_TIF=YES"</code></li>
+<li><code>"COMPRESS=LZW"</code></li>
+</ul>
+<p>If any of the options are already specified, they are not added.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>options</code> (<em>list</em>/None): The GDAL creation options to add to. (Default: <strong>None</strong>)</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): A list containing the default values.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def default_creation_options(options=None):
+    &#34;&#34;&#34;
+    Takes a list of GDAL creation options and adds the following defaults to it if their not specified: &lt;/br&gt;
+
+    * `&#34;TILED=YES&#34;`
+    * `&#34;NUM_THREADS=ALL_CPUS&#34;`
+    * `&#34;BIGG_TIF=YES&#34;`
+    * `&#34;COMPRESS=LZW&#34;`
+
+    If any of the options are already specified, they are not added.
+
+    ## Kwargs:
+    `options` (_list_/None): The GDAL creation options to add to. (Default: **None**)
+
+    ## Returns:
+    (_list_): A list containing the default values.
+    &#34;&#34;&#34;
+    assert isinstance(options, (list, type(None))), &#34;Options must be a list or None.&#34;
+
+    if options is None:
+        options = []
+
+    internal_options = list(options)
+
+    opt_str = &#34; &#34;.join(internal_options)
+    if &#34;TILED&#34; not in opt_str:
+        internal_options.append(&#34;TILED=YES&#34;)
+
+    if &#34;NUM_THREADS&#34; not in opt_str:
+        internal_options.append(&#34;NUM_THREADS=ALL_CPUS&#34;)
+
+    if &#34;BIGTIFF&#34; not in opt_str:
+        internal_options.append(&#34;BIGTIFF=IF_SAFER&#34;)
+
+    if &#34;COMPRESS&#34; not in opt_str:
+        internal_options.append(&#34;COMPRESS=LZW&#34;)
+
+    if &#34;BLOCKXSIZE&#34; not in opt_str:
+        internal_options.append(&#34;BLOCKXSIZE=256&#34;)
+
+    if &#34;BLOCKYSIZE&#34; not in opt_str:
+        internal_options.append(&#34;BLOCKYSIZE=256&#34;)
+
+    return internal_options</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.delete_if_in_memory"><code class="name flex">
+<span>def <span class="ident">delete_if_in_memory</span></span>(<span>raster_or_vector)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete raster or vector if it is in memory</p>
+<h2 id="args">Args:</h2>
+<p><code>raster_or_vector</code> (<em>str</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>): The vector or raster to check.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the vector is deleted, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def delete_if_in_memory(raster_or_vector):
+    &#34;&#34;&#34;
+    Delete raster or vector if it is in memory
+
+    ## Args:
+    `raster_or_vector` (_str_/_gdal.Dataset_/_ogr.DataSource_): The vector or raster to check.
+
+    ## Returns:
+    (_bool_): **True** if the vector is deleted, **False** otherwise.
+    &#34;&#34;&#34;
+    if not isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)):
+        return False
+
+    if not isinstance(raster_or_vector, str):
+        path = get_path_from_dataset(raster_or_vector)
+    else:
+        path = raster_or_vector
+
+    if is_in_memory(raster_or_vector):
+        if isinstance(raster_or_vector, str):
+            gdal.Unlink(raster_or_vector)
+        else:
+            raster_or_vector.Destroy()
+            raster_or_vector = None
+
+            gdal.Unlink(path)
+
+        datasets = get_gdal_memory()
+        if path not in datasets:
+            return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.delete_if_in_memory_list"><code class="name flex">
+<span>def <span class="ident">delete_if_in_memory_list</span></span>(<span>list_of_raster_or_vectors)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Deletes a list of raster or vector if they are in memory</p>
+<h2 id="args">Args:</h2>
+<p><code>list_of_raster_or_vectors</code> (<em>list</em>): The vector(s) or raster(s) to check.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if they were all deleted, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def delete_if_in_memory_list(list_of_raster_or_vectors):
+    &#34;&#34;&#34;
+    Deletes a list of raster or vector if they are in memory
+
+    ## Args:
+    `list_of_raster_or_vectors` (_list_): The vector(s) or raster(s) to check.
+
+    ## Returns:
+    (_bool_): **True** if they were all deleted, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(list_of_raster_or_vectors, list), &#34;list_of_raster_or_vectors must be a list.&#34;
+
+    deleted = []
+    for raster_or_vector in list_of_raster_or_vectors:
+        deleted.append(delete_if_in_memory(raster_or_vector))
+
+    if any(deleted):
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.delete_raster_or_vector"><code class="name flex">
+<span>def <span class="ident">delete_raster_or_vector</span></span>(<span>raster_or_vector)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete raster or vector. Can be used on both in memory and on disk.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster_or_vector</code> (<em>str</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>): The vector or raster to check.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the file is deleted, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def delete_raster_or_vector(raster_or_vector):
+    &#34;&#34;&#34;
+    Delete raster or vector. Can be used on both in memory and on disk.
+
+    ## Args:
+    `raster_or_vector` (_str_/_gdal.Dataset_/_ogr.DataSource_): The vector or raster to check.
+
+    ## Returns:
+    (_bool_): **True** if the file is deleted, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)), &#34;raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource.&#34;
+
+    if delete_if_in_memory(raster_or_vector):
+        return True
+
+    driver_shortname = path_to_driver(raster_or_vector)
+    driver = gdal.GetDriverByName(driver_shortname)
+    driver.Delete(raster_or_vector)
+
+    if not core_utils.file_exists(raster_or_vector):
+        return True
+
+    return core_utils.delete_file(raster_or_vector)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.gdal_print_memory"><code class="name flex">
+<span>def <span class="ident">gdal_print_memory</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Prints all gdal memory.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def gdal_print_memory():
+    &#34;&#34;&#34; Prints all gdal memory. &#34;&#34;&#34;
+    memory = get_gdal_memory()
+
+    for dataset in memory:
+        print(dataset)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.get_default_projection"><code class="name flex">
+<span>def <span class="ident">get_default_projection</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the default projection for a new raster.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The default projection.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_default_projection():
+    &#34;&#34;&#34;
+    Get the default projection for a new raster.
+
+    ## Returns:
+    (_str_): The default projection.
+    &#34;&#34;&#34;
+    epsg_4326_wkt = &#39;GEOGCS[&#34;WGS 84&#34;,DATUM[&#34;WGS_1984&#34;,SPHEROID[&#34;WGS 84&#34;,6378137,298.257223563]],PRIMEM[&#34;Greenwich&#34;,0],UNIT[&#34;degree&#34;,0.0174532925199433,AUTHORITY[&#34;EPSG&#34;,&#34;9122&#34;]],AUTHORITY[&#34;EPSG&#34;,&#34;4326&#34;]]&#39;
+
+    return epsg_4326_wkt</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.get_gdal_memory"><code class="name flex">
+<span>def <span class="ident">get_gdal_memory</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get at list of all active memory layers in GDAL.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_gdal_memory():
+    &#34;&#34;&#34; Get at list of all active memory layers in GDAL. &#34;&#34;&#34;
+    if hasattr(gdal, &#34;listdir&#34;):
+        datasets = [ds.name for ds in gdal.listdir(&#34;/vsimem&#34;)]
+    elif hasattr(gdal, &#34;ReadDir&#34;):
+        datasets = [&#34;/vsimem/&#34; + ds for ds in gdal.ReadDir(&#34;/vsimem&#34;)]
+    else:
+        print(&#34;Warning: Unable to clear gdal_memory due to GDAL version.&#34;)
+        return []
+
+    return datasets</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.get_gdalwarp_ram_limit"><code class="name flex">
+<span>def <span class="ident">get_gdalwarp_ram_limit</span></span>(<span>limit_in_mb)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts a RAM limit to a GDALWarp RAM limit.</p>
+<h2 id="args">Args:</h2>
+<p><code>limit</code> (<em>str</em>/<em>int</em>): The RAM limit to convert. Can be auto, a percentage "80%" or a number in MB.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>int</em>): The GDALWarp RAM limit in bytes.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_gdalwarp_ram_limit(limit_in_mb):
+    &#34;&#34;&#34;
+    Converts a RAM limit to a GDALWarp RAM limit.
+
+    ## Args:
+    `limit` (_str_/_int_): The RAM limit to convert. Can be auto, a percentage &#34;80%&#34; or a number in MB.
+
+    ## Returns:
+    (_int_): The GDALWarp RAM limit in bytes.
+    &#34;&#34;&#34;
+    assert isinstance(limit_in_mb, (str, int)), &#34;limit must be a string or integer.&#34;
+
+    min_ram = 1000000
+    limit = min_ram
+
+    if isinstance(limit_in_mb, str):
+        if limit_in_mb.lower() == &#34;auto&#34;:
+            return core_utils.get_dynamic_memory_limit_bytes(percentage=80.0)
+        else:
+            if &#34;%&#34; not in limit_in_mb:
+                raise ValueError(f&#34;Invalid limit: {limit_in_mb}&#34;)
+
+            limit_in_percentage = limit_in_mb.replace(&#34;%&#34;, &#34;&#34;)
+            limit_in_percentage = int(limit_in_percentage)
+
+            if limit_in_percentage &lt;= 0 or limit_in_percentage &gt; 100:
+                raise ValueError(f&#34;Invalid limit: {limit_in_mb}&#34;)
+
+            limit = core_utils.get_percentage_of_total_ram_mb(limit_in_percentage) * (1024 ** 2)
+
+            if limit &gt; min_ram:
+                return limit
+
+    if limit &gt; min_ram:
+        return int(limit_in_mb * (1024 ** 2))
+
+    return min_ram</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.get_path_from_dataset"><code class="name flex">
+<span>def <span class="ident">get_path_from_dataset</span></span>(<span>dataset, *, dataset_type=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gets the path from a datasets. Can be vector or raster, string or opened.</p>
+<h2 id="args">Args:</h2>
+<p><code>dataset</code> (<em>str</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>): The dataset.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>dataset_type</code> (<em>str</em>): The type of dataset. If not specified, it is guessed. (<strong>Default</strong>: <code>None</code>)</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): The path to the dataset.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_path_from_dataset(dataset, *, dataset_type=None):
+    &#34;&#34;&#34;
+    Gets the path from a datasets. Can be vector or raster, string or opened.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_): The dataset.
+
+    ## Kwargs:
+    `dataset_type` (_str_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
+
+    ## Returns:
+    (_list_): The path to the dataset.
+    &#34;&#34;&#34;
+    if (dataset_type == &#34;raster&#34; or dataset_type is None) and is_raster(dataset, empty_is_invalid=False):
+        if isinstance(dataset, str):
+            raster = gdal.Open(dataset, 0)
+        elif isinstance(dataset, gdal.Dataset):
+            raster = dataset
+        else:
+            raise RuntimeError(f&#34;Could not read input raster: {raster}&#34;)
+
+        path = raster.GetDescription()
+        raster = None
+
+        return path
+
+    if (dataset_type == &#34;vector&#34; or dataset_type is None) and is_vector(dataset, empty_is_invalid=False):
+        if isinstance(dataset, str):
+            vector = ogr.Open(dataset, 0)
+        elif isinstance(dataset, ogr.DataSource):
+            vector = dataset
+        else:
+            raise RuntimeError(f&#34;Could not read input vector: {vector}&#34;)
+
+        path = vector.GetDescription()
+        vector = None
+
+        return path
+
+    raise ValueError(&#34;The dataset is not a raster or vector.&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.get_path_from_dataset_list"><code class="name flex">
+<span>def <span class="ident">get_path_from_dataset_list</span></span>(<span>datasets, *, allow_mixed=False, dataset_type=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gets the paths from a list of datasets.</p>
+<h2 id="args">Args:</h2>
+<p><code>datasets</code> (<em>list</em>): The list of datasets.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>allow_mixed</code> (<em>bool</em>): If True, allow mixed raster/vector datasets. (<strong>Default</strong>: <code>False</code>) </br>
+<code>dataset_type</code> (<em>str</em>/<em>None</em>): The type of dataset. If not specified, it is guessed. (<strong>Default</strong>: <code>None</code>)</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): A list of paths.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_path_from_dataset_list(datasets, *, allow_mixed=False, dataset_type=None):
+    &#34;&#34;&#34;
+    Gets the paths from a list of datasets.
+
+    ## Args:
+    `datasets` (_list_): The list of datasets.
+
+    ## Kwargs:
+    `allow_mixed` (_bool_): If True, allow mixed raster/vector datasets. (**Default**: `False`) &lt;/br&gt;
+    `dataset_type` (_str_/_None_): The type of dataset. If not specified, it is guessed. (**Default**: `None`)
+
+    ## Returns:
+    (_list_): A list of paths.
+    &#34;&#34;&#34;
+    assert isinstance(datasets, list), &#34;The datasets must be a list.&#34;
+    assert isinstance(dataset_type, (str, type(None))), &#34;The dataset_type must be &#39;raster&#39;, &#39;vector&#39;, or None.&#34;
+
+    rasters = False
+    vectors = False
+
+    outputs = []
+    for dataset in datasets:
+        if (dataset_type == &#34;raster&#34; or dataset_type is None) and is_raster(dataset, empty_is_invalid=False):
+            dataset_type = &#34;raster&#34;
+            rasters = True
+        elif (dataset_type == &#34;vector&#34; or dataset_type is None) and is_vector(dataset, empty_is_invalid=False):
+            dataset_type = &#34;vector&#34;
+            vectors = True
+        else:
+            raise ValueError(f&#34;The dataset is not a raster or vector. {dataset}&#34;)
+
+        if rasters and vectors and not allow_mixed:
+            raise ValueError(&#34;The datasets cannot be vectors and rasters mixed.&#34;)
+
+        outputs.append(get_path_from_dataset(dataset, dataset_type=dataset_type))
+
+    return outputs</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.import_esri_projection"><code class="name flex">
+<span>def <span class="ident">import_esri_projection</span></span>(<span>esri_code)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Imports a projection from an ESRI code.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def import_esri_projection(esri_code):
+    &#34;&#34;&#34; Imports a projection from an ESRI code. &#34;&#34;&#34;
+
+    # ESRI:54009 is equivalent to EPSG:3785
+    if esri_code == &#34;ESRI:54009&#34;:
+        wkt_code = &#34;&#34;&#34;
+        PROJCRS[&#34;World_Mollweide&#34;,
+            BASEGEOGCRS[&#34;WGS 84&#34;,
+                DATUM[&#34;World Geodetic System 1984&#34;,
+                    ELLIPSOID[&#34;WGS 84&#34;,6378137,298.257223563,
+                        LENGTHUNIT[&#34;metre&#34;,1]]],
+                PRIMEM[&#34;Greenwich&#34;,0,
+                    ANGLEUNIT[&#34;Degree&#34;,0.0174532925199433]]],
+            CONVERSION[&#34;World_Mollweide&#34;,
+                METHOD[&#34;Mollweide&#34;],
+                PARAMETER[&#34;Longitude of natural origin&#34;,0,
+                    ANGLEUNIT[&#34;Degree&#34;,0.0174532925199433],
+                    ID[&#34;EPSG&#34;,8802]],
+                PARAMETER[&#34;False easting&#34;,0,
+                    LENGTHUNIT[&#34;metre&#34;,1],
+                    ID[&#34;EPSG&#34;,8806]],
+                PARAMETER[&#34;False northing&#34;,0,
+                    LENGTHUNIT[&#34;metre&#34;,1],
+                    ID[&#34;EPSG&#34;,8807]]],
+            CS[Cartesian,2],
+                AXIS[&#34;(E)&#34;,east,
+                    ORDER[1],
+                    LENGTHUNIT[&#34;metre&#34;,1]],
+                AXIS[&#34;(N)&#34;,north,
+                    ORDER[2],
+                    LENGTHUNIT[&#34;metre&#34;,1]],
+            USAGE[
+                SCOPE[&#34;Not known.&#34;],
+                AREA[&#34;World.&#34;],
+                BBOX[-90,-180,90,180]],
+            ID[&#34;ESRI&#34;,54009]]
+        &#34;&#34;&#34;
+    else:
+        raise ValueError(&#34;Unknown ESRI code&#34;)
+
+    # Create a spatial reference object
+    spatial_ref = osr.SpatialReference()
+
+    # Import the EPSG code
+    spatial_ref.ImportFromWkt(wkt_code)
+
+    return spatial_ref.ExportToWkt()</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_in_memory"><code class="name flex">
+<span>def <span class="ident">is_in_memory</span></span>(<span>raster_or_vector)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if vector is in memory</p>
+<h2 id="args">Args:</h2>
+<p><code>raster_or_vector</code> (<em>str</em>/<em>gdal.Dataset</em>/ogr.DataSource): The vector or raster to check.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the vector is in memory, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_in_memory(raster_or_vector):
+    &#34;&#34;&#34;
+    Check if vector is in memory
+
+    ## Args:
+    `raster_or_vector` (_str_/_gdal.Dataset_/ogr.DataSource): The vector or raster to check.
+
+    ## Returns:
+    (_bool_): **True** if the vector is in memory, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)), &#34;raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource.&#34;
+
+    if isinstance(raster_or_vector, str):
+        if core_utils.is_valid_mem_path(raster_or_vector):
+            return True
+
+        return False
+
+    elif isinstance(raster_or_vector, (gdal.Dataset, ogr.DataSource)):
+        driver = raster_or_vector.GetDriver()
+        driver_short_name = None
+        try:
+            driver_short_name = driver.GetName()
+        except Exception:
+            driver_short_name = driver.ShortName
+
+        if driver_short_name== &#34;MEM&#34;:
+            return True
+
+        if driver_short_name == &#34;Memory&#34;:
+            return True
+
+        if driver_short_name == &#34;VirtualMem&#34;:
+            return True
+
+        if driver_short_name == &#34;VirtualOGR&#34;:
+            return True
+
+        if core_utils.is_valid_mem_path(raster_or_vector.GetDescription()):
+            return True
+
+        return False
+
+    else:
+        raise TypeError(&#34;vector_or_raster must be a string, ogr.DataSource, or gdal.Dataset&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_path_list"><code class="name flex">
+<span>def <span class="ident">is_path_list</span></span>(<span>potential_path_list, allow_none=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a variable is a valid list of paths.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_path_list(potential_path_list, allow_none=False):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid list of paths.
+    &#34;&#34;&#34;
+
+    if not isinstance(potential_path_list, list):
+        return False
+
+    if len(potential_path_list) == 0:
+        return False
+
+    for element in potential_path_list:
+        if element is None and not allow_none:
+            return False
+
+        if not core_utils.is_valid_output_path(element) and not os.path.isdir(element):
+            return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_raster"><code class="name flex">
+<span>def <span class="ident">is_raster</span></span>(<span>potential_raster, *, empty_is_invalid=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a variable is a valid raster.</p>
+<h2 id="args">Args:</h2>
+<p><code>potential_raster</code> (<em>any</em>): The variable to check.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>empty_is_invalid</code> (<em>bool</em>): If <strong>True</strong>, an empty raster is considered invalid. (Default: <strong>True</strong>)</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the variable is a valid raster, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_raster(potential_raster, *, empty_is_invalid=True):
+    &#34;&#34;&#34;Checks if a variable is a valid raster.
+
+    ## Args:
+    `potential_raster` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty raster is considered invalid. (Default: **True**)
+
+    ## Returns:
+    (_bool_): **True** if the variable is a valid raster, **False** otherwise.
+    &#34;&#34;&#34;
+    if isinstance(potential_raster, str):
+        if not core_utils.file_exists(potential_raster) and not core_utils.is_valid_mem_path(potential_raster):
+            return False
+
+        try:
+            gdal.PushErrorHandler(&#39;CPLQuietErrorHandler&#39;)
+            opened = gdal.Open(potential_raster, 0)
+            gdal.PopErrorHandler()
+        except Exception:
+            return False
+
+        if opened is None:
+            return False
+
+        if empty_is_invalid and is_raster_empty(opened):
+            return False
+
+        opened = None
+
+        return True
+
+    if isinstance(potential_raster, gdal.Dataset):
+
+        if empty_is_invalid and is_raster_empty(potential_raster):
+            return False
+
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_raster_empty"><code class="name flex">
+<span>def <span class="ident">is_raster_empty</span></span>(<span>raster)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a raster has bands or zero width and zero height.</p>
+<h2 id="args">Args:</h2>
+<p><code>raster</code> (<em>gdal.Dataset</em>): The raster to check.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the raster has bands, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_raster_empty(raster):
+    &#34;&#34;&#34;
+    Check if a raster has bands or zero width and zero height.
+
+    ## Args:
+    `raster` (_gdal.Dataset_): The raster to check.
+
+    ## Returns:
+    (_bool_): **True** if the raster has bands, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(raster, gdal.Dataset), &#34;raster must be a gdal.Dataset.&#34;
+
+    if raster.RasterCount == 0:
+        return True
+
+    if raster.RasterXSize == 0 or raster.RasterYSize == 0:
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_raster_list"><code class="name flex">
+<span>def <span class="ident">is_raster_list</span></span>(<span>potential_raster_list, *, empty_is_invalid=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a variable is a valid list of rasters.</p>
+<h2 id="args">Args:</h2>
+<p><code>potential_raster_list</code> (<em>any</em>): The variable to check.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>empty_is_invalid</code> (<em>bool</em>): If <strong>True</strong>, an empty raster is considered invalid. (Default: <strong>True</strong>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_raster_list(potential_raster_list, *, empty_is_invalid=True):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid list of rasters.
+
+    ## Args:
+    `potential_raster_list` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty raster is considered invalid. (Default: **True**)
+    &#34;&#34;&#34;
+    if not isinstance(potential_raster_list, list):
+        return False
+
+    if len(potential_raster_list) == 0:
+        return False
+
+    for element in potential_raster_list:
+        if not is_raster(element, empty_is_invalid=empty_is_invalid):
+            return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_raster_or_vector"><code class="name flex">
+<span>def <span class="ident">is_raster_or_vector</span></span>(<span>potential_raster_or_vector, *, empty_is_invalid=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a variable is a valid raster or vector.</p>
+<h2 id="args">Args:</h2>
+<p><code>potential_raster_or_vector</code> (<em>any</em>): The variable to check.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>empty_is_invalid</code> (<em>bool</em>): If <strong>True</strong>, an empty raster or vector is considered invalid. (Default: <strong>True</strong>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_raster_or_vector(potential_raster_or_vector, *, empty_is_invalid=True):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid raster or vector.
+
+    ## Args:
+    `potential_raster_or_vector` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty raster or vector is considered invalid. (Default: **True**)
+    &#34;&#34;&#34;
+    if is_raster(potential_raster_or_vector, empty_is_invalid=empty_is_invalid):
+        return True
+
+    if is_vector(potential_raster_or_vector, empty_is_invalid=empty_is_invalid):
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_raster_or_vector_list"><code class="name flex">
+<span>def <span class="ident">is_raster_or_vector_list</span></span>(<span>potential_raster_or_vector_list, *, empty_is_invalid=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a variable is a valid list of rasters or vectors.</p>
+<h2 id="args">Args:</h2>
+<p><code>potential_raster_or_vector_list</code> (<em>any</em>): The variable to check.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>empty_is_invalid</code> (<em>bool</em>): If <strong>True</strong>, an empty raster or vector is considered invalid. (Default: <strong>True</strong>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_raster_or_vector_list(potential_raster_or_vector_list, *, empty_is_invalid=True):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid list of rasters or vectors.
+
+    ## Args:
+    `potential_raster_or_vector_list` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty raster or vector is considered invalid. (Default: **True**)
+    &#34;&#34;&#34;
+    if not isinstance(potential_raster_or_vector_list, list):
+        return False
+
+    if len(potential_raster_or_vector_list) == 0:
+        return False
+
+    for element in potential_raster_or_vector_list:
+        if not is_raster_or_vector(element, empty_is_invalid=empty_is_invalid):
+            return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_valid_datatype"><code class="name flex">
+<span>def <span class="ident">is_valid_datatype</span></span>(<span>file_path)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a file path has a valid GDAL or OGR driver.</p>
+<h2 id="args">Args:</h2>
+<p><code>file_path</code> (<em>str</em>): The file path to check.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the file path is a valid GDAL or OGR driver, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_valid_datatype(file_path):
+    &#34;&#34;&#34;
+    Check if a file path has a valid GDAL or OGR driver.
+
+    ## Args:
+    `file_path` (_str_): The file path to check.
+
+    ## Returns:
+    (_bool_): **True** if the file path is a valid GDAL or OGR driver, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(file_path, str), &#34;file_path must be a string.&#34;
+
+    ext = core_utils.path_to_ext(file_path)
+
+    if ext in gdal_enums.get_valid_driver_extensions():
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_valid_raster_datatype"><code class="name flex">
+<span>def <span class="ident">is_valid_raster_datatype</span></span>(<span>file_path)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a file path has a valid GDAL driver.</p>
+<h2 id="args">Args:</h2>
+<p><code>file_path</code> (<em>str</em>): The file path to check.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the file path is a valid GDAL Raster driver, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_valid_raster_datatype(file_path):
+    &#34;&#34;&#34;
+    Check if a file path has a valid GDAL driver.
+
+    ## Args:
+    `file_path` (_str_): The file path to check.
+
+    ## Returns:
+    (_bool_): **True** if the file path is a valid GDAL Raster driver, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(file_path, str), &#34;file_path must be a string.&#34;
+
+    ext = core_utils.path_to_ext(file_path)
+
+    if ext in gdal_enums.get_valid_raster_driver_extensions():
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_valid_vector_datatype"><code class="name flex">
+<span>def <span class="ident">is_valid_vector_datatype</span></span>(<span>file_path)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a file path has a valid OGR driver.</p>
+<h2 id="args">Args:</h2>
+<p><code>file_path</code> (<em>str</em>): The file path to check.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the file path is a valid OGR Vector driver, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_valid_vector_datatype(file_path):
+    &#34;&#34;&#34;
+    Check if a file path has a valid OGR driver.
+
+    ## Args:
+    `file_path` (_str_): The file path to check.
+
+    ## Returns:
+    (_bool_): **True** if the file path is a valid OGR Vector driver, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(file_path, str), &#34;file_path must be a string.&#34;
+
+    ext = core_utils.path_to_ext(file_path)
+
+    if ext in gdal_enums.get_valid_vector_driver_extensions():
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_vector"><code class="name flex">
+<span>def <span class="ident">is_vector</span></span>(<span>potential_vector, empty_is_invalid=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a variable is a valid vector.</p>
+<h2 id="args">Args:</h2>
+<p><code>potential_vector</code> (<em>any</em>): The variable to check.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>empty_is_invalid</code> (<em>bool</em>): If <strong>True</strong>, an empty vector is considered invalid. (Default: <strong>True</strong>)</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the variable is a valid vector, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_vector(potential_vector, empty_is_invalid=True):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid vector.
+
+    ## Args:
+    `potential_vector` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty vector is considered invalid. (Default: **True**)
+
+    ## Returns:
+    (_bool_): **True** if the variable is a valid vector, **False** otherwise.
+    &#34;&#34;&#34;
+    if isinstance(potential_vector, ogr.DataSource):
+
+        if empty_is_invalid and is_vector_empty(potential_vector):
+            print(f&#34;Vector: {potential_vector} was empty.&#34;)
+
+            return False
+
+        return True
+
+    if isinstance(potential_vector, str):
+        gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+
+        opened = ogr.Open(potential_vector, 0)
+        if opened is None:
+            extension = os.path.splitext(potential_vector)[1][1:]
+
+            if extension == &#34;memory&#34; or &#34;mem&#34;:
+                driver = ogr.GetDriverByName(&#34;Memory&#34;)
+                opened = driver.Open(potential_vector)
+
+        gdal.PopErrorHandler()
+
+        if isinstance(opened, ogr.DataSource):
+
+            if empty_is_invalid and is_vector_empty(opened):
+                return False
+
+            return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_vector_empty"><code class="name flex">
+<span>def <span class="ident">is_vector_empty</span></span>(<span>vector)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a vector has features with geometries</p>
+<h2 id="args">Args:</h2>
+<p><code>vector</code> (<em>ogr.DataSource</em>): The vector to check.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the vector has features, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_vector_empty(vector):
+    &#34;&#34;&#34;
+    Check if a vector has features with geometries
+
+    ## Args:
+    `vector` (_ogr.DataSource_): The vector to check.
+
+    ## Returns:
+    (_bool_): **True** if the vector has features, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(vector, ogr.DataSource), &#34;vector must be an ogr.DataSource.&#34;
+
+    layer_count = vector.GetLayerCount()
+
+    if layer_count == 0:
+        return True
+
+    for layer in range(0, layer_count):
+        layer = vector.GetLayerByIndex(layer)
+
+        if layer.GetFeatureCount() &gt; 0:
+            feature_count = layer.GetFeatureCount()
+
+            for feature in range(0, feature_count):
+                feature = layer.GetNextFeature()
+
+                if feature.GetGeometryRef() is not None:
+                    return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.is_vector_list"><code class="name flex">
+<span>def <span class="ident">is_vector_list</span></span>(<span>potential_vector_list, *, empty_is_invalid=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if a variable is a valid list of vectors.</p>
+<h2 id="args">Args:</h2>
+<p><code>potential_vector_list</code> (<em>any</em>): The variable to check.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>empty_is_invalid</code> (<em>bool</em>): If <strong>True</strong>, an empty vector is considered invalid. (Default: <strong>True</strong>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_vector_list(potential_vector_list, *, empty_is_invalid=True):
+    &#34;&#34;&#34;
+    Checks if a variable is a valid list of vectors.
+
+    ## Args:
+    `potential_vector_list` (_any_): The variable to check.
+
+    ## Kwargs:
+    `empty_is_invalid` (_bool_): If **True**, an empty vector is considered invalid. (Default: **True**)
+    &#34;&#34;&#34;
+    if not isinstance(potential_vector_list, list):
+        return False
+
+    if len(potential_vector_list) == 0:
+        return False
+
+    for element in potential_vector_list:
+        if not is_vector(element, empty_is_invalid=empty_is_invalid):
+            return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.parse_projection"><code class="name flex">
+<span>def <span class="ident">parse_projection</span></span>(<span>projection, *, return_wkt=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Parses a gdal, ogr og osr data source and extraction the projection. If
+a string or int is passed, it attempts to open it and return the projection as
+an osr.SpatialReference.</p>
+<h2 id="args">Args:</h2>
+<p><code>projection</code> (<em>str</em>/<em>int</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>osr.SpatialReference</em>): The projection to parse.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>return_wkt</code> (<em>bool</em>): If <strong>True</strong> the projection will be returned as a WKT string, otherwise an osr.SpatialReference is returned. (Default: <strong>False</strong>)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def parse_projection(projection, *, return_wkt=False):
+    &#34;&#34;&#34;
+    Parses a gdal, ogr og osr data source and extraction the projection. If
+    a string or int is passed, it attempts to open it and return the projection as
+    an osr.SpatialReference.
+
+    ## Args:
+    `projection` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The projection to parse.
+
+    ## Kwargs:
+    `return_wkt` (_bool_): If **True** the projection will be returned as a WKT string, otherwise an osr.SpatialReference is returned. (Default: **False**)
+    &#34;&#34;&#34;
+    assert isinstance(projection, (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)), &#34;projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference.&#34;
+
+    err_msg = f&#34;Unable to parse target projection: {projection}&#34;
+    target_proj = osr.SpatialReference()
+
+    # Suppress gdal errors and handle them ourselves.
+    gdal.PushErrorHandler(&#34;CPLQuietErrorHandler&#34;)
+
+    if isinstance(projection, ogr.DataSource):
+        layer = projection.GetLayer()
+        target_proj = layer.GetSpatialRef()
+
+    elif isinstance(projection, gdal.Dataset):
+        target_proj.ImportFromWkt(projection.GetProjection())
+
+    elif isinstance(projection, osr.SpatialReference):
+        target_proj = projection
+
+    elif isinstance(projection, str):
+        if is_raster(projection):
+            ref = gdal.Open(projection, 0)
+            target_proj.ImportFromWkt(ref.GetProjection())
+        elif is_vector(projection):
+            ref = ogr.Open(projection, 0)
+            layer = ref.GetLayer()
+            target_proj = layer.GetSpatialRef()
+        else:
+            code = target_proj.ImportFromWkt(projection)
+            if code != 0:
+                code = target_proj.ImportFromProj4(projection)
+                if code != 0:
+                    if projection.startswith(&#34;EPSG:&#34;) or projection.startswith(&#34;epsg:&#34;):
+                        epsg_code = int(projection.split(&#34;:&#34;)[1])
+                        code = target_proj.ImportFromEPSG(epsg_code)
+                        if code != 0:
+                            raise ValueError(err_msg)
+                    elif projection.startswith(&#34;ESRI:&#34;) or projection.startswith(&#34;esri:&#34;):
+                        wkt_code = import_esri_projection(projection)
+
+                        code = target_proj.ImportFromWkt(wkt_code)
+                        if code != 0:
+                            raise ValueError(err_msg)
+
+    elif isinstance(projection, int):
+        code = target_proj.ImportFromEPSG(projection)
+        if code != 0:
+            raise ValueError(err_msg)
+
+    else:
+        raise ValueError(err_msg)
+
+    gdal.PopErrorHandler()
+
+    if isinstance(target_proj, osr.SpatialReference):
+
+        if return_wkt:
+            return target_proj.ExportToWkt()
+
+        return target_proj
+    else:
+        raise ValueError(err_msg)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.parse_raster_size"><code class="name flex">
+<span>def <span class="ident">parse_raster_size</span></span>(<span>target, *, target_in_pixels=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Parses the raster size from either a list of numbers or a GDAL raster.</p>
+<h2 id="args">Args:</h2>
+<p><code>target_size</code> (<em>any</em>): The target to parse raster_size from.</p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>target_in_pixels</code> (<em>bool</em>): If <strong>True</strong>, the target size is in pixels, otherwise it is in the rasters_units. (Default: <strong>False</strong>)</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>tuple</em>): The raster size in the form of: <code>(x_res, y_res, x_size, y_size)</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def parse_raster_size(target, *, target_in_pixels=False):
+    &#34;&#34;&#34;
+    Parses the raster size from either a list of numbers or a GDAL raster.
+
+    ## Args:
+    `target_size` (_any_): The target to parse raster_size from.
+
+    ## Kwargs:
+    `target_in_pixels` (_bool_): If **True**, the target size is in pixels, otherwise it is in the rasters_units. (Default: **False**)
+
+    ## Returns:
+    (_tuple_): The raster size in the form of: `(x_res, y_res, x_size, y_size)`.
+    &#34;&#34;&#34;
+    assert target is not None, &#34;target_size cannot be None.&#34;
+
+    x_res = None
+    y_res = None
+
+    x_pixels = None
+    y_pixels = None
+
+    if isinstance(target, (gdal.Dataset, str)):
+        reference = (
+            target
+            if isinstance(target, gdal.Dataset)
+            else gdal.Open(target, 0)
+        )
+
+        transform = reference.GetGeoTransform()
+        reference = None
+
+        x_res = transform[1]
+        y_res = abs(transform[5])
+
+    elif target_in_pixels:
+        if isinstance(target, tuple) or isinstance(target, list):
+            if len(target) == 1:
+                if core_utils.is_number(target[0]):
+                    x_pixels = int(target[0])
+                    y_pixels = int(target[0])
+                else:
+                    raise ValueError(
+                        &#34;target_size_pixels is not a number or a list/tuple of numbers.&#34;
+                    )
+            elif len(target) == 2:
+                if core_utils.is_number(target[0]) and core_utils.is_number(target[1]):
+                    x_pixels = int(target[1])
+                    y_pixels = int(target[0])
+            else:
+                raise ValueError(&#34;target_size_pixels is either empty or larger than 2.&#34;)
+        elif core_utils.is_number(target):
+            x_pixels = int(target)
+            y_pixels = int(target)
+        else:
+            raise ValueError(&#34;target_size_pixels is invalid.&#34;)
+
+        x_res = None
+        y_res = None
+    else:
+        if isinstance(target, tuple) or isinstance(target, list):
+            if len(target) == 1:
+                if core_utils.is_number(target[0]):
+                    x_res = float(target[0])
+                    y_res = float(target[0])
+                else:
+                    raise ValueError(
+                        &#34;target_size is not a number or a list/tuple of numbers.&#34;
+                    )
+            elif len(target) == 2:
+                if core_utils.is_number(target[0]) and core_utils.is_number(target[1]):
+                    x_res = float(target[0])
+                    y_res = float(target[1])
+            else:
+                raise ValueError(&#34;target_size is either empty or larger than 2.&#34;)
+        elif core_utils.is_number(target):
+            x_res = float(target)
+            y_res = float(target)
+        else:
+            raise ValueError(&#34;target_size is invalid.&#34;)
+
+        x_pixels = None
+        y_pixels = None
+
+    return x_res, y_res, x_pixels, y_pixels</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.path_to_driver"><code class="name flex">
+<span>def <span class="ident">path_to_driver</span></span>(<span>file_path)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert a file path to a GDAL or OGR driver ShortName (e.g. "GTiff" for "new_york.tif")</p>
+<h2 id="args">Args:</h2>
+<p><code>file_path</code> (<em>str</em>): The file path to convert.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The GDAL or OGR driver ShortName.</p>
+<h2 id="raises">Raises:</h2>
+<p><code>ValueError</code>: If the file path is not a valid GDAL or OGR driver.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def path_to_driver(file_path):
+    &#34;&#34;&#34;
+    Convert a file path to a GDAL or OGR driver ShortName (e.g. &#34;GTiff&#34; for &#34;new_york.tif&#34;)
+
+    ## Args:
+    `file_path` (_str_): The file path to convert.
+
+    ## Returns:
+    (_str_): The GDAL or OGR driver ShortName.
+
+    ## Raises:
+    `ValueError`: If the file path is not a valid GDAL or OGR driver.
+    &#34;&#34;&#34;
+    assert isinstance(file_path, str), &#34;file_path must be a string.&#34;
+
+    ext = core_utils.path_to_ext(file_path)
+
+    if is_valid_datatype(ext):
+        return gdal_enums.convert_extension_to_driver_shortname(ext)
+
+    raise ValueError(f&#34;Unable to parse GDAL or OGR driver from path: {file_path}&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.path_to_driver_raster"><code class="name flex">
+<span>def <span class="ident">path_to_driver_raster</span></span>(<span>file_path)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert a file path to a GDAL driver ShortName (e.g. "GTiff" for "new_york.tif")</p>
+<h2 id="args">Args:</h2>
+<p><code>file_path</code> (<em>str</em>): The file path to convert.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The GDAL driver ShortName.</p>
+<h2 id="raises">Raises:</h2>
+<p><code>ValueError</code>: If the file path is not a valid GDAL driver.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def path_to_driver_raster(file_path):
+    &#34;&#34;&#34;
+    Convert a file path to a GDAL driver ShortName (e.g. &#34;GTiff&#34; for &#34;new_york.tif&#34;)
+
+    ## Args:
+    `file_path` (_str_): The file path to convert.
+
+    ## Returns:
+    (_str_): The GDAL driver ShortName.
+
+    ## Raises:
+    `ValueError`: If the file path is not a valid GDAL driver.
+    &#34;&#34;&#34;
+    assert isinstance(file_path, str), &#34;file_path must be a string.&#34;
+
+    ext = core_utils.path_to_ext(file_path)
+
+    if is_valid_raster_datatype(file_path):
+        return gdal_enums.convert_raster_extension_to_driver_shortname(ext)
+
+    raise ValueError(f&#34;Unable to parse GDAL or OGR driver from path: {file_path}&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.path_to_driver_vector"><code class="name flex">
+<span>def <span class="ident">path_to_driver_vector</span></span>(<span>file_path)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert a file path to an OGR driver ShortName (e.g. "FlatGeoBuf" for "new_york.fgb")</p>
+<h2 id="args">Args:</h2>
+<p><code>file_path</code> (<em>str</em>): The file path to convert.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>str</em>): The OGR driver ShortName.</p>
+<h2 id="raises">Raises:</h2>
+<p><code>ValueError</code>: If the file path is not a valid OGR driver.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def path_to_driver_vector(file_path):
+    &#34;&#34;&#34;
+    Convert a file path to an OGR driver ShortName (e.g. &#34;FlatGeoBuf&#34; for &#34;new_york.fgb&#34;)
+
+    ## Args:
+    `file_path` (_str_): The file path to convert.
+
+    ## Returns:
+    (_str_): The OGR driver ShortName.
+
+    ## Raises:
+    `ValueError`: If the file path is not a valid OGR driver.
+    &#34;&#34;&#34;
+    assert isinstance(file_path, str), &#34;file_path must be a string.&#34;
+
+    ext = core_utils.path_to_ext(file_path)
+
+    if is_valid_vector_datatype(file_path):
+        return gdal_enums.convert_vector_extension_to_driver_shortname(ext)
+
+    raise ValueError(f&#34;Unable to parse GDAL or OGR driver from path: {file_path}&#34;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.projections_match"><code class="name flex">
+<span>def <span class="ident">projections_match</span></span>(<span>source1, source2)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Tests if two projection sources have the same projection.</p>
+<h2 id="args">Args:</h2>
+<p><code>source1</code> (<em>str</em>/<em>int</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>osr.SpatialReference</em>): The first projection to parse.
+<code>source1</code> (<em>str</em>/<em>int</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>osr.SpatialReference</em>): The second projection to parse.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the projections match, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def projections_match(source1, source2):
+    &#34;&#34;&#34;
+    Tests if two projection sources have the same projection.
+
+    ## Args:
+    `source1` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The first projection to parse.
+    `source1` (_str_/_int_/_gdal.Dataset_/_ogr.DataSource_/_osr.SpatialReference_): The second projection to parse.
+
+    ## Returns:
+    (_bool_): **True** if the projections match, **False** otherwise.
+    &#34;&#34;&#34;
+    proj1 = parse_projection(source1)
+    proj2 = parse_projection(source2)
+
+    if proj1.IsSame(proj2):
+        return True
+    elif proj1.ExportToProj4() == proj2.ExportToProj4():
+        return True
+
+    return False</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.projections_match_list"><code class="name flex">
+<span>def <span class="ident">projections_match_list</span></span>(<span>list_of_projection_sources)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Tests if a list of projection sources all have the same projection.</p>
+<h2 id="args">Args:</h2>
+<p><code>list_of_projection_sources</code> (<em>list</em>): A list of projections to test.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>bool</em>): <strong>True</strong> if the projections match, <strong>False</strong> otherwise.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def projections_match_list(list_of_projection_sources):
+    &#34;&#34;&#34;
+    Tests if a list of projection sources all have the same projection.
+
+    ## Args:
+    `list_of_projection_sources` (_list_): A list of projections to test.
+
+    ## Returns:
+    (_bool_): **True** if the projections match, **False** otherwise.
+    &#34;&#34;&#34;
+    assert isinstance(list_of_projection_sources, list), &#34;list_of_projection_sources must be a list.&#34;
+    assert len(list_of_projection_sources) &gt; 1, &#34;The list &#39;list_of_projection_sources&#39; must be a list of len &gt; 1&#34;
+
+    first = None
+    for index, source in enumerate(list_of_projection_sources):
+        if index == 0:
+            first = parse_projection(source)
+        else:
+            compare = parse_projection(source)
+
+            if not first.IsSame(compare) and first.ExportToProj4() != compare.ExportToProj4():
+                return False
+
+    return True</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.save_dataset_to_disk"><code class="name flex">
+<span>def <span class="ident">save_dataset_to_disk</span></span>(<span>dataset, out_path, *, overwrite=True, creation_options=None, prefix='', suffix='', add_uuid=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Writes a dataset to disk. Can be a raster or a vector.</p>
+<h2 id="args">Args:</h2>
+<p><code>dataset</code> (<em>str</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>list</em>): The dataset(s) to save. </br>
+<code>out_path</code> (<em>str</em>/<em>list</em>): The path(s) to save the dataset(s) to. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>overwrite</code> (<em>bool</em>): Whether to overwrite the file if it already exists. (Default: <strong>True</strong>) </br>
+<code>creation_options</code> (<em>list</em>/<em>None</em>): A list of creation options to pass to GDAL if saving as raster. (Default: <strong>True</strong>) </br>
+<code>prefix</code> (<em>str</em>): A prefix to add to the file name. (Default: <strong>""</strong>) </br>
+<code>suffix</code> (<em>str</em>): A suffix to add to the file name. (Default: <strong>""</strong>) </br>
+<code>add_uuid</code> (<em>bool</em>): Whether to add a UUID to the file name. (Default: <strong>False</strong>) </br></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save_dataset_to_disk(
+    dataset,
+    out_path,
+    *,
+    overwrite=True,
+    creation_options=None,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    add_uuid=False,
+):
+    &#34;&#34;&#34;
+    Writes a dataset to disk. Can be a raster or a vector.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_/_list_): The dataset(s) to save. &lt;/br&gt;
+    `out_path` (_str_/_list_): The path(s) to save the dataset(s) to. &lt;/br&gt;
+
+    ## Kwargs:
+    `overwrite` (_bool_): Whether to overwrite the file if it already exists. (Default: **True**) &lt;/br&gt;
+    `creation_options` (_list_/_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) &lt;/br&gt;
+    `prefix` (_str_): A prefix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `suffix` (_str_): A suffix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `add_uuid` (_bool_): Whether to add a UUID to the file name. (Default: **False**) &lt;/br&gt;
+    &#34;&#34;&#34;
+    datasets = core_utils.ensure_list(dataset)
+    datasets_paths = get_path_from_dataset_list(datasets, allow_mixed=True)
+    out_paths = create_output_path_list(datasets_paths, out_path, prefix=prefix, suffix=suffix, add_uuid=add_uuid)
+
+    options = None
+
+    for index, dataset_ in enumerate(datasets):
+        opened_dataset = None
+        dataset_type = None
+
+        if is_raster(dataset_):
+            options = default_creation_options(creation_options)
+            dataset_type = &#34;raster&#34;
+            if isinstance(dataset_, str):
+                opened_dataset = gdal.Open(dataset_, 0)
+            elif isinstance(dataset_, gdal.Dataset):
+                opened_dataset = dataset_
+            else:
+                raise RuntimeError(f&#34;Could not read input raster: {dataset_}&#34;)
+
+        elif is_vector(dataset_):
+            dataset_type = &#34;vector&#34;
+            if isinstance(dataset_, str):
+                opened_dataset = ogr.Open(dataset_, 0)
+            elif isinstance(dataset_, ogr.DataSource):
+                opened_dataset = dataset_
+            else:
+                raise RuntimeError(f&#34;Could not read input vector: {dataset_}&#34;)
+
+        else:
+            raise RuntimeError(f&#34;Invalid dataset type: {dataset_}&#34;)
+
+        driver_destination = None
+
+        if dataset_type == &#34;raster&#34;:
+            driver_destination = gdal.GetDriverByName(path_to_driver_raster(out_paths[index]))
+        else:
+            driver_destination = ogr.GetDriverByName(path_to_driver_vector(out_paths[index]))
+
+        assert driver_destination is not None, &#34;Could not get driver for output dataset.&#34;
+
+        core_utils.remove_if_required(out_paths[index], overwrite)
+
+        driver_destination.CreateCopy(
+            out_path[index],
+            opened_dataset,
+            options=options,
+        )
+
+    if isinstance(dataset, list):
+        return out_paths[0]
+
+    return out_paths</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.save_dataset_to_memory"><code class="name flex">
+<span>def <span class="ident">save_dataset_to_memory</span></span>(<span>dataset, *, overwrite=True, creation_options=None, prefix='', suffix='', add_uuid=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Writes a dataset to memory. Can be a raster or a vector.</p>
+<h2 id="args">Args:</h2>
+<p><code>dataset</code> (<em>str</em>/<em>gdal.Dataset</em>/<em>ogr.DataSource</em>/<em>list</em>): The dataset(s) to save. </br></p>
+<h2 id="kwargs">Kwargs:</h2>
+<p><code>overwrite</code> (<em>bool</em>): Whether to overwrite the file if it already exists. (Default: <strong>True</strong>) </br>
+<code>creation_options</code> (<em>list</em>/<em>None</em>): A list of creation options to pass to GDAL if saving as raster. (Default: <strong>True</strong>) </br>
+<code>prefix</code> (<em>str</em>): A prefix to add to the file name. (Default: <strong>""</strong>) </br>
+<code>suffix</code> (<em>str</em>): A suffix to add to the file name. (Default: <strong>""</strong>) </br>
+<code>add_uuid</code> (<em>bool</em>): Whether to add a UUID to the file name. (Default: <strong>True</strong>) </br></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save_dataset_to_memory(
+    dataset,
+    *,
+    overwrite=True,
+    creation_options=None,
+    prefix=&#34;&#34;,
+    suffix=&#34;&#34;,
+    add_uuid=True,
+):
+    &#34;&#34;&#34;
+    Writes a dataset to memory. Can be a raster or a vector.
+
+    ## Args:
+    `dataset` (_str_/_gdal.Dataset_/_ogr.DataSource_/_list_): The dataset(s) to save. &lt;/br&gt;
+
+    ## Kwargs:
+    `overwrite` (_bool_): Whether to overwrite the file if it already exists. (Default: **True**) &lt;/br&gt;
+    `creation_options` (_list_/_None_): A list of creation options to pass to GDAL if saving as raster. (Default: **True**) &lt;/br&gt;
+    `prefix` (_str_): A prefix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `suffix` (_str_): A suffix to add to the file name. (Default: **&#34;&#34;**) &lt;/br&gt;
+    `add_uuid` (_bool_): Whether to add a UUID to the file name. (Default: **True**) &lt;/br&gt;
+    &#34;&#34;&#34;
+    return save_dataset_to_disk(
+        dataset,
+        out_path=None,
+        overwrite=overwrite,
+        creation_options=creation_options,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+    )</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.to_array_list"><code class="name flex">
+<span>def <span class="ident">to_array_list</span></span>(<span>array_or_list_of_array)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts a numpy array or list of numpy arrays to a list of arrays.</p>
+<h2 id="args">Args:</h2>
+<p><code>array_or_list_of_array</code> (<em>numpy.ndarray</em>/<em>list</em>/<em>str</em>): The numpy array or list of numpy arrays to convert to a list of arrays.</p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): The list of arrays.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_array_list(array_or_list_of_array):
+    &#34;&#34;&#34;
+    Converts a numpy array or list of numpy arrays to a list of arrays.
+
+    ## Args:
+    `array_or_list_of_array` (_numpy.ndarray_/_list_/_str_): The numpy array or list of numpy arrays to convert to a list of arrays.
+
+    ## Returns:
+    (_list_): The list of arrays.
+    &#34;&#34;&#34;
+    assert isinstance(array_or_list_of_array, (np.ndarray, list, str)), &#34;array_or_list_of_array must be a numpy array, list of numpy arrays, or string.&#34;
+
+    return_list = [array_or_list_of_array] if isinstance(array_or_list_of_array, np.ndarray) else array_or_list_of_array
+
+    if len(return_list) == 0:
+        raise ValueError(&#34;Empty array list.&#34;)
+
+    for array in return_list:
+        if not isinstance(array, np.ndarray):
+            if isinstance(array, str) and core_utils.file_exists(array):
+                try:
+                    _ = np.load(array)
+                except:
+                    raise ValueError(f&#34;Invalid array in list: {array}&#34;) from None
+        else:
+            raise ValueError(f&#34;Invalid array in list: {array}&#34;)
+
+    return return_list</code></pre>
+</details>
+</dd>
+<dt id="buteo.utils.gdal_utils.to_band_list"><code class="name flex">
+<span>def <span class="ident">to_band_list</span></span>(<span>band_number, band_count)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts a band number or list of band numbers to a list of band numbers.</p>
+<h2 id="args">Args:</h2>
+<p><code>band_number</code> (<em>int</em>/<em>float</em>/<em>list</em>): The band number or list of band numbers to convert to a list of band numbers. </br>
+<code>band_count</code> (<em>int</em>): The number of bands in the raster. </br></p>
+<h2 id="returns">Returns:</h2>
+<p>(<em>list</em>): The list of band numbers.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_band_list(
+    band_number,
+    band_count,
+):
+    &#34;&#34;&#34;
+    Converts a band number or list of band numbers to a list of band numbers.
+
+    ## Args:
+    `band_number` (_int_/_float_/_list_): The band number or list of band numbers to convert to a list of band numbers. &lt;/br&gt;
+    `band_count` (_int_): The number of bands in the raster. &lt;/br&gt;
+
+    ## Returns:
+    (_list_): The list of band numbers.
+    &#34;&#34;&#34;
+
+    return_list = []
+    if not isinstance(band_number, (int, float, list)):
+        raise TypeError(f&#34;Invalid type for band: {type(band_number)}&#34;)
+
+    if isinstance(band_number, list):
+        if len(band_number) == 0:
+            raise ValueError(&#34;Provided list of bands is empty.&#34;)
+        for val in band_number:
+            try:
+                band_int = int(val)
+            except Exception:
+                raise ValueError(
+                    f&#34;List of bands contained non-valid band number: {val}&#34;
+                ) from None
+
+            if band_int &gt; band_count:
+                raise ValueError(&#34;Requested a higher band that is available in raster.&#34;)
+            else:
+                return_list.append(band_int)
+    elif band_number == -1:
+        for val in range(band_count):
+            return_list.append(val + 1)
+    else:
+        if band_number &gt; band_count + 1:
+            raise ValueError(&#34;Requested a higher band that is available in raster.&#34;)
+        else:
+            return_list.append(int(band_number))
+
+    return return_list</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul>
+<li><a href="#utility-functions-to-work-with-gdal">Utility functions to work with GDAL</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="buteo.utils" href="index.html">buteo.utils</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.utils.gdal_utils.clear_gdal_memory" href="#buteo.utils.gdal_utils.clear_gdal_memory">clear_gdal_memory</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.convert_geom_to_vector" href="#buteo.utils.gdal_utils.convert_geom_to_vector">convert_geom_to_vector</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.create_memory_path" href="#buteo.utils.gdal_utils.create_memory_path">create_memory_path</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.create_output_path" href="#buteo.utils.gdal_utils.create_output_path">create_output_path</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.create_output_path_list" href="#buteo.utils.gdal_utils.create_output_path_list">create_output_path_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.default_creation_options" href="#buteo.utils.gdal_utils.default_creation_options">default_creation_options</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.delete_if_in_memory" href="#buteo.utils.gdal_utils.delete_if_in_memory">delete_if_in_memory</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.delete_if_in_memory_list" href="#buteo.utils.gdal_utils.delete_if_in_memory_list">delete_if_in_memory_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.delete_raster_or_vector" href="#buteo.utils.gdal_utils.delete_raster_or_vector">delete_raster_or_vector</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.gdal_print_memory" href="#buteo.utils.gdal_utils.gdal_print_memory">gdal_print_memory</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.get_default_projection" href="#buteo.utils.gdal_utils.get_default_projection">get_default_projection</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.get_gdal_memory" href="#buteo.utils.gdal_utils.get_gdal_memory">get_gdal_memory</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.get_gdalwarp_ram_limit" href="#buteo.utils.gdal_utils.get_gdalwarp_ram_limit">get_gdalwarp_ram_limit</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.get_path_from_dataset" href="#buteo.utils.gdal_utils.get_path_from_dataset">get_path_from_dataset</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.get_path_from_dataset_list" href="#buteo.utils.gdal_utils.get_path_from_dataset_list">get_path_from_dataset_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.import_esri_projection" href="#buteo.utils.gdal_utils.import_esri_projection">import_esri_projection</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_in_memory" href="#buteo.utils.gdal_utils.is_in_memory">is_in_memory</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_path_list" href="#buteo.utils.gdal_utils.is_path_list">is_path_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_raster" href="#buteo.utils.gdal_utils.is_raster">is_raster</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_raster_empty" href="#buteo.utils.gdal_utils.is_raster_empty">is_raster_empty</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_raster_list" href="#buteo.utils.gdal_utils.is_raster_list">is_raster_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_raster_or_vector" href="#buteo.utils.gdal_utils.is_raster_or_vector">is_raster_or_vector</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_raster_or_vector_list" href="#buteo.utils.gdal_utils.is_raster_or_vector_list">is_raster_or_vector_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_valid_datatype" href="#buteo.utils.gdal_utils.is_valid_datatype">is_valid_datatype</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_valid_raster_datatype" href="#buteo.utils.gdal_utils.is_valid_raster_datatype">is_valid_raster_datatype</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_valid_vector_datatype" href="#buteo.utils.gdal_utils.is_valid_vector_datatype">is_valid_vector_datatype</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_vector" href="#buteo.utils.gdal_utils.is_vector">is_vector</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_vector_empty" href="#buteo.utils.gdal_utils.is_vector_empty">is_vector_empty</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.is_vector_list" href="#buteo.utils.gdal_utils.is_vector_list">is_vector_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.parse_projection" href="#buteo.utils.gdal_utils.parse_projection">parse_projection</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.parse_raster_size" href="#buteo.utils.gdal_utils.parse_raster_size">parse_raster_size</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.path_to_driver" href="#buteo.utils.gdal_utils.path_to_driver">path_to_driver</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.path_to_driver_raster" href="#buteo.utils.gdal_utils.path_to_driver_raster">path_to_driver_raster</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.path_to_driver_vector" href="#buteo.utils.gdal_utils.path_to_driver_vector">path_to_driver_vector</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.projections_match" href="#buteo.utils.gdal_utils.projections_match">projections_match</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.projections_match_list" href="#buteo.utils.gdal_utils.projections_match_list">projections_match_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.save_dataset_to_disk" href="#buteo.utils.gdal_utils.save_dataset_to_disk">save_dataset_to_disk</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.save_dataset_to_memory" href="#buteo.utils.gdal_utils.save_dataset_to_memory">save_dataset_to_memory</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.to_array_list" href="#buteo.utils.gdal_utils.to_array_list">to_array_list</a></code></li>
+<li><code><a title="buteo.utils.gdal_utils.to_band_list" href="#buteo.utils.gdal_utils.to_band_list">to_band_list</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

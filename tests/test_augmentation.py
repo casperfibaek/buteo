@@ -6,7 +6,6 @@ import sys; sys.path.append("../")
 
 # External
 import numpy as np
-import pytest
 
 # Internal
 from buteo.ai.augmentation import (
@@ -29,7 +28,8 @@ from buteo.ai.augmentation import (
     augmentation_mixup_batch,
 )
 
-def test_rotate_90():
+def test_rotate_arr():
+    """ Test if the rotate_arr function works for 90-degree rotations. """
     ch_first = np.random.randint(0, 2, (3, 4, 4))
     ch_last = np.random.randint(0, 2, (4, 4, 3))
 
@@ -239,42 +239,33 @@ def test_augmentation_sharpen():
     assert not_sharpened_image.shape == image.shape
     assert np.allclose(not_sharpened_image, image)
 
-
-@pytest.fixture
-def create_images():
-    """ Create a batch of images for testing. """
-    batch_size = 10
-    height = 32
-    width = 32
-    channels = 3
-    images = np.random.randint(0, 255, size=(batch_size, height, width, channels))
-    return images
-
-def test_augmentation_cutmix_batch(create_images):
+def test_augmentation_cutmix_batch():
     """ Test if the cutmix augmentation works (batch). """
-    images = create_images
+    images = np.random.randint(0, 255, size=(10, 32, 32, 3))
     cutmix_images, _ = augmentation_cutmix_batch(images, chance=1.0, max_size=0.5, max_mixes=1.0, channel_last=True)
 
     assert cutmix_images.shape == images.shape
     assert not np.array_equal(cutmix_images, images)
 
-def test_augmentation_cutmix_batch_no_change(create_images):
+def test_augmentation_cutmix_batch_no_change():
     """ Test if the cutmix augmentation works (batch). No changes. """
-    images = create_images
+    images = np.random.randint(0, 255, size=(10, 32, 32, 3))
     cutmix_images, _ = augmentation_cutmix_batch(images, chance=0.0, channel_last=True)
 
     assert cutmix_images.shape == images.shape
     assert np.array_equal(cutmix_images, images)
 
-def test_augmentation_mixup(create_images):
-    images = create_images
+def test_augmentation_mixup():
+    """ Test if the mixup augmentation works (batch). """
+    images = np.random.randint(0, 255, size=(10, 32, 32, 3))
     mixup_images, _ = augmentation_mixup_batch(images, chance=1.0, max_mixes=1.0, channel_last=True)
 
     assert mixup_images.shape == images.shape
     assert not np.array_equal(mixup_images, images)
 
-def test_augmentation_mixup_no_change(create_images):
-    images = create_images
+def test_augmentation_mixup_no_change():
+    """ Test if the mixup augmentation works (batch). No changes. """
+    images = np.random.randint(0, 255, size=(10, 32, 32, 3))
     mixup_images, _ = augmentation_mixup_batch(images, chance=0.0, channel_last=True)
 
     assert mixup_images.shape == images.shape
