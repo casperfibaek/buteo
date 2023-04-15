@@ -145,3 +145,6 @@ lib/credentials.py
 *.gpkg-shm
 *.gpkg-wal
 ./geometry_and_rassters/*.xml
+**/*.tif.aux
+**/*.tif.aux.xml
+/tests/tmp*.tif

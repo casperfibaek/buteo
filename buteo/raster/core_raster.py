@@ -539,7 +539,7 @@ def raster_to_array(
     filled: bool = False,
     fill_value: Optional[Union[int, float]] = None,
     bbox: Optional[List[float]] = None,
-    pixel_offsets: Optional[List[int]] = None,
+    pixel_offsets: Optional[Union[List[int], Tuple[int, int, int, int]]] = None,
 ) -> np.ndarray:
     """
     Converts a raster or a list of rasters into a NumPy array.
@@ -559,7 +559,7 @@ def raster_to_array(
             If None, the nodata value of the raster is used.
         bbox (list, default=None): A list of `[xmin, xmax, ymin, ymax]` to use as
             the extent of the raster. Uses coordinates and the OGR format.
-        pixel_offsets (list, default=None): A list of
+        pixel_offsets (list/tuple, default=None): A list of
             `[x_offset, y_offset, x_size, y_size]` to use as the extent of the
             raster. Uses pixel offsets and the OGR format.
 
@@ -572,7 +572,7 @@ def raster_to_array(
     core_utils.type_check(fill_value, [int, float, None], "fill_value")
     core_utils.type_check(masked, [bool, str], "masked")
     core_utils.type_check(bbox, [list, None], "bbox")
-    core_utils.type_check(pixel_offsets, [list, None], "pixel_offsets")
+    core_utils.type_check(pixel_offsets, [list, tuple, None], "pixel_offsets")
 
     if masked not in ["auto", True, False]:
         raise ValueError(f"masked must be 'auto', True, or False. {masked} was provided.")
@@ -710,7 +710,7 @@ def array_to_raster(
     out_path: Optional[str] = None,
     set_nodata: Union[bool, float, int, str] = "arr",
     allow_mismatches: bool = False,
-    pixel_offsets: Optional[List[Union[int, float]]] = None,
+    pixel_offsets: Optional[Union[List[int], Tuple[int, int, int, int]]] = None,
     bbox: Optional[List[float]] = None,
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
@@ -731,7 +731,7 @@ def array_to_raster(
             • value: The nodata value will be the value provided.
         allow_mismatches (bool, default=False): If True, the array can have a
             different shape than the reference raster.
-        pixel_offsets (list, default=None): If provided, the array will be
+        pixel_offsets (list/tuple, default=None): If provided, the array will be
             written to the reference raster at the specified pixel offsets.
             The list should be in the format [x_offset, y_offset, x_size, y_size].
         bbox (list, default=None): If provided, the array will be written to
@@ -749,7 +749,7 @@ def array_to_raster(
     core_utils.type_check(reference, [str, gdal.Dataset], "reference")
     core_utils.type_check(out_path, [str, None], "out_path")
     core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(pixel_offsets, [[int, float], None], "pixel_offsets")
+    core_utils.type_check(pixel_offsets, [[int, float], tuple, None], "pixel_offsets")
     core_utils.type_check(allow_mismatches, [bool], "allow_mismatches")
     core_utils.type_check(set_nodata, [int, float, str, None], "set_nodata")
     core_utils.type_check(creation_options, [[str], None], "creation_options")

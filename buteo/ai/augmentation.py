@@ -11,7 +11,7 @@ from numba import jit, prange
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
-def feather_box(
+def feather_box_2d(
     array: np.ndarray,
     bbox: Union[List[int], Tuple[int]],
     feather_dist: int = 3,
@@ -88,7 +88,7 @@ def feather_box(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def blur_kernel() -> Tuple[np.ndarray, np.ndarray]:
+def simple_blur_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
     """
     Create a 2D blur kernel.
 
@@ -99,45 +99,119 @@ def blur_kernel() -> Tuple[np.ndarray, np.ndarray]:
     Returns:
         Tuple[np.ndarray, np.ndarray]: The offsets and weights.
     """
-
     offsets = np.array([
-        [0 , 0], [0 , -1], [0 , 1],
-        [-1, 0], [-1, -1], [-1, 1],
-        [1 , 0], [1 , -1], [1 , 1],
+        [ 1, -1], [ 1, 0], [ 1, 1],
+        [ 0, -1], [ 0, 0], [ 0, 1],
+        [-1, -1], [-1, 0], [-1, 1],
     ])
 
     weights = np.array([
-        1.0, 2.0, 1.0, 2.0, 4.0, 2.0, 1.0, 2.0, 1.0,
+        0.08422299, 0.12822174, 0.08422299,
+        0.12822174, 0.1502211 , 0.12822174,
+        0.08422299, 0.12822174, 0.08422299,
     ], dtype=np.float32)
 
     return offsets, weights
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def unsharp_kernel() -> Tuple[np.ndarray, np.ndarray]:
+def simple_unsharp_kernel_2d_3x3(
+    strength: float = 1.0
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Create a 2D unsharp kernel.
 
-    [ 0, -1,  0],
-    [-1,  5, -1],
-    [ 0, -1,  0],
+    baseweights:
+        0.09911165, 0.15088834, 0.09911165,
+        0.15088834, 0.        , 0.15088834,
+        0.09911165, 0.15088834, 0.09911165,
 
     Returns:
         Tuple[np.ndarray, np.ndarray]: The offsets and weights.
     """
     offsets = np.array([
-        [0 , 0], [0 , -1], [0 , 1],
-        [-1, 0], [-1, -1], [-1, 1],
-        [1 , 0], [1 , -1], [1 , 1],
+        [ 1, -1], [ 1, 0], [ 1, 1],
+        [ 0, -1], [ 0, 0], [ 0, 1],
+        [-1, -1], [-1, 0], [-1, 1],
     ])
 
-    weights = np.array([
-        0, -1.0, 0.0, -1.0, 5.0, -1.0, 0.0, -1.0, 0.0,
+    base_weights = np.array([
+        0.09911165, 0.15088834, 0.09911165,
+        0.15088834, 0.        , 0.15088834,
+        0.09911165, 0.15088834, 0.09911165,
     ], dtype=np.float32)
+
+    weights = base_weights * strength
+    middle_weight = np.sum(weights) + 1.0
+    weights *= -1.0
+    weights[4] = middle_weight
 
     return offsets, weights
 
 
+def simple_shift_kernel_2d(
+    x_offset: float,
+    y_offset: float,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Create a 2D shift kernel. Useful for either aligning rasters at the sub-pixel
+    level or for shifting a raster by a whole pixel while keeping the bbox.
+    Can be used to for an augmentation, where channel misalignment is simulated.
+
+    Args:
+        x_offset (float): The x offset.
+        y_offset (float): The y offset.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+    """
+    if x_offset == 0.0 and y_offset == 0.0:
+        offsets = np.array([[0, 0]], dtype=np.int64)
+        weights = np.array([1.0], dtype=np.float32)
+
+        return offsets, weights
+
+    y0 = [int(np.floor(y_offset)), int(np.ceil(y_offset))] if y_offset != 0 else [0, 0]
+    x0 = [int(np.floor(x_offset)), int(np.ceil(x_offset))] if x_offset != 0 else [0, 0]
+
+    if x_offset == 0.0 or x_offset % 1 == 0.0:
+        offsets = np.zeros((2, 2), dtype=np.int64)
+        weights = np.zeros(2, dtype=np.float32)
+
+        offsets[0] = [int(x_offset) if x_offset % 1 == 0.0 else 0, y0[0]]
+        offsets[1] = [int(x_offset) if x_offset % 1 == 0.0 else 0, y0[1]]
+
+        weights[0] = y_offset - y0[0]
+        weights[1] = 1 - weights[0]
+
+    elif y_offset == 0.0 or y_offset % 1 == 0.0:
+        offsets = np.zeros((2, 2), dtype=np.int64)
+        weights = np.zeros(2, dtype=np.float32)
+
+        offsets[0] = [x0[0], int(y_offset) if y_offset % 1 == 0.0 else 0]
+        offsets[1] = [x0[1], int(y_offset) if y_offset % 1 == 0.0 else 0]
+
+        weights[0] = x_offset - x0[0]
+        weights[1] = 1 - weights[0]
+
+    else:
+        offsets = np.zeros((4, 2), dtype=np.int64)
+        weights = np.zeros(4, dtype=np.float32)
+
+        offsets[0] = [x0[0], y0[0]]
+        offsets[1] = [x0[0], y0[1]]
+        offsets[2] = [x0[1], y0[0]]
+        offsets[3] = [x0[1], y0[1]]
+
+        weights[0] = (1 - (x_offset - offsets[0][0])) * (1 - (y_offset - offsets[0][1]))
+        weights[1] = (1 - (x_offset - offsets[1][0])) * (1 + (y_offset - offsets[1][1]))
+        weights[2] = (1 + (x_offset - offsets[2][0])) * (1 - (y_offset - offsets[2][1]))
+        weights[3] = (1 + (x_offset - offsets[3][0])) * (1 + (y_offset - offsets[3][1]))
+
+    return offsets, weights
+
+
+# Sharpen still offsets everything, blur is better.
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def convolution_simple(
     array: np.ndarray,
@@ -168,17 +242,24 @@ def convolution_simple(
 
     for col in prange(array.shape[0]):
         for row in prange(array.shape[1]):
-            weights_sum = 0.0
             result_value = 0.0
-            for i in prange(offsets.shape[0]):
+            for i in range(offsets.shape[0]):
                 new_col = col + offsets[i, 0]
                 new_row = row + offsets[i, 1]
 
-                if 0 <= new_col < array.shape[0] and 0 <= new_row < array.shape[1]:
-                    result_value += array[new_col, new_row] * weights[i]
-                    weights_sum += weights[i]
+                if new_col < 0:
+                    new_col = 0
+                elif new_col >= array.shape[0]:
+                    new_col = array.shape[0] - 1
 
-            result[col, row] = result_value / weights_sum
+                if new_row < 0:
+                    new_row = 0
+                elif new_row >= array.shape[1]:
+                    new_row = array.shape[1] - 1
+
+                result_value += array[new_col, new_row] * weights[i]
+
+            result[col, row] = result_value
 
     if intensity < 1.0:
         result *= intensity
@@ -375,6 +456,7 @@ def augmentation_mirror(
     y: Optional[np.ndarray] = None,
     *,
     chance: float = 0.5,
+    k: Optional[int] = None,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
@@ -386,6 +468,9 @@ def augmentation_mirror(
     Keyword Args:
         y (np.ndarray/none=None): The label to mirror.
         chance (float=0.5): The chance of mirroring the image.
+        k (int=None): If None, randomly mirrors the image along the horizontal or vertical axis.
+            If 1, mirrors the image along the horizontal axis.
+            If 2, mirrors the image along the vertical axis.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
 
     Returns:
@@ -394,7 +479,11 @@ def augmentation_mirror(
     if np.random.rand() > chance:
         return X, y
 
-    random_k = np.random.randint(1, 3)
+    if k is None:
+        random_k = np.random.randint(1, 3)
+    else:
+        assert k in [1, 2]
+        random_k = k
 
     flipped_x = X.copy()
     flipped_y = None if y is None else y.copy()
@@ -413,6 +502,7 @@ def augmentation_mirror_batch(
     y: Optional[np.ndarray] = None,
     *,
     chance: float = 0.5,
+    k: Optional[int] = None,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
@@ -424,6 +514,9 @@ def augmentation_mirror_batch(
     Keyword Args:
         y (np.ndarray/none=None): The label to mirror.
         chance (float=0.5): The chance of mirroring the image.
+        k (int=None): If None, randomly mirrors the image along the horizontal or vertical axis.
+            If 1, mirrors the image along the horizontal axis.
+            If 2, mirrors the image along the vertical axis.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
     
     Returns:
@@ -434,9 +527,9 @@ def augmentation_mirror_batch(
 
     for i in range(X.shape[0]):
         if y is None:
-            X_mirror[i], _ = augmentation_mirror(X[i], y=None, chance=chance, channel_last=channel_last)
+            X_mirror[i], _ = augmentation_mirror(X[i], y=None, chance=chance, k=k, channel_last=channel_last)
         else:
-            X_mirror[i], y_mirror[i] = augmentation_mirror(X[i], y=y[i], chance=chance, channel_last=channel_last)
+            X_mirror[i], y_mirror[i] = augmentation_mirror(X[i], y=y[i], chance=chance, k=k, channel_last=channel_last)
 
     return X_mirror, y_mirror
 
@@ -446,8 +539,8 @@ def augmentation_noise(
     y: Optional[np.ndarray] = None,
     *,
     chance: float = 0.5,
-    amount: float = 0.025,
-    additive: bool = True,
+    amount: float = 0.1,
+    additive: bool = False,
     channel_last: Any = None, # pylint: disable=unused-argument
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
@@ -462,7 +555,7 @@ def augmentation_noise(
         y (np.ndarray/none=None): The label to add noise to. If None, no label is returned.
         chance (float=0.5): The chance of adding noise.
         amount (float=0.01): The amount of noise to add.
-        additive (bool=True): Whether to add or multiply the noise.
+        additive (bool=False): Whether to add or multiply the noise.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
             ignored for this function. Kept to keep the same function signature as other augmentations.
 
@@ -485,8 +578,8 @@ def augmentation_noise_batch(
     y: Optional[np.ndarray] = None,
     *,
     chance: float = 0.5,
-    amount: float = 0.025,
-    additive: bool = True,
+    amount: float = 0.1,
+    additive: bool = False,
     channel_last: Any = None, # pylint: disable=unused-argument
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
@@ -501,10 +594,9 @@ def augmentation_noise_batch(
         y (np.ndarray/none=None): The label to add noise to. If None, no label is returned.
         chance (float=0.5): The chance of adding noise.
         amount (float=0.01): The amount of noise to add.
-        additive (bool=True): Whether to add or multiply the noise.
+        additive (bool=False): Whether to add or multiply the noise.
         channel_last (any=None): Whether the image is (channels, height, width) or (height, width, channels).
             ignored for this function. Kept to keep the same function signature as other augmentations.
-
 
     Returns:
         Tuple[np.ndarray, Optional[np.ndarray]]: The batch of images with noise and optionally the unmodified label.
@@ -523,7 +615,7 @@ def augmentation_channel_scale(
     *,
     y: Optional[np.ndarray] = None,
     chance: float = 0.5,
-    amount: float = 0.025,
+    amount: float = 0.1,
     additive: bool = False,
     channel_last: bool = True, # pylint: disable=unused-argument
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
@@ -574,7 +666,7 @@ def augmentation_channel_scale_batch(
     *,
     y: Optional[np.ndarray] = None,
     chance: float = 0.5,
-    amount: float = 0.025,
+    amount: float = 0.1,
     additive: bool = False,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
@@ -864,11 +956,13 @@ def augmentation_blur(
     y: Optional[np.ndarray] = None,
     chance: float = 0.5,
     intensity: float = 1.0,
+    blur_y: bool = False,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
     Blurs an image at random.
     input should be (height, width, channels) or (channels, height, width).
+    Same goes for the label if blur_y is True.
 
     Args:
         X (np.ndarray): The image to potentially blur.
@@ -877,6 +971,7 @@ def augmentation_blur(
         y (np.ndarray/none=None): The label to blur a pixel in. If None, no label is returned.
         chance (float=0.5): The chance of blurring a pixel.
         intensity (float=1.0): The intensity of the blur. from 0.0 to 1.0.
+        blur_y (bool=False): Whether to blur the label as well.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
     """
     if np.random.rand() > chance:
@@ -884,14 +979,18 @@ def augmentation_blur(
 
     x = X.copy().astype(np.float32, copy=False)
 
-    offsets, weights = blur_kernel()
+    offsets, weights = simple_blur_kernel_2d_3x3()
 
     if channel_last:
         for channel in range(x.shape[2]):
             x[:, :, channel] = convolution_simple(x[:, :, channel], offsets, weights, intensity)
+            if blur_y and y is not None:
+                y[:, :, channel] = convolution_simple(y[:, :, channel], offsets, weights, intensity)
     else:
         for channel in range(x.shape[0]):
             x[channel, :, :] = convolution_simple(x[channel, :, :], offsets, weights, intensity)
+            if blur_y and y is not None:
+                y[channel, :, :] = convolution_simple(y[channel, :, :], offsets, weights, intensity)
 
     return x, y
 
@@ -902,6 +1001,7 @@ def augmentation_blur_batch(
     y: Optional[np.ndarray] = None,
     chance: float = 0.5,
     intensity: float = 1.0,
+    blur_y: bool = False,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
@@ -915,6 +1015,7 @@ def augmentation_blur_batch(
         y (np.ndarray/none=None): The label to blur a pixel in. If None, no label is returned.
         chance (float=0.5): The chance of blurring a pixel.
         intensity (float=1.0): The intensity of the blur. from 0.0 to 1.0.
+        blur_y (bool=False): Whether to blur the label as well.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
     """
     X_blurred = np.zeros_like(X, dtype=X.dtype)
@@ -925,6 +1026,7 @@ def augmentation_blur_batch(
             y=y,
             chance=chance,
             intensity=intensity,
+            blur_y=blur_y,
             channel_last=channel_last,
         )
 
@@ -937,6 +1039,7 @@ def augmentation_sharpen(
     y: Optional[np.ndarray] = None,
     chance: float = 0.5,
     intensity: float = 1.0,
+    sharpen_y: bool = False,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
@@ -950,6 +1053,7 @@ def augmentation_sharpen(
         y (np.ndarray/none=None): The label to sharpen a pixel in. If None, no label is returned.
         chance (float=0.5): The chance of sharpening a pixel.
         intensity (float=1.0): The intensity of the sharpening. from 0.0 to 1.0.
+        sharpen_y (bool=False): Whether to sharpen the label as well.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
     """
     if np.random.rand() > chance:
@@ -957,14 +1061,18 @@ def augmentation_sharpen(
 
     x = X.copy().astype(np.float32, copy=False)
 
-    offsets, weights = unsharp_kernel()
+    offsets, weights = simple_unsharp_kernel_2d_3x3()
 
     if channel_last:
         for channel in range(x.shape[2]):
             x[:, :, channel] = convolution_simple(x[:, :, channel], offsets, weights, intensity)
+            if sharpen_y and y is not None:
+                y[:, :, channel] = convolution_simple(y[:, :, channel], offsets, weights, intensity)
     else:
         for channel in range(x.shape[0]):
             x[channel, :, :] = convolution_simple(x[channel, :, :], offsets, weights, intensity)
+            if sharpen_y and y is not None:
+                y[channel, :, :] = convolution_simple(y[channel, :, :], offsets, weights, intensity)
 
     return x, y
 
@@ -975,6 +1083,7 @@ def augmentation_sharpen_batch(
     y: Optional[np.ndarray] = None,
     chance: float = 0.5,
     intensity: float = 1.0,
+    sharpen_y: bool = False,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
@@ -988,6 +1097,7 @@ def augmentation_sharpen_batch(
         y (np.ndarray/none=None): The label to sharpen a pixel in. If None, no label is returned.
         chance (float=0.5): The chance of sharpening a pixel.
         intensity (float=1.0): The intensity of the sharpening. from 0.0 to 1.0.
+        sharpen_y (bool=False): Whether to sharpen the label as well.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
     """
     X_sharpened = np.zeros_like(X, dtype=X.dtype)
@@ -998,10 +1108,113 @@ def augmentation_sharpen_batch(
             y=y,
             chance=chance,
             intensity=intensity,
+            sharpen_y=sharpen_y,
             channel_last=channel_last,
         )
 
     return X_sharpened, y
+
+
+def augmentation_misalign_pixels(
+    X: np.ndarray,
+    *,
+    y: Optional[np.ndarray] = None,
+    chance: float = 0.5,
+    max_offset: float = 0.5,
+    max_channels: int = 1,
+    channel_last: bool = True,
+) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    """
+    Misaligns the channels of an image at random.
+    input should be (height, width, channels) or (channels, height, width).
+
+    Args:
+        X (np.ndarray): The image to potentially misalign the channels of.
+
+    Keyword Args:
+        y (np.ndarray/none=None): The label to misalign the channels of a pixel in. If None, no label is returned.
+        chance (float=0.5): The chance of misaligning the channels of a pixel.
+        max_offset (float=0.5): The maximum offset to misalign the channels by.
+        max_channels (int=1): The maximum number of channels to misalign.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    """
+    if np.random.rand() > chance:
+        return X, y
+
+    x = X.copy().astype(np.float32, copy=False)
+
+    offsets, weights = simple_shift_kernel_2d(
+        min(np.random.rand(), max_offset),
+        min(np.random.rand(), max_offset),
+    )
+
+    if channel_last:
+        _height, _width, channels = x.shape
+    else:
+        channels, _height, _width = x.shape
+
+    channels_to_misalign = np.random.choice(channels, min(channels, max_channels), replace=False)
+
+    if channel_last:
+        for channel in range(channels_to_misalign):
+            x[:, :, channel] = convolution_simple(x[:, :, channel], offsets, weights)
+    else:
+        for channel in range(channels_to_misalign):
+            x[channel, :, :] = convolution_simple(x[channel, :, :], offsets, weights)
+
+    return x, y
+
+
+def augmentation_misalign_channels_batch(
+    X: np.ndarray,
+    *,
+    y: Optional[np.ndarray] = None,
+    chance: float = 0.5,
+    max_offset: float = 0.5,
+    max_images: float = 0.2,
+    max_channels: int = 1,
+    channel_last: bool = True,
+) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    """
+    Misaligns the channels of a batch of images at random.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to potentially misalign the channels of.
+
+    Keyword Args:
+        y (np.ndarray/none=None): The label to misalign the channels of a pixel in. If None, no label is returned.
+        chance (float=0.5): The chance of misaligning the channels of a pixel.
+        max_offset (float=0.5): The maximum offset to misalign the channels by.
+        max_images (float=0.2): The maximum number of images to misalign the channels of.
+        max_channels (int=1): The maximum number of channels to misalign.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    """
+    X_misaligned = np.zeros_like(X, dtype=X.dtype)
+
+    batch_size = X.shape[0]
+
+    n_mixes = min(
+        (np.random.rand(batch_size) <= chance).sum(),
+        int(batch_size * max_images),
+    )
+
+    if n_mixes == 0:
+        return X, y
+
+    idx_targets = np.random.choice(batch_size, n_mixes, replace=False)
+
+    for idx in range(idx_targets):
+        X_misaligned[idx], _ = augmentation_misalign_pixels(
+            X[idx],
+            y=y,
+            chance=chance,
+            max_offset=max_offset,
+            max_channels=max_channels,
+            channel_last=channel_last,
+        )
+
+    return X_misaligned, y
 
 
 def augmentation_cutmix_batch(
@@ -1068,7 +1281,7 @@ def augmentation_cutmix_batch(
 
         if feather:
             bbox = np.array([x0, x1, y0, y1])
-            feather_weight_source, feather_weight_target = feather_box(x[idx_target, :, :, 0], bbox, feather_dist)
+            feather_weight_source, feather_weight_target = feather_box_2d(x[idx_target, :, :, 0], bbox, feather_dist)
 
             feather_weight_source = np.repeat(feather_weight_source[:, :, np.newaxis], channels, axis=2)
             feather_weight_target = np.repeat(feather_weight_target[:, :, np.newaxis], channels, axis=2)
@@ -1337,6 +1550,25 @@ def apply_augmentations(
                 kwargs["channel_last"] = channel_last
 
             batch_x, batch_y = augmentation_sharpen_batch(
+                batch_x,
+                y=batch_y,
+                **kwargs,
+            )
+
+        elif aug["name"] == "misalign":
+            kwargs = {}
+            if "chance" in aug:
+                kwargs["chance"] = aug["chance"]
+            if "max_offset" in aug:
+                kwargs["max_offset"] = aug["max_offset"]
+            if "max_images" in aug:
+                kwargs["max_images"] = aug["max_images"]
+            if "max_channels" in aug:
+                kwargs["max_channels"] = aug["max_channels"]
+            if "channel_last" in aug:
+                kwargs["channel_last"] = aug["channel_last"]
+
+            batch_x, batch_y = augmentation_misalign_channels_batch(
                 batch_x,
                 y=batch_y,
                 **kwargs,
