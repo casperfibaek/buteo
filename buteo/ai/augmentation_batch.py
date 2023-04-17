@@ -11,7 +11,6 @@ import numpy as np
 from numba import jit, prange
 
 # Internal
-from buteo.ai.augmentation_utils import feather_box_2d
 from buteo.ai.augmentation_funcs import (
     augmentation_rotation,
     augmentation_mirror,
@@ -74,13 +73,13 @@ def augmentation_batch_rotation(
     Args:
         X (np.ndarray): The batch of images to rotate.
         y (np.ndarray/None): The label of images to rotate. If None, no label is returned.
-    
+
     Keyword Args:
         y (np.ndarray/none=None): The batch of labels to rotate.
         chance (float=0.5): The chance of rotating the image.
         max_images (float=None): The maximum proportion of the images in the batch to possibly rotate.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
-    
+
     Returns:
         Tuple[np.ndarray, Optional[np.ndarray]]: The rotated images and optionally labels.
     """
@@ -178,7 +177,7 @@ def augmentation_batch_noise(
     Args:
         X (np.ndarray): The batch of images to add noise to.
         y (np.ndarray/None): The labels of images to add noise to. If None, no label is returned.
-    
+
     Keyword Args:
         chance (float=0.5): The chance of adding noise.
         amount (float=0.01): The amount of noise to add.
@@ -225,7 +224,7 @@ def augmentation_batch_channel_scale(
     Args:
         X (np.ndarray): The batch of images to scale the channels of.
         y (np.ndarray/None): The labels of images to scale the channels of. If None, no label is returned.
-    
+
     Keyword Args:
         chance (float=0.5): The chance of scaling the channels.
         max_amount (float=0.1): The amount to possible scale the channels by. Sampled uniformly.
@@ -269,7 +268,7 @@ def augmentation_batch_contrast(
     Args:
         X (np.ndarray): The batch of images to change the contrast of.
         y (np.ndarray/None): The labels of images to change the contrast of. If None, no label is returned.
-    
+
     Keyword Args:
         chance (float=0.5): The chance of changing the contrast.
         max_amount (float=0.01): The amount to change the contrast by.
@@ -312,7 +311,7 @@ def augmentation_batch_drop_pixel(
     Args:
         X (np.ndarray): The batch of images to drop a pixel from.
         y (np.ndarray/None): The labels of images to drop pixels from. If None, no label is returned.
-    
+
     Keyword Args:
         chance (float=0.5): The chance of dropping a pixel.
         drop_probability (float=0.05): The probability of dropping a pixel.
@@ -399,9 +398,9 @@ def augmentation_batch_blur(
 
     Args:
         X (np.ndarray): The batch of images to potentially blur.
+        y (np.ndarray/None): The labels of images to potentially blur. If None, no label is returned.
 
     Keyword Args:
-        y (np.ndarray/none=None): The label to blur a pixel in. If None, no label is returned.
         chance (float=0.5): The chance of blurring a pixel.
         max_images (float=1.0): The maximum proportion of images in the batch to blur.
         intensity (float=1.0): The intensity of the blur. from 0.0 to 1.0.
@@ -441,9 +440,9 @@ def augmentation_batch_sharpen(
 
     Args:
         X (np.ndarray): The batch of images to potentially sharpen.
+        y (np.ndarray/None): The labels of images to potentially sharpen. If None, no label is returned.
 
     Keyword Args:
-        y (np.ndarray/none=None): The label to sharpen a pixel in. If None, no label is returned.
         chance (float=0.5): The chance of sharpening a pixel.
         max_images (float=1.0): The maximum proportion of images in the batch to sharpen.
         intensity (float=1.0): The intensity of the sharpening. from 0.0 to 1.0.
@@ -482,9 +481,9 @@ def augmentation_batch_misalign(
 
     Args:
         X (np.ndarray): The batch of images to potentially misalign the channels of.
+        y (np.ndarray/None): The labels of images to potentially misalign the channels of. If None, no label is returned.
 
     Keyword Args:
-        y (np.ndarray/none=None): The label to misalign the channels of a pixel in. If None, no label is returned.
         chance (float=0.5): The chance of misaligning the channels of a pixel.
         max_offset (float=0.5): The maximum offset to misalign the channels by.
         max_images (float=0.2): The maximum number of images to misalign the channels of.
@@ -524,9 +523,9 @@ def augmentation_batch_cutmix(
 
     Args:
         X (np.ndarray): The batch of images to potentially cutmix.
+        y (np.ndarray/None): The labels of images to potentially cutmix. If None, no label is returned.
 
     Keyword Args:
-        y (np.ndarray/none=None): The label to cutmix a pixel in. If None, no label is returned.
         chance (float=0.5): The chance of cutmixing a pixel.
         max_size (float=0.5): The maximum size of the patch to cutmix. In percentage of the image width.
         max_images (float=0.2): The maximum percentage of images in a batch to mixup.
@@ -552,52 +551,9 @@ def augmentation_batch_cutmix(
     idx_targets = np.random.choice(batch_size, n_mixes, replace=False)
 
     for idx_target in idx_targets:
-        patch_height = np.random.randint(1, int(height * max_size))
-        patch_width = np.random.randint(1, int(width * max_size))
+        pass
 
-        if feather:
-            patch_height += feather_dist * 2
-            patch_width += feather_dist * 2
-
-            patch_height = min(patch_height, height)
-            patch_width = min(patch_width, width)
-
-        x0 = np.random.randint(0, width - patch_width)
-        y0 = np.random.randint(0, height - patch_height)
-        x1 = x0 + patch_width
-        y1 = y0 + patch_height
-
-        source_img = np.random.choice(np.where(np.arange(batch_size) != idx_target)[0])
-
-        if feather:
-            bbox = np.array([x0, x1, y0, y1])
-            feather_weight_source, feather_weight_target = feather_box_2d(x[idx_target, :, :, 0], bbox, feather_dist)
-
-            feather_weight_source = np.repeat(feather_weight_source[:, :, np.newaxis], channels, axis=2)
-            feather_weight_target = np.repeat(feather_weight_target[:, :, np.newaxis], channels, axis=2)
-
-            if channel_last:
-
-                x[idx_target, y0:y1, x0:x1, :] = (
-                    x[idx_target, y0:y1, x0:x1, :] * feather_weight_target[y0:y1, x0:x1, :]
-                    + x[source_img, y0:y1, x0:x1, :] * feather_weight_source[y0:y1, x0:x1, :]
-                )
-                if y is not None:
-                    y[idx_target, y0:y1, x0:x1, :] = (
-                        y[idx_target, y0:y1, x0:x1, :] * feather_weight_target[y0:y1, x0:x1, :]
-                        + y[source_img, y0:y1, x0:x1, :] * feather_weight_source[y0:y1, x0:x1, :]
-                    )
-        else:
-            if channel_last:
-                x[idx_target, y0:y1, x0:x1, :] = x[source_img, y0:y1, x0:x1, :]
-                if y is not None:
-                    y[idx_target, y0:y1, x0:x1, :] = y[source_img, y0:y1, x0:x1, :]
-            else:
-                x[idx_target, :, y0:y1, x0:x1] = x[source_img, :, y0:y1, x0:x1]
-                if y is not None:
-                    y[idx_target, :, y0:y1, x0:x1] = y[source_img, :, y0:y1, x0:x1]
-
-    return x, y
+    return
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
@@ -623,9 +579,9 @@ def augmentation_batch_mixup(
 
     Args:
         X (np.ndarray): The batch of images to potentially mixup.
+        y (np.ndarray/None): The batch of labels to potentially mixup.
 
     Keyword Args:
-        y (np.ndarray/none=None): The label to mixup a pixel in. If None, no label is returned.
         chance (float=0.5): The chance of mixuping a pixel.
         max_mixes (float=0.2): The maximum percentage of images in a batch to mixup.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
@@ -645,16 +601,6 @@ def augmentation_batch_mixup(
     idx_targets = np.random.choice(batch_size, n_mixes, replace=False)
 
     for idx_target in idx_targets:
-        source_img = np.random.choice(np.where(np.arange(batch_size) != idx_target)[0])
-        mixup_coeff = np.random.rand()
+        pass
 
-        if channel_last:
-            x[idx_target, :, :, :] = x[idx_target, :, :, :] * mixup_coeff + x[source_img, :, :, :] * (1 - mixup_coeff)
-            if y is not None:
-                y[idx_target, :, :, :] = y[idx_target, :, :, :] * mixup_coeff + y[source_img, :, :, :] * (1 - mixup_coeff)
-        else:
-            x[idx_target, :, :, :] = x[idx_target, :, :, :] * mixup_coeff + x[source_img, :, :, :] * (1 - mixup_coeff)
-            if y is not None:
-                y[idx_target, :, :, :] = y[idx_target, :, :, :] * mixup_coeff + y[source_img, :, :, :] * (1 - mixup_coeff)
-
-    return x, y
+    return
