@@ -171,7 +171,7 @@ def test_augmentation_contrast():
     image = np.ones((4, 4, 3))
 
     # Test contrast adjustment
-    contrast_image, _ = augmentation_contrast(image, contrast_factor=0.25)
+    contrast_image, _ = augmentation_contrast(image, max_factor=0.25)
     assert contrast_image.shape == image.shape
 
 def test_augmentation_contrast_batch():
@@ -180,7 +180,7 @@ def test_augmentation_contrast_batch():
     images = np.ones((4, 4, 4, 3))
 
     # Test contrast adjustment
-    contrast_images, _ = augmentation_contrast_batch(images, contrast_factor=0.25)
+    contrast_images, _ = augmentation_contrast_batch(images, max_amount=0.25)
     assert contrast_images.shape == images.shape
 
 def test_augmentation_drop_channel():
