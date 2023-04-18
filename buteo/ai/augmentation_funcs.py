@@ -491,32 +491,42 @@ def augmentation_misalign_pixels(
     return x_misaligned, y_misaligned
 
 
-
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def augmentation_cutmix(
     X_target: np.ndarray,
-    y_target: Optional[np.ndarray],
+    y_target: np.ndarray,
     X_source: np.ndarray,
-    y_source: Optional[np.ndarray],
+    y_source: np.ndarray,
     chance: float = 0.5,
-    max_size: float = 0.5,
+    min_size: float = 0.333,
+    max_size: float = 0.666,
+    label_mix: int = 0,
     feather: bool = True,
     feather_dist: int = 3,
     channel_last: bool = True,
-) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+) -> Tuple[np.ndarray, np.ndarray,]:
     """
     Cutmixes two images.
     input should be (height, width, channels) or (channels, height, width).
 
     Args:
         X_target (np.ndarray): The image to transfer the cutmix to.
-        y_target (np.ndarray/None): The label to transfer the cutmix to.
+        y_target (np.ndarray): The label to transfer the cutmix to.
         X_source (np.ndarray): The image to cutmix from.
-        y_source (np.ndarray/None): The label to cutmix from.
+        y_source (np.ndarray): The label to cutmix from.
 
     Keyword Args:
         chance (float=0.5): The chance of cutmixing a pixel.
-        max_size (float=0.5): The maximum size of the patch to cutmix. In percentage of the image width.
+        min_size (float=0.333): The minimum size of the patch to cutmix. In percentage of the image width.
+        max_size (float=0.666): The maximum size of the patch to cutmix. In percentage of the image width.
+        label_mix (int=0): if
+            0 - The labels will be mixed by the weights.\n
+            1 - The target label will be used.\n
+            2 - The source label will be used.\n
+            3 - The max of the labels will be used.\n
+            4 - The min of the labels will be used.\n
+            5 - The max of the image with the highest weight will be used.\n
+            6 - The min of the image with the highest weight will be used.\n
         feather (bool=True): Whether to feather the edges of the cutmix.
         feather_dist (int=3): The distance to feather the edges of the cutmix in pixels
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
@@ -525,15 +535,17 @@ def augmentation_cutmix(
         return X_target, y_target
 
     x_mixed = X_target.astype(np.float32)
-    y_mixed = y_target.astype(np.float32) if y_target is not None else None
+    y_mixed = y_target.astype(np.float32)
 
     if channel_last:
-        height, width, channels = x_mixed.shape
+        height, width, channels_x = x_mixed.shape
     else:
-        channels, height, width = x_mixed.shape
+        channels_x, height, width = x_mixed.shape
 
-    patch_height = np.random.randint(1, int(height * max_size))
-    patch_width = np.random.randint(1, int(width * max_size))
+    channels_y = y_mixed.shape[2] if channel_last else y_mixed.shape[0]
+
+    patch_height = np.random.randint(int(height * min_size), int(height * max_size))
+    patch_width = np.random.randint(int(width * min_size), int(width * max_size))
 
     if feather:
         patch_height += feather_dist * 2
@@ -549,46 +561,113 @@ def augmentation_cutmix(
 
     if feather:
         bbox = np.array([x0, x1, y0, y1])
-        feather_weight_source, feather_weight_target = feather_box_2d(x_mixed, bbox, feather_dist)
+        feather_weight_target = feather_box_2d(x_mixed, bbox, feather_dist)
+        feather_weight_source = 1 - feather_weight_target
 
-        feather_weight_source = np.repeat(feather_weight_source[:, :, np.newaxis], channels, axis=2)
-        feather_weight_target = np.repeat(feather_weight_target[:, :, np.newaxis], channels, axis=2)
+        x0 = max(0, x0 - feather_dist)
+        x1 = min(x1 + 1 + feather_dist, x_mixed.shape[1])
+        y0 = max(0, y0 - feather_dist)
+        y1 = min(y1 + 1 + feather_dist, x_mixed.shape[0])
 
-        if channel_last:
-            x_mixed[y0:y1, x0:x1, :] = (
-                x_mixed[y0:y1, x0:x1, :] * feather_weight_target[y0:y1, x0:x1, :]
-                + X_source[y0:y1, x0:x1, :] * feather_weight_source[y0:y1, x0:x1, :]
-            )
+        if channel_last: # Reshape and tile instead of slicing, because of Numba.
+            for col in prange(y0, y1):
+                for row in prange(x0, x1):
+                    for channel_x in prange(channels_x):
+                        x_mixed[col, row, channel_x] = (
+                            x_mixed[col, row, channel_x] * feather_weight_target[col, row][0]
+                            + X_source[col, row, channel_x] * feather_weight_source[col, row][0]
+                        )
 
-            if y_mixed is not None:
-                y_mixed[y0:y1, x0:x1, :] = (
-                    y_mixed[y0:y1, x0:x1, :] * feather_weight_target[y0:y1, x0:x1, :]
-                    + y_source[y0:y1, x0:x1, :] * feather_weight_source[y0:y1, x0:x1, :]
-                )
+                    for channel_y in prange(channels_y):
+                        if label_mix == 0:
+                            y_mixed[col, row, channel_y] = (
+                                y_mixed[col, row, channel_y] * feather_weight_target[col, row][0]
+                                + y_source[col, row, channel_y] * feather_weight_source[col, row][0]
+                            )
+                        elif label_mix == 1:
+                            y_mixed[col, row, channel_y] = y_mixed[col, row, channel_y]
+                        elif label_mix == 2:
+                            y_mixed[col, row, channel_y] = y_source[col, row, channel_y]
+                        elif label_mix == 3:
+                            y_mixed[col, row, channel_y] = max(
+                                y_mixed[col, row, channel_y], y_source[col, row, channel_y]
+                            )
+                        elif label_mix == 4:
+                            y_mixed[col, row, channel_y] = min(
+                                y_mixed[col, row, channel_y], y_source[col, row, channel_y]
+                            )
+                        elif label_mix == 5:
+                            if feather_weight_target[col, row][0] > feather_weight_source[col, row][0]:
+                                y_mixed[col, row, channel_y] = y_mixed[col, row, channel_y]
+                            else:
+                                y_mixed[col, row, channel_y] = y_source[col, row, channel_y]
+                        elif label_mix == 6:
+                            if feather_weight_target[col, row][0] < feather_weight_source[col, row][0]:
+                                y_mixed[col, row, channel_y] = y_mixed[col, row, channel_y]
+                            else:
+                                y_mixed[col, row, channel_y] = y_source[col, row, channel_y]
+        else:
+            for col in prange(y0, y1):
+                for row in prange(x0, x1):
+                    for channel_x in prange(channels_x):
+                        x_mixed[channel_x, col, row] = (
+                            x_mixed[channel_x, col, row] * feather_weight_target[col, row][0]
+                            + X_source[channel_x, col, row] * feather_weight_source[col, row][0]
+                        )
+
+                    for channel_y in prange(channels_y):
+                        if label_mix == 0:
+                            y_mixed[channel_y, col, row] = (
+                                y_mixed[channel_y, col, row] * feather_weight_target[col, row][0]
+                                + y_source[channel_y, col, row] * feather_weight_source[col, row][0]
+                            )
+                        elif label_mix == 1:
+                            y_mixed[channel_y, col, row] = y_mixed[channel_y, col, row]
+                        elif label_mix == 2:
+                            y_mixed[channel_y, col, row] = y_source[channel_y, col, row]
+                        elif label_mix == 3:
+                            y_mixed[channel_y, col, row] = max(
+                                y_mixed[channel_y, col, row], y_source[channel_y, col, row]
+                            )
+                        elif label_mix == 4:
+                            y_mixed[channel_y, col, row] = min(
+                                y_mixed[channel_y, col, row], y_source[channel_y, col, row]
+                            )
+                        elif label_mix == 5:
+                            if feather_weight_target[col, row][0] > feather_weight_source[col, row][0]:
+                                y_mixed[channel_y, col, row] = y_mixed[channel_y, col, row]
+                            else:
+                                y_mixed[channel_y, col, row] = y_source[channel_y, col, row]
+                        elif label_mix == 6:
+                            if feather_weight_target[col, row][0] < feather_weight_source[col, row][0]:
+                                y_mixed[channel_y, col, row] = y_mixed[channel_y, col, row]
+                            else:
+                                y_mixed[channel_y, col, row] = y_source[channel_y, col, row]
 
     else:
         if channel_last:
             x_mixed[y0:y1, x0:x1, :] = X_source[y0:y1, x0:x1, :]
-            if y_mixed is not None:
-                y_mixed[y0:y1, x0:x1, :] = y_source[y0:y1, x0:x1, :]
+            y_mixed[y0:y1, x0:x1, :] = y_source[y0:y1, x0:x1, :]
 
         else:
             x_mixed[:, y0:y1, x0:x1] = X_source[:, y0:y1, x0:x1]
-            if y_mixed is not None:
-                y_mixed[:, y0:y1, x0:x1] = y_source[:, y0:y1, x0:x1]
+            y_mixed[:, y0:y1, x0:x1] = y_source[:, y0:y1, x0:x1]
 
-    x_mixed = fit_data_to_dtype(x_mixed, X_target.dtype)
-    y_mixed = fit_data_to_dtype(y_mixed, y_target.dtype) if y_target is not None else None
-
-    return x_mixed, y_mixed
+    return (
+        fit_data_to_dtype(x_mixed, X_target.dtype),
+        fit_data_to_dtype(y_mixed, y_target.dtype),
+    )
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def augmentation_mixup(
     X_target: np.ndarray,
-    y_target: Optional[np.ndarray],
+    y_target: np.ndarray,
     X_source: np.ndarray,
-    y_source: Optional[np.ndarray],
+    y_source: np.ndarray,
+    min_mix: float = 0.333,
+    max_mix: float = 0.666,
+    label_mix: int = 0,
     chance: float = 0.5,
     channel_last: bool = True, # pylint: disable=unused-argument
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
@@ -607,11 +686,21 @@ def augmentation_mixup(
 
     Args:
         X_target (np.ndarray): The image to transfer to.
-        y_target (np.ndarray/None): The label to transfer to.
+        y_target (np.ndarray): The label to transfer to.
         X_source (np.ndarray): The image to transfer from.
-        y_source (np.ndarray/None): The label to transfer from.
+        y_source (np.ndarray): The label to transfer from.
 
     Keyword Args:
+        min_mix (float=0.333): The minimum mixup coefficient.
+        max_mix (float=0.666): The maximum mixup coefficient.
+        label_mix (int=0): if
+            0 - The labels will be mixed by the weights.\n
+            1 - The target label will be used.\n
+            2 - The source label will be used.\n
+            3 - The max of the labels will be used.\n
+            4 - The min of the labels will be used.\n
+            5 - The max of the image with the highest weight will be used.\n
+            6 - The min of the image with the highest weight will be used.\n
         chance (float=0.5): The chance of mixuping a pixel.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
     """
@@ -619,15 +708,28 @@ def augmentation_mixup(
         return X_target, y_target
 
     x_mixed = X_target.astype(np.float32)
-    y_mixed = y_target.astype(np.float32) if y_target is not None else None
+    y_mixed = y_target.astype(np.float32)
 
-    mixup_coeff = np.random.rand()
+    mixup_coeff = np.random.uniform(min_mix, max_mix + 0.001)
 
     x_mixed = x_mixed * mixup_coeff + X_source * (1 - mixup_coeff)
-    if y_mixed is not None:
+
+    if label_mix == 0:
         y_mixed = y_mixed * mixup_coeff + y_source * (1 - mixup_coeff)
+    elif label_mix == 1:
+        y_mixed = y_target
+    elif label_mix == 2:
+        y_mixed = y_source
+    elif label_mix == 3:
+        y_mixed = np.maximum(y_target, y_source)
+    elif label_mix == 4:
+        y_mixed = np.minimum(y_target, y_source)
+    elif label_mix == 5:
+        y_mixed = y_target if mixup_coeff >= 0.5 else y_source
+    elif label_mix == 6:
+        y_mixed = y_target if mixup_coeff >= 0.5 else y_source
 
-    x_mixed = fit_data_to_dtype(x_mixed, X_target.dtype)
-    y_mixed = fit_data_to_dtype(y_mixed, y_target.dtype) if y_target is not None else None
-
-    return x_mixed, y_mixed
+    return (
+        fit_data_to_dtype(x_mixed, X_target.dtype),
+        fit_data_to_dtype(y_mixed, y_target.dtype),
+    )

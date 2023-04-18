@@ -97,21 +97,19 @@ def feather_box_2d(
                 within_circle += 1
 
     feather_offsets = feather_offsets[:within_circle]
+    n_offsets = feather_offsets.shape[0]
 
-    masking_array = np.zeros_like(array, dtype=np.uint8)
-    x0 = x_min + feather_dist
-    x1 = x_max + 1 - feather_dist
-    y0 = y_min + feather_dist
-    y1 = y_max + 1 - feather_dist
+    x_min = max(0, x_min - feather_dist)
+    x_max = min(x_max + 1 + feather_dist, array.shape[1])
+    y_min = max(0, y_min - feather_dist)
+    y_max = min(y_max + 1 + feather_dist, array.shape[0])
 
-    masking_array[y0:y1, x0:x1] = 1
-
-    feather_weights_box = np.zeros_like(array, dtype=np.float32)
-    feather_weights_array = np.zeros_like(array, dtype=np.float32)
+    feather_weights_array = np.ones_like(array, dtype=np.float32)
 
     # Feather the box
-    for y in prange(masking_array.shape[0]):
-        for x in prange(masking_array.shape[1]):
+    for y in prange(y_min, y_max + 1):
+        for x in prange(x_min, x_max + 1):
+            total_possible = n_offsets
             within_bbox = 0
             for offset in feather_offsets:
                 x_offset, y_offset = offset
@@ -119,19 +117,20 @@ def feather_box_2d(
                 y_new = y + y_offset
 
                 if y_new < 0 or y_new >= array.shape[0]:
+                    total_possible -= 1
                     continue
 
                 if x_new < 0 or x_new >= array.shape[1]:
+                    total_possible -= 1
                     continue
 
-                if x_new >= x_min and x_new <= x_max and y_new >= y_min and y_new <= y_max:
+                if x_new - feather_dist >= x_min and x_new + feather_dist <= x_max and y_new - feather_dist >= y_min and y_new + feather_dist <= y_max:
                     within_bbox += 1
 
-            weights_box = within_bbox / n_offsets
-            feather_weights_box[y, x] = weights_box
+            weights_box = within_bbox / total_possible
             feather_weights_array[y, x] = 1 - weights_box
 
-    return feather_weights_array, feather_weights_box
+    return feather_weights_array
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')

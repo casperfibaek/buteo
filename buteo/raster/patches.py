@@ -55,7 +55,7 @@ def get_kernel_weights(
     return arr
 
 
-@jit(nopython=True, parallel=True, nogil=True)
+@jit(nopython=True, parallel=True, nogil=True, cache=True)
 def merge_weighted_median(
     arr: np.ndarray,
     arr_weight: np.ndarray,
@@ -108,7 +108,7 @@ def merge_weighted_median(
     return ret_arr
 
 
-@jit(nopython=True, parallel=True, nogil=True)
+@jit(nopython=True, parallel=True, nogil=True, cache=True)
 def merge_weighted_average(
     arr: np.ndarray,
     arr_weight: np.ndarray,
@@ -152,7 +152,7 @@ def merge_weighted_average(
 
     return ret_arr
 
-@jit(nopython=True, parallel=True, nogil=True)
+@jit(nopython=True, parallel=True, nogil=True, cache=True)
 def merge_weighted_minmax(
     arr: np.ndarray,
     arr_weight: np.ndarray,
@@ -207,7 +207,7 @@ def merge_weighted_minmax(
     return ret_arr
 
 
-@jit(nopython=True, parallel=True, nogil=True)
+@jit(nopython=True, parallel=True, nogil=True, cache=True)
 def merge_weighted_olympic(
     arr: np.ndarray,
     arr_weight: np.ndarray,
@@ -802,7 +802,7 @@ def predict_array(
     Returns:
         np.ndarray: The predicted array.
     """
-    assert merge_method in ["mad", "median", "mean", "mode"], "Invalid merge method"
+    assert merge_method in ["mad", "median", "mean", "mode", "min", "max", "olympic1", "olympic2"], "Invalid merge method"
     assert len(arr.shape) == 3, "Array must be 3D"
     assert tile_size < arr.shape[0], "Tile size must be smaller than the array size"
     assert tile_size < arr.shape[1], "Tile size must be smaller than the array size"

@@ -17,7 +17,8 @@ pip install buteo
 ```
 Using conda:
 ```
-conda install buteo --channel casperfibaek
+conda install gdal
+pip install buteo
 ```
 
 **Quickstart**

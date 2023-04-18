@@ -3,6 +3,8 @@
 import sys; sys.path.append("../")
 import os
 
+import numpy as np
+
 import buteo.ai.augmentation_funcs as augmentation
 from buteo.raster import raster_to_array, array_to_raster
 
@@ -311,4 +313,54 @@ array_to_raster(
     reference=path_img,
     out_path=os.path.join(FOLDER, "tmp_test_image_rgb_8bit_misaligned_1.tif"),
     pixel_offsets=offset,
+)
+
+
+arr_target = raster_to_array(path_img, pixel_offsets=[0, 0, 1000, 1000])
+arr_source = raster_to_array(path_img, pixel_offsets=[1000, 1000, 1000, 1000])
+
+cutmix_x, _cutmix_y = augmentation.augmentation_cutmix(
+    arr_target, np.random.randint(0, 2, size=arr_target.shape),
+    arr_source, np.random.randint(0, 2, size=arr_target.shape),
+    max_size=0.75,
+    min_size=0.25,
+    feather=True,
+    feather_dist=6,
+    chance=1.0,
+    channel_last=True,
+)
+array_to_raster(
+    cutmix_x,
+    reference=path_img,
+    out_path=os.path.join(FOLDER, "tmp_test_image_rgb_8bit_cutmix_feather.tif"),
+    pixel_offsets=[0, 0, 1000, 1000],
+)
+
+cutmix_x, _cutmix_y = augmentation.augmentation_cutmix(
+    arr_target, np.random.randint(0, 2, size=arr_target.shape),
+    arr_source, np.random.randint(0, 2, size=arr_target.shape),
+    max_size=0.75,
+    min_size=0.25,
+    feather=False,
+    chance=1.0,
+    channel_last=True,
+)
+array_to_raster(
+    cutmix_x,
+    reference=path_img,
+    out_path=os.path.join(FOLDER, "tmp_test_image_rgb_8bit_cutmix.tif"),
+    pixel_offsets=[0, 0, 1000, 1000],
+)
+
+mixup_x, _mixup_y = augmentation.augmentation_mixup(
+    arr_target, np.random.randint(0, 2, size=arr_target.shape),
+    arr_source, np.random.randint(0, 2, size=arr_target.shape),
+    chance=1.0,
+    channel_last=True,
+)
+array_to_raster(
+    mixup_x,
+    reference=path_img,
+    out_path=os.path.join(FOLDER, "tmp_test_image_rgb_8bit_mixup.tif"),
+    pixel_offsets=[0, 0, 1000, 1000],
 )

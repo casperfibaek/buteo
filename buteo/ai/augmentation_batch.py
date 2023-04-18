@@ -22,6 +22,8 @@ from buteo.ai.augmentation_funcs import (
     augmentation_blur,
     augmentation_sharpen,
     augmentation_misalign_pixels,
+    augmentation_cutmix,
+    augmentation_mixup,
 )
 
 
@@ -509,10 +511,12 @@ def augmentation_batch_misalign(
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def augmentation_batch_cutmix(
     X: np.ndarray,
-    y: Optional[np.ndarray],
+    y: np.ndarray,
     chance: float = 0.5,
-    max_size: float = 0.5,
+    min_size: float = 0.333,
+    max_size: float = 0.666,
     max_images: float = 0.2,
+    label_mix: int = 0,
     feather: bool = True,
     feather_dist: int = 3,
     channel_last: bool = True,
@@ -527,18 +531,25 @@ def augmentation_batch_cutmix(
 
     Keyword Args:
         chance (float=0.5): The chance of cutmixing a pixel.
-        max_size (float=0.5): The maximum size of the patch to cutmix. In percentage of the image width.
+        min_size (float=0.333): The minimum size of the patch to cutmix. In percentage of the image width.
+        max_size (float=0.666): The maximum size of the patch to cutmix. In percentage of the image width.
         max_images (float=0.2): The maximum percentage of images in a batch to mixup.
+        label_mix (int=0): if
+            0 - The labels will be mixed by the weights.\n
+            1 - The target label will be used.\n
+            2 - The source label will be used.\n
+            3 - The max of the labels will be used.\n
+            4 - The min of the labels will be used.\n
+            5 - The max of the image with the highest weight will be used.\n
+            6 - The min of the image with the highest weight will be used.\n
         feather (bool=True): Whether to feather the edges of the cutmix.
         feather_dist (int=3): The distance to feather the edges of the cutmix in pixels
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
     """
-    x = X.copy().astype(np.float32, copy=False)
+    x_cutmix = X.astype(np.float32)
+    y_cutmix = y.astype(np.float32)
 
-    if channel_last:
-        batch_size, height, width, channels = x.shape
-    else:
-        batch_size, channels, height, width = x.shape
+    batch_size = x_cutmix.shape[0]
 
     n_mixes = min(
         (np.random.rand(batch_size) <= chance).sum(),
@@ -546,14 +557,35 @@ def augmentation_batch_cutmix(
     )
 
     if n_mixes == 0:
-        return x, y
+        return X, y
 
     idx_targets = np.random.choice(batch_size, n_mixes, replace=False)
 
     for idx_target in idx_targets:
-        pass
+        target_x = x_cutmix[idx_target]
+        target_y = y_cutmix[idx_target]
 
-    return
+        source_idxs = [idx for idx in range(batch_size) if idx != idx_target]
+        idx_source = np.random.choice(source_idxs, 1, replace=False)[0]
+
+        source_x = x_cutmix[idx_source]
+        source_y = y_cutmix[idx_source]
+
+        cutmixed_x, cutmixed_y = augmentation_cutmix(
+            target_x, target_y,
+            source_x, source_y,
+            min_size=min_size,
+            max_size=max_size,
+            label_mix=label_mix,
+            feather=feather,
+            feather_dist=feather_dist,
+            channel_last=channel_last,
+        )
+
+        x_cutmix[idx_target] = cutmixed_x
+        y_cutmix[idx_target] = cutmixed_y
+
+    return x_cutmix, y_cutmix
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
@@ -561,7 +593,10 @@ def augmentation_batch_mixup(
     X: np.ndarray,
     y: Optional[np.ndarray],
     chance: float = 0.5,
-    max_mixes: float = 0.2,
+    min_size: float = 0.333,
+    max_size: float = 0.666,
+    label_mix: int = 0,
+    max_images: float = 0.2,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
@@ -583,24 +618,45 @@ def augmentation_batch_mixup(
 
     Keyword Args:
         chance (float=0.5): The chance of mixuping a pixel.
-        max_mixes (float=0.2): The maximum percentage of images in a batch to mixup.
+        max_images (float=0.2): The maximum percentage of images in a batch to mixup.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
     """
-    x = X.copy().astype(np.float32, copy=False)
+    x_mixup = X.astype(np.float32)
+    y_mixup = y.astype(np.float32)
 
-    batch_size = x.shape[0]
+    batch_size = x_mixup.shape[0]
 
     n_mixes = min(
         (np.random.rand(batch_size) <= chance).sum(),
-        int(batch_size * max_mixes),
+        int(batch_size * max_images),
     )
 
     if n_mixes == 0:
-        return x, y
+        return X, y
 
     idx_targets = np.random.choice(batch_size, n_mixes, replace=False)
 
     for idx_target in idx_targets:
-        pass
+        target_x = x_mixup[idx_target]
+        target_y = y_mixup[idx_target]
 
-    return
+        source_idxs = [idx for idx in range(batch_size) if idx != idx_target]
+        idx_source = np.random.choice(source_idxs, 1, replace=False)[0]
+
+        source_x = x_mixup[idx_source]
+        source_y = y_mixup[idx_source]
+
+        mixupped_x, mixupped_y = augmentation_mixup(
+            target_x, target_y,
+            source_x, source_y,
+            min_size=min_size,
+            max_size=max_size,
+            label_mix=label_mix,
+            chance=chance,
+            channel_last=channel_last,
+        )
+
+        x_mixup[idx_target] = mixupped_x
+        y_mixup[idx_target] = mixupped_y
+
+    return x_mixup, y_mixup

@@ -1,0 +1,1416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>buteo.ai.augmentation_utils API documentation</title>
+<meta name="description" content="This module contains utility functions for augmenting images that are
+suited to remote sensing imagery." />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>buteo.ai.augmentation_utils</code></h1>
+</header>
+<section id="section-intro">
+<p>This module contains utility functions for augmenting images that are
+suited to remote sensing imagery.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+This module contains utility functions for augmenting images that are
+suited to remote sensing imagery.
+&#34;&#34;&#34;
+# Standard library
+from typing import Tuple, List, Union
+
+# External
+import numpy as np
+from numba import jit, prange
+
+@jit(nopython=True, nogil=True, cache=True)
+def is_integer_dtype(dtype: np.dtype) -&gt; bool:
+    &#34;&#34;&#34;
+    Check if a dtype is an integer type 
+    
+    Args:
+        dtype (np.dtype): The dtype to check.
+
+    Returns:
+        bool: True if the dtype is an integer type.
+    &#34;&#34;&#34;
+    return dtype.kind in (&#39;i&#39;, &#39;u&#39;)
+
+
+# These should have .astype(dtype, copy=False) to avoid copying the data
+# But this is currently not supported by numba.
+@jit(nopython=True, nogil=True, cache=True)
+def fit_data_to_dtype(
+    data: np.ndarray,
+    dtype: np.dtype,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Fit data to a dtype. If the dtype is an integer type, the data will be
+        rounded to the nearest integer. If the dtype is a float type, the data
+        will be clipped to the min and max values of the dtype.
+    
+    Args:
+        data (np.ndarray): The data to fit to the dtype.
+        dtype (np.dtype): The dtype to fit the data to.
+
+    Returns:
+        np.ndarray: The data fitted to the dtype.
+    &#34;&#34;&#34;
+    max_value = np.iinfo(dtype).max
+    min_value = np.iinfo(dtype).min
+
+    if is_integer_dtype(dtype):
+        return np.rint(
+            np.clip(data, min_value, max_value)
+        ).astype(dtype)
+
+    return np.clip(
+        data,
+        min_value,
+        max_value,
+    ).astype(dtype)
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def feather_box_2d(
+    array: np.ndarray,
+    bbox: Union[List[int], Tuple[int]],
+    feather_dist: int = 3,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Feather a box into an array (2D). Box should be the original box
+        buffered by feather_dist.
+
+    Args:
+        array_whole (np.ndarray): The array containing the box.
+        bbox (Union[List[int], Tuple[int]]): The box.
+            the bbox should be in the form [x_min, x_max, y_min, y_max].
+    
+    Keyword Args:
+        feather_dist (int=3): The distance to feather the box.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: The featherweights for the array and the bbox.
+    &#34;&#34;&#34;
+    # Get the bbox
+    x_min, x_max, y_min, y_max = bbox
+
+    kernel_size = int((feather_dist * 2) + 1)
+    n_offsets = kernel_size ** 2
+    max_dist = (np.sqrt(2) / 2) + feather_dist
+
+    feather_offsets = np.zeros((n_offsets, 2), dtype=np.int64)
+
+    within_circle = 0
+    for i in prange(-feather_dist, feather_dist + 1):
+        for j in prange(-feather_dist, feather_dist + 1):
+            dist = np.sqrt(i ** 2 + j ** 2)
+            if dist &lt;= max_dist:
+                feather_offsets[within_circle][0] = i
+                feather_offsets[within_circle][1] = j
+                within_circle += 1
+
+    feather_offsets = feather_offsets[:within_circle]
+    n_offsets = feather_offsets.shape[0]
+
+    x_min = max(0, x_min - feather_dist)
+    x_max = min(x_max + 1 + feather_dist, array.shape[1])
+    y_min = max(0, y_min - feather_dist)
+    y_max = min(y_max + 1 + feather_dist, array.shape[0])
+
+    feather_weights_array = np.ones_like(array, dtype=np.float32)
+
+    # Feather the box
+    for y in prange(y_min, y_max + 1):
+        for x in prange(x_min, x_max + 1):
+            total_possible = n_offsets
+            within_bbox = 0
+            for offset in feather_offsets:
+                x_offset, y_offset = offset
+                x_new = x + x_offset
+                y_new = y + y_offset
+
+                if y_new &lt; 0 or y_new &gt;= array.shape[0]:
+                    total_possible -= 1
+                    continue
+
+                if x_new &lt; 0 or x_new &gt;= array.shape[1]:
+                    total_possible -= 1
+                    continue
+
+                if x_new - feather_dist &gt;= x_min and x_new + feather_dist &lt;= x_max and y_new - feather_dist &gt;= y_min and y_new + feather_dist &lt;= y_max:
+                    within_bbox += 1
+
+            weights_box = within_bbox / total_possible
+            feather_weights_array[y, x] = 1 - weights_box
+
+    return feather_weights_array
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def simple_blur_kernel_2d_3x3() -&gt; Tuple[np.ndarray, np.ndarray]:
+    &#34;&#34;&#34;
+    Create a 2D blur kernel.
+
+    [1, 2, 1],
+    [2, 4, 2],
+    [1, 2, 1],
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+    &#34;&#34;&#34;
+    offsets = np.array([
+        [ 1, -1], [ 1, 0], [ 1, 1],
+        [ 0, -1], [ 0, 0], [ 0, 1],
+        [-1, -1], [-1, 0], [-1, 1],
+    ])
+
+    weights = np.array([
+        0.08422299, 0.12822174, 0.08422299,
+        0.12822174, 0.1502211 , 0.12822174,
+        0.08422299, 0.12822174, 0.08422299,
+    ], dtype=np.float32)
+
+    return offsets, weights
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def simple_unsharp_kernel_2d_3x3(
+    strength: float = 1.0
+) -&gt; Tuple[np.ndarray, np.ndarray]:
+    &#34;&#34;&#34;
+    Create a 2D unsharp kernel.
+
+    baseweights:
+        0.09911165, 0.15088834, 0.09911165,
+        0.15088834, 0.        , 0.15088834,
+        0.09911165, 0.15088834, 0.09911165,
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+    &#34;&#34;&#34;
+    offsets = np.array([
+        [ 1, -1], [ 1, 0], [ 1, 1],
+        [ 0, -1], [ 0, 0], [ 0, 1],
+        [-1, -1], [-1, 0], [-1, 1],
+    ])
+
+    base_weights = np.array([
+        0.09911165, 0.15088834, 0.09911165,
+        0.15088834, 0.        , 0.15088834,
+        0.09911165, 0.15088834, 0.09911165,
+    ], dtype=np.float32)
+
+    weights = base_weights * strength
+    middle_weight = np.sum(weights) + 1.0
+    weights *= -1.0
+    weights[4] = middle_weight
+
+    return offsets, weights
+
+
+def simple_shift_kernel_2d(
+    x_offset: float,
+    y_offset: float,
+) -&gt; Tuple[np.ndarray, np.ndarray]:
+    &#34;&#34;&#34;
+    Create a 2D shift kernel. Useful for either aligning rasters at the sub-pixel
+    level or for shifting a raster by a whole pixel while keeping the bbox.
+    Can be used to for an augmentation, where channel misalignment is simulated.
+
+    Args:
+        x_offset (float): The x offset.
+        y_offset (float): The y offset.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+    &#34;&#34;&#34;
+    if x_offset == 0.0 and y_offset == 0.0:
+        offsets = np.array([[0, 0]], dtype=np.int64)
+        weights = np.array([1.0], dtype=np.float32)
+
+        return offsets, weights
+
+    y0 = [int(np.floor(y_offset)), int(np.ceil(y_offset))] if y_offset != 0 else [0, 0]
+    x0 = [int(np.floor(x_offset)), int(np.ceil(x_offset))] if x_offset != 0 else [0, 0]
+
+    if x_offset == 0.0 or x_offset % 1 == 0.0:
+        offsets = np.zeros((2, 2), dtype=np.int64)
+        weights = np.zeros(2, dtype=np.float32)
+
+        offsets[0] = [int(x_offset) if x_offset % 1 == 0.0 else 0, y0[0]]
+        offsets[1] = [int(x_offset) if x_offset % 1 == 0.0 else 0, y0[1]]
+
+        weights[0] = y_offset - y0[0]
+        weights[1] = 1 - weights[0]
+
+    elif y_offset == 0.0 or y_offset % 1 == 0.0:
+        offsets = np.zeros((2, 2), dtype=np.int64)
+        weights = np.zeros(2, dtype=np.float32)
+
+        offsets[0] = [x0[0], int(y_offset) if y_offset % 1 == 0.0 else 0]
+        offsets[1] = [x0[1], int(y_offset) if y_offset % 1 == 0.0 else 0]
+
+        weights[0] = x_offset - x0[0]
+        weights[1] = 1 - weights[0]
+
+    else:
+        offsets = np.zeros((4, 2), dtype=np.int64)
+        weights = np.zeros(4, dtype=np.float32)
+
+        offsets[0] = [x0[0], y0[0]]
+        offsets[1] = [x0[0], y0[1]]
+        offsets[2] = [x0[1], y0[0]]
+        offsets[3] = [x0[1], y0[1]]
+
+        weights[0] = (1 - (x_offset - offsets[0][0])) * (1 - (y_offset - offsets[0][1]))
+        weights[1] = (1 - (x_offset - offsets[1][0])) * (1 + (y_offset - offsets[1][1]))
+        weights[2] = (1 + (x_offset - offsets[2][0])) * (1 - (y_offset - offsets[2][1]))
+        weights[3] = (1 + (x_offset - offsets[3][0])) * (1 + (y_offset - offsets[3][1]))
+
+    return offsets, weights
+
+
+# Sharpen still offsets everything, blur is better.
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def convolution_simple(
+    array: np.ndarray,
+    offsets: np.ndarray,
+    weights: np.ndarray,
+    intensity: float = 1.0,
+):
+    &#34;&#34;&#34;
+    Convolve a kernel with an array using a simple method.
+
+    Args:
+        array (np.ndarray): The array to convolve.
+        offsets (np.ndarray): The offsets of the kernel.
+        weights (np.ndarray): The weights of the kernel.
+    
+    Keyword Args:
+        intensity (float=1.0): The intensity of the convolution. If
+            1.0, the convolution is applied as is. If 0.5, the
+            convolution is applied at half intensity.
+
+    Returns:
+        np.ndarray: The convolved array.
+    &#34;&#34;&#34;
+    result = np.empty_like(array, dtype=np.float32)
+
+    if intensity &lt;= 0.0:
+        return array.astype(np.float32)
+
+    for col in prange(array.shape[0]):
+        for row in prange(array.shape[1]):
+            result_value = 0.0
+            for i in range(offsets.shape[0]):
+                new_col = col + offsets[i, 0]
+                new_row = row + offsets[i, 1]
+
+                if new_col &lt; 0:
+                    new_col = 0
+                elif new_col &gt;= array.shape[0]:
+                    new_col = array.shape[0] - 1
+
+                if new_row &lt; 0:
+                    new_row = 0
+                elif new_row &gt;= array.shape[1]:
+                    new_row = array.shape[1] - 1
+
+                result_value += array[new_col, new_row] * weights[i]
+
+            result[col, row] = result_value
+
+    if intensity &lt; 1.0:
+        result *= intensity
+        array *= (1.0 - intensity)
+        result += array
+
+    return result
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def rotate_90(
+    arr: np.ndarray,
+    channel_last: bool = True
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Rotate a 3D array 90 degrees clockwise.
+    
+    Args:
+        arr (np.ndarray): The array to rotate.
+    
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+
+    Returns:
+        np.ndarray: The rotated array.
+    &#34;&#34;&#34;
+    if channel_last:
+        return arr[::-1, :, :].transpose(1, 0, 2) # (H, W, C)
+
+    return arr[:, ::-1, :].transpose(0, 2, 1) # (C, H, W)
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def rotate_180(
+    arr: np.ndarray,
+    channel_last: bool = True
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Rotate a 3D array 180 degrees clockwise.
+
+    Args:
+        arr (np.ndarray): The array to rotate.
+    
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+
+    Returns:
+        np.ndarray: The rotated array.
+    &#34;&#34;&#34;
+    if channel_last:
+        return arr[::-1, ::-1, :]  # (H, W, C)
+
+    return arr[:, ::-1, ::-1] # (C, H, W)
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def rotate_270(
+    arr: np.ndarray,
+    channel_last: bool = True
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; 
+    Rotate a 3D image array 270 degrees clockwise.
+
+    Args:
+        arr (np.ndarray): The array to rotate.
+
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+
+    Returns:
+        np.ndarray: The rotated array.
+    &#34;&#34;&#34;
+    if channel_last:
+        return arr[:, ::-1, :].transpose(1, 0, 2) # (H, W, C)
+
+    return arr[:, :, ::-1].transpose(0, 2, 1) # (C, H, W)
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def rotate_arr(
+    arr: np.ndarray,
+    k: int,
+    channel_last: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Rotate an array by 90 degrees intervals clockwise.
+    
+    Args:
+        arr (np.ndarray): The array to rotate.
+        k (int): The number of 90 degree intervals to rotate by.
+            1 for 90 degrees, 2 for 180 degrees, 3 for 270 degrees. 0 for no rotation.
+
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+
+    Returns:
+        np.ndarray: The rotated array.
+    &#34;&#34;&#34;
+    if k == 0:
+        return arr.copy()
+
+    view = arr
+
+    if k == 1:
+        view = rotate_90(arr, channel_last=channel_last)
+    elif k == 2:
+        view = rotate_180(arr, channel_last=channel_last)
+    elif k == 3:
+        view = rotate_270(arr, channel_last=channel_last)
+
+    return view.copy()
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def mirror_horizontal(
+    arr: np.ndarray,
+    channel_last: bool = True
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Mirror a 3D array horizontally.
+    
+    Args:
+        arr (np.ndarray): The array to mirror.
+    
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+
+    Returns:
+        np.ndarray: The mirrored array.
+    &#34;&#34;&#34;
+    if channel_last:
+        return arr[:, ::-1, :] # (H, W, C)
+
+    return arr[:, :, ::-1] # (C, H, W)
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def mirror_vertical(
+    arr: np.ndarray,
+    channel_last: bool = True
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Mirror a 3D array vertically.
+
+    Args:
+        arr (np.ndarray): The array to mirror.
+
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+    
+    Returns:
+        np.ndarray: The mirrored array.
+    &#34;&#34;&#34;
+    if channel_last:
+        return arr[::-1, :, :] # (H, W, C)
+
+    return arr[:, ::-1, :] # (C, H, W)
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def mirror_horisontal_vertical(
+    arr: np.ndarray,
+    channel_last: bool = True
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Mirror a 3D array horizontally and vertically.
+
+    Args:
+        arr (np.ndarray): The array to mirror.
+
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+
+    Returns:
+        np.ndarray: The mirrored array.
+    &#34;&#34;&#34;
+    if channel_last:
+        return arr[::-1, ::-1, :] # (H, W, C)
+
+    return arr[:, ::-1, ::-1] # (C, H, W)
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def mirror_arr(
+    arr: np.ndarray,
+    k: int,
+    channel_last: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Mirror an array horizontally and/or vertically.
+
+    Args:
+        arr (np.ndarray): The array to mirror.
+        k (int): 1 for horizontal, 2 for vertical, 3 for both, 0 for no mirroring.
+    
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+    &#34;&#34;&#34;
+    if k == 0:
+        return arr.copy()
+
+    view = arr
+
+    if k == 1:
+        view = mirror_horizontal(arr, channel_last=channel_last)
+    elif k == 2:
+        view = mirror_vertical(arr, channel_last=channel_last)
+    elif k == 3:
+        view = mirror_horisontal_vertical(arr, channel_last=channel_last)
+
+    return view.copy()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.ai.augmentation_utils.convolution_simple"><code class="name flex">
+<span>def <span class="ident">convolution_simple</span></span>(<span>array: numpy.ndarray, offsets: numpy.ndarray, weights: numpy.ndarray, intensity: float = 1.0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convolve a kernel with an array using a simple method.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>array</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The array to convolve.</dd>
+<dt><strong><code>offsets</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The offsets of the kernel.</dd>
+<dt><strong><code>weights</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The weights of the kernel.</dd>
+</dl>
+<p>Keyword Args:
+intensity (float=1.0): The intensity of the convolution. If
+1.0, the convolution is applied as is. If 0.5, the
+convolution is applied at half intensity.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The convolved array.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def convolution_simple(
+    array: np.ndarray,
+    offsets: np.ndarray,
+    weights: np.ndarray,
+    intensity: float = 1.0,
+):
+    &#34;&#34;&#34;
+    Convolve a kernel with an array using a simple method.
+
+    Args:
+        array (np.ndarray): The array to convolve.
+        offsets (np.ndarray): The offsets of the kernel.
+        weights (np.ndarray): The weights of the kernel.
+    
+    Keyword Args:
+        intensity (float=1.0): The intensity of the convolution. If
+            1.0, the convolution is applied as is. If 0.5, the
+            convolution is applied at half intensity.
+
+    Returns:
+        np.ndarray: The convolved array.
+    &#34;&#34;&#34;
+    result = np.empty_like(array, dtype=np.float32)
+
+    if intensity &lt;= 0.0:
+        return array.astype(np.float32)
+
+    for col in prange(array.shape[0]):
+        for row in prange(array.shape[1]):
+            result_value = 0.0
+            for i in range(offsets.shape[0]):
+                new_col = col + offsets[i, 0]
+                new_row = row + offsets[i, 1]
+
+                if new_col &lt; 0:
+                    new_col = 0
+                elif new_col &gt;= array.shape[0]:
+                    new_col = array.shape[0] - 1
+
+                if new_row &lt; 0:
+                    new_row = 0
+                elif new_row &gt;= array.shape[1]:
+                    new_row = array.shape[1] - 1
+
+                result_value += array[new_col, new_row] * weights[i]
+
+            result[col, row] = result_value
+
+    if intensity &lt; 1.0:
+        result *= intensity
+        array *= (1.0 - intensity)
+        result += array
+
+    return result</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.feather_box_2d"><code class="name flex">
+<span>def <span class="ident">feather_box_2d</span></span>(<span>array: numpy.ndarray, bbox: Union[List[int], Tuple[int]], feather_dist: int = 3) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Feather a box into an array (2D). Box should be the original box
+buffered by feather_dist.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>array_whole</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The array containing the box.</dd>
+<dt><strong><code>bbox</code></strong> :&ensp;<code>Union[List[int], Tuple[int]]</code></dt>
+<dd>The box.
+the bbox should be in the form [x_min, x_max, y_min, y_max].</dd>
+</dl>
+<p>Keyword Args:
+feather_dist (int=3): The distance to feather the box.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[np.ndarray, np.ndarray]</code></dt>
+<dd>The featherweights for the array and the bbox.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def feather_box_2d(
+    array: np.ndarray,
+    bbox: Union[List[int], Tuple[int]],
+    feather_dist: int = 3,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Feather a box into an array (2D). Box should be the original box
+        buffered by feather_dist.
+
+    Args:
+        array_whole (np.ndarray): The array containing the box.
+        bbox (Union[List[int], Tuple[int]]): The box.
+            the bbox should be in the form [x_min, x_max, y_min, y_max].
+    
+    Keyword Args:
+        feather_dist (int=3): The distance to feather the box.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: The featherweights for the array and the bbox.
+    &#34;&#34;&#34;
+    # Get the bbox
+    x_min, x_max, y_min, y_max = bbox
+
+    kernel_size = int((feather_dist * 2) + 1)
+    n_offsets = kernel_size ** 2
+    max_dist = (np.sqrt(2) / 2) + feather_dist
+
+    feather_offsets = np.zeros((n_offsets, 2), dtype=np.int64)
+
+    within_circle = 0
+    for i in prange(-feather_dist, feather_dist + 1):
+        for j in prange(-feather_dist, feather_dist + 1):
+            dist = np.sqrt(i ** 2 + j ** 2)
+            if dist &lt;= max_dist:
+                feather_offsets[within_circle][0] = i
+                feather_offsets[within_circle][1] = j
+                within_circle += 1
+
+    feather_offsets = feather_offsets[:within_circle]
+    n_offsets = feather_offsets.shape[0]
+
+    x_min = max(0, x_min - feather_dist)
+    x_max = min(x_max + 1 + feather_dist, array.shape[1])
+    y_min = max(0, y_min - feather_dist)
+    y_max = min(y_max + 1 + feather_dist, array.shape[0])
+
+    feather_weights_array = np.ones_like(array, dtype=np.float32)
+
+    # Feather the box
+    for y in prange(y_min, y_max + 1):
+        for x in prange(x_min, x_max + 1):
+            total_possible = n_offsets
+            within_bbox = 0
+            for offset in feather_offsets:
+                x_offset, y_offset = offset
+                x_new = x + x_offset
+                y_new = y + y_offset
+
+                if y_new &lt; 0 or y_new &gt;= array.shape[0]:
+                    total_possible -= 1
+                    continue
+
+                if x_new &lt; 0 or x_new &gt;= array.shape[1]:
+                    total_possible -= 1
+                    continue
+
+                if x_new - feather_dist &gt;= x_min and x_new + feather_dist &lt;= x_max and y_new - feather_dist &gt;= y_min and y_new + feather_dist &lt;= y_max:
+                    within_bbox += 1
+
+            weights_box = within_bbox / total_possible
+            feather_weights_array[y, x] = 1 - weights_box
+
+    return feather_weights_array</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.fit_data_to_dtype"><code class="name flex">
+<span>def <span class="ident">fit_data_to_dtype</span></span>(<span>data: numpy.ndarray, dtype: numpy.dtype) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Fit data to a dtype. If the dtype is an integer type, the data will be
+rounded to the nearest integer. If the dtype is a float type, the data
+will be clipped to the min and max values of the dtype.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>data</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The data to fit to the dtype.</dd>
+<dt><strong><code>dtype</code></strong> :&ensp;<code>np.dtype</code></dt>
+<dd>The dtype to fit the data to.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The data fitted to the dtype.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True)
+def fit_data_to_dtype(
+    data: np.ndarray,
+    dtype: np.dtype,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34;
+    Fit data to a dtype. If the dtype is an integer type, the data will be
+        rounded to the nearest integer. If the dtype is a float type, the data
+        will be clipped to the min and max values of the dtype.
+    
+    Args:
+        data (np.ndarray): The data to fit to the dtype.
+        dtype (np.dtype): The dtype to fit the data to.
+
+    Returns:
+        np.ndarray: The data fitted to the dtype.
+    &#34;&#34;&#34;
+    max_value = np.iinfo(dtype).max
+    min_value = np.iinfo(dtype).min
+
+    if is_integer_dtype(dtype):
+        return np.rint(
+            np.clip(data, min_value, max_value)
+        ).astype(dtype)
+
+    return np.clip(
+        data,
+        min_value,
+        max_value,
+    ).astype(dtype)</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.is_integer_dtype"><code class="name flex">
+<span>def <span class="ident">is_integer_dtype</span></span>(<span>dtype: numpy.dtype) -> bool</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Check if a dtype is an integer type </p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>dtype</code></strong> :&ensp;<code>np.dtype</code></dt>
+<dd>The dtype to check.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if the dtype is an integer type.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True)
+def is_integer_dtype(dtype: np.dtype) -&gt; bool:
+    &#34;&#34;&#34;
+    Check if a dtype is an integer type 
+    
+    Args:
+        dtype (np.dtype): The dtype to check.
+
+    Returns:
+        bool: True if the dtype is an integer type.
+    &#34;&#34;&#34;
+    return dtype.kind in (&#39;i&#39;, &#39;u&#39;)</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.mirror_arr"><code class="name flex">
+<span>def <span class="ident">mirror_arr</span></span>(<span>arr: numpy.ndarray, k: int, channel_last: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Mirror an array horizontally and/or vertically.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>arr</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The array to mirror.</dd>
+<dt><strong><code>k</code></strong> :&ensp;<code>int</code></dt>
+<dd>1 for horizontal, 2 for vertical, 3 for both, 0 for no mirroring.</dd>
+</dl>
+<p>Keyword Args:
+channel_last (bool=True): Whether the last axis is the channel axis.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def mirror_arr(
+    arr: np.ndarray,
+    k: int,
+    channel_last: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Mirror an array horizontally and/or vertically.
+
+    Args:
+        arr (np.ndarray): The array to mirror.
+        k (int): 1 for horizontal, 2 for vertical, 3 for both, 0 for no mirroring.
+    
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+    &#34;&#34;&#34;
+    if k == 0:
+        return arr.copy()
+
+    view = arr
+
+    if k == 1:
+        view = mirror_horizontal(arr, channel_last=channel_last)
+    elif k == 2:
+        view = mirror_vertical(arr, channel_last=channel_last)
+    elif k == 3:
+        view = mirror_horisontal_vertical(arr, channel_last=channel_last)
+
+    return view.copy()</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.mirror_horisontal_vertical"><code class="name flex">
+<span>def <span class="ident">mirror_horisontal_vertical</span></span>(<span>arr: numpy.ndarray, channel_last: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Mirror a 3D array horizontally and vertically.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>arr</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The array to mirror.</dd>
+</dl>
+<p>Keyword Args:
+channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The mirrored array.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def mirror_horisontal_vertical(
+    arr: np.ndarray,
+    channel_last: bool = True
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Mirror a 3D array horizontally and vertically.
+
+    Args:
+        arr (np.ndarray): The array to mirror.
+
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+
+    Returns:
+        np.ndarray: The mirrored array.
+    &#34;&#34;&#34;
+    if channel_last:
+        return arr[::-1, ::-1, :] # (H, W, C)
+
+    return arr[:, ::-1, ::-1] # (C, H, W)</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.mirror_horizontal"><code class="name flex">
+<span>def <span class="ident">mirror_horizontal</span></span>(<span>arr: numpy.ndarray, channel_last: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Mirror a 3D array horizontally.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>arr</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The array to mirror.</dd>
+</dl>
+<p>Keyword Args:
+channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The mirrored array.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def mirror_horizontal(
+    arr: np.ndarray,
+    channel_last: bool = True
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Mirror a 3D array horizontally.
+    
+    Args:
+        arr (np.ndarray): The array to mirror.
+    
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+
+    Returns:
+        np.ndarray: The mirrored array.
+    &#34;&#34;&#34;
+    if channel_last:
+        return arr[:, ::-1, :] # (H, W, C)
+
+    return arr[:, :, ::-1] # (C, H, W)</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.mirror_vertical"><code class="name flex">
+<span>def <span class="ident">mirror_vertical</span></span>(<span>arr: numpy.ndarray, channel_last: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Mirror a 3D array vertically.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>arr</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The array to mirror.</dd>
+</dl>
+<p>Keyword Args:
+channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The mirrored array.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def mirror_vertical(
+    arr: np.ndarray,
+    channel_last: bool = True
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Mirror a 3D array vertically.
+
+    Args:
+        arr (np.ndarray): The array to mirror.
+
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+    
+    Returns:
+        np.ndarray: The mirrored array.
+    &#34;&#34;&#34;
+    if channel_last:
+        return arr[::-1, :, :] # (H, W, C)
+
+    return arr[:, ::-1, :] # (C, H, W)</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.rotate_180"><code class="name flex">
+<span>def <span class="ident">rotate_180</span></span>(<span>arr: numpy.ndarray, channel_last: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Rotate a 3D array 180 degrees clockwise.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>arr</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The array to rotate.</dd>
+</dl>
+<p>Keyword Args:
+channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The rotated array.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def rotate_180(
+    arr: np.ndarray,
+    channel_last: bool = True
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Rotate a 3D array 180 degrees clockwise.
+
+    Args:
+        arr (np.ndarray): The array to rotate.
+    
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+
+    Returns:
+        np.ndarray: The rotated array.
+    &#34;&#34;&#34;
+    if channel_last:
+        return arr[::-1, ::-1, :]  # (H, W, C)
+
+    return arr[:, ::-1, ::-1] # (C, H, W)</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.rotate_270"><code class="name flex">
+<span>def <span class="ident">rotate_270</span></span>(<span>arr: numpy.ndarray, channel_last: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Rotate a 3D image array 270 degrees clockwise.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>arr</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The array to rotate.</dd>
+</dl>
+<p>Keyword Args:
+channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The rotated array.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def rotate_270(
+    arr: np.ndarray,
+    channel_last: bool = True
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; 
+    Rotate a 3D image array 270 degrees clockwise.
+
+    Args:
+        arr (np.ndarray): The array to rotate.
+
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+
+    Returns:
+        np.ndarray: The rotated array.
+    &#34;&#34;&#34;
+    if channel_last:
+        return arr[:, ::-1, :].transpose(1, 0, 2) # (H, W, C)
+
+    return arr[:, :, ::-1].transpose(0, 2, 1) # (C, H, W)</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.rotate_90"><code class="name flex">
+<span>def <span class="ident">rotate_90</span></span>(<span>arr: numpy.ndarray, channel_last: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Rotate a 3D array 90 degrees clockwise.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>arr</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The array to rotate.</dd>
+</dl>
+<p>Keyword Args:
+channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The rotated array.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def rotate_90(
+    arr: np.ndarray,
+    channel_last: bool = True
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Rotate a 3D array 90 degrees clockwise.
+    
+    Args:
+        arr (np.ndarray): The array to rotate.
+    
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+
+    Returns:
+        np.ndarray: The rotated array.
+    &#34;&#34;&#34;
+    if channel_last:
+        return arr[::-1, :, :].transpose(1, 0, 2) # (H, W, C)
+
+    return arr[:, ::-1, :].transpose(0, 2, 1) # (C, H, W)</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.rotate_arr"><code class="name flex">
+<span>def <span class="ident">rotate_arr</span></span>(<span>arr: numpy.ndarray, k: int, channel_last: bool = True) -> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Rotate an array by 90 degrees intervals clockwise.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>arr</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The array to rotate.</dd>
+<dt><strong><code>k</code></strong> :&ensp;<code>int</code></dt>
+<dd>The number of 90 degree intervals to rotate by.
+1 for 90 degrees, 2 for 180 degrees, 3 for 270 degrees. 0 for no rotation.</dd>
+</dl>
+<p>Keyword Args:
+channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>The rotated array.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def rotate_arr(
+    arr: np.ndarray,
+    k: int,
+    channel_last: bool = True,
+) -&gt; np.ndarray:
+    &#34;&#34;&#34; Rotate an array by 90 degrees intervals clockwise.
+    
+    Args:
+        arr (np.ndarray): The array to rotate.
+        k (int): The number of 90 degree intervals to rotate by.
+            1 for 90 degrees, 2 for 180 degrees, 3 for 270 degrees. 0 for no rotation.
+
+    Keyword Args:
+        channel_last (bool=True): Whether the last axis is the channel axis.
+
+    Returns:
+        np.ndarray: The rotated array.
+    &#34;&#34;&#34;
+    if k == 0:
+        return arr.copy()
+
+    view = arr
+
+    if k == 1:
+        view = rotate_90(arr, channel_last=channel_last)
+    elif k == 2:
+        view = rotate_180(arr, channel_last=channel_last)
+    elif k == 3:
+        view = rotate_270(arr, channel_last=channel_last)
+
+    return view.copy()</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.simple_blur_kernel_2d_3x3"><code class="name flex">
+<span>def <span class="ident">simple_blur_kernel_2d_3x3</span></span>(<span>) -> Tuple[numpy.ndarray, numpy.ndarray]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a 2D blur kernel.</p>
+<p>[1, 2, 1],
+[2, 4, 2],
+[1, 2, 1],</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[np.ndarray, np.ndarray]</code></dt>
+<dd>The offsets and weights.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def simple_blur_kernel_2d_3x3() -&gt; Tuple[np.ndarray, np.ndarray]:
+    &#34;&#34;&#34;
+    Create a 2D blur kernel.
+
+    [1, 2, 1],
+    [2, 4, 2],
+    [1, 2, 1],
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+    &#34;&#34;&#34;
+    offsets = np.array([
+        [ 1, -1], [ 1, 0], [ 1, 1],
+        [ 0, -1], [ 0, 0], [ 0, 1],
+        [-1, -1], [-1, 0], [-1, 1],
+    ])
+
+    weights = np.array([
+        0.08422299, 0.12822174, 0.08422299,
+        0.12822174, 0.1502211 , 0.12822174,
+        0.08422299, 0.12822174, 0.08422299,
+    ], dtype=np.float32)
+
+    return offsets, weights</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.simple_shift_kernel_2d"><code class="name flex">
+<span>def <span class="ident">simple_shift_kernel_2d</span></span>(<span>x_offset: float, y_offset: float) -> Tuple[numpy.ndarray, numpy.ndarray]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a 2D shift kernel. Useful for either aligning rasters at the sub-pixel
+level or for shifting a raster by a whole pixel while keeping the bbox.
+Can be used to for an augmentation, where channel misalignment is simulated.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>x_offset</code></strong> :&ensp;<code>float</code></dt>
+<dd>The x offset.</dd>
+<dt><strong><code>y_offset</code></strong> :&ensp;<code>float</code></dt>
+<dd>The y offset.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[np.ndarray, np.ndarray]</code></dt>
+<dd>The offsets and weights.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def simple_shift_kernel_2d(
+    x_offset: float,
+    y_offset: float,
+) -&gt; Tuple[np.ndarray, np.ndarray]:
+    &#34;&#34;&#34;
+    Create a 2D shift kernel. Useful for either aligning rasters at the sub-pixel
+    level or for shifting a raster by a whole pixel while keeping the bbox.
+    Can be used to for an augmentation, where channel misalignment is simulated.
+
+    Args:
+        x_offset (float): The x offset.
+        y_offset (float): The y offset.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+    &#34;&#34;&#34;
+    if x_offset == 0.0 and y_offset == 0.0:
+        offsets = np.array([[0, 0]], dtype=np.int64)
+        weights = np.array([1.0], dtype=np.float32)
+
+        return offsets, weights
+
+    y0 = [int(np.floor(y_offset)), int(np.ceil(y_offset))] if y_offset != 0 else [0, 0]
+    x0 = [int(np.floor(x_offset)), int(np.ceil(x_offset))] if x_offset != 0 else [0, 0]
+
+    if x_offset == 0.0 or x_offset % 1 == 0.0:
+        offsets = np.zeros((2, 2), dtype=np.int64)
+        weights = np.zeros(2, dtype=np.float32)
+
+        offsets[0] = [int(x_offset) if x_offset % 1 == 0.0 else 0, y0[0]]
+        offsets[1] = [int(x_offset) if x_offset % 1 == 0.0 else 0, y0[1]]
+
+        weights[0] = y_offset - y0[0]
+        weights[1] = 1 - weights[0]
+
+    elif y_offset == 0.0 or y_offset % 1 == 0.0:
+        offsets = np.zeros((2, 2), dtype=np.int64)
+        weights = np.zeros(2, dtype=np.float32)
+
+        offsets[0] = [x0[0], int(y_offset) if y_offset % 1 == 0.0 else 0]
+        offsets[1] = [x0[1], int(y_offset) if y_offset % 1 == 0.0 else 0]
+
+        weights[0] = x_offset - x0[0]
+        weights[1] = 1 - weights[0]
+
+    else:
+        offsets = np.zeros((4, 2), dtype=np.int64)
+        weights = np.zeros(4, dtype=np.float32)
+
+        offsets[0] = [x0[0], y0[0]]
+        offsets[1] = [x0[0], y0[1]]
+        offsets[2] = [x0[1], y0[0]]
+        offsets[3] = [x0[1], y0[1]]
+
+        weights[0] = (1 - (x_offset - offsets[0][0])) * (1 - (y_offset - offsets[0][1]))
+        weights[1] = (1 - (x_offset - offsets[1][0])) * (1 + (y_offset - offsets[1][1]))
+        weights[2] = (1 + (x_offset - offsets[2][0])) * (1 - (y_offset - offsets[2][1]))
+        weights[3] = (1 + (x_offset - offsets[3][0])) * (1 + (y_offset - offsets[3][1]))
+
+    return offsets, weights</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_utils.simple_unsharp_kernel_2d_3x3"><code class="name flex">
+<span>def <span class="ident">simple_unsharp_kernel_2d_3x3</span></span>(<span>strength: float = 1.0) -> Tuple[numpy.ndarray, numpy.ndarray]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a 2D unsharp kernel.</p>
+<p>baseweights:
+0.09911165, 0.15088834, 0.09911165,
+0.15088834, 0.
+, 0.15088834,
+0.09911165, 0.15088834, 0.09911165,</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[np.ndarray, np.ndarray]</code></dt>
+<dd>The offsets and weights.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline=&#39;always&#39;)
+def simple_unsharp_kernel_2d_3x3(
+    strength: float = 1.0
+) -&gt; Tuple[np.ndarray, np.ndarray]:
+    &#34;&#34;&#34;
+    Create a 2D unsharp kernel.
+
+    baseweights:
+        0.09911165, 0.15088834, 0.09911165,
+        0.15088834, 0.        , 0.15088834,
+        0.09911165, 0.15088834, 0.09911165,
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+    &#34;&#34;&#34;
+    offsets = np.array([
+        [ 1, -1], [ 1, 0], [ 1, 1],
+        [ 0, -1], [ 0, 0], [ 0, 1],
+        [-1, -1], [-1, 0], [-1, 1],
+    ])
+
+    base_weights = np.array([
+        0.09911165, 0.15088834, 0.09911165,
+        0.15088834, 0.        , 0.15088834,
+        0.09911165, 0.15088834, 0.09911165,
+    ], dtype=np.float32)
+
+    weights = base_weights * strength
+    middle_weight = np.sum(weights) + 1.0
+    weights *= -1.0
+    weights[4] = middle_weight
+
+    return offsets, weights</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="buteo.ai" href="index.html">buteo.ai</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.ai.augmentation_utils.convolution_simple" href="#buteo.ai.augmentation_utils.convolution_simple">convolution_simple</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.feather_box_2d" href="#buteo.ai.augmentation_utils.feather_box_2d">feather_box_2d</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.fit_data_to_dtype" href="#buteo.ai.augmentation_utils.fit_data_to_dtype">fit_data_to_dtype</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.is_integer_dtype" href="#buteo.ai.augmentation_utils.is_integer_dtype">is_integer_dtype</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.mirror_arr" href="#buteo.ai.augmentation_utils.mirror_arr">mirror_arr</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.mirror_horisontal_vertical" href="#buteo.ai.augmentation_utils.mirror_horisontal_vertical">mirror_horisontal_vertical</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.mirror_horizontal" href="#buteo.ai.augmentation_utils.mirror_horizontal">mirror_horizontal</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.mirror_vertical" href="#buteo.ai.augmentation_utils.mirror_vertical">mirror_vertical</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.rotate_180" href="#buteo.ai.augmentation_utils.rotate_180">rotate_180</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.rotate_270" href="#buteo.ai.augmentation_utils.rotate_270">rotate_270</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.rotate_90" href="#buteo.ai.augmentation_utils.rotate_90">rotate_90</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.rotate_arr" href="#buteo.ai.augmentation_utils.rotate_arr">rotate_arr</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.simple_blur_kernel_2d_3x3" href="#buteo.ai.augmentation_utils.simple_blur_kernel_2d_3x3">simple_blur_kernel_2d_3x3</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.simple_shift_kernel_2d" href="#buteo.ai.augmentation_utils.simple_shift_kernel_2d">simple_shift_kernel_2d</a></code></li>
+<li><code><a title="buteo.ai.augmentation_utils.simple_unsharp_kernel_2d_3x3" href="#buteo.ai.augmentation_utils.simple_unsharp_kernel_2d_3x3">simple_unsharp_kernel_2d_3x3</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

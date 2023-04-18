@@ -31,15 +31,16 @@
 &#34;&#34;&#34;
 
 # Standard Library
-from typing import List, Tuple, Optional
-
-# Internal
-from buteo.utils import core_utils
-from buteo.raster.convolution_funcs import *
+from typing import List, Tuple, Optional, Union
 
 # External
 import numpy as np
 from numba import jit, prange
+
+# Internal
+from buteo.utils import core_utils
+from buteo.raster import convolution_funcs
+
 
 
 def weight_distance(
@@ -319,33 +320,33 @@ METHOD_ENUMS = {
 def hood_to_value(method, values, weights, nodata_value=-9999.9, center_value=0, value=0.5):
     &#34;&#34;&#34; Convert a array of values and weights to a single value using a given method. &#34;&#34;&#34;
     if method == 1:
-        return hood_sum(values, weights)
+        return convolution_funcs.hood_sum(values, weights)
     elif method == 2:
-        return hood_mode(values, weights)
+        return convolution_funcs.hood_mode(values, weights)
     elif method == 3:
-        return hood_max(values, weights)
+        return convolution_funcs.hood_max(values, weights)
     elif method == 4:
-        return hood_min(values, weights)
+        return convolution_funcs.hood_min(values, weights)
     elif method == 5:
-        return hood_contrast(values, weights)
+        return convolution_funcs.hood_contrast(values, weights)
     elif method == 6:
-        return hood_quantile(values, weights, 0.5)
+        return convolution_funcs.hood_quantile(values, weights, 0.5)
     elif method == 7:
-        return hood_standard_deviation(values, weights)
+        return convolution_funcs.hood_standard_deviation(values, weights)
     elif method == 8:
-        return hood_median_absolute_deviation(values, weights)
+        return convolution_funcs.hood_median_absolute_deviation(values, weights)
     elif method == 9:
-        return hood_z_score(values, weights, center_value)
+        return convolution_funcs.hood_z_score(values, weights, center_value)
     elif method == 10:
-        return hood_z_score_mad(values, weights, center_value)
+        return convolution_funcs.hood_z_score_mad(values, weights, center_value)
     elif method == 11:
-        return hood_sigma_lee(values, weights)
+        return convolution_funcs.hood_sigma_lee(values, weights)
     elif method == 12:
-        return hood_quantile(values, weights, value)
+        return convolution_funcs.hood_quantile(values, weights, value)
     elif method == 13:
-        return hood_count_occurances(values, weights, value, normalise=False)
+        return convolution_funcs.hood_count_occurances(values, weights, value, normalise=False)
     elif method == 14:
-        return hood_count_occurances(values, weights, value, normalise=True)
+        return convolution_funcs.hood_count_occurances(values, weights, value, normalise=True)
     else:
         return nodata_value
 
@@ -912,33 +913,33 @@ multi-dimensional kernel.</dd>
 def hood_to_value(method, values, weights, nodata_value=-9999.9, center_value=0, value=0.5):
     &#34;&#34;&#34; Convert a array of values and weights to a single value using a given method. &#34;&#34;&#34;
     if method == 1:
-        return hood_sum(values, weights)
+        return convolution_funcs.hood_sum(values, weights)
     elif method == 2:
-        return hood_mode(values, weights)
+        return convolution_funcs.hood_mode(values, weights)
     elif method == 3:
-        return hood_max(values, weights)
+        return convolution_funcs.hood_max(values, weights)
     elif method == 4:
-        return hood_min(values, weights)
+        return convolution_funcs.hood_min(values, weights)
     elif method == 5:
-        return hood_contrast(values, weights)
+        return convolution_funcs.hood_contrast(values, weights)
     elif method == 6:
-        return hood_quantile(values, weights, 0.5)
+        return convolution_funcs.hood_quantile(values, weights, 0.5)
     elif method == 7:
-        return hood_standard_deviation(values, weights)
+        return convolution_funcs.hood_standard_deviation(values, weights)
     elif method == 8:
-        return hood_median_absolute_deviation(values, weights)
+        return convolution_funcs.hood_median_absolute_deviation(values, weights)
     elif method == 9:
-        return hood_z_score(values, weights, center_value)
+        return convolution_funcs.hood_z_score(values, weights, center_value)
     elif method == 10:
-        return hood_z_score_mad(values, weights, center_value)
+        return convolution_funcs.hood_z_score_mad(values, weights, center_value)
     elif method == 11:
-        return hood_sigma_lee(values, weights)
+        return convolution_funcs.hood_sigma_lee(values, weights)
     elif method == 12:
-        return hood_quantile(values, weights, value)
+        return convolution_funcs.hood_quantile(values, weights, value)
     elif method == 13:
-        return hood_count_occurances(values, weights, value, normalise=False)
+        return convolution_funcs.hood_count_occurances(values, weights, value, normalise=False)
     elif method == 14:
-        return hood_count_occurances(values, weights, value, normalise=True)
+        return convolution_funcs.hood_count_occurances(values, weights, value, normalise=True)
     else:
         return nodata_value</code></pre>
 </details>

@@ -1,0 +1,1663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>buteo.ai.augmentation_batch API documentation</title>
+<meta name="description" content="This module contains functions for augmenting images that are
+suited to remote sensing imagery." />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>buteo.ai.augmentation_batch</code></h1>
+</header>
+<section id="section-intro">
+<p>This module contains functions for augmenting images that are
+suited to remote sensing imagery.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+This module contains functions for augmenting images that are
+suited to remote sensing imagery.
+&#34;&#34;&#34;
+# Standard library
+import sys; sys.path.append(&#34;../../&#34;)
+from typing import Optional, Tuple, Any
+
+# External
+import numpy as np
+from numba import jit, prange
+
+# Internal
+from buteo.ai.augmentation_funcs import (
+    augmentation_rotation,
+    augmentation_mirror,
+    augmentation_noise,
+    augmentation_channel_scale,
+    augmentation_contrast,
+    augmentation_drop_pixel,
+    augmentation_drop_channel,
+    augmentation_blur,
+    augmentation_sharpen,
+    augmentation_misalign_pixels,
+    augmentation_cutmix,
+    augmentation_mixup,
+)
+
+
+@jit(nopython=True, nogil=True, cache=True)
+def _augmentation_batch_default(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_images: float = 1.0,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray], np.ndarray]:
+    &#34;&#34;&#34; INTERNAL FUNCTION. DO NOT USE. &#34;&#34;&#34;
+
+    X_aug = X.copy()
+    y_aug = y.copy() if y is not None else None
+
+    batch_size = X.shape[0]
+
+    n_mixes = min(
+        (np.random.rand(batch_size) &lt;= chance).sum(),
+        int(batch_size * max_images),
+    )
+
+    if n_mixes == 0:
+        aug_flags = np.array([False] * batch_size, dtype=np.int64)
+        return X, y, aug_flags
+
+    aug_flags = np.array([False] * batch_size, dtype=np.int64)
+
+    idx_targets = np.random.choice(batch_size, n_mixes, replace=False)
+    for i in aug_flags:
+        if i in idx_targets:
+            aug_flags[i] = True
+
+    return X_aug, y_aug, aug_flags
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_rotation(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_images: float = 1.0,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Randomly rotates images in a batch by 90 degrees intervals. Images
+    can be (batch, channels, height, width) or (batch, height, width, channels).
+
+    Args:
+        X (np.ndarray): The batch of images to rotate.
+        y (np.ndarray/None): The label of images to rotate. If None, no label is returned.
+
+    Keyword Args:
+        y (np.ndarray/none=None): The batch of labels to rotate.
+        chance (float=0.5): The chance of rotating the image.
+        max_images (float=None): The maximum proportion of the images in the batch to possibly rotate.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The rotated images and optionally labels.
+    &#34;&#34;&#34;
+    x_rotated, y_rotated, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        if y is None:
+            x_rotated[idx], _ = augmentation_rotation(
+                X[idx], None,
+                chance=1.0,
+                k=None,
+                channel_last=channel_last,
+            )
+
+        else:
+            x_rotated[idx], y_rotated[idx] = augmentation_rotation(
+                X[idx], y[idx],
+                chance=1.0,
+                k=None,
+                channel_last=channel_last,
+            )
+
+    return x_rotated, y_rotated
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_mirror(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_images: float = 1.0,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Randomly mirrors images in a batch. Images can be (batch, channels, height, width) or (batch, height, width, channels).
+
+    Args:
+        X (np.ndarray): The batch of images to mirror.
+        y (np.ndarray/None): The labels of images to mirror. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of mirroring the image.
+        max_images (float=1.0): The maximum proportion  of images in the batch to possibly mirror.
+        k (int=None): If None, randomly mirrors the image along the horizontal or vertical axis.
+            If 1, mirrors the image along the horizontal axis.
+            If 2, mirrors the image along the vertical axis.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The mirrored images and optionally labels.
+    &#34;&#34;&#34;
+    x_mirrored, y_mirrored, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        if y is None:
+            x_mirrored[idx], _ = augmentation_mirror(
+                X[idx], None,
+                chance=1.0,
+                k=None,
+                channel_last=channel_last,
+            )
+
+        else:
+            x_mirrored[idx], y_mirrored[idx] = augmentation_mirror(
+                X[idx], y[idx],
+                chance=1.0,
+                k=None,
+                channel_last=channel_last,
+            )
+
+    return x_mirrored, y_mirrored
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_noise(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_amount: float = 0.1,
+    max_images: float = 1.0,
+    additive: bool = False,
+    channel_last: Any = None, # pylint: disable=unused-argument
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Adds random noise seperately to each channel of the batch of images. The noise works
+    for both channel first and last images.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to add noise to.
+        y (np.ndarray/None): The labels of images to add noise to. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of adding noise.
+        amount (float=0.01): The amount of noise to add.
+        max_amount (float=0.1): The maximum amount of noise to add, sampled uniformly.
+        max_images (float=1.0): The maximum proportion of images in the batch to add noise to.
+        additive (bool=False): Whether to add or multiply the noise.
+        channel_last (any=None): Whether the image is (channels, height, width) or (height, width, channels).
+            ignored for this function. Kept to keep the same function signature as other augmentations.
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The batch of images with noise and optionally the unmodified label.
+    &#34;&#34;&#34;
+    x_noised, y_noised, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_noised[idx], _ = augmentation_noise(
+            X[idx], None,
+            chance=1.0,
+            max_amount=max_amount,
+            additive=additive,
+            channel_last=channel_last,
+        )
+
+    return x_noised, y_noised
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_channel_scale(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_amount: float = 0.1,
+    max_images: Optional[float] = 1.0,
+    additive: bool = False,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Scales the channels of the batch of images seperately by a fixed amount.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to scale the channels of.
+        y (np.ndarray/None): The labels of images to scale the channels of. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of scaling the channels.
+        max_amount (float=0.1): The amount to possible scale the channels by. Sampled uniformly.
+        max_images (float=1.0): The maximum number of images to add noise to.
+        additive (bool=False): Whether to add or multiply the scaling.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuble[np.ndarray, Optional[np.ndarray]]: The batch of images with scaled channels and optionally the unmodified label.
+    &#34;&#34;&#34;
+    x_scaled, y_scaled, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_scaled[idx], _ = augmentation_channel_scale(
+            X[idx], None,
+            chance=1.0,
+            max_amount=max_amount,
+            additive=additive,
+            channel_last=channel_last,
+        )
+
+    return x_scaled, y_scaled
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_contrast(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_amount: float = 0.1,
+    max_images: float = 1.0,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Changes the contrast of a batch of images by a random amount, seperately for each channel.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to change the contrast of.
+        y (np.ndarray/None): The labels of images to change the contrast of. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of changing the contrast.
+        max_amount (float=0.01): The amount to change the contrast by.
+        max_images (float=1.0): The maximum proportion of images in the batch to change the contrast of.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuble[np.ndarray, Optional[np.ndarray]]: The batch of images with changed contrast and optionally the unmodified label.
+    &#34;&#34;&#34;
+    x_constrast, y_contrast, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_constrast[idx], _ = augmentation_contrast(
+            X[idx], None,
+            chance=1.0,
+            max_amount=max_amount,
+            channel_last=channel_last,
+        )
+
+    return x_constrast, y_contrast
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_drop_pixel(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    drop_probability: float = 0.1,
+    drop_value: float = 0.0,
+    max_images: float = 1.0,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Drops a random pixels from a batch of images.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to drop a pixel from.
+        y (np.ndarray/None): The labels of images to drop pixels from. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of dropping a pixel.
+        drop_probability (float=0.05): The probability of dropping a pixel.
+        drop_value (float=0.0): The value to drop the pixel to.
+        max_images (float=1.0): The maximum proportion of images in the batch to drop a pixel from.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The batch of images with the dropped pixels and optionally the unmodified label.
+    &#34;&#34;&#34;
+    x_drop, y_drop, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_drop[idx], _ = augmentation_drop_pixel(
+            X[idx], None,
+            chance=1.0,
+            drop_probability=drop_probability,
+            drop_value=drop_value,
+            channel_last=channel_last,
+        )
+
+    return x_drop, y_drop
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_drop_channel(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    drop_probability: float = 0.1,
+    drop_value: float = 0.0,
+    max_images: float = 1.0,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Drops a random channel from a batch of images.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+    A maximum of one channel will be dropped.
+
+    Args:
+        X (np.ndarray): The batch of images to drop a channel from.
+        y (np.ndarray/None): The labels of images to drop channels from. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of dropping a channel.
+        max_images (float=1.0): The maximum proportion of images in the batch to drop a channel from.
+        drop_probability (float=0.1): The probability of dropping a channel.
+        drop_value (float=0.0): The value to drop the channel to.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    &#34;&#34;&#34;
+    x_drop, y_drop, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_drop[idx], _ = augmentation_drop_channel(
+            X[idx], None,
+            chance=1.0,
+            drop_probability=drop_probability,
+            drop_value=drop_value,
+            channel_last=channel_last,
+        )
+
+    return x_drop, y_drop
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_blur(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_images: float = 1.0,
+    intensity: float = 1.0,
+    apply_to_y: bool = False,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Blurs a batch of images at random.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to potentially blur.
+        y (np.ndarray/None): The labels of images to potentially blur. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of blurring a pixel.
+        max_images (float=1.0): The maximum proportion of images in the batch to blur.
+        intensity (float=1.0): The intensity of the blur. from 0.0 to 1.0.
+        apply_to_y (bool=False): Whether to blur the label as well.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    &#34;&#34;&#34;
+    x_blurred, y_blurred, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_blurred[idx], _ = augmentation_blur(
+            X[idx], None,
+            chance=1.0,
+            intensity=intensity,
+            apply_to_y=apply_to_y,
+            channel_last=channel_last,
+        )
+
+    return x_blurred, y_blurred
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_sharpen(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_images: float = 1.0,
+    intensity: float = 1.0,
+    apply_to_y: bool = False,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Sharpens a batch of images at random.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to potentially sharpen.
+        y (np.ndarray/None): The labels of images to potentially sharpen. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of sharpening a pixel.
+        max_images (float=1.0): The maximum proportion of images in the batch to sharpen.
+        intensity (float=1.0): The intensity of the sharpening. from 0.0 to 1.0.
+        apply_to_y (bool=False): Whether to sharpen the label as well.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    &#34;&#34;&#34;
+    x_sharpened, y_sharpened, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_sharpened[idx], _ = augmentation_sharpen(
+            X[idx], None,
+            chance=1.0,
+            intensity=intensity,
+            apply_to_y=apply_to_y,
+            channel_last=channel_last,
+        )
+
+    return x_sharpened, y_sharpened
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_misalign(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_offset: float = 0.5,
+    max_images: float = 0.2,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Misaligns the channels of a batch of images at random.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to potentially misalign the channels of.
+        y (np.ndarray/None): The labels of images to potentially misalign the channels of. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of misaligning the channels of a pixel.
+        max_offset (float=0.5): The maximum offset to misalign the channels by.
+        max_images (float=0.2): The maximum number of images to misalign the channels of.
+        max_channels (int=1): The maximum number of channels to misalign.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    &#34;&#34;&#34;
+    x_misaligned, y_misaligned, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_misaligned[idx], _ = augmentation_misalign_pixels(
+            X[idx], None,
+            chance=1.0,
+            max_offset=max_offset,
+            channel_last=channel_last,
+        )
+
+    return x_misaligned, y_misaligned
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_cutmix(
+    X: np.ndarray,
+    y: np.ndarray,
+    chance: float = 0.5,
+    min_size: float = 0.333,
+    max_size: float = 0.666,
+    max_images: float = 0.2,
+    label_mix: int = 0,
+    feather: bool = True,
+    feather_dist: int = 3,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Cutmixes a batch of images at random.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to potentially cutmix.
+        y (np.ndarray/None): The labels of images to potentially cutmix. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of cutmixing a pixel.
+        min_size (float=0.333): The minimum size of the patch to cutmix. In percentage of the image width.
+        max_size (float=0.666): The maximum size of the patch to cutmix. In percentage of the image width.
+        max_images (float=0.2): The maximum percentage of images in a batch to mixup.
+        label_mix (int=0): if
+            0 - The labels will be mixed by the weights.\n
+            1 - The target label will be used.\n
+            2 - The source label will be used.\n
+            3 - The max of the labels will be used.\n
+            4 - The min of the labels will be used.\n
+            5 - The max of the image with the highest weight will be used.\n
+            6 - The min of the image with the highest weight will be used.\n
+        feather (bool=True): Whether to feather the edges of the cutmix.
+        feather_dist (int=3): The distance to feather the edges of the cutmix in pixels
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    &#34;&#34;&#34;
+    x_cutmix = X.astype(np.float32)
+    y_cutmix = y.astype(np.float32)
+
+    batch_size = x_cutmix.shape[0]
+
+    n_mixes = min(
+        (np.random.rand(batch_size) &lt;= chance).sum(),
+        int(batch_size * max_images),
+    )
+
+    if n_mixes == 0:
+        return X, y
+
+    idx_targets = np.random.choice(batch_size, n_mixes, replace=False)
+
+    for idx_target in idx_targets:
+        target_x = x_cutmix[idx_target]
+        target_y = y_cutmix[idx_target]
+
+        source_idxs = [idx for idx in range(batch_size) if idx != idx_target]
+        idx_source = np.random.choice(source_idxs, 1, replace=False)[0]
+
+        source_x = x_cutmix[idx_source]
+        source_y = y_cutmix[idx_source]
+
+        cutmixed_x, cutmixed_y = augmentation_cutmix(
+            target_x, target_y,
+            source_x, source_y,
+            min_size=min_size,
+            max_size=max_size,
+            label_mix=label_mix,
+            feather=feather,
+            feather_dist=feather_dist,
+            channel_last=channel_last,
+        )
+
+        x_cutmix[idx_target] = cutmixed_x
+        y_cutmix[idx_target] = cutmixed_y
+
+    return x_cutmix, y_cutmix
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_mixup(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    min_size: float = 0.333,
+    max_size: float = 0.666,
+    label_mix: int = 0,
+    max_images: float = 0.2,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Mixups a batch of images at random. This works by doing a linear intepolation between
+    two images in the batch and then adding a random weight to each image.
+
+    Mixup involves taking two images and blending them together by randomly interpolating
+    their pixel values. More specifically, suppose we have two images x and x&#39; with their
+    corresponding labels y and y&#39;. To generate a new training example, mixup takes a
+    weighted sum of x and x&#39;, such that the resulting image x^* = λx + (1-λ)x&#39;,
+    where λ is a randomly chosen interpolation coefficient. The label for the new image
+    is also a weighted sum of y and y&#39; based on the same interpolation coefficient.
+
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to potentially mixup.
+        y (np.ndarray/None): The batch of labels to potentially mixup.
+
+    Keyword Args:
+        chance (float=0.5): The chance of mixuping a pixel.
+        max_images (float=0.2): The maximum percentage of images in a batch to mixup.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    &#34;&#34;&#34;
+    x_mixup = X.astype(np.float32)
+    y_mixup = y.astype(np.float32)
+
+    batch_size = x_mixup.shape[0]
+
+    n_mixes = min(
+        (np.random.rand(batch_size) &lt;= chance).sum(),
+        int(batch_size * max_images),
+    )
+
+    if n_mixes == 0:
+        return X, y
+
+    idx_targets = np.random.choice(batch_size, n_mixes, replace=False)
+
+    for idx_target in idx_targets:
+        target_x = x_mixup[idx_target]
+        target_y = y_mixup[idx_target]
+
+        source_idxs = [idx for idx in range(batch_size) if idx != idx_target]
+        idx_source = np.random.choice(source_idxs, 1, replace=False)[0]
+
+        source_x = x_mixup[idx_source]
+        source_y = y_mixup[idx_source]
+
+        mixupped_x, mixupped_y = augmentation_mixup(
+            target_x, target_y,
+            source_x, source_y,
+            min_size=min_size,
+            max_size=max_size,
+            label_mix=label_mix,
+            chance=chance,
+            channel_last=channel_last,
+        )
+
+        x_mixup[idx_target] = mixupped_x
+        y_mixup[idx_target] = mixupped_y
+
+    return x_mixup, y_mixup</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="buteo.ai.augmentation_batch.augmentation_batch_blur"><code class="name flex">
+<span>def <span class="ident">augmentation_batch_blur</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray], chance: float = 0.5, max_images: float = 1.0, intensity: float = 1.0, apply_to_y: bool = False, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Blurs a batch of images at random.
+input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to potentially blur.</dd>
+</dl>
+<p>y (np.ndarray/None): The labels of images to potentially blur. If None, no label is returned.
+Keyword Args:
+chance (float=0.5): The chance of blurring a pixel.
+max_images (float=1.0): The maximum proportion of images in the batch to blur.
+intensity (float=1.0): The intensity of the blur. from 0.0 to 1.0.
+apply_to_y (bool=False): Whether to blur the label as well.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_blur(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_images: float = 1.0,
+    intensity: float = 1.0,
+    apply_to_y: bool = False,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Blurs a batch of images at random.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to potentially blur.
+        y (np.ndarray/None): The labels of images to potentially blur. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of blurring a pixel.
+        max_images (float=1.0): The maximum proportion of images in the batch to blur.
+        intensity (float=1.0): The intensity of the blur. from 0.0 to 1.0.
+        apply_to_y (bool=False): Whether to blur the label as well.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    &#34;&#34;&#34;
+    x_blurred, y_blurred, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_blurred[idx], _ = augmentation_blur(
+            X[idx], None,
+            chance=1.0,
+            intensity=intensity,
+            apply_to_y=apply_to_y,
+            channel_last=channel_last,
+        )
+
+    return x_blurred, y_blurred</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_batch.augmentation_batch_channel_scale"><code class="name flex">
+<span>def <span class="ident">augmentation_batch_channel_scale</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray], chance: float = 0.5, max_amount: float = 0.1, max_images: Optional[float] = 1.0, additive: bool = False, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Scales the channels of the batch of images seperately by a fixed amount.
+input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to scale the channels of.</dd>
+</dl>
+<p>y (np.ndarray/None): The labels of images to scale the channels of. If None, no label is returned.
+Keyword Args:
+chance (float=0.5): The chance of scaling the channels.
+max_amount (float=0.1): The amount to possible scale the channels by. Sampled uniformly.
+max_images (float=1.0): The maximum number of images to add noise to.
+additive (bool=False): Whether to add or multiply the scaling.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuble[np.ndarray, Optional[np.ndarray]]</code></dt>
+<dd>The batch of images with scaled channels and optionally the unmodified label.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_channel_scale(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_amount: float = 0.1,
+    max_images: Optional[float] = 1.0,
+    additive: bool = False,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Scales the channels of the batch of images seperately by a fixed amount.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to scale the channels of.
+        y (np.ndarray/None): The labels of images to scale the channels of. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of scaling the channels.
+        max_amount (float=0.1): The amount to possible scale the channels by. Sampled uniformly.
+        max_images (float=1.0): The maximum number of images to add noise to.
+        additive (bool=False): Whether to add or multiply the scaling.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuble[np.ndarray, Optional[np.ndarray]]: The batch of images with scaled channels and optionally the unmodified label.
+    &#34;&#34;&#34;
+    x_scaled, y_scaled, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_scaled[idx], _ = augmentation_channel_scale(
+            X[idx], None,
+            chance=1.0,
+            max_amount=max_amount,
+            additive=additive,
+            channel_last=channel_last,
+        )
+
+    return x_scaled, y_scaled</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_batch.augmentation_batch_contrast"><code class="name flex">
+<span>def <span class="ident">augmentation_batch_contrast</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray], chance: float = 0.5, max_amount: float = 0.1, max_images: float = 1.0, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Changes the contrast of a batch of images by a random amount, seperately for each channel.
+input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to change the contrast of.</dd>
+</dl>
+<p>y (np.ndarray/None): The labels of images to change the contrast of. If None, no label is returned.
+Keyword Args:
+chance (float=0.5): The chance of changing the contrast.
+max_amount (float=0.01): The amount to change the contrast by.
+max_images (float=1.0): The maximum proportion of images in the batch to change the contrast of.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuble[np.ndarray, Optional[np.ndarray]]</code></dt>
+<dd>The batch of images with changed contrast and optionally the unmodified label.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_contrast(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_amount: float = 0.1,
+    max_images: float = 1.0,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Changes the contrast of a batch of images by a random amount, seperately for each channel.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to change the contrast of.
+        y (np.ndarray/None): The labels of images to change the contrast of. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of changing the contrast.
+        max_amount (float=0.01): The amount to change the contrast by.
+        max_images (float=1.0): The maximum proportion of images in the batch to change the contrast of.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuble[np.ndarray, Optional[np.ndarray]]: The batch of images with changed contrast and optionally the unmodified label.
+    &#34;&#34;&#34;
+    x_constrast, y_contrast, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_constrast[idx], _ = augmentation_contrast(
+            X[idx], None,
+            chance=1.0,
+            max_amount=max_amount,
+            channel_last=channel_last,
+        )
+
+    return x_constrast, y_contrast</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_batch.augmentation_batch_cutmix"><code class="name flex">
+<span>def <span class="ident">augmentation_batch_cutmix</span></span>(<span>X: numpy.ndarray, y: numpy.ndarray, chance: float = 0.5, min_size: float = 0.333, max_size: float = 0.666, max_images: float = 0.2, label_mix: int = 0, feather: bool = True, feather_dist: int = 3, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Cutmixes a batch of images at random.
+input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to potentially cutmix.</dd>
+</dl>
+<p>y (np.ndarray/None): The labels of images to potentially cutmix. If None, no label is returned.
+Keyword Args:
+chance (float=0.5): The chance of cutmixing a pixel.
+min_size (float=0.333): The minimum size of the patch to cutmix. In percentage of the image width.
+max_size (float=0.666): The maximum size of the patch to cutmix. In percentage of the image width.
+max_images (float=0.2): The maximum percentage of images in a batch to mixup.
+label_mix (int=0): if
+0 - The labels will be mixed by the weights.</p>
+<pre><code>    1 - The target label will be used.
+
+    2 - The source label will be used.
+
+    3 - The max of the labels will be used.
+
+    4 - The min of the labels will be used.
+
+    5 - The max of the image with the highest weight will be used.
+
+    6 - The min of the image with the highest weight will be used.
+
+feather (bool=True): Whether to feather the edges of the cutmix.
+feather_dist (int=3): The distance to feather the edges of the cutmix in pixels
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_cutmix(
+    X: np.ndarray,
+    y: np.ndarray,
+    chance: float = 0.5,
+    min_size: float = 0.333,
+    max_size: float = 0.666,
+    max_images: float = 0.2,
+    label_mix: int = 0,
+    feather: bool = True,
+    feather_dist: int = 3,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Cutmixes a batch of images at random.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to potentially cutmix.
+        y (np.ndarray/None): The labels of images to potentially cutmix. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of cutmixing a pixel.
+        min_size (float=0.333): The minimum size of the patch to cutmix. In percentage of the image width.
+        max_size (float=0.666): The maximum size of the patch to cutmix. In percentage of the image width.
+        max_images (float=0.2): The maximum percentage of images in a batch to mixup.
+        label_mix (int=0): if
+            0 - The labels will be mixed by the weights.\n
+            1 - The target label will be used.\n
+            2 - The source label will be used.\n
+            3 - The max of the labels will be used.\n
+            4 - The min of the labels will be used.\n
+            5 - The max of the image with the highest weight will be used.\n
+            6 - The min of the image with the highest weight will be used.\n
+        feather (bool=True): Whether to feather the edges of the cutmix.
+        feather_dist (int=3): The distance to feather the edges of the cutmix in pixels
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    &#34;&#34;&#34;
+    x_cutmix = X.astype(np.float32)
+    y_cutmix = y.astype(np.float32)
+
+    batch_size = x_cutmix.shape[0]
+
+    n_mixes = min(
+        (np.random.rand(batch_size) &lt;= chance).sum(),
+        int(batch_size * max_images),
+    )
+
+    if n_mixes == 0:
+        return X, y
+
+    idx_targets = np.random.choice(batch_size, n_mixes, replace=False)
+
+    for idx_target in idx_targets:
+        target_x = x_cutmix[idx_target]
+        target_y = y_cutmix[idx_target]
+
+        source_idxs = [idx for idx in range(batch_size) if idx != idx_target]
+        idx_source = np.random.choice(source_idxs, 1, replace=False)[0]
+
+        source_x = x_cutmix[idx_source]
+        source_y = y_cutmix[idx_source]
+
+        cutmixed_x, cutmixed_y = augmentation_cutmix(
+            target_x, target_y,
+            source_x, source_y,
+            min_size=min_size,
+            max_size=max_size,
+            label_mix=label_mix,
+            feather=feather,
+            feather_dist=feather_dist,
+            channel_last=channel_last,
+        )
+
+        x_cutmix[idx_target] = cutmixed_x
+        y_cutmix[idx_target] = cutmixed_y
+
+    return x_cutmix, y_cutmix</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_batch.augmentation_batch_drop_channel"><code class="name flex">
+<span>def <span class="ident">augmentation_batch_drop_channel</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray], chance: float = 0.5, drop_probability: float = 0.1, drop_value: float = 0.0, max_images: float = 1.0, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Drops a random channel from a batch of images.
+input should be (batch, height, width, channels) or (batch, channels, height, width).
+A maximum of one channel will be dropped.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to drop a channel from.</dd>
+</dl>
+<p>y (np.ndarray/None): The labels of images to drop channels from. If None, no label is returned.
+Keyword Args:
+chance (float=0.5): The chance of dropping a channel.
+max_images (float=1.0): The maximum proportion of images in the batch to drop a channel from.
+drop_probability (float=0.1): The probability of dropping a channel.
+drop_value (float=0.0): The value to drop the channel to.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_drop_channel(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    drop_probability: float = 0.1,
+    drop_value: float = 0.0,
+    max_images: float = 1.0,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Drops a random channel from a batch of images.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+    A maximum of one channel will be dropped.
+
+    Args:
+        X (np.ndarray): The batch of images to drop a channel from.
+        y (np.ndarray/None): The labels of images to drop channels from. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of dropping a channel.
+        max_images (float=1.0): The maximum proportion of images in the batch to drop a channel from.
+        drop_probability (float=0.1): The probability of dropping a channel.
+        drop_value (float=0.0): The value to drop the channel to.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    &#34;&#34;&#34;
+    x_drop, y_drop, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_drop[idx], _ = augmentation_drop_channel(
+            X[idx], None,
+            chance=1.0,
+            drop_probability=drop_probability,
+            drop_value=drop_value,
+            channel_last=channel_last,
+        )
+
+    return x_drop, y_drop</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_batch.augmentation_batch_drop_pixel"><code class="name flex">
+<span>def <span class="ident">augmentation_batch_drop_pixel</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray], chance: float = 0.5, drop_probability: float = 0.1, drop_value: float = 0.0, max_images: float = 1.0, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Drops a random pixels from a batch of images.
+input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to drop a pixel from.</dd>
+</dl>
+<p>y (np.ndarray/None): The labels of images to drop pixels from. If None, no label is returned.
+Keyword Args:
+chance (float=0.5): The chance of dropping a pixel.
+drop_probability (float=0.05): The probability of dropping a pixel.
+drop_value (float=0.0): The value to drop the pixel to.
+max_images (float=1.0): The maximum proportion of images in the batch to drop a pixel from.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[np.ndarray, Optional[np.ndarray]]</code></dt>
+<dd>The batch of images with the dropped pixels and optionally the unmodified label.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_drop_pixel(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    drop_probability: float = 0.1,
+    drop_value: float = 0.0,
+    max_images: float = 1.0,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Drops a random pixels from a batch of images.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to drop a pixel from.
+        y (np.ndarray/None): The labels of images to drop pixels from. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of dropping a pixel.
+        drop_probability (float=0.05): The probability of dropping a pixel.
+        drop_value (float=0.0): The value to drop the pixel to.
+        max_images (float=1.0): The maximum proportion of images in the batch to drop a pixel from.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The batch of images with the dropped pixels and optionally the unmodified label.
+    &#34;&#34;&#34;
+    x_drop, y_drop, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_drop[idx], _ = augmentation_drop_pixel(
+            X[idx], None,
+            chance=1.0,
+            drop_probability=drop_probability,
+            drop_value=drop_value,
+            channel_last=channel_last,
+        )
+
+    return x_drop, y_drop</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_batch.augmentation_batch_mirror"><code class="name flex">
+<span>def <span class="ident">augmentation_batch_mirror</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray], chance: float = 0.5, max_images: float = 1.0, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Randomly mirrors images in a batch. Images can be (batch, channels, height, width) or (batch, height, width, channels).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to mirror.</dd>
+</dl>
+<p>y (np.ndarray/None): The labels of images to mirror. If None, no label is returned.
+Keyword Args:
+chance (float=0.5): The chance of mirroring the image.
+max_images (float=1.0): The maximum proportion
+of images in the batch to possibly mirror.
+k (int=None): If None, randomly mirrors the image along the horizontal or vertical axis.
+If 1, mirrors the image along the horizontal axis.
+If 2, mirrors the image along the vertical axis.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[np.ndarray, Optional[np.ndarray]]</code></dt>
+<dd>The mirrored images and optionally labels.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_mirror(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_images: float = 1.0,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Randomly mirrors images in a batch. Images can be (batch, channels, height, width) or (batch, height, width, channels).
+
+    Args:
+        X (np.ndarray): The batch of images to mirror.
+        y (np.ndarray/None): The labels of images to mirror. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of mirroring the image.
+        max_images (float=1.0): The maximum proportion  of images in the batch to possibly mirror.
+        k (int=None): If None, randomly mirrors the image along the horizontal or vertical axis.
+            If 1, mirrors the image along the horizontal axis.
+            If 2, mirrors the image along the vertical axis.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The mirrored images and optionally labels.
+    &#34;&#34;&#34;
+    x_mirrored, y_mirrored, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        if y is None:
+            x_mirrored[idx], _ = augmentation_mirror(
+                X[idx], None,
+                chance=1.0,
+                k=None,
+                channel_last=channel_last,
+            )
+
+        else:
+            x_mirrored[idx], y_mirrored[idx] = augmentation_mirror(
+                X[idx], y[idx],
+                chance=1.0,
+                k=None,
+                channel_last=channel_last,
+            )
+
+    return x_mirrored, y_mirrored</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_batch.augmentation_batch_misalign"><code class="name flex">
+<span>def <span class="ident">augmentation_batch_misalign</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray], chance: float = 0.5, max_offset: float = 0.5, max_images: float = 0.2, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Misaligns the channels of a batch of images at random.
+input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to potentially misalign the channels of.</dd>
+</dl>
+<p>y (np.ndarray/None): The labels of images to potentially misalign the channels of. If None, no label is returned.
+Keyword Args:
+chance (float=0.5): The chance of misaligning the channels of a pixel.
+max_offset (float=0.5): The maximum offset to misalign the channels by.
+max_images (float=0.2): The maximum number of images to misalign the channels of.
+max_channels (int=1): The maximum number of channels to misalign.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_misalign(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_offset: float = 0.5,
+    max_images: float = 0.2,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Misaligns the channels of a batch of images at random.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to potentially misalign the channels of.
+        y (np.ndarray/None): The labels of images to potentially misalign the channels of. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of misaligning the channels of a pixel.
+        max_offset (float=0.5): The maximum offset to misalign the channels by.
+        max_images (float=0.2): The maximum number of images to misalign the channels of.
+        max_channels (int=1): The maximum number of channels to misalign.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    &#34;&#34;&#34;
+    x_misaligned, y_misaligned, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_misaligned[idx], _ = augmentation_misalign_pixels(
+            X[idx], None,
+            chance=1.0,
+            max_offset=max_offset,
+            channel_last=channel_last,
+        )
+
+    return x_misaligned, y_misaligned</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_batch.augmentation_batch_mixup"><code class="name flex">
+<span>def <span class="ident">augmentation_batch_mixup</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray], chance: float = 0.5, min_size: float = 0.333, max_size: float = 0.666, label_mix: int = 0, max_images: float = 0.2, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Mixups a batch of images at random. This works by doing a linear intepolation between
+two images in the batch and then adding a random weight to each image.</p>
+<p>Mixup involves taking two images and blending them together by randomly interpolating
+their pixel values. More specifically, suppose we have two images x and x' with their
+corresponding labels y and y'. To generate a new training example, mixup takes a
+weighted sum of x and x', such that the resulting image x^* = λx + (1-λ)x',
+where λ is a randomly chosen interpolation coefficient. The label for the new image
+is also a weighted sum of y and y' based on the same interpolation coefficient.</p>
+<p>input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to potentially mixup.</dd>
+</dl>
+<p>y (np.ndarray/None): The batch of labels to potentially mixup.
+Keyword Args:
+chance (float=0.5): The chance of mixuping a pixel.
+max_images (float=0.2): The maximum percentage of images in a batch to mixup.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_mixup(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    min_size: float = 0.333,
+    max_size: float = 0.666,
+    label_mix: int = 0,
+    max_images: float = 0.2,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Mixups a batch of images at random. This works by doing a linear intepolation between
+    two images in the batch and then adding a random weight to each image.
+
+    Mixup involves taking two images and blending them together by randomly interpolating
+    their pixel values. More specifically, suppose we have two images x and x&#39; with their
+    corresponding labels y and y&#39;. To generate a new training example, mixup takes a
+    weighted sum of x and x&#39;, such that the resulting image x^* = λx + (1-λ)x&#39;,
+    where λ is a randomly chosen interpolation coefficient. The label for the new image
+    is also a weighted sum of y and y&#39; based on the same interpolation coefficient.
+
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to potentially mixup.
+        y (np.ndarray/None): The batch of labels to potentially mixup.
+
+    Keyword Args:
+        chance (float=0.5): The chance of mixuping a pixel.
+        max_images (float=0.2): The maximum percentage of images in a batch to mixup.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    &#34;&#34;&#34;
+    x_mixup = X.astype(np.float32)
+    y_mixup = y.astype(np.float32)
+
+    batch_size = x_mixup.shape[0]
+
+    n_mixes = min(
+        (np.random.rand(batch_size) &lt;= chance).sum(),
+        int(batch_size * max_images),
+    )
+
+    if n_mixes == 0:
+        return X, y
+
+    idx_targets = np.random.choice(batch_size, n_mixes, replace=False)
+
+    for idx_target in idx_targets:
+        target_x = x_mixup[idx_target]
+        target_y = y_mixup[idx_target]
+
+        source_idxs = [idx for idx in range(batch_size) if idx != idx_target]
+        idx_source = np.random.choice(source_idxs, 1, replace=False)[0]
+
+        source_x = x_mixup[idx_source]
+        source_y = y_mixup[idx_source]
+
+        mixupped_x, mixupped_y = augmentation_mixup(
+            target_x, target_y,
+            source_x, source_y,
+            min_size=min_size,
+            max_size=max_size,
+            label_mix=label_mix,
+            chance=chance,
+            channel_last=channel_last,
+        )
+
+        x_mixup[idx_target] = mixupped_x
+        y_mixup[idx_target] = mixupped_y
+
+    return x_mixup, y_mixup</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_batch.augmentation_batch_noise"><code class="name flex">
+<span>def <span class="ident">augmentation_batch_noise</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray], chance: float = 0.5, max_amount: float = 0.1, max_images: float = 1.0, additive: bool = False, channel_last: Any = None) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Adds random noise seperately to each channel of the batch of images. The noise works
+for both channel first and last images.
+input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to add noise to.</dd>
+</dl>
+<p>y (np.ndarray/None): The labels of images to add noise to. If None, no label is returned.
+Keyword Args:
+chance (float=0.5): The chance of adding noise.
+amount (float=0.01): The amount of noise to add.
+max_amount (float=0.1): The maximum amount of noise to add, sampled uniformly.
+max_images (float=1.0): The maximum proportion of images in the batch to add noise to.
+additive (bool=False): Whether to add or multiply the noise.
+channel_last (any=None): Whether the image is (channels, height, width) or (height, width, channels).
+ignored for this function. Kept to keep the same function signature as other augmentations.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[np.ndarray, Optional[np.ndarray]]</code></dt>
+<dd>The batch of images with noise and optionally the unmodified label.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_noise(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_amount: float = 0.1,
+    max_images: float = 1.0,
+    additive: bool = False,
+    channel_last: Any = None, # pylint: disable=unused-argument
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Adds random noise seperately to each channel of the batch of images. The noise works
+    for both channel first and last images.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to add noise to.
+        y (np.ndarray/None): The labels of images to add noise to. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of adding noise.
+        amount (float=0.01): The amount of noise to add.
+        max_amount (float=0.1): The maximum amount of noise to add, sampled uniformly.
+        max_images (float=1.0): The maximum proportion of images in the batch to add noise to.
+        additive (bool=False): Whether to add or multiply the noise.
+        channel_last (any=None): Whether the image is (channels, height, width) or (height, width, channels).
+            ignored for this function. Kept to keep the same function signature as other augmentations.
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The batch of images with noise and optionally the unmodified label.
+    &#34;&#34;&#34;
+    x_noised, y_noised, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_noised[idx], _ = augmentation_noise(
+            X[idx], None,
+            chance=1.0,
+            max_amount=max_amount,
+            additive=additive,
+            channel_last=channel_last,
+        )
+
+    return x_noised, y_noised</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_batch.augmentation_batch_rotation"><code class="name flex">
+<span>def <span class="ident">augmentation_batch_rotation</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray], chance: float = 0.5, max_images: float = 1.0, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Randomly rotates images in a batch by 90 degrees intervals. Images
+can be (batch, channels, height, width) or (batch, height, width, channels).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to rotate.</dd>
+</dl>
+<p>y (np.ndarray/None): The label of images to rotate. If None, no label is returned.
+Keyword Args:
+y (np.ndarray/none=None): The batch of labels to rotate.
+chance (float=0.5): The chance of rotating the image.
+max_images (float=None): The maximum proportion of the images in the batch to possibly rotate.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Tuple[np.ndarray, Optional[np.ndarray]]</code></dt>
+<dd>The rotated images and optionally labels.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_rotation(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_images: float = 1.0,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Randomly rotates images in a batch by 90 degrees intervals. Images
+    can be (batch, channels, height, width) or (batch, height, width, channels).
+
+    Args:
+        X (np.ndarray): The batch of images to rotate.
+        y (np.ndarray/None): The label of images to rotate. If None, no label is returned.
+
+    Keyword Args:
+        y (np.ndarray/none=None): The batch of labels to rotate.
+        chance (float=0.5): The chance of rotating the image.
+        max_images (float=None): The maximum proportion of the images in the batch to possibly rotate.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+
+    Returns:
+        Tuple[np.ndarray, Optional[np.ndarray]]: The rotated images and optionally labels.
+    &#34;&#34;&#34;
+    x_rotated, y_rotated, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        if y is None:
+            x_rotated[idx], _ = augmentation_rotation(
+                X[idx], None,
+                chance=1.0,
+                k=None,
+                channel_last=channel_last,
+            )
+
+        else:
+            x_rotated[idx], y_rotated[idx] = augmentation_rotation(
+                X[idx], y[idx],
+                chance=1.0,
+                k=None,
+                channel_last=channel_last,
+            )
+
+    return x_rotated, y_rotated</code></pre>
+</details>
+</dd>
+<dt id="buteo.ai.augmentation_batch.augmentation_batch_sharpen"><code class="name flex">
+<span>def <span class="ident">augmentation_batch_sharpen</span></span>(<span>X: numpy.ndarray, y: Optional[numpy.ndarray], chance: float = 0.5, max_images: float = 1.0, intensity: float = 1.0, apply_to_y: bool = False, channel_last: bool = True) -> Tuple[numpy.ndarray, Optional[numpy.ndarray]]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Sharpens a batch of images at random.
+input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>The batch of images to potentially sharpen.</dd>
+</dl>
+<p>y (np.ndarray/None): The labels of images to potentially sharpen. If None, no label is returned.
+Keyword Args:
+chance (float=0.5): The chance of sharpening a pixel.
+max_images (float=1.0): The maximum proportion of images in the batch to sharpen.
+intensity (float=1.0): The intensity of the sharpening. from 0.0 to 1.0.
+apply_to_y (bool=False): Whether to sharpen the label as well.
+channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def augmentation_batch_sharpen(
+    X: np.ndarray,
+    y: Optional[np.ndarray],
+    chance: float = 0.5,
+    max_images: float = 1.0,
+    intensity: float = 1.0,
+    apply_to_y: bool = False,
+    channel_last: bool = True,
+) -&gt; Tuple[np.ndarray, Optional[np.ndarray]]:
+    &#34;&#34;&#34;
+    Sharpens a batch of images at random.
+    input should be (batch, height, width, channels) or (batch, channels, height, width).
+
+    Args:
+        X (np.ndarray): The batch of images to potentially sharpen.
+        y (np.ndarray/None): The labels of images to potentially sharpen. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.5): The chance of sharpening a pixel.
+        max_images (float=1.0): The maximum proportion of images in the batch to sharpen.
+        intensity (float=1.0): The intensity of the sharpening. from 0.0 to 1.0.
+        apply_to_y (bool=False): Whether to sharpen the label as well.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    &#34;&#34;&#34;
+    x_sharpened, y_sharpened, selection = _augmentation_batch_default(X, y, chance, max_images)
+
+    for idx, selected in enumerate(prange(selection.shape[0])):
+        if not selected:
+            continue
+
+        x_sharpened[idx], _ = augmentation_sharpen(
+            X[idx], None,
+            chance=1.0,
+            intensity=intensity,
+            apply_to_y=apply_to_y,
+            channel_last=channel_last,
+        )
+
+    return x_sharpened, y_sharpened</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="buteo.ai" href="index.html">buteo.ai</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="buteo.ai.augmentation_batch.augmentation_batch_blur" href="#buteo.ai.augmentation_batch.augmentation_batch_blur">augmentation_batch_blur</a></code></li>
+<li><code><a title="buteo.ai.augmentation_batch.augmentation_batch_channel_scale" href="#buteo.ai.augmentation_batch.augmentation_batch_channel_scale">augmentation_batch_channel_scale</a></code></li>
+<li><code><a title="buteo.ai.augmentation_batch.augmentation_batch_contrast" href="#buteo.ai.augmentation_batch.augmentation_batch_contrast">augmentation_batch_contrast</a></code></li>
+<li><code><a title="buteo.ai.augmentation_batch.augmentation_batch_cutmix" href="#buteo.ai.augmentation_batch.augmentation_batch_cutmix">augmentation_batch_cutmix</a></code></li>
+<li><code><a title="buteo.ai.augmentation_batch.augmentation_batch_drop_channel" href="#buteo.ai.augmentation_batch.augmentation_batch_drop_channel">augmentation_batch_drop_channel</a></code></li>
+<li><code><a title="buteo.ai.augmentation_batch.augmentation_batch_drop_pixel" href="#buteo.ai.augmentation_batch.augmentation_batch_drop_pixel">augmentation_batch_drop_pixel</a></code></li>
+<li><code><a title="buteo.ai.augmentation_batch.augmentation_batch_mirror" href="#buteo.ai.augmentation_batch.augmentation_batch_mirror">augmentation_batch_mirror</a></code></li>
+<li><code><a title="buteo.ai.augmentation_batch.augmentation_batch_misalign" href="#buteo.ai.augmentation_batch.augmentation_batch_misalign">augmentation_batch_misalign</a></code></li>
+<li><code><a title="buteo.ai.augmentation_batch.augmentation_batch_mixup" href="#buteo.ai.augmentation_batch.augmentation_batch_mixup">augmentation_batch_mixup</a></code></li>
+<li><code><a title="buteo.ai.augmentation_batch.augmentation_batch_noise" href="#buteo.ai.augmentation_batch.augmentation_batch_noise">augmentation_batch_noise</a></code></li>
+<li><code><a title="buteo.ai.augmentation_batch.augmentation_batch_rotation" href="#buteo.ai.augmentation_batch.augmentation_batch_rotation">augmentation_batch_rotation</a></code></li>
+<li><code><a title="buteo.ai.augmentation_batch.augmentation_batch_sharpen" href="#buteo.ai.augmentation_batch.augmentation_batch_sharpen">augmentation_batch_sharpen</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
