@@ -13,6 +13,7 @@ For documentation, visit: https://casperfibaek.github.io/buteo/
 **Installation** </br>
 Using pip:
 ```
+pip install gdal
 pip install buteo
 ```
 Using conda:
@@ -22,12 +23,13 @@ pip install buteo
 ```
 
 **Quickstart**
+
+### Reproject (and other functions) to references. (Vector and raster)
 ```python
 import buteo as beo
 
 OUTDIR = "path/to/output/dir"
 
-# Reproject (and other functions) to references. (Vector and raster)
 vector_file_correct_projection = "path/to/vector/file.gpkg"
 raster_files_wrong_projection = "path/to/raster/files/*.tif:glob"
 
@@ -41,10 +43,9 @@ paths_to_reprojected_rasters
 >>> [path/to/output/dir/file1.tif, path/to/output/dir/file2.tif, ...]
 ```
 
+### Align, stack, and make patches from rasters
 ```python
 import buteo as beo
-
-# Align, stack, and make patches from rasters
 
 SRCDIR = "path/to/src/dir/"
 
@@ -57,10 +58,10 @@ stacked_numpy_arrays = beo.raster_to_array(
 )
 
 patches = beo.array_to_patches(
-    path_to_stacked_numpy_arrays,
+    stacked_numpy_arrays,
     256,
-    offsets_y=3,
-    offsets_x=3,
+    offsets_y=1, # 1 overlap at 1/2 patch size (128)
+    offsets_x=1, # 1 overlap at 1/2 patch size (128)
 )
 
 # patches_nr, height, width, channels
@@ -68,10 +69,9 @@ patches
 >>> np.ndarray([10000, 256, 256, 9])
 ```
 
+### Predict a raster using a model
 ```python
 import buteo as beo
-
-# Predict a raster using a model
 
 RASTER_PATH = "path/to/raster/raster.tif"
 RASTER_OUT_PATH = "path/to/raster/raster_pred.tif"
@@ -94,6 +94,8 @@ beo.array_to_raster(
     reference=RASTER_PATH,
     out_path=RASTER_OUT_PATH,
 )
+# Path to the predicted raster
+>>> "path/to/raster/raster_pred.tif"
 ```
 
 </br>
