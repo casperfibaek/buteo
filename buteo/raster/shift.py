@@ -9,11 +9,12 @@ import sys; sys.path.append("../../")
 
 # External
 from osgeo import gdal
+import numpy as np
 
 # Internal
 from buteo.utils import core_utils, gdal_utils
 from buteo.raster import core_raster
-
+from buteo.raster.convolution import convolve_array_simple, simple_shift_kernel_2d
 
 
 def _shift_raster(
@@ -91,7 +92,7 @@ def shift_raster(
     creation_options=None,
 ):
     """
-    Shifts a raster in a given direction.
+    Shifts a raster in a given direction. (The frame is shifted)
 
     ## Args:
     `raster` (_str_/_list_/_gdal.Dataset_): The raster(s) to be shifted. </br>
@@ -143,3 +144,37 @@ def shift_raster(
         return shifted_rasters
 
     return shifted_rasters[0]
+
+
+def shift_raster_pixel(
+    raster,
+    shift_list,
+    nodata_value=-9999.9,
+    out_path=None,
+) -> str:
+    """
+    Shifts a raster in a given direction. (The frame is shifted)
+    """
+    core_utils.type_check(raster, [str, gdal.Dataset], "raster")
+    core_utils.type_check(shift_list, [[tuple, list]], "shift_list")
+    core_utils.type_check(out_path, [str, None], "out_path")
+
+    arr = core_raster.raster_to_array(raster)
+
+    offsets, weights = simple_shift_kernel_2d(shift_list[0], shift_list[1])
+
+    arr_float32 = arr.astype(np.float32)
+
+    for channel in arr.shape[2]:
+        arr[:, :, channel] = convolve_array_simple(
+            arr_float32[:, :, channel], offsets, weights, nodata_value,
+        )
+
+    if out_path is None:
+        out_path = gdal_utils.create_memory_path("shifted_raster", add_uuid=True)
+
+    return core_raster.array_to_raster(
+        arr,
+        reference=raster,
+        out_path=out_path,
+    )

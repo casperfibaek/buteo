@@ -18,3 +18,4 @@ from .edge_detection import *
 from .morphology import *
 from .patches import *
 from .textures import *
+from .dem import *

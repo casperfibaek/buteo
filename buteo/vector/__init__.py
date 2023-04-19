@@ -11,3 +11,4 @@ from .merge import *
 from .rasterize import *
 from .reproject import *
 from .buffer import *
+from .split import *

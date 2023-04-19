@@ -16,10 +16,12 @@ from buteo.ai.augmentation_utils import (
     feather_box_2d,
     rotate_arr,
     mirror_arr,
+)
+from buteo.raster.convolution import (
+    convolve_array_simple,
     simple_blur_kernel_2d_3x3,
     simple_unsharp_kernel_2d_3x3,
     simple_shift_kernel_2d,
-    convolution_simple,
 )
 
 
@@ -382,14 +384,14 @@ def augmentation_blur(
 
     if channel_last:
         for channel in prange(channels):
-            x_blurred[:, :, channel] = convolution_simple(x_blurred[:, :, channel], offsets, weights, intensity)
+            x_blurred[:, :, channel] = convolve_array_simple(x_blurred[:, :, channel], offsets, weights, intensity)
             if apply_to_y and y is not None:
-                y_blurred[:, :, channel] = convolution_simple(y_blurred[:, :, channel], offsets, weights, intensity)
+                y_blurred[:, :, channel] = convolve_array_simple(y_blurred[:, :, channel], offsets, weights, intensity)
     else:
         for channel in prange(channels):
-            x_blurred[channel, :, :] = convolution_simple(x_blurred[channel, :, :], offsets, weights, intensity)
+            x_blurred[channel, :, :] = convolve_array_simple(x_blurred[channel, :, :], offsets, weights, intensity)
             if apply_to_y and y is not None:
-                y_blurred[channel, :, :] = convolution_simple(y_blurred[channel, :, :], offsets, weights, intensity)
+                y_blurred[channel, :, :] = convolve_array_simple(y_blurred[channel, :, :], offsets, weights, intensity)
 
     x_blurred = fit_data_to_dtype(x_blurred, X.dtype)
     y_blurred = fit_data_to_dtype(y_blurred, y.dtype) if y is not None else None
@@ -431,14 +433,14 @@ def augmentation_sharpen(
 
     if channel_last:
         for channel in prange(channels):
-            x_sharpened[:, :, channel] = convolution_simple(x_sharpened[:, :, channel], offsets, weights, intensity)
+            x_sharpened[:, :, channel] = convolve_array_simple(x_sharpened[:, :, channel], offsets, weights, intensity)
             if apply_to_y and y is not None:
-                y_sharpened[:, :, channel] = convolution_simple(y_sharpened[:, :, channel], offsets, weights, intensity)
+                y_sharpened[:, :, channel] = convolve_array_simple(y_sharpened[:, :, channel], offsets, weights, intensity)
     else:
         for channel in prange(channels):
-            x_sharpened[channel, :, :] = convolution_simple(x_sharpened[channel, :, :], offsets, weights, intensity)
+            x_sharpened[channel, :, :] = convolve_array_simple(x_sharpened[channel, :, :], offsets, weights, intensity)
             if apply_to_y and y is not None:
-                y_sharpened[channel, :, :] = convolution_simple(y_sharpened[channel, :, :], offsets, weights, intensity)
+                y_sharpened[channel, :, :] = convolve_array_simple(y_sharpened[channel, :, :], offsets, weights, intensity)
 
     x_sharpened = fit_data_to_dtype(x_sharpened, X.dtype)
     y_sharpened = fit_data_to_dtype(y_sharpened, y.dtype) if y is not None else None
@@ -478,12 +480,12 @@ def augmentation_misalign_pixels(
     )
 
     channels = X.shape[2] if channel_last else X.shape[0]
-    channel_to_drop = np.random.randint(0, channels)
+    channel_to_adjust = np.random.randint(0, channels)
 
     if channel_last:
-        x_misaligned[:, :, channel_to_drop] = convolution_simple(x_misaligned[:, :, channel_to_drop], offsets, weights)
+        x_misaligned[:, :, channel_to_adjust] = convolve_array_simple(x_misaligned[:, :, channel_to_adjust], offsets, weights)
     else:
-        x_misaligned[channel_to_drop, :, :] = convolution_simple(x_misaligned[channel_to_drop, :, :], offsets, weights)
+        x_misaligned[channel_to_adjust, :, :] = convolve_array_simple(x_misaligned[channel_to_adjust, :, :], offsets, weights)
 
     x_misaligned = fit_data_to_dtype(x_misaligned, X.dtype)
     y_misaligned = fit_data_to_dtype(y_misaligned, y.dtype) if y is not None else None

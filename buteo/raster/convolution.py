@@ -15,6 +15,130 @@ from buteo.raster import convolution_funcs
 
 
 
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+def simple_blur_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Create a 2D blur kernel.
+
+    [1, 2, 1],
+    [2, 4, 2],
+    [1, 2, 1],
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+    """
+    offsets = np.array([
+        [ 1, -1], [ 1, 0], [ 1, 1],
+        [ 0, -1], [ 0, 0], [ 0, 1],
+        [-1, -1], [-1, 0], [-1, 1],
+    ])
+
+    weights = np.array([
+        0.08422299, 0.12822174, 0.08422299,
+        0.12822174, 0.1502211 , 0.12822174,
+        0.08422299, 0.12822174, 0.08422299,
+    ], dtype=np.float32)
+
+    return offsets, weights
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+def simple_unsharp_kernel_2d_3x3(
+    strength: float = 1.0
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Create a 2D unsharp kernel.
+
+    baseweights:
+        0.09911165, 0.15088834, 0.09911165,
+        0.15088834, 0.        , 0.15088834,
+        0.09911165, 0.15088834, 0.09911165,
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+    """
+    offsets = np.array([
+        [ 1, -1], [ 1, 0], [ 1, 1],
+        [ 0, -1], [ 0, 0], [ 0, 1],
+        [-1, -1], [-1, 0], [-1, 1],
+    ])
+
+    base_weights = np.array([
+        0.09911165, 0.15088834, 0.09911165,
+        0.15088834, 0.        , 0.15088834,
+        0.09911165, 0.15088834, 0.09911165,
+    ], dtype=np.float32)
+
+    weights = base_weights * strength
+    middle_weight = np.sum(weights) + 1.0
+    weights *= -1.0
+    weights[4] = middle_weight
+
+    return offsets, weights
+
+
+def simple_shift_kernel_2d(
+    x_offset: float,
+    y_offset: float,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Create a 2D shift kernel. Useful for either aligning rasters at the sub-pixel
+    level or for shifting a raster by a whole pixel while keeping the bbox.
+    Can be used to for an augmentation, where channel misalignment is simulated.
+
+    Args:
+        x_offset (float): The x offset.
+        y_offset (float): The y offset.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+    """
+    if x_offset == 0.0 and y_offset == 0.0:
+        offsets = np.array([[0, 0]], dtype=np.int64)
+        weights = np.array([1.0], dtype=np.float32)
+
+        return offsets, weights
+
+    y0 = [int(np.floor(y_offset)), int(np.ceil(y_offset))] if y_offset != 0 else [0, 0]
+    x0 = [int(np.floor(x_offset)), int(np.ceil(x_offset))] if x_offset != 0 else [0, 0]
+
+    if x_offset == 0.0 or x_offset % 1 == 0.0:
+        offsets = np.zeros((2, 2), dtype=np.int64)
+        weights = np.zeros(2, dtype=np.float32)
+
+        offsets[0] = [int(x_offset) if x_offset % 1 == 0.0 else 0, y0[0]]
+        offsets[1] = [int(x_offset) if x_offset % 1 == 0.0 else 0, y0[1]]
+
+        weights[0] = y_offset - y0[0]
+        weights[1] = 1 - weights[0]
+
+    elif y_offset == 0.0 or y_offset % 1 == 0.0:
+        offsets = np.zeros((2, 2), dtype=np.int64)
+        weights = np.zeros(2, dtype=np.float32)
+
+        offsets[0] = [x0[0], int(y_offset) if y_offset % 1 == 0.0 else 0]
+        offsets[1] = [x0[1], int(y_offset) if y_offset % 1 == 0.0 else 0]
+
+        weights[0] = x_offset - x0[0]
+        weights[1] = 1 - weights[0]
+
+    else:
+        offsets = np.zeros((4, 2), dtype=np.int64)
+        weights = np.zeros(4, dtype=np.float32)
+
+        offsets[0] = [x0[0], y0[0]]
+        offsets[1] = [x0[0], y0[1]]
+        offsets[2] = [x0[1], y0[0]]
+        offsets[3] = [x0[1], y0[1]]
+
+        weights[0] = (1 - (x_offset - offsets[0][0])) * (1 - (y_offset - offsets[0][1]))
+        weights[1] = (1 - (x_offset - offsets[1][0])) * (1 + (y_offset - offsets[1][1]))
+        weights[2] = (1 + (x_offset - offsets[2][0])) * (1 - (y_offset - offsets[2][1]))
+        weights[3] = (1 + (x_offset - offsets[3][0])) * (1 + (y_offset - offsets[3][1]))
+
+    return offsets, weights
+
+
 def weight_distance(
     arr: np.ndarray,
     method: Optional[str] = None,
@@ -475,6 +599,69 @@ def _convolve_array(
                     hood_weights /= np.sum(hood_weights)
 
                 result[idx_y, idx_x, idx_z] = hood_to_value(method, hood_values, hood_weights, nodata_value, center_value, value)
+
+    return result
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def convolve_array_simple(
+    array: np.ndarray,
+    offsets: np.ndarray,
+    weights: np.ndarray,
+    nodata_value: float = -9999.9,
+    intensity: float = 1.0,
+):
+    """
+    Convolve a kernel with an array using a simple method.
+
+    Args:
+        array (np.ndarray): The array to convolve.
+        offsets (np.ndarray): The offsets of the kernel.
+        weights (np.ndarray): The weights of the kernel.
+    
+    Keyword Args:
+        intensity (float=1.0): The intensity of the convolution. If
+            1.0, the convolution is applied as is. If 0.5, the
+            convolution is applied at half intensity.
+
+    Returns:
+        np.ndarray: The convolved array.
+    """
+    result = np.empty_like(array, dtype=np.float32)
+
+    if intensity <= 0.0:
+        return array.astype(np.float32)
+
+    for col in prange(array.shape[0]):
+        for row in prange(array.shape[1]):
+            if array[col, row] == nodata_value:
+                result[col, row] = nodata_value
+                continue
+
+            result_value = 0.0
+            result_weight = 0.0
+            for i in range(offsets.shape[0]):
+                new_col = col + offsets[i, 0]
+                new_row = row + offsets[i, 1]
+
+                if new_col < 0 or new_col >= array.shape[0]:
+                    continue
+
+                if new_row < 0 or  new_row >= array.shape[1]:
+                    continue
+
+                result_weight += weights[i]
+                result_value += array[new_col, new_row] * weights[i]
+
+            if result_weight > 0.0:
+                result_value /= result_weight
+            else:
+                result_value = nodata_value
+
+    if intensity < 1.0:
+        result *= intensity
+        array *= (1.0 - intensity)
+        result += array
 
     return result
 

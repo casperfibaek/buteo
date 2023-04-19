@@ -7,6 +7,7 @@ Clips a raster using a vector geometry or the extents of a raster.
 # Standard library
 import sys; sys.path.append("../../")
 import os
+from typing import Union, List, Optional, Tuple, Dict, Any
 
 # External
 from osgeo import gdal, ogr
@@ -187,25 +188,25 @@ def _clip_raster(
 
 
 def clip_raster(
-    raster,
-    clip_geom,
-    out_path=None,
+    raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
+    out_path: Optional[str] = None,
     *,
-    resample_alg="nearest",
-    crop_to_geom=True,
-    adjust_bbox=False,
-    all_touch=False,
-    to_extent=False,
-    prefix="",
-    suffix="",
-    overwrite=True,
-    creation_options=None,
-    dst_nodata="infer",
-    src_nodata="infer",
-    layer_to_clip=0,
-    verbose=0,
-    add_uuid=False,
-    ram="auto",
+    resample_alg: str = "nearest",
+    crop_to_geom: bool = True,
+    adjust_bbox: bool = False,
+    all_touch: bool = False,
+    to_extent: bool = False,
+    prefix: str = "",
+    suffix: str = "",
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
+    dst_nodata: Union[float, int, str] = "infer",
+    src_nodata: Union[float, int, str] = "infer",
+    layer_to_clip: int = 0,
+    verbose: int = 0,
+    add_uuid: bool = False,
+    ram: Union[str, float, int] = "auto",
 ):
     """
     Clips a raster(s) using a vector geometry or the extents of a raster.
