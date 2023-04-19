@@ -9,9 +9,10 @@ from glob import glob
 shutil.rmtree('./docs/', ignore_errors=True)
 
 os.mkdir("./docs/")
+os.mkdir("./docs/buteo/")
 
 # Build documentation
-os.system("pdoc3 ./buteo -o ./docs --html -f")
+os.system("pdoc ./buteo -o ./docs")
 
 # Move from buteo -> docs
 for file in glob("./docs/buteo/*"):
