@@ -13,10 +13,3 @@ os.mkdir("./docs/buteo/")
 
 # Build documentation
 os.system("pdoc ./buteo -o ./docs")
-
-# Move from buteo -> docs
-for file in glob("./docs/buteo/*"):
-    shutil.move(file, "./docs/")
-
-# Remove buteo subfolder
-os.removedirs("./docs/buteo")
