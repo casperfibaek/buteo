@@ -883,17 +883,26 @@ suited to remote sensing imagery.</p>
             <div class="docstring"><p>Randomly rotate the image by 90 degrees intervals. Images
 can be (channels, height, width) or (height, width, channels).</p>
 
-<p>Args:
-    X (np.ndarray): The image to rotate.
-    y (np.ndarray/None): The label to rotate.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of rotating the image.
-    k (int=None): The number of 90 degree intervals to rotate by.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The image to rotate.</li>
+<li><strong>y (np.ndarray/None):</strong>  The label to rotate.</li>
+</ul>
 
-<p>Returns:
-    Tuple[np.ndarray, Optional[np.ndarray]]: The rotated image and optionally the label.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of rotating the image.
+  k (int=None): The number of 90 degree intervals to rotate by.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, Optional[np.ndarray]]: The rotated image and optionally the label.</p>
+</blockquote>
 </div>
 
 
@@ -950,20 +959,29 @@ can be (channels, height, width) or (height, width, channels).</p>
 
             <div class="docstring"><p>Randomly mirrors the image. Images can be (channels, height, width) or (height, width, channels).</p>
 
-<p>Args:
-    X (np.ndarray): The image to mirror.
-    y (np.ndarray/None): The label to mirror.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of mirroring the image.
-    k (int=None): If None, randomly mirrors the image along the horizontal or vertical axis.
-        If 1, mirrors the image along the horizontal axis.
-        If 2, mirrors the image along the vertical axis.
-        If 3, mirrors the image along both the horizontal and vertical axis.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The image to mirror.</li>
+<li><strong>y (np.ndarray/None):</strong>  The label to mirror.</li>
+</ul>
 
-<p>Returns:
-    Tuple[np.ndarray, Optional[np.ndarray]]: The mirrored image and optionally the label.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of mirroring the image.
+  k (int=None): If None, randomly mirrors the image along the horizontal or vertical axis.
+      If 1, mirrors the image along the horizontal axis.
+      If 2, mirrors the image along the vertical axis.
+      If 3, mirrors the image along both the horizontal and vertical axis.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, Optional[np.ndarray]]: The mirrored image and optionally the label.</p>
+</blockquote>
 </div>
 
 
@@ -1026,19 +1044,28 @@ can be (channels, height, width) or (height, width, channels).</p>
 for both channel first and last images.
 input should be (height, width, channels) or (channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The image to add noise to.
-    y (np.ndarray/None): The label to add noise to. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of adding noise.
-    max_amount (float=0.1): The maximum amount of noise to add, sampled uniformly.
-    additive (bool=False): Whether to add or multiply the noise.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
-        ignored for this function. Kept to keep the same function signature as other augmentations.</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The image to add noise to.</li>
+<li><strong>y (np.ndarray/None):</strong>  The label to add noise to. If None, no label is returned.</li>
+</ul>
 
-<p>Returns:
-    Tuple[np.ndarray, Optional[np.ndarray]]: The image with noise and optionally the unmodified label.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of adding noise.
+  max_amount (float=0.1): The maximum amount of noise to add, sampled uniformly.
+  additive (bool=False): Whether to add or multiply the noise.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+      ignored for this function. Kept to keep the same function signature as other augmentations.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, Optional[np.ndarray]]: The image with noise and optionally the unmodified label.</p>
+</blockquote>
 </div>
 
 
@@ -1113,18 +1140,27 @@ input should be (height, width, channels) or (channels, height, width).</p>
             <div class="docstring"><p>Scales the channels of the image seperately by a fixed amount.
 input should be (height, width, channels) or (channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The image to scale the channels of.
-    y (np.ndarray/None): The label to scale the channels of. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of scaling the channels.
-    max_amount (float=0.1): The amount to possible scale the channels by. Sampled uniformly.
-    additive (bool=False): Whether to add or multiply the scaling.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The image to scale the channels of.</li>
+<li><strong>y (np.ndarray/None):</strong>  The label to scale the channels of. If None, no label is returned.</li>
+</ul>
 
-<p>Returns:
-    Tuple[np.ndarray, Optional[np.ndarray]]: The image with scaled channels and optionally the unmodified label.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of scaling the channels.
+  max_amount (float=0.1): The amount to possible scale the channels by. Sampled uniformly.
+  additive (bool=False): Whether to add or multiply the scaling.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, Optional[np.ndarray]]: The image with scaled channels and optionally the unmodified label.</p>
+</blockquote>
 </div>
 
 
@@ -1194,17 +1230,26 @@ input should be (height, width, channels) or (channels, height, width).</p>
             <div class="docstring"><p>Changes the contrast of an image by a random amount, seperately for each channel.
 input should be (height, width, channels) or (channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The image to change the contrast of.
-    y (np.ndarray/None): The label to change the contrast of. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of changing the contrast.
-    max_amount (float=0.1): The max amount to change the contrast by.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The image to change the contrast of.</li>
+<li><strong>y (np.ndarray/None):</strong>  The label to change the contrast of. If None, no label is returned.</li>
+</ul>
 
-<p>Returns:
-    Tuple[np.ndarray, Optional[np.ndarray]]: The image with changed contrast and optionally the unmodified label.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of changing the contrast.
+  max_amount (float=0.1): The max amount to change the contrast by.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, Optional[np.ndarray]]: The image with changed contrast and optionally the unmodified label.</p>
+</blockquote>
 </div>
 
 
@@ -1280,19 +1325,28 @@ input should be (height, width, channels) or (channels, height, width).</p>
 input should be (height, width, channels) or (channels, height, width).
 Only drops pixels from features, not labels.</p>
 
-<p>Args:
-    X (np.ndarray): The image to drop a pixel from.
-    y (np.ndarray/None): The label to drop a pixel from. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of dropping a pixel.
-    drop_probability (float=0.05): The probability of dropping a pixel.
-    drop_value (float=0.0): The value to drop the pixel to.
-    apply_to_y (bool=False): Whether to apply the drop to the label.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The image to drop a pixel from.</li>
+<li><strong>y (np.ndarray/None):</strong>  The label to drop a pixel from. If None, no label is returned.</li>
+</ul>
 
-<p>Returns:
-    Tuple[np.ndarray, Optional[np.ndarray]]: The image with the dropped pixels and optionally the unmodified label.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of dropping a pixel.
+  drop_probability (float=0.05): The probability of dropping a pixel.
+  drop_value (float=0.0): The value to drop the pixel to.
+  apply_to_y (bool=False): Whether to apply the drop to the label.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, Optional[np.ndarray]]: The image with the dropped pixels and optionally the unmodified label.</p>
+</blockquote>
 </div>
 
 
@@ -1365,15 +1419,21 @@ Only drops pixels from features, not labels.</p>
 input should be (height, width, channels) or (channels, height, width).
 A maximum of one channel will be dropped.</p>
 
-<p>Args:
-    X (np.ndarray): The image to drop a channel from.
-    y (np.ndarray/None): The label to drop a channel from. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of dropping a channel.
-    drop_probability (float=0.1): The probability of dropping a channel.
-    drop_value (float=0.0): The value to drop the channel to.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The image to drop a channel from.</li>
+<li><strong>y (np.ndarray/None):</strong>  The label to drop a channel from. If None, no label is returned.</li>
+</ul>
+
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of dropping a channel.
+  drop_probability (float=0.1): The probability of dropping a channel.
+  drop_value (float=0.0): The value to drop the channel to.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
 </div>
 
 
@@ -1445,15 +1505,21 @@ A maximum of one channel will be dropped.</p>
 input should be (height, width, channels) or (channels, height, width).
 Same goes for the label if apply_to_y is True.</p>
 
-<p>Args:
-    X (np.ndarray): The image to potentially blur.
-    y (np.ndarray/None): The label to potentially blur. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of blurring a pixel.
-    intensity (float=1.0): The intensity of the blur. from 0.0 to 1.0.
-    apply_to_y (bool=False): Whether to blur the label as well.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The image to potentially blur.</li>
+<li><strong>y (np.ndarray/None):</strong>  The label to potentially blur. If None, no label is returned.</li>
+</ul>
+
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of blurring a pixel.
+  intensity (float=1.0): The intensity of the blur. from 0.0 to 1.0.
+  apply_to_y (bool=False): Whether to blur the label as well.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
 </div>
 
 
@@ -1523,15 +1589,21 @@ Same goes for the label if apply_to_y is True.</p>
             <div class="docstring"><p>Sharpens an image at random.
 input should be (height, width, channels) or (channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The image to potentially sharpen.
-    y (np.ndarray/None): The label to potentially sharpen. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of sharpening a pixel.
-    intensity (float=1.0): The intensity of the sharpening. from 0.0 to 1.0.
-    apply_to_y (bool=False): Whether to sharpen the label as well.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The image to potentially sharpen.</li>
+<li><strong>y (np.ndarray/None):</strong>  The label to potentially sharpen. If None, no label is returned.</li>
+</ul>
+
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of sharpening a pixel.
+  intensity (float=1.0): The intensity of the sharpening. from 0.0 to 1.0.
+  apply_to_y (bool=False): Whether to sharpen the label as well.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
 </div>
 
 
@@ -1596,14 +1668,20 @@ input should be (height, width, channels) or (channels, height, width).</p>
             <div class="docstring"><p>Misaligns one channel in the image at random.
 input should be (height, width, channels) or (channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The image to potentially misalign the channels of.
-    y (np.ndarray/None): The label to potentially misalign the channels of. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of misaligning the channels of a pixel.
-    max_offset (float=0.5): The maximum offset to misalign the channels by.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The image to potentially misalign the channels of.</li>
+<li><strong>y (np.ndarray/None):</strong>  The label to potentially misalign the channels of. If None, no label is returned.</li>
+</ul>
+
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of misaligning the channels of a pixel.
+  max_offset (float=0.5): The maximum offset to misalign the channels by.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
 </div>
 
 
@@ -1792,35 +1870,41 @@ input should be (height, width, channels) or (channels, height, width).</p>
             <div class="docstring"><p>Cutmixes two images.
 input should be (height, width, channels) or (channels, height, width).</p>
 
-<p>Args:
-    X_target (np.ndarray): The image to transfer the cutmix to.
-    y_target (np.ndarray): The label to transfer the cutmix to.
-    X_source (np.ndarray): The image to cutmix from.
-    y_source (np.ndarray): The label to cutmix from.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of cutmixing a pixel.
-    min_size (float=0.333): The minimum size of the patch to cutmix. In percentage of the image width.
-    max_size (float=0.666): The maximum size of the patch to cutmix. In percentage of the image width.
-    label_mix (int=0): if
-        0 - The labels will be mixed by the weights.</p>
+<ul>
+<li><strong>X_target (np.ndarray):</strong>  The image to transfer the cutmix to.</li>
+<li><strong>y_target (np.ndarray):</strong>  The label to transfer the cutmix to.</li>
+<li><strong>X_source (np.ndarray):</strong>  The image to cutmix from.</li>
+<li><strong>y_source (np.ndarray):</strong>  The label to cutmix from.</li>
+</ul>
 
-<pre><code>    1 - The target label will be used.
+<h6 id="keyword-args">Keyword Args:</h6>
 
-    2 - The source label will be used.
+<blockquote>
+  <p>chance (float=0.5): The chance of cutmixing a pixel.
+  min_size (float=0.333): The minimum size of the patch to cutmix. In percentage of the image width.
+  max_size (float=0.666): The maximum size of the patch to cutmix. In percentage of the image width.
+  label_mix (int=0): if
+      0 - The labels will be mixed by the weights.</p>
 
-    3 - The max of the labels will be used.
+<pre><code>1 - The target label will be used.
 
-    4 - The min of the labels will be used.
+2 - The source label will be used.
 
-    5 - The max of the image with the highest weight will be used.
+3 - The max of the labels will be used.
 
-    6 - The min of the image with the highest weight will be used.
+4 - The min of the labels will be used.
 
-feather (bool=True): Whether to feather the edges of the cutmix.
-feather_dist (int=3): The distance to feather the edges of the cutmix in pixels
-channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+5 - The max of the image with the highest weight will be used.
+
+6 - The min of the image with the highest weight will be used.
 </code></pre>
+  
+  <p>feather (bool=True): Whether to feather the edges of the cutmix.
+  feather_dist (int=3): The distance to feather the edges of the cutmix in pixels
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
 </div>
 
 
@@ -1926,33 +2010,39 @@ is also a weighted sum of y and y' based on the same interpolation coefficient.<
 
 <p>input should be (height, width, channels) or (channels, height, width).</p>
 
-<p>Args:
-    X_target (np.ndarray): The image to transfer to.
-    y_target (np.ndarray): The label to transfer to.
-    X_source (np.ndarray): The image to transfer from.
-    y_source (np.ndarray): The label to transfer from.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    min_mix (float=0.333): The minimum mixup coefficient.
-    max_mix (float=0.666): The maximum mixup coefficient.
-    label_mix (int=0): if
-        0 - The labels will be mixed by the weights.</p>
+<ul>
+<li><strong>X_target (np.ndarray):</strong>  The image to transfer to.</li>
+<li><strong>y_target (np.ndarray):</strong>  The label to transfer to.</li>
+<li><strong>X_source (np.ndarray):</strong>  The image to transfer from.</li>
+<li><strong>y_source (np.ndarray):</strong>  The label to transfer from.</li>
+</ul>
 
-<pre><code>    1 - The target label will be used.
+<h6 id="keyword-args">Keyword Args:</h6>
 
-    2 - The source label will be used.
+<blockquote>
+  <p>min_mix (float=0.333): The minimum mixup coefficient.
+  max_mix (float=0.666): The maximum mixup coefficient.
+  label_mix (int=0): if
+      0 - The labels will be mixed by the weights.</p>
 
-    3 - The max of the labels will be used.
+<pre><code>1 - The target label will be used.
 
-    4 - The min of the labels will be used.
+2 - The source label will be used.
 
-    5 - The max of the image with the highest weight will be used.
+3 - The max of the labels will be used.
 
-    6 - The min of the image with the highest weight will be used.
+4 - The min of the labels will be used.
 
-chance (float=0.5): The chance of mixuping a pixel.
-channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+5 - The max of the image with the highest weight will be used.
+
+6 - The min of the image with the highest weight will be used.
 </code></pre>
+  
+  <p>chance (float=0.5): The chance of mixuping a pixel.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
 </div>
 
 

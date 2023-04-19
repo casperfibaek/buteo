@@ -644,11 +644,17 @@ suited to remote sensing imagery.</p>
 
             <div class="docstring"><p>Check if a dtype is an integer type </p>
 
-<p>Args:
-    dtype (np.dtype): The dtype to check.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    bool: True if the dtype is an integer type.</p>
+<ul>
+<li><strong>dtype (np.dtype):</strong>  The dtype to check.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>bool: True if the dtype is an integer type.</p>
+</blockquote>
 </div>
 
 
@@ -702,12 +708,18 @@ suited to remote sensing imagery.</p>
     rounded to the nearest integer. If the dtype is a float type, the data
     will be clipped to the min and max values of the dtype.</p>
 
-<p>Args:
-    data (np.ndarray): The data to fit to the dtype.
-    dtype (np.dtype): The dtype to fit the data to.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    np.ndarray: The data fitted to the dtype.</p>
+<ul>
+<li><strong>data (np.ndarray):</strong>  The data to fit to the dtype.</li>
+<li><strong>dtype (np.dtype):</strong>  The dtype to fit the data to.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>np.ndarray: The data fitted to the dtype.</p>
+</blockquote>
 </div>
 
 
@@ -804,16 +816,25 @@ suited to remote sensing imagery.</p>
             <div class="docstring"><p>Feather a box into an array (2D). Box should be the original box
     buffered by feather_dist.</p>
 
-<p>Args:
-    array_whole (np.ndarray): The array containing the box.
-    bbox (Union[List[int], Tuple[int]]): The box.
-        the bbox should be in the form [x_min, x_max, y_min, y_max].</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    feather_dist (int=3): The distance to feather the box.</p>
+<ul>
+<li><strong>array_whole (np.ndarray):</strong>  The array containing the box.</li>
+<li><strong>bbox (Union[List[int], Tuple[int]]):</strong>  The box.
+the bbox should be in the form [x_min, x_max, y_min, y_max].</li>
+</ul>
 
-<p>Returns:
-    Tuple[np.ndarray, np.ndarray]: The featherweights for the array and the bbox.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>feather_dist (int=3): The distance to feather the box.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, np.ndarray]: The featherweights for the array and the bbox.</p>
+</blockquote>
 </div>
 
 
@@ -864,8 +885,11 @@ suited to remote sensing imagery.</p>
 [2, 4, 2],
 [1, 2, 1],</p>
 
-<p>Returns:
-    Tuple[np.ndarray, np.ndarray]: The offsets and weights.</p>
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, np.ndarray]: The offsets and weights.</p>
+</blockquote>
 </div>
 
 
@@ -925,8 +949,11 @@ suited to remote sensing imagery.</p>
     0.15088834, 0.        , 0.15088834,
     0.09911165, 0.15088834, 0.09911165,</p>
 
-<p>Returns:
-    Tuple[np.ndarray, np.ndarray]: The offsets and weights.</p>
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, np.ndarray]: The offsets and weights.</p>
+</blockquote>
 </div>
 
 
@@ -1009,12 +1036,18 @@ suited to remote sensing imagery.</p>
 level or for shifting a raster by a whole pixel while keeping the bbox.
 Can be used to for an augmentation, where channel misalignment is simulated.</p>
 
-<p>Args:
-    x_offset (float): The x offset.
-    y_offset (float): The y offset.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    Tuple[np.ndarray, np.ndarray]: The offsets and weights.</p>
+<ul>
+<li><strong>x_offset (float):</strong>  The x offset.</li>
+<li><strong>y_offset (float):</strong>  The y offset.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, np.ndarray]: The offsets and weights.</p>
+</blockquote>
 </div>
 
 
@@ -1091,18 +1124,27 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 
             <div class="docstring"><p>Convolve a kernel with an array using a simple method.</p>
 
-<p>Args:
-    array (np.ndarray): The array to convolve.
-    offsets (np.ndarray): The offsets of the kernel.
-    weights (np.ndarray): The weights of the kernel.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    intensity (float=1.0): The intensity of the convolution. If
-        1.0, the convolution is applied as is. If 0.5, the
-        convolution is applied at half intensity.</p>
+<ul>
+<li><strong>array (np.ndarray):</strong>  The array to convolve.</li>
+<li><strong>offsets (np.ndarray):</strong>  The offsets of the kernel.</li>
+<li><strong>weights (np.ndarray):</strong>  The weights of the kernel.</li>
+</ul>
 
-<p>Returns:
-    np.ndarray: The convolved array.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>intensity (float=1.0): The intensity of the convolution. If
+      1.0, the convolution is applied as is. If 0.5, the
+      convolution is applied at half intensity.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>np.ndarray: The convolved array.</p>
+</blockquote>
 </div>
 
 
@@ -1144,14 +1186,23 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 
             <div class="docstring"><p>Rotate a 3D array 90 degrees clockwise.</p>
 
-<p>Args:
-    arr (np.ndarray): The array to rotate.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<ul>
+<li><strong>arr (np.ndarray):</strong>  The array to rotate.</li>
+</ul>
 
-<p>Returns:
-    np.ndarray: The rotated array.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>np.ndarray: The rotated array.</p>
+</blockquote>
 </div>
 
 
@@ -1193,14 +1244,23 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 
             <div class="docstring"><p>Rotate a 3D array 180 degrees clockwise.</p>
 
-<p>Args:
-    arr (np.ndarray): The array to rotate.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<ul>
+<li><strong>arr (np.ndarray):</strong>  The array to rotate.</li>
+</ul>
 
-<p>Returns:
-    np.ndarray: The rotated array.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>np.ndarray: The rotated array.</p>
+</blockquote>
 </div>
 
 
@@ -1243,14 +1303,23 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 
             <div class="docstring"><p>Rotate a 3D image array 270 degrees clockwise.</p>
 
-<p>Args:
-    arr (np.ndarray): The array to rotate.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<ul>
+<li><strong>arr (np.ndarray):</strong>  The array to rotate.</li>
+</ul>
 
-<p>Returns:
-    np.ndarray: The rotated array.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>np.ndarray: The rotated array.</p>
+</blockquote>
 </div>
 
 
@@ -1304,16 +1373,25 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 
             <div class="docstring"><p>Rotate an array by 90 degrees intervals clockwise.</p>
 
-<p>Args:
-    arr (np.ndarray): The array to rotate.
-    k (int): The number of 90 degree intervals to rotate by.
-        1 for 90 degrees, 2 for 180 degrees, 3 for 270 degrees. 0 for no rotation.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<ul>
+<li><strong>arr (np.ndarray):</strong>  The array to rotate.</li>
+<li><strong>k (int):</strong>  The number of 90 degree intervals to rotate by.
+1 for 90 degrees, 2 for 180 degrees, 3 for 270 degrees. 0 for no rotation.</li>
+</ul>
 
-<p>Returns:
-    np.ndarray: The rotated array.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>np.ndarray: The rotated array.</p>
+</blockquote>
 </div>
 
 
@@ -1355,14 +1433,23 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 
             <div class="docstring"><p>Mirror a 3D array horizontally.</p>
 
-<p>Args:
-    arr (np.ndarray): The array to mirror.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<ul>
+<li><strong>arr (np.ndarray):</strong>  The array to mirror.</li>
+</ul>
 
-<p>Returns:
-    np.ndarray: The mirrored array.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>np.ndarray: The mirrored array.</p>
+</blockquote>
 </div>
 
 
@@ -1404,14 +1491,23 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 
             <div class="docstring"><p>Mirror a 3D array vertically.</p>
 
-<p>Args:
-    arr (np.ndarray): The array to mirror.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<ul>
+<li><strong>arr (np.ndarray):</strong>  The array to mirror.</li>
+</ul>
 
-<p>Returns:
-    np.ndarray: The mirrored array.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>np.ndarray: The mirrored array.</p>
+</blockquote>
 </div>
 
 
@@ -1453,14 +1549,23 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 
             <div class="docstring"><p>Mirror a 3D array horizontally and vertically.</p>
 
-<p>Args:
-    arr (np.ndarray): The array to mirror.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<ul>
+<li><strong>arr (np.ndarray):</strong>  The array to mirror.</li>
+</ul>
 
-<p>Returns:
-    np.ndarray: The mirrored array.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>np.ndarray: The mirrored array.</p>
+</blockquote>
 </div>
 
 
@@ -1510,12 +1615,18 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 
             <div class="docstring"><p>Mirror an array horizontally and/or vertically.</p>
 
-<p>Args:
-    arr (np.ndarray): The array to mirror.
-    k (int): 1 for horizontal, 2 for vertical, 3 for both, 0 for no mirroring.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    channel_last (bool=True): Whether the last axis is the channel axis.</p>
+<ul>
+<li><strong>arr (np.ndarray):</strong>  The array to mirror.</li>
+<li><strong>k (int):</strong>  1 for horizontal, 2 for vertical, 3 for both, 0 for no mirroring.</li>
+</ul>
+
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
+</blockquote>
 </div>
 
 

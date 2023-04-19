@@ -734,23 +734,29 @@
 
             <div class="docstring"><p>Weights the kernel by distance using various methods.</p>
 
-<p>Args:
-    arr (numpy.ndarray): The input array.
-    method (str, default=None): The weighting method to use.
-        "none": No weighting (default).
-        "linear": Linear decay.
-        "sqrt": Square root decay.
-        "power": Power decay.
-        "log": Logarithmic decay.
-        "gaussian": Gaussian decay.
-    decay (float, default=0.2): The decay rate for the <code>linear</code>, <code>sqrt</code>, and <code>power</code> methods.
-    sigma (float, default=1.0): The standard deviation for the Gaussian method.
-    center (float, default=0.0): The center of the array.
-    spherical (bool, default=False): If True, adjust weights based on the radius.
-    radius (float, default=3.0): The radius for spherical adjustments.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    float: The computed weight.</p>
+<ul>
+<li><strong>arr (numpy.ndarray):</strong>  The input array.</li>
+<li><strong>method (str, default=None):</strong>  The weighting method to use.
+"none": No weighting (default).
+"linear": Linear decay.
+"sqrt": Square root decay.
+"power": Power decay.
+"log": Logarithmic decay.
+"gaussian": Gaussian decay.</li>
+<li><strong>decay (float, default=0.2):</strong>  The decay rate for the <code>linear</code>, <code>sqrt</code>, and <code>power</code> methods.</li>
+<li><strong>sigma (float, default=1.0):</strong>  The standard deviation for the Gaussian method.</li>
+<li><strong>center (float, default=0.0):</strong>  The center of the array.</li>
+<li><strong>spherical (bool, default=False):</strong>  If True, adjust weights based on the radius.</li>
+<li><strong>radius (float, default=3.0):</strong>  The radius for spherical adjustments.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>float: The computed weight.</p>
+</blockquote>
 </div>
 
 
@@ -795,11 +801,17 @@
 
             <div class="docstring"><p>Creates a whole kernel from a quadrant.</p>
 
-<p>Args:
-    bottom_right (numpy.ndarray): The bottom-right quadrant of the kernel.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    numpy.ndarray: The complete kernel generated from the given quadrant.</p>
+<ul>
+<li><strong>bottom_right (numpy.ndarray):</strong>  The bottom-right quadrant of the kernel.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>numpy.ndarray: The complete kernel generated from the given quadrant.</p>
+</blockquote>
 </div>
 
 
@@ -927,22 +939,28 @@
 
             <div class="docstring"><p>Generates a square kernel for convolutions.</p>
 
-<p>Args:
-    size (int): Size of the kernel (must be odd).
-    depth (int, default=1): Depth of the kernel.
-    hole (bool, default=False): Create a hole in the center of the kernel.
-    inverted (bool, default=False): Invert the kernel values.
-    normalise (bool, default=True): Normalize the kernel values.
-    multi_dimensional (bool, default=False): Consider the kernel multi-dimensional.
-    multi_dimensional_center (int, default=0): Center of the
-        multi-dimensional kernel.
-    spherical (bool, default=False): Consider the kernel spherical.
-    distance_weight (str or None, default=None): Distance weighting method.
-    distance_decay (float, default=0.2): Distance decay factor.
-    distance_sigma (float, default=1): Distance sigma for Gaussian distance weighting.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    tuple: A tuple containing the kernel, weights, and offsets.</p>
+<ul>
+<li><strong>size (int):</strong>  Size of the kernel (must be odd).</li>
+<li><strong>depth (int, default=1):</strong>  Depth of the kernel.</li>
+<li><strong>hole (bool, default=False):</strong>  Create a hole in the center of the kernel.</li>
+<li><strong>inverted (bool, default=False):</strong>  Invert the kernel values.</li>
+<li><strong>normalise (bool, default=True):</strong>  Normalize the kernel values.</li>
+<li><strong>multi_dimensional (bool, default=False):</strong>  Consider the kernel multi-dimensional.</li>
+<li><strong>multi_dimensional_center (int, default=0):</strong>  Center of the
+multi-dimensional kernel.</li>
+<li><strong>spherical (bool, default=False):</strong>  Consider the kernel spherical.</li>
+<li><strong>distance_weight (str or None, default=None):</strong>  Distance weighting method.</li>
+<li><strong>distance_decay (float, default=0.2):</strong>  Distance decay factor.</li>
+<li><strong>distance_sigma (float, default=1):</strong>  Distance sigma for Gaussian distance weighting.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>tuple: A tuple containing the kernel, weights, and offsets.</p>
+</blockquote>
 </div>
 
 
@@ -1008,19 +1026,28 @@
 
             <div class="docstring"><p>Create a padded view of an array using SAME padding.</p>
 
-<p>Args:
-    arr (numpy.ndarray): The input array to be padded.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    pad_size (int, default=1): The number of padding elements to add
-        to each side of the array. Default is 1.
-    method (str, default="same"): The padding method to use. Default
-        is "same". Other options are "edge" and "constant".
-    constant_value (int, default=None): The constant value to use
-        when padding with "constant". Default is 0.</p>
+<ul>
+<li><strong>arr (numpy.ndarray):</strong>  The input array to be padded.</li>
+</ul>
 
-<p>Returns:
-    numpy.ndarray: A padded view of the input array.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>pad_size (int, default=1): The number of padding elements to add
+      to each side of the array. Default is 1.
+  method (str, default="same"): The padding method to use. Default
+      is "same". Other options are "edge" and "constant".
+  constant_value (int, default=None): The constant value to use
+      when padding with "constant". Default is 0.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>numpy.ndarray: A padded view of the input array.</p>
+</blockquote>
 </div>
 
 
@@ -1186,40 +1213,49 @@
 
             <div class="docstring"><p>Convolve an image with a function.</p>
 
-<p>Args:
-    arr (numpy.ndarray): The input array to convolve.
-    offsets (list of tuples): The list of offsets for the neighborhood
-        used in the convolution.
-    weights (list): The list of weights used in the convolution.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    method (int=1): The method to use for the convolution.
-        1: hood_sum
-        2: hood_mode
-        3: hood_max
-        4: hood_min
-        5: hood_contrast
-        6: hood_quantile
-        7: hood_standard_deviation
-        8: hood_median_absolute_deviation
-        9: hood_z_score
-        10: hood_z_score_mad
-        11: hood_sigma_lee
-    nodata (bool=False): If True, nodata values are considered
-        in the convolution.
-    nodata_value (float=-9999.9): The value representing nodata.
-    normalise_edges (bool=True): If True, the weights at the edges
-        are normalised to sum to one. Only relavant for border pixels.
-        Use false, if you are interested in the sum, otherwise you likely
-        want to use True.
-    collapse (bool=False): If True, the convolution results in a (height, width, 1)
-        array. Otherwise, the convolution results in a (height, width, depth) applied
-        channelwise.
-    value (Union[int, float, None]=None): If not None, the value to use for the convolution.
-        depending on the method specified.</p>
+<ul>
+<li><strong>arr (numpy.ndarray):</strong>  The input array to convolve.</li>
+<li><strong>offsets (list of tuples):</strong>  The list of offsets for the neighborhood
+used in the convolution.</li>
+<li><strong>weights (list):</strong>  The list of weights used in the convolution.</li>
+</ul>
 
-<p>Returns:
-    numpy.ndarray: The convolved array.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>method (int=1): The method to use for the convolution.
+      1: hood_sum
+      2: hood_mode
+      3: hood_max
+      4: hood_min
+      5: hood_contrast
+      6: hood_quantile
+      7: hood_standard_deviation
+      8: hood_median_absolute_deviation
+      9: hood_z_score
+      10: hood_z_score_mad
+      11: hood_sigma_lee
+  nodata (bool=False): If True, nodata values are considered
+      in the convolution.
+  nodata_value (float=-9999.9): The value representing nodata.
+  normalise_edges (bool=True): If True, the weights at the edges
+      are normalised to sum to one. Only relavant for border pixels.
+      Use false, if you are interested in the sum, otherwise you likely
+      want to use True.
+  collapse (bool=False): If True, the convolution results in a (height, width, 1)
+      array. Otherwise, the convolution results in a (height, width, depth) applied
+      channelwise.
+  value (Union[int, float, None]=None): If not None, the value to use for the convolution.
+      depending on the method specified.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>numpy.ndarray: The convolved array.</p>
+</blockquote>
 </div>
 
 

@@ -336,24 +336,33 @@ Useful for warped satellite images and for proximity searching.</p>
 
             <div class="docstring"><p>Add a border to a raster.</p>
 
-<p>Args:
-    input_raster (str/gdal.DataSet): The input raster.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    out_path (str/None, default=None): The output path. If None, the output
-        will be a memory raster.
-    border_size (int, default=100): The size of the border.
-    border_size_unit (str, default='px'): The unit of the border size.
-    border_value (int, default=0): The value of the border.
-    overwrite (bool, default=True): If True, the output raster will be
-        overwritten.
-    allow_lists (bool, default=True): If True, lists of rasters will be
-        allowed.
-    creation_options (list/None, default=None): Creation options for the
-        output raster.</p>
+<ul>
+<li><strong>input_raster (str/gdal.DataSet):</strong>  The input raster.</li>
+</ul>
 
-<p>Returns:
-    str/gdal.DataSet: The output raster with added borders.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>out_path (str/None, default=None): The output path. If None, the output
+      will be a memory raster.
+  border_size (int, default=100): The size of the border.
+  border_size_unit (str, default='px'): The unit of the border size.
+  border_value (int, default=0): The value of the border.
+  overwrite (bool, default=True): If True, the output raster will be
+      overwritten.
+  allow_lists (bool, default=True): If True, lists of rasters will be
+      allowed.
+  creation_options (list/None, default=None): Creation options for the
+      output raster.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>str/gdal.DataSet: The output raster with added borders.</p>
+</blockquote>
 </div>
 
 

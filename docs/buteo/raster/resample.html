@@ -377,29 +377,38 @@ Can uses references from vector or other raster datasets.</p>
             <div class="docstring"><p>Resampled raster(s) given a target size. </br>
 <strong>Beware</strong> if your input is in latitude and longitude, you'll need to specify the target_size in degrees as well.</p>
 
-<p>Args:
-    raster (str/list/gdal.Dataset): The input raster(s) to resample.
-    target_size (str/int/ogr.DataSource/gdal.Dataset): The desired resolution for the resampled raster(s),
-        in the same unit as the raster projection. For better resampling results, reproject to a projected
-        coordinate system first. If a raster is provided as the target_size, the function will read the pixel
-        size from that raster.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    target_in_pixels (bool, default=False): If True, interprets target_size as the number of pixels.
-    out_path (str/None, default=None): The output path for the resampled raster(s). If not provided, the output
-        path is inferred from the input raster(s).
-    resample_alg (str, default="nearest"): The resampling algorithm to use.
-    copy_if_same (bool, default=True): If input and output projections are the same, copies the input raster
-        to the output path.
-    overwrite (bool, default=True): If the output path already exists, overwrites it.
-    creation_options (list/None, default=None): A list of creation options for the output raster(s).
-    dst_nodata (str/int/float, default="infer"): The nodata value for the output raster(s).
-    prefix (str, default=""): The prefix to add to the output path.
-    suffix (str, default="_reprojected"): The suffix to add to the output path.
-    add_uuid (bool, default=False): If True, adds a UUID to the output path.</p>
+<ul>
+<li><strong>raster (str/list/gdal.Dataset):</strong>  The input raster(s) to resample.</li>
+<li><strong>target_size (str/int/ogr.DataSource/gdal.Dataset):</strong>  The desired resolution for the resampled raster(s),
+in the same unit as the raster projection. For better resampling results, reproject to a projected
+coordinate system first. If a raster is provided as the target_size, the function will read the pixel
+size from that raster.</li>
+</ul>
 
-<p>Returns:
-    str/list: The output path(s) of the resampled raster(s).</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>target_in_pixels (bool, default=False): If True, interprets target_size as the number of pixels.
+  out_path (str/None, default=None): The output path for the resampled raster(s). If not provided, the output
+      path is inferred from the input raster(s).
+  resample_alg (str, default="nearest"): The resampling algorithm to use.
+  copy_if_same (bool, default=True): If input and output projections are the same, copies the input raster
+      to the output path.
+  overwrite (bool, default=True): If the output path already exists, overwrites it.
+  creation_options (list/None, default=None): A list of creation options for the output raster(s).
+  dst_nodata (str/int/float, default="infer"): The nodata value for the output raster(s).
+  prefix (str, default=""): The prefix to add to the output path.
+  suffix (str, default="_reprojected"): The suffix to add to the output path.
+  add_uuid (bool, default=False): If True, adds a UUID to the output path.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>str/list: The output path(s) of the resampled raster(s).</p>
+</blockquote>
 </div>
 
 

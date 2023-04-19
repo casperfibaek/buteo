@@ -405,11 +405,17 @@ the majority of the same projection, the function will return the
 projection of the first raster. If only on raster is provided, the
 projection of that raster will be returned.</p>
 
-<p>Args:
-    rasters (list): A list of rasters.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    osr.SpatialReference: The common projection.</p>
+<ul>
+<li><strong>rasters (list):</strong>  A list of rasters.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>osr.SpatialReference: The common projection.</p>
+</blockquote>
 </div>
 
 
@@ -519,26 +525,35 @@ projection of that raster will be returned.</p>
 
             <div class="docstring"><p>Reproject a raster(s) to a target coordinate reference system.</p>
 
-<p>Args:
-    raster (str/list/gdal.Dataset): The raster(s) to reproject.
-    projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference): The projection is inferred from
-        the input. The input can be: WKT proj, EPSG proj, Proj, osr proj, or read
-        from a vector or raster datasource either from path or in-memory.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    out_path (str/list/None, default=None): The output path. If not provided, the output path is inferred from the input.
-    resample_alg (str, default="nearest"): The resampling algorithm.
-    copy_if_same (bool, default=True): If the input and output projections are the same, copy the input raster to the output path.
-    overwrite (bool, default=True): If the output path already exists, overwrite it.
-    creation_options (list/None, default=None): A list of creation options for the output raster.
-    dst_nodata (str/int/float, default="infer"): The nodata value for the output raster.
-    dtype (str/None, default=None): The data type for the output raster.
-    prefix (str, default=""): The prefix to add to the output path.
-    suffix (str, default=""): The suffix to add to the output path.
-    add_uuid (bool, default=False): If True, add a UUID to the output path.</p>
+<ul>
+<li><strong>raster (str/list/gdal.Dataset):</strong>  The raster(s) to reproject.</li>
+<li><strong>projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference):</strong>  The projection is inferred from
+the input. The input can be: WKT proj, EPSG proj, Proj, osr proj, or read
+from a vector or raster datasource either from path or in-memory.</li>
+</ul>
 
-<p>Returns:
-    str/list: The output path(s).</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>out_path (str/list/None, default=None): The output path. If not provided, the output path is inferred from the input.
+  resample_alg (str, default="nearest"): The resampling algorithm.
+  copy_if_same (bool, default=True): If the input and output projections are the same, copy the input raster to the output path.
+  overwrite (bool, default=True): If the output path already exists, overwrite it.
+  creation_options (list/None, default=None): A list of creation options for the output raster.
+  dst_nodata (str/int/float, default="infer"): The nodata value for the output raster.
+  dtype (str/None, default=None): The data type for the output raster.
+  prefix (str, default=""): The prefix to add to the output path.
+  suffix (str, default=""): The suffix to add to the output path.
+  add_uuid (bool, default=False): If True, add a UUID to the output path.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>str/list: The output path(s).</p>
+</blockquote>
 </div>
 
 
@@ -631,25 +646,34 @@ projection of that raster will be returned.</p>
             <div class="docstring"><p>Match a raster or list of rasters to a master layer. The master can be
 either an OGR layer or a GDAL layer.</p>
 
-<p>Args:
-    rasters (list): A list of rasters to match.
-    reference (str/gdal.Dataset/ogr.DataSource): Path to the reference raster
-        or vector.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    out_path (str/list, default=None): Paths to the output. If not provided,
-        the output will be in-memory rasters.
-    overwrite (bool, default=True): If True, existing rasters will be
-        overwritten.
-    dst_nodata (str, default='infer'): Value to use for no-data pixels. If not
-        provided, the value will be transfered from the original.
-    copy_if_already_correct (bool, default=True): If True, the raster will be
-        copied if it is already in the correct projection.
-    creation_options (list, default=None): List of creation options to pass
-        to the output raster.</p>
+<ul>
+<li><strong>rasters (list):</strong>  A list of rasters to match.</li>
+<li><strong>reference (str/gdal.Dataset/ogr.DataSource):</strong>  Path to the reference raster
+or vector.</li>
+</ul>
 
-<p>Returns:
-    list: A list of reprojected input rasters with the correct projection.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>out_path (str/list, default=None): Paths to the output. If not provided,
+      the output will be in-memory rasters.
+  overwrite (bool, default=True): If True, existing rasters will be
+      overwritten.
+  dst_nodata (str, default='infer'): Value to use for no-data pixels. If not
+      provided, the value will be transfered from the original.
+  copy_if_already_correct (bool, default=True): If True, the raster will be
+      copied if it is already in the correct projection.
+  creation_options (list, default=None): List of creation options to pass
+      to the output raster.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>list: A list of reprojected input rasters with the correct projection.</p>
+</blockquote>
 </div>
 
 

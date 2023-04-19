@@ -822,18 +822,27 @@ suited to remote sensing imagery.</p>
             <div class="docstring"><p>Randomly rotates images in a batch by 90 degrees intervals. Images
 can be (batch, channels, height, width) or (batch, height, width, channels).</p>
 
-<p>Args:
-    X (np.ndarray): The batch of images to rotate.
-    y (np.ndarray/None): The label of images to rotate. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    y (np.ndarray/none=None): The batch of labels to rotate.
-    chance (float=0.5): The chance of rotating the image.
-    max_images (float=None): The maximum proportion of the images in the batch to possibly rotate.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The batch of images to rotate.</li>
+<li><strong>y (np.ndarray/None):</strong>  The label of images to rotate. If None, no label is returned.</li>
+</ul>
 
-<p>Returns:
-    Tuple[np.ndarray, Optional[np.ndarray]]: The rotated images and optionally labels.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>y (np.ndarray/none=None): The batch of labels to rotate.
+  chance (float=0.5): The chance of rotating the image.
+  max_images (float=None): The maximum proportion of the images in the batch to possibly rotate.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, Optional[np.ndarray]]: The rotated images and optionally labels.</p>
+</blockquote>
 </div>
 
 
@@ -904,20 +913,29 @@ can be (batch, channels, height, width) or (batch, height, width, channels).</p>
 
             <div class="docstring"><p>Randomly mirrors images in a batch. Images can be (batch, channels, height, width) or (batch, height, width, channels).</p>
 
-<p>Args:
-    X (np.ndarray): The batch of images to mirror.
-    y (np.ndarray/None): The labels of images to mirror. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of mirroring the image.
-    max_images (float=1.0): The maximum proportion  of images in the batch to possibly mirror.
-    k (int=None): If None, randomly mirrors the image along the horizontal or vertical axis.
-        If 1, mirrors the image along the horizontal axis.
-        If 2, mirrors the image along the vertical axis.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The batch of images to mirror.</li>
+<li><strong>y (np.ndarray/None):</strong>  The labels of images to mirror. If None, no label is returned.</li>
+</ul>
 
-<p>Returns:
-    Tuple[np.ndarray, Optional[np.ndarray]]: The mirrored images and optionally labels.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of mirroring the image.
+  max_images (float=1.0): The maximum proportion  of images in the batch to possibly mirror.
+  k (int=None): If None, randomly mirrors the image along the horizontal or vertical axis.
+      If 1, mirrors the image along the horizontal axis.
+      If 2, mirrors the image along the vertical axis.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, Optional[np.ndarray]]: The mirrored images and optionally labels.</p>
+</blockquote>
 </div>
 
 
@@ -987,21 +1005,30 @@ can be (batch, channels, height, width) or (batch, height, width, channels).</p>
 for both channel first and last images.
 input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The batch of images to add noise to.
-    y (np.ndarray/None): The labels of images to add noise to. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of adding noise.
-    amount (float=0.01): The amount of noise to add.
-    max_amount (float=0.1): The maximum amount of noise to add, sampled uniformly.
-    max_images (float=1.0): The maximum proportion of images in the batch to add noise to.
-    additive (bool=False): Whether to add or multiply the noise.
-    channel_last (any=None): Whether the image is (channels, height, width) or (height, width, channels).
-        ignored for this function. Kept to keep the same function signature as other augmentations.</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The batch of images to add noise to.</li>
+<li><strong>y (np.ndarray/None):</strong>  The labels of images to add noise to. If None, no label is returned.</li>
+</ul>
 
-<p>Returns:
-    Tuple[np.ndarray, Optional[np.ndarray]]: The batch of images with noise and optionally the unmodified label.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of adding noise.
+  amount (float=0.01): The amount of noise to add.
+  max_amount (float=0.1): The maximum amount of noise to add, sampled uniformly.
+  max_images (float=1.0): The maximum proportion of images in the batch to add noise to.
+  additive (bool=False): Whether to add or multiply the noise.
+  channel_last (any=None): Whether the image is (channels, height, width) or (height, width, channels).
+      ignored for this function. Kept to keep the same function signature as other augmentations.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, Optional[np.ndarray]]: The batch of images with noise and optionally the unmodified label.</p>
+</blockquote>
 </div>
 
 
@@ -1067,19 +1094,28 @@ input should be (batch, height, width, channels) or (batch, channels, height, wi
             <div class="docstring"><p>Scales the channels of the batch of images seperately by a fixed amount.
 input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The batch of images to scale the channels of.
-    y (np.ndarray/None): The labels of images to scale the channels of. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of scaling the channels.
-    max_amount (float=0.1): The amount to possible scale the channels by. Sampled uniformly.
-    max_images (float=1.0): The maximum number of images to add noise to.
-    additive (bool=False): Whether to add or multiply the scaling.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The batch of images to scale the channels of.</li>
+<li><strong>y (np.ndarray/None):</strong>  The labels of images to scale the channels of. If None, no label is returned.</li>
+</ul>
 
-<p>Returns:
-    Tuble[np.ndarray, Optional[np.ndarray]]: The batch of images with scaled channels and optionally the unmodified label.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of scaling the channels.
+  max_amount (float=0.1): The amount to possible scale the channels by. Sampled uniformly.
+  max_images (float=1.0): The maximum number of images to add noise to.
+  additive (bool=False): Whether to add or multiply the scaling.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuble[np.ndarray, Optional[np.ndarray]]: The batch of images with scaled channels and optionally the unmodified label.</p>
+</blockquote>
 </div>
 
 
@@ -1142,18 +1178,27 @@ input should be (batch, height, width, channels) or (batch, channels, height, wi
             <div class="docstring"><p>Changes the contrast of a batch of images by a random amount, seperately for each channel.
 input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The batch of images to change the contrast of.
-    y (np.ndarray/None): The labels of images to change the contrast of. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of changing the contrast.
-    max_amount (float=0.01): The amount to change the contrast by.
-    max_images (float=1.0): The maximum proportion of images in the batch to change the contrast of.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The batch of images to change the contrast of.</li>
+<li><strong>y (np.ndarray/None):</strong>  The labels of images to change the contrast of. If None, no label is returned.</li>
+</ul>
 
-<p>Returns:
-    Tuble[np.ndarray, Optional[np.ndarray]]: The batch of images with changed contrast and optionally the unmodified label.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of changing the contrast.
+  max_amount (float=0.01): The amount to change the contrast by.
+  max_images (float=1.0): The maximum proportion of images in the batch to change the contrast of.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuble[np.ndarray, Optional[np.ndarray]]: The batch of images with changed contrast and optionally the unmodified label.</p>
+</blockquote>
 </div>
 
 
@@ -1219,19 +1264,28 @@ input should be (batch, height, width, channels) or (batch, channels, height, wi
             <div class="docstring"><p>Drops a random pixels from a batch of images.
 input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The batch of images to drop a pixel from.
-    y (np.ndarray/None): The labels of images to drop pixels from. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of dropping a pixel.
-    drop_probability (float=0.05): The probability of dropping a pixel.
-    drop_value (float=0.0): The value to drop the pixel to.
-    max_images (float=1.0): The maximum proportion of images in the batch to drop a pixel from.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The batch of images to drop a pixel from.</li>
+<li><strong>y (np.ndarray/None):</strong>  The labels of images to drop pixels from. If None, no label is returned.</li>
+</ul>
 
-<p>Returns:
-    Tuple[np.ndarray, Optional[np.ndarray]]: The batch of images with the dropped pixels and optionally the unmodified label.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of dropping a pixel.
+  drop_probability (float=0.05): The probability of dropping a pixel.
+  drop_value (float=0.0): The value to drop the pixel to.
+  max_images (float=1.0): The maximum proportion of images in the batch to drop a pixel from.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple[np.ndarray, Optional[np.ndarray]]: The batch of images with the dropped pixels and optionally the unmodified label.</p>
+</blockquote>
 </div>
 
 
@@ -1296,16 +1350,22 @@ input should be (batch, height, width, channels) or (batch, channels, height, wi
 input should be (batch, height, width, channels) or (batch, channels, height, width).
 A maximum of one channel will be dropped.</p>
 
-<p>Args:
-    X (np.ndarray): The batch of images to drop a channel from.
-    y (np.ndarray/None): The labels of images to drop channels from. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of dropping a channel.
-    max_images (float=1.0): The maximum proportion of images in the batch to drop a channel from.
-    drop_probability (float=0.1): The probability of dropping a channel.
-    drop_value (float=0.0): The value to drop the channel to.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The batch of images to drop a channel from.</li>
+<li><strong>y (np.ndarray/None):</strong>  The labels of images to drop channels from. If None, no label is returned.</li>
+</ul>
+
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of dropping a channel.
+  max_images (float=1.0): The maximum proportion of images in the batch to drop a channel from.
+  drop_probability (float=0.1): The probability of dropping a channel.
+  drop_value (float=0.0): The value to drop the channel to.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
 </div>
 
 
@@ -1368,16 +1428,22 @@ A maximum of one channel will be dropped.</p>
             <div class="docstring"><p>Blurs a batch of images at random.
 input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The batch of images to potentially blur.
-    y (np.ndarray/None): The labels of images to potentially blur. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of blurring a pixel.
-    max_images (float=1.0): The maximum proportion of images in the batch to blur.
-    intensity (float=1.0): The intensity of the blur. from 0.0 to 1.0.
-    apply_to_y (bool=False): Whether to blur the label as well.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The batch of images to potentially blur.</li>
+<li><strong>y (np.ndarray/None):</strong>  The labels of images to potentially blur. If None, no label is returned.</li>
+</ul>
+
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of blurring a pixel.
+  max_images (float=1.0): The maximum proportion of images in the batch to blur.
+  intensity (float=1.0): The intensity of the blur. from 0.0 to 1.0.
+  apply_to_y (bool=False): Whether to blur the label as well.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
 </div>
 
 
@@ -1440,16 +1506,22 @@ input should be (batch, height, width, channels) or (batch, channels, height, wi
             <div class="docstring"><p>Sharpens a batch of images at random.
 input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The batch of images to potentially sharpen.
-    y (np.ndarray/None): The labels of images to potentially sharpen. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of sharpening a pixel.
-    max_images (float=1.0): The maximum proportion of images in the batch to sharpen.
-    intensity (float=1.0): The intensity of the sharpening. from 0.0 to 1.0.
-    apply_to_y (bool=False): Whether to sharpen the label as well.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The batch of images to potentially sharpen.</li>
+<li><strong>y (np.ndarray/None):</strong>  The labels of images to potentially sharpen. If None, no label is returned.</li>
+</ul>
+
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of sharpening a pixel.
+  max_images (float=1.0): The maximum proportion of images in the batch to sharpen.
+  intensity (float=1.0): The intensity of the sharpening. from 0.0 to 1.0.
+  apply_to_y (bool=False): Whether to sharpen the label as well.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
 </div>
 
 
@@ -1510,16 +1582,22 @@ input should be (batch, height, width, channels) or (batch, channels, height, wi
             <div class="docstring"><p>Misaligns the channels of a batch of images at random.
 input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The batch of images to potentially misalign the channels of.
-    y (np.ndarray/None): The labels of images to potentially misalign the channels of. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of misaligning the channels of a pixel.
-    max_offset (float=0.5): The maximum offset to misalign the channels by.
-    max_images (float=0.2): The maximum number of images to misalign the channels of.
-    max_channels (int=1): The maximum number of channels to misalign.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The batch of images to potentially misalign the channels of.</li>
+<li><strong>y (np.ndarray/None):</strong>  The labels of images to potentially misalign the channels of. If None, no label is returned.</li>
+</ul>
+
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of misaligning the channels of a pixel.
+  max_offset (float=0.5): The maximum offset to misalign the channels by.
+  max_images (float=0.2): The maximum number of images to misalign the channels of.
+  max_channels (int=1): The maximum number of channels to misalign.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
 </div>
 
 
@@ -1620,34 +1698,40 @@ input should be (batch, height, width, channels) or (batch, channels, height, wi
             <div class="docstring"><p>Cutmixes a batch of images at random.
 input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The batch of images to potentially cutmix.
-    y (np.ndarray/None): The labels of images to potentially cutmix. If None, no label is returned.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of cutmixing a pixel.
-    min_size (float=0.333): The minimum size of the patch to cutmix. In percentage of the image width.
-    max_size (float=0.666): The maximum size of the patch to cutmix. In percentage of the image width.
-    max_images (float=0.2): The maximum percentage of images in a batch to mixup.
-    label_mix (int=0): if
-        0 - The labels will be mixed by the weights.</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The batch of images to potentially cutmix.</li>
+<li><strong>y (np.ndarray/None):</strong>  The labels of images to potentially cutmix. If None, no label is returned.</li>
+</ul>
 
-<pre><code>    1 - The target label will be used.
+<h6 id="keyword-args">Keyword Args:</h6>
 
-    2 - The source label will be used.
+<blockquote>
+  <p>chance (float=0.5): The chance of cutmixing a pixel.
+  min_size (float=0.333): The minimum size of the patch to cutmix. In percentage of the image width.
+  max_size (float=0.666): The maximum size of the patch to cutmix. In percentage of the image width.
+  max_images (float=0.2): The maximum percentage of images in a batch to mixup.
+  label_mix (int=0): if
+      0 - The labels will be mixed by the weights.</p>
 
-    3 - The max of the labels will be used.
+<pre><code>1 - The target label will be used.
 
-    4 - The min of the labels will be used.
+2 - The source label will be used.
 
-    5 - The max of the image with the highest weight will be used.
+3 - The max of the labels will be used.
 
-    6 - The min of the image with the highest weight will be used.
+4 - The min of the labels will be used.
 
-feather (bool=True): Whether to feather the edges of the cutmix.
-feather_dist (int=3): The distance to feather the edges of the cutmix in pixels
-channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+5 - The max of the image with the highest weight will be used.
+
+6 - The min of the image with the highest weight will be used.
 </code></pre>
+  
+  <p>feather (bool=True): Whether to feather the edges of the cutmix.
+  feather_dist (int=3): The distance to feather the edges of the cutmix in pixels
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
 </div>
 
 
@@ -1751,14 +1835,20 @@ is also a weighted sum of y and y' based on the same interpolation coefficient.<
 
 <p>input should be (batch, height, width, channels) or (batch, channels, height, width).</p>
 
-<p>Args:
-    X (np.ndarray): The batch of images to potentially mixup.
-    y (np.ndarray/None): The batch of labels to potentially mixup.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    chance (float=0.5): The chance of mixuping a pixel.
-    max_images (float=0.2): The maximum percentage of images in a batch to mixup.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The batch of images to potentially mixup.</li>
+<li><strong>y (np.ndarray/None):</strong>  The batch of labels to potentially mixup.</li>
+</ul>
+
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>chance (float=0.5): The chance of mixuping a pixel.
+  max_images (float=0.2): The maximum percentage of images in a batch to mixup.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
 </div>
 
 

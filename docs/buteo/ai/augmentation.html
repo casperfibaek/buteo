@@ -724,16 +724,25 @@ suited to remote sensing imagery.</p>
 
             <div class="docstring"><p>Apply a list of augmentations to a batch of images.</p>
 
-<p>Args:
-    batch_x (np.ndarray): The batch of images to augment.
-    batch_y (np.ndarray/None=None): The batch of labels to augment.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    augmentations (list/dict=None): The list of augmentations to apply.
-    channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+<ul>
+<li><strong>batch_x (np.ndarray):</strong>  The batch of images to augment.</li>
+<li><strong>batch_y (np.ndarray/None=None):</strong>  The batch of labels to augment.</li>
+</ul>
 
-<p>Returns:
-    Tuple(np.ndarray, np.ndarray): The augmented batch of images and labels (if provided).</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>augmentations (list/dict=None): The list of augmentations to apply.
+  channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Tuple(np.ndarray, np.ndarray): The augmented batch of images and labels (if provided).</p>
+</blockquote>
 </div>
 
 
@@ -805,19 +814,28 @@ suited to remote sensing imagery.</p>
 
             <div class="docstring"><p>Generate batches of augmented data.</p>
 
-<p>Args:
-    X (np.ndarray): The data to augment.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    y (np.ndarray): The labels for the data.
-    batch_size (int): The size of the batches to generate.
-    augmentations (list): The augmentations to apply.
-    shuffle (bool): Whether to shuffle the data before generating batches.
-    seed (int): The seed to use for shuffling.
-    channel_last (bool): Whether the data is in channel last format.</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The data to augment.</li>
+</ul>
 
-<p>Returns:
-    A generator yielding batches of augmented data.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>y (np.ndarray): The labels for the data.
+  batch_size (int): The size of the batches to generate.
+  augmentations (list): The augmentations to apply.
+  shuffle (bool): Whether to shuffle the data before generating batches.
+  seed (int): The seed to use for shuffling.
+  channel_last (bool): Whether the data is in channel last format.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>A generator yielding batches of augmented data.</p>
+</blockquote>
 </div>
 
 
@@ -900,21 +918,30 @@ suited to remote sensing imagery.</p>
 
             <div class="docstring"><p>A dataset that applies augmentations to the data.</p>
 
-<p>Args:
-    X (np.ndarray): The data to augment.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    y (np.ndarray): The labels for the data.
-    batch_size (int): The size of the batches to generate.
-    augmentations (list): The augmentations to apply.
-    shuffle (bool): Whether to shuffle the data before generating batches.
-        and whenever the dataset is iterated over.
-    seed (int): The seed to use for shuffling.
-    channel_last (bool): Whether the data is in channel last format.</p>
+<ul>
+<li><strong>X (np.ndarray):</strong>  The data to augment.</li>
+</ul>
 
-<p>Returns:
-    A dataset yielding batches of augmented data. For Pytorch,
-        convert the batches to tensors before ingestion.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>y (np.ndarray): The labels for the data.
+  batch_size (int): The size of the batches to generate.
+  augmentations (list): The augmentations to apply.
+  shuffle (bool): Whether to shuffle the data before generating batches.
+      and whenever the dataset is iterated over.
+  seed (int): The seed to use for shuffling.
+  channel_last (bool): Whether the data is in channel last format.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>A dataset yielding batches of augmented data. For Pytorch,
+      convert the batches to tensors before ingestion.</p>
+</blockquote>
 </div>
 
 

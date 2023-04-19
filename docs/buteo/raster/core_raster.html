@@ -1832,16 +1832,25 @@
 gdal.Dataset is passed, it is returned. Supports lists. If a list is passed,
 a list is returned with the opened raster.</p>
 
-<p>Args:
-    raster (gdal.Dataset/str/list): A path to a raster or a GDAL dataframe.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    writeable (bool, default=True): If True, the raster is opened in write mode. Default is True.
-    allow_lists (bool, default=True): If True, the input can be a list of rasters. Otherwise,
-        only a single raster is allowed. Default is True.</p>
+<ul>
+<li><strong>raster (gdal.Dataset/str/list):</strong>  A path to a raster or a GDAL dataframe.</li>
+</ul>
 
-<p>Returns:
-    gdal.Dataset/list: A gdal.Dataset or a list of gdal.Datasets.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>writeable (bool, default=True): If True, the raster is opened in write mode. Default is True.
+  allow_lists (bool, default=True): If True, the input can be a list of rasters. Otherwise,
+      only a single raster is allowed. Default is True.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>gdal.Dataset/list: A gdal.Dataset or a list of gdal.Datasets.</p>
+</blockquote>
 </div>
 
 
@@ -1886,14 +1895,23 @@ a list is returned with the opened raster.</p>
             <div class="docstring"><p>Gets the projection from a dataset, either as WKT or osr.
 The input can be a path or a gdal.Dataset.</p>
 
-<p>Args:
-    raster (str/gdal.Dataset): A path to a raster or a gdal.Dataset.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    wkt (bool, default=True): If True, returns the projection as WKT.</p>
+<ul>
+<li><strong>raster (str/gdal.Dataset):</strong>  A path to a raster or a gdal.Dataset.</li>
+</ul>
 
-<p>Returns:
-    str: The projection of the input raster in the specified format.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>wkt (bool, default=True): If True, returns the projection as WKT.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>str: The projection of the input raster in the specified format.</p>
+</blockquote>
 </div>
 
 
@@ -1955,17 +1973,26 @@ The input can be a path or a gdal.Dataset.</p>
             <div class="docstring"><p>Reads metadata from a raster dataset or a list of raster datasets, and returns a dictionary or a list of dictionaries
 containing metadata information for each raster.</p>
 
-<p>Args:
-    raster (str/gdal.Dataset/list): A path to a raster or a gdal.Dataset,
-        or a list of paths to rasters.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    allow_lists (bool, default=True): If True, allows the input to be a
-        list of rasters. Otherwise, only a single raster is allowed.</p>
+<ul>
+<li><strong>raster (str/gdal.Dataset/list):</strong>  A path to a raster or a gdal.Dataset,
+or a list of paths to rasters.</li>
+</ul>
 
-<p>Returns:
-    dict/list of dict: A dictionary or a list of dictionaries containing
-        metadata information for each raster.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>allow_lists (bool, default=True): If True, allows the input to be a
+      list of rasters. Otherwise, only a single raster is allowed.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>dict/list of dict: A dictionary or a list of dictionaries containing
+      metadata information for each raster.</p>
+</blockquote>
 </div>
 
 
@@ -2102,22 +2129,31 @@ containing metadata information for each raster.</p>
 
             <div class="docstring"><p>Verifies whether a list of rasters are aligned.</p>
 
-<p>Args:
-    rasters (list): A list of rasters, either in gdal.Dataset or a string
-        referring to the dataset.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    same_extent (bool, default=True): If True, all the rasters should have
-        the same extent.
-    same_dtype (bool, default=False): If True, all the rasters should have
-        the same data type.
-    same_nodata (bool, default=False): If True, all the rasters should have
-        the same nodata value.
-    threshold (float, default=0.001): The threshold for the difference between
-        the rasters.</p>
+<ul>
+<li><strong>rasters (list):</strong>  A list of rasters, either in gdal.Dataset or a string
+referring to the dataset.</li>
+</ul>
 
-<p>Returns:
-    bool: True if rasters are aligned and optional parameters are True, False otherwise.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>same_extent (bool, default=True): If True, all the rasters should have
+      the same extent.
+  same_dtype (bool, default=False): If True, all the rasters should have
+      the same data type.
+  same_nodata (bool, default=False): If True, all the rasters should have
+      the same nodata value.
+  threshold (float, default=0.001): The threshold for the difference between
+      the rasters.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>bool: True if rasters are aligned and optional parameters are True, False otherwise.</p>
+</blockquote>
 </div>
 
 
@@ -2164,12 +2200,18 @@ containing metadata information for each raster.</p>
 
             <div class="docstring"><p>Verifies whether a raster has any nodata values.</p>
 
-<p>Args:
-    raster (str): A raster, either in gdal.Dataset or a string
-        referring to the dataset.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    bool: True if raster has nodata values, False otherwise.</p>
+<ul>
+<li><strong>raster (str):</strong>  A raster, either in gdal.Dataset or a string
+referring to the dataset.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>bool: True if raster has nodata values, False otherwise.</p>
+</blockquote>
 </div>
 
 
@@ -2211,8 +2253,11 @@ containing metadata information for each raster.</p>
 
             <div class="docstring"><p>Verifies whether a list of rasters have any nodata values.</p>
 
-<p>Args:
-    rasters (list): A list of rasters, either in gdal.Dataset or a string</p>
+<h6 id="arguments">Arguments:</h6>
+
+<ul>
+<li><strong>rasters (list):</strong>  A list of rasters, either in gdal.Dataset or a string</li>
+</ul>
 </div>
 
 
@@ -2258,8 +2303,11 @@ containing metadata information for each raster.</p>
 
             <div class="docstring"><p>Verifies whether a list of rasters have the same nodata values.</p>
 
-<p>Args:
-    rasters (list): A list of rasters, either in gdal.Dataset or a string</p>
+<h6 id="arguments">Arguments:</h6>
+
+<ul>
+<li><strong>rasters (list):</strong>  A list of rasters, either in gdal.Dataset or a string</li>
+</ul>
 </div>
 
 
@@ -2304,8 +2352,11 @@ containing metadata information for each raster.</p>
 
             <div class="docstring"><p>Gets the first nodata value from a raster.</p>
 
-<p>Args:
-    raster (str/gdal.Dataset): The raster to get the nodata value from.</p>
+<h6 id="arguments">Arguments:</h6>
+
+<ul>
+<li><strong>raster (str/gdal.Dataset):</strong>  The raster to get the nodata value from.</li>
+</ul>
 </div>
 
 
@@ -2350,11 +2401,17 @@ containing metadata information for each raster.</p>
 
             <div class="docstring"><p>Counts the number of bands in a list of rasters.</p>
 
-<p>Args:
-    rasters (list): A list of rasters, either in gdal.Dataset or a string</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    int: The number of bands in the rasters.</p>
+<ul>
+<li><strong>rasters (list):</strong>  A list of rasters, either in gdal.Dataset or a string</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>int: The number of bands in the rasters.</p>
+</blockquote>
 </div>
 
 
@@ -2545,27 +2602,36 @@ containing metadata information for each raster.</p>
 
             <div class="docstring"><p>Converts a raster or a list of rasters into a NumPy array.</p>
 
-<p>Args:
-    raster (gdal.Dataset/str/list): Raster(s) to convert.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    bands (list/str/int, default="all"): Bands from the raster to convert to a numpy array.
-        Can be "all", an int, or a list of integers, or a single integer.
-    masked (bool/str, default="auto"): If the array contains nodata values, determines whether
-        the resulting array should be a masked numpy array or a regular numpy array. If "auto",
-        the array will be masked only if the raster has nodata values.
-    filled (bool, default=False): If the array contains nodata values, determines whether
-        the resulting array should be a filled numpy array or a masked array.
-    fill_value (int/float, default=None): Value to fill the array with if filled is True.
-        If None, the nodata value of the raster is used.
-    bbox (list, default=None): A list of <code>[xmin, xmax, ymin, ymax]</code> to use as
-        the extent of the raster. Uses coordinates and the OGR format.
-    pixel_offsets (list/tuple, default=None): A list of
-        <code>[x_offset, y_offset, x_size, y_size]</code> to use as the extent of the
-        raster. Uses pixel offsets and the OGR format.</p>
+<ul>
+<li><strong>raster (gdal.Dataset/str/list):</strong>  Raster(s) to convert.</li>
+</ul>
 
-<p>Returns:
-    np.ndarray: A numpy array in the 3D channel-last format.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>bands (list/str/int, default="all"): Bands from the raster to convert to a numpy array.
+      Can be "all", an int, or a list of integers, or a single integer.
+  masked (bool/str, default="auto"): If the array contains nodata values, determines whether
+      the resulting array should be a masked numpy array or a regular numpy array. If "auto",
+      the array will be masked only if the raster has nodata values.
+  filled (bool, default=False): If the array contains nodata values, determines whether
+      the resulting array should be a filled numpy array or a masked array.
+  fill_value (int/float, default=None): Value to fill the array with if filled is True.
+      If None, the nodata value of the raster is used.
+  bbox (list, default=None): A list of <code>[xmin, xmax, ymin, ymax]</code> to use as
+      the extent of the raster. Uses coordinates and the OGR format.
+  pixel_offsets (list/tuple, default=None): A list of
+      <code>[x_offset, y_offset, x_size, y_size]</code> to use as the extent of the
+      raster. Uses pixel offsets and the OGR format.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>np.ndarray: A numpy array in the 3D channel-last format.</p>
+</blockquote>
 </div>
 
 
@@ -2758,31 +2824,40 @@ containing metadata information for each raster.</p>
             <div class="docstring"><p>Turns a NumPy array into a GDAL dataset or exported
 as a raster using a reference raster.</p>
 
-<p>Args:
-    array (np.ndarray): The numpy array to convert.
-    reference (str/gdal.Dataset): The reference raster to use for the output.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    out_path (path, default=None): The destination to save to.
-    set_nodata (bool/float/int, default="arr"): Can be set to
-        • "arr": The nodata value will be the same as the NumPy array.
-        • "ref": The nodata value will be the same as the reference raster.
-        • value: The nodata value will be the value provided.
-    allow_mismatches (bool, default=False): If True, the array can have a
-        different shape than the reference raster.
-    pixel_offsets (list/tuple, default=None): If provided, the array will be
-        written to the reference raster at the specified pixel offsets.
-        The list should be in the format [x_offset, y_offset, x_size, y_size].
-    bbox (list, default=None): If provided, the array will be written to
-        the reference raster at the specified bounding box.
-        The list should be in the format [min_x, min_y, max_x, max_y].
-    overwrite (bool, default=True): If the file exists, should it be
-        overwritten?
-    creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
-        "BIGTIFF=YES", "COMPRESS=LZW"]): List of GDAL creation options.</p>
+<ul>
+<li><strong>array (np.ndarray):</strong>  The numpy array to convert.</li>
+<li><strong>reference (str/gdal.Dataset):</strong>  The reference raster to use for the output.</li>
+</ul>
 
-<p>Returns:
-    str: The filepath to the newly created raster(s).</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>out_path (path, default=None): The destination to save to.
+  set_nodata (bool/float/int, default="arr"): Can be set to
+      • "arr": The nodata value will be the same as the NumPy array.
+      • "ref": The nodata value will be the same as the reference raster.
+      • value: The nodata value will be the value provided.
+  allow_mismatches (bool, default=False): If True, the array can have a
+      different shape than the reference raster.
+  pixel_offsets (list/tuple, default=None): If provided, the array will be
+      written to the reference raster at the specified pixel offsets.
+      The list should be in the format [x_offset, y_offset, x_size, y_size].
+  bbox (list, default=None): If provided, the array will be written to
+      the reference raster at the specified bounding box.
+      The list should be in the format [min_x, min_y, max_x, max_y].
+  overwrite (bool, default=True): If the file exists, should it be
+      overwritten?
+  creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
+      "BIGTIFF=YES", "COMPRESS=LZW"]): List of GDAL creation options.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>str: The filepath to the newly created raster(s).</p>
+</blockquote>
 </div>
 
 
@@ -2876,26 +2951,35 @@ as a raster using a reference raster.</p>
 
             <div class="docstring"><p>Converts the datatype of a raster.</p>
 
-<p>Args:
-    raster (str/gdal.Dataset/list): The input raster(s) for which the
-        datatype will be changed.
-    dtype (str): The target datatype for the output raster(s).</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    out_path (path/list, default=None): The output location for the
-        processed raster(s).
-    overwrite (bool, default=True): Determines whether to overwrite
-        existing files with the same name.
-    allow_lists (bool, default=True): Allows processing multiple
-        rasters as a list. If set to False, only single rasters are
-        accepted.
-    creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
-        "BIGTIFF=YES", "COMPRESS=LZW"]): A list of GDAL creation options
-        for the output raster(s).</p>
+<ul>
+<li><strong>raster (str/gdal.Dataset/list):</strong>  The input raster(s) for which the
+datatype will be changed.</li>
+<li><strong>dtype (str):</strong>  The target datatype for the output raster(s).</li>
+</ul>
 
-<p>Returns:
-    str/list: The filepath(s) of the newly created raster(s) with
-        the specified datatype.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>out_path (path/list, default=None): The output location for the
+      processed raster(s).
+  overwrite (bool, default=True): Determines whether to overwrite
+      existing files with the same name.
+  allow_lists (bool, default=True): Allows processing multiple
+      rasters as a list. If set to False, only single rasters are
+      accepted.
+  creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
+      "BIGTIFF=YES", "COMPRESS=LZW"]): A list of GDAL creation options
+      for the output raster(s).</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>str/list: The filepath(s) of the newly created raster(s) with
+      the specified datatype.</p>
+</blockquote>
 </div>
 
 
@@ -3048,19 +3132,28 @@ as a raster using a reference raster.</p>
 
             <div class="docstring"><p>Stacks a list of aligned rasters.</p>
 
-<p>Args:
-    rasters (list): List of rasters to stack.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    out_path (str/None, default=None): The destination to save the output raster.
-    overwrite (bool, default=True): If the file exists, should it be overwritten?
-    dtype (str, default=None): The data type of the output raster.
-    creation_options (list,
-        default=["TILED=YES", "NUM_THREADS=ALL_CPUS", "BIGTIFF=YES", "COMPRESS=LZW"]):
-            A list of GDAL creation options for the output raster.</p>
+<ul>
+<li><strong>rasters (list):</strong>  List of rasters to stack.</li>
+</ul>
 
-<p>Returns:
-    str/list: The filepath(s) to the newly created raster(s).</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>out_path (str/None, default=None): The destination to save the output raster.
+  overwrite (bool, default=True): If the file exists, should it be overwritten?
+  dtype (str, default=None): The data type of the output raster.
+  creation_options (list,
+      default=["TILED=YES", "NUM_THREADS=ALL_CPUS", "BIGTIFF=YES", "COMPRESS=LZW"]):
+          A list of GDAL creation options for the output raster.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>str/list: The filepath(s) to the newly created raster(s).</p>
+</blockquote>
 </div>
 
 
@@ -3205,25 +3298,34 @@ as a raster using a reference raster.</p>
 
             <div class="docstring"><p>Stacks a list of rasters into a virtual raster (.vrt).</p>
 
-<p>Args:
-    rasters (list): List of rasters to stack.
-    out_path (str): The destination to save the output raster.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    separate (bool, default=True): If the raster bands should be separated.
-    resample_alg (str, default='nearest'): The resampling algorithm to use.
-    nodata_src (float, default=None): The NoData value to use for the source rasters.
-    nodata_VRT (float, default=None): The NoData value to use for the VRT raster.
-    nodata_hide (bool, default=None): If the NoData value should be hidden.
-    options (list, default=[]): List of VRT options for GDAL.
-    overwrite (bool, default=True): If the file exists, should it be overwritten?
-    reference (str, default=None): The reference raster to use.
-    creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
-                                     "BIGTIFF=YES", "COMPRESS=LZW"]):
-        A list of GDAL creation options for the output raster.</p>
+<ul>
+<li><strong>rasters (list):</strong>  List of rasters to stack.</li>
+<li><strong>out_path (str):</strong>  The destination to save the output raster.</li>
+</ul>
 
-<p>Returns:
-    str: The filepath to the newly created VRT raster.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>separate (bool, default=True): If the raster bands should be separated.
+  resample_alg (str, default='nearest'): The resampling algorithm to use.
+  nodata_src (float, default=None): The NoData value to use for the source rasters.
+  nodata_VRT (float, default=None): The NoData value to use for the VRT raster.
+  nodata_hide (bool, default=None): If the NoData value should be hidden.
+  options (list, default=[]): List of VRT options for GDAL.
+  overwrite (bool, default=True): If the file exists, should it be overwritten?
+  reference (str, default=None): The reference raster to use.
+  creation_options (list, default=["TILED=YES", "NUM_THREADS=ALL_CPUS",
+                                   "BIGTIFF=YES", "COMPRESS=LZW"]):
+      A list of GDAL creation options for the output raster.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>str: The filepath to the newly created VRT raster.</p>
+</blockquote>
 </div>
 
 
@@ -3265,12 +3367,18 @@ as a raster using a reference raster.</p>
 
             <div class="docstring"><p>Checks if two rasters intersect using their latlong boundaries.</p>
 
-<p>Args:
-    raster1 (str/gdal.Dataset): The first raster.
-    raster2 (str/gdal.Dataset): The second raster.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    bool: If the rasters intersect.</p>
+<ul>
+<li><strong>raster1 (str/gdal.Dataset):</strong>  The first raster.</li>
+<li><strong>raster2 (str/gdal.Dataset):</strong>  The second raster.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>bool: If the rasters intersect.</p>
+</blockquote>
 </div>
 
 
@@ -3324,15 +3432,24 @@ as a raster using a reference raster.</p>
 
             <div class="docstring"><p>Gets the latlng intersection of two rasters.</p>
 
-<p>Args:
-    raster1 (str/gdal.Dataset): The first raster.
-    raster2 (str/gdal.Dataset): The second raster.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    return_as_vector (bool, default=False): If True, the intersection will be returned as a vector.</p>
+<ul>
+<li><strong>raster1 (str/gdal.Dataset):</strong>  The first raster.</li>
+<li><strong>raster2 (str/gdal.Dataset):</strong>  The second raster.</li>
+</ul>
 
-<p>Returns:
-    bool: If the rasters intersect.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>return_as_vector (bool, default=False): If True, the intersection will be returned as a vector.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>bool: If the rasters intersect.</p>
+</blockquote>
 </div>
 
 
@@ -3386,12 +3503,18 @@ as a raster using a reference raster.</p>
             <div class="docstring"><p>Get the fraction of the overlap between two rasters.
 (e.g. 0.9 for mostly overlapping rasters)</p>
 
-<p>Args:
-    raster1 (str/gdal.Dataset): The first raster (master).
-    raster2 (str/gdal.Dataset): The second raster.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    float: A value (0.0 - 1.0) representing the degree of overlap between the two rasters.</p>
+<ul>
+<li><strong>raster1 (str/gdal.Dataset):</strong>  The first raster (master).</li>
+<li><strong>raster2 (str/gdal.Dataset):</strong>  The second raster.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>float: A value (0.0 - 1.0) representing the degree of overlap between the two rasters.</p>
+</blockquote>
 </div>
 
 
@@ -3502,22 +3625,28 @@ as a raster using a reference raster.</p>
 
             <div class="docstring"><p>Create an empty raster.</p>
 
-<p>Keyword Args:
-    out_path (str, default=None): The output path. If None, a temporary file will be created.
-    width (int, default=100): The width of the raster in pixels.
-    height (int, default=100): The height of the raster in pixels.
-    pixel_size (int/float/list/tuple, default=10.0): The pixel size in units of the projection.
-    bands (int, default=1): The number of bands in the raster.
-    dtype (str, default="uint8"): The data type of the raster.
-    x_min (int/float, default=0.0): The x coordinate of the top left corner of the raster.
-    y_max (int/float, default=0.0): The y coordinate of the top left corner of the raster.
-    nodata_value (int/float/None, default=None): The nodata value of the raster.
-    projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference, default="EPSG:3857"): The projection of the raster.
-    creation_options (list, default=None): A list of creation options.
-    overwrite (bool, default=True): If True, overwrite the output file if it exists.</p>
+<h6 id="keyword-args">Keyword Args:</h6>
 
-<p>Returns:
-    str: The path to the output raster.</p>
+<blockquote>
+  <p>out_path (str, default=None): The output path. If None, a temporary file will be created.
+  width (int, default=100): The width of the raster in pixels.
+  height (int, default=100): The height of the raster in pixels.
+  pixel_size (int/float/list/tuple, default=10.0): The pixel size in units of the projection.
+  bands (int, default=1): The number of bands in the raster.
+  dtype (str, default="uint8"): The data type of the raster.
+  x_min (int/float, default=0.0): The x coordinate of the top left corner of the raster.
+  y_max (int/float, default=0.0): The y coordinate of the top left corner of the raster.
+  nodata_value (int/float/None, default=None): The nodata value of the raster.
+  projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference, default="EPSG:3857"): The projection of the raster.
+  creation_options (list, default=None): A list of creation options.
+  overwrite (bool, default=True): If True, overwrite the output file if it exists.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>str: The path to the output raster.</p>
+</blockquote>
 </div>
 
 
@@ -3628,18 +3757,24 @@ as a raster using a reference raster.</p>
 
             <div class="docstring"><p>Create a raster from a numpy array.</p>
 
-<p>Args:
-    arr (np.ndarray): The array to convert to a raster.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    out_path (str, default=None): The output path. If None, a temporary file will be created.
-    pixel_size (int/float/list/tuple, default=10.0): The pixel size of the output raster.
-    x_min (int/float, default=0.0): The x coordinate of the top left corner of the output raster.
-    y_max (int/float, default=0.0): The y coordinate of the top left corner of the output raster.
-    projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference,
-        default="EPSG:3857"): The projection of the output raster.
-    creation_options (list, default=None): The creation options for the output raster.
-    overwrite (bool, default=True): If True, the output raster will be overwritten if it already exists.</p>
+<ul>
+<li><strong>arr (np.ndarray):</strong>  The array to convert to a raster.</li>
+</ul>
+
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>out_path (str, default=None): The output path. If None, a temporary file will be created.
+  pixel_size (int/float/list/tuple, default=10.0): The pixel size of the output raster.
+  x_min (int/float, default=0.0): The x coordinate of the top left corner of the output raster.
+  y_max (int/float, default=0.0): The y coordinate of the top left corner of the output raster.
+  projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference,
+      default="EPSG:3857"): The projection of the output raster.
+  creation_options (list, default=None): The creation options for the output raster.
+  overwrite (bool, default=True): If True, the output raster will be overwritten if it already exists.</p>
+</blockquote>
 </div>
 
 
@@ -3696,11 +3831,17 @@ as a raster using a reference raster.</p>
 
             <div class="docstring"><p>Create a grid of coordinates from a raster. Format is (x, y, xy).</p>
 
-<p>Args:
-    raster (str/gdal.Dataset): The raster to create the grid from.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    np.ndarray: (x, y, xy-coordinates)</p>
+<ul>
+<li><strong>raster (str/gdal.Dataset):</strong>  The raster to create the grid from.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>np.ndarray: (x, y, xy-coordinates)</p>
+</blockquote>
 </div>
 
 
@@ -3749,13 +3890,19 @@ as a raster using a reference raster.</p>
 
             <div class="docstring"><p>NOT YET IMPLEMENTED: Mosaic a list of rasters into a single raster.</p>
 
-<p>Args:
-    raster_paths (str/list): The list of rasters to mosaic.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Keyword Args:
-    out_path (str, default=None): The output path. If None, a temporary file will be created.
-    creation_options (list, default=None): The creation options for the output raster.
-    overwrite (bool, default=True): If True, the output raster will be overwritten if it already exists.</p>
+<ul>
+<li><strong>raster_paths (str/list):</strong>  The list of rasters to mosaic.</li>
+</ul>
+
+<h6 id="keyword-args">Keyword Args:</h6>
+
+<blockquote>
+  <p>out_path (str, default=None): The output path. If None, a temporary file will be created.
+  creation_options (list, default=None): The creation options for the output raster.
+  overwrite (bool, default=True): If True, the output raster will be overwritten if it already exists.</p>
+</blockquote>
 </div>
 
 
