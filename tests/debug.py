@@ -4,16 +4,31 @@
 import sys; sys.path.append("../")
 import os
 
-from buteo.eo.s2_utils import s2_l2a_get_metadata
-from buteo.raster.patches import array_to_patches
+from buteo.vector.split import split_vector_by_fid
+from buteo.raster import raster_to_array, array_to_raster, clip_raster
 
-FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/s2_data/"
+FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/ccai_tutorial/gaza_israel/"
+FOLDER_OUT = FOLDER + "patches/"
 
-zip_file = os.path.join(FOLDER, "S2A_MSIL2A_20220117T090321_N0301_R007_T35TPE_20220117T120927.zip")
+split_files = split_vector_by_fid(
+    os.path.join(FOLDER, "mask.gpkg"),
+)
 
-metadata = s2_l2a_get_metadata(zip_file)
-bands_10m = metadata["bands_10m"]()
+mask_raster_path = os.path.join(FOLDER, "labels_10m.tif")
 
-patches = array_to_patches(bands_10m, tile_size=128, offsets_x=1, offsets_y=1, border_check=True)
+for idx, split_file in enumerate(split_files):
+    mask_clipped = clip_raster(
+        mask_raster_path,
+        split_file,
+        adjust_bbox=True,
+    )
 
-final = (patches / 10000.0).astype("float32")
+    mask_arr = raster_to_array(mask_clipped, filled=True, fill_value=0)
+
+    array_to_raster(
+        mask_arr,
+        reference=mask_clipped,
+        out_path=os.path.join(FOLDER_OUT, f"label_{idx}.tif"),
+    )
+
+import pdb; pdb.set_trace()
