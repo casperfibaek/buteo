@@ -151,8 +151,9 @@ def raster_dem_to_hillshade(
 def raster_dem_to_orientation(
     input_raster: Union[str, gdal.Dataset],
     output_raster: str,
+    include_height: bool = True,
     height_normalisation: bool = True,
-    height_normalisation_value: float = 5000.0, # 5000m
+    height_normalisation_value: float = 8849.0, # mt. everest
 ) -> str:
     """ 
     Normalised orientation.
@@ -160,6 +161,11 @@ def raster_dem_to_orientation(
     Args:
         input_raster: Path to input raster or gdal.Dataset.
         output_raster: Path to output raster.
+    
+    Keyword Args:
+        include_height: If True, include height in orientation calculation.
+        height_normalisation: If True, normalise height to 0-1.
+        height_normalisation_value: Value to normalise height to.
     
     Returns:
         Path to output raster.
@@ -176,17 +182,20 @@ def raster_dem_to_orientation(
     delete_if_in_memory(tmp_path)
     delete_if_in_memory(tmp_slope)
 
-    dem = raster_to_array(input_raster)
+    if include_height:
+        dem = raster_to_array(input_raster)
 
-    if height_normalisation:
-        dem_norm = np.zeros(dem.shape, dtype=np.float32)
-        dem_norm = np.divide(dem, height_normalisation_value, out=dem_norm, where=dem != 0)
-    else:
-        dem_norm = dem
+        if height_normalisation:
+            dem_norm = np.zeros(dem.shape, dtype=np.float32)
+            dem_norm = np.divide(dem, height_normalisation_value, out=dem_norm, where=dem != 0)
+        else:
+            dem_norm = dem
 
-    dem = None
+        dem = None
 
-    destination = np.zeros((aspect.shape[0], aspect.shape[1], 4), dtype=np.float32)
+    bands = 4 if include_height else 3
+
+    destination = np.zeros((aspect.shape[0], aspect.shape[1], bands), dtype=np.float32)
 
     aspect_norm = np.zeros(aspect.shape, dtype=np.float32)
     aspect_norm = np.divide(aspect, 360.0, out=aspect_norm, where=aspect != 0)
@@ -198,7 +207,9 @@ def raster_dem_to_orientation(
     destination[:, :, 0] = encoded_sin[:, :, 0]
     destination[:, :, 1] = encoded_cos[:, :, 0]
     destination[:, :, 2] = encoded_slope[:, :, 0]
-    destination[:, :, 3] = dem_norm[:, :, 0]
+
+    if include_height:
+        destination[:, :, 3] = dem_norm[:, :, 0]
 
     array_to_raster(destination, reference=input_raster, out_path=output_raster)
 

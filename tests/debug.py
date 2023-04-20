@@ -4,7 +4,6 @@
 import sys; sys.path.append("../")
 import os
 from glob import glob
-from osgeo import gdal
 
 from buteo.vector.split import split_vector_by_fid
 from buteo.raster import (
@@ -14,16 +13,17 @@ from buteo.raster import (
     reproject_raster,
     resample_raster,
     align_rasters,
-    raster_to_metadata,
-    raster_dem_to_slope,
-    raster_dem_to_aspect,
     raster_dem_to_orientation,
+    stack_rasters,
+    stack_rasters_vrt,
+    rasters_are_aligned,
 )
-from buteo.raster.convolution import simple_blur_kernel_2d_3x3, convolve_array_simple
+from buteo.vector import reproject_vector
 
-FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/ccai_tutorial/gaza_israel/"
+FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/ccai_tutorial/egypt/"
 FOLDER_OUT = FOLDER + "patches/"
 PROCESS_DEM = False
+PROCESS_RESAMPLE = False
 
 dem_path = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/ccai_tutorial/DEM_east_mediterranean.tif"
 mask_path = os.path.join(FOLDER, "labels_10m.tif")
@@ -41,12 +41,12 @@ if PROCESS_DEM:
     reproject_raster(
         os.path.join(FOLDER, "DEM_10m_clipped.tif"),
         projection=mask_path,
-        out_path=os.path.join(FOLDER, "DEM_10m_resampled.tif"),
+        out_path=os.path.join(FOLDER, "DEM_10m_reprojected.tif"),
         resample_alg=resample_method,
     )
 
     align_rasters(
-        os.path.join(FOLDER, "DEM_10m_resampled.tif"),
+        os.path.join(FOLDER, "DEM_10m_reprojected.tif"),
         reference=mask_path,
         out_path=os.path.join(FOLDER, "DEM_10m.tif"),
         resample_alg=resample_method,
@@ -55,78 +55,61 @@ if PROCESS_DEM:
     raster_dem_to_orientation(
         os.path.join(FOLDER, "DEM_10m.tif"),
         os.path.join(FOLDER, "ORIENTATION_10m.tif"),
+        include_height=True,
     )
 
-for img in glob(FOLDER + "*_20m.tif"):
-    resampled = resample_raster(
-        img,
-        target_size=mask_path,
-        resample_alg="bilinear",
-    )
-    align_rasters(
-        resampled,
-        reference=mask_path,
-        out_path=img.replace("_20m.tif", "_10m.tif"),
-        resample_alg="bilinear",
-    )
+if PROCESS_RESAMPLE:
+    for img in glob(FOLDER + "*_20m.tif"):
+        resampled = resample_raster(
+            img,
+            target_size=mask_path,
+            resample_alg="bilinear",
+        )
+        align_rasters(
+            resampled,
+            reference=mask_path,
+            out_path=img.replace("_20m.tif", "_10m.tif"),
+            resample_alg="bilinear",
+        )
 
 mask_raster_path = os.path.join(FOLDER, "labels_10m.tif")
+s1_stacked = os.path.join(FOLDER, "s1.vrt")
+s2_stacked = os.path.join(FOLDER, "s2.vrt")
+dem = os.path.join(FOLDER, "ORIENTATION_10m.tif")
 
 split_files = split_vector_by_fid(
-    os.path.join(FOLDER, "mask.gpkg"),
+    reproject_vector(os.path.join(FOLDER, "mask.gpkg"), mask_raster_path),
 )
+
 for idx, split_file in enumerate(split_files):
+    idx_offset = idx + 9
     mask_clipped = clip_raster(
         mask_raster_path,
         split_file,
+        out_path=os.path.join(FOLDER_OUT, f"label_{idx_offset}.tif"),
         adjust_bbox=True,
     )
 
-    mask_arr = raster_to_array(mask_clipped, filled=True, fill_value=0)
-
-    array_to_raster(
-        mask_arr,
-        reference=mask_clipped,
-        out_path=os.path.join(FOLDER_OUT, f"label_{idx}.tif"),
-    )
-
-    bands = ["B02", "B03", "B04", "B05", "B06", "B07", "B08", "B11", "B12"]
-    s2_clipped = clip_raster(
-        [os.path.join(FOLDER, f"{band}_10m.tif") for band in bands],
-        split_file,
-        adjust_bbox=True,
-    )
-
-    s2_arr = raster_to_array(s2_clipped, filled=True, fill_value=0)
-
-    array_to_raster(
-        s2_arr,
-        reference=s2_clipped,
-        out_path=os.path.join(FOLDER_OUT, f"features_s2_{idx}.tif"),
-    )
-
-    bands = ["VV", "VH"]
     s1_clipped = clip_raster(
-        [os.path.join(FOLDER, f"{band}_10m.tif") for band in bands],
+        s1_stacked,
         split_file,
+        out_path=os.path.join(FOLDER_OUT, f"s1_{idx_offset}.tif"),
         adjust_bbox=True,
     )
 
-    s1_arr = raster_to_array(s1_clipped, filled=True, fill_value=0)
-
-    array_to_raster(
-        s1_arr,
-        reference=s1_clipped,
-        out_path=os.path.join(FOLDER_OUT, f"features_s1_{idx}.tif"),
+    s2_clipped = clip_raster(
+        s2_stacked,
+        split_file,
+        out_path=os.path.join(FOLDER_OUT, f"s2_{idx_offset}.tif"),
+        adjust_bbox=True,
     )
 
     dem_clipped = clip_raster(
-        os.path.join(FOLDER, "ORIENTATION_10m.tif"),
+        dem,
         split_file,
+        out_path=os.path.join(FOLDER_OUT, f"dem_{idx_offset}.tif"),
         adjust_bbox=True,
     )
 
-    array_to_raster(
-        dem_clipped,
-        reference=dem_clipped,
-    )
+    if not rasters_are_aligned([mask_clipped, s1_clipped, s2_clipped, dem_clipped]):
+        print("Rasters are not aligned: ", idx_offset)

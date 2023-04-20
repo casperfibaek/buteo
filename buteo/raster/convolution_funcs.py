@@ -133,11 +133,13 @@ def hood_median_absolute_deviation(
 def hood_z_score(
     values: np.ndarray,
     weights: np.ndarray,
-    center_value: Union[float, int],
+    center_idx: int,
 ) -> Union[float, int]:
     """ Get the local z score ."""
     std = hood_standard_deviation(values, weights)
     mean = hood_sum(values, weights)
+
+    center_value = values[center_idx]
 
     return (center_value - mean) / std
 
@@ -146,11 +148,13 @@ def hood_z_score(
 def hood_z_score_mad(
     values: np.ndarray,
     weights: np.ndarray,
-    center_value: Union[float, int],
+    center_idx: int,
 ) -> Union[float, int]:
     """ Get the local z score calculated around the MAD. """
     mad_std = hood_median_absolute_deviation(values, weights) * 1.4826
     median = hood_quantile(values, weights, 0.5)
+
+    center_value = values[center_idx]
 
     return (center_value - median) / mad_std
 
@@ -208,3 +212,56 @@ def hood_sigma_lee(
     selected_weights = np.divide(selected_weights, sum_of_weights)
 
     return hood_sum(selected_values, selected_weights)
+
+
+@jit(nopython=True, nogil=True, fastmath=True, cache=True)
+def hood_roughness(
+    values: np.ndarray,
+    weights: np.ndarray,
+    center_idx: int,
+) -> Union[float, int]:
+    """ 
+        Defined as the maximum difference between the center value and the
+        surrounding values. Weighted.
+    """
+    center_value = values[center_idx]
+
+    max_idx = np.argmax(np.abs(np.subtract(values, center_value)) * weights)
+
+    return np.abs(center_value - values[max_idx])
+
+
+@jit(nopython=True, nogil=True, fastmath=True, cache=True)
+def hood_roughness_tpi(
+    values: np.ndarray,
+    weights: np.ndarray,
+    center_idx: int,
+) -> Union[float, int]:
+    """ 
+        Defined as the difference between the center pixel and the mean of
+        the surrounding pixels. Weighted.
+    """
+    center_value = values[center_idx]
+    values_non_center = np.delete(values, center_idx)
+    weights_non_center = np.delete(weights, center_idx)
+    weights_non_center = np.divide(weights_non_center, np.sum(weights_non_center))
+
+    return np.abs(center_value - hood_sum(values_non_center, weights_non_center))
+
+
+@jit(nopython=True, nogil=True, fastmath=True, cache=True)
+def hood_roughness_tri(
+    values: np.ndarray,
+    weights: np.ndarray,
+    center_idx: int,
+) -> Union[float, int]:
+    """ 
+        Defined as the mean difference between the center pixel and the
+        surrounding pixels. Weighted.
+    """
+    center_value = values[center_idx]
+    values_non_center = np.delete(values, center_idx)
+    weights_non_center = np.delete(weights, center_idx)
+    weights_non_center = np.divide(weights_non_center, np.sum(weights_non_center))
+
+    return hood_sum(np.abs(np.subtract(values_non_center, center_value)), weights_non_center)

@@ -409,11 +409,14 @@ METHOD_ENUMS = {
     "quantile": 12,
     "occurrances": 13,
     "feather": 14,
+    "roughness": 15,
+    "roughness_tri": 16,
+    "roughness_tpi": 17,
 }
 
 
 @jit(nopython=True, nogil=False, fastmath=True, cache=True)
-def hood_to_value(method, values, weights, nodata_value=-9999.9, center_value=0, value=0.5):
+def hood_to_value(method, values, weights, nodata_value=-9999.9, center_idx=0, value=0.5):
     """ Convert a array of values and weights to a single value using a given method. """
     if method == 1:
         return convolution_funcs.hood_sum(values, weights)
@@ -432,9 +435,9 @@ def hood_to_value(method, values, weights, nodata_value=-9999.9, center_value=0,
     elif method == 8:
         return convolution_funcs.hood_median_absolute_deviation(values, weights)
     elif method == 9:
-        return convolution_funcs.hood_z_score(values, weights, center_value)
+        return convolution_funcs.hood_z_score(values, weights, center_idx)
     elif method == 10:
-        return convolution_funcs.hood_z_score_mad(values, weights, center_value)
+        return convolution_funcs.hood_z_score_mad(values, weights, center_idx)
     elif method == 11:
         return convolution_funcs.hood_sigma_lee(values, weights)
     elif method == 12:
@@ -443,6 +446,12 @@ def hood_to_value(method, values, weights, nodata_value=-9999.9, center_value=0,
         return convolution_funcs.hood_count_occurances(values, weights, value, normalise=False)
     elif method == 14:
         return convolution_funcs.hood_count_occurances(values, weights, value, normalise=True)
+    elif method == 15:
+        return convolution_funcs.hood_roughness(values, weights, center_idx)
+    elif method == 16:
+        return convolution_funcs.hood_roughness_tri(values, weights, center_idx)
+    elif method == 17:
+        return convolution_funcs.hood_roughness_tpi(values, weights, center_idx)
     else:
         return nodata_value
 
@@ -465,15 +474,10 @@ def _convolve_array_collapse(
     result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype="float32")
     hood_size = len(offsets)
 
-    if arr.shape[2] == 1:
-        idx_center = 0
-    else:
-        idx_center = int(np.ceil((arr.shape[2] / 2) - 1))
-
     for idx_y in prange(0, arr.shape[0]):
         for idx_x in range(0, arr.shape[1]):
 
-            center_value = arr[idx_y, idx_x, idx_center]
+            center_idx = 0
 
             if nodata and arr[idx_y, idx_x] == nodata_value:
                 result[idx_y, idx_x] = nodata_value
@@ -513,6 +517,9 @@ def _convolve_array_collapse(
                 hood_weights[hood_count] = weights[idx_h]
                 hood_count += 1
 
+                if offsets[idx_h][0] == 0 and offsets[idx_h][1] == 0:
+                    center_idx = hood_count - 1
+
             if hood_count == 0:
                 result[idx_y, idx_x] = nodata_value
                 continue
@@ -523,7 +530,7 @@ def _convolve_array_collapse(
             if hood_normalise:
                 hood_weights /= np.sum(hood_weights)
 
-            result[idx_y, idx_x, 0] = hood_to_value(method, hood_values, hood_weights, nodata_value, center_value, value)
+            result[idx_y, idx_x, 0] = hood_to_value(method, hood_values, hood_weights, nodata_value, center_idx, value)
 
     return result
 
@@ -549,7 +556,7 @@ def _convolve_array(
         for idx_x in range(0, arr.shape[1]):
             for idx_z in range(0, arr.shape[2]):
 
-                center_value = arr[idx_y, idx_x, idx_z]
+                center_idx = 0
                 hood_normalise = False
                 hood_values = np.zeros(hood_size, dtype="float32")
                 hood_weights = np.zeros(hood_size, dtype="float32")
@@ -588,6 +595,9 @@ def _convolve_array(
                     hood_weights[hood_count] = weights[idx_h]
                     hood_count += 1
 
+                    if offsets[idx_h][0] == 0 and offsets[idx_h][1] == 0 and offsets[idx_h][2] == 0:
+                        center_idx = hood_count - 1
+
                 if hood_count == 0:
                     result[idx_y, idx_x, idx_z] = nodata_value
                     continue
@@ -598,7 +608,7 @@ def _convolve_array(
                 if hood_normalise:
                     hood_weights /= np.sum(hood_weights)
 
-                result[idx_y, idx_x, idx_z] = hood_to_value(method, hood_values, hood_weights, nodata_value, center_value, value)
+                result[idx_y, idx_x, idx_z] = hood_to_value(method, hood_values, hood_weights, nodata_value, center_idx, value)
 
     return result
 
