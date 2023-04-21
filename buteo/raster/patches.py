@@ -725,18 +725,21 @@ def patches_to_weights(
 def array_to_patches(
     arr: np.ndarray,
     tile_size: int,
-    offsets_y: int = 3,
-    offsets_x: int = 3,
+    offsets_y: int = 1,
+    offsets_x: int = 1,
     border_check: bool = True,
 ) -> np.ndarray:
     """
     Generate patches from an array based on the specified parameters.
 
+    NOTE: The produced patches are in channel_last format
+    Use buteo.aux_utils.channel_last_to_first and channel_first_to_last to convert if needed.
+
     Args:
         arr (np.ndarray): A numpy array to be divided into patches.
         tile_size (int): The size of each tile/patch, e.g., 64 for 64x64 tiles.
-        offsets_y (int=3): The desired number of offsets to be calculated in the y dimension.
-        offsets_x (int=3): The desired number of offsets to be calculated in the x dimension.
+        offsets_y (int=1): The desired number of offsets to be calculated in the y dimension.
+        offsets_x (int=1): The desired number of offsets to be calculated in the x dimension.
         border_check (bool=True): Whether or not to include border patches.
 
     Returns:

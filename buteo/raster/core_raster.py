@@ -700,6 +700,9 @@ def raster_to_array(
 
         ref = None
 
+    if filled:
+        return np.ma.getdata(output_arr.filled(fill_value))
+
     return output_arr
 
 
