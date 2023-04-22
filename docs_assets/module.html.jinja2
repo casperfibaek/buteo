@@ -1,5 +1,5 @@
 {% extends "frame.html.jinja2" %}
-{% block title %}Buteo documentation{% endblock %}
+{% block title %}Buteo Documentation{% endblock %}
 {% block nav %}
     {% block module_list_link %}
         {% set parentmodule = ".".join(module.modulename.split(".")[:-1]) %}
@@ -37,14 +37,14 @@
     {% block nav_index %}
         {% set index = module.docstring | to_markdown | to_html | attr("toc_html") %}
         {% if index %}
-            <h2>Contents</h2>
+            <h2>Overview</h2>
             {{ index | safe }}
         {% endif %}
     {% endblock %}
 
     {% block nav_submodules %}
         {% if module.submodules %}
-            <h2>Submodules</h2>
+            <h2>Packages</h2>
             <ul>
                 {% for submodule in module.submodules if is_public(submodule) | trim %}
                     <li>{{ submodule.taken_from | link(text=submodule.name) }}</li>
