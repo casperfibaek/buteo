@@ -700,7 +700,7 @@ def raster_to_array(
 
         ref = None
 
-    if filled:
+    if filled and np.ma.isMaskedArray(output_arr):
         return np.ma.getdata(output_arr.filled(fill_value))
 
     return output_arr

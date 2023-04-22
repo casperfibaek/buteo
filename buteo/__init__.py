@@ -1,5 +1,5 @@
 """
-# Buteo - Geospatial Analysis Meets AI
+# Geospatial Analysis Meets AI
 
 Buteo is a toolbox designed to simplify the process of working with geospatial data in machine learning. It includes tools for reading, writing, and processing geospatial data, as well as tools for creating labels from vector data and generating patches from geospatial data. Buteo makes it easy to ingest data, create training data, and perform inference on geospatial data.
 
@@ -121,15 +121,6 @@ numba
 optional:
 orfeo-toolbox
 esa-snap
-
-# Build steps
-python -m run_tests; python -m build_documentation;
-python -m build; python -m twine upload dist/*;
-
-python -m run_tests && python -m build_documentation
-python -m build && python -m twine upload dist/*
-
-python -m build_anaconda -forge -clean;
 """
 
 from .utils import *

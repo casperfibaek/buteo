@@ -120,12 +120,3 @@ numba
 optional:
 orfeo-toolbox
 esa-snap
-
-# Build steps
-python -m run_tests; python -m build_documentation;
-python -m build; python -m twine upload dist/*;
-
-python -m run_tests && python -m build_documentation
-python -m build && python -m twine upload dist/*
-
-python -m build_anaconda -forge -clean;
