@@ -50,12 +50,24 @@
                     <li>{{ submodule.taken_from | link(text=submodule.name) }}</li>
                 {% endfor %}
             </ul>
+        {% block nav_package_functions %}
+            {% if all_modules %}
+                <h2>All Functions</h2>
+                <ul>
+                    {% for mod in all_modules.values() %}
+                        {% for m in mod.members.values() if m.kind == "function" and is_public(m) | trim %}
+                            <li>{{ m.taken_from | link(text=m.name) }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endblock %}
         {% endif %}
     {% endblock %}
 
     {% block nav_members %}
         {% if module.members %}
-            <h2>API Documentation</h2>
+            <h2>Functions</h2>
             {{ nav_members(module.members.values()) }}
         {% endif %}
     {% endblock %}
