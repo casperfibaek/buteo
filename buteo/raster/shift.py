@@ -6,6 +6,7 @@ Module to shift the location of rasters in geographic coordinates.
 
 # Standard library
 import sys; sys.path.append("../../")
+from typing import Union, Optional, List
 
 # External
 from osgeo import gdal
@@ -18,13 +19,13 @@ from buteo.raster.convolution import convolve_array_simple, simple_shift_kernel_
 
 
 def _shift_raster(
-    raster,
-    shift_list,
-    out_path=None,
+    raster: Union[str, gdal.Dataset, List],
+    shift_list: List[Union[int, float]],
+    out_path: Optional[str] = None,
     *,
-    overwrite=True,
-    creation_options=None,
-):
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
+) -> Union[str, gdal.Dataset]:
     """ Internal. """
     assert isinstance(shift_list, (list, tuple)), f"shift_list must be a list or a tuple. {shift_list}"
     assert len(shift_list) == 2, f"shift_list must be a list or tuple with len 2 (x_shift, y_shift): {shift_list}"
@@ -81,34 +82,34 @@ def _shift_raster(
 
 
 def shift_raster(
-    raster,
-    shift_list,
-    out_path=None,
+    raster: Union[str, gdal.Dataset, List],
+    shift_list: List[Union[int, float]],
+    out_path: Optional[str] = None,
     *,
-    overwrite=True,
-    prefix="",
-    suffix="",
-    add_uuid=False,
-    creation_options=None,
-):
+    overwrite: bool = True,
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = False,
+    creation_options: Optional[List[str]] = None,
+) -> Union[str, List[str], gdal.Dataset]:
     """
     Shifts a raster in a given direction. (The frame is shifted)
 
-    ## Args:
-    `raster` (_str_/_list_/_gdal.Dataset_): The raster(s) to be shifted. </br>
-    `shift_list` (_list_/_tuple_): The shift in x and y direction. </br>
+    Args:
+        raster (Union[str, List, gdal.Dataset]): The raster(s) to be shifted.
+        shift_list (List[Union[int, float]]): The shift in x and y direction.
 
-    ## Kwargs:
-    `out_path` (_str_/_list_/_None_): The path to the output raster. If None, the raster is
-    created in memory. (Default: **None**)</br>
-    `overwrite` (_bool_): If True, the output raster will be overwritten if it already exists. (Default: **True**) </br>
-    `prefix` (_str_): The prefix to be added to the output raster name. (Default: **""**) </br>
-    `suffix` (_str_): The suffix to be added to the output raster name. (Default: **""**) </br>
-    `add_uuid` (_bool_): If True, a unique identifier will be added to the output raster name. (Default: **False**) </br>
-    `creation_options` (_list_/_None_): The creation options to be used when creating the output. (Default: **None**) </br>
+    Keyword Args:
+        out_path (Optional[str]='None'): The path to the output raster. If None, the raster is
+            created in memory.
+        overwrite (bool=True): If True, the output raster will be overwritten if it already exists.
+        prefix (str=''): The prefix to be added to the output raster name.
+        suffix (str=''): The suffix to be added to the output raster name.
+        add_uuid (bool=False): If True, a unique identifier will be added to the output raster name.
+        creation_options (Optional[List[str]]='None'): The creation options to be used when creating the output.
 
-    ## Returns:
-    (_str_/_list_): The path(s) to the shifted raster(s).
+    Returns:
+        Union[str, List[str], gdal.Dataset]: The path(s) to the shifted raster(s).
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(shift_list, [[tuple, list]], "shift_list")
@@ -147,13 +148,25 @@ def shift_raster(
 
 
 def shift_raster_pixel(
-    raster,
-    shift_list,
-    nodata_value=-9999.9,
-    out_path=None,
+    raster: Union[str, gdal.Dataset],
+    shift_list: List[Union[int, float]],
+    nodata_value: Union[int, float] = -9999.9,
+    out_path: Optional[str] = None,
 ) -> str:
     """
-    Shifts a raster in a given direction. (The frame is shifted)
+    Shifts a raster in a given direction. (The pixels are shifted, not the frame)
+
+    Args:
+        raster (Union[str, gdal.Dataset]): The raster to be shifted.
+        shift_list (List[Union[int, float]]): The shift in x and y direction.
+
+    Keyword Args:
+        nodata_value (Union[int, float]=-9999.9): The nodata value to use when shifting pixels.
+        out_path (Optional[str]='None'): The path to the output raster. If None, the raster is
+            created in memory.
+
+    Returns:
+        str: The path to the shifted raster.
     """
     core_utils.type_check(raster, [str, gdal.Dataset], "raster")
     core_utils.type_check(shift_list, [[tuple, list]], "shift_list")

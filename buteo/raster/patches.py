@@ -784,6 +784,8 @@ def predict_array(
     """
     Generate patches from an array. Also outputs the offsets and the shapes of the offsets. Only
     suppors the prediction of single values in the rasters/arrays. 
+
+    NOTE: The produced patches passed to the callback are in channel_last format.
     
     Args:
         arr (np.ndarray): A numpy array to be divided into patches.

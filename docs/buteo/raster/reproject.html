@@ -219,16 +219,16 @@ Can uses references from vector or other raster datasets.</p>
 </span><span id="L-150"><a href="#L-150"><span class="linenos">150</span></a><span class="sd">            from a vector or raster datasource either from path or in-memory.</span>
 </span><span id="L-151"><a href="#L-151"><span class="linenos">151</span></a>
 </span><span id="L-152"><a href="#L-152"><span class="linenos">152</span></a><span class="sd">    Keyword Args:</span>
-</span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a><span class="sd">        out_path (str/list/None, default=None): The output path. If not provided, the output path is inferred from the input.</span>
-</span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a><span class="sd">        resample_alg (str, default=&quot;nearest&quot;): The resampling algorithm.</span>
-</span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a><span class="sd">        copy_if_same (bool, default=True): If the input and output projections are the same, copy the input raster to the output path.</span>
-</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a><span class="sd">        overwrite (bool, default=True): If the output path already exists, overwrite it.</span>
-</span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a><span class="sd">        creation_options (list/None, default=None): A list of creation options for the output raster.</span>
-</span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a><span class="sd">        dst_nodata (str/int/float, default=&quot;infer&quot;): The nodata value for the output raster.</span>
-</span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a><span class="sd">        dtype (str/None, default=None): The data type for the output raster.</span>
-</span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a><span class="sd">        prefix (str, default=&quot;&quot;): The prefix to add to the output path.</span>
-</span><span id="L-161"><a href="#L-161"><span class="linenos">161</span></a><span class="sd">        suffix (str, default=&quot;&quot;): The suffix to add to the output path.</span>
-</span><span id="L-162"><a href="#L-162"><span class="linenos">162</span></a><span class="sd">        add_uuid (bool, default=False): If True, add a UUID to the output path.</span>
+</span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a><span class="sd">        out_path (str/list/None=None): The output path. If not provided, the output path is inferred from the input.</span>
+</span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a><span class="sd">        resample_alg (str=&quot;nearest&quot;): The resampling algorithm.</span>
+</span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a><span class="sd">        copy_if_same (bool=True): If the input and output projections are the same, copy the input raster to the output path.</span>
+</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a><span class="sd">        overwrite (bool=True): If the output path already exists, overwrite it.</span>
+</span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a><span class="sd">        creation_options (list/None=None): A list of creation options for the output raster.</span>
+</span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a><span class="sd">        dst_nodata (str/int/float=&quot;infer&quot;): The nodata value for the output raster.</span>
+</span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a><span class="sd">        dtype (str/None=None): The data type for the output raster.</span>
+</span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a><span class="sd">        prefix (str=&quot;&quot;): The prefix to add to the output path.</span>
+</span><span id="L-161"><a href="#L-161"><span class="linenos">161</span></a><span class="sd">        suffix (str=&quot;&quot;): The suffix to add to the output path.</span>
+</span><span id="L-162"><a href="#L-162"><span class="linenos">162</span></a><span class="sd">        add_uuid (bool=False): If True, add a UUID to the output path.</span>
 </span><span id="L-163"><a href="#L-163"><span class="linenos">163</span></a>
 </span><span id="L-164"><a href="#L-164"><span class="linenos">164</span></a><span class="sd">    Returns:</span>
 </span><span id="L-165"><a href="#L-165"><span class="linenos">165</span></a><span class="sd">        str/list: The output path(s).</span>
@@ -305,15 +305,15 @@ Can uses references from vector or other raster datasets.</p>
 </span><span id="L-236"><a href="#L-236"><span class="linenos">236</span></a><span class="sd">            or vector.</span>
 </span><span id="L-237"><a href="#L-237"><span class="linenos">237</span></a>
 </span><span id="L-238"><a href="#L-238"><span class="linenos">238</span></a><span class="sd">    Keyword Args:</span>
-</span><span id="L-239"><a href="#L-239"><span class="linenos">239</span></a><span class="sd">        out_path (str/list, default=None): Paths to the output. If not provided,</span>
+</span><span id="L-239"><a href="#L-239"><span class="linenos">239</span></a><span class="sd">        out_path (str/list=None): Paths to the output. If not provided,</span>
 </span><span id="L-240"><a href="#L-240"><span class="linenos">240</span></a><span class="sd">            the output will be in-memory rasters.</span>
-</span><span id="L-241"><a href="#L-241"><span class="linenos">241</span></a><span class="sd">        overwrite (bool, default=True): If True, existing rasters will be</span>
+</span><span id="L-241"><a href="#L-241"><span class="linenos">241</span></a><span class="sd">        overwrite (bool=True): If True, existing rasters will be</span>
 </span><span id="L-242"><a href="#L-242"><span class="linenos">242</span></a><span class="sd">            overwritten.</span>
-</span><span id="L-243"><a href="#L-243"><span class="linenos">243</span></a><span class="sd">        dst_nodata (str, default=&#39;infer&#39;): Value to use for no-data pixels. If not</span>
+</span><span id="L-243"><a href="#L-243"><span class="linenos">243</span></a><span class="sd">        dst_nodata (str=&#39;infer&#39;): Value to use for no-data pixels. If not</span>
 </span><span id="L-244"><a href="#L-244"><span class="linenos">244</span></a><span class="sd">            provided, the value will be transfered from the original.</span>
-</span><span id="L-245"><a href="#L-245"><span class="linenos">245</span></a><span class="sd">        copy_if_already_correct (bool, default=True): If True, the raster will be</span>
+</span><span id="L-245"><a href="#L-245"><span class="linenos">245</span></a><span class="sd">        copy_if_already_correct (bool=True): If True, the raster will be</span>
 </span><span id="L-246"><a href="#L-246"><span class="linenos">246</span></a><span class="sd">            copied if it is already in the correct projection.</span>
-</span><span id="L-247"><a href="#L-247"><span class="linenos">247</span></a><span class="sd">        creation_options (list, default=None): List of creation options to pass</span>
+</span><span id="L-247"><a href="#L-247"><span class="linenos">247</span></a><span class="sd">        creation_options (list=None): List of creation options to pass</span>
 </span><span id="L-248"><a href="#L-248"><span class="linenos">248</span></a><span class="sd">            to the output raster.</span>
 </span><span id="L-249"><a href="#L-249"><span class="linenos">249</span></a>
 </span><span id="L-250"><a href="#L-250"><span class="linenos">250</span></a><span class="sd">    Returns:</span>
@@ -458,16 +458,16 @@ projection of that raster will be returned.</p>
 </span><span id="reproject_raster-151"><a href="#reproject_raster-151"><span class="linenos">151</span></a><span class="sd">            from a vector or raster datasource either from path or in-memory.</span>
 </span><span id="reproject_raster-152"><a href="#reproject_raster-152"><span class="linenos">152</span></a>
 </span><span id="reproject_raster-153"><a href="#reproject_raster-153"><span class="linenos">153</span></a><span class="sd">    Keyword Args:</span>
-</span><span id="reproject_raster-154"><a href="#reproject_raster-154"><span class="linenos">154</span></a><span class="sd">        out_path (str/list/None, default=None): The output path. If not provided, the output path is inferred from the input.</span>
-</span><span id="reproject_raster-155"><a href="#reproject_raster-155"><span class="linenos">155</span></a><span class="sd">        resample_alg (str, default=&quot;nearest&quot;): The resampling algorithm.</span>
-</span><span id="reproject_raster-156"><a href="#reproject_raster-156"><span class="linenos">156</span></a><span class="sd">        copy_if_same (bool, default=True): If the input and output projections are the same, copy the input raster to the output path.</span>
-</span><span id="reproject_raster-157"><a href="#reproject_raster-157"><span class="linenos">157</span></a><span class="sd">        overwrite (bool, default=True): If the output path already exists, overwrite it.</span>
-</span><span id="reproject_raster-158"><a href="#reproject_raster-158"><span class="linenos">158</span></a><span class="sd">        creation_options (list/None, default=None): A list of creation options for the output raster.</span>
-</span><span id="reproject_raster-159"><a href="#reproject_raster-159"><span class="linenos">159</span></a><span class="sd">        dst_nodata (str/int/float, default=&quot;infer&quot;): The nodata value for the output raster.</span>
-</span><span id="reproject_raster-160"><a href="#reproject_raster-160"><span class="linenos">160</span></a><span class="sd">        dtype (str/None, default=None): The data type for the output raster.</span>
-</span><span id="reproject_raster-161"><a href="#reproject_raster-161"><span class="linenos">161</span></a><span class="sd">        prefix (str, default=&quot;&quot;): The prefix to add to the output path.</span>
-</span><span id="reproject_raster-162"><a href="#reproject_raster-162"><span class="linenos">162</span></a><span class="sd">        suffix (str, default=&quot;&quot;): The suffix to add to the output path.</span>
-</span><span id="reproject_raster-163"><a href="#reproject_raster-163"><span class="linenos">163</span></a><span class="sd">        add_uuid (bool, default=False): If True, add a UUID to the output path.</span>
+</span><span id="reproject_raster-154"><a href="#reproject_raster-154"><span class="linenos">154</span></a><span class="sd">        out_path (str/list/None=None): The output path. If not provided, the output path is inferred from the input.</span>
+</span><span id="reproject_raster-155"><a href="#reproject_raster-155"><span class="linenos">155</span></a><span class="sd">        resample_alg (str=&quot;nearest&quot;): The resampling algorithm.</span>
+</span><span id="reproject_raster-156"><a href="#reproject_raster-156"><span class="linenos">156</span></a><span class="sd">        copy_if_same (bool=True): If the input and output projections are the same, copy the input raster to the output path.</span>
+</span><span id="reproject_raster-157"><a href="#reproject_raster-157"><span class="linenos">157</span></a><span class="sd">        overwrite (bool=True): If the output path already exists, overwrite it.</span>
+</span><span id="reproject_raster-158"><a href="#reproject_raster-158"><span class="linenos">158</span></a><span class="sd">        creation_options (list/None=None): A list of creation options for the output raster.</span>
+</span><span id="reproject_raster-159"><a href="#reproject_raster-159"><span class="linenos">159</span></a><span class="sd">        dst_nodata (str/int/float=&quot;infer&quot;): The nodata value for the output raster.</span>
+</span><span id="reproject_raster-160"><a href="#reproject_raster-160"><span class="linenos">160</span></a><span class="sd">        dtype (str/None=None): The data type for the output raster.</span>
+</span><span id="reproject_raster-161"><a href="#reproject_raster-161"><span class="linenos">161</span></a><span class="sd">        prefix (str=&quot;&quot;): The prefix to add to the output path.</span>
+</span><span id="reproject_raster-162"><a href="#reproject_raster-162"><span class="linenos">162</span></a><span class="sd">        suffix (str=&quot;&quot;): The suffix to add to the output path.</span>
+</span><span id="reproject_raster-163"><a href="#reproject_raster-163"><span class="linenos">163</span></a><span class="sd">        add_uuid (bool=False): If True, add a UUID to the output path.</span>
 </span><span id="reproject_raster-164"><a href="#reproject_raster-164"><span class="linenos">164</span></a>
 </span><span id="reproject_raster-165"><a href="#reproject_raster-165"><span class="linenos">165</span></a><span class="sd">    Returns:</span>
 </span><span id="reproject_raster-166"><a href="#reproject_raster-166"><span class="linenos">166</span></a><span class="sd">        str/list: The output path(s).</span>
@@ -539,16 +539,16 @@ from a vector or raster datasource either from path or in-memory.</li>
 <h6 id="keyword-args">Keyword Args:</h6>
 
 <blockquote>
-  <p>out_path (str/list/None, default=None): The output path. If not provided, the output path is inferred from the input.
-  resample_alg (str, default="nearest"): The resampling algorithm.
-  copy_if_same (bool, default=True): If the input and output projections are the same, copy the input raster to the output path.
-  overwrite (bool, default=True): If the output path already exists, overwrite it.
-  creation_options (list/None, default=None): A list of creation options for the output raster.
-  dst_nodata (str/int/float, default="infer"): The nodata value for the output raster.
-  dtype (str/None, default=None): The data type for the output raster.
-  prefix (str, default=""): The prefix to add to the output path.
-  suffix (str, default=""): The suffix to add to the output path.
-  add_uuid (bool, default=False): If True, add a UUID to the output path.</p>
+  <p>out_path (str/list/None=None): The output path. If not provided, the output path is inferred from the input.
+  resample_alg (str="nearest"): The resampling algorithm.
+  copy_if_same (bool=True): If the input and output projections are the same, copy the input raster to the output path.
+  overwrite (bool=True): If the output path already exists, overwrite it.
+  creation_options (list/None=None): A list of creation options for the output raster.
+  dst_nodata (str/int/float="infer"): The nodata value for the output raster.
+  dtype (str/None=None): The data type for the output raster.
+  prefix (str=""): The prefix to add to the output path.
+  suffix (str=""): The suffix to add to the output path.
+  add_uuid (bool=False): If True, add a UUID to the output path.</p>
 </blockquote>
 
 <h6 id="returns">Returns:</h6>
@@ -591,15 +591,15 @@ from a vector or raster datasource either from path or in-memory.</li>
 </span><span id="match_raster_projections-237"><a href="#match_raster_projections-237"><span class="linenos">237</span></a><span class="sd">            or vector.</span>
 </span><span id="match_raster_projections-238"><a href="#match_raster_projections-238"><span class="linenos">238</span></a>
 </span><span id="match_raster_projections-239"><a href="#match_raster_projections-239"><span class="linenos">239</span></a><span class="sd">    Keyword Args:</span>
-</span><span id="match_raster_projections-240"><a href="#match_raster_projections-240"><span class="linenos">240</span></a><span class="sd">        out_path (str/list, default=None): Paths to the output. If not provided,</span>
+</span><span id="match_raster_projections-240"><a href="#match_raster_projections-240"><span class="linenos">240</span></a><span class="sd">        out_path (str/list=None): Paths to the output. If not provided,</span>
 </span><span id="match_raster_projections-241"><a href="#match_raster_projections-241"><span class="linenos">241</span></a><span class="sd">            the output will be in-memory rasters.</span>
-</span><span id="match_raster_projections-242"><a href="#match_raster_projections-242"><span class="linenos">242</span></a><span class="sd">        overwrite (bool, default=True): If True, existing rasters will be</span>
+</span><span id="match_raster_projections-242"><a href="#match_raster_projections-242"><span class="linenos">242</span></a><span class="sd">        overwrite (bool=True): If True, existing rasters will be</span>
 </span><span id="match_raster_projections-243"><a href="#match_raster_projections-243"><span class="linenos">243</span></a><span class="sd">            overwritten.</span>
-</span><span id="match_raster_projections-244"><a href="#match_raster_projections-244"><span class="linenos">244</span></a><span class="sd">        dst_nodata (str, default=&#39;infer&#39;): Value to use for no-data pixels. If not</span>
+</span><span id="match_raster_projections-244"><a href="#match_raster_projections-244"><span class="linenos">244</span></a><span class="sd">        dst_nodata (str=&#39;infer&#39;): Value to use for no-data pixels. If not</span>
 </span><span id="match_raster_projections-245"><a href="#match_raster_projections-245"><span class="linenos">245</span></a><span class="sd">            provided, the value will be transfered from the original.</span>
-</span><span id="match_raster_projections-246"><a href="#match_raster_projections-246"><span class="linenos">246</span></a><span class="sd">        copy_if_already_correct (bool, default=True): If True, the raster will be</span>
+</span><span id="match_raster_projections-246"><a href="#match_raster_projections-246"><span class="linenos">246</span></a><span class="sd">        copy_if_already_correct (bool=True): If True, the raster will be</span>
 </span><span id="match_raster_projections-247"><a href="#match_raster_projections-247"><span class="linenos">247</span></a><span class="sd">            copied if it is already in the correct projection.</span>
-</span><span id="match_raster_projections-248"><a href="#match_raster_projections-248"><span class="linenos">248</span></a><span class="sd">        creation_options (list, default=None): List of creation options to pass</span>
+</span><span id="match_raster_projections-248"><a href="#match_raster_projections-248"><span class="linenos">248</span></a><span class="sd">        creation_options (list=None): List of creation options to pass</span>
 </span><span id="match_raster_projections-249"><a href="#match_raster_projections-249"><span class="linenos">249</span></a><span class="sd">            to the output raster.</span>
 </span><span id="match_raster_projections-250"><a href="#match_raster_projections-250"><span class="linenos">250</span></a>
 </span><span id="match_raster_projections-251"><a href="#match_raster_projections-251"><span class="linenos">251</span></a><span class="sd">    Returns:</span>
@@ -659,15 +659,15 @@ or vector.</li>
 <h6 id="keyword-args">Keyword Args:</h6>
 
 <blockquote>
-  <p>out_path (str/list, default=None): Paths to the output. If not provided,
+  <p>out_path (str/list=None): Paths to the output. If not provided,
       the output will be in-memory rasters.
-  overwrite (bool, default=True): If True, existing rasters will be
+  overwrite (bool=True): If True, existing rasters will be
       overwritten.
-  dst_nodata (str, default='infer'): Value to use for no-data pixels. If not
+  dst_nodata (str='infer'): Value to use for no-data pixels. If not
       provided, the value will be transfered from the original.
-  copy_if_already_correct (bool, default=True): If True, the raster will be
+  copy_if_already_correct (bool=True): If True, the raster will be
       copied if it is already in the correct projection.
-  creation_options (list, default=None): List of creation options to pass
+  creation_options (list=None): List of creation options to pass
       to the output raster.</p>
 </blockquote>
 

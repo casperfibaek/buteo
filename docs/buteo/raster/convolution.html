@@ -240,18 +240,18 @@
 </span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a>
 </span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a><span class="sd">    Args:</span>
 </span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a><span class="sd">        arr (numpy.ndarray): The input array.</span>
-</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a><span class="sd">        method (str, default=None): The weighting method to use.</span>
+</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a><span class="sd">        method (str=None): The weighting method to use.</span>
 </span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a><span class="sd">            &quot;none&quot;: No weighting (default).</span>
 </span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a><span class="sd">            &quot;linear&quot;: Linear decay.</span>
 </span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a><span class="sd">            &quot;sqrt&quot;: Square root decay.</span>
 </span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a><span class="sd">            &quot;power&quot;: Power decay.</span>
 </span><span id="L-161"><a href="#L-161"><span class="linenos">161</span></a><span class="sd">            &quot;log&quot;: Logarithmic decay.</span>
 </span><span id="L-162"><a href="#L-162"><span class="linenos">162</span></a><span class="sd">            &quot;gaussian&quot;: Gaussian decay.</span>
-</span><span id="L-163"><a href="#L-163"><span class="linenos">163</span></a><span class="sd">        decay (float, default=0.2): The decay rate for the `linear`, `sqrt`, and `power` methods.</span>
-</span><span id="L-164"><a href="#L-164"><span class="linenos">164</span></a><span class="sd">        sigma (float, default=1.0): The standard deviation for the Gaussian method.</span>
-</span><span id="L-165"><a href="#L-165"><span class="linenos">165</span></a><span class="sd">        center (float, default=0.0): The center of the array.</span>
-</span><span id="L-166"><a href="#L-166"><span class="linenos">166</span></a><span class="sd">        spherical (bool, default=False): If True, adjust weights based on the radius.</span>
-</span><span id="L-167"><a href="#L-167"><span class="linenos">167</span></a><span class="sd">        radius (float, default=3.0): The radius for spherical adjustments.</span>
+</span><span id="L-163"><a href="#L-163"><span class="linenos">163</span></a><span class="sd">        decay (float=0.2): The decay rate for the `linear`, `sqrt`, and `power` methods.</span>
+</span><span id="L-164"><a href="#L-164"><span class="linenos">164</span></a><span class="sd">        sigma (float=1.0): The standard deviation for the Gaussian method.</span>
+</span><span id="L-165"><a href="#L-165"><span class="linenos">165</span></a><span class="sd">        center (float=0.0): The center of the array.</span>
+</span><span id="L-166"><a href="#L-166"><span class="linenos">166</span></a><span class="sd">        spherical (bool=False): If True, adjust weights based on the radius.</span>
+</span><span id="L-167"><a href="#L-167"><span class="linenos">167</span></a><span class="sd">        radius (float=3.0): The radius for spherical adjustments.</span>
 </span><span id="L-168"><a href="#L-168"><span class="linenos">168</span></a>
 </span><span id="L-169"><a href="#L-169"><span class="linenos">169</span></a><span class="sd">    Returns:</span>
 </span><span id="L-170"><a href="#L-170"><span class="linenos">170</span></a><span class="sd">        float: The computed weight.</span>
@@ -342,17 +342,17 @@
 </span><span id="L-255"><a href="#L-255"><span class="linenos">255</span></a>
 </span><span id="L-256"><a href="#L-256"><span class="linenos">256</span></a><span class="sd">    Args:</span>
 </span><span id="L-257"><a href="#L-257"><span class="linenos">257</span></a><span class="sd">        size (int): Size of the kernel (must be odd).</span>
-</span><span id="L-258"><a href="#L-258"><span class="linenos">258</span></a><span class="sd">        depth (int, default=1): Depth of the kernel.</span>
-</span><span id="L-259"><a href="#L-259"><span class="linenos">259</span></a><span class="sd">        hole (bool, default=False): Create a hole in the center of the kernel.</span>
-</span><span id="L-260"><a href="#L-260"><span class="linenos">260</span></a><span class="sd">        inverted (bool, default=False): Invert the kernel values.</span>
-</span><span id="L-261"><a href="#L-261"><span class="linenos">261</span></a><span class="sd">        normalise (bool, default=True): Normalize the kernel values.</span>
-</span><span id="L-262"><a href="#L-262"><span class="linenos">262</span></a><span class="sd">        multi_dimensional (bool, default=False): Consider the kernel multi-dimensional.</span>
-</span><span id="L-263"><a href="#L-263"><span class="linenos">263</span></a><span class="sd">        multi_dimensional_center (int, default=0): Center of the</span>
+</span><span id="L-258"><a href="#L-258"><span class="linenos">258</span></a><span class="sd">        depth (int=1): Depth of the kernel.</span>
+</span><span id="L-259"><a href="#L-259"><span class="linenos">259</span></a><span class="sd">        hole (bool=False): Create a hole in the center of the kernel.</span>
+</span><span id="L-260"><a href="#L-260"><span class="linenos">260</span></a><span class="sd">        inverted (bool=False): Invert the kernel values.</span>
+</span><span id="L-261"><a href="#L-261"><span class="linenos">261</span></a><span class="sd">        normalise (bool=True): Normalize the kernel values.</span>
+</span><span id="L-262"><a href="#L-262"><span class="linenos">262</span></a><span class="sd">        multi_dimensional (bool=False): Consider the kernel multi-dimensional.</span>
+</span><span id="L-263"><a href="#L-263"><span class="linenos">263</span></a><span class="sd">        multi_dimensional_center (int=0): Center of the</span>
 </span><span id="L-264"><a href="#L-264"><span class="linenos">264</span></a><span class="sd">            multi-dimensional kernel.</span>
-</span><span id="L-265"><a href="#L-265"><span class="linenos">265</span></a><span class="sd">        spherical (bool, default=False): Consider the kernel spherical.</span>
-</span><span id="L-266"><a href="#L-266"><span class="linenos">266</span></a><span class="sd">        distance_weight (str or None, default=None): Distance weighting method.</span>
-</span><span id="L-267"><a href="#L-267"><span class="linenos">267</span></a><span class="sd">        distance_decay (float, default=0.2): Distance decay factor.</span>
-</span><span id="L-268"><a href="#L-268"><span class="linenos">268</span></a><span class="sd">        distance_sigma (float, default=1): Distance sigma for Gaussian distance weighting.</span>
+</span><span id="L-265"><a href="#L-265"><span class="linenos">265</span></a><span class="sd">        spherical (bool=False): Consider the kernel spherical.</span>
+</span><span id="L-266"><a href="#L-266"><span class="linenos">266</span></a><span class="sd">        distance_weight (str or None=None): Distance weighting method.</span>
+</span><span id="L-267"><a href="#L-267"><span class="linenos">267</span></a><span class="sd">        distance_decay (float=0.2): Distance decay factor.</span>
+</span><span id="L-268"><a href="#L-268"><span class="linenos">268</span></a><span class="sd">        distance_sigma (float=1): Distance sigma for Gaussian distance weighting.</span>
 </span><span id="L-269"><a href="#L-269"><span class="linenos">269</span></a>
 </span><span id="L-270"><a href="#L-270"><span class="linenos">270</span></a><span class="sd">    Returns:</span>
 </span><span id="L-271"><a href="#L-271"><span class="linenos">271</span></a><span class="sd">        tuple: A tuple containing the kernel, weights, and offsets.</span>
@@ -446,11 +446,11 @@
 </span><span id="L-359"><a href="#L-359"><span class="linenos">359</span></a><span class="sd">        arr (numpy.ndarray): The input array to be padded.</span>
 </span><span id="L-360"><a href="#L-360"><span class="linenos">360</span></a>
 </span><span id="L-361"><a href="#L-361"><span class="linenos">361</span></a><span class="sd">    Keyword Args:</span>
-</span><span id="L-362"><a href="#L-362"><span class="linenos">362</span></a><span class="sd">        pad_size (int, default=1): The number of padding elements to add</span>
+</span><span id="L-362"><a href="#L-362"><span class="linenos">362</span></a><span class="sd">        pad_size (int=1): The number of padding elements to add</span>
 </span><span id="L-363"><a href="#L-363"><span class="linenos">363</span></a><span class="sd">            to each side of the array. Default is 1.</span>
-</span><span id="L-364"><a href="#L-364"><span class="linenos">364</span></a><span class="sd">        method (str, default=&quot;same&quot;): The padding method to use. Default</span>
+</span><span id="L-364"><a href="#L-364"><span class="linenos">364</span></a><span class="sd">        method (str=&quot;same&quot;): The padding method to use. Default</span>
 </span><span id="L-365"><a href="#L-365"><span class="linenos">365</span></a><span class="sd">            is &quot;same&quot;. Other options are &quot;edge&quot; and &quot;constant&quot;.</span>
-</span><span id="L-366"><a href="#L-366"><span class="linenos">366</span></a><span class="sd">        constant_value (int, default=None): The constant value to use</span>
+</span><span id="L-366"><a href="#L-366"><span class="linenos">366</span></a><span class="sd">        constant_value (int=None): The constant value to use</span>
 </span><span id="L-367"><a href="#L-367"><span class="linenos">367</span></a><span class="sd">            when padding with &quot;constant&quot;. Default is 0.</span>
 </span><span id="L-368"><a href="#L-368"><span class="linenos">368</span></a>
 </span><span id="L-369"><a href="#L-369"><span class="linenos">369</span></a><span class="sd">    Returns:</span>
@@ -1097,18 +1097,18 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 </span><span id="weight_distance-154"><a href="#weight_distance-154"><span class="linenos">154</span></a>
 </span><span id="weight_distance-155"><a href="#weight_distance-155"><span class="linenos">155</span></a><span class="sd">    Args:</span>
 </span><span id="weight_distance-156"><a href="#weight_distance-156"><span class="linenos">156</span></a><span class="sd">        arr (numpy.ndarray): The input array.</span>
-</span><span id="weight_distance-157"><a href="#weight_distance-157"><span class="linenos">157</span></a><span class="sd">        method (str, default=None): The weighting method to use.</span>
+</span><span id="weight_distance-157"><a href="#weight_distance-157"><span class="linenos">157</span></a><span class="sd">        method (str=None): The weighting method to use.</span>
 </span><span id="weight_distance-158"><a href="#weight_distance-158"><span class="linenos">158</span></a><span class="sd">            &quot;none&quot;: No weighting (default).</span>
 </span><span id="weight_distance-159"><a href="#weight_distance-159"><span class="linenos">159</span></a><span class="sd">            &quot;linear&quot;: Linear decay.</span>
 </span><span id="weight_distance-160"><a href="#weight_distance-160"><span class="linenos">160</span></a><span class="sd">            &quot;sqrt&quot;: Square root decay.</span>
 </span><span id="weight_distance-161"><a href="#weight_distance-161"><span class="linenos">161</span></a><span class="sd">            &quot;power&quot;: Power decay.</span>
 </span><span id="weight_distance-162"><a href="#weight_distance-162"><span class="linenos">162</span></a><span class="sd">            &quot;log&quot;: Logarithmic decay.</span>
 </span><span id="weight_distance-163"><a href="#weight_distance-163"><span class="linenos">163</span></a><span class="sd">            &quot;gaussian&quot;: Gaussian decay.</span>
-</span><span id="weight_distance-164"><a href="#weight_distance-164"><span class="linenos">164</span></a><span class="sd">        decay (float, default=0.2): The decay rate for the `linear`, `sqrt`, and `power` methods.</span>
-</span><span id="weight_distance-165"><a href="#weight_distance-165"><span class="linenos">165</span></a><span class="sd">        sigma (float, default=1.0): The standard deviation for the Gaussian method.</span>
-</span><span id="weight_distance-166"><a href="#weight_distance-166"><span class="linenos">166</span></a><span class="sd">        center (float, default=0.0): The center of the array.</span>
-</span><span id="weight_distance-167"><a href="#weight_distance-167"><span class="linenos">167</span></a><span class="sd">        spherical (bool, default=False): If True, adjust weights based on the radius.</span>
-</span><span id="weight_distance-168"><a href="#weight_distance-168"><span class="linenos">168</span></a><span class="sd">        radius (float, default=3.0): The radius for spherical adjustments.</span>
+</span><span id="weight_distance-164"><a href="#weight_distance-164"><span class="linenos">164</span></a><span class="sd">        decay (float=0.2): The decay rate for the `linear`, `sqrt`, and `power` methods.</span>
+</span><span id="weight_distance-165"><a href="#weight_distance-165"><span class="linenos">165</span></a><span class="sd">        sigma (float=1.0): The standard deviation for the Gaussian method.</span>
+</span><span id="weight_distance-166"><a href="#weight_distance-166"><span class="linenos">166</span></a><span class="sd">        center (float=0.0): The center of the array.</span>
+</span><span id="weight_distance-167"><a href="#weight_distance-167"><span class="linenos">167</span></a><span class="sd">        spherical (bool=False): If True, adjust weights based on the radius.</span>
+</span><span id="weight_distance-168"><a href="#weight_distance-168"><span class="linenos">168</span></a><span class="sd">        radius (float=3.0): The radius for spherical adjustments.</span>
 </span><span id="weight_distance-169"><a href="#weight_distance-169"><span class="linenos">169</span></a>
 </span><span id="weight_distance-170"><a href="#weight_distance-170"><span class="linenos">170</span></a><span class="sd">    Returns:</span>
 </span><span id="weight_distance-171"><a href="#weight_distance-171"><span class="linenos">171</span></a><span class="sd">        float: The computed weight.</span>
@@ -1162,18 +1162,18 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 
 <ul>
 <li><strong>arr (numpy.ndarray):</strong>  The input array.</li>
-<li><strong>method (str, default=None):</strong>  The weighting method to use.
+<li><strong>method (str=None):</strong>  The weighting method to use.
 "none": No weighting (default).
 "linear": Linear decay.
 "sqrt": Square root decay.
 "power": Power decay.
 "log": Logarithmic decay.
 "gaussian": Gaussian decay.</li>
-<li><strong>decay (float, default=0.2):</strong>  The decay rate for the <code>linear</code>, <code>sqrt</code>, and <code>power</code> methods.</li>
-<li><strong>sigma (float, default=1.0):</strong>  The standard deviation for the Gaussian method.</li>
-<li><strong>center (float, default=0.0):</strong>  The center of the array.</li>
-<li><strong>spherical (bool, default=False):</strong>  If True, adjust weights based on the radius.</li>
-<li><strong>radius (float, default=3.0):</strong>  The radius for spherical adjustments.</li>
+<li><strong>decay (float=0.2):</strong>  The decay rate for the <code>linear</code>, <code>sqrt</code>, and <code>power</code> methods.</li>
+<li><strong>sigma (float=1.0):</strong>  The standard deviation for the Gaussian method.</li>
+<li><strong>center (float=0.0):</strong>  The center of the array.</li>
+<li><strong>spherical (bool=False):</strong>  If True, adjust weights based on the radius.</li>
+<li><strong>radius (float=3.0):</strong>  The radius for spherical adjustments.</li>
 </ul>
 
 <h6 id="returns">Returns:</h6>
@@ -1269,17 +1269,17 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 </span><span id="get_kernel-256"><a href="#get_kernel-256"><span class="linenos">256</span></a>
 </span><span id="get_kernel-257"><a href="#get_kernel-257"><span class="linenos">257</span></a><span class="sd">    Args:</span>
 </span><span id="get_kernel-258"><a href="#get_kernel-258"><span class="linenos">258</span></a><span class="sd">        size (int): Size of the kernel (must be odd).</span>
-</span><span id="get_kernel-259"><a href="#get_kernel-259"><span class="linenos">259</span></a><span class="sd">        depth (int, default=1): Depth of the kernel.</span>
-</span><span id="get_kernel-260"><a href="#get_kernel-260"><span class="linenos">260</span></a><span class="sd">        hole (bool, default=False): Create a hole in the center of the kernel.</span>
-</span><span id="get_kernel-261"><a href="#get_kernel-261"><span class="linenos">261</span></a><span class="sd">        inverted (bool, default=False): Invert the kernel values.</span>
-</span><span id="get_kernel-262"><a href="#get_kernel-262"><span class="linenos">262</span></a><span class="sd">        normalise (bool, default=True): Normalize the kernel values.</span>
-</span><span id="get_kernel-263"><a href="#get_kernel-263"><span class="linenos">263</span></a><span class="sd">        multi_dimensional (bool, default=False): Consider the kernel multi-dimensional.</span>
-</span><span id="get_kernel-264"><a href="#get_kernel-264"><span class="linenos">264</span></a><span class="sd">        multi_dimensional_center (int, default=0): Center of the</span>
+</span><span id="get_kernel-259"><a href="#get_kernel-259"><span class="linenos">259</span></a><span class="sd">        depth (int=1): Depth of the kernel.</span>
+</span><span id="get_kernel-260"><a href="#get_kernel-260"><span class="linenos">260</span></a><span class="sd">        hole (bool=False): Create a hole in the center of the kernel.</span>
+</span><span id="get_kernel-261"><a href="#get_kernel-261"><span class="linenos">261</span></a><span class="sd">        inverted (bool=False): Invert the kernel values.</span>
+</span><span id="get_kernel-262"><a href="#get_kernel-262"><span class="linenos">262</span></a><span class="sd">        normalise (bool=True): Normalize the kernel values.</span>
+</span><span id="get_kernel-263"><a href="#get_kernel-263"><span class="linenos">263</span></a><span class="sd">        multi_dimensional (bool=False): Consider the kernel multi-dimensional.</span>
+</span><span id="get_kernel-264"><a href="#get_kernel-264"><span class="linenos">264</span></a><span class="sd">        multi_dimensional_center (int=0): Center of the</span>
 </span><span id="get_kernel-265"><a href="#get_kernel-265"><span class="linenos">265</span></a><span class="sd">            multi-dimensional kernel.</span>
-</span><span id="get_kernel-266"><a href="#get_kernel-266"><span class="linenos">266</span></a><span class="sd">        spherical (bool, default=False): Consider the kernel spherical.</span>
-</span><span id="get_kernel-267"><a href="#get_kernel-267"><span class="linenos">267</span></a><span class="sd">        distance_weight (str or None, default=None): Distance weighting method.</span>
-</span><span id="get_kernel-268"><a href="#get_kernel-268"><span class="linenos">268</span></a><span class="sd">        distance_decay (float, default=0.2): Distance decay factor.</span>
-</span><span id="get_kernel-269"><a href="#get_kernel-269"><span class="linenos">269</span></a><span class="sd">        distance_sigma (float, default=1): Distance sigma for Gaussian distance weighting.</span>
+</span><span id="get_kernel-266"><a href="#get_kernel-266"><span class="linenos">266</span></a><span class="sd">        spherical (bool=False): Consider the kernel spherical.</span>
+</span><span id="get_kernel-267"><a href="#get_kernel-267"><span class="linenos">267</span></a><span class="sd">        distance_weight (str or None=None): Distance weighting method.</span>
+</span><span id="get_kernel-268"><a href="#get_kernel-268"><span class="linenos">268</span></a><span class="sd">        distance_decay (float=0.2): Distance decay factor.</span>
+</span><span id="get_kernel-269"><a href="#get_kernel-269"><span class="linenos">269</span></a><span class="sd">        distance_sigma (float=1): Distance sigma for Gaussian distance weighting.</span>
 </span><span id="get_kernel-270"><a href="#get_kernel-270"><span class="linenos">270</span></a>
 </span><span id="get_kernel-271"><a href="#get_kernel-271"><span class="linenos">271</span></a><span class="sd">    Returns:</span>
 </span><span id="get_kernel-272"><a href="#get_kernel-272"><span class="linenos">272</span></a><span class="sd">        tuple: A tuple containing the kernel, weights, and offsets.</span>
@@ -1367,17 +1367,17 @@ Can be used to for an augmentation, where channel misalignment is simulated.</p>
 
 <ul>
 <li><strong>size (int):</strong>  Size of the kernel (must be odd).</li>
-<li><strong>depth (int, default=1):</strong>  Depth of the kernel.</li>
-<li><strong>hole (bool, default=False):</strong>  Create a hole in the center of the kernel.</li>
-<li><strong>inverted (bool, default=False):</strong>  Invert the kernel values.</li>
-<li><strong>normalise (bool, default=True):</strong>  Normalize the kernel values.</li>
-<li><strong>multi_dimensional (bool, default=False):</strong>  Consider the kernel multi-dimensional.</li>
-<li><strong>multi_dimensional_center (int, default=0):</strong>  Center of the
+<li><strong>depth (int=1):</strong>  Depth of the kernel.</li>
+<li><strong>hole (bool=False):</strong>  Create a hole in the center of the kernel.</li>
+<li><strong>inverted (bool=False):</strong>  Invert the kernel values.</li>
+<li><strong>normalise (bool=True):</strong>  Normalize the kernel values.</li>
+<li><strong>multi_dimensional (bool=False):</strong>  Consider the kernel multi-dimensional.</li>
+<li><strong>multi_dimensional_center (int=0):</strong>  Center of the
 multi-dimensional kernel.</li>
-<li><strong>spherical (bool, default=False):</strong>  Consider the kernel spherical.</li>
-<li><strong>distance_weight (str or None, default=None):</strong>  Distance weighting method.</li>
-<li><strong>distance_decay (float, default=0.2):</strong>  Distance decay factor.</li>
-<li><strong>distance_sigma (float, default=1):</strong>  Distance sigma for Gaussian distance weighting.</li>
+<li><strong>spherical (bool=False):</strong>  Consider the kernel spherical.</li>
+<li><strong>distance_weight (str or None=None):</strong>  Distance weighting method.</li>
+<li><strong>distance_decay (float=0.2):</strong>  Distance decay factor.</li>
+<li><strong>distance_sigma (float=1):</strong>  Distance sigma for Gaussian distance weighting.</li>
 </ul>
 
 <h6 id="returns">Returns:</h6>
@@ -1413,11 +1413,11 @@ multi-dimensional kernel.</li>
 </span><span id="pad_array-360"><a href="#pad_array-360"><span class="linenos">360</span></a><span class="sd">        arr (numpy.ndarray): The input array to be padded.</span>
 </span><span id="pad_array-361"><a href="#pad_array-361"><span class="linenos">361</span></a>
 </span><span id="pad_array-362"><a href="#pad_array-362"><span class="linenos">362</span></a><span class="sd">    Keyword Args:</span>
-</span><span id="pad_array-363"><a href="#pad_array-363"><span class="linenos">363</span></a><span class="sd">        pad_size (int, default=1): The number of padding elements to add</span>
+</span><span id="pad_array-363"><a href="#pad_array-363"><span class="linenos">363</span></a><span class="sd">        pad_size (int=1): The number of padding elements to add</span>
 </span><span id="pad_array-364"><a href="#pad_array-364"><span class="linenos">364</span></a><span class="sd">            to each side of the array. Default is 1.</span>
-</span><span id="pad_array-365"><a href="#pad_array-365"><span class="linenos">365</span></a><span class="sd">        method (str, default=&quot;same&quot;): The padding method to use. Default</span>
+</span><span id="pad_array-365"><a href="#pad_array-365"><span class="linenos">365</span></a><span class="sd">        method (str=&quot;same&quot;): The padding method to use. Default</span>
 </span><span id="pad_array-366"><a href="#pad_array-366"><span class="linenos">366</span></a><span class="sd">            is &quot;same&quot;. Other options are &quot;edge&quot; and &quot;constant&quot;.</span>
-</span><span id="pad_array-367"><a href="#pad_array-367"><span class="linenos">367</span></a><span class="sd">        constant_value (int, default=None): The constant value to use</span>
+</span><span id="pad_array-367"><a href="#pad_array-367"><span class="linenos">367</span></a><span class="sd">        constant_value (int=None): The constant value to use</span>
 </span><span id="pad_array-368"><a href="#pad_array-368"><span class="linenos">368</span></a><span class="sd">            when padding with &quot;constant&quot;. Default is 0.</span>
 </span><span id="pad_array-369"><a href="#pad_array-369"><span class="linenos">369</span></a>
 </span><span id="pad_array-370"><a href="#pad_array-370"><span class="linenos">370</span></a><span class="sd">    Returns:</span>
@@ -1459,11 +1459,11 @@ multi-dimensional kernel.</li>
 <h6 id="keyword-args">Keyword Args:</h6>
 
 <blockquote>
-  <p>pad_size (int, default=1): The number of padding elements to add
+  <p>pad_size (int=1): The number of padding elements to add
       to each side of the array. Default is 1.
-  method (str, default="same"): The padding method to use. Default
+  method (str="same"): The padding method to use. Default
       is "same". Other options are "edge" and "constant".
-  constant_value (int, default=None): The constant value to use
+  constant_value (int=None): The constant value to use
       when padding with "constant". Default is 0.</p>
 </blockquote>
 

@@ -129,16 +129,16 @@ def add_border_to_raster(
         input_raster (str/gdal.DataSet): The input raster.
 
     Keyword Args:
-        out_path (str/None, default=None): The output path. If None, the output
+        out_path (str/None=None): The output path. If None, the output
             will be a memory raster.
-        border_size (int, default=100): The size of the border.
-        border_size_unit (str, default='px'): The unit of the border size.
-        border_value (int, default=0): The value of the border.
-        overwrite (bool, default=True): If True, the output raster will be
+        border_size (int=100): The size of the border.
+        border_size_unit (str='px'): The unit of the border size.
+        border_value (int=0): The value of the border.
+        overwrite (bool=True): If True, the output raster will be
             overwritten.
-        allow_lists (bool, default=True): If True, lists of rasters will be
+        allow_lists (bool=True): If True, lists of rasters will be
             allowed.
-        creation_options (list/None, default=None): Creation options for the
+        creation_options (list/None=None): Creation options for the
             output raster.
 
     Returns:

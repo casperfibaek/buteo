@@ -168,6 +168,7 @@
                             <li><a href="raster/core_raster.html#create_raster_from_array">create_raster_from_array</a></li>
                             <li><a href="raster/core_raster.html#create_grid_with_coordinates">create_grid_with_coordinates</a></li>
                             <li><a href="raster/core_raster.html#mosaic_rasters">mosaic_rasters</a></li>
+                            <li><a href="raster/core_raster.html#split_shape_into_offsets">split_shape_into_offsets</a></li>
                             <li><a href="raster/dem.html#raster_dem_to_slope">raster_dem_to_slope</a></li>
                             <li><a href="raster/dem.html#raster_dem_to_aspect">raster_dem_to_aspect</a></li>
                             <li><a href="raster/dem.html#raster_dem_to_hillshade">raster_dem_to_hillshade</a></li>
@@ -239,15 +240,14 @@
                             <li><a href="utils/aux_utils.html#encode_arr_position">encode_arr_position</a></li>
                             <li><a href="utils/aux_utils.html#channel_first_to_last">channel_first_to_last</a></li>
                             <li><a href="utils/aux_utils.html#channel_last_to_first">channel_last_to_first</a></li>
-                            <li><a href="utils/aux_utils.html#scale_to_range">scale_to_range</a></li>
                             <li><a href="utils/aux_utils.html#create_grid">create_grid</a></li>
-                            <li><a href="utils/aux_utils.html#split_into_offsets">split_into_offsets</a></li>
                             <li><a href="utils/aux_utils.html#calculate_pixel_distances">calculate_pixel_distances</a></li>
                             <li><a href="utils/aux_utils.html#fill_nodata_with_nearest_average">fill_nodata_with_nearest_average</a></li>
                             <li><a href="utils/aux_utils.html#single_hue_to_rgb">single_hue_to_rgb</a></li>
                             <li><a href="utils/aux_utils.html#single_hsl_to_rgb">single_hsl_to_rgb</a></li>
                             <li><a href="utils/aux_utils.html#hsl_to_rgb">hsl_to_rgb</a></li>
                             <li><a href="utils/aux_utils.html#rgb_to_hsl">rgb_to_hsl</a></li>
+                            <li><a href="utils/aux_utils.html#force_garbage_collect">force_garbage_collect</a></li>
                             <li><a href="utils/bbox_utils.html#is_valid_bbox">is_valid_bbox</a></li>
                             <li><a href="utils/bbox_utils.html#is_valid_bbox_latlng">is_valid_bbox_latlng</a></li>
                             <li><a href="utils/bbox_utils.html#is_valid_geotransform">is_valid_geotransform</a></li>
@@ -327,9 +327,9 @@
                             <li><a href="utils/gdal_enums.html#is_valid_driver_extension">is_valid_driver_extension</a></li>
                             <li><a href="utils/gdal_enums.html#is_valid_raster_driver_extension">is_valid_raster_driver_extension</a></li>
                             <li><a href="utils/gdal_enums.html#is_valid_vector_driver_extension">is_valid_vector_driver_extension</a></li>
-                            <li><a href="utils/gdal_enums.html#convert_raster_extension_to_driver_shortname">convert_raster_extension_to_driver_shortname</a></li>
+                            <li><a href="utils/gdal_enums.html#convert_raster_ext_to_driver_shortname">convert_raster_ext_to_driver_shortname</a></li>
                             <li><a href="utils/gdal_enums.html#convert_extension_to_driver_shortname">convert_extension_to_driver_shortname</a></li>
-                            <li><a href="utils/gdal_enums.html#convert_vector_extension_to_driver_shortname">convert_vector_extension_to_driver_shortname</a></li>
+                            <li><a href="utils/gdal_enums.html#convert_vector_ext_to_driver_shortname">convert_vector_ext_to_driver_shortname</a></li>
                             <li><a href="utils/gdal_enums.html#translate_resample_method">translate_resample_method</a></li>
                             <li><a href="utils/gdal_enums.html#translate_gdal_dtype_to_str">translate_gdal_dtype_to_str</a></li>
                             <li><a href="utils/gdal_enums.html#translate_str_to_gdal_dtype">translate_str_to_gdal_dtype</a></li>

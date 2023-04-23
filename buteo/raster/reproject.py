@@ -150,16 +150,16 @@ def reproject_raster(
             from a vector or raster datasource either from path or in-memory.
 
     Keyword Args:
-        out_path (str/list/None, default=None): The output path. If not provided, the output path is inferred from the input.
-        resample_alg (str, default="nearest"): The resampling algorithm.
-        copy_if_same (bool, default=True): If the input and output projections are the same, copy the input raster to the output path.
-        overwrite (bool, default=True): If the output path already exists, overwrite it.
-        creation_options (list/None, default=None): A list of creation options for the output raster.
-        dst_nodata (str/int/float, default="infer"): The nodata value for the output raster.
-        dtype (str/None, default=None): The data type for the output raster.
-        prefix (str, default=""): The prefix to add to the output path.
-        suffix (str, default=""): The suffix to add to the output path.
-        add_uuid (bool, default=False): If True, add a UUID to the output path.
+        out_path (str/list/None=None): The output path. If not provided, the output path is inferred from the input.
+        resample_alg (str="nearest"): The resampling algorithm.
+        copy_if_same (bool=True): If the input and output projections are the same, copy the input raster to the output path.
+        overwrite (bool=True): If the output path already exists, overwrite it.
+        creation_options (list/None=None): A list of creation options for the output raster.
+        dst_nodata (str/int/float="infer"): The nodata value for the output raster.
+        dtype (str/None=None): The data type for the output raster.
+        prefix (str=""): The prefix to add to the output path.
+        suffix (str=""): The suffix to add to the output path.
+        add_uuid (bool=False): If True, add a UUID to the output path.
 
     Returns:
         str/list: The output path(s).
@@ -236,15 +236,15 @@ def match_raster_projections(
             or vector.
 
     Keyword Args:
-        out_path (str/list, default=None): Paths to the output. If not provided,
+        out_path (str/list=None): Paths to the output. If not provided,
             the output will be in-memory rasters.
-        overwrite (bool, default=True): If True, existing rasters will be
+        overwrite (bool=True): If True, existing rasters will be
             overwritten.
-        dst_nodata (str, default='infer'): Value to use for no-data pixels. If not
+        dst_nodata (str='infer'): Value to use for no-data pixels. If not
             provided, the value will be transfered from the original.
-        copy_if_already_correct (bool, default=True): If True, the raster will be
+        copy_if_already_correct (bool=True): If True, the raster will be
             copied if it is already in the correct projection.
-        creation_options (list, default=None): List of creation options to pass
+        creation_options (list=None): List of creation options to pass
             to the output raster.
 
     Returns:

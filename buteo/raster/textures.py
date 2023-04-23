@@ -4,6 +4,7 @@
 
 # Standard library
 import sys; sys.path.append("../../")
+from typing import Optional, Union
 
 # External
 import numpy as np
@@ -121,7 +122,7 @@ def texture_local_median(
     type_check(distance_sigma, [int, float], "distance_sigma")
 
     assert filter_size % 2 == 1, "Filter size must be odd."
-    
+
     _kernel, weights, offsets = get_kernel(
         filter_size,
         distance_weight=distance_weight,
@@ -206,40 +207,39 @@ def texture_local_blur(
 
 
 def texture_local_mode(
-    arr,
-    filter_size=5,
-    spherical=True,
-    nodata=False,
-    nodata_value=9999.0,
-    distance_weight="none",
-    distance_decay=0.2,
-    distance_sigma=1,
-):
+    arr: np.ndarray,
+    filter_size: int = 5,
+    spherical: bool = True,
+    nodata: bool = False,
+    nodata_value: float = 9999.0,
+    distance_weight: str = "none",
+    distance_decay: float = 0.2,
+    distance_sigma: float = 1,
+) -> np.ndarray:
     """
     Apply a mode filter. Default is a circular filter with no distance decay.
 
-    ## Args:
-    `arr` (_np.ndarray_): The array on which to calculate the filter.\n
+    Args:
+        arr (np.ndarray): The array on which to calculate the filter.
 
-    ## Kwargs:
-    `filter_size` (_int_): The size of the kernel to use. filter_size x filter_size. (Default: **5**)\n
-    `spherical` (_bool_): If True, the filter applied will be weighted by a circle (Default: **False**)\n
-    `nodata` (_bool_): Does the array contain nodata and should the values be left? (Default: **False**)\n
-    `nodata_value` (_bool_): If nodata is True, what value is nodata. (Default: **9999.9**)\n
-    `distance_weight` (_str_): How should the distance from the center be treated: (Default: **"linear"**)\n
-        * `"none"`: no distance weighing will be done.\n
-        * `"linear"`: np.power((1 - decay), normed).\n
-        * `"sqrt"`: np.power(np.sqrt((1 - decay)), normed).\n
-        * `"power"`: np.power(np.power((1 - decay), 2), normed).\n
-        * `"log"`: np.log(normed + 2).\n
-        * `"gaussian"`: np.exp(-(np.power(normed, 2)) / (2 * np.power(sigma, 2))).\n
-    `distance_decay` (_float_): Rate of distance decay. (Default: **0.2**)\n
-    `distance_sigma` (_float_): The sigma to use for gaussian decay. (Default: **1.0**)\n
+    Keyword Args:
+        filter_size (int=5): The size of the kernel to use. filter_size x filter_size.
+        spherical (bool=True): If True, the filter applied will be weighted by a circle.
+        nodata (bool=False): Does the array contain nodata and should the values be left?
+        nodata_value (float=9999.0): If nodata is True, what value is nodata.
+        distance_weight (str='none'): How should the distance from the center be treated:
+            * "none": no distance weighing will be done.
+            * "linear": np.power((1 - decay), normed).
+            * "sqrt": np.power(np.sqrt((1 - decay)), normed).
+            * "power": np.power(np.power((1 - decay), 2), normed).
+            * "log": np.log(normed + 2).
+            * "gaussian": np.exp(-(np.power(normed, 2)) / (2 * np.power(sigma, 2))).
+        distance_decay (float=0.2): Rate of distance decay.
+        distance_sigma (float=1.0): The sigma to use for gaussian decay.
 
-    ## Returns:
-    (_np.ndarray_): The filtered array.
+    Returns:
+        np.ndarray: The filtered array.
     """
-
     type_check(arr, [np.ndarray], "arr")
     type_check(filter_size, [int], "filter_size")
     type_check(spherical, [bool], "spherical")
@@ -270,40 +270,39 @@ def texture_local_mode(
 
 
 def texture_hole_dif(
-    arr,
-    filter_size=5,
-    spherical=False,
-    nodata=False,
-    nodata_value=9999.0,
-    distance_weight="linear",
-    distance_decay=0.2,
-    distance_sigma=1,
-):
+    arr: np.ndarray,
+    filter_size: int = 5,
+    spherical: bool = False,
+    nodata: bool = False,
+    nodata_value: float = 9999.0,
+    distance_weight: str = "linear",
+    distance_decay: float = 0.2,
+    distance_sigma: float = 1,
+) -> np.ndarray:
     """
     Create a 'hole' filter, representing the difference between a pixel and its surrounding neighbourhood.
 
-    ## Args:
-    `arr` (_np.ndarray_): The array on which to calculate the filter.\n
+    Args:
+        arr (np.ndarray): The array on which to calculate the filter.
 
-    ## Kwargs:
-    `filter_size` (_int_): The size of the kernel to use. filter_size x filter_size. (Default: **5**)\n
-    `spherical` (_bool_): If True, the filter applied will be weighted by a circle (Default: **False**)\n
-    `nodata` (_bool_): Does the array contain nodata and should the values be left? (Default: **False**)\n
-    `nodata_value` (_bool_): If nodata is True, what value is nodata. (Default: **9999.9**)\n
-    `distance_weight` (_str_): How should the distance from the center be treated: (Default: **"linear"**)\n
-        * `"none"`: no distance weighing will be done.\n
-        * `"linear"`: np.power((1 - decay), normed).\n
-        * `"sqrt"`: np.power(np.sqrt((1 - decay)), normed).\n
-        * `"power"`: np.power(np.power((1 - decay), 2), normed).\n
-        * `"log"`: np.log(normed + 2).\n
-        * `"gaussian"`: np.exp(-(np.power(normed, 2)) / (2 * np.power(sigma, 2))).\n
-    `distance_decay` (_float_): Rate of distance decay. (Default: **0.2**)\n
-    `distance_sigma` (_float_): The sigma to use for gaussian decay. (Default: **1.0**)\n
+    Keyword Args:
+        filter_size (int=5): The size of the kernel to use. filter_size x filter_size.
+        spherical (bool=False): If True, the filter applied will be weighted by a circle.
+        nodata (bool=False): Does the array contain nodata and should the values be left?
+        nodata_value (float=9999.0): If nodata is True, what value is nodata.
+        distance_weight (str='linear'): How should the distance from the center be treated:
+            * "none": no distance weighing will be done.
+            * "linear": np.power((1 - decay), normed).
+            * "sqrt": np.power(np.sqrt((1 - decay)), normed).
+            * "power": np.power(np.power((1 - decay), 2), normed).
+            * "log": np.log(normed + 2).
+            * "gaussian": np.exp(-(np.power(normed, 2)) / (2 * np.power(sigma, 2))).
+        distance_decay (float=0.2): Rate of distance decay.
+        distance_sigma (float=1.0): The sigma to use for gaussian decay.
 
-    ## Returns:
-    (_np.ndarray_): The filtered array.
+    Returns:
+        np.ndarray: The filtered array.
     """
-
     type_check(arr, [np.ndarray], "arr")
     type_check(filter_size, [int], "filter_size")
     type_check(spherical, [bool], "spherical")

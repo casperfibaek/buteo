@@ -4,6 +4,8 @@
 Functions that make interacting with the toolbox easier.
 """
 # Internal
+import sys
+import gc
 from typing import Tuple
 
 # External
@@ -229,14 +231,6 @@ def channel_last_to_first(arr: np.ndarray) -> np.ndarray:
 
     return arr
 
-def scale_to_range(arr, min_val, max_val):
-    """ Scales the values in the input array to the specified range. """
-
-    # Scale the values in the array to the specified range
-    arr = (arr - arr.min()) / (arr.max() - arr.min())
-    arr = (max_val - min_val) * arr + min_val
-
-    return arr
 
 @jit(nopython=True)
 def create_grid(range_rows, range_cols):
@@ -250,56 +244,6 @@ def create_grid(range_rows, range_cols):
             rows_grid[i, j] = range_cols[i]
 
     return rows_grid, cols_grid
-
-
-def split_into_offsets(shape, offsets_x=2, offsets_y=2, overlap_x=0, overlap_y=0):
-    """ Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed. """
-    height = shape[0]
-    width = shape[1]
-
-    x_remainder = width % offsets_x
-    y_remainder = height % offsets_y
-
-    x_offsets = [0]
-    x_sizes = []
-    for _ in range(offsets_x - 1):
-        x_offsets.append(x_offsets[-1] + (width // offsets_x) - overlap_x)
-    x_offsets[-1] -= x_remainder
-
-    for idx, _ in enumerate(x_offsets):
-        if idx == len(x_offsets) - 1:
-            x_sizes.append(width - x_offsets[idx])
-        elif idx == 0:
-            x_sizes.append(x_offsets[1] + overlap_x)
-        else:
-            x_sizes.append(x_offsets[idx + 1] - x_offsets[idx] + overlap_x)
-
-    y_offsets = [0]
-    y_sizes = []
-    for _ in range(offsets_y - 1):
-        y_offsets.append(y_offsets[-1] + (height // offsets_y) - overlap_y)
-    y_offsets[-1] -= y_remainder
-
-    for idx, _ in enumerate(y_offsets):
-        if idx == len(y_offsets) - 1:
-            y_sizes.append(height - y_offsets[idx])
-        elif idx == 0:
-            y_sizes.append(y_offsets[1] + overlap_y)
-        else:
-            y_sizes.append(y_offsets[idx + 1] - y_offsets[idx] + overlap_y)
-
-    offsets = []
-
-    for idx_col, _ in enumerate(y_offsets):
-        for idx_row, _ in enumerate(x_offsets):
-            offsets.append([
-                x_offsets[idx_row],
-                y_offsets[idx_col],
-                x_sizes[idx_row],
-                y_sizes[idx_col],
-            ])
-
-    return offsets
 
 
 @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
@@ -602,3 +546,31 @@ def rgb_to_hsl(rgb_array: np.ndarray) -> np.ndarray:
     hsl_array = np.clip(hsl_array, 0.0, 1.0)
 
     return hsl_array
+
+
+def force_garbage_collect(delete_functions: bool = True) -> None:
+    """
+    Clears the memory by deleting all objects in the main namespace.
+    
+    Args:
+        delete_functions (bool, optional): Whether to delete functions as well. Defaults to True.
+
+    Returns:
+        None
+    """
+    # Get a list of all objects
+    all_objects = sys.modules['__main__'].__dict__.copy()
+
+    # Iterate over the objects and delete them if possible
+    for key, value in all_objects.items():
+        if key in ["sys", "os", "gc"]:
+            continue
+        if key.startswith("__"):
+            continue  # Skip built-in objects
+        if not delete_functions and callable(value):
+            continue
+
+        del sys.modules['__main__'].__dict__[key]  # Remove the object from the namespace
+
+    # Collect garbage
+    gc.collect()

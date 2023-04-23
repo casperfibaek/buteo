@@ -153,18 +153,18 @@ def weight_distance(
 
     Args:
         arr (numpy.ndarray): The input array.
-        method (str, default=None): The weighting method to use.
+        method (str=None): The weighting method to use.
             "none": No weighting (default).
             "linear": Linear decay.
             "sqrt": Square root decay.
             "power": Power decay.
             "log": Logarithmic decay.
             "gaussian": Gaussian decay.
-        decay (float, default=0.2): The decay rate for the `linear`, `sqrt`, and `power` methods.
-        sigma (float, default=1.0): The standard deviation for the Gaussian method.
-        center (float, default=0.0): The center of the array.
-        spherical (bool, default=False): If True, adjust weights based on the radius.
-        radius (float, default=3.0): The radius for spherical adjustments.
+        decay (float=0.2): The decay rate for the `linear`, `sqrt`, and `power` methods.
+        sigma (float=1.0): The standard deviation for the Gaussian method.
+        center (float=0.0): The center of the array.
+        spherical (bool=False): If True, adjust weights based on the radius.
+        radius (float=3.0): The radius for spherical adjustments.
 
     Returns:
         float: The computed weight.
@@ -255,17 +255,17 @@ def get_kernel(
 
     Args:
         size (int): Size of the kernel (must be odd).
-        depth (int, default=1): Depth of the kernel.
-        hole (bool, default=False): Create a hole in the center of the kernel.
-        inverted (bool, default=False): Invert the kernel values.
-        normalise (bool, default=True): Normalize the kernel values.
-        multi_dimensional (bool, default=False): Consider the kernel multi-dimensional.
-        multi_dimensional_center (int, default=0): Center of the
+        depth (int=1): Depth of the kernel.
+        hole (bool=False): Create a hole in the center of the kernel.
+        inverted (bool=False): Invert the kernel values.
+        normalise (bool=True): Normalize the kernel values.
+        multi_dimensional (bool=False): Consider the kernel multi-dimensional.
+        multi_dimensional_center (int=0): Center of the
             multi-dimensional kernel.
-        spherical (bool, default=False): Consider the kernel spherical.
-        distance_weight (str or None, default=None): Distance weighting method.
-        distance_decay (float, default=0.2): Distance decay factor.
-        distance_sigma (float, default=1): Distance sigma for Gaussian distance weighting.
+        spherical (bool=False): Consider the kernel spherical.
+        distance_weight (str or None=None): Distance weighting method.
+        distance_decay (float=0.2): Distance decay factor.
+        distance_sigma (float=1): Distance sigma for Gaussian distance weighting.
 
     Returns:
         tuple: A tuple containing the kernel, weights, and offsets.
@@ -359,11 +359,11 @@ def pad_array(
         arr (numpy.ndarray): The input array to be padded.
 
     Keyword Args:
-        pad_size (int, default=1): The number of padding elements to add
+        pad_size (int=1): The number of padding elements to add
             to each side of the array. Default is 1.
-        method (str, default="same"): The padding method to use. Default
+        method (str="same"): The padding method to use. Default
             is "same". Other options are "edge" and "constant".
-        constant_value (int, default=None): The constant value to use
+        constant_value (int=None): The constant value to use
             when padding with "constant". Default is 0.
 
     Returns:

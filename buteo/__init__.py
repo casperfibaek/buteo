@@ -3,9 +3,10 @@
 
 Buteo is a toolbox designed to simplify the process of working with geospatial data in machine learning. It includes tools for reading, writing, and processing geospatial data, as well as tools for creating labels from vector data and generating patches from geospatial data. Buteo makes it easy to ingest data, create training data, and perform inference on geospatial data.
 
-Please note that Buteo is under active development, and its API may not be entirely stable. Feel free to report any bugs or suggest improvements.
+Please note that Buteo is under active development, and its API may not be entirely stable.
+When using, please pin the version of Buteo you are using to avoid breaking changes.
+Feel free to report any bugs or suggest improvements.
 
-For documentation, visit: https://casperfibaek.github.io/buteo/
 
 **Dependencies** </br>
 `numba` (https://numba.pydata.org/) </br>

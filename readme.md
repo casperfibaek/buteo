@@ -4,6 +4,8 @@ Buteo is a toolbox designed to simplify the process of working with geospatial d
 
 Please note that Buteo is under active development, and its API may not be entirely stable. Feel free to report any bugs or suggest improvements.
 
+When using, please pin the version of Buteo you are using to avoid breaking changes.
+
 For documentation, visit: https://casperfibaek.github.io/buteo/
 
 **Dependencies** </br>

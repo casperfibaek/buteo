@@ -182,7 +182,7 @@ def path_to_driver_vector(file_path):
     ext = core_utils.path_to_ext(file_path)
 
     if is_valid_vector_datatype(file_path):
-        return gdal_enums.convert_vector_extension_to_driver_shortname(ext)
+        return gdal_enums.convert_vector_ext_to_driver_shortname(ext)
 
     raise ValueError(f"Unable to parse GDAL or OGR driver from path: {file_path}")
 
@@ -205,7 +205,7 @@ def path_to_driver_raster(file_path):
     ext = core_utils.path_to_ext(file_path)
 
     if is_valid_raster_datatype(file_path):
-        return gdal_enums.convert_raster_extension_to_driver_shortname(ext)
+        return gdal_enums.convert_raster_ext_to_driver_shortname(ext)
 
     raise ValueError(f"Unable to parse GDAL or OGR driver from path: {file_path}")
 
@@ -246,7 +246,7 @@ def is_in_memory(raster_or_vector):
         driver_short_name = None
         try:
             driver_short_name = driver.GetName()
-        except Exception:
+        except AttributeError:
             driver_short_name = driver.ShortName
 
         if driver_short_name== "MEM":
@@ -424,7 +424,7 @@ def is_raster(potential_raster, *, empty_is_invalid=True):
             gdal.PushErrorHandler('CPLQuietErrorHandler')
             opened = gdal.Open(potential_raster, 0)
             gdal.PopErrorHandler()
-        except Exception:
+        except RuntimeError:
             return False
 
         if opened is None:

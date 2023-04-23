@@ -7,6 +7,7 @@ Can uses references from vector or other raster datasets.
 
 # Standard library
 import sys; sys.path.append("../../")
+from typing import Union, Optional, List, Any
 
 # External
 from osgeo import gdal
@@ -19,20 +20,20 @@ from buteo.raster import core_raster
 
 
 def _resample_raster(
-    raster,
-    target_size,
-    out_path=None,
+    raster: Union[str, gdal.Dataset, List],
+    target_size: Union[int, float],
+    out_path: Optional[str] = None,
     *,
-    target_in_pixels=False,
-    resample_alg="nearest",
-    overwrite=True,
-    creation_options=None,
-    dtype=None,
-    dst_nodata="infer",
-    prefix="",
-    suffix="_resampled",
-    add_uuid=False,
-):
+    target_in_pixels: bool = False,
+    resample_alg: str = "nearest",
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
+    dtype: Optional[str] = None,
+    dst_nodata: Union[float, int, str] = "infer",
+    prefix: str = "",
+    suffix: str = "_resampled",
+    add_uuid: bool = False,
+) -> Union[str, gdal.Dataset]:
     """ Internal. """
     assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
 
@@ -84,7 +85,7 @@ def _resample_raster(
     )
 
     if resampled is None:
-        raise Exception(f"Error while resampling raster: {out_path}")
+        raise RuntimeError(f"Error while resampling raster: {out_path}")
 
     return out_path
 
@@ -105,8 +106,8 @@ def resample_raster(
     overwrite=True,
 ):
     """
-    Resampled raster(s) given a target size. </br>
-    **Beware** if your input is in latitude and longitude, you'll need to specify the target_size in degrees as well.
+    Resampled raster(s) given a target size.
+    Beware, if your input is in latitude and longitude, you'll need to specify the target_size in degrees as well.
 
     Args:
         raster (str/list/gdal.Dataset): The input raster(s) to resample.
@@ -116,18 +117,18 @@ def resample_raster(
             size from that raster.
 
     Keyword Args:
-        target_in_pixels (bool, default=False): If True, interprets target_size as the number of pixels.
-        out_path (str/None, default=None): The output path for the resampled raster(s). If not provided, the output
+        target_in_pixels (bool=False): If True, interprets target_size as the number of pixels.
+        out_path (str/None=None): The output path for the resampled raster(s). If not provided, the output
             path is inferred from the input raster(s).
-        resample_alg (str, default="nearest"): The resampling algorithm to use.
-        copy_if_same (bool, default=True): If input and output projections are the same, copies the input raster
+        resample_alg (str="nearest"): The resampling algorithm to use.
+        copy_if_same (bool=True): If input and output projections are the same, copies the input raster
             to the output path.
-        overwrite (bool, default=True): If the output path already exists, overwrites it.
-        creation_options (list/None, default=None): A list of creation options for the output raster(s).
-        dst_nodata (str/int/float, default="infer"): The nodata value for the output raster(s).
-        prefix (str, default=""): The prefix to add to the output path.
-        suffix (str, default="_reprojected"): The suffix to add to the output path.
-        add_uuid (bool, default=False): If True, adds a UUID to the output path.
+        overwrite (bool=True): If the output path already exists, overwrites it.
+        creation_options (list/None=None): A list of creation options for the output raster(s).
+        dst_nodata (str/int/float="infer"): The nodata value for the output raster(s).
+        prefix (str=""): The prefix to add to the output path.
+        suffix (str="_reprojected"): The suffix to add to the output path.
+        add_uuid (bool=False): If True, adds a UUID to the output path.
 
     Returns:
         str/list: The output path(s) of the resampled raster(s).

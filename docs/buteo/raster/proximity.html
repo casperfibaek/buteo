@@ -69,58 +69,58 @@
 </span><span id="L-7"><a href="#L-7"><span class="linenos">  7</span></a><span class="c1"># Standard library</span>
 </span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a><span class="kn">import</span> <span class="nn">sys</span><span class="p">;</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;../../&quot;</span><span class="p">)</span>
 </span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a><span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">uuid4</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a>
-</span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a><span class="c1"># External</span>
-</span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">gdal</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos"> 14</span></a>
-</span><span id="L-15"><a href="#L-15"><span class="linenos"> 15</span></a><span class="c1"># Internal</span>
-</span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a><span class="kn">from</span> <span class="nn">buteo.utils</span> <span class="kn">import</span> <span class="n">core_utils</span><span class="p">,</span> <span class="n">gdal_utils</span>
-</span><span id="L-17"><a href="#L-17"><span class="linenos"> 17</span></a><span class="kn">from</span> <span class="nn">buteo.raster</span> <span class="kn">import</span> <span class="n">core_raster</span>
-</span><span id="L-18"><a href="#L-18"><span class="linenos"> 18</span></a><span class="kn">from</span> <span class="nn">buteo.raster.borders</span> <span class="kn">import</span> <span class="n">add_border_to_raster</span>
-</span><span id="L-19"><a href="#L-19"><span class="linenos"> 19</span></a>
+</span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a>
+</span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a><span class="c1"># External</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos"> 14</span></a><span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">gdal</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos"> 15</span></a>
+</span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a><span class="c1"># Internal</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos"> 17</span></a><span class="kn">from</span> <span class="nn">buteo.utils</span> <span class="kn">import</span> <span class="n">core_utils</span><span class="p">,</span> <span class="n">gdal_utils</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos"> 18</span></a><span class="kn">from</span> <span class="nn">buteo.raster</span> <span class="kn">import</span> <span class="n">core_raster</span>
+</span><span id="L-19"><a href="#L-19"><span class="linenos"> 19</span></a><span class="kn">from</span> <span class="nn">buteo.raster.borders</span> <span class="kn">import</span> <span class="n">add_border_to_raster</span>
 </span><span id="L-20"><a href="#L-20"><span class="linenos"> 20</span></a>
 </span><span id="L-21"><a href="#L-21"><span class="linenos"> 21</span></a>
-</span><span id="L-22"><a href="#L-22"><span class="linenos"> 22</span></a><span class="k">def</span> <span class="nf">calc_proximity</span><span class="p">(</span>
-</span><span id="L-23"><a href="#L-23"><span class="linenos"> 23</span></a>    <span class="n">input_rasters</span><span class="p">,</span>
-</span><span id="L-24"><a href="#L-24"><span class="linenos"> 24</span></a>    <span class="n">target_value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-</span><span id="L-25"><a href="#L-25"><span class="linenos"> 25</span></a>    <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;GEO&quot;</span><span class="p">,</span>
-</span><span id="L-26"><a href="#L-26"><span class="linenos"> 26</span></a>    <span class="n">out_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-</span><span id="L-27"><a href="#L-27"><span class="linenos"> 27</span></a>    <span class="n">max_dist</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-</span><span id="L-28"><a href="#L-28"><span class="linenos"> 28</span></a>    <span class="n">add_border</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="L-29"><a href="#L-29"><span class="linenos"> 29</span></a>    <span class="n">border_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-</span><span id="L-30"><a href="#L-30"><span class="linenos"> 30</span></a>    <span class="n">weighted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="L-31"><a href="#L-31"><span class="linenos"> 31</span></a>    <span class="n">invert</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="L-32"><a href="#L-32"><span class="linenos"> 32</span></a>    <span class="n">return_array</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="L-33"><a href="#L-33"><span class="linenos"> 33</span></a>    <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-</span><span id="L-34"><a href="#L-34"><span class="linenos"> 34</span></a>    <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;_proximity&quot;</span><span class="p">,</span>
-</span><span id="L-35"><a href="#L-35"><span class="linenos"> 35</span></a>    <span class="n">add_uuid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="L-36"><a href="#L-36"><span class="linenos"> 36</span></a>    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="L-37"><a href="#L-37"><span class="linenos"> 37</span></a><span class="p">):</span>
-</span><span id="L-38"><a href="#L-38"><span class="linenos"> 38</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-39"><a href="#L-39"><span class="linenos"> 39</span></a><span class="sd">    Calculate the proximity of input_raster to values</span>
-</span><span id="L-40"><a href="#L-40"><span class="linenos"> 40</span></a>
-</span><span id="L-41"><a href="#L-41"><span class="linenos"> 41</span></a><span class="sd">    ## Args:</span>
-</span><span id="L-42"><a href="#L-42"><span class="linenos"> 42</span></a><span class="sd">    `input_rasters` (_list_): A list of rasters to use as input. &lt;/br&gt;</span>
-</span><span id="L-43"><a href="#L-43"><span class="linenos"> 43</span></a>
-</span><span id="L-44"><a href="#L-44"><span class="linenos"> 44</span></a><span class="sd">    ## Kwargs:</span>
-</span><span id="L-45"><a href="#L-45"><span class="linenos"> 45</span></a><span class="sd">    `target_value` (_int_/_float_): The value to use as target. (Default: **1**) &lt;/br&gt;</span>
-</span><span id="L-46"><a href="#L-46"><span class="linenos"> 46</span></a><span class="sd">    `unit` (_str_): The unit to use for the distance. GEO or PIXEL. (Default: **&quot;GEO&quot;**) &lt;/br&gt;</span>
-</span><span id="L-47"><a href="#L-47"><span class="linenos"> 47</span></a><span class="sd">    `out_path` (_str_/_None_/_list_): The output path. (Default: **None**) &lt;/br&gt;</span>
-</span><span id="L-48"><a href="#L-48"><span class="linenos"> 48</span></a><span class="sd">    `max_dist` (_int_/_float_): The maximum distance to use. (Default: **1000**) &lt;/br&gt;</span>
-</span><span id="L-49"><a href="#L-49"><span class="linenos"> 49</span></a><span class="sd">    `add_border` (_bool_): If **True**, a border will be added to the raster. (Default: **False**) &lt;/br&gt;</span>
-</span><span id="L-50"><a href="#L-50"><span class="linenos"> 50</span></a><span class="sd">    `border_value` (_int_/_float_): The value to use for the border. (Default: **0**) &lt;/br&gt;</span>
-</span><span id="L-51"><a href="#L-51"><span class="linenos"> 51</span></a><span class="sd">    `weighted` (_bool_): If **True**, the distance will be divided by the max distance. (Default: **False**) &lt;/br&gt;</span>
-</span><span id="L-52"><a href="#L-52"><span class="linenos"> 52</span></a><span class="sd">    `invert` (_bool_): If **True**, the target will be inversed. (Default: **False**) &lt;/br&gt;</span>
-</span><span id="L-53"><a href="#L-53"><span class="linenos"> 53</span></a><span class="sd">    `return_array` (_bool_): If **True** a NumPy array will be returned instead of a raster. (Default: **False**) &lt;/br&gt;</span>
-</span><span id="L-54"><a href="#L-54"><span class="linenos"> 54</span></a><span class="sd">    `prefix` (_str_): Prefix to add to the output. (Default: **&quot;&quot;**) &lt;/br&gt;</span>
-</span><span id="L-55"><a href="#L-55"><span class="linenos"> 55</span></a><span class="sd">    `suffix` (_str_): Suffix to add to the output. (Default: **&quot;&quot;**) &lt;/br&gt;</span>
-</span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a><span class="sd">    `add_uuid` (_bool_): Should a uuid be added to the output path? (Default: **False**) &lt;/br&gt;</span>
-</span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a><span class="sd">    `creation_options` (_list_/_None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;</span>
-</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a><span class="sd">    `overwrite` (_bool_): If the output path exists already, should it be overwritten? (Default: **True**)&lt;/br&gt;</span>
+</span><span id="L-22"><a href="#L-22"><span class="linenos"> 22</span></a>
+</span><span id="L-23"><a href="#L-23"><span class="linenos"> 23</span></a><span class="k">def</span> <span class="nf">calc_proximity</span><span class="p">(</span>
+</span><span id="L-24"><a href="#L-24"><span class="linenos"> 24</span></a>    <span class="n">input_rasters</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
+</span><span id="L-25"><a href="#L-25"><span class="linenos"> 25</span></a>    <span class="n">target_value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos"> 26</span></a>    <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;GEO&quot;</span><span class="p">,</span>
+</span><span id="L-27"><a href="#L-27"><span class="linenos"> 27</span></a>    <span class="n">out_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="L-28"><a href="#L-28"><span class="linenos"> 28</span></a>    <span class="n">max_dist</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+</span><span id="L-29"><a href="#L-29"><span class="linenos"> 29</span></a>    <span class="n">add_border</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="L-30"><a href="#L-30"><span class="linenos"> 30</span></a>    <span class="n">border_value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span><span id="L-31"><a href="#L-31"><span class="linenos"> 31</span></a>    <span class="n">weighted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="L-32"><a href="#L-32"><span class="linenos"> 32</span></a>    <span class="n">invert</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="L-33"><a href="#L-33"><span class="linenos"> 33</span></a>    <span class="n">return_array</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="L-34"><a href="#L-34"><span class="linenos"> 34</span></a>    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span id="L-35"><a href="#L-35"><span class="linenos"> 35</span></a>    <span class="n">suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_proximity&quot;</span><span class="p">,</span>
+</span><span id="L-36"><a href="#L-36"><span class="linenos"> 36</span></a>    <span class="n">add_uuid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="L-37"><a href="#L-37"><span class="linenos"> 37</span></a>    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="L-38"><a href="#L-38"><span class="linenos"> 38</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+</span><span id="L-39"><a href="#L-39"><span class="linenos"> 39</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-40"><a href="#L-40"><span class="linenos"> 40</span></a><span class="sd">    Calculate the proximity of input_raster to values.</span>
+</span><span id="L-41"><a href="#L-41"><span class="linenos"> 41</span></a>
+</span><span id="L-42"><a href="#L-42"><span class="linenos"> 42</span></a><span class="sd">    Args:</span>
+</span><span id="L-43"><a href="#L-43"><span class="linenos"> 43</span></a><span class="sd">        input_rasters (List): A list of rasters to use as input.</span>
+</span><span id="L-44"><a href="#L-44"><span class="linenos"> 44</span></a><span class="sd">    </span>
+</span><span id="L-45"><a href="#L-45"><span class="linenos"> 45</span></a><span class="sd">    Keyword Args:</span>
+</span><span id="L-46"><a href="#L-46"><span class="linenos"> 46</span></a><span class="sd">        target_value (Union[int, float]=1): The value to use as target.</span>
+</span><span id="L-47"><a href="#L-47"><span class="linenos"> 47</span></a><span class="sd">        unit (str=&#39;GEO&#39;): The unit to use for the distance, GEO or PIXEL.</span>
+</span><span id="L-48"><a href="#L-48"><span class="linenos"> 48</span></a><span class="sd">        out_path (Union[str, None, List]=None): The output path.</span>
+</span><span id="L-49"><a href="#L-49"><span class="linenos"> 49</span></a><span class="sd">        max_dist (Union[int, float]=1000): The maximum distance to use.</span>
+</span><span id="L-50"><a href="#L-50"><span class="linenos"> 50</span></a><span class="sd">        add_border (bool=False): If True, a border will be added to the raster.</span>
+</span><span id="L-51"><a href="#L-51"><span class="linenos"> 51</span></a><span class="sd">        border_value (Union[int, float]=0): The value to use for the border.</span>
+</span><span id="L-52"><a href="#L-52"><span class="linenos"> 52</span></a><span class="sd">        weighted (bool=False): If True, the distance will be divided by the max distance.</span>
+</span><span id="L-53"><a href="#L-53"><span class="linenos"> 53</span></a><span class="sd">        invert (bool=False): If True, the target will be inversed.</span>
+</span><span id="L-54"><a href="#L-54"><span class="linenos"> 54</span></a><span class="sd">        return_array (bool=False): If True, a NumPy array will be returned instead of a raster.</span>
+</span><span id="L-55"><a href="#L-55"><span class="linenos"> 55</span></a><span class="sd">        prefix (str=&#39;&#39;): Prefix to add to the output.</span>
+</span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a><span class="sd">        suffix (str=&#39;_proximity&#39;): Suffix to add to the output.</span>
+</span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a><span class="sd">        add_uuid (bool=False): Should a uuid be added to the output path?</span>
+</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a><span class="sd">        overwrite (bool=True): If the output path exists already, should it be overwritten?</span>
 </span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a>
-</span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a><span class="sd">    ## Returns:</span>
-</span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a><span class="sd">    (_str_/_np.ndarray_): A path to a raster with the calculate proximity, or a numpy array with the data.</span>
+</span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a><span class="sd">    Returns:</span>
+</span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a><span class="sd">        Union[str, np.ndarray]: A path to a raster with the calculated proximity, or a numpy array with the data.</span>
 </span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a>    <span class="n">core_utils</span><span class="o">.</span><span class="n">type_check</span><span class="p">(</span><span class="n">input_rasters</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]],</span> <span class="s2">&quot;input_rasters&quot;</span><span class="p">)</span>
 </span><span id="L-64"><a href="#L-64"><span class="linenos"> 64</span></a>    <span class="n">core_utils</span><span class="o">.</span><span class="n">type_check</span><span class="p">(</span><span class="n">target_value</span><span class="p">,</span> <span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="s2">&quot;target_value&quot;</span><span class="p">)</span>
@@ -246,52 +246,51 @@
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">calc_proximity</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">input_rasters</span>,</span><span class="param">	<span class="n">target_value</span><span class="o">=</span><span class="mi">1</span>,</span><span class="param">	<span class="n">unit</span><span class="o">=</span><span class="s1">&#39;GEO&#39;</span>,</span><span class="param">	<span class="n">out_path</span><span class="o">=</span><span class="kc">None</span>,</span><span class="param">	<span class="n">max_dist</span><span class="o">=</span><span class="mi">1000</span>,</span><span class="param">	<span class="n">add_border</span><span class="o">=</span><span class="kc">False</span>,</span><span class="param">	<span class="n">border_value</span><span class="o">=</span><span class="mi">0</span>,</span><span class="param">	<span class="n">weighted</span><span class="o">=</span><span class="kc">False</span>,</span><span class="param">	<span class="n">invert</span><span class="o">=</span><span class="kc">False</span>,</span><span class="param">	<span class="n">return_array</span><span class="o">=</span><span class="kc">False</span>,</span><span class="param">	<span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;&#39;</span>,</span><span class="param">	<span class="n">suffix</span><span class="o">=</span><span class="s1">&#39;_proximity&#39;</span>,</span><span class="param">	<span class="n">add_uuid</span><span class="o">=</span><span class="kc">False</span>,</span><span class="param">	<span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span></span><span class="return-annotation">):</span></span>
+        <span class="name">calc_proximity</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">input_rasters</span><span class="p">:</span> <span class="n">List</span>,</span><span class="param">	<span class="n">target_value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>,</span><span class="param">	<span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;GEO&#39;</span>,</span><span class="param">	<span class="n">out_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">List</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">max_dist</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1000</span>,</span><span class="param">	<span class="n">add_border</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">border_value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>,</span><span class="param">	<span class="n">weighted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">invert</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">return_array</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>,</span><span class="param">	<span class="n">suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;_proximity&#39;</span>,</span><span class="param">	<span class="n">add_uuid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></span><span class="return-annotation">) -> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>:</span></span>
 
                 <label class="view-source-button" for="calc_proximity-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#calc_proximity"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="calc_proximity-23"><a href="#calc_proximity-23"><span class="linenos"> 23</span></a><span class="k">def</span> <span class="nf">calc_proximity</span><span class="p">(</span>
-</span><span id="calc_proximity-24"><a href="#calc_proximity-24"><span class="linenos"> 24</span></a>    <span class="n">input_rasters</span><span class="p">,</span>
-</span><span id="calc_proximity-25"><a href="#calc_proximity-25"><span class="linenos"> 25</span></a>    <span class="n">target_value</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-</span><span id="calc_proximity-26"><a href="#calc_proximity-26"><span class="linenos"> 26</span></a>    <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;GEO&quot;</span><span class="p">,</span>
-</span><span id="calc_proximity-27"><a href="#calc_proximity-27"><span class="linenos"> 27</span></a>    <span class="n">out_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-</span><span id="calc_proximity-28"><a href="#calc_proximity-28"><span class="linenos"> 28</span></a>    <span class="n">max_dist</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-</span><span id="calc_proximity-29"><a href="#calc_proximity-29"><span class="linenos"> 29</span></a>    <span class="n">add_border</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="calc_proximity-30"><a href="#calc_proximity-30"><span class="linenos"> 30</span></a>    <span class="n">border_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-</span><span id="calc_proximity-31"><a href="#calc_proximity-31"><span class="linenos"> 31</span></a>    <span class="n">weighted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="calc_proximity-32"><a href="#calc_proximity-32"><span class="linenos"> 32</span></a>    <span class="n">invert</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="calc_proximity-33"><a href="#calc_proximity-33"><span class="linenos"> 33</span></a>    <span class="n">return_array</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="calc_proximity-34"><a href="#calc_proximity-34"><span class="linenos"> 34</span></a>    <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-</span><span id="calc_proximity-35"><a href="#calc_proximity-35"><span class="linenos"> 35</span></a>    <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;_proximity&quot;</span><span class="p">,</span>
-</span><span id="calc_proximity-36"><a href="#calc_proximity-36"><span class="linenos"> 36</span></a>    <span class="n">add_uuid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="calc_proximity-37"><a href="#calc_proximity-37"><span class="linenos"> 37</span></a>    <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="calc_proximity-38"><a href="#calc_proximity-38"><span class="linenos"> 38</span></a><span class="p">):</span>
-</span><span id="calc_proximity-39"><a href="#calc_proximity-39"><span class="linenos"> 39</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="calc_proximity-40"><a href="#calc_proximity-40"><span class="linenos"> 40</span></a><span class="sd">    Calculate the proximity of input_raster to values</span>
-</span><span id="calc_proximity-41"><a href="#calc_proximity-41"><span class="linenos"> 41</span></a>
-</span><span id="calc_proximity-42"><a href="#calc_proximity-42"><span class="linenos"> 42</span></a><span class="sd">    ## Args:</span>
-</span><span id="calc_proximity-43"><a href="#calc_proximity-43"><span class="linenos"> 43</span></a><span class="sd">    `input_rasters` (_list_): A list of rasters to use as input. &lt;/br&gt;</span>
-</span><span id="calc_proximity-44"><a href="#calc_proximity-44"><span class="linenos"> 44</span></a>
-</span><span id="calc_proximity-45"><a href="#calc_proximity-45"><span class="linenos"> 45</span></a><span class="sd">    ## Kwargs:</span>
-</span><span id="calc_proximity-46"><a href="#calc_proximity-46"><span class="linenos"> 46</span></a><span class="sd">    `target_value` (_int_/_float_): The value to use as target. (Default: **1**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-47"><a href="#calc_proximity-47"><span class="linenos"> 47</span></a><span class="sd">    `unit` (_str_): The unit to use for the distance. GEO or PIXEL. (Default: **&quot;GEO&quot;**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-48"><a href="#calc_proximity-48"><span class="linenos"> 48</span></a><span class="sd">    `out_path` (_str_/_None_/_list_): The output path. (Default: **None**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-49"><a href="#calc_proximity-49"><span class="linenos"> 49</span></a><span class="sd">    `max_dist` (_int_/_float_): The maximum distance to use. (Default: **1000**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-50"><a href="#calc_proximity-50"><span class="linenos"> 50</span></a><span class="sd">    `add_border` (_bool_): If **True**, a border will be added to the raster. (Default: **False**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-51"><a href="#calc_proximity-51"><span class="linenos"> 51</span></a><span class="sd">    `border_value` (_int_/_float_): The value to use for the border. (Default: **0**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-52"><a href="#calc_proximity-52"><span class="linenos"> 52</span></a><span class="sd">    `weighted` (_bool_): If **True**, the distance will be divided by the max distance. (Default: **False**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-53"><a href="#calc_proximity-53"><span class="linenos"> 53</span></a><span class="sd">    `invert` (_bool_): If **True**, the target will be inversed. (Default: **False**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-54"><a href="#calc_proximity-54"><span class="linenos"> 54</span></a><span class="sd">    `return_array` (_bool_): If **True** a NumPy array will be returned instead of a raster. (Default: **False**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-55"><a href="#calc_proximity-55"><span class="linenos"> 55</span></a><span class="sd">    `prefix` (_str_): Prefix to add to the output. (Default: **&quot;&quot;**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-56"><a href="#calc_proximity-56"><span class="linenos"> 56</span></a><span class="sd">    `suffix` (_str_): Suffix to add to the output. (Default: **&quot;&quot;**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-57"><a href="#calc_proximity-57"><span class="linenos"> 57</span></a><span class="sd">    `add_uuid` (_bool_): Should a uuid be added to the output path? (Default: **False**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-58"><a href="#calc_proximity-58"><span class="linenos"> 58</span></a><span class="sd">    `creation_options` (_list_/_None_): The GDAL creation options to be passed. (Default: **None**) &lt;/br&gt;</span>
-</span><span id="calc_proximity-59"><a href="#calc_proximity-59"><span class="linenos"> 59</span></a><span class="sd">    `overwrite` (_bool_): If the output path exists already, should it be overwritten? (Default: **True**)&lt;/br&gt;</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="calc_proximity-24"><a href="#calc_proximity-24"><span class="linenos"> 24</span></a><span class="k">def</span> <span class="nf">calc_proximity</span><span class="p">(</span>
+</span><span id="calc_proximity-25"><a href="#calc_proximity-25"><span class="linenos"> 25</span></a>    <span class="n">input_rasters</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
+</span><span id="calc_proximity-26"><a href="#calc_proximity-26"><span class="linenos"> 26</span></a>    <span class="n">target_value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="calc_proximity-27"><a href="#calc_proximity-27"><span class="linenos"> 27</span></a>    <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;GEO&quot;</span><span class="p">,</span>
+</span><span id="calc_proximity-28"><a href="#calc_proximity-28"><span class="linenos"> 28</span></a>    <span class="n">out_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="calc_proximity-29"><a href="#calc_proximity-29"><span class="linenos"> 29</span></a>    <span class="n">max_dist</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+</span><span id="calc_proximity-30"><a href="#calc_proximity-30"><span class="linenos"> 30</span></a>    <span class="n">add_border</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="calc_proximity-31"><a href="#calc_proximity-31"><span class="linenos"> 31</span></a>    <span class="n">border_value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span><span id="calc_proximity-32"><a href="#calc_proximity-32"><span class="linenos"> 32</span></a>    <span class="n">weighted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="calc_proximity-33"><a href="#calc_proximity-33"><span class="linenos"> 33</span></a>    <span class="n">invert</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="calc_proximity-34"><a href="#calc_proximity-34"><span class="linenos"> 34</span></a>    <span class="n">return_array</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="calc_proximity-35"><a href="#calc_proximity-35"><span class="linenos"> 35</span></a>    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span id="calc_proximity-36"><a href="#calc_proximity-36"><span class="linenos"> 36</span></a>    <span class="n">suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_proximity&quot;</span><span class="p">,</span>
+</span><span id="calc_proximity-37"><a href="#calc_proximity-37"><span class="linenos"> 37</span></a>    <span class="n">add_uuid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="calc_proximity-38"><a href="#calc_proximity-38"><span class="linenos"> 38</span></a>    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="calc_proximity-39"><a href="#calc_proximity-39"><span class="linenos"> 39</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+</span><span id="calc_proximity-40"><a href="#calc_proximity-40"><span class="linenos"> 40</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="calc_proximity-41"><a href="#calc_proximity-41"><span class="linenos"> 41</span></a><span class="sd">    Calculate the proximity of input_raster to values.</span>
+</span><span id="calc_proximity-42"><a href="#calc_proximity-42"><span class="linenos"> 42</span></a>
+</span><span id="calc_proximity-43"><a href="#calc_proximity-43"><span class="linenos"> 43</span></a><span class="sd">    Args:</span>
+</span><span id="calc_proximity-44"><a href="#calc_proximity-44"><span class="linenos"> 44</span></a><span class="sd">        input_rasters (List): A list of rasters to use as input.</span>
+</span><span id="calc_proximity-45"><a href="#calc_proximity-45"><span class="linenos"> 45</span></a><span class="sd">    </span>
+</span><span id="calc_proximity-46"><a href="#calc_proximity-46"><span class="linenos"> 46</span></a><span class="sd">    Keyword Args:</span>
+</span><span id="calc_proximity-47"><a href="#calc_proximity-47"><span class="linenos"> 47</span></a><span class="sd">        target_value (Union[int, float]=1): The value to use as target.</span>
+</span><span id="calc_proximity-48"><a href="#calc_proximity-48"><span class="linenos"> 48</span></a><span class="sd">        unit (str=&#39;GEO&#39;): The unit to use for the distance, GEO or PIXEL.</span>
+</span><span id="calc_proximity-49"><a href="#calc_proximity-49"><span class="linenos"> 49</span></a><span class="sd">        out_path (Union[str, None, List]=None): The output path.</span>
+</span><span id="calc_proximity-50"><a href="#calc_proximity-50"><span class="linenos"> 50</span></a><span class="sd">        max_dist (Union[int, float]=1000): The maximum distance to use.</span>
+</span><span id="calc_proximity-51"><a href="#calc_proximity-51"><span class="linenos"> 51</span></a><span class="sd">        add_border (bool=False): If True, a border will be added to the raster.</span>
+</span><span id="calc_proximity-52"><a href="#calc_proximity-52"><span class="linenos"> 52</span></a><span class="sd">        border_value (Union[int, float]=0): The value to use for the border.</span>
+</span><span id="calc_proximity-53"><a href="#calc_proximity-53"><span class="linenos"> 53</span></a><span class="sd">        weighted (bool=False): If True, the distance will be divided by the max distance.</span>
+</span><span id="calc_proximity-54"><a href="#calc_proximity-54"><span class="linenos"> 54</span></a><span class="sd">        invert (bool=False): If True, the target will be inversed.</span>
+</span><span id="calc_proximity-55"><a href="#calc_proximity-55"><span class="linenos"> 55</span></a><span class="sd">        return_array (bool=False): If True, a NumPy array will be returned instead of a raster.</span>
+</span><span id="calc_proximity-56"><a href="#calc_proximity-56"><span class="linenos"> 56</span></a><span class="sd">        prefix (str=&#39;&#39;): Prefix to add to the output.</span>
+</span><span id="calc_proximity-57"><a href="#calc_proximity-57"><span class="linenos"> 57</span></a><span class="sd">        suffix (str=&#39;_proximity&#39;): Suffix to add to the output.</span>
+</span><span id="calc_proximity-58"><a href="#calc_proximity-58"><span class="linenos"> 58</span></a><span class="sd">        add_uuid (bool=False): Should a uuid be added to the output path?</span>
+</span><span id="calc_proximity-59"><a href="#calc_proximity-59"><span class="linenos"> 59</span></a><span class="sd">        overwrite (bool=True): If the output path exists already, should it be overwritten?</span>
 </span><span id="calc_proximity-60"><a href="#calc_proximity-60"><span class="linenos"> 60</span></a>
-</span><span id="calc_proximity-61"><a href="#calc_proximity-61"><span class="linenos"> 61</span></a><span class="sd">    ## Returns:</span>
-</span><span id="calc_proximity-62"><a href="#calc_proximity-62"><span class="linenos"> 62</span></a><span class="sd">    (_str_/_np.ndarray_): A path to a raster with the calculate proximity, or a numpy array with the data.</span>
+</span><span id="calc_proximity-61"><a href="#calc_proximity-61"><span class="linenos"> 61</span></a><span class="sd">    Returns:</span>
+</span><span id="calc_proximity-62"><a href="#calc_proximity-62"><span class="linenos"> 62</span></a><span class="sd">        Union[str, np.ndarray]: A path to a raster with the calculated proximity, or a numpy array with the data.</span>
 </span><span id="calc_proximity-63"><a href="#calc_proximity-63"><span class="linenos"> 63</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="calc_proximity-64"><a href="#calc_proximity-64"><span class="linenos"> 64</span></a>    <span class="n">core_utils</span><span class="o">.</span><span class="n">type_check</span><span class="p">(</span><span class="n">input_rasters</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]],</span> <span class="s2">&quot;input_rasters&quot;</span><span class="p">)</span>
 </span><span id="calc_proximity-65"><a href="#calc_proximity-65"><span class="linenos"> 65</span></a>    <span class="n">core_utils</span><span class="o">.</span><span class="n">type_check</span><span class="p">(</span><span class="n">target_value</span><span class="p">,</span> <span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="s2">&quot;target_value&quot;</span><span class="p">)</span>
@@ -411,32 +410,37 @@
 </span></pre></div>
 
 
-            <div class="docstring"><p>Calculate the proximity of input_raster to values</p>
+            <div class="docstring"><p>Calculate the proximity of input_raster to values.</p>
 
-<h2 id="args">Args:</h2>
+<h6 id="arguments">Arguments:</h6>
 
-<p><code>input_rasters</code> (_list_): A list of rasters to use as input. </br></p>
+<ul>
+<li><strong>input_rasters (List):</strong>  A list of rasters to use as input.</li>
+</ul>
 
-<h2 id="kwargs">Kwargs:</h2>
+<h6 id="keyword-args">Keyword Args:</h6>
 
-<p><code>target_value</code> (_int_/_float_): The value to use as target. (Default: <strong>1</strong>) </br>
-<code>unit</code> (_str_): The unit to use for the distance. GEO or PIXEL. (Default: <strong>"GEO"</strong>) </br>
-<code>out_path</code> (_str_/_None_/_list_): The output path. (Default: <strong>None</strong>) </br>
-<code>max_dist</code> (_int_/_float_): The maximum distance to use. (Default: <strong>1000</strong>) </br>
-<code>add_border</code> (_bool_): If <strong>True</strong>, a border will be added to the raster. (Default: <strong>False</strong>) </br>
-<code>border_value</code> (_int_/_float_): The value to use for the border. (Default: <strong>0</strong>) </br>
-<code>weighted</code> (_bool_): If <strong>True</strong>, the distance will be divided by the max distance. (Default: <strong>False</strong>) </br>
-<code>invert</code> (_bool_): If <strong>True</strong>, the target will be inversed. (Default: <strong>False</strong>) </br>
-<code>return_array</code> (_bool_): If <strong>True</strong> a NumPy array will be returned instead of a raster. (Default: <strong>False</strong>) </br>
-<code>prefix</code> (_str_): Prefix to add to the output. (Default: <strong>""</strong>) </br>
-<code>suffix</code> (_str_): Suffix to add to the output. (Default: <strong>""</strong>) </br>
-<code>add_uuid</code> (_bool_): Should a uuid be added to the output path? (Default: <strong>False</strong>) </br>
-<code>creation_options</code> (_list_/_None_): The GDAL creation options to be passed. (Default: <strong>None</strong>) </br>
-<code>overwrite</code> (_bool_): If the output path exists already, should it be overwritten? (Default: <strong>True</strong>)</br></p>
+<blockquote>
+  <p>target_value (Union[int, float]=1): The value to use as target.
+  unit (str='GEO'): The unit to use for the distance, GEO or PIXEL.
+  out_path (Union[str, None, List]=None): The output path.
+  max_dist (Union[int, float]=1000): The maximum distance to use.
+  add_border (bool=False): If True, a border will be added to the raster.
+  border_value (Union[int, float]=0): The value to use for the border.
+  weighted (bool=False): If True, the distance will be divided by the max distance.
+  invert (bool=False): If True, the target will be inversed.
+  return_array (bool=False): If True, a NumPy array will be returned instead of a raster.
+  prefix (str=''): Prefix to add to the output.
+  suffix (str='_proximity'): Suffix to add to the output.
+  add_uuid (bool=False): Should a uuid be added to the output path?
+  overwrite (bool=True): If the output path exists already, should it be overwritten?</p>
+</blockquote>
 
-<h2 id="returns">Returns:</h2>
+<h6 id="returns">Returns:</h6>
 
-<p>(_str_/_np.ndarray_): A path to a raster with the calculate proximity, or a numpy array with the data.</p>
+<blockquote>
+  <p>Union[str, np.ndarray]: A path to a raster with the calculated proximity, or a numpy array with the data.</p>
+</blockquote>
 </div>
 
 

@@ -7,7 +7,7 @@ Clips a raster using a vector geometry or the extents of a raster.
 # Standard library
 import sys; sys.path.append("../../")
 import os
-from typing import Union, List, Optional, Tuple, Dict, Any
+from typing import Union, List, Optional
 
 # External
 from osgeo import gdal, ogr
@@ -217,35 +217,35 @@ def clip_raster(
             clip the raster.
 
     Keyword Args:
-        out_path (str/list/None, default=None): The path(s) to save the
+        out_path (str/list/None=None): The path(s) to save the
             clipped raster to. If None, a memory raster is created.
-        resample_alg (str, default="nearest"): The resampling algorithm to use.
+        resample_alg (str="nearest"): The resampling algorithm to use.
             Options include: nearest, bilinear, cubic, cubicspline, lanczos, average,
                 mode, max, min, median, q1, q3, sum, rms.
-        crop_to_geom (bool, default=True): If True, the output raster will be
+        crop_to_geom (bool=True): If True, the output raster will be
             cropped to the extent of the clip geometry.
-        adjust_bbox (bool, default=False): If True, the output raster will have its
+        adjust_bbox (bool=False): If True, the output raster will have its
             bbox adjusted to match the clip geometry.
-        all_touch (bool, default=False): If true, all pixels touching the
+        all_touch (bool=False): If true, all pixels touching the
             clipping geometry will be included.
-        to_extent (bool, default=False): If True, the output raster will be
+        to_extent (bool=False): If True, the output raster will be
             cropped to the extent of the clip geometry.
-        prefix (str, default=""): The prefix to use for the output raster.
-        suffix (str, default=""): The suffix to use for the output raster.
-        overwrite (bool, default=True): If True, the output raster will be
+        prefix (str=""): The prefix to use for the output raster.
+        suffix (str=""): The suffix to use for the output raster.
+        overwrite (bool=True): If True, the output raster will be
             overwritten if it already exists.
-        creation_options (list/None, default=None): A list of creation options
+        creation_options (list/None=None): A list of creation options
             to pass to gdal.
-        dst_nodata (int/float/None, default="infer"): The nodata value to use for
+        dst_nodata (int/float/None="infer"): The nodata value to use for
             the output raster.
-        src_nodata (int/float/None, default="infer"): The nodata value to use for
+        src_nodata (int/float/None="infer"): The nodata value to use for
             the input raster.
-        layer_to_clip (int/str, default=0): The layer ID or name in the
+        layer_to_clip (int/str=0): The layer ID or name in the
             vector to use for clipping.
-        verbose (int, default=0): The verbosity level.
-        add_uuid (bool, default=False): If True, a UUID will be added to the
+        verbose (int=0): The verbosity level.
+        add_uuid (bool=False): If True, a UUID will be added to the
             output raster.
-        ram (str, default="auto"): The amount of RAM to use for the operation.
+        ram (str="auto"): The amount of RAM to use for the operation.
 
     Returns:
         str/list: A string or list of strings representing the path(s) to

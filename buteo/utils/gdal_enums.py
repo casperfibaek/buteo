@@ -3,11 +3,12 @@
 
 Functions to translate between **GDAL** and **NumPy** datatypes.
 """
+# Standard Library
+from typing import List, Tuple, Union, Dict
 
 # External
 import numpy as np
 from osgeo import gdal
-from typing import List, Tuple, Union, Dict
 
 
 
@@ -155,7 +156,7 @@ def is_valid_vector_driver_extension(ext: str) -> bool:
     return ext in get_valid_vector_driver_extensions()
 
 
-def convert_raster_extension_to_driver_shortname(ext: str) -> str:
+def convert_raster_ext_to_driver_shortname(ext: str) -> str:
     """
     Converts a raster file extension to a GDAL driver short name.
 
@@ -197,7 +198,7 @@ def convert_extension_to_driver_shortname(ext: str) -> str:
     raise RuntimeError(f"Invalid extension: {ext}")
 
 
-def convert_vector_extension_to_driver_shortname(ext: str) -> str:
+def convert_vector_ext_to_driver_shortname(ext: str) -> str:
     """
     Converts a vector file extension to an **OGR** driver short_name name.
 

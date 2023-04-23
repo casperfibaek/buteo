@@ -10,6 +10,7 @@ Cut rasters to grids. Use vectors or rasters as grids.
 # Standard library
 import sys; sys.path.append("../../")
 from uuid import uuid4
+from typing import Union, Optional, List
 
 # External
 from osgeo import gdal, ogr
@@ -25,35 +26,35 @@ from buteo.vector.reproject import _reproject_vector
 
 
 def raster_to_grid(
-    raster,
-    grid,
-    out_dir,
+    raster: Union[str, gdal.Dataset],
+    grid: Union[str, ogr.DataSource],
+    out_dir: str,
     *,
-    use_field=None,
-    generate_vrt=True,
-    overwrite=True,
-    process_layer=0,
-    creation_options=None,
-    verbose=0,
-):
+    use_field: bool = None,
+    generate_vrt: bool = True,
+    overwrite: bool = True,
+    process_layer: int = 0,
+    creation_options: Optional[List[str]] = None,
+    verbose: int = 0,
+) -> str:
     """
     Clips a raster to a grid. Generate .vrt.
 
-    ## Args:
-    `raster` (_str_/_gdal.DataSet_): The input raster. </br>
-    `grid` (_str_/ogr.DataSource): The grid to use. </br>
-    `out_dir` (_str_): The output directory. </br>
+    Args:
+        raster (str/gdal.DataSet): The input raster.
+        grid (str/ogr.DataSource): The grid to use.
+        out_dir (str): The output directory.
 
-    ## Kwargs:
-    `use_field` (_str_/_None_): A field to use to name the grid cells. </br>
-    `generate_vrt` (_bool_): If **True**, the output raster will be a .vrt. </br>
-    `overwrite` (_bool_): If **True**, the output raster will be overwritten. </br>
-    `process_layer` (_int_): The layer from the grid to process. </br>
-    `creation_options` (_list_/_None_): Creation options for the output raster. </br>
-    `verbose` (_int_): The verbosity level. </br>
+    Keyword Args:
+        use_field (str=None): A field to use to name the grid cells.
+        generate_vrt (bool=True): If True, the output raster will be a .vrt.
+        overwrite (bool=True): If True, the output raster will be overwritten.
+        process_layer (int=0): The layer from the grid to process.
+        creation_options (list=None): Creation options for the output raster.
+        verbose (int=0): The verbosity level.
 
-    ## Returns:
-    (_str_): The filepath for the newly created raster.
+    Returns:
+        str: The filepath for the newly created raster.
     """
     core_utils.type_check(raster, [str, gdal.Dataset], "raster")
     core_utils.type_check(grid, [str, ogr.DataSource], "grid")
@@ -73,7 +74,7 @@ def raster_to_grid(
         grid_metadata = core_vector._vector_to_metadata(use_grid)
 
         if not isinstance(grid_metadata, dict):
-            raise Exception("Error while parsing metadata.")
+            raise RuntimeError("Error while parsing metadata.")
 
     # Only use the polygons in the grid that intersect the extent of the raster.
     use_grid = _intersect_vector(use_grid, raster_metadata["extent_datasource"]())

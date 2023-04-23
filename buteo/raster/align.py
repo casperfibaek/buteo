@@ -42,16 +42,16 @@ def align_rasters_to_reference(
             or vector.
 
     Keyword Args:
-        out_path (str/list, default=None): Paths to the output. If not provided,
+        out_path (str/list=None): Paths to the output. If not provided,
             the output will be in-memory rasters.
-        resample_alg (str, default="nearest"): Resampling algorithm to use.
-        target_nodata (int/float, default=None): Nodata value to use for the
+        resample_alg (str="nearest"): Resampling algorithm to use.
+        target_nodata (int/float=None): Nodata value to use for the
             output rasters.
-        overwrite (bool, default=True): Overwrite existing files.
-        creation_options (list, default=None): List of creation options.
-        prefix (str, default=""): Prefix to add to the output file name.
-        suffix (str, default=""): Suffix to add to the output file name.
-        ram (int/str, default="auto"): Amount of RAM to use in MB. If "auto",
+        overwrite (bool=True): Overwrite existing files.
+        creation_options (list=None): List of creation options.
+        prefix (str=""): Prefix to add to the output file name.
+        suffix (str=""): Suffix to add to the output file name.
+        ram (int/str="auto"): Amount of RAM to use in MB. If "auto",
             the amount of RAM will be determined automatically.
     """
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
@@ -326,7 +326,7 @@ def align_rasters(
         creation_options (Optional[List[str]], optional): The creation options to use. Defaults to None.
         prefix (str, optional): The prefix to add to the output file name. Defaults to "".
         suffix (str, optional): The suffix to add to the output file name. Defaults to "".
-        ram (int/str, default="auto"): Amount of RAM to use in MB. If "auto",
+        ram (int/str="auto"): Amount of RAM to use in MB. If "auto",
             the amount of RAM will be determined automatically.
     
     Returns:

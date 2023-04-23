@@ -110,16 +110,16 @@
 </span><span id="L-42"><a href="#L-42"><span class="linenos"> 42</span></a><span class="sd">            or vector.</span>
 </span><span id="L-43"><a href="#L-43"><span class="linenos"> 43</span></a>
 </span><span id="L-44"><a href="#L-44"><span class="linenos"> 44</span></a><span class="sd">    Keyword Args:</span>
-</span><span id="L-45"><a href="#L-45"><span class="linenos"> 45</span></a><span class="sd">        out_path (str/list, default=None): Paths to the output. If not provided,</span>
+</span><span id="L-45"><a href="#L-45"><span class="linenos"> 45</span></a><span class="sd">        out_path (str/list=None): Paths to the output. If not provided,</span>
 </span><span id="L-46"><a href="#L-46"><span class="linenos"> 46</span></a><span class="sd">            the output will be in-memory rasters.</span>
-</span><span id="L-47"><a href="#L-47"><span class="linenos"> 47</span></a><span class="sd">        resample_alg (str, default=&quot;nearest&quot;): Resampling algorithm to use.</span>
-</span><span id="L-48"><a href="#L-48"><span class="linenos"> 48</span></a><span class="sd">        target_nodata (int/float, default=None): Nodata value to use for the</span>
+</span><span id="L-47"><a href="#L-47"><span class="linenos"> 47</span></a><span class="sd">        resample_alg (str=&quot;nearest&quot;): Resampling algorithm to use.</span>
+</span><span id="L-48"><a href="#L-48"><span class="linenos"> 48</span></a><span class="sd">        target_nodata (int/float=None): Nodata value to use for the</span>
 </span><span id="L-49"><a href="#L-49"><span class="linenos"> 49</span></a><span class="sd">            output rasters.</span>
-</span><span id="L-50"><a href="#L-50"><span class="linenos"> 50</span></a><span class="sd">        overwrite (bool, default=True): Overwrite existing files.</span>
-</span><span id="L-51"><a href="#L-51"><span class="linenos"> 51</span></a><span class="sd">        creation_options (list, default=None): List of creation options.</span>
-</span><span id="L-52"><a href="#L-52"><span class="linenos"> 52</span></a><span class="sd">        prefix (str, default=&quot;&quot;): Prefix to add to the output file name.</span>
-</span><span id="L-53"><a href="#L-53"><span class="linenos"> 53</span></a><span class="sd">        suffix (str, default=&quot;&quot;): Suffix to add to the output file name.</span>
-</span><span id="L-54"><a href="#L-54"><span class="linenos"> 54</span></a><span class="sd">        ram (int/str, default=&quot;auto&quot;): Amount of RAM to use in MB. If &quot;auto&quot;,</span>
+</span><span id="L-50"><a href="#L-50"><span class="linenos"> 50</span></a><span class="sd">        overwrite (bool=True): Overwrite existing files.</span>
+</span><span id="L-51"><a href="#L-51"><span class="linenos"> 51</span></a><span class="sd">        creation_options (list=None): List of creation options.</span>
+</span><span id="L-52"><a href="#L-52"><span class="linenos"> 52</span></a><span class="sd">        prefix (str=&quot;&quot;): Prefix to add to the output file name.</span>
+</span><span id="L-53"><a href="#L-53"><span class="linenos"> 53</span></a><span class="sd">        suffix (str=&quot;&quot;): Suffix to add to the output file name.</span>
+</span><span id="L-54"><a href="#L-54"><span class="linenos"> 54</span></a><span class="sd">        ram (int/str=&quot;auto&quot;): Amount of RAM to use in MB. If &quot;auto&quot;,</span>
 </span><span id="L-55"><a href="#L-55"><span class="linenos"> 55</span></a><span class="sd">            the amount of RAM will be determined automatically.</span>
 </span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a>    <span class="n">core_utils</span><span class="o">.</span><span class="n">type_check</span><span class="p">(</span><span class="n">rasters</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]],</span> <span class="s2">&quot;rasters&quot;</span><span class="p">)</span>
@@ -394,7 +394,7 @@
 </span><span id="L-326"><a href="#L-326"><span class="linenos">326</span></a><span class="sd">        creation_options (Optional[List[str]], optional): The creation options to use. Defaults to None.</span>
 </span><span id="L-327"><a href="#L-327"><span class="linenos">327</span></a><span class="sd">        prefix (str, optional): The prefix to add to the output file name. Defaults to &quot;&quot;.</span>
 </span><span id="L-328"><a href="#L-328"><span class="linenos">328</span></a><span class="sd">        suffix (str, optional): The suffix to add to the output file name. Defaults to &quot;&quot;.</span>
-</span><span id="L-329"><a href="#L-329"><span class="linenos">329</span></a><span class="sd">        ram (int/str, default=&quot;auto&quot;): Amount of RAM to use in MB. If &quot;auto&quot;,</span>
+</span><span id="L-329"><a href="#L-329"><span class="linenos">329</span></a><span class="sd">        ram (int/str=&quot;auto&quot;): Amount of RAM to use in MB. If &quot;auto&quot;,</span>
 </span><span id="L-330"><a href="#L-330"><span class="linenos">330</span></a><span class="sd">            the amount of RAM will be determined automatically.</span>
 </span><span id="L-331"><a href="#L-331"><span class="linenos">331</span></a><span class="sd">    </span>
 </span><span id="L-332"><a href="#L-332"><span class="linenos">332</span></a><span class="sd">    Returns:</span>
@@ -483,16 +483,16 @@
 </span><span id="align_rasters_to_reference-43"><a href="#align_rasters_to_reference-43"><span class="linenos"> 43</span></a><span class="sd">            or vector.</span>
 </span><span id="align_rasters_to_reference-44"><a href="#align_rasters_to_reference-44"><span class="linenos"> 44</span></a>
 </span><span id="align_rasters_to_reference-45"><a href="#align_rasters_to_reference-45"><span class="linenos"> 45</span></a><span class="sd">    Keyword Args:</span>
-</span><span id="align_rasters_to_reference-46"><a href="#align_rasters_to_reference-46"><span class="linenos"> 46</span></a><span class="sd">        out_path (str/list, default=None): Paths to the output. If not provided,</span>
+</span><span id="align_rasters_to_reference-46"><a href="#align_rasters_to_reference-46"><span class="linenos"> 46</span></a><span class="sd">        out_path (str/list=None): Paths to the output. If not provided,</span>
 </span><span id="align_rasters_to_reference-47"><a href="#align_rasters_to_reference-47"><span class="linenos"> 47</span></a><span class="sd">            the output will be in-memory rasters.</span>
-</span><span id="align_rasters_to_reference-48"><a href="#align_rasters_to_reference-48"><span class="linenos"> 48</span></a><span class="sd">        resample_alg (str, default=&quot;nearest&quot;): Resampling algorithm to use.</span>
-</span><span id="align_rasters_to_reference-49"><a href="#align_rasters_to_reference-49"><span class="linenos"> 49</span></a><span class="sd">        target_nodata (int/float, default=None): Nodata value to use for the</span>
+</span><span id="align_rasters_to_reference-48"><a href="#align_rasters_to_reference-48"><span class="linenos"> 48</span></a><span class="sd">        resample_alg (str=&quot;nearest&quot;): Resampling algorithm to use.</span>
+</span><span id="align_rasters_to_reference-49"><a href="#align_rasters_to_reference-49"><span class="linenos"> 49</span></a><span class="sd">        target_nodata (int/float=None): Nodata value to use for the</span>
 </span><span id="align_rasters_to_reference-50"><a href="#align_rasters_to_reference-50"><span class="linenos"> 50</span></a><span class="sd">            output rasters.</span>
-</span><span id="align_rasters_to_reference-51"><a href="#align_rasters_to_reference-51"><span class="linenos"> 51</span></a><span class="sd">        overwrite (bool, default=True): Overwrite existing files.</span>
-</span><span id="align_rasters_to_reference-52"><a href="#align_rasters_to_reference-52"><span class="linenos"> 52</span></a><span class="sd">        creation_options (list, default=None): List of creation options.</span>
-</span><span id="align_rasters_to_reference-53"><a href="#align_rasters_to_reference-53"><span class="linenos"> 53</span></a><span class="sd">        prefix (str, default=&quot;&quot;): Prefix to add to the output file name.</span>
-</span><span id="align_rasters_to_reference-54"><a href="#align_rasters_to_reference-54"><span class="linenos"> 54</span></a><span class="sd">        suffix (str, default=&quot;&quot;): Suffix to add to the output file name.</span>
-</span><span id="align_rasters_to_reference-55"><a href="#align_rasters_to_reference-55"><span class="linenos"> 55</span></a><span class="sd">        ram (int/str, default=&quot;auto&quot;): Amount of RAM to use in MB. If &quot;auto&quot;,</span>
+</span><span id="align_rasters_to_reference-51"><a href="#align_rasters_to_reference-51"><span class="linenos"> 51</span></a><span class="sd">        overwrite (bool=True): Overwrite existing files.</span>
+</span><span id="align_rasters_to_reference-52"><a href="#align_rasters_to_reference-52"><span class="linenos"> 52</span></a><span class="sd">        creation_options (list=None): List of creation options.</span>
+</span><span id="align_rasters_to_reference-53"><a href="#align_rasters_to_reference-53"><span class="linenos"> 53</span></a><span class="sd">        prefix (str=&quot;&quot;): Prefix to add to the output file name.</span>
+</span><span id="align_rasters_to_reference-54"><a href="#align_rasters_to_reference-54"><span class="linenos"> 54</span></a><span class="sd">        suffix (str=&quot;&quot;): Suffix to add to the output file name.</span>
+</span><span id="align_rasters_to_reference-55"><a href="#align_rasters_to_reference-55"><span class="linenos"> 55</span></a><span class="sd">        ram (int/str=&quot;auto&quot;): Amount of RAM to use in MB. If &quot;auto&quot;,</span>
 </span><span id="align_rasters_to_reference-56"><a href="#align_rasters_to_reference-56"><span class="linenos"> 56</span></a><span class="sd">            the amount of RAM will be determined automatically.</span>
 </span><span id="align_rasters_to_reference-57"><a href="#align_rasters_to_reference-57"><span class="linenos"> 57</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="align_rasters_to_reference-58"><a href="#align_rasters_to_reference-58"><span class="linenos"> 58</span></a>    <span class="n">core_utils</span><span class="o">.</span><span class="n">type_check</span><span class="p">(</span><span class="n">rasters</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]],</span> <span class="s2">&quot;rasters&quot;</span><span class="p">)</span>
@@ -614,16 +614,16 @@ or vector.</li>
 <h6 id="keyword-args">Keyword Args:</h6>
 
 <blockquote>
-  <p>out_path (str/list, default=None): Paths to the output. If not provided,
+  <p>out_path (str/list=None): Paths to the output. If not provided,
       the output will be in-memory rasters.
-  resample_alg (str, default="nearest"): Resampling algorithm to use.
-  target_nodata (int/float, default=None): Nodata value to use for the
+  resample_alg (str="nearest"): Resampling algorithm to use.
+  target_nodata (int/float=None): Nodata value to use for the
       output rasters.
-  overwrite (bool, default=True): Overwrite existing files.
-  creation_options (list, default=None): List of creation options.
-  prefix (str, default=""): Prefix to add to the output file name.
-  suffix (str, default=""): Suffix to add to the output file name.
-  ram (int/str, default="auto"): Amount of RAM to use in MB. If "auto",
+  overwrite (bool=True): Overwrite existing files.
+  creation_options (list=None): List of creation options.
+  prefix (str=""): Prefix to add to the output file name.
+  suffix (str=""): Suffix to add to the output file name.
+  ram (int/str="auto"): Amount of RAM to use in MB. If "auto",
       the amount of RAM will be determined automatically.</p>
 </blockquote>
 </div>
@@ -839,7 +839,7 @@ Options include: "reference", "intersection", and "union".</li>
 </span><span id="align_rasters-327"><a href="#align_rasters-327"><span class="linenos">327</span></a><span class="sd">        creation_options (Optional[List[str]], optional): The creation options to use. Defaults to None.</span>
 </span><span id="align_rasters-328"><a href="#align_rasters-328"><span class="linenos">328</span></a><span class="sd">        prefix (str, optional): The prefix to add to the output file name. Defaults to &quot;&quot;.</span>
 </span><span id="align_rasters-329"><a href="#align_rasters-329"><span class="linenos">329</span></a><span class="sd">        suffix (str, optional): The suffix to add to the output file name. Defaults to &quot;&quot;.</span>
-</span><span id="align_rasters-330"><a href="#align_rasters-330"><span class="linenos">330</span></a><span class="sd">        ram (int/str, default=&quot;auto&quot;): Amount of RAM to use in MB. If &quot;auto&quot;,</span>
+</span><span id="align_rasters-330"><a href="#align_rasters-330"><span class="linenos">330</span></a><span class="sd">        ram (int/str=&quot;auto&quot;): Amount of RAM to use in MB. If &quot;auto&quot;,</span>
 </span><span id="align_rasters-331"><a href="#align_rasters-331"><span class="linenos">331</span></a><span class="sd">            the amount of RAM will be determined automatically.</span>
 </span><span id="align_rasters-332"><a href="#align_rasters-332"><span class="linenos">332</span></a><span class="sd">    </span>
 </span><span id="align_rasters-333"><a href="#align_rasters-333"><span class="linenos">333</span></a><span class="sd">    Returns:</span>
@@ -914,7 +914,7 @@ one of three methods: reference, intersection, or union.</p>
   creation_options (Optional[List[str]], optional): The creation options to use. Defaults to None.
   prefix (str, optional): The prefix to add to the output file name. Defaults to "".
   suffix (str, optional): The suffix to add to the output file name. Defaults to "".
-  ram (int/str, default="auto"): Amount of RAM to use in MB. If "auto",
+  ram (int/str="auto"): Amount of RAM to use in MB. If "auto",
       the amount of RAM will be determined automatically.</p>
 </blockquote>
 
