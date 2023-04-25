@@ -87,7 +87,7 @@ def scaler_standardise(
     num = np.subtract(arr, arr_mean)
     np.divide(num, arr_std, out=result, where=arr_std != 0)
 
-    return (result, stat_dict)
+    return result, stat_dict
 
 
 def scaler_standardise_mad(
@@ -222,13 +222,15 @@ def scaler_to_range(
     result = np.zeros_like(arr, dtype="float32")
     np.divide(num, den, out=result, where=den != 0)
 
-    return np.multiply(result, max_val - min_val) + min_val, stat_dict
+    result = np.multiply(result, max_val - min_val) + min_val
+
+    return result, stat_dict
 
 
 def scaler_truncate(
     arr: np.ndarray,
-    trunc_min: Union[float, int],
-    trunc_max: Union[float, int],
+    trunc_min: Union[float, int] = None,
+    trunc_max: Union[float, int] = None,
     target_min: Union[float, int] = 0.0,
     target_max: Union[float, int] = 1.0,
     stat_dict: Optional[dict] = None,
@@ -238,8 +240,8 @@ def scaler_truncate(
 
     Args:
         arr (np.array): The array to normalise
-        trunc_min (float/int): The minimum value to truncate to.
-        trunc_max (float/int): The maximum value to truncate to.
+        trunc_min (float/int=None): The minimum value to truncate to.
+        trunc_max (float/int=None): The maximum value to truncate to.
 
     Keyword Args:
         target_min (float=0.0): The minimum value to normalise to.
@@ -259,21 +261,27 @@ def scaler_truncate(
         trunc_max = stat_dict["trunc_max"]
         target_min = stat_dict["target_min"]
         target_max = stat_dict["target_max"]
+    else:
+        stat_dict = {
+            "trunc_min": trunc_min,
+            "trunc_max": trunc_max,
+            "target_min": target_min,
+            "target_max": target_max,
+        }
 
-    stat_dict = {
-        "trunc_min": trunc_min,
-        "trunc_max": trunc_max,
-        "target_min": target_min,
-        "target_max": target_max,
-    }
+    truncated = arr
+    if trunc_min is not None:
+        truncated = np.where(arr > trunc_max, trunc_max, arr)
 
-    truncated = np.where(arr > trunc_max, trunc_max, arr)
-    truncated = np.where(truncated < trunc_min, trunc_min, truncated)
+    if trunc_max is not None:
+        truncated = np.where(truncated < trunc_min, trunc_min, truncated)
 
     if "arr_min" not in stat_dict:
         stat_dict["arr_min"] = np.min(truncated)
     if "arr_max" not in stat_dict:
         stat_dict["arr_max"] = np.max(truncated)
+
+    truncated = truncated.astype(np.float32, copy=False)
 
     arr_min = stat_dict["arr_min"]
     arr_max = stat_dict["arr_max"]
@@ -284,4 +292,6 @@ def scaler_truncate(
     result = np.zeros_like(arr, dtype="float32")
     np.divide(num, den, out=result, where=den != 0)
 
-    return np.multiply(result, target_max - target_min) + target_min, stat_dict
+    result = np.multiply(result, target_max - target_min) + target_min
+
+    return result, stat_dict

@@ -614,7 +614,7 @@ def _convolve_array(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
-def convolve_array_simple(
+def convolve_array_simple2(
     array: np.ndarray,
     offsets: np.ndarray,
     weights: np.ndarray,
@@ -674,6 +674,66 @@ def convolve_array_simple(
         result += array
 
     return result
+
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def convolve_array_simple(
+    array: np.ndarray,
+    offsets: np.ndarray,
+    weights: np.ndarray,
+    intensity: float = 1.0,
+):
+    """
+    Convolve a kernel with an array using a simple method.
+
+    Args:
+        array (np.ndarray): The array to convolve.
+        offsets (np.ndarray): The offsets of the kernel.
+        weights (np.ndarray): The weights of the kernel.
+    
+    Keyword Args:
+        intensity (float=1.0): The intensity of the convolution. If
+            1.0, the convolution is applied as is. If 0.5, the
+            convolution is applied at half intensity.
+
+    Returns:
+        np.ndarray: The convolved array.
+    """
+    result = np.empty_like(array, dtype=np.float32)
+
+    if intensity <= 0.0:
+        return array.astype(np.float32)
+
+    for col in prange(array.shape[0]):
+        for row in prange(array.shape[1]):
+
+            result_value = 0.0
+            for i in range(offsets.shape[0]):
+                new_col = col + offsets[i, 0]
+                new_row = row + offsets[i, 1]
+
+                if new_col < 0:
+                    new_col = 0
+                elif new_col >= array.shape[0]:
+                    new_col = array.shape[0] - 1
+
+                if new_row < 0:
+                    new_row = 0
+                elif new_row >= array.shape[1]:
+                    new_row = array.shape[1] - 1
+
+                result_value += array[new_col, new_row] * weights[i]
+
+            result[col, row] = result_value
+
+    if intensity < 1.0:
+        result *= intensity
+        array *= (1.0 - intensity)
+        result += array
+
+    return result
+
 
 
 def convolve_array(

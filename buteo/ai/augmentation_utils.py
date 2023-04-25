@@ -42,19 +42,23 @@ def fit_data_to_dtype(
     Returns:
         np.ndarray: The data fitted to the dtype.
     """
-    max_value = np.iinfo(dtype).max
-    min_value = np.iinfo(dtype).min
+    # TODO: This is a workaround for numba. Remove when numba supports.
+    return data.astype(dtype)
 
-    if is_integer_dtype(dtype):
-        return np.rint(
-            np.clip(data, min_value, max_value)
-        ).astype(dtype)
+    # return data.astype(dtype)
+    # max_value = np.iinfo(dtype).max
+    # min_value = np.iinfo(dtype).min
 
-    return np.clip(
-        data,
-        min_value,
-        max_value,
-    ).astype(dtype)
+    # if is_integer_dtype(dtype):
+    #     return np.rint(
+    #         np.clip(data, min_value, max_value)
+    #     ).astype(dtype)
+
+    # return np.clip(
+    #     data,
+    #     min_value,
+    #     max_value,
+    # ).astype(dtype)
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)

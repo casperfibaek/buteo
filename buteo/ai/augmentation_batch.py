@@ -21,7 +21,7 @@ from buteo.ai.augmentation_funcs import (
     augmentation_drop_channel,
     augmentation_blur,
     augmentation_sharpen,
-    augmentation_misalign_pixels,
+    augmentation_misalign,
     augmentation_cutmix,
     augmentation_mixup,
 )
@@ -35,11 +35,14 @@ def _augmentation_batch_default(
     max_images: float = 1.0,
 ) -> Tuple[np.ndarray, Optional[np.ndarray], np.ndarray]:
     """ INTERNAL FUNCTION. DO NOT USE. """
-
-    X_aug = X.copy()
-    y_aug = y.copy() if y is not None else None
-
     batch_size = X.shape[0]
+
+    if chance == 0.0:
+        aug_flags = np.zeros(batch_size, dtype=np.uint8)
+        return X, y, aug_flags
+    elif chance == 1.0:
+        aug_flags = np.ones(batch_size, dtype=np.uint8)
+        return X, y, aug_flags
 
     n_mixes = min(
         (np.random.rand(batch_size) <= chance).sum(),
@@ -47,17 +50,17 @@ def _augmentation_batch_default(
     )
 
     if n_mixes == 0:
-        aug_flags = np.array([False] * batch_size, dtype=np.int64)
+        aug_flags = np.zeros(batch_size, dtype=np.uint8)
         return X, y, aug_flags
 
-    aug_flags = np.array([False] * batch_size, dtype=np.int64)
+    aug_flags = np.zeros(batch_size, dtype=np.uint8)
 
     idx_targets = np.random.choice(batch_size, n_mixes, replace=False)
     for i in aug_flags:
         if i in idx_targets:
-            aug_flags[i] = True
+            aug_flags[i] = 1
 
-    return X_aug, y_aug, aug_flags
+    return X, y, aug_flags
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
@@ -87,8 +90,10 @@ def augmentation_batch_rotation(
     """
     x_rotated, y_rotated, selection = _augmentation_batch_default(X, y, chance, max_images)
 
-    for idx, selected in enumerate(prange(selection.shape[0])):
-        if not selected:
+    for idx in prange(selection.shape[0]):
+        selected = selection[idx]
+
+        if selected != np.uint8(1):
             continue
 
         if y is None:
@@ -138,8 +143,10 @@ def augmentation_batch_mirror(
     """
     x_mirrored, y_mirrored, selection = _augmentation_batch_default(X, y, chance, max_images)
 
-    for idx, selected in enumerate(prange(selection.shape[0])):
-        if not selected:
+    for idx in prange(selection.shape[0]):
+        selected = selection[idx]
+
+        if selected != np.uint8(1):
             continue
 
         if y is None:
@@ -194,8 +201,10 @@ def augmentation_batch_noise(
     """
     x_noised, y_noised, selection = _augmentation_batch_default(X, y, chance, max_images)
 
-    for idx, selected in enumerate(prange(selection.shape[0])):
-        if not selected:
+    for idx in prange(selection.shape[0]):
+        selected = selection[idx]
+
+        if selected != np.uint8(1):
             continue
 
         x_noised[idx], _ = augmentation_noise(
@@ -239,8 +248,10 @@ def augmentation_batch_channel_scale(
     """
     x_scaled, y_scaled, selection = _augmentation_batch_default(X, y, chance, max_images)
 
-    for idx, selected in enumerate(prange(selection.shape[0])):
-        if not selected:
+    for idx in prange(selection.shape[0]):
+        selected = selection[idx]
+
+        if selected != np.uint8(1):
             continue
 
         x_scaled[idx], _ = augmentation_channel_scale(
@@ -282,8 +293,10 @@ def augmentation_batch_contrast(
     """
     x_constrast, y_contrast, selection = _augmentation_batch_default(X, y, chance, max_images)
 
-    for idx, selected in enumerate(prange(selection.shape[0])):
-        if not selected:
+    for idx in prange(selection.shape[0]):
+        selected = selection[idx]
+
+        if selected != np.uint8(1):
             continue
 
         x_constrast[idx], _ = augmentation_contrast(
@@ -301,7 +314,7 @@ def augmentation_batch_drop_pixel(
     X: np.ndarray,
     y: Optional[np.ndarray],
     chance: float = 0.5,
-    drop_probability: float = 0.1,
+    drop_probability: float = 0.01,
     drop_value: float = 0.0,
     max_images: float = 1.0,
     channel_last: bool = True,
@@ -326,8 +339,10 @@ def augmentation_batch_drop_pixel(
     """
     x_drop, y_drop, selection = _augmentation_batch_default(X, y, chance, max_images)
 
-    for idx, selected in enumerate(prange(selection.shape[0])):
-        if not selected:
+    for idx in prange(selection.shape[0]):
+        selected = selection[idx]
+
+        if selected != np.uint8(1):
             continue
 
         x_drop[idx], _ = augmentation_drop_pixel(
@@ -369,8 +384,10 @@ def augmentation_batch_drop_channel(
     """
     x_drop, y_drop, selection = _augmentation_batch_default(X, y, chance, max_images)
 
-    for idx, selected in enumerate(prange(selection.shape[0])):
-        if not selected:
+    for idx in prange(selection.shape[0]):
+        selected = selection[idx]
+
+        if selected != np.uint8(1):
             continue
 
         x_drop[idx], _ = augmentation_drop_channel(
@@ -411,15 +428,26 @@ def augmentation_batch_blur(
     """
     x_blurred, y_blurred, selection = _augmentation_batch_default(X, y, chance, max_images)
 
-    for idx, selected in enumerate(prange(selection.shape[0])):
-        if not selected:
+    for idx in prange(selection.shape[0]):
+        selected = selection[idx]
+
+        if selected != np.uint8(1):
             continue
+
+        if apply_to_y and y is not None:
+            y_blurred[idx], _  = augmentation_blur(
+                y[idx], None,
+                chance=1.0,
+                intensity=intensity,
+                apply_to_y=False,
+                channel_last=channel_last,
+            )
 
         x_blurred[idx], _ = augmentation_blur(
             X[idx], None,
             chance=1.0,
             intensity=intensity,
-            apply_to_y=apply_to_y,
+            apply_to_y=False,
             channel_last=channel_last,
         )
 
@@ -453,15 +481,26 @@ def augmentation_batch_sharpen(
     """
     x_sharpened, y_sharpened, selection = _augmentation_batch_default(X, y, chance, max_images)
 
-    for idx, selected in enumerate(prange(selection.shape[0])):
-        if not selected:
+    for idx in prange(selection.shape[0]):
+        selected = selection[idx]
+
+        if selected != np.uint8(1):
             continue
+
+        if apply_to_y and y is not None:
+            y_sharpened[idx], _ = augmentation_sharpen(
+                y[idx], None,
+                chance=1.0,
+                intensity=intensity,
+                apply_to_y=False,
+                channel_last=channel_last,
+            )
 
         x_sharpened[idx], _ = augmentation_sharpen(
             X[idx], None,
             chance=1.0,
             intensity=intensity,
-            apply_to_y=apply_to_y,
+            apply_to_y=False,
             channel_last=channel_last,
         )
 
@@ -494,11 +533,13 @@ def augmentation_batch_misalign(
     """
     x_misaligned, y_misaligned, selection = _augmentation_batch_default(X, y, chance, max_images)
 
-    for idx, selected in enumerate(prange(selection.shape[0])):
-        if not selected:
+    for idx in prange(selection.shape[0]):
+        selected = selection[idx]
+
+        if selected != np.uint8(1):
             continue
 
-        x_misaligned[idx], _ = augmentation_misalign_pixels(
+        x_misaligned[idx], _ = augmentation_misalign(
             X[idx], None,
             chance=1.0,
             max_offset=max_offset,
@@ -542,6 +583,7 @@ def augmentation_batch_cutmix(
             4 - The min of the labels will be used.\n
             5 - The max of the image with the highest weight will be used.\n
             6 - The min of the image with the highest weight will be used.\n
+            7 - The sum of the labels will be used.\n
         feather (bool=True): Whether to feather the edges of the cutmix.
         feather_dist (int=3): The distance to feather the edges of the cutmix in pixels
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
@@ -565,7 +607,7 @@ def augmentation_batch_cutmix(
         target_x = x_cutmix[idx_target]
         target_y = y_cutmix[idx_target]
 
-        source_idxs = [idx for idx in range(batch_size) if idx != idx_target]
+        source_idxs = np.array([idx for idx in range(batch_size) if idx != idx_target])
         idx_source = np.random.choice(source_idxs, 1, replace=False)[0]
 
         source_x = x_cutmix[idx_source]
@@ -618,7 +660,18 @@ def augmentation_batch_mixup(
 
     Keyword Args:
         chance (float=0.5): The chance of mixuping a pixel.
+        min_size (float=0.333): The minimum size of the patch to cutmix. In percentage of the image width.
+        max_size (float=0.666): The maximum size of the patch to cutmix. In percentage of the image width.
         max_images (float=0.2): The maximum percentage of images in a batch to mixup.
+        label_mix (int=0): if
+            0 - The labels will be mixed by the weights.\n
+            1 - The target label will be used.\n
+            2 - The source label will be used.\n
+            3 - The max of the labels will be used.\n
+            4 - The min of the labels will be used.\n
+            5 - The max of the image with the highest weight will be used.\n
+            6 - The min of the image with the highest weight will be used.\n
+            7 - The sum of the labels will be used.\n
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
     """
     x_mixup = X.astype(np.float32)
@@ -640,7 +693,7 @@ def augmentation_batch_mixup(
         target_x = x_mixup[idx_target]
         target_y = y_mixup[idx_target]
 
-        source_idxs = [idx for idx in range(batch_size) if idx != idx_target]
+        source_idxs = np.array([idx for idx in range(batch_size) if idx != idx_target])
         idx_source = np.random.choice(source_idxs, 1, replace=False)[0]
 
         source_x = x_mixup[idx_source]

@@ -9,7 +9,7 @@ This module does standard raster operations related to read, write, and metadata
 # Standard library
 import sys; sys.path.append("../../")
 import os
-from typing import List, Optional, Union, Tuple, Generator
+from typing import List, Optional, Union, Tuple
 from uuid import uuid4
 import warnings
 
@@ -540,6 +540,7 @@ def raster_to_array(
     fill_value: Optional[Union[int, float]] = None,
     bbox: Optional[List[float]] = None,
     pixel_offsets: Optional[Union[List[int], Tuple[int, int, int, int]]] = None,
+    cast: Optional[Union[np.dtype, str]] = None,
 ) -> np.ndarray:
     """
     Converts a raster or a list of rasters into a NumPy array.
@@ -563,7 +564,9 @@ def raster_to_array(
         pixel_offsets (list/tuple=None): A list of
             `[x_offset, y_offset, x_size, y_size]` to use as the extent of the
             raster. Uses pixel offsets and the OGR format.
-
+        cast (str/dtype=None): A type to cast the array to. If None, the array is not cast.
+            it is only cast if the array is not already the dtype.
+            
     Returns:
         np.ndarray: A numpy array in the 3D channel-last format.
     """
@@ -702,14 +705,21 @@ def raster_to_array(
         ref = None
 
     if filled and np.ma.isMaskedArray(output_arr):
-        return np.ma.getdata(output_arr.filled(fill_value))
+        output_arr = np.ma.getdata(output_arr.filled(fill_value))
+
+    if cast is not None:
+        output_arr = output_arr.astype(cast, copy=False)
 
     return output_arr
 
 
 class raster_to_array_chunks:
     """
-    A class for reading raster data in chunks.
+    A class for reading raster data in chunks. The array will be split into x and y
+    amount of chunks in the x and y directions. The output will be the read array
+    and the offsets of the chunk in the raster. The offset can be used to reconstitute
+    the array into the original raster or a new raster representing the chunk,
+    using the :func:`array_to_raster` function.
 
     Args:
         raster (Union[gdal.Dataset, str, List[Union[str, gdal.Dataset]]]): The raster to read.
@@ -723,6 +733,7 @@ class raster_to_array_chunks:
         masked (bool/str='auto'): Whether to return a masked array.
         filled (bool): Whether to fill masked values.
         fill_value (int/float): The value to fill masked values with.
+        cast (type/str=None): The data type to cast the output to.
     
     Returns:
         generator: A generator that yields the raster data in chunks and the offsets
@@ -740,6 +751,7 @@ class raster_to_array_chunks:
         masked: Union[bool, str] = "auto",
         filled: bool = False,
         fill_value: Optional[Union[int, float]] = None,
+        cast: Optional[Union[np.dtype, str]] = None,
     ):
         self.raster = raster
         self.chunks_x = chunks_x
@@ -750,6 +762,7 @@ class raster_to_array_chunks:
         self.masked = masked
         self.filled = filled
         self.fill_value = fill_value
+        self.cast = cast
         self.current_chunk = 0
 
         self.shape = raster_to_metadata(self.raster)["shape"]
@@ -788,6 +801,7 @@ class raster_to_array_chunks:
                 filled=self.filled,
                 fill_value=self.fill_value,
                 pixel_offsets=offset,
+                cast=self.cast,
             ),
             offset,
         )

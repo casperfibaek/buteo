@@ -29,7 +29,7 @@ from buteo.raster.convolution import (
 def augmentation_rotation(
     X: np.ndarray,
     y: Optional[np.ndarray],
-    chance: float = 0.5,
+    chance: float = 0.2,
     k: Optional[int] = None,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
@@ -42,7 +42,7 @@ def augmentation_rotation(
         y (np.ndarray/None): The label to rotate.
 
     Keyword Args:
-        chance (float=0.5): The chance of rotating the image.
+        chance (float=0.2): The chance of rotating the image.
         k (int=None): The number of 90 degree intervals to rotate by.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
 
@@ -67,7 +67,7 @@ def augmentation_rotation(
 def augmentation_mirror(
     X: np.ndarray,
     y: Optional[np.ndarray],
-    chance: float = 0.5,
+    chance: float = 0.2,
     k: Optional[int] = None,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
@@ -79,7 +79,7 @@ def augmentation_mirror(
         y (np.ndarray/None): The label to mirror.
 
     Keyword Args:
-        chance (float=0.5): The chance of mirroring the image.
+        chance (float=0.2): The chance of mirroring the image.
         k (int=None): If None, randomly mirrors the image along the horizontal or vertical axis.
             If 1, mirrors the image along the horizontal axis.
             If 2, mirrors the image along the vertical axis.
@@ -104,7 +104,7 @@ def augmentation_mirror(
 def augmentation_noise(
     X: np.ndarray,
     y: Optional[np.ndarray],
-    chance: float = 0.5,
+    chance: float = 0.2,
     max_amount: float = 0.1,
     additive: bool = False,
     channel_last: Any = None, # pylint: disable=unused-argument
@@ -119,7 +119,7 @@ def augmentation_noise(
         y (np.ndarray/None): The label to add noise to. If None, no label is returned.
 
     Keyword Args:
-        chance (float=0.5): The chance of adding noise.
+        chance (float=0.2): The chance of adding noise.
         max_amount (float=0.1): The maximum amount of noise to add, sampled uniformly.
         additive (bool=False): Whether to add or multiply the noise.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
@@ -145,7 +145,7 @@ def augmentation_noise(
 def augmentation_channel_scale(
     X: np.ndarray,
     y: Optional[np.ndarray],
-    chance: float = 0.5,
+    chance: float = 0.2,
     max_amount: float = 0.1,
     additive: bool = False,
     channel_last: bool = True,
@@ -159,7 +159,7 @@ def augmentation_channel_scale(
         y (np.ndarray/None): The label to scale the channels of. If None, no label is returned.
 
     Keyword Args:
-        chance (float=0.5): The chance of scaling the channels.
+        chance (float=0.2): The chance of scaling the channels.
         max_amount (float=0.1): The amount to possible scale the channels by. Sampled uniformly.
         additive (bool=False): Whether to add or multiply the scaling.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
@@ -199,7 +199,7 @@ def augmentation_channel_scale(
 def augmentation_contrast(
     X: np.ndarray,
     y: Optional[np.ndarray],
-    chance: float = 0.5,
+    chance: float = 0.2,
     max_amount: float = 0.1,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
@@ -212,7 +212,7 @@ def augmentation_contrast(
         y (np.ndarray/None): The label to change the contrast of. If None, no label is returned.
 
     Keyword Args:
-        chance (float=0.5): The chance of changing the contrast.
+        chance (float=0.2): The chance of changing the contrast.
         max_amount (float=0.1): The max amount to change the contrast by.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
 
@@ -248,7 +248,7 @@ def augmentation_contrast(
 def augmentation_drop_pixel(
     X: np.ndarray,
     y: Optional[np.ndarray],
-    chance: float = 0.5,
+    chance: float = 0.2,
     drop_probability: float = 0.01,
     drop_value: float = 0.0,
     channel_last: bool = True,
@@ -263,7 +263,7 @@ def augmentation_drop_pixel(
         y (np.ndarray/None): The label to drop a pixel from. If None, no label is returned.
 
     Keyword Args:
-        chance (float=0.5): The chance of dropping a pixel.
+        chance (float=0.2): The chance of dropping a pixel.
         drop_probability (float=0.05): The probability of dropping a pixel.
         drop_value (float=0.0): The value to drop the pixel to.
         apply_to_y (bool=False): Whether to apply the drop to the label.
@@ -302,7 +302,7 @@ def augmentation_drop_pixel(
 def augmentation_drop_channel(
     X: np.ndarray,
     y: Optional[np.ndarray],
-    chance: float = 0.5,
+    chance: float = 0.2,
     drop_probability: float = 0.1,
     drop_value: float = 0.0,
     channel_last: bool = True,
@@ -317,7 +317,7 @@ def augmentation_drop_channel(
         y (np.ndarray/None): The label to drop a channel from. If None, no label is returned.
 
     Keyword Args:
-        chance (float=0.5): The chance of dropping a channel.
+        chance (float=0.2): The chance of dropping a channel.
         drop_probability (float=0.1): The probability of dropping a channel.
         drop_value (float=0.0): The value to drop the channel to.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
@@ -353,9 +353,8 @@ def augmentation_drop_channel(
 def augmentation_blur(
     X: np.ndarray,
     y: Optional[np.ndarray],
-    chance: float = 0.5,
+    chance: float = 0.2,
     intensity: float = 1.0,
-    apply_to_y: bool = False,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
@@ -365,10 +364,10 @@ def augmentation_blur(
 
     Args:
         X (np.ndarray): The image to potentially blur.
-        y (np.ndarray/None): The label to potentially blur. If None, no label is returned.
+        y (np.ndarray/None): The label is ignored.
 
     Keyword Args:
-        chance (float=0.5): The chance of blurring a pixel.
+        chance (float=0.2): The chance of blurring a pixel.
         intensity (float=1.0): The intensity of the blur. from 0.0 to 1.0.
         apply_to_y (bool=False): Whether to blur the label as well.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
@@ -377,7 +376,7 @@ def augmentation_blur(
         return X, y
 
     x_blurred = X.astype(np.float32)
-    y_blurred = y.astype(np.float32) if y is not None else None
+    y_blurred = y
 
     offsets, weights = simple_blur_kernel_2d_3x3()
     channels = X.shape[2] if channel_last else X.shape[0]
@@ -385,16 +384,43 @@ def augmentation_blur(
     if channel_last:
         for channel in prange(channels):
             x_blurred[:, :, channel] = convolve_array_simple(x_blurred[:, :, channel], offsets, weights, intensity)
-            if apply_to_y and y is not None:
-                y_blurred[:, :, channel] = convolve_array_simple(y_blurred[:, :, channel], offsets, weights, intensity)
     else:
         for channel in prange(channels):
             x_blurred[channel, :, :] = convolve_array_simple(x_blurred[channel, :, :], offsets, weights, intensity)
-            if apply_to_y and y is not None:
-                y_blurred[channel, :, :] = convolve_array_simple(y_blurred[channel, :, :], offsets, weights, intensity)
 
     x_blurred = fit_data_to_dtype(x_blurred, X.dtype)
-    y_blurred = fit_data_to_dtype(y_blurred, y.dtype) if y is not None else None
+
+    return x_blurred, y_blurred
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True)
+def augmentation_blur_xy(
+    X: np.ndarray,
+    y: np.ndarray,
+    chance: float = 0.2,
+    intensity: float = 1.0,
+    channel_last: bool = True,
+) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    """
+    Blurs an image at random.
+    input should be (height, width, channels) or (channels, height, width).
+    Same goes for the label.
+
+    Args:
+        X (np.ndarray): The image to potentially blur.
+        y (np.ndarray/None): The label to potentially blur. If None, no label is returned.
+
+    Keyword Args:
+        chance (float=0.2): The chance of blurring a pixel.
+        intensity (float=1.0): The intensity of the blur. from 0.0 to 1.0.
+        apply_to_y (bool=False): Whether to blur the label as well.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    """
+    if np.random.rand() > chance:
+        return X, y
+
+    x_blurred, _ = augmentation_blur(X, None, chance, intensity, channel_last)
+    y_blurred, _ = augmentation_blur(y, None, chance, intensity, channel_last)
 
     return x_blurred, y_blurred
 
@@ -403,9 +429,8 @@ def augmentation_blur(
 def augmentation_sharpen(
     X: np.ndarray,
     y: Optional[np.ndarray],
-    chance: float = 0.5,
+    chance: float = 0.2,
     intensity: float = 1.0,
-    apply_to_y: bool = False,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
@@ -414,10 +439,10 @@ def augmentation_sharpen(
 
     Args:
         X (np.ndarray): The image to potentially sharpen.
-        y (np.ndarray/None): The label to potentially sharpen. If None, no label is returned.
+        y (np.ndarray/None): The label will be ignored. If None, no label is returned.
 
     Keyword Args:
-        chance (float=0.5): The chance of sharpening a pixel.
+        chance (float=0.2): The chance of sharpening a pixel.
         intensity (float=1.0): The intensity of the sharpening. from 0.0 to 1.0.
         apply_to_y (bool=False): Whether to sharpen the label as well.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
@@ -426,7 +451,7 @@ def augmentation_sharpen(
         return X, y
 
     x_sharpened = X.astype(np.float32)
-    y_sharpened = y.astype(np.float32) if y is not None else None
+    y_sharpened = y
 
     offsets, weights = simple_unsharp_kernel_2d_3x3()
     channels = X.shape[2] if channel_last else X.shape[0]
@@ -434,24 +459,51 @@ def augmentation_sharpen(
     if channel_last:
         for channel in prange(channels):
             x_sharpened[:, :, channel] = convolve_array_simple(x_sharpened[:, :, channel], offsets, weights, intensity)
-            if apply_to_y and y is not None:
-                y_sharpened[:, :, channel] = convolve_array_simple(y_sharpened[:, :, channel], offsets, weights, intensity)
     else:
         for channel in prange(channels):
             x_sharpened[channel, :, :] = convolve_array_simple(x_sharpened[channel, :, :], offsets, weights, intensity)
-            if apply_to_y and y is not None:
-                y_sharpened[channel, :, :] = convolve_array_simple(y_sharpened[channel, :, :], offsets, weights, intensity)
 
     x_sharpened = fit_data_to_dtype(x_sharpened, X.dtype)
-    y_sharpened = fit_data_to_dtype(y_sharpened, y.dtype) if y is not None else None
 
     return x_sharpened, y_sharpened
 
 
-def augmentation_misalign_pixels(
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True)
+def augmentation_sharpen_xy(
+    X: np.ndarray,
+    y: np.ndarray,
+    chance: float = 0.2,
+    intensity: float = 1.0,
+    channel_last: bool = True,
+) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    """
+    Sharpens an image at random.
+    input should be (height, width, channels) or (channels, height, width).
+
+    Args:
+        X (np.ndarray): The image to potentially sharpen.
+        y (np.ndarray): The label to potentially sharpen.
+
+    Keyword Args:
+        chance (float=0.2): The chance of sharpening a pixel.
+        intensity (float=1.0): The intensity of the sharpening. from 0.0 to 1.0.
+        channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
+    """
+    if np.random.rand() > chance:
+        return X, y
+
+    x_sharpened, _ = augmentation_sharpen(X, None, chance, intensity, channel_last)
+    y_sharpened, _ = augmentation_sharpen(y, None, chance, intensity, channel_last)
+
+    return x_sharpened, y_sharpened
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True)
+def augmentation_misalign(
     X: np.ndarray,
     y: Optional[np.ndarray],
-    chance: float = 0.5,
+    chance: float = 0.2,
     max_offset: float = 0.5,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
@@ -464,7 +516,7 @@ def augmentation_misalign_pixels(
         y (np.ndarray/None): The label to potentially misalign the channels of. If None, no label is returned.
 
     Keyword Args:
-        chance (float=0.5): The chance of misaligning the channels of a pixel.
+        chance (float=0.2): The chance of misaligning the channels of a pixel.
         max_offset (float=0.5): The maximum offset to misalign the channels by.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
     """
@@ -499,11 +551,11 @@ def augmentation_cutmix(
     y_target: np.ndarray,
     X_source: np.ndarray,
     y_source: np.ndarray,
-    chance: float = 0.5,
+    chance: float = 0.2,
     min_size: float = 0.333,
     max_size: float = 0.666,
     label_mix: int = 0,
-    feather: bool = True,
+    feather: bool = False,
     feather_dist: int = 3,
     channel_last: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray,]:
@@ -518,7 +570,7 @@ def augmentation_cutmix(
         y_source (np.ndarray): The label to cutmix from.
 
     Keyword Args:
-        chance (float=0.5): The chance of cutmixing a pixel.
+        chance (float=0.2): The chance of cutmixing a pixel.
         min_size (float=0.333): The minimum size of the patch to cutmix. In percentage of the image width.
         max_size (float=0.666): The maximum size of the patch to cutmix. In percentage of the image width.
         label_mix (int=0): if
@@ -529,7 +581,8 @@ def augmentation_cutmix(
             4 - The min of the labels will be used.\n
             5 - The max of the image with the highest weight will be used.\n
             6 - The min of the image with the highest weight will be used.\n
-        feather (bool=True): Whether to feather the edges of the cutmix.
+            7 - The sum of the labels will be used.\n
+        feather (bool=False): Whether to feather the edges of the cutmix.
         feather_dist (int=3): The distance to feather the edges of the cutmix in pixels
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
     """
@@ -608,6 +661,10 @@ def augmentation_cutmix(
                                 y_mixed[col, row, channel_y] = y_mixed[col, row, channel_y]
                             else:
                                 y_mixed[col, row, channel_y] = y_source[col, row, channel_y]
+                        elif label_mix == 7:
+                            y_mixed[col, row, channel_y] = (
+                                y_mixed[col, row, channel_y] + y_source[col, row, channel_y]
+                            )
         else:
             for col in prange(y0, y1):
                 for row in prange(x0, x1):
@@ -645,6 +702,10 @@ def augmentation_cutmix(
                                 y_mixed[channel_y, col, row] = y_mixed[channel_y, col, row]
                             else:
                                 y_mixed[channel_y, col, row] = y_source[channel_y, col, row]
+                        elif label_mix == 7:
+                            y_mixed[channel_y, col, row] = (
+                                y_mixed[channel_y, col, row] + y_source[channel_y, col, row]
+                            )
 
     else:
         if channel_last:
@@ -655,10 +716,10 @@ def augmentation_cutmix(
             x_mixed[:, y0:y1, x0:x1] = X_source[:, y0:y1, x0:x1]
             y_mixed[:, y0:y1, x0:x1] = y_source[:, y0:y1, x0:x1]
 
-    return (
-        fit_data_to_dtype(x_mixed, X_target.dtype),
-        fit_data_to_dtype(y_mixed, y_target.dtype),
-    )
+    x_mixed = fit_data_to_dtype(x_mixed, X_target.dtype)
+    y_mixed = fit_data_to_dtype(y_mixed, y_target.dtype)
+
+    return x_mixed, y_mixed
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
@@ -667,10 +728,10 @@ def augmentation_mixup(
     y_target: np.ndarray,
     X_source: np.ndarray,
     y_source: np.ndarray,
-    min_mix: float = 0.333,
-    max_mix: float = 0.666,
+    min_size: float = 0.333,
+    max_size: float = 0.666,
     label_mix: int = 0,
-    chance: float = 0.5,
+    chance: float = 0.2,
     channel_last: bool = True, # pylint: disable=unused-argument
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
@@ -693,8 +754,8 @@ def augmentation_mixup(
         y_source (np.ndarray): The label to transfer from.
 
     Keyword Args:
-        min_mix (float=0.333): The minimum mixup coefficient.
-        max_mix (float=0.666): The maximum mixup coefficient.
+        min_size (float=0.333): The minimum mixup coefficient.
+        max_size (float=0.666): The maximum mixup coefficient.
         label_mix (int=0): if
             0 - The labels will be mixed by the weights.\n
             1 - The target label will be used.\n
@@ -703,35 +764,43 @@ def augmentation_mixup(
             4 - The min of the labels will be used.\n
             5 - The max of the image with the highest weight will be used.\n
             6 - The min of the image with the highest weight will be used.\n
-        chance (float=0.5): The chance of mixuping a pixel.
+            7 - The sum of the labels will be used.\n
+        chance (float=0.2): The chance of mixuping a pixel.
         channel_last (bool=True): Whether the image is (channels, height, width) or (height, width, channels).
     """
     if np.random.rand() > chance:
         return X_target, y_target
 
-    x_mixed = X_target.astype(np.float32)
-    y_mixed = y_target.astype(np.float32)
+    x_mixed_target = X_target.astype(np.float32)
+    y_mixed_target = y_target.astype(np.float32)
 
-    mixup_coeff = np.random.uniform(min_mix, max_mix + 0.001)
+    x_mixed_source = X_source.astype(np.float32)
+    y_mixed_source = y_source.astype(np.float32)
 
-    x_mixed = x_mixed * mixup_coeff + X_source * (1 - mixup_coeff)
+    mixup_coeff = np.float32(
+        min(np.random.uniform(min_size, max_size + 0.001), 1.0),
+    )
+
+    x_mixed_target = x_mixed_target * mixup_coeff + x_mixed_source * (np.float32(1.0) - mixup_coeff)
 
     if label_mix == 0:
-        y_mixed = y_mixed * mixup_coeff + y_source * (1 - mixup_coeff)
+        y_mixed_target = y_mixed_target * mixup_coeff + y_mixed_source * (np.float32(1.0) - mixup_coeff)
     elif label_mix == 1:
-        y_mixed = y_target
+        y_mixed_target = y_mixed_target
     elif label_mix == 2:
-        y_mixed = y_source
+        y_mixed_target = y_mixed_source
     elif label_mix == 3:
-        y_mixed = np.maximum(y_target, y_source)
+        y_mixed_target = np.maximum(y_mixed_target, y_mixed_source)
     elif label_mix == 4:
-        y_mixed = np.minimum(y_target, y_source)
+        y_mixed_target = np.minimum(y_mixed_target, y_mixed_source)
     elif label_mix == 5:
-        y_mixed = y_target if mixup_coeff >= 0.5 else y_source
+        y_mixed_target = y_mixed_target if mixup_coeff >= 0.5 else y_mixed_source
     elif label_mix == 6:
-        y_mixed = y_target if mixup_coeff >= 0.5 else y_source
+        y_mixed_target = y_mixed_target if mixup_coeff >= 0.5 else y_mixed_source
+    elif label_mix == 7:
+        y_mixed_target = y_mixed_target + y_mixed_source
 
-    return (
-        fit_data_to_dtype(x_mixed, X_target.dtype),
-        fit_data_to_dtype(y_mixed, y_target.dtype),
-    )
+    x_mixed_target = fit_data_to_dtype(x_mixed_target, X_target.dtype)
+    y_mixed_target = fit_data_to_dtype(y_mixed_target, y_target.dtype)
+
+    return x_mixed_target, y_mixed_target

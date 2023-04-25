@@ -24,7 +24,7 @@ def train_val_split(
         y (np.ndarray): The target data.
     
     Keyword Args:
-        val_size (float=0.25): The size of the validation set as a fraction of the total dataset.
+        val_size (float=0.2): The size of the validation set as a fraction of the total dataset.
         random_state (float=None): The random seed to use for the split.
 
     Returns:
