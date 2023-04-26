@@ -416,58 +416,88 @@ def merge_weighted_mode(
     return ret_arr
 
 
-def calculate_offset_single(
-    tile_size: int,
-    num_offsets: int,
-) -> List[int]:
-    """
-    Calculate a list of offset values for a given tile size and number of offsets.
+# def calculate_offset_single(
+#     tile_size: int,
+#     num_offsets: int,
+# ) -> List[int]:
+#     """
+#     Calculate a list of offset values for a given tile size and number of offsets.
 
-    Args:
-        tile_size (int): The size of each tile.
-        num_offsets (int): The desired number of offsets to be calculated.
+#     Args:
+#         tile_size (int): The size of each tile.
+#         num_offsets (int): The desired number of offsets to be calculated.
 
-    Returns:
-        List[int]: A list of calculated offset values.
-    """
-    assert num_offsets >= 0, "Number of offsets must be greater than or equal to 0."
-    assert tile_size > 0, "Tile size must be greater than 0."
+#     Returns:
+#         List[int]: A list of calculated offset values.
+#     """
+#     assert num_offsets >= 0, "Number of offsets must be greater than or equal to 0."
+#     assert tile_size > 0, "Tile size must be greater than 0."
 
-    # Initialize the list of offsets with the first value, 0
-    offsets = [0]
-    previous = None
-    for _ in range(num_offsets):
+#     # Initialize the list of offsets with the first value, 0
+#     offsets = [0]
+#     previous = None
+#     for _ in range(num_offsets):
 
-        # Calculate the step size based on previous step
-        if previous is None:
-            step = tile_size // 2
-            previous = step
-        else:
-            step = previous // 2
-            previous = step
+#         # Calculate the step size based on previous step
+#         if previous is None:
+#             step = tile_size // 2
+#             previous = step
+#         else:
+#             step = previous // 2
+#             previous = step
 
-        # Break the loop if the step size is 0
-        if step == 0:
-            break
+#         # Break the loop if the step size is 0
+#         if step == 0:
+#             break
 
-        # Calculate and add offset values based on the step size
-        for j in range(1, num_offsets + 1):
-            val = j * step
-            if (
-                val not in offsets
-                and val < tile_size
-                and val > 0
-                and len(offsets) < num_offsets + 1
-            ):
-                offsets.append(j * step)
+#         # Calculate and add offset values based on the step size
+#         for j in range(1, num_offsets + 1):
+#             val = j * step
+#             if (
+#                 val not in offsets
+#                 and val < tile_size
+#                 and val > 0
+#                 and len(offsets) < num_offsets + 1
+#             ):
+#                 offsets.append(j * step)
 
-    return offsets
+#     return offsets
+
+# def get_offsets(
+#     tile_size: int,
+#     offsets_y: int,
+#     offsets_x: int,
+# ) -> List[Tuple[int, int]]:
+#     """
+#     Generate a list of offset pairs for a given tile size and number of offsets in x and y dimensions.
+
+#     Args:
+#         tile_size (int): The size of each tile.
+#         offsets_y (int): The desired number of offsets to be calculated in the y dimension.
+#         offsets_x (int): The desired number of offsets to be calculated in the x dimension.
+
+#     Returns:
+#         List[Tuple[int, int]]: A list of tuples containing offset pairs for y and x dimensions.
+#         order is (y, x)
+#     """
+#     assert offsets_y >= 0, "Number of offsets in y dimension must be >= 0"
+#     assert offsets_x >= 0, "Number of offsets in x dimension must be >= 0"
+#     assert tile_size > 0, "Tile size must be > 0"
+
+#     offsets_y = calculate_offset_single(tile_size, offsets_y)
+#     offsets_x = calculate_offset_single(tile_size, offsets_x)
+
+#     offsets = []
+#     for y in offsets_y:
+#         for x in offsets_x:
+#             offsets.append((y, x))
+
+#     return offsets
 
 def get_offsets(
     tile_size: int,
-    offsets_y: int,
-    offsets_x: int,
-) -> List[Tuple[int, int]]:
+    n_offsets: int,
+):
     """
     Generate a list of offset pairs for a given tile size and number of offsets in x and y dimensions.
 
@@ -480,17 +510,14 @@ def get_offsets(
         List[Tuple[int, int]]: A list of tuples containing offset pairs for y and x dimensions.
         order is (y, x)
     """
-    assert offsets_y >= 0, "Number of offsets in y dimension must be >= 0"
-    assert offsets_x >= 0, "Number of offsets in x dimension must be >= 0"
-    assert tile_size > 0, "Tile size must be > 0"
+    offset_props = np.arange(0, 1, 1 / (n_offsets + 1))[1:].tolist()
+    offsets = [(0, 0)]
 
-    offsets_y = calculate_offset_single(tile_size, offsets_y)
-    offsets_x = calculate_offset_single(tile_size, offsets_x)
+    assert tile_size > n_offsets, f"Too many offsets ({n_offsets}) requested for tile_size {tile_size}"
 
-    offsets = []
-    for y in offsets_y:
-        for x in offsets_x:
-            offsets.append((y, x))
+    for val in offset_props:
+        offset = int(round((val * tile_size), 2))
+        offsets.append((offset, offset))
 
     return offsets
 
@@ -722,11 +749,11 @@ def patches_to_weights(
 
     return weights
 
+
 def array_to_patches(
     arr: np.ndarray,
     tile_size: int,
-    offsets_y: int = 1,
-    offsets_x: int = 1,
+    n_offsets: int = 0,
     border_check: bool = True,
 ) -> np.ndarray:
     """
@@ -738,15 +765,22 @@ def array_to_patches(
     Args:
         arr (np.ndarray): A numpy array to be divided into patches.
         tile_size (int): The size of each tile/patch, e.g., 64 for 64x64 tiles.
-        offsets_y (int=1): The desired number of offsets to be calculated in the y dimension.
-        offsets_x (int=1): The desired number of offsets to be calculated in the x dimension.
+        n_offsets (int=0): The desired number of offsets to be calculated.
         border_check (bool=True): Whether or not to include border patches.
 
     Returns:
         np.ndarray: The concatenate patches along axis 0. In the order (patches, y, x, channels)
     """
+    assert len(arr.shape) == 3, "Array must be 3D"
+    assert arr.shape[0] >= tile_size, "Array must be larger than tile_size"
+    assert arr.shape[1] >= tile_size, "Array must be larger than tile_size"
+    assert tile_size > 0, "Tile size must be greater than 0"
+    assert n_offsets >= 0, "Number of offsets must be greater than or equal to 0"
+    assert isinstance(border_check, bool), "Border check must be a boolean"
+    assert isinstance(n_offsets, int), "Number of offsets must be an integer"
+
     # Get the list of offsets for both x and y dimensions
-    offsets = get_offsets(tile_size, offsets_y, offsets_x)
+    offsets = get_offsets(tile_size, n_offsets)
 
     if border_check:
         borders_y, borders_x = borders_are_necessary_list(arr, tile_size, offsets)
@@ -773,13 +807,12 @@ def array_to_patches(
 def predict_array(
     arr: np.ndarray,
     callback: Callable[[np.ndarray], np.ndarray],
-    tile_size=64,
-    offsets_y=1,
-    offsets_x=1,
-    border_check=True,
-    merge_method="median",
-    edge_weighted=True,
-    edge_distance=3,
+    tile_size: int = 64,
+    n_offsets: int = 1,
+    border_check: bool = True,
+    merge_method: str = "median",
+    edge_weighted: bool = True,
+    edge_distance: int = 3,
 ) -> np.ndarray:
     """
     Generate patches from an array. Also outputs the offsets and the shapes of the offsets. Only
@@ -794,8 +827,7 @@ def predict_array(
     
     Keyword Args:
         tile_size (int=64): The size of each tile/patch, e.g., 64 for 64x64 tiles.
-        offsets_y (int=1): The desired number of offsets to be calculated in the y dimension.
-        offsets_x (int=1): The desired number of offsets to be calculated in the x dimension.
+        n_offsets (int=1): The desired number of offsets to be calculated.
         border_check (bool=True): Whether or not to include border patches.
         merge_method (str="median"): The method to use for merging the patches. Valid methods
         are ['mad', 'median', 'mean', 'mode', "min", "max", "olympic1", "olympic2"]
@@ -813,7 +845,7 @@ def predict_array(
     assert tile_size < arr.shape[1], "Tile size must be smaller than the array size"
 
     # Get the list of offsets for both x and y dimensions
-    offsets = get_offsets(tile_size, offsets_y, offsets_x)
+    offsets = get_offsets(tile_size, n_offsets)
 
     if border_check:
         borders_y, borders_x = borders_are_necessary_list(arr, tile_size, offsets)

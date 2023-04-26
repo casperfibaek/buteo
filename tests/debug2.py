@@ -1,4 +1,6 @@
 """ This is a debug script, used for ad-hoc testing. """
+# disable all of pylint for this file only.
+# pylint: disable-all
 
 import sys; sys.path.append("../")
 import os
@@ -10,7 +12,7 @@ import buteo as beo
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from torch.cuda.amp import GradScaler
 from tqdm import tqdm
 
@@ -173,19 +175,20 @@ dataset = beo.AugmentationDataset(
     x_train,
     y_train,
     callback=callback,
-    data_is_channel_last=True,
+    input_is_channel_last=True,
+    output_is_channel_last=False,
     augmentations=[
         { "name": "rotation", "chance": 0.2},
         { "name": "mirror", "chance": 0.2 },
-        { "name": "channel_scale", "chance": 0.2 },
-        { "name": "noise", "chance": 0.2 },
-        { "name": "contrast", "chance": 0.2 },
-        { "name": "drop_pixel", "chance": 0.2 },
-        { "name": "drop_channel", "chance": 0.2 },
-        { "name": "blur_xy", "chance": 0.2 },
-        { "name": "sharpen_xy", "chance": 0.2 },
-        { "name": "cutmix", "chance": 0.2 },
-        { "name": "mixup", "chance": 0.2 },
+        # { "name": "channel_scale", "chance": 0.2 },
+        # { "name": "noise", "chance": 0.2 },
+        # { "name": "contrast", "chance": 0.2 },
+        # { "name": "drop_pixel", "chance": 0.2 },
+        # { "name": "drop_channel", "chance": 0.2 },
+        # { "name": "blur_xy", "chance": 0.2 },
+        # { "name": "sharpen_xy", "chance": 0.2 },
+        # { "name": "cutmix", "chance": 0.2 },
+        # { "name": "mixup", "chance": 0.2 },
     ],
 )
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -249,6 +252,7 @@ for epoch in range(EPOCHS):
 # Clear GPU memory
 torch.cuda.empty_cache()
 
+# This way of doing metrics seem to give very high values - is it correct?
 with torch.no_grad():
     x_test = beo.channel_last_to_first(np.load(os.path.join(FOLDER, "test.npz"))["x_s2"])
     y_test = beo.channel_last_to_first(np.load(os.path.join(FOLDER, "test.npz"))["y"])
@@ -258,7 +262,7 @@ print("RMSE:", np.sqrt(np.mean((y_test - y_pred) ** 2)))
 print("MAE:", np.mean(np.abs(y_test - y_pred)))
 print("MSE:", np.mean((y_test - y_pred) ** 2))
 
-torch.save(model.state_dict(), os.path.join(FOLDER, "example_model.pt"))
+# torch.save(model.state_dict(), os.path.join(FOLDER, "example_model.pt"))
 
 # BS 32, LR 0.0001, 100 epochs
 # RMSE: 20.995897

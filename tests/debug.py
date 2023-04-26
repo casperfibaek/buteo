@@ -1,4 +1,6 @@
 """ This is a debug script, used for ad-hoc testing. """
+# disable all of pylint for this file only.
+# pylint: disable-all
 
 # Standard library
 import sys; sys.path.append("../")
@@ -7,15 +9,11 @@ from glob import glob
 
 from buteo.vector.split import split_vector_by_fid
 from buteo.raster import (
-    raster_to_array,
-    array_to_raster,
     clip_raster,
     reproject_raster,
     resample_raster,
     align_rasters,
     raster_dem_to_orientation,
-    stack_rasters,
-    stack_rasters_vrt,
     rasters_are_aligned,
 )
 from buteo.vector import reproject_vector

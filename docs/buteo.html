@@ -40,18 +40,6 @@
             </ul>
                 <h2>All Functions</h2>
                 <ul>
-                            <li><a href="buteo/ai/augmentation_batch.html#augmentation_batch_rotation">augmentation_batch_rotation</a></li>
-                            <li><a href="buteo/ai/augmentation_batch.html#augmentation_batch_mirror">augmentation_batch_mirror</a></li>
-                            <li><a href="buteo/ai/augmentation_batch.html#augmentation_batch_noise">augmentation_batch_noise</a></li>
-                            <li><a href="buteo/ai/augmentation_batch.html#augmentation_batch_channel_scale">augmentation_batch_channel_scale</a></li>
-                            <li><a href="buteo/ai/augmentation_batch.html#augmentation_batch_contrast">augmentation_batch_contrast</a></li>
-                            <li><a href="buteo/ai/augmentation_batch.html#augmentation_batch_drop_pixel">augmentation_batch_drop_pixel</a></li>
-                            <li><a href="buteo/ai/augmentation_batch.html#augmentation_batch_drop_channel">augmentation_batch_drop_channel</a></li>
-                            <li><a href="buteo/ai/augmentation_batch.html#augmentation_batch_blur">augmentation_batch_blur</a></li>
-                            <li><a href="buteo/ai/augmentation_batch.html#augmentation_batch_sharpen">augmentation_batch_sharpen</a></li>
-                            <li><a href="buteo/ai/augmentation_batch.html#augmentation_batch_misalign">augmentation_batch_misalign</a></li>
-                            <li><a href="buteo/ai/augmentation_batch.html#augmentation_batch_cutmix">augmentation_batch_cutmix</a></li>
-                            <li><a href="buteo/ai/augmentation_batch.html#augmentation_batch_mixup">augmentation_batch_mixup</a></li>
                             <li><a href="buteo/ai/augmentation_funcs.html#augmentation_rotation">augmentation_rotation</a></li>
                             <li><a href="buteo/ai/augmentation_funcs.html#augmentation_mirror">augmentation_mirror</a></li>
                             <li><a href="buteo/ai/augmentation_funcs.html#augmentation_noise">augmentation_noise</a></li>
@@ -170,6 +158,7 @@
                             <li><a href="buteo/raster/core_raster.html#create_grid_with_coordinates">create_grid_with_coordinates</a></li>
                             <li><a href="buteo/raster/core_raster.html#mosaic_rasters">mosaic_rasters</a></li>
                             <li><a href="buteo/raster/core_raster.html#split_shape_into_offsets">split_shape_into_offsets</a></li>
+                            <li><a href="buteo/raster/core_raster.html#get_chunk_offsets">get_chunk_offsets</a></li>
                             <li><a href="buteo/raster/dem.html#raster_dem_to_slope">raster_dem_to_slope</a></li>
                             <li><a href="buteo/raster/dem.html#raster_dem_to_aspect">raster_dem_to_aspect</a></li>
                             <li><a href="buteo/raster/dem.html#raster_dem_to_hillshade">raster_dem_to_hillshade</a></li>
@@ -202,7 +191,6 @@
                             <li><a href="buteo/raster/patches.html#merge_weighted_mad">merge_weighted_mad</a></li>
                             <li><a href="buteo/raster/patches.html#unique_values">unique_values</a></li>
                             <li><a href="buteo/raster/patches.html#merge_weighted_mode">merge_weighted_mode</a></li>
-                            <li><a href="buteo/raster/patches.html#calculate_offset_single">calculate_offset_single</a></li>
                             <li><a href="buteo/raster/patches.html#get_offsets">get_offsets</a></li>
                             <li><a href="buteo/raster/patches.html#borders_are_necessary">borders_are_necessary</a></li>
                             <li><a href="buteo/raster/patches.html#borders_are_necessary_list">borders_are_necessary_list</a></li>
@@ -478,8 +466,7 @@ pip install buteo
 <span class="n">patches</span> <span class="o">=</span> <span class="n">beo</span><span class="o">.</span><span class="n">array_to_patches</span><span class="p">(</span>
     <span class="n">stacked_numpy_arrays</span><span class="p">,</span>
     <span class="mi">256</span><span class="p">,</span>
-    <span class="n">offsets_y</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># 1 overlap at 1/2 patch size (128)</span>
-    <span class="n">offsets_x</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># 1 overlap at 1/2 patch size (128)</span>
+    <span class="n">n_offsets</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># 1 overlap at 1/2 patch size (128)</span>
 <span class="p">)</span>
 
 <span class="c1"># patches_nr, height, width, channels</span>
@@ -634,73 +621,72 @@ esa-snap</p>
 </span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a><span class="sd">patches = beo.array_to_patches(</span>
 </span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a><span class="sd">    stacked_numpy_arrays,</span>
 </span><span id="L-64"><a href="#L-64"><span class="linenos"> 64</span></a><span class="sd">    256,</span>
-</span><span id="L-65"><a href="#L-65"><span class="linenos"> 65</span></a><span class="sd">    offsets_y=1, # 1 overlap at 1/2 patch size (128)</span>
-</span><span id="L-66"><a href="#L-66"><span class="linenos"> 66</span></a><span class="sd">    offsets_x=1, # 1 overlap at 1/2 patch size (128)</span>
-</span><span id="L-67"><a href="#L-67"><span class="linenos"> 67</span></a><span class="sd">)</span>
-</span><span id="L-68"><a href="#L-68"><span class="linenos"> 68</span></a>
-</span><span id="L-69"><a href="#L-69"><span class="linenos"> 69</span></a><span class="sd"># patches_nr, height, width, channels</span>
-</span><span id="L-70"><a href="#L-70"><span class="linenos"> 70</span></a><span class="sd">patches</span>
-</span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a><span class="sd">&gt;&gt;&gt; np.ndarray([10000, 256, 256, 9])</span>
-</span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a><span class="sd">```</span>
-</span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a>
-</span><span id="L-74"><a href="#L-74"><span class="linenos"> 74</span></a><span class="sd">### Predict a raster using a model</span>
-</span><span id="L-75"><a href="#L-75"><span class="linenos"> 75</span></a><span class="sd">```python</span>
-</span><span id="L-76"><a href="#L-76"><span class="linenos"> 76</span></a><span class="sd">import buteo as beo</span>
-</span><span id="L-77"><a href="#L-77"><span class="linenos"> 77</span></a>
-</span><span id="L-78"><a href="#L-78"><span class="linenos"> 78</span></a><span class="sd">RASTER_PATH = &quot;path/to/raster/raster.tif&quot;</span>
-</span><span id="L-79"><a href="#L-79"><span class="linenos"> 79</span></a><span class="sd">RASTER_OUT_PATH = &quot;path/to/raster/raster_pred.tif&quot;</span>
-</span><span id="L-80"><a href="#L-80"><span class="linenos"> 80</span></a>
-</span><span id="L-81"><a href="#L-81"><span class="linenos"> 81</span></a><span class="sd">array = beo.raster_to_array(RASTER_PATH)</span>
-</span><span id="L-82"><a href="#L-82"><span class="linenos"> 82</span></a>
-</span><span id="L-83"><a href="#L-83"><span class="linenos"> 83</span></a><span class="sd">callback = model.predict # from pytorch, keras, etc..</span>
-</span><span id="L-84"><a href="#L-84"><span class="linenos"> 84</span></a>
-</span><span id="L-85"><a href="#L-85"><span class="linenos"> 85</span></a><span class="sd"># Predict the raster using overlaps, and borders.</span>
-</span><span id="L-86"><a href="#L-86"><span class="linenos"> 86</span></a><span class="sd"># Merge using different methods. (median, mad, mean, mode, ...)</span>
-</span><span id="L-87"><a href="#L-87"><span class="linenos"> 87</span></a><span class="sd">predicted = predict_array(</span>
-</span><span id="L-88"><a href="#L-88"><span class="linenos"> 88</span></a><span class="sd">    array,</span>
-</span><span id="L-89"><a href="#L-89"><span class="linenos"> 89</span></a><span class="sd">    callback,</span>
-</span><span id="L-90"><a href="#L-90"><span class="linenos"> 90</span></a><span class="sd">    tile_size=256,</span>
-</span><span id="L-91"><a href="#L-91"><span class="linenos"> 91</span></a><span class="sd">)</span>
-</span><span id="L-92"><a href="#L-92"><span class="linenos"> 92</span></a>
-</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a><span class="sd"># Write the predicted raster to disk</span>
-</span><span id="L-94"><a href="#L-94"><span class="linenos"> 94</span></a><span class="sd">beo.array_to_raster(</span>
-</span><span id="L-95"><a href="#L-95"><span class="linenos"> 95</span></a><span class="sd">    predicted,</span>
-</span><span id="L-96"><a href="#L-96"><span class="linenos"> 96</span></a><span class="sd">    reference=RASTER_PATH,</span>
-</span><span id="L-97"><a href="#L-97"><span class="linenos"> 97</span></a><span class="sd">    out_path=RASTER_OUT_PATH,</span>
-</span><span id="L-98"><a href="#L-98"><span class="linenos"> 98</span></a><span class="sd">)</span>
-</span><span id="L-99"><a href="#L-99"><span class="linenos"> 99</span></a><span class="sd"># Path to the predicted raster</span>
-</span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a><span class="sd">&gt;&gt;&gt; &quot;path/to/raster/raster_pred.tif&quot;</span>
-</span><span id="L-101"><a href="#L-101"><span class="linenos">101</span></a><span class="sd">```</span>
-</span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a>
-</span><span id="L-103"><a href="#L-103"><span class="linenos">103</span></a><span class="sd">&lt;/br&gt;</span>
-</span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a>
-</span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a><span class="sd">| Example Colabs                        |                                                                                                                                                                                                               |</span>
-</span><span id="L-106"><a href="#L-106"><span class="linenos">106</span></a><span class="sd">|---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|</span>
-</span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a><span class="sd">| Create labels from OpenStreetMap data | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/create_labels_from_osm_data.ipynb)            |</span>
-</span><span id="L-108"><a href="#L-108"><span class="linenos">108</span></a><span class="sd">| Scheduled cleaning of geospatial data | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/rocket_example.ipynb)                         |</span>
-</span><span id="L-109"><a href="#L-109"><span class="linenos">109</span></a><span class="sd">| Clip and remove noise from rasters    | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/clip_and_remove_noise_raster.ipynb)           |</span>
-</span><span id="L-110"><a href="#L-110"><span class="linenos">110</span></a><span class="sd">| Sharpen nightlights data              | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/process_nightlights.ipynb)                    |</span>
-</span><span id="L-111"><a href="#L-111"><span class="linenos">111</span></a><span class="sd">| Filters and morphological operations  | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/filters_and_morphology.ipynb)                 |</span>
+</span><span id="L-65"><a href="#L-65"><span class="linenos"> 65</span></a><span class="sd">    n_offsets=1, # 1 overlap at 1/2 patch size (128)</span>
+</span><span id="L-66"><a href="#L-66"><span class="linenos"> 66</span></a><span class="sd">)</span>
+</span><span id="L-67"><a href="#L-67"><span class="linenos"> 67</span></a>
+</span><span id="L-68"><a href="#L-68"><span class="linenos"> 68</span></a><span class="sd"># patches_nr, height, width, channels</span>
+</span><span id="L-69"><a href="#L-69"><span class="linenos"> 69</span></a><span class="sd">patches</span>
+</span><span id="L-70"><a href="#L-70"><span class="linenos"> 70</span></a><span class="sd">&gt;&gt;&gt; np.ndarray([10000, 256, 256, 9])</span>
+</span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a><span class="sd">```</span>
+</span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a>
+</span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a><span class="sd">### Predict a raster using a model</span>
+</span><span id="L-74"><a href="#L-74"><span class="linenos"> 74</span></a><span class="sd">```python</span>
+</span><span id="L-75"><a href="#L-75"><span class="linenos"> 75</span></a><span class="sd">import buteo as beo</span>
+</span><span id="L-76"><a href="#L-76"><span class="linenos"> 76</span></a>
+</span><span id="L-77"><a href="#L-77"><span class="linenos"> 77</span></a><span class="sd">RASTER_PATH = &quot;path/to/raster/raster.tif&quot;</span>
+</span><span id="L-78"><a href="#L-78"><span class="linenos"> 78</span></a><span class="sd">RASTER_OUT_PATH = &quot;path/to/raster/raster_pred.tif&quot;</span>
+</span><span id="L-79"><a href="#L-79"><span class="linenos"> 79</span></a>
+</span><span id="L-80"><a href="#L-80"><span class="linenos"> 80</span></a><span class="sd">array = beo.raster_to_array(RASTER_PATH)</span>
+</span><span id="L-81"><a href="#L-81"><span class="linenos"> 81</span></a>
+</span><span id="L-82"><a href="#L-82"><span class="linenos"> 82</span></a><span class="sd">callback = model.predict # from pytorch, keras, etc..</span>
+</span><span id="L-83"><a href="#L-83"><span class="linenos"> 83</span></a>
+</span><span id="L-84"><a href="#L-84"><span class="linenos"> 84</span></a><span class="sd"># Predict the raster using overlaps, and borders.</span>
+</span><span id="L-85"><a href="#L-85"><span class="linenos"> 85</span></a><span class="sd"># Merge using different methods. (median, mad, mean, mode, ...)</span>
+</span><span id="L-86"><a href="#L-86"><span class="linenos"> 86</span></a><span class="sd">predicted = predict_array(</span>
+</span><span id="L-87"><a href="#L-87"><span class="linenos"> 87</span></a><span class="sd">    array,</span>
+</span><span id="L-88"><a href="#L-88"><span class="linenos"> 88</span></a><span class="sd">    callback,</span>
+</span><span id="L-89"><a href="#L-89"><span class="linenos"> 89</span></a><span class="sd">    tile_size=256,</span>
+</span><span id="L-90"><a href="#L-90"><span class="linenos"> 90</span></a><span class="sd">)</span>
+</span><span id="L-91"><a href="#L-91"><span class="linenos"> 91</span></a>
+</span><span id="L-92"><a href="#L-92"><span class="linenos"> 92</span></a><span class="sd"># Write the predicted raster to disk</span>
+</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a><span class="sd">beo.array_to_raster(</span>
+</span><span id="L-94"><a href="#L-94"><span class="linenos"> 94</span></a><span class="sd">    predicted,</span>
+</span><span id="L-95"><a href="#L-95"><span class="linenos"> 95</span></a><span class="sd">    reference=RASTER_PATH,</span>
+</span><span id="L-96"><a href="#L-96"><span class="linenos"> 96</span></a><span class="sd">    out_path=RASTER_OUT_PATH,</span>
+</span><span id="L-97"><a href="#L-97"><span class="linenos"> 97</span></a><span class="sd">)</span>
+</span><span id="L-98"><a href="#L-98"><span class="linenos"> 98</span></a><span class="sd"># Path to the predicted raster</span>
+</span><span id="L-99"><a href="#L-99"><span class="linenos"> 99</span></a><span class="sd">&gt;&gt;&gt; &quot;path/to/raster/raster_pred.tif&quot;</span>
+</span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a><span class="sd">```</span>
+</span><span id="L-101"><a href="#L-101"><span class="linenos">101</span></a>
+</span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a><span class="sd">&lt;/br&gt;</span>
+</span><span id="L-103"><a href="#L-103"><span class="linenos">103</span></a>
+</span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a><span class="sd">| Example Colabs                        |                                                                                                                                                                                                               |</span>
+</span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a><span class="sd">|---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|</span>
+</span><span id="L-106"><a href="#L-106"><span class="linenos">106</span></a><span class="sd">| Create labels from OpenStreetMap data | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/create_labels_from_osm_data.ipynb)            |</span>
+</span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a><span class="sd">| Scheduled cleaning of geospatial data | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/rocket_example.ipynb)                         |</span>
+</span><span id="L-108"><a href="#L-108"><span class="linenos">108</span></a><span class="sd">| Clip and remove noise from rasters    | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/clip_and_remove_noise_raster.ipynb)           |</span>
+</span><span id="L-109"><a href="#L-109"><span class="linenos">109</span></a><span class="sd">| Sharpen nightlights data              | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/process_nightlights.ipynb)                    |</span>
+</span><span id="L-110"><a href="#L-110"><span class="linenos">110</span></a><span class="sd">| Filters and morphological operations  | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/filters_and_morphology.ipynb)                 |</span>
+</span><span id="L-111"><a href="#L-111"><span class="linenos">111</span></a>
 </span><span id="L-112"><a href="#L-112"><span class="linenos">112</span></a>
-</span><span id="L-113"><a href="#L-113"><span class="linenos">113</span></a>
-</span><span id="L-114"><a href="#L-114"><span class="linenos">114</span></a><span class="sd">&lt;/br&gt;</span>
-</span><span id="L-115"><a href="#L-115"><span class="linenos">115</span></a>
-</span><span id="L-116"><a href="#L-116"><span class="linenos">116</span></a><span class="sd">The toolbox is being developed by ESA-Philab, NIRAS, and Aalborg University.</span>
-</span><span id="L-117"><a href="#L-117"><span class="linenos">117</span></a>
-</span><span id="L-118"><a href="#L-118"><span class="linenos">118</span></a><span class="sd"># Dependencies</span>
-</span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a><span class="sd">gdal</span>
-</span><span id="L-120"><a href="#L-120"><span class="linenos">120</span></a><span class="sd">numba</span>
-</span><span id="L-121"><a href="#L-121"><span class="linenos">121</span></a>
-</span><span id="L-122"><a href="#L-122"><span class="linenos">122</span></a><span class="sd">optional:</span>
-</span><span id="L-123"><a href="#L-123"><span class="linenos">123</span></a><span class="sd">orfeo-toolbox</span>
-</span><span id="L-124"><a href="#L-124"><span class="linenos">124</span></a><span class="sd">esa-snap</span>
-</span><span id="L-125"><a href="#L-125"><span class="linenos">125</span></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-126"><a href="#L-126"><span class="linenos">126</span></a>
-</span><span id="L-127"><a href="#L-127"><span class="linenos">127</span></a><span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-128"><a href="#L-128"><span class="linenos">128</span></a><span class="kn">from</span> <span class="nn">.raster</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-129"><a href="#L-129"><span class="linenos">129</span></a><span class="kn">from</span> <span class="nn">.vector</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-130"><a href="#L-130"><span class="linenos">130</span></a><span class="kn">from</span> <span class="nn">.eo</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-131"><a href="#L-131"><span class="linenos">131</span></a><span class="kn">from</span> <span class="nn">.ai</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-113"><a href="#L-113"><span class="linenos">113</span></a><span class="sd">&lt;/br&gt;</span>
+</span><span id="L-114"><a href="#L-114"><span class="linenos">114</span></a>
+</span><span id="L-115"><a href="#L-115"><span class="linenos">115</span></a><span class="sd">The toolbox is being developed by ESA-Philab, NIRAS, and Aalborg University.</span>
+</span><span id="L-116"><a href="#L-116"><span class="linenos">116</span></a>
+</span><span id="L-117"><a href="#L-117"><span class="linenos">117</span></a><span class="sd"># Dependencies</span>
+</span><span id="L-118"><a href="#L-118"><span class="linenos">118</span></a><span class="sd">gdal</span>
+</span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a><span class="sd">numba</span>
+</span><span id="L-120"><a href="#L-120"><span class="linenos">120</span></a>
+</span><span id="L-121"><a href="#L-121"><span class="linenos">121</span></a><span class="sd">optional:</span>
+</span><span id="L-122"><a href="#L-122"><span class="linenos">122</span></a><span class="sd">orfeo-toolbox</span>
+</span><span id="L-123"><a href="#L-123"><span class="linenos">123</span></a><span class="sd">esa-snap</span>
+</span><span id="L-124"><a href="#L-124"><span class="linenos">124</span></a><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-125"><a href="#L-125"><span class="linenos">125</span></a>
+</span><span id="L-126"><a href="#L-126"><span class="linenos">126</span></a><span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-127"><a href="#L-127"><span class="linenos">127</span></a><span class="kn">from</span> <span class="nn">.raster</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-128"><a href="#L-128"><span class="linenos">128</span></a><span class="kn">from</span> <span class="nn">.vector</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-129"><a href="#L-129"><span class="linenos">129</span></a><span class="kn">from</span> <span class="nn">.eo</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-130"><a href="#L-130"><span class="linenos">130</span></a><span class="kn">from</span> <span class="nn">.ai</span> <span class="kn">import</span> <span class="o">*</span>
 </span></pre></div>
 
 

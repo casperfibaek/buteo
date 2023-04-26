@@ -16,7 +16,6 @@ from buteo.raster.patches import (
     unique_values,
     merge_weighted_mad,
     merge_weighted_mode,
-    calculate_offset_single,
     get_offsets,
     borders_are_necessary,
     array_to_patches_single,
@@ -195,70 +194,6 @@ def test_merge_weighted_mode_basic():
 
     assert np.allclose(merged_arr, expected_arr)
 
-def test_calculate_offset_single_basic():
-    """ Test that the offset is calculated correctly. """
-    tile_size = 64
-    num_offsets = 2
-    expected_output = [0, 32, 16]
-    result = calculate_offset_single(tile_size, num_offsets)
-    assert result == expected_output
-
-def test_calculate_offset_single_large_num_offsets():
-    """ Test that the offset is calculated correctly. """
-    tile_size = 64
-    num_offsets = 6
-    expected_output = [0, 32, 16, 48, 8, 24, 40]
-    result = calculate_offset_single(tile_size, num_offsets)
-    assert result == expected_output
-
-def test_calculate_offset_single_zero_tile_size():
-    """ Test that the offset is calculated correctly. """
-    tile_size = 0
-    num_offsets = 2
-    with pytest.raises(AssertionError):
-        calculate_offset_single(tile_size, num_offsets)
-
-def test_calculate_offset_single_negative_tile_size():
-    """ Test that the offset is calculated correctly. """
-    tile_size = -64
-    num_offsets = 2
-    with pytest.raises(AssertionError):
-        calculate_offset_single(tile_size, num_offsets)
-
-def test_get_offsets_basic():
-    """ Test that the offset is calculated correctly. """
-    tile_size = 64
-    offsets_y = 2
-    offsets_x = 2
-    expected_output = [(0, 0), (0, 32), (0, 16), (32, 0), (32, 32), (32, 16), (16, 0), (16, 32), (16, 16)]
-    result = get_offsets(tile_size, offsets_y, offsets_x)
-    assert result == expected_output
-
-def test_get_offsets_single_dimension():
-    """ Test that the offset is calculated correctly. """
-    tile_size = 64
-    offsets_y = 2
-    offsets_x = 0
-    expected_output = [(0, 0), (32, 0), (16, 0)]
-    result = get_offsets(tile_size, offsets_y, offsets_x)
-    assert result == expected_output
-
-def test_get_offsets_zero_tile_size():
-    """ Test that the offset is calculated correctly. """
-    tile_size = 0
-    offsets_y = 2
-    offsets_x = 2
-    with pytest.raises(AssertionError):
-        get_offsets(tile_size, offsets_y, offsets_x)
-
-def test_get_offsets_negative_tile_size():
-    """ Test that the offset is calculated correctly. """
-    tile_size = -64
-    offsets_y = 2
-    offsets_x = 2
-    with pytest.raises(AssertionError):
-        get_offsets(tile_size, offsets_y, offsets_x)
-
 def test_borders_are_necessary_basic():
     """ Test that borders are correctly. (basic) """
     arr = np.zeros((64, 64))
@@ -382,21 +317,19 @@ def test_array_to_patches_basic():
     """ Test that the array is correctly divided into patches (basic). """
     arr = np.random.rand(64, 64, 3)
     tile_size = 32
-    offsets_y = 1
-    offsets_x = 1
-    patches = array_to_patches(arr, tile_size, offsets_y, offsets_x)
+    offsets = 1
+    patches = array_to_patches(arr, tile_size, offsets)
 
-    assert patches.shape == (9, tile_size, tile_size, arr.shape[2])
+    assert patches.shape == (5, tile_size, tile_size, arr.shape[2])
 
 def test_array_to_patches_multiple_offsets():
     """ Test that the array is correctly divided into patches (multiple offsets). """
     arr = np.random.rand(96, 96, 3)
     tile_size = 32
-    offsets_y = 2
-    offsets_x = 2
-    patches = array_to_patches(arr, tile_size, offsets_y, offsets_x)
+    offsets = 3
+    patches = array_to_patches(arr, tile_size, offsets)
 
-    assert patches.shape == (49, tile_size, tile_size, arr.shape[2])
+    assert patches.shape == (21, tile_size, tile_size, arr.shape[2])
 
 
 # Dummy callback function for testing purposes

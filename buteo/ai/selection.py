@@ -81,17 +81,18 @@ def train_val_test_split(
     if random_state is not None:
         np.random.seed(random_state)
 
-    sample_indices = np.random.permutation(X.shape[0])
+    indices = np.arange(X.shape[0])
+    np.random.shuffle(indices)
 
     test_split_idx = int(X.shape[0] * (1 - test_size))
     val_split_idx = int((1 - val_size) * test_split_idx)
 
-    X_train = X[sample_indices[:val_split_idx]]
-    X_val = X[sample_indices[val_split_idx:test_split_idx]]
-    X_test = X[sample_indices[test_split_idx:]]
-    y_train = y[sample_indices[:val_split_idx]]
-    y_val = y[sample_indices[val_split_idx:test_split_idx]]
-    y_test = y[sample_indices[test_split_idx:]]
+    X_train = X[indices[:val_split_idx]]
+    X_val = X[indices[val_split_idx:test_split_idx]]
+    X_test = X[indices[test_split_idx:]]
+    y_train = y[indices[:val_split_idx]]
+    y_val = y[indices[val_split_idx:test_split_idx]]
+    y_test = y[indices[test_split_idx:]]
 
     return X_train, X_val, X_test, y_train, y_val, y_test
 

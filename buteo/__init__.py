@@ -62,8 +62,7 @@ stacked_numpy_arrays = beo.raster_to_array(
 patches = beo.array_to_patches(
     stacked_numpy_arrays,
     256,
-    offsets_y=1, # 1 overlap at 1/2 patch size (128)
-    offsets_x=1, # 1 overlap at 1/2 patch size (128)
+    n_offsets=1, # 1 overlap at 1/2 patch size (128)
 )
 
 # patches_nr, height, width, channels
