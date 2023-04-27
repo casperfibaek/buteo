@@ -6,6 +6,7 @@ Functions that make interacting with the toolbox easier.
 
 # Standard Library
 import os
+import gc
 import sys
 import time
 import shutil
@@ -16,14 +17,13 @@ from pathlib import PurePosixPath
 from typing import Any, Union, List, Optional, Dict, Tuple
 from warnings import warn
 
-# Internal
-from buteo.utils.gdal_enums import get_valid_raster_driver_extensions, get_valid_vector_driver_extensions
-
 # External
 import psutil
 import numpy as np
 from osgeo import gdal
 
+# Internal
+from buteo.utils.gdal_enums import get_valid_raster_driver_extensions, get_valid_vector_driver_extensions
 
 
 def get_unix_seconds_as_str() -> str:
@@ -1080,3 +1080,31 @@ def all_arrays_are_same_size(
             return False
 
     return True
+
+
+def force_garbage_collect(delete_functions: bool = True) -> None:
+    """
+    Clears the memory by deleting all objects in the main namespace.
+    
+    Args:
+        delete_functions (bool, optional): Whether to delete functions as well. Defaults to True.
+
+    Returns:
+        None
+    """
+    # Get a list of all objects
+    all_objects = sys.modules['__main__'].__dict__.copy()
+
+    # Iterate over the objects and delete them if possible
+    for key, value in all_objects.items():
+        if key in ["sys", "os", "gc"]:
+            continue
+        if key.startswith("__"):
+            continue  # Skip built-in objects
+        if not delete_functions and callable(value):
+            continue
+
+        del sys.modules['__main__'].__dict__[key]  # Remove the object from the namespace
+
+    # Collect garbage
+    gc.collect()

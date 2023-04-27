@@ -39,26 +39,54 @@ def calc_proximity(
     """
     Calculate the proximity of input_raster to values.
 
-    Args:
-        input_rasters (List): A list of rasters to use as input.
-    
-    Keyword Args:
-        target_value (Union[int, float]=1): The value to use as target.
-        unit (str='GEO'): The unit to use for the distance, GEO or PIXEL.
-        out_path (Union[str, None, List]=None): The output path.
-        max_dist (Union[int, float]=1000): The maximum distance to use.
-        add_border (bool=False): If True, a border will be added to the raster.
-        border_value (Union[int, float]=0): The value to use for the border.
-        weighted (bool=False): If True, the distance will be divided by the max distance.
-        invert (bool=False): If True, the target will be inversed.
-        return_array (bool=False): If True, a NumPy array will be returned instead of a raster.
-        prefix (str=''): Prefix to add to the output.
-        suffix (str='_proximity'): Suffix to add to the output.
-        add_uuid (bool=False): Should a uuid be added to the output path?
-        overwrite (bool=True): If the output path exists already, should it be overwritten?
+    Parameters
+    ----------
+    input_rasters : List
+        A list of rasters to use as input.
 
-    Returns:
-        Union[str, np.ndarray]: A path to a raster with the calculated proximity, or a numpy array with the data.
+    target_value : Union[int, float], optional
+        The value to use as target, default: 1.
+
+    unit : str, optional
+        The unit to use for the distance, GEO or PIXEL, default: "GEO".
+
+    out_path : Union[str, None, List], optional
+        The output path, default: None.
+
+    max_dist : Union[int, float], optional
+        The maximum distance to use, default: 1000.
+
+    add_border : bool, optional
+        If True, a border will be added to the raster, default: False.
+
+    border_value : Union[int, float], optional
+        The value to use for the border, default: 0.
+
+    weighted : bool, optional
+        If True, the distance will be divided by the max distance, default: False.
+
+    invert : bool, optional
+        If True, the target will be inversed, default: False.
+
+    return_array : bool, optional
+        If True, a NumPy array will be returned instead of a raster, default: False.
+
+    prefix : str, optional
+        Prefix to add to the output, default: "".
+
+    suffix : str, optional
+        Suffix to add to the output, default: "_proximity".
+
+    add_uuid : bool, optional
+        Should a uuid be added to the output path?, default: False.
+
+    overwrite : bool, optional
+        If the output path exists already, should it be overwritten?, default: True.
+
+    Returns
+    -------
+    Union[str, np.ndarray]
+        A path to a raster with the calculated proximity, or a numpy array with the data.
     """
     core_utils.type_check(input_rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "input_rasters")
     core_utils.type_check(target_value, [int, float], "target_value")

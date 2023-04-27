@@ -31,7 +31,7 @@ class AugmentationDataset():
     """
     A dataset that applies augmentations to the data.
 
-    The current augmentations are supported:
+    The following augmentations are supported:
         - rotation (chance)
         - mirror (chance)
         - channel_scale (chance, additive(bool), max_value(float[0,1]))
@@ -46,47 +46,59 @@ class AugmentationDataset():
         - cutmix (chance, min_size(float[0, 1]), max_size(float[0, 1]))
         - mixup (chance, min_size(float[0, 1]), max_size(float[0, 1]), label_mix(int))
 
-    Args:
-        X (np.ndarray): The data to augment.
-        y (np.ndarray): The labels for the data.
+    Parameters
+    ----------
+    X : np.ndarray
+        The data to augment.
 
-    Keyword Args:
-        augmentations (list): The augmentations to apply.
-        callback (callable): A callback to apply to the data after augmentation.
-        input_is_channel_last (bool=True): Whether the data is in channel last format.
-        output_is_channel_last (bool=False): Whether the output should be in channel last format.
-    
-    Returns:
+    y : np.ndarray
+        The labels for the data.
+
+    augmentations : list, optional
+        The augmentations to apply.
+
+    callback : callable, optional
+        A callback to apply to the data after augmentation.
+
+    input_is_channel_last : bool, default: True
+        Whether the data is in channel last format.
+
+    output_is_channel_last : bool, default: False
+        Whether the output should be in channel last format.
+
+    Returns
+    -------
+    AugmentationDataset
         A dataset yielding batches of augmented data. For Pytorch,
-            convert the batches to tensors before ingestion.
+        convert the batches to tensors before ingestion.
 
-    Example:
-        ```python
-        def callback(x, y):
-            return (
-                torch.from_numpy(x).float(),
-                torch.from_numpy(y).float(),
-            )
-
-        dataset = AugmentationDataset(
-            x_train,
-            y_train,
-            callback=callback,
-            input_is_channel_last=True,
-            output_is_channel_last=False,
-            augmentations=[
-                { "name": "rotation", "chance": 0.2},
-                { "name": "mirror", "chance": 0.2 },
-                { "name": "noise", "chance": 0.2 },
-                { "name": "cutmix", "chance": 0.2 },
-            ],
-        )
-
-        from torch.utils.data import DataLoader
-        dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
-        ```
+    Example
+    -------
+    >>> def callback(x, y):
+    ...     return (
+    ...         torch.from_numpy(x).float(),
+    ...         torch.from_numpy(y).float(),
+    ...     )
+    ...
+    >>> dataset = AugmentationDataset(
+    ...     x_train,
+    ...     y_train,
+    ...     callback=callback,
+    ...     input_is_channel_last=True,
+    ...     output_is_channel_last=False,
+    ...     augmentations=[
+    ...         { "name": "rotation", "chance": 0.2},
+    ...         { "name": "mirror", "chance": 0.2 },
+    ...         { "name": "noise", "chance": 0.2 },
+    ...         { "name": "cutmix", "chance": 0.2 },
+    ...     ],
+    ... )
+    >>>
+    >>> from torch.utils.data import DataLoader
+    >>> dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
     """
-    def __init__(self,
+    def __init__(
+        self,
         X: np.ndarray,
         y: np.ndarray,
         augmentations: Optional[List] = None,
@@ -94,6 +106,7 @@ class AugmentationDataset():
         input_is_channel_last: bool = True,
         output_is_channel_last: bool = False,
     ):
+        # Convert data format if necessary
         if input_is_channel_last:
             self.x_train = beo.channel_last_to_first(X)
             self.y_train = beo.channel_last_to_first(y)
@@ -101,11 +114,8 @@ class AugmentationDataset():
             self.x_train = X
             self.y_train = y
 
-        if augmentations is None:
-            self.augmentations = []
-        else:
-            self.augmentations = augmentations
-
+        # Set augmentations and callback
+        self.augmentations = augmentations or []
         self.callback = callback
         self.channel_last = False
         self.output_is_channel_last = output_is_channel_last
@@ -117,8 +127,12 @@ class AugmentationDataset():
         x = self.x_train[index]
         y = self.y_train[index]
 
+        # Apply augmentations
         for aug in self.augmentations:
             aug_name = aug["name"]
+            func = None
+
+            # Mapping augmentation names to their respective functions
             if aug_name == "rotation":
                 func = augmentation_rotation
             elif aug_name == "mirror":
@@ -154,6 +168,7 @@ class AugmentationDataset():
             channel_last = self.channel_last
             kwargs = {key: value for key, value in aug.items() if key != "name"}
 
+            # Apply cutmix and mixup augmentations
             if aug_name in ["cutmix", "mixup"]:
                 idx_source = np.random.randint(len(self.x_train))
                 xx = self.x_train[idx_source]
@@ -163,9 +178,11 @@ class AugmentationDataset():
             else:
                 x, y = func(x, y, channel_last=channel_last, **kwargs)
 
+        # Apply callback if specified
         if self.callback is not None:
             x, y = self.callback(x, y)
 
+        # Convert output format if necessary
         if self.output_is_channel_last:
             x = beo.channel_first_to_last(x)
             y = beo.channel_first_to_last(y)
@@ -179,18 +196,28 @@ class Dataset():
     Allows a callback to be passed and can convert between
     channel formats.
 
-    Args:
-        X (np.ndarray): The data to augment.
-        y (np.ndarray): The labels for the data.
+    Parameters
+    ----------
+    X : np.ndarray
+        The data to augment.
 
-    Keyword Args:
-        callback (callable): A callback to apply to the data after augmentation.
-        input_is_channel_last (bool=True): Whether the data is in channel last format.
-        output_is_channel_last (bool=False): Whether the output should be in channel last format.
-    
-    Returns:
+    y : np.ndarray
+        The labels for the data.
+
+    callback : callable, optional
+        A callback to apply to the data after augmentation.
+
+    input_is_channel_last : bool, default: True
+        Whether the data is in channel last format.
+
+    output_is_channel_last : bool, default: False
+        Whether the output should be in channel last format.
+
+    Returns
+    -------
+    Dataset
         A dataset yielding batches of data. For Pytorch,
-            convert the batches to tensors before ingestion.
+        convert the batches to tensors before ingestion.
     """
     def __init__(self,
         X: np.ndarray,
@@ -199,6 +226,7 @@ class Dataset():
         input_is_channel_last: bool = True,
         output_is_channel_last: bool = False,
     ):
+        # Convert input format if necessary
         if input_is_channel_last:
             self.x_train = beo.channel_last_to_first(X)
             self.y_train = beo.channel_last_to_first(y)
@@ -217,9 +245,11 @@ class Dataset():
         x = self.x_train[index]
         y = self.y_train[index]
 
+        # Apply callback if specified
         if self.callback is not None:
             x, y = self.callback(x, y)
 
+        # Convert output format if necessary
         if self.output_is_channel_last:
             x = beo.channel_first_to_last(x)
             y = beo.channel_first_to_last(y)

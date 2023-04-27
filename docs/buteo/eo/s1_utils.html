@@ -36,7 +36,7 @@
                     <a class="function" href="#s1_kml_to_bbox">s1_kml_to_bbox</a>
             </li>
             <li>
-                    <a class="function" href="#get_metadata">get_metadata</a>
+                    <a class="function" href="#s1_get_metadata">s1_get_metadata</a>
             </li>
     </ul>
 
@@ -118,7 +118,7 @@ and finding the GPT tools.</p>
 </span><span id="L-51"><a href="#L-51"><span class="linenos">51</span></a>
 </span><span id="L-52"><a href="#L-52"><span class="linenos">52</span></a>
 </span><span id="L-53"><a href="#L-53"><span class="linenos">53</span></a><span class="c1"># TODO: get_metadata_from_zip</span>
-</span><span id="L-54"><a href="#L-54"><span class="linenos">54</span></a><span class="k">def</span> <span class="nf">get_metadata</span><span class="p">(</span><span class="n">image_paths</span><span class="p">):</span>
+</span><span id="L-54"><a href="#L-54"><span class="linenos">54</span></a><span class="k">def</span> <span class="nf">s1_get_metadata</span><span class="p">(</span><span class="n">image_paths</span><span class="p">):</span>
 </span><span id="L-55"><a href="#L-55"><span class="linenos">55</span></a>    <span class="n">images_obj</span> <span class="o">=</span> <span class="p">[]</span>
 </span><span id="L-56"><a href="#L-56"><span class="linenos">56</span></a>
 </span><span id="L-57"><a href="#L-57"><span class="linenos">57</span></a>    <span class="k">for</span> <span class="n">img</span> <span class="ow">in</span> <span class="n">image_paths</span><span class="p">:</span>
@@ -194,35 +194,35 @@ and finding the GPT tools.</p>
     
 
                 </section>
-                <section id="get_metadata">
-                            <input id="get_metadata-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                <section id="s1_get_metadata">
+                            <input id="s1_get_metadata-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">get_metadata</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">image_paths</span></span><span class="return-annotation">):</span></span>
+        <span class="name">s1_get_metadata</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">image_paths</span></span><span class="return-annotation">):</span></span>
 
-                <label class="view-source-button" for="get_metadata-view-source"><span>View Source</span></label>
+                <label class="view-source-button" for="s1_get_metadata-view-source"><span>View Source</span></label>
 
     </div>
-    <a class="headerlink" href="#get_metadata"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="get_metadata-55"><a href="#get_metadata-55"><span class="linenos">55</span></a><span class="k">def</span> <span class="nf">get_metadata</span><span class="p">(</span><span class="n">image_paths</span><span class="p">):</span>
-</span><span id="get_metadata-56"><a href="#get_metadata-56"><span class="linenos">56</span></a>    <span class="n">images_obj</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="get_metadata-57"><a href="#get_metadata-57"><span class="linenos">57</span></a>
-</span><span id="get_metadata-58"><a href="#get_metadata-58"><span class="linenos">58</span></a>    <span class="k">for</span> <span class="n">img</span> <span class="ow">in</span> <span class="n">image_paths</span><span class="p">:</span>
-</span><span id="get_metadata-59"><a href="#get_metadata-59"><span class="linenos">59</span></a>        <span class="n">kml</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img</span><span class="si">}</span><span class="s2">/preview/map-overlay.kml&quot;</span>
-</span><span id="get_metadata-60"><a href="#get_metadata-60"><span class="linenos">60</span></a>
-</span><span id="get_metadata-61"><a href="#get_metadata-61"><span class="linenos">61</span></a>        <span class="n">timestr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="mi">5</span><span class="p">])</span>
-</span><span id="get_metadata-62"><a href="#get_metadata-62"><span class="linenos">62</span></a>        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">timestr</span><span class="p">,</span> <span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">T%H%M%S&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
-</span><span id="get_metadata-63"><a href="#get_metadata-63"><span class="linenos">63</span></a>
-</span><span id="get_metadata-64"><a href="#get_metadata-64"><span class="linenos">64</span></a>        <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="get_metadata-65"><a href="#get_metadata-65"><span class="linenos">65</span></a>            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">img</span><span class="p">,</span>
-</span><span id="get_metadata-66"><a href="#get_metadata-66"><span class="linenos">66</span></a>            <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">,</span>
-</span><span id="get_metadata-67"><a href="#get_metadata-67"><span class="linenos">67</span></a>            <span class="s2">&quot;footprint_wkt&quot;</span><span class="p">:</span> <span class="n">s1_kml_to_bbox</span><span class="p">(</span><span class="n">kml</span><span class="p">),</span>
-</span><span id="get_metadata-68"><a href="#get_metadata-68"><span class="linenos">68</span></a>        <span class="p">}</span>
-</span><span id="get_metadata-69"><a href="#get_metadata-69"><span class="linenos">69</span></a>
-</span><span id="get_metadata-70"><a href="#get_metadata-70"><span class="linenos">70</span></a>        <span class="n">images_obj</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
-</span><span id="get_metadata-71"><a href="#get_metadata-71"><span class="linenos">71</span></a>
-</span><span id="get_metadata-72"><a href="#get_metadata-72"><span class="linenos">72</span></a>    <span class="k">return</span> <span class="n">images_obj</span>
+    <a class="headerlink" href="#s1_get_metadata"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="s1_get_metadata-55"><a href="#s1_get_metadata-55"><span class="linenos">55</span></a><span class="k">def</span> <span class="nf">s1_get_metadata</span><span class="p">(</span><span class="n">image_paths</span><span class="p">):</span>
+</span><span id="s1_get_metadata-56"><a href="#s1_get_metadata-56"><span class="linenos">56</span></a>    <span class="n">images_obj</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="s1_get_metadata-57"><a href="#s1_get_metadata-57"><span class="linenos">57</span></a>
+</span><span id="s1_get_metadata-58"><a href="#s1_get_metadata-58"><span class="linenos">58</span></a>    <span class="k">for</span> <span class="n">img</span> <span class="ow">in</span> <span class="n">image_paths</span><span class="p">:</span>
+</span><span id="s1_get_metadata-59"><a href="#s1_get_metadata-59"><span class="linenos">59</span></a>        <span class="n">kml</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">img</span><span class="si">}</span><span class="s2">/preview/map-overlay.kml&quot;</span>
+</span><span id="s1_get_metadata-60"><a href="#s1_get_metadata-60"><span class="linenos">60</span></a>
+</span><span id="s1_get_metadata-61"><a href="#s1_get_metadata-61"><span class="linenos">61</span></a>        <span class="n">timestr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="mi">5</span><span class="p">])</span>
+</span><span id="s1_get_metadata-62"><a href="#s1_get_metadata-62"><span class="linenos">62</span></a>        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">timestr</span><span class="p">,</span> <span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">T%H%M%S&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
+</span><span id="s1_get_metadata-63"><a href="#s1_get_metadata-63"><span class="linenos">63</span></a>
+</span><span id="s1_get_metadata-64"><a href="#s1_get_metadata-64"><span class="linenos">64</span></a>        <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="s1_get_metadata-65"><a href="#s1_get_metadata-65"><span class="linenos">65</span></a>            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">img</span><span class="p">,</span>
+</span><span id="s1_get_metadata-66"><a href="#s1_get_metadata-66"><span class="linenos">66</span></a>            <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">,</span>
+</span><span id="s1_get_metadata-67"><a href="#s1_get_metadata-67"><span class="linenos">67</span></a>            <span class="s2">&quot;footprint_wkt&quot;</span><span class="p">:</span> <span class="n">s1_kml_to_bbox</span><span class="p">(</span><span class="n">kml</span><span class="p">),</span>
+</span><span id="s1_get_metadata-68"><a href="#s1_get_metadata-68"><span class="linenos">68</span></a>        <span class="p">}</span>
+</span><span id="s1_get_metadata-69"><a href="#s1_get_metadata-69"><span class="linenos">69</span></a>
+</span><span id="s1_get_metadata-70"><a href="#s1_get_metadata-70"><span class="linenos">70</span></a>        <span class="n">images_obj</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
+</span><span id="s1_get_metadata-71"><a href="#s1_get_metadata-71"><span class="linenos">71</span></a>
+</span><span id="s1_get_metadata-72"><a href="#s1_get_metadata-72"><span class="linenos">72</span></a>    <span class="k">return</span> <span class="n">images_obj</span>
 </span></pre></div>
 
 

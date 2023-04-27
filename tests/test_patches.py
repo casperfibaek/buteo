@@ -9,16 +9,16 @@ import numpy as np
 import pytest
 
 # Internal
-from buteo.raster.patches import (
-    get_kernel_weights,
-    merge_weighted_median,
-    merge_weighted_average,
-    unique_values,
-    merge_weighted_mad,
-    merge_weighted_mode,
-    borders_are_necessary,
-    array_to_patches_single,
-    patches_to_array_single,
+from buteo.array.patches import (
+    _get_kernel_weights,
+    _merge_weighted_median,
+    _merge_weighted_average,
+    _unique_values,
+    _merge_weighted_mad,
+    _merge_weighted_mode,
+    _borders_are_necessary,
+    _array_to_patches_single,
+    _patches_to_array_single,
     array_to_patches,
     predict_array,
     predict_array_pixel,
@@ -30,7 +30,7 @@ def test_get_kernel_weights_default_values():
     edge_distance = 5
     tile_size = 64
 
-    kernel = get_kernel_weights(edge_distance=edge_distance, tile_size=tile_size)
+    kernel = _get_kernel_weights(edge_distance=edge_distance, tile_size=tile_size)
 
     assert kernel.shape == (64, 64)
     assert kernel.dtype == np.float32
@@ -45,7 +45,7 @@ def test_get_kernel_weights_custom_values():
     edge_distance = 3
     tile_size = 32
 
-    kernel = get_kernel_weights(tile_size=tile_size, edge_distance=edge_distance)
+    kernel = _get_kernel_weights(tile_size=tile_size, edge_distance=edge_distance)
 
     assert kernel.shape == (tile_size, tile_size)
     assert kernel.dtype == np.float32
@@ -70,7 +70,7 @@ dummy_arr_weight = np.ones_like(dummy_arr)
 
 def test_merge_weighted_median_basic():
     """ Test the basic functionality of the merge_weighted_median function. """
-    merged_arr = merge_weighted_median(dummy_arr, dummy_arr_weight)
+    merged_arr = _merge_weighted_median(dummy_arr, dummy_arr_weight)
 
     expected_arr = np.array([
         [[2, 3], [5, 6]],
@@ -92,7 +92,7 @@ def test_merge_weighted_median_different_weights():
         ]
     ], dtype="float32")
 
-    merged_arr = merge_weighted_median(dummy_arr, arr_weight)
+    merged_arr = _merge_weighted_median(dummy_arr, arr_weight)
 
     expected_arr = np.array([
         [[2.333333, 3.3333333], [5.3333333, 6.333333]],
@@ -103,7 +103,7 @@ def test_merge_weighted_median_different_weights():
 
 def test_merge_weighted_average_basic():
     """ Test the basic functionality of the merge_weighted_average function. """
-    merged_arr = merge_weighted_average(dummy_arr, dummy_arr_weight)
+    merged_arr = _merge_weighted_average(dummy_arr, dummy_arr_weight)
 
     expected_arr = np.array([
         [[2, 3], [5, 6]],
@@ -125,7 +125,7 @@ def test_merge_weighted_average_different_weights():
         ]
     ], dtype="float32")
 
-    merged_arr = merge_weighted_average(dummy_arr, arr_weight)
+    merged_arr = _merge_weighted_average(dummy_arr, arr_weight)
 
     expected_arr = np.array([
         [[2.333333, 3.3333333], [5.3333333, 6.333333]],
@@ -140,7 +140,7 @@ def test_merge_weighted_average_with_nan():
     arr_with_nan[0, 0, 0, 0] = np.nan
     arr_with_nan[1, 0, 1, 1] = np.nan
 
-    merged_arr = merge_weighted_average(arr_with_nan, dummy_arr_weight)
+    merged_arr = _merge_weighted_average(arr_with_nan, dummy_arr_weight)
 
     expected_arr = np.array([
         [[3, 3], [5, 5]],
@@ -151,7 +151,7 @@ def test_merge_weighted_average_with_nan():
 
 def test_merge_weighted_mad_basic():
     """ Test the basic functionality of the merge_weighted_mad function. """
-    merged_arr = merge_weighted_mad(dummy_arr, dummy_arr_weight)
+    merged_arr = _merge_weighted_mad(dummy_arr, dummy_arr_weight)
 
     expected_arr = np.array([
         [[2, 3], [5, 6]],
@@ -163,7 +163,7 @@ def test_merge_weighted_mad_basic():
 def test_unique_values_basic():
     """ Test the basic functionality of the unique_values function. """
     arr = np.array([1, 2, 3, 2, 1, 4, 5, 3, 6], dtype="float32")
-    unique_arr = unique_values(arr)
+    unique_arr = _unique_values(arr)
 
     expected_arr = np.array([1, 2, 3, 4, 5, 6], dtype="float32")
 
@@ -184,7 +184,7 @@ def test_merge_weighted_mode_basic():
 
     arr_weight = np.ones_like(arr)
 
-    merged_arr = merge_weighted_mode(arr, arr_weight)
+    merged_arr = _merge_weighted_mode(arr, arr_weight)
 
     expected_arr = np.array([
         [[1, 2], [2, 3]],
@@ -199,7 +199,7 @@ def test_borders_are_necessary_basic():
     tile_size = 32
     offset = [0, 0]
     expected_output = (False, False)
-    result = borders_are_necessary(arr, tile_size, offset)
+    result = _borders_are_necessary(arr, tile_size, offset)
     assert result == expected_output
 
 def test_borders_are_necessary_border_needed():
@@ -208,7 +208,7 @@ def test_borders_are_necessary_border_needed():
     tile_size = 32
     offset = [0, 0]
     expected_output = (True, True)
-    result = borders_are_necessary(arr, tile_size, offset)
+    result = _borders_are_necessary(arr, tile_size, offset)
     assert result == expected_output
 
 def test_borders_are_necessary_3d_array():
@@ -217,7 +217,7 @@ def test_borders_are_necessary_3d_array():
     tile_size = 32
     offset = [0, 0]
     expected_output = (False, False)
-    result = borders_are_necessary(arr, tile_size, offset)
+    result = _borders_are_necessary(arr, tile_size, offset)
     assert result == expected_output
 
 def test_borders_are_necessary_with_offset():
@@ -226,7 +226,7 @@ def test_borders_are_necessary_with_offset():
     tile_size = 32
     offset = [32, 32]
     expected_output = (False, False)
-    result = borders_are_necessary(arr, tile_size, offset)
+    result = _borders_are_necessary(arr, tile_size, offset)
     assert result == expected_output
 
 def test_borders_are_necessary_offset_and_border_needed():
@@ -235,14 +235,14 @@ def test_borders_are_necessary_offset_and_border_needed():
     tile_size = 32
     offset = [16, 16]
     expected_output = (True, True)
-    result = borders_are_necessary(arr, tile_size, offset)
+    result = _borders_are_necessary(arr, tile_size, offset)
     assert result == expected_output
 
 def test_array_to_patches_single_basic():
     """ Test that the array is correctly converted to patches. (basic) """
     arr = np.random.rand(64, 64, 3)
     tile_size = 32
-    patches = array_to_patches_single(arr, tile_size)
+    patches = _array_to_patches_single(arr, tile_size)
 
     assert patches.shape == (4, 32, 32, 3)
 
@@ -251,7 +251,7 @@ def test_array_to_patches_single_with_offset():
     arr = np.random.rand(128, 128, 3)
     tile_size = 32
     offset = [32, 32]
-    patches = array_to_patches_single(arr, tile_size, offset)
+    patches = _array_to_patches_single(arr, tile_size, offset)
 
     assert patches.shape == (9, 32, 32, 3)
 
@@ -259,7 +259,7 @@ def test_array_to_patches_single_no_divisible_dimensions():
     """ Test that the array is correctly converted to patches. (no divisible dimensions) """
     arr = np.random.rand(70, 70, 3)
     tile_size = 32
-    patches = array_to_patches_single(arr, tile_size)
+    patches = _array_to_patches_single(arr, tile_size)
 
     assert patches.shape == (4, 32, 32, 3)
 
@@ -268,8 +268,8 @@ def test_patches_to_array_single_basic():
     """ Test that the patches are correctly converted to an array. (basic) """
     arr = np.random.rand(64, 64, 3)
     tile_size = 32
-    patches = array_to_patches_single(arr, tile_size)
-    restored_arr = patches_to_array_single(patches, arr.shape, tile_size)
+    patches = _array_to_patches_single(arr, tile_size)
+    restored_arr = _patches_to_array_single(patches, arr.shape, tile_size)
 
     assert np.allclose(arr, restored_arr)
 
@@ -278,8 +278,8 @@ def test_patches_to_array_single_with_offset():
     arr = np.random.rand(64, 64, 3)
     tile_size = 32
     offset = [16, 16]
-    patches = array_to_patches_single(arr, tile_size, offset)
-    restored_arr = patches_to_array_single(patches, arr.shape, tile_size, offset)
+    patches = _array_to_patches_single(arr, tile_size, offset)
+    restored_arr = _patches_to_array_single(patches, arr.shape, tile_size, offset)
 
     assert np.allclose(arr[16:48, 16:48], restored_arr[16:48, 16:48])
 
@@ -287,8 +287,8 @@ def test_patches_to_array_single_no_divisible_dimensions():
     """ Test that the patches are correctly converted to an array. (no divisible dimensions) """
     arr = np.random.rand(70, 70, 3)
     tile_size = 32
-    patches = array_to_patches_single(arr, tile_size)
-    restored_arr = patches_to_array_single(patches, arr.shape, tile_size)
+    patches = _array_to_patches_single(arr, tile_size)
+    restored_arr = _patches_to_array_single(patches, arr.shape, tile_size)
 
     assert np.allclose(arr[:64, :64], restored_arr[:64, :64])
 
@@ -297,8 +297,8 @@ def test_patches_to_array_single_different_height_and_width():
     arr = np.random.rand(80, 100, 3)
     tile_size = 32
     offset = [0, 0]
-    patches = array_to_patches_single(arr, tile_size, offset)
-    restored_arr = patches_to_array_single(patches, arr.shape, tile_size, offset)
+    patches = _array_to_patches_single(arr, tile_size, offset)
+    restored_arr = _patches_to_array_single(patches, arr.shape, tile_size, offset)
 
     assert np.allclose(arr[:64, :96], restored_arr[:64, :96])
 
@@ -307,8 +307,8 @@ def test_patches_to_array_single_different_offset_height_and_width():
     arr = np.random.rand(80, 100, 3)
     tile_size = 32
     offset = [20, 10]
-    patches = array_to_patches_single(arr, tile_size, offset)
-    restored_arr = patches_to_array_single(patches, arr.shape, tile_size, offset)
+    patches = _array_to_patches_single(arr, tile_size, offset)
+    restored_arr = _patches_to_array_single(patches, arr.shape, tile_size, offset)
 
     assert np.allclose(arr[20:52, 10:74], restored_arr[20:52, 10:74])
 

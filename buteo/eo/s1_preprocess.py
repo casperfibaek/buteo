@@ -24,7 +24,7 @@ from buteo.vector import vector_to_metadata
 from buteo.utils.gdal_utils import is_raster, is_vector
 
 
-def find_gpt(test_gpt_path):
+def _find_gpt(test_gpt_path):
     gpt = os.path.realpath(os.path.abspath(os.path.expanduser(test_gpt_path)))
     if not os.path.exists(gpt):
         possible_locations = [
@@ -47,7 +47,7 @@ def find_gpt(test_gpt_path):
         return gpt
 
 
-def backscatter_step1(
+def _backscatter_step1(
     zip_file,
     out_path,
     gpt_path="~/snap/bin/gpt",
@@ -57,7 +57,7 @@ def backscatter_step1(
     graph = "backscatter_step1.xml"
 
     # Get absolute location of graph processing tool
-    gpt = find_gpt(gpt_path)
+    gpt = _find_gpt(gpt_path)
 
     out_path_ext = out_path + ".dim"
     if os.path.exists(out_path_ext):
@@ -72,11 +72,11 @@ def backscatter_step1(
 
     if extent is not None:
         if is_vector(extent):
-            metadata = vector_to_metadata(extent, create_geometry=True)
+            metadata = vector_to_metadata(extent)
         elif is_raster(extent):
-            metadata = raster_to_metadata(extent, create_geometry=True)
+            metadata = raster_to_metadata(extent)
         elif isinstance(extent, str):
-            metadata = raster_to_metadata(extent, create_geometry=True)
+            metadata = raster_to_metadata(extent)
         else:
             raise ValueError("Extent must be a vector, raster or a path to a raster.")
 
@@ -110,7 +110,7 @@ def backscatter_step1(
 
     return out_path_ext
 
-def backscatter_step2(
+def _backscatter_step2(
     dim_file,
     out_path,
     speckle_filter=False,
@@ -123,7 +123,7 @@ def backscatter_step2(
         graph = "backscatter_step2_speckle.xml"
 
     # Get absolute location of graph processing tool
-    gpt = find_gpt(gpt_path)
+    gpt = _find_gpt(gpt_path)
 
     out_path_ext = out_path + ".dim"
     if os.path.exists(out_path_ext):
@@ -177,7 +177,7 @@ def backscatter_step2(
     return out_path_ext
 
 
-def convert_to_tiff(
+def _convert_to_tiff(
     dim_file,
     out_folder,
     decibel=False,
@@ -228,7 +228,7 @@ def convert_to_tiff(
     return out_paths
 
 
-def clear_tmp_folder(tmp_folder):
+def _clear_tmp_folder(tmp_folder):
     try:
         tmp_files = glob(tmp_folder + "*.dim")
         for f in tmp_files:
@@ -240,7 +240,7 @@ def clear_tmp_folder(tmp_folder):
         print("Error while cleaning tmp files.")
 
 
-def backscatter(
+def s1_backscatter(
     zip_file,
     out_path,
     tmp_folder,
@@ -261,12 +261,12 @@ def backscatter(
 
     if os.path.exists(vh) and os.path.exists(vv):
         if clean_tmp:
-            clear_tmp_folder(tmp_folder)
+            _clear_tmp_folder(tmp_folder)
         print(f"{zip_file} already processed")
         return [vh, vv]
 
     def step1_helper(args=[]):
-        return backscatter_step1(
+        return _backscatter_step1(
             args[0], args[1], gpt_path=args[2], extent=args[3], tmp_folder=args[4]
         )
 
@@ -281,14 +281,14 @@ def backscatter(
 
     except Exception as e:
         if clean_tmp:
-            clear_tmp_folder(tmp_folder)
+            _clear_tmp_folder(tmp_folder)
 
         raise Exception(f"{zip_file} failed to complete step 1., {e}")
 
     name2 = base + "_step_2"
 
     def step2_helper(args=[]):
-        return backscatter_step2(
+        return _backscatter_step2(
             args[0],
             args[1],
             speckle_filter=args[2],
@@ -308,16 +308,16 @@ def backscatter(
 
     except Exception as e:
         if clean_tmp:
-            clear_tmp_folder(tmp_folder)
+            _clear_tmp_folder(tmp_folder)
 
         raise Exception(f"{zip_file} failed to complete step 2., {e}")
 
     print("Generating .tif files from step2.")
-    converted = convert_to_tiff(
+    converted = _convert_to_tiff(
         step2, out_path, decibel, use_nodata=use_nodata, nodata_value=nodata_value
     )
 
     if clean_tmp:
-        clear_tmp_folder(tmp_folder)
+        _clear_tmp_folder(tmp_folder)
 
     return converted

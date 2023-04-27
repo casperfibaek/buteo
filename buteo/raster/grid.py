@@ -38,23 +38,41 @@ def raster_to_grid(
     verbose: int = 0,
 ) -> str:
     """
-    Clips a raster to a grid. Generate .vrt.
+    Clips a raster to a grid. Generates .vrt.
 
-    Args:
-        raster (str/gdal.DataSet): The input raster.
-        grid (str/ogr.DataSource): The grid to use.
-        out_dir (str): The output directory.
+    Parameters
+    ----------
+    raster : Union[str, gdal.Dataset]
+        The input raster.
 
-    Keyword Args:
-        use_field (str=None): A field to use to name the grid cells.
-        generate_vrt (bool=True): If True, the output raster will be a .vrt.
-        overwrite (bool=True): If True, the output raster will be overwritten.
-        process_layer (int=0): The layer from the grid to process.
-        creation_options (list=None): Creation options for the output raster.
-        verbose (int=0): The verbosity level.
+    grid : Union[str, ogr.DataSource]
+        The grid to use.
 
-    Returns:
-        str: The filepath for the newly created raster.
+    out_dir : str
+        The output directory.
+
+    use_field : bool, optional
+        A field to use to name the grid cells, default: None.
+
+    generate_vrt : bool, optional
+        If True, the output raster will be a .vrt, default: True.
+
+    overwrite : bool, optional
+        If True, the output raster will be overwritten, default: True.
+
+    process_layer : int, optional
+        The layer from the grid to process, default: 0.
+
+    creation_options : Optional[List[str]], optional
+        Creation options for the output raster, default: None.
+
+    verbose : int, optional
+        The verbosity level, default: 0.
+
+    Returns
+    -------
+    str
+        The filepath for the newly created raster.
     """
     core_utils.type_check(raster, [str, gdal.Dataset], "raster")
     core_utils.type_check(grid, [str, ogr.DataSource], "grid")

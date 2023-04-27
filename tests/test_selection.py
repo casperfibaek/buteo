@@ -10,8 +10,8 @@ import pytest
 
 # Internal
 from buteo.ai.selection import (
-    train_val_split,
-    train_val_test_split,
+    split_train_val,
+    split_train_val_test,
     stratified_sampling,
 )
 
@@ -21,7 +21,7 @@ def test_split_proportions():
     X = np.random.random((100, 4))
     y = np.random.randint(0, 2, 100)
 
-    X_train, X_val, y_train, y_val = train_val_split(X, y, val_size=0.25, random_state=42)
+    X_train, X_val, y_train, y_val = split_train_val(X, y, val_size=0.25, random_state=42)
 
     assert X_train.shape[0] == 75
     assert X_val.shape[0] == 25
@@ -33,7 +33,7 @@ def test_split_proportions_with_different_val_size():
     X = np.random.random((100, 4))
     y = np.random.randint(0, 2, 100)
 
-    X_train, X_val, y_train, y_val = train_val_split(X, y, val_size=0.1, random_state=42)
+    X_train, X_val, y_train, y_val = split_train_val(X, y, val_size=0.1, random_state=42)
 
     assert X_train.shape[0] == 90
     assert X_val.shape[0] == 10
@@ -45,8 +45,8 @@ def test_random_state_reproducibility():
     X = np.random.random((100, 4))
     y = np.random.randint(0, 2, 100)
 
-    X_train1, X_val1, y_train1, y_val1 = train_val_split(X, y, val_size=0.25, random_state=42)
-    X_train2, X_val2, y_train2, y_val2 = train_val_split(X, y, val_size=0.25, random_state=42)
+    X_train1, X_val1, y_train1, y_val1 = split_train_val(X, y, val_size=0.25, random_state=42)
+    X_train2, X_val2, y_train2, y_val2 = split_train_val(X, y, val_size=0.25, random_state=42)
 
     assert np.array_equal(X_train1, X_train2)
     assert np.array_equal(X_val1, X_val2)
@@ -59,7 +59,7 @@ def test_input_type_validation():
     y = np.random.randint(0, 2, 100).tolist()
 
     with pytest.raises(AssertionError):
-        train_val_split(X, y, val_size=0.25, random_state=42)
+        split_train_val(X, y, val_size=0.25, random_state=42)
 
 def test_input_size_validation():
     """ Test that the input sizes are validated. """
@@ -67,7 +67,7 @@ def test_input_size_validation():
     y = np.random.randint(0, 2, 101)
 
     with pytest.raises(AssertionError):
-        train_val_split(X, y, val_size=0.25, random_state=42)
+        split_train_val(X, y, val_size=0.25, random_state=42)
 
 def test_val_size_validation():
     """ Test that the val_size is validated. """
@@ -75,17 +75,17 @@ def test_val_size_validation():
     y = np.random.randint(0, 2, 100)
 
     with pytest.raises(AssertionError):
-        train_val_split(X, y, val_size=1.5, random_state=42)
+        split_train_val(X, y, val_size=1.5, random_state=42)
 
     with pytest.raises(AssertionError):
-        train_val_split(X, y, val_size=-0.1, random_state=42)
+        split_train_val(X, y, val_size=-0.1, random_state=42)
 
 def test_split_proportions_with_different_val_size_3DX():
     """ Test that the split proportions are correct with different val_size. """
     X = np.random.random((100, 32, 32, 3))
     y = np.random.randint(0, 2, 100)
 
-    X_train, X_val, y_train, y_val = train_val_split(X, y, val_size=0.1, random_state=42)
+    X_train, X_val, y_train, y_val = split_train_val(X, y, val_size=0.1, random_state=42)
 
     assert X_train.shape[0] == 90
     assert X_val.shape[0] == 10
@@ -97,7 +97,7 @@ def test_train_val_test_split_proportions():
     X = np.random.random((100, 4))
     y = np.random.randint(0, 2, 100)
 
-    X_train, X_val, X_test, y_train, y_val, y_test = train_val_test_split(X, y, val_size=0.1, test_size=0.2, random_state=42)
+    X_train, X_val, X_test, y_train, y_val, y_test = split_train_val_test(X, y, val_size=0.1, test_size=0.2, random_state=42)
 
     assert X_train.shape[0] == 72
     assert X_val.shape[0] == 8
@@ -111,7 +111,7 @@ def test_train_val_test_split_proportions_with_different_sizes():
     X = np.random.random((100, 4))
     y = np.random.randint(0, 2, 100)
 
-    X_train, X_val, X_test, y_train, y_val, y_test = train_val_test_split(X, y, val_size=0.15, test_size=0.25, random_state=42)
+    X_train, X_val, X_test, y_train, y_val, y_test = split_train_val_test(X, y, val_size=0.15, test_size=0.25, random_state=42)
 
     assert X_train.shape[0] == 63
     assert X_val.shape[0] == 12
@@ -125,8 +125,8 @@ def test_train_val_test_split_random_state_reproducibility():
     X = np.random.random((100, 4))
     y = np.random.randint(0, 2, 100)
 
-    X_train1, X_val1, X_test1, y_train1, y_val1, y_test1 = train_val_test_split(X, y, val_size=0.1, test_size=0.2, random_state=42)
-    X_train2, X_val2, X_test2, y_train2, y_val2, y_test2 = train_val_test_split(X, y, val_size=0.1, test_size=0.2, random_state=42)
+    X_train1, X_val1, X_test1, y_train1, y_val1, y_test1 = split_train_val_test(X, y, val_size=0.1, test_size=0.2, random_state=42)
+    X_train2, X_val2, X_test2, y_train2, y_val2, y_test2 = split_train_val_test(X, y, val_size=0.1, test_size=0.2, random_state=42)
 
     assert np.array_equal(X_train1, X_train2)
     assert np.array_equal(X_val1, X_val2)
@@ -141,7 +141,7 @@ def test_train_val_test_split_input_type_validation():
     y = np.random.randint(0, 2, 100).tolist()
 
     with pytest.raises(AssertionError):
-        train_val_test_split(X, y, val_size=0.1, test_size=0.2, random_state=42)
+        split_train_val_test(X, y, val_size=0.1, test_size=0.2, random_state=42)
 
 def test_train_val_test_split_input_size_validation():
     """ Test that the input sizes are validated. """
@@ -149,7 +149,7 @@ def test_train_val_test_split_input_size_validation():
     y = np.random.randint(0, 2, 101)
 
     with pytest.raises(AssertionError):
-        train_val_test_split(X, y, val_size=0.1, test_size=0.2, random_state=42)
+        split_train_val_test(X, y, val_size=0.1, test_size=0.2, random_state=42)
 
 def test_stratified_sampling_classification():
     """ Test that the stratified sampling works for classification. """

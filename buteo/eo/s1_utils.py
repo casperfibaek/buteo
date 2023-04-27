@@ -51,7 +51,7 @@ def s1_kml_to_bbox(path_to_kml):
 
 
 # TODO: get_metadata_from_zip
-def get_metadata(image_paths):
+def s1_get_metadata(image_paths):
     images_obj = []
 
     for img in image_paths:

@@ -151,7 +151,7 @@ class SimpleConvNet(nn.Module):
 x_train = np.load(os.path.join(FOLDER, "train.npz"))["x_s2"]
 y_train = np.load(os.path.join(FOLDER, "train.npz"))["y"]
 
-x_train, x_val, y_train, y_val, = beo.train_val_split(x_train, y_train, val_size=0.1, random_state=42)
+x_train, x_val, y_train, y_val, = beo.split_train_val(x_train, y_train, val_size=0.1, random_state=42)
 
 # Define a model
 model = SimpleConvNet(9, 0.0, 100.0)

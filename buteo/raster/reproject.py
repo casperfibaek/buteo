@@ -17,20 +17,25 @@ from buteo.utils import core_utils, gdal_utils, gdal_enums
 from buteo.raster import core_raster
 
 
-def find_common_projection(
+def _find_common_projection(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
 ):
     """
-        Find the common projection of a list of rasters. If no rasters have 
-        the majority of the same projection, the function will return the
-        projection of the first raster. If only on raster is provided, the
-        projection of that raster will be returned.
-    
-        Args:
-            rasters (list): A list of rasters.
+    Finds the common projection of a list of rasters.
 
-        Returns:
-            osr.SpatialReference: The common projection.
+    If no rasters have the majority of the same projection, the function will return the
+    projection of the first raster. If only one raster is provided, the projection of that
+    raster will be returned.
+
+    Parameters
+    ----------
+    rasters : Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
+        A list of rasters.
+
+    Returns
+    -------
+    osr.SpatialReference
+        The common projection.
     """
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
 
@@ -48,20 +53,20 @@ def find_common_projection(
 
 
 def _reproject_raster(
-    raster,
-    projection,
-    out_path=None,
+    raster: Union[str, gdal.Dataset],
+    projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
+    out_path: Optional[Union[str, List[str]]] = None,
     *,
-    resample_alg="nearest",
-    copy_if_same=True,
-    overwrite=True,
-    creation_options=None,
-    dst_nodata="infer",
-    dtype=None,
-    prefix="",
-    suffix="",
-    add_uuid=False,
-):
+    resample_alg: str = "nearest",
+    copy_if_same: bool = True,
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
+    dst_nodata: Union[str, int, float] = "infer",
+    dtype: Optional[str] = None,
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = False,
+) -> Union[str, List[str]]:
     """ Internal. """
     assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
 
@@ -141,28 +146,54 @@ def reproject_raster(
     add_uuid: bool = False,
 ) -> Union[str, List[str]]:
     """
-    Reproject a raster(s) to a target coordinate reference system.
+    Reproject raster(s) to a target coordinate reference system.
 
-    Args:
-        raster (str/list/gdal.Dataset): The raster(s) to reproject.
-        projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference): The projection is inferred from
-            the input. The input can be: WKT proj, EPSG proj, Proj, osr proj, or read
-            from a vector or raster datasource either from path or in-memory.
+    Parameters
+    ----------
+    raster : Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
+        The raster(s) to reproject.
 
-    Keyword Args:
-        out_path (str/list/None=None): The output path. If not provided, the output path is inferred from the input.
-        resample_alg (str="nearest"): The resampling algorithm.
-        copy_if_same (bool=True): If the input and output projections are the same, copy the input raster to the output path.
-        overwrite (bool=True): If the output path already exists, overwrite it.
-        creation_options (list/None=None): A list of creation options for the output raster.
-        dst_nodata (str/int/float="infer"): The nodata value for the output raster.
-        dtype (str/None=None): The data type for the output raster.
-        prefix (str=""): The prefix to add to the output path.
-        suffix (str=""): The suffix to add to the output path.
-        add_uuid (bool=False): If True, add a UUID to the output path.
+    projection : Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
+        The projection to reproject the raster to. The input can be a WKT proj,
+        EPSG proj, Proj, osr proj, or read from a vector or raster datasource
+        either from path or in-memory.
 
-    Returns:
-        str/list: The output path(s).
+    out_path : Optional[Union[str, List[str]]], optional
+        The output path, default: None. If not provided, the output path is inferred
+        from the input.
+
+    resample_alg : str, optional
+        The resampling algorithm, default: "nearest".
+
+    copy_if_same : bool, optional
+        If the input and output projections are the same, copy the input raster to the
+        output path, default: True.
+
+    overwrite : bool, optional
+        If the output path already exists, overwrite it, default: True.
+
+    creation_options : Optional[List[str]], optional
+        A list of creation options for the output raster, default: None.
+
+    dst_nodata : Union[str, int, float], optional
+        The nodata value for the output raster, default: "infer".
+
+    dtype : Optional[str], optional
+        The data type for the output raster, default: None.
+
+    prefix : str, optional
+        The prefix to add to the output path, default: "".
+
+    suffix : str, optional
+        The suffix to add to the output path, default: "".
+
+    add_uuid : bool, optional
+        If True, add a UUID to the output path, default: False.
+
+    Returns
+    -------
+    Union[str, List[str]]
+        The output path(s).
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
@@ -230,25 +261,33 @@ def match_raster_projections(
     Match a raster or list of rasters to a master layer. The master can be
     either an OGR layer or a GDAL layer.
 
-    Args:
-        rasters (list): A list of rasters to match.
-        reference (str/gdal.Dataset/ogr.DataSource): Path to the reference raster
-            or vector.
+    Parameters
+    ----------
+    rasters : Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
+        A list of rasters to match.
 
-    Keyword Args:
-        out_path (str/list=None): Paths to the output. If not provided,
-            the output will be in-memory rasters.
-        overwrite (bool=True): If True, existing rasters will be
-            overwritten.
-        dst_nodata (str='infer'): Value to use for no-data pixels. If not
-            provided, the value will be transfered from the original.
-        copy_if_already_correct (bool=True): If True, the raster will be
-            copied if it is already in the correct projection.
-        creation_options (list=None): List of creation options to pass
-            to the output raster.
+    reference : Union[str, gdal.Dataset, ogr.DataSource]
+        Path to the reference raster or vector.
 
-    Returns:
-        list: A list of reprojected input rasters with the correct projection.
+    out_path : Optional[Union[str, List[str]]], optional
+        Paths to the output. If not provided, the output will be in-memory rasters., default: None
+
+    overwrite : bool, optional
+        If True, existing rasters will be overwritten., default: True
+
+    dst_nodata : Union[str, int, float], optional
+        Value to use for no-data pixels. If not provided, the value will be transfered from the original., default: "infer"
+
+    copy_if_already_correct : bool, optional
+        If True, the raster will be copied if it is already in the correct projection., default: True
+
+    creation_options : Optional[List[str]], optional
+        List of creation options to pass to the output raster., default: None
+
+    Returns
+    -------
+    List[str]
+        A list of reprojected input rasters with the correct projection.
     """
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
     core_utils.type_check(reference, [str, gdal.Dataset, ogr.DataSource], "reference")

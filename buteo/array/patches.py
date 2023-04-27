@@ -5,7 +5,7 @@ import numpy as np
 from numba import prange, jit
 
 
-def get_kernel_weights(
+def _get_kernel_weights(
     tile_size: int = 64,
     edge_distance: int = 5,
     epsilon: float = 1e-7,
@@ -56,7 +56,7 @@ def get_kernel_weights(
 
 
 @jit(nopython=True, parallel=True, nogil=True, cache=True)
-def merge_weighted_median(
+def _merge_weighted_median(
     arr: np.ndarray,
     arr_weight: np.ndarray,
 ) -> np.ndarray:
@@ -109,7 +109,7 @@ def merge_weighted_median(
 
 
 @jit(nopython=True, parallel=True, nogil=True, cache=True)
-def merge_weighted_average(
+def _merge_weighted_average(
     arr: np.ndarray,
     arr_weight: np.ndarray,
 ) -> np.ndarray:
@@ -153,7 +153,7 @@ def merge_weighted_average(
     return ret_arr
 
 @jit(nopython=True, parallel=True, nogil=True, cache=True)
-def merge_weighted_minmax(
+def _merge_weighted_minmax(
     arr: np.ndarray,
     arr_weight: np.ndarray,
     method="max",
@@ -208,7 +208,7 @@ def merge_weighted_minmax(
 
 
 @jit(nopython=True, parallel=True, nogil=True, cache=True)
-def merge_weighted_olympic(
+def _merge_weighted_olympic(
     arr: np.ndarray,
     arr_weight: np.ndarray,
     level: int = 1,
@@ -266,7 +266,7 @@ def merge_weighted_olympic(
 
 
 @jit(nopython=True, parallel=True, nogil=True)
-def merge_weighted_mad(
+def _merge_weighted_mad(
     arr: np.ndarray,
     arr_weight: np.ndarray,
     mad_dist: float = 2.0,
@@ -343,7 +343,7 @@ def merge_weighted_mad(
 
 
 @jit(nopython=True, nogil=True)
-def unique_values(arr: np.ndarray) -> np.ndarray:
+def _unique_values(arr: np.ndarray) -> np.ndarray:
     """
     Find the unique values in a 1D NumPy array.
     
@@ -364,7 +364,7 @@ def unique_values(arr: np.ndarray) -> np.ndarray:
 
 
 @jit(nopython=True, parallel=True, nogil=True)
-def merge_weighted_mode(
+def _merge_weighted_mode(
     arr: np.ndarray,
     arr_weight: np.ndarray,
 ) -> np.ndarray:
@@ -399,7 +399,7 @@ def merge_weighted_mode(
                 weights = weights[nan_mask]
 
                 # Get unique values and their weighted counts
-                unique_vals = unique_values(values)
+                unique_vals = _unique_values(values)
                 weighted_counts = np.zeros(unique_vals.shape[0])
 
                 # Calculate the weighted sum for each unique value
@@ -416,85 +416,7 @@ def merge_weighted_mode(
     return ret_arr
 
 
-# def calculate_offset_single(
-#     tile_size: int,
-#     num_offsets: int,
-# ) -> List[int]:
-#     """
-#     Calculate a list of offset values for a given tile size and number of offsets.
-
-#     Args:
-#         tile_size (int): The size of each tile.
-#         num_offsets (int): The desired number of offsets to be calculated.
-
-#     Returns:
-#         List[int]: A list of calculated offset values.
-#     """
-#     assert num_offsets >= 0, "Number of offsets must be greater than or equal to 0."
-#     assert tile_size > 0, "Tile size must be greater than 0."
-
-#     # Initialize the list of offsets with the first value, 0
-#     offsets = [0]
-#     previous = None
-#     for _ in range(num_offsets):
-
-#         # Calculate the step size based on previous step
-#         if previous is None:
-#             step = tile_size // 2
-#             previous = step
-#         else:
-#             step = previous // 2
-#             previous = step
-
-#         # Break the loop if the step size is 0
-#         if step == 0:
-#             break
-
-#         # Calculate and add offset values based on the step size
-#         for j in range(1, num_offsets + 1):
-#             val = j * step
-#             if (
-#                 val not in offsets
-#                 and val < tile_size
-#                 and val > 0
-#                 and len(offsets) < num_offsets + 1
-#             ):
-#                 offsets.append(j * step)
-
-#     return offsets
-
-# def get_offsets(
-#     tile_size: int,
-#     offsets_y: int,
-#     offsets_x: int,
-# ) -> List[Tuple[int, int]]:
-#     """
-#     Generate a list of offset pairs for a given tile size and number of offsets in x and y dimensions.
-
-#     Args:
-#         tile_size (int): The size of each tile.
-#         offsets_y (int): The desired number of offsets to be calculated in the y dimension.
-#         offsets_x (int): The desired number of offsets to be calculated in the x dimension.
-
-#     Returns:
-#         List[Tuple[int, int]]: A list of tuples containing offset pairs for y and x dimensions.
-#         order is (y, x)
-#     """
-#     assert offsets_y >= 0, "Number of offsets in y dimension must be >= 0"
-#     assert offsets_x >= 0, "Number of offsets in x dimension must be >= 0"
-#     assert tile_size > 0, "Tile size must be > 0"
-
-#     offsets_y = calculate_offset_single(tile_size, offsets_y)
-#     offsets_x = calculate_offset_single(tile_size, offsets_x)
-
-#     offsets = []
-#     for y in offsets_y:
-#         for x in offsets_x:
-#             offsets.append((y, x))
-
-#     return offsets
-
-def get_offsets(
+def _get_offsets(
     tile_size: int,
     n_offsets: int,
 ):
@@ -522,7 +444,7 @@ def get_offsets(
     return offsets
 
 
-def borders_are_necessary(
+def _borders_are_necessary(
     arr: np.ndarray,
     tile_size: int,
     offset: List[int],
@@ -557,7 +479,7 @@ def borders_are_necessary(
     return height_border, width_border
 
 
-def borders_are_necessary_list(
+def _borders_are_necessary_list(
     arr: np.ndarray,
     tile_size: int,
     offsets: List[List[int]],
@@ -578,7 +500,7 @@ def borders_are_necessary_list(
     width_border = True
 
     for offset in offsets:
-        offset_height_border, offset_width_border = borders_are_necessary(
+        offset_height_border, offset_width_border = _borders_are_necessary(
             arr, tile_size, offset
         )
         if not offset_height_border:
@@ -593,7 +515,7 @@ def borders_are_necessary_list(
     return height_border, width_border
 
 
-def array_to_patches_single(
+def _array_to_patches_single(
     arr: np.ndarray,
     tile_size: int,
     offset: Optional[Union[List[int], Tuple[int, int]]] = None,
@@ -648,7 +570,7 @@ def array_to_patches_single(
     return blocks
 
 
-def patches_to_array_single(
+def _patches_to_array_single(
     patches: np.ndarray,
     shape: Union[List, Tuple],
     tile_size: int,
@@ -733,7 +655,7 @@ def patches_to_array_single(
     return target
 
 
-def patches_to_weights(
+def _patches_to_weights(
     patches: np.ndarray,
     edge_distance: int,
 ) -> np.ndarray:
@@ -742,7 +664,7 @@ def patches_to_weights(
     assert patches.shape[1] == patches.shape[2], "Patches must be square"
 
     # Calculate the distance to the edge for each patch
-    weights = get_kernel_weights(patches.shape[1], edge_distance)
+    weights = _get_kernel_weights(patches.shape[1], edge_distance)
 
     # Expand the weights to match the number of patches
     weights = np.repeat(weights[np.newaxis, ...], patches.shape[0], axis=0)[..., np.newaxis]
@@ -780,10 +702,10 @@ def array_to_patches(
     assert isinstance(n_offsets, int), "Number of offsets must be an integer"
 
     # Get the list of offsets for both x and y dimensions
-    offsets = get_offsets(tile_size, n_offsets)
+    offsets = _get_offsets(tile_size, n_offsets)
 
     if border_check:
-        borders_y, borders_x = borders_are_necessary_list(arr, tile_size, offsets)
+        borders_y, borders_x = _borders_are_necessary_list(arr, tile_size, offsets)
 
         if borders_y:
             offsets.append([arr.shape[0] - tile_size, 0])
@@ -796,7 +718,7 @@ def array_to_patches(
     # Iterate through the offsets and generate patches for each offset
     for offset in offsets:
         patches.append(
-            array_to_patches_single(arr, tile_size, offset),
+            _array_to_patches_single(arr, tile_size, offset),
         )
 
     patches = np.concatenate(patches, axis=0)
@@ -845,10 +767,10 @@ def predict_array(
     assert tile_size < arr.shape[1], "Tile size must be smaller than the array size"
 
     # Get the list of offsets for both x and y dimensions
-    offsets = get_offsets(tile_size, n_offsets)
+    offsets = _get_offsets(tile_size, n_offsets)
 
     if border_check:
-        borders_y, borders_x = borders_are_necessary_list(arr, tile_size, offsets)
+        borders_y, borders_x = _borders_are_necessary_list(arr, tile_size, offsets)
 
         if borders_y:
             offsets.append([arr.shape[0] - tile_size, 0])
@@ -866,36 +788,36 @@ def predict_array(
 
     # Iterate through the offsets and generate patches for each offset
     for idx, offset in enumerate(offsets):
-        patches = array_to_patches_single(arr, tile_size, offset)
+        patches = _array_to_patches_single(arr, tile_size, offset)
 
         prediction = callback(patches)
 
         if edge_weighted:
-            weights = patches_to_weights(patches, edge_distance)
+            weights = _patches_to_weights(patches, edge_distance)
         else:
             weights = np.ones((tile_size, tile_size, 1), dtype=np.float32)
             weights = np.repeat(weights[np.newaxis, ...], patches.shape[0], axis=0)
 
-        predictions[idx, :, :, :] = patches_to_array_single(prediction, (arr.shape[0], arr.shape[1], test_shape[-1]), tile_size, offset)
-        predictions_weights[idx, :, :, :] = patches_to_array_single(weights, (arr.shape[0], arr.shape[1], 1), tile_size, offset, 0.0)
+        predictions[idx, :, :, :] = _patches_to_array_single(prediction, (arr.shape[0], arr.shape[1], test_shape[-1]), tile_size, offset)
+        predictions_weights[idx, :, :, :] = _patches_to_array_single(weights, (arr.shape[0], arr.shape[1], 1), tile_size, offset, 0.0)
 
     # Merge the predictions
     if merge_method == "mad":
-        predictions = merge_weighted_mad(predictions, predictions_weights)
+        predictions = _merge_weighted_mad(predictions, predictions_weights)
     elif merge_method == "median":
-        predictions = merge_weighted_median(predictions, predictions_weights)
+        predictions = _merge_weighted_median(predictions, predictions_weights)
     elif merge_method in ["mean", "average", "avg"]:
-        predictions = merge_weighted_average(predictions, predictions_weights)
+        predictions = _merge_weighted_average(predictions, predictions_weights)
     elif merge_method == "mode":
-        predictions = merge_weighted_mode(predictions, predictions_weights)
+        predictions = _merge_weighted_mode(predictions, predictions_weights)
     elif merge_method == "max":
-        predictions = merge_weighted_minmax(predictions, predictions_weights, "max")
+        predictions = _merge_weighted_minmax(predictions, predictions_weights, "max")
     elif merge_method == "min":
-        predictions = merge_weighted_minmax(predictions, predictions_weights, "min")
+        predictions = _merge_weighted_minmax(predictions, predictions_weights, "min")
     elif merge_method == "olympic1":
-        predictions = merge_weighted_olympic(predictions, predictions_weights, 1)
+        predictions = _merge_weighted_olympic(predictions, predictions_weights, 1)
     elif merge_method == "olympic2":
-        predictions = merge_weighted_olympic(predictions, predictions_weights, 2)
+        predictions = _merge_weighted_olympic(predictions, predictions_weights, 2)
 
     return predictions
 

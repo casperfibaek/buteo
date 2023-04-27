@@ -17,11 +17,11 @@
     <nav class="pdoc">
         <label id="navtoggle" for="togglestate" class="pdoc-button"><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path stroke-linecap='round' stroke="currentColor" stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/></svg></label>
         <input id="togglestate" type="checkbox" aria-hidden="true" tabindex="-1">
-        <div>            <a class="pdoc-button module-list-button" href="../raster.html">
+        <div>            <a class="pdoc-button module-list-button" href="../array.html">
 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-in-left" viewBox="0 0 16 16">
   <path fill-rule="evenodd" d="M10 3.5a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 1 0v2A1.5 1.5 0 0 1 9.5 14h-8A1.5 1.5 0 0 1 0 12.5v-9A1.5 1.5 0 0 1 1.5 2h8A1.5 1.5 0 0 1 11 3.5v2a.5.5 0 0 1-1 0v-2z"/>
   <path fill-rule="evenodd" d="M4.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H14.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3z"/>
-</svg>                &nbsp;buteo.raster</a>
+</svg>                &nbsp;buteo.array</a>
 
             <img src="https://casperfibaek.github.io/buteo/logo.png" class="logo" alt="project logo"/>
 
@@ -61,7 +61,7 @@
     <main class="pdoc">
             <section class="module-info">
                     <h1 class="modulename">
-<a href="./../../buteo.html">buteo</a><wbr>.<a href="./../raster.html">raster</a><wbr>.textures    </h1>
+<a href="./../../buteo.html">buteo</a><wbr>.<a href="./../array.html">array</a><wbr>.textures    </h1>
 
                         <div class="docstring"><h3 id="perform-morphological-operations-on-arrays-and-rasters">Perform morphological operations on arrays and rasters.</h3>
 </div>
@@ -82,7 +82,7 @@
 </span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a>
 </span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a><span class="c1"># Internal</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="kn">from</span> <span class="nn">buteo.raster.convolution</span> <span class="kn">import</span> <span class="n">convolve_array</span><span class="p">,</span> <span class="n">get_kernel</span><span class="p">,</span> <span class="n">_METHOD_ENUMS</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="kn">from</span> <span class="nn">buteo.array.convolution</span> <span class="kn">import</span> <span class="n">convolve_array</span><span class="p">,</span> <span class="n">get_kernel</span><span class="p">,</span> <span class="n">_METHOD_ENUMS</span>
 </span><span id="L-14"><a href="#L-14"><span class="linenos"> 14</span></a><span class="kn">from</span> <span class="nn">buteo.utils</span> <span class="kn">import</span> <span class="n">type_check</span>
 </span><span id="L-15"><a href="#L-15"><span class="linenos"> 15</span></a>
 </span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a><span class="k">def</span> <span class="nf">texture_local_variance</span><span class="p">(</span>

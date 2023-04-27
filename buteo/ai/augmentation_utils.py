@@ -10,46 +10,56 @@ import numpy as np
 from numba import jit, prange
 
 @jit(nopython=True, nogil=True, cache=True)
-def is_integer_dtype(dtype: np.dtype) -> bool:
+def _is_integer_dtype(dtype: np.dtype) -> bool:
     """
-    Check if a dtype is an integer type 
-    
-    Args:
-        dtype (np.dtype): The dtype to check.
+    Check if a dtype is an integer type.
 
-    Returns:
-        bool: True if the dtype is an integer type.
+    Parameters
+    ----------
+    dtype : np.dtype
+        The dtype to check.
+
+    Returns
+    -------
+    bool
+        True if the dtype is an integer type.
     """
     return dtype.kind in ('i', 'u')
 
 
 # These should have .astype(dtype, copy=False) to avoid copying the data
 # But this is currently not supported by numba.
+# TODO: This is a workaround for numba. Remove when numba supports.
 @jit(nopython=True, nogil=True, cache=True)
-def fit_data_to_dtype(
+def _fit_data_to_dtype(
     data: np.ndarray,
     dtype: np.dtype,
 ) -> np.ndarray:
     """
     Fit data to a dtype. If the dtype is an integer type, the data will be
-        rounded to the nearest integer. If the dtype is a float type, the data
-        will be clipped to the min and max values of the dtype.
-    
-    Args:
-        data (np.ndarray): The data to fit to the dtype.
-        dtype (np.dtype): The dtype to fit the data to.
+    rounded to the nearest integer. If the dtype is a float type, the data
+    will be clipped to the min and max values of the dtype.
 
-    Returns:
-        np.ndarray: The data fitted to the dtype.
+    Parameters
+    ----------
+    data : np.ndarray
+        The data to fit to the dtype.
+
+    dtype : np.dtype
+        The dtype to fit the data to.
+
+    Returns
+    -------
+    np.ndarray
+        The data fitted to the dtype.
     """
-    # TODO: This is a workaround for numba. Remove when numba supports.
     return data.astype(dtype)
 
     # return data.astype(dtype)
     # max_value = np.iinfo(dtype).max
     # min_value = np.iinfo(dtype).min
 
-    # if is_integer_dtype(dtype):
+    # if _is_integer_dtype(dtype):
     #     return np.rint(
     #         np.clip(data, min_value, max_value)
     #     ).astype(dtype)
@@ -62,25 +72,29 @@ def fit_data_to_dtype(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
-def feather_box_2d(
+def _feather_box_2d(
     array: np.ndarray,
     bbox: Union[List[int], Tuple[int]],
     feather_dist: int = 3,
 ) -> np.ndarray:
     """
-    Feather a box into an array (2D). Box should be the original box
-        buffered by feather_dist.
+    Feather a box into an array (2D). Box should be the original box buffered by feather_dist.
 
-    Args:
-        array_whole (np.ndarray): The array containing the box.
-        bbox (Union[List[int], Tuple[int]]): The box.
-            the bbox should be in the form [x_min, x_max, y_min, y_max].
-    
-    Keyword Args:
-        feather_dist (int=3): The distance to feather the box.
+    Parameters
+    ----------
+    array_whole : np.ndarray
+        The array containing the box.
 
-    Returns:
-        Tuple[np.ndarray, np.ndarray]: The featherweights for the array and the bbox.
+    bbox : Union[List[int], Tuple[int]]
+        The box. The bbox should be in the form `[x_min, x_max, y_min, y_max]`.
+
+    feather_dist : int, optional
+        The distance to feather the box, default: 3.
+
+    Returns
+    -------
+    np.ndarray
+        The featherweights for the array.
     """
     # Get the bbox
     x_min, x_max, y_min, y_max = bbox
@@ -138,20 +152,25 @@ def feather_box_2d(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def rotate_90(
+def _rotate_90(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """ Rotate a 3D array 90 degrees clockwise.
-    
-    Args:
-        arr (np.ndarray): The array to rotate.
-    
-    Keyword Args:
-        channel_last (bool=True): Whether the last axis is the channel axis.
+    """
+    Rotate a 3D array 90 degrees clockwise.
 
-    Returns:
-        np.ndarray: The rotated array.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to rotate.
+
+    channel_last : bool, optional
+        Whether the last axis is the channel axis, default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The rotated array.
     """
     if channel_last:
         return arr[::-1, :, :].transpose(1, 0, 2) # (H, W, C)
@@ -160,20 +179,25 @@ def rotate_90(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def rotate_180(
+def _rotate_180(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """ Rotate a 3D array 180 degrees clockwise.
+    """
+    Rotate a 3D array 180 degrees clockwise.
 
-    Args:
-        arr (np.ndarray): The array to rotate.
-    
-    Keyword Args:
-        channel_last (bool=True): Whether the last axis is the channel axis.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to rotate.
 
-    Returns:
-        np.ndarray: The rotated array.
+    channel_last : bool, optional
+        Whether the last axis is the channel axis, default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The rotated array.
     """
     if channel_last:
         return arr[::-1, ::-1, :]  # (H, W, C)
@@ -182,21 +206,25 @@ def rotate_180(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def rotate_270(
+def _rotate_270(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
     """ 
     Rotate a 3D image array 270 degrees clockwise.
 
-    Args:
-        arr (np.ndarray): The array to rotate.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to rotate.
+        
+    channel_last : bool, optional
+        Whether the last axis is the channel axis, default: True.
 
-    Keyword Args:
-        channel_last (bool=True): Whether the last axis is the channel axis.
-
-    Returns:
-        np.ndarray: The rotated array.
+    Returns
+    -------
+    np.ndarray
+        The rotated array.
     """
     if channel_last:
         return arr[:, ::-1, :].transpose(1, 0, 2) # (H, W, C)
@@ -209,50 +237,64 @@ def rotate_arr(
     arr: np.ndarray,
     k: int,
     channel_last: bool = True,
+    copy: bool = False,
 ) -> np.ndarray:
-    """ Rotate an array by 90 degrees intervals clockwise.
-    
-    Args:
-        arr (np.ndarray): The array to rotate.
-        k (int): The number of 90 degree intervals to rotate by.
-            1 for 90 degrees, 2 for 180 degrees, 3 for 270 degrees. 0 for no rotation.
-
-    Keyword Args:
-        channel_last (bool=True): Whether the last axis is the channel axis.
-
-    Returns:
-        np.ndarray: The rotated array.
     """
-    if k == 0:
-        return arr.copy()
+    Rotate an array by 90 degrees intervals clockwise.
 
-    view = arr
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        The array to rotate.
 
+    k : int
+        The number of 90 degree intervals to rotate by. 1 for 90 degrees, 2 for 180 degrees, 3 for 270 degrees, and 0 for no rotation.
+
+    channel_last : bool, optional
+        Whether the last axis is the channel axis. Default is True.
+
+    copy : bool, optional
+        Whether to copy the array before rotating. Default is False.
+
+    Returns
+    -------
+    numpy.ndarray
+        The rotated array.
+    """
+    # For k == 0, we don't need to do anything
     if k == 1:
-        view = rotate_90(arr, channel_last=channel_last)
+        view = _rotate_90(arr, channel_last=channel_last)
     elif k == 2:
-        view = rotate_180(arr, channel_last=channel_last)
+        view = _rotate_180(arr, channel_last=channel_last)
     elif k == 3:
-        view = rotate_270(arr, channel_last=channel_last)
+        view = _rotate_270(arr, channel_last=channel_last)
 
-    return view.copy()
+    if copy:
+        return view.copy()
+
+    return view
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def mirror_horizontal(
+def _mirror_horizontal(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """ Mirror a 3D array horizontally.
-    
-    Args:
-        arr (np.ndarray): The array to mirror.
-    
-    Keyword Args:
-        channel_last (bool=True): Whether the last axis is the channel axis.
+    """
+    Mirror a 3D array horizontally.
 
-    Returns:
-        np.ndarray: The mirrored array.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to mirror.
+
+    channel_last : bool, optional
+        Whether the last axis is the channel axis. default: True
+
+    Returns
+    -------
+    np.ndarray
+        The mirrored array.
     """
     if channel_last:
         return arr[:, ::-1, :] # (H, W, C)
@@ -261,20 +303,25 @@ def mirror_horizontal(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def mirror_vertical(
+def _mirror_vertical(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """ Mirror a 3D array vertically.
+    """
+    Mirror a 3D array vertically.
 
-    Args:
-        arr (np.ndarray): The array to mirror.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to mirror.
 
-    Keyword Args:
-        channel_last (bool=True): Whether the last axis is the channel axis.
-    
-    Returns:
-        np.ndarray: The mirrored array.
+    channel_last : bool, optional
+        Whether the last axis is the channel axis. Default: True
+
+    Returns
+    -------
+    np.ndarray
+        The mirrored array.
     """
     if channel_last:
         return arr[::-1, :, :] # (H, W, C)
@@ -283,20 +330,25 @@ def mirror_vertical(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def mirror_horisontal_vertical(
+def _mirror_horisontal_vertical(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """ Mirror a 3D array horizontally and vertically.
+    """
+    Mirror a 3D array horizontally and vertically
 
-    Args:
-        arr (np.ndarray): The array to mirror.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to mirror.
 
-    Keyword Args:
-        channel_last (bool=True): Whether the last axis is the channel axis.
+    channel_last : bool, optional
+        Whether the last axis is the channel axis. Default: True
 
-    Returns:
-        np.ndarray: The mirrored array.
+    Returns
+    -------
+    np.ndarray
+        The mirrored array.
     """
     if channel_last:
         return arr[::-1, ::-1, :] # (H, W, C)
@@ -309,26 +361,40 @@ def mirror_arr(
     arr: np.ndarray,
     k: int,
     channel_last: bool = True,
+    copy: bool = False,
 ) -> np.ndarray:
-    """ Mirror an array horizontally and/or vertically.
-
-    Args:
-        arr (np.ndarray): The array to mirror.
-        k (int): 1 for horizontal, 2 for vertical, 3 for both, 0 for no mirroring.
-    
-    Keyword Args:
-        channel_last (bool=True): Whether the last axis is the channel axis.
     """
-    if k == 0:
-        return arr.copy()
+    Mirror an array horizontally and/or vertically.
 
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to mirror.
+
+    k : int
+        1 for horizontal, 2 for vertical, 3 for both, 0 for no mirroring.
+
+    channel_last : bool, optional
+        Whether the last axis is the channel axis, default: True
+
+    copy : bool, optional
+        Whether to copy the array before mirroring, default: False
+
+    Returns
+    -------
+    np.ndarray
+        The mirrored array.
+    """
     view = arr
 
     if k == 1:
-        view = mirror_horizontal(arr, channel_last=channel_last)
+        view = _mirror_horizontal(arr, channel_last=channel_last)
     elif k == 2:
-        view = mirror_vertical(arr, channel_last=channel_last)
+        view = _mirror_vertical(arr, channel_last=channel_last)
     elif k == 3:
-        view = mirror_horisontal_vertical(arr, channel_last=channel_last)
+        view = _mirror_horisontal_vertical(arr, channel_last=channel_last)
 
-    return view.copy()
+    if copy:
+        return arr.copy()
+
+    return view

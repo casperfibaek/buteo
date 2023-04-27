@@ -10,7 +10,7 @@ from typing import Optional, Union
 import numpy as np
 
 # Internal
-from buteo.raster.convolution import convolve_array, get_kernel, _METHOD_ENUMS
+from buteo.array.convolution import convolve_array, get_kernel, _METHOD_ENUMS
 from buteo.utils import type_check
 
 def texture_local_variance(

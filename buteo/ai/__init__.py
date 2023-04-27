@@ -6,3 +6,4 @@ from .augmentation_funcs import *
 from .augmentation_utils import *
 from .scalers import *
 from .selection import *
+from .encoding import *

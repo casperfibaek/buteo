@@ -13,18 +13,29 @@ def scaler_minmax(
     arr: np.array,
     stat_dict: Optional[dict] = None,
 ) -> Tuple[np.array, dict]:
-    """ 
-    Normalise an array using the min-max method.
+    """
+    Normalize an input numpy array using the min-max scaling method.
 
-    Args:
-        arr (np.array): The array to normalise.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The input numpy array to be normalized.
 
-    Keyword Args:
-        stat_dict (dict=None): A dictionary containing the min and max values of the array.
+    stat_dict : Optional[Dict[str, float]], default: None
+        A dictionary containing the minimum and maximum values of the input array.
+        If not provided, the function will compute the minimum and maximum values from the input array.
 
-    Returns:
-        (np.array, dict): The normalised array (always float32) and a dictionary containing
-            the min and max values.
+    Returns
+    -------
+    Tuple[np.ndarray, Dict[str, float]]
+        A tuple containing the normalized numpy array (with dtype float32) and a dictionary containing the minimum
+        and maximum values used for scaling. The minimum and maximum values are stored in the dictionary using the
+        keys "min" and "max", respectively.
+
+    Raises
+    ------
+    AssertionError
+        If the input array is not a numpy array, or if the stat_dict is not a dictionary or None.
     """
     assert isinstance(arr, np.ndarray), "Input must be a numpy array."
     assert isinstance(stat_dict, dict) or stat_dict is None, "stat_dict must be a dictionary or None"
@@ -54,18 +65,29 @@ def scaler_standardise(
     arr: np.array,
     stat_dict: Optional[dict] = None,
 ) -> Tuple[np.array, dict]:
-    """ 
-    Normalise an array using the mean and standard deviation method.
+    """
+    Standardize an an input numpy array.
 
-    Args:
-        arr (np.array): The array to normalise.
-    
-    Keyword Args:
-        stat_dict (dict=None): A dictionary containing the mean and
-            standard deviation of the array.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The input numpy array to be normalized.
 
-    Returns:
-        (np.array, dict): The normalised array (always float32) and a dictionary containing statistics.
+    stat_dict : Optional[Dict[str, float]], default: None
+        A dictionary containing the mean and standard deviation values of the input array.
+        If not provided, the function will compute the mean and standard deviation from the input array.
+
+    Returns
+    -------
+    Tuple[np.ndarray, Dict[str, float]]
+        A tuple containing the normalized numpy array (with dtype float32) and a dictionary containing the mean
+        and standard deviation values used for scaling. The mean and standard deviation values are stored in the
+        dictionary using the keys "mean" and "std", respectively.
+
+    Raises
+    ------
+    AssertionError
+        If the input array is not a numpy array, or if the stat_dict is not a dictionary or None.
     """
     assert isinstance(arr, np.ndarray), "Input must be a numpy array."
     assert isinstance(stat_dict, dict) or stat_dict is None, "stat_dict must be a dictionary or None"
@@ -94,18 +116,29 @@ def scaler_standardise_mad(
     arr: np.array,
     stat_dict: Optional[dict] = None,
 ) -> Tuple[np.array, dict]:
-    """ Normalise an array using the median absolute deviation (MAD) method.
-    
-    Args:
-        arr (np.array): The array to normalise.
+    """
+    Normalize an input numpy array using the median absolute deviation (MAD) scaling method.
 
-    Keyword Args:
-        stat_dict (dict=None): A dictionary containing the median, absolute
-            and deviations, and the median absolute deviation of the array.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The input numpy array to be normalized.
 
-    Returns:
-        (np.array, dict): The normalised array (always float32) and a
-            dictionary containing statistics.
+    stat_dict : Optional[Dict[str, float]], default: None
+        A dictionary containing the median, absolute deviation and median absolute deviation of the input array.
+        If not provided, the function will compute these statistics from the input array.
+
+    Returns
+    -------
+    Tuple[np.ndarray, Dict[str, float]]
+        A tuple containing the normalized numpy array (with dtype float32) and a dictionary containing the median,
+        absolute deviation, and median absolute deviation used for scaling. These statistics are stored in the
+        dictionary using the keys "median", "absdev", and "madstd", respectively.
+
+    Raises
+    ------
+    AssertionError
+        If the input array is not a numpy array, or if the stat_dict is not a dictionary or None.
     """
     assert isinstance(arr, np.ndarray), "Input must be a numpy array."
     assert isinstance(stat_dict, dict) or stat_dict is None, "stat_dict must be a dictionary or None"
@@ -140,18 +173,35 @@ def scaler_iqr(
     stat_dict: Optional[dict] = None,
 ) -> Tuple[np.array, dict]:
     """ 
-    Normalise an array using the interquartile range (IQR) method.
+    Normalize an input numpy array using the interquartile range (IQR) method.
 
-    Args:
-        arr (np.array): The array to normalise.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The input numpy array to be normalized.
 
-    Keyword Args:
-        q1 (float=0.25): The lower quartile.
-        q3 (float=0.75): The upper quartile.
-        stat_dict (dict=None): A dictionary containing the lower, median, and upper quartiles.
+    q1 : float, default: 0.25
+        The lower quartile to use in the IQR calculation.
 
-    Returns:
-        (np.array, dict): The normalised array (always float32) and a dictionary containing statistics.
+    q3 : float, default: 0.75
+        The upper quartile to use in the IQR calculation.
+
+    stat_dict : Optional[Dict[str, float]], default: None
+        A dictionary containing the lower, median, and upper quartiles of the input array.
+        If not provided, the function will compute the quartiles from the input array.
+
+    Returns
+    -------
+    Tuple[np.ndarray, Dict[str, float]]
+        A tuple containing the normalized numpy array (with dtype float32) and a dictionary containing the lower,
+        median, and upper quartiles used for scaling. The quartile values are stored in the dictionary using the keys
+        "q1", "median", and "q3", respectively.
+
+    Raises
+    ------
+    AssertionError
+        If the input array is not a numpy array, q1 is not between 0.0 and 0.5, q3 is not between 0.5 and 1.0, or if
+        q1 is greater than or equal to q3, or if stat_dict is not a dictionary or None.
     """
     assert isinstance(arr, np.ndarray), "Input must be a numpy array."
     assert 0.0 <= q1 < 0.5, "q1 must be less than 0.5 and above or equal to 0.0"
@@ -187,19 +237,50 @@ def scaler_to_range(
     max_val: Union[float, int] = 1.0,
     stat_dict: Optional[dict] = None,
 ) -> Tuple[np.array, dict]:
-    """ 
-    Normalise an array to a given range.
+    """
+    Normalizes an input numpy array to a given range.
 
-    Args:
-        arr (np.array): The array to normalise.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The input numpy array to be normalized.
 
-    Keyword Args:
-        min_val (float=0.0): The minimum value.
-        max_val (float=1.0): The maximum value.
-        stat_dict (dict=None): A dictionary containing the minimum and maximum values of the array.
+    min_val : Union[float, int], optional
+        The minimum value to scale the array to, default: 0.0.
 
-    Returns:
-        (np.array, dict): The normalised array (always float32) and a dictionary containing statistics.
+    max_val : Union[float, int], optional
+        The maximum value to scale the array to, default: 1.0.
+
+    stat_dict : Optional[Dict[str, float]], optional
+        A dictionary containing the minimum and maximum values of the input array.
+        If not provided, the function will compute the minimum and maximum values from the input array.
+        default: None.
+
+    Returns
+    -------
+    Tuple[np.array, Dict[str, float]]
+        A tuple containing the normalized numpy array (with dtype float32) and a dictionary containing the minimum
+        and maximum values used for scaling. The minimum and maximum values are stored in the dictionary using the
+        keys "min" and "max", respectively.
+
+    Raises
+    ------
+    AssertionError
+        If the input array is not a numpy array or if the stat_dict is not a dictionary or None.
+
+    Notes
+    -----
+    This function uses the formula (arr - arr_min) / (arr_max - arr_min) to normalize the input array to a range
+    of [min_val, max_val]. The minimum and maximum values of the input array can be passed through stat_dict,
+    otherwise, they will be computed from the array.
+
+    Examples
+    --------
+    ```python
+    >>> arr = np.array([1, 2, 3, 4, 5])
+    >>> scaler_to_range(arr, 0, 10)
+    (array([0., 2., 4., 6., 10.], dtype=float32), {'min': 1, 'max': 5})
+    ```
     """
     assert isinstance(arr, np.ndarray), "Input must be a numpy array."
     assert isinstance(stat_dict, dict) or stat_dict is None, "stat_dict must be a dictionary or None"
@@ -236,20 +317,41 @@ def scaler_truncate(
     stat_dict: Optional[dict] = None,
 ) -> Tuple[np.array, dict]:
     """
-    Truncate an array and then normalise it to a given range.
+    Truncate an input numpy array within the given range, and then normalise it to the target range.
 
-    Args:
-        arr (np.array): The array to normalise
-        trunc_min (float/int=None): The minimum value to truncate to.
-        trunc_max (float/int=None): The maximum value to truncate to.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The input numpy array to be truncated and normalized.
 
-    Keyword Args:
-        target_min (float=0.0): The minimum value to normalise to.
-        target_max (float=1.0): The maximum value to normalise to.
-        stat_dict (dict=None): A dictionary containing the minimum and maximum values of the array.
-    
-    Returns:
-        (np.array, dict): The normalised array (always float32) and a dictionary containing statistics.
+    trunc_min : float/int, optional
+        The minimum value to truncate to. If not provided, truncation will not be applied to the lower end.
+
+    trunc_max : float/int, optional
+        The maximum value to truncate to. If not provided, truncation will not be applied to the upper end.
+
+    target_min : float/int, optional
+        The minimum value of the target range to normalize to. Default: 0.0.
+
+    target_max : float/int, optional
+        The maximum value of the target range to normalize to. Default: 1.0.
+
+    stat_dict : Dict[str, float], optional
+        A dictionary containing the minimum and maximum values of the input array. If not provided, the function
+        will compute the minimum and maximum values from the truncated array.
+
+    Returns
+    -------
+    Tuple[np.array, Dict[str, float]]
+        A tuple containing the normalized numpy array (with dtype float32) and a dictionary containing the minimum
+        and maximum values used for scaling. The minimum and maximum values are stored in the dictionary using the
+        keys "arr_min" and "arr_max", respectively.
+
+    Raises
+    ------
+    AssertionError
+        If the input array is not a numpy array, or if the trunc_min is not less than trunc_max, or if the
+        target_min is not less than target_max, or if the stat_dict is not a dictionary or None.
     """
     assert isinstance(arr, np.ndarray), "Input must be a numpy array."
     assert isinstance(stat_dict, dict) or stat_dict is None, "stat_dict must be a dictionary or None"

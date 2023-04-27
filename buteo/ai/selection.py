@@ -10,25 +10,44 @@ from typing import Optional, Union, Tuple
 import numpy as np
 
 
-def train_val_split(
+def split_train_val(
     X: np.ndarray,
     y: np.ndarray,
     val_size: float = 0.2,
     random_state: Optional[Union[float, int]] = None,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
-    Split a dataset into training and validation sets. Always shuffles.
-    
-    Args:
-        X (np.ndarray): The input data.
-        y (np.ndarray): The target data.
-    
-    Keyword Args:
-        val_size (float=0.2): The size of the validation set as a fraction of the total dataset.
-        random_state (float=None): The random seed to use for the split.
+    Split a dataset into training and validation sets using random shuffling.
 
-    Returns:
-        x_train, x_val, y_train, y_val (np.ndarray): The training and validation sets in a tuple.
+    Parameters
+    ----------
+    X : np.ndarray
+        The input data.
+
+    y : np.ndarray
+        The target data.
+
+    val_size : float, optional
+        The size of the validation set as a fraction of the total dataset. Default: 0.2.
+
+    random_state : Union[float, int], optional
+        The random seed to use for the split. Default is None.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        A tuple containing the training and validation sets for input data and target data,
+        respectively, in the following order: x_train, x_val, y_train, y_val.
+
+    Raises
+    ------
+    AssertionError
+        If X and y are not numpy arrays, X and y do not have the same number of rows, or
+        val_size is not between 0 and 1.
+
+    Notes
+    -----
+    The function always shuffles the data before splitting.
     """
     assert isinstance(X, np.ndarray), "X should be a numpy array."
     assert isinstance(y, np.ndarray), "y should be a numpy array."
@@ -38,19 +57,20 @@ def train_val_split(
     if random_state is not None:
         np.random.seed(random_state)
 
-    sample_indices = np.random.permutation(X.shape[0])
+    indices = np.arange(X.shape[0])
+    np.random.shuffle(indices)
 
     split_idx = int(X.shape[0] * (1 - val_size))
 
-    X_train = X[sample_indices[:split_idx]]
-    X_test = X[sample_indices[split_idx:]]
-    y_train = y[sample_indices[:split_idx]]
-    y_test = y[sample_indices[split_idx:]]
+    X_train = X[indices[:split_idx]]
+    X_test = X[indices[split_idx:]]
+    y_train = y[indices[:split_idx]]
+    y_test = y[indices[split_idx:]]
 
     return X_train, X_test, y_train, y_test
 
 
-def train_val_test_split(
+def split_train_val_test(
     X: np.ndarray,
     y: np.ndarray,
     val_size: float = 0.1,
@@ -58,19 +78,44 @@ def train_val_test_split(
     random_state: Optional[Union[float, int]] = None,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
-    Split a dataset into training, validation, and test sets. Always shuffles.
+    Split a dataset into training, validation, and test sets using a specified random seed.
 
-    Args:
-        X (np.ndarray): The input data.
-        y (np.ndarray): The target data.
+    Parameters
+    ----------
+    X : np.ndarray
+        The input data to be split.
 
-    Keyword Args:
-        val_size (float=0.1): The size of the validation set as a fraction of the total dataset.
-        test_size (float=0.2): The size of the test set as a fraction of the total dataset.
-        random_state (float=None): The random seed to use for the split.
-    
-    Returns:
-        x_train, x_val, x_test, y_train, y_val, y_test (np.ndarray): The training, validation, and test sets in a tuple.
+    y : np.ndarray
+        The target data to be split.
+
+    val_size : float, optional
+        The proportion of the data to use for validation, default: 0.1.
+
+    test_size : float, optional
+        The proportion of the data to use for testing, default: 0.2.
+
+    random_state : float or int, optional
+        Seed for the random number generator used for shuffling, default: None.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        A tuple containing the following arrays:
+        - x_train: training input data
+        - x_val: validation input data
+        - x_test: testing input data
+        - y_train: training target data
+        - y_val: validation target data
+        - y_test: testing target data
+
+    Raises
+    ------
+    AssertionError
+        If X and y are not numpy arrays with the same shape[0], or if val_size or test_size are not between 0 and 1.
+
+    Notes
+    -----
+    The function always shuffles the data before splitting.
     """
     assert isinstance(X, np.ndarray), "X should be a numpy array."
     assert isinstance(y, np.ndarray), "y should be a numpy array."
@@ -104,19 +149,31 @@ def stratified_sampling(
     samples_per_class: bool = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Stratified sampling of a dataset. Can be used for regression or classification.
-    
-    Args:
-        X (np.ndarray): The input data.
-        y (np.ndarray): The target data.
-    
-    Keyword Args:
-        regression (bool=False): Whether the dataset is for regression or classification.
-        samples_per_class (int=None): The number of samples to take per class. If None,
-            takes the same number of samples per class as the smallest class.
+    Stratified sampling of a dataset.
+
+    This function can be used for both regression and classification problems.
+
+    Parameters:
+    -----------
+    X : np.ndarray
+        The input data.
+
+    y : np.ndarray
+        The target data.
+
+    regression : bool, optional
+        Whether the dataset is for regression or classification.
+        Default: False.
+
+    samples_per_class : int, optional
+        The number of samples to take per class.
+        If None, takes the same number of samples per class as the smallest class.
+        Default: None.
 
     Returns:
-        X, y (np.ndarray): The stratified dataset.
+    --------
+    Tuple[np.ndarray, np.ndarray]
+        (X_stratified, y_stratified) : The stratified input and target data.
     """
     assert isinstance(X, np.ndarray), "X should be a numpy array."
     assert isinstance(y, np.ndarray), "y should be a numpy array."
@@ -143,3 +200,7 @@ def stratified_sampling(
         stratified_indices = np.concatenate((stratified_indices, selected_indices))
 
     return X[stratified_indices], y[stratified_indices]
+
+# TODO: add a function to split a dataset into k folds
+# TODO: add a function to split a dataset into k folds stratified by class
+# TODO: Add a function to randomly sample a dataset

@@ -9,7 +9,7 @@ import sys; sys.path.append("../../")
 import numpy as np
 
 # Internal
-from buteo.raster.convolution import convolve_array, get_kernel, pad_array
+from buteo.array.convolution import convolve_array, get_kernel, pad_array
 
 
 def _adjust_kernel(
@@ -42,7 +42,7 @@ def _adjust_kernel(
     return kernel
 
 
-def get_sobel_kernel(
+def _get_sobel_kernel(
     size=3,
     scale=1,
     spherical=False,
@@ -51,7 +51,6 @@ def get_sobel_kernel(
     distance_sigma=1.0,
 ):
     """ Get a sobel kernel of arbitrary size. """
-
     assert size % 2 != 0
 
     gx = np.zeros((size, size, 1), dtype=np.float32)
@@ -123,7 +122,7 @@ def get_sobel_kernel(
     )
 
 
-def get_prewitt_kernel(
+def _get_prewitt_kernel(
     spherical=False,
     distance_weight=None,
     distance_decay=0.2,
@@ -215,7 +214,7 @@ def edge_detection(
     """ Perform an detection method. """
 
     if method == "sobel":
-        gx, gy = get_sobel_kernel(
+        gx, gy = _get_sobel_kernel(
             size=filter_size,
             scale=scale,
             spherical=spherical,
@@ -224,7 +223,7 @@ def edge_detection(
             distance_sigma=distance_sigma,
         )
     elif method == "prewitt":
-        gx, gy = get_prewitt_kernel(
+        gx, gy = _get_prewitt_kernel(
             spherical=spherical,
             distance_weight=distance_weight,
             distance_decay=distance_decay,
@@ -252,3 +251,4 @@ def edge_detection(
         return np.sqrt(np.add(np.power(gx, 2), np.power(gy, 2)))
 
     return gx, gy
+

@@ -11,12 +11,12 @@ from numba import jit, prange
 
 # Internal
 from buteo.utils import core_utils
-from buteo.raster import convolution_funcs
+from buteo.array import convolution_funcs
 
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def simple_blur_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
+def _simple_blur_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
     """
     Create a 2D blur kernel.
 
@@ -49,7 +49,7 @@ def simple_blur_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def simple_unsharp_kernel_2d_3x3(
+def _simple_unsharp_kernel_2d_3x3(
     strength: float = 1.0
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -91,7 +91,7 @@ def simple_unsharp_kernel_2d_3x3(
     return offsets, weights
 
 
-def simple_shift_kernel_2d(
+def _simple_shift_kernel_2d(
     x_offset: float,
     y_offset: float,
 ) -> Tuple[np.ndarray, np.ndarray]:

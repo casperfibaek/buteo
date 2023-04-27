@@ -636,47 +636,53 @@ def raster_to_array(
     
     Examples
     --------
+    `Example 1: Convert a raster to a numpy array.`
     ```python
-    # Example 1: Convert a raster to a numpy array.
-    import buteo as beo
-    
-    raster = "/path/to/raster/raster.tif"
-
-    # Convert a raster to a numpy array
-    array = beo.raster_to_array(raster)
-
-    array.shape, array.dtype
+    >>> import buteo as beo
+    >>> 
+    >>> raster = "/path/to/raster/raster.tif"
+    >>> 
+    >>> # Convert a raster to a numpy array
+    >>> array = beo.raster_to_array(raster)
+    >>> 
+    >>> array.shape, array.dtype
     >>> (100, 100, 3), dtype('uint8')
     ```
+    `Example 2: Convert a raster to a numpy array with a specific band.`
     ```python
-    # Example 2: Convert a raster to a numpy array with a specific band.
-    import buteo as beo
-
-    raster = "/path/to/raster/raster.tif"
-
-    # Convert a raster to a numpy array
-    array = beo.raster_to_array(raster, bands=[2])
-
-    array.shape, array.dtype
+    >>> import buteo as beo
+    >>> 
+    >>> raster = "/path/to/raster/raster.tif"
+    >>> 
+    >>> # Convert a raster to a numpy array
+    >>> array = beo.raster_to_array(raster, bands=[2])
+    >>> 
+    >>> array.shape, array.dtype
     >>> (100, 100, 1), dtype('uint8')
     ```
+    `Example 3: Convert a list of rasters to a numpy array with a specific`
     ```python
-    # Example 3: Convert a list of rasters to a numpy array with a specific
-    # band and a specific type and filled.
-    from glob import glob
-    import buteo as beo
-
-    FOLDER = "/path/to/folder"
-    rasters = glob(FOLDER + "/*.tif")
-
-    len(rasters)
+    >>> # band and a specific type and filled.
+    >>> from glob import glob
+    >>> import buteo as beo
+    >>> 
+    >>> FOLDER = "/path/to/folder"
+    >>> rasters = glob(FOLDER + "/*.tif")
+    >>>
+    >>> len(rasters)
     >>> 10
-
-    # Convert rasters to a numpy array
-    array = beo.raster_to_array(rasters, bands=[2], cast="float32", filled=True, fill_value=0.0)
-
-    # This raises an error if the 10 rasters are not aligned.
-    array.shape, array.dtype
+    >>> 
+    >>> # Convert rasters to a numpy array
+    >>> array = beo.raster_to_array(
+    ...     rasters,
+    ...     bands=[2],
+    ...     cast="float32",
+    ...     filled=True,
+    ...     fill_value=0.0,
+    ... )
+    >>> 
+    >>> # This raises an error if the 10 rasters are not aligned.
+    >>> array.shape, array.dtype
     >>> (100, 100, 10), dtype('float32')
     ```
     """
@@ -871,18 +877,18 @@ class raster_to_array_chunks:
     Examples
     --------
     ```python
-    # Read a raster into array via chunks.
-    import buteo as beo
-
-    raster = "/path/to/raster/raster.tif"
-
-    shape = beo.raster_to_metadata(raster)["shape"]
-    shape
+    >>> # Read a raster into array via chunks.
+    >>> import buteo as beo
+    >>> 
+    >>> raster = "/path/to/raster/raster.tif"
+    >>> 
+    >>> shape = beo.raster_to_metadata(raster)["shape"]
+    >>> shape
     >>> (100, 100)
-
-    for chunk, offsets in beo.raster_to_array_chunks(raster, chunks=4):
-        print(chunk.shape, offsets)
-        >>> (25, 25), [0, 0, 25, 25]
+    >>> 
+    >>> for chunk, offsets in beo.raster_to_array_chunks(raster, chunks=4):
+    >>>     print(chunk.shape, offsets)
+    >>>     (25, 25), [0, 0, 25, 25]
     ```
     """
 
@@ -1011,21 +1017,21 @@ def array_to_raster(
     Examples
     --------
     ```python
-    # Create a raster from a numpy array.
-    import buteo as beo
-
-    raster = "/path/to/raster/raster.tif"
-
-    array = beo.raster_to_array(raster)
-    array = array ** 2
-
-    out_path = beo.array_to_raster(
-        array,
-        reference=raster,
-        out_path="/path/to/new/new_raster.tif"
-    )
-
-    out_path
+    >>> # Create a raster from a numpy array.
+    >>> import buteo as beo
+    >>> 
+    >>> raster = "/path/to/raster/raster.tif"
+    >>> 
+    >>> array = beo.raster_to_array(raster)
+    >>> array = array ** 2
+    >>> 
+    >>> out_path = beo.array_to_raster(
+    ...     array,
+    ...     reference=raster,
+    ...     out_path="/path/to/new/new_raster.tif"
+    ... )
+    >>> 
+    >>> out_path
     >>> "/path/to/new/new_raster.tif"
     ```
     """

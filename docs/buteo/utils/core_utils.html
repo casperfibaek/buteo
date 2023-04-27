@@ -143,6 +143,9 @@
             <li>
                     <a class="function" href="#all_arrays_are_same_size">all_arrays_are_same_size</a>
             </li>
+            <li>
+                    <a class="function" href="#force_garbage_collect">force_garbage_collect</a>
+            </li>
     </ul>
 
 
@@ -176,24 +179,24 @@
 </span><span id="L-6"><a href="#L-6"><span class="linenos">   6</span></a>
 </span><span id="L-7"><a href="#L-7"><span class="linenos">   7</span></a><span class="c1"># Standard Library</span>
 </span><span id="L-8"><a href="#L-8"><span class="linenos">   8</span></a><span class="kn">import</span> <span class="nn">os</span>
-</span><span id="L-9"><a href="#L-9"><span class="linenos">   9</span></a><span class="kn">import</span> <span class="nn">sys</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos">  10</span></a><span class="kn">import</span> <span class="nn">time</span>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">  11</span></a><span class="kn">import</span> <span class="nn">shutil</span>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">  12</span></a><span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">  13</span></a><span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">uuid4</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">  14</span></a><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">  15</span></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">PurePosixPath</span>
-</span><span id="L-16"><a href="#L-16"><span class="linenos">  16</span></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
-</span><span id="L-17"><a href="#L-17"><span class="linenos">  17</span></a><span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
-</span><span id="L-18"><a href="#L-18"><span class="linenos">  18</span></a>
-</span><span id="L-19"><a href="#L-19"><span class="linenos">  19</span></a><span class="c1"># Internal</span>
-</span><span id="L-20"><a href="#L-20"><span class="linenos">  20</span></a><span class="kn">from</span> <span class="nn">buteo.utils.gdal_enums</span> <span class="kn">import</span> <span class="n">get_valid_raster_driver_extensions</span><span class="p">,</span> <span class="n">get_valid_vector_driver_extensions</span>
-</span><span id="L-21"><a href="#L-21"><span class="linenos">  21</span></a>
-</span><span id="L-22"><a href="#L-22"><span class="linenos">  22</span></a><span class="c1"># External</span>
-</span><span id="L-23"><a href="#L-23"><span class="linenos">  23</span></a><span class="kn">import</span> <span class="nn">psutil</span>
-</span><span id="L-24"><a href="#L-24"><span class="linenos">  24</span></a><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-</span><span id="L-25"><a href="#L-25"><span class="linenos">  25</span></a><span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">gdal</span>
-</span><span id="L-26"><a href="#L-26"><span class="linenos">  26</span></a>
+</span><span id="L-9"><a href="#L-9"><span class="linenos">   9</span></a><span class="kn">import</span> <span class="nn">gc</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos">  10</span></a><span class="kn">import</span> <span class="nn">sys</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">  11</span></a><span class="kn">import</span> <span class="nn">time</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">  12</span></a><span class="kn">import</span> <span class="nn">shutil</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">  13</span></a><span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">  14</span></a><span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">uuid4</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">  15</span></a><span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">  16</span></a><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">PurePosixPath</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">  17</span></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">  18</span></a><span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+</span><span id="L-19"><a href="#L-19"><span class="linenos">  19</span></a>
+</span><span id="L-20"><a href="#L-20"><span class="linenos">  20</span></a><span class="c1"># External</span>
+</span><span id="L-21"><a href="#L-21"><span class="linenos">  21</span></a><span class="kn">import</span> <span class="nn">psutil</span>
+</span><span id="L-22"><a href="#L-22"><span class="linenos">  22</span></a><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</span><span id="L-23"><a href="#L-23"><span class="linenos">  23</span></a><span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">gdal</span>
+</span><span id="L-24"><a href="#L-24"><span class="linenos">  24</span></a>
+</span><span id="L-25"><a href="#L-25"><span class="linenos">  25</span></a><span class="c1"># Internal</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos">  26</span></a><span class="kn">from</span> <span class="nn">buteo.utils.gdal_enums</span> <span class="kn">import</span> <span class="n">get_valid_raster_driver_extensions</span><span class="p">,</span> <span class="n">get_valid_vector_driver_extensions</span>
 </span><span id="L-27"><a href="#L-27"><span class="linenos">  27</span></a>
 </span><span id="L-28"><a href="#L-28"><span class="linenos">  28</span></a>
 </span><span id="L-29"><a href="#L-29"><span class="linenos">  29</span></a><span class="k">def</span> <span class="nf">get_unix_seconds_as_str</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1250,6 +1253,34 @@
 </span><span id="L-1080"><a href="#L-1080"><span class="linenos">1080</span></a>            <span class="k">return</span> <span class="kc">False</span>
 </span><span id="L-1081"><a href="#L-1081"><span class="linenos">1081</span></a>
 </span><span id="L-1082"><a href="#L-1082"><span class="linenos">1082</span></a>    <span class="k">return</span> <span class="kc">True</span>
+</span><span id="L-1083"><a href="#L-1083"><span class="linenos">1083</span></a>
+</span><span id="L-1084"><a href="#L-1084"><span class="linenos">1084</span></a>
+</span><span id="L-1085"><a href="#L-1085"><span class="linenos">1085</span></a><span class="k">def</span> <span class="nf">force_garbage_collect</span><span class="p">(</span><span class="n">delete_functions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-1086"><a href="#L-1086"><span class="linenos">1086</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-1087"><a href="#L-1087"><span class="linenos">1087</span></a><span class="sd">    Clears the memory by deleting all objects in the main namespace.</span>
+</span><span id="L-1088"><a href="#L-1088"><span class="linenos">1088</span></a><span class="sd">    </span>
+</span><span id="L-1089"><a href="#L-1089"><span class="linenos">1089</span></a><span class="sd">    Args:</span>
+</span><span id="L-1090"><a href="#L-1090"><span class="linenos">1090</span></a><span class="sd">        delete_functions (bool, optional): Whether to delete functions as well. Defaults to True.</span>
+</span><span id="L-1091"><a href="#L-1091"><span class="linenos">1091</span></a>
+</span><span id="L-1092"><a href="#L-1092"><span class="linenos">1092</span></a><span class="sd">    Returns:</span>
+</span><span id="L-1093"><a href="#L-1093"><span class="linenos">1093</span></a><span class="sd">        None</span>
+</span><span id="L-1094"><a href="#L-1094"><span class="linenos">1094</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-1095"><a href="#L-1095"><span class="linenos">1095</span></a>    <span class="c1"># Get a list of all objects</span>
+</span><span id="L-1096"><a href="#L-1096"><span class="linenos">1096</span></a>    <span class="n">all_objects</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;__main__&#39;</span><span class="p">]</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+</span><span id="L-1097"><a href="#L-1097"><span class="linenos">1097</span></a>
+</span><span id="L-1098"><a href="#L-1098"><span class="linenos">1098</span></a>    <span class="c1"># Iterate over the objects and delete them if possible</span>
+</span><span id="L-1099"><a href="#L-1099"><span class="linenos">1099</span></a>    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">all_objects</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="L-1100"><a href="#L-1100"><span class="linenos">1100</span></a>        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;sys&quot;</span><span class="p">,</span> <span class="s2">&quot;os&quot;</span><span class="p">,</span> <span class="s2">&quot;gc&quot;</span><span class="p">]:</span>
+</span><span id="L-1101"><a href="#L-1101"><span class="linenos">1101</span></a>            <span class="k">continue</span>
+</span><span id="L-1102"><a href="#L-1102"><span class="linenos">1102</span></a>        <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">):</span>
+</span><span id="L-1103"><a href="#L-1103"><span class="linenos">1103</span></a>            <span class="k">continue</span>  <span class="c1"># Skip built-in objects</span>
+</span><span id="L-1104"><a href="#L-1104"><span class="linenos">1104</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">delete_functions</span> <span class="ow">and</span> <span class="n">callable</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+</span><span id="L-1105"><a href="#L-1105"><span class="linenos">1105</span></a>            <span class="k">continue</span>
+</span><span id="L-1106"><a href="#L-1106"><span class="linenos">1106</span></a>
+</span><span id="L-1107"><a href="#L-1107"><span class="linenos">1107</span></a>        <span class="k">del</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;__main__&#39;</span><span class="p">]</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>  <span class="c1"># Remove the object from the namespace</span>
+</span><span id="L-1108"><a href="#L-1108"><span class="linenos">1108</span></a>
+</span><span id="L-1109"><a href="#L-1109"><span class="linenos">1109</span></a>    <span class="c1"># Collect garbage</span>
+</span><span id="L-1110"><a href="#L-1110"><span class="linenos">1110</span></a>    <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 </span></pre></div>
 
 
@@ -3190,6 +3221,57 @@
 
 <p>Returns:
     bool: True if all arrays are the same size, False otherwise.</p>
+</div>
+
+
+                </section>
+                <section id="force_garbage_collect">
+                            <input id="force_garbage_collect-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">force_garbage_collect</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">delete_functions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
+
+                <label class="view-source-button" for="force_garbage_collect-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#force_garbage_collect"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="force_garbage_collect-1086"><a href="#force_garbage_collect-1086"><span class="linenos">1086</span></a><span class="k">def</span> <span class="nf">force_garbage_collect</span><span class="p">(</span><span class="n">delete_functions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="force_garbage_collect-1087"><a href="#force_garbage_collect-1087"><span class="linenos">1087</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="force_garbage_collect-1088"><a href="#force_garbage_collect-1088"><span class="linenos">1088</span></a><span class="sd">    Clears the memory by deleting all objects in the main namespace.</span>
+</span><span id="force_garbage_collect-1089"><a href="#force_garbage_collect-1089"><span class="linenos">1089</span></a><span class="sd">    </span>
+</span><span id="force_garbage_collect-1090"><a href="#force_garbage_collect-1090"><span class="linenos">1090</span></a><span class="sd">    Args:</span>
+</span><span id="force_garbage_collect-1091"><a href="#force_garbage_collect-1091"><span class="linenos">1091</span></a><span class="sd">        delete_functions (bool, optional): Whether to delete functions as well. Defaults to True.</span>
+</span><span id="force_garbage_collect-1092"><a href="#force_garbage_collect-1092"><span class="linenos">1092</span></a>
+</span><span id="force_garbage_collect-1093"><a href="#force_garbage_collect-1093"><span class="linenos">1093</span></a><span class="sd">    Returns:</span>
+</span><span id="force_garbage_collect-1094"><a href="#force_garbage_collect-1094"><span class="linenos">1094</span></a><span class="sd">        None</span>
+</span><span id="force_garbage_collect-1095"><a href="#force_garbage_collect-1095"><span class="linenos">1095</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="force_garbage_collect-1096"><a href="#force_garbage_collect-1096"><span class="linenos">1096</span></a>    <span class="c1"># Get a list of all objects</span>
+</span><span id="force_garbage_collect-1097"><a href="#force_garbage_collect-1097"><span class="linenos">1097</span></a>    <span class="n">all_objects</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;__main__&#39;</span><span class="p">]</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+</span><span id="force_garbage_collect-1098"><a href="#force_garbage_collect-1098"><span class="linenos">1098</span></a>
+</span><span id="force_garbage_collect-1099"><a href="#force_garbage_collect-1099"><span class="linenos">1099</span></a>    <span class="c1"># Iterate over the objects and delete them if possible</span>
+</span><span id="force_garbage_collect-1100"><a href="#force_garbage_collect-1100"><span class="linenos">1100</span></a>    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">all_objects</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="force_garbage_collect-1101"><a href="#force_garbage_collect-1101"><span class="linenos">1101</span></a>        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;sys&quot;</span><span class="p">,</span> <span class="s2">&quot;os&quot;</span><span class="p">,</span> <span class="s2">&quot;gc&quot;</span><span class="p">]:</span>
+</span><span id="force_garbage_collect-1102"><a href="#force_garbage_collect-1102"><span class="linenos">1102</span></a>            <span class="k">continue</span>
+</span><span id="force_garbage_collect-1103"><a href="#force_garbage_collect-1103"><span class="linenos">1103</span></a>        <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">):</span>
+</span><span id="force_garbage_collect-1104"><a href="#force_garbage_collect-1104"><span class="linenos">1104</span></a>            <span class="k">continue</span>  <span class="c1"># Skip built-in objects</span>
+</span><span id="force_garbage_collect-1105"><a href="#force_garbage_collect-1105"><span class="linenos">1105</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">delete_functions</span> <span class="ow">and</span> <span class="n">callable</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+</span><span id="force_garbage_collect-1106"><a href="#force_garbage_collect-1106"><span class="linenos">1106</span></a>            <span class="k">continue</span>
+</span><span id="force_garbage_collect-1107"><a href="#force_garbage_collect-1107"><span class="linenos">1107</span></a>
+</span><span id="force_garbage_collect-1108"><a href="#force_garbage_collect-1108"><span class="linenos">1108</span></a>        <span class="k">del</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="s1">&#39;__main__&#39;</span><span class="p">]</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>  <span class="c1"># Remove the object from the namespace</span>
+</span><span id="force_garbage_collect-1109"><a href="#force_garbage_collect-1109"><span class="linenos">1109</span></a>
+</span><span id="force_garbage_collect-1110"><a href="#force_garbage_collect-1110"><span class="linenos">1110</span></a>    <span class="c1"># Collect garbage</span>
+</span><span id="force_garbage_collect-1111"><a href="#force_garbage_collect-1111"><span class="linenos">1111</span></a>    <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Clears the memory by deleting all objects in the main namespace.</p>
+
+<p>Args:
+    delete_functions (bool, optional): Whether to delete functions as well. Defaults to True.</p>
+
+<p>Returns:
+    None</p>
 </div>
 
 
