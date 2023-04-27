@@ -21,27 +21,30 @@ from buteo.vector.reproject import _reproject_vector
 
 
 def _clip_raster(
-    raster,
-    clip_geom,
-    out_path,
+    raster: Union[str, List[str], gdal.Dataset, List[gdal.Dataset]],
+    clip_geom: Union[str, ogr.DataSource, ogr.Layer, List[ogr.Layer], List[ogr.DataSource]],
+    out_path: Optional[Union[str, List[str]]] = None,
     *,
-    resample_alg="nearest",
-    crop_to_geom=True,
-    adjust_bbox=True,
-    all_touch=True,
-    to_extent=False,
-    overwrite=True,
-    creation_options=None,
-    dst_nodata="infer",
-    src_nodata="infer",
-    layer_to_clip=0,
-    prefix="",
-    suffix="",
-    verbose=1,
-    add_uuid=False,
-    ram="auto",
+    resample_alg: str = "nearest",
+    crop_to_geom: bool = True,
+    adjust_bbox: bool = True,
+    all_touch: bool = True,
+    to_extent: bool = False,
+    overwrite: bool = True,
+    creation_options: Optional[List] = None,
+    dst_nodata: str = "infer",
+    src_nodata: str = "infer",
+    layer_to_clip: int = 0,
+    prefix: str = "",
+    suffix: str = "",
+    verbose: int = 1,
+    add_uuid: bool = False,
+    ram: Union[str, int, float] = "auto",
 ):
-    """ INTERNAL. """
+    """
+    INTERNAL.
+    Clips a raster(s) using a vector geometry or the extents of a raster.
+    """
     path_list = gdal_utils.create_output_path_list(
         core_utils.ensure_list(raster),
         out_path=out_path,
@@ -211,45 +214,67 @@ def clip_raster(
     """
     Clips a raster(s) using a vector geometry or the extents of a raster.
 
-    Args:
-        raster (list/str/gdal.Dataset): The raster(s) to clip.
-        clip_geom (str/ogr.DataSource/gdal.Dataset): The geometry to use to
-            clip the raster.
+    Parameters
+    ----------
+    raster : str or gdal.Dataset or list of str/gdal.Dataset
+        The raster(s) to clip.
 
-    Keyword Args:
-        out_path (str/list/None=None): The path(s) to save the
-            clipped raster to. If None, a memory raster is created.
-        resample_alg (str="nearest"): The resampling algorithm to use.
-            Options include: nearest, bilinear, cubic, cubicspline, lanczos, average,
-                mode, max, min, median, q1, q3, sum, rms.
-        crop_to_geom (bool=True): If True, the output raster will be
-            cropped to the extent of the clip geometry.
-        adjust_bbox (bool=False): If True, the output raster will have its
-            bbox adjusted to match the clip geometry.
-        all_touch (bool=False): If true, all pixels touching the
-            clipping geometry will be included.
-        to_extent (bool=False): If True, the output raster will be
-            cropped to the extent of the clip geometry.
-        prefix (str=""): The prefix to use for the output raster.
-        suffix (str=""): The suffix to use for the output raster.
-        overwrite (bool=True): If True, the output raster will be
-            overwritten if it already exists.
-        creation_options (list/None=None): A list of creation options
-            to pass to gdal.
-        dst_nodata (int/float/None="infer"): The nodata value to use for
-            the output raster.
-        src_nodata (int/float/None="infer"): The nodata value to use for
-            the input raster.
-        layer_to_clip (int/str=0): The layer ID or name in the
-            vector to use for clipping.
-        verbose (int=0): The verbosity level.
-        add_uuid (bool=False): If True, a UUID will be added to the
-            output raster.
-        ram (str="auto"): The amount of RAM to use for the operation.
+    clip_geom : str or ogr.DataSource or gdal.Dataset
+        The geometry to use to clip the raster.
 
-    Returns:
-        str/list: A string or list of strings representing the path(s) to
-            the clipped raster(s).
+    out_path : str or list or None, optional
+        The path(s) to save the clipped raster to. If None, a memory raster is created. Default: None.
+
+    resample_alg : str, optional
+        The resampling algorithm to use. Options include: nearest, bilinear, cubic, cubicspline, lanczos, 
+        average, mode, max, min, median, q1, q3, sum, rms. Default: "nearest".
+
+    crop_to_geom : bool, optional
+        If True, the output raster will be cropped to the extent of the clip geometry. Default: True.
+
+    adjust_bbox : bool, optional
+        If True, the output raster will have its bbox adjusted to match the clip geometry. Default: False.
+
+    all_touch : bool, optional
+        If true, all pixels touching the clipping geometry will be included. Default: False.
+
+    to_extent : bool, optional
+        If True, the output raster will be cropped to the extent of the clip geometry. Default: False.
+
+    prefix : str, optional
+        The prefix to use for the output raster. Default: "".
+
+    suffix : str, optional
+        The suffix to use for the output raster. Default: "".
+
+    overwrite : bool, optional
+        If True, the output raster will be overwritten if it already exists. Default: True.
+
+    creation_options : list or None, optional
+        A list of creation options to pass to gdal. Default: None.
+
+    dst_nodata : int or float or None, optional
+        The nodata value to use for the output raster. Default: "infer".
+
+    src_nodata : int or float or None, optional
+        The nodata value to use for the input raster. Default: "infer".
+
+    layer_to_clip : int or str, optional
+        The layer ID or name in the vector to use for clipping. Default: 0.
+
+    verbose : int, optional
+        The verbosity level. Default: 0.
+
+    add_uuid : bool, optional
+        If True, a UUID will be added to the output raster. Default: False.
+
+    ram : str or float or int, optional
+        The amount of RAM to use for the operation. Default: "auto".
+
+    Returns
+    -------
+    str or list
+        A string or list of strings representing the path(s) to the clipped raster(s).
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_geom")

@@ -29,30 +29,49 @@ def align_rasters_to_reference(
     target_nodata: Optional[Union[int, float]] = None,
     overwrite=True,
     creation_options: Optional[List[str]] = None,
-    prefix="",
-    suffix="",
-    ram="auto",
+    prefix: str = "",
+    suffix: str = "",
+    ram: Union[str, float, int] = "auto",
 ) -> List[str]:
     """
     Aligns a series of rasters to a reference.
 
-    Args:
-        rasters (list): A list of rasters to align.
-        reference (str/gdal.Dataset): Path to the reference raster
-            or vector.
+    Parameters
+    ----------
+    rasters : list of str
+        A list of rasters to align.
 
-    Keyword Args:
-        out_path (str/list=None): Paths to the output. If not provided,
-            the output will be in-memory rasters.
-        resample_alg (str="nearest"): Resampling algorithm to use.
-        target_nodata (int/float=None): Nodata value to use for the
-            output rasters.
-        overwrite (bool=True): Overwrite existing files.
-        creation_options (list=None): List of creation options.
-        prefix (str=""): Prefix to add to the output file name.
-        suffix (str=""): Suffix to add to the output file name.
-        ram (int/str="auto"): Amount of RAM to use in MB. If "auto",
-            the amount of RAM will be determined automatically.
+    reference : str or gdal.Dataset
+        Path to the reference raster or vector.
+
+    out_path : str or list of str, optional
+        Paths to the output. If not provided, the output will be in-memory rasters.
+
+    resample_alg : str, optional
+        Resampling algorithm to use. Default: "nearest".
+
+    target_nodata : int or float, optional
+        Nodata value to use for the output rasters.
+
+    overwrite : bool, optional
+        Overwrite existing files. Default: True.
+
+    creation_options : list, optional
+        List of creation options.
+
+    prefix : str, optional
+        Prefix to add to the output file name. Default: "".
+
+    suffix : str, optional
+        Suffix to add to the output file name. Default: "".
+
+    ram : str or int, optional
+        Amount of RAM to use in MB. If "auto", the amount of RAM will be determined automatically.
+
+    Returns
+    -------
+    List[str]
+        A list of paths to the aligned rasters.
     """
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
     core_utils.type_check(reference, [str, gdal.Dataset], "reference")
@@ -163,14 +182,22 @@ def find_best_reference(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     method: str,
 ) -> str:
-    """ Find the best reference raster for aligning a list of rasters.
-    
-    Args:
-        rasters (str/list): List of rasters to align.
-        method (str): Bounding box method to use for finding the best reference.
-            Options include: "reference", "intersection", and "union".
-    Returns:
-        str: Path to the best reference raster.
+    """
+    Find the best reference raster for aligning a list of rasters.
+
+    Parameters
+    ----------
+    rasters : Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
+        List of rasters to align.
+
+    method : str
+        Bounding box method to use for finding the best reference.
+        Options include: "reference", "intersection", and "union".
+
+    Returns
+    -------
+    str
+        Path to the best reference raster.
     """
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
     core_utils.type_check(method, [str], "method")
@@ -307,30 +334,50 @@ def align_rasters(
     resample_alg: str = "nearest",
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
-    prefix="",
-    suffix="",
+    prefix: str = "",
+    suffix: str = "",
     ram: Union[int, str] = "auto",
 ) -> List[str]:
-    """ Aligns rasters either to a reference raster or to each other using the
-    one of three methods: reference, intersection, or union.
-    
-    Args:
-        rasters (Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]): The rasters to align.
+    """
+    Aligns rasters either to a reference raster or to each other using one of three methods:
+    reference, intersection, or union.
 
-    Keyword Args:
-        out_path (Optional[Union[str, List[str]]], optional): The output path(s). Defaults to None.
-        reference (Optional[Union[str, gdal.Dataset]], optional): The reference raster to align to. Defaults to None.
-        method (str, optional): The method to use. Defaults to "reference" [reference, intersection, union].
-        resample_alg (str, optional): The resampling algorithm to use. Defaults to "nearest".
-        overwrite (bool, optional): Whether to overwrite existing files. Defaults to True.
-        creation_options (Optional[List[str]], optional): The creation options to use. Defaults to None.
-        prefix (str, optional): The prefix to add to the output file name. Defaults to "".
-        suffix (str, optional): The suffix to add to the output file name. Defaults to "".
-        ram (int/str="auto"): Amount of RAM to use in MB. If "auto",
-            the amount of RAM will be determined automatically.
+    Parameters
+    ----------
+    rasters : Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
+        The rasters to align.
+
+    out_path : List[str] or str, optional
+        The output path(s), default: None
+
+    reference : Str or gdal.Dataset, optional
+        The reference raster to align to, default: None
+
+    method : str, optional
+        The method to use, default: "reference" [reference, intersection, union]
+
+    resample_alg : str, optional
+        The resampling algorithm to use, default: "nearest"
+
+    overwrite : bool, optional
+        Whether to overwrite existing files, default: True
+
+    creation_options : Optional[List[str]], optional
+        The creation options to use, default: None
+
+    prefix : str, optional
+        The prefix to add to the output file name, default: ""
+
+    suffix : str, optional
+        The suffix to add to the output file name, default: ""
+
+    ram : Union[str, int], optional
+        Amount of RAM to use in MB. If "auto", the amount of RAM will be determined automatically.
     
-    Returns:
-        List[str]: The aligned rasters.
+    Returns
+    -------
+    List[str]
+        The aligned rasters.
     """
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
     core_utils.type_check(out_path, [str, None, [str]], "out_path")

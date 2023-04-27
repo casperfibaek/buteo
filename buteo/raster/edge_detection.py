@@ -12,18 +12,12 @@ import numpy as np
 from buteo.raster.convolution import convolve_array, get_kernel, pad_array
 
 
-DEFAULT_SPHERICAL = False
-DEFAULT_WEIGHT = None
-DEFAULT_DECAY = 0.2
-DEFAULT_SIGMA = 1.0
-
-
-def adjust_kernel(
+def _adjust_kernel(
     kernel,
-    spherical=DEFAULT_SPHERICAL,
-    distance_weight=DEFAULT_WEIGHT,
-    distance_decay=DEFAULT_DECAY,
-    distance_sigma=DEFAULT_SIGMA,
+    spherical=False,
+    distance_weight=None,
+    distance_decay=0.2,
+    distance_sigma=1.0,
 ):
     """ Adjust an edge kernel by a normal kernel. Only works for symmetric kernels."""
     normal_kernel, _weights, _offsets = get_kernel(
@@ -51,10 +45,10 @@ def adjust_kernel(
 def get_sobel_kernel(
     size=3,
     scale=1,
-    spherical=DEFAULT_SPHERICAL,
-    distance_weight=DEFAULT_WEIGHT,
-    distance_decay=DEFAULT_DECAY,
-    distance_sigma=DEFAULT_SIGMA,
+    spherical=False,
+    distance_weight=None,
+    distance_decay=0.2,
+    distance_sigma=1.0,
 ):
     """ Get a sobel kernel of arbitrary size. """
 
@@ -74,14 +68,14 @@ def get_sobel_kernel(
     gx = gx * scale
     gy = gy * scale
 
-    gx = adjust_kernel(
+    gx = _adjust_kernel(
         gx,
         spherical=spherical,
         distance_weight=distance_weight,
         distance_decay=distance_decay,
         distance_sigma=distance_sigma,
     )
-    gy = adjust_kernel(
+    gy = _adjust_kernel(
         gy,
         spherical=spherical,
         distance_weight=distance_weight,
@@ -129,48 +123,34 @@ def get_sobel_kernel(
     )
 
 
-def get_roberts_prewitt_kernel(
-    roberts=True,
-    spherical=DEFAULT_SPHERICAL,
-    distance_weight=DEFAULT_WEIGHT,
-    distance_decay=DEFAULT_DECAY,
-    distance_sigma=DEFAULT_SIGMA,
+def get_prewitt_kernel(
+    spherical=False,
+    distance_weight=None,
+    distance_decay=0.2,
+    distance_sigma=1.0,
 ):
-    """ Get a roberts cross or prewitt kernel, only available for size 2x2 and 3x3 """
+    """ Get a prewitt kernel. """
 
-    if roberts:
-        gx = np.array([
-            [ 0, 0, 0 ],
-            [ 0, 1, 0 ],
-            [ 0, 0,-1 ],
-        ])[:, :, np.newaxis]
+    gx = np.array([
+        [-1, 0, 1 ],
+        [-1, 0, 1 ],
+        [-1, 0, 1 ],
+    ])[:, :, np.newaxis]
 
-        gy = np.array([
-            [ 0, 0, 0 ],
-            [ 0, 0, 1 ],
-            [ 0,-1, 0 ],
-        ])[:, :, np.newaxis]
-    else:
-        gx = np.array([
-            [-1, 0, 1 ],
-            [-1, 0, 1 ],
-            [-1, 0, 1 ],
-        ])[:, :, np.newaxis]
+    gy = np.array([
+        [ 1, 1, 1 ],
+        [ 0, 0, 0 ],
+        [-1,-1,-1 ],
+    ])[:, :, np.newaxis]
 
-        gy = np.array([
-            [ 1, 1, 1 ],
-            [ 0, 0, 0 ],
-            [-1,-1,-1 ],
-        ])[:, :, np.newaxis]
-
-    gx = adjust_kernel(
+    gx = _adjust_kernel(
         gx,
         spherical=spherical,
         distance_weight=distance_weight,
         distance_decay=distance_decay,
         distance_sigma=distance_sigma,
     )
-    gy = adjust_kernel(
+    gy = _adjust_kernel(
         gy,
         spherical=spherical,
         distance_weight=distance_weight,
@@ -222,10 +202,10 @@ def edge_detection(
     arr,
     method,
     filter_size=3,
-    spherical=DEFAULT_SPHERICAL,
-    distance_weight=DEFAULT_WEIGHT,
-    distance_decay=DEFAULT_DECAY,
-    distance_sigma=DEFAULT_SIGMA,
+    spherical=False,
+    distance_weight=None,
+    distance_decay=0.2,
+    distance_sigma=1.0,
     scale=1.0,
     merge_results=True,
     gradient_output=False,
@@ -243,17 +223,8 @@ def edge_detection(
             distance_decay=distance_decay,
             distance_sigma=distance_sigma,
         )
-    elif method == "roberts":
-        gx, gy = get_roberts_prewitt_kernel(
-            roberts=True,
-            spherical=spherical,
-            distance_weight=distance_weight,
-            distance_decay=distance_decay,
-            distance_sigma=distance_sigma,
-        )
     elif method == "prewitt":
-        gx, gy = get_roberts_prewitt_kernel(
-            roberts=False,
+        gx, gy = get_prewitt_kernel(
             spherical=spherical,
             distance_weight=distance_weight,
             distance_decay=distance_decay,
@@ -266,7 +237,7 @@ def edge_detection(
     _kernel_y, weights_y, offsets_y = gy
 
     pad_size = filter_size // 2
-    arr_padded = pad_array_view(arr, pad_size)
+    arr_padded = pad_array(arr, pad_size)
     gx = convolve_array(arr_padded, offsets=offsets_x, weights=weights_x, method="sum", nodata=nodata, nodata_value=nodata_value)
     gx = gx[pad_size:-pad_size, pad_size:-pad_size, :]
     gy = convolve_array(arr_padded, offsets=offsets_y, weights=weights_y, method="sum", nodata=nodata, nodata_value=nodata_value)
@@ -281,56 +252,3 @@ def edge_detection(
         return np.sqrt(np.add(np.power(gx, 2), np.power(gy, 2)))
 
     return gx, gy
-
-
-def edge_detection_sobel(arr, filter_size=3, spherical=DEFAULT_SPHERICAL, distance_weight=DEFAULT_WEIGHT, distance_decay=DEFAULT_DECAY, distance_sigma=DEFAULT_SIGMA, scale=1.0, merge_results=True, gradient_output=False, nodata=False, nodata_value=-9999.9):
-    """ Detect edges using the sobel filtering method. """
-
-    return edge_detection(
-        arr,
-        method="sobel",
-        filter_size=filter_size,
-        spherical=spherical,
-        distance_weight=distance_weight,
-        distance_decay=distance_decay,
-        distance_sigma=distance_sigma,
-        scale=scale,
-        merge_results=merge_results,
-        gradient_output=gradient_output,
-        nodata=nodata,
-        nodata_value=nodata_value,
-    )
-
-
-def edge_detection_roberts(arr, spherical=DEFAULT_SPHERICAL, distance_weight=DEFAULT_WEIGHT, distance_decay=DEFAULT_DECAY, distance_sigma=DEFAULT_SIGMA, merge_results=True, gradient_output=False, nodata=False, nodata_value=-9999.9):
-    """ Detect edges using the roberts filtering method. """
-
-    return edge_detection(
-        arr,
-        method="roberts",
-        spherical=spherical,
-        distance_weight=distance_weight,
-        distance_decay=distance_decay,
-        distance_sigma=distance_sigma,
-        merge_results=merge_results,
-        gradient_output=gradient_output,
-        nodata=nodata,
-        nodata_value=nodata_value,
-    )
-
-
-def edge_detection_prewitt(arr, spherical=DEFAULT_SPHERICAL, distance_weight=DEFAULT_WEIGHT, distance_decay=DEFAULT_DECAY, distance_sigma=DEFAULT_SIGMA, merge_results=True, gradient_output=False, nodata=False, nodata_value=-9999.9):
-    """ Detect edges using the prewitt filtering method. """
-
-    return edge_detection(
-        arr,
-        method="prewitt",
-        spherical=spherical,
-        distance_weight=distance_weight,
-        distance_decay=distance_decay,
-        distance_sigma=distance_sigma,
-        merge_results=merge_results,
-        gradient_output=gradient_output,
-        nodata=nodata,
-        nodata_value=nodata_value,
-    )

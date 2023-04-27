@@ -429,24 +429,15 @@
 
             <div class="docstring"><p>Normalise an array using the min-max method.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.array): The array to normalise.</p>
 
-<ul>
-<li><strong>arr (np.array):</strong>  The array to normalise.</li>
-</ul>
+<p>Keyword Args:
+    stat_dict (dict=None): A dictionary containing the min and max values of the array.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>stat_dict (dict=None): A dictionary containing the min and max values of the array.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>(np.array, dict): The normalised array (always float32) and a dictionary containing
-      the min and max values.</p>
-</blockquote>
+<p>Returns:
+    (np.array, dict): The normalised array (always float32) and a dictionary containing
+        the min and max values.</p>
 </div>
 
 
@@ -505,24 +496,15 @@
 
             <div class="docstring"><p>Normalise an array using the mean and standard deviation method.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.array): The array to normalise.</p>
 
-<ul>
-<li><strong>arr (np.array):</strong>  The array to normalise.</li>
-</ul>
+<p>Keyword Args:
+    stat_dict (dict=None): A dictionary containing the mean and
+        standard deviation of the array.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>stat_dict (dict=None): A dictionary containing the mean and
-      standard deviation of the array.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>(np.array, dict): The normalised array (always float32) and a dictionary containing statistics.</p>
-</blockquote>
+<p>Returns:
+    (np.array, dict): The normalised array (always float32) and a dictionary containing statistics.</p>
 </div>
 
 
@@ -584,25 +566,16 @@
 
             <div class="docstring"><p>Normalise an array using the median absolute deviation (MAD) method.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.array): The array to normalise.</p>
 
-<ul>
-<li><strong>arr (np.array):</strong>  The array to normalise.</li>
-</ul>
+<p>Keyword Args:
+    stat_dict (dict=None): A dictionary containing the median, absolute
+        and deviations, and the median absolute deviation of the array.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>stat_dict (dict=None): A dictionary containing the median, absolute
-      and deviations, and the median absolute deviation of the array.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>(np.array, dict): The normalised array (always float32) and a
-      dictionary containing statistics.</p>
-</blockquote>
+<p>Returns:
+    (np.array, dict): The normalised array (always float32) and a
+        dictionary containing statistics.</p>
 </div>
 
 
@@ -669,25 +642,16 @@
 
             <div class="docstring"><p>Normalise an array using the interquartile range (IQR) method.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.array): The array to normalise.</p>
 
-<ul>
-<li><strong>arr (np.array):</strong>  The array to normalise.</li>
-</ul>
+<p>Keyword Args:
+    q1 (float=0.25): The lower quartile.
+    q3 (float=0.75): The upper quartile.
+    stat_dict (dict=None): A dictionary containing the lower, median, and upper quartiles.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>q1 (float=0.25): The lower quartile.
-  q3 (float=0.75): The upper quartile.
-  stat_dict (dict=None): A dictionary containing the lower, median, and upper quartiles.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>(np.array, dict): The normalised array (always float32) and a dictionary containing statistics.</p>
-</blockquote>
+<p>Returns:
+    (np.array, dict): The normalised array (always float32) and a dictionary containing statistics.</p>
 </div>
 
 
@@ -752,25 +716,16 @@
 
             <div class="docstring"><p>Normalise an array to a given range.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.array): The array to normalise.</p>
 
-<ul>
-<li><strong>arr (np.array):</strong>  The array to normalise.</li>
-</ul>
+<p>Keyword Args:
+    min_val (float=0.0): The minimum value.
+    max_val (float=1.0): The maximum value.
+    stat_dict (dict=None): A dictionary containing the minimum and maximum values of the array.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>min_val (float=0.0): The minimum value.
-  max_val (float=1.0): The maximum value.
-  stat_dict (dict=None): A dictionary containing the minimum and maximum values of the array.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>(np.array, dict): The normalised array (always float32) and a dictionary containing statistics.</p>
-</blockquote>
+<p>Returns:
+    (np.array, dict): The normalised array (always float32) and a dictionary containing statistics.</p>
 </div>
 
 
@@ -859,27 +814,18 @@
 
             <div class="docstring"><p>Truncate an array and then normalise it to a given range.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.array): The array to normalise
+    trunc_min (float/int=None): The minimum value to truncate to.
+    trunc_max (float/int=None): The maximum value to truncate to.</p>
 
-<ul>
-<li><strong>arr (np.array):</strong>  The array to normalise</li>
-<li><strong>trunc_min (float/int=None):</strong>  The minimum value to truncate to.</li>
-<li><strong>trunc_max (float/int=None):</strong>  The maximum value to truncate to.</li>
-</ul>
+<p>Keyword Args:
+    target_min (float=0.0): The minimum value to normalise to.
+    target_max (float=1.0): The maximum value to normalise to.
+    stat_dict (dict=None): A dictionary containing the minimum and maximum values of the array.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>target_min (float=0.0): The minimum value to normalise to.
-  target_max (float=1.0): The maximum value to normalise to.
-  stat_dict (dict=None): A dictionary containing the minimum and maximum values of the array.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>(np.array, dict): The normalised array (always float32) and a dictionary containing statistics.</p>
-</blockquote>
+<p>Returns:
+    (np.array, dict): The normalised array (always float32) and a dictionary containing statistics.</p>
 </div>
 
 

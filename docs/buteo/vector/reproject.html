@@ -305,14 +305,13 @@
 
             <div class="docstring"><p>Reprojects a vector given a target projection.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    vector (_path_/_vector_): The vector to reproject.</p>
 
-<ul>
-<li><strong>vector (_path_/_vector_):</strong>  The vector to reproject.</li>
-<li><strong>projection (_str_/_int_/_vector_/_raster_):</strong>  The projection is infered from</li>
-<li><strong>the input. The input can be:</strong>  WKT proj, EPSG proj, Proj, or read from a</li>
-<li>vector or raster datasource either from path or in-memory.</li>
-</ul>
+<pre><code>projection (_str_/_int_/_vector_/_raster_): The projection is infered from
+the input. The input can be: WKT proj, EPSG proj, Proj, or read from a
+vector or raster datasource either from path or in-memory.
+</code></pre>
 
 <p>**kwargs:
     out_path (_path_/_None_): The destination to save to. If None then
@@ -323,12 +322,9 @@
 overwite (_bool_): Is it possible to overwrite the out_path if it exists.
 </code></pre>
 
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>An in-memory vector. If an out_path is given, the output is a string containing
-  the path to the newly created vecotr.</p>
-</blockquote>
+<p>Returns:
+    An in-memory vector. If an out_path is given, the output is a string containing
+    the path to the newly created vecotr.</p>
 </div>
 
 

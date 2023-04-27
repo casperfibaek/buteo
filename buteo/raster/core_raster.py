@@ -64,22 +64,23 @@ def open_raster(
     allow_lists=True,
 ) -> Union[gdal.Dataset, List[gdal.Dataset]]:
     """
-    Opens a raster from a path to a raster. Can be in-memory or local. If a
-    gdal.Dataset is passed, it is returned. Supports lists. If a list is passed,
-    a list is returned with the opened raster.
+    Parameters
+    ----------
+    raster : Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
+        A path to a raster or a GDAL dataframe.
 
-    Args:
-        raster (gdal.Dataset/str/list): A path to a raster or a GDAL dataframe.
+    writeable : bool, optional
+        If True, the raster is opened in write mode. Default: True.
 
-    Keyword Args:
-        writeable (bool=True): If True, the raster is opened in write mode.
-        allow_lists (bool=True): If True, the input can be a list of rasters. Otherwise,
-            only a single raster is allowed.
+    allow_lists : bool, optional
+        If True, the input can be a list of rasters. Otherwise,
+        only a single raster is allowed. Default: True.
 
-    Returns:
-        gdal.Dataset/list: A gdal.Dataset or a list of gdal.Datasets.
+    Returns
+    -------
+    Union[gdal.Dataset, List[gdal.Dataset]]
+        A gdal.Dataset or a list of gdal.Datasets.
     """
-
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(writeable, [bool], "writeable")
     core_utils.type_check(allow_lists, [bool], "allow_lists")
@@ -110,17 +111,20 @@ def get_projection(
     wkt: bool = True,
 ) -> str:
     """
-    Gets the projection from a dataset, either as WKT or osr.
-    The input can be a path or a gdal.Dataset.
+    Get the projection from a dataset, either as WKT or osr.
 
-    Args:
-        raster (str/gdal.Dataset): A path to a raster or a gdal.Dataset.
+    Parameters
+    ----------
+    raster : str or gdal.Dataset
+        A path to a raster or a gdal.Dataset.
 
-    Keyword Args:
-        wkt (bool=True): If True, returns the projection as WKT.
+    wkt : bool, optional
+        If True, returns the projection as WKT. Default: True.
 
-    Returns:
-        str: The projection of the input raster in the specified format.
+    Returns
+    -------
+    str
+        The projection of the input raster in the specified format.
     """
     dataset = open_raster(raster)
 
@@ -250,19 +254,19 @@ def raster_to_metadata(
     Reads metadata from a raster dataset or a list of raster datasets, and returns a dictionary or a list of dictionaries
     containing metadata information for each raster.
 
-    Args:
-        raster (str/gdal.Dataset/list): A path to a raster or a gdal.Dataset,
-            or a list of paths to rasters.
+    Parameters
+    ----------
+    raster : str or gdal.Dataset or list
+        A path to a raster or a gdal.Dataset, or a list of paths to rasters.
 
-    Keyword Args:
-        allow_lists (bool=True): If True, allows the input to be a
-            list of rasters. Otherwise, only a single raster is allowed.
+    allow_lists : bool, optional
+        If True, allows the input to be a list of rasters. Otherwise, only a single raster is allowed. Default: True.
 
-    Returns:
-        dict/list of dict: A dictionary or a list of dictionaries containing
-            metadata information for each raster.
+    Returns
+    -------
+    dict or list of dict
+        A dictionary or a list of dictionaries containing metadata information for each raster.
     """
-
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
     if not allow_lists and isinstance(raster, list):
@@ -294,23 +298,29 @@ def rasters_are_aligned(
     """
     Verifies whether a list of rasters are aligned.
 
-    Args:
-        rasters (list): A list of rasters, either in gdal.Dataset or a string
-            referring to the dataset.
+    Parameters
+    ----------
+    rasters : list
+        A list of rasters, either in gdal.Dataset or a string referring to the dataset.
 
-    Keyword Args:
-        same_extent (bool=True): If True, all the rasters should have
-            the same extent.
-        same_dtype (bool=False): If True, all the rasters should have
-            the same data type.
-        same_nodata (bool=False): If True, all the rasters should have
-            the same nodata value.
-        threshold (float=0.001): The threshold for the difference between
-            the rasters.
+    same_extent : bool, optional
+        If True, all the rasters should have the same extent. Default: True.
 
-    Returns:
-        bool: True if rasters are aligned and optional parameters are True, False otherwise.
+    same_dtype : bool, optional
+        If True, all the rasters should have the same data type. Default: False.
+
+    same_nodata : bool, optional
+        If True, all the rasters should have the same nodata value. Default: False.
+
+    threshold : float, optional
+        The threshold for the difference between the rasters. Default: 0.001.
+
+    Returns
+    -------
+    bool
+        True if rasters are aligned and optional parameters are True, False otherwise.
     """
+
     core_utils.type_check(rasters, [[str, gdal.Dataset]], "rasters")
     core_utils.type_check(same_extent, [bool], "same_extent")
     core_utils.type_check(same_dtype, [bool], "same_dtype")
@@ -407,12 +417,15 @@ def raster_has_nodata(
     """
     Verifies whether a raster has any nodata values.
 
-    Args:
-        raster (str): A raster, either in gdal.Dataset or a string
-            referring to the dataset.
+    Parameters
+    ----------
+    raster : str or gdal.Dataset
+        A raster, either in gdal.Dataset or a string referring to the dataset.
 
-    Returns:
-        bool: True if raster has nodata values, False otherwise.
+    Returns
+    -------
+    bool
+        True if raster has nodata values, False otherwise.
     """
     core_utils.type_check(raster, [str, gdal.Dataset], "raster")
 
@@ -435,8 +448,15 @@ def rasters_have_nodata(
     """
     Verifies whether a list of rasters have any nodata values.
 
-    Args:
-        rasters (list): A list of rasters, either in gdal.Dataset or a string
+    Parameters
+    ----------
+    rasters : list
+        A list of rasters, either in gdal.Dataset or a string referring to the dataset.
+
+    Returns
+    -------
+    bool
+        True if all rasters have nodata values, False otherwise.
     """
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
@@ -458,8 +478,15 @@ def rasters_have_same_nodata(
     """
     Verifies whether a list of rasters have the same nodata values.
 
-    Args:
-        rasters (list): A list of rasters, either in gdal.Dataset or a string
+    Parameters
+    ----------
+    rasters : list
+        A list of rasters, either in gdal.Dataset or a string referring to the dataset.
+
+    Returns
+    -------
+    bool
+        True if all rasters have the same nodata value, False otherwise.
     """
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
@@ -485,8 +512,15 @@ def get_first_nodata_value(
     """
     Gets the first nodata value from a raster.
 
-    Args:
-        raster (str/gdal.Dataset): The raster to get the nodata value from.
+    Parameters
+    ----------
+    raster : str or gdal.Dataset
+        The raster to get the nodata value from.
+
+    Returns
+    -------
+    float or None
+        The nodata value if found, or None if not found.
     """
     core_utils.type_check(raster, [str, gdal.Dataset], "raster")
 
@@ -511,11 +545,15 @@ def count_bands_in_rasters(
     """
     Counts the number of bands in a list of rasters.
 
-    Args:
-        rasters (list): A list of rasters, either in gdal.Dataset or a string
+    Parameters
+    ----------
+    rasters : list
+        A list of rasters, either in gdal.Dataset or a string referring to the dataset.
 
-    Returns:
-        int: The number of bands in the rasters.
+    Returns
+    -------
+    int
+        The number of bands in the rasters.
     """
     core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
@@ -545,30 +583,102 @@ def raster_to_array(
     """
     Converts a raster or a list of rasters into a NumPy array.
 
-    Args:
-        raster (gdal.Dataset/str/list): Raster(s) to convert.
+    Parameters
+    ----------
+    raster : gdal.Dataset or str or list
+        Raster(s) to convert.
 
-    Keyword Args:
-        bands (list/str/int="all"): Bands from the raster to convert to a numpy array.
-            Can be "all", an int, or a list of integers, or a single integer.
-            Please note that bands are 1-indexed.
-        masked (bool/str="auto"): If the array contains nodata values, determines whether
-            the resulting array should be a masked numpy array or a regular numpy array. If "auto",
-            the array will be masked only if the raster has nodata values.
-        filled (bool=False): If the array contains nodata values, determines whether
-            the resulting array should be a filled numpy array or a masked array.
-        fill_value (int/float=None): Value to fill the array with if filled is True.
-            If None, the nodata value of the raster is used.
-        bbox (list=None): A list of `[xmin, xmax, ymin, ymax]` to use as
-            the extent of the raster. Uses coordinates and the OGR format.
-        pixel_offsets (list/tuple=None): A list of
-            `[x_offset, y_offset, x_size, y_size]` to use as the extent of the
-            raster. Uses pixel offsets and the OGR format.
-        cast (str/dtype=None): A type to cast the array to. If None, the array is not cast.
-            it is only cast if the array is not already the dtype.
-            
-    Returns:
-        np.ndarray: A numpy array in the 3D channel-last format.
+    bands : list or str or int, optional
+        Bands from the raster to convert to a numpy array. Can be "all", an int,
+        or a list of integers, or a single integer. Please note that bands are 1-indexed.
+        Default: "all".
+
+    masked : bool or str, optional
+        If the array contains nodata values, determines whether the resulting
+        array should be a masked numpy array or a regular numpy array. If "auto",
+        the array will be masked only if the raster has nodata values. Default: "auto".
+
+    filled : bool, optional
+        If the array contains nodata values, determines whether the resulting
+        array should be a filled numpy array or a masked array. Default: False.
+
+    fill_value : int or float, optional
+        Value to fill the array with if filled is True. If None, the nodata value
+        of the raster is used. Default: None.
+
+    bbox : list, optional
+        A list of `[xmin, xmax, ymin, ymax]` to use as the extent of the raster.
+        Uses coordinates and the OGR format. Default: None.
+
+    pixel_offsets : list or tuple, optional
+        A list of `[x_offset, y_offset, x_size, y_size]` to use as the extent of the
+        raster. Uses pixel offsets and the OGR format. Default: None.
+
+    cast : str or dtype, optional
+        A type to cast the array to. If None, the array is not cast. It is only cast
+        if the array is not already the dtype. Default: None.
+
+    Returns
+    -------
+    np.ndarray
+        A numpy array in the 3D channel-last format.
+    
+    Raises
+    ------
+    ValueError
+        If the raster is not a valid raster.
+    ValueError
+        If the bands are not valid.
+    ValueError
+        If the masked parameter is not valid.
+    ValueError
+        If both bbox and pixel_offsets are provided.
+    
+    Examples
+    --------
+    ```python
+    # Example 1: Convert a raster to a numpy array.
+    import buteo as beo
+    
+    raster = "/path/to/raster/raster.tif"
+
+    # Convert a raster to a numpy array
+    array = beo.raster_to_array(raster)
+
+    array.shape, array.dtype
+    >>> (100, 100, 3), dtype('uint8')
+    ```
+    ```python
+    # Example 2: Convert a raster to a numpy array with a specific band.
+    import buteo as beo
+
+    raster = "/path/to/raster/raster.tif"
+
+    # Convert a raster to a numpy array
+    array = beo.raster_to_array(raster, bands=[2])
+
+    array.shape, array.dtype
+    >>> (100, 100, 1), dtype('uint8')
+    ```
+    ```python
+    # Example 3: Convert a list of rasters to a numpy array with a specific
+    # band and a specific type and filled.
+    from glob import glob
+    import buteo as beo
+
+    FOLDER = "/path/to/folder"
+    rasters = glob(FOLDER + "/*.tif")
+
+    len(rasters)
+    >>> 10
+
+    # Convert rasters to a numpy array
+    array = beo.raster_to_array(rasters, bands=[2], cast="float32", filled=True, fill_value=0.0)
+
+    # This raises an error if the 10 rasters are not aligned.
+    array.shape, array.dtype
+    >>> (100, 100, 10), dtype('float32')
+    ```
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(bands, [int, [int], str], "bands")
@@ -721,24 +831,61 @@ class raster_to_array_chunks:
     the array into the original raster or a new raster representing the chunk,
     using the :func:`array_to_raster` function.
 
-    Args:
-        raster (Union[gdal.Dataset, str, List[Union[str, gdal.Dataset]]]): The raster to read.
-        chunks_x (int): The number of chunks to read in the x direction.
-        chunks_y (int): The number of chunks to read in the y direction.
-    
-    Keyword Args:
-        overlap_x (int): The number of pixels to overlap in the x direction.
-        overlap_y (int): The number of pixels to overlap in the y direction.
-        bands (list/str/int='all'): The bands to read.
-        masked (bool/str='auto'): Whether to return a masked array.
-        filled (bool): Whether to fill masked values.
-        fill_value (int/float): The value to fill masked values with.
-        cast (type/str=None): The data type to cast the output to.
-    
-    Returns:
-        generator: A generator that yields the raster data in chunks and the offsets
-            of the chunk in the raster in a tuple.
+    Parameters
+    ----------
+    raster : Union[gdal.Dataset, str, List[Union[str, gdal.Dataset]]]
+        The raster to read.
+
+    chunks : int
+        The number of chunks to read. The area is chunked in way that ensures
+        that the chunks are as square as possible. Default: 1.
+
+    overlap : int, optional
+        The number of pixels to overlap. Default: 0.
+
+    overlap_y : int, optional
+        The number of pixels to overlap in the y direction. Default: 0.
+
+    bands : list or str or int, optional
+        The bands to read. Can be "all", an int, or a list of integers, or a single
+        integer. Please note that bands are 1-indexed. Default: "all".
+
+    masked : bool or str, optional
+        Whether to return a masked array. Default: "auto".
+
+    filled : bool, optional
+        Whether to fill masked values. Default: False.
+
+    fill_value : int or float, optional
+        The value to fill masked values with. Default: None.
+
+    cast : type or str, optional
+        The data type to cast the output to. Default: None.
+
+    Returns
+    -------
+    generator
+        A generator that yields the raster data in chunks and the offsets of the chunk
+        in the raster in a tuple.
+
+    Examples
+    --------
+    ```python
+    # Read a raster into array via chunks.
+    import buteo as beo
+
+    raster = "/path/to/raster/raster.tif"
+
+    shape = beo.raster_to_metadata(raster)["shape"]
+    shape
+    >>> (100, 100)
+
+    for chunk, offsets in beo.raster_to_array_chunks(raster, chunks=4):
+        print(chunk.shape, offsets)
+        >>> (25, 25), [0, 0, 25, 25]
+    ```
     """
+
     def __init__(
         self,
         raster: Union[gdal.Dataset, str, List[Union[str, gdal.Dataset]]],
@@ -817,34 +964,70 @@ def array_to_raster(
     creation_options: Optional[List[str]] = None,
 ) -> str:
     """
-    Turns a NumPy array into a GDAL dataset or exported
-    as a raster using a reference raster.
+    Turns a NumPy array into a GDAL dataset or exported as a raster using a reference raster.
 
-    Args:
-        array (np.ndarray): The numpy array to convert.
-        reference (str/gdal.Dataset): The reference raster to use for the output.
+    Parameters
+    ----------
+    array : np.ndarray
+        The numpy array to convert.
 
-    Keyword Args:
-        out_path (path=None): The destination to save to.
-        set_nodata (bool/float/int="arr"): Can be set to
-            • "arr": The nodata value will be the same as the NumPy array.
-            • "ref": The nodata value will be the same as the reference raster.
-            • value: The nodata value will be the value provided.
-        allow_mismatches (bool=False): If True, the array can have a
-            different shape than the reference raster.
-        pixel_offsets (list/tuple=None): If provided, the array will be
-            written to the reference raster at the specified pixel offsets.
-            The list should be in the format [x_offset, y_offset, x_size, y_size].
-        bbox (list=None): If provided, the array will be written to
-            the reference raster at the specified bounding box.
-            The list should be in the format [min_x, min_y, max_x, max_y].
-        overwrite (bool=True): If the file exists, should it be
-            overwritten?
-        creation_options (list=["TILED=YES", "NUM_THREADS=ALL_CPUS",
-            "BIGTIFF=YES", "COMPRESS=LZW"]): List of GDAL creation options.
+    reference : str or gdal.Dataset
+        The reference raster to use for the output.
 
-    Returns:
-        str: The filepath to the newly created raster(s).
+    out_path : path, optional
+        The destination to save to. Default: None.
+
+    set_nodata : bool or float or int, optional
+        Can be set to:
+            - "arr": The nodata value will be the same as the NumPy array.
+            - "ref": The nodata value will be the same as the reference raster.
+            - value: The nodata value will be the value provided. Default: "arr".
+
+    allow_mismatches : bool, optional
+        If True, the array can have a different shape than the reference raster.
+        Default: False.
+
+    pixel_offsets : list or tuple, optional
+        If provided, the array will be written to the reference raster at the
+        specified pixel offsets. The list should be in the format [x_offset, y_offset, x_size, y_size].
+        Default: None.
+
+    bbox : list, optional
+        If provided, the array will be written to the reference raster at the specified
+        bounding box. The list should be in the format [min_x, min_y, max_x, max_y]. Default: None.
+
+    overwrite : bool, optional
+        If the file exists, should it be overwritten? Default: True.
+
+    creation_options : list, optional
+        List of GDAL creation options. Default: ["TILED=YES", "NUM_THREADS=ALL_CPUS",
+        "BIGTIFF=YES", "COMPRESS=LZW"].
+
+    Returns
+    -------
+    str
+        The filepath to the newly created raster(s).
+
+    Examples
+    --------
+    ```python
+    # Create a raster from a numpy array.
+    import buteo as beo
+
+    raster = "/path/to/raster/raster.tif"
+
+    array = beo.raster_to_array(raster)
+    array = array ** 2
+
+    out_path = beo.array_to_raster(
+        array,
+        reference=raster,
+        out_path="/path/to/new/new_raster.tif"
+    )
+
+    out_path
+    >>> "/path/to/new/new_raster.tif"
+    ```
     """
     core_utils.type_check(array, [np.ndarray, np.ma.MaskedArray], "array")
     core_utils.type_check(reference, [str, gdal.Dataset], "reference")
@@ -1079,26 +1262,32 @@ def raster_set_datatype(
     """
     Converts the datatype of a raster.
 
-    Args:
-        raster (str/gdal.Dataset/list): The input raster(s) for which the
-            datatype will be changed.
-        dtype (str): The target datatype for the output raster(s).
+    Parameters
+    ----------
+    raster : str or gdal.Dataset or list
+        The input raster(s) for which the datatype will be changed.
 
-    Keyword Args:
-        out_path (path/list=None): The output location for the
-            processed raster(s).
-        overwrite (bool=True): Determines whether to overwrite
-            existing files with the same name.
-        allow_lists (bool=True): Allows processing multiple
-            rasters as a list. If set to False, only single rasters are
-            accepted.
-        creation_options (list=["TILED=YES", "NUM_THREADS=ALL_CPUS",
-            "BIGTIFF=YES", "COMPRESS=LZW"]): A list of GDAL creation options
-            for the output raster(s).
+    dtype : str
+        The target datatype for the output raster(s).
 
-    Returns:
-        str/list: The filepath(s) of the newly created raster(s) with
-            the specified datatype.
+    out_path : path or list, optional
+        The output location for the processed raster(s). Default: None.
+
+    overwrite : bool, optional
+        Determines whether to overwrite existing files with the same name. Default: True.
+
+    allow_lists : bool, optional
+        Allows processing multiple rasters as a list. If set to False, only single rasters are accepted.
+        Default: True.
+
+    creation_options : list, optional
+        A list of GDAL creation options for the output raster(s). Default is
+        ["TILED=YES", "NUM_THREADS=ALL_CPUS", "BIGTIFF=YES", "COMPRESS=LZW"].
+
+    Returns
+    -------
+    str or list
+        The filepath(s) of the newly created raster(s) with the specified datatype.
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(dtype, [str], "dtype")
@@ -1153,18 +1342,28 @@ def stack_rasters(
     """
     Stacks a list of aligned rasters.
 
-    Args:
-        rasters (list): List of rasters to stack.
+    Parameters
+    ----------
+    rasters : list
+        List of rasters to stack.
 
-    Keyword Args:
-        out_path (str/None=None): The destination to save the output raster.
-        overwrite (bool=True): If the file exists, should it be overwritten?
-        dtype (str=None): The data type of the output raster.
-        creation_options (list=["TILED=YES", "NUM_THREADS=ALL_CPUS", "BIGTIFF=YES", "COMPRESS=LZW"]):
-            A list of GDAL creation options for the output raster.
+    out_path : str or None, optional
+        The destination to save the output raster. Default: None.
 
-    Returns:
-        str/list: The filepath(s) to the newly created raster(s).
+    overwrite : bool, optional
+        If the file exists, should it be overwritten? Default: True.
+
+    dtype : str, optional
+        The data type of the output raster. Default: None.
+
+    creation_options : list, optional
+        A list of GDAL creation options for the output raster. Default is
+        ["TILED=YES", "NUM_THREADS=ALL_CPUS", "BIGTIFF=YES", "COMPRESS=LZW"].
+
+    Returns
+    -------
+    str or list
+        The filepath(s) to the newly created raster(s).
     """
     core_utils.type_check(rasters, [[str, gdal.Dataset]], "rasters")
     core_utils.type_check(out_path, [str, None], "out_path")
@@ -1292,25 +1491,46 @@ def stack_rasters_vrt(
     """
     Stacks a list of rasters into a virtual raster (.vrt).
 
-    Args:
-        rasters (list): List of rasters to stack.
-        out_path (str): The destination to save the output raster.
+    Parameters
+    ----------
+    rasters : list
+        List of rasters to stack.
 
-    Keyword Args:
-        separate (bool=True): If the raster bands should be separated.
-        resample_alg (str='nearest'): The resampling algorithm to use.
-        nodata_src (float=None): The NoData value to use for the source rasters.
-        nodata_VRT (float=None): The NoData value to use for the VRT raster.
-        nodata_hide (bool=None): If the NoData value should be hidden.
-        options (list=[]): List of VRT options for GDAL.
-        overwrite (bool=True): If the file exists, should it be overwritten?
-        reference (str=None): The reference raster to use.
-        creation_options (list=["TILED=YES", "NUM_THREADS=ALL_CPUS",
-                                "BIGTIFF=YES", "COMPRESS=LZW"]):
-            A list of GDAL creation options for the output raster.
+    out_path : str
+        The destination to save the output raster.
 
-    Returns:
-        str: The filepath to the newly created VRT raster.
+    separate : bool, optional
+        If the raster bands should be separated. Default: True.
+
+    resample_alg : str, optional
+        The resampling algorithm to use. Default: 'nearest'.
+
+    nodata_src : float, optional
+        The NoData value to use for the source rasters. Default: None.
+
+    nodata_VRT : float, optional
+        The NoData value to use for the VRT raster. Default: None.
+
+    nodata_hide : bool, optional
+        If the NoData value should be hidden. Default: None.
+
+    options : list, optional
+        List of VRT options for GDAL. Default: None.
+
+    overwrite : bool, optional
+        If the file exists, should it be overwritten? Default: True.
+
+    reference : str, optional
+        The reference raster to use. Default: None.
+
+    creation_options : list, optional
+        A list of GDAL creation options for the output raster. Default is
+        ["TILED=YES", "NUM_THREADS=ALL_CPUS", "BIGTIFF=YES", "COMPRESS=LZW"].
+
+    Returns
+    -------
+    str
+        The filepath to the newly created VRT raster.
     """
     core_utils.type_check(rasters, [[str, gdal.Dataset]], "rasters")
     core_utils.type_check(out_path, [str], "out_path")
@@ -1408,12 +1628,18 @@ def rasters_intersect(
     """
     Checks if two rasters intersect using their latlong boundaries.
 
-    Args:
-        raster1 (str/gdal.Dataset): The first raster.
-        raster2 (str/gdal.Dataset): The second raster.
+    Parameters
+    ----------
+    raster1 : str or gdal.Dataset
+        The first raster.
 
-    Returns:
-        bool: If the rasters intersect.
+    raster2 : str or gdal.Dataset
+        The second raster.
+
+    Returns
+    -------
+    bool
+        True if the rasters intersect, False otherwise.
     """
     core_utils.type_check(raster1, [str, gdal.Dataset], "raster1")
     core_utils.type_check(raster2, [str, gdal.Dataset], "raster2")
@@ -1432,15 +1658,23 @@ def rasters_intersection(
     """
     Gets the latlng intersection of two rasters.
 
-    Args:
-        raster1 (str/gdal.Dataset): The first raster.
-        raster2 (str/gdal.Dataset): The second raster.
-    
-    Keyword Args:
-        return_as_vector (bool=False): If True, the intersection will be returned as a vector.
+    Parameters
+    ----------
+    raster1 : str or gdal.Dataset
+        The first raster.
 
-    Returns:
-        bool: If the rasters intersect.
+    raster2 : str or gdal.Dataset
+        The second raster.
+
+    return_as_vector : bool, optional
+        If True, the intersection will be returned as a vector. Default: False.
+
+    Returns
+    -------
+    tuple or ogr.Geometry
+        If return_as_vector is False, returns a tuple `(xmin, ymin, xmax, ymax)` representing
+        the intersection of the two rasters. If return_as_vector is True, returns an ogr.Geometry
+        object representing the intersection.
     """
     core_utils.type_check(raster1, [str, gdal.Dataset], "raster1")
     core_utils.type_check(raster2, [str, gdal.Dataset], "raster2")
@@ -1467,12 +1701,18 @@ def get_overlap_fraction(
     Get the fraction of the overlap between two rasters.
     (e.g. 0.9 for mostly overlapping rasters)
 
-    Args:
-        raster1 (str/gdal.Dataset): The first raster (master).
-        raster2 (str/gdal.Dataset): The second raster.
+    Parameters
+    ----------
+    raster1 : str or gdal.Dataset
+        The first raster (master).
 
-    Returns:
-        float: A value (0.0 - 1.0) representing the degree of overlap between the two rasters.
+    raster2 : str or gdal.Dataset
+        The second raster.
+
+    Returns
+    -------
+    float
+        A value between 0.0 and 1.0 representing the degree of overlap between the two rasters.
     """
     core_utils.type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], "raster1")
     core_utils.type_check(raster2, [str, gdal.Dataset, [str, gdal.Dataset]], "raster2")
@@ -1507,24 +1747,51 @@ def create_empty_raster(
     creation_options: Union[List[str], None] = None,
     overwrite: bool = True,
 ) -> str:
-    """ Create an empty raster.
-    
-    Keyword Args:
-        out_path (str=None): The output path. If None, a temporary file will be created.
-        width (int=100): The width of the raster in pixels.
-        height (int=100): The height of the raster in pixels.
-        pixel_size (int/float/list/tuple=10.0): The pixel size in units of the projection.
-        bands (int=1): The number of bands in the raster.
-        dtype (str="uint8"): The data type of the raster.
-        x_min (int/float=0.0): The x coordinate of the top left corner of the raster.
-        y_max (int/float=0.0): The y coordinate of the top left corner of the raster.
-        nodata_value (int/float/None=None): The nodata value of the raster.
-        projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference="EPSG:3857"): The projection of the raster.
-        creation_options (list=None): A list of creation options.
-        overwrite (bool=True): If True, overwrite the output file if it exists.
+    """
+    Create an empty raster.
 
-    Returns:
-        str: The path to the output raster.
+    Parameters
+    ----------
+    out_path : str, optional
+        The output path. If None, a temporary file will be created.
+
+    width : int, optional
+        The width of the raster in pixels. Default: 100.
+
+    height : int, optional
+        The height of the raster in pixels. Default: 100.
+
+    pixel_size : int or float or list or tuple, optional
+        The pixel size in units of the projection. Default: 10.0.
+
+    bands : int, optional
+        The number of bands in the raster. Default: 1.
+
+    dtype : str, optional
+        The data type of the raster. Default: "uint8".
+
+    x_min : int or float, optional
+        The x coordinate of the top left corner of the raster. Default: 0.0.
+
+    y_max : int or float, optional
+        The y coordinate of the top left corner of the raster. Default: 0.0.
+
+    nodata_value : int or float or None, optional
+        The nodata value of the raster. Default: None.
+
+    projection : int or str or gdal.Dataset or ogr.DataSource or osr.SpatialReference, optional
+        The projection of the raster. Default: "EPSG:3857".
+
+    creation_options : list or None, optional
+        A list of creation options. Default: None.
+
+    overwrite : bool, optional
+        If True, overwrite the output file if it exists. Default: True.
+
+    Returns
+    -------
+    str
+        The path to the output raster.
     """
     core_utils.type_check(out_path, [str, type(None)], "out_path")
     core_utils.type_check(width, int, "width")
@@ -1597,17 +1864,36 @@ def create_raster_from_array(
 ) -> str:
     """ Create a raster from a numpy array.
 
-    Args:
-        arr (np.ndarray): The array to convert to a raster.
-    
-    Keyword Args:
-        out_path (str=None): The output path. If None, a temporary file will be created.
-        pixel_size (int/float/list/tuple=10.0): The pixel size of the output raster.
-        x_min (int/float=0.0): The x coordinate of the top left corner of the output raster.
-        y_max (int/float=0.0): The y coordinate of the top left corner of the output raster.
-        projection (int/str/gdal.Dataset/ogr.DataSource/osr.SpatialReference="EPSG:3857"): The projection of the output raster.
-        creation_options (list=None): The creation options for the output raster.
-        overwrite (bool=True): If True, the output raster will be overwritten if it already exists.
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to convert to a raster.
+
+    out_path : str, optional
+        The output path. If None, a temporary file will be created.
+
+    pixel_size : int or float or list or tuple, optional
+        The pixel size of the output raster. Default: 10.0.
+
+    x_min : int or float, optional
+        The x coordinate of the top left corner of the output raster. Default: 0.0.
+
+    y_max : int or float, optional
+        The y coordinate of the top left corner of the output raster. Default: 0.0.
+
+    projection : int or str or gdal.Dataset or ogr.DataSource or osr.SpatialReference, optional
+        The projection of the output raster. Default: "EPSG:3857".
+
+    creation_options : list or None, optional
+        The creation options for the output raster. Default: None.
+
+    overwrite : bool, optional
+        If True, the output raster will be overwritten if it already exists. Default: True.
+
+    Returns
+    -------
+    str
+        The path to the output raster.
     """
     core_utils.type_check(arr, [np.ndarray, np.ma.MaskedArray], "arr")
     core_utils.type_check(out_path, [str, None], "out_path")
@@ -1681,12 +1967,16 @@ def create_grid_with_coordinates(
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Create a grid of coordinates from a raster. Format is (x, y, xy).
-    
-    Args:
-        raster (str/gdal.Dataset): The raster to create the grid from.
-    
-    Returns:
-        np.ndarray: (x, y, xy-coordinates)
+
+    Parameters
+    ----------
+    raster : str or gdal.Dataset
+        The raster to create the grid from.
+
+    Returns
+    -------
+    np.ndarray
+        A NumPy array of shape (x, y, xy-coordinates).
     """
     core_utils.type_check(raster, [str, gdal.Dataset], "raster")
 
@@ -1721,15 +2011,26 @@ def mosaic_rasters(
     creation_options: Union[List[str], None] = None,
     overwrite: bool = True,
 ) -> str:
-    """ NOT YET IMPLEMENTED: Mosaic a list of rasters into a single raster.
+    """
+    NOT YET IMPLEMENTED: Mosaic a list of rasters into a single raster.
 
-    Args:
-        raster_paths (str/list): The list of rasters to mosaic.
-    
-    Keyword Args:
-        out_path (str=None): The output path. If None, a temporary file will be created.
-        creation_options (list=None): The creation options for the output raster.
-        overwrite (bool=True): If True, the output raster will be overwritten if it already exists.
+    Parameters
+    ----------
+    raster_paths : str or list
+        The list of rasters to mosaic.
+
+    out_path : str, optional
+        The output path. If None, a temporary file will be created.
+
+    creation_options : list or None, optional
+        The creation options for the output raster.
+
+    overwrite : bool, optional
+        If True, the output raster will be overwritten if it already exists. Default: True.
+
+    Returns
+    -------
+    None
     """
     core_utils.type_check(raster_paths, [str, [str]], "raster_paths")
     core_utils.type_check(out_path, [str, None], "out_path")
@@ -1746,7 +2047,7 @@ def mosaic_rasters(
 
 
 def split_shape_into_offsets(
-    shape: Union[List[int], Tuple[int, int, int, int]],
+    shape: Union[List[int], Tuple[int]],
     offsets_x: int = 2,
     offsets_y: int = 2,
     overlap_x: int = 0,
@@ -1755,15 +2056,27 @@ def split_shape_into_offsets(
     """
     Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed.
     
-    Args:
-        shape (list/tuple): The shape to split into offsets. (height, width, ...)
-        offsets_x (int=2): The number of offsets to split the shape into in the x-direction.
-        offsets_y (int=2): The number of offsets to split the shape into in the y-direction.
-        overlap_x (int=0): The number of pixels to overlap in the x-direction.
-        overlap_y (int=0): The number of pixels to overlap in the y-direction.
-    
-    Returns:
-        list: The offsets. [x_offset, y_offset, x_size, y_size]
+    Parameters
+    ----------
+    shape : tuple or list
+        The shape to split into offsets. (height, width, ...)
+
+    offsets_x : int, optional
+        The number of offsets to split the shape into in the x-direction. Default: 2.
+
+    offsets_y : int, optional
+        The number of offsets to split the shape into in the y-direction. Default: 2.
+
+    overlap_x : int, optional
+        The number of pixels to overlap in the x-direction. Default: 0.
+
+    overlap_y : int, optional
+        The number of pixels to overlap in the y-direction. Default: 0.
+
+    Returns
+    -------
+    list
+        The offsets. `[x_offset, y_offset, x_size, y_size]`
     """
     print("WARNING: This is deprecated and will be removed in a future update. Please use get_chunk_offsets instead.")
     height = shape[0]
@@ -1826,16 +2139,18 @@ def _apply_overlap_to_offsets(
     Parameters
     ----------
     list_of_offsets : List[Tuple[int, int, int, int]]
-        A list of tuples containing the chunk offsets and dimensions in the format (x_start, y_start, x_pixels, y_pixels).
+        A list of tuples containing the chunk offsets and dimensions in the format `(x_start, y_start, x_pixels, y_pixels)`.
+
     overlap : int
         The amount of overlap to apply to each chunk, in pixels.
+
     shape : Tuple[int, int]
-        A tuple containing the height and width of the image. (Height, Width)
+        A tuple containing the height and width of the image: `(Height, Width)`.
         
     Returns
     -------
     List[List[int]]
-        A list of lists, each containing the adjusted chunk offsets and dimensions in the format [x_start, y_start, x_pixels, y_pixels].
+        A list of lists, each containing the adjusted chunk offsets and dimensions in the format `[x_start, y_start, x_pixels, y_pixels]`.
     """
     height, width = shape
     new_offsets = []
@@ -1875,13 +2190,14 @@ def get_chunk_offsets(
     ----------
     image_shape : Tuple[int, int]
         A tuple containing the height and width of the image. (Height, Width)
+
     num_chunks : int
         The number of chunks to divide the image into.
 
     Returns
     -------
     List[Tuple[int, int, int, int]]
-        A list of tuples, each containing the chunk offsets and dimensions in the format (x_start, y_start, x_pixels, y_pixels).
+        A list of tuples, each containing the chunk offsets and dimensions in the format: `(x_start, y_start, x_pixels, y_pixels)`.
 
     Raises
     ------

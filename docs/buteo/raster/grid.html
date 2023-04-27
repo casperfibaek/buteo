@@ -415,30 +415,21 @@
 
             <div class="docstring"><p>Clips a raster to a grid. Generate .vrt.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    raster (str/gdal.DataSet): The input raster.
+    grid (str/ogr.DataSource): The grid to use.
+    out_dir (str): The output directory.</p>
 
-<ul>
-<li><strong>raster (str/gdal.DataSet):</strong>  The input raster.</li>
-<li><strong>grid (str/ogr.DataSource):</strong>  The grid to use.</li>
-<li><strong>out_dir (str):</strong>  The output directory.</li>
-</ul>
+<p>Keyword Args:
+    use_field (str=None): A field to use to name the grid cells.
+    generate_vrt (bool=True): If True, the output raster will be a .vrt.
+    overwrite (bool=True): If True, the output raster will be overwritten.
+    process_layer (int=0): The layer from the grid to process.
+    creation_options (list=None): Creation options for the output raster.
+    verbose (int=0): The verbosity level.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>use_field (str=None): A field to use to name the grid cells.
-  generate_vrt (bool=True): If True, the output raster will be a .vrt.
-  overwrite (bool=True): If True, the output raster will be overwritten.
-  process_layer (int=0): The layer from the grid to process.
-  creation_options (list=None): Creation options for the output raster.
-  verbose (int=0): The verbosity level.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>str: The filepath for the newly created raster.</p>
-</blockquote>
+<p>Returns:
+    str: The filepath for the newly created raster.</p>
 </div>
 
 

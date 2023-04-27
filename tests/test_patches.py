@@ -16,7 +16,6 @@ from buteo.raster.patches import (
     unique_values,
     merge_weighted_mad,
     merge_weighted_mode,
-    get_offsets,
     borders_are_necessary,
     array_to_patches_single,
     patches_to_array_single,

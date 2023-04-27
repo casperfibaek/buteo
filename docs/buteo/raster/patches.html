@@ -1095,19 +1095,13 @@
 
             <div class="docstring"><p>Weight a kernel according to how close to an edge a given pixel is.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
+<p>Keyword Args:
+    tile_size (int=64): The size of the square kernel.
+    edge_distance (int=5): The distance from the edge to consider for weighting.
+    epsilon (float=1e-7): A small value to prevent division by zero.</p>
 
-<blockquote>
-  <p>tile_size (int=64): The size of the square kernel.
-  edge_distance (int=5): The distance from the edge to consider for weighting.
-  epsilon (float=1e-7): A small value to prevent division by zero.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: A 2D NumPy array of shape (tile_size, tile_size) with the kernel weights.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: A 2D NumPy array of shape (tile_size, tile_size) with the kernel weights.</p>
 </div>
 
 
@@ -1181,18 +1175,12 @@
             <div class="docstring"><p>Calculate the weighted median of a multi-dimensional array along the first axis.
 This is the order (number_of_overlaps, tile_size, tile_size, number_of_bands)</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The input array.
+    arr_weight (np.ndarray): The weight array with the same shape as the input array.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The input array.</li>
-<li><strong>arr_weight (np.ndarray):</strong>  The weight array with the same shape as the input array.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: A 3D NumPy array of shape (arr.shape[1], arr.shape[2], arr.shape[3]) with the weighted medians.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: A 3D NumPy array of shape (arr.shape[1], arr.shape[2], arr.shape[3]) with the weighted medians.</p>
 </div>
 
 
@@ -1257,18 +1245,12 @@ This is the order (number_of_overlaps, tile_size, tile_size, number_of_bands)</p
 
             <div class="docstring"><p>Calculate the weighted average of a multi-dimensional array along the last axis.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The input array.
+    arr_weight (np.ndarray): The weight array with the same shape as the input array.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The input array.</li>
-<li><strong>arr_weight (np.ndarray):</strong>  The weight array with the same shape as the input array.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the weighted averages.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the weighted averages.</p>
 </div>
 
 
@@ -1343,18 +1325,12 @@ This is the order (number_of_overlaps, tile_size, tile_size, number_of_bands)</p
 
             <div class="docstring"><p>Calculate the weighted min or max of a multi-dimensional array along the last axis.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The input array.
+    arr_weight (np.ndarray): The weight array with the same shape as the input array.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The input array.</li>
-<li><strong>arr_weight (np.ndarray):</strong>  The weight array with the same shape as the input array.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the weighted min or max.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the weighted min or max.</p>
 </div>
 
 
@@ -1435,18 +1411,12 @@ Using olympic sort, the highest and lowest values are removed from the calculati
 If level is 1, then the highest and loweest values are removed. If the level is 2,
 then the 2 highest and lowest values are removed, and so on.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The input array.
+    arr_weight (np.ndarray): The weight array with the same shape as the input array.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The input array.</li>
-<li><strong>arr_weight (np.ndarray):</strong>  The weight array with the same shape as the input array.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the olympic value.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the olympic value.</p>
 </div>
 
 
@@ -1543,24 +1513,14 @@ then the 2 highest and lowest values are removed, and so on.</p>
 
             <div class="docstring"><p>Merge an array of predictions using the MAD-merge methodology.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The input array.
+    arr_weight (np.ndarray): The weight array with the same shape as the input array.
+Keyword Args:
+    mad_dist (float=2.0): The MAD distance.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The input array.</li>
-<li><strong>arr_weight (np.ndarray):</strong>  The weight array with the same shape as the input array.</li>
-</ul>
-
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>mad_dist (float=2.0): The MAD distance.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the MAD-merged values.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the MAD-merged values.</p>
 </div>
 
 
@@ -1601,17 +1561,11 @@ then the 2 highest and lowest values are removed, and so on.</p>
 
             <div class="docstring"><p>Find the unique values in a 1D NumPy array.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The input array.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The input array.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: A 1D NumPy array with the unique values.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: A 1D NumPy array with the unique values.</p>
 </div>
 
 
@@ -1684,18 +1638,12 @@ then the 2 highest and lowest values are removed, and so on.</p>
 
             <div class="docstring"><p>Calculate the weighted mode of a multi-dimensional array along the last axis.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The input array.
+    arr_weight (np.ndarray): The weight array with the same shape as the input array.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The input array.</li>
-<li><strong>arr_weight (np.ndarray):</strong>  The weight array with the same shape as the input array.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the weighted modes.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the weighted modes.</p>
 </div>
 
 
@@ -1742,20 +1690,14 @@ then the 2 highest and lowest values are removed, and so on.</p>
 
             <div class="docstring"><p>Generate a list of offset pairs for a given tile size and number of offsets in x and y dimensions.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    tile_size (int): The size of each tile.
+    offsets_y (int): The desired number of offsets to be calculated in the y dimension.
+    offsets_x (int): The desired number of offsets to be calculated in the x dimension.</p>
 
-<ul>
-<li><strong>tile_size (int):</strong>  The size of each tile.</li>
-<li><strong>offsets_y (int):</strong>  The desired number of offsets to be calculated in the y dimension.</li>
-<li><strong>offsets_x (int):</strong>  The desired number of offsets to be calculated in the x dimension.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>List[Tuple[int, int]]: A list of tuples containing offset pairs for y and x dimensions.
-  order is (y, x)</p>
-</blockquote>
+<p>Returns:
+    List[Tuple[int, int]]: A list of tuples containing offset pairs for y and x dimensions.
+    order is (y, x)</p>
 </div>
 
 
@@ -1810,19 +1752,13 @@ then the 2 highest and lowest values are removed, and so on.</p>
             <div class="docstring"><p>Checks if borders are necessary for the given array.
 Width and height are returned as a tuple.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The array to be checked.
+    tile_size (int): The size of each tile.
+    offset (list): The offset to be used.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The array to be checked.</li>
-<li><strong>tile_size (int):</strong>  The size of each tile.</li>
-<li><strong>offset (list):</strong>  The offset to be used.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>tuple: A tuple containing of borders are needed in (height, width) dims.</p>
-</blockquote>
+<p>Returns:
+    tuple: A tuple containing of borders are needed in (height, width) dims.</p>
 </div>
 
 
@@ -1878,19 +1814,13 @@ Width and height are returned as a tuple.</p>
             <div class="docstring"><p>Checks if borders are necessary for the given array.
 Width and height are returned as a tuple.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The array to be checked.
+    tile_size (int): The size of each tile.
+    offsets (list): The offset to be used.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The array to be checked.</li>
-<li><strong>tile_size (int):</strong>  The size of each tile.</li>
-<li><strong>offsets (list):</strong>  The offset to be used.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>tuple: A tuple containing of borders are needed in (height, width) dims.</p>
-</blockquote>
+<p>Returns:
+    tuple: A tuple containing of borders are needed in (height, width) dims.</p>
 </div>
 
 
@@ -1964,20 +1894,14 @@ Width and height are returned as a tuple.</p>
 
             <div class="docstring"><p>Generate patches from an array.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): A numpy array to be divided into patches.
+    tile_size (int): The size of each tile/patch, e.g., 64 for 64x64 tiles.
+    offset (list/tuple/None=None): The x and y offset values for the input
+        array. If not provided, defaults to [0, 0].</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  A numpy array to be divided into patches.</li>
-<li><strong>tile_size (int):</strong>  The size of each tile/patch, e.g., 64 for 64x64 tiles.</li>
-<li><strong>offset (list/tuple/None=None):</strong>  The x and y offset values for the input
-array. If not provided, defaults to [0, 0].</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>nd.array: A numpy array containing the patches.</p>
-</blockquote>
+<p>Returns:
+    nd.array: A numpy array containing the patches.</p>
 </div>
 
 
@@ -2084,28 +2008,19 @@ array. If not provided, defaults to [0, 0].</li>
 <p>Given an array of patches, this function stitches them back together
 to form the original array of the specified shape.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    patches (np.ndarray): A numpy array containing the patches to be
+        stitched together.
+    shape (list/tuple): The desired shape of the output array.
+    tile_size (int): The size of each tile/patch Eg. 64 for 64x64 tiles.</p>
 
-<ul>
-<li><strong>patches (np.ndarray):</strong>  A numpy array containing the patches to be
-stitched together.</li>
-<li><strong>shape (list/tuple):</strong>  The desired shape of the output array.</li>
-<li><strong>tile_size (int):</strong>  The size of each tile/patch Eg. 64 for 64x64 tiles.</li>
-</ul>
+<p>Keyword Args:
+    offset (list/tuple/None=None): The x and y offset values for the
+        target array. If not provided, defaults to [0, 0].</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>offset (list/tuple/None=None): The x and y offset values for the
-      target array. If not provided, defaults to [0, 0].</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: A numpy array with the original shape, formed by stitching
-      together the provided patches.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: A numpy array with the original shape, formed by stitching
+        together the provided patches.</p>
 </div>
 
 
@@ -2215,20 +2130,14 @@ stitched together.</li>
 <p>NOTE: The produced patches are in channel_last format
 Use buteo.aux_utils.channel_last_to_first and channel_first_to_last to convert if needed.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): A numpy array to be divided into patches.
+    tile_size (int): The size of each tile/patch, e.g., 64 for 64x64 tiles.
+    n_offsets (int=0): The desired number of offsets to be calculated.
+    border_check (bool=True): Whether or not to include border patches.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  A numpy array to be divided into patches.</li>
-<li><strong>tile_size (int):</strong>  The size of each tile/patch, e.g., 64 for 64x64 tiles.</li>
-<li><strong>n_offsets (int=0):</strong>  The desired number of offsets to be calculated.</li>
-<li><strong>border_check (bool=True):</strong>  Whether or not to include border patches.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: The concatenate patches along axis 0. In the order (patches, y, x, channels)</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: The concatenate patches along axis 0. In the order (patches, y, x, channels)</p>
 </div>
 
 
@@ -2346,33 +2255,24 @@ suppors the prediction of single values in the rasters/arrays. </p>
 
 <p>NOTE: The produced patches passed to the callback are in channel_last format.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): A numpy array to be divided into patches.
+    callback (function): The callback function to be used for prediction. The callback function
+        must take a numpy array as input and return a numpy array as output.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  A numpy array to be divided into patches.</li>
-<li><strong>callback (function):</strong>  The callback function to be used for prediction. The callback function
-must take a numpy array as input and return a numpy array as output.</li>
-</ul>
+<p>Keyword Args:
+    tile_size (int=64): The size of each tile/patch, e.g., 64 for 64x64 tiles.
+    n_offsets (int=1): The desired number of offsets to be calculated.
+    border_check (bool=True): Whether or not to include border patches.
+    merge_method (str="median"): The method to use for merging the patches. Valid methods
+    are ['mad', 'median', 'mean', 'mode', "min", "max", "olympic1", "olympic2"]
+    edge_weighted (bool=True): Whether or not to weight the edges patches of patches less
+        than the central parts.
+    edge_distance (int=3): The distance from the edge to be weighted less. Usually good to
+        adjust this to your maximum convolution kernel size.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>tile_size (int=64): The size of each tile/patch, e.g., 64 for 64x64 tiles.
-  n_offsets (int=1): The desired number of offsets to be calculated.
-  border_check (bool=True): Whether or not to include border patches.
-  merge_method (str="median"): The method to use for merging the patches. Valid methods
-  are ['mad', 'median', 'mean', 'mode', "min", "max", "olympic1", "olympic2"]
-  edge_weighted (bool=True): Whether or not to weight the edges patches of patches less
-      than the central parts.
-  edge_distance (int=3): The distance from the edge to be weighted less. Usually good to
-      adjust this to your maximum convolution kernel size.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: The predicted array.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: The predicted array.</p>
 </div>
 
 
@@ -2412,13 +2312,10 @@ must take a numpy array as input and return a numpy array as output.</li>
 
             <div class="docstring"><p>Predicts an array pixel by pixel.</p>
 
-<h6 id="arguments">Arguments:</h6>
-
-<ul>
-<li><strong>arr (np.ndarray):</strong>  A numpy array to be divided into patches.</li>
-<li><strong>callback (function):</strong>  The callback function to be used for prediction. The callback function
-must take a numpy array as input and return a numpy array as output.</li>
-</ul>
+<p>Args:
+    arr (np.ndarray): A numpy array to be divided into patches.
+    callback (function): The callback function to be used for prediction. The callback function
+        must take a numpy array as input and return a numpy array as output.</p>
 </div>
 
 

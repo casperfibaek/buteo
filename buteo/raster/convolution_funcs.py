@@ -11,7 +11,7 @@ from numba import jit
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_max(
+def _hood_max(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
@@ -21,7 +21,7 @@ def hood_max(
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_min(
+def _hood_min(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
@@ -33,7 +33,7 @@ def hood_min(
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_sum(
+def _hood_sum(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
@@ -42,7 +42,7 @@ def hood_sum(
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_mode(
+def _hood_mode(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
@@ -67,7 +67,7 @@ def hood_mode(
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_count_occurances(
+def _hood_count_occurances(
     values: np.ndarray,
     weights: np.ndarray,
     value: Union[int, float, None],
@@ -91,7 +91,7 @@ def hood_count_occurances(
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_contrast(
+def _hood_contrast(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
@@ -104,7 +104,7 @@ def hood_contrast(
     return np.abs(local_max - local_min)
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_quantile(
+def _hood_quantile(
     values: np.ndarray,
     weights: np.ndarray,
     quantile: float,
@@ -119,25 +119,25 @@ def hood_quantile(
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_median_absolute_deviation(
+def _hood_median_absolute_deviation(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
     """ Get the median absolute deviation """
-    median = hood_quantile(values, weights, 0.5)
+    median = _hood_quantile(values, weights, 0.5)
     absdeviation = np.abs(np.subtract(values, median))
-    return hood_quantile(absdeviation, weights, 0.5)
+    return _hood_quantile(absdeviation, weights, 0.5)
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_z_score(
+def _hood_z_score(
     values: np.ndarray,
     weights: np.ndarray,
     center_idx: int,
 ) -> Union[float, int]:
     """ Get the local z score ."""
-    std = hood_standard_deviation(values, weights)
-    mean = hood_sum(values, weights)
+    std = _hood_standard_deviation(values, weights)
+    mean = _hood_sum(values, weights)
 
     center_value = values[center_idx]
 
@@ -145,14 +145,14 @@ def hood_z_score(
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_z_score_mad(
+def _hood_z_score_mad(
     values: np.ndarray,
     weights: np.ndarray,
     center_idx: int,
 ) -> Union[float, int]:
     """ Get the local z score calculated around the MAD. """
-    mad_std = hood_median_absolute_deviation(values, weights) * 1.4826
-    median = hood_quantile(values, weights, 0.5)
+    mad_std = _hood_median_absolute_deviation(values, weights) * 1.4826
+    median = _hood_quantile(values, weights, 0.5)
 
     center_value = values[center_idx]
 
@@ -160,36 +160,36 @@ def hood_z_score_mad(
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_standard_deviation(
+def _hood_standard_deviation(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
     "Get the weighted standard deviation. "
-    summed = hood_sum(values, weights)
+    summed = _hood_sum(values, weights)
     variance = np.sum(np.multiply(np.power(np.subtract(values, summed), 2), weights))
     return np.sqrt(variance)
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def k_to_size(size: int) -> int:
+def _k_to_size(size: int) -> int:
     """ Preprocess Sigma Lee limits. """
     return int(np.rint(-0.0000837834 * size ** 2 + 0.045469 * size + 0.805733))
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, cache=True)
-def hood_sigma_lee(
+def _hood_sigma_lee(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
     """ Sigma lee SAR filter. """
-    std = hood_standard_deviation(values, weights)
+    std = _hood_standard_deviation(values, weights)
     selected_values = np.zeros_like(values)
     selected_weights = np.zeros_like(weights)
 
     sigma_mult = 1
     passed = 0
     attempts = 0
-    ks = k_to_size(values.size)
+    ks = _k_to_size(values.size)
 
     while passed < ks and attempts < 5:
         for idx, val in np.ndenumerate(values):
@@ -202,7 +202,7 @@ def hood_sigma_lee(
         attempts += 1
 
     if passed < ks:
-        return hood_sum(values, weights)
+        return _hood_sum(values, weights)
 
     sum_of_weights = np.sum(selected_weights)
 
@@ -211,11 +211,11 @@ def hood_sigma_lee(
 
     selected_weights = np.divide(selected_weights, sum_of_weights)
 
-    return hood_sum(selected_values, selected_weights)
+    return _hood_sum(selected_values, selected_weights)
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_roughness(
+def _hood_roughness(
     values: np.ndarray,
     weights: np.ndarray,
     center_idx: int,
@@ -232,7 +232,7 @@ def hood_roughness(
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_roughness_tpi(
+def _hood_roughness_tpi(
     values: np.ndarray,
     weights: np.ndarray,
     center_idx: int,
@@ -246,11 +246,11 @@ def hood_roughness_tpi(
     weights_non_center = np.delete(weights, center_idx)
     weights_non_center = np.divide(weights_non_center, np.sum(weights_non_center))
 
-    return np.abs(center_value - hood_sum(values_non_center, weights_non_center))
+    return np.abs(center_value - _hood_sum(values_non_center, weights_non_center))
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
-def hood_roughness_tri(
+def _hood_roughness_tri(
     values: np.ndarray,
     weights: np.ndarray,
     center_idx: int,
@@ -264,4 +264,4 @@ def hood_roughness_tri(
     weights_non_center = np.delete(weights, center_idx)
     weights_non_center = np.divide(weights_non_center, np.sum(weights_non_center))
 
-    return hood_sum(np.abs(np.subtract(values_non_center, center_value)), weights_non_center)
+    return _hood_sum(np.abs(np.subtract(values_non_center, center_value)), weights_non_center)

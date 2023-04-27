@@ -505,17 +505,11 @@
 
             <div class="docstring"><p>Check if a raster or a list of rasters contain nodata values.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    raster (Union[str, gdal.Dataset, List]): The raster to check for nodata values.</p>
 
-<ul>
-<li><strong>raster (Union[str, gdal.Dataset, List]):</strong>  The raster to check for nodata values.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>bool: True if the raster or list of rasters contain nodata values.</p>
-</blockquote>
+<p>Returns:
+    bool: True if the raster or list of rasters contain nodata values.</p>
 </div>
 
 
@@ -565,17 +559,11 @@
 
             <div class="docstring"><p>Get the nodata value of a raster or a list of rasters.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    raster (Union[str, gdal.Dataset, List]): The raster(s) to get nodata values from.</p>
 
-<ul>
-<li><strong>raster (Union[str, gdal.Dataset, List]):</strong>  The raster(s) to get nodata values from.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>Union[float, int, List]: The nodata value(s) of the raster(s).</p>
-</blockquote>
+<p>Returns:
+    Union[float, int, List]: The nodata value(s) of the raster(s).</p>
 </div>
 
 
@@ -711,32 +699,23 @@
 
             <div class="docstring"><p>Sets all the nodata for raster(s) to a value.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    raster (Union[str, gdal.Dataset, List]): The raster(s) to set nodata values for.
+    dst_nodata (Union[float, int, str, None]): The target nodata value. If 'infer' the nodata
+        value is set based on the input datatype. A list of nodata values can be based matching
+        the amount of input rasters. If multiple nodata values should be set,
+        use raster_mask_values.</p>
 
-<ul>
-<li><strong>raster (Union[str, gdal.Dataset, List]):</strong>  The raster(s) to set nodata values for.</li>
-<li><strong>dst_nodata (Union[float, int, str, None]):</strong>  The target nodata value. If 'infer' the nodata
-value is set based on the input datatype. A list of nodata values can be based matching
-the amount of input rasters. If multiple nodata values should be set,
-use raster_mask_values.</li>
-</ul>
+<p>Keyword Args:
+    out_path (str=None): The destination of the changed rasters.
+    overwrite (bool=True): Should the rasters be overwritten if they already exist?
+    in_place (bool=False): Should the rasters be changed in_place or copied?
+    prefix (str=""): Prefix to add to the output.
+    suffix (str="_nodata_set"): Suffix to add to the output.
+    creation_options (List=None): Creation options for the output rasters.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>out_path (str=None): The destination of the changed rasters.
-  overwrite (bool=True): Should the rasters be overwritten if they already exist?
-  in_place (bool=False): Should the rasters be changed in_place or copied?
-  prefix (str=""): Prefix to add to the output.
-  suffix (str="_nodata_set"): Suffix to add to the output.
-  creation_options (List=None): Creation options for the output rasters.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>Union[str, List]: Returns the rasters with nodata set.</p>
-</blockquote>
+<p>Returns:
+    Union[str, List]: Returns the rasters with nodata set.</p>
 </div>
 
 
@@ -795,28 +774,19 @@ use raster_mask_values.</li>
 
             <div class="docstring"><p>Removes all the nodata from a raster or a list of rasters.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    raster (Union[str, gdal.Dataset, List]): The raster(s) to remove nodata values for.</p>
 
-<ul>
-<li><strong>raster (Union[str, gdal.Dataset, List]):</strong>  The raster(s) to remove nodata values for.</li>
-</ul>
+<p>Keyword Args:
+    out_path (str=None): The destination of the changed rasters.
+    overwrite (bool=True): Should the rasters be overwritten if they already exist?
+    in_place (bool=False): Should the rasters be changed in_place or copied?
+    prefix (str=""): Prefix to add to the output.
+    suffix (str="_nodata_removed"): Suffix to add to the output.
+    creation_options (List=None): Creation options for the output rasters.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>out_path (str=None): The destination of the changed rasters.
-  overwrite (bool=True): Should the rasters be overwritten if they already exist?
-  in_place (bool=False): Should the rasters be changed in_place or copied?
-  prefix (str=""): Prefix to add to the output.
-  suffix (str="_nodata_removed"): Suffix to add to the output.
-  creation_options (List=None): Creation options for the output rasters.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>Union[str, List]: Returns the rasters with nodata removed.</p>
-</blockquote>
+<p>Returns:
+    Union[str, List]: Returns the rasters with nodata removed.</p>
 </div>
 
 
@@ -973,35 +943,26 @@ use raster_mask_values.</li>
 
             <div class="docstring"><p>Mask a raster with a list of values.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    raster (Union[str, gdal.Dataset, List]): The raster(s) to mask.
+    values_to_mask (List): The values to mask.</p>
 
-<ul>
-<li><strong>raster (Union[str, gdal.Dataset, List]):</strong>  The raster(s) to mask.</li>
-<li><strong>values_to_mask (List):</strong>  The values to mask.</li>
-</ul>
+<p>Keyword Args:
+    include_original_nodata (bool=True): Should the nodata_value of the input raster be added
+        to the list of masked values?
+    dst_nodata (Union[float, int, str, List]="infer"): The nodata value to use for the output raster.
+        If infer, the nodata_value from the input raster is used.
+    out_path (str=None): The destination of the changed rasters.
+        If out_paths are specified, in_place is automatically set to False. The path can be a folder.
+    in_place (bool=False): Should the rasters be changed in_place or copied?
+    overwrite (bool=True): If the output path exists already, should it be overwritten?
+    prefix (str=""): Prefix to add to the output.
+    suffix (str=""): Suffix to add to the output.
+    add_uuid (bool=False): Should a uuid be added to the output path?
+    creation_options (List=None): The GDAL creation options to be passed.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>include_original_nodata (bool=True): Should the nodata_value of the input raster be added
-      to the list of masked values?
-  dst_nodata (Union[float, int, str, List]="infer"): The nodata value to use for the output raster.
-      If infer, the nodata_value from the input raster is used.
-  out_path (str=None): The destination of the changed rasters.
-      If out_paths are specified, in_place is automatically set to False. The path can be a folder.
-  in_place (bool=False): Should the rasters be changed in_place or copied?
-  overwrite (bool=True): If the output path exists already, should it be overwritten?
-  prefix (str=""): Prefix to add to the output.
-  suffix (str=""): Suffix to add to the output.
-  add_uuid (bool=False): Should a uuid be added to the output path?
-  creation_options (List=None): The GDAL creation options to be passed.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>Union[str, List]: Returns the rasters with nodata masked.</p>
-</blockquote>
+<p>Returns:
+    Union[str, List]: Returns the rasters with nodata masked.</p>
 </div>
 
 

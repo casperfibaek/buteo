@@ -20,12 +20,18 @@ def simple_blur_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
     """
     Create a 2D blur kernel.
 
-    [1, 2, 1],
-    [2, 4, 2],
-    [1, 2, 1],
+    The kernel has the following form:
 
-    Returns:
-        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+        [1, 2, 1],
+        [2, 4, 2],
+        [1, 2, 1],
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        A tuple of two numpy arrays. The first array contains the (x, y) offsets
+        of the kernel values. The second array contains the corresponding weights
+        of each kernel value.
     """
     offsets = np.array([
         [ 1, -1], [ 1, 0], [ 1, 1],
@@ -49,13 +55,21 @@ def simple_unsharp_kernel_2d_3x3(
     """
     Create a 2D unsharp kernel.
 
-    baseweights:
+    The kernel has the following form:
+    ```python
+    [
         0.09911165, 0.15088834, 0.09911165,
         0.15088834, 0.        , 0.15088834,
         0.09911165, 0.15088834, 0.09911165,
+    ]
+    ```
 
-    Returns:
-        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        A tuple of two numpy arrays. The first array contains the (x, y) offsets
+        of the kernel values. The second array contains the corresponding weights
+        of each kernel value.
     """
     offsets = np.array([
         [ 1, -1], [ 1, 0], [ 1, 1],
@@ -82,16 +96,26 @@ def simple_shift_kernel_2d(
     y_offset: float,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Create a 2D shift kernel. Useful for either aligning rasters at the sub-pixel
-    level or for shifting a raster by a whole pixel while keeping the bbox.
-    Can be used to for an augmentation, where channel misalignment is simulated.
+    Create a 2D shift kernel.
 
-    Args:
-        x_offset (float): The x offset.
-        y_offset (float): The y offset.
+    This function returns a kernel that can be used to shift a raster by a fractional
+    number of pixels in the x and y directions. The kernel can also be used to simulate
+    channel misalignment in image augmentation.
 
-    Returns:
-        Tuple[np.ndarray, np.ndarray]: The offsets and weights.
+    Parameters
+    ----------
+    x_offset : float
+        The horizontal (x) offset to apply.
+
+    y_offset : float
+        The vertical (y) offset to apply.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        A tuple of two numpy arrays. The first array contains the (x, y) offsets
+        of the kernel values. The second array contains the corresponding weights
+        of each kernel value.
     """
     if x_offset == 0.0 and y_offset == 0.0:
         offsets = np.array([[0, 0]], dtype=np.int64)
@@ -139,7 +163,7 @@ def simple_shift_kernel_2d(
     return offsets, weights
 
 
-def weight_distance(
+def _weight_distance(
     arr: np.ndarray,
     method: Optional[str] = None,
     decay: float = 0.2,
@@ -151,25 +175,49 @@ def weight_distance(
     """
     Weights the kernel by distance using various methods.
 
-    Args:
-        arr (numpy.ndarray): The input array.
-        method (str=None): The weighting method to use.
-            "none": No weighting (default).
-            "linear": Linear decay.
-            "sqrt": Square root decay.
-            "power": Power decay.
-            "log": Logarithmic decay.
-            "gaussian": Gaussian decay.
-        decay (float=0.2): The decay rate for the `linear`, `sqrt`, and `power` methods.
-        sigma (float=1.0): The standard deviation for the Gaussian method.
-        center (float=0.0): The center of the array.
-        spherical (bool=False): If True, adjust weights based on the radius.
-        radius (float=3.0): The radius for spherical adjustments.
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        The input array.
 
-    Returns:
-        float: The computed weight.
+    method : str, optional
+        The weighting method to use. Can be one of the following:
+        - "none": No weighting (default).
+        - "linear": Linear decay.
+        - "sqrt": Square root decay.
+        - "power": Power decay.
+        - "log": Logarithmic decay.
+        - "gaussian": Gaussian decay.
+
+    decay : float, optional
+        The decay rate for the `linear`, `sqrt`, and `power` methods.
+
+    sigma : float, optional
+        The standard deviation for the Gaussian method.
+
+    center : float, optional
+        The center of the array.
+
+    spherical : bool, optional
+        If True, adjust weights based on the radius.
+
+    radius : float, optional
+        The radius for spherical adjustments.
+
+    Returns
+    -------
+    float
+        The computed weight.
+
+    Notes
+    -----
+    This function applies a weighting scheme to an input array based on the distance
+    of each value from a specified center. The weighting method can be one of several
+    options, including no weighting (the default), linear decay, square root decay,
+    power decay, logarithmic decay, or Gaussian decay. If the `spherical` parameter is
+    set to True, the weighting will be adjusted based on the distance from the center
+    using a spherical radius.
     """
-
     if center == 0.0:
         normed = np.linalg.norm(arr)
     else:
@@ -211,15 +259,26 @@ def weight_distance(
     return weights
 
 
-def rotate_kernel(bottom_right: np.ndarray) -> np.ndarray:
+def _rotate_kernel(bottom_right: np.ndarray) -> np.ndarray:
     """
     Creates a whole kernel from a quadrant.
 
-    Args:
-        bottom_right (numpy.ndarray): The bottom-right quadrant of the kernel.
+    Parameters
+    ----------
+    bottom_right : numpy.ndarray
+        The bottom-right quadrant of the kernel.
 
-    Returns:
-        numpy.ndarray: The complete kernel generated from the given quadrant.
+    Returns
+    -------
+    numpy.ndarray
+        The complete kernel generated from the given quadrant.
+
+    Notes
+    -----
+    This function takes a quadrant of a kernel as input and returns the complete kernel
+    by mirroring the quadrant across both axes. The input quadrant should be the
+    bottom-right quadrant of the kernel, as this quadrant contains the highest frequency
+    components of the kernel.
     """
     size = ((bottom_right.shape[0] - 1) * 2) + 1
     depth = bottom_right.shape[2]
@@ -251,24 +310,59 @@ def get_kernel(
     distance_sigma: float = 1,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Generates a square kernel for convolutions.
+    Generates a kernel for convolutions.
 
-    Args:
-        size (int): Size of the kernel (must be odd).
-        depth (int=1): Depth of the kernel.
-        hole (bool=False): Create a hole in the center of the kernel.
-        inverted (bool=False): Invert the kernel values.
-        normalise (bool=True): Normalize the kernel values.
-        multi_dimensional (bool=False): Consider the kernel multi-dimensional.
-        multi_dimensional_center (int=0): Center of the
-            multi-dimensional kernel.
-        spherical (bool=False): Consider the kernel spherical.
-        distance_weight (str or None=None): Distance weighting method.
-        distance_decay (float=0.2): Distance decay factor.
-        distance_sigma (float=1): Distance sigma for Gaussian distance weighting.
+    Parameters
+    ----------
+    size : int
+        The size of the kernel (must be odd).
 
-    Returns:
-        tuple: A tuple containing the kernel, weights, and offsets.
+    depth : int, optional
+        The depth of the kernel. Default: 1.
+
+    hole : bool, optional
+        If True, create a hole in the center of the kernel. Default: False.
+
+    inverted : bool, optional
+        If True, invert the kernel values. Default: False.
+
+    normalise : bool, optional
+        If True, normalize the kernel values. Default: True.
+
+    multi_dimensional : bool, optional
+        If True, consider the kernel multi-dimensional. Default: False.
+
+    multi_dimensional_center : int, optional
+        The center of the multi-dimensional kernel. Default: 0.
+
+    spherical : bool, optional
+        If True, consider the kernel spherical. Default: False.
+
+    distance_weight : str or None, optional
+        The distance weighting method. Can be one of the following:
+        - "none": No weighting.
+        - "linear": Linear decay.
+        - "sqrt": Square root decay.
+        - "power": Power decay.
+        - "log": Logarithmic decay.
+        - "gaussian": Gaussian decay.
+        Default: None.
+    distance_decay : float, optional
+        The distance decay factor. Default: 0.2.
+
+    distance_sigma : float, optional
+        The distance sigma for Gaussian distance weighting. Default: 1.
+
+    Returns
+    -------
+    tuple
+        A tuple containing the kernel, weights, and offsets.
+
+    Notes
+    -----
+    This function generates a square kernel for use in convolutions. The kernel can
+    have multiple dimensions, and can be spherically or distance-weighted. The function
+    returns a tuple containing the kernel, weights, and offsets.
     """
     assert size >= 3, "Kernel must have atleast size 3."
     assert size % 2 != 0, "Kernel must be an uneven size."
@@ -287,7 +381,7 @@ def get_kernel(
 
                 z_value = idx_z if multi_dimensional else 0
 
-                weighted = weight_distance(
+                weighted = _weight_distance(
                     np.array([idx_x, idx_y, z_value], dtype="float32"),
                     method=distance_weight,
                     decay=distance_decay,
@@ -303,7 +397,7 @@ def get_kernel(
         for idx_z in range(0, quadrant.shape[2]):
             quadrant[0, 0, idx_z] = 0
 
-    kernel = rotate_kernel(quadrant)
+    kernel = _rotate_kernel(quadrant)
 
     if distance_weight == "log":
         kernel = kernel.max() - kernel
@@ -355,19 +449,37 @@ def pad_array(
     """
     Create a padded view of an array using SAME padding.
 
-    Args:
-        arr (numpy.ndarray): The input array to be padded.
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        The input array to be padded.
 
-    Keyword Args:
-        pad_size (int=1): The number of padding elements to add
-            to each side of the array. Default is 1.
-        method (str="same"): The padding method to use. Default
-            is "same". Other options are "edge" and "constant".
-        constant_value (int=None): The constant value to use
-            when padding with "constant". Default is 0.
+    Keyword Args
+    ------------
+    pad_size : int, optional
+        The number of padding elements to add to each side of the array.
+        Default: 1.
 
-    Returns:
-        numpy.ndarray: A padded view of the input array.
+    method : str, optional
+        The padding method to use. Default: "same". Other options are
+        "edge" and "constant".
+
+    constant_value : int, optional
+        The constant value to use when padding with "constant". Default: 0.
+
+    Returns
+    -------
+    numpy.ndarray
+        A padded view of the input array.
+
+    Notes
+    -----
+    This function creates a padded view of an array using SAME padding, which
+    adds padding elements to each side of the array so that the output shape
+    is the same as the input shape. The amount of padding is determined by the
+    `pad_size` parameter. The padding method can be one of three options: "same"
+    (the default), "edge", or "constant". If "constant" padding is used, the
+    `constant_value` parameter specifies the value to use.
     """
     core_utils.type_check(arr, [np.ndarray], "arr")
     core_utils.type_check(pad_size, [int], "pad_size")
@@ -392,7 +504,7 @@ def pad_array(
 
     return padded_view
 
-METHOD_ENUMS = {
+_METHOD_ENUMS = {
     "sum": 1,
     "mode": 2,
     "max": 3,
@@ -416,45 +528,91 @@ METHOD_ENUMS = {
 
 
 @jit(nopython=True, nogil=False, fastmath=True, cache=True)
-def hood_to_value(method, values, weights, nodata_value=-9999.9, center_idx=0, value=0.5):
-    """ Convert a array of values and weights to a single value using a given method. """
+def _hood_to_value(
+    method: int,
+    values: np.ndarray,
+    weights: np.ndarray,
+    nodata_value: float = -9999.9,
+    center_idx: int = 0,
+    value: Union[int, float] = 0.5,
+):
+    """
+    Convert an array of values and weights to a single value using a given method.
+
+    Parameters
+    ----------
+    method : str
+        The method to use for combining the values and weights. Can be one of the following:
+        "mean": Compute the weighted mean of the values.
+        "median": Compute the weighted median of the values.
+        "mode": Compute the weighted mode of the values.
+        "max": Compute the weighted maximum of the values.
+        "min": Compute the weighted minimum of the values.
+        ... any many more specified in the METHODS_ENUM.
+
+    values : numpy.ndarray
+        The values to be combined.
+
+    weights : numpy.ndarray
+        The weights to be used in the combination.
+
+    nodata_value : float, optional
+        The nodata value to use when computing the result. Default: -9999.9.
+
+    center_idx : int, optional
+        The index of the center value in the input arrays. Default: 0.
+
+    value : float, optional
+        The value to use when the input arrays have no valid values. Default: 0.5.
+
+    Returns
+    -------
+    float
+        The result of the combination, or the `nodata_value` if there are no valid values.
+
+    Notes
+    -----
+    This function takes an array of values and an array of weights and combines them
+    into a single value using a specified method. The function supports several methods,
+    including mean, median, mode, maximum, and minimum. The function can also handle nodata
+    values and cases where there are no valid values.
+    """
     if method == 1:
-        return convolution_funcs.hood_sum(values, weights)
+        return convolution_funcs._hood_sum(values, weights)
     elif method == 2:
-        return convolution_funcs.hood_mode(values, weights)
+        return convolution_funcs._hood_mode(values, weights)
     elif method == 3:
-        return convolution_funcs.hood_max(values, weights)
+        return convolution_funcs._hood_max(values, weights)
     elif method == 4:
-        return convolution_funcs.hood_min(values, weights)
+        return convolution_funcs._hood_min(values, weights)
     elif method == 5:
-        return convolution_funcs.hood_contrast(values, weights)
+        return convolution_funcs._hood_contrast(values, weights)
     elif method == 6:
-        return convolution_funcs.hood_quantile(values, weights, 0.5)
+        return convolution_funcs._hood_quantile(values, weights, 0.5)
     elif method == 7:
-        return convolution_funcs.hood_standard_deviation(values, weights)
+        return convolution_funcs._hood_standard_deviation(values, weights)
     elif method == 8:
-        return convolution_funcs.hood_median_absolute_deviation(values, weights)
+        return convolution_funcs._hood_median_absolute_deviation(values, weights)
     elif method == 9:
-        return convolution_funcs.hood_z_score(values, weights, center_idx)
+        return convolution_funcs._hood_z_score(values, weights, center_idx)
     elif method == 10:
-        return convolution_funcs.hood_z_score_mad(values, weights, center_idx)
+        return convolution_funcs._hood_z_score_mad(values, weights, center_idx)
     elif method == 11:
-        return convolution_funcs.hood_sigma_lee(values, weights)
+        return convolution_funcs._hood_sigma_lee(values, weights)
     elif method == 12:
-        return convolution_funcs.hood_quantile(values, weights, value)
+        return convolution_funcs._hood_quantile(values, weights, value)
     elif method == 13:
-        return convolution_funcs.hood_count_occurances(values, weights, value, normalise=False)
+        return convolution_funcs._hood_count_occurances(values, weights, value, normalise=False)
     elif method == 14:
-        return convolution_funcs.hood_count_occurances(values, weights, value, normalise=True)
+        return convolution_funcs._hood_count_occurances(values, weights, value, normalise=True)
     elif method == 15:
-        return convolution_funcs.hood_roughness(values, weights, center_idx)
+        return convolution_funcs._hood_roughness(values, weights, center_idx)
     elif method == 16:
-        return convolution_funcs.hood_roughness_tri(values, weights, center_idx)
+        return convolution_funcs._hood_roughness_tri(values, weights, center_idx)
     elif method == 17:
-        return convolution_funcs.hood_roughness_tpi(values, weights, center_idx)
+        return convolution_funcs._hood_roughness_tpi(values, weights, center_idx)
     else:
         return nodata_value
-
 
 
 @jit(nopython=True, parallel=True, nogil=False, fastmath=True, cache=True)
@@ -469,7 +627,52 @@ def _convolve_array_collapse(
     value: Union[int, float] = 0.5,
 ) -> np.ndarray:
     """
-    Internal. Convolve an array using a set of offsets and weights.
+    Internal function. Convolve an array using a set of offsets and weights and collapse the
+    result along the last axis.
+
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        The input array to be convolved and collapsed.
+
+    offsets : list of tuples
+        The list of pixel offsets to use in the convolution. Each tuple should be in the
+        format `(row_offset, col_offset, depth_offset)`, where row_offset and col_offset
+        are the row and column offsets from the center pixel, and depth_offset is the
+        depth offset if the input array has more than two dimensions.
+
+    weights : list of floats
+        The list of weights to use in the convolution. The length of the weights list should
+        be the same as the length of the offsets list.
+
+    method : int, optional
+        The convolution method to use. Default: 1.
+
+    nodata : bool, optional
+        If True, treat the nodata value as a valid value. Default: False.
+
+    nodata_value : float, optional
+        The nodata value to use when computing the result. Default: -9999.9.
+
+    normalise_edges : bool, optional
+        If True, normalise the edge pixels based on the number of valid pixels in the kernel.
+        Default: True.
+
+    value : int or float, optional
+        The value to use for pixels where the kernel extends outside the input array.
+        Default: 0.5.
+
+    Returns
+    -------
+    numpy.ndarray
+        The convolved and collapsed array.
+
+    Notes
+    -----
+    This function convolves an array using a set of offsets and weights and collapses the result
+    along the last axis. The function supports different convolution methods, including nearest,
+    linear, and cubic. The function can also handle nodata values and cases where the kernel
+    extends outside the input array.
     """
     result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype="float32")
     hood_size = len(offsets)
@@ -530,7 +733,7 @@ def _convolve_array_collapse(
             if hood_normalise:
                 hood_weights /= np.sum(hood_weights)
 
-            result[idx_y, idx_x, 0] = hood_to_value(method, hood_values, hood_weights, nodata_value, center_idx, value)
+            result[idx_y, idx_x, 0] = _hood_to_value(method, hood_values, hood_weights, nodata_value, center_idx, value)
 
     return result
 
@@ -547,7 +750,50 @@ def _convolve_array(
     value: Union[int, float, None] = None,
 ) -> np.ndarray:
     """
-    Internal. Convolve an array using a set of offsets and weights.
+    Internal function. Convolve an array using a set of offsets and weights.
+
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        The input array to be convolved.
+
+    offsets : list of tuples
+        The list of pixel offsets to use in the convolution. Each tuple should be in the
+        format (row_offset, col_offset, depth_offset), where row_offset and col_offset
+        are the row and column offsets from the center pixel, and depth_offset is the
+        depth offset if the input array has more than two dimensions.
+
+    weights : list of floats
+        The list of weights to use in the convolution. The length of the weights list should
+        be the same as the length of the offsets list.
+
+    method : int, optional
+        The convolution method to use. Default: 1.
+
+    nodata : bool, optional
+        If True, treat the nodata value as a valid value. Default: False.
+
+    nodata_value : float, optional
+        The nodata value to use when computing the result. Default: -9999.9.
+
+    normalise_edges : bool, optional
+        If True, normalise the edge pixels based on the number of valid pixels in the kernel.
+        Default: True.
+
+    value : int or float or None, optional
+        The value to use for pixels where the kernel extends outside the input array.
+        If None, use the edge value. Default: None.
+
+    Returns
+    -------
+    numpy.ndarray
+        The convolved array.
+
+    Notes
+    -----
+    This function convolves an array using a set of offsets and weights. The function supports
+    different convolution methods, including nearest, linear, and cubic. The function can also
+    handle nodata values and cases where the kernel extends outside the input array.
     """
     result = np.zeros((arr.shape[0], arr.shape[1], arr.shape[2]), dtype="float32")
     hood_size = len(offsets)
@@ -608,73 +854,9 @@ def _convolve_array(
                 if hood_normalise:
                     hood_weights /= np.sum(hood_weights)
 
-                result[idx_y, idx_x, idx_z] = hood_to_value(method, hood_values, hood_weights, nodata_value, center_idx, value)
+                result[idx_y, idx_x, idx_z] = _hood_to_value(method, hood_values, hood_weights, nodata_value, center_idx, value)
 
     return result
-
-
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
-def convolve_array_simple2(
-    array: np.ndarray,
-    offsets: np.ndarray,
-    weights: np.ndarray,
-    nodata_value: float = -9999.9,
-    intensity: float = 1.0,
-):
-    """
-    Convolve a kernel with an array using a simple method.
-
-    Args:
-        array (np.ndarray): The array to convolve.
-        offsets (np.ndarray): The offsets of the kernel.
-        weights (np.ndarray): The weights of the kernel.
-    
-    Keyword Args:
-        intensity (float=1.0): The intensity of the convolution. If
-            1.0, the convolution is applied as is. If 0.5, the
-            convolution is applied at half intensity.
-
-    Returns:
-        np.ndarray: The convolved array.
-    """
-    result = np.empty_like(array, dtype=np.float32)
-
-    if intensity <= 0.0:
-        return array.astype(np.float32)
-
-    for col in prange(array.shape[0]):
-        for row in prange(array.shape[1]):
-            if array[col, row] == nodata_value:
-                result[col, row] = nodata_value
-                continue
-
-            result_value = 0.0
-            result_weight = 0.0
-            for i in range(offsets.shape[0]):
-                new_col = col + offsets[i, 0]
-                new_row = row + offsets[i, 1]
-
-                if new_col < 0 or new_col >= array.shape[0]:
-                    continue
-
-                if new_row < 0 or  new_row >= array.shape[1]:
-                    continue
-
-                result_weight += weights[i]
-                result_value += array[new_col, new_row] * weights[i]
-
-            if result_weight > 0.0:
-                result_value /= result_weight
-            else:
-                result_value = nodata_value
-
-    if intensity < 1.0:
-        result *= intensity
-        array *= (1.0 - intensity)
-        result += array
-
-    return result
-
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
@@ -687,18 +869,30 @@ def convolve_array_simple(
     """
     Convolve a kernel with an array using a simple method.
 
-    Args:
-        array (np.ndarray): The array to convolve.
-        offsets (np.ndarray): The offsets of the kernel.
-        weights (np.ndarray): The weights of the kernel.
-    
-    Keyword Args:
-        intensity (float=1.0): The intensity of the convolution. If
-            1.0, the convolution is applied as is. If 0.5, the
-            convolution is applied at half intensity.
+    Parameters
+    ----------
+    array : numpy.ndarray
+        The array to convolve.
 
-    Returns:
-        np.ndarray: The convolved array.
+    offsets : numpy.ndarray
+        The offsets of the kernel.
+
+    weights : numpy.ndarray
+        The weights of the kernel.
+
+    intensity : float, optional
+        The intensity of the convolution. If 1.0, the convolution is applied as is. If 0.5,
+        the convolution is applied at half intensity. Default: 1.0.
+
+    Returns
+    -------
+    numpy.ndarray
+        The convolved array.
+
+    Notes
+    -----
+    This function convolves a kernel with an array using a simple method. The function supports
+    applying the convolution at a reduced intensity to achieve a blended effect.
     """
     result = np.empty_like(array, dtype=np.float32)
 
@@ -748,16 +942,25 @@ def convolve_array(
     value: Union[int, float, None] = None,
 ) -> np.ndarray:
     """
-    Convolve an image with a function.
+   Convolve an image with a neighborhood function.
 
-    Args:
-        arr (numpy.ndarray): The input array to convolve.
-        offsets (list of tuples): The list of offsets for the neighborhood
-            used in the convolution.
-        weights (list): The list of weights used in the convolution.
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        The input array to convolve.
 
-    Keyword Args:
-        method (int=1): The method to use for the convolution.
+    offsets : list of tuples
+        The list of pixel offsets to use in the convolution. Each tuple should be in the
+        format (row_offset, col_offset, depth_offset), where row_offset and col_offset
+        are the row and column offsets from the center pixel, and depth_offset is the
+        depth offset if the input array has more than two dimensions.
+
+    weights : list of floats
+        The list of weights to use in the convolution. The length of the weights list should
+        be the same as the length of the offsets list.
+
+    method : int, optional
+        The method to use for the convolution. The available options are:
             1: hood_sum
             2: hood_mode
             3: hood_max
@@ -769,22 +972,40 @@ def convolve_array(
             9: hood_z_score
             10: hood_z_score_mad
             11: hood_sigma_lee
-        nodata (bool=False): If True, nodata values are considered
-            in the convolution.
-        nodata_value (float=-9999.9): The value representing nodata.
-        normalise_edges (bool=True): If True, the weights at the edges
-            are normalised to sum to one. Only relavant for border pixels.
-            Use false, if you are interested in the sum, otherwise you likely
-            want to use True.
-        collapse (bool=False): If True, the convolution results in a (height, width, 1)
-            array. Otherwise, the convolution results in a (height, width, depth) applied
-            channelwise.
-        value (Union[int, float, None]=None): If not None, the value to use for the convolution.
-            depending on the method specified.
+        Default: 1.
 
+    nodata : bool, optional
+        If True, treat the nodata value as a valid value. Default: False.
 
-    Returns:
-        numpy.ndarray: The convolved array.
+    nodata_value : float, optional
+        The nodata value to use when computing the result. Default: -9999.9.
+
+    normalise_edges : bool, optional
+        If True, normalise the edge pixels based on the number of valid pixels in the kernel.
+        Only relevant for border pixels. Use False if you are interested in the sum; otherwise,
+        you likely want to use True. Default: True.
+
+    collapse : bool, optional
+        If True, the convolution results in a (height, width, 1) array. Otherwise, the
+        convolution results in a (height, width, depth) array that is applied channel-wise.
+        Default: False.
+
+    value : int or float or None, optional
+        If not None, the value to use for the convolution depending on the method specified.
+        Default: None.
+
+    Returns
+    -------
+    numpy.ndarray
+        The convolved array.
+
+    Notes
+    -----
+    This function convolves an array with a neighborhood function using a set of pixel
+    offsets and weights. The function supports various convolution methods, including
+    sum, mode, maximum, minimum, contrast, quantile, standard deviation, median absolute
+    deviation, z-score, and sigma-lee. The function can also handle nodata values and cases
+    where the kernel extends outside the input array.
     """
     core_utils.type_check(arr, [np.ndarray], "arr")
     core_utils.type_check(offsets, [np.ndarray], "offsets")
@@ -797,7 +1018,7 @@ def convolve_array(
     core_utils.type_check(value, [int, float, type(None)], "value")
 
     assert len(offsets) == len(weights), "offsets and weights must be the same length"
-    assert method in range(1, len(METHOD_ENUMS)), "method must be between 1 and 11"
+    assert method in range(1, len(_METHOD_ENUMS)), "method must be between 1 and 11"
     assert arr.ndim in [2, 3], "arr must be 2 or 3 dimensional"
 
     if value is None:

@@ -24,15 +24,23 @@ def raster_dem_to_slope(
     """
     Slope in percent.
     
-    Args:
-        input_raster: Path to input raster or gdal.Dataset.
-        output_raster: Path to output raster.
+    Parameters
+    ----------
+    input_raster : str or gdal.Dataset
+        Path to input raster or gdal.Dataset.
 
-    Keyword Args:
-        slope_format: "percent" or "degree".
-        z_factor: Z factor for slope calculation.
+    output_raster : str
+        Path to output raster.
 
-    Returns:
+    slope_format : str, optional
+        "percent" or "degree", by default "percent".
+
+    z_factor : float, optional
+        Z factor for slope calculation, by default 1.0.
+
+    Returns
+    -------
+    str
         Path to output raster.
     """
     type_check(input_raster, [str, gdal.Dataset], "input_raster")
@@ -71,14 +79,20 @@ def raster_dem_to_aspect(
     """
     Aspect in degrees.
     
-    Args:
-        input_raster: Path to input raster or gdal.Dataset.
-        output_raster: Path to output raster.
+    Parameters
+    ----------
+    input_raster : str or gdal.Dataset
+        Path to input raster or gdal.Dataset.
 
-    Keyword Args:
-        zero_for_flat: If True, set aspect to 0 for flat areas.
+    output_raster : str
+        Path to output raster.
 
-    Returns:
+    zero_for_flat : bool, optional
+        If True, set aspect to 0 for flat areas, by default False.
+
+    Returns
+    -------
+    str
         Path to output raster.
     """
     type_check(input_raster, [str, gdal.Dataset], "input_raster")
@@ -113,14 +127,20 @@ def raster_dem_to_hillshade(
     """
     Hillshade in degrees.
     
-    Args:
-        input_raster: Path to input raster or gdal.Dataset.
-        output_raster: Path to output raster.
+    Parameters
+    ----------
+    input_raster : str or gdal.Dataset
+        Path to input raster or gdal.Dataset.
 
-    Keyword Args:
-        z_factor: Z factor for hillshade calculation.
-    
-    Returns:
+    output_raster : str
+        Path to output raster.
+
+    z_factor : float, optional
+        Z factor for hillshade calculation, by default 1.0.
+
+    Returns
+    -------
+    str
         Path to output raster.
     """
     type_check(input_raster, [str, gdal.Dataset], "input_raster")
@@ -155,19 +175,29 @@ def raster_dem_to_orientation(
     height_normalisation: bool = True,
     height_normalisation_value: float = 8849.0, # mt. everest
 ) -> str:
-    """ 
+    """
     Normalised orientation.
+    
+    Parameters
+    ----------
+    input_raster : str or gdal.Dataset
+        Path to input raster or gdal.Dataset.
 
-    Args:
-        input_raster: Path to input raster or gdal.Dataset.
-        output_raster: Path to output raster.
-    
-    Keyword Args:
-        include_height: If True, include height in orientation calculation.
-        height_normalisation: If True, normalise height to 0-1.
-        height_normalisation_value: Value to normalise height to.
-    
-    Returns:
+    output_raster : str
+        Path to output raster.
+
+    include_height : bool, optional
+        If True, include height in orientation calculation, by default False.
+
+    height_normalisation : bool, optional
+        If True, normalise height to 0-1, by default False.
+
+    height_normalisation_value : float, optional
+        Value to normalise height to, by default 1.0.
+
+    Returns
+    -------
+    str
         Path to output raster.
     """
     tmp_path = f"/vsimem/{uuid4().int}_temp_aspect.tif"

@@ -10,7 +10,7 @@ from typing import Optional, Union
 import numpy as np
 
 # Internal
-from buteo.raster.convolution import convolve_array, get_kernel, METHOD_ENUMS
+from buteo.raster.convolution import convolve_array, get_kernel, _METHOD_ENUMS
 from buteo.utils import type_check
 
 def texture_local_variance(
@@ -70,7 +70,7 @@ def texture_local_variance(
         arr,
         offsets,
         weights,
-        METHOD_ENUMS["std"],
+        _METHOD_ENUMS["std"],
         nodata=nodata,
         nodata_value=nodata_value,
     )
@@ -135,7 +135,7 @@ def texture_local_median(
         arr,
         offsets,
         weights,
-        METHOD_ENUMS["median"],
+        _METHOD_ENUMS["median"],
         nodata=nodata,
         nodata_value=nodata_value,
     )
@@ -200,7 +200,7 @@ def texture_local_blur(
         arr,
         offsets,
         weights,
-        METHOD_ENUMS["sum"],
+        _METHOD_ENUMS["sum"],
         nodata=nodata,
         nodata_value=nodata_value,
     )
@@ -263,7 +263,7 @@ def texture_local_mode(
         arr,
         offsets,
         weights,
-        METHOD_ENUMS["mode"],
+        _METHOD_ENUMS["mode"],
         nodata=nodata,
         nodata_value=nodata_value,
     )
@@ -328,7 +328,7 @@ def texture_hole_dif(
         arr,
         offsets,
         weights,
-        METHOD_ENUMS["sum"],
+        _METHOD_ENUMS["sum"],
         nodata=nodata,
         nodata_value=nodata_value,
     )

@@ -646,14 +646,11 @@
 
             <div class="docstring"><p>Returns a list of all available drivers.</p>
 
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>List[Dict[str, str]]: List of dicts containing available drivers. Each dict has the following keys:
-      - 'short_name' (str): Driver short name (e.g. GTiff).
-      - 'long_name' (str): Driver long name (e.g. GeoTiff).
-      - 'extension' (str): Driver file extension (e.g. tif). Note: Can be an empty string.</p>
-</blockquote>
+<p>Returns:
+    List[Dict[str, str]]: List of dicts containing available drivers. Each dict has the following keys:
+        - 'short_name' (str): Driver short name (e.g. GTiff).
+        - 'long_name' (str): Driver long name (e.g. GeoTiff).
+        - 'extension' (str): Driver file extension (e.g. tif). Note: Can be an empty string.</p>
 </div>
 
 
@@ -693,11 +690,8 @@
 
             <div class="docstring"><p>Returns a list of valid raster driver extensions.</p>
 
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>list: List of valid raster driver extensions.</p>
-</blockquote>
+<p>Returns:
+    list: List of valid raster driver extensions.</p>
 </div>
 
 
@@ -734,11 +728,8 @@
 
             <div class="docstring"><p>Returns a list of valid vector driver extensions.</p>
 
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>list: List of valid vector driver extensions.</p>
-</blockquote>
+<p>Returns:
+    list: List of valid vector driver extensions.</p>
 </div>
 
 
@@ -775,11 +766,8 @@
 
             <div class="docstring"><p>Returns a list of all valid driver extensions (<strong>GDAL</strong> + <strong>OGR</strong>).</p>
 
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>list: List of all valid driver extensions.</p>
-</blockquote>
+<p>Returns:
+    list: List of all valid driver extensions.</p>
 </div>
 
 
@@ -814,17 +802,11 @@
 
             <div class="docstring"><p>Checks if a file extension is a valid GDAL or OGR driver extension.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    ext (str): The file extension.</p>
 
-<ul>
-<li><strong>ext (str):</strong>  The file extension.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>bool: True if valid, False otherwise.</p>
-</blockquote>
+<p>Returns:
+    bool: True if valid, False otherwise.</p>
 </div>
 
 
@@ -859,17 +841,11 @@
 
             <div class="docstring"><p>Checks if a raster file extension is a valid GDAL driver extension.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    ext (str): The file extension.</p>
 
-<ul>
-<li><strong>ext (str):</strong>  The file extension.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>bool: True if valid, False otherwise.</p>
-</blockquote>
+<p>Returns:
+    bool: True if valid, False otherwise.</p>
 </div>
 
 
@@ -904,17 +880,11 @@
 
             <div class="docstring"><p>Checks if a vector file extension is a valid <strong>OGR</strong> driver extension.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    ext (str): The file extension.</p>
 
-<ul>
-<li><strong>ext (str):</strong>  The file extension.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>bool: True if valid, False otherwise.</p>
-</blockquote>
+<p>Returns:
+    bool: True if valid, False otherwise.</p>
 </div>
 
 
@@ -954,17 +924,11 @@
 
             <div class="docstring"><p>Converts a raster file extension to a GDAL driver short name.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    ext (str): The file extension.</p>
 
-<ul>
-<li><strong>ext (str):</strong>  The file extension.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>str: The GDAL driver short name (e.g. "GTiff").</p>
-</blockquote>
+<p>Returns:
+    str: The GDAL driver short name (e.g. "GTiff").</p>
 </div>
 
 
@@ -1004,17 +968,11 @@
 
             <div class="docstring"><p>Converts a file extension to a driver short name for either OGR or GDAL.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    ext (str): The file extension.</p>
 
-<ul>
-<li><strong>ext (str):</strong>  The file extension.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>str: The driver short name (e.g. GPKG or GTiff).</p>
-</blockquote>
+<p>Returns:
+    str: The driver short name (e.g. GPKG or GTiff).</p>
 </div>
 
 
@@ -1054,17 +1012,11 @@
 
             <div class="docstring"><p>Converts a vector file extension to an <strong>OGR</strong> driver short_name name.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    ext (str): The file extension.</p>
 
-<ul>
-<li><strong>ext (str):</strong>  The file extension.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>str: The driver short_name (e.g. GPKG).</p>
-</blockquote>
+<p>Returns:
+    str: The driver short_name (e.g. GPKG).</p>
 </div>
 
 
@@ -1140,17 +1092,11 @@
 
             <div class="docstring"><p>Translate a string of a resampling method to a GDAL integer (e.g. gdal.GRA_NearestNeighbour).</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    method (str): The resampling method.</p>
 
-<ul>
-<li><strong>method (str):</strong>  The resampling method.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>int: The GDAL resampling integer (e.g. "nearest"=1).</p>
-</blockquote>
+<p>Returns:
+    int: The GDAL resampling integer (e.g. "nearest"=1).</p>
 </div>
 
 
@@ -1203,17 +1149,11 @@
 
             <div class="docstring"><p>Translates the <strong>GDAL</strong> datatype integer into a string. Can be used by <strong>NumPy</strong>.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    gdal_datatype_int (int): The <strong>GDAL</strong> datatype integer.</p>
 
-<ul>
-<li><strong>gdal_datatype_int (int):</strong>  The <strong>GDAL</strong> datatype integer.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>str: The translated string (e.g. <code>0="uint8"</code>)</p>
-</blockquote>
+<p>Returns:
+    str: The translated string (e.g. <code>0="uint8"</code>)</p>
 </div>
 
 
@@ -1349,18 +1289,12 @@
 
             <div class="docstring"><p>Returns the default fill value for masked numpy arrays.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    dtype: The data type of the array, can be either a numpy dtype object, a string representing a
+        data type (e.g. 'float32') or an integer representing a numpy data type (e.g. 5 for 'float32').</p>
 
-<ul>
-<li><strong>dtype:</strong>  The data type of the array, can be either a numpy dtype object, a string representing a
-data type (e.g. 'float32') or an integer representing a numpy data type (e.g. 5 for 'float32').</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>The default fill value for the given data type.</p>
-</blockquote>
+<p>Returns:
+    The default fill value for the given data type.</p>
 </div>
 
 
@@ -1419,17 +1353,11 @@ data type (e.g. 'float32') or an integer representing a numpy data type (e.g. 5 
 
             <div class="docstring"><p>Returns the range of values that can be represented by a given numpy dtype.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    numpy_dtype (str/np.dtype): The numpy dtype.</p>
 
-<ul>
-<li><strong>numpy_dtype (str/np.dtype):</strong>  The numpy dtype.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>tuple: (min_value, max_value) that can be represented by the numpy dtype.</p>
-</blockquote>
+<p>Returns:
+    tuple: (min_value, max_value) that can be represented by the numpy dtype.</p>
 </div>
 
 
@@ -1470,18 +1398,12 @@ data type (e.g. 'float32') or an integer representing a numpy data type (e.g. 5 
 
             <div class="docstring"><p>Checks if a value is within the range of a numpy datatype.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    value (int/float): The value to check.
+    numpy_dtype (str/np.dtype): The numpy dtype.</p>
 
-<ul>
-<li><strong>value (int/float):</strong>  The value to check.</li>
-<li><strong>numpy_dtype (str/np.dtype):</strong>  The numpy dtype.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>bool: True if the value is within the range of the numpy dtype, False otherwise.</p>
-</blockquote>
+<p>Returns:
+    bool: True if the value is within the range of the numpy dtype, False otherwise.</p>
 </div>
 
 
@@ -1522,17 +1444,11 @@ data type (e.g. 'float32') or an integer representing a numpy data type (e.g. 5 
             <div class="docstring"><p>Checks if a GDAL datatype integer is a floating-point datatype:
 (Float32, Float64, cFloat32, cFloat64)</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    gdal_dtype (int): The GDAL datatype integer.</p>
 
-<ul>
-<li><strong>gdal_dtype (int):</strong>  The GDAL datatype integer.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>bool: True if the datatype is a float, otherwise False.</p>
-</blockquote>
+<p>Returns:
+    bool: True if the datatype is a float, otherwise False.</p>
 </div>
 
 

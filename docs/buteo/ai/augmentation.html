@@ -465,78 +465,61 @@ suited to remote sensing imagery.</p>
 
             <div class="docstring"><p>A dataset that applies augmentations to the data.</p>
 
-<h6 id="the-current-augmentations-are-supported">The current augmentations are supported:</h6>
+<p>The current augmentations are supported:
+    - rotation (chance)
+    - mirror (chance)
+    - channel_scale (chance, additive(bool), max_value(float[0,1]))
+    - noise (chance, additive(bool), max_value(float[0,1]))
+    - contrast (chance, max_value(float[0,1]))
+    - drop_pixel (chance, drop_probability(float[0,1]), drop_value(float))
+    - drop_channel (chance, drop_probability(float[0,1]), drop_value(float))
+    - blur (chance, intensity(float[0,1]=1.0))
+    - blur_xy (chance, intensity(float[0,1]=1.0))
+    - sharpen (chance, intensity(float[0,1]=1.0))
+    - sharpen_xy (chance, intensity(float[0,1]=1.0))
+    - cutmix (chance, min_size(float[0, 1]), max_size(float[0, 1]))
+    - mixup (chance, min_size(float[0, 1]), max_size(float[0, 1]), label_mix(int))</p>
 
-<blockquote>
-  <ul>
-  <li>rotation (chance)</li>
-  <li>mirror (chance)</li>
-  <li>channel_scale (chance, additive(bool), max_value(float[0,1]))</li>
-  <li>noise (chance, additive(bool), max_value(float[0,1]))</li>
-  <li>contrast (chance, max_value(float[0,1]))</li>
-  <li>drop_pixel (chance, drop_probability(float[0,1]), drop_value(float))</li>
-  <li>drop_channel (chance, drop_probability(float[0,1]), drop_value(float))</li>
-  <li>blur (chance, intensity(float[0,1]=1.0))</li>
-  <li>blur_xy (chance, intensity(float[0,1]=1.0))</li>
-  <li>sharpen (chance, intensity(float[0,1]=1.0))</li>
-  <li>sharpen_xy (chance, intensity(float[0,1]=1.0))</li>
-  <li>cutmix (chance, min_size(float[0, 1]), max_size(float[0, 1]))</li>
-  <li>mixup (chance, min_size(float[0, 1]), max_size(float[0, 1]), label_mix(int))</li>
-  </ul>
-</blockquote>
+<p>Args:
+    X (np.ndarray): The data to augment.
+    y (np.ndarray): The labels for the data.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Keyword Args:
+    augmentations (list): The augmentations to apply.
+    callback (callable): A callback to apply to the data after augmentation.
+    input_is_channel_last (bool=True): Whether the data is in channel last format.
+    output_is_channel_last (bool=False): Whether the output should be in channel last format.</p>
 
-<ul>
-<li><strong>X (np.ndarray):</strong>  The data to augment.</li>
-<li><strong>y (np.ndarray):</strong>  The labels for the data.</li>
-</ul>
+<p>Returns:
+    A dataset yielding batches of augmented data. For Pytorch,
+        convert the batches to tensors before ingestion.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>augmentations (list): The augmentations to apply.
-  callback (callable): A callback to apply to the data after augmentation.
-  input_is_channel_last (bool=True): Whether the data is in channel last format.
-  output_is_channel_last (bool=False): Whether the output should be in channel last format.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>A dataset yielding batches of augmented data. For Pytorch,
-      convert the batches to tensors before ingestion.</p>
-</blockquote>
-
-<h6 id="example">Example:</h6>
-
-<blockquote>
-  <div class="pdoc-code codehilite">
-<pre><span></span><code><span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-    <span class="k">return</span> <span class="p">(</span>
-        <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span>
-        <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span>
+<p>Example:
+    <div class="pdoc-code codehilite">
+    <pre><span></span><code><span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span>
+        <span class="p">)</span>
+ <br />
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">AugmentationDataset</span><span class="p">(</span>
+        <span class="n">x_train</span><span class="p">,</span>
+        <span class="n">y_train</span><span class="p">,</span>
+        <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
+        <span class="n">input_is_channel_last</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">output_is_channel_last</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">augmentations</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">{</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;rotation&quot;</span><span class="p">,</span> <span class="s2">&quot;chance&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">},</span>
+            <span class="p">{</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;mirror&quot;</span><span class="p">,</span> <span class="s2">&quot;chance&quot;</span><span class="p">:</span> <span class="mf">0.2</span> <span class="p">},</span>
+            <span class="p">{</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;noise&quot;</span><span class="p">,</span> <span class="s2">&quot;chance&quot;</span><span class="p">:</span> <span class="mf">0.2</span> <span class="p">},</span>
+            <span class="p">{</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;cutmix&quot;</span><span class="p">,</span> <span class="s2">&quot;chance&quot;</span><span class="p">:</span> <span class="mf">0.2</span> <span class="p">},</span>
+        <span class="p">],</span>
     <span class="p">)</span>
-
-<span class="n">dataset</span> <span class="o">=</span> <span class="n">AugmentationDataset</span><span class="p">(</span>
-    <span class="n">x_train</span><span class="p">,</span>
-    <span class="n">y_train</span><span class="p">,</span>
-    <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
-    <span class="n">input_is_channel_last</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">output_is_channel_last</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">augmentations</span><span class="o">=</span><span class="p">[</span>
-        <span class="p">{</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;rotation&quot;</span><span class="p">,</span> <span class="s2">&quot;chance&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">},</span>
-        <span class="p">{</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;mirror&quot;</span><span class="p">,</span> <span class="s2">&quot;chance&quot;</span><span class="p">:</span> <span class="mf">0.2</span> <span class="p">},</span>
-        <span class="p">{</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;noise&quot;</span><span class="p">,</span> <span class="s2">&quot;chance&quot;</span><span class="p">:</span> <span class="mf">0.2</span> <span class="p">},</span>
-        <span class="p">{</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;cutmix&quot;</span><span class="p">,</span> <span class="s2">&quot;chance&quot;</span><span class="p">:</span> <span class="mf">0.2</span> <span class="p">},</span>
-    <span class="p">],</span>
-<span class="p">)</span>
-
-<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
-<span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</code></pre>
-  </div>
-</blockquote>
+ <br />
+    <span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+    <span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    </code></pre>
+    </div></p>
 </div>
 
 
@@ -650,27 +633,18 @@ suited to remote sensing imagery.</p>
 Allows a callback to be passed and can convert between
 channel formats.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    X (np.ndarray): The data to augment.
+    y (np.ndarray): The labels for the data.</p>
 
-<ul>
-<li><strong>X (np.ndarray):</strong>  The data to augment.</li>
-<li><strong>y (np.ndarray):</strong>  The labels for the data.</li>
-</ul>
+<p>Keyword Args:
+    callback (callable): A callback to apply to the data after augmentation.
+    input_is_channel_last (bool=True): Whether the data is in channel last format.
+    output_is_channel_last (bool=False): Whether the output should be in channel last format.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>callback (callable): A callback to apply to the data after augmentation.
-  input_is_channel_last (bool=True): Whether the data is in channel last format.
-  output_is_channel_last (bool=False): Whether the output should be in channel last format.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>A dataset yielding batches of data. For Pytorch,
-      convert the batches to tensors before ingestion.</p>
-</blockquote>
+<p>Returns:
+    A dataset yielding batches of data. For Pytorch,
+        convert the batches to tensors before ingestion.</p>
 </div>
 
 

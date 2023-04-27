@@ -267,25 +267,16 @@
 
             <div class="docstring"><p>Split a dataset into training and validation sets. Always shuffles.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    X (np.ndarray): The input data.
+    y (np.ndarray): The target data.</p>
 
-<ul>
-<li><strong>X (np.ndarray):</strong>  The input data.</li>
-<li><strong>y (np.ndarray):</strong>  The target data.</li>
-</ul>
+<p>Keyword Args:
+    val_size (float=0.2): The size of the validation set as a fraction of the total dataset.
+    random_state (float=None): The random seed to use for the split.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>val_size (float=0.2): The size of the validation set as a fraction of the total dataset.
-  random_state (float=None): The random seed to use for the split.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>x_train, x_val, y_train, y_val (np.ndarray): The training and validation sets in a tuple.</p>
-</blockquote>
+<p>Returns:
+    x_train, x_val, y_train, y_val (np.ndarray): The training and validation sets in a tuple.</p>
 </div>
 
 
@@ -351,26 +342,17 @@
 
             <div class="docstring"><p>Split a dataset into training, validation, and test sets. Always shuffles.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    X (np.ndarray): The input data.
+    y (np.ndarray): The target data.</p>
 
-<ul>
-<li><strong>X (np.ndarray):</strong>  The input data.</li>
-<li><strong>y (np.ndarray):</strong>  The target data.</li>
-</ul>
+<p>Keyword Args:
+    val_size (float=0.1): The size of the validation set as a fraction of the total dataset.
+    test_size (float=0.2): The size of the test set as a fraction of the total dataset.
+    random_state (float=None): The random seed to use for the split.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>val_size (float=0.1): The size of the validation set as a fraction of the total dataset.
-  test_size (float=0.2): The size of the test set as a fraction of the total dataset.
-  random_state (float=None): The random seed to use for the split.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>x_train, x_val, x_test, y_train, y_val, y_test (np.ndarray): The training, validation, and test sets in a tuple.</p>
-</blockquote>
+<p>Returns:
+    x_train, x_val, x_test, y_train, y_val, y_test (np.ndarray): The training, validation, and test sets in a tuple.</p>
 </div>
 
 
@@ -437,26 +419,17 @@
 
             <div class="docstring"><p>Stratified sampling of a dataset. Can be used for regression or classification.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    X (np.ndarray): The input data.
+    y (np.ndarray): The target data.</p>
 
-<ul>
-<li><strong>X (np.ndarray):</strong>  The input data.</li>
-<li><strong>y (np.ndarray):</strong>  The target data.</li>
-</ul>
+<p>Keyword Args:
+    regression (bool=False): Whether the dataset is for regression or classification.
+    samples_per_class (int=None): The number of samples to take per class. If None,
+        takes the same number of samples per class as the smallest class.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>regression (bool=False): Whether the dataset is for regression or classification.
-  samples_per_class (int=None): The number of samples to take per class. If None,
-      takes the same number of samples per class as the smallest class.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>X, y (np.ndarray): The stratified dataset.</p>
-</blockquote>
+<p>Returns:
+    X, y (np.ndarray): The stratified dataset.</p>
 </div>
 
 

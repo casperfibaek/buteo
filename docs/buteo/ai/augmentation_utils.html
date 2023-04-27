@@ -456,17 +456,11 @@ suited to remote sensing imagery.</p>
 
             <div class="docstring"><p>Check if a dtype is an integer type </p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    dtype (np.dtype): The dtype to check.</p>
 
-<ul>
-<li><strong>dtype (np.dtype):</strong>  The dtype to check.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>bool: True if the dtype is an integer type.</p>
-</blockquote>
+<p>Returns:
+    bool: True if the dtype is an integer type.</p>
 </div>
 
 
@@ -524,18 +518,12 @@ suited to remote sensing imagery.</p>
     rounded to the nearest integer. If the dtype is a float type, the data
     will be clipped to the min and max values of the dtype.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    data (np.ndarray): The data to fit to the dtype.
+    dtype (np.dtype): The dtype to fit the data to.</p>
 
-<ul>
-<li><strong>data (np.ndarray):</strong>  The data to fit to the dtype.</li>
-<li><strong>dtype (np.dtype):</strong>  The dtype to fit the data to.</li>
-</ul>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: The data fitted to the dtype.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: The data fitted to the dtype.</p>
 </div>
 
 
@@ -632,25 +620,16 @@ suited to remote sensing imagery.</p>
             <div class="docstring"><p>Feather a box into an array (2D). Box should be the original box
     buffered by feather_dist.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    array_whole (np.ndarray): The array containing the box.
+    bbox (Union[List[int], Tuple[int]]): The box.
+        the bbox should be in the form [x_min, x_max, y_min, y_max].</p>
 
-<ul>
-<li><strong>array_whole (np.ndarray):</strong>  The array containing the box.</li>
-<li><strong>bbox (Union[List[int], Tuple[int]]):</strong>  The box.
-the bbox should be in the form [x_min, x_max, y_min, y_max].</li>
-</ul>
+<p>Keyword Args:
+    feather_dist (int=3): The distance to feather the box.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>feather_dist (int=3): The distance to feather the box.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>Tuple[np.ndarray, np.ndarray]: The featherweights for the array and the bbox.</p>
-</blockquote>
+<p>Returns:
+    Tuple[np.ndarray, np.ndarray]: The featherweights for the array and the bbox.</p>
 </div>
 
 
@@ -692,23 +671,14 @@ the bbox should be in the form [x_min, x_max, y_min, y_max].</li>
 
             <div class="docstring"><p>Rotate a 3D array 90 degrees clockwise.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The array to rotate.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The array to rotate.</li>
-</ul>
+<p>Keyword Args:
+    channel_last (bool=True): Whether the last axis is the channel axis.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: The rotated array.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: The rotated array.</p>
 </div>
 
 
@@ -750,23 +720,14 @@ the bbox should be in the form [x_min, x_max, y_min, y_max].</li>
 
             <div class="docstring"><p>Rotate a 3D array 180 degrees clockwise.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The array to rotate.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The array to rotate.</li>
-</ul>
+<p>Keyword Args:
+    channel_last (bool=True): Whether the last axis is the channel axis.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: The rotated array.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: The rotated array.</p>
 </div>
 
 
@@ -809,23 +770,14 @@ the bbox should be in the form [x_min, x_max, y_min, y_max].</li>
 
             <div class="docstring"><p>Rotate a 3D image array 270 degrees clockwise.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The array to rotate.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The array to rotate.</li>
-</ul>
+<p>Keyword Args:
+    channel_last (bool=True): Whether the last axis is the channel axis.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: The rotated array.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: The rotated array.</p>
 </div>
 
 
@@ -879,25 +831,16 @@ the bbox should be in the form [x_min, x_max, y_min, y_max].</li>
 
             <div class="docstring"><p>Rotate an array by 90 degrees intervals clockwise.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The array to rotate.
+    k (int): The number of 90 degree intervals to rotate by.
+        1 for 90 degrees, 2 for 180 degrees, 3 for 270 degrees. 0 for no rotation.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The array to rotate.</li>
-<li><strong>k (int):</strong>  The number of 90 degree intervals to rotate by.
-1 for 90 degrees, 2 for 180 degrees, 3 for 270 degrees. 0 for no rotation.</li>
-</ul>
+<p>Keyword Args:
+    channel_last (bool=True): Whether the last axis is the channel axis.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: The rotated array.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: The rotated array.</p>
 </div>
 
 
@@ -939,23 +882,14 @@ the bbox should be in the form [x_min, x_max, y_min, y_max].</li>
 
             <div class="docstring"><p>Mirror a 3D array horizontally.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The array to mirror.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The array to mirror.</li>
-</ul>
+<p>Keyword Args:
+    channel_last (bool=True): Whether the last axis is the channel axis.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: The mirrored array.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: The mirrored array.</p>
 </div>
 
 
@@ -997,23 +931,14 @@ the bbox should be in the form [x_min, x_max, y_min, y_max].</li>
 
             <div class="docstring"><p>Mirror a 3D array vertically.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The array to mirror.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The array to mirror.</li>
-</ul>
+<p>Keyword Args:
+    channel_last (bool=True): Whether the last axis is the channel axis.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: The mirrored array.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: The mirrored array.</p>
 </div>
 
 
@@ -1055,23 +980,14 @@ the bbox should be in the form [x_min, x_max, y_min, y_max].</li>
 
             <div class="docstring"><p>Mirror a 3D array horizontally and vertically.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The array to mirror.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The array to mirror.</li>
-</ul>
+<p>Keyword Args:
+    channel_last (bool=True): Whether the last axis is the channel axis.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>np.ndarray: The mirrored array.</p>
-</blockquote>
+<p>Returns:
+    np.ndarray: The mirrored array.</p>
 </div>
 
 
@@ -1121,18 +1037,12 @@ the bbox should be in the form [x_min, x_max, y_min, y_max].</li>
 
             <div class="docstring"><p>Mirror an array horizontally and/or vertically.</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    arr (np.ndarray): The array to mirror.
+    k (int): 1 for horizontal, 2 for vertical, 3 for both, 0 for no mirroring.</p>
 
-<ul>
-<li><strong>arr (np.ndarray):</strong>  The array to mirror.</li>
-<li><strong>k (int):</strong>  1 for horizontal, 2 for vertical, 3 for both, 0 for no mirroring.</li>
-</ul>
-
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>channel_last (bool=True): Whether the last axis is the channel axis.</p>
-</blockquote>
+<p>Keyword Args:
+    channel_last (bool=True): Whether the last axis is the channel axis.</p>
 </div>
 
 

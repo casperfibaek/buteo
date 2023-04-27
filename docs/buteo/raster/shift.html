@@ -340,30 +340,21 @@
 
             <div class="docstring"><p>Shifts a raster in a given direction. (The frame is shifted)</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    raster (Union[str, List, gdal.Dataset]): The raster(s) to be shifted.
+    shift_list (List[Union[int, float]]): The shift in x and y direction.</p>
 
-<ul>
-<li><strong>raster (Union[str, List, gdal.Dataset]):</strong>  The raster(s) to be shifted.</li>
-<li><strong>shift_list (List[Union[int, float]]):</strong>  The shift in x and y direction.</li>
-</ul>
+<p>Keyword Args:
+    out_path (Optional[str]='None'): The path to the output raster. If None, the raster is
+        created in memory.
+    overwrite (bool=True): If True, the output raster will be overwritten if it already exists.
+    prefix (str=''): The prefix to be added to the output raster name.
+    suffix (str=''): The suffix to be added to the output raster name.
+    add_uuid (bool=False): If True, a unique identifier will be added to the output raster name.
+    creation_options (Optional[List[str]]='None'): The creation options to be used when creating the output.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>out_path (Optional[str]='None'): The path to the output raster. If None, the raster is
-      created in memory.
-  overwrite (bool=True): If True, the output raster will be overwritten if it already exists.
-  prefix (str=''): The prefix to be added to the output raster name.
-  suffix (str=''): The suffix to be added to the output raster name.
-  add_uuid (bool=False): If True, a unique identifier will be added to the output raster name.
-  creation_options (Optional[List[str]]='None'): The creation options to be used when creating the output.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>Union[str, List[str], gdal.Dataset]: The path(s) to the shifted raster(s).</p>
-</blockquote>
+<p>Returns:
+    Union[str, List[str], gdal.Dataset]: The path(s) to the shifted raster(s).</p>
 </div>
 
 
@@ -428,26 +419,17 @@
 
             <div class="docstring"><p>Shifts a raster in a given direction. (The pixels are shifted, not the frame)</p>
 
-<h6 id="arguments">Arguments:</h6>
+<p>Args:
+    raster (Union[str, gdal.Dataset]): The raster to be shifted.
+    shift_list (List[Union[int, float]]): The shift in x and y direction.</p>
 
-<ul>
-<li><strong>raster (Union[str, gdal.Dataset]):</strong>  The raster to be shifted.</li>
-<li><strong>shift_list (List[Union[int, float]]):</strong>  The shift in x and y direction.</li>
-</ul>
+<p>Keyword Args:
+    nodata_value (Union[int, float]=-9999.9): The nodata value to use when shifting pixels.
+    out_path (Optional[str]='None'): The path to the output raster. If None, the raster is
+        created in memory.</p>
 
-<h6 id="keyword-args">Keyword Args:</h6>
-
-<blockquote>
-  <p>nodata_value (Union[int, float]=-9999.9): The nodata value to use when shifting pixels.
-  out_path (Optional[str]='None'): The path to the output raster. If None, the raster is
-      created in memory.</p>
-</blockquote>
-
-<h6 id="returns">Returns:</h6>
-
-<blockquote>
-  <p>str: The path to the shifted raster.</p>
-</blockquote>
+<p>Returns:
+    str: The path to the shifted raster.</p>
 </div>
 
 

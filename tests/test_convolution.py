@@ -10,11 +10,11 @@ import pytest
 
 # Internal
 from buteo.raster.convolution import (
-    weight_distance,
+    _weight_distance,
     get_kernel,
     pad_array,
     convolve_array,
-    METHOD_ENUMS,
+    _METHOD_ENUMS,
 )
 
 # def test_weight_distance():
@@ -136,7 +136,7 @@ def test_convolve_array_sum():
     arr = np.random.rand(15, 15, 1).astype("float32")
     _kernel, weights, offsets = get_kernel(3, normalise=False)
 
-    result = convolve_array(arr, offsets, weights, method=METHOD_ENUMS["sum"], normalise_edges=False) # sum
+    result = convolve_array(arr, offsets, weights, method=_METHOD_ENUMS["sum"], normalise_edges=False) # sum
 
     assert np.alltrue(result > arr), "Result should be greater than input"
     assert result.shape == (15, 15, 1)

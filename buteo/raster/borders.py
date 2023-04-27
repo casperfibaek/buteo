@@ -9,6 +9,7 @@ Useful for warped satellite images and for proximity searching.
 
 # Standard library
 import sys; sys.path.append("../../")
+from typing import Union, List, Optional
 
 # External
 import numpy as np
@@ -29,7 +30,10 @@ def _add_border_to_raster(
     overwrite=True,
     creation_options=None,
 ):
-    """ Internal. """
+    """
+    Internal.
+    Add a border to a raster.
+    """
     in_raster = core_raster.open_raster(raster)
     metadata = core_raster.raster_to_metadata(in_raster)
 
@@ -112,37 +116,49 @@ def _add_border_to_raster(
 
 
 def add_border_to_raster(
-    raster,
-    out_path=None,
-    border_size=100,
-    *,
-    border_size_unit="px",
-    border_value=0,
-    allow_lists=True,
-    overwrite=True,
-    creation_options=None,
-):
+    raster: Union[str, gdal.Dataset],
+    out_path: Optional[str] = None,
+    border_size: int = 100,
+    border_size_unit: str = "px",
+    border_value: int = 0,
+    allow_lists: bool = True,
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
+    ) -> Union[str, gdal.Dataset]:
     """
     Add a border to a raster.
 
-    Args:
-        input_raster (str/gdal.DataSet): The input raster.
+    Parameters
+    ----------
+    raster : Union[str, gdal.Dataset]
+        The input raster.
 
-    Keyword Args:
-        out_path (str/None=None): The output path. If None, the output
-            will be a memory raster.
-        border_size (int=100): The size of the border.
-        border_size_unit (str='px'): The unit of the border size.
-        border_value (int=0): The value of the border.
-        overwrite (bool=True): If True, the output raster will be
-            overwritten.
-        allow_lists (bool=True): If True, lists of rasters will be
-            allowed.
-        creation_options (list/None=None): Creation options for the
-            output raster.
+    out_path : Optional[str], optional
+        The output path. If None, the output will be a memory raster.
+        Default: None
 
-    Returns:
-        str/gdal.DataSet: The output raster with added borders.
+    border_size : int, optional
+        The size of the border. Default: 100
+
+    border_size_unit : str, optional
+        The unit of the border size. Default: 'px'
+
+    border_value : int, optional
+        The value of the border. Default: 0
+
+    allow_lists : bool, optional
+        If True, lists of rasters will be allowed. Default: True
+
+    overwrite : bool, optional
+        If True, the output raster will be overwritten. Default: True
+
+    creation_options : Optional[List[str]], optional
+        Creation options for the output raster. Default is None
+
+    Returns
+    -------
+    Union[str, gdal.Dataset]
+        The output raster with added borders.
     """
     core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     core_utils.type_check(out_path, [str, None], "out_path")
