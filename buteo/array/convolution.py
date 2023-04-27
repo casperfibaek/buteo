@@ -454,8 +454,6 @@ def pad_array(
     arr : numpy.ndarray
         The input array to be padded.
 
-    Keyword Args
-    ------------
     pad_size : int, optional
         The number of padding elements to add to each side of the array.
         Default: 1.
@@ -542,13 +540,7 @@ def _hood_to_value(
     Parameters
     ----------
     method : str
-        The method to use for combining the values and weights. Can be one of the following:
-        "mean": Compute the weighted mean of the values.
-        "median": Compute the weighted median of the values.
-        "mode": Compute the weighted mode of the values.
-        "max": Compute the weighted maximum of the values.
-        "min": Compute the weighted minimum of the values.
-        ... any many more specified in the METHODS_ENUM.
+        The method to use for combining the values and weights.
 
     values : numpy.ndarray
         The values to be combined.
@@ -942,7 +934,7 @@ def convolve_array(
     value: Union[int, float, None] = None,
 ) -> np.ndarray:
     """
-   Convolve an image with a neighborhood function.
+    Convolve an image with a neighborhood function.
 
     Parameters
     ----------

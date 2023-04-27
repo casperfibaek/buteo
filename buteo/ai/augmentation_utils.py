@@ -53,7 +53,10 @@ def _fit_data_to_dtype(
     np.ndarray
         The data fitted to the dtype.
     """
-    return data.astype(dtype)
+    return data
+
+    # HOW: data.astype(dtype, copy=False) in numba???
+    # return data.astype(dtype)
 
     # return data.astype(dtype)
     # max_value = np.iinfo(dtype).max

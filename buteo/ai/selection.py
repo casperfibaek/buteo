@@ -153,8 +153,8 @@ def stratified_sampling(
 
     This function can be used for both regression and classification problems.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     X : np.ndarray
         The input data.
 

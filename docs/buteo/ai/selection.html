@@ -219,8 +219,8 @@
 </span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a>
 </span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a><span class="sd">    This function can be used for both regression and classification problems.</span>
 </span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a>
-</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a><span class="sd">    Parameters:</span>
-</span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a><span class="sd">    -----------</span>
+</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a><span class="sd">    Parameters</span>
+</span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a><span class="sd">    ----------</span>
 </span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a><span class="sd">    X : np.ndarray</span>
 </span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a><span class="sd">        The input data.</span>
 </span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a>
@@ -532,8 +532,8 @@ Seed for the random number generator used for shuffling, default: None.</li>
 </span><span id="stratified_sampling-154"><a href="#stratified_sampling-154"><span class="linenos">154</span></a>
 </span><span id="stratified_sampling-155"><a href="#stratified_sampling-155"><span class="linenos">155</span></a><span class="sd">    This function can be used for both regression and classification problems.</span>
 </span><span id="stratified_sampling-156"><a href="#stratified_sampling-156"><span class="linenos">156</span></a>
-</span><span id="stratified_sampling-157"><a href="#stratified_sampling-157"><span class="linenos">157</span></a><span class="sd">    Parameters:</span>
-</span><span id="stratified_sampling-158"><a href="#stratified_sampling-158"><span class="linenos">158</span></a><span class="sd">    -----------</span>
+</span><span id="stratified_sampling-157"><a href="#stratified_sampling-157"><span class="linenos">157</span></a><span class="sd">    Parameters</span>
+</span><span id="stratified_sampling-158"><a href="#stratified_sampling-158"><span class="linenos">158</span></a><span class="sd">    ----------</span>
 </span><span id="stratified_sampling-159"><a href="#stratified_sampling-159"><span class="linenos">159</span></a><span class="sd">    X : np.ndarray</span>
 </span><span id="stratified_sampling-160"><a href="#stratified_sampling-160"><span class="linenos">160</span></a><span class="sd">        The input data.</span>
 </span><span id="stratified_sampling-161"><a href="#stratified_sampling-161"><span class="linenos">161</span></a>
@@ -586,27 +586,24 @@ Seed for the random number generator used for shuffling, default: None.</li>
 
 <p>This function can be used for both regression and classification problems.</p>
 
-<h2 id="parameters">Parameters:</h2>
+<h6 id="parameters">Parameters</h6>
 
-<p>X : np.ndarray
-    The input data.</p>
-
-<p>y : np.ndarray
-    The target data.</p>
-
-<p>regression : bool, optional
-    Whether the dataset is for regression or classification.
-    Default: False.</p>
-
-<p>samples_per_class : int, optional
-    The number of samples to take per class.
-    If None, takes the same number of samples per class as the smallest class.
-    Default: None.</p>
-
-<h2 id="returns">Returns:</h2>
-
-<p>Tuple[np.ndarray, np.ndarray]
-    (X_stratified, y_stratified) : The stratified input and target data.</p>
+<ul>
+<li><strong>X</strong> (np.ndarray):
+The input data.</li>
+<li><strong>y</strong> (np.ndarray):
+The target data.</li>
+<li><strong>regression</strong> (bool, optional):
+Whether the dataset is for regression or classification.
+Default: False.</li>
+<li><strong>samples_per_class</strong> (int, optional):
+The number of samples to take per class.
+If None, takes the same number of samples per class as the smallest class.
+Default: None.</li>
+<li><strong>Returns:</strong></li>
+<li><strong>--------</strong></li>
+<li><strong>Tuple[np.ndarray, np.ndarray]</strong>: (X_stratified, y_stratified) : The stratified input and target data.</li>
+</ul>
 </div>
 
 
