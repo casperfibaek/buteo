@@ -21,11 +21,13 @@ def _simple_blur_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
     Create a 2D blur kernel.
 
     The kernel has the following form:
-
-        [1, 2, 1],
-        [2, 4, 2],
-        [1, 2, 1],
-
+    ```python
+    >>> weights = [
+    ...     0.08422299, 0.12822174, 0.08422299,
+    ...     0.12822174, 0.15022110, 0.12822174,
+    ...     0.08422299, 0.12822174, 0.08422299,
+    ... ]
+    ```
     Returns
     -------
     Tuple[np.ndarray, np.ndarray]
@@ -57,11 +59,11 @@ def _simple_unsharp_kernel_2d_3x3(
 
     The kernel has the following form:
     ```python
-    [
-        0.09911165, 0.15088834, 0.09911165,
-        0.15088834, 0.        , 0.15088834,
-        0.09911165, 0.15088834, 0.09911165,
-    ]
+    >>> weights = [
+    ...     0.09911165, 0.15088834, 0.09911165,
+    ...     0.15088834, 0.        , 0.15088834,
+    ...     0.09911165, 0.15088834, 0.09911165,
+    ... ]
     ```
 
     Returns
@@ -91,6 +93,7 @@ def _simple_unsharp_kernel_2d_3x3(
     return offsets, weights
 
 
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
 def _simple_shift_kernel_2d(
     x_offset: float,
     y_offset: float,
@@ -852,14 +855,14 @@ def _convolve_array(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
-def convolve_array_simple(
+def convolve_array_simple_hwc(
     array: np.ndarray,
     offsets: np.ndarray,
     weights: np.ndarray,
-    intensity: float = 1.0,
-):
+) -> np.ndarray:
     """
     Convolve a kernel with an array using a simple method.
+    Array must be 3D and in channel last format. (height, width, channels)
 
     Parameters
     ----------
@@ -872,9 +875,64 @@ def convolve_array_simple(
     weights : numpy.ndarray
         The weights of the kernel.
 
-    intensity : float, optional
-        The intensity of the convolution. If 1.0, the convolution is applied as is. If 0.5,
-        the convolution is applied at half intensity. Default: 1.0.
+    Returns
+    -------
+    numpy.ndarray
+        The convolved array.
+
+    Notes
+    -----
+    This function convolves a kernel with an array using a simple method. The function supports
+    applying the convolution at a reduced intensity to achieve a blended effect.
+    """
+    result = np.zeros(array.shape, dtype=np.float32)
+
+    for col in prange(array.shape[0]):
+        for row in prange(array.shape[1]):
+            for channel in prange(array.shape[2]):
+
+                result_value = 0.0
+                for i in range(offsets.shape[0]):
+                    new_col = col + offsets[i, 0]
+                    new_row = row + offsets[i, 1]
+
+                    if new_col < 0:
+                        new_col = 0
+                    elif new_col >= array.shape[0]:
+                        new_col = array.shape[0] - 1
+
+                    if new_row < 0:
+                        new_row = 0
+                    elif new_row >= array.shape[1]:
+                        new_row = array.shape[1] - 1
+
+                    result_value += array[new_col, new_row, channel] * weights[i]
+
+                result[col, row, channel] = result_value
+
+    return result
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def convolve_array_simple_chw(
+    array: np.ndarray,
+    offsets: np.ndarray,
+    weights: np.ndarray,
+) -> np.ndarray:
+    """
+    Convolve a kernel with an array using a simple method.
+    Array must be 3D and in channel first format. (channels, height, width)
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        The array to convolve.
+
+    offsets : numpy.ndarray
+        The offsets of the kernel.
+
+    weights : numpy.ndarray
+        The weights of the kernel.
 
     Returns
     -------
@@ -886,10 +944,66 @@ def convolve_array_simple(
     This function convolves a kernel with an array using a simple method. The function supports
     applying the convolution at a reduced intensity to achieve a blended effect.
     """
-    result = np.empty_like(array, dtype=np.float32)
+    result = np.zeros(array.shape, dtype=np.float32)
 
-    if intensity <= 0.0:
-        return array.astype(np.float32)
+    for channel in prange(array.shape[0]):
+        for col in prange(array.shape[1]):
+            for row in prange(array.shape[2]):
+
+                result_value = 0.0
+                for i in range(offsets.shape[0]):
+                    new_col = col + offsets[i, 0]
+                    new_row = row + offsets[i, 1]
+
+                    if new_col < 0:
+                        new_col = 0
+                    elif new_col >= array.shape[0]:
+                        new_col = array.shape[0] - 1
+
+                    if new_row < 0:
+                        new_row = 0
+                    elif new_row >= array.shape[1]:
+                        new_row = array.shape[1] - 1
+
+                    result_value += array[channel, new_col, new_row] * weights[i]
+
+                result[channel, col, row] = result_value
+
+    return result
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def convolve_array_simple_2D(
+    array: np.ndarray,
+    offsets: np.ndarray,
+    weights: np.ndarray,
+) -> np.ndarray:
+    """
+    Convolve a kernel with an array using a simple method.
+    Array must be 2D (height, width).
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        The array to convolve.
+
+    offsets : numpy.ndarray
+        The offsets of the kernel.
+
+    weights : numpy.ndarray
+        The weights of the kernel.
+
+    Returns
+    -------
+    numpy.ndarray
+        The convolved array.
+
+    Notes
+    -----
+    This function convolves a kernel with an array using a simple method. The function supports
+    applying the convolution at a reduced intensity to achieve a blended effect.
+    """
+    result = np.zeros(array.shape, dtype=np.float32)
 
     for col in prange(array.shape[0]):
         for row in prange(array.shape[1]):
@@ -913,13 +1027,7 @@ def convolve_array_simple(
 
             result[col, row] = result_value
 
-    if intensity < 1.0:
-        result *= intensity
-        array *= (1.0 - intensity)
-        result += array
-
     return result
-
 
 
 def convolve_array(

@@ -6,45 +6,55 @@ suited to remote sensing imagery.
 import sys; sys.path.append("../../")
 from typing import Optional, List, Callable
 
+# External
 import numpy as np
-import buteo as beo
 
+# Buteo
+from buteo.utils.aux_utils import channel_first_to_last, channel_last_to_first
 from buteo.ai.augmentation_funcs import (
-    augmentation_rotation,
     augmentation_mirror,
+    augmentation_mirror_xy,
+    augmentation_rotation,
+    augmentation_rotation_xy,
+    augmentation_noise_uniform,
+    augmentation_noise_normal,
     augmentation_channel_scale,
-    augmentation_noise,
     augmentation_contrast,
+    augmentation_drop_channel,
+    augmentation_drop_pixel,
     augmentation_blur,
     augmentation_blur_xy,
     augmentation_sharpen,
     augmentation_sharpen_xy,
-    augmentation_drop_pixel,
-    augmentation_drop_channel,
-    augmentation_misalign,
     augmentation_cutmix,
     augmentation_mixup,
+    augmentation_misalign
 )
+
 
 
 class AugmentationDataset():
     """
     A dataset that applies augmentations to the data.
+    Every augmentation added needs to be specified as a dictionary
+    with the following keys:
+        - name (str)
+        - chance (float[0,1])
 
     The following augmentations are supported:
-        - rotation (chance)
-        - mirror (chance)
-        - channel_scale (chance, additive(bool), max_value(float[0,1]))
-        - noise (chance, additive(bool), max_value(float[0,1]))
-        - contrast (chance, max_value(float[0,1]))
-        - drop_pixel (chance, drop_probability(float[0,1]), drop_value(float))
-        - drop_channel (chance, drop_probability(float[0,1]), drop_value(float))
-        - blur (chance, intensity(float[0,1]=1.0))
-        - blur_xy (chance, intensity(float[0,1]=1.0))
-        - sharpen (chance, intensity(float[0,1]=1.0))
-        - sharpen_xy (chance, intensity(float[0,1]=1.0))
-        - cutmix (chance, min_size(float[0, 1]), max_size(float[0, 1]))
-        - mixup (chance, min_size(float[0, 1]), max_size(float[0, 1]), label_mix(int))
+        - rotation
+        - mirror
+        - channel_scale (additive(bool), max_value(float[0,1]))
+        - noise (additive(bool), max_value(float[0,1]))
+        - contrast (max_value(float[0,1]))
+        - drop_pixel (drop_probability(float[0,1]), drop_value(float))
+        - drop_channel (drop_probability(float[0,1]), drop_value(float))
+        - blur
+        - blur_xy
+        - sharpen
+        - sharpen_xy
+        - cutmix (min_size(float[0, 1]), max_size(float[0, 1]))
+        - mixup (min_size(float[0, 1]), max_size(float[0, 1]), label_mix(int))
 
     Parameters
     ----------
@@ -106,10 +116,14 @@ class AugmentationDataset():
         input_is_channel_last: bool = True,
         output_is_channel_last: bool = False,
     ):
+        assert len(X) == len(y), "X and y must have the same length."
+        assert X.dtype in [np.float16, np.float32, np.float64], "X must be a float array."
+        assert y.dtype in [np.float16, np.float32, np.float64], "y must be a float array."
+
         # Convert data format if necessary
         if input_is_channel_last:
-            self.x_train = beo.channel_last_to_first(X)
-            self.y_train = beo.channel_last_to_first(y)
+            self.x_train = channel_last_to_first(X)
+            self.y_train = channel_last_to_first(y)
         else:
             self.x_train = X
             self.y_train = y
@@ -124,23 +138,34 @@ class AugmentationDataset():
         return len(self.x_train)
 
     def __getitem__(self, index):
-        x = self.x_train[index]
-        y = self.y_train[index]
+        x = self.x_train[index].copy()
+        y = self.y_train[index].copy()
 
         # Apply augmentations
         for aug in self.augmentations:
             aug_name = aug["name"]
+            aug_change = aug["chance"]
             func = None
+
+            # Check if augmentation should be applied
+            if np.random.rand() > aug_change:
+                break
 
             # Mapping augmentation names to their respective functions
             if aug_name == "rotation":
                 func = augmentation_rotation
+            elif aug_name == "rotation_xy":
+                func = augmentation_rotation_xy
             elif aug_name == "mirror":
                 func = augmentation_mirror
+            elif aug_name == "mirror_xy":
+                func = augmentation_mirror_xy
             elif aug_name == "channel_scale":
                 func = augmentation_channel_scale
-            elif aug_name == "noise":
-                func = augmentation_noise
+            elif aug_name == "noise_uniform":
+                func = augmentation_noise_uniform
+            elif aug_name == "noise_normal":
+                func = augmentation_noise_normal
             elif aug_name == "contrast":
                 func = augmentation_contrast
             elif aug_name == "drop_pixel":
@@ -166,17 +191,23 @@ class AugmentationDataset():
                 raise ValueError(f"Augmentation {aug['name']} not supported.")
 
             channel_last = self.channel_last
-            kwargs = {key: value for key, value in aug.items() if key != "name"}
+            kwargs = {key: value for key, value in aug.items() if key not in ["name", "chance", "inplace"]}
 
-            # Apply cutmix and mixup augmentations
-            if aug_name in ["cutmix", "mixup"]:
+            # Augmentations that apply to both image and label
+            if aug_name in ["rotation_xy", "mirror_xy", "blur_xy", "sharpen_xy"]:
+                x, y = func(x, y, channel_last=channel_last, inplace=True, **kwargs)
+
+            # Augmentations that needs two images
+            elif aug_name in ["cutmix", "mixup"]:
                 idx_source = np.random.randint(len(self.x_train))
                 xx = self.x_train[idx_source]
                 yy = self.y_train[idx_source]
 
-                x, y = func(x, y, xx, yy, channel_last=channel_last, **kwargs)
+                x, y = func(x, y, xx, yy, channel_last=channel_last, inplace=True, **kwargs)
+
+            # Augmentations that only apply to image
             else:
-                x, y = func(x, y, channel_last=channel_last, **kwargs)
+                x = func(x, y, channel_last=channel_last, inplace=True, **kwargs)
 
         # Apply callback if specified
         if self.callback is not None:
@@ -184,8 +215,8 @@ class AugmentationDataset():
 
         # Convert output format if necessary
         if self.output_is_channel_last:
-            x = beo.channel_first_to_last(x)
-            y = beo.channel_first_to_last(y)
+            x = channel_first_to_last(x)
+            y = channel_first_to_last(y)
 
         return x, y
 
@@ -228,8 +259,8 @@ class Dataset():
     ):
         # Convert input format if necessary
         if input_is_channel_last:
-            self.x_train = beo.channel_last_to_first(X)
-            self.y_train = beo.channel_last_to_first(y)
+            self.x_train = channel_last_to_first(X)
+            self.y_train = channel_last_to_first(y)
         else:
             self.x_train = X
             self.y_train = y
@@ -251,7 +282,7 @@ class Dataset():
 
         # Convert output format if necessary
         if self.output_is_channel_last:
-            x = beo.channel_first_to_last(x)
-            y = beo.channel_first_to_last(y)
+            x = channel_first_to_last(x)
+            y = channel_first_to_last(y)
 
         return x, y

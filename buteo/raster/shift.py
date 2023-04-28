@@ -15,7 +15,7 @@ import numpy as np
 # Internal
 from buteo.utils import core_utils, gdal_utils
 from buteo.raster import core_raster
-from buteo.array.convolution import convolve_array_simple, _simple_shift_kernel_2d
+from buteo.array.convolution import convolve_array_simple_hwc, _simple_shift_kernel_2d
 
 
 def _shift_raster(
@@ -179,7 +179,7 @@ def shift_raster_pixel(
     arr_float32 = arr.astype(np.float32)
 
     for channel in arr.shape[2]:
-        arr[:, :, channel] = convolve_array_simple(
+        arr[:, :, channel] = convolve_array_simple_hwc(
             arr_float32[:, :, channel], offsets, weights, nodata_value,
         )
 
