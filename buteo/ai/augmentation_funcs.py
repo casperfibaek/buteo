@@ -19,6 +19,8 @@ from buteo.array.convolution import (
     convolve_array_simple_chw,
     convolve_array_simple_hwc,
     convolve_array_simple_2D,
+)
+from buteo.array.convolution_kernels import (
     _simple_blur_kernel_2d_3x3,
     _simple_unsharp_kernel_2d_3x3,
     _simple_shift_kernel_2d,

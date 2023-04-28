@@ -221,8 +221,8 @@ def _hood_roughness(
     center_idx: int,
 ) -> Union[float, int]:
     """ 
-        Defined as the maximum difference between the center value and the
-        surrounding values. Weighted.
+    Defined as the maximum difference between the center value and the
+    surrounding values. Weighted.
     """
     center_value = values[center_idx]
 
@@ -238,8 +238,8 @@ def _hood_roughness_tpi(
     center_idx: int,
 ) -> Union[float, int]:
     """ 
-        Defined as the difference between the center pixel and the mean of
-        the surrounding pixels. Weighted.
+    Defined as the difference between the center pixel and the mean of
+    the surrounding pixels. Weighted.
     """
     center_value = values[center_idx]
     values_non_center = np.delete(values, center_idx)
@@ -265,3 +265,86 @@ def _hood_roughness_tri(
     weights_non_center = np.divide(weights_non_center, np.sum(weights_non_center))
 
     return _hood_sum(np.abs(np.subtract(values_non_center, center_value)), weights_non_center)
+
+
+
+@jit(nopython=True, nogil=False, fastmath=True, cache=True)
+def _hood_to_value(
+    method: int,
+    values: np.ndarray,
+    weights: np.ndarray,
+    nodata_value: float = -9999.9,
+    center_idx: int = 0,
+    value: Union[int, float] = 0.5,
+):
+    """
+    Convert an array of values and weights to a single value using a given method.
+
+    Parameters
+    ----------
+    method : str
+        The method to use for combining the values and weights.
+
+    values : numpy.ndarray
+        The values to be combined.
+
+    weights : numpy.ndarray
+        The weights to be used in the combination.
+
+    nodata_value : float, optional
+        The nodata value to use when computing the result. Default: -9999.9.
+
+    center_idx : int, optional
+        The index of the center value in the input arrays. Default: 0.
+
+    value : float, optional
+        The value to use when the input arrays have no valid values. Default: 0.5.
+
+    Returns
+    -------
+    float
+        The result of the combination, or the `nodata_value` if there are no valid values.
+
+    Notes
+    -----
+    This function takes an array of values and an array of weights and combines them
+    into a single value using a specified method. The function supports several methods,
+    including mean, median, mode, maximum, and minimum. The function can also handle nodata
+    values and cases where there are no valid values.
+    """
+    if method == 1:
+        return _hood_sum(values, weights)
+    elif method == 2:
+        return _hood_mode(values, weights)
+    elif method == 3:
+        return _hood_max(values, weights)
+    elif method == 4:
+        return _hood_min(values, weights)
+    elif method == 5:
+        return _hood_contrast(values, weights)
+    elif method == 6:
+        return _hood_quantile(values, weights, 0.5)
+    elif method == 7:
+        return _hood_standard_deviation(values, weights)
+    elif method == 8:
+        return _hood_median_absolute_deviation(values, weights)
+    elif method == 9:
+        return _hood_z_score(values, weights, center_idx)
+    elif method == 10:
+        return _hood_z_score_mad(values, weights, center_idx)
+    elif method == 11:
+        return _hood_sigma_lee(values, weights)
+    elif method == 12:
+        return _hood_quantile(values, weights, value)
+    elif method == 13:
+        return _hood_count_occurances(values, weights, value, normalise=False)
+    elif method == 14:
+        return _hood_count_occurances(values, weights, value, normalise=True)
+    elif method == 15:
+        return _hood_roughness(values, weights, center_idx)
+    elif method == 16:
+        return _hood_roughness_tri(values, weights, center_idx)
+    elif method == 17:
+        return _hood_roughness_tpi(values, weights, center_idx)
+    else:
+        return nodata_value

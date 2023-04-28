@@ -15,6 +15,29 @@ from buteo.array.convolution_funcs import _hood_to_value
 
 
 
+_METHOD_ENUMS = {
+    "sum": 1,
+    "mode": 2,
+    "max": 3,
+    "dilate": 3,
+    "min": 4,
+    "erode": 4,
+    "contrast": 5,
+    "median": 6,
+    "std": 7,
+    "mad": 8,
+    "z_score": 9,
+    "z_score_mad": 10,
+    "sigma_lee": 11,
+    "quantile": 12,
+    "occurrances": 13,
+    "feather": 14,
+    "roughness": 15,
+    "roughness_tri": 16,
+    "roughness_tpi": 17,
+}
+
+
 def pad_array(
     arr: np.ndarray,
     pad_size: int = 1,
@@ -76,152 +99,6 @@ def pad_array(
         )
 
     return padded_view
-
-_METHOD_ENUMS = {
-    "sum": 1,
-    "mode": 2,
-    "max": 3,
-    "dilate": 3,
-    "min": 4,
-    "erode": 4,
-    "contrast": 5,
-    "median": 6,
-    "std": 7,
-    "mad": 8,
-    "z_score": 9,
-    "z_score_mad": 10,
-    "sigma_lee": 11,
-    "quantile": 12,
-    "occurrances": 13,
-    "feather": 14,
-    "roughness": 15,
-    "roughness_tri": 16,
-    "roughness_tpi": 17,
-}
-
-
-
-@jit(nopython=True, parallel=True, nogil=False, fastmath=True, cache=True)
-def _convolve_array_collapse(
-    arr: np.ndarray,
-    offsets: List[Tuple[int, int, int]],
-    weights: List[float],
-    method: int = 1,
-    nodata: bool = False,
-    nodata_value: float = -9999.9,
-    normalise_edges: bool = True,
-    value: Union[int, float] = 0.5,
-) -> np.ndarray:
-    """
-    Internal function. Convolve an array using a set of offsets and weights and collapse the
-    result along the last axis.
-
-    Parameters
-    ----------
-    arr : numpy.ndarray
-        The input array to be convolved and collapsed.
-
-    offsets : list of tuples
-        The list of pixel offsets to use in the convolution. Each tuple should be in the
-        format `(row_offset, col_offset, depth_offset)`, where row_offset and col_offset
-        are the row and column offsets from the center pixel, and depth_offset is the
-        depth offset if the input array has more than two dimensions.
-
-    weights : list of floats
-        The list of weights to use in the convolution. The length of the weights list should
-        be the same as the length of the offsets list.
-
-    method : int, optional
-        The convolution method to use. Default: 1.
-
-    nodata : bool, optional
-        If True, treat the nodata value as a valid value. Default: False.
-
-    nodata_value : float, optional
-        The nodata value to use when computing the result. Default: -9999.9.
-
-    normalise_edges : bool, optional
-        If True, normalise the edge pixels based on the number of valid pixels in the kernel.
-        Default: True.
-
-    value : int or float, optional
-        The value to use for pixels where the kernel extends outside the input array.
-        Default: 0.5.
-
-    Returns
-    -------
-    numpy.ndarray
-        The convolved and collapsed array.
-
-    Notes
-    -----
-    This function convolves an array using a set of offsets and weights and collapses the result
-    along the last axis. The function supports different convolution methods, including nearest,
-    linear, and cubic. The function can also handle nodata values and cases where the kernel
-    extends outside the input array.
-    """
-    result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype="float32")
-    hood_size = len(offsets)
-
-    for idx_y in prange(0, arr.shape[0]):
-        for idx_x in range(0, arr.shape[1]):
-
-            center_idx = 0
-
-            if nodata and arr[idx_y, idx_x] == nodata_value:
-                result[idx_y, idx_x] = nodata_value
-                continue
-
-            hood_normalise = False
-            hood_values = np.zeros(hood_size, dtype="float32")
-            hood_weights = np.zeros(hood_size, dtype="float32")
-            hood_count = 0
-
-            for idx_h in range(0, hood_size):
-                hood_x = idx_x + offsets[idx_h][0]
-                hood_y = idx_y + offsets[idx_h][1]
-                hood_z = offsets[idx_h][2]
-
-                if hood_x < 0 or hood_x >= arr.shape[1]:
-                    if normalise_edges:
-                        hood_normalise = True
-                    continue
-
-                if hood_y < 0 or hood_y >= arr.shape[0]:
-                    if normalise_edges:
-                        hood_normalise = True
-                    continue
-
-                if hood_z < 0 or hood_z >= arr.shape[2]:
-                    if normalise_edges:
-                        hood_normalise = True
-                    continue
-
-                if nodata and arr[hood_y, hood_x, hood_z] == nodata_value:
-                    if normalise_edges:
-                        hood_normalise = True
-                    continue
-
-                hood_values[hood_count] = arr[hood_y, hood_x, hood_z]
-                hood_weights[hood_count] = weights[idx_h]
-                hood_count += 1
-
-                if offsets[idx_h][0] == 0 and offsets[idx_h][1] == 0:
-                    center_idx = hood_count - 1
-
-            if hood_count == 0:
-                result[idx_y, idx_x] = nodata_value
-                continue
-
-            hood_values = hood_values[:hood_count]
-            hood_weights = hood_weights[:hood_count]
-
-            if hood_normalise:
-                hood_weights /= np.sum(hood_weights)
-
-            result[idx_y, idx_x, 0] = _hood_to_value(method, hood_values, hood_weights, nodata_value, center_idx, value)
-
-    return result
 
 
 @jit(nopython=True, parallel=True, nogil=False, fastmath=True, cache=True)
@@ -529,7 +406,6 @@ def convolve_array(
     nodata: bool = False,
     nodata_value: float = -9999.9,
     normalise_edges: bool = True,
-    collapse: bool = False,
     value: Union[int, float, None] = None,
 ) -> np.ndarray:
     """
@@ -576,11 +452,6 @@ def convolve_array(
         Only relevant for border pixels. Use False if you are interested in the sum; otherwise,
         you likely want to use True. Default: True.
 
-    collapse : bool, optional
-        If True, the convolution results in a (height, width, 1) array. Otherwise, the
-        convolution results in a (height, width, depth) array that is applied channel-wise.
-        Default: False.
-
     value : int or float or None, optional
         If not None, the value to use for the convolution depending on the method specified.
         Default: None.
@@ -605,7 +476,6 @@ def convolve_array(
     core_utils.type_check(nodata, [bool], "nodata")
     core_utils.type_check(nodata_value, [float], "nodata_value")
     core_utils.type_check(normalise_edges, [bool], "normalise_edges")
-    core_utils.type_check(collapse, [bool], "collapse")
     core_utils.type_check(value, [int, float, type(None)], "value")
 
     assert len(offsets) == len(weights), "offsets and weights must be the same length"
@@ -617,18 +487,6 @@ def convolve_array(
 
     if arr.ndim == 2:
         arr = arr[:, :, np.newaxis]
-
-    if collapse:
-        return _convolve_array_collapse(
-            arr,
-            offsets,
-            weights,
-            method=method,
-            nodata=nodata,
-            nodata_value=nodata_value,
-            normalise_edges=normalise_edges,
-            value=value,
-        )
 
     return _convolve_array(
         arr,
