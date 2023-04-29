@@ -339,6 +339,8 @@ def get_kernel_sobel(
     Creates a 2D Sobel style kernel consisting of a horizontal and vertical component.
     This function returns a kernel that can be used to apply a Sobel filter to an image.
 
+    `kernel_gx, kernel_gy = get_kernel_sobel(radius=1, scale=2)`
+
     The kernels for radis=2, scale=2 are:
     ```python
     gx = [
