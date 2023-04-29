@@ -114,7 +114,8 @@ def _hood_quantile(
     sorted_data = values[sort_mask]
     sorted_weights = weights[sort_mask]
     cumsum = np.cumsum(sorted_weights)
-    intersect = (cumsum - 0.5 * sorted_weights) / cumsum[-1]
+    intersect = (cumsum - (np.float32(0.5) * sorted_weights)) / cumsum[-1]
+
     return np.interp(quantile, intersect, sorted_data)
 
 
@@ -275,7 +276,7 @@ def _hood_to_value(
     weights: np.ndarray,
     nodata_value: float = -9999.9,
     center_idx: int = 0,
-    value: Union[int, float] = 0.5,
+    func_value: Union[int, float] = 0.5,
 ):
     """
     Convert an array of values and weights to a single value using a given method.
@@ -297,7 +298,7 @@ def _hood_to_value(
     center_idx : int, optional
         The index of the center value in the input arrays. Default: 0.
 
-    value : float, optional
+    func_value : float, optional
         The value to use when the input arrays have no valid values. Default: 0.5.
 
     Returns
@@ -335,11 +336,11 @@ def _hood_to_value(
     elif method == 11:
         return _hood_sigma_lee(values, weights)
     elif method == 12:
-        return _hood_quantile(values, weights, value)
+        return _hood_quantile(values, weights, func_value)
     elif method == 13:
-        return _hood_count_occurances(values, weights, value, normalise=False)
+        return _hood_count_occurances(values, weights, func_value, normalise=False)
     elif method == 14:
-        return _hood_count_occurances(values, weights, value, normalise=True)
+        return _hood_count_occurances(values, weights, func_value, normalise=True)
     elif method == 15:
         return _hood_roughness(values, weights, center_idx)
     elif method == 16:

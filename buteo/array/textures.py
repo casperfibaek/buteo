@@ -4,13 +4,13 @@
 
 # Standard library
 import sys; sys.path.append("../../")
-from typing import Optional, Union
 
 # External
 import numpy as np
 
 # Internal
-from buteo.array.convolution import convolve_array, get_kernel, _METHOD_ENUMS
+from buteo.array.convolution import convolve_array
+from buteo.array.convolution_kernels import get_kernel
 from buteo.utils import type_check
 
 def texture_local_variance(
@@ -70,7 +70,7 @@ def texture_local_variance(
         arr,
         offsets,
         weights,
-        _METHOD_ENUMS["std"],
+        7,
         nodata=nodata,
         nodata_value=nodata_value,
     )
@@ -135,7 +135,7 @@ def texture_local_median(
         arr,
         offsets,
         weights,
-        _METHOD_ENUMS["median"],
+        6,
         nodata=nodata,
         nodata_value=nodata_value,
     )
@@ -200,7 +200,7 @@ def texture_local_blur(
         arr,
         offsets,
         weights,
-        _METHOD_ENUMS["sum"],
+        1,
         nodata=nodata,
         nodata_value=nodata_value,
     )
@@ -263,7 +263,7 @@ def texture_local_mode(
         arr,
         offsets,
         weights,
-        _METHOD_ENUMS["mode"],
+        2,
         nodata=nodata,
         nodata_value=nodata_value,
     )
@@ -314,7 +314,6 @@ def texture_hole_dif(
 
     assert filter_size % 2 == 1, "Filter size must be odd."
 
-
     _kernel, weights, offsets = get_kernel(
         filter_size,
         distance_weight=distance_weight,
@@ -328,7 +327,7 @@ def texture_hole_dif(
         arr,
         offsets,
         weights,
-        _METHOD_ENUMS["sum"],
+        1,
         nodata=nodata,
         nodata_value=nodata_value,
     )

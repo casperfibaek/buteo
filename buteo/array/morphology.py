@@ -6,7 +6,8 @@
 import sys; sys.path.append("../../")
 
 # Internal
-from buteo.array.convolution import get_kernel, convolve_array
+from buteo.array.convolution import convolve_array
+from buteo.array.convolution_kernels import get_kernel
 
 
 def morph_erode(arr, filter_size=5, spherical=False, distance_weight=False, distance_decay=0.2, distance_sigma=1.0):

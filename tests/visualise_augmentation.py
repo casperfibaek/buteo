@@ -188,7 +188,7 @@ misaligned_x = augmentation_misalign(arr, max_offset=1.0)
 array_to_raster(
     misaligned_x,
     reference=path_img,
-    out_path=os.path.join(FOLDER, "tmp_test_image_rgb_8bit_misaligned_1.tif"),
+    out_path=os.path.join(FOLDER, "tmp_test_image_rgb_8bit_misaligned.tif"),
     pixel_offsets=offset,
 )
 

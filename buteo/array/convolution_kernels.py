@@ -330,13 +330,84 @@ def get_kernel_unsharp(
     return kernel
 
 
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def get_kernel_sobel(
+    radius=1,
+    scale=2,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Creates a 2D Sobel style kernel consisting of a horizontal and vertical component.
+    This function returns a kernel that can be used to apply a Sobel filter to an image.
+
+    The kernels for radis=2, scale=2 are:
+    ```python
+    gx = [
+        [ 0.56  0.85  0.   -0.85 -0.56],
+        [ 0.85  1.5   0.   -1.5  -0.85],
+        [ 1.    2.    0.   -2.   -1.  ],
+        [ 0.85  1.5   0.   -1.5  -0.85],
+        [ 0.56  0.85  0.   -0.85 -0.56],
+    ]
+
+    gy = [
+        [ 0.56  0.85  1.    0.85  0.56],
+        [ 0.85  1.5   2.    1.5   0.85],
+        [ 0.    0.    0.    0.    0.  ],
+        [-0.85 -1.5  -2.   -1.5  -0.85],
+        [-0.56 -0.85 -1.   -0.85 -0.56],
+    ]
+    ```
+
+    Parameters
+    ----------
+    radius : float, optional
+        The radius of the kernel. Default: 1.0.
+
+    scale : float, optional
+        The scale of the kernel. Default: 2.0.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        The kernels 
+    
+    """
+    size = np.int64(np.ceil(radius) * 2 + 1)
+    kernel_base = np.zeros((size, size), dtype=np.float32)
+
+    center = np.array([0.0, 0.0], dtype=np.float32)
+
+    step = size // 2
+    for idx_i, col in enumerate(range(-step, step + 1)):
+        for idx_j, row in enumerate(range(-step, step + 1)):
+            point = np.array([col, row], dtype=np.float32)
+            distance = _distance_2D(center, point)
+            if col == 0 and row == 0:
+                kernel_base[idx_i, idx_j] = 0
+            else:
+                weight = np.power((1 - 0.5), distance) * 2
+                kernel_base[idx_i, idx_j] = weight * scale
+
+    # vertical
+    kernel_gx = kernel_base.copy()
+    kernel_gx[:, size // 2:] *= -1
+    kernel_gx[:, size // 2] = 0
+
+    # horisontal
+    kernel_gy = kernel_base.copy()
+    kernel_gy[size // 2:, :] *= -1
+    kernel_gy[size // 2, :] = 0
+
+    return kernel_gx, kernel_gy
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def get_offsets_and_weights(
     kernel: np.ndarray,
     remove_zero_weights: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray, int]:
     """
-    Generates a list of offsets and weights for a given kernel.
+    Generates a list of offsets, weights, and the center pixel index for a given kernel.
 
     Parameters
     ----------
@@ -348,13 +419,13 @@ def get_offsets_and_weights(
 
     Returns
     -------
-    Tuple[np.ndarray, np.ndarray]
-        The offsets and the weights.
+    Tuple[np.ndarray, np.ndarray, int]
+        The offsets, weights and the center pixel index.
     """
     count = np.count_nonzero(kernel) if remove_zero_weights else kernel.size
 
     offsets = np.zeros((count, 2), dtype=np.int64)
-    weights = np.zeros((count, 1), dtype=np.float32)
+    weights = np.zeros((count), dtype=np.float32)
     center_idx = kernel.shape[0] // 2
 
     step = kernel.shape[0] // 2
@@ -364,7 +435,7 @@ def get_offsets_and_weights(
             if kernel[col + step, row + step] != 0.0:
                 offsets[index][0] = col
                 offsets[index][1] = row
-                weights[index][0] = kernel[col + step, row + step]
+                weights[index] = kernel[col + step, row + step]
 
                 if col == 0 and row == 0:
                     center_idx = index
@@ -443,9 +514,3 @@ def _simple_shift_kernel_2d(
 ) -> Tuple[np.ndarray, np.ndarray]:
     """ Create a 2D shift kernel. For augmentations. """
     return get_kernel_shift(x_offset, y_offset)
-
-
-# TODO: Add more kernels
-# - Sobel
-# - Prewitt
-# - Morphological

@@ -9,7 +9,8 @@ import sys; sys.path.append("../../")
 import numpy as np
 
 # Internal
-from buteo.array.convolution import convolve_array, get_kernel, pad_array
+from buteo.array.convolution import convolve_array, pad_array
+from buteo.array.convolution_kernels import get_kernel
 
 
 def _adjust_kernel(

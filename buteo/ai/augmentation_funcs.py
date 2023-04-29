@@ -16,9 +16,7 @@ from buteo.ai.augmentation_utils import (
     _mirror_arr,
 )
 from buteo.array.convolution import (
-    convolve_array_simple_chw,
-    convolve_array_simple_hwc,
-    convolve_array_simple_2D,
+    _convolve_array_2D,
 )
 from buteo.array.convolution_kernels import (
     _simple_blur_kernel_2d_3x3,
@@ -562,9 +560,19 @@ def augmentation_blur(
     offsets, weights = _simple_blur_kernel_2d_3x3()
 
     if channel_last:
-        X[:] = convolve_array_simple_hwc(X, offsets, weights)
+        for channel in prange(X.shape[2]):
+            X[:, :, channel] = _convolve_array_2D(
+                X[:, :, channel],
+                offsets,
+                weights
+            )
     else:
-        X[:] = convolve_array_simple_chw(X, offsets, weights)
+        for channel in prange(X.shape[0]):
+            X[channel, :, :] = _convolve_array_2D(
+                X[channel, :, :],
+                offsets,
+                weights,
+            )
 
     return X
 
@@ -640,9 +648,19 @@ def augmentation_sharpen(
     offsets, weights = _simple_unsharp_kernel_2d_3x3()
 
     if channel_last:
-        X[:] = convolve_array_simple_hwc(X, offsets, weights)
+        for channel in prange(X.shape[2]):
+            X[:, :, channel] = _convolve_array_2D(
+                X[:, :, channel],
+                offsets,
+                weights
+            )
     else:
-        X[:] = convolve_array_simple_chw(X, offsets, weights)
+        for channel in prange(X.shape[0]):
+            X[channel, :, :] = _convolve_array_2D(
+                X[channel, :, :],
+                offsets,
+                weights,
+            )
 
     return X
 
@@ -724,11 +742,11 @@ def augmentation_misalign(
     channel_to_adjust = np.random.randint(0, channels)
 
     if channel_last:
-        X[:, :, channel_to_adjust] = convolve_array_simple_2D(
+        X[:, :, channel_to_adjust] = _convolve_array_2D(
             X[:, :, channel_to_adjust], offsets, weights,
         )
     else:
-        X[channel_to_adjust, :, :] = convolve_array_simple_2D(
+        X[channel_to_adjust, :, :] = _convolve_array_2D(
             X[channel_to_adjust, :, :], offsets, weights,
         )
 
