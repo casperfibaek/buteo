@@ -3,7 +3,7 @@
 """
 
 # Standard Library
-from typing import Union, Optional
+from typing import Union
 
 # External
 import numpy as np
@@ -100,7 +100,7 @@ def _convolve_array_2D(
     nodata_value = np.float32(nodata_value)
 
     for idx_y in prange(arr.shape[0]):
-        for idx_x in prange(arr.shape[1]):
+        for idx_x in range(arr.shape[1]):
             hood_values = np.zeros(hood_size, dtype="float32")
             hood_weights = np.zeros(hood_size, dtype="float32")
             hood_normalise = False
@@ -157,6 +157,61 @@ def _convolve_array_2D(
     return result
 
 
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def _convolve_array_2D_simple(
+    arr: np.ndarray,
+    offsets: np.ndarray,
+    weights: np.ndarray,
+) -> np.ndarray:
+    """
+    Convolve a kernel with an array using a simple method.
+    Array must be 2D (height, width).
+    The function ignores nodata values and pads the array with 'same'.
+    It only supports 'summation' method.
+
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        The array to convolve.
+
+    offsets : numpy.ndarray
+        The offsets of the kernel.
+
+    weights : numpy.ndarray
+        The weights of the kernel.
+
+    Returns
+    -------
+    numpy.ndarray
+        The convolved array.
+    """
+    result = np.zeros(arr.shape, dtype=np.float32)
+
+    for col in prange(arr.shape[0]):
+        for row in range(arr.shape[1]):
+
+            result_value = 0.0
+            for i in range(offsets.shape[0]):
+                new_col = col + offsets[i, 0]
+                new_row = row + offsets[i, 1]
+
+                if new_col < 0:
+                    new_col = 0
+                elif new_col >= arr.shape[0]:
+                    new_col = arr.shape[0] - 1
+
+                if new_row < 0:
+                    new_row = 0
+                elif new_row >= arr.shape[1]:
+                    new_row = arr.shape[1] - 1
+
+                result_value += arr[new_col, new_row] * weights[i]
+
+            result[col, row] = result_value
+
+    return result
+
+
 @jit(nopython=True, parallel=True, nogil=False, fastmath=True, cache=True)
 def _convolve_array_channels_HWC(
     arr: np.ndarray,
@@ -172,17 +227,18 @@ def _convolve_array_channels_HWC(
     result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype="float32")
 
     hood_size = arr.shape[2]
-    hood_weights = np.ones(hood_size, dtype="float32")
     center_idx = int(hood_size / 2)
 
     for idx_y in prange(arr.shape[0]):
-        for idx_x in prange(arr.shape[1]):
-            hood_count = 0
+        for idx_x in range(arr.shape[1]):
             hood_values = np.zeros(hood_size, dtype="float32")
+            hood_weights = np.ones(hood_size, dtype="float32")
+            hood_count = 0
 
             for idx_c in range(hood_size):
                 if nodata and arr[idx_y, idx_x, idx_c] == nodata_value:
                     continue
+
                 hood_values[hood_count] = arr[idx_y, idx_x, idx_c]
                 hood_count += 1
 
@@ -191,7 +247,7 @@ def _convolve_array_channels_HWC(
                 continue
 
             hood_values = hood_values[:hood_count]
-            hood_weights = hood_weights[:hood_count]
+            hood_weights = hood_weights[:hood_count] / hood_weights[:hood_count].sum()
 
             result[idx_y, idx_x, 0] = _hood_to_value(
                 method,
@@ -220,13 +276,13 @@ def _convolve_array_channels_CHW(
     result = np.zeros((1, arr.shape[0], arr.shape[1]), dtype="float32")
 
     hood_size = arr.shape[0]
-    hood_weights = np.ones(hood_size, dtype="float32")
     center_idx = int(hood_size / 2)
 
     for idx_y in prange(arr.shape[1]):
-        for idx_x in prange(arr.shape[2]):
+        for idx_x in range(arr.shape[2]):
             hood_count = 0
             hood_values = np.zeros(hood_size, dtype="float32")
+            hood_weights = np.ones(hood_size, dtype="float32")
 
             for idx_c in range(hood_size):
                 if nodata and arr[idx_c, idx_y, idx_x] == nodata_value:
@@ -239,7 +295,7 @@ def _convolve_array_channels_CHW(
                 continue
 
             hood_values = hood_values[:hood_count]
-            hood_weights = hood_weights[:hood_count]
+            hood_weights = hood_weights[:hood_count] / hood_weights[:hood_count].sum()
 
             result[0, idx_y, idx_x] = _hood_to_value(
                 method,
@@ -276,22 +332,24 @@ def convolve_array_channels(
         The following methods are valid:
         ```text
             1. sum
-            2. mode
-            3. max/dilate
-            4. min/erode
-            5. contrast
-            6. median
-            7. std
-            8. mad
-            9. z_score
-            10. z_score_mad
-            11. sigma_lee
-            12. quantile
-            13. occurrances
-            14. feather
-            15. roughness
-            16. roughness_tri
-            17. roughness_tpi
+            2. max
+            3. min
+            4. mean
+            5. median
+            6. variance
+            7. standard deviation
+            8. contrast
+            9. mode
+            10. median absolute deviation (mad)
+            11. z-score
+            12. z-score (mad)
+            13. sigma lee
+            14. quantile
+            15. occurances
+            16. feather
+            17. roughness
+            18. roughness tri
+            19. roughness tpi
         ```
 
         Default: 1.
@@ -377,25 +435,27 @@ def convolve_array(
 
     method : int, optional
         The convolution method to use. Default: 1.
-        The following methods are valid:
+         The following methods are valid:
         ```text
             1. sum
-            2. mode
-            3. max/dilate
-            4. min/erode
-            5. contrast
-            6. median
-            7. std
-            8. mad
-            9. z_score
-            10. z_score_mad
-            11. sigma_lee
-            12. quantile
-            13. occurrances
-            14. feather
-            15. roughness
-            16. roughness_tri
-            17. roughness_tpi
+            2. max
+            3. min
+            4. mean
+            5. median
+            6. variance
+            7. standard deviation
+            8. contrast
+            9. mode
+            10. median absolute deviation (mad)
+            11. z-score
+            12. z-score (mad)
+            13. sigma lee
+            14. quantile
+            15. occurances
+            16. feather
+            17. roughness
+            18. roughness tri
+            19. roughness tpi
         ```
 
     nodata : bool, optional
@@ -407,6 +467,9 @@ def convolve_array(
     func_value : int or float, optional
         The value to use for pixels where the kernel extends outside the input array.
         If None, use the edge value. Default: 0.5.
+    
+    channel_last : bool, optional
+        Whether the channels are the last axis in the array. Default: True.
 
     Returns
     -------
@@ -426,6 +489,7 @@ def convolve_array(
     type_check(nodata, [bool], "nodata")
     type_check(nodata_value, [float], "nodata_value")
     type_check(func_value, [int, float, type(None)], "value")
+    type_check(channel_last, [bool], "channel_last")
 
     assert len(offsets) == len(weights), "offsets and weights must be the same length"
     assert arr.ndim in [2, 3], "arr must be 2 or 3 dimensional"
@@ -438,10 +502,10 @@ def convolve_array(
             arr,
             offsets,
             weights,
-            method,
-            nodata,
-            nodata_value,
-            func_value,
+            method=method,
+            nodata=nodata,
+            nodata_value=nodata_value,
+            func_value=func_value,
         )
 
     result = np.zeros((arr.shape), dtype="float32")
@@ -452,10 +516,10 @@ def convolve_array(
                 arr[:, :, idx_d],
                 offsets,
                 weights,
-                method,
-                nodata,
-                nodata_value,
-                func_value,
+                method=method,
+                nodata=nodata,
+                nodata_value=nodata_value,
+                func_value=func_value,
             )
     else:
         for idx_d in range(arr.shape[0]):
@@ -463,10 +527,10 @@ def convolve_array(
                 arr[idx_d, :, :],
                 offsets,
                 weights,
-                method,
-                nodata,
-                nodata_value,
-                func_value,
+                method=method,
+                nodata=nodata,
+                nodata_value=nodata_value,
+                func_value=func_value,
             )
 
     return result

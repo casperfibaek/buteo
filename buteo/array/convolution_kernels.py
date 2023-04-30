@@ -409,7 +409,7 @@ def get_offsets_and_weights(
     remove_zero_weights: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray, int]:
     """
-    Generates a list of offsets, weights, and the center pixel index for a given kernel.
+    Generates a list of offsets and weights for a given kernel.
 
     Parameters
     ----------
@@ -421,14 +421,13 @@ def get_offsets_and_weights(
 
     Returns
     -------
-    Tuple[np.ndarray, np.ndarray, int]
-        The offsets, weights and the center pixel index.
+    Tuple[np.ndarray, np.ndarray]
+        The offsets and weights
     """
     count = np.count_nonzero(kernel) if remove_zero_weights else kernel.size
 
     offsets = np.zeros((count, 2), dtype=np.int64)
     weights = np.zeros((count), dtype=np.float32)
-    center_idx = kernel.shape[0] // 2
 
     step = kernel.shape[0] // 2
     index = 0
@@ -439,12 +438,9 @@ def get_offsets_and_weights(
                 offsets[index][1] = row
                 weights[index] = kernel[col + step, row + step]
 
-                if col == 0 and row == 0:
-                    center_idx = index
-
                 index += 1
 
-    return offsets, weights, center_idx
+    return offsets, weights
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')

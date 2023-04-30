@@ -36,9 +36,9 @@
                     <li><a href="array/convolution_funcs.html">convolution_funcs</a></li>
                     <li><a href="array/convolution_kernels.html">convolution_kernels</a></li>
                     <li><a href="array/edge_detection.html">edge_detection</a></li>
+                    <li><a href="array/filters.html">filters</a></li>
                     <li><a href="array/morphology.html">morphology</a></li>
                     <li><a href="array/patches.html">patches</a></li>
-                    <li><a href="array/textures.html">textures</a></li>
             </ul>
                 <h2>All Functions</h2>
                 <ul>
@@ -89,6 +89,15 @@
                             <li><a href="array/convolution_kernels.html#get_kernel_sobel">get_kernel_sobel</a></li>
                             <li><a href="array/convolution_kernels.html#get_offsets_and_weights">get_offsets_and_weights</a></li>
                             <li><a href="array/edge_detection.html#edge_detection">edge_detection</a></li>
+                            <li><a href="array/filters.html#filter_variance">filter_variance</a></li>
+                            <li><a href="array/filters.html#filter_standard_deviation">filter_standard_deviation</a></li>
+                            <li><a href="array/filters.html#filter_blur">filter_blur</a></li>
+                            <li><a href="array/filters.html#filter_median">filter_median</a></li>
+                            <li><a href="array/filters.html#filter_min">filter_min</a></li>
+                            <li><a href="array/filters.html#filter_max">filter_max</a></li>
+                            <li><a href="array/filters.html#filter_sum">filter_sum</a></li>
+                            <li><a href="array/filters.html#filter_mode">filter_mode</a></li>
+                            <li><a href="array/filters.html#filter_center_difference">filter_center_difference</a></li>
                             <li><a href="array/morphology.html#morph_erode">morph_erode</a></li>
                             <li><a href="array/morphology.html#morph_dilate">morph_dilate</a></li>
                             <li><a href="array/morphology.html#morph_open">morph_open</a></li>
@@ -99,11 +108,6 @@
                             <li><a href="array/patches.html#array_to_patches">array_to_patches</a></li>
                             <li><a href="array/patches.html#predict_array">predict_array</a></li>
                             <li><a href="array/patches.html#predict_array_pixel">predict_array_pixel</a></li>
-                            <li><a href="array/textures.html#texture_local_variance">texture_local_variance</a></li>
-                            <li><a href="array/textures.html#texture_local_median">texture_local_median</a></li>
-                            <li><a href="array/textures.html#texture_local_blur">texture_local_blur</a></li>
-                            <li><a href="array/textures.html#texture_local_mode">texture_local_mode</a></li>
-                            <li><a href="array/textures.html#texture_hole_dif">texture_hole_dif</a></li>
                             <li><a href="eo/s1_preprocess.html#s1_backscatter">s1_backscatter</a></li>
                             <li><a href="eo/s1_utils.html#s1_kml_to_bbox">s1_kml_to_bbox</a></li>
                             <li><a href="eo/s1_utils.html#s1_get_metadata">s1_get_metadata</a></li>
@@ -357,13 +361,14 @@
                         <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="sd">Functions for transforming rasters represented as arrays.</span>
 </span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="kn">from</span> <span class="nn">.convolution_funcs</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a><span class="kn">from</span> <span class="nn">.convolution</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="kn">from</span> <span class="nn">.edge_detection</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a><span class="kn">from</span> <span class="nn">.morphology</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="kn">from</span> <span class="nn">.patches</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="kn">from</span> <span class="nn">.textures</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="kn">from</span> <span class="nn">.color</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="kn">from</span> <span class="nn">.convolution_kernels</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a><span class="kn">from</span> <span class="nn">.convolution_funcs</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="kn">from</span> <span class="nn">.convolution</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a><span class="kn">from</span> <span class="nn">.edge_detection</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="kn">from</span> <span class="nn">.morphology</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="kn">from</span> <span class="nn">.patches</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="kn">from</span> <span class="nn">.filters</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="kn">from</span> <span class="nn">.color</span> <span class="kn">import</span> <span class="o">*</span>
 </span></pre></div>
 
 

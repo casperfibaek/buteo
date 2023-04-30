@@ -40,6 +40,14 @@ def _hood_sum(
     """ Get the weighted sum. """
     return np.sum(np.multiply(values, weights))
 
+@jit(nopython=True, nogil=True, fastmath=True, cache=True)
+def _hood_mean(
+    values: np.ndarray,
+    weights: np.ndarray,
+) -> Union[float, int]:
+    """ Get the weighted mean. """
+    return np.sum(np.multiply(values, weights)) / np.sum(weights)
+
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
 def _hood_mode(
@@ -172,6 +180,17 @@ def _hood_standard_deviation(
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
+def _hood_variance(
+    values: np.ndarray,
+    weights: np.ndarray,
+) -> Union[float, int]:
+    "Get the weighted variation. "
+    summed = _hood_sum(values, weights)
+    variance = np.sum(np.multiply(np.power(np.subtract(values, summed), 2), weights))
+    return variance
+
+
+@jit(nopython=True, nogil=True, fastmath=True, cache=True)
 def _k_to_size(size: int) -> int:
     """ Preprocess Sigma Lee limits. """
     return int(np.rint(-0.0000837834 * size ** 2 + 0.045469 * size + 0.805733))
@@ -268,7 +287,6 @@ def _hood_roughness_tri(
     return _hood_sum(np.abs(np.subtract(values_non_center, center_value)), weights_non_center)
 
 
-
 @jit(nopython=True, nogil=False, fastmath=True, cache=True)
 def _hood_to_value(
     method: int,
@@ -285,6 +303,29 @@ def _hood_to_value(
     ----------
     method : str
         The method to use for combining the values and weights.
+
+        The following methods are valid:
+        ```text
+            1. sum
+            2. max
+            3. min
+            4. mean
+            5. median
+            6. variance
+            7. standard deviation
+            8. contrast
+            9. mode
+            10. median absolute deviation (mad)
+            11. z-score
+            12. z-score (mad)
+            13. sigma lee
+            14. quantile
+            15. occurances
+            16. feather
+            17. roughness
+            18. roughness tri
+            19. roughness tpi
+        ```
 
     values : numpy.ndarray
         The values to be combined.
@@ -316,36 +357,40 @@ def _hood_to_value(
     if method == 1:
         return _hood_sum(values, weights)
     elif method == 2:
-        return _hood_mode(values, weights)
-    elif method == 3:
         return _hood_max(values, weights)
-    elif method == 4:
+    elif method == 3:
         return _hood_min(values, weights)
+    elif method == 4:
+        return _hood_mean(values, weights)
     elif method == 5:
-        return _hood_contrast(values, weights)
-    elif method == 6:
         return _hood_quantile(values, weights, 0.5)
+    elif method == 6:
+        return _hood_variance(values, weights)
     elif method == 7:
         return _hood_standard_deviation(values, weights)
     elif method == 8:
-        return _hood_median_absolute_deviation(values, weights)
+        return _hood_contrast(values, weights)
     elif method == 9:
-        return _hood_z_score(values, weights, center_idx)
+        return _hood_mode(values, weights)
     elif method == 10:
-        return _hood_z_score_mad(values, weights, center_idx)
+        return _hood_median_absolute_deviation(values, weights)
     elif method == 11:
-        return _hood_sigma_lee(values, weights)
+        return _hood_z_score(values, weights, center_idx)
     elif method == 12:
-        return _hood_quantile(values, weights, func_value)
+        return _hood_z_score_mad(values, weights, center_idx)
     elif method == 13:
-        return _hood_count_occurances(values, weights, func_value, normalise=False)
+        return _hood_sigma_lee(values, weights)
     elif method == 14:
-        return _hood_count_occurances(values, weights, func_value, normalise=True)
+        return _hood_quantile(values, weights, func_value)
     elif method == 15:
-        return _hood_roughness(values, weights, center_idx)
+        return _hood_count_occurances(values, weights, func_value, normalise=False)
     elif method == 16:
-        return _hood_roughness_tri(values, weights, center_idx)
+        return _hood_count_occurances(values, weights, func_value, normalise=True)
     elif method == 17:
+        return _hood_roughness(values, weights, center_idx)
+    elif method == 18:
+        return _hood_roughness_tri(values, weights, center_idx)
+    elif method == 19:
         return _hood_roughness_tpi(values, weights, center_idx)
     else:
         return nodata_value
