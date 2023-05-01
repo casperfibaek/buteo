@@ -1124,3 +1124,140 @@ def save_dataset_to_memory(
         suffix=suffix,
         add_uuid=add_uuid,
     )
+
+
+def _parse_input_data(
+    input_data: Union[gdal.Dataset, ogr.DataSource, str, List[Union[gdal.Dataset, ogr.DataSource, str]]],
+    input_type: str,
+) -> List[str]:
+    """
+    Parses the input data to a list of paths.
+
+    Parameters
+    ----------
+    input_data : Union[gdal.Dataset, ogr.DataSource, str, List[Union[gdal.Dataset, ogr.DataSource, str]]]
+        The input data to parse.
+
+    input_type : str, optional
+        The input type. Can be "raster", "vector" or "mixed". Default: "mixed".
+
+    Returns
+    -------
+    List[str]
+        The list of paths.
+    """
+    assert input_type in ["raster", "vector"], "Invalid input type."
+    assert isinstance(input_data, (gdal.Dataset, ogr.DataSource, str, list)), "Invalid type for input data."
+
+    if isinstance(input_data, str):
+        if utils_path._check_is_path_glob(input_data):
+            input_data = utils_path._get_paths_from_glob(input_data)
+        else:
+            input_data = utils_base._get_variable_as_list(input_data)
+
+    elif isinstance(input_data, (gdal.Dataset, ogr.DataSource)):
+        input_data = [input_data.GetDescription()]
+
+    # Input is list
+    elif isinstance(input_data, list):
+        if len(input_data) == 0:
+            raise ValueError("Input data cannot be empty.")
+
+        if not all([isinstance(val, (gdal.Dataset, ogr.DataSource, str)) for val in input_data]):
+            raise TypeError("Invalid type for input data.")
+
+        input_data = _get_path_from_dataset_list(input_data, allow_mixed=True)
+
+        if input_type == "mixed":
+            if not all([_check_is_file_valid_dtype(val) for val in input_data]):
+                raise TypeError("Invalid type for input data.")
+        elif input_type == "raster":
+            if not all([_check_is_raster(val) for val in input_data]):
+                raise TypeError("Invalid type for input data.")
+        elif input_type == "vector":
+            if not all([_check_is_vector(val) for val in input_data]):
+                raise TypeError("Invalid type for input data.")
+
+        input_data = [val.GetDescription() if isinstance(val, (gdal.Dataset, ogr.DataSource)) else val for val in input_data]
+
+    else:
+        raise TypeError("Invalid type for input data.")
+
+    if not utils_path._check_is_valid_filepath_list(input_data):
+        raise ValueError("Invalid input data.")
+
+    if input_type == "raster":
+        for val in input_data:
+            if not _check_is_raster(val):
+                raise TypeError("Invalid type for input data.")
+    elif input_type == "vector":
+        for val in input_data:
+            if not _check_is_vector(val):
+                raise TypeError("Invalid type for input data.")
+    else:
+        for val in input_data:
+            if not _check_is_raster_or_vector(val):
+                raise TypeError("Invalid type for input data.")
+
+    return input_data
+
+
+def _parse_output_data(
+    input_data: Union[gdal.Dataset, ogr.DataSource, str, List[Union[gdal.Dataset, ogr.DataSource, str]]],
+    output_data: Optional[Union[str, List[str]]],
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = False,
+    overwrite: bool = True,
+    change_ext: bool = False,
+) -> List[str]:
+    """
+    Parses the output data to a list of paths.
+
+    Parameters
+    ----------
+    input_data : List[str]
+        The input data.
+
+    output_data : Optional[Union[str, List[str]]]
+        The output data.
+
+    prefix : str, optional
+        A prefix to add to the output path. Default: "".
+
+    suffix : str, optional
+        A suffix to add to the output path. Default: "".
+
+    add_uuid : bool, optional
+        If True, a UUID will be added to the output path. Default: False.
+
+    overwrite : bool, optional
+        If True, the output will be overwritten if it already exists. Default: True.
+
+    change_ext : bool, optional
+        If True, the extension of the output path will be changed to the extension of the input path. Default: False.
+
+    Returns
+    -------
+    List[str]
+        The list of paths.
+    """
+    assert isinstance(input_data, list), "Invalid type for input data."
+    assert isinstance(output_data, (str, list, type(None))), "Invalid type for output data."
+    assert isinstance(prefix, str), "Invalid type for prefix."
+    assert isinstance(suffix, str), "Invalid type for suffix."
+    assert isinstance(add_uuid, bool), "Invalid type for add_uuid."
+    assert isinstance(overwrite, bool), "Invalid type for overwrite."
+    assert isinstance(change_ext, bool), "Invalid type for change_ext."
+
+    output_data = utils_path._get_output_path_list(
+        input_data,
+        output_data,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        overwrite=overwrite,
+        change_ext=change_ext,
+    )
+
+    return output_data

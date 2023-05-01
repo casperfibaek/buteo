@@ -92,10 +92,9 @@ def align_rasters_to_reference(
     utils_base.type_check(suffix, [str], "suffix")
     utils_base.type_check(ram, [int, str], "ram")
 
-    rasters_list = utils_base._get_variable_as_list(rasters)
-    assert utils_gdal._check_is_raster_or_vector(reference), "Reference must be a raster or vector."
+    rasters_list = utils_gdal._parse_input_data(rasters, "raster")
 
-    add_uuid = True if out_path is None else False
+    assert utils_gdal._check_is_raster_or_vector(reference), "Reference must be a raster or vector."
 
     # Verify that all of the rasters overlap the reference
     for raster in rasters_list:
@@ -103,12 +102,12 @@ def align_rasters_to_reference(
             f"Raster: {utils_gdal._get_path_from_dataset(raster)} does not intersect reference."
         )
 
-    path_list = utils_path._get_output_path_list(
+    path_list = utils_gdal._parse_output_data(
         rasters_list,
         out_path,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=add_uuid,
+        add_uuid=True if out_path is None else False,
         overwrite=overwrite,
         change_ext="tif",
     )
@@ -210,7 +209,7 @@ def find_best_reference(
     utils_base.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
     utils_base.type_check(method, [str], "method")
 
-    rasters_list = utils_base._get_variable_as_list(rasters)
+    rasters_list = utils_gdal._parse_input_data(rasters, "raster")
     assert method in ["reference", "intersection", "union"], (
         f"Invalid bounding_box: {method}. Options include: reference, intersection, and union."
     )
@@ -399,18 +398,14 @@ def align_rasters(
     utils_base.type_check(suffix, [str], "suffix")
     utils_base.type_check(ram, [int, str], "ram")
 
-    raster_list = utils_base._get_variable_as_list(rasters)
-
-    assert utils_gdal._check_is_raster_list(raster_list), "rasters must be a single raster or a list of rasters."
+    raster_list = utils_gdal._parse_input_data(rasters)
     assert method in ["reference", "intersection", "union"], "method must be one of reference, intersection, or union."
 
-    add_uuid = True if out_path is None else False
-
-    path_list = utils_path._get_output_path_list(
+    path_list = utils_gdal._parse_output_data(
         raster_list,
         out_path,
         overwrite=overwrite,
-        add_uuid=add_uuid,
+        add_uuid=True if out_path is None else False,
         change_ext="tif",
         prefix=prefix,
         suffix=suffix,

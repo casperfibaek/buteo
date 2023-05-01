@@ -17,7 +17,7 @@ from osgeo import gdal
 
 # Internal
 from buteo.raster import core_raster
-from buteo.utils import utils_gdal, utils_base, utils_gdal_translate
+from buteo.utils import utils_gdal, utils_base, utils_gdal_translate, utils_path
 
 
 def _add_border_to_raster(
