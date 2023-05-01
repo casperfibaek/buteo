@@ -11,8 +11,8 @@ import numpy as np
 
 # Internal
 from buteo.raster import raster_to_array, array_to_raster
-from buteo.utils.core_utils import type_check
-from buteo.utils.gdal_utils import default_creation_options, delete_if_in_memory
+from buteo.utils.utils_base import type_check
+from buteo.utils.utils_gdal import default_creation_options, _delete_dataset_if_in_memory
 
 
 def raster_dem_to_slope(
@@ -209,8 +209,8 @@ def raster_dem_to_orientation(
     aspect = raster_to_array(tmp_path)
     slope = raster_to_array(tmp_slope)
 
-    delete_if_in_memory(tmp_path)
-    delete_if_in_memory(tmp_slope)
+    _delete_dataset_if_in_memory(tmp_path)
+    _delete_dataset_if_in_memory(tmp_slope)
 
     if include_height:
         dem = raster_to_array(input_raster)

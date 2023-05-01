@@ -11,7 +11,7 @@ import sys; sys.path.append("../../")
 from osgeo import ogr, gdal
 
 # Internal
-from buteo.utils import core_utils, gdal_utils
+from buteo.utils import utils_base, utils_gdal
 from buteo.vector import core_vector
 from buteo.vector.reproject import _reproject_vector
 from buteo.vector.merge import merge_vectors
@@ -30,15 +30,15 @@ def _intersect_vector(
 ):
     """ Internal. """
     assert isinstance(vector, ogr.DataSource), f"Invalid input vector: {vector}"
-    assert gdal_utils.is_vector(vector), f"Invalid input vector: {vector}"
+    assert utils_gdal._check_is_vector(vector), f"Invalid input vector: {vector}"
 
     if out_path is None:
-        out_path = gdal_utils.create_memory_path(
-            gdal_utils.get_path_from_dataset(vector),
+        out_path = utils_gdal.create_memory_path(
+            utils_gdal._get_path_from_dataset(vector),
             add_uuid=True,
         )
 
-    assert core_utils.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path."
+    assert utils_base.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path."
 
     match_projection = _reproject_vector(clip_geom, vector)
     geometry_to_clip = core_vector._open_vector(match_projection)
@@ -69,7 +69,7 @@ def _intersect_vector(
         else:
             return True
 
-    driver = ogr.GetDriverByName(gdal_utils.path_to_driver_vector(out_path))
+    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_from_path(out_path))
     destination = driver.CreateDataSource(out_path)
     destination.CopyLayer(result, vector_layername, ["OVERWRITE=YES"])
 
@@ -116,26 +116,26 @@ def intersect_vector(
     ## Returns:
     (_str_/_list_): The path(s) to the clipped vector(s).
     """
-    core_utils.type_check(vector, [ogr.DataSource, str, list], "vector")
-    core_utils.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
-    core_utils.type_check(out_path, [str], "out_path", allow_none=True)
-    core_utils.type_check(process_layer, [int], "process_layer")
-    core_utils.type_check(process_layer_clip, [int], "process_layer_clip")
-    core_utils.type_check(add_index, [bool], "add_index")
-    core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(prefix, [str], "prefix")
-    core_utils.type_check(suffix, [str], "suffix")
-    core_utils.type_check(add_uuid, [bool], "add_uuid")
-    core_utils.type_check(allow_lists, [bool], "allow_lists")
+    utils_base.type_check(vector, [ogr.DataSource, str, list], "vector")
+    utils_base.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
+    utils_base.type_check(out_path, [str], "out_path", allow_none=True)
+    utils_base.type_check(process_layer, [int], "process_layer")
+    utils_base.type_check(process_layer_clip, [int], "process_layer_clip")
+    utils_base.type_check(add_index, [bool], "add_index")
+    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base.type_check(prefix, [str], "prefix")
+    utils_base.type_check(suffix, [str], "suffix")
+    utils_base.type_check(add_uuid, [bool], "add_uuid")
+    utils_base.type_check(allow_lists, [bool], "allow_lists")
 
     if not allow_lists and isinstance(vector, list):
         raise ValueError("Lists are not allowed when allow_lists is False.")
 
-    vector_list = core_utils.ensure_list(vector)
+    vector_list = utils_base._get_variable_as_list(vector)
 
-    assert gdal_utils.is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
+    assert utils_gdal._check_is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
 
-    path_list = gdal_utils.create_output_path_list(
+    path_list = utils_gdal.create_output_path_list(
         vector_list,
         out_path=out_path,
         prefix=prefix,
@@ -143,7 +143,7 @@ def intersect_vector(
         add_uuid=add_uuid,
     )
 
-    assert core_utils.is_valid_output_paths(path_list, overwrite=overwrite), "Invalid output path generated."
+    assert utils_base.is_valid_output_paths(path_list, overwrite=overwrite), "Invalid output path generated."
 
     output = []
     for index, in_vector in enumerate(vector_list):

@@ -21,7 +21,7 @@ import numpy as np
 from osgeo import ogr, gdal, osr
 
 # Internal
-from buteo.utils import bbox_utils, core_utils, gdal_utils
+from buteo.utils import utils_base, utils_gdal, utils_bbox
 
 
 def _open_vector(vector, *, writeable=True, allow_raster=True):
@@ -29,7 +29,7 @@ def _open_vector(vector, *, writeable=True, allow_raster=True):
     assert isinstance(vector, (str, ogr.DataSource)), "vector must be a path or a DataSource"
 
     opened = None
-    if gdal_utils.is_vector(vector):
+    if utils_gdal._check_is_vector(vector):
         if isinstance(vector, str):
             gdal.PushErrorHandler("CPLQuietErrorHandler")
             opened = ogr.Open(vector, gdal.GF_Write) if writeable else ogr.Open(vector, gdal.GF_Read)
@@ -39,7 +39,7 @@ def _open_vector(vector, *, writeable=True, allow_raster=True):
         else:
             raise Exception(f"Could not read input vector: {vector}")
 
-    elif allow_raster and gdal_utils.is_raster(vector):
+    elif allow_raster and utils_gdal._check_is_raster(vector):
         if isinstance(vector, str):
             gdal.PushErrorHandler("CPLQuietErrorHandler")
             opened = gdal.Open(vector, gdal.GF_Write) if writeable else ogr.Open(vector, gdal.GF_Read)
@@ -49,7 +49,7 @@ def _open_vector(vector, *, writeable=True, allow_raster=True):
         else:
             raise Exception(f"Could not read input vector: {vector}")
 
-        bbox = bbox_utils.get_bbox_from_geotransform(
+        bbox = utils_bbox._get_bbox_from_geotransform(
             opened.GetGeoTransform(),
             opened.RasterXSize,
             opened.RasterYSize,
@@ -59,7 +59,7 @@ def _open_vector(vector, *, writeable=True, allow_raster=True):
         projection_osr = osr.SpatialReference()
         projection_osr.ImportFromWkt(projection_wkt)
 
-        vector_bbox = bbox_utils.convert_bbox_to_vector(bbox, projection_osr)
+        vector_bbox = utils_bbox._get_vector_from_bbox(bbox, projection_osr)
         opened = ogr.Open(vector_bbox, gdal.GF_Write) if writeable else ogr.Open(vector_bbox, gdal.GF_Read)
 
     else:
@@ -93,13 +93,13 @@ def open_vector(
     ## Returns:
     (_ogr.DataSource_/_list_): The opened vector(s).
     """
-    core_utils.type_check(vector, [str, ogr.DataSource, gdal.Dataset, [str, ogr.DataSource, gdal.Dataset]], "vector")
-    core_utils.type_check(writeable, [bool], "writeable")
+    utils_base.type_check(vector, [str, ogr.DataSource, gdal.Dataset, [str, ogr.DataSource, gdal.Dataset]], "vector")
+    utils_base.type_check(writeable, [bool], "writeable")
 
     if isinstance(vector, list) and not allow_lists:
         raise ValueError("Cannot open a list of vectors when allow_list is False.")
 
-    vectors = core_utils.ensure_list(vector)
+    vectors = utils_base._get_variable_as_list(vector)
 
     output = []
     for element in vectors:
@@ -127,7 +127,7 @@ def _vector_to_metadata(vector):
 
     driver = vector_driver.GetName()
 
-    in_memory = gdal_utils.is_in_memory(datasource)
+    in_memory = utils_gdal._check_dataset_in_memory(datasource)
 
     layer_count = datasource.GetLayerCount()
     layers = []
@@ -204,7 +204,7 @@ def _vector_to_metadata(vector):
             "extent": layer_bbox,
         }
 
-        layer_bboxes = bbox_utils.additional_bboxes(layer_bbox, projection_osr)
+        layer_bboxes = utils_bbox._additional_bboxes(layer_bbox, projection_osr)
 
         for key, value in layer_bboxes.items():
             layer_dict[key] = value
@@ -212,7 +212,7 @@ def _vector_to_metadata(vector):
 
         ## MOVE TO A SINGLE FUNCTION
         def get_bbox_as_vector_layer():
-            return bbox_utils.convert_bbox_to_vector(layer_bbox, projection_osr) # pylint: disable=cell-var-from-loop
+            return utils_bbox._get_vector_from_bbox(layer_bbox, projection_osr) # pylint: disable=cell-var-from-loop
 
 
         def get_bbox_as_vector_latlng_layer():
@@ -220,7 +220,7 @@ def _vector_to_metadata(vector):
             projection_osr_latlng.ImportFromWkt('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]')
             # projection_osr_latlng.ImportFromEPSG(4326)
 
-            return bbox_utils.convert_bbox_to_vector(layer_dict["bbox_latlng"], projection_osr_latlng)  # pylint: disable=cell-var-from-loop
+            return utils_bbox._get_vector_from_bbox(layer_dict["bbox_latlng"], projection_osr_latlng)  # pylint: disable=cell-var-from-loop
 
 
         layer_dict["get_bbox_vector"] = get_bbox_as_vector_layer
@@ -249,14 +249,14 @@ def _vector_to_metadata(vector):
         "bbox": vector_bbox,
     }
 
-    vector_bboxes = bbox_utils.additional_bboxes(vector_bbox, projection_osr)
+    vector_bboxes = utils_bbox._additional_bboxes(vector_bbox, projection_osr)
 
     for key, value in vector_bboxes.items():
         metadata[key] = value
 
 
     def get_bbox_as_vector():
-        return bbox_utils.convert_bbox_to_vector(vector_bbox, projection_osr) # pylint: disable=cell-var-from-loop
+        return utils_bbox._get_vector_from_bbox(vector_bbox, projection_osr) # pylint: disable=cell-var-from-loop
 
 
     def get_bbox_as_vector_latlng():
@@ -264,7 +264,7 @@ def _vector_to_metadata(vector):
         projection_osr_latlng.ImportFromWkt('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]')
         # projection_osr_latlng.ImportFromEPSG(4326)
 
-        return bbox_utils.convert_bbox_to_vector(metadata["bbox_latlng"], projection_osr_latlng)  # pylint: disable=cell-var-from-loop
+        return utils_bbox._get_vector_from_bbox(metadata["bbox_latlng"], projection_osr_latlng)  # pylint: disable=cell-var-from-loop
 
 
     metadata["get_bbox_vector"] = get_bbox_as_vector
@@ -286,15 +286,15 @@ def vector_to_metadata(vector, *, allow_lists=True):
     ## Returns:
     (_dict_/_list_) A dictionary with metadata about the vector layer(s) or a list of dictionaries with metadata about the vector layer(s).
     """
-    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    core_utils.type_check(allow_lists, [bool], "allow_lists")
+    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base.type_check(allow_lists, [bool], "allow_lists")
 
     if isinstance(vector, list) and not allow_lists:
         raise ValueError("The vector parameter cannot be a list when allow_lists is False.")
 
-    vector_list = core_utils.ensure_list(vector)
+    vector_list = utils_base._get_variable_as_list(vector)
 
-    if not gdal_utils.is_vector_list(vector_list):
+    if not utils_gdal._check_is_vector_list(vector_list):
         raise ValueError("The vector parameter must be a list of vector layers.")
 
     output = []
@@ -325,18 +325,18 @@ def _filter_vector(
     metadata = _vector_to_metadata(vector)
 
     if out_path is None:
-        out_path = gdal_utils.create_memory_path(
-            gdal_utils.get_path_from_dataset(vector),
+        out_path = utils_gdal.create_memory_path(
+            utils_gdal._get_path_from_dataset(vector),
             prefix=prefix,
             suffix=suffix,
             add_uuid=True,
         )
 
-    assert core_utils.is_valid_output_path(out_path, overwrite=overwrite), f"out_path is not a valid output path. {out_path}"
+    assert utils_base.is_valid_output_path(out_path, overwrite=overwrite), f"out_path is not a valid output path. {out_path}"
 
     projection = metadata["projection_osr"]
 
-    driver = gdal_utils.path_to_driver_vector(out_path)
+    driver = utils_gdal._get_vector_driver_from_path(out_path)
 
     datasource_destination = driver.CreateDataSource(out_path)
     datasource_original = open_vector(vector)
@@ -405,20 +405,20 @@ def filter_vector(
     ## Returns:
     (_str_/_list_): Path(s) to the output vector file(s).
     """
-    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    core_utils.type_check(filter_function, [type(lambda: True)], "filter_function")
-    core_utils.type_check(process_layer, [int], "process_layer")
-    core_utils.type_check(allow_lists, [bool], "allow_lists")
+    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base.type_check(filter_function, [type(lambda: True)], "filter_function")
+    utils_base.type_check(process_layer, [int], "process_layer")
+    utils_base.type_check(allow_lists, [bool], "allow_lists")
 
     if isinstance(vector, list) and not allow_lists:
         raise ValueError("The vector parameter cannot be a list when allow_lists is False.")
 
-    vector_list = core_utils.ensure_list(vector)
+    vector_list = utils_base._get_variable_as_list(vector)
 
-    if not gdal_utils.is_vector_list(vector_list):
+    if not utils_gdal._check_is_vector_list(vector_list):
         raise ValueError("The vector parameter must be a list of vector layers.")
 
-    path_list = gdal_utils.create_output_path_list(
+    path_list = utils_gdal.create_output_path_list(
         vector_list,
         out_path=out_path,
         prefix=prefix,
@@ -459,17 +459,17 @@ def vector_add_index(vector, allow_lists=True):
     ## Returns:
     (_str_/_list_): Path(s) to the input rasters.
     """
-    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
 
     if isinstance(vector, list) and not allow_lists:
         raise ValueError("The vector parameter cannot be a list when allow_lists is False.")
 
-    vector_list = core_utils.ensure_list(vector)
+    vector_list = utils_base._get_variable_as_list(vector)
 
-    if not gdal_utils.is_vector_list(vector_list):
+    if not utils_gdal._check_is_vector_list(vector_list):
         raise ValueError("The vector parameter must be a list of vector layers.")
 
-    output = gdal_utils.get_path_from_dataset_list(vector_list)
+    output = utils_gdal._get_path_from_dataset_list(vector_list)
 
     try:
         for in_vector in vector_list:
@@ -507,7 +507,7 @@ def _vector_add_shapes_in_place(vector, *, shapes=None, prefix="", verbose=False
                 raise ValueError(f"{shape} is not a valid shape.")
 
     datasource = _open_vector(vector)
-    out_path = gdal_utils.get_path_from_dataset(datasource, dataset_type="vector")
+    out_path = utils_gdal._get_path_from_dataset(datasource, dataset_type="vector")
     metadata = _vector_to_metadata(datasource)
 
     for index in range(metadata["layer_count"]):
@@ -534,7 +534,7 @@ def _vector_add_shapes_in_place(vector, *, shapes=None, prefix="", verbose=False
         vector_feature_count = vector_layer.GetFeatureCount()
 
         if verbose:
-            core_utils.progress(0, vector_feature_count, name="shape")
+            utils_base.progress(0, vector_feature_count, name="shape")
 
         for i in range(vector_feature_count):
             vector_feature = vector_layer.GetNextFeature()
@@ -584,7 +584,7 @@ def _vector_add_shapes_in_place(vector, *, shapes=None, prefix="", verbose=False
             vector_layer.SetFeature(vector_feature)
 
             if verbose:
-                core_utils.progress(i, vector_feature_count, name="shape")
+                utils_base.progress(i, vector_feature_count, name="shape")
 
         vector_layer.CommitTransaction()
 
@@ -618,14 +618,14 @@ def vector_add_shapes_in_place(vector, *, shapes=None, prefix="", allow_lists=Tr
     Returns:
         Either the path to the updated vector or a list of the input vectors.
     """
-    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    core_utils.type_check(shapes, [[str], None], "shapes")
+    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base.type_check(shapes, [[str], None], "shapes")
 
     if not allow_lists and isinstance(vector, list):
         raise ValueError("Lists of vectors are not supported when allow_list is False.")
 
-    vector_list = core_utils.ensure_list(vector)
-    output = gdal_utils.get_path_from_dataset_list(vector_list)
+    vector_list = utils_base._get_variable_as_list(vector)
+    output = utils_gdal._get_path_from_dataset_list(vector_list)
 
     for in_vector in vector_list:
         output.append(_vector_add_shapes_in_place(
@@ -652,12 +652,12 @@ def vector_get_attribute_table(
     """
     Get the attribute table(s) of a vector.
     """
-    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    core_utils.type_check(process_layer, [int], "process_layer")
-    core_utils.type_check(include_fids, [bool], "include_fids")
-    core_utils.type_check(include_geometry, [bool], "include_geometry")
-    core_utils.type_check(include_attributes, [bool], "include_attributes")
-    core_utils.type_check(allow_lists, [bool], "allow_lists")
+    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base.type_check(process_layer, [int], "process_layer")
+    utils_base.type_check(include_fids, [bool], "include_fids")
+    utils_base.type_check(include_geometry, [bool], "include_geometry")
+    utils_base.type_check(include_attributes, [bool], "include_attributes")
+    utils_base.type_check(allow_lists, [bool], "allow_lists")
 
     ref = open_vector(vector)
     metadata = _vector_to_metadata(ref)
@@ -706,7 +706,7 @@ def vector_filter_layer(
     ref = open_vector(vector)
     meta = vector_to_metadata(ref, allow_lists=False)
 
-    out_path = gdal_utils.create_output_path(
+    out_path = utils_gdal.create_output_path(
         meta["path"],
         out_path=out_path,
         overwrite=overwrite,
@@ -722,7 +722,7 @@ def vector_filter_layer(
     else:
         raise Exception("Wrong datatype for layer selection")
 
-    driver = gdal_utils.path_to_driver_vector(out_path)
+    driver = utils_gdal._get_vector_driver_from_path(out_path)
 
     destination = driver.CreateDataSource(out_path)
     destination.CopyLayer(layer, layer.GetName(), ["OVERWRITE=YES"])

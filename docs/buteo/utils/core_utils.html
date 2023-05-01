@@ -138,7 +138,7 @@
                     <a class="function" href="#parse_glob_path">parse_glob_path</a>
             </li>
             <li>
-                    <a class="function" href="#ensure_list">ensure_list</a>
+                    <a class="function" href="#_get_variable_as_list">_get_variable_as_list</a>
             </li>
             <li>
                     <a class="function" href="#all_arrays_are_same_size">all_arrays_are_same_size</a>
@@ -160,16 +160,16 @@
     <main class="pdoc">
             <section class="module-info">
                     <h1 class="modulename">
-<a href="./../../buteo.html">buteo</a><wbr>.<a href="./../utils.html">utils</a><wbr>.core_utils    </h1>
+<a href="./../../buteo.html">buteo</a><wbr>.<a href="./../utils.html">utils</a><wbr>.utils_base    </h1>
 
                         <div class="docstring"><h3 id="generic-utility-functions">Generic utility functions</h3>
 
 <p>Functions that make interacting with the toolbox easier.</p>
 </div>
 
-                        <input id="mod-core_utils-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                        <input id="mod-utils_base-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
-                        <label class="view-source-button" for="mod-core_utils-view-source"><span>View Source</span></label>
+                        <label class="view-source-button" for="mod-utils_base-view-source"><span>View Source</span></label>
 
                         <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">   1</span></a><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-2"><a href="#L-2"><span class="linenos">   2</span></a><span class="sd">### Generic utility functions ###</span>
@@ -196,7 +196,7 @@
 </span><span id="L-23"><a href="#L-23"><span class="linenos">  23</span></a><span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">gdal</span>
 </span><span id="L-24"><a href="#L-24"><span class="linenos">  24</span></a>
 </span><span id="L-25"><a href="#L-25"><span class="linenos">  25</span></a><span class="c1"># Internal</span>
-</span><span id="L-26"><a href="#L-26"><span class="linenos">  26</span></a><span class="kn">from</span> <span class="nn">buteo.utils.gdal_enums</span> <span class="kn">import</span> <span class="n">get_valid_raster_driver_extensions</span><span class="p">,</span> <span class="n">get_valid_vector_driver_extensions</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos">  26</span></a><span class="kn">from</span> <span class="nn">buteo.utils.utils_gdal_translate</span> <span class="kn">import</span> <span class="n">get_valid_raster_driver_extensions</span><span class="p">,</span> <span class="n">get_valid_vector_driver_extensions</span>
 </span><span id="L-27"><a href="#L-27"><span class="linenos">  27</span></a>
 </span><span id="L-28"><a href="#L-28"><span class="linenos">  28</span></a>
 </span><span id="L-29"><a href="#L-29"><span class="linenos">  29</span></a><span class="k">def</span> <span class="nf">get_unix_seconds_as_str</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1205,7 +1205,7 @@
 </span><span id="L-1032"><a href="#L-1032"><span class="linenos">1032</span></a>    <span class="k">return</span> <span class="n">glob</span><span class="p">(</span><span class="n">pre_glob</span><span class="p">)</span>
 </span><span id="L-1033"><a href="#L-1033"><span class="linenos">1033</span></a>
 </span><span id="L-1034"><a href="#L-1034"><span class="linenos">1034</span></a>
-</span><span id="L-1035"><a href="#L-1035"><span class="linenos">1035</span></a><span class="k">def</span> <span class="nf">ensure_list</span><span class="p">(</span>
+</span><span id="L-1035"><a href="#L-1035"><span class="linenos">1035</span></a><span class="k">def</span> <span class="nf">_get_variable_as_list</span><span class="p">(</span>
 </span><span id="L-1036"><a href="#L-1036"><span class="linenos">1036</span></a>    <span class="n">variable_or_list</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 </span><span id="L-1037"><a href="#L-1037"><span class="linenos">1037</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
 </span><span id="L-1038"><a href="#L-1038"><span class="linenos">1038</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -3129,36 +3129,36 @@
 
 
                 </section>
-                <section id="ensure_list">
-                            <input id="ensure_list-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                <section id="_get_variable_as_list">
+                            <input id="_get_variable_as_list-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">ensure_list</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">variable_or_list</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>:</span></span>
+        <span class="name">_get_variable_as_list</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">variable_or_list</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>:</span></span>
 
-                <label class="view-source-button" for="ensure_list-view-source"><span>View Source</span></label>
+                <label class="view-source-button" for="_get_variable_as_list-view-source"><span>View Source</span></label>
 
     </div>
-    <a class="headerlink" href="#ensure_list"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="ensure_list-1036"><a href="#ensure_list-1036"><span class="linenos">1036</span></a><span class="k">def</span> <span class="nf">ensure_list</span><span class="p">(</span>
-</span><span id="ensure_list-1037"><a href="#ensure_list-1037"><span class="linenos">1037</span></a>    <span class="n">variable_or_list</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-</span><span id="ensure_list-1038"><a href="#ensure_list-1038"><span class="linenos">1038</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-</span><span id="ensure_list-1039"><a href="#ensure_list-1039"><span class="linenos">1039</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="ensure_list-1040"><a href="#ensure_list-1040"><span class="linenos">1040</span></a><span class="sd">    Ensure that a variable is a list.</span>
-</span><span id="ensure_list-1041"><a href="#ensure_list-1041"><span class="linenos">1041</span></a>
-</span><span id="ensure_list-1042"><a href="#ensure_list-1042"><span class="linenos">1042</span></a><span class="sd">    Args:</span>
-</span><span id="ensure_list-1043"><a href="#ensure_list-1043"><span class="linenos">1043</span></a><span class="sd">        variable_or_list (any): The variable to check.</span>
-</span><span id="ensure_list-1044"><a href="#ensure_list-1044"><span class="linenos">1044</span></a>
-</span><span id="ensure_list-1045"><a href="#ensure_list-1045"><span class="linenos">1045</span></a><span class="sd">    Returns:</span>
-</span><span id="ensure_list-1046"><a href="#ensure_list-1046"><span class="linenos">1046</span></a><span class="sd">        list: The variable as a list.</span>
-</span><span id="ensure_list-1047"><a href="#ensure_list-1047"><span class="linenos">1047</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="ensure_list-1048"><a href="#ensure_list-1048"><span class="linenos">1048</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable_or_list</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_str_a_glob</span><span class="p">(</span><span class="n">variable_or_list</span><span class="p">):</span>
-</span><span id="ensure_list-1049"><a href="#ensure_list-1049"><span class="linenos">1049</span></a>        <span class="k">return</span> <span class="n">parse_glob_path</span><span class="p">(</span><span class="n">variable_or_list</span><span class="p">)</span>
-</span><span id="ensure_list-1050"><a href="#ensure_list-1050"><span class="linenos">1050</span></a>
-</span><span id="ensure_list-1051"><a href="#ensure_list-1051"><span class="linenos">1051</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable_or_list</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-</span><span id="ensure_list-1052"><a href="#ensure_list-1052"><span class="linenos">1052</span></a>        <span class="k">return</span> <span class="n">variable_or_list</span>
-</span><span id="ensure_list-1053"><a href="#ensure_list-1053"><span class="linenos">1053</span></a>
-</span><span id="ensure_list-1054"><a href="#ensure_list-1054"><span class="linenos">1054</span></a>    <span class="k">return</span> <span class="p">[</span><span class="n">variable_or_list</span><span class="p">]</span>
+    <a class="headerlink" href="#_get_variable_as_list"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="_get_variable_as_list-1036"><a href="#_get_variable_as_list-1036"><span class="linenos">1036</span></a><span class="k">def</span> <span class="nf">_get_variable_as_list</span><span class="p">(</span>
+</span><span id="_get_variable_as_list-1037"><a href="#_get_variable_as_list-1037"><span class="linenos">1037</span></a>    <span class="n">variable_or_list</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+</span><span id="_get_variable_as_list-1038"><a href="#_get_variable_as_list-1038"><span class="linenos">1038</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+</span><span id="_get_variable_as_list-1039"><a href="#_get_variable_as_list-1039"><span class="linenos">1039</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="_get_variable_as_list-1040"><a href="#_get_variable_as_list-1040"><span class="linenos">1040</span></a><span class="sd">    Ensure that a variable is a list.</span>
+</span><span id="_get_variable_as_list-1041"><a href="#_get_variable_as_list-1041"><span class="linenos">1041</span></a>
+</span><span id="_get_variable_as_list-1042"><a href="#_get_variable_as_list-1042"><span class="linenos">1042</span></a><span class="sd">    Args:</span>
+</span><span id="_get_variable_as_list-1043"><a href="#_get_variable_as_list-1043"><span class="linenos">1043</span></a><span class="sd">        variable_or_list (any): The variable to check.</span>
+</span><span id="_get_variable_as_list-1044"><a href="#_get_variable_as_list-1044"><span class="linenos">1044</span></a>
+</span><span id="_get_variable_as_list-1045"><a href="#_get_variable_as_list-1045"><span class="linenos">1045</span></a><span class="sd">    Returns:</span>
+</span><span id="_get_variable_as_list-1046"><a href="#_get_variable_as_list-1046"><span class="linenos">1046</span></a><span class="sd">        list: The variable as a list.</span>
+</span><span id="_get_variable_as_list-1047"><a href="#_get_variable_as_list-1047"><span class="linenos">1047</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="_get_variable_as_list-1048"><a href="#_get_variable_as_list-1048"><span class="linenos">1048</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable_or_list</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_str_a_glob</span><span class="p">(</span><span class="n">variable_or_list</span><span class="p">):</span>
+</span><span id="_get_variable_as_list-1049"><a href="#_get_variable_as_list-1049"><span class="linenos">1049</span></a>        <span class="k">return</span> <span class="n">parse_glob_path</span><span class="p">(</span><span class="n">variable_or_list</span><span class="p">)</span>
+</span><span id="_get_variable_as_list-1050"><a href="#_get_variable_as_list-1050"><span class="linenos">1050</span></a>
+</span><span id="_get_variable_as_list-1051"><a href="#_get_variable_as_list-1051"><span class="linenos">1051</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable_or_list</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+</span><span id="_get_variable_as_list-1052"><a href="#_get_variable_as_list-1052"><span class="linenos">1052</span></a>        <span class="k">return</span> <span class="n">variable_or_list</span>
+</span><span id="_get_variable_as_list-1053"><a href="#_get_variable_as_list-1053"><span class="linenos">1053</span></a>
+</span><span id="_get_variable_as_list-1054"><a href="#_get_variable_as_list-1054"><span class="linenos">1054</span></a>    <span class="k">return</span> <span class="p">[</span><span class="n">variable_or_list</span><span class="p">]</span>
 </span></pre></div>
 
 

@@ -16,7 +16,7 @@ import numpy as np
 from osgeo import gdal
 
 # Internal
-from buteo.utils import core_utils, gdal_utils, gdal_enums
+from buteo.utils import utils_base, utils_gdal, utils_gdal_translate
 from buteo.raster import core_raster
 
 
@@ -37,10 +37,10 @@ def raster_has_nodata_value(
     bool
         True if the raster or list of rasters contain nodata values.
     """
-    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
-    rasters = gdal_utils.get_path_from_dataset(core_utils.ensure_list(raster))
-    assert gdal_utils.is_raster_list(raster), f"List contains invalid rasters. {raster}"
+    rasters = utils_gdal._get_path_from_dataset(utils_base._get_variable_as_list(raster))
+    assert utils_gdal._check_is_raster_list(raster), f"List contains invalid rasters. {raster}"
 
     nodata_values = []
     for internal_raster in rasters:
@@ -75,10 +75,10 @@ def raster_get_nodata_value(
     Union[float, int, List]
         The nodata value(s) of the raster(s).
     """
-    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
-    rasters = gdal_utils.get_path_from_dataset(core_utils.ensure_list(raster))
-    assert gdal_utils.is_raster_list(raster), f"List contains invalid rasters. {raster}"
+    rasters = utils_gdal._get_path_from_dataset(utils_base._get_variable_as_list(raster))
+    assert utils_gdal._check_is_raster_list(raster), f"List contains invalid rasters. {raster}"
 
     nodata_values = []
     for internal_raster in rasters:
@@ -141,16 +141,16 @@ def raster_set_nodata(
     Union[str, List]
         Returns the rasters with nodata set.
     """
-    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    core_utils.type_check(dst_nodata, [float, int, str, list, None], "dst_nodata")
-    core_utils.type_check(out_path, [list, str, None], "out_path")
-    core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(prefix, [str], "prefix")
-    core_utils.type_check(suffix, [str], "postfix")
-    core_utils.type_check(creation_options, [[str], None], "creation_options")
+    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base.type_check(dst_nodata, [float, int, str, list, None], "dst_nodata")
+    utils_base.type_check(out_path, [list, str, None], "out_path")
+    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base.type_check(prefix, [str], "prefix")
+    utils_base.type_check(suffix, [str], "postfix")
+    utils_base.type_check(creation_options, [[str], None], "creation_options")
 
-    raster_list = core_utils.ensure_list(raster)
-    path_list = gdal_utils.create_output_path_list(
+    raster_list = utils_base._get_variable_as_list(raster)
+    path_list = utils_gdal.create_output_path_list(
         raster_list,
         out_path,
         prefix=prefix,
@@ -193,7 +193,7 @@ def raster_set_nodata(
             raster_metadata = rasters_metadata[index]
 
         if dst_nodata == "infer":
-            internal_dst_nodata = gdal_enums.translate_gdal_dtype_to_str(
+            internal_dst_nodata = utils_gdal_translate._translate_gdal_dtype_to_str(
                 raster_metadata["dtype_gdal_raw"]
             )
         elif isinstance(dst_nodata, list):
@@ -210,10 +210,10 @@ def raster_set_nodata(
             raster_mem = None
 
             if out_path is None:
-                raster_mem = gdal_utils.save_dataset_to_memory(internal_raster)
+                raster_mem = utils_gdal.save_dataset_to_memory(internal_raster)
             else:
-                core_utils.remove_if_required(path_list[index], overwrite)
-                raster_mem = gdal_utils.save_dataset_to_disk(internal_raster, path_list[index], creation_options=creation_options)
+                utils_path._delete_if_required(path_list[index], overwrite)
+                raster_mem = utils_gdal.save_dataset_to_disk(internal_raster, path_list[index], creation_options=creation_options)
 
             for band in range(raster_metadata["bands"]):
                 raster_mem_ref = core_raster._open_raster(raster_mem)
@@ -337,16 +337,16 @@ def raster_mask_values(
     Union[str, List]
         Returns the rasters with nodata masked.
     """
-    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    core_utils.type_check(values_to_mask, [[int, float, None]], "values_to_mask")
-    core_utils.type_check(out_path, [[str], str, None], "out_path")
-    core_utils.type_check(include_original_nodata, [bool], "include_original_nodata")
-    core_utils.type_check(dst_nodata, [float, int, str, [float, int, str, None], None], "dst_nodata")
-    core_utils.type_check(in_place, [bool], "in_place")
-    core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(prefix, [str], "prefix")
-    core_utils.type_check(suffix, [str], "postfix")
-    core_utils.type_check(creation_options, [[str], None], "creation_options")
+    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base.type_check(values_to_mask, [[int, float, None]], "values_to_mask")
+    utils_base.type_check(out_path, [[str], str, None], "out_path")
+    utils_base.type_check(include_original_nodata, [bool], "include_original_nodata")
+    utils_base.type_check(dst_nodata, [float, int, str, [float, int, str, None], None], "dst_nodata")
+    utils_base.type_check(in_place, [bool], "in_place")
+    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base.type_check(prefix, [str], "prefix")
+    utils_base.type_check(suffix, [str], "postfix")
+    utils_base.type_check(creation_options, [[str], None], "creation_options")
 
     rasters_metadata = []
     internal_in_place = in_place if out_path is None else False
@@ -372,8 +372,8 @@ def raster_mask_values(
             if isinstance(value, str) and value != "infer":
                 raise ValueError("If dst_nodata is a string it must be 'infer'")
 
-    raster_list = core_utils.ensure_list(raster)
-    out_paths = gdal_utils.create_output_path_list(
+    raster_list = utils_base._get_variable_as_list(raster)
+    out_paths = utils_gdal.create_output_path_list(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,
@@ -394,7 +394,7 @@ def raster_mask_values(
             raster_metadata = rasters_metadata[index]
 
         if dst_nodata == "infer":
-            internal_dst_nodata = gdal_enums.translate_gdal_dtype_to_str(
+            internal_dst_nodata = utils_gdal_translate._translate_gdal_dtype_to_str(
                 raster_metadata["dtype_gdal_raw"]
             )
         elif isinstance(dst_nodata, list):
@@ -425,7 +425,7 @@ def raster_mask_values(
                 raster_band = None
         else:
             out_name = out_paths[index]
-            core_utils.remove_if_required(out_name, overwrite)
+            utils_path._delete_if_required(out_name, overwrite)
 
             output_rasters.append(
                 core_raster.array_to_raster(arr, internal_raster, out_path=out_name)

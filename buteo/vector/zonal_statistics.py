@@ -22,7 +22,7 @@
 #     _vector_to_metadata,
 # )
 # from buteo.vector.zonal_statistics_stats import calculate_array_stats
-# from buteo.utils.core_utils import progress
+# from buteo.utils.utils_base import progress
 
 
 

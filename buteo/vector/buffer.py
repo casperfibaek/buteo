@@ -11,25 +11,25 @@ import sys; sys.path.append("../../")
 from osgeo import ogr
 
 # Internal
-from buteo.utils import gdal_utils, core_utils
+from buteo.utils import utils_gdal, utils_base
 from buteo.vector import core_vector
 
 
 def _buffer_vector(vector, distance, out_path=None):
     """ Internal. """
     if out_path is None:
-        out_path = gdal_utils.create_memory_path(
-            gdal_utils.get_path_from_dataset(vector),
+        out_path = utils_gdal.create_memory_path(
+            utils_gdal._get_path_from_dataset(vector),
             prefix="",
             suffix="_buffer",
             add_uuid=True,
         )
 
-    assert core_utils.is_valid_output_path(out_path), "Invalid output path"
+    assert utils_base.is_valid_output_path(out_path), "Invalid output path"
 
     read = core_vector.open_vector(vector)
 
-    driver = ogr.GetDriverByName(gdal_utils.path_to_driver_vector(out_path))
+    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_from_path(out_path))
     destination = driver.CreateDataSource(out_path)
 
     vector_metadata = core_vector._vector_to_metadata(read)
@@ -87,22 +87,22 @@ def buffer_vector(
     ## Returns:
     (_str_/_list_): Output path(s) of clipped vector(s).
     """
-    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    core_utils.type_check(distance, [int, float, str], "distance")
-    core_utils.type_check(out_path, [str, None], "out_path")
-    core_utils.type_check(prefix, [str], "prefix")
-    core_utils.type_check(suffix, [str], "suffix")
-    core_utils.type_check(add_uuid, [bool], "add_uuid")
-    core_utils.type_check(allow_lists, [bool], "allow_lists")
+    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base.type_check(distance, [int, float, str], "distance")
+    utils_base.type_check(out_path, [str, None], "out_path")
+    utils_base.type_check(prefix, [str], "prefix")
+    utils_base.type_check(suffix, [str], "suffix")
+    utils_base.type_check(add_uuid, [bool], "add_uuid")
+    utils_base.type_check(allow_lists, [bool], "allow_lists")
 
     if not allow_lists and isinstance(vector, (list, tuple)):
         raise ValueError("Lists are not allowed for vector.")
 
-    vector_list = core_utils.ensure_list(vector)
+    vector_list = utils_base._get_variable_as_list(vector)
 
-    assert gdal_utils.is_vector_list(vector_list), f"Invalid vector in list: {vector_list}"
+    assert utils_gdal._check_is_vector_list(vector_list), f"Invalid vector in list: {vector_list}"
 
-    path_list = gdal_utils.create_output_path_list(
+    path_list = utils_gdal.create_output_path_list(
         vector_list,
         out_path=out_path,
         prefix=prefix,

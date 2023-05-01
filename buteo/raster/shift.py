@@ -13,7 +13,7 @@ from osgeo import gdal
 import numpy as np
 
 # Internal
-from buteo.utils import core_utils, gdal_utils
+from buteo.utils import utils_base, utils_gdal
 from buteo.raster import core_raster
 from buteo.array.convolution import _convolve_array_2D_simple
 from buteo.array.convolution_kernels import get_kernel_shift
@@ -41,14 +41,14 @@ def _shift_raster(
 
     if out_path is None:
         raster_name = metadata["basename"]
-        out_path = gdal_utils.create_memory_path(raster_name, add_uuid=True)
+        out_path = utils_gdal.create_memory_path(raster_name, add_uuid=True)
     else:
-        if not core_utils.is_valid_output_path(out_path, overwrite=overwrite):
+        if not utils_base.is_valid_output_path(out_path, overwrite=overwrite):
             raise ValueError(f"out_path is not a valid output path: {out_path}")
 
-    core_utils.remove_if_required(out_path, overwrite)
+    utils_path._delete_if_required(out_path, overwrite)
 
-    driver = gdal.GetDriverByName(gdal_utils.path_to_driver_raster(out_path))
+    driver = gdal.GetDriverByName(utils_gdal._get_raster_driver_from_path(out_path))
 
     shifted = driver.Create(
         out_path,  # Location of the saved raster, ignored if driver is memory.
@@ -56,7 +56,7 @@ def _shift_raster(
         metadata["height"],  # Dataframe height in pixels (e.g. 1280px).
         metadata["band_count"],  # The number of bands required.
         metadata["datatype_gdal_raw"],  # Datatype of the destination.
-        gdal_utils.default_creation_options(creation_options),
+        utils_gdal.default_creation_options(creation_options),
     )
 
     new_transform = list(metadata["transform"])
@@ -112,16 +112,16 @@ def shift_raster(
     Returns:
         Union[str, List[str], gdal.Dataset]: The path(s) to the shifted raster(s).
     """
-    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    core_utils.type_check(shift_list, [[tuple, list]], "shift_list")
-    core_utils.type_check(out_path, [str, [str], None], "out_path")
-    core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(creation_options, [[str], None], "creation_options")
+    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base.type_check(shift_list, [[tuple, list]], "shift_list")
+    utils_base.type_check(out_path, [str, [str], None], "out_path")
+    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base.type_check(creation_options, [[str], None], "creation_options")
 
-    raster_list = core_utils.ensure_list(raster)
-    assert gdal_utils.is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
+    raster_list = utils_base._get_variable_as_list(raster)
+    assert utils_gdal._check_is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
 
-    path_list = gdal_utils.create_output_path_list(
+    path_list = utils_gdal.create_output_path_list(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,
@@ -169,9 +169,9 @@ def shift_raster_pixel(
     Returns:
         str: The path to the shifted raster.
     """
-    core_utils.type_check(raster, [str, gdal.Dataset], "raster")
-    core_utils.type_check(shift_list, [[tuple, list]], "shift_list")
-    core_utils.type_check(out_path, [str, None], "out_path")
+    utils_base.type_check(raster, [str, gdal.Dataset], "raster")
+    utils_base.type_check(shift_list, [[tuple, list]], "shift_list")
+    utils_base.type_check(out_path, [str, None], "out_path")
 
     arr = core_raster.raster_to_array(raster)
 
@@ -185,7 +185,7 @@ def shift_raster_pixel(
         )
 
     if out_path is None:
-        out_path = gdal_utils.create_memory_path("shifted_raster", add_uuid=True)
+        out_path = utils_gdal.create_memory_path("shifted_raster", add_uuid=True)
 
     return core_raster.array_to_raster(
         arr,

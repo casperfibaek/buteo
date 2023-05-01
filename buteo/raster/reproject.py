@@ -13,7 +13,7 @@ from typing import Union, Optional, List
 from osgeo import gdal, ogr, osr
 
 # Internal
-from buteo.utils import core_utils, gdal_utils, gdal_enums
+from buteo.utils import utils_base, utils_gdal, utils_gdal_translate
 from buteo.raster import core_raster
 
 
@@ -37,14 +37,14 @@ def _find_common_projection(
     osr.SpatialReference
         The common projection.
     """
-    core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
+    utils_base.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
 
-    rasters = core_utils.ensure_list(rasters)
+    rasters = utils_base._get_variable_as_list(rasters)
 
-    assert gdal_utils.is_raster_list(rasters), "rasters must be a list of rasters."
+    assert utils_gdal._check_is_raster_list(rasters), "rasters must be a list of rasters."
 
     # Get the projection of each raster
-    projections = [gdal_utils.parse_projection(raster) for raster in rasters]
+    projections = [utils_gdal.parse_projection(raster) for raster in rasters]
 
     # Get the most common projection
     common_projection = max(set(projections), key=projections.count)
@@ -70,7 +70,7 @@ def _reproject_raster(
     """ Internal. """
     assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
 
-    out_path = gdal_utils.create_output_path(
+    out_path = utils_gdal.create_output_path(
         raster,
         out_path=out_path,
         overwrite=overwrite,
@@ -82,10 +82,10 @@ def _reproject_raster(
     ref = core_raster._open_raster(raster)
     metadata = core_raster._raster_to_metadata(ref)
 
-    out_format = gdal_utils.path_to_driver_raster(out_path)
+    out_format = utils_gdal._get_raster_driver_from_path(out_path)
 
-    original_projection = gdal_utils.parse_projection(ref)
-    target_projection = gdal_utils.parse_projection(projection)
+    original_projection = utils_gdal.parse_projection(ref)
+    target_projection = utils_gdal.parse_projection(projection)
 
     if not isinstance(original_projection, osr.SpatialReference):
         raise RuntimeError("Error while parsing input projection.")
@@ -94,8 +94,8 @@ def _reproject_raster(
         raise RuntimeError("Error while parsing target projection.")
 
     # The input is already in the correct projection.
-    if not copy_if_same and gdal_utils.projections_match(original_projection, target_projection):
-        return gdal_utils.get_path_from_dataset(ref)
+    if not copy_if_same and utils_gdal._check_do_projections_match(original_projection, target_projection):
+        return utils_gdal._get_path_from_dataset(ref)
 
     src_nodata = metadata["nodata_value"]
     out_nodata = None
@@ -108,7 +108,7 @@ def _reproject_raster(
     if dtype is None:
         dtype = metadata["datatype"]
 
-    core_utils.remove_if_required(out_path, overwrite)
+    utils_path._delete_if_required(out_path, overwrite)
 
     reprojected = gdal.Warp(
         out_path,
@@ -116,9 +116,9 @@ def _reproject_raster(
         format=out_format,
         srcSRS=original_projection,
         dstSRS=target_projection,
-        resampleAlg=gdal_enums.translate_resample_method(resample_alg),
-        outputType=gdal_enums.translate_str_to_gdal_dtype(dtype),
-        creationOptions=gdal_utils.default_creation_options(creation_options),
+        resampleAlg=utils_gdal_translate._translate_resample_method(resample_alg),
+        outputType=utils_gdal_translate._translate_str_to_gdal_dtype(dtype),
+        creationOptions=utils_gdal.default_creation_options(creation_options),
         srcNodata=src_nodata,
         dstNodata=out_nodata,
         multithread=True,
@@ -195,26 +195,26 @@ def reproject_raster(
     Union[str, List[str]]
         The output path(s).
     """
-    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    core_utils.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
-    core_utils.type_check(out_path, [list, str, None], "out_path")
-    core_utils.type_check(resample_alg, [str], "resample_alg")
-    core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(creation_options, [[str], None], "creation_options")
-    core_utils.type_check(dst_nodata, [str, int, float], "dst_nodata")
-    core_utils.type_check(dtype, [str, None], "dtype")
-    core_utils.type_check(prefix, [str], "prefix")
-    core_utils.type_check(suffix, [str], "postfix")
-    core_utils.type_check(add_uuid, [bool], "add_uuid")
+    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
+    utils_base.type_check(out_path, [list, str, None], "out_path")
+    utils_base.type_check(resample_alg, [str], "resample_alg")
+    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base.type_check(creation_options, [[str], None], "creation_options")
+    utils_base.type_check(dst_nodata, [str, int, float], "dst_nodata")
+    utils_base.type_check(dtype, [str, None], "dtype")
+    utils_base.type_check(prefix, [str], "prefix")
+    utils_base.type_check(suffix, [str], "postfix")
+    utils_base.type_check(add_uuid, [bool], "add_uuid")
 
-    if core_utils.is_str_a_glob(raster):
-        raster = core_utils.parse_glob_path(raster)
+    if utils_base.is_str_a_glob(raster):
+        raster = utils_base.parse_glob_path(raster)
 
-    raster_list = core_utils.ensure_list(raster)
+    raster_list = utils_base._get_variable_as_list(raster)
 
-    assert gdal_utils.is_raster_list(raster_list), f"The input raster(s) contains invalid elements: {raster_list}"
+    assert utils_gdal._check_is_raster_list(raster_list), f"The input raster(s) contains invalid elements: {raster_list}"
 
-    path_list = gdal_utils.create_output_path_list(
+    path_list = utils_gdal.create_output_path_list(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,
@@ -289,26 +289,26 @@ def match_raster_projections(
     List[str]
         A list of reprojected input rasters with the correct projection.
     """
-    core_utils.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
-    core_utils.type_check(reference, [str, gdal.Dataset, ogr.DataSource], "reference")
-    core_utils.type_check(out_path, [str, list, None], "out_path")
-    core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(dst_nodata, [str, int, float], "dst_nodata")
-    core_utils.type_check(copy_if_already_correct, [bool], "copy_if_already_correct")
-    core_utils.type_check(creation_options, [[str], None], "creation_options")
+    utils_base.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
+    utils_base.type_check(reference, [str, gdal.Dataset, ogr.DataSource], "reference")
+    utils_base.type_check(out_path, [str, list, None], "out_path")
+    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base.type_check(dst_nodata, [str, int, float], "dst_nodata")
+    utils_base.type_check(copy_if_already_correct, [bool], "copy_if_already_correct")
+    utils_base.type_check(creation_options, [[str], None], "creation_options")
 
-    rasters = core_utils.ensure_list(rasters)
+    rasters = utils_base._get_variable_as_list(rasters)
 
-    assert gdal_utils.is_raster_list(rasters), "rasters must be a list of rasters."
+    assert utils_gdal._check_is_raster_list(rasters), "rasters must be a list of rasters."
 
     try:
-        target_projection = gdal_utils.parse_projection(reference)
+        target_projection = utils_gdal.parse_projection(reference)
     except Exception:
         raise ValueError(f"Unable to parse projection from master. Received: {reference}") from None
 
     add_uuid = out_path is None
 
-    path_list = gdal_utils.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid, ext=".tif")
+    path_list = utils_gdal.create_output_path_list(rasters, out_path, overwrite=overwrite, add_uuid=add_uuid, ext=".tif")
 
     output = []
 
@@ -320,7 +320,7 @@ def match_raster_projections(
             overwrite=overwrite,
             copy_if_same=copy_if_already_correct,
             dst_nodata=dst_nodata,
-            creation_options=gdal_utils.default_creation_options(creation_options),
+            creation_options=utils_gdal.default_creation_options(creation_options),
         )
 
         output.append(path)

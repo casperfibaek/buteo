@@ -31,7 +31,7 @@ from buteo.raster.core_raster import (
     create_raster_from_array,
     create_grid_with_coordinates,
 )
-from buteo.utils import gdal_enums, gdal_utils
+from buteo.utils import utils_gdal_translate, utils_gdal
 
 DEFAULT_ARR = np.array([
     [178, 250, 117,  23, 250,  42, 166, 164,  84, 175],
@@ -814,7 +814,7 @@ def test_raster_set_datatype_single():
 
     metadata = raster_to_metadata(output_path)
 
-    assert metadata["dtype"] == gdal_enums.translate_gdal_dtype_to_str(gdal.GDT_UInt16)
+    assert metadata["dtype"] == utils_gdal_translate._translate_gdal_dtype_to_str(gdal.GDT_UInt16)
 
     gdal.Unlink(output_path)
     gdal.Unlink(reference)
@@ -835,7 +835,7 @@ def test_raster_set_datatype_list():
 
     for path in output_paths:
         metadata = raster_to_metadata(path)
-        assert metadata["dtype"] == gdal_enums.translate_gdal_dtype_to_str(gdal.GDT_UInt16)
+        assert metadata["dtype"] == utils_gdal_translate._translate_gdal_dtype_to_str(gdal.GDT_UInt16)
 
     gdal.Unlink(reference1)
     gdal.Unlink(reference2)
@@ -1095,7 +1095,7 @@ def test_create_raster_from_array_default():
     assert ds.RasterXSize == 10
     assert ds.RasterYSize == 10
     assert ds.RasterCount == 1
-    assert ds.GetProjection() == gdal_utils.parse_projection("EPSG:3857", return_wkt=True)
+    assert ds.GetProjection() == utils_gdal.parse_projection("EPSG:3857", return_wkt=True)
     assert ds.GetGeoTransform() == (0.0, 10.0, 0.0, 0.0, 0.0, -10.0)
 
     gdal.Unlink(output_name)
@@ -1115,7 +1115,7 @@ def test_create_raster_from_array_special():
     assert ds.RasterXSize == 12
     assert ds.RasterYSize == 10
     assert ds.RasterCount == 3
-    assert ds.GetProjection() == gdal_utils.parse_projection("EPSG:4326", return_wkt=True)
+    assert ds.GetProjection() == utils_gdal.parse_projection("EPSG:4326", return_wkt=True)
 
     gt = ds.GetGeoTransform()
 

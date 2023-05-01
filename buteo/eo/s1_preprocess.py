@@ -21,7 +21,7 @@ from buteo.raster import (
     raster_to_metadata,
 )
 from buteo.vector import vector_to_metadata
-from buteo.utils.gdal_utils import is_raster, is_vector
+from buteo.utils.utils_gdal import _check_is_raster, _check_is_vector
 
 
 def _find_gpt(test_gpt_path):
@@ -71,9 +71,9 @@ def _backscatter_step1(
     snap_graph_step1.close()
 
     if extent is not None:
-        if is_vector(extent):
+        if _check_is_vector(extent):
             metadata = vector_to_metadata(extent)
-        elif is_raster(extent):
+        elif _check_is_raster(extent):
             metadata = raster_to_metadata(extent)
         elif isinstance(extent, str):
             metadata = raster_to_metadata(extent)

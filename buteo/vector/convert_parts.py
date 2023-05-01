@@ -11,7 +11,7 @@ import sys; sys.path.append("../../")
 from osgeo import ogr
 
 # Internal
-from buteo.utils import core_utils, gdal_utils
+from buteo.utils import utils_base, utils_gdal
 from buteo.vector import core_vector
 
 
@@ -26,19 +26,19 @@ def _singlepart_to_multipart(
 ):
     """ Internal. """
     assert isinstance(vector, (ogr.DataSource, str)), "Invalid input vector"
-    assert gdal_utils.is_vector(vector), "Invalid input vector"
+    assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
     if out_path is None:
-        out_path = gdal_utils.create_memory_path(gdal_utils.get_path_from_dataset(vector), add_uuid=True)
+        out_path = utils_gdal.create_memory_path(utils_gdal._get_path_from_dataset(vector), add_uuid=True)
 
-    assert core_utils.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path"
+    assert utils_base.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path"
 
     ref = core_vector._open_vector(vector)
 
-    out_format = gdal_utils.get_path_from_dataset(out_path, dataset_type="vector")
+    out_format = utils_gdal._get_path_from_dataset(out_path, dataset_type="vector")
     driver = ogr.GetDriverByName(out_format)
 
-    core_utils.remove_if_required(out_path, overwrite)
+    utils_path._delete_if_required(out_path, overwrite)
 
     metadata = core_vector._vector_to_metadata(ref)
     destination = driver.CreateDataSource(out_path)
@@ -75,23 +75,23 @@ def _multipart_to_singlepart(
 ):
     """ Internal. """
     assert isinstance(vector, (ogr.DataSource, str)), "Invalid input vector"
-    assert gdal_utils.is_vector(vector), "Invalid input vector"
+    assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
     if out_path is None:
-        out_path = gdal_utils.create_memory_path(gdal_utils.get_path_from_dataset(vector), add_uuid=True)
+        out_path = utils_gdal.create_memory_path(utils_gdal._get_path_from_dataset(vector), add_uuid=True)
 
-    assert core_utils.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path"
+    assert utils_base.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path"
 
     ref = core_vector._open_vector(vector)
 
-    out_format = gdal_utils.get_path_from_dataset(out_path, dataset_type="vector")
+    out_format = utils_gdal._get_path_from_dataset(out_path, dataset_type="vector")
     driver = ogr.GetDriverByName(out_format)
 
-    core_utils.remove_if_required(out_path, overwrite)
+    utils_path._delete_if_required(out_path, overwrite)
 
     metadata = core_vector._vector_to_metadata(ref)
 
-    core_utils.remove_if_required(out_path, overwrite)
+    utils_path._delete_if_required(out_path, overwrite)
 
     destination = driver.CreateDataSource(out_path)
 
@@ -196,7 +196,7 @@ def _multipart_to_singlepart(
                 destination_layer.CreateFeature(out_feat)
 
             if verbose:
-                core_utils.progress(_, feature_count - 1, "Splitting.")
+                utils_base.progress(_, feature_count - 1, "Splitting.")
 
     if add_index:
         core_vector.vector_add_index(destination)
@@ -234,24 +234,24 @@ def singlepart_to_multipart(
     ## Returns:
     (_str_/_list_): The path(s) to the output vector.
     """
-    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    core_utils.type_check(out_path, [str, [str], None], "out_path")
-    core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(add_index, [bool], "add_index")
-    core_utils.type_check(process_layer, [int], "process_layer")
-    core_utils.type_check(prefix, [str], "prefix")
-    core_utils.type_check(suffix, [str], "suffix")
-    core_utils.type_check(add_uuid, [bool], "add_uuid")
-    core_utils.type_check(allow_lists, [bool], "allow_lists")
+    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base.type_check(out_path, [str, [str], None], "out_path")
+    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base.type_check(add_index, [bool], "add_index")
+    utils_base.type_check(process_layer, [int], "process_layer")
+    utils_base.type_check(prefix, [str], "prefix")
+    utils_base.type_check(suffix, [str], "suffix")
+    utils_base.type_check(add_uuid, [bool], "add_uuid")
+    utils_base.type_check(allow_lists, [bool], "allow_lists")
 
     if not allow_lists and isinstance(vector, list):
         raise ValueError("Vector cannot be a list when allow_lists is False.")
 
-    vector_list = core_utils.ensure_list(vector)
+    vector_list = utils_base._get_variable_as_list(vector)
 
-    assert gdal_utils.is_vector_list(vector_list), f"Vector is not a list of vectors. {vector_list}"
+    assert utils_gdal._check_is_vector_list(vector_list), f"Vector is not a list of vectors. {vector_list}"
 
-    path_list = gdal_utils.create_output_path_list(
+    path_list = utils_gdal.create_output_path_list(
         vector_list,
         out_path=out_path,
         prefix=prefix,
@@ -311,24 +311,24 @@ def multipart_to_singlepart(
     ## Returns:
     (_str_/_list_): The path(s) to the output vector.
     """
-    core_utils.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    core_utils.type_check(out_path, [str, [str], None], "out_path")
-    core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(add_index, [bool], "add_index")
-    core_utils.type_check(process_layer, [int], "process_layer")
-    core_utils.type_check(prefix, [str], "prefix")
-    core_utils.type_check(suffix, [str], "suffix")
-    core_utils.type_check(add_uuid, [bool], "add_uuid")
-    core_utils.type_check(allow_lists, [bool], "allow_lists")
+    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base.type_check(out_path, [str, [str], None], "out_path")
+    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base.type_check(add_index, [bool], "add_index")
+    utils_base.type_check(process_layer, [int], "process_layer")
+    utils_base.type_check(prefix, [str], "prefix")
+    utils_base.type_check(suffix, [str], "suffix")
+    utils_base.type_check(add_uuid, [bool], "add_uuid")
+    utils_base.type_check(allow_lists, [bool], "allow_lists")
 
     if not allow_lists and isinstance(vector, list):
         raise ValueError("Vector cannot be a list when allow_lists is False.")
 
-    vector_list = core_utils.ensure_list(vector)
+    vector_list = utils_base._get_variable_as_list(vector)
 
-    assert gdal_utils.is_vector_list(vector_list), f"Vector is not a list of vectors. {vector_list}"
+    assert utils_gdal._check_is_vector_list(vector_list), f"Vector is not a list of vectors. {vector_list}"
 
-    path_list = gdal_utils.create_output_path_list(
+    path_list = utils_gdal.create_output_path_list(
         vector_list,
         out_path=out_path,
         prefix=prefix,

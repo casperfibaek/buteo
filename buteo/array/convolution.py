@@ -10,7 +10,7 @@ import numpy as np
 from numba import jit, prange
 
 # Internal
-from buteo.utils.core_utils import type_check
+from buteo.utils.utils_base import type_check
 from buteo.array.convolution_funcs import _hood_to_value
 
 

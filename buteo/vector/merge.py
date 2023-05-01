@@ -11,7 +11,7 @@ import sys; sys.path.append("../../")
 from osgeo import ogr
 
 # Internal
-from buteo.utils import core_utils, gdal_utils
+from buteo.utils import utils_base, utils_gdal
 from buteo.vector import core_vector
 
 
@@ -35,23 +35,23 @@ def merge_vectors(
     ## Returns:
     (_str_): Path to output vector.
     """
-    core_utils.type_check(vectors, [[str, ogr.DataSource]], "vector")
-    core_utils.type_check(out_path, [str, [str], None], "out_path")
-    core_utils.type_check(preserve_fid, [bool], "preserve_fid")
+    utils_base.type_check(vectors, [[str, ogr.DataSource]], "vector")
+    utils_base.type_check(out_path, [str, [str], None], "out_path")
+    utils_base.type_check(preserve_fid, [bool], "preserve_fid")
 
-    vector_list = core_utils.ensure_list(vectors)
+    vector_list = utils_base._get_variable_as_list(vectors)
 
-    assert gdal_utils.is_vector_list(vector_list), "Invalid input vector list"
+    assert utils_gdal._check_is_vector_list(vector_list), "Invalid input vector list"
 
     if out_path is None:
-        out_path = gdal_utils.create_memory_path(
-            gdal_utils.get_path_from_dataset(vector_list[0]),
+        out_path = utils_gdal.create_memory_path(
+            utils_gdal._get_path_from_dataset(vector_list[0]),
             prefix="",
             suffix="_merged",
             add_uuid=True,
         )
 
-    driver = ogr.GetDriverByName(gdal_utils.path_to_driver_vector(out_path))
+    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_from_path(out_path))
 
     merged_ds = driver.CreateDataSource(out_path)
 

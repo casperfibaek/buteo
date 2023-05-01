@@ -14,7 +14,7 @@ import numpy as np
 from osgeo import gdal
 
 # Internal
-from buteo.utils import core_utils, gdal_utils
+from buteo.utils import utils_base, utils_gdal
 from buteo.raster import core_raster
 from buteo.raster.borders import add_border_to_raster
 
@@ -88,22 +88,22 @@ def calc_proximity(
     Union[str, np.ndarray]
         A path to a raster with the calculated proximity, or a numpy array with the data.
     """
-    core_utils.type_check(input_rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "input_rasters")
-    core_utils.type_check(target_value, [int, float], "target_value")
-    core_utils.type_check(out_path, [str, [str], None], "out_path")
-    core_utils.type_check(max_dist, [int, float], "max_dist")
-    core_utils.type_check(add_border, [bool], "add_border")
-    core_utils.type_check(border_value, [int, float], "border_value")
-    core_utils.type_check(weighted, [bool], "weighted")
-    core_utils.type_check(invert, [bool], "invert")
-    core_utils.type_check(return_array, [bool], "return_array")
-    core_utils.type_check(prefix, [str], "prefix")
-    core_utils.type_check(suffix, [str], "suffix")
-    core_utils.type_check(add_uuid, [bool], "add_uuid")
-    core_utils.type_check(overwrite, [bool], "overwrite")
+    utils_base.type_check(input_rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "input_rasters")
+    utils_base.type_check(target_value, [int, float], "target_value")
+    utils_base.type_check(out_path, [str, [str], None], "out_path")
+    utils_base.type_check(max_dist, [int, float], "max_dist")
+    utils_base.type_check(add_border, [bool], "add_border")
+    utils_base.type_check(border_value, [int, float], "border_value")
+    utils_base.type_check(weighted, [bool], "weighted")
+    utils_base.type_check(invert, [bool], "invert")
+    utils_base.type_check(return_array, [bool], "return_array")
+    utils_base.type_check(prefix, [str], "prefix")
+    utils_base.type_check(suffix, [str], "suffix")
+    utils_base.type_check(add_uuid, [bool], "add_uuid")
+    utils_base.type_check(overwrite, [bool], "overwrite")
 
-    raster_list = core_utils.ensure_list(input_rasters)
-    path_list = gdal_utils.create_output_path_list(
+    raster_list = utils_base._get_variable_as_list(input_rasters)
+    path_list = utils_gdal.create_output_path_list(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,
@@ -139,7 +139,7 @@ def calc_proximity(
 
         src_band = in_raster.GetRasterBand(1)
 
-        driver_name = "GTiff" if out_path is None else gdal_utils.path_to_driver_raster(out_path)
+        driver_name = "GTiff" if out_path is None else utils_gdal._get_raster_driver_from_path(out_path)
         if driver_name is None:
             raise ValueError(f"Unable to parse filetype from path: {out_path}")
 

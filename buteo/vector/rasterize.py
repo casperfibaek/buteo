@@ -18,7 +18,7 @@ from buteo.vector.reproject import reproject_vector
 from osgeo import gdal, ogr
 
 # Internal
-from buteo.utils import gdal_utils, gdal_enums
+from buteo.utils import utils_gdal, utils_gdal_translate
 from buteo.vector import core_vector
 from buteo.raster import core_raster
 
@@ -67,25 +67,25 @@ def rasterize_vector(
     vector_fn = vector
 
     if out_path is None:
-        out_path = gdal_utils.create_memory_path(
-            gdal_utils.get_path_from_dataset(vector),
+        out_path = utils_gdal.create_memory_path(
+            utils_gdal._get_path_from_dataset(vector),
             add_uuid=True,
             suffix="_rasterized",
         )
 
     if projection is not None:
-        projection = gdal_utils.parse_projection(projection)
+        projection = utils_gdal.parse_projection(projection)
 
         vector_fn = reproject_vector(vector, projection)
 
         if isinstance(extent, (gdal.Dataset, ogr.DataSource)):
-            if gdal_utils.is_raster(extent):
+            if utils_gdal._check_is_raster(extent):
                 extent = reproject_raster(extent, projection, add_uuid=True, suffix="_reprojected")
             else:
                 extent = reproject_vector(extent, projection, add_uuid=True, suffix="_reprojected")
 
         if isinstance(pixel_size, (gdal.Dataset, ogr.DataSource)):
-            if gdal_utils.is_raster(pixel_size):
+            if utils_gdal._check_is_raster(pixel_size):
                 pixel_size = reproject_raster(pixel_size, projection, add_uuid=True, suffix="_reprojected")
             else:
                 pixel_size = reproject_vector(pixel_size, projection, add_uuid=True, suffix="_reprojected")
@@ -134,7 +134,7 @@ def rasterize_vector(
             x_res,
             y_res,
             1,
-            gdal_enums.translate_str_to_gdal_dtype(dtype),
+            utils_gdal_translate._translate_str_to_gdal_dtype(dtype),
         )
     finally:
         gdal.SetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")
@@ -176,7 +176,7 @@ def rasterize_vector(
     else:
         options.append(f"ATTRIBUTE={attribute}")
         gdal.RasterizeLayer(
-            target_ds, [1], source_layer, options=gdal_utils.default_creation_options(options)
+            target_ds, [1], source_layer, options=utils_gdal.default_creation_options(options)
         )
 
     return out_path

@@ -11,7 +11,7 @@ import sys; sys.path.append("../../")
 from osgeo import gdal
 
 # Internal
-from buteo.utils import core_utils, gdal_utils
+from buteo.utils import utils_base, utils_gdal
 from buteo.raster import core_raster
 
 
@@ -30,13 +30,13 @@ def _vectorize_raster(
     projection = meta["projection_osr"]
 
     if out_path is None:
-        out_path = gdal_utils.create_memory_path(
+        out_path = utils_gdal.create_memory_path(
             out_path,
             suffix="_vectorized",
             add_uuid=True,
         )
 
-    driver = gdal_utils.path_to_driver_vector(out_path)
+    driver = utils_gdal._get_vector_driver_from_path(out_path)
 
     datasource = driver.CreateDataSource(out_path)
     layer = datasource.CreateLayer(out_path, srs=projection)
@@ -76,18 +76,18 @@ def vectorize_raster(
     ## Returns:
     (_str_/_list_): The path(s) to the vectorized raster(s).
     """
-    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    core_utils.type_check(out_path, [str, [str], None], "out_path")
-    core_utils.type_check(band, [int], "band")
-    core_utils.type_check(prefix, [str], "prefix")
-    core_utils.type_check(suffix, [str], "suffix")
-    core_utils.type_check(add_uuid, [bool], "add_uuid")
-    core_utils.type_check(overwrite, [bool], "overwrite")
+    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base.type_check(out_path, [str, [str], None], "out_path")
+    utils_base.type_check(band, [int], "band")
+    utils_base.type_check(prefix, [str], "prefix")
+    utils_base.type_check(suffix, [str], "suffix")
+    utils_base.type_check(add_uuid, [bool], "add_uuid")
+    utils_base.type_check(overwrite, [bool], "overwrite")
 
-    raster_list = core_utils.ensure_list(raster)
-    assert gdal_utils.is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
+    raster_list = utils_base._get_variable_as_list(raster)
+    assert utils_gdal._check_is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
 
-    path_list = gdal_utils.create_output_path_list(
+    path_list = utils_gdal.create_output_path_list(
         raster_list,
         out_path=out_path,
         overwrite=overwrite,

@@ -16,7 +16,7 @@ from typing import Union, Optional, List
 from osgeo import gdal, ogr
 
 # Internal
-from buteo.utils import bbox_utils, core_utils, gdal_utils
+from buteo.utils import utils_base, utils_gdal, utils_bbox
 from buteo.raster import core_raster
 from buteo.raster.clip import _clip_raster
 from buteo.vector import core_vector
@@ -72,15 +72,15 @@ def raster_to_grid(
     Returns
     -------
     str
-        The filepath for the newly created raster.
+        The file path for the newly created raster.
     """
-    core_utils.type_check(raster, [str, gdal.Dataset], "raster")
-    core_utils.type_check(grid, [str, ogr.DataSource], "grid")
-    core_utils.type_check(out_dir, [str], "out_dir")
-    core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(process_layer, [int], "process_layer")
-    core_utils.type_check(creation_options, [[str], None], "creation_options")
-    core_utils.type_check(verbose, [int], "verbose")
+    utils_base.type_check(raster, [str, gdal.Dataset], "raster")
+    utils_base.type_check(grid, [str, ogr.DataSource], "grid")
+    utils_base.type_check(out_dir, [str], "out_dir")
+    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base.type_check(process_layer, [int], "process_layer")
+    utils_base.type_check(creation_options, [[str], None], "creation_options")
+    utils_base.type_check(verbose, [int], "verbose")
 
     use_grid = core_vector.open_vector(grid)
     grid_metadata = core_vector._vector_to_metadata(use_grid)
@@ -103,7 +103,7 @@ def raster_to_grid(
     layer = use_grid.GetLayer(process_layer)
     feature_count = layer.GetFeatureCount()
     raster_extent = raster_metadata["bbox"]
-    filetype = core_utils.path_to_ext(raster)
+    filetype = utils_base.path_to_ext(raster)
     name = raster_metadata["name"]
     geom_type = grid_metadata["layers"][process_layer]["geom_type_ogr"]
 
@@ -127,7 +127,7 @@ def raster_to_grid(
         feature = layer.GetNextFeature()
         geom = feature.GetGeometryRef()
 
-        if not bbox_utils.bboxes_intersect(raster_extent, geom.GetEnvelope()):
+        if not utils_bbox._check_bboxes_intersect(raster_extent, geom.GetEnvelope()):
             continue
 
         intersections += 1
@@ -149,11 +149,11 @@ def raster_to_grid(
         feature = layer.GetNextFeature()
         geom = feature.GetGeometryRef()
 
-        if not bbox_utils.bboxes_intersect(raster_extent, geom.GetEnvelope()):
+        if not utils_bbox._check_bboxes_intersect(raster_extent, geom.GetEnvelope()):
             continue
 
         if verbose == 1:
-            core_utils.progress(clipped, intersections - 1, "clip_grid")
+            utils_base.progress(clipped, intersections - 1, "clip_grid")
 
         fid = feature.GetFID()
 
@@ -183,7 +183,7 @@ def raster_to_grid(
             all_touch=False,
             suffix="",
             prefix="",
-            creation_options=gdal_utils.default_creation_options(creation_options),
+            creation_options=utils_gdal.default_creation_options(creation_options),
             verbose=0,
         )
 

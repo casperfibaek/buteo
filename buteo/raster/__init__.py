@@ -12,5 +12,4 @@ from .reproject import *
 from .resample import *
 from .shift import *
 from .vectorize import *
-from .warp import *
 from .dem import *

@@ -16,7 +16,7 @@ import numpy as np
 # Internal
 from buteo.raster import core_raster
 from buteo.vector import core_vector
-from buteo.utils import gdal_utils, core_utils, bbox_utils, gdal_enums
+from buteo.utils import utils_gdal, utils_base, utils_gdal_translate, utils_bbox, utils_path
 from buteo.vector.reproject import _reproject_vector
 
 
@@ -45,8 +45,8 @@ def _clip_raster(
     INTERNAL.
     Clips a raster(s) using a vector geometry or the extents of a raster.
     """
-    path_list = gdal_utils.create_output_path_list(
-        core_utils.ensure_list(raster),
+    path_list = utils_gdal.create_output_path_list(
+        utils_base._get_variable_as_list(raster),
         out_path=out_path,
         prefix=prefix,
         suffix=suffix,
@@ -63,7 +63,7 @@ def _clip_raster(
     memory_files = []
 
     # Input is a vector.
-    if gdal_utils.is_vector(clip_geom):
+    if utils_gdal._check_is_vector(clip_geom):
         clip_ds = core_vector._open_vector(clip_geom)
 
         # TODO: Fix potential memory leak
@@ -74,19 +74,19 @@ def _clip_raster(
         clip_metadata = core_vector._vector_to_metadata(clip_ds)
 
         if to_extent:
-            clip_ds = bbox_utils.convert_bbox_to_vector(clip_metadata["bbox"], clip_metadata["projection_osr"])
+            clip_ds = utils_bbox._get_vector_from_bbox(clip_metadata["bbox"], clip_metadata["projection_osr"])
             memory_files.append(clip_ds)
 
         if isinstance(clip_ds, ogr.DataSource):
             clip_ds = clip_ds.GetName()
 
     # Input is a raster (use extent)
-    elif gdal_utils.is_raster(clip_geom):
+    elif utils_gdal._check_is_raster(clip_geom):
         clip_metadata = core_raster._raster_to_metadata(clip_geom)
-        clip_ds = bbox_utils.convert_bbox_to_vector(clip_metadata["bbox"], clip_metadata["projection_osr"])
+        clip_ds = utils_bbox._get_vector_from_bbox(clip_metadata["bbox"], clip_metadata["projection_osr"])
         memory_files.append(clip_ds)
     else:
-        if core_utils.file_exists(clip_geom):
+        if utils_base.file_exists(clip_geom):
             raise ValueError(f"Unable to parse clip geometry: {clip_geom}")
         else:
             raise ValueError(f"Unable to locate clip geometry {clip_geom}")
@@ -108,7 +108,7 @@ def _clip_raster(
 
     # Fast check: Does the extent of the two inputs overlap?
     has_inf = True in [np.isinf(val) for val in raster_metadata["bbox_latlng"]]
-    if not has_inf and not bbox_utils.bboxes_intersect(raster_metadata["bbox_latlng"], clip_metadata["bbox_latlng"]):
+    if not has_inf and not utils_bbox._check_bboxes_intersect(raster_metadata["bbox_latlng"], clip_metadata["bbox_latlng"]):
         raise ValueError(f"Geometries of {raster} and {clip_geom} did not intersect.")
 
     if not origin_projection.IsSame(clip_metadata["projection_osr"]):
@@ -121,7 +121,7 @@ def _clip_raster(
     if crop_to_geom:
 
         if adjust_bbox:
-            output_bounds = bbox_utils.align_bboxes_to_pixel_size(
+            output_bounds = utils_bbox._get_aligned_bbox_to_pixel_size(
                 raster_metadata["bbox"],
                 clip_metadata["bbox"],
                 raster_metadata["pixel_width"],
@@ -132,8 +132,8 @@ def _clip_raster(
 
     # formats
     out_name = path_list[0]
-    out_format = gdal_utils.path_to_driver_raster(out_name)
-    out_creation_options = gdal_utils.default_creation_options(creation_options)
+    out_format = utils_gdal._get_raster_driver_from_path(out_name)
+    out_creation_options = utils_gdal._get_default_creation_options(creation_options)
 
     # nodata
     if src_nodata == "infer":
@@ -148,14 +148,14 @@ def _clip_raster(
         if src_nodata == "infer":
             out_nodata = raster_metadata["nodata_value"]
         else:
-            out_nodata = gdal_enums.get_default_nodata_value(raster_metadata["datatype_gdal_raw"])
+            out_nodata = utils_gdal_translate._get_default_nodata_value(raster_metadata["datatype_gdal_raw"])
     elif isinstance(dst_nodata, (int, float)) or dst_nodata is None:
         out_nodata = dst_nodata
     else:
         raise ValueError(f"Unable to parse nodata_value: {dst_nodata}")
 
     # Removes file if it exists and overwrite is True.
-    core_utils.remove_if_required(out_path, overwrite)
+    utils_path._delete_if_required(out_path, overwrite)
 
     if verbose == 0:
         gdal.PushErrorHandler("CPLQuietErrorHandler")
@@ -164,22 +164,22 @@ def _clip_raster(
         out_name,
         origin_layer,
         format=out_format,
-        resampleAlg=gdal_enums.translate_resample_method(resample_alg),
+        resampleAlg=utils_gdal_translate._translate_resample_method(resample_alg),
         targetAlignedPixels=False,
-        outputBounds=bbox_utils.convert_ogr_bbox_to_gdal_bbox(output_bounds),
+        outputBounds=utils_bbox._get_gdal_bbox_from_ogr_bbox(output_bounds),
         xRes=raster_metadata["pixel_width"],
         yRes=raster_metadata["pixel_height"],
         cutlineDSName=clip_ds,
         cropToCutline=False,
         creationOptions=out_creation_options,
-        warpMemoryLimit=gdal_utils.get_gdalwarp_ram_limit(ram),
+        warpMemoryLimit=utils_gdal._get_gdalwarp_ram_limit(ram),
         warpOptions=warp_options,
         srcNodata=src_nodata,
         dstNodata=out_nodata,
         multithread=True,
     )
 
-    gdal_utils.delete_if_in_memory_list(memory_files)
+    utils_gdal.delete_if_in_memory_list(memory_files)
 
     if verbose == 0:
         gdal.PopErrorHandler()
@@ -276,26 +276,26 @@ def clip_raster(
     str or list
         A string or list of strings representing the path(s) to the clipped raster(s).
     """
-    core_utils.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    core_utils.type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_geom")
-    core_utils.type_check(out_path, [[str], str, None], "out_path")
-    core_utils.type_check(resample_alg, [str], "resample_alg")
-    core_utils.type_check(crop_to_geom, [bool], "crop_to_geom")
-    core_utils.type_check(adjust_bbox, [bool], "adjust_bbox")
-    core_utils.type_check(all_touch, [bool], "all_touch")
-    core_utils.type_check(to_extent, [bool], "to_extent")
-    core_utils.type_check(dst_nodata, [str, int, float, None], "dst_nodata")
-    core_utils.type_check(src_nodata, [str, int, float, None], "src_nodata")
-    core_utils.type_check(layer_to_clip, [int], "layer_to_clip")
-    core_utils.type_check(overwrite, [bool], "overwrite")
-    core_utils.type_check(creation_options, [[str], None], "creation_options")
-    core_utils.type_check(prefix, [str], "prefix")
-    core_utils.type_check(suffix, [str], "postfix")
-    core_utils.type_check(verbose, [int], "verbose")
-    core_utils.type_check(add_uuid, [bool], "uuid")
+    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base.type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_geom")
+    utils_base.type_check(out_path, [[str], str, None], "out_path")
+    utils_base.type_check(resample_alg, [str], "resample_alg")
+    utils_base.type_check(crop_to_geom, [bool], "crop_to_geom")
+    utils_base.type_check(adjust_bbox, [bool], "adjust_bbox")
+    utils_base.type_check(all_touch, [bool], "all_touch")
+    utils_base.type_check(to_extent, [bool], "to_extent")
+    utils_base.type_check(dst_nodata, [str, int, float, None], "dst_nodata")
+    utils_base.type_check(src_nodata, [str, int, float, None], "src_nodata")
+    utils_base.type_check(layer_to_clip, [int], "layer_to_clip")
+    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base.type_check(creation_options, [[str], None], "creation_options")
+    utils_base.type_check(prefix, [str], "prefix")
+    utils_base.type_check(suffix, [str], "postfix")
+    utils_base.type_check(verbose, [int], "verbose")
+    utils_base.type_check(add_uuid, [bool], "uuid")
 
-    raster_list = core_utils.ensure_list(raster)
-    path_list = gdal_utils.create_output_path_list(
+    raster_list = utils_base._get_variable_as_list(raster)
+    path_list = utils_gdal.create_output_path_list(
         raster_list,
         out_path=out_path,
         prefix=prefix,

@@ -12,15 +12,17 @@ from osgeo import gdal
 
 
 
-def get_available_drivers() -> List[Dict[str, str]]:
+def _get_available_drivers() -> List[Dict[str, str]]:
     """
     Returns a list of all available drivers.
 
-    Returns:
-        List[Dict[str, str]]: List of dicts containing available drivers. Each dict has the following keys:
-            - 'short_name' (str): Driver short name (e.g. GTiff).
-            - 'long_name' (str): Driver long name (e.g. GeoTiff).
-            - 'extension' (str): Driver file extension (e.g. tif). Note: Can be an empty string.
+    Returns
+    -------
+    List[Dict[str, str]]
+        List of dicts containing available drivers. Each dict has the following keys:
+        - 'short_name' (str): Driver short name (e.g. GTiff).
+        - 'long_name' (str): Driver long name (e.g. GeoTiff).
+        - 'extension' (str): Driver file extension (e.g. tif). Note: Can be an empty string.
     """
     raster_drivers = []
     vector_drivers = []
@@ -51,14 +53,16 @@ def get_available_drivers() -> List[Dict[str, str]]:
     return (raster_drivers, vector_drivers)
 
 
-def get_valid_raster_driver_extensions() -> List[str]:
+def _get_valid_raster_driver_extensions() -> List[str]:
     """
     Returns a list of valid raster driver extensions.
 
-    Returns:
-        list: List of valid raster driver extensions.
+    Returns
+    -------
+    List[str]
+        List of valid raster driver extensions.
     """
-    available_raster_drivers, _available_vector_drivers = get_available_drivers()
+    available_raster_drivers, _available_vector_drivers = _get_available_drivers()
 
     valid_raster_driver_extensions = []
 
@@ -72,14 +76,16 @@ def get_valid_raster_driver_extensions() -> List[str]:
     return valid_raster_driver_extensions
 
 
-def get_valid_vector_driver_extensions() -> List[str]:
+def _get_valid_vector_driver_extensions() -> List[str]:
     """
     Returns a list of valid vector driver extensions.
 
-    Returns:
-        list: List of valid vector driver extensions.
+    Returns
+    -------
+    List[str]
+        List of valid vector driver extensions.
     """
-    _available_raster_drivers, available_vector_drivers = get_available_drivers()
+    _available_raster_drivers, available_vector_drivers = _get_available_drivers()
 
     valid_vector_driver_extensions = []
 
@@ -90,14 +96,16 @@ def get_valid_vector_driver_extensions() -> List[str]:
     return valid_vector_driver_extensions
 
 
-def get_valid_driver_extensions() -> List[str]:
+def _get_valid_driver_extensions() -> List[str]:
     """
     Returns a list of all valid driver extensions (**GDAL** + **OGR**).
 
-    Returns:
-        list: List of all valid driver extensions.
+    Returns
+    -------
+    List[str]
+        List of all valid driver extensions.
     """
-    available_raster_drivers, available_vector_drivers = get_available_drivers()
+    available_raster_drivers, available_vector_drivers = _get_available_drivers()
 
     valid_driver_extensions = []
 
@@ -108,67 +116,83 @@ def get_valid_driver_extensions() -> List[str]:
     return valid_driver_extensions
 
 
-def is_valid_driver_extension(ext: str) -> bool:
+def _check_is_valid_driver_extension(ext: str) -> bool:
     """
     Checks if a file extension is a valid GDAL or OGR driver extension.
 
-    Args:
-        ext (str): The file extension.
+    Parameters
+    ----------
+    ext : str
+        The file extension.
 
-    Returns:
-        bool: True if valid, False otherwise.
+    Returns
+    -------
+    bool
+        True if valid, False otherwise.
     """
     assert isinstance(ext, str), "Extension must be a string."
     assert len(ext) > 0, "Extension must be a non-empty string."
 
-    return ext in get_valid_driver_extensions()
+    return ext in _get_valid_driver_extensions()
 
 
-def is_valid_raster_driver_extension(ext: str) -> bool:
+def _check_is_valid_raster_driver_extension(ext: str) -> bool:
     """
     Checks if a raster file extension is a valid GDAL driver extension.
 
-    Args:
-        ext (str): The file extension.
+    Parameters
+    ----------
+    ext : str
+        The file extension.
 
-    Returns:
-        bool: True if valid, False otherwise.
+    Returns
+    -------
+    bool
+        True if valid, False otherwise.
     """
     assert isinstance(ext, str), "Extension must be a string."
     assert len(ext) > 0, "Extension must be a non-empty string."
 
-    return ext in get_valid_raster_driver_extensions()
+    return ext in _get_valid_raster_driver_extensions()
 
 
-def is_valid_vector_driver_extension(ext: str) -> bool:
+def _check_is_valid_vector_driver_extension(ext: str) -> bool:
     """
     Checks if a vector file extension is a valid **OGR** driver extension.
 
-    Args:
-        ext (str): The file extension.
-
-    Returns:
-        bool: True if valid, False otherwise.
+    Parameters
+    ----------
+    ext : str
+        The file extension.
+    
+    Returns
+    -------
+    bool
+        True if valid, False otherwise.
     """
     assert isinstance(ext, str), "Extension must be a string."
     assert len(ext) > 0, "Extension must be a non-empty string."
 
-    return ext in get_valid_vector_driver_extensions()
+    return ext in _get_valid_vector_driver_extensions()
 
 
-def convert_raster_ext_to_driver_shortname(ext: str) -> str:
+def _get_raster_shortname_from_ext(ext: str) -> str:
     """
     Converts a raster file extension to a GDAL driver short name.
 
-    Args:
-        ext (str): The file extension.
+    Parameters
+    ----------
+    ext : str
+        The file extension.
 
-    Returns:
-        str: The GDAL driver short name (e.g. "GTiff").
+    Returns
+    -------
+    str
+        The driver short name (e.g. GTiff).
     """
-    assert is_valid_raster_driver_extension(ext), f"Invalid extension: {ext}"
+    assert _check_is_valid_raster_driver_extension(ext), f"Invalid extension: {ext}"
 
-    raster_drivers, _vector_drivers = get_available_drivers()
+    raster_drivers, _vector_drivers = _get_available_drivers()
 
     for driver in raster_drivers:
         if driver["extension"] == ext:
@@ -177,40 +201,23 @@ def convert_raster_ext_to_driver_shortname(ext: str) -> str:
     raise RuntimeError(f"Invalid extension: {ext}")
 
 
-def convert_extension_to_driver_shortname(ext: str) -> str:
-    """
-    Converts a file extension to a driver short name for either OGR or GDAL.
-
-    Args:
-        ext (str): The file extension.
-
-    Returns:
-        str: The driver short name (e.g. GPKG or GTiff).
-    """
-    assert is_valid_vector_driver_extension(ext) or is_valid_raster_driver_extension(ext), f"Invalid extension: {ext}"
-
-    raster_drivers, vector_drivers = get_available_drivers()
-
-    for driver in raster_drivers + vector_drivers:
-        if driver["extension"] == ext:
-            return driver["short_name"]
-
-    raise RuntimeError(f"Invalid extension: {ext}")
-
-
-def convert_vector_ext_to_driver_shortname(ext: str) -> str:
+def _get_vector_shortname_from_ext(ext: str) -> str:
     """
     Converts a vector file extension to an **OGR** driver short_name name.
 
-    Args:
-        ext (str): The file extension.
+    Parameters
+    ----------
+    ext : str
+        The file extension.
 
-    Returns:
-        str: The driver short_name (e.g. GPKG).
+    Returns
+    -------
+    str
+        The driver short name (e.g. GPKG).
     """
-    assert is_valid_vector_driver_extension(ext), f"Invalid extension: {ext}"
+    assert _check_is_valid_vector_driver_extension(ext), f"Invalid extension: {ext}"
 
-    _raster_drivers, vector_drivers = get_available_drivers()
+    _raster_drivers, vector_drivers = _get_available_drivers()
 
     for driver in vector_drivers:
         if driver["extension"] == ext:
@@ -219,15 +226,44 @@ def convert_vector_ext_to_driver_shortname(ext: str) -> str:
     raise RuntimeError(f"Invalid extension: {ext}")
 
 
-def translate_resample_method(method: str) -> int:
+def _get_driver_shortname_from_ext(ext: str) -> str:
+    """
+    Converts a file extension to a driver short name for either OGR or GDAL.
+
+    Parameters
+    ----------
+    ext : str
+        The file extension.
+
+    Returns
+    -------
+    str
+        The driver short name (e.g. GPKG).
+    """
+    assert _check_is_valid_vector_driver_extension(ext) or _check_is_valid_raster_driver_extension(ext), f"Invalid extension: {ext}"
+
+    raster_drivers, vector_drivers = _get_available_drivers()
+
+    for driver in raster_drivers + vector_drivers:
+        if driver["extension"] == ext:
+            return driver["short_name"]
+
+    raise RuntimeError(f"Invalid extension: {ext}")
+
+
+def _translate_resample_method(method: str) -> int:
     """
     Translate a string of a resampling method to a GDAL integer (e.g. gdal.GRA_NearestNeighbour).
 
-    Args:
-        method (str): The resampling method.
+    Parameters
+    ----------
+    method : str
+        The resampling method.
 
-    Returns:
-        int: The GDAL resampling integer (e.g. "nearest"=1).
+    Returns
+    -------
+    int
+        The GDAL resampling method integer.
     """
     assert isinstance(method, str), "method must be a string."
     assert len(method) > 0, "method must be a non-empty string."
@@ -276,15 +312,19 @@ def translate_resample_method(method: str) -> int:
     raise ValueError("Unknown resample method: " + method)
 
 
-def translate_gdal_dtype_to_str(gdal_datatype_int: int) -> str:
+def _translate_gdal_dtype_to_str(gdal_datatype_int: int) -> str:
     """
     Translates the **GDAL** datatype integer into a string. Can be used by **NumPy**.
 
-    Args:
-        gdal_datatype_int (int): The **GDAL** datatype integer.
-
-    Returns:
-        str: The translated string (e.g. `0="uint8"`)
+    Parameters
+    ----------
+    gdal_datatype_int : int
+        The GDAL datatype integer.
+    
+    Returns
+    -------
+    str
+        The GDAL datatype string.
     """
     assert isinstance(gdal_datatype_int, int), f"gdal_datatype must be an integer. Received: {gdal_datatype_int}"
 
@@ -310,15 +350,19 @@ def translate_gdal_dtype_to_str(gdal_datatype_int: int) -> str:
     raise ValueError(f"Could not translate the datatype: {gdal_datatype_int}")
 
 
-def translate_str_to_gdal_dtype(dtype_str: str) -> int:
+def _translate_str_to_gdal_dtype(dtype_str: str) -> int:
     """
     Translates the datatype string into a **GDAL** datatype integer. Can be used by **GDAL**.
 
-    Args:
-    - dtype_str (str): The datatype string (e.g. "float32").
-
-    Returns:
-    - int: The **GDAL** datatype integer corresponding to the input datatype string (e.g. `"uint8"=1`).
+    Parameters
+    ----------
+    dtype_str : str
+        The datatype string.
+    
+    Returns
+    -------
+    int
+        The GDAL datatype integer.
     """
     assert isinstance(dtype_str, (np.dtype, str)), "dtype_str must be a string or numpy dtype."
 
@@ -355,16 +399,20 @@ def translate_str_to_gdal_dtype(dtype_str: str) -> int:
     raise ValueError(f"Could not translate the datatype: {dtype_str}")
 
 
-def get_default_nodata_value(dtype: Union[np.dtype, str, int]) -> Union[float, int]:
+def _get_default_nodata_value(dtype: Union[np.dtype, str, int]) -> Union[float, int]:
     """
     Returns the default fill value for masked numpy arrays.
 
-    Args:
-        dtype: The data type of the array, can be either a numpy dtype object, a string representing a
+    Parameters
+    ----------
+    dtype : Union[np.dtype, str, int]
+        The data type of the array, can be either a numpy dtype object, a string representing a
             data type (e.g. 'float32') or an integer representing a numpy data type (e.g. 5 for 'float32').
 
-    Returns:
-        The default fill value for the given data type.
+    Returns
+    -------
+    Union[float, int]
+        The default fill value for masked numpy arrays.
     """
     assert isinstance(dtype, (np.dtype, str, int)), "numpy_dtype must be a numpy.dtype or string."
 
@@ -388,7 +436,7 @@ def get_default_nodata_value(dtype: Union[np.dtype, str, int]) -> Union[float, i
     if isinstance(dtype, np.dtype):
         test_type = test_type.name
     elif isinstance(dtype, int):
-        test_type = translate_gdal_dtype_to_str(dtype)
+        test_type = _translate_gdal_dtype_to_str(dtype)
 
     test_type = test_type.lower()
 
@@ -398,15 +446,19 @@ def get_default_nodata_value(dtype: Union[np.dtype, str, int]) -> Union[float, i
     raise ValueError("Unknown numpy datatype: " + test_type)
 
 
-def get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype]) -> Tuple[Union[int, float], Union[int, float]]:
+def _get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype]) -> Tuple[Union[int, float], Union[int, float]]:
     """
     Returns the range of values that can be represented by a given numpy dtype.
 
-    Args:
-        numpy_dtype (str/np.dtype): The numpy dtype.
+    Parameters
+    ----------
+    numpy_dtype : Union[str, np.dtype]
+        The numpy dtype.
 
-    Returns:
-        tuple: (min_value, max_value) that can be represented by the numpy dtype.
+    Returns
+    -------
+    Tuple[Union[int, float], Union[int, float]]
+        The range of values that can be represented by a given numpy dtype.
     """
 
     datatypes = {
@@ -430,7 +482,7 @@ def get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype]) -> Tuple[Uni
     if isinstance(numpy_dtype, np.dtype):
         test_type = test_type.name
     elif isinstance(numpy_dtype, int):
-        test_type = translate_gdal_dtype_to_str(numpy_dtype)
+        test_type = _translate_gdal_dtype_to_str(numpy_dtype)
 
     if test_type in datatypes:
         return datatypes[test_type]
@@ -438,38 +490,48 @@ def get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype]) -> Tuple[Uni
     raise ValueError("Unknown numpy datatype: " + test_type)
 
 
-def value_is_within_datatype_range(
+def _check_value_is_within_dtype_range(
     value: Union[int, float],
     numpy_dtype: Union[str, np.dtype],
 ) -> bool:
     """
     Checks if a value is within the range of a numpy datatype.
 
-    Args:
-        value (int/float): The value to check.
-        numpy_dtype (str/np.dtype): The numpy dtype.
+    Parameters
+    ----------
+    value : Union[int, float]
+        The value to check.
 
-    Returns:
-        bool: True if the value is within the range of the numpy dtype, False otherwise.
+    numpy_dtype : Union[str, np.dtype]
+        The numpy dtype.
+
+    Returns
+    -------
+    bool
+        True if the value is within the range of the numpy dtype, otherwise False.
     """
     if value is np.nan:
         return True
 
-    min_val, max_val = get_range_for_numpy_datatype(numpy_dtype)
+    min_val, max_val = _get_range_for_numpy_datatype(numpy_dtype)
 
     return min_val <= value <= max_val
 
 
-def is_gdal_datatype_a_float(gdal_dtype: int) -> bool:
+def _check_is_gdal_dtype_float(gdal_dtype: int) -> bool:
     """
     Checks if a GDAL datatype integer is a floating-point datatype:
     (Float32, Float64, cFloat32, cFloat64)
 
-    Args:
-        gdal_dtype (int): The GDAL datatype integer.
+    Parameters
+    ----------
+    gdal_dtype : int
+        The GDAL datatype integer.
 
-    Returns:
-        bool: True if the datatype is a float, otherwise False.
+    Returns
+    -------
+    bool
+        True if the GDAL datatype integer is a floating-point datatype, otherwise False.
     """
     assert isinstance(gdal_dtype, int), f"gdal_dtype must be an integer. Received: {gdal_dtype}"
 
