@@ -3,6 +3,9 @@
 
 Functions that make interacting with the toolbox easier.
 """
+# Standard library
+from typing import Union, List, Optional
+
 # Internal
 from helpers import _create_grid
 
@@ -11,9 +14,40 @@ import numpy as np
 from numba import jit, prange
 
 
+# TODO: Multi-channel support, Split assert
 @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
-def calculate_pixel_distances(array, target=1, maximum_distance=None, pixel_width=1, pixel_height=1):
-    """ Calculate the distance from each pixel to the nearest target pixel. """
+def calculate_pixel_distances(
+    array: np.ndarray,
+    target: Union[int, float] = 1,
+    maximum_distance: Optional[int, float] = None,
+    pixel_width: Union[int, float] = 1,
+    pixel_height: Union[int, float] = 1,
+) -> np.ndarray:
+    """
+    Calculate the distance from each pixel to the nearest target pixel.
+    
+    Parameters
+    ----------
+    array : np.ndarray
+        The array to calculate the distances for.
+
+    target : Union[int, float], optional
+        The target value to calculate the distance to. Default: 1.
+
+    maximum_distance : Union[int, float], optional
+        The maximum distance to calculate. Default: None.
+
+    pixel_width : Union[int, float], optional
+        The width of each pixel. Default: 1.
+
+    pixel_height : Union[int, float], optional
+        The height of each pixel. Default: 1.
+
+    Returns
+    -------
+    np.ndarray
+        The array of distances.
+    """
     binary_array = np.sum(array == target, axis=2, dtype=np.uint8)
 
     if maximum_distance is None:

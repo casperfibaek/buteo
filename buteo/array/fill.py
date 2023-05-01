@@ -3,6 +3,9 @@
 
 Functions that make interacting with the toolbox easier.
 """
+# Standard library
+from typing import Union, List, Optional
+
 # Internal
 from helpers import _create_grid
 
@@ -11,9 +14,41 @@ import numpy as np
 from numba import jit, prange
 
 
+
+# TODO: Multichannel support, Split assert
 @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
-def fill_nodata_with_nearest_average(array, nodata_value, mask=None, max_iterations=None, channel=0):
-    """ Calculate the distance from each pixel to the nearest target pixel. """
+def fill_nodata_with_nearest_average(
+    array: np.ndarray,
+    nodata_value: Union[int, float],
+    mask: Optional[np.ndarray] = None,
+    max_iterations: Optional[Union[int, float]] = None,
+    channel: int = 0,
+):
+    """
+    Fill in nodata values with the average of the nearest values.
+    
+    Parameters
+    ----------
+    array : np.ndarray
+        The array to fill in the nodata values for.
+
+    nodata_value : Union[int, float]
+        The value to use as the nodata value.
+
+    mask : Optional[np.ndarray], optional
+        The mask to use. Default: None.
+
+    max_iterations : Optional[Union[int, float]], optional
+        The maximum number of iterations to run. Default: None.
+
+    channel : int, optional
+        The channel to use. Default: 0.
+
+    Returns
+    -------
+    np.ndarray
+        The filled in array.
+    """
     kernel_size = 3
 
     range_rows = np.arange(-(kernel_size // 2), (kernel_size // 2) + 1)
