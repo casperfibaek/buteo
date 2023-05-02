@@ -207,7 +207,7 @@ def shift_raster_pixel(
         )
 
     if out_path is None:
-        out_path = utils_path._get_output_path("shifted_raster", add_uuid=True, folder="/vsimem/")
+        out_path = utils_path._get_output_path("shifted_raster", add_uuid=True)
 
     return core_raster.array_to_raster(
         arr,

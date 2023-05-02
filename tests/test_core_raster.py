@@ -31,7 +31,7 @@ from buteo.raster.core_raster import (
     raster_create_from_array,
     raster_create_grid_with_coordinates,
 )
-from buteo.utils import utils_gdal_translate, utils_gdal
+from buteo.utils import utils_gdal_translate, utils_gdal, utils_gdal_projection
 
 DEFAULT_ARR = np.array([
     [178, 250, 117,  23, 250,  42, 166, 164,  84, 175],
@@ -1095,7 +1095,7 @@ def test_create_raster_from_array_default():
     assert ds.RasterXSize == 10
     assert ds.RasterYSize == 10
     assert ds.RasterCount == 1
-    assert ds.GetProjection() == utils_gdal.parse_projection("EPSG:3857", return_wkt=True)
+    assert ds.GetProjection() == utils_gdal_projection.parse_projection("EPSG:3857", return_wkt=True)
     assert ds.GetGeoTransform() == (0.0, 10.0, 0.0, 0.0, 0.0, -10.0)
 
     gdal.Unlink(output_name)
@@ -1115,7 +1115,7 @@ def test_create_raster_from_array_special():
     assert ds.RasterXSize == 12
     assert ds.RasterYSize == 10
     assert ds.RasterCount == 3
-    assert ds.GetProjection() == utils_gdal.parse_projection("EPSG:4326", return_wkt=True)
+    assert ds.GetProjection() == utils_gdal_projection.parse_projection("EPSG:4326", return_wkt=True)
 
     gt = ds.GetGeoTransform()
 

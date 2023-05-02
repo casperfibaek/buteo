@@ -56,7 +56,7 @@ def _raster_open(
             opened.SetDescription(raster)
 
         if opened.GetProjectionRef() == "":
-            opened.SetProjection(utils_gdal._get_default_projection())
+            opened.SetProjection(utils_gdal_projection._get_default_projection())
             warnings.warn(f"WARNING: Input raster {raster} has no projection. Setting to default: EPSG:4326.", UserWarning)
 
         return opened
@@ -239,12 +239,11 @@ def _raster_to_metadata(
         return utils_bbox._get_vector_from_bbox(bbox_ogr, projection_osr)
 
     def get_bbox_as_vector_latlng():
-        latlng_wkt = utils_gdal._get_default_projection()
+        latlng_wkt = utils_gdal_projection._get_default_projection()
         projection_osr_latlng = osr.SpatialReference()
         projection_osr_latlng.ImportFromWkt(latlng_wkt)
 
         return utils_bbox._get_vector_from_bbox(metadata["bbox_latlng"], projection_osr_latlng)
-
 
     metadata["get_bbox_vector"] = get_bbox_as_vector
     metadata["get_bbox_vector_latlng"] = get_bbox_as_vector_latlng
@@ -747,7 +746,7 @@ def raster_to_array(
     else:
         channels = 0
         for in_raster in internal_rasters:
-            internal_bands = utils_gdal.to_band_list(bands, raster_to_metadata(in_raster)["band_count"])
+            internal_bands = utils_gdal._convert_to_band_list(bands, raster_to_metadata(in_raster)["band_count"])
             channels += len(internal_bands)
 
         output_shape = (y_size, x_size, channels)
@@ -797,7 +796,7 @@ def raster_to_array(
         if bands == "all":
             bands = -1
 
-        internal_bands = utils_gdal.to_band_list(bands, metadata["band_count"])
+        internal_bands = utils_gdal._convert_to_band_list(bands, metadata["band_count"])
 
         for band in internal_bands:
             band_ref = ref.GetRasterBand(band)
@@ -1085,7 +1084,7 @@ def array_to_raster(
 
     output_name = None
     if out_path is None:
-        output_name = utils_gdal.create_memory_path("array_to_raster.tif", add_uuid=True)
+        output_name = utils_path._get_augmented_path("array_to_raster.tif", add_uuid=True, folder="/vsimem/")
     else:
         output_name = out_path
 
@@ -1195,15 +1194,15 @@ def _raster_set_datatype(
 
     path = ""
     if out_path is None:
-        path = utils_gdal.create_memory_path(metadata["basename"], add_uuid=True)
+        path = utils_path._get_augmented_path("set_datatype.tif", add_uuid=True, folder="/vsimem/")
 
-    elif utils_base.folder_exists(out_path):
+    elif utils_path._check_dir_exists(out_path):
         path = os.path.join(out_path, os.path.basename(utils_gdal._get_path_from_dataset(ref)))
 
-    elif utils_base.folder_exists(utils_base.path_to_folder(out_path)):
+    elif utils_path._check_dir_exists(utils_path._get_dir_from_path(out_path)):
         path = out_path
 
-    elif utils_base.is_valid_mem_path(out_path):
+    elif utils_path._check_is_valid_mem_filepath(out_path):
         path = out_path
 
     else:
@@ -1411,7 +1410,7 @@ def raster_stack_list(
 
     output_name = None
     if out_path is None:
-        output_name = utils_path._get_output_path("stack_rasters.tif", add_uuid=True, folder="/vsimem/")
+        output_name = utils_path._get_output_path("stack_rasters.tif", add_uuid=True)
     else:
         output_name = out_path
 
@@ -1834,7 +1833,7 @@ def raster_create_empty(
 
     output_name = None
     if out_path is None:
-        output_name = utils_path._get_output_path("raster_from_array.tif", add_uuid=True, folder="/vsimem/")
+        output_name = utils_path._get_output_path("raster_from_array.tif", add_uuid=True)
     else:
         output_name = out_path
 
@@ -1938,7 +1937,7 @@ def raster_create_from_array(
 
     output_name = None
     if out_path is None:
-        output_name = utils_path._get_output_path("raster_from_array.tif", add_uuid=True, folder="/vsimem/")
+        output_name = utils_path._get_output_path("raster_from_array.tif", add_uuid=True)
     else:
         output_name = out_path
 

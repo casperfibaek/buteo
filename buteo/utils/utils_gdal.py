@@ -959,14 +959,17 @@ def _convert_to_band_list(
     if not isinstance(band_count, int):
         raise TypeError(f"Invalid type for band_count: {type(band_count)}")
 
+    if band_number == -1:
+        band_number = list(range(1, band_count + 1))
+
     input_list = band_number if isinstance(band_number, list) else [band_number]
     output_list = []
 
-    if len(input_list) == 0:
-        raise ValueError("Band number cannot be 0.")
-
     if band_count <= 0:
         raise ValueError("Band count cannot be 0.")
+
+    if len(input_list) == 0:
+        raise ValueError("Band number cannot be 0.")
 
     if any([val <= 0 or val > band_count for val in input_list]):
         raise ValueError("Band number cannot be 0 or above the band count.")
@@ -1146,7 +1149,7 @@ def _parse_input_data(
     List[str]
         The list of paths.
     """
-    assert input_type in ["raster", "vector"], "Invalid input type."
+    assert input_type in ["raster", "vector", "mixed"], "Invalid input type."
     assert isinstance(input_data, (gdal.Dataset, ogr.DataSource, str, list)), "Invalid type for input data."
 
     if isinstance(input_data, str):
@@ -1199,17 +1202,20 @@ def _parse_input_data(
             if not _check_is_raster_or_vector(val):
                 raise TypeError("Invalid type for input data.")
 
+    input_data = [utils_path._get_unix_path(path) for path in input_data]
+
     return input_data
 
 
 def _parse_output_data(
     input_data: Union[gdal.Dataset, ogr.DataSource, str, List[Union[gdal.Dataset, ogr.DataSource, str]]],
     output_data: Optional[Union[str, List[str]]],
+    *,
     prefix: str = "",
     suffix: str = "",
     add_uuid: bool = False,
     overwrite: bool = True,
-    change_ext: bool = False,
+    change_ext: Optional[str] = None,
 ) -> List[str]:
     """
     Parses the output data to a list of paths.
@@ -1234,21 +1240,23 @@ def _parse_output_data(
     overwrite : bool, optional
         If True, the output will be overwritten if it already exists. Default: True.
 
-    change_ext : bool, optional
-        If True, the extension of the output path will be changed to the extension of the input path. Default: False.
+    change_ext : str, optional
+        The extension to change to. Default: None.
 
     Returns
     -------
     List[str]
         The list of paths.
     """
-    assert isinstance(input_data, list), "Invalid type for input data."
+    assert isinstance(input_data, (list, str, ogr.DataSource, gdal.Dataset)), "Invalid type for input data."
     assert isinstance(output_data, (str, list, type(None))), "Invalid type for output data."
     assert isinstance(prefix, str), "Invalid type for prefix."
     assert isinstance(suffix, str), "Invalid type for suffix."
     assert isinstance(add_uuid, bool), "Invalid type for add_uuid."
     assert isinstance(overwrite, bool), "Invalid type for overwrite."
-    assert isinstance(change_ext, bool), "Invalid type for change_ext."
+    assert isinstance(change_ext, (str, type(None))), "Invalid type for change_ext."
+
+    input_data = _parse_input_data(input_data, "mixed")
 
     output_data = utils_path._get_output_path_list(
         input_data,

@@ -50,7 +50,7 @@ def _find_common_projection(
     assert utils_gdal._check_is_raster_list(rasters), "rasters must be a list of rasters."
 
     # Get the projection of each raster
-    projections = [utils_gdal.parse_projection(raster) for raster in rasters]
+    projections = [utils_gdal_projection.parse_projection(raster) for raster in rasters]
 
     # Get the most common projection
     common_projection = max(set(projections), key=projections.count)
@@ -83,7 +83,7 @@ def _raster_reproject(
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
-    )
+    )[0]
 
     ref = core_raster._raster_open(raster)
     metadata = core_raster._raster_to_metadata(ref)

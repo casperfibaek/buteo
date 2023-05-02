@@ -47,6 +47,7 @@ def _get_vsimem_content(
     try:
         if hasattr(gdal, "listdir"):
             vsimem = gdal.listdir(folder_name)
+            vsimem = [folder_name + v.name for v in vsimem]
         elif hasattr(gdal, "ReadDir"):
             vsimem = [folder_name + ds for ds in gdal.ReadDirRecursive(folder_name)]
         else:
@@ -56,7 +57,7 @@ def _get_vsimem_content(
     except RuntimeError as e:
         warn(f"WARNING: Failed to access vsimem. Is GDAL installed? Error: {e}")
 
-    paths = [os.path.normpath(p) for p in vsimem]
+    paths = _get_unix_path(vsimem)
 
     return paths
 
@@ -88,6 +89,41 @@ def _glob_vsimem(
     return matches
 
 
+def _get_unix_path(path: Union[str, List[str]]) -> Union[str, List[str]]:
+    """
+    Convert a path or list of paths to a unix path(s).
+
+    Parameters
+    ----------
+    path: str
+        The path to convert.
+
+    Returns
+    -------
+    Union[str, List[str]]
+        The converted path[s].
+    """
+    input_is_list = False
+    if isinstance(path, list):
+        input_is_list = True
+
+    path = [path] if isinstance(path, str) else path
+    for p in path:
+        assert isinstance(p, str), "path must be a string."
+        assert len(p) > 0, "path must not be empty."
+
+    out_path = []
+    for p in path:
+        out_path.append(
+            "/".join(os.path.normpath(p).split("\\"))
+        )
+
+    if input_is_list:
+        return out_path
+
+    return out_path[0]
+
+
 def _check_file_exists(path: str) -> bool:
     """
     Check if a file exists. Also checks vsimem.
@@ -113,7 +149,7 @@ def _check_file_exists(path: str) -> bool:
         return True
 
     vsimem = _get_vsimem_content()
-    if os.path.normpath(path) in vsimem:
+    if _get_unix_path(path) in vsimem:
         return True
 
     return False
@@ -137,13 +173,13 @@ def _check_file_exists_vsimem(path: str) -> bool:
         return False
 
     vsimem = _get_vsimem_content()
-    if os.path.normpath(path) in vsimem:
+    if _get_unix_path(path) in vsimem:
         return True
 
     return False
 
 
-def _check_folder_exists(
+def _check_dir_exists(
     path: str,
 ) -> bool:
     """
@@ -169,14 +205,15 @@ def _check_folder_exists(
     if os.path.isdir(os.path.abspath(path)):
         return True
 
-    vsimem = _get_vsimem_content()
-    if os.path.normpath(path) in vsimem:
+    split = os.path.normpath(os.path.dirname(path)).split("\\")
+
+    if "vsimem" in split:
         return True
 
     return False
 
 
-def _check_folder_exists_vsimem(path: str) -> bool:
+def _check_dir_exists_vsimem(path: str) -> bool:
     """
     Check if a folder exists in vsimem.
 
@@ -200,7 +237,7 @@ def _check_folder_exists_vsimem(path: str) -> bool:
     return False
 
 
-def _delete_folder_content(
+def _delete_dir_content(
     folder: str,
     delete_subfolders: bool = True,
 ) -> bool:
@@ -223,10 +260,10 @@ def _delete_folder_content(
     """
     assert isinstance(folder, str), "folder must be a string."
     assert len(folder) > 0, "folder must not be a non-empty string."
-    assert _check_folder_exists(folder), "folder must exist."
+    assert _check_dir_exists(folder), "folder must exist."
 
     # Folder is on disk
-    if not _check_folder_exists_vsimem(folder):
+    if not _check_dir_exists_vsimem(folder):
         for f in os.listdir(folder):
             try:
                 path = os.path.join(folder, f)
@@ -248,14 +285,14 @@ def _delete_folder_content(
         for f in vsimem:
             gdal.Unlink(f)
 
-    if _check_folder_exists(folder):
+    if _check_dir_exists(folder):
         warn(f"Warning. Failed to remove: {folder}", UserWarning)
         return False
 
     return True
 
 
-def _delete_folder(folder: str) -> bool:
+def _delete_dir(folder: str) -> bool:
     """
     Delete a folder and all its content. Also deletes vsimem folders.
 
@@ -267,10 +304,10 @@ def _delete_folder(folder: str) -> bool:
     """
     assert isinstance(folder, str), "folder must be a string."
     assert len(folder) > 0, "folder must be a non-empty string."
-    assert _check_folder_exists(folder), "folder must exist."
+    assert _check_dir_exists(folder), "folder must exist."
 
     # Folder is on disk
-    if not _check_folder_exists_vsimem(folder):
+    if not _check_dir_exists_vsimem(folder):
         try:
             shutil.rmtree(folder)
 
@@ -288,7 +325,7 @@ def _delete_folder(folder: str) -> bool:
 
     gdal.Unlink(folder)
 
-    if _check_folder_exists(folder):
+    if _check_dir_exists(folder):
         warn(f"Warning. Failed to remove: {folder}", UserWarning)
         return False
 
@@ -352,16 +389,16 @@ def _create_dir_if_not_exists(path: str) -> str:
     assert isinstance(path, str), "path must be a string."
     assert len(path) > 0, "path must not be empty."
 
-    if not _check_folder_exists(path):
+    if not _check_dir_exists(path):
 
         # Folder is on disk
-        if not _check_folder_exists_vsimem(path):
+        if not _check_dir_exists_vsimem(path):
             os.makedirs(path)
 
         # Folder is in vsimem
         return path
 
-    if not _check_folder_exists(path):
+    if not _check_dir_exists(path):
         raise RuntimeError(f"Could not create folder: {path}.")
 
     return path
@@ -509,7 +546,9 @@ def _check_is_valid_mem_filepath(path: str) -> bool:
     if len(path) == 0:
         return False
 
-    if "vsimem/" not in path or "vsizip/" not in path:
+    path_chunks = os.path.normpath(path).split("\\")
+
+    if "vsimem" not in path_chunks and "vsizip" not in path_chunks:
         return False
 
     if _get_ext_from_path(path) == "":
@@ -543,7 +582,7 @@ def _check_is_valid_non_mem_filepath(path: str) -> bool:
         return False
 
     folder = _get_dir_from_path(path)
-    if not _check_folder_exists(folder):
+    if not _check_dir_exists(folder):
         return False
 
     return True
@@ -768,7 +807,9 @@ def _get_changed_folder(
     filename = _get_filename_from_path(path)
     joined = os.path.join(target_folder, filename)
 
-    return os.path.normpath(joined)
+    unix_path = _get_unix_path(joined)
+
+    return unix_path
 
 
 def _get_augmented_path(
@@ -839,7 +880,9 @@ def _get_augmented_path(
     augmented_filename = f"{prefix}{filename}{uuid}{suffix}.{ext}"
     augmented_path = os.path.join(target_folder, augmented_filename)
 
-    return os.path.normpath(augmented_path)
+    augmented_path = _get_unix_path(augmented_path)
+
+    return augmented_path
 
 
 def _get_augmented_path_list(
@@ -1008,10 +1051,12 @@ def _get_output_path(
     assert output_path is None or isinstance(output_path, str), "output_paths must be a string."
     assert output_path is None or len(output_path) > 0, "output_paths must not be non-empty string."
 
+    input_path = _get_unix_path(input_path)
+
     if output_path is not None:
 
         # It is a folder
-        if _check_folder_exists(output_path):
+        if _check_dir_exists(output_path):
             output_path = _get_augmented_path(
                 input_path,
                 prefix=prefix,
@@ -1021,6 +1066,7 @@ def _get_output_path(
                 add_uuid=add_uuid,
             )
             if _check_is_valid_output_filepath(output_path, overwrite=overwrite):
+                output_path = _get_unix_path(output_path)
                 return output_path
             else:
                 raise ValueError(f"output_path {output_path} is not a valid filepath.")
@@ -1096,9 +1142,11 @@ def _get_output_path_list(
     assert output_path_list is None or len(output_path_list) > 0, "output_paths must not be non-empty."
     assert change_ext is None or isinstance(change_ext, str), "change_ext must be a string."
 
+    input_path_list = _get_unix_path(input_path_list)
+
     # Must be a folder
     if output_path_list is not None and isinstance(output_path_list, str):
-        if not _check_folder_exists(output_path_list):
+        if not _check_dir_exists(output_path_list):
             raise ValueError(f"output_path_list {output_path_list} is not a valid folder.")
 
         output_path_list = _get_augmented_path_list(

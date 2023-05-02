@@ -48,7 +48,7 @@ def vector_split_by_fid(
     """
     utils_base.type_check(vector, [ogr.DataSource, str], "vector")
     utils_base.type_check(out_folder, [str, None], "out_folder")
-    assert utils_path._check_folder_exists(out_folder) or out_folder is None, "out_folder does not exist."
+    assert utils_path._check_dir_exists(out_folder) or out_folder is None, "out_folder does not exist."
 
     opened = core_vector.vector_open(vector)
     metadata = core_vector.vector_to_metadata(opened)

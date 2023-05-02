@@ -208,11 +208,12 @@ def _get_bbox_from_geotransform(
     return [x_min, x_max, y_min, y_max]
 
 
-def _get_bbox_from_raster(
+def get_bbox_from_raster(
     raster_dataframe: gdal.Dataset,
 ) -> List[Union[int, float]]:
     """
     Gets an OGR bounding box from a GDAL raster dataframe.
+    The bounding box is in the same projection as the raster.
 
     Parameters
     ----------
@@ -237,11 +238,12 @@ def _get_bbox_from_raster(
     return bbox
 
 
-def _get_bbox_from_vector(
+def get_bbox_from_vector(
     vector_dataframe: ogr.DataSource,
 ) -> List[Union[int, float]]:
     """
     Gets an OGR bounding box from an OGR dataframe.
+    The bounding box is in the same projection as the vector.
 
     Parameters
     ----------
@@ -315,11 +317,13 @@ def _get_bbox_from_vector_layer(
     return [x_min, x_max, y_min, y_max]
 
 
-def _get_bbox_from_dataset(
+def get_bbox_from_dataset(
     dataset: Union[str, gdal.Dataset, ogr.DataSource],
 ) -> List[Union[int, float]]:
     """
     Get the bbox from a dataset.
+    The bounding box is in the same projection as the dataset.
+    If you want the Bounding Box in WGS84, use `get_bbox_from_dataset_wgs84`.
 
     Parameters
     ----------
@@ -347,12 +351,127 @@ def _get_bbox_from_dataset(
             raise RuntimeError(f"Could not open dataset. {dataset}")
 
     if isinstance(opened, gdal.Dataset):
-        return _get_bbox_from_raster(opened)
+        return get_bbox_from_raster(opened)
 
     if isinstance(opened, ogr.DataSource):
-        return _get_bbox_from_vector(opened)
+        return get_bbox_from_vector(opened)
 
     raise RuntimeError(f"Could not get bbox from dataset. {dataset}")
+
+
+# def get_bbox_from_raster_wgs84(
+#     raster_dataframe: gdal.Dataset,
+# ) -> List[Union[int, float]]:
+#     """
+#     Gets an OGR bounding box from a GDAL raster dataframe in WGS84.
+#     The bounding box is in the same projection as the raster.
+#     If you want the Bounding Box in the dataset's projection, use `get_bbox_from_raster`.
+
+#     Parameters
+#     ----------
+#     raster_dataframe : gdal.Dataset
+#         A GDAL raster dataframe.
+
+#     Returns
+#     -------
+#     list
+#         An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+#     """
+#     assert isinstance(
+#         raster_dataframe, gdal.Dataset
+#     ), f"raster_dataframe was not a gdal.Datasource. Received: {raster_dataframe}"
+
+#     bbox = _get_bbox_from_geotransform(
+#         raster_dataframe.GetGeoTransform(),
+#         raster_dataframe.RasterXSize,
+#         raster_dataframe.RasterYSize,
+#     )
+
+#     bbox_wgs84 = bbox_ogr_latlng = utils_gdal_projection.reproject_bbox(bbox_ogr, original_projection, latlng_projection)
+
+
+#     return bbox
+
+
+# def get_bbox_from_vector_wgs84(
+#     vector_dataframe: Union[ogr.DataSource, str],
+# ):
+#     """
+#     Gets an OGR bounding box from an OGR vector dataframe in WGS84.
+#     The bounding box is in the same projection as the vector dataframe.
+#     If you want the Bounding Box in the dataset's projection, use `get_bbox_from_vector`.
+
+#     Parameters
+#     ----------
+#     vector_dataframe : ogr.DataSource, str
+#         An OGR vector dataframe.
+
+#     Returns
+#     -------
+#     list
+#         An OGR formatted bbox. `[x_min, x_max, y_min, y_max]`
+#     """
+#     assert isinstance(
+#         vector_dataframe, (ogr.DataSource, str)
+#     ), f"vector_dataframe was not a valid ogr.DataSource or string. Received: {vector_dataframe}"
+
+#     opened = vector_dataframe if isinstance(vector_dataframe, ogr.DataSource) else None
+
+#     if opened is None:
+#         gdal.PushErrorHandler("CPLQuietErrorHandler")
+#         opened = ogr.Open(vector_dataframe, gdal.GA_ReadOnly)
+#         gdal.PopErrorHandler()
+
+#         if opened is None:
+#             raise RuntimeError(f"Could not open vector_dataframe. {vector_dataframe}")
+
+#     if isinstance(opened, ogr.DataSource):
+#         return _get_bbox_from_vector_dataframe_wgs84(opened)
+
+#     raise RuntimeError(f"Could not get bbox from vector_dataframe. {vector_dataframe}")
+
+
+
+# def get_bbox_from_dataset_wgs84(
+#     dataset: Union[str, gdal.Dataset, ogr.DataSource],
+# ) -> List[Union[int, float]]:
+#     """
+#     Get the bbox from a dataset in WGS84.
+#     The bounding box is in the same projection as the dataset.
+#     If you want the Bounding Box in the dataset's projection, use `get_bbox_from_dataset`.
+
+#     Parameters
+#     ----------
+#     dataset : str, gdal.Dataset, ogr.DataSource
+#         A dataset or dataset path.
+
+#     Returns
+#     -------
+#     list
+#         The bounding box in ogr format: `[x_min, x_max, y_min, y_max]`.
+#     """
+#     assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), "DataSet must be a string, ogr.DataSource, or gdal.Dataset."
+
+#     opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+
+#     if opened is None:
+#         gdal.PushErrorHandler("CPLQuietErrorHandler")
+#         opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+
+#         if opened is None:
+#             opened = ogr.Open(dataset, gdal.GA_ReadOnly)
+
+#         gdal.PopErrorHandler()
+#         if opened is None:
+#             raise RuntimeError(f"Could not open dataset. {dataset}")
+
+#     if isinstance(opened, gdal.Dataset):
+#         return get_bbox_from_raster_wgs84(opened)
+
+#     if isinstance(opened, ogr.DataSource):
+#         return get_bbox_from_vector_wgs84(opened)
+
+#     raise RuntimeError(f"Could not get bbox from dataset. {dataset}")
 
 
 def _get_sub_geotransform(
@@ -999,7 +1118,7 @@ def _get_utm_zone_from_dataset(
     """
     assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), "dataset was not a valid dataset."
 
-    bbox = _get_bbox_from_dataset(dataset)
+    bbox = get_bbox_from_dataset(dataset)
     source_projection = utils_gdal_projection._get_projection_from_dataset(dataset)
     target_projection = osr.SpatialReference()
     target_projection_wkt = utils_gdal_projection._get_default_projection()
@@ -1035,7 +1154,7 @@ def _get_utm_zone_from_dataset_list(
     latlng_proj.ImportFromWkt('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]')
 
     for dataset in datasets:
-        bbox = _get_bbox_from_dataset(dataset)
+        bbox = get_bbox_from_dataset(dataset)
         projection = utils_gdal_projection._get_projection_from_dataset(dataset)
         latlng_bboxes.append(utils_gdal_projection.reproject_bbox(bbox, projection, latlng_proj))
 

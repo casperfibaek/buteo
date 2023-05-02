@@ -397,7 +397,7 @@ def raster_align(
     utils_base.type_check(suffix, [str], "suffix")
     utils_base.type_check(ram, [int, str], "ram")
 
-    raster_list = utils_gdal._parse_input_data(rasters)
+    raster_list = utils_gdal._parse_input_data(rasters, "raster")
     assert method in ["reference", "intersection", "union"], "method must be one of reference, intersection, or union."
 
     path_list = utils_gdal._parse_output_data(

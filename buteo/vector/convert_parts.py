@@ -29,7 +29,7 @@ def _singlepart_to_multipart(
     assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
     if out_path is None:
-        out_path = utils_path._get_output_path(utils_gdal._get_path_from_dataset(vector), add_uuid=True, folder="/vsimem/")
+        out_path = utils_path._get_output_path(utils_gdal._get_path_from_dataset(vector), add_uuid=True)
 
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path"
 
@@ -77,7 +77,7 @@ def _multipart_to_singlepart(
     assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
     if out_path is None:
-        out_path = utils_path._get_output_path(utils_gdal._get_path_from_dataset(vector), add_uuid=True, folder="/vsimem/")
+        out_path = utils_path._get_output_path(utils_gdal._get_path_from_dataset(vector), add_uuid=True)
 
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path"
 

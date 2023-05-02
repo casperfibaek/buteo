@@ -48,7 +48,7 @@ def _raster_add_border(
 
     output_name = None
     if out_path is None:
-        out_path = utils_path._get_output_path("raster_proximity.tif", add_uuid=True, folder="/vsimem/")
+        out_path = utils_path._get_output_path("raster_proximity.tif", add_uuid=True)
     else:
         output_name = out_path
 
@@ -185,7 +185,7 @@ def raster_add_border(
     raster_list = utils_base._get_variable_as_list(raster)
 
     if out_path is None:
-        out_path = utils_path._get_output_path("raster_proximity.tif", add_uuid=True, folder="/vsimem/")
+        out_path = utils_path._get_output_path("raster_proximity.tif", add_uuid=True)
 
     for raster_path in raster_list:
         _raster_add_border(
