@@ -6,32 +6,32 @@ Convert geometries from multiparts and singleparts and vice versa.
 
 # Standard library
 import sys; sys.path.append("../../")
+from typing import Union, Optional, List
 
 # External
 from osgeo import ogr
 
 # Internal
-from buteo.utils import utils_base, utils_gdal
+from buteo.utils import utils_base, utils_gdal, utils_path
 from buteo.vector import core_vector
 
 
 
 def _singlepart_to_multipart(
-    vector,
-    out_path=None,
-    *,
-    overwrite=True,
-    add_index=True,
-    process_layer=-1,
-):
+    vector: Union[str, ogr.DataSource],
+    out_path: Optional[str] = None,
+    overwrite: bool = True,
+    add_index: bool = True,
+    process_layer: int = -1,
+) -> str:
     """ Internal. """
     assert isinstance(vector, (ogr.DataSource, str)), "Invalid input vector"
     assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
     if out_path is None:
-        out_path = utils_gdal.create_memory_path(utils_gdal._get_path_from_dataset(vector), add_uuid=True)
+        out_path = utils_path._get_output_path(utils_gdal._get_path_from_dataset(vector), add_uuid=True, folder="/vsimem/")
 
-    assert utils_base.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path"
+    assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path"
 
     ref = core_vector._open_vector(vector)
 
@@ -64,23 +64,22 @@ def _singlepart_to_multipart(
 
 
 def _multipart_to_singlepart(
-    vector,
-    out_path=None,
-    *,
-    copy_attributes=False,
-    overwrite=True,
-    add_index=True,
-    process_layer=-1,
-    verbose=False,
-):
+    vector: Union[str, ogr.DataSource],
+    out_path: Optional[str] = None,
+    copy_attributes: bool = False,
+    overwrite: bool = True,
+    add_index: bool = True,
+    process_layer: int = -1,
+    verbose: bool = False,
+) -> str:
     """ Internal. """
     assert isinstance(vector, (ogr.DataSource, str)), "Invalid input vector"
     assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
     if out_path is None:
-        out_path = utils_gdal.create_memory_path(utils_gdal._get_path_from_dataset(vector), add_uuid=True)
+        out_path = utils_path._get_output_path(utils_gdal._get_path_from_dataset(vector), add_uuid=True, folder="/vsimem/")
 
-    assert utils_base.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path"
+    assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path"
 
     ref = core_vector._open_vector(vector)
 
@@ -204,35 +203,53 @@ def _multipart_to_singlepart(
     return out_path
 
 
-def singlepart_to_multipart(
-    vector,
-    out_path=None,
-    add_index=True,
-    process_layer=-1,
-    prefix="",
-    suffix="",
-    add_uuid=False,
-    overwrite=True,
-    allow_lists=True,
-):
+def vector_singlepart_to_multipart(
+    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
+    out_path: Optional[str] = None,
+    add_index: bool = True,
+    process_layer: int = -1,
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = False,
+    overwrite: bool = True,
+    allow_lists: bool = True,
+) -> Union[str, List[str]]:
     """
     Converts a singlepart vector to multipart.
 
-    ## Args:
-    `vector` (_str_/_ogr.DataSource_/_list_): The vector(s) to convert. </br>
+    Parameters
+    ----------
+    vector : Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]]
+        The vector(s) to convert.
 
-    ## Kvargs:
-    `out_path` (_str_/_None_): The path(s) to the output vector. If None a memory output is produced. (Default: **None**) </br>
-    `add_index` (_bool_): Add an geospatial index to the output vector. (Default: **True**) </br>
-    `process_layer` (_int_): The layer index to process. (Default: **-1**) </br>
-    `prefix` (_str_): The prefix to add to the layer name. (Default: **""**) </br>
-    `suffix` (_str_): The suffix to add to the layer name. (Default: **""**) </br>
-    `add_uuid` (_bool_): Add a UUID field to the output vector. (Default: **False**) </br>
-    `overwrite` (_bool_): Overwrite the output vector if it already exists. (Default: **True**) </br>
-    `allow_lists` (_bool_): Allow the input to be a list of vectors. (Default: **True**) </br>
+    out_path : Optional[str], optional
+        The path(s) to the output vector. If None a memory output is produced. Default: None
 
-    ## Returns:
-    (_str_/_list_): The path(s) to the output vector.
+    add_index : bool, optional
+        Add an geospatial index to the output vector. Default: True
+
+    process_layer : int, optional
+        The layer index to process. Default: -1
+
+    prefix : str, optional
+        The prefix to add to the layer name. Default: ""
+
+    suffix : str, optional
+        The suffix to add to the layer name. Default: ""
+    
+    add_uuid : bool, optional
+        Add a UUID field to the output vector. Default: False
+
+    overwrite : bool, optional
+        Overwrite the output vector if it already exists. Default: True
+
+    allow_lists : bool, optional
+        Allow lists of vectors as input. Default: True
+
+    Returns
+    -------
+    Union[str, List[str]]
+        The path(s) to the output vector(s).
     """
     utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
     utils_base.type_check(out_path, [str, [str], None], "out_path")
@@ -251,9 +268,9 @@ def singlepart_to_multipart(
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Vector is not a list of vectors. {vector_list}"
 
-    path_list = utils_gdal.create_output_path_list(
+    path_list = utils_gdal._parse_output_data(
         vector_list,
-        out_path=out_path,
+        output_data=out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
@@ -278,38 +295,57 @@ def singlepart_to_multipart(
     return output
 
 
-def multipart_to_singlepart(
-    vector,
-    out_path=None,
-    *,
-    overwrite=True,
-    add_index=True,
-    process_layer=-1,
-    verbose=False,
-    prefix="",
-    suffix="",
-    add_uuid=False,
-    allow_lists=True,
-):
+def vector_multipart_to_singlepart(
+    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
+    out_path: Optional[str] = None,
+    overwrite: bool = True,
+    add_index: bool = True,
+    process_layer: int = -1,
+    verbose: bool = False,
+    prefix: str ="",
+    suffix: str = "",
+    add_uuid: bool = False,
+    allow_lists: bool = True,
+) -> Union[str, List[str]]:
     """
     Converts a multipart vector to singlepart.
 
-    ## Args:
-    `vector` (_str_/_ogr.DataSource_/_list_): The vector(s) to convert. </br>
+    Parameters
+    ----------
+    vector : Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]]
+        The vector(s) to convert.
 
-    ## Kvargs:
-    `out_path` (_str_/_None_): The path(s) to the output vector. If None a memory output is produced. (Default: **None**) </br>
-    `overwrite` (_bool_): Overwrite the output vector if it already exists. (Default: **True**) </br>
-    `add_index` (_bool_): Add an geospatial index to the output vector. (Default: **True**) </br>
-    `process_layer` (_int_): The layer index to process. (Default: **-1**) </br>
-    `verbose` (_bool_): Print progress. (Default: **False**) </br>
-    `prefix` (_str_): The prefix to add to the layer name. (Default: **""**) </br>
-    `suffix` (_str_): The suffix to add to the layer name. (Default: **""**) </br>
-    `add_uuid` (_bool_): Add a UUID field to the output vector. (Default: **False**) </br>
-    `allow_lists` (_bool_): Allow the input to be a list of vectors. (Default: **True**) </br>
+    out_path : Optional[str], optional
+        The path(s) to the output vector. If None a memory output is produced. Default: None
 
-    ## Returns:
-    (_str_/_list_): The path(s) to the output vector.
+    overwrite : bool, optional
+        Overwrite the output vector if it already exists. Default: True
+
+    add_index : bool, optional
+        Add an geospatial index to the output vector. Default: True
+
+    process_layer : int, optional
+        The layer index to process. Default: -1
+
+    verbose : bool, optional
+        Print progress. Default: False
+
+    prefix : str, optional
+        The prefix to add to the layer name. Default: ""
+
+    suffix : str, optional
+        The suffix to add to the layer name. Default: ""
+
+    add_uuid : bool, optional
+        Add a UUID field to the output vector. Default: False
+
+    allow_lists : bool, optional
+        Allow lists of vectors as input. Default: True
+
+    Returns
+    -------
+    Union[str, List[str]]
+        The path(s) to the output vector(s).
     """
     utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
     utils_base.type_check(out_path, [str, [str], None], "out_path")
@@ -328,9 +364,9 @@ def multipart_to_singlepart(
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Vector is not a list of vectors. {vector_list}"
 
-    path_list = utils_gdal.create_output_path_list(
+    path_list = utils_gdal._parse_output_data(
         vector_list,
-        out_path=out_path,
+        output_data=out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,

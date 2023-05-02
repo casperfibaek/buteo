@@ -4,14 +4,15 @@
 Functions that make interacting with the toolbox easier.
 """
 # Standard library
-from typing import Union, List, Optional
-
-# Internal
-from helpers import _create_grid
+from typing import Union, Optional
+import sys; sys.path.append("../../")
 
 # External
 import numpy as np
 from numba import jit, prange
+
+# Internal
+from buteo.array.utils_array import _create_grid
 
 
 # TODO: Multi-channel support, Split assert
@@ -19,7 +20,7 @@ from numba import jit, prange
 def calculate_pixel_distances(
     array: np.ndarray,
     target: Union[int, float] = 1,
-    maximum_distance: Optional[int, float] = None,
+    maximum_distance: Optional[Union[int, float]] = None,
     pixel_width: Union[int, float] = 1,
     pixel_height: Union[int, float] = 1,
 ) -> np.ndarray:

@@ -13,23 +13,23 @@ from osgeo import gdal, osr
 # Internal
 from buteo.raster.core_raster import (
     raster_to_metadata,
-    open_raster,
+    raster_open,
     raster_to_array,
-    rasters_are_aligned,
+    check_are_rasters_are_aligned,
     raster_has_nodata,
-    rasters_have_nodata,
-    rasters_have_same_nodata,
-    get_first_nodata_value,
-    count_bands_in_rasters,
+    raster_has_nodata_list,
+    check_rasters_have_same_nodata,
+    _get_first_nodata_value,
+    raster_count_bands_list,
     array_to_raster,
     raster_set_datatype,
-    stack_rasters,
-    stack_rasters_vrt,
-    rasters_intersect,
-    rasters_intersection,
-    get_overlap_fraction,
-    create_raster_from_array,
-    create_grid_with_coordinates,
+    raster_stack_list,
+    raster_stack_vrt_list,
+    check_do_rasters_intersect,
+    get_raster_intersection,
+    get_raster_overlap_fraction,
+    raster_create_from_array,
+    raster_create_grid_with_coordinates,
 )
 from buteo.utils import utils_gdal_translate, utils_gdal
 
@@ -183,7 +183,7 @@ def test_create_sample_raster():
 def test_open_raster_single():
     """ Test: Open raster file. """
     raster_1 = get_sample_raster()
-    raster = open_raster(raster_1, writeable=False, allow_lists=False)
+    raster = raster_open(raster_1, writeable=False, allow_lists=False)
     assert isinstance(raster, gdal.Dataset)
 
     gdal.Unlink(raster_1)
@@ -192,7 +192,7 @@ def test_open_raster_list():
     """ Test: Open list of raster files. """
     raster_1 = get_sample_raster()
     raster_2 = get_sample_raster_with_nodata()
-    rasters = open_raster([raster_1, raster_2], writeable=False)
+    rasters = raster_open([raster_1, raster_2], writeable=False)
     assert isinstance(rasters, list) and len(rasters) == 2
     assert all(isinstance(r, gdal.Dataset) for r in rasters)
 
@@ -202,14 +202,14 @@ def test_open_raster_list():
 def test_open_raster_invalid_input():
     """ Test: Open raster file - invalid. """
     with pytest.raises(ValueError):
-        open_raster("non_existent_file.tif", writeable=False)
+        raster_open("non_existent_file.tif", writeable=False)
 
 def test_open_raster_list_not_allowed():
     """ Test: Open list of raster files - not allowed. """
     raster_1 = get_sample_raster()
     raster_2 = get_sample_raster_with_nodata()
     with pytest.raises(ValueError):
-        open_raster([raster_1, raster_2], allow_lists=False)
+        raster_open([raster_1, raster_2], allow_lists=False)
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -217,7 +217,7 @@ def test_open_raster_list_not_allowed():
 def test_open_raster_write_mode():
     """ Test: Open raster file in write mode. """
     raster_1 = get_sample_raster()
-    raster = open_raster(raster_1, writeable=True)
+    raster = raster_open(raster_1, writeable=True)
     assert isinstance(raster, gdal.Dataset)
 
     error_code = raster.GetRasterBand(1).WriteArray(np.zeros((10, 10)))
@@ -230,7 +230,7 @@ def test_open_raster_write_mode():
 def test_open_raster_read_mode():
     """ Test: Open raster file in read mode. """
     raster_1 = get_sample_raster()
-    raster = open_raster(raster_1, writeable=False)
+    raster = raster_open(raster_1, writeable=False)
     assert isinstance(raster, gdal.Dataset)
 
     error_code = raster.GetRasterBand(1).WriteArray(np.zeros((10, 10)))
@@ -327,7 +327,7 @@ def test_raster_to_metadata_disallow_lists():
 def test_rasters_are_aligned_single_raster():
     """ Test: rasters are aligned. Single raster. """
     raster_1 = create_sample_raster()
-    assert rasters_are_aligned([raster_1])
+    assert check_are_rasters_are_aligned([raster_1])
 
     gdal.Unlink(raster_1)
 
@@ -335,7 +335,7 @@ def test_rasters_are_aligned_same_projection():
     """ Test: rasters are aligned. Same projection. """
     raster_1 = create_sample_raster()
     raster_2 = create_sample_raster()
-    assert rasters_are_aligned([raster_1, raster_2])
+    assert check_are_rasters_are_aligned([raster_1, raster_2])
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -345,7 +345,7 @@ def test_rasters_are_aligned_different_projection():
     raster_1 = create_sample_raster(epsg_code=4326)
     raster_2 = create_sample_raster(epsg_code=32632)
 
-    assert not rasters_are_aligned([raster_1, raster_2])
+    assert not check_are_rasters_are_aligned([raster_1, raster_2])
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -354,7 +354,7 @@ def test_rasters_are_aligned_same_extent():
     """ Test: rasters are aligned. Same extent. """
     raster_1 = create_sample_raster()
     raster_2 = create_sample_raster()
-    assert rasters_are_aligned([raster_1, raster_2], same_extent=True)
+    assert check_are_rasters_are_aligned([raster_1, raster_2], same_extent=True)
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -363,7 +363,7 @@ def test_rasters_are_aligned_different_extent():
     """ Test: rasters are aligned. Different extent. """
     raster_1 = create_sample_raster()
     raster_2 = create_sample_raster(width=20, height=20)
-    assert not rasters_are_aligned([raster_1, raster_2], same_extent=True)
+    assert not check_are_rasters_are_aligned([raster_1, raster_2], same_extent=True)
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -372,7 +372,7 @@ def test_rasters_are_aligned_same_dtype():
     """ Test: rasters are aligned. Same dtype. """
     raster_1 = create_sample_raster()
     raster_2 = create_sample_raster()
-    assert rasters_are_aligned([raster_1, raster_2], same_dtype=True)
+    assert check_are_rasters_are_aligned([raster_1, raster_2], same_dtype=True)
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -381,7 +381,7 @@ def test_rasters_are_aligned_different_dtype():
     """ Test: rasters are aligned. Different dtype. """
     raster_1 = create_sample_raster(datatype=gdal.GDT_Byte)
     raster_2 = create_sample_raster(datatype=gdal.GDT_UInt16)
-    assert not rasters_are_aligned([raster_1, raster_2], same_dtype=True)
+    assert not check_are_rasters_are_aligned([raster_1, raster_2], same_dtype=True)
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -404,7 +404,7 @@ def test_rasters_have_nodata_true():
     """ Test: rasters have nodata. True case. """
     raster_1 = create_sample_raster(nodata=0)
     raster_2 = create_sample_raster()
-    assert rasters_have_nodata([raster_1, raster_2])
+    assert raster_has_nodata_list([raster_1, raster_2])
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -413,7 +413,7 @@ def test_rasters_have_nodata_false():
     """ Test: rasters have nodata. False case. """
     raster_1 = create_sample_raster()
     raster_2 = create_sample_raster()
-    assert not rasters_have_nodata([raster_1, raster_2])
+    assert not raster_has_nodata_list([raster_1, raster_2])
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -422,7 +422,7 @@ def test_rasters_have_same_nodata_true():
     """ Test: rasters have same nodata. True case. """
     raster_1 = create_sample_raster(nodata=0)
     raster_2 = create_sample_raster(nodata=0)
-    assert rasters_have_same_nodata([raster_1, raster_2])
+    assert check_rasters_have_same_nodata([raster_1, raster_2])
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -431,7 +431,7 @@ def test_rasters_have_same_nodata_false():
     """ Test: rasters have same nodata. False case. """
     raster_1 = create_sample_raster(nodata=0)
     raster_2 = create_sample_raster(nodata=1)
-    assert not rasters_have_same_nodata([raster_1, raster_2])
+    assert not check_rasters_have_same_nodata([raster_1, raster_2])
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -439,7 +439,7 @@ def test_rasters_have_same_nodata_false():
 def test_get_first_nodata_value():
     """ Test: get first nodata value. """
     raster_1 = create_sample_raster(nodata=0)
-    assert get_first_nodata_value(raster_1) == 0
+    assert _get_first_nodata_value(raster_1) == 0
 
     gdal.Unlink(raster_1)
 
@@ -450,7 +450,7 @@ def test_count_bands_in_rasters_single_band_rasters():
     raster3 = create_sample_raster(width=10, height=10, bands=1)
 
     rasters = [raster1, raster2, raster3]
-    band_count = count_bands_in_rasters(rasters)
+    band_count = raster_count_bands_list(rasters)
 
     assert band_count == 3
 
@@ -465,7 +465,7 @@ def test_count_bands_in_rasters_multiple_band_rasters():
     raster3 = create_sample_raster(width=10, height=10, bands=1)
 
     rasters = [raster1, raster2, raster3]
-    band_count = count_bands_in_rasters(rasters)
+    band_count = raster_count_bands_list(rasters)
 
     assert band_count == 6
 
@@ -845,7 +845,7 @@ def test_stack_rasters_single_band():
     raster1 = create_sample_raster()
     raster2 = create_sample_raster()
 
-    output_path = stack_rasters([raster1, raster2], out_path=None)
+    output_path = raster_stack_list([raster1, raster2], out_path=None)
 
     output_raster = gdal.Open(output_path)
     assert output_raster.RasterCount == 2
@@ -859,7 +859,7 @@ def test_stack_rasters_multiple_bands():
     raster1 = create_sample_raster(bands=3)
     raster2 = create_sample_raster(bands=4)
 
-    output_path = stack_rasters([raster1, raster2], out_path=None)
+    output_path = raster_stack_list([raster1, raster2], out_path=None)
 
     output_raster = gdal.Open(output_path)
     assert output_raster.RasterCount == 7
@@ -873,7 +873,7 @@ def test_stack_rasters_dtype_conversion():
     raster1 = create_sample_raster()
     raster2 = create_sample_raster()
 
-    output_path = stack_rasters([raster1, raster2], out_path=None, dtype="Int16")
+    output_path = raster_stack_list([raster1, raster2], out_path=None, dtype="Int16")
 
     output_raster = gdal.Open(output_path)
     assert output_raster.GetRasterBand(1).DataType == gdal.GDT_Int16
@@ -888,7 +888,7 @@ def test_stack_rasters_nodata_value():
     raster1 = create_sample_raster(nodata=-9999)
     raster2 = create_sample_raster(nodata=-9999)
 
-    output_path = stack_rasters([raster1, raster2], out_path=None)
+    output_path = raster_stack_list([raster1, raster2], out_path=None)
 
     output_raster = gdal.Open(output_path)
     assert output_raster.GetRasterBand(1).GetNoDataValue() == -9999
@@ -903,7 +903,7 @@ def test_stack_rasters_nodata_value_mismatch():
     raster2 = create_sample_raster(nodata=-8888)
 
     with pytest.warns(UserWarning):
-        output_path = stack_rasters([raster1, raster2], out_path=None)
+        output_path = raster_stack_list([raster1, raster2], out_path=None)
 
     output_raster = gdal.Open(output_path)
 
@@ -919,7 +919,7 @@ def test_stack_rasters_projection_mismatch():
     raster2 = create_sample_raster(epsg_code=3857)
 
     with pytest.raises(ValueError):
-        stack_rasters([raster1, raster2], out_path=None)
+        raster_stack_list([raster1, raster2], out_path=None)
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -929,7 +929,7 @@ def test_stack_rasters_vrt_single_band():
     raster1 = create_sample_raster(width=10, height=10, bands=1, nodata=0)
     raster2 = create_sample_raster(width=10, height=10, bands=1, nodata=0)
 
-    output_path = stack_rasters_vrt([raster1, raster2], "/vsimem/stacked_vrt_single_band.vrt")
+    output_path = raster_stack_vrt_list([raster1, raster2], "/vsimem/stacked_vrt_single_band.vrt")
     output_dataset = gdal.Open(output_path)
 
     assert output_dataset is not None
@@ -944,7 +944,7 @@ def test_stack_rasters_vrt_multi_band():
     raster1 = create_sample_raster(width=10, height=10, bands=3, nodata=0)
     raster2 = create_sample_raster(width=10, height=10, bands=3, nodata=0)
 
-    output_path = stack_rasters_vrt([raster1, raster2], "/vsimem/stacked_vrt_multi_band.vrt")
+    output_path = raster_stack_vrt_list([raster1, raster2], "/vsimem/stacked_vrt_multi_band.vrt")
     output_dataset = gdal.Open(output_path)
 
     assert output_dataset is not None
@@ -959,7 +959,7 @@ def test_stack_rasters_vrt_mixed_bands():
     raster1 = create_sample_raster(width=10, height=10, bands=2, nodata=0)
     raster2 = create_sample_raster(width=10, height=10, bands=3, nodata=0)
 
-    output_path = stack_rasters_vrt([raster1, raster2], "/vsimem/stacked_vrt_mixed_bands.vrt")
+    output_path = raster_stack_vrt_list([raster1, raster2], "/vsimem/stacked_vrt_mixed_bands.vrt")
     output_dataset = gdal.Open(output_path)
 
     assert output_dataset is not None
@@ -975,7 +975,7 @@ def test_stack_rasters_vrt_separate_false():
     raster2 = create_sample_raster(width=10, height=10, bands=3, nodata=0)
 
     with pytest.raises(ValueError):
-        stack_rasters_vrt([raster1, raster2], "/vsimem/stacked_vrt_separate_false.vrt", separate=False)
+        raster_stack_vrt_list([raster1, raster2], "/vsimem/stacked_vrt_separate_false.vrt", separate=False)
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -985,7 +985,7 @@ def test_rasters_intersect_true():
     raster1 = create_sample_raster(height=10, width=10, pixel_height=1, pixel_width=1)
     raster2 = create_sample_raster(height=10, width=10, pixel_height=1, pixel_width=1, x_min=5, y_max=15)
 
-    assert rasters_intersect(raster1, raster2) is True
+    assert check_do_rasters_intersect(raster1, raster2) is True
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -995,7 +995,7 @@ def test_rasters_intersect_false():
     raster1 = create_sample_raster(height=10, width=10, pixel_height=1, pixel_width=1)
     raster2 = create_sample_raster(height=10, width=10, pixel_height=1, pixel_width=1, x_min=15, y_max=25)
 
-    assert rasters_intersect(raster1, raster2) is False
+    assert check_do_rasters_intersect(raster1, raster2) is False
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -1005,7 +1005,7 @@ def test_rasters_intersect_same():
     raster1 = create_sample_raster(width=10, height=10, x_min=0, y_max=10)
     raster2 = create_sample_raster(width=10, height=10, x_min=0, y_max=10)
 
-    assert rasters_intersect(raster1, raster2) is True
+    assert check_do_rasters_intersect(raster1, raster2) is True
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -1015,7 +1015,7 @@ def test_rasters_intersect_different_pixelsizes():
     raster1 = create_sample_raster(width=10, height=10, pixel_width=1, pixel_height=1, x_min=0, y_max=10)
     raster2 = create_sample_raster(width=20, height=20, pixel_width=0.5, pixel_height=0.5, x_min=5, y_max=15)
 
-    assert rasters_intersect(raster1, raster2) is True
+    assert check_do_rasters_intersect(raster1, raster2) is True
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -1025,7 +1025,7 @@ def rasters_intersect_non_intersecting_difpixel():
     raster1 = create_sample_raster(width=10, height=10, pixel_width=1, pixel_height=1, x_min=0, y_max=10)
     raster2 = create_sample_raster(width=40, height=40, pixel_width=0.5, pixel_height=0.5, x_min=20, y_max=30)
 
-    assert rasters_intersect(raster1, raster2) is False
+    assert check_do_rasters_intersect(raster1, raster2) is False
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -1034,7 +1034,7 @@ def test_rasters_intersection_true():
     """ Test: Rasters intersection. True Case """ 
     raster1 = create_sample_raster(width=10, height=10, x_min=0, y_max=10)
     raster2 = create_sample_raster(width=10, height=10, x_min=5, y_max=15)
-    intersection1 = rasters_intersection(raster1, raster2)
+    intersection1 = get_raster_intersection(raster1, raster2)
 
     assert intersection1 is not None
 
@@ -1047,7 +1047,7 @@ def test_rasters_intersection_false():
     raster2 = create_sample_raster(width=10, height=10, x_min=20, y_max=30)
 
     with pytest.raises(ValueError):
-        rasters_intersection(raster1, raster2)
+        get_raster_intersection(raster1, raster2)
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -1056,7 +1056,7 @@ def test_get_overlap_fraction():
     """ Test: Get overlap fraction. Complete overlap. """
     raster1 = create_sample_raster(width=10, height=10, x_min=0, y_max=10)
     raster2 = create_sample_raster(width=10, height=10, x_min=0, y_max=10)
-    overlap1 = get_overlap_fraction(raster1, raster2)
+    overlap1 = get_raster_overlap_fraction(raster1, raster2)
 
     assert overlap1 == 1.0
 
@@ -1067,7 +1067,7 @@ def test_get_overlap_fraction_partial():
     """ Test: Get overlap fraction. Partial overlap."""
     raster1 = create_sample_raster(width=10, height=10, x_min=0, y_max=10)
     raster2 = create_sample_raster(width=10, height=10, x_min=5, y_max=15)
-    overlap = get_overlap_fraction(raster1, raster2)
+    overlap = get_raster_overlap_fraction(raster1, raster2)
 
     assert 0 < overlap < 1
 
@@ -1078,7 +1078,7 @@ def test_get_overlap_fraction_no_overlap():
     """ Test: Get overlap fraction. No overlap."""
     raster1 = create_sample_raster(width=10, height=10, x_min=0, y_max=10)
     raster2 = create_sample_raster(width=10, height=10, x_min=20, y_max=30)
-    overlap = get_overlap_fraction(raster1, raster2)
+    overlap = get_raster_overlap_fraction(raster1, raster2)
 
     assert overlap == 0
 
@@ -1088,7 +1088,7 @@ def test_get_overlap_fraction_no_overlap():
 def test_create_raster_from_array_default():
     """ Test: Create raster from array with default arguments. """
     arr = np.random.rand(10, 10).astype(np.float32)
-    output_name = create_raster_from_array(arr)
+    output_name = raster_create_from_array(arr)
 
     # Check created raster properties
     ds = gdal.Open(output_name)
@@ -1103,7 +1103,7 @@ def test_create_raster_from_array_default():
 def test_create_raster_from_array_special():
     """ Test: Create raster from array with special arguments. """
     arr = np.random.rand(10, 12, 3).astype(np.float32) # (height, width, bands)
-    output_name = create_raster_from_array(
+    output_name = raster_create_from_array(
         arr,
         pixel_size=0.5,
         x_min=10,
@@ -1130,16 +1130,16 @@ def test_create_raster_from_array_invalid_input():
     invalid_arr = np.random.rand(10, 10, 3, 3)
 
     with pytest.raises(AssertionError, match="Array must be 2 or 3 dimensional"):
-        create_raster_from_array(invalid_arr)
+        raster_create_from_array(invalid_arr)
 
 def test_create_grid_with_coordinates():
     """ Test: Create grid with coordinates. """
     arr = np.random.rand(10, 10, 1)
-    raster_file = create_raster_from_array(arr, pixel_size=[2.0, 2.0], x_min=10.0, y_max=20.0)
+    raster_file = raster_create_from_array(arr, pixel_size=[2.0, 2.0], x_min=10.0, y_max=20.0)
     raster = gdal.Open(raster_file)
 
     # Create grid with coordinates
-    grid = create_grid_with_coordinates(raster)
+    grid = raster_create_grid_with_coordinates(raster)
 
     # Check grid properties
     assert grid.shape == (10, 10, 2)

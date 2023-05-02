@@ -253,6 +253,7 @@ def s1_backscatter(
     clean_tmp=False,
     gpt_path="~/snap/bin/gpt",
 ):
+    """ Calculate backscatter from Sentinel-1 GRD data. """
     base = os.path.splitext(os.path.splitext(os.path.basename(zip_file))[0])[0]
     name1 = base + "_step_1"
 

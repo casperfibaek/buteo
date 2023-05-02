@@ -16,11 +16,11 @@ from osgeo import gdal
 # Internal
 from buteo.utils import utils_base, utils_gdal
 from buteo.raster import core_raster
-from buteo.raster.borders import add_border_to_raster
+from buteo.raster.borders import raster_add_border
 
 
 
-def calc_proximity(
+def raster_get_proximity(
     input_rasters: List,
     target_value: Union[int, float] = 1,
     unit: str = "GEO",
@@ -103,9 +103,9 @@ def calc_proximity(
     utils_base.type_check(overwrite, [bool], "overwrite")
 
     raster_list = utils_base._get_variable_as_list(input_rasters)
-    path_list = utils_gdal.create_output_path_list(
+    path_list = utils_gdal._parse_output_data(
         raster_list,
-        out_path=out_path,
+        output_data=out_path,
         overwrite=overwrite,
         prefix=prefix,
         suffix=suffix,
@@ -120,19 +120,19 @@ def calc_proximity(
         bin_arr = (in_arr != target_value).astype("uint8")
         bin_raster = core_raster.array_to_raster(bin_arr, reference=input_raster)
 
-        in_raster = core_raster._open_raster(bin_raster)
+        in_raster = core_raster._raster_open(bin_raster)
         in_raster_path = bin_raster
 
         if add_border:
             border_size = 1
-            border_raster = add_border_to_raster(
+            border_raster = raster_add_border(
                 in_raster,
                 border_size=border_size,
                 border_value=border_value,
                 overwrite=True,
             )
 
-            in_raster = core_raster._open_raster(border_raster)
+            in_raster = core_raster._raster_open(border_raster)
 
             gdal.Unlink(in_raster_path)
             in_raster_path = border_raster

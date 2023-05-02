@@ -50,18 +50,24 @@
                     <li>{{ submodule.taken_from | link(text=submodule.name) }}</li>
                 {% endfor %}
             </ul>
-        {% block nav_package_functions %}
-            {% if all_modules %}
-                <h2>All Functions</h2>
-                <ul>
-                    {% for mod in all_modules.values() %}
-                        {% for m in mod.members.values() if m.kind == "function" and is_public(m) | trim %}
+            {% block nav_package_functions %}
+                {% if all_modules %}
+                    <h2>All Functions</h2>
+                    <ul>
+                        {% set public_functions = [] %}
+                        {% for mod in all_modules.values() %}
+                            {% for m in mod.members.values() if m.kind == "function" %}
+                                {% if is_public(m) %}
+                                    {% set _ = public_functions.append(m) %}
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                        {% for m in public_functions|sort(attribute="name") %}
                             <li>{{ m.taken_from | link(text=m.name) }}</li>
                         {% endfor %}
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        {% endblock %}
+                    </ul>
+                {% endif %}
+            {% endblock %}
         {% endif %}
     {% endblock %}
 

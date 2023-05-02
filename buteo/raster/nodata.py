@@ -16,7 +16,12 @@ import numpy as np
 from osgeo import gdal
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_gdal_translate
+from buteo.utils import (
+    utils_base,
+    utils_gdal,
+    utils_gdal_translate,
+    utils_path,
+)
 from buteo.raster import core_raster
 
 
@@ -150,9 +155,9 @@ def raster_set_nodata(
     utils_base.type_check(creation_options, [[str], None], "creation_options")
 
     raster_list = utils_base._get_variable_as_list(raster)
-    path_list = utils_gdal.create_output_path_list(
+    path_list = utils_gdal._parse_output_data(
         raster_list,
-        out_path,
+        output_data=out_path,
         prefix=prefix,
         suffix=suffix,
         overwrite=overwrite,
@@ -216,7 +221,7 @@ def raster_set_nodata(
                 raster_mem = utils_gdal.save_dataset_to_disk(internal_raster, path_list[index], creation_options=creation_options)
 
             for band in range(raster_metadata["bands"]):
-                raster_mem_ref = core_raster._open_raster(raster_mem)
+                raster_mem_ref = core_raster._raster_open(raster_mem)
                 raster_band = raster_mem_ref.GetRasterBand(band + 1)
                 raster_band.SetNodataValue(internal_dst_nodata)
 
@@ -373,10 +378,9 @@ def raster_mask_values(
                 raise ValueError("If dst_nodata is a string it must be 'infer'")
 
     raster_list = utils_base._get_variable_as_list(raster)
-    out_paths = utils_gdal.create_output_path_list(
+    out_paths = utils_gdal._parse_output_data(
         raster_list,
-        out_path=out_path,
-        overwrite=overwrite,
+        output_data=out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,

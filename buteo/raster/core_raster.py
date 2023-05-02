@@ -18,11 +18,18 @@ import numpy as np
 from osgeo import gdal, osr, ogr
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_gdal_translate, utils_bbox
+from buteo.utils import (
+    utils_base,
+    utils_gdal,
+    utils_gdal_translate,
+    utils_bbox,
+    utils_path,
+    utils_gdal_projection,
+)
 
 
 
-def _open_raster(
+def _raster_open(
     raster: Union[str, gdal.Dataset],
     *,
     writeable: bool = True,
@@ -57,7 +64,7 @@ def _open_raster(
     raise ValueError(f"Input raster does not exists. Received: {raster}")
 
 
-def open_raster(
+def raster_open(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     *,
     writeable=True,
@@ -89,14 +96,14 @@ def open_raster(
         raise ValueError("Input raster must be a single raster. Not a list or tuple.")
 
     if not allow_lists:
-        return _open_raster(raster, writeable=writeable)
+        return _raster_open(raster, writeable=writeable)
 
     list_input = utils_base._get_variable_as_list(raster)
     list_return = []
 
     for in_raster in list_input:
         try:
-            list_return.append(_open_raster(in_raster, writeable=writeable))
+            list_return.append(_raster_open(in_raster, writeable=writeable))
         except Exception:
             raise ValueError(f"Could not open raster: {in_raster}") from None
 
@@ -106,7 +113,7 @@ def open_raster(
     return list_return[0]
 
 
-def get_projection(
+def _raster_get_projection(
     raster: Union[str, gdal.Dataset],
     wkt: bool = True,
 ) -> str:
@@ -126,7 +133,7 @@ def get_projection(
     str
         The projection of the input raster in the specified format.
     """
-    dataset = open_raster(raster)
+    dataset = raster_open(raster)
 
     if wkt:
         return dataset.GetProjectionRef()
@@ -140,7 +147,7 @@ def _raster_to_metadata(
     """ Internal. """
     utils_base.type_check(raster, [str, gdal.Dataset], "raster")
 
-    dataset = open_raster(raster)
+    dataset = raster_open(raster)
 
     raster_driver = dataset.GetDriver()
 
@@ -287,7 +294,7 @@ def raster_to_metadata(
     return list_return[0]
 
 
-def rasters_are_aligned(
+def check_are_rasters_are_aligned(
     rasters: List[Union[str, gdal.Dataset]],
     *,
     same_extent: bool = True,
@@ -429,7 +436,7 @@ def raster_has_nodata(
     """
     utils_base.type_check(raster, [str, gdal.Dataset], "raster")
 
-    ref = open_raster(raster)
+    ref = raster_open(raster)
     band_count = ref.RasterCount
     for band in range(1, band_count + 1):
         band_ref = ref.GetRasterBand(band)
@@ -442,7 +449,7 @@ def raster_has_nodata(
     return False
 
 
-def rasters_have_nodata(
+def raster_has_nodata_list(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
 ) -> bool:
     """
@@ -472,7 +479,7 @@ def rasters_have_nodata(
     return has_nodata
 
 
-def rasters_have_same_nodata(
+def check_rasters_have_same_nodata(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
 ) -> bool:
     """
@@ -495,7 +502,7 @@ def rasters_have_same_nodata(
 
     nodata_values = []
     for in_raster in internal_rasters:
-        ref = open_raster(in_raster)
+        ref = raster_open(in_raster)
         band_count = ref.RasterCount
         for band in range(1, band_count + 1):
             band_ref = ref.GetRasterBand(band)
@@ -506,7 +513,7 @@ def rasters_have_same_nodata(
     return len(set(nodata_values)) == 1
 
 
-def get_first_nodata_value(
+def _get_first_nodata_value(
     raster: Union[float, int, None],
 ):
     """
@@ -526,7 +533,7 @@ def get_first_nodata_value(
 
     nodata = None
 
-    ref = open_raster(raster)
+    ref = raster_open(raster)
     band_count = ref.RasterCount
     for band in range(1, band_count + 1):
         band_ref = ref.GetRasterBand(band)
@@ -539,7 +546,7 @@ def get_first_nodata_value(
     return nodata
 
 
-def count_bands_in_rasters(
+def raster_count_bands_list(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
 ) -> int:
     """
@@ -562,7 +569,7 @@ def count_bands_in_rasters(
 
     band_count = 0
     for in_raster in internal_rasters:
-        ref = open_raster(in_raster)
+        ref = raster_open(in_raster)
         band_count += ref.RasterCount
         ref = None
 
@@ -707,7 +714,7 @@ def raster_to_array(
 
     internal_rasters = utils_gdal._get_path_from_dataset_list(internal_rasters, dataset_type="raster")
 
-    if len(internal_rasters) > 1 and not rasters_are_aligned(internal_rasters, same_extent=True, same_dtype=False):
+    if len(internal_rasters) > 1 and not check_are_rasters_are_aligned(internal_rasters, same_extent=True, same_dtype=False):
         raise ValueError(
             "Cannot merge rasters that are not aligned, have dissimilar extent or dtype, when stack=True."
         )
@@ -747,7 +754,7 @@ def raster_to_array(
 
     # Determine nodata and value
     if masked == "auto":
-        has_nodata = rasters_have_nodata(internal_rasters)
+        has_nodata = raster_has_nodata_list(internal_rasters)
         if has_nodata:
             masked = True
         else:
@@ -755,7 +762,7 @@ def raster_to_array(
 
     output_nodata_value = None
     if masked or filled:
-        output_nodata_value = get_first_nodata_value(internal_rasters[0])
+        output_nodata_value = _get_first_nodata_value(internal_rasters[0])
 
         if output_nodata_value is None:
             output_nodata_value = np.nan
@@ -779,7 +786,7 @@ def raster_to_array(
     band_idx = 0
     for in_raster in internal_rasters:
 
-        ref = open_raster(in_raster)
+        ref = raster_open(in_raster)
 
         metadata = raster_to_metadata(ref)
         band_count = metadata["band_count"]
@@ -921,7 +928,7 @@ class raster_to_array_chunks:
         assert self.chunks <= self.shape[1], "The number of chunks must be less than or equal to the number of columns in the raster."
         assert self.chunks <= self.shape[0], "The number of chunks must be less than or equal to the number of rows in the raster."
 
-        self.offsets = get_chunk_offsets(
+        self.offsets = _get_chunk_offsets(
             self.shape,
             self.chunks,
             self.overlap,
@@ -1138,7 +1145,7 @@ def array_to_raster(
         array.shape[0],
         bands,
         destination_dtype,
-        utils_gdal.default_creation_options(creation_options),
+        utils_gdal._get_default_creation_options(creation_options),
     )
 
     destination.SetProjection(metadata["projection_wkt"])
@@ -1183,7 +1190,7 @@ def _raster_set_datatype(
     if not utils_gdal._check_is_raster(raster):
         raise ValueError(f"Unable to open input raster: {raster}")
 
-    ref = open_raster(raster)
+    ref = raster_open(raster)
     metadata = raster_to_metadata(ref)
 
     path = ""
@@ -1219,7 +1226,7 @@ def _raster_set_datatype(
         metadata["height"],
         metadata["band_count"],
         utils_gdal_translate._translate_str_to_gdal_dtype(dtype_str),
-        utils_gdal.default_creation_options(creation_options),
+        utils_gdal._get_default_creation_options(creation_options),
     )
 
     if copy is None:
@@ -1239,7 +1246,7 @@ def _raster_set_datatype(
         # Set the NoData value for the output band if it exists in the input band
         if input_band.GetNoDataValue() is not None:
             input_nodata = input_band.GetNoDataValue()
-            if utils_gdal_translate._check_value_is_within_datatype_range(input_nodata, dtype_str):
+            if utils_gdal_translate._check_value_is_within_dtype_range(input_nodata, dtype_str):
                 output_band.SetNoDataValue(input_nodata)
             else:
                 warnings.warn("Input NoData value is outside the range of the output datatype. NoData value will not be set.", UserWarning)
@@ -1317,7 +1324,12 @@ def raster_set_datatype(
     add_uuid = out_path is None
 
     raster_list = utils_base._get_variable_as_list(raster)
-    path_list = utils_gdal.create_output_path_list(raster_list, out_path, overwrite=overwrite, add_uuid=add_uuid)
+    path_list = utils_gdal._parse_output_data(
+        raster_list,
+        output_data=out_path,
+        add_uuid=add_uuid,
+        overwrite=overwrite,
+    )
 
     output = []
     for index, in_raster in enumerate(raster_list):
@@ -1326,7 +1338,7 @@ def raster_set_datatype(
             dtype,
             out_path=path_list[index],
             overwrite=overwrite,
-            creation_options=utils_gdal.default_creation_options(creation_options),
+            creation_options=utils_gdal._get_default_creation_options(creation_options),
         )
 
         output.append(path)
@@ -1337,7 +1349,7 @@ def raster_set_datatype(
     return output[0]
 
 
-def stack_rasters(
+def raster_stack_list(
     rasters: List[Union[str, gdal.Dataset]],
     out_path: Optional[str] = None,
     *,
@@ -1379,7 +1391,7 @@ def stack_rasters(
 
     assert utils_gdal._check_is_raster_list(rasters), "Input rasters must be a list of rasters."
 
-    if not rasters_are_aligned(rasters, same_extent=True):
+    if not check_are_rasters_are_aligned(rasters, same_extent=True):
         raise ValueError("Rasters are not aligned. Try running align_rasters.")
 
     # Ensures that all the input rasters are valid.
@@ -1399,7 +1411,7 @@ def stack_rasters(
 
     output_name = None
     if out_path is None:
-        output_name = utils_gdal.create_memory_path("stack_rasters.tif", add_uuid=True)
+        output_name = utils_path._get_output_path("stack_rasters.tif", add_uuid=True, folder="/vsimem/")
     else:
         output_name = out_path
 
@@ -1444,7 +1456,7 @@ def stack_rasters(
         metadatas[0]["height"],
         total_bands,
         datatype,
-        utils_gdal.default_creation_options(creation_options),
+        utils_gdal._get_default_creation_options(creation_options),
     )
 
     destination.SetProjection(metadatas[0]["projection_wkt"])
@@ -1452,7 +1464,7 @@ def stack_rasters(
 
     bands_added = 0
     for idx, raster in enumerate(raster_list):
-        ref = open_raster(raster)
+        ref = raster_open(raster)
 
         for band_idx in range(metadatas[idx]["band_count"]):
             target_band = destination.GetRasterBand(bands_added + 1)
@@ -1480,7 +1492,7 @@ def stack_rasters(
     return output_name
 
 
-def stack_rasters_vrt(
+def raster_stack_vrt_list(
     rasters: List[Union[str, gdal.Dataset]],
     out_path: str,
     separate: bool = True,
@@ -1627,7 +1639,7 @@ def stack_rasters_vrt(
     return out_path
 
 
-def rasters_intersect(
+def check_do_rasters_intersect(
     raster1: Union[str, gdal.Dataset],
     raster2: Union[str, gdal.Dataset],
 ) -> bool:
@@ -1656,7 +1668,7 @@ def rasters_intersect(
     return geom_1.Intersects(geom_2)
 
 
-def rasters_intersection(
+def get_raster_intersection(
     raster1: Union[str, gdal.Dataset],
     raster2: Union[str, gdal.Dataset],
     return_as_vector: bool = False,
@@ -1685,7 +1697,7 @@ def rasters_intersection(
     utils_base.type_check(raster1, [str, gdal.Dataset], "raster1")
     utils_base.type_check(raster2, [str, gdal.Dataset], "raster2")
 
-    if not rasters_intersect(raster1, raster2):
+    if not check_do_rasters_intersect(raster1, raster2):
         raise ValueError("Rasters do not intersect.")
 
     geom_1 = raster_to_metadata(raster1)["geom_latlng"]
@@ -1699,7 +1711,7 @@ def rasters_intersection(
     return intersection
 
 
-def get_overlap_fraction(
+def get_raster_overlap_fraction(
     raster1: Union[str, gdal.Dataset],
     raster2: Union[str, gdal.Dataset],
 ) -> float:
@@ -1723,7 +1735,7 @@ def get_overlap_fraction(
     utils_base.type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], "raster1")
     utils_base.type_check(raster2, [str, gdal.Dataset, [str, gdal.Dataset]], "raster2")
 
-    if not rasters_intersect(raster1, raster2):
+    if not check_do_rasters_intersect(raster1, raster2):
         return 0.0
 
     geom_1 = raster_to_metadata(raster1)["geom_latlng"]
@@ -1739,7 +1751,7 @@ def get_overlap_fraction(
     return overlap
 
 
-def create_empty_raster(
+def raster_create_empty(
     out_path: Union[str, None] = None,
     width: int = 100,
     height: int = 100,
@@ -1822,7 +1834,7 @@ def create_empty_raster(
 
     output_name = None
     if out_path is None:
-        output_name = utils_gdal.create_memory_path("raster_from_array.tif", add_uuid=True)
+        output_name = utils_path._get_output_path("raster_from_array.tif", add_uuid=True, folder="/vsimem/")
     else:
         output_name = out_path
 
@@ -1834,10 +1846,10 @@ def create_empty_raster(
         height,
         bands,
         utils_gdal_translate._translate_str_to_gdal_dtype(dtype),
-        utils_gdal.default_creation_options(creation_options),
+        utils_gdal._get_default_creation_options(creation_options),
     )
 
-    parsed_projection = utils_gdal.parse_projection(projection, return_wkt=True)
+    parsed_projection = utils_gdal_projection.parse_projection(projection, return_wkt=True)
 
     destination.SetProjection(parsed_projection)
 
@@ -1858,7 +1870,7 @@ def create_empty_raster(
     return output_name
 
 
-def create_raster_from_array(
+def raster_create_from_array(
     arr: np.ndarray,
     out_path: str = None,
     pixel_size: Union[Union[float, int], List[Union[float, int]]] = 10.0,
@@ -1926,7 +1938,7 @@ def create_raster_from_array(
 
     output_name = None
     if out_path is None:
-        output_name = utils_gdal.create_memory_path("raster_from_array.tif", add_uuid=True)
+        output_name = utils_path._get_output_path("raster_from_array.tif", add_uuid=True, folder="/vsimem/")
     else:
         output_name = out_path
 
@@ -1940,10 +1952,10 @@ def create_raster_from_array(
         height,
         bands,
         utils_gdal_translate._translate_str_to_gdal_dtype(arr.dtype.name),
-        utils_gdal.default_creation_options(creation_options),
+        utils_gdal._get_default_creation_options(creation_options),
     )
 
-    parsed_projection = utils_gdal.parse_projection(projection, return_wkt=True)
+    parsed_projection = utils_gdal_projection.parse_projection(projection, return_wkt=True)
 
     destination.SetProjection(parsed_projection)
 
@@ -1968,7 +1980,7 @@ def create_raster_from_array(
     return output_name
 
 
-def create_grid_with_coordinates(
+def raster_create_grid_with_coordinates(
     raster: Union[str, gdal.Dataset]
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -2010,8 +2022,10 @@ def create_grid_with_coordinates(
     return grid
 
 
+# TODO: Create raster with the coordinates of the raster.
+
 # TODO: Implement
-def mosaic_rasters(
+def raster_mosaic_list(
     raster_paths: Union[str, List[str]],
     out_path: str = None,
     creation_options: Union[List[str], None] = None,
@@ -2046,7 +2060,7 @@ def mosaic_rasters(
     if isinstance(raster_paths, str):
         raster_paths = [raster_paths]
 
-    raster_paths = [utils_gdal.path_to_memory(raster_path) for raster_path in raster_paths]
+    # raster_paths = [utils_gdal.path_to_memory(raster_path) for raster_path in raster_paths]
 
     # Parse the driver
     return
@@ -2181,7 +2195,7 @@ def _apply_overlap_to_offsets(
     return new_offsets
 
 
-def get_chunk_offsets(
+def _get_chunk_offsets(
     image_shape: Tuple[int, int],
     num_chunks: int,
     overlap: int = 0,

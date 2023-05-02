@@ -7,19 +7,19 @@ Can uses references from vector or other raster datasets.
 
 # Standard library
 import sys; sys.path.append("../../")
-from typing import Union, Optional, List, Any
+from typing import Union, Optional, List
 
 # External
 from osgeo import gdal
 import numpy as np
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_gdal_translate
+from buteo.utils import utils_base, utils_gdal, utils_gdal_translate, utils_path
 from buteo.raster import core_raster
 
 
 
-def _resample_raster(
+def _raster_resample(
     raster: Union[str, gdal.Dataset, List],
     target_size: Union[int, float],
     out_path: Optional[str] = None,
@@ -37,19 +37,19 @@ def _resample_raster(
     """ Internal. """
     assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
 
-    out_path = utils_gdal.create_output_path(
+    out_path = utils_gdal._parse_output_data(
         raster,
-        out_path=out_path,
+        output_data=out_path,
         overwrite=overwrite,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
     )
 
-    ref = core_raster._open_raster(raster)
+    ref = core_raster._raster_open(raster)
     metadata = core_raster._raster_to_metadata(ref)
 
-    x_res, y_res, x_pixels, y_pixels = utils_gdal.parse_raster_size(
+    x_res, y_res, x_pixels, y_pixels = utils_gdal._get_raster_size(
         target_size, target_in_pixels=target_in_pixels
     )
 
@@ -78,7 +78,7 @@ def _resample_raster(
         format=out_format,
         outputType=utils_gdal_translate._translate_str_to_gdal_dtype(dtype),
         resampleAlg=utils_gdal_translate._translate_resample_method(resample_alg),
-        creationOptions=utils_gdal.default_creation_options(creation_options),
+        creationOptions=utils_gdal._get_default_creation_options(creation_options),
         srcNodata=metadata["nodata_value"],
         dstNodata=out_nodata,
         multithread=True,
@@ -90,7 +90,7 @@ def _resample_raster(
     return out_path
 
 
-def resample_raster(
+def raster_resample(
     raster,
     target_size,
     out_path=None,
@@ -109,29 +109,48 @@ def resample_raster(
     Resampled raster(s) given a target size.
     Beware, if your input is in latitude and longitude, you'll need to specify the target_size in degrees as well.
 
-    Args:
-        raster (str/list/gdal.Dataset): The input raster(s) to resample.
-        target_size (str/int/ogr.DataSource/gdal.Dataset): The desired resolution for the resampled raster(s),
-            in the same unit as the raster projection. For better resampling results, reproject to a projected
-            coordinate system first. If a raster is provided as the target_size, the function will read the pixel
-            size from that raster.
+    Parameters
+    ----------
+    raster : str/gdal.Dataset/list
+        The input raster(s) to resample.
+    
+    target_size : str/int/ogr.DataSource/gdal.Dataset
+        The desired resolution for the resampled raster(s), in the same unit as the raster projection.
 
-    Keyword Args:
-        target_in_pixels (bool=False): If True, interprets target_size as the number of pixels.
-        out_path (str/None=None): The output path for the resampled raster(s). If not provided, the output
-            path is inferred from the input raster(s).
-        resample_alg (str="nearest"): The resampling algorithm to use.
-        copy_if_same (bool=True): If input and output projections are the same, copies the input raster
-            to the output path.
-        overwrite (bool=True): If the output path already exists, overwrites it.
-        creation_options (list/None=None): A list of creation options for the output raster(s).
-        dst_nodata (str/int/float="infer"): The nodata value for the output raster(s).
-        prefix (str=""): The prefix to add to the output path.
-        suffix (str="_reprojected"): The suffix to add to the output path.
-        add_uuid (bool=False): If True, adds a UUID to the output path.
+    target_in_pixels : bool, optional
+        If True, interprets target_size as the number of pixels, by default False
 
-    Returns:
-        str/list: The output path(s) of the resampled raster(s).
+    out_path : str, optional
+        The output path for the resampled raster(s). If not provided, the output path is inferred from the input raster(s), by default None
+
+    resample_alg : str, optional
+        The resampling algorithm to use, by default "nearest"
+
+    creation_options : list, optional
+        A list of creation options for the output raster(s), by default None
+
+    dtype : str, optional
+        The output data type, by default None
+
+    dst_nodata : str/int/float, optional
+        The nodata value for the output raster(s), by default "infer"
+
+    prefix : str, optional
+        A prefix to add to the output path, by default ""
+
+    suffix : str, optional
+        A suffix to add to the output path, by default ""
+
+    add_uuid : bool, optional
+        If True, adds a uuid to the output path, by default False
+
+    overwrite : bool, optional
+        If True, overwrites the output raster(s) if it/they already exist, by default True
+
+    Returns
+    -------
+    str/list[str]
+        The output path(s) of the resampled raster(s).
     """
     utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     utils_base.type_check(target_size, [tuple, [int, float], int, float, str, gdal.Dataset], "target_size")
@@ -145,15 +164,15 @@ def resample_raster(
     utils_base.type_check(prefix, [str], "prefix")
     utils_base.type_check(suffix, [str], "postfix")
 
-    if utils_base.is_str_a_glob(raster):
-        raster = utils_base.parse_glob_path(raster)
+    if utils_path._check_is_path_glob(raster):
+        raster = utils_path._get_paths_from_glob(raster)
 
     raster_list = utils_base._get_variable_as_list(raster)
     assert utils_gdal._check_is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
 
-    path_list = utils_gdal.create_output_path_list(
+    path_list = utils_gdal._parse_output_data(
         raster_list,
-        out_path=out_path,
+        output_data=out_path,
         overwrite=overwrite,
         prefix=prefix,
         suffix=suffix,
@@ -163,7 +182,7 @@ def resample_raster(
     resampled_rasters = []
     for index, in_raster in enumerate(raster_list):
         resampled_rasters.append(
-            _resample_raster(
+            _raster_resample(
                 in_raster,
                 target_size,
                 target_in_pixels=target_in_pixels,
@@ -193,8 +212,8 @@ def resample_array(arr, target_shape_pixels, resample_alg="nearest"):
     if len(target_shape_pixels) > 2:
         target_shape_pixels = target_shape_pixels[:2]
 
-    arr_as_raster = core_raster.create_raster_from_array(arr)
-    resampled = _resample_raster(arr_as_raster, target_shape_pixels, target_in_pixels=True, resample_alg=resample_alg)
+    arr_as_raster = core_raster.raster_create_from_array(arr)
+    resampled = _raster_resample(arr_as_raster, target_shape_pixels, target_in_pixels=True, resample_alg=resample_alg)
     out_arr = core_raster.raster_to_array(resampled)
 
     utils_gdal._delete_dataset_if_in_memory(arr_as_raster)

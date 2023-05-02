@@ -4,10 +4,11 @@
 Functions that make interacting with the toolbox easier.
 """
 # Standard library
-from typing import Union, List, Optional
+from typing import Union, Optional
+import sys; sys.path.append("../../")
 
 # Internal
-from helpers import _create_grid
+from buteo.array.utils_array import _create_grid
 
 # External
 import numpy as np

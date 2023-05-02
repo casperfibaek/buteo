@@ -88,7 +88,7 @@ def _single_hsl_to_rgb(
 
 
 @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
-def hsl_to_rgb(hsl_array: np.ndarray) -> np.ndarray:
+def color_hsl_to_rgb(hsl_array: np.ndarray) -> np.ndarray:
     """
     Convert an HSL array to an RGB array.
 
@@ -126,7 +126,7 @@ def hsl_to_rgb(hsl_array: np.ndarray) -> np.ndarray:
 
 
 @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
-def rgb_to_hsl(rgb_array: np.ndarray) -> np.ndarray:
+def color_rgb_to_hsl(rgb_array: np.ndarray) -> np.ndarray:
     """
     Convert an RGB array to an HSL array.
     

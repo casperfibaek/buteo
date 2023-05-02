@@ -10,7 +10,7 @@ import numpy as np
 from osgeo import gdal, osr
 
 # Internal
-from buteo.raster.reproject import match_raster_projections
+from buteo.raster.reproject import raster_match_projections
 
 def create_sample_raster(
         width=10,
@@ -59,7 +59,7 @@ def test_match_raster_projections_same_projection():
     rasters = [raster1, raster2]
     master = create_sample_raster(width=10, height=10, x_min=0, y_max=10, epsg_code=4326)
 
-    matched_rasters = match_raster_projections(rasters, master)
+    matched_rasters = raster_match_projections(rasters, master)
 
     for matched_raster in matched_rasters:
         assert isinstance(matched_raster, str)
@@ -77,7 +77,7 @@ def test_match_raster_projections_different_projection():
     rasters = [raster1, raster2]
     master = create_sample_raster(width=10, height=10, x_min=0, y_max=10, epsg_code=3857)
 
-    matched_rasters = match_raster_projections(rasters, master)
+    matched_rasters = raster_match_projections(rasters, master)
 
     for matched_raster in matched_rasters:
         assert isinstance(matched_raster, str)
@@ -95,7 +95,7 @@ def test_match_raster_projections_all_different():
     rasters = [raster1, raster2]
     master = create_sample_raster(width=10, height=10, x_min=0, y_max=10, epsg_code=3857)
 
-    matched_rasters = match_raster_projections(rasters, master)
+    matched_rasters = raster_match_projections(rasters, master)
 
     for matched_raster in matched_rasters:
         assert isinstance(matched_raster, str)

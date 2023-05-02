@@ -12,7 +12,7 @@ import numpy as np
 # Internal
 from buteo.raster import raster_to_array, array_to_raster
 from buteo.utils.utils_base import type_check
-from buteo.utils.utils_gdal import default_creation_options, _delete_dataset_if_in_memory
+from buteo.utils.utils_gdal import _get_default_creation_options, _delete_dataset_if_in_memory
 
 
 def raster_dem_to_slope(
@@ -51,7 +51,7 @@ def raster_dem_to_slope(
         computeEdges=True,
         slopeFormat=slope_format,
         zFactor=z_factor,
-        creationOptions=default_creation_options(),
+        creationOptions=_get_default_creation_options(),
     )
 
     ds = gdal.DEMProcessing(
@@ -100,7 +100,7 @@ def raster_dem_to_aspect(
 
     aspect_options = gdal.DEMProcessingOptions(
         computeEdges=True,
-        creationOptions=default_creation_options(),
+        creationOptions=_get_default_creation_options(),
         zeroForFlat=zero_for_flat,
     )
 
@@ -149,7 +149,7 @@ def raster_dem_to_hillshade(
 
     hillshade_options = gdal.DEMProcessingOptions(
         computeEdges=True,
-        creationOptions=default_creation_options(),
+        creationOptions=_get_default_creation_options(),
         zFactor=z_factor,
     )
 

@@ -6,39 +6,39 @@ Dissolve vectors by attributes or geometry.
 
 # Standard library
 import sys; sys.path.append("../../")
+from typing import Union, Optional, List
 
 # External
 from osgeo import ogr
 
 # Internal
-from buteo.utils import utils_base, utils_gdal
+from buteo.utils import utils_base, utils_gdal, utils_path
 from buteo.vector import core_vector
 
 
 
-def _dissolve_vector(
-    vector,
-    attribute=None,
-    out_path=None,
-    *,
-    overwrite=True,
-    add_index=True,
-    process_layer=-1,
-):
+def _vector_dissolve(
+    vector: Union[str, ogr.DataSource],
+    attribute: Optional[str] = None,
+    out_path: Optional[str] = None,
+    overwrite: bool = True,
+    add_index: bool = True,
+    process_layer: int = -1,
+) -> Union[str, ogr.DataSource]:
     """ Internal. """
     assert isinstance(vector, ogr.DataSource), "Invalid input vector"
 
     vector_list = utils_base._get_variable_as_list(vector)
 
     if out_path is None:
-        out_path = utils_gdal.create_memory_path(
+        out_path = utils_path._get_output_path(
             utils_gdal._get_path_from_dataset(vector),
+            add_uuid=True,
             prefix="",
             suffix="_dissolve",
-            add_uuid=True,
         )
 
-    assert utils_base.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path"
+    assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path"
 
     out_format = utils_gdal._get_vector_driver_from_path(out_path)
 
@@ -100,31 +100,57 @@ def _dissolve_vector(
     return out_path
 
 
-def dissolve_vector(
-    vector,
-    attribute=None,
-    out_path=None,
-    *,
-    add_index=True,
-    process_layer=-1,
-    prefix="",
-    suffix="",
-    add_uuid=False,
-    overwrite=True,
-    allow_lists=True,
+def vector_dissolve(
+    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
+    attribute: Optional[str] = None,
+    out_path: Optional[str] = None,
+    add_index: bool = True,
+    process_layer: int = -1,
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = False,
+    overwrite: bool = True,
+    allow_lists: bool = True,
 ):
-    """Clips a vector to a geometry.
-    Args:
-        vector (list of vectors/path/vector): The vectors(s) to clip.
+    """
+    Clips a vector to a geometry.
 
-        clip_geom (list of geom/path/vector/rasters): The geometry to use
-        for the clipping
+    Parameters
+    ----------
+    vector : Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]]
+        The vector(s) to clip.
 
-    **kwargs:
+    attribute : Optional[str], optional
+        The attribute to use for the dissolve, default: None
+    
+    out_path : Optional[str], optional
+        The output path, default: None
 
+    add_index : bool, optional
+        Add a spatial index to the output, default: True
 
-    Returns:
-        A clipped ogr.Datasource or the path to one.
+    process_layer : int, optional
+        The layer to process, default: -1
+
+    prefix : str, optional
+        The prefix to add to the output path, default: ""
+
+    suffix : str, optional
+        The suffix to add to the output path, default: ""
+
+    add_uuid : bool, optional
+        Add a uuid to the output path, default: False
+
+    overwrite : bool, optional
+        Overwrite the output, default: True
+
+    allow_lists : bool, optional
+        Allow lists as input, default: True
+
+    Returns
+    -------
+    Union[str, ogr.DataSource]
+        The output path or ogr.DataSource
     """
     utils_base.type_check(vector, [ogr.DataSource, str, [str, ogr.DataSource]], "vector")
     utils_base.type_check(attribute, [str, None], "attribute")
@@ -144,20 +170,20 @@ def dissolve_vector(
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
 
-    path_list = utils_gdal.create_output_path_list(
+    path_list = utils_gdal._parse_output_data(
         vector_list,
-        out_path=out_path,
+        output_data=out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
     )
 
-    assert utils_base.is_valid_output_paths(path_list, overwrite=overwrite), "Invalid output path generated."
+    assert utils_path._check_is_valid_output_filepath(path_list, overwrite=overwrite), "Invalid output path generated."
 
     output = []
     for index, in_vector in enumerate(vector_list):
         output.append(
-            _dissolve_vector(
+            _vector_dissolve(
                 in_vector,
                 attribute=attribute,
                 out_path=path_list[index],

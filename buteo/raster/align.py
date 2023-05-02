@@ -19,16 +19,15 @@ from buteo.utils import (
     utils_gdal,
     utils_base,
     utils_bbox,
-    utils_path,
     utils_gdal_translate,
     utils_gdal_projection,
 )
 
 from buteo.raster import core_raster
-from buteo.raster.reproject import reproject_raster, match_raster_projections
+from buteo.raster.reproject import raster_reproject, raster_match_projections
 
 
-def align_rasters_to_reference(
+def raster_align_to_reference(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     reference: Union[str, gdal.Dataset],
     *,
@@ -98,7 +97,7 @@ def align_rasters_to_reference(
 
     # Verify that all of the rasters overlap the reference
     for raster in rasters_list:
-        assert core_raster.rasters_intersect(raster, reference), (
+        assert core_raster.check_do_rasters_intersect(raster, reference), (
             f"Raster: {utils_gdal._get_path_from_dataset(raster)} does not intersect reference."
         )
 
@@ -134,7 +133,7 @@ def align_rasters_to_reference(
         raster_reprojected = None
         raster_projection = raster_metadata["projection_osr"]
         if not utils_gdal_projection._check_do_projections_match(raster_projection, target_projection):
-            raster_reprojected = reproject_raster(
+            raster_reprojected = raster_reproject(
                 raster_path,
                 target_projection,
                 out_path=None,
@@ -143,11 +142,11 @@ def align_rasters_to_reference(
                 prefix="tmp_reprojection_",
                 add_uuid=True,
             )
-            raster_ds = core_raster.open_raster(raster_reprojected)
+            raster_ds = core_raster.raster_open(raster_reprojected)
         else:
-            raster_ds = core_raster.open_raster(raster_path)
+            raster_ds = core_raster.raster_open(raster_path)
 
-        destination_ds = core_raster.create_empty_raster(
+        destination_ds = core_raster.raster_create_empty(
             out_path=path_list[idx],
             width=x_pixels,
             height=y_pixels,
@@ -162,7 +161,7 @@ def align_rasters_to_reference(
             overwrite=overwrite,
         )
 
-        destination_ds = core_raster.open_raster(destination_ds)
+        destination_ds = core_raster.raster_open(destination_ds)
 
         warp_options = gdal.WarpOptions(
             resampleAlg=utils_gdal_translate._translate_resample_method(resample_alg),
@@ -185,7 +184,7 @@ def align_rasters_to_reference(
     return path_list
 
 
-def find_best_reference(
+def raster_find_best_align_reference(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     method: str,
 ) -> str:
@@ -229,7 +228,7 @@ def find_best_reference(
                 continue
 
             # Uses the latlng bounding box to determine if the rasters intersect.
-            intersection = core_raster.rasters_intersect(raster_i, raster_j)
+            intersection = core_raster.check_do_rasters_intersect(raster_i, raster_j)
 
             if intersection:
                 intersections += 1
@@ -266,14 +265,14 @@ def find_best_reference(
         all_other_rasters.append(raster_path)
 
     for raster in all_other_rasters:
-        assert core_raster.rasters_intersect(best_reference, raster), (
+        assert core_raster.check_do_rasters_intersect(best_reference, raster), (
             f"Rasters {best_reference} and {raster} do not intersect."
         )
 
     if method == "reference":
         return best_reference
 
-    matched_rasters = match_raster_projections(
+    matched_rasters = raster_match_projections(
         all_other_rasters,
         best_reference,
         copy_if_already_correct=False,
@@ -314,7 +313,7 @@ def find_best_reference(
     width = int(round((outbox_bbox[1] - outbox_bbox[0]) / best_reference_meta["pixel_width"]))
     height = int(round((outbox_bbox[3] - outbox_bbox[2]) / best_reference_meta["pixel_height"]))
 
-    out_path = core_raster.create_empty_raster(
+    out_path = core_raster.raster_create_empty(
         out_path=f"/vsimem/intersection_union_{uuid4().int}.tif",
         width=width,
         height=height,
@@ -331,7 +330,7 @@ def find_best_reference(
     return out_path
 
 
-def align_rasters(
+def raster_align(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     *,
     out_path: Optional[Union[str, List[str]]] = None,
@@ -412,9 +411,9 @@ def align_rasters(
     )
 
     if reference is None:
-        reference = find_best_reference(raster_list, method)
+        reference = raster_find_best_align_reference(raster_list, method)
 
-    aligned = align_rasters_to_reference(
+    aligned = raster_align_to_reference(
         raster_list,
         reference,
         out_path=path_list,

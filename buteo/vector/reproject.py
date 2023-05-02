@@ -6,23 +6,23 @@ Functions to reproject vectors. References can be both vector and raster.
 
 # Standard library
 import sys; sys.path.append("../../")
+from typing import Union, Optional, List
 
 # External
 from osgeo import gdal, osr, ogr
 
 # Internal
-from buteo.utils import utils_gdal, utils_base
+from buteo.utils import utils_gdal, utils_base, utils_path, utils_gdal_projection
 
 
-def _reproject_vector(
-    vector,
-    projection,
-    out_path=None,
-    copy_if_same=False,
-    *,
-    prefix="",
-    suffix="",
-    add_uuid=False,
+def _vector_reproject(
+    vector: Union[str, ogr.DataSource],
+    projection: Union[str, int, osr.SpatialReference, gdal.Dataset, ogr.DataSource],
+    out_path: Optional[str] = None,
+    copy_if_same: bool = False,
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = False,
 ):
     """ Internal. """
     assert isinstance(vector, (ogr.DataSource, str)), "Invalid vector input"
@@ -30,23 +30,23 @@ def _reproject_vector(
 
     # The input is already in the correct projection.
     if not copy_if_same:
-        original_projection = utils_gdal.parse_projection(vector)
+        original_projection = utils_gdal_projection.parse_projection(vector)
 
-        if utils_gdal._check_do_projections_match(original_projection, projection):
+        if utils_gdal_projection._check_do_projections_match(original_projection, projection):
             return utils_gdal._get_path_from_dataset(vector)
 
     in_path = utils_gdal._get_path_from_dataset(vector)
 
     if out_path is None:
-        out_path = utils_gdal.create_memory_path(
+        out_path = utils_path._get_output_path(
             utils_gdal._get_path_from_dataset(vector),
+            add_uuid=add_uuid,
             prefix=prefix,
             suffix=suffix,
-            add_uuid=add_uuid,
         )
 
     options = []
-    wkt = utils_gdal.parse_projection(projection, return_wkt=True).replace(" ", "\\")
+    wkt = utils_gdal_projection.parse_projection(projection, return_wkt=True).replace(" ", "\\")
 
     options.append(f'-t_srs "{wkt}"')
 
@@ -60,41 +60,56 @@ def _reproject_vector(
     if success != 0:
         return out_path
     else:
-        raise Exception("Error while clipping geometry.")
+        raise RuntimeError("Error while clipping geometry.")
 
 
-def reproject_vector(
-    vector,
-    projection,
-    out_path=None,
-    *,
-    copy_if_same=False,
-    prefix="",
-    suffix="",
-    add_uuid=False,
-    allow_lists=True,
-    overwrite=True,
+def vector_reproject(
+    vector: Union[Union[str, ogr.DataSource], List[Union[str, ogr.DataSource]]],
+    projection: Union[str, int, osr.SpatialReference, gdal.Dataset, ogr.DataSource],
+    out_path: Optional[str] = None,
+    copy_if_same: bool = False,
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = False,
+    allow_lists: bool = True,
+    overwrite: bool = True,
 ):
-    """Reprojects a vector given a target projection.
+    """
+    Reprojects a vector given a target projection.
 
-    Args:
-        vector (_path_/_vector_): The vector to reproject.
+    Parameters
+    ----------
+    vector : Union[str, ogr.DataSource]
+        The vector to reproject.
 
-        projection (_str_/_int_/_vector_/_raster_): The projection is infered from
-        the input. The input can be: WKT proj, EPSG proj, Proj, or read from a
-        vector or raster datasource either from path or in-memory.
+    projection : Union[str, int, osr.SpatialReference, gdal.Dataset, ogr.DataSource]
+        The projection is infered from the input. The input can be: WKT proj, EPSG proj, Proj, or read from a vector or raster datasource either from path or in-memory.
 
-    **kwargs:
-        out_path (_path_/_None_): The destination to save to. If None then
-        the output is an in-memory raster.
+    out_path : Optional[str], optional
+        The destination to save to. If None then the output is an in-memory raster., default: None
 
-        copy_if_same (_bool_): Create a copy, even if the projections are the same.
+    copy_if_same : bool, optional
+        Create a copy, even if the projections are the same., default: False
 
-        overwite (_bool_): Is it possible to overwrite the out_path if it exists.
+    prefix : str, optional
+        The prefix to add to the output path., default: ""
 
-    Returns:
-        An in-memory vector. If an out_path is given, the output is a string containing
-        the path to the newly created vecotr.
+    suffix : str, optional
+        The suffix to add to the output path., default: ""
+
+    add_uuid : bool, optional
+        Add a uuid to the output path., default: False
+
+    allow_lists : bool, optional
+        Allow lists as input., default: True
+
+    overwrite : bool, optional
+        Is it possible to overwrite the out_path if it exists., default: True
+
+    Returns
+    -------
+    Union[str, List[str]]
+        An in-memory vector. If an out_path is given, the output is a string containing the path to the newly created vecotr.
     """
     utils_base.type_check(vector, [str, ogr.DataSource], "vector")
     utils_base.type_check(projection, [str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference], "projection")
@@ -114,21 +129,21 @@ def reproject_vector(
     assert utils_gdal._check_is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
 
 
-    path_list = utils_gdal.create_output_path_list(
+    path_list = utils_gdal._parse_output_data(
         vector_list,
-        out_path=out_path,
+        output_data=out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
         overwrite=overwrite,
     )
 
-    assert utils_base.is_valid_output_path_list(path_list, overwrite=overwrite), "Invalid output path generated."
+    assert utils_path._check_is_valid_output_filepath(path_list, overwrite=overwrite), "Invalid output path generated."
 
     output = []
     for index, in_vector in enumerate(vector_list):
         output.append(
-            _reproject_vector(
+            _vector_reproject(
                 in_vector,
                 projection,
                 out_path=path_list[index],

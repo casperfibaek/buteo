@@ -3,6 +3,7 @@
 """
 
 # Standard Library
+import sys; sys.path.append("../../")
 from typing import Union
 
 # External
@@ -158,7 +159,7 @@ def _convolve_array_2D(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
-def _convolve_array_2D_simple(
+def convolve_array_simple(
     arr: np.ndarray,
     offsets: np.ndarray,
     weights: np.ndarray,
@@ -330,27 +331,25 @@ def convolve_array_channels(
         The method to use for convolving the array.
 
         The following methods are valid:
-        ```text
-            1. sum
-            2. max
-            3. min
-            4. mean
-            5. median
-            6. variance
-            7. standard deviation
-            8. contrast
-            9. mode
-            10. median absolute deviation (mad)
-            11. z-score
-            12. z-score (mad)
-            13. sigma lee
-            14. quantile
-            15. occurances
-            16. feather
-            17. roughness
-            18. roughness tri
-            19. roughness tpi
-        ```
+        1. sum
+        2. max
+        3. min
+        4. mean
+        5. median
+        6. variance
+        7. standard deviation
+        8. contrast
+        9. mode
+        10. median absolute deviation (mad)
+        11. z-score
+        12. z-score (mad)
+        13. sigma lee
+        14. quantile
+        15. occurances
+        16. feather
+        17. roughness
+        18. roughness tri
+        19. roughness tpi
 
         Default: 1.
     
@@ -435,28 +434,26 @@ def convolve_array(
 
     method : int, optional
         The convolution method to use. Default: 1.
-         The following methods are valid:
-        ```text
-            1. sum
-            2. max
-            3. min
-            4. mean
-            5. median
-            6. variance
-            7. standard deviation
-            8. contrast
-            9. mode
-            10. median absolute deviation (mad)
-            11. z-score
-            12. z-score (mad)
-            13. sigma lee
-            14. quantile
-            15. occurances
-            16. feather
-            17. roughness
-            18. roughness tri
-            19. roughness tpi
-        ```
+        The following methods are valid:
+        1. sum
+        2. max
+        3. min
+        4. mean
+        5. median
+        6. variance
+        7. standard deviation
+        8. contrast
+        9. mode
+        10. median absolute deviation (mad)
+        11. z-score
+        12. z-score (mad)
+        13. sigma lee
+        14. quantile
+        15. occurances
+        16. feather
+        17. roughness
+        18. roughness tri
+        19. roughness tpi
 
     nodata : bool, optional
         If True, treat the nodata value as a valid value. Default: False.

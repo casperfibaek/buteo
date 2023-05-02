@@ -6,44 +6,46 @@ Calculate and tests the intersections between geometries.
 
 # Standard library
 import sys; sys.path.append("../../")
+from typing import Union, List, Optional
 
 # External
 from osgeo import ogr, gdal
 
 # Internal
-from buteo.utils import utils_base, utils_gdal
+from buteo.utils import utils_base, utils_gdal, utils_path
 from buteo.vector import core_vector
-from buteo.vector.reproject import _reproject_vector
-from buteo.vector.merge import merge_vectors
+from buteo.vector.reproject import _vector_reproject
+from buteo.vector.merge import vector_merge
 
 
-def _intersect_vector(
-    vector,
-    clip_geom,
-    out_path=None,
-    *,
-    process_layer=0,
-    process_layer_clip=0,
-    add_index=True,
-    overwrite=True,
-    return_bool=False,
-):
+def _vector_intersect(
+    vector: Union[str, ogr.DataSource],
+    clip_geom: Union[str, ogr.Geometry],
+    out_path: Optional[str] = None,
+    process_layer: int = 0,
+    process_layer_clip: int = 0,
+    add_index: bool = True,
+    overwrite: bool = True,
+    return_bool: bool = False,
+) -> Union[str, bool]:
     """ Internal. """
     assert isinstance(vector, ogr.DataSource), f"Invalid input vector: {vector}"
     assert utils_gdal._check_is_vector(vector), f"Invalid input vector: {vector}"
 
     if out_path is None:
-        out_path = utils_gdal.create_memory_path(
+        out_path = utils_path._get_output_path(
             utils_gdal._get_path_from_dataset(vector),
             add_uuid=True,
+            prefix="",
+            suffix="_intersect",
         )
 
-    assert utils_base.is_valid_output_path(out_path, overwrite=overwrite), "Invalid output path."
+    assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path."
 
-    match_projection = _reproject_vector(clip_geom, vector)
+    match_projection = _vector_reproject(clip_geom, vector)
     geometry_to_clip = core_vector._open_vector(match_projection)
 
-    merged = core_vector._open_vector(merge_vectors([vector, match_projection]))
+    merged = core_vector._open_vector(vector_merge([vector, match_projection]))
 
     if add_index:
         core_vector.vector_add_index(merged)
@@ -74,47 +76,68 @@ def _intersect_vector(
     destination.CopyLayer(result, vector_layername, ["OVERWRITE=YES"])
 
     if destination is None:
-        raise Exception("Error while running intersect.")
+        raise RuntimeError("Error while running intersect.")
 
     destination.FlushCache()
 
     return out_path
 
 
-def intersect_vector(
-    vector,
-    clip_geom,
-    out_path=None,
-    *,
-    process_layer=0,
-    process_layer_clip=0,
-    add_index=True,
-    overwrite=True,
-    prefix="",
-    suffix="",
-    add_uuid=False,
-    allow_lists=True,
-):
+def vector_intersect(
+    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
+    clip_geom: Union[str, ogr.Geometry, List[Union[str, ogr.Geometry]]],
+    out_path: Optional[str] = None,
+    process_layer: int = 0,
+    process_layer_clip: int = 0,
+    add_index: bool = True,
+    overwrite: bool = True,
+    prefix: str ="",
+    suffix: str ="",
+    add_uuid: bool = False,
+    allow_lists: bool = True,
+) -> Union[str, List[str]]:
     """
     Clips a vector to a geometry.
 
-    ## Args:
-    `vector` (_str_/_ogr.DataSource_/_list_): The vector(s) to intersect. </br>
-    `clip_geom` (_str_/_ogr.Geometry_): The geometry to intersect the vector(s) with. </br>
+    Parameters
+    ----------
+    vector : Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]]
+        The vector(s) to intersect.
 
-    ## Kwargs:
-    `out_path` (_str_/_list_/_None_): The path(s) to save the clipped vector(s) to. (Default: **None**) </br>
-    `process_layer` (_int_): The layer to process in the vector(s). (Default: **0**) </br>
-    `process_layer_clip` (_int_): The layer to process in the clip geometry. (Default: **0**) </br>
-    `add_index` (_bool_): Add a geospatial index to the vector(s). (Default: **True**) </br>
-    `overwrite` (_bool_): Overwrite the output vector(s) if they already exist. (Default: **True**) </br>
-    `prefix` (_str_): A prefix to add to the output vector(s). (Default: **""**) </br>
-    `suffix` (_str_): A suffix to add to the output vector(s). (Default: **""**) </br>
-    `add_uuid` (_bool_): Add a UUID to the output vector(s). (Default: **False**) </br>
-    `allow_lists` (_bool_): Allow the input to be a list of vectors. (Default: **True**) </br>
+    clip_geom : Union[str, ogr.Geometry, List[Union[str, ogr.Geometry]]]
+        The geometry to intersect the vector(s) with.
 
-    ## Returns:
-    (_str_/_list_): The path(s) to the clipped vector(s).
+    out_path : Optional[str], optional
+        The path(s) to save the clipped vector(s) to. Default: None
+
+    process_layer : int, optional
+        The layer to process in the vector(s). Default: 0
+
+    process_layer_clip : int, optional
+        The layer to process in the clip geometry. Default: 0
+
+    add_index : bool, optional
+        Add a geospatial index to the vector(s). Default: True
+
+    overwrite : bool, optional
+        Overwrite the output vector(s) if they already exist. Default: True
+
+    prefix : str, optional
+        A prefix to add to the output vector(s). Default: ""
+
+    suffix : str, optional
+        A suffix to add to the output vector(s). Default: ""
+
+    add_uuid : bool, optional
+        Add a uuid to the output vector(s). Default: False
+
+    allow_lists : bool, optional
+        Allow lists as input. Default: True
+
+    Returns
+    -------
+    Union[str, List[str]]
+        The path(s) to the intersected vector(s).
     """
     utils_base.type_check(vector, [ogr.DataSource, str, list], "vector")
     utils_base.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
@@ -135,20 +158,20 @@ def intersect_vector(
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
 
-    path_list = utils_gdal.create_output_path_list(
+    path_list = utils_gdal._parse_output_data(
         vector_list,
-        out_path=out_path,
+        output_data=out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
     )
 
-    assert utils_base.is_valid_output_paths(path_list, overwrite=overwrite), "Invalid output path generated."
+    assert utils_path._check_is_valid_output_filepath(path_list, overwrite=overwrite), "Invalid output path generated."
 
     output = []
     for index, in_vector in enumerate(vector_list):
         output.append(
-            _intersect_vector(
+            _vector_intersect(
                 in_vector,
                 clip_geom,
                 out_path=path_list[index],

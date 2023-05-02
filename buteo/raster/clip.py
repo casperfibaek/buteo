@@ -17,10 +17,10 @@ import numpy as np
 from buteo.raster import core_raster
 from buteo.vector import core_vector
 from buteo.utils import utils_gdal, utils_base, utils_gdal_translate, utils_bbox, utils_path
-from buteo.vector.reproject import _reproject_vector
+from buteo.vector.reproject import _vector_reproject
 
 
-def _clip_raster(
+def _raster_clip(
     raster: Union[str, List[str], gdal.Dataset, List[gdal.Dataset]],
     clip_geom: Union[str, ogr.DataSource, ogr.Layer, List[ogr.Layer], List[ogr.DataSource]],
     out_path: Optional[Union[str, List[str]]] = None,
@@ -45,9 +45,9 @@ def _clip_raster(
     INTERNAL.
     Clips a raster(s) using a vector geometry or the extents of a raster.
     """
-    path_list = utils_gdal.create_output_path_list(
-        utils_base._get_variable_as_list(raster),
-        out_path=out_path,
+    path_list = utils_gdal._parse_output_data(
+        raster,
+        output_data=out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
@@ -101,7 +101,7 @@ def _clip_raster(
     else:
         warp_options.append("CUTLINE_ALL_TOUCHED=FALSE")
 
-    origin_layer = core_raster.open_raster(raster)
+    origin_layer = core_raster.raster_open(raster)
 
     raster_metadata = core_raster._raster_to_metadata(raster)
     origin_projection = raster_metadata["projection_osr"]
@@ -112,7 +112,7 @@ def _clip_raster(
         raise ValueError(f"Geometries of {raster} and {clip_geom} did not intersect.")
 
     if not origin_projection.IsSame(clip_metadata["projection_osr"]):
-        clip_ds = _reproject_vector(clip_ds, origin_projection)
+        clip_ds = _vector_reproject(clip_ds, origin_projection)
         clip_metadata = core_vector._vector_to_metadata(clip_ds)
         memory_files.append(clip_ds)
 
@@ -190,7 +190,7 @@ def _clip_raster(
     return out_name
 
 
-def clip_raster(
+def raster_clip(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
     out_path: Optional[str] = None,
@@ -295,9 +295,9 @@ def clip_raster(
     utils_base.type_check(add_uuid, [bool], "uuid")
 
     raster_list = utils_base._get_variable_as_list(raster)
-    path_list = utils_gdal.create_output_path_list(
-        raster_list,
-        out_path=out_path,
+    path_list = utils_gdal._parse_output_data(
+        raster,
+        output_data=out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
@@ -307,7 +307,7 @@ def clip_raster(
     output = []
     for index, in_raster in enumerate(raster_list):
         output.append(
-            _clip_raster(
+            _raster_clip(
                 in_raster,
                 clip_geom,
                 out_path=path_list[index],

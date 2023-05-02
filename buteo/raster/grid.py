@@ -16,12 +16,12 @@ from typing import Union, Optional, List
 from osgeo import gdal, ogr
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_bbox
+from buteo.utils import utils_base, utils_gdal, utils_bbox, utils_path
 from buteo.raster import core_raster
-from buteo.raster.clip import _clip_raster
+from buteo.raster.clip import _raster_clip
 from buteo.vector import core_vector
-from buteo.vector.intersect import _intersect_vector
-from buteo.vector.reproject import _reproject_vector
+from buteo.vector.intersect import _vector_intersect
+from buteo.vector.reproject import _vector_reproject
 
 
 
@@ -82,28 +82,28 @@ def raster_to_grid(
     utils_base.type_check(creation_options, [[str], None], "creation_options")
     utils_base.type_check(verbose, [int], "verbose")
 
-    use_grid = core_vector.open_vector(grid)
+    use_grid = core_vector.vector_open(grid)
     grid_metadata = core_vector._vector_to_metadata(use_grid)
     raster_metadata = core_raster.raster_to_metadata(raster)
 
     # Reproject raster if necessary.
     if not raster_metadata["projection_osr"].IsSame(grid_metadata["projection_osr"]):
-        use_grid = _reproject_vector(grid, raster_metadata["projection_osr"])
+        use_grid = _vector_reproject(grid, raster_metadata["projection_osr"])
         grid_metadata = core_vector._vector_to_metadata(use_grid)
 
         if not isinstance(grid_metadata, dict):
             raise RuntimeError("Error while parsing metadata.")
 
     # Only use the polygons in the grid that intersect the extent of the raster.
-    use_grid = _intersect_vector(use_grid, raster_metadata["extent_datasource"]())
+    use_grid = _vector_intersect(use_grid, raster_metadata["extent_datasource"]())
 
-    ref = core_raster._open_raster(raster)
-    use_grid = core_vector.open_vector(use_grid)
+    ref = core_raster._raster_open(raster)
+    use_grid = core_vector.vector_open(use_grid)
 
     layer = use_grid.GetLayer(process_layer)
     feature_count = layer.GetFeatureCount()
     raster_extent = raster_metadata["bbox"]
-    filetype = utils_base.path_to_ext(raster)
+    filetype = utils_path._get_ext_from_path(raster)
     name = raster_metadata["name"]
     geom_type = grid_metadata["layers"][process_layer]["geom_type_ogr"]
 
@@ -174,7 +174,7 @@ def raster_to_grid(
         else:
             out_name = f"{out_dir}{name}_{fid}{filetype}"
 
-        _clip_raster(
+        _raster_clip(
             ref,
             test_ds_path,
             out_path=out_name,
@@ -183,7 +183,7 @@ def raster_to_grid(
             all_touch=False,
             suffix="",
             prefix="",
-            creation_options=utils_gdal.default_creation_options(creation_options),
+            creation_options=utils_gdal._get_default_creation_options(creation_options),
             verbose=0,
         )
 
@@ -192,7 +192,7 @@ def raster_to_grid(
 
     if generate_vrt:
         vrt_name = f"{out_dir}{name}.vrt"
-        core_raster.stack_rasters_vrt(generated, vrt_name, separate=False)
+        core_raster.raster_stack_vrt_list(generated, vrt_name, separate=False)
 
         return (generated, vrt_name)
 

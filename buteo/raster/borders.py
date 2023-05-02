@@ -20,7 +20,7 @@ from buteo.raster import core_raster
 from buteo.utils import utils_gdal, utils_base, utils_gdal_translate, utils_path
 
 
-def _add_border_to_raster(
+def _raster_add_border(
     raster,
     out_path=None,
     border_size=100,
@@ -34,7 +34,7 @@ def _add_border_to_raster(
     Internal.
     Add a border to a raster.
     """
-    in_raster = core_raster.open_raster(raster)
+    in_raster = core_raster.raster_open(raster)
     metadata = core_raster.raster_to_metadata(in_raster)
 
     # Parse the driver
@@ -48,7 +48,7 @@ def _add_border_to_raster(
 
     output_name = None
     if out_path is None:
-        output_name = utils_gdal.create_memory_path("raster_proximity.tif", add_uuid=True)
+        out_path = utils_path._get_output_path("raster_proximity.tif", add_uuid=True, folder="/vsimem/")
     else:
         output_name = out_path
 
@@ -90,7 +90,7 @@ def _add_border_to_raster(
         new_shape[0],
         metadata["band_count"],
         utils_gdal_translate._translate_str_to_gdal_dtype(in_arr.dtype),
-        utils_gdal.default_creation_options(creation_options),
+        utils_gdal._get_default_creation_options(creation_options),
     )
 
     og_transform = in_raster.GetGeoTransform()
@@ -115,7 +115,7 @@ def _add_border_to_raster(
     return output_name
 
 
-def add_border_to_raster(
+def raster_add_border(
     raster: Union[str, gdal.Dataset],
     out_path: Optional[str] = None,
     border_size: int = 100,
@@ -172,7 +172,7 @@ def add_border_to_raster(
         if isinstance(raster, list):
             raise ValueError("Lists are not allowed as input.")
 
-        return _add_border_to_raster(
+        return _raster_add_border(
             raster,
             out_path=out_path,
             border_size=border_size,
@@ -185,10 +185,10 @@ def add_border_to_raster(
     raster_list = utils_base._get_variable_as_list(raster)
 
     if out_path is None:
-        out_path = utils_gdal.create_memory_path("raster_proximity.tif", add_uuid=True)
+        out_path = utils_path._get_output_path("raster_proximity.tif", add_uuid=True, folder="/vsimem/")
 
     for raster_path in raster_list:
-        _add_border_to_raster(
+        _raster_add_border(
             raster_path,
             out_path=out_path,
             border_size=border_size,

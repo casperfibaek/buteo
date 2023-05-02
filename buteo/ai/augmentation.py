@@ -10,7 +10,7 @@ from typing import Optional, List, Callable
 import numpy as np
 
 # Buteo
-from buteo.utils.aux_utils import channel_first_to_last, channel_last_to_first
+from buteo.array.utils_array import channel_first_to_last, channel_last_to_first
 from buteo.ai.augmentation_funcs import (
     augmentation_mirror,
     augmentation_mirror_xy,

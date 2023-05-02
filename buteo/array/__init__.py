@@ -9,6 +9,7 @@ from .morphology import *
 from .patches import *
 from .filters import *
 from .color import *
-from .helpers import *
+from .utils_array import *
 from .fill import *
 from .distance import *
+from .timeseries import *

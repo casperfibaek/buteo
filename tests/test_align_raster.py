@@ -11,8 +11,8 @@ import pytest
 from osgeo import gdal, osr
 
 # Internal
-from buteo.raster.align import align_rasters_to_reference, align_rasters
-from buteo.raster.core_raster import rasters_are_aligned, raster_to_metadata
+from buteo.raster.align import raster_align_to_reference, raster_align
+from buteo.raster.core_raster import check_are_rasters_are_aligned, raster_to_metadata
 
 
 def create_sample_raster(
@@ -57,9 +57,9 @@ def create_sample_raster(
 def test_align_rasters_single_raster():
     """ Test: align_rasters with a single raster """
     raster1 = create_sample_raster()
-    aligned_raster_path = align_rasters_to_reference(raster1, reference=raster1)
+    aligned_raster_path = raster_align_to_reference(raster1, reference=raster1)
 
-    assert rasters_are_aligned(aligned_raster_path + [raster1])
+    assert check_are_rasters_are_aligned(aligned_raster_path + [raster1])
     assert gdal.Open(aligned_raster_path[0]) is not None
 
     gdal.Unlink(raster1)
@@ -72,10 +72,10 @@ def test_align_rasters_multiple_rasters_reference():
     raster2 = create_sample_raster(width=15, height=15)
     raster_ref = create_sample_raster(width=13, height=13)
     rasters = [raster1, raster2]
-    aligned_rasters = align_rasters_to_reference(rasters, reference=raster_ref)
+    aligned_rasters = raster_align_to_reference(rasters, reference=raster_ref)
 
     assert len(aligned_rasters) == len(rasters)
-    assert rasters_are_aligned(aligned_rasters + [raster_ref])
+    assert check_are_rasters_are_aligned(aligned_rasters + [raster_ref])
 
     for aligned_raster in aligned_rasters:
         assert gdal.Open(aligned_raster) is not None
@@ -92,10 +92,10 @@ def test_align_rasters_different_projections():
     raster2 = create_sample_raster(width=15, height=15, epsg_code=32632)
     raster_ref = create_sample_raster(width=15, height=15, epsg_code=4326)
     rasters = [raster1, raster2]
-    aligned_rasters = align_rasters_to_reference(rasters, reference=raster_ref)
+    aligned_rasters = raster_align_to_reference(rasters, reference=raster_ref)
 
     assert len(aligned_rasters) == len(rasters)
-    assert rasters_are_aligned(aligned_rasters)
+    assert check_are_rasters_are_aligned(aligned_rasters)
 
     for aligned_raster in aligned_rasters:
         assert gdal.Open(aligned_raster) is not None
@@ -112,10 +112,10 @@ def test_align_rasters_multiple_rasters():
     raster2 = create_sample_raster(width=15, height=16)
     raster3 = create_sample_raster(width=13, height=13)
     rasters = [raster1, raster2, raster3]
-    aligned_rasters = align_rasters(rasters)
+    aligned_rasters = raster_align(rasters)
 
     assert len(aligned_rasters) == len(rasters)
-    assert rasters_are_aligned(aligned_rasters)
+    assert check_are_rasters_are_aligned(aligned_rasters)
 
     metadata = raster_to_metadata(aligned_rasters[0])
 
@@ -139,7 +139,7 @@ def test_align_rasters_multiple_rasters_no_overlap():
     rasters = [raster1, raster2, raster3]
 
     with pytest.raises(AssertionError):
-        align_rasters(rasters)
+        raster_align(rasters)
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -152,10 +152,10 @@ def test_align_rasters_same_size_and_projection():
     raster2 = create_sample_raster(width=10, height=10)
     raster_ref = create_sample_raster(width=10, height=10)
     rasters = [raster1, raster2]
-    aligned_rasters = align_rasters_to_reference(rasters, reference=raster_ref)
+    aligned_rasters = raster_align_to_reference(rasters, reference=raster_ref)
 
     assert len(aligned_rasters) == len(rasters)
-    assert rasters_are_aligned(aligned_rasters)
+    assert check_are_rasters_are_aligned(aligned_rasters)
 
     for aligned_raster in aligned_rasters:
         assert gdal.Open(aligned_raster) is not None
@@ -171,10 +171,10 @@ def test_align_rasters_different_sizes_same_projection():
     raster2 = create_sample_raster(width=15, height=12)
     raster_ref = create_sample_raster(width=20, height=20)
     rasters = [raster1, raster2]
-    aligned_rasters = align_rasters_to_reference(rasters, reference=raster_ref)
+    aligned_rasters = raster_align_to_reference(rasters, reference=raster_ref)
 
     assert len(aligned_rasters) == len(rasters)
-    assert rasters_are_aligned(aligned_rasters)
+    assert check_are_rasters_are_aligned(aligned_rasters)
 
     for aligned_raster in aligned_rasters:
         assert gdal.Open(aligned_raster) is not None
@@ -190,10 +190,10 @@ def test_align_rasters_different_epsg_codes():
     raster2 = create_sample_raster(width=10, height=10, epsg_code=32632)
     raster_ref = create_sample_raster(width=10, height=10, epsg_code=4326)
     rasters = [raster1, raster2]
-    aligned_rasters = align_rasters_to_reference(rasters, reference=raster_ref)
+    aligned_rasters = raster_align_to_reference(rasters, reference=raster_ref)
 
     assert len(aligned_rasters) == len(rasters)
-    assert rasters_are_aligned(aligned_rasters)
+    assert check_are_rasters_are_aligned(aligned_rasters)
 
     for aligned_raster in aligned_rasters:
         assert gdal.Open(aligned_raster) is not None

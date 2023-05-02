@@ -6,28 +6,33 @@ Clip vector files with other geometries. Can come from rasters or vectors.
 
 # Standard library
 import sys; sys.path.append("../../")
+from typing import Union, Optional, List
 
 # External
 from osgeo import ogr
 
 # Internal
-from buteo.utils import utils_gdal, utils_base
+from buteo.utils import utils_gdal, utils_base, utils_path
 from buteo.vector import core_vector
 
 
-def _buffer_vector(vector, distance, out_path=None):
+def _vector_buffer(
+    vector: Union[str, ogr.DataSource],
+    distance: Union[int, float],
+    out_path: Optional[str] = None,
+) -> str:
     """ Internal. """
     if out_path is None:
-        out_path = utils_gdal.create_memory_path(
+        out_path = utils_path._get_output_path(
             utils_gdal._get_path_from_dataset(vector),
             prefix="",
             suffix="_buffer",
             add_uuid=True,
         )
 
-    assert utils_base.is_valid_output_path(out_path), "Invalid output path"
+    assert utils_path._check_is_valid_filepath(out_path), "Invalid output path"
 
-    read = core_vector.open_vector(vector)
+    read = core_vector.vector_open(vector)
 
     driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_from_path(out_path))
     destination = driver.CreateDataSource(out_path)
@@ -51,43 +56,58 @@ def _buffer_vector(vector, distance, out_path=None):
         destination.ExecuteSQL(sql, dialect="SQLITE")
 
     if destination is None:
-        raise Exception("Error while running intersect.")
+        raise RuntimeError("Error while running intersect.")
 
     destination.FlushCache()
 
     return out_path
 
 
-def buffer_vector(
-    vector,
-    distance,
-    out_path=None,
-    *,
-    prefix="",
-    suffix="",
-    add_uuid=False,
-    allow_lists=True,
-    overwrite=True,
-):
+def vector_buffer(
+    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
+    distance: Union[int, float],
+    out_path: Optional[str] = None,
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = False,
+    allow_lists: bool = True,
+    overwrite: bool = True,
+) -> Union[str, List[str]]:
     """
     Buffers a vector with a fixed distance or an attribute.
 
-    ## Args:
-    `vector` (_str_/_ogr.DataSource_/_list_): Vector(s) to buffer. </br>
-    `distance` (_int_/_float_/_str_): The distance to buffer with. If string, uses the attribute of that name. </br>
+    Parameters
+    ----------
+    vector : Union[str, ogr.DataSource, List[str, ogr.DataSource]]
+        Vector(s) to buffer.
 
-    ## Kwargs:
-    `out_path` (_str_/_None_): Output path. If None, memory vectors are created. (Default: **None**) </br>
-    `prefix` (_str_): Prefix to add to the output path. (Default: **""**) </br>
-    `suffix` (_str_): Suffix to add to the output path. (Default: **""**) </br>
-    `add_uuid` (_bool_): Add UUID to the output path. (Default: **False**) </br>
-    `allow_lists` (_bool_): Allow lists of vectors as input. (Default: **True**) </br>
-    `overwrite` (_bool_): Overwrite output if it already exists. (Default: **True**) </br>
+    distance : Union[int, float, str]
+        The distance to buffer with. If string, uses the attribute of that name.
 
-    ## Returns:
-    (_str_/_list_): Output path(s) of clipped vector(s).
+    out_path : Optional[str], optional
+        Output path. If None, memory vectors are created. Default: None
+
+    prefix : str, optional
+        Prefix to add to the output path. Default: ""
+
+    suffix : str, optional
+        Suffix to add to the output path. Default: ""
+
+    add_uuid : bool, optional
+        Add UUID to the output path. Default: False
+
+    allow_lists : bool, optional
+        Allow lists of vectors as input. Default: True
+
+    overwrite : bool, optional
+        Overwrite output if it already exists. Default: True
+
+    Returns
+    -------
+    Union[str, List[str]]
+        Output path(s) of clipped vector(s).
     """
-    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base.type_check(vector, [str, ogr.DataSource, List[Union[str, ogr.DataSource]]], "vector")
     utils_base.type_check(distance, [int, float, str], "distance")
     utils_base.type_check(out_path, [str, None], "out_path")
     utils_base.type_check(prefix, [str], "prefix")
@@ -102,9 +122,9 @@ def buffer_vector(
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Invalid vector in list: {vector_list}"
 
-    path_list = utils_gdal.create_output_path_list(
+    path_list = utils_gdal._parse_output_data(
         vector_list,
-        out_path=out_path,
+        output_data=out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
@@ -114,7 +134,7 @@ def buffer_vector(
     output = []
     for index, in_vector in enumerate(vector_list):
         output.append(
-            _buffer_vector(
+            _vector_buffer(
                 in_vector,
                 distance,
                 out_path=path_list[index],
