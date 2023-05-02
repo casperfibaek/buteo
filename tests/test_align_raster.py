@@ -16,17 +16,17 @@ from buteo.raster.core_raster import check_are_rasters_are_aligned, raster_to_me
 
 
 def create_sample_raster(
-        width=10,
-        height=10,
-        bands=1,
-        pixel_width=1,
-        pixel_height=1,
-        x_min=None,
-        y_max=None,
-        epsg_code=4326,
-        datatype=gdal.GDT_Byte,
-        nodata=None,
-    ):
+    width=10,
+    height=10,
+    bands=1,
+    pixel_width=1,
+    pixel_height=1,
+    x_min=None,
+    y_max=None,
+    epsg_code=4326,
+    datatype=gdal.GDT_Byte,
+    nodata=None,
+):
     """ Create a sample raster file for testing purposes. """
     raster_path = f"/vsimem/mem_raster_{uuid4().int}.tif"
     driver = gdal.GetDriverByName("GTiff")

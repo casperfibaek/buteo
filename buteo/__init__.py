@@ -7,6 +7,7 @@ Please note that Buteo is under active development, and its API may not be entir
 When using, please pin the version of Buteo you are using to avoid breaking changes.
 Feel free to report any bugs or suggest improvements.
 
+Author: *Casper Fibaek* (github.com/casperfibaek) </br>
 
 **Dependencies** </br>
 `numba` (https://numba.pydata.org/) </br>
