@@ -12,7 +12,7 @@ import numpy as np
 
 # Internal
 from buteo.array.convolution import convolve_array
-from buteo.array.convolution_kernels import get_kernel, get_offsets_and_weights
+from buteo.array.convolution_kernels import kernel_base, kernel_get_offsets_and_weights
 from buteo.utils import type_check
 
 
@@ -29,8 +29,8 @@ def _morphology_operation(
     type_check(spherical, [bool], "spherical")
     type_check(channel_last, [bool], "channel_last")
 
-    kernel = get_kernel(radius, spherical=spherical, normalise=False)
-    offsets, weights = get_offsets_and_weights(kernel)
+    kernel = kernel_base(radius, spherical=spherical, normalise=False)
+    offsets, weights = kernel_get_offsets_and_weights(kernel)
 
     mask = None
     if np.ma.isMaskedArray(arr):

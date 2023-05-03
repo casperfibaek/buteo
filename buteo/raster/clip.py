@@ -14,9 +14,15 @@ from osgeo import gdal, ogr
 import numpy as np
 
 # Internal
+from buteo.utils import (
+    utils_gdal,
+    utils_base,
+    utils_bbox,
+    utils_path,
+    utils_translate,
+)
 from buteo.raster import core_raster
 from buteo.vector import core_vector
-from buteo.utils import utils_gdal, utils_base, utils_gdal_translate, utils_bbox, utils_path
 from buteo.vector.reproject import _vector_reproject
 
 
@@ -148,7 +154,7 @@ def _raster_clip(
         if src_nodata == "infer":
             out_nodata = raster_metadata["nodata_value"]
         else:
-            out_nodata = utils_gdal_translate._get_default_nodata_value(raster_metadata["datatype_gdal_raw"])
+            out_nodata = utils_translate._get_default_nodata_value(raster_metadata["datatype_gdal_raw"])
     elif isinstance(dst_nodata, (int, float)) or dst_nodata is None:
         out_nodata = dst_nodata
     else:
@@ -164,7 +170,7 @@ def _raster_clip(
         out_name,
         origin_layer,
         format=out_format,
-        resampleAlg=utils_gdal_translate._translate_resample_method(resample_alg),
+        resampleAlg=utils_translate._translate_resample_method(resample_alg),
         targetAlignedPixels=False,
         outputBounds=utils_bbox._get_gdal_bbox_from_ogr_bbox(output_bounds),
         xRes=raster_metadata["pixel_width"],
@@ -179,7 +185,7 @@ def _raster_clip(
         multithread=True,
     )
 
-    utils_gdal.delete_if_in_memory_list(memory_files)
+    utils_gdal.delete_dataset_if_in_memory_list(memory_files)
 
     if verbose == 0:
         gdal.PopErrorHandler()

@@ -14,7 +14,12 @@ from osgeo import gdal
 import numpy as np
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_gdal_translate, utils_path
+from buteo.utils import (
+    utils_base,
+    utils_gdal,
+    utils_path,
+    utils_translate,
+)
 from buteo.raster import core_raster
 
 
@@ -76,8 +81,8 @@ def _raster_resample(
         xRes=x_res,
         yRes=y_res,
         format=out_format,
-        outputType=utils_gdal_translate._translate_str_to_gdal_dtype(dtype),
-        resampleAlg=utils_gdal_translate._translate_resample_method(resample_alg),
+        outputType=utils_translate._translate_str_to_gdal_dtype(dtype),
+        resampleAlg=utils_translate._translate_resample_method(resample_alg),
         creationOptions=utils_gdal._get_default_creation_options(creation_options),
         srcNodata=metadata["nodata_value"],
         dstNodata=out_nodata,
@@ -216,7 +221,7 @@ def resample_array(arr, target_shape_pixels, resample_alg="nearest"):
     resampled = _raster_resample(arr_as_raster, target_shape_pixels, target_in_pixels=True, resample_alg=resample_alg)
     out_arr = core_raster.raster_to_array(resampled)
 
-    utils_gdal._delete_dataset_if_in_memory(arr_as_raster)
-    utils_gdal._delete_dataset_if_in_memory(resampled)
+    utils_gdal.delete_dataset_if_in_memory(arr_as_raster)
+    utils_gdal.delete_dataset_if_in_memory(resampled)
 
     return out_arr

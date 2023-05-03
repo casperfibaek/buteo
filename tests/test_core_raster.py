@@ -2,7 +2,9 @@
 
 
 # Standard library
-import sys; sys.path.append("../")
+import sys
+
+from buteo.utils import utils_translate; sys.path.append("../")
 from uuid import uuid4
 
 # External
@@ -15,23 +17,23 @@ from buteo.raster.core_raster import (
     raster_to_metadata,
     raster_open,
     raster_to_array,
-    check_are_rasters_are_aligned,
-    raster_has_nodata,
-    raster_has_nodata_list,
+    check_rasters_are_aligned,
+    _check_raster_has_nodata,
+    _check_raster_has_nodata_list,
     check_rasters_have_same_nodata,
     _get_first_nodata_value,
-    raster_count_bands_list,
+    _raster_count_bands_list,
     array_to_raster,
     raster_set_datatype,
     raster_stack_list,
     raster_stack_vrt_list,
-    check_do_rasters_intersect,
+    check_rasters_intersect,
     get_raster_intersection,
     get_raster_overlap_fraction,
     raster_create_from_array,
     raster_create_grid_with_coordinates,
 )
-from buteo.utils import utils_gdal_translate, utils_gdal, utils_gdal_projection
+from buteo.utils import utils_gdal, utils_projection
 
 DEFAULT_ARR = np.array([
     [178, 250, 117,  23, 250,  42, 166, 164,  84, 175],
@@ -327,7 +329,7 @@ def test_raster_to_metadata_disallow_lists():
 def test_rasters_are_aligned_single_raster():
     """ Test: rasters are aligned. Single raster. """
     raster_1 = create_sample_raster()
-    assert check_are_rasters_are_aligned([raster_1])
+    assert check_rasters_are_aligned([raster_1])
 
     gdal.Unlink(raster_1)
 
@@ -335,7 +337,7 @@ def test_rasters_are_aligned_same_projection():
     """ Test: rasters are aligned. Same projection. """
     raster_1 = create_sample_raster()
     raster_2 = create_sample_raster()
-    assert check_are_rasters_are_aligned([raster_1, raster_2])
+    assert check_rasters_are_aligned([raster_1, raster_2])
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -345,7 +347,7 @@ def test_rasters_are_aligned_different_projection():
     raster_1 = create_sample_raster(epsg_code=4326)
     raster_2 = create_sample_raster(epsg_code=32632)
 
-    assert not check_are_rasters_are_aligned([raster_1, raster_2])
+    assert not check_rasters_are_aligned([raster_1, raster_2])
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -354,7 +356,7 @@ def test_rasters_are_aligned_same_extent():
     """ Test: rasters are aligned. Same extent. """
     raster_1 = create_sample_raster()
     raster_2 = create_sample_raster()
-    assert check_are_rasters_are_aligned([raster_1, raster_2], same_extent=True)
+    assert check_rasters_are_aligned([raster_1, raster_2], same_extent=True)
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -363,7 +365,7 @@ def test_rasters_are_aligned_different_extent():
     """ Test: rasters are aligned. Different extent. """
     raster_1 = create_sample_raster()
     raster_2 = create_sample_raster(width=20, height=20)
-    assert not check_are_rasters_are_aligned([raster_1, raster_2], same_extent=True)
+    assert not check_rasters_are_aligned([raster_1, raster_2], same_extent=True)
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -372,7 +374,7 @@ def test_rasters_are_aligned_same_dtype():
     """ Test: rasters are aligned. Same dtype. """
     raster_1 = create_sample_raster()
     raster_2 = create_sample_raster()
-    assert check_are_rasters_are_aligned([raster_1, raster_2], same_dtype=True)
+    assert check_rasters_are_aligned([raster_1, raster_2], same_dtype=True)
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -381,7 +383,7 @@ def test_rasters_are_aligned_different_dtype():
     """ Test: rasters are aligned. Different dtype. """
     raster_1 = create_sample_raster(datatype=gdal.GDT_Byte)
     raster_2 = create_sample_raster(datatype=gdal.GDT_UInt16)
-    assert not check_are_rasters_are_aligned([raster_1, raster_2], same_dtype=True)
+    assert not check_rasters_are_aligned([raster_1, raster_2], same_dtype=True)
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -389,14 +391,14 @@ def test_rasters_are_aligned_different_dtype():
 def test_raster_has_nodata_true():
     """ Test: raster has nodata. True case. """
     raster_1 = create_sample_raster(nodata=0)
-    assert raster_has_nodata(raster_1)
+    assert _check_raster_has_nodata(raster_1)
 
     gdal.Unlink(raster_1)
 
 def test_raster_has_nodata_false():
     """ Test: raster has nodata. False case. """
     raster_1 = create_sample_raster()
-    assert not raster_has_nodata(raster_1)
+    assert not _check_raster_has_nodata(raster_1)
 
     gdal.Unlink(raster_1)
 
@@ -404,7 +406,7 @@ def test_rasters_have_nodata_true():
     """ Test: rasters have nodata. True case. """
     raster_1 = create_sample_raster(nodata=0)
     raster_2 = create_sample_raster()
-    assert raster_has_nodata_list([raster_1, raster_2])
+    assert _check_raster_has_nodata_list([raster_1, raster_2])
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -413,7 +415,7 @@ def test_rasters_have_nodata_false():
     """ Test: rasters have nodata. False case. """
     raster_1 = create_sample_raster()
     raster_2 = create_sample_raster()
-    assert not raster_has_nodata_list([raster_1, raster_2])
+    assert not _check_raster_has_nodata_list([raster_1, raster_2])
 
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
@@ -450,7 +452,7 @@ def test_count_bands_in_rasters_single_band_rasters():
     raster3 = create_sample_raster(width=10, height=10, bands=1)
 
     rasters = [raster1, raster2, raster3]
-    band_count = raster_count_bands_list(rasters)
+    band_count = _raster_count_bands_list(rasters)
 
     assert band_count == 3
 
@@ -465,7 +467,7 @@ def test_count_bands_in_rasters_multiple_band_rasters():
     raster3 = create_sample_raster(width=10, height=10, bands=1)
 
     rasters = [raster1, raster2, raster3]
-    band_count = raster_count_bands_list(rasters)
+    band_count = _raster_count_bands_list(rasters)
 
     assert band_count == 6
 
@@ -814,7 +816,7 @@ def test_raster_set_datatype_single():
 
     metadata = raster_to_metadata(output_path)
 
-    assert metadata["dtype"] == utils_gdal_translate._translate_gdal_dtype_to_str(gdal.GDT_UInt16)
+    assert metadata["dtype"] == utils_translate._translate_gdal_dtype_to_str(gdal.GDT_UInt16)
 
     gdal.Unlink(output_path)
     gdal.Unlink(reference)
@@ -835,7 +837,7 @@ def test_raster_set_datatype_list():
 
     for path in output_paths:
         metadata = raster_to_metadata(path)
-        assert metadata["dtype"] == utils_gdal_translate._translate_gdal_dtype_to_str(gdal.GDT_UInt16)
+        assert metadata["dtype"] == utils_translate._translate_gdal_dtype_to_str(gdal.GDT_UInt16)
 
     gdal.Unlink(reference1)
     gdal.Unlink(reference2)
@@ -985,7 +987,7 @@ def test_rasters_intersect_true():
     raster1 = create_sample_raster(height=10, width=10, pixel_height=1, pixel_width=1)
     raster2 = create_sample_raster(height=10, width=10, pixel_height=1, pixel_width=1, x_min=5, y_max=15)
 
-    assert check_do_rasters_intersect(raster1, raster2) is True
+    assert check_rasters_intersect(raster1, raster2) is True
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -995,7 +997,7 @@ def test_rasters_intersect_false():
     raster1 = create_sample_raster(height=10, width=10, pixel_height=1, pixel_width=1)
     raster2 = create_sample_raster(height=10, width=10, pixel_height=1, pixel_width=1, x_min=15, y_max=25)
 
-    assert check_do_rasters_intersect(raster1, raster2) is False
+    assert check_rasters_intersect(raster1, raster2) is False
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -1005,7 +1007,7 @@ def test_rasters_intersect_same():
     raster1 = create_sample_raster(width=10, height=10, x_min=0, y_max=10)
     raster2 = create_sample_raster(width=10, height=10, x_min=0, y_max=10)
 
-    assert check_do_rasters_intersect(raster1, raster2) is True
+    assert check_rasters_intersect(raster1, raster2) is True
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -1015,7 +1017,7 @@ def test_rasters_intersect_different_pixelsizes():
     raster1 = create_sample_raster(width=10, height=10, pixel_width=1, pixel_height=1, x_min=0, y_max=10)
     raster2 = create_sample_raster(width=20, height=20, pixel_width=0.5, pixel_height=0.5, x_min=5, y_max=15)
 
-    assert check_do_rasters_intersect(raster1, raster2) is True
+    assert check_rasters_intersect(raster1, raster2) is True
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -1025,7 +1027,7 @@ def rasters_intersect_non_intersecting_difpixel():
     raster1 = create_sample_raster(width=10, height=10, pixel_width=1, pixel_height=1, x_min=0, y_max=10)
     raster2 = create_sample_raster(width=40, height=40, pixel_width=0.5, pixel_height=0.5, x_min=20, y_max=30)
 
-    assert check_do_rasters_intersect(raster1, raster2) is False
+    assert check_rasters_intersect(raster1, raster2) is False
 
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
@@ -1095,7 +1097,7 @@ def test_create_raster_from_array_default():
     assert ds.RasterXSize == 10
     assert ds.RasterYSize == 10
     assert ds.RasterCount == 1
-    assert ds.GetProjection() == utils_gdal_projection.parse_projection("EPSG:3857", return_wkt=True)
+    assert ds.GetProjection() == utils_projection.parse_projection("EPSG:3857", return_wkt=True)
     assert ds.GetGeoTransform() == (0.0, 10.0, 0.0, 0.0, 0.0, -10.0)
 
     gdal.Unlink(output_name)
@@ -1115,7 +1117,7 @@ def test_create_raster_from_array_special():
     assert ds.RasterXSize == 12
     assert ds.RasterYSize == 10
     assert ds.RasterCount == 3
-    assert ds.GetProjection() == utils_gdal_projection.parse_projection("EPSG:4326", return_wkt=True)
+    assert ds.GetProjection() == utils_projection.parse_projection("EPSG:4326", return_wkt=True)
 
     gt = ds.GetGeoTransform()
 

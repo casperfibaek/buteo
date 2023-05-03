@@ -14,7 +14,7 @@ from buteo.raster import (
     raster_resample,
     raster_align,
     raster_dem_to_orientation,
-    check_are_rasters_are_aligned,
+    check_rasters_are_aligned,
 )
 from buteo.vector import vector_reproject
 
@@ -109,5 +109,5 @@ for idx, split_file in enumerate(split_files):
         adjust_bbox=True,
     )
 
-    if not check_are_rasters_are_aligned([mask_clipped, s1_clipped, s2_clipped, dem_clipped]):
+    if not check_rasters_are_aligned([mask_clipped, s1_clipped, s2_clipped, dem_clipped]):
         print("Rasters are not aligned: ", idx_offset)

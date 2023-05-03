@@ -142,7 +142,7 @@ def split_train_val_test(
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 
-def stratified_sampling(
+def sampling_stratified(
     X: np.ndarray,
     y: np.ndarray,
     regression: bool = False,
@@ -201,6 +201,46 @@ def stratified_sampling(
 
     return X[stratified_indices], y[stratified_indices]
 
+
+def sampling_random(
+    X: np.ndarray,
+    y: np.ndarray,
+    samples: Union[int, float],
+) -> Tuple[np.ndarray, np.ndarray]:
+    """ 
+    Random sampling of a dataset.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        The input data.
+
+    y : np.ndarray
+        The target data.
+
+    samples : int or float
+        The number of samples to take.
+        If int, the number of samples to take.
+        If float, the proportion of samples to take.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        (X_random, y_random) : The random input and target data.
+    """
+    assert isinstance(X, np.ndarray), "X should be a numpy array."
+    assert isinstance(y, np.ndarray), "y should be a numpy array."
+    assert X.shape[0] == y.shape[0], "X and y should be the same axis=0 size."
+    assert samples > 0, "samples should be greater than 0."
+    assert isinstance(samples, (int, float)), "samples should be an int or float."
+
+    if isinstance(samples, float) and samples <= 1:
+        samples = int(X.shape[0] * samples)
+
+    random_indices = np.random.choice(np.arange(X.shape[0]), samples, replace=False)
+
+    return X[random_indices], y[random_indices]
+
+
 # TODO: add a function to split a dataset into k folds
 # TODO: add a function to split a dataset into k folds stratified by class
-# TODO: Add a function to randomly sample a dataset

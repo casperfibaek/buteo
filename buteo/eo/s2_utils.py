@@ -20,14 +20,18 @@ def s2_l2a_get_bands(
 ) -> dict:
     """ Get the bands from a sentinel 2 L2A product.
     
-    Args:
-        zip_or_safe_folder (str): Path to the zip file or SAFE folder.
-    
-    Key Args:
-        zipfile (bool=True): If True, the zip file is used. If False, the SAFE folder is used.
+    Parameters
+    ----------
+    zip_or_safe_folder : str
+        Path to the zip file or SAFE folder.
 
-    Returns:
-        dict: Dictionary with the bands.
+    zipfile : bool, optional
+        If True, the zip file is used. If False, the SAFE folder is used. Default: True.
+
+    Returns
+    -------
+    dict
+        Dictionary with the paths to the bands.
     """
     bands = {
         "10m": {"B02": None, "B03": None, "B04": None, "B08": None, "AOT": None},
@@ -179,16 +183,21 @@ def s2_l2a_get_metadata(
     zip_or_safe_folder: str,
     zipfile: bool = True,
 ) -> dict:
-    """ Get metadata from the SAFE folder or the zip file.
+    """
+    Get metadata from the SAFE folder or the zip file.
     
-    Args:
-        zip_or_safe_folder (str): Path to the zip file or the SAFE folder.
-    
-    Keyword Args:
-        zipfile (bool): If True, the zip file is used. If False, the SAFE folder is used.
-    
-    Returns:
-        dict: Dictionary with the metadata.
+    Parameters
+    ----------
+    zip_or_safe_folder : str
+        Path to the zip file or the SAFE folder.
+
+    zipfile : bool, optional
+        If True, the zip file is used. If False, the SAFE folder is used. Default: True
+
+    Returns
+    -------
+    dict
+        Dictionary with the metadata.
     """
     metadata = {
         "PRODUCT_START_TIME": None,

@@ -8,7 +8,7 @@ from typing import List, Tuple, Union, Dict
 
 # External
 import numpy as np
-from osgeo import gdal
+from osgeo import gdal, gdal_array
 
 
 
@@ -267,17 +267,23 @@ def _translate_resample_method(method: str) -> int:
     """
     assert isinstance(method, str), "method must be a string."
     assert len(method) > 0, "method must be a non-empty string."
-    try:
-        methods = {
-            "nearest": gdal.GRA_NearestNeighbour,
-            "bilinear": gdal.GRA_Bilinear,
-            "cubic": gdal.GRA_Cubic,
-            "cubic_spline": gdal.GRA_CubicSpline,
-            "cubicspline": gdal.GRA_CubicSpline,
-            "lanczos": gdal.GRA_Lanczos,
-            "average": gdal.GRA_Average,
-            "mean": gdal.GRA_Average,
-            "mode": gdal.GRA_Mode,
+
+    methods = {
+        "nearest": gdal.GRA_NearestNeighbour,
+        "bilinear": gdal.GRA_Bilinear,
+        "cubic": gdal.GRA_Cubic,
+        "cubic_spline": gdal.GRA_CubicSpline,
+        "cubicspline": gdal.GRA_CubicSpline,
+        "lanczos": gdal.GRA_Lanczos,
+        "average": gdal.GRA_Average,
+        "mean": gdal.GRA_Average,
+        "mode": gdal.GRA_Mode,
+    }
+
+    # Check GDAL version and add methods available in newer versions
+    gdal_version = tuple(map(int, gdal.VersionInfo().split('.')))
+    if gdal_version >= (3, 3, 0):
+        extended_methods = {
             "max": gdal.GRA_Max,
             "maximum": gdal.GRA_Max,
             "min": gdal.GRA_Min,
@@ -292,19 +298,9 @@ def _translate_resample_method(method: str) -> int:
             "rms": gdal.GRA_RMS,
             "RMS": gdal.GRA_RMS,
         }
-    except: # pylint: disable=bare-except
+        methods.update(extended_methods)
+    else:
         print("Warning: Old version of GDAL running, only a subset of resampling methods are supported.")
-        methods = {
-            "nearest": gdal.GRA_NearestNeighbour,
-            "bilinear": gdal.GRA_Bilinear,
-            "cubic": gdal.GRA_Cubic,
-            "cubic_spline": gdal.GRA_CubicSpline,
-            "cubicspline": gdal.GRA_CubicSpline,
-            "lanczos": gdal.GRA_Lanczos,
-            "average": gdal.GRA_Average,
-            "mean": gdal.GRA_Average,
-            "mode": gdal.GRA_Mode,
-        }
 
     if method in methods:
         return methods[method]
@@ -312,91 +308,46 @@ def _translate_resample_method(method: str) -> int:
     raise ValueError("Unknown resample method: " + method)
 
 
-def _translate_gdal_dtype_to_str(gdal_datatype_int: int) -> str:
+def _translate_dtype_gdal_to_numpy(gdal_datatype_int: int) -> np.dtype:
     """
-    Translates the **GDAL** datatype integer into a string. Can be used by **NumPy**.
+    Translates the **GDAL** datatype integer into a **NumPy** datatype.
 
     Parameters
     ----------
     gdal_datatype_int : int
         The GDAL datatype integer.
-    
+
     Returns
     -------
-    str
-        The GDAL datatype string.
+    np.dtype
+        The **NumPy** datatype.
     """
     assert isinstance(gdal_datatype_int, int), f"gdal_datatype must be an integer. Received: {gdal_datatype_int}"
 
-    datatypes = {
-        str(gdal.GDT_Byte): "uint8",
-        str(gdal.GDT_Int16): "int16",
-        str(gdal.GDT_Int32): "int32",
-        str(gdal.GDT_UInt16): "uint16",
-        str(gdal.GDT_UInt32): "uint32",
-        str(gdal.GDT_Float32): "float32",
-        str(gdal.GDT_Float64): "float64",
-        str(gdal.GDT_CFloat32): "cfloat32",
-        str(gdal.GDT_CFloat64): "cfloat64",
-        str(gdal.GDT_CInt16): "cint16",
-        str(gdal.GDT_CInt32): "cint32",
-    }
+    dtype = np.dtype(gdal_array.GDALTypeCodeToNumericTypeCode(gdal_datatype_int))
 
-    dtype_str = str(gdal_datatype_int)
-    for key in datatypes:
-        if dtype_str == key:
-            return datatypes[dtype_str]
-
-    raise ValueError(f"Could not translate the datatype: {gdal_datatype_int}")
+    return dtype
 
 
-def _translate_str_to_gdal_dtype(dtype_str: str) -> int:
+def _translate_dtype_numpy_to_gdal(numpy_datatype: np.dtype) -> int:
     """
-    Translates the datatype string into a **GDAL** datatype integer. Can be used by **GDAL**.
+    Translates the **NumPy** datatype into a **GDAL** datatype integer.
 
     Parameters
     ----------
-    dtype_str : str
-        The datatype string.
-    
+    numpy_datatype : np.dtype
+        The **NumPy** datatype.
+
     Returns
     -------
     int
         The GDAL datatype integer.
     """
-    assert isinstance(dtype_str, (np.dtype, str)), "dtype_str must be a string or numpy dtype."
+    assert isinstance(numpy_datatype, np.dtype), f"numpy_datatype must be a numpy.dtype. Received: {numpy_datatype}"
 
-    if isinstance(dtype_str, np.dtype):
-        dtype_str = dtype_str.name
+    dtype = gdal_array.NumericTypeCodeToGDALTypeCode(numpy_datatype)
 
-    dtype_str = dtype_str.lower()
-
-    assert len(dtype_str) > 0, "dtype_str must be a non-empty string."
-
-    datatypes = {
-        "int8": gdal.GDT_Int16,
-        "int16": gdal.GDT_Int16,
-        "int32": gdal.GDT_Int32,
-        "int64": gdal.GDT_Int32,
-        "uint8": gdal.GDT_Byte,
-        'bool': gdal.GDT_Byte,
-        "uint16": gdal.GDT_UInt16,
-        "uint32": gdal.GDT_UInt32,
-        "uint64": gdal.GDT_UInt32,
-        "float16": gdal.GDT_Float32,
-        "float32": gdal.GDT_Float32,
-        "float64": gdal.GDT_Float64,
-        "cfloat32": gdal.GDT_CFloat32,
-        "cfloat64": gdal.GDT_CFloat64,
-        "cint16": gdal.GDT_CInt16,
-        "cint32": gdal.GDT_CInt32,
-    }
-
-    for key in datatypes:
-        if dtype_str == key:
-            return datatypes[dtype_str]
-
-    raise ValueError(f"Could not translate the datatype: {dtype_str}")
+    return dtype
 
 
 def _get_default_nodata_value(dtype: Union[np.dtype, str, int]) -> Union[float, int]:
@@ -436,7 +387,7 @@ def _get_default_nodata_value(dtype: Union[np.dtype, str, int]) -> Union[float, 
     if isinstance(dtype, np.dtype):
         test_type = test_type.name
     elif isinstance(dtype, int):
-        test_type = _translate_gdal_dtype_to_str(dtype)
+        test_type = _translate_dtype_gdal_to_numpy(dtype).name
 
     test_type = test_type.lower()
 
@@ -446,7 +397,7 @@ def _get_default_nodata_value(dtype: Union[np.dtype, str, int]) -> Union[float, 
     raise ValueError("Unknown numpy datatype: " + test_type)
 
 
-def _get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype]) -> Tuple[Union[int, float], Union[int, float]]:
+def _get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype, int]) -> Tuple[Union[int, float], Union[int, float]]:
     """
     Returns the range of values that can be represented by a given numpy dtype.
 
@@ -460,6 +411,7 @@ def _get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype]) -> Tuple[Un
     Tuple[Union[int, float], Union[int, float]]
         The range of values that can be represented by a given numpy dtype.
     """
+    assert isinstance(numpy_dtype, (str, np.dtype, int)), "numpy_dtype must be a numpy.dtype or string."
 
     datatypes = {
         "int8": (-128, 127),
@@ -482,7 +434,7 @@ def _get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype]) -> Tuple[Un
     if isinstance(numpy_dtype, np.dtype):
         test_type = test_type.name
     elif isinstance(numpy_dtype, int):
-        test_type = _translate_gdal_dtype_to_str(numpy_dtype)
+        test_type = _translate_dtype_gdal_to_numpy(numpy_dtype).name
 
     if test_type in datatypes:
         return datatypes[test_type]
@@ -490,7 +442,7 @@ def _get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype]) -> Tuple[Un
     raise ValueError("Unknown numpy datatype: " + test_type)
 
 
-def _check_value_is_within_dtype_range(
+def _check_is_value_within_dtype_range(
     value: Union[int, float],
     numpy_dtype: Union[str, np.dtype],
 ) -> bool:

@@ -12,7 +12,7 @@ import numpy as np
 
 # Internal
 from buteo.array.convolution import convolve_array
-from buteo.array.convolution_kernels import get_kernel, get_offsets_and_weights
+from buteo.array.convolution_kernels import kernel_base, kernel_get_offsets_and_weights
 from buteo.utils import type_check
 
 
@@ -44,7 +44,7 @@ def _filter_operation(
     type_check(distance_decay, [int, float], "distance_decay")
     type_check(distance_sigma, [int, float], "distance_sigma")
 
-    kernel = get_kernel(
+    kernel = kernel_base(
         radius,
         spherical=spherical,
         distance_weighted=distance_weighted,
@@ -55,7 +55,7 @@ def _filter_operation(
         sigma=distance_sigma,
     )
 
-    offsets, weights = get_offsets_and_weights(kernel)
+    offsets, weights = kernel_get_offsets_and_weights(kernel)
 
     mask = None
     if np.ma.isMaskedArray(arr):

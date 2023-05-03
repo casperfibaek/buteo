@@ -29,6 +29,24 @@ def _get_default_projection() -> str:
     return epsg_4326_wkt
 
 
+def _get_default_projection_osr() -> osr.SpatialReference:
+    """
+    Get the default projection for a new raster.
+    EPSG:4326 in osr.SpatialReference format.
+
+    Returns
+    -------
+    osr.SpatialReference:
+        The default projection. (EPSG:4326) in osr.SpatialReference format.
+    """
+    epsg_4326_wkt = _get_default_projection()
+
+    spatial_ref = osr.SpatialReference()
+    spatial_ref.ImportFromWkt(epsg_4326_wkt)
+
+    return spatial_ref
+
+
 def _get_esri_projection(esri_code: str) -> str:
     """
     Imports a projection from an ESRI code.
@@ -180,7 +198,7 @@ def parse_projection(
         raise ValueError(err_msg)
 
 
-def _check_do_projections_match(
+def _check_projections_match(
     source1: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     source2: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
 ) -> bool:
@@ -212,7 +230,7 @@ def _check_do_projections_match(
     return False
 
 
-def _check_do_projections_match_list(
+def _check_projections_match_list(
     list_of_projection_sources: List[Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]],
 ) -> bool:
     """
@@ -397,7 +415,7 @@ def reproject_bbox(
     src_proj = parse_projection(source_projection)
     dst_proj = parse_projection(target_projection)
 
-    if _check_do_projections_match(src_proj, dst_proj):
+    if _check_projections_match(src_proj, dst_proj):
         return bbox_ogr
 
     transformer = osr.CoordinateTransformation(src_proj, dst_proj)

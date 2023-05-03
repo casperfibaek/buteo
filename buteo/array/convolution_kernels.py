@@ -11,6 +11,77 @@ from numba import jit
 
 
 
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+def _simple_blur_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Create a 2D blur kernel.
+
+    The kernel has the following form:
+    ```python
+    >>> weights = [
+    ...     0.08422299, 0.12822174, 0.08422299,
+    ...     0.12822174, 0.15022110, 0.12822174,
+    ...     0.08422299, 0.12822174, 0.08422299,
+    ... ]
+    ```
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        A tuple of two numpy arrays. The first array contains the (x, y) offsets
+        of the kernel values. The second array contains the corresponding weights
+        of each kernel value.
+    """
+    offsets = np.array([
+        [ 1, -1], [ 1, 0], [ 1, 1],
+        [ 0, -1], [ 0, 0], [ 0, 1],
+        [-1, -1], [-1, 0], [-1, 1],
+    ])
+
+    weights = np.array([
+        0.08422299, 0.12822174, 0.08422299,
+        0.12822174, 0.1502211 , 0.12822174,
+        0.08422299, 0.12822174, 0.08422299,
+    ], dtype=np.float32)
+
+    return offsets, weights
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+def _simple_unsharp_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Create a 2D unsharp kernel.
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        A tuple of two numpy arrays. The first array contains the (x, y) offsets
+        of the kernel values. The second array contains the corresponding weights
+        of each kernel value.
+    """
+    offsets = np.array([
+        [ 1, -1], [ 1, 0], [ 1, 1],
+        [ 0, -1], [ 0, 0], [ 0, 1],
+        [-1, -1], [-1, 0], [-1, 1],
+    ])
+
+    weights = np.array([
+        -0.09911165, -0.15088834, -0.09911165,
+        -0.15088834,  2.        , -0.15088834,
+        -0.09911165, -0.15088834, -0.09911165,
+    ], dtype=np.float32)
+
+    return offsets, weights
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+def _simple_shift_kernel_2d(
+    x_offset: float,
+    y_offset: float,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """ Create a 2D shift kernel. For augmentations. """
+    return kernel_shift(x_offset, y_offset)
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline="always")
 def _distance_2D(p1: np.ndarray, p2: np.ndarray) -> float:
     """ Returns the distance between two points. (2D) """
@@ -142,7 +213,7 @@ def _distance_weighted_kernel_2D(radius, method, decay=0.2, sigma=2.0):
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
-def get_kernel(
+def kernel_base(
     radius: float,
     circular: bool = False,
     distance_weighted: bool = False,
@@ -218,7 +289,7 @@ def get_kernel(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def get_kernel_shift(
+def kernel_shift(
     x_offset: float,
     y_offset: float,
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -291,7 +362,7 @@ def get_kernel_shift(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
-def get_kernel_unsharp(
+def kernel_unsharp(
     radius: float = 1.0,
     intensity: float = 1.0,
 ) -> np.ndarray:
@@ -313,7 +384,7 @@ def get_kernel_unsharp(
     np.ndarray
         The kernel.
     """
-    kernel = get_kernel(
+    kernel = kernel_base(
         radius=radius,
         circular=True,
         distance_weighted=True,
@@ -331,7 +402,7 @@ def get_kernel_unsharp(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
-def get_kernel_sobel(
+def kernel_sobel(
     radius=1,
     scale=2,
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -375,8 +446,7 @@ def get_kernel_sobel(
     
     """
     size = np.int64(np.ceil(radius) * 2 + 1)
-    kernel_base = np.zeros((size, size), dtype=np.float32)
-
+    kernel = np.zeros((size, size), dtype=np.float32)
     center = np.array([0.0, 0.0], dtype=np.float32)
 
     step = size // 2
@@ -385,18 +455,18 @@ def get_kernel_sobel(
             point = np.array([col, row], dtype=np.float32)
             distance = _distance_2D(center, point)
             if col == 0 and row == 0:
-                kernel_base[idx_i, idx_j] = 0
+                kernel[idx_i, idx_j] = 0
             else:
                 weight = np.power((1 - 0.5), distance) * 2
-                kernel_base[idx_i, idx_j] = weight * scale
+                kernel[idx_i, idx_j] = weight * scale
 
     # vertical
-    kernel_gx = kernel_base.copy()
+    kernel_gx = kernel.copy()
     kernel_gx[:, size // 2:] *= -1
     kernel_gx[:, size // 2] = 0
 
     # horisontal
-    kernel_gy = kernel_base.copy()
+    kernel_gy = kernel.copy()
     kernel_gy[size // 2:, :] *= -1
     kernel_gy[size // 2, :] = 0
 
@@ -404,7 +474,7 @@ def get_kernel_sobel(
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
-def get_offsets_and_weights(
+def kernel_get_offsets_and_weights(
     kernel: np.ndarray,
     remove_zero_weights: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray, int]:
@@ -441,74 +511,3 @@ def get_offsets_and_weights(
                 index += 1
 
     return offsets, weights
-
-
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def _simple_blur_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Create a 2D blur kernel.
-
-    The kernel has the following form:
-    ```python
-    >>> weights = [
-    ...     0.08422299, 0.12822174, 0.08422299,
-    ...     0.12822174, 0.15022110, 0.12822174,
-    ...     0.08422299, 0.12822174, 0.08422299,
-    ... ]
-    ```
-    Returns
-    -------
-    Tuple[np.ndarray, np.ndarray]
-        A tuple of two numpy arrays. The first array contains the (x, y) offsets
-        of the kernel values. The second array contains the corresponding weights
-        of each kernel value.
-    """
-    offsets = np.array([
-        [ 1, -1], [ 1, 0], [ 1, 1],
-        [ 0, -1], [ 0, 0], [ 0, 1],
-        [-1, -1], [-1, 0], [-1, 1],
-    ])
-
-    weights = np.array([
-        0.08422299, 0.12822174, 0.08422299,
-        0.12822174, 0.1502211 , 0.12822174,
-        0.08422299, 0.12822174, 0.08422299,
-    ], dtype=np.float32)
-
-    return offsets, weights
-
-
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def _simple_unsharp_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Create a 2D unsharp kernel.
-
-    Returns
-    -------
-    Tuple[np.ndarray, np.ndarray]
-        A tuple of two numpy arrays. The first array contains the (x, y) offsets
-        of the kernel values. The second array contains the corresponding weights
-        of each kernel value.
-    """
-    offsets = np.array([
-        [ 1, -1], [ 1, 0], [ 1, 1],
-        [ 0, -1], [ 0, 0], [ 0, 1],
-        [-1, -1], [-1, 0], [-1, 1],
-    ])
-
-    weights = np.array([
-        -0.09911165, -0.15088834, -0.09911165,
-        -0.15088834,  2.        , -0.15088834,
-        -0.09911165, -0.15088834, -0.09911165,
-    ], dtype=np.float32)
-
-    return offsets, weights
-
-
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def _simple_shift_kernel_2d(
-    x_offset: float,
-    y_offset: float,
-) -> Tuple[np.ndarray, np.ndarray]:
-    """ Create a 2D shift kernel. For augmentations. """
-    return get_kernel_shift(x_offset, y_offset)

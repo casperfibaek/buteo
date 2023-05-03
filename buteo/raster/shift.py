@@ -16,7 +16,7 @@ import numpy as np
 from buteo.utils import utils_base, utils_gdal, utils_path
 from buteo.raster import core_raster
 from buteo.array.convolution import convolve_array_simple
-from buteo.array.convolution_kernels import get_kernel_shift
+from buteo.array.convolution_kernels import kernel_shift
 
 
 def _raster_shift(
@@ -167,7 +167,7 @@ def raster_shift(
     return shifted_rasters[0]
 
 
-def shift_raster_pixel(
+def raster_shift_pixel(
     raster: Union[str, gdal.Dataset],
     shift_list: List[Union[int, float]],
     out_path: Optional[str] = None,
@@ -197,7 +197,7 @@ def shift_raster_pixel(
 
     arr = core_raster.raster_to_array(raster)
 
-    offsets, weights = get_kernel_shift(shift_list[0], shift_list[1])
+    offsets, weights = kernel_shift(shift_list[0], shift_list[1])
 
     arr_float32 = arr.astype(np.float32)
 

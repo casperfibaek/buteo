@@ -12,6 +12,7 @@ import shutil
 from glob import glob
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
+from typing import List, Union, Optional
 
 import numpy as np
 
@@ -24,7 +25,10 @@ from buteo.vector import vector_to_metadata
 from buteo.utils.utils_gdal import _check_is_raster, _check_is_vector
 
 
-def _find_gpt(test_gpt_path):
+def _find_gpt(
+    test_gpt_path: str,
+) -> str:
+    """ Internal. """
     gpt = os.path.realpath(os.path.abspath(os.path.expanduser(test_gpt_path)))
     if not os.path.exists(gpt):
         possible_locations = [
@@ -48,12 +52,13 @@ def _find_gpt(test_gpt_path):
 
 
 def _backscatter_step1(
-    zip_file,
-    out_path,
-    gpt_path="~/snap/bin/gpt",
-    extent=None,
+    zip_file: str,
+    out_path: str,
+    gpt_path: str ="~/snap/bin/gpt",
+    extent: Optional[List[Union[int, float]]]=None,
     tmp_folder=None,
-):
+) -> str:
+    """ Internal. """
     graph = "backscatter_step1.xml"
 
     # Get absolute location of graph processing tool
@@ -111,13 +116,14 @@ def _backscatter_step1(
     return out_path_ext
 
 def _backscatter_step2(
-    dim_file,
-    out_path,
-    speckle_filter=False,
-    epsg=None,
-    gpt_path="~/snap/bin/gpt",
-    tmp_folder=None,
-):
+    dim_file: str,
+    out_path: str,
+    speckle_filter: bool = False,
+    epsg: Optional[int] = None,
+    gpt_path: str = "~/snap/bin/gpt",
+    tmp_folder: Optional[str] = None,
+) -> str:
+    """ Internal. """
     graph = "backscatter_step2.xml"
     if speckle_filter:
         graph = "backscatter_step2_speckle.xml"
@@ -178,12 +184,13 @@ def _backscatter_step2(
 
 
 def _convert_to_tiff(
-    dim_file,
-    out_folder,
-    decibel=False,
-    use_nodata=True,
-    nodata_value=-9999.0,
-):
+    dim_file: str,
+    out_folder: str,
+    decibel: bool = False,
+    use_nodata: bool = True,
+    nodata_value: Union[int, float] = -9999.0,
+) -> List[str]:
+    """ Internal. """
     data_folder = os.path.splitext(dim_file)[0] + ".data/"
     name = os.path.splitext(os.path.basename(dim_file))[0].replace("_step_2", "")
 
@@ -228,7 +235,10 @@ def _convert_to_tiff(
     return out_paths
 
 
-def _clear_tmp_folder(tmp_folder):
+def _clear_tmp_folder(
+    tmp_folder: str,
+) -> None:
+    """ Internal. """
     try:
         tmp_files = glob(tmp_folder + "*.dim")
         for f in tmp_files:
@@ -241,19 +251,62 @@ def _clear_tmp_folder(tmp_folder):
 
 
 def s1_backscatter(
-    zip_file,
-    out_path,
-    tmp_folder,
-    extent=None,
-    epsg=None,
-    use_nodata=True,
-    nodata_value=-9999.0,
-    speckle_filter=False,
-    decibel=False,
-    clean_tmp=False,
-    gpt_path="~/snap/bin/gpt",
+    zip_file: str,
+    out_path: str,
+    tmp_folder: str,
+    extent: Optional[List[Union[int, float]]] = None,
+    epsg: Optional[int] = None,
+    use_nodata: bool = True,
+    nodata_value: Union[int, float] = -9999.0,
+    speckle_filter: bool = False,
+    decibel: bool = False,
+    clean_tmp: bool = False,
+    gpt_path: str = "~/snap/bin/gpt",
 ):
-    """ Calculate backscatter from Sentinel-1 GRD data. """
+    """
+    Calculate backscatter from Sentinel-1 GRD data.
+    
+    Parameters
+    ----------
+    zip_file : str
+        Path to the Sentinel-1 zip file.
+
+    out_path : str
+        Path to the output folder.
+
+    tmp_folder : str
+        Path to the temporary folder.
+
+    extent : list, optional
+        The extent of the output raster in the format [xmin, xmax, ymin, ymax].
+        Default: None
+
+    epsg : int, optional
+        The EPSG code of the output raster. Default: None
+
+    use_nodata : bool, optional
+        If True, the output raster will have a nodata value. Default: True
+
+    nodata_value : int or float, optional
+        The nodata value of the output raster. Default: -9999.0
+
+    speckle_filter : bool, optional
+        If True, a speckle filter will be applied. Default: False
+
+    decibel : bool, optional
+        If True, the output raster will be in decibel. Default: False
+
+    clean_tmp : bool, optional
+        If True, the temporary files will be deleted after processing. Default: False
+
+    gpt_path : str, optional
+        Path to the GPT executable. Default: "~/snap/bin/gpt"
+
+    Returns
+    -------
+    list[str]
+        A list with the paths to the output rasters.
+    """
     base = os.path.splitext(os.path.splitext(os.path.basename(zip_file))[0])[0]
     name1 = base + "_step_1"
 

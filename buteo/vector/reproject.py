@@ -12,7 +12,7 @@ from typing import Union, Optional, List
 from osgeo import gdal, osr, ogr
 
 # Internal
-from buteo.utils import utils_gdal, utils_base, utils_path, utils_gdal_projection
+from buteo.utils import utils_gdal, utils_base, utils_path, utils_projection
 
 
 def _vector_reproject(
@@ -30,9 +30,9 @@ def _vector_reproject(
 
     # The input is already in the correct projection.
     if not copy_if_same:
-        original_projection = utils_gdal_projection.parse_projection(vector)
+        original_projection = utils_projection.parse_projection(vector)
 
-        if utils_gdal_projection._check_do_projections_match(original_projection, projection):
+        if utils_projection._check_projections_match(original_projection, projection):
             return utils_gdal._get_path_from_dataset(vector)
 
     in_path = utils_gdal._get_path_from_dataset(vector)
@@ -46,7 +46,7 @@ def _vector_reproject(
         )
 
     options = []
-    wkt = utils_gdal_projection.parse_projection(projection, return_wkt=True).replace(" ", "\\")
+    wkt = utils_projection.parse_projection(projection, return_wkt=True).replace(" ", "\\")
 
     options.append(f'-t_srs "{wkt}"')
 

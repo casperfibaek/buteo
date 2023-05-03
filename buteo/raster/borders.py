@@ -16,8 +16,13 @@ import numpy as np
 from osgeo import gdal
 
 # Internal
+from buteo.utils import (
+    utils_gdal,
+    utils_base,
+    utils_path,
+    utils_translate,
+)
 from buteo.raster import core_raster
-from buteo.utils import utils_gdal, utils_base, utils_gdal_translate, utils_path
 
 
 def _raster_add_border(
@@ -89,7 +94,7 @@ def _raster_add_border(
         new_shape[1],
         new_shape[0],
         metadata["band_count"],
-        utils_gdal_translate._translate_str_to_gdal_dtype(in_arr.dtype),
+        utils_translate._translate_str_to_gdal_dtype(in_arr.dtype),
         utils_gdal._get_default_creation_options(creation_options),
     )
 

@@ -5,7 +5,9 @@ These functions are used to interact with basic GDAL objects.
 """
 
 # Standard Library
-import sys; sys.path.append("../../")
+import sys
+
+from buteo.utils import utils_translate; sys.path.append("../../")
 from typing import Optional, Union, List, Any
 from warnings import warn
 import os
@@ -14,7 +16,7 @@ import os
 from osgeo import gdal, ogr
 
 # Internal
-from buteo.utils import utils_path, utils_gdal_translate, utils_aux, utils_base
+from buteo.utils import utils_path, utils_aux, utils_base
 
 
 
@@ -75,7 +77,7 @@ def _get_default_creation_options(
     return internal_options
 
 
-def _get_gdal_memory() -> list:
+def get_gdal_memory() -> list:
     """
     Get at list of all active memory layers in GDAL.
     
@@ -95,7 +97,7 @@ def _get_gdal_memory() -> list:
     return datasets
 
 
-def _clear_gdal_memory() -> None:
+def clear_gdal_memory() -> None:
     """
     Clears all gdal memory.
 
@@ -104,13 +106,13 @@ def _clear_gdal_memory() -> None:
     This function is not guaranteed to work.
     It is a best effort attempt to clear all gdal memory.
     """
-    memory = _get_gdal_memory()
+    memory = get_gdal_memory()
 
     for dataset in memory:
         gdal.Unlink(dataset)
 
-    if len(_get_gdal_memory()) != 0:
-        for dataset in _get_gdal_memory():
+    if len(get_gdal_memory()) != 0:
+        for dataset in get_gdal_memory():
             opened = None
 
             if _check_is_raster(dataset):
@@ -126,20 +128,11 @@ def _clear_gdal_memory() -> None:
             opened = None
             driver = None
 
-    if len(_get_gdal_memory()) != 0:
-        print("Failed to clear all GDAL memory.")
+    if len(get_gdal_memory()) != 0:
+        warn("Failed to clear all GDAL memory.", RuntimeWarning)
 
 
-def _print_gdal_memory() -> None:
-    """ Prints all gdal memory. """
-    memory = _get_gdal_memory()
-
-    for dataset in memory:
-        print(dataset)
-
-
-
-def _check_is_file_valid_dtype(file_path: str) -> bool:
+def _check_is_file_valid_ext(file_path: str) -> bool:
     """
     Check if a file path has a valid GDAL or OGR driver.
 
@@ -158,13 +151,13 @@ def _check_is_file_valid_dtype(file_path: str) -> bool:
 
     ext = utils_path._get_ext_from_path(file_path)
 
-    if ext in utils_gdal_translate._get_valid_driver_extensions():
+    if ext in utils_translate._get_valid_driver_extensions():
         return True
 
     return False
 
 
-def _check_is_valid_raster_dtype(file_path: str) -> bool:
+def _check_is_file_valid_raster_ext(file_path: str) -> bool:
     """
     Check if a file path has a valid GDAL driver.
 
@@ -183,13 +176,13 @@ def _check_is_valid_raster_dtype(file_path: str) -> bool:
 
     ext = utils_path._get_ext_from_path(file_path)
 
-    if ext in utils_gdal_translate._get_valid_raster_driver_extensions():
+    if ext in utils_translate._get_valid_raster_driver_extensions():
         return True
 
     return False
 
 
-def _check_is_valid_vector_dtype(file_path: str) -> bool:
+def _check_is_file_valid_vector_ext(file_path: str) -> bool:
     """
     Check if a file path has a valid OGR driver.
 
@@ -208,7 +201,7 @@ def _check_is_valid_vector_dtype(file_path: str) -> bool:
 
     ext = utils_path._get_ext_from_path(file_path)
 
-    if ext in utils_gdal_translate._get_valid_vector_driver_extensions():
+    if ext in utils_translate._get_valid_vector_driver_extensions():
         return True
 
     return False
@@ -233,8 +226,8 @@ def _get_driver_from_path(file_path: str) -> str:
 
     ext = utils_path._get_ext_from_path(file_path)
 
-    if _check_is_file_valid_dtype(ext):
-        return utils_gdal_translate._get_driver_shortname_from_ext(ext)
+    if _check_is_file_valid_ext(ext):
+        return utils_translate._get_driver_shortname_from_ext(ext)
 
     raise ValueError(f"Unable to parse GDAL or OGR driver from path: {file_path}")
 
@@ -258,8 +251,8 @@ def _get_vector_driver_from_path(file_path: str) -> str:
 
     ext = utils_path._get_ext_from_path(file_path)
 
-    if _check_is_valid_vector_dtype(file_path):
-        return utils_gdal_translate._get_raster_shortname_from_ext(ext)
+    if _check_is_file_valid_vector_ext(file_path):
+        return utils_translate._get_raster_shortname_from_ext(ext)
 
     raise ValueError(f"Unable to parse GDAL or OGR driver from path: {file_path}")
 
@@ -283,13 +276,13 @@ def _get_raster_driver_from_path(file_path: str) -> str:
 
     ext = utils_path._get_ext_from_path(file_path)
 
-    if _check_is_valid_raster_dtype(file_path):
-        return utils_gdal_translate._get_raster_shortname_from_ext(ext)
+    if _check_is_file_valid_raster_ext(file_path):
+        return utils_translate._get_raster_shortname_from_ext(ext)
 
     raise ValueError(f"Unable to parse GDAL or OGR driver from path: {file_path}")
 
 
-def _check_dataset_in_memory(
+def _check_is_dataset_in_memory(
     raster_or_vector: Union[str, gdal.Dataset, ogr.DataSource],
 ) -> bool:
     """
@@ -334,7 +327,7 @@ def _check_dataset_in_memory(
         raise TypeError("vector_or_raster must be a string, ogr.DataSource, or gdal.Dataset")
 
 
-def _delete_dataset_if_in_memory(
+def delete_dataset_if_in_memory(
     raster_or_vector: Union[str, gdal.Dataset, ogr.DataSource],
 ) -> bool:
     """
@@ -358,7 +351,7 @@ def _delete_dataset_if_in_memory(
     else:
         path = raster_or_vector
 
-    if _check_dataset_in_memory(raster_or_vector):
+    if _check_is_dataset_in_memory(raster_or_vector):
         if isinstance(raster_or_vector, str):
             gdal.Unlink(raster_or_vector)
         else:
@@ -367,14 +360,14 @@ def _delete_dataset_if_in_memory(
 
             gdal.Unlink(path)
 
-        datasets = _get_gdal_memory()
+        datasets = get_gdal_memory()
         if path not in datasets:
             return True
 
     return False
 
 
-def delete_if_in_memory_list(
+def delete_dataset_if_in_memory_list(
     list_of_raster_or_vectors: List[Union[str, gdal.Dataset, ogr.DataSource]],
 ) -> bool:
     """
@@ -397,7 +390,7 @@ def delete_if_in_memory_list(
 
     deleted = []
     for raster_or_vector in list_of_raster_or_vectors:
-        deleted.append(_delete_dataset_if_in_memory(raster_or_vector))
+        deleted.append(delete_dataset_if_in_memory(raster_or_vector))
 
     if all(deleted):
         return True
@@ -423,7 +416,7 @@ def _delete_raster_or_vector(
     """
     assert isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)), "raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource."
 
-    if _delete_dataset_if_in_memory(raster_or_vector):
+    if delete_dataset_if_in_memory(raster_or_vector):
         return True
 
     driver_shortname = _get_driver_from_path(raster_or_vector)
@@ -727,7 +720,6 @@ def _check_is_raster_or_vector_list(
     return True
 
 
-
 def _get_path_from_dataset(
     dataset: Union[str, gdal.Dataset, ogr.DataSource],
     dataset_type: Optional[bool] = None,
@@ -819,41 +811,6 @@ def _get_path_from_dataset_list(
         outputs.append(_get_path_from_dataset(dataset, dataset_type=dataset_type))
 
     return outputs
-
-
-def _get_vector_from_geom(geom: ogr.Geometry) -> ogr.DataSource:
-    """
-    Converts a geometry to a vector.
-
-    Parameters
-    ----------
-    geom : ogr.Geometry
-        The geometry to convert.
-
-    Returns
-    -------
-    ogr.DataSource
-    """
-    assert isinstance(geom, ogr.Geometry), "geom must be an ogr.Geometry."
-
-    path = utils_path._get_augmented_path(
-        "converted_geom.gpkg",
-        add_uuid=True,
-        folder="/vsimem/",
-    )
-
-    driver = ogr.GetDriverByName(_get_vector_driver_from_path(path))
-    vector = driver.CreateDataSource(path)
-
-    layer = vector.CreateLayer("converted_geom", geom.GetSpatialReference(), geom.GetGeometryType())
-
-    feature = ogr.Feature(layer.GetLayerDefn())
-    feature.SetGeometry(geom)
-
-    layer.CreateFeature(feature)
-    feature.Destroy()
-
-    return vector
 
 
 def _get_raster_size(
@@ -979,293 +936,3 @@ def _convert_to_band_list(
 
     return output_list
 
-
-# TODO: Verify this function, it looks funky.
-def save_dataset_to_disk(
-    dataset: Union[gdal.Dataset, ogr.DataSource, str],
-    out_path: Union[str, List[str]],
-    overwrite: bool = True,
-    creation_options: Optional[List[str]] = None,
-    prefix: str = "",
-    suffix: str = "",
-    add_uuid: bool = False,
-) -> Union[str, List[str]]:
-    """
-    Writes a dataset to disk. Can be a raster or a vector.
-
-    Parameters
-    ----------
-    dataset : Union[gdal.Dataset, ogr.DataSource, str]
-        The dataset to write to disk.
-
-    out_path : Union[str, List[str]]
-        The output path or list of output paths.
-    
-    overwrite : bool, optional
-        If True, the output will be overwritten if it already exists. Default: True.
-
-    creation_options : Optional[List[str]], optional
-        A list of creation options. Default: None.
-
-    prefix : str, optional
-        A prefix to add to the output path. Default: "".
-
-    suffix : str, optional
-        A suffix to add to the output path. Default: "".
-
-    add_uuid : bool, optional
-        If True, a UUID will be added to the output path. Default: False.
-
-    Returns
-    -------
-    Union[str, List[str]]
-        The output path or list of output paths.
-    """
-    datasets = utils_base._get_variable_as_list(dataset)
-    datasets_paths = _get_path_from_dataset_list(datasets, allow_mixed=True)
-    out_paths = utils_path._get_output_path_list(
-        datasets_paths,
-        out_path,
-        prefix=prefix,
-        suffix=suffix,
-        add_uuid=add_uuid,
-    )
-
-    options = None
-
-    for index, dataset_ in enumerate(datasets):
-        opened_dataset = None
-        dataset_type = None
-
-        if _check_is_raster(dataset_):
-            options = _get_default_creation_options(creation_options)
-            dataset_type = "raster"
-            if isinstance(dataset_, str):
-                opened_dataset = gdal.Open(dataset_, 0)
-            elif isinstance(dataset_, gdal.Dataset):
-                opened_dataset = dataset_
-            else:
-                raise RuntimeError(f"Could not read input raster: {dataset_}")
-
-        elif _check_is_vector(dataset_):
-            dataset_type = "vector"
-            if isinstance(dataset_, str):
-                opened_dataset = ogr.Open(dataset_, 0)
-            elif isinstance(dataset_, ogr.DataSource):
-                opened_dataset = dataset_
-            else:
-                raise RuntimeError(f"Could not read input vector: {dataset_}")
-
-        else:
-            raise RuntimeError(f"Invalid dataset type: {dataset_}")
-
-        driver_destination = None
-
-        if dataset_type == "raster":
-            driver_destination = gdal.GetDriverByName(_get_raster_driver_from_path(out_paths[index]))
-        else:
-            driver_destination = ogr.GetDriverByName(_get_vector_driver_from_path(out_paths[index]))
-
-        assert driver_destination is not None, "Could not get driver for output dataset."
-
-        utils_path._delete_if_required(out_paths[index], overwrite)
-
-        driver_destination.CreateCopy(
-            out_path[index],
-            opened_dataset,
-            options=options,
-        )
-
-    if isinstance(dataset, list):
-        return out_paths[0]
-
-    return out_paths
-
-
-def save_dataset_to_memory(
-    dataset: Union[gdal.Dataset, ogr.DataSource, str],
-    overwrite: bool = True,
-    creation_options: Optional[List[str]] = None,
-    prefix: str = "",
-    suffix: str = "",
-    add_uuid: bool = True,
-) -> Union[str, List[str]]:
-    """
-    Writes a dataset to memory. Can be a raster or a vector.
-
-    Parameters
-    ----------
-    dataset : Union[gdal.Dataset, ogr.DataSource, str]
-        The dataset to write to memory.
-
-    overwrite : bool, optional
-        If True, the output will be overwritten if it already exists. Default: True.
-
-    creation_options : Optional[List[str]], optional
-        A list of creation options. Default: None.
-
-    prefix : str, optional
-        A prefix to add to the output path. Default: "".
-
-    suffix : str, optional
-        A suffix to add to the output path. Default: "".
-
-    add_uuid : bool, optional
-        If True, a UUID will be added to the output path. Default: False.
-
-    Returns
-    -------
-    Union[str, List[str]]
-        The output path or list of output paths.
-    """
-    return save_dataset_to_disk(
-        dataset,
-        out_path=None,
-        overwrite=overwrite,
-        creation_options=creation_options,
-        prefix=prefix,
-        suffix=suffix,
-        add_uuid=add_uuid,
-    )
-
-
-def _parse_input_data(
-    input_data: Union[gdal.Dataset, ogr.DataSource, str, List[Union[gdal.Dataset, ogr.DataSource, str]]],
-    input_type: str,
-) -> List[str]:
-    """
-    Parses the input data to a list of paths.
-
-    Parameters
-    ----------
-    input_data : Union[gdal.Dataset, ogr.DataSource, str, List[Union[gdal.Dataset, ogr.DataSource, str]]]
-        The input data to parse.
-
-    input_type : str, optional
-        The input type. Can be "raster", "vector" or "mixed". Default: "mixed".
-
-    Returns
-    -------
-    List[str]
-        The list of paths.
-    """
-    assert input_type in ["raster", "vector", "mixed"], "Invalid input type."
-    assert isinstance(input_data, (gdal.Dataset, ogr.DataSource, str, list)), "Invalid type for input data."
-
-    if isinstance(input_data, str):
-        if utils_path._check_is_path_glob(input_data):
-            input_data = utils_path._get_paths_from_glob(input_data)
-        else:
-            input_data = utils_base._get_variable_as_list(input_data)
-
-    elif isinstance(input_data, (gdal.Dataset, ogr.DataSource)):
-        input_data = [input_data.GetDescription()]
-
-    # Input is list
-    elif isinstance(input_data, list):
-        if len(input_data) == 0:
-            raise ValueError("Input data cannot be empty.")
-
-        if not all([isinstance(val, (gdal.Dataset, ogr.DataSource, str)) for val in input_data]):
-            raise TypeError("Invalid type for input data.")
-
-        input_data = _get_path_from_dataset_list(input_data, allow_mixed=True)
-
-        if input_type == "mixed":
-            if not all([_check_is_file_valid_dtype(val) for val in input_data]):
-                raise TypeError("Invalid type for input data.")
-        elif input_type == "raster":
-            if not all([_check_is_raster(val) for val in input_data]):
-                raise TypeError("Invalid type for input data.")
-        elif input_type == "vector":
-            if not all([_check_is_vector(val) for val in input_data]):
-                raise TypeError("Invalid type for input data.")
-
-        input_data = [val.GetDescription() if isinstance(val, (gdal.Dataset, ogr.DataSource)) else val for val in input_data]
-
-    else:
-        raise TypeError("Invalid type for input data.")
-
-    if not utils_path._check_is_valid_filepath_list(input_data):
-        raise ValueError("Invalid input data.")
-
-    if input_type == "raster":
-        for val in input_data:
-            if not _check_is_raster(val):
-                raise TypeError("Invalid type for input data.")
-    elif input_type == "vector":
-        for val in input_data:
-            if not _check_is_vector(val):
-                raise TypeError("Invalid type for input data.")
-    else:
-        for val in input_data:
-            if not _check_is_raster_or_vector(val):
-                raise TypeError("Invalid type for input data.")
-
-    input_data = [utils_path._get_unix_path(path) for path in input_data]
-
-    return input_data
-
-
-def _parse_output_data(
-    input_data: Union[gdal.Dataset, ogr.DataSource, str, List[Union[gdal.Dataset, ogr.DataSource, str]]],
-    output_data: Optional[Union[str, List[str]]],
-    *,
-    prefix: str = "",
-    suffix: str = "",
-    add_uuid: bool = False,
-    overwrite: bool = True,
-    change_ext: Optional[str] = None,
-) -> List[str]:
-    """
-    Parses the output data to a list of paths.
-
-    Parameters
-    ----------
-    input_data : List[str]
-        The input data.
-
-    output_data : Optional[Union[str, List[str]]]
-        The output data.
-
-    prefix : str, optional
-        A prefix to add to the output path. Default: "".
-
-    suffix : str, optional
-        A suffix to add to the output path. Default: "".
-
-    add_uuid : bool, optional
-        If True, a UUID will be added to the output path. Default: False.
-
-    overwrite : bool, optional
-        If True, the output will be overwritten if it already exists. Default: True.
-
-    change_ext : str, optional
-        The extension to change to. Default: None.
-
-    Returns
-    -------
-    List[str]
-        The list of paths.
-    """
-    assert isinstance(input_data, (list, str, ogr.DataSource, gdal.Dataset)), "Invalid type for input data."
-    assert isinstance(output_data, (str, list, type(None))), "Invalid type for output data."
-    assert isinstance(prefix, str), "Invalid type for prefix."
-    assert isinstance(suffix, str), "Invalid type for suffix."
-    assert isinstance(add_uuid, bool), "Invalid type for add_uuid."
-    assert isinstance(overwrite, bool), "Invalid type for overwrite."
-    assert isinstance(change_ext, (str, type(None))), "Invalid type for change_ext."
-
-    input_data = _parse_input_data(input_data, "mixed")
-
-    output_data = utils_path._get_output_path_list(
-        input_data,
-        output_data,
-        prefix=prefix,
-        suffix=suffix,
-        add_uuid=add_uuid,
-        overwrite=overwrite,
-        change_ext=change_ext,
-    )
-
-    return output_data

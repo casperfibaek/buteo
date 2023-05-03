@@ -14,15 +14,15 @@ from buteo.array.convolution import (
     convolve_array,
 )
 from buteo.array.convolution_kernels import (
-    get_kernel,
-    get_offsets_and_weights,
+    kernel_base,
+    kernel_get_offsets_and_weights,
 )
 
 
 def test_get_kernel_simple():
     """ Test get_kernel() """
-    kernel = get_kernel(1)
-    offsets, weights = get_offsets_and_weights(kernel, remove_zero_weights=True)
+    kernel = kernel_base(1)
+    offsets, weights = kernel_get_offsets_and_weights(kernel, remove_zero_weights=True)
 
     assert kernel.shape == (3, 3)
     assert len(weights) > 0
@@ -33,8 +33,8 @@ def test_get_kernel_simple():
 
 def test_get_kernel_complex_1():
     """ Test get_kernel() 1 """
-    kernel = get_kernel(2)
-    offsets, weights = get_offsets_and_weights(kernel, remove_zero_weights=True)
+    kernel = kernel_base(2)
+    offsets, weights = kernel_get_offsets_and_weights(kernel, remove_zero_weights=True)
 
     assert kernel.shape == (5, 5)
     assert len(weights) > 0
@@ -66,8 +66,8 @@ def test_pad_array():
 def test_convolve_array_invalid_method():
     """ Test convolve_array() with invalid method """
     arr = np.random.rand(15, 15, 1).astype("float32")
-    kernel = get_kernel(3)
-    offsets, weights = get_offsets_and_weights(kernel, remove_zero_weights=True)
+    kernel = kernel_base(3)
+    offsets, weights = kernel_get_offsets_and_weights(kernel, remove_zero_weights=True)
 
     with pytest.raises(Exception):
         convolve_array(arr, offsets, weights, method=-1)
@@ -75,8 +75,8 @@ def test_convolve_array_invalid_method():
 def test_convolve_array_sum():
     """ Test convolve_array() with method=sum """
     arr = np.random.rand(15, 15, 1).astype("float32")
-    kernel = get_kernel(1, normalised=False, circular=True)
-    offsets, weights = get_offsets_and_weights(kernel, remove_zero_weights=True)
+    kernel = kernel_base(1, normalised=False, circular=True)
+    offsets, weights = kernel_get_offsets_and_weights(kernel, remove_zero_weights=True)
 
     result = convolve_array(arr, offsets, weights, method=1) # sum
 

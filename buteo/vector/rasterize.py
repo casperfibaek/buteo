@@ -8,7 +8,9 @@ TODO:
 """
 
 # Standard library
-import sys; sys.path.append("../../")
+import sys
+
+from buteo.utils import utils_translate; sys.path.append("../../")
 from typing import Union, Optional, List
 
 # External
@@ -18,7 +20,7 @@ import numpy as np
 # Internal
 from buteo.raster.reproject import raster_reproject
 from buteo.vector.reproject import vector_reproject
-from buteo.utils import utils_gdal, utils_gdal_translate, utils_path, utils_gdal_projection
+from buteo.utils import utils_gdal, utils_path, utils_projection
 from buteo.vector import core_vector
 from buteo.raster import core_raster
 
@@ -103,7 +105,7 @@ def vector_rasterize(
         )
 
     if projection is not None:
-        projection = utils_gdal_projection.parse_projection(projection)
+        projection = utils_projection.parse_projection(projection)
 
         vector_fn = vector_reproject(vector, projection)
 
@@ -163,7 +165,7 @@ def vector_rasterize(
             x_res,
             y_res,
             1,
-            utils_gdal_translate._translate_str_to_gdal_dtype(dtype),
+            utils_translate._translate_str_to_gdal_dtype(dtype),
         )
     finally:
         gdal.SetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")

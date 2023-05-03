@@ -12,7 +12,7 @@ from typing import Union, Optional, List
 from osgeo import ogr, gdal, osr
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_path, utils_gdal_projection
+from buteo.utils import utils_base, utils_gdal, utils_path, utils_projection
 from buteo.raster import core_raster
 from buteo.vector import core_vector
 from buteo.vector.reproject import _vector_reproject
@@ -60,7 +60,7 @@ def _vector_clip(
     clip_vector_reprojected = _vector_reproject(clip_vector_path, vector)
 
     if clear_memory:
-        utils_gdal._delete_dataset_if_in_memory(clip_vector_path)
+        utils_gdal.delete_dataset_if_in_memory(clip_vector_path)
 
     x_min, x_max, y_min, y_max = core_vector._vector_to_metadata(clip_vector_reprojected)["extent"]
 
@@ -77,7 +77,7 @@ def _vector_clip(
         options.append("-unsetFid")
 
     if target_projection is not None:
-        wkt = utils_gdal_projection.parse_projection(target_projection, return_wkt=True).replace(" ", "\\")
+        wkt = utils_projection.parse_projection(target_projection, return_wkt=True).replace(" ", "\\")
 
         options.append(f'-t_srs "{wkt}"')
 
@@ -89,7 +89,7 @@ def _vector_clip(
         options=" ".join(options),
     )
 
-    utils_gdal._delete_dataset_if_in_memory(clip_vector_reprojected)
+    utils_gdal.delete_dataset_if_in_memory(clip_vector_reprojected)
 
     if success != 0:
         return out_path

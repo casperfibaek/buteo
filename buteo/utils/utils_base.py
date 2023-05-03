@@ -45,6 +45,19 @@ def _get_unix_seconds_as_str() -> str:
     return str(int(time.time()))
 
 
+def _get_time_as_str() -> str:
+    """
+    Gets the current time as a string.
+    in the format: YYYYMMDD_HHMMSS
+
+    Returns
+    -------
+    str
+        The current time as a string.
+    """
+    return time.strftime("%Y%m%d_%H%M%S")
+
+
 def _check_variable_is_float(variable: Any) -> bool:
     """
     Check if a variable is a float.
@@ -171,7 +184,7 @@ def _ensure_negative(number: Union[int, float]) -> Union[int, float]:
     return -number
 
 
-def _check_recursive_iterable_or_type(potential_type: Any) -> bool:
+def _check_variable_is_iterable_or_type(potential_type: Any) -> bool:
     """
     Recursively check if a variable is a type, list, or tuple.
 
@@ -193,7 +206,7 @@ def _check_recursive_iterable_or_type(potential_type: Any) -> bool:
 
     if isinstance(potential_type, (list, tuple)):
         for item in potential_type:
-            if not _check_recursive_iterable_or_type(item):
+            if not _check_variable_is_iterable_or_type(item):
                 return False
         return True
 
@@ -240,7 +253,7 @@ def type_check(
         True if the type check passes, False otherwise.
     """
     assert isinstance(name, str), "name must be a string."
-    assert _check_recursive_iterable_or_type(types), f"types must be a type, list, None, or tuple. not: {types}"
+    assert _check_variable_is_iterable_or_type(types), f"types must be a type, list, None, or tuple. not: {types}"
 
     if not isinstance(types, (list, tuple)):
         types = [types]
@@ -308,3 +321,30 @@ def type_check(
         )
 
     return False
+
+
+def _check_number_is_within_threshold(number, target, threshold):
+    """
+    Check if a number is within a threshold of a target.
+
+    Parameters
+    ----------
+    number : float
+        The number to check.
+
+    target : float
+        The target number.
+
+    threshold : float
+        The threshold.
+
+    Returns
+    -------
+    bool
+        True if the number is within the threshold of the target, False otherwise.
+    """
+    assert isinstance(number, (int, float)), "number must be a number."
+    assert isinstance(target, (int, float)), "target must be a number."
+    assert isinstance(threshold, (int, float)), "threshold must be a number."
+
+    return abs(number - target) <= threshold

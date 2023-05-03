@@ -19,8 +19,8 @@ from buteo.utils import (
     utils_gdal,
     utils_base,
     utils_bbox,
-    utils_gdal_translate,
-    utils_gdal_projection,
+    utils_translate,
+    utils_projection,
 )
 
 from buteo.raster import core_raster
@@ -91,13 +91,13 @@ def raster_align_to_reference(
     utils_base.type_check(suffix, [str], "suffix")
     utils_base.type_check(ram, [int, str], "ram")
 
-    rasters_list = utils_gdal._parse_input_data(rasters, "raster")
+    rasters_list = utils_io._get_input_paths(rasters, "raster")
 
     assert utils_gdal._check_is_raster_or_vector(reference), "Reference must be a raster or vector."
 
     # Verify that all of the rasters overlap the reference
     for raster in rasters_list:
-        assert core_raster.check_do_rasters_intersect(raster, reference), (
+        assert core_raster.check_rasters_intersect(raster, reference), (
             f"Raster: {utils_gdal._get_path_from_dataset(raster)} does not intersect reference."
         )
 
@@ -132,7 +132,7 @@ def raster_align_to_reference(
 
         raster_reprojected = None
         raster_projection = raster_metadata["projection_osr"]
-        if not utils_gdal_projection._check_do_projections_match(raster_projection, target_projection):
+        if not utils_projection._check_projections_match(raster_projection, target_projection):
             raster_reprojected = raster_reproject(
                 raster_path,
                 target_projection,
@@ -164,7 +164,7 @@ def raster_align_to_reference(
         destination_ds = core_raster.raster_open(destination_ds)
 
         warp_options = gdal.WarpOptions(
-            resampleAlg=utils_gdal_translate._translate_resample_method(resample_alg),
+            resampleAlg=utils_translate._translate_resample_method(resample_alg),
             multithread=True,
             outputBounds=utils_bbox._get_gdal_bbox_from_ogr_bbox(reference_bbox),
             warpMemoryLimit=utils_gdal._get_gdalwarp_ram_limit(ram),
@@ -173,7 +173,7 @@ def raster_align_to_reference(
         warped = gdal.Warp(destination_ds, raster_ds, options=warp_options)
 
         if raster_reprojected is not None:
-            utils_gdal._delete_dataset_if_in_memory(raster_reprojected)
+            utils_gdal.delete_dataset_if_in_memory(raster_reprojected)
 
         destination_ds.FlushCache()
         destination_ds = None
@@ -208,7 +208,7 @@ def raster_find_best_align_reference(
     utils_base.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
     utils_base.type_check(method, [str], "method")
 
-    rasters_list = utils_gdal._parse_input_data(rasters, "raster")
+    rasters_list = utils_io._get_input_paths(rasters, "raster")
     assert method in ["reference", "intersection", "union"], (
         f"Invalid bounding_box: {method}. Options include: reference, intersection, and union."
     )
@@ -228,7 +228,7 @@ def raster_find_best_align_reference(
                 continue
 
             # Uses the latlng bounding box to determine if the rasters intersect.
-            intersection = core_raster.check_do_rasters_intersect(raster_i, raster_j)
+            intersection = core_raster.check_rasters_intersect(raster_i, raster_j)
 
             if intersection:
                 intersections += 1
@@ -265,7 +265,7 @@ def raster_find_best_align_reference(
         all_other_rasters.append(raster_path)
 
     for raster in all_other_rasters:
-        assert core_raster.check_do_rasters_intersect(best_reference, raster), (
+        assert core_raster.check_rasters_intersect(best_reference, raster), (
             f"Rasters {best_reference} and {raster} do not intersect."
         )
 
@@ -299,7 +299,7 @@ def raster_find_best_align_reference(
 
     for raster_path in matched_rasters:
         if raster_path not in input_path_list:
-            utils_gdal._delete_dataset_if_in_memory(raster_path)
+            utils_gdal.delete_dataset_if_in_memory(raster_path)
 
     outbox_bbox = utils_bbox._get_aligned_bbox_to_pixel_size(
         best_reference_meta["bbox"],
@@ -397,7 +397,7 @@ def raster_align(
     utils_base.type_check(suffix, [str], "suffix")
     utils_base.type_check(ram, [int, str], "ram")
 
-    raster_list = utils_gdal._parse_input_data(rasters, "raster")
+    raster_list = utils_io._get_input_paths(rasters, "raster")
     assert method in ["reference", "intersection", "union"], "method must be one of reference, intersection, or union."
 
     path_list = utils_gdal._parse_output_data(

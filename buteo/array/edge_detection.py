@@ -11,10 +11,10 @@ import numpy as np
 
 # Internal
 from buteo.array.convolution import convolve_array, pad_array
-from buteo.array.convolution_kernels import get_kernel_sobel, get_offsets_and_weights
+from buteo.array.convolution_kernels import kernel_sobel, kernel_get_offsets_and_weights
 
 
-def edge_detection(
+def filter_edge_detection(
     arr: np.ndarray,
     radius: Union[int, float] = 1,
     scale: Union[int, float] = 1,
@@ -57,10 +57,10 @@ def edge_detection(
         nodata = False
         nodata_value = 0.0
 
-    kernel_gx, kernel_gy = get_kernel_sobel(radius, scale)
+    kernel_gx, kernel_gy = kernel_sobel(radius, scale)
 
-    offsets_gx, weights_gx = get_offsets_and_weights(kernel_gx)
-    offsets_gy, weights_gy = get_offsets_and_weights(kernel_gy)
+    offsets_gx, weights_gx = kernel_get_offsets_and_weights(kernel_gx)
+    offsets_gy, weights_gy = kernel_get_offsets_and_weights(kernel_gy)
 
     pad_size = kernel_gx.shape[0] // 2
     padded = pad_array(arr, pad_size)

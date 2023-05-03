@@ -140,7 +140,7 @@ def _vector_to_metadata(
 
     driver = vector_driver.GetName()
 
-    in_memory = utils_gdal._check_dataset_in_memory(datasource)
+    in_memory = utils_gdal._check_is_dataset_in_memory(datasource)
 
     layer_count = datasource.GetLayerCount()
     layers = []

@@ -81,7 +81,7 @@
 </span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a><span class="c1"># Internal</span>
 </span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="kn">from</span> <span class="nn">buteo.raster</span> <span class="kn">import</span> <span class="n">raster_to_array</span><span class="p">,</span> <span class="n">array_to_raster</span>
 </span><span id="L-14"><a href="#L-14"><span class="linenos"> 14</span></a><span class="kn">from</span> <span class="nn">buteo.utils.utils_base</span> <span class="kn">import</span> <span class="n">type_check</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos"> 15</span></a><span class="kn">from</span> <span class="nn">buteo.utils.utils_gdal</span> <span class="kn">import</span> <span class="n">_get_default_creation_options</span><span class="p">,</span> <span class="n">_delete_dataset_if_in_memory</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos"> 15</span></a><span class="kn">from</span> <span class="nn">buteo.utils.utils_gdal</span> <span class="kn">import</span> <span class="n">_get_default_creation_options</span><span class="p">,</span> <span class="n">delete_dataset_if_in_memory</span>
 </span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a>
 </span><span id="L-17"><a href="#L-17"><span class="linenos"> 17</span></a>
 </span><span id="L-18"><a href="#L-18"><span class="linenos"> 18</span></a><span class="k">def</span> <span class="nf">raster_dem_to_slope</span><span class="p">(</span>
@@ -278,8 +278,8 @@
 </span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a>    <span class="n">aspect</span> <span class="o">=</span> <span class="n">raster_to_array</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">)</span>
 </span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a>    <span class="n">slope</span> <span class="o">=</span> <span class="n">raster_to_array</span><span class="p">(</span><span class="n">tmp_slope</span><span class="p">)</span>
 </span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a>
-</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a>    <span class="n">_delete_dataset_if_in_memory</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">)</span>
-</span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a>    <span class="n">_delete_dataset_if_in_memory</span><span class="p">(</span><span class="n">tmp_slope</span><span class="p">)</span>
+</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a>    <span class="n">delete_dataset_if_in_memory</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">)</span>
+</span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a>    <span class="n">delete_dataset_if_in_memory</span><span class="p">(</span><span class="n">tmp_slope</span><span class="p">)</span>
 </span><span id="L-214"><a href="#L-214"><span class="linenos">214</span></a>
 </span><span id="L-215"><a href="#L-215"><span class="linenos">215</span></a>    <span class="k">if</span> <span class="n">include_height</span><span class="p">:</span>
 </span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a>        <span class="n">dem</span> <span class="o">=</span> <span class="n">raster_to_array</span><span class="p">(</span><span class="n">input_raster</span><span class="p">)</span>
@@ -626,8 +626,8 @@ Z factor for hillshade calculation, by default 1.0.</li>
 </span><span id="raster_dem_to_orientation-210"><a href="#raster_dem_to_orientation-210"><span class="linenos">210</span></a>    <span class="n">aspect</span> <span class="o">=</span> <span class="n">raster_to_array</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">)</span>
 </span><span id="raster_dem_to_orientation-211"><a href="#raster_dem_to_orientation-211"><span class="linenos">211</span></a>    <span class="n">slope</span> <span class="o">=</span> <span class="n">raster_to_array</span><span class="p">(</span><span class="n">tmp_slope</span><span class="p">)</span>
 </span><span id="raster_dem_to_orientation-212"><a href="#raster_dem_to_orientation-212"><span class="linenos">212</span></a>
-</span><span id="raster_dem_to_orientation-213"><a href="#raster_dem_to_orientation-213"><span class="linenos">213</span></a>    <span class="n">_delete_dataset_if_in_memory</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">)</span>
-</span><span id="raster_dem_to_orientation-214"><a href="#raster_dem_to_orientation-214"><span class="linenos">214</span></a>    <span class="n">_delete_dataset_if_in_memory</span><span class="p">(</span><span class="n">tmp_slope</span><span class="p">)</span>
+</span><span id="raster_dem_to_orientation-213"><a href="#raster_dem_to_orientation-213"><span class="linenos">213</span></a>    <span class="n">delete_dataset_if_in_memory</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">)</span>
+</span><span id="raster_dem_to_orientation-214"><a href="#raster_dem_to_orientation-214"><span class="linenos">214</span></a>    <span class="n">delete_dataset_if_in_memory</span><span class="p">(</span><span class="n">tmp_slope</span><span class="p">)</span>
 </span><span id="raster_dem_to_orientation-215"><a href="#raster_dem_to_orientation-215"><span class="linenos">215</span></a>
 </span><span id="raster_dem_to_orientation-216"><a href="#raster_dem_to_orientation-216"><span class="linenos">216</span></a>    <span class="k">if</span> <span class="n">include_height</span><span class="p">:</span>
 </span><span id="raster_dem_to_orientation-217"><a href="#raster_dem_to_orientation-217"><span class="linenos">217</span></a>        <span class="n">dem</span> <span class="o">=</span> <span class="n">raster_to_array</span><span class="p">(</span><span class="n">input_raster</span><span class="p">)</span>

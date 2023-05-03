@@ -726,6 +726,7 @@ def array_to_patches(
     return patches
 
 
+# TODO: Add support for multiple input values in the rasters/arrays
 def predict_array(
     arr: np.ndarray,
     callback: Callable[[np.ndarray], np.ndarray],

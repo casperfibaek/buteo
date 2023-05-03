@@ -16,9 +16,9 @@ from osgeo import gdal, ogr, osr
 from buteo.utils import (
     utils_base,
     utils_gdal,
-    utils_gdal_translate,
-    utils_gdal_projection,
     utils_path,
+    utils_projection,
+    utils_translate,
 )
 from buteo.raster import core_raster
 
@@ -50,7 +50,7 @@ def _find_common_projection(
     assert utils_gdal._check_is_raster_list(rasters), "rasters must be a list of rasters."
 
     # Get the projection of each raster
-    projections = [utils_gdal_projection.parse_projection(raster) for raster in rasters]
+    projections = [utils_projection.parse_projection(raster) for raster in rasters]
 
     # Get the most common projection
     common_projection = max(set(projections), key=projections.count)
@@ -90,8 +90,8 @@ def _raster_reproject(
 
     out_format = utils_gdal._get_raster_driver_from_path(out_path)
 
-    original_projection = utils_gdal_projection.parse_projection(ref)
-    target_projection = utils_gdal_projection.parse_projection(projection)
+    original_projection = utils_projection.parse_projection(ref)
+    target_projection = utils_projection.parse_projection(projection)
 
     if not isinstance(original_projection, osr.SpatialReference):
         raise RuntimeError("Error while parsing input projection.")
@@ -100,7 +100,7 @@ def _raster_reproject(
         raise RuntimeError("Error while parsing target projection.")
 
     # The input is already in the correct projection.
-    if not copy_if_same and utils_gdal_projection._check_do_projections_match(original_projection, target_projection):
+    if not copy_if_same and utils_projection._check_projections_match(original_projection, target_projection):
         return utils_gdal._get_path_from_dataset(ref)
 
     src_nodata = metadata["nodata_value"]
@@ -122,8 +122,8 @@ def _raster_reproject(
         format=out_format,
         srcSRS=original_projection,
         dstSRS=target_projection,
-        resampleAlg=utils_gdal_translate._translate_resample_method(resample_alg),
-        outputType=utils_gdal_translate._translate_str_to_gdal_dtype(dtype),
+        resampleAlg=utils_translate._translate_resample_method(resample_alg),
+        outputType=utils_translate._translate_str_to_gdal_dtype(dtype),
         creationOptions=utils_gdal._get_default_creation_options(creation_options),
         srcNodata=src_nodata,
         dstNodata=out_nodata,
@@ -308,7 +308,7 @@ def raster_match_projections(
     assert utils_gdal._check_is_raster_list(rasters), "rasters must be a list of rasters."
 
     try:
-        target_projection = utils_gdal_projection.parse_projection(reference)
+        target_projection = utils_projection.parse_projection(reference)
     except Exception:
         raise ValueError(f"Unable to parse projection from master. Received: {reference}") from None
 

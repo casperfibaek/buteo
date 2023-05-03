@@ -5,6 +5,7 @@ Functions that make interacting with the toolbox easier.
 """
 
 # Standard Library
+import sys; sys.path.append("../../")
 import os
 import shutil
 import fnmatch
@@ -15,6 +16,10 @@ from warnings import warn
 
 # External
 from osgeo import gdal
+
+# Internal
+from buteo.utils import utils_base
+
 
 
 def _get_vsimem_content(
@@ -812,142 +817,6 @@ def _get_changed_folder(
     return unix_path
 
 
-def _get_augmented_path(
-    path: str,
-    prefix: str = "",
-    suffix: str = "",
-    change_ext: Optional[str] = None,
-    folder: Optional[str] = None,
-    add_uuid: bool = False,
-) -> str:
-    """
-    Augments a path with a prefix, suffix, and uuid.
-    Can also change the output directory.
-
-    Parameters
-    ----------
-    path: str
-        The path to the original file.
-
-    prefix: str
-        The prefix to add to the path. Default: "".
-
-    suffix: str
-        The suffix to add to the path. Default: "".
-
-    change_ext: str. Optional.
-        The extension to change the file to. Default: None.
-
-    add_uuid: bool
-        If True, add a uuid the path. Default: False.
-
-    folder: str. Optional.
-        The folder to save the file in. This can be specified as
-        /vsimem/ to save the file in memory. Default: None.
-
-    Returns
-    -------
-    str
-        The augmented path.
-    """
-    assert isinstance(path, str), "path must be a string."
-    assert isinstance(prefix, str), "prefix must be a string."
-    assert isinstance(suffix, str), "suffix must be a string."
-    assert isinstance(add_uuid, bool), "add_uuid must be a bool."
-    assert folder is None or isinstance(folder, str), "folder must be a string."
-    assert change_ext is None or isinstance(change_ext, str), "change_ext must be a string."
-    assert len(path) > 0, "path must not be non-empty string."
-
-    # Find the target folder
-    target_folder = _get_dir_from_path(path)
-    if folder is not None:
-        assert len(folder) > 0, "folder must not be non-empty string."
-        target_folder = _get_dir_from_path(folder)
-
-    # Find the target extension
-    ext = _get_ext_from_path(path)
-    if change_ext is not None:
-        assert len(change_ext) > 0, "change_ext must not be non-empty string."
-        ext = ext.lstrip(".").lower()
-
-    filename = _get_filename_from_path(path, with_ext=False)
-
-    if add_uuid:
-        uuid = "_" + str(uuid4().int)
-    else:
-        uuid = ""
-
-    augmented_filename = f"{prefix}{filename}{uuid}{suffix}.{ext}"
-    augmented_path = os.path.join(target_folder, augmented_filename)
-
-    augmented_path = _get_unix_path(augmented_path)
-
-    return augmented_path
-
-
-def _get_augmented_path_list(
-    path_list: List[str],
-    prefix: str = "",
-    suffix: str = "",
-    change_ext: Optional[str] = None,
-    folder: Optional[str] = None,
-    add_uuid: bool = False,
-) -> List[str]:
-    """
-    Augments a list of paths with a prefix, suffix, and uuid.
-    Can also change the output directory.
-
-    Parameters
-    ----------
-    path_list: list[str]
-        The list of paths to the original files.
-
-    prefix: str
-        The prefix to add to the path. Default: "".
-
-    suffix: str
-        The suffix to add to the path. Default: "".
-
-    change_ext: str. Optional.
-        The extension to change the file to. Default: None.
-
-    folder: str. Optional.
-        The folder to save the file in. This can be specified as
-        /vsimem/ to save the file in memory.
-
-    add_uuid: bool
-        If True, add a uuid the path. Default: False.
-
-    Returns
-    -------
-    list[str]
-        The augmented paths.
-    """
-    assert isinstance(path_list, list), "path_list must be a list."
-    assert len(path_list) > 0, "path_list must not be empty."
-    assert isinstance(prefix, str), "prefix must be a string."
-    assert isinstance(suffix, str), "suffix must be a string."
-    assert isinstance(add_uuid, bool), "add_uuid must be a bool."
-    assert change_ext is None or isinstance(change_ext, str), "change_ext must be a string."
-    assert folder is None or isinstance(folder, str), "folder must be a string."
-    assert change_ext is None or isinstance(change_ext, str), "change_ext must be a string."
-
-    augmented_path_list = []
-    for path in path_list:
-        augmented_path_list.append(
-            _get_augmented_path(
-                path,
-                prefix=prefix,
-                suffix=suffix,
-                change_ext=change_ext,
-                folder=folder,
-                add_uuid=add_uuid,
-            )
-        )
-
-    return augmented_path_list
-
-
 def _check_is_path_glob(path: str) -> bool:
     """
     Check if a path is a glob.
@@ -997,192 +866,152 @@ def _get_paths_from_glob(path: str) -> List[str]:
     return glob(pre_glob)
 
 
-def _get_output_path(
-    input_path: str,
-    output_path: Optional[str] = None,
+def _get_augmented_path(
+    path: str,
     prefix: str = "",
     suffix: str = "",
     change_ext: Optional[str] = None,
-    overwrite: bool = True,
+    folder: Optional[str] = None,
     add_uuid: bool = False,
+    add_timestamp: bool = False,
 ) -> str:
     """
-    Get the output path for a file using the input path and the output path.
-    The output path can be None, in which case the created path will be in memory.
-    Augmentations can be made to the output.
+    Augments a path with a prefix, suffix, and uuid.
+    Can also change the output directory.
+
+    `{prefix}{filename}{uuid}{timestamp}{suffix}.{ext}`
 
     Parameters
     ----------
-    input_path: str
-        The path to the input file.
+    path: str
+        The path to the original file.
 
-    output_path: str or None. Optional.
-        The path to the output file. If None, the output will be in memory.
-        Default: None.
-
-    prefix: str. Optional.
+    prefix: str
         The prefix to add to the path. Default: "".
 
-    suffix: str. Optional.
+    suffix: str
         The suffix to add to the path. Default: "".
 
     change_ext: str. Optional.
         The extension to change the file to. Default: None.
 
-    overwrite: bool. Optional.
-        If True, if the output path exists and overwrite is False, an error will be thrown.
-        Default: True.
-
-    add_uuid: bool. Optional.
+    add_uuid: bool
         If True, add a uuid the path. Default: False.
+
+    add_timestamp: bool
+        If True, add a timestamp to the path. Default: False.
+        Format: YYYYMMDD_HHMMSS.
+
+    folder: str. Optional.
+        The folder to save the file in. This can be specified as
+        /vsimem/ to save the file in memory. Default: None.
 
     Returns
     -------
     str
-        The output path.
+        The augmented path.
     """
-    assert isinstance(input_path, str), "input_paths must be a string."
-    assert len(input_path) > 0, "input_paths must not be non-empty string."
+    assert isinstance(path, str), "path must be a string."
     assert isinstance(prefix, str), "prefix must be a string."
     assert isinstance(suffix, str), "suffix must be a string."
-    assert isinstance(overwrite, bool), "overwrite must be a bool."
     assert isinstance(add_uuid, bool), "add_uuid must be a bool."
+    assert folder is None or isinstance(folder, str), "folder must be a string."
     assert change_ext is None or isinstance(change_ext, str), "change_ext must be a string."
-    assert output_path is None or isinstance(output_path, str), "output_paths must be a string."
-    assert output_path is None or len(output_path) > 0, "output_paths must not be non-empty string."
+    assert len(path) > 0, "path must not be non-empty string."
 
-    input_path = _get_unix_path(input_path)
+    # Find the target folder
+    target_folder = _get_dir_from_path(path)
+    if folder is not None:
+        assert len(folder) > 0, "folder must not be non-empty string."
+        target_folder = _get_dir_from_path(folder)
 
-    if output_path is not None:
+    # Find the target extension
+    ext = _get_ext_from_path(path)
+    if change_ext is not None:
+        assert len(change_ext) > 0, "change_ext must not be non-empty string."
+        ext = ext.lstrip(".").lower()
 
-        # It is a folder
-        if _check_dir_exists(output_path):
-            output_path = _get_augmented_path(
-                input_path,
-                prefix=prefix,
-                suffix=suffix,
-                change_ext=change_ext,
-                folder=output_path,
-                add_uuid=add_uuid,
-            )
-            if _check_is_valid_output_filepath(output_path, overwrite=overwrite):
-                output_path = _get_unix_path(output_path)
-                return output_path
-            else:
-                raise ValueError(f"output_path {output_path} is not a valid filepath.")
+    filename = _get_filename_from_path(path, with_ext=False)
 
-        # It is a path
-        if _check_is_valid_output_filepath(output_path, overwrite=overwrite):
-            return output_path
-        else:
-            raise ValueError(f"output_path {output_path} is not a valid filepath.")
+    if add_uuid:
+        uuid = "_" + str(uuid4().int)
+    else:
+        uuid = ""
 
-    output_path = _get_augmented_path(
-        input_path,
-        prefix=prefix,
-        suffix=suffix,
-        add_uuid=add_uuid,
-        change_ext=change_ext,
-        folder="/vsimem/"
-    )
+    if add_timestamp:
+        timestamp = "_" + utils_base._get_time_as_str()
+    else:
+        timestamp = ""
 
-    return output_path
+    augmented_filename = f"{prefix}{filename}{uuid}{timestamp}{suffix}.{ext}"
+    augmented_path = os.path.join(target_folder, augmented_filename)
+
+    augmented_path = _get_unix_path(augmented_path)
+
+    return augmented_path
 
 
-def _get_output_path_list(
-    input_path_list: List[str],
-    output_path_list: Optional[Union[List[str], str]] = None,
+def _get_augmented_path_list(
+    path_list: List[str],
     prefix: str = "",
     suffix: str = "",
     change_ext: Optional[str] = None,
-    overwrite: bool = True,
+    folder: Optional[str] = None,
     add_uuid: bool = False,
+    add_timestamp: bool = False,
 ) -> List[str]:
     """
-    Get the output path for a list of files using the input path and the output path.
+    Augments a list of paths with a prefix, suffix, and uuid.
+    Can also change the output directory.
 
     Parameters
     ----------
-    input_path_list: list[str]
-        The list of paths to the input files.
+    path_list: list[str]
+        The list of paths to the original files.
 
-    output_path_list: list[str] or str or None. Optional.
-        The list of paths to the output files. If None, the output will be in memory.
-        Can also be a single string, in which case it will be interpreted as a folder.
-        Default: None.
-
-    prefix: str. Optional.
+    prefix: str
         The prefix to add to the path. Default: "".
 
-    suffix: str. Optional.
+    suffix: str
         The suffix to add to the path. Default: "".
 
     change_ext: str. Optional.
         The extension to change the file to. Default: None.
 
-    overwrite: bool. Optional.
-        If True, if the output path exists and overwrite is False, an error will be thrown.
-        Default: True.
+    folder: str. Optional.
+        The folder to save the file in. This can be specified as
+        /vsimem/ to save the file in memory.
 
-    add_uuid: bool. Optional.
+    add_uuid: bool
         If True, add a uuid the path. Default: False.
 
     Returns
     -------
     list[str]
-        The list of output paths.
+        The augmented paths.
     """
-    assert isinstance(input_path_list, list), "input_paths must be a list."
-    assert len(input_path_list) > 0, "input_paths must not be empty."
+    assert isinstance(path_list, list), "path_list must be a list."
+    assert len(path_list) > 0, "path_list must not be empty."
     assert isinstance(prefix, str), "prefix must be a string."
     assert isinstance(suffix, str), "suffix must be a string."
-    assert isinstance(overwrite, bool), "overwrite must be a bool."
     assert isinstance(add_uuid, bool), "add_uuid must be a bool."
-    assert output_path_list is None or isinstance(output_path_list, (list, str)), "output_paths must be a list or string."
-    assert output_path_list is None or len(output_path_list) > 0, "output_paths must not be non-empty."
     assert change_ext is None or isinstance(change_ext, str), "change_ext must be a string."
+    assert folder is None or isinstance(folder, str), "folder must be a string."
+    assert change_ext is None or isinstance(change_ext, str), "change_ext must be a string."
+    assert isinstance(add_timestamp, bool), "add_timestamp must be a bool."
 
-    input_path_list = _get_unix_path(input_path_list)
-
-    # Must be a folder
-    if output_path_list is not None and isinstance(output_path_list, str):
-        if not _check_dir_exists(output_path_list):
-            raise ValueError(f"output_path_list {output_path_list} is not a valid folder.")
-
-        output_path_list = _get_augmented_path_list(
-            input_path_list,
-            prefix=prefix,
-            suffix=suffix,
-            add_uuid=add_uuid,
-            change_ext=change_ext,
-            folder=output_path_list,
+    augmented_path_list = []
+    for path in path_list:
+        augmented_path_list.append(
+            _get_augmented_path(
+                path,
+                prefix=prefix,
+                suffix=suffix,
+                change_ext=change_ext,
+                folder=folder,
+                add_uuid=add_uuid,
+                add_timestamp=add_timestamp,
+            )
         )
 
-    # Must be a list
-    elif output_path_list is not None and isinstance(output_path_list, list):
-        assert len(input_path_list) == len(output_path_list), "input_paths and output_paths must be the same length."
-
-        output_path_list = _get_augmented_path_list(
-            output_path_list,
-            prefix=prefix,
-            suffix=suffix,
-            add_uuid=add_uuid,
-            change_ext=change_ext,
-        )
-
-    # Must be None - Memory files will be used
-    else:
-        output_path_list = _get_augmented_path_list(
-            input_path_list,
-            prefix=prefix,
-            suffix=suffix,
-            add_uuid=add_uuid,
-            change_ext=change_ext,
-            folder="/vsimem/",
-        )
-
-    for output_path in output_path_list:
-        if not _check_is_valid_output_filepath(output_path, overwrite=overwrite):
-            raise ValueError(f"output_path {output_path} is not a valid filepath.")
-
-    return output_path_list
+    return augmented_path_list

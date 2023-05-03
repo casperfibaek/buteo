@@ -19,8 +19,8 @@ from osgeo import gdal
 from buteo.utils import (
     utils_base,
     utils_gdal,
-    utils_gdal_translate,
     utils_path,
+    utils_translate,
 )
 from buteo.raster import core_raster
 
@@ -198,7 +198,7 @@ def raster_set_nodata(
             raster_metadata = rasters_metadata[index]
 
         if dst_nodata == "infer":
-            internal_dst_nodata = utils_gdal_translate._translate_gdal_dtype_to_str(
+            internal_dst_nodata = utils_translate._translate_gdal_dtype_to_str(
                 raster_metadata["dtype_gdal_raw"]
             )
         elif isinstance(dst_nodata, list):
@@ -398,7 +398,7 @@ def raster_mask_values(
             raster_metadata = rasters_metadata[index]
 
         if dst_nodata == "infer":
-            internal_dst_nodata = utils_gdal_translate._translate_gdal_dtype_to_str(
+            internal_dst_nodata = utils_translate._translate_gdal_dtype_to_str(
                 raster_metadata["dtype_gdal_raw"]
             )
         elif isinstance(dst_nodata, list):

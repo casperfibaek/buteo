@@ -12,7 +12,7 @@ import pytest
 from buteo.ai.selection import (
     split_train_val,
     split_train_val_test,
-    stratified_sampling,
+    sampling_stratified,
 )
 
 
@@ -156,7 +156,7 @@ def test_stratified_sampling_classification():
     X = np.random.random((100, 4))
     y = np.random.randint(0, 3, 100)
 
-    X_strat, y_strat = stratified_sampling(X, y, regression=False, samples_per_class=10)
+    X_strat, y_strat = sampling_stratified(X, y, regression=False, samples_per_class=10)
 
     assert X_strat.shape == (30, 4)
     assert y_strat.shape == (30,)
@@ -170,7 +170,7 @@ def test_stratified_sampling_regression():
     X = np.random.random((100, 4))
     y = np.random.random(100)
 
-    X_strat, y_strat = stratified_sampling(X, y, regression=True, samples_per_class=5)
+    X_strat, y_strat = sampling_stratified(X, y, regression=True, samples_per_class=5)
 
     assert X_strat.shape == (50, 4)
     assert y_strat.shape == (50,)
@@ -182,19 +182,19 @@ def test_stratified_sampling_input_validation():
     y = np.random.randint(0, 2, 100).tolist()
 
     with pytest.raises(AssertionError):
-        stratified_sampling(X, y, regression=False, samples_per_class=10)
+        sampling_stratified(X, y, regression=False, samples_per_class=10)
 
     X = np.random.random((100, 4))
     y = np.random.randint(0, 2, 101)
 
     with pytest.raises(AssertionError):
-        stratified_sampling(X, y, regression=False, samples_per_class=10)
+        sampling_stratified(X, y, regression=False, samples_per_class=10)
 
     X = np.random.random((100, 4))
     y = np.random.random(100)
 
     with pytest.raises(AssertionError):
-        stratified_sampling(X, y, regression=True, samples_per_class=0)
+        sampling_stratified(X, y, regression=True, samples_per_class=0)
 
 
 def test_stratified_sampling_automatic_samples_per_class():
@@ -202,7 +202,7 @@ def test_stratified_sampling_automatic_samples_per_class():
     X = np.random.random((100, 4))
     y = np.hstack([np.zeros(50, dtype=int), np.ones(25, dtype=int), np.full(25, 2, dtype=int)])
 
-    X_strat, y_strat = stratified_sampling(X, y, regression=False, samples_per_class=None)
+    X_strat, y_strat = sampling_stratified(X, y, regression=False, samples_per_class=None)
 
     assert X_strat.shape == (75, 4)
     assert y_strat.shape == (75,)

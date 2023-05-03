@@ -2,7 +2,7 @@
 import numpy as np
 
 
-def least_squares_slope(arr):
+def timeseries_least_square_slope(arr):
     """ Compute the least squares slope for a set of data points along the last channel. """
     assert arr.ndim == 3, "Input array must be 3D"
 
@@ -22,7 +22,7 @@ def least_squares_slope(arr):
     return slope
 
 
-def robust_least_squares_slope(arr, std_threshold=1.0, splits=10, report_progress=True):
+def timeseries_robust_least_squares_slope(arr, std_threshold=1.0, splits=10, report_progress=True):
     """ Compute the robust least squares slope for a set of data points along the last channel. """
     assert arr.ndim == 3, "Input array must be 3D"
     assert arr.shape[0] > splits, "Input array must have at least splits rows"

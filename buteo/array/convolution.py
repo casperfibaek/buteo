@@ -369,7 +369,6 @@ def convolve_array_channels(
     -------
     np.ndarray
         The convolved array.
-
     """
     type_check(arr, [np.ndarray], "arr")
     type_check(method, [int], "method")

@@ -12,7 +12,7 @@ from osgeo import gdal, osr
 
 # Internal
 from buteo.raster.align import raster_align_to_reference, raster_align
-from buteo.raster.core_raster import check_are_rasters_are_aligned, raster_to_metadata
+from buteo.raster.core_raster import check_rasters_are_aligned, raster_to_metadata
 
 
 def create_sample_raster(
@@ -59,7 +59,7 @@ def test_align_rasters_single_raster():
     raster1 = create_sample_raster()
     aligned_raster_path = raster_align_to_reference(raster1, reference=raster1)
 
-    assert check_are_rasters_are_aligned(aligned_raster_path + [raster1])
+    assert check_rasters_are_aligned(aligned_raster_path + [raster1])
     assert gdal.Open(aligned_raster_path[0]) is not None
 
     gdal.Unlink(raster1)
@@ -75,7 +75,7 @@ def test_align_rasters_multiple_rasters_reference():
     aligned_rasters = raster_align_to_reference(rasters, reference=raster_ref)
 
     assert len(aligned_rasters) == len(rasters)
-    assert check_are_rasters_are_aligned(aligned_rasters + [raster_ref])
+    assert check_rasters_are_aligned(aligned_rasters + [raster_ref])
 
     for aligned_raster in aligned_rasters:
         assert gdal.Open(aligned_raster) is not None
@@ -95,7 +95,7 @@ def test_align_rasters_different_projections():
     aligned_rasters = raster_align_to_reference(rasters, reference=raster_ref)
 
     assert len(aligned_rasters) == len(rasters)
-    assert check_are_rasters_are_aligned(aligned_rasters)
+    assert check_rasters_are_aligned(aligned_rasters)
 
     for aligned_raster in aligned_rasters:
         assert gdal.Open(aligned_raster) is not None
@@ -115,7 +115,7 @@ def test_align_rasters_multiple_rasters():
     aligned_rasters = raster_align(rasters)
 
     assert len(aligned_rasters) == len(rasters)
-    assert check_are_rasters_are_aligned(aligned_rasters)
+    assert check_rasters_are_aligned(aligned_rasters)
 
     metadata = raster_to_metadata(aligned_rasters[0])
 
@@ -155,7 +155,7 @@ def test_align_rasters_same_size_and_projection():
     aligned_rasters = raster_align_to_reference(rasters, reference=raster_ref)
 
     assert len(aligned_rasters) == len(rasters)
-    assert check_are_rasters_are_aligned(aligned_rasters)
+    assert check_rasters_are_aligned(aligned_rasters)
 
     for aligned_raster in aligned_rasters:
         assert gdal.Open(aligned_raster) is not None
@@ -174,7 +174,7 @@ def test_align_rasters_different_sizes_same_projection():
     aligned_rasters = raster_align_to_reference(rasters, reference=raster_ref)
 
     assert len(aligned_rasters) == len(rasters)
-    assert check_are_rasters_are_aligned(aligned_rasters)
+    assert check_rasters_are_aligned(aligned_rasters)
 
     for aligned_raster in aligned_rasters:
         assert gdal.Open(aligned_raster) is not None
@@ -193,7 +193,7 @@ def test_align_rasters_different_epsg_codes():
     aligned_rasters = raster_align_to_reference(rasters, reference=raster_ref)
 
     assert len(aligned_rasters) == len(rasters)
-    assert check_are_rasters_are_aligned(aligned_rasters)
+    assert check_rasters_are_aligned(aligned_rasters)
 
     for aligned_raster in aligned_rasters:
         assert gdal.Open(aligned_raster) is not None

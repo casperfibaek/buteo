@@ -8,10 +8,12 @@ TODO:
 
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from typing import Union, List, Tuple, Dict, Any
 
 
 # TODO: wkt to ogr geometry
-def s1_kml_to_bbox(path_to_kml):
+def _s1_kml_to_bbox(path_to_kml: str) -> str:
+    """ Internal. """
     root = ET.parse(path_to_kml).getroot()
     for elem in root.iter():
         if elem.tag == "coordinates":
@@ -51,7 +53,22 @@ def s1_kml_to_bbox(path_to_kml):
 
 
 # TODO: get_metadata_from_zip
-def s1_get_metadata(image_paths):
+def s1_get_metadata(
+    image_paths: List[str],
+) -> List[Dict[str, Any]]:
+    """
+    Get metadata from Sentinel 1 images.
+
+    Parameters
+    ----------
+    image_paths : List[str]
+        List of paths to Sentinel 1 images.
+
+    Returns
+    -------
+    List[Dict[str, Any]]
+        List of metadata dictionaries.
+    """
     images_obj = []
 
     for img in image_paths:
@@ -63,7 +80,7 @@ def s1_get_metadata(image_paths):
         meta = {
             "path": img,
             "timestamp": timestamp,
-            "footprint_wkt": s1_kml_to_bbox(kml),
+            "footprint_wkt": _s1_kml_to_bbox(kml),
         }
 
         images_obj.append(meta)

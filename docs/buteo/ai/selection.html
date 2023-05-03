@@ -39,7 +39,10 @@
                     <a class="function" href="#split_train_val_test">split_train_val_test</a>
             </li>
             <li>
-                    <a class="function" href="#stratified_sampling">stratified_sampling</a>
+                    <a class="function" href="#sampling_stratified">sampling_stratified</a>
+            </li>
+            <li>
+                    <a class="function" href="#sampling_random">sampling_random</a>
             </li>
     </ul>
 
@@ -208,7 +211,7 @@
 </span><span id="L-142"><a href="#L-142"><span class="linenos">142</span></a>    <span class="k">return</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_val</span><span class="p">,</span> <span class="n">y_test</span>
 </span><span id="L-143"><a href="#L-143"><span class="linenos">143</span></a>
 </span><span id="L-144"><a href="#L-144"><span class="linenos">144</span></a>
-</span><span id="L-145"><a href="#L-145"><span class="linenos">145</span></a><span class="k">def</span> <span class="nf">stratified_sampling</span><span class="p">(</span>
+</span><span id="L-145"><a href="#L-145"><span class="linenos">145</span></a><span class="k">def</span> <span class="nf">sampling_stratified</span><span class="p">(</span>
 </span><span id="L-146"><a href="#L-146"><span class="linenos">146</span></a>    <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
 </span><span id="L-147"><a href="#L-147"><span class="linenos">147</span></a>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
 </span><span id="L-148"><a href="#L-148"><span class="linenos">148</span></a>    <span class="n">regression</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -267,9 +270,49 @@
 </span><span id="L-201"><a href="#L-201"><span class="linenos">201</span></a>
 </span><span id="L-202"><a href="#L-202"><span class="linenos">202</span></a>    <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">stratified_indices</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">stratified_indices</span><span class="p">]</span>
 </span><span id="L-203"><a href="#L-203"><span class="linenos">203</span></a>
-</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a><span class="c1"># TODO: add a function to split a dataset into k folds</span>
-</span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a><span class="c1"># TODO: add a function to split a dataset into k folds stratified by class</span>
-</span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a><span class="c1"># TODO: Add a function to randomly sample a dataset</span>
+</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a>
+</span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a><span class="k">def</span> <span class="nf">sampling_random</span><span class="p">(</span>
+</span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a>    <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+</span><span id="L-207"><a href="#L-207"><span class="linenos">207</span></a>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a>    <span class="n">samples</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+</span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+</span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; </span>
+</span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a><span class="sd">    Random sampling of a dataset.</span>
+</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a>
+</span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a><span class="sd">    Parameters</span>
+</span><span id="L-214"><a href="#L-214"><span class="linenos">214</span></a><span class="sd">    ----------</span>
+</span><span id="L-215"><a href="#L-215"><span class="linenos">215</span></a><span class="sd">    X : np.ndarray</span>
+</span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a><span class="sd">        The input data.</span>
+</span><span id="L-217"><a href="#L-217"><span class="linenos">217</span></a>
+</span><span id="L-218"><a href="#L-218"><span class="linenos">218</span></a><span class="sd">    y : np.ndarray</span>
+</span><span id="L-219"><a href="#L-219"><span class="linenos">219</span></a><span class="sd">        The target data.</span>
+</span><span id="L-220"><a href="#L-220"><span class="linenos">220</span></a>
+</span><span id="L-221"><a href="#L-221"><span class="linenos">221</span></a><span class="sd">    samples : int or float</span>
+</span><span id="L-222"><a href="#L-222"><span class="linenos">222</span></a><span class="sd">        The number of samples to take.</span>
+</span><span id="L-223"><a href="#L-223"><span class="linenos">223</span></a><span class="sd">        If int, the number of samples to take.</span>
+</span><span id="L-224"><a href="#L-224"><span class="linenos">224</span></a><span class="sd">        If float, the proportion of samples to take.</span>
+</span><span id="L-225"><a href="#L-225"><span class="linenos">225</span></a>
+</span><span id="L-226"><a href="#L-226"><span class="linenos">226</span></a><span class="sd">    Returns</span>
+</span><span id="L-227"><a href="#L-227"><span class="linenos">227</span></a><span class="sd">    -------</span>
+</span><span id="L-228"><a href="#L-228"><span class="linenos">228</span></a><span class="sd">    Tuple[np.ndarray, np.ndarray]</span>
+</span><span id="L-229"><a href="#L-229"><span class="linenos">229</span></a><span class="sd">        (X_random, y_random) : The random input and target data.</span>
+</span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-231"><a href="#L-231"><span class="linenos">231</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;X should be a numpy array.&quot;</span>
+</span><span id="L-232"><a href="#L-232"><span class="linenos">232</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;y should be a numpy array.&quot;</span>
+</span><span id="L-233"><a href="#L-233"><span class="linenos">233</span></a>    <span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;X and y should be the same axis=0 size.&quot;</span>
+</span><span id="L-234"><a href="#L-234"><span class="linenos">234</span></a>    <span class="k">assert</span> <span class="n">samples</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;samples should be greater than 0.&quot;</span>
+</span><span id="L-235"><a href="#L-235"><span class="linenos">235</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)),</span> <span class="s2">&quot;samples should be an int or float.&quot;</span>
+</span><span id="L-236"><a href="#L-236"><span class="linenos">236</span></a>
+</span><span id="L-237"><a href="#L-237"><span class="linenos">237</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">samples</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="L-238"><a href="#L-238"><span class="linenos">238</span></a>        <span class="n">samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">samples</span><span class="p">)</span>
+</span><span id="L-239"><a href="#L-239"><span class="linenos">239</span></a>
+</span><span id="L-240"><a href="#L-240"><span class="linenos">240</span></a>    <span class="n">random_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">samples</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="L-241"><a href="#L-241"><span class="linenos">241</span></a>
+</span><span id="L-242"><a href="#L-242"><span class="linenos">242</span></a>    <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">random_indices</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">random_indices</span><span class="p">]</span>
+</span><span id="L-243"><a href="#L-243"><span class="linenos">243</span></a>
+</span><span id="L-244"><a href="#L-244"><span class="linenos">244</span></a>
+</span><span id="L-245"><a href="#L-245"><span class="linenos">245</span></a><span class="c1"># TODO: add a function to split a dataset into k folds</span>
+</span><span id="L-246"><a href="#L-246"><span class="linenos">246</span></a><span class="c1"># TODO: add a function to split a dataset into k folds stratified by class</span>
 </span></pre></div>
 
 
@@ -279,7 +322,7 @@
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">split_train_val</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">X</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">y</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">val_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span>,</span><span class="param">	<span class="n">random_state</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">Tuple</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>:</span></span>
+        <span class="name">split_train_val</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">X</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">y</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">val_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span>,</span><span class="param">	<span class="n">random_state</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">Tuple</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>:</span></span>
 
                 <label class="view-source-button" for="split_train_val-view-source"><span>View Source</span></label>
 
@@ -387,7 +430,7 @@ val_size is not between 0 and 1.</li>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">split_train_val_test</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">X</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">y</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">val_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>,</span><span class="param">	<span class="n">test_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span>,</span><span class="param">	<span class="n">random_state</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">Tuple</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>:</span></span>
+        <span class="name">split_train_val_test</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">X</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">y</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">val_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>,</span><span class="param">	<span class="n">test_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span>,</span><span class="param">	<span class="n">random_state</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">Tuple</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>:</span></span>
 
                 <label class="view-source-button" for="split_train_val_test-view-source"><span>View Source</span></label>
 
@@ -510,75 +553,75 @@ Seed for the random number generator used for shuffling, default: None.</li>
 
 
                 </section>
-                <section id="stratified_sampling">
-                            <input id="stratified_sampling-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                <section id="sampling_stratified">
+                            <input id="sampling_stratified-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">stratified_sampling</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">X</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">y</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">regression</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">samples_per_class</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">Tuple</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>:</span></span>
+        <span class="name">sampling_stratified</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">X</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">y</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">regression</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>,</span><span class="param">	<span class="n">samples_per_class</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">Tuple</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>:</span></span>
 
-                <label class="view-source-button" for="stratified_sampling-view-source"><span>View Source</span></label>
+                <label class="view-source-button" for="sampling_stratified-view-source"><span>View Source</span></label>
 
     </div>
-    <a class="headerlink" href="#stratified_sampling"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="stratified_sampling-146"><a href="#stratified_sampling-146"><span class="linenos">146</span></a><span class="k">def</span> <span class="nf">stratified_sampling</span><span class="p">(</span>
-</span><span id="stratified_sampling-147"><a href="#stratified_sampling-147"><span class="linenos">147</span></a>    <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-</span><span id="stratified_sampling-148"><a href="#stratified_sampling-148"><span class="linenos">148</span></a>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-</span><span id="stratified_sampling-149"><a href="#stratified_sampling-149"><span class="linenos">149</span></a>    <span class="n">regression</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-</span><span id="stratified_sampling-150"><a href="#stratified_sampling-150"><span class="linenos">150</span></a>    <span class="n">samples_per_class</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="stratified_sampling-151"><a href="#stratified_sampling-151"><span class="linenos">151</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-</span><span id="stratified_sampling-152"><a href="#stratified_sampling-152"><span class="linenos">152</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="stratified_sampling-153"><a href="#stratified_sampling-153"><span class="linenos">153</span></a><span class="sd">    Stratified sampling of a dataset.</span>
-</span><span id="stratified_sampling-154"><a href="#stratified_sampling-154"><span class="linenos">154</span></a>
-</span><span id="stratified_sampling-155"><a href="#stratified_sampling-155"><span class="linenos">155</span></a><span class="sd">    This function can be used for both regression and classification problems.</span>
-</span><span id="stratified_sampling-156"><a href="#stratified_sampling-156"><span class="linenos">156</span></a>
-</span><span id="stratified_sampling-157"><a href="#stratified_sampling-157"><span class="linenos">157</span></a><span class="sd">    Parameters</span>
-</span><span id="stratified_sampling-158"><a href="#stratified_sampling-158"><span class="linenos">158</span></a><span class="sd">    ----------</span>
-</span><span id="stratified_sampling-159"><a href="#stratified_sampling-159"><span class="linenos">159</span></a><span class="sd">    X : np.ndarray</span>
-</span><span id="stratified_sampling-160"><a href="#stratified_sampling-160"><span class="linenos">160</span></a><span class="sd">        The input data.</span>
-</span><span id="stratified_sampling-161"><a href="#stratified_sampling-161"><span class="linenos">161</span></a>
-</span><span id="stratified_sampling-162"><a href="#stratified_sampling-162"><span class="linenos">162</span></a><span class="sd">    y : np.ndarray</span>
-</span><span id="stratified_sampling-163"><a href="#stratified_sampling-163"><span class="linenos">163</span></a><span class="sd">        The target data.</span>
-</span><span id="stratified_sampling-164"><a href="#stratified_sampling-164"><span class="linenos">164</span></a>
-</span><span id="stratified_sampling-165"><a href="#stratified_sampling-165"><span class="linenos">165</span></a><span class="sd">    regression : bool, optional</span>
-</span><span id="stratified_sampling-166"><a href="#stratified_sampling-166"><span class="linenos">166</span></a><span class="sd">        Whether the dataset is for regression or classification.</span>
-</span><span id="stratified_sampling-167"><a href="#stratified_sampling-167"><span class="linenos">167</span></a><span class="sd">        Default: False.</span>
-</span><span id="stratified_sampling-168"><a href="#stratified_sampling-168"><span class="linenos">168</span></a>
-</span><span id="stratified_sampling-169"><a href="#stratified_sampling-169"><span class="linenos">169</span></a><span class="sd">    samples_per_class : int, optional</span>
-</span><span id="stratified_sampling-170"><a href="#stratified_sampling-170"><span class="linenos">170</span></a><span class="sd">        The number of samples to take per class.</span>
-</span><span id="stratified_sampling-171"><a href="#stratified_sampling-171"><span class="linenos">171</span></a><span class="sd">        If None, takes the same number of samples per class as the smallest class.</span>
-</span><span id="stratified_sampling-172"><a href="#stratified_sampling-172"><span class="linenos">172</span></a><span class="sd">        Default: None.</span>
-</span><span id="stratified_sampling-173"><a href="#stratified_sampling-173"><span class="linenos">173</span></a>
-</span><span id="stratified_sampling-174"><a href="#stratified_sampling-174"><span class="linenos">174</span></a><span class="sd">    Returns:</span>
-</span><span id="stratified_sampling-175"><a href="#stratified_sampling-175"><span class="linenos">175</span></a><span class="sd">    --------</span>
-</span><span id="stratified_sampling-176"><a href="#stratified_sampling-176"><span class="linenos">176</span></a><span class="sd">    Tuple[np.ndarray, np.ndarray]</span>
-</span><span id="stratified_sampling-177"><a href="#stratified_sampling-177"><span class="linenos">177</span></a><span class="sd">        (X_stratified, y_stratified) : The stratified input and target data.</span>
-</span><span id="stratified_sampling-178"><a href="#stratified_sampling-178"><span class="linenos">178</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="stratified_sampling-179"><a href="#stratified_sampling-179"><span class="linenos">179</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;X should be a numpy array.&quot;</span>
-</span><span id="stratified_sampling-180"><a href="#stratified_sampling-180"><span class="linenos">180</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;y should be a numpy array.&quot;</span>
-</span><span id="stratified_sampling-181"><a href="#stratified_sampling-181"><span class="linenos">181</span></a>    <span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;X and y should be the same axis=0 size.&quot;</span>
-</span><span id="stratified_sampling-182"><a href="#stratified_sampling-182"><span class="linenos">182</span></a>    <span class="k">assert</span> <span class="n">samples_per_class</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">samples_per_class</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;samples_per_class should be greater than 0.&quot;</span>
-</span><span id="stratified_sampling-183"><a href="#stratified_sampling-183"><span class="linenos">183</span></a>
-</span><span id="stratified_sampling-184"><a href="#stratified_sampling-184"><span class="linenos">184</span></a>    <span class="n">y_classes</span> <span class="o">=</span> <span class="n">y</span>
-</span><span id="stratified_sampling-185"><a href="#stratified_sampling-185"><span class="linenos">185</span></a>
-</span><span id="stratified_sampling-186"><a href="#stratified_sampling-186"><span class="linenos">186</span></a>    <span class="k">if</span> <span class="n">regression</span><span class="p">:</span>
-</span><span id="stratified_sampling-187"><a href="#stratified_sampling-187"><span class="linenos">187</span></a>        <span class="k">assert</span> <span class="n">y</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float16</span><span class="p">],</span> <span class="s2">&quot;y should be a float array for regression.&quot;</span>
-</span><span id="stratified_sampling-188"><a href="#stratified_sampling-188"><span class="linenos">188</span></a>
-</span><span id="stratified_sampling-189"><a href="#stratified_sampling-189"><span class="linenos">189</span></a>        <span class="n">y_classes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">70</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">90</span><span class="p">]))</span>
-</span><span id="stratified_sampling-190"><a href="#stratified_sampling-190"><span class="linenos">190</span></a>
-</span><span id="stratified_sampling-191"><a href="#stratified_sampling-191"><span class="linenos">191</span></a>    <span class="n">unique_classes</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y_classes</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="stratified_sampling-192"><a href="#stratified_sampling-192"><span class="linenos">192</span></a>
-</span><span id="stratified_sampling-193"><a href="#stratified_sampling-193"><span class="linenos">193</span></a>    <span class="k">if</span> <span class="n">samples_per_class</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="stratified_sampling-194"><a href="#stratified_sampling-194"><span class="linenos">194</span></a>        <span class="n">samples_per_class</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-</span><span id="stratified_sampling-195"><a href="#stratified_sampling-195"><span class="linenos">195</span></a>
-</span><span id="stratified_sampling-196"><a href="#stratified_sampling-196"><span class="linenos">196</span></a>    <span class="n">stratified_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-</span><span id="stratified_sampling-197"><a href="#stratified_sampling-197"><span class="linenos">197</span></a>
-</span><span id="stratified_sampling-198"><a href="#stratified_sampling-198"><span class="linenos">198</span></a>    <span class="k">for</span> <span class="n">class_</span> <span class="ow">in</span> <span class="n">unique_classes</span><span class="p">:</span>
-</span><span id="stratified_sampling-199"><a href="#stratified_sampling-199"><span class="linenos">199</span></a>        <span class="n">class_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">y_classes</span> <span class="o">==</span> <span class="n">class_</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="stratified_sampling-200"><a href="#stratified_sampling-200"><span class="linenos">200</span></a>        <span class="n">selected_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">class_indices</span><span class="p">,</span> <span class="n">samples_per_class</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-</span><span id="stratified_sampling-201"><a href="#stratified_sampling-201"><span class="linenos">201</span></a>        <span class="n">stratified_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">stratified_indices</span><span class="p">,</span> <span class="n">selected_indices</span><span class="p">))</span>
-</span><span id="stratified_sampling-202"><a href="#stratified_sampling-202"><span class="linenos">202</span></a>
-</span><span id="stratified_sampling-203"><a href="#stratified_sampling-203"><span class="linenos">203</span></a>    <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">stratified_indices</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">stratified_indices</span><span class="p">]</span>
+    <a class="headerlink" href="#sampling_stratified"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="sampling_stratified-146"><a href="#sampling_stratified-146"><span class="linenos">146</span></a><span class="k">def</span> <span class="nf">sampling_stratified</span><span class="p">(</span>
+</span><span id="sampling_stratified-147"><a href="#sampling_stratified-147"><span class="linenos">147</span></a>    <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+</span><span id="sampling_stratified-148"><a href="#sampling_stratified-148"><span class="linenos">148</span></a>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+</span><span id="sampling_stratified-149"><a href="#sampling_stratified-149"><span class="linenos">149</span></a>    <span class="n">regression</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="sampling_stratified-150"><a href="#sampling_stratified-150"><span class="linenos">150</span></a>    <span class="n">samples_per_class</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="sampling_stratified-151"><a href="#sampling_stratified-151"><span class="linenos">151</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+</span><span id="sampling_stratified-152"><a href="#sampling_stratified-152"><span class="linenos">152</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="sampling_stratified-153"><a href="#sampling_stratified-153"><span class="linenos">153</span></a><span class="sd">    Stratified sampling of a dataset.</span>
+</span><span id="sampling_stratified-154"><a href="#sampling_stratified-154"><span class="linenos">154</span></a>
+</span><span id="sampling_stratified-155"><a href="#sampling_stratified-155"><span class="linenos">155</span></a><span class="sd">    This function can be used for both regression and classification problems.</span>
+</span><span id="sampling_stratified-156"><a href="#sampling_stratified-156"><span class="linenos">156</span></a>
+</span><span id="sampling_stratified-157"><a href="#sampling_stratified-157"><span class="linenos">157</span></a><span class="sd">    Parameters</span>
+</span><span id="sampling_stratified-158"><a href="#sampling_stratified-158"><span class="linenos">158</span></a><span class="sd">    ----------</span>
+</span><span id="sampling_stratified-159"><a href="#sampling_stratified-159"><span class="linenos">159</span></a><span class="sd">    X : np.ndarray</span>
+</span><span id="sampling_stratified-160"><a href="#sampling_stratified-160"><span class="linenos">160</span></a><span class="sd">        The input data.</span>
+</span><span id="sampling_stratified-161"><a href="#sampling_stratified-161"><span class="linenos">161</span></a>
+</span><span id="sampling_stratified-162"><a href="#sampling_stratified-162"><span class="linenos">162</span></a><span class="sd">    y : np.ndarray</span>
+</span><span id="sampling_stratified-163"><a href="#sampling_stratified-163"><span class="linenos">163</span></a><span class="sd">        The target data.</span>
+</span><span id="sampling_stratified-164"><a href="#sampling_stratified-164"><span class="linenos">164</span></a>
+</span><span id="sampling_stratified-165"><a href="#sampling_stratified-165"><span class="linenos">165</span></a><span class="sd">    regression : bool, optional</span>
+</span><span id="sampling_stratified-166"><a href="#sampling_stratified-166"><span class="linenos">166</span></a><span class="sd">        Whether the dataset is for regression or classification.</span>
+</span><span id="sampling_stratified-167"><a href="#sampling_stratified-167"><span class="linenos">167</span></a><span class="sd">        Default: False.</span>
+</span><span id="sampling_stratified-168"><a href="#sampling_stratified-168"><span class="linenos">168</span></a>
+</span><span id="sampling_stratified-169"><a href="#sampling_stratified-169"><span class="linenos">169</span></a><span class="sd">    samples_per_class : int, optional</span>
+</span><span id="sampling_stratified-170"><a href="#sampling_stratified-170"><span class="linenos">170</span></a><span class="sd">        The number of samples to take per class.</span>
+</span><span id="sampling_stratified-171"><a href="#sampling_stratified-171"><span class="linenos">171</span></a><span class="sd">        If None, takes the same number of samples per class as the smallest class.</span>
+</span><span id="sampling_stratified-172"><a href="#sampling_stratified-172"><span class="linenos">172</span></a><span class="sd">        Default: None.</span>
+</span><span id="sampling_stratified-173"><a href="#sampling_stratified-173"><span class="linenos">173</span></a>
+</span><span id="sampling_stratified-174"><a href="#sampling_stratified-174"><span class="linenos">174</span></a><span class="sd">    Returns:</span>
+</span><span id="sampling_stratified-175"><a href="#sampling_stratified-175"><span class="linenos">175</span></a><span class="sd">    --------</span>
+</span><span id="sampling_stratified-176"><a href="#sampling_stratified-176"><span class="linenos">176</span></a><span class="sd">    Tuple[np.ndarray, np.ndarray]</span>
+</span><span id="sampling_stratified-177"><a href="#sampling_stratified-177"><span class="linenos">177</span></a><span class="sd">        (X_stratified, y_stratified) : The stratified input and target data.</span>
+</span><span id="sampling_stratified-178"><a href="#sampling_stratified-178"><span class="linenos">178</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="sampling_stratified-179"><a href="#sampling_stratified-179"><span class="linenos">179</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;X should be a numpy array.&quot;</span>
+</span><span id="sampling_stratified-180"><a href="#sampling_stratified-180"><span class="linenos">180</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;y should be a numpy array.&quot;</span>
+</span><span id="sampling_stratified-181"><a href="#sampling_stratified-181"><span class="linenos">181</span></a>    <span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;X and y should be the same axis=0 size.&quot;</span>
+</span><span id="sampling_stratified-182"><a href="#sampling_stratified-182"><span class="linenos">182</span></a>    <span class="k">assert</span> <span class="n">samples_per_class</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">samples_per_class</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;samples_per_class should be greater than 0.&quot;</span>
+</span><span id="sampling_stratified-183"><a href="#sampling_stratified-183"><span class="linenos">183</span></a>
+</span><span id="sampling_stratified-184"><a href="#sampling_stratified-184"><span class="linenos">184</span></a>    <span class="n">y_classes</span> <span class="o">=</span> <span class="n">y</span>
+</span><span id="sampling_stratified-185"><a href="#sampling_stratified-185"><span class="linenos">185</span></a>
+</span><span id="sampling_stratified-186"><a href="#sampling_stratified-186"><span class="linenos">186</span></a>    <span class="k">if</span> <span class="n">regression</span><span class="p">:</span>
+</span><span id="sampling_stratified-187"><a href="#sampling_stratified-187"><span class="linenos">187</span></a>        <span class="k">assert</span> <span class="n">y</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float16</span><span class="p">],</span> <span class="s2">&quot;y should be a float array for regression.&quot;</span>
+</span><span id="sampling_stratified-188"><a href="#sampling_stratified-188"><span class="linenos">188</span></a>
+</span><span id="sampling_stratified-189"><a href="#sampling_stratified-189"><span class="linenos">189</span></a>        <span class="n">y_classes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">70</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">90</span><span class="p">]))</span>
+</span><span id="sampling_stratified-190"><a href="#sampling_stratified-190"><span class="linenos">190</span></a>
+</span><span id="sampling_stratified-191"><a href="#sampling_stratified-191"><span class="linenos">191</span></a>    <span class="n">unique_classes</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y_classes</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="sampling_stratified-192"><a href="#sampling_stratified-192"><span class="linenos">192</span></a>
+</span><span id="sampling_stratified-193"><a href="#sampling_stratified-193"><span class="linenos">193</span></a>    <span class="k">if</span> <span class="n">samples_per_class</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="sampling_stratified-194"><a href="#sampling_stratified-194"><span class="linenos">194</span></a>        <span class="n">samples_per_class</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+</span><span id="sampling_stratified-195"><a href="#sampling_stratified-195"><span class="linenos">195</span></a>
+</span><span id="sampling_stratified-196"><a href="#sampling_stratified-196"><span class="linenos">196</span></a>    <span class="n">stratified_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+</span><span id="sampling_stratified-197"><a href="#sampling_stratified-197"><span class="linenos">197</span></a>
+</span><span id="sampling_stratified-198"><a href="#sampling_stratified-198"><span class="linenos">198</span></a>    <span class="k">for</span> <span class="n">class_</span> <span class="ow">in</span> <span class="n">unique_classes</span><span class="p">:</span>
+</span><span id="sampling_stratified-199"><a href="#sampling_stratified-199"><span class="linenos">199</span></a>        <span class="n">class_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">y_classes</span> <span class="o">==</span> <span class="n">class_</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="sampling_stratified-200"><a href="#sampling_stratified-200"><span class="linenos">200</span></a>        <span class="n">selected_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">class_indices</span><span class="p">,</span> <span class="n">samples_per_class</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="sampling_stratified-201"><a href="#sampling_stratified-201"><span class="linenos">201</span></a>        <span class="n">stratified_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">stratified_indices</span><span class="p">,</span> <span class="n">selected_indices</span><span class="p">))</span>
+</span><span id="sampling_stratified-202"><a href="#sampling_stratified-202"><span class="linenos">202</span></a>
+</span><span id="sampling_stratified-203"><a href="#sampling_stratified-203"><span class="linenos">203</span></a>    <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">stratified_indices</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">stratified_indices</span><span class="p">]</span>
 </span></pre></div>
 
 
@@ -603,6 +646,82 @@ Default: None.</li>
 <li><strong>Returns:</strong></li>
 <li><strong>--------</strong></li>
 <li><strong>Tuple[np.ndarray, np.ndarray]</strong>: (X_stratified, y_stratified) : The stratified input and target data.</li>
+</ul>
+</div>
+
+
+                </section>
+                <section id="sampling_random">
+                            <input id="sampling_random-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">sampling_random</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">X</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">y</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>,</span><span class="param">	<span class="n">samples</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Tuple</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>:</span></span>
+
+                <label class="view-source-button" for="sampling_random-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#sampling_random"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="sampling_random-206"><a href="#sampling_random-206"><span class="linenos">206</span></a><span class="k">def</span> <span class="nf">sampling_random</span><span class="p">(</span>
+</span><span id="sampling_random-207"><a href="#sampling_random-207"><span class="linenos">207</span></a>    <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+</span><span id="sampling_random-208"><a href="#sampling_random-208"><span class="linenos">208</span></a>    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+</span><span id="sampling_random-209"><a href="#sampling_random-209"><span class="linenos">209</span></a>    <span class="n">samples</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+</span><span id="sampling_random-210"><a href="#sampling_random-210"><span class="linenos">210</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+</span><span id="sampling_random-211"><a href="#sampling_random-211"><span class="linenos">211</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot; </span>
+</span><span id="sampling_random-212"><a href="#sampling_random-212"><span class="linenos">212</span></a><span class="sd">    Random sampling of a dataset.</span>
+</span><span id="sampling_random-213"><a href="#sampling_random-213"><span class="linenos">213</span></a>
+</span><span id="sampling_random-214"><a href="#sampling_random-214"><span class="linenos">214</span></a><span class="sd">    Parameters</span>
+</span><span id="sampling_random-215"><a href="#sampling_random-215"><span class="linenos">215</span></a><span class="sd">    ----------</span>
+</span><span id="sampling_random-216"><a href="#sampling_random-216"><span class="linenos">216</span></a><span class="sd">    X : np.ndarray</span>
+</span><span id="sampling_random-217"><a href="#sampling_random-217"><span class="linenos">217</span></a><span class="sd">        The input data.</span>
+</span><span id="sampling_random-218"><a href="#sampling_random-218"><span class="linenos">218</span></a>
+</span><span id="sampling_random-219"><a href="#sampling_random-219"><span class="linenos">219</span></a><span class="sd">    y : np.ndarray</span>
+</span><span id="sampling_random-220"><a href="#sampling_random-220"><span class="linenos">220</span></a><span class="sd">        The target data.</span>
+</span><span id="sampling_random-221"><a href="#sampling_random-221"><span class="linenos">221</span></a>
+</span><span id="sampling_random-222"><a href="#sampling_random-222"><span class="linenos">222</span></a><span class="sd">    samples : int or float</span>
+</span><span id="sampling_random-223"><a href="#sampling_random-223"><span class="linenos">223</span></a><span class="sd">        The number of samples to take.</span>
+</span><span id="sampling_random-224"><a href="#sampling_random-224"><span class="linenos">224</span></a><span class="sd">        If int, the number of samples to take.</span>
+</span><span id="sampling_random-225"><a href="#sampling_random-225"><span class="linenos">225</span></a><span class="sd">        If float, the proportion of samples to take.</span>
+</span><span id="sampling_random-226"><a href="#sampling_random-226"><span class="linenos">226</span></a>
+</span><span id="sampling_random-227"><a href="#sampling_random-227"><span class="linenos">227</span></a><span class="sd">    Returns</span>
+</span><span id="sampling_random-228"><a href="#sampling_random-228"><span class="linenos">228</span></a><span class="sd">    -------</span>
+</span><span id="sampling_random-229"><a href="#sampling_random-229"><span class="linenos">229</span></a><span class="sd">    Tuple[np.ndarray, np.ndarray]</span>
+</span><span id="sampling_random-230"><a href="#sampling_random-230"><span class="linenos">230</span></a><span class="sd">        (X_random, y_random) : The random input and target data.</span>
+</span><span id="sampling_random-231"><a href="#sampling_random-231"><span class="linenos">231</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="sampling_random-232"><a href="#sampling_random-232"><span class="linenos">232</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;X should be a numpy array.&quot;</span>
+</span><span id="sampling_random-233"><a href="#sampling_random-233"><span class="linenos">233</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;y should be a numpy array.&quot;</span>
+</span><span id="sampling_random-234"><a href="#sampling_random-234"><span class="linenos">234</span></a>    <span class="k">assert</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;X and y should be the same axis=0 size.&quot;</span>
+</span><span id="sampling_random-235"><a href="#sampling_random-235"><span class="linenos">235</span></a>    <span class="k">assert</span> <span class="n">samples</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;samples should be greater than 0.&quot;</span>
+</span><span id="sampling_random-236"><a href="#sampling_random-236"><span class="linenos">236</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)),</span> <span class="s2">&quot;samples should be an int or float.&quot;</span>
+</span><span id="sampling_random-237"><a href="#sampling_random-237"><span class="linenos">237</span></a>
+</span><span id="sampling_random-238"><a href="#sampling_random-238"><span class="linenos">238</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">samples</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="sampling_random-239"><a href="#sampling_random-239"><span class="linenos">239</span></a>        <span class="n">samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">samples</span><span class="p">)</span>
+</span><span id="sampling_random-240"><a href="#sampling_random-240"><span class="linenos">240</span></a>
+</span><span id="sampling_random-241"><a href="#sampling_random-241"><span class="linenos">241</span></a>    <span class="n">random_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">samples</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="sampling_random-242"><a href="#sampling_random-242"><span class="linenos">242</span></a>
+</span><span id="sampling_random-243"><a href="#sampling_random-243"><span class="linenos">243</span></a>    <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="n">random_indices</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">random_indices</span><span class="p">]</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Random sampling of a dataset.</p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>X</strong> (np.ndarray):
+The input data.</li>
+<li><strong>y</strong> (np.ndarray):
+The target data.</li>
+<li><strong>samples</strong> (int or float):
+The number of samples to take.
+If int, the number of samples to take.
+If float, the proportion of samples to take.</li>
+</ul>
+
+<h6 id="returns">Returns</h6>
+
+<ul>
+<li><strong>Tuple[np.ndarray, np.ndarray]</strong>: (X_random, y_random) : The random input and target data.</li>
 </ul>
 </div>
 

@@ -17,7 +17,7 @@ from buteo.array.utils_array import _create_grid
 
 # TODO: Multi-channel support, Split assert
 @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
-def calculate_pixel_distances(
+def convolve_distance(
     array: np.ndarray,
     target: Union[int, float] = 1,
     maximum_distance: Optional[Union[int, float]] = None,

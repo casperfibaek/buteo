@@ -1,24 +1,24 @@
 """
 ### Generic utility functions ###
-
 Functions that make interacting with the toolbox easier.
+
 """
 # Standard library
 from typing import Union, Optional
 import sys; sys.path.append("../../")
 
-# Internal
-from buteo.array.utils_array import _create_grid
-
 # External
 import numpy as np
 from numba import jit, prange
+
+# Internal
+from buteo.array.utils_array import _create_grid
 
 
 
 # TODO: Multichannel support, Split assert
 @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
-def fill_nodata_with_nearest_average(
+def convolve_fill_nearest(
     array: np.ndarray,
     nodata_value: Union[int, float],
     mask: Optional[np.ndarray] = None,
@@ -87,7 +87,7 @@ def fill_nodata_with_nearest_average(
     while True:
         local_filled = np.copy(main_filled)
         for row in prange(main_filled.shape[0]):
-            for col in prange(main_filled.shape[1]):
+            for col in range(main_filled.shape[1]):
                 if main_filled[row, col] != nodata_value:
                     continue
                 if mask[row, col] != uint8_1:
