@@ -354,7 +354,7 @@ def _vector_filter(
 
     projection = metadata["projection_osr"]
 
-    driver = utils_gdal._get_vector_driver_from_path(out_path)
+    driver = utils_gdal._get_vector_driver_name_from_path(out_path)
 
     datasource_destination = driver.CreateDataSource(out_path)
     datasource_original = vector_open(vector)
@@ -837,7 +837,7 @@ def vector_filter_layer(
     else:
         raise RuntimeError("Wrong datatype for layer selection")
 
-    driver = utils_gdal._get_vector_driver_from_path(out_path)
+    driver = utils_gdal._get_vector_driver_name_from_path(out_path)
 
     destination = driver.CreateDataSource(out_path)
     destination.CopyLayer(layer, layer.GetName(), ["OVERWRITE=YES"])

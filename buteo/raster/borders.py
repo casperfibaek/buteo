@@ -43,7 +43,7 @@ def _raster_add_border(
     metadata = core_raster.raster_to_metadata(in_raster)
 
     # Parse the driver
-    driver_name = "GTiff" if out_path is None else utils_gdal._get_raster_driver_from_path(out_path)
+    driver_name = "GTiff" if out_path is None else utils_gdal._get_raster_driver_name_from_path(out_path)
     if driver_name is None:
         raise ValueError(f"Unable to parse filetype from path: {out_path}")
 

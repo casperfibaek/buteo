@@ -4,6 +4,7 @@ Create offsets to read rasters in chunks.
 
 # Standard library
 from typing import List, Union, Tuple
+from math import ceil
 
 
 
@@ -13,6 +14,7 @@ def _split_shape_into_offsets(
     offsets_y: int = 2,
     overlap_x: int = 0,
     overlap_y: int = 0,
+    channel_last: bool = True,
 ) -> List[int]:
     """
     Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed.
@@ -34,14 +36,16 @@ def _split_shape_into_offsets(
     overlap_y : int, optional
         The number of pixels to overlap in the y-direction. Default: 0.
 
+    channel_last : bool, optional
+        Whether the image has the channels as the last dimension. Default: True.
+
     Returns
     -------
     list
         The offsets. `[x_offset, y_offset, x_size, y_size]`
     """
     print("WARNING: This is deprecated and will be removed in a future update. Please use get_chunk_offsets instead.")
-    height = shape[0]
-    width = shape[1]
+    height, width = shape[:2] if channel_last else shape[1:]
 
     x_remainder = width % offsets_x
     y_remainder = height % offsets_y
@@ -92,6 +96,7 @@ def _apply_overlap_to_offsets(
     list_of_offsets: List[Tuple[int, int, int, int]],
     overlap: int,
     shape: Tuple[int, int],
+    channel_last: bool = True,
 ) -> List[List[int]]:
     """
     Apply an overlap to a list of chunk offsets.
@@ -108,20 +113,26 @@ def _apply_overlap_to_offsets(
 
     shape : Tuple[int, int]
         A tuple containing the height and width of the image: `(Height, Width)`.
+
+    channel_last : bool, optional
+        Whether the image has the channels as the last dimension. Default: True.
         
     Returns
     -------
     List[List[int]]
         A list of lists, each containing the adjusted chunk offsets and dimensions in the format `[x_start, y_start, x_pixels, y_pixels]`.
     """
-    height, width = shape
+    height, width = shape[:2] if channel_last else shape[1:]
+
+    overlap_half = ceil(overlap / 2)
+
     new_offsets = []
     for start_x, start_y, size_x, size_y in list_of_offsets:
-        new_start_x = max(0, start_x - (overlap // 2))
-        new_start_y = max(0, start_y - (overlap // 2))
+        new_start_x = max(0, start_x - overlap_half)
+        new_start_y = max(0, start_y - overlap_half)
 
-        new_size_x = size_x + overlap
-        new_size_y = size_y + overlap
+        new_size_x = size_x + overlap_half
+        new_size_y = size_y + overlap_half
 
         # If we are over the adjust, bring it back.
         if new_size_x + new_start_x > width:
@@ -130,9 +141,9 @@ def _apply_overlap_to_offsets(
         if new_size_y + new_start_y > height:
             new_size_y = new_size_y - ((new_size_y + new_start_y) - height)
 
-        new_offsets.append([
+        new_offsets.append((
             new_start_x, new_start_y, new_size_x, new_size_y,
-        ])
+        ))
 
     return new_offsets
 
@@ -141,6 +152,7 @@ def _get_chunk_offsets(
     image_shape: Tuple[int, int],
     num_chunks: int,
     overlap: int = 0,
+    channel_last: bool = True,
 ) -> List[Tuple[int, int, int, int]]:
     """
     Calculate chunk offsets for dividing an image into a specified number of chunks with minimal circumference.
@@ -156,6 +168,12 @@ def _get_chunk_offsets(
     num_chunks : int
         The number of chunks to divide the image into.
 
+    overlap : int, optional
+        The amount of overlap to apply to each chunk, in pixels. Default: 0.
+
+    channel_last : bool, optional
+        Whether the image has the channels as the last dimension. Default: True.
+
     Returns
     -------
     List[Tuple[int, int, int, int]]
@@ -166,7 +184,7 @@ def _get_chunk_offsets(
     ValueError
         If the number of chunks is too high for the given image size.
     """
-    height, width = image_shape[:2]
+    height, width = image_shape[:2] if channel_last else image_shape[1:]
 
     # Find the factors of num_chunks that minimize the circumference of the chunks
     min_circumference = float("inf")
@@ -208,6 +226,6 @@ def _get_chunk_offsets(
             chunk_offsets.append((w_start, h_start, x_pixels, y_pixels))
 
     if overlap > 0:
-        return _apply_overlap_to_offsets(chunk_offsets, overlap, image_shape)
+        return _apply_overlap_to_offsets(chunk_offsets, overlap, image_shape, channel_last=channel_last)
 
     return chunk_offsets

@@ -5,20 +5,18 @@
 # Standard library
 import sys; sys.path.append("../../")
 from typing import Union, List, Optional
-from warnings import warn
-from uuid import uuid4
 
 # External
 from osgeo import gdal
 
 # Internal
 from buteo.utils import (
-    utils_gdal,
+    utils_io,
     utils_base,
     utils_path,
     utils_translate,
 )
-from buteo.raster import core_raster
+from buteo.raster import core_raster, core_io
 
 
 
@@ -62,107 +60,30 @@ def raster_stack_list(
     utils_base.type_check(dtype, [str, None], "dtype")
     utils_base.type_check(creation_options, [[str], None], "creation_options")
 
-    assert utils_gdal._check_is_raster_list(rasters), "Input rasters must be a list of rasters."
+    input_data = utils_io._get_input_paths(rasters, "raster")
 
-    if not core_raster.check_rasters_are_aligned(rasters):
-        raise ValueError("Rasters are not aligned. Try running align_rasters.")
-
-    # Ensures that all the input rasters are valid.
-    raster_list = utils_gdal._get_path_from_dataset_list(rasters)
-
-    if out_path is not None and utils_path._get_ext_from_path(out_path) == ".vrt":
-        raise ValueError("Please use stack_rasters_vrt to create vrt files.")
-
-    # Parse the driver
-    driver_name = "GTiff" if out_path is None else utils_gdal._get_raster_driver_from_path(out_path)
-    if driver_name is None:
-        raise ValueError(f"Unable to parse filetype from path: {out_path}")
-
-    driver = gdal.GetDriverByName(driver_name)
-    if driver is None:
-        raise ValueError(f"Error while creating driver from extension: {out_path}")
-
-    output_name = None
     if out_path is None:
-        output_name = utils_path._get_output_path("stack_rasters.tif", add_uuid=True)
+        out_path = utils_path._get_temp_filepath(
+            "temp_stack",
+            ext="tif",
+            add_uuid=True,
+            add_timestamp=True,
+        )
     else:
-        output_name = out_path
+        assert utils_path._check_is_valid_output_filepath(out_path), "Invalid output path."
 
-    utils_path._delete_if_required(output_name, overwrite)
+    assert core_raster.check_rasters_are_aligned(input_data), "Rasters are not aligned."
 
-    raster_dtype = core_raster._get_basic_metadata_raster(raster_list[0])["dtype_gdal"]
-
-    datatype = raster_dtype
-    if dtype is not None:
-        datatype = utils_translate._translate_str_to_gdal_dtype(dtype)
-
-    nodata_values = []
-    nodata_missmatch = False
-    nodata_value = None
-    total_bands = 0
-    metadatas = []
-
-    for raster in raster_list:
-        metadata = core_raster._get_basic_metadata_raster(raster)
-        metadatas.append(metadata)
-
-        nodata_value = metadata["nodata_value"]
-        total_bands += metadata["bands"]
-
-        if nodata_missmatch is False:
-            for ndv in nodata_values:
-                if nodata_missmatch:
-                    continue
-
-                if metadata["nodata_value"] != ndv:
-                    nodata_missmatch = True
-                    warn("NoDataValues of input rasters do not match. Removing nodata.", UserWarning)
-
-        nodata_values.append(metadata["nodata_value"])
-
-    if nodata_missmatch:
-        nodata_value = None
-
-    destination = driver.Create(
-        output_name,
-        metadatas[0]["width"],
-        metadatas[0]["height"],
-        total_bands,
-        datatype,
-        utils_gdal._get_default_creation_options(creation_options),
+    array = core_io.raster_to_array(input_data, cast=dtype)
+    out_path = core_io.array_to_raster(
+        array,
+        reference=input_data[0],
+        out_path=out_path,
+        overwrite=overwrite,
+        creation_options=creation_options,
     )
 
-    destination.SetProjection(metadatas[0]["projection_wkt"])
-    destination.SetGeoTransform(metadatas[0]["transform"])
-
-    bands_added = 0
-    for idx, raster in enumerate(raster_list):
-        ref = core_raster._raster_open(raster)
-
-        for band_idx in range(metadatas[idx]["band_count"]):
-            target_band = destination.GetRasterBand(bands_added + 1)
-            source_band = ref.GetRasterBand(band_idx + 1)
-
-            if target_band is None or source_band is None:
-                raise ValueError("Unable to get bands from raster.")
-
-            data = source_band.ReadRaster(0, 0, source_band.XSize, source_band.YSize)
-            target_band.WriteRaster(0, 0, source_band.XSize, source_band.YSize, data)
-
-            if nodata_value is not None:
-                try:
-                    target_band.SetNoDataValue(nodata_value)
-                except ValueError:
-                    target_band.SetNoDataValue(float(nodata_value))
-
-            target_band.SetColorInterpretation(source_band.GetColorInterpretation())
-
-            bands_added += 1
-
-    destination.FlushCache()
-    destination = None
-
-    return output_name
+    return out_path
 
 
 def raster_stack_vrt_list(
@@ -272,7 +193,12 @@ def raster_stack_vrt_list(
             bands_in_raster = core_raster._get_basic_metadata_raster(raster)["bands"]
 
             for band in range(bands_in_raster):
-                tmp_vrt_path = f"/vsimem/{uuid4().int}_{idx}_{band+1}.vrt"
+                tmp_vrt_path = utils_path._get_temp_filepath(
+                    "temp_vrt",
+                    ext="vrt",
+                    add_uuid=True,
+                    add_timestamp=True,
+                )
 
                 tmp_vrt_code = gdal.BuildVRT(
                     tmp_vrt_path,
@@ -310,3 +236,7 @@ def raster_stack_vrt_list(
     vrt = None
 
     return out_path
+
+
+# TODO: Mosaic raster(s)
+# TODO: Use gdaltools?

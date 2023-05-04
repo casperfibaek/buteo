@@ -541,7 +541,6 @@ def raster_open(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     *,
     writeable=True,
-    allow_lists=True,
 ) -> Union[gdal.Dataset, List[gdal.Dataset]]:
     """
     Opens a raster in read or write mode.
@@ -555,10 +554,6 @@ def raster_open(
     writeable : bool, optional
         If True, the raster is opened in write mode. Default: True.
 
-    allow_lists : bool, optional
-        If True, the input can be a list of rasters. Otherwise,
-        only a single raster is allowed. Default: True.
-
     Returns
     -------
     Union[gdal.Dataset, List[gdal.Dataset]]
@@ -566,24 +561,18 @@ def raster_open(
     """
     utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     utils_base.type_check(writeable, [bool], "writeable")
-    utils_base.type_check(allow_lists, [bool], "allow_lists")
 
-    if not allow_lists and isinstance(raster, (list, tuple)):
-        raise ValueError("Input raster must be a single raster. Not a list or tuple.")
+    input_is_list = isinstance(raster, list)
+    in_raster = utils_io._get_input_paths(raster, "raster")
 
-    if not allow_lists:
-        return _raster_open(raster, writeable=writeable)
-
-    list_input = utils_base._get_variable_as_list(raster)
     list_return = []
-
-    for in_raster in list_input:
+    for r in in_raster:
         try:
-            list_return.append(_raster_open(in_raster, writeable=writeable))
+            list_return.append(_raster_open(r, writeable=writeable))
         except Exception:
-            raise ValueError(f"Could not open raster: {in_raster}") from None
+            raise ValueError(f"Could not open raster: {r}") from None
 
-    if isinstance(raster, list):
+    if input_is_list:
         return list_return
 
     return list_return[0]

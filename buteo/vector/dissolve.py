@@ -40,7 +40,7 @@ def _vector_dissolve(
 
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path"
 
-    out_format = utils_gdal._get_vector_driver_from_path(out_path)
+    out_format = utils_gdal._get_vector_driver_name_from_path(out_path)
 
     driver = ogr.GetDriverByName(out_format)
 

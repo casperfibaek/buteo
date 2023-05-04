@@ -4,7 +4,7 @@
 Functions to translate between **GDAL** and **NumPy** datatypes.
 """
 # Standard Library
-from typing import List, Tuple, Union, Dict
+from typing import List, Tuple, Union, Dict, Type, Optional
 
 # External
 import numpy as np
@@ -400,6 +400,7 @@ def _get_default_nodata_value(dtype: Union[np.dtype, str, int]) -> Union[float, 
 def _get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype, int]) -> Tuple[Union[int, float], Union[int, float]]:
     """
     Returns the range of values that can be represented by a given numpy dtype.
+    `(min_value, max_value)`
 
     Parameters
     ----------
@@ -410,6 +411,7 @@ def _get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype, int]) -> Tup
     -------
     Tuple[Union[int, float], Union[int, float]]
         The range of values that can be represented by a given numpy dtype.
+        `(min_value, max_value)`
     """
     assert isinstance(numpy_dtype, (str, np.dtype, int)), "numpy_dtype must be a numpy.dtype or string."
 
@@ -493,3 +495,106 @@ def _check_is_gdal_dtype_float(gdal_dtype: int) -> bool:
         return True
 
     return False
+
+
+def _parse_dtype(
+    dtype: Union[str, np.dtype, int, Type[np.int64]]
+) -> np.dtype:
+    """
+    Parses a numpy dtype from a string, numpy dtype, or GDAL datatype integer.
+
+    Parameters
+    ----------
+    dtype : Union[str, np.dtype, int, type(np.int64)]
+        The numpy dtype.
+
+    Returns
+    -------
+    np.dtype
+        The numpy dtype.
+    """
+    try:
+        if isinstance(dtype, str):
+            dtype = np.dtype(dtype)
+        elif isinstance(dtype, int):
+            dtype = _translate_dtype_gdal_to_numpy(dtype)
+        elif isinstance(dtype, type(np.int64)):
+            dtype = np.dtype(dtype)
+        elif isinstance(dtype, np.dtype):
+            pass
+        else:
+            raise ValueError(f"Could not parse dtype: {dtype}")
+
+    except Exception as e:
+        raise ValueError(f"Could not parse dtype: {dtype}", e) from None
+
+    return dtype
+
+
+def _check_is_int_numpy_dtype(
+    dtype: Union[str, np.dtype, int, Type[np.int64]],
+):
+    """
+    Checks if a numpy dtype is an integer.
+
+    Parameters
+    ----------
+    dtype : Union[str, np.dtype, int, type(np.int64)]
+        The numpy dtype.
+
+    Returns
+    -------
+    bool
+        True if the numpy dtype is an integer, otherwise False.
+    """
+    dtype = _parse_dtype(dtype)
+
+    if dtype.kind == "i":
+        return True
+
+    return False
+
+
+def _safe_numpy_casting(
+    arr: np.ndarray,
+    target_dtype: Union[str, np.dtype, Type[np.int8]],
+    outarr: Optional[np.ndarray] = None,
+):
+    """
+    Safe casting of numpy arrays.
+    Clips to min/max of destinations and rounds properly.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to cast.
+
+    target_dtype : Union[str, np.dtype, type(np.int8)]
+        The target dtype.
+    
+    Returns
+    -------
+    np.ndarray
+        The casted array.
+    """
+    assert isinstance(arr, np.ndarray), "arr must be a numpy array."
+    assert isinstance(target_dtype, (str, np.dtype, type(np.int8))), "target_dtype must be a string or numpy dtype."
+
+    dtype = _parse_dtype(target_dtype)
+
+    if arr.dtype == dtype:
+        if outarr is not None:
+            outarr[:] = arr[:]
+        else:
+            return arr
+
+    if outarr is None:
+        outarr = np.zeros(arr.shape, dtype=dtype)
+
+    if _check_is_int_numpy_dtype(dtype) and not _check_is_int_numpy_dtype(arr.dtype):
+        arr = np.rint()
+
+    min_val, max_val = _get_range_for_numpy_datatype(dtype.name)
+    np.clip(outarr, min_val, max_val, out=outarr)
+
+    return outarr

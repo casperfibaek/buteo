@@ -1015,3 +1015,63 @@ def _get_augmented_path_list(
         )
 
     return augmented_path_list
+
+
+def _get_temp_filepath(
+    name: str = "temp",
+    ext: str = "tif",
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = True,
+    add_timestamp: bool = True,
+) -> str:
+    """
+    Get a temporary filepath in vsimem.
+
+    Parameters
+    ----------
+    name: str
+        The name of the file. Default: "temp".
+
+    ext: str
+        The extension of the file. Default: ".tif".
+
+    prefix: str
+        The prefix to add to the path. Default: "".
+
+    suffix: str
+        The suffix to add to the path. Default: "".
+
+    add_uuid: bool
+        If True, add a uuid the path. Default: True.
+
+    add_timestamp: bool
+        If True, add a timestamp to the path. Default: True.
+        Format: YYYYMMDD_HHMMSS.
+
+    Returns
+    -------
+    str
+        The temporary filepath. (e.g. /vsimem/temp_20210101_000000_123456789.tif)
+    """
+    assert isinstance(name, str), "name must be a string."
+    assert isinstance(ext, str), "ext must be a string."
+    assert isinstance(prefix, str), "prefix must be a string."
+    assert isinstance(suffix, str), "suffix must be a string."
+    assert isinstance(add_uuid, bool), "add_uuid must be a bool."
+    assert isinstance(add_timestamp, bool), "add_timestamp must be a bool."
+
+    if add_uuid:
+        uuid = "_" + str(uuid4().int)
+    else:
+        uuid = ""
+
+    if add_timestamp:
+        timestamp = "_" + utils_base._get_time_as_str()
+    else:
+        timestamp = ""
+
+    filename = f"{prefix}{name}{uuid}{timestamp}{suffix}.{ext.lstrip('.').lower()}"
+    filepath = os.path.join("/vsimem/", filename)
+
+    return filepath

@@ -7,6 +7,7 @@ Functions that make interacting with the toolbox easier.
 # Standard Library
 import time
 from typing import Any, Union, List, Tuple
+import numpy as np
 
 
 
@@ -348,3 +349,30 @@ def _check_number_is_within_threshold(number, target, threshold):
     assert isinstance(threshold, (int, float)), "threshold must be a number."
 
     return abs(number - target) <= threshold
+
+
+def _check_number_is_within_range(number, min_value, max_value):
+    """
+    Check if a number is within a range.
+
+    Parameters
+    ----------
+    number : float
+        The number to check.
+
+    min_value : float
+        The minimum value.
+
+    max_value : float
+        The maximum value.
+
+    Returns
+    -------
+    bool
+        True if the number is within the range, False otherwise.
+    """
+    assert isinstance(number, (int, float)), "number must be a number."
+    assert isinstance(min_value, (int, float)), "min_value must be a number."
+    assert isinstance(max_value, (int, float)), "max_value must be a number."
+
+    return min_value <= number <= max_value

@@ -57,7 +57,7 @@ def vector_merge(
             suffix="_merged",
         )
 
-    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_from_path(out_path))
+    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_name_from_path(out_path))
 
     merged_ds = driver.CreateDataSource(out_path)
 

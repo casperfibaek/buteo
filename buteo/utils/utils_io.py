@@ -94,6 +94,7 @@ def _get_input_paths(
 def _get_output_paths(
     inputs: Union[str, gdal.Dataset, ogr.DataSource, List[Union[str, gdal.Dataset, ogr.DataSource]]],
     output_path: Optional[str] = None,
+    *,
     prefix: str = "",
     suffix: str = "",
     change_ext: Optional[str] = None,

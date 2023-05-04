@@ -71,7 +71,7 @@ def _vector_intersect(
         else:
             return True
 
-    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_from_path(out_path))
+    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_name_from_path(out_path))
     destination = driver.CreateDataSource(out_path)
     destination.CopyLayer(result, vector_layername, ["OVERWRITE=YES"])
 

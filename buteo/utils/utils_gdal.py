@@ -207,7 +207,31 @@ def _check_is_file_valid_vector_ext(file_path: str) -> bool:
     return False
 
 
-def _get_driver_from_path(file_path: str) -> str:
+def _get_default_driver_raster() -> gdal.Driver:
+    """
+    Get the default GDAL raster driver.
+
+    Returns
+    -------
+    gdal.Driver
+        The default GDAL raster driver.
+    """
+    return gdal.GetDriverByName("GTiff")
+
+
+def _get_default_driver_vector() -> ogr.Driver:
+    """
+    Get the default OGR vector driver.
+
+    Returns
+    -------
+    ogr.Driver
+        The default OGR vector driver.
+    """
+    return ogr.GetDriverByName("GPKG")
+
+
+def _get_driver_name_from_path(file_path: str) -> str:
     """
     Convert a file path to a GDAL or OGR driver ShortName (e.g. "GTiff" for "new_york.tif")
 
@@ -226,13 +250,13 @@ def _get_driver_from_path(file_path: str) -> str:
 
     ext = utils_path._get_ext_from_path(file_path)
 
-    if _check_is_file_valid_ext(ext):
+    if _check_is_file_valid_ext(file_path):
         return utils_translate._get_driver_shortname_from_ext(ext)
 
     raise ValueError(f"Unable to parse GDAL or OGR driver from path: {file_path}")
 
 
-def _get_vector_driver_from_path(file_path: str) -> str:
+def _get_vector_driver_name_from_path(file_path: str) -> str:
     """
     Convert a file path to an OGR driver ShortName (e.g. "FlatGeoBuf" for "new_york.fgb")
 
@@ -257,7 +281,7 @@ def _get_vector_driver_from_path(file_path: str) -> str:
     raise ValueError(f"Unable to parse GDAL or OGR driver from path: {file_path}")
 
 
-def _get_raster_driver_from_path(file_path: str) -> str:
+def _get_raster_driver_name_from_path(file_path: str) -> str:
     """
     Convert a file path to a GDAL driver ShortName (e.g. "GTiff" for "new_york.tif")
 
@@ -419,7 +443,7 @@ def _delete_raster_or_vector(
     if delete_dataset_if_in_memory(raster_or_vector):
         return True
 
-    driver_shortname = _get_driver_from_path(raster_or_vector)
+    driver_shortname = _get_driver_name_from_path(raster_or_vector)
     driver = gdal.GetDriverByName(driver_shortname)
     driver.Delete(raster_or_vector)
 

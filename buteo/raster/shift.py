@@ -48,7 +48,7 @@ def _raster_shift(
 
     utils_path._delete_if_required(out_path, overwrite)
 
-    driver = gdal.GetDriverByName(utils_gdal._get_raster_driver_from_path(out_path))
+    driver = gdal.GetDriverByName(utils_gdal._get_raster_driver_name_from_path(out_path))
 
     shifted = driver.Create(
         out_path,  # Location of the saved raster, ignored if driver is memory.

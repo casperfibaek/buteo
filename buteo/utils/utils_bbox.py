@@ -57,11 +57,11 @@ def _check_is_valid_bbox(bbox_ogr: List[Union[int, float]]) -> bool:
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
+    if x_min >= x_max or y_min >= y_max:
+        return False
+
     if True in [np.isinf(val) for val in bbox_ogr]:
         return True
-
-    if x_min > x_max or y_min > y_max:
-        return False
 
     return True
 
@@ -1168,7 +1168,7 @@ def _get_vector_from_geom(geom: ogr.Geometry) -> ogr.DataSource:
         folder="/vsimem/",
     )
 
-    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_from_path(path))
+    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_name_from_path(path))
     vector = driver.CreateDataSource(path)
 
     layer = vector.CreateLayer("converted_geom", geom.GetSpatialReference(), geom.GetGeometryType())

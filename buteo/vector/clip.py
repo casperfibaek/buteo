@@ -85,7 +85,7 @@ def _vector_clip(
     success = gdal.VectorTranslate(
         out_path,
         input_path,
-        format=utils_gdal._get_vector_driver_from_path(out_path),
+        format=utils_gdal._get_vector_driver_name_from_path(out_path),
         options=" ".join(options),
     )
 

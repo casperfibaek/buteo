@@ -34,7 +34,7 @@ def _vector_buffer(
 
     read = core_vector.vector_open(vector)
 
-    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_from_path(out_path))
+    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_name_from_path(out_path))
     destination = driver.CreateDataSource(out_path)
 
     vector_metadata = core_vector._vector_to_metadata(read)

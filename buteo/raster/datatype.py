@@ -57,7 +57,7 @@ def _raster_set_datatype(
     else:
         raise ValueError(f"Unable to find output folder: {out_path}")
 
-    driver_name = utils_gdal._get_raster_driver_from_path(path)
+    driver_name = utils_gdal._get_raster_driver_name_from_path(path)
     driver = gdal.GetDriverByName(driver_name)
 
     if driver is None:

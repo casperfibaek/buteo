@@ -32,7 +32,7 @@ def _raster_vectorize(
     if out_path is None:
         out_path = utils_path._get_output_path(out_path, suffix="_vectorized", add_uuid=True)
 
-    driver = utils_gdal._get_vector_driver_from_path(out_path)
+    driver = utils_gdal._get_vector_driver_name_from_path(out_path)
 
     datasource = driver.CreateDataSource(out_path)
     layer = datasource.CreateLayer(out_path, srs=projection)

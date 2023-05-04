@@ -138,7 +138,7 @@ def _raster_clip(
 
     # formats
     out_name = path_list[0]
-    out_format = utils_gdal._get_raster_driver_from_path(out_name)
+    out_format = utils_gdal._get_raster_driver_name_from_path(out_name)
     out_creation_options = utils_gdal._get_default_creation_options(creation_options)
 
     # nodata

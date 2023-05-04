@@ -88,7 +88,7 @@ def _raster_reproject(
     ref = core_raster._raster_open(raster)
     metadata = core_raster._raster_to_metadata(ref)
 
-    out_format = utils_gdal._get_raster_driver_from_path(out_path)
+    out_format = utils_gdal._get_raster_driver_name_from_path(out_path)
 
     original_projection = utils_projection.parse_projection(ref)
     target_projection = utils_projection.parse_projection(projection)

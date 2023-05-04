@@ -58,7 +58,7 @@ def _raster_resample(
         target_size, target_in_pixels=target_in_pixels
     )
 
-    out_format = utils_gdal._get_raster_driver_from_path(out_path)
+    out_format = utils_gdal._get_raster_driver_name_from_path(out_path)
 
     src_nodata = metadata["nodata_value"]
     out_nodata = None
