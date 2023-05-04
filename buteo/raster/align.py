@@ -9,13 +9,14 @@ Functions to align a series of rasters to a master or a reference.
 # Standard library
 import sys; sys.path.append("../../")
 from typing import List, Union, Optional
-from uuid import uuid4
 
 # External
 from osgeo import gdal
 
 # Internal
 from buteo.utils import (
+    utils_io,
+    utils_path,
     utils_gdal,
     utils_base,
     utils_bbox,
@@ -23,7 +24,7 @@ from buteo.utils import (
     utils_projection,
 )
 
-from buteo.raster import core_raster
+from buteo.raster import core_raster, core_io
 from buteo.raster.reproject import raster_reproject, raster_match_projections
 
 
@@ -101,19 +102,20 @@ def raster_align_to_reference(
             f"Raster: {utils_gdal._get_path_from_dataset(raster)} does not intersect reference."
         )
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         rasters_list,
         out_path,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=True if out_path is None else False,
+        add_uuid=out_path is None,
+        add_timestamp=out_path is None,
         overwrite=overwrite,
         change_ext="tif",
     )
 
     creation_options = utils_gdal._get_default_creation_options(creation_options)
 
-    reference_metadata = core_raster.raster_to_metadata(reference)
+    reference_metadata = core_raster._get_basic_metadata_raster(reference)
 
     target_projection = reference_metadata["projection_osr"]
     reference_bbox = reference_metadata["bbox"]
@@ -127,7 +129,7 @@ def raster_align_to_reference(
 
     # Reproject the rasters to the reference projection.
     for idx, raster in enumerate(rasters_list):
-        raster_metadata = core_raster.raster_to_metadata(raster)
+        raster_metadata = core_raster._get_basic_metadata_raster(raster)
         raster_path = utils_gdal._get_path_from_dataset(raster)
 
         raster_reprojected = None
@@ -142,11 +144,11 @@ def raster_align_to_reference(
                 prefix="tmp_reprojection_",
                 add_uuid=True,
             )
-            raster_ds = core_raster.raster_open(raster_reprojected)
+            raster_ds = core_raster._raster_open(raster_reprojected)
         else:
-            raster_ds = core_raster.raster_open(raster_path)
+            raster_ds = core_raster._raster_open(raster_path)
 
-        destination_ds = core_raster.raster_create_empty(
+        destination_ds = core_io.raster_create_empty(
             out_path=path_list[idx],
             width=x_pixels,
             height=y_pixels,
@@ -154,14 +156,14 @@ def raster_align_to_reference(
             x_min=x_min,
             y_max=y_max,
             dtype=raster_metadata["dtype"],
-            bands=raster_metadata["band_count"],
+            bands=raster_metadata["bands"],
             nodata_value=target_nodata,
             projection=target_projection,
             creation_options=creation_options,
             overwrite=overwrite,
         )
 
-        destination_ds = core_raster.raster_open(destination_ds)
+        destination_ds = core_raster._raster_open(destination_ds)
 
         warp_options = gdal.WarpOptions(
             resampleAlg=utils_translate._translate_resample_method(resample_alg),
@@ -187,6 +189,7 @@ def raster_align_to_reference(
 def raster_find_best_align_reference(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     method: str,
+    out_path: Optional[str] = None,
 ) -> str:
     """
     Find the best reference raster for aligning a list of rasters.
@@ -200,6 +203,9 @@ def raster_find_best_align_reference(
         Bounding box method to use for finding the best reference.
         Options include: "reference", "intersection", and "union".
 
+    out_path : str, optional
+        Path to the output raster, default: None
+
     Returns
     -------
     str
@@ -207,6 +213,7 @@ def raster_find_best_align_reference(
     """
     utils_base.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
     utils_base.type_check(method, [str], "method")
+    utils_base.type_check(out_path, [str, None], "out_path")
 
     rasters_list = utils_io._get_input_paths(rasters, "raster")
     assert method in ["reference", "intersection", "union"], (
@@ -217,6 +224,16 @@ def raster_find_best_align_reference(
 
     if len(rasters_list) == 1:
         return rasters_list[0]
+
+    if out_path is None:
+        out_path = utils_path._get_temp_filepath(
+            name="best_reference.tif",
+            add_uuid=True,
+            add_timestamp=True,
+        )
+    else:
+        if not utils_path._check_is_valid_output_filepath(out_path, overwrite=True):
+            raise ValueError(f"Invalid out_path: {out_path}")
 
     # Count intersections
     most_intersections = 0
@@ -244,8 +261,7 @@ def raster_find_best_align_reference(
     for idx, intersection in enumerate(intersections_arr):
         if intersection == most_intersections:
             raster = rasters_list[idx]
-            raster_metadata = core_raster.raster_to_metadata(raster)
-            raster_area = raster_metadata["area_latlng"]
+            raster_area = core_raster._get_basic_metadata_raster(raster)["area_latlng"]
 
             if raster_area > largest_area:
                 largest_area = raster_area
@@ -278,11 +294,11 @@ def raster_find_best_align_reference(
         copy_if_already_correct=False,
     )
 
-    best_reference_meta = core_raster.raster_to_metadata(best_reference)
+    best_reference_meta = core_raster._get_basic_metadata_raster(best_reference)
 
     best_geom = best_reference_meta["geom"]
     for raster_path in matched_rasters:
-        raster_meta = core_raster.raster_to_metadata(raster_path)
+        raster_meta = core_raster._get_basic_metadata_raster(raster_path)
         raster_geom = raster_meta["geom"]
 
         if not raster_geom.Intersects(best_geom):
@@ -313,8 +329,8 @@ def raster_find_best_align_reference(
     width = int(round((outbox_bbox[1] - outbox_bbox[0]) / best_reference_meta["pixel_width"]))
     height = int(round((outbox_bbox[3] - outbox_bbox[2]) / best_reference_meta["pixel_height"]))
 
-    out_path = core_raster.raster_create_empty(
-        out_path=f"/vsimem/intersection_union_{uuid4().int}.tif",
+    out_path = core_io.raster_create_empty(
+        out_path=out_path,
         width=width,
         height=height,
         pixel_width=best_reference_meta["pixel_width"],
@@ -400,14 +416,15 @@ def raster_align(
     raster_list = utils_io._get_input_paths(rasters, "raster")
     assert method in ["reference", "intersection", "union"], "method must be one of reference, intersection, or union."
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         raster_list,
         out_path,
-        overwrite=overwrite,
-        add_uuid=True if out_path is None else False,
-        change_ext="tif",
         prefix=prefix,
         suffix=suffix,
+        add_uuid=out_path is None,
+        add_timestamp=out_path is None,
+        overwrite=overwrite,
+        change_ext="tif",
     )
 
     if reference is None:

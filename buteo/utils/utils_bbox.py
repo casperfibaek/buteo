@@ -905,6 +905,8 @@ def _get_bounds_from_bbox(
     the skewed bounds in latlng, which is what you want for overlap checks across
     projections.
 
+    The return is in WGS84.
+
     Parameters
     ----------
     bbox_ogr : list

@@ -133,7 +133,9 @@ def _get_basic_metadata_raster(
 
     bbox = utils_bbox._get_bbox_from_geotransform(transform, dataset.RasterXSize, dataset.RasterYSize)
     bbox_latlng = utils_projection.reproject_bbox(bbox, projection_osr, utils_projection._get_default_projection_osr())
-    bounds_latlng = utils_bbox._get_bounds_from_bbox(bbox, projection_osr, wkt=True)
+    bounds_latlng = utils_bbox._get_bounds_from_bbox(bbox, projection_osr, wkt=False)
+    bounds_area = bounds_latlng.GetArea()
+    bounds_wkt = bounds_latlng.ExportToWkt()
     first_band = dataset.GetRasterBand(1)
     dtype = None if first_band is None else first_band.DataType
     dtype_numpy = utils_translate._translate_dtype_gdal_to_numpy(dtype)
@@ -157,7 +159,7 @@ def _get_basic_metadata_raster(
         "bbox": bbox,
         "bbox_gdal": utils_bbox._get_gdal_bbox_from_ogr_bbox(bbox),
         "bbox_latlng": bbox_latlng,
-        "bounds_latlng": bounds_latlng,
+        "bounds_latlng": bounds_wkt,
         "x_min": bbox[0],
         "x_max": bbox[1],
         "y_min": bbox[2],
@@ -166,7 +168,11 @@ def _get_basic_metadata_raster(
         "dtype_gdal": dtype,
         "dtype": dtype_numpy,
         "dtype_name": dtype_numpy.name,
+        "area_latlng": bounds_area,
     }
+
+    x_min, x_max, y_min, y_max = bbox
+    metadata["area"] = (x_max - x_min) * (y_max - y_min)
 
     # Add the nodata values
     metadata["nodata"] = False

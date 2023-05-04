@@ -14,6 +14,7 @@ from osgeo import gdal, ogr, osr
 
 # Internal
 from buteo.utils import (
+    utils_io,
     utils_base,
     utils_gdal,
     utils_path,
@@ -72,21 +73,25 @@ def _raster_reproject(
     prefix: str = "",
     suffix: str = "",
     add_uuid: bool = False,
+    add_timestamp: bool = False,
 ) -> Union[str, List[str]]:
     """ Internal. """
     assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
 
-    out_path = utils_gdal._parse_output_data(
-        raster,
-        output_data=out_path,
-        overwrite=overwrite,
-        prefix=prefix,
-        suffix=suffix,
-        add_uuid=add_uuid,
-    )[0]
+    if out_path is None:
+        out_path = utils_path._get_temp_filepath(
+            name="reprojected_raster.tif",
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            add_timestamp=add_timestamp,
+        )
+    else:
+        if not utils_path._check_is_valid_output_filepath(out_path):
+            raise ValueError(f"Invalid output path: {out_path}")
 
     ref = core_raster._raster_open(raster)
-    metadata = core_raster._raster_to_metadata(ref)
+    metadata = core_raster._get_basic_metadata_raster(ref)
 
     out_format = utils_gdal._get_raster_driver_name_from_path(out_path)
 
@@ -112,7 +117,7 @@ def _raster_reproject(
         out_nodata = dst_nodata
 
     if dtype is None:
-        dtype = metadata["datatype"]
+        dtype = metadata["dtype"]
 
     utils_path._delete_if_required(out_path, overwrite)
 
@@ -123,7 +128,7 @@ def _raster_reproject(
         srcSRS=original_projection,
         dstSRS=target_projection,
         resampleAlg=utils_translate._translate_resample_method(resample_alg),
-        outputType=utils_translate._translate_str_to_gdal_dtype(dtype),
+        outputType=utils_translate._translate_dtype_numpy_to_gdal(utils_translate._parse_dtype(dtype)),
         creationOptions=utils_gdal._get_default_creation_options(creation_options),
         srcNodata=src_nodata,
         dstNodata=out_nodata,
@@ -220,9 +225,9 @@ def raster_reproject(
 
     assert utils_gdal._check_is_raster_list(raster_list), f"The input raster(s) contains invalid elements: {raster_list}"
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         raster_list,
-        output_data=out_path,
+        out_path,
         overwrite=overwrite,
         prefix=prefix,
         suffix=suffix,
@@ -314,9 +319,9 @@ def raster_match_projections(
 
     add_uuid = out_path is None
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         rasters,
-        output_data=out_path,
+        out_path,
         overwrite=overwrite,
         add_uuid=add_uuid,
         change_ext="tif",

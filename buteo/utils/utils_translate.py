@@ -515,7 +515,7 @@ def _parse_dtype(
     """
     try:
         if isinstance(dtype, str):
-            dtype = np.dtype(dtype)
+            dtype = np.dtype(dtype.lower())
         elif isinstance(dtype, int):
             dtype = _translate_dtype_gdal_to_numpy(dtype)
         elif isinstance(dtype, type(np.int64)):
@@ -580,21 +580,21 @@ def _safe_numpy_casting(
     assert isinstance(arr, np.ndarray), "arr must be a numpy array."
     assert isinstance(target_dtype, (str, np.dtype, type(np.int8))), "target_dtype must be a string or numpy dtype."
 
-    dtype = _parse_dtype(target_dtype)
+    target_dtype = _parse_dtype(target_dtype)
 
-    if arr.dtype == dtype:
+    if arr.dtype == target_dtype:
         if outarr is not None:
             outarr[:] = arr[:]
         else:
             return arr
 
     if outarr is None:
-        outarr = np.zeros(arr.shape, dtype=dtype)
+        outarr = np.zeros(arr.shape, dtype=target_dtype)
 
-    if _check_is_int_numpy_dtype(dtype) and not _check_is_int_numpy_dtype(arr.dtype):
-        arr = np.rint()
+    if _check_is_int_numpy_dtype(target_dtype) and not _check_is_int_numpy_dtype(arr.dtype):
+        arr = np.rint(arr)
 
-    min_val, max_val = _get_range_for_numpy_datatype(dtype.name)
+    min_val, max_val = _get_range_for_numpy_datatype(target_dtype.name)
     np.clip(outarr, min_val, max_val, out=outarr)
 
     return outarr

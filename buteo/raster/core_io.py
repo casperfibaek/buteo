@@ -3,7 +3,7 @@
 """
 # Standard library
 import sys; sys.path.append("../../")
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union, Tuple, Type
 import warnings
 
 # External
@@ -41,7 +41,7 @@ def raster_to_array(
     Parameters
     ----------
     raster : gdal.Dataset or str or list
-        Raster(s) to convert.
+        Raster(s) to convert. The rasters must be aligned.
 
     bands : list or str or int, optional
         Bands from the raster to convert to a numpy array. Can be "all", an int,
@@ -49,8 +49,8 @@ def raster_to_array(
         Default: "all".
 
     filled : bool, optional
-        If the array contains nodata values, determines whether the resulting
-        array should be a filled numpy array or a masked array. Default: False.
+        If True, nodata values in the array will be filled with the specified fill_value.
+        If False, a masked array will be created with nodata values masked. Default: False.
 
     fill_value : int or float, optional
         Value to fill the array with if filled is True. If None, the nodata value
@@ -68,10 +68,15 @@ def raster_to_array(
         A type to cast the array to. If None, the array is not cast. It is only cast
         if the array is not already the dtype. Default: None.
 
+    channel_last : bool, optional
+        If True, the output array will have shape (height, width, channels).
+        If False, the output array will have shape (channels, height, width).
+        Default: True.
+
     Returns
     -------
     np.ndarray
-        A numpy array in the 3D channel-last format.
+        A numpy array representing the raster data.
     
     Raises
     ------
@@ -213,13 +218,12 @@ def raster_to_array(
         output_array = np.ma.zeros(output_shape, dtype=dtype)
 
     # Read data
-    for i, r in enumerate(raster):
-        bands_to_process_raster = bands_to_process[i]
+    channel = 0
+    for idx, r_path in enumerate(raster):
+        for n_band in bands_to_process[idx]:
+            r_open = core_raster._raster_open(r_path)
 
-        for channel, n_band in enumerate(bands_to_process_raster):
-            r = core_raster._raster_open(r)
-
-            band = r.GetRasterBand(n_band)
+            band = r_open.GetRasterBand(n_band)
             data = band.ReadAsArray(x_offset, y_offset, x_size, y_size)
 
             if np.ma.isMaskedArray(data) and filled:
@@ -239,6 +243,8 @@ def raster_to_array(
                 utils_translate._safe_numpy_casting(data, dtype, outarr=output_array[:, :, channel])
             else:
                 output_array[:, :, channel] = data
+
+            channel += 1
 
     # Reshape array
     if not channel_last:
@@ -701,7 +707,7 @@ def raster_create_empty(
     height: int = 100,
     pixel_size: Union[Union[float, int], List[Union[float, int]]] = 10.0,
     bands: int = 1,
-    dtype: str = "uint8",
+    dtype: Union[str, int, np.dtype, Type[np.uint8]] = "uint8",
     x_min: Union[float, int] = 0.0,
     y_max: Union[float, int] = 0.0,
     nodata_value: Union[float, int, None] = None,
@@ -730,7 +736,7 @@ def raster_create_empty(
     bands : int, optional
         The number of bands in the raster. Default: 1.
 
-    dtype : str, optional
+    dtype : str, int, np.dtype, optional
         The data type of the raster. Default: "uint8".
 
     x_min : int or float, optional
@@ -760,11 +766,11 @@ def raster_create_empty(
         The path to the output raster.
     """
     utils_base.type_check(out_path, [str, type(None)], "out_path")
-    utils_base.type_check(width, int, "width")
-    utils_base.type_check(height, int, "height")
+    utils_base.type_check(width, [int], "width")
+    utils_base.type_check(height, [int], "height")
     utils_base.type_check(pixel_size, [int, float, list, tuple], "pixel_size")
-    utils_base.type_check(bands, int, "bands")
-    utils_base.type_check(dtype, str, "dtype")
+    utils_base.type_check(bands, [int], "bands")
+    utils_base.type_check(dtype, [str, int, np.dtype, type(np.int8), None], "dtype")
     utils_base.type_check(x_min, [int, float], "x_min")
     utils_base.type_check(y_max, [int, float], "y_max")
     utils_base.type_check(nodata_value, [int, float, type(None)], "nodata_value")

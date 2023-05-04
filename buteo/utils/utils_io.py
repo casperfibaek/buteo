@@ -146,8 +146,15 @@ def _get_output_paths(
     assert isinstance(overwrite, bool), "overwrite must be a bool."
     assert isinstance(add_uuid, bool), "add_uuid must be a bool."
     assert change_ext is None or isinstance(change_ext, str), "change_ext must be a string."
-    assert output_path is None or isinstance(output_path, str), "output_paths must be a string."
-    assert output_path is None or len(output_path) > 0, "output_paths must not be non-empty string."
+
+    if output_path is not None:
+        assert isinstance(output_path, (str, list)), "output_path must be a string or list."
+        if isinstance(output_path, str):
+            assert len(output_path) > 0, "output_path must not be empty string."
+        elif isinstance(output_path, list):
+            assert len(output_path) > 0, "output_path must not be empty list."
+            assert all([isinstance(val, str) for val in output_path]), "output_path must be a list of strings."
+            assert all([len(val) > 0 for val in output_path]), "output_path must not be a list of empty strings."
 
     input_is_list = False
     if isinstance(inputs, list):

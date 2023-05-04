@@ -959,4 +959,3 @@ def _convert_to_band_list(
         output_list.append(int(val))
 
     return output_list
-

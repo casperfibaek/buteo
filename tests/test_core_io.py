@@ -402,15 +402,17 @@ def test_create_raster_from_array_invalid_input():
         core_io.raster_create_from_array(invalid_arr)
 
 
-# TEST THE VALUES AS WELL
-# def test_bands_raster_to_array():
-#     """ Test: Raster to array with bands specified. """
-#     raster_1 = create_sample_raster(width=10, height=10, bands=3)
-#     raster_2 = create_sample_raster(width=10, height=10, bands=1)
+def test_bands_raster_to_array():
+    """ Test: Raster to array with bands specified. """
+    raster_1 = create_sample_raster(width=10, height=10, bands=3)
+    raster_2 = create_sample_raster(width=10, height=10, bands=1)
 
-#     array_1 = core_io.raster_to_array(raster_1, bands=[1, 3])
+    arr = core_io.raster_to_array([raster_1, raster_2])
 
-#     array = core_io.raster_to_array(raster_path, bands=[1, 3])
+    assert arr.shape == (10, 10, 4)
 
-#     assert array.shape == (10, 10, 2)
+    arr_1 = core_io.raster_to_array(raster_1)
+    arr_2 = core_io.raster_to_array(raster_2)
 
+    assert np.array_equal(arr[:, :, 0:3], arr_1)
+    assert np.array_equal(arr[:, :, 3:4], arr_2) # <-- all 0.0
