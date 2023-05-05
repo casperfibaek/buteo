@@ -3,149 +3,9 @@ Create offsets to read rasters in chunks.
 """
 
 # Standard library
-from typing import List, Union, Tuple
+from typing import List, Tuple
 from math import ceil
 
-
-
-def _split_shape_into_offsets(
-    shape: Union[List[int], Tuple[int]],
-    offsets_x: int = 2,
-    offsets_y: int = 2,
-    overlap_x: int = 0,
-    overlap_y: int = 0,
-    channel_last: bool = True,
-) -> List[int]:
-    """
-    Split a shape into offsets. Usually used for splitting an image into offsets to reduce RAM needed.
-    
-    Parameters
-    ----------
-    shape : tuple or list
-        The shape to split into offsets. (height, width, ...)
-
-    offsets_x : int, optional
-        The number of offsets to split the shape into in the x-direction. Default: 2.
-
-    offsets_y : int, optional
-        The number of offsets to split the shape into in the y-direction. Default: 2.
-
-    overlap_x : int, optional
-        The number of pixels to overlap in the x-direction. Default: 0.
-
-    overlap_y : int, optional
-        The number of pixels to overlap in the y-direction. Default: 0.
-
-    channel_last : bool, optional
-        Whether the image has the channels as the last dimension. Default: True.
-
-    Returns
-    -------
-    list
-        The offsets. `[x_offset, y_offset, x_size, y_size]`
-    """
-    print("WARNING: This is deprecated and will be removed in a future update. Please use get_chunk_offsets instead.")
-    height, width = shape[:2] if channel_last else shape[1:]
-
-    x_remainder = width % offsets_x
-    y_remainder = height % offsets_y
-
-    x_offsets = [0]
-    x_sizes = []
-    for _ in range(offsets_x - 1):
-        x_offsets.append(x_offsets[-1] + (width // offsets_x) - overlap_x)
-    x_offsets[-1] -= x_remainder
-
-    for idx, _ in enumerate(x_offsets):
-        if idx == len(x_offsets) - 1:
-            x_sizes.append(width - x_offsets[idx])
-        elif idx == 0:
-            x_sizes.append(x_offsets[1] + overlap_x)
-        else:
-            x_sizes.append(x_offsets[idx + 1] - x_offsets[idx] + overlap_x)
-
-    y_offsets = [0]
-    y_sizes = []
-    for _ in range(offsets_y - 1):
-        y_offsets.append(y_offsets[-1] + (height // offsets_y) - overlap_y)
-    y_offsets[-1] -= y_remainder
-
-    for idx, _ in enumerate(y_offsets):
-        if idx == len(y_offsets) - 1:
-            y_sizes.append(height - y_offsets[idx])
-        elif idx == 0:
-            y_sizes.append(y_offsets[1] + overlap_y)
-        else:
-            y_sizes.append(y_offsets[idx + 1] - y_offsets[idx] + overlap_y)
-
-    offsets = []
-
-    for idx_col, _ in enumerate(y_offsets):
-        for idx_row, _ in enumerate(x_offsets):
-            offsets.append([
-                x_offsets[idx_row],
-                y_offsets[idx_col],
-                x_sizes[idx_row],
-                y_sizes[idx_col],
-            ])
-
-    return offsets
-
-
-def _apply_overlap_to_offsets(
-    list_of_offsets: List[Tuple[int, int, int, int]],
-    overlap: int,
-    shape: Tuple[int, int],
-    channel_last: bool = True,
-) -> List[List[int]]:
-    """
-    Apply an overlap to a list of chunk offsets.
-    
-    The function adjusts the starting position and size of each chunk to apply the specified overlap.
-    
-    Parameters
-    ----------
-    list_of_offsets : List[Tuple[int, int, int, int]]
-        A list of tuples containing the chunk offsets and dimensions in the format `(x_start, y_start, x_pixels, y_pixels)`.
-
-    overlap : int
-        The amount of overlap to apply to each chunk, in pixels.
-
-    shape : Tuple[int, int]
-        A tuple containing the height and width of the image: `(Height, Width)`.
-
-    channel_last : bool, optional
-        Whether the image has the channels as the last dimension. Default: True.
-        
-    Returns
-    -------
-    List[List[int]]
-        A list of lists, each containing the adjusted chunk offsets and dimensions in the format `[x_start, y_start, x_pixels, y_pixels]`.
-    """
-    height, width = shape[:2] if channel_last else shape[1:]
-
-    overlap_half = ceil(overlap / 2)
-
-    new_offsets = []
-    for start_x, start_y, size_x, size_y in list_of_offsets:
-        new_start_x = max(0, start_x - overlap_half)
-        new_start_y = max(0, start_y - overlap_half)
-
-        new_size_x = size_x + overlap_half
-        new_size_y = size_y + overlap_half
-
-        # If we are over the adjust, bring it back.
-        if new_size_x + new_start_x > width:
-            new_size_x = new_size_x - ((new_size_x + new_start_x) - width)
-
-        if new_size_y + new_start_y > height:
-            new_size_y = new_size_y - ((new_size_y + new_start_y) - height)
-
-        new_offsets.append((
-            new_start_x, new_start_y, new_size_x, new_size_y,
-        ))
-
-    return new_offsets
 
 
 def _get_chunk_offsets(
@@ -186,9 +46,8 @@ def _get_chunk_offsets(
     """
     height, width = image_shape[:2] if channel_last else image_shape[1:]
 
-    # Find the factors of num_chunks that minimize the circumference of the chunks
-    min_circumference = float("inf")
-    best_factors = (1, num_chunks)
+    best_factors = None
+    min_aspect_ratio_diff = float("inf")
 
     for i in range(1, num_chunks + 1):
         if num_chunks % i == 0:
@@ -198,25 +57,22 @@ def _get_chunk_offsets(
             chunk_height = height // num_h_chunks
             chunk_width = width // num_w_chunks
 
-            # Calculate the circumference of the current chunk configuration
-            circumference = 2 * (chunk_height + chunk_width)
+            aspect_ratio = chunk_width / chunk_height
+            aspect_ratio_diff = abs(aspect_ratio - 1)
 
-            if circumference < min_circumference:
-                min_circumference = circumference
+            if aspect_ratio_diff < min_aspect_ratio_diff:
+                min_aspect_ratio_diff = aspect_ratio_diff
                 best_factors = (num_h_chunks, num_w_chunks)
 
     num_h_chunks, num_w_chunks = best_factors
 
-    # Initialize an empty list to store the chunk offsets
     chunk_offsets = []
 
-    # Iterate through the image and create chunk offsets
     for h in range(num_h_chunks):
         for w in range(num_w_chunks):
             h_start = h * (height // num_h_chunks)
             w_start = w * (width // num_w_chunks)
 
-            # If the current chunk is the last one in its row or column, adjust its size
             h_end = height if h == num_h_chunks - 1 else (h + 1) * (height // num_h_chunks)
             w_end = width if w == num_w_chunks - 1 else (w + 1) * (width // num_w_chunks)
 
@@ -226,6 +82,187 @@ def _get_chunk_offsets(
             chunk_offsets.append((w_start, h_start, x_pixels, y_pixels))
 
     if overlap > 0:
-        return _apply_overlap_to_offsets(chunk_offsets, overlap, image_shape, channel_last=channel_last)
+        overlap_half = ceil(overlap / 2)
+
+        new_offsets = []
+        for start_x, start_y, size_x, size_y in chunk_offsets:
+            new_start_x = max(0, start_x - overlap_half)
+            new_start_y = max(0, start_y - overlap_half)
+
+            new_size_x = size_x + overlap_half
+            new_size_y = size_y + overlap_half
+
+            # If we are over the adjust, bring it back.
+            if new_size_x + new_start_x > width:
+                new_size_x = new_size_x - ((new_size_x + new_start_x) - width)
+
+            if new_size_y + new_start_y > height:
+                new_size_y = new_size_y - ((new_size_y + new_start_y) - height)
+
+            new_offsets.append((
+                new_start_x, new_start_y, new_size_x, new_size_y,
+            ))
+
+        return new_offsets
+
+    return chunk_offsets
+
+
+def _get_chunk_offsets_fixed_size(
+    image_shape,
+    chunk_size_x: int,
+    chunk_size_y: int,
+    border_strategy: int = 1,
+    overlap: int = 0,
+    *,
+    channel_last: bool = True,
+) -> List[Tuple[int, int, int, int]]:
+    """
+    Get chunk offsets for a fixed chunk size.
+
+    Parameters
+    ----------
+    image_shape : Tuple[int, int]
+        A tuple containing the height and width of the image. (Height, Width)
+
+    chunk_size_x : int
+        The size of the chunks in the x-direction.
+
+    chunk_size_y : int
+        The size of the chunks in the y-direction.
+
+    border_strategy : int, optional
+        The border strategy to use when splitting the raster into chunks.
+        border_strategy ignored when chunk_size and overlaps are provided.
+        Only applied when chunk_size is provided. Can be 1 or 2. Default: 1.
+        1. Ignore the border chunks if they do not fit the chunk size.
+        2. Oversample the border chunks to fit the chunk size.
+        3. Shrink the last chunk to fit the image size. (Creates uneven chunks.)
+
+    overlap : int, optional
+        The amount of overlap to apply to each chunk, in pixels. Default: 0.
+
+    channel_last : bool, optional
+        Whether the image has the channels as the last dimension. Default: True.
+
+    Returns
+    -------
+    List[Tuple[int, int, int, int]]
+        A list of tuples, each containing the chunk offsets and dimensions in the format: `(x_start, y_start, x_pixels, y_pixels)`.
+    """
+    assert isinstance(image_shape, (list, tuple)), "image_shape must be a list or tuple."
+    assert isinstance(chunk_size_x, int), "chunk_size_x must be an integer."
+    assert isinstance(chunk_size_y, int), "chunk_size_y must be an integer."
+    assert isinstance(border_strategy, int), "border_strategy must be an integer."
+    assert isinstance(channel_last, bool), "channel_last must be a boolean."
+    assert chunk_size_x > 0, "chunk_size_x must be > 0."
+    assert border_strategy in [1, 2], "border_strategy must be 1 or 2."
+    height, width = image_shape[:2] if channel_last else image_shape[1:]
+
+    num_chunks_x = width // chunk_size_x + (1 if width % chunk_size_x > 0 else 0)
+    num_chunks_y = height // chunk_size_y + (1 if height % chunk_size_y > 0 else 0)
+
+    chunk_offsets = []
+
+    for y in range(num_chunks_y):
+        for x in range(num_chunks_x):
+            x_start = x * chunk_size_x + overlap
+            y_start = y * chunk_size_y + overlap
+
+            x_end = (x + 1) * chunk_size_x + overlap
+            y_end = (y + 1) * chunk_size_y + overlap
+
+            if x_end > width or y_end > height:
+                if border_strategy == 1:
+                    if x_end > width or y_end > height:
+                        continue
+                elif border_strategy == 2:
+                    x_end = min(x_end, width)
+                    y_end = min(y_end, height)
+
+            x_pixels = x_end - x_start
+            y_pixels = y_end - y_start
+
+            if border_strategy in [1, 2] and (x_pixels < chunk_size_x or y_pixels < chunk_size_y):
+                x_pixels = chunk_size_x
+                y_pixels = chunk_size_y
+
+            if x_start + x_pixels > width:
+                if border_strategy == 1:
+                    continue
+                elif border_strategy == 2:
+                    x_start = width - x_pixels
+                elif border_strategy == 3:
+                    x_pixels = width - x_start
+
+            if y_start + y_pixels > height:
+                if border_strategy == 1:
+                    continue
+                elif border_strategy == 2:
+                    y_start = height - y_pixels
+                elif border_strategy == 3:
+                    y_pixels = height - y_start
+
+            new_offset = (x_start, y_start, x_pixels, y_pixels)
+
+            if border_strategy in [1, 2] and (new_offset[2] != chunk_size_x or new_offset[3] != chunk_size_y):
+                raise RuntimeError("Parsing error in offsets.")
+
+            if new_offset not in chunk_offsets:
+                chunk_offsets.append(new_offset)
+
+    if overlap > 0:
+        num_chunks_x = width // chunk_size_x + (1 if width % chunk_size_x > 0 else 0)
+        num_chunks_y = height // chunk_size_y + (1 if height % chunk_size_y > 0 else 0)
+
+        for x in range(num_chunks_x):
+            x_start = x * chunk_size_x
+            x_end = (x + 1) * chunk_size_x
+
+            x_pixels = chunk_size_x
+
+            if x_start < x_pixels and border_strategy == 1:
+                continue
+
+            if x_end > width:
+                if border_strategy == 1:
+                    continue
+                elif border_strategy == 2:
+                    x_start = width - chunk_size_x
+                elif border_strategy == 3:
+                    x_pixels = width - x_start
+
+            new_offset = (x_start, 0, x_pixels, chunk_size_y)
+
+            if border_strategy in [1, 2] and (new_offset[2] != chunk_size_x or new_offset[3] != chunk_size_y):
+                raise RuntimeError("Parsing error in offsets.")
+
+            if new_offset not in chunk_offsets:
+                chunk_offsets.append(new_offset)
+
+        for y in range(num_chunks_y):
+            y_start = y * chunk_size_y
+            y_end = (y + 1) * chunk_size_y
+
+            y_pixels = chunk_size_y
+
+            if y_start < y_pixels and border_strategy == 1:
+                continue
+
+            if y_end > height:
+                if border_strategy == 1:
+                    continue
+                elif border_strategy == 2:
+                    y_start = height - chunk_size_y
+                elif border_strategy == 3:
+                    y_pixels = height - y_start
+
+            new_offset = (0, y_start, chunk_size_x, y_pixels)
+
+            if border_strategy in [1, 2] and (new_offset[2] != chunk_size_x or new_offset[3] != chunk_size_y):
+                raise RuntimeError("Parsing error in offsets.")
+
+            if new_offset not in chunk_offsets:
+                chunk_offsets.append(new_offset)
 
     return chunk_offsets

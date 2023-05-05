@@ -2,7 +2,7 @@
 Make simple work of raster analysis!
 """
 from .core_raster import *
-from .core_io import *
+from .core_raster_io import *
 from .core_offsets import *
 from .core_stack import *
 from .metadata import *

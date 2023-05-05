@@ -118,7 +118,7 @@ def parse_projection(
     return_wkt: bool = False,
 ) -> Union[osr.SpatialReference, str]:
     """
-    Parses a gdal, ogr og osr data source and extraction the projection. If
+    Parses a gdal, ogr or osr data source and extracts the projection. If
     a string or int is passed, it attempts to open it and return the projection as
     an osr.SpatialReference.
 
@@ -135,7 +135,9 @@ def parse_projection(
     Union[osr.SpatialReference, str]:
         The projection as an osr.SpatialReference or a WKT string.
     """
-    assert isinstance(projection, (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)), "projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference."
+    valid_types = (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)
+    if not isinstance(projection, valid_types):
+        raise ValueError("projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference.")
 
     err_msg = f"Unable to parse target projection: {projection}"
     target_proj = osr.SpatialReference()
@@ -143,59 +145,50 @@ def parse_projection(
     # Suppress gdal errors and handle them ourselves.
     gdal.PushErrorHandler("CPLQuietErrorHandler")
 
-    if isinstance(projection, ogr.DataSource):
-        layer = projection.GetLayer()
-        target_proj = layer.GetSpatialRef()
-
-    elif isinstance(projection, gdal.Dataset):
-        target_proj.ImportFromWkt(projection.GetProjection())
-
-    elif isinstance(projection, osr.SpatialReference):
-        target_proj = projection
-
-    elif isinstance(projection, str):
-        if utils_gdal._check_is_raster(projection):
-            ref = gdal.Open(projection, 0)
-            target_proj.ImportFromWkt(ref.GetProjection())
-        if utils_gdal._check_is_vector(projection):
-            ref = ogr.Open(projection, 0)
-            layer = ref.GetLayer()
+    try:
+        if isinstance(projection, ogr.DataSource):
+            layer = projection.GetLayer()
             target_proj = layer.GetSpatialRef()
+
+        elif isinstance(projection, gdal.Dataset):
+            target_proj.ImportFromWkt(projection.GetProjection())
+
+        elif isinstance(projection, osr.SpatialReference):
+            if projection.ExportToWkt() == "":
+                raise ValueError("Spatial reference is empty.")
+            target_proj = projection
+
+        elif isinstance(projection, str):
+            if utils_gdal._check_is_raster(projection):
+                ref = gdal.Open(projection, 0)
+                target_proj.ImportFromWkt(ref.GetProjection())
+            elif utils_gdal._check_is_vector(projection):
+                ref = ogr.Open(projection, 0)
+                layer = ref.GetLayer()
+                target_proj = layer.GetSpatialRef()
+            else:
+                if not (target_proj.ImportFromWkt(projection) == 0 or
+                        target_proj.ImportFromProj4(projection) == 0 or
+                        (projection.lower().startswith("epsg:") and
+                         target_proj.ImportFromEPSG(int(projection.split(":")[1])) == 0) or
+                        (projection.lower().startswith("esri:") and
+                         target_proj.ImportFromWkt(_get_esri_projection(projection)) == 0)):
+                    raise ValueError(err_msg)
+
+        elif isinstance(projection, int):
+            if target_proj.ImportFromEPSG(projection) != 0:
+                raise ValueError(err_msg)
+
         else:
-            code = target_proj.ImportFromWkt(projection)
-            if code != 0:
-                code = target_proj.ImportFromProj4(projection)
-                if code != 0:
-                    if projection.startswith("EPSG:") or projection.startswith("epsg:"):
-                        epsg_code = int(projection.split(":")[1])
-                        code = target_proj.ImportFromEPSG(epsg_code)
-                        if code != 0:
-                            raise ValueError(err_msg)
-                    elif projection.startswith("ESRI:") or projection.startswith("esri:"):
-                        wkt_code = _get_esri_projection(projection)
-
-                        code = target_proj.ImportFromWkt(wkt_code)
-                        if code != 0:
-                            raise ValueError(err_msg)
-
-    elif isinstance(projection, int):
-        code = target_proj.ImportFromEPSG(projection)
-        if code != 0:
             raise ValueError(err_msg)
 
-    else:
+    finally:
+        gdal.PopErrorHandler()
+
+    if not isinstance(target_proj, osr.SpatialReference) or target_proj.ExportToWkt() == "":
         raise ValueError(err_msg)
 
-    gdal.PopErrorHandler()
-
-    if isinstance(target_proj, osr.SpatialReference):
-
-        if return_wkt:
-            return target_proj.ExportToWkt()
-
-        return target_proj
-    else:
-        raise ValueError(err_msg)
+    return target_proj.ExportToWkt() if return_wkt else target_proj
 
 
 def _check_projections_match(

@@ -15,6 +15,7 @@ from osgeo import gdal, ogr, osr
 # Internal
 from buteo.utils import (
     utils_io,
+    utils_aux,
     utils_base,
     utils_gdal,
     utils_path,
@@ -71,9 +72,10 @@ def _raster_reproject(
     dst_nodata: Union[str, int, float] = "infer",
     dtype: Optional[str] = None,
     prefix: str = "",
-    suffix: str = "",
+    suffix: str = "reprojected",
     add_uuid: bool = False,
-    add_timestamp: bool = False,
+    add_timestamp: bool = True,
+    memory: float = 0.8,
 ) -> Union[str, List[str]]:
     """ Internal. """
     assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
@@ -121,19 +123,30 @@ def _raster_reproject(
 
     utils_path._delete_if_required(out_path, overwrite)
 
-    reprojected = gdal.Warp(
-        out_path,
-        ref,
+    # Translate for GdalWarp
+    resample_alg = utils_translate._translate_resample_method(resample_alg)
+    creation_options = utils_gdal._get_default_creation_options(creation_options)
+    memory_limit = utils_aux._get_dynamic_memory_limit(memory)
+    output_dtype = utils_translate._translate_dtype_numpy_to_gdal(
+        utils_translate._parse_dtype(dtype),
+    )
+    src_projection = original_projection.ExportToWkt()
+    dst_projection = target_projection.ExportToWkt()
+
+    warp_options = gdal.WarpOptions(
         format=out_format,
-        srcSRS=original_projection,
-        dstSRS=target_projection,
-        resampleAlg=utils_translate._translate_resample_method(resample_alg),
-        outputType=utils_translate._translate_dtype_numpy_to_gdal(utils_translate._parse_dtype(dtype)),
-        creationOptions=utils_gdal._get_default_creation_options(creation_options),
+        srcSRS=src_projection,
+        dstSRS=dst_projection,
+        resampleAlg=resample_alg,
+        outputType=output_dtype,
+        creationOptions=creation_options,
         srcNodata=src_nodata,
         dstNodata=out_nodata,
+        warpMemoryLimit=memory_limit,
         multithread=True,
     )
+
+    reprojected = gdal.Warp(out_path, ref, options=warp_options)
 
     if reprojected is None:
         raise RuntimeError(f"Error while reprojecting raster: {raster}")

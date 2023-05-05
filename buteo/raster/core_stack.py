@@ -16,7 +16,7 @@ from buteo.utils import (
     utils_path,
     utils_translate,
 )
-from buteo.raster import core_raster, core_io
+from buteo.raster import core_raster, core_raster_io
 
 
 
@@ -78,10 +78,10 @@ def raster_stack_list(
     assert core_raster.check_rasters_are_aligned(input_data), "Rasters are not aligned."
 
     # Read input rasters as NumPy arrays and stack them
-    array = core_io.raster_to_array(input_data, cast=dtype)
+    array = core_raster_io.raster_to_array(input_data, cast=dtype)
 
     # Write the stacked array as a raster file
-    out_path = core_io.array_to_raster(
+    out_path = core_raster_io.array_to_raster(
         array,
         reference=input_data[0],
         out_path=out_path,

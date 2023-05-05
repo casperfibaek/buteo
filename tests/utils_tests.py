@@ -1,8 +1,12 @@
-from osgeo import gdal, osr, ogr
-import numpy as np
-from uuid import uuid4
-import random
+""" This module contains utility functions for testing purposes. """
 
+# Standard library
+import random
+from uuid import uuid4
+
+# External
+import numpy as np
+from osgeo import gdal, osr, ogr
 
 
 def create_sample_raster(

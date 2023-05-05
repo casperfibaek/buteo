@@ -594,6 +594,13 @@ class raster_to_array_chunks:
         The number of chunks to read. The area is chunked in way that ensures
         that the chunks are as square as possible. Default: 1.
 
+    chunk_size : list or tuple, optional
+        The raster can be split into chunks of a fixed size, 
+        instead of splitting into a fixed number of chunks.
+
+        The list should be in the format [x_size, y_size].
+        If this is provided, the chunks parameter is ignored. Default: None.
+
     overlap : int, optional
         The number of pixels to overlap. Default: 0.
 
@@ -606,6 +613,17 @@ class raster_to_array_chunks:
 
     fill_value : int or float, optional
         The value to fill masked values with. Default: None.
+
+    skip : int, optional
+        The number of chunks to skip when iterating. Default: 0.
+
+    border_strategy : int, optional
+        The border strategy to use when splitting the raster into chunks.
+        border_strategy ignored when chunk_size and overlaps are provided.
+        Only applied when chunk_size is provided. Can be 1 or 2. Default: 1.
+        1. Ignore the border chunks if they do not fit the chunk size.
+        2. Oversample the border chunks to fit the chunk size.
+        3. Shrink the last chunk to fit the image size. (Creates uneven chunks.)
 
     cast : type or str, optional
         The data type to cast the output to. Default: None.
@@ -637,21 +655,27 @@ class raster_to_array_chunks:
     def __init__(
         self,
         raster: Union[gdal.Dataset, str, List[Union[str, gdal.Dataset]]],
-        chunks: int = 1,
+        chunks: Optional[int] = 1,
+        chunk_size: Optional[Union[List[int], Tuple[int, int]]] = None,
         *,
         overlap: int = 0,
         bands: Union[List[int], str, int] = 'all',
         filled: bool = False,
         fill_value: Optional[Union[int, float]] = None,
+        skip: int = 0,
+        border_strategy: int = 1,
         cast: Optional[Union[np.dtype, str]] = None,
         channel_last: bool = True,
     ):
         self.raster = raster
         self.chunks = chunks
+        self.chunk_size = chunk_size
         self.overlap = overlap
         self.bands = bands
         self.filled = filled
         self.fill_value = fill_value
+        self.skip = skip
+        self.border_strategy = border_strategy
         self.cast = cast
         self.current_chunk = 0
         self.channel_last = channel_last
@@ -662,13 +686,29 @@ class raster_to_array_chunks:
         assert self.overlap >= 0, "The overlap must be greater than or equal to 0."
         assert self.chunks <= self.shape[1], "The number of chunks must be less than or equal to the number of columns in the raster."
         assert self.chunks <= self.shape[0], "The number of chunks must be less than or equal to the number of rows in the raster."
+        assert self.border_strategy in [1, 2, 3], "The border strategy must be 1, 2, or 3."
 
-        self.offsets = core_offsets._get_chunk_offsets(
-            self.shape,
-            self.chunks,
-            self.overlap,
-            channel_last=channel_last,
-        )
+        if self.chunk_size is not None:
+            assert isinstance(self.chunk_size, (list, tuple)), "Chunk size must be a list or tuple."
+            assert len(self.chunk_size) == 2, "Chunk size must be a list or tuple of length 2."
+            assert all([isinstance(val, int) for val in self.chunk_size]), "Chunk size must be a list or tuple of integers."
+
+            self.offsets = core_offsets._get_chunk_offsets_fixed_size(
+                self.shape,
+                self.chunk_size[0],
+                self.chunk_size[1],
+                self.border_strategy,
+                self.overlap,
+                channel_last=channel_last,
+            )
+
+        else:
+            self.offsets = core_offsets._get_chunk_offsets(
+                self.shape,
+                self.chunks,
+                self.overlap,
+                channel_last=channel_last,
+            )
 
         self.total_chunks = len(self.offsets)
 
@@ -681,7 +721,7 @@ class raster_to_array_chunks:
             raise StopIteration
 
         offset = self.offsets[self.current_chunk]
-        self.current_chunk += 1
+        self.current_chunk += 1 + self.skip
 
         return (
             raster_to_array(

@@ -1,14 +1,15 @@
 """ Tests for core_raster.py """
+# pylint: disable=missing-function-docstring
 
 # Standard library
 import sys; sys.path.append("../")
 
 # External
-from osgeo import gdal
+from osgeo import gdal, osr
 
 # Internal
 from utils_tests import create_sample_raster
-from buteo.raster.reproject import raster_match_projections
+from buteo.raster.reproject import raster_match_projections, _find_common_projection, _raster_reproject
 
 
 
@@ -65,3 +66,82 @@ def test_match_raster_projections_all_different():
     gdal.Unlink(raster1)
     gdal.Unlink(raster2)
     gdal.Unlink(master)
+
+def test_find_common_projection():
+    # Create sample raster files
+    raster_paths = [create_sample_raster() for _ in range(2)]
+
+    common_projection = _find_common_projection(raster_paths)
+    assert common_projection.GetAuthorityCode(None) == "4326", "Common projection not found correctly."
+
+def test_raster_reproject():
+    # Create a sample raster file
+    raster_path = create_sample_raster()
+
+    # Test raster reproject
+    reprojected_raster_path = _raster_reproject(
+        raster=raster_path,
+        projection=4326,
+        out_path=None,
+        resample_alg="nearest",
+        copy_if_same=True,
+        overwrite=True,
+        creation_options=None,
+        dst_nodata="infer",
+        dtype=None,
+        prefix="",
+        suffix="reprojected",
+        add_uuid=False,
+        add_timestamp=True,
+        memory=0.8,
+    )
+    reprojected_raster = gdal.Open(reprojected_raster_path)
+    assert reprojected_raster is not None, "Reprojected raster is not created."
+
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt(reprojected_raster.GetProjection())
+    assert srs.GetAuthorityCode(None) == "4326", "Projection is not set correctly."
+
+def test_raster_reproject_different_projection():
+    raster_path = create_sample_raster(epsg_code=3857)
+    reprojected_raster_path = _raster_reproject(raster_path, projection=4326)
+    
+    reprojected_raster = gdal.Open(reprojected_raster_path)
+    assert reprojected_raster is not None, "Reprojected raster is not created."
+
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt(reprojected_raster.GetProjection())
+    assert srs.GetAuthorityCode(None) == "4326", "Projection is not set correctly."
+
+def test_raster_reproject_no_copy_same_projection():
+    raster_path = create_sample_raster(epsg_code=3857)
+    reprojected_raster_path = _raster_reproject(raster_path, projection=3857, copy_if_same=False)
+    
+    assert raster_path == reprojected_raster_path, "Output path should be the same as the input path when copy_if_same is False and projections match."
+
+def test_raster_reproject_copy_same_projection():
+    raster_path = create_sample_raster(epsg_code=3857)
+    reprojected_raster_path = _raster_reproject(raster_path, projection=3857, copy_if_same=True)
+    
+    assert raster_path != reprojected_raster_path, "Output path should be different from the input path when copy_if_same is True."
+
+def test_raster_reproject_resample_alg():
+    raster_path = create_sample_raster(epsg_code=3857)
+    reprojected_raster_path = _raster_reproject(raster_path, projection=4326, resample_alg="bilinear")
+
+    reprojected_raster = gdal.Open(reprojected_raster_path)
+    assert reprojected_raster is not None, "Reprojected raster is not created."
+
+    srs = osr.SpatialReference()
+    srs.ImportFromWkt(reprojected_raster.GetProjection())
+    assert srs.GetAuthorityCode(None) == "4326", "Projection is not set correctly."
+
+def test_raster_reproject_dtype():
+    raster_path = create_sample_raster(epsg_code=3857, datatype=gdal.GDT_Int16)
+    reprojected_raster_path = _raster_reproject(raster_path, projection=4326, dtype="Int32")
+
+    reprojected_raster = gdal.Open(reprojected_raster_path)
+    assert reprojected_raster is not None, "Reprojected raster is not created."
+
+    raster_band = reprojected_raster.GetRasterBand(1)
+    assert raster_band.DataType == gdal.GDT_Int32, "Data type is not set correctly."

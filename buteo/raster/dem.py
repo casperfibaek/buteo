@@ -10,7 +10,7 @@ from osgeo import gdal
 import numpy as np
 
 # Internal
-from buteo.raster.core_io import raster_to_array, array_to_raster
+from buteo.raster.core_raster_io import raster_to_array, array_to_raster
 from buteo.utils.utils_base import type_check
 from buteo.utils.utils_gdal import _get_default_creation_options, delete_dataset_if_in_memory
 

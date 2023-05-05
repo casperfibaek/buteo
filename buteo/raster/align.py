@@ -24,7 +24,7 @@ from buteo.utils import (
     utils_projection,
 )
 
-from buteo.raster import core_raster, core_io
+from buteo.raster import core_raster, core_raster_io
 from buteo.raster.reproject import raster_reproject, raster_match_projections
 
 
@@ -148,7 +148,7 @@ def raster_align_to_reference(
         else:
             raster_ds = core_raster._raster_open(raster_path)
 
-        destination_ds = core_io.raster_create_empty(
+        destination_ds = core_raster_io.raster_create_empty(
             out_path=path_list[idx],
             width=x_pixels,
             height=y_pixels,
@@ -329,7 +329,7 @@ def raster_find_best_align_reference(
     width = int(round((outbox_bbox[1] - outbox_bbox[0]) / best_reference_meta["pixel_width"]))
     height = int(round((outbox_bbox[3] - outbox_bbox[2]) / best_reference_meta["pixel_height"]))
 
-    out_path = core_io.raster_create_empty(
+    out_path = core_raster_io.raster_create_empty(
         out_path=out_path,
         width=width,
         height=height,

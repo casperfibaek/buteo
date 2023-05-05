@@ -1,17 +1,18 @@
+import sys; sys.path.append("../")
+
+
 import os
-from osgeo import gdal, gdal_array
-import numpy as np
+import buteo as beo
 
-FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/buteo/tests/"
-img = os.path.join(FOLDER, "test_image_rgb_8bit.tif")
+FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/s2_data/S2A_MSIL2A_20220107T090351_N0301_R007_T36UVB_20220107T120342.SAFE/GRANULE/L2A_T36UVB_A034181_20220107T090345/IMG_DATA/R10m/"
 
-opened = gdal.Open(img)
-band = opened.GetRasterBand(1)
-gdal_data_type = band.DataType
+jp2_file = os.path.join(FOLDER, "T36UVB_20220107T090351_TCI_10m.jp2")
 
-numpy_data_type = np.dtype(gdal_array.GDALTypeCodeToNumericTypeCode(gdal_data_type))
+jp2_arr = beo.raster_to_array(jp2_file, pixel_offsets=[500, 500, 1000, 1000])
+print(jp2_arr.shape)
 
+all = beo.raster_to_array(jp2_file)
+print(all.shape)
 
-gdal_array.NumericTypeCodeToGDALTypeCode("uint8")
-
-import pdb; pdb.set_trace()
+for chunk, offset in beo.raster_to_array_chunks(jp2_file, chunks=10):
+    print(chunk.shape)

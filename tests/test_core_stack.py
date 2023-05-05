@@ -12,7 +12,7 @@ import pytest
 
 # Internal
 from buteo.utils.utils_gdal import delete_dataset_if_in_memory
-from buteo.raster import core_stack, core_io
+from buteo.raster import core_raster_io, core_stack
 from utils_tests import create_sample_raster
 
 
