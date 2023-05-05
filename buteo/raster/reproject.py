@@ -126,7 +126,7 @@ def _raster_reproject(
     # Translate for GdalWarp
     resample_alg = utils_translate._translate_resample_method(resample_alg)
     creation_options = utils_gdal._get_default_creation_options(creation_options)
-    memory_limit = utils_aux._get_dynamic_memory_limit(memory)
+    memory_limit = utils_gdal._get_dynamic_memory_limit(memory)
     output_dtype = utils_translate._translate_dtype_numpy_to_gdal(
         utils_translate._parse_dtype(dtype),
     )

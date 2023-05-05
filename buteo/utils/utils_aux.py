@@ -11,11 +11,7 @@ import gc
 import sys
 import shutil
 from datetime import datetime
-from typing import Optional
 
-# External
-import psutil
-import numpy as np
 
 
 def _print_progress(
@@ -160,59 +156,6 @@ def _get_folder_size(
         return total_size >> 20
 
     return total_size
-
-
-def _get_dynamic_memory_limit(
-    proportion: float = 0.8,
-    *,
-    min_mb: int = 100,
-    available: bool = False,
-) -> int:
-    """
-    Returns a dynamic memory limit taking into account total memory and CPU cores.
-    The return is in mbytes. For GDAL.
-
-    The value is interpreted as being in megabytes if the value is less than 10000. For values >=10000, this is interpreted as bytes.
-
-    Parameters
-    ----------
-    percentage : float, optional.
-        The percentage of the total memory to use. Default: 0.8.
-    
-    min_mb : int, optional.
-        The minimum number of megabytes to be returned. Default: 100.
-    
-    available : bool, optional.
-        If True, consider available memory instead of total memory. Default: False.
-
-    Returns
-    -------
-    int
-        The dynamic memory limit in bytes.
-    """
-    assert isinstance(proportion, (int, float)), "percentage must be an integer."
-    assert isinstance(min_mb, int), "min_mb must be an integer."
-    assert isinstance(available, bool), "available must be a boolean."
-    assert min_mb > 0, "min_mb must be > 0."
-    assert proportion > 0.0 and proportion <= 1.0, "percentage must be > 0 and <= 1."
-
-    if available:
-        dyn_limit = np.rint(
-            (psutil.virtual_memory().available * proportion)  / (1024 ** 2),
-        )
-    else:
-        dyn_limit = np.rint(
-            (psutil.virtual_memory().total * proportion)  / (1024 ** 2),
-        )
-
-    if dyn_limit < min_mb:
-        dyn_limit = min_mb
-
-    # GDALWarpMemoryLimit() expects the value in bytes if it is >= 10000
-    if dyn_limit > 10000:
-        dyn_limit = dyn_limit * (1024 ** 2)
-
-    return int(dyn_limit)
 
 
 def _force_garbage_collect_all(

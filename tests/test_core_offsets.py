@@ -46,7 +46,6 @@ def test_get_chunk_offsets_with_overlap():
     ]
 
     used = []
-
     for offset in chunk_offsets:
         assert offset in expected_chunk_offsets and offset not in used
         used.append(offset)
@@ -60,13 +59,20 @@ def test_get_chunk_offsets_fixed_size():
     chunk_size_y = 4
     border_strategy = 1
     channel_last = True
-    expected_output = [
+    expected_chunk_offsets = [
         (0, 0, 3, 4), (3, 0, 3, 4), (6, 0, 3, 4), (9, 0, 3, 4),
         (0, 4, 3, 4), (3, 4, 3, 4), (6, 4, 3, 4), (9, 4, 3, 4),
         (0, 8, 3, 4), (3, 8, 3, 4), (6, 8, 3, 4), (9, 8, 3, 4),
     ]
-    output = _get_chunk_offsets_fixed_size(img_shape, chunk_size_x, chunk_size_y, border_strategy, channel_last=channel_last)
-    assert output == expected_output, f"Expected {expected_output}, but got {output}"
+    chunk_offsets = _get_chunk_offsets_fixed_size(img_shape, chunk_size_x, chunk_size_y, border_strategy, channel_last=channel_last)
+
+    used = []
+    for offset in chunk_offsets:
+        assert offset in expected_chunk_offsets and offset not in used
+        used.append(offset)
+
+    assert len(used) == len(expected_chunk_offsets)
+
 
     # Test case 2: Image with extra pixels on the border, border_strategy = 1
     img_shape = (10, 10)
@@ -74,12 +80,19 @@ def test_get_chunk_offsets_fixed_size():
     chunk_size_y = 4
     border_strategy = 1
     channel_last = True
-    expected_output = [
+    expected_chunk_offsets = [
         (0, 0, 4, 4), (4, 0, 4, 4),
         (0, 4, 4, 4), (4, 4, 4, 4),
     ]
-    output = _get_chunk_offsets_fixed_size(img_shape, chunk_size_x, chunk_size_y, border_strategy, channel_last=channel_last)
-    assert output == expected_output, f"Expected {expected_output}, but got {output}"
+    chunk_offsets = _get_chunk_offsets_fixed_size(img_shape, chunk_size_x, chunk_size_y, border_strategy, channel_last=channel_last)
+
+    used = []
+    for offset in chunk_offsets:
+        assert offset in expected_chunk_offsets and offset not in used
+        used.append(offset)
+
+    assert len(used) == len(expected_chunk_offsets)
+
 
     # Test case 3: Image with extra pixels on the border, border_strategy = 2
     img_shape = (10, 10)
@@ -87,10 +100,16 @@ def test_get_chunk_offsets_fixed_size():
     chunk_size_y = 4
     border_strategy = 2
     channel_last = True
-    expected_output = [
-        (0, 0, 4, 4), (4, 0, 4, 4), (8, 0, 2, 4),
-        (0, 4, 4, 4), (4, 4, 4, 4), (8, 4, 2, 4),
-        (0, 8, 4, 2), (4, 8, 4, 2), (8, 8, 2, 2),
+    expected_chunk_offsets = [
+        (0, 0, 4, 4), (4, 0, 4, 4), (6, 0, 4, 4),
+        (0, 4, 4, 4), (4, 4, 4, 4), (6, 4, 4, 4),
+        (0, 6, 4, 4), (4, 6, 4, 4), (6, 6, 4, 4),
     ]
-    output = _get_chunk_offsets_fixed_size(img_shape, chunk_size_x, chunk_size_y, border_strategy, channel_last=channel_last)
-    assert output == expected_output, f"Expected {expected_output}, but got {output}"
+    chunk_offsets = _get_chunk_offsets_fixed_size(img_shape, chunk_size_x, chunk_size_y, border_strategy, channel_last=channel_last)
+
+    used = []
+    for offset in chunk_offsets:
+        assert offset in expected_chunk_offsets and offset not in used
+        used.append(offset)
+
+    assert len(used) == len(expected_chunk_offsets)

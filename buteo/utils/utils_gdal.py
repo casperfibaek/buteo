@@ -5,18 +5,18 @@ These functions are used to interact with basic GDAL objects.
 """
 
 # Standard Library
-import sys
-
-from buteo.utils import utils_translate; sys.path.append("../../")
+import sys; sys.path.append("../../")
 from typing import Optional, Union, List, Any
 from warnings import warn
 import os
 
 # External
 from osgeo import gdal, ogr
+import psutil
+import numpy as np
 
 # Internal
-from buteo.utils import utils_path, utils_aux, utils_base
+from buteo.utils import utils_path, utils_translate
 
 
 
@@ -871,48 +871,62 @@ def _get_raster_size(
     return x_res, y_res
 
 
-def _get_gdalwarp_ram_limit(
-    limit_in_mb: Union[str, int] = "auto",
+def _get_dynamic_memory_limit(
+    proportion: float = 0.8,
+    *,
+    min_mb: int = 100,
+    max_mb: Optional[int] = None,
+    available: bool = False,
 ) -> int:
     """
-    Converts a RAM limit to a GDALWarp RAM limit.
+    Returns a dynamic memory limit taking into account total memory and CPU cores.
+    The return is in mbytes. For GDAL.
+
+    The value is interpreted as being in megabytes if the value is less than 10000. For values >=10000, this is interpreted as bytes.
 
     Parameters
     ----------
-    limit_in_mb : Union[str, int], optional
-        The limit in MB. Can be "auto" or a number. Default: "auto".
+    percentage : float, optional.
+        The percentage of the total memory to use. Default: 0.8.
+    
+    min_mb : int, optional.
+        The minimum number of megabytes to be returned. Default: 100.
+    
+    available : bool, optional.
+        If True, consider available memory instead of total memory. Default: False.
 
     Returns
     -------
     int
+        The dynamic memory limit in bytes.
     """
-    assert isinstance(limit_in_mb, (str, int)), "limit must be a string or integer."
+    assert isinstance(proportion, (int, float)), "percentage must be an integer."
+    assert isinstance(min_mb, int), "min_mb must be an integer."
+    assert isinstance(available, bool), "available must be a boolean."
+    assert min_mb > 0, "min_mb must be > 0."
+    assert proportion > 0.0 and proportion <= 1.0, "percentage must be > 0 and <= 1."
 
-    min_ram = 1000000
-    limit = min_ram
+    if available:
+        dyn_limit = np.rint(
+            (psutil.virtual_memory().available * proportion)  / (1024 ** 2),
+        )
+    else:
+        dyn_limit = np.rint(
+            (psutil.virtual_memory().total * proportion)  / (1024 ** 2),
+        )
 
-    if isinstance(limit_in_mb, str):
-        if limit_in_mb.lower() == "auto":
-            return utils_aux._get_dynamic_memory_limit_bytes(percentage=80.0)
-        else:
-            if "%" not in limit_in_mb:
-                raise ValueError(f"Invalid limit: {limit_in_mb}")
+    if dyn_limit < min_mb:
+        dyn_limit = min_mb
 
-            limit_in_percentage = limit_in_mb.replace("%", "")
-            limit_in_percentage = int(limit_in_percentage)
+    if max_mb is not None:
+        if dyn_limit > max_mb:
+            dyn_limit = max_mb
 
-            if limit_in_percentage <= 0 or limit_in_percentage > 100:
-                raise ValueError(f"Invalid limit: {limit_in_mb}")
+    # GDALWarpMemoryLimit() expects the value in bytes if it is >= 10000
+    if dyn_limit > 10000:
+        dyn_limit = dyn_limit * (1024 ** 2)
 
-            limit = utils_aux._get_dynamic_memory_limit_bytes(percentage=limit_in_percentage)
-
-            if limit > min_ram:
-                return limit
-
-    if limit > min_ram:
-        return int(limit_in_mb * (1024 ** 2))
-
-    return min_ram
+    return int(dyn_limit)
 
 
 def _convert_to_band_list(

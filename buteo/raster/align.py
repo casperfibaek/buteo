@@ -39,7 +39,9 @@ def raster_align_to_reference(
     creation_options: Optional[List[str]] = None,
     prefix: str = "",
     suffix: str = "",
-    ram: Union[str, float, int] = "auto",
+    ram: float = 0.8,
+    ram_max: Optional[int] = None,
+    ram_min: Optional[int] = 100,
 ) -> List[str]:
     """
     Aligns a series of rasters to a reference.
@@ -73,8 +75,14 @@ def raster_align_to_reference(
     suffix : str, optional
         Suffix to add to the output file name. Default: "".
 
-    ram : str or int, optional
-        Amount of RAM to use in MB. If "auto", the amount of RAM will be determined automatically.
+    ram : float, optional
+        The proportion of total ram to allow usage of. Default: 0.8.
+    
+    ram_max: int, optional
+        The maximum amount of ram to use in MB. Default: None.
+    
+    ram_min: int, optional
+        The minimum amount of ram to use in MB. Default: 100.
 
     Returns
     -------
@@ -90,7 +98,9 @@ def raster_align_to_reference(
     utils_base.type_check(creation_options, [[str], None], "creation_options")
     utils_base.type_check(prefix, [str], "prefix")
     utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(ram, [int, str], "ram")
+    utils_base.type_check(ram, [float], "ram")
+    utils_base.type_check(ram_max, [int, None], "ram_max")
+    utils_base.type_check(ram_min, [int, None], "ram_min")
 
     rasters_list = utils_io._get_input_paths(rasters, "raster")
 
@@ -169,7 +179,7 @@ def raster_align_to_reference(
             resampleAlg=utils_translate._translate_resample_method(resample_alg),
             multithread=True,
             outputBounds=utils_bbox._get_gdal_bbox_from_ogr_bbox(reference_bbox),
-            warpMemoryLimit=utils_gdal._get_gdalwarp_ram_limit(ram),
+            warpMemoryLimit=utils_gdal._get_dynamic_memory_limit(ram, min_mb=ram_min, max_mb=ram_max),
         )
 
         warped = gdal.Warp(destination_ds, raster_ds, options=warp_options)
@@ -358,7 +368,9 @@ def raster_align(
     creation_options: Optional[List[str]] = None,
     prefix: str = "",
     suffix: str = "",
-    ram: Union[int, str] = "auto",
+    ram: float = 0.8,
+    ram_min: Optional[int] = 100,
+    ram_max: Optional[int] = None,
 ) -> List[str]:
     """
     Aligns rasters either to a reference raster or to each other using one of three methods:
@@ -393,8 +405,14 @@ def raster_align(
     suffix : str, optional
         The suffix to add to the output file name, default: ""
 
-    ram : Union[str, int], optional
-        Amount of RAM to use in MB. If "auto", the amount of RAM will be determined automatically.
+    ram : float, optional
+        The proportion of total ram to allow usage of, default: 0.8
+
+    ram_min : int, optional
+        The minimum amount of RAM to use in MB, default: 100
+
+    ram_max : int, optional
+        The maximum amount of RAM to use in MB, default: None
     
     Returns
     -------
@@ -411,7 +429,10 @@ def raster_align(
     utils_base.type_check(creation_options, [[str], None], "creation_options")
     utils_base.type_check(prefix, [str], "prefix")
     utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(ram, [int, str], "ram")
+    utils_base.type_check(ram, [float], "ram")
+    utils_base.type_check(ram_min, [int, None], "ram_min")
+    utils_base.type_check(ram_max, [int, None], "ram_max")
+
 
     raster_list = utils_io._get_input_paths(rasters, "raster")
     assert method in ["reference", "intersection", "union"], "method must be one of reference, intersection, or union."
@@ -441,6 +462,8 @@ def raster_align(
         suffix=suffix,
         prefix=prefix,
         ram=ram,
+        ram_min=ram_min,
+        ram_max=ram_max,
     )
 
     return aligned

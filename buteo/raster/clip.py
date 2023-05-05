@@ -45,7 +45,9 @@ def _raster_clip(
     suffix: str = "",
     verbose: int = 1,
     add_uuid: bool = False,
-    ram: Union[str, int, float] = "auto",
+    ram: float = 0.8,
+    ram_max: Optional[int] = None,
+    ram_min: Optional[int] = 100,
 ):
     """
     INTERNAL.
@@ -178,7 +180,7 @@ def _raster_clip(
         cutlineDSName=clip_ds,
         cropToCutline=False,
         creationOptions=out_creation_options,
-        warpMemoryLimit=utils_gdal._get_gdalwarp_ram_limit(ram),
+        warpMemoryLimit=utils_gdal._get_dynamic_memory_limit(ram, min_mb=ram_min, max_mb=ram_max),
         warpOptions=warp_options,
         srcNodata=src_nodata,
         dstNodata=out_nodata,
@@ -215,7 +217,9 @@ def raster_clip(
     layer_to_clip: int = 0,
     verbose: int = 0,
     add_uuid: bool = False,
-    ram: Union[str, float, int] = "auto",
+    ram: float = 0.8,
+    ram_max: Optional[int] = None,
+    ram_min: Optional[int] = 100,
 ):
     """
     Clips a raster(s) using a vector geometry or the extents of a raster.
@@ -274,8 +278,14 @@ def raster_clip(
     add_uuid : bool, optional
         If True, a UUID will be added to the output raster. Default: False.
 
-    ram : str or float or int, optional
-        The amount of RAM to use for the operation. Default: "auto".
+    ram : float, optional
+        The proportion of total ram to allow usage of. Default: 0.8.
+    
+    ram_max: int, optional
+        The maximum amount of ram to use in MB. Default: None.
+    
+    ram_min: int, optional
+        The minimum amount of ram to use in MB. Default: 100.
 
     Returns
     -------
@@ -299,6 +309,9 @@ def raster_clip(
     utils_base.type_check(suffix, [str], "postfix")
     utils_base.type_check(verbose, [int], "verbose")
     utils_base.type_check(add_uuid, [bool], "uuid")
+    utils_base.type_check(ram, [float], "ram")
+    utils_base.type_check(ram_max, [int, None], "ram_max")
+    utils_base.type_check(ram_min, [int, None], "ram_min")
 
     raster_list = utils_base._get_variable_as_list(raster)
     path_list = utils_gdal._parse_output_data(
@@ -331,6 +344,8 @@ def raster_clip(
                 suffix=suffix,
                 verbose=verbose,
                 ram=ram,
+                ram_max=ram_max,
+                ram_min=ram_min,
             )
         )
 
