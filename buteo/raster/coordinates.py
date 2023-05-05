@@ -34,7 +34,7 @@ def raster_create_grid_with_coordinates(
     np.ndarray
         A NumPy array of shape (x, y, xy-coordinates).
     """
-    utils_base.type_check(raster, [str, gdal.Dataset], "raster")
+    utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
     meta = core_raster._get_basic_metadata_raster(raster)
 

@@ -14,8 +14,8 @@ import numpy as np
 from osgeo import gdal
 
 # Internal
-from buteo.utils import utils_base, utils_gdal
-from buteo.raster import core_raster
+from buteo.utils import utils_base, utils_gdal, utils_io
+from buteo.raster import core_raster, core_raster_io
 from buteo.raster.borders import raster_add_border
 
 
@@ -88,37 +88,37 @@ def raster_get_proximity(
     Union[str, np.ndarray]
         A path to a raster with the calculated proximity, or a numpy array with the data.
     """
-    utils_base.type_check(input_rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "input_rasters")
-    utils_base.type_check(target_value, [int, float], "target_value")
-    utils_base.type_check(out_path, [str, [str], None], "out_path")
-    utils_base.type_check(max_dist, [int, float], "max_dist")
-    utils_base.type_check(add_border, [bool], "add_border")
-    utils_base.type_check(border_value, [int, float], "border_value")
-    utils_base.type_check(weighted, [bool], "weighted")
-    utils_base.type_check(invert, [bool], "invert")
-    utils_base.type_check(return_array, [bool], "return_array")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(add_uuid, [bool], "add_uuid")
-    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(input_rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "input_rasters")
+    utils_base._type_check(target_value, [int, float], "target_value")
+    utils_base._type_check(out_path, [str, [str], None], "out_path")
+    utils_base._type_check(max_dist, [int, float], "max_dist")
+    utils_base._type_check(add_border, [bool], "add_border")
+    utils_base._type_check(border_value, [int, float], "border_value")
+    utils_base._type_check(weighted, [bool], "weighted")
+    utils_base._type_check(invert, [bool], "invert")
+    utils_base._type_check(return_array, [bool], "return_array")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(overwrite, [bool], "overwrite")
 
     raster_list = utils_base._get_variable_as_list(input_rasters)
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         raster_list,
-        output_data=out_path,
-        overwrite=overwrite,
+        out_path,
+        add_uuid=add_uuid or out_path is None,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=add_uuid,
+        overwrite=overwrite,
     )
 
     output = []
     for index, input_raster in enumerate(raster_list):
         out_path = path_list[index]
 
-        in_arr = core_raster.raster_to_array(input_raster, filled=True)
+        in_arr = core_raster_io.raster_to_array(input_raster, filled=True)
         bin_arr = (in_arr != target_value).astype("uint8")
-        bin_raster = core_raster.array_to_raster(bin_arr, reference=input_raster)
+        bin_raster = core_raster_io.array_to_raster(bin_arr, reference=input_raster)
 
         in_raster = core_raster._raster_open(bin_raster)
         in_raster_path = bin_raster

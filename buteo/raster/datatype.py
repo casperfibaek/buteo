@@ -13,6 +13,7 @@ from osgeo import gdal
 
 # Internal
 from buteo.utils import (
+    utils_io,
     utils_gdal,
     utils_base,
     utils_path,
@@ -73,7 +74,7 @@ def _raster_set_datatype(
         metadata["width"],
         metadata["height"],
         metadata["bands"],
-        utils_translate._translate_str_to_gdal_dtype(dtype_str),
+        utils_translate._translate_dtype_gdal_to_numpy(dtype_str),
         utils_gdal._get_default_creation_options(creation_options),
     )
 
@@ -150,12 +151,12 @@ def raster_set_datatype(
     str or list
         The file path(s) of the newly created raster(s) with the specified datatype.
     """
-    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base.type_check(dtype, [str], "dtype")
-    utils_base.type_check(out_path, [list, str, None], "out_path")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(allow_lists, [bool], "allow_lists")
-    utils_base.type_check(creation_options, [list, None], "creation_options")
+    utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base._type_check(dtype, [str], "dtype")
+    utils_base._type_check(out_path, [list, str, None], "out_path")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(creation_options, [list, None], "creation_options")
 
     if not allow_lists:
         if isinstance(raster, list):
@@ -172,11 +173,10 @@ def raster_set_datatype(
     add_uuid = out_path is None
 
     raster_list = utils_base._get_variable_as_list(raster)
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         raster_list,
-        output_data=out_path,
-        add_uuid=add_uuid,
-        overwrite=overwrite,
+        out_path,
+        add_uuid=add_uuid or out_path is None,
     )
 
     output = []

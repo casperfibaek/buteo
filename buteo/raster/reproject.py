@@ -15,7 +15,6 @@ from osgeo import gdal, ogr, osr
 # Internal
 from buteo.utils import (
     utils_io,
-    utils_aux,
     utils_base,
     utils_gdal,
     utils_path,
@@ -45,7 +44,7 @@ def _find_common_projection(
     osr.SpatialReference
         The common projection.
     """
-    utils_base.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
+    utils_base._type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
 
     rasters = utils_base._get_variable_as_list(rasters)
 
@@ -219,17 +218,17 @@ def raster_reproject(
     Union[str, List[str]]
         The output path(s).
     """
-    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
-    utils_base.type_check(out_path, [list, str, None], "out_path")
-    utils_base.type_check(resample_alg, [str], "resample_alg")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(creation_options, [[str], None], "creation_options")
-    utils_base.type_check(dst_nodata, [str, int, float], "dst_nodata")
-    utils_base.type_check(dtype, [str, None], "dtype")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "postfix")
-    utils_base.type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base._type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
+    utils_base._type_check(out_path, [list, str, None], "out_path")
+    utils_base._type_check(resample_alg, [str], "resample_alg")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
+    utils_base._type_check(dst_nodata, [str, int, float], "dst_nodata")
+    utils_base._type_check(dtype, [str, None], "dtype")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "postfix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
 
     if utils_path._check_is_path_glob(raster):
         raster = utils_path._get_paths_from_glob(raster)
@@ -313,13 +312,13 @@ def raster_match_projections(
     List[str]
         A list of reprojected input rasters with the correct projection.
     """
-    utils_base.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
-    utils_base.type_check(reference, [str, gdal.Dataset, ogr.DataSource], "reference")
-    utils_base.type_check(out_path, [str, list, None], "out_path")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(dst_nodata, [str, int, float], "dst_nodata")
-    utils_base.type_check(copy_if_already_correct, [bool], "copy_if_already_correct")
-    utils_base.type_check(creation_options, [[str], None], "creation_options")
+    utils_base._type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
+    utils_base._type_check(reference, [str, gdal.Dataset, ogr.DataSource], "reference")
+    utils_base._type_check(out_path, [str, list, None], "out_path")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(dst_nodata, [str, int, float], "dst_nodata")
+    utils_base._type_check(copy_if_already_correct, [bool], "copy_if_already_correct")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
 
     rasters = utils_base._get_variable_as_list(rasters)
 

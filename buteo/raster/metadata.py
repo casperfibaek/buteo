@@ -24,7 +24,7 @@ def _raster_to_metadata(
     raster: Union[str, gdal.Dataset],
 ) -> dict:
     """ Internal. """
-    utils_base.type_check(raster, [str, gdal.Dataset], "raster")
+    utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
     dataset = _raster_open(raster)
 
@@ -67,7 +67,7 @@ def _raster_to_metadata(
     datatype_gdal_raw = band0.DataType
     datatype_gdal = gdal.GetDataTypeName(datatype_gdal_raw)
 
-    datatype = utils_translate._translate_gdal_dtype_to_str(datatype_gdal_raw)
+    datatype = utils_translate._translate_dtype_gdal_to_numpy(datatype_gdal_raw).name
 
     nodata_value = band0.GetNoDataValue()
     has_nodata = nodata_value is not None
@@ -152,7 +152,7 @@ def raster_to_metadata(
     dict or list of dict
         A dictionary or a list of dictionaries containing metadata information for each raster.
     """
-    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
     if not allow_lists and isinstance(raster, list):
         raise ValueError("Input raster must be a single raster.")

@@ -15,12 +15,13 @@ import numpy as np
 
 # Internal
 from buteo.utils import (
+    utils_io,
     utils_base,
     utils_gdal,
     utils_path,
     utils_translate,
 )
-from buteo.raster import core_raster
+from buteo.raster import core_raster, core_raster_io
 
 
 
@@ -42,17 +43,17 @@ def _raster_resample(
     """ Internal. """
     assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
 
-    out_path = utils_gdal._parse_output_data(
+    out_path = utils_io._get_output_paths(
         raster,
-        output_data=out_path,
-        overwrite=overwrite,
+        out_path,
+        add_uuid=add_uuid or out_path is None,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=add_uuid,
+        overwrite=overwrite,
     )
 
     ref = core_raster._raster_open(raster)
-    metadata = core_raster._raster_to_metadata(ref)
+    metadata = core_raster._get_basic_metadata_raster(ref)
 
     x_res, y_res, x_pixels, y_pixels = utils_gdal._get_raster_size(
         target_size, target_in_pixels=target_in_pixels
@@ -81,7 +82,7 @@ def _raster_resample(
         xRes=x_res,
         yRes=y_res,
         format=out_format,
-        outputType=utils_translate._translate_str_to_gdal_dtype(dtype),
+        outputType=utils_translate._translate_dtype_gdal_to_numpy(dtype),
         resampleAlg=utils_translate._translate_resample_method(resample_alg),
         creationOptions=utils_gdal._get_default_creation_options(creation_options),
         srcNodata=metadata["nodata_value"],
@@ -157,17 +158,17 @@ def raster_resample(
     str/list[str]
         The output path(s) of the resampled raster(s).
     """
-    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base.type_check(target_size, [tuple, [int, float], int, float, str, gdal.Dataset], "target_size")
-    utils_base.type_check(target_in_pixels, [bool], "target_in_pixels")
-    utils_base.type_check(out_path, [str, [str], None], "out_path")
-    utils_base.type_check(resample_alg, [str], "resample_alg")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(creation_options, [[str], None], "creation_options")
-    utils_base.type_check(dst_nodata, [str, int, float, None], "dst_nodata")
-    utils_base.type_check(dtype, [str, None], "dtype")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "postfix")
+    utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base._type_check(target_size, [tuple, [int, float], int, float, str, gdal.Dataset], "target_size")
+    utils_base._type_check(target_in_pixels, [bool], "target_in_pixels")
+    utils_base._type_check(out_path, [str, [str], None], "out_path")
+    utils_base._type_check(resample_alg, [str], "resample_alg")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
+    utils_base._type_check(dst_nodata, [str, int, float, None], "dst_nodata")
+    utils_base._type_check(dtype, [str, None], "dtype")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "postfix")
 
     if utils_path._check_is_path_glob(raster):
         raster = utils_path._get_paths_from_glob(raster)
@@ -175,13 +176,13 @@ def raster_resample(
     raster_list = utils_base._get_variable_as_list(raster)
     assert utils_gdal._check_is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         raster_list,
-        output_data=out_path,
-        overwrite=overwrite,
+        out_path,
+        add_uuid=add_uuid or out_path is None,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=add_uuid,
+        overwrite=overwrite,
     )
 
     resampled_rasters = []
@@ -210,16 +211,16 @@ def raster_resample(
 
 def resample_array(arr, target_shape_pixels, resample_alg="nearest"):
     """ Resample a numpy array using the GDAL algorithms. """
-    utils_base.type_check(arr, [np.ndarray, np.ma.MaskedArray], "arr")
-    utils_base.type_check(target_shape_pixels, [tuple, [int, float]], "target_shape_pixels")
-    utils_base.type_check(resample_alg, [str], "resample_alg")
+    utils_base._type_check(arr, [np.ndarray, np.ma.MaskedArray], "arr")
+    utils_base._type_check(target_shape_pixels, [tuple, [int, float]], "target_shape_pixels")
+    utils_base._type_check(resample_alg, [str], "resample_alg")
 
     if len(target_shape_pixels) > 2:
         target_shape_pixels = target_shape_pixels[:2]
 
-    arr_as_raster = core_raster.raster_create_from_array(arr)
+    arr_as_raster = core_raster_io.raster_create_from_array(arr)
     resampled = _raster_resample(arr_as_raster, target_shape_pixels, target_in_pixels=True, resample_alg=resample_alg)
-    out_arr = core_raster.raster_to_array(resampled)
+    out_arr = core_raster_io.raster_to_array(resampled)
 
     utils_gdal.delete_dataset_if_in_memory(arr_as_raster)
     utils_gdal.delete_dataset_if_in_memory(resampled)

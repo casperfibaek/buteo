@@ -15,6 +15,7 @@ import numpy as np
 
 # Internal
 from buteo.utils import (
+    utils_io,
     utils_gdal,
     utils_base,
     utils_bbox,
@@ -44,7 +45,6 @@ def _raster_clip(
     prefix: str = "",
     suffix: str = "",
     verbose: int = 1,
-    add_uuid: bool = False,
     ram: float = 0.8,
     ram_max: Optional[int] = None,
     ram_min: Optional[int] = 100,
@@ -53,12 +53,12 @@ def _raster_clip(
     INTERNAL.
     Clips a raster(s) using a vector geometry or the extents of a raster.
     """
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         raster,
-        output_data=out_path,
+        out_path,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=add_uuid,
+        add_uuid=out_path is None,
     )
 
     if out_path is not None and isinstance(out_path, str):
@@ -90,11 +90,11 @@ def _raster_clip(
 
     # Input is a raster (use extent)
     elif utils_gdal._check_is_raster(clip_geom):
-        clip_metadata = core_raster._raster_to_metadata(clip_geom)
+        clip_metadata = core_raster._get_basic_metadata_raster(clip_geom)
         clip_ds = utils_bbox._get_vector_from_bbox(clip_metadata["bbox"], clip_metadata["projection_osr"])
         memory_files.append(clip_ds)
     else:
-        if utils_base.file_exists(clip_geom):
+        if utils_path._check_file_exists(clip_geom):
             raise ValueError(f"Unable to parse clip geometry: {clip_geom}")
         else:
             raise ValueError(f"Unable to locate clip geometry {clip_geom}")
@@ -111,7 +111,7 @@ def _raster_clip(
 
     origin_layer = core_raster.raster_open(raster)
 
-    raster_metadata = core_raster._raster_to_metadata(raster)
+    raster_metadata = core_raster._get_basic_metadata_raster(raster)
     origin_projection = raster_metadata["projection_osr"]
 
     # Fast check: Does the extent of the two inputs overlap?
@@ -292,34 +292,34 @@ def raster_clip(
     str or list
         A string or list of strings representing the path(s) to the clipped raster(s).
     """
-    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base.type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_geom")
-    utils_base.type_check(out_path, [[str], str, None], "out_path")
-    utils_base.type_check(resample_alg, [str], "resample_alg")
-    utils_base.type_check(crop_to_geom, [bool], "crop_to_geom")
-    utils_base.type_check(adjust_bbox, [bool], "adjust_bbox")
-    utils_base.type_check(all_touch, [bool], "all_touch")
-    utils_base.type_check(to_extent, [bool], "to_extent")
-    utils_base.type_check(dst_nodata, [str, int, float, None], "dst_nodata")
-    utils_base.type_check(src_nodata, [str, int, float, None], "src_nodata")
-    utils_base.type_check(layer_to_clip, [int], "layer_to_clip")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(creation_options, [[str], None], "creation_options")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "postfix")
-    utils_base.type_check(verbose, [int], "verbose")
-    utils_base.type_check(add_uuid, [bool], "uuid")
-    utils_base.type_check(ram, [float], "ram")
-    utils_base.type_check(ram_max, [int, None], "ram_max")
-    utils_base.type_check(ram_min, [int, None], "ram_min")
+    utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base._type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_geom")
+    utils_base._type_check(out_path, [[str], str, None], "out_path")
+    utils_base._type_check(resample_alg, [str], "resample_alg")
+    utils_base._type_check(crop_to_geom, [bool], "crop_to_geom")
+    utils_base._type_check(adjust_bbox, [bool], "adjust_bbox")
+    utils_base._type_check(all_touch, [bool], "all_touch")
+    utils_base._type_check(to_extent, [bool], "to_extent")
+    utils_base._type_check(dst_nodata, [str, int, float, None], "dst_nodata")
+    utils_base._type_check(src_nodata, [str, int, float, None], "src_nodata")
+    utils_base._type_check(layer_to_clip, [int], "layer_to_clip")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "postfix")
+    utils_base._type_check(verbose, [int], "verbose")
+    utils_base._type_check(add_uuid, [bool], "uuid")
+    utils_base._type_check(ram, [float], "ram")
+    utils_base._type_check(ram_max, [int, None], "ram_max")
+    utils_base._type_check(ram_min, [int, None], "ram_min")
 
     raster_list = utils_base._get_variable_as_list(raster)
-    path_list = utils_gdal._parse_output_data(
+    out_path_list = utils_io._get_output_paths(
         raster,
-        output_data=out_path,
+        out_path,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=add_uuid,
+        add_uuid=add_uuid or out_path is None,
         overwrite=overwrite,
     )
 
@@ -329,7 +329,7 @@ def raster_clip(
             _raster_clip(
                 in_raster,
                 clip_geom,
-                out_path=path_list[index],
+                out_path=out_path_list[index],
                 resample_alg=resample_alg,
                 crop_to_geom=crop_to_geom,
                 adjust_bbox=adjust_bbox,

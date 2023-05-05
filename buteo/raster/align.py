@@ -89,18 +89,18 @@ def raster_align_to_reference(
     List[str]
         A list of paths to the aligned rasters.
     """
-    utils_base.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
-    utils_base.type_check(reference, [str, gdal.Dataset], "reference")
-    utils_base.type_check(out_path, [str, None, [str]], "out_path")
-    utils_base.type_check(resample_alg, [str], "resample_alg")
-    utils_base.type_check(target_nodata, [int, float, None], "target_nodata")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(creation_options, [[str], None], "creation_options")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(ram, [float], "ram")
-    utils_base.type_check(ram_max, [int, None], "ram_max")
-    utils_base.type_check(ram_min, [int, None], "ram_min")
+    utils_base._type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
+    utils_base._type_check(reference, [str, gdal.Dataset], "reference")
+    utils_base._type_check(out_path, [str, None, [str]], "out_path")
+    utils_base._type_check(resample_alg, [str], "resample_alg")
+    utils_base._type_check(target_nodata, [int, float, None], "target_nodata")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(ram, [float], "ram")
+    utils_base._type_check(ram_max, [int, None], "ram_max")
+    utils_base._type_check(ram_min, [int, None], "ram_min")
 
     rasters_list = utils_io._get_input_paths(rasters, "raster")
 
@@ -221,9 +221,9 @@ def raster_find_best_align_reference(
     str
         Path to the best reference raster.
     """
-    utils_base.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
-    utils_base.type_check(method, [str], "method")
-    utils_base.type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
+    utils_base._type_check(method, [str], "method")
+    utils_base._type_check(out_path, [str, None], "out_path")
 
     rasters_list = utils_io._get_input_paths(rasters, "raster")
     assert method in ["reference", "intersection", "union"], (
@@ -419,19 +419,19 @@ def raster_align(
     List[str]
         The aligned rasters.
     """
-    utils_base.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
-    utils_base.type_check(out_path, [str, None, [str]], "out_path")
-    utils_base.type_check(reference, [str, [str], None], "reference")
-    utils_base.type_check(method, [str], "method")
-    utils_base.type_check(target_nodata, [int, float, None], "target_nodata")
-    utils_base.type_check(resample_alg, [str], "resample_alg")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(creation_options, [[str], None], "creation_options")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(ram, [float], "ram")
-    utils_base.type_check(ram_min, [int, None], "ram_min")
-    utils_base.type_check(ram_max, [int, None], "ram_max")
+    utils_base._type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
+    utils_base._type_check(out_path, [str, None, [str]], "out_path")
+    utils_base._type_check(reference, [str, [str], None], "reference")
+    utils_base._type_check(method, [str], "method")
+    utils_base._type_check(target_nodata, [int, float, None], "target_nodata")
+    utils_base._type_check(resample_alg, [str], "resample_alg")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(ram, [float], "ram")
+    utils_base._type_check(ram_min, [int, None], "ram_min")
+    utils_base._type_check(ram_max, [int, None], "ram_max")
 
 
     raster_list = utils_io._get_input_paths(rasters, "raster")

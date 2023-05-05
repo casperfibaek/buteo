@@ -141,14 +141,14 @@ def raster_to_array(
     >>> (100, 100, 10), dtype('float32')
     ```
     """
-    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base.type_check(bands, [int, [int], str], "bands")
-    utils_base.type_check(filled, [bool], "filled")
-    utils_base.type_check(fill_value, [int, float, None], "fill_value")
-    utils_base.type_check(bbox, [list, None], "bbox")
-    utils_base.type_check(pixel_offsets, [list, tuple, None], "pixel_offsets")
-    utils_base.type_check(cast, [np.dtype, str, type(np.int64), None], "cast")
-    utils_base.type_check(channel_last, [bool], "channel_last")
+    utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base._type_check(bands, [int, [int], str], "bands")
+    utils_base._type_check(filled, [bool], "filled")
+    utils_base._type_check(fill_value, [int, float, None], "fill_value")
+    utils_base._type_check(bbox, [list, None], "bbox")
+    utils_base._type_check(pixel_offsets, [list, tuple, None], "pixel_offsets")
+    utils_base._type_check(cast, [np.dtype, str, type(np.int64), None], "cast")
+    utils_base._type_check(channel_last, [bool], "channel_last")
 
     input_is_list = isinstance(raster, list)
 
@@ -339,16 +339,16 @@ def array_to_raster(
     >>> "/path/to/new/new_raster.tif"
     ```
     """
-    utils_base.type_check(array, [np.ndarray], "array")
-    utils_base.type_check(reference, [str, gdal.Dataset], "reference")
-    utils_base.type_check(out_path, [str, None], "out_path")
-    utils_base.type_check(set_nodata, [float, int, str], "set_nodata")
-    utils_base.type_check(allow_mismatches, [bool], "allow_mismatches")
-    utils_base.type_check(pixel_offsets, [list, tuple, None], "pixel_offsets")
-    utils_base.type_check(bbox, [list, None], "bbox")
-    utils_base.type_check(channel_last, [bool], "channel_last")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(creation_options, [list, None], "creation_options")
+    utils_base._type_check(array, [np.ndarray], "array")
+    utils_base._type_check(reference, [str, gdal.Dataset], "reference")
+    utils_base._type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(set_nodata, [float, int, str], "set_nodata")
+    utils_base._type_check(allow_mismatches, [bool], "allow_mismatches")
+    utils_base._type_check(pixel_offsets, [list, tuple, None], "pixel_offsets")
+    utils_base._type_check(bbox, [list, None], "bbox")
+    utils_base._type_check(channel_last, [bool], "channel_last")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(creation_options, [list, None], "creation_options")
 
     if isinstance(set_nodata, str) and set_nodata not in ["arr", "ref"]:
         raise ValueError("set_nodata must be either 'arr' or 'ref'.")
@@ -805,19 +805,19 @@ def raster_create_empty(
     str
         The path to the output raster.
     """
-    utils_base.type_check(out_path, [str, type(None)], "out_path")
-    utils_base.type_check(width, [int], "width")
-    utils_base.type_check(height, [int], "height")
-    utils_base.type_check(pixel_size, [int, float, list, tuple], "pixel_size")
-    utils_base.type_check(bands, [int], "bands")
-    utils_base.type_check(dtype, [str, int, np.dtype, type(np.int8), None], "dtype")
-    utils_base.type_check(x_min, [int, float], "x_min")
-    utils_base.type_check(y_max, [int, float], "y_max")
-    utils_base.type_check(nodata_value, [int, float, type(None)], "nodata_value")
-    utils_base.type_check(fill_value, [int, float, type(None)], "fill_value")
-    utils_base.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
-    utils_base.type_check(creation_options, [list, type(None)], "creation_options")
-    utils_base.type_check(overwrite, bool, "overwrite")
+    utils_base._type_check(out_path, [str, type(None)], "out_path")
+    utils_base._type_check(width, [int], "width")
+    utils_base._type_check(height, [int], "height")
+    utils_base._type_check(pixel_size, [int, float, list, tuple], "pixel_size")
+    utils_base._type_check(bands, [int], "bands")
+    utils_base._type_check(dtype, [str, int, np.dtype, type(np.int8), None], "dtype")
+    utils_base._type_check(x_min, [int, float], "x_min")
+    utils_base._type_check(y_max, [int, float], "y_max")
+    utils_base._type_check(nodata_value, [int, float, type(None)], "nodata_value")
+    utils_base._type_check(fill_value, [int, float, type(None)], "fill_value")
+    utils_base._type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
+    utils_base._type_check(creation_options, [list, type(None)], "creation_options")
+    utils_base._type_check(overwrite, bool, "overwrite")
 
     if out_path is not None and not utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite):
         raise ValueError(
@@ -912,14 +912,14 @@ def raster_create_from_array(
     str
         The path to the output raster.
     """
-    utils_base.type_check(arr, [np.ndarray, np.ma.MaskedArray], "arr")
-    utils_base.type_check(out_path, [str, None], "out_path")
-    utils_base.type_check(pixel_size, [int, float, [int, float], tuple], "pixel_size")
-    utils_base.type_check(x_min, [int, float], "x_min")
-    utils_base.type_check(y_max, [int, float], "y_max")
-    utils_base.type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
-    utils_base.type_check(creation_options, [[str], None], "creation_options")
-    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(arr, [np.ndarray, np.ma.MaskedArray], "arr")
+    utils_base._type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(pixel_size, [int, float, [int, float], tuple], "pixel_size")
+    utils_base._type_check(x_min, [int, float], "x_min")
+    utils_base._type_check(y_max, [int, float], "y_max")
+    utils_base._type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
+    utils_base._type_check(overwrite, [bool], "overwrite")
 
     assert arr.ndim in [2, 3], "Array must be 2 or 3 dimensional (3rd dimension considered bands.)"
 

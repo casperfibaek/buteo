@@ -12,7 +12,13 @@ from typing import Union, Optional, List
 from osgeo import gdal, osr, ogr
 
 # Internal
-from buteo.utils import utils_gdal, utils_base, utils_path, utils_projection
+from buteo.utils import (
+    utils_io,
+    utils_gdal,
+    utils_base,
+    utils_path,
+    utils_projection,
+)
 
 
 def _vector_reproject(
@@ -38,12 +44,7 @@ def _vector_reproject(
     in_path = utils_gdal._get_path_from_dataset(vector)
 
     if out_path is None:
-        out_path = utils_path._get_output_path(
-            utils_gdal._get_path_from_dataset(vector),
-            add_uuid=add_uuid,
-            prefix=prefix,
-            suffix=suffix,
-        )
+        out_path = utils_path._get_temp_filepath(vector, add_uuid=add_uuid, prefix=prefix, suffix=suffix)
 
     options = []
     wkt = utils_projection.parse_projection(projection, return_wkt=True).replace(" ", "\\")
@@ -111,15 +112,15 @@ def vector_reproject(
     Union[str, List[str]]
         An in-memory vector. If an out_path is given, the output is a string containing the path to the newly created vecotr.
     """
-    utils_base.type_check(vector, [str, ogr.DataSource], "vector")
-    utils_base.type_check(projection, [str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference], "projection")
-    utils_base.type_check(out_path, [str, [str], None], "out_path")
-    utils_base.type_check(copy_if_same, [bool], "copy_if_same")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(add_uuid, [bool], "add_uuid")
-    utils_base.type_check(allow_lists, [bool], "allow_lists")
-    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
+    utils_base._type_check(projection, [str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference], "projection")
+    utils_base._type_check(out_path, [str, [str], None], "out_path")
+    utils_base._type_check(copy_if_same, [bool], "copy_if_same")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(overwrite, [bool], "overwrite")
 
     if not allow_lists and isinstance(vector, list):
         raise ValueError("Lists are not allowed when allow_lists is False.")
@@ -128,10 +129,9 @@ def vector_reproject(
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
 
-
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         vector_list,
-        output_data=out_path,
+        out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,

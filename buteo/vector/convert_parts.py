@@ -12,7 +12,12 @@ from typing import Union, Optional, List
 from osgeo import ogr
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_path
+from buteo.utils import (
+    utils_base,
+    utils_gdal,
+    utils_path,
+    utils_io,
+)
 from buteo.vector import core_vector
 
 
@@ -29,7 +34,7 @@ def _singlepart_to_multipart(
     assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
     if out_path is None:
-        out_path = utils_path._get_output_path(utils_gdal._get_path_from_dataset(vector), add_uuid=True)
+        out_path = utils_path._get_temp_filepath(vector)
 
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path"
 
@@ -77,7 +82,7 @@ def _multipart_to_singlepart(
     assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
     if out_path is None:
-        out_path = utils_path._get_output_path(utils_gdal._get_path_from_dataset(vector), add_uuid=True)
+        out_path = utils_path._get_temp_filepath(vector)
 
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path"
 
@@ -251,15 +256,15 @@ def vector_singlepart_to_multipart(
     Union[str, List[str]]
         The path(s) to the output vector(s).
     """
-    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    utils_base.type_check(out_path, [str, [str], None], "out_path")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(add_index, [bool], "add_index")
-    utils_base.type_check(process_layer, [int], "process_layer")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(add_uuid, [bool], "add_uuid")
-    utils_base.type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base._type_check(out_path, [str, [str], None], "out_path")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(add_index, [bool], "add_index")
+    utils_base._type_check(process_layer, [int], "process_layer")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(allow_lists, [bool], "allow_lists")
 
     if not allow_lists and isinstance(vector, list):
         raise ValueError("Vector cannot be a list when allow_lists is False.")
@@ -268,9 +273,9 @@ def vector_singlepart_to_multipart(
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Vector is not a list of vectors. {vector_list}"
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         vector_list,
-        output_data=out_path,
+        out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
@@ -347,15 +352,15 @@ def vector_multipart_to_singlepart(
     Union[str, List[str]]
         The path(s) to the output vector(s).
     """
-    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    utils_base.type_check(out_path, [str, [str], None], "out_path")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(add_index, [bool], "add_index")
-    utils_base.type_check(process_layer, [int], "process_layer")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(add_uuid, [bool], "add_uuid")
-    utils_base.type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base._type_check(out_path, [str, [str], None], "out_path")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(add_index, [bool], "add_index")
+    utils_base._type_check(process_layer, [int], "process_layer")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(allow_lists, [bool], "allow_lists")
 
     if not allow_lists and isinstance(vector, list):
         raise ValueError("Vector cannot be a list when allow_lists is False.")
@@ -364,9 +369,9 @@ def vector_multipart_to_singlepart(
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Vector is not a list of vectors. {vector_list}"
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         vector_list,
-        output_data=out_path,
+        out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,

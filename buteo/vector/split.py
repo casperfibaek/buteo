@@ -14,7 +14,10 @@ from uuid import uuid4
 from osgeo import ogr
 
 # Internal
-from buteo.utils import utils_base, utils_path
+from buteo.utils import (
+    utils_base,
+    utils_path,
+)
 from buteo.vector import core_vector
 
 
@@ -46,8 +49,8 @@ def vector_split_by_fid(
     str
         Output paths.
     """
-    utils_base.type_check(vector, [ogr.DataSource, str], "vector")
-    utils_base.type_check(out_folder, [str, None], "out_folder")
+    utils_base._type_check(vector, [ogr.DataSource, str], "vector")
+    utils_base._type_check(out_folder, [str, None], "out_folder")
     assert utils_path._check_dir_exists(out_folder) or out_folder is None, "out_folder does not exist."
 
     opened = core_vector.vector_open(vector)

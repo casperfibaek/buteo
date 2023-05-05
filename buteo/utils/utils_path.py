@@ -15,7 +15,7 @@ from typing import List, Optional, Union
 from warnings import warn
 
 # External
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 # Internal
 from buteo.utils import utils_base
@@ -1018,8 +1018,9 @@ def _get_augmented_path_list(
 
 
 def _get_temp_filepath(
-    name: str = "temp",
-    ext: str = "tif",
+    name: Union[str, gdal.Dataset, ogr.DataSource] = "temp",
+    *,
+    ext: Optional[str] = None,
     prefix: str = "",
     suffix: str = "",
     add_uuid: bool = True,
@@ -1030,22 +1031,22 @@ def _get_temp_filepath(
 
     Parameters
     ----------
-    name: str
+    name: Union[str, gdal.Dataset, ogr.DataSource], Optional.
         The name of the file. Default: "temp".
 
-    ext: str
+    ext: str, Optional.
         The extension of the file. Default: ".tif".
 
-    prefix: str
+    prefix: str, Optional.
         The prefix to add to the path. Default: "".
 
-    suffix: str
+    suffix: str, Optional.
         The suffix to add to the path. Default: "".
 
-    add_uuid: bool
+    add_uuid: bool, Optional.
         If True, add a uuid the path. Default: True.
 
-    add_timestamp: bool
+    add_timestamp: bool, Optional.
         If True, add a timestamp to the path. Default: True.
         Format: YYYYMMDD_HHMMSS.
 
@@ -1054,12 +1055,19 @@ def _get_temp_filepath(
     str
         The temporary filepath. (e.g. /vsimem/temp_20210101_000000_123456789.tif)
     """
-    assert isinstance(name, str), "name must be a string."
-    assert isinstance(ext, str), "ext must be a string."
+    assert isinstance(name, (str, ogr.DataSource, gdal.Dataset)), "name must be a string or dataset"
+    assert isinstance(ext, (str, type(None))), "ext must be a string or None."
     assert isinstance(prefix, str), "prefix must be a string."
     assert isinstance(suffix, str), "suffix must be a string."
     assert isinstance(add_uuid, bool), "add_uuid must be a bool."
     assert isinstance(add_timestamp, bool), "add_timestamp must be a bool."
+
+    if isinstance(name, gdal.Dataset):
+        name = os.path.basename(name.GetDescription())
+    elif isinstance(name, ogr.DataSource):
+        name = os.path.basename(name.GetDescription())
+    else:
+        name = os.path.basename(name)
 
     if add_uuid:
         uuid = "_" + str(uuid4().int)
@@ -1070,6 +1078,12 @@ def _get_temp_filepath(
         timestamp = "_" + utils_base._get_time_as_str()
     else:
         timestamp = ""
+
+    if ext is None:
+        ext = _get_ext_from_path(name)
+
+    if ext == "":
+        ext = ".tif"
 
     filename = f"{prefix}{name}{uuid}{timestamp}{suffix}.{ext.lstrip('.').lower()}"
     filepath = os.path.join("/vsimem/", filename)

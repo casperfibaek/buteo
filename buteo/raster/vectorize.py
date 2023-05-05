@@ -12,7 +12,12 @@ from typing import Union, Optional, List
 from osgeo import gdal
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_path
+from buteo.utils import (
+    utils_base,
+    utils_gdal,
+    utils_path,
+    utils_io
+)
 from buteo.raster import core_raster
 
 
@@ -23,14 +28,14 @@ def _raster_vectorize(
     band: int = 1,
 ):
     """ Internal. """
-    meta = core_raster._raster_to_metadata(raster)
+    meta = core_raster._get_basic_metadata_raster(raster)
     opened = core_raster._raster_open(raster)
     src_band = opened.GetRasterBand(band)
 
     projection = meta["projection_osr"]
 
     if out_path is None:
-        out_path = utils_path._get_output_path(out_path, suffix="_vectorized", add_uuid=True)
+        out_path = utils_path._get_temp_filepath("vectorized_raster.shp", add_uuid=True)
 
     driver = utils_gdal._get_vector_driver_name_from_path(out_path)
 
@@ -83,24 +88,24 @@ def raster_vectorize(
     Union[str, List]
         The path(s) to the vectorized raster(s).
     """
-    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base.type_check(out_path, [str, [str], None], "out_path")
-    utils_base.type_check(band, [int], "band")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(add_uuid, [bool], "add_uuid")
-    utils_base.type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base._type_check(out_path, [str, [str], None], "out_path")
+    utils_base._type_check(band, [int], "band")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(overwrite, [bool], "overwrite")
 
     raster_list = utils_base._get_variable_as_list(raster)
     assert utils_gdal._check_is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         raster_list,
-        output_data=out_path,
-        overwrite=overwrite,
+        out_path,
+        add_uuid=add_uuid or out_path is None,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=add_uuid,
+        overwrite=overwrite,
     )
 
     vectorized_rasters = []

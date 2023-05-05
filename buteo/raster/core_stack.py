@@ -54,11 +54,11 @@ def raster_stack_list(
     str or list
         The file path(s) to the newly created raster(s).
     """
-    utils_base.type_check(rasters, [[str, gdal.Dataset]], "rasters")
-    utils_base.type_check(out_path, [str, None], "out_path")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(dtype, [str, None], "dtype")
-    utils_base.type_check(creation_options, [[str], None], "creation_options")
+    utils_base._type_check(rasters, [[str, gdal.Dataset]], "rasters")
+    utils_base._type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(dtype, [str, None], "dtype")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
 
     # Get input raster file paths
     input_data = utils_io._get_input_paths(rasters, "raster")
@@ -164,13 +164,13 @@ def raster_stack_vrt_list(
         The file path to the newly created VRT raster.
     """
     # Type checking for input parameters
-    utils_base.type_check(rasters, [[str, gdal.Dataset]], "rasters")
-    utils_base.type_check(out_path, [str, None], "out_path")
-    utils_base.type_check(separate, [bool], "separate")
-    utils_base.type_check(resample_alg, [str], "resample_alg")
-    utils_base.type_check(options, [list, None], "options")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(creation_options, [[str], None], "creation_options")
+    utils_base._type_check(rasters, [[str, gdal.Dataset]], "rasters")
+    utils_base._type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(separate, [bool], "separate")
+    utils_base._type_check(resample_alg, [str], "resample_alg")
+    utils_base._type_check(options, [list, None], "options")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
 
     # Check if all rasters have the same number of bands when separate is False
     if not separate:

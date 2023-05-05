@@ -12,7 +12,13 @@ from typing import Union, Optional, List
 from osgeo import ogr, gdal, osr
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_path, utils_projection
+from buteo.utils import (
+    utils_io,
+    utils_base,
+    utils_gdal,
+    utils_path,
+    utils_projection,
+)
 from buteo.raster import core_raster
 from buteo.vector import core_vector
 from buteo.vector.reproject import _vector_reproject
@@ -32,7 +38,7 @@ def _vector_clip(
     input_path = utils_gdal._get_path_from_dataset(vector)
 
     if out_path is None:
-        out_path = utils_path._get_output_path(
+        out_path = utils_path._get_temp_filepath(
             input_path, add_uuid=True, prefix="", suffix="_clip",
         )
 
@@ -50,7 +56,7 @@ def _vector_clip(
         else:
             geometry_to_clip = core_vector._open_vector(clip_geom)
     elif utils_gdal._check_is_raster(clip_geom):
-        extent = core_raster._raster_to_metadata(clip_geom)["get_bbox_vector"]() # pylint: disable=not-callable
+        extent = core_raster._get_basic_metadata_raster(clip_geom)["get_bbox_vector"]() # pylint: disable=not-callable
         geometry_to_clip = extent
         clear_memory = True
     else:
@@ -157,16 +163,16 @@ def vector_clip(
     Union[str, List[str]]
         Path to the clipped vector(s)
     """
-    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    utils_base.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
-    utils_base.type_check(out_path, [str, None], "out_path")
-    utils_base.type_check(to_extent, [bool], "to_extent")
-    utils_base.type_check(target_projection, [str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int, None], "target_projection")
-    utils_base.type_check(preserve_fid, [bool], "preserve_fid")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(add_uuid, [bool], "add_uuid")
-    utils_base.type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base._type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
+    utils_base._type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(to_extent, [bool], "to_extent")
+    utils_base._type_check(target_projection, [str, ogr.DataSource, gdal.Dataset, osr.SpatialReference, int, None], "target_projection")
+    utils_base._type_check(preserve_fid, [bool], "preserve_fid")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(allow_lists, [bool], "allow_lists")
 
     if not allow_lists and isinstance(vector, (list, tuple)):
         raise ValueError("Lists are not allowed for vector.")
@@ -175,9 +181,9 @@ def vector_clip(
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Invalid vector in list: {vector_list}"
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         vector_list,
-        output_data=out_path,
+        out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,

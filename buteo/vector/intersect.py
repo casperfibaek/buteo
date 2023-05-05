@@ -12,7 +12,12 @@ from typing import Union, List, Optional
 from osgeo import ogr, gdal
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_path
+from buteo.utils import (
+    utils_io,
+    utils_base,
+    utils_gdal,
+    utils_path,
+)
 from buteo.vector import core_vector
 from buteo.vector.reproject import _vector_reproject
 from buteo.vector.merge import vector_merge
@@ -33,12 +38,7 @@ def _vector_intersect(
     assert utils_gdal._check_is_vector(vector), f"Invalid input vector: {vector}"
 
     if out_path is None:
-        out_path = utils_path._get_output_path(
-            utils_gdal._get_path_from_dataset(vector),
-            add_uuid=True,
-            prefix="",
-            suffix="_intersect",
-        )
+        out_path = utils_path._get_temp_filepath(vector, suffix="_intersect")
 
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path."
 
@@ -139,17 +139,17 @@ def vector_intersect(
     Union[str, List[str]]
         The path(s) to the intersected vector(s).
     """
-    utils_base.type_check(vector, [ogr.DataSource, str, list], "vector")
-    utils_base.type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
-    utils_base.type_check(out_path, [str], "out_path", allow_none=True)
-    utils_base.type_check(process_layer, [int], "process_layer")
-    utils_base.type_check(process_layer_clip, [int], "process_layer_clip")
-    utils_base.type_check(add_index, [bool], "add_index")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(add_uuid, [bool], "add_uuid")
-    utils_base.type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(vector, [ogr.DataSource, str, list], "vector")
+    utils_base._type_check(clip_geom, [ogr.DataSource, gdal.Dataset, str, list, tuple], "clip_geom")
+    utils_base._type_check(out_path, [str], "out_path", allow_none=True)
+    utils_base._type_check(process_layer, [int], "process_layer")
+    utils_base._type_check(process_layer_clip, [int], "process_layer_clip")
+    utils_base._type_check(add_index, [bool], "add_index")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(allow_lists, [bool], "allow_lists")
 
     if not allow_lists and isinstance(vector, list):
         raise ValueError("Lists are not allowed when allow_lists is False.")
@@ -158,9 +158,9 @@ def vector_intersect(
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         vector_list,
-        output_data=out_path,
+        out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,

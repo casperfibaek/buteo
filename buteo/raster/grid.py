@@ -17,7 +17,7 @@ from osgeo import gdal, ogr
 
 # Internal
 from buteo.utils import utils_base, utils_gdal, utils_bbox, utils_path
-from buteo.raster import core_raster
+from buteo.raster import core_raster, core_stack
 from buteo.raster.clip import _raster_clip
 from buteo.vector import core_vector
 from buteo.vector.intersect import _vector_intersect
@@ -74,17 +74,17 @@ def raster_to_grid(
     str
         The file path for the newly created raster.
     """
-    utils_base.type_check(raster, [str, gdal.Dataset], "raster")
-    utils_base.type_check(grid, [str, ogr.DataSource], "grid")
-    utils_base.type_check(out_dir, [str], "out_dir")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(process_layer, [int], "process_layer")
-    utils_base.type_check(creation_options, [[str], None], "creation_options")
-    utils_base.type_check(verbose, [int], "verbose")
+    utils_base._type_check(raster, [str, gdal.Dataset], "raster")
+    utils_base._type_check(grid, [str, ogr.DataSource], "grid")
+    utils_base._type_check(out_dir, [str], "out_dir")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(process_layer, [int], "process_layer")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
+    utils_base._type_check(verbose, [int], "verbose")
 
     use_grid = core_vector.vector_open(grid)
     grid_metadata = core_vector._vector_to_metadata(use_grid)
-    raster_metadata = core_raster.raster_to_metadata(raster)
+    raster_metadata = core_raster._get_basic_metadata_raster(raster)
 
     # Reproject raster if necessary.
     if not raster_metadata["projection_osr"].IsSame(grid_metadata["projection_osr"]):
@@ -192,7 +192,8 @@ def raster_to_grid(
 
     if generate_vrt:
         vrt_name = f"{out_dir}{name}.vrt"
-        core_raster.raster_stack_vrt_list(generated, vrt_name, separate=False)
+
+        core_stack.raster_stack_vrt_list(generated, vrt_name, separate=False)
 
         return (generated, vrt_name)
 

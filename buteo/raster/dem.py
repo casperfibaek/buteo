@@ -11,7 +11,7 @@ import numpy as np
 
 # Internal
 from buteo.raster.core_raster_io import raster_to_array, array_to_raster
-from buteo.utils.utils_base import type_check
+from buteo.utils.utils_base import _type_check
 from buteo.utils.utils_gdal import _get_default_creation_options, delete_dataset_if_in_memory
 
 
@@ -43,9 +43,9 @@ def raster_dem_to_slope(
     str
         Path to output raster.
     """
-    type_check(input_raster, [str, gdal.Dataset], "input_raster")
-    type_check(output_raster, str, "output_raster")
-    type_check(z_factor, [float, int], "z_factor")
+    _type_check(input_raster, [str, gdal.Dataset], "input_raster")
+    _type_check(output_raster, str, "output_raster")
+    _type_check(z_factor, [float, int], "z_factor")
 
     slope_options = gdal.DEMProcessingOptions(
         computeEdges=True,
@@ -95,8 +95,8 @@ def raster_dem_to_aspect(
     str
         Path to output raster.
     """
-    type_check(input_raster, [str, gdal.Dataset], "input_raster")
-    type_check(output_raster, str, "output_raster")
+    _type_check(input_raster, [str, gdal.Dataset], "input_raster")
+    _type_check(output_raster, str, "output_raster")
 
     aspect_options = gdal.DEMProcessingOptions(
         computeEdges=True,
@@ -143,9 +143,9 @@ def raster_dem_to_hillshade(
     str
         Path to output raster.
     """
-    type_check(input_raster, [str, gdal.Dataset], "input_raster")
-    type_check(output_raster, str, "output_raster")
-    type_check(z_factor, [float, int], "z_factor")
+    _type_check(input_raster, [str, gdal.Dataset], "input_raster")
+    _type_check(output_raster, str, "output_raster")
+    _type_check(z_factor, [float, int], "z_factor")
 
     hillshade_options = gdal.DEMProcessingOptions(
         computeEdges=True,

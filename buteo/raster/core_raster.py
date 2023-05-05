@@ -89,7 +89,7 @@ def _get_first_nodata_value(
     float or None
         The nodata value if found, or None if not found.
     """
-    utils_base.type_check(raster, [str, gdal.Dataset], "raster")
+    utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
     nodata = None
 
@@ -123,7 +123,7 @@ def _get_basic_metadata_raster(
     Dict[str]
         A dictionary with the metadata.
     """
-    utils_base.type_check(raster, [str, gdal.Dataset], "raster")
+    utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
     dataset = _raster_open(raster)
     transform = dataset.GetGeoTransform()
@@ -206,7 +206,7 @@ def _get_basic_metadata_raster_list(
     List[Dict[str]]
         A list of dictionaries with the metadata.
     """
-    utils_base.type_check(rasters, [[str, gdal.Dataset]], "rasters")
+    utils_base._type_check(rasters, [[str, gdal.Dataset]], "rasters")
 
     metadata = []
     for raster in rasters:
@@ -231,7 +231,7 @@ def _check_raster_has_nodata(
     bool
         True if raster has nodata values, False otherwise.
     """
-    utils_base.type_check(raster, [str, gdal.Dataset], "raster")
+    utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
     metadata = _get_basic_metadata_raster(raster)
     if metadata["nodata"]:
@@ -256,7 +256,7 @@ def _check_raster_has_nodata_list(
     bool
         True if all rasters have nodata values, False otherwise.
     """
-    utils_base.type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base._type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
     rasters = utils_io._get_input_paths(rasters, "raster")
 
@@ -284,7 +284,7 @@ def _raster_count_bands_list(
     int
         The number of bands in the rasters.
     """
-    utils_base.type_check(rasters, [[str, gdal.Dataset]], "raster")
+    utils_base._type_check(rasters, [[str, gdal.Dataset]], "raster")
 
     rasters = utils_io._get_input_paths(rasters, "raster")
     metadata = _get_basic_metadata_raster_list(rasters)
@@ -312,7 +312,7 @@ def check_rasters_have_same_nodata(
     bool
         True if all rasters have the same nodata value, False otherwise.
     """
-    utils_base.type_check(rasters, [[str, gdal.Dataset]], "raster")
+    utils_base._type_check(rasters, [[str, gdal.Dataset]], "raster")
 
     rasters = utils_io._get_input_paths(rasters, "raster")
 
@@ -346,8 +346,8 @@ def check_rasters_intersect(
     bool
         True if the rasters intersect, False otherwise.
     """
-    utils_base.type_check(raster1, [str, gdal.Dataset], "raster1")
-    utils_base.type_check(raster2, [str, gdal.Dataset], "raster2")
+    utils_base._type_check(raster1, [str, gdal.Dataset], "raster1")
+    utils_base._type_check(raster2, [str, gdal.Dataset], "raster2")
 
     meta_1 = _get_basic_metadata_raster(raster1)
     meta_2 = _get_basic_metadata_raster(raster2)
@@ -383,8 +383,8 @@ def get_raster_intersection(
         the intersection of the two rasters. If return_as_vector is True, returns an ogr.Geometry
         object representing the intersection.
     """
-    utils_base.type_check(raster1, [str, gdal.Dataset], "raster1")
-    utils_base.type_check(raster2, [str, gdal.Dataset], "raster2")
+    utils_base._type_check(raster1, [str, gdal.Dataset], "raster1")
+    utils_base._type_check(raster2, [str, gdal.Dataset], "raster2")
 
     if not check_rasters_intersect(raster1, raster2):
         raise ValueError("Rasters do not intersect.")
@@ -425,8 +425,8 @@ def get_raster_overlap_fraction(
     float
         A value between 0.0 and 1.0 representing the degree of overlap between the two rasters.
     """
-    utils_base.type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], "raster1")
-    utils_base.type_check(raster2, [str, gdal.Dataset, [str, gdal.Dataset]], "raster2")
+    utils_base._type_check(raster1, [str, gdal.Dataset, [str, gdal.Dataset]], "raster1")
+    utils_base._type_check(raster2, [str, gdal.Dataset, [str, gdal.Dataset]], "raster2")
 
     if not check_rasters_intersect(raster1, raster2):
         return 0.0
@@ -479,10 +479,10 @@ def check_rasters_are_aligned(
     bool
         True if rasters are aligned and optional parameters are True, False otherwise.
     """
-    utils_base.type_check(rasters, [[str, gdal.Dataset]], "rasters")
-    utils_base.type_check(same_dtype, [bool], "same_dtype")
-    utils_base.type_check(same_nodata, [bool], "same_nodata")
-    utils_base.type_check(threshold, [float], "threshold")
+    utils_base._type_check(rasters, [[str, gdal.Dataset]], "rasters")
+    utils_base._type_check(same_dtype, [bool], "same_dtype")
+    utils_base._type_check(same_nodata, [bool], "same_nodata")
+    utils_base._type_check(threshold, [float], "threshold")
 
     if len(rasters) == 1:
         return True
@@ -565,8 +565,8 @@ def raster_open(
     Union[gdal.Dataset, List[gdal.Dataset]]
         A gdal.Dataset or a list of gdal.Datasets.
     """
-    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base.type_check(writeable, [bool], "writeable")
+    utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base._type_check(writeable, [bool], "writeable")
 
     input_is_list = isinstance(raster, list)
     in_raster = utils_io._get_input_paths(raster, "raster")

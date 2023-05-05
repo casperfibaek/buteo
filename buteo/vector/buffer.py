@@ -12,7 +12,7 @@ from typing import Union, Optional, List
 from osgeo import ogr
 
 # Internal
-from buteo.utils import utils_gdal, utils_base, utils_path
+from buteo.utils import utils_gdal, utils_base, utils_path, utils_io
 from buteo.vector import core_vector
 
 
@@ -107,13 +107,13 @@ def vector_buffer(
     Union[str, List[str]]
         Output path(s) of clipped vector(s).
     """
-    utils_base.type_check(vector, [str, ogr.DataSource, List[Union[str, ogr.DataSource]]], "vector")
-    utils_base.type_check(distance, [int, float, str], "distance")
-    utils_base.type_check(out_path, [str, None], "out_path")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(add_uuid, [bool], "add_uuid")
-    utils_base.type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(vector, [str, ogr.DataSource, List[Union[str, ogr.DataSource]]], "vector")
+    utils_base._type_check(distance, [int, float, str], "distance")
+    utils_base._type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(allow_lists, [bool], "allow_lists")
 
     if not allow_lists and isinstance(vector, (list, tuple)):
         raise ValueError("Lists are not allowed for vector.")
@@ -121,13 +121,12 @@ def vector_buffer(
     vector_list = utils_base._get_variable_as_list(vector)
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Invalid vector in list: {vector_list}"
-
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         vector_list,
-        output_data=out_path,
+        out_path,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=add_uuid,
+        add_uuid=add_uuid or out_path is None,
         overwrite=overwrite,
     )
 

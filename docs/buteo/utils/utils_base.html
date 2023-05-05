@@ -32,9 +32,6 @@
 
             <h2>Functions</h2>
                 <ul class="memberlist">
-            <li>
-                    <a class="function" href="#type_check">type_check</a>
-            </li>
     </ul>
 
 
@@ -275,7 +272,7 @@
 </span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a>    <span class="k">return</span> <span class="kc">False</span>
 </span><span id="L-214"><a href="#L-214"><span class="linenos">214</span></a>
 </span><span id="L-215"><a href="#L-215"><span class="linenos">215</span></a>
-</span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a><span class="k">def</span> <span class="nf">type_check</span><span class="p">(</span>
+</span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a><span class="k">def</span> <span class="nf">_type_check</span><span class="p">(</span>
 </span><span id="L-217"><a href="#L-217"><span class="linenos">217</span></a>    <span class="n">variable</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 </span><span id="L-218"><a href="#L-218"><span class="linenos">218</span></a>    <span class="n">types</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
 </span><span id="L-219"><a href="#L-219"><span class="linenos">219</span></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -410,168 +407,37 @@
 </span><span id="L-348"><a href="#L-348"><span class="linenos">348</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)),</span> <span class="s2">&quot;threshold must be a number.&quot;</span>
 </span><span id="L-349"><a href="#L-349"><span class="linenos">349</span></a>
 </span><span id="L-350"><a href="#L-350"><span class="linenos">350</span></a>    <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">number</span> <span class="o">-</span> <span class="n">target</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">threshold</span>
+</span><span id="L-351"><a href="#L-351"><span class="linenos">351</span></a>
+</span><span id="L-352"><a href="#L-352"><span class="linenos">352</span></a>
+</span><span id="L-353"><a href="#L-353"><span class="linenos">353</span></a><span class="k">def</span> <span class="nf">_check_number_is_within_range</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="n">min_value</span><span class="p">,</span> <span class="n">max_value</span><span class="p">):</span>
+</span><span id="L-354"><a href="#L-354"><span class="linenos">354</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-355"><a href="#L-355"><span class="linenos">355</span></a><span class="sd">    Check if a number is within a range.</span>
+</span><span id="L-356"><a href="#L-356"><span class="linenos">356</span></a>
+</span><span id="L-357"><a href="#L-357"><span class="linenos">357</span></a><span class="sd">    Parameters</span>
+</span><span id="L-358"><a href="#L-358"><span class="linenos">358</span></a><span class="sd">    ----------</span>
+</span><span id="L-359"><a href="#L-359"><span class="linenos">359</span></a><span class="sd">    number : float</span>
+</span><span id="L-360"><a href="#L-360"><span class="linenos">360</span></a><span class="sd">        The number to check.</span>
+</span><span id="L-361"><a href="#L-361"><span class="linenos">361</span></a>
+</span><span id="L-362"><a href="#L-362"><span class="linenos">362</span></a><span class="sd">    min_value : float</span>
+</span><span id="L-363"><a href="#L-363"><span class="linenos">363</span></a><span class="sd">        The minimum value.</span>
+</span><span id="L-364"><a href="#L-364"><span class="linenos">364</span></a>
+</span><span id="L-365"><a href="#L-365"><span class="linenos">365</span></a><span class="sd">    max_value : float</span>
+</span><span id="L-366"><a href="#L-366"><span class="linenos">366</span></a><span class="sd">        The maximum value.</span>
+</span><span id="L-367"><a href="#L-367"><span class="linenos">367</span></a>
+</span><span id="L-368"><a href="#L-368"><span class="linenos">368</span></a><span class="sd">    Returns</span>
+</span><span id="L-369"><a href="#L-369"><span class="linenos">369</span></a><span class="sd">    -------</span>
+</span><span id="L-370"><a href="#L-370"><span class="linenos">370</span></a><span class="sd">    bool</span>
+</span><span id="L-371"><a href="#L-371"><span class="linenos">371</span></a><span class="sd">        True if the number is within the range, False otherwise.</span>
+</span><span id="L-372"><a href="#L-372"><span class="linenos">372</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-373"><a href="#L-373"><span class="linenos">373</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)),</span> <span class="s2">&quot;number must be a number.&quot;</span>
+</span><span id="L-374"><a href="#L-374"><span class="linenos">374</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">min_value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)),</span> <span class="s2">&quot;min_value must be a number.&quot;</span>
+</span><span id="L-375"><a href="#L-375"><span class="linenos">375</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">max_value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)),</span> <span class="s2">&quot;max_value must be a number.&quot;</span>
+</span><span id="L-376"><a href="#L-376"><span class="linenos">376</span></a>
+</span><span id="L-377"><a href="#L-377"><span class="linenos">377</span></a>    <span class="k">return</span> <span class="n">min_value</span> <span class="o">&lt;=</span> <span class="n">number</span> <span class="o">&lt;=</span> <span class="n">max_value</span>
 </span></pre></div>
 
 
             </section>
-                <section id="type_check">
-                            <input id="type_check-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
-<div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">type_check</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">variable</span><span class="p">:</span> <span class="n">Any</span>,</span><span class="param">	<span class="n">types</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>,</span><span class="param">	<span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>,</span><span class="param">	<span class="o">*</span>,</span><span class="param">	<span class="n">throw_error</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></span><span class="return-annotation">) -> <span class="nb">bool</span>:</span></span>
-
-                <label class="view-source-button" for="type_check-view-source"><span>View Source</span></label>
-
-    </div>
-    <a class="headerlink" href="#type_check"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="type_check-217"><a href="#type_check-217"><span class="linenos">217</span></a><span class="k">def</span> <span class="nf">type_check</span><span class="p">(</span>
-</span><span id="type_check-218"><a href="#type_check-218"><span class="linenos">218</span></a>    <span class="n">variable</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-</span><span id="type_check-219"><a href="#type_check-219"><span class="linenos">219</span></a>    <span class="n">types</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
-</span><span id="type_check-220"><a href="#type_check-220"><span class="linenos">220</span></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-</span><span id="type_check-221"><a href="#type_check-221"><span class="linenos">221</span></a>    <span class="o">*</span><span class="p">,</span>
-</span><span id="type_check-222"><a href="#type_check-222"><span class="linenos">222</span></a>    <span class="n">throw_error</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="type_check-223"><a href="#type_check-223"><span class="linenos">223</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="type_check-224"><a href="#type_check-224"><span class="linenos">224</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="type_check-225"><a href="#type_check-225"><span class="linenos">225</span></a><span class="sd">    Utility function to type check the inputs of a function. Checks recursively.</span>
-</span><span id="type_check-226"><a href="#type_check-226"><span class="linenos">226</span></a><span class="sd">    This is useful for the external facing functions of a module.</span>
-</span><span id="type_check-227"><a href="#type_check-227"><span class="linenos">227</span></a>
-</span><span id="type_check-228"><a href="#type_check-228"><span class="linenos">228</span></a><span class="sd">    Use like this:</span>
-</span><span id="type_check-229"><a href="#type_check-229"><span class="linenos">229</span></a><span class="sd">    ```python</span>
-</span><span id="type_check-230"><a href="#type_check-230"><span class="linenos">230</span></a><span class="sd">    &gt;&gt;&gt; def my_function(</span>
-</span><span id="type_check-231"><a href="#type_check-231"><span class="linenos">231</span></a><span class="sd">    ...     my_variable: Optional[Union[str, float, List[str]]] = None</span>
-</span><span id="type_check-232"><a href="#type_check-232"><span class="linenos">232</span></a><span class="sd">    ... ) -&gt; None:</span>
-</span><span id="type_check-233"><a href="#type_check-233"><span class="linenos">233</span></a><span class="sd">    ...     type_check(my_variable, [str, float, [str], None], &quot;my_variable&quot;)</span>
-</span><span id="type_check-234"><a href="#type_check-234"><span class="linenos">234</span></a><span class="sd">    ...     # Do stuff</span>
-</span><span id="type_check-235"><a href="#type_check-235"><span class="linenos">235</span></a><span class="sd">    ```</span>
-</span><span id="type_check-236"><a href="#type_check-236"><span class="linenos">236</span></a>
-</span><span id="type_check-237"><a href="#type_check-237"><span class="linenos">237</span></a><span class="sd">    Parameters</span>
-</span><span id="type_check-238"><a href="#type_check-238"><span class="linenos">238</span></a><span class="sd">    ----------</span>
-</span><span id="type_check-239"><a href="#type_check-239"><span class="linenos">239</span></a><span class="sd">    variable : Any</span>
-</span><span id="type_check-240"><a href="#type_check-240"><span class="linenos">240</span></a><span class="sd">        The variable to check.</span>
-</span><span id="type_check-241"><a href="#type_check-241"><span class="linenos">241</span></a><span class="sd">    </span>
-</span><span id="type_check-242"><a href="#type_check-242"><span class="linenos">242</span></a><span class="sd">    types : Tuple[type, ...]</span>
-</span><span id="type_check-243"><a href="#type_check-243"><span class="linenos">243</span></a><span class="sd">        The types to check against.</span>
-</span><span id="type_check-244"><a href="#type_check-244"><span class="linenos">244</span></a>
-</span><span id="type_check-245"><a href="#type_check-245"><span class="linenos">245</span></a><span class="sd">    name : str, optional</span>
-</span><span id="type_check-246"><a href="#type_check-246"><span class="linenos">246</span></a><span class="sd">        The name of the variable to check.</span>
-</span><span id="type_check-247"><a href="#type_check-247"><span class="linenos">247</span></a>
-</span><span id="type_check-248"><a href="#type_check-248"><span class="linenos">248</span></a><span class="sd">    throw_error : bool, optional</span>
-</span><span id="type_check-249"><a href="#type_check-249"><span class="linenos">249</span></a><span class="sd">        If True, throw an error if the type check fails. If False, return False if the type check fails.</span>
-</span><span id="type_check-250"><a href="#type_check-250"><span class="linenos">250</span></a><span class="sd">    </span>
-</span><span id="type_check-251"><a href="#type_check-251"><span class="linenos">251</span></a><span class="sd">    Returns</span>
-</span><span id="type_check-252"><a href="#type_check-252"><span class="linenos">252</span></a><span class="sd">    -------</span>
-</span><span id="type_check-253"><a href="#type_check-253"><span class="linenos">253</span></a><span class="sd">    bool</span>
-</span><span id="type_check-254"><a href="#type_check-254"><span class="linenos">254</span></a><span class="sd">        True if the type check passes, False otherwise.</span>
-</span><span id="type_check-255"><a href="#type_check-255"><span class="linenos">255</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="type_check-256"><a href="#type_check-256"><span class="linenos">256</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> <span class="s2">&quot;name must be a string.&quot;</span>
-</span><span id="type_check-257"><a href="#type_check-257"><span class="linenos">257</span></a>    <span class="k">assert</span> <span class="n">_check_variable_is_iterable_or_type</span><span class="p">(</span><span class="n">types</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;types must be a type, list, None, or tuple. not: </span><span class="si">{</span><span class="n">types</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="type_check-258"><a href="#type_check-258"><span class="linenos">258</span></a>
-</span><span id="type_check-259"><a href="#type_check-259"><span class="linenos">259</span></a>    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">types</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-</span><span id="type_check-260"><a href="#type_check-260"><span class="linenos">260</span></a>        <span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="n">types</span><span class="p">]</span>
-</span><span id="type_check-261"><a href="#type_check-261"><span class="linenos">261</span></a>
-</span><span id="type_check-262"><a href="#type_check-262"><span class="linenos">262</span></a>    <span class="n">valid_types</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="type_check-263"><a href="#type_check-263"><span class="linenos">263</span></a>    <span class="k">for</span> <span class="n">valid_type</span> <span class="ow">in</span> <span class="n">types</span><span class="p">:</span>
-</span><span id="type_check-264"><a href="#type_check-264"><span class="linenos">264</span></a>        <span class="k">if</span> <span class="n">valid_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="type_check-265"><a href="#type_check-265"><span class="linenos">265</span></a>            <span class="n">valid_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
-</span><span id="type_check-266"><a href="#type_check-266"><span class="linenos">266</span></a>        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">valid_type</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
-</span><span id="type_check-267"><a href="#type_check-267"><span class="linenos">267</span></a>            <span class="n">valid_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">valid_type</span><span class="p">)</span>
-</span><span id="type_check-268"><a href="#type_check-268"><span class="linenos">268</span></a>        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">valid_type</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-</span><span id="type_check-269"><a href="#type_check-269"><span class="linenos">269</span></a>            <span class="n">valid_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">valid_type</span><span class="p">)</span>
-</span><span id="type_check-270"><a href="#type_check-270"><span class="linenos">270</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="type_check-271"><a href="#type_check-271"><span class="linenos">271</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid type: </span><span class="si">{</span><span class="n">valid_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</span><span id="type_check-272"><a href="#type_check-272"><span class="linenos">272</span></a>
-</span><span id="type_check-273"><a href="#type_check-273"><span class="linenos">273</span></a>    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-</span><span id="type_check-274"><a href="#type_check-274"><span class="linenos">274</span></a>        <span class="n">sublist_valid_types</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="type_check-275"><a href="#type_check-275"><span class="linenos">275</span></a>        <span class="k">for</span> <span class="n">valid_type</span> <span class="ow">in</span> <span class="n">valid_types</span><span class="p">:</span>
-</span><span id="type_check-276"><a href="#type_check-276"><span class="linenos">276</span></a>            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">valid_type</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-</span><span id="type_check-277"><a href="#type_check-277"><span class="linenos">277</span></a>                <span class="n">sublist_valid_types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">valid_type</span><span class="p">)</span>
-</span><span id="type_check-278"><a href="#type_check-278"><span class="linenos">278</span></a>
-</span><span id="type_check-279"><a href="#type_check-279"><span class="linenos">279</span></a>        <span class="k">for</span> <span class="n">valid_type</span> <span class="ow">in</span> <span class="n">sublist_valid_types</span><span class="p">:</span>
-</span><span id="type_check-280"><a href="#type_check-280"><span class="linenos">280</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">valid_type</span><span class="p">):</span>
-</span><span id="type_check-281"><a href="#type_check-281"><span class="linenos">281</span></a>                <span class="k">return</span> <span class="kc">True</span>
-</span><span id="type_check-282"><a href="#type_check-282"><span class="linenos">282</span></a>
-</span><span id="type_check-283"><a href="#type_check-283"><span class="linenos">283</span></a>    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span> <span class="ow">in</span> <span class="n">valid_types</span><span class="p">:</span>
-</span><span id="type_check-284"><a href="#type_check-284"><span class="linenos">284</span></a>        <span class="k">return</span> <span class="kc">True</span>
-</span><span id="type_check-285"><a href="#type_check-285"><span class="linenos">285</span></a>
-</span><span id="type_check-286"><a href="#type_check-286"><span class="linenos">286</span></a>    <span class="n">type_list</span> <span class="o">=</span> <span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">valid_types</span><span class="p">]</span>
-</span><span id="type_check-287"><a href="#type_check-287"><span class="linenos">287</span></a>
-</span><span id="type_check-288"><a href="#type_check-288"><span class="linenos">288</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">([])</span> <span class="ow">in</span> <span class="n">type_list</span><span class="p">:</span>
-</span><span id="type_check-289"><a href="#type_check-289"><span class="linenos">289</span></a>        <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">valid_types</span><span class="p">:</span>
-</span><span id="type_check-290"><a href="#type_check-290"><span class="linenos">290</span></a>            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sublist</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-</span><span id="type_check-291"><a href="#type_check-291"><span class="linenos">291</span></a>                <span class="k">continue</span>
-</span><span id="type_check-292"><a href="#type_check-292"><span class="linenos">292</span></a>
-</span><span id="type_check-293"><a href="#type_check-293"><span class="linenos">293</span></a>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sublist</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="type_check-294"><a href="#type_check-294"><span class="linenos">294</span></a>                <span class="k">return</span> <span class="kc">True</span>
-</span><span id="type_check-295"><a href="#type_check-295"><span class="linenos">295</span></a>
-</span><span id="type_check-296"><a href="#type_check-296"><span class="linenos">296</span></a>            <span class="n">found</span> <span class="o">=</span> <span class="mi">0</span>
-</span><span id="type_check-297"><a href="#type_check-297"><span class="linenos">297</span></a>            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">variable</span><span class="p">:</span>
-</span><span id="type_check-298"><a href="#type_check-298"><span class="linenos">298</span></a>                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">:</span>
-</span><span id="type_check-299"><a href="#type_check-299"><span class="linenos">299</span></a>                    <span class="n">found</span> <span class="o">+=</span> <span class="mi">1</span>
-</span><span id="type_check-300"><a href="#type_check-300"><span class="linenos">300</span></a>
-</span><span id="type_check-301"><a href="#type_check-301"><span class="linenos">301</span></a>            <span class="k">if</span> <span class="n">found</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">variable</span><span class="p">):</span>
-</span><span id="type_check-302"><a href="#type_check-302"><span class="linenos">302</span></a>                <span class="k">return</span> <span class="kc">True</span>
-</span><span id="type_check-303"><a href="#type_check-303"><span class="linenos">303</span></a>
-</span><span id="type_check-304"><a href="#type_check-304"><span class="linenos">304</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(())</span> <span class="ow">in</span> <span class="n">type_list</span><span class="p">:</span>
-</span><span id="type_check-305"><a href="#type_check-305"><span class="linenos">305</span></a>        <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">valid_types</span><span class="p">:</span>
-</span><span id="type_check-306"><a href="#type_check-306"><span class="linenos">306</span></a>            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sublist</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-</span><span id="type_check-307"><a href="#type_check-307"><span class="linenos">307</span></a>                <span class="k">continue</span>
-</span><span id="type_check-308"><a href="#type_check-308"><span class="linenos">308</span></a>
-</span><span id="type_check-309"><a href="#type_check-309"><span class="linenos">309</span></a>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sublist</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="type_check-310"><a href="#type_check-310"><span class="linenos">310</span></a>                <span class="k">return</span> <span class="kc">True</span>
-</span><span id="type_check-311"><a href="#type_check-311"><span class="linenos">311</span></a>
-</span><span id="type_check-312"><a href="#type_check-312"><span class="linenos">312</span></a>            <span class="n">found</span> <span class="o">=</span> <span class="mi">0</span>
-</span><span id="type_check-313"><a href="#type_check-313"><span class="linenos">313</span></a>            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">variable</span><span class="p">:</span>
-</span><span id="type_check-314"><a href="#type_check-314"><span class="linenos">314</span></a>                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">:</span>
-</span><span id="type_check-315"><a href="#type_check-315"><span class="linenos">315</span></a>                    <span class="n">found</span> <span class="o">+=</span> <span class="mi">1</span>
-</span><span id="type_check-316"><a href="#type_check-316"><span class="linenos">316</span></a>
-</span><span id="type_check-317"><a href="#type_check-317"><span class="linenos">317</span></a>            <span class="k">if</span> <span class="n">found</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">variable</span><span class="p">):</span>
-</span><span id="type_check-318"><a href="#type_check-318"><span class="linenos">318</span></a>                <span class="k">return</span> <span class="kc">True</span>
-</span><span id="type_check-319"><a href="#type_check-319"><span class="linenos">319</span></a>    <span class="k">if</span> <span class="n">throw_error</span><span class="p">:</span>
-</span><span id="type_check-320"><a href="#type_check-320"><span class="linenos">320</span></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="type_check-321"><a href="#type_check-321"><span class="linenos">321</span></a>            <span class="sa">f</span><span class="s2">&quot;The type of variable </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is not valid. Expected: </span><span class="si">{</span><span class="n">types</span><span class="si">}</span><span class="s2">, got: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="type_check-322"><a href="#type_check-322"><span class="linenos">322</span></a>        <span class="p">)</span>
-</span><span id="type_check-323"><a href="#type_check-323"><span class="linenos">323</span></a>
-</span><span id="type_check-324"><a href="#type_check-324"><span class="linenos">324</span></a>    <span class="k">return</span> <span class="kc">False</span>
-</span></pre></div>
-
-
-            <div class="docstring"><p>Utility function to type check the inputs of a function. Checks recursively.
-This is useful for the external facing functions of a module.</p>
-
-<p>Use like this:</p>
-
-<div class="pdoc-code codehilite">
-<pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="k">def</span> <span class="nf">my_function</span><span class="p">(</span>
-<span class="o">...</span>     <span class="n">my_variable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="o">...</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="o">...</span>     <span class="n">type_check</span><span class="p">(</span><span class="n">my_variable</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span> <span class="s2">&quot;my_variable&quot;</span><span class="p">)</span>
-<span class="o">...</span>     <span class="c1"># Do stuff</span>
-</code></pre>
-</div>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>variable</strong> (Any):
-The variable to check.</li>
-<li><strong>types</strong> (Tuple[type, ...]):
-The types to check against.</li>
-<li><strong>name</strong> (str, optional):
-The name of the variable to check.</li>
-<li><strong>throw_error</strong> (bool, optional):
-If True, throw an error if the type check fails. If False, return False if the type check fails.</li>
-</ul>
-
-<h6 id="returns">Returns</h6>
-
-<ul>
-<li><strong>bool</strong>: True if the type check passes, False otherwise.</li>
-</ul>
-</div>
-
-
-                </section>
     </main>
 <script>
     function escapeHTML(html) {

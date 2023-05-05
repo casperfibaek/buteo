@@ -22,7 +22,13 @@ import numpy as np
 from osgeo import ogr, gdal, osr
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_bbox, utils_path
+from buteo.utils import (
+    utils_io,
+    utils_base,
+    utils_gdal,
+    utils_bbox,
+    utils_path,
+)
 
 
 def _open_vector(
@@ -104,8 +110,8 @@ def vector_open(
     ogr.DataSource, list[ogr.DataSource]
         The opened vector(s).
     """
-    utils_base.type_check(vector, [str, ogr.DataSource, gdal.Dataset, [str, ogr.DataSource, gdal.Dataset]], "vector")
-    utils_base.type_check(writeable, [bool], "writeable")
+    utils_base._type_check(vector, [str, ogr.DataSource, gdal.Dataset, [str, ogr.DataSource, gdal.Dataset]], "vector")
+    utils_base._type_check(writeable, [bool], "writeable")
 
     if isinstance(vector, list) and not allow_lists:
         raise ValueError("Cannot open a list of vectors when allow_list is False.")
@@ -305,8 +311,8 @@ def vector_to_metadata(
     -------
     Union[Dict[str, Any], List[Dict[str, Any]]]
     """
-    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    utils_base.type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base._type_check(allow_lists, [bool], "allow_lists")
 
     if isinstance(vector, list) and not allow_lists:
         raise ValueError("The vector parameter cannot be a list when allow_lists is False.")
@@ -343,12 +349,7 @@ def _vector_filter(
     metadata = _vector_to_metadata(vector)
 
     if out_path is None:
-        out_path = utils_path._get_output_path(
-            utils_gdal._get_path_from_dataset(vector),
-            prefix=prefix,
-            suffix=suffix,
-            add_uuid=True,
-        )
+        out_path = utils_path._get_temp_filepath(vector, prefix=prefix, suffix=suffix)
 
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), f"out_path is not a valid output path. {out_path}"
 
@@ -440,10 +441,10 @@ def vector_filter(
     Union[str, List[str]]
         The path(s) to the output vector file(s).
     """
-    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    utils_base.type_check(filter_function, [type(lambda: True)], "filter_function")
-    utils_base.type_check(process_layer, [int], "process_layer")
-    utils_base.type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base._type_check(filter_function, [type(lambda: True)], "filter_function")
+    utils_base._type_check(process_layer, [int], "process_layer")
+    utils_base._type_check(allow_lists, [bool], "allow_lists")
 
     if isinstance(vector, list) and not allow_lists:
         raise ValueError("The vector parameter cannot be a list when allow_lists is False.")
@@ -453,9 +454,9 @@ def vector_filter(
     if not utils_gdal._check_is_vector_list(vector_list):
         raise ValueError("The vector parameter must be a list of vector layers.")
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         vector_list,
-        output_data=out_path,
+        out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
@@ -501,7 +502,7 @@ def vector_add_index(
     Union[str, List[str]]
         The path(s) to the input vector file(s).
     """
-    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
 
     if isinstance(vector, list) and not allow_lists:
         raise ValueError("The vector parameter cannot be a list when allow_lists is False.")
@@ -678,8 +679,8 @@ def vector_add_shapes_in_place(
     out_path : str
         Path to the output vector.
     """
-    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    utils_base.type_check(shapes, [[str], None], "shapes")
+    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base._type_check(shapes, [[str], None], "shapes")
 
     if not allow_lists and isinstance(vector, list):
         raise ValueError("Lists of vectors are not supported when allow_list is False.")
@@ -737,12 +738,12 @@ def vector_get_attribute_table(
     attribute_table : Dict[str, Any]
         The attribute table(s) of the vector(s).
     """
-    utils_base.type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    utils_base.type_check(process_layer, [int], "process_layer")
-    utils_base.type_check(include_fids, [bool], "include_fids")
-    utils_base.type_check(include_geometry, [bool], "include_geometry")
-    utils_base.type_check(include_attributes, [bool], "include_attributes")
-    utils_base.type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
+    utils_base._type_check(process_layer, [int], "process_layer")
+    utils_base._type_check(include_fids, [bool], "include_fids")
+    utils_base._type_check(include_geometry, [bool], "include_geometry")
+    utils_base._type_check(include_attributes, [bool], "include_attributes")
+    utils_base._type_check(allow_lists, [bool], "allow_lists")
 
     ref = vector_open(vector)
     metadata = _vector_to_metadata(ref)
@@ -821,9 +822,9 @@ def vector_filter_layer(
     ref = vector_open(vector)
     meta = vector_to_metadata(ref, allow_lists=False)
 
-    out_path = utils_gdal._parse_output_data(
+    out_path = utils_io._get_output_paths(
         meta["path"],
-        output_data=out_path,
+        out_path,
         overwrite=overwrite,
         prefix=prefix,
         suffix=suffix,

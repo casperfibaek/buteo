@@ -13,7 +13,7 @@ import numpy as np
 # Internal
 from buteo.array.convolution import convolve_array
 from buteo.array.convolution_kernels import kernel_base, kernel_get_offsets_and_weights
-from buteo.utils import type_check
+from buteo.utils.utils_base import _type_check
 
 
 def _filter_operation(
@@ -31,18 +31,18 @@ def _filter_operation(
     channel_last: bool = True,
 ) -> np.ndarray:
     """ Internal function to perform filter operations on arrays and rasters. """
-    type_check(arr, [np.ndarray], "arr")
-    type_check(method, [int], "method")
-    type_check(radius, [int, float], "radius")
-    type_check(spherical, [bool], "spherical")
-    type_check(channel_last, [bool], "channel_last")
-    type_check(normalised, [bool], "normalised")
-    type_check(hole, [bool], "hole")
-    type_check(func_value, [int, float], "func_value")
-    type_check(distance_weighted, [bool], "distance_weighted")
-    type_check(distance_method, [int], "distance_method")
-    type_check(distance_decay, [int, float], "distance_decay")
-    type_check(distance_sigma, [int, float], "distance_sigma")
+    _type_check(arr, [np.ndarray], "arr")
+    _type_check(method, [int], "method")
+    _type_check(radius, [int, float], "radius")
+    _type_check(spherical, [bool], "spherical")
+    _type_check(channel_last, [bool], "channel_last")
+    _type_check(normalised, [bool], "normalised")
+    _type_check(hole, [bool], "hole")
+    _type_check(func_value, [int, float], "func_value")
+    _type_check(distance_weighted, [bool], "distance_weighted")
+    _type_check(distance_method, [int], "distance_method")
+    _type_check(distance_decay, [int, float], "distance_decay")
+    _type_check(distance_sigma, [int, float], "distance_sigma")
 
     kernel = kernel_base(
         radius,

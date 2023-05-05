@@ -41,21 +41,16 @@ def vector_merge(
     str
         The output path.
     """
-    utils_base.type_check(vectors, [[str, ogr.DataSource]], "vector")
-    utils_base.type_check(out_path, [str, [str], None], "out_path")
-    utils_base.type_check(preserve_fid, [bool], "preserve_fid")
+    utils_base._type_check(vectors, [[str, ogr.DataSource]], "vector")
+    utils_base._type_check(out_path, [str, [str], None], "out_path")
+    utils_base._type_check(preserve_fid, [bool], "preserve_fid")
 
     vector_list = utils_base._get_variable_as_list(vectors)
 
     assert utils_gdal._check_is_vector_list(vector_list), "Invalid input vector list"
 
     if out_path is None:
-        out_path = utils_path._get_output_path(
-            utils_gdal._get_path_from_dataset(vector_list[0]),
-            add_uuid=True,
-            prefix="",
-            suffix="_merged",
-        )
+        out_path = utils_path._get_temp_filepath(vector_list[0], suffix="_merged")
 
     driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_name_from_path(out_path))
 

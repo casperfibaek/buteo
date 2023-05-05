@@ -11,7 +11,7 @@ import numpy as np
 from numba import jit, prange
 
 # Internal
-from buteo.utils.utils_base import type_check
+from buteo.utils.utils_base import _type_check
 from buteo.array.convolution_funcs import _hood_to_value
 
 
@@ -55,9 +55,9 @@ def pad_array(
     (the default), "edge", or "constant". If "constant" padding is used, the
     `constant_value` parameter specifies the value to use.
     """
-    type_check(arr, [np.ndarray], "arr")
-    type_check(pad_size, [int], "pad_size")
-    type_check(method, [str], "method")
+    _type_check(arr, [np.ndarray], "arr")
+    _type_check(pad_size, [int], "pad_size")
+    _type_check(method, [str], "method")
 
     assert pad_size >= 0, "pad_size must be a non-negative integer"
     method = method.lower()
@@ -370,11 +370,11 @@ def convolve_array_channels(
     np.ndarray
         The convolved array.
     """
-    type_check(arr, [np.ndarray], "arr")
-    type_check(method, [int], "method")
-    type_check(nodata, [bool], "nodata")
-    type_check(nodata_value, [float], "nodata_value")
-    type_check(func_value, [int, float], "value")
+    _type_check(arr, [np.ndarray], "arr")
+    _type_check(method, [int], "method")
+    _type_check(nodata, [bool], "nodata")
+    _type_check(nodata_value, [float], "nodata_value")
+    _type_check(func_value, [int, float], "value")
 
     assert arr.ndim == 3, "arr must be a 3D array"
     assert method in range(1, 18), "method must be between 1 and 17"
@@ -478,14 +478,14 @@ def convolve_array(
     different convolution methods, including nearest, linear, and cubic. The function can also
     handle nodata values and cases where the kernel extends outside the input array.
     """
-    type_check(arr, [np.ndarray], "arr")
-    type_check(offsets, [np.ndarray], "offsets")
-    type_check(weights, [np.ndarray], "weights")
-    type_check(method, [int], "method")
-    type_check(nodata, [bool], "nodata")
-    type_check(nodata_value, [float], "nodata_value")
-    type_check(func_value, [int, float, type(None)], "value")
-    type_check(channel_last, [bool], "channel_last")
+    _type_check(arr, [np.ndarray], "arr")
+    _type_check(offsets, [np.ndarray], "offsets")
+    _type_check(weights, [np.ndarray], "weights")
+    _type_check(method, [int], "method")
+    _type_check(nodata, [bool], "nodata")
+    _type_check(nodata_value, [float], "nodata_value")
+    _type_check(func_value, [int, float, type(None)], "value")
+    _type_check(channel_last, [bool], "channel_last")
 
     assert len(offsets) == len(weights), "offsets and weights must be the same length"
     assert arr.ndim in [2, 3], "arr must be 2 or 3 dimensional"

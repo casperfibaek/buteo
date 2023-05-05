@@ -12,7 +12,12 @@ from typing import Union, Optional, List
 from osgeo import ogr
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_path
+from buteo.utils import (
+    utils_io,
+    utils_base,
+    utils_gdal,
+    utils_path,
+)
 from buteo.vector import core_vector
 
 
@@ -31,12 +36,7 @@ def _vector_dissolve(
     vector_list = utils_base._get_variable_as_list(vector)
 
     if out_path is None:
-        out_path = utils_path._get_output_path(
-            utils_gdal._get_path_from_dataset(vector),
-            add_uuid=True,
-            prefix="",
-            suffix="_dissolve",
-        )
+        out_path = utils_path._get_temp_filepath("dissolve.shp", suffix="_dissolve")
 
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path"
 
@@ -152,16 +152,16 @@ def vector_dissolve(
     Union[str, ogr.DataSource]
         The output path or ogr.DataSource
     """
-    utils_base.type_check(vector, [ogr.DataSource, str, [str, ogr.DataSource]], "vector")
-    utils_base.type_check(attribute, [str, None], "attribute")
-    utils_base.type_check(out_path, [str, [str], None], "out_path")
-    utils_base.type_check(add_index, [bool], "add_index")
-    utils_base.type_check(process_layer, [int], "process_layer")
-    utils_base.type_check(prefix, [str], "prefix")
-    utils_base.type_check(suffix, [str], "suffix")
-    utils_base.type_check(add_uuid, [bool], "add_uuid")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(vector, [ogr.DataSource, str, [str, ogr.DataSource]], "vector")
+    utils_base._type_check(attribute, [str, None], "attribute")
+    utils_base._type_check(out_path, [str, [str], None], "out_path")
+    utils_base._type_check(add_index, [bool], "add_index")
+    utils_base._type_check(process_layer, [int], "process_layer")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(allow_lists, [bool], "allow_lists")
 
     if not allow_lists and isinstance(vector, list):
         raise ValueError("Lists are not allowed when allow_lists is False.")
@@ -170,9 +170,9 @@ def vector_dissolve(
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         vector_list,
-        output_data=out_path,
+        out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,

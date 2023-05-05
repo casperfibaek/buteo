@@ -13,8 +13,13 @@ from osgeo import gdal
 import numpy as np
 
 # Internal
-from buteo.utils import utils_base, utils_gdal, utils_path
-from buteo.raster import core_raster
+from buteo.utils import (
+    utils_base,
+    utils_gdal,
+    utils_path,
+    utils_io,
+)
+from buteo.raster import core_raster, core_raster_io
 from buteo.array.convolution import convolve_array_simple
 from buteo.array.convolution_kernels import kernel_shift
 
@@ -35,15 +40,15 @@ def _raster_shift(
         assert isinstance(shift, (int, float)), f"shift must be an int or a float: {shift}"
 
     ref = core_raster._raster_open(raster)
-    metadata = core_raster._raster_to_metadata(ref)
+    metadata = core_raster._get_basic_metadata_raster(ref)
 
     x_shift, y_shift = shift_list
 
     if out_path is None:
         raster_name = metadata["basename"]
-        out_path = utils_path._get_output_path(raster_name, add_uuid=True)
+        out_path = utils_path._get_temp_filepath(f"{raster_name}_shifted.tif", add_uuid=True)
     else:
-        if not utils_base.is_valid_output_path(out_path, overwrite=overwrite):
+        if not utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite):
             raise ValueError(f"out_path is not a valid output path: {out_path}")
 
     utils_path._delete_if_required(out_path, overwrite)
@@ -131,22 +136,22 @@ def raster_shift(
     Union[str, List[str]]
         The path(s) to the shifted raster(s).
     """
-    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base.type_check(shift_list, [[tuple, list]], "shift_list")
-    utils_base.type_check(out_path, [str, [str], None], "out_path")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(creation_options, [[str], None], "creation_options")
+    utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base._type_check(shift_list, [[tuple, list]], "shift_list")
+    utils_base._type_check(out_path, [str, [str], None], "out_path")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
 
     raster_list = utils_base._get_variable_as_list(raster)
     assert utils_gdal._check_is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
 
-    path_list = utils_gdal._parse_output_data(
+    path_list = utils_io._get_output_paths(
         raster_list,
-        output_data=out_path,
-        overwrite=overwrite,
+        out_path,
+        add_uuid=add_uuid or out_path is None,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=add_uuid,
+        overwrite=overwrite,
     )
 
     shifted_rasters = []
@@ -191,11 +196,11 @@ def raster_shift_pixel(
     str
         The path to the shifted raster.
     """
-    utils_base.type_check(raster, [str, gdal.Dataset], "raster")
-    utils_base.type_check(shift_list, [[tuple, list]], "shift_list")
-    utils_base.type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(raster, [str, gdal.Dataset], "raster")
+    utils_base._type_check(shift_list, [[tuple, list]], "shift_list")
+    utils_base._type_check(out_path, [str, None], "out_path")
 
-    arr = core_raster.raster_to_array(raster)
+    arr = core_raster_io.raster_to_array(raster)
 
     offsets, weights = kernel_shift(shift_list[0], shift_list[1])
 
@@ -207,9 +212,9 @@ def raster_shift_pixel(
         )
 
     if out_path is None:
-        out_path = utils_path._get_output_path("shifted_raster", add_uuid=True)
+        out_path = utils_path._get_temp_filepath("shifted_raster.tif", add_uuid=True)
 
-    return core_raster.array_to_raster(
+    return core_raster_io.array_to_raster(
         arr,
         reference=raster,
         out_path=out_path,

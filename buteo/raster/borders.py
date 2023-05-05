@@ -39,8 +39,8 @@ def _raster_add_border(
     Internal.
     Add a border to a raster.
     """
-    in_raster = core_raster.raster_open(raster)
-    metadata = core_raster.raster_to_metadata(in_raster)
+    in_raster = core_raster._raster_open(raster)
+    metadata = core_raster._get_basic_metadata_raster(in_raster)
 
     # Parse the driver
     driver_name = "GTiff" if out_path is None else utils_gdal._get_raster_driver_name_from_path(out_path)
@@ -53,8 +53,11 @@ def _raster_add_border(
 
     output_name = None
     if out_path is None:
-        out_path = utils_path._get_output_path("raster_proximity.tif", add_uuid=True)
+        output_name = utils_path._get_temp_filepath("raster_proximity.tif", add_uuid=True, add_timestamp=True)
     else:
+        assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), (
+            f"Output path is not valid: {out_path}"
+        )
         output_name = out_path
 
     in_arr = core_raster.raster_to_array(in_raster)
@@ -87,14 +90,14 @@ def _raster_add_border(
         new_arr = np.ma.array(new_arr, mask=mask)
         new_arr.fill_value = in_arr.fill_value
 
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_path._delete_if_required(output_name, overwrite)
 
     dest_raster = driver.Create(
         output_name,
         new_shape[1],
         new_shape[0],
         metadata["band_count"],
-        utils_translate._translate_str_to_gdal_dtype(in_arr.dtype),
+        utils_translate._translate_dtype_gdal_to_numpy(in_arr.dtype),
         utils_gdal._get_default_creation_options(creation_options),
     )
 
@@ -165,13 +168,13 @@ def raster_add_border(
     Union[str, gdal.Dataset]
         The output raster with added borders.
     """
-    utils_base.type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base.type_check(out_path, [str, None], "out_path")
-    utils_base.type_check(border_size, [int], "border_size")
-    utils_base.type_check(border_size_unit, [str], "border_size_unit")
-    utils_base.type_check(border_value, [int, float], "border_value")
-    utils_base.type_check(overwrite, [bool], "overwrite")
-    utils_base.type_check(creation_options, [list, None], "creation_options")
+    utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base._type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(border_size, [int], "border_size")
+    utils_base._type_check(border_size_unit, [str], "border_size_unit")
+    utils_base._type_check(border_value, [int, float], "border_value")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(creation_options, [list, None], "creation_options")
 
     if not allow_lists:
         if isinstance(raster, list):
@@ -190,7 +193,7 @@ def raster_add_border(
     raster_list = utils_base._get_variable_as_list(raster)
 
     if out_path is None:
-        out_path = utils_path._get_output_path("raster_proximity.tif", add_uuid=True)
+        out_path = utils_path._get_temp_filepath("raster_proximity.tif", add_uuid=True, add_timestamp=True)
 
     for raster_path in raster_list:
         _raster_add_border(

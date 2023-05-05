@@ -13,7 +13,7 @@ import numpy as np
 # Internal
 from buteo.array.convolution import convolve_array
 from buteo.array.convolution_kernels import kernel_base, kernel_get_offsets_and_weights
-from buteo.utils import type_check
+from buteo.utils.utils_base import _type_check
 
 
 def _morphology_operation(
@@ -23,11 +23,11 @@ def _morphology_operation(
     spherical: bool = True,
     channel_last: bool = True,
 ) -> np.ndarray:
-    type_check(arr, [np.ndarray], "arr")
-    type_check(method, [int], "method")
-    type_check(radius, [int, float], "radius")
-    type_check(spherical, [bool], "spherical")
-    type_check(channel_last, [bool], "channel_last")
+    _type_check(arr, [np.ndarray], "arr")
+    _type_check(method, [int], "method")
+    _type_check(radius, [int, float], "radius")
+    _type_check(spherical, [bool], "spherical")
+    _type_check(channel_last, [bool], "channel_last")
 
     kernel = kernel_base(radius, spherical=spherical, normalise=False)
     offsets, weights = kernel_get_offsets_and_weights(kernel)

@@ -7,7 +7,6 @@ Functions that make interacting with the toolbox easier.
 # Standard Library
 import time
 from typing import Any, Union, List, Tuple
-import numpy as np
 
 
 
@@ -214,7 +213,7 @@ def _check_variable_is_iterable_or_type(potential_type: Any) -> bool:
     return False
 
 
-def type_check(
+def _type_check(
     variable: Any,
     types: Tuple[type, ...],
     name: str = "",
