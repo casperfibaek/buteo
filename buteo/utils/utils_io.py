@@ -101,7 +101,7 @@ def _get_output_paths(
     add_uuid: bool = False,
     add_timestamp: bool = False,
     overwrite: bool = True,
-) -> Union[str, List[str]]:
+) -> List[str]:
     """
     Get the output path for a file using the input path and the output path.
     The output path can be None, in which case the created path will be in memory.
@@ -137,7 +137,7 @@ def _get_output_paths(
 
     Returns
     -------
-    str or List[str]
+    List[str]
         The output path(s).
     """
     assert isinstance(inputs, (str, gdal.Dataset, ogr.DataSource, list)), "input_path must be a string or a list."
@@ -156,24 +156,19 @@ def _get_output_paths(
             assert all([isinstance(val, str) for val in output_path]), "output_path must be a list of strings."
             assert all([len(val) > 0 for val in output_path]), "output_path must not be a list of empty strings."
 
-    input_is_list = False
-    if isinstance(inputs, list):
-        input_is_list = True
-
     inputs = _get_input_paths(inputs, input_type="mixed")
     outputs = []
 
     # Output is None - Memory is used.
     if output_path is None:
         for path in inputs:
-            aug_path = utils_path._get_augmented_path(
+            aug_path = utils_path._get_temp_filepath(
                 path,
                 prefix=prefix,
                 suffix=suffix,
                 add_uuid=add_uuid,
                 add_timestamp=add_timestamp,
-                change_ext=change_ext,
-                folder="/vsimem/",
+                ext=change_ext,
             )
             outputs.append(aug_path)
 
@@ -224,7 +219,4 @@ def _get_output_paths(
     else:
         raise ValueError("Invalid output_path.")
 
-    if input_is_list:
-        return outputs
-
-    return outputs[0]
+    return outputs

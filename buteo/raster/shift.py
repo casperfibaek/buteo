@@ -60,7 +60,7 @@ def _raster_shift(
         metadata["width"],  # Dataframe width in pixels (e.g. 1920px).
         metadata["height"],  # Dataframe height in pixels (e.g. 1280px).
         metadata["band_count"],  # The number of bands required.
-        metadata["datatype_gdal_raw"],  # Datatype of the destination.
+        metadata["dtype_gdal"],  # Datatype of the destination.
         utils_gdal._get_default_creation_options(creation_options),
     )
 

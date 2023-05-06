@@ -18,7 +18,7 @@ from warnings import warn
 from osgeo import gdal, ogr
 
 # Internal
-from buteo.utils import utils_base
+from buteo.utils import utils_base, utils_gdal
 
 
 
@@ -919,6 +919,12 @@ def _get_augmented_path(
     assert change_ext is None or isinstance(change_ext, str), "change_ext must be a string."
     assert len(path) > 0, "path must not be non-empty string."
 
+    path = os.path.abspath(path)
+    if "\\vsimem\\" in path:
+        path = "/" + path.replace(os.path.abspath(os.sep), "")
+
+    path = _get_unix_path(path)
+
     # Find the target folder
     target_folder = _get_dir_from_path(path)
     if folder is not None:
@@ -1023,8 +1029,8 @@ def _get_temp_filepath(
     ext: Optional[str] = None,
     prefix: str = "",
     suffix: str = "",
-    add_uuid: bool = True,
-    add_timestamp: bool = True,
+    add_uuid: bool = False,
+    add_timestamp: bool = False,
 ) -> str:
     """
     Get a temporary filepath in vsimem.
@@ -1063,11 +1069,13 @@ def _get_temp_filepath(
     assert isinstance(add_timestamp, bool), "add_timestamp must be a bool."
 
     if isinstance(name, gdal.Dataset):
-        name = os.path.basename(name.GetDescription())
+        path = name.GetDescription()
+        name = os.path.splitext(os.path.basename(path))[0]
     elif isinstance(name, ogr.DataSource):
-        name = os.path.basename(name.GetDescription())
+        path = name.GetDescription()
+        name = os.path.splitext(os.path.basename(path))[0]
     else:
-        name = os.path.basename(name)
+        name = os.path.splitext(os.path.basename(name))[0]
 
     if add_uuid:
         uuid = "_" + str(uuid4().int)
@@ -1087,5 +1095,13 @@ def _get_temp_filepath(
 
     filename = f"{prefix}{name}{uuid}{timestamp}{suffix}.{ext.lstrip('.').lower()}"
     filepath = os.path.join("/vsimem/", filename)
+
+    # Add _1, _2, etc. if the file already exists
+    if _check_file_exists(filepath):
+        i = 1
+        while _check_file_exists(filepath):
+            filename = f"{prefix}{name}{uuid}{timestamp}{suffix}_{i}.{ext.lstrip('.').lower()}"
+            filepath = os.path.join("/vsimem/", filename)
+            i += 1
 
     return filepath

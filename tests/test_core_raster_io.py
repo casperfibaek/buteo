@@ -11,8 +11,8 @@ import numpy as np
 import pytest
 
 # Internal
-from buteo.raster import core_raster_io
 from utils_tests import create_sample_raster, create_sample_vector
+from buteo.raster import core_raster_io
 
 
 def test_raster_to_array_shape_dtype():

@@ -64,10 +64,10 @@ def _raster_to_metadata(
 
     band0 = dataset.GetRasterBand(1)
 
-    datatype_gdal_raw = band0.DataType
-    datatype_gdal = gdal.GetDataTypeName(datatype_gdal_raw)
+    dtype_gdal = band0.DataType
+    datatype_gdal = gdal.GetDataTypeName(dtype_gdal)
 
-    datatype = utils_translate._translate_dtype_gdal_to_numpy(datatype_gdal_raw).name
+    datatype = utils_translate._translate_dtype_gdal_to_numpy(dtype_gdal).name
 
     nodata_value = band0.GetNoDataValue()
     has_nodata = nodata_value is not None
@@ -99,10 +99,10 @@ def _raster_to_metadata(
         "y_min": y_min,
         "dtype": datatype,
         "dtype_gdal": datatype_gdal,
-        "dtype_gdal_raw": datatype_gdal_raw,
+        "dtype_gdal_raw": dtype_gdal,
         "datatype": datatype,
         "datatype_gdal": datatype_gdal,
-        "datatype_gdal_raw": datatype_gdal_raw,
+        "dtype_gdal": dtype_gdal,
         "nodata_value": nodata_value,
         "has_nodata": has_nodata,
         "is_raster": True,

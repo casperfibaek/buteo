@@ -15,7 +15,7 @@ The GDAL geotransform is a list of six parameters:</br>
 
 # Standard library
 import sys; sys.path.append("../../")
-from typing import List, Union, Dict, Any
+from typing import List, Union, Dict, Any, Optional
 from uuid import uuid4
 
 # External
@@ -1149,7 +1149,10 @@ def _additional_bboxes(
     }
 
 
-def _get_vector_from_geom(geom: ogr.Geometry) -> ogr.DataSource:
+def _get_vector_from_geom(
+    geom: ogr.Geometry,
+    projection_osr: Optional[osr.SpatialReference] = None,
+) -> ogr.DataSource:
     """
     Converts a geometry to a vector.
 
@@ -1173,7 +1176,8 @@ def _get_vector_from_geom(geom: ogr.Geometry) -> ogr.DataSource:
     driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_name_from_path(path))
     vector = driver.CreateDataSource(path)
 
-    layer = vector.CreateLayer("converted_geom", geom.GetSpatialReference(), geom.GetGeometryType())
+    proj = projection_osr if projection_osr is not None else utils_projection._get_default_projection_osr()
+    layer = vector.CreateLayer("converted_geom", proj, geom.GetGeometryType())
 
     feature = ogr.Feature(layer.GetLayerDefn())
     feature.SetGeometry(geom)

@@ -9,7 +9,7 @@ Useful for warped satellite images and for proximity searching.
 
 # Standard library
 import sys; sys.path.append("../../")
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Any
 
 # External
 import numpy as np
@@ -17,23 +17,24 @@ from osgeo import gdal
 
 # Internal
 from buteo.utils import (
+    utils_io,
     utils_gdal,
     utils_base,
     utils_path,
     utils_translate,
 )
-from buteo.raster import core_raster
+from buteo.raster import core_raster, core_raster_io
 
 
 def _raster_add_border(
-    raster,
-    out_path=None,
-    border_size=100,
+    raster: Union[str, gdal.Dataset],
+    out_path: Optional[str] = None,
+    border_size: int = 100,
     *,
-    border_size_unit="px",
-    border_value=0,
-    overwrite=True,
-    creation_options=None,
+    border_size_unit: str = "px",
+    border_value: Union[int, float] = 0,
+    overwrite: bool = True,
+    creation_options: Optional[List[str]] = None,
 ):
     """
     Internal.
@@ -60,7 +61,7 @@ def _raster_add_border(
         )
         output_name = out_path
 
-    in_arr = core_raster.raster_to_array(in_raster)
+    in_arr = core_raster_io.raster_to_array(in_raster)
 
     if border_size_unit == "px":
         border_size_y = border_size
@@ -96,8 +97,8 @@ def _raster_add_border(
         output_name,
         new_shape[1],
         new_shape[0],
-        metadata["band_count"],
-        utils_translate._translate_dtype_gdal_to_numpy(in_arr.dtype),
+        metadata["bands"],
+        utils_translate._translate_dtype_numpy_to_gdal(in_arr.dtype),
         utils_gdal._get_default_creation_options(creation_options),
     )
 
@@ -113,23 +114,26 @@ def _raster_add_border(
     dest_raster.SetGeoTransform(new_transform)
     dest_raster.SetProjection(in_raster.GetProjectionRef())
 
-    for band_num in range(1, metadata["band_count"] + 1):
+    for band_num in range(1, metadata["bands"] + 1):
         dst_band = dest_raster.GetRasterBand(band_num)
         dst_band.WriteArray(new_arr[:, :, band_num - 1])
 
-        if metadata["has_nodata"]:
+        if metadata["nodata"]:
             dst_band.SetNoDataValue(metadata["nodata_value"])
 
     return output_name
 
 
 def raster_add_border(
-    raster: Union[str, gdal.Dataset],
+    raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     out_path: Optional[str] = None,
     border_size: int = 100,
     border_size_unit: str = "px",
     border_value: int = 0,
-    allow_lists: bool = True,
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = False,
+    add_timestamp: bool = False,
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
     ) -> Union[str, gdal.Dataset]:
@@ -138,7 +142,7 @@ def raster_add_border(
 
     Parameters
     ----------
-    raster : Union[str, gdal.Dataset]
+    raster : Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
         The input raster.
 
     out_path : Optional[str], optional
@@ -154,8 +158,17 @@ def raster_add_border(
     border_value : int, optional
         The value of the border. Default: 0
 
-    allow_lists : bool, optional
-        If True, lists of rasters will be allowed. Default: True
+    prefix : str, optional
+        The prefix to add to the output file name, default: ""
+
+    suffix : str, optional
+        The suffix to add to the output file name, default: ""
+
+    add_uuid : bool, optional
+        Whether to add a uuid to the output file name, default: False
+
+    add_timestamp : bool, optional
+        Whether to add a timestamp to the output file name, default: False
 
     overwrite : bool, optional
         If True, the output raster will be overwritten. Default: True
@@ -173,32 +186,33 @@ def raster_add_border(
     utils_base._type_check(border_size, [int], "border_size")
     utils_base._type_check(border_size_unit, [str], "border_size_unit")
     utils_base._type_check(border_value, [int, float], "border_value")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(add_timestamp, [bool], "add_timestamp")
     utils_base._type_check(overwrite, [bool], "overwrite")
     utils_base._type_check(creation_options, [list, None], "creation_options")
 
-    if not allow_lists:
-        if isinstance(raster, list):
-            raise ValueError("Lists are not allowed as input.")
+    input_is_list = isinstance(raster, list)
 
-        return _raster_add_border(
-            raster,
-            out_path=out_path,
-            border_size=border_size,
-            border_size_unit=border_size_unit,
-            border_value=border_value,
-            overwrite=overwrite,
-            creation_options=creation_options,
-        )
+    input_rasters = utils_io._get_input_paths(raster, "raster")
+    out_path = utils_io._get_output_paths(
+        input_rasters,
+        out_path,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        add_timestamp=add_timestamp,
+        change_ext="tif",
+        overwrite=overwrite,
+    )
 
-    raster_list = utils_base._get_variable_as_list(raster)
+    utils_path._delete_if_required_list(out_path, overwrite)
 
-    if out_path is None:
-        out_path = utils_path._get_temp_filepath("raster_proximity.tif", add_uuid=True, add_timestamp=True)
-
-    for raster_path in raster_list:
+    for idx, raster in enumerate(input_rasters):
         _raster_add_border(
-            raster_path,
-            out_path=out_path,
+            raster,
+            out_path=out_path[idx],
             border_size=border_size,
             border_size_unit=border_size_unit,
             border_value=border_value,
@@ -206,4 +220,7 @@ def raster_add_border(
             creation_options=creation_options,
         )
 
-    return out_path
+    if input_is_list:
+        return out_path
+
+    return out_path[0]

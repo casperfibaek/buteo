@@ -6,8 +6,8 @@ Clips a raster using a vector geometry or the extents of a raster.
 
 # Standard library
 import sys; sys.path.append("../../")
-import os
 from typing import Union, List, Optional
+from warnings import warn
 
 # External
 from osgeo import gdal, ogr
@@ -60,15 +60,16 @@ def _raster_clip(
         suffix=suffix,
         add_uuid=out_path is None,
     )
-
-    if out_path is not None and isinstance(out_path, str):
-        if "vsimem" not in out_path:
-            if not os.path.isdir(os.path.split(os.path.normpath(out_path))[0]):
-                raise ValueError(f"out_path folder does not exist: {out_path}")
+    assert utils_path._check_is_valid_output_path_list(path_list, overwrite), (
+        f"Unable to parse out_path: {out_path}"
+    )
 
     clip_ds = None
 
     memory_files = []
+
+    if isinstance(clip_geom, ogr.Geometry):
+        utils_bbox._get_vector_from_geom(clip_geom)
 
     # Input is a vector.
     if utils_gdal._check_is_vector(clip_geom):
@@ -156,11 +157,15 @@ def _raster_clip(
         if src_nodata == "infer":
             out_nodata = raster_metadata["nodata_value"]
         else:
-            out_nodata = utils_translate._get_default_nodata_value(raster_metadata["datatype_gdal_raw"])
+            out_nodata = utils_translate._get_default_nodata_value(raster_metadata["dtype_gdal"])
     elif isinstance(dst_nodata, (int, float)) or dst_nodata is None:
         out_nodata = dst_nodata
     else:
         raise ValueError(f"Unable to parse nodata_value: {dst_nodata}")
+    
+    if not utils_translate._check_is_value_within_dtype_range(out_nodata, raster_metadata["dtype"]):
+        warn("Nodata value is outside of the range of the input raster's dtype. Setting to None.")
+        out_nodata = None
 
     # Removes file if it exists and overwrite is True.
     utils_path._delete_if_required(out_path, overwrite)
@@ -168,9 +173,7 @@ def _raster_clip(
     if verbose == 0:
         gdal.PushErrorHandler("CPLQuietErrorHandler")
 
-    clipped = gdal.Warp(
-        out_name,
-        origin_layer,
+    options = gdal.WarpOptions(
         format=out_format,
         resampleAlg=utils_translate._translate_resample_method(resample_alg),
         targetAlignedPixels=False,
@@ -187,6 +190,12 @@ def _raster_clip(
         multithread=True,
     )
 
+    clipped = gdal.Warp(
+        out_name,
+        origin_layer,
+        options=options,
+    )
+
     utils_gdal.delete_dataset_if_in_memory_list(memory_files)
 
     if verbose == 0:
@@ -200,7 +209,7 @@ def _raster_clip(
 
 def raster_clip(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
-    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
+    clip_geom: Union[str, ogr.DataSource, gdal.Dataset, ogr.Geometry],
     out_path: Optional[str] = None,
     *,
     resample_alg: str = "nearest",
@@ -208,15 +217,16 @@ def raster_clip(
     adjust_bbox: bool = False,
     all_touch: bool = False,
     to_extent: bool = False,
+    layer_to_clip: int = 0,
+    dst_nodata: Union[float, int, str] = "infer",
+    src_nodata: Union[float, int, str] = "infer",
+    creation_options: Optional[List[str]] = None,
+    add_uuid: bool = False,
+    add_timestamp: bool = False,
     prefix: str = "",
     suffix: str = "",
     overwrite: bool = True,
-    creation_options: Optional[List[str]] = None,
-    dst_nodata: Union[float, int, str] = "infer",
-    src_nodata: Union[float, int, str] = "infer",
-    layer_to_clip: int = 0,
     verbose: int = 0,
-    add_uuid: bool = False,
     ram: float = 0.8,
     ram_max: Optional[int] = None,
     ram_min: Optional[int] = 100,
@@ -229,7 +239,7 @@ def raster_clip(
     raster : str or gdal.Dataset or list of str/gdal.Dataset
         The raster(s) to clip.
 
-    clip_geom : str or ogr.DataSource or gdal.Dataset
+    clip_geom : str or ogr.DataSource, gdal.Dataset or ogr.Geometry
         The geometry to use to clip the raster.
 
     out_path : str or list or None, optional
@@ -278,6 +288,9 @@ def raster_clip(
     add_uuid : bool, optional
         If True, a UUID will be added to the output raster. Default: False.
 
+    add_timestamp : bool, optional
+        If True, a timestamp will be added to the output raster. Default: False.
+
     ram : float, optional
         The proportion of total ram to allow usage of. Default: 0.8.
     
@@ -293,7 +306,7 @@ def raster_clip(
         A string or list of strings representing the path(s) to the clipped raster(s).
     """
     utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base._type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset], "clip_geom")
+    utils_base._type_check(clip_geom, [str, ogr.DataSource, gdal.Dataset, ogr.Geometry], "clip_geom")
     utils_base._type_check(out_path, [[str], str, None], "out_path")
     utils_base._type_check(resample_alg, [str], "resample_alg")
     utils_base._type_check(crop_to_geom, [bool], "crop_to_geom")
@@ -309,22 +322,27 @@ def raster_clip(
     utils_base._type_check(suffix, [str], "postfix")
     utils_base._type_check(verbose, [int], "verbose")
     utils_base._type_check(add_uuid, [bool], "uuid")
+    utils_base._type_check(add_timestamp, [bool], "timestamp")
     utils_base._type_check(ram, [float], "ram")
     utils_base._type_check(ram_max, [int, None], "ram_max")
     utils_base._type_check(ram_min, [int, None], "ram_min")
 
-    raster_list = utils_base._get_variable_as_list(raster)
+    input_is_list = isinstance(raster, list)
+    input_rasters = utils_io._get_input_paths(raster, "raster")
     out_path_list = utils_io._get_output_paths(
         raster,
         out_path,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=add_uuid or out_path is None,
+        add_uuid=add_uuid,
+        add_timestamp=add_uuid,
+        change_ext="tif",
         overwrite=overwrite,
     )
+    utils_path._delete_if_required_list(out_path_list, overwrite)
 
     output = []
-    for index, in_raster in enumerate(raster_list):
+    for index, in_raster in enumerate(input_rasters):
         output.append(
             _raster_clip(
                 in_raster,
@@ -349,7 +367,7 @@ def raster_clip(
             )
         )
 
-    if isinstance(raster, list):
+    if input_is_list:
         return output
 
     return output[0]

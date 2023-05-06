@@ -148,3 +148,4 @@ lib/credentials.py
 **/*.tif.aux
 **/*.tif.aux.xml
 /tests/tmp*.tif
+/tests/tmp/*.*

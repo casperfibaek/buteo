@@ -28,7 +28,7 @@ from buteo.raster import core_raster, core_raster_io
 from buteo.raster.reproject import raster_reproject, raster_match_projections
 
 
-def raster_align_to_reference(
+def _raster_align_to_reference(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     reference: Union[str, gdal.Dataset],
     *,
@@ -39,6 +39,8 @@ def raster_align_to_reference(
     creation_options: Optional[List[str]] = None,
     prefix: str = "",
     suffix: str = "",
+    add_uuid: bool = False,
+    add_timestamp: bool = False,
     ram: float = 0.8,
     ram_max: Optional[int] = None,
     ram_min: Optional[int] = 100,
@@ -75,6 +77,12 @@ def raster_align_to_reference(
     suffix : str, optional
         Suffix to add to the output file name. Default: "".
 
+    add_uuid : bool, optional
+        Whether to add a uuid to the output file name. Default: False.
+
+    add_timestamp : bool, optional
+        Whether to add a timestamp to the output file name. Default: False.
+
     ram : float, optional
         The proportion of total ram to allow usage of. Default: 0.8.
     
@@ -98,27 +106,29 @@ def raster_align_to_reference(
     utils_base._type_check(creation_options, [[str], None], "creation_options")
     utils_base._type_check(prefix, [str], "prefix")
     utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(add_timestamp, [bool], "add_timestamp")
     utils_base._type_check(ram, [float], "ram")
     utils_base._type_check(ram_max, [int, None], "ram_max")
     utils_base._type_check(ram_min, [int, None], "ram_min")
 
-    rasters_list = utils_io._get_input_paths(rasters, "raster")
+    input_rasters = utils_io._get_input_paths(rasters, "raster")
 
     assert utils_gdal._check_is_raster_or_vector(reference), "Reference must be a raster or vector."
 
     # Verify that all of the rasters overlap the reference
-    for raster in rasters_list:
+    for raster in input_rasters:
         assert core_raster.check_rasters_intersect(raster, reference), (
             f"Raster: {utils_gdal._get_path_from_dataset(raster)} does not intersect reference."
         )
 
     path_list = utils_io._get_output_paths(
-        rasters_list,
+        input_rasters,
         out_path,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=out_path is None,
-        add_timestamp=out_path is None,
+        add_uuid=add_uuid,
+        add_timestamp=add_timestamp,
         overwrite=overwrite,
         change_ext="tif",
     )
@@ -138,7 +148,7 @@ def raster_align_to_reference(
     y_pixels = reference_metadata["height"]
 
     # Reproject the rasters to the reference projection.
-    for idx, raster in enumerate(rasters_list):
+    for idx, raster in enumerate(input_rasters):
         raster_metadata = core_raster._get_basic_metadata_raster(raster)
         raster_path = utils_gdal._get_path_from_dataset(raster)
 
@@ -196,7 +206,7 @@ def raster_align_to_reference(
     return path_list
 
 
-def raster_find_best_align_reference(
+def _raster_find_best_align_reference(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     method: str,
     out_path: Optional[str] = None,
@@ -225,22 +235,17 @@ def raster_find_best_align_reference(
     utils_base._type_check(method, [str], "method")
     utils_base._type_check(out_path, [str, None], "out_path")
 
-    rasters_list = utils_io._get_input_paths(rasters, "raster")
     assert method in ["reference", "intersection", "union"], (
         f"Invalid bounding_box: {method}. Options include: reference, intersection, and union."
     )
 
-    assert utils_gdal._check_is_raster_list(rasters_list), "All rasters must be raster datasets."
+    input_rasters = utils_io._get_input_paths(rasters, "raster")
 
-    if len(rasters_list) == 1:
-        return rasters_list[0]
+    if len(input_rasters) == 1:
+        return input_rasters[0]
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath(
-            name="best_reference.tif",
-            add_uuid=True,
-            add_timestamp=True,
-        )
+        out_path = utils_path._get_temp_filepath(name="best_reference.tif")
     else:
         if not utils_path._check_is_valid_output_filepath(out_path, overwrite=True):
             raise ValueError(f"Invalid out_path: {out_path}")
@@ -248,9 +253,9 @@ def raster_find_best_align_reference(
     # Count intersections
     most_intersections = 0
     intersections_arr = []
-    for idx_i, raster_i in enumerate(rasters_list):
+    for idx_i, raster_i in enumerate(input_rasters):
         intersections = 0
-        for idx_j, raster_j in enumerate(rasters_list):
+        for idx_j, raster_j in enumerate(input_rasters):
             if idx_i == idx_j:
                 continue
 
@@ -270,17 +275,17 @@ def raster_find_best_align_reference(
     largest_area_idx = 0
     for idx, intersection in enumerate(intersections_arr):
         if intersection == most_intersections:
-            raster = rasters_list[idx]
+            raster = input_rasters[idx]
             raster_area = core_raster._get_basic_metadata_raster(raster)["area_latlng"]
 
             if raster_area > largest_area:
                 largest_area = raster_area
                 largest_area_idx = idx
 
-    best_reference = utils_gdal._get_path_from_dataset(rasters_list[largest_area_idx])
+    best_reference = utils_gdal._get_path_from_dataset(input_rasters[largest_area_idx])
 
     input_path_list = []
-    for raster in rasters_list:
+    for raster in input_rasters:
         input_path_list.append(utils_gdal._get_path_from_dataset(raster))
 
     all_other_rasters = []
@@ -368,6 +373,8 @@ def raster_align(
     creation_options: Optional[List[str]] = None,
     prefix: str = "",
     suffix: str = "",
+    add_uuid: bool = False,
+    add_timestamp: bool = False,
     ram: float = 0.8,
     ram_min: Optional[int] = 100,
     ram_max: Optional[int] = None,
@@ -405,6 +412,12 @@ def raster_align(
     suffix : str, optional
         The suffix to add to the output file name, default: ""
 
+    add_uuid : bool, optional
+        Whether to add a uuid to the output file name, default: False
+
+    add_timestamp : bool, optional
+        Whether to add a timestamp to the output file name, default: False
+
     ram : float, optional
         The proportion of total ram to allow usage of, default: 0.8
 
@@ -429,29 +442,30 @@ def raster_align(
     utils_base._type_check(creation_options, [[str], None], "creation_options")
     utils_base._type_check(prefix, [str], "prefix")
     utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(add_timestamp, [bool], "add_timestamp")
     utils_base._type_check(ram, [float], "ram")
     utils_base._type_check(ram_min, [int, None], "ram_min")
     utils_base._type_check(ram_max, [int, None], "ram_max")
-
+    assert method in ["reference", "intersection", "union"], "method must be one of reference, intersection, or union."
 
     raster_list = utils_io._get_input_paths(rasters, "raster")
-    assert method in ["reference", "intersection", "union"], "method must be one of reference, intersection, or union."
 
     path_list = utils_io._get_output_paths(
         raster_list,
         out_path,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=out_path is None,
-        add_timestamp=out_path is None,
+        add_uuid=add_uuid,
+        add_timestamp=add_timestamp,
         overwrite=overwrite,
         change_ext="tif",
     )
 
     if reference is None:
-        reference = raster_find_best_align_reference(raster_list, method)
+        reference = _raster_find_best_align_reference(raster_list, method)
 
-    aligned = raster_align_to_reference(
+    aligned = _raster_align_to_reference(
         raster_list,
         reference,
         out_path=path_list,
