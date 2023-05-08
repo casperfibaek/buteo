@@ -104,4 +104,6 @@ def convolve_distance(
                         distances[col, row] = coord_grid_values[idx]
                         break
 
-    return np.expand_dims(distances, axis=2)
+    distance_array = np.expand_dims(distances, axis=2)
+
+    return distance_array

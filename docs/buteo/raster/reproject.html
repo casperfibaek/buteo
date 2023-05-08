@@ -35,9 +35,6 @@
             <li>
                     <a class="function" href="#raster_reproject">raster_reproject</a>
             </li>
-            <li>
-                    <a class="function" href="#raster_match_projections">raster_match_projections</a>
-            </li>
     </ul>
 
 
@@ -296,131 +293,43 @@ Can uses references from vector or other raster datasets.</p>
 </span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">suffix</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="s2">&quot;postfix&quot;</span><span class="p">)</span>
 </span><span id="L-231"><a href="#L-231"><span class="linenos">231</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">add_uuid</span><span class="p">,</span> <span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="s2">&quot;add_uuid&quot;</span><span class="p">)</span>
 </span><span id="L-232"><a href="#L-232"><span class="linenos">232</span></a>
-</span><span id="L-233"><a href="#L-233"><span class="linenos">233</span></a>    <span class="k">if</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_check_is_path_glob</span><span class="p">(</span><span class="n">raster</span><span class="p">):</span>
-</span><span id="L-234"><a href="#L-234"><span class="linenos">234</span></a>        <span class="n">raster</span> <span class="o">=</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_get_paths_from_glob</span><span class="p">(</span><span class="n">raster</span><span class="p">)</span>
-</span><span id="L-235"><a href="#L-235"><span class="linenos">235</span></a>
-</span><span id="L-236"><a href="#L-236"><span class="linenos">236</span></a>    <span class="n">raster_list</span> <span class="o">=</span> <span class="n">utils_base</span><span class="o">.</span><span class="n">_get_variable_as_list</span><span class="p">(</span><span class="n">raster</span><span class="p">)</span>
-</span><span id="L-237"><a href="#L-237"><span class="linenos">237</span></a>
-</span><span id="L-238"><a href="#L-238"><span class="linenos">238</span></a>    <span class="k">assert</span> <span class="n">utils_gdal</span><span class="o">.</span><span class="n">_check_is_raster_list</span><span class="p">(</span><span class="n">raster_list</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;The input raster(s) contains invalid elements: </span><span class="si">{</span><span class="n">raster_list</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="L-239"><a href="#L-239"><span class="linenos">239</span></a>
-</span><span id="L-240"><a href="#L-240"><span class="linenos">240</span></a>    <span class="n">path_list</span> <span class="o">=</span> <span class="n">utils_io</span><span class="o">.</span><span class="n">_get_output_paths</span><span class="p">(</span>
-</span><span id="L-241"><a href="#L-241"><span class="linenos">241</span></a>        <span class="n">raster_list</span><span class="p">,</span>
-</span><span id="L-242"><a href="#L-242"><span class="linenos">242</span></a>        <span class="n">out_path</span><span class="p">,</span>
-</span><span id="L-243"><a href="#L-243"><span class="linenos">243</span></a>        <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
-</span><span id="L-244"><a href="#L-244"><span class="linenos">244</span></a>        <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
-</span><span id="L-245"><a href="#L-245"><span class="linenos">245</span></a>        <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
-</span><span id="L-246"><a href="#L-246"><span class="linenos">246</span></a>        <span class="n">add_uuid</span><span class="o">=</span><span class="n">add_uuid</span><span class="p">,</span>
-</span><span id="L-247"><a href="#L-247"><span class="linenos">247</span></a>    <span class="p">)</span>
-</span><span id="L-248"><a href="#L-248"><span class="linenos">248</span></a>
-</span><span id="L-249"><a href="#L-249"><span class="linenos">249</span></a>    <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="L-250"><a href="#L-250"><span class="linenos">250</span></a>    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">in_raster</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raster_list</span><span class="p">):</span>
-</span><span id="L-251"><a href="#L-251"><span class="linenos">251</span></a>        <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-</span><span id="L-252"><a href="#L-252"><span class="linenos">252</span></a>            <span class="n">_raster_reproject</span><span class="p">(</span>
-</span><span id="L-253"><a href="#L-253"><span class="linenos">253</span></a>                <span class="n">in_raster</span><span class="p">,</span>
-</span><span id="L-254"><a href="#L-254"><span class="linenos">254</span></a>                <span class="n">projection</span><span class="p">,</span>
-</span><span id="L-255"><a href="#L-255"><span class="linenos">255</span></a>                <span class="n">out_path</span><span class="o">=</span><span class="n">path_list</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
-</span><span id="L-256"><a href="#L-256"><span class="linenos">256</span></a>                <span class="n">resample_alg</span><span class="o">=</span><span class="n">resample_alg</span><span class="p">,</span>
-</span><span id="L-257"><a href="#L-257"><span class="linenos">257</span></a>                <span class="n">copy_if_same</span><span class="o">=</span><span class="n">copy_if_same</span><span class="p">,</span>
-</span><span id="L-258"><a href="#L-258"><span class="linenos">258</span></a>                <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
-</span><span id="L-259"><a href="#L-259"><span class="linenos">259</span></a>                <span class="n">creation_options</span><span class="o">=</span><span class="n">creation_options</span><span class="p">,</span>
-</span><span id="L-260"><a href="#L-260"><span class="linenos">260</span></a>                <span class="n">dst_nodata</span><span class="o">=</span><span class="n">dst_nodata</span><span class="p">,</span>
-</span><span id="L-261"><a href="#L-261"><span class="linenos">261</span></a>                <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
-</span><span id="L-262"><a href="#L-262"><span class="linenos">262</span></a>                <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
-</span><span id="L-263"><a href="#L-263"><span class="linenos">263</span></a>                <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
-</span><span id="L-264"><a href="#L-264"><span class="linenos">264</span></a>            <span class="p">)</span>
-</span><span id="L-265"><a href="#L-265"><span class="linenos">265</span></a>        <span class="p">)</span>
-</span><span id="L-266"><a href="#L-266"><span class="linenos">266</span></a>
-</span><span id="L-267"><a href="#L-267"><span class="linenos">267</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raster</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-</span><span id="L-268"><a href="#L-268"><span class="linenos">268</span></a>        <span class="k">return</span> <span class="n">output</span>
-</span><span id="L-269"><a href="#L-269"><span class="linenos">269</span></a>
-</span><span id="L-270"><a href="#L-270"><span class="linenos">270</span></a>    <span class="k">return</span> <span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="L-271"><a href="#L-271"><span class="linenos">271</span></a>
-</span><span id="L-272"><a href="#L-272"><span class="linenos">272</span></a>
-</span><span id="L-273"><a href="#L-273"><span class="linenos">273</span></a><span class="k">def</span> <span class="nf">raster_match_projections</span><span class="p">(</span>
-</span><span id="L-274"><a href="#L-274"><span class="linenos">274</span></a>    <span class="n">rasters</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]]],</span>
-</span><span id="L-275"><a href="#L-275"><span class="linenos">275</span></a>    <span class="n">reference</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">ogr</span><span class="o">.</span><span class="n">DataSource</span><span class="p">],</span>
-</span><span id="L-276"><a href="#L-276"><span class="linenos">276</span></a>    <span class="o">*</span><span class="p">,</span>
-</span><span id="L-277"><a href="#L-277"><span class="linenos">277</span></a>    <span class="n">out_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="L-278"><a href="#L-278"><span class="linenos">278</span></a>    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="L-279"><a href="#L-279"><span class="linenos">279</span></a>    <span class="n">dst_nodata</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;infer&quot;</span><span class="p">,</span>
-</span><span id="L-280"><a href="#L-280"><span class="linenos">280</span></a>    <span class="n">copy_if_already_correct</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="L-281"><a href="#L-281"><span class="linenos">281</span></a>    <span class="n">creation_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="L-282"><a href="#L-282"><span class="linenos">282</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-</span><span id="L-283"><a href="#L-283"><span class="linenos">283</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-284"><a href="#L-284"><span class="linenos">284</span></a><span class="sd">    Match a raster or list of rasters to a master layer. The master can be</span>
-</span><span id="L-285"><a href="#L-285"><span class="linenos">285</span></a><span class="sd">    either an OGR layer or a GDAL layer.</span>
-</span><span id="L-286"><a href="#L-286"><span class="linenos">286</span></a>
-</span><span id="L-287"><a href="#L-287"><span class="linenos">287</span></a><span class="sd">    Parameters</span>
-</span><span id="L-288"><a href="#L-288"><span class="linenos">288</span></a><span class="sd">    ----------</span>
-</span><span id="L-289"><a href="#L-289"><span class="linenos">289</span></a><span class="sd">    rasters : Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]</span>
-</span><span id="L-290"><a href="#L-290"><span class="linenos">290</span></a><span class="sd">        A list of rasters to match.</span>
-</span><span id="L-291"><a href="#L-291"><span class="linenos">291</span></a>
-</span><span id="L-292"><a href="#L-292"><span class="linenos">292</span></a><span class="sd">    reference : Union[str, gdal.Dataset, ogr.DataSource]</span>
-</span><span id="L-293"><a href="#L-293"><span class="linenos">293</span></a><span class="sd">        Path to the reference raster or vector.</span>
-</span><span id="L-294"><a href="#L-294"><span class="linenos">294</span></a>
-</span><span id="L-295"><a href="#L-295"><span class="linenos">295</span></a><span class="sd">    out_path : Optional[Union[str, List[str]]], optional</span>
-</span><span id="L-296"><a href="#L-296"><span class="linenos">296</span></a><span class="sd">        Paths to the output. If not provided, the output will be in-memory rasters., default: None</span>
-</span><span id="L-297"><a href="#L-297"><span class="linenos">297</span></a>
-</span><span id="L-298"><a href="#L-298"><span class="linenos">298</span></a><span class="sd">    overwrite : bool, optional</span>
-</span><span id="L-299"><a href="#L-299"><span class="linenos">299</span></a><span class="sd">        If True, existing rasters will be overwritten., default: True</span>
-</span><span id="L-300"><a href="#L-300"><span class="linenos">300</span></a>
-</span><span id="L-301"><a href="#L-301"><span class="linenos">301</span></a><span class="sd">    dst_nodata : Union[str, int, float], optional</span>
-</span><span id="L-302"><a href="#L-302"><span class="linenos">302</span></a><span class="sd">        Value to use for no-data pixels. If not provided, the value will be transfered from the original., default: &quot;infer&quot;</span>
-</span><span id="L-303"><a href="#L-303"><span class="linenos">303</span></a>
-</span><span id="L-304"><a href="#L-304"><span class="linenos">304</span></a><span class="sd">    copy_if_already_correct : bool, optional</span>
-</span><span id="L-305"><a href="#L-305"><span class="linenos">305</span></a><span class="sd">        If True, the raster will be copied if it is already in the correct projection., default: True</span>
-</span><span id="L-306"><a href="#L-306"><span class="linenos">306</span></a>
-</span><span id="L-307"><a href="#L-307"><span class="linenos">307</span></a><span class="sd">    creation_options : Optional[List[str]], optional</span>
-</span><span id="L-308"><a href="#L-308"><span class="linenos">308</span></a><span class="sd">        List of creation options to pass to the output raster., default: None</span>
-</span><span id="L-309"><a href="#L-309"><span class="linenos">309</span></a>
-</span><span id="L-310"><a href="#L-310"><span class="linenos">310</span></a><span class="sd">    Returns</span>
-</span><span id="L-311"><a href="#L-311"><span class="linenos">311</span></a><span class="sd">    -------</span>
-</span><span id="L-312"><a href="#L-312"><span class="linenos">312</span></a><span class="sd">    List[str]</span>
-</span><span id="L-313"><a href="#L-313"><span class="linenos">313</span></a><span class="sd">        A list of reprojected input rasters with the correct projection.</span>
-</span><span id="L-314"><a href="#L-314"><span class="linenos">314</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-315"><a href="#L-315"><span class="linenos">315</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">rasters</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]],</span> <span class="s2">&quot;rasters&quot;</span><span class="p">)</span>
-</span><span id="L-316"><a href="#L-316"><span class="linenos">316</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">ogr</span><span class="o">.</span><span class="n">DataSource</span><span class="p">],</span> <span class="s2">&quot;reference&quot;</span><span class="p">)</span>
-</span><span id="L-317"><a href="#L-317"><span class="linenos">317</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="s2">&quot;out_path&quot;</span><span class="p">)</span>
-</span><span id="L-318"><a href="#L-318"><span class="linenos">318</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">overwrite</span><span class="p">,</span> <span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="s2">&quot;overwrite&quot;</span><span class="p">)</span>
-</span><span id="L-319"><a href="#L-319"><span class="linenos">319</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">dst_nodata</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="s2">&quot;dst_nodata&quot;</span><span class="p">)</span>
-</span><span id="L-320"><a href="#L-320"><span class="linenos">320</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">copy_if_already_correct</span><span class="p">,</span> <span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="s2">&quot;copy_if_already_correct&quot;</span><span class="p">)</span>
-</span><span id="L-321"><a href="#L-321"><span class="linenos">321</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">creation_options</span><span class="p">,</span> <span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span> <span class="s2">&quot;creation_options&quot;</span><span class="p">)</span>
-</span><span id="L-322"><a href="#L-322"><span class="linenos">322</span></a>
-</span><span id="L-323"><a href="#L-323"><span class="linenos">323</span></a>    <span class="n">rasters</span> <span class="o">=</span> <span class="n">utils_base</span><span class="o">.</span><span class="n">_get_variable_as_list</span><span class="p">(</span><span class="n">rasters</span><span class="p">)</span>
-</span><span id="L-324"><a href="#L-324"><span class="linenos">324</span></a>
-</span><span id="L-325"><a href="#L-325"><span class="linenos">325</span></a>    <span class="k">assert</span> <span class="n">utils_gdal</span><span class="o">.</span><span class="n">_check_is_raster_list</span><span class="p">(</span><span class="n">rasters</span><span class="p">),</span> <span class="s2">&quot;rasters must be a list of rasters.&quot;</span>
-</span><span id="L-326"><a href="#L-326"><span class="linenos">326</span></a>
-</span><span id="L-327"><a href="#L-327"><span class="linenos">327</span></a>    <span class="k">try</span><span class="p">:</span>
-</span><span id="L-328"><a href="#L-328"><span class="linenos">328</span></a>        <span class="n">target_projection</span> <span class="o">=</span> <span class="n">utils_projection</span><span class="o">.</span><span class="n">parse_projection</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span>
-</span><span id="L-329"><a href="#L-329"><span class="linenos">329</span></a>    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-</span><span id="L-330"><a href="#L-330"><span class="linenos">330</span></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to parse projection from master. Received: </span><span class="si">{</span><span class="n">reference</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="bp">None</span>
-</span><span id="L-331"><a href="#L-331"><span class="linenos">331</span></a>
-</span><span id="L-332"><a href="#L-332"><span class="linenos">332</span></a>    <span class="n">add_uuid</span> <span class="o">=</span> <span class="n">out_path</span> <span class="ow">is</span> <span class="kc">None</span>
-</span><span id="L-333"><a href="#L-333"><span class="linenos">333</span></a>
-</span><span id="L-334"><a href="#L-334"><span class="linenos">334</span></a>    <span class="n">path_list</span> <span class="o">=</span> <span class="n">utils_io</span><span class="o">.</span><span class="n">_get_output_paths</span><span class="p">(</span>
-</span><span id="L-335"><a href="#L-335"><span class="linenos">335</span></a>        <span class="n">rasters</span><span class="p">,</span>
-</span><span id="L-336"><a href="#L-336"><span class="linenos">336</span></a>        <span class="n">out_path</span><span class="p">,</span>
-</span><span id="L-337"><a href="#L-337"><span class="linenos">337</span></a>        <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
-</span><span id="L-338"><a href="#L-338"><span class="linenos">338</span></a>        <span class="n">add_uuid</span><span class="o">=</span><span class="n">add_uuid</span><span class="p">,</span>
-</span><span id="L-339"><a href="#L-339"><span class="linenos">339</span></a>        <span class="n">change_ext</span><span class="o">=</span><span class="s2">&quot;tif&quot;</span><span class="p">,</span>
-</span><span id="L-340"><a href="#L-340"><span class="linenos">340</span></a>    <span class="p">)</span>
-</span><span id="L-341"><a href="#L-341"><span class="linenos">341</span></a>
-</span><span id="L-342"><a href="#L-342"><span class="linenos">342</span></a>    <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="L-343"><a href="#L-343"><span class="linenos">343</span></a>
-</span><span id="L-344"><a href="#L-344"><span class="linenos">344</span></a>    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">in_raster</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rasters</span><span class="p">):</span>
-</span><span id="L-345"><a href="#L-345"><span class="linenos">345</span></a>        <span class="n">path</span> <span class="o">=</span> <span class="n">_raster_reproject</span><span class="p">(</span>
-</span><span id="L-346"><a href="#L-346"><span class="linenos">346</span></a>            <span class="n">in_raster</span><span class="p">,</span>
-</span><span id="L-347"><a href="#L-347"><span class="linenos">347</span></a>            <span class="n">target_projection</span><span class="p">,</span>
-</span><span id="L-348"><a href="#L-348"><span class="linenos">348</span></a>            <span class="n">out_path</span><span class="o">=</span><span class="n">path_list</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
-</span><span id="L-349"><a href="#L-349"><span class="linenos">349</span></a>            <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
-</span><span id="L-350"><a href="#L-350"><span class="linenos">350</span></a>            <span class="n">copy_if_same</span><span class="o">=</span><span class="n">copy_if_already_correct</span><span class="p">,</span>
-</span><span id="L-351"><a href="#L-351"><span class="linenos">351</span></a>            <span class="n">dst_nodata</span><span class="o">=</span><span class="n">dst_nodata</span><span class="p">,</span>
-</span><span id="L-352"><a href="#L-352"><span class="linenos">352</span></a>            <span class="n">creation_options</span><span class="o">=</span><span class="n">utils_gdal</span><span class="o">.</span><span class="n">_get_default_creation_options</span><span class="p">(</span><span class="n">creation_options</span><span class="p">),</span>
-</span><span id="L-353"><a href="#L-353"><span class="linenos">353</span></a>        <span class="p">)</span>
-</span><span id="L-354"><a href="#L-354"><span class="linenos">354</span></a>
-</span><span id="L-355"><a href="#L-355"><span class="linenos">355</span></a>        <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-</span><span id="L-356"><a href="#L-356"><span class="linenos">356</span></a>
-</span><span id="L-357"><a href="#L-357"><span class="linenos">357</span></a>    <span class="k">return</span> <span class="n">output</span>
+</span><span id="L-233"><a href="#L-233"><span class="linenos">233</span></a>    <span class="n">input_is_list</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raster</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+</span><span id="L-234"><a href="#L-234"><span class="linenos">234</span></a>
+</span><span id="L-235"><a href="#L-235"><span class="linenos">235</span></a>    <span class="n">raster_list</span> <span class="o">=</span> <span class="n">utils_io</span><span class="o">.</span><span class="n">_get_input_paths</span><span class="p">(</span><span class="n">raster</span><span class="p">,</span> <span class="s2">&quot;raster&quot;</span><span class="p">)</span>
+</span><span id="L-236"><a href="#L-236"><span class="linenos">236</span></a>    <span class="n">out_path_list</span> <span class="o">=</span> <span class="n">utils_io</span><span class="o">.</span><span class="n">_get_output_paths</span><span class="p">(</span>
+</span><span id="L-237"><a href="#L-237"><span class="linenos">237</span></a>        <span class="n">raster_list</span><span class="p">,</span>
+</span><span id="L-238"><a href="#L-238"><span class="linenos">238</span></a>        <span class="n">out_path</span><span class="p">,</span>
+</span><span id="L-239"><a href="#L-239"><span class="linenos">239</span></a>        <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+</span><span id="L-240"><a href="#L-240"><span class="linenos">240</span></a>        <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+</span><span id="L-241"><a href="#L-241"><span class="linenos">241</span></a>        <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
+</span><span id="L-242"><a href="#L-242"><span class="linenos">242</span></a>        <span class="n">add_uuid</span><span class="o">=</span><span class="n">add_uuid</span><span class="p">,</span>
+</span><span id="L-243"><a href="#L-243"><span class="linenos">243</span></a>        <span class="n">change_ext</span><span class="o">=</span><span class="s2">&quot;tif&quot;</span><span class="p">,</span>
+</span><span id="L-244"><a href="#L-244"><span class="linenos">244</span></a>    <span class="p">)</span>
+</span><span id="L-245"><a href="#L-245"><span class="linenos">245</span></a>
+</span><span id="L-246"><a href="#L-246"><span class="linenos">246</span></a>    <span class="n">utils_path</span><span class="o">.</span><span class="n">_delete_if_required_list</span><span class="p">(</span><span class="n">out_path_list</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">)</span>
+</span><span id="L-247"><a href="#L-247"><span class="linenos">247</span></a>
+</span><span id="L-248"><a href="#L-248"><span class="linenos">248</span></a>    <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="L-249"><a href="#L-249"><span class="linenos">249</span></a>    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">in_raster</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raster_list</span><span class="p">):</span>
+</span><span id="L-250"><a href="#L-250"><span class="linenos">250</span></a>        <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span id="L-251"><a href="#L-251"><span class="linenos">251</span></a>            <span class="n">_raster_reproject</span><span class="p">(</span>
+</span><span id="L-252"><a href="#L-252"><span class="linenos">252</span></a>                <span class="n">in_raster</span><span class="p">,</span>
+</span><span id="L-253"><a href="#L-253"><span class="linenos">253</span></a>                <span class="n">projection</span><span class="p">,</span>
+</span><span id="L-254"><a href="#L-254"><span class="linenos">254</span></a>                <span class="n">out_path</span><span class="o">=</span><span class="n">out_path_list</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+</span><span id="L-255"><a href="#L-255"><span class="linenos">255</span></a>                <span class="n">resample_alg</span><span class="o">=</span><span class="n">resample_alg</span><span class="p">,</span>
+</span><span id="L-256"><a href="#L-256"><span class="linenos">256</span></a>                <span class="n">copy_if_same</span><span class="o">=</span><span class="n">copy_if_same</span><span class="p">,</span>
+</span><span id="L-257"><a href="#L-257"><span class="linenos">257</span></a>                <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+</span><span id="L-258"><a href="#L-258"><span class="linenos">258</span></a>                <span class="n">creation_options</span><span class="o">=</span><span class="n">creation_options</span><span class="p">,</span>
+</span><span id="L-259"><a href="#L-259"><span class="linenos">259</span></a>                <span class="n">dst_nodata</span><span class="o">=</span><span class="n">dst_nodata</span><span class="p">,</span>
+</span><span id="L-260"><a href="#L-260"><span class="linenos">260</span></a>                <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+</span><span id="L-261"><a href="#L-261"><span class="linenos">261</span></a>                <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+</span><span id="L-262"><a href="#L-262"><span class="linenos">262</span></a>                <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
+</span><span id="L-263"><a href="#L-263"><span class="linenos">263</span></a>            <span class="p">)</span>
+</span><span id="L-264"><a href="#L-264"><span class="linenos">264</span></a>        <span class="p">)</span>
+</span><span id="L-265"><a href="#L-265"><span class="linenos">265</span></a>
+</span><span id="L-266"><a href="#L-266"><span class="linenos">266</span></a>    <span class="k">if</span> <span class="n">input_is_list</span><span class="p">:</span>
+</span><span id="L-267"><a href="#L-267"><span class="linenos">267</span></a>        <span class="k">return</span> <span class="n">output</span>
+</span><span id="L-268"><a href="#L-268"><span class="linenos">268</span></a>
+</span><span id="L-269"><a href="#L-269"><span class="linenos">269</span></a>    <span class="k">return</span> <span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </span></pre></div>
 
 
@@ -513,44 +422,43 @@ Can uses references from vector or other raster datasets.</p>
 </span><span id="raster_reproject-231"><a href="#raster_reproject-231"><span class="linenos">231</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">suffix</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="s2">&quot;postfix&quot;</span><span class="p">)</span>
 </span><span id="raster_reproject-232"><a href="#raster_reproject-232"><span class="linenos">232</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">add_uuid</span><span class="p">,</span> <span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="s2">&quot;add_uuid&quot;</span><span class="p">)</span>
 </span><span id="raster_reproject-233"><a href="#raster_reproject-233"><span class="linenos">233</span></a>
-</span><span id="raster_reproject-234"><a href="#raster_reproject-234"><span class="linenos">234</span></a>    <span class="k">if</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_check_is_path_glob</span><span class="p">(</span><span class="n">raster</span><span class="p">):</span>
-</span><span id="raster_reproject-235"><a href="#raster_reproject-235"><span class="linenos">235</span></a>        <span class="n">raster</span> <span class="o">=</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_get_paths_from_glob</span><span class="p">(</span><span class="n">raster</span><span class="p">)</span>
-</span><span id="raster_reproject-236"><a href="#raster_reproject-236"><span class="linenos">236</span></a>
-</span><span id="raster_reproject-237"><a href="#raster_reproject-237"><span class="linenos">237</span></a>    <span class="n">raster_list</span> <span class="o">=</span> <span class="n">utils_base</span><span class="o">.</span><span class="n">_get_variable_as_list</span><span class="p">(</span><span class="n">raster</span><span class="p">)</span>
-</span><span id="raster_reproject-238"><a href="#raster_reproject-238"><span class="linenos">238</span></a>
-</span><span id="raster_reproject-239"><a href="#raster_reproject-239"><span class="linenos">239</span></a>    <span class="k">assert</span> <span class="n">utils_gdal</span><span class="o">.</span><span class="n">_check_is_raster_list</span><span class="p">(</span><span class="n">raster_list</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;The input raster(s) contains invalid elements: </span><span class="si">{</span><span class="n">raster_list</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="raster_reproject-240"><a href="#raster_reproject-240"><span class="linenos">240</span></a>
-</span><span id="raster_reproject-241"><a href="#raster_reproject-241"><span class="linenos">241</span></a>    <span class="n">path_list</span> <span class="o">=</span> <span class="n">utils_io</span><span class="o">.</span><span class="n">_get_output_paths</span><span class="p">(</span>
-</span><span id="raster_reproject-242"><a href="#raster_reproject-242"><span class="linenos">242</span></a>        <span class="n">raster_list</span><span class="p">,</span>
-</span><span id="raster_reproject-243"><a href="#raster_reproject-243"><span class="linenos">243</span></a>        <span class="n">out_path</span><span class="p">,</span>
-</span><span id="raster_reproject-244"><a href="#raster_reproject-244"><span class="linenos">244</span></a>        <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
-</span><span id="raster_reproject-245"><a href="#raster_reproject-245"><span class="linenos">245</span></a>        <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
-</span><span id="raster_reproject-246"><a href="#raster_reproject-246"><span class="linenos">246</span></a>        <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
-</span><span id="raster_reproject-247"><a href="#raster_reproject-247"><span class="linenos">247</span></a>        <span class="n">add_uuid</span><span class="o">=</span><span class="n">add_uuid</span><span class="p">,</span>
-</span><span id="raster_reproject-248"><a href="#raster_reproject-248"><span class="linenos">248</span></a>    <span class="p">)</span>
-</span><span id="raster_reproject-249"><a href="#raster_reproject-249"><span class="linenos">249</span></a>
-</span><span id="raster_reproject-250"><a href="#raster_reproject-250"><span class="linenos">250</span></a>    <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="raster_reproject-251"><a href="#raster_reproject-251"><span class="linenos">251</span></a>    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">in_raster</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raster_list</span><span class="p">):</span>
-</span><span id="raster_reproject-252"><a href="#raster_reproject-252"><span class="linenos">252</span></a>        <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-</span><span id="raster_reproject-253"><a href="#raster_reproject-253"><span class="linenos">253</span></a>            <span class="n">_raster_reproject</span><span class="p">(</span>
-</span><span id="raster_reproject-254"><a href="#raster_reproject-254"><span class="linenos">254</span></a>                <span class="n">in_raster</span><span class="p">,</span>
-</span><span id="raster_reproject-255"><a href="#raster_reproject-255"><span class="linenos">255</span></a>                <span class="n">projection</span><span class="p">,</span>
-</span><span id="raster_reproject-256"><a href="#raster_reproject-256"><span class="linenos">256</span></a>                <span class="n">out_path</span><span class="o">=</span><span class="n">path_list</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
-</span><span id="raster_reproject-257"><a href="#raster_reproject-257"><span class="linenos">257</span></a>                <span class="n">resample_alg</span><span class="o">=</span><span class="n">resample_alg</span><span class="p">,</span>
-</span><span id="raster_reproject-258"><a href="#raster_reproject-258"><span class="linenos">258</span></a>                <span class="n">copy_if_same</span><span class="o">=</span><span class="n">copy_if_same</span><span class="p">,</span>
-</span><span id="raster_reproject-259"><a href="#raster_reproject-259"><span class="linenos">259</span></a>                <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
-</span><span id="raster_reproject-260"><a href="#raster_reproject-260"><span class="linenos">260</span></a>                <span class="n">creation_options</span><span class="o">=</span><span class="n">creation_options</span><span class="p">,</span>
-</span><span id="raster_reproject-261"><a href="#raster_reproject-261"><span class="linenos">261</span></a>                <span class="n">dst_nodata</span><span class="o">=</span><span class="n">dst_nodata</span><span class="p">,</span>
-</span><span id="raster_reproject-262"><a href="#raster_reproject-262"><span class="linenos">262</span></a>                <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
-</span><span id="raster_reproject-263"><a href="#raster_reproject-263"><span class="linenos">263</span></a>                <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
-</span><span id="raster_reproject-264"><a href="#raster_reproject-264"><span class="linenos">264</span></a>                <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
-</span><span id="raster_reproject-265"><a href="#raster_reproject-265"><span class="linenos">265</span></a>            <span class="p">)</span>
-</span><span id="raster_reproject-266"><a href="#raster_reproject-266"><span class="linenos">266</span></a>        <span class="p">)</span>
-</span><span id="raster_reproject-267"><a href="#raster_reproject-267"><span class="linenos">267</span></a>
-</span><span id="raster_reproject-268"><a href="#raster_reproject-268"><span class="linenos">268</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raster</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-</span><span id="raster_reproject-269"><a href="#raster_reproject-269"><span class="linenos">269</span></a>        <span class="k">return</span> <span class="n">output</span>
-</span><span id="raster_reproject-270"><a href="#raster_reproject-270"><span class="linenos">270</span></a>
-</span><span id="raster_reproject-271"><a href="#raster_reproject-271"><span class="linenos">271</span></a>    <span class="k">return</span> <span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="raster_reproject-234"><a href="#raster_reproject-234"><span class="linenos">234</span></a>    <span class="n">input_is_list</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raster</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+</span><span id="raster_reproject-235"><a href="#raster_reproject-235"><span class="linenos">235</span></a>
+</span><span id="raster_reproject-236"><a href="#raster_reproject-236"><span class="linenos">236</span></a>    <span class="n">raster_list</span> <span class="o">=</span> <span class="n">utils_io</span><span class="o">.</span><span class="n">_get_input_paths</span><span class="p">(</span><span class="n">raster</span><span class="p">,</span> <span class="s2">&quot;raster&quot;</span><span class="p">)</span>
+</span><span id="raster_reproject-237"><a href="#raster_reproject-237"><span class="linenos">237</span></a>    <span class="n">out_path_list</span> <span class="o">=</span> <span class="n">utils_io</span><span class="o">.</span><span class="n">_get_output_paths</span><span class="p">(</span>
+</span><span id="raster_reproject-238"><a href="#raster_reproject-238"><span class="linenos">238</span></a>        <span class="n">raster_list</span><span class="p">,</span>
+</span><span id="raster_reproject-239"><a href="#raster_reproject-239"><span class="linenos">239</span></a>        <span class="n">out_path</span><span class="p">,</span>
+</span><span id="raster_reproject-240"><a href="#raster_reproject-240"><span class="linenos">240</span></a>        <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+</span><span id="raster_reproject-241"><a href="#raster_reproject-241"><span class="linenos">241</span></a>        <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+</span><span id="raster_reproject-242"><a href="#raster_reproject-242"><span class="linenos">242</span></a>        <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
+</span><span id="raster_reproject-243"><a href="#raster_reproject-243"><span class="linenos">243</span></a>        <span class="n">add_uuid</span><span class="o">=</span><span class="n">add_uuid</span><span class="p">,</span>
+</span><span id="raster_reproject-244"><a href="#raster_reproject-244"><span class="linenos">244</span></a>        <span class="n">change_ext</span><span class="o">=</span><span class="s2">&quot;tif&quot;</span><span class="p">,</span>
+</span><span id="raster_reproject-245"><a href="#raster_reproject-245"><span class="linenos">245</span></a>    <span class="p">)</span>
+</span><span id="raster_reproject-246"><a href="#raster_reproject-246"><span class="linenos">246</span></a>
+</span><span id="raster_reproject-247"><a href="#raster_reproject-247"><span class="linenos">247</span></a>    <span class="n">utils_path</span><span class="o">.</span><span class="n">_delete_if_required_list</span><span class="p">(</span><span class="n">out_path_list</span><span class="p">,</span> <span class="n">overwrite</span><span class="p">)</span>
+</span><span id="raster_reproject-248"><a href="#raster_reproject-248"><span class="linenos">248</span></a>
+</span><span id="raster_reproject-249"><a href="#raster_reproject-249"><span class="linenos">249</span></a>    <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="raster_reproject-250"><a href="#raster_reproject-250"><span class="linenos">250</span></a>    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">in_raster</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raster_list</span><span class="p">):</span>
+</span><span id="raster_reproject-251"><a href="#raster_reproject-251"><span class="linenos">251</span></a>        <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span id="raster_reproject-252"><a href="#raster_reproject-252"><span class="linenos">252</span></a>            <span class="n">_raster_reproject</span><span class="p">(</span>
+</span><span id="raster_reproject-253"><a href="#raster_reproject-253"><span class="linenos">253</span></a>                <span class="n">in_raster</span><span class="p">,</span>
+</span><span id="raster_reproject-254"><a href="#raster_reproject-254"><span class="linenos">254</span></a>                <span class="n">projection</span><span class="p">,</span>
+</span><span id="raster_reproject-255"><a href="#raster_reproject-255"><span class="linenos">255</span></a>                <span class="n">out_path</span><span class="o">=</span><span class="n">out_path_list</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+</span><span id="raster_reproject-256"><a href="#raster_reproject-256"><span class="linenos">256</span></a>                <span class="n">resample_alg</span><span class="o">=</span><span class="n">resample_alg</span><span class="p">,</span>
+</span><span id="raster_reproject-257"><a href="#raster_reproject-257"><span class="linenos">257</span></a>                <span class="n">copy_if_same</span><span class="o">=</span><span class="n">copy_if_same</span><span class="p">,</span>
+</span><span id="raster_reproject-258"><a href="#raster_reproject-258"><span class="linenos">258</span></a>                <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+</span><span id="raster_reproject-259"><a href="#raster_reproject-259"><span class="linenos">259</span></a>                <span class="n">creation_options</span><span class="o">=</span><span class="n">creation_options</span><span class="p">,</span>
+</span><span id="raster_reproject-260"><a href="#raster_reproject-260"><span class="linenos">260</span></a>                <span class="n">dst_nodata</span><span class="o">=</span><span class="n">dst_nodata</span><span class="p">,</span>
+</span><span id="raster_reproject-261"><a href="#raster_reproject-261"><span class="linenos">261</span></a>                <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+</span><span id="raster_reproject-262"><a href="#raster_reproject-262"><span class="linenos">262</span></a>                <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+</span><span id="raster_reproject-263"><a href="#raster_reproject-263"><span class="linenos">263</span></a>                <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
+</span><span id="raster_reproject-264"><a href="#raster_reproject-264"><span class="linenos">264</span></a>            <span class="p">)</span>
+</span><span id="raster_reproject-265"><a href="#raster_reproject-265"><span class="linenos">265</span></a>        <span class="p">)</span>
+</span><span id="raster_reproject-266"><a href="#raster_reproject-266"><span class="linenos">266</span></a>
+</span><span id="raster_reproject-267"><a href="#raster_reproject-267"><span class="linenos">267</span></a>    <span class="k">if</span> <span class="n">input_is_list</span><span class="p">:</span>
+</span><span id="raster_reproject-268"><a href="#raster_reproject-268"><span class="linenos">268</span></a>        <span class="k">return</span> <span class="n">output</span>
+</span><span id="raster_reproject-269"><a href="#raster_reproject-269"><span class="linenos">269</span></a>
+</span><span id="raster_reproject-270"><a href="#raster_reproject-270"><span class="linenos">270</span></a>    <span class="k">return</span> <span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </span></pre></div>
 
 
@@ -593,136 +501,6 @@ If True, add a UUID to the output path, default: False.</li>
 
 <ul>
 <li><strong>Union[str, List[str]]</strong>: The output path(s).</li>
-</ul>
-</div>
-
-
-                </section>
-                <section id="raster_match_projections">
-                            <input id="raster_match_projections-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
-<div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">raster_match_projections</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">rasters</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">osgeo</span><span class="o">.</span><span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">osgeo</span><span class="o">.</span><span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]]]</span>,</span><span class="param">	<span class="n">reference</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">osgeo</span><span class="o">.</span><span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">osgeo</span><span class="o">.</span><span class="n">ogr</span><span class="o">.</span><span class="n">DataSource</span><span class="p">]</span>,</span><span class="param">	<span class="o">*</span>,</span><span class="param">	<span class="n">out_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">dst_nodata</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;infer&#39;</span>,</span><span class="param">	<span class="n">copy_if_already_correct</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>,</span><span class="param">	<span class="n">creation_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>:</span></span>
-
-                <label class="view-source-button" for="raster_match_projections-view-source"><span>View Source</span></label>
-
-    </div>
-    <a class="headerlink" href="#raster_match_projections"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="raster_match_projections-274"><a href="#raster_match_projections-274"><span class="linenos">274</span></a><span class="k">def</span> <span class="nf">raster_match_projections</span><span class="p">(</span>
-</span><span id="raster_match_projections-275"><a href="#raster_match_projections-275"><span class="linenos">275</span></a>    <span class="n">rasters</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]]],</span>
-</span><span id="raster_match_projections-276"><a href="#raster_match_projections-276"><span class="linenos">276</span></a>    <span class="n">reference</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">ogr</span><span class="o">.</span><span class="n">DataSource</span><span class="p">],</span>
-</span><span id="raster_match_projections-277"><a href="#raster_match_projections-277"><span class="linenos">277</span></a>    <span class="o">*</span><span class="p">,</span>
-</span><span id="raster_match_projections-278"><a href="#raster_match_projections-278"><span class="linenos">278</span></a>    <span class="n">out_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="raster_match_projections-279"><a href="#raster_match_projections-279"><span class="linenos">279</span></a>    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="raster_match_projections-280"><a href="#raster_match_projections-280"><span class="linenos">280</span></a>    <span class="n">dst_nodata</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;infer&quot;</span><span class="p">,</span>
-</span><span id="raster_match_projections-281"><a href="#raster_match_projections-281"><span class="linenos">281</span></a>    <span class="n">copy_if_already_correct</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="raster_match_projections-282"><a href="#raster_match_projections-282"><span class="linenos">282</span></a>    <span class="n">creation_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="raster_match_projections-283"><a href="#raster_match_projections-283"><span class="linenos">283</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-</span><span id="raster_match_projections-284"><a href="#raster_match_projections-284"><span class="linenos">284</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="raster_match_projections-285"><a href="#raster_match_projections-285"><span class="linenos">285</span></a><span class="sd">    Match a raster or list of rasters to a master layer. The master can be</span>
-</span><span id="raster_match_projections-286"><a href="#raster_match_projections-286"><span class="linenos">286</span></a><span class="sd">    either an OGR layer or a GDAL layer.</span>
-</span><span id="raster_match_projections-287"><a href="#raster_match_projections-287"><span class="linenos">287</span></a>
-</span><span id="raster_match_projections-288"><a href="#raster_match_projections-288"><span class="linenos">288</span></a><span class="sd">    Parameters</span>
-</span><span id="raster_match_projections-289"><a href="#raster_match_projections-289"><span class="linenos">289</span></a><span class="sd">    ----------</span>
-</span><span id="raster_match_projections-290"><a href="#raster_match_projections-290"><span class="linenos">290</span></a><span class="sd">    rasters : Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]</span>
-</span><span id="raster_match_projections-291"><a href="#raster_match_projections-291"><span class="linenos">291</span></a><span class="sd">        A list of rasters to match.</span>
-</span><span id="raster_match_projections-292"><a href="#raster_match_projections-292"><span class="linenos">292</span></a>
-</span><span id="raster_match_projections-293"><a href="#raster_match_projections-293"><span class="linenos">293</span></a><span class="sd">    reference : Union[str, gdal.Dataset, ogr.DataSource]</span>
-</span><span id="raster_match_projections-294"><a href="#raster_match_projections-294"><span class="linenos">294</span></a><span class="sd">        Path to the reference raster or vector.</span>
-</span><span id="raster_match_projections-295"><a href="#raster_match_projections-295"><span class="linenos">295</span></a>
-</span><span id="raster_match_projections-296"><a href="#raster_match_projections-296"><span class="linenos">296</span></a><span class="sd">    out_path : Optional[Union[str, List[str]]], optional</span>
-</span><span id="raster_match_projections-297"><a href="#raster_match_projections-297"><span class="linenos">297</span></a><span class="sd">        Paths to the output. If not provided, the output will be in-memory rasters., default: None</span>
-</span><span id="raster_match_projections-298"><a href="#raster_match_projections-298"><span class="linenos">298</span></a>
-</span><span id="raster_match_projections-299"><a href="#raster_match_projections-299"><span class="linenos">299</span></a><span class="sd">    overwrite : bool, optional</span>
-</span><span id="raster_match_projections-300"><a href="#raster_match_projections-300"><span class="linenos">300</span></a><span class="sd">        If True, existing rasters will be overwritten., default: True</span>
-</span><span id="raster_match_projections-301"><a href="#raster_match_projections-301"><span class="linenos">301</span></a>
-</span><span id="raster_match_projections-302"><a href="#raster_match_projections-302"><span class="linenos">302</span></a><span class="sd">    dst_nodata : Union[str, int, float], optional</span>
-</span><span id="raster_match_projections-303"><a href="#raster_match_projections-303"><span class="linenos">303</span></a><span class="sd">        Value to use for no-data pixels. If not provided, the value will be transfered from the original., default: &quot;infer&quot;</span>
-</span><span id="raster_match_projections-304"><a href="#raster_match_projections-304"><span class="linenos">304</span></a>
-</span><span id="raster_match_projections-305"><a href="#raster_match_projections-305"><span class="linenos">305</span></a><span class="sd">    copy_if_already_correct : bool, optional</span>
-</span><span id="raster_match_projections-306"><a href="#raster_match_projections-306"><span class="linenos">306</span></a><span class="sd">        If True, the raster will be copied if it is already in the correct projection., default: True</span>
-</span><span id="raster_match_projections-307"><a href="#raster_match_projections-307"><span class="linenos">307</span></a>
-</span><span id="raster_match_projections-308"><a href="#raster_match_projections-308"><span class="linenos">308</span></a><span class="sd">    creation_options : Optional[List[str]], optional</span>
-</span><span id="raster_match_projections-309"><a href="#raster_match_projections-309"><span class="linenos">309</span></a><span class="sd">        List of creation options to pass to the output raster., default: None</span>
-</span><span id="raster_match_projections-310"><a href="#raster_match_projections-310"><span class="linenos">310</span></a>
-</span><span id="raster_match_projections-311"><a href="#raster_match_projections-311"><span class="linenos">311</span></a><span class="sd">    Returns</span>
-</span><span id="raster_match_projections-312"><a href="#raster_match_projections-312"><span class="linenos">312</span></a><span class="sd">    -------</span>
-</span><span id="raster_match_projections-313"><a href="#raster_match_projections-313"><span class="linenos">313</span></a><span class="sd">    List[str]</span>
-</span><span id="raster_match_projections-314"><a href="#raster_match_projections-314"><span class="linenos">314</span></a><span class="sd">        A list of reprojected input rasters with the correct projection.</span>
-</span><span id="raster_match_projections-315"><a href="#raster_match_projections-315"><span class="linenos">315</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="raster_match_projections-316"><a href="#raster_match_projections-316"><span class="linenos">316</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">rasters</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">]],</span> <span class="s2">&quot;rasters&quot;</span><span class="p">)</span>
-</span><span id="raster_match_projections-317"><a href="#raster_match_projections-317"><span class="linenos">317</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">ogr</span><span class="o">.</span><span class="n">DataSource</span><span class="p">],</span> <span class="s2">&quot;reference&quot;</span><span class="p">)</span>
-</span><span id="raster_match_projections-318"><a href="#raster_match_projections-318"><span class="linenos">318</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="s2">&quot;out_path&quot;</span><span class="p">)</span>
-</span><span id="raster_match_projections-319"><a href="#raster_match_projections-319"><span class="linenos">319</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">overwrite</span><span class="p">,</span> <span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="s2">&quot;overwrite&quot;</span><span class="p">)</span>
-</span><span id="raster_match_projections-320"><a href="#raster_match_projections-320"><span class="linenos">320</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">dst_nodata</span><span class="p">,</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="s2">&quot;dst_nodata&quot;</span><span class="p">)</span>
-</span><span id="raster_match_projections-321"><a href="#raster_match_projections-321"><span class="linenos">321</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">copy_if_already_correct</span><span class="p">,</span> <span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="s2">&quot;copy_if_already_correct&quot;</span><span class="p">)</span>
-</span><span id="raster_match_projections-322"><a href="#raster_match_projections-322"><span class="linenos">322</span></a>    <span class="n">utils_base</span><span class="o">.</span><span class="n">_type_check</span><span class="p">(</span><span class="n">creation_options</span><span class="p">,</span> <span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span> <span class="s2">&quot;creation_options&quot;</span><span class="p">)</span>
-</span><span id="raster_match_projections-323"><a href="#raster_match_projections-323"><span class="linenos">323</span></a>
-</span><span id="raster_match_projections-324"><a href="#raster_match_projections-324"><span class="linenos">324</span></a>    <span class="n">rasters</span> <span class="o">=</span> <span class="n">utils_base</span><span class="o">.</span><span class="n">_get_variable_as_list</span><span class="p">(</span><span class="n">rasters</span><span class="p">)</span>
-</span><span id="raster_match_projections-325"><a href="#raster_match_projections-325"><span class="linenos">325</span></a>
-</span><span id="raster_match_projections-326"><a href="#raster_match_projections-326"><span class="linenos">326</span></a>    <span class="k">assert</span> <span class="n">utils_gdal</span><span class="o">.</span><span class="n">_check_is_raster_list</span><span class="p">(</span><span class="n">rasters</span><span class="p">),</span> <span class="s2">&quot;rasters must be a list of rasters.&quot;</span>
-</span><span id="raster_match_projections-327"><a href="#raster_match_projections-327"><span class="linenos">327</span></a>
-</span><span id="raster_match_projections-328"><a href="#raster_match_projections-328"><span class="linenos">328</span></a>    <span class="k">try</span><span class="p">:</span>
-</span><span id="raster_match_projections-329"><a href="#raster_match_projections-329"><span class="linenos">329</span></a>        <span class="n">target_projection</span> <span class="o">=</span> <span class="n">utils_projection</span><span class="o">.</span><span class="n">parse_projection</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span>
-</span><span id="raster_match_projections-330"><a href="#raster_match_projections-330"><span class="linenos">330</span></a>    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-</span><span id="raster_match_projections-331"><a href="#raster_match_projections-331"><span class="linenos">331</span></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to parse projection from master. Received: </span><span class="si">{</span><span class="n">reference</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="bp">None</span>
-</span><span id="raster_match_projections-332"><a href="#raster_match_projections-332"><span class="linenos">332</span></a>
-</span><span id="raster_match_projections-333"><a href="#raster_match_projections-333"><span class="linenos">333</span></a>    <span class="n">add_uuid</span> <span class="o">=</span> <span class="n">out_path</span> <span class="ow">is</span> <span class="kc">None</span>
-</span><span id="raster_match_projections-334"><a href="#raster_match_projections-334"><span class="linenos">334</span></a>
-</span><span id="raster_match_projections-335"><a href="#raster_match_projections-335"><span class="linenos">335</span></a>    <span class="n">path_list</span> <span class="o">=</span> <span class="n">utils_io</span><span class="o">.</span><span class="n">_get_output_paths</span><span class="p">(</span>
-</span><span id="raster_match_projections-336"><a href="#raster_match_projections-336"><span class="linenos">336</span></a>        <span class="n">rasters</span><span class="p">,</span>
-</span><span id="raster_match_projections-337"><a href="#raster_match_projections-337"><span class="linenos">337</span></a>        <span class="n">out_path</span><span class="p">,</span>
-</span><span id="raster_match_projections-338"><a href="#raster_match_projections-338"><span class="linenos">338</span></a>        <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
-</span><span id="raster_match_projections-339"><a href="#raster_match_projections-339"><span class="linenos">339</span></a>        <span class="n">add_uuid</span><span class="o">=</span><span class="n">add_uuid</span><span class="p">,</span>
-</span><span id="raster_match_projections-340"><a href="#raster_match_projections-340"><span class="linenos">340</span></a>        <span class="n">change_ext</span><span class="o">=</span><span class="s2">&quot;tif&quot;</span><span class="p">,</span>
-</span><span id="raster_match_projections-341"><a href="#raster_match_projections-341"><span class="linenos">341</span></a>    <span class="p">)</span>
-</span><span id="raster_match_projections-342"><a href="#raster_match_projections-342"><span class="linenos">342</span></a>
-</span><span id="raster_match_projections-343"><a href="#raster_match_projections-343"><span class="linenos">343</span></a>    <span class="n">output</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="raster_match_projections-344"><a href="#raster_match_projections-344"><span class="linenos">344</span></a>
-</span><span id="raster_match_projections-345"><a href="#raster_match_projections-345"><span class="linenos">345</span></a>    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">in_raster</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rasters</span><span class="p">):</span>
-</span><span id="raster_match_projections-346"><a href="#raster_match_projections-346"><span class="linenos">346</span></a>        <span class="n">path</span> <span class="o">=</span> <span class="n">_raster_reproject</span><span class="p">(</span>
-</span><span id="raster_match_projections-347"><a href="#raster_match_projections-347"><span class="linenos">347</span></a>            <span class="n">in_raster</span><span class="p">,</span>
-</span><span id="raster_match_projections-348"><a href="#raster_match_projections-348"><span class="linenos">348</span></a>            <span class="n">target_projection</span><span class="p">,</span>
-</span><span id="raster_match_projections-349"><a href="#raster_match_projections-349"><span class="linenos">349</span></a>            <span class="n">out_path</span><span class="o">=</span><span class="n">path_list</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
-</span><span id="raster_match_projections-350"><a href="#raster_match_projections-350"><span class="linenos">350</span></a>            <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
-</span><span id="raster_match_projections-351"><a href="#raster_match_projections-351"><span class="linenos">351</span></a>            <span class="n">copy_if_same</span><span class="o">=</span><span class="n">copy_if_already_correct</span><span class="p">,</span>
-</span><span id="raster_match_projections-352"><a href="#raster_match_projections-352"><span class="linenos">352</span></a>            <span class="n">dst_nodata</span><span class="o">=</span><span class="n">dst_nodata</span><span class="p">,</span>
-</span><span id="raster_match_projections-353"><a href="#raster_match_projections-353"><span class="linenos">353</span></a>            <span class="n">creation_options</span><span class="o">=</span><span class="n">utils_gdal</span><span class="o">.</span><span class="n">_get_default_creation_options</span><span class="p">(</span><span class="n">creation_options</span><span class="p">),</span>
-</span><span id="raster_match_projections-354"><a href="#raster_match_projections-354"><span class="linenos">354</span></a>        <span class="p">)</span>
-</span><span id="raster_match_projections-355"><a href="#raster_match_projections-355"><span class="linenos">355</span></a>
-</span><span id="raster_match_projections-356"><a href="#raster_match_projections-356"><span class="linenos">356</span></a>        <span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-</span><span id="raster_match_projections-357"><a href="#raster_match_projections-357"><span class="linenos">357</span></a>
-</span><span id="raster_match_projections-358"><a href="#raster_match_projections-358"><span class="linenos">358</span></a>    <span class="k">return</span> <span class="n">output</span>
-</span></pre></div>
-
-
-            <div class="docstring"><p>Match a raster or list of rasters to a master layer. The master can be
-either an OGR layer or a GDAL layer.</p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>rasters</strong> (Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]):
-A list of rasters to match.</li>
-<li><strong>reference</strong> (Union[str, gdal.Dataset, ogr.DataSource]):
-Path to the reference raster or vector.</li>
-<li><strong>out_path</strong> (Optional[Union[str, List[str]]], optional):
-Paths to the output. If not provided, the output will be in-memory rasters., default: None</li>
-<li><strong>overwrite</strong> (bool, optional):
-If True, existing rasters will be overwritten., default: True</li>
-<li><strong>dst_nodata</strong> (Union[str, int, float], optional):
-Value to use for no-data pixels. If not provided, the value will be transfered from the original., default: "infer"</li>
-<li><strong>copy_if_already_correct</strong> (bool, optional):
-If True, the raster will be copied if it is already in the correct projection., default: True</li>
-<li><strong>creation_options</strong> (Optional[List[str]], optional):
-List of creation options to pass to the output raster., default: None</li>
-</ul>
-
-<h6 id="returns">Returns</h6>
-
-<ul>
-<li><strong>List[str]</strong>: A list of reprojected input rasters with the correct projection.</li>
 </ul>
 </div>
 

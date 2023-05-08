@@ -444,6 +444,51 @@ def reproject_bbox(
     ]
 
 
+def _reproject_point(
+    p: List[Union[int, float]],
+    source_projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
+    target_projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
+) -> List[Union[int, float]]:
+    """
+    Reprojects a point.
+
+    Parameters
+    ----------
+    p : List[Union[int, float]]
+        The point to reproject.
+
+    source_projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
+        The source projection.
+
+    target_projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
+        The target projection.
+
+    Returns
+    -------
+    List[Union[int, float]]:
+        The reprojected point.
+    """
+    assert isinstance(p, list), "p must be a list."
+    assert len(p) == 2, "p must have 2 elements."
+
+    src_proj = parse_projection(source_projection)
+    dst_proj = parse_projection(target_projection)
+
+    if _check_projections_match(src_proj, dst_proj):
+        return p
+
+    transformer = osr.CoordinateTransformation(src_proj, dst_proj)
+
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    try:
+        pt = transformer.TransformPoint(p[0], p[1])
+    except RuntimeError:
+        pt = transformer.TransformPoint(float(p[0]), float(p[1]))
+    gdal.PopErrorHandler()
+
+    return [pt[0], pt[1]]
+
+
 def _get_utm_zone_from_latlng(
     latlng: List[Union[int, float]],
     return_epsg: bool = False,

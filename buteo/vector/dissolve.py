@@ -44,7 +44,7 @@ def _vector_dissolve(
 
     driver = ogr.GetDriverByName(out_format)
 
-    ref = core_vector._open_vector(vector_list[0])
+    ref = core_vector._vector_open(vector_list[0])
     metadata = core_vector._vector_to_metadata(ref)
 
     layers = []

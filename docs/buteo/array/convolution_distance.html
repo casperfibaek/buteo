@@ -166,7 +166,9 @@
 </span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a>                        <span class="n">distances</span><span class="p">[</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">]</span> <span class="o">=</span> <span class="n">coord_grid_values</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
 </span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a>                        <span class="k">break</span>
 </span><span id="L-106"><a href="#L-106"><span class="linenos">106</span></a>
-</span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a>    <span class="n">distance_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="L-108"><a href="#L-108"><span class="linenos">108</span></a>
+</span><span id="L-109"><a href="#L-109"><span class="linenos">109</span></a>    <span class="k">return</span> <span class="n">distance_array</span>
 </span></pre></div>
 
 
@@ -271,7 +273,9 @@
 </span><span id="convolve_distance-105"><a href="#convolve_distance-105"><span class="linenos">105</span></a>                        <span class="n">distances</span><span class="p">[</span><span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">]</span> <span class="o">=</span> <span class="n">coord_grid_values</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
 </span><span id="convolve_distance-106"><a href="#convolve_distance-106"><span class="linenos">106</span></a>                        <span class="k">break</span>
 </span><span id="convolve_distance-107"><a href="#convolve_distance-107"><span class="linenos">107</span></a>
-</span><span id="convolve_distance-108"><a href="#convolve_distance-108"><span class="linenos">108</span></a>    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="convolve_distance-108"><a href="#convolve_distance-108"><span class="linenos">108</span></a>    <span class="n">distance_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</span><span id="convolve_distance-109"><a href="#convolve_distance-109"><span class="linenos">109</span></a>
+</span><span id="convolve_distance-110"><a href="#convolve_distance-110"><span class="linenos">110</span></a>    <span class="k">return</span> <span class="n">distance_array</span>
 </span></pre></div>
 
 

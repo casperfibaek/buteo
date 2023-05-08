@@ -9,7 +9,7 @@ import sys; sys.path.append("../../")
 from typing import Union, Optional, List
 
 # External
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 # Internal
 from buteo.utils import (
@@ -35,9 +35,15 @@ def _raster_vectorize(
     projection = meta["projection_osr"]
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath("vectorized_raster.shp", add_uuid=True)
+        out_path = utils_path._get_temp_filepath("vectorized_raster.gpkg")
+    else:
+        if not utils_path._check_is_valid_output_filepath(out_path, overwrite=True):
+            raise ValueError(f"out_path is not a valid output path: {out_path}")
 
-    driver = utils_gdal._get_vector_driver_name_from_path(out_path)
+    utils_path._delete_if_required(out_path, overwrite=True)
+
+    driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
+    driver = ogr.GetDriverByName(driver_name)
 
     datasource = driver.CreateDataSource(out_path)
     layer = datasource.CreateLayer(out_path, srs=projection)
@@ -46,6 +52,10 @@ def _raster_vectorize(
         gdal.Polygonize(src_band, None, layer, 0)
     except:
         raise RuntimeError(f"Error while vectorizing raster. {raster}") from None
+    finally:
+        datasource.FlushCache()
+        src_band = None
+        datasource = None
 
     return out_path
 
@@ -57,6 +67,7 @@ def raster_vectorize(
     prefix: str = "",
     suffix: str = "",
     add_uuid: bool = False,
+    add_timestamp: bool = False,
     overwrite: bool = True,
 ) -> Union[str, List[str]]:
     """
@@ -83,6 +94,12 @@ def raster_vectorize(
     add_uuid : bool, optional
         If True, a unique identifier will be added to the output raster name. Default: False
 
+    add_timestamp : bool, optional
+        If True, a timestamp will be added to the output raster name. Default: False
+
+    overwrite : bool, optional
+        If True, the output raster will be overwritten if it already exists. Default: True
+
     Returns
     -------
     Union[str, List]
@@ -94,31 +111,36 @@ def raster_vectorize(
     utils_base._type_check(prefix, [str], "prefix")
     utils_base._type_check(suffix, [str], "suffix")
     utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(add_timestamp, [bool], "add_timestamp")
     utils_base._type_check(overwrite, [bool], "overwrite")
 
-    raster_list = utils_base._get_variable_as_list(raster)
-    assert utils_gdal._check_is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
+    input_is_list = isinstance(raster, list)
 
-    path_list = utils_io._get_output_paths(
-        raster_list,
+    input_list = utils_io._get_input_paths(raster, "raster")
+    output_list = utils_io._get_output_paths(
+        input_list,
         out_path,
-        add_uuid=add_uuid or out_path is None,
+        overwrite=overwrite,
         prefix=prefix,
         suffix=suffix,
-        overwrite=overwrite,
+        add_uuid=add_uuid,
+        add_timestamp=add_timestamp,
+        change_ext="gpkg",
     )
 
+    utils_path._delete_if_required_list(output_list, overwrite)
+
     vectorized_rasters = []
-    for index, in_raster in enumerate(raster_list):
+    for idx, in_raster in enumerate(input_list):
         vectorized_rasters.append(
             _raster_vectorize(
                 in_raster,
-                out_path=path_list[index],
+                out_path=output_list[idx],
                 band=band,
             )
         )
 
-    if isinstance(raster, list):
+    if input_is_list:
         return vectorized_rasters
 
     return vectorized_rasters[0]

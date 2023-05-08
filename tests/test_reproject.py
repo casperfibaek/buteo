@@ -1,5 +1,5 @@
 """ Tests for core_raster.py """
-# pylint: disable=missing-function-docstring
+# pylint: disable=missing-function-docstring, bare-except
 
 # Standard library
 import sys; sys.path.append("../")
@@ -9,7 +9,7 @@ from osgeo import gdal, osr
 
 # Internal
 from utils_tests import create_sample_raster
-from buteo.raster.reproject import raster_match_projections, _find_common_projection, _raster_reproject
+from buteo.raster.reproject import raster_reproject, _find_common_projection, _raster_reproject
 
 
 
@@ -20,7 +20,7 @@ def test_match_raster_projections_same_projection():
     rasters = [raster1, raster2]
     master = create_sample_raster(width=10, height=10, x_min=0, y_max=10, epsg_code=4326)
 
-    matched_rasters = raster_match_projections(rasters, master)
+    matched_rasters = raster_reproject(rasters, master)
 
     for matched_raster in matched_rasters:
         assert isinstance(matched_raster, str)
@@ -38,7 +38,7 @@ def test_match_raster_projections_different_projection():
     rasters = [raster1, raster2]
     master = create_sample_raster(width=10, height=10, x_min=0, y_max=10, epsg_code=3857)
 
-    matched_rasters = raster_match_projections(rasters, master)
+    matched_rasters = raster_reproject(rasters, master)
 
     for matched_raster in matched_rasters:
         assert isinstance(matched_raster, str)
@@ -56,7 +56,7 @@ def test_match_raster_projections_all_different():
     rasters = [raster1, raster2]
     master = create_sample_raster(width=10, height=10, x_min=0, y_max=10, epsg_code=3857)
 
-    matched_rasters = raster_match_projections(rasters, master)
+    matched_rasters = raster_reproject(rasters, master)
 
     for matched_raster in matched_rasters:
         assert isinstance(matched_raster, str)
@@ -105,7 +105,7 @@ def test_raster_reproject():
 def test_raster_reproject_different_projection():
     raster_path = create_sample_raster(epsg_code=3857)
     reprojected_raster_path = _raster_reproject(raster_path, projection=4326)
-    
+
     reprojected_raster = gdal.Open(reprojected_raster_path)
     assert reprojected_raster is not None, "Reprojected raster is not created."
 
@@ -116,13 +116,13 @@ def test_raster_reproject_different_projection():
 def test_raster_reproject_no_copy_same_projection():
     raster_path = create_sample_raster(epsg_code=3857)
     reprojected_raster_path = _raster_reproject(raster_path, projection=3857, copy_if_same=False)
-    
+
     assert raster_path == reprojected_raster_path, "Output path should be the same as the input path when copy_if_same is False and projections match."
 
 def test_raster_reproject_copy_same_projection():
     raster_path = create_sample_raster(epsg_code=3857)
     reprojected_raster_path = _raster_reproject(raster_path, projection=3857, copy_if_same=True)
-    
+
     assert raster_path != reprojected_raster_path, "Output path should be different from the input path when copy_if_same is True."
 
 def test_raster_reproject_resample_alg():

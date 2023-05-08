@@ -74,14 +74,14 @@ def _raster_clip(
 
     # Input is a vector.
     if utils_gdal._check_is_vector(clip_geom):
-        clip_ds = core_vector._open_vector(clip_geom)
+        clip_ds = core_vector._vector_open(clip_geom)
 
         # TODO: Fix potential memory leak
         if clip_ds.GetLayerCount() > 1:
             clip_ds = core_vector.vector_filter_layer(clip_ds, layer_name_or_idx=layer_to_clip, add_uuid=True)
             memory_files.append(clip_ds)
 
-        clip_metadata = core_vector._vector_to_metadata(clip_ds)
+        clip_metadata = core_vector._get_basic_metadata_vector(clip_ds)
 
         if to_extent:
             clip_ds = utils_bbox._get_vector_from_bbox(clip_metadata["bbox"], clip_metadata["projection_osr"])
@@ -123,7 +123,7 @@ def _raster_clip(
 
     if not origin_projection.IsSame(clip_metadata["projection_osr"]):
         clip_ds = _vector_reproject(clip_ds, origin_projection)
-        clip_metadata = core_vector._vector_to_metadata(clip_ds)
+        clip_metadata = core_vector._get_basic_metadata_vector(clip_ds)
         memory_files.append(clip_ds)
 
     output_bounds = raster_metadata["bbox"]

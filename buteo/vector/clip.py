@@ -54,7 +54,7 @@ def _vector_clip(
             geometry_to_clip = extent
             clear_memory = True
         else:
-            geometry_to_clip = core_vector._open_vector(clip_geom)
+            geometry_to_clip = core_vector._vector_open(clip_geom)
     elif utils_gdal._check_is_raster(clip_geom):
         extent = core_raster._get_basic_metadata_raster(clip_geom)["get_bbox_vector"]() # pylint: disable=not-callable
         geometry_to_clip = extent

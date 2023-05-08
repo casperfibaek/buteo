@@ -3,18 +3,17 @@
 """
 # Standard library
 import sys; sys.path.append("../../")
-import os
 from typing import List, Union
 
 # External
-from osgeo import gdal, osr
+from osgeo import gdal
 
 # Internal
 from buteo.utils import (
     utils_io,
     utils_base,
 )
-from buteo.raster.core_raster import _raster_open, _get_basic_metadata_raster
+from buteo.raster.core_raster import _get_basic_metadata_raster
 
 
 def _raster_to_metadata(

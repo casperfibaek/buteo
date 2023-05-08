@@ -1,5 +1,5 @@
 """ Tests for core_raster.py """
-# pylint: disable=missing-function-docstring
+# pylint: disable=missing-function-docstring, bare-except
 
 
 # Standard library
@@ -44,7 +44,10 @@ def test_raster_clip_output_path():
     finally:
         result_ds = None
         if os.path.exists(output_path):
-            os.remove(output_path)
+            try:
+                os.remove(output_path)
+            except:
+                pass
 
 
 def test_raster_clip_resample_alg():
@@ -84,6 +87,7 @@ def test_raster_clip_dst_nodata():
     nodata_value = result_ds.GetRasterBand(1).GetNoDataValue()
 
     assert nodata_value == dst_nodata
+    result_ds = None
 
 
 def test_raster_clip_no_intersection():
@@ -91,12 +95,18 @@ def test_raster_clip_no_intersection():
     polygon_wkt = 'POLYGON ((-10 -10, -10 -5, -5 -5, -5 -10, -10 -10))'
     clip_geom = ogr.CreateGeometryFromWkt(polygon_wkt, parse_projection(raster_path))
 
-    output_path = os.path.join(tmpdir, 'clipped.tif')
+    output_path = os.path.join(tmpdir, 'clipped_01.tif')
     clipped_raster = None
     with pytest.raises(ValueError):
         clipped_raster = raster_clip(raster_path, clip_geom, out_path=output_path)
 
     assert clipped_raster is None, "Clipped raster should be created even if there's no intersection"
+
+    clipped_raster = None
+    try:
+        os.remove(output_path)
+    except:
+        pass
 
 
 def test_raster_clip_partial_intersection():
@@ -104,7 +114,7 @@ def test_raster_clip_partial_intersection():
     polygon_wkt = 'POLYGON ((3 3, 3 8, 8 8, 8 3, 3 3))'
     clip_geom = ogr.CreateGeometryFromWkt(polygon_wkt)
 
-    output_path = os.path.join(tmpdir, 'clipped.tif')
+    output_path = os.path.join(tmpdir, 'clipped_02.tif')
     clipped_raster = raster_clip(raster_path, clip_geom, out_path=output_path)
 
     clipped_ds = gdal.Open(clipped_raster)
@@ -113,13 +123,19 @@ def test_raster_clip_partial_intersection():
     clipped_array = clipped_ds.GetRasterBand(1).ReadAsArray()
     assert np.count_nonzero(clipped_array) > 0, "Clipped raster should contain non-zero values for partial intersection"
 
+    clipped_ds = None
+    try:
+        os.remove(output_path)
+    except:
+        pass
+
 
 def test_raster_clip_complete_intersection():
     raster_path = create_sample_raster()
     polygon_wkt = 'POLYGON ((0 0, 0 10, 10 10, 10 0, 0 0))'
     clip_geom = ogr.CreateGeometryFromWkt(polygon_wkt)
 
-    output_path = os.path.join(tmpdir, 'clipped.tif')
+    output_path = os.path.join(tmpdir, 'clipped_03.tif')
     clipped_raster = raster_clip(raster_path, clip_geom, out_path=output_path)
 
     clipped_ds = gdal.Open(clipped_raster)
@@ -130,3 +146,11 @@ def test_raster_clip_complete_intersection():
     clipped_array = clipped_ds.GetRasterBand(1).ReadAsArray()
 
     assert np.array_equal(input_array, clipped_array), "Input and clipped rasters should have the same pixel values for complete intersection"
+
+    clipped_ds = None
+    input_ds = None
+
+    try:
+        os.remove(output_path)
+    except:
+        pass

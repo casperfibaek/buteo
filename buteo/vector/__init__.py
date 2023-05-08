@@ -12,3 +12,5 @@ from .rasterize import *
 from .reproject import *
 from .buffer import *
 from .split import *
+from .metadata import *
+from .shapes import *

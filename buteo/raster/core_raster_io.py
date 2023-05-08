@@ -1022,7 +1022,7 @@ def raster_create_copy(
     driver = gdal.GetDriverByName(driver_name)
 
     src_ds = core_raster._raster_open(raster)
-    dst_ds = driver.CreateCopy(out_path, src_ds)
+    dst_ds = driver.CreateCopy(out_path, src_ds) # pylint: disable=unused-variable
     dst_ds = None
     src_ds = None
 

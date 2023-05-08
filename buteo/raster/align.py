@@ -25,7 +25,7 @@ from buteo.utils import (
 )
 
 from buteo.raster import core_raster, core_raster_io
-from buteo.raster.reproject import raster_reproject, raster_match_projections
+from buteo.raster.reproject import raster_reproject
 
 
 def _raster_align_to_reference(
@@ -303,10 +303,10 @@ def _raster_find_best_align_reference(
     if method == "reference":
         return best_reference
 
-    matched_rasters = raster_match_projections(
+    matched_rasters = raster_reproject(
         all_other_rasters,
         best_reference,
-        copy_if_already_correct=False,
+        copy_if_same=False,
     )
 
     best_reference_meta = core_raster._get_basic_metadata_raster(best_reference)

@@ -38,7 +38,7 @@ def _singlepart_to_multipart(
 
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path"
 
-    ref = core_vector._open_vector(vector)
+    ref = core_vector._vector_open(vector)
 
     out_format = utils_gdal._get_path_from_dataset(out_path, dataset_type="vector")
     driver = ogr.GetDriverByName(out_format)
@@ -86,7 +86,7 @@ def _multipart_to_singlepart(
 
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path"
 
-    ref = core_vector._open_vector(vector)
+    ref = core_vector._vector_open(vector)
 
     out_format = utils_gdal._get_path_from_dataset(out_path, dataset_type="vector")
     driver = ogr.GetDriverByName(out_format)

@@ -142,6 +142,13 @@ def _get_basic_metadata_raster(
     dtype = None if first_band is None else first_band.DataType
     dtype_numpy = utils_translate._translate_dtype_gdal_to_numpy(dtype)
 
+    centroid = [(bbox[1] - bbox[0]) / 2, (bbox[3] - bbox[2]) / 2]
+    centroid_latlng = utils_projection._reproject_point(
+        centroid,
+        projection_osr,
+        utils_projection._get_default_projection_osr(),
+    )
+
     # Paths
     path = os.path.abspath(dataset.GetDescription())
     in_memory = False
@@ -172,6 +179,8 @@ def _get_basic_metadata_raster(
         "origin": (transform[0], transform[3]),
         "origin_x": transform[0],
         "origin_y": transform[3],
+        "centroid": centroid,
+        "centroid_latlng": centroid_latlng,
         "bbox": bbox,
         "bbox_gdal": utils_bbox._get_gdal_bbox_from_ogr_bbox(bbox),
         "bbox_latlng": bbox_latlng,

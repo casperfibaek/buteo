@@ -21,7 +21,7 @@ from buteo.raster import (
     array_to_raster,
     raster_to_metadata,
 )
-from buteo.vector import vector_to_metadata
+from buteo.vector.metadata import vector_to_metadata
 from buteo.utils.utils_gdal import _check_is_raster, _check_is_vector
 
 

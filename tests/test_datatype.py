@@ -1,5 +1,5 @@
 """ Tests for core_raster.py """
-# pylint: disable=missing-function-docstring
+# pylint: disable=missing-function-docstring, bare-except
 
 
 # Standard library
@@ -20,7 +20,7 @@ def test_raster_set_datatype_int16():
     raster_path = create_sample_raster()
     dtype = 'int16'
 
-    output_path = os.path.join(tmpdir, 'converted.tif')
+    output_path = os.path.join(tmpdir, 'converted_01.tif')
     converted_raster = raster_set_datatype(raster_path, dtype, out_path=output_path)
 
     converted_ds = gdal.Open(converted_raster)
@@ -28,12 +28,18 @@ def test_raster_set_datatype_int16():
 
     converted_dtype = gdal.GetDataTypeName(converted_ds.GetRasterBand(1).DataType)
     assert converted_dtype.lower() == dtype.lower(), f"Converted raster should have {dtype} datatype"
+
+    converted_ds = None
+    try:
+        os.remove(output_path)
+    except:
+        pass
 
 def test_raster_set_datatype_float32():
     raster_path = create_sample_raster()
     dtype = 'float32'
 
-    output_path = os.path.join(tmpdir, 'converted.tif')
+    output_path = os.path.join(tmpdir, 'converted_02.tif')
     converted_raster = raster_set_datatype(raster_path, dtype, out_path=output_path)
 
     converted_ds = gdal.Open(converted_raster)
@@ -41,12 +47,18 @@ def test_raster_set_datatype_float32():
 
     converted_dtype = gdal.GetDataTypeName(converted_ds.GetRasterBand(1).DataType)
     assert converted_dtype.lower() == dtype.lower(), f"Converted raster should have {dtype} datatype"
+
+    converted_ds = None
+    try:
+        os.remove(output_path)
+    except:
+        pass
 
 def test_raster_set_datatype_uint8():
     raster_path = create_sample_raster()
     dtype = 'byte'
 
-    output_path = os.path.join(tmpdir, 'converted.tif')
+    output_path = os.path.join(tmpdir, 'converted_03.tif')
     converted_raster = raster_set_datatype(raster_path, dtype, out_path=output_path)
 
     converted_ds = gdal.Open(converted_raster)
@@ -54,6 +66,12 @@ def test_raster_set_datatype_uint8():
 
     converted_dtype = gdal.GetDataTypeName(converted_ds.GetRasterBand(1).DataType)
     assert converted_dtype.lower() == dtype.lower(), f"Converted raster should have {dtype} datatype"
+
+    converted_ds = None
+    try:
+        os.remove(output_path)
+    except:
+        pass
 
 def test_raster_get_datatype_single():
     raster_path = create_sample_raster(datatype=gdal.GDT_Float32)

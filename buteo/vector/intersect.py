@@ -43,9 +43,9 @@ def _vector_intersect(
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path."
 
     match_projection = _vector_reproject(clip_geom, vector)
-    geometry_to_clip = core_vector._open_vector(match_projection)
+    geometry_to_clip = core_vector._vector_open(match_projection)
 
-    merged = core_vector._open_vector(vector_merge([vector, match_projection]))
+    merged = core_vector._vector_open(vector_merge([vector, match_projection]))
 
     if add_index:
         core_vector.vector_add_index(merged)

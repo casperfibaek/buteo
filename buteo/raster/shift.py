@@ -25,7 +25,7 @@ from buteo.array.convolution_kernels import kernel_shift
 
 
 def _raster_shift(
-    raster: Union[str, gdal.Dataset, List],
+    raster: Union[str, gdal.Dataset],
     shift_list: List[Union[int, float]],
     out_path: Optional[str] = None,
     *,
@@ -45,8 +45,7 @@ def _raster_shift(
     x_shift, y_shift = shift_list
 
     if out_path is None:
-        raster_name = metadata["basename"]
-        out_path = utils_path._get_temp_filepath(f"{raster_name}_shifted.tif", add_uuid=True)
+        out_path = utils_path._get_temp_filepath("shifted_raster.tif")
     else:
         if not utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite):
             raise ValueError(f"out_path is not a valid output path: {out_path}")
@@ -78,13 +77,18 @@ def _raster_shift(
         target_raster_band = shifted.GetRasterBand(band + 1)
 
         target_raster_band.WriteArray(origin_raster_band.ReadAsArray())
-        target_raster_band.SetNoDataValue(src_nodata)
 
-    if out_path is not None:
-        shifted = None
-        return out_path
-    else:
-        return shifted
+        if src_nodata is not None:
+            if utils_base._check_variable_is_int(src_nodata):
+                target_raster_band.SetNoDataValue(int(src_nodata))
+            else:
+                target_raster_band.SetNoDataValue(float(src_nodata))
+
+    shifted.FlushCache()
+    shifted = None
+    ref = None
+
+    return out_path
 
 
 def raster_shift(
@@ -96,6 +100,7 @@ def raster_shift(
     prefix: str = "",
     suffix: str = "",
     add_uuid: bool = False,
+    add_timestamp: bool = False,
     creation_options: Optional[List[str]] = None,
 ) -> Union[str, List[str], gdal.Dataset]:
     """
@@ -110,22 +115,25 @@ def raster_shift(
         The shift in x and y direction.
 
     out_path : Optional[str], optional
-        The path to the output raster. If None, the raster is created in memory., by default None
+        The path to the output raster. If None, the raster is created in memory., default: None
 
     overwrite : bool, optional
-        If True, the output raster will be overwritten if it already exists., by default True
+        If True, the output raster will be overwritten if it already exists., default: True
 
     prefix : str, optional
-        The prefix to be added to the output raster name., by default ""
+        The prefix to be added to the output raster name., default: ""
 
     suffix : str, optional
-        The suffix to be added to the output raster name., by default ""
+        The suffix to be added to the output raster name., default: ""
 
     add_uuid : bool, optional
-        If True, a unique identifier will be added to the output raster name., by default False
+        If True, a unique identifier will be added to the output raster name., default: False
+
+    add_timestamp : bool, optional
+        If True, a timestamp will be added to the output raster name., default: False
 
     creation_options : Optional[List[str]], optional
-        The creation options to be used when creating the output., by default None
+        The creation options to be used when creating the output., default: None
 
     Args:
         raster (Union[str, List, gdal.Dataset]): The raster(s) to be shifted.
@@ -137,36 +145,44 @@ def raster_shift(
         The path(s) to the shifted raster(s).
     """
     utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base._type_check(shift_list, [[tuple, list]], "shift_list")
+    utils_base._type_check(shift_list, [[int, float], tuple], "shift_list")
     utils_base._type_check(out_path, [str, [str], None], "out_path")
     utils_base._type_check(overwrite, [bool], "overwrite")
     utils_base._type_check(creation_options, [[str], None], "creation_options")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(add_timestamp, [bool], "add_timestamp")
 
-    raster_list = utils_base._get_variable_as_list(raster)
-    assert utils_gdal._check_is_raster_list(raster_list), f"Invalid raster in raster list: {raster_list}"
+    input_is_list = isinstance(raster, list)
 
-    path_list = utils_io._get_output_paths(
-        raster_list,
+    input_list = utils_io._get_input_paths(raster, "raster")
+    output_list = utils_io._get_output_paths(
+        input_list,
         out_path,
-        add_uuid=add_uuid or out_path is None,
+        overwrite=overwrite,
         prefix=prefix,
         suffix=suffix,
-        overwrite=overwrite,
+        add_uuid=add_uuid,
+        add_timestamp=add_timestamp,
+        change_ext="tif",
     )
 
+    utils_path._delete_if_required_list(output_list, overwrite)
+
     shifted_rasters = []
-    for index, in_raster in enumerate(raster_list):
+    for idx, in_raster in enumerate(input_list):
         shifted_rasters.append(
             _raster_shift(
                 in_raster,
                 shift_list,
-                out_path=path_list[index],
+                out_path=output_list[idx],
                 overwrite=overwrite,
                 creation_options=creation_options,
             )
         )
 
-    if isinstance(raster, list):
+    if input_is_list:
         return shifted_rasters
 
     return shifted_rasters[0]
@@ -189,7 +205,7 @@ def raster_shift_pixel(
         The shift in x and y direction.
 
     out_path : Optional[str], optional
-        The path to the output raster. If None, the raster is created in memory., by default None
+        The path to the output raster. If None, the raster is created in memory., default: None
 
     Returns
     -------
@@ -197,22 +213,27 @@ def raster_shift_pixel(
         The path to the shifted raster.
     """
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
-    utils_base._type_check(shift_list, [[tuple, list]], "shift_list")
+    utils_base._type_check(shift_list, [[int, float], tuple], "shift_list")
     utils_base._type_check(out_path, [str, None], "out_path")
 
     arr = core_raster_io.raster_to_array(raster)
 
     offsets, weights = kernel_shift(shift_list[0], shift_list[1])
 
-    arr_float32 = arr.astype(np.float32)
+    arr_float32 = arr.astype(np.float32, copy=False)
 
-    for channel in arr.shape[2]:
+    for channel in range(arr.shape[2]):
         arr[:, :, channel] = convolve_array_simple(
             arr_float32[:, :, channel], offsets, weights,
         )
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath("shifted_raster.tif", add_uuid=True)
+        out_path = utils_path._get_temp_filepath("shifted_raster.tif")
+    else:
+        if not utils_path._check_is_valid_output_filepath(out_path):
+            raise ValueError(f"out_path is not a valid output path: {out_path}")
+
+    utils_path._delete_if_required(out_path, overwrite=True)
 
     return core_raster_io.array_to_raster(
         arr,

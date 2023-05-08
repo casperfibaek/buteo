@@ -14,11 +14,10 @@ The basic module for interacting with vector data
 
 # Standard library
 import sys; sys.path.append("../../")
-from typing import Union, Optional, List, Dict, Any, Callable
 import os
+from typing import Union, Optional, List, Dict, Any, Callable
 
 # External
-import numpy as np
 from osgeo import ogr, gdal, osr
 
 # Internal
@@ -28,10 +27,12 @@ from buteo.utils import (
     utils_gdal,
     utils_bbox,
     utils_path,
+    utils_translate,
+    utils_projection,
 )
 
 
-def _open_vector(
+def _vector_open(
     vector: Union[str, ogr.DataSource, gdal.Dataset],
     writeable: bool = True,
     allow_raster: bool = True,
@@ -120,7 +121,7 @@ def vector_open(
 
     output = []
     for element in vectors:
-        output.append(_open_vector(element, writeable=writeable, allow_raster=allow_raster))
+        output.append(_vector_open(element, writeable=writeable, allow_raster=allow_raster))
 
     if isinstance(vector, list):
         return output
@@ -128,30 +129,39 @@ def vector_open(
     return output[0]
 
 
-def _vector_to_metadata(
-    vector: Union[str, ogr.DataSource, gdal.Dataset],
+
+def _get_basic_metadata_vector(
+    vector: Union[str, ogr.DataSource],
 ) -> Dict[str, Any]:
-    """ Internal. """
-    assert isinstance(vector, (str, ogr.DataSource)), "vector must be a path or a DataSource"
+    """
+    Get basic metadata from a vector.
 
-    datasource = _open_vector(vector)
+    Parameters
+    ----------
+    raster : str or ogr.DataSource
+        The raster to get the metadata from.
 
-    vector_driver = datasource.GetDriver()
+    Returns
+    -------
+    Dict[str]
+        A dictionary with the metadata.
+    """
+    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
 
-    path = datasource.GetDescription()
-    basename = os.path.basename(path)
-    split_path = os.path.split(basename)
-    name = split_path[0]
-    ext = split_path[1]
+    datasource = _vector_open(vector)
 
-    driver = vector_driver.GetName()
+    # Paths
+    path = os.path.abspath(datasource.GetDescription())
+    in_memory = False
+    if "\\vsimem\\" in path:
+        path = "/" + path.replace(os.path.abspath(os.sep), "")
+        in_memory = True
 
-    in_memory = utils_gdal._check_is_dataset_in_memory(datasource)
+    path = utils_path._get_unix_path(path)
 
-    layer_count = datasource.GetLayerCount()
     layers = []
-
     vector_bbox = None
+    layer_count = datasource.GetLayerCount()
     for layer_index in range(layer_count):
         layer = datasource.GetLayerByIndex(layer_index)
 
@@ -223,114 +233,53 @@ def _vector_to_metadata(
             "extent": layer_bbox,
         }
 
-        layer_bboxes = utils_bbox._additional_bboxes(layer_bbox, projection_osr)
-
-        for key, value in layer_bboxes.items():
-            layer_dict[key] = value
-
-
-        ## MOVE TO A SINGLE FUNCTION
-        def get_bbox_as_vector_layer():
-            return utils_bbox._get_vector_from_bbox(layer_bbox, projection_osr) # pylint: disable=cell-var-from-loop
-
-
-        def get_bbox_as_vector_latlng_layer():
-            projection_osr_latlng = osr.SpatialReference()
-            projection_osr_latlng.ImportFromWkt('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]')
-            # projection_osr_latlng.ImportFromEPSG(4326)
-
-            return utils_bbox._get_vector_from_bbox(layer_dict["bbox_latlng"], projection_osr_latlng)  # pylint: disable=cell-var-from-loop
-
-
-        layer_dict["get_bbox_vector"] = get_bbox_as_vector_layer
-        layer_dict["get_bbox_vector_latlng"] = get_bbox_as_vector_latlng_layer
-
         layers.append(layer_dict)
+
+    x_min, x_max, y_min, y_max = vector_bbox
+    area = (x_max - x_min) * (y_max - y_min)
+
+    bbox_latlng = utils_projection.reproject_bbox(vector_bbox, projection_osr, utils_projection._get_default_projection_osr())
+    bounds_latlng = utils_bbox._get_bounds_from_bbox(vector_bbox, projection_osr, wkt=False)
+    bounds_area = bounds_latlng.GetArea()
+    x_min, x_max, y_min, y_max = vector_bbox
+    area = (x_max - x_min) * (y_max - y_min)
+    bounds_wkt = bounds_latlng.ExportToWkt()
+
+    centroid = [(x_max - x_min) / 2, (y_max - y_min) / 2]
+    centroid_latlng = utils_projection._reproject_point(
+        centroid,
+        projection_osr,
+        utils_projection._get_default_projection_osr(),
+    )
 
     metadata = {
         "path": path,
-        "basename": basename,
-        "name": name,
-        "ext": ext,
+        "basename": os.path.basename(path),
+        "name": os.path.splitext(os.path.basename(path))[0],
+        "folder": os.path.dirname(path),
+        "ext": os.path.splitext(path)[1],
         "in_memory": in_memory,
-        "projection_wkt": projection_wkt,
+        "driver": datasource.GetDriver().GetName(),
         "projection_osr": projection_osr,
-        "driver": driver,
+        "projection_wkt": projection_wkt,
+        "bbox": vector_bbox,
+        "bbox_gdal": utils_bbox._get_gdal_bbox_from_ogr_bbox(vector_bbox),
+        "bbox_latlng": bbox_latlng,
+        "bounds_latlng": bounds_wkt,
+        "centroid": centroid,
+        "centroid_latlng": centroid_latlng,
         "x_min": vector_bbox[0],
         "x_max": vector_bbox[1],
         "y_min": vector_bbox[2],
         "y_max": vector_bbox[3],
-        "is_vector": True,
-        "is_raster": False,
+        "area_bounds_latlng": bounds_area,
+        "area_bounds": area,
         "layer_count": layer_count,
         "layers": layers,
-        "extent": vector_bbox,
-        "bbox": vector_bbox,
     }
 
-    vector_bboxes = utils_bbox._additional_bboxes(vector_bbox, projection_osr)
-
-    for key, value in vector_bboxes.items():
-        metadata[key] = value
-
-
-    def get_bbox_as_vector():
-        return utils_bbox._get_vector_from_bbox(vector_bbox, projection_osr) # pylint: disable=cell-var-from-loop
-
-
-    def get_bbox_as_vector_latlng():
-        projection_osr_latlng = osr.SpatialReference()
-        projection_osr_latlng.ImportFromWkt('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]')
-        # projection_osr_latlng.ImportFromEPSG(4326)
-
-        return utils_bbox._get_vector_from_bbox(metadata["bbox_latlng"], projection_osr_latlng)  # pylint: disable=cell-var-from-loop
-
-
-    metadata["get_bbox_vector"] = get_bbox_as_vector
-    metadata["get_bbox_vector_latlng"] = get_bbox_as_vector_latlng
-
+    datasource = None
     return metadata
-
-
-def vector_to_metadata(
-    vector: Union[ogr.DataSource, str, List[Union[ogr.DataSource, str]]],
-    allow_lists: bool = True,
-) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
-    """
-    Creates a dictionary with metadata about the vector layer.
-
-    Parameters
-    ----------
-    vector : Union[ogr.DataSource, str, List[Union[ogr.DataSource, str]]]
-        A vector layer(s) or path(s) to a vector file.
-    
-    allow_lists : bool, optional
-        If True, vector can be a list of vector layers or paths. If False, vector must be a single vector layer or path. default: True
-
-    Returns
-    -------
-    Union[Dict[str, Any], List[Dict[str, Any]]]
-    """
-    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    utils_base._type_check(allow_lists, [bool], "allow_lists")
-
-    if isinstance(vector, list) and not allow_lists:
-        raise ValueError("The vector parameter cannot be a list when allow_lists is False.")
-
-    vector_list = utils_base._get_variable_as_list(vector)
-
-    if not utils_gdal._check_is_vector_list(vector_list):
-        raise ValueError("The vector parameter must be a list of vector layers.")
-
-    output = []
-
-    for in_vector in vector_list:
-        output.append(_vector_to_metadata(in_vector))
-
-    if isinstance(vector, list):
-        return output
-
-    return output[0]
 
 
 def _vector_filter(
@@ -346,7 +295,7 @@ def _vector_filter(
     assert isinstance(vector, (str, ogr.DataSource)), "vector must be a string or an ogr.DataSource object."
     assert isinstance(filter_function, (type(lambda: True))), "filter_function must be a function."
 
-    metadata = _vector_to_metadata(vector)
+    metadata = _get_basic_metadata_vector(vector)
 
     if out_path is None:
         out_path = utils_path._get_temp_filepath(vector, prefix=prefix, suffix=suffix)
@@ -516,8 +465,8 @@ def vector_add_index(
 
     try:
         for in_vector in vector_list:
-            metadata = _vector_to_metadata(in_vector)
-            ref = _open_vector(in_vector)
+            metadata = _get_basic_metadata_vector(in_vector)
+            ref = _vector_open(in_vector)
 
             for layer in metadata["layers"]:
                 name = layer["layer_name"]
@@ -527,174 +476,6 @@ def vector_add_index(
                 ref.ExecuteSQL(sql, dialect="SQLITE")
     except:
         raise RuntimeError(f"Error while creating indices for {vector}") from None
-
-    if isinstance(vector, list):
-        return output
-
-    return output[0]
-
-
-def _vector_add_shapes_in_place(
-    vector: Union[ogr.DataSource, str],
-    shapes: Optional[List[str]] = None,
-    prefix: str = "",
-    verbose: bool = False,
-) -> str:
-    """ Internal. """
-    assert isinstance(vector, (ogr.DataSource, str)), "vector must be a vector layer or path to one."
-    assert isinstance(shapes, (list, tuple)) or shapes is None, "shapes must be a list of shapes."
-    assert isinstance(prefix, str), "prefix must be a string."
-
-    all_shapes = ["area", "perimeter", "ipq", "hull", "compactness", "centroid"]
-
-    if shapes is None:
-        shapes = all_shapes
-    else:
-        for shape in shapes:
-            if shape not in all_shapes:
-                raise ValueError(f"{shape} is not a valid shape.")
-
-    datasource = _open_vector(vector)
-    out_path = utils_gdal._get_path_from_dataset(datasource, dataset_type="vector")
-    metadata = _vector_to_metadata(datasource)
-
-    for index in range(metadata["layer_count"]):
-        vector_current_fields = metadata["layers"][index]["field_names"]
-        vector_layer = datasource.GetLayer(index)
-
-        vector_layer.StartTransaction()
-
-        # Add missing fields
-        for attribute in shapes:
-            if attribute == "centroid":
-                if "centroid_x" not in vector_current_fields:
-                    field_defn = ogr.FieldDefn(f"{prefix}centroid_x", ogr.OFTReal)
-                    vector_layer.CreateField(field_defn)
-
-                if "centroid_y" not in vector_current_fields:
-                    field_defn = ogr.FieldDefn(f"{prefix}centroid_y", ogr.OFTReal)
-                    vector_layer.CreateField(field_defn)
-
-            elif attribute not in vector_current_fields:
-                field_defn = ogr.FieldDefn(f"{prefix}{attribute}", ogr.OFTReal)
-                vector_layer.CreateField(field_defn)
-
-        vector_feature_count = vector_layer.GetFeatureCount()
-
-        if verbose:
-            utils_base.progress(0, vector_feature_count, name="shape")
-
-        for i in range(vector_feature_count):
-            vector_feature = vector_layer.GetNextFeature()
-
-            try:
-                vector_geom = vector_feature.GetGeometryRef()
-            except RuntimeWarning:
-                # vector_geom.Buffer(0)
-                raise RuntimeWarning("Invalid geometry at : ", i) from None
-
-            if vector_geom is None:
-                raise RuntimeError("Invalid geometry. Could not fix.")
-
-            centroid = vector_geom.Centroid()
-            vector_area = vector_geom.GetArea()
-            vector_perimeter = vector_geom.Boundary().Length()
-
-            if "ipq" or "compact" in shapes:
-                vector_ipq = 0
-                if vector_perimeter != 0:
-                    vector_ipq = (4 * np.pi * vector_area) / vector_perimeter ** 2
-
-            if "centroid" in shapes:
-                vector_feature.SetField(f"{prefix}centroid_x", centroid.GetX())
-                vector_feature.SetField(f"{prefix}centroid_y", centroid.GetY())
-
-            if "hull" in shapes or "compact" in shapes:
-                vector_hull = vector_geom.ConvexHull()
-                hull_area = vector_hull.GetArea()
-                hull_peri = vector_hull.Boundary().Length()
-                hull_ratio = float(vector_area) / float(hull_area)
-                compactness = np.sqrt(float(hull_ratio) * float(vector_ipq))
-
-            if "area" in shapes:
-                vector_feature.SetField(f"{prefix}area", vector_area)
-            if "perimeter" in shapes:
-                vector_feature.SetField(f"{prefix}perimeter", vector_perimeter)
-            if "ipq" in shapes:
-                vector_feature.SetField(f"{prefix}ipq", vector_ipq)
-            if "hull" in shapes:
-                vector_feature.SetField(f"{prefix}hull_area", hull_area)
-                vector_feature.SetField(f"{prefix}hull_peri", hull_peri)
-                vector_feature.SetField(f"{prefix}hull_ratio", hull_ratio)
-            if "compact" in shapes:
-                vector_feature.SetField(f"{prefix}compact", compactness)
-
-            vector_layer.SetFeature(vector_feature)
-
-            if verbose:
-                utils_base.progress(i, vector_feature_count, name="shape")
-
-        vector_layer.CommitTransaction()
-
-    return out_path
-
-
-def vector_add_shapes_in_place(
-    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
-    shapes: Optional[List[str]] = None,
-    prefix: str = "",
-    allow_lists: bool = True,
-    verbose: bool = False,
-) -> Union[str, List[str]]:
-    """
-    Adds shape calculations to a vector such as area and perimeter.
-    Can also add compactness measurements.
-
-    Parameters
-    ----------
-    vector : Union[str, ogr.DataSource, List[str, ogr.DataSource]]
-        Vector layer(s) or path(s) to vector layer(s).
-    
-    shapes : Optional[List[str]], optional
-        The shapes to calculate. The following a possible:
-            * Area          (In same unit as projection)
-            * Perimeter     (In same unit as projection)
-            * IPQ           (0-1) given as (4*Pi*Area)/(Perimeter ** 2)
-            * Hull Area     (The area of the convex hull. Same unit as projection)
-            * Compactness   (0-1) given as sqrt((area / hull_area) * ipq)
-            * Centroid      (Coordinate of X and Y)
-        Default: all shapes.
-    
-    prefix : str, optional
-        Prefix to add to the field names. Default: "".
-
-    allow_lists : bool, optional
-        If True, will accept a list of vectors. If False, will raise an error if a list is passed. Default: True.
-
-    verbose : bool, optional
-        If True, will print progress. Default: False.
-
-    Returns
-    -------
-    out_path : str
-        Path to the output vector.
-    """
-    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
-    utils_base._type_check(shapes, [[str], None], "shapes")
-
-    if not allow_lists and isinstance(vector, list):
-        raise ValueError("Lists of vectors are not supported when allow_list is False.")
-
-    vector_list = utils_base._get_variable_as_list(vector)
-    output = utils_gdal._get_path_from_dataset_list(vector_list)
-
-    for in_vector in vector_list:
-        output.append(_vector_add_shapes_in_place(
-            in_vector,
-            shapes=shapes,
-            prefix=prefix,
-            verbose=verbose,
-        ))
 
     if isinstance(vector, list):
         return output
@@ -745,8 +526,8 @@ def vector_get_attribute_table(
     utils_base._type_check(include_attributes, [bool], "include_attributes")
     utils_base._type_check(allow_lists, [bool], "allow_lists")
 
-    ref = vector_open(vector)
-    metadata = _vector_to_metadata(ref)
+    ref = _vector_open(vector)
+    metadata = _get_basic_metadata_vector(ref)
 
     attribute_table_header = None
     feature_count = None
@@ -819,8 +600,8 @@ def vector_filter_layer(
     out_path : str
         Path to the output vector.
     """
-    ref = vector_open(vector)
-    meta = vector_to_metadata(ref, allow_lists=False)
+    ref = _vector_open(vector)
+    meta = _get_basic_metadata_vector(ref)
 
     out_path = utils_io._get_output_paths(
         meta["path"],

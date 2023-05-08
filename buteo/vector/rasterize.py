@@ -127,7 +127,7 @@ def vector_rasterize(
         vector_fn = vector_reproject(vector, pixel_size, add_uuid=True, suffix="_reprojected")
 
     # Open the data source and read in the extent
-    source_ds = core_vector._open_vector(vector_fn)
+    source_ds = core_vector._vector_open(vector_fn)
     source_meta = core_vector._vector_to_metadata(vector_fn)
     source_layer = source_ds.GetLayer()
     x_min, x_max, y_min, y_max = source_layer.GetExtent()
