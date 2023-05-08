@@ -14,9 +14,8 @@ from osgeo import gdal
 from buteo.utils import utils_base
 from buteo.raster import core_raster
 
-# Create raster with coordinates
-# Latlng option
 
+# TODO: Define how this is going to work.
 def raster_create_grid_with_coordinates(
     raster: Union[str, gdal.Dataset],
     latlng: bool = False,

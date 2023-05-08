@@ -59,12 +59,12 @@ def _raster_shift(
         out_path,  # Location of the saved raster, ignored if driver is memory.
         metadata["width"],  # Dataframe width in pixels (e.g. 1920px).
         metadata["height"],  # Dataframe height in pixels (e.g. 1280px).
-        metadata["band_count"],  # The number of bands required.
+        metadata["bands"],  # The number of bands required.
         metadata["dtype_gdal"],  # Datatype of the destination.
         utils_gdal._get_default_creation_options(creation_options),
     )
 
-    new_transform = list(metadata["transform"])
+    new_transform = list(metadata["geotransform"])
     new_transform[0] += x_shift
     new_transform[3] += y_shift
 
@@ -73,7 +73,7 @@ def _raster_shift(
 
     src_nodata = metadata["nodata_value"]
 
-    for band in range(metadata["band_count"]):
+    for band in range(metadata["bands"]):
         origin_raster_band = ref.GetRasterBand(band + 1)
         target_raster_band = shifted.GetRasterBand(band + 1)
 

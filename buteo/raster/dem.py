@@ -2,7 +2,7 @@
 
 # Standard library
 import sys; sys.path.append("../../")
-from typing import Union
+from typing import Union, Optional, List
 from uuid import uuid4
 
 # External
@@ -11,8 +11,8 @@ import numpy as np
 
 # Internal
 from buteo.raster.core_raster_io import raster_to_array, array_to_raster
-from buteo.utils.utils_base import _type_check
-from buteo.utils.utils_gdal import _get_default_creation_options, delete_dataset_if_in_memory
+from buteo.utils import utils_base, utils_gdal
+
 
 
 def raster_dem_to_slope(
@@ -20,6 +20,7 @@ def raster_dem_to_slope(
     output_raster: str,
     slope_format: str = "percent",
     z_factor: float = 1.0,
+    creation_options: Optional[List[str]] = None,
 ) -> str:
     """
     Slope in percent.
@@ -38,20 +39,27 @@ def raster_dem_to_slope(
     z_factor : float, optional
         Z factor for slope calculation, by default 1.0.
 
+    creation_options : list, optional
+        A list of GDAL creation options for the output raster(s).
+
     Returns
     -------
     str
         Path to output raster.
     """
-    _type_check(input_raster, [str, gdal.Dataset], "input_raster")
-    _type_check(output_raster, str, "output_raster")
-    _type_check(z_factor, [float, int], "z_factor")
+    utils_base._type_check(input_raster, [str, gdal.Dataset], "input_raster")
+    utils_base._type_check(output_raster, str, "output_raster")
+    utils_base._type_check(z_factor, [float, int], "z_factor")
+    utils_base._type_check(slope_format, [str], "slope_format")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
+
+    creation_options = utils_gdal._get_default_creation_options(creation_options)
 
     slope_options = gdal.DEMProcessingOptions(
         computeEdges=True,
         slopeFormat=slope_format,
         zFactor=z_factor,
-        creationOptions=_get_default_creation_options(),
+        creationOptions=creation_options,
     )
 
     ds = gdal.DEMProcessing(
@@ -75,6 +83,7 @@ def raster_dem_to_aspect(
     input_raster: Union[str, gdal.Dataset],
     output_raster: str,
     zero_for_flat: bool = True,
+    creation_options: Optional[List[str]] = None,
 ) -> str:
     """
     Aspect in degrees.
@@ -95,12 +104,16 @@ def raster_dem_to_aspect(
     str
         Path to output raster.
     """
-    _type_check(input_raster, [str, gdal.Dataset], "input_raster")
-    _type_check(output_raster, str, "output_raster")
+    utils_base._type_check(input_raster, [str, gdal.Dataset], "input_raster")
+    utils_base._type_check(output_raster, str, "output_raster")
+    utils_base._type_check(zero_for_flat, [bool], "zero_for_flat")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
+
+    creation_options = utils_gdal._get_default_creation_options(creation_options)
 
     aspect_options = gdal.DEMProcessingOptions(
         computeEdges=True,
-        creationOptions=_get_default_creation_options(),
+        creationOptions=creation_options,
         zeroForFlat=zero_for_flat,
     )
 
@@ -123,6 +136,7 @@ def raster_dem_to_hillshade(
     input_raster: Union[str, gdal.Dataset],
     output_raster: str,
     z_factor: float = 1.0,
+    creation_options: Optional[List[str]] = None,
 ) -> str:
     """
     Hillshade in degrees.
@@ -143,13 +157,16 @@ def raster_dem_to_hillshade(
     str
         Path to output raster.
     """
-    _type_check(input_raster, [str, gdal.Dataset], "input_raster")
-    _type_check(output_raster, str, "output_raster")
-    _type_check(z_factor, [float, int], "z_factor")
+    utils_base._type_check(input_raster, [str, gdal.Dataset], "input_raster")
+    utils_base._type_check(output_raster, str, "output_raster")
+    utils_base._type_check(z_factor, [float, int], "z_factor")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
+
+    creation_options = utils_gdal._get_default_creation_options(creation_options)
 
     hillshade_options = gdal.DEMProcessingOptions(
         computeEdges=True,
-        creationOptions=_get_default_creation_options(),
+        creationOptions=creation_options,
         zFactor=z_factor,
     )
 
@@ -174,6 +191,7 @@ def raster_dem_to_orientation(
     include_height: bool = True,
     height_normalisation: bool = True,
     height_normalisation_value: float = 8849.0, # mt. everest
+    creation_options: Optional[List[str]] = None,
 ) -> str:
     """
     Normalised orientation.
@@ -200,17 +218,26 @@ def raster_dem_to_orientation(
     str
         Path to output raster.
     """
+    utils_base._type_check(input_raster, [str, gdal.Dataset], "input_raster")
+    utils_base._type_check(output_raster, str, "output_raster")
+    utils_base._type_check(include_height, [bool], "include_height")
+    utils_base._type_check(height_normalisation, [bool], "height_normalisation")
+    utils_base._type_check(height_normalisation_value, [float, int], "height_normalisation_value")
+    utils_base._type_check(creation_options, [[str], None], "creation_options")
+
+    creation_options = utils_gdal._get_default_creation_options(creation_options)
+
     tmp_path = f"/vsimem/{uuid4().int}_temp_aspect.tif"
     tmp_slope = f"/vsimem/{uuid4().int}_temp_slope.tif"
 
-    raster_dem_to_aspect(input_raster, tmp_path, zero_for_flat=True)
+    raster_dem_to_aspect(input_raster, tmp_path, zero_for_flat=True, )
     raster_dem_to_slope(input_raster, tmp_slope, slope_format="degree")
 
     aspect = raster_to_array(tmp_path)
     slope = raster_to_array(tmp_slope)
 
-    delete_dataset_if_in_memory(tmp_path)
-    delete_dataset_if_in_memory(tmp_slope)
+    utils_gdal.delete_dataset_if_in_memory(tmp_path)
+    utils_gdal.delete_dataset_if_in_memory(tmp_slope)
 
     if include_height:
         dem = raster_to_array(input_raster)
@@ -241,6 +268,11 @@ def raster_dem_to_orientation(
     if include_height:
         destination[:, :, 3] = dem_norm[:, :, 0]
 
-    array_to_raster(destination, reference=input_raster, out_path=output_raster)
+    array_to_raster(
+        destination,
+        reference=input_raster,
+        out_path=output_raster,
+        creation_options=creation_options,
+    )
 
     return output_raster

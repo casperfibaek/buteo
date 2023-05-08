@@ -981,3 +981,49 @@ def raster_create_from_array(
             dst_band.SetNoDataValue(nodata_value)
 
     return out_path
+
+
+def raster_create_copy(
+    raster: Union[str, gdal.Dataset],
+    out_path: Optional[str] = None,
+    overwrite: bool = True,
+) -> str:
+    """
+    Create a copy of a raster.
+
+    Parameters
+    ----------
+    raster : str or gdal.Dataset
+        The raster to copy.
+
+    out_path : str, optional
+        The output path. If None, a temporary file will be created.
+
+    Returns
+    -------
+    str
+        The path to the output raster.
+    """
+    assert utils_gdal._check_is_raster(raster), "Raster is not valid."
+
+    if out_path is None:
+        out_path = utils_path._get_temp_filepath(
+            utils_gdal._get_path_from_dataset(raster),
+            ext="tif",
+        )
+    else:
+        assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), (
+            f"Output path {out_path} is not valid or already exists. "
+        )
+
+    utils_path._delete_if_required(out_path, overwrite)
+
+    driver_name = utils_gdal._get_driver_name_from_path(out_path)
+    driver = gdal.GetDriverByName(driver_name)
+
+    src_ds = core_raster._raster_open(raster)
+    dst_ds = driver.CreateCopy(out_path, src_ds)
+    dst_ds = None
+    src_ds = None
+
+    return out_path

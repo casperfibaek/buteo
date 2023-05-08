@@ -4,8 +4,7 @@
 Cut rasters to grids. Use vectors or rasters as grids.
 """
 
-# TODO: Split rasters into grid of x tiles.
-# TODO: raster_to_grid without geom.
+# TODO: Verify this function and create more grid options.
 
 # Standard library
 import sys; sys.path.append("../../")
@@ -22,7 +21,6 @@ from buteo.raster.clip import _raster_clip
 from buteo.vector import core_vector
 from buteo.vector.intersect import _vector_intersect
 from buteo.vector.reproject import _vector_reproject
-
 
 
 def raster_to_grid(

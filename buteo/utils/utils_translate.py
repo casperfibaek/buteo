@@ -343,9 +343,10 @@ def _translate_dtype_numpy_to_gdal(numpy_datatype: np.dtype) -> int:
     int
         The GDAL datatype integer.
     """
-    assert isinstance(numpy_datatype, np.dtype), f"numpy_datatype must be a numpy.dtype. Received: {numpy_datatype}"
+    assert isinstance(numpy_datatype, (np.dtype, str, int)), f"numpy_datatype must be a numpy.dtype, str or int. Received: {numpy_datatype}"
 
-    dtype = gdal_array.NumericTypeCodeToGDALTypeCode(numpy_datatype)
+    parsed = _parse_dtype(numpy_datatype)
+    dtype = gdal_array.NumericTypeCodeToGDALTypeCode(parsed)
 
     return dtype
 

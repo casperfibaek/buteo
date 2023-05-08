@@ -72,20 +72,20 @@ def _get_input_paths(
     if not utils_path._check_is_valid_filepath_list(inputs):
         raise ValueError("Invalid input data.")
 
+    inputs = [utils_path._parse_path(val) for val in inputs]
+
     if input_type == "raster":
         for val in inputs:
             if not utils_gdal._check_is_raster(val):
-                raise TypeError("Invalid type for input data.")
+                raise TypeError("Invalid raster type for input data.")
     elif input_type == "vector":
         for val in inputs:
             if not utils_gdal._check_is_vector(val):
-                raise TypeError("Invalid type for input data.")
+                raise TypeError("Invalid vector type for input data.")
     else:
         for val in inputs:
             if not utils_gdal._check_is_raster_or_vector(val):
                 raise TypeError("Invalid type for input data.")
-
-    inputs = [utils_path._get_unix_path(path) for path in inputs]
 
     return inputs
 
@@ -94,6 +94,7 @@ def _get_input_paths(
 def _get_output_paths(
     inputs: Union[str, gdal.Dataset, ogr.DataSource, List[Union[str, gdal.Dataset, ogr.DataSource]]],
     output_path: Optional[str] = None,
+    in_place: bool = False,
     *,
     prefix: str = "",
     suffix: str = "",
@@ -115,6 +116,9 @@ def _get_output_paths(
     output_path: str or None. Optional.
         The path to the output file. If None, the output will be in memory.
         Default: None.
+
+    in_place: bool. Optional.
+        If True, the output will be the same as the input. Default: False.
 
     prefix: str. Optional.
         The prefix to add to the path. Default: "".
@@ -141,6 +145,8 @@ def _get_output_paths(
         The output path(s).
     """
     assert isinstance(inputs, (str, gdal.Dataset, ogr.DataSource, list)), "input_path must be a string or a list."
+    assert isinstance(output_path, (str, type(None), list)), "output_path must be a string or None."
+    assert isinstance(in_place, bool), "in_place must be a bool."
     assert isinstance(prefix, str), "prefix must be a string."
     assert isinstance(suffix, str), "suffix must be a string."
     assert isinstance(overwrite, bool), "overwrite must be a bool."
@@ -155,12 +161,18 @@ def _get_output_paths(
             assert len(output_path) > 0, "output_path must not be empty list."
             assert all([isinstance(val, str) for val in output_path]), "output_path must be a list of strings."
             assert all([len(val) > 0 for val in output_path]), "output_path must not be a list of empty strings."
+            assert len(output_path) == len(inputs), "output_path must be the same length as input_path."
 
     inputs = _get_input_paths(inputs, input_type="mixed")
     outputs = []
 
+    # In-place
+    if in_place:
+        for path in inputs:
+            outputs.append(path)
+
     # Output is None - Memory is used.
-    if output_path is None:
+    elif output_path is None:
         for path in inputs:
             aug_path = utils_path._get_temp_filepath(
                 path,
@@ -173,7 +185,10 @@ def _get_output_paths(
             outputs.append(aug_path)
 
     # Output is a file
-    elif isinstance(output_path, str) and utils_path._check_is_valid_output_filepath(output_path):
+    elif isinstance(output_path, str):
+        if not utils_path._check_is_valid_output_filepath(output_path):
+            raise ValueError("Invalid output_path.")
+
         aug_path = utils_path._get_augmented_path(
             output_path,
             prefix=prefix,
@@ -186,7 +201,10 @@ def _get_output_paths(
         outputs.append(aug_path)
 
     # Output is a folder
-    elif isinstance(output_path, str) and utils_path._check_dir_exists(output_path):
+    elif isinstance(output_path, str):
+        if not utils_path._check_dir_exists(output_path):
+            raise ValueError("Invalid output_path. Directory does not exists.")
+
         for path in inputs:
             aug_path = utils_path._get_augmented_path(
                 path,
@@ -200,7 +218,10 @@ def _get_output_paths(
             outputs.append(aug_path)
 
     # Output is a list of files
-    elif isinstance(output_path, list) and utils_path._check_is_valid_filepath_list(output_path):
+    elif isinstance(output_path, list):
+        if not utils_path._check_is_valid_filepath_list(output_path):
+            raise ValueError("Invalid output_path.")
+
         if len(output_path) != len(inputs):
             raise ValueError("The number of output paths must match the number of input paths.")
 

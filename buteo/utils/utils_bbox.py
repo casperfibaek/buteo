@@ -1123,6 +1123,8 @@ def _additional_bboxes(
     else:
         geom_latlng = _get_bounds_from_bbox(bbox_ogr, original_projection, latlng_projection)
 
+    geom_latlng_geom = ogr.CreateGeometryFromWkt(geom_latlng)
+
     bbox_wkt = _get_wkt_from_bbox(bbox_ogr)
     bbox_wkt_latlng = _get_wkt_from_bbox(bbox_ogr_latlng)
 
@@ -1142,7 +1144,7 @@ def _additional_bboxes(
             "y_max": latlng_y_max,
         },
         "bbox_geojson": _get_geojson_from_bbox(bbox_ogr_latlng),
-        "area_latlng": geom_latlng.GetArea(),
+        "area_latlng": geom_latlng_geom.GetArea(),
         "area": geom.GetArea(),
         "geom": geom,
         "geom_latlng": geom_latlng,
@@ -1167,13 +1169,14 @@ def _get_vector_from_geom(
     """
     assert isinstance(geom, ogr.Geometry), "geom must be an ogr.Geometry."
 
-    path = utils_path._get_augmented_path_list(
+    path = utils_path._get_augmented_path(
         "converted_geom.gpkg",
         add_uuid=True,
         folder="/vsimem/",
     )
 
-    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_name_from_path(path))
+    driver_name = utils_gdal._get_vector_driver_name_from_path(path)
+    driver = ogr.GetDriverByName(driver_name)
     vector = driver.CreateDataSource(path)
 
     proj = projection_osr if projection_osr is not None else utils_projection._get_default_projection_osr()

@@ -321,7 +321,7 @@
 #     raster_projection = raster_metadata["projection_osr"]
 
 #     # Read raster data in overlap
-#     raster_transform = np.array(raster_metadata["transform"], dtype=np.float32)
+#     raster_transform = np.array(raster_metadata["geotransform"], dtype=np.float32)
 #     raster_size = np.array(raster_metadata["size"], dtype=np.int32)
 
 #     raster_extent = get_extent(raster_transform, raster_size)

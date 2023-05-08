@@ -254,8 +254,9 @@ def test_save_dataset_to_disk_with_prefix():
     prefix = "test_prefix_"
 
     output_path = core_raster_io.save_dataset_to_disk(in_path, out_path, prefix=prefix)
+
     assert os.path.exists(output_path)
-    assert output_path.startswith(prefix)
+    assert os.path.basename(output_path).startswith(prefix)
     os.remove(output_path)
 
 def test_save_dataset_to_disk_with_suffix():

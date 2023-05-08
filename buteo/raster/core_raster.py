@@ -4,6 +4,7 @@
 
 # Standard library
 import sys; sys.path.append("../../")
+import os
 from typing import List, Optional, Union, Dict, Any
 import warnings
 
@@ -135,13 +136,28 @@ def _get_basic_metadata_raster(
     bbox_latlng = utils_projection.reproject_bbox(bbox, projection_osr, utils_projection._get_default_projection_osr())
     bounds_latlng = utils_bbox._get_bounds_from_bbox(bbox, projection_osr, wkt=False)
     bounds_area = bounds_latlng.GetArea()
+    area = (bbox[1] - bbox[0]) * (bbox[3] - bbox[2])
     bounds_wkt = bounds_latlng.ExportToWkt()
     first_band = dataset.GetRasterBand(1)
     dtype = None if first_band is None else first_band.DataType
     dtype_numpy = utils_translate._translate_dtype_gdal_to_numpy(dtype)
 
+    # Paths
+    path = os.path.abspath(dataset.GetDescription())
+    in_memory = False
+    if "\\vsimem\\" in path:
+        path = "/" + path.replace(os.path.abspath(os.sep), "")
+        in_memory = True
+
+    path = utils_path._get_unix_path(path)
+
     metadata = {
-        "path": dataset.GetDescription(),
+        "path": path,
+        "basename": os.path.basename(path),
+        "name": os.path.splitext(os.path.basename(path))[0],
+        "folder": os.path.dirname(path),
+        "ext": os.path.splitext(path)[1],
+        "in_memory": in_memory,
         "driver": dataset.GetDriver().ShortName,
         "projection_osr": projection_osr,
         "projection_wkt": projection_wkt,
@@ -169,6 +185,7 @@ def _get_basic_metadata_raster(
         "dtype": dtype_numpy,
         "dtype_name": dtype_numpy.name,
         "area_latlng": bounds_area,
+        "area": area,
     }
 
     x_min, x_max, y_min, y_max = bbox

@@ -866,6 +866,30 @@ def _get_paths_from_glob(path: str) -> List[str]:
     return glob(pre_glob)
 
 
+def _parse_path(path: str) -> str:
+    """
+    Parse a path to an absolute unix path.
+
+    Parameters
+    ----------
+    path: str
+        The path to parse.
+
+    Returns
+    -------
+    str
+        The parsed path.
+    """
+    assert isinstance(path, str), "path must be a string."
+
+    abspath = os.path.abspath(path)
+    if "\\vsimem\\" in abspath:
+        abspath = "/" + abspath.replace(os.path.abspath(os.sep), "")
+
+    abspath = _get_unix_path(abspath)
+    return abspath
+
+
 def _get_augmented_path(
     path: str,
     prefix: str = "",
@@ -1075,6 +1099,7 @@ def _get_temp_filepath(
         path = name.GetDescription()
         name = os.path.splitext(os.path.basename(path))[0]
     else:
+        path = name
         name = os.path.splitext(os.path.basename(name))[0]
 
     if add_uuid:
@@ -1088,10 +1113,9 @@ def _get_temp_filepath(
         timestamp = ""
 
     if ext is None:
-        ext = _get_ext_from_path(name)
+        ext = _get_ext_from_path(path)
 
-    if ext == "":
-        ext = ".tif"
+    assert utils_gdal._check_is_valid_ext(ext), f"ext must be a valid extension. {ext} is not valid."
 
     filename = f"{prefix}{name}{uuid}{timestamp}{suffix}.{ext.lstrip('.').lower()}"
     filepath = os.path.join("/vsimem/", filename)

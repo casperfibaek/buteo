@@ -1,6 +1,7 @@
 """ Tests for core_raster.py """
 # pylint: disable=missing-function-docstring
 
+
 # Standard library
 import os
 import sys; sys.path.append("../")
@@ -8,9 +9,11 @@ import sys; sys.path.append("../")
 # External
 from osgeo import gdal, ogr
 import numpy as np
+import pytest
 
 # Internal
 from utils_tests import create_sample_raster
+from buteo.utils.utils_projection import parse_projection
 from buteo.raster.clip import raster_clip
 
 tmpdir = "./tests/tmp/"
@@ -86,13 +89,14 @@ def test_raster_clip_dst_nodata():
 def test_raster_clip_no_intersection():
     raster_path = create_sample_raster()
     polygon_wkt = 'POLYGON ((-10 -10, -10 -5, -5 -5, -5 -10, -10 -10))'
-    clip_geom = ogr.CreateGeometryFromWkt(polygon_wkt)
+    clip_geom = ogr.CreateGeometryFromWkt(polygon_wkt, parse_projection(raster_path))
 
     output_path = os.path.join(tmpdir, 'clipped.tif')
-    clipped_raster = raster_clip(raster_path, clip_geom, out_path=output_path)
+    clipped_raster = None
+    with pytest.raises(ValueError):
+        clipped_raster = raster_clip(raster_path, clip_geom, out_path=output_path)
 
-    clipped_ds = gdal.Open(clipped_raster)
-    assert clipped_ds is not None, "Clipped raster should be created even if there's no intersection"
+    assert clipped_raster is None, "Clipped raster should be created even if there's no intersection"
 
 
 def test_raster_clip_partial_intersection():

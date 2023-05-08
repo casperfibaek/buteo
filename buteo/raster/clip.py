@@ -69,7 +69,8 @@ def _raster_clip(
     memory_files = []
 
     if isinstance(clip_geom, ogr.Geometry):
-        utils_bbox._get_vector_from_geom(clip_geom)
+        clip_geom = utils_bbox._get_vector_from_geom(clip_geom)
+        clip_geom = utils_gdal._get_path_from_dataset(clip_geom)
 
     # Input is a vector.
     if utils_gdal._check_is_vector(clip_geom):
@@ -162,7 +163,7 @@ def _raster_clip(
         out_nodata = dst_nodata
     else:
         raise ValueError(f"Unable to parse nodata_value: {dst_nodata}")
-    
+
     if not utils_translate._check_is_value_within_dtype_range(out_nodata, raster_metadata["dtype"]):
         warn("Nodata value is outside of the range of the input raster's dtype. Setting to None.")
         out_nodata = None

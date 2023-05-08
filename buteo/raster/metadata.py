@@ -11,13 +11,10 @@ from osgeo import gdal, osr
 
 # Internal
 from buteo.utils import (
+    utils_io,
     utils_base,
-    utils_gdal,
-    utils_bbox,
-    utils_translate,
-    utils_projection,
 )
-from buteo.raster.core_raster import _raster_open
+from buteo.raster.core_raster import _raster_open, _get_basic_metadata_raster
 
 
 def _raster_to_metadata(
@@ -26,126 +23,59 @@ def _raster_to_metadata(
     """ Internal. """
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
-    dataset = _raster_open(raster)
-
-    raster_driver = dataset.GetDriver()
-
-    path = dataset.GetDescription()
-    basename = os.path.basename(path)
-    split_path = os.path.splitext(basename)
-    name = split_path[0]
-    ext = split_path[1]
-
-    driver = raster_driver.ShortName
-
-    in_memory = utils_gdal._check_is_dataset_in_memory(raster)
-
-    transform = dataset.GetGeoTransform()
-
-    projection_wkt = dataset.GetProjection()
-    projection_osr = osr.SpatialReference()
-    projection_osr.ImportFromWkt(projection_wkt)
-
-    width = dataset.RasterXSize
-    height = dataset.RasterYSize
-    band_count = dataset.RasterCount
-
-    size = [dataset.RasterXSize, dataset.RasterYSize]
-    shape = (height, width, band_count)
-
-    pixel_width = abs(transform[1])
-    pixel_height = abs(transform[5])
-
-    x_min = transform[0]
-    y_max = transform[3]
-
-    x_max = x_min + width * transform[1] + height * transform[2]  # Handle skew
-    y_min = y_max + width * transform[4] + height * transform[5]  # Handle skew
-
-    band0 = dataset.GetRasterBand(1)
-
-    dtype_gdal = band0.DataType
-    datatype_gdal = gdal.GetDataTypeName(dtype_gdal)
-
-    datatype = utils_translate._translate_dtype_gdal_to_numpy(dtype_gdal).name
-
-    nodata_value = band0.GetNoDataValue()
-    has_nodata = nodata_value is not None
-
-    bbox_ogr = [x_min, x_max, y_min, y_max]
-
-    bboxes = utils_bbox._additional_bboxes(bbox_ogr, projection_osr)
-
-    metadata = {
-        "path": path,
-        "basename": basename,
-        "name": name,
-        "ext": ext,
-        "transform": transform,
-        "in_memory": in_memory,
-        "projection_wkt": projection_wkt,
-        "projection_osr": projection_osr,
-        "width": width,
-        "height": height,
-        "band_count": band_count,
-        "driver": driver,
-        "size": size,
-        "shape": shape,
-        "pixel_width": pixel_width,
-        "pixel_height": pixel_height,
-        "x_min": x_min,
-        "y_max": y_max,
-        "x_max": x_max,
-        "y_min": y_min,
-        "dtype": datatype,
-        "dtype_gdal": datatype_gdal,
-        "dtype_gdal_raw": dtype_gdal,
-        "datatype": datatype,
-        "datatype_gdal": datatype_gdal,
-        "dtype_gdal": dtype_gdal,
-        "nodata_value": nodata_value,
-        "has_nodata": has_nodata,
-        "is_raster": True,
-        "is_vector": False,
-        "bbox": bbox_ogr,
-        "extent": bbox_ogr,
-    }
-
-    for key, value in bboxes.items():
-        metadata[key] = value
-
-    def get_bbox_as_vector():
-        return utils_bbox._get_vector_from_bbox(bbox_ogr, projection_osr)
-
-    def get_bbox_as_vector_latlng():
-        latlng_wkt = utils_projection._get_default_projection()
-        projection_osr_latlng = osr.SpatialReference()
-        projection_osr_latlng.ImportFromWkt(latlng_wkt)
-
-        return utils_bbox._get_vector_from_bbox(metadata["bbox_latlng"], projection_osr_latlng)
-
-    metadata["get_bbox_vector"] = get_bbox_as_vector
-    metadata["get_bbox_vector_latlng"] = get_bbox_as_vector_latlng
+    metadata = _get_basic_metadata_raster(raster)
 
     return metadata
 
 
 def raster_to_metadata(
     raster: Union[str, gdal.Dataset, List[str], List[gdal.Dataset]],
-    *,
-    allow_lists: bool = True,
 ) -> Union[dict, List[dict]]:
     """
     Reads metadata from a raster dataset or a list of raster datasets, and returns a dictionary or a list of dictionaries
     containing metadata information for each raster.
 
+    Bounding boxes are in the format `[xmin, xmax, ymin, ymax]`. These are the keys in the dictionary:
+
+    - `path` (str): Path to the raster.
+    - `basename` (str): Basename of the raster.
+    - `name` (str): Name of the raster without extension.
+    - `folder` (str): Folder of the raster.
+    - `ext` (str): Extension of the raster.
+    - `in_memory` (bool): Whether the raster is in memory or not.
+    - `driver` (str): Driver of the raster.
+    - `projection_osr` (osr.SpatialReference): Projection of the raster as an osr.SpatialReference object.	
+    - `projection_wkt` (str): Projection of the raster as a WKT string.
+    - `geotransform` (tuple): Geotransform of the raster.
+    - `size` (tuple): Size of the raster in pixels.
+    - `shape` (list): Shape of the raster in pixels. (height, width, bands)
+    - `height` (int): Height of the raster in pixels.
+    - `width` (int): Width of the raster in pixels.
+    - `pixel_size` (tuple): Pixel size of the raster in units of the projection.
+    - `pixel_width` (float): Pixel width of the raster in units of the projection.
+    - `pixel_height` (float): Pixel height of the raster in units of the projection.
+    - `origin` (tuple): Origin of the raster in units of the projection.
+    - `origin_x` (float): Origin x of the raster in units of the projection.
+    - `origin_y` (float): Origin y of the raster in units of the projection.
+    - `bbox` (list): Bounding box of the raster in units of the projection. `[xmin, xmax, ymin, ymax]`
+    - `bbox_gdal` (list): Bounding box of the raster in GDAL format. `[xmin, ymin, xmax, ymax]`
+    - `bbox_latlng` (list): Bounding box of the raster in latlng format. `[ymin, xmin, ymax, xmax]`
+    - `bounds_latlng` (str): Bounding box of the raster in latlng format as a WKT string.
+    - `x_min` (float): Minimum x of the raster in units of the projection.
+    - `x_max` (float): Maximum x of the raster in units of the projection.
+    - `y_min` (float): Minimum y of the raster in units of the projection.
+    - `y_max` (float): Maximum y of the raster in units of the projection.
+    - `bands` (int): Number of bands in the raster.
+    - `dtype_gdal` (int): GDAL data type of the raster.
+    - `dtype` (numpy.dtype): Numpy data type of the raster.
+    - `dtype_name` (str): Name of the numpy data type of the raster.
+    - `area_latlng` (float): Area of the raster in latlng units.
+    - `area` (float): Area of the raster in units of the projection.
+
     Parameters
     ----------
     raster : str or gdal.Dataset or list
         A path to a raster or a gdal.Dataset, or a list of paths to rasters.
-
-    allow_lists : bool, optional
-        If True, allows the input to be a list of rasters. Otherwise, only a single raster is allowed. Default: True.
 
     Returns
     -------
@@ -154,19 +84,14 @@ def raster_to_metadata(
     """
     utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
-    if not allow_lists and isinstance(raster, list):
-        raise ValueError("Input raster must be a single raster.")
+    input_is_list = isinstance(raster, list)
+    input_rasters = utils_io._get_input_paths(raster, "raster")
 
-    if not allow_lists:
-        return _raster_to_metadata(raster)
+    metadata = []
+    for in_raster in input_rasters:
+        metadata.append(_raster_to_metadata(in_raster))
 
-    list_input = utils_base._get_variable_as_list(raster)
-    list_return = []
+    if input_is_list:
+        return metadata
 
-    for in_raster in list_input:
-        list_return.append(_raster_to_metadata(in_raster))
-
-    if isinstance(raster, list):
-        return list_return
-
-    return list_return[0]
+    return metadata[0]

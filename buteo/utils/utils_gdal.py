@@ -132,6 +132,78 @@ def clear_gdal_memory() -> None:
         warn("Failed to clear all GDAL memory.", RuntimeWarning)
 
 
+def _check_is_valid_ext(ext: str) -> bool:
+    """
+    Check if a file extension has a valid GDAL or OGR driver.
+
+    Parameters
+    ----------
+    ext : str
+        The file extension to check.
+
+    Returns
+    -------
+    bool
+        True if the file extension is a valid GDAL or OGR driver, False otherwise.
+    """
+    assert isinstance(ext, str), "ext must be a string."
+    if len(ext) == 0:
+        return False
+
+    if ext in utils_translate._get_valid_driver_extensions():
+        return True
+
+    return False
+
+
+def _check_is_valid_raster_ext(ext: str) -> bool:
+    """
+    Check if a file extension has a valid GDAL driver.
+
+    Parameters
+    ----------
+    ext : str
+        The file extension to check.
+
+    Returns
+    -------
+    bool
+        True if the file extension is a valid GDAL Raster driver, False otherwise.
+    """
+    assert isinstance(ext, str), "ext must be a string."
+    if len(ext) == 0:
+        return False
+
+    if ext in utils_translate._get_valid_raster_driver_extensions():
+        return True
+
+    return False
+
+
+def _check_is_valid_vector_ext(ext: str) -> bool:
+    """
+    Check if a file extension has a valid OGR driver.
+
+    Parameters
+    ----------
+    ext : str
+        The file extension to check.
+
+    Returns
+    -------
+    bool
+        True if the file extension is a valid OGR Vector driver, False otherwise.
+    """
+    assert isinstance(ext, str), "ext must be a string."
+    if len(ext) == 0:
+        return False
+
+    if ext in utils_translate._get_valid_vector_driver_extensions():
+        return True
+
+    return False
+
+
 def _check_is_file_valid_ext(file_path: str) -> bool:
     """
     Check if a file path has a valid GDAL or OGR driver.
@@ -276,7 +348,7 @@ def _get_vector_driver_name_from_path(file_path: str) -> str:
     ext = utils_path._get_ext_from_path(file_path)
 
     if _check_is_file_valid_vector_ext(file_path):
-        return utils_translate._get_raster_shortname_from_ext(ext)
+        return utils_translate._get_vector_shortname_from_ext(ext)
 
     raise ValueError(f"Unable to parse GDAL or OGR driver from path: {file_path}")
 
@@ -770,7 +842,7 @@ def _get_path_from_dataset(
         path = raster.GetDescription()
         raster = None
 
-        return path
+        return utils_path._get_unix_path(path)
 
     if (dataset_type == "vector" or dataset_type is None) and _check_is_vector(dataset, empty_is_invalid=False):
         if isinstance(dataset, str):
@@ -783,7 +855,7 @@ def _get_path_from_dataset(
         path = vector.GetDescription()
         vector = None
 
-        return path
+        return utils_path._get_unix_path(path)
 
     raise ValueError("The dataset is not a raster or vector.")
 

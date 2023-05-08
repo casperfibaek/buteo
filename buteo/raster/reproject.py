@@ -244,6 +244,7 @@ def raster_reproject(
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
+        change_ext="tif"
     )
 
     output = []

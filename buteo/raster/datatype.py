@@ -9,6 +9,7 @@ from typing import Union, List, Optional
 from warnings import warn
 
 # External
+import numpy as np
 from osgeo import gdal
 
 # Internal
@@ -30,59 +31,48 @@ def _raster_set_datatype(
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
 ) -> str:
-    """ **INTERNAL**. """
-    assert isinstance(raster, (str, gdal.Dataset)), "raster must be a string or a GDAL.Dataset."
-    assert isinstance(dtype_str, str), "dtype_str must be a string."
-    assert len(dtype_str) > 0, "dtype_str must be a non-empty string."
-    assert out_path is None or isinstance(out_path, str), "out_path must be a string."
+    """
+    Internal function.
 
-    if not utils_gdal._check_is_raster(raster):
-        raise ValueError(f"Unable to open input raster: {raster}")
+    For internal functions, only basic testing should be done.
+    The input should be checked in the public function calling the internal function.
+    an input and output raster should be provided.
+    """
+    assert isinstance(raster, (str, gdal.Dataset)), "raster must be a string or a GDAL.Dataset."
+    assert isinstance(dtype_str, (str, int, np.dtype)), "dtype_str must be a string."
+    assert isinstance(out_path, (str, None)), "out_path must be a string or None."
+
+    if out_path is None:
+        out_path = utils_path._get_temp_filepath("set_datatype.tif")
 
     ref = _raster_open(raster)
     metadata = _get_basic_metadata_raster(ref)
 
-    path = ""
-    if out_path is None:
-        path = utils_path._get_augmented_path_list("set_datatype.tif", add_uuid=True, folder="/vsimem/")
-
-    elif utils_path._check_dir_exists(out_path):
-        path = os.path.join(out_path, os.path.basename(utils_gdal._get_path_from_dataset(ref)))
-
-    elif utils_path._check_dir_exists(utils_path._get_dir_from_path(out_path)):
-        path = out_path
-
-    elif utils_path._check_is_valid_mem_filepath(out_path):
-        path = out_path
-
-    else:
-        raise ValueError(f"Unable to find output folder: {out_path}")
-
-    driver_name = utils_gdal._get_raster_driver_name_from_path(path)
+    driver_name = utils_gdal._get_raster_driver_name_from_path(out_path)
     driver = gdal.GetDriverByName(driver_name)
 
     if driver is None:
         raise ValueError(f"Unable to get driver for raster: {raster}")
 
-    utils_path._delete_if_required(path, overwrite)
+    utils_path._delete_if_required(out_path, overwrite)
 
     if isinstance(dtype_str, str):
         dtype_str = dtype_str.lower()
 
     copy = driver.Create(
-        path,
+        out_path,
         metadata["width"],
         metadata["height"],
         metadata["bands"],
-        utils_translate._translate_dtype_gdal_to_numpy(dtype_str),
+        utils_translate._translate_dtype_numpy_to_gdal(dtype_str),
         utils_gdal._get_default_creation_options(creation_options),
     )
 
     if copy is None:
-        raise ValueError(f"Unable to create output raster: {path}")
+        raise ValueError(f"Unable to create output raster: {out_path}")
 
     copy.SetProjection(metadata["projection_wkt"])
-    copy.SetGeoTransform(metadata["transform"])
+    copy.SetGeoTransform(metadata["geotransform"])
 
     for band_idx in range(metadata["bands"]):
         input_band = ref.GetRasterBand(band_idx + 1)
@@ -109,7 +99,7 @@ def _raster_set_datatype(
     ref = None
     copy = None
 
-    return path
+    return out_path
 
 
 def raster_set_datatype(
@@ -117,9 +107,12 @@ def raster_set_datatype(
     dtype: str,
     out_path: Optional[Union[str, List[str]]] = None,
     *,
-    overwrite: bool = True,
-    allow_lists: bool = True,
     creation_options: Optional[List[str]] = None,
+    add_uuid: bool = False,
+    add_timestamp: bool = False,
+    prefix: str = "",
+    suffix: str = "",
+    overwrite: bool = True,
 ) -> Union[str, List[str]]:
     """
     Converts the datatype of a raster.
@@ -135,16 +128,24 @@ def raster_set_datatype(
     out_path : path or list, optional
         The output location for the processed raster(s). Default: None.
 
-    overwrite : bool, optional
-        Determines whether to overwrite existing files with the same name. Default: True.
-
-    allow_lists : bool, optional
-        Allows processing multiple rasters as a list. If set to False, only single rasters are accepted.
-        Default: True.
-
     creation_options : list, optional
         A list of GDAL creation options for the output raster(s). Default is
         ["TILED=YES", "NUM_THREADS=ALL_CPUS", "BIGTIFF=YES", "COMPRESS=LZW"].
+
+    add_uuid : bool, optional
+        Determines whether to add a UUID to the output path. Default: False.
+
+    add_timestamp : bool, optional
+        Determines whether to add a timestamp to the output path. Default: False.
+
+    prefix : str, optional
+        A prefix to add to the output path. Default: "".
+
+    suffix : str, optional
+        A suffix to add to the output path. Default: "".
+
+    overwrite : bool, optional
+        Determines whether to overwrite existing files with the same name. Default: True.
 
     Returns
     -------
@@ -152,46 +153,77 @@ def raster_set_datatype(
         The file path(s) of the newly created raster(s) with the specified datatype.
     """
     utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base._type_check(dtype, [str], "dtype")
+    utils_base._type_check(dtype, [str, np.dtype, int], "dtype")
     utils_base._type_check(out_path, [list, str, None], "out_path")
-    utils_base._type_check(overwrite, [bool], "overwrite")
-    utils_base._type_check(allow_lists, [bool], "allow_lists")
     utils_base._type_check(creation_options, [list, None], "creation_options")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(add_timestamp, [bool], "add_timestamp")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(overwrite, [bool], "overwrite")
 
-    if not allow_lists:
-        if isinstance(raster, list):
-            raise ValueError("allow_lists is False, but the input raster is a list.")
+    input_is_list = isinstance(raster, list)
 
-        return _raster_set_datatype(
-            raster,
+    input_rasters = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        input_rasters,
+        out_path,
+        add_uuid=add_uuid,
+        add_timestamp=add_timestamp,
+        prefix=prefix,
+        suffix=suffix,
+    )
+
+    creation_options = utils_gdal._get_default_creation_options(creation_options)
+
+    utils_path._delete_if_required_list(out_paths, overwrite)
+
+    output = []
+    for idx, in_raster in enumerate(input_rasters):
+        path = _raster_set_datatype(
+            in_raster,
             dtype,
-            out_path=out_path,
+            out_path=out_paths[idx],
             overwrite=overwrite,
             creation_options=creation_options,
         )
 
-    add_uuid = out_path is None
-
-    raster_list = utils_base._get_variable_as_list(raster)
-    path_list = utils_io._get_output_paths(
-        raster_list,
-        out_path,
-        add_uuid=add_uuid or out_path is None,
-    )
-
-    output = []
-    for index, in_raster in enumerate(raster_list):
-        path = _raster_set_datatype(
-            in_raster,
-            dtype,
-            out_path=path_list[index],
-            overwrite=overwrite,
-            creation_options=utils_gdal._get_default_creation_options(creation_options),
-        )
-
         output.append(path)
 
-    if isinstance(raster, list):
+    if input_is_list:
         return output
 
     return output[0]
+
+
+def raster_get_datatype(
+    raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+) -> Union[str, List[str]]:
+    """
+    Gets the datatype of a raster.
+
+    Parameters
+    ----------
+    raster : str or gdal.Dataset or list
+        The input raster(s) for which the datatype will be changed.
+
+    Returns
+    -------
+    str or list
+        The datatype of the input raster(s).
+    """
+    input_is_list = isinstance(raster, list)
+    input_rasters = utils_io._get_input_paths(raster, "raster")
+
+    datatypes = []
+    for input_raster in input_rasters:
+        if not utils_gdal._check_is_raster(input_raster):
+            raise ValueError(f"Unable to open input raster: {input_raster}")
+
+        metadata = _get_basic_metadata_raster(input_raster)
+        datatypes.append(metadata["dtype_name"])
+
+    if input_is_list:
+        return datatypes
+
+    return datatypes[0]
