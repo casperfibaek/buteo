@@ -229,8 +229,8 @@ def _convert_to_tiff(
                 vh = np.multiply(np.log10(np.abs(vh)), 10)
                 vv = np.multiply(np.log10(np.abs(vv)), 10)
 
-    array_to_raster(vh, vh_path, out_paths[0])
-    array_to_raster(vv, vv_path, out_paths[1])
+    array_to_raster(vh, reference=vh_path, out_path=out_paths[0])
+    array_to_raster(vv, reference=vv_path, out_path=out_paths[1])
 
     return out_paths
 

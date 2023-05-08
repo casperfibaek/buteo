@@ -54,7 +54,7 @@ def _vector_open(
     elif allow_raster and utils_gdal._check_is_raster(vector):
         if isinstance(vector, str):
             gdal.PushErrorHandler("CPLQuietErrorHandler")
-            opened = gdal.Open(vector, gdal.GF_Write) if writeable else ogr.Open(vector, gdal.GF_Read)
+            opened = gdal.Open(vector, gdal.GF_Write) if writeable else gdal.Open(vector, gdal.GF_Read)
             gdal.PopErrorHandler()
         elif isinstance(vector, gdal.Dataset):
             opened = vector
@@ -87,7 +87,6 @@ def vector_open(
     vector: Union[str, ogr.DataSource, gdal.Dataset, List[Union[str, ogr.DataSource, gdal.Dataset]]],
     writeable: bool = True,
     allow_raster: bool = True,
-    allow_lists: bool = True,
 ) -> Union[ogr.DataSource, List[ogr.DataSource]]:
     """
     Opens a vector to an ogr.Datasource class.
@@ -113,9 +112,7 @@ def vector_open(
     """
     utils_base._type_check(vector, [str, ogr.DataSource, gdal.Dataset, [str, ogr.DataSource, gdal.Dataset]], "vector")
     utils_base._type_check(writeable, [bool], "writeable")
-
-    if isinstance(vector, list) and not allow_lists:
-        raise ValueError("Cannot open a list of vectors when allow_list is False.")
+    utils_base._type_check(allow_raster, [bool], "allow_raster")
 
     vectors = utils_base._get_variable_as_list(vector)
 
@@ -227,10 +224,7 @@ def _get_basic_metadata_vector(
             "field_names": field_names,
             "field_types": field_types,
             "field_types_ogr": field_types_ogr,
-            "is_raster": False,
-            "is_vector": True,
             "bbox": layer_bbox,
-            "extent": layer_bbox,
         }
 
         layers.append(layer_dict)
@@ -278,6 +272,7 @@ def _get_basic_metadata_vector(
         "layers": layers,
     }
 
+    layer = None
     datasource = None
     return metadata
 
@@ -304,12 +299,13 @@ def _vector_filter(
 
     projection = metadata["projection_osr"]
 
-    driver = utils_gdal._get_vector_driver_name_from_path(out_path)
+    driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
+    driver = ogr.GetDriverByName(driver_name)
 
     datasource_destination = driver.CreateDataSource(out_path)
-    datasource_original = vector_open(vector)
+    datasource_original = _vector_open(vector)
 
-    for i, _layer in enumerate(metadata["layers"]):
+    for i in range(metadata["layer_count"]):
         if process_layer != -1 and i != process_layer:
             continue
 
@@ -347,7 +343,6 @@ def vector_filter(
     filter_function: Callable,
     out_path: Optional[str] = None,
     process_layer: int = -1,
-    allow_lists: bool = True,
     prefix: str = "",
     suffix: str = "",
     add_uuid: bool = False,
@@ -370,9 +365,6 @@ def vector_filter(
     process_layer : int, optional
         The index of the layer to process. If -1, all layers will be processed. default: -1
 
-    allow_lists : bool, optional
-        If True, vector can be a list of vector layers or paths. If False, vector must be a single vector layer or path. default: True
-
     prefix : str, optional
         A prefix to add to the output vector file. default: ""
 
@@ -393,39 +385,38 @@ def vector_filter(
     utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
     utils_base._type_check(filter_function, [type(lambda: True)], "filter_function")
     utils_base._type_check(process_layer, [int], "process_layer")
-    utils_base._type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(overwrite, [bool], "overwrite")
 
-    if isinstance(vector, list) and not allow_lists:
-        raise ValueError("The vector parameter cannot be a list when allow_lists is False.")
-
-    vector_list = utils_base._get_variable_as_list(vector)
-
-    if not utils_gdal._check_is_vector_list(vector_list):
-        raise ValueError("The vector parameter must be a list of vector layers.")
-
-    path_list = utils_io._get_output_paths(
-        vector_list,
+    input_is_list = isinstance(vector, list)
+    input_list = utils_io._get_input_paths(vector, "vector")
+    output_list = utils_io._get_output_paths(
+        input_list,
         out_path,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
         overwrite=overwrite,
+        change_ext="gpkg",
     )
 
-    output = []
+    utils_path._delete_if_required_list(output_list, overwrite)
 
-    for index, in_vector in vector_list:
+    output = []
+    for idx, in_vector in enumerate(input_list):
         output.append(_vector_filter(
             in_vector,
             filter_function,
-            out_path=path_list[index],
+            out_path=output_list[idx],
             process_layer=process_layer,
             prefix=prefix,
             suffix=suffix,
             overwrite=overwrite,
         ))
 
-    if isinstance(vector, list):
+    if input_is_list:
         return output
 
     return output[0]
@@ -433,7 +424,6 @@ def vector_filter(
 
 def vector_add_index(
     vector: Union[ogr.DataSource, str, List[Union[ogr.DataSource, str]]],
-    allow_lists: bool = True,
 ) -> Union[str, List[str]]:
     """
     Adds a spatial index to the vector in place, if it doesn't have one.
@@ -443,9 +433,6 @@ def vector_add_index(
     vector : Union[ogr.DataSource, str, List[Union[ogr.DataSource, str]]]
         A vector layer(s) or path(s) to a vector file.
 
-    allow_lists : bool, optional
-        If True, vector can be a list of vector layers or paths. If False, vector must be a single vector layer or path. default: True
-    
     Returns
     -------
     Union[str, List[str]]
@@ -453,18 +440,11 @@ def vector_add_index(
     """
     utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
 
-    if isinstance(vector, list) and not allow_lists:
-        raise ValueError("The vector parameter cannot be a list when allow_lists is False.")
-
-    vector_list = utils_base._get_variable_as_list(vector)
-
-    if not utils_gdal._check_is_vector_list(vector_list):
-        raise ValueError("The vector parameter must be a list of vector layers.")
-
-    output = utils_gdal._get_path_from_dataset_list(vector_list)
+    input_is_list = isinstance(vector, list)
+    input_list = utils_io._get_input_paths(vector, "vector")
 
     try:
-        for in_vector in vector_list:
+        for in_vector in input_list:
             metadata = _get_basic_metadata_vector(in_vector)
             ref = _vector_open(in_vector)
 
@@ -477,19 +457,18 @@ def vector_add_index(
     except:
         raise RuntimeError(f"Error while creating indices for {vector}") from None
 
-    if isinstance(vector, list):
-        return output
+    if input_is_list:
+        return input_list
 
-    return output[0]
+    return input_list[0]
 
 
-def vector_get_attribute_table(
-    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
-    process_layer: int = -1,
+def _vector_get_attribute_table(
+    vector: Union[str, ogr.DataSource],
+    process_layer: int = 0,
     include_fids: bool = False,
     include_geometry: bool = False,
     include_attributes: bool = True,
-    allow_lists: bool = True,
 ) -> Dict[str, Any]:
     """
     Get the attribute table(s) of a vector.
@@ -500,7 +479,84 @@ def vector_get_attribute_table(
         Vector layer(s) or path(s) to vector layer(s).
 
     process_layer : int, optional
-        The layer to process. Default: -1 (all layers).
+        The layer to process. Default: 0 (first layer).
+
+    include_fids : bool, optional
+        If True, will include the FID column. Default: False.
+
+    include_geometry : bool, optional
+        If True, will include the geometry column. Default: False.
+
+    include_attributes : bool, optional
+        If True, will include the attribute columns. Default: True.
+
+    allow_lists : bool, optional
+        If True, will accept a list of vectors. If False, will raise an error if a list is passed. Default: True.
+    
+    Returns
+    -------
+    attribute_table : Dict[str, Any]
+        The attribute table(s) of the vector(s).
+    """
+    assert isinstance(vector, (str, ogr.DataSource)), "vector must be a string or an ogr.DataSource object."
+    assert isinstance(process_layer, int), "process_layer must be an integer."
+    assert isinstance(include_fids, bool), "include_fids must be a boolean."
+    assert isinstance(include_geometry, bool), "include_geometry must be a boolean."
+    assert isinstance(include_attributes, bool), "include_attributes must be a boolean."
+
+    ref = _vector_open(vector)
+    metadata = _get_basic_metadata_vector(ref)
+
+    attribute_table_header = metadata["layers"][process_layer]["field_names"]
+    attribute_table = []
+
+    layer = ref.GetLayer(process_layer)
+    layer.ResetReading()
+    while True:
+        feature = layer.GetNextFeature()
+
+        if feature is None:
+            break
+
+        attributes = [feature.GetFID()]
+
+        for field_name in attribute_table_header:
+            attributes.append(feature.GetField(field_name))
+
+        if include_geometry:
+            geom_defn = feature.GetGeometryRef()
+            attributes.append(geom_defn.ExportToIsoWkt())
+
+        attribute_table.append(attributes)
+
+    attribute_table_header.insert(0, "fid")
+
+    if include_geometry:
+        attribute_table_header.append("geom")
+
+    ref = None
+    layer = None
+
+    return attribute_table
+
+
+def vector_get_attribute_table(
+    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
+    process_layer: int = 0,
+    include_fids: bool = False,
+    include_geometry: bool = False,
+    include_attributes: bool = True,
+) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    """
+    Get the attribute table(s) of a vector.
+
+    Parameters
+    ----------
+    vector : Union[str, ogr.DataSource, List[str, ogr.DataSource]]
+        Vector layer(s) or path(s) to vector layer(s).
+
+    process_layer : int, optional
+        The layer to process. Default: 0 (first layer).
 
     include_fids : bool, optional
         If True, will include the FID column. Default: False.
@@ -524,40 +580,24 @@ def vector_get_attribute_table(
     utils_base._type_check(include_fids, [bool], "include_fids")
     utils_base._type_check(include_geometry, [bool], "include_geometry")
     utils_base._type_check(include_attributes, [bool], "include_attributes")
-    utils_base._type_check(allow_lists, [bool], "allow_lists")
 
-    ref = _vector_open(vector)
-    metadata = _get_basic_metadata_vector(ref)
+    input_is_list = isinstance(vector, list)
+    input_list = utils_io._get_input_paths(vector, "vector")
 
-    attribute_table_header = None
-    feature_count = None
+    output = []
+    for in_vector in input_list:
+        output.append(_vector_get_attribute_table(
+            in_vector,
+            process_layer=process_layer,
+            include_fids=include_fids,
+            include_geometry=include_geometry,
+            include_attributes=include_attributes,
+        ))
 
-    attribute_table_header = metadata["layers"][process_layer]["field_names"]
-    feature_count = metadata["layers"][process_layer]["feature_count"]
+    if input_is_list:
+        return output
 
-    attribute_table = []
-
-    layer = ref.GetLayer(process_layer)
-
-    for _ in range(feature_count):
-        feature = layer.GetNextFeature()
-        attributes = [feature.GetFID()]
-
-        for field_name in attribute_table_header:
-            attributes.append(feature.GetField(field_name))
-
-        if include_geometry:
-            geom_defn = feature.GetGeometryRef()
-            attributes.append(geom_defn.ExportToIsoWkt())
-
-        attribute_table.append(attributes)
-
-    attribute_table_header.insert(0, "fid")
-
-    if include_geometry:
-        attribute_table_header.append("geom")
-
-    return attribute_table
+    return output[0]
 
 
 def vector_filter_layer(
@@ -600,29 +640,46 @@ def vector_filter_layer(
     out_path : str
         Path to the output vector.
     """
-    ref = _vector_open(vector)
-    meta = _get_basic_metadata_vector(ref)
+    input_is_list = isinstance(vector, list)
 
-    out_path = utils_io._get_output_paths(
-        meta["path"],
+    input_list = utils_io._get_input_paths(vector, "vector")
+    output_list = utils_io._get_output_paths(
+        input_list,
         out_path,
-        overwrite=overwrite,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
+        overwrite=overwrite,
+        change_ext="gpkg",
     )
 
-    if isinstance(layer_name_or_idx, int):
-        layer = ref.GetLayerByIndex(layer_name_or_idx)
-    elif isinstance(layer_name_or_idx, str):
-        layer = ref.GetLayer(layer_name_or_idx)
-    else:
-        raise RuntimeError("Wrong datatype for layer selection")
+    utils_path._delete_if_required_list(output_list, overwrite)
 
-    driver = utils_gdal._get_vector_driver_name_from_path(out_path)
+    output = []
+    for idx, in_vector in enumerate(input_list):
+        ref = _vector_open(in_vector)
+        out_path = output_list[idx]
 
-    destination = driver.CreateDataSource(out_path)
-    destination.CopyLayer(layer, layer.GetName(), ["OVERWRITE=YES"])
-    destination.FlushCache()
+        if isinstance(layer_name_or_idx, int):
+            layer = ref.GetLayerByIndex(layer_name_or_idx)
+        elif isinstance(layer_name_or_idx, str):
+            layer = ref.GetLayer(layer_name_or_idx)
+        else:
+            raise RuntimeError("Wrong datatype for layer selection")
 
-    return out_path
+        driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
+        driver = ogr.GetDriverByName(driver_name)
+
+        destination = driver.CreateDataSource(out_path)
+        destination.CopyLayer(layer, layer.GetName(), ["OVERWRITE=YES"])
+        destination.FlushCache()
+
+        destination = None
+        ref = None
+
+        output.append(out_path)
+
+    if input_is_list:
+        return output
+
+    return output[0]

@@ -61,6 +61,7 @@ def create_sample_vector(
     num_features=10,
     epsg_code=4326,
     attribute_data=None,
+    n_layers=1,
 ):
     """
     Create a sample vector dataset for testing purposes. (GPKG)
@@ -102,40 +103,41 @@ def create_sample_vector(
     srs.ImportFromEPSG(epsg_code)
 
     vector_ds = driver.CreateDataSource(vector_path)
-    layer = vector_ds.CreateLayer("sample_layer", srs, geom_type)
-
-    if attribute_data:
-        for attr in attribute_data:
-            field_defn = ogr.FieldDefn(attr["name"], attr["type"])
-            layer.CreateField(field_defn)
-
-    for i in range(num_features):
-        feature = ogr.Feature(layer.GetLayerDefn())
-
-        if geom_type == ogr.wkbPolygon:
-            ring = ogr.Geometry(ogr.wkbLinearRing)
-            x, y = random.uniform(-180, 180), random.uniform(-90, 90)
-            ring.AddPoint(x, y)
-            ring.AddPoint(x + 1, y)
-            ring.AddPoint(x + 1, y + 1)
-            ring.AddPoint(x, y + 1)
-            ring.AddPoint(x, y)
-            polygon = ogr.Geometry(ogr.wkbPolygon)
-            polygon.AddGeometry(ring)
-            feature.SetGeometry(polygon)
-
-        elif geom_type == ogr.wkbPoint:
-            x, y = random.uniform(-180, 180), random.uniform(-90, 90)
-            point = ogr.Geometry(ogr.wkbPoint)
-            point.AddPoint(x, y)
-            feature.SetGeometry(point)
+    for i in range(n_layers):
+        layer = vector_ds.CreateLayer(f"sample_layer_{str(i + 1)}", srs, geom_type)
 
         if attribute_data:
             for attr in attribute_data:
-                feature.SetField(attr["name"], attr["values"][i])
+                field_defn = ogr.FieldDefn(attr["name"], attr["type"])
+                layer.CreateField(field_defn)
 
-        layer.CreateFeature(feature)
-        feature = None
+        for i in range(num_features):
+            feature = ogr.Feature(layer.GetLayerDefn())
+
+            if geom_type == ogr.wkbPolygon:
+                ring = ogr.Geometry(ogr.wkbLinearRing)
+                x, y = random.uniform(-180, 180), random.uniform(-90, 90)
+                ring.AddPoint(x, y)
+                ring.AddPoint(x + 1, y)
+                ring.AddPoint(x + 1, y + 1)
+                ring.AddPoint(x, y + 1)
+                ring.AddPoint(x, y)
+                polygon = ogr.Geometry(ogr.wkbPolygon)
+                polygon.AddGeometry(ring)
+                feature.SetGeometry(polygon)
+
+            elif geom_type == ogr.wkbPoint:
+                x, y = random.uniform(-180, 180), random.uniform(-90, 90)
+                point = ogr.Geometry(ogr.wkbPoint)
+                point.AddPoint(x, y)
+                feature.SetGeometry(point)
+
+            if attribute_data:
+                for attr in attribute_data:
+                    feature.SetField(attr["name"], attr["values"][i])
+
+            layer.CreateFeature(feature)
+            feature = None
 
     vector_ds.FlushCache()
     vector_ds = None
