@@ -127,5 +127,6 @@ esa-snap
 from .utils import *
 from .raster import *
 from .vector import *
+from .array import *
 from .eo import *
 from .ai import *
