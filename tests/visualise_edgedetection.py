@@ -1,12 +1,12 @@
 import os
 import numpy as np
-from buteo.raster.core_raster import raster_to_array, array_to_raster
+from buteo.raster.core_raster_io import raster_to_array, array_to_raster
 from buteo.array.convolution import convolve_array_channels
 from buteo.array.edge_detection import filter_edge_detection
 
 
-FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/buteo/tests/"
-path = os.path.join(FOLDER, "test_image_rgb_8bit.tif")
+FOLDER = "./"
+path = os.path.join(FOLDER, "/features/test_image_rgb_8bit.tif")
 
 arr = raster_to_array(path, filled=True, fill_value=0.0, cast=np.float32)
 

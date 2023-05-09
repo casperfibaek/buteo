@@ -31,7 +31,7 @@ from buteo.array.patches import array_to_patches
 from buteo.ai.selection import split_train_val
 
 
-test_image = os.path.join(os.path.dirname(__file__), "test_image_rgb_8bit.tif")
+test_image = "./tests/features/test_image_rgb_8bit.tif"
 
 def test_augmentation_dataset():
     arr = raster_to_array(test_image, filled=True, fill_value=0.0, cast=np.float32)
