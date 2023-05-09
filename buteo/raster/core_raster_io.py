@@ -240,7 +240,7 @@ def raster_to_array(
                 data = np.ma.getdata(data.filled(fill_value))
 
             if cast is not None:
-                utils_translate._safe_numpy_casting(data, dtype, outarr=output_array[:, :, channel])
+                output_array[:, :, channel] = utils_translate._safe_numpy_casting(data, dtype)
             else:
                 output_array[:, :, channel] = data
 

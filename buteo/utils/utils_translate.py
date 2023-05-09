@@ -559,7 +559,6 @@ def _check_is_int_numpy_dtype(
 def _safe_numpy_casting(
     arr: np.ndarray,
     target_dtype: Union[str, np.dtype, Type[np.int8]],
-    outarr: Optional[np.ndarray] = None,
 ):
     """
     Safe casting of numpy arrays.
@@ -584,18 +583,14 @@ def _safe_numpy_casting(
     target_dtype = _parse_dtype(target_dtype)
 
     if arr.dtype == target_dtype:
-        if outarr is not None:
-            outarr[:] = arr[:]
-        else:
-            return arr
+        return arr
 
-    if outarr is None:
-        outarr = np.zeros(arr.shape, dtype=target_dtype)
+    outarr = np.zeros(arr.shape, dtype=target_dtype)
 
     if _check_is_int_numpy_dtype(target_dtype) and not _check_is_int_numpy_dtype(arr.dtype):
         arr = np.rint(arr)
 
     min_val, max_val = _get_range_for_numpy_datatype(target_dtype.name)
-    np.clip(outarr, min_val, max_val, out=outarr)
+    outarr = np.clip(outarr, min_val, max_val)
 
     return outarr

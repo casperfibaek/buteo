@@ -618,46 +618,41 @@
 </span><span id="L-559"><a href="#L-559"><span class="linenos">559</span></a><span class="k">def</span> <span class="nf">_safe_numpy_casting</span><span class="p">(</span>
 </span><span id="L-560"><a href="#L-560"><span class="linenos">560</span></a>    <span class="n">arr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
 </span><span id="L-561"><a href="#L-561"><span class="linenos">561</span></a>    <span class="n">target_dtype</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">Type</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">]],</span>
-</span><span id="L-562"><a href="#L-562"><span class="linenos">562</span></a>    <span class="n">outarr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="L-563"><a href="#L-563"><span class="linenos">563</span></a><span class="p">):</span>
-</span><span id="L-564"><a href="#L-564"><span class="linenos">564</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-565"><a href="#L-565"><span class="linenos">565</span></a><span class="sd">    Safe casting of numpy arrays.</span>
-</span><span id="L-566"><a href="#L-566"><span class="linenos">566</span></a><span class="sd">    Clips to min/max of destinations and rounds properly.</span>
-</span><span id="L-567"><a href="#L-567"><span class="linenos">567</span></a>
-</span><span id="L-568"><a href="#L-568"><span class="linenos">568</span></a><span class="sd">    Parameters</span>
-</span><span id="L-569"><a href="#L-569"><span class="linenos">569</span></a><span class="sd">    ----------</span>
-</span><span id="L-570"><a href="#L-570"><span class="linenos">570</span></a><span class="sd">    arr : np.ndarray</span>
-</span><span id="L-571"><a href="#L-571"><span class="linenos">571</span></a><span class="sd">        The array to cast.</span>
-</span><span id="L-572"><a href="#L-572"><span class="linenos">572</span></a>
-</span><span id="L-573"><a href="#L-573"><span class="linenos">573</span></a><span class="sd">    target_dtype : Union[str, np.dtype, type(np.int8)]</span>
-</span><span id="L-574"><a href="#L-574"><span class="linenos">574</span></a><span class="sd">        The target dtype.</span>
-</span><span id="L-575"><a href="#L-575"><span class="linenos">575</span></a><span class="sd">    </span>
-</span><span id="L-576"><a href="#L-576"><span class="linenos">576</span></a><span class="sd">    Returns</span>
-</span><span id="L-577"><a href="#L-577"><span class="linenos">577</span></a><span class="sd">    -------</span>
-</span><span id="L-578"><a href="#L-578"><span class="linenos">578</span></a><span class="sd">    np.ndarray</span>
-</span><span id="L-579"><a href="#L-579"><span class="linenos">579</span></a><span class="sd">        The casted array.</span>
-</span><span id="L-580"><a href="#L-580"><span class="linenos">580</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-581"><a href="#L-581"><span class="linenos">581</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;arr must be a numpy array.&quot;</span>
-</span><span id="L-582"><a href="#L-582"><span class="linenos">582</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_dtype</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">))),</span> <span class="s2">&quot;target_dtype must be a string or numpy dtype.&quot;</span>
-</span><span id="L-583"><a href="#L-583"><span class="linenos">583</span></a>
-</span><span id="L-584"><a href="#L-584"><span class="linenos">584</span></a>    <span class="n">target_dtype</span> <span class="o">=</span> <span class="n">_parse_dtype</span><span class="p">(</span><span class="n">target_dtype</span><span class="p">)</span>
-</span><span id="L-585"><a href="#L-585"><span class="linenos">585</span></a>
-</span><span id="L-586"><a href="#L-586"><span class="linenos">586</span></a>    <span class="k">if</span> <span class="n">arr</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">target_dtype</span><span class="p">:</span>
-</span><span id="L-587"><a href="#L-587"><span class="linenos">587</span></a>        <span class="k">if</span> <span class="n">outarr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="L-588"><a href="#L-588"><span class="linenos">588</span></a>            <span class="n">outarr</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">arr</span><span class="p">[:]</span>
-</span><span id="L-589"><a href="#L-589"><span class="linenos">589</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="L-590"><a href="#L-590"><span class="linenos">590</span></a>            <span class="k">return</span> <span class="n">arr</span>
-</span><span id="L-591"><a href="#L-591"><span class="linenos">591</span></a>
-</span><span id="L-592"><a href="#L-592"><span class="linenos">592</span></a>    <span class="k">if</span> <span class="n">outarr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="L-593"><a href="#L-593"><span class="linenos">593</span></a>        <span class="n">outarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">target_dtype</span><span class="p">)</span>
-</span><span id="L-594"><a href="#L-594"><span class="linenos">594</span></a>
-</span><span id="L-595"><a href="#L-595"><span class="linenos">595</span></a>    <span class="k">if</span> <span class="n">_check_is_int_numpy_dtype</span><span class="p">(</span><span class="n">target_dtype</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_check_is_int_numpy_dtype</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
-</span><span id="L-596"><a href="#L-596"><span class="linenos">596</span></a>        <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
-</span><span id="L-597"><a href="#L-597"><span class="linenos">597</span></a>
-</span><span id="L-598"><a href="#L-598"><span class="linenos">598</span></a>    <span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span> <span class="o">=</span> <span class="n">_get_range_for_numpy_datatype</span><span class="p">(</span><span class="n">target_dtype</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-</span><span id="L-599"><a href="#L-599"><span class="linenos">599</span></a>    <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">outarr</span><span class="p">,</span> <span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">outarr</span><span class="p">)</span>
-</span><span id="L-600"><a href="#L-600"><span class="linenos">600</span></a>
-</span><span id="L-601"><a href="#L-601"><span class="linenos">601</span></a>    <span class="k">return</span> <span class="n">outarr</span>
+</span><span id="L-562"><a href="#L-562"><span class="linenos">562</span></a><span class="p">):</span>
+</span><span id="L-563"><a href="#L-563"><span class="linenos">563</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-564"><a href="#L-564"><span class="linenos">564</span></a><span class="sd">    Safe casting of numpy arrays.</span>
+</span><span id="L-565"><a href="#L-565"><span class="linenos">565</span></a><span class="sd">    Clips to min/max of destinations and rounds properly.</span>
+</span><span id="L-566"><a href="#L-566"><span class="linenos">566</span></a>
+</span><span id="L-567"><a href="#L-567"><span class="linenos">567</span></a><span class="sd">    Parameters</span>
+</span><span id="L-568"><a href="#L-568"><span class="linenos">568</span></a><span class="sd">    ----------</span>
+</span><span id="L-569"><a href="#L-569"><span class="linenos">569</span></a><span class="sd">    arr : np.ndarray</span>
+</span><span id="L-570"><a href="#L-570"><span class="linenos">570</span></a><span class="sd">        The array to cast.</span>
+</span><span id="L-571"><a href="#L-571"><span class="linenos">571</span></a>
+</span><span id="L-572"><a href="#L-572"><span class="linenos">572</span></a><span class="sd">    target_dtype : Union[str, np.dtype, type(np.int8)]</span>
+</span><span id="L-573"><a href="#L-573"><span class="linenos">573</span></a><span class="sd">        The target dtype.</span>
+</span><span id="L-574"><a href="#L-574"><span class="linenos">574</span></a><span class="sd">    </span>
+</span><span id="L-575"><a href="#L-575"><span class="linenos">575</span></a><span class="sd">    Returns</span>
+</span><span id="L-576"><a href="#L-576"><span class="linenos">576</span></a><span class="sd">    -------</span>
+</span><span id="L-577"><a href="#L-577"><span class="linenos">577</span></a><span class="sd">    np.ndarray</span>
+</span><span id="L-578"><a href="#L-578"><span class="linenos">578</span></a><span class="sd">        The casted array.</span>
+</span><span id="L-579"><a href="#L-579"><span class="linenos">579</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-580"><a href="#L-580"><span class="linenos">580</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s2">&quot;arr must be a numpy array.&quot;</span>
+</span><span id="L-581"><a href="#L-581"><span class="linenos">581</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_dtype</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">))),</span> <span class="s2">&quot;target_dtype must be a string or numpy dtype.&quot;</span>
+</span><span id="L-582"><a href="#L-582"><span class="linenos">582</span></a>
+</span><span id="L-583"><a href="#L-583"><span class="linenos">583</span></a>    <span class="n">target_dtype</span> <span class="o">=</span> <span class="n">_parse_dtype</span><span class="p">(</span><span class="n">target_dtype</span><span class="p">)</span>
+</span><span id="L-584"><a href="#L-584"><span class="linenos">584</span></a>
+</span><span id="L-585"><a href="#L-585"><span class="linenos">585</span></a>    <span class="k">if</span> <span class="n">arr</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">target_dtype</span><span class="p">:</span>
+</span><span id="L-586"><a href="#L-586"><span class="linenos">586</span></a>        <span class="k">return</span> <span class="n">arr</span>
+</span><span id="L-587"><a href="#L-587"><span class="linenos">587</span></a>
+</span><span id="L-588"><a href="#L-588"><span class="linenos">588</span></a>    <span class="n">outarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">target_dtype</span><span class="p">)</span>
+</span><span id="L-589"><a href="#L-589"><span class="linenos">589</span></a>
+</span><span id="L-590"><a href="#L-590"><span class="linenos">590</span></a>    <span class="k">if</span> <span class="n">_check_is_int_numpy_dtype</span><span class="p">(</span><span class="n">target_dtype</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_check_is_int_numpy_dtype</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+</span><span id="L-591"><a href="#L-591"><span class="linenos">591</span></a>        <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
+</span><span id="L-592"><a href="#L-592"><span class="linenos">592</span></a>
+</span><span id="L-593"><a href="#L-593"><span class="linenos">593</span></a>    <span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span> <span class="o">=</span> <span class="n">_get_range_for_numpy_datatype</span><span class="p">(</span><span class="n">target_dtype</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</span><span id="L-594"><a href="#L-594"><span class="linenos">594</span></a>    <span class="n">outarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">outarr</span><span class="p">,</span> <span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span>
+</span><span id="L-595"><a href="#L-595"><span class="linenos">595</span></a>
+</span><span id="L-596"><a href="#L-596"><span class="linenos">596</span></a>    <span class="k">return</span> <span class="n">outarr</span>
 </span></pre></div>
 
 
