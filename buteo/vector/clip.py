@@ -17,32 +17,34 @@ from buteo.utils import (
     utils_base,
     utils_gdal,
     utils_path,
+    utils_bbox,
     utils_projection,
 )
-from buteo.raster import core_raster
 from buteo.vector import core_vector
 from buteo.vector.reproject import _vector_reproject
 
 
 
 def _vector_clip(
-    vector: Union[str, ogr.DataSource, gdal.Dataset],
-    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
+    vector: Union[str, ogr.DataSource],
+    clip_geom: Union[str, ogr.DataSource],
     out_path: Optional[str] = None,
     to_extent: bool = False,
     target_projection: Optional[Union[str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference]] = None,
     preserve_fid: bool = True,
     promote_to_multi: bool = True,
+    overwrite: bool = True,
 ) -> str:
     """ Internal. """
-    input_path = utils_gdal._get_path_from_dataset(vector)
+    assert isinstance(vector, (str, ogr.DataSource)), "Invalid vector input."
+    assert isinstance(clip_geom, (str, ogr.DataSource)), "Invalid clip_geom input."
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath(
-            input_path, add_uuid=True, prefix="", suffix="_clip",
-        )
+        out_path = utils_path._get_temp_filepath(vector, suffix="_clipped", ext="gpkg")
+    else:
+        assert utils_path._check_is_valid_output_filepath(out_path, overwrite), "Invalid vector output path."
 
-    assert utils_path._check_is_valid_filepath(input_path), "Invalid input path"
+    input_path = utils_gdal._get_path_from_dataset(vector)
 
     options = []
 
@@ -50,15 +52,14 @@ def _vector_clip(
     geometry_to_clip = None
     if utils_gdal._check_is_vector(clip_geom):
         if to_extent:
-            extent = core_vector._vector_to_metadata(clip_geom)["get_bbox_vector"]() # pylint: disable=not-callable
+            clip_geom_meta = core_vector._get_basic_metadata_vector(clip_geom)
+            bbox = clip_geom_meta["bbox"]
+            proj = clip_geom_meta["projection_osr"]
+            extent = utils_bbox._get_vector_from_bbox(bbox, proj)
             geometry_to_clip = extent
             clear_memory = True
         else:
             geometry_to_clip = core_vector._vector_open(clip_geom)
-    elif utils_gdal._check_is_raster(clip_geom):
-        extent = core_raster._get_basic_metadata_raster(clip_geom)["get_bbox_vector"]() # pylint: disable=not-callable
-        geometry_to_clip = extent
-        clear_memory = True
     else:
         raise ValueError(f"Invalid input in clip_geom, unable to parse: {clip_geom}")
 
@@ -68,10 +69,9 @@ def _vector_clip(
     if clear_memory:
         utils_gdal.delete_dataset_if_in_memory(clip_vector_path)
 
-    x_min, x_max, y_min, y_max = core_vector._vector_to_metadata(clip_vector_reprojected)["extent"]
+    x_min, x_max, y_min, y_max = core_vector._get_basic_metadata_vector(clip_vector_reprojected)["bbox"]
 
     options.append(f"-spat {x_min} {y_min} {x_max} {y_max}")
-
     options.append(f'-clipsrc "{clip_vector_reprojected}"')
 
     if promote_to_multi:
@@ -105,7 +105,7 @@ def _vector_clip(
 
 def vector_clip(
     vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
-    clip_geom: Union[str, ogr.DataSource, gdal.Dataset],
+    clip_geom: Union[str, ogr.DataSource],
     out_path: Optional[str] = None,
     to_extent: bool = False,
     target_projection: Optional[Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]] = None,
@@ -113,7 +113,6 @@ def vector_clip(
     prefix: str = "",
     suffix: str = "",
     add_uuid: bool = False,
-    allow_lists: bool = True,
     overwrite: bool = True,
     promote_to_multi: bool = True,
 ) -> Union[str, List[str]]:
@@ -125,7 +124,7 @@ def vector_clip(
     vector : Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]]
         Vector(s) to clip.
 
-    clip_geom : Union[str, ogr.DataSource, gdal.Dataset]
+    clip_geom : Union[str, ogr.DataSource]
         Vector to clip with.
 
     out_path : Optional[str], optional
@@ -149,9 +148,6 @@ def vector_clip(
     add_uuid : bool, optional
         Add a uuid to the output path. Default: False
 
-    allow_lists : bool, optional
-        Allow lists as input. Default: True
-
     overwrite : bool, optional
         Overwrite output. Default: True
 
@@ -172,17 +168,11 @@ def vector_clip(
     utils_base._type_check(prefix, [str], "prefix")
     utils_base._type_check(suffix, [str], "suffix")
     utils_base._type_check(add_uuid, [bool], "add_uuid")
-    utils_base._type_check(allow_lists, [bool], "allow_lists")
 
-    if not allow_lists and isinstance(vector, (list, tuple)):
-        raise ValueError("Lists are not allowed for vector.")
-
-    vector_list = utils_base._get_variable_as_list(vector)
-
-    assert utils_gdal._check_is_vector_list(vector_list), f"Invalid vector in list: {vector_list}"
-
-    path_list = utils_io._get_output_paths(
-        vector_list,
+    input_is_list = isinstance(vector, list)
+    input_data = utils_io._get_input_paths(vector, "vector")
+    output_data = utils_io._get_output_paths(
+        input_data,
         out_path,
         prefix=prefix,
         suffix=suffix,
@@ -190,21 +180,24 @@ def vector_clip(
         overwrite=overwrite,
     )
 
+    utils_path._delete_if_required_list(output_data, overwrite)
+
     output = []
-    for index, in_vector in enumerate(vector_list):
+    for idx, in_vector in enumerate(input_data):
         output.append(
             _vector_clip(
                 in_vector,
                 clip_geom,
-                out_path=path_list[index],
+                out_path=output_data[idx],
                 to_extent=to_extent,
                 target_projection=target_projection,
                 preserve_fid=preserve_fid,
                 promote_to_multi=promote_to_multi,
+                overwrite=overwrite,
             )
         )
 
-    if isinstance(vector, list):
+    if input_is_list:
         return output
 
     return output[0]

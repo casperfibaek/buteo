@@ -577,14 +577,16 @@ def _check_is_vector_empty(
 
     for layer in range(0, layer_count):
         layer = vector.GetLayerByIndex(layer)
+        layer.ResetReading()
 
         if layer.GetFeatureCount() > 0:
             feature_count = layer.GetFeatureCount()
 
-            for feature in range(0, feature_count):
+            for feature in range(feature_count):
                 feature = layer.GetNextFeature()
 
-                if feature.GetGeometryRef() is not None:
+                # TODO: Expand this to check geometry.
+                if feature is not None:
                     return False
 
     return True

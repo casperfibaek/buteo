@@ -72,7 +72,6 @@ def vector_reproject(
     prefix: str = "",
     suffix: str = "",
     add_uuid: bool = False,
-    allow_lists: bool = True,
     overwrite: bool = True,
 ):
     """
@@ -101,9 +100,6 @@ def vector_reproject(
     add_uuid : bool, optional
         Add a uuid to the output path., default: False
 
-    allow_lists : bool, optional
-        Allow lists as input., default: True
-
     overwrite : bool, optional
         Is it possible to overwrite the out_path if it exists., default: True
 
@@ -119,18 +115,13 @@ def vector_reproject(
     utils_base._type_check(prefix, [str], "prefix")
     utils_base._type_check(suffix, [str], "suffix")
     utils_base._type_check(add_uuid, [bool], "add_uuid")
-    utils_base._type_check(allow_lists, [bool], "allow_lists")
     utils_base._type_check(overwrite, [bool], "overwrite")
 
-    if not allow_lists and isinstance(vector, list):
-        raise ValueError("Lists are not allowed when allow_lists is False.")
+    input_is_list = isinstance(vector, list)
 
-    vector_list = utils_base._get_variable_as_list(vector)
-
-    assert utils_gdal._check_is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
-
-    path_list = utils_io._get_output_paths(
-        vector_list,
+    input_data = utils_io._get_input_paths(vector, "vector")
+    output_data = utils_io._get_output_paths(
+        input_data,
         out_path,
         prefix=prefix,
         suffix=suffix,
@@ -138,15 +129,15 @@ def vector_reproject(
         overwrite=overwrite,
     )
 
-    assert utils_path._check_is_valid_output_filepath(path_list, overwrite=overwrite), "Invalid output path generated."
+    utils_path._delete_if_required_list(output_data, overwrite)
 
     output = []
-    for index, in_vector in enumerate(vector_list):
+    for idx, in_vector in enumerate(input_data):
         output.append(
             _vector_reproject(
                 in_vector,
                 projection,
-                out_path=path_list[index],
+                out_path=output_data[idx],
                 prefix=prefix,
                 suffix=suffix,
                 add_uuid=add_uuid,
@@ -154,7 +145,7 @@ def vector_reproject(
             )
         )
 
-    if isinstance(vector, list):
+    if input_is_list:
         return output
 
     return output[0]

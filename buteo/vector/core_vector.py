@@ -27,7 +27,6 @@ from buteo.utils import (
     utils_gdal,
     utils_bbox,
     utils_path,
-    utils_translate,
     utils_projection,
 )
 
@@ -266,8 +265,8 @@ def _get_basic_metadata_vector(
         "x_max": vector_bbox[1],
         "y_min": vector_bbox[2],
         "y_max": vector_bbox[3],
-        "area_bounds_latlng": bounds_area,
-        "area_bounds": area,
+        "area_bounds": bounds_area,
+        "area": area,
         "layer_count": layer_count,
         "layers": layers,
     }
@@ -341,7 +340,7 @@ def _vector_filter(
 def vector_filter(
     vector: Union[ogr.DataSource, str, List[Union[ogr.DataSource, str]]],
     filter_function: Callable,
-    out_path: Optional[str] = None,
+    out_path: Optional[Union[str, List[str]]] = None,
     process_layer: int = -1,
     prefix: str = "",
     suffix: str = "",
@@ -603,7 +602,7 @@ def vector_get_attribute_table(
 def vector_filter_layer(
     vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
     layer_name_or_idx: Union[str, int],
-    out_path: Optional[str] = None,
+    out_path: Optional[Union[str, List[str]]] = None,
     prefix: str = "",
     suffix: str = "_layer",
     add_uuid: bool = False,
@@ -678,6 +677,66 @@ def vector_filter_layer(
         ref = None
 
         output.append(out_path)
+
+    if input_is_list:
+        return output
+
+    return output[0]
+
+
+def vector_copy(
+    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
+    out_path: Optional[Union[str, List[str]]] = None,
+) -> Union[str, List[str]]:
+    """
+    Creates a copy of a vector.
+
+    Parameters
+    ----------
+    vector : Union[str, ogr.DataSource, List[str, ogr.DataSource]]
+        Vector layer(s) or path(s) to vector layer(s).
+
+    out_path : Optional[str], optional
+        The path to the output vector. If None, will create a new file in the same directory as the input vector. Default: None.
+
+    Returns
+    -------
+    out_path : str
+        Path to the output vector.
+    """
+    assert isinstance(vector, (str, ogr.DataSource)), "vector must be a string or an ogr.DataSource object."
+    assert isinstance(out_path, (str, list, type(None))), "out_path must be a string, list, or None."
+
+    input_is_list = isinstance(vector, list)
+
+    input_list = utils_io._get_input_paths(vector, "vector")
+    output_list = utils_io._get_output_paths(
+        input_list,
+        out_path,
+    )
+
+    utils_path._delete_if_required_list(output_list, overwrite=True)
+
+    output = []
+    for idx, in_vector in enumerate(input_list):
+        ref = _vector_open(in_vector)
+
+        driver_name = utils_gdal._get_vector_driver_name_from_path(output_list[idx])
+        driver = ogr.GetDriverByName(driver_name)
+
+        destination = driver.CreateDataSource(output_list[idx])
+        layers = ref.GetLayerCount()
+
+        for layer_index in range(layers):
+            layer = ref.GetLayer(layer_index)
+            layer.ResetReading()
+            destination.CopyLayer(layer, layer.GetName(), ["OVERWRITE=YES"])
+
+        destination.FlushCache()
+        destination = None
+        ref = None
+
+        output.append(output_list[idx])
 
     if input_is_list:
         return output

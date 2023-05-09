@@ -54,7 +54,7 @@ def vector_split_by_fid(
     assert utils_path._check_dir_exists(out_folder) or out_folder is None, "out_folder does not exist."
 
     opened = core_vector.vector_open(vector)
-    metadata = core_vector.vector_to_metadata(opened)
+    metadata = core_vector._get_basic_metadata_vector(opened)
 
     out_paths = []
 

@@ -137,9 +137,11 @@ def create_sample_vector(
                     feature.SetField(attr["name"], attr["values"][i])
 
             layer.CreateFeature(feature)
-            feature = None
+
+        layer.SyncToDisk()
 
     vector_ds.FlushCache()
     vector_ds = None
+    layer = None
 
     return vector_path

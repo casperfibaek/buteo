@@ -12,53 +12,77 @@ from typing import Union, Optional, List
 from osgeo import ogr
 
 # Internal
-from buteo.utils import utils_gdal, utils_base, utils_path, utils_io
+from buteo.utils import utils_base, utils_path, utils_io
 from buteo.vector import core_vector
 
 
+# TODO: Do this with a vectorized approach - multicore.
 def _vector_buffer(
     vector: Union[str, ogr.DataSource],
-    distance: Union[int, float],
+    distance: Union[int, float, str],
     out_path: Optional[str] = None,
+    in_place: bool = False,
 ) -> str:
     """ Internal. """
+    assert isinstance(vector, (str, ogr.DataSource)), "Invalid vector input."
+    assert isinstance(distance, (int, float, str)), "Invalid distance input."
+    assert isinstance(out_path, (str, type(None))), "Invalid output path input."
+    if isinstance(distance, (int, float)):
+        assert distance >= 0.0, "Distance must be positive."
+
     if out_path is None:
-        out_path = utils_path._get_output_path(
-            utils_gdal._get_path_from_dataset(vector),
-            prefix="",
-            suffix="_buffer",
-            add_uuid=True,
-        )
+        out_path = utils_path._get_temp_filepath(vector, suffix="_buffered", ext="gpkg")
+    else:
+        assert utils_path._check_is_valid_output_filepath(vector, out_path), "Invalid vector output path."
 
-    assert utils_path._check_is_valid_filepath(out_path), "Invalid output path"
+    if not in_place:
+        read = core_vector.vector_open(core_vector.vector_copy(vector, out_path))
+    else:
+        read = core_vector.vector_open(vector)
 
-    read = core_vector.vector_open(vector)
+    metadata = core_vector._get_basic_metadata_vector(read)
 
-    driver = ogr.GetDriverByName(utils_gdal._get_vector_driver_name_from_path(out_path))
-    destination = driver.CreateDataSource(out_path)
-
-    vector_metadata = core_vector._vector_to_metadata(read)
-
-    for layer_idx in range(0, len(vector_metadata["layers"])):
-        layer_name = vector_metadata["layers"][layer_idx]["layer_name"]
+    for layer_meta in metadata["layers"]:
+        layer_name = layer_meta["layer_name"]
         vector_layer = read.GetLayer(layer_name)
-        destination.CopyLayer(vector_layer, layer_name, ["OVERWRITE=YES"])
 
-        field_names = vector_metadata["layers"][layer_idx]["field_names"]
+        field_names = layer_meta["field_names"]
+
         if isinstance(distance, str):
             if distance not in field_names:
                 raise ValueError(f"Attribute to buffer by not in vector field names: {distance} not in {field_names}")
 
-            sql = f"update {layer_name} set geom=ST_Buffer(geom, {layer_name}.{distance})"
-        else:
-            sql = f"update {layer_name} set geom=ST_Buffer(geom, {distance})"
+        feature_count = vector_layer.GetFeatureCount()
 
-        destination.ExecuteSQL(sql, dialect="SQLITE")
+        vector_layer.ResetReading()
+        for _ in range(feature_count):
+            feature = vector_layer.GetNextFeature()
 
-    if destination is None:
-        raise RuntimeError("Error while running intersect.")
+            if isinstance(distance, str):
+                buffer_distance = float(feature.GetField(distance))
+            else:
+                buffer_distance = float(distance)
 
-    destination.FlushCache()
+            if feature is None:
+                break
+
+            feature_geom = feature.GetGeometryRef()
+
+            if feature_geom is None:
+                continue
+
+            try:
+                feature.SetGeometry(feature_geom.Buffer(buffer_distance))
+                vector_layer.SetFeature(feature)
+            except ValueError:
+                continue
+
+        vector_layer.GetExtent()
+        vector_layer.ResetReading()
+        vector_layer.SyncToDisk()
+
+    read.FlushCache()
+    read = None
 
     return out_path
 
@@ -66,11 +90,12 @@ def _vector_buffer(
 def vector_buffer(
     vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
     distance: Union[int, float],
-    out_path: Optional[str] = None,
+    out_path: Optional[Union[str, List[str]]] = None,
     prefix: str = "",
     suffix: str = "",
     add_uuid: bool = False,
-    allow_lists: bool = True,
+    add_timestamp: bool = False,
+    in_place: bool = False,
     overwrite: bool = True,
 ) -> Union[str, List[str]]:
     """
@@ -96,8 +121,11 @@ def vector_buffer(
     add_uuid : bool, optional
         Add UUID to the output path. Default: False
 
-    allow_lists : bool, optional
-        Allow lists of vectors as input. Default: True
+    add_timestamp : bool, optional
+        Add timestamp to the output path. Default: False
+    
+    in_place : bool, optional
+        If True, overwrites the input vector. Default: False
 
     overwrite : bool, optional
         Overwrite output if it already exists. Default: True
@@ -107,40 +135,44 @@ def vector_buffer(
     Union[str, List[str]]
         Output path(s) of clipped vector(s).
     """
-    utils_base._type_check(vector, [str, ogr.DataSource, List[Union[str, ogr.DataSource]]], "vector")
+    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
     utils_base._type_check(distance, [int, float, str], "distance")
     utils_base._type_check(out_path, [str, None], "out_path")
     utils_base._type_check(prefix, [str], "prefix")
     utils_base._type_check(suffix, [str], "suffix")
     utils_base._type_check(add_uuid, [bool], "add_uuid")
-    utils_base._type_check(allow_lists, [bool], "allow_lists")
+    utils_base._type_check(add_timestamp, [bool], "add_timestamp")
+    utils_base._type_check(in_place, [bool], "in_place")
+    utils_base._type_check(overwrite, [bool], "overwrite")
 
-    if not allow_lists and isinstance(vector, (list, tuple)):
-        raise ValueError("Lists are not allowed for vector.")
-
-    vector_list = utils_base._get_variable_as_list(vector)
-
-    assert utils_gdal._check_is_vector_list(vector_list), f"Invalid vector in list: {vector_list}"
-    path_list = utils_io._get_output_paths(
-        vector_list,
+    input_is_list = isinstance(vector, list)
+    input_data = utils_io._get_input_paths(vector, "vector")
+    output_data = utils_io._get_output_paths(
+        input_data,
         out_path,
+        in_place=in_place,
         prefix=prefix,
         suffix=suffix,
-        add_uuid=add_uuid or out_path is None,
+        add_uuid=add_uuid,
+        add_timestamp=add_timestamp,
         overwrite=overwrite,
     )
 
+    if not in_place:
+        utils_path._delete_if_required_list(output_data, overwrite)
+
     output = []
-    for index, in_vector in enumerate(vector_list):
+    for idx, in_vector in enumerate(input_data):
         output.append(
             _vector_buffer(
                 in_vector,
                 distance,
-                out_path=path_list[index],
+                out_path=output_data[idx],
+                in_place=in_place,
             )
         )
 
-    if isinstance(vector, list):
+    if input_is_list:
         return output
 
     return output[0]
