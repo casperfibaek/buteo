@@ -207,7 +207,7 @@ class AugmentationDataset():
 
             # Augmentations that only apply to image
             else:
-                x = func(x, y, channel_last=channel_last, inplace=True, **kwargs)
+                x = func(x, channel_last=channel_last, inplace=True, **kwargs)
 
         # Apply callback if specified
         if self.callback is not None:

@@ -4,6 +4,7 @@ suited to remote sensing imagery.
 """
 # Standard library
 import sys; sys.path.append("../../")
+import random
 from typing import Optional, Tuple, Any
 
 # External
@@ -26,12 +27,11 @@ from buteo.array.convolution_kernels import (
 
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_rotation(
     X: np.ndarray,
-    k: Optional[int] = None,
+    k: int = -1,
     channel_last: bool = True,
-    inplace=False,
+    inplace = False,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """
     Randomly rotate the image by 90 degrees intervals. Images
@@ -43,7 +43,7 @@ def augmentation_rotation(
         The image to rotate.
 
     k : int, optional
-        The number of 90 degree intervals to rotate by, default: None.
+        The number of 90 degree intervals to rotate by, default: -1 (random).
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
@@ -59,18 +59,20 @@ def augmentation_rotation(
     if not inplace:
         X = X.copy()
 
-    random_k = np.random.randint(1, 4) if k is None else k
+    if k == -1:
+        random_k = random.choice([1, 2, 3])
+    else:
+        random_k = k
 
     X[:] = _rotate_arr(X, random_k, channel_last)
 
     return X
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_rotation_xy(
     X: np.ndarray,
     y: np.ndarray,
-    k: Optional[int] = None,
+    k: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -87,7 +89,7 @@ def augmentation_rotation_xy(
         The label to rotate.
 
     k : int, optional
-        The number of 90 degree intervals to rotate by, default: None.
+        The number of 90 degree intervals to rotate by, default: -1 (random).
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
@@ -104,7 +106,10 @@ def augmentation_rotation_xy(
         X = X.copy()
         y = y.copy()
 
-    random_k = np.random.randint(1, 4) if k is None else k
+    if k == -1:
+        random_k = random.choice([1, 2, 3])
+    else:
+        random_k = k
 
     X[:] = _rotate_arr(X, random_k, channel_last)
     y[:] = _rotate_arr(y, random_k, channel_last)
@@ -112,10 +117,9 @@ def augmentation_rotation_xy(
     return X, y
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_mirror(
     X: np.ndarray,
-    k: Optional[int] = None,
+    k: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
@@ -129,7 +133,7 @@ def augmentation_mirror(
         The image to mirror.
 
     k : int, optional
-        If None, randomly mirrors the image along the horizontal or vertical axis.
+        If -1, randomly mirrors the image along the horizontal or vertical axis.
         1. mirrors the image along the horizontal axis.
         2. mirrors the image along the vertical axis.
         3. mirrors the image along both the horizontal and vertical axis, default: None.
@@ -148,18 +152,20 @@ def augmentation_mirror(
     if not inplace:
         X = X.copy()
 
-    random_k = np.random.randint(1, 4) if k is None else k
+    if k == -1:
+        random_k = random.choice([1, 2, 3])
+    else:
+        random_k = k
 
     X[:] = _mirror_arr(X, random_k, channel_last)
 
     return X
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_mirror_xy(
     X: np.ndarray,
     y: np.ndarray,
-    k: Optional[int] = None,
+    k: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -175,7 +181,7 @@ def augmentation_mirror_xy(
         The label to mirror.
 
     k : int, optional
-        If None, randomly mirrors the image along the horizontal or vertical axis.
+        If -1, randomly mirrors the image along the horizontal or vertical axis.
         1. mirrors the image along the horizontal axis.
         2. mirrors the image along the vertical axis.
         3. mirrors the image along both the horizontal and vertical axis, default: None.
@@ -195,7 +201,10 @@ def augmentation_mirror_xy(
         X = X.copy()
         y = y.copy()
 
-    random_k = np.random.randint(1, 4) if k is None else k
+    if k == -1:
+        random_k = random.choice([1, 2, 3])
+    else:
+        random_k = k
 
     X[:] = _mirror_arr(X, random_k, channel_last)
     y[:] = _mirror_arr(y, random_k, channel_last)

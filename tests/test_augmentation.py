@@ -1,11 +1,12 @@
 """ Tests for ai/augmentation.py """
-
+# pylint: disable=missing-function-docstring, bare-except
 
 # Standard library
 import sys; sys.path.append("../")
 
 # External
 import numpy as np
+import os
 
 # Internal
 from buteo.ai.augmentation_funcs import (
@@ -24,7 +25,53 @@ from buteo.ai.augmentation_funcs import (
     augmentation_cutmix,
     augmentation_mixup,
 )
+from buteo.ai.augmentation import AugmentationDataset
+from buteo.raster.core_raster_io import raster_to_array
+from buteo.array.patches import array_to_patches
+from buteo.ai.selection import split_train_val
 
+
+test_image = os.path.join(os.path.dirname(__file__), "test_image_rgb_8bit.tif")
+
+def test_augmentation_dataset():
+    arr = raster_to_array(test_image, filled=True, fill_value=0.0, cast=np.float32)
+    patches = array_to_patches(arr, 256, n_offsets=1)
+    x_train, x_val, y_train, y_val = split_train_val(patches, patches, val_size=0.2, random_state=42)
+    dataset = AugmentationDataset(x_train, y_train, augmentations=[
+        {"name": "rotation_xy", "chance": 0.5},
+        {"name": "mirror_xy", "chance": 0.5},
+    ])
+    for idx, (X, y) in enumerate(dataset):
+        assert X.shape == (3, 256, 256)
+        assert y.shape == (3, 256, 256)
+
+        if idx > 10:
+            break
+
+    dataset = AugmentationDataset(x_val, y_val, augmentations=[
+        {"name": "rotation_xy", "chance": 1.0},
+        {"name": "mirror_xy", "chance": 1.0},
+        {"name": "noise_uniform", "chance": 1.0, "additive": False },
+        {"name": "noise_uniform", "chance": 1.0, "additive": True },
+        {"name": "noise_normal", "chance": 1.0, "additive": False },
+        {"name": "noise_normal", "chance": 1.0, "additive": True },
+        {"name": "channel_scale", "chance": 1.0 },
+        {"name": "contrast", "chance": 1.0 },
+        {"name": "drop_pixel", "chance": 1.0, "drop_probability": 0.1 },
+        {"name": "drop_channel", "chance": 1.0, "drop_value": 0.0 },
+        {"name": "blur", "chance": 1.0 },
+        {"name": "sharpen", "chance": 1.0 },
+        {"name": "misalign", "chance": 1.0, "max_offset": 10 },
+        {"name": "cutmix", "chance": 1.0 },
+        {"name": "mixup", "chance": 1.0 },
+    ])
+
+    for idx, (X, y) in enumerate(dataset):
+        assert X.shape == (3, 256, 256)
+        assert y.shape == (3, 256, 256)
+
+        if idx > 10:
+            break
 
 
 def test_augmentation_rotation():
