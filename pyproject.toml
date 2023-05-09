@@ -1,10 +1,10 @@
 [build-system]
-requires = ["flit_core>=3.8.0", "numba>=0.56.4", "psutil>=5.4.8", "PyYAML>=6.0", "tqdm>=4.62.3"]
+requires = ["flit_core>=3.8.0", "numba>=0.57.0", "psutil>=5.9.5", "PyYAML>=6.0", "tqdm>=4.65.0"]
 build-backend = "flit_core.buildapi"
 
 [project]
 name = "buteo"
-version = "0.9.3"
+version = "0.9.4"
 authors = [
   { name="Casper Fibaek", email="casperfibaek@gmail.com" },
 ]
@@ -18,9 +18,9 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  "numba>=0.56",
-  "psutil>=5.4.8",
-  "tqdm>=4.62.3",
+  "numba>=0.57",
+  "psutil>=5.9.5",
+  "tqdm>=4.65.0",
 ]
 
 [project.urls]

@@ -9,7 +9,6 @@ import numpy as np
 from numba import jit
 
 
-@jit(nopython=True)
 def channel_first_to_last(arr: np.ndarray) -> np.ndarray:
     """
     Converts a numpy array from channel first to channel last format.
@@ -40,7 +39,6 @@ def channel_first_to_last(arr: np.ndarray) -> np.ndarray:
     return arr
 
 
-@jit(nopython=True)
 def channel_last_to_first(arr: np.ndarray) -> np.ndarray:
     """
     Converts a numpy array from channel last to channel first format.
