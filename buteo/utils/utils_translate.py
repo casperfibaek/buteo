@@ -585,12 +585,13 @@ def _safe_numpy_casting(
     if arr.dtype == target_dtype:
         return arr
 
+    min_val, max_val = _get_range_for_numpy_datatype(target_dtype.name)
     outarr = np.zeros(arr.shape, dtype=target_dtype)
 
     if _check_is_int_numpy_dtype(target_dtype) and not _check_is_int_numpy_dtype(arr.dtype):
-        arr = np.rint(arr)
-
-    min_val, max_val = _get_range_for_numpy_datatype(target_dtype.name)
-    outarr = np.clip(outarr, min_val, max_val)
+        outarr[:] = np.rint(arr)
+        np.clip(outarr, min_val, max_val, out=outarr)
+    else:
+        np.clip(arr, min_val, max_val, out=outarr)
 
     return outarr
