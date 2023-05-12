@@ -7,18 +7,23 @@ import buteo as beo
 from osgeo import gdal
 
 FOLDER = "./features/"
-img = os.path.join(FOLDER, "prediction_5.tif")
 
-arr = beo.raster_to_array(img, filled=True, fill_value=0.0, cast=np.float32)
-arr = np.ones_like(arr)
+path = os.path.join(FOLDER, "prediction_2_error.tif")
+arr = beo.raster_to_array(path, filled=True, fill_value=0.0, cast=np.float32)
 
 pred = beo.predict_array(
     arr,
-    callback=lambda x: x,
+    callback=lambda x: x[:, :, :, 0:1],
     tile_size=64,
     n_offsets=3,
-    merge_method="median",
+    merge_method="mad",
     edge_weighted=True,
+)
+
+beo.array_to_raster(
+    pred,
+    reference=path,
+    out_path=os.path.join(FOLDER, "prediction_2_error.tif"),
 )
 
 print(np.any(np.isnan(pred)))

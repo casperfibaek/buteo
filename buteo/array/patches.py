@@ -708,11 +708,10 @@ def array_to_patches(
     if border_check:
         borders_y, borders_x = _borders_are_necessary_list(arr, tile_size, offsets)
 
-        if borders_y:
-            offsets.append((arr.shape[0] - tile_size, 0))
-        if borders_x:
+        # TODO: Investigate how to handle smarter. Currently we might get duplicates.
+        if borders_y or borders_x:
             offsets.append((0, arr.shape[1] - tile_size))
-        if borders_y and borders_x:
+            offsets.append((arr.shape[0] - tile_size, 0))
             offsets.append((arr.shape[0] - tile_size, arr.shape[1] - tile_size))
 
     # Initialize an empty list to store the generated patches
@@ -776,11 +775,10 @@ def predict_array(
     if border_check:
         borders_y, borders_x = _borders_are_necessary_list(arr, tile_size, offsets)
 
-        if borders_y:
-            offsets.append((arr.shape[0] - tile_size, 0))
-        if borders_x:
+        # TODO: Investigate how to handle smarter. Currently we might get duplicates.
+        if borders_y or borders_x:
             offsets.append((0, arr.shape[1] - tile_size))
-        if borders_y and borders_x:
+            offsets.append((arr.shape[0] - tile_size, 0))
             offsets.append((arr.shape[0] - tile_size, arr.shape[1] - tile_size))
 
     # Test output dimensions of prediction

@@ -6,7 +6,6 @@ import sys; sys.path.append("../")
 
 # External
 import numpy as np
-import os
 
 # Internal
 from buteo.ai.augmentation_funcs import (
