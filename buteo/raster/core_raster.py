@@ -173,7 +173,7 @@ def _get_basic_metadata_raster(
         "shape": [dataset.RasterYSize, dataset.RasterXSize, dataset.RasterCount],
         "height": dataset.RasterYSize,
         "width": dataset.RasterXSize,
-        "pixel_size": (abs(transform[1]), (transform[5])),
+        "pixel_size": (abs(transform[1]), abs((transform[5]))),
         "pixel_width": abs(transform[1]),
         "pixel_height": abs(transform[5]),
         "origin": (transform[0], transform[3]),

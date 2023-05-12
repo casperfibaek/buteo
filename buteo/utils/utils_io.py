@@ -70,18 +70,24 @@ def _get_input_paths(
         raise TypeError("Invalid type for input data.")
 
     if not utils_path._check_is_valid_filepath_list(inputs):
-        raise ValueError("Invalid input data.")
+        raise ValueError(f"Unable to locate input data. {str(inputs)}")
 
     inputs = [utils_path._parse_path(val) for val in inputs]
+
+    for val in inputs:
+        if not utils_path._check_file_exists(val):
+            raise ValueError(f"Unable to locate input data. {str(val)}")
 
     if input_type == "raster":
         for val in inputs:
             if not utils_gdal._check_is_raster(val):
                 raise TypeError("Invalid raster type for input data.")
+
     elif input_type == "vector":
         for val in inputs:
             if not utils_gdal._check_is_vector(val):
                 raise TypeError("Invalid vector type for input data.")
+
     else:
         for val in inputs:
             if not utils_gdal._check_is_raster_or_vector(val):

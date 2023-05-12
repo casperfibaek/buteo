@@ -79,7 +79,7 @@ def _merge_weighted_median(
         for idx_x in range(arr.shape[2]):
             for idx_band in range(arr.shape[3]):
 
-                # Flatten the input and weight arrays
+               # Flatten the input and weight arrays
                 values = arr[:, idx_y, idx_x, idx_band].flatten()
                 weights = arr_weight[:, idx_y, idx_x, 0].flatten()
 
@@ -421,7 +421,7 @@ def _get_offsets(
     n_offsets: int,
 ):
     """
-    Generate a list of offset pairs for a given tile size and number of offsets in x and y dimensions.
+    Generate a list of offset pairs for a given tile size and number of offsets in y and x dimensions.
 
     Args:
         tile_size (int): The size of each tile.
@@ -452,6 +452,7 @@ def _borders_are_necessary(
     """
     Checks if borders are necessary for the given array.
     Width and height are returned as a tuple.
+    order is (y, x).
 
     Args:
         arr (np.ndarray): The array to be checked.
@@ -521,7 +522,7 @@ def _array_to_patches_single(
     offset: Optional[Union[List[int], Tuple[int, int]]] = None,
 ) -> np.ndarray:
     """
-    Generate patches from an array.
+    Generate patches from an array. Offsets in (y, x) order.
 
     Args:
         arr (np.ndarray): A numpy array to be divided into patches.
@@ -708,9 +709,11 @@ def array_to_patches(
         borders_y, borders_x = _borders_are_necessary_list(arr, tile_size, offsets)
 
         if borders_y:
-            offsets.append([arr.shape[0] - tile_size, 0])
+            offsets.append((arr.shape[0] - tile_size, 0))
         if borders_x:
-            offsets.append([0, arr.shape[1] - tile_size])
+            offsets.append((0, arr.shape[1] - tile_size))
+        if borders_y and borders_x:
+            offsets.append((arr.shape[0] - tile_size, arr.shape[1] - tile_size))
 
     # Initialize an empty list to store the generated patches
     patches = []
@@ -774,9 +777,11 @@ def predict_array(
         borders_y, borders_x = _borders_are_necessary_list(arr, tile_size, offsets)
 
         if borders_y:
-            offsets.append([arr.shape[0] - tile_size, 0])
+            offsets.append((arr.shape[0] - tile_size, 0))
         if borders_x:
-            offsets.append([0, arr.shape[1] - tile_size])
+            offsets.append((0, arr.shape[1] - tile_size))
+        if borders_y and borders_x:
+            offsets.append((arr.shape[0] - tile_size, arr.shape[1] - tile_size))
 
     # Test output dimensions of prediction
     test_patch = arr[np.newaxis, :tile_size, :tile_size, :]

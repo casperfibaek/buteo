@@ -36,7 +36,7 @@ def test_open_raster_list():
 
 def test_open_raster_invalid_input():
     """ Test: Open raster file - invalid. """
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         core_raster.raster_open("non_existent_file.tif", writeable=False)
 
 def test_open_raster_write_mode():
