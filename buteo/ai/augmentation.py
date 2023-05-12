@@ -134,6 +134,14 @@ class AugmentationDataset():
         self.channel_last = False
         self.output_is_channel_last = output_is_channel_last
 
+        for aug in self.augmentations:
+            aug_name = aug["name"]
+            aug_change = aug["chance"] if aug["chance"] is not None else aug["p"]
+
+            assert aug_change is not None, "Augmentation chance cannot be None."
+            assert 0 <= aug_change <= 1, "Augmentation chance must be between 0 and 1."
+            assert aug_name is not None, "Augmentation name cannot be None."
+
     def __len__(self):
         return len(self.x_train)
 
@@ -144,7 +152,7 @@ class AugmentationDataset():
         # Apply augmentations
         for aug in self.augmentations:
             aug_name = aug["name"]
-            aug_change = aug["chance"]
+            aug_change = aug["chance"] if aug["chance"] is not None else aug["p"]
             func = None
 
             # Check if augmentation should be applied
@@ -191,7 +199,7 @@ class AugmentationDataset():
                 raise ValueError(f"Augmentation {aug['name']} not supported.")
 
             channel_last = self.channel_last
-            kwargs = {key: value for key, value in aug.items() if key not in ["name", "chance", "inplace"]}
+            kwargs = {key: value for key, value in aug.items() if key not in ["name", "chance", "inplace", "p"]}
 
             # Augmentations that apply to both image and label
             if aug_name in ["rotation_xy", "mirror_xy", "blur_xy", "sharpen_xy"]:

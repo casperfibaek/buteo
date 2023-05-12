@@ -7,10 +7,10 @@ import buteo as beo
 from osgeo import gdal
 
 FOLDER = "./features/"
-img = os.path.join(FOLDER, "test_image_rgb_8bit.tif")
+img = os.path.join(FOLDER, "prediction_5.tif")
 
 arr = beo.raster_to_array(img, filled=True, fill_value=0.0, cast=np.float32)
-arr[:] = arr / 255.0
+arr = np.ones_like(arr)
 
 pred = beo.predict_array(
     arr,
@@ -20,3 +20,7 @@ pred = beo.predict_array(
     merge_method="median",
     edge_weighted=True,
 )
+
+print(np.any(np.isnan(pred)))
+
+# import pdb; pdb.set_trace()

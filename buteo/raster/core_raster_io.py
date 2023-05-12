@@ -239,6 +239,9 @@ def raster_to_array(
 
                 data = np.ma.getdata(data.filled(fill_value))
 
+            elif filled:
+                np.nan_to_num(data, nan=fill_value, copy=False)
+
             if cast is not None:
                 output_array[:, :, channel] = utils_translate._safe_numpy_casting(data, dtype)
             else:
