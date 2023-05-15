@@ -8,6 +8,8 @@ When using, please pin the version of Buteo you are using to avoid breaking chan
 
 For documentation, visit: https://casperfibaek.github.io/buteo/
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7936577.svg)](https://doi.org/10.5281/zenodo.7936577)
+
 **Dependencies** </br>
 `numba` (https://numba.pydata.org/) </br>
 `gdal` (https://gdal.org/) </br>
