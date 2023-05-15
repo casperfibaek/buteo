@@ -1,0 +1,12 @@
+{
+    "creators": [
+        {
+            "orcid": "0000-0002-2475-3563",
+            "affiliation": "European Space Agency",
+            "name": "Fibaek, Casper"
+        }
+    ],
+    "license": "MIT",
+    "title": "Buteo: Geospatial Data Analysis Framework for AI/EO.",
+    "keywords": ["geospatial", "data", "analysis", "framework", "ai", "eo"]
+}
