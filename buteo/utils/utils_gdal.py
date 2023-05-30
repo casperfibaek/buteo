@@ -924,7 +924,7 @@ def _get_raster_size(
 
     Returns
     -------
-    Tuple[float, float]
+    Tuple[float, float] - xres, yres
     """
     assert _check_is_raster(raster), "The target must be a raster."
 
