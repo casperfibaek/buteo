@@ -19,6 +19,7 @@ from buteo.utils import (
     utils_path,
 )
 from buteo.vector import core_vector
+from buteo.vector.metadata import _vector_to_metadata
 from buteo.vector.reproject import _vector_reproject
 from buteo.vector.merge import vector_merge
 
@@ -50,11 +51,11 @@ def _vector_intersect(
     if add_index:
         core_vector.vector_add_index(merged)
 
-    vector_metadata = core_vector._vector_to_metadata(vector)
+    vector_metadata = _vector_to_metadata(vector)
     vector_layername = vector_metadata["layers"][process_layer]["layer_name"]
     vector_geom_col = vector_metadata["layers"][process_layer]["column_geom"]
 
-    clip_geom_metadata = core_vector._vector_to_metadata(geometry_to_clip)
+    clip_geom_metadata = _vector_to_metadata(geometry_to_clip)
     clip_geom_layername = clip_geom_metadata["layers"][process_layer_clip]["layer_name"]
     clip_geom_col = clip_geom_metadata["layers"][process_layer_clip]["column_geom"]
 

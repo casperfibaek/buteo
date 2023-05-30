@@ -8,9 +8,8 @@ from osgeo import gdal
 
 FOLDER = "./features/"
 
-path = os.path.join(FOLDER, "test_image_rgb_8bit.tif")
+path = os.path.join(FOLDER, "test_vector_roads.gpkg")
 
-arr = beo.raster_to_array(path)
-reprojected = beo.raster_reproject(path, path)
-resampled = beo.raster_resample(reprojected, path, resample_alg="bilinear")
-clipped = beo.raster_clip(resampled, path)
+bob = beo.vector_rasterize(path, 0.0001, extent=path)
+
+import pdb; pdb.set_trace()

@@ -24,6 +24,7 @@ from buteo.utils import (
 )
 from buteo.raster.reproject import raster_reproject
 from buteo.vector.reproject import vector_reproject
+from buteo.vector.metadata import _vector_to_metadata
 from buteo.vector import core_vector
 from buteo.raster import core_raster
 
@@ -101,7 +102,7 @@ def vector_rasterize(
     vector_fn = vector
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath(vector, suffix="_rasterized")
+        out_path = utils_path._get_temp_filepath(vector, suffix="_rasterized", ext="tif")
 
     if projection is not None:
         projection = utils_projection.parse_projection(projection)
@@ -128,7 +129,7 @@ def vector_rasterize(
 
     # Open the data source and read in the extent
     source_ds = core_vector._vector_open(vector_fn)
-    source_meta = core_vector._vector_to_metadata(vector_fn)
+    source_meta = _vector_to_metadata(vector_fn)
     source_layer = source_ds.GetLayer()
     x_min, x_max, y_min, y_max = source_layer.GetExtent()
 
@@ -148,7 +149,7 @@ def vector_rasterize(
     y_res = int((y_max - y_min) / pixel_size_y)
 
     if extent is not None:
-        extent_vector = core_vector._vector_to_metadata(extent)
+        extent_vector = _vector_to_metadata(extent)
         extent_dict = extent_vector["bbox_dict"]
         x_res = int((extent_dict["x_max"] - extent_dict["x_min"]) / abs(pixel_size_x))
         y_res = int((extent_dict["y_max"] - extent_dict["y_min"]) / abs(pixel_size_y))
@@ -158,13 +159,16 @@ def vector_rasterize(
     if check_memory is False:
         gdal.SetConfigOption("CHECK_DISK_FREE_SPACE", "FALSE")
 
+    if x_res == 0.0 or y_res == 0.0:
+        raise ValueError("Invalid extent. x_res or y_res is 0.0. Did you consider latlng coordinates?")
+
     try:
         target_ds = gdal.GetDriverByName("GTiff").Create(
             out_path,
             x_res,
             y_res,
             1,
-            utils_translate._translate_dtype_gdal_to_numpy(dtype),
+            utils_translate._translate_dtype_numpy_to_gdal(dtype),
         )
     finally:
         gdal.SetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")

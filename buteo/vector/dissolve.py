@@ -19,6 +19,8 @@ from buteo.utils import (
     utils_path,
 )
 from buteo.vector import core_vector
+from buteo.vector.metadata import _vector_to_metadata
+
 
 
 
@@ -45,7 +47,7 @@ def _vector_dissolve(
     driver = ogr.GetDriverByName(out_format)
 
     ref = core_vector._vector_open(vector_list[0])
-    metadata = core_vector._vector_to_metadata(ref)
+    metadata = _vector_to_metadata(ref)
 
     layers = []
 

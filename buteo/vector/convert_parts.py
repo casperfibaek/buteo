@@ -19,7 +19,7 @@ from buteo.utils import (
     utils_io,
 )
 from buteo.vector import core_vector
-
+from buteo.vector.metadata import _vector_to_metadata
 
 
 def _singlepart_to_multipart(
@@ -45,7 +45,7 @@ def _singlepart_to_multipart(
 
     utils_path._delete_if_required(out_path, overwrite)
 
-    metadata = core_vector._vector_to_metadata(ref)
+    metadata = _vector_to_metadata(ref)
     destination = driver.CreateDataSource(out_path)
 
     for index, layer_meta in enumerate(metadata["layers"]):
@@ -93,7 +93,7 @@ def _multipart_to_singlepart(
 
     utils_path._delete_if_required(out_path, overwrite)
 
-    metadata = core_vector._vector_to_metadata(ref)
+    metadata = _vector_to_metadata(ref)
 
     utils_path._delete_if_required(out_path, overwrite)
 

@@ -14,6 +14,7 @@ from osgeo import ogr
 # Internal
 from buteo.utils import utils_base, utils_gdal, utils_path
 from buteo.vector import core_vector
+from buteo.vector.metadata import _vector_to_metadata
 
 
 
@@ -58,7 +59,7 @@ def vector_merge(
 
     for vector in vector_list:
         ref = core_vector._vector_open(vector)
-        metadata = core_vector._vector_to_metadata(ref)
+        metadata = _vector_to_metadata(ref)
 
         for layer in metadata["layers"]:
             name = layer["layer_name"]

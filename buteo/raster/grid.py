@@ -21,6 +21,7 @@ from buteo.raster.clip import _raster_clip
 from buteo.vector import core_vector
 from buteo.vector.intersect import _vector_intersect
 from buteo.vector.reproject import _vector_reproject
+from buteo.vector.metadata import _vector_to_metadata
 
 
 def raster_to_grid(
@@ -81,13 +82,13 @@ def raster_to_grid(
     utils_base._type_check(verbose, [int], "verbose")
 
     use_grid = core_vector.vector_open(grid)
-    grid_metadata = core_vector._vector_to_metadata(use_grid)
+    grid_metadata = _vector_to_metadata(use_grid)
     raster_metadata = core_raster._get_basic_metadata_raster(raster)
 
     # Reproject raster if necessary.
     if not raster_metadata["projection_osr"].IsSame(grid_metadata["projection_osr"]):
         use_grid = _vector_reproject(grid, raster_metadata["projection_osr"])
-        grid_metadata = core_vector._vector_to_metadata(use_grid)
+        grid_metadata = _vector_to_metadata(use_grid)
 
         if not isinstance(grid_metadata, dict):
             raise RuntimeError("Error while parsing metadata.")
