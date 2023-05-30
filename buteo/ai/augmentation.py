@@ -135,8 +135,19 @@ class AugmentationDataset():
         self.output_is_channel_last = output_is_channel_last
 
         for aug in self.augmentations:
+
+            # Check if augmentation is valid
+            if "name" not in aug:
+                raise ValueError("Augmentation name not specified.")
+
+            if "p" not in aug and "chance" not in aug:
+                raise ValueError("Augmentation chance not specified.")
+
             aug_name = aug["name"]
-            aug_change = aug["chance"] if aug["chance"] is not None else aug["p"]
+            if "chance" in aug:
+                aug_change = aug["chance"]
+            elif "p" in aug:
+                aug_change = aug["p"]
 
             assert aug_change is not None, "Augmentation chance cannot be None."
             assert 0 <= aug_change <= 1, "Augmentation chance must be between 0 and 1."
@@ -152,7 +163,10 @@ class AugmentationDataset():
         # Apply augmentations
         for aug in self.augmentations:
             aug_name = aug["name"]
-            aug_change = aug["chance"] if aug["chance"] is not None else aug["p"]
+            if "chance" in aug:
+                aug_change = aug["chance"]
+            elif "p" in aug:
+                aug_change = aug["p"]
             func = None
 
             # Check if augmentation should be applied

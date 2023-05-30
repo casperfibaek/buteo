@@ -54,9 +54,7 @@ def _raster_resample(
     metadata = core_raster._get_basic_metadata_raster(ref)
 
     if isinstance(target_size, (gdal.Dataset, str)):
-        x_res, y_res, x_pixels, y_pixels = utils_gdal._get_raster_size(
-            target_size, target_in_pixels=target_in_pixels
-        )
+        x_res, y_res, x_pixels, y_pixels = utils_gdal._get_raster_size(target_size)
     elif target_in_pixels:
         x_res = None
         y_res = None

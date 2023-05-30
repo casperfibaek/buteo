@@ -698,6 +698,10 @@ def _check_is_valid_output_path_list(
         return False
 
     for path in output_list:
+        # TODO: This is a hack to avoid checking vsimem paths.
+        if "vsimem" in path:
+            continue
+
         if not _check_is_valid_output_filepath(path, overwrite=overwrite):
             return False
 

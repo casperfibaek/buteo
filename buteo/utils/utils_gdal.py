@@ -922,9 +922,6 @@ def _get_raster_size(
     target : Union[gdal.Dataset, str]
         The target to get the size from.
 
-    target_in_pixels : bool, optional
-        If True, the target is in pixels. Default: False.
-
     Returns
     -------
     Tuple[float, float]
