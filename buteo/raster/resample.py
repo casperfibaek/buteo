@@ -55,6 +55,8 @@ def _raster_resample(
 
     if isinstance(target_size, (gdal.Dataset, str)):
         x_res, y_res = utils_gdal._get_raster_size(target_size)
+        x_pixels = None
+        y_pixels = None
     elif target_in_pixels:
         x_res = None
         y_res = None

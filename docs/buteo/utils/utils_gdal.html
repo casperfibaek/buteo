@@ -77,7 +77,7 @@
 </span><span id="L-6"><a href="#L-6"><span class="linenos">   6</span></a>
 </span><span id="L-7"><a href="#L-7"><span class="linenos">   7</span></a><span class="c1"># Standard Library</span>
 </span><span id="L-8"><a href="#L-8"><span class="linenos">   8</span></a><span class="kn">import</span> <span class="nn">sys</span><span class="p">;</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;../../&quot;</span><span class="p">)</span>
-</span><span id="L-9"><a href="#L-9"><span class="linenos">   9</span></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Any</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos">   9</span></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Tuple</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos">  10</span></a><span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos">  11</span></a><span class="kn">import</span> <span class="nn">os</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos">  12</span></a>
@@ -984,7 +984,7 @@
 </span><span id="L-913"><a href="#L-913"><span class="linenos"> 913</span></a>
 </span><span id="L-914"><a href="#L-914"><span class="linenos"> 914</span></a><span class="k">def</span> <span class="nf">_get_raster_size</span><span class="p">(</span>
 </span><span id="L-915"><a href="#L-915"><span class="linenos"> 915</span></a>    <span class="n">raster</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">gdal</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-</span><span id="L-916"><a href="#L-916"><span class="linenos"> 916</span></a><span class="p">):</span>
+</span><span id="L-916"><a href="#L-916"><span class="linenos"> 916</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 </span><span id="L-917"><a href="#L-917"><span class="linenos"> 917</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-918"><a href="#L-918"><span class="linenos"> 918</span></a><span class="sd">    Gets the size of a raster (xres, yres).</span>
 </span><span id="L-919"><a href="#L-919"><span class="linenos"> 919</span></a>

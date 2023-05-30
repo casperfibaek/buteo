@@ -662,7 +662,11 @@ def _check_is_valid_output_filepath(
         True if path is a valid path, False otherwise.
     """
     # TODO: This is a hack to avoid checking vsimem paths.
-    if isinstance(path, str) and "vsimem" in path:
+    if isinstance(path, str) and "vsimem" in str(path):
+        return True
+    elif isinstance(path, str) and "/vsimem/" in str(path):
+        return True
+    elif isinstance(path, str) and "vsizip/" in str(path):
         return True
 
     if not _check_is_valid_filepath(path):

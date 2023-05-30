@@ -6,7 +6,7 @@ These functions are used to interact with basic GDAL objects.
 
 # Standard Library
 import sys; sys.path.append("../../")
-from typing import Optional, Union, List, Any
+from typing import Optional, Union, List, Any, Tuple
 from warnings import warn
 import os
 
@@ -913,7 +913,7 @@ def _get_path_from_dataset_list(
 
 def _get_raster_size(
     raster: Union[gdal.Dataset, str],
-):
+) -> Tuple[float, float]:
     """
     Gets the size of a raster (xres, yres).
 
