@@ -69,18 +69,15 @@ dependencies:
   - mako=1.2.4=pyhd8ed1ab_0
   - markdown=3.4.1=pyhd8ed1ab_0
   - markdown-it-py=2.2.0=pyhd8ed1ab_0
-  - markupsafe=1.1.1=py310he2412df_4
   - mdurl=0.1.0=pyhd8ed1ab_0
   - mkl=2020.4=hb70f87d_311
   - more-itertools=9.1.0=pyhd8ed1ab_0
   - numba=0.56.4=py310h4ed8f06_0
-  - numpy=1.22.3=py310hed7ac4c_2
   - openjpeg=2.4.0=h4fc8c34_0
   - openssl=1.1.1t=h2bbff1b_0
   - packaging=23.0=pyhd8ed1ab_0
   - pcre=8.45=h0e60522_0
   - pcre2=10.37=hdfff0fc_0
-  - pdoc3=0.8.1=py_0
   - pep517=0.13.0=pyhd8ed1ab_0
   - pip=22.3.1=py310haa95532_0
   - pixman=0.38.0=hfa6e2cd_1003
@@ -116,7 +113,6 @@ dependencies:
   - tqdm=4.64.1=pyhd8ed1ab_0
   - twine=4.0.2=pyhd8ed1ab_0
   - typing_extensions=4.4.0=pyha770c72_0
-  - tzdata=2022g=h04d1e81_0
   - urllib3=1.26.14=pyhd8ed1ab_0
   - vc=14.2=h21ff451_1
   - vs2015_runtime=14.27.29016=h5e58377_2
@@ -130,4 +126,28 @@ dependencies:
   - zipp=3.15.0=pyhd8ed1ab_0
   - zlib=1.2.13=h8cc25b3_0
   - zstd=1.5.2=h19a0ad4_0
+  - pip:
+      - contourpy==1.0.7
+      - cycler==0.11.0
+      - filelock==3.9.0
+      - fonttools==4.39.3
+      - jinja2==3.1.2
+      - kiwisolver==1.4.4
+      - markupsafe==2.1.2
+      - matplotlib==3.7.1
+      - mpmath==1.2.1
+      - networkx==3.0
+      - numpy==1.23.5
+      - pandas==2.0.0
+      - pdoc==13.1.0
+      - pdoc3==0.10.0
+      - pillow==9.5.0
+      - pyparsing==3.0.9
+      - python-dateutil==2.8.2
+      - pytz==2023.3
+      - seaborn==0.12.2
+      - sympy==1.11.1
+      - torch==2.0.0+cu117
+      - torchvision==0.15.1+cu117
+      - tzdata==2023.3
 prefix: C:\Users\casper.fibaek\Anaconda3\envs\buteo-dev
