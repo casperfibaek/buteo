@@ -147,5 +147,5 @@ lib/credentials.py
 ./geometry_and_rassters/*.xml
 **/*.tif.aux
 **/*.tif.aux.xml
-/tests/tmp*.tif
+/tests/tmp/*.tif
 /tests/tmp/*.*

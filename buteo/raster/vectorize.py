@@ -7,6 +7,7 @@ Module to turn rasters into vector representations.
 # Standard library
 import sys; sys.path.append("../../")
 from typing import Union, Optional, List
+import os
 
 # External
 from osgeo import gdal, ogr
@@ -46,7 +47,8 @@ def _raster_vectorize(
     driver = ogr.GetDriverByName(driver_name)
 
     datasource = driver.CreateDataSource(out_path)
-    layer = datasource.CreateLayer(out_path, srs=projection)
+    layer_name = os.path.basename(utils_path._get_filename_from_path(out_path))
+    layer = datasource.CreateLayer(layer_name, srs=projection)
 
     try:
         gdal.Polygonize(src_band, None, layer, 0)

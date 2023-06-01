@@ -150,13 +150,8 @@ def _get_basic_metadata_raster(
     )
 
     # Paths
-    path = os.path.abspath(dataset.GetDescription())
-    in_memory = False
-    if "\\vsimem\\" in path:
-        path = "/" + path.replace(os.path.abspath(os.sep), "")
-        in_memory = True
-
-    path = utils_path._get_unix_path(path)
+    path = utils_path._get_unix_path(dataset.GetDescription())
+    in_memory = utils_path._check_is_valid_mem_filepath(path)
 
     metadata = {
         "path": path,

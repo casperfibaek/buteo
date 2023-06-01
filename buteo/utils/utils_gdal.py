@@ -87,7 +87,13 @@ def get_gdal_memory() -> list:
         A list of all active memory layers in GDAL.
     """
     if hasattr(gdal, "listdir"):
-        datasets = [ds.name for ds in gdal.listdir("/vsimem")]
+        datasets = []
+        for ds in gdal.listdir("/vsimem"):
+            name = ds.name
+            if name.startswith("/vsimem"):
+                datasets.append(name)
+            else:
+                datasets.append("/vsimem/" + name)
     elif hasattr(gdal, "ReadDir"):
         datasets = ["/vsimem/" + ds for ds in gdal.ReadDir("/vsimem")]
     else:

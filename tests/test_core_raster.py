@@ -82,6 +82,7 @@ def test_raster_to_metadata():
     assert metadata["y_max"] == 10
     assert metadata["dtype_name"] == "uint8"
     assert metadata["nodata"] is False
+    assert metadata["in_memory"] is True
 
     gdal.Unlink(raster_1)
 

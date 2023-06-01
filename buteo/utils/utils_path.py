@@ -551,7 +551,7 @@ def _check_is_valid_mem_filepath(path: str) -> bool:
     if len(path) == 0:
         return False
 
-    path_chunks = os.path.normpath(path).split("\\")
+    path_chunks = os.path.normpath(path).split(os.path.sep)
 
     if "vsimem" not in path_chunks and "vsizip" not in path_chunks:
         return False
@@ -661,14 +661,6 @@ def _check_is_valid_output_filepath(
     bool
         True if path is a valid path, False otherwise.
     """
-    # TODO: This is a hack to avoid checking vsimem paths.
-    if isinstance(path, str) and "vsimem" in str(path):
-        return True
-    elif isinstance(path, str) and "/vsimem/" in str(path):
-        return True
-    elif isinstance(path, str) and "vsizip/" in str(path):
-        return True
-
     if not _check_is_valid_filepath(path):
         return False
 
@@ -706,9 +698,6 @@ def _check_is_valid_output_path_list(
         return False
 
     for path in output_list:
-        # TODO: This is a hack to avoid checking vsimem paths.
-        if "vsimem" in path:
-            continue
 
         if not _check_is_valid_output_filepath(path, overwrite=overwrite):
             return False
