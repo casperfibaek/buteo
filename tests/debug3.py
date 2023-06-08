@@ -8,7 +8,13 @@ from osgeo import gdal
 
 FOLDER = "./features/"
 
-path = os.path.join(FOLDER, "test_image_rgb_8bit.tif")
+path = os.path.join(FOLDER, "prediction_2.tif")
 
 arr = beo.raster_to_array(path)
-arr_filtered = beo.filter_median(arr, 2)
+arr_filtered = beo.filter_median(arr, radius=2)
+
+beo.array_to_raster(
+    arr_filtered,
+    reference=path,
+    out_path=os.path.join(FOLDER, "prediction_2_median_5x5.tif"),
+)

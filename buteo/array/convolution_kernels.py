@@ -212,7 +212,6 @@ def _distance_weighted_kernel_2D(radius, method, decay=0.2, sigma=2.0):
     return kernel
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def kernel_base(
     radius: float,
     circular: bool = False,
