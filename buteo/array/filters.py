@@ -46,7 +46,7 @@ def _filter_operation(
 
     kernel = kernel_base(
         radius,
-        spherical=spherical,
+        circular=spherical,
         distance_weighted=distance_weighted,
         normalised=normalised,
         hole=hole,
@@ -210,6 +210,33 @@ def filter_blur(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
+    """
+    Blur the array using a weighted moving window.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Array to blur.
+    radius : Union[int, float], optional
+        Radius of the moving window, can be fractional. Default: 1
+    spherical : bool, optional
+        Whether to use a spherical moving window, default: True.
+    distance_weighted : bool, optional
+        Whether to weight the moving window by distance, default: False.
+    distance_method : int, optional
+        Method to use for distance weighting, default: 0.
+    distance_decay : Union[int, float], optional
+        Decay rate for distance weighting, default: 0.2.
+    distance_sigma : Union[int, float], optional
+        Sigma for distance weighting, default: 2.0.
+    channel_last : bool, optional
+        Whether the channels are the last dimension, default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The blurred array.
+    """
     return _filter_operation(
         arr,
         method=1,
@@ -234,6 +261,33 @@ def filter_median(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
+    """
+    Calculate the median of the array using a weighted moving window.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Array to blur.
+    radius : Union[int, float], optional
+        Radius of the moving window, can be fractional. Default: 1
+    spherical : bool, optional
+        Whether to use a spherical moving window, default: True.
+    distance_weighted : bool, optional
+        Whether to weight the moving window by distance, default: False.
+    distance_method : int, optional
+        Method to use for distance weighting, default: 0.
+    distance_decay : Union[int, float], optional
+        Decay rate for distance weighting, default: 0.2.
+    distance_sigma : Union[int, float], optional
+        Sigma for distance weighting, default: 2.0.
+    channel_last : bool, optional
+        Whether the channels are the last dimension, default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The median filtered array.
+    """
     return _filter_operation(
         arr,
         method=5,
@@ -258,6 +312,33 @@ def filter_min(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
+    """
+    Takes the min of the array using a weighted moving window.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Array to blur.
+    radius : Union[int, float], optional
+        Radius of the moving window, can be fractional. Default: 1
+    spherical : bool, optional
+        Whether to use a spherical moving window, default: True.
+    distance_weighted : bool, optional
+        Whether to weight the moving window by distance, default: False.
+    distance_method : int, optional
+        Method to use for distance weighting, default: 0.
+    distance_decay : Union[int, float], optional
+        Decay rate for distance weighting, default: 0.2.
+    distance_sigma : Union[int, float], optional
+        Sigma for distance weighting, default: 2.0.
+    channel_last : bool, optional
+        Whether the channels are the last dimension, default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The min filtered array.
+    """
     return _filter_operation(
         arr,
         method=3,
@@ -282,6 +363,33 @@ def filter_max(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
+    """
+    Takes the max of the array using a weighted moving window.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Array to blur.
+    radius : Union[int, float], optional
+        Radius of the moving window, can be fractional. Default: 1
+    spherical : bool, optional
+        Whether to use a spherical moving window, default: True.
+    distance_weighted : bool, optional
+        Whether to weight the moving window by distance, default: False.
+    distance_method : int, optional
+        Method to use for distance weighting, default: 0.
+    distance_decay : Union[int, float], optional
+        Decay rate for distance weighting, default: 0.2.
+    distance_sigma : Union[int, float], optional
+        Sigma for distance weighting, default: 2.0.
+    channel_last : bool, optional
+        Whether the channels are the last dimension, default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The max filtered array.
+    """
     return _filter_operation(
         arr,
         method=2,
@@ -306,6 +414,33 @@ def filter_sum(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
+    """
+    Takes the sum of the array using a weighted moving window.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Array to blur.
+    radius : Union[int, float], optional
+        Radius of the moving window, can be fractional. Default: 1
+    spherical : bool, optional
+        Whether to use a spherical moving window, default: True.
+    distance_weighted : bool, optional
+        Whether to weight the moving window by distance, default: False.
+    distance_method : int, optional
+        Method to use for distance weighting, default: 0.
+    distance_decay : Union[int, float], optional
+        Decay rate for distance weighting, default: 0.2.
+    distance_sigma : Union[int, float], optional
+        Sigma for distance weighting, default: 2.0.
+    channel_last : bool, optional
+        Whether the channels are the last dimension, default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The sum filtered array.
+    """
     return _filter_operation(
         arr,
         method=1,
@@ -330,6 +465,33 @@ def filter_mode(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
+    """
+    Takes the mode of the array using a weighted moving window.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Array to blur.
+    radius : Union[int, float], optional
+        Radius of the moving window, can be fractional. Default: 1
+    spherical : bool, optional
+        Whether to use a spherical moving window, default: True.
+    distance_weighted : bool, optional
+        Whether to weight the moving window by distance, default: False.
+    distance_method : int, optional
+        Method to use for distance weighting, default: 0.
+    distance_decay : Union[int, float], optional
+        Decay rate for distance weighting, default: 0.2.
+    distance_sigma : Union[int, float], optional
+        Sigma for distance weighting, default: 2.0.
+    channel_last : bool, optional
+        Whether the channels are the last dimension, default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The mode filtered array.
+    """
     return _filter_operation(
         arr,
         method=9,
@@ -354,6 +516,33 @@ def filter_center_difference(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
+    """
+    Take the difference from the center to the surrounding values of the array using a weighted moving window.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        Array to blur.
+    radius : Union[int, float], optional
+        Radius of the moving window, can be fractional. Default: 1
+    spherical : bool, optional
+        Whether to use a spherical moving window, default: True.
+    distance_weighted : bool, optional
+        Whether to weight the moving window by distance, default: False.
+    distance_method : int, optional
+        Method to use for distance weighting, default: 0.
+    distance_decay : Union[int, float], optional
+        Decay rate for distance weighting, default: 0.2.
+    distance_sigma : Union[int, float], optional
+        Sigma for distance weighting, default: 2.0.
+    channel_last : bool, optional
+        Whether the channels are the last dimension, default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The center difference filtered array.
+    """
     convolved = _filter_operation(
         arr,
         method=1,

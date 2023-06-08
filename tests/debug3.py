@@ -10,7 +10,5 @@ FOLDER = "./features/"
 
 path = os.path.join(FOLDER, "test_image_rgb_8bit.tif")
 
-arr1 = beo.raster_to_array(path)
-raster = beo.array_to_raster(arr1, reference=path, out_path="/vsimem/test.tif")
-arr2 = beo.raster_to_array(raster)
-import pdb; pdb.set_trace()
+arr = beo.raster_to_array(path)
+arr_filtered = beo.filter_median(arr, 2)
