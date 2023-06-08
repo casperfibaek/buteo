@@ -29,7 +29,7 @@ def _morphology_operation(
     _type_check(spherical, [bool], "spherical")
     _type_check(channel_last, [bool], "channel_last")
 
-    kernel = kernel_base(radius, spherical=spherical, normalise=False)
+    kernel = kernel_base(radius, circular=spherical, normalised=False)
     offsets, weights = kernel_get_offsets_and_weights(kernel)
 
     mask = None
