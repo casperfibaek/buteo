@@ -7,6 +7,7 @@ Clip vector files with other geometries. Can come from rasters or vectors.
 # Standard library
 import sys; sys.path.append("../../")
 from typing import Union, Optional, List
+from warnings import warn
 
 # External
 from osgeo import ogr, gdal, osr
@@ -17,7 +18,6 @@ from buteo.utils import (
     utils_base,
     utils_gdal,
     utils_path,
-    utils_bbox,
     utils_projection,
 )
 from buteo.vector import core_vector
@@ -48,33 +48,25 @@ def _vector_clip(
     input_path = utils_gdal._get_path_from_dataset(vector)
 
     options = []
-
-    clear_memory = False
+    to_clear = []
     geometry_to_clip = None
-
     if utils_gdal._check_is_raster(clip_geom):
-        clip_geom = core_raster.raster_to_extent(clip_geom)
-        clear_memory = True
-        geometry_to_clip = clip_geom
+        geometry_to_clip = core_raster.raster_to_extent(clip_geom)
+        to_clear.append(geometry_to_clip)
 
     if utils_gdal._check_is_vector(clip_geom):
         if to_extent:
-            clip_geom_meta = core_vector._get_basic_metadata_vector(clip_geom)
-            bbox = clip_geom_meta["bbox"]
-            proj = clip_geom_meta["projection_osr"]
-            extent = utils_bbox._get_vector_from_bbox(bbox, proj)
-            geometry_to_clip = extent
-            clear_memory = True
+            geometry_to_clip = core_vector.vector_to_extent(clip_geom)
+            to_clear.append(geometry_to_clip)
         else:
-            geometry_to_clip = core_vector._vector_open(clip_geom)
+            geometry_to_clip = utils_gdal._get_path_from_dataset(clip_geom)
     else:
         raise ValueError(f"Invalid input in clip_geom, unable to parse: {clip_geom}")
 
-    clip_vector_path = utils_gdal._get_path_from_dataset(geometry_to_clip)
-    clip_vector_reprojected = _vector_reproject(clip_vector_path, vector)
+    clip_vector_reprojected = _vector_reproject(geometry_to_clip, vector)
 
-    if clear_memory:
-        utils_gdal.delete_dataset_if_in_memory(clip_vector_path)
+    if clip_vector_reprojected != geometry_to_clip:
+        to_clear.append(clip_vector_reprojected)
 
     x_min, x_max, y_min, y_max = core_vector._get_basic_metadata_vector(clip_vector_reprojected)["bbox"]
 
@@ -102,9 +94,17 @@ def _vector_clip(
         options=" ".join(options),
     )
 
-    utils_gdal.delete_dataset_if_in_memory(clip_vector_reprojected)
+    utils_gdal.delete_dataset_if_in_memory_list(to_clear)
 
-    if success != 0:
+    if success != 0 and success is not None:
+
+        opened = ogr.Open(out_path)
+        layer = opened.GetLayer()
+        features = layer.GetFeatureCount()
+
+        if features == 0:
+            warn("Error while clipping geometry. No features in output.", RuntimeWarning)
+
         return out_path
     else:
         raise RuntimeError("Error while clipping geometry.")
@@ -178,6 +178,7 @@ def vector_clip(
 
     input_is_list = isinstance(vector, list)
     input_data = utils_io._get_input_paths(vector, "vector")
+
     output_data = utils_io._get_output_paths(
         input_data,
         out_path,

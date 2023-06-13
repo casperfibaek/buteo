@@ -138,7 +138,8 @@ def _get_basic_metadata_raster(
     bounds_area = bounds_latlng.GetArea()
     area = (bbox[1] - bbox[0]) * (bbox[3] - bbox[2])
     bounds_wkt = bounds_latlng.ExportToWkt()
-    bounds_raster = utils_bbox._get_bounds_from_bbox(bbox, projection_osr, wkt=True)
+    bounds_raster_raw = utils_bbox._get_geom_from_bbox(bbox)
+    bounds_raster = bounds_raster_raw.ExportToWkt()
     first_band = dataset.GetRasterBand(1)
     dtype = None if first_band is None else first_band.DataType
     dtype_numpy = utils_translate._translate_dtype_gdal_to_numpy(dtype)

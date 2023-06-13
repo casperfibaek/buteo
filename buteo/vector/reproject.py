@@ -58,10 +58,10 @@ def _vector_reproject(
         options=" ".join(options),
     )
 
-    if success != 0:
+    if success != 0 and success is not None:
         return out_path
     else:
-        raise RuntimeError("Error while clipping geometry.")
+        raise RuntimeError("Error while reprojecting geometry.")
 
 
 def vector_reproject(

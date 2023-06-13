@@ -264,7 +264,7 @@ def array_to_raster(
     *,
     reference: Union[str, gdal.Dataset],
     out_path: Optional[str] = None,
-    set_nodata: Union[float, int, str] = "arr",
+    set_nodata: Optional[Union[float, int, str, bool]] = "arr",
     allow_mismatches: bool = False,
     pixel_offsets: Optional[Union[List[int], Tuple[int, int, int, int]]] = None,
     bbox: Optional[List[float]] = None,
@@ -286,11 +286,12 @@ def array_to_raster(
     out_path : path, optional
         The destination to save to. Default: None.
 
-    set_nodata : str, float, or int, optional
+    set_nodata : str, float, int, or bool. Optional
         Can be set to:
             - "arr": The nodata value will be the same as the NumPy array.
             - "ref": The nodata value will be the same as the reference raster.
             - value: The nodata value will be the value provided. Default: "arr".
+            - None/False: The nodata value will not be set.
 
     allow_mismatches : bool, optional
         If True, the array can have a different shape than the reference raster.
@@ -345,7 +346,7 @@ def array_to_raster(
     utils_base._type_check(array, [np.ndarray], "array")
     utils_base._type_check(reference, [str, gdal.Dataset], "reference")
     utils_base._type_check(out_path, [str, None], "out_path")
-    utils_base._type_check(set_nodata, [float, int, str], "set_nodata")
+    utils_base._type_check(set_nodata, [float, int, str, bool, None], "set_nodata")
     utils_base._type_check(allow_mismatches, [bool], "allow_mismatches")
     utils_base._type_check(pixel_offsets, [list, tuple, None], "pixel_offsets")
     utils_base._type_check(bbox, [list, None], "bbox")
@@ -405,6 +406,9 @@ def array_to_raster(
     elif set_nodata == "ref":
         destination_nodata = metadata_ref["nodata"]
         destination_nodata_value = metadata_ref["nodata_value"]
+    elif set_nodata is None or set_nodata is False:
+        destination_nodata = False
+        destination_nodata_value = None
     else:
         destination_nodata = True
         destination_nodata_value = set_nodata

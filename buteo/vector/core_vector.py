@@ -234,7 +234,8 @@ def _get_basic_metadata_vector(
     x_min, x_max, y_min, y_max = vector_bbox
     area = (x_max - x_min) * (y_max - y_min)
     bounds_wkt = bounds_latlng.ExportToWkt()
-    bounds_vector = utils_bbox._get_bounds_from_bbox(vector_bbox, projection_osr, wkt=True)
+    bounds_vector_raw = utils_bbox._get_geom_from_bbox(vector_bbox)
+    bounds_vector = bounds_vector_raw.ExportToWkt()
 
     centroid = [(x_max - x_min) / 2, (y_max - y_min) / 2]
     centroid_latlng = utils_projection._reproject_point(
