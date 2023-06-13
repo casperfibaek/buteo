@@ -138,6 +138,7 @@ def _get_basic_metadata_raster(
     bounds_area = bounds_latlng.GetArea()
     area = (bbox[1] - bbox[0]) * (bbox[3] - bbox[2])
     bounds_wkt = bounds_latlng.ExportToWkt()
+    bounds_raster = utils_bbox._get_bounds_from_bbox(bbox, projection_osr, wkt=True)
     first_band = dataset.GetRasterBand(1)
     dtype = None if first_band is None else first_band.DataType
     dtype_numpy = utils_translate._translate_dtype_gdal_to_numpy(dtype)
@@ -180,6 +181,7 @@ def _get_basic_metadata_raster(
         "bbox_gdal": utils_bbox._get_gdal_bbox_from_ogr_bbox(bbox),
         "bbox_latlng": bbox_latlng,
         "bounds_latlng": bounds_wkt,
+        "bounds_raster": bounds_raster,
         "x_min": bbox[0],
         "x_max": bbox[1],
         "y_min": bbox[2],
@@ -562,6 +564,72 @@ def check_rasters_are_aligned(
                 return False
 
     return True
+
+
+def raster_to_extent(
+    raster: Union[str, gdal.Dataset],
+    out_path: Optional[str] = None,
+    *,
+    latlng: bool = False,
+    overwrite: bool = True,
+) -> str:
+    """
+    Converts a raster to a vector file with the extent as a polygon.
+
+    Parameters
+    ----------
+    raster : str or gdal.Dataset
+        The raster to convert.
+
+    out_path : str, optional
+        The path to save the extent to. If None, the extent is saved in memory. Default: None.
+
+    latlng : bool, optional
+        If True, the extent is returned in latlng coordinates. If false,
+        the projection of the raster is used. Default: False.
+
+    overwrite : bool, optional
+        If True, the output file is overwritten if it exists. Default: True.
+
+    Returns
+    -------
+    str
+        The path to the extent.
+    """
+    utils_base._type_check(raster, [str, gdal.Dataset], "raster")
+    utils_base._type_check(out_path, [str, type(None)], "out_path")
+    utils_base._type_check(latlng, [bool], "latlng")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+
+    if out_path is None:
+        out_path = utils_path._get_temp_filepath("temp_extent.gpkg", add_timestamp=True, add_uuid=True)
+
+    if not utils_path._check_is_valid_output_filepath(out_path):
+        raise ValueError(f"Invalid output path: {out_path}")
+
+    metadata = _get_basic_metadata_raster(raster)
+
+    if latlng:
+        extent = metadata["bounds_latlng"]
+    else:
+        extent = metadata["bounds_raster"]
+
+    extent = ogr.CreateGeometryFromWkt(extent, metadata["projection_osr"])
+
+    driver_name = utils_gdal._get_driver_name_from_path(out_path)
+
+    driver = ogr.GetDriverByName(driver_name)
+    extent_ds = driver.CreateDataSource(out_path)
+    extent_layer = extent_ds.CreateLayer("extent", metadata["projection_osr"], ogr.wkbPolygon)
+    extent_feature = ogr.Feature(extent_layer.GetLayerDefn())
+    extent_feature.SetGeometry(extent)
+    extent_layer.CreateFeature(extent_feature)
+
+    extent_ds = None
+    extent_layer = None
+    extent_feature = None
+
+    return out_path
 
 
 def raster_open(

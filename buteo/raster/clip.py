@@ -29,7 +29,7 @@ from buteo.vector.reproject import _vector_reproject
 
 def _raster_clip(
     raster: Union[str, List[str], gdal.Dataset, List[gdal.Dataset]],
-    clip_geom: Union[str, ogr.DataSource, ogr.Layer, List[ogr.Layer], List[ogr.DataSource]],
+    clip_geom: Union[str, gdal.Dataset, ogr.DataSource, ogr.Layer, List[ogr.Layer], List[ogr.DataSource], List[gdal.Dataset]],
     out_path: Optional[Union[str, List[str]]] = None,
     *,
     resample_alg: str = "nearest",
@@ -76,7 +76,6 @@ def _raster_clip(
     if utils_gdal._check_is_vector(clip_geom):
         clip_ds = core_vector._vector_open(clip_geom)
 
-        # TODO: Fix potential memory leak
         if clip_ds.GetLayerCount() > 1:
             clip_ds = core_vector.vector_filter_layer(clip_ds, layer_name_or_idx=layer_to_clip, add_uuid=True)
             memory_files.append(clip_ds)
@@ -92,14 +91,14 @@ def _raster_clip(
 
     # Input is a raster (use extent)
     elif utils_gdal._check_is_raster(clip_geom):
+        clip_ds = core_raster.raster_to_extent(clip_geom)
         clip_metadata = core_raster._get_basic_metadata_raster(clip_geom)
-        clip_ds = utils_bbox._get_vector_from_bbox(clip_metadata["bbox"], clip_metadata["projection_osr"])
         memory_files.append(clip_ds)
     else:
         if utils_path._check_file_exists(clip_geom):
             raise ValueError(f"Unable to parse clip geometry: {clip_geom}")
-        else:
-            raise ValueError(f"Unable to locate clip geometry {clip_geom}")
+
+        raise ValueError(f"Unable to locate clip geometry {clip_geom}")
 
     if clip_ds is None:
         raise ValueError(f"Unable to parse input clip geom: {clip_geom}")

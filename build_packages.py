@@ -20,6 +20,7 @@ PYTHON = [
     "3.8",
     "3.9",
     "3.10",
+    "3.11",
 ]
 
 with open("./meta.yaml", "r", encoding="latin1") as stream:

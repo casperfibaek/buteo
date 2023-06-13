@@ -21,6 +21,7 @@ from buteo.utils import (
     utils_projection,
 )
 from buteo.vector import core_vector
+from buteo.raster import core_raster
 from buteo.vector.reproject import _vector_reproject
 
 
@@ -50,6 +51,12 @@ def _vector_clip(
 
     clear_memory = False
     geometry_to_clip = None
+
+    if utils_gdal._check_is_raster(clip_geom):
+        clip_geom = core_raster.raster_to_extent(clip_geom)
+        clear_memory = True
+        geometry_to_clip = clip_geom
+
     if utils_gdal._check_is_vector(clip_geom):
         if to_extent:
             clip_geom_meta = core_vector._get_basic_metadata_vector(clip_geom)

@@ -204,7 +204,7 @@ def _check_dir_exists(
     if not isinstance(path, str):
         return False
 
-    if os.path.isdir(path):
+    if os.path.isdir(os.path.normpath(path)):
         return True
 
     if os.path.isdir(os.path.abspath(path)):
@@ -426,7 +426,12 @@ def _get_dir_from_path(path: str) -> str:
     assert isinstance(path, str), "path must be a string."
     assert len(path) > 0, "path must not be empty."
 
-    dirname = os.path.dirname(path)
+    if "/vsimem" in path:
+        dirname = "/vsimem/"
+    elif "vsizip" in path:
+        dirname = "/vsizip/"
+    else:
+        dirname = _get_unix_path(os.path.dirname(os.path.abspath(path))) + "/"
 
     return dirname
 
