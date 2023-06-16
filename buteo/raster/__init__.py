@@ -19,3 +19,4 @@ from .resample import *
 from .shift import *
 from .vectorize import *
 from .dem import *
+from .footprints import *

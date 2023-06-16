@@ -508,6 +508,9 @@ def check_rasters_are_aligned(
     utils_base._type_check(same_nodata, [bool], "same_nodata")
     utils_base._type_check(threshold, [float], "threshold")
 
+    if len(rasters) == 0:
+        raise ValueError("Input is an empty list.")
+
     if len(rasters) == 1:
         return True
 

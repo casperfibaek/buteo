@@ -27,6 +27,7 @@ def _raster_vectorize(
     raster: Union[str, gdal.Dataset],
     out_path: Optional[str] = None,
     band: int = 1,
+    attribute_field: Optional[str] = None,
 ):
     """ Internal. """
     meta = core_raster._get_basic_metadata_raster(raster)
@@ -50,8 +51,18 @@ def _raster_vectorize(
     layer_name = os.path.basename(utils_path._get_filename_from_path(out_path))
     layer = datasource.CreateLayer(layer_name, srs=projection)
 
+    if attribute_field is None:
+        attr_index = -1
+    else:
+        metadata = core_raster._get_basic_metadata_raster(raster)
+        layer = metadata["layers"][0]["field_names"]
+        if attribute_field not in layer:
+            raise AttributeError(f"Attribute field ({attribute_field}) not found in raster.")
+
+        attr_index = layer.index(attribute_field)
+
     try:
-        gdal.Polygonize(src_band, None, layer, 0)
+        gdal.Polygonize(src_band, None, layer, attr_index)
     except:
         raise RuntimeError(f"Error while vectorizing raster. {raster}") from None
     finally:
@@ -66,6 +77,7 @@ def raster_vectorize(
     raster: Union[str, gdal.Dataset, List],
     out_path: Optional[str] = None,
     band: int = 1,
+    attribute_field: Optional[str] = None,
     prefix: str = "",
     suffix: str = "",
     add_uuid: bool = False,
@@ -110,6 +122,7 @@ def raster_vectorize(
     utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     utils_base._type_check(out_path, [str, [str], None], "out_path")
     utils_base._type_check(band, [int], "band")
+    utils_base._type_check(attribute_field, [str, None], "attribute_field")
     utils_base._type_check(prefix, [str], "prefix")
     utils_base._type_check(suffix, [str], "suffix")
     utils_base._type_check(add_uuid, [bool], "add_uuid")
@@ -139,6 +152,7 @@ def raster_vectorize(
                 in_raster,
                 out_path=output_list[idx],
                 band=band,
+                attribute_field=attribute_field,
             )
         )
 

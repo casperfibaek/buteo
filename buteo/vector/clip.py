@@ -35,6 +35,7 @@ def _vector_clip(
     preserve_fid: bool = True,
     promote_to_multi: bool = True,
     overwrite: bool = True,
+    verbose: bool = False,
 ) -> str:
     """ Internal. """
     assert isinstance(vector, (str, ogr.DataSource)), "Invalid vector input."
@@ -44,6 +45,11 @@ def _vector_clip(
         out_path = utils_path._get_temp_filepath(vector, suffix="_clipped", ext="gpkg")
     else:
         assert utils_path._check_is_valid_output_filepath(out_path, overwrite), "Invalid vector output path."
+
+    gdal.UseExceptions()
+
+    if not verbose:
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
 
     input_path = utils_gdal._get_path_from_dataset(vector)
 
@@ -96,9 +102,16 @@ def _vector_clip(
 
     utils_gdal.delete_dataset_if_in_memory_list(to_clear)
 
+    if not verbose:
+        gdal.PopErrorHandler()
+
     if success != 0 and success is not None:
 
         opened = ogr.Open(out_path)
+
+        if opened is None:
+            raise RuntimeError("Error while clipping geometry.")
+
         layer = opened.GetLayer()
         features = layer.GetFeatureCount()
 
@@ -122,6 +135,7 @@ def vector_clip(
     add_uuid: bool = False,
     overwrite: bool = True,
     promote_to_multi: bool = True,
+    verbose: bool = False,
 ) -> Union[str, List[str]]:
     """
     Clips a vector to a geometry.
@@ -160,6 +174,9 @@ def vector_clip(
 
     promote_to_multi : bool, optional
         Promote to multi. Default: True
+    
+    verbose : bool, optional
+        Print progress/warnings. Default: False
 
     Returns
     -------
@@ -175,6 +192,9 @@ def vector_clip(
     utils_base._type_check(prefix, [str], "prefix")
     utils_base._type_check(suffix, [str], "suffix")
     utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+    utils_base._type_check(promote_to_multi, [bool], "promote_to_multi")
+    utils_base._type_check(verbose, [bool], "verbose")
 
     input_is_list = isinstance(vector, list)
     input_data = utils_io._get_input_paths(vector, "vector")
@@ -202,6 +222,7 @@ def vector_clip(
                 preserve_fid=preserve_fid,
                 promote_to_multi=promote_to_multi,
                 overwrite=overwrite,
+                verbose=verbose,
             )
         )
 

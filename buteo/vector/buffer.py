@@ -30,27 +30,28 @@ def _vector_buffer(
     if isinstance(distance, (int, float)):
         assert distance >= 0.0, "Distance must be positive."
 
+
     if out_path is None:
         out_path = utils_path._get_temp_filepath(vector, suffix="_buffered", ext="gpkg")
     else:
         assert utils_path._check_is_valid_output_filepath(vector, out_path), "Invalid vector output path."
 
     if not in_place:
-        read = core_vector.vector_open(core_vector.vector_copy(vector, out_path))
+        copy = core_vector.vector_copy(vector, out_path)
+        read = core_vector.vector_open(copy)
     else:
         read = core_vector.vector_open(vector)
 
     metadata = core_vector._get_basic_metadata_vector(read)
 
+    if isinstance(distance, str):
+        for layer_meta in metadata["layers"]:
+            if distance not in layer_meta["field_names"]:
+                raise AttributeError(f"Attribute ({distance}) is a stirng and not one of the vector field names.")
+
     for layer_meta in metadata["layers"]:
         layer_name = layer_meta["layer_name"]
         vector_layer = read.GetLayer(layer_name)
-
-        field_names = layer_meta["field_names"]
-
-        if isinstance(distance, str):
-            if distance not in field_names:
-                raise ValueError(f"Attribute to buffer by not in vector field names: {distance} not in {field_names}")
 
         feature_count = vector_layer.GetFeatureCount()
 
@@ -89,7 +90,7 @@ def _vector_buffer(
 
 def vector_buffer(
     vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
-    distance: Union[int, float],
+    distance: Union[int, float, str],
     out_path: Optional[Union[str, List[str]]] = None,
     prefix: str = "",
     suffix: str = "",

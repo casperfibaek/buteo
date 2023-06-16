@@ -212,7 +212,7 @@ def _check_dir_exists(
 
     split = os.path.normpath(os.path.dirname(path)).split("\\")
 
-    if "vsimem" in split:
+    if "vsimem" in split or "vsizip" in split:
         return True
 
     return False
@@ -426,10 +426,13 @@ def _get_dir_from_path(path: str) -> str:
     assert isinstance(path, str), "path must be a string."
     assert len(path) > 0, "path must not be empty."
 
-    if "/vsimem" in path:
+    dirs = os.path.normpath(path).split(os.path.sep)[0:2]
+    if "vsimem" in dirs:
         dirname = "/vsimem/"
-    elif "vsizip" in path:
-        dirname = "/vsizip/"
+    elif "vsizip" in dirs:
+        dirname = "vsizip"
+    elif _check_dir_exists(path):
+        dirname = _get_unix_path(os.path.abspath(path)) + "/"
     else:
         dirname = _get_unix_path(os.path.dirname(os.path.abspath(path))) + "/"
 
@@ -534,6 +537,35 @@ def _get_changed_path_ext(
 
     return os.path.join(os.path.dirname(path), f"{basesplit[0]}.{target_ext}")
 
+
+def _check_is_dir(path: str) -> bool:
+    """
+    Check if a path is a directory or a file.
+    Also returns true if vsimem or vsizip is passed.
+
+    Parameters
+    ----------
+    path: str
+        The path to test.
+
+    Returns
+    -------
+    bool
+        True if path is a directory, False otherwise.
+    """
+    if not isinstance(path, str):
+        return False
+
+    if len(path) == 0:
+        return False
+
+    if path in ["/vsimem", "/vsimem/", "/vsizip", "/vsizip/"]:
+        return True
+
+    if os.path.isdir(path):
+        return True
+
+    return False
 
 
 def _check_is_valid_mem_filepath(path: str) -> bool:
@@ -965,7 +997,10 @@ def _get_augmented_path(
     ext = _get_ext_from_path(path)
     if change_ext is not None:
         assert len(change_ext) > 0, "change_ext must not be non-empty string."
-        ext = ext.lstrip(".").lower()
+        assert isinstance(change_ext, str), "change_ext must be a string."
+        ext = change_ext
+
+    ext = ext.lstrip(".").lower()
 
     filename = _get_filename_from_path(path, with_ext=False)
 

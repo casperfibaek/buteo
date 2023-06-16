@@ -17,11 +17,10 @@ from buteo.vector import core_vector
 
 tmpdir = "./tests/tmp/"
 
-# Create sample vector
-sample_vector = create_sample_vector(geom_type="point", num_features=10)
-sample_area = core_vector._get_basic_metadata_vector(sample_vector)["area"]
 
 def test_vector_buffer_with_distance():
+    sample_vector = create_sample_vector(geom_type="point", num_features=10)
+    sample_area = core_vector._get_basic_metadata_vector(sample_vector)["area"]
     buffer_distance = 1.0
     out_path = os.path.join(tmpdir, "buffered_vector_01.gpkg")
 
@@ -44,11 +43,12 @@ def test_vector_buffer_with_distance():
         pass
 
 def test_vector_buffer_invalid_distance():
-    with pytest.raises(ValueError):
+    sample_vector = create_sample_vector(geom_type="point", num_features=10)
+    with pytest.raises(AttributeError):
         vector_buffer(sample_vector, "invalid_attribute")
 
-
 def test_vector_buffer_output_path():
+    sample_vector = create_sample_vector(geom_type="point", num_features=10)
     out_path = os.path.join(tmpdir, "buffered_vector.gpkg")
     vector_buffer(sample_vector, 1.0, out_path=out_path, overwrite=True)
 
@@ -65,6 +65,8 @@ def test_vector_buffer_output_path():
 
 
 def test_vector_buffer_zero_distance():
+    sample_vector = create_sample_vector(geom_type="point", num_features=10)
+    sample_area = core_vector._get_basic_metadata_vector(sample_vector)["area"]
     out_path = os.path.join(tmpdir, "buffered_vector_zero.gpkg")
 
     # Buffer with zero distance, output should be the same as input
@@ -106,6 +108,8 @@ def test_vector_buffer_with_polygon():
 
 
 def test_vector_buffer_negative_distance():
+    sample_vector = create_sample_vector(geom_type="point", num_features=10)
+
     with pytest.raises(AssertionError):
         vector_buffer(sample_vector, -1.0, out_path=os.path.join(tmpdir, "buffered_vector_negative.gpkg"), overwrite=True)
 
@@ -134,6 +138,9 @@ def test_vector_buffer_multiple_layers():
 
 
 def test_vector_buffer_overwrite():
+    sample_vector = create_sample_vector(geom_type="point", num_features=10)
+    sample_area = core_vector._get_basic_metadata_vector(sample_vector)["area"]
+
     out_path = os.path.join(tmpdir, "buffered_vector_overwrite.gpkg")
 
     # First buffer operation
@@ -158,6 +165,7 @@ def test_vector_buffer_overwrite():
 
 
 def test_vector_buffer_without_out_path():
+    sample_vector = create_sample_vector(geom_type="point", num_features=10)
     # Buffer operation without specifying an output path
     buffered = vector_buffer(sample_vector, 1.0, out_path=None, overwrite=True)
 

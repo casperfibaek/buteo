@@ -24,6 +24,7 @@ from buteo.vector import core_vector
 def vector_split_by_fid(
     vector: Union[str, ogr.DataSource],
     out_folder: Optional[str] = None,
+    output_layer_idx: bool = False,
     prefix: str = "",
     suffix: str = "",
 ) -> str:
@@ -74,10 +75,16 @@ def vector_split_by_fid(
             if out_folder is None:
                 out_path = f"/vsimem/{prefix}{str(uuid4().int)}_{layer_index}_{feature_id}{suffix}.gpkg"
             else:
-                out_path = os.path.join(
-                    out_folder,
-                    f"{prefix}{layer_index}_{feature_id}{suffix}.gpkg",
-                )
+                if output_layer_idx:
+                    out_path = os.path.join(
+                        out_folder,
+                        f"{prefix}{layer_index}_{feature_id}{suffix}.gpkg",
+                    )
+                else:
+                    out_path = os.path.join(
+                        out_folder,
+                        f"{prefix}{feature_id}{suffix}.gpkg",
+                    )
 
             out_driver = ogr.GetDriverByName("GPKG")
             out_ds = out_driver.CreateDataSource(out_path)

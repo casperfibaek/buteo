@@ -156,7 +156,7 @@ def _get_chunk_offsets_fixed_size(
     assert isinstance(border_strategy, int), "border_strategy must be an integer."
     assert isinstance(channel_last, bool), "channel_last must be a boolean."
     assert chunk_size_x > 0, "chunk_size_x must be > 0."
-    assert border_strategy in [1, 2], "border_strategy must be 1 or 2."
+    assert border_strategy in [1, 2, 3], "border_strategy must be 1 or 2."
     height, width = image_shape[:2] if channel_last else image_shape[1:]
 
     num_chunks_x = width // chunk_size_x + (1 if width % chunk_size_x > 0 else 0)

@@ -247,63 +247,61 @@
 </span><span id="L-190"><a href="#L-190"><span class="linenos">190</span></a>            <span class="p">)</span>
 </span><span id="L-191"><a href="#L-191"><span class="linenos">191</span></a>            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aug_path</span><span class="p">)</span>
 </span><span id="L-192"><a href="#L-192"><span class="linenos">192</span></a>
-</span><span id="L-193"><a href="#L-193"><span class="linenos">193</span></a>    <span class="c1"># Output is a file</span>
-</span><span id="L-194"><a href="#L-194"><span class="linenos">194</span></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span id="L-195"><a href="#L-195"><span class="linenos">195</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_check_is_valid_output_filepath</span><span class="p">(</span><span class="n">output_path</span><span class="p">):</span>
-</span><span id="L-196"><a href="#L-196"><span class="linenos">196</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid output_path.&quot;</span><span class="p">)</span>
-</span><span id="L-197"><a href="#L-197"><span class="linenos">197</span></a>
-</span><span id="L-198"><a href="#L-198"><span class="linenos">198</span></a>        <span class="n">aug_path</span> <span class="o">=</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_get_augmented_path</span><span class="p">(</span>
-</span><span id="L-199"><a href="#L-199"><span class="linenos">199</span></a>            <span class="n">output_path</span><span class="p">,</span>
-</span><span id="L-200"><a href="#L-200"><span class="linenos">200</span></a>            <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
-</span><span id="L-201"><a href="#L-201"><span class="linenos">201</span></a>            <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
-</span><span id="L-202"><a href="#L-202"><span class="linenos">202</span></a>            <span class="n">add_uuid</span><span class="o">=</span><span class="n">add_uuid</span><span class="p">,</span>
-</span><span id="L-203"><a href="#L-203"><span class="linenos">203</span></a>            <span class="n">add_timestamp</span><span class="o">=</span><span class="n">add_timestamp</span><span class="p">,</span>
-</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a>            <span class="n">change_ext</span><span class="o">=</span><span class="n">change_ext</span><span class="p">,</span>
-</span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a>            <span class="n">folder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-</span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a>        <span class="p">)</span>
-</span><span id="L-207"><a href="#L-207"><span class="linenos">207</span></a>        <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aug_path</span><span class="p">)</span>
-</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a>
-</span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a>    <span class="c1"># Output is a folder</span>
-</span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_check_dir_exists</span><span class="p">(</span><span class="n">output_path</span><span class="p">):</span>
-</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid output_path. Directory does not exists.&quot;</span><span class="p">)</span>
-</span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a>
-</span><span id="L-214"><a href="#L-214"><span class="linenos">214</span></a>        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
-</span><span id="L-215"><a href="#L-215"><span class="linenos">215</span></a>            <span class="n">aug_path</span> <span class="o">=</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_get_augmented_path</span><span class="p">(</span>
-</span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a>                <span class="n">path</span><span class="p">,</span>
-</span><span id="L-217"><a href="#L-217"><span class="linenos">217</span></a>                <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
-</span><span id="L-218"><a href="#L-218"><span class="linenos">218</span></a>                <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
-</span><span id="L-219"><a href="#L-219"><span class="linenos">219</span></a>                <span class="n">add_uuid</span><span class="o">=</span><span class="n">add_uuid</span><span class="p">,</span>
-</span><span id="L-220"><a href="#L-220"><span class="linenos">220</span></a>                <span class="n">add_timestamp</span><span class="o">=</span><span class="n">add_timestamp</span><span class="p">,</span>
-</span><span id="L-221"><a href="#L-221"><span class="linenos">221</span></a>                <span class="n">change_ext</span><span class="o">=</span><span class="n">change_ext</span><span class="p">,</span>
-</span><span id="L-222"><a href="#L-222"><span class="linenos">222</span></a>                <span class="n">folder</span><span class="o">=</span><span class="n">output_path</span><span class="p">,</span>
-</span><span id="L-223"><a href="#L-223"><span class="linenos">223</span></a>            <span class="p">)</span>
-</span><span id="L-224"><a href="#L-224"><span class="linenos">224</span></a>            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aug_path</span><span class="p">)</span>
-</span><span id="L-225"><a href="#L-225"><span class="linenos">225</span></a>
-</span><span id="L-226"><a href="#L-226"><span class="linenos">226</span></a>    <span class="c1"># Output is a list of files</span>
-</span><span id="L-227"><a href="#L-227"><span class="linenos">227</span></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-</span><span id="L-228"><a href="#L-228"><span class="linenos">228</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_check_is_valid_filepath_list</span><span class="p">(</span><span class="n">output_path</span><span class="p">):</span>
-</span><span id="L-229"><a href="#L-229"><span class="linenos">229</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid output_path.&quot;</span><span class="p">)</span>
-</span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a>
-</span><span id="L-231"><a href="#L-231"><span class="linenos">231</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">):</span>
-</span><span id="L-232"><a href="#L-232"><span class="linenos">232</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The number of output paths must match the number of input paths.&quot;</span><span class="p">)</span>
-</span><span id="L-233"><a href="#L-233"><span class="linenos">233</span></a>
-</span><span id="L-234"><a href="#L-234"><span class="linenos">234</span></a>        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">output_path</span><span class="p">:</span>
-</span><span id="L-235"><a href="#L-235"><span class="linenos">235</span></a>            <span class="n">aug_path</span> <span class="o">=</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_get_augmented_path</span><span class="p">(</span>
-</span><span id="L-236"><a href="#L-236"><span class="linenos">236</span></a>                <span class="n">path</span><span class="p">,</span>
-</span><span id="L-237"><a href="#L-237"><span class="linenos">237</span></a>                <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
-</span><span id="L-238"><a href="#L-238"><span class="linenos">238</span></a>                <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
-</span><span id="L-239"><a href="#L-239"><span class="linenos">239</span></a>                <span class="n">add_uuid</span><span class="o">=</span><span class="n">add_uuid</span><span class="p">,</span>
-</span><span id="L-240"><a href="#L-240"><span class="linenos">240</span></a>                <span class="n">add_timestamp</span><span class="o">=</span><span class="n">add_timestamp</span><span class="p">,</span>
-</span><span id="L-241"><a href="#L-241"><span class="linenos">241</span></a>                <span class="n">change_ext</span><span class="o">=</span><span class="n">change_ext</span><span class="p">,</span>
-</span><span id="L-242"><a href="#L-242"><span class="linenos">242</span></a>                <span class="n">folder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-</span><span id="L-243"><a href="#L-243"><span class="linenos">243</span></a>            <span class="p">)</span>
-</span><span id="L-244"><a href="#L-244"><span class="linenos">244</span></a>            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aug_path</span><span class="p">)</span>
-</span><span id="L-245"><a href="#L-245"><span class="linenos">245</span></a>
-</span><span id="L-246"><a href="#L-246"><span class="linenos">246</span></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="L-247"><a href="#L-247"><span class="linenos">247</span></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid output_path.&quot;</span><span class="p">)</span>
-</span><span id="L-248"><a href="#L-248"><span class="linenos">248</span></a>
-</span><span id="L-249"><a href="#L-249"><span class="linenos">249</span></a>    <span class="k">return</span> <span class="n">outputs</span>
+</span><span id="L-193"><a href="#L-193"><span class="linenos">193</span></a>    <span class="c1"># Output is a folder</span>
+</span><span id="L-194"><a href="#L-194"><span class="linenos">194</span></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_check_is_dir</span><span class="p">(</span><span class="n">output_path</span><span class="p">):</span>
+</span><span id="L-195"><a href="#L-195"><span class="linenos">195</span></a>
+</span><span id="L-196"><a href="#L-196"><span class="linenos">196</span></a>        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+</span><span id="L-197"><a href="#L-197"><span class="linenos">197</span></a>            <span class="n">aug_path</span> <span class="o">=</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_get_augmented_path</span><span class="p">(</span>
+</span><span id="L-198"><a href="#L-198"><span class="linenos">198</span></a>                <span class="n">path</span><span class="p">,</span>
+</span><span id="L-199"><a href="#L-199"><span class="linenos">199</span></a>                <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+</span><span id="L-200"><a href="#L-200"><span class="linenos">200</span></a>                <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
+</span><span id="L-201"><a href="#L-201"><span class="linenos">201</span></a>                <span class="n">add_uuid</span><span class="o">=</span><span class="n">add_uuid</span><span class="p">,</span>
+</span><span id="L-202"><a href="#L-202"><span class="linenos">202</span></a>                <span class="n">add_timestamp</span><span class="o">=</span><span class="n">add_timestamp</span><span class="p">,</span>
+</span><span id="L-203"><a href="#L-203"><span class="linenos">203</span></a>                <span class="n">change_ext</span><span class="o">=</span><span class="n">change_ext</span><span class="p">,</span>
+</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a>                <span class="n">folder</span><span class="o">=</span><span class="n">output_path</span><span class="p">,</span>
+</span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a>            <span class="p">)</span>
+</span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a>            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aug_path</span><span class="p">)</span>
+</span><span id="L-207"><a href="#L-207"><span class="linenos">207</span></a>
+</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a>    <span class="c1"># Output is a file</span>
+</span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_check_is_valid_output_filepath</span><span class="p">(</span><span class="n">output_path</span><span class="p">):</span>
+</span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid output_path.&quot;</span><span class="p">)</span>
+</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a>
+</span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a>        <span class="n">aug_path</span> <span class="o">=</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_get_augmented_path</span><span class="p">(</span>
+</span><span id="L-214"><a href="#L-214"><span class="linenos">214</span></a>            <span class="n">output_path</span><span class="p">,</span>
+</span><span id="L-215"><a href="#L-215"><span class="linenos">215</span></a>            <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+</span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a>            <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
+</span><span id="L-217"><a href="#L-217"><span class="linenos">217</span></a>            <span class="n">add_uuid</span><span class="o">=</span><span class="n">add_uuid</span><span class="p">,</span>
+</span><span id="L-218"><a href="#L-218"><span class="linenos">218</span></a>            <span class="n">add_timestamp</span><span class="o">=</span><span class="n">add_timestamp</span><span class="p">,</span>
+</span><span id="L-219"><a href="#L-219"><span class="linenos">219</span></a>            <span class="n">change_ext</span><span class="o">=</span><span class="n">change_ext</span><span class="p">,</span>
+</span><span id="L-220"><a href="#L-220"><span class="linenos">220</span></a>            <span class="n">folder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="L-221"><a href="#L-221"><span class="linenos">221</span></a>        <span class="p">)</span>
+</span><span id="L-222"><a href="#L-222"><span class="linenos">222</span></a>        <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aug_path</span><span class="p">)</span>
+</span><span id="L-223"><a href="#L-223"><span class="linenos">223</span></a>
+</span><span id="L-224"><a href="#L-224"><span class="linenos">224</span></a>    <span class="c1"># Output is a list of files</span>
+</span><span id="L-225"><a href="#L-225"><span class="linenos">225</span></a>    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+</span><span id="L-226"><a href="#L-226"><span class="linenos">226</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_check_is_valid_filepath_list</span><span class="p">(</span><span class="n">output_path</span><span class="p">):</span>
+</span><span id="L-227"><a href="#L-227"><span class="linenos">227</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid output_path.&quot;</span><span class="p">)</span>
+</span><span id="L-228"><a href="#L-228"><span class="linenos">228</span></a>
+</span><span id="L-229"><a href="#L-229"><span class="linenos">229</span></a>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">):</span>
+</span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The number of output paths must match the number of input paths.&quot;</span><span class="p">)</span>
+</span><span id="L-231"><a href="#L-231"><span class="linenos">231</span></a>
+</span><span id="L-232"><a href="#L-232"><span class="linenos">232</span></a>        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">output_path</span><span class="p">:</span>
+</span><span id="L-233"><a href="#L-233"><span class="linenos">233</span></a>            <span class="n">aug_path</span> <span class="o">=</span> <span class="n">utils_path</span><span class="o">.</span><span class="n">_get_augmented_path</span><span class="p">(</span>
+</span><span id="L-234"><a href="#L-234"><span class="linenos">234</span></a>                <span class="n">path</span><span class="p">,</span>
+</span><span id="L-235"><a href="#L-235"><span class="linenos">235</span></a>                <span class="n">prefix</span><span class="o">=</span><span class="n">prefix</span><span class="p">,</span>
+</span><span id="L-236"><a href="#L-236"><span class="linenos">236</span></a>                <span class="n">suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
+</span><span id="L-237"><a href="#L-237"><span class="linenos">237</span></a>                <span class="n">add_uuid</span><span class="o">=</span><span class="n">add_uuid</span><span class="p">,</span>
+</span><span id="L-238"><a href="#L-238"><span class="linenos">238</span></a>                <span class="n">add_timestamp</span><span class="o">=</span><span class="n">add_timestamp</span><span class="p">,</span>
+</span><span id="L-239"><a href="#L-239"><span class="linenos">239</span></a>                <span class="n">change_ext</span><span class="o">=</span><span class="n">change_ext</span><span class="p">,</span>
+</span><span id="L-240"><a href="#L-240"><span class="linenos">240</span></a>                <span class="n">folder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="L-241"><a href="#L-241"><span class="linenos">241</span></a>            <span class="p">)</span>
+</span><span id="L-242"><a href="#L-242"><span class="linenos">242</span></a>            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aug_path</span><span class="p">)</span>
+</span><span id="L-243"><a href="#L-243"><span class="linenos">243</span></a>
+</span><span id="L-244"><a href="#L-244"><span class="linenos">244</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="L-245"><a href="#L-245"><span class="linenos">245</span></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid output_path.&quot;</span><span class="p">)</span>
+</span><span id="L-246"><a href="#L-246"><span class="linenos">246</span></a>
+</span><span id="L-247"><a href="#L-247"><span class="linenos">247</span></a>    <span class="k">return</span> <span class="n">outputs</span>
 </span></pre></div>
 
 

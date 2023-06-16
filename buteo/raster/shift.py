@@ -135,10 +135,6 @@ def raster_shift(
     creation_options : Optional[List[str]], optional
         The creation options to be used when creating the output., default: None
 
-    Args:
-        raster (Union[str, List, gdal.Dataset]): The raster(s) to be shifted.
-        shift_list (List[Union[int, float]]): The shift in x and y direction.
-
     Returns
     -------
     Union[str, List[str]]

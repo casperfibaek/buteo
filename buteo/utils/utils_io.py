@@ -190,6 +190,21 @@ def _get_output_paths(
             )
             outputs.append(aug_path)
 
+    # Output is a folder
+    elif isinstance(output_path, str) and utils_path._check_is_dir(output_path):
+
+        for path in inputs:
+            aug_path = utils_path._get_augmented_path(
+                path,
+                prefix=prefix,
+                suffix=suffix,
+                add_uuid=add_uuid,
+                add_timestamp=add_timestamp,
+                change_ext=change_ext,
+                folder=output_path,
+            )
+            outputs.append(aug_path)
+
     # Output is a file
     elif isinstance(output_path, str):
         if not utils_path._check_is_valid_output_filepath(output_path):
@@ -205,23 +220,6 @@ def _get_output_paths(
             folder=None,
         )
         outputs.append(aug_path)
-
-    # Output is a folder
-    elif isinstance(output_path, str):
-        if not utils_path._check_dir_exists(output_path):
-            raise ValueError("Invalid output_path. Directory does not exists.")
-
-        for path in inputs:
-            aug_path = utils_path._get_augmented_path(
-                path,
-                prefix=prefix,
-                suffix=suffix,
-                add_uuid=add_uuid,
-                add_timestamp=add_timestamp,
-                change_ext=change_ext,
-                folder=output_path,
-            )
-            outputs.append(aug_path)
 
     # Output is a list of files
     elif isinstance(output_path, list):

@@ -777,10 +777,7 @@ def vector_copy(
     input_is_list = isinstance(vector, list)
 
     input_list = utils_io._get_input_paths(vector, "vector")
-    output_list = utils_io._get_output_paths(
-        input_list,
-        out_path,
-    )
+    output_list = utils_io._get_output_paths(input_list, out_path)
 
     utils_path._delete_if_required_list(output_list, overwrite=True)
 
@@ -804,6 +801,74 @@ def vector_copy(
         ref = None
 
         output.append(output_list[idx])
+
+    if input_is_list:
+        return output
+
+    return output[0]
+
+
+def vector_reset_fids(
+    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
+) -> Union[str, List[str]]:
+    """ 
+    Resets the FID column of a vector to 0, 1, 2, 3, ...
+
+    Parameters
+    ----------
+    vector : Union[str, ogr.DataSource, List[str, ogr.DataSource]]
+        Vector layer(s) or path(s) to vector layer(s).
+
+    out_path : Optional[str], optional
+        The path to the output vector. If None, will create a new file in the same directory as the input vector. Default: None.
+
+    Returns
+    -------
+    out_path : str
+        Path to the output vector.
+    """
+    assert isinstance(vector, (str, ogr.DataSource)), "vector must be a string or an ogr.DataSource object."
+
+    input_is_list = isinstance(vector, list)
+
+    input_list = utils_io._get_input_paths(vector, "vector")
+
+    output = []
+    for idx, in_vector in enumerate(input_list):
+        ref = _vector_open(in_vector)
+
+        layers = ref.GetLayerCount()
+
+        for layer_index in range(layers):
+            layer = ref.GetLayer(layer_index)
+            layer.ResetReading()
+            fids = []
+
+            for feature in layer:
+                fids.append(feature.GetFID())
+
+            layer.ResetReading()
+            fids = sorted(fids)
+
+            layer_defn = layer.GetLayerDefn()
+            field_names = [layer_defn.GetFieldDefn(i).GetName() for i in range(layer_defn.GetFieldCount())]
+
+            for feature in layer:
+                current_fid = feature.GetFID()
+                target_fid = fids.index(current_fid)
+
+                # If there is a fid field, update it too.
+                if "fid" in field_names:
+                    feature.SetField("fid", str(target_fid))
+
+                feature.SetFID(target_fid)
+                layer.SetFeature(feature)
+
+            layer.SyncToDisk()
+
+        ref = None
+
+        output.append(input_list[idx])
 
     if input_is_list:
         return output

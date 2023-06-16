@@ -925,6 +925,15 @@ def _get_bounds_from_bbox(
         The geometry in the source dataset's projection.
     """
     default_projection = utils_projection._get_default_projection_osr()
+
+    if utils_projection._check_projections_match(projection_osr, default_projection):
+        geom = _get_geom_from_bbox(bbox_ogr)
+
+        if wkt:
+            return geom.ExportToWkt()
+
+        return geom
+
     transformer = osr.CoordinateTransformation(projection_osr, default_projection)
 
     x_min, x_max, y_min, y_max = bbox_ogr
@@ -945,14 +954,16 @@ def _get_bounds_from_bbox(
         p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
         p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
         p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+
     gdal.PopErrorHandler()
 
     ring = ogr.Geometry(ogr.wkbLinearRing)
-    ring.AddPoint(p1t[0], p1t[1])
-    ring.AddPoint(p2t[0], p2t[1])
-    ring.AddPoint(p3t[0], p3t[1])
-    ring.AddPoint(p4t[0], p4t[1])
-    ring.AddPoint(p1t[0], p1t[1])
+    ring.AddPoint(p1t[1], p1t[0])
+    ring.AddPoint(p2t[1], p2t[0])
+    ring.AddPoint(p3t[1], p3t[0])
+    ring.AddPoint(p4t[1], p4t[0])
+    ring.AddPoint(p1t[1], p1t[0])
+
     polygon = ogr.Geometry(ogr.wkbPolygon)
     polygon.AddGeometry(ring)
 
@@ -1153,10 +1164,15 @@ def _additional_bboxes(
 
 def _get_vector_from_geom(
     geom: ogr.Geometry,
+    out_path: Optional[str] = None,
+    prefix: Optional[str] = "",
+    suffix: Optional[str] = "",
+    add_uuid: Optional[bool] = False,
+    add_timestamp: Optional[bool] = False,
     projection_osr: Optional[osr.SpatialReference] = None,
 ) -> ogr.DataSource:
     """
-    Converts a geometry to a vector.
+    Converts a geometry to a vector in memory.
 
     Parameters
     ----------
@@ -1169,11 +1185,19 @@ def _get_vector_from_geom(
     """
     assert isinstance(geom, ogr.Geometry), "geom must be an ogr.Geometry."
 
-    path = utils_path._get_augmented_path(
-        "converted_geom.gpkg",
-        add_uuid=True,
-        folder="/vsimem/",
-    )
+    if out_path is None:
+        path = utils_path._get_temp_filepath(
+            "converted_geom.gpkg",
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            add_timestamp=add_timestamp,
+        )
+    else:
+        assert isinstance(out_path, str), "out_path must be a string."
+        assert utils_path._check_is_valid_output_filepath(out_path), "out_path was not a valid output filepath."
+
+        path = out_path
 
     driver_name = utils_gdal._get_vector_driver_name_from_path(path)
     driver = ogr.GetDriverByName(driver_name)
@@ -1188,4 +1212,6 @@ def _get_vector_from_geom(
     layer.CreateFeature(feature)
     feature.Destroy()
 
-    return vector
+    vector = None
+
+    return path
