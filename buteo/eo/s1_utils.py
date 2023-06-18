@@ -9,6 +9,7 @@ TODO:
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import Union, List, Tuple, Dict, Any
+import numpy as np
 
 
 # TODO: wkt to ogr geometry
@@ -86,3 +87,23 @@ def s1_get_metadata(
         images_obj.append(meta)
 
     return images_obj
+
+def s1_to_db(
+    arr: np.ndarray,
+) -> np.ndarray:
+    """
+    Convert intensity to dB
+    10 * log10(arr)
+    """
+    epsilon = np.finfo(arr.dtype).eps
+    return 10.0 * np.log10(np.where(arr == 0.0, epsilon, arr))
+
+
+def s1_to_intensity(
+    arr: np.ndarray,
+) -> np.ndarray:
+    """
+    Convert dB to intensity
+    10^(arr/10)
+    """
+    return np.power(10, arr / 10.0)

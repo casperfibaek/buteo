@@ -126,7 +126,7 @@ def _get_basic_metadata_raster(
     """
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
-    dataset = _raster_open(raster)
+    dataset = _raster_open(raster, writeable=False)
     transform = dataset.GetGeoTransform()
     projection_wkt = dataset.GetProjectionRef()
     projection_osr = osr.SpatialReference()

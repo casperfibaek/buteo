@@ -10,6 +10,7 @@ from typing import Union, Optional, List
 from osgeo import gdal
 
 # Internal
+from buteo.raster import core_raster
 from buteo.utils import (
     utils_base,
     utils_bbox,

@@ -163,7 +163,7 @@ def _raster_clip(
     else:
         raise ValueError(f"Unable to parse nodata_value: {dst_nodata}")
 
-    if not utils_translate._check_is_value_within_dtype_range(out_nodata, raster_metadata["dtype"]):
+    if out_nodata is not None and not utils_translate._check_is_value_within_dtype_range(out_nodata, raster_metadata["dtype"]):
         warn("Nodata value is outside of the range of the input raster's dtype. Setting to None.")
         out_nodata = None
 
