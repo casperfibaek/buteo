@@ -13,3 +13,4 @@ from .color import *
 from .utils_array import *
 from .fill import *
 from .timeseries import *
+from .loaders import *
