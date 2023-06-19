@@ -83,7 +83,7 @@
 </span><span id="L-21"><a href="#L-21"><span class="linenos"> 21</span></a><span class="kn">from</span> <span class="nn">buteo.vector</span> <span class="kn">import</span> <span class="n">core_vector</span>
 </span><span id="L-22"><a href="#L-22"><span class="linenos"> 22</span></a><span class="kn">from</span> <span class="nn">buteo.vector.metadata</span> <span class="kn">import</span> <span class="n">_vector_to_metadata</span>
 </span><span id="L-23"><a href="#L-23"><span class="linenos"> 23</span></a><span class="kn">from</span> <span class="nn">buteo.vector.reproject</span> <span class="kn">import</span> <span class="n">_vector_reproject</span>
-</span><span id="L-24"><a href="#L-24"><span class="linenos"> 24</span></a><span class="kn">from</span> <span class="nn">buteo.vector.merge</span> <span class="kn">import</span> <span class="n">vector_merge</span>
+</span><span id="L-24"><a href="#L-24"><span class="linenos"> 24</span></a><span class="kn">from</span> <span class="nn">buteo.vector.merge</span> <span class="kn">import</span> <span class="n">vector_merge_layers</span>
 </span><span id="L-25"><a href="#L-25"><span class="linenos"> 25</span></a>
 </span><span id="L-26"><a href="#L-26"><span class="linenos"> 26</span></a>
 </span><span id="L-27"><a href="#L-27"><span class="linenos"> 27</span></a><span class="k">def</span> <span class="nf">_vector_intersect</span><span class="p">(</span>
@@ -108,7 +108,7 @@
 </span><span id="L-46"><a href="#L-46"><span class="linenos"> 46</span></a>    <span class="n">match_projection</span> <span class="o">=</span> <span class="n">_vector_reproject</span><span class="p">(</span><span class="n">clip_geom</span><span class="p">,</span> <span class="n">vector</span><span class="p">)</span>
 </span><span id="L-47"><a href="#L-47"><span class="linenos"> 47</span></a>    <span class="n">geometry_to_clip</span> <span class="o">=</span> <span class="n">core_vector</span><span class="o">.</span><span class="n">_vector_open</span><span class="p">(</span><span class="n">match_projection</span><span class="p">)</span>
 </span><span id="L-48"><a href="#L-48"><span class="linenos"> 48</span></a>
-</span><span id="L-49"><a href="#L-49"><span class="linenos"> 49</span></a>    <span class="n">merged</span> <span class="o">=</span> <span class="n">core_vector</span><span class="o">.</span><span class="n">_vector_open</span><span class="p">(</span><span class="n">vector_merge</span><span class="p">([</span><span class="n">vector</span><span class="p">,</span> <span class="n">match_projection</span><span class="p">]))</span>
+</span><span id="L-49"><a href="#L-49"><span class="linenos"> 49</span></a>    <span class="n">merged</span> <span class="o">=</span> <span class="n">core_vector</span><span class="o">.</span><span class="n">_vector_open</span><span class="p">(</span><span class="n">vector_merge_layers</span><span class="p">([</span><span class="n">vector</span><span class="p">,</span> <span class="n">match_projection</span><span class="p">]))</span>
 </span><span id="L-50"><a href="#L-50"><span class="linenos"> 50</span></a>
 </span><span id="L-51"><a href="#L-51"><span class="linenos"> 51</span></a>    <span class="k">if</span> <span class="n">add_index</span><span class="p">:</span>
 </span><span id="L-52"><a href="#L-52"><span class="linenos"> 52</span></a>        <span class="n">core_vector</span><span class="o">.</span><span class="n">vector_add_index</span><span class="p">(</span><span class="n">merged</span><span class="p">)</span>

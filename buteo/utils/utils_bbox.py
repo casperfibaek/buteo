@@ -1165,6 +1165,7 @@ def _additional_bboxes(
 def _get_vector_from_geom(
     geom: ogr.Geometry,
     out_path: Optional[str] = None,
+    name: Optional[str] = "converted_geom",
     prefix: Optional[str] = "",
     suffix: Optional[str] = "",
     add_uuid: Optional[bool] = False,
@@ -1187,7 +1188,7 @@ def _get_vector_from_geom(
 
     if out_path is None:
         path = utils_path._get_temp_filepath(
-            "converted_geom.gpkg",
+            f"{name}.gpkg",
             prefix=prefix,
             suffix=suffix,
             add_uuid=add_uuid,
@@ -1204,7 +1205,7 @@ def _get_vector_from_geom(
     vector = driver.CreateDataSource(path)
 
     proj = projection_osr if projection_osr is not None else utils_projection._get_default_projection_osr()
-    layer = vector.CreateLayer("converted_geom", proj, geom.GetGeometryType())
+    layer = vector.CreateLayer(name, proj, geom.GetGeometryType())
 
     feature = ogr.Feature(layer.GetLayerDefn())
     feature.SetGeometry(geom)

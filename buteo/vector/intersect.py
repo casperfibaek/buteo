@@ -21,7 +21,7 @@ from buteo.utils import (
 from buteo.vector import core_vector
 from buteo.vector.metadata import _vector_to_metadata
 from buteo.vector.reproject import _vector_reproject
-from buteo.vector.merge import vector_merge
+from buteo.vector.merge import vector_merge_layers
 
 
 def _vector_intersect(
@@ -46,7 +46,7 @@ def _vector_intersect(
     match_projection = _vector_reproject(clip_geom, vector)
     geometry_to_clip = core_vector._vector_open(match_projection)
 
-    merged = core_vector._vector_open(vector_merge([vector, match_projection]))
+    merged = core_vector._vector_open(vector_merge_layers([vector, match_projection]))
 
     if add_index:
         core_vector.vector_add_index(merged)

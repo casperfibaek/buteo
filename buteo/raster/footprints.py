@@ -5,6 +5,7 @@
 # Standard library
 import sys; sys.path.append("../../")
 from typing import Union, Optional, List
+import os
 
 # External
 from osgeo import gdal
@@ -31,6 +32,7 @@ def raster_get_footprints(
     suffix: str = "",
     add_uuid: bool = False,
     add_timestamp: bool = False,
+    out_format: str = "gpkg",
 ) -> Union[str, List[str], gdal.Dataset]:
     """
     Gets the footprints of a raster or a list of rasters.
@@ -60,6 +62,9 @@ def raster_get_footprints(
 
     add_timestamp : bool, optional
         If True, a timestamp will be added to the output raster name., default: False
+    
+    out_format : str, optional
+        The output format of the raster. If None, the format is inferred from the output path., default: "gpkg"
 
     Returns
     -------
@@ -86,7 +91,7 @@ def raster_get_footprints(
         suffix=suffix,
         add_uuid=add_uuid,
         add_timestamp=add_timestamp,
-        change_ext="gpkg",
+        change_ext=out_format,
     )
 
     utils_path._delete_if_required_list(output_list, overwrite)
@@ -94,6 +99,7 @@ def raster_get_footprints(
     footprints = []
     for idx, in_raster in enumerate(input_list):
         metadata = core_raster._get_basic_metadata_raster(in_raster)
+        name = os.path.splitext(os.path.basename(metadata["name"]))[0]
 
         # Projections
         projection_osr = metadata["projection_osr"]
@@ -103,14 +109,26 @@ def raster_get_footprints(
         bbox = metadata["bbox"]
 
         if latlng:
-            footprint_geom = utils_bbox._get_bounds_from_bbox(bbox, projection_osr, wkt=False)
-            footprint = utils_bbox._get_vector_from_geom(footprint_geom, projection_osr=projection_latlng, out_path=output_list[idx])
+            footprint_geom = utils_bbox._get_bounds_from_bbox(
+                bbox,
+                projection_osr,
+                wkt=False,
+            )
+            footprint = utils_bbox._get_vector_from_geom(
+                footprint_geom,
+                projection_osr=projection_latlng,
+                out_path=output_list[idx],
+                name=name,
+            )
         else:
-            footprint_geom = utils_bbox._get_geom_from_bbox(bbox)
+            footprint_geom = utils_bbox._get_geom_from_bbox(
+                bbox,
+            )
             footprint = utils_bbox._get_vector_from_geom(
                 footprint_geom,
                 projection_osr=projection_osr,
                 out_path=output_list[idx],
+                name=name,
             )
 
         footprints.append(footprint)
