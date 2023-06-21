@@ -123,10 +123,14 @@ optional:
 orfeo-toolbox
 esa-snap
 """
-
 from .utils import *
 from .raster import *
 from .vector import *
 from .array import *
 from .eo import *
 from .ai import *
+
+from osgeo import gdal
+gdal.UseExceptions()
+
+__version__ = "0.9.22"

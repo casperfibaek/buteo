@@ -1,22 +1,30 @@
 import os
-import sys; sys.path.append("../")
+import sys; sys.path.append("..")
 from glob import glob
 from tqdm import tqdm
 
 import buteo as beo
-import numpy as np
+
+FOLDER = "D:/data/s2_building_and_roads/images/"
+VRT = "D:/data/esa_worldcover2021/esa_worldcover2021_wgs84.vrt"
 
 
-FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/s12_buildings/data_raw/israel_gaza_2/"
+images = glob(FOLDER + "*label_roads.tif")
 
-ref = os.path.join(FOLDER, "labels.tif")
-ref_resampled = beo.raster_resample(ref, 10.0)
+for img in tqdm(images, total=len(images)):
+    name = os.path.splitext(os.path.basename(img))[0]
+    name = name.replace("label_roads", "label_lc.tif")
 
-images = glob(os.path.join(FOLDER, "*.tif"))
-
-beo.raster_align(
-    images,
-    reference=ref_resampled,
-    out_path=FOLDER + "aligned/",
-    target_nodata=None,
-)
+    warped = beo.raster_warp(
+        VRT,
+        out_path=os.path.join(FOLDER, name),
+        src_projection=VRT,
+        dst_projection=img,
+        resampling_alg="mode",
+        align_pixels=True,
+        dst_extent=img,
+        dst_extent_srs=img,
+        dst_x_res=img,
+        dst_y_res=img,
+        clip_geom=beo.raster_get_footprints(img, latlng=False),
+    )
