@@ -132,6 +132,8 @@ class AugmentationDataset():
         assert len(self.x_train) == len(self.y_train), "X and y must have the same length."
         assert input_is_channel_last is not None, "Input channel format must be specified."
         assert output_is_channel_last is not None, "Output channel format must be specified."
+        assert callback is None or callable(callback), "Callback must be callable."
+        assert callback_pre is None or callable(callback_pre), "Callback_pre must be callable."
 
         # If X is more than one array, then we need to make sure that the
         # number of list of augmentations is the same as the number of arrays.
@@ -310,17 +312,25 @@ class AugmentationDataset():
             # Augmentations that needs two images
             elif aug_name in ["cutmix", "mixup"]:
                 idx_source = np.random.randint(len(self.x_train))
-                xx = self.x_train[idx_source]
-                yy = self.y_train[idx_source]
 
-                if isinstance(xx, list):
-                    xx = xx[0]
-                if isinstance(yy, list):
-                    yy = yy[0]
+                xx, yy = (self.x_train[idx_source], self.y_train[idx_source])
 
+                if isinstance(xx, list): xx = xx[0]
+                if isinstance(yy, list): yy = yy[0]
+
+                # Convert the format of the input data if necessary
                 if self.input_is_channel_last:
                     xx = channel_last_to_first(xx)
                     yy = channel_last_to_first(yy)
+
+                # If using cutmix/mixup, we have to draw samples from other images.
+                # This means that we have to apply the callback_pre those samples
+                # before applying the augmentation.
+                if self.callback_pre is not None:
+                    xx, yy = self.callback_pre(xx, yy)
+                
+                xx = np.array(xx) if isinstance(xx, np.memmap) else xx
+                yy = np.array(yy) if isinstance(yy, np.memmap) else yy
 
                 x, y = func(x, y, xx, yy, channel_last=False, inplace=True, **kwargs)
 
@@ -347,7 +357,7 @@ class AugmentationDataset():
             sample_x, sample_y = self._apply_callback(self.callback_pre, sample_x, sample_y)
 
         sample_x = [np.array(x) if isinstance(x, np.memmap) else x.copy() for x in sample_x]
-        sample_y = [np.array(y) if isinstance(y, np.memmap) else y.copy() for y in sample_x]
+        sample_y = [np.array(y) if isinstance(y, np.memmap) else y.copy() for y in sample_y]
 
         # Apply augmentations
         if self.x_is_multi_input or self.y_is_multi_input:
@@ -419,6 +429,10 @@ class Dataset:
         output_is_channel_last: Optional[bool] = False,
     ):
         assert len(X) == len(y), "X and y must have the same length."
+        assert input_is_channel_last is not None, "Input channel format must be specified."
+        assert output_is_channel_last is not None, "Output channel format must be specified."
+        assert callback is None or callable(callback), "Callback must be callable."
+
         self.x_train = X
         self.y_train = y
         self.callback = callback
@@ -436,7 +450,7 @@ class Dataset:
         sample_y = [self._copy_and_convert_format(y, self.input_is_channel_last, channel_last_to_first) for y in sample_y]
 
         sample_x = [np.array(x) if isinstance(x, np.memmap) else x.copy() for x in sample_x]
-        sample_y = [np.array(y) if isinstance(y, np.memmap) else y.copy() for y in sample_x]
+        sample_y = [np.array(y) if isinstance(y, np.memmap) else y.copy() for y in sample_y]
 
         # Apply callback if specified
         if self.callback is not None:

@@ -26,36 +26,13 @@ from buteo.array.convolution_kernels import (
 )
 
 
-
 def augmentation_rotation(
     X: np.ndarray,
     k: int = -1,
     channel_last: bool = True,
     inplace = False,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
-    """
-    Randomly rotate the image by 90 degrees intervals. Images
-    can be (channels, height, width) or (height, width, channels).
-    
-    Parameters
-    ----------
-    X : np.ndarray
-        The image to rotate.
 
-    k : int, optional
-        The number of 90 degree intervals to rotate by, default: -1 (random).
-
-    channel_last : bool, optional
-        Whether the image is (channels, height, width) or (height, width, channels), default: True.
-
-    inplace : bool, optional
-        Whether to perform the rotation in-place, default: False.
-
-    Returns
-    -------
-    np.ndarray
-        The rotated image.
-    """
     if not inplace:
         X = X.copy()
 
