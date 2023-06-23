@@ -113,7 +113,6 @@ class AugmentationDataset():
         augmentations: Optional[List] = None,
         callback: Callable = None,
         callback_pre: Callable = None,
-        mutable_data: bool = False,
         input_is_channel_last: Optional[bool] = None,
         output_is_channel_last: Optional[bool] = None,
     ):
@@ -125,7 +124,6 @@ class AugmentationDataset():
         self.callback_pre = callback_pre
         self.input_is_channel_last = input_is_channel_last
         self.output_is_channel_last = output_is_channel_last
-        self.mutable_data = mutable_data
 
         # Read the first sample to determine if it is multi input
         self.x_is_multi_input = isinstance(self.x_train[0], list) and len(self.x_train[0]) > 1
@@ -339,11 +337,6 @@ class AugmentationDataset():
         # Ensure the samples are in list format
         sample_x, sample_y = self._ensure_list_format(self.x_train[index], self.y_train[index])
 
-        # Copy the data if mutable_data is False. For Pytorch.
-        if not self.mutable_data:
-            sample_x = [x.copy() for x in sample_x]
-            sample_y = [y.copy() for y in sample_y]
-
         # Convert the format of the input data if necessary
         if self.input_is_channel_last:
             sample_x = [channel_last_to_first(x) for x in sample_x]
@@ -352,6 +345,9 @@ class AugmentationDataset():
         # Apply callback_pre if specified. For normalization.
         if self.callback_pre is not None:
             sample_x, sample_y = self._apply_callback(self.callback_pre, sample_x, sample_y)
+
+        sample_x = [np.array(x) if isinstance(x, np.memmap) else x.copy() for x in sample_x]
+        sample_y = [np.array(y) if isinstance(y, np.memmap) else y.copy() for y in sample_x]
 
         # Apply augmentations
         if self.x_is_multi_input or self.y_is_multi_input:
@@ -377,9 +373,9 @@ class AugmentationDataset():
     def _copy_and_convert_format(self, data, format_flag, converter_func):
         return converter_func(data) if format_flag else data
 
-    def _apply_callback(self, sample_x, sample_y):
+    def _apply_callback(self, callback_func, sample_x, sample_y):
         preconv_x, preconv_y = sample_x[0], sample_y[0]
-        callback_x, callback_y = self.callback(preconv_x, preconv_y)
+        callback_x, callback_y = callback_func(preconv_x, preconv_y)
         return [callback_x], [callback_y]
 
     def _restore_original_format(self, data):
@@ -419,7 +415,6 @@ class Dataset:
         X: Union[Union[np.ndarray, MultiArray], List[Union[np.ndarray, MultiArray]]],
         y: Union[Union[np.ndarray, MultiArray], List[Union[np.ndarray, MultiArray]]],
         callback: Callable = None,
-        mutable_data: bool = False,
         input_is_channel_last: Optional[bool] = True,
         output_is_channel_last: Optional[bool] = False,
     ):
@@ -429,7 +424,6 @@ class Dataset:
         self.callback = callback
         self.input_is_channel_last = input_is_channel_last
         self.output_is_channel_last = output_is_channel_last
-        self.mutable_data = mutable_data
 
     def __len__(self):
         return len(self.x_train)
@@ -440,6 +434,9 @@ class Dataset:
         # Copy and optionally convert the format of the input data
         sample_x = [self._copy_and_convert_format(x, self.input_is_channel_last, channel_last_to_first) for x in sample_x]
         sample_y = [self._copy_and_convert_format(y, self.input_is_channel_last, channel_last_to_first) for y in sample_y]
+
+        sample_x = [np.array(x) if isinstance(x, np.memmap) else x.copy() for x in sample_x]
+        sample_y = [np.array(y) if isinstance(y, np.memmap) else y.copy() for y in sample_x]
 
         # Apply callback if specified
         if self.callback is not None:
@@ -455,9 +452,6 @@ class Dataset:
         return (x if isinstance(x, list) else [x]), (y if isinstance(y, list) else [y])
 
     def _copy_and_convert_format(self, data, format_flag, converter_func):
-        if not self.mutable_data:
-            data = data.copy()
-
         return converter_func(data) if format_flag else data
 
     def _apply_callback(self, sample_x, sample_y):

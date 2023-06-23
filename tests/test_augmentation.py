@@ -43,7 +43,6 @@ def test_augmentation_dataset():
             {"name": "rotation_xy", "chance": 0.5},
             {"name": "mirror_xy", "chance": 0.5},
         ],
-        mutable_data=True,
         input_is_channel_last=True,
         output_is_channel_last=False,
     )
@@ -74,7 +73,6 @@ def test_augmentation_dataset():
             {"name": "cutmix", "chance": 1.0 },
             {"name": "mixup", "chance": 1.0 },
         ],
-        mutable_data=True,
         input_is_channel_last=True,
         output_is_channel_last=False,
     )

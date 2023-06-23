@@ -1,37 +1,48 @@
-import os
-import sys; sys.path.append("..")
-from glob import glob
-from tqdm import tqdm
+""" Get simple EO data and labels for testing model architectures. """
 
+import os
+from glob import glob
+import sys; sys.path.append("../")
+import torch
+
+import numpy as np
 import buteo as beo
 
-FOLDER = "D:/data/s2_building_and_roads/images/"
-VRT = "D:/data/esa_worldcover2021/esa_worldcover2021_wgs84.vrt"
 
+FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/model_zoo/data/patches/"
 
-images = glob(FOLDER + "*label_roads.tif")
+x_train = beo.MultiArray([np.load(f, mmap_mode="r") for f in glob(os.path.join(FOLDER, "*train_s2.npy"))])
+y_train = beo.MultiArray([np.load(f, mmap_mode="r") for f in glob(os.path.join(FOLDER, "*train_label_area.npy"))])
 
-for img in tqdm(images, total=len(images)):
-    name = os.path.splitext(os.path.basename(img))[0]
-    name = name.replace("label_roads", "label_lc.tif")
+x_test = beo.MultiArray([np.load(f, mmap_mode="r") for f in glob(os.path.join(FOLDER, "*test_s2.npy"))])
+y_test = beo.MultiArray([np.load(f, mmap_mode="r") for f in glob(os.path.join(FOLDER, "*test_label_area.npy"))])
 
-    warped = beo.raster_warp(
-        VRT,
-        out_path=None,
-        src_projection=VRT,
-        dst_projection=img,
-        resampling_alg="mode",
-        align_pixels=False,
-        dst_extent=img,
-        dst_extent_srs=img,
-        dst_x_res=img,
-        dst_y_res=img,
-        clip_geom=beo.raster_get_footprints(img, latlng=False),
-    )
+assert len(x_train) == len(y_train)
+assert len(x_test) == len(y_test)
 
-    beo.array_to_raster(
-        beo.raster_to_array(warped, filled=True, fill_value=0),
-        reference=img,
-        out_path=os.path.join(FOLDER, name),
-        set_nodata=None,
-    )
+def callback_pre(x, y):
+    x_norm = np.empty_like(x, dtype=np.float32)
+    np.divide(x, 10000.0, out=x_norm)
+
+    return x_norm, y
+
+def callback(x, y):
+    return torch.from_numpy(x), torch.from_numpy(y)
+
+ds_train = beo.AugmentationDataset(
+    x_train,
+    y_train,
+    input_is_channel_last=True,
+    output_is_channel_last=False,
+    callback_pre=callback_pre,
+    callback=callback,
+    augmentations=[
+        { "name": "rotation_xy", "chance": 0.2},
+        { "name": "mirror_xy", "chance": 0.2},
+        { "name": "cutmix", "chance": 0.2 },
+    ],
+)
+ds_test = beo.Dataset(x_test, y_test, input_is_channel_last=True, output_is_channel_last=False, callback=callback)
+
+bob = ds_train[0]
+import pdb; pdb.set_trace()
