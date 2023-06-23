@@ -58,10 +58,9 @@ def test_open_raster_read_mode():
     raster = core_raster.raster_open(raster_1, writeable=False)
     assert isinstance(raster, gdal.Dataset)
 
-    error_code = raster.GetRasterBand(1).WriteArray(np.zeros((10, 10)))
-    is_writeable = error_code == 0
+    with pytest.raises(RuntimeError):
+        raster.GetRasterBand(1).WriteArray(np.zeros((10, 10)))
 
-    assert not is_writeable
     gdal.Unlink(raster_1)
 
 

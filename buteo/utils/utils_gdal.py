@@ -623,9 +623,7 @@ def _check_is_raster(
             return False
 
         try:
-            gdal.PushErrorHandler('CPLQuietErrorHandler')
             opened = gdal.Open(potential_raster, 0)
-            gdal.PopErrorHandler()
         except RuntimeError:
             return False
 
@@ -698,7 +696,6 @@ def _check_is_vector(
         True if the variable is a valid vector, False otherwise.
     """
     if isinstance(potential_vector, ogr.DataSource):
-
         if empty_is_invalid and _check_is_vector_empty(potential_vector):
             print(f"Vector: {potential_vector} was empty.")
 
@@ -707,20 +704,19 @@ def _check_is_vector(
         return True
 
     if isinstance(potential_vector, str):
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
+        try:
+            opened = ogr.Open(potential_vector, 0)
+            if opened is None:
+                extension = os.path.splitext(potential_vector)[1][1:]
 
-        opened = ogr.Open(potential_vector, 0)
-        if opened is None:
-            extension = os.path.splitext(potential_vector)[1][1:]
+                if extension == "memory" or "mem":
+                    driver = ogr.GetDriverByName("Memory")
+                    opened = driver.Open(potential_vector)
 
-            if extension == "memory" or "mem":
-                driver = ogr.GetDriverByName("Memory")
-                opened = driver.Open(potential_vector)
-
-        gdal.PopErrorHandler()
+        except RuntimeError:
+            return False
 
         if isinstance(opened, ogr.DataSource):
-
             if empty_is_invalid and _check_is_vector_empty(opened):
                 return False
 

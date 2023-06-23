@@ -167,12 +167,27 @@ def parse_projection(
                 layer = ref.GetLayer()
                 target_proj = layer.GetSpatialRef()
             else:
-                if not (target_proj.ImportFromWkt(projection) == 0 or
-                        target_proj.ImportFromProj4(projection) == 0 or
-                        (projection.lower().startswith("epsg:") and
-                         target_proj.ImportFromEPSG(int(projection.split(":")[1])) == 0) or
-                        (projection.lower().startswith("esri:") and
-                         target_proj.ImportFromWkt(_get_esri_projection(projection)) == 0)):
+                if projection.lower().startswith("epsg:"):
+                    try:
+                        success = target_proj.ImportFromEPSG(int(projection.split(":")[1])) == 0
+                    except: # pylint: disable=bare-except
+                        success = False
+                elif projection.lower().startswith("esri:"):
+                    try:
+                        success = target_proj.ImportFromWkt(_get_esri_projection(projection)) == 0
+                    except: # pylint: disable=bare-except
+                        success = False
+                else:
+                    try:
+                        success = target_proj.ImportFromWkt(projection) == 0
+                    except: # pylint: disable=bare-except
+                        success = False
+                        try:
+                            success = target_proj.ImportFromProj4(projection) == 0
+                        except: # pylint: disable=bare-except
+                            success = False
+
+                if not success:
                     raise ValueError(err_msg)
 
         elif isinstance(projection, int):
@@ -281,9 +296,10 @@ def _get_projection_from_raster(
     if isinstance(raster, gdal.Dataset):
         opened = raster
     else:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        opened = gdal.Open(raster, gdal.GA_ReadOnly)
-        gdal.PopErrorHandler()
+        try:
+            opened = gdal.Open(raster, gdal.GA_ReadOnly)
+        except ValueError:
+            opened = None
 
     if opened is None:
         raise RuntimeError(f"Could not open raster. {raster}")
@@ -315,9 +331,10 @@ def _get_projection_from_vector(
     if isinstance(vector, ogr.DataSource):
         opened = vector
     else:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        opened = ogr.Open(vector, gdal.GA_ReadOnly)
-        gdal.PopErrorHandler()
+        try:
+            opened = ogr.Open(vector, gdal.GA_ReadOnly)
+        except ValueError:
+            opened = None
 
     if opened is None:
         raise RuntimeError(f"Could not open vector. {vector}")
@@ -350,15 +367,16 @@ def _get_projection_from_dataset(
     opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
 
     if opened is None:
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+        try:
+            opened = gdal.Open(dataset, gdal.GA_ReadOnly)
+        except ValueError:
+            try:
+                opened = ogr.Open(dataset, gdal.GA_ReadOnly)
+            except ValueError:
+                opened = None
 
-        if opened is None:
-            opened = ogr.Open(dataset, gdal.GA_ReadOnly)
-
-        gdal.PopErrorHandler()
-        if opened is None:
-            raise RuntimeError(f"Could not open dataset. {dataset}")
+    if opened is None:
+        raise RuntimeError(f"Could not open dataset. {dataset}")
 
     if isinstance(opened, gdal.Dataset):
         return _get_projection_from_raster(opened)

@@ -79,7 +79,7 @@ def _raster_set_datatype(
         output_band = copy.GetRasterBand(band_idx + 1)
 
         # Read the input band data and write it to the output band
-        data = input_band.ReadRaster(0, 0, input_band.XSize, input_band.YSize)
+        data = input_band.ReadAsArray(0, 0, input_band.XSize, input_band.YSize).astype(dtype_str)
         output_band.WriteRaster(0, 0, input_band.XSize, input_band.YSize, data)
 
         # Set the NoData value for the output band if it exists in the input band
