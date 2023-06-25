@@ -1,13 +1,17 @@
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Optional
 
 import numpy as np
 
 
 class MultiArray:
     def __init__(self,
-        array_list: Union[np.ndarray, List[Union[np.ndarray, List[np.ndarray]]]],
+        array_list: List[Union[np.ndarray, np.memmap]],
         shuffle: bool = False,
+        random_sampling: bool = False,
         seed: int = 42,
+        _idx_start: Optional[int] = None,
+        _idx_end: Optional[int] = None,
+        _is_subarray: bool = False
     ):
         """
         This is a class that takes in a tuple of list of arrays and glues them together
@@ -19,11 +23,18 @@ class MultiArray:
 
         Parameters
         ----------
-        array_list : Union[np.ndarray, List[Union[np.ndarray, List[np.ndarray]]]]
-            The input can be multimodal data in the following formats:
-                1. A single numpy array. 
-                2. A list of numpy arrays. (single modality) - will be iterable
-                3. A list of lists of numpy arrays. (multi-modality) - Each list will be iterable, returning a tuple of arrays.
+        array_list : List[Union[np.ndarray, np.memmap]]
+            A list of numpy arrays to load as one. Can be mmaped or not.
+        
+        shuffle : bool, default: False
+            Whether to shuffle the data or not. Cannot be used together with random_sampling.
+            This is different from random sampling in that it ensures that all data will be used.
+            It creates an index array that is shuffled and then uses that to index the MultiArray.
+        
+        random_sampling : bool, default: False
+            Whether to use random sampling or not. If True, the returned data will be randomly sampled from the MultiArray.
+            Cannot be used together with shuffling.
+            Does not ensure that all data will be used, but it will be randomly (uniform) sampled.
 
         Returns
         -------
@@ -46,172 +57,124 @@ class MultiArray:
         32
         ```
         """
-        self.list_list_arrays, self.original_format = self._convert_input(array_list)
-        self.cumulative_lens = []
+        self.array_list = array_list
+        self.is_subarray = _is_subarray
+        
+        assert isinstance(self.array_list, list), "Input should be a list of numpy arrays."
+        assert len(self.array_list) > 0, "Input list is empty. Please provide a list with numpy arrays."
+        assert all(isinstance(item, (np.ndarray, np.memmap)) for item in self.array_list), "Input list should only contain numpy arrays."
+
+        self.cumulative_sizes = np.cumsum([0] + [arr.shape[0] for arr in self.array_list])
+
+        self._idx_start = int(_idx_start) if _idx_start is not None else 0
+        self._idx_end = int(_idx_end) if _idx_end is not None else int(self.cumulative_sizes[-1])
+
+        assert isinstance(self._idx_start, int), "Minimum length should be an integer."
+        assert isinstance(self._idx_end, int), "Maximum length should be an integer."
+        assert self._idx_start < self._idx_end, "Minimum length should be smaller than maximum length."
+
+        self.total_length = int(min(self.cumulative_sizes[-1], self._idx_end - self._idx_start))  # Store length for faster access
+
+        if shuffle and random_sampling:
+            raise ValueError("Cannot use both shuffling and resevoir sampling at the same time.")
+
+        # Shuffling
         self.seed = seed
         self.shuffle = shuffle
-        self.shuffle_incides = None
-
-        # Calculate the cumulative lengths once for all the arrays
-        for i in range(len(self.list_list_arrays)):
-            self.cumulative_lens.append(
-                np.cumsum([0] + [arr.shape[0] for arr in self.list_list_arrays[i]])
-            )
-
-        # Check that all arrays have the same length (across modalities)
-        if len(self.cumulative_lens) > 1:
-            for i in range(1, len(self.cumulative_lens)):
-                if not np.array_equal(self.cumulative_lens[i], self.cumulative_lens[i-1]):
-                    raise ValueError("All arrays should have the same length.")
-
-        # They should all be the same, so just take the first one
-        self.cumulative_sizes = self.cumulative_lens[0]
+        self.shuffle_indices = None
+        self.random_sampling = random_sampling
+        self.rng = np.random.default_rng(seed)
 
         if self.shuffle:
-            np.random.seed(self.seed)
-            self.shuffle_incides = np.random.permutation(self.__len__())
+            self.shuffle_indices = self.rng.permutation(range(self._idx_start, self._idx_end))
 
+    def _load_item(self, idx: int):
+        """ Load an item from the array list. """
+        array_idx = np.searchsorted(self.cumulative_sizes, idx, side='right') - 1
 
-    def _convert_input(self,
-        array_list: Union[np.ndarray, List[Union[np.ndarray, List[np.ndarray]]]],
-    ) -> Tuple[List[List[np.ndarray]], str]:
-        """
-        The input can be:
-            1. A single numpy array.
-            2. A list of numpy arrays 
-            3. A list of lists of numpy arrays
+        calculated_idx = idx - self.cumulative_sizes[array_idx]
+        if calculated_idx < 0 or calculated_idx >= self.array_list[array_idx].shape[0]:
+            raise IndexError(f'Index {idx} out of bounds for MultiArray with length {self.__len__()}')
 
-        All inputs will be converted to format 3. The output will be in the original format.
-        """
-        # Case 1: single numpy array
-        if isinstance(array_list, np.ndarray):
-            return [[array_list]], 'array'  
+        output = self.array_list[array_idx][calculated_idx]
 
-        elif isinstance(array_list, list):
-            if not array_list:
-                raise ValueError("Input list is empty. Please provide a list with numpy arrays.")
-
-            # Case 2: list of numpy arrays
-            if all(isinstance(item, np.ndarray) for item in array_list):
-                return [array_list], 'list'
-
-            # Case 3: list of lists of numpy arrays
-            elif all(isinstance(item, list) and all(isinstance(sub_item, np.ndarray) for sub_item in item) for item in array_list):
-                return array_list, 'list_list'
-
-            else:
-                raise ValueError("Input list should either contain numpy arrays or lists of numpy arrays.")
-        else:
-            raise TypeError("Invalid input type. Input should either be a numpy array or a list of numpy arrays or a list of lists of numpy arrays.")
-
-
-    def _revert_input(self,
-        converted_array_list: List[List[np.ndarray]], original_format: str,
-    ) -> Union[np.ndarray, List[Union[np.ndarray, List[np.ndarray]]]]:
-        """ Convert the list of lists back to the original format. """
-        if original_format == 'array':
-            return converted_array_list[0][0]
-
-        elif original_format == 'list':
-            return converted_array_list[0]
-
-        elif original_format == 'list_list':
-            return converted_array_list
-        else:
-            raise ValueError("Invalid format string. It should be one of the following: 'array', 'list', 'list_list'.")
+        return output
 
 
     def set_shuffle_index(self, shuffle_indices: np.ndarray) -> None:
         """ Set the shuffle indices and enable shuffling. """
-        self.shuffle_incides = shuffle_indices
+        self.shuffle_indices = shuffle_indices
         self.shuffle = True
-        assert len(self.shuffle_incides) == len(self), "Length of shuffle indices should be equal to the length of the MultiArray."
+        assert len(self.shuffle_indices) == len(self), "Length of shuffle indices should be equal to the length of the MultiArray."
 
     
     def get_shuffle_index(self) -> np.ndarray:
         """ Get the shuffle indices. """
-        return self.shuffle_incides
+        return self.shuffle_indices
+    
+    
+    def shuffle_index(self) -> None:
+        """ Shuffle the MultiArray. """
+        self.shuffle_indices = self.rng.permutation(range(self._idx_start, self._idx_end))
+        self.shuffle = True
 
+    
+    def disable_shuffle(self) -> None:
+        """ Disable shuffling. """
+        self.shuffle = False
 
-    def __getitem__(self, idx: int):
-        if idx < 0:  # support negative indexing
-            idx = self.__len__() + idx
-
-        if self.shuffle:
-            idx = self.shuffle_incides[idx]
-
-        if idx >= self.__len__():
-            raise IndexError("Index out of range")
-
-        array_idx = np.searchsorted(self.cumulative_sizes, idx, side='right') - 1
-
-        output = [
-            self.list_list_arrays[i][array_idx][idx - self.cumulative_sizes[array_idx]]
-            for i in range(len(self.list_list_arrays))
-        ]
-
-        return self._revert_input(output, self.original_format)
-
-
-    def __len__(self):
-        return self.cumulative_sizes[-1]
-
-
-class MultiArraySubset:
-    """
-    A subset of a MultiArray. Usually used for train/val/test splits.
-    """
-    def __init__(self,
-        multi_array: MultiArray,
-        idx_start: int,
-        idx_end: int,
-    ):
-        self.multi_array = multi_array
-        self.idx_start = idx_start
-        self.idx_end = idx_end
-
-        assert self.idx_start < self.idx_end, "Start index should be smaller than end index."
-        assert self.idx_start >= 0, "Start index should be larger than or equal to 0."
-        assert self.idx_end <= len(self.multi_array), "End index should be smaller than or equal to the length of the MultiArray."
 
     def __getitem__(self, idx: int):
         if idx < 0:
-            idx = self.__len__() + idx
-        
-        if idx >= self.__len__():
+            idx = self._idx_end + idx
+
+        if self.random_sampling:
+            idx = np.random.randint(self._idx_start, self._idx_end)
+        elif self.shuffle:
+            idx = self.shuffle_indices[idx]
+        else:
+            idx = idx + self._idx_start
+
+        if idx < self._idx_start or idx >= self._idx_end:
             raise IndexError("Index out of range")
-        
-        return self.multi_array[self.idx_start + idx]
-    
+
+        return self._load_item(idx)
+
+
+    def split(self, split_point: Union[int, float]) -> Tuple["MultiArray", "MultiArray"]:
+        """
+        Split the MultiArray into two MultiArrays.
+
+        Parameters
+        ----------
+        split_point : int or float
+            The split point for the multi array. If float, it will be interpreted as a percentage.
+            If int, it will be interpreted as an index.
+
+        Returns
+        -------
+        MultiArray, MultiArray
+            Two MultiArray objects. (before_split_point, after_split_point)
+        """
+        if isinstance(split_point, float):
+            split_point = int(split_point * len(self))
+
+        if split_point > len(self):
+            raise ValueError("Split point is larger than the length of the MultiArray.")
+            
+        if self.is_subarray:
+            raise ValueError("Cannot split an array that has already been split.")
+
+        before_split_point = MultiArray(self.array_list, shuffle=False, random_sampling=self.random_sampling, seed=self.seed, _idx_start=self._idx_start, _idx_end=self._idx_start + split_point, _is_subarray=True)
+        after_split_point = MultiArray(self.array_list, shuffle=False, random_sampling=self.random_sampling, seed=self.seed, _idx_start=self._idx_start + split_point, _idx_end=self._idx_end, _is_subarray=True)
+
+        return before_split_point, after_split_point
+
+
+    def __iter__(self):
+        for i in range(self.__len__()):
+            yield self[i]
+
+
     def __len__(self):
-        return self.idx_end - self.idx_start
-
-
-def split_multi_array(multi_array, split_point=0.9):
-    """
-    Split a MultiArray into two MultiArraySubsets.
-
-    Parameters
-    ----------
-    multi_array : MultiArray
-        A MultiArray object.
-
-    split_point : float or int. Default: 0.9
-        The split point for the multi array. If float, it will be interpreted as a percentage.
-        If int, it will be interpreted as an index.
-
-    Returns
-    -------
-    MultiArraySubset, MultiArraySubset
-        Two MultiArraySubset objects. (before_split_point, after_split_point)
-    """
-    if isinstance(split_point, float):
-        split_point = int(split_point * len(multi_array))
-
-    if split_point > len(multi_array):
-        raise ValueError("Split point is larger than the length of the MultiArray.")
-    
-    before_split_point = MultiArraySubset(multi_array, 0, split_point)
-    after_split_point = MultiArraySubset(multi_array, split_point, len(multi_array))
-
-    return before_split_point, after_split_point
+        return self.total_length

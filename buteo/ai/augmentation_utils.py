@@ -9,7 +9,7 @@ from numba import jit
 
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+# @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
 def _rotate_90(
     arr: np.ndarray,
     channel_last: bool = True
@@ -36,7 +36,7 @@ def _rotate_90(
     return arr[:, ::-1, :].transpose(0, 2, 1) # (C, H, W)
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+# @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
 def _rotate_180(
     arr: np.ndarray,
     channel_last: bool = True
@@ -63,7 +63,7 @@ def _rotate_180(
     return arr[:, ::-1, ::-1] # (C, H, W)
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+# @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
 def _rotate_270(
     arr: np.ndarray,
     channel_last: bool = True
@@ -90,7 +90,7 @@ def _rotate_270(
     return arr[:, :, ::-1].transpose(0, 2, 1) # (C, H, W)
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+# @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
 def _mirror_horizontal(
     arr: np.ndarray,
     channel_last: bool = True
@@ -117,7 +117,7 @@ def _mirror_horizontal(
     return arr[:, :, ::-1] # (C, H, W)
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+# @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
 def _mirror_vertical(
     arr: np.ndarray,
     channel_last: bool = True
@@ -144,7 +144,7 @@ def _mirror_vertical(
     return arr[:, ::-1, :] # (C, H, W)
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+# @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
 def _mirror_horisontal_vertical(
     arr: np.ndarray,
     channel_last: bool = True
@@ -171,7 +171,7 @@ def _mirror_horisontal_vertical(
     return arr[:, ::-1, ::-1] # (C, H, W)
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+# @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
 def _mirror_arr(
     arr: np.ndarray,
     k: int,
@@ -209,7 +209,7 @@ def _mirror_arr(
     return view
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+# @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
 def _rotate_arr(
     arr: np.ndarray,
     k: int,
