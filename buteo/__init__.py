@@ -133,4 +133,4 @@ from .ai import *
 from osgeo import gdal
 gdal.UseExceptions()
 
-__version__ = "0.9.29"
+__version__ = "0.9.30"

@@ -27,7 +27,7 @@ from buteo.array.convolution_kernels import (
 
 
 def augmentation_rotation(
-    X: np.ndarray,
+    X: np.ndarray, *,
     k: int = -1,
     channel_last: bool = True,
     inplace = False,
@@ -46,9 +46,31 @@ def augmentation_rotation(
     return X
 
 
+class AugmentationRotation:
+    def __init__(self, *, p: float = 1.0, k: int = -1, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.k = k
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = False
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return X
+
+        return augmentation_rotation(
+            X,
+            k=self.k,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 def augmentation_rotation_xy(
     X: np.ndarray,
-    y: np.ndarray,
+    y: np.ndarray, *,
     k: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
@@ -94,8 +116,31 @@ def augmentation_rotation_xy(
     return X, y
 
 
+class AugmentationRotationXY:
+    def __init__(self, *, p: float = 1.0, k: int = -1, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.k = k
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = True
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        if random.random() > self.p:
+            return X, y
+
+        return augmentation_rotation_xy(
+            X,
+            y,
+            k=self.k,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 def augmentation_mirror(
-    X: np.ndarray,
+    X: np.ndarray, *,
     k: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
@@ -139,9 +184,31 @@ def augmentation_mirror(
     return X
 
 
+class AugmentationMirror:
+    def __init__(self, *, p: float = 1.0, k: int = -1, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.k = k
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = False
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return X
+
+        return augmentation_mirror(
+            X,
+            k=self.k,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 def augmentation_mirror_xy(
     X: np.ndarray,
-    y: np.ndarray,
+    y: np.ndarray, *,
     k: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
@@ -189,12 +256,36 @@ def augmentation_mirror_xy(
     return X, y
 
 
+class AugmentationMirrorXY:
+    def __init__(self, *, p: float = 1.0, k: int = -1, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.k = k
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = True
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        if random.random() > self.p:
+            return X, y
+
+        return augmentation_mirror_xy(
+            X,
+            y,
+            k=self.k,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_noise_uniform(
-    X: np.ndarray,
+    X: np.ndarray, *,
     max_amount: float = 0.1,
     additive: bool = False,
-    channel_last: Any = None, # pylint: disable=unused-argument
+    per_channel: bool = True,
+    channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
     """
@@ -232,22 +323,70 @@ def augmentation_noise_uniform(
 
     amount = np.random.rand() * max_amount
 
-    if additive:
-        random_noise = np.random.uniform(-amount, amount, X.shape).astype(X.dtype)
-        X[:] += random_noise
+    if per_channel:
+        if additive:
+            random_noise = np.random.uniform(-amount, amount, size=X.shape).astype(X.dtype)
+            X[:] += random_noise
+        else:
+            random_noise = np.random.uniform(1 - amount, 1 + amount, size=X.shape).astype(X.dtype)
+            X[:] *= random_noise
+
     else:
-        random_noise = np.random.uniform(1 - amount, 1 + amount, X.shape).astype(X.dtype)
-        X[:] *= random_noise
+        if channel_last: # hwc
+            if additive:
+                random_noise = np.random.uniform(-amount, amount, size=X.shape[:2]).astype(X.dtype)
+                for i in range(X.shape[2]):
+                    X[:, :, i] += random_noise
+            else:
+                random_noise = np.random.uniform(1 - amount, 1 + amount, size=X.shape[:2]).astype(X.dtype)
+                for i in range(X.shape[2]):
+                    X[:, :, i] *= random_noise
+        else:
+            if additive:
+                random_noise = np.random.uniform(-amount, amount, size=X.shape[1:]).astype(X.dtype)
+                for i in range(X.shape[0]):
+                    X[i, :, :] += random_noise
+            else:
+                random_noise = np.random.uniform(1 - amount, 1 + amount, size=X.shape[1:]).astype(X.dtype)
+                for i in range(X.shape[0]):
+                    X[i, :, :] *= random_noise
 
     return X
 
 
+class AugmentationNoiseUniform:
+    def __init__(self, *, p: float = 1.0, max_amount: float = 0.1, additive: bool = False, per_channel: bool = True, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.max_amount = max_amount
+        self.additive = additive
+        self.per_channel = per_channel
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = False
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return X
+
+        return augmentation_noise_uniform(
+            X,
+            max_amount=self.max_amount,
+            additive=self.additive,
+            per_channel=self.per_channel,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_noise_normal(
-    X: np.ndarray,
+    X: np.ndarray, *,
     max_amount: float = 0.1,
     additive: bool = False,
-    channel_last: Any = None, # pylint: disable=unused-argument
+    per_channel: bool = True,
+    channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
     """
@@ -286,19 +425,66 @@ def augmentation_noise_normal(
 
     amount = np.random.rand() * max_amount
 
-    if additive:
-        random_noise = np.random.normal(0, amount, X.shape).astype(X.dtype)
-        X[:] += random_noise
+    if per_channel:
+        if additive:
+            random_noise = np.random.normal(0, amount, size=X.shape).astype(X.dtype)
+            X[:] += random_noise
+        else:
+            random_noise = np.random.normal(1, amount, size=X.shape).astype(X.dtype)
+            X[:] *= random_noise
+
     else:
-        random_noise = np.random.normal(1, amount, X.shape).astype(X.dtype)
-        X[:] *= random_noise
+        if channel_last: # hwc
+            if additive:
+                random_noise = np.random.normal(0, amount, size=X.shape[:2]).astype(X.dtype)
+                for i in range(X.shape[2]):
+                    X[:, :, i] += random_noise
+            else:
+                random_noise = np.random.normal(1, amount, size=X.shape[:2]).astype(X.dtype)
+                for i in range(X.shape[2]):
+                    X[:, :, i] *= random_noise
+        else:
+            if additive:
+                random_noise = np.random.normal(0, amount, size=X.shape[1:]).astype(X.dtype)
+                for i in range(X.shape[0]):
+                    X[i, :, :] += random_noise
+            else:
+                random_noise = np.random.normal(1, amount, size=X.shape[1:]).astype(X.dtype)
+                for i in range(X.shape[0]):
+                    X[i, :, :] *= random_noise
 
     return X
 
 
+class AugmentationNoiseNormal:
+    def __init__(self, *, p: float = 1.0, max_amount: float = 0.1, additive: bool = False, per_channel: bool = True, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.max_amount = max_amount
+        self.additive = additive
+        self.per_channel = per_channel
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = False
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return X
+
+        return augmentation_noise_normal(
+            X,
+            max_amount=self.max_amount,
+            additive=self.additive,
+            per_channel=self.per_channel,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def augmentation_channel_scale(
-    X: np.ndarray,
+    X: np.ndarray, *,
     max_amount: float = 0.1,
     additive: bool = False,
     channel_last: bool = True,
@@ -357,9 +543,33 @@ def augmentation_channel_scale(
     return X
 
 
+class AugmentationChannelScale:
+    def __init__(self, *, p: float = 1.0, max_amount: float = 0.1, additive: bool = False, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.max_amount = max_amount
+        self.additive = additive
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = False
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return X
+
+        return augmentation_channel_scale(
+            X,
+            max_amount=self.max_amount,
+            additive=self.additive,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def augmentation_contrast(
-    X: np.ndarray,
+    X: np.ndarray, *,
     max_amount: float = 0.1,
     channel_last: bool = True,
     inplace: bool = False,
@@ -411,11 +621,34 @@ def augmentation_contrast(
     return X
 
 
+class AugmentationContrast:
+    def __init__(self, *, p: float = 1.0, max_amount: float = 0.1, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.max_amount = max_amount
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = False
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return X
+
+        return augmentation_contrast(
+            X,
+            max_amount=self.max_amount,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def augmentation_drop_pixel(
-    X: np.ndarray,
+    X: np.ndarray, *,
     drop_probability: float = 0.01,
     drop_value: float = 0.0,
+    per_channel: bool = False,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
@@ -448,30 +681,201 @@ def augmentation_drop_pixel(
     if not inplace:
         X = X.copy()
 
-    # Create a mask of random numbers
-    mask = np.random.uniform(0.0, 1.0, size=X.shape).astype(np.float32)
 
-    # Agreed. This looks terrible. But it's the only way to get numba to parallelize this.
-    if channel_last:
-        for col in prange(X.shape[0]):
-            for row in prange(X.shape[1]):
-                for channel in prange(X.shape[2]):
-                    if mask[col, row, channel] <= drop_probability:
-                        X[col, row, channel] = drop_value
+    if per_channel:
+        # Create a mask of random numbers
+        mask = np.random.uniform(0.0, 1.0, size=X.shape).astype(np.float32)
 
+        # Agreed. This looks terrible. But it's the only way to get numba to parallelize this.
+        if channel_last:
+            for col in prange(X.shape[0]):
+                for row in prange(X.shape[1]):
+                    for channel in prange(X.shape[2]):
+                        if mask[col, row, channel] <= drop_probability:
+                            X[col, row, channel] = drop_value
+
+        else:
+            for channel in prange(X.shape[0]):
+                for col in prange(X.shape[1]):
+                    for row in prange(X.shape[2]):
+                        if mask[channel, col, row] <= drop_probability:
+                            X[channel, col, row] = drop_value
     else:
-        for channel in prange(X.shape[0]):
+        if channel_last:
+            mask = np.random.uniform(0.0, 1.0, size=(X.shape[0], X.shape[1])).astype(np.float32)
+
+            for col in prange(X.shape[0]):
+                for row in prange(X.shape[1]):
+                    if mask[col, row] <= drop_probability:
+                        X[col, row, :] = drop_value
+
+        else:
+            mask = np.random.uniform(0.0, 1.0, size=(X.shape[1], X.shape[2])).astype(np.float32)
             for col in prange(X.shape[1]):
                 for row in prange(X.shape[2]):
-                    if mask[channel, col, row] <= drop_probability:
-                        X[channel, col, row] = drop_value
+                    if mask[col, row] <= drop_probability:
+                        X[:, col, row] = drop_value
 
     return X
 
 
+class AugmentationDropPixel:
+    def __init__(self, *, p: float = 1.0, drop_probability: float = 0.01, drop_value: float = 0.0, per_channel: bool = False, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.drop_probability = drop_probability
+        self.drop_value = drop_value
+        self.per_channel = per_channel
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = False
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return X
+
+        return augmentation_drop_pixel(
+            X,
+            drop_probability=self.drop_probability,
+            drop_value=self.drop_value,
+            per_channel=self.per_channel,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+    
+
+class AugmentationDropPixelLabel:
+    def __init__(self, *, p: float = 1.0, drop_probability: float = 0.01, drop_value: float = 0.0, per_channel: bool = False, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.drop_probability = drop_probability
+        self.drop_value = drop_value
+        self.per_channel = per_channel
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = False
+        self.applies_to_labels = True
+        self.requires_dataset = False
+
+    def __call__(self, y: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return y
+
+        return augmentation_drop_pixel(
+            y,
+            drop_probability=self.drop_probability,
+            drop_value=self.drop_value,
+            per_channel=self.per_channel,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
+def augmentation_drop_rectangle(
+    X: np.ndarray, *,
+    drop_value: float = 0.0,
+    channel_last: bool = True,
+    inplace: bool = False,
+) -> np.ndarray:
+    """
+    Drops a random rectangle from an image. Input should be (height, width, channels) or (channels, height, width).
+    Covers the rectangle with the drop_value. Size of rectangle is random(max: width/2, height/2).
+    
+    Parameters
+    ----------
+    X : np.ndarray
+        The image to drop a rectangle from.
+
+    drop_value : float, optional
+        The value to drop the rectangle to, default: 0.0.
+
+    channel_last : bool, optional
+        Whether the image is (channels, height, width) or (height, width, channels), default: True.
+    
+    inplace : bool, optional
+        Whether to perform the rotation in-place, default: False.
+
+    Returns
+    -------
+    np.ndarray
+        The image with dropped rectangles.
+    """
+    if not inplace:
+        X = X.copy()
+
+    # height, width, channels = X.shape
+    if channel_last:
+        height = np.random.randint(1, X.shape[0] // 2)
+        width = np.random.randint(1, X.shape[1] // 2)
+
+    # channels, height, width = X.shape
+    else:
+        height = np.random.randint(1, X.shape[1] // 2)
+        width = np.random.randint(1, X.shape[2] // 2)
+
+    # Create a mask of the drop_value
+    mask = np.full((height, width), drop_value, dtype=X.dtype)
+
+    # Apply the mask to the image in a random location
+    if channel_last:
+        col = np.random.randint(0, X.shape[0] - height)
+        row = np.random.randint(0, X.shape[1] - width)
+
+        X[col:col+height, row:row+width, :] = mask
+    else:
+        col = np.random.randint(0, X.shape[1] - width)
+        row = np.random.randint(0, X.shape[2] - width)
+
+        X[:, col:col+height, row:row+width] = mask
+
+    return X
+
+
+class AugmentationDropRectangle:
+    def __init__(self, *, p: float = 1.0, drop_value: float = 0.0, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.drop_value = drop_value
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = False
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return X
+
+        return augmentation_drop_rectangle(
+            X,
+            self.drop_value,
+            self.channel_last,
+            self.inplace,
+        )
+    
+
+class AugmentationDropRectangleLabel:
+    def __init__(self, *, p: float = 1.0, drop_value: float = 0.0, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.drop_value = drop_value
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = False
+        self.applies_to_labels = True
+        self.requires_dataset = False
+
+    def __call__(self, y: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return y
+
+        return augmentation_drop_rectangle(
+            y,
+            drop_value=self.drop_value,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_drop_channel(
-    X: np.ndarray,
+    X: np.ndarray, *,
     drop_value: float = 0.0,
     channel_last: bool = True,
     inplace: bool = False,
@@ -513,9 +917,31 @@ def augmentation_drop_channel(
     return X
 
 
+class AugmentationDropChannel:
+    def __init__(self, *, p: float = 1.0, drop_value: float = 0.0, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.drop_value = drop_value
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = False
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return X
+
+        return augmentation_drop_channel(
+            X,
+            drop_value=self.drop_value,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_blur(
-    X: np.ndarray,
+    X: np.ndarray, *,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
@@ -563,10 +989,30 @@ def augmentation_blur(
     return X
 
 
+class AugmentationBlur:
+    def __init__(self, *, p: float = 1.0, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = False
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return X
+
+        return augmentation_blur(
+            X,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_blur_xy(
     X: np.ndarray,
-    y: np.ndarray,
+    y: np.ndarray, *,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -601,9 +1047,113 @@ def augmentation_blur_xy(
     return x_blurred, y_blurred
 
 
+class AugmentationBlurXY:
+    def __init__(self, *, p: float = 1.0, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = True
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        if random.random() > self.p:
+            return X, y
+
+        return augmentation_blur_xy(
+            X,
+            y,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True)
+def augmentation_label_smoothing(
+    y: np.ndarray, *,
+    flat_array: bool = False,
+    max_amount: float = 0.1,
+    fixed_amount: bool = False,
+    channel_last: bool = True,
+    inplace: bool = False,
+) -> np.ndarray:
+    """
+    Smooths the labels of an image at random. Input should be (height, width, channels) or (channels, height, width).
+    The label is blurred by a random amount.
+    
+    NOTE: Beware of datatypes. Consider casting to float32 before adding noise.
+    
+    Parameters
+    ----------
+    y : np.ndarray
+        The label to smooth.
+
+    max_amount : float, optional
+        The maximum amount to smooth the label by, default: 0.1.
+
+    channel_last : bool, optional
+        Whether the image is (channels, height, width) or (height, width, channels), ignored for this function.
+        Kept to keep the same function signature as other augmentations, default: True.
+    
+    inplace : bool, optional
+        Whether to perform the rotation in-place, default: False.
+
+    Returns
+    -------
+    np.ndarray
+        The smoothed label.
+    """
+    if not inplace:
+        y = y.copy()
+
+    if fixed_amount:
+        amount = max_amount
+    else:
+        amount = np.random.rand() * max_amount
+    
+    if flat_array:
+        mean = np.mean(y)
+        y = ((1 - amount) * y) + (amount * mean)
+    else:
+        if channel_last:
+            mean = np.mean(y, axis=2, keepdims=True)
+            y = ((1 - amount) * y) + (amount * mean)
+        else:
+            mean = np.mean(y, axis=0, keepdims=True)
+            y = ((1 - amount) * y) + (amount * mean)
+
+    return y
+
+
+class AugmentationLabelSmoothing:
+    def __init__(self, *, p: float = 1.0, flat_array: bool = False, max_amount: float = 0.1, fixed_amount: bool = False, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.flat_array = flat_array
+        self.max_amount = max_amount
+        self.fixed_amount = fixed_amount
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = False
+        self.applies_to_labels = True
+        self.requires_dataset = False
+
+    def __call__(self, y: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return y
+
+        return augmentation_label_smoothing(
+            y,
+            flat_array=self.flat_array,
+            max_amount=self.max_amount,
+            fixed_amount=self.fixed_amount,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def augmentation_sharpen(
-    X: np.ndarray,
+    X: np.ndarray, *,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
@@ -651,10 +1201,30 @@ def augmentation_sharpen(
     return X
 
 
+class AugmentationSharpen:
+    def __init__(self, *, p: float = 1.0, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = False
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return X
+
+        return augmentation_sharpen(
+            X,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_sharpen_xy(
     X: np.ndarray,
-    y: np.ndarray,
+    y: np.ndarray, *,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
@@ -689,15 +1259,37 @@ def augmentation_sharpen_xy(
     return x_sharpened, y_sharpened
 
 
+class AugmentationSharpenXY:
+    def __init__(self, *, p: float = 1.0, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = True
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        if random.random() > self.p:
+            return X, y
+
+        return augmentation_sharpen_xy(
+            X,
+            y,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_misalign(
-    X: np.ndarray,
+    X: np.ndarray, *,
     max_offset: float = 0.5,
+    per_channel: bool = False,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
     """
-    Misaligns one channel in the image at random.
+    Misaligns channels in the image at random.
     input should be (height, width, channels) or (channels, height, width).
 
     Parameters
@@ -707,6 +1299,10 @@ def augmentation_misalign(
 
     max_offset : float, optional
         The maximum offset to misalign the channels by. Default: 0.5.
+        Measured in percentage pixels.
+
+    per_channel : bool, optional
+        Whether to misalign each channel by a different amount. Default: False.
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels). Default: True.
@@ -719,24 +1315,90 @@ def augmentation_misalign(
     if not inplace:
         X = X.copy()
 
-    offsets, weights = _simple_shift_kernel_2d(
-        min(np.random.rand(), max_offset),
-        min(np.random.rand(), max_offset),
-    )
-
-    channels = X.shape[2] if channel_last else X.shape[0]
-    channel_to_adjust = np.random.randint(0, channels)
-
-    if channel_last:
-        X[:, :, channel_to_adjust] = convolve_array_simple(
-            X[:, :, channel_to_adjust], offsets, weights,
+    if per_channel:
+        offsets, weights = _simple_shift_kernel_2d(
+            min(np.random.rand(), max_offset),
+            min(np.random.rand(), max_offset),
         )
+
+        if channel_last:
+            for channel_to_adjust in prange(X.shape[2]):
+                X[:, :, channel_to_adjust] = convolve_array_simple(
+                    X[:, :, channel_to_adjust], offsets, weights,
+                )
+        else:
+            for channel_to_adjust in prange(X.shape[0]):
+                X[channel_to_adjust, :, :] = convolve_array_simple(
+                    X[channel_to_adjust, :, :], offsets, weights,
+                )
     else:
-        X[channel_to_adjust, :, :] = convolve_array_simple(
-            X[channel_to_adjust, :, :], offsets, weights,
+        offsets, weights = _simple_shift_kernel_2d(
+            min(np.random.rand(), max_offset),
+            min(np.random.rand(), max_offset),
         )
 
-    return X
+        channels = X.shape[2] if channel_last else X.shape[0]
+        channel_to_adjust = np.random.randint(0, channels)
+
+        if channel_last:
+            X[:, :, channel_to_adjust] = convolve_array_simple(
+                X[:, :, channel_to_adjust], offsets, weights,
+            )
+        else:
+            X[channel_to_adjust, :, :] = convolve_array_simple(
+                X[channel_to_adjust, :, :], offsets, weights,
+            )
+
+        return X
+
+
+class AugmentationMisalign:
+    def __init__(self, *, p: float = 1.0, max_offset: float = 0.5, per_channel: bool = False, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.max_offset = max_offset
+        self.per_channel = per_channel
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = False
+        self.requires_dataset = False
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return X
+
+        return augmentation_misalign(
+            X,
+            max_offset=self.max_offset,
+            per_channel=self.per_channel,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
+class AugmentationMisalignLabel:
+    def __init__(self, *, p: float = 1.0, max_offset: float = 0.5, per_channel: bool = False, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.max_offset = max_offset
+        self.per_channel = per_channel
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = False
+        self.applies_to_labels = True
+        self.requires_dataset = False
+
+    def __call__(self, y: np.ndarray) -> np.ndarray:
+        if random.random() > self.p:
+            return y
+
+        return augmentation_misalign(
+            y,
+            max_offset=self.max_offset,
+            per_channel=self.per_channel,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
@@ -744,7 +1406,7 @@ def augmentation_cutmix(
     X_target: np.ndarray,
     y_target: np.ndarray,
     X_source: np.ndarray,
-    y_source: np.ndarray,
+    y_source: np.ndarray, *,
     min_size: float = 0.333,
     max_size: float = 0.666,
     channel_last: bool = True,
@@ -816,12 +1478,39 @@ def augmentation_cutmix(
     return X_target, y_target
 
 
+class AugmentationCutmix:
+    def __init__(self, *, p: float = 1.0, min_size: float = 0.333, max_size: float = 0.666, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.min_size = min_size
+        self.max_size = max_size
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = True
+        self.requires_dataset = True
+
+    def __call__(self, X_t: np.ndarray, y_t: np.ndarray, X_s: np.ndarray, y_s: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        if random.random() > self.p:
+            return X_t, y_t
+
+        return augmentation_cutmix(
+            X_t,
+            y_t,
+            X_s,
+            y_s,
+            min_size=self.min_size,
+            max_size=self.max_size,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
-def augmentation_mixup(
+def augmentation_mixup( 
     X_target: np.ndarray,
     y_target: np.ndarray,
     X_source: np.ndarray,
-    y_source: np.ndarray,
+    y_source: np.ndarray, *,
     min_size: float = 0.333,
     max_size: float = 0.666,
     label_mix: int = 0,
@@ -907,3 +1596,32 @@ def augmentation_mixup(
         y_target[:] = y_target + y_source
 
     return X_target, y_target
+
+
+class AugmentationMixup:
+    def __init__(self, *, p: float = 1.0, min_size: float = 0.333, max_size: float = 0.666, label_mix: int = 0, channel_last: bool = True, inplace: bool = False):
+        self.p = p
+        self.min_size = min_size
+        self.max_size = max_size
+        self.label_mix = label_mix
+        self.channel_last = channel_last
+        self.inplace = inplace
+        self.applies_to_features = True
+        self.applies_to_labels = True
+        self.requires_dataset = True
+
+    def __call__(self, X_t: np.ndarray, y_t: np.ndarray, X_s: np.ndarray, y_s: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        if random.random() > self.p:
+            return X_t, y_t
+
+        return augmentation_mixup(
+            X_t,
+            y_t,
+            X_s,
+            y_s,
+            min_size=self.min_size,
+            max_size=self.max_size,
+            label_mix=self.label_mix,
+            channel_last=self.channel_last,
+            inplace=self.inplace,
+        )
