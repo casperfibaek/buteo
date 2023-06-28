@@ -317,7 +317,7 @@ def test_array_to_patches_basic():
     arr = np.random.rand(64, 64, 3)
     tile_size = 32
     offsets = 1
-    patches = array_to_patches(arr, tile_size, offsets)
+    patches = array_to_patches(arr, tile_size, n_offsets=offsets)
 
     assert patches.shape == (5, tile_size, tile_size, arr.shape[2])
 
@@ -326,7 +326,7 @@ def test_array_to_patches_multiple_offsets():
     arr = np.random.rand(96, 96, 3)
     tile_size = 32
     offsets = 3
-    patches = array_to_patches(arr, tile_size, offsets)
+    patches = array_to_patches(arr, tile_size, n_offsets=offsets)
 
     assert patches.shape == (21, tile_size, tile_size, arr.shape[2])
 
@@ -342,10 +342,9 @@ def test_predict_array_basic_1d():
     """ Test the basic functionality of the predict_array function. """
     arr = np.random.rand(64, 64, 1)
     tile_size = 32
-    offsets_y = 1
-    offsets_x = 1
+    offsets = 1
 
-    predicted_array = predict_array(arr, dummy_callback, tile_size, offsets_y, offsets_x)
+    predicted_array = predict_array(arr, dummy_callback, tile_size=tile_size, n_offsets=offsets)
 
     assert predicted_array.shape[:2] == arr.shape[:2]
     assert np.allclose(predicted_array, arr * 2)
@@ -354,10 +353,9 @@ def test_predict_array_basic_3d():
     """ Test the basic functionality of the predict_array function. """
     arr = np.random.rand(64, 64, 3)
     tile_size = 32
-    offsets_y = 1
-    offsets_x = 1
+    offsets = 1
 
-    predicted_array = predict_array(arr, dummy_callback, tile_size, offsets_y, offsets_x)
+    predicted_array = predict_array(arr, dummy_callback, tile_size=tile_size, n_offsets=offsets)
 
     assert predicted_array.shape == arr.shape
     assert np.allclose(predicted_array, arr * 2)
@@ -366,10 +364,9 @@ def test_predict_array_basic_1d_to_3d():
     """ Test the basic functionality of the predict_array function. """
     arr = np.random.rand(64, 64, 3)
     tile_size = 32
-    offsets_y = 1
-    offsets_x = 1
+    offsets = 1
 
-    predicted_array = predict_array(arr, dummy_callback_mult, tile_size, offsets_y, offsets_x)
+    predicted_array = predict_array(arr, dummy_callback_mult, tile_size=tile_size, n_offsets=offsets)
 
     assert predicted_array.shape[:2] == arr.shape[:2]
     assert predicted_array.shape[2] == arr.shape[2] * 2
@@ -380,40 +377,36 @@ def test_predict_array_invalid_merge_method():
     """ Test the predict_array function with an invalid merge_method. """
     arr = np.random.rand(64, 64, 1)
     tile_size = 32
-    offsets_y = 1
-    offsets_x = 1
+    offsets = 1
 
-    with pytest.raises(AssertionError, match="Invalid merge method"):
-        predict_array(arr, dummy_callback, tile_size, offsets_y, offsets_x, merge_method="invalid_method")
+    with pytest.raises(AssertionError):
+        predict_array(arr, dummy_callback, tile_size=tile_size, n_offsets=offsets, merge_method="invalid_method")
 
 def test_predict_array_2D_array():
     """ Test the predict_array function with a 2D array. """
     arr = np.random.rand(64, 64)
     tile_size = 32
-    offsets_y = 1
-    offsets_x = 1
+    offsets = 1
 
-    with pytest.raises(AssertionError, match="Array must be 3D"):
-        predict_array(arr, dummy_callback, tile_size, offsets_y, offsets_x)
+    with pytest.raises(AssertionError):
+        predict_array(arr, dummy_callback, tile_size=tile_size, n_offsets=offsets)
 
 def test_predict_array_large_tile_size():
     """ Test the predict_array function with a tile_size larger than the array dimensions. """
     arr = np.random.rand(64, 64, 1)
     tile_size = 128
-    offsets_y = 1
-    offsets_x = 1
+    offsets = 1
 
-    with pytest.raises(AssertionError, match="Tile size must be smaller than the array size"):
-        predict_array(arr, dummy_callback, tile_size, offsets_y, offsets_x)
+    with pytest.raises(AssertionError):
+        predict_array(arr, dummy_callback, tile_size=tile_size, n_offsets=offsets)
 
 def test_predict_array_merge_method_median():
     """ Test the predict_array function with merge_method set to 'median'. """
     arr = np.random.rand(64, 64, 2)
     tile_size = 32
-    offsets_y = 1
-    offsets_x = 1
+    offsets = 1
 
-    predicted_array = predict_array(arr, dummy_callback, tile_size, offsets_y, offsets_x, merge_method="median")
+    predicted_array = predict_array(arr, dummy_callback, tile_size=tile_size, n_offsets=offsets, merge_method="median")
 
     assert predicted_array.shape == arr.shape
     assert np.allclose(predicted_array, arr * 2)
@@ -422,10 +415,9 @@ def test_predict_array_merge_method_mean():
     """ Test the predict_array function with merge_method set to 'mean'. """
     arr = np.random.rand(64, 64, 3)
     tile_size = 32
-    offsets_y = 1
-    offsets_x = 1
+    offsets = 1
 
-    predicted_array = predict_array(arr, dummy_callback, tile_size, offsets_y, offsets_x, merge_method="mean")
+    predicted_array = predict_array(arr, dummy_callback, tile_size=tile_size, n_offsets=offsets, merge_method="mean")
 
     assert predicted_array.shape == arr.shape
     assert np.allclose(predicted_array, arr * 2)
@@ -434,10 +426,9 @@ def test_predict_array_merge_method_mode():
     """ Test the predict_array function with merge_method set to 'mode'. """
     arr = np.rint(np.random.rand(64, 64, 1) * 100).astype(np.uint8)
     tile_size = 32
-    offsets_y = 1
-    offsets_x = 1
+    offsets = 1
 
-    predicted_array = predict_array(arr, dummy_callback, tile_size, offsets_y, offsets_x, merge_method="mode")
+    predicted_array = predict_array(arr, dummy_callback, tile_size=tile_size, n_offsets=offsets, merge_method="mode")
 
     assert predicted_array.shape == arr.shape
 

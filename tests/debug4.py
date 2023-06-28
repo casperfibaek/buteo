@@ -136,7 +136,10 @@ y_test = beo.MultiArray([np.load(f, mmap_mode="r") for f in sorted(glob(os.path.
 
 assert len(x_train) == len(y_train) and len(x_test) == len(y_test) and len(x_val) == len(y_val), "Lengths of x and y do not match."
 
-# ds_train = beo.Dataset(x_train, y_train, callback=callback) # without augmentations
+# This is without augmentations
+# ds_train = beo.Dataset(x_train, y_train, callback=callback)
+
+# This is with augmentations
 ds_train = beo.DatasetAugmentation(
     x_train, y_train,
     callback_pre_augmentation=callback_preprocess,
@@ -218,9 +221,6 @@ if __name__ == "__main__":
                 scaler.scale(loss).backward()
                 scaler.step(optimizer)
                 scaler.update()
-
-            # loss.backward()
-            # optimizer.step()
 
             # Update the scheduler
             scheduler.step()
