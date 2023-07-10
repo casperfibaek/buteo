@@ -11,6 +11,7 @@ import gc
 import sys
 import shutil
 from datetime import datetime
+from typing import List
 
 
 
@@ -190,3 +191,46 @@ def _force_garbage_collect_all(
 
     # Collect garbage
     gc.collect()
+
+
+def split_number(num: int, parts: int) -> List[int]:
+    """
+    Splits a number into parts of equal size.
+    The remainder is distributed starting on the left.
+
+    ```python
+    >>> split_number(10, 3)
+    [4, 3, 3]
+    >>> split_number(10, 4)
+    [3, 3, 2, 2]
+    ```
+
+    Parameters
+    ----------
+    num : int
+        The number to split.
+
+    parts : int
+        The number of parts to split the number into.
+
+    Returns
+    -------
+    List[int]
+        A list of the parts.
+    """
+    assert isinstance(num, int), "num must be an integer."
+    assert isinstance(parts, int), "parts must be an integer."
+    assert num >= parts, "num must be larger than parts."
+
+    # Calculate the base and remainder
+    base_num = num // parts
+    remainder = num % parts
+    
+    # Create the result list
+    result = [base_num] * parts
+    
+    # Add the remainder to the elements from the left
+    for i in range(remainder):
+        result[i] += 1
+    
+    return result

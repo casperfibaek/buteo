@@ -130,7 +130,10 @@ from .array import *
 from .eo import *
 from .ai import *
 
-from osgeo import gdal
-gdal.UseExceptions()
+try:
+    from osgeo import gdal
+    gdal.UseExceptions()
+except:
+    print("GDAL not installed. Some functions may not work.")
 
-__version__ = "0.9.31"
+__version__ = "0.9.32"

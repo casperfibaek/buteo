@@ -153,7 +153,7 @@ def raster_set_datatype(
         The file path(s) of the newly created raster(s) with the specified datatype.
     """
     utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base._type_check(dtype, [str, np.dtype, int], "dtype")
+    utils_base._type_check(dtype, [str, np.dtype, int, type(np.int8)], "dtype")
     utils_base._type_check(out_path, [list, str, None], "out_path")
     utils_base._type_check(creation_options, [list, None], "creation_options")
     utils_base._type_check(add_uuid, [bool], "add_uuid")

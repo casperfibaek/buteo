@@ -8,6 +8,7 @@ from typing import Union, List, Optional
 
 # External
 from osgeo import gdal
+import numpy as np
 
 # Internal
 from buteo.utils import (
@@ -57,7 +58,7 @@ def raster_stack_list(
     utils_base._type_check(rasters, [[str, gdal.Dataset]], "rasters")
     utils_base._type_check(out_path, [str, None], "out_path")
     utils_base._type_check(overwrite, [bool], "overwrite")
-    utils_base._type_check(dtype, [str, None], "dtype")
+    utils_base._type_check(dtype, [str, None, np.dtype, type(np.uint8)], "dtype")
     utils_base._type_check(creation_options, [[str], None], "creation_options")
 
     # Get input raster file paths

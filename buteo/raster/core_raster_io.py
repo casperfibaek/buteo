@@ -754,7 +754,7 @@ def raster_create_empty(
     height: int = 100,
     pixel_size: Union[Union[float, int], List[Union[float, int]]] = 10.0,
     bands: int = 1,
-    dtype: Union[str, int, np.dtype, Type[np.uint8]] = "uint8",
+    dtype: Union[str, int, np.dtype] = "uint8",
     x_min: Union[float, int] = 0.0,
     y_max: Union[float, int] = 0.0,
     nodata_value: Union[float, int, None] = None,

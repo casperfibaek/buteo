@@ -222,7 +222,7 @@ def raster_resample(
     utils_base._type_check(overwrite, [bool], "overwrite")
     utils_base._type_check(creation_options, [[str], None], "creation_options")
     utils_base._type_check(dst_nodata, [str, int, float, None], "dst_nodata")
-    utils_base._type_check(dtype, [str, None], "dtype")
+    utils_base._type_check(dtype, [str, None, np.dtype, type(np.int8)], "dtype")
     utils_base._type_check(prefix, [str], "prefix")
     utils_base._type_check(suffix, [str], "postfix")
     utils_base._type_check(add_uuid, [bool], "add_uuid")
