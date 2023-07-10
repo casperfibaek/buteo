@@ -89,9 +89,6 @@ class DatasetAugmentation:
 
     augmentations : list, optional
         The augmentations to apply.
-
-    channel_last : bool, optional
-        Whether the data is in channel last format.
         
     Returns
     -------
@@ -101,7 +98,6 @@ class DatasetAugmentation:
     def __init__(self,
         X: Union[np.ndarray, MultiArray],
         y: Union[np.ndarray, MultiArray],
-        channel_last: bool,
         callback_pre_augmentation: Callable = None,
         callback_post_augmentation: Callable = None,
         augmentations: Optional[List] = None,
@@ -120,7 +116,6 @@ class DatasetAugmentation:
         self.y_train = y
         self.callback_pre_augmentation = callback_pre_augmentation
         self.callback_post_augmentation = callback_post_augmentation
-        self.channel_last = channel_last
 
     def __getitem__(self, index):
         sample_x, sample_y = (self.x_train[index], self.y_train[index])
@@ -144,14 +139,14 @@ class DatasetAugmentation:
                 if self.callback_pre_augmentation is not None:
                     source_x, source_y = self.callback_pre_augmentation(source_x, source_y)
 
-                sample_x, sample_y = aug(sample_x, sample_y, source_x, source_y, channel_last=self.channel_last)
+                sample_x, sample_y = aug(sample_x, sample_y, source_x, source_y)
 
             elif aug.applies_to_features and aug.applies_to_labels:
-                sample_x, sample_y = aug(sample_x, sample_y, channel_last=self.channel_last)
+                sample_x, sample_y = aug(sample_x, sample_y)
             elif aug.applies_to_features:
-                sample_x = aug(sample_x, channel_last=self.channel_last)
+                sample_x = aug(sample_x)
             elif aug.applies_to_labels:
-                sample_y = aug(sample_y, channel_last=self.channel_last)
+                sample_y = aug(sample_y)
 
         # Apply callback if specified
         if self.callback_post_augmentation is not None:

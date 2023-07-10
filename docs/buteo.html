@@ -523,10 +523,13 @@ esa-snap</p>
 </span><span id="L-130"><a href="#L-130"><span class="linenos">130</span></a><span class="kn">from</span> <span class="nn">.eo</span> <span class="kn">import</span> <span class="o">*</span>
 </span><span id="L-131"><a href="#L-131"><span class="linenos">131</span></a><span class="kn">from</span> <span class="nn">.ai</span> <span class="kn">import</span> <span class="o">*</span>
 </span><span id="L-132"><a href="#L-132"><span class="linenos">132</span></a>
-</span><span id="L-133"><a href="#L-133"><span class="linenos">133</span></a><span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">gdal</span>
-</span><span id="L-134"><a href="#L-134"><span class="linenos">134</span></a><span class="n">gdal</span><span class="o">.</span><span class="n">UseExceptions</span><span class="p">()</span>
-</span><span id="L-135"><a href="#L-135"><span class="linenos">135</span></a>
-</span><span id="L-136"><a href="#L-136"><span class="linenos">136</span></a><span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.9.32&quot;</span>
+</span><span id="L-133"><a href="#L-133"><span class="linenos">133</span></a><span class="k">try</span><span class="p">:</span>
+</span><span id="L-134"><a href="#L-134"><span class="linenos">134</span></a>    <span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">gdal</span>
+</span><span id="L-135"><a href="#L-135"><span class="linenos">135</span></a>    <span class="n">gdal</span><span class="o">.</span><span class="n">UseExceptions</span><span class="p">()</span>
+</span><span id="L-136"><a href="#L-136"><span class="linenos">136</span></a><span class="k">except</span><span class="p">:</span>
+</span><span id="L-137"><a href="#L-137"><span class="linenos">137</span></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;GDAL not installed. Some functions may not work.&quot;</span><span class="p">)</span>
+</span><span id="L-138"><a href="#L-138"><span class="linenos">138</span></a>
+</span><span id="L-139"><a href="#L-139"><span class="linenos">139</span></a><span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.9.33&quot;</span>
 </span></pre></div>
 
 
