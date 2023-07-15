@@ -942,6 +942,7 @@ class AugmentationDropChannel:
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_blur(
     X: np.ndarray, *,
+    channel_to_adjust: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
@@ -954,6 +955,9 @@ def augmentation_blur(
     ----------
     X : np.ndarray
         The image to blur.
+
+    channel_to_adjust : int, optional
+        Weather to only apply the blur to a specific channel.
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
@@ -972,26 +976,33 @@ def augmentation_blur(
     offsets, weights = _simple_blur_kernel_2d_3x3()
 
     if channel_last:
-        for channel in prange(X.shape[2]):
-            X[:, :, channel] = convolve_array_simple(
-                X[:, :, channel],
-                offsets,
-                weights
-            )
+        if channel_to_adjust != -1:
+            X[:, :, channel_to_adjust] = convolve_array_simple(X[:, :, channel_to_adjust], offsets, weights)
+        else:
+            for channel in prange(X.shape[2]):
+                X[:, :, channel] = convolve_array_simple(
+                    X[:, :, channel],
+                    offsets,
+                    weights
+                )
     else:
-        for channel in prange(X.shape[0]):
-            X[channel, :, :] = convolve_array_simple(
-                X[channel, :, :],
-                offsets,
-                weights,
-            )
+        if channel_to_adjust != -1:
+            X[channel_to_adjust, :, :] = convolve_array_simple(X[channel_to_adjust, :, :], offsets, weights)
+        else:
+            for channel in prange(X.shape[0]):
+                X[channel, :, :] = convolve_array_simple(
+                    X[channel, :, :],
+                    offsets,
+                    weights,
+                )
 
     return X
 
 
 class AugmentationBlur:
-    def __init__(self, *, p: float = 1.0, channel_last: bool = True, inplace: bool = False):
+    def __init__(self, *, p: float = 1.0, channel_to_adjust: int = -1, channel_last: bool = True, inplace: bool = False):
         self.p = p
+        self.channel_to_adjust = channel_to_adjust
         self.channel_last = channel_last
         self.inplace = inplace
         self.applies_to_features = True
@@ -1004,6 +1015,7 @@ class AugmentationBlur:
 
         return augmentation_blur(
             X,
+            channel_to_adjust=self.channel_to_adjust,
             channel_last=self.channel_last,
             inplace=self.inplace,
         )
@@ -1154,6 +1166,7 @@ class AugmentationLabelSmoothing:
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def augmentation_sharpen(
     X: np.ndarray, *,
+    channel_to_adjust: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
@@ -1166,6 +1179,9 @@ def augmentation_sharpen(
     ----------
     X : np.ndarray
         The image to sharpen.
+
+    channel_to_adjust : int, default = -1
+        Weather to apply the sharpen to a specific channel or all (-1).
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
@@ -1184,16 +1200,30 @@ def augmentation_sharpen(
     offsets, weights = _simple_unsharp_kernel_2d_3x3()
 
     if channel_last:
-        for channel in prange(X.shape[2]):
-            X[:, :, channel] = convolve_array_simple(
-                X[:, :, channel],
+        if channel_to_adjust == -1:
+            for channel in prange(X.shape[2]):
+                X[:, :, channel] = convolve_array_simple(
+                    X[:, :, channel],
+                    offsets,
+                    weights
+                )
+        else:
+            X[:, :, channel_to_adjust] = convolve_array_simple(
+                X[:, :, channel_to_adjust],
                 offsets,
                 weights
             )
     else:
-        for channel in prange(X.shape[0]):
-            X[channel, :, :] = convolve_array_simple(
-                X[channel, :, :],
+        if channel_to_adjust == -1:
+            for channel in prange(X.shape[0]):
+                X[channel, :, :] = convolve_array_simple(
+                    X[channel, :, :],
+                    offsets,
+                    weights,
+                )
+        else:
+            X[channel_to_adjust, :, :] = convolve_array_simple(
+                X[channel_to_adjust, :, :],
                 offsets,
                 weights,
             )
@@ -1202,8 +1232,9 @@ def augmentation_sharpen(
 
 
 class AugmentationSharpen:
-    def __init__(self, *, p: float = 1.0, channel_last: bool = True, inplace: bool = False):
+    def __init__(self, *, p: float = 1.0, channel_to_adjust: int = -1, channel_last: bool = True, inplace: bool = False):
         self.p = p
+        self.channel_to_adjust = channel_to_adjust
         self.channel_last = channel_last
         self.inplace = inplace
         self.applies_to_features = True
@@ -1216,6 +1247,7 @@ class AugmentationSharpen:
 
         return augmentation_sharpen(
             X,
+            channel_to_adjust=self.channel_to_adjust,
             channel_last=self.channel_last,
             inplace=self.inplace,
         )
@@ -1285,6 +1317,7 @@ def augmentation_misalign(
     X: np.ndarray, *,
     max_offset: float = 0.5,
     per_channel: bool = False,
+    channel_to_adjust: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
@@ -1304,6 +1337,9 @@ def augmentation_misalign(
     per_channel : bool, optional
         Whether to misalign each channel by a different amount. Default: False.
 
+    channel_to_adjust: int, optional
+        A specific channel to apply misalignment to. (-1 == all)
+
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels). Default: True.
 
@@ -1322,15 +1358,26 @@ def augmentation_misalign(
         )
 
         if channel_last:
-            for channel_to_adjust in prange(X.shape[2]):
+            if channel_to_adjust == -1:
+                for c in prange(X.shape[2]):
+                    X[:, :, c] = convolve_array_simple(
+                        X[:, :, c], offsets, weights,
+                    )
+            else:
                 X[:, :, channel_to_adjust] = convolve_array_simple(
                     X[:, :, channel_to_adjust], offsets, weights,
-                )
+                )  
         else:
-            for channel_to_adjust in prange(X.shape[0]):
-                X[channel_to_adjust, :, :] = convolve_array_simple(
-                    X[channel_to_adjust, :, :], offsets, weights,
-                )
+            if channel_to_adjust == -1:
+                for c in prange(X.shape[0]):
+                    X[c, :, :] = convolve_array_simple(
+                        X[c, :, :], offsets, weights,
+                    )
+            else:
+                    X[channel_to_adjust, :, :] = convolve_array_simple(
+                        X[channel_to_adjust, :, :], offsets, weights,
+                    )
+
     else:
         offsets, weights = _simple_shift_kernel_2d(
             min(np.random.rand(), max_offset),
@@ -1338,7 +1385,7 @@ def augmentation_misalign(
         )
 
         channels = X.shape[2] if channel_last else X.shape[0]
-        channel_to_adjust = np.random.randint(0, channels)
+        channel_to_adjust = np.random.randint(0, channels) if channel_to_adjust == -1 else channel_to_adjust
 
         if channel_last:
             X[:, :, channel_to_adjust] = convolve_array_simple(
@@ -1353,10 +1400,11 @@ def augmentation_misalign(
 
 
 class AugmentationMisalign:
-    def __init__(self, *, p: float = 1.0, max_offset: float = 0.5, per_channel: bool = False, channel_last: bool = True, inplace: bool = False):
+    def __init__(self, *, p: float = 1.0, max_offset: float = 0.5, per_channel: bool = False, channel_to_adjust: int = -1, channel_last: bool = True, inplace: bool = False):
         self.p = p
         self.max_offset = max_offset
         self.per_channel = per_channel
+        self.channel_to_adjust = channel_to_adjust
         self.channel_last = channel_last
         self.inplace = inplace
         self.applies_to_features = True
@@ -1371,6 +1419,7 @@ class AugmentationMisalign:
             X,
             max_offset=self.max_offset,
             per_channel=self.per_channel,
+            channel_to_adjust=self.channel_to_adjust,
             channel_last=self.channel_last,
             inplace=self.inplace,
         )
