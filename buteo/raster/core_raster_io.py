@@ -229,15 +229,15 @@ def raster_to_array(
     # Read data
     channel = 0
     for idx, r_path in enumerate(raster):
-        for n_band in bands_to_process[idx]:
-            r_open = core_raster._raster_open(r_path)
 
-            band = r_open.GetRasterBand(n_band)
-            data = band.ReadAsArray(x_offset, y_offset, x_size, y_size)
+        # We can read all at once
+        if bands_to_process == "all" or bands_to_process[idx] == -1:
+            r_open = core_raster._raster_open(r_path)
+            data = r_open.ReadAsArray(x_offset, y_offset, x_size, y_size)
 
             if np.ma.isMaskedArray(data) and filled:
                 if fill_value is None:
-                    fill_value = band.GetNoDataValue()
+                    fill_value = r_open.GetRasterBand(1).GetNoDataValue()
 
                     if not utils_translate._check_is_value_within_dtype_range(fill_value, dtype):
                         warnings.warn(
@@ -252,9 +252,36 @@ def raster_to_array(
                 np.nan_to_num(data, nan=fill_value, copy=False)
 
             if cast is not None:
-                output_array[:, :, channel] = utils_translate._safe_numpy_casting(data, dtype)
-            else:
-                output_array[:, :, channel] = data
+                data = utils_translate._safe_numpy_casting(data, dtype)
+        
+        # We need to read bands one by one
+        else:
+            for n_band in bands_to_process[idx]:
+                r_open = core_raster._raster_open(r_path)
+
+                band = r_open.GetRasterBand(n_band)
+                data = band.ReadAsArray(x_offset, y_offset, x_size, y_size)
+
+                if np.ma.isMaskedArray(data) and filled:
+                    if fill_value is None:
+                        fill_value = band.GetNoDataValue()
+
+                        if not utils_translate._check_is_value_within_dtype_range(fill_value, dtype):
+                            warnings.warn(
+                                f"Fill value {fill_value} is outside of dtype {dtype} range. "
+                                "Setting fill value to 0."
+                            )
+                            fill_value = 0
+
+                    data = np.ma.getdata(data.filled(fill_value))
+
+                elif filled:
+                    np.nan_to_num(data, nan=fill_value, copy=False)
+
+                if cast is not None:
+                    output_array[:, :, channel] = utils_translate._safe_numpy_casting(data, dtype)
+                else:
+                    output_array[:, :, channel] = data
 
             channel += 1
 

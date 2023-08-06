@@ -7,6 +7,7 @@ import sys; sys.path.append("../../")
 from typing import Union, List
 
 # External
+import osgeo
 from osgeo import gdal, ogr, osr
 import numpy as np
 
@@ -204,6 +205,28 @@ def parse_projection(
         raise ValueError(err_msg)
 
     return target_proj.ExportToWkt() if return_wkt else target_proj
+
+
+def _projection_is_latlng(projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]) -> bool:
+    """
+    Tests if a projection is in latlng format.
+
+    Parameters
+    ----------
+    projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
+        The projection to test.
+
+    Returns
+    -------
+    bool:
+        **True** if the projection is in latlng format, **False** otherwise.
+    """
+    proj = parse_projection(projection)
+
+    if proj.IsGeographic():
+        return True
+
+    return False
 
 
 def _check_projections_match(
@@ -436,7 +459,13 @@ def reproject_bbox(
     p3 = [x_max, y_max]
     p4 = [x_min, y_max]
 
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
+    if _projection_is_latlng(src_proj):
+        p1.reverse()
+        p2.reverse()
+        p3.reverse()
+        p4.reverse()
+
+    # gdal.PushErrorHandler("CPLQuietErrorHandler")
     try:
         p1t = transformer.TransformPoint(p1[0], p1[1])
         p2t = transformer.TransformPoint(p2[0], p2[1])
@@ -447,7 +476,7 @@ def reproject_bbox(
         p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
         p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
         p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
-    gdal.PopErrorHandler()
+    # gdal.PopErrorHandler()
 
     transformed_x_min = min(p1t[0], p2t[0], p3t[0], p4t[0])
     transformed_x_max = max(p1t[0], p2t[0], p3t[0], p4t[0])

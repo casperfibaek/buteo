@@ -14,14 +14,10 @@ raster_utm = os.path.join(FOLDER, "test_image_rgb_8bit.tif")
 
 bbox_latlng = [116.206538452, 116.243267680, 6.165653284, 6.198924241]
 
-bbox = beo.reproject_bbox(bbox_latlng, "EPSG:4326", raster_utm)
-# read = beo.raster_to_array(raster_utm, bbox=bbox)
-
-import pdb; pdb.set_trace()
-
-# beo.array_to_raster(
-#     read,
-#     bbox=bbox_latlng,
-#     out_path=os.path.join(FOLDER, "test_image_rgb_8bit_bbox_latlng.tif"),
-#     reference=raster_latlng,
-# )
+beo.array_to_raster(
+    beo.raster_to_array(raster_utm, bbox=bbox_latlng, bbox_srs="EPSG:4326"),
+    bbox=bbox_latlng,
+    bbox_srs="EPSG:4326",
+    out_path=os.path.join(FOLDER, "test_image_rgb_8bit_bbox_latlng.tif"),
+    reference=raster_utm,
+)
