@@ -64,24 +64,6 @@ def test_vector_buffer_output_path():
         pass
 
 
-def test_vector_buffer_zero_distance():
-    sample_vector = create_sample_vector(geom_type="point", num_features=10)
-    sample_area = core_vector._get_basic_metadata_vector(sample_vector)["area"]
-    out_path = os.path.join(tmpdir, "buffered_vector_zero.gpkg")
-
-    # Buffer with zero distance, output should be the same as input
-    buffered = vector_buffer(sample_vector, 0.0, out_path=out_path, overwrite=True)
-    buffered_area = core_vector._get_basic_metadata_vector(buffered)["area"]
-
-    # Check if the area remains the same
-    assert buffered_area == sample_area
-
-    try:
-        os.remove(out_path)
-    except:
-        pass
-
-
 def test_vector_buffer_with_polygon():
     # Create a sample polygon vector
     sample_polygon_vector = create_sample_vector(geom_type="polygon", num_features=10)
@@ -105,13 +87,6 @@ def test_vector_buffer_with_polygon():
         os.remove(out_path)
     except:
         pass
-
-
-def test_vector_buffer_negative_distance():
-    sample_vector = create_sample_vector(geom_type="point", num_features=10)
-
-    with pytest.raises(AssertionError):
-        vector_buffer(sample_vector, -1.0, out_path=os.path.join(tmpdir, "buffered_vector_negative.gpkg"), overwrite=True)
 
 
 def test_vector_buffer_multiple_layers():

@@ -32,6 +32,7 @@ def raster_to_array(
     fill_value: Optional[Union[int, float]] = None,
     pixel_offsets: Optional[Union[List[int], Tuple[int, int, int, int]]] = None,
     bbox: Optional[List[float]] = None,
+    bbox_srs: Optional[Union[str, osr.SpatialReference]] = None,
     cast: Optional[Union[np.dtype, str]] = None,
     channel_last: bool = True,
 ) -> np.ndarray:
@@ -59,6 +60,10 @@ def raster_to_array(
     bbox : list, optional
         A list of `[xmin, xmax, ymin, ymax]` to use as the extent of the raster.
         Uses coordinates and the OGR format. Default: None.
+
+    bbox_srs : str or osr.SpatialReference, optional
+        The spatial reference of the bounding box. If None, the spatial reference
+        of the raster is used. Default: None.
 
     pixel_offsets : list or tuple, optional
         A list of `[x_offset, y_offset, x_size, y_size]` to use as the extent of the
@@ -146,6 +151,7 @@ def raster_to_array(
     utils_base._type_check(filled, [bool], "filled")
     utils_base._type_check(fill_value, [int, float, None], "fill_value")
     utils_base._type_check(bbox, [list, None], "bbox")
+    utils_base._type_check(bbox_srs, [str, osr.SpatialReference, None], "bbox_srs")
     utils_base._type_check(pixel_offsets, [list, tuple, None], "pixel_offsets")
     utils_base._type_check(cast, [np.dtype, str, type(np.int64), None], "cast")
     utils_base._type_check(channel_last, [bool], "channel_last")
@@ -178,6 +184,9 @@ def raster_to_array(
             raise ValueError("Pixel offsets are outside of raster.")
 
     elif bbox is not None:
+        if bbox_srs is not None:
+            bbox = utils_projection.reproject_bbox(bbox, bbox_srs, metadata["projection_wkt"])
+
         if not utils_bbox._check_bboxes_intersect(metadata["bbox"], bbox):
             raise ValueError("Extent is outside of raster.")
 
@@ -268,6 +277,7 @@ def array_to_raster(
     allow_mismatches: bool = False,
     pixel_offsets: Optional[Union[List[int], Tuple[int, int, int, int]]] = None,
     bbox: Optional[List[float]] = None,
+    bbox_srs: Optional[Union[str, osr.SpatialReference]] = None,
     channel_last: bool = True,
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
@@ -305,6 +315,10 @@ def array_to_raster(
     bbox : list, optional
         If provided, the array will be written to the reference raster at the specified
         bounding box. The list should be in the format [min_x, min_y, max_x, max_y]. Default: None.
+
+    bbox_srs : str or osr.SpatialReference, optional
+        The spatial reference of the bounding box. If None, the spatial reference
+        of the raster is used. Default: None.
 
     channel_last : bool, optional
         If True, the array is in the channel-last format. If False, the array is in the
@@ -350,6 +364,7 @@ def array_to_raster(
     utils_base._type_check(allow_mismatches, [bool], "allow_mismatches")
     utils_base._type_check(pixel_offsets, [list, tuple, None], "pixel_offsets")
     utils_base._type_check(bbox, [list, None], "bbox")
+    utils_base._type_check(bbox_srs, [str, osr.SpatialReference, None], "bbox_srs")
     utils_base._type_check(channel_last, [bool], "channel_last")
     utils_base._type_check(overwrite, [bool], "overwrite")
     utils_base._type_check(creation_options, [list, None], "creation_options")
@@ -390,6 +405,9 @@ def array_to_raster(
             "Bounding box must be a list of 4 floats or integers."
         )
         assert utils_bbox._check_is_valid_bbox(bbox), "Bounding box is not valid."
+
+        if bbox_srs is not None:
+            bbox = utils_projection.reproject_bbox(bbox, bbox_srs, metadata_ref["projection_wkt"])
 
         pixel_offsets = utils_bbox._get_pixel_offsets(metadata_ref["geotransform"], bbox)
 

@@ -6,17 +6,17 @@ Clip vector files with other geometries. Can come from rasters or vectors.
 
 # Standard library
 import sys; sys.path.append("../../")
+import os
 from typing import Union, Optional, List
 
 # External
 from osgeo import ogr
 
 # Internal
-from buteo.utils import utils_base, utils_path, utils_io
+from buteo.utils import utils_base, utils_path, utils_io, utils_gdal
 from buteo.vector import core_vector
 
 
-# TODO: Do this with a vectorized approach - multicore.
 def _vector_buffer(
     vector: Union[str, ogr.DataSource],
     distance: Union[int, float, str],
@@ -27,42 +27,68 @@ def _vector_buffer(
     assert isinstance(vector, (str, ogr.DataSource)), "Invalid vector input."
     assert isinstance(distance, (int, float, str)), "Invalid distance input."
     assert isinstance(out_path, (str, type(None))), "Invalid output path input."
-    if isinstance(distance, (int, float)):
-        assert distance >= 0.0, "Distance must be positive."
-
 
     if out_path is None:
         out_path = utils_path._get_temp_filepath(vector, suffix="_buffered", ext="gpkg")
     else:
         assert utils_path._check_is_valid_output_filepath(vector, out_path), "Invalid vector output path."
 
-    if not in_place:
-        copy = core_vector.vector_copy(vector, out_path)
-        read = core_vector.vector_open(copy)
-    else:
-        read = core_vector.vector_open(vector)
-
+    read = core_vector.vector_open(vector)
     metadata = core_vector._get_basic_metadata_vector(read)
+
+    if in_place:
+        for l in metadata["layers"]:
+            if l["geom_type"] not in ["Polygon", "MultiPolygon"]:
+                raise ValueError("Input vector must be polygonal to be buffered in-place.")
+    else:
+        driver = ogr.GetDriverByName(utils_gdal._get_driver_name_from_path(out_path))
+        if driver is None:
+            raise Exception("Driver for output buffer file is not available.")
+        
+        if os.path.exists(out_path):
+            driver.DeleteDataSource(out_path)
+
+        output_ds = driver.CreateDataSource(out_path)
+        if output_ds is None:
+            raise Exception(f"Could not create output file: {out_path}")
 
     if isinstance(distance, str):
         for layer_meta in metadata["layers"]:
             if distance not in layer_meta["field_names"]:
-                raise AttributeError(f"Attribute ({distance}) is a stirng and not one of the vector field names.")
+                raise AttributeError(f"Attribute ({distance}) is a string and not one of the vector field names.")
 
     for layer_meta in metadata["layers"]:
         layer_name = layer_meta["layer_name"]
-        vector_layer = read.GetLayer(layer_name)
 
-        feature_count = vector_layer.GetFeatureCount()
+        vector_layer_origin = read.GetLayer(layer_name)
+        if in_place:
+            vector_layer_destination = vector_layer_origin
+        else:
+            vector_layer_destination = output_ds.CreateLayer(layer_name, geom_type=ogr.wkbMultiPolygon, srs=vector_layer_origin.GetSpatialRef())
+            vector_layer_origin_defn = vector_layer_origin.GetLayerDefn()
 
-        vector_layer.ResetReading()
+            for i in range(vector_layer_origin_defn.GetFieldCount()):
+                vector_layer_destination.CreateField(vector_layer_origin_defn.GetFieldDefn(i))
+
+        if isinstance(distance, str):
+            if distance not in layer_meta["field_names"]:
+                raise AttributeError(f"Attribute ({distance}) is a stirng and not one of the vector field names.")
+            buffer_is_field = True
+        else:
+            buffer_is_field = False
+
+        vector_layer_origin = read.GetLayer(layer_name)
+
+        feature_count = vector_layer_origin.GetFeatureCount()
+
+        vector_layer_origin.ResetReading()
         for _ in range(feature_count):
-            feature = vector_layer.GetNextFeature()
+            feature = vector_layer_origin.GetNextFeature()
 
-            if isinstance(distance, str):
-                buffer_distance = float(feature.GetField(distance))
+            if buffer_is_field:
+                buffer_distance = feature.GetField(distance)
             else:
-                buffer_distance = float(distance)
+                buffer_distance = distance
 
             if feature is None:
                 break
@@ -72,15 +98,30 @@ def _vector_buffer(
             if feature_geom is None:
                 continue
 
-            try:
-                feature.SetGeometry(feature_geom.Buffer(buffer_distance))
-                vector_layer.SetFeature(feature)
-            except ValueError:
-                continue
+            buffered_geometry = feature_geom.Buffer(buffer_distance)
 
-        vector_layer.GetExtent()
-        vector_layer.ResetReading()
-        vector_layer.SyncToDisk()
+            if buffered_geometry.GetGeometryType() == ogr.wkbPolygon:
+                buffered_geometry = ogr.ForceToMultiPolygon(buffered_geometry)
+
+            if in_place:
+                try:
+                    feature.SetGeometry(buffered_geometry)
+                    vector_layer_origin.SetFeature(feature)
+                except ValueError:
+                    continue
+
+            else:
+                out_feature = ogr.Feature(vector_layer_destination.GetLayerDefn())
+                out_feature.SetGeometry(buffered_geometry)
+
+                for i in range(feature.GetFieldCount()):
+                    out_feature.SetField(i, feature.GetField(i))
+                
+                vector_layer_destination.CreateFeature(out_feature)
+
+        vector_layer_destination.GetExtent()
+        vector_layer_destination.ResetReading()
+        vector_layer_destination.SyncToDisk()
 
     read.FlushCache()
     read = None

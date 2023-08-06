@@ -874,3 +874,112 @@ def vector_reset_fids(
         return output
 
     return output[0]
+
+
+def vector_from_bbox(
+    bbox: List[Union[float, int]],
+    projection: Union[str, osr.SpatialReference, None] = None,
+    out_path: Optional[str] = None,
+) -> str:
+    """
+    Creates a vector from a bounding box.
+    
+    Parameters
+    ----------
+    bbox : List[float, int]
+        The bounding box to create the vector from. Must be in the format [x_min, x_max, y_min, y_max].
+
+    projection : Union[str, osr.SpatialReference, None], optional
+        The projection of the bounding box. If None, the default (latlng) projection is used. Default: None.
+
+    out_path : Optional[str], optional
+        The path to the output vector. If None, will create a new file in the same directory as the input vector. Default: None.
+    """
+    assert utils_bbox._check_is_valid_bbox(bbox), "bbox is not a valid bounding box."
+
+    if projection is None:
+        proj = utils_projection._get_default_projection_osr()
+    else:
+        proj = utils_projection.parse_projection(projection)
+
+    if out_path is None:
+        out_path = utils_path._get_temp_filepath("temp_bbox.gpkg", add_timestamp=True, add_uuid=True)
+    
+    if not utils_path._check_is_valid_output_filepath(out_path):
+        raise ValueError(f"Invalid output path: {out_path}")
+    
+    driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
+    driver = ogr.GetDriverByName(driver_name)
+
+    datasource = driver.CreateDataSource(out_path)
+    layer = datasource.CreateLayer("bbox", geom_type=ogr.wkbPolygon, srs=proj)
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometry(utils_bbox._get_geom_from_bbox(bbox))
+    
+    layer.CreateFeature(feature)
+    layer.SyncToDisk()
+
+    datasource = None
+    layer = None
+    feature = None
+
+    return out_path
+
+
+def vector_from_points(
+    points: List[List[Union[float, int]]],
+    projection: Union[str, osr.SpatialReference, None] = None,
+    out_path: Optional[str] = None,
+) -> str:
+    """
+    Creates a point vector from a list of points.
+    
+    Parameters
+    ----------
+    points : List[List[float, int]]
+        The points to create the vector from. Must be in the format [[x1, y1], [x2, y2], ...].
+
+    projection : Union[str, osr.SpatialReference, None], optional
+        The projection of the points. If None, the default (latlng) projection is used. Default: None.
+
+    out_path : Optional[str], optional
+        The path to the output vector. If None, will create a new file in the same directory as the input vector. Default: None.
+    """
+    assert isinstance(points, list), "points must be a list."
+    assert len(points) > 0, "points must have at least one point."
+    for point in points:
+        assert isinstance(point, list), "points must be a list of lists."
+        assert len(point) == 2, "points must be a list of lists of length 2."
+
+    if projection is None:
+        proj = utils_projection._get_default_projection_osr()
+    else:
+        proj = utils_projection.parse_projection(projection)
+
+    if out_path is None:
+        out_path = utils_path._get_temp_filepath("temp_points.gpkg", add_timestamp=True, add_uuid=True)
+    
+    if not utils_path._check_is_valid_output_filepath(out_path):
+        raise ValueError(f"Invalid output path: {out_path}")
+    
+    driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
+    driver = ogr.GetDriverByName(driver_name)
+
+    datasource = driver.CreateDataSource(out_path)
+    layer = datasource.CreateLayer("points", geom_type=ogr.wkbPoint, srs=proj)
+    layer_defn = layer.GetLayerDefn()
+
+    for point in points:
+        feature = ogr.Feature(layer_defn)
+        geom = ogr.Geometry(ogr.wkbPoint)
+        geom.AddPoint(point[1], point[0])
+        feature.SetGeometry(geom)
+        layer.CreateFeature(feature)
+    
+    layer.SyncToDisk()
+
+    datasource = None
+    layer = None
+    feature = None
+
+    return out_path

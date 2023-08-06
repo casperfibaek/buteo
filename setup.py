@@ -1,7 +1,7 @@
 """ Build script for pip and conda package. """
 from setuptools import setup, find_packages
 
-VERSION = "0.9.34"
+VERSION = "0.9.35"
 
 def readme():
     """ Generate readme file. """
