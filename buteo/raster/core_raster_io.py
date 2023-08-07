@@ -220,20 +220,19 @@ def raster_to_array(
 
         output_shape = [y_size, x_size, channels]
 
-    # Create output array
-    if not core_raster._check_raster_has_nodata_list(raster) or filled:
-        output_array = np.zeros(output_shape, dtype=dtype)
-    else:
-        output_array = np.ma.zeros(output_shape, dtype=dtype)
-
     # Read data
     channel = 0
     for idx, r_path in enumerate(raster):
 
         # We can read all at once
-        if bands_to_process == "all" or bands_to_process[idx] == -1:
+        if len(raster) == 1 and (bands == "all" or bands == -1):
             r_open = core_raster._raster_open(r_path)
             data = r_open.ReadAsArray(x_offset, y_offset, x_size, y_size)
+
+            if data.ndim != 3:
+                data = np.expand_dims(data, axis=0)
+
+            data = np.transpose(data, (1, 2, 0))
 
             if np.ma.isMaskedArray(data) and filled:
                 if fill_value is None:
@@ -253,9 +252,17 @@ def raster_to_array(
 
             if cast is not None:
                 data = utils_translate._safe_numpy_casting(data, dtype)
+
+            output_array = data
         
         # We need to read bands one by one
         else:
+            # Create output array
+            if not core_raster._check_raster_has_nodata_list(raster) or filled:
+                output_array = np.zeros(output_shape, dtype=dtype)
+            else:
+                output_array = np.ma.zeros(output_shape, dtype=dtype)
+
             for n_band in bands_to_process[idx]:
                 r_open = core_raster._raster_open(r_path)
 
@@ -283,7 +290,7 @@ def raster_to_array(
                 else:
                     output_array[:, :, channel] = data
 
-            channel += 1
+                channel += 1
 
     # Reshape array
     if not channel_last:

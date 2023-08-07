@@ -57,7 +57,7 @@ def _check_is_valid_bbox(bbox_ogr: List[Union[int, float]]) -> bool:
 
     x_min, x_max, y_min, y_max = bbox_ogr
 
-    if x_min >= x_max or y_min >= y_max:
+    if x_min > x_max or y_min > y_max:
         return False
 
     if True in [np.isinf(val) for val in bbox_ogr]:

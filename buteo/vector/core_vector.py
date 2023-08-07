@@ -930,6 +930,7 @@ def vector_from_points(
     points: List[List[Union[float, int]]],
     projection: Union[str, osr.SpatialReference, None] = None,
     out_path: Optional[str] = None,
+    reverse_xy_order: bool = False,
 ) -> str:
     """
     Creates a point vector from a list of points.
@@ -972,14 +973,19 @@ def vector_from_points(
     for point in points:
         feature = ogr.Feature(layer_defn)
         geom = ogr.Geometry(ogr.wkbPoint)
-        geom.AddPoint(point[1], point[0])
+        if reverse_xy_order:
+            geom.AddPoint(point[1], point[0])
+        else:
+            geom.AddPoint(point[0], point[1])
         feature.SetGeometry(geom)
+        
         layer.CreateFeature(feature)
-    
+        feature = None
+
+    layer.GetExtent()
     layer.SyncToDisk()
 
     datasource = None
     layer = None
-    feature = None
 
     return out_path
