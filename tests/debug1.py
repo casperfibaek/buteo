@@ -10,27 +10,36 @@ import buteo as beo
 
 FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/test_data/"
 
-udp = os.path.join(FOLDER, "T31UDP_20170119T110351_B01.jp2")
-udq = os.path.join(FOLDER, "T31UDQ_20170119T110351_B01.jp2")
+raster = os.path.join(FOLDER, "landcover.tif")
+classes = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100])
 
-vrt_file = beo.raster_stack_vrt_list([udp, udq], separate=False)
+arr = beo.raster_to_array(raster, fill_value=80, filled=True, cast=np.uint8)
+dst = np.zeros((arr.shape[0], arr.shape[1], len(classes)), dtype=np.float32)
 
-# Define camera points in UTM-32631 or latlng (EPSG:4326)
-points = [
-    [430441, 5402109],
-    [444808, 5409819],
-    [451921, 5391856],
-]
+for i, c in enumerate(classes):
+    feathered = beo.filter_operation(
+        arr,
+        15, # count weighted occurances
+        radius=2, # 5x5
+        func_value=int(c),
+        normalised=False,
+    )
+    dst[:, :, i] = feathered[:, :, 0]
 
-points_vector = beo.vector_from_points(points, vrt_file)
+dst = dst / np.sum(dst, axis=2, keepdims=True)
+beo.array_to_raster(dst, reference=raster, out_path=os.path.join(FOLDER, "feathered.tif"))
 
-# Only necessary if points at in latlng
-# points_vector = beo.vector_reproject(points_vector, vrt_file)
+# Kernel Distance weighing Parameters
+# method : int
+#     Method to use for weighting.
+#     0. linear
+#     1. sqrt
+#     2. power
+#     3. gaussian
+#     4. constant
 
-# Buffer points 10km
-points_buffer = beo.vector_buffer(points_vector, 10000.0)
-points_bbox = beo.vector_to_metadata(points_buffer)['bbox']
-# Read the bounds and normalise to 0-1
-arr = beo.raster_to_array(vrt_file, cast=np.float32, bbox=points_bbox) / 10000.0
-# Save the image
-beo.array_to_raster(arr, reference=vrt_file, out_path=os.path.join(FOLDER, "test.tif"), bbox=points_bbox)
+# decay : float
+#     Decay rate for distance weighted kernels. Only used if `distance_weighted` is True.
+
+# sigma : float
+#     Sigma for gaussian distance weighted kernels. Only used if `distance_weighted` is True and `method` is 3.

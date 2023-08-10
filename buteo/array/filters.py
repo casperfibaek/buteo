@@ -16,7 +16,7 @@ from buteo.array.convolution_kernels import kernel_base, kernel_get_offsets_and_
 from buteo.utils.utils_base import _type_check
 
 
-def _filter_operation(
+def filter_operation(
     arr: np.ndarray,
     method: int,
     radius: Union[int, float] = 1,
@@ -83,6 +83,8 @@ def _filter_operation(
 
     return arr_convolved
 
+
+_filter_operation = filter_operation
 
 def filter_variance(
     arr: np.ndarray,

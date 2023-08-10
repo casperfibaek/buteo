@@ -136,4 +136,4 @@ try:
 except:
     print("GDAL not installed. Some functions may not work.")
 
-__version__ = "0.9.38"
+__version__ = "0.9.39"
