@@ -4,7 +4,7 @@
 
 # Standard library
 import sys; sys.path.append("../../")
-from typing import Union
+from typing import Union, Optional
 
 
 # External
@@ -28,6 +28,7 @@ def filter_operation(
     distance_method: int = 0,
     distance_decay: Union[int, float] = 0.2,
     distance_sigma: Union[int, float] = 2.0,
+    kernel: Optional[np.ndarray] = None,
     channel_last: bool = True,
 ) -> np.ndarray:
     """ Internal function to perform filter operations on arrays and rasters. """
@@ -44,16 +45,17 @@ def filter_operation(
     _type_check(distance_decay, [int, float], "distance_decay")
     _type_check(distance_sigma, [int, float], "distance_sigma")
 
-    kernel = kernel_base(
-        radius,
-        circular=spherical,
-        distance_weighted=distance_weighted,
-        normalised=normalised,
-        hole=hole,
-        method=distance_method,
-        decay=distance_decay,
-        sigma=distance_sigma,
-    )
+    if kernel is None:
+        kernel = kernel_base(
+            radius,
+            circular=spherical,
+            distance_weighted=distance_weighted,
+            normalised=normalised,
+            hole=hole,
+            method=distance_method,
+            decay=distance_decay,
+            sigma=distance_sigma,
+        )
 
     offsets, weights = kernel_get_offsets_and_weights(kernel)
 
@@ -85,6 +87,7 @@ def filter_operation(
 
 
 _filter_operation = filter_operation
+
 
 def filter_variance(
     arr: np.ndarray,

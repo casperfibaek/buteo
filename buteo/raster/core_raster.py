@@ -144,12 +144,13 @@ def _get_basic_metadata_raster(
     dtype = None if first_band is None else first_band.DataType
     dtype_numpy = utils_translate._translate_dtype_gdal_to_numpy(dtype)
 
-    centroid = [(bbox[1] - bbox[0]) / 2, (bbox[3] - bbox[2]) / 2]
-    centroid_latlng = utils_projection._reproject_point(
-        centroid,
-        projection_osr,
-        utils_projection._get_default_projection_osr(),
-    )
+    _centroid = bounds_raster_raw.Centroid()
+    centroid = (_centroid.GetX(), _centroid.GetY())
+    if projection_osr.IsGeographic():
+        centroid_latlng = (centroid[1], centroid[0])
+    else:
+        _centroid_latlng = bounds_latlng.Centroid()
+        centroid_latlng = (_centroid_latlng.GetY(), _centroid_latlng.GetX())
 
     # Paths
     path = utils_path._get_unix_path(dataset.GetDescription())

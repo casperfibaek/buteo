@@ -2,7 +2,7 @@
 Functions for transforming rasters represented as arrays.
 """
 from .convolution_kernels import *
-from .convolution_distance import *
+from .distance import *
 from .convolution_funcs import *
 from .convolution import *
 from .edge_detection import *

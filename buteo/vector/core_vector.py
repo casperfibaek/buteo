@@ -237,12 +237,14 @@ def _get_basic_metadata_vector(
     bounds_vector_raw = utils_bbox._get_geom_from_bbox(vector_bbox)
     bounds_vector = bounds_vector_raw.ExportToWkt()
 
-    centroid = [(x_max - x_min) / 2, (y_max - y_min) / 2]
-    centroid_latlng = utils_projection._reproject_point(
-        centroid,
-        projection_osr,
-        utils_projection._get_default_projection_osr(),
-    )
+    _centroid = bounds_vector_raw.Centroid()
+    centroid = (_centroid.GetX(), _centroid.GetY())
+    if projection_osr.IsGeographic():
+        centroid_latlng = (centroid[1], centroid[0])
+    else:
+        _centroid_latlng = bounds_latlng.Centroid()
+        centroid_latlng = (_centroid_latlng.GetY(), _centroid_latlng.GetX())
+
 
     metadata = {
         "path": path,

@@ -19,7 +19,7 @@ from buteo.utils import (
     utils_path,
 )
 from buteo.raster import core_raster, core_raster_io
-from buteo.array.convolution_distance import convolve_distance
+from buteo.array.distance import convolve_distance
 
 
 def _raster_get_proximity(
