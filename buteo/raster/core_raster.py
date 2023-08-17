@@ -133,8 +133,24 @@ def _get_basic_metadata_raster(
     projection_osr.ImportFromWkt(projection_wkt)
 
     bbox = utils_bbox._get_bbox_from_geotransform(transform, dataset.RasterXSize, dataset.RasterYSize)
-    bbox_latlng = utils_projection.reproject_bbox(bbox, projection_osr, utils_projection._get_default_projection_osr())
-    bounds_latlng = utils_bbox._get_bounds_from_bbox(bbox, projection_osr, wkt=False)
+    try:
+        bbox_latlng = utils_projection.reproject_bbox(bbox, projection_osr, utils_projection._get_default_projection_osr())
+    except RuntimeError as e: 
+        # Catch domain errors which happen if the point requested is outside the projection domain
+        # We set the latlng bbox to the default projection domain
+        if e.args[0] == "Point outside of projection domain":
+            bbox_latlng = [0.0, 90.0, 0.0, 180.0]
+        else:
+            raise e
+
+    try:
+        bounds_latlng = utils_bbox._get_bounds_from_bbox(bbox, projection_osr, wkt=False)
+    except RuntimeError as e:
+        if e.args[0] == "Point outside of projection domain":
+            bounds_latlng = utils_bbox._get_bounds_from_bbox(bbox_latlng, utils_projection._get_default_projection_osr(), wkt=False)
+        else:
+            raise e
+
     bounds_area = bounds_latlng.GetArea()
     area = (bbox[1] - bbox[0]) * (bbox[3] - bbox[2])
     bounds_wkt = bounds_latlng.ExportToWkt()

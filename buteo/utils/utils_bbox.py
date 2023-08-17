@@ -934,7 +934,9 @@ def _get_bounds_from_bbox(
 
         return geom
 
-    transformer = osr.CoordinateTransformation(projection_osr, default_projection)
+    options = osr.CoordinateTransformationOptions()
+    options.SetAreaOfInterest(-180.0, -90.0, 180.0, 90.0)
+    transformer = osr.CoordinateTransformation(projection_osr, default_projection, options)
 
     x_min, x_max, y_min, y_max = bbox_ogr
 

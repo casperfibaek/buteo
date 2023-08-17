@@ -452,20 +452,24 @@ def reproject_bbox(
     if _check_projections_match(src_proj, dst_proj):
         return bbox_ogr
 
-    transformer = osr.CoordinateTransformation(src_proj, dst_proj)
 
     p1 = [x_min, y_min]
     p2 = [x_max, y_min]
     p3 = [x_max, y_max]
     p4 = [x_min, y_max]
 
+    options = osr.CoordinateTransformationOptions()
     if _projection_is_latlng(src_proj):
         p1.reverse()
         p2.reverse()
         p3.reverse()
         p4.reverse()
 
-    # gdal.PushErrorHandler("CPLQuietErrorHandler")
+        options.SetAreaOfInterest(-180.0, -90.0, 180.0, 90.0)
+
+    transformer = osr.CoordinateTransformation(src_proj, dst_proj, options)
+
+    gdal.PushErrorHandler("CPLQuietErrorHandler")
     try:
         p1t = transformer.TransformPoint(p1[0], p1[1])
         p2t = transformer.TransformPoint(p2[0], p2[1])
@@ -476,7 +480,7 @@ def reproject_bbox(
         p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
         p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
         p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
-    # gdal.PopErrorHandler()
+    gdal.PopErrorHandler()
 
     transformed_x_min = min(p1t[0], p2t[0], p3t[0], p4t[0])
     transformed_x_max = max(p1t[0], p2t[0], p3t[0], p4t[0])
@@ -524,7 +528,12 @@ def _reproject_point(
     if _check_projections_match(src_proj, dst_proj):
         return p
 
-    transformer = osr.CoordinateTransformation(src_proj, dst_proj)
+    options = osr.CoordinateTransformationOptions()
+
+    if _projection_is_latlng(dst_proj):
+        options.SetAreaOfInterest(-180.0, -90.0, 180.0, 90.0)
+
+    transformer = osr.CoordinateTransformation(src_proj, dst_proj, options)
 
     gdal.PushErrorHandler("CPLQuietErrorHandler")
     try:

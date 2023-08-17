@@ -167,6 +167,8 @@ def raster_to_array(
     shape = metadata["shape"]
     dtype = metadata["dtype"] if cast is None else cast
     dtype = utils_translate._parse_dtype(dtype)
+    has_nodata = metadata["nodata"]
+    nodata_value = np.array(metadata["nodata_value"], dtype=dtype) if has_nodata else None
 
     # Determine output shape
     x_offset, y_offset, x_size, y_size = 0, 0, shape[1], shape[0]
@@ -205,14 +207,16 @@ def raster_to_array(
         output_shape = [y_size, x_size, total_channels]
 
         for r in raster:
-            bands_in_raster = core_raster._get_basic_metadata_raster(r)["bands"]
+            meta = core_raster._get_basic_metadata_raster(r)
+            bands_in_raster = meta["bands"]
             bands_to_process.append(
                 utils_gdal._convert_to_band_list(-1, bands_in_raster),
             )
     else:
         channels = 0
         for r in raster:
-            bands_in_raster = core_raster._get_basic_metadata_raster(r)["bands"]
+            meta = core_raster._get_basic_metadata_raster(r)
+            bands_in_raster = meta["bands"]
             bands_in_raster_list = utils_gdal._convert_to_band_list(bands, bands_in_raster)
             bands_to_process.append(bands_in_raster_list)
 
@@ -221,11 +225,12 @@ def raster_to_array(
         output_shape = [y_size, x_size, channels]
 
     # Read data
+    output_array = np.ma.zeros(output_shape, dtype=dtype)
     channel = 0
     for idx, r_path in enumerate(raster):
 
         # We can read all at once
-        if len(raster) == 1 and (bands == "all" or bands == -1):
+        if len(raster) == 1 and (bands == "all" or bands == -1) and False == True:
             r_open = core_raster._raster_open(r_path)
             data = r_open.ReadAsArray(x_offset, y_offset, x_size, y_size)
 
@@ -234,22 +239,6 @@ def raster_to_array(
 
             data = np.transpose(data, (1, 2, 0))
 
-            if np.ma.isMaskedArray(data) and filled:
-                if fill_value is None:
-                    fill_value = r_open.GetRasterBand(1).GetNoDataValue()
-
-                    if not utils_translate._check_is_value_within_dtype_range(fill_value, dtype):
-                        warnings.warn(
-                            f"Fill value {fill_value} is outside of dtype {dtype} range. "
-                            "Setting fill value to 0."
-                        )
-                        fill_value = 0
-
-                data = np.ma.getdata(data.filled(fill_value))
-
-            elif filled:
-                np.nan_to_num(data, nan=fill_value, copy=False)
-
             if cast is not None:
                 data = utils_translate._safe_numpy_casting(data, dtype)
 
@@ -257,33 +246,11 @@ def raster_to_array(
         
         # We need to read bands one by one
         else:
-            # Create output array
-            if not core_raster._check_raster_has_nodata_list(raster) or filled:
-                output_array = np.zeros(output_shape, dtype=dtype)
-            else:
-                output_array = np.ma.zeros(output_shape, dtype=dtype)
-
             for n_band in bands_to_process[idx]:
                 r_open = core_raster._raster_open(r_path)
 
                 band = r_open.GetRasterBand(n_band)
                 data = band.ReadAsArray(x_offset, y_offset, x_size, y_size)
-
-                if np.ma.isMaskedArray(data) and filled:
-                    if fill_value is None:
-                        fill_value = band.GetNoDataValue()
-
-                        if not utils_translate._check_is_value_within_dtype_range(fill_value, dtype):
-                            warnings.warn(
-                                f"Fill value {fill_value} is outside of dtype {dtype} range. "
-                                "Setting fill value to 0."
-                            )
-                            fill_value = 0
-
-                    data = np.ma.getdata(data.filled(fill_value))
-
-                elif filled:
-                    np.nan_to_num(data, nan=fill_value, copy=False)
 
                 if cast is not None:
                     output_array[:, :, channel] = utils_translate._safe_numpy_casting(data, dtype)
@@ -291,6 +258,25 @@ def raster_to_array(
                     output_array[:, :, channel] = data
 
                 channel += 1
+
+    if has_nodata:
+        output_array = np.ma.masked_equal(output_array, nodata_value)
+
+        if filled:
+            if fill_value is None:
+                fill_value = nodata_value
+
+                if not utils_translate._check_is_value_within_dtype_range(fill_value, dtype):
+                    warnings.warn(
+                        f"Fill value {fill_value} is outside of dtype {dtype} range. "
+                        "Setting fill value to 0."
+                    )
+                    fill_value = 0
+
+            output_array = np.ma.getdata(output_array.filled(fill_value))
+
+    elif filled:
+        np.nan_to_num(data, nan=fill_value, copy=False)
 
     # Reshape array
     if not channel_last:
