@@ -5,7 +5,7 @@ suited to remote sensing imagery.
 # Standard library
 import sys; sys.path.append("../../")
 import random
-from typing import Optional, Tuple, Any
+from typing import Optional, Tuple
 
 # External
 import numpy as np
@@ -27,7 +27,7 @@ from buteo.array.convolution_kernels import (
 
 
 def augmentation_rotation(
-    X: np.ndarray, *,
+    X: np.ndarray,
     k: int = -1,
     channel_last: bool = True,
     inplace = False,
@@ -70,7 +70,7 @@ class AugmentationRotation:
 
 def augmentation_rotation_xy(
     X: np.ndarray,
-    y: np.ndarray, *,
+    y: np.ndarray,
     k: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
@@ -140,7 +140,7 @@ class AugmentationRotationXY:
 
 
 def augmentation_mirror(
-    X: np.ndarray, *,
+    X: np.ndarray,
     k: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
@@ -208,7 +208,7 @@ class AugmentationMirror:
 
 def augmentation_mirror_xy(
     X: np.ndarray,
-    y: np.ndarray, *,
+    y: np.ndarray,
     k: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
@@ -281,7 +281,7 @@ class AugmentationMirrorXY:
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_noise_uniform(
-    X: np.ndarray, *,
+    X: np.ndarray,
     max_amount: float = 0.1,
     additive: bool = False,
     per_channel: bool = True,
@@ -305,6 +305,9 @@ def augmentation_noise_uniform(
 
     additive : bool, optional
         Whether to add or multiply the noise, default: False.
+
+    per_channel : bool, optional
+        Whether to add the same noise to each channel or different noise to each channel (per_channel), default: True.
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), ignored for this function.
@@ -382,7 +385,7 @@ class AugmentationNoiseUniform:
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_noise_normal(
-    X: np.ndarray, *,
+    X: np.ndarray,
     max_amount: float = 0.1,
     additive: bool = False,
     per_channel: bool = True,
@@ -407,6 +410,9 @@ def augmentation_noise_normal(
 
     additive : bool, optional
         Whether to add or multiply the noise, default: False.
+
+    per_channel : bool, optional
+        Whether to add the same noise to each channel or different noise to each channel (per_channel), default: True.
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), ignored for this function.
@@ -484,7 +490,7 @@ class AugmentationNoiseNormal:
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def augmentation_channel_scale(
-    X: np.ndarray, *,
+    X: np.ndarray,
     max_amount: float = 0.1,
     additive: bool = False,
     channel_last: bool = True,
@@ -569,7 +575,7 @@ class AugmentationChannelScale:
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def augmentation_contrast(
-    X: np.ndarray, *,
+    X: np.ndarray,
     max_amount: float = 0.1,
     channel_last: bool = True,
     inplace: bool = False,
@@ -643,305 +649,10 @@ class AugmentationContrast:
         )
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
-def augmentation_drop_pixel(
-    X: np.ndarray, *,
-    drop_probability: float = 0.01,
-    drop_value: float = 0.0,
-    per_channel: bool = False,
-    channel_last: bool = True,
-    inplace: bool = False,
-) -> np.ndarray:
-    """
-    Drops random pixels from an image. Input should be (height, width, channels) or (channels, height, width).
-    Only drops pixels from features, not labels.
-    
-    Parameters
-    ----------
-    X : np.ndarray
-        The image to drop a pixel from.
-
-    drop_probability : float, optional
-        The probability of dropping a pixel, default: 0.05.
-
-    drop_value : float, optional
-        The value to drop the pixel to, default: 0.0.
-
-    channel_last : bool, optional
-        Whether the image is (channels, height, width) or (height, width, channels), default: True.
-    
-    inplace : bool, optional
-        Whether to perform the rotation in-place, default: False.
-
-    Returns
-    -------
-    np.ndarray
-        The image with dropped pixels.
-    """
-    if not inplace:
-        X = X.copy()
-
-
-    if per_channel:
-        # Create a mask of random numbers
-        mask = np.random.uniform(0.0, 1.0, size=X.shape).astype(np.float32)
-
-        # Agreed. This looks terrible. But it's the only way to get numba to parallelize this.
-        if channel_last:
-            for col in prange(X.shape[0]):
-                for row in prange(X.shape[1]):
-                    for channel in prange(X.shape[2]):
-                        if mask[col, row, channel] <= drop_probability:
-                            X[col, row, channel] = drop_value
-
-        else:
-            for channel in prange(X.shape[0]):
-                for col in prange(X.shape[1]):
-                    for row in prange(X.shape[2]):
-                        if mask[channel, col, row] <= drop_probability:
-                            X[channel, col, row] = drop_value
-    else:
-        if channel_last:
-            mask = np.random.uniform(0.0, 1.0, size=(X.shape[0], X.shape[1])).astype(np.float32)
-
-            for col in prange(X.shape[0]):
-                for row in prange(X.shape[1]):
-                    if mask[col, row] <= drop_probability:
-                        X[col, row, :] = drop_value
-
-        else:
-            mask = np.random.uniform(0.0, 1.0, size=(X.shape[1], X.shape[2])).astype(np.float32)
-            for col in prange(X.shape[1]):
-                for row in prange(X.shape[2]):
-                    if mask[col, row] <= drop_probability:
-                        X[:, col, row] = drop_value
-
-    return X
-
-
-class AugmentationDropPixel:
-    def __init__(self, *, p: float = 1.0, drop_probability: float = 0.01, drop_value: float = 0.0, per_channel: bool = False, channel_last: bool = True, inplace: bool = False):
-        self.p = p
-        self.drop_probability = drop_probability
-        self.drop_value = drop_value
-        self.per_channel = per_channel
-        self.channel_last = channel_last
-        self.inplace = inplace
-        self.applies_to_features = True
-        self.applies_to_labels = False
-
-    def __call__(self, X: np.ndarray) -> np.ndarray:
-        if random.random() > self.p:
-            return X
-
-        return augmentation_drop_pixel(
-            X,
-            drop_probability=self.drop_probability,
-            drop_value=self.drop_value,
-            per_channel=self.per_channel,
-            channel_last=self.channel_last,
-            inplace=self.inplace,
-        )
-    
-
-class AugmentationDropPixelLabel:
-    def __init__(self, *, p: float = 1.0, drop_probability: float = 0.01, drop_value: float = 0.0, per_channel: bool = False, channel_last: bool = True, inplace: bool = False):
-        self.p = p
-        self.drop_probability = drop_probability
-        self.drop_value = drop_value
-        self.per_channel = per_channel
-        self.channel_last = channel_last
-        self.inplace = inplace
-        self.applies_to_features = False
-        self.applies_to_labels = True
-        self.requires_dataset = False
-
-    def __call__(self, y: np.ndarray) -> np.ndarray:
-        if random.random() > self.p:
-            return y
-
-        return augmentation_drop_pixel(
-            y,
-            drop_probability=self.drop_probability,
-            drop_value=self.drop_value,
-            per_channel=self.per_channel,
-            channel_last=self.channel_last,
-            inplace=self.inplace,
-        )
-
-
-def augmentation_drop_rectangle(
-    X: np.ndarray, *,
-    drop_value: float = 0.0,
-    channel_last: bool = True,
-    inplace: bool = False,
-) -> np.ndarray:
-    """
-    Drops a random rectangle from an image. Input should be (height, width, channels) or (channels, height, width).
-    Covers the rectangle with the drop_value. Size of rectangle is random(max: width/2, height/2).
-    
-    Parameters
-    ----------
-    X : np.ndarray
-        The image to drop a rectangle from.
-
-    drop_value : float, optional
-        The value to drop the rectangle to, default: 0.0.
-
-    channel_last : bool, optional
-        Whether the image is (channels, height, width) or (height, width, channels), default: True.
-    
-    inplace : bool, optional
-        Whether to perform the rotation in-place, default: False.
-
-    Returns
-    -------
-    np.ndarray
-        The image with dropped rectangles.
-    """
-    if not inplace:
-        X = X.copy()
-
-    # height, width, channels = X.shape
-    if channel_last:
-        height = np.random.randint(1, X.shape[0] // 2)
-        width = np.random.randint(1, X.shape[1] // 2)
-
-    # channels, height, width = X.shape
-    else:
-        height = np.random.randint(1, X.shape[1] // 2)
-        width = np.random.randint(1, X.shape[2] // 2)
-
-    # Create a mask of the drop_value
-    mask = np.full((height, width), drop_value, dtype=X.dtype)
-
-    # Apply the mask to the image in a random location
-    if channel_last:
-        col = np.random.randint(0, X.shape[0] - height)
-        row = np.random.randint(0, X.shape[1] - width)
-
-        X[col:col+height, row:row+width, :] = mask
-    else:
-        col = np.random.randint(0, X.shape[1] - width)
-        row = np.random.randint(0, X.shape[2] - width)
-
-        X[:, col:col+height, row:row+width] = mask
-
-    return X
-
-
-class AugmentationDropRectangle:
-    def __init__(self, *, p: float = 1.0, drop_value: float = 0.0, channel_last: bool = True, inplace: bool = False):
-        self.p = p
-        self.drop_value = drop_value
-        self.channel_last = channel_last
-        self.inplace = inplace
-        self.applies_to_features = True
-        self.applies_to_labels = False
-
-    def __call__(self, X: np.ndarray) -> np.ndarray:
-        if random.random() > self.p:
-            return X
-
-        return augmentation_drop_rectangle(
-            X,
-            self.drop_value,
-            self.channel_last,
-            self.inplace,
-        )
-    
-
-class AugmentationDropRectangleLabel:
-    def __init__(self, *, p: float = 1.0, drop_value: float = 0.0, channel_last: bool = True, inplace: bool = False):
-        self.p = p
-        self.drop_value = drop_value
-        self.channel_last = channel_last
-        self.inplace = inplace
-        self.applies_to_features = False
-        self.applies_to_labels = True
-        self.requires_dataset = False
-
-    def __call__(self, y: np.ndarray) -> np.ndarray:
-        if random.random() > self.p:
-            return y
-
-        return augmentation_drop_rectangle(
-            y,
-            drop_value=self.drop_value,
-            channel_last=self.channel_last,
-            inplace=self.inplace,
-        )
-
-
-@jit(nopython=True, nogil=True, cache=True, fastmath=True)
-def augmentation_drop_channel(
-    X: np.ndarray, *,
-    drop_value: float = 0.0,
-    channel_last: bool = True,
-    inplace: bool = False,
-) -> np.ndarray:
-    """
-    Drops a random channel from an image. Input should be (height, width, channels) or (channels, height, width).
-    A maximum of one channel will be dropped.
-    
-    Parameters
-    ----------
-    X : np.ndarray
-        The image to drop a channel from.
-
-    drop_value : float, optional
-        The value to drop the channel to, default: 0.0.
-
-    channel_last : bool, optional
-        Whether the image is (channels, height, width) or (height, width, channels), default: True.
-    
-    inplace : bool, optional
-        Whether to perform the rotation in-place, default: False.
-
-    Returns
-    -------
-    np.ndarray
-        The image with dropped channels.
-    """
-    if not inplace:
-        X = X.copy()
-
-    channels = X.shape[2] if channel_last else X.shape[0]
-    channel_to_drop = np.random.randint(0, channels)
-
-    if channel_last:
-        X[:, :, channel_to_drop] = drop_value
-    else:
-        X[channel_to_drop, :, :] = drop_value
-
-    return X
-
-
-class AugmentationDropChannel:
-    def __init__(self, *, p: float = 1.0, drop_value: float = 0.0, channel_last: bool = True, inplace: bool = False):
-        self.p = p
-        self.drop_value = drop_value
-        self.channel_last = channel_last
-        self.inplace = inplace
-        self.applies_to_features = True
-        self.applies_to_labels = False
-        self.requires_dataset = False
-
-    def __call__(self, X: np.ndarray) -> np.ndarray:
-        if random.random() > self.p:
-            return X
-
-        return augmentation_drop_channel(
-            X,
-            drop_value=self.drop_value,
-            channel_last=self.channel_last,
-            inplace=self.inplace,
-        )
-
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_blur(
-    X: np.ndarray, *,
+    X: np.ndarray,
     channel_to_adjust: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
@@ -1024,7 +735,7 @@ class AugmentationBlur:
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_blur_xy(
     X: np.ndarray,
-    y: np.ndarray, *,
+    y: np.ndarray,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -1082,7 +793,7 @@ class AugmentationBlurXY:
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_label_smoothing(
-    y: np.ndarray, *,
+    y: np.ndarray,
     flat_array: bool = False,
     max_amount: float = 0.1,
     fixed_amount: bool = False,
@@ -1165,7 +876,7 @@ class AugmentationLabelSmoothing:
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def augmentation_sharpen(
-    X: np.ndarray, *,
+    X: np.ndarray,
     channel_to_adjust: int = -1,
     channel_last: bool = True,
     inplace: bool = False,
@@ -1256,7 +967,7 @@ class AugmentationSharpen:
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_sharpen_xy(
     X: np.ndarray,
-    y: np.ndarray, *,
+    y: np.ndarray,
     channel_last: bool = True,
     inplace: bool = False,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
@@ -1314,7 +1025,7 @@ class AugmentationSharpenXY:
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
 def augmentation_misalign(
-    X: np.ndarray, *,
+    X: np.ndarray,
     max_offset: float = 0.5,
     per_channel: bool = False,
     channel_to_adjust: int = -1,
@@ -1455,7 +1166,7 @@ def augmentation_cutmix(
     X_target: np.ndarray,
     y_target: np.ndarray,
     X_source: np.ndarray,
-    y_source: np.ndarray, *,
+    y_source: np.ndarray,
     min_size: float = 0.333,
     max_size: float = 0.666,
     channel_last: bool = True,
@@ -1559,7 +1270,7 @@ def augmentation_mixup(
     X_target: np.ndarray,
     y_target: np.ndarray,
     X_source: np.ndarray,
-    y_source: np.ndarray, *,
+    y_source: np.ndarray,
     min_size: float = 0.333,
     max_size: float = 0.666,
     label_mix: int = 0,

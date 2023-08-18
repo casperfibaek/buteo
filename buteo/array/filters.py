@@ -59,6 +59,8 @@ def filter_operation(
 
     offsets, weights = kernel_get_offsets_and_weights(kernel)
 
+    arr = arr.astype(np.float32, copy=False)
+
     mask = None
     if np.ma.isMaskedArray(arr):
         nodata = True

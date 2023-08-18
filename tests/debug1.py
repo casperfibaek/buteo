@@ -1,28 +1,58 @@
-# Mikelsons, Karlis; Wang, Menghua; Jiang, Lide; Wang, Xiao-Long (2021), “Global land mask for satellite ocean color remote sensing”, Mendeley Data, V1, doi: 10.17632/9r93m9s7cw.1
-import os
 import sys; sys.path.append("../")
 import buteo as beo
+import numpy as np
+import matplotlib.pyplot as plt
+
+image_path = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/buteo/tests/features/test_image_rgb_8bit.tif"
+arr = beo.raster_to_array(image_path, pixel_offsets=[900, 500, 100, 100], cast=np.float32)
+
+Mask2D = beo.MaskImages(
+    masking_functions=[
+        beo.MaskPixels2D(p=0.05),
+        beo.MaskLines2D(p=0.05),
+        beo.MaskRectangle2D(p=0.5, max_height=40, max_width=40, min_height=10, min_width=10),
+    ],
+    per_channel=False,
+    method=3,
+    min_val=0,
+    max_val=255,
+    channel_last=True,
+    inplace=False,
+)
+
+Mask3D = beo.MaskImages(
+    masking_functions=[
+        beo.MaskPixels3D(p=0.05),
+        beo.MaskLines3D(p=0.05),
+        beo.MaskRectangle3D(p=0.5, max_height=40, max_width=40, min_height=10, min_width=10),
+        beo.MaskChannels(p=0.1, max_channels=1),
+    ],
+    per_channel=True,
+    method=3,
+    min_val=0,
+    max_val=255,
+    channel_last=True,
+    inplace=False,
+)
 
 
-FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/data/masks/"
-FOLDER_REF = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/data/nightlights/"
+for _ in range(10):
+    noise_2d = Mask2D(arr)
+    noise_3d = Mask3D(arr)
 
-# This is the reference raster for projection, pixel_size, etc.. we are going to use
-reference = os.path.join(FOLDER_REF, "VNL_v21_npp_2021_global_vcmslcfg_c202205302300.median.dat_500m_54009.tif")
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
 
-# Align the water_mask to the reference raster
-water_mask = os.path.join(FOLDER, "watermask.tif")
+    ax1.imshow(np.rint(arr).astype(np.uint8), vmin=0, vmax=255)
+    ax1.set_title('Image 1')
+    ax1.axis('off')
 
-print("Reprojecting...")
-reprojected = beo.raster_reproject(water_mask, projection=reference, resample_alg="min", out_path=os.path.join(FOLDER, "watermask_54009.tif"))
-print("Resampling...")
-resampled = beo.raster_resample(reprojected, target_size=reference, resample_alg="min", out_path=os.path.join(FOLDER, "watermask_500m_54009.tif"))
-print()
-aligned = beo.raster_align(resampled, reference=reference, resample_alg="min", out_path=os.path.join(FOLDER, "watermask_500m_54009_aligned.tif"))
+    ax2.imshow(np.rint(noise_2d).astype(np.uint8), vmin=0, vmax=255, cmap='gray')
+    ax2.set_title('Image 2')
+    ax2.axis('off')
 
-# # Flip the mask so land is 1 and water is 0
-# beo.array_to_raster(
-#     beo.raster_to_array(aligned, filled=True, fill_value=0, cast=np.uint8) == 0,
-#     reference=reference,
-#     out_path=os.path.join(FOLDER, "landmask_500m_54009.tif"),
-# )
+    ax3.imshow(np.rint(noise_3d).astype(np.uint8), vmin=0, vmax=255, cmap='gray')
+    ax3.set_title('Image 3')
+    ax3.axis('off')
+
+    plt.tight_layout()
+    plt.show()
