@@ -14,7 +14,7 @@ from buteo.array.filters import filter_operation
 from buteo.array.convolution_kernels import kernel_base
 
 
-def spatial_label_smoothing_arr(
+def spatial_label_smoothing(
     arr: np.array,
     radius: int = 2,
     classes: Optional[np.array] = None,
@@ -22,7 +22,7 @@ def spatial_label_smoothing_arr(
     channel_last: bool = True,
 ) -> np.ndarray:
     """
-    Smooths the labels in a landcover classification by taking counting the weighted
+    Smoothes the labels in a landcover classification by counting the weighted
     occurances of classes in a given radius.
 
     Parameters
