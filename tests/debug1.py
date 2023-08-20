@@ -40,7 +40,7 @@ for _ in range(10):
     noise_2d = Mask2D(arr)
     noise_3d = Mask3D(arr)
 
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(20, 5))
 
     ax1.imshow(np.rint(arr).astype(np.uint8), vmin=0, vmax=255)
     ax1.set_title('Image 1')
@@ -53,6 +53,10 @@ for _ in range(10):
     ax3.imshow(np.rint(noise_3d).astype(np.uint8), vmin=0, vmax=255, cmap='gray')
     ax3.set_title('Image 3')
     ax3.axis('off')
+
+    ax4.imshow(np.rint(beo.filter_edge_detection(arr, radius=2)).astype(np.uint8), vmin=0, vmax=255, cmap='gray')
+    ax4.set_title('Image 3')
+    ax4.axis('off')
 
     plt.tight_layout()
     plt.show()
