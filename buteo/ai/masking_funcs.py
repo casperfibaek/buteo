@@ -13,6 +13,7 @@ from numba import jit, prange
 from buteo.array.convolution import convolve_array_simple
 from buteo.array.convolution_kernels import _simple_blur_kernel_2d_3x3
 
+EPSILON = 1e-7
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
@@ -259,14 +260,20 @@ class MaskPixels3D():
 def mask_lines_2d(
     arr: np.ndarray,
     p: float = 0.05,
+    max_height: float = 1.0,
+    max_width: float = 1.0,
+    min_height: float = 0.1,
+    min_width: float = 0.1,
+    max_size: int = 3,
+    min_size: int = 1,
     channel_last: bool = True,
 ):
     height, width, channels = arr.shape
-    mask_shape = (height, width, 1)
+    mask_shape = (height, width, channels)
 
     if not channel_last:
         channels, height, width = arr.shape
-        mask_shape = (1, height, width)
+        mask_shape = (channels, height, width)
 
     mask = np.ones(mask_shape, dtype=np.uint8)
     zero = np.array(0, dtype=np.uint8)
@@ -274,23 +281,47 @@ def mask_lines_2d(
     mask_height = (np.random.uniform(0.0, 1.0, size=(height, )) < p).astype(np.uint8)
     mask_width = (np.random.uniform(0.0, 1.0, size=(width, )) < p).astype(np.uint8)
 
+    mask_height_indices = np.where(mask_height == 1)[0]
+    mask_width_indices = np.where(mask_width == 1)[0]
+
+    vertical_lines = mask_height.sum()
+    horizontal_lines = mask_width.sum()
+
+    if vertical_lines == 0 and horizontal_lines == 0:
+        return mask
+    
+    vertical_start = np.random.randint(0, height, size=(vertical_lines, ))
+    vertical_end = vertical_start + np.floor(np.random.uniform(min_height, max_height, size=(vertical_lines, )) * height).astype(np.int64)
+
+    for i in range(vertical_end.shape[0]):
+        if vertical_end[i] > height:
+            vertical_end[i] = height
+
+    horizontal_start = np.random.randint(0, width, size=(horizontal_lines, ))
+    horizontal_end = horizontal_start + np.floor(np.random.uniform(min_width, max_width, size=(horizontal_lines, )) * width).astype(np.int64)
+
+    for j in range(horizontal_end.shape[0]):
+        if horizontal_end[j] > width:
+            horizontal_end[j] = width
+
     if channel_last:
-        for col in prange(height):
-            for row in prange(width):
-                if mask_height[col]:
-                    mask[col, row, :] = zero
-                if mask_width[row]:
-                    mask[col, row, :] = zero
+        for idx, pos_y in enumerate(mask_height_indices):
+            size = np.random.randint(min_size, max_size + 1)
+            size_half = size // 2
 
+            mask[vertical_start[idx]:vertical_end[idx], pos_y - size_half:pos_y + size_half + 1 , :] = zero
+
+        for idx, pos_x in enumerate(mask_width_indices):
+            size = np.random.randint(min_size, max_size + 1)
+            size_half = size // 2
+
+            mask[pos_x - size_half: pos_x + size_half + 1, horizontal_start[idx]:horizontal_end[idx], :] = zero
     else:
-        for col in prange(height):
-            for row in prange(width):
-                if mask_height[col]:
-                    mask[:, col, row] = zero
-                if mask_width[row]:
-                    mask[:, col, row] = zero
+        for idx, pos_y in enumerate(mask_height_indices):
+            mask[:, vertical_start[idx]:vertical_end[idx], pos_y + size] = zero
 
-    mask = mask.repeat(channels).reshape(arr.shape)
+        for idx, pos_x in enumerate(mask_width_indices):
+            mask[:, pos_x + size, horizontal_start[idx]:horizontal_end[idx]] = zero
 
     return mask
 
@@ -321,6 +352,7 @@ class MaskLines2D():
 
     def __call__(self, arr: np.ndarray) -> np.ndarray:
         return mask_lines_2d(arr, p=self.p, channel_last=self.channel_last)
+
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def mask_lines_3d(
@@ -388,14 +420,468 @@ class MaskLines3D():
     def __call__(self, arr: np.ndarray) -> np.ndarray:
         return mask_lines_3d(arr, p=self.p, channel_last=self.channel_last)
 
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True)
+def _round_converter(idx, height, width):
+    # Top side
+    if idx < width:
+        return 0, idx
+
+    # Right side
+    elif idx < width + height - 1:
+        return idx - width + 1, width - 1
+
+    # Bottom side
+    elif idx < 2 * width + height - 2:
+        return height - 1, width - 1 - (idx - width - height + 2)
+
+    # Left side
+    else:
+        return height - 1 - (idx - 2 * width - height + 3), 0
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True)
+def _quadratic_bezier(px0, py0, px1, py1, px2, py2, t):
+    """Calculate point on a quadratic Bezier curve using individual components."""
+    a = (1-t)
+    b = t
+    x = a*(a*px0 + b*px1) + b*(a*px1 + b*px2)
+    y = a*(a*py0 + b*py1) + b*(a*py1 + b*py2)
+    
+    return int(x + 0.5), int(y + 0.5)  # Using +0.5 and int for rounding
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def mask_lines_2d_bezier(
+    arr: np.ndarray,
+    p: float = 0.05,
+    channel_last: bool = True,
+) -> np.ndarray:
+    if channel_last:
+        height, width, channels = arr.shape
+    else:
+        channels, height, width = arr.shape
+
+    mask = np.ones((height, width, channels), dtype=np.uint8)
+
+    border_pixels = (2 * (height + width)) - 4
+    lines_count = (np.random.rand(border_pixels) < p).sum()
+
+    if lines_count == 0:
+        return mask
+
+    _sy = np.zeros(lines_count, dtype=np.int64)
+    _sx = np.zeros(lines_count, dtype=np.int64)
+    _ey = np.zeros(lines_count, dtype=np.int64)
+    _ex = np.zeros(lines_count, dtype=np.int64)
+    _my = np.zeros(lines_count, dtype=np.int64)
+    _mx = np.zeros(lines_count, dtype=np.int64)
+
+    for i in prange(lines_count):
+        start_idx = np.random.randint(0, border_pixels)
+        end_idx = np.random.randint(0, border_pixels)
+
+        _sy[i], _sx[i] = _round_converter(start_idx, height, width)
+        _ey[i], _ex[i] = _round_converter(end_idx, height, width)
+        _my[i] = np.random.randint(0, height)
+        _mx[i] = np.random.randint(0, width)
+
+    for i in prange(lines_count):
+        # 1. Calculate the Bounding Box for Each Curve:
+        min_x = min(_sx[i], _mx[i], _ex[i])
+        max_x = max(_sx[i], _mx[i], _ex[i])
+        min_y = min(_sy[i], _my[i], _ey[i])
+        max_y = max(_sy[i], _my[i], _ey[i])
+        
+        # 2. Determine the `linspace` Resolution for Each Curve:
+        bounding_box_diagonal = int(np.sqrt((max_x - min_x)**2 + (max_y - min_y)**2))
+        space = np.linspace(0.0, 1.0, bounding_box_diagonal)
+    
+        for t_idx in prange(space.shape[0]):
+            t = space[t_idx]
+            
+            y, x = _quadratic_bezier(_sx[i], _sy[i], _mx[i], _my[i], _ex[i], _ey[i], t)
+
+            if channel_last:
+                mask[y, x, :] = 0
+            else:
+                mask[:, y, x] = 0
+
+    return mask
+
+
+class MaskLines2DBezier():
+    """
+    Masks random bezier lines from an image.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        The image to mask a pixel from.
+
+    p : float, optional
+        The probability of masking a pixel, default: 0.05.
+
+    channel_last : bool, optional
+        Whether the image is (channels, height, width) or (height, width, channels), default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The image with masked pixels.
+    """
+    def __init__(self, p: float = 0.05, channel_last: bool = True):
+        self.p = p
+        self.channel_last = channel_last
+
+    def __call__(self, arr: np.ndarray) -> np.ndarray:
+        return mask_lines_2d_bezier(arr, p=self.p, channel_last=self.channel_last)
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def mask_lines_3d_bezier(
+    arr: np.ndarray,
+    p: float = 0.05,
+    channel_last: bool = True,
+) -> np.ndarray:
+    if channel_last:
+        height, width, channels = arr.shape
+    else:
+        channels, height, width = arr.shape
+
+    mask = np.ones((height, width, channels), dtype=np.uint8)
+
+    border_pixels = (2 * (height + width)) - 4
+    lines_count = (np.random.rand(border_pixels) < p).sum()
+
+    if lines_count == 0:
+        return mask
+
+    _sy = np.zeros(lines_count, dtype=np.int64)
+    _sx = np.zeros(lines_count, dtype=np.int64)
+    _ey = np.zeros(lines_count, dtype=np.int64)
+    _ex = np.zeros(lines_count, dtype=np.int64)
+    _my = np.zeros(lines_count, dtype=np.int64)
+    _mx = np.zeros(lines_count, dtype=np.int64)
+
+    for c in prange(channels):
+        for i in prange(lines_count):
+            start_idx = np.random.randint(0, border_pixels)
+            end_idx = np.random.randint(0, border_pixels)
+
+            _sy[i], _sx[i] = _round_converter(start_idx, height, width)
+            _ey[i], _ex[i] = _round_converter(end_idx, height, width)
+            _my[i] = np.random.randint(0, height)
+            _mx[i] = np.random.randint(0, width)
+
+        for i in prange(lines_count):
+            # 1. Calculate the Bounding Box for Each Curve:
+            min_x = min(_sx[i], _mx[i], _ex[i])
+            max_x = max(_sx[i], _mx[i], _ex[i])
+            min_y = min(_sy[i], _my[i], _ey[i])
+            max_y = max(_sy[i], _my[i], _ey[i])
+            
+            # 2. Determine the `linspace` Resolution for Each Curve:
+            bounding_box_diagonal = int(np.sqrt((max_x - min_x)**2 + (max_y - min_y)**2))
+            space = np.linspace(0.0, 1.0, bounding_box_diagonal)
+        
+            for t_idx in prange(space.shape[0]):
+                t = space[t_idx]
+                
+                y, x = _quadratic_bezier(_sx[i], _sy[i], _mx[i], _my[i], _ex[i], _ey[i], t)
+
+                if channel_last:
+                    mask[y, x, c] = 0
+                else:
+                    mask[c, y, x] = 0
+
+    return mask
+
+
+class MaskLines3DBezier():
+    """
+    Masks random bezier lines from an image.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        The image to mask a pixel from.
+
+    p : float, optional
+        The probability of masking a pixel, default: 0.05.
+
+    channel_last : bool, optional
+        Whether the image is (channels, height, width) or (height, width, channels), default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The image with masked pixels.
+    """
+    def __init__(self, p: float = 0.05, channel_last: bool = True):
+        self.p = p
+        self.channel_last = channel_last
+
+    def __call__(self, arr: np.ndarray) -> np.ndarray:
+        return mask_lines_3d_bezier(arr, p=self.p, channel_last=self.channel_last)
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True)
+def _point_within_elipse(
+    centroid: np.ndarray,
+    a: float,
+    b: float,
+    theta: float,
+    point: np.ndarray,
+) -> bool:
+    x, y = point
+    x0, y0 = centroid
+
+    return ((x - x0) * np.cos(theta) + (y - y0) * np.sin(theta)) ** 2 / a ** 2 + ((x - x0) * np.sin(theta) - (y - y0) * np.cos(theta)) ** 2 / b ** 2 <= 1
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def mask_elipse_2d(
+    arr: np.ndarray,
+    p: float = 0.05,
+    max_height: float = 0.4,
+    max_width: float = 0.4,
+    min_height: float = 0.1,
+    min_width: float = 0.1,
+    channel_last: bool = True,
+):
+    height, width, channels = arr.shape
+    mask_shape = (height, width, channels)
+
+    if not channel_last:
+        channels, height, width = arr.shape
+        mask_shape = (channels, height, width)
+
+    mask = np.ones(mask_shape, dtype=np.uint8)
+    zero = np.array(0, dtype=np.uint8)
+
+    if np.random.uniform(0.0, 1.0 + EPSILON) > p:
+        return mask
+
+    # Randomly select the centroid of the ellipse
+    centroid = (np.random.uniform(0, height), np.random.uniform(0, width))
+    
+    # Randomly select the height and width of the ellipse
+    # Ensure that the ellipse fits within the rectangle
+    min_x = int(width * min_width)
+    min_y = int(height * min_height)
+    max_x = int(width * max_width)
+    max_y = int(height * max_height)
+    a = np.random.uniform(min_y, max_y)  # semi-major axis
+    b = np.random.uniform(min_x, max_x)  # semi-minor axis
+    
+    # Randomly select the orientation of the ellipse
+    theta = np.random.uniform(0, 2 * np.pi)
+
+    # Calculate lazy bounds
+    max_side = np.ceil(np.maximum(a, b))
+    max_y = centroid[0] + max_side
+    min_y = centroid[0] - max_side
+    max_x = centroid[1] + max_side
+    min_x = centroid[1] - max_side
+
+    for col in prange(height):
+        if col < min_y or col > max_y:
+            continue
+        for row in prange(width):
+            if row < min_x or row > max_x:
+                continue
+
+            if _point_within_elipse(centroid, a, b, theta, np.array([col, row], dtype=np.float32)):
+                if channel_last:
+                    mask[col, row, :] = zero
+                else:
+                    mask[:, col, row] = zero
+
+    return mask
+
+
+class MaskElipse2D():
+    """
+    Masks a random elipse within the image.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        The image to mask a pixel from.
+
+    p : float, optional
+        The probability of masking a pixel, default: 0.05.
+
+    channel_last : bool, optional
+        Whether the image is (channels, height, width) or (height, width, channels), default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The image with masked pixels.
+    """
+    def __init__(self,
+        p: float = 0.05,
+        channel_last: bool = True,
+        max_height: float = 0.4,
+        max_width: float = 0.4,
+        min_height: float = 0.1,
+        min_width: float = 0.1,
+    ):
+        self.p = p
+        self.channel_last = channel_last
+        self.max_height = max_height
+        self.max_width = max_width
+        self.min_height = min_height
+        self.min_width = min_width
+
+        assert self.max_height >= self.min_height, "max_height must be greater than or equal to min_height"
+        assert self.max_width >= self.min_width, "max_width must be greater than or equal to min_width"
+        assert p >= 0.0 and p <= 1.0, "p must be between 0.0 and 1.0"
+        assert max_height >= 0.0 and max_height <= 1.0, "max_height must be between 0.0 and 1.0"
+        assert max_width >= 0.0 and max_width <= 1.0, "max_width must be between 0.0 and 1.0"
+        assert min_height >= 0.0 and min_height <= 1.0, "min_height must be between 0.0 and 1.0"
+        assert min_width >= 0.0 and min_width <= 1.0, "min_width must be between 0.0 and 1.0"
+
+    def __call__(self, arr: np.ndarray) -> np.ndarray:
+        return mask_elipse_2d(
+            arr,
+            p=self.p,
+            max_height=self.max_height,
+            max_width=self.max_width,
+            min_height=self.min_height,
+            min_width=self.min_width,
+            channel_last=self.channel_last,
+        )
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def mask_elipse_3d(
+    arr: np.ndarray,
+    p: float = 0.05,
+    max_height: float = 0.4,
+    max_width: float = 0.4,
+    min_height: float = 0.1,
+    min_width: float = 0.1,
+    channel_last: bool = True,
+):
+    height, width, channels = arr.shape
+    mask_shape = (height, width, channels)
+
+    if not channel_last:
+        channels, height, width = arr.shape
+        mask_shape = (channels, height, width)
+
+    mask = np.ones(mask_shape, dtype=np.uint8)
+    zero = np.array(0, dtype=np.uint8)
+
+    if np.random.uniform(0.0, 1.0 + EPSILON) > p:
+        return mask
+
+    for channel in range(channels):
+
+        # Randomly select the centroid of the ellipse
+        centroid = (np.random.uniform(0, height), np.random.uniform(0, width))
+        
+        # Randomly select the height and width of the ellipse
+        # Ensure that the ellipse fits within the rectangle
+        min_x = int(width * min_width)
+        min_y = int(height * min_height)
+        max_x = int(width * max_width)
+        max_y = int(height * max_height)
+        a = np.random.uniform(min_y, max_y)  # semi-major axis
+        b = np.random.uniform(min_x, max_x)  # semi-minor axis
+        
+        # Randomly select the orientation of the ellipse
+        theta = np.random.uniform(0, 2 * np.pi)
+
+        # Calculate lazy bounds
+        max_side = np.ceil(np.maximum(a, b))
+        max_y = centroid[0] + max_side
+        min_y = centroid[0] - max_side
+        max_x = centroid[1] + max_side
+        min_x = centroid[1] - max_side
+
+        for col in prange(height):
+            if col < min_y or col > max_y:
+                continue
+            for row in prange(width):
+                if row < min_x or row > max_x:
+                    continue
+
+                if _point_within_elipse(centroid, a, b, theta, np.array([col, row], dtype=np.float32)):
+                    if channel_last:
+                        mask[col, row, channel] = zero
+                    else:
+                        mask[channel, col, row] = zero
+
+    return mask
+
+
+class MaskElipse3D():
+    """
+    Masks a random elipse within the image.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        The image to mask a pixel from.
+
+    p : float, optional
+        The probability of masking a pixel, default: 0.05.
+
+    channel_last : bool, optional
+        Whether the image is (channels, height, width) or (height, width, channels), default: True.
+
+    Returns
+    -------
+    np.ndarray
+        The image with masked pixels.
+    """
+    def __init__(self,
+        p: float = 0.05,
+        max_height: float = 0.4,
+        max_width: float = 0.4,
+        min_height: float = 0.1,
+        min_width: float = 0.1,
+        channel_last: bool = True,
+    ):
+        self.p = p
+        self.channel_last = channel_last
+        self.max_height = max_height
+        self.max_width = max_width
+        self.min_height = min_height
+        self.min_width = min_width
+
+        assert self.max_height >= self.min_height, "max_height must be greater than or equal to min_height"
+        assert self.max_width >= self.min_width, "max_width must be greater than or equal to min_width"
+        assert p >= 0.0 and p <= 1.0, "p must be between 0.0 and 1.0"
+        assert max_height >= 0.0 and max_height <= 1.0, "max_height must be between 0.0 and 1.0"
+        assert max_width >= 0.0 and max_width <= 1.0, "max_width must be between 0.0 and 1.0"
+        assert min_height >= 0.0 and min_height <= 1.0, "min_height must be between 0.0 and 1.0"
+        assert min_width >= 0.0 and min_width <= 1.0, "min_width must be between 0.0 and 1.0"
+
+    def __call__(self, arr: np.ndarray) -> np.ndarray:
+        return mask_elipse_3d(
+            arr,
+            p=self.p,
+            channel_last=self.channel_last,
+            max_height=self.max_height,
+            max_width=self.max_width,
+            min_height=self.min_height,
+            min_width=self.min_width,
+        )
+
+
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def mask_rectangle_2d(
     arr: np.ndarray,
     p: float = 0.05,
-    max_height: int = -1,
-    max_width: int = -1,
-    min_height: int = 10,
-    min_width: int = 10,
+    max_height: float = 0.5,
+    max_width: float = 0.5,
+    min_height: float = 0.1,
+    min_width: float = 0.1,
     channel_last: bool = True,
 ) -> np.ndarray:
     
@@ -404,10 +890,15 @@ def mask_rectangle_2d(
     if not channel_last:
         _channels, height, width = arr.shape
 
+    max_height = int(max_height * height)
+    max_width = int(max_width * width)
+    min_height = int(min_height * height)
+    min_width = int(min_width * width)
+
     mask = np.ones(arr.shape, dtype=np.uint8)
     zero = np.array(0, dtype=np.uint8)
 
-    if np.random.uniform(0.0, 1.0) < p:
+    if np.random.uniform(0.0, 1.0 + EPSILON) > p:
         return mask
 
     if max_height == -1:
@@ -444,18 +935,16 @@ class MaskRectangle2D():
         The probability of a rectangle being masked, default: 0.05.
 
     max_height : int, optional
-        The maximum height of the rectangle, default: -1.
-        -1 means that half the image height is used.
+        The maximum height (proportion of total_height) of the rectangle, default: 0.5.
 
     max_width : int, optional
-        The maximum width of the rectangle, default: -1.
-        -1 means that half the image width is used.
+        The maximum width (proportion of total_width) of the rectangle, default: 0.5.
 
     min_height : int, optional
-        The minimum height of the rectangle, default: 10.
+        The minimum height of the rectangle (proportion of total_height), default: 0.1
 
     min_width : int, optional
-        The minimum width of the rectangle, default: 10.
+        The minimum width of the rectangle (proportion of total_width), default: 0.1
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
@@ -468,10 +957,10 @@ class MaskRectangle2D():
     def __init__(
         self,
         p: float = 0.05,
-        max_height: int = -1,
-        max_width: int = -1,
-        min_height: int = 10,
-        min_width: int = 10,
+        max_height: float = 0.5,
+        max_width: float = 0.5,
+        min_height: float = 0.1,
+        min_width: float = 0.1,
         channel_last: bool = True,
     ):
         self.p = p
@@ -480,6 +969,14 @@ class MaskRectangle2D():
         self.min_height = min_height
         self.min_width = min_width
         self.channel_last = channel_last
+
+        assert self.max_height >= self.min_height, "max_height must be greater than or equal to min_height"
+        assert self.max_width >= self.min_width, "max_width must be greater than or equal to min_width"
+        assert p >= 0.0 and p <= 1.0, "p must be between 0.0 and 1.0"
+        assert max_height >= 0.0 and max_height <= 1.0, "max_height must be between 0.0 and 1.0"
+        assert max_width >= 0.0 and max_width <= 1.0, "max_width must be between 0.0 and 1.0"
+        assert min_height >= 0.0 and min_height <= 1.0, "min_height must be between 0.0 and 1.0"
+        assert min_width >= 0.0 and min_width <= 1.0, "min_width must be between 0.0 and 1.0"
 
     def __call__(self, arr: np.ndarray) -> np.ndarray:
         return mask_rectangle_2d(
@@ -497,10 +994,10 @@ class MaskRectangle2D():
 def mask_rectangle_3d(
     arr: np.ndarray,
     p: float = 0.05,
-    max_height: int = -1,
-    max_width: int = -1,
-    min_height: int = 10,
-    min_width: int = 10,
+    max_height: float = 0.5,
+    max_width: float = 0.5,
+    min_height: float = 0.1,
+    min_width: float = 0.1,
     channel_last: bool = True,
 ) -> np.ndarray:
     height, width, channels = arr.shape
@@ -511,8 +1008,13 @@ def mask_rectangle_3d(
     mask = np.ones(arr.shape, dtype=np.uint8)
     zero = np.array(0, dtype=np.uint8)
 
+    max_height = int(max_height * height)
+    max_width = int(max_width * width)
+    min_height = int(min_height * height)
+    min_width = int(min_width * width)
+
     for channel in prange(channels):
-        if np.random.uniform(0.0, 1.0) > p:
+        if np.random.uniform(0.0, 1.0 + EPSILON) > p:
             continue
 
         if max_height == -1:
@@ -549,18 +1051,16 @@ class MaskRectangle3D():
         The probability of a rectangle being masked, default: 0.05.
 
     max_height : int, optional
-        The maximum height of the rectangle, default: -1.
-        -1 means that half the image height is used.
+        The maximum height (proportion of total_height) of the rectangle, default: 0.5.
 
     max_width : int, optional
-        The maximum width of the rectangle, default: -1.
-        -1 means that half the image width is used.
+        The maximum width (proportion of total_width) of the rectangle, default: 0.5.
 
     min_height : int, optional
-        The minimum height of the rectangle, default: 10.
+        The minimum height of the rectangle (proportion of total_height), default: 0.1
 
     min_width : int, optional
-        The minimum width of the rectangle, default: 10.
+        The minimum width of the rectangle (proportion of total_width), default: 0.1
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
@@ -573,10 +1073,10 @@ class MaskRectangle3D():
     def __init__(
         self,
         p: float = 0.05,
-        max_height: int = -1,
-        max_width: int = -1,
-        min_height: int = 10,
-        min_width: int = 10,
+        max_height: float = 0.5,
+        max_width: float = 0.5,
+        min_height: float = 0.1,
+        min_width: float = 0.1,
         channel_last: bool = True,
     ):
         self.p = p
@@ -585,6 +1085,14 @@ class MaskRectangle3D():
         self.min_height = min_height
         self.min_width = min_width
         self.channel_last = channel_last
+
+        assert self.max_height >= self.min_height, "max_height must be greater than or equal to min_height"
+        assert self.max_width >= self.min_width, "max_width must be greater than or equal to min_width"
+        assert p >= 0.0 and p <= 1.0, "p must be between 0.0 and 1.0"
+        assert max_height >= 0.0 and max_height <= 1.0, "max_height must be between 0.0 and 1.0"
+        assert max_width >= 0.0 and max_width <= 1.0, "max_width must be between 0.0 and 1.0"
+        assert min_height >= 0.0 and min_height <= 1.0, "min_height must be between 0.0 and 1.0"
+        assert min_width >= 0.0 and min_width <= 1.0, "min_width must be between 0.0 and 1.0"
 
     def __call__(self, arr: np.ndarray) -> np.ndarray:
         return mask_rectangle_3d(
@@ -652,6 +1160,10 @@ class MaskChannels():
         self.p = p
         self.max_channels = max_channels
         self.channel_last = channel_last
+
+        assert p >= 0.0 and p <= 1.0, "p must be between 0.0 and 1.0"
+        if channel_last:
+            assert max_channels >= 1, "max_channels must be between 1 and the number of channels in the image"
 
     def __call__(self, arr: np.ndarray) -> np.ndarray:
         return mask_channels(arr, p=self.p, max_channels=self.max_channels, channel_last=self.channel_last)

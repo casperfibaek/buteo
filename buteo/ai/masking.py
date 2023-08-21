@@ -6,6 +6,9 @@ suited to remote sensing imagery.
 import sys; sys.path.append("../../")
 from typing import List
 
+# External
+import numpy as np
+
 # Internal
 from buteo.ai.masking_funcs import mask_replace_2d, mask_replace_3d
 
@@ -13,10 +16,12 @@ from buteo.ai.masking_funcs import mask_replace_2d, mask_replace_3d
 class MaskImages():
     """
     A class that masks images when called using a list of masking functions.
-    Parameters
+    Parameters.
+    NOTE: The images that are being masked should be floating point arrays.
+
     ----------
-    arr : np.ndarray
-        The array to replace pixels in.
+    masking_functions : List, optional
+        A list of masking functions to apply to the image, default: None.
 
     method : int, optional
         The method to use for replacing pixels.
@@ -74,6 +79,19 @@ class MaskImages():
 
 
     def __call__(self, X):
+        """
+        Applies the masking functions to the input image.
+        Parameters
+        ----------
+        X : np.ndarray
+            The input image to mask.
+
+        Returns
+        -------
+        np.ndarray
+            The masked image.
+        """
+        X = X.astype(np.float32, copy=False)
         masks = None
         for i, func in enumerate(self.masking_functions):
             if i == 0:

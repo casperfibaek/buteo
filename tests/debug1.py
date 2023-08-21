@@ -4,16 +4,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 image_path = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/buteo/tests/features/test_image_rgb_8bit.tif"
-arr = beo.raster_to_array(image_path, pixel_offsets=[900, 500, 100, 100], cast=np.float32)
+arr = beo.raster_to_array(image_path, pixel_offsets=[900, 500, 100, 100], cast=np.float32, filled=True, fill_value=0.0)
 
 Mask2D = beo.MaskImages(
     masking_functions=[
         beo.MaskPixels2D(p=0.05),
-        beo.MaskLines2D(p=0.05),
-        beo.MaskRectangle2D(p=0.5, max_height=40, max_width=40, min_height=10, min_width=10),
+        beo.MaskElipse2D(p=1.0, max_height=0.25, max_width=0.25),
+        beo.MaskLines2DBezier(p=0.025),
+        beo.MaskRectangle2D(p=1.0, max_height=0.25, max_width=0.25),
     ],
     per_channel=False,
-    method=3,
+    method=0,
     min_val=0,
     max_val=255,
     channel_last=True,
@@ -23,12 +24,13 @@ Mask2D = beo.MaskImages(
 Mask3D = beo.MaskImages(
     masking_functions=[
         beo.MaskPixels3D(p=0.05),
-        beo.MaskLines3D(p=0.05),
-        beo.MaskRectangle3D(p=0.5, max_height=40, max_width=40, min_height=10, min_width=10),
+        beo.MaskElipse3D(p=1.0, max_height=0.25, max_width=0.25),
+        beo.MaskLines3DBezier(p=0.01),
+        beo.MaskRectangle3D(p=1.0, max_height=0.25, max_width=0.25),
         beo.MaskChannels(p=0.1, max_channels=1),
     ],
     per_channel=True,
-    method=3,
+    method=4,
     min_val=0,
     max_val=255,
     channel_last=True,
@@ -36,7 +38,7 @@ Mask3D = beo.MaskImages(
 )
 
 
-for _ in range(10):
+for _ in range(5):
     noise_2d = Mask2D(arr)
     noise_3d = Mask3D(arr)
 
