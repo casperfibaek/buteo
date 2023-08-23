@@ -486,7 +486,7 @@ def mask_lines_2d_bezier(
         _my[i] = np.random.randint(0, height)
         _mx[i] = np.random.randint(0, width)
 
-    for i in prange(lines_count):
+    for i in range(lines_count):
         # 1. Calculate the Bounding Box for Each Curve:
         min_x = min(_sx[i], _mx[i], _ex[i])
         max_x = max(_sx[i], _mx[i], _ex[i])
@@ -552,20 +552,21 @@ def mask_lines_3d_bezier(
     mask = np.ones((height, width, channels), dtype=np.uint8)
 
     border_pixels = (2 * (height + width)) - 4
-    lines_count = (np.random.rand(border_pixels) < p).sum()
-
-    if lines_count == 0:
-        return mask
-
-    _sy = np.zeros(lines_count, dtype=np.int64)
-    _sx = np.zeros(lines_count, dtype=np.int64)
-    _ey = np.zeros(lines_count, dtype=np.int64)
-    _ex = np.zeros(lines_count, dtype=np.int64)
-    _my = np.zeros(lines_count, dtype=np.int64)
-    _mx = np.zeros(lines_count, dtype=np.int64)
 
     for c in prange(channels):
-        for i in prange(lines_count):
+        lines_count = (np.random.rand(border_pixels) < p).sum()
+
+        if lines_count == 0:
+            continue
+
+        _sy = np.zeros(lines_count, dtype=np.int64)
+        _sx = np.zeros(lines_count, dtype=np.int64)
+        _ey = np.zeros(lines_count, dtype=np.int64)
+        _ex = np.zeros(lines_count, dtype=np.int64)
+        _my = np.zeros(lines_count, dtype=np.int64)
+        _mx = np.zeros(lines_count, dtype=np.int64)
+
+        for i in range(lines_count):
             start_idx = np.random.randint(0, border_pixels)
             end_idx = np.random.randint(0, border_pixels)
 
@@ -574,7 +575,7 @@ def mask_lines_3d_bezier(
             _my[i] = np.random.randint(0, height)
             _mx[i] = np.random.randint(0, width)
 
-        for i in prange(lines_count):
+        for i in range(lines_count):
             # 1. Calculate the Bounding Box for Each Curve:
             min_x = min(_sx[i], _mx[i], _ex[i])
             max_x = max(_sx[i], _mx[i], _ex[i])
@@ -776,10 +777,9 @@ def mask_elipse_3d(
     mask = np.ones(mask_shape, dtype=np.uint8)
     zero = np.array(0, dtype=np.uint8)
 
-    if np.random.uniform(0.0, 1.0 + EPSILON) > p:
-        return mask
-
-    for channel in range(channels):
+    for c in range(channels):
+        if np.random.uniform(0.0, 1.0 + EPSILON) > p:
+            continue
 
         # Randomly select the centroid of the ellipse
         centroid = (np.random.uniform(0, height), np.random.uniform(0, width))
@@ -812,9 +812,9 @@ def mask_elipse_3d(
 
                 if _point_within_elipse(centroid, a, b, theta, np.array([col, row], dtype=np.float32)):
                     if channel_last:
-                        mask[col, row, channel] = zero
+                        mask[col, row, c] = zero
                     else:
-                        mask[channel, col, row] = zero
+                        mask[c, col, row] = zero
 
     return mask
 
@@ -1013,7 +1013,7 @@ def mask_rectangle_3d(
     min_height = int(min_height * height)
     min_width = int(min_width * width)
 
-    for channel in prange(channels):
+    for c in prange(channels):
         if np.random.uniform(0.0, 1.0 + EPSILON) > p:
             continue
 
@@ -1031,9 +1031,9 @@ def mask_rectangle_3d(
         row = np.random.randint(0, width - mask_width)
 
         if channel_last:
-            mask[col:col + mask_height, row:row + mask_width, channel] = zero
+            mask[col:col + mask_height, row:row + mask_width, c] = zero
         else:
-            mask[channel, col:col + mask_height, row:row + mask_width] = zero
+            mask[c, col:col + mask_height, row:row + mask_width] = zero
 
     return mask
 
