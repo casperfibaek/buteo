@@ -278,6 +278,9 @@ def raster_to_array(
     elif filled:
         np.nan_to_num(data, nan=fill_value, copy=False)
 
+    else:
+        output_array = np.ma.getdata(output_array)
+
     # Reshape array
     if not channel_last:
         output_array = np.transpose(output_array, (2, 0, 1))

@@ -22,6 +22,7 @@ def _vector_buffer(
     distance: Union[int, float, str],
     out_path: Optional[str] = None,
     in_place: bool = False,
+    force_multipolygon: bool = False,
 ) -> str:
     """ Internal. """
     assert isinstance(vector, (str, ogr.DataSource)), "Invalid vector input."
@@ -38,7 +39,7 @@ def _vector_buffer(
 
     if in_place:
         for l in metadata["layers"]:
-            if l["geom_type"] not in ["Polygon", "MultiPolygon"]:
+            if l["geom_type"] not in ["Polygon", "MultiPolygon", "3D Polygon", "3D MultiPolygon"]:
                 raise ValueError("Input vector must be polygonal to be buffered in-place.")
     else:
         driver = ogr.GetDriverByName(utils_gdal._get_driver_name_from_path(out_path))
@@ -100,8 +101,9 @@ def _vector_buffer(
 
             buffered_geometry = feature_geom.Buffer(buffer_distance)
 
-            if buffered_geometry.GetGeometryType() == ogr.wkbPolygon:
-                buffered_geometry = ogr.ForceToMultiPolygon(buffered_geometry)
+            if force_multipolygon:
+                if buffered_geometry.GetGeometryType() == ogr.wkbPolygon:
+                    buffered_geometry = ogr.ForceToMultiPolygon(buffered_geometry)
 
             if in_place:
                 try:
