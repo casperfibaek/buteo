@@ -149,3 +149,4 @@ lib/credentials.py
 **/*.tif.aux.xml
 /tests/tmp/*.tif
 /tests/tmp/*.*
+.pypirc
