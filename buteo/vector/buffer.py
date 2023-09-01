@@ -22,7 +22,7 @@ def _vector_buffer(
     distance: Union[int, float, str],
     out_path: Optional[str] = None,
     in_place: bool = False,
-    force_multipolygon: bool = False,
+    force_multipolygon: bool = True,
 ) -> str:
     """ Internal. """
     assert isinstance(vector, (str, ogr.DataSource)), "Invalid vector input."

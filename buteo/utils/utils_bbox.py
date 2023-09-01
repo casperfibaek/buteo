@@ -660,9 +660,6 @@ def _get_vector_from_bbox(
         projection_osr, osr.SpatialReference
     ), f"projection_osr not a valid spatial reference. Recieved: {projection_osr}"
 
-    if utils_projection._projection_is_latlng(projection_osr):
-        bbox_ogr = [bbox_ogr[2], bbox_ogr[3], bbox_ogr[0], bbox_ogr[1]]
-
     geom = _get_geom_from_bbox(bbox_ogr)
 
     driver = ogr.GetDriverByName("GPKG")
