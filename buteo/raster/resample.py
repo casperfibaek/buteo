@@ -284,11 +284,14 @@ def resample_array(
     utils_base._type_check(resample_alg, [str], "resample_alg")
     utils_base._type_check(channel_last, [bool], "channel_last")
 
-    if len(target_shape_pixels) in [2, 3]:
+    assert len(arr.shape) in [2, 3], f"Invalid array shape: {arr.shape}"
+    assert len(target_shape_pixels) in [2, 3], f"Invalid target_shape_pixels: {target_shape_pixels}"
+
+    if len(target_shape_pixels) == 3:
         if channel_last:
-            target_shape_pixels = (target_shape_pixels[0], target_shape_pixels[1], 1)
+            target_shape_pixels = (target_shape_pixels[0], target_shape_pixels[1])
         else:
-            target_shape_pixels = (1, target_shape_pixels[0], target_shape_pixels[1])
+            target_shape_pixels = (target_shape_pixels[1], target_shape_pixels[2])
     else:
         raise ValueError(f"Invalid target_shape_pixels: {target_shape_pixels}")
 

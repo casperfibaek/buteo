@@ -13,6 +13,13 @@ folder = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/datasets/s12_buildings/d
 folder_out = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/datasets/s12_buildings/data_images_v2/"
 world_cover_vrt = "D:/data/esa_worldcover2021/esa_worldcover2021_wgs84.vrt"
 
+masks = glob(os.path.join(folder_out, "*_wc.tif"))
+
+for f in masks:
+    os.rename(f, f.replace("_wc.tif", "_lc.tif"))
+
+exit()
+
 masks = glob(os.path.join(folder, "*_mask.tif"))
 for idx, mask in tqdm(enumerate(masks), total=len(masks)):
     basename = os.path.splitext(os.path.basename(mask))[0]

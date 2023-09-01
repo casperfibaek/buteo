@@ -904,6 +904,9 @@ def vector_from_bbox(
     else:
         proj = utils_projection.parse_projection(projection)
 
+    if utils_projection._projection_is_latlng(proj):
+        bbox = [bbox[2], bbox[3], bbox[0], bbox[1]]
+
     if out_path is None:
         out_path = utils_path._get_temp_filepath("temp_bbox.gpkg", add_timestamp=True, add_uuid=True)
     
