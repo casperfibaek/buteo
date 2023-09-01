@@ -60,7 +60,7 @@ def vector_rasterize(
     out_path : Optional[str], optional
         Path to output raster. Default: None
 
-    extent : Optional[List[Union[float, int]]], optional
+    extent: Optional[List[Union[float, int, str, gdal.Dataset, ogr.DataSource]]], optional
         Extent of raster. Default: None
 
     projection : Optional[Union[str, int, osr.SpatialReference, gdal.Dataset, ogr.DataSource]], optional

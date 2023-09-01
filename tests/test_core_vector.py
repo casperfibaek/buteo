@@ -227,32 +227,32 @@ def test_vector_add_index_multiple_vectors():
 
 
 def test_vector_get_attribute_table_single_vector():
-    attribute_table = core_vector.vector_get_attribute_table(sample_vector1)
+    attribute_table = core_vector.vector_get_attribute_table(sample_vector1, return_header=False)
 
     # Check if the attribute table is not empty and has the correct number of features
     assert attribute_table
     assert len(attribute_table) == 10
 
 def test_vector_get_attribute_table_single_vector_include_fid():
-    attribute_table = core_vector.vector_get_attribute_table(sample_vector1, include_fids=True)
+    attribute_table = core_vector.vector_get_attribute_table(sample_vector1, include_fids=True, return_header=False)
 
     # Check if the FIDs are included
     assert all(isinstance(row[0], int) for row in attribute_table)
 
 def test_vector_get_attribute_table_single_vector_include_geometry():
-    attribute_table = core_vector.vector_get_attribute_table(sample_vector1, include_geometry=True)
+    attribute_table = core_vector.vector_get_attribute_table(sample_vector1, include_geometry=True, return_header=False)
 
     # Check if the geometry is included
     assert all(isinstance(row[-1], str) for row in attribute_table)
 
 def test_vector_get_attribute_table_single_vector_no_attributes():
-    attribute_table = core_vector.vector_get_attribute_table(sample_vector1, include_attributes=False)
+    attribute_table = core_vector.vector_get_attribute_table(sample_vector1, include_attributes=False, return_header=False)
 
     # Check if the attribute table has only FID values
     assert all(len(row) == 1 for row in attribute_table)
 
 def test_vector_get_attribute_table_multiple_vectors():
-    attribute_tables = core_vector.vector_get_attribute_table([sample_vector1, sample_vector2])
+    attribute_tables = core_vector.vector_get_attribute_table([sample_vector1, sample_vector2], return_header=False)
 
     # Check if the attribute tables are not empty and have the correct number of features
     assert attribute_tables

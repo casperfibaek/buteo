@@ -33,7 +33,7 @@ def _vector_dissolve(
     process_layer: int = -1,
 ) -> Union[str, ogr.DataSource]:
     """ Internal. """
-    assert isinstance(vector, ogr.DataSource), "Invalid input vector"
+    assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
     vector_list = utils_base._get_variable_as_list(vector)
 
@@ -85,13 +85,23 @@ def _vector_dissolve(
         geom_col = layer["geom"]
         name = layer["name"]
 
-        sql = None
-        if attribute is None:
-            sql = f"SELECT ST_Union({geom_col}) AS geom FROM {name};"
-        else:
-            sql = f"SELECT {attribute}, ST_Union({geom_col}) AS geom FROM {name} GROUP BY {attribute};"
+        try:
+            sql = None
+            if attribute is None:
+                sql = f"SELECT ST_Union({geom_col}) AS geom FROM {name};"
+            else:
+                sql = f"SELECT {attribute}, ST_Union({geom_col}) AS geom FROM {name} GROUP BY {attribute};"
 
-        result = ref.ExecuteSQL(sql, dialect="SQLITE")
+            result = ref.ExecuteSQL(sql, dialect="SQLITE")
+        except:
+            sql = None
+            if attribute is None:
+                sql = f"SELECT ST_Union(geometry) AS geom FROM {name};"
+            else:
+                sql = f"SELECT {attribute}, ST_Union(geometry) AS geom FROM {name} GROUP BY {attribute};"
+
+            result = ref.ExecuteSQL(sql, dialect="SQLITE")
+
         destination.CopyLayer(result, name, ["OVERWRITE=YES"])
 
     if add_index:
@@ -180,7 +190,7 @@ def vector_dissolve(
         add_uuid=add_uuid,
     )
 
-    assert utils_path._check_is_valid_output_filepath(path_list, overwrite=overwrite), "Invalid output path generated."
+    assert utils_path._check_is_valid_output_path_list(path_list, overwrite=overwrite), f"Invalid output path generated. {path_list}"
 
     output = []
     for index, in_vector in enumerate(vector_list):

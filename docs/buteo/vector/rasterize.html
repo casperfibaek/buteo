@@ -125,7 +125,7 @@
 </span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a><span class="sd">    out_path : Optional[str], optional</span>
 </span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a><span class="sd">        Path to output raster. Default: None</span>
 </span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a>
-</span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a><span class="sd">    extent : Optional[List[Union[float, int]]], optional</span>
+</span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a><span class="sd">    extent: Optional[List[Union[float, int, str, gdal.Dataset, ogr.DataSource]]], optional</span>
 </span><span id="L-64"><a href="#L-64"><span class="linenos"> 64</span></a><span class="sd">        Extent of raster. Default: None</span>
 </span><span id="L-65"><a href="#L-65"><span class="linenos"> 65</span></a>
 </span><span id="L-66"><a href="#L-66"><span class="linenos"> 66</span></a><span class="sd">    projection : Optional[Union[str, int, osr.SpatialReference, gdal.Dataset, ogr.DataSource]], optional</span>
@@ -324,7 +324,7 @@
 </span><span id="vector_rasterize-61"><a href="#vector_rasterize-61"><span class="linenos"> 61</span></a><span class="sd">    out_path : Optional[str], optional</span>
 </span><span id="vector_rasterize-62"><a href="#vector_rasterize-62"><span class="linenos"> 62</span></a><span class="sd">        Path to output raster. Default: None</span>
 </span><span id="vector_rasterize-63"><a href="#vector_rasterize-63"><span class="linenos"> 63</span></a>
-</span><span id="vector_rasterize-64"><a href="#vector_rasterize-64"><span class="linenos"> 64</span></a><span class="sd">    extent : Optional[List[Union[float, int]]], optional</span>
+</span><span id="vector_rasterize-64"><a href="#vector_rasterize-64"><span class="linenos"> 64</span></a><span class="sd">    extent: Optional[List[Union[float, int, str, gdal.Dataset, ogr.DataSource]]], optional</span>
 </span><span id="vector_rasterize-65"><a href="#vector_rasterize-65"><span class="linenos"> 65</span></a><span class="sd">        Extent of raster. Default: None</span>
 </span><span id="vector_rasterize-66"><a href="#vector_rasterize-66"><span class="linenos"> 66</span></a>
 </span><span id="vector_rasterize-67"><a href="#vector_rasterize-67"><span class="linenos"> 67</span></a><span class="sd">    projection : Optional[Union[str, int, osr.SpatialReference, gdal.Dataset, ogr.DataSource]], optional</span>
@@ -492,7 +492,7 @@ The vector to rasterize.</li>
 The pixel size of the raster.</li>
 <li><strong>out_path</strong> (Optional[str], optional):
 Path to output raster. Default: None</li>
-<li><strong>extent</strong> (Optional[List[Union[float, int]]], optional):
+<li><strong>extent</strong> (Optional[List[Union[float, int, str, gdal.Dataset, ogr.DataSource]]], optional):
 Extent of raster. Default: None</li>
 <li><strong>projection</strong> (Optional[Union[str, int, osr.SpatialReference, gdal.Dataset, ogr.DataSource]], optional):
 Projection of raster. Default: None</li>
