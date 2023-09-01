@@ -119,8 +119,3 @@ for build in glob(builds_glob):
 for build in glob(builds_glob):
     upload_call = f"anaconda upload {build}"
     os.system(upload_call)
-
-# Build steps
-# python -m run_tests && python -m build_documentation
-# python -m build && python -m twine upload dist/* -u __token__ -p pypi-AgEIcHlwaS5vcmcCJGI5NzM5M2VjLTMyNDgtNDBkYi1iYzQ0LTdlZWM0MTc2Mzg3ZAACDVsxLFsiYnV0ZW8iXV0AAixbMixbImY0Yjc1NGRiLWZkYmYtNDhjZi04YjFlLTUyZDI4NzhjMmQ2MCJdXQAABiAifVVO7V3tqQmijdSMFzZRqZHHylmfxSTjc1kiE-XEug
-# python -m build_anaconda -forge -clean;
