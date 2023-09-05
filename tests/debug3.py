@@ -1,80 +1,53 @@
 import os
 import sys; sys.path.append("../")
 import buteo as beo
+import numpy as np
 
-BANDS = ['B02', 'B03', 'B04', 'B08', 'B05', 'B06', 'B07', 'B8A', 'B11', 'B12']
-MOD2DIC = {
-    'Forest Closed Acquatic': 'Wetlands',
-    'Forest Open Acquatic': 'Wetlands',
-    'River': 'Natural Waterbodies',
-    'Tree Orchard Large': 'Cultivated and Managed Terrestrial Area(s)',
-    'Tree Orchard Small': 'Cultivated and Managed Terrestrial Area(s)',
-    'Herbaceous Crops Small': 'Cultivated and Managed Terrestrial Area(s)',
-    'Forest Closed': 'Natural vegetation',
-    'Forest Open': 'Natural vegetation',
-    'Shrubs Open': 'Natural vegetation',
-    'Grasslands Open': 'Natural vegetation',
-    'Tree Plantations Small': 'Cultivated and Managed Terrestrial Area(s)',
-    'Shrubs Closed': 'Natural vegetation',
-    'Grasslands Closed': 'Natural vegetation',
-    'Agriculture flooded - Graminoid Small': 'Acquatic agriculture',
-    'Shrubs Open Acquatic': 'Wetlands',
-    'Grasslands Open Acquatic': 'Wetlands',
-    'Shrubs Closed Acquatic': 'Wetlands',
-    'Grasslands Closed Acquatic': 'Wetlands',
-    'Urban - Built Up': 'Urban',
-    'Urban - Not Built Up': 'Urban',
-    'Standing Artificial Waterbodies': 'Artificial Waterbodies',
-    'Lake': 'Natural Waterbodies',
-    'Bare': 'Bare',
-    'Tree Plantations Large': 'Cultivated and Managed Terrestrial Area(s)',
-}
+FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/spatial_label_smoothing/data/"
+FOLDER_DST = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/spatial_label_smoothing/visualisations/"
 
-CLASSES = {
-    'Acquatic agriculture': 0,
-    'Artificial Waterbodies': 1,
-    'Bare': 2,
-    'Cultivated and Managed Terrestrial Area(s)': 3,
-    'Natural Waterbodies': 4,
-    'Natural vegetation': 5,
-    'Urban': 6,
-    'Wetlands': 7,
-}
+RADIUS = 2
 
-FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/test_data/"
+data = os.path.join(FOLDER, "naestved_s2.tif")
+labels = os.path.join(FOLDER, "naestved_label_lc.tif")
 
-GROUND_TRUTH = os.path.join(FOLDER, "WAF_04_lc_b.shp")
-REF_31PCN = {'path': os.path.join(FOLDER, "31PCN", "S2A", "B04.tif"), 'name': '31PCN' }
-REF_31PDN = {'path': os.path.join(FOLDER, "31PDN", "S2A", "B04.tif"), 'name': '31PDN' }
-REF_31PDP = {'path': os.path.join(FOLDER, "31PDP", "S2A", "B04.tif"), 'name': '31PDP' }
+arr_label = beo.raster_to_array(labels, filled=True, fill_value=0, cast=np.uint8)
+arr_data = beo.raster_to_array(data, filled=True, fill_value=0.0, cast=np.float32)
 
-if __name__ == '__main__':
-    ground_truth = beo.vector_copy(GROUND_TRUTH)
-    attribute_header, attribute_table = beo.vector_get_attribute_table(ground_truth, include_fids=True)
+classes = [10, 30, 40, 50, 60, 80, 90]
+classes_shape = np.array(classes).reshape(1, 1, -1)
+classes_arr = (arr_label == classes_shape).astype(np.uint8)
 
-    update_header = ["class", "fid"]
-    update_attributes = []
+# beo.array_to_raster(classes_arr, reference=labels, out_path=os.path.join(FOLDER_DST, "naestved_label_lc_hard.tif"))
 
-    idx_bname = attribute_header.index('b_name')
-    idx_fid = attribute_header.index('fid')
-    for feature in attribute_table:
-        b_name = feature[idx_bname].strip()
-        fid = feature[idx_fid]
+# smoothing = 0.1
+# global_smooth = ((1 - smoothing) * classes_arr) + (smoothing / len(classes))
+# beo.array_to_raster(global_smooth, reference=labels, out_path=os.path.join(FOLDER_DST, "naestved_label_lc_smooth_global.tif"))
 
-        simple_name = MOD2DIC[b_name]
-        class_id = CLASSES[simple_name]
-        update_attributes.append([class_id, fid])
+# smooth_half = beo.spatial_label_smoothing(arr_label, radius=RADIUS, method="half")
+# beo.array_to_raster(smooth_half, reference=labels, out_path=os.path.join(FOLDER_DST, "naestved_label_lc_smooth_half.tif"))
 
-    beo.vector_add_field(ground_truth, "class", "integer")
-    beo.vector_set_attribute_table(ground_truth, update_header, update_attributes, match='fid')
+# smooth_half = beo.spatial_label_smoothing(arr_label, radius=RADIUS, method="kernel")
+# beo.array_to_raster(smooth_half, reference=labels, out_path=os.path.join(FOLDER_DST, "naestved_label_lc_smooth_kernel.tif"))
 
-    for ref in [REF_31PCN, REF_31PDN, REF_31PDP]:
-        beo.vector_rasterize(
-            ground_truth,
-            pixel_size=ref['path'],
-            extent=ref['path'],
-            projection=ref['path'],
-            fill_value=100,
-            attribute='class',
-            out_path=os.path.join(FOLDER, f"{ref['name']}_groundtruth.tif"),
-        )
+smooth_max = beo.spatial_label_smoothing(arr_label, radius=RADIUS, method="max")
+beo.array_to_raster(smooth_max, reference=labels, out_path=os.path.join(FOLDER_DST, "naestved_label_lc_smooth_max.tif"))
+
+# smooth_max = beo.spatial_label_smoothing(arr_label, radius=RADIUS, method=None)
+# beo.array_to_raster(smooth_max, reference=labels, out_path=os.path.join(FOLDER_DST, "naestved_label_lc_smooth_none.tif"))
+
+# SOBEL_POWER = 1.0
+# sobel = beo.filter_edge_detection(arr_data, radius=RADIUS, scale=2)
+# sobel = np.mean(sobel, axis=2, keepdims=True)
+# sobel = np.power((sobel - np.min(sobel)) / ((np.max(sobel) - np.min(sobel) + 1e-7)), SOBEL_POWER)
+# sobel = sobel.max() - sobel
+# beo.array_to_raster(sobel, reference=labels, out_path=os.path.join(FOLDER_DST, "naestved_label_lc_sobel.tif"))
+
+# smooth_half_sobel = beo.spatial_label_smoothing(arr_label, radius=RADIUS, method="half", variance=sobel)
+# beo.array_to_raster(smooth_half_sobel, reference=labels, out_path=os.path.join(FOLDER_DST, "naestved_label_lc_smooth_half_sobel2.tif"))
+
+# smooth_max_sobel = beo.spatial_label_smoothing(arr_label, radius=RADIUS, method="max", variance=sobel)
+# beo.array_to_raster(smooth_max_sobel, reference=labels, out_path=os.path.join(FOLDER_DST, "naestved_label_lc_smooth_max_sobel.tif"))
+
+# smooth_max_sobel = beo.spatial_label_smoothing(arr_label, radius=RADIUS, method=None, variance=sobel)
+# beo.array_to_raster(smooth_max_sobel, reference=labels, out_path=os.path.join(FOLDER_DST, "naestved_label_lc_smooth_none_sobel.tif"))

@@ -281,6 +281,9 @@ def raster_to_array(
     else:
         output_array = np.ma.getdata(output_array)
 
+    if filled and np.ma.isMaskedArray(output_array):
+        output_array = np.ma.getdata(output_array.filled(fill_value))
+
     # Reshape array
     if not channel_last:
         output_array = np.transpose(output_array, (2, 0, 1))

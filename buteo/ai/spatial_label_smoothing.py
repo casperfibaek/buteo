@@ -12,64 +12,14 @@ import numpy as np
 # Internal
 from buteo.array.filters import filter_operation
 from buteo.array.convolution_kernels import kernel_base
-from numba import jit, prange
-
-
-@jit(nopython=True, nogil=True, parallel=True)
-def _reweight(
-    arr: np.array,
-    feathered: np.array,
-    classes: np.array,
-    strength: float,
-    method: int,
-    argmax: Optional[np.array] = None,
-    channel_last: bool = True,
-) -> np.ndarray:
-    height, width, _channels = arr.shape
-    if not channel_last:
-        _channels, height, width = arr.shape
-
-    class_holder = np.arange(0, classes.max() + 1) * 0
-    
-    for i, c in enumerate(classes):
-        class_holder[c] = i
-
-    if channel_last:
-        feathered = feathered / np.expand_dims(np.sum(feathered, axis=2), axis=2)
-    else:
-        feathered = feathered / np.expand_dims(np.sum(feathered, axis=0), axis=0)
-
-    for col in prange(height):
-        for row in prange(width):
-
-            if channel_last:
-                cls_idx = class_holder[arr[col, row, 0]]
-            else:
-                cls_idx = class_holder[arr[0, col, row]]
-
-            if method == 0:
-                if channel_last:
-                    feathered[col, row, cls_idx] = (feathered[col, row, cls_idx] + 1.0) * strength
-                else:
-                    feathered[cls_idx, col, row] = (feathered[cls_idx, col, row] + 1.0) * strength
-            else:
-                if channel_last:
-                    max_val = feathered[col, row, argmax[col, row]]
-                    feathered[col, row, cls_idx] = max_val * strength
-                else:
-                    max_val = feathered[argmax[col, row], col, row]
-                    feathered[cls_idx, col, row] = max_val * strength
-
-    return feathered
 
 
 def spatial_label_smoothing(
     arr: np.array,
     radius: int = 2, *,
     classes: Optional[np.array] = None,
-    strength: float = 1.01,
-    flip_protection: bool = True,
-    method: int = 1,
+    method: Optional[str] = "half",
+    variance: Optional[np.ndarray] = None,
     channel_last: bool = True,
 ) -> np.ndarray:
     """
@@ -87,25 +37,17 @@ def spatial_label_smoothing(
     classes : np.array, optional
         The classes in the classification. Numpy integer list of unique values in the array if None, default: None.
 
-    strength : float, optional
-        The strength of the smoothing, default: 1.001.
-        Calculated as the power of the sum of the kernel without the central pixel.
-        If the value is above 1, the class, if using argmax downstream, will never be replaced by another class.
-
-    flip_protection : bool, optional
-        Whether to protect against flipping of classes, default: True.
-        If True, the class will never be replaced by another class.
-
-    method : int, optional
-        Determines the flip protection method, default: 1.
-        0: The class is protected by ensuring that it is always at least 50% + strength of the weight of the classes in the neighbourhood.
-        1: The class is protected by ensuring that it is always at at least the max + strength of the strongest class in the neighbourhood.
+    method : str, optional
+        Determines the flip protection method, default: 'half'.
+        kernel: The class is protected by ensuring that the weight of the center class is always at least the sum of the surrounding weights.
+        half: The class is protected by ensuring that it is always at least 50% + strength of the weight of the classes in the neighbourhood.
+        max: The class is protected by ensuring that it is always at at least the max + strength of the strongest class in the neighbourhood.
+        None: No flip protection.
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
     
     Returns
-    -------
     np.ndarray
         The smoothed array. One channel for each class in ascending order. Float32.
     """
@@ -113,47 +55,57 @@ def spatial_label_smoothing(
         classes = np.unique(arr)
 
     if channel_last:
-        dst = np.zeros((arr.shape[0], arr.shape[1], len(classes)), dtype=np.float32)
+        classes_shape = np.array(classes).reshape(1, 1, -1)
     else:
-        dst = np.zeros((len(classes), arr.shape[0], arr.shape[1]), dtype=np.float32)
+        classes_shape = np.array(classes).reshape(-1, 1, 1)
+
+    classes_hot = (arr == classes_shape).astype(np.uint8)
+
+    if variance is not None:
+        classes_arr = classes_hot * variance
+    else:
+        classes_arr = classes_hot
 
     kernel = kernel_base(
         radius=radius,
         circular=True,
         distance_weighted=True,
         normalised=False,
-        hole=True if flip_protection else False,
+        hole=True if method is not None else False,
         method=3,
-        decay=0.5,
         sigma=2,
     )
 
-    for i, c in enumerate(classes):
-        feathered = filter_operation(
-            arr,
-            15, # count weighted occurances
-            radius=radius,
-            func_value=int(c),
-            normalised=False,
-            kernel=kernel,
-            channel_last=channel_last,
-        )
+    strength = np.float32(kernel.size / (kernel.size - 1.0))
 
+    if method == "kernel":
+        kernel[kernel.shape[0] // 2, kernel.shape[1] // 2] = kernel.sum() * strength
+
+    feathered = filter_operation(classes_arr, 1, radius=radius, normalised=False, kernel=kernel, channel_last=channel_last)
+
+    if method == "max":
         if channel_last:
-            dst[:, :, i] = feathered[:, :, 0]
+            maxval = np.max(feathered, axis=2, keepdims=True)
+            argmax = np.argmax(feathered, axis=2, keepdims=True)
         else:
-            dst[i, :, :] = feathered[0, :, :]
+            maxval = np.max(feathered, axis=0, keepdims=True)
+            argmax = np.argmax(feathered, axis=0, keepdims=True)
 
-    if flip_protection:
-        if method == 1 and channel_last:
-            argmax = np.argmax(dst, axis=2)
-        elif method == 1:
-            argmax = np.argmax(dst, axis=0)
-        else:
-            argmax = None
+        argmax_hot = np.argmax(classes_hot, axis=2, keepdims=True)
 
-        dst = _reweight(arr, dst, classes, strength, method, argmax, channel_last=channel_last)
+        weight = np.where(argmax == argmax_hot, feathered, maxval * strength)
+        dst = np.where(classes_hot == 1, weight, feathered)
+    
+    elif method == "half":
+        weight = kernel.sum() * strength 
+        dst = np.where(classes_hot == 1, weight, feathered)
 
-    dst = dst / np.sum(dst, axis=2, keepdims=True)
+    elif method is None or method == "kernel":
+        dst = feathered
+
+    else:
+        raise ValueError("Invalid method.")
+    
+    dst = dst / np.maximum(np.sum(dst, axis=2, keepdims=True), 1e-7)
 
     return dst
