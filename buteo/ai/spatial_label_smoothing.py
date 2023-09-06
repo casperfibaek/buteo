@@ -71,7 +71,7 @@ def spatial_label_smoothing(
         circular=True,
         distance_weighted=True,
         normalised=False,
-        hole=True if method is not None else False,
+        hole=False if method in [None, "max"] else True,
         method=3,
         sigma=2,
     )
