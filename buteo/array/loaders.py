@@ -178,3 +178,33 @@ class MultiArray:
 
     def __len__(self):
         return self.total_length
+
+
+
+if __name__ == "__main__":
+    import os
+
+    FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/model_zoo/data/patches/"
+
+    paths = [
+        os.path.join(FOLDER, "copenhagen_train_s2.npy"),
+        os.path.join(FOLDER, "naestved_test_s2.npy"),
+        os.path.join(FOLDER, "odense_train_s2.npy"),
+        os.path.join(FOLDER, "copenhagen_train_s2.npy"),
+        os.path.join(FOLDER, "naestved_test_s2.npy"),
+        os.path.join(FOLDER, "odense_train_s2.npy"),
+        os.path.join(FOLDER, "copenhagen_train_s2.npy"),
+        os.path.join(FOLDER, "naestved_test_s2.npy"),
+        os.path.join(FOLDER, "odense_train_s2.npy"),
+    ]
+
+    multi_array = MultiArray([np.load(p, mmap_mode="r") for p in paths], shuffle=True)
+
+    print(len(multi_array))
+
+    for _ in range(100000):
+        for i in range(len(multi_array)):
+            bob = multi_array[i]
+        multi_array.shuffle_index()
+
+    print(bob)

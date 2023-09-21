@@ -952,10 +952,22 @@ def _get_bounds_from_bbox(
         p3t = transformer.TransformPoint(p3[0], p3[1])
         p4t = transformer.TransformPoint(p4[0], p4[1])
     except RuntimeError:
-        p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
-        p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
-        p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
-        p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+        try:
+            p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
+            p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
+            p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
+            p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+        except:
+            try:
+                p1t = transformer.TransformPoint(p1[1], p1[0])
+                p2t = transformer.TransformPoint(p2[1], p2[0])
+                p3t = transformer.TransformPoint(p3[1], p3[0])
+                p4t = transformer.TransformPoint(p4[1], p4[0])
+            except:
+                p1t = transformer.TransformPoint(float(p1[1]), float(p1[0]))
+                p2t = transformer.TransformPoint(float(p2[1]), float(p2[0]))
+                p3t = transformer.TransformPoint(float(p3[1]), float(p3[0]))
+                p4t = transformer.TransformPoint(float(p4[1]), float(p4[0]))
 
     gdal.PopErrorHandler()
 

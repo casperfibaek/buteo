@@ -4,7 +4,7 @@
 
 # Standard Library
 import sys; sys.path.append("../../")
-from typing import Union
+from typing import Union, Optional
 
 # External
 import numpy as np
@@ -89,6 +89,7 @@ def _convolve_array_2D(
     nodata: bool = False,
     nodata_value: float = -9999.9,
     func_value: Union[int, float] = 0.5,
+    mask: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """
     Internal function for convolving a 2D array.
@@ -99,9 +100,14 @@ def _convolve_array_2D(
     weights_total = np.sum(weights)
 
     nodata_value = np.float32(nodata_value)
+    mask_2d = mask[:, :, 0]
 
     for idx_y in prange(arr.shape[0]):
         for idx_x in range(arr.shape[1]):
+            if mask_2d[idx_y, idx_x] == 0:
+                result[idx_y, idx_x] = arr[idx_y, idx_x]
+                continue
+
             hood_values = np.zeros(hood_size, dtype="float32")
             hood_weights = np.zeros(hood_size, dtype="float32")
             hood_normalise = False
@@ -128,9 +134,15 @@ def _convolve_array_2D(
                     hood_normalise = True
                     continue
 
-                hood_values[hood_count] = arr[hood_y, hood_x]
-                hood_weights[hood_count] = weights[idx_h]
-                hood_count += 1
+                hood_val = arr[hood_y, hood_x]
+                if method == 9 and hood_val == func_value:
+                    hood_values[hood_count] = 0.0
+                    hood_weights[hood_count] = 0.0
+                    hood_normalise = True
+                else:
+                    hood_values[hood_count] = hood_val
+                    hood_weights[hood_count] = weights[idx_h]
+                    hood_count += 1
 
                 if offsets[idx_h][0] == 0 and offsets[idx_h][1] == 0:
                     hood_center = hood_count - 1
@@ -411,6 +423,7 @@ def convolve_array(
     nodata_value: float = -9999.9,
     func_value: Union[int, float] = 0.5,
     channel_last: bool = True,
+    mask: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """
     Convolve an array using a set of offsets and weights.
@@ -493,6 +506,9 @@ def convolve_array(
 
     arr = arr.astype(np.float32, copy=False)
 
+    if mask is None:
+        mask = np.ones(arr.shape, dtype=np.uint8)
+
     if arr.ndim == 2:
         return _convolve_array_2D(
             arr,
@@ -502,6 +518,7 @@ def convolve_array(
             nodata=nodata,
             nodata_value=nodata_value,
             func_value=func_value,
+            mask=mask,
         )
 
     result = np.zeros((arr.shape), dtype="float32")
@@ -516,6 +533,7 @@ def convolve_array(
                 nodata=nodata,
                 nodata_value=nodata_value,
                 func_value=func_value,
+                mask=mask,
             )
     else:
         for idx_d in range(arr.shape[0]):
@@ -527,6 +545,7 @@ def convolve_array(
                 nodata=nodata,
                 nodata_value=nodata_value,
                 func_value=func_value,
+                mask=mask,
             )
 
     return result

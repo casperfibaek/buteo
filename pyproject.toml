@@ -18,7 +18,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  "numba>=0.57",
+  "numba>=0.57.1",
   "psutil>=5.9.5",
   "tqdm>=4.65.0",
 ]

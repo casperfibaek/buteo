@@ -452,7 +452,6 @@ def reproject_bbox(
     if _check_projections_match(src_proj, dst_proj):
         return bbox_ogr
 
-
     p1 = [x_min, y_min]
     p2 = [x_max, y_min]
     p3 = [x_max, y_max]
@@ -476,10 +475,22 @@ def reproject_bbox(
         p3t = transformer.TransformPoint(p3[0], p3[1])
         p4t = transformer.TransformPoint(p4[0], p4[1])
     except RuntimeError:
-        p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
-        p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
-        p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
-        p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+        try:
+            p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
+            p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
+            p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
+            p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
+        except:
+            try:
+                p1t = transformer.TransformPoint(p1[1], p1[0])
+                p2t = transformer.TransformPoint(p2[1], p2[0])
+                p3t = transformer.TransformPoint(p3[1], p3[0])
+                p4t = transformer.TransformPoint(p4[1], p4[0])
+            except RuntimeError:
+                p1t = transformer.TransformPoint(float(p1[1]), float(p1[0]))
+                p2t = transformer.TransformPoint(float(p2[1]), float(p2[0]))
+                p3t = transformer.TransformPoint(float(p3[1]), float(p3[0]))
+                p4t = transformer.TransformPoint(float(p4[1]), float(p4[0]))
     gdal.PopErrorHandler()
 
     transformed_x_min = min(p1t[0], p2t[0], p3t[0], p4t[0])
