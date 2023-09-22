@@ -1,28 +1,32 @@
 import os
+import sys; sys.path.append("../")
 import pandas as pd
 import math
-import requests
-from osgeo import gdal
-import numpy as np
-import matplotlib.pyplot as plt
 import tqdm
-
-FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/"
-FOLDER_OUT = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/scraped_schools/"
-
-# schools_gpkg = beo.vector_open(os.path.join(FOLDER, "complete_all_schools.gpkg"))
-# attributes = beo.vector_get_attribute_table(schools_gpkg)
-
-csv = pd.read_csv(os.path.join(FOLDER, "schools_complete_csv_abisubset.csv"))
-
-# set seeed
-np.random.seed(42)
-
-latlng = csv[["fid", "X.chosen", "Y.chosen"]].to_numpy()
-latlng = latlng[np.random.permutation(len(latlng))]
+import requests
+import numpy as np
+import buteo as beo
+from osgeo import gdal
 
 
-def latlon_to_tilexy(lat, lon, z):
+def latlon_to_tilexy(lat: float, lon: float, z: int):
+    """
+    Convert lat/lon to tile x/y
+
+    Parameters
+    ----------
+    lat : float
+        Latitude
+    lon : float
+        Longitude
+    z : int
+        Zoom level
+
+    Returns
+    -------
+    tuple(list, tuple)
+        List of tiles, and tuple of x/y
+    """
     n = 2.0 ** z
     x = (lon + 180.0) / 360.0 * n
     y = (1.0 - math.asinh(math.tan(math.radians(lat))) / math.pi) / 2.0 * n
@@ -52,75 +56,107 @@ def latlon_to_tilexy(lat, lon, z):
 
     return squares, (x, y)
 
-for i, c in tqdm.tqdm(enumerate(latlng), total=len(latlng)):
-    fid, x, y = c
-    z = 18
+if __name__ == "__main__":
+    FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/"
+    FOLDER_OUT = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/scraped_schools/"
 
-    outname = f"{int(fid)}_{round(x, 6)}_{round(y, 6)}.png"
+    csv = pd.read_csv(os.path.join(FOLDER, "complete_all_schools_fixed.csv"))
 
-    if os.path.isfile(os.path.join(FOLDER_OUT, outname)):
-        continue
+    np.random.seed(42)
+    convertor = beo.GlobalMercator(tileSize=256)
 
-    squares, (og_x, og_y) = latlon_to_tilexy(y, x, z)
+    latlng = csv[["fid", "X.chosen", "Y.chosen"]].to_numpy()
+    latlng = latlng[np.random.permutation(len(latlng))]
 
-    total_image = np.zeros((3, 512, 512), dtype=np.uint8)
+    for i, c in tqdm.tqdm(enumerate(latlng), total=len(latlng)):
+        for px_size in [0.5, 2.0, 5.0]:
+            z = convertor.ZoomForPixelSize(px_size)
+            fid, x, y = c
 
-    skip = False
-    for i, s in enumerate(squares):
-        if skip:
-            continue
-        x_tile, y_tile, z_tile = s
-        url = f"https://mt1.google.com/vt/lyrs=s&x={x_tile}&y={y_tile}&z={z_tile}"
-        tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
+            outname = f"i{int(fid)}_x{round(x, 6)}_y{round(y, 6)}_z{z}.tif"
 
-        response = requests.get(url)
+            if os.path.isfile(os.path.join(FOLDER_OUT, outname)):
+                continue
 
-        with open(f'{tmp_path}', 'wb') as file:
-            file.write(response.content)
+            squares, (og_x, og_y) = latlon_to_tilexy(y, x, z)
 
-        try:
-            # Read the raster band as numpy array
-            array = gdal.Open(tmp_path).ReadAsArray()
+            total_image = np.zeros((3, 512, 512), dtype=np.uint8)
 
-            if i == 0:
-                total_image[:, 0:256, 0:256] = array
-            elif i == 3:
-                total_image[:, 0:256, 256:512] = array
-            elif i == 2:
-                total_image[:, 256:512, 256:512] = array
-            elif i == 1:
-                total_image[:, 256:512, 0:256] = array
-            
-        except:
-            skip = True
-        finally:
-            os.remove(tmp_path)
+            pixel_sizes = []
+            x_min, y_min, x_max, y_max = None, None, None, None
 
+            skip = False
+            for i, s in enumerate(squares):
+                if skip:
+                    continue
+                x_tile, y_tile, z_tile = s
 
-    if skip:
-        continue
+                tms_x_tile, tms_y_tile = convertor.GoogleToTMSTile(x_tile, y_tile, z_tile)
+                minx, miny, maxx, maxy = convertor.TileBounds(tms_x_tile, tms_y_tile, z_tile)
 
-    label_y = round(og_y * 512)
-    label_x = round(og_x * 512)
+                if x_min is None:
+                    x_min, y_min, x_max, y_max = minx, miny, maxx, maxy
+                else:
+                    x_min = min(x_min, minx)
+                    y_min = min(y_min, miny)
+                    x_max = max(x_max, maxx)
+                    y_max = max(y_max, maxy)
 
-    adj = 128
-    lxmin = max(0, label_x - adj)
-    lxmax = min(511, label_x + adj)
-    lymin = max(0, label_y - adj)
-    lymax = min(511, label_y + adj)
+                pixel_sizes.append((maxx - minx) / 256)
+                pixel_sizes.append((maxy - miny) / 256)
 
-    # Ensure that the clip is always 256 x 256
-    if lxmax - lxmin < 256:
-        lxmin = max(0, lxmax - 256)
-    if lymax - lymin < 256:
-        lymin = max(0, lymax - 256)
+                url = f"https://mt1.google.com/vt/lyrs=s&x={x_tile}&y={y_tile}&z={z_tile}"
+                tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
 
-    total_image = total_image[:, lymin:lymax, lxmin:lxmax]
-    total_image = total_image.transpose(1, 2, 0)
+                response = requests.get(url)
 
-    fig, ax = plt.subplots(figsize=plt.figaspect(total_image))
-    fig.subplots_adjust(0,0,1,1)
-    ax.imshow(total_image)
+                # if respose is not ok, skip
+                if response.status_code != 200:
+                    skip = True
+                    continue
 
-    plt.savefig(os.path.join(FOLDER_OUT, outname))
-    plt.close()
+                with open(f'{tmp_path}', 'wb') as file:
+                    file.write(response.content)
+
+                try:
+                    # Read the raster band as numpy array
+                    array = gdal.Open(tmp_path).ReadAsArray()
+
+                    if i == 0:
+                        total_image[:, 0:256, 0:256] = array
+                    elif i == 3:
+                        total_image[:, 0:256, 256:512] = array
+                    elif i == 2:
+                        total_image[:, 256:512, 256:512] = array
+                    elif i == 1:
+                        total_image[:, 256:512, 0:256] = array
+                    
+                except:
+                    skip = True
+                finally:
+                    os.remove(tmp_path)
+
+            if skip:
+                continue
+
+            total_image = total_image.transpose(1, 2, 0)
+
+            raster_tmp = beo.raster_create_from_array(
+                total_image,
+                out_path=None,
+                pixel_size=np.array(pixel_sizes).mean(),
+                x_min=x_min,
+                y_max=y_max,
+            )
+
+            label_y = max(0, round(og_y * 512) - 128)
+            label_x = max(0, round(og_x * 512) - 128)
+
+            beo.array_to_raster(
+                beo.raster_to_array(raster_tmp, pixel_offsets=[label_x, label_y, 256, 256]),
+                out_path=os.path.join(FOLDER_OUT, outname),
+                reference=raster_tmp,
+                pixel_offsets=[label_x, label_y, 256, 256],
+            )
+
+            beo.delete_dataset_if_in_memory(raster_tmp)
