@@ -182,13 +182,11 @@ def latlon_to_tilexy(lat: float, lon: float, z: int):
 def process_latlng(latlng, FOLDER_OUT):
     convertor = GlobalMercator(tileSize=256)
 
-    for BING in [True, False]:
+    for source in [0, 1, 2]:
         for px_size in [0.5, 2.0, 5.0]:
             fid, x, y = latlng
 
             z = convertor.ZoomForPixelSize(px_size)
-
-            source = 0 if BING else 1
 
             outname = f"i{int(fid)}_x{round(x, 6)}_y{round(y, 6)}_z{z}_s{source}.tif"
 
@@ -222,12 +220,17 @@ def process_latlng(latlng, FOLDER_OUT):
                 pixel_sizes.append((maxx - minx) / 256)
                 pixel_sizes.append((maxy - miny) / 256)
 
-                if BING:
+                if source == 0:
                     q = convertor.QuadTree(tms_x_tile, tms_y_tile, z_tile)
                     url = f"https://ecn.t3.tiles.virtualearth.net/tiles/a{q}.jpeg?g=1"
                     tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.jpeg"))
-                else:
+
+                elif source == 1:
                     url = f"https://mt1.google.com/vt/lyrs=s&x={x_tile}&y={y_tile}&z={z_tile}"
+                    tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
+
+                elif source == 2:
+                    url = f"https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                     tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
 
                 response = requests.get(url)
