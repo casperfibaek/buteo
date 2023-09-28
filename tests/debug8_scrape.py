@@ -179,18 +179,25 @@ def latlon_to_tilexy(lat: float, lon: float, z: int):
     return squares, (x, y)
 
 
-def process_latlng(latlng, FOLDER_OUT):
+def process_latlng(latlng, FOLDER_OUT, overwrite=True):
     convertor = GlobalMercator(tileSize=256)
 
-    for source in [0, 1, 2]:
+    for source in [
+        # 0, # bing
+        # 1, # google
+        # 2, # esri
+        3, # sentinel
+    ]:
         for px_size in [0.5, 2.0, 5.0]:
             fid, x, y = latlng
 
             z = convertor.ZoomForPixelSize(px_size)
+            if source == 3:
+                z = 14
 
             outname = f"i{int(fid)}_x{round(x, 6)}_y{round(y, 6)}_z{z}_s{source}.tif"
 
-            if os.path.isfile(os.path.join(FOLDER_OUT, outname)):
+            if not overwrite and os.path.isfile(os.path.join(FOLDER_OUT, outname)):
                 continue
 
             squares, (og_x, og_y) = latlon_to_tilexy(y, x, z)
@@ -230,10 +237,14 @@ def process_latlng(latlng, FOLDER_OUT):
                     tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
 
                 elif source == 2:
-                    url = f"https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                    url = f"https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z_tile}/{y_tile}/{x_tile}.png"
                     tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
 
-                response = requests.get(url)
+                elif source == 3:
+                    url = f"https://s2maps-tiles.eu/wmts/1.0.0/s2cloudless-2021_3857/default/GoogleMapsCompatible/{z_tile}/{y_tile}/{x_tile}.png"
+                    tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
+
+                response = requests.get(url, timeout=120)
 
                 # if respose is not ok, skip
                 if response.status_code != 200:
@@ -247,6 +258,10 @@ def process_latlng(latlng, FOLDER_OUT):
                     # Read the raster band as numpy array
                     array = gdal.Open(tmp_path).ReadAsArray()
 
+                    # The image is not available
+                    if source == 2 and np.all(array[:, :100, :100] == 204):
+                        raise Exception("Image not available")
+
                     if i == 0:
                         total_image[:, 0:256, 0:256] = array
                     elif i == 3:
@@ -259,7 +274,8 @@ def process_latlng(latlng, FOLDER_OUT):
                 except:
                     skip = True
                 finally:
-                    os.remove(tmp_path)
+                    if os.path.isfile(tmp_path):
+                        os.remove(tmp_path)
 
             if skip:
                 continue
@@ -294,11 +310,11 @@ if __name__ == "__main__":
     from tqdm import tqdm
 
     FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/"
-    FOLDER_OUT = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/scraped_schools_south-america-test/"
+    FOLDER_OUT = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/scraped_schools_africa/"
     MAX_IMAGES = 10000
-    PROCESSES = 8
+    PROCESSES = 5
 
-    csv = pd.read_csv(os.path.join(FOLDER, "south-america_schools_osm_sampled_10k.csv"), encoding="latin-1")
+    csv = pd.read_csv(os.path.join(FOLDER, "africa_schools_osm_sampled_10k.csv"), encoding="latin-1")
 
     np.random.seed(42)
 
@@ -311,7 +327,7 @@ if __name__ == "__main__":
     def update_progress_bar(_result):
         bar.update()
 
-    pool = mp.Pool(8)
+    pool = mp.Pool(PROCESSES)
     for i in range(len(latlng)):
         pool.apply_async(process_latlng, args=(latlng[i], FOLDER_OUT), callback=update_progress_bar)
 
@@ -322,5 +338,5 @@ if __name__ == "__main__":
     print("Done!")
     print("Finding straglers...")
 
-    for c in tqdm(latlng, total=len(latlng)):
+    for i, c in enumerate(tqdm(latlng, total=len(latlng))):
         process_latlng(c, FOLDER_OUT)
