@@ -179,128 +179,132 @@ def latlon_to_tilexy(lat: float, lon: float, z: int):
     return squares, (x, y)
 
 
-def process_latlng(latlng, FOLDER_OUT, overwrite=True):
+def process_latlng(latlng, FOLDER_OUT, overwrite=False):
     convertor = GlobalMercator(tileSize=256)
 
     for source in [
-        # 0, # bing
-        # 1, # google
-        # 2, # esri
-        3, # sentinel
+        0, # bing
+        1, # google satellite
+        2, # google roads
+        # 3, # esri
+        # 4, # sentinel
     ]:
-        for px_size in [0.5, 2.0, 5.0]:
-            fid, x, y = latlng
+        fid, x, y = latlng
 
-            z = convertor.ZoomForPixelSize(px_size)
-            if source == 3:
-                z = 14
+        z = 17
+        if source == 4:
+            z = 14
 
-            outname = f"i{int(fid)}_x{round(x, 6)}_y{round(y, 6)}_z{z}_s{source}.tif"
+        outname = f"i{int(fid)}_x{round(x, 6)}_y{round(y, 6)}_z{z}_s{source}.tif"
 
-            if not overwrite and os.path.isfile(os.path.join(FOLDER_OUT, outname)):
-                continue
+        if not overwrite and os.path.isfile(os.path.join(FOLDER_OUT, outname)):
+            continue
 
-            squares, (og_x, og_y) = latlon_to_tilexy(y, x, z)
+        squares, (og_x, og_y) = latlon_to_tilexy(y, x, z)
 
-            total_image = np.zeros((3, 512, 512), dtype=np.uint8)
+        total_image = np.zeros((3, 512, 512), dtype=np.uint8)
 
-            pixel_sizes = []
-            x_min, y_min, x_max, y_max = None, None, None, None
+        pixel_sizes = []
+        x_min, y_min, x_max, y_max = None, None, None, None
 
-            skip = False
-            for i, s in enumerate(squares):
-                if skip:
-                    continue
-                x_tile, y_tile, z_tile = s
-
-                tms_x_tile, tms_y_tile = convertor.GoogleToTMSTile(x_tile, y_tile, z_tile)
-                minx, miny, maxx, maxy = convertor.TileBounds(tms_x_tile, tms_y_tile, z_tile)
-
-                if x_min is None:
-                    x_min, y_min, x_max, y_max = minx, miny, maxx, maxy
-                else:
-                    x_min = min(x_min, minx)
-                    y_min = min(y_min, miny)
-                    x_max = max(x_max, maxx)
-                    y_max = max(y_max, maxy)
-
-                pixel_sizes.append((maxx - minx) / 256)
-                pixel_sizes.append((maxy - miny) / 256)
-
-                if source == 0:
-                    q = convertor.QuadTree(tms_x_tile, tms_y_tile, z_tile)
-                    url = f"https://ecn.t3.tiles.virtualearth.net/tiles/a{q}.jpeg?g=1"
-                    tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.jpeg"))
-
-                elif source == 1:
-                    url = f"https://mt1.google.com/vt/lyrs=s&x={x_tile}&y={y_tile}&z={z_tile}"
-                    tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
-
-                elif source == 2:
-                    url = f"https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z_tile}/{y_tile}/{x_tile}.png"
-                    tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
-
-                elif source == 3:
-                    url = f"https://s2maps-tiles.eu/wmts/1.0.0/s2cloudless-2021_3857/default/GoogleMapsCompatible/{z_tile}/{y_tile}/{x_tile}.png"
-                    tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
-
-                response = requests.get(url, timeout=120)
-
-                # if respose is not ok, skip
-                if response.status_code != 200:
-                    skip = True
-                    continue
-
-                with open(f'{tmp_path}', 'wb') as file:
-                    file.write(response.content)
-
-                try:
-                    # Read the raster band as numpy array
-                    array = gdal.Open(tmp_path).ReadAsArray()
-
-                    # The image is not available
-                    if source == 2 and np.all(array[:, :100, :100] == 204):
-                        raise Exception("Image not available")
-
-                    if i == 0:
-                        total_image[:, 0:256, 0:256] = array
-                    elif i == 3:
-                        total_image[:, 0:256, 256:512] = array
-                    elif i == 2:
-                        total_image[:, 256:512, 256:512] = array
-                    elif i == 1:
-                        total_image[:, 256:512, 0:256] = array
-                    
-                except:
-                    skip = True
-                finally:
-                    if os.path.isfile(tmp_path):
-                        os.remove(tmp_path)
-
+        skip = False
+        for i, s in enumerate(squares):
             if skip:
                 continue
+            x_tile, y_tile, z_tile = s
 
-            total_image = total_image.transpose(1, 2, 0)
+            tms_x_tile, tms_y_tile = convertor.GoogleToTMSTile(x_tile, y_tile, z_tile)
+            minx, miny, maxx, maxy = convertor.TileBounds(tms_x_tile, tms_y_tile, z_tile)
 
-            raster_tmp = beo.raster_create_from_array(
-                total_image,
-                out_path=None,
-                pixel_size=np.array(pixel_sizes).mean(),
-                x_min=x_min,
-                y_max=y_max,
-            )
+            if x_min is None:
+                x_min, y_min, x_max, y_max = minx, miny, maxx, maxy
+            else:
+                x_min = min(x_min, minx)
+                y_min = min(y_min, miny)
+                x_max = max(x_max, maxx)
+                y_max = max(y_max, maxy)
 
-            label_y = max(0, round(og_y * 512) - 128)
-            label_x = max(0, round(og_x * 512) - 128)
+            pixel_sizes.append((maxx - minx) / 256)
+            pixel_sizes.append((maxy - miny) / 256)
 
-            beo.array_to_raster(
-                beo.raster_to_array(raster_tmp, pixel_offsets=[label_x, label_y, 256, 256]),
-                out_path=os.path.join(FOLDER_OUT, outname),
-                reference=raster_tmp,
-                pixel_offsets=[label_x, label_y, 256, 256],
-            )
+            if source == 0:
+                q = convertor.QuadTree(tms_x_tile, tms_y_tile, z_tile)
+                url = f"https://ecn.t3.tiles.virtualearth.net/tiles/a{q}.jpeg?g=1"
+                tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.jpeg"))
 
-            beo.delete_dataset_if_in_memory(raster_tmp)
+            elif source == 1:
+                url = f"https://mt1.google.com/vt/lyrs=s&x={x_tile}&y={y_tile}&z={z_tile}"
+                tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
+
+            elif source == 2:
+                url = f"https://mt1.google.com/vt/lyrs=m&x={x_tile}&y={y_tile}&z={z_tile}"
+                tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
+
+            elif source == 3:
+                url = f"https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z_tile}/{y_tile}/{x_tile}.png"
+                tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
+
+            elif source == 4:
+                url = f"https://s2maps-tiles.eu/wmts/1.0.0/s2cloudless-2021_3857/default/GoogleMapsCompatible/{z_tile}/{y_tile}/{x_tile}.png"
+                tmp_path = os.path.abspath(os.path.join("./tmp", f"{x_tile}_{y_tile}_{z_tile}.png"))
+
+            response = requests.get(url, timeout=120)
+
+            # if respose is not ok, skip
+            if response.status_code != 200:
+                skip = True
+                continue
+
+            with open(f'{tmp_path}', 'wb') as file:
+                file.write(response.content)
+
+            try:
+                # Read the raster band as numpy array
+                array = gdal.Open(tmp_path).ReadAsArray()
+
+                # The image is not available
+                if source == 2 and np.all(array[:, :100, :100] == 204):
+                    raise Exception("Image not available")
+
+                if i == 0:
+                    total_image[:, 0:256, 0:256] = array
+                elif i == 3:
+                    total_image[:, 0:256, 256:512] = array
+                elif i == 2:
+                    total_image[:, 256:512, 256:512] = array
+                elif i == 1:
+                    total_image[:, 256:512, 0:256] = array
+                
+            except:
+                skip = True
+            finally:
+                if os.path.isfile(tmp_path):
+                    os.remove(tmp_path)
+
+        if skip:
+            continue
+
+        total_image = total_image.transpose(1, 2, 0)
+
+        raster_tmp = beo.raster_create_from_array(
+            total_image,
+            out_path=None,
+            pixel_size=np.array(pixel_sizes).mean(),
+            x_min=x_min,
+            y_max=y_max,
+        )
+
+        label_y = max(0, round(og_y * 512) - 128)
+        label_x = max(0, round(og_x * 512) - 128)
+
+        beo.array_to_raster(
+            beo.raster_to_array(raster_tmp, pixel_offsets=[label_x, label_y, 256, 256]),
+            out_path=os.path.join(FOLDER_OUT, outname),
+            reference=raster_tmp,
+            pixel_offsets=[label_x, label_y, 256, 256],
+        )
+
+        beo.delete_dataset_if_in_memory(raster_tmp)
 
     return True
 
@@ -310,11 +314,11 @@ if __name__ == "__main__":
     from tqdm import tqdm
 
     FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/"
-    FOLDER_OUT = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/scraped_schools_africa/"
+    FOLDER_OUT = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/scraped_schools_south-america/"
     MAX_IMAGES = 10000
     PROCESSES = 5
 
-    csv = pd.read_csv(os.path.join(FOLDER, "africa_schools_osm_sampled_10k.csv"), encoding="latin-1")
+    csv = pd.read_csv(os.path.join(FOLDER, "south-america_schools_osm_sampled_10k.csv"), encoding="latin-1")
 
     np.random.seed(42)
 

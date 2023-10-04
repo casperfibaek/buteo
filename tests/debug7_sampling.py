@@ -3,12 +3,16 @@ import pandas as pd
 from tqdm import tqdm
 
 
-FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/tmp/"
-FILTER_CLASS = "grid_id"
+# FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/tmp/"
+# FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/scratch_folder/"
+FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/unicef/school_selection/africa/extracted/"
 
-schools_africa = os.path.join(FOLDER, "africa_schools_hex.csv")
+FILTER_CLASS = "degurba"
+# FILTER_CLASS = "grid_id"
 
-df = pd.read_csv(schools_africa, encoding="latin-1")
+schools = os.path.join(FOLDER, "africa_school_extraction.csv")
+
+df = pd.read_csv(schools, encoding="latin-1")
 
 # Calculate the proportions of each adm02 class
 proportions = df[FILTER_CLASS].value_counts(normalize=True)
@@ -80,7 +84,7 @@ for _ in tqdm(range(features_to_remove), total=features_to_remove):
     # Update the features_to_remove count
     features_to_remove -= 1
 
-sdf.to_csv(os.path.join(FOLDER, "africa_schools_sampled.csv"), index=False, encoding="latin-1")
+sdf.to_csv(os.path.join(FOLDER, "africa_school_sampled.csv"), index=False, encoding="latin-1")
 
 # Now sampled_df contains up to 10,000 stratified samples.
 # import pdb; pdb.set_trace()
