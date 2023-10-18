@@ -10,6 +10,7 @@ from typing import Union, List
 import osgeo
 from osgeo import gdal, ogr, osr
 import numpy as np
+import math
 
 # Internal
 from buteo.utils import utils_gdal
@@ -578,11 +579,11 @@ def _get_utm_zone_from_latlng(
     """
     assert isinstance(latlng, (list, np.ndarray)), "latlng must be in the form of a list."
 
-    zone = round(((latlng[1] + 180) / 6) + 1)
+    zone = math.floor(((latlng[1] + 180) / 6) + 1)
     n_or_s = "S" if latlng[0] < 0 else "N"
 
     false_northing = "10000000" if n_or_s == "S" else "0"
-    central_meridian = str(round(((zone * 6) - 180) - 3))
+    central_meridian = str(zone * 6 - 183)
     epsg = f"32{'7' if n_or_s == 'S' else '6'}{str(zone)}"
 
     if return_epsg:
