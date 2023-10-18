@@ -10,7 +10,7 @@ from osgeo import gdal, osr
 # Internal
 from utils_tests import create_sample_raster
 from buteo.raster.reproject import raster_reproject, _find_common_projection, _raster_reproject
-
+from buteo.utils import utils_projection
 
 
 def test_match_raster_projections_same_projection():
@@ -145,3 +145,26 @@ def test_raster_reproject_dtype():
 
     raster_band = reprojected_raster.GetRasterBand(1)
     assert raster_band.DataType == gdal.GDT_Int32, "Data type is not set correctly."
+
+def test_get_utm_zone_from_latlng():
+    longitudes = [-7,-6,-3,-1,0,1,3,6,7]
+    latitudes = [-1,0,1]
+
+    for long in longitudes:
+        for lat in latitudes:
+            if long < -6:
+                zone = '30'
+            elif long >= -6 and 0 > long:
+                zone = '31'
+            elif long >= 0 and 6 > long:
+                zone = '32'
+            elif long >= 6:
+                zone = '33'
+            if lat >= 0:
+                ns = '6'
+            else:
+                ns = '7'
+
+            epsg = utils_projection._get_utm_zone_from_latlng([lat,long],return_epsg=True)
+            assert epsg.lower() == f'32{ns}{zone}', "UTM zone for latlong point is wrong."
+                
