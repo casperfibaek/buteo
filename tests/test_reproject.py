@@ -153,18 +153,18 @@ def test_get_utm_zone_from_latlng():
     for long in longitudes:
         for lat in latitudes:
             if long < -6:
-                zone = '30'
+                zone = '29'
             elif long >= -6 and 0 > long:
-                zone = '31'
+                zone = '30'
             elif long >= 0 and 6 > long:
-                zone = '32'
+                zone = '31'
             elif long >= 6:
-                zone = '33'
+                zone = '32'
             if lat >= 0:
                 ns = '6'
             else:
                 ns = '7'
 
             epsg = utils_projection._get_utm_zone_from_latlng([lat,long],return_epsg=True)
-            assert epsg.lower() == f'32{ns}{zone}', "UTM zone for latlong point is wrong."
+            assert epsg.lower() == f'32{ns}{zone}', f"UTM zone for latlong point is wrong {lat}, {long}."
                 
