@@ -27,7 +27,7 @@ from buteo.utils import (
 def _raster_open(
     raster: Union[str, gdal.Dataset],
     *,
-    writeable: bool = True,
+    writeable: bool = False,
 ) -> gdal.Dataset:
     """
     Opens a raster in read or write mode.
@@ -656,7 +656,7 @@ def raster_to_extent(
 def raster_open(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     *,
-    writeable=True,
+    writeable=False,
 ) -> Union[gdal.Dataset, List[gdal.Dataset]]:
     """
     Opens a raster in read or write mode.
