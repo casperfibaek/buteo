@@ -183,7 +183,7 @@ def _raster_align_to_reference(
             overwrite=overwrite,
         )
 
-        destination_ds = core_raster._raster_open(destination_ds)
+        destination_ds = core_raster._raster_open(destination_ds, writeable=True)
 
         warp_options = gdal.WarpOptions(
             resampleAlg=utils_translate._translate_resample_method(resample_alg),
