@@ -28,6 +28,7 @@ def _raster_open(
     raster: Union[str, gdal.Dataset],
     *,
     writeable: bool = False,
+    default_projection: Optional[Union[str, int, osr.SpatialReference]] = 4326,
 ) -> gdal.Dataset:
     """
     Opens a raster in read or write mode.
@@ -39,6 +40,9 @@ def _raster_open(
 
     writeable : bool, optional
         If True, the raster is opened in write mode. Default: True.
+
+    default_projection : int, optional
+        The default projection to use if the raster has no projection. Default: 4326.
     
     Returns
     -------
@@ -66,8 +70,22 @@ def _raster_open(
             opened.SetDescription(raster)
 
         if opened.GetProjectionRef() == "":
-            opened.SetProjection(utils_projection._get_default_projection())
-            warnings.warn(f"WARNING: Input raster {raster} has no projection. Setting to default: EPSG:4326.", UserWarning)
+            if default_projection == 4326:
+                opened.SetProjection(utils_projection._get_default_projection())
+                opened.SetGeoTransform([0, 1 / opened.RasterXSize, 0, 0, 0, -1 / opened.RasterYSize])
+                warnings.warn(f"WARNING: Input raster {raster} has no projection. Setting to default: EPSG:4326.", UserWarning)
+            elif default_projection == 3857:
+                opened.SetProjection(utils_projection._get_pseudo_mercator_projection())
+                opened.SetGeoTransform([0, 1, 0, 0, 0, -1])
+                warnings.warn(f"WARNING: Input raster {raster} has no projection. Setting to web-mercator: EPSG:3857.", UserWarning)
+            else:
+                try:
+                    projection = utils_projection.parse_projection(default_projection)
+                    opened.SetProjection(projection.ExportToWkt())
+                    opened.SetGeoTransform([0, 1, 0, 0, 0, -1])
+                    warnings.warn(f"WARNING: Input raster {raster} has no projection. Setting to default: {default_projection}.", UserWarning)
+                except Exception:
+                    raise ValueError(f"Input has no projection, and default projection is invalid: {default_projection}")
 
         return opened
 
@@ -126,8 +144,9 @@ def _get_basic_metadata_raster(
     """
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
-    dataset = _raster_open(raster, writeable=False)
+    dataset = _raster_open(raster, writeable=False, default_projection=3857)
     transform = dataset.GetGeoTransform()
+
     projection_wkt = dataset.GetProjectionRef()
     projection_osr = osr.SpatialReference()
     projection_osr.ImportFromWkt(projection_wkt)
@@ -135,14 +154,13 @@ def _get_basic_metadata_raster(
     bbox = utils_bbox._get_bbox_from_geotransform(transform, dataset.RasterXSize, dataset.RasterYSize)
     try:
         bbox_latlng = utils_projection.reproject_bbox(bbox, projection_osr, utils_projection._get_default_projection_osr())
-    except RuntimeError as e: 
+    except RuntimeError as e:
         # Catch domain errors which happen if the point requested is outside the projection domain
         # We set the latlng bbox to the default projection domain
         if e.args[0] == "Point outside of projection domain":
             bbox_latlng = [0.0, 90.0, 0.0, 180.0]
         else:
             raise e
-
     try:
         bounds_latlng = utils_bbox._get_bounds_from_bbox(bbox, projection_osr, wkt=False)
     except RuntimeError as e:
@@ -656,7 +674,8 @@ def raster_to_extent(
 def raster_open(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     *,
-    writeable=False,
+    writeable: bool = False,
+    default_projection: int = 4326,
 ) -> Union[gdal.Dataset, List[gdal.Dataset]]:
     """
     Opens a raster in read or write mode.
@@ -669,6 +688,9 @@ def raster_open(
 
     writeable : bool, optional
         If True, the raster is opened in write mode. Default: True.
+
+    default_projection : int, optional
+        The default projection to use if the raster has no projection. Default: 4326.
 
     Returns
     -------
@@ -684,7 +706,7 @@ def raster_open(
     list_return = []
     for r in in_raster:
         try:
-            list_return.append(_raster_open(r, writeable=writeable))
+            list_return.append(_raster_open(r, writeable=writeable, default_projection=default_projection))
         except Exception:
             raise ValueError(f"Could not open raster: {r}") from None
 

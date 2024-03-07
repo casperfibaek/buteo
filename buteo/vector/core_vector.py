@@ -959,9 +959,37 @@ def vector_from_bbox(
     return out_path
 
 
+def vector_from_wkt(
+    wkt: str,
+    projection: Union[str, osr.SpatialReference, int, None] = None,
+    out_path: Optional[str] = None,
+) -> str:
+    """
+    OBS: NOT-implemented yet.
+    Creates a vector file from a wkt string.
+
+    Parameters
+    ----------
+    wkt : str
+        A string with the Well-known-text representation of a vector.
+
+    projection : Union[str, osr.SpatialReference, int, None], optional
+        The projection of the points. If None, the default (latlng) projection is used. Default: None.
+
+    out_path : Optional[str], optional
+        The path to the output vector. If None, will create a new file in the same directory as the input vector. Default: None.
+    
+    Returns
+    -------
+    str
+        The path to the created vector file.
+    """
+    return None
+
+
 def vector_from_points(
     points: List[List[Union[float, int]]],
-    projection: Union[str, osr.SpatialReference, None] = None,
+    projection: Union[str, osr.SpatialReference, int, None] = None,
     out_path: Optional[str] = None,
     reverse_xy_order: bool = False,
 ) -> str:
@@ -973,7 +1001,7 @@ def vector_from_points(
     points : List[List[float, int]]
         The points to create the vector from. Must be in the format [[x1, y1], [x2, y2], ...].
 
-    projection : Union[str, osr.SpatialReference, None], optional
+    projection : Union[str, osr.SpatialReference, int, None], optional
         The projection of the points. If None, the default (latlng) projection is used. Default: None.
 
     out_path : Optional[str], optional

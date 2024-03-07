@@ -48,6 +48,37 @@ def _get_default_projection_osr() -> osr.SpatialReference:
 
     return spatial_ref
 
+def _get_pseudo_mercator_projection() -> str:
+    """
+    Get the pseudo-mercator projection.
+    EPSG:3857 in WKT format.
+
+    Returns
+    -------
+    str:
+        The web-mercator (pseudo-mercator) projection. (EPSG:3857) in WKT format.
+    """
+    epsg_3857_wkt = 'PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"],AUTHORITY["EPSG","3857"]]'
+
+    return epsg_3857_wkt
+
+def _get_pseudo_mercator_projection_osr() -> osr.SpatialReference:
+    """
+    Get the pseudo-mercator projection.
+    EPSG:3857 in osr.SpatialReference format.
+
+    Returns
+    -------
+    osr.SpatialReference:
+        The web-mercator (pseudo-mercator) projection. (EPSG:3857) in osr.SpatialReference format.
+    """
+    epsg_3857_wkt = _get_pseudo_mercator_projection()
+
+    spatial_ref = osr.SpatialReference()
+    spatial_ref.ImportFromWkt(epsg_3857_wkt)
+
+    return spatial_ref
+
 
 def _get_esri_projection(esri_code: str) -> str:
     """
@@ -651,3 +682,67 @@ def _reproject_latlng_point_to_utm(
         utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
 
     return [utm_x, utm_y]
+
+
+def set_projection(
+    dataset: Union[str, gdal.Dataset, ogr.DataSource],
+    projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
+    flip_y_axis: bool = False,
+    pixel_size_x = 1.0,
+    pixel_size_y = 1.0,
+) -> None:
+    """
+    Sets the projection of a dataset.
+
+    Parameters
+    ----------
+    dataset : Union[str, gdal.Dataset, ogr.DataSource]
+        The dataset to set the projection of.
+
+    projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
+        The projection to set.
+    """
+    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), "DataSet must be a string, ogr.DataSource, or gdal.Dataset."
+    assert isinstance(projection, (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)), "projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference."
+
+    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+
+    if opened is None:
+        try:
+            opened = gdal.Open(dataset)
+        except ValueError:
+            try:
+                opened = ogr.Open(dataset)
+            except ValueError:
+                opened = None
+
+    if opened is None:
+        raise RuntimeError(f"Could not open dataset. {dataset}")
+
+    proj = parse_projection(projection)
+
+    if isinstance(opened, gdal.Dataset):
+        opened.SetProjection(proj.ExportToWkt())
+    elif isinstance(opened, ogr.DataSource):
+        layer = opened.GetLayer()
+        layer.SetSpatialRef(proj)
+
+    gt = opened.GetGeoTransform()
+    x_min, pixel_width, _row_skew, y_max, _column_skew, pixel_height = gt
+
+    x_max = x_min + (opened.RasterXSize * pixel_width)
+    y_min = y_max + (opened.RasterYSize * pixel_height)
+
+    if y_min > y_max:
+        gt = [gt[0], gt[1], gt[2], gt[3], -gt[4], -gt[5]]
+
+    if pixel_size_y > 0:
+        pixel_size_y = -1.0 * pixel_size_y
+
+    gt[1] = pixel_size_x
+    gt[-1] = pixel_size_y
+
+    opened.SetGeoTransform(gt)
+
+    opened.FlushCache()
+    opened = None

@@ -208,6 +208,7 @@
                             <li><a href="buteo/ai/scalers.html#scaler_standardise_mad">scaler_standardise_mad</a></li>
                             <li><a href="buteo/ai/scalers.html#scaler_to_range">scaler_to_range</a></li>
                             <li><a href="buteo/ai/scalers.html#scaler_truncate">scaler_truncate</a></li>
+                            <li><a href="buteo/utils/utils_projection.html#set_projection">set_projection</a></li>
                             <li><a href="buteo/array/utils_array.html#single_hsl_to_rgb">single_hsl_to_rgb</a></li>
                             <li><a href="buteo/array/utils_array.html#single_hue_to_rgb">single_hue_to_rgb</a></li>
                             <li><a href="buteo/ai/spatial_label_smoothing.html#spatial_label_smoothing">spatial_label_smoothing</a></li>
@@ -228,6 +229,7 @@
                             <li><a href="buteo/vector/core_vector.html#vector_filter_layer">vector_filter_layer</a></li>
                             <li><a href="buteo/vector/core_vector.html#vector_from_bbox">vector_from_bbox</a></li>
                             <li><a href="buteo/vector/core_vector.html#vector_from_points">vector_from_points</a></li>
+                            <li><a href="buteo/vector/core_vector.html#vector_from_wkt">vector_from_wkt</a></li>
                             <li><a href="buteo/vector/core_vector.html#vector_get_attribute_table">vector_get_attribute_table</a></li>
                             <li><a href="buteo/vector/intersect.html#vector_intersect">vector_intersect</a></li>
                             <li><a href="buteo/vector/merge.html#vector_merge_features">vector_merge_features</a></li>
@@ -554,13 +556,15 @@ esa-snap</p>
 </span><span id="L-130"><a href="#L-130"><span class="linenos">130</span></a><span class="kn">from</span> <span class="nn">.eo</span> <span class="kn">import</span> <span class="o">*</span>
 </span><span id="L-131"><a href="#L-131"><span class="linenos">131</span></a><span class="kn">from</span> <span class="nn">.ai</span> <span class="kn">import</span> <span class="o">*</span>
 </span><span id="L-132"><a href="#L-132"><span class="linenos">132</span></a>
-</span><span id="L-133"><a href="#L-133"><span class="linenos">133</span></a><span class="k">try</span><span class="p">:</span>
-</span><span id="L-134"><a href="#L-134"><span class="linenos">134</span></a>    <span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">gdal</span>
-</span><span id="L-135"><a href="#L-135"><span class="linenos">135</span></a>    <span class="n">gdal</span><span class="o">.</span><span class="n">UseExceptions</span><span class="p">()</span>
-</span><span id="L-136"><a href="#L-136"><span class="linenos">136</span></a><span class="k">except</span><span class="p">:</span>
-</span><span id="L-137"><a href="#L-137"><span class="linenos">137</span></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;GDAL not installed. Some functions may not work.&quot;</span><span class="p">)</span>
-</span><span id="L-138"><a href="#L-138"><span class="linenos">138</span></a>
-</span><span id="L-139"><a href="#L-139"><span class="linenos">139</span></a><span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.9.57&quot;</span>
+</span><span id="L-133"><a href="#L-133"><span class="linenos">133</span></a><span class="c1"># import os; os.environ[&quot;GDAL_PAM_ENABLED&quot;] = &quot;FALSE&quot;</span>
+</span><span id="L-134"><a href="#L-134"><span class="linenos">134</span></a>
+</span><span id="L-135"><a href="#L-135"><span class="linenos">135</span></a><span class="k">try</span><span class="p">:</span>
+</span><span id="L-136"><a href="#L-136"><span class="linenos">136</span></a>    <span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">gdal</span>
+</span><span id="L-137"><a href="#L-137"><span class="linenos">137</span></a>    <span class="n">gdal</span><span class="o">.</span><span class="n">UseExceptions</span><span class="p">()</span>
+</span><span id="L-138"><a href="#L-138"><span class="linenos">138</span></a><span class="k">except</span> <span class="ne">ModuleNotFoundError</span><span class="p">:</span>
+</span><span id="L-139"><a href="#L-139"><span class="linenos">139</span></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;GDAL not installed. Some functions may not work.&quot;</span><span class="p">)</span>
+</span><span id="L-140"><a href="#L-140"><span class="linenos">140</span></a>
+</span><span id="L-141"><a href="#L-141"><span class="linenos">141</span></a><span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.9.58&quot;</span>
 </span></pre></div>
 
 

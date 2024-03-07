@@ -3,7 +3,7 @@
 """
 # Standard library
 import sys; sys.path.append("../../")
-from typing import List, Optional, Union, Tuple, Type
+from typing import List, Optional, Union, Tuple
 import warnings
 
 # External
@@ -32,7 +32,7 @@ def raster_to_array(
     fill_value: Optional[Union[int, float]] = None,
     pixel_offsets: Optional[Union[List[int], Tuple[int, int, int, int]]] = None,
     bbox: Optional[List[float]] = None,
-    bbox_srs: Optional[Union[str, osr.SpatialReference]] = None,
+    bbox_srs: Optional[Union[str, int, osr.SpatialReference]] = None,
     cast: Optional[Union[np.dtype, str]] = None,
     channel_last: bool = True,
 ) -> np.ndarray:
@@ -243,7 +243,7 @@ def raster_to_array(
                 data = utils_translate._safe_numpy_casting(data, dtype)
 
             output_array = data
-        
+
         # We need to read bands one by one
         else:
             for n_band in bands_to_process[idx]:

@@ -130,10 +130,12 @@ from .array import *
 from .eo import *
 from .ai import *
 
+# import os; os.environ["GDAL_PAM_ENABLED"] = "FALSE"
+
 try:
     from osgeo import gdal
     gdal.UseExceptions()
-except:
+except ModuleNotFoundError:
     print("GDAL not installed. Some functions may not work.")
 
-__version__ = "0.9.57"
+__version__ = "0.9.58"
