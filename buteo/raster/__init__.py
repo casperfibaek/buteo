@@ -21,3 +21,4 @@ from .vectorize import *
 from .dem import *
 from .footprints import *
 from .warp import *
+from .coregister import *

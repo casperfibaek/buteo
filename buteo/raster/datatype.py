@@ -4,7 +4,6 @@
 
 # Standard library
 import sys; sys.path.append("../../")
-import os
 from typing import Union, List, Optional
 from warnings import warn
 

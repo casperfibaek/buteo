@@ -31,20 +31,7 @@
 
             <h2>Packages</h2>
             <ul>
-                    <li><a href="vector/buffer.html">buffer</a></li>
-                    <li><a href="vector/clip.html">clip</a></li>
-                    <li><a href="vector/convert_parts.html">convert_parts</a></li>
-                    <li><a href="vector/core_vector.html">core_vector</a></li>
-                    <li><a href="vector/dissolve.html">dissolve</a></li>
-                    <li><a href="vector/grid.html">grid</a></li>
-                    <li><a href="vector/intersect.html">intersect</a></li>
-                    <li><a href="vector/merge.html">merge</a></li>
-                    <li><a href="vector/metadata.html">metadata</a></li>
-                    <li><a href="vector/rasterize.html">rasterize</a></li>
-                    <li><a href="vector/reproject.html">reproject</a></li>
-                    <li><a href="vector/shapes.html">shapes</a></li>
-                    <li><a href="vector/split.html">split</a></li>
-                    <li><a href="vector/zonal_statistics.html">zonal_statistics</a></li>
+                    <li><a href="bindings/orfeo.html">orfeo</a></li>
             </ul>
                     <h2>All Functions</h2>
                     <ul>
@@ -296,31 +283,19 @@
     <main class="pdoc">
             <section class="module-info">
                     <h1 class="modulename">
-<a href="./../buteo.html">buteo</a><wbr>.vector    </h1>
+<a href="./../buteo.html">buteo</a><wbr>.bindings    </h1>
 
-                        <div class="docstring"><p>Work with vector data and attributes with ease.</p>
+                        <div class="docstring"><p>Tools for working with sentinel data</p>
 </div>
 
-                        <input id="mod-vector-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                        <input id="mod-bindings-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
-                        <label class="view-source-button" for="mod-vector-view-source"><span>View Source</span></label>
+                        <label class="view-source-button" for="mod-bindings-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="sd">Work with vector data and attributes with ease.</span>
-</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="kn">from</span> <span class="nn">.core_vector</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a><span class="kn">from</span> <span class="nn">.clip</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="kn">from</span> <span class="nn">.convert_parts</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a><span class="kn">from</span> <span class="nn">.dissolve</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="kn">from</span> <span class="nn">.grid</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="kn">from</span> <span class="nn">.intersect</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="kn">from</span> <span class="nn">.merge</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="kn">from</span> <span class="nn">.rasterize</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="kn">from</span> <span class="nn">.reproject</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="kn">from</span> <span class="nn">.buffer</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="kn">from</span> <span class="nn">.split</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="kn">from</span> <span class="nn">.metadata</span> <span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="kn">from</span> <span class="nn">.shapes</span> <span class="kn">import</span> <span class="o">*</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">1</span></a><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos">2</span></a><span class="sd">Tools for working with sentinel data</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos">3</span></a><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos">4</span></a><span class="kn">from</span> <span class="nn">.orfeo</span> <span class="kn">import</span> <span class="o">*</span>
 </span></pre></div>
 
 

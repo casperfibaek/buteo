@@ -9,9 +9,18 @@ import buteo as beo
 from osgeo import gdal
 
 
-image = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/buteo/tests/features/normal_image.png"
+FOLDER = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/glimmer_test/"
+OTB_PATH = "C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/otb/"
 
-# define projection
-# beo.set_projection(image, 3857, pixel_size_y=10.0, pixel_size_x=10.0)
-
-bob = beo.raster_dem_to_orientation(image, out_path="C:/Users/casper.fibaek/OneDrive - ESA/Desktop/projects/buteo/tests/features/normal_image_orientation.tif")
+beo.otb_fine_registration(
+    reference_image=os.path.join(FOLDER, "master_HDR.tif"),
+    secondary_image=os.path.join(FOLDER, "slave_HDR.tif"),
+    warp_image=os.path.join(FOLDER, "slave_HDR.tif"),
+    out_raster=os.path.join(FOLDER, "slave_HDR_out.tif"),
+    out_raster_warp=os.path.join(FOLDER, "slave_HDR_warp.tif"),
+    otb_path=OTB_PATH,
+    erx=3,
+    ery=3,
+    mrx=3,
+    mry=3,
+)

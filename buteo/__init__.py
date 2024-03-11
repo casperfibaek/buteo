@@ -129,6 +129,7 @@ from .vector import *
 from .array import *
 from .eo import *
 from .ai import *
+from .bindings import *
 
 # import os; os.environ["GDAL_PAM_ENABLED"] = "FALSE"
 
@@ -138,4 +139,4 @@ try:
 except ModuleNotFoundError:
     print("GDAL not installed. Some functions may not work.")
 
-__version__ = "0.9.59"
+__version__ = "0.9.60"
