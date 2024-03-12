@@ -2,7 +2,7 @@ import numpy as np
 from skimage import color, img_as_float, img_as_uint
 from skimage.exposure import rescale_intensity
 from skimage.util import view_as_blocks
-from skimage.transform import resize
+from skimage.transform import resize as _resize
 
 from scipy import signal, ndimage
 
@@ -157,7 +157,8 @@ def _clahe(image, ntiles_x, ntiles_y, clip_limit, nbins=128, nr_of_grey=16384, m
     for y in range(ntiles_y):
         for x in range(ntiles_x):
             sub_img = img_blocks[y, x]
-            hist = aLUT[sub_img.ravel()]
+            hist_indices = np.rint(sub_img.ravel())
+            hist = aLUT[hist_indices.astype(int)] # pylint: disable=unsubscriptable-object
             hist = np.bincount(hist)
             hist = np.append(hist, np.zeros(nbins - hist.size, dtype=int))
             hist = clip_histogram(hist, clip_limit)
@@ -253,6 +254,7 @@ def clip_histogram(hist, clip_limit):
 
     while n_excess > 0:  # Redistribute remaining excess
         index = 0
+
         while n_excess > 0 and index < hist.size:
             step_size = int(hist[hist < clip_limit].size / n_excess)
             step_size = max(step_size, 1)
@@ -296,8 +298,7 @@ def map_histogram(hist, min_val, max_val, n_pixels):
     return out.astype(int)
 
 
-def interpolate(image, xslice, yslice,
-                mapLU, mapRU, mapLB, mapRB, aLUT):
+def interpolate(image, xslice, yslice, mapLU, mapRU, mapLB, mapRB, aLUT):
     """
     Find the new grayscale level for a region using bilinear interpolation.
 
@@ -332,6 +333,7 @@ def interpolate(image, xslice, yslice,
 
     view = image[int(yslice[0]):int(yslice[-1] + 1),
                  int(xslice[0]):int(xslice[-1] + 1)]
+    view = np.rint(view).astype(int)
 
     im_slice = aLUT[view]
     new = ((y_inv_coef * (x_inv_coef * mapLU[im_slice]
@@ -355,6 +357,7 @@ def conv2SepMatlabbis(I, fen):
     I = np.append(I, colonne, axis=1)
 
     res = conv2bis(conv2bis(I, fen.T), fen)
+
     return res
 
 
@@ -394,8 +397,10 @@ def EFolkiIter(I0, I1, iteration=5, radius=[8, 4], rank=4, uinit=None,vinit=None
             it = I0 - i1w + u*Ix + v*Iy
             Ixt = W(Ix * it)
             Iyt = W(Iy * it)
-            u = (Iyy * Ixt - Ixy * Iyt)/D
-            v = (Ixx * Iyt - Ixy * Ixt)/D
+
+            with np.errstate(divide='ignore', invalid='ignore'):
+                u = (Iyy * Ixt - Ixy * Iyt) / D
+                v = (Ixx * Iyt - Ixy * Ixt) / D
 
             invalid = np.isnan(u) | np.isinf(u) | np.isnan(v) | np.isinf(v)
             u[invalid] = 0
@@ -404,8 +409,27 @@ def EFolkiIter(I0, I1, iteration=5, radius=[8, 4], rank=4, uinit=None,vinit=None
     return u, v
 
 
-def GEFolkiIter(I0, I1, iteration=5, radius=[8, 4], rank=4, uinit=None, vinit=None):
+def resize(image, shape, order=1):
+    """Resize image to match a certain shape.
 
+    Parameters
+    ----------
+    image : ndarray
+        Input image.
+    shape : tuple
+        Shape of the output image.
+    order : int, optional
+        The order of the spline interpolation, default is 1.
+
+    Returns
+    -------
+    out : ndarray
+        Resized image.
+    """
+    return _resize(image, shape, order=order)
+
+
+def GEFolkiIter(I0, I1, iteration=5, radius=[8, 4], rank=4, uinit=None, vinit=None):
     if rank > 0:
         R0 = rank_filter_sup(I0, rank)
         R1i = rank_filter_inf(I1, rank)
@@ -503,8 +527,10 @@ def GEFolkiIter(I0, I1, iteration=5, radius=[8, 4], rank=4, uinit=None, vinit=No
             it = R0 - R1w + u*Ix + v*Iy
             Ixt = W(Ix * it)
             Iyt = W(Iy * it)
-            u = (Iyy * Ixt - Ixy * Iyt)/D
-            v = (Ixx * Iyt - Ixy * Ixt)/D
+
+            with np.errstate(divide='ignore', invalid='ignore'):
+                u = (Iyy * Ixt - Ixy * Iyt) / D
+                v = (Ixx * Iyt - Ixy * Ixt) / D
 
             invalid = np.isnan(u) | np.isinf(u) | np.isnan(v) | np.isinf(v)
             u[invalid] = 0
@@ -538,7 +564,7 @@ class BurtOF:
         self.levels = levels
 
     def __call__(self, I0, I1, **kparams):
-        if 'levels'in kparams:
+        if 'levels' in kparams:
             self.levels = kparams.pop('levels')
 
         I0 = (I0-I0.min())/(I0.max()-I0.min())
@@ -565,7 +591,6 @@ class BurtOF:
 
         return u, v
 
-
     def conv2SepMatlab(self, I, fen):
         rad = int((fen.size-1)/2)
         ligne = np.zeros((rad, I.shape[1]))
@@ -579,7 +604,6 @@ class BurtOF:
         res = conv2bis(conv2bis(I, fen.T), fen)
 
         return res
-
 
     def pyrUp(self, I):
         a = 0.4
@@ -599,7 +623,6 @@ class BurtOF:
         res[:row, :col] = I[:row, :col]
 
         return res
-
 
 def rank_filter_sup(I, rad):
     nl, nc = I.shape
@@ -624,7 +647,6 @@ def rank_filter_sup(I, rad):
 
     return R
 
-
 def rank_filter_inf(I, rad):
     nl, nc = I.shape
     R = np.zeros([nl, nc])
@@ -648,7 +670,6 @@ def rank_filter_inf(I, rad):
             R[idx] = R[idx]+1
 
     return R
-
 
 def wrapData(I, u, v):
     """ Apply the [u,v] optical flow to the data I """

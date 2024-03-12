@@ -1,8 +1,8 @@
 import sys; sys.path.append("../../")
 from typing import Union, Optional
 
-import numpy as np
 from osgeo import gdal
+import numpy as np
 
 from buteo.raster.core_raster_io import raster_to_array, array_to_raster
 from buteo.raster.align import _raster_align_to_reference
@@ -101,12 +101,17 @@ def coregister_images_efolki(
         master_arr = master_arr * mask
         slave_arr = slave_arr * mask
 
-    uu, vv = EFolki(slave_arr[:, :, band_to_base_slave - 1], master_arr[:, :, band_to_base_master - 1], iteration=iteration, radius=radius, rank=rank, levels=levels)
+    uu, vv = EFolki(
+        slave_arr[:, :, band_to_base_slave - 1],
+        master_arr[:, :, band_to_base_master - 1],
+        iteration=iteration,
+        radius=radius,
+        rank=rank,
+        levels=levels,
+    )
 
     QBrecalee = wrapData(master_arr[:, :, band_to_base_master - 1], uu, vv)
-
     array_to_raster(QBrecalee[:, :, np.newaxis], reference=master, out_path=out_path)
-
 
     return out_path
 
@@ -198,7 +203,14 @@ def coregister_images_gefolki(
         master_arr = master_arr * mask
         slave_arr = slave_arr * mask
 
-    uu, vv = GEFolki(slave_arr[:, :, band_to_base_slave - 1], master_arr[:, :, band_to_base_master - 1], iteration=iteration, radius=radius, rank=rank, levels=levels)
+    uu, vv = GEFolki(
+        slave_arr[:, :, band_to_base_slave - 1],
+        master_arr[:, :, band_to_base_master - 1],
+        iteration=iteration,
+        radius=radius,
+        rank=rank,
+        levels=levels,
+    )
 
     QBrecalee = wrapData(master_arr[:, :, band_to_base_master - 1], uu, vv)
 
