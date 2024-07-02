@@ -210,7 +210,10 @@ def vector_rasterize(
     else:
         options.append(f"ATTRIBUTE={attribute}")
         gdal.RasterizeLayer(
-            target_ds, [1], source_layer, options=utils_gdal._get_default_creation_options(options)
+            target_ds,
+            [1],
+            source_layer,
+            options=options,
         )
 
     return out_path

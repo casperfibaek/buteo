@@ -3,9 +3,7 @@ from skimage import color, img_as_float, img_as_uint
 from skimage.exposure import rescale_intensity
 from skimage.util import view_as_blocks
 from skimage.transform import resize as _resize
-
 from scipy import signal, ndimage
-
 
 """
 Adapted code from "Contrast Limited Adaptive Histogram Equalization" by Karel
@@ -564,6 +562,7 @@ class BurtOF:
         self.levels = levels
 
     def __call__(self, I0, I1, **kparams):
+
         if 'levels' in kparams:
             self.levels = kparams.pop('levels')
 
@@ -678,7 +677,3 @@ def wrapData(I, u, v):
     R = interp2(I, X+u, Y+v)
 
     return R
-
-
-GEFolki = BurtOF(GEFolkiIter)
-EFolki = BurtOF(EFolkiIter)

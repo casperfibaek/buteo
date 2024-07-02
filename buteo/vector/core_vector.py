@@ -906,6 +906,121 @@ def vector_reset_fids(
     return output[0]
 
 
+def vector_create_fid_field(
+    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
+):
+    """
+    Creates a FID field in a vector if it doesn't exist.
+
+    Parameters
+    ----------
+    vector : Union[str, ogr.DataSource, List[str, ogr.DataSource]]
+        Vector layer(s) or path(s) to vector layer(s).
+
+    Returns
+    -------
+        str: original vector path
+    """
+    assert isinstance(vector, (str, ogr.DataSource)), "vector must be a string or an ogr.DataSource object."
+
+    input_is_list = isinstance(vector, list)
+
+    input_list = utils_io._get_input_paths(vector, "vector")
+
+    output = []
+    for idx, in_vector in enumerate(input_list):
+        ref = _vector_open(in_vector)
+
+        layers = ref.GetLayerCount()
+
+        for layer_index in range(layers):
+            layer = ref.GetLayer(layer_index)
+            layer.ResetReading()
+            layer_defn = layer.GetLayerDefn()
+            field_names = [layer_defn.GetFieldDefn(i).GetName() for i in range(layer_defn.GetFieldCount())]
+
+            if "fid" not in field_names:
+                field = ogr.FieldDefn("fid", ogr.OFTInteger)
+                layer.CreateField(field)
+
+            layer.ResetReading()
+
+            for idx, feature in enumerate(layer):
+                feature.SetField("fid", idx)
+                layer.SetFeature(feature)
+
+            layer.SyncToDisk()
+
+        ref = None
+
+        output.append(input_list[idx])
+
+    if input_is_list:
+        return output
+    
+    return output[0]
+
+
+def vector_create_attribute_from_fid(
+    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
+    attribute_name: str = "id",
+):
+    """
+    Creates an attribute from the FID field in a vector.
+
+    Parameters
+    ----------
+    vector : Union[str, ogr.DataSource, List[str, ogr.DataSource]]
+        Vector layer(s) or path(s) to vector layer(s).
+
+    attribute_name : str, optional
+        The name of the attribute to create. Default: "id"
+
+    Returns
+    -------
+        str: original vector path
+    """
+    assert isinstance(vector, (str, ogr.DataSource)), "vector must be a string or an ogr.DataSource object."
+    assert isinstance(attribute_name, str), "attribute_name must be a string."
+
+    input_is_list = isinstance(vector, list)
+
+    input_list = utils_io._get_input_paths(vector, "vector")
+
+    output = []
+    for idx, in_vector in enumerate(input_list):
+        ref = _vector_open(in_vector)
+
+        layers = ref.GetLayerCount()
+
+        for layer_index in range(layers):
+            layer = ref.GetLayer(layer_index)
+            layer.ResetReading()
+            layer_defn = layer.GetLayerDefn()
+            field_names = [layer_defn.GetFieldDefn(i).GetName() for i in range(layer_defn.GetFieldCount())]
+
+            if "fid" in field_names and attribute_name not in field_names:
+                field = ogr.FieldDefn(attribute_name, ogr.OFTInteger)
+                layer.CreateField(field)
+
+            layer.ResetReading()
+
+            for feature in layer:
+                feature.SetField(attribute_name, feature.GetFID())
+                layer.SetFeature(feature)
+
+            layer.SyncToDisk()
+
+        ref = None
+
+        output.append(input_list[idx])
+
+    if input_is_list:
+        return output
+    
+    return output[0]
+
+
 def vector_from_bbox(
     bbox: List[Union[float, int]],
     projection: Union[str, osr.SpatialReference, None] = None,
@@ -965,7 +1080,6 @@ def vector_from_wkt(
     out_path: Optional[str] = None,
 ) -> str:
     """
-    OBS: NOT-implemented yet.
     Creates a vector file from a wkt string.
 
     Parameters
@@ -984,7 +1098,39 @@ def vector_from_wkt(
     str
         The path to the created vector file.
     """
-    return None
+    assert isinstance(wkt, str), "wkt must be a string."
+    assert len(wkt) > 0, "wkt must have at least one character."
+
+    if projection is None:
+        proj = utils_projection._get_default_projection_osr()
+    else:
+        proj = utils_projection.parse_projection(projection)
+
+    if out_path is None:
+        out_path = utils_path._get_temp_filepath("temp_points.gpkg", add_timestamp=True, add_uuid=True)
+
+    driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
+    driver = ogr.GetDriverByName(driver_name)
+    
+    datasource = driver.CreateDataSource(out_path)
+
+    geom_type = ogr.CreateGeometryFromWkt(wkt).GetGeometryType()
+
+    layer = datasource.CreateLayer("points", geom_type=geom_type, srs=proj)
+    layer_defn = layer.GetLayerDefn()
+
+    feature = ogr.Feature(layer_defn)
+    feature.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
+
+    layer.CreateFeature(feature)
+    layer.SyncToDisk()
+
+    datasource = None
+    layer = None
+    feature = None
+
+    return out_path
+
 
 
 def vector_from_points(

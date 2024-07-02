@@ -22,3 +22,4 @@ from .dem import *
 from .footprints import *
 from .warp import *
 from .coregister import *
+from .zonal_statistics import *

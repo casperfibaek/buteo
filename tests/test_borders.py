@@ -59,7 +59,7 @@ def test_raster_add_border_custom_value():
     result_data = result.GetRasterBand(1).ReadAsArray()
 
     # Check if the border value is set correctly
-    border_mask = (result_data == border_value)
+    border_mask = result_data == border_value
 
     assert border_mask[:, :100].all()
     assert border_mask[:, -100:].all()
@@ -69,7 +69,7 @@ def test_raster_add_border_custom_value():
 
 def test_raster_add_border_nodata_value():
     nodata_value = -9999
-    sample_raster = create_sample_raster(nodata=nodata_value)
+    sample_raster = create_sample_raster(nodata=nodata_value, datatype=gdal.GDT_Float32)
     result_raster = raster_add_border(sample_raster, border_value=nodata_value)
 
     # Open the original raster and the result raster

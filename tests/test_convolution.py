@@ -80,5 +80,5 @@ def test_convolve_array_sum():
 
     result = convolve_array(arr, offsets, weights, method=1) # sum
 
-    assert np.alltrue(result > arr), "Result should be greater than input"
+    assert np.all(result > arr), "Result should be greater than input"
     assert result.shape == (15, 15, 1)

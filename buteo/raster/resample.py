@@ -105,20 +105,32 @@ def _raster_resample(
     if verbose == 0:
         gdal.PushErrorHandler("CPLQuietErrorHandler")
 
-    options = gdal.WarpOptions(
-        format=out_format,
-        width=x_pixels,
-        height=y_pixels,
-        xRes=x_res,
-        yRes=y_res,
-        outputType=utils_translate._translate_dtype_numpy_to_gdal(dtype),
-        resampleAlg=utils_translate._translate_resample_method(resample_alg),
-        creationOptions=utils_gdal._get_default_creation_options(creation_options),
-        srcNodata=metadata["nodata_value"],
-        dstNodata=out_nodata,
-        multithread=True,
-        warpMemoryLimit=utils_gdal._get_dynamic_memory_limit(ram, min_mb=ram_min, max_mb=ram_max),
-    )
+    if x_pixels is None or y_pixels is None:
+        options = gdal.WarpOptions(
+            format=out_format,
+            xRes=x_res,
+            yRes=y_res,
+            outputType=utils_translate._translate_dtype_numpy_to_gdal(dtype),
+            resampleAlg=utils_translate._translate_resample_method(resample_alg),
+            creationOptions=utils_gdal._get_default_creation_options(creation_options),
+            srcNodata=metadata["nodata_value"],
+            dstNodata=out_nodata,
+            multithread=True,
+            warpMemoryLimit=utils_gdal._get_dynamic_memory_limit(ram, min_mb=ram_min, max_mb=ram_max),
+        )
+    else:
+        options = gdal.WarpOptions(
+            format=out_format,
+            width=x_pixels,
+            height=y_pixels,
+            outputType=utils_translate._translate_dtype_numpy_to_gdal(dtype),
+            resampleAlg=utils_translate._translate_resample_method(resample_alg),
+            creationOptions=utils_gdal._get_default_creation_options(creation_options),
+            srcNodata=metadata["nodata_value"],
+            dstNodata=out_nodata,
+            multithread=True,
+            warpMemoryLimit=utils_gdal._get_dynamic_memory_limit(ram, min_mb=ram_min, max_mb=ram_max),
+        )
 
     resampled = gdal.Warp(out_path, ref, options=options)
 

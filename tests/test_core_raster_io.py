@@ -172,7 +172,7 @@ def test_raster_to_array_and_array_to_raster_modified():
     assert np.array_equal(modified_array, result_array)
 
 def test_raster_to_array_and_array_to_raster_custom_nodata():
-    reference_path = create_sample_raster(10, 10)
+    reference_path = create_sample_raster(10, 10, datatype=gdal.GDT_Float32)
 
     original_array = core_raster_io.raster_to_array(reference_path)
     modified_array = np.where(original_array < 0.5, -9999, original_array)
@@ -214,7 +214,7 @@ def test_raster_to_array_and_array_to_raster_pixel_offsets_modified():
     assert np.array_equal(modified_array, result_array)
 
 def test_raster_to_array_and_array_to_raster_pixel_offsets_custom_nodata():
-    reference_path = create_sample_raster(10, 10)
+    reference_path = create_sample_raster(10, 10, datatype=gdal.GDT_Float32)
 
     original_array = core_raster_io.raster_to_array(reference_path, pixel_offsets=[2, 2, 6, 6])
     modified_array = np.where(original_array < 0.5, -9999, original_array)

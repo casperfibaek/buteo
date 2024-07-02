@@ -74,7 +74,7 @@ def coregister_images_efolki(
         Path to the output file.
     """
     try:
-        from .gefolki import EFolki, wrapData # pylint: disable=import-outside-toplevel
+        from .gefolki import BurtOF, EFolkiIter, wrapData # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError as exc:
         raise ModuleNotFoundError("Using the GeFolki tools requires skimage and scipy. Please install them using `pip install scikit-image scipy`") from exc
 
@@ -86,6 +86,7 @@ def coregister_images_efolki(
         reprojected_slave = slave
 
     aligned_slave = _raster_align_to_reference(reprojected_slave, master, resample_alg=resample_alg)
+
     master_arr = raster_to_array(master, filled=True, fill_value=fill_value, cast=np.float32) # QB
     slave_arr = raster_to_array(aligned_slave, filled=True, fill_value=fill_value, cast=np.float32) # WV
 
@@ -100,6 +101,8 @@ def coregister_images_efolki(
         mask = np.logical_and(master_arr != fill_value, slave_arr != fill_value)
         master_arr = master_arr * mask
         slave_arr = slave_arr * mask
+
+    EFolki = BurtOF(EFolkiIter)
 
     uu, vv = EFolki(
         slave_arr[:, :, band_to_base_slave - 1],
@@ -176,7 +179,7 @@ def coregister_images_gefolki(
         Path to the output file.
     """
     try:
-        from .gefolki import GEFolki, wrapData # pylint: disable=import-outside-toplevel
+        from .gefolki import BurtOF, GEFolkiIter, wrapData # pylint: disable=import-outside-toplevel
     except ModuleNotFoundError as exc:
         raise ModuleNotFoundError("Using the GeFolki tools requires skimage and scipy. Please install them using `pip install scikit-image scipy`") from exc
 
@@ -188,6 +191,7 @@ def coregister_images_gefolki(
         reprojected_slave = slave
 
     aligned_slave = _raster_align_to_reference(reprojected_slave, master, resample_alg=resample_alg)
+
     master_arr = raster_to_array(master, filled=True, fill_value=fill_value, cast=np.float32) # QB
     slave_arr = raster_to_array(aligned_slave, filled=True, fill_value=fill_value, cast=np.float32) # WV
 
@@ -202,6 +206,8 @@ def coregister_images_gefolki(
         mask = np.logical_and(master_arr != fill_value, slave_arr != fill_value)
         master_arr = master_arr * mask
         slave_arr = slave_arr * mask
+
+    GEFolki = BurtOF(GEFolkiIter)
 
     uu, vv = GEFolki(
         slave_arr[:, :, band_to_base_slave - 1],
