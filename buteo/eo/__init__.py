@@ -1,6 +1,4 @@
-"""
-Tools for working with sentinel data
-"""
+"""Tools for working with sentinel data"""
 from .s1_utils import *
 from .s2_utils import *
 from .s1_preprocess import *

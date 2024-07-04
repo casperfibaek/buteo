@@ -1,5 +1,4 @@
-"""
-### Split functions for vector layers. ###
+"""### Split functions for vector layers. ###
 
 Dissolve vectors by attributes or geometry.
 """
@@ -28,8 +27,7 @@ def vector_split_by_fid(
     prefix: str = "",
     suffix: str = "",
 ) -> str:
-    """
-    Split a vector by feature id.
+    """Split a vector by feature id.
 
     Parameters
     ----------
@@ -109,8 +107,7 @@ def vector_split(
     prefix: str = "",
     suffix: str = "",
 ) -> str:
-    """
-    Split a vector by feature id.
+    """Split a vector by feature id.
 
     Parameters
     ----------

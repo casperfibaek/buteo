@@ -1,5 +1,4 @@
-"""
-### Shift rasters. ###
+"""### Shift rasters. ###
 
 Module to shift the location of rasters in geographic coordinates.
 """
@@ -32,7 +31,7 @@ def _raster_shift(
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
 ) -> Union[str, gdal.Dataset]:
-    """ Internal. """
+    """Internal."""
     assert isinstance(shift_list, (list, tuple)), f"shift_list must be a list or a tuple. {shift_list}"
     assert len(shift_list) == 2, f"shift_list must be a list or tuple with len 2 (x_shift, y_shift): {shift_list}"
 
@@ -103,8 +102,7 @@ def raster_shift(
     add_timestamp: bool = False,
     creation_options: Optional[List[str]] = None,
 ) -> Union[str, List[str], gdal.Dataset]:
-    """
-    Shifts a raster in a given direction. (The frame is shifted)
+    """Shifts a raster in a given direction. (The frame is shifted)
 
     Parameters
     ----------
@@ -189,8 +187,7 @@ def raster_shift_pixel(
     shift_list: List[Union[int, float]],
     out_path: Optional[str] = None,
 ) -> str:
-    """
-    Shifts a raster in a given direction. (The pixels are shifted, not the frame)
+    """Shifts a raster in a given direction. (The pixels are shifted, not the frame)
 
     Parameters
     ----------

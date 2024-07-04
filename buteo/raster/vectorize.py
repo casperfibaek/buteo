@@ -1,5 +1,4 @@
-"""
-### Vectorize rasters. ###
+"""### Vectorize rasters. ###
 
 Module to turn rasters into vector representations.
 """
@@ -29,7 +28,7 @@ def _raster_vectorize(
     band: int = 1,
     attribute_field: Optional[str] = None,
 ):
-    """ Internal. """
+    """Internal."""
     meta = core_raster._get_basic_metadata_raster(raster)
     opened = core_raster._raster_open(raster)
     src_band = opened.GetRasterBand(band)
@@ -84,8 +83,7 @@ def raster_vectorize(
     add_timestamp: bool = False,
     overwrite: bool = True,
 ) -> Union[str, List[str]]:
-    """
-    Vectorizes a raster by turning it into polygons per unique value. Works
+    """Vectorizes a raster by turning it into polygons per unique value. Works
     best on integer rasters.
 
     Parameters
@@ -95,7 +93,7 @@ def raster_vectorize(
 
     out_path : Optional[str], optional
         The path(s) to save the vectorized raster(s) to. Default: None
-    
+
     band : int, optional
         The band to vectorize. Default: 1
 

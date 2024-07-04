@@ -1,6 +1,4 @@
-"""
-Create vector grids from references or hardcode
-"""
+"""Create vector grids from references or hardcode"""
 # Standard library
 import sys; sys.path.append("../../")
 from typing import Union, Optional, List

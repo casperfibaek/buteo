@@ -1,6 +1,4 @@
-"""
-### Functions for changing the datatype of a raster. ###
-"""
+"""### Functions for changing the datatype of a raster. ###"""
 
 # Standard library
 import sys; sys.path.append("../../")
@@ -30,8 +28,7 @@ def _raster_set_datatype(
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
 ) -> str:
-    """
-    Internal function.
+    """Internal function.
 
     For internal functions, only basic testing should be done.
     The input should be checked in the public function calling the internal function.
@@ -113,8 +110,7 @@ def raster_set_datatype(
     suffix: str = "",
     overwrite: bool = True,
 ) -> Union[str, List[str]]:
-    """
-    Converts the datatype of a raster.
+    """Converts the datatype of a raster.
 
     Parameters
     ----------
@@ -198,8 +194,7 @@ def raster_set_datatype(
 def raster_get_datatype(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
 ) -> Union[str, List[str]]:
-    """
-    Gets the datatype of a raster.
+    """Gets the datatype of a raster.
 
     Parameters
     ----------

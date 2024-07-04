@@ -1,5 +1,4 @@
-"""
-### Merge vectors. ###
+"""### Merge vectors. ###
 
 Merges vectors into a single vector file.
 """
@@ -28,8 +27,7 @@ def vector_merge_layers(
     vectors: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
     out_path: Optional[str] = None,
 ) -> str:
-    """
-    Merge vectors to a single geopackage.
+    """Merge vectors to a single geopackage.
 
     Parameters
     ----------
@@ -79,8 +77,7 @@ def vector_merge_features(
     overwrite: bool = True,
     skip_failures: bool = True,
 ) -> str:
-    """
-    Merge vectors to a single geopackage.
+    """Merge vectors to a single geopackage.
 
     Parameters
     ----------
@@ -99,7 +96,7 @@ def vector_merge_features(
 
     overwrite : bool, optional
         If True, the output file is overwritten if it exists, default: True.
-    
+
     skip_failures : bool, optional
         If True, failures are skipped, default: True.
 

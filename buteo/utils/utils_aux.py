@@ -1,6 +1,5 @@
 
-"""
-### Generic utility functions ###
+"""### Generic utility functions ###
 
 Functions that make interacting with the toolbox easier.
 """
@@ -20,8 +19,7 @@ def _print_progress(
     total: int,
     name: str = "Processing",
 ) -> None:
-    """
-    Print a progress bar.
+    """Print a progress bar.
 
     `progress(10, 100, "Processing..")`
 
@@ -77,14 +75,13 @@ def _get_timing(
     before: datetime,
     print_msg: bool = True,
 ) -> str:
-    """
-    Get the time elapsed since the given time.
+    """Get the time elapsed since the given time.
 
     Parameters
     ----------
     before : datetime
         The time to compare to.
-    
+
     print_msg : bool, optional.
         If True, print the message. Default: True.
 
@@ -126,14 +123,13 @@ def _get_folder_size(
     start_path: str = ".",
     rough: bool = True,
 ) -> int:
-    """
-    Get the size of a folder.
+    """Get the size of a folder.
 
     Parameters
     ----------
     start_path : str, optional.
         The path to the folder. Default: ".".
-    
+
     rough : bool, optional.
         If True, return the size in MB. Default: True.
 
@@ -162,10 +158,9 @@ def _get_folder_size(
 def _force_garbage_collect_all(
     delete_functions: bool = True,
 ) -> None:
-    """
-    Clears the memory by deleting all objects in the main namespace.
+    """Clears the memory by deleting all objects in the main namespace.
     Very aggresive. Use with caution.
-    
+
     Parameters
     ----------
     delete_functions : bool, optional.
@@ -194,8 +189,7 @@ def _force_garbage_collect_all(
 
 
 def split_number(num: int, parts: int) -> List[int]:
-    """
-    Splits a number into parts of equal size.
+    """Splits a number into parts of equal size.
     The remainder is distributed starting on the left.
 
     ```python

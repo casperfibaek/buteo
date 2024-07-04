@@ -1,5 +1,4 @@
-"""
-### Reproject rasters. ###
+"""### Reproject rasters. ###
 
 Module to reproject rasters to a target coordinate reference system.
 Can uses references from vector or other raster datasets.
@@ -28,8 +27,7 @@ from buteo.raster import core_raster
 def _find_common_projection(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
 ):
-    """
-    Finds the common projection of a list of rasters.
+    """Finds the common projection of a list of rasters.
 
     If no rasters have the majority of the same projection, the function will return the
     projection of the first raster. If only one raster is provided, the projection of that
@@ -77,7 +75,7 @@ def _raster_reproject(
     add_timestamp: bool = True,
     memory: float = 0.8,
 ) -> Union[str, List[str]]:
-    """ Internal. """
+    """Internal."""
     assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
 
     if out_path is None:
@@ -169,8 +167,7 @@ def raster_reproject(
     suffix: str = "",
     add_uuid: bool = False,
 ) -> Union[str, List[str]]:
-    """
-    Reproject raster(s) to a target coordinate reference system.
+    """Reproject raster(s) to a target coordinate reference system.
 
     Parameters
     ----------

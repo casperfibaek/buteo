@@ -25,8 +25,7 @@ def coregister_images_efolki(
     fill_value: Optional[Union[int, float]] = None,
     resample_alg="nearest",
 ):
-    """
-    Coregister two images using the EFolki method. This method is based on the paper:
+    """Coregister two images using the EFolki method. This method is based on the paper:
 
     "GeFolki: A Generic and Efficient Method for Optical Image Registration"
 
@@ -34,7 +33,7 @@ def coregister_images_efolki(
     ----------
     master : str
         Path to the master image.
-    
+
     slave : str
         Path to the slave image.
 
@@ -133,8 +132,7 @@ def coregister_images_gefolki(
     fill_value: Optional[Union[int, float]] = None,
     resample_alg="nearest",
 ):
-    """
-    Coregister two images using the GeFolki method. This method is based on the paper:
+    """Coregister two images using the GeFolki method. This method is based on the paper:
 
     "GeFolki: A Generic and Efficient Method for Optical Image Registration"
 
@@ -142,7 +140,7 @@ def coregister_images_gefolki(
     ----------
     master : str
         Path to the master image.
-    
+
     slave : str
         Path to the slave image.
 

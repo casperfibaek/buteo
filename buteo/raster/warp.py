@@ -1,5 +1,4 @@
-"""
-### Vectorize rasters. ###
+"""### Vectorize rasters. ###
 
 Module to turn rasters into vector representations.
 """
@@ -38,7 +37,7 @@ def raster_warp(
     clip_geom: Optional[Union[str, ogr.DataSource]]= None,
     overwrite: bool = True,
 ) -> str:
-    """ Warp a raster to a new projection, resolution, extent, or size. """
+    """Warp a raster to a new projection, resolution, extent, or size."""
 
     if out_path is None:
         out_path = utils_path._get_temp_filepath(raster)

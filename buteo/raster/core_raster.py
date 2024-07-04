@@ -1,6 +1,4 @@
-"""
-### Basic functionality for working with rasters. ###
-"""
+"""### Basic functionality for working with rasters. ###"""
 
 # Standard library
 import sys; sys.path.append("../../")
@@ -30,8 +28,7 @@ def _raster_open(
     writeable: bool = False,
     default_projection: Optional[Union[str, int, osr.SpatialReference]] = 4326,
 ) -> gdal.Dataset:
-    """
-    Opens a raster in read or write mode.
+    """Opens a raster in read or write mode.
 
     Parameters
     ----------
@@ -43,7 +40,7 @@ def _raster_open(
 
     default_projection : int, optional
         The default projection to use if the raster has no projection. Default: 4326.
-    
+
     Returns
     -------
     gdal.Dataset
@@ -95,8 +92,7 @@ def _raster_open(
 def _get_first_nodata_value(
     raster: Union[str, gdal.Dataset],
 ) -> Optional[Union[float, int]]:
-    """
-    Gets the first nodata value from a raster.
+    """Gets the first nodata value from a raster.
 
     Parameters
     ----------
@@ -129,8 +125,7 @@ def _get_first_nodata_value(
 def _get_basic_metadata_raster(
     raster: Union[str, gdal.Dataset],
 ) -> Dict[str, Any]:
-    """
-    Get basic metadata from a raster.
+    """Get basic metadata from a raster.
 
     Parameters
     ----------
@@ -252,8 +247,7 @@ def _get_basic_metadata_raster(
 def _get_basic_metadata_raster_list(
     rasters: List[Union[str, gdal.Dataset]],
 ) -> List[Dict[str, Any]]:
-    """
-    Get basic metadata from a list of rasters.
+    """Get basic metadata from a list of rasters.
 
     Parameters
     ----------
@@ -277,8 +271,7 @@ def _get_basic_metadata_raster_list(
 def _check_raster_has_nodata(
     raster: Union[str, gdal.Dataset],
 ) -> bool:
-    """
-    Verifies whether a raster has any nodata values.
+    """Verifies whether a raster has any nodata values.
 
     Parameters
     ----------
@@ -302,8 +295,7 @@ def _check_raster_has_nodata(
 def _check_raster_has_nodata_list(
     rasters: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
 ) -> bool:
-    """
-    Verifies whether a list of rasters have any nodata values.
+    """Verifies whether a list of rasters have any nodata values.
 
     Parameters
     ----------
@@ -330,8 +322,7 @@ def _check_raster_has_nodata_list(
 def _raster_count_bands_list(
     rasters: List[Union[str, gdal.Dataset]]
 ) -> int:
-    """
-    Counts the number of bands in a list of rasters.
+    """Counts the number of bands in a list of rasters.
 
     Parameters
     ----------
@@ -358,8 +349,7 @@ def _raster_count_bands_list(
 def check_rasters_have_same_nodata(
     rasters: List[Union[str, gdal.Dataset]],
 ) -> bool:
-    """
-    Verifies whether a list of rasters have the same nodata values.
+    """Verifies whether a list of rasters have the same nodata values.
 
     Parameters
     ----------
@@ -389,8 +379,7 @@ def check_rasters_intersect(
     raster1: Union[str, gdal.Dataset],
     raster2: Union[str, gdal.Dataset],
 ) -> bool:
-    """
-    Checks if two rasters intersect using their latlong boundaries.
+    """Checks if two rasters intersect using their latlong boundaries.
 
     Parameters
     ----------
@@ -424,8 +413,7 @@ def get_raster_intersection(
     raster1: Union[str, gdal.Dataset],
     raster2: Union[str, gdal.Dataset],
 ) -> ogr.Geometry:
-    """
-    Gets the latlng intersection of two rasters.
+    """Gets the latlng intersection of two rasters.
 
     Parameters
     ----------
@@ -467,8 +455,7 @@ def get_raster_overlap_fraction(
     raster1: Union[str, gdal.Dataset],
     raster2: Union[str, gdal.Dataset],
 ) -> float:
-    """
-    Get the fraction of the overlap between two rasters.
+    """Get the fraction of the overlap between two rasters.
     (e.g. 0.9 for mostly overlapping rasters)
 
     Parameters
@@ -516,8 +503,7 @@ def check_rasters_are_aligned(
     same_bands: bool = False,
     threshold: float = 0.0001,
 ) -> bool:
-    """
-    Verifies whether a list of rasters are aligned.
+    """Verifies whether a list of rasters are aligned.
 
     Parameters
     ----------
@@ -612,8 +598,7 @@ def raster_to_extent(
     latlng: bool = False,
     overwrite: bool = True,
 ) -> str:
-    """
-    Converts a raster to a vector file with the extent as a polygon.
+    """Converts a raster to a vector file with the extent as a polygon.
 
     Parameters
     ----------
@@ -677,8 +662,7 @@ def raster_open(
     writeable: bool = False,
     default_projection: int = 4326,
 ) -> Union[gdal.Dataset, List[gdal.Dataset]]:
-    """
-    Opens a raster in read or write mode.
+    """Opens a raster in read or write mode.
     Supports lists.
 
     Parameters

@@ -1,6 +1,4 @@
-"""
-### Functions to turn rasters into rasters of coordinates. ###
-"""
+"""### Functions to turn rasters into rasters of coordinates. ###"""
 
 # Standard library
 import sys; sys.path.append("../../")
@@ -20,8 +18,7 @@ def raster_create_grid_with_coordinates(
     raster: Union[str, gdal.Dataset],
     latlng: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Create a grid of coordinates from a raster. Format is (x, y, xy).
+    """Create a grid of coordinates from a raster. Format is (x, y, xy).
 
     Parameters
     ----------

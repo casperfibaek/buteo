@@ -1,6 +1,4 @@
-"""
-### Utility functions to work with GDAL and projections ###
-"""
+"""### Utility functions to work with GDAL and projections ###"""
 
 # Standard Library
 import sys; sys.path.append("../../")
@@ -17,8 +15,7 @@ from buteo.utils import utils_gdal
 
 
 def _get_default_projection() -> str:
-    """
-    Get the default projection for a new raster.
+    """Get the default projection for a new raster.
     EPSG:4326 in WKT format.
 
     Returns
@@ -32,8 +29,7 @@ def _get_default_projection() -> str:
 
 
 def _get_default_projection_osr() -> osr.SpatialReference:
-    """
-    Get the default projection for a new raster.
+    """Get the default projection for a new raster.
     EPSG:4326 in osr.SpatialReference format.
 
     Returns
@@ -49,8 +45,7 @@ def _get_default_projection_osr() -> osr.SpatialReference:
     return spatial_ref
 
 def _get_pseudo_mercator_projection() -> str:
-    """
-    Get the pseudo-mercator projection.
+    """Get the pseudo-mercator projection.
     EPSG:3857 in WKT format.
 
     Returns
@@ -63,8 +58,7 @@ def _get_pseudo_mercator_projection() -> str:
     return epsg_3857_wkt
 
 def _get_pseudo_mercator_projection_osr() -> osr.SpatialReference:
-    """
-    Get the pseudo-mercator projection.
+    """Get the pseudo-mercator projection.
     EPSG:3857 in osr.SpatialReference format.
 
     Returns
@@ -81,8 +75,7 @@ def _get_pseudo_mercator_projection_osr() -> osr.SpatialReference:
 
 
 def _get_esri_projection(esri_code: str) -> str:
-    """
-    Imports a projection from an ESRI code.
+    """Imports a projection from an ESRI code.
 
     Parameters
     ----------
@@ -150,8 +143,7 @@ def parse_projection(
     projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     return_wkt: bool = False,
 ) -> Union[osr.SpatialReference, str]:
-    """
-    Parses a gdal, ogr or osr data source and extracts the projection. If
+    """Parses a gdal, ogr or osr data source and extracts the projection. If
     a string or int is passed, it attempts to open it and return the projection as
     an osr.SpatialReference.
 
@@ -240,8 +232,7 @@ def parse_projection(
 
 
 def _projection_is_latlng(projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]) -> bool:
-    """
-    Tests if a projection is in latlng format.
+    """Tests if a projection is in latlng format.
 
     Parameters
     ----------
@@ -265,8 +256,7 @@ def _check_projections_match(
     source1: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     source2: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
 ) -> bool:
-    """
-    Tests if two projection sources have the same projection.
+    """Tests if two projection sources have the same projection.
 
     Parameters
     ----------
@@ -296,8 +286,7 @@ def _check_projections_match(
 def _check_projections_match_list(
     list_of_projection_sources: List[Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]],
 ) -> bool:
-    """
-    Tests if a list of projection sources all have the same projection.
+    """Tests if a list of projection sources all have the same projection.
 
     Parameters
     ----------
@@ -334,14 +323,13 @@ def _check_projections_match_list(
 def _get_projection_from_raster(
     raster: Union[str, gdal.Dataset],
 ) -> osr.SpatialReference:
-    """
-    Get the projection from a raster.
+    """Get the projection from a raster.
 
     Parameters
     ----------
     raster : Union[str, gdal.Dataset]
         A raster or raster path.
-    
+
     Returns
     -------
     osr.SpatialReference:
@@ -369,8 +357,7 @@ def _get_projection_from_raster(
 def _get_projection_from_vector(
     vector: Union[str, ogr.DataSource],
 ) -> osr.SpatialReference:
-    """
-    Get the projection from a vector.
+    """Get the projection from a vector.
 
     Parameters
     ----------
@@ -404,14 +391,13 @@ def _get_projection_from_vector(
 def _get_projection_from_dataset(
     dataset: Union[str, gdal.Dataset, ogr.DataSource],
 ) -> osr.SpatialReference:
-    """
-    Get the projection from a dataset.
+    """Get the projection from a dataset.
 
     Parameters
     ----------
     dataset : Union[str, gdal.Dataset, ogr.DataSource]
         A dataset or dataset path.
-    
+
     Returns
     -------
     osr.SpatialReference:
@@ -447,8 +433,7 @@ def reproject_bbox(
     source_projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     target_projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
 ) -> List[Union[int, float]]:
-    """
-    Reprojects an OGR formatted bbox.
+    """Reprojects an OGR formatted bbox.
     OGR formatted bboxes are in the format `[x_min, x_max, y_min, y_max]`.
 
     Parameters
@@ -543,8 +528,7 @@ def _reproject_point(
     source_projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     target_projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
 ) -> List[Union[int, float]]:
-    """
-    Reprojects a point.
+    """Reprojects a point.
 
     Parameters
     ----------
@@ -592,8 +576,7 @@ def _get_utm_zone_from_latlng(
     latlng: List[Union[int, float]],
     return_epsg: bool = False,
 ) -> str:
-    """
-    Get the UTM ZONE from a latlng list.
+    """Get the UTM ZONE from a latlng list.
 
     Parameters
     ----------
@@ -653,8 +636,7 @@ def _get_utm_zone_from_latlng(
 def _reproject_latlng_point_to_utm(
     latlng: List[Union[int, float]],
 ) -> List[Union[int, float]]:
-    """
-    Converts a latlng point into an UTM point.
+    """Converts a latlng point into an UTM point.
     Takes point in [lat, lng], returns [utm_x, utm_y].
 
     Parameters
@@ -691,8 +673,7 @@ def set_projection(
     pixel_size_x = 1.0,
     pixel_size_y = 1.0,
 ) -> None:
-    """
-    Sets the projection of a dataset.
+    """Sets the projection of a dataset.
 
     Parameters
     ----------

@@ -1,5 +1,4 @@
-"""
-### Clip vectors to other geometries ###
+"""### Clip vectors to other geometries ###
 
 Clip vector files with other geometries. Can come from rasters or vectors.
 """
@@ -24,7 +23,7 @@ def _vector_buffer(
     in_place: bool = False,
     force_multipolygon: bool = True,
 ) -> str:
-    """ Internal. """
+    """Internal."""
     assert isinstance(vector, (str, ogr.DataSource)), "Invalid vector input."
     assert isinstance(distance, (int, float, str)), "Invalid distance input."
     assert isinstance(out_path, (str, type(None))), "Invalid output path input."
@@ -142,8 +141,7 @@ def vector_buffer(
     in_place: bool = False,
     overwrite: bool = True,
 ) -> Union[str, List[str]]:
-    """
-    Buffers a vector with a fixed distance or an attribute.
+    """Buffers a vector with a fixed distance or an attribute.
 
     Parameters
     ----------
@@ -167,7 +165,7 @@ def vector_buffer(
 
     add_timestamp : bool, optional
         Add timestamp to the output path. Default: False
-    
+
     in_place : bool, optional
         If True, overwrites the input vector. Default: False
 

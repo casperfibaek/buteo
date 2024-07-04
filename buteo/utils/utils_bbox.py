@@ -1,5 +1,4 @@
-"""
-### Bounding box utility functions ###
+"""### Bounding box utility functions ###
 
 Various utility functions to work with bounding boxes and gdal.
 
@@ -28,8 +27,7 @@ from buteo.utils import utils_base, utils_projection, utils_path, utils_gdal
 
 
 def _check_is_valid_bbox(bbox_ogr: List[Union[int, float]]) -> bool:
-    """
-    Checks if a bbox is valid.
+    """Checks if a bbox is valid.
 
     A valid ogr formatted bbox has the form:
         `[x_min, x_max, y_min, y_max]`
@@ -67,8 +65,7 @@ def _check_is_valid_bbox(bbox_ogr: List[Union[int, float]]) -> bool:
 
 
 def _check_is_valid_bbox_latlng(bbox_ogr_latlng: List[Union[int, float]]) -> bool:
-    """
-    Checks if a bbox is valid and latlng.
+    """Checks if a bbox is valid and latlng.
 
     A valid ogr formatted bbox has the form:
         `[x_min, x_max, y_min, y_max]`
@@ -78,7 +75,7 @@ def _check_is_valid_bbox_latlng(bbox_ogr_latlng: List[Union[int, float]]) -> boo
     bbox_ogr_latlng : list
         An OGR formatted bbox.
         `[x_min, x_max, y_min, y_max]`
-        
+
     Returns
     -------
     bool
@@ -95,8 +92,7 @@ def _check_is_valid_bbox_latlng(bbox_ogr_latlng: List[Union[int, float]]) -> boo
 
 
 def _check_is_valid_geotransform(geotransform: List[Union[int, float]]) -> bool:
-    """
-    Checks if a geotransform is valid.
+    """Checks if a geotransform is valid.
 
     A valid geotransform has the form:
     `[x_min, pixel_width, row_skew, y_max, column_skew, pixel_height]`
@@ -130,8 +126,7 @@ def _get_pixel_offsets(
     geotransform: List[Union[int, float]],
     bbox_ogr: List[Union[int, float]],
 ):
-    """
-    Get the pixels offsets for a bbox and a geotransform.
+    """Get the pixels offsets for a bbox and a geotransform.
 
     Parameters
     ----------
@@ -176,8 +171,7 @@ def _get_bbox_from_geotransform(
     raster_x_size: int,
     raster_y_size: int,
 ) -> List[Union[int, float]]:
-    """
-    Get an OGR bounding box from a geotransform and raster sizes.
+    """Get an OGR bounding box from a geotransform and raster sizes.
 
     Parameters
     ----------
@@ -211,8 +205,7 @@ def _get_bbox_from_geotransform(
 def _get_bbox_from_raster(
     raster_dataframe: gdal.Dataset,
 ) -> List[Union[int, float]]:
-    """
-    Gets an OGR bounding box from a GDAL raster dataframe.
+    """Gets an OGR bounding box from a GDAL raster dataframe.
     The bounding box is in the same projection as the raster.
 
     Parameters
@@ -241,8 +234,7 @@ def _get_bbox_from_raster(
 def _get_bbox_from_vector(
     vector_dataframe: ogr.DataSource,
 ) -> List[Union[int, float]]:
-    """
-    Gets an OGR bounding box from an OGR dataframe.
+    """Gets an OGR bounding box from an OGR dataframe.
     The bounding box is in the same projection as the vector.
 
     Parameters
@@ -295,8 +287,7 @@ def _get_bbox_from_vector(
 def _get_bbox_from_vector_layer(
     vector_layer: ogr.Layer,
 ) -> List[Union[int, float]]:
-    """
-    Gets an OGR bounding box from an OGR dataframe layer.
+    """Gets an OGR bounding box from an OGR dataframe layer.
 
     Parameters
     ----------
@@ -320,8 +311,7 @@ def _get_bbox_from_vector_layer(
 def get_bbox_from_dataset(
     dataset: Union[str, gdal.Dataset, ogr.DataSource],
 ) -> List[Union[int, float]]:
-    """
-    Get the bbox from a dataset.
+    """Get the bbox from a dataset.
     The bounding box is in the same projection as the dataset.
     If you want the Bounding Box in WGS84, use `get_bbox_from_dataset_wgs84`.
 
@@ -363,15 +353,14 @@ def _get_sub_geotransform(
     geotransform: List[Union[int, float]],
     bbox_ogr: List[Union[int, float]],
 ) -> Dict:
-    """
-    Create a GeoTransform and the raster sizes for an OGR formatted bbox.
+    """Create a GeoTransform and the raster sizes for an OGR formatted bbox.
 
     Parameters
     ----------
     geotransform : list
         A GDAL geotransform.
         `[top_left_x, pixel_width, rotation_x, top_left_y, rotation_y, pixel_height]`
-    
+
     bbox_ogr : list
         An OGR formatted bbox.
         `[x_min, x_max, y_min, y_max]`
@@ -405,8 +394,7 @@ def _get_sub_geotransform(
 def _get_geom_from_bbox(
     bbox_ogr: List[Union[int, float]],
 ) -> ogr.Geometry:
-    """
-    Convert an OGR bounding box to ogr.Geometry.
+    """Convert an OGR bounding box to ogr.Geometry.
     `[x_min, x_max, y_min, y_max] -> ogr.Geometry`
 
     Parameters
@@ -441,8 +429,7 @@ def _get_geom_from_bbox(
 
 
 def _get_bbox_from_geom(geom: ogr.Geometry) -> List[Union[int, float]]:
-    """
-    Convert an ogr.Geometry to an OGR bounding box.
+    """Convert an ogr.Geometry to an OGR bounding box.
     `ogr.Geometry -> [x_min, x_max, y_min, y_max]`
 
     Parameters
@@ -469,8 +456,7 @@ def _get_geotransform_from_bbox(
     raster_x_size: int,
     raster_y_size: int,
 ) -> List[Union[int, float]]:
-    """
-    Convert an OGR formatted bounding box to a GDAL GeoTransform.
+    """Convert an OGR formatted bounding box to a GDAL GeoTransform.
     `[x_min, x_max, y_min, y_max] -> [x_min, pixel_width, x_skew, y_max, y_skew, pixel_height]`
 
     Parameters
@@ -478,7 +464,7 @@ def _get_geotransform_from_bbox(
     bbox_ogr : list
         An OGR formatted bbox.
         `[x_min, x_max, y_min, y_max]`
-    
+
     raster_x_size : int
         The number of pixels in the x direction.
 
@@ -507,8 +493,7 @@ def _get_geotransform_from_bbox(
 def _get_gdal_bbox_from_ogr_bbox(
     bbox_ogr: List[Union[int, float]],
 ) -> List[Union[int, float]]:
-    """
-    Converts an OGR formatted bbox to a GDAL formatted one.
+    """Converts an OGR formatted bbox to a GDAL formatted one.
     `[x_min, x_max, y_min, y_max] -> [x_min, y_min, x_max, y_max]`
 
     Parameters
@@ -536,8 +521,7 @@ def _get_gdal_bbox_from_ogr_bbox(
 def _get_ogr_bbox_from_gdal_bbox(
     bbox_gdal: List[Union[int, float]],
 ) -> List[Union[int, float]]:
-    """
-    Converts a GDAL formatted bbox to an OGR formatted one.
+    """Converts a GDAL formatted bbox to an OGR formatted one.
     `[x_min, y_min, x_max, y_max] -> [x_min, x_max, y_min, y_max]`
 
     Parameters
@@ -565,8 +549,7 @@ def _get_ogr_bbox_from_gdal_bbox(
 def _get_wkt_from_bbox(
     bbox_ogr: List[Union[int, float]],
 ) -> str:
-    """
-    Converts an OGR formatted bbox to a WKT string.
+    """Converts an OGR formatted bbox to a WKT string.
     `[x_min, x_max, y_min, y_max] -> WKT`
 
     Parameters
@@ -593,8 +576,7 @@ def _get_wkt_from_bbox(
 def _get_geojson_from_bbox(
     bbox_ogr: List[Union[int, float]],
 ) -> Dict[str, Union[str, List]]:
-    """
-    Converts an OGR formatted bbox to a GeoJson dictionary.
+    """Converts an OGR formatted bbox to a GeoJson dictionary.
     `[x_min, x_max, y_min, y_max] -> GeoJson`
 
     Parameters
@@ -602,7 +584,7 @@ def _get_geojson_from_bbox(
     bbox_ogr : list
         An OGR formatted bbox.
         `[x_min, x_max, y_min, y_max]`
-    
+
     Returns
     -------
     dict
@@ -634,8 +616,7 @@ def _get_vector_from_bbox(
     bbox_ogr: List[Union[int, float]],
     projection_osr: osr.SpatialReference,
 ) -> ogr.DataSource:
-    """
-    Converts an OGR formatted bbox to an in-memory vector.
+    """Converts an OGR formatted bbox to an in-memory vector.
     _Vectors are stored in /vsimem/ as .gpkg files.
     **OBS**: Layers should be manually cleared when no longer used.
 
@@ -644,7 +625,7 @@ def _get_vector_from_bbox(
     bbox_ogr : list
         An OGR formatted bbox.
         `[x_min, x_max, y_min, y_max]`
-    
+
     projection_osr : osr.SpatialReference
         The projection of the vector.
 
@@ -683,8 +664,7 @@ def _check_bboxes_intersect(
     bbox1_ogr: List[Union[int, float]],
     bbox2_ogr: List[Union[int, float]],
 ) -> bool:
-    """
-    Checks if two OGR formatted bboxes intersect.
+    """Checks if two OGR formatted bboxes intersect.
 
     Parameters
     ----------
@@ -730,8 +710,7 @@ def _check_bboxes_within(
     bbox1_ogr: List[Union[int, float]],
     bbox2_ogr: List[Union[int, float]],
 ) -> bool:
-    """
-    Checks if one OGR formatted bbox is within another.
+    """Checks if one OGR formatted bbox is within another.
 
     Parameters
     ----------
@@ -770,19 +749,18 @@ def _get_intersection_bboxes(
     bbox1_ogr: List[Union[int, float]],
     bbox2_ogr: List[Union[int, float]],
 ) -> List[Union[int, float]]:
-    """
-    Get the intersection of two OGR formatted bboxes.
+    """Get the intersection of two OGR formatted bboxes.
 
     Parameters
     ----------
     bbox1_ogr : list
         An OGR formatted bbox.
         `[x_min, x_max, y_min, y_max]`
-    
+
     bbox2_ogr : list
         An OGR formatted bbox.
         `[x_min, x_max, y_min, y_max]`
-    
+
     Returns
     -------
     list
@@ -807,8 +785,7 @@ def _get_union_bboxes(
     bbox1_ogr: List[Union[int, float]],
     bbox2_ogr: List[Union[int, float]],
 ) -> List[Union[int, float]]:
-    """
-    Get the union of two OGR formatted bboxes.
+    """Get the union of two OGR formatted bboxes.
 
     Parameters
     ----------
@@ -847,8 +824,7 @@ def _get_aligned_bbox_to_pixel_size(
     pixel_width: Union[int, float],
     pixel_height: Union[int, float],
 ) -> List[Union[int, float]]:
-    """
-    Aligns two OGR formatted bboxes to a pixel size. Output is an augmented version
+    """Aligns two OGR formatted bboxes to a pixel size. Output is an augmented version
     of bbox2.
 
     Parameters
@@ -856,14 +832,14 @@ def _get_aligned_bbox_to_pixel_size(
     bbox1_ogr : list
         An OGR formatted bbox.
         `[x_min, x_max, y_min, y_max]`
-    
+
     bbox2_ogr : list
         An OGR formatted bbox.
         `[x_min, x_max, y_min, y_max]`
 
     pixel_width : int or float
         The width of the pixel.
-    
+
     pixel_height : int or float
         The height of the pixel.
 
@@ -897,10 +873,9 @@ def _get_bounds_from_bbox(
     projection_osr: osr.SpatialReference,
     wkt: bool = True,
 ) -> ogr.Geometry:
-    """ 
-    This is an internal utility function for metadata generation. It takes a standard
+    """This is an internal utility function for metadata generation. It takes a standard
     OGR bounding box and the geometry of the source dataset in latlng and returns a
-    geometry in the source dataset's projection. This is important as, as when 
+    geometry in the source dataset's projection. This is important as, as when
     reprojecting to latlng, you might get a skewed bounding box. This function returns
     the skewed bounds in latlng, which is what you want for overlap checks across
     projections.
@@ -990,8 +965,7 @@ def _get_bounds_from_bbox(
 def _get_utm_zone_from_bbox(
     bbox_ogr_latlng: List[Union[int, float]],
 ) -> osr.SpatialReference:
-    """
-    Get the UTM zone from an OGR formatted bbox.
+    """Get the UTM zone from an OGR formatted bbox.
 
     Parameters
     ----------
@@ -1019,8 +993,7 @@ def _get_utm_zone_from_bbox(
 def _get_utm_zone_from_dataset(
     dataset: Union[str, gdal.Dataset, ogr.DataSource],
 ) -> str:
-    """
-    Get the UTM zone from a GDAL dataset.
+    """Get the UTM zone from a GDAL dataset.
 
     Parameters
     ----------
@@ -1049,8 +1022,7 @@ def _get_utm_zone_from_dataset(
 def _get_utm_zone_from_dataset_list(
     datasets: List[Union[str, gdal.Dataset, ogr.DataSource]],
 ) -> str:
-    """
-    Get the UTM zone from a list of GDAL datasets.
+    """Get the UTM zone from a list of GDAL datasets.
 
     Parameters
     ----------
@@ -1085,8 +1057,7 @@ def _additional_bboxes(
     bbox_ogr: List[Union[int, float]],
     projection_osr: osr.SpatialReference,
 ) -> Dict[str, Any]:
-    """
-    This is an internal utility function for metadata generation. It takes a standard
+    """This is an internal utility function for metadata generation. It takes a standard
     OGR bounding box and returns a list of variations of bounding boxes.
 
     Parameters
@@ -1186,8 +1157,7 @@ def _get_vector_from_geom(
     add_timestamp: Optional[bool] = False,
     projection_osr: Optional[osr.SpatialReference] = None,
 ) -> ogr.DataSource:
-    """
-    Converts a geometry to a vector in memory.
+    """Converts a geometry to a vector in memory.
 
     Parameters
     ----------

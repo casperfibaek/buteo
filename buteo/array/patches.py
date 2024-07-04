@@ -1,4 +1,4 @@
-""" Create patches from rasters, used for machine learnign applications. """
+"""Create patches from rasters, used for machine learnign applications."""
 
 import sys; sys.path.append("../../")
 from typing import Union, List, Tuple, Optional, Callable
@@ -13,8 +13,7 @@ def _get_kernel_weights(
     edge_distance: int = 5,
     epsilon: float = 1e-7,
 ) -> np.ndarray:
-    """
-    Weight a kernel according to how close to an edge a given pixel is.
+    """Weight a kernel according to how close to an edge a given pixel is.
 
     Parameters
     ----------
@@ -71,15 +70,14 @@ def _merge_weighted_median(
     arr: np.ndarray,
     arr_weight: np.ndarray,
 ) -> np.ndarray:
-    """
-    Calculate the weighted median of a multi-dimensional array along the first axis.
+    """Calculate the weighted median of a multi-dimensional array along the first axis.
     This is the order (number_of_overlaps, tile_size, tile_size, number_of_bands)
-    
+
     Parameters
     ----------
     arr : np.ndarray
         The input array.
-    
+
     arr_weight : np.ndarray
         The weight array with the same shape as the input array.
 
@@ -130,9 +128,8 @@ def _merge_weighted_average(
     arr: np.ndarray,
     arr_weight: np.ndarray,
 ) -> np.ndarray:
-    """
-    Calculate the weighted average of a multi-dimensional array along the last axis.
-    
+    """Calculate the weighted average of a multi-dimensional array along the last axis.
+
     Parameters
     ----------
     arr : np.ndarray
@@ -181,17 +178,16 @@ def _merge_weighted_minmax(
     arr_weight: np.ndarray,
     method="max",
 ) -> np.ndarray:
-    """
-    Calculate the weighted min or max of a multi-dimensional array along the last axis.
-    
+    """Calculate the weighted min or max of a multi-dimensional array along the last axis.
+
     Parameters
     ----------
     arr : np.ndarray
         The input array.
-    
+
     arr_weight : np.ndarray
         The weight array with the same shape as the input array.
-    
+
     method : str, optional
         The method to use. Either "min" or "max". Default: "max"
 
@@ -245,12 +241,11 @@ def _merge_weighted_olympic(
     arr_weight: np.ndarray,
     level: int = 1,
 ) -> np.ndarray:
-    """
-    Calculate the olympic value of a multi-dimensional array along the last axis.
+    """Calculate the olympic value of a multi-dimensional array along the last axis.
     Using olympic sort, the highest and lowest values are removed from the calculation.
     If level is 1, then the highest and loweest values are removed. If the level is 2,
     then the 2 highest and lowest values are removed, and so on.
-    
+
     Parameters
     ----------
     arr : np.ndarray
@@ -258,7 +253,7 @@ def _merge_weighted_olympic(
 
     arr_weight : np.ndarray
         The weight array with the same shape as the input array.
-    
+
     level : int, optional
         The level of olympic sort to use. Default: 1
 
@@ -312,9 +307,8 @@ def _merge_weighted_mad(
     arr_weight: np.ndarray,
     mad_dist: float = 2.0,
 ) -> np.ndarray:
-    """
-    Merge an array of predictions using the MAD-merge methodology.
-    
+    """Merge an array of predictions using the MAD-merge methodology.
+
     Parameters
     ----------
     arr : np.ndarray
@@ -392,9 +386,8 @@ def _merge_weighted_mad(
 
 @jit(nopython=True, nogil=True)
 def _unique_values(arr: np.ndarray) -> np.ndarray:
-    """
-    Find the unique values in a 1D NumPy array.
-    
+    """Find the unique values in a 1D NumPy array.
+
     Parameters
     ----------
     arr : np.ndarray
@@ -420,9 +413,8 @@ def _merge_weighted_mode(
     arr: np.ndarray,
     arr_weight: np.ndarray,
 ) -> np.ndarray:
-    """
-    Calculate the weighted mode of a multi-dimensional array along the last axis.
-    
+    """Calculate the weighted mode of a multi-dimensional array along the last axis.
+
     Parameters
     ----------
     arr : np.ndarray
@@ -478,8 +470,7 @@ def _get_offsets(
     tile_size: int,
     n_offsets: int,
 ):
-    """
-    Generate a list of offset pairs for a given tile size and number of offsets in y and x dimensions.
+    """Generate a list of offset pairs for a given tile size and number of offsets in y and x dimensions.
 
     Parameters
     ----------
@@ -512,8 +503,7 @@ def _borders_are_necessary(
     tile_size: int,
     offset: List[int],
 ) -> Tuple[bool, bool]:
-    """
-    Checks if borders are necessary for the given array.
+    """Checks if borders are necessary for the given array.
     Width and height are returned as a tuple.
     order is (y, x).
 
@@ -524,10 +514,10 @@ def _borders_are_necessary(
 
     tile_size : int
         The size of each tile.
-    
+
     offset : List[int]
         The offset to be used.
-    
+
     Returns
     -------
     Tuple[bool, bool]
@@ -556,15 +546,14 @@ def _borders_are_necessary_list(
     tile_size: int,
     offsets: List[List[int]],
 ) -> Tuple[bool, bool]:
-    """
-    Checks if borders are necessary for the given array.
+    """Checks if borders are necessary for the given array.
     Width and height are returned as a tuple.
 
     Parameters
     ----------
     arr : np.ndarray
         The array to be checked.
-    
+
     tile_size : int
         The size of each tile.
 
@@ -600,8 +589,7 @@ def _array_to_patches_single(
     tile_size: int,
     offset: Optional[Union[List[int], Tuple[int, int]]] = None,
 ) -> np.ndarray:
-    """
-    Generate patches from an array. Offsets in (y, x) order.
+    """Generate patches from an array. Offsets in (y, x) order.
 
     Parameters
     ----------
@@ -610,10 +598,10 @@ def _array_to_patches_single(
 
     tile_size : int
         The size of each tile/patch, e.g., 64 for 64x64 tiles.
-    
+
     offset : Optional[Union[List[int], Tuple[int, int]]], optional
         The y and x offset values for the input array. If not provided, defaults to [0, 0].
-    
+
     Returns
     -------
     np.ndarray
@@ -664,8 +652,7 @@ def _patches_to_array_single(
     offset: Optional[Union[List, Tuple]] = None,
     background_value: Optional[Union[int, float]] = None,
 ) -> np.ndarray:
-    """
-    Reconstitute an array from patches.
+    """Reconstitute an array from patches.
 
     Given an array of patches, this function stitches them back together
     to form the original array of the specified shape.
@@ -754,7 +741,7 @@ def _patches_to_weights(
     patches: np.ndarray,
     edge_distance: int,
 ) -> np.ndarray:
-    """ Calculate the weights for each patch based on the distance to the edge. """
+    """Calculate the weights for each patch based on the distance to the edge."""
     assert len(patches.shape) == 4, "Patches must be a 4D array"
     assert patches.shape[1] == patches.shape[2], "Patches must be square"
 
@@ -774,8 +761,7 @@ def array_to_patches(
     border_check: bool = True,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Generate patches from an array based on the specified parameters.
+    """Generate patches from an array based on the specified parameters.
 
     Parameters
     ----------
@@ -857,9 +843,8 @@ def predict_array(
     batch_size: int = 1,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Generate patches from an array. Also outputs the offsets and the shapes of the offsets. Only
-    suppors the prediction of single values in the rasters/arrays. 
+    """Generate patches from an array. Also outputs the offsets and the shapes of the offsets. Only
+    suppors the prediction of single values in the rasters/arrays.
 
     Parameters
     ----------
@@ -869,7 +854,7 @@ def predict_array(
     callback : Callable[[np.ndarray], np.ndarray]
         The callback function to be used for prediction. The callback function
         must take a numpy array as input and return a numpy array as output.
-    
+
     tile_size : int, optional
         The size of each tile/patch, e.g., 64 for 64x64 tiles. Default: 64
 
@@ -882,7 +867,7 @@ def predict_array(
     merge_method : str, optional
         The method to use for merging the patches. Valid methods
         are ['mad', 'median', 'mean', 'mode', "min", "max", "olympic1", "olympic2"]. Default: "median"
-    
+
     edge_weighted : bool, optional
         Whether or not to weight the edges patches of patches less than the central parts. Default: True
 
@@ -995,8 +980,7 @@ def predict_array_pixel(
     arr: np.ndarray,
     callback: Callable[[np.ndarray], np.ndarray],
 ) -> np.ndarray:
-    """ 
-    Predicts an array pixel by pixel.
+    """Predicts an array pixel by pixel.
 
     Args:
         arr (np.ndarray): A numpy array to be divided into patches.

@@ -1,6 +1,4 @@
-"""
-### Functions for changing the datatype of a raster. ###
-"""
+"""### Functions for changing the datatype of a raster. ###"""
 
 # Standard library
 import sys; sys.path.append("../../")
@@ -29,8 +27,7 @@ def raster_stack_list(
     dtype: Optional[str] = None,
     creation_options: Optional[List[str]] = None,
 ) -> Union[str, List[str]]:
-    """
-    Stacks a list of aligned rasters into a single raster file.
+    """Stacks a list of aligned rasters into a single raster file.
 
     Parameters
     ----------
@@ -107,8 +104,7 @@ def raster_stack_vrt_list(
     reference: Optional[str] = None,
     creation_options: Optional[List[str]] = None,
 ) -> str:
-    """
-    Create a virtual raster (.vrt) by stacking a list of input rasters.
+    """Create a virtual raster (.vrt) by stacking a list of input rasters.
 
     The function accepts a list of rasters and creates a virtual raster stack
     by combining them. The rasters can be stacked by keeping their bands separate,

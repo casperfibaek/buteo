@@ -1,5 +1,4 @@
-"""
-### Calculate intersections ###
+"""### Calculate intersections ###
 
 Calculate and tests the intersections between geometries.
 """
@@ -34,7 +33,7 @@ def _vector_intersect(
     overwrite: bool = True,
     return_bool: bool = False,
 ) -> Union[str, bool]:
-    """ Internal. """
+    """Internal."""
     assert isinstance(vector, ogr.DataSource), f"Invalid input vector: {vector}"
     assert utils_gdal._check_is_vector(vector), f"Invalid input vector: {vector}"
 
@@ -97,8 +96,7 @@ def vector_intersect(
     add_uuid: bool = False,
     allow_lists: bool = True,
 ) -> Union[str, List[str]]:
-    """
-    Clips a vector to a geometry.
+    """Clips a vector to a geometry.
 
     Parameters
     ----------

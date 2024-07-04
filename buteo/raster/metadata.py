@@ -1,6 +1,4 @@
-"""
-### Read metadata from rasters ###
-"""
+"""### Read metadata from rasters ###"""
 # Standard library
 import sys; sys.path.append("../../")
 from typing import List, Union
@@ -19,7 +17,7 @@ from buteo.raster.core_raster import _get_basic_metadata_raster
 def _raster_to_metadata(
     raster: Union[str, gdal.Dataset],
 ) -> dict:
-    """ Internal. """
+    """Internal."""
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
     metadata = _get_basic_metadata_raster(raster)
@@ -30,8 +28,7 @@ def _raster_to_metadata(
 def raster_to_metadata(
     raster: Union[str, gdal.Dataset, List[str], List[gdal.Dataset]],
 ) -> Union[dict, List[dict]]:
-    """
-    Reads metadata from a raster dataset or a list of raster datasets, and returns a dictionary or a list of dictionaries
+    """Reads metadata from a raster dataset or a list of raster datasets, and returns a dictionary or a list of dictionaries
     containing metadata information for each raster.
 
     Bounding boxes are in the format `[xmin, xmax, ymin, ymax]`. These are the keys in the dictionary:
@@ -43,7 +40,7 @@ def raster_to_metadata(
     - `ext` (str): Extension of the raster.
     - `in_memory` (bool): Whether the raster is in memory or not.
     - `driver` (str): Driver of the raster.
-    - `projection_osr` (osr.SpatialReference): Projection of the raster as an osr.SpatialReference object.	
+    - `projection_osr` (osr.SpatialReference): Projection of the raster as an osr.SpatialReference object.
     - `projection_wkt` (str): Projection of the raster as a WKT string.
     - `geotransform` (tuple): Geotransform of the raster.
     - `size` (tuple): Size of the raster in pixels.

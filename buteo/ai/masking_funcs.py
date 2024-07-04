@@ -1,5 +1,4 @@
-"""
-This module contains functions for augmenting images that are
+"""This module contains functions for augmenting images that are
 suited to remote sensing imagery.
 """
 # Standard library
@@ -42,9 +41,7 @@ def _get_matched_noise_2d_binary(
     val_max: float = 1.0,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Matches the noise of an array to the noise of another array.
-    """
+    """Matches the noise of an array to the noise of another array."""
     size = (1, arr.shape[0], arr.shape[1])
     if channel_last:
         size = (arr.shape[0], arr.shape[1], 1)
@@ -80,9 +77,7 @@ def _get_matched_noise_3d(
     val_max: float = 1.0,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Matches the noise of an array to the noise of another array.
-    """
+    """Matches the noise of an array to the noise of another array."""
     noise = np.random.uniform(val_min, val_max, size=arr.shape).astype(np.float32)
 
     return noise
@@ -95,9 +90,7 @@ def _get_matched_noise_3d_binary(
     val_max: float = 1.0,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Matches the noise of an array to the noise of another array.
-    """
+    """Matches the noise of an array to the noise of another array."""
     binary_noise = np.random.uniform(0.0, 1.0, size=arr.shape) > 0.5
     noise = arr.copy()
 
@@ -129,9 +122,8 @@ def _get_blurred_image(
     X: np.ndarray,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Blurs an image at random. Input should be (height, width, channels) or (channels, height, width).
-    
+    """Blurs an image at random. Input should be (height, width, channels) or (channels, height, width).
+
     NOTE: Beware of datatypes. Consider casting to float32 before adding noise.
 
     Parameters
@@ -144,7 +136,7 @@ def _get_blurred_image(
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
-    
+
     inplace : bool, optional
         Whether to perform the rotation in-place, default: False.
 
@@ -195,8 +187,7 @@ def mask_pixels_2d(
 
 
 class MaskPixels2D():
-    """
-    Masks random pixels from an image. The same pixels are masked on each channel.
+    """Masks random pixels from an image. The same pixels are masked on each channel.
 
     Parameters
     ----------
@@ -233,8 +224,7 @@ def mask_pixels_3d(
 
 
 class MaskPixels3D():
-    """
-    Masks random pixels from an image.
+    """Masks random pixels from an image.
 
     Parameters
     ----------
@@ -327,8 +317,7 @@ def mask_lines_2d(
 
 
 class MaskLines2D():
-    """
-    Masks random lines from an image. The same pixels are masked on each channel.
+    """Masks random lines from an image. The same pixels are masked on each channel.
 
     Parameters
     ----------
@@ -394,8 +383,7 @@ def mask_lines_3d(
 
 
 class MaskLines3D():
-    """
-    Masks random lines from an image.
+    """Masks random lines from an image.
 
     Parameters
     ----------
@@ -511,8 +499,7 @@ def mask_lines_2d_bezier(
 
 
 class MaskLines2DBezier():
-    """
-    Masks random bezier lines from an image.
+    """Masks random bezier lines from an image.
 
     Parameters
     ----------
@@ -600,8 +587,7 @@ def mask_lines_3d_bezier(
 
 
 class MaskLines3DBezier():
-    """
-    Masks random bezier lines from an image.
+    """Masks random bezier lines from an image.
 
     Parameters
     ----------
@@ -703,8 +689,7 @@ def mask_elipse_2d(
 
 
 class MaskElipse2D():
-    """
-    Masks a random elipse within the image.
+    """Masks a random elipse within the image.
 
     Parameters
     ----------
@@ -820,8 +805,7 @@ def mask_elipse_3d(
 
 
 class MaskElipse3D():
-    """
-    Masks a random elipse within the image.
+    """Masks a random elipse within the image.
 
     Parameters
     ----------
@@ -923,8 +907,7 @@ def mask_rectangle_2d(
 
 
 class MaskRectangle2D():
-    """
-    Masks a random rectangle from an image. The same pixels are masked on each channel.
+    """Masks a random rectangle from an image. The same pixels are masked on each channel.
 
     Parameters
     ----------
@@ -1039,8 +1022,7 @@ def mask_rectangle_3d(
 
 
 class MaskRectangle3D():
-    """
-    Masks a random rectangle from an image.
+    """Masks a random rectangle from an image.
 
     Parameters
     ----------
@@ -1134,8 +1116,7 @@ def mask_channels(
 
 
 class MaskChannels():
-    """
-    Masks random channels from an image.
+    """Masks random channels from an image.
 
     Parameters
     ----------
@@ -1180,8 +1161,7 @@ def mask_replace_2d(
     channel_last: bool = True,
     inplace: bool = False
 ):
-    """
-    Replaces pixels in an array with values using a mask and a method.
+    """Replaces pixels in an array with values using a mask and a method.
     NOTE: The mask should have the same shape as the array and
     contain values either 0 for masked and 1 for valid.
 
@@ -1274,8 +1254,7 @@ def mask_replace_3d(
     channel_last: bool = True,
     inplace: bool = False
 ):
-    """
-    Replaces pixels in an array with values using a mask and a method.
+    """Replaces pixels in an array with values using a mask and a method.
     NOTE: The mask should have the same shape as the array and
     contain values either 0 for masked and 1 for valid.
 

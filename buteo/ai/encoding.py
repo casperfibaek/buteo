@@ -1,6 +1,4 @@
-"""
-### Encoding spatial values  ###
-"""
+"""### Encoding spatial values  ###"""
 # Standard library
 from typing import Tuple, Union, List
 # External
@@ -11,8 +9,7 @@ from numba import jit, prange
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def encode_latitude(lat: float) -> np.ndarray:
-    """
-    Encode a latitude value into a two-element numpy array of sine and cosine components.
+    """Encode a latitude value into a two-element numpy array of sine and cosine components.
 
     Parameters
     ----------
@@ -36,8 +33,7 @@ def encode_latitude(lat: float) -> np.ndarray:
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def encode_longitude(lng: float) -> np.ndarray:
-    """
-    Encode a longitude value into a two-element numpy array of sine and cosine components.
+    """Encode a longitude value into a two-element numpy array of sine and cosine components.
 
     Parameters
     ----------
@@ -61,8 +57,7 @@ def encode_longitude(lng: float) -> np.ndarray:
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def encode_latlng(latlng: Union[np.ndarray, Tuple[float, float], List[float]]) -> np.ndarray:
-    """
-    Encode a latitude-longitude coordinate into a four-element numpy array of sine and cosine components.
+    """Encode a latitude-longitude coordinate into a four-element numpy array of sine and cosine components.
 
     Parameters
     ----------
@@ -87,8 +82,7 @@ def encode_latlng(latlng: Union[np.ndarray, Tuple[float, float], List[float]]) -
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def encode_latlngs(latlngs: np.ndarray) -> np.ndarray:
-    """
-    Encode multiple latitude-longitude coordinates into a numpy array of sine and cosine components.
+    """Encode multiple latitude-longitude coordinates into a numpy array of sine and cosine components.
 
     Parameters
     ----------
@@ -139,8 +133,7 @@ def decode_latitude(
     encoded_sin: float,
     encoded_cos: float,
 ) -> float:
-    """
-    Decode an encoded sine and cosine value to the original latitude value.
+    """Decode an encoded sine and cosine value to the original latitude value.
 
     Parameters
     ----------
@@ -183,8 +176,7 @@ def decode_longitude(
     encoded_sin: float,
     encoded_cos: float,
 ) -> float:
-    """
-    Decode an encoded sine and cosine value to the original longitude value.
+    """Decode an encoded sine and cosine value to the original longitude value.
 
     Parameters
     ----------
@@ -224,8 +216,7 @@ def decode_longitude(
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def decode_latlng(encoded_latlng: Union[np.ndarray, List[Union[float, int]]]) -> np.ndarray:
-    """
-    Decode an encoded latitude-longitude coordinate to the original latitude-longitude values.
+    """Decode an encoded latitude-longitude coordinate to the original latitude-longitude values.
 
     Parameters
     ----------
@@ -249,8 +240,7 @@ def decode_latlng(encoded_latlng: Union[np.ndarray, List[Union[float, int]]]) ->
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def decode_latlngs(encoded_latlngs: Union[np.ndarray, List[Union[float, int]]]) -> np.ndarray:
-    """
-    Decode multiple encoded latitude-longitude coordinates to the original latitude-longitude values.
+    """Decode multiple encoded latitude-longitude coordinates to the original latitude-longitude values.
 
     Parameters
     ----------
@@ -276,8 +266,7 @@ def encode_width(
     lng: float,
     lng_max: float,
 ) -> float:
-    """
-    Encode the width of a rectangle to be used as input to the model.
+    """Encode the width of a rectangle to be used as input to the model.
 
     Parameters
     ----------
@@ -303,8 +292,7 @@ def encode_width(
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def encode_arr_position(arr: np.ndarray) -> np.ndarray:
-    """
-    Fast encoding of a 2D numpy array of coordinates where the width is cyclical.
+    """Fast encoding of a 2D numpy array of coordinates where the width is cyclical.
     Very useful for global maps.
 
     Parameters

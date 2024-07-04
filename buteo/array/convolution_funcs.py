@@ -1,6 +1,4 @@
-"""
-### Perform convolutions on arrays. (Funcs) ###
-"""
+"""### Perform convolutions on arrays. (Funcs) ###"""
 
 # Standard Library
 from typing import Union
@@ -15,7 +13,7 @@ def _hood_max(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    """ Get the weighted maximum. """
+    """Get the weighted maximum."""
     idx = np.argmax(np.multiply(values, weights))
     return values[idx]
 
@@ -25,7 +23,7 @@ def _hood_min(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    """ Get the weighted minimum. """
+    """Get the weighted minimum."""
     max_val = values.max()
     adjusted_values = np.where(weights == 0.0, max_val, values)
     idx = np.argmin(np.divide(adjusted_values, weights + 1e-7))
@@ -37,7 +35,7 @@ def _hood_sum(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    """ Get the weighted sum. """
+    """Get the weighted sum."""
     return np.sum(np.multiply(values, weights))
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
@@ -45,7 +43,7 @@ def _hood_mean(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    """ Get the weighted mean. """
+    """Get the weighted mean."""
     return np.sum(np.multiply(values, weights)) / np.sum(weights)
 
 
@@ -54,7 +52,7 @@ def _hood_mode(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    """ Get the weighted sum. """
+    """Get the weighted sum."""
     values_ints = np.rint(values)
     unique = np.unique(values_ints)
 
@@ -81,8 +79,8 @@ def _hood_count_occurances(
     value: Union[int, float, None],
     normalise: bool=False,
 ) -> Union[float, int]:
-    """ Count how many times a number appears in an array. 
-        Can be normalised to the size of the array to do feathering.
+    """Count how many times a number appears in an array.
+       Can be normalised to the size of the array to do feathering.
     """
     if value is None:
         return 0.0
@@ -103,7 +101,7 @@ def _hood_contrast(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    """ Get the local contrast. """
+    """Get the local contrast."""
     max_val = values.max()
     adjusted_values = np.where(weights == 0.0, max_val, values)
     local_min = np.min(np.divide(adjusted_values, weights + 1e-7))
@@ -117,7 +115,7 @@ def _hood_quantile(
     weights: np.ndarray,
     quantile: float,
 ) -> Union[float, int]:
-    """ Get the weighted median. """
+    """Get the weighted median."""
     sort_mask = np.argsort(values)
     sorted_data = values[sort_mask]
     sorted_weights = weights[sort_mask]
@@ -132,7 +130,7 @@ def _hood_median_absolute_deviation(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    """ Get the median absolute deviation """
+    """Get the median absolute deviation"""
     median = _hood_quantile(values, weights, 0.5)
     absdeviation = np.abs(np.subtract(values, median))
     return _hood_quantile(absdeviation, weights, 0.5)
@@ -144,7 +142,7 @@ def _hood_z_score(
     weights: np.ndarray,
     center_idx: int,
 ) -> Union[float, int]:
-    """ Get the local z score ."""
+    """Get the local z score ."""
     std = _hood_standard_deviation(values, weights)
     mean = _hood_sum(values, weights)
 
@@ -159,7 +157,7 @@ def _hood_z_score_mad(
     weights: np.ndarray,
     center_idx: int,
 ) -> Union[float, int]:
-    """ Get the local z score calculated around the MAD. """
+    """Get the local z score calculated around the MAD."""
     mad_std = _hood_median_absolute_deviation(values, weights) * 1.4826
     median = _hood_quantile(values, weights, 0.5)
 
@@ -173,7 +171,7 @@ def _hood_standard_deviation(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    "Get the weighted standard deviation. "
+    "Get the weighted standard deviation."
     summed = _hood_sum(values, weights)
     variance = np.sum(np.multiply(np.power(np.subtract(values, summed), 2), weights))
     return np.sqrt(variance)
@@ -184,7 +182,7 @@ def _hood_variance(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    "Get the weighted variation. "
+    "Get the weighted variation."
     summed = _hood_sum(values, weights)
     variance = np.sum(np.multiply(np.power(np.subtract(values, summed), 2), weights))
     return variance
@@ -192,7 +190,7 @@ def _hood_variance(
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
 def _k_to_size(size: int) -> int:
-    """ Preprocess Sigma Lee limits. """
+    """Preprocess Sigma Lee limits."""
     return int(np.rint(-0.0000837834 * size ** 2 + 0.045469 * size + 0.805733))
 
 
@@ -201,7 +199,7 @@ def _hood_sigma_lee(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    """ Sigma lee SAR filter. """
+    """Sigma lee SAR filter."""
     std = _hood_standard_deviation(values, weights)
     selected_values = np.zeros_like(values)
     selected_weights = np.zeros_like(weights)
@@ -240,8 +238,7 @@ def _hood_roughness(
     weights: np.ndarray,
     center_idx: int,
 ) -> Union[float, int]:
-    """ 
-    Defined as the maximum difference between the center value and the
+    """Defined as the maximum difference between the center value and the
     surrounding values. Weighted.
     """
     center_value = values[center_idx]
@@ -257,8 +254,7 @@ def _hood_roughness_tpi(
     weights: np.ndarray,
     center_idx: int,
 ) -> Union[float, int]:
-    """ 
-    Defined as the difference between the center pixel and the mean of
+    """Defined as the difference between the center pixel and the mean of
     the surrounding pixels. Weighted.
     """
     center_value = values[center_idx]
@@ -275,9 +271,8 @@ def _hood_roughness_tri(
     weights: np.ndarray,
     center_idx: int,
 ) -> Union[float, int]:
-    """ 
-        Defined as the mean difference between the center pixel and the
-        surrounding pixels. Weighted.
+    """Defined as the mean difference between the center pixel and the
+    surrounding pixels. Weighted.
     """
     center_value = values[center_idx]
     values_non_center = np.delete(values, center_idx)
@@ -296,8 +291,7 @@ def _hood_to_value(
     center_idx: int = 0,
     func_value: Union[int, float] = 0.5,
 ):
-    """
-    Convert an array of values and weights to a single value using a given method.
+    """Convert an array of values and weights to a single value using a given method.
 
     Parameters
     ----------

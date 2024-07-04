@@ -1,5 +1,4 @@
-"""
-### Dissolve vector geometries. ###
+"""### Dissolve vector geometries. ###
 
 Dissolve vectors by attributes or geometry.
 """
@@ -32,7 +31,7 @@ def _vector_dissolve(
     add_index: bool = True,
     process_layer: int = -1,
 ) -> Union[str, ogr.DataSource]:
-    """ Internal. """
+    """Internal."""
     assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
     vector_list = utils_base._get_variable_as_list(vector)
@@ -124,8 +123,7 @@ def vector_dissolve(
     overwrite: bool = True,
     allow_lists: bool = True,
 ):
-    """
-    Clips a vector to a geometry.
+    """Clips a vector to a geometry.
 
     Parameters
     ----------
@@ -134,7 +132,7 @@ def vector_dissolve(
 
     attribute : Optional[str], optional
         The attribute to use for the dissolve, default: None
-    
+
     out_path : Optional[str], optional
         The output path, default: None
 

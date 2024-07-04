@@ -1,5 +1,4 @@
-"""
-### Handle nodata values in rasters. ###
+"""### Handle nodata values in rasters. ###
 
 A module to handle the various aspects of NODATA in raster files.
 """
@@ -29,8 +28,7 @@ from buteo.raster import core_raster, core_raster_io
 def _raster_has_nodata(
     raster: Union[str, gdal.Dataset],
 ) -> bool:
-    """
-    Internal. Check if a raster or a list of rasters contain nodata values.
+    """Internal. Check if a raster or a list of rasters contain nodata values.
 
     Parameters
     ----------
@@ -55,8 +53,7 @@ def _raster_has_nodata(
 def raster_has_nodata(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
 ) -> Union[bool, List[bool]]:
-    """
-    Check if a raster or a list of rasters contain nodata values.
+    """Check if a raster or a list of rasters contain nodata values.
 
     Parameters
     ----------
@@ -87,8 +84,7 @@ def raster_has_nodata(
 def _raster_get_nodata(
     raster: Union[str, gdal.Dataset],
 ) -> Union[float, int]:
-    """
-    Internal. Get the nodata value of a raster.
+    """Internal. Get the nodata value of a raster.
 
     Parameters
     ----------
@@ -110,8 +106,7 @@ def _raster_get_nodata(
 def raster_get_nodata(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
 ) -> Union[float, int, List[Union[float, int]]]:
-    """
-    Get the nodata value of a raster or a list of rasters.
+    """Get the nodata value of a raster or a list of rasters.
 
     Parameters
     ----------
@@ -146,14 +141,13 @@ def _raster_set_nodata(
     in_place: bool = True,
     overwrite: bool = True,
 ) -> Union[str, gdal.Dataset]:
-    """
-    Internal. Sets the nodata value of a single raster.
+    """Internal. Sets the nodata value of a single raster.
 
     Parameters
     ----------
     raster : Union[str, gdal.Dataset]
         The raster to set nodata values for.
-    
+
     nodata : float, int, or None
         The nodata value to set for the raster.
         If nodata is None, nodata will be removed from the raster.
@@ -220,8 +214,7 @@ def raster_set_nodata(
     suffix: str = "",
     creation_options: Optional[List] = None,
 ):
-    """
-    Sets all the nodata for raster(s) to a value.
+    """Sets all the nodata for raster(s) to a value.
 
     Parameters
     ----------
@@ -231,7 +224,7 @@ def raster_set_nodata(
     nodata : float, int, or None
         The nodata value to set for the raster(s).
         If nodata is None, nodata will be removed from the raster(s).
-    
+
     out_path : str, optional
         The destination of the changed rasters, default: None
 

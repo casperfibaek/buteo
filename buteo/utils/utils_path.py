@@ -1,5 +1,4 @@
-"""
-### Generic utility functions ###
+"""### Generic utility functions ###
 
 Functions that make interacting with the toolbox easier.
 """
@@ -25,8 +24,7 @@ from buteo.utils import utils_base, utils_gdal
 def _get_vsimem_content(
     folder_name: Optional[str] = None,
 ) -> List[str]:
-    """ 
-    Get the content of the vsimem folder.
+    """Get the content of the vsimem folder.
     vsimem is the virtual memory folder of GDAL.
     By default, the content of the root folder is returned.
 
@@ -70,8 +68,7 @@ def _get_vsimem_content(
 def _glob_vsimem(
     pattern: str,
 ) -> List[str]:
-    """
-    Find files in vsimem using glob.
+    """Find files in vsimem using glob.
 
     Example:
     `_glob_vsimem("*/patches/*.tif")` will return all tif files in the patches folder of all subfolders.
@@ -95,8 +92,7 @@ def _glob_vsimem(
 
 
 def _get_unix_path(path: Union[str, List[str]]) -> Union[str, List[str]]:
-    """
-    Convert a path or list of paths to a unix path(s).
+    """Convert a path or list of paths to a unix path(s).
 
     Parameters
     ----------
@@ -130,8 +126,7 @@ def _get_unix_path(path: Union[str, List[str]]) -> Union[str, List[str]]:
 
 
 def _check_file_exists(path: str) -> bool:
-    """
-    Check if a file exists. Also checks vsimem.
+    """Check if a file exists. Also checks vsimem.
     Handles both absolute and relative paths and with or without trailing slash.
 
     Parameters
@@ -161,8 +156,7 @@ def _check_file_exists(path: str) -> bool:
 
 
 def _check_file_exists_vsimem(path: str) -> bool:
-    """
-    Check if a file exists in vsimem.
+    """Check if a file exists in vsimem.
 
     Parameters
     ----------
@@ -187,8 +181,7 @@ def _check_file_exists_vsimem(path: str) -> bool:
 def _check_dir_exists(
     path: str,
 ) -> bool:
-    """
-    Check if a folder exists. Also checks vsimem.
+    """Check if a folder exists. Also checks vsimem.
     Handles both absolute and relative paths and with or without trailing slash.
 
     Parameters
@@ -219,8 +212,7 @@ def _check_dir_exists(
 
 
 def _check_dir_exists_vsimem(path: str) -> bool:
-    """
-    Check if a folder exists in vsimem.
+    """Check if a folder exists in vsimem.
 
     Parameters
     ----------
@@ -246,8 +238,7 @@ def _delete_dir_content(
     folder: str,
     delete_subfolders: bool = True,
 ) -> bool:
-    """
-    Delete all files and folders in a folder.
+    """Delete all files and folders in a folder.
     If only the files are to be deleted, set delete_subfolders to False.
 
     Parameters
@@ -255,7 +246,7 @@ def _delete_dir_content(
     folder: str
         The path to the folder.
 
-    delete_subfolders: bool, optional. 
+    delete_subfolders: bool, optional.
         If True, delete subfolders as well. Default: True
 
     Returns
@@ -298,8 +289,7 @@ def _delete_dir_content(
 
 
 def _delete_dir(folder: str) -> bool:
-    """
-    Delete a folder and all its content. Also deletes vsimem folders.
+    """Delete a folder and all its content. Also deletes vsimem folders.
 
     Args:
         folder (str): The path to the folder.
@@ -338,8 +328,7 @@ def _delete_dir(folder: str) -> bool:
 
 
 def _delete_file(file: str) -> bool:
-    """
-    Delete a File
+    """Delete a File
 
     Args:
         file (str): The path to the file.
@@ -374,8 +363,7 @@ def _delete_file(file: str) -> bool:
 
 
 def _create_dir_if_not_exists(path: str) -> str:
-    """
-    Make a directory if it does not exist.
+    """Make a directory if it does not exist.
     This does not work for creating directories in GDAL vsimem.
     On vsimem, it is not possible to create a folder without a file in it.
 
@@ -410,8 +398,7 @@ def _create_dir_if_not_exists(path: str) -> str:
 
 
 def _get_dir_from_path(path: str) -> str:
-    """
-    Get the directory of a file. Also works for folders and vsimem.
+    """Get the directory of a file. Also works for folders and vsimem.
 
     Parameters
     ----------
@@ -443,8 +430,7 @@ def _get_filename_from_path(
     path: str,
     with_ext: bool = True,
 ) -> str:
-    """
-    Get the filename of a file. Also works for vsimem.
+    """Get the filename of a file. Also works for vsimem.
 
     Parameters
     ----------
@@ -472,8 +458,7 @@ def _get_filename_from_path(
 
 
 def _get_ext_from_path(path: str) -> str:
-    """
-    Get the extension of a file. If the file has no extension, raise an error.
+    """Get the extension of a file. If the file has no extension, raise an error.
     The extension is returned without a dot.
 
     Parameters
@@ -503,8 +488,7 @@ def _get_changed_path_ext(
     path: str,
     target_ext: str,
 ) -> str:
-    """
-    Update the extension of a file.
+    """Update the extension of a file.
 
     Parameters
     ----------
@@ -513,7 +497,7 @@ def _get_changed_path_ext(
 
     target_ext: str
         The new extension (with or without dot.)
-    
+
     Returns
     -------
     str
@@ -539,8 +523,7 @@ def _get_changed_path_ext(
 
 
 def _check_is_dir(path: str) -> bool:
-    """
-    Check if a path is a directory or a file.
+    """Check if a path is a directory or a file.
     Also returns true if vsimem or vsizip is passed.
 
     Parameters
@@ -569,8 +552,7 @@ def _check_is_dir(path: str) -> bool:
 
 
 def _check_is_valid_mem_filepath(path: str) -> bool:
-    """
-    Check if a path is a valid memory path that has an extension. vsizip also works.
+    """Check if a path is a valid memory path that has an extension. vsizip also works.
 
     Parameters
     ----------
@@ -600,8 +582,7 @@ def _check_is_valid_mem_filepath(path: str) -> bool:
 
 
 def _check_is_valid_non_mem_filepath(path: str) -> bool:
-    """
-    Check if a path is a valid path that has an extension.
+    """Check if a path is a valid path that has an extension.
     Does not check if the file exists and does not check if the path is in memory.
 
     Parameters
@@ -631,8 +612,7 @@ def _check_is_valid_non_mem_filepath(path: str) -> bool:
 
 
 def _check_is_valid_filepath(path: str) -> bool:
-    """
-    Check if a path is a valid path that has an extension. Path can be in memory.
+    """Check if a path is a valid path that has an extension. Path can be in memory.
 
     Parameters
     ----------
@@ -651,8 +631,7 @@ def _check_is_valid_filepath(path: str) -> bool:
 
 
 def _check_is_valid_filepath_list(path_list: List[str]) -> bool:
-    """
-    Check if a list of paths is a valid list of paths that have an extension. Paths can be in memory.
+    """Check if a list of paths is a valid list of paths that have an extension. Paths can be in memory.
 
     Parameters
     ----------
@@ -681,15 +660,14 @@ def _check_is_valid_output_filepath(
     path: str,
     overwrite: bool = True,
 ):
-    """
-    Check if a path is a valid output path that has an extension. Path can be in memory.
+    """Check if a path is a valid output path that has an extension. Path can be in memory.
     If the file already exists, and overwrite is false, return False.
 
     Parameters
     ----------
     path: str
         The path to test.
-    
+
     overwrite: bool
         True if the file could be overwritten, False otherwise.
 
@@ -712,8 +690,7 @@ def _check_is_valid_output_path_list(
     output_list: List[str],
     overwrite: bool = True,
 ) -> bool:
-    """
-    Check if a list of output paths are valid.
+    """Check if a list of output paths are valid.
 
     Parameters
     ----------
@@ -746,8 +723,7 @@ def _delete_if_required(
     path: str,
     overwrite: bool = True,
 ) -> bool:
-    """
-    Delete a file if overwrite is True.
+    """Delete a file if overwrite is True.
 
     Parameters
     ----------
@@ -790,8 +766,7 @@ def _delete_if_required_list(
     output_list: List[str],
     overwrite: bool = True,
 ) -> bool:
-    """
-    Delete a list of files if overwrite is True.
+    """Delete a list of files if overwrite is True.
 
     Parameters
     ----------
@@ -826,8 +801,7 @@ def _get_changed_folder(
     path: str,
     target_folder: str,
 ) -> str:
-    """
-    Change the folder of a path.
+    """Change the folder of a path.
 
     Parameters
     ----------
@@ -856,8 +830,7 @@ def _get_changed_folder(
 
 
 def _check_is_path_glob(path: str) -> bool:
-    """
-    Check if a path is a glob.
+    """Check if a path is a glob.
 
     Parameters
     ----------
@@ -879,8 +852,7 @@ def _check_is_path_glob(path: str) -> bool:
 
 
 def _get_paths_from_glob(path: str) -> List[str]:
-    """
-    Get a list of paths from a glob.
+    """Get a list of paths from a glob.
 
     Parameters
     ----------
@@ -905,8 +877,7 @@ def _get_paths_from_glob(path: str) -> List[str]:
 
 
 def _parse_path(path: str) -> str:
-    """
-    Parse a path to an absolute unix path.
+    """Parse a path to an absolute unix path.
 
     Parameters
     ----------
@@ -937,8 +908,7 @@ def _get_augmented_path(
     add_uuid: bool = False,
     add_timestamp: bool = False,
 ) -> str:
-    """
-    Augments a path with a prefix, suffix, and uuid.
+    """Augments a path with a prefix, suffix, and uuid.
     Can also change the output directory.
 
     `{prefix}{filename}{uuid}{timestamp}{suffix}.{ext}`
@@ -1031,8 +1001,7 @@ def _get_augmented_path_list(
     add_uuid: bool = False,
     add_timestamp: bool = False,
 ) -> List[str]:
-    """
-    Augments a list of paths with a prefix, suffix, and uuid.
+    """Augments a list of paths with a prefix, suffix, and uuid.
     Can also change the output directory.
 
     Parameters
@@ -1097,8 +1066,7 @@ def _get_temp_filepath(
     add_uuid: bool = False,
     add_timestamp: bool = False,
 ) -> str:
-    """
-    Get a temporary filepath in vsimem.
+    """Get a temporary filepath in vsimem.
 
     Parameters
     ----------

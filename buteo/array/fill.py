@@ -1,5 +1,4 @@
-"""
-### Generic utility functions ###
+"""### Generic utility functions ###
 Functions that make interacting with the toolbox easier.
 
 """
@@ -25,9 +24,8 @@ def convolve_fill_nearest(
     max_iterations: Optional[Union[int, float]] = None,
     channel: int = 0,
 ):
-    """
-    Fill in nodata values with the average of the nearest values.
-    
+    """Fill in nodata values with the average of the nearest values.
+
     Parameters
     ----------
     array : np.ndarray
@@ -135,9 +133,8 @@ def convolve_fill_nearest_classes(
     max_iterations: Optional[Union[int, float]] = None,
     channel: int = 0,
 ):
-    """
-    Fill in nodata values with the average of the nearest values.
-    
+    """Fill in nodata values with the average of the nearest values.
+
     Parameters
     ----------
     array : np.ndarray

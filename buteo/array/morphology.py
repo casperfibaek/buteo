@@ -1,6 +1,4 @@
-"""
-### Perform morphological operations on arrays and rasters.  ###
-"""
+"""### Perform morphological operations on arrays and rasters.  ###"""
 
 # Standard library
 import sys; sys.path.append("../../")
@@ -64,9 +62,8 @@ def morph_erode(
     spherical: bool = True,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Erode an array by taking the local minimum.
-    
+    """Erode an array by taking the local minimum.
+
     Parameters
     ----------
     arr : np.ndarray
@@ -101,9 +98,8 @@ def morph_dilate(
     spherical: bool = True,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Dilate an array by taking the local maximum.
-    
+    """Dilate an array by taking the local maximum.
+
     Parameters
     ----------
     arr : np.ndarray
@@ -138,9 +134,8 @@ def morph_open(
     spherical: bool = True,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Perform the open mortholigical operation on an array.
-    
+    """Perform the open mortholigical operation on an array.
+
     Parameters
     ----------
     arr : np.ndarray
@@ -181,8 +176,7 @@ def morph_close(
     spherical: bool = True,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Perform the close morphological operation on an array.
+    """Perform the close morphological operation on an array.
 
     Parameters
     ----------
@@ -224,8 +218,7 @@ def morph_tophat(
     spherical: bool = True,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Perform the top_hat morphological operation on an array.
+    """Perform the top_hat morphological operation on an array.
 
     Same as: `array / opened(array)`
 
@@ -264,9 +257,8 @@ def morph_bothat(
     spherical: bool = True,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Perform the bottom_hat morphological operation on an array.
-    
+    """Perform the bottom_hat morphological operation on an array.
+
     Same as: `closed(array) / array`
 
     Parameters
@@ -304,9 +296,8 @@ def morph_difference(
     spherical: bool = True,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Perform the difference morphological operation on an array.
-    
+    """Perform the difference morphological operation on an array.
+
     Same as: `dilate(array) - erode(array)`
 
     Parameters

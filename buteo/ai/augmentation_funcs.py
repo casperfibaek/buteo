@@ -1,5 +1,4 @@
-"""
-This module contains functions for augmenting images that are
+"""This module contains functions for augmenting images that are
 suited to remote sensing imagery.
 """
 # Standard library
@@ -75,10 +74,9 @@ def augmentation_rotation_xy(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Randomly rotate the image and label by 90 degrees intervals. Images
+    """Randomly rotate the image and label by 90 degrees intervals. Images
     can be (channels, height, width) or (height, width, channels).
-    
+
     Parameters
     ----------
     X : np.ndarray
@@ -145,10 +143,9 @@ def augmentation_mirror(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
-    """
-    Randomly mirrors the image.
+    """Randomly mirrors the image.
     Images can be (channels, height, width) or (height, width, channels).
-    
+
     Parameters
     ----------
     X : np.ndarray
@@ -213,9 +210,8 @@ def augmentation_mirror_xy(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Randomly mirrors the image. Images can be (channels, height, width) or (height, width, channels).
-    
+    """Randomly mirrors the image. Images can be (channels, height, width) or (height, width, channels).
+
     Parameters
     ----------
     X : np.ndarray
@@ -232,7 +228,7 @@ def augmentation_mirror_xy(
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
-    
+
     inplace : bool, optional
         Whether to perform the rotation in-place, default: False.
 
@@ -288,13 +284,12 @@ def augmentation_noise_uniform(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
-    """
-    Adds random noise seperately to each pixel of the image. The noise works
+    """Adds random noise seperately to each pixel of the image. The noise works
     for both channel first and last images. Follows a uniform distribution.
     Input should be (height, width, channels) or (channels, height, width).
 
     NOTE: Beware of datatypes. Consider casting to float32 before adding noise.
-    
+
     Parameters
     ----------
     X : np.ndarray
@@ -312,7 +307,7 @@ def augmentation_noise_uniform(
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), ignored for this function.
         Kept to keep the same function signature as other augmentations, default: True.
-    
+
     inplace : bool, optional
         Whether to perform the rotation in-place, default: False.
 
@@ -392,14 +387,13 @@ def augmentation_noise_normal(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
-    """
-    Adds random noise seperately to each pixel of the image. The noise works
+    """Adds random noise seperately to each pixel of the image. The noise works
     for both channel first and last images. Follows a normal distribution.
     max_amount is the standard deviation of the normal distribution.
     Input should be (height, width, channels) or (channels, height, width).
 
     NOTE: Beware of datatypes. Consider casting to float32 before adding noise.
-    
+
     Parameters
     ----------
     X : np.ndarray
@@ -496,12 +490,11 @@ def augmentation_channel_scale(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
-    """
-    Scales the channels of the image seperately by a fixed amount.
+    """Scales the channels of the image seperately by a fixed amount.
     Input should be (height, width, channels) or (channels, height, width).
 
     NOTE: Beware of datatypes. Consider casting to float32 before adding noise.
-    
+
     Parameters
     ----------
     X : np.ndarray
@@ -580,10 +573,9 @@ def augmentation_contrast(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
-    """
-    Changes the contrast of an image by a random amount, seperately for each channel.
+    """Changes the contrast of an image by a random amount, seperately for each channel.
     Input should be (height, width, channels) or (channels, height, width).
-    
+
     NOTE: Beware of datatypes. Consider casting to float32 before adding noise.
 
     Parameters
@@ -596,7 +588,7 @@ def augmentation_contrast(
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
-    
+
     inplace : bool, optional
         Whether to perform the rotation in-place, default: False.
 
@@ -657,9 +649,8 @@ def augmentation_blur(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
-    """
-    Blurs an image at random. Input should be (height, width, channels) or (channels, height, width).
-    
+    """Blurs an image at random. Input should be (height, width, channels) or (channels, height, width).
+
     NOTE: Beware of datatypes. Consider casting to float32 before adding noise.
 
     Parameters
@@ -672,7 +663,7 @@ def augmentation_blur(
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
-    
+
     inplace : bool, optional
         Whether to perform the rotation in-place, default: False.
 
@@ -739,12 +730,11 @@ def augmentation_blur_xy(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Blurs an image at random. Input should be (height, width, channels) or (channels, height, width).
+    """Blurs an image at random. Input should be (height, width, channels) or (channels, height, width).
     The label is blurred by the same amount.
 
     NOTE: Beware of datatypes. Consider casting to float32 before adding noise.
-    
+
     Parameters
     ----------
     X : np.ndarray
@@ -755,7 +745,7 @@ def augmentation_blur_xy(
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
-    
+
     inplace : bool, optional
         Whether to perform the rotation in-place, default: False.
 
@@ -800,12 +790,11 @@ def augmentation_label_smoothing(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
-    """
-    Smooths the labels of an image at random. Input should be (height, width, channels) or (channels, height, width).
+    """Smooths the labels of an image at random. Input should be (height, width, channels) or (channels, height, width).
     The label is blurred by a random amount.
-    
+
     NOTE: Beware of datatypes. Consider casting to float32 before adding noise.
-    
+
     Parameters
     ----------
     y : np.ndarray
@@ -817,7 +806,7 @@ def augmentation_label_smoothing(
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), ignored for this function.
         Kept to keep the same function signature as other augmentations, default: True.
-    
+
     inplace : bool, optional
         Whether to perform the rotation in-place, default: False.
 
@@ -881,8 +870,7 @@ def augmentation_sharpen(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
-    """
-    Sharpens an image at random. Input should be (height, width, channels) or (channels, height, width).
+    """Sharpens an image at random. Input should be (height, width, channels) or (channels, height, width).
 
     NOTE: Beware of datatypes. Consider casting to float32 before adding noise.
 
@@ -971,8 +959,7 @@ def augmentation_sharpen_xy(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
-    """
-    Sharpens an image at random. Input should be (height, width, channels) or (channels, height, width).
+    """Sharpens an image at random. Input should be (height, width, channels) or (channels, height, width).
     The label is sharpened by the same amount.
 
     NOTE: Beware of datatypes. Consider casting to float32 before adding noise.
@@ -987,7 +974,7 @@ def augmentation_sharpen_xy(
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
-    
+
     inplace : bool, optional
         Whether to perform the rotation in-place, default: False.
 
@@ -1032,8 +1019,7 @@ def augmentation_misalign(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> np.ndarray:
-    """
-    Misaligns channels in the image at random.
+    """Misaligns channels in the image at random.
     input should be (height, width, channels) or (channels, height, width).
 
     Parameters
@@ -1172,8 +1158,7 @@ def augmentation_cutmix(
     channel_last: bool = True,
     inplace: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray,]:
-    """
-    Cutmixes two images.
+    """Cutmixes two images.
     Input should be (height, width, channels) or (channels, height, width).
 
     Parameters
@@ -1198,7 +1183,7 @@ def augmentation_cutmix(
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
-    
+
     inplace : bool, optional
         Whether to perform the rotation in-place, default: False.
 
@@ -1277,8 +1262,7 @@ def augmentation_mixup(
     channel_last: bool = True, # pylint: disable=unused-argument
     inplace: bool = False,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
-    """
-    Mixups two images at random. This works by doing a linear intepolation between
+    """Mixups two images at random. This works by doing a linear intepolation between
     two images and then adding a random weight to each image.
 
     Mixup involves taking two images and blending them together by randomly interpolating
@@ -1311,15 +1295,15 @@ def augmentation_mixup(
         The maximum mixup coefficient, default: 0.666.
 
     label_mix : int, optional
-        If 0, the labels will be mixed by the weights. If 1, the target label will be used. If 2, 
-        the source label will be used. If 3, the max of the labels will be used. If 4, the min 
-        of the labels will be used. If 5, the max of the image with the highest weight will be used. 
-        If 6, the min of the image with the highest weight will be used. If 7, the sum of the labels 
+        If 0, the labels will be mixed by the weights. If 1, the target label will be used. If 2,
+        the source label will be used. If 3, the max of the labels will be used. If 4, the min
+        of the labels will be used. If 5, the max of the image with the highest weight will be used.
+        If 6, the min of the image with the highest weight will be used. If 7, the sum of the labels
         will be used, default: 0.
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
-    
+
     inplace : bool, optional
         Whether to perform the rotation in-place, default: False.
 

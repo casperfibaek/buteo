@@ -1,6 +1,4 @@
-"""
-### Perform filter operations on arrays and rasters.  ###
-"""
+"""### Perform filter operations on arrays and rasters.  ###"""
 
 # Standard library
 import sys; sys.path.append("../../")
@@ -31,7 +29,7 @@ def filter_operation(
     kernel: Optional[np.ndarray] = None,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """ Internal function to perform filter operations on arrays and rasters. """
+    """Internal function to perform filter operations on arrays and rasters."""
     _type_check(arr, [np.ndarray], "arr")
     _type_check(method, [int], "method")
     _type_check(radius, [int, float], "radius")
@@ -159,14 +157,13 @@ def filter_standard_deviation(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
-    """
-    Calculate the standard deviation of the array using a weighted moving window.
+    """Calculate the standard deviation of the array using a weighted moving window.
 
     Parameters
     ----------
     arr : np.ndarray
         Array to calculate standard deviation on.
-    
+
     radius : Union[int, float], optional
         Radius of the moving window, can be fractional. Default: 1
 
@@ -217,8 +214,7 @@ def filter_blur(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
-    """
-    Blur the array using a weighted moving window.
+    """Blur the array using a weighted moving window.
 
     Parameters
     ----------
@@ -268,8 +264,7 @@ def filter_median(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
-    """
-    Calculate the median of the array using a weighted moving window.
+    """Calculate the median of the array using a weighted moving window.
 
     Parameters
     ----------
@@ -319,8 +314,7 @@ def filter_min(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
-    """
-    Takes the min of the array using a weighted moving window.
+    """Takes the min of the array using a weighted moving window.
 
     Parameters
     ----------
@@ -370,8 +364,7 @@ def filter_max(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
-    """
-    Takes the max of the array using a weighted moving window.
+    """Takes the max of the array using a weighted moving window.
 
     Parameters
     ----------
@@ -421,8 +414,7 @@ def filter_sum(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
-    """
-    Takes the sum of the array using a weighted moving window.
+    """Takes the sum of the array using a weighted moving window.
 
     Parameters
     ----------
@@ -472,8 +464,7 @@ def filter_mode(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
-    """
-    Takes the mode of the array using a weighted moving window.
+    """Takes the mode of the array using a weighted moving window.
 
     Parameters
     ----------
@@ -523,8 +514,7 @@ def filter_center_difference(
     distance_sigma: Union[int, float] = 2.0,
     channel_last: bool = True,
 ):
-    """
-    Take the difference from the center to the surrounding values of the array using a weighted moving window.
+    """Take the difference from the center to the surrounding values of the array using a weighted moving window.
 
     Parameters
     ----------

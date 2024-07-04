@@ -1,5 +1,4 @@
-"""
-### Generic utility functions ###
+"""### Generic utility functions ###
 
 Functions that make interacting with the toolbox easier.
 """
@@ -11,10 +10,9 @@ from numba import jit, prange
 
 
 def channel_first_to_last(arr: np.ndarray) -> np.ndarray:
-    """
-    Converts a numpy array from channel first to channel last format.
+    """Converts a numpy array from channel first to channel last format.
     `(-batch-, channel, height, width)` -> `(-batch-, height, width, channel)`
-    
+
     If 4D, it is assumed that the input array is in batch, channel, height, width format.
     If 3D, it is assumed that the input array is in channel, height, width format.
 
@@ -41,11 +39,10 @@ def channel_first_to_last(arr: np.ndarray) -> np.ndarray:
 
 
 def channel_last_to_first(arr: np.ndarray) -> np.ndarray:
-    """
-    Converts a numpy array from channel last to channel first format.
+    """Converts a numpy array from channel last to channel first format.
 
     `(-batch-, height, width, channel)` -> `(-batch-, channel, height, width)`
-    
+
     If 4D, it is assumed that the input array is in batch, channel, height, width format.
     If 3D, it is assumed that the input array is in channel, height, width format.
 
@@ -73,9 +70,8 @@ def channel_last_to_first(arr: np.ndarray) -> np.ndarray:
 
 @jit(nopython=True)
 def _create_grid(range_rows, range_cols):
-    """
-    Create a grid of rows and columns.
-    
+    """Create a grid of rows and columns.
+
     Parameters
     ----------
     range_rows : np.ndarray
@@ -102,7 +98,7 @@ def _create_grid(range_rows, range_cols):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def encode_latitude(lat):
-    """ Latitude goes from -90 to 90 """
+    """Latitude goes from -90 to 90"""
     lat_adj = lat + 90.0
     lat_max = 180
 
@@ -113,7 +109,7 @@ def encode_latitude(lat):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def encode_longitude(lng):
-    """ Longitude goes from -180 to 180 """
+    """Longitude goes from -180 to 180"""
     lng_adj = lng + 180.0
     lng_max = 360
 
@@ -124,9 +120,7 @@ def encode_longitude(lng):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def encode_latlng(latlng):
-    """
-    Encode latitude and longitude values to be used as input to the model.
-    """
+    """Encode latitude and longitude values to be used as input to the model."""
     lat = latlng[0]
     lng = latlng[1]
 
@@ -137,7 +131,7 @@ def encode_latlng(latlng):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def encode_latlngs(latlngs):
-    """ Encode multiple latitude and longitude values. """
+    """Encode multiple latitude and longitude values."""
     if latlngs.ndim == 1:
         encoded_latlngs = np.apply_along_axis(encode_latlng, 0, latlngs)
     elif latlngs.ndim == 2:
@@ -163,9 +157,7 @@ def encode_latlngs(latlngs):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def decode_latitude(encoded_sin, encoded_cos):
-    """
-    Decode encoded latitude values to the original latitude value.
-    """
+    """Decode encoded latitude values to the original latitude value."""
     lat_max = 180
     lat_max_half = lat_max / 2.0
 
@@ -187,9 +179,7 @@ def decode_latitude(encoded_sin, encoded_cos):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def decode_longitude(encoded_sin, encoded_cos):
-    """
-    Decode encoded longitude values to the original longitude value.
-    """
+    """Decode encoded longitude values to the original longitude value."""
     lng_max = 360
     lng_max_half = lng_max / 2.0
 
@@ -213,9 +203,7 @@ def decode_longitude(encoded_sin, encoded_cos):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def decode_latlng(encoded_latlng):
-    """
-    Decode encoded latitude and longitude values to the original values.
-    """
+    """Decode encoded latitude and longitude values to the original values."""
     lat = decode_latitude(encoded_latlng[0], encoded_latlng[1])
     lng = decode_longitude(encoded_latlng[2], encoded_latlng[3])
 
@@ -223,14 +211,14 @@ def decode_latlng(encoded_latlng):
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def decode_latlngs(encoded_latlngs):
-    """ Decode multiple latitude and longitude values. """
+    """Decode multiple latitude and longitude values."""
     latlngs = np.apply_along_axis(decode_latlng, 1, encoded_latlngs)
     return latlngs
 
 
 @jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline="always")
 def encode_width(lng, lng_max):
-    """ Longitude goes from -180 to 180 """
+    """Longitude goes from -180 to 180"""
 
     encoded_sin = ((np.sin(2 * np.pi * (lng / lng_max)) + 1)) / 2.0
     encoded_cos = ((np.cos(2 * np.pi * (lng / lng_max)) + 1)) / 2.0
@@ -244,8 +232,7 @@ def single_hue_to_rgb(
     q: float,
     t: float,
 ) -> float:
-    """
-    Helper function to convert hue to RGB.
+    """Helper function to convert hue to RGB.
 
     Args:
         p (float): Intermediate value used for hue to RGB conversion.
@@ -274,8 +261,7 @@ def single_hsl_to_rgb(
     s: float,
     l: float,
 ) -> Tuple[float, float, float]:
-    """
-    Convert a single HSL color to RGB.
+    """Convert a single HSL color to RGB.
 
     Args:
         h (float): Hue component.
@@ -300,8 +286,7 @@ def single_hsl_to_rgb(
 
 @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
 def hsl_to_rgb(hsl_array: np.ndarray) -> np.ndarray:
-    """
-    Convert an HSL array to an RGB array.
+    """Convert an HSL array to an RGB array.
 
     Args:
         hsl_array (np.ndarray): Input HSL array with shape (height, width, 3).
@@ -334,13 +319,13 @@ def hsl_to_rgb(hsl_array: np.ndarray) -> np.ndarray:
 
 @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
 def rgb_to_hsl(rgb_array: np.ndarray) -> np.ndarray:
-    """ Convert an RGB array to an HSL array.
-    
-    Args:
-        rgb_array (np.ndarray): Input RGB array with shape (height, width, 3).
-    
-    Returns:
-        np.ndarray: Output HSL array with shape (height, width, 3).
+    """Convert an RGB array to an HSL array.
+
+        Args:
+       rgb_array (np.ndarray): Input RGB array with shape (height, width, 3).
+
+        Returns:
+       np.ndarray: Output HSL array with shape (height, width, 3).
     """
     assert rgb_array.ndim == 3, "Input array must have 3 dimensions"
     assert rgb_array.shape[-1] == 3, "Input array must have 3 channels"

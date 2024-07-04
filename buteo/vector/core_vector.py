@@ -1,5 +1,4 @@
-"""
-### Basic IO functions for working with Vectprs ###
+"""### Basic IO functions for working with Vectprs ###
 
 The basic module for interacting with vector data
 """
@@ -36,7 +35,7 @@ def _vector_open(
     writeable: bool = True,
     allow_raster: bool = True,
 ) -> ogr.DataSource:
-    """ Internal. """
+    """Internal."""
     assert isinstance(vector, (str, ogr.DataSource)), "vector must be a path or a DataSource"
 
     opened = None
@@ -87,8 +86,7 @@ def vector_open(
     writeable: bool = True,
     allow_raster: bool = True,
 ) -> Union[ogr.DataSource, List[ogr.DataSource]]:
-    """
-    Opens a vector to an ogr.Datasource class.
+    """Opens a vector to an ogr.Datasource class.
 
     Parameters
     ----------
@@ -100,7 +98,7 @@ def vector_open(
 
     allow_raster : bool, optional
         If True, a raster will be opened as a vector bounding box. Default: True
-    
+
     allow_lists : bool, optional
         If True, the input can be a list of vectors. Default: True
 
@@ -129,8 +127,7 @@ def vector_open(
 def _get_basic_metadata_vector(
     vector: Union[str, ogr.DataSource],
 ) -> Dict[str, Any]:
-    """
-    Get basic metadata from a vector.
+    """Get basic metadata from a vector.
 
     Parameters
     ----------
@@ -288,7 +285,7 @@ def _vector_filter(
     suffix: str = "",
     overwrite: bool = True,
 ) -> str:
-    """ Internal. """
+    """Internal."""
     assert isinstance(vector, (str, ogr.DataSource)), "vector must be a string or an ogr.DataSource object."
     assert isinstance(filter_function, (type(lambda: True))), "filter_function must be a function."
 
@@ -350,8 +347,7 @@ def vector_filter(
     add_uuid: bool = False,
     overwrite: bool = True,
 ) -> Union[str, List[str]]:
-    """
-    Filters a vector using its attribute table and a function.
+    """Filters a vector using its attribute table and a function.
 
     Parameters
     ----------
@@ -360,7 +356,7 @@ def vector_filter(
 
     filter_function : Callable
         A function that takes a dictionary of attributes and returns a boolean.
-    
+
     out_path : Optional[str], optional
         Path to the output vector file. If None, a memory vector will be created. default: None
 
@@ -427,8 +423,7 @@ def vector_filter(
 def vector_add_index(
     vector: Union[ogr.DataSource, str, List[Union[ogr.DataSource, str]]],
 ) -> Union[str, List[str]]:
-    """
-    Adds a spatial index to the vector in place, if it doesn't have one.
+    """Adds a spatial index to the vector in place, if it doesn't have one.
 
     Parameters
     ----------
@@ -473,8 +468,7 @@ def _vector_get_attribute_table(
     include_attributes: bool = True,
     return_header: bool = True,
 ) -> Union[Dict[str, Any], Tuple[Dict[str, Any]]]:
-    """
-    Get the attribute table(s) of a vector.
+    """Get the attribute table(s) of a vector.
 
     Parameters
     ----------
@@ -555,8 +549,7 @@ def vector_get_attribute_table(
     include_attributes: bool = True,
     return_header: bool = True,
 ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
-    """
-    Get the attribute table(s) of a vector.
+    """Get the attribute table(s) of a vector.
 
     Parameters
     ----------
@@ -577,7 +570,7 @@ def vector_get_attribute_table(
 
     return_header : bool, optional
         If True, will return the header. Default: True.
-        
+
     Returns
     -------
     attribute_table : Dict[str, Any]
@@ -639,14 +632,13 @@ def vector_filter_layer(
     add_uuid: bool = False,
     overwrite: bool = True,
 ):
-    """
-    Filters a multi-layer vector source to a single layer.
-    
+    """Filters a multi-layer vector source to a single layer.
+
     Parameters
     ----------
     vector : Union[str, ogr.DataSource, List[str, ogr.DataSource]]
         Vector layer(s) or path(s) to vector layer(s).
-    
+
     layer_name_or_idx : Union[str, int]
         The name or index of the layer to filter.
 
@@ -658,7 +650,7 @@ def vector_filter_layer(
 
     suffix : str, optional
         Suffix to add to the output vector. Default: "_layer".
-    
+
     add_uuid : bool, optional
         If True, will add a UUID to the output vector. Default: False.
 
@@ -722,8 +714,7 @@ def vector_to_extent(
     latlng: bool = False,
     overwrite: bool = True,
 ) -> str:
-    """
-    Converts a vector to a vector file with the extent as a polygon.
+    """Converts a vector to a vector file with the extent as a polygon.
 
     Parameters
     ----------
@@ -785,8 +776,7 @@ def vector_copy(
     vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
     out_path: Optional[Union[str, List[str]]] = None,
 ) -> Union[str, List[str]]:
-    """
-    Creates a copy of a vector.
+    """Creates a copy of a vector.
 
     Parameters
     ----------
@@ -841,8 +831,7 @@ def vector_copy(
 def vector_reset_fids(
     vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
 ) -> Union[str, List[str]]:
-    """ 
-    Resets the FID column of a vector to 0, 1, 2, 3, ...
+    """Resets the FID column of a vector to 0, 1, 2, 3, ...
 
     Parameters
     ----------
@@ -909,8 +898,7 @@ def vector_reset_fids(
 def vector_create_fid_field(
     vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
 ):
-    """
-    Creates a FID field in a vector if it doesn't exist.
+    """Creates a FID field in a vector if it doesn't exist.
 
     Parameters
     ----------
@@ -965,8 +953,7 @@ def vector_create_attribute_from_fid(
     vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
     attribute_name: str = "id",
 ):
-    """
-    Creates an attribute from the FID field in a vector.
+    """Creates an attribute from the FID field in a vector.
 
     Parameters
     ----------
@@ -1026,9 +1013,8 @@ def vector_from_bbox(
     projection: Union[str, osr.SpatialReference, None] = None,
     out_path: Optional[str] = None,
 ) -> str:
-    """
-    Creates a vector from a bounding box.
-    
+    """Creates a vector from a bounding box.
+
     Parameters
     ----------
     bbox : List[float, int]
@@ -1063,7 +1049,7 @@ def vector_from_bbox(
     layer = datasource.CreateLayer("bbox", geom_type=ogr.wkbPolygon, srs=proj)
     feature = ogr.Feature(layer.GetLayerDefn())
     feature.SetGeometry(utils_bbox._get_geom_from_bbox(bbox))
-    
+
     layer.CreateFeature(feature)
     layer.SyncToDisk()
 
@@ -1079,8 +1065,7 @@ def vector_from_wkt(
     projection: Union[str, osr.SpatialReference, int, None] = None,
     out_path: Optional[str] = None,
 ) -> str:
-    """
-    Creates a vector file from a wkt string.
+    """Creates a vector file from a wkt string.
 
     Parameters
     ----------
@@ -1092,7 +1077,7 @@ def vector_from_wkt(
 
     out_path : Optional[str], optional
         The path to the output vector. If None, will create a new file in the same directory as the input vector. Default: None.
-    
+
     Returns
     -------
     str
@@ -1107,16 +1092,16 @@ def vector_from_wkt(
         proj = utils_projection.parse_projection(projection)
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath("temp_points.gpkg", add_timestamp=True, add_uuid=True)
+        out_path = utils_path._get_temp_filepath("temp_geom.gpkg", add_timestamp=True, add_uuid=True)
 
     driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
     driver = ogr.GetDriverByName(driver_name)
-    
+
     datasource = driver.CreateDataSource(out_path)
 
     geom_type = ogr.CreateGeometryFromWkt(wkt).GetGeometryType()
 
-    layer = datasource.CreateLayer("points", geom_type=geom_type, srs=proj)
+    layer = datasource.CreateLayer("temp_geom", geom_type=geom_type, srs=proj)
     layer_defn = layer.GetLayerDefn()
 
     feature = ogr.Feature(layer_defn)
@@ -1139,9 +1124,8 @@ def vector_from_points(
     out_path: Optional[str] = None,
     reverse_xy_order: bool = False,
 ) -> str:
-    """
-    Creates a point vector from a list of points.
-    
+    """Creates a point vector from a list of points.
+
     Parameters
     ----------
     points : List[List[float, int]]
@@ -1203,8 +1187,7 @@ def vector_add_field(
     field_name: str,
     field_type: str,
 ) -> Union[str, List[str]]:
-    """
-    Adds a field to a vector in place.
+    """Adds a field to a vector in place.
 
     Parameters
     ----------
@@ -1277,8 +1260,7 @@ def vector_set_attribute_table(
     attribute_table: List[List[Any]],
     match: Optional[str] = 'fid',
 ) -> Union[str, List[str]]:
-    """
-    Sets the attribute table of a vector in place.
+    """Sets the attribute table of a vector in place.
 
     Parameters
     ----------
@@ -1365,8 +1347,7 @@ def vector_delete_fields(
     vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
     fields: List[str],
 ) -> Union[str, List[str]]:
-    """
-    Deletes fields from a vector in place.
+    """Deletes fields from a vector in place.
 
     Parameters
     ----------

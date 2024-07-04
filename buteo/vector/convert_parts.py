@@ -1,5 +1,4 @@
-"""
-### Convert geometry composition. ###
+"""### Convert geometry composition. ###
 
 Convert geometries from multiparts and singleparts and vice versa.
 """
@@ -29,7 +28,7 @@ def _singlepart_to_multipart(
     add_index: bool = True,
     process_layer: int = -1,
 ) -> str:
-    """ Internal. """
+    """Internal."""
     assert isinstance(vector, (ogr.DataSource, str)), "Invalid input vector"
     assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
@@ -77,7 +76,7 @@ def _multipart_to_singlepart(
     process_layer: int = -1,
     verbose: bool = False,
 ) -> str:
-    """ Internal. """
+    """Internal."""
     assert isinstance(vector, (ogr.DataSource, str)), "Invalid input vector"
     assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
@@ -219,8 +218,7 @@ def vector_singlepart_to_multipart(
     overwrite: bool = True,
     allow_lists: bool = True,
 ) -> Union[str, List[str]]:
-    """
-    Converts a singlepart vector to multipart.
+    """Converts a singlepart vector to multipart.
 
     Parameters
     ----------
@@ -241,7 +239,7 @@ def vector_singlepart_to_multipart(
 
     suffix : str, optional
         The suffix to add to the layer name. Default: ""
-    
+
     add_uuid : bool, optional
         Add a UUID field to the output vector. Default: False
 
@@ -312,8 +310,7 @@ def vector_multipart_to_singlepart(
     add_uuid: bool = False,
     allow_lists: bool = True,
 ) -> Union[str, List[str]]:
-    """
-    Converts a multipart vector to singlepart.
+    """Converts a multipart vector to singlepart.
 
     Parameters
     ----------

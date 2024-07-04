@@ -13,8 +13,7 @@ class MultiArray:
         _idx_end: Optional[int] = None,
         _is_subarray: bool = False
     ):
-        """
-        This is a class that takes in a tuple of list of arrays and glues them together
+        """This is a class that takes in a tuple of list of arrays and glues them together
         without concatenating them. This is useful for when you have a large
         dataset that you want to load into memory, but you don't want to
         concatenate them because that would take up too much memory.
@@ -25,12 +24,12 @@ class MultiArray:
         ----------
         array_list : List[Union[np.ndarray, np.memmap]]
             A list of numpy arrays to load as one. Can be mmaped or not.
-        
+
         shuffle : bool, default: False
             Whether to shuffle the data or not. Cannot be used together with random_sampling.
             This is different from random sampling in that it ensures that all data will be used.
             It creates an index array that is shuffled and then uses that to index the MultiArray.
-        
+
         random_sampling : bool, default: False
             Whether to use random sampling or not. If True, the returned data will be randomly sampled from the MultiArray.
             Cannot be used together with shuffling.
@@ -89,7 +88,7 @@ class MultiArray:
             self.shuffle_indices = self.rng.permutation(range(self._idx_start, self._idx_end))
 
     def _load_item(self, idx: int):
-        """ Load an item from the array list. """
+        """Load an item from the array list."""
         array_idx = np.searchsorted(self.cumulative_sizes, idx, side='right') - 1
 
         calculated_idx = idx - self.cumulative_sizes[array_idx]
@@ -102,25 +101,25 @@ class MultiArray:
 
 
     def set_shuffle_index(self, shuffle_indices: np.ndarray) -> None:
-        """ Set the shuffle indices and enable shuffling. """
+        """Set the shuffle indices and enable shuffling."""
         self.shuffle_indices = shuffle_indices
         self.shuffle = True
         assert len(self.shuffle_indices) == len(self), "Length of shuffle indices should be equal to the length of the MultiArray."
 
     
     def get_shuffle_index(self) -> np.ndarray:
-        """ Get the shuffle indices. """
+        """Get the shuffle indices."""
         return self.shuffle_indices
     
     
     def shuffle_index(self) -> None:
-        """ Shuffle the MultiArray. """
+        """Shuffle the MultiArray."""
         self.shuffle_indices = self.rng.permutation(range(self._idx_start, self._idx_end))
         self.shuffle = True
 
     
     def disable_shuffle(self) -> None:
-        """ Disable shuffling. """
+        """Disable shuffling."""
         self.shuffle = False
 
 
@@ -142,8 +141,7 @@ class MultiArray:
 
 
     def split(self, split_point: Union[int, float]) -> Tuple["MultiArray", "MultiArray"]:
-        """
-        Split the MultiArray into two MultiArrays.
+        """Split the MultiArray into two MultiArrays.
 
         Parameters
         ----------

@@ -1,5 +1,4 @@
-"""
-### Generic utility functions ###
+"""### Generic utility functions ###
 
 Functions that make interacting with the toolbox easier.
 """
@@ -24,9 +23,8 @@ def convolve_distance(
     pixel_width: Union[int, float] = 1,
     pixel_height: Union[int, float] = 1,
 ) -> np.ndarray:
-    """
-    Calculate the distance from each pixel to the nearest target pixel.
-    
+    """Calculate the distance from each pixel to the nearest target pixel.
+
     Parameters
     ----------
     array : np.ndarray

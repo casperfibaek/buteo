@@ -1,6 +1,4 @@
-"""
-### Basic IO functions for working with Rasters ###
-"""
+"""### Basic IO functions for working with Rasters ###"""
 # Standard library
 import sys; sys.path.append("../../")
 from typing import List, Optional, Union, Tuple
@@ -36,8 +34,7 @@ def raster_to_array(
     cast: Optional[Union[np.dtype, str]] = None,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Converts a raster or a list of rasters into a NumPy array.
+    """Converts a raster or a list of rasters into a NumPy array.
 
     Parameters
     ----------
@@ -82,7 +79,7 @@ def raster_to_array(
     -------
     np.ndarray
         A numpy array representing the raster data.
-    
+
     Raises
     ------
     ValueError
@@ -93,30 +90,30 @@ def raster_to_array(
         If the masked parameter is not valid.
     ValueError
         If both bbox and pixel_offsets are provided.
-    
+
     Examples
     --------
     `Example 1: Convert a raster to a numpy array.`
     ```python
     >>> import buteo as beo
-    >>> 
+    >>>
     >>> raster = "/path/to/raster/raster.tif"
-    >>> 
+    >>>
     >>> # Convert a raster to a numpy array
     >>> array = beo.raster_to_array(raster)
-    >>> 
+    >>>
     >>> array.shape, array.dtype
     >>> (100, 100, 3), dtype('uint8')
     ```
     `Example 2: Convert a raster to a numpy array with a specific band.`
     ```python
     >>> import buteo as beo
-    >>> 
+    >>>
     >>> raster = "/path/to/raster/raster.tif"
-    >>> 
+    >>>
     >>> # Convert a raster to a numpy array
     >>> array = beo.raster_to_array(raster, bands=[2])
-    >>> 
+    >>>
     >>> array.shape, array.dtype
     >>> (100, 100, 1), dtype('uint8')
     ```
@@ -125,13 +122,13 @@ def raster_to_array(
     >>> # band and a specific type and filled.
     >>> from glob import glob
     >>> import buteo as beo
-    >>> 
+    >>>
     >>> FOLDER = "/path/to/folder"
     >>> rasters = glob(FOLDER + "/*.tif")
     >>>
     >>> len(rasters)
     >>> 10
-    >>> 
+    >>>
     >>> # Convert rasters to a numpy array
     >>> array = beo.raster_to_array(
     ...     rasters,
@@ -140,7 +137,7 @@ def raster_to_array(
     ...     filled=True,
     ...     fill_value=0.0,
     ... )
-    >>> 
+    >>>
     >>> # This raises an error if the 10 rasters are not aligned.
     >>> array.shape, array.dtype
     >>> (100, 100, 10), dtype('float32')
@@ -308,8 +305,7 @@ def array_to_raster(
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
 ):
-    """
-    Turns a NumPy array into a GDAL dataset or exported as a raster using a reference raster.
+    """Turns a NumPy array into a GDAL dataset or exported as a raster using a reference raster.
 
     Parameters
     ----------
@@ -367,18 +363,18 @@ def array_to_raster(
     ```python
     >>> # Create a raster from a numpy array.
     >>> import buteo as beo
-    >>> 
+    >>>
     >>> raster = "/path/to/raster/raster.tif"
-    >>> 
+    >>>
     >>> array = beo.raster_to_array(raster)
     >>> array = array ** 2
-    >>> 
+    >>>
     >>> out_path = beo.array_to_raster(
     ...     array,
     ...     reference=raster,
     ...     out_path="/path/to/new/new_raster.tif"
     ... )
-    >>> 
+    >>>
     >>> out_path
     >>> "/path/to/new/new_raster.tif"
     ```
@@ -547,8 +543,7 @@ def save_dataset_to_disk(
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
 ) -> Union[str, List[str]]:
-    """
-    Writes a dataset to disk. Can be a raster or a vector.
+    """Writes a dataset to disk. Can be a raster or a vector.
 
     Parameters
     ----------
@@ -557,7 +552,7 @@ def save_dataset_to_disk(
 
     out_path : Union[str, List[str]]
         The output path or list of output paths.
-    
+
     prefix : str, optional
         A prefix to add to the output path. Default: "".
 
@@ -629,8 +624,7 @@ def save_dataset_to_disk(
 
 
 class raster_to_array_chunks:
-    """
-    A class for reading raster data in chunks. The array will be split into x and y
+    """A class for reading raster data in chunks. The array will be split into x and y
     amount of chunks in the x and y directions. The output will be the read array
     and the offsets of the chunk in the raster. The offset can be used to reconstitute
     the array into the original raster or a new raster representing the chunk,
@@ -646,7 +640,7 @@ class raster_to_array_chunks:
         that the chunks are as square as possible. Default: 1.
 
     chunk_size : list or tuple, optional
-        The raster can be split into chunks of a fixed size, 
+        The raster can be split into chunks of a fixed size,
         instead of splitting into a fixed number of chunks.
 
         The list should be in the format [x_size, y_size].
@@ -690,13 +684,13 @@ class raster_to_array_chunks:
     ```python
     >>> # Read a raster into array via chunks.
     >>> import buteo as beo
-    >>> 
+    >>>
     >>> raster = "/path/to/raster/raster.tif"
-    >>> 
+    >>>
     >>> shape = beo.raster_to_metadata(raster)["shape"]
     >>> shape
     >>> (100, 100)
-    >>> 
+    >>>
     >>> for chunk, offsets in beo.raster_to_array_chunks(raster, chunks=4):
     >>>     print(chunk.shape, offsets)
     >>>     (25, 25), (0, 0, 25, 25)
@@ -807,8 +801,7 @@ def raster_create_empty(
     creation_options: Union[List[str], None] = None,
     overwrite: bool = True,
 ) -> str:
-    """
-    Create an empty raster.
+    """Create an empty raster.
 
     Parameters
     ----------
@@ -930,38 +923,38 @@ def raster_create_from_array(
     overwrite: bool = True,
     creation_options: Union[List[str], None] = None,
 ) -> str:
-    """ Create a raster from a numpy array.
+    """Create a raster from a numpy array.
 
-    Parameters
-    ----------
-    arr : np.ndarray
-        The array to convert to a raster.
+        Parameters
+        ----------
+        arr : np.ndarray
+       The array to convert to a raster.
 
-    out_path : str, optional
-        The output path. If None, a temporary file will be created.
+        out_path : str, optional
+       The output path. If None, a temporary file will be created.
 
-    pixel_size : int or float or list or tuple, optional
-        The pixel size of the output raster. Default: 10.0.
+        pixel_size : int or float or list or tuple, optional
+       The pixel size of the output raster. Default: 10.0.
 
-    x_min : int or float, optional
-        The x coordinate of the top left corner of the output raster. Default: 0.0.
+        x_min : int or float, optional
+       The x coordinate of the top left corner of the output raster. Default: 0.0.
 
-    y_max : int or float, optional
-        The y coordinate of the top left corner of the output raster. Default: 0.0.
+        y_max : int or float, optional
+       The y coordinate of the top left corner of the output raster. Default: 0.0.
 
-    projection : int or str or gdal.Dataset or ogr.DataSource or osr.SpatialReference, optional
-        The projection of the output raster. Default: "EPSG:3857".
+        projection : int or str or gdal.Dataset or ogr.DataSource or osr.SpatialReference, optional
+       The projection of the output raster. Default: "EPSG:3857".
 
-    creation_options : list or None, optional
-        The creation options for the output raster. Default: None.
+        creation_options : list or None, optional
+       The creation options for the output raster. Default: None.
 
-    overwrite : bool, optional
-        If True, the output raster will be overwritten if it already exists. Default: True.
+        overwrite : bool, optional
+       If True, the output raster will be overwritten if it already exists. Default: True.
 
-    Returns
-    -------
-    str
-        The path to the output raster.
+        Returns
+        -------
+        str
+       The path to the output raster.
     """
     utils_base._type_check(arr, [np.ndarray, np.ma.MaskedArray], "arr")
     utils_base._type_check(out_path, [str, None], "out_path")
@@ -1039,8 +1032,7 @@ def raster_create_copy(
     out_path: Optional[str] = None,
     overwrite: bool = True,
 ) -> str:
-    """
-    Create a copy of a raster.
+    """Create a copy of a raster.
 
     Parameters
     ----------
@@ -1081,8 +1073,7 @@ def raster_create_copy(
 
 
 def raster_set_band_descriptions(raster, bands, descriptions):
-    """
-    Update the band descriptions of a raster.
+    """Update the band descriptions of a raster.
 
     Parameters
     ----------
@@ -1123,8 +1114,7 @@ def raster_extract_bands(
     overwrite: bool = True,
     creation_options: Union[List[str], None] = None,
 ):
-    """
-    Extract a band from a raster.
+    """Extract a band from a raster.
 
     Parameters
     ----------

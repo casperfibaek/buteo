@@ -1,5 +1,4 @@
-"""
-This module provides functions to ease the preprocessing of Sentinel 1 data
+"""This module provides functions to ease the preprocessing of Sentinel 1 data
 and finding the GPT tools.
 
 TODO:
@@ -14,7 +13,7 @@ import numpy as np
 
 # TODO: wkt to ogr geometry
 def _s1_kml_to_bbox(path_to_kml: str) -> str:
-    """ Internal. """
+    """Internal."""
     root = ET.parse(path_to_kml).getroot()
     for elem in root.iter():
         if elem.tag == "coordinates":
@@ -57,8 +56,7 @@ def _s1_kml_to_bbox(path_to_kml: str) -> str:
 def s1_get_metadata(
     image_paths: List[str],
 ) -> List[Dict[str, Any]]:
-    """
-    Get metadata from Sentinel 1 images.
+    """Get metadata from Sentinel 1 images.
 
     Parameters
     ----------
@@ -91,8 +89,7 @@ def s1_get_metadata(
 def s1_to_db(
     arr: np.ndarray,
 ) -> np.ndarray:
-    """
-    Convert intensity to dB
+    """Convert intensity to dB
     10 * log10(arr)
     """
     epsilon = np.finfo(arr.dtype).eps
@@ -102,8 +99,7 @@ def s1_to_db(
 def s1_to_intensity(
     arr: np.ndarray,
 ) -> np.ndarray:
-    """
-    Convert dB to intensity
+    """Convert dB to intensity
     10^(arr/10)
     """
     return np.power(10, arr / 10.0)

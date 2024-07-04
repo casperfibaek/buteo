@@ -1,6 +1,4 @@
-"""
-### Perform convolutions on arrays.  ###
-"""
+"""### Perform convolutions on arrays.  ###"""
 
 # Standard Library
 import sys; sys.path.append("../../")
@@ -22,8 +20,7 @@ def pad_array(
     method: str = "same",
     constant_value: Union[float, int] = 0.0,
 ) -> np.ndarray:
-    """
-    Create a padded view of an array using SAME padding.
+    """Create a padded view of an array using SAME padding.
 
     Parameters
     ----------
@@ -91,8 +88,7 @@ def _convolve_array_2D(
     func_value: Union[int, float] = 0.5,
     mask: Optional[np.ndarray] = None,
 ) -> np.ndarray:
-    """
-    Internal function for convolving a 2D array.
+    """Internal function for convolving a 2D array.
     Input should be float32.
     """
     result = np.zeros((arr.shape[0], arr.shape[1]), dtype="float32")
@@ -176,8 +172,7 @@ def convolve_array_simple(
     offsets: np.ndarray,
     weights: np.ndarray,
 ) -> np.ndarray:
-    """
-    Convolve a kernel with an array using a simple method.
+    """Convolve a kernel with an array using a simple method.
     Array must be 2D (height, width).
     The function ignores nodata values and pads the array with 'same'.
     It only supports 'summation' method.
@@ -233,8 +228,7 @@ def _convolve_array_channels_HWC(
     nodata_value: float = -9999.9,
     func_value: Union[int, float] = 0.5,
 ) -> np.ndarray:
-    """
-    Internal function for convoling a 3D array along its channels.
+    """Internal function for convoling a 3D array along its channels.
     Input should be float32. Channel-last version.
     """
     result = np.zeros((arr.shape[0], arr.shape[1], 1), dtype="float32")
@@ -282,8 +276,7 @@ def _convolve_array_channels_CHW(
     nodata_value: float = -9999.9,
     func_value: Union[int, float] = 0.5,
 ) -> np.ndarray:
-    """
-    Internal function for convoling a 3D array along its channels.
+    """Internal function for convoling a 3D array along its channels.
     Input should be float32. Channel-first version.
     """
     result = np.zeros((1, arr.shape[0], arr.shape[1]), dtype="float32")
@@ -330,8 +323,7 @@ def convolve_array_channels(
     func_value: Union[int, float] = 0.5,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Convolves a 3D array along its channels.
+    """Convolves a 3D array along its channels.
     Useful for 'collapsing' a 3D array into a 2D array.
 
     Parameters
@@ -364,16 +356,16 @@ def convolve_array_channels(
         19. roughness tpi
 
         Default: 1.
-    
+
     nodata : bool, optional
         Whether to use nodata values in the convolution. Default: False.
-    
+
     nodata_value : float, optional
         The nodata value to use in the convolution. Default: -9999.9.
-    
+
     func_value : int or float, optional
         The value to use in the convolution. Default: 0.5.
-    
+
     channel_last : bool, optional
         Whether the channels are the last axis in the array. Default: True.
 
@@ -425,8 +417,7 @@ def convolve_array(
     channel_last: bool = True,
     mask: Optional[np.ndarray] = None,
 ) -> np.ndarray:
-    """
-    Convolve an array using a set of offsets and weights.
+    """Convolve an array using a set of offsets and weights.
     Array can be 2D or 3D.
 
     Parameters
@@ -476,7 +467,7 @@ def convolve_array(
     func_value : int or float, optional
         The value to use for pixels where the kernel extends outside the input array.
         If None, use the edge value. Default: 0.5.
-    
+
     channel_last : bool, optional
         Whether the channels are the last axis in the array. Default: True.
 

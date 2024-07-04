@@ -1,6 +1,4 @@
-"""
-Create offsets to read rasters in chunks.
-"""
+"""Create offsets to read rasters in chunks."""
 
 # Standard library
 from typing import List, Tuple
@@ -14,8 +12,7 @@ def _get_chunk_offsets(
     overlap: int = 0,
     channel_last: bool = True,
 ) -> List[Tuple[int, int, int, int]]:
-    """
-    Calculate chunk offsets for dividing an image into a specified number of chunks with minimal circumference.
+    """Calculate chunk offsets for dividing an image into a specified number of chunks with minimal circumference.
 
     The function finds the optimal configuration of chunks to minimize the circumference and ensure the whole image
     is captured.
@@ -117,8 +114,7 @@ def _get_chunk_offsets_fixed_size(
     *,
     channel_last: bool = True,
 ) -> List[Tuple[int, int, int, int]]:
-    """
-    Get chunk offsets for a fixed chunk size.
+    """Get chunk offsets for a fixed chunk size.
 
     Parameters
     ----------

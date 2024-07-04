@@ -1,6 +1,4 @@
-"""
-### Extract the footprints or centroids of rasters. ###
-"""
+"""### Extract the footprints or centroids of rasters. ###"""
 
 # Standard library
 import sys; sys.path.append("../../")
@@ -34,8 +32,7 @@ def raster_get_footprints(
     add_timestamp: bool = False,
     out_format: str = "gpkg",
 ) -> Union[str, List[str], gdal.Dataset]:
-    """
-    Gets the footprints of a raster or a list of rasters.
+    """Gets the footprints of a raster or a list of rasters.
 
     Parameters
     ----------
@@ -44,7 +41,7 @@ def raster_get_footprints(
 
     latlng : bool, optional
         If True, the footprints are returned in lat/lon coordinates. If False, the footprints are returned in projected coordinates., default: True
-        
+
     out_path : Optional[str], optional
         The path to the output raster. If None, the raster is created in memory., default: None
 
@@ -62,7 +59,7 @@ def raster_get_footprints(
 
     add_timestamp : bool, optional
         If True, a timestamp will be added to the output raster name., default: False
-    
+
     out_format : str, optional
         The output format of the raster. If None, the format is inferred from the output path., default: "gpkg"
 

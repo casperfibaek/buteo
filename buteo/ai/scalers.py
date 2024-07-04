@@ -1,6 +1,4 @@
-"""
-This module provides a set of functions to normalise data for machine learning.
-"""
+"""This module provides a set of functions to normalise data for machine learning."""
 
 # Standard library
 from typing import Union, Optional, Tuple
@@ -13,8 +11,7 @@ def scaler_minmax(
     arr: np.array,
     stat_dict: Optional[dict] = None,
 ) -> Tuple[np.array, dict]:
-    """
-    Normalize an input numpy array using the min-max scaling method.
+    """Normalize an input numpy array using the min-max scaling method.
 
     Parameters
     ----------
@@ -65,8 +62,7 @@ def scaler_standardise(
     arr: np.array,
     stat_dict: Optional[dict] = None,
 ) -> Tuple[np.array, dict]:
-    """
-    Standardize an an input numpy array.
+    """Standardize an an input numpy array.
 
     Parameters
     ----------
@@ -116,8 +112,7 @@ def scaler_standardise_mad(
     arr: np.array,
     stat_dict: Optional[dict] = None,
 ) -> Tuple[np.array, dict]:
-    """
-    Normalize an input numpy array using the median absolute deviation (MAD) scaling method.
+    """Normalize an input numpy array using the median absolute deviation (MAD) scaling method.
 
     Parameters
     ----------
@@ -172,8 +167,7 @@ def scaler_iqr(
     q3=0.75,
     stat_dict: Optional[dict] = None,
 ) -> Tuple[np.array, dict]:
-    """ 
-    Normalize an input numpy array using the interquartile range (IQR) method.
+    """Normalize an input numpy array using the interquartile range (IQR) method.
 
     Parameters
     ----------
@@ -237,8 +231,7 @@ def scaler_to_range(
     max_val: Union[float, int] = 1.0,
     stat_dict: Optional[dict] = None,
 ) -> Tuple[np.array, dict]:
-    """
-    Normalizes an input numpy array to a given range.
+    """Normalizes an input numpy array to a given range.
 
     Parameters
     ----------
@@ -316,8 +309,7 @@ def scaler_truncate(
     target_max: Union[float, int] = 1.0,
     stat_dict: Optional[dict] = None,
 ) -> Tuple[np.array, dict]:
-    """
-    Truncate an input numpy array within the given range, and then normalise it to the target range.
+    """Truncate an input numpy array within the given range, and then normalise it to the target range.
 
     Parameters
     ----------

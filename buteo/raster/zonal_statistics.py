@@ -1,5 +1,4 @@
-"""
-### Calculate zonal statistics between a raster and a vector. ###
+"""### Calculate zonal statistics between a raster and a vector. ###
 
 """
 
@@ -33,9 +32,7 @@ def _calculate_zonal_statistics(
     zones: np.ndarray,
     statistics: List[str],
 ) -> np.ndarray:
-    """
-    Internal. Calculate the zonal statistics.
-    """
+    """Internal. Calculate the zonal statistics."""
     # statistics
     stats = np.zeros((len(zones), len(statistics)), dtype=np.float32)
 
@@ -71,9 +68,7 @@ def _raster_get_zonal_statistics(
     statistics: List[str] = ["mean"],
     out_path: Optional[str] = None,
 ) -> str:
-    """
-    TODO: Get zonal statistics between a raster and a vector.
-    """
+    """TODO: Get zonal statistics between a raster and a vector."""
     assert isinstance(raster, (str, gdal.Dataset)), f"Invalid raster. {raster}"
     assert isinstance(vector, (str, ogr.DataSource)), f"Invalid vector. {vector}"
     assert isinstance(statistics, list), f"Invalid statistics. {statistics}"

@@ -1,9 +1,9 @@
-""" Time series analysis functions. """
+"""Time series analysis functions."""
 import numpy as np
 
 
 def timeseries_least_square_slope(arr):
-    """ Compute the least squares slope for a set of data points along the last channel. """
+    """Compute the least squares slope for a set of data points along the last channel."""
     assert arr.ndim == 3, "Input array must be 3D"
 
     y = arr
@@ -23,7 +23,7 @@ def timeseries_least_square_slope(arr):
 
 
 def timeseries_robust_least_squares_slope(arr, std_threshold=1.0, splits=10, report_progress=True):
-    """ Compute the robust least squares slope for a set of data points along the last channel. """
+    """Compute the robust least squares slope for a set of data points along the last channel."""
     assert arr.ndim == 3, "Input array must be 3D"
     assert arr.shape[0] > splits, "Input array must have at least splits rows"
     y_list = np.array_split(arr, splits, axis=0)

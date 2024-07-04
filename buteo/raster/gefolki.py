@@ -211,8 +211,7 @@ def _clahe(image, ntiles_x, ntiles_y, clip_limit, nbins=128, nr_of_grey=16384, m
 
 
 def clip_histogram(hist, clip_limit):
-    """
-    Perform clipping of the histogram and redistribution of bins.
+    """Perform clipping of the histogram and redistribution of bins.
 
     The histogram is clipped and the number of excess pixels is counted.
     Afterwards the excess pixels are equally redistributed across the
@@ -266,8 +265,7 @@ def clip_histogram(hist, clip_limit):
 
 
 def map_histogram(hist, min_val, max_val, n_pixels):
-    """
-    Calculate the equalized lookup table (mapping).
+    """Calculate the equalized lookup table (mapping).
 
     It does so by cumulating the input histogram.
 
@@ -297,8 +295,7 @@ def map_histogram(hist, min_val, max_val, n_pixels):
 
 
 def interpolate(image, xslice, yslice, mapLU, mapRU, mapLB, mapRB, aLUT):
-    """
-    Find the new grayscale level for a region using bilinear interpolation.
+    """Find the new grayscale level for a region using bilinear interpolation.
 
     Parameters
     ----------
@@ -671,7 +668,7 @@ def rank_filter_inf(I, rad):
     return R
 
 def wrapData(I, u, v):
-    """ Apply the [u,v] optical flow to the data I """
+    """Apply the [u,v] optical flow to the data I"""
     col, row = I.shape[1], I.shape[0]
     X, Y = np.meshgrid(range(col), range(row))
     R = interp2(I, X+u, Y+v)

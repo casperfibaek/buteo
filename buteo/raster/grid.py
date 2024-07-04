@@ -1,5 +1,4 @@
-"""
-### Create grids from rasters.  ###
+"""### Create grids from rasters.  ###
 
 Cut rasters to grids. Use vectors or rasters as grids.
 """
@@ -36,8 +35,7 @@ def raster_to_grid(
     creation_options: Optional[List[str]] = None,
     verbose: int = 0,
 ) -> str:
-    """
-    Clips a raster to a grid. Generates .vrt.
+    """Clips a raster to a grid. Generates .vrt.
 
     Parameters
     ----------

@@ -1,5 +1,4 @@
-"""
-### Rasterize vectors. ###
+"""### Rasterize vectors. ###
 
 Functions to rasterize vectors to rasters.
 
@@ -46,17 +45,16 @@ def vector_rasterize(
     burn_value=1,
     attribute=None,
 ) -> str:
-    """
-    Rasterize a vector to a raster.
+    """Rasterize a vector to a raster.
 
     Parameters
     ----------
     vector : Union[str, ogr.DataSource]
         The vector to rasterize.
-    
+
     pixel_size : Union[float, int]
         The pixel size of the raster.
-    
+
     out_path : Optional[str], optional
         Path to output raster. Default: None
 
@@ -77,7 +75,7 @@ def vector_rasterize(
 
     band : int, optional
         Band to rasterize. Default: 1
-    
+
     fill_value : Union[int, float], optional
         Fill value. Default: 0
 

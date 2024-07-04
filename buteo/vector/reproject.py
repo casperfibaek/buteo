@@ -1,5 +1,4 @@
-"""
-### Reproject vectors. ###
+"""### Reproject vectors. ###
 
 Functions to reproject vectors. References can be both vector and raster.
 """
@@ -30,7 +29,7 @@ def _vector_reproject(
     suffix: str = "",
     add_uuid: bool = False,
 ):
-    """ Internal. """
+    """Internal."""
     assert isinstance(vector, (ogr.DataSource, str)), "Invalid vector input"
     assert utils_gdal._check_is_vector(vector), "Invalid vector input"
 
@@ -74,8 +73,7 @@ def vector_reproject(
     add_uuid: bool = False,
     overwrite: bool = True,
 ):
-    """
-    Reprojects a vector given a target projection.
+    """Reprojects a vector given a target projection.
 
     Parameters
     ----------

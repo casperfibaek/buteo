@@ -1,6 +1,4 @@
-"""
-This module contains function to select features from a dataset for machine learning.
-"""
+"""This module contains function to select features from a dataset for machine learning."""
 
 # Standard library
 import sys; sys.path.append("../../")
@@ -16,8 +14,7 @@ def split_train_val(
     val_size: float = 0.2,
     random_state: Optional[Union[float, int]] = None,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Split a dataset into training and validation sets using random shuffling.
+    """Split a dataset into training and validation sets using random shuffling.
 
     Parameters
     ----------
@@ -77,8 +74,7 @@ def split_train_val_test(
     test_size: float = 0.2,
     random_state: Optional[Union[float, int]] = None,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Split a dataset into training, validation, and test sets using a specified random seed.
+    """Split a dataset into training, validation, and test sets using a specified random seed.
 
     Parameters
     ----------
@@ -148,8 +144,7 @@ def sampling_stratified(
     regression: bool = False,
     samples_per_class: bool = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Stratified sampling of a dataset.
+    """Stratified sampling of a dataset.
 
     This function can be used for both regression and classification problems.
 
@@ -207,8 +202,7 @@ def sampling_random(
     y: np.ndarray,
     samples: Union[int, float],
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """ 
-    Random sampling of a dataset.
+    """Random sampling of a dataset.
 
     Parameters
     ----------

@@ -1,5 +1,4 @@
-"""
-### Align rasters ###
+"""### Align rasters ###
 
 Functions to align a series of rasters to a master or a reference.
 """
@@ -45,8 +44,7 @@ def _raster_align_to_reference(
     ram_max: Optional[int] = None,
     ram_min: Optional[int] = 100,
 ) -> List[str]:
-    """
-    Aligns a series of rasters to a reference.
+    """Aligns a series of rasters to a reference.
 
     Parameters
     ----------
@@ -85,10 +83,10 @@ def _raster_align_to_reference(
 
     ram : float, optional
         The proportion of total ram to allow usage of. Default: 0.8.
-    
+
     ram_max: int, optional
         The maximum amount of ram to use in MB. Default: None.
-    
+
     ram_min: int, optional
         The minimum amount of ram to use in MB. Default: 100.
 
@@ -211,8 +209,7 @@ def _raster_find_best_align_reference(
     method: str,
     out_path: Optional[str] = None,
 ) -> str:
-    """
-    Find the best reference raster for aligning a list of rasters.
+    """Find the best reference raster for aligning a list of rasters.
 
     Parameters
     ----------
@@ -379,8 +376,7 @@ def raster_align(
     ram_min: Optional[int] = 100,
     ram_max: Optional[int] = None,
 ) -> List[str]:
-    """
-    Aligns rasters either to a reference raster or to each other using one of three methods:
+    """Aligns rasters either to a reference raster or to each other using one of three methods:
     reference, intersection, or union.
 
     Parameters
@@ -426,7 +422,7 @@ def raster_align(
 
     ram_max : int, optional
         The maximum amount of RAM to use in MB, default: None
-    
+
     Returns
     -------
     List[str]

@@ -25,7 +25,7 @@ def _vector_add_shapes_in_place(
     prefix: str = "",
     verbose: bool = False,
 ) -> str:
-    """ Internal. """
+    """Internal."""
     assert isinstance(vector, (ogr.DataSource, str)), "vector must be a vector layer or path to one."
     assert isinstance(shapes, (list, tuple)) or shapes is None, "shapes must be a list of shapes."
     assert isinstance(prefix, str), "prefix must be a string."
@@ -131,15 +131,14 @@ def vector_add_shapes_in_place(
     allow_lists: bool = True,
     verbose: bool = False,
 ) -> Union[str, List[str]]:
-    """
-    Adds shape calculations to a vector such as area and perimeter.
+    """Adds shape calculations to a vector such as area and perimeter.
     Can also add compactness measurements.
 
     Parameters
     ----------
     vector : Union[str, ogr.DataSource, List[str, ogr.DataSource]]
         Vector layer(s) or path(s) to vector layer(s).
-    
+
     shapes : Optional[List[str]], optional
         The shapes to calculate. The following a possible:
             * Area          (In same unit as projection)
@@ -149,7 +148,7 @@ def vector_add_shapes_in_place(
             * Compactness   (0-1) given as sqrt((area / hull_area) * ipq)
             * Centroid      (Coordinate of X and Y)
         Default: all shapes.
-    
+
     prefix : str, optional
         Prefix to add to the field names. Default: "".
 

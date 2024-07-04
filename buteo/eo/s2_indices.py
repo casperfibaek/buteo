@@ -1,5 +1,4 @@
-"""
-This module provides varoius indices for Sentinel 2 imagery.
+"""This module provides varoius indices for Sentinel 2 imagery.
 
 TODO:
     Convert to numpy functions.
@@ -14,12 +13,12 @@ import numpy as np
 
 
 def _all_arrays_are_same_size(arrays: List[np.ndarray]) -> bool:
-    """ Check if all arrays are the same size. """
+    """Check if all arrays are the same size."""
     return all([arrays[0].shape == array.shape for array in arrays])
 
 def s2_index_chlre(b_05: np.ndarray, b_08: np.ndarray):
-    """ Red Edge Chlorophyll Index
-        Calc: B05 / B08
+    """Red Edge Chlorophyll Index
+       Calc: B05 / B08
     """
     assert _all_arrays_are_same_size([b_05, b_08]), "All arrays must be the same size."
 
@@ -29,8 +28,8 @@ def s2_index_chlre(b_05: np.ndarray, b_08: np.ndarray):
     return result
 
 def s2_index_rendvi(b_08: np.ndarray, b_06: np.ndarray):
-    """ Red Edge NDVI
-        Calc: (B08 - B06) / (B08 + B06)
+    """Red Edge NDVI
+       Calc: (B08 - B06) / (B08 + B06)
     """
     assert _all_arrays_are_same_size([b_08, b_06]), "All arrays must be the same size."
 
@@ -43,8 +42,8 @@ def s2_index_rendvi(b_08: np.ndarray, b_06: np.ndarray):
     return result
 
 def s2_index_s2_rep(b_07: np.ndarray, b_04: np.ndarray, b_05: np.ndarray, b_06: np.ndarray):
-    """ Sentinel 2 Red Edge Position
-        Calc: 705 + 35 * ((((B07 + B04) / 2) - B05) / (B06 - B05))
+    """Sentinel 2 Red Edge Position
+       Calc: 705 + 35 * ((((B07 + B04) / 2) - B05) / (B06 - B05))
     """
     assert _all_arrays_are_same_size([b_07, b_04, b_05, b_06]), "All arrays must be the same size."
 
@@ -56,8 +55,8 @@ def s2_index_s2_rep(b_07: np.ndarray, b_04: np.ndarray, b_05: np.ndarray, b_06: 
     return result
 
 def s2_index_ireci(b_07: np.ndarray, b_04: np.ndarray, b_05: np.ndarray, b_06: np.ndarray):
-    """ Red Edge Chlorophyll Index
-        Calc: (B07 - B04) * B06 / B05
+    """Red Edge Chlorophyll Index
+       Calc: (B07 - B04) * B06 / B05
     """
     assert _all_arrays_are_same_size([b_07, b_04, b_05, b_06]), "All arrays must be the same size."
 
@@ -67,16 +66,16 @@ def s2_index_ireci(b_07: np.ndarray, b_04: np.ndarray, b_05: np.ndarray, b_06: n
     return result
 
 def s2_index_mcari(b_05: np.ndarray, b_04: np.ndarray, b_03: np.ndarray):
-    """ Modified Chlorophyll Absorption in Reflectance Index
-        Calc: (B05 - B04) - 0.2 * (B05 - B03) * (B05 / B04)
+    """Modified Chlorophyll Absorption in Reflectance Index
+       Calc: (B05 - B04) - 0.2 * (B05 - B03) * (B05 / B04)
     """
     assert _all_arrays_are_same_size([b_05, b_04, b_03]), "All arrays must be the same size."
 
     return (b_05 - b_04) - 0.2 * (b_05 - b_03) * (b_05 / b_04)
 
 def s2_index_arvi(b_08: np.ndarray, b_04: np.ndarray, b_02: np.ndarray):
-    """ Atmospherically Resistant Vegetation Index
-        Calc: (B08 - b) / (B08 + b), b = 2 * B04 - B02
+    """Atmospherically Resistant Vegetation Index
+       Calc: (B08 - b) / (B08 + b), b = 2 * B04 - B02
     """
     assert _all_arrays_are_same_size([b_08, b_04, b_02]), "All arrays must be the same size."
 
@@ -90,8 +89,8 @@ def s2_index_arvi(b_08: np.ndarray, b_04: np.ndarray, b_02: np.ndarray):
     return result
 
 def s2_index_savi(b_08: np.ndarray, b_04: np.ndarray):
-    """ Soil Adjusted Vegetation Index
-        Calc: ((B08 - B04) / ((B08 + B04) + 0.428)) * 1.856
+    """Soil Adjusted Vegetation Index
+       Calc: ((B08 - B04) / ((B08 + B04) + 0.428)) * 1.856
     """
     assert _all_arrays_are_same_size([b_08, b_04]), "All arrays must be the same size."
 
@@ -104,16 +103,16 @@ def s2_index_savi(b_08: np.ndarray, b_04: np.ndarray):
     return result * 1.856
 
 def s2_index_msavi2(b_08: np.ndarray, b_04: np.ndarray):
-    """ Modified Soil Adjusted Vegetation Index v2
-        Calc: (2 * B08 + 1 - sqrt((2 * B08 + 1) ** 2) - 8 * (B08 - B04)) / 2
+    """Modified Soil Adjusted Vegetation Index v2
+       Calc: (2 * B08 + 1 - sqrt((2 * B08 + 1) ** 2) - 8 * (B08 - B04)) / 2
     """
     assert _all_arrays_are_same_size([b_08, b_04]), "All arrays must be the same size."
 
     return (2 * b_08 + 1 - np.sqrt((2 * b_08 + 1) ** 2) - 8 * (b_08 - b_04)) / 2
 
 def s2_index_gndvi(b_08: np.ndarray, b_03: np.ndarray):
-    """ Green Normalized Difference Vegetation Index
-        Calc: (B08 - B03) / (B08 + B03)
+    """Green Normalized Difference Vegetation Index
+       Calc: (B08 - B03) / (B08 + B03)
     """
     assert _all_arrays_are_same_size([b_08, b_03]), "All arrays must be the same size."
 
@@ -126,8 +125,8 @@ def s2_index_gndvi(b_08: np.ndarray, b_03: np.ndarray):
     return result
 
 def s2_index_ndvi(b_08: np.ndarray, b_04: np.ndarray):
-    """ Normalized Difference Vegetation Index
-        Calc: (B08 - B04) / (B08 + B04)
+    """Normalized Difference Vegetation Index
+       Calc: (B08 - B04) / (B08 + B04)
     """
     assert _all_arrays_are_same_size([b_08, b_04]), "All arrays must be the same size."
 
@@ -140,8 +139,8 @@ def s2_index_ndvi(b_08: np.ndarray, b_04: np.ndarray):
     return result
 
 def s2_index_moist(b_8A: np.ndarray, b_11: np.ndarray):
-    """ Soil Moisture Index
-        Calc: (B8A - B11) / (B8A + B11)
+    """Soil Moisture Index
+       Calc: (B8A - B11) / (B8A + B11)
     """
     assert _all_arrays_are_same_size([b_8A, b_11]), "All arrays must be the same size."
 
@@ -154,8 +153,8 @@ def s2_index_moist(b_8A: np.ndarray, b_11: np.ndarray):
     return result
 
 def s2_index_ndwi(b_08: np.ndarray, b_11: np.ndarray):
-    """ Normalized Difference Water Index
-        Calc: (B08 - B11) / (B08 + B11)
+    """Normalized Difference Water Index
+       Calc: (B08 - B11) / (B08 + B11)
     """
     assert _all_arrays_are_same_size([b_08, b_11]), "All arrays must be the same size."
 
@@ -168,8 +167,8 @@ def s2_index_ndwi(b_08: np.ndarray, b_11: np.ndarray):
     return result
 
 def s2_index_ndwi_v2(b_03: np.ndarray, b_08: np.ndarray):
-    """ Normalized Difference Water Index v2
-        Calc: (B03 - B08) / (B03 + B08)
+    """Normalized Difference Water Index v2
+       Calc: (B03 - B08) / (B03 + B08)
     """
     assert _all_arrays_are_same_size([b_03, b_08]), "All arrays must be the same size."
 
@@ -182,8 +181,8 @@ def s2_index_ndwi_v2(b_03: np.ndarray, b_08: np.ndarray):
     return result
 
 def s2_index_nbr(b_08: np.ndarray, b_12: np.ndarray):
-    """ Normalized Burn Ratio
-        Calc: (B08 - B12) / (B08 + B12)
+    """Normalized Burn Ratio
+       Calc: (B08 - B12) / (B08 + B12)
     """
     assert _all_arrays_are_same_size([b_08, b_12]), "All arrays must be the same size."
 
@@ -196,8 +195,8 @@ def s2_index_nbr(b_08: np.ndarray, b_12: np.ndarray):
     return result
 
 def s2_index_nvei(b_02: np.ndarray, b_04: np.ndarray):
-    """ Non-elimination vegetation index
-        Calc: (B02 - B04) / (B08 + B04)
+    """Non-elimination vegetation index
+       Calc: (B02 - B04) / (B08 + B04)
     """
     assert _all_arrays_are_same_size([b_02, b_04]), "All arrays must be the same size."
 
@@ -210,8 +209,8 @@ def s2_index_nvei(b_02: np.ndarray, b_04: np.ndarray):
     return result
 
 def s2_index_nbai(b_02: np.ndarray, b_08: np.ndarray, b_12: np.ndarray): # Built-up area index
-    """ Built-up area index
-        Calc: (B12 - d) / (B12 + d), d = B08 / B02
+    """Built-up area index
+       Calc: (B12 - d) / (B12 + d), d = B08 / B02
     """
     assert _all_arrays_are_same_size([b_02, b_08, b_12]), "All arrays must be the same size."
 
@@ -227,8 +226,8 @@ def s2_index_nbai(b_02: np.ndarray, b_08: np.ndarray, b_12: np.ndarray): # Built
     return result
 
 def s2_index_brba(b_03: np.ndarray, b_08: np.ndarray):
-    """ Band ratio for built-up areas
-        Calc: (B03 / B08)
+    """Band ratio for built-up areas
+       Calc: (B03 / B08)
     """
     assert _all_arrays_are_same_size([b_03, b_08]), "All arrays must be the same size."
 
@@ -238,8 +237,8 @@ def s2_index_brba(b_03: np.ndarray, b_08: np.ndarray):
     return result
 
 def s2_index_ndbi(b_11: np.ndarray, b_08: np.ndarray):
-    """ Normalised difference built-up index
-        Calc: (B11 - B08) / (B11 + B08)
+    """Normalised difference built-up index
+       Calc: (B11 - B08) / (B11 + B08)
     """
     assert _all_arrays_are_same_size([b_11, b_08]), "All arrays must be the same size."
 
@@ -252,8 +251,8 @@ def s2_index_ndbi(b_11: np.ndarray, b_08: np.ndarray):
     return result
 
 def s2_index_blfei(b_03: np.ndarray, b_04: np.ndarray, b_11: np.ndarray, b_12: np.ndarray):
-    """ Built-up features extraction
-        Calc: (bix - B11) / (bix + B11), bix = (B03 + B04 + B12) / 3
+    """Built-up features extraction
+       Calc: (bix - B11) / (bix + B11), bix = (B03 + B04 + B12) / 3
     """
     assert _all_arrays_are_same_size([b_03, b_04, b_11, b_12]), "All arrays must be the same size."
 
@@ -268,11 +267,11 @@ def s2_index_blfei(b_03: np.ndarray, b_04: np.ndarray, b_11: np.ndarray, b_12: n
     return result
 
 def s2_index_ibi(b_03: np.ndarray, b_04: np.ndarray, b_08: np.ndarray, b_11: np.ndarray):
-    """ Built-up features extraction
-        Calc: (ndbi - ((savi + ndwi2) / 2)) / (ndbi + ((savi + ndwi2) / 2))
-            savi = ((B08 - B04) / ((B08 + B04) + 0.428)) * 1.856
-            ndwi2 = (B03 - B08) / (B03 + B08)
-            ndbi = (B11 - B08) / (B11 + B08
+    """Built-up features extraction
+       Calc: (ndbi - ((savi + ndwi2) / 2)) / (ndbi + ((savi + ndwi2) / 2))
+           savi = ((B08 - B04) / ((B08 + B04) + 0.428)) * 1.856
+           ndwi2 = (B03 - B08) / (B03 + B08)
+           ndbi = (B11 - B08) / (B11 + B08
     """
     assert _all_arrays_are_same_size([b_03, b_04, b_08, b_11]), "All arrays must be the same size."
 

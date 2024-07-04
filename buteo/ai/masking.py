@@ -1,5 +1,4 @@
-"""
-This module contains functions for masking images that are
+"""This module contains functions for masking images that are
 suited to remote sensing imagery.
 """
 # Standard library
@@ -14,8 +13,7 @@ from buteo.ai.masking_funcs import mask_replace_2d, mask_replace_3d
 
 
 class MaskImages():
-    """
-    A class that masks images when called using a list of masking functions.
+    """A class that masks images when called using a list of masking functions.
     Parameters.
     NOTE: The images that are being masked should be floating point arrays.
 
@@ -37,7 +35,7 @@ class MaskImages():
 
     val : float, optional
         The value to replace pixels with if method is 2, default: 0.0.
-    
+
     min_val : float, optional
         The minimum value to replace pixels with if method is 3 or 4, default: 0.0.
 
@@ -79,8 +77,7 @@ class MaskImages():
 
 
     def __call__(self, X):
-        """
-        Applies the masking functions to the input image.
+        """Applies the masking functions to the input image.
         Parameters
         ----------
         X : np.ndarray

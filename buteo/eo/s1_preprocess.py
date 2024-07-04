@@ -1,5 +1,4 @@
-"""
-This module preprocesses Sentinel-1 data. Using SNAP GPT.
+"""This module preprocesses Sentinel-1 data. Using SNAP GPT.
 
 TODO:
     - Enable support for processing only VV or VH.
@@ -28,7 +27,7 @@ from buteo.utils.utils_gdal import _check_is_raster, _check_is_vector
 def _find_gpt(
     test_gpt_path: str,
 ) -> str:
-    """ Internal. """
+    """Internal."""
     gpt = os.path.realpath(os.path.abspath(os.path.expanduser(test_gpt_path)))
     if not os.path.exists(gpt):
         possible_locations = [
@@ -58,7 +57,7 @@ def _backscatter_step1(
     extent: Optional[List[Union[int, float]]]=None,
     tmp_folder=None,
 ) -> str:
-    """ Internal. """
+    """Internal."""
     graph = "backscatter_step1.xml"
 
     # Get absolute location of graph processing tool
@@ -123,7 +122,7 @@ def _backscatter_step2(
     gpt_path: str = "~/snap/bin/gpt",
     tmp_folder: Optional[str] = None,
 ) -> str:
-    """ Internal. """
+    """Internal."""
     graph = "backscatter_step2.xml"
     if speckle_filter:
         graph = "backscatter_step2_speckle.xml"
@@ -190,7 +189,7 @@ def _convert_to_tiff(
     use_nodata: bool = True,
     nodata_value: Union[int, float] = -9999.0,
 ) -> List[str]:
-    """ Internal. """
+    """Internal."""
     data_folder = os.path.splitext(dim_file)[0] + ".data/"
     name = os.path.splitext(os.path.basename(dim_file))[0].replace("_step_2", "")
 
@@ -238,7 +237,7 @@ def _convert_to_tiff(
 def _clear_tmp_folder(
     tmp_folder: str,
 ) -> None:
-    """ Internal. """
+    """Internal."""
     try:
         tmp_files = glob(tmp_folder + "*.dim")
         for f in tmp_files:
@@ -263,9 +262,8 @@ def s1_backscatter(
     clean_tmp: bool = False,
     gpt_path: str = "~/snap/bin/gpt",
 ):
-    """
-    Calculate backscatter from Sentinel-1 GRD data.
-    
+    """Calculate backscatter from Sentinel-1 GRD data.
+
     Parameters
     ----------
     zip_file : str

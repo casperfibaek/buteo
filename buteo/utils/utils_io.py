@@ -1,6 +1,4 @@
-"""
-### Utility functions read and write buteo files ###
-"""
+"""### Utility functions read and write buteo files ###"""
 
 # Standard Library
 import sys; sys.path.append("../../")
@@ -18,8 +16,7 @@ def _get_input_paths(
     inputs: Union[gdal.Dataset, ogr.DataSource, str, List[Union[gdal.Dataset, ogr.DataSource, str]]],
     input_type: str,
 ) -> List[str]:
-    """
-    Parses the input data to a list of paths.
+    """Parses the input data to a list of paths.
 
     Parameters
     ----------
@@ -109,8 +106,7 @@ def _get_output_paths(
     add_timestamp: bool = False,
     overwrite: bool = True,
 ) -> List[str]:
-    """
-    Get the output path for a file using the input path and the output path.
+    """Get the output path for a file using the input path and the output path.
     The output path can be None, in which case the created path will be in memory.
     Augmentations can be made to the output.
 

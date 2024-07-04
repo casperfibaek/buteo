@@ -1,5 +1,4 @@
-"""
-### Handle and create borders on rasters. ###
+"""### Handle and create borders on rasters. ###
 
 Functions to add or remove borders from rasters.
 Useful for warped satellite images and for proximity searching.
@@ -36,8 +35,7 @@ def _raster_add_border(
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
 ):
-    """
-    Internal.
+    """Internal.
     Add a border to a raster.
     """
     in_raster = core_raster._raster_open(raster)
@@ -137,8 +135,7 @@ def raster_add_border(
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
     ) -> Union[str, gdal.Dataset]:
-    """
-    Add a border to a raster.
+    """Add a border to a raster.
 
     Parameters
     ----------

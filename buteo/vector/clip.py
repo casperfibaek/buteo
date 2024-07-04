@@ -1,5 +1,4 @@
-"""
-### Clip vectors to other geometries ###
+"""### Clip vectors to other geometries ###
 
 Clip vector files with other geometries. Can come from rasters or vectors.
 """
@@ -37,7 +36,7 @@ def _vector_clip(
     overwrite: bool = True,
     verbose: bool = False,
 ) -> str:
-    """ Internal. """
+    """Internal."""
     assert isinstance(vector, (str, ogr.DataSource)), "Invalid vector input."
     assert isinstance(clip_geom, (str, ogr.DataSource)), "Invalid clip_geom input."
 
@@ -137,8 +136,7 @@ def vector_clip(
     promote_to_multi: bool = True,
     verbose: bool = False,
 ) -> Union[str, List[str]]:
-    """
-    Clips a vector to a geometry.
+    """Clips a vector to a geometry.
 
     Parameters
     ----------
@@ -150,13 +148,13 @@ def vector_clip(
 
     out_path : Optional[str], optional
         Output path. If None, memory vectors are created. Default: None
-    
+
     to_extent : bool, optional
         Clip to extent. Default: False
 
     target_projection : Optional[Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]], optional
         Target projection. Default: None
-    
+
     preserve_fid : bool, optional
         Preserve fid. Default: True
 
@@ -174,7 +172,7 @@ def vector_clip(
 
     promote_to_multi : bool, optional
         Promote to multi. Default: True
-    
+
     verbose : bool, optional
         Print progress/warnings. Default: False
 

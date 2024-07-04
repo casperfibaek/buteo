@@ -58,49 +58,47 @@
 
                         <label class="view-source-button" for="mod-grid-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="sd">Create vector grids from references or hardcode</span>
-</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="c1"># Standard library</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a><span class="kn">import</span> <span class="nn">sys</span><span class="p">;</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;../../&quot;</span><span class="p">)</span>
-</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span>
-</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>
-</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="c1"># External</span>
-</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">ogr</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="c1"># Internal</span>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="kn">from</span> <span class="nn">buteo.utils</span> <span class="kn">import</span> <span class="p">(</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>    <span class="n">utils_io</span><span class="p">,</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>    <span class="n">utils_base</span><span class="p">,</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>    <span class="n">utils_gdal</span><span class="p">,</span>
-</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>    <span class="n">utils_path</span><span class="p">,</span>
-</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="p">)</span>
-</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="kn">from</span> <span class="nn">buteo.vector</span> <span class="kn">import</span> <span class="n">core_vector</span>
-</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a><span class="kn">from</span> <span class="nn">buteo.vector.metadata</span> <span class="kn">import</span> <span class="n">_vector_to_metadata</span>
-</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a>
-</span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a>
-</span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a><span class="c1"># TODO: Implement grid functions</span>
-</span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a><span class="c1"># TODO: create_grid, create_grid_points, create_grid_linestrings</span>
-</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a>
-</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a>
-</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a><span class="k">def</span> <span class="nf">create_hexagonal_grid</span><span class="p">(</span><span class="n">extend</span><span class="p">,</span> <span class="n">projection</span><span class="p">,</span> <span class="n">cell_size</span><span class="p">,</span> <span class="n">out_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-</span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a hexagonal grid in a given extend and projection.</span>
-</span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a>
-</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a><span class="sd">    Args:</span>
-</span><span id="L-30"><a href="#L-30"><span class="linenos">30</span></a><span class="sd">        extend (list): [xmin, ymin, xmax, ymax]</span>
-</span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a><span class="sd">        projection (str): EPSG code</span>
-</span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a><span class="sd">        cell_size (float): size of the hexagon</span>
-</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a><span class="sd">        out_path (str): path to save the grid</span>
-</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a>
-</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a><span class="sd">    Returns:</span>
-</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a><span class="sd">        None</span>
-</span><span id="L-37"><a href="#L-37"><span class="linenos">37</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a>    <span class="c1"># vector = core_vector._vector_open(extend)</span>
-</span><span id="L-39"><a href="#L-39"><span class="linenos">39</span></a>
-</span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;CREATE TABLE hex_grid (id INTEGER PRIMARY KEY, geom GEOMETRY)&quot;)</span>
-</span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;SELECT AddGeometryColumn(&#39;hex_grid&#39;, &#39;geom&#39;, 4326, &#39;POLYGON&#39;, 2)&quot;)</span>
-</span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;CREATE INDEX hex_grid_geom_idx ON hex_grid USING GIST (geom)&quot;)</span>
-</span><span id="L-43"><a href="#L-43"><span class="linenos">43</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;SELECT ST_Hex</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="sd">&quot;&quot;&quot;Create vector grids from references or hardcode&quot;&quot;&quot;</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a><span class="c1"># Standard library</span>
+</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="kn">import</span> <span class="nn">sys</span><span class="p">;</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;../../&quot;</span><span class="p">)</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="c1"># External</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a><span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">ogr</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a>
+</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="c1"># Internal</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="kn">from</span> <span class="nn">buteo.utils</span> <span class="kn">import</span> <span class="p">(</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>    <span class="n">utils_io</span><span class="p">,</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>    <span class="n">utils_base</span><span class="p">,</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>    <span class="n">utils_gdal</span><span class="p">,</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>    <span class="n">utils_path</span><span class="p">,</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="p">)</span>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="kn">from</span> <span class="nn">buteo.vector</span> <span class="kn">import</span> <span class="n">core_vector</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="kn">from</span> <span class="nn">buteo.vector.metadata</span> <span class="kn">import</span> <span class="n">_vector_to_metadata</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a>
+</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a>
+</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a><span class="c1"># TODO: Implement grid functions</span>
+</span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a><span class="c1"># TODO: create_grid, create_grid_points, create_grid_linestrings</span>
+</span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a>
+</span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a>
+</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a><span class="k">def</span> <span class="nf">create_hexagonal_grid</span><span class="p">(</span><span class="n">extend</span><span class="p">,</span> <span class="n">projection</span><span class="p">,</span> <span class="n">cell_size</span><span class="p">,</span> <span class="n">out_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a hexagonal grid in a given extend and projection.</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a>
+</span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a><span class="sd">    Args:</span>
+</span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a><span class="sd">        extend (list): [xmin, ymin, xmax, ymax]</span>
+</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a><span class="sd">        projection (str): EPSG code</span>
+</span><span id="L-30"><a href="#L-30"><span class="linenos">30</span></a><span class="sd">        cell_size (float): size of the hexagon</span>
+</span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a><span class="sd">        out_path (str): path to save the grid</span>
+</span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a>
+</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a><span class="sd">    Returns:</span>
+</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a><span class="sd">        None</span>
+</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a>    <span class="c1"># vector = core_vector._vector_open(extend)</span>
+</span><span id="L-37"><a href="#L-37"><span class="linenos">37</span></a>
+</span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;CREATE TABLE hex_grid (id INTEGER PRIMARY KEY, geom GEOMETRY)&quot;)</span>
+</span><span id="L-39"><a href="#L-39"><span class="linenos">39</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;SELECT AddGeometryColumn(&#39;hex_grid&#39;, &#39;geom&#39;, 4326, &#39;POLYGON&#39;, 2)&quot;)</span>
+</span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;CREATE INDEX hex_grid_geom_idx ON hex_grid USING GIST (geom)&quot;)</span>
+</span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;SELECT ST_Hex</span>
 </span></pre></div>
 
 
@@ -116,24 +114,24 @@
 
     </div>
     <a class="headerlink" href="#create_hexagonal_grid"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="create_hexagonal_grid-27"><a href="#create_hexagonal_grid-27"><span class="linenos">27</span></a><span class="k">def</span> <span class="nf">create_hexagonal_grid</span><span class="p">(</span><span class="n">extend</span><span class="p">,</span> <span class="n">projection</span><span class="p">,</span> <span class="n">cell_size</span><span class="p">,</span> <span class="n">out_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-</span><span id="create_hexagonal_grid-28"><a href="#create_hexagonal_grid-28"><span class="linenos">28</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a hexagonal grid in a given extend and projection.</span>
-</span><span id="create_hexagonal_grid-29"><a href="#create_hexagonal_grid-29"><span class="linenos">29</span></a>
-</span><span id="create_hexagonal_grid-30"><a href="#create_hexagonal_grid-30"><span class="linenos">30</span></a><span class="sd">    Args:</span>
-</span><span id="create_hexagonal_grid-31"><a href="#create_hexagonal_grid-31"><span class="linenos">31</span></a><span class="sd">        extend (list): [xmin, ymin, xmax, ymax]</span>
-</span><span id="create_hexagonal_grid-32"><a href="#create_hexagonal_grid-32"><span class="linenos">32</span></a><span class="sd">        projection (str): EPSG code</span>
-</span><span id="create_hexagonal_grid-33"><a href="#create_hexagonal_grid-33"><span class="linenos">33</span></a><span class="sd">        cell_size (float): size of the hexagon</span>
-</span><span id="create_hexagonal_grid-34"><a href="#create_hexagonal_grid-34"><span class="linenos">34</span></a><span class="sd">        out_path (str): path to save the grid</span>
-</span><span id="create_hexagonal_grid-35"><a href="#create_hexagonal_grid-35"><span class="linenos">35</span></a>
-</span><span id="create_hexagonal_grid-36"><a href="#create_hexagonal_grid-36"><span class="linenos">36</span></a><span class="sd">    Returns:</span>
-</span><span id="create_hexagonal_grid-37"><a href="#create_hexagonal_grid-37"><span class="linenos">37</span></a><span class="sd">        None</span>
-</span><span id="create_hexagonal_grid-38"><a href="#create_hexagonal_grid-38"><span class="linenos">38</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="create_hexagonal_grid-39"><a href="#create_hexagonal_grid-39"><span class="linenos">39</span></a>    <span class="c1"># vector = core_vector._vector_open(extend)</span>
-</span><span id="create_hexagonal_grid-40"><a href="#create_hexagonal_grid-40"><span class="linenos">40</span></a>
-</span><span id="create_hexagonal_grid-41"><a href="#create_hexagonal_grid-41"><span class="linenos">41</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;CREATE TABLE hex_grid (id INTEGER PRIMARY KEY, geom GEOMETRY)&quot;)</span>
-</span><span id="create_hexagonal_grid-42"><a href="#create_hexagonal_grid-42"><span class="linenos">42</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;SELECT AddGeometryColumn(&#39;hex_grid&#39;, &#39;geom&#39;, 4326, &#39;POLYGON&#39;, 2)&quot;)</span>
-</span><span id="create_hexagonal_grid-43"><a href="#create_hexagonal_grid-43"><span class="linenos">43</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;CREATE INDEX hex_grid_geom_idx ON hex_grid USING GIST (geom)&quot;)</span>
-</span><span id="create_hexagonal_grid-44"><a href="#create_hexagonal_grid-44"><span class="linenos">44</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;SELECT ST_Hex</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="create_hexagonal_grid-25"><a href="#create_hexagonal_grid-25"><span class="linenos">25</span></a><span class="k">def</span> <span class="nf">create_hexagonal_grid</span><span class="p">(</span><span class="n">extend</span><span class="p">,</span> <span class="n">projection</span><span class="p">,</span> <span class="n">cell_size</span><span class="p">,</span> <span class="n">out_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="create_hexagonal_grid-26"><a href="#create_hexagonal_grid-26"><span class="linenos">26</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a hexagonal grid in a given extend and projection.</span>
+</span><span id="create_hexagonal_grid-27"><a href="#create_hexagonal_grid-27"><span class="linenos">27</span></a>
+</span><span id="create_hexagonal_grid-28"><a href="#create_hexagonal_grid-28"><span class="linenos">28</span></a><span class="sd">    Args:</span>
+</span><span id="create_hexagonal_grid-29"><a href="#create_hexagonal_grid-29"><span class="linenos">29</span></a><span class="sd">        extend (list): [xmin, ymin, xmax, ymax]</span>
+</span><span id="create_hexagonal_grid-30"><a href="#create_hexagonal_grid-30"><span class="linenos">30</span></a><span class="sd">        projection (str): EPSG code</span>
+</span><span id="create_hexagonal_grid-31"><a href="#create_hexagonal_grid-31"><span class="linenos">31</span></a><span class="sd">        cell_size (float): size of the hexagon</span>
+</span><span id="create_hexagonal_grid-32"><a href="#create_hexagonal_grid-32"><span class="linenos">32</span></a><span class="sd">        out_path (str): path to save the grid</span>
+</span><span id="create_hexagonal_grid-33"><a href="#create_hexagonal_grid-33"><span class="linenos">33</span></a>
+</span><span id="create_hexagonal_grid-34"><a href="#create_hexagonal_grid-34"><span class="linenos">34</span></a><span class="sd">    Returns:</span>
+</span><span id="create_hexagonal_grid-35"><a href="#create_hexagonal_grid-35"><span class="linenos">35</span></a><span class="sd">        None</span>
+</span><span id="create_hexagonal_grid-36"><a href="#create_hexagonal_grid-36"><span class="linenos">36</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="create_hexagonal_grid-37"><a href="#create_hexagonal_grid-37"><span class="linenos">37</span></a>    <span class="c1"># vector = core_vector._vector_open(extend)</span>
+</span><span id="create_hexagonal_grid-38"><a href="#create_hexagonal_grid-38"><span class="linenos">38</span></a>
+</span><span id="create_hexagonal_grid-39"><a href="#create_hexagonal_grid-39"><span class="linenos">39</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;CREATE TABLE hex_grid (id INTEGER PRIMARY KEY, geom GEOMETRY)&quot;)</span>
+</span><span id="create_hexagonal_grid-40"><a href="#create_hexagonal_grid-40"><span class="linenos">40</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;SELECT AddGeometryColumn(&#39;hex_grid&#39;, &#39;geom&#39;, 4326, &#39;POLYGON&#39;, 2)&quot;)</span>
+</span><span id="create_hexagonal_grid-41"><a href="#create_hexagonal_grid-41"><span class="linenos">41</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;CREATE INDEX hex_grid_geom_idx ON hex_grid USING GIST (geom)&quot;)</span>
+</span><span id="create_hexagonal_grid-42"><a href="#create_hexagonal_grid-42"><span class="linenos">42</span></a>    <span class="c1"># vector.ExecuteSQL(&quot;SELECT ST_Hex</span>
 </span></pre></div>
 
 

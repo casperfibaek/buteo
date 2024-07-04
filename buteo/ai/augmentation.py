@@ -1,5 +1,4 @@
-"""
-This module contains functions for augmenting images that are
+"""This module contains functions for augmenting images that are
 suited to remote sensing imagery.
 """
 # Standard library
@@ -14,8 +13,7 @@ from buteo.array.loaders import MultiArray
 
 
 class Dataset:
-    """
-    A dataset that does not apply any augmentations to the data.
+    """A dataset that does not apply any augmentations to the data.
     Allows a callback to be passed and can convert between
     channel formats.
 
@@ -68,8 +66,7 @@ class Dataset:
 
 
 class DatasetAugmentation:
-    """
-    A dataset that does not apply any augmentations to the data.
+    """A dataset that does not apply any augmentations to the data.
     Allows a callback to be passed and can convert between
     channel formats.
 
@@ -89,7 +86,7 @@ class DatasetAugmentation:
 
     augmentations : list, optional
         The augmentations to apply.
-        
+
     Returns
     -------
     Dataset

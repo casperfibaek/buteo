@@ -1,5 +1,4 @@
-"""
-### Calculate distances on a raster. ###
+"""### Calculate distances on a raster. ###
 
 Module to calculate the distance from a pixel value to other pixels.
 """
@@ -33,9 +32,7 @@ def _raster_get_proximity(
     inverted: bool = False,
     overwrite: bool = True,
 ) -> str:
-    """
-    Internal. Calculate the proximity of a raster to values.
-    """
+    """Internal. Calculate the proximity of a raster to values."""
     assert isinstance(raster, (str, gdal.Dataset)), f"Invalid raster. {raster}"
     assert isinstance(target_value, (int, float)), f"Invalid target_value. {target_value}"
     assert isinstance(unit, str), f"Invalid unit. {unit}"
@@ -97,8 +94,7 @@ def raster_get_proximity(
     add_uuid: bool = False,
     add_timestamp: bool = False,
 ) -> Union[str, List[str]]:
-    """
-    Calculate the proximity of input_raster to values.
+    """Calculate the proximity of input_raster to values.
 
     Parameters
     ----------

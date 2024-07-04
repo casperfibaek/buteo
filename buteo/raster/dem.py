@@ -1,4 +1,4 @@
-""" Slope, aspect, hillshade, and other DEM functions. """
+"""Slope, aspect, hillshade, and other DEM functions."""
 
 # Standard library
 import os
@@ -29,9 +29,8 @@ def raster_dem_to_slope(
     add_timestamp: bool = False,
     out_format: str = "tif",
 ) -> str:
-    """
-    Calculate the slope of a raster DEM.
-    
+    """Calculate the slope of a raster DEM.
+
     Parameters
     ----------
     raster : Union[str, List, gdal.Dataset]
@@ -63,7 +62,7 @@ def raster_dem_to_slope(
 
     add_timestamp : bool, optional
         If True, a timestamp will be added to the output raster name., default: False
-    
+
     out_format : str, optional
         The output format of the raster. If None, the format is inferred from the output path., default: ".tif"
 
@@ -144,9 +143,8 @@ def raster_dem_to_aspect(
     add_timestamp: bool = False,
     out_format: str = "tif",
 ) -> str:
-    """
-    Calculate the aspect in degrees of a raster DEM.
-    
+    """Calculate the aspect in degrees of a raster DEM.
+
     Parameters
     ----------
     raster : Union[str, List, gdal.Dataset]
@@ -175,7 +173,7 @@ def raster_dem_to_aspect(
 
     add_timestamp : bool, optional
         If True, a timestamp will be added to the output raster name., default: False
-    
+
     out_format : str, optional
         The output format of the raster. If None, the format is inferred from the output path., default: ".tif"
 
@@ -254,9 +252,8 @@ def raster_dem_to_hillshade(
     add_timestamp: bool = False,
     out_format: str = "tif",
 ) -> str:
-    """
-    Calculate the hillshade of a raster DEM.
-    
+    """Calculate the hillshade of a raster DEM.
+
     Parameters
     ----------
     raster : Union[str, List, gdal.Dataset]
@@ -285,7 +282,7 @@ def raster_dem_to_hillshade(
 
     add_timestamp : bool, optional
         If True, a timestamp will be added to the output raster name., default: False
-    
+
     out_format : str, optional
         The output format of the raster. If None, the format is inferred from the output path., default: ".tif"
 
@@ -365,9 +362,8 @@ def raster_dem_to_orientation(
     add_timestamp: bool = False,
     out_format: str = "tif",
 ) -> str:
-    """
-    Calculate the orientation of a raster DEM.
-    
+    """Calculate the orientation of a raster DEM.
+
     Parameters
     ----------
     raster : Union[str, List, gdal.Dataset]
@@ -402,7 +398,7 @@ def raster_dem_to_orientation(
 
     add_timestamp : bool, optional
         If True, a timestamp will be added to the output raster name., default: False
-    
+
     out_format : str, optional
         The output format of the raster. If None, the format is inferred from the output path., default: ".tif"
 

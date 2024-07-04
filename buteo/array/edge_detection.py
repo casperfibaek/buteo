@@ -1,6 +1,4 @@
-"""
-### Perform morphological operations on arrays and rasters.  ###
-"""
+"""### Perform morphological operations on arrays and rasters.  ###"""
 
 # Standard library
 import sys; sys.path.append("../../")
@@ -21,8 +19,7 @@ def filter_edge_detection(
     gradient: bool = False,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Perform edge detection on an array using a Sobel-style operator.
+    """Perform edge detection on an array using a Sobel-style operator.
 
     Parameters
     ----------

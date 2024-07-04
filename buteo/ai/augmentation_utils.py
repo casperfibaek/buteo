@@ -1,5 +1,4 @@
-"""
-This module contains utility functions for augmenting images that are
+"""This module contains utility functions for augmenting images that are
 suited to remote sensing imagery.
 """
 
@@ -14,8 +13,7 @@ def _rotate_90(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """
-    Rotate a 3D array 90 degrees clockwise.
+    """Rotate a 3D array 90 degrees clockwise.
 
     Parameters
     ----------
@@ -41,8 +39,7 @@ def _rotate_180(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """
-    Rotate a 3D array 180 degrees clockwise.
+    """Rotate a 3D array 180 degrees clockwise.
 
     Parameters
     ----------
@@ -68,14 +65,13 @@ def _rotate_270(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """ 
-    Rotate a 3D image array 270 degrees clockwise.
+    """Rotate a 3D image array 270 degrees clockwise.
 
     Parameters
     ----------
     arr : np.ndarray
         The array to rotate.
-        
+
     channel_last : bool, optional
         Whether the last axis is the channel axis, default: True.
 
@@ -95,8 +91,7 @@ def _mirror_horizontal(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """
-    Mirror a 3D array horizontally.
+    """Mirror a 3D array horizontally.
 
     Parameters
     ----------
@@ -122,8 +117,7 @@ def _mirror_vertical(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """
-    Mirror a 3D array vertically.
+    """Mirror a 3D array vertically.
 
     Parameters
     ----------
@@ -149,8 +143,7 @@ def _mirror_horisontal_vertical(
     arr: np.ndarray,
     channel_last: bool = True
 ) -> np.ndarray:
-    """
-    Mirror a 3D array horizontally and vertically
+    """Mirror a 3D array horizontally and vertically
 
     Parameters
     ----------
@@ -177,8 +170,7 @@ def _mirror_arr(
     k: int,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Mirror an array horizontally and/or vertically.
+    """Mirror an array horizontally and/or vertically.
     Returns a view to the mirrored array.
 
     Parameters
@@ -215,8 +207,7 @@ def _rotate_arr(
     k: int,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Rotate an array by 90 degrees intervals clockwise.
+    """Rotate an array by 90 degrees intervals clockwise.
     Returns a view.
 
     Parameters

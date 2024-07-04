@@ -1,5 +1,4 @@
-"""
-### Generic utility functions ###
+"""### Generic utility functions ###
 
 Functions that make interacting with the toolbox easier.
 """
@@ -13,8 +12,7 @@ from typing import Any, Union, List, Tuple
 def _get_variable_as_list(
     variable_or_list: Union[List, Any],
 ) -> List[Any]:
-    """
-    Ensures that a variable is a list. If the variable is a list, return the list.
+    """Ensures that a variable is a list. If the variable is a list, return the list.
     If the variable is not a list, return a list with the variable as the only element.
 
     Parameters
@@ -34,8 +32,7 @@ def _get_variable_as_list(
 
 
 def _get_unix_seconds_as_str() -> str:
-    """
-    Get a string of the current UNIX time in seconds.
+    """Get a string of the current UNIX time in seconds.
 
     Returns
     -------
@@ -46,8 +43,7 @@ def _get_unix_seconds_as_str() -> str:
 
 
 def _get_time_as_str() -> str:
-    """
-    Gets the current time as a string.
+    """Gets the current time as a string.
     in the format: YYYYMMDD_HHMMSS
 
     Returns
@@ -59,8 +55,7 @@ def _get_time_as_str() -> str:
 
 
 def _check_variable_is_float(variable: Any) -> bool:
-    """
-    Check if a variable is a float.
+    """Check if a variable is a float.
     If it is a string, see if it a representation of a float.
 
     Parameters
@@ -88,8 +83,7 @@ def _check_variable_is_float(variable: Any) -> bool:
 
 
 def _check_variable_is_int(variable: Any) -> bool:
-    """
-    Check if a variable is an integer.
+    """Check if a variable is an integer.
     If it is a string, see if it a representation of an integer.
     If it is a float, return False.
 
@@ -117,8 +111,7 @@ def _check_variable_is_int(variable: Any) -> bool:
 
 
 def _check_variable_is_number_type(variable: Any) -> bool:
-    """
-    Check if variable is a number.
+    """Check if variable is a number.
 
     Parameters
     ----------
@@ -139,8 +132,7 @@ def _check_variable_is_number_type(variable: Any) -> bool:
 def _get_variable_as_number(
     variable: Any,
 ) -> float:
-    """
-    Attempts to convert a variable to a number.
+    """Attempts to convert a variable to a number.
 
     Parameters
     ----------
@@ -163,8 +155,7 @@ def _get_variable_as_number(
 
 
 def _ensure_negative(number: Union[int, float]) -> Union[int, float]:
-    """
-    Ensures that a valid is negative. If the number is positive, it is made negative.
+    """Ensures that a valid is negative. If the number is positive, it is made negative.
 
     Parameters
     ----------
@@ -185,8 +176,7 @@ def _ensure_negative(number: Union[int, float]) -> Union[int, float]:
 
 
 def _check_variable_is_iterable_or_type(potential_type: Any) -> bool:
-    """
-    Recursively check if a variable is a type, list, or tuple.
+    """Recursively check if a variable is a type, list, or tuple.
 
     Parameters
     ----------
@@ -220,8 +210,7 @@ def _type_check(
     *,
     throw_error: bool = True,
 ) -> bool:
-    """
-    Utility function to type check the inputs of a function. Checks recursively.
+    """Utility function to type check the inputs of a function. Checks recursively.
     This is useful for the external facing functions of a module.
 
     Use like this:
@@ -237,7 +226,7 @@ def _type_check(
     ----------
     variable : Any
         The variable to check.
-    
+
     types : Tuple[type, ...]
         The types to check against.
 
@@ -246,7 +235,7 @@ def _type_check(
 
     throw_error : bool, optional
         If True, throw an error if the type check fails. If False, return False if the type check fails.
-    
+
     Returns
     -------
     bool
@@ -324,8 +313,7 @@ def _type_check(
 
 
 def _check_number_is_within_threshold(number, target, threshold):
-    """
-    Check if a number is within a threshold of a target.
+    """Check if a number is within a threshold of a target.
 
     Parameters
     ----------
@@ -351,8 +339,7 @@ def _check_number_is_within_threshold(number, target, threshold):
 
 
 def _check_number_is_within_range(number, min_value, max_value):
-    """
-    Check if a number is within a range.
+    """Check if a number is within a range.
 
     Parameters
     ----------

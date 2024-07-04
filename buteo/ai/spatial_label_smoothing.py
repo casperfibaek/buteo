@@ -1,5 +1,4 @@
-"""
-This module contains functions for augmenting images that are
+"""This module contains functions for augmenting images that are
 suited to remote sensing imagery.
 """
 # Standard library
@@ -22,8 +21,7 @@ def spatial_label_smoothing(
     variance: Optional[np.ndarray] = None,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """
-    Smoothes the labels in a landcover classification by counting the weighted
+    """Smoothes the labels in a landcover classification by counting the weighted
     occurances of classes in a given radius.
 
     Parameters
@@ -46,7 +44,7 @@ def spatial_label_smoothing(
 
     channel_last : bool, optional
         Whether the image is (channels, height, width) or (height, width, channels), default: True.
-    
+
     Returns
     np.ndarray
         The smoothed array. One channel for each class in ascending order. Float32.

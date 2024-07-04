@@ -1,5 +1,4 @@
-"""
-Bindings to interact with the orfeo-toolbox in a more pythonic way.
+"""Bindings to interact with the orfeo-toolbox in a more pythonic way.
 
 TODO:
     - Documentation
@@ -66,7 +65,8 @@ def execute_cli_function(command, name, quiet=False):
 def otb_pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):
     """Pansharpen an image using the attributes
     of another image. Beware that the two images
-    should be of the same size and position."""
+    should be of the same size and position.
+    """
 
     cli = "otbcli_Pansharpening"
 
@@ -120,7 +120,8 @@ def otb_pansharpen(in_pan, in_xs, out_raster, options=None, out_datatype=None):
 
 def otb_local_stats(in_raster, out_raster, options=None, band=None):
     """Computes local statistical moments on every pixel
-    in the selected channel of the input image"""
+    in the selected channel of the input image
+    """
 
     cli = "otbcli_LocalStatisticExtraction"
 
@@ -208,7 +209,8 @@ def otb_dimension_reduction(in_raster, out_raster, options=None, out_datatype=No
     It is also possible to compute the inverse transform
     to reconstruct the image. It is also possible to
     optionally export the transformation matrix
-    to a text file."""
+    to a text file.
+    """
 
     cli = "otbcli_DimensionalityReduction"
 
@@ -248,7 +250,8 @@ def otb_concatenate_images(in_rasters, out_raster, ram=None, out_datatype=None):
     """This application performs images channels concatenation.
     It reads the input image list (single or multi-channel) and
     generates a single multi-channel image. The channel order
-    is the same as the list."""
+    is the same as the list.
+    """
 
     cli = "otbcli_ConcatenateImages"
 
@@ -283,7 +286,8 @@ def otb_split_images(in_raster, out_rasters, ram=None, out_datatype=None):
     The output images filename will be generated from the output parameter.
     Thus, if the input image has 2 channels, and the user has set as
     output parameter, outimage.tif, the generated images will be
-    outimage_0.tif and outimage_1.tif."""
+    outimage_0.tif and outimage_1.tif.
+    """
 
     cli = "otbcli_SplitImage"
 
@@ -311,7 +315,8 @@ def otb_split_images(in_raster, out_rasters, ram=None, out_datatype=None):
 def otb_rescale(in_raster, out_raster, options=None, out_datatype="float"):
     """This application scales the given image pixel intensity between two given values.
     By default min (resp. max) value is set to 0 (resp. 1).
-    Input minimum and maximum values is automatically computed for all image bands."""
+    Input minimum and maximum values is automatically computed for all image bands.
+    """
 
     cli = "otbcli_Rescale"
 
@@ -560,7 +565,8 @@ def otb_meanshift_segmentation(
     tilesize=0,
 ):
     """Computes local statistical moments on every pixel
-    in the selected channel of the input image"""
+    in the selected channel of the input image
+    """
 
     cli = "otbcli_Segmentation"
 

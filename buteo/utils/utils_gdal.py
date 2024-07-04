@@ -1,5 +1,4 @@
-"""
-### Utility functions to work with GDAL ###
+"""### Utility functions to work with GDAL ###
 
 These functions are used to interact with basic GDAL objects.
 """
@@ -23,8 +22,7 @@ from buteo.utils import utils_path, utils_translate
 def _get_default_creation_options(
     options: Optional[list] = None,
 ) -> list:
-    """
-    Takes a list of GDAL creation options and adds the following defaults to it if their not specified: </br>
+    """Takes a list of GDAL creation options and adds the following defaults to it if their not specified: </br>
 
     Default options are:
     ```python
@@ -78,9 +76,8 @@ def _get_default_creation_options(
 
 
 def get_gdal_memory() -> list:
-    """
-    Get at list of all active memory layers in GDAL.
-    
+    """Get at list of all active memory layers in GDAL.
+
     Returns
     -------
     list
@@ -104,8 +101,7 @@ def get_gdal_memory() -> list:
 
 
 def clear_gdal_memory() -> None:
-    """
-    Clears all gdal memory.
+    """Clears all gdal memory.
 
     Notes
     -----
@@ -139,8 +135,7 @@ def clear_gdal_memory() -> None:
 
 
 def _check_is_valid_ext(ext: str) -> bool:
-    """
-    Check if a file extension has a valid GDAL or OGR driver.
+    """Check if a file extension has a valid GDAL or OGR driver.
 
     Parameters
     ----------
@@ -163,8 +158,7 @@ def _check_is_valid_ext(ext: str) -> bool:
 
 
 def _check_is_valid_raster_ext(ext: str) -> bool:
-    """
-    Check if a file extension has a valid GDAL driver.
+    """Check if a file extension has a valid GDAL driver.
 
     Parameters
     ----------
@@ -187,8 +181,7 @@ def _check_is_valid_raster_ext(ext: str) -> bool:
 
 
 def _check_is_valid_vector_ext(ext: str) -> bool:
-    """
-    Check if a file extension has a valid OGR driver.
+    """Check if a file extension has a valid OGR driver.
 
     Parameters
     ----------
@@ -211,8 +204,7 @@ def _check_is_valid_vector_ext(ext: str) -> bool:
 
 
 def _check_is_file_valid_ext(file_path: str) -> bool:
-    """
-    Check if a file path has a valid GDAL or OGR driver.
+    """Check if a file path has a valid GDAL or OGR driver.
 
     Parameters
     ----------
@@ -236,8 +228,7 @@ def _check_is_file_valid_ext(file_path: str) -> bool:
 
 
 def _check_is_file_valid_raster_ext(file_path: str) -> bool:
-    """
-    Check if a file path has a valid GDAL driver.
+    """Check if a file path has a valid GDAL driver.
 
     Parameters
     ----------
@@ -261,8 +252,7 @@ def _check_is_file_valid_raster_ext(file_path: str) -> bool:
 
 
 def _check_is_file_valid_vector_ext(file_path: str) -> bool:
-    """
-    Check if a file path has a valid OGR driver.
+    """Check if a file path has a valid OGR driver.
 
     Parameters
     ----------
@@ -286,8 +276,7 @@ def _check_is_file_valid_vector_ext(file_path: str) -> bool:
 
 
 def _get_default_driver_raster() -> gdal.Driver:
-    """
-    Get the default GDAL raster driver.
+    """Get the default GDAL raster driver.
 
     Returns
     -------
@@ -298,8 +287,7 @@ def _get_default_driver_raster() -> gdal.Driver:
 
 
 def _get_default_driver_vector() -> ogr.Driver:
-    """
-    Get the default OGR vector driver.
+    """Get the default OGR vector driver.
 
     Returns
     -------
@@ -310,8 +298,7 @@ def _get_default_driver_vector() -> ogr.Driver:
 
 
 def _get_driver_name_from_path(file_path: str) -> str:
-    """
-    Convert a file path to a GDAL or OGR driver ShortName (e.g. "GTiff" for "new_york.tif")
+    """Convert a file path to a GDAL or OGR driver ShortName (e.g. "GTiff" for "new_york.tif")
 
     Parameters
     ----------
@@ -335,8 +322,7 @@ def _get_driver_name_from_path(file_path: str) -> str:
 
 
 def _get_vector_driver_name_from_path(file_path: str) -> str:
-    """
-    Convert a file path to an OGR driver ShortName (e.g. "FlatGeoBuf" for "new_york.fgb")
+    """Convert a file path to an OGR driver ShortName (e.g. "FlatGeoBuf" for "new_york.fgb")
 
     Parameters
     ----------
@@ -360,8 +346,7 @@ def _get_vector_driver_name_from_path(file_path: str) -> str:
 
 
 def _get_raster_driver_name_from_path(file_path: str) -> str:
-    """
-    Convert a file path to a GDAL driver ShortName (e.g. "GTiff" for "new_york.tif")
+    """Convert a file path to a GDAL driver ShortName (e.g. "GTiff" for "new_york.tif")
 
     Parameters
     ----------
@@ -387,14 +372,13 @@ def _get_raster_driver_name_from_path(file_path: str) -> str:
 def _check_is_dataset_in_memory(
     raster_or_vector: Union[str, gdal.Dataset, ogr.DataSource],
 ) -> bool:
-    """
-    Check if vector is in memory
+    """Check if vector is in memory
 
     Parameters
     ----------
     raster_or_vector : Union[str, gdal.Dataset, ogr.DataSource]
         The raster or vector to check.
-    
+
     Returns
     -------
     bool
@@ -432,8 +416,7 @@ def _check_is_dataset_in_memory(
 def delete_dataset_if_in_memory(
     raster_or_vector: Union[str, gdal.Dataset, ogr.DataSource],
 ) -> bool:
-    """
-    Delete raster or vector if it is in memory
+    """Delete raster or vector if it is in memory
 
     Parameters
     ----------
@@ -472,8 +455,7 @@ def delete_dataset_if_in_memory(
 def delete_dataset_if_in_memory_list(
     list_of_raster_or_vectors: List[Union[str, gdal.Dataset, ogr.DataSource]],
 ) -> bool:
-    """
-    Deletes a list of raster or vector if they are in memory
+    """Deletes a list of raster or vector if they are in memory
 
     Parameters
     ----------
@@ -503,8 +485,7 @@ def delete_dataset_if_in_memory_list(
 def _delete_raster_or_vector(
     raster_or_vector: Union[str, gdal.Dataset, ogr.DataSource],
 ) -> bool:
-    """
-    Delete raster or vector. Can be used on both in memory and on disk.
+    """Delete raster or vector. Can be used on both in memory and on disk.
 
     Parameters
     ----------
@@ -534,8 +515,7 @@ def _delete_raster_or_vector(
 def _check_is_raster_empty(
     raster: gdal.Dataset,
 ) -> bool:
-    """
-    Check if a raster has bands or zero width and zero height.
+    """Check if a raster has bands or zero width and zero height.
 
     Parameters
     ----------
@@ -561,8 +541,7 @@ def _check_is_raster_empty(
 def _check_is_vector_empty(
     vector: ogr.DataSource,
 ) -> bool:
-    """
-    Check if a vector has features with geometries
+    """Check if a vector has features with geometries
 
     Parameters
     ----------
@@ -602,8 +581,7 @@ def _check_is_raster(
     potential_raster: Any,
     empty_is_invalid: bool = True,
 ) -> bool:
-    """
-    Checks if a variable is a valid raster.
+    """Checks if a variable is a valid raster.
 
     Parameters
     ----------
@@ -651,8 +629,7 @@ def _check_is_raster_list(
     potential_raster_list,
     empty_is_invalid=True,
 ) -> bool:
-    """
-    Checks if a list of variables are full of valid rasters.
+    """Checks if a list of variables are full of valid rasters.
 
     Parameters
     ----------
@@ -679,8 +656,7 @@ def _check_is_vector(
     potential_vector: List[Any],
     empty_is_invalid: bool = True,
 ) -> bool:
-    """
-    Checks if a variable is a valid vector.
+    """Checks if a variable is a valid vector.
 
     Parameters
     ----------
@@ -729,8 +705,7 @@ def _check_is_vector_list(
     potential_vector_list: List[Any],
     empty_is_invalid=True,
 ) -> bool:
-    """
-    Checks if a variable is a valid list of vectors.
+    """Checks if a variable is a valid list of vectors.
 
     Parameters
     ----------
@@ -762,8 +737,7 @@ def _check_is_raster_or_vector(
     potential_raster_or_vector: Any,
     empty_is_invalid: bool = True,
 ) -> bool:
-    """
-    Checks if a variable is a valid raster or vector.
+    """Checks if a variable is a valid raster or vector.
 
     Parameters
     ----------
@@ -791,8 +765,7 @@ def _check_is_raster_or_vector_list(
     potential_raster_or_vector_list: List[Any],
     empty_is_invalid: bool = True,
 ) -> bool:
-    """
-    Checks if a variable is a valid list of rasters or vectors.
+    """Checks if a variable is a valid list of rasters or vectors.
 
     Parameters
     ----------
@@ -824,8 +797,7 @@ def _get_path_from_dataset(
     dataset: Union[str, gdal.Dataset, ogr.DataSource],
     dataset_type: Optional[bool] = None,
 ) -> str:
-    """
-    Gets the path from a datasets. Can be vector or raster, string or opened.
+    """Gets the path from a datasets. Can be vector or raster, string or opened.
 
     Parameters
     ----------
@@ -869,8 +841,7 @@ def _get_path_from_dataset_list(
     allow_mixed: bool = False,
     dataset_type: Optional[bool] = None,
 ):
-    """
-    Gets the paths from a list of datasets.
+    """Gets the paths from a list of datasets.
 
     Parameters
     ----------
@@ -916,8 +887,7 @@ def _get_path_from_dataset_list(
 def _get_raster_size(
     raster: Union[gdal.Dataset, str],
 ) -> Tuple[float, float]:
-    """
-    Gets the size of a raster (xres, yres).
+    """Gets the size of a raster (xres, yres).
 
     Parameters
     ----------
@@ -951,8 +921,7 @@ def _get_dynamic_memory_limit(
     max_mb: Optional[int] = None,
     available: bool = False,
 ) -> int:
-    """
-    Returns a dynamic memory limit taking into account total memory and CPU cores.
+    """Returns a dynamic memory limit taking into account total memory and CPU cores.
     The return is in mbytes. For GDAL.
 
     The value is interpreted as being in megabytes if the value is less than 10000. For values >=10000, this is interpreted as bytes.
@@ -961,10 +930,10 @@ def _get_dynamic_memory_limit(
     ----------
     percentage : float, optional.
         The percentage of the total memory to use. Default: 0.8.
-    
+
     min_mb : int, optional.
         The minimum number of megabytes to be returned. Default: 100.
-    
+
     available : bool, optional.
         If True, consider available memory instead of total memory. Default: False.
 
@@ -1006,8 +975,7 @@ def _convert_to_band_list(
     band_number: Union[int, List[int]],
     band_count: int,
 ) -> List[int]:
-    """
-    Converts a band number or list of band numbers to a list of band numbers.
+    """Converts a band number or list of band numbers to a list of band numbers.
 
     Parameters
     ----------

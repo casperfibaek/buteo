@@ -1,5 +1,4 @@
-"""
-### GDAL Enum Functions ###
+"""### GDAL Enum Functions ###
 
 Functions to translate between **GDAL** and **NumPy** datatypes.
 """
@@ -13,8 +12,7 @@ from osgeo import gdal, gdal_array
 
 
 def _get_available_drivers() -> List[Dict[str, str]]:
-    """
-    Returns a list of all available drivers.
+    """Returns a list of all available drivers.
 
     Returns
     -------
@@ -54,8 +52,7 @@ def _get_available_drivers() -> List[Dict[str, str]]:
 
 
 def _get_valid_raster_driver_extensions() -> List[str]:
-    """
-    Returns a list of valid raster driver extensions.
+    """Returns a list of valid raster driver extensions.
 
     Returns
     -------
@@ -77,8 +74,7 @@ def _get_valid_raster_driver_extensions() -> List[str]:
 
 
 def _get_valid_vector_driver_extensions() -> List[str]:
-    """
-    Returns a list of valid vector driver extensions.
+    """Returns a list of valid vector driver extensions.
 
     Returns
     -------
@@ -97,8 +93,7 @@ def _get_valid_vector_driver_extensions() -> List[str]:
 
 
 def _get_valid_driver_extensions() -> List[str]:
-    """
-    Returns a list of all valid driver extensions (**GDAL** + **OGR**).
+    """Returns a list of all valid driver extensions (**GDAL** + **OGR**).
 
     Returns
     -------
@@ -117,8 +112,7 @@ def _get_valid_driver_extensions() -> List[str]:
 
 
 def _check_is_valid_driver_extension(ext: str) -> bool:
-    """
-    Checks if a file extension is a valid GDAL or OGR driver extension.
+    """Checks if a file extension is a valid GDAL or OGR driver extension.
 
     Parameters
     ----------
@@ -137,8 +131,7 @@ def _check_is_valid_driver_extension(ext: str) -> bool:
 
 
 def _check_is_valid_raster_driver_extension(ext: str) -> bool:
-    """
-    Checks if a raster file extension is a valid GDAL driver extension.
+    """Checks if a raster file extension is a valid GDAL driver extension.
 
     Parameters
     ----------
@@ -157,14 +150,13 @@ def _check_is_valid_raster_driver_extension(ext: str) -> bool:
 
 
 def _check_is_valid_vector_driver_extension(ext: str) -> bool:
-    """
-    Checks if a vector file extension is a valid **OGR** driver extension.
+    """Checks if a vector file extension is a valid **OGR** driver extension.
 
     Parameters
     ----------
     ext : str
         The file extension.
-    
+
     Returns
     -------
     bool
@@ -177,8 +169,7 @@ def _check_is_valid_vector_driver_extension(ext: str) -> bool:
 
 
 def _get_raster_shortname_from_ext(ext: str) -> str:
-    """
-    Converts a raster file extension to a GDAL driver short name.
+    """Converts a raster file extension to a GDAL driver short name.
 
     Parameters
     ----------
@@ -202,8 +193,7 @@ def _get_raster_shortname_from_ext(ext: str) -> str:
 
 
 def _get_vector_shortname_from_ext(ext: str) -> str:
-    """
-    Converts a vector file extension to an **OGR** driver short_name name.
+    """Converts a vector file extension to an **OGR** driver short_name name.
 
     Parameters
     ----------
@@ -227,8 +217,7 @@ def _get_vector_shortname_from_ext(ext: str) -> str:
 
 
 def _get_driver_shortname_from_ext(ext: str) -> str:
-    """
-    Converts a file extension to a driver short name for either OGR or GDAL.
+    """Converts a file extension to a driver short name for either OGR or GDAL.
 
     Parameters
     ----------
@@ -252,8 +241,7 @@ def _get_driver_shortname_from_ext(ext: str) -> str:
 
 
 def _translate_resample_method(method: str) -> int:
-    """
-    Translate a string of a resampling method to a GDAL integer (e.g. gdal.GRA_NearestNeighbour).
+    """Translate a string of a resampling method to a GDAL integer (e.g. gdal.GRA_NearestNeighbour).
 
     Parameters
     ----------
@@ -309,8 +297,7 @@ def _translate_resample_method(method: str) -> int:
 
 
 def _translate_dtype_gdal_to_numpy(gdal_datatype_int: int) -> np.dtype:
-    """
-    Translates the **GDAL** datatype integer into a **NumPy** datatype.
+    """Translates the **GDAL** datatype integer into a **NumPy** datatype.
 
     Parameters
     ----------
@@ -330,8 +317,7 @@ def _translate_dtype_gdal_to_numpy(gdal_datatype_int: int) -> np.dtype:
 
 
 def _translate_dtype_numpy_to_gdal(numpy_datatype: np.dtype) -> int:
-    """
-    Translates the **NumPy** datatype into a **GDAL** datatype integer.
+    """Translates the **NumPy** datatype into a **GDAL** datatype integer.
 
     Parameters
     ----------
@@ -352,8 +338,7 @@ def _translate_dtype_numpy_to_gdal(numpy_datatype: np.dtype) -> int:
 
 
 def _get_default_nodata_value(dtype: Union[np.dtype, str, int]) -> Union[float, int]:
-    """
-    Returns the default fill value for masked numpy arrays.
+    """Returns the default fill value for masked numpy arrays.
 
     Parameters
     ----------
@@ -399,8 +384,7 @@ def _get_default_nodata_value(dtype: Union[np.dtype, str, int]) -> Union[float, 
 
 
 def _get_range_for_numpy_datatype(numpy_dtype: Union[str, np.dtype, int]) -> Tuple[Union[int, float], Union[int, float]]:
-    """
-    Returns the range of values that can be represented by a given numpy dtype.
+    """Returns the range of values that can be represented by a given numpy dtype.
     `(min_value, max_value)`
 
     Parameters
@@ -449,8 +433,7 @@ def _check_is_value_within_dtype_range(
     value: Union[int, float],
     numpy_dtype: Union[str, np.dtype],
 ) -> bool:
-    """
-    Checks if a value is within the range of a numpy datatype.
+    """Checks if a value is within the range of a numpy datatype.
 
     Parameters
     ----------
@@ -474,8 +457,7 @@ def _check_is_value_within_dtype_range(
 
 
 def _check_is_gdal_dtype_float(gdal_dtype: int) -> bool:
-    """
-    Checks if a GDAL datatype integer is a floating-point datatype:
+    """Checks if a GDAL datatype integer is a floating-point datatype:
     (Float32, Float64, cFloat32, cFloat64)
 
     Parameters
@@ -501,8 +483,7 @@ def _check_is_gdal_dtype_float(gdal_dtype: int) -> bool:
 def _parse_dtype(
     dtype: Union[str, np.dtype, int, Type[np.int64]]
 ) -> np.dtype:
-    """
-    Parses a numpy dtype from a string, numpy dtype, or GDAL datatype integer.
+    """Parses a numpy dtype from a string, numpy dtype, or GDAL datatype integer.
 
     Parameters
     ----------
@@ -535,8 +516,7 @@ def _parse_dtype(
 def _check_is_int_numpy_dtype(
     dtype: Union[str, np.dtype, int, Type[np.int64]],
 ):
-    """
-    Checks if a numpy dtype is an integer.
+    """Checks if a numpy dtype is an integer.
 
     Parameters
     ----------
@@ -560,8 +540,7 @@ def _safe_numpy_casting(
     arr: np.ndarray,
     target_dtype: Union[str, np.dtype, Type[np.int8]],
 ):
-    """
-    Safe casting of numpy arrays.
+    """Safe casting of numpy arrays.
     Clips to min/max of destinations and rounds properly.
 
     Parameters
@@ -571,7 +550,7 @@ def _safe_numpy_casting(
 
     target_dtype : Union[str, np.dtype, type(np.int8)]
         The target dtype.
-    
+
     Returns
     -------
     np.ndarray

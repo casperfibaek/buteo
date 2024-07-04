@@ -21,7 +21,7 @@ from buteo.vector.core_vector import _vector_open
 def _vector_to_metadata(
     vector: Union[str, ogr.DataSource, gdal.Dataset],
 ) -> Dict[str, Any]:
-    """ Internal. """
+    """Internal."""
     assert isinstance(vector, (str, ogr.DataSource)), "vector must be a path or a DataSource"
 
     datasource = _vector_open(vector)
@@ -186,14 +186,13 @@ def vector_to_metadata(
     vector: Union[ogr.DataSource, str, List[Union[ogr.DataSource, str]]],
     allow_lists: bool = True,
 ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
-    """
-    Creates a dictionary with metadata about the vector layer.
+    """Creates a dictionary with metadata about the vector layer.
 
     Parameters
     ----------
     vector : Union[ogr.DataSource, str, List[Union[ogr.DataSource, str]]]
         A vector layer(s) or path(s) to a vector file.
-    
+
     allow_lists : bool, optional
         If True, vector can be a list of vector layers or paths. If False, vector must be a single vector layer or path. default: True
 

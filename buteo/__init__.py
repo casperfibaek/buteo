@@ -1,5 +1,4 @@
-"""
-# Geospatial Analysis Meets AI
+"""# Geospatial Analysis Meets AI
 
 Buteo is a toolbox designed to simplify the process of working with geospatial data in machine learning. It includes tools for reading, writing, and processing geospatial data, as well as tools for creating labels from vector data and generating patches from geospatial data. Buteo makes it easy to ingest data, create training data, and perform inference on geospatial data.
 
@@ -109,7 +108,6 @@ beo.array_to_raster(
 | Clip and remove noise from rasters    | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/clip_and_remove_noise_raster.ipynb)           |
 | Sharpen nightlights data              | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/process_nightlights.ipynb)                    |
 | Filters and morphological operations  | [![Open All Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/casperfibaek/buteo/blob/master/examples/filters_and_morphology.ipynb)                 |
-
 
 </br>
 

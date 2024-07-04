@@ -1,5 +1,4 @@
-"""
-### Resample rasters. ###
+"""### Resample rasters. ###
 
 Module to resample rasters to a target resolution.
 Can uses references from vector or other raster datasets.
@@ -41,7 +40,7 @@ def _raster_resample(
     ram_max: Optional[int] = None,
     ram_min: Optional[int] = 100,
 ) -> Union[str, gdal.Dataset]:
-    """ Internal. """
+    """Internal."""
     assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
 
     if out_path is None:
@@ -163,15 +162,14 @@ def raster_resample(
     ram_max: Optional[int] = None,
     ram_min: Optional[int] = 100,
 ):
-    """
-    Resampled raster(s) given a target size.
+    """Resampled raster(s) given a target size.
     Beware, if your input is in latitude and longitude, you'll need to specify the target_size in degrees as well.
 
     Parameters
     ----------
     raster : str/gdal.Dataset/list
         The input raster(s) to resample.
-    
+
     target_size : str/int/ogr.DataSource/gdal.Dataset
         The desired resolution for the resampled raster(s), in the same unit as the raster projection.
         x_res, y_res - or x_pixels, y_pixels if target_in_pixels is True.
@@ -290,7 +288,7 @@ def resample_array(
     resample_alg="bilinear",
     channel_last=True,
 ):
-    """ Resample a numpy array using the GDAL algorithms. """
+    """Resample a numpy array using the GDAL algorithms."""
     utils_base._type_check(arr, [np.ndarray, np.ma.MaskedArray], "arr")
     utils_base._type_check(target_shape_pixels, [tuple, [int, float]], "target_shape_pixels")
     utils_base._type_check(resample_alg, [str], "resample_alg")

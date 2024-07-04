@@ -1,5 +1,4 @@
-"""
-### Generic utility functions ###
+"""### Generic utility functions ###
 
 Functions that make interacting with the toolbox easier.
 """
@@ -17,8 +16,7 @@ def _single_hue_to_rgb(
     q: float,
     t: float,
 ) -> float:
-    """
-    Helper function to convert hue to RGB.
+    """Helper function to convert hue to RGB.
 
     Parameters
     ----------
@@ -55,8 +53,7 @@ def _single_hsl_to_rgb(
     s: float,
     l: float,
 ) -> Tuple[float, float, float]:
-    """
-    Convert a single HSL color to RGB.
+    """Convert a single HSL color to RGB.
 
     Parameters
     ----------
@@ -89,8 +86,7 @@ def _single_hsl_to_rgb(
 
 @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
 def color_hsl_to_rgb(hsl_array: np.ndarray) -> np.ndarray:
-    """
-    Convert an HSL array to an RGB array.
+    """Convert an HSL array to an RGB array.
 
     Parameters
     ----------
@@ -127,14 +123,13 @@ def color_hsl_to_rgb(hsl_array: np.ndarray) -> np.ndarray:
 
 @jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
 def color_rgb_to_hsl(rgb_array: np.ndarray) -> np.ndarray:
-    """
-    Convert an RGB array to an HSL array.
-    
+    """Convert an RGB array to an HSL array.
+
     Parameters
     ----------
     rgb_array : np.ndarray
         Input RGB array with shape (height, width, 3).
-    
+
     Returns
     -------
     np.ndarray

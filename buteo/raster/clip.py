@@ -1,5 +1,4 @@
-"""
-### Clip rasters ###
+"""### Clip rasters ###
 
 Clips a raster using a vector geometry or the extents of a raster.
 """
@@ -49,8 +48,7 @@ def _raster_clip(
     ram_max: Optional[int] = None,
     ram_min: Optional[int] = 100,
 ):
-    """
-    INTERNAL.
+    """INTERNAL.
     Clips a raster(s) using a vector geometry or the extents of a raster.
     """
     path_list = utils_io._get_output_paths(
@@ -231,8 +229,7 @@ def raster_clip(
     ram_max: Optional[int] = None,
     ram_min: Optional[int] = 100,
 ):
-    """
-    Clips a raster(s) using a vector geometry or the extents of a raster.
+    """Clips a raster(s) using a vector geometry or the extents of a raster.
 
     Parameters
     ----------
@@ -246,7 +243,7 @@ def raster_clip(
         The path(s) to save the clipped raster to. If None, a memory raster is created. Default: None.
 
     resample_alg : str, optional
-        The resampling algorithm to use. Options include: nearest, bilinear, cubic, cubicspline, lanczos, 
+        The resampling algorithm to use. Options include: nearest, bilinear, cubic, cubicspline, lanczos,
         average, mode, max, min, median, q1, q3, sum, rms. Default: "nearest".
 
     crop_to_geom : bool, optional
@@ -293,10 +290,10 @@ def raster_clip(
 
     ram : float, optional
         The proportion of total ram to allow usage of. Default: 0.8.
-    
+
     ram_max: int, optional
         The maximum amount of ram to use in MB. Default: None.
-    
+
     ram_min: int, optional
         The minimum amount of ram to use in MB. Default: 100.
 

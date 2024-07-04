@@ -1,6 +1,4 @@
-"""
-### Perform convolutions on arrays.  ###
-"""
+"""### Perform convolutions on arrays.  ###"""
 
 # Standard Library
 from typing import Tuple
@@ -13,8 +11,7 @@ from numba import jit
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
 def _simple_blur_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Create a 2D blur kernel.
+    """Create a 2D blur kernel.
 
     The kernel has the following form:
     ```python
@@ -48,8 +45,7 @@ def _simple_blur_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
 def _simple_unsharp_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Create a 2D unsharp kernel.
+    """Create a 2D unsharp kernel.
 
     Returns
     -------
@@ -78,13 +74,13 @@ def _simple_shift_kernel_2d(
     x_offset: float,
     y_offset: float,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """ Create a 2D shift kernel. For augmentations. """
+    """Create a 2D shift kernel. For augmentations."""
     return kernel_shift(x_offset, y_offset)
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline="always")
 def _distance_2D(p1: np.ndarray, p2: np.ndarray) -> float:
-    """ Returns the distance between two points. (2D) """
+    """Returns the distance between two points. (2D)"""
     d1 = (p1[0] - p2[0]) ** 2
     d2 = (p1[1] - p2[1]) ** 2
 
@@ -93,8 +89,7 @@ def _distance_2D(p1: np.ndarray, p2: np.ndarray) -> float:
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def _area_covered(square, radius):
-    """
-    Calculates the area covered by a circle within a square.
+    """Calculates the area covered by a circle within a square.
     Monte-carlo(ish) method. Can be parallelized.
     """
     n_points = 100
@@ -124,7 +119,7 @@ def _area_covered(square, radius):
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def _circular_kernel_2D(radius):
-    """ Creates a circular 2D kernel. Supports fractional radii. """
+    """Creates a circular 2D kernel. Supports fractional radii."""
     size = np.int64(np.ceil(radius) * 2 + 1)
     kernel = np.zeros((size, size), dtype=np.float32)
 
@@ -160,15 +155,14 @@ def _circular_kernel_2D(radius):
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def _distance_weighted_kernel_2D(radius, method, decay=0.2, sigma=2.0):
-    """
-    Creates a distance weighted kernel.
-    
+    """Creates a distance weighted kernel.
+
     Parameters
     ----------
 
     radius : float
         Radius of the kernel.
-    
+
     method : int
         Method to use for weighting.
         0. linear
@@ -222,23 +216,22 @@ def kernel_base(
     decay: float = 0.2,
     sigma: float = 2.0,
 ) -> np.ndarray:
-    """
-    Creates a 2D kernel for convolution.
+    """Creates a 2D kernel for convolution.
 
     Parameters
     ----------
     radius : float
         Radius of the kernel.
-    
+
     circular : bool
         Whether to use a circular kernel.
-    
+
     distance_weighted : bool
         Whether to use a distance weighted kernel.
-    
+
     normalised : bool
         Whether to normalise the kernel.
-    
+
     hole : bool
         Whether to create a hole in the center of the kernel.
 
@@ -249,7 +242,7 @@ def kernel_base(
         2. power
         3. gaussian
         4. constant
-    
+
     decay : float
         Decay rate for distance weighted kernels. Only used if `distance_weighted` is True.
 
@@ -292,8 +285,7 @@ def kernel_shift(
     x_offset: float,
     y_offset: float,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Create a 2D shift kernel.
+    """Create a 2D shift kernel.
 
     This function returns a kernel that can be used to shift a raster by a fractional
     number of pixels in the x and y directions. The kernel can also be used to simulate
@@ -365,8 +357,7 @@ def kernel_unsharp(
     radius: float = 1.0,
     intensity: float = 1.0,
 ) -> np.ndarray:
-    """
-    Create a 2D unsharp kernel.
+    """Create a 2D unsharp kernel.
 
     This function returns a kernel that can be used to apply an unsharp mask to an image.
 
@@ -405,8 +396,7 @@ def kernel_sobel(
     radius=1,
     scale=2,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Creates a 2D Sobel style kernel consisting of a horizontal and vertical component.
+    """Creates a 2D Sobel style kernel consisting of a horizontal and vertical component.
     This function returns a kernel that can be used to apply a Sobel filter to an image.
 
     `kernel_gx, kernel_gy = get_kernel_sobel(radius=1, scale=2)`
@@ -441,8 +431,8 @@ def kernel_sobel(
     Returns
     -------
     Tuple[np.ndarray, np.ndarray]
-        The kernels 
-    
+        The kernels
+
     """
     size = np.int64(np.ceil(radius) * 2 + 1)
     kernel = np.zeros((size, size), dtype=np.float32)
@@ -477,8 +467,7 @@ def kernel_get_offsets_and_weights(
     kernel: np.ndarray,
     remove_zero_weights: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray, int]:
-    """
-    Generates a list of offsets and weights for a given kernel.
+    """Generates a list of offsets and weights for a given kernel.
 
     Parameters
     ----------
