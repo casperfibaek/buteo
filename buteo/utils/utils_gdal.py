@@ -20,8 +20,8 @@ from buteo.utils import utils_path, utils_translate
 
 
 def _get_default_creation_options(
-    options: Optional[list] = None,
-) -> list:
+    options: Optional[List] = None,
+) -> List:
     """Takes a list of GDAL creation options and adds the following defaults to it if their not specified: </br>
 
     Default options are:
@@ -75,7 +75,7 @@ def _get_default_creation_options(
     return internal_options
 
 
-def get_gdal_memory() -> list:
+def get_gdal_memory() -> List:
     """Get at list of all active memory layers in GDAL.
 
     Returns

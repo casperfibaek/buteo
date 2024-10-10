@@ -1109,7 +1109,7 @@ def raster_set_band_descriptions(raster, bands, descriptions):
 
 def raster_extract_bands(
     raster: Union[str, gdal.Dataset],
-    band: Union[int, list[int]],
+    band: Union[int, List[int]],
     out_path: Optional[str] = None,
     overwrite: bool = True,
     creation_options: Union[List[str], None] = None,

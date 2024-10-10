@@ -1,5 +1,5 @@
 import sys; sys.path.append("../../")
-from typing import Union, Optional
+from typing import Union, Optional, List
 
 from osgeo import gdal
 import numpy as np
@@ -16,7 +16,7 @@ def coregister_images_efolki(
     slave: Union[str, gdal.Dataset],
     out_path: Optional[str] = None,
     iteration: int = 4,
-    radius: list[int] = [16, 8],
+    radius: List[int] = [16, 8],
     rank: int = 4,
     levels: int = 5,
     band_to_base_master: int = 1,
@@ -123,7 +123,7 @@ def coregister_images_gefolki(
     slave: Union[str, gdal.Dataset],
     out_path: Optional[str] = None,
     iteration: int = 4,
-    radius: list[int] = [16, 8],
+    radius: List[int] = [16, 8],
     rank: int = 4,
     levels: int = 5,
     band_to_base_master: int = 1,

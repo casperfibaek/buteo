@@ -99,7 +99,7 @@ def raster_stack_vrt_list(
     nodata_src: Optional[float] = None,
     nodata_VRT: Optional[float] = None,
     nodata_hide: Optional[bool] = None,
-    options: Optional[list] = None,
+    options: Optional[List] = None,
     overwrite: bool = True,
     reference: Optional[str] = None,
     creation_options: Optional[List[str]] = None,
