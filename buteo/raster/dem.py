@@ -18,7 +18,7 @@ from buteo.utils import utils_base, utils_gdal, utils_io, utils_path
 
 def raster_dem_to_slope(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
-    out_path: Optional[Union[str, list[str]]] = None,
+    out_path: Optional[Union[str, List[str]]] = None,
     slope_format: str = "percent",
     z_factor: float = 1.0,
     creation_options: Optional[List[str]] = None,
@@ -133,7 +133,7 @@ def raster_dem_to_slope(
 
 def raster_dem_to_aspect(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
-    out_path: Optional[Union[str, list[str]]] = None,
+    out_path: Optional[Union[str, List[str]]] = None,
     zero_for_flat: bool = True,
     creation_options: Optional[List[str]] = None,
     overwrite: bool = True,
@@ -242,7 +242,7 @@ def raster_dem_to_aspect(
 
 def raster_dem_to_hillshade(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
-    out_path: Optional[Union[str, list[str]]] = None,
+    out_path: Optional[Union[str, List[str]]] = None,
     z_factor: float = 1.0,
     creation_options: Optional[List[str]] = None,
     overwrite: bool = True,
@@ -350,7 +350,7 @@ def raster_dem_to_hillshade(
 
 def raster_dem_to_orientation(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
-    out_path: Optional[Union[str, list[str]]] = None,
+    out_path: Optional[Union[str, List[str]]] = None,
     include_height: bool = True,
     height_normalisation: bool = True,
     height_normalisation_value: float = 8849.0, # mt. everest
