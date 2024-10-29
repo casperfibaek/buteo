@@ -10,7 +10,7 @@ For documentation, visit: https://casperfibaek.github.io/buteo/
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7936577.svg)](https://doi.org/10.5281/zenodo.7936577)
 
-Fibaek, Casper. (2023). Buteo: Geospatial Data Analysis Framework for AI/EO. (v0.9.8). Zenodo. https://doi.org/10.5281/zenodo.7936577
+Fibaek, Casper. (2024). Buteo: Geospatial Data Analysis Framework for AI/EO. (v0.9.63). Zenodo. https://doi.org/10.5281/zenodo.7936577
 
 **Dependencies** </br>
 `numba` (https://numba.pydata.org/) </br>
