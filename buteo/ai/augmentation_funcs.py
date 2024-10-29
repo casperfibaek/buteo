@@ -37,8 +37,10 @@ def augmentation_rotation(
 
     if k == -1:
         random_k = random.choice([1, 2, 3])
-    else:
+    elif k in [1, 2, 3]:
         random_k = k
+    else:
+        raise ValueError("k must be -1 or 1, 2, 3")
 
     X[:] = _rotate_arr(X, random_k, channel_last)
 

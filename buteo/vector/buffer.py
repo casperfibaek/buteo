@@ -44,7 +44,7 @@ def _vector_buffer(
         driver = ogr.GetDriverByName(utils_gdal._get_driver_name_from_path(out_path))
         if driver is None:
             raise Exception("Driver for output buffer file is not available.")
-        
+
         if os.path.exists(out_path):
             driver.DeleteDataSource(out_path)
 
@@ -117,7 +117,7 @@ def _vector_buffer(
 
                 for i in range(feature.GetFieldCount()):
                     out_feature.SetField(i, feature.GetField(i))
-                
+
                 vector_layer_destination.CreateFeature(out_feature)
 
         vector_layer_destination.GetExtent()

@@ -219,12 +219,12 @@ def split_number(num: int, parts: int) -> List[int]:
     # Calculate the base and remainder
     base_num = num // parts
     remainder = num % parts
-    
+
     # Create the result list
     result = [base_num] * parts
-    
+
     # Add the remainder to the elements from the left
     for i in range(remainder):
         result[i] += 1
-    
+
     return result

@@ -132,7 +132,7 @@ def encode_latlngs(latlngs: np.ndarray) -> np.ndarray:
 def decode_latitude(
     encoded_sin: float,
     encoded_cos: float,
-) -> float:
+) -> np.ndarray:
     """Decode an encoded sine and cosine value to the original latitude value.
 
     Parameters
@@ -175,7 +175,7 @@ def decode_latitude(
 def decode_longitude(
     encoded_sin: float,
     encoded_cos: float,
-) -> float:
+) -> np.ndarray:
     """Decode an encoded sine and cosine value to the original longitude value.
 
     Parameters
@@ -265,7 +265,7 @@ def decode_latlngs(encoded_latlngs: Union[np.ndarray, List[Union[float, int]]]) 
 def encode_width(
     lng: float,
     lng_max: float,
-) -> float:
+) -> np.ndarray:
     """Encode the width of a rectangle to be used as input to the model.
 
     Parameters

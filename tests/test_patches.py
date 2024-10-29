@@ -70,7 +70,7 @@ dummy_arr_weight = np.ones_like(dummy_arr)
 
 def test_merge_weighted_median_basic():
     """ Test the basic functionality of the merge_weighted_median function. """
-    merged_arr = _merge_weighted_median(dummy_arr, dummy_arr_weight)
+    merged_arr = _merge_weighted_median(dummy_arr, dummy_arr_weight, np.zeros((dummy_arr.shape[0], dummy_arr.shape[1], 2)))
 
     expected_arr = np.array([
         [[2, 3], [5, 6]],
@@ -92,7 +92,7 @@ def test_merge_weighted_median_different_weights():
         ]
     ], dtype="float32")
 
-    merged_arr = _merge_weighted_median(dummy_arr, arr_weight)
+    merged_arr = _merge_weighted_median(dummy_arr, arr_weight, np.zeros((dummy_arr.shape[0], dummy_arr.shape[1], 2)))
 
     expected_arr = np.array([
         [[2.333333, 3.3333333], [5.3333333, 6.333333]],
@@ -103,7 +103,7 @@ def test_merge_weighted_median_different_weights():
 
 def test_merge_weighted_average_basic():
     """ Test the basic functionality of the merge_weighted_average function. """
-    merged_arr = _merge_weighted_average(dummy_arr, dummy_arr_weight)
+    merged_arr = _merge_weighted_average(dummy_arr, dummy_arr_weight, np.zeros((dummy_arr.shape[0], dummy_arr.shape[1], 2)))
 
     expected_arr = np.array([
         [[2, 3], [5, 6]],
@@ -125,7 +125,7 @@ def test_merge_weighted_average_different_weights():
         ]
     ], dtype="float32")
 
-    merged_arr = _merge_weighted_average(dummy_arr, arr_weight)
+    merged_arr = _merge_weighted_average(dummy_arr, arr_weight, np.zeros((dummy_arr.shape[0], dummy_arr.shape[1], 2)))
 
     expected_arr = np.array([
         [[2.333333, 3.3333333], [5.3333333, 6.333333]],
@@ -140,7 +140,7 @@ def test_merge_weighted_average_with_nan():
     arr_with_nan[0, 0, 0, 0] = np.nan
     arr_with_nan[1, 0, 1, 1] = np.nan
 
-    merged_arr = _merge_weighted_average(arr_with_nan, dummy_arr_weight)
+    merged_arr = _merge_weighted_average(arr_with_nan, dummy_arr_weight, np.zeros((dummy_arr.shape[0], dummy_arr.shape[1], 2)))
 
     expected_arr = np.array([
         [[3, 3], [5, 5]],
@@ -151,7 +151,7 @@ def test_merge_weighted_average_with_nan():
 
 def test_merge_weighted_mad_basic():
     """ Test the basic functionality of the merge_weighted_mad function. """
-    merged_arr = _merge_weighted_mad(dummy_arr, dummy_arr_weight)
+    merged_arr = _merge_weighted_mad(dummy_arr, dummy_arr_weight, np.zeros((dummy_arr.shape[0], dummy_arr.shape[1], 2)))
 
     expected_arr = np.array([
         [[2, 3], [5, 6]],
@@ -180,16 +180,16 @@ def test_merge_weighted_mode_basic():
             [[2, 3], [3, 4]],
             [[2, 3], [3, 4]],
         ]
-    ], dtype="float32")
+    ], dtype="uint8")
 
     arr_weight = np.ones_like(arr)
 
-    merged_arr = _merge_weighted_mode(arr, arr_weight)
+    merged_arr = _merge_weighted_mode(arr, arr_weight, np.zeros((dummy_arr.shape[0], dummy_arr.shape[1], 2)))
 
     expected_arr = np.array([
         [[1, 2], [2, 3]],
         [[1, 2], [2, 3]]
-    ], dtype="float32")
+    ], dtype="uint8")
 
     assert np.allclose(merged_arr, expected_arr)
 
@@ -424,7 +424,7 @@ def test_predict_array_merge_method_mean():
 
 def test_predict_array_merge_method_mode():
     """ Test the predict_array function with merge_method set to 'mode'. """
-    arr = np.rint(np.random.rand(64, 64, 1) * 100).astype(np.uint8)
+    arr = np.rint(np.random.rand(64, 64, 1) * 100).astype(np.int32)
     tile_size = 32
     offsets = 1
 

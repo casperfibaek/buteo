@@ -5,7 +5,6 @@ The list is a combination of the [release checklist](#release-checklist) and the
 ## Milestones
 * [ ] Make sure all tests pass
 * [ ] Merge Peter code
-* [ ] Built API for preprocessing and postprocessing EO -> AI data
 * [ ] Verify AI Package
 * [ ] Verify Array package
 * [ ] Verify Bindings package
@@ -13,6 +12,7 @@ The list is a combination of the [release checklist](#release-checklist) and the
 * [ ] Verify Raster package
 * [ ] Verify Vector package
 * [ ] Verify Utils package
+* [ ] Built API for preprocessing and postprocessing EO -> AI data
 
 ## Release checklist
 * [ ] Readme text

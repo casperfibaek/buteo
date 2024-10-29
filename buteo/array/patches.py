@@ -69,6 +69,7 @@ def _get_kernel_weights(
 def _merge_weighted_median(
     arr: np.ndarray,
     arr_weight: np.ndarray,
+    ret_arr: np.ndarray,
 ) -> np.ndarray:
     """Calculate the weighted median of a multi-dimensional array along the first axis.
     This is the order (number_of_overlaps, tile_size, tile_size, number_of_bands)
@@ -80,15 +81,15 @@ def _merge_weighted_median(
 
     arr_weight : np.ndarray
         The weight array with the same shape as the input array.
+    
+    ret_arr : np.ndarray
+        The output array with the same shape as the input array.
 
     Returns
     -------
     np.ndarray
         A 3D NumPy array of shape (arr.shape[1], arr.shape[2], arr.shape[3]) with the weighted medians.
     """
-    ret_arr = np.empty((arr.shape[1], arr.shape[2], arr.shape[3]), dtype="float32")
-    ret_arr[:] = np.nan
-
     # Iterate through the input array
     for idx_y in prange(arr.shape[1]):
         for idx_x in range(arr.shape[2]):
@@ -127,6 +128,7 @@ def _merge_weighted_median(
 def _merge_weighted_average(
     arr: np.ndarray,
     arr_weight: np.ndarray,
+    ret_arr: np.ndarray,
 ) -> np.ndarray:
     """Calculate the weighted average of a multi-dimensional array along the last axis.
 
@@ -137,15 +139,15 @@ def _merge_weighted_average(
 
     arr_weight : np.ndarray
         The weight array with the same shape as the input array.
+    
+    ret_arr : np.ndarray
+        The output array with the same shape as the input array.
 
     Returns
     -------
     np.ndarray
         A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the weighted averages.
     """
-    ret_arr = np.empty((arr.shape[1], arr.shape[2], arr.shape[3]), dtype="float32")
-    ret_arr[:] = np.nan
-
     # Iterate through the input array
     for idx_y in prange(arr.shape[1]):
         for idx_x in range(arr.shape[2]):
@@ -176,6 +178,7 @@ def _merge_weighted_average(
 def _merge_weighted_minmax(
     arr: np.ndarray,
     arr_weight: np.ndarray,
+    ret_arr: np.ndarray,
     method="max",
 ) -> np.ndarray:
     """Calculate the weighted min or max of a multi-dimensional array along the last axis.
@@ -188,6 +191,9 @@ def _merge_weighted_minmax(
     arr_weight : np.ndarray
         The weight array with the same shape as the input array.
 
+    ret_arr : np.ndarray
+        The output array with the same shape as the input array.
+
     method : str, optional
         The method to use. Either "min" or "max". Default: "max"
 
@@ -196,9 +202,6 @@ def _merge_weighted_minmax(
     np.ndarray
         A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the weighted min or max.
     """
-    ret_arr = np.empty((arr.shape[1], arr.shape[2], arr.shape[3]), dtype="float32")
-    ret_arr[:] = np.nan
-
     minmax = 0
     if method == "min":
         minmax = 1
@@ -239,6 +242,7 @@ def _merge_weighted_minmax(
 def _merge_weighted_olympic(
     arr: np.ndarray,
     arr_weight: np.ndarray,
+    ret_arr: np.ndarray,
     level: int = 1,
 ) -> np.ndarray:
     """Calculate the olympic value of a multi-dimensional array along the last axis.
@@ -253,6 +257,9 @@ def _merge_weighted_olympic(
 
     arr_weight : np.ndarray
         The weight array with the same shape as the input array.
+
+    ret_arr : np.ndarray
+        The output array with the same shape as the input array.
 
     level : int, optional
         The level of olympic sort to use. Default: 1
@@ -305,6 +312,7 @@ def _merge_weighted_olympic(
 def _merge_weighted_mad(
     arr: np.ndarray,
     arr_weight: np.ndarray,
+    ret_arr: np.ndarray,
     mad_dist: float = 2.0,
 ) -> np.ndarray:
     """Merge an array of predictions using the MAD-merge methodology.
@@ -317,6 +325,9 @@ def _merge_weighted_mad(
     arr_weight : np.ndarray
         The weight array with the same shape as the input array.
 
+    ret_arr : np.ndarray
+        The output array with the same shape as the input array.
+
     mad_dist : float, optional
         The MAD distance. Default: 2.0
 
@@ -325,9 +336,6 @@ def _merge_weighted_mad(
     np.ndarray
         A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the MAD-merged values.
     """
-    ret_arr = np.empty((arr.shape[1], arr.shape[2], arr.shape[3]), dtype="float32")
-    ret_arr[:] = np.nan
-
     # Iterate through the input array
     for idx_y in prange(arr.shape[1]):
         for idx_x in range(arr.shape[2]):
@@ -412,6 +420,7 @@ def _unique_values(arr: np.ndarray) -> np.ndarray:
 def _merge_weighted_mode(
     arr: np.ndarray,
     arr_weight: np.ndarray,
+    ret_arr: np.ndarray,
 ) -> np.ndarray:
     """Calculate the weighted mode of a multi-dimensional array along the last axis.
 
@@ -423,14 +432,14 @@ def _merge_weighted_mode(
     arr_weight : np.ndarray
         The weight array with the same shape as the input array.
 
+    ret_arr : np.ndarray
+        The output array with the same shape as the input array.
+
     Returns
     -------
     np.ndarray
         A 3D NumPy array of shape (arr.shape[0], arr.shape[1], 1) with the weighted modes.
     """
-    ret_arr = np.empty((arr.shape[1], arr.shape[2], arr.shape[3]), dtype=arr.dtype)
-    ret_arr[:] = np.nan
-
     # Iterate through the input array
     for idx_y in prange(arr.shape[1]):
         for idx_x in range(arr.shape[2]):
@@ -450,7 +459,7 @@ def _merge_weighted_mode(
 
                 # Get unique values and their weighted counts
                 unique_vals = _unique_values(values)
-                weighted_counts = np.zeros(unique_vals.shape[0])
+                weighted_counts = np.zeros(unique_vals.shape[0], dtype="float32")
 
                 # Calculate the weighted sum for each unique value
                 for i in range(unique_vals.shape[0]):
@@ -691,7 +700,13 @@ def _patches_to_array_single(
 
     # Create an empty target array of the specified shape
     if background_value is None:
-        target = np.full(shape, np.nan, dtype=patches.dtype)
+
+        # check if patches.dtype is integer types
+        if patches.dtype.kind in "ui":
+            target = np.full(shape, np.iinfo(patches.dtype).min, dtype=patches.dtype)
+        else:
+            target = np.full(shape, np.nan, dtype=patches.dtype)
+
     else:
         target = np.full(shape, background_value, dtype=patches.dtype)
 
@@ -842,6 +857,7 @@ def predict_array(
     edge_distance: int = 3,
     batch_size: int = 1,
     channel_last: bool = True,
+    background_value: Optional[Union[int, float]] = None,
 ) -> np.ndarray:
     """Generate patches from an array. Also outputs the offsets and the shapes of the offsets. Only
     suppors the prediction of single values in the rasters/arrays.
@@ -880,6 +896,9 @@ def predict_array(
 
     channel_last : bool, optional
         Whether or not the channel dimension is the last dimension. Default: True
+
+    background_value : Optional[Union[int, float]], optional
+        The value to use for the background. If not provided, defaults to np.nan.
 
     Returns
     -------
@@ -926,7 +945,7 @@ def predict_array(
 
         offset_predictions = np.empty((patches.shape[0], patches.shape[1], patches.shape[2], test_shape[-1]), dtype=arr.dtype)
         offset_weights = np.empty((patches.shape[0], patches.shape[1], patches.shape[2], 1), dtype=np.float32)
-        
+
         for idx_j in range((patches.shape[0] // batch_size) + (1 if patches.shape[0] % batch_size != 0 else 0)):
             idx_start = idx_j * batch_size
             idx_end = (idx_j + 1) * batch_size
@@ -952,23 +971,33 @@ def predict_array(
         predictions[idx_i, :, :, :] = _patches_to_array_single(offset_predictions, (arr.shape[0], arr.shape[1], test_shape[-1]), tile_size, offset)
         predictions_weights[idx_i, :, :, :] = _patches_to_array_single(offset_weights, (arr.shape[0], arr.shape[1], 1), tile_size, offset, 0.0)
 
+    ret_arr = np.empty((predictions.shape[1], predictions.shape[2], predictions.shape[3]), dtype=predictions.dtype)
+
+    # check if patches.dtype is integer types
+    if background_value is not None:
+        ret_arr[:] = background_value
+    elif arr.dtype.kind in "ui":
+        ret_arr[:] = np.iinfo(predictions.dtype).min
+    else:
+        ret_arr[:] = np.nan
+
     # Merge the predictions
     if merge_method == "mad":
-        predictions = _merge_weighted_mad(predictions, predictions_weights)
+        predictions = _merge_weighted_mad(predictions, predictions_weights, ret_arr)
     elif merge_method == "median":
-        predictions = _merge_weighted_median(predictions, predictions_weights)
+        predictions = _merge_weighted_median(predictions, predictions_weights, ret_arr)
     elif merge_method in ["mean", "average", "avg"]:
-        predictions = _merge_weighted_average(predictions, predictions_weights)
+        predictions = _merge_weighted_average(predictions, predictions_weights, ret_arr)
     elif merge_method == "mode":
-        predictions = _merge_weighted_mode(predictions, predictions_weights)
+        predictions = _merge_weighted_mode(predictions, predictions_weights, ret_arr)
     elif merge_method == "max":
-        predictions = _merge_weighted_minmax(predictions, predictions_weights, "max")
+        predictions = _merge_weighted_minmax(predictions, predictions_weights, ret_arr, "max")
     elif merge_method == "min":
-        predictions = _merge_weighted_minmax(predictions, predictions_weights, "min")
+        predictions = _merge_weighted_minmax(predictions, predictions_weights, ret_arr, "min")
     elif merge_method == "olympic1":
-        predictions = _merge_weighted_olympic(predictions, predictions_weights, 1)
+        predictions = _merge_weighted_olympic(predictions, predictions_weights, ret_arr, 1)
     elif merge_method == "olympic2":
-        predictions = _merge_weighted_olympic(predictions, predictions_weights, 2)
+        predictions = _merge_weighted_olympic(predictions, predictions_weights, ret_arr, 2)
 
     if not channel_last:
         predictions = channel_last_to_first(predictions)
