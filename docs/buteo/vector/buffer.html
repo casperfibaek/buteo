@@ -106,7 +106,7 @@
 </span><span id="L-44"><a href="#L-44"><span class="linenos"> 44</span></a>        <span class="n">driver</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="n">utils_gdal</span><span class="o">.</span><span class="n">_get_driver_name_from_path</span><span class="p">(</span><span class="n">out_path</span><span class="p">))</span>
 </span><span id="L-45"><a href="#L-45"><span class="linenos"> 45</span></a>        <span class="k">if</span> <span class="n">driver</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="L-46"><a href="#L-46"><span class="linenos"> 46</span></a>            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Driver for output buffer file is not available.&quot;</span><span class="p">)</span>
-</span><span id="L-47"><a href="#L-47"><span class="linenos"> 47</span></a>        
+</span><span id="L-47"><a href="#L-47"><span class="linenos"> 47</span></a>
 </span><span id="L-48"><a href="#L-48"><span class="linenos"> 48</span></a>        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">out_path</span><span class="p">):</span>
 </span><span id="L-49"><a href="#L-49"><span class="linenos"> 49</span></a>            <span class="n">driver</span><span class="o">.</span><span class="n">DeleteDataSource</span><span class="p">(</span><span class="n">out_path</span><span class="p">)</span>
 </span><span id="L-50"><a href="#L-50"><span class="linenos"> 50</span></a>
@@ -179,7 +179,7 @@
 </span><span id="L-117"><a href="#L-117"><span class="linenos">117</span></a>
 </span><span id="L-118"><a href="#L-118"><span class="linenos">118</span></a>                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">GetFieldCount</span><span class="p">()):</span>
 </span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a>                    <span class="n">out_feature</span><span class="o">.</span><span class="n">SetField</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">feature</span><span class="o">.</span><span class="n">GetField</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
-</span><span id="L-120"><a href="#L-120"><span class="linenos">120</span></a>                
+</span><span id="L-120"><a href="#L-120"><span class="linenos">120</span></a>
 </span><span id="L-121"><a href="#L-121"><span class="linenos">121</span></a>                <span class="n">vector_layer_destination</span><span class="o">.</span><span class="n">CreateFeature</span><span class="p">(</span><span class="n">out_feature</span><span class="p">)</span>
 </span><span id="L-122"><a href="#L-122"><span class="linenos">122</span></a>
 </span><span id="L-123"><a href="#L-123"><span class="linenos">123</span></a>        <span class="n">vector_layer_destination</span><span class="o">.</span><span class="n">GetExtent</span><span class="p">()</span>

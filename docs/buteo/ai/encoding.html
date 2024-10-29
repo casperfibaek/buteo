@@ -219,7 +219,7 @@
 </span><span id="L-132"><a href="#L-132"><span class="linenos">132</span></a><span class="k">def</span> <span class="nf">decode_latitude</span><span class="p">(</span>
 </span><span id="L-133"><a href="#L-133"><span class="linenos">133</span></a>    <span class="n">encoded_sin</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 </span><span id="L-134"><a href="#L-134"><span class="linenos">134</span></a>    <span class="n">encoded_cos</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-</span><span id="L-135"><a href="#L-135"><span class="linenos">135</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="L-135"><a href="#L-135"><span class="linenos">135</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="L-136"><a href="#L-136"><span class="linenos">136</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode an encoded sine and cosine value to the original latitude value.</span>
 </span><span id="L-137"><a href="#L-137"><span class="linenos">137</span></a>
 </span><span id="L-138"><a href="#L-138"><span class="linenos">138</span></a><span class="sd">    Parameters</span>
@@ -262,7 +262,7 @@
 </span><span id="L-175"><a href="#L-175"><span class="linenos">175</span></a><span class="k">def</span> <span class="nf">decode_longitude</span><span class="p">(</span>
 </span><span id="L-176"><a href="#L-176"><span class="linenos">176</span></a>    <span class="n">encoded_sin</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 </span><span id="L-177"><a href="#L-177"><span class="linenos">177</span></a>    <span class="n">encoded_cos</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-</span><span id="L-178"><a href="#L-178"><span class="linenos">178</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="L-178"><a href="#L-178"><span class="linenos">178</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="L-179"><a href="#L-179"><span class="linenos">179</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode an encoded sine and cosine value to the original longitude value.</span>
 </span><span id="L-180"><a href="#L-180"><span class="linenos">180</span></a>
 </span><span id="L-181"><a href="#L-181"><span class="linenos">181</span></a><span class="sd">    Parameters</span>
@@ -352,7 +352,7 @@
 </span><span id="L-265"><a href="#L-265"><span class="linenos">265</span></a><span class="k">def</span> <span class="nf">encode_width</span><span class="p">(</span>
 </span><span id="L-266"><a href="#L-266"><span class="linenos">266</span></a>    <span class="n">lng</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 </span><span id="L-267"><a href="#L-267"><span class="linenos">267</span></a>    <span class="n">lng_max</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-</span><span id="L-268"><a href="#L-268"><span class="linenos">268</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="L-268"><a href="#L-268"><span class="linenos">268</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="L-269"><a href="#L-269"><span class="linenos">269</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Encode the width of a rectangle to be used as input to the model.</span>
 </span><span id="L-270"><a href="#L-270"><span class="linenos">270</span></a>
 </span><span id="L-271"><a href="#L-271"><span class="linenos">271</span></a><span class="sd">    Parameters</span>
@@ -679,7 +679,7 @@
                     <div class="decorator">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#39;always&#39;)</div>
 
         <span class="def">def</span>
-        <span class="name">decode_latitude</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">encoded_sin</span><span class="p">:</span> <span class="nb">float</span>, </span><span class="param"><span class="n">encoded_cos</span><span class="p">:</span> <span class="nb">float</span></span><span class="return-annotation">) -> <span class="nb">float</span>:</span></span>
+        <span class="name">decode_latitude</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">encoded_sin</span><span class="p">:</span> <span class="nb">float</span>, </span><span class="param"><span class="n">encoded_cos</span><span class="p">:</span> <span class="nb">float</span></span><span class="return-annotation">) -> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>:</span></span>
 
                 <label class="view-source-button" for="decode_latitude-view-source"><span>View Source</span></label>
 
@@ -689,7 +689,7 @@
 </span><span id="decode_latitude-133"><a href="#decode_latitude-133"><span class="linenos">133</span></a><span class="k">def</span> <span class="nf">decode_latitude</span><span class="p">(</span>
 </span><span id="decode_latitude-134"><a href="#decode_latitude-134"><span class="linenos">134</span></a>    <span class="n">encoded_sin</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 </span><span id="decode_latitude-135"><a href="#decode_latitude-135"><span class="linenos">135</span></a>    <span class="n">encoded_cos</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-</span><span id="decode_latitude-136"><a href="#decode_latitude-136"><span class="linenos">136</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="decode_latitude-136"><a href="#decode_latitude-136"><span class="linenos">136</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="decode_latitude-137"><a href="#decode_latitude-137"><span class="linenos">137</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode an encoded sine and cosine value to the original latitude value.</span>
 </span><span id="decode_latitude-138"><a href="#decode_latitude-138"><span class="linenos">138</span></a>
 </span><span id="decode_latitude-139"><a href="#decode_latitude-139"><span class="linenos">139</span></a><span class="sd">    Parameters</span>
@@ -755,7 +755,7 @@
                     <div class="decorator">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#39;always&#39;)</div>
 
         <span class="def">def</span>
-        <span class="name">decode_longitude</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">encoded_sin</span><span class="p">:</span> <span class="nb">float</span>, </span><span class="param"><span class="n">encoded_cos</span><span class="p">:</span> <span class="nb">float</span></span><span class="return-annotation">) -> <span class="nb">float</span>:</span></span>
+        <span class="name">decode_longitude</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">encoded_sin</span><span class="p">:</span> <span class="nb">float</span>, </span><span class="param"><span class="n">encoded_cos</span><span class="p">:</span> <span class="nb">float</span></span><span class="return-annotation">) -> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>:</span></span>
 
                 <label class="view-source-button" for="decode_longitude-view-source"><span>View Source</span></label>
 
@@ -765,7 +765,7 @@
 </span><span id="decode_longitude-176"><a href="#decode_longitude-176"><span class="linenos">176</span></a><span class="k">def</span> <span class="nf">decode_longitude</span><span class="p">(</span>
 </span><span id="decode_longitude-177"><a href="#decode_longitude-177"><span class="linenos">177</span></a>    <span class="n">encoded_sin</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 </span><span id="decode_longitude-178"><a href="#decode_longitude-178"><span class="linenos">178</span></a>    <span class="n">encoded_cos</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-</span><span id="decode_longitude-179"><a href="#decode_longitude-179"><span class="linenos">179</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="decode_longitude-179"><a href="#decode_longitude-179"><span class="linenos">179</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="decode_longitude-180"><a href="#decode_longitude-180"><span class="linenos">180</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode an encoded sine and cosine value to the original longitude value.</span>
 </span><span id="decode_longitude-181"><a href="#decode_longitude-181"><span class="linenos">181</span></a>
 </span><span id="decode_longitude-182"><a href="#decode_longitude-182"><span class="linenos">182</span></a><span class="sd">    Parameters</span>
@@ -943,7 +943,7 @@
                     <div class="decorator">@jit(nopython=True, parallel=True, nogil=True, fastmath=True, inline=&#39;always&#39;)</div>
 
         <span class="def">def</span>
-        <span class="name">encode_width</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">lng</span><span class="p">:</span> <span class="nb">float</span>, </span><span class="param"><span class="n">lng_max</span><span class="p">:</span> <span class="nb">float</span></span><span class="return-annotation">) -> <span class="nb">float</span>:</span></span>
+        <span class="name">encode_width</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">lng</span><span class="p">:</span> <span class="nb">float</span>, </span><span class="param"><span class="n">lng_max</span><span class="p">:</span> <span class="nb">float</span></span><span class="return-annotation">) -> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span>:</span></span>
 
                 <label class="view-source-button" for="encode_width-view-source"><span>View Source</span></label>
 
@@ -953,7 +953,7 @@
 </span><span id="encode_width-266"><a href="#encode_width-266"><span class="linenos">266</span></a><span class="k">def</span> <span class="nf">encode_width</span><span class="p">(</span>
 </span><span id="encode_width-267"><a href="#encode_width-267"><span class="linenos">267</span></a>    <span class="n">lng</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
 </span><span id="encode_width-268"><a href="#encode_width-268"><span class="linenos">268</span></a>    <span class="n">lng_max</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-</span><span id="encode_width-269"><a href="#encode_width-269"><span class="linenos">269</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="encode_width-269"><a href="#encode_width-269"><span class="linenos">269</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="encode_width-270"><a href="#encode_width-270"><span class="linenos">270</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Encode the width of a rectangle to be used as input to the model.</span>
 </span><span id="encode_width-271"><a href="#encode_width-271"><span class="linenos">271</span></a>
 </span><span id="encode_width-272"><a href="#encode_width-272"><span class="linenos">272</span></a><span class="sd">    Parameters</span>
