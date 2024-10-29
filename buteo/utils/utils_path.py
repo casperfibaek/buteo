@@ -694,7 +694,7 @@ def _check_is_valid_output_path_list(
 
     Parameters
     ----------
-    output_list: list[str]
+    output_list: List[str]
         The list of paths to the files.
 
     overwrite: bool
@@ -770,7 +770,7 @@ def _delete_if_required_list(
 
     Parameters
     ----------
-    output_list: list[str]
+    output_list: List[str]
         The list of paths to the files.
 
     overwrite: bool
@@ -861,7 +861,7 @@ def _get_paths_from_glob(path: str) -> List[str]:
 
     Returns
     -------
-    list[str]
+    List[str]
         The list of paths.
     """
     assert isinstance(path, str), "path must be a string."
@@ -1006,7 +1006,7 @@ def _get_augmented_path_list(
 
     Parameters
     ----------
-    path_list: list[str]
+    path_list: List[str]
         The list of paths to the original files.
 
     prefix: str
@@ -1027,7 +1027,7 @@ def _get_augmented_path_list(
 
     Returns
     -------
-    list[str]
+    List[str]
         The augmented paths.
     """
     assert isinstance(path_list, list), "path_list must be a list."

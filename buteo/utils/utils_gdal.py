@@ -20,7 +20,7 @@ from buteo.utils import utils_path, utils_translate
 
 
 def _get_default_creation_options(
-    options: Optional[list] = None,
+    options: Optional[List] = None,
 ) -> list:
     """Takes a list of GDAL creation options and adds the following defaults to it if their not specified: </br>
 
@@ -38,7 +38,7 @@ def _get_default_creation_options(
 
     Parameters
     ----------
-    options : Optional[list], optional
+    options : Optional[List], optional
         A list of GDAL creation options, default: None
 
     Returns

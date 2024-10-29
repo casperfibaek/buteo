@@ -104,7 +104,7 @@ def vector_open(
 
     Returns
     -------
-    ogr.DataSource, list[ogr.DataSource]
+    ogr.DataSource, List[ogr.DataSource]
         The opened vector(s).
     """
     utils_base._type_check(vector, [str, ogr.DataSource, gdal.Dataset, [str, ogr.DataSource, gdal.Dataset]], "vector")

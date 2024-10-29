@@ -221,7 +221,7 @@ def raster_resample(
 
     Returns
     -------
-    str/list[str]
+    str/List[str]
         The output path(s) of the resampled raster(s).
     """
     utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")

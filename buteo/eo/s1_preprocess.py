@@ -302,7 +302,7 @@ def s1_backscatter(
 
     Returns
     -------
-    list[str]
+    List[str]
         A list with the paths to the output rasters.
     """
     base = os.path.splitext(os.path.splitext(os.path.basename(zip_file))[0])[0]

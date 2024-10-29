@@ -99,7 +99,7 @@ def raster_stack_vrt_list(
     nodata_src: Optional[float] = None,
     nodata_VRT: Optional[float] = None,
     nodata_hide: Optional[bool] = None,
-    options: Optional[list] = None,
+    options: Optional[List] = None,
     overwrite: bool = True,
     reference: Optional[str] = None,
     creation_options: Optional[List[str]] = None,
@@ -140,7 +140,7 @@ def raster_stack_vrt_list(
         If True, the NoData value will be hidden in the VRT. If not provided, the value
         will be determined by the input rasters.
 
-    options : Optional[list], default=None
+    options : Optional[List], default=None
         A list of VRT options for GDAL. If not provided, default options will be used.
 
     overwrite : bool, default=True
