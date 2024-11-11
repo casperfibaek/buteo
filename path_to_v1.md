@@ -3,8 +3,8 @@ Before the v1.0 release, we need to ensure that the following steps are complete
 The list is a combination of the [release checklist](#release-checklist) and the [milestones](#milestones) that need to be completed.
 
 ## Milestones
-* [ ] Make sure all tests pass
-* [ ] Merge Peter code
+* [x] Make sure all tests pass
+* [x] Merge Peter code
 * [ ] Verify AI Package
 * [ ] Verify Array package
 * [ ] Verify Bindings package
@@ -20,5 +20,5 @@ The list is a combination of the [release checklist](#release-checklist) and the
 * [ ] Ensure all tests are written
 * [ ] Ensure all tests pass
 * [ ] Validate documentation
-* [x] Update the version numbering
+* [ ] Update the version numbering
 * [ ] Upload to pip & conda

@@ -240,6 +240,7 @@ def _get_basic_metadata_raster(
             metadata["nodata_value"] = nodata_value
             break
 
+    projection_osr = None
     dataset = None
     return metadata
 

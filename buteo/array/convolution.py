@@ -66,7 +66,7 @@ def pad_array(
             pad_width=((pad_size, pad_size), (pad_size, pad_size), (0, 0)),
             mode='edge',
         )
-    elif method in "constant":
+    elif method == "constant":
         padded_view = np.pad(
             arr,
             pad_width=((pad_size, pad_size), (pad_size, pad_size), (0, 0)),
