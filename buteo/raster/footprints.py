@@ -1,7 +1,6 @@
 """### Extract the footprints or centroids of rasters. ###"""
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, Optional, List
 import os
 

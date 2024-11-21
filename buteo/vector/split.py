@@ -4,7 +4,6 @@ Dissolve vectors by attributes or geometry.
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 import os
 from typing import Optional, Union
 from uuid import uuid4
@@ -13,11 +12,9 @@ from uuid import uuid4
 from osgeo import ogr
 
 # Internal
-from buteo.utils import (
-    utils_base,
-    utils_path,
-)
+from buteo.utils import utils_base, utils_path
 from buteo.vector import core_vector
+
 
 
 def vector_split_by_fid(

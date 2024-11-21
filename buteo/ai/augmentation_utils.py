@@ -1,6 +1,4 @@
-"""This module contains utility functions for augmenting images that are
-suited to remote sensing imagery.
-"""
+""" ### Utility functions for image augmentation. ###"""
 
 # External
 import numpy as np

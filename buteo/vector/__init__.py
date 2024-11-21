@@ -1,4 +1,5 @@
-"""Work with vector data and attributes with ease."""
+"""### Work with vector data and attributes with ease. ###"""
+
 from .core_vector import *
 from .clip import *
 from .convert_parts import *

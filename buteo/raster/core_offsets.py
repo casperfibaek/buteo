@@ -1,4 +1,4 @@
-"""Create offsets to read rasters in chunks."""
+""" ### Create offsets to read rasters in chunks. ### """
 
 # Standard library
 from typing import List, Tuple

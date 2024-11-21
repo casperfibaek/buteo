@@ -1,5 +1,6 @@
+""" ### Shape Calculations ### """
+
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, Optional, List
 
 # External
@@ -7,13 +8,7 @@ import numpy as np
 from osgeo import ogr
 
 # Internal
-from buteo.utils import (
-    utils_io,
-    utils_base,
-    utils_gdal,
-    utils_bbox,
-    utils_path,
-)
+from buteo.utils import utils_base, utils_gdal
 from buteo.vector.metadata import _vector_to_metadata
 from buteo.vector.core_vector import _vector_open
 

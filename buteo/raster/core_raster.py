@@ -1,10 +1,9 @@
-"""### Basic functionality for working with rasters. ###"""
+"""###. Basic functionality for working with rasters. ###"""
 
 # Standard library
-import sys; sys.path.append("../../")
 import os
-from typing import List, Optional, Union, Dict, Any
 import warnings
+from typing import List, Optional, Union, Dict, Any
 
 # External
 from osgeo import gdal, ogr, osr

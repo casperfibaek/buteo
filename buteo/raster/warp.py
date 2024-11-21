@@ -4,7 +4,6 @@ Module to turn rasters into vector representations.
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, Optional, List
 
 # External
@@ -18,6 +17,7 @@ from buteo.utils import (
     utils_projection
 )
 from buteo.raster import core_raster
+
 
 
 def raster_warp(

@@ -1,17 +1,15 @@
-"""### Read metadata from rasters ###"""
+"""### Read metadata from rasters. ###"""
+
 # Standard library
-import sys; sys.path.append("../../")
 from typing import List, Union
 
 # External
 from osgeo import gdal
 
 # Internal
-from buteo.utils import (
-    utils_io,
-    utils_base,
-)
+from buteo.utils import utils_io, utils_base
 from buteo.raster.core_raster import _get_basic_metadata_raster
+
 
 
 def _raster_to_metadata(

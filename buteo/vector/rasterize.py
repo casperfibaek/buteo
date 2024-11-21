@@ -7,7 +7,6 @@ TODO:
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, Optional, List
 
 # External

@@ -4,7 +4,6 @@ Convert geometries from multiparts and singleparts and vice versa.
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, Optional, List
 
 # External
@@ -19,6 +18,7 @@ from buteo.utils import (
 )
 from buteo.vector import core_vector
 from buteo.vector.metadata import _vector_to_metadata
+
 
 
 def _singlepart_to_multipart(

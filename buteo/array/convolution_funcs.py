@@ -1,11 +1,12 @@
-"""### Perform convolutions on arrays. (Funcs) ###"""
+"""### Convolutions functions on arrays. ###"""
 
-# Standard Library
+# Standard library
 from typing import Union
 
 # External
 import numpy as np
 from numba import jit
+
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)

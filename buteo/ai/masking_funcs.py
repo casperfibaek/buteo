@@ -1,8 +1,4 @@
-"""This module contains functions for augmenting images that are
-suited to remote sensing imagery.
-"""
-# Standard library
-import sys; sys.path.append("../../")
+""" ### Noise and Masking functions for images. ###"""
 
 # External
 import numpy as np
@@ -12,7 +8,6 @@ from numba import jit, prange
 from buteo.array.convolution import convolve_array_simple
 from buteo.array.convolution_kernels import _simple_blur_kernel_2d_3x3
 
-EPSILON = 1e-7
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True)
@@ -636,6 +631,7 @@ def mask_elipse_2d(
     min_height: float = 0.1,
     min_width: float = 0.1,
     channel_last: bool = True,
+    epsilon: float = 1e-7,
 ):
     height, width, channels = arr.shape
     mask_shape = (height, width, channels)
@@ -647,7 +643,7 @@ def mask_elipse_2d(
     mask = np.ones(mask_shape, dtype=np.uint8)
     zero = np.array(0, dtype=np.uint8)
 
-    if np.random.uniform(0.0, 1.0 + EPSILON) > p:
+    if np.random.uniform(0.0, 1.0 + epsilon) > p:
         return mask
 
     # Randomly select the centroid of the ellipse
@@ -751,6 +747,7 @@ def mask_elipse_3d(
     min_height: float = 0.1,
     min_width: float = 0.1,
     channel_last: bool = True,
+    epsilon: float = 1e-7,
 ):
     height, width, channels = arr.shape
     mask_shape = (height, width, channels)
@@ -763,7 +760,7 @@ def mask_elipse_3d(
     zero = np.array(0, dtype=np.uint8)
 
     for c in range(channels):
-        if np.random.uniform(0.0, 1.0 + EPSILON) > p:
+        if np.random.uniform(0.0, 1.0 + epsilon) > p:
             continue
 
         # Randomly select the centroid of the ellipse
@@ -867,6 +864,7 @@ def mask_rectangle_2d(
     min_height: float = 0.1,
     min_width: float = 0.1,
     channel_last: bool = True,
+    epsilon: float = 1e-7,
 ) -> np.ndarray:
     
     height, width, _channels = arr.shape
@@ -882,7 +880,7 @@ def mask_rectangle_2d(
     mask = np.ones(arr.shape, dtype=np.uint8)
     zero = np.array(0, dtype=np.uint8)
 
-    if np.random.uniform(0.0, 1.0 + EPSILON) > p:
+    if np.random.uniform(0.0, 1.0 + epsilon) > p:
         return mask
 
     if max_height == -1:

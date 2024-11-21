@@ -1,10 +1,7 @@
-"""Slope, aspect, hillshade, and other DEM functions."""
+""" ### Slope, aspect, hillshade, and other DEM functions. ###"""
 
 # Standard library
-import os
-import sys; sys.path.append("../../")
 from typing import Union, Optional, List
-from uuid import uuid4
 
 # External
 from osgeo import gdal

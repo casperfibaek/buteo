@@ -1,4 +1,4 @@
-"""### Bounding box utility functions ###
+"""### Bounding box utility functions. ###
 
 Various utility functions to work with bounding boxes and gdal.
 
@@ -13,7 +13,6 @@ The GDAL geotransform is a list of six parameters:</br>
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import List, Union, Dict, Any, Optional
 from uuid import uuid4
 

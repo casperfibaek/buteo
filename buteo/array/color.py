@@ -1,13 +1,12 @@
-"""### Generic utility functions ###
+"""### Functions for interacting with colour. ### """
 
-Functions that make interacting with the toolbox easier.
-"""
-# Internal
+# Standard library
 from typing import Tuple
 
 # External
 import numpy as np
 from numba import jit, prange
+
 
 
 @jit(nopython=True, fastmath=True, cache=True, nogil=True, inline='always')

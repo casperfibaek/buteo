@@ -1,7 +1,6 @@
 """### Functions for changing the datatype of a raster. ###"""
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, List, Optional
 from warnings import warn
 
@@ -18,6 +17,7 @@ from buteo.utils import (
     utils_translate,
 )
 from buteo.raster.core_raster import _raster_open, _get_basic_metadata_raster
+
 
 
 def _raster_set_datatype(

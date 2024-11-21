@@ -1,14 +1,17 @@
-"""This module provides functions to ease the preprocessing of Sentinel 1 data
-and finding the GPT tools.
+""" ### Sentinel 1 Utility functions. ###
 
 TODO:
     - Improve documentation
 """
 
+# Standard library
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import Union, List, Tuple, Dict, Any
+from typing import List, Dict, Any
+
+# External
 import numpy as np
+
 
 
 # TODO: wkt to ogr geometry

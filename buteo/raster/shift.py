@@ -4,12 +4,11 @@ Module to shift the location of rasters in geographic coordinates.
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, Optional, List
 
 # External
-from osgeo import gdal
 import numpy as np
+from osgeo import gdal
 
 # Internal
 from buteo.utils import (
@@ -21,6 +20,7 @@ from buteo.utils import (
 from buteo.raster import core_raster, core_raster_io
 from buteo.array.convolution import convolve_array_simple
 from buteo.array.convolution_kernels import kernel_shift
+
 
 
 def _raster_shift(

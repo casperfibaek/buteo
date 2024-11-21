@@ -4,7 +4,6 @@ Module to calculate the distance from a pixel value to other pixels.
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, List, Optional
 
 # External
@@ -19,6 +18,7 @@ from buteo.utils import (
 )
 from buteo.raster import core_raster, core_raster_io
 from buteo.array.distance import convolve_distance
+
 
 
 def _raster_get_proximity(

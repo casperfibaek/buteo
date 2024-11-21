@@ -1,4 +1,5 @@
-"""Tools for working with sentinel data"""
+""" This module contains functions for augmenting images that are suited to remote sensing imagery."""
+
 from .augmentation import *
 from .augmentation_funcs import *
 from .augmentation_utils import *

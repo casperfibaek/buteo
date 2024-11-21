@@ -7,8 +7,7 @@ Useful for warped satellite images and for proximity searching.
 # TODO: Remove near black borders.
 
 # Standard library
-import sys; sys.path.append("../../")
-from typing import Union, List, Optional, Any
+from typing import Union, List, Optional
 
 # External
 import numpy as np
@@ -23,6 +22,7 @@ from buteo.utils import (
     utils_translate,
 )
 from buteo.raster import core_raster, core_raster_io
+
 
 
 def _raster_add_border(

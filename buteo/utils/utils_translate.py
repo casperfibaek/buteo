@@ -1,7 +1,8 @@
-"""### GDAL Enum Functions ###
+"""### GDAL Enum-like Functions. ###
 
 Functions to translate between **GDAL** and **NumPy** datatypes.
 """
+
 # Standard Library
 from typing import List, Tuple, Union, Dict, Type, Optional
 

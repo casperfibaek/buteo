@@ -4,7 +4,6 @@ Functions to reproject vectors. References can be both vector and raster.
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, Optional, List
 
 # External
@@ -18,6 +17,7 @@ from buteo.utils import (
     utils_path,
     utils_projection,
 )
+
 
 
 def _vector_reproject(

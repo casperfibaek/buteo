@@ -1,8 +1,6 @@
-"""This module contains functions for augmenting images that are
-suited to remote sensing imagery.
-"""
+"""### Module for spatial label smoothing. ###"""
+
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Optional
 
 # External
@@ -11,6 +9,7 @@ import numpy as np
 # Internal
 from buteo.array.filters import filter_operation
 from buteo.array.convolution_kernels import kernel_base
+
 
 
 def spatial_label_smoothing(

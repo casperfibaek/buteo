@@ -1,12 +1,11 @@
 """### Functions for changing the datatype of a raster. ###"""
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, List, Optional
 
 # External
-from osgeo import gdal
 import numpy as np
+from osgeo import gdal
 
 # Internal
 from buteo.utils import (

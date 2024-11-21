@@ -1,14 +1,13 @@
 [MESSAGES CONTROL]
 
 disable=multiple-statements,
-        import-error,
-        wrong-import-position,
         isinstance-second-argument-not-valid-type,
         protected-access,
         not-an-iterable,
         invalid-name,
         line-too-long,
-        too-many-lines
+        too-many-lines,
+        line-too-long
 
 [TYPECHECK]
 

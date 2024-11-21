@@ -5,12 +5,11 @@ Can uses references from vector or other raster datasets.
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, Optional, List
 
 # External
-from osgeo import gdal, ogr, osr
 import numpy as np
+from osgeo import gdal, ogr, osr
 
 # Internal
 from buteo.utils import (
@@ -22,6 +21,7 @@ from buteo.utils import (
     utils_translate,
 )
 from buteo.raster import core_raster
+
 
 
 def _find_common_projection(

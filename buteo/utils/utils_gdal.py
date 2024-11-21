@@ -1,10 +1,9 @@
-"""### Utility functions to work with GDAL ###
+"""### Utility functions to work with GDAL. ###
 
 These functions are used to interact with basic GDAL objects.
 """
 
 # Standard Library
-import sys; sys.path.append("../../")
 from typing import Optional, Union, List, Any, Tuple
 from warnings import warn
 import os

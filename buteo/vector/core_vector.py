@@ -1,4 +1,4 @@
-"""### Basic IO functions for working with Vectprs ###
+"""### Basic IO functions for working with vectors. ###
 
 The basic module for interacting with vector data
 """
@@ -12,7 +12,6 @@ The basic module for interacting with vector data
 # TODO: Vector intersects, etc..
 
 # Standard library
-import sys; sys.path.append("../../")
 import os
 from typing import Union, Optional, List, Dict, Any, Callable, Tuple
 
@@ -28,6 +27,7 @@ from buteo.utils import (
     utils_path,
     utils_projection,
 )
+
 
 
 def _vector_open(

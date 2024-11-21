@@ -1,6 +1,8 @@
-"""### Encoding spatial values  ###"""
+"""### Encoding spatial values.  ###"""
+
 # Standard library
 from typing import Tuple, Union, List
+
 # External
 import numpy as np
 from numba import jit, prange

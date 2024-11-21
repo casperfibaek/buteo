@@ -1,15 +1,16 @@
-"""This module provides varoius indices for Sentinel 2 imagery.
+""" ### Calculate spectral indices for Sentinel 2 data. ###
 
 TODO:
     Convert to numpy functions.
     Handle resampling
 """
+
 # Standard library
-import sys; sys.path.append("../../")
 from typing import List
 
 # External
 import numpy as np
+
 
 
 def _all_arrays_are_same_size(arrays: List[np.ndarray]) -> bool:

@@ -1,15 +1,18 @@
-"""Bindings to interact with the orfeo-toolbox in a more pythonic way.
+"""### Bindings to interact with the orfeo-toolbox ### 
 
 TODO:
     - Documentation
 """
 
-import sys; sys.path.append("../../") # Path: buteo/orfeo_toolbox_bindings.py
+# Standard library
 import os
+import sys
 import subprocess
 from time import time
 
-from buteo import raster_to_array
+# Internal
+from buteo.raster import raster_to_array
+
 
 
 def _progress(percent, total, status=""):

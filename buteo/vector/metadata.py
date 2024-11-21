@@ -1,5 +1,6 @@
+""" ### Metadata functions for vector layers. ### """
+
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, List, Dict, Any
 import os
 
@@ -8,11 +9,9 @@ from osgeo import ogr, gdal, osr
 
 # Internal
 from buteo.utils import (
-    utils_io,
     utils_base,
     utils_gdal,
     utils_bbox,
-    utils_path,
 )
 from buteo.vector.core_vector import _vector_open
 

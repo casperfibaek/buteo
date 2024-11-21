@@ -1,15 +1,14 @@
-"""This module contains functions for augmenting images that are
-suited to remote sensing imagery.
-"""
+"""### Dataset Augmentation Module. ###"""
+
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Optional, List, Callable, Union
 
 # External
 import numpy as np
 
-# Buteo
+# Internal
 from buteo.array.loaders import MultiArray
+
 
 
 class Dataset:

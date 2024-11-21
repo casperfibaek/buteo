@@ -1,11 +1,11 @@
-"""This module contains function to select features from a dataset for machine learning."""
+""" ### Data Selection. ### """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Optional, Union, Tuple
 
 # External
 import numpy as np
+
 
 
 def split_train_val(

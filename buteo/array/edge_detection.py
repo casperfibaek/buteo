@@ -1,7 +1,6 @@
-"""### Perform morphological operations on arrays and rasters.  ###"""
+"""### Edge Detection functions.  ###"""
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union
 
 # External
@@ -10,6 +9,7 @@ import numpy as np
 # Internal
 from buteo.array.convolution import convolve_array, pad_array
 from buteo.array.convolution_kernels import kernel_sobel, kernel_get_offsets_and_weights
+
 
 
 def filter_edge_detection(

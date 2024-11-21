@@ -1,10 +1,11 @@
-"""This module preprocesses Sentinel-1 data. Using SNAP GPT.
+"""### This module preprocesses Sentinel-1 data. Using SNAP GPT. ###
 
 TODO:
     - Enable support for processing only VV or VH.
     - Improve documentation
 """
 
+# Standard library
 from sys import platform
 import os
 import shutil
@@ -13,8 +14,10 @@ from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Union, Optional
 
+# External
 import numpy as np
 
+# Internal
 from buteo.raster import (
     raster_to_array,
     array_to_raster,
@@ -22,6 +25,7 @@ from buteo.raster import (
 )
 from buteo.vector.metadata import vector_to_metadata
 from buteo.utils.utils_gdal import _check_is_raster, _check_is_vector
+
 
 
 def _find_gpt(

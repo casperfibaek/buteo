@@ -1,10 +1,7 @@
-"""### Generic utility functions ###
-Functions that make interacting with the toolbox easier.
+"""### Fill nearest or nodata values. ###"""
 
-"""
 # Standard library
 from typing import Union, Optional
-import sys; sys.path.append("../../")
 
 # External
 import numpy as np

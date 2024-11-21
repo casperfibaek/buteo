@@ -1,4 +1,4 @@
-"""### Align rasters ###
+"""### Align rasters. ###
 
 Functions to align a series of rasters to a master or a reference.
 """
@@ -6,7 +6,6 @@ Functions to align a series of rasters to a master or a reference.
 # TODO: phase_cross_correlation
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import List, Union, Optional
 
 # External
@@ -22,9 +21,9 @@ from buteo.utils import (
     utils_translate,
     utils_projection,
 )
-
 from buteo.raster import core_raster, core_raster_io
 from buteo.raster.reproject import raster_reproject
+
 
 
 def _raster_align_to_reference(

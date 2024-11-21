@@ -5,12 +5,11 @@ Can uses references from vector or other raster datasets.
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, Optional, List
 
 # External
-from osgeo import gdal
 import numpy as np
+from osgeo import gdal
 
 # Internal
 from buteo.utils import (

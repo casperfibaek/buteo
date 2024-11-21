@@ -51,7 +51,7 @@
                     <h1 class="modulename">
 <a href="./../../buteo.html">buteo</a><wbr>.<a href="./../utils.html">utils</a><wbr>.utils_aux    </h1>
 
-                        <div class="docstring"><h3 id="generic-utility-functions">Generic utility functions</h3>
+                        <div class="docstring"><h3 id="generic-utility-functions">Generic utility functions.</h3>
 
 <p>Functions that make interacting with the toolbox easier.</p>
 </div>
@@ -60,7 +60,7 @@
 
                         <label class="view-source-button" for="mod-utils_aux-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">  1</span></a><span class="sd">&quot;&quot;&quot;### Generic utility functions ###</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">  1</span></a><span class="sd">&quot;&quot;&quot;### Generic utility functions. ###</span>
 </span><span id="L-2"><a href="#L-2"><span class="linenos">  2</span></a>
 </span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a><span class="sd">Functions that make interacting with the toolbox easier.</span>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">  4</span></a><span class="sd">&quot;&quot;&quot;</span>
@@ -304,46 +304,46 @@
 
     </div>
     <a class="headerlink" href="#split_number"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="split_number-192"><a href="#split_number-192"><span class="linenos">192</span></a><span class="k">def</span> <span class="nf">split_number</span><span class="p">(</span><span class="n">num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">parts</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-</span><span id="split_number-193"><a href="#split_number-193"><span class="linenos">193</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Splits a number into parts of equal size.</span>
-</span><span id="split_number-194"><a href="#split_number-194"><span class="linenos">194</span></a><span class="sd">    The remainder is distributed starting on the left.</span>
-</span><span id="split_number-195"><a href="#split_number-195"><span class="linenos">195</span></a>
-</span><span id="split_number-196"><a href="#split_number-196"><span class="linenos">196</span></a><span class="sd">    ```python</span>
-</span><span id="split_number-197"><a href="#split_number-197"><span class="linenos">197</span></a><span class="sd">    &gt;&gt;&gt; split_number(10, 3)</span>
-</span><span id="split_number-198"><a href="#split_number-198"><span class="linenos">198</span></a><span class="sd">    [4, 3, 3]</span>
-</span><span id="split_number-199"><a href="#split_number-199"><span class="linenos">199</span></a><span class="sd">    &gt;&gt;&gt; split_number(10, 4)</span>
-</span><span id="split_number-200"><a href="#split_number-200"><span class="linenos">200</span></a><span class="sd">    [3, 3, 2, 2]</span>
-</span><span id="split_number-201"><a href="#split_number-201"><span class="linenos">201</span></a><span class="sd">    ```</span>
-</span><span id="split_number-202"><a href="#split_number-202"><span class="linenos">202</span></a>
-</span><span id="split_number-203"><a href="#split_number-203"><span class="linenos">203</span></a><span class="sd">    Parameters</span>
-</span><span id="split_number-204"><a href="#split_number-204"><span class="linenos">204</span></a><span class="sd">    ----------</span>
-</span><span id="split_number-205"><a href="#split_number-205"><span class="linenos">205</span></a><span class="sd">    num : int</span>
-</span><span id="split_number-206"><a href="#split_number-206"><span class="linenos">206</span></a><span class="sd">        The number to split.</span>
-</span><span id="split_number-207"><a href="#split_number-207"><span class="linenos">207</span></a>
-</span><span id="split_number-208"><a href="#split_number-208"><span class="linenos">208</span></a><span class="sd">    parts : int</span>
-</span><span id="split_number-209"><a href="#split_number-209"><span class="linenos">209</span></a><span class="sd">        The number of parts to split the number into.</span>
-</span><span id="split_number-210"><a href="#split_number-210"><span class="linenos">210</span></a>
-</span><span id="split_number-211"><a href="#split_number-211"><span class="linenos">211</span></a><span class="sd">    Returns</span>
-</span><span id="split_number-212"><a href="#split_number-212"><span class="linenos">212</span></a><span class="sd">    -------</span>
-</span><span id="split_number-213"><a href="#split_number-213"><span class="linenos">213</span></a><span class="sd">    List[int]</span>
-</span><span id="split_number-214"><a href="#split_number-214"><span class="linenos">214</span></a><span class="sd">        A list of the parts.</span>
-</span><span id="split_number-215"><a href="#split_number-215"><span class="linenos">215</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="split_number-216"><a href="#split_number-216"><span class="linenos">216</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="s2">&quot;num must be an integer.&quot;</span>
-</span><span id="split_number-217"><a href="#split_number-217"><span class="linenos">217</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="s2">&quot;parts must be an integer.&quot;</span>
-</span><span id="split_number-218"><a href="#split_number-218"><span class="linenos">218</span></a>    <span class="k">assert</span> <span class="n">num</span> <span class="o">&gt;=</span> <span class="n">parts</span><span class="p">,</span> <span class="s2">&quot;num must be larger than parts.&quot;</span>
-</span><span id="split_number-219"><a href="#split_number-219"><span class="linenos">219</span></a>
-</span><span id="split_number-220"><a href="#split_number-220"><span class="linenos">220</span></a>    <span class="c1"># Calculate the base and remainder</span>
-</span><span id="split_number-221"><a href="#split_number-221"><span class="linenos">221</span></a>    <span class="n">base_num</span> <span class="o">=</span> <span class="n">num</span> <span class="o">//</span> <span class="n">parts</span>
-</span><span id="split_number-222"><a href="#split_number-222"><span class="linenos">222</span></a>    <span class="n">remainder</span> <span class="o">=</span> <span class="n">num</span> <span class="o">%</span> <span class="n">parts</span>
-</span><span id="split_number-223"><a href="#split_number-223"><span class="linenos">223</span></a>
-</span><span id="split_number-224"><a href="#split_number-224"><span class="linenos">224</span></a>    <span class="c1"># Create the result list</span>
-</span><span id="split_number-225"><a href="#split_number-225"><span class="linenos">225</span></a>    <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="n">base_num</span><span class="p">]</span> <span class="o">*</span> <span class="n">parts</span>
-</span><span id="split_number-226"><a href="#split_number-226"><span class="linenos">226</span></a>
-</span><span id="split_number-227"><a href="#split_number-227"><span class="linenos">227</span></a>    <span class="c1"># Add the remainder to the elements from the left</span>
-</span><span id="split_number-228"><a href="#split_number-228"><span class="linenos">228</span></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">remainder</span><span class="p">):</span>
-</span><span id="split_number-229"><a href="#split_number-229"><span class="linenos">229</span></a>        <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-</span><span id="split_number-230"><a href="#split_number-230"><span class="linenos">230</span></a>
-</span><span id="split_number-231"><a href="#split_number-231"><span class="linenos">231</span></a>    <span class="k">return</span> <span class="n">result</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="split_number-191"><a href="#split_number-191"><span class="linenos">191</span></a><span class="k">def</span> <span class="nf">split_number</span><span class="p">(</span><span class="n">num</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">parts</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+</span><span id="split_number-192"><a href="#split_number-192"><span class="linenos">192</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Splits a number into parts of equal size.</span>
+</span><span id="split_number-193"><a href="#split_number-193"><span class="linenos">193</span></a><span class="sd">    The remainder is distributed starting on the left.</span>
+</span><span id="split_number-194"><a href="#split_number-194"><span class="linenos">194</span></a>
+</span><span id="split_number-195"><a href="#split_number-195"><span class="linenos">195</span></a><span class="sd">    ```python</span>
+</span><span id="split_number-196"><a href="#split_number-196"><span class="linenos">196</span></a><span class="sd">    &gt;&gt;&gt; split_number(10, 3)</span>
+</span><span id="split_number-197"><a href="#split_number-197"><span class="linenos">197</span></a><span class="sd">    [4, 3, 3]</span>
+</span><span id="split_number-198"><a href="#split_number-198"><span class="linenos">198</span></a><span class="sd">    &gt;&gt;&gt; split_number(10, 4)</span>
+</span><span id="split_number-199"><a href="#split_number-199"><span class="linenos">199</span></a><span class="sd">    [3, 3, 2, 2]</span>
+</span><span id="split_number-200"><a href="#split_number-200"><span class="linenos">200</span></a><span class="sd">    ```</span>
+</span><span id="split_number-201"><a href="#split_number-201"><span class="linenos">201</span></a>
+</span><span id="split_number-202"><a href="#split_number-202"><span class="linenos">202</span></a><span class="sd">    Parameters</span>
+</span><span id="split_number-203"><a href="#split_number-203"><span class="linenos">203</span></a><span class="sd">    ----------</span>
+</span><span id="split_number-204"><a href="#split_number-204"><span class="linenos">204</span></a><span class="sd">    num : int</span>
+</span><span id="split_number-205"><a href="#split_number-205"><span class="linenos">205</span></a><span class="sd">        The number to split.</span>
+</span><span id="split_number-206"><a href="#split_number-206"><span class="linenos">206</span></a>
+</span><span id="split_number-207"><a href="#split_number-207"><span class="linenos">207</span></a><span class="sd">    parts : int</span>
+</span><span id="split_number-208"><a href="#split_number-208"><span class="linenos">208</span></a><span class="sd">        The number of parts to split the number into.</span>
+</span><span id="split_number-209"><a href="#split_number-209"><span class="linenos">209</span></a>
+</span><span id="split_number-210"><a href="#split_number-210"><span class="linenos">210</span></a><span class="sd">    Returns</span>
+</span><span id="split_number-211"><a href="#split_number-211"><span class="linenos">211</span></a><span class="sd">    -------</span>
+</span><span id="split_number-212"><a href="#split_number-212"><span class="linenos">212</span></a><span class="sd">    List[int]</span>
+</span><span id="split_number-213"><a href="#split_number-213"><span class="linenos">213</span></a><span class="sd">        A list of the parts.</span>
+</span><span id="split_number-214"><a href="#split_number-214"><span class="linenos">214</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="split_number-215"><a href="#split_number-215"><span class="linenos">215</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="s2">&quot;num must be an integer.&quot;</span>
+</span><span id="split_number-216"><a href="#split_number-216"><span class="linenos">216</span></a>    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="s2">&quot;parts must be an integer.&quot;</span>
+</span><span id="split_number-217"><a href="#split_number-217"><span class="linenos">217</span></a>    <span class="k">assert</span> <span class="n">num</span> <span class="o">&gt;=</span> <span class="n">parts</span><span class="p">,</span> <span class="s2">&quot;num must be larger than parts.&quot;</span>
+</span><span id="split_number-218"><a href="#split_number-218"><span class="linenos">218</span></a>
+</span><span id="split_number-219"><a href="#split_number-219"><span class="linenos">219</span></a>    <span class="c1"># Calculate the base and remainder</span>
+</span><span id="split_number-220"><a href="#split_number-220"><span class="linenos">220</span></a>    <span class="n">base_num</span> <span class="o">=</span> <span class="n">num</span> <span class="o">//</span> <span class="n">parts</span>
+</span><span id="split_number-221"><a href="#split_number-221"><span class="linenos">221</span></a>    <span class="n">remainder</span> <span class="o">=</span> <span class="n">num</span> <span class="o">%</span> <span class="n">parts</span>
+</span><span id="split_number-222"><a href="#split_number-222"><span class="linenos">222</span></a>
+</span><span id="split_number-223"><a href="#split_number-223"><span class="linenos">223</span></a>    <span class="c1"># Create the result list</span>
+</span><span id="split_number-224"><a href="#split_number-224"><span class="linenos">224</span></a>    <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="n">base_num</span><span class="p">]</span> <span class="o">*</span> <span class="n">parts</span>
+</span><span id="split_number-225"><a href="#split_number-225"><span class="linenos">225</span></a>
+</span><span id="split_number-226"><a href="#split_number-226"><span class="linenos">226</span></a>    <span class="c1"># Add the remainder to the elements from the left</span>
+</span><span id="split_number-227"><a href="#split_number-227"><span class="linenos">227</span></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">remainder</span><span class="p">):</span>
+</span><span id="split_number-228"><a href="#split_number-228"><span class="linenos">228</span></a>        <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span id="split_number-229"><a href="#split_number-229"><span class="linenos">229</span></a>
+</span><span id="split_number-230"><a href="#split_number-230"><span class="linenos">230</span></a>    <span class="k">return</span> <span class="n">result</span>
 </span></pre></div>
 
 

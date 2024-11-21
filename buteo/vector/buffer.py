@@ -1,10 +1,9 @@
-"""### Clip vectors to other geometries ###
+"""### Clip vectors to other geometries. ###
 
 Clip vector files with other geometries. Can come from rasters or vectors.
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 import os
 from typing import Union, Optional, List
 
@@ -14,6 +13,7 @@ from osgeo import ogr
 # Internal
 from buteo.utils import utils_base, utils_path, utils_io, utils_gdal
 from buteo.vector import core_vector
+
 
 
 def _vector_buffer(

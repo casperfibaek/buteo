@@ -1,7 +1,6 @@
 """### Functions to turn rasters into rasters of coordinates. ###"""
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, Tuple
 
 # External
@@ -11,6 +10,7 @@ from osgeo import gdal
 # Internal
 from buteo.utils import utils_base
 from buteo.raster import core_raster
+
 
 
 # TODO: Define how this is going to work.

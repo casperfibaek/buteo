@@ -1,5 +1,8 @@
-"""Time series analysis functions."""
+""" ### Time series analysis functions. ###"""
+
+# External
 import numpy as np
+
 
 
 def timeseries_least_square_slope(arr):

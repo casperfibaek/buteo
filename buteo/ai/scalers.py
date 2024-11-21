@@ -1,10 +1,11 @@
-"""This module provides a set of functions to normalise data for machine learning."""
+"""### Scalers for normalizing input data. ###"""
 
 # Standard library
 from typing import Union, Optional, Tuple
 
 # External
 import numpy as np
+
 
 
 def scaler_minmax(

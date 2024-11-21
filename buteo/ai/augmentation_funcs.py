@@ -1,8 +1,6 @@
-"""This module contains functions for augmenting images that are
-suited to remote sensing imagery.
-"""
+""" ### Augmentation functions. ###"""
+
 # Standard library
-import sys; sys.path.append("../../")
 import random
 from typing import Optional, Tuple
 
@@ -23,6 +21,7 @@ from buteo.array.convolution_kernels import (
     _simple_unsharp_kernel_2d_3x3,
     _simple_shift_kernel_2d,
 )
+
 
 
 def augmentation_rotation(

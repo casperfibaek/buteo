@@ -1,11 +1,15 @@
-"""Create patches from rasters, used for machine learnign applications."""
+""" ### Create patches from rasters. ###"""
 
-import sys; sys.path.append("../../")
+# Standard library
 from typing import Union, List, Tuple, Optional, Callable
 
+# External
 import numpy as np
 from numba import prange, jit
+
+# Internal
 from buteo.array.utils_array import channel_first_to_last, channel_last_to_first
+
 
 
 def _get_kernel_weights(

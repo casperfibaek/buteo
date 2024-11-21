@@ -1,8 +1,6 @@
-"""This module contains functions for masking images that are
-suited to remote sensing imagery.
-"""
+""" ### Masking module for images ###"""
+
 # Standard library
-import sys; sys.path.append("../../")
 from typing import List
 
 # External
@@ -10,6 +8,7 @@ import numpy as np
 
 # Internal
 from buteo.ai.masking_funcs import mask_replace_2d, mask_replace_3d
+
 
 
 class MaskImages():

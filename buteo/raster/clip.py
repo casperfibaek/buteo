@@ -1,10 +1,9 @@
-"""### Clip rasters ###
+"""### Clip rasters. ###
 
 Clips a raster using a vector geometry or the extents of a raster.
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, List, Optional
 from warnings import warn
 
@@ -24,6 +23,7 @@ from buteo.utils import (
 from buteo.raster import core_raster
 from buteo.vector import core_vector
 from buteo.vector.reproject import _vector_reproject
+
 
 
 def _raster_clip(

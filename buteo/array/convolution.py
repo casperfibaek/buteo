@@ -1,7 +1,6 @@
-"""### Perform convolutions on arrays.  ###"""
+"""### Convolution module.  ###"""
 
-# Standard Library
-import sys; sys.path.append("../../")
+# Standard library
 from typing import Union, Optional
 
 # External

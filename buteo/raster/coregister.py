@@ -1,14 +1,19 @@
-import sys; sys.path.append("../../")
+""" ### Coregistering images. ### """ 
+
+# Standard library
 from typing import Union, Optional, List
 
-from osgeo import gdal
+# External
 import numpy as np
+from osgeo import gdal
 
+# Internal
 from buteo.raster.core_raster_io import raster_to_array, array_to_raster
 from buteo.raster.align import _raster_align_to_reference
 from buteo.raster.reproject import _raster_reproject
 from buteo.utils.utils_projection import _check_projections_match
 from buteo.utils.utils_gdal import delete_dataset_if_in_memory
+
 
 
 def coregister_images_efolki(

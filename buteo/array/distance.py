@@ -1,10 +1,7 @@
-"""### Generic utility functions ###
+"""### Distance Calculation Module. ###"""
 
-Functions that make interacting with the toolbox easier.
-"""
 # Standard library
 from typing import Union, Optional
-import sys; sys.path.append("../../")
 
 # External
 import numpy as np
@@ -12,6 +9,7 @@ from numba import jit, prange
 
 # Internal
 from buteo.array.utils_array import _create_grid
+
 
 
 # TODO: Multi-channel support, Split assert

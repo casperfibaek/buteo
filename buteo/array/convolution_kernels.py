@@ -1,6 +1,6 @@
-"""### Perform convolutions on arrays.  ###"""
+"""### Convolutions kernels. ###"""
 
-# Standard Library
+# Standard library
 from typing import Tuple
 
 # External

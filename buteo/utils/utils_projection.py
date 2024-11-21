@@ -1,17 +1,16 @@
-"""### Utility functions to work with GDAL and projections ###"""
+"""### Utility functions to work with GDAL and projections. ###"""
 
 # Standard Library
-import sys; sys.path.append("../../")
 from typing import Union, List
 
 # External
-import osgeo
-from osgeo import gdal, ogr, osr
 import numpy as np
 import math
+from osgeo import gdal, ogr, osr
 
 # Internal
 from buteo.utils import utils_gdal
+
 
 
 def _get_default_projection() -> str:

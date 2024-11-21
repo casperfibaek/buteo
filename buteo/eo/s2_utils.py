@@ -1,7 +1,6 @@
-"""This module contains utility functions to work with sentinel 2 data."""
+""" ### Utility functions for working with Sentinel 2 data. ### """
 
 # Standard library
-import sys; sys.path.append("../../")
 import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -10,6 +9,7 @@ from glob import glob
 
 # Internal
 from buteo.raster import raster_to_array
+
 
 
 def s2_l2a_get_bands(

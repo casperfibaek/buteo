@@ -4,7 +4,6 @@ Merges vectors into a single vector file.
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, List, Optional
 
 # External

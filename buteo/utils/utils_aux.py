@@ -1,5 +1,4 @@
-
-"""### Generic utility functions ###
+"""### Generic utility functions. ###
 
 Functions that make interacting with the toolbox easier.
 """

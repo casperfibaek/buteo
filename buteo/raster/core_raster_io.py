@@ -1,6 +1,6 @@
-"""### Basic IO functions for working with Rasters ###"""
+"""### Basic IO functions for working with Rasters. ###"""
+
 # Standard library
-import sys; sys.path.append("../../")
 from typing import List, Optional, Union, Tuple
 import warnings
 

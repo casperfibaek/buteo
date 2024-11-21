@@ -1,7 +1,6 @@
-"""### Utility functions read and write buteo files ###"""
+"""### Utility functions read and write buteo files. ###"""
 
 # Standard Library
-import sys; sys.path.append("../../")
 from typing import Optional, Union, List
 
 # External

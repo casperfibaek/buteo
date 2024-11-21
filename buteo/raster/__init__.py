@@ -1,4 +1,5 @@
-"""Make simple work of raster analysis!"""
+""" ### Make simple work of raster analysis! ### """
+
 from .core_raster import *
 from .core_raster_io import *
 from .core_offsets import *

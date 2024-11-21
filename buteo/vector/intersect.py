@@ -1,10 +1,9 @@
-"""### Calculate intersections ###
+"""### Calculate intersections. ###
 
 Calculate and tests the intersections between geometries.
 """
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, List, Optional
 
 # External
@@ -21,6 +20,7 @@ from buteo.vector import core_vector
 from buteo.vector.metadata import _vector_to_metadata
 from buteo.vector.reproject import _vector_reproject
 from buteo.vector.merge import vector_merge_layers
+
 
 
 def _vector_intersect(

@@ -1,12 +1,12 @@
-"""### Generic utility functions ###
+"""### Generic utility functions for arrays. ### """
 
-Functions that make interacting with the toolbox easier.
-"""
+# Standard Library
 from typing import Tuple
 
 # External
 import numpy as np
 from numba import jit, prange
+
 
 
 def channel_first_to_last(arr: np.ndarray) -> np.ndarray:

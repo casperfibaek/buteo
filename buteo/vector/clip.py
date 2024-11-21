@@ -1,10 +1,6 @@
-"""### Clip vectors to other geometries ###
-
-Clip vector files with other geometries. Can come from rasters or vectors.
-"""
+"""### Clip vectors to other geometries. ###"""
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union, Optional, List
 from warnings import warn
 

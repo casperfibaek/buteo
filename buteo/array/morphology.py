@@ -1,9 +1,7 @@
 """### Perform morphological operations on arrays and rasters.  ###"""
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import Union
-
 
 # External
 import numpy as np
@@ -12,6 +10,7 @@ import numpy as np
 from buteo.array.convolution import convolve_array
 from buteo.array.convolution_kernels import kernel_base, kernel_get_offsets_and_weights
 from buteo.utils.utils_base import _type_check
+
 
 
 def _morphology_operation(

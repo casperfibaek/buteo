@@ -1,10 +1,9 @@
-"""### Generic utility functions ###
+"""### Generic utility functions. ###
 
 Functions that make interacting with the toolbox easier.
 """
 
 # Standard Library
-import sys; sys.path.append("../../")
 import os
 import shutil
 import fnmatch

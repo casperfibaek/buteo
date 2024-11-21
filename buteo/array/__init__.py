@@ -1,4 +1,5 @@
-"""Functions for transforming rasters represented as arrays."""
+""" ### Functions for transforming rasters represented as arrays. ### """
+
 from .convolution_kernels import *
 from .distance import *
 from .convolution_funcs import *

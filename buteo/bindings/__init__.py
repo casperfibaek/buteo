@@ -1,2 +1,3 @@
-"""Tools for working with sentinel data"""
+""" ### Bindings for thirdparty libraries. ### """
+
 from .orfeo import *

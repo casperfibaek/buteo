@@ -96,7 +96,7 @@
                     <h1 class="modulename">
 <a href="./../../buteo.html">buteo</a><wbr>.<a href="./../vector.html">vector</a><wbr>.core_vector    </h1>
 
-                        <div class="docstring"><h3 id="basic-io-functions-for-working-with-vectprs">Basic IO functions for working with Vectprs</h3>
+                        <div class="docstring"><h3 id="basic-io-functions-for-working-with-vectors">Basic IO functions for working with vectors.</h3>
 
 <p>The basic module for interacting with vector data</p>
 </div>
@@ -105,7 +105,7 @@
 
                         <label class="view-source-button" for="mod-core_vector-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">   1</span></a><span class="sd">&quot;&quot;&quot;### Basic IO functions for working with Vectprs ###</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">   1</span></a><span class="sd">&quot;&quot;&quot;### Basic IO functions for working with vectors. ###</span>
 </span><span id="L-2"><a href="#L-2"><span class="linenos">   2</span></a>
 </span><span id="L-3"><a href="#L-3"><span class="linenos">   3</span></a><span class="sd">The basic module for interacting with vector data</span>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">   4</span></a><span class="sd">&quot;&quot;&quot;</span>
@@ -119,22 +119,22 @@
 </span><span id="L-12"><a href="#L-12"><span class="linenos">  12</span></a><span class="c1"># TODO: Vector intersects, etc..</span>
 </span><span id="L-13"><a href="#L-13"><span class="linenos">  13</span></a>
 </span><span id="L-14"><a href="#L-14"><span class="linenos">  14</span></a><span class="c1"># Standard library</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">  15</span></a><span class="kn">import</span> <span class="nn">sys</span><span class="p">;</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;../../&quot;</span><span class="p">)</span>
-</span><span id="L-16"><a href="#L-16"><span class="linenos">  16</span></a><span class="kn">import</span> <span class="nn">os</span>
-</span><span id="L-17"><a href="#L-17"><span class="linenos">  17</span></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Tuple</span>
-</span><span id="L-18"><a href="#L-18"><span class="linenos">  18</span></a>
-</span><span id="L-19"><a href="#L-19"><span class="linenos">  19</span></a><span class="c1"># External</span>
-</span><span id="L-20"><a href="#L-20"><span class="linenos">  20</span></a><span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">ogr</span><span class="p">,</span> <span class="n">gdal</span><span class="p">,</span> <span class="n">osr</span>
-</span><span id="L-21"><a href="#L-21"><span class="linenos">  21</span></a>
-</span><span id="L-22"><a href="#L-22"><span class="linenos">  22</span></a><span class="c1"># Internal</span>
-</span><span id="L-23"><a href="#L-23"><span class="linenos">  23</span></a><span class="kn">from</span> <span class="nn">buteo.utils</span> <span class="kn">import</span> <span class="p">(</span>
-</span><span id="L-24"><a href="#L-24"><span class="linenos">  24</span></a>    <span class="n">utils_io</span><span class="p">,</span>
-</span><span id="L-25"><a href="#L-25"><span class="linenos">  25</span></a>    <span class="n">utils_base</span><span class="p">,</span>
-</span><span id="L-26"><a href="#L-26"><span class="linenos">  26</span></a>    <span class="n">utils_gdal</span><span class="p">,</span>
-</span><span id="L-27"><a href="#L-27"><span class="linenos">  27</span></a>    <span class="n">utils_bbox</span><span class="p">,</span>
-</span><span id="L-28"><a href="#L-28"><span class="linenos">  28</span></a>    <span class="n">utils_path</span><span class="p">,</span>
-</span><span id="L-29"><a href="#L-29"><span class="linenos">  29</span></a>    <span class="n">utils_projection</span><span class="p">,</span>
-</span><span id="L-30"><a href="#L-30"><span class="linenos">  30</span></a><span class="p">)</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">  15</span></a><span class="kn">import</span> <span class="nn">os</span>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">  16</span></a><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Tuple</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">  17</span></a>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">  18</span></a><span class="c1"># External</span>
+</span><span id="L-19"><a href="#L-19"><span class="linenos">  19</span></a><span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">ogr</span><span class="p">,</span> <span class="n">gdal</span><span class="p">,</span> <span class="n">osr</span>
+</span><span id="L-20"><a href="#L-20"><span class="linenos">  20</span></a>
+</span><span id="L-21"><a href="#L-21"><span class="linenos">  21</span></a><span class="c1"># Internal</span>
+</span><span id="L-22"><a href="#L-22"><span class="linenos">  22</span></a><span class="kn">from</span> <span class="nn">buteo.utils</span> <span class="kn">import</span> <span class="p">(</span>
+</span><span id="L-23"><a href="#L-23"><span class="linenos">  23</span></a>    <span class="n">utils_io</span><span class="p">,</span>
+</span><span id="L-24"><a href="#L-24"><span class="linenos">  24</span></a>    <span class="n">utils_base</span><span class="p">,</span>
+</span><span id="L-25"><a href="#L-25"><span class="linenos">  25</span></a>    <span class="n">utils_gdal</span><span class="p">,</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos">  26</span></a>    <span class="n">utils_bbox</span><span class="p">,</span>
+</span><span id="L-27"><a href="#L-27"><span class="linenos">  27</span></a>    <span class="n">utils_path</span><span class="p">,</span>
+</span><span id="L-28"><a href="#L-28"><span class="linenos">  28</span></a>    <span class="n">utils_projection</span><span class="p">,</span>
+</span><span id="L-29"><a href="#L-29"><span class="linenos">  29</span></a><span class="p">)</span>
+</span><span id="L-30"><a href="#L-30"><span class="linenos">  30</span></a>
 </span><span id="L-31"><a href="#L-31"><span class="linenos">  31</span></a>
 </span><span id="L-32"><a href="#L-32"><span class="linenos">  32</span></a>
 </span><span id="L-33"><a href="#L-33"><span class="linenos">  33</span></a><span class="k">def</span> <span class="nf">_vector_open</span><span class="p">(</span>

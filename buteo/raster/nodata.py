@@ -7,7 +7,6 @@ A module to handle the various aspects of NODATA in raster files.
 # TODO: raster_invert_nodata
 
 # Standard library
-import sys; sys.path.append("../../")
 from typing import List, Union, Optional
 
 # External

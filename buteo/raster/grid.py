@@ -6,7 +6,6 @@ Cut rasters to grids. Use vectors or rasters as grids.
 # TODO: Verify this function and create more grid options.
 
 # Standard library
-import sys; sys.path.append("../../")
 from uuid import uuid4
 from typing import Union, Optional, List
 
@@ -21,6 +20,7 @@ from buteo.vector import core_vector
 from buteo.vector.intersect import _vector_intersect
 from buteo.vector.reproject import _vector_reproject
 from buteo.vector.metadata import _vector_to_metadata
+
 
 
 def raster_to_grid(
