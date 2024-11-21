@@ -46,7 +46,7 @@ class Dataset:
 
     def __getitem__(self, index):
         sample_x, sample_y = (self.x_train[index], self.y_train[index])
-        
+
         sample_x = np.array(sample_x) if isinstance(sample_x, np.memmap) else sample_x
         sample_y = np.array(sample_y) if isinstance(sample_y, np.memmap) else sample_y
 

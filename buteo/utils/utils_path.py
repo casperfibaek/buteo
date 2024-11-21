@@ -29,39 +29,49 @@ def _get_vsimem_content(
 
     Parameters
     ----------
-    folder_name: str, optional
+    folder_name: Optional[str]
         The name of the folder to get the content of. Default: None (root folder)
 
     Returns
     -------
     List[str]
-        A list of the content of the vsimem folder.
+        A list of paths to files in the vsimem folder.
+
+    Raises
+    ------
+    TypeError
+        If folder_name is not None or str
+    RuntimeError
+        If GDAL lacks directory listing functionality or access fails
     """
+    # Handle default case
     if folder_name is None:
         folder_name = "/vsimem/"
+    elif not isinstance(folder_name, str):
+        raise TypeError("folder_name must be None or str")
 
-    if not isinstance(folder_name, str):
-        raise TypeError("folder_name must be a string.")
+    # Ensure folder name ends with /
+    folder_name = folder_name if folder_name.endswith("/") else folder_name + "/"
 
-    if not folder_name.endswith("/"):
-        folder_name += "/"
+    # Initialize empty list for consistent return type
+    vsimem: List[str] = []
 
     try:
         if hasattr(gdal, "listdir"):
-            vsimem = gdal.listdir(folder_name)
-            vsimem = [folder_name + v.name for v in vsimem]
-        elif hasattr(gdal, "ReadDir"):
-            vsimem = [folder_name + ds for ds in gdal.ReadDirRecursive(folder_name)]
+            contents = gdal.listdir(folder_name)
+            vsimem = [folder_name + item.name for item in contents]
+        elif hasattr(gdal, "ReadDirRecursive"):
+            contents = gdal.ReadDirRecursive(folder_name)
+            vsimem = [folder_name + item for item in contents] if contents else []
         else:
-            warn("WARNING: Unable to access vsimem. Is GDAL installed?")
-            return False
+            raise RuntimeError("GDAL installation lacks required directory listing functionality")
 
     except RuntimeError as e:
-        warn(f"WARNING: Failed to access vsimem. Is GDAL installed? Error: {e}")
+        raise RuntimeError(f"Failed to access vsimem folder {folder_name}. Error: {e}") from None
 
-    paths = _get_unix_path(vsimem)
-
-    return paths
+    # Convert paths to unix style
+    converted = _get_unix_path(vsimem) if vsimem else []
+    return converted if isinstance(converted, list) else [converted]
 
 
 def _glob_vsimem(
@@ -81,47 +91,78 @@ def _glob_vsimem(
     -------
     List[str]
         A list of the files matching the pattern.
+
+    Raises
+    ------
+    TypeError
+        If pattern is not a string.
+    ValueError
+        If pattern is empty.
     """
-    assert isinstance(pattern, str), "pattern must be a string."
+    if not isinstance(pattern, str):
+        raise TypeError("pattern must be a string.")
 
-    virtual_fs = _get_vsimem_content()
-    matches = [path for path in virtual_fs if fnmatch.fnmatch(path, pattern)]
+    if not pattern:
+        raise ValueError("pattern cannot be empty.")
 
-    return matches
+    try:
+        virtual_fs = _get_vsimem_content()
+        if not virtual_fs:
+            return []
+
+        matches = [path for path in virtual_fs if fnmatch.fnmatch(path, pattern)]
+        return matches
+    except (RuntimeError, OSError) as e:
+        warn(f"Error while searching vsimem: {str(e)}", UserWarning)
+        return []
 
 
-def _get_unix_path(path: Union[str, List[str]]) -> Union[str, List[str]]:
-    """Convert a path or list of paths to a unix path(s).
+def _get_unix_path(path: Union[str, List[str], None]) -> Union[str, List[str]]:
+    """Convert a path or list of paths to unix style path(s).
+    Handles None values, empty strings, and ensures consistent return types.
 
     Parameters
     ----------
-    path: str
-        The path to convert.
+    path: Union[str, List[str], None]
+        The path(s) to convert. Can be a single path string or list of paths.
 
     Returns
     -------
     Union[str, List[str]]
-        The converted path[s].
+        The converted unix style path(s). Returns empty string for None input.
+        Returns list of strings if input was a list, otherwise returns single string.
+
+    Raises
+    ------
+    TypeError
+        If path contains non-string elements
+    ValueError
+        If any path string is empty
     """
-    input_is_list = False
-    if isinstance(path, list):
-        input_is_list = True
+    # Handle None case
+    if path is None:
+        return ""
 
-    path = [path] if isinstance(path, str) else path
-    for p in path:
-        assert isinstance(p, str), "path must be a string."
-        assert len(p) > 0, "path must not be empty."
+    # Track input type for consistent return
+    input_is_list = isinstance(path, list)
 
-    out_path = []
-    for p in path:
-        out_path.append(
-            "/".join(os.path.normpath(p).split("\\"))
-        )
+    # Convert to list for unified processing
+    paths = path if input_is_list else [path]
 
-    if input_is_list:
-        return out_path
+    # Validate inputs
+    if not all(isinstance(p, str) for p in paths):
+        raise TypeError("All paths must be strings")
+    if any(len(p.strip()) == 0 for p in paths):
+        raise ValueError("Paths cannot be empty strings")
 
-    return out_path[0]
+    # Convert paths to unix style
+    unix_paths = [
+        "/".join(os.path.normpath(p).split(os.sep))
+        for p in paths
+    ]
+
+    # Return same type as input
+    return unix_paths if input_is_list else unix_paths[0]
 
 
 def _check_file_exists(path: str) -> bool:
@@ -137,25 +178,43 @@ def _check_file_exists(path: str) -> bool:
     -------
     bool
         True if the file exists, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string
+    ValueError
+        If path is empty
     """
+    # Type checking
     if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not path.strip():
+        raise ValueError("path cannot be empty")
+
+    try:
+        # Check physical filesystem
+        if os.path.isfile(path):
+            return True
+
+        abs_path = os.path.abspath(path)
+        if os.path.isfile(abs_path):
+            return True
+
+        # Check virtual filesystem (vsimem)
+        vsimem = _get_vsimem_content()
+        if not vsimem:
+            return False
+
+        unix_path = _get_unix_path(path)
+        return unix_path in vsimem
+
+    except (OSError, RuntimeError):
         return False
-
-    if os.path.isfile(path):
-        return True
-
-    if os.path.isfile(os.path.abspath(path)):
-        return True
-
-    vsimem = _get_vsimem_content()
-    if _get_unix_path(path) in vsimem:
-        return True
-
-    return False
 
 
 def _check_file_exists_vsimem(path: str) -> bool:
-    """Check if a file exists in vsimem.
+    """Check if a file exists in vsimem (GDAL virtual memory filesystem).
 
     Parameters
     ----------
@@ -165,21 +224,35 @@ def _check_file_exists_vsimem(path: str) -> bool:
     Returns
     -------
     bool
-        True if the file exists, False otherwise.
+        True if the file exists in vsimem, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string
+    ValueError
+        If path is empty
     """
+    # Type checking
     if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not path.strip():
+        raise ValueError("path cannot be empty")
+
+    try:
+        # Get vsimem content and normalize path
+        vsimem = _get_vsimem_content()
+        if not vsimem:
+            return False
+
+        unix_path = _get_unix_path(path)
+        return unix_path in vsimem
+
+    except (RuntimeError, OSError):
         return False
 
-    vsimem = _get_vsimem_content()
-    if _get_unix_path(path) in vsimem:
-        return True
 
-    return False
-
-
-def _check_dir_exists(
-    path: str,
-) -> bool:
+def _check_dir_exists(path: str) -> bool:
     """Check if a folder exists. Also checks vsimem.
     Handles both absolute and relative paths and with or without trailing slash.
 
@@ -192,26 +265,55 @@ def _check_dir_exists(
     -------
     bool
         True if the folder exists, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string
+    ValueError
+        If path is empty
     """
+    # Type checking
     if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not path.strip():
+        raise ValueError("path cannot be empty")
+
+    try:
+        # Check physical filesystem
+        norm_path = os.path.normpath(path)
+        if os.path.isdir(norm_path):
+            return True
+
+        abs_path = os.path.abspath(path)
+        if os.path.isdir(abs_path):
+            return True
+
+        # Check for virtual filesystems
+        path_parts = os.path.normpath(os.path.dirname(path)).split(os.sep)
+        if any(vfs in path_parts for vfs in ["vsimem", "vsizip"]):
+            # Verify the virtual directory exists in GDAL's virtual filesystem
+            try:
+                vsimem = _get_vsimem_content()
+                if not vsimem:
+                    return False
+
+                unix_path = _get_unix_path(path)
+                unix_path = unix_path[0] if isinstance(unix_path, list) else unix_path
+
+                return any(p.startswith(unix_path) for p in vsimem)
+            except (RuntimeError, OSError):
+                return False
+
         return False
 
-    if os.path.isdir(os.path.normpath(path)):
-        return True
-
-    if os.path.isdir(os.path.abspath(path)):
-        return True
-
-    split = os.path.normpath(os.path.dirname(path)).split("\\")
-
-    if "vsimem" in split or "vsizip" in split:
-        return True
-
-    return False
+    except (OSError, RuntimeError):
+        return False
 
 
 def _check_dir_exists_vsimem(path: str) -> bool:
-    """Check if a folder exists in vsimem.
+    """Check if a folder exists in vsimem (GDAL virtual memory filesystem).
+    Handles both absolute and relative paths and with or without trailing slash.
 
     Parameters
     ----------
@@ -221,16 +323,37 @@ def _check_dir_exists_vsimem(path: str) -> bool:
     Returns
     -------
     bool
-        True if the folder exists, False otherwise.
+        True if the folder exists in vsimem, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string
+    ValueError
+        If path is empty
     """
+    # Type checking
     if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not path.strip():
+        raise ValueError("path cannot be empty")
+
+    try:
+        # Get vsimem content and normalize paths
+        vsimem = _get_vsimem_content()
+        if not vsimem:
+            return False
+
+        # Convert path to unix style and normalize
+        unix_path = _get_unix_path(path)
+        unix_path = unix_path[0] if isinstance(unix_path, list) else unix_path
+        unix_path = unix_path if unix_path.endswith("/") else unix_path + "/"
+
+        # Check if any files in vsimem start with this path
+        return any(p.startswith(unix_path) for p in vsimem)
+
+    except (RuntimeError, OSError):
         return False
-
-    vsimem = _get_vsimem_content()
-    if os.path.normpath(path) in vsimem:
-        return True
-
-    return False
 
 
 def _delete_dir_content(
@@ -244,121 +367,188 @@ def _delete_dir_content(
     ----------
     folder: str
         The path to the folder.
-
-    delete_subfolders: bool, optional.
+    delete_subfolders: bool
         If True, delete subfolders as well. Default: True
 
     Returns
     -------
     bool
-        True if the folder was deleted, False otherwise.
+        True if all content was successfully deleted, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If folder is not a string or delete_subfolders is not a bool
+    ValueError
+        If folder is empty string
+    RuntimeError
+        If folder doesn't exist
     """
-    assert isinstance(folder, str), "folder must be a string."
-    assert len(folder) > 0, "folder must not be a non-empty string."
-    assert _check_dir_exists(folder), "folder must exist."
+    # Type checking
+    if not isinstance(folder, str):
+        raise TypeError("folder must be a string")
+    if not isinstance(delete_subfolders, bool):
+        raise TypeError("delete_subfolders must be a bool")
 
-    # Folder is on disk
-    if not _check_dir_exists_vsimem(folder):
-        for f in os.listdir(folder):
+    # Value checking
+    if not folder.strip():
+        raise ValueError("folder cannot be empty")
+    if not _check_dir_exists(folder):
+        raise RuntimeError(f"folder does not exist: {folder}")
+
+    try:
+        # Handle physical filesystem
+        if not _check_dir_exists_vsimem(folder):
+            for item in os.listdir(folder):
+                try:
+                    path = os.path.join(folder, item)
+                    if os.path.isfile(path):
+                        os.remove(path)
+                    elif os.path.isdir(path) and delete_subfolders:
+                        shutil.rmtree(path)
+                except (OSError, RuntimeError) as e:
+                    warn(f"Failed to remove {path}: {str(e)}", UserWarning)
+                    return False
+
+        # Handle virtual filesystem (vsimem)
+        else:
             try:
-                path = os.path.join(folder, f)
-                if os.path.isfile(path):
-                    os.remove(path)
-
-                elif delete_subfolders and os.path.isdir(path):
-                    shutil.rmtree(path)
-
-            except RuntimeError:
-                warn(f"Warning. Could not remove: {path}", UserWarning)
-
+                vsimem = _get_vsimem_content(folder)
+                if vsimem:  # Only attempt deletion if there are files
+                    for f in vsimem:
+                        gdal.Unlink(f)
+            except RuntimeError as e:
+                warn(f"Failed to access or clear vsimem folder {folder}: {str(e)}", UserWarning)
                 return False
 
-    # Folder is in vsimem
-    else:
-        # Delete the files and folder in VSIMEM
-        vsimem = _get_vsimem_content(folder)
-        for f in vsimem:
-            gdal.Unlink(f)
+        # Verify deletion was successful
+        remaining_content = (
+            os.listdir(folder) if not _check_dir_exists_vsimem(folder)
+            else _get_vsimem_content(folder)
+        )
 
-    if _check_dir_exists(folder):
-        warn(f"Warning. Failed to remove: {folder}", UserWarning)
+        if remaining_content and (delete_subfolders or
+            all(not os.path.isdir(os.path.join(folder, x)) for x in remaining_content)):
+            warn(f"Failed to remove all content from: {folder}", UserWarning)
+            return False
+
+        return True
+
+    except (OSError, RuntimeError, PermissionError) as e:
+        warn(f"Error while clearing folder {folder}: {str(e)}", UserWarning)
         return False
-
-    return True
 
 
 def _delete_dir(folder: str) -> bool:
-    """Delete a folder and all its content. Also deletes vsimem folders.
+    """Delete a folder and all its content. Handles both physical and virtual (vsimem) folders.
 
-    Args:
-        folder (str): The path to the folder.
+    Parameters
+    ----------
+    folder: str
+        The path to the folder to delete.
 
-    Returns:
-        bool: True if the folder was deleted, False otherwise.
+    Returns
+    -------
+    bool
+        True if the folder was successfully deleted, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If folder is not a string
+    ValueError
+        If folder is empty string
+    RuntimeError
+        If folder doesn't exist
     """
-    assert isinstance(folder, str), "folder must be a string."
-    assert len(folder) > 0, "folder must be a non-empty string."
-    assert _check_dir_exists(folder), "folder must exist."
+    # Type checking
+    if not isinstance(folder, str):
+        raise TypeError("folder must be a string")
+    if not folder.strip():
+        raise ValueError("folder cannot be empty")
+    if not _check_dir_exists(folder):
+        raise RuntimeError(f"folder does not exist: {folder}")
 
-    # Folder is on disk
-    if not _check_dir_exists_vsimem(folder):
+    try:
+        # Handle physical filesystem
+        if not _check_dir_exists_vsimem(folder):
+            try:
+                shutil.rmtree(folder)
+                return not _check_dir_exists(folder)
+            except (OSError, PermissionError) as e:
+                warn(f"Failed to remove folder {folder}: {str(e)}", UserWarning)
+                return False
+
+        # Handle virtual filesystem (vsimem)
         try:
-            shutil.rmtree(folder)
-
-        except RuntimeError:
-            warn(f"Warning. Could not remove: {folder}", UserWarning)
-
+            vsimem = _get_vsimem_content(folder)
+            # Delete all files in the folder
+            for f in vsimem:
+                gdal.Unlink(f)
+            # Delete the folder itself
+            if folder != "/vsimem/":  # Don't delete root vsimem
+                gdal.Unlink(folder)
+            return not _check_dir_exists_vsimem(folder)
+        except RuntimeError as e:
+            warn(f"Failed to remove vsimem folder {folder}: {str(e)}", UserWarning)
             return False
 
-        return True
-
-    # Delete the files and folder in VSIMEM
-    vsimem = _get_vsimem_content(folder)
-    for f in vsimem:
-        gdal.Unlink(f)
-
-    gdal.Unlink(folder)
-
-    if _check_dir_exists(folder):
-        warn(f"Warning. Failed to remove: {folder}", UserWarning)
+    except (OSError, RuntimeError, PermissionError) as e:
+        warn(f"Error while deleting folder {folder}: {str(e)}", UserWarning)
         return False
-
-    return True
 
 
 def _delete_file(file: str) -> bool:
-    """Delete a File
+    """Delete a file from physical or virtual (vsimem) filesystem.
 
-    Args:
-        file (str): The path to the file.
+    Parameters
+    ----------
+    file: str
+        The path to the file to delete.
 
-    Returns:
-        bool: True if the file was deleted, False otherwise.
+    Returns
+    -------
+    bool
+        True if the file was successfully deleted, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If file is not a string
+    ValueError
+        If file is empty string
+    RuntimeError
+        If file doesn't exist
     """
-    assert isinstance(file, str), "file must be a string."
-    assert len(file) > 0, "file must be a non-empty string."
-    assert _check_file_exists(file), "file must exist."
+    # Type checking
+    if not isinstance(file, str):
+        raise TypeError("file must be a string")
+    if not file.strip():
+        raise ValueError("file cannot be empty")
+    if not _check_file_exists(file):
+        raise RuntimeError(f"file does not exist: {file}")
 
-    # File is on disk
-    if not _check_file_exists_vsimem(file):
+    try:
+        # Handle physical filesystem
+        if not _check_file_exists_vsimem(file):
+            try:
+                os.remove(file)
+                return not _check_file_exists(file)
+            except (OSError, PermissionError) as e:
+                warn(f"Failed to remove file {file}: {str(e)}", UserWarning)
+                return False
+
+        # Handle virtual filesystem (vsimem)
         try:
-            os.remove(file)
-
-        except RuntimeError:
-            warn(f"Warning. Could not remove: {file}", UserWarning)
-
+            gdal.Unlink(file)
+            return not _check_file_exists_vsimem(file)
+        except RuntimeError as e:
+            warn(f"Failed to remove vsimem file {file}: {str(e)}", UserWarning)
             return False
 
-        return True
-
-    # Delete the file in VSIMEM
-    gdal.Unlink(file)
-
-    if _check_file_exists_vsimem(file):
-        warn(f"Warning. Failed to remove: {file}", UserWarning)
+    except (OSError, RuntimeError) as e:
+        warn(f"Error while deleting file {file}: {str(e)}", UserWarning)
         return False
-
-    return True
 
 
 def _create_dir_if_not_exists(path: str) -> str:
@@ -376,66 +566,111 @@ def _create_dir_if_not_exists(path: str) -> str:
     Returns
     -------
     str
-        The path to the folder.
+        The path to the folder (normalized to unix-style).
+
+    Raises
+    ------
+    TypeError
+        If path is not a string
+    ValueError
+        If path is empty
+    RuntimeError
+        If directory creation fails
     """
-    assert isinstance(path, str), "path must be a string."
-    assert len(path) > 0, "path must not be empty."
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not path.strip():
+        raise ValueError("path cannot be empty")
 
-    if not _check_dir_exists(path):
+    # Normalize path to unix-style
+    unix_path = _get_unix_path(path)
+    unix_path = unix_path[0] if isinstance(unix_path, list) else unix_path
 
-        # Folder is on disk
-        if not _check_dir_exists_vsimem(path):
-            os.makedirs(path)
+    # Check if directory already exists (either on disk or in vsimem)
+    if _check_dir_exists(unix_path):
+        return unix_path
 
-        # Folder is in vsimem
-        return path
+    try:
+        # Handle physical filesystem
+        if not _check_dir_exists_vsimem(unix_path):
+            os.makedirs(unix_path, exist_ok=True)
 
-    if not _check_dir_exists(path):
-        raise RuntimeError(f"Could not create folder: {path}.")
+            if not _check_dir_exists(unix_path):
+                raise RuntimeError(f"Failed to create directory: {unix_path}")
 
-    return path
+        # For vsimem, we don't create the directory as it's not possible
+        # without creating a file in it. We just return the path.
+        return unix_path
+
+    except (OSError, PermissionError) as e:
+        raise RuntimeError(f"Failed to create directory {unix_path}: {str(e)}") from None
 
 
 def _get_dir_from_path(path: str) -> str:
-    """Get the directory of a file. Also works for folders and vsimem.
+    """Get the directory of a file or folder path. Also works for vsimem and vsizip paths.
+    For regular paths, returns the absolute normalized unix-style path with trailing slash.
+    For virtual paths (vsimem/vsizip), returns the virtual root with trailing slash.
 
     Parameters
     ----------
     path: str
-        The path to the file.
+        The path to get the directory from.
 
     Returns
     -------
     str
-        The directory of the file.
+        The directory path with trailing slash.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string
+    ValueError
+        If path is empty
     """
-    assert isinstance(path, str), "path must be a string."
-    assert len(path) > 0, "path must not be empty."
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not path.strip():
+        raise ValueError("path cannot be empty")
 
-    dirs = os.path.normpath(path).split(os.path.sep)[0:2]
-    if "vsimem" in dirs:
-        dirname = "/vsimem/"
-    elif "vsizip" in dirs:
-        dirname = "vsizip"
-    elif _check_dir_exists(path):
-        dirname = _get_unix_path(os.path.abspath(path)) + "/"
-    else:
-        dirname = _get_unix_path(os.path.dirname(os.path.abspath(path))) + "/"
+    try:
+        # Handle virtual filesystems
+        path_parts = os.path.normpath(path).split(os.sep)
+        if any(vfs in path_parts for vfs in ["vsimem", "vsizip"]):
+            if "vsimem" in path_parts:
+                return "/vsimem/"
+            return "/vsizip/"
 
-    return dirname
+        # Handle physical filesystem
+        if _check_dir_exists(path):
+            # If path is already a directory, normalize it
+            abs_path = os.path.abspath(path)
+            unix_path = _get_unix_path(abs_path)
+            unix_path = unix_path[0] if isinstance(unix_path, list) else unix_path
+            return unix_path if unix_path.endswith("/") else f"{unix_path}/"
+        else:
+            # Get directory of file path
+            dir_path = os.path.dirname(os.path.abspath(path))
+            unix_path = _get_unix_path(dir_path)
+            unix_path = unix_path[0] if isinstance(unix_path, list) else unix_path
+            return unix_path if unix_path.endswith("/") else f"{unix_path}/"
+
+    except (OSError, RuntimeError, AttributeError, TypeError, ValueError) as e:
+        raise RuntimeError(f"Failed to get directory from path {path}: {str(e)}") from None
 
 
 def _get_filename_from_path(
     path: str,
     with_ext: bool = True,
 ) -> str:
-    """Get the filename of a file. Also works for vsimem.
+    """Get the filename of a file. Also works for vsimem paths.
 
     Parameters
     ----------
     path: str
         The path to the file.
-
     with_ext: bool
         If True, the extension is included in the filename.
 
@@ -443,17 +678,40 @@ def _get_filename_from_path(
     -------
     str
         The filename of the file.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string or with_ext is not a bool
+    ValueError
+        If path is empty
     """
-    assert isinstance(path, str), "path must be a string."
-    assert len(path) > 0, "path must not be empty."
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not isinstance(with_ext, bool):
+        raise TypeError("with_ext must be a bool")
 
-    basename = os.path.basename(path)
+    # Value checking
+    if not path.strip():
+        raise ValueError("path cannot be empty")
 
-    if with_ext:
-        return basename
+    try:
+        # Handle paths with backslashes
+        path = path.replace("\\", "/")
 
-    basesplit = os.path.splitext(basename)
-    return basesplit[0]
+        # Get basename, handling both Unix and Windows paths
+        basename = path.rstrip("/").split("/")[-1]
+
+        if with_ext:
+            return basename
+
+        # Split at last dot to handle multiple dots in filename
+        name_parts = basename.rsplit(".", 1)
+        return name_parts[0] if len(name_parts) > 1 else basename
+
+    except (TypeError, ValueError, AttributeError) as e:
+        raise RuntimeError(f"Failed to get filename from path {path}: {str(e)}") from None
 
 
 def _get_ext_from_path(path: str) -> str:
@@ -468,62 +726,126 @@ def _get_ext_from_path(path: str) -> str:
     Returns
     -------
     str
-        The extension of the file.
+        The extension of the file without the leading dot.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string
+    ValueError
+        If path is empty
+    RuntimeError
+        If file has no extension
     """
-    assert isinstance(path, str), "path must be a string."
-    assert len(path) > 0, "path must not be empty."
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not path.strip():
+        raise ValueError("path cannot be empty")
 
-    basename = os.path.basename(path)
-    basesplit = os.path.splitext(basename)
-    ext = basesplit[1]
+    try:
+        # Handle paths with backslashes
+        path = path.replace("\\", "/")
 
-    if ext == "" or len(ext) == 1:
-        raise RuntimeError (f"File: {path} has no extension.")
+        # Get basename, handling both Unix and Windows paths
+        basename = path.rstrip("/").split("/")[-1]
 
-    return ext[1:]
+        # Split at last dot to handle multiple dots in filename
+        ext_parts = basename.rsplit(".", 1)
+
+        if len(ext_parts) < 2 or not ext_parts[1]:
+            raise RuntimeError(f"File has no extension: {path}")
+
+        return ext_parts[1].lower()
+
+    except Exception as e:
+        if isinstance(e, RuntimeError):
+            raise
+        raise RuntimeError(f"Failed to get extension from path {path}: {str(e)}") from None
 
 
 def _get_changed_path_ext(
     path: str,
     target_ext: str,
 ) -> str:
-    """Update the extension of a file.
+    """Update the extension of a file path.
+    The path can be a physical path or a virtual path (vsimem/vsizip).
 
     Parameters
     ----------
     path: str
         The path to the file.
-
     target_ext: str
-        The new extension (with or without dot.)
+        The new extension (with or without dot).
 
     Returns
     -------
     str
-        The path to the file with the new extension.
+        The path with the new extension in unix style.
+
+    Raises
+    ------
+    TypeError
+        If path or target_ext are not strings or are None
+    ValueError
+        If path or target_ext are empty or contain only whitespace
+    RuntimeError
+        If path has no extension or path manipulation fails
     """
-    assert isinstance(path, str), "path must be a string."
-    assert isinstance(target_ext, str), "target_ext must be a string."
-    assert len(path) > 0, "path must not be empty."
-    assert len(target_ext) > 0, "target_ext must not be empty."
+    # Type checking
+    if path is None:
+        raise TypeError("path cannot be None")
+    if target_ext is None:
+        raise TypeError("target_ext cannot be None")
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not isinstance(target_ext, str):
+        raise TypeError("target_ext must be a string")
 
-    target_ext = target_ext.lstrip('.')
-    basename = os.path.basename(path)
-    basesplit = os.path.splitext(basename)
-    ext = basesplit[1].lstrip('.')
+    # Value checking
+    if not path.strip():
+        raise ValueError("path cannot be empty or whitespace")
+    if not target_ext.strip():
+        raise ValueError("target_ext cannot be empty or whitespace")
 
-    if ext == "":
-        raise RuntimeError(f"File: {path} has no extension.")
+    try:
+        # Normalize and validate the path
+        norm_path = path.strip()
+        if not _check_is_valid_filepath(norm_path):
+            raise RuntimeError(f"Invalid file path: {path}")
 
-    if target_ext == "":
-        return os.path.join(os.path.dirname(path), basesplit[0])
+        # Strip leading dots and normalize extension
+        target_ext = target_ext.strip().lstrip('.').lower()
 
-    return os.path.join(os.path.dirname(path), f"{basesplit[0]}.{target_ext}")
+        # Get directory and filename components
+        directory = _get_dir_from_path(norm_path)
+        filename = _get_filename_from_path(norm_path, with_ext=False)
+
+        # Handle special case where target_ext is empty
+        if not target_ext:
+            new_path = os.path.join(directory, filename)
+        else:
+            new_path = os.path.join(directory, f"{filename}.{target_ext}")
+
+        # Convert to unix style path and ensure string return type
+        unix_path = _get_unix_path(new_path)
+        if isinstance(unix_path, list):
+            if not unix_path:
+                raise RuntimeError("Path conversion failed")
+            return unix_path[0]
+
+        return unix_path
+
+    except Exception as e:
+        if isinstance(e, (TypeError, ValueError, RuntimeError)):
+            raise
+        raise RuntimeError(f"Failed to change extension for path {path}: {str(e)}") from None
 
 
 def _check_is_dir(path: str) -> bool:
-    """Check if a path is a directory or a file.
-    Also returns true if vsimem or vsizip is passed.
+    """Check if a path is a directory. Works with both physical and virtual filesystems.
+    For virtual filesystems (vsimem/vsizip), checks if the path exists and is a directory.
+    For physical filesystems, converts to absolute path and checks if it exists and is a directory.
 
     Parameters
     ----------
@@ -534,24 +856,50 @@ def _check_is_dir(path: str) -> bool:
     -------
     bool
         True if path is a directory, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string
+    ValueError
+        If path is empty string or consists only of whitespace
     """
+    # Type checking
     if not isinstance(path, str):
+        raise TypeError("path must be a string")
+
+    # Value checking
+    if not path.strip():
+        raise ValueError("path cannot be empty or whitespace")
+
+    try:
+        # Normalize path by removing trailing slashes
+        norm_path = path.rstrip("/").rstrip("\\")
+
+        # Handle root virtual filesystem paths
+        if norm_path in ["/vsimem", "/vsizip"]:
+            return True
+
+        # Check for virtual filesystem paths
+        if any(vfs in ["vsimem", "vsizip"] for vfs in norm_path.split(os.sep)):
+            return _check_dir_exists_vsimem(norm_path)
+
+        # Handle physical filesystem
+        try:
+            # Convert to absolute path to handle relative paths
+            abs_path = os.path.abspath(norm_path)
+            return os.path.exists(abs_path) and os.path.isdir(abs_path)
+        except (OSError, RuntimeError):
+            return False
+
+    except (OSError, RuntimeError) as e:
+        warn(f"Error checking if path is directory: {str(e)}", UserWarning)
         return False
-
-    if len(path) == 0:
-        return False
-
-    if path in ["/vsimem", "/vsimem/", "/vsizip", "/vsizip/"]:
-        return True
-
-    if os.path.isdir(path):
-        return True
-
-    return False
 
 
 def _check_is_valid_mem_filepath(path: str) -> bool:
-    """Check if a path is a valid memory path that has an extension. vsizip also works.
+    """Check if a path is a valid memory path that has an extension.
+    Validates paths in GDAL's virtual filesystems (vsimem, vsizip).
 
     Parameters
     ----------
@@ -561,23 +909,47 @@ def _check_is_valid_mem_filepath(path: str) -> bool:
     Returns
     -------
     bool
-        True if path is a valid memory path, False otherwise.
+        True if path is a valid memory path with extension, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string
     """
+    # Type checking
     if not isinstance(path, str):
+        raise TypeError("path must be a string")
+
+    try:
+        # Handle empty or whitespace-only strings
+        if not path.strip():
+            return False
+
+        # Convert path to normalized form
+        path = path.replace("\\", "/")  # Handle Windows paths
+        path_parts = path.strip("/").split("/")
+
+        # Check for virtual filesystem prefixes
+        if not any(vfs in ["vsimem", "vsizip"] for vfs in path_parts):
+            return False
+
+        # Verify path has an extension
+        try:
+            ext = _get_ext_from_path(path)
+            if not ext:
+                return False
+        except (RuntimeError, ValueError):
+            return False
+
+        # Validate path structure
+        if len(path_parts) < 2:  # Need at least /vfs/filename.ext
+            return False
+
+        return True
+
+    except (TypeError, ValueError, AttributeError) as e:
+        warn(f"Error validating memory filepath: {str(e)}", UserWarning)
         return False
-
-    if len(path) == 0:
-        return False
-
-    path_chunks = os.path.normpath(path).split(os.path.sep)
-
-    if "vsimem" not in path_chunks and "vsizip" not in path_chunks:
-        return False
-
-    if _get_ext_from_path(path) == "":
-        return False
-
-    return True
 
 
 def _check_is_valid_non_mem_filepath(path: str) -> bool:
@@ -592,22 +964,41 @@ def _check_is_valid_non_mem_filepath(path: str) -> bool:
     Returns
     -------
     bool
-        True if path is a valid path, False otherwise.
+        True if path is a valid path with an extension, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string
     """
+    # Type checking
     if not isinstance(path, str):
-        return False
+        raise TypeError("path must be a string")
 
-    if len(path) == 0:
-        return False
+    try:
+        # Check for empty path
+        if not path.strip():
+            return False
 
-    if _get_ext_from_path(path) == "":
-        return False
+        # Check for extension
+        try:
+            if not _get_ext_from_path(path):
+                return False
+        except (RuntimeError, ValueError):
+            return False
 
-    folder = _get_dir_from_path(path)
-    if not _check_dir_exists(folder):
-        return False
+        # Check if parent directory exists
+        try:
+            folder = _get_dir_from_path(path)
+            if not _check_dir_exists(folder):
+                return False
+        except (RuntimeError, ValueError):
+            return False
 
-    return True
+        return True
+
+    except (AttributeError, TypeError):
+        return False
 
 
 def _check_is_valid_filepath(path: str) -> bool:
@@ -622,11 +1013,28 @@ def _check_is_valid_filepath(path: str) -> bool:
     -------
     bool
         True if path is a valid path, False otherwise.
-    """
-    if _check_is_valid_mem_filepath(path) or _check_is_valid_non_mem_filepath(path):
-        return True
 
-    return False
+    Raises
+    ------
+    TypeError
+        If path is not a string
+    """
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
+
+    try:
+        # Handle empty or whitespace-only paths
+        if not path.strip():
+            return False
+
+        # Check if path is valid memory path or non-memory path
+        return (_check_is_valid_mem_filepath(path) or
+                _check_is_valid_non_mem_filepath(path))
+
+    except (TypeError, ValueError, AttributeError):
+        # Catch any unexpected errors from sub-functions
+        return False
 
 
 def _check_is_valid_filepath_list(path_list: List[str]) -> bool:
@@ -641,32 +1049,52 @@ def _check_is_valid_filepath_list(path_list: List[str]) -> bool:
     -------
     bool
         True if path_list is a valid list of paths, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If path_list is not a list
+        If any path in the list is not a string
     """
+    # Type check for path_list
     if not isinstance(path_list, list):
+        raise TypeError("path_list must be a list")
+
+    # Handle empty list case
+    if not path_list:
         return False
 
-    if len(path_list) == 0:
+    try:
+        # Check each path is a string and valid
+        for path in path_list:
+            if not isinstance(path, str):
+                raise TypeError("All paths must be strings")
+
+            if not path or path.isspace():
+                return False
+
+            if not _check_is_valid_filepath(path):
+                return False
+
+        return True
+
+    except (TypeError, ValueError, AttributeError) as e:
+        if isinstance(e, TypeError):
+            raise
         return False
-
-    for path in path_list:
-        if not _check_is_valid_filepath(path):
-            return False
-
-    return True
 
 
 def _check_is_valid_output_filepath(
     path: str,
     overwrite: bool = True,
-):
+) -> bool:
     """Check if a path is a valid output path that has an extension. Path can be in memory.
-    If the file already exists, and overwrite is false, return False.
+    If the file already exists and overwrite is false, return False.
 
     Parameters
     ----------
     path: str
         The path to test.
-
     overwrite: bool
         True if the file could be overwritten, False otherwise.
 
@@ -674,15 +1102,44 @@ def _check_is_valid_output_filepath(
     -------
     bool
         True if path is a valid path, False otherwise.
-    """
-    if not _check_is_valid_filepath(path):
-        return False
 
-    if not overwrite:
-        if _check_file_exists(path):
+    Raises
+    ------
+    TypeError
+        If path is not a string or overwrite is not a bool
+    ValueError
+        If path is empty or None
+    """
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not isinstance(overwrite, bool):
+        raise TypeError("overwrite must be a bool")
+
+    # Value checking
+    if not path.strip():
+        raise ValueError("path cannot be empty")
+
+    try:
+        # Check if path is valid
+        if not _check_is_valid_filepath(path):
             return False
 
-    return True
+        # Check if file exists and overwrite is allowed
+        if not overwrite and _check_file_exists(path):
+            return False
+
+        # Get directory path and check if parent directory exists/is writable
+        dir_path = _get_dir_from_path(path)
+        if not _check_dir_exists(dir_path):
+            return False
+
+        return True
+
+    except (TypeError, ValueError, RuntimeError) as e:
+        if isinstance(e, (TypeError, ValueError)):
+            raise
+        return False
 
 
 def _check_is_valid_output_path_list(
@@ -695,106 +1152,188 @@ def _check_is_valid_output_path_list(
     ----------
     output_list: List[str]
         The list of paths to the files.
-
     overwrite: bool
-        True if the file should be overwritten, False otherwise.
+        True if existing files can be overwritten, False otherwise.
 
     Returns
     -------
     bool
-        True if the list of output paths are valid, False otherwise.
+        True if all paths in the list are valid output paths, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If output_list is not a list or overwrite is not a bool
+        If any path in the list is not a string
+    ValueError
+        If output_list is empty or any path in it is empty
     """
+    # Type checking
     if not isinstance(output_list, list):
+        raise TypeError("output_list must be a list")
+    if not isinstance(overwrite, bool):
+        raise TypeError("overwrite must be a bool")
+
+    # Check for empty list
+    if not output_list:
+        raise ValueError("output_list cannot be empty")
+
+    try:
+        # Check each path in the list
+        for path in output_list:
+            if path is None:
+                raise TypeError("Paths cannot be None")
+            if not isinstance(path, str):
+                raise TypeError("All paths must be strings")
+            if not path.strip():
+                raise ValueError("Paths cannot be empty strings")
+
+            if not _check_is_valid_output_filepath(path, overwrite=overwrite):
+                return False
+
+        return True
+
+    except (TypeError, ValueError):
         return False
-
-    if len(output_list) == 0:
-        return False
-
-    for path in output_list:
-
-        if not _check_is_valid_output_filepath(path, overwrite=overwrite):
-            return False
-
-    return True
 
 
 def _delete_if_required(
     path: str,
     overwrite: bool = True,
 ) -> bool:
-    """Delete a file if overwrite is True.
+    """Delete a file if overwrite is True and the file exists.
 
     Parameters
     ----------
     path: str
-        The path to the file.
-
+        The path to the file to potentially delete.
     overwrite: bool
-        If True, overwrite the file.
+        If True, delete the file if it exists.
 
     Returns
     -------
     bool
-        True if successful, raises error otherwise.
+        True if deletion was successful or not needed, False if deletion failed.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string or overwrite is not a bool
+    ValueError
+        If path is empty or None
     """
-    assert isinstance(path, str), "path must be a string."
-    assert len(path) > 0, "path must not be non-empty string."
-    assert isinstance(overwrite, bool), "overwrite must be a bool."
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not isinstance(overwrite, bool):
+        raise TypeError("overwrite must be a bool")
 
-    if not overwrite:
+    # Value checking
+    if not path.strip():
+        raise ValueError("path cannot be empty")
+
+    try:
+        # If overwrite is False or file doesn't exist, no action needed
+        if not overwrite or not _check_file_exists(path):
+            return True
+
+        # Handle virtual filesystem (vsimem) files
+        if _check_is_valid_mem_filepath(path):
+            try:
+                gdal.Unlink(path)
+            except RuntimeError as e:
+                warn(f"Failed to delete vsimem file {path}: {str(e)}", UserWarning)
+                return False
+        # Handle physical files
+        else:
+            try:
+                os.remove(path)
+            except (OSError, PermissionError) as e:
+                warn(f"Failed to delete file {path}: {str(e)}", UserWarning)
+                return False
+
+        # Verify deletion was successful
+        if _check_file_exists(path):
+            warn(f"File still exists after deletion attempt: {path}", UserWarning)
+            return False
+
         return True
 
-    if not _check_file_exists(path):
-        return True
-
-    if _check_is_valid_mem_filepath(path):
-        gdal.Unlink(path)
-    else:
-        try:
-            os.remove(path)
-        except RuntimeError as e:
-            raise RuntimeError(f"Error while deleting file: {path}, {e}") from None
-
-    if _check_file_exists(path):
-        raise RuntimeError(f"Error while deleting file: {path}")
-
-    return True
+    except (OSError, RuntimeError, PermissionError) as e:
+        warn(f"Error while deleting file {path}: {str(e)}", UserWarning)
+        return False
 
 
 def _delete_if_required_list(
     output_list: List[str],
     overwrite: bool = True,
 ) -> bool:
-    """Delete a list of files if overwrite is True.
+    """Delete a list of files if overwrite is True and the files exist.
 
     Parameters
     ----------
     output_list: List[str]
         The list of paths to the files.
-
     overwrite: bool
-        If True, overwrite the files.
+        If True, delete files if they exist.
 
     Returns
     -------
     bool
-        True if the files were deleted, False otherwise.
+        True if all deletions were successful or not needed, False if any deletion failed.
+
+    Raises
+    ------
+    TypeError
+        If output_list is not a list or overwrite is not a bool
+        If any path in output_list is not a string
+    ValueError
+        If output_list is empty or contains empty strings
+    RuntimeError
+        If any deletion operation fails
     """
+    # Type checking
     if not isinstance(output_list, list):
+        raise TypeError("output_list must be a list")
+    if not isinstance(overwrite, bool):
+        raise TypeError("overwrite must be a bool")
+
+    # Check for empty list
+    if not output_list:
+        raise ValueError("output_list cannot be empty")
+
+    try:
+        # Validate all paths before attempting any deletions
+        for path in output_list:
+            if path is None:
+                raise TypeError("Paths cannot be None")
+            if not isinstance(path, str):
+                raise TypeError("All paths must be strings")
+            if not path.strip():
+                raise ValueError("Paths cannot be empty strings")
+
+        # Attempt deletion for each file
+        deletion_results = []
+        for path in output_list:
+            try:
+                result = _delete_if_required(path, overwrite=overwrite)
+                deletion_results.append(result)
+            except (OSError, PermissionError, RuntimeError) as e:
+                warn(f"Failed to delete {path}: {str(e)}", UserWarning)
+                deletion_results.append(False)
+
+        # Check if all deletions were successful
+        if not all(deletion_results):
+            failed_paths = [p for p, r in zip(output_list, deletion_results) if not r]
+            raise RuntimeError(f"Failed to delete files: {failed_paths}")
+
+        return True
+
+    except (OSError, RuntimeError, PermissionError, TypeError, ValueError) as e:
+        warn(f"Error during deletion operations: {str(e)}", UserWarning)
         return False
 
-    if len(output_list) == 0:
-        return False
-
-    success = []
-    for path in output_list:
-        success.append(_delete_if_required(path, overwrite=overwrite))
-
-    if not all(success):
-        raise RuntimeError(f"Error while deleting files: {output_list}")
-
-    return True
-
+# TODO: MADE IT TO HERE
 
 def _get_changed_folder(
     path: str,

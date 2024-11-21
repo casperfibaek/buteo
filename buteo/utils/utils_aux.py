@@ -79,7 +79,7 @@ def _get_timing(
     Parameters
     ----------
     before : datetime
-        The time to compare to.
+        The time to compare to. In a datetime object.
 
     print_msg : bool, optional.
         If True, print the message. Default: True.
@@ -156,7 +156,7 @@ def _get_folder_size(
 
 def _force_garbage_collect_all(
     delete_functions: bool = True,
-) -> None:
+) -> bool:
     """Clears the memory by deleting all objects in the main namespace.
     Very aggresive. Use with caution.
 
@@ -167,7 +167,8 @@ def _force_garbage_collect_all(
 
     Returns
     -------
-    None
+    bool
+        True if successful.
     """
     # Get a list of all objects
     all_objects = sys.modules['__main__'].__dict__.copy()
@@ -185,6 +186,8 @@ def _force_garbage_collect_all(
 
     # Collect garbage
     gc.collect()
+
+    return True
 
 
 def split_number(num: int, parts: int) -> List[int]:

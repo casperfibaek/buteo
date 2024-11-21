@@ -1,6 +1,5 @@
 """ Tests for core_raster.py """
 
-
 # Standard library
 import sys; sys.path.append("../")
 
@@ -12,6 +11,7 @@ from osgeo import gdal
 from utils_tests import create_sample_raster
 from buteo.raster.align import _raster_align_to_reference, raster_align
 from buteo.raster.core_raster import check_rasters_are_aligned, _get_basic_metadata_raster
+
 
 
 def test_align_rasters_single_raster():

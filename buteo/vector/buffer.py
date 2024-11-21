@@ -31,7 +31,7 @@ def _vector_buffer(
     if out_path is None:
         out_path = utils_path._get_temp_filepath(vector, suffix="_buffered", ext="gpkg")
     else:
-        assert utils_path._check_is_valid_output_filepath(vector, out_path), "Invalid vector output path."
+        assert utils_path._check_is_valid_output_filepath(out_path), "Invalid vector output path."
 
     read = core_vector.vector_open(vector)
     metadata = core_vector._get_basic_metadata_vector(read)

@@ -169,7 +169,7 @@ def _raster_align_to_reference(
             out_path=path_list[idx],
             width=x_pixels,
             height=y_pixels,
-            pixel_size=(x_res, y_res),
+            pixel_size=[x_res, y_res],
             x_min=x_min,
             y_max=y_max,
             dtype=raster_metadata["dtype"],

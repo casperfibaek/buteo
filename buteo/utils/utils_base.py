@@ -25,6 +25,9 @@ def _get_variable_as_list(
     List[Any]
         The variable as a list.
     """
+    if variable_or_list is None:
+        return []
+
     if isinstance(variable_or_list, list):
         return variable_or_list
 
@@ -68,6 +71,9 @@ def _check_variable_is_float(variable: Any) -> bool:
     bool
         True if the variable is a float or float representation, False otherwise.
     """
+    if variable is None:
+        return False
+
     if isinstance(variable, float):
         return True
 
@@ -75,7 +81,6 @@ def _check_variable_is_float(variable: Any) -> bool:
         try:
             float(variable)
             return True
-
         except ValueError:
             return False
 
@@ -97,6 +102,9 @@ def _check_variable_is_int(variable: Any) -> bool:
     bool
         True if the variable is an integer or integer representation, False otherwise.
     """
+    if variable is None:
+        return False
+
     if isinstance(variable, int):
         return True
 
@@ -123,6 +131,9 @@ def _check_variable_is_number_type(variable: Any) -> bool:
     bool
         True if the variable is a number type, False otherwise.
     """
+    if variable is None:
+        return False
+
     if isinstance(variable, (float, int)):
         return True
 
@@ -131,7 +142,7 @@ def _check_variable_is_number_type(variable: Any) -> bool:
 
 def _get_variable_as_number(
     variable: Any,
-) -> float:
+) -> Union[int, float]:
     """Attempts to convert a variable to a number.
 
     Parameters
@@ -141,33 +152,44 @@ def _get_variable_as_number(
 
     Returns
     -------
-    float
-        The variable as a float.
+    Union[int, float]
+        The variable as an int or float.
     """
-    assert isinstance(variable, (str, int, float)), "value must be a string, integer or float."
+    if variable is None:
+        raise ValueError("Cannot convert None to a number.")
+
+    if not isinstance(variable, (str, int, float)):
+        raise TypeError("value must be a string, integer or float.")
+
     if _check_variable_is_int(variable):
         return int(variable)
 
     if _check_variable_is_float(variable):
         return float(variable)
 
-    raise RuntimeError(f"Could not convert {variable} to a number.")
+    raise ValueError(f"Could not convert {variable} to a number.")
 
 
-def _ensure_negative(number: Union[int, float]) -> Union[int, float]:
+def _ensure_negative(
+    number: Union[int, float]
+) -> Union[int, float]:
     """Ensures that a valid is negative. If the number is positive, it is made negative.
 
     Parameters
     ----------
-    number : int, float
+    number : Union[int, float]
         A number.
 
     Returns
     -------
-    int, float
+    Union[int, float]
         The number, made negative if it was positive.
     """
-    assert _check_variable_is_number_type(number), f"number must be a number. Received: {number}"
+    if number is None:
+        raise ValueError("Cannot process None value.")
+
+    if not _check_variable_is_number_type(number):
+        raise TypeError(f"number must be a number. Received: {type(number)}")
 
     if number <= 0:
         return number
@@ -175,7 +197,36 @@ def _ensure_negative(number: Union[int, float]) -> Union[int, float]:
     return -number
 
 
-def _check_variable_is_iterable_or_type(potential_type: Any) -> bool:
+def _ensure_positive(
+    number: Union[int, float]
+) -> Union[int, float]:
+    """Ensures that a valid is positive. If the number is negative, it is made positive.
+
+    Parameters
+    ----------
+    number : Union[int, float]
+        A number.
+
+    Returns
+    -------
+    Union[int, float]
+        The number, made positive if it was negative.
+    """
+    if number is None:
+        raise ValueError("Cannot process None value.")
+
+    if not _check_variable_is_number_type(number):
+        raise TypeError(f"number must be a number. Received: {type(number)}")
+
+    if number >= 0:
+        return number
+
+    return -number
+
+
+def _check_variable_is_iterable_or_type(
+    potential_type: Any
+) -> bool:
     """Recursively check if a variable is a type, list, or tuple.
 
     Parameters
@@ -188,177 +239,186 @@ def _check_variable_is_iterable_or_type(potential_type: Any) -> bool:
     bool
         True if the variable is a type, list, or tuple, False otherwise.
     """
-    if isinstance(potential_type, type(None)):
+    if potential_type is None:
         return True
 
     if isinstance(potential_type, type):
         return True
 
     if isinstance(potential_type, (list, tuple)):
-        for item in potential_type:
-            if not _check_variable_is_iterable_or_type(item):
-                return False
-        return True
+        return all(_check_variable_is_iterable_or_type(item) for item in potential_type)
 
     return False
 
 
 def _type_check(
     variable: Any,
-    types: Tuple[type, ...],
+    types: Union[type, List[type], Tuple[type, ...], None],
     name: str = "",
     *,
     throw_error: bool = True,
 ) -> bool:
-    """Utility function to type check the inputs of a function. Checks recursively.
-    This is useful for the external facing functions of a module.
-
-    Use like this:
-    ```python
-    >>> def my_function(
-    ...     my_variable: Optional[Union[str, float, List[str]]] = None
-    ... ) -> None:
-    ...     type_check(my_variable, [str, float, [str], None], "my_variable")
-    ...     # Do stuff
-    ```
-
+    """Type check function that supports nested types and collections.
+    
+    Examples
+    --------
+    >>> _type_check("hello", str)  # True
+    >>> _type_check([1, 2, 3], [int])  # True
+    >>> _type_check([1, "a"], [int])  # False
+    >>> _type_check(None, [str, None])  # True
+    >>> _type_check({"a": 1}, dict)  # True
+    
     Parameters
     ----------
     variable : Any
-        The variable to check.
-
-    types : Tuple[type, ...]
-        The types to check against.
-
+        The variable to type check
+    types : Union[type, List[type], Tuple[type, ...], None]
+        Single type, list of types, or None to check against
     name : str, optional
-        The name of the variable to check.
-
+        Variable name for error messages
     throw_error : bool, optional
-        If True, throw an error if the type check fails. If False, return False if the type check fails.
+        If True, raises ValueError on type mismatch
 
     Returns
     -------
     bool
-        True if the type check passes, False otherwise.
+        True if type check passes, False otherwise
+
+    Raises
+    ------
+    ValueError
+        If throw_error is True and type check fails
+    TypeError 
+        If types argument is invalid
     """
-    assert isinstance(name, str), "name must be a string."
-    assert _check_variable_is_iterable_or_type(types), f"types must be a type, list, None, or tuple. not: {types}"
+    # Validate inputs
+    if not isinstance(name, str):
+        raise TypeError("name must be a string")
+    if not _check_variable_is_iterable_or_type(types):
+        raise TypeError(f"types must be a type, list, tuple, or None. Got: {type(types)}")
 
-    if not isinstance(types, (list, tuple)):
-        types = [types]
-
+    # Normalize types to list
     valid_types = []
-    for valid_type in types:
-        if valid_type is None:
+    types_list = [types] if not isinstance(types, (list, tuple)) else types
+
+    for t in types_list:
+        if t is None:
             valid_types.append(type(None))
-        elif isinstance(valid_type, type):
-            valid_types.append(valid_type)
-        elif isinstance(valid_type, (list, tuple)):
-            valid_types.append(valid_type)
+        elif isinstance(t, type):
+            valid_types.append(t)
+        elif isinstance(t, (list, tuple)):
+            valid_types.append(t)
         else:
-            raise ValueError(f"Invalid type: {valid_type}")
+            raise TypeError(f"Invalid type specification: {t}")
 
-    if not isinstance(variable, (list, tuple)):
-        sublist_valid_types = []
-        for valid_type in valid_types:
-            if not isinstance(valid_type, (list, tuple)):
-                sublist_valid_types.append(valid_type)
-
-        for valid_type in sublist_valid_types:
-            if isinstance(variable, valid_type):
-                return True
-
+    # Handle direct type matches
     if type(variable) in valid_types:
         return True
 
-    type_list = [type(val) for val in valid_types]
+    # Handle None
+    if variable is None and type(None) in valid_types:
+        return True
 
-    if isinstance(variable, list) and type([]) in type_list:
-        for sublist in valid_types:
-            if not isinstance(sublist, list):
+    # Handle collection type checking
+    if isinstance(variable, (list, tuple)):
+        for valid_type in valid_types:
+            if not isinstance(valid_type, (list, tuple)):
                 continue
 
-            if len(sublist) == 0:
+            if not valid_type:  # Empty list/tuple means any elements are valid
                 return True
 
-            found = 0
-            for item in variable:
-                if type(item) in sublist:
-                    found += 1
-
-            if found == len(variable):
+            if all(isinstance(item, tuple(valid_type)) for item in variable):
+                return True
+    else:
+        for valid_type in valid_types:
+            if isinstance(variable, valid_type):
                 return True
 
-    if isinstance(variable, tuple) and type(()) in type_list:
-        for sublist in valid_types:
-            if not isinstance(sublist, tuple):
-                continue
-
-            if len(sublist) == 0:
-                return True
-
-            found = 0
-            for item in variable:
-                if type(item) in sublist:
-                    found += 1
-
-            if found == len(variable):
-                return True
     if throw_error:
-        raise ValueError(
-            f"The type of variable {name} is not valid. Expected: {types}, got: {type(variable)}"
-        )
+        actual_type = type(variable).__name__
+        expected_types = [t.__name__ if isinstance(t, type) else str(t) for t in types_list]
+        error_msg = f"Type mismatch for '{name}': Expected {' or '.join(expected_types)}, got {actual_type}"
+        raise ValueError(error_msg)
 
     return False
 
 
-def _check_number_is_within_threshold(number, target, threshold):
+def _check_number_is_within_threshold(
+    number: Union[int, float],
+    target: Union[int, float],
+    threshold: Union[int, float],
+) -> bool:
     """Check if a number is within a threshold of a target.
 
     Parameters
     ----------
-    number : float
+    number : Union[int, float]
         The number to check.
-
-    target : float
+    target : Union[int, float]
         The target number.
-
-    threshold : float
-        The threshold.
+    threshold : Union[int, float]
+        The threshold value (must be positive).
 
     Returns
     -------
     bool
         True if the number is within the threshold of the target, False otherwise.
+
+    Raises
+    ------
+    ValueError
+        If any input is None or if threshold is negative.
+    TypeError
+        If any input is not a number.
     """
-    assert isinstance(number, (int, float)), "number must be a number."
-    assert isinstance(target, (int, float)), "target must be a number."
-    assert isinstance(threshold, (int, float)), "threshold must be a number."
+    if any(x is None for x in [number, target, threshold]):
+        raise ValueError("None values are not allowed")
+
+    if not all(_check_variable_is_number_type(x) for x in [number, target, threshold]):
+        raise TypeError("All inputs must be numbers")
+
+    if threshold < 0:
+        raise ValueError("Threshold must be positive")
 
     return abs(number - target) <= threshold
 
 
-def _check_number_is_within_range(number, min_value, max_value):
+def _check_number_is_within_range(
+    number: Union[int, float],
+    min_value: Union[int, float],
+    max_value: Union[int, float],
+) -> bool:
     """Check if a number is within a range.
 
     Parameters
     ----------
-    number : float
+    number : Union[int, float]
         The number to check.
-
-    min_value : float
+    min_value : Union[int, float]
         The minimum value.
-
-    max_value : float
+    max_value : Union[int, float]
         The maximum value.
 
     Returns
     -------
     bool
         True if the number is within the range, False otherwise.
+
+    Raises
+    ------
+    ValueError
+        If any input is None or if min_value > max_value.
+    TypeError
+        If any input is not a number.
     """
-    assert isinstance(number, (int, float)), "number must be a number."
-    assert isinstance(min_value, (int, float)), "min_value must be a number."
-    assert isinstance(max_value, (int, float)), "max_value must be a number."
+    if any(x is None for x in [number, min_value, max_value]):
+        raise ValueError("None values are not allowed")
+
+    if not all(_check_variable_is_number_type(x) for x in [number, min_value, max_value]):
+        raise TypeError("All inputs must be numbers")
+
+    if min_value > max_value:
+        raise ValueError("min_value cannot be greater than max_value")
 
     return min_value <= number <= max_value

@@ -854,7 +854,7 @@ def raster_create_empty(
     utils_base._type_check(height, [int], "height")
     utils_base._type_check(pixel_size, [int, float, list, tuple], "pixel_size")
     utils_base._type_check(bands, [int], "bands")
-    utils_base._type_check(dtype, [str, int, np.dtype, type(np.int8), None], "dtype")
+    utils_base._type_check(dtype, [str, int, np.dtype, None], "dtype")
     utils_base._type_check(x_min, [int, float], "x_min")
     utils_base._type_check(y_max, [int, float], "y_max")
     utils_base._type_check(nodata_value, [int, float, type(None)], "nodata_value")
