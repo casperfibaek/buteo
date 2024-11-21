@@ -137,4 +137,4 @@ try:
 except ModuleNotFoundError:
     print("GDAL not installed. Some functions may not work.")
 
-__version__ = "0.9.63"
+__version__ = "0.9.64"
