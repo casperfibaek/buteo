@@ -263,6 +263,9 @@ def raster_to_array(
             if fill_value is None:
                 fill_value = nodata_value
 
+                if isinstance(fill_value, np.ndarray) and fill_value.ndim == 0:
+                    fill_value = np.asarray(fill_value).item()
+
                 if not utils_translate._check_is_value_within_dtype_range(fill_value, dtype):
                     warnings.warn(
                         f"Fill value {fill_value} is outside of dtype {dtype} range. "

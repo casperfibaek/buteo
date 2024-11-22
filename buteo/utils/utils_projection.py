@@ -1,11 +1,11 @@
 """### Utility functions to work with GDAL and projections. ###"""
 
 # Standard Library
+import math
 from typing import Union, List
 
 # External
 import numpy as np
-import math
 from osgeo import gdal, ogr, osr
 
 # Internal
@@ -35,13 +35,20 @@ def _get_default_projection_osr() -> osr.SpatialReference:
     -------
     osr.SpatialReference:
         The default projection. (EPSG:4326) in osr.SpatialReference format.
-    """
-    epsg_4326_wkt = _get_default_projection()
 
+    Raises
+    ------
+    RuntimeError:
+        If projection could not be created.
+    """
     spatial_ref = osr.SpatialReference()
-    spatial_ref.ImportFromWkt(epsg_4326_wkt)
+    wkt = _get_default_projection()
+
+    if spatial_ref.ImportFromWkt(wkt) != 0:
+        raise RuntimeError("Could not create default projection.")
 
     return spatial_ref
+
 
 def _get_pseudo_mercator_projection() -> str:
     """Get the pseudo-mercator projection.
@@ -56,6 +63,7 @@ def _get_pseudo_mercator_projection() -> str:
 
     return epsg_3857_wkt
 
+
 def _get_pseudo_mercator_projection_osr() -> osr.SpatialReference:
     """Get the pseudo-mercator projection.
     EPSG:3857 in osr.SpatialReference format.
@@ -64,11 +72,17 @@ def _get_pseudo_mercator_projection_osr() -> osr.SpatialReference:
     -------
     osr.SpatialReference:
         The web-mercator (pseudo-mercator) projection. (EPSG:3857) in osr.SpatialReference format.
-    """
-    epsg_3857_wkt = _get_pseudo_mercator_projection()
 
+    Raises
+    ------
+    RuntimeError:
+        If projection could not be created.
+    """
     spatial_ref = osr.SpatialReference()
-    spatial_ref.ImportFromWkt(epsg_3857_wkt)
+    wkt = _get_pseudo_mercator_projection()
+
+    if spatial_ref.ImportFromWkt(wkt) != 0:
+        raise RuntimeError("Could not create pseudo-mercator projection.")
 
     return spatial_ref
 
@@ -94,7 +108,7 @@ def _get_esri_projection(esri_code: str) -> str:
 
     # ESRI:54009 is equivalent to EPSG:3785
     if esri_code == "ESRI:54009":
-        wkt_code = """
+        wkt = """
         PROJCRS["World_Mollweide",
             BASEGEOGCRS["WGS 84",
                 DATUM["World Geodetic System 1984",
@@ -132,8 +146,8 @@ def _get_esri_projection(esri_code: str) -> str:
     # Create a spatial reference object
     spatial_ref = osr.SpatialReference()
 
-    # Import the EPSG code
-    spatial_ref.ImportFromWkt(wkt_code)
+    if spatial_ref.ImportFromWkt(wkt) != 0:
+        raise RuntimeError("Could not create pseudo-mercator projection.")
 
     return spatial_ref.ExportToWkt()
 
@@ -142,95 +156,123 @@ def parse_projection(
     projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     return_wkt: bool = False,
 ) -> Union[osr.SpatialReference, str]:
-    """Parses a gdal, ogr or osr data source and extracts the projection. If
-    a string or int is passed, it attempts to open it and return the projection as
-    an osr.SpatialReference.
+    """Parses a gdal, ogr or osr data source and extracts the projection.
 
     Parameters
     ----------
     projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
-        The projection to parse.
-
+        The projection to parse. Cannot be None.
     return_wkt : bool, optional
-        Whether to return the projection as a WKT string or an osr.SpatialReference
+        Whether to return the projection as a WKT string, by default False
 
     Returns
     -------
-    Union[osr.SpatialReference, str]:
-        The projection as an osr.SpatialReference or a WKT string.
+    Union[osr.SpatialReference, str]
+        The projection as an osr.SpatialReference or WKT string
+
+    Raises
+    ------
+    ValueError
+        If projection is None, invalid type, or cannot be parsed
     """
+    if projection is None:
+        raise ValueError("Projection cannot be None")
+
     valid_types = (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)
     if not isinstance(projection, valid_types):
-        raise ValueError("projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference.")
+        raise ValueError(f"Projection must be one of {valid_types}, got {type(projection)}")
 
-    err_msg = f"Unable to parse target projection: {projection}"
     target_proj = osr.SpatialReference()
-
-    # Suppress gdal errors and handle them ourselves.
     gdal.PushErrorHandler("CPLQuietErrorHandler")
 
     try:
         if isinstance(projection, ogr.DataSource):
             layer = projection.GetLayer()
-            target_proj = layer.GetSpatialRef()
+            if layer is None:
+                raise ValueError("Vector datasource has no layers")
+            spatial_ref = layer.GetSpatialRef()
+            if spatial_ref is None:
+                raise ValueError("Layer has no spatial reference")
+            target_proj = spatial_ref
 
         elif isinstance(projection, gdal.Dataset):
-            target_proj.ImportFromWkt(projection.GetProjection())
+            wkt = projection.GetProjection()
+            if not wkt:
+                raise ValueError("Raster has no projection")
+            target_proj.ImportFromWkt(wkt)
 
         elif isinstance(projection, osr.SpatialReference):
-            if projection.ExportToWkt() == "":
-                raise ValueError("Spatial reference is empty.")
+            wkt = projection.ExportToWkt()
+            if not wkt:
+                raise ValueError("Spatial reference is empty")
             target_proj = projection
 
         elif isinstance(projection, str):
             if utils_gdal._check_is_raster(projection):
-                ref = gdal.Open(projection, 0)
-                target_proj.ImportFromWkt(ref.GetProjection())
+                ds = gdal.Open(projection, gdal.GA_ReadOnly)
+                if ds is None:
+                    raise ValueError("Could not open raster")
+                wkt = ds.GetProjection()
+                if not wkt:
+                    raise ValueError("Raster has no projection")
+                target_proj.ImportFromWkt(wkt)
+                ds = None
             elif utils_gdal._check_is_vector(projection):
-                ref = ogr.Open(projection, 0)
-                layer = ref.GetLayer()
-                target_proj = layer.GetSpatialRef()
+                ds = ogr.Open(projection, 0)
+                if ds is None:
+                    raise ValueError("Could not open vector")
+                layer = ds.GetLayer()
+                if layer is None:
+                    raise ValueError("Vector has no layers")
+                spatial_ref = layer.GetSpatialRef()
+                if spatial_ref is None:
+                    raise ValueError("Layer has no spatial reference")
+                target_proj = spatial_ref
+                ds = None
             else:
-                if projection.lower().startswith("epsg:"):
+                success = False
+                if projection.upper().startswith("EPSG:"):
                     try:
-                        success = target_proj.ImportFromEPSG(int(projection.split(":")[1])) == 0
-                    except: # pylint: disable=bare-except
-                        success = False
-                elif projection.lower().startswith("esri:"):
+                        epsg = int(projection.split(":")[1])
+                        success = target_proj.ImportFromEPSG(epsg) == 0
+                    except (ValueError, IndexError):
+                        pass
+                elif projection.upper().startswith("ESRI:"):
                     try:
-                        success = target_proj.ImportFromWkt(_get_esri_projection(projection)) == 0
-                    except: # pylint: disable=bare-except
-                        success = False
-                else:
-                    try:
-                        success = target_proj.ImportFromWkt(projection) == 0
-                    except: # pylint: disable=bare-except
-                        success = False
-                        try:
-                            success = target_proj.ImportFromProj4(projection) == 0
-                        except: # pylint: disable=bare-except
-                            success = False
-
+                        wkt = _get_esri_projection(projection)
+                        success = target_proj.ImportFromWkt(wkt) == 0
+                    except ValueError:
+                        pass
                 if not success:
-                    raise ValueError(err_msg)
+                    for import_func in (target_proj.ImportFromWkt, target_proj.ImportFromProj4):
+                        try:
+                            if import_func(projection) == 0:
+                                success = True
+                                break
+                        except Exception:  # pylint: disable=broad-except
+                            continue
+                if not success:
+                    raise ValueError(f"Could not parse projection string: {projection}")
 
         elif isinstance(projection, int):
             if target_proj.ImportFromEPSG(projection) != 0:
-                raise ValueError(err_msg)
+                raise ValueError(f"Invalid EPSG code: {projection}")
 
-        else:
-            raise ValueError(err_msg)
-
-    finally:
+    except Exception as e:
         gdal.PopErrorHandler()
+        raise ValueError(f"Failed to parse projection: {str(e)}") from e
 
-    if not isinstance(target_proj, osr.SpatialReference) or target_proj.ExportToWkt() == "":
-        raise ValueError(err_msg)
+    gdal.PopErrorHandler()
+
+    if not target_proj.ExportToWkt():
+        raise ValueError("Resulting projection is empty")
 
     return target_proj.ExportToWkt() if return_wkt else target_proj
 
 
-def _projection_is_latlng(projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]) -> bool:
+def _projection_is_latlng(
+    projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
+) -> bool:
     """Tests if a projection is in latlng format.
 
     Parameters
@@ -240,15 +282,24 @@ def _projection_is_latlng(projection: Union[str, int, gdal.Dataset, ogr.DataSour
 
     Returns
     -------
-    bool:
-        **True** if the projection is in latlng format, **False** otherwise.
+    bool
+        True if the projection is in latlng format, False otherwise.
+
+    Raises
+    ------
+    ValueError
+        If projection is None or cannot be parsed
     """
-    proj = parse_projection(projection)
+    if projection is None:
+        raise ValueError("Projection cannot be None")
 
-    if proj.IsGeographic():
-        return True
+    try:
+        proj = parse_projection(projection)
+        proj = osr.SpatialReference(proj) if isinstance(proj, str) else proj
 
-    return False
+        return bool(proj.IsGeographic())
+    except Exception as e:
+        raise ValueError(f"Could not parse projection: {str(e)}") from e
 
 
 def _check_projections_match(
@@ -261,25 +312,33 @@ def _check_projections_match(
     ----------
     source1 : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
         The first projection to test.
-
     source2 : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
         The second projection to test.
 
     Returns
     -------
-    bool:
-        **True** if the projections match, **False** otherwise.
+    bool
+        True if the projections match, False otherwise.
 
+    Raises
+    ------
+    ValueError
+        If either source is None or cannot be parsed
     """
-    proj1 = parse_projection(source1)
-    proj2 = parse_projection(source2)
+    if source1 is None or source2 is None:
+        raise ValueError("Source projections cannot be None")
 
-    if proj1.IsSame(proj2):
-        return True
-    elif proj1.ExportToProj4() == proj2.ExportToProj4():
-        return True
+    try:
+        proj1 = parse_projection(source1)
+        proj2 = parse_projection(source2)
 
-    return False
+        proj1 = osr.SpatialReference(proj1) if isinstance(proj1, str) else proj1
+        proj2 = osr.SpatialReference(proj2) if isinstance(proj2, str) else proj2
+
+        return bool(proj1.IsSame(proj2) or proj1.ExportToProj4() == proj2.ExportToProj4())
+
+    except Exception as e:
+        raise ValueError(f"Could not compare projections: {str(e)}") from e
 
 
 def _check_projections_match_list(
@@ -294,26 +353,40 @@ def _check_projections_match_list(
 
     Returns
     -------
-    bool:
-        **True** if the projections match, **False** otherwise.
-    """
-    assert isinstance(list_of_projection_sources, list), "list_of_projection_sources must be a list."
+    bool
+        True if the projections match, False otherwise.
 
-    if len(list_of_projection_sources) == 0:
-        raise ValueError("list_of_projection_sources must not be empty.")
+    Raises
+    ------
+    TypeError
+        If list_of_projection_sources is not a list
+    ValueError
+        If list is empty or contains None values
+    """
+    if not isinstance(list_of_projection_sources, list):
+        raise TypeError("list_of_projection_sources must be a list")
+
+    if not list_of_projection_sources:
+        raise ValueError("list_of_projection_sources must not be empty")
+
+    if any(src is None for src in list_of_projection_sources):
+        raise ValueError("list_of_projection_sources cannot contain None values")
 
     if len(list_of_projection_sources) == 1:
         return True
 
-    first = None
-    for index, source in enumerate(list_of_projection_sources):
-        if index == 0:
-            first = parse_projection(source)
-        else:
-            compare = parse_projection(source)
+    first_proj = parse_projection(list_of_projection_sources[0])
+    first_proj = osr.SpatialReference(first_proj) if isinstance(first_proj, str) else first_proj
 
-            if not first.IsSame(compare) and first.ExportToProj4() != compare.ExportToProj4():
+    for source in list_of_projection_sources[1:]:
+        try:
+            current_proj = parse_projection(source)
+            current_proj = osr.SpatialReference(current_proj) if isinstance(current_proj, str) else current_proj
+            if not bool(first_proj.IsSame(current_proj) or
+                       first_proj.ExportToProj4() == current_proj.ExportToProj4()):
                 return False
+        except Exception as e:
+            raise ValueError(f"Could not parse projection: {str(e)}") from e
 
     return True
 
@@ -331,26 +404,47 @@ def _get_projection_from_raster(
 
     Returns
     -------
-    osr.SpatialReference:
+    osr.SpatialReference
         The projection in OSR format.
+
+    Raises
+    ------
+    ValueError
+        If raster is None or invalid type
+    RuntimeError
+        If raster cannot be opened or has no projection
     """
-    opened = None
-    if isinstance(raster, gdal.Dataset):
-        opened = raster
-    else:
-        try:
-            opened = gdal.Open(raster, gdal.GA_ReadOnly)
-        except ValueError:
-            opened = None
+    if raster is None:
+        raise ValueError("Raster cannot be None")
 
-    if opened is None:
-        raise RuntimeError(f"Could not open raster. {raster}")
+    if not isinstance(raster, (str, gdal.Dataset)):
+        raise ValueError(f"Raster must be str or gdal.Dataset, got {type(raster)}")
 
-    projection = osr.SpatialReference()
-    projection.ImportFromWkt(opened.GetProjection())
-    opened = None
+    try:
+        ds = raster if isinstance(raster, gdal.Dataset) else gdal.Open(raster, gdal.GA_ReadOnly)
+        if ds is None:
+            raise RuntimeError(f"Could not open raster: {raster}")
 
-    return projection
+        wkt = ds.GetProjection()
+        if not wkt:
+            raise RuntimeError("Raster has no projection")
+
+        projection = osr.SpatialReference()
+        if projection.ImportFromWkt(wkt) != 0:
+            raise RuntimeError("Failed to parse projection WKT")
+
+        if not projection.ExportToWkt():
+            raise RuntimeError("Resulting projection is empty")
+
+        if ds != raster:
+            ds = None
+
+        return projection
+
+    except Exception as e:
+        if ds != raster:
+            ds = None
+        raise RuntimeError(f"Failed to get projection from raster: {str(e)}") from e
 
 
 def _get_projection_from_vector(
@@ -365,30 +459,51 @@ def _get_projection_from_vector(
 
     Returns
     -------
-    osr.SpatialReference:
+    osr.SpatialReference
         The projection in OSR format.
+
+    Raises
+    ------
+    ValueError
+        If vector is None or invalid type
+    RuntimeError
+        If vector cannot be opened, has no layers, or has no projection
     """
-    opened = None
-    if isinstance(vector, ogr.DataSource):
-        opened = vector
-    else:
-        try:
-            opened = ogr.Open(vector, gdal.GA_ReadOnly)
-        except ValueError:
-            opened = None
+    if vector is None:
+        raise ValueError("Vector cannot be None")
 
-    if opened is None:
-        raise RuntimeError(f"Could not open vector. {vector}")
+    if not isinstance(vector, (str, ogr.DataSource)):
+        raise ValueError(f"Vector must be str or ogr.DataSource, got {type(vector)}")
 
-    layer = opened.GetLayer()
-    projection = layer.GetSpatialRef()
-    opened = None
+    try:
+        ds = vector if isinstance(vector, ogr.DataSource) else ogr.Open(vector, gdal.GA_ReadOnly)
+        if ds is None:
+            raise RuntimeError(f"Could not open vector: {vector}")
 
-    return projection
+        layer = ds.GetLayer()
+        if layer is None:
+            raise RuntimeError("Vector has no layers")
+
+        projection = layer.GetSpatialRef()
+        if projection is None:
+            raise RuntimeError("Vector has no projection")
+
+        if not projection.ExportToWkt():
+            raise RuntimeError("Resulting projection is empty")
+
+        if ds != vector:
+            ds = None
+
+        return projection
+
+    except Exception as e:
+        if ds != vector:
+            ds = None
+        raise RuntimeError(f"Failed to get projection from vector: {str(e)}") from e
 
 
 def _get_projection_from_dataset(
-    dataset: Union[str, gdal.Dataset, ogr.DataSource],
+    dataset: Union[str, gdal.Dataset, ogr.DataSource]
 ) -> osr.SpatialReference:
     """Get the projection from a dataset.
 
@@ -399,32 +514,46 @@ def _get_projection_from_dataset(
 
     Returns
     -------
-    osr.SpatialReference:
+    osr.SpatialReference
         The projection in OSR format.
+
+    Raises
+    ------
+    ValueError
+        If dataset is None or invalid type
+    RuntimeError
+        If dataset cannot be opened or has no projection
     """
-    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), "DataSet must be a string, ogr.DataSource, or gdal.Dataset."
+    if dataset is None:
+        raise ValueError("Dataset cannot be None")
 
-    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+    if not isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)):
+        raise ValueError(f"Dataset must be str, gdal.Dataset, or ogr.DataSource, got {type(dataset)}")
 
-    if opened is None:
-        try:
+    opened = None
+    try:
+        if isinstance(dataset, (gdal.Dataset, ogr.DataSource)):
+            opened = dataset
+        else:
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
             opened = gdal.Open(dataset, gdal.GA_ReadOnly)
-        except ValueError:
-            try:
+            if opened is None:
                 opened = ogr.Open(dataset, gdal.GA_ReadOnly)
-            except ValueError:
-                opened = None
+            gdal.PopErrorHandler()
 
-    if opened is None:
-        raise RuntimeError(f"Could not open dataset. {dataset}")
+        if opened is None:
+            raise RuntimeError(f"Could not open dataset: {dataset}")
 
-    if isinstance(opened, gdal.Dataset):
-        return _get_projection_from_raster(opened)
+        if isinstance(opened, gdal.Dataset):
+            return _get_projection_from_raster(opened)
+        elif isinstance(opened, ogr.DataSource):
+            return _get_projection_from_vector(opened)
+        else:
+            raise RuntimeError(f"Unknown dataset type: {type(opened)}")
 
-    if isinstance(opened, ogr.DataSource):
-        return _get_projection_from_vector(opened)
-
-    raise RuntimeError(f"Could not get projection from dataset. {dataset}")
+    finally:
+        if opened is not None and opened != dataset:
+            opened = None
 
 
 def reproject_bbox(
@@ -451,16 +580,27 @@ def reproject_bbox(
     List[Union[int, float]]:
         The reprojected bbox.
     """
-    assert isinstance(bbox_ogr, list), "bbox_ogr must be a list."
-    assert len(bbox_ogr) == 4, "bbox_ogr must have 4 elements."
+    if not isinstance(bbox_ogr, list):
+        raise ValueError("bbox_ogr must be a list.")
+
+    if len(bbox_ogr) != 4:
+        raise ValueError("bbox_ogr must have 4 elements.")
+
     for val in bbox_ogr:
-        assert isinstance(val, (int, float)), "bbox_ogr must only contain numbers."
-    assert isinstance(source_projection, (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)), "source_projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference."
-    assert isinstance(target_projection, (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)), "target_projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference."
+        if not isinstance(val, (int, float)):
+            raise ValueError("bbox_ogr must only contain numbers.")
+
+    if not isinstance(source_projection, (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)):
+        raise ValueError("source_projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference.")
+
+    if not isinstance(target_projection, (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)):
+        raise ValueError("target_projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference.")
 
     x_min, x_max, y_min, y_max = bbox_ogr
-    assert x_min <= x_max, "x_min must be less than or equal to x_max."
-    assert y_min <= y_max, "y_min must be less than or equal to y_max."
+    if x_min > x_max:
+        raise ValueError("x_min must be less than or equal to x_max.")
+    if y_min > y_max:
+        raise ValueError("y_min must be less than or equal to y_max.")
 
     src_proj = parse_projection(source_projection)
     dst_proj = parse_projection(target_projection)
@@ -490,19 +630,19 @@ def reproject_bbox(
         p2t = transformer.TransformPoint(p2[0], p2[1])
         p3t = transformer.TransformPoint(p3[0], p3[1])
         p4t = transformer.TransformPoint(p4[0], p4[1])
-    except RuntimeError:
+    except (RuntimeError, TypeError):
         try:
             p1t = transformer.TransformPoint(float(p1[0]), float(p1[1]))
             p2t = transformer.TransformPoint(float(p2[0]), float(p2[1]))
             p3t = transformer.TransformPoint(float(p3[0]), float(p3[1]))
             p4t = transformer.TransformPoint(float(p4[0]), float(p4[1]))
-        except:
+        except (RuntimeError, TypeError, ValueError):
             try:
                 p1t = transformer.TransformPoint(p1[1], p1[0])
                 p2t = transformer.TransformPoint(p2[1], p2[0])
                 p3t = transformer.TransformPoint(p3[1], p3[0])
                 p4t = transformer.TransformPoint(p4[1], p4[0])
-            except RuntimeError:
+            except (RuntimeError, TypeError):
                 p1t = transformer.TransformPoint(float(p1[1]), float(p1[0]))
                 p2t = transformer.TransformPoint(float(p2[1]), float(p2[0]))
                 p3t = transformer.TransformPoint(float(p3[1]), float(p3[0]))
@@ -526,84 +666,123 @@ def _reproject_point(
     p: List[Union[int, float]],
     source_projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     target_projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-) -> List[Union[int, float]]:
-    """Reprojects a point.
+) -> List[float]:
+    """Reprojects a point from source to target projection.
 
     Parameters
     ----------
     p : List[Union[int, float]]
-        The point to reproject.
-
+        The point to reproject as [x, y].
     source_projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
         The source projection.
-
     target_projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
         The target projection.
 
     Returns
     -------
-    List[Union[int, float]]:
-        The reprojected point.
+    List[float]
+        The reprojected point as [x, y].
+
+    Raises
+    ------
+    ValueError
+        If point is None, invalid format, or projection is invalid.
+    RuntimeError
+        If reprojection fails.
     """
-    assert isinstance(p, list), "p must be a list."
-    assert len(p) == 2, "p must have 2 elements."
+    if p is None:
+        raise ValueError("Point cannot be None")
 
-    src_proj = parse_projection(source_projection)
-    dst_proj = parse_projection(target_projection)
+    if not isinstance(p, (list, tuple)):
+        raise ValueError("Point must be a list or tuple")
 
-    if _check_projections_match(src_proj, dst_proj):
-        return p
+    if len(p) != 2:
+        raise ValueError("Point must have exactly 2 coordinates")
 
-    options = osr.CoordinateTransformationOptions()
+    if not all(isinstance(x, (int, float)) for x in p):
+        raise ValueError("Point coordinates must be numbers")
 
-    if _projection_is_latlng(dst_proj):
-        options.SetAreaOfInterest(-180.0, -90.0, 180.0, 90.0)
-
-    transformer = osr.CoordinateTransformation(src_proj, dst_proj, options)
-
-    gdal.PushErrorHandler("CPLQuietErrorHandler")
     try:
-        pt = transformer.TransformPoint(p[0], p[1])
-    except RuntimeError:
-        pt = transformer.TransformPoint(float(p[0]), float(p[1]))
-    gdal.PopErrorHandler()
+        src_proj = parse_projection(source_projection)
+        dst_proj = parse_projection(target_projection)
 
-    return [pt[0], pt[1]]
+        # Return original point if projections match
+        if _check_projections_match(src_proj, dst_proj):
+            return [float(p[0]), float(p[1])]
+
+        options = osr.CoordinateTransformationOptions()
+        if _projection_is_latlng(dst_proj):
+            options.SetAreaOfInterest(-180.0, -90.0, 180.0, 90.0)
+
+        transformer = osr.CoordinateTransformation(src_proj, dst_proj, options)
+
+        # Attempt transformation
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
+        try:
+            x, y, _ = transformer.TransformPoint(float(p[0]), float(p[1]))
+            return [x, y]
+        except Exception as e:
+            raise RuntimeError(f"Reprojection failed: {str(e)}") from e
+        finally:
+            gdal.PopErrorHandler()
+
+    except Exception as e:
+        raise ValueError(f"Invalid projection: {str(e)}") from e
 
 
 def _get_utm_zone_from_latlng(
     latlng: List[Union[int, float]],
     return_epsg: bool = False,
-) -> str:
-    """Get the UTM ZONE from a latlng list.
+) -> Union[str, osr.SpatialReference]:
+    """Get the UTM zone from latitude/longitude coordinates.
 
     Parameters
     ----------
     latlng : List[Union[int, float]]
-        The latlng list to get the UTM ZONE from.
-
+        The latitude/longitude coordinates in [lat, lng] format.
     return_epsg : bool, optional
-        Whether or not to return the EPSG code instead of the WKT, by default False
+        Whether to return the EPSG code instead of SpatialReference, by default False.
 
     Returns
     -------
-    str
-        The WKT or EPSG code.
+    Union[str, osr.SpatialReference]
+        Either the EPSG code as string if return_epsg=True,
+        or the UTM projection as SpatialReference.
+
+    Raises
+    ------
+    ValueError
+        If latlng is None, not a list/array, wrong length, or invalid coordinates.
+    RuntimeError
+        If projection creation fails.
     """
-    assert isinstance(latlng, (list, np.ndarray)), "latlng must be in the form of a list."
+    if latlng is None:
+        raise ValueError("latlng cannot be None")
 
-    zone = math.floor(((latlng[1] + 180) / 6) + 1)
-    n_or_s = "S" if latlng[0] < 0 else "N"
+    if not isinstance(latlng, (list, np.ndarray)):
+        raise ValueError("latlng must be a list or numpy array")
 
-    false_northing = "10000000" if n_or_s == "S" else "0"
-    central_meridian = str(zone * 6 - 183)
-    epsg = f"32{'7' if n_or_s == 'S' else '6'}{str(zone)}"
+    if len(latlng) != 2:
+        raise ValueError("latlng must contain exactly 2 coordinates")
+
+    try:
+        lat, lng = float(latlng[0]), float(latlng[1])
+    except (TypeError, ValueError) as exc:
+        raise ValueError("latlng coordinates must be numeric") from exc
+
+    if not -90 <= lat <= 90:
+        raise ValueError("Latitude must be between -90 and 90 degrees")
+    if not -180 <= lng <= 180:
+        raise ValueError("Longitude must be between -180 and 180 degrees")
+
+    zone = math.floor(((lng + 180) / 6) + 1)
+    hemisphere = "S" if lat < 0 else "N"
+    epsg = f"32{'7' if hemisphere == 'S' else '6'}{zone:02d}"
 
     if return_epsg:
         return epsg
 
-    wkt = f"""
-        PROJCS["WGS 84 / UTM zone {str(zone)}{n_or_s}",
+    wkt = f"""PROJCS["WGS 84 / UTM zone {zone}{hemisphere}",
         GEOGCS["WGS 84",
             DATUM["WGS_1984",
                 SPHEROID["WGS 84",6378137,298.257223563,
@@ -616,113 +795,167 @@ def _get_utm_zone_from_latlng(
             AUTHORITY["EPSG","4326"]],
         PROJECTION["Transverse_Mercator"],
         PARAMETER["latitude_of_origin",0],
-        PARAMETER["central_meridian",{central_meridian}],
+        PARAMETER["central_meridian",{zone * 6 - 183}],
         PARAMETER["scale_factor",0.9996],
         PARAMETER["false_easting",500000],
-        PARAMETER["false_northing",{false_northing}],
+        PARAMETER["false_northing",{"10000000" if hemisphere == "S" else "0"}],
         UNIT["metre",1,
             AUTHORITY["EPSG","9001"]],
         AXIS["Easting",EAST],
         AXIS["Northing",NORTH],
-        AUTHORITY["EPSG","{epsg}"]]
-    """
+        AUTHORITY["EPSG","{epsg}"]]"""
+
     projection = osr.SpatialReference()
-    projection.ImportFromWkt(wkt)
+    if projection.ImportFromWkt(wkt) != 0:
+        raise RuntimeError("Failed to create UTM projection")
 
     return projection
 
 
 def _reproject_latlng_point_to_utm(
-    latlng: List[Union[int, float]],
-) -> List[Union[int, float]]:
-    """Converts a latlng point into an UTM point.
-    Takes point in [lat, lng], returns [utm_x, utm_y].
+    latlng: List[Union[int, float]]
+) -> List[float]:
+    """Converts a latlng point into UTM coordinates.
 
     Parameters
     ----------
     latlng : List[Union[int, float]]
-        The latlng point to convert.
+        The latlng point to convert in [lat, lng] format.
 
     Returns
     -------
-    List[Union[int, float]]
-        The converted UTM point.
-    """
-    source_projection = osr.SpatialReference()
-    source_projection_wkt = _get_default_projection()
-    source_projection.ImportFromWkt(source_projection_wkt)
-    target_projection = _get_utm_zone_from_latlng(latlng)
+    List[float]
+        The converted UTM point in [utm_x, utm_y] format.
 
-    transformer = osr.CoordinateTransformation(
-        source_projection, target_projection
-    )
+    Raises
+    ------
+    ValueError
+        If latlng is None, not a list, wrong length, or invalid coordinates.
+    RuntimeError
+        If transformation fails.
+    """
+    if latlng is None:
+        raise ValueError("latlng cannot be None")
+
+    if not isinstance(latlng, (list, np.ndarray)):
+        raise ValueError("latlng must be a list or numpy array")
+
+    if len(latlng) != 2:
+        raise ValueError("latlng must contain exactly 2 coordinates")
 
     try:
-        utm_x, utm_y, _utm_z = transformer.TransformPoint(latlng[0], latlng[1])
-    except: # pylint: disable=bare-except
-        utm_x, utm_y, _utm_z = transformer.TransformPoint(float(latlng[0]), float(latlng[1]))
+        lat, lng = float(latlng[0]), float(latlng[1])
+    except (TypeError, ValueError) as exc:
+        raise ValueError("latlng coordinates must be numeric") from exc
 
-    return [utm_x, utm_y]
+    if not -90 <= lat <= 90:
+        raise ValueError("Latitude must be between -90 and 90 degrees")
+    if not -180 <= lng <= 180:
+        raise ValueError("Longitude must be between -180 and 180 degrees")
+
+    # Get source (WGS84) and target (UTM) projections
+    source_proj = parse_projection("EPSG:4326")
+    target_proj = _get_utm_zone_from_latlng([lat, lng])
+
+    # Create transformation
+    transformer = osr.CoordinateTransformation(source_proj, target_proj)
+
+    # Transform point
+    try:
+        utm_x, utm_y, _ = transformer.TransformPoint(lng, lat)
+        return [utm_x, utm_y]
+    except Exception as e:
+        raise RuntimeError(f"UTM transformation failed: {str(e)}") from e
 
 
 def set_projection(
     dataset: Union[str, gdal.Dataset, ogr.DataSource],
     projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-    flip_y_axis: bool = False,
-    pixel_size_x = 1.0,
-    pixel_size_y = 1.0,
+    pixel_size_x: float = 1.0,
+    pixel_size_y: float = -1.0,
 ) -> None:
-    """Sets the projection of a dataset.
+    """Sets the projection of a dataset and optionally adjusts pixel size.
 
     Parameters
     ----------
     dataset : Union[str, gdal.Dataset, ogr.DataSource]
         The dataset to set the projection of.
-
     projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
         The projection to set.
+    pixel_size_x : float, optional
+        The x pixel size, by default 1.0
+    pixel_size_y : float, optional
+        The y pixel size (negative for north-up), by default -1.0
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If dataset or projection is None or invalid type
+    RuntimeError
+        If dataset cannot be opened or projection cannot be set
     """
-    assert isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)), "DataSet must be a string, ogr.DataSource, or gdal.Dataset."
-    assert isinstance(projection, (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)), "projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference."
+    if dataset is None or projection is None:
+        raise ValueError("Dataset and projection cannot be None")
 
+    if not isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)):
+        raise ValueError("Dataset must be a string, gdal.Dataset, or ogr.DataSource")
+
+    if not isinstance(projection, (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)):
+        raise ValueError("Projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference")
+
+    # Parse projection first to fail early if invalid
+    try:
+        proj = parse_projection(projection)
+        proj = osr.SpatialReference(proj) if isinstance(proj, str) else proj
+    except Exception as e:
+        raise ValueError(f"Invalid projection: {str(e)}") from e
+
+    # Open dataset if string path provided
     opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
-
     if opened is None:
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
         try:
-            opened = gdal.Open(dataset)
-        except ValueError:
-            try:
-                opened = ogr.Open(dataset)
-            except ValueError:
-                opened = None
+            opened = gdal.Open(dataset, gdal.GA_Update)
+            if opened is None:
+                opened = ogr.Open(dataset, 1)  # 1 = Update mode
+        except Exception as e:
+            gdal.PopErrorHandler()
+            raise RuntimeError(f"Could not open dataset: {str(e)}") from e
+        gdal.PopErrorHandler()
 
     if opened is None:
-        raise RuntimeError(f"Could not open dataset. {dataset}")
+        raise RuntimeError(f"Could not open dataset: {dataset}")
 
-    proj = parse_projection(projection)
+    try:
+        # Set projection based on dataset type
+        if isinstance(opened, gdal.Dataset):
+            opened.SetProjection(proj.ExportToWkt())
 
-    if isinstance(opened, gdal.Dataset):
-        opened.SetProjection(proj.ExportToWkt())
-    elif isinstance(opened, ogr.DataSource):
-        layer = opened.GetLayer()
-        layer.SetSpatialRef(proj)
+            # Update geotransform if it's a raster
+            gt = opened.GetGeoTransform()
+            if gt:
+                # Ensure pixel_size_y is negative for north-up orientation
+                pixel_size_y = -abs(pixel_size_y)
+                new_gt = list(gt)
+                new_gt[1] = pixel_size_x  # x pixel size
+                new_gt[5] = pixel_size_y  # y pixel size
+                opened.SetGeoTransform(new_gt)
 
-    gt = opened.GetGeoTransform()
-    x_min, pixel_width, _row_skew, y_max, _column_skew, pixel_height = gt
+        elif isinstance(opened, ogr.DataSource):
+            layer = opened.GetLayer()
+            if layer is None:
+                raise RuntimeError("Vector dataset has no layers")
+            layer.SetSpatialRef(proj)
 
-    x_max = x_min + (opened.RasterXSize * pixel_width)
-    y_min = y_max + (opened.RasterYSize * pixel_height)
+        opened.FlushCache()
 
-    if y_min > y_max:
-        gt = [gt[0], gt[1], gt[2], gt[3], -gt[4], -gt[5]]
+    except Exception as e:
+        raise RuntimeError(f"Failed to set projection: {str(e)}") from e
 
-    if pixel_size_y > 0:
-        pixel_size_y = -1.0 * pixel_size_y
-
-    gt[1] = pixel_size_x
-    gt[-1] = pixel_size_y
-
-    opened.SetGeoTransform(gt)
-
-    opened.FlushCache()
-    opened = None
+    finally:
+        if opened is not None and opened != dataset:
+            opened = None

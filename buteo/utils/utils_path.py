@@ -70,7 +70,7 @@ def _get_vsimem_content(
         raise RuntimeError(f"Failed to access vsimem folder {folder_name}. Error: {e}") from None
 
     # Convert paths to unix style
-    converted = _get_unix_path(vsimem) if vsimem else []
+    converted = _get_unix_path_list(vsimem) if vsimem else []
     return converted if isinstance(converted, list) else [converted]
 
 
@@ -117,52 +117,120 @@ def _glob_vsimem(
         return []
 
 
-def _get_unix_path(path: Union[str, List[str], None]) -> Union[str, List[str]]:
-    """Convert a path or list of paths to unix style path(s).
+def _get_unix_path(path: Union[str, None]) -> str:
+    """Convert a path to unix style path.
     Handles None values, empty strings, and ensures consistent return types.
+    Converts backslashes and forward slashes to unix style forward slashes.
+
+    To handle lists, please use _get_unix_path_list. This function is for single paths.    
 
     Parameters
     ----------
-    path: Union[str, List[str], None]
-        The path(s) to convert. Can be a single path string or list of paths.
+    path: Union[str, None]
+        The path to convert.
 
     Returns
     -------
-    Union[str, List[str]]
-        The converted unix style path(s). Returns empty string for None input.
-        Returns list of strings if input was a list, otherwise returns single string.
+    str
+        The converted unix style path.
 
     Raises
     ------
     TypeError
-        If path contains non-string elements
+        If path is None
+        If path is not a string
+        If path is a list
     ValueError
-        If any path string is empty
+        If path is empty or only whitespace
+    RuntimeError
+        If path conversion fails
+    """
+    # Type checking
+    if path is None:
+        raise TypeError("path cannot be None")
+    if isinstance(path, list):
+        raise TypeError("path must not be a list")
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
+
+    # Value checking
+    if not path.strip():
+        raise ValueError("path cannot be empty or whitespace")
+
+    try:
+        # Normalize path (handles '.' and '..' and multiple slashes)
+        normalized = os.path.normpath(path)
+
+        # Convert to unix style with forward slashes
+        unix_path = "/".join(normalized.split(os.sep))
+
+        # Ensure special paths retain leading slash
+        if path.startswith("/") and not unix_path.startswith("/"):
+            unix_path = f"/{unix_path}"
+
+        # Handle virtual filesystem paths
+        if "vsimem" in unix_path and not unix_path.startswith("/"):
+            unix_path = f"/{unix_path}"
+
+        # Return empty string for empty paths (defensive)
+        return unix_path if unix_path else ""
+
+    except Exception as e:
+        raise RuntimeError(f"Failed to convert path to unix style: {str(e)}") from None
+
+
+def _get_unix_path_list(paths: List[str]) -> List[str]:
+    """Convert a list of paths to unix style paths.
+    Handles empty lists and ensures consistent return types.
+
+    Parameters
+    ----------
+    paths: List[str]
+        The list of paths to convert.
+
+    Returns
+    -------
+    List[str]
+        The converted unix style paths.
+        Returns empty list if input is empty list.
+
+    Raises
+    ------
+    TypeError
+        If paths is not a list or contains non-string elements
+        If paths is None
+    ValueError
+        If any path string is empty or only whitespace
     """
     # Handle None case
-    if path is None:
-        return ""
+    if paths is None:
+        raise TypeError("paths cannot be None")
 
-    # Track input type for consistent return
-    input_is_list = isinstance(path, list)
+    # Type checking
+    if not isinstance(paths, list):
+        raise TypeError("paths must be a list")
 
-    # Convert to list for unified processing
-    paths = path if input_is_list else [path]
+    # Handle empty list
+    if not paths:
+        return []
 
     # Validate inputs
     if not all(isinstance(p, str) for p in paths):
         raise TypeError("All paths must be strings")
-    if any(len(p.strip()) == 0 for p in paths):
-        raise ValueError("Paths cannot be empty strings")
 
-    # Convert paths to unix style
-    unix_paths = [
-        "/".join(os.path.normpath(p).split(os.sep))
-        for p in paths
-    ]
+    # Check for empty strings
+    empty_paths = [p for p in paths if not p.strip()]
+    if empty_paths:
+        raise ValueError(f"Found empty paths at indices: {[paths.index(p) for p in empty_paths]}")
 
-    # Return same type as input
-    return unix_paths if input_is_list else unix_paths[0]
+    try:
+        # Convert paths to unix style
+        unix_paths = [_get_unix_path(p) for p in paths]
+
+        return unix_paths
+
+    except (AttributeError, TypeError) as e:
+        raise RuntimeError(f"Failed to convert paths: {str(e)}") from None
 
 
 def _check_file_exists(path: str) -> bool:
@@ -346,7 +414,6 @@ def _check_dir_exists_vsimem(path: str) -> bool:
 
         # Convert path to unix style and normalize
         unix_path = _get_unix_path(path)
-        unix_path = unix_path[0] if isinstance(unix_path, list) else unix_path
         unix_path = unix_path if unix_path.endswith("/") else unix_path + "/"
 
         # Check if any files in vsimem start with this path
@@ -585,7 +652,6 @@ def _create_dir_if_not_exists(path: str) -> str:
 
     # Normalize path to unix-style
     unix_path = _get_unix_path(path)
-    unix_path = unix_path[0] if isinstance(unix_path, list) else unix_path
 
     # Check if directory already exists (either on disk or in vsimem)
     if _check_dir_exists(unix_path):
@@ -648,13 +714,13 @@ def _get_dir_from_path(path: str) -> str:
             # If path is already a directory, normalize it
             abs_path = os.path.abspath(path)
             unix_path = _get_unix_path(abs_path)
-            unix_path = unix_path[0] if isinstance(unix_path, list) else unix_path
+
             return unix_path if unix_path.endswith("/") else f"{unix_path}/"
         else:
             # Get directory of file path
             dir_path = os.path.dirname(os.path.abspath(path))
             unix_path = _get_unix_path(dir_path)
-            unix_path = unix_path[0] if isinstance(unix_path, list) else unix_path
+
             return unix_path if unix_path.endswith("/") else f"{unix_path}/"
 
     except (OSError, RuntimeError, AttributeError, TypeError, ValueError) as e:
@@ -829,10 +895,6 @@ def _get_changed_path_ext(
 
         # Convert to unix style path and ensure string return type
         unix_path = _get_unix_path(new_path)
-        if isinstance(unix_path, list):
-            if not unix_path:
-                raise RuntimeError("Path conversion failed")
-            return unix_path[0]
 
         return unix_path
 
@@ -1333,42 +1395,69 @@ def _delete_if_required_list(
         warn(f"Error during deletion operations: {str(e)}", UserWarning)
         return False
 
-# TODO: MADE IT TO HERE
 
 def _get_changed_folder(
     path: str,
     target_folder: str,
 ) -> str:
-    """Change the folder of a path.
+    """Change the folder of a path while preserving the filename.
+    Works with both physical and virtual (vsimem) paths.
 
     Parameters
     ----------
     path: str
-        The path to the file.
-
+        The path to modify. Must contain a filename with extension.
     target_folder: str
-        The target folder.
+        The new folder path. Can be physical or virtual (vsimem) path.
 
     Returns
     -------
     str
-        The path with the new folder.
+        The path with the new folder in unix style.
+
+    Raises
+    ------
+    TypeError
+        If path or target_folder are not strings
+    ValueError
+        If path or target_folder are empty strings
+        If path doesn't contain a filename with extension
+    RuntimeError
+        If path manipulation fails
     """
-    assert isinstance(path, str), "path must be a string."
-    assert len(path) > 0, "path must not be non-empty string."
-    assert isinstance(target_folder, str), "target_folder must be a string."
-    assert len(target_folder) > 0, "target_folder must not be non-empty string."
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not isinstance(target_folder, str):
+        raise TypeError("target_folder must be a string")
 
-    filename = _get_filename_from_path(path)
-    joined = os.path.join(target_folder, filename)
+    # Value checking
+    if not path.strip():
+        raise ValueError("path cannot be empty")
+    if not target_folder.strip():
+        raise ValueError("target_folder cannot be empty")
 
-    unix_path = _get_unix_path(joined)
+    try:
+        # Validate path has filename and extension
+        if not _check_is_valid_filepath(path):
+            raise ValueError(f"Invalid file path: {path}")
 
-    return unix_path
+        # Get filename and normalize target folder
+        filename = _get_filename_from_path(path)
+        norm_folder = _get_dir_from_path(target_folder)
+
+        # Join paths and convert to unix style
+        new_path = os.path.join(norm_folder, filename)
+        unix_path = _get_unix_path(new_path)
+
+        return unix_path
+
+    except (OSError, RuntimeError) as e:
+        raise RuntimeError(f"Failed to change folder for path {path}: {str(e)}") from None
 
 
 def _check_is_path_glob(path: str) -> bool:
-    """Check if a path is a glob.
+    """Check if a path is a glob pattern by determining if it ends with ':glob'.
 
     Parameters
     ----------
@@ -1378,44 +1467,99 @@ def _check_is_path_glob(path: str) -> bool:
     Returns
     -------
     bool
-        True if the path is a glob, False otherwise.
+        True if the path ends with ':glob', False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string
+    ValueError
+        If path is empty or only whitespace
     """
-    assert isinstance(path, str), "path must be a string."
-    assert len(path) > 0, "path must not be non-empty string."
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
 
-    if path[-5:] == ":glob":
-        return True
+    # Value checking
+    if not path.strip():
+        raise ValueError("path cannot be empty or whitespace")
 
-    return False
+    try:
+        # Check if path ends with ':glob'
+        # Using endswith is more robust than string slicing
+        return path.endswith(":glob")
+
+    except (AttributeError, TypeError) as e:
+        # Handle any unexpected string operation errors
+        raise TypeError(f"Failed to check if path is glob: {str(e)}") from None
 
 
 def _get_paths_from_glob(path: str) -> List[str]:
-    """Get a list of paths from a glob.
+    """Get a list of paths from a glob pattern. The path must end with ':glob'.
+    Works with both physical filesystem and GDAL virtual filesystems (vsimem).
 
     Parameters
     ----------
     path: str
-        The path to the glob.
+        The path to the glob pattern. Must end with ':glob'.
 
     Returns
     -------
     List[str]
-        The list of paths.
+        The list of matched paths in unix style. Empty list if no matches found.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string
+    ValueError
+        If path is empty or does not end with ':glob'
+    RuntimeError
+        If glob pattern evaluation fails
     """
-    assert isinstance(path, str), "path must be a string."
-    assert len(path) > 0, "path must not be non-empty string."
-    assert _check_is_path_glob(path), "path must be a glob."
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
 
-    pre_glob = path[:-5]
+    # Value checking
+    if not path.strip():
+        raise ValueError("path cannot be empty")
+    if not _check_is_path_glob(path):
+        raise ValueError("path must end with ':glob'")
 
-    if len(pre_glob) > 6 and "vsimem" in pre_glob[:10]:
-        return _glob_vsimem(pre_glob)
+    try:
+        # Remove ':glob' suffix and normalize path
+        pattern = path[:-5].strip()
+        if not pattern:
+            raise ValueError("glob pattern cannot be empty")
 
-    return glob(pre_glob)
+        # Handle virtual filesystem (vsimem)
+        if pattern.startswith("/vsimem/") or "\\vsimem\\" in pattern:
+            matches = _glob_vsimem(pattern)
+        else:
+            matches = glob(pattern)
+
+        try:
+            return_paths = [_get_unix_path(p) for p in matches]
+
+            for p in return_paths:
+                if not _check_is_valid_filepath(p):
+                    raise RuntimeError(f"Invalid file path: {p}")
+
+            return return_paths
+
+        except (OSError, RuntimeError) as e:
+            raise RuntimeError(f"Failed to evaluate glob pattern: {str(e)}") from None
+
+    except Exception as e:
+        if isinstance(e, (TypeError, ValueError, RuntimeError)):
+            raise
+        raise RuntimeError(f"Failed to get paths from glob: {str(e)}") from None
 
 
 def _parse_path(path: str) -> str:
-    """Parse a path to an absolute unix path.
+    """Parse a path to an absolute unix-style path.
+    Works with both physical filesystem and GDAL virtual filesystem paths.
 
     Parameters
     ----------
@@ -1425,16 +1569,40 @@ def _parse_path(path: str) -> str:
     Returns
     -------
     str
-        The parsed path.
+        The parsed absolute unix-style path.
+
+    Raises
+    ------
+    TypeError
+        If path is not a string or is None
+    ValueError
+        If path is empty or consists only of whitespace
+    RuntimeError
+        If path conversion fails
     """
-    assert isinstance(path, str), "path must be a string."
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
 
-    abspath = os.path.abspath(path)
-    if "\\vsimem\\" in abspath:
-        abspath = "/" + abspath.replace(os.path.abspath(os.sep), "")
+    # Value checking
+    if not path.strip():
+        raise ValueError("path cannot be empty or whitespace")
 
-    abspath = _get_unix_path(abspath)
-    return abspath
+    try:
+        # Handle virtual filesystem paths
+        if path.startswith("/vsimem/") or path.startswith("/vsizip/"):
+            unix_path = _get_unix_path(path)
+        else:
+            # Convert to absolute path and handle Windows paths
+            abspath = os.path.abspath(path)
+            if "\\vsimem\\" in abspath:
+                abspath = "/" + abspath.replace(os.path.abspath(os.sep), "")
+            unix_path = _get_unix_path(abspath)
+
+        return unix_path
+
+    except (OSError, RuntimeError) as e:
+        raise RuntimeError(f"Failed to parse path {path}: {str(e)}") from None
 
 
 def _get_augmented_path(
@@ -1446,88 +1614,105 @@ def _get_augmented_path(
     add_uuid: bool = False,
     add_timestamp: bool = False,
 ) -> str:
-    """Augments a path with a prefix, suffix, and uuid.
-    Can also change the output directory.
-
-    `{prefix}{filename}{uuid}{timestamp}{suffix}.{ext}`
+    """Augments a path with a prefix, suffix, and optional components.
+    Format: {prefix}{filename}{uuid}{timestamp}{suffix}.{ext}
 
     Parameters
     ----------
     path: str
         The path to the original file.
-
     prefix: str
         The prefix to add to the path. Default: "".
-
     suffix: str
         The suffix to add to the path. Default: "".
-
-    change_ext: str. Optional.
+    change_ext: Optional[str]
         The extension to change the file to. Default: None.
-
+    folder: Optional[str]
+        The folder to save the file in. Can be /vsimem/ for memory. Default: None.
     add_uuid: bool
-        If True, add a uuid the path. Default: False.
-
+        If True, add a uuid to the path. Default: False.
     add_timestamp: bool
-        If True, add a timestamp to the path. Default: False.
-        Format: YYYYMMDD_HHMMSS.
-
-    folder: str. Optional.
-        The folder to save the file in. This can be specified as
-        /vsimem/ to save the file in memory. Default: None.
+        If True, add a timestamp (YYYYMMDD_HHMMSS). Default: False.
 
     Returns
     -------
     str
-        The augmented path.
+        The augmented path in unix style.
+
+    Raises
+    ------
+    TypeError
+        If inputs are not of correct type
+    ValueError
+        If path is empty or invalid
+    RuntimeError
+        If path manipulation fails
     """
-    assert isinstance(path, str), "path must be a string."
-    assert isinstance(prefix, str), "prefix must be a string."
-    assert isinstance(suffix, str), "suffix must be a string."
-    assert isinstance(add_uuid, bool), "add_uuid must be a bool."
-    assert folder is None or isinstance(folder, str), "folder must be a string."
-    assert change_ext is None or isinstance(change_ext, str), "change_ext must be a string."
-    assert len(path) > 0, "path must not be non-empty string."
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
+    if not isinstance(prefix, str):
+        raise TypeError("prefix must be a string")
+    if not isinstance(suffix, str):
+        raise TypeError("suffix must be a string")
+    if not isinstance(add_uuid, bool):
+        raise TypeError("add_uuid must be a bool")
+    if not isinstance(add_timestamp, bool):
+        raise TypeError("add_timestamp must be a bool")
+    if change_ext is not None and not isinstance(change_ext, str):
+        raise TypeError("change_ext must be None or string")
+    if folder is not None and not isinstance(folder, str):
+        raise TypeError("folder must be None or string")
 
-    path = os.path.abspath(path)
-    if "\\vsimem\\" in path:
-        path = "/" + path.replace(os.path.abspath(os.sep), "")
+    # Value checking
+    if not path.strip():
+        raise ValueError("path cannot be empty")
+    if folder is not None and not folder.strip():
+        raise ValueError("folder cannot be empty")
+    if change_ext is not None and not change_ext.strip():
+        raise ValueError("change_ext cannot be empty")
 
-    path = _get_unix_path(path)
+    try:
+        # Parse and normalize input path
+        parsed_path = _parse_path(path)
+        if not _check_is_valid_filepath(parsed_path):
+            raise ValueError(f"Invalid file path: {parsed_path}")
 
-    # Find the target folder
-    target_folder = _get_dir_from_path(path)
-    if folder is not None:
-        assert len(folder) > 0, "folder must not be non-empty string."
-        target_folder = _get_dir_from_path(folder)
+        # Handle target folder
+        target_folder = _get_dir_from_path(parsed_path)
+        if folder is not None:
+            target_folder = _get_dir_from_path(folder)
+            if not _check_dir_exists(target_folder):
+                raise ValueError(f"Target folder does not exist: {target_folder}")
 
-    # Find the target extension
-    ext = _get_ext_from_path(path)
-    if change_ext is not None:
-        assert len(change_ext) > 0, "change_ext must not be non-empty string."
-        assert isinstance(change_ext, str), "change_ext must be a string."
-        ext = change_ext
+        # Handle extension
+        try:
+            ext = _get_ext_from_path(parsed_path)
+            if change_ext is not None:
+                ext = change_ext.lstrip(".").lower()
+        except (RuntimeError, ValueError) as e:
+            raise ValueError(f"Failed to process extension: {str(e)}") from None
 
-    ext = ext.lstrip(".").lower()
+        # Get base filename without extension
+        filename = _get_filename_from_path(parsed_path, with_ext=False)
 
-    filename = _get_filename_from_path(path, with_ext=False)
+        # Add optional components
+        uuid_str = f"_{uuid4().int}" if add_uuid else ""
+        timestamp_str = f"_{utils_base._get_time_as_str()}" if add_timestamp else ""
 
-    if add_uuid:
-        uuid = "_" + str(uuid4().int)
-    else:
-        uuid = ""
+        # Construct new filename
+        augmented_filename = f"{prefix}{filename}{uuid_str}{timestamp_str}{suffix}.{ext}"
 
-    if add_timestamp:
-        timestamp = "_" + utils_base._get_time_as_str()
-    else:
-        timestamp = ""
+        # Join with target folder and normalize
+        augmented_path = os.path.join(target_folder, augmented_filename)
+        unix_path = _get_unix_path(augmented_path)
 
-    augmented_filename = f"{prefix}{filename}{uuid}{timestamp}{suffix}.{ext}"
-    augmented_path = os.path.join(target_folder, augmented_filename)
+        return unix_path
 
-    augmented_path = _get_unix_path(augmented_path)
-
-    return augmented_path
+    except Exception as e:
+        if isinstance(e, (TypeError, ValueError, RuntimeError)):
+            raise
+        raise RuntimeError(f"Failed to augment path: {str(e)}") from None
 
 
 def _get_augmented_path_list(
@@ -1539,60 +1724,98 @@ def _get_augmented_path_list(
     add_uuid: bool = False,
     add_timestamp: bool = False,
 ) -> List[str]:
-    """Augments a list of paths with a prefix, suffix, and uuid.
-    Can also change the output directory.
+    """Augments a list of paths with prefix, suffix, and optional components.
+    Format for each path: {prefix}{filename}{uuid}{timestamp}{suffix}.{ext}
 
     Parameters
     ----------
     path_list: List[str]
-        The list of paths to the original files.
-
+        The list of paths to augment.
     prefix: str
-        The prefix to add to the path. Default: "".
-
+        The prefix to add to each path. Default: "".
     suffix: str
-        The suffix to add to the path. Default: "".
-
-    change_ext: str. Optional.
-        The extension to change the file to. Default: None.
-
-    folder: str. Optional.
-        The folder to save the file in. This can be specified as
-        /vsimem/ to save the file in memory.
-
+        The suffix to add to each path. Default: "".
+    change_ext: Optional[str]
+        The extension to change the files to. Default: None.
+    folder: Optional[str]
+        The folder to save files in. Can be /vsimem/ for memory. Default: None.
     add_uuid: bool
-        If True, add a uuid the path. Default: False.
+        If True, add a uuid to each path. Default: False.
+    add_timestamp: bool
+        If True, add a timestamp to each path. Default: False.
 
     Returns
     -------
     List[str]
-        The augmented paths.
+        The list of augmented paths in unix style.
+
+    Raises
+    ------
+    TypeError
+        If inputs are not of correct type
+    ValueError
+        If path_list is empty or contains invalid paths
+    RuntimeError
+        If path augmentation fails
     """
-    assert isinstance(path_list, list), "path_list must be a list."
-    assert len(path_list) > 0, "path_list must not be empty."
-    assert isinstance(prefix, str), "prefix must be a string."
-    assert isinstance(suffix, str), "suffix must be a string."
-    assert isinstance(add_uuid, bool), "add_uuid must be a bool."
-    assert change_ext is None or isinstance(change_ext, str), "change_ext must be a string."
-    assert folder is None or isinstance(folder, str), "folder must be a string."
-    assert change_ext is None or isinstance(change_ext, str), "change_ext must be a string."
-    assert isinstance(add_timestamp, bool), "add_timestamp must be a bool."
+    # Type checking
+    if not isinstance(path_list, list):
+        raise TypeError("path_list must be a list")
+    if not isinstance(prefix, str):
+        raise TypeError("prefix must be a string")
+    if not isinstance(suffix, str):
+        raise TypeError("suffix must be a string")
+    if not isinstance(add_uuid, bool):
+        raise TypeError("add_uuid must be a bool")
+    if not isinstance(add_timestamp, bool):
+        raise TypeError("add_timestamp must be a bool")
+    if change_ext is not None and not isinstance(change_ext, str):
+        raise TypeError("change_ext must be None or string")
+    if folder is not None and not isinstance(folder, str):
+        raise TypeError("folder must be None or string")
 
-    augmented_path_list = []
-    for path in path_list:
-        augmented_path_list.append(
-            _get_augmented_path(
-                path,
-                prefix=prefix,
-                suffix=suffix,
-                change_ext=change_ext,
-                folder=folder,
-                add_uuid=add_uuid,
-                add_timestamp=add_timestamp,
-            )
-        )
+    # Value checking
+    if not path_list:
+        raise ValueError("path_list cannot be empty")
+    if folder is not None and not folder.strip():
+        raise ValueError("folder cannot be empty")
+    if change_ext is not None and not change_ext.strip():
+        raise ValueError("change_ext cannot be empty")
 
-    return augmented_path_list
+    try:
+        augmented_paths: List[str] = []
+
+        for path in path_list:
+            if path is None:
+                raise TypeError("Paths in path_list cannot be None")
+            if not isinstance(path, str):
+                raise TypeError("All paths must be strings")
+            if not path.strip():
+                raise ValueError("Paths cannot be empty strings")
+
+            try:
+                augmented_path = _get_augmented_path(
+                    path,
+                    prefix=prefix,
+                    suffix=suffix,
+                    change_ext=change_ext,
+                    folder=folder,
+                    add_uuid=add_uuid,
+                    add_timestamp=add_timestamp,
+                )
+                augmented_paths.append(augmented_path)
+            except (TypeError, ValueError, RuntimeError) as e:
+                raise RuntimeError(f"Failed to augment path {path}: {str(e)}") from None
+
+        if not augmented_paths:  # Defensive check
+            raise RuntimeError("No paths were successfully augmented")
+
+        return augmented_paths
+
+    except Exception as e:
+        if isinstance(e, (TypeError, ValueError, RuntimeError)):
+            raise
+        raise RuntimeError(f"Failed to process path list: {str(e)}") from None
 
 
 def _get_temp_filepath(
@@ -1608,71 +1831,93 @@ def _get_temp_filepath(
 
     Parameters
     ----------
-    name: Union[str, gdal.Dataset, ogr.DataSource], Optional.
-        The name of the file. Default: "temp".
-
-    ext: str, Optional.
-        The extension of the file. Default: ".tif".
-
-    prefix: str, Optional.
+    name: Union[str, gdal.Dataset, ogr.DataSource]
+        The name or dataset to base the filename on. Default: "temp".
+    ext: Optional[str]
+        The extension of the file. If None, tries to derive from name. Default: None.
+    prefix: str
         The prefix to add to the path. Default: "".
-
-    suffix: str, Optional.
+    suffix: str
         The suffix to add to the path. Default: "".
-
-    add_uuid: bool, Optional.
-        If True, add a uuid the path. Default: True.
-
-    add_timestamp: bool, Optional.
-        If True, add a timestamp to the path. Default: True.
-        Format: YYYYMMDD_HHMMSS.
+    add_uuid: bool
+        If True, add a uuid to the path. Default: False.
+    add_timestamp: bool
+        If True, add a timestamp (YYYYMMDD_HHMMSS). Default: False.
 
     Returns
     -------
     str
-        The temporary filepath. (e.g. /vsimem/temp_20210101_000000_123456789.tif)
+        The temporary filepath in unix style (e.g. /vsimem/temp_20210101_000000_123456789.tif)
+
+    Raises
+    ------
+    TypeError
+        If inputs are not of correct type
+    ValueError
+        If inputs are invalid or empty
+    RuntimeError
+        If path creation fails
     """
-    assert isinstance(name, (str, ogr.DataSource, gdal.Dataset)), "name must be a string or dataset"
-    assert isinstance(ext, (str, type(None))), "ext must be a string or None."
-    assert isinstance(prefix, str), "prefix must be a string."
-    assert isinstance(suffix, str), "suffix must be a string."
-    assert isinstance(add_uuid, bool), "add_uuid must be a bool."
-    assert isinstance(add_timestamp, bool), "add_timestamp must be a bool."
+    # Type checking
+    if not isinstance(name, (str, gdal.Dataset, ogr.DataSource)):
+        raise TypeError("name must be a string or GDAL/OGR dataset")
+    if not isinstance(prefix, str):
+        raise TypeError("prefix must be a string")
+    if not isinstance(suffix, str):
+        raise TypeError("suffix must be a string")
+    if not isinstance(add_uuid, bool):
+        raise TypeError("add_uuid must be a bool")
+    if not isinstance(add_timestamp, bool):
+        raise TypeError("add_timestamp must be a bool")
+    if ext is not None and not isinstance(ext, str):
+        raise TypeError("ext must be None or string")
 
-    if isinstance(name, gdal.Dataset):
-        path = name.GetDescription()
-        name = os.path.splitext(os.path.basename(path))[0]
-    elif isinstance(name, ogr.DataSource):
-        path = name.GetDescription()
-        name = os.path.splitext(os.path.basename(path))[0]
-    else:
-        path = name
-        name = os.path.splitext(os.path.basename(name))[0]
+    try:
+        # Extract base name from input
+        if isinstance(name, (gdal.Dataset, ogr.DataSource)):
+            path = name.GetDescription()
+            if not path:
+                raise ValueError("Dataset has no description/path")
+            base_name = _get_filename_from_path(path, with_ext=False)
+        else:
+            if not name.strip():
+                raise ValueError("name cannot be empty")
+            base_name = _get_filename_from_path(name, with_ext=False)
 
-    if add_uuid:
-        uuid = "_" + str(uuid4().int)
-    else:
-        uuid = ""
+        # Handle extension
+        if ext is None:
+            try:
+                if isinstance(name, (str, gdal.Dataset, ogr.DataSource)):
+                    ext = _get_ext_from_path(name if isinstance(name, str) else name.GetDescription())
+                else:
+                    ext = "tif"  # Default extension
+            except (RuntimeError, ValueError):
+                ext = "tif"  # Fallback extension
+        else:
+            ext = ext.lstrip(".").lower()
 
-    if add_timestamp:
-        timestamp = "_" + utils_base._get_time_as_str()
-    else:
-        timestamp = ""
+        if not utils_gdal._check_is_valid_ext(ext):
+            raise ValueError(f"Invalid extension: {ext}")
 
-    if ext is None:
-        ext = _get_ext_from_path(path)
+        # Add optional components
+        uuid_str = f"_{uuid4().int}" if add_uuid else ""
+        timestamp_str = f"_{utils_base._get_time_as_str()}" if add_timestamp else ""
 
-    assert utils_gdal._check_is_valid_ext(ext), f"ext must be a valid extension. {ext} is not valid."
+        # Construct filename
+        filename = f"{prefix}{base_name}{uuid_str}{timestamp_str}{suffix}.{ext}"
+        filepath = _get_unix_path(os.path.join("/vsimem/", filename))
 
-    filename = f"{prefix}{name}{uuid}{timestamp}{suffix}.{ext.lstrip('.').lower()}"
-    filepath = os.path.join("/vsimem/", filename)
+        # Handle filename collisions
+        if _check_file_exists(filepath):
+            counter = 1
+            while _check_file_exists(filepath):
+                new_filename = f"{prefix}{base_name}{uuid_str}{timestamp_str}{suffix}_{counter}.{ext}"
+                filepath = _get_unix_path(os.path.join("/vsimem/", new_filename))
+                counter += 1
 
-    # Add _1, _2, etc. if the file already exists
-    if _check_file_exists(filepath):
-        i = 1
-        while _check_file_exists(filepath):
-            filename = f"{prefix}{name}{uuid}{timestamp}{suffix}_{i}.{ext.lstrip('.').lower()}"
-            filepath = os.path.join("/vsimem/", filename)
-            i += 1
+        return filepath
 
-    return filepath
+    except Exception as e:
+        if isinstance(e, (TypeError, ValueError)):
+            raise
+        raise RuntimeError(f"Failed to create temporary filepath: {str(e)}") from None

@@ -57,6 +57,7 @@ def test_raster_to_array_custom_fill_value():
 
 def test_raster_to_array_cast_dtype():
     raster_path = create_sample_raster(width=10, height=10, bands=1)
+    import pdb; pdb.set_trace()
     array = core_raster_io.raster_to_array(raster_path, cast=np.int16)
 
     assert array.shape == (10, 10, 1)
