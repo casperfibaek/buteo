@@ -156,10 +156,10 @@ def _get_basic_metadata_raster(
         else:
             raise e
     try:
-        bounds_latlng = utils_bbox._get_bounds_from_bbox(bbox, projection_osr, wkt=False)
+        bounds_latlng = utils_bbox._get_bounds_from_bbox_as_geom(bbox, projection_osr)
     except RuntimeError as e:
         if e.args[0] == "Point outside of projection domain":
-            bounds_latlng = utils_bbox._get_bounds_from_bbox(bbox_latlng, utils_projection._get_default_projection_osr(), wkt=False)
+            bounds_latlng = utils_bbox._get_bounds_from_bbox_as_geom(bbox_latlng, utils_projection._get_default_projection_osr())
         else:
             raise e
 

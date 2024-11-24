@@ -30,7 +30,7 @@ def _check_is_valid_bbox(bbox_ogr: List[Union[int, float]]) -> bool:
 
     A valid OGR formatted bbox has the form:
         `[x_min, x_max, y_min, y_max]`
-    
+
     The following rules apply:
     - Must be a list of 4 numbers
     - x_min must be less than or equal to x_max
@@ -120,7 +120,7 @@ def _check_is_valid_bbox_latlng(bbox_ogr_latlng: List[Union[int, float]]) -> boo
     -------
     bool
         True if the bbox is valid lat/long coordinates, False otherwise.
-    
+
     Examples
     --------
     >>> _check_is_valid_bbox_latlng([-180, 180, -90, 90])
@@ -313,7 +313,7 @@ def _get_bbox_from_geotransform(
     geotransform: List[Union[int, float]],
     raster_x_size: int,
     raster_y_size: int,
-) -> List[float]:
+) -> List[Union[int, float]]:
     """Get an OGR bounding box from a geotransform and raster sizes.
 
     Parameters
@@ -574,7 +574,7 @@ def _get_bbox_from_vector_layer(
 
 def get_bbox_from_dataset(
     dataset: Union[str, gdal.Dataset, ogr.DataSource],
-) -> List[float]:
+) -> List[Union[int, float]]:
     """Get the bbox from a dataset.
     The bounding box is in the same projection as the dataset.
     If you want the Bounding Box in WGS84, use `get_bbox_from_dataset_wgs84`.
@@ -652,7 +652,7 @@ def get_bbox_from_dataset(
 def _get_sub_geotransform(
     geotransform: List[Union[int, float]],
     bbox_ogr: List[Union[int, float]],
-) -> Dict[str, Union[List[float], int]]:
+) -> Dict[str, Union[List[Union[int, float]], Union[int, float]]]:
     """Create a GeoTransform and the raster sizes for an OGR formatted bbox.
 
     Parameters
@@ -666,11 +666,11 @@ def _get_sub_geotransform(
 
     Returns
     -------
-    Dict[str, Union[List[float], int]]
+    Dict[str, Union[List[Union[int, float]], Union[int, float]]]
         Dictionary containing:
-        - "Transform": List[float] - The geotransform parameters
-        - "RasterXSize": int - Number of pixels in X direction
-        - "RasterYSize": int - Number of pixels in Y direction
+        - "Transform": List[Union[int, float]] - The geotransform parameters
+        - "RasterXSize": Union[int, float] - Number of pixels in X direction
+        - "RasterYSize": Union[int, float] - Number of pixels in Y direction
 
     Raises
     ------
@@ -1114,7 +1114,7 @@ def _get_wkt_from_bbox(
 
 def _get_geojson_from_bbox(
     bbox_ogr: List[Union[int, float]],
-) -> Dict[str, Union[str, List[List[List[float]]]]]:
+) -> Dict[str, Union[str, List[List[List[Union[int, float]]]]]]:
     """Converts an OGR formatted bbox to a GeoJson dictionary.
     `[x_min, x_max, y_min, y_max] -> GeoJson`
 
@@ -1126,7 +1126,7 @@ def _get_geojson_from_bbox(
 
     Returns
     -------
-    Dict[str, Union[str, List[List[List[float]]]]]
+    Dict[str, Union[str, List[List[List[Union[int, float]]]]]]
         A GeoJson dictionary with the following structure:
         `{ "type": "Polygon", "coordinates": [[[float, float], ...]] }`
 
@@ -1302,7 +1302,7 @@ def _check_bboxes_intersect(
     bbox1_ogr : List[Union[int, float]]
         An OGR formatted bbox.
         `[x_min, x_max, y_min, y_max]`
-    bbox2_ogr : List[Union[int, float]] 
+    bbox2_ogr : List[Union[int, float]]
         An OGR formatted bbox.
         `[x_min, x_max, y_min, y_max]`
 
@@ -1310,19 +1310,19 @@ def _check_bboxes_intersect(
     -------
     bool
         True if the bboxes intersect, False otherwise.
-        
+
     Raises
     ------
     TypeError
         If either bbox is None or not a list/tuple
-    ValueError 
+    ValueError
         If either bbox is not a valid OGR formatted bbox
 
     Examples
     --------
     >>> _check_bboxes_intersect([0, 1, 0, 1], [0.5, 1.5, 0.5, 1.5])
     True
-    >>> _check_bboxes_intersect([0, 1, 0, 1], [2, 3, 2, 3]) 
+    >>> _check_bboxes_intersect([0, 1, 0, 1], [2, 3, 2, 3])
     False
     >>> _check_bboxes_intersect(None, [0, 1, 0, 1])
     Raises TypeError
@@ -1443,7 +1443,7 @@ def _check_bboxes_within(
 def _get_intersection_bboxes(
     bbox1_ogr: List[Union[int, float]],
     bbox2_ogr: List[Union[int, float]],
-) -> List[float]:
+) -> List[Union[int, float]]:
     """Get the intersection of two OGR formatted bboxes.
 
     Parameters
@@ -1457,7 +1457,7 @@ def _get_intersection_bboxes(
 
     Returns
     -------
-    List[float]
+    List[Union[int, float]]
         An OGR formatted bbox of the intersection.
         All values are returned as floats for consistency.
 
@@ -1521,7 +1521,7 @@ def _get_intersection_bboxes(
 def _get_union_bboxes(
     bbox1_ogr: List[Union[int, float]],
     bbox2_ogr: List[Union[int, float]]
-) -> List[float]:
+) -> List[Union[int, float]]:
     """Get the union of two OGR formatted bboxes.
 
     Parameters
@@ -1535,7 +1535,7 @@ def _get_union_bboxes(
 
     Returns
     -------
-    List[float]
+    List[Union[int, float]]
         An OGR formatted bbox of the union.
         All values are returned as floats for consistency.
 
@@ -1611,7 +1611,7 @@ def _get_aligned_bbox_to_pixel_size(
     bbox2_ogr: List[Union[int, float]],
     pixel_width: Union[int, float],
     pixel_height: Union[int, float],
-) -> List[float]:
+) -> List[Union[int, float]]:
     """Aligns two OGR formatted bboxes to a pixel size. Output is an augmented version
     of bbox2 aligned to bbox1's grid.
 
@@ -1630,7 +1630,7 @@ def _get_aligned_bbox_to_pixel_size(
 
     Returns
     -------
-    List[float]
+    List[Union[int, float]]
         An OGR formatted bbox of the alignment.
         `[x_min, x_max, y_min, y_max]`
         All values are returned as float for consistency.
@@ -1703,89 +1703,58 @@ def _get_aligned_bbox_to_pixel_size(
         raise ValueError(f"Error during bbox alignment: {str(e)}") from e
 
 
-def _get_bounds_from_bbox(
+def _transform_point(point: List[float], transformer: osr.CoordinateTransformation) -> List[Union[int, float]]:
+    """Transform a point using the provided transformer.
+
+    Parameters
+    ----------
+    point : List[float]
+        A point to transform [x, y].
+    transformer : osr.CoordinateTransformation
+        The coordinate transformer.
+
+    Returns
+    -------
+    List[float]
+        The transformed point [y, x].
+
+    Raises
+    ------
+    ValueError
+        If the point transformation fails.
+    """
+    try:
+        transformed = transformer.TransformPoint(point[0], point[1])
+        if transformed is None:
+            raise ValueError("TransformPoint returned None")
+        return [float(transformed[1]), float(transformed[0])]
+    except (RuntimeError, ValueError) as e:
+        raise ValueError(f"Failed to transform point {point}: {str(e)}") from e
+
+
+def _transform_bbox_coordinates(
     bbox_ogr: List[Union[int, float]],
-    projection_osr: osr.SpatialReference,
-    wkt: bool = True,
-) -> Union[str, ogr.Geometry]:
-    """Convert a bounding box from one projection to WGS84, preserving the actual shape
-    of the bounds rather than using a simple bbox reprojection.
+    transformer: osr.CoordinateTransformation,
+) -> List[List[float]]:
+    """Transform bbox corners using coordinate transformation.
 
     Parameters
     ----------
     bbox_ogr : List[Union[int, float]]
-        An OGR formatted bbox.
-        `[x_min, x_max, y_min, y_max]`
-    projection_osr : osr.SpatialReference
-        The projection of the input bbox
-    wkt : bool, optional
-        If True, returns WKT string. If False, returns OGR Geometry.
-        Default is True.
+        An OGR formatted bbox. [x_min, x_max, y_min, y_max]
+    transformer : osr.CoordinateTransformation
+        The coordinate transformer to use.
 
     Returns
     -------
-    Union[str, ogr.Geometry]
-        If wkt=True, returns WKT string representation of the transformed geometry
-        If wkt=False, returns OGR Geometry object
+    List[List[float]]
+        List of transformed coordinates [[x1, y1], [x2, y2], [x3, y3], [x4, y4]].
 
     Raises
     ------
-    TypeError
-        If bbox_ogr is None or not a list/tuple
-        If projection_osr is None or not an osr.SpatialReference
     ValueError
-        If bbox_ogr is not a valid bbox
-        If coordinate transformation fails
-        If geometry creation fails
-
-    Examples
-    --------
-    >>> proj = osr.SpatialReference()
-    >>> proj.ImportFromEPSG(32633)  # UTM 33N
-    >>> bbox = [500000, 600000, 5000000, 5100000]
-    >>> result = _get_bounds_from_bbox(bbox, proj)
-    >>> isinstance(result, str)  # WKT string
-    True
+        If coordinate transformation fails.
     """
-    # Input validation
-    if bbox_ogr is None:
-        raise TypeError("bbox_ogr cannot be None")
-
-    if projection_osr is None:
-        raise TypeError("projection_osr cannot be None")
-
-    if not isinstance(bbox_ogr, (list, tuple)):
-        raise TypeError(f"bbox_ogr must be a list or tuple, got {type(bbox_ogr)}")
-
-    if not isinstance(projection_osr, osr.SpatialReference):
-        raise TypeError(f"projection_osr must be osr.SpatialReference, got {type(projection_osr)}")
-
-    if not isinstance(wkt, bool):
-        raise TypeError(f"wkt must be a boolean, got {type(wkt)}")
-
-    if not _check_is_valid_bbox(bbox_ogr):
-        raise ValueError(f"Invalid bbox format: {bbox_ogr}")
-
-    # Get WGS84 projection
-    default_projection = utils_projection._get_default_projection_osr()
-
-    # If already in WGS84, just return the bbox geometry
-    if utils_projection._check_projections_match(projection_osr, default_projection):
-        try:
-            geom = _get_geom_from_bbox(bbox_ogr)
-            return geom.ExportToWkt() if wkt else geom
-        except Exception as e:
-            raise ValueError(f"Failed to create geometry from bbox: {str(e)}") from e
-
-    # Set up coordinate transformation
-    try:
-        options = osr.CoordinateTransformationOptions()
-        options.SetAreaOfInterest(-180.0, -90.0, 180.0, 90.0)
-        transformer = osr.CoordinateTransformation(projection_osr, default_projection, options)
-    except Exception as e:
-        raise ValueError(f"Failed to create coordinate transformation: {str(e)}") from e
-
-    # Extract coordinates
     x_min, x_max, y_min, y_max = map(float, bbox_ogr)
     corners = [
         [x_min, y_min],  # lower left
@@ -1794,84 +1763,147 @@ def _get_bounds_from_bbox(
         [x_min, y_max],  # upper left
     ]
 
-    # Transform coordinates with multiple fallback attempts
     transformed_points = []
     gdal.PushErrorHandler("CPLQuietErrorHandler")
-
     try:
-        for point in corners:
-            try:
-                # First attempt: direct transformation
-                try:
-                    transformed = transformer.TransformPoint(point[0], point[1])
-                    if transformed is None:
-                        raise ValueError("TransformPoint returned None") # pylint: disable=raise-missing-from
-                    transformed_points.append([float(transformed[1]), float(transformed[0])])
-                    continue
-                except (RuntimeError, ValueError) as transform_error:
-                    # Let second attempt handle it
-                    try:
-                        # Second attempt: explicit float conversion
-                        transformed = transformer.TransformPoint(float(point[0]), float(point[1]))
-                        if transformed is None:
-                            raise ValueError("TransformPoint returned None") # pylint: disable=raise-missing-from
-                        transformed_points.append([float(transformed[1]), float(transformed[0])])
-                        continue
-                    except (RuntimeError, ValueError, TypeError) as float_error:
-                        # Let third attempt handle it
-                        try:
-                            # Third attempt: swap coordinates
-                            transformed = transformer.TransformPoint(point[1], point[0])
-                            if transformed is None:
-                                raise ValueError("TransformPoint returned None") # pylint: disable=raise-missing-from
-                            transformed_points.append([float(transformed[1]), float(transformed[0])])
-                            continue
-                        except (RuntimeError, ValueError) as swap_error:
-                            raise ValueError(
-                                f"Failed to transform point {point}. "
-                                f"Original error: {str(transform_error)}, "
-                                f"Float error: {str(float_error)}, "
-                                f"Swap error: {str(swap_error)}"
-                            ) from swap_error
-
-            except ValueError as point_error:
-                raise ValueError(f"Point transformation failed: {str(point_error)}") from point_error
-
-    except Exception as e:
-        raise RuntimeError(f"Failed to transform coordinates: {str(e)}") from e
-
+        transformed_points = [_transform_point(point, transformer) for point in corners]
+        if len(transformed_points) != 4:
+            raise ValueError("Failed to transform all corners")
+        return transformed_points
     finally:
         gdal.PopErrorHandler()
 
-    if len(transformed_points) != 4:
-        raise ValueError(f"Failed to transform all corners. Got {len(transformed_points)} points instead of 4")
 
-    # Create geometry
+def _create_polygon_from_points(points: List[List[float]]) -> ogr.Geometry:
+    """Create a polygon geometry from a list of points.
+
+    Parameters
+    ----------
+    points : List[List[float]]
+        List of coordinates [[x1, y1], [x2, y2], ...].
+
+    Returns
+    -------
+    ogr.Geometry
+        A valid polygon geometry.
+
+    Raises
+    ------
+    ValueError
+        If geometry creation fails.
+    """
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    for point in points:
+        ring.AddPoint(point[0], point[1])
+    ring.AddPoint(points[0][0], points[0][1])  # Close the ring
+
+    polygon = ogr.Geometry(ogr.wkbPolygon)
+    if polygon.AddGeometry(ring) != 0:
+        raise ValueError("Failed to create polygon from points")
+
+    if not polygon.IsValid():
+        raise ValueError("Created geometry is invalid")
+
+    return polygon
+
+
+def _get_bounds_from_bbox_as_geom(
+    bbox_ogr: List[Union[int, float]],
+    projection_osr: osr.SpatialReference,
+) -> ogr.Geometry:
+    """Convert a bounding box from one projection to WGS84 and return as OGR Geometry.
+
+    Parameters
+    ----------
+    bbox_ogr : List[Union[int, float]]
+        An OGR formatted bbox. [x_min, x_max, y_min, y_max]
+    projection_osr : osr.SpatialReference
+        The projection of the input bbox.
+
+    Returns
+    -------
+    ogr.Geometry
+        OGR Geometry object of the transformed geometry.
+
+    Raises
+    ------
+    TypeError
+        If inputs are None or of invalid type.
+    ValueError
+        If bbox is invalid or transformation fails.
+    """
+    if bbox_ogr is None or projection_osr is None:
+        raise TypeError("bbox_ogr and projection_osr cannot be None")
+
+    if not isinstance(bbox_ogr, (list, tuple)):
+        raise TypeError(f"bbox_ogr must be a list or tuple, got {type(bbox_ogr)}")
+
+    if not isinstance(projection_osr, osr.SpatialReference):
+        raise TypeError(f"projection_osr must be osr.SpatialReference, got {type(projection_osr)}")
+
+    if not _check_is_valid_bbox(bbox_ogr):
+        raise ValueError(f"Invalid bbox format: {bbox_ogr}")
+
+    default_projection = utils_projection._get_default_projection_osr()
+
+    # Return untransformed geometry if already in WGS84
+    if utils_projection._check_projections_match(projection_osr, default_projection):
+        return _get_geom_from_bbox(bbox_ogr)
+
+    # Create transformer with area of interest
     try:
-        ring = ogr.Geometry(ogr.wkbLinearRing)
-        for point in transformed_points:
-            ring.AddPoint(point[0], point[1])
-        # Close the ring
-        ring.AddPoint(transformed_points[0][0], transformed_points[0][1])
-
-        polygon = ogr.Geometry(ogr.wkbPolygon)
-        if polygon.AddGeometry(ring) != 0:
-            raise ValueError("Failed to add ring to polygon")
-
-        if not polygon.IsValid():
-            raise ValueError("Created geometry is not valid")
-
-        return polygon.ExportToWkt() if wkt else polygon
-
+        options = osr.CoordinateTransformationOptions()
+        options.SetAreaOfInterest(-180.0, -90.0, 180.0, 90.0)
+        transformer = osr.CoordinateTransformation(projection_osr, default_projection, options)
     except Exception as e:
-        raise ValueError(f"Failed to create output geometry: {str(e)}") from e
+        raise ValueError(f"Failed to create coordinate transformation: {str(e)}") from e
+
+    # Transform coordinates and create geometry
+    try:
+        transformed_points = _transform_bbox_coordinates(bbox_ogr, transformer)
+        return _create_polygon_from_points(transformed_points)
+    except Exception as e:
+        raise ValueError(f"Failed to create transformed geometry: {str(e)}") from e
+
+
+def _get_bounds_from_bbox_as_wkt(
+    bbox_ogr: List[Union[int, float]],
+    projection_osr: osr.SpatialReference,
+) -> str:
+    """Convert a bounding box from one projection to WGS84 and return as WKT string.
+
+    Parameters
+    ----------
+    bbox_ogr : List[Union[int, float]]
+        An OGR formatted bbox.
+        `[x_min, x_max, y_min, y_max]`
+    projection_osr : osr.SpatialReference
+        The projection of the input bbox.
+
+    Returns
+    -------
+    str
+        WKT string representation of the transformed geometry.
+
+    Raises
+    ------
+    TypeError
+        If bbox_ogr is None or not a list/tuple.
+        If projection_osr is None or not an osr.SpatialReference.
+    ValueError
+        If bbox_ogr is not a valid bbox.
+        If coordinate transformation fails.
+        If geometry creation fails.
+    """
+    geom = _get_bounds_from_bbox_as_geom(bbox_ogr, projection_osr)
+    return geom.ExportToWkt()
 
 
 def _get_utm_zone_from_bbox(
     bbox_ogr_latlng: List[Union[int, float]],
 ) -> str:
     """Get the UTM zone from a WGS84 (lat/long) OGR formatted bbox.
-    
+
     Parameters
     ----------
     bbox_ogr_latlng : List[Union[int, float]]
@@ -1933,7 +1965,11 @@ def _get_utm_zone_from_bbox(
         if not (-180 <= mid_lng <= 180) or not -90 <= mid_lat <= 90:
             raise ValueError(f"Invalid midpoint coordinates: lat={mid_lat}, lng={mid_lng}")
 
-        return utils_projection._get_utm_zone_from_latlng([mid_lat, mid_lng], return_epsg=False)
+        epsg = utils_projection._get_utm_epsg_from_latlng([mid_lat, mid_lng])
+        hemisphere = "N" if mid_lat >= 0 else "S"
+        zone = epsg[-2:]
+
+        return f"{zone}{hemisphere}"
 
     except (TypeError, ValueError) as e:
         raise ValueError(f"Error calculating UTM zone: {str(e)}") from e
@@ -1959,7 +1995,7 @@ def _get_utm_zone_from_dataset(
     ------
     TypeError
         If dataset is None or not a string, gdal.Dataset, or ogr.DataSource
-    ValueError 
+    ValueError
         If dataset cannot be opened or processed
         If dataset has invalid spatial reference information
         If UTM zone cannot be determined
@@ -2207,7 +2243,7 @@ def _additional_bboxes(
         if world:
             geom_latlng = bbox_geom_latlng
         else:
-            geom_latlng = _get_bounds_from_bbox(bbox_ogr, original_projection, wkt=False)
+            geom_latlng = _get_bounds_from_bbox_as_geom(bbox_ogr, original_projection)
 
         # Create WKT strings
         bbox_wkt = _get_wkt_from_bbox(bbox_ogr)

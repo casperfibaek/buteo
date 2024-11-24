@@ -119,7 +119,7 @@ def vector_merge_features(
     if projection is None:
         target_projection = utils_projection._get_projection_from_vector(vector_list[0]).ExportToWkt()
     else:
-        target_projection = utils_projection.parse_projection(projection, return_wkt=True)
+        target_projection = utils_projection.parse_projection_wkt(projection)
 
     success = ogrmerge(
         vector_list,

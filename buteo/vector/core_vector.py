@@ -226,7 +226,7 @@ def _get_basic_metadata_vector(
     area = (x_max - x_min) * (y_max - y_min)
 
     bbox_latlng = utils_projection.reproject_bbox(vector_bbox, projection_osr, utils_projection._get_default_projection_osr())
-    bounds_latlng = utils_bbox._get_bounds_from_bbox(vector_bbox, projection_osr, wkt=False)
+    bounds_latlng = utils_bbox._get_bounds_from_bbox_as_geom(vector_bbox, projection_osr)
     bounds_area = bounds_latlng.GetArea()
     x_min, x_max, y_min, y_max = vector_bbox
     area = (x_max - x_min) * (y_max - y_min)

@@ -15,6 +15,7 @@ from utils_tests import create_sample_raster, create_sample_vector
 from buteo.raster import core_raster_io
 
 
+
 def test_raster_to_array_shape_dtype():
     raster_path = create_sample_raster(width=10, height=10, bands=1)
     array = core_raster_io.raster_to_array(raster_path)
@@ -55,13 +56,26 @@ def test_raster_to_array_custom_fill_value():
     assert not np.ma.isMaskedArray(array)
     assert array.dtype == np.uint8
 
-def test_raster_to_array_cast_dtype():
+def test_raster_to_array_cast_dtype_int16():
     raster_path = create_sample_raster(width=10, height=10, bands=1)
-    import pdb; pdb.set_trace()
-    array = core_raster_io.raster_to_array(raster_path, cast=np.int16)
+    array = core_raster_io.raster_to_array(raster_path, cast=np.int16) # TODO: Fix this test
 
     assert array.shape == (10, 10, 1)
     assert array.dtype == np.int16
+
+def test_raster_to_array_cast_dtype_float32():
+    raster_path = create_sample_raster(width=10, height=10, bands=1)
+    array = core_raster_io.raster_to_array(raster_path, cast=np.float32) # TODO: Fix this test
+
+    assert array.shape == (10, 10, 1)
+    assert array.dtype == np.float32
+
+def test_raster_to_array_cast_dtype_float32_str():
+    raster_path = create_sample_raster(width=10, height=10, bands=1)
+    array = core_raster_io.raster_to_array(raster_path, cast="float32") # TODO: Fix this test
+
+    assert array.shape == (10, 10, 1)
+    assert array.dtype == np.float32
 
 def test_raster_to_array_channel_last():
     raster_path = create_sample_raster(width=10, height=10, bands=3)

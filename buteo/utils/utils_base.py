@@ -251,9 +251,38 @@ def _check_variable_is_iterable_or_type(
     return False
 
 
+def _normalise_type(t):
+    """Convert a type specification to a standard format.
+    
+    Parameters
+    ----------
+    t : Any
+        The type specification to normalize.
+        
+    Returns
+    -------
+    Union[type, Tuple[type]]
+        The normalized type specification.
+        
+    Raises
+    ------
+    TypeError
+        If the type specification is invalid.
+    """
+    if t is None:
+        return type(None)
+    if isinstance(t, type):
+        return t
+    if isinstance(t, (list, tuple)):
+        if not all(isinstance(st, type) for st in t):
+            raise TypeError(f"Invalid nested type specification: {t}")
+        return tuple(t)
+    raise TypeError(f"Invalid type specification: {t}")
+
+
 def _type_check(
     variable: Any,
-    types: Union[type, List[type], Tuple[type, ...], None],
+    types: Union[List[Union[type, List[type], None]], Tuple[Union[type, List[type], None], ...]],
     name: str = "",
     *,
     throw_error: bool = True,
@@ -262,84 +291,48 @@ def _type_check(
     
     Examples
     --------
-    >>> _type_check("hello", str)  # True
-    >>> _type_check([1, 2, 3], [int])  # True
-    >>> _type_check([1, "a"], [int])  # False
+    >>> _type_check("hello", [str])  # True
+    >>> _type_check([1, 2, 3], [[int]])  # True
+    >>> _type_check([1, "a"], [[int]])  # False
     >>> _type_check(None, [str, None])  # True
-    >>> _type_check({"a": 1}, dict)  # True
-    
-    Parameters
-    ----------
-    variable : Any
-        The variable to type check
-    types : Union[type, List[type], Tuple[type, ...], None]
-        Single type, list of types, or None to check against
-    name : str, optional
-        Variable name for error messages
-    throw_error : bool, optional
-        If True, raises ValueError on type mismatch
-
-    Returns
-    -------
-    bool
-        True if type check passes, False otherwise
-
-    Raises
-    ------
-    ValueError
-        If throw_error is True and type check fails
-    TypeError 
-        If types argument is invalid
+    >>> _type_check({"a": 1}, [dict])  # True
     """
-    # Validate inputs
+    # Input validation
     if not isinstance(name, str):
         raise TypeError("name must be a string")
-    if not _check_variable_is_iterable_or_type(types):
-        raise TypeError(f"types must be a type, list, tuple, or None. Got: {type(types)}")
+    if not isinstance(types, (list, tuple)):
+        raise TypeError("types must be a list or tuple")
 
-    # Normalize types to list
-    valid_types = []
-    types_list = [types] if not isinstance(types, (list, tuple)) else types
+    # Normalize all type specifications
+    valid_types = [_normalise_type(t) for t in types]
 
-    for t in types_list:
-        if t is None:
-            valid_types.append(type(None))
-        elif isinstance(t, type):
-            valid_types.append(t)
-        elif isinstance(t, (list, tuple)):
-            valid_types.append(t)
-        else:
-            raise TypeError(f"Invalid type specification: {t}")
+    # Check if variable matches any of the valid types
+    for valid_type in valid_types:
+        # Handle nested type checking (e.g., [[int]] for list of integers)
+        if isinstance(valid_type, tuple):
+            if isinstance(variable, (list, tuple)):
+                if not variable or all(isinstance(item, valid_type) for item in variable):
+                    return True
+        # Handle simple type checking
+        elif isinstance(variable, valid_type):
+            return True
 
-    # Handle direct type matches
-    if type(variable) in valid_types:
-        return True
-
-    # Handle None
-    if variable is None and type(None) in valid_types:
-        return True
-
-    # Handle collection type checking
-    if isinstance(variable, (list, tuple)):
-        for valid_type in valid_types:
-            if not isinstance(valid_type, (list, tuple)):
-                continue
-
-            if not valid_type:  # Empty list/tuple means any elements are valid
-                return True
-
-            if all(isinstance(item, tuple(valid_type)) for item in variable):
-                return True
-    else:
-        for valid_type in valid_types:
-            if isinstance(variable, valid_type):
-                return True
-
+    # Handle error reporting
     if throw_error:
         actual_type = type(variable).__name__
-        expected_types = [t.__name__ if isinstance(t, type) else str(t) for t in types_list]
-        error_msg = f"Type mismatch for '{name}': Expected {' or '.join(expected_types)}, got {actual_type}"
-        raise ValueError(error_msg)
+        if isinstance(variable, (list, tuple)):
+            actual_type = f"[{type(variable[0]).__name__}]" if variable else "[]"
+
+        expected_types = []
+        for t in valid_types:
+            if isinstance(t, tuple):
+                expected_types.append(f"[{','.join(st.__name__ for st in t)}]")
+            else:
+                expected_types.append(t.__name__)
+
+        raise ValueError(
+            f"Type mismatch for '{name}': Expected {' or '.join(expected_types)}, got {actual_type}"
+        )
 
     return False
 

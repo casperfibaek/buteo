@@ -165,6 +165,6 @@ def test_get_utm_zone_from_latlng():
             else:
                 ns = '7'
 
-            epsg = utils_projection._get_utm_zone_from_latlng([lat,long],return_epsg=True)
+            epsg = utils_projection._get_utm_epsg_from_latlng([lat,long])
             assert epsg.lower() == f'32{ns}{zone}', f"UTM zone for latlong point is wrong {lat}, {long}."
                 

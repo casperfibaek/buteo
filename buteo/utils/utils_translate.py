@@ -60,7 +60,7 @@ def _get_valid_raster_driver_extensions() -> List[str]:
     available_raster_drivers, _ = _get_available_drivers()
 
     valid_raster_driver_extensions = [
-        driver["extension"] 
+        driver["extension"]
         for driver in available_raster_drivers
         if driver["extension"] and driver["extension"] != "gpkg"
     ]
@@ -79,7 +79,7 @@ def _get_valid_vector_driver_extensions() -> List[str]:
     _, available_vector_drivers = _get_available_drivers()
 
     valid_vector_driver_extensions = [
-        driver["extension"] 
+        driver["extension"]
         for driver in available_vector_drivers
         if driver["extension"]
     ]
@@ -98,8 +98,8 @@ def _get_valid_driver_extensions() -> List[str]:
     available_raster_drivers, available_vector_drivers = _get_available_drivers()
 
     valid_driver_extensions = [
-        driver["extension"] 
-        for driver in available_raster_drivers + available_vector_drivers 
+        driver["extension"]
+        for driver in available_raster_drivers + available_vector_drivers
         if driver["extension"]
     ]
 
@@ -198,7 +198,7 @@ def _get_raster_shortname_from_ext(ext: str) -> str:
     ------
     AssertionError
         If ext is not a valid raster driver extension.
-    RuntimeError 
+    RuntimeError
         If no matching driver is found for the extension.
     """
     if not ext:
@@ -235,7 +235,7 @@ def _get_vector_shortname_from_ext(ext: str) -> str:
     ------
     AssertionError
         If ext is not a valid vector driver extension.
-    RuntimeError 
+    RuntimeError
         If no matching driver is found for the extension.
     """
     if not ext:
@@ -272,7 +272,7 @@ def _get_driver_shortname_from_ext(ext: str) -> str:
     ------
     AssertionError
         If ext is None, empty or not a string.
-    ValueError 
+    ValueError
         If extension is not a valid GDAL/OGR driver extension.
     """
     if not ext:
@@ -431,7 +431,7 @@ def _get_default_nodata_value(dtype: Union[np.dtype, str, int]) -> Union[float, 
     ------
     TypeError
         If dtype is None or invalid type
-    ValueError 
+    ValueError
         If dtype is not recognized
     """
     if dtype is None:
@@ -663,7 +663,7 @@ def _parse_dtype(
             return np.dtype(dtype.lower())
         if isinstance(dtype, int):
             return _translate_dtype_gdal_to_numpy(dtype)
-        if isinstance(dtype, type) and issubclass(dtype, np.integer):
+        if isinstance(dtype, type) and (issubclass(dtype, np.integer) or issubclass(dtype, np.floating)):
             return np.dtype(dtype)
         if isinstance(dtype, np.dtype):
             return dtype
@@ -739,8 +739,8 @@ def _check_is_float_numpy_dtype(
 
 def _safe_numpy_casting(
     arr: np.ndarray,
-    target_dtype: Union[str, np.dtype, Type[np.int8]],
-):
+    target_dtype: Union[str, np.dtype, Type[np.integer]],
+) -> np.ndarray:
     """Safe casting of numpy arrays.
     Clips to min/max of destinations and rounds properly.
 
@@ -748,17 +748,26 @@ def _safe_numpy_casting(
     ----------
     arr : np.ndarray
         The array to cast.
-
-    target_dtype : Union[str, np.dtype, type(np.int8)]
+    target_dtype : Union[str, np.dtype, Type[np.integer]]
         The target dtype.
 
     Returns
     -------
     np.ndarray
         The casted array.
+
+    Raises
+    ------
+    TypeError
+        If input array is not a numpy array or target_dtype is invalid.
+    ValueError
+        If the dtype cannot be parsed.
     """
-    assert isinstance(arr, np.ndarray), "arr must be a numpy array."
-    assert isinstance(target_dtype, (str, np.dtype, type(np.int8))), "target_dtype must be a string or numpy dtype."
+    if not isinstance(arr, np.ndarray):
+        raise TypeError("Input must be a numpy array")
+
+    if not isinstance(target_dtype, (str, np.dtype, type)):
+        raise TypeError("target_dtype must be a string, numpy dtype, or type")
 
     target_dtype = _parse_dtype(target_dtype)
 
@@ -766,12 +775,8 @@ def _safe_numpy_casting(
         return arr
 
     min_val, max_val = _get_range_for_numpy_datatype(target_dtype.name)
-    outarr = np.zeros(arr.shape, dtype=target_dtype)
 
-    if _check_is_int_numpy_dtype(target_dtype) and not _check_is_int_numpy_dtype(arr.dtype):
-        outarr[:] = np.rint(arr)
-        np.clip(outarr, min_val, max_val, out=outarr)
-    else:
-        np.clip(arr, min_val, max_val, out=outarr)
+    if _check_is_int_numpy_dtype(target_dtype):
+        return np.clip(np.rint(arr), min_val, max_val).astype(target_dtype)
 
-    return outarr
+    return np.clip(arr, min_val, max_val).astype(target_dtype)

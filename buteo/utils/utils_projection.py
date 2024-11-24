@@ -154,21 +154,18 @@ def _get_esri_projection(esri_code: str) -> str:
 
 def parse_projection(
     projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-    return_wkt: bool = False,
-) -> Union[osr.SpatialReference, str]:
+) -> osr.SpatialReference:
     """Parses a gdal, ogr or osr data source and extracts the projection.
 
     Parameters
     ----------
     projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
-        The projection to parse. Cannot be None.
-    return_wkt : bool, optional
-        Whether to return the projection as a WKT string, by default False
+        The projection to parse.
 
     Returns
     -------
-    Union[osr.SpatialReference, str]
-        The projection as an osr.SpatialReference or WKT string
+    osr.SpatialReference
+        The projection as an osr.SpatialReference
 
     Raises
     ------
@@ -193,81 +190,115 @@ def parse_projection(
             spatial_ref = layer.GetSpatialRef()
             if spatial_ref is None:
                 raise ValueError("Layer has no spatial reference")
-            target_proj = spatial_ref
+            return spatial_ref
 
-        elif isinstance(projection, gdal.Dataset):
+        if isinstance(projection, gdal.Dataset):
             wkt = projection.GetProjection()
             if not wkt:
                 raise ValueError("Raster has no projection")
             target_proj.ImportFromWkt(wkt)
+            return target_proj
 
-        elif isinstance(projection, osr.SpatialReference):
-            wkt = projection.ExportToWkt()
-            if not wkt:
+        if isinstance(projection, osr.SpatialReference):
+            if not projection.ExportToWkt():
                 raise ValueError("Spatial reference is empty")
-            target_proj = projection
+            return projection
 
-        elif isinstance(projection, str):
+        if isinstance(projection, str):
             if utils_gdal._check_is_raster(projection):
                 ds = gdal.Open(projection, gdal.GA_ReadOnly)
                 if ds is None:
                     raise ValueError("Could not open raster")
-                wkt = ds.GetProjection()
-                if not wkt:
-                    raise ValueError("Raster has no projection")
-                target_proj.ImportFromWkt(wkt)
-                ds = None
-            elif utils_gdal._check_is_vector(projection):
+                try:
+                    wkt = ds.GetProjection()
+                    if not wkt:
+                        raise ValueError("Raster has no projection")
+                    target_proj.ImportFromWkt(wkt)
+                    return target_proj
+                finally:
+                    ds = None
+
+            if utils_gdal._check_is_vector(projection):
                 ds = ogr.Open(projection, 0)
                 if ds is None:
                     raise ValueError("Could not open vector")
-                layer = ds.GetLayer()
-                if layer is None:
-                    raise ValueError("Vector has no layers")
-                spatial_ref = layer.GetSpatialRef()
-                if spatial_ref is None:
-                    raise ValueError("Layer has no spatial reference")
-                target_proj = spatial_ref
-                ds = None
-            else:
-                success = False
-                if projection.upper().startswith("EPSG:"):
-                    try:
-                        epsg = int(projection.split(":")[1])
-                        success = target_proj.ImportFromEPSG(epsg) == 0
-                    except (ValueError, IndexError):
-                        pass
-                elif projection.upper().startswith("ESRI:"):
-                    try:
-                        wkt = _get_esri_projection(projection)
-                        success = target_proj.ImportFromWkt(wkt) == 0
-                    except ValueError:
-                        pass
-                if not success:
-                    for import_func in (target_proj.ImportFromWkt, target_proj.ImportFromProj4):
-                        try:
-                            if import_func(projection) == 0:
-                                success = True
-                                break
-                        except Exception:  # pylint: disable=broad-except
-                            continue
-                if not success:
-                    raise ValueError(f"Could not parse projection string: {projection}")
+                try:
+                    layer = ds.GetLayer()
+                    if layer is None:
+                        raise ValueError("Vector has no layers")
+                    spatial_ref = layer.GetSpatialRef()
+                    if spatial_ref is None:
+                        raise ValueError("Layer has no spatial reference")
+                    return spatial_ref
+                finally:
+                    ds = None
 
-        elif isinstance(projection, int):
+            # Handle EPSG codes
+            if projection.upper().startswith("EPSG:"):
+                try:
+                    epsg = int(projection.split(":")[1])
+                    if target_proj.ImportFromEPSG(epsg) == 0:
+                        return target_proj
+                except (ValueError, IndexError):
+                    pass
+
+            # Handle ESRI codes
+            if projection.upper().startswith("ESRI:"):
+                try:
+                    wkt = _get_esri_projection(projection)
+                    if target_proj.ImportFromWkt(wkt) == 0:
+                        return target_proj
+                except ValueError:
+                    pass
+
+            # Try WKT and Proj4 imports
+            for import_func in (target_proj.ImportFromWkt, target_proj.ImportFromProj4):
+                try:
+                    if import_func(projection) == 0:
+                        return target_proj
+                except Exception:  # pylint: disable=broad-except
+                    continue
+
+            raise ValueError(f"Could not parse projection string: {projection}")
+
+        if isinstance(projection, int):
             if target_proj.ImportFromEPSG(projection) != 0:
                 raise ValueError(f"Invalid EPSG code: {projection}")
+            return target_proj
 
     except Exception as e:
-        gdal.PopErrorHandler()
         raise ValueError(f"Failed to parse projection: {str(e)}") from e
+    finally:
+        gdal.PopErrorHandler()
 
-    gdal.PopErrorHandler()
 
-    if not target_proj.ExportToWkt():
-        raise ValueError("Resulting projection is empty")
+def parse_projection_wkt(
+    projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
+) -> str:
+    """Parses a gdal, ogr or osr data source and extracts the projection as WKT.
 
-    return target_proj.ExportToWkt() if return_wkt else target_proj
+    Parameters
+    ----------
+    projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
+        The projection to parse.
+
+    Returns
+    -------
+    str
+        The projection in WKT format
+
+    Raises
+    ------
+    ValueError
+        If projection is None, invalid type, or cannot be parsed
+    """
+    spatial_ref = parse_projection(projection)
+    wkt = spatial_ref.ExportToWkt()
+
+    if not wkt:
+        raise ValueError("Failed to export projection to WKT")
+
+    return wkt
 
 
 def _projection_is_latlng(
@@ -666,7 +697,7 @@ def _reproject_point(
     p: List[Union[int, float]],
     source_projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     target_projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-) -> List[float]:
+) -> List[Union[int, float]]:
     """Reprojects a point from source to target projection.
 
     Parameters
@@ -680,7 +711,7 @@ def _reproject_point(
 
     Returns
     -------
-    List[float]
+    List[Unit[int, float]]
         The reprojected point as [x, y].
 
     Raises
@@ -730,31 +761,25 @@ def _reproject_point(
         raise ValueError(f"Invalid projection: {str(e)}") from e
 
 
-def _get_utm_zone_from_latlng(
-    latlng: List[Union[int, float]],
-    return_epsg: bool = False,
-) -> Union[str, osr.SpatialReference]:
-    """Get the UTM zone from latitude/longitude coordinates.
+def _get_utm_epsg_from_latlng(
+    latlng: List[Union[int, float]]
+) -> str:
+    """Get the UTM EPSG code from latitude/longitude coordinates.
 
     Parameters
     ----------
     latlng : List[Union[int, float]]
         The latitude/longitude coordinates in [lat, lng] format.
-    return_epsg : bool, optional
-        Whether to return the EPSG code instead of SpatialReference, by default False.
 
     Returns
     -------
-    Union[str, osr.SpatialReference]
-        Either the EPSG code as string if return_epsg=True,
-        or the UTM projection as SpatialReference.
+    str
+        The EPSG code for the UTM zone.
 
     Raises
     ------
     ValueError
         If latlng is None, not a list/array, wrong length, or invalid coordinates.
-    RuntimeError
-        If projection creation fails.
     """
     if latlng is None:
         raise ValueError("latlng cannot be None")
@@ -776,11 +801,38 @@ def _get_utm_zone_from_latlng(
         raise ValueError("Longitude must be between -180 and 180 degrees")
 
     zone = math.floor(((lng + 180) / 6) + 1)
-    hemisphere = "S" if lat < 0 else "N"
-    epsg = f"32{'7' if hemisphere == 'S' else '6'}{zone:02d}"
+    hemisphere = "7" if lat < 0 else "6"  # 7 for South, 6 for North
 
-    if return_epsg:
-        return epsg
+    return f"32{hemisphere}{zone:02d}"
+
+
+def _get_utm_zone_from_latlng(
+    latlng: List[Union[int, float]]
+) -> osr.SpatialReference:
+    """Get the UTM zone projection from latitude/longitude coordinates.
+
+    Parameters
+    ----------
+    latlng : List[Union[int, float]]
+        The latitude/longitude coordinates in [lat, lng] format.
+
+    Returns
+    -------
+    osr.SpatialReference
+        The UTM projection.
+
+    Raises
+    ------
+    ValueError
+        If latlng is invalid.
+    RuntimeError
+        If projection creation fails.
+    """
+    epsg = _get_utm_epsg_from_latlng(latlng)
+    lat, lng = float(latlng[0]), float(latlng[1])
+
+    zone = math.floor(((lng + 180) / 6) + 1)
+    hemisphere = "S" if lat < 0 else "N"
 
     wkt = f"""PROJCS["WGS 84 / UTM zone {zone}{hemisphere}",
         GEOGCS["WGS 84",
@@ -814,7 +866,7 @@ def _get_utm_zone_from_latlng(
 
 def _reproject_latlng_point_to_utm(
     latlng: List[Union[int, float]]
-) -> List[float]:
+) -> List[Union[int, float]]:
     """Converts a latlng point into UTM coordinates.
 
     Parameters
@@ -824,7 +876,7 @@ def _reproject_latlng_point_to_utm(
 
     Returns
     -------
-    List[float]
+    List[Union[int, float]]
         The converted UTM point in [utm_x, utm_y] format.
 
     Raises
@@ -873,7 +925,7 @@ def set_projection(
     projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     pixel_size_x: float = 1.0,
     pixel_size_y: float = -1.0,
-) -> None:
+) -> bool:
     """Sets the projection of a dataset and optionally adjusts pixel size.
 
     Parameters
@@ -889,7 +941,8 @@ def set_projection(
 
     Returns
     -------
-    None
+    bool
+        True if successful.
 
     Raises
     ------
@@ -959,3 +1012,5 @@ def set_projection(
     finally:
         if opened is not None and opened != dataset:
             opened = None
+
+    return True

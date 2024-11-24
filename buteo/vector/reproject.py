@@ -46,7 +46,7 @@ def _vector_reproject(
         out_path = utils_path._get_temp_filepath(vector, add_uuid=add_uuid, prefix=prefix, suffix=suffix)
 
     options = []
-    wkt = utils_projection.parse_projection(projection, return_wkt=True).replace(" ", "\\")
+    wkt = utils_projection.parse_projection_wkt(projection).replace(" ", "\\")
 
     options.append(f'-t_srs "{wkt}"')
 

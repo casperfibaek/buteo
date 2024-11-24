@@ -49,15 +49,15 @@ def raster_warp(
     if src_projection is None:
         src_projection = input_metadata["projection_wkt"]
     else:
-        src_projection = utils_projection.parse_projection(src_projection, return_wkt=True)
+        src_projection = utils_projection.parse_projection_wkt(src_projection)
 
     if dst_projection is None:
         dst_projection = src_projection
     else:
-        dst_projection = utils_projection.parse_projection(dst_projection, return_wkt=True)
+        dst_projection = utils_projection.parse_projection_wkt(dst_projection)
 
     if dst_extent_srs is not None:
-        dst_extent_srs = utils_projection.parse_projection(dst_extent_srs, return_wkt=True)
+        dst_extent_srs = utils_projection.parse_projection_wkt(dst_extent_srs)
 
     resampling_alg = utils_translate._translate_resample_method(resampling_alg)
 

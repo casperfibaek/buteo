@@ -864,7 +864,7 @@ def raster_create_empty(
     utils_base._type_check(fill_value, [int, float, type(None)], "fill_value")
     utils_base._type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
     utils_base._type_check(creation_options, [list, type(None)], "creation_options")
-    utils_base._type_check(overwrite, bool, "overwrite")
+    utils_base._type_check(overwrite, [bool], "overwrite")
 
     if out_path is not None and not utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite):
         raise ValueError(
@@ -889,7 +889,7 @@ def raster_create_empty(
         utils_gdal._get_default_creation_options(creation_options),
     )
 
-    parsed_projection = utils_projection.parse_projection(projection, return_wkt=True)
+    parsed_projection = utils_projection.parse_projection_wkt(projection)
     destination.SetProjection(parsed_projection)
 
     pixel_width = pixel_size if isinstance(pixel_size, (int,  float)) else pixel_size[0]
@@ -1001,7 +1001,7 @@ def raster_create_from_array(
         utils_gdal._get_default_creation_options(creation_options),
     )
 
-    parsed_projection = utils_projection.parse_projection(projection, return_wkt=True)
+    parsed_projection = utils_projection.parse_projection_wkt(projection)
 
     destination.SetProjection(parsed_projection)
 

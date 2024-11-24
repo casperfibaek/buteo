@@ -1215,7 +1215,7 @@ def _check_is_raster_or_vector_list(
 def _get_path_from_dataset(
     dataset: Union[str, gdal.Dataset, ogr.DataSource],
     dataset_type: Optional[str] = None,
-) -> Union[str, List[str]]:
+) -> str:
     """Gets the path from a dataset. Can be vector or raster, string or opened dataset.
 
     Parameters

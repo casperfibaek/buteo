@@ -83,7 +83,7 @@ def _vector_clip(
         options.append("-unsetFid")
 
     if target_projection is not None:
-        wkt = utils_projection.parse_projection(target_projection, return_wkt=True).replace(" ", "\\")
+        wkt = utils_projection.parse_projection_wkt(target_projection).replace(" ", "\\")
 
         options.append(f'-t_srs "{wkt}"')
 
