@@ -1014,3 +1014,49 @@ def set_projection(
             opened = None
 
     return True
+
+
+def _get_transformer(
+    proj_source: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
+    proj_target: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
+) -> osr.CoordinateTransformation:
+    """Get a transformer object for reprojecting coordinates.
+
+    Parameters
+    ----------
+    proj_source : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
+        The source projection.
+    proj_target : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
+        The target projection.
+
+    Returns
+    -------
+    osr.CoordinateTransformation
+        The transformer object.
+        
+    Raises
+    ------
+    ValueError
+        If either projection is None or invalid
+    RuntimeError
+        If transformer cannot be created
+    """
+    if proj_source is None or proj_target is None:
+        raise ValueError("Source and target projections cannot be None")
+
+    try:
+        source_sref = parse_projection(proj_source)
+        target_sref = parse_projection(proj_target)
+
+        options = osr.CoordinateTransformationOptions()
+        if _projection_is_latlng(target_sref):
+            options.SetAreaOfInterest(-180.0, -90.0, 180.0, 90.0)
+
+        transformer = osr.CoordinateTransformation(source_sref, target_sref, options)
+        if transformer is None:
+            raise RuntimeError("Failed to create coordinate transformation")
+
+        return transformer
+
+    except Exception as e:
+        raise RuntimeError(f"Failed to create transformer: {str(e)}") from e

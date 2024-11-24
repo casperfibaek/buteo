@@ -208,8 +208,9 @@ def _check_is_valid_geotransform(geotransform: List[Union[int, float]]) -> bool:
             if val is None:
                 return False
 
-            # Check if value can be converted to float
-            float(val)
+            # check if val is int or float, and not infinite
+            if not isinstance(val, (int, float)):
+                return False
 
             # Check if value is finite
             if not np.isfinite(float(val)) and not np.isinf(float(val)):
@@ -274,13 +275,11 @@ def _get_pixel_offsets(
     if geotransform is None or bbox_ogr is None:
         raise ValueError("geotransform and bbox_ogr cannot be None")
 
-    assert _check_is_valid_geotransform(
-        geotransform
-    ), f"geotransform must be a valid GDAL geotransform. Received: {geotransform}"
+    if not _check_is_valid_geotransform(geotransform):
+        raise ValueError(f"geotransform must be a valid GDAL geotransform. Received: {geotransform}")
 
-    assert _check_is_valid_bbox(
-        bbox_ogr
-    ), f"bbox_ogr must be a valid OGR formatted bbox. Received: {bbox_ogr}"
+    if not _check_is_valid_bbox(bbox_ogr):
+        raise ValueError(f"bbox_ogr must be a valid OGR formatted bbox. Received: {bbox_ogr}")
 
     # Unpack values
     x_min, x_max, y_min, y_max = bbox_ogr
@@ -358,9 +357,8 @@ def _get_bbox_from_geotransform(
         raise ValueError("raster sizes cannot be negative")
 
     # Verify geotransform validity
-    assert _check_is_valid_geotransform(
-        geotransform
-    ), f"geotransform must be a valid GDAL geotransform. Received: {geotransform}"
+    if not _check_is_valid_geotransform(geotransform):
+        raise ValueError(f"geotransform must be a valid GDAL geotransform. Received: {geotransform}")
 
     # Convert all values to float for consistent return type
     x_min = float(geotransform[0])
@@ -1948,18 +1946,18 @@ def _get_utm_zone_from_bbox(
 
     try:
         # Convert to float and calculate midpoint
-        x_min, x_max, y_min, y_max = map(float, bbox_ogr_latlng)
+        lng_min, lng_max, lat_min, lat_max = map(float, bbox_ogr_latlng)
 
         # Handle coordinate wrapping for longitude
-        if x_min > x_max:  # Crosses 180/-180 meridian
-            x_min, x_max = x_max, x_min
+        if lng_min > lng_max:  # Crosses 180/-180 meridian
+            lng_min, lng_max = lng_max, lng_min
 
         # Calculate midpoint
-        mid_lng = ((x_min + x_max) / 2) % 360  # Normalize to 0-360
+        mid_lng = ((lng_min + lng_max) / 2) % 360  # Normalize to 0-360
         if mid_lng > 180:
             mid_lng -= 360  # Convert back to -180 to 180 range
 
-        mid_lat = (y_min + y_max) / 2
+        mid_lat = (lat_min + lat_max) / 2
 
         # Check for valid coordinates
         if not (-180 <= mid_lng <= 180) or not -90 <= mid_lat <= 90:
