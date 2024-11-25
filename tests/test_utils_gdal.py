@@ -28,7 +28,7 @@ def sample_geotiff(tmp_path):
     return filename
 
 @pytest.fixture
-def sample_vector(tmp_path):
+def sample_vector_empty(tmp_path):
     """Create a sample vector file"""
     filename = str(tmp_path / "test.gpkg")
     driver = ogr.GetDriverByName('GPKG')
@@ -38,9 +38,53 @@ def sample_vector(tmp_path):
     return filename
 
 @pytest.fixture
+def sample_vector_geometry(tmp_path):
+    """Create a sample vector file with a square polygon"""
+    filename = str(tmp_path / "complex.gpkg")
+    driver = ogr.GetDriverByName('GPKG')
+    ds = driver.CreateDataSource(filename)
+    layer = ds.CreateLayer('test', geom_type=ogr.wkbPolygon)
+    
+    # Add fields
+    field_defn = ogr.FieldDefn('name', ogr.OFTString)
+    layer.CreateField(field_defn)
+    field_defn = ogr.FieldDefn('value', ogr.OFTInteger)
+    layer.CreateField(field_defn)
+    
+    # Create a square
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    ring.AddPoint(0, 0)
+    ring.AddPoint(0, 1)
+    ring.AddPoint(1, 1)
+    ring.AddPoint(1, 0)
+    ring.AddPoint(0, 0)
+    
+    polygon = ogr.Geometry(ogr.wkbPolygon)
+    polygon.AddGeometry(ring)
+    
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometry(polygon)
+    feature.SetField('name', 'square')
+    feature.SetField('value', 1)
+    layer.CreateFeature(feature)
+    
+    ds = None
+    return filename
+
+@pytest.fixture
 def memory_dataset():
     """Create a sample in-memory dataset"""
     return gdal.GetDriverByName('MEM').Create('', 10, 10, 1, gdal.GDT_Byte)
+
+@pytest.fixture
+def vsimem_geotiff():
+    """Create a GeoTIFF in virtual memory"""
+    filename = "/vsimem/test.tif"
+    driver = gdal.GetDriverByName('GTiff')
+    ds = driver.Create(filename, 10, 10, 1, gdal.GDT_Byte)
+    ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    ds = None
+    return filename
 
 class TestCreationOptions:
     def test_default_creation_options(self):
@@ -116,8 +160,8 @@ class TestDatasetValidation:
         assert not utils_gdal._check_is_raster_empty(memory_dataset)
         assert utils_gdal._check_is_raster_empty(None)
 
-    def test_check_is_vector_empty(self, sample_vector):
-        ds = ogr.Open(sample_vector)
+    def test_check_is_vector_empty(self, sample_vector_empty):
+        ds = ogr.Open(sample_vector_empty)
         assert utils_gdal._check_is_vector_empty(ds)
         ds = None
 
@@ -133,27 +177,43 @@ class TestDatasetChecks:
         assert not utils_gdal._check_is_raster("nonexistent.tif")
         assert not utils_gdal._check_is_raster(None)
 
-    def test_check_is_vector(self, sample_vector):
-        assert utils_gdal._check_is_vector(sample_vector)
+    def test_check_is_vector(self, sample_vector_empty, sample_vector_geometry):
+        assert utils_gdal._check_is_vector(sample_vector_empty, empty_is_invalid=False)
+        assert utils_gdal._check_is_vector(sample_vector_geometry) # Tests vector with actual geometry
         assert not utils_gdal._check_is_vector("nonexistent.shp")
         assert not utils_gdal._check_is_vector(None)
 
-    def test_check_is_raster_or_vector(self, sample_geotiff, sample_vector):
+    def test_check_is_raster_or_vector(self, sample_geotiff, sample_vector_empty, sample_vector_geometry):
         assert utils_gdal._check_is_raster_or_vector(sample_geotiff)
-        assert utils_gdal._check_is_raster_or_vector(sample_vector)
+        assert utils_gdal._check_is_raster_or_vector(sample_vector_empty, empty_is_invalid=False)
+        assert not utils_gdal._check_is_raster_or_vector(sample_vector_empty, empty_is_invalid=True)
+        assert utils_gdal._check_is_raster_or_vector(sample_vector_geometry)
         assert not utils_gdal._check_is_raster_or_vector("nonexistent.tif")
 
 class TestDatasetOperations:
-    def test_delete_dataset_if_in_memory(self, memory_dataset):
-        path = memory_dataset.GetDescription()
-        assert utils_gdal.delete_dataset_if_in_memory(memory_dataset)
-        memory_dataset = None
+    def test_delete_dataset_if_in_memory(self, memory_dataset, vsimem_geotiff):
+        
+        assert utils_gdal.delete_dataset_if_in_memory(vsimem_geotiff)
+        assert not utils_gdal._check_is_raster(vsimem_geotiff)
 
-    def test_get_path_from_dataset(self, sample_geotiff):
+        # Raise error if the memory dataset is used. # MEM and Memory should not be used. Use /vsimem/ instead
+        with pytest.warns(RuntimeWarning):
+            deleted = utils_gdal.delete_dataset_if_in_memory(memory_dataset)
+            assert deleted is False
+
+    def test_get_path_from_dataset(self, sample_geotiff, sample_vector_geometry):
+        path_sample_geotiff = utils_gdal._get_path_from_dataset(sample_geotiff)
         ds = gdal.Open(sample_geotiff)
         path = utils_gdal._get_path_from_dataset(ds)
         assert isinstance(path, str)
-        assert path == sample_geotiff
+        assert path == path_sample_geotiff
+        ds = None
+
+        path_sample_vector = utils_gdal._get_path_from_dataset(sample_vector_geometry)
+        ds = ogr.Open(sample_vector_geometry)
+        path = utils_gdal._get_path_from_dataset(ds)
+        assert isinstance(path, str)
+        assert path == path_sample_vector
         ds = None
 
 
@@ -203,7 +263,7 @@ class TestPerformance:
         assert duration < 10.0  # Should complete within 10 seconds
 
 class TestMemoryLeaks:
-    def get_memory_usage():
+    def get_memory_usage(self):
         """Helper to get current memory usage"""
         process = psutil.Process()
         return process.memory_info().rss / 1024 / 1024  # MB
@@ -212,11 +272,12 @@ class TestMemoryLeaks:
         """Test for memory leaks in dataset operations"""
         initial_memory = self.get_memory_usage()
         
-        for _ in range(100):
-            ds = gdal.GetDriverByName('MEM').Create('', 1000, 1000, 1, gdal.GDT_Byte)
+        for i in range(100):
+            # This is given a unique name, to not overwrite the previous dataset
+            ds = gdal.GetDriverByName('GTiff').Create(f'/vsimem/test_memory_leak_check_{i}', 1000, 1000, 1, gdal.GDT_Byte)
             utils_gdal.delete_dataset_if_in_memory(ds)
             ds = None
-        
+
         final_memory = self.get_memory_usage()
         memory_growth = final_memory - initial_memory
         assert memory_growth < 10  # Less than 10MB growth
@@ -276,9 +337,8 @@ class TestEdgeCases:
 
     def test_zero_size_raster(self):
         """Test handling of zero-size rasters"""
-        ds = gdal.GetDriverByName('MEM').Create('', 0, 0, 1, gdal.GDT_Byte)
-        assert utils_gdal._check_is_raster_empty(ds)
-        ds = None
+        with pytest.raises(RuntimeError):
+            gdal.GetDriverByName('MEM').Create('', 0, 0, 1, gdal.GDT_Byte)
 
     def test_extreme_values(self, tmp_path):
         """Test handling of extreme values"""

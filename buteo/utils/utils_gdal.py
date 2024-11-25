@@ -6,6 +6,7 @@ These functions are used to interact with basic GDAL objects.
 # Standard Library
 from typing import Optional, Union, List, Any, Tuple
 from warnings import warn
+import inspect
 
 # External
 from osgeo import gdal, ogr
@@ -519,8 +520,10 @@ def _get_vector_driver_name_from_path(file_path: str) -> str:
 
     if _check_is_file_valid_vector_ext(file_path):
         driver_name = utils_translate._get_vector_shortname_from_ext(ext)
-        if driver_name is None:
+
+        if driver_name is None or not isinstance(driver_name, str):
             raise ValueError(f"No valid vector driver found for extension: {ext}")
+
         return driver_name
 
     raise ValueError(f"Unable to parse OGR driver from path: {file_path}")
@@ -561,8 +564,10 @@ def _get_raster_driver_name_from_path(file_path: str) -> str:
 
     if _check_is_file_valid_raster_ext(file_path):
         driver_name = utils_translate._get_raster_shortname_from_ext(ext)
-        if driver_name is None:
+
+        if driver_name is None or not isinstance(driver_name, str):
             raise ValueError(f"No valid raster driver found for extension: {ext}")
+
         return driver_name
 
     raise ValueError(f"Unable to parse GDAL driver from path: {file_path}")
@@ -571,7 +576,7 @@ def _get_raster_driver_name_from_path(file_path: str) -> str:
 def _check_is_dataset_in_memory(
     raster_or_vector: Union[str, gdal.Dataset, ogr.DataSource],
 ) -> bool:
-    """Check if a raster or vector dataset is in memory.
+    """Check if a raster or vector dataset is in memory. Also works for /vsimem/ paths. etc..
 
     Parameters
     ----------
@@ -623,6 +628,48 @@ def _check_is_dataset_in_memory(
         return False
 
 
+def _check_is_memory_dataset(dataset: Union[str, gdal.Dataset, ogr.DataSource]) -> bool:
+    """Check if a dataset is a Memory or MEM dataset.
+
+    Parameters
+    ----------
+    dataset : Union[gdal.Dataset, ogr.DataSource]
+        The dataset to check.
+
+    Returns
+    -------
+    bool
+        True if the dataset is a Memory or MEM dataset, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If dataset is not a gdal.Dataset or ogr.DataSource.
+    """
+    if dataset is None:
+        return False
+
+    if isinstance(dataset, str):
+        return False
+
+    if not isinstance(dataset, (gdal.Dataset, ogr.DataSource)):
+        raise TypeError("dataset must be a string, gdal.Dataset or ogr.DataSource")
+
+    try:
+        driver = dataset.GetDriver()
+        if driver is None:
+            return False
+
+        driver_name = getattr(driver, "ShortName", None)
+        if driver_name is None:
+            driver_name = driver.GetName()
+
+        return driver_name in {"MEM", "Memory"}
+
+    except (RuntimeError, AttributeError):
+        return False
+
+
 def delete_dataset_if_in_memory(
     raster_or_vector: Union[str, gdal.Dataset, ogr.DataSource],
 ) -> bool:
@@ -636,13 +683,15 @@ def delete_dataset_if_in_memory(
     Returns
     -------
     bool
-        True if the dataset was successfully deleted from memory,
-        False if deletion failed or dataset was not in memory.
+        True if the dataset was successfully deleted or wasn't in memory.
+        False if deletion failed.
 
     Raises
     ------
     TypeError
-        If raster_or_vector is not a string, gdal.Dataset, or ogr.DataSource.
+        If raster_or_vector is None or not a string, gdal.Dataset, or ogr.DataSource.
+    RuntimeError
+        If using deprecated MEM/Memory drivers instead of /vsimem/.
     """
     if raster_or_vector is None:
         raise TypeError("raster_or_vector cannot be None")
@@ -650,36 +699,39 @@ def delete_dataset_if_in_memory(
     if not isinstance(raster_or_vector, (str, gdal.Dataset, ogr.DataSource)):
         raise TypeError("raster_or_vector must be a string, gdal.Dataset, or ogr.DataSource")
 
+    # Skip if not in memory
+    if not _check_is_dataset_in_memory(raster_or_vector):
+        return True
+
     try:
-        # Get path, handling both string and dataset inputs
-        path = (raster_or_vector if isinstance(raster_or_vector, str)
-                else _get_path_from_dataset(raster_or_vector))
+        # Check for deprecated memory drivers
+        if _check_is_memory_dataset(raster_or_vector):
+            raise RuntimeError("Using MEM/Memory drivers is deprecated. Use /vsimem/ paths instead.")
 
-        # Only proceed if dataset is in memory
-        if not _check_is_dataset_in_memory(raster_or_vector):
-            return False
-
-        # Handle string paths
+        # Handle /vsimem/ datasets
         if isinstance(raster_or_vector, str):
-            gdal.Unlink(raster_or_vector)
-
-        # Handle dataset objects
+            path = raster_or_vector
         else:
+            path = _get_path_from_dataset(raster_or_vector)
+
+        if path.startswith("/vsimem/"):
+            gdal.Unlink(path)
+            return path not in get_gdal_memory()
+
+        # Final attempt to delete any remaining in-memory datasets
+        if isinstance(raster_or_vector, (gdal.Dataset, ogr.DataSource)):
             try:
-                raster_or_vector.Destroy() # type: ignore
+                raster_or_vector.FlushCache()
             except (RuntimeError, AttributeError):
                 pass
-            finally:
-                raster_or_vector = None # type: ignore
-                gdal.Unlink(path)
-
-        # Verify deletion
-        remaining_datasets = get_gdal_memory()
-        return path not in remaining_datasets
+            raster_or_vector = None # type: ignore
+            return True
 
     except (RuntimeError, AttributeError) as e:
         warn(f"Error deleting dataset: {str(e)}", RuntimeWarning)
         return False
+
+    return True
 
 
 def delete_dataset_if_in_memory_list(
@@ -1301,13 +1353,14 @@ def _get_path_from_dataset(
         # If we reach here, dataset is neither valid raster nor vector
         if dataset_type:
             raise ValueError(f"Dataset is not a valid {dataset_type}")
-        raise ValueError("Dataset is not a valid raster or vector")
 
-    except Exception as e:
+        raise ValueError("Unable to retrieve path from dataset")
+
+    except (RuntimeError, AttributeError, IOError) as e:
         if isinstance(e, (TypeError, ValueError)):
-            raise
-        raise ValueError(f"Error retrieving path from dataset: {str(e)}") from e
+            raise ValueError(f"Error retrieving path from dataset: {str(e)}") from e
 
+    raise ValueError(f"Error retrieving path from dataset: {dataset}")
 
 def _get_path_from_dataset_list(
     datasets: List[Union[str, gdal.Dataset, ogr.DataSource]],
