@@ -942,9 +942,11 @@ def _check_is_dir(path: str) -> bool:
         if norm_path in ["/vsimem", "/vsizip"]:
             return True
 
-        # Check for virtual filesystem paths
-        if any(vfs in ["vsimem", "vsizip"] for vfs in norm_path.split(os.sep)):
-            return _check_dir_exists_vsimem(norm_path)
+        # For vsimem paths, check if any files exist in this directory
+        if "vsimem" in norm_path:
+            dir_path = norm_path if norm_path.endswith("/") else norm_path + "/"
+            vsimem_contents = _get_vsimem_content()
+            return any(p.startswith(dir_path) for p in vsimem_contents)
 
         # Handle physical filesystem
         try:
@@ -1697,7 +1699,7 @@ def _get_augmented_path(
         filename = _get_filename_from_path(parsed_path, with_ext=False)
 
         # Add optional components
-        uuid_str = f"_{uuid4().int}" if add_uuid else ""
+        uuid_str = f"_{uuid4().hex}" if add_uuid else ""
         timestamp_str = f"_{utils_base._get_time_as_str()}" if add_timestamp else ""
 
         # Construct new filename
@@ -1900,7 +1902,7 @@ def _get_temp_filepath(
             raise ValueError(f"Invalid extension: {ext}")
 
         # Add optional components
-        uuid_str = f"_{uuid4().int}" if add_uuid else ""
+        uuid_str = f"_{uuid4().hex}" if add_uuid else ""
         timestamp_str = f"_{utils_base._get_time_as_str()}" if add_timestamp else ""
 
         # Construct filename

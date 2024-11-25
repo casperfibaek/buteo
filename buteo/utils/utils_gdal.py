@@ -6,7 +6,6 @@ These functions are used to interact with basic GDAL objects.
 # Standard Library
 from typing import Optional, Union, List, Any, Tuple
 from warnings import warn
-import inspect
 
 # External
 from osgeo import gdal, ogr
@@ -949,7 +948,7 @@ def _check_is_vector_empty(
 
 def _check_is_raster(
     potential_raster: Any,
-    empty_is_invalid: bool = True,
+    empty_is_invalid: bool = False,
 ) -> bool:
     """Checks if a variable is a valid raster.
 
@@ -959,7 +958,7 @@ def _check_is_raster(
         The variable to check. Expected to be either str path to raster or gdal.Dataset.
 
     empty_is_invalid : bool, optional
-        If True, an empty raster is considered invalid. Default: True.
+        If True, an empty raster is considered invalid. Default: False.
 
     Returns
     -------
@@ -1010,7 +1009,7 @@ def _check_is_raster(
 
 def _check_is_raster_list(
     potential_raster_list: List[Any],
-    empty_is_invalid: bool = True,
+    empty_is_invalid: bool = False,
 ) -> bool:
     """Checks if a list of variables contains only valid rasters.
 
@@ -1020,7 +1019,7 @@ def _check_is_raster_list(
         The list of variables to check. Expected to contain str paths to rasters
         or gdal.Dataset objects.
     empty_is_invalid : bool, optional
-        If True, an empty raster is considered invalid. Default: True.
+        If True, an empty raster is considered invalid. Default: False.
 
     Returns
     -------
@@ -1056,7 +1055,7 @@ def _check_is_raster_list(
 
 def _check_is_vector(
     potential_vector: Any,
-    empty_is_invalid: bool = True,
+    empty_is_invalid: bool = False,
 ) -> bool:
     """Checks if a variable is a valid vector.
 
@@ -1065,7 +1064,7 @@ def _check_is_vector(
     potential_vector : Any
         The variable to check. Expected to be either str path to vector or ogr.DataSource.
     empty_is_invalid : bool, optional
-        If True, an empty vector is considered invalid. Default: True.
+        If True, an empty vector is considered invalid. Default: False.
 
     Returns
     -------
@@ -1128,7 +1127,7 @@ def _check_is_vector(
 
 def _check_is_vector_list(
     potential_vector_list: List[Any],
-    empty_is_invalid: bool = True,
+    empty_is_invalid: bool = False,
 ) -> bool:
     """Checks if a variable is a valid list of vectors.
 
@@ -1138,7 +1137,7 @@ def _check_is_vector_list(
         The list of variables to check. Expected to contain str paths to vectors
         or ogr.DataSource objects.
     empty_is_invalid : bool, optional
-        If True, an empty vector is considered invalid. Default: True.
+        If True, an empty vector is considered invalid. Default: False.
 
     Returns
     -------
@@ -1174,7 +1173,7 @@ def _check_is_vector_list(
 
 def _check_is_raster_or_vector(
     potential_raster_or_vector: Any,
-    empty_is_invalid: bool = True,
+    empty_is_invalid: bool = False,
 ) -> bool:
     """Checks if a variable is a valid raster or vector.
 
@@ -1183,7 +1182,7 @@ def _check_is_raster_or_vector(
     potential_raster_or_vector : Union[str, gdal.Dataset, ogr.DataSource]
         The variable to check. Can be a path string, gdal.Dataset or ogr.DataSource.
     empty_is_invalid : bool, optional
-        If True, an empty raster or vector is considered invalid. Default: True.
+        If True, an empty raster or vector is considered invalid. Default: False.
 
     Returns
     -------
@@ -1219,7 +1218,7 @@ def _check_is_raster_or_vector(
 
 def _check_is_raster_or_vector_list(
     potential_raster_or_vector_list: List[Any],
-    empty_is_invalid: bool = True,
+    empty_is_invalid: bool = False,
 ) -> bool:
     """Checks if a variable is a valid list of rasters or vectors.
 
@@ -1229,7 +1228,7 @@ def _check_is_raster_or_vector_list(
         The list of variables to check. Expected to contain paths to rasters/vectors,
         gdal.Dataset or ogr.DataSource objects.
     empty_is_invalid : bool, optional
-        If True, an empty raster or vector is considered invalid. Default: True.
+        If True, an empty raster or vector is considered invalid. Default: False.
 
     Returns
     -------
