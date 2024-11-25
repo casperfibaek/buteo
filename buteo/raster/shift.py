@@ -38,8 +38,8 @@ def _raster_shift(
     for shift in shift_list:
         assert isinstance(shift, (int, float)), f"shift must be an int or a float: {shift}"
 
-    ref = core_raster._raster_open(raster)
-    metadata = core_raster._get_basic_metadata_raster(ref)
+    ref = core_raster._open_raster(raster)
+    metadata = core_raster.get_metadata_raster(ref)
 
     x_shift, y_shift = shift_list
 

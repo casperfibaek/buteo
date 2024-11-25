@@ -18,7 +18,7 @@ from buteo.raster import core_raster
 def test_open_raster_single():
     """ Test: Open raster file. """
     raster_1 = create_sample_raster()
-    raster = core_raster.raster_open(raster_1, writeable=False)
+    raster = core_raster.open_raster(raster_1, writeable=False)
     assert isinstance(raster, gdal.Dataset)
 
     gdal.Unlink(raster_1)
@@ -27,7 +27,7 @@ def test_open_raster_list():
     """ Test: Open list of raster files. """
     raster_1 = create_sample_raster()
     raster_2 = create_sample_raster(nodata=0.0)
-    rasters = core_raster.raster_open([raster_1, raster_2], writeable=False)
+    rasters = core_raster.open_raster([raster_1, raster_2], writeable=False)
     assert isinstance(rasters, list) and len(rasters) == 2
     assert all(isinstance(r, gdal.Dataset) for r in rasters)
 
@@ -37,12 +37,12 @@ def test_open_raster_list():
 def test_open_raster_invalid_input():
     """ Test: Open raster file - invalid. """
     with pytest.raises(ValueError):
-        core_raster.raster_open("non_existent_file.tif", writeable=False)
+        core_raster.open_raster("non_existent_file.tif", writeable=False)
 
 def test_open_raster_write_mode():
     """ Test: Open raster file in write mode. """
     raster_1 = create_sample_raster()
-    raster = core_raster.raster_open(raster_1, writeable=True)
+    raster = core_raster.open_raster(raster_1, writeable=True)
     assert isinstance(raster, gdal.Dataset)
 
     error_code = raster.GetRasterBand(1).WriteArray(np.zeros((10, 10)))
@@ -55,7 +55,7 @@ def test_open_raster_write_mode():
 def test_open_raster_read_mode():
     """ Test: Open raster file in read mode. """
     raster_1 = create_sample_raster()
-    raster = core_raster.raster_open(raster_1, writeable=False)
+    raster = core_raster.open_raster(raster_1, writeable=False)
     assert isinstance(raster, gdal.Dataset)
 
     with pytest.raises(RuntimeError):
@@ -67,7 +67,7 @@ def test_open_raster_read_mode():
 def test_raster_to_metadata():
     """ Test: raster to metadata. """
     raster_1 = create_sample_raster()
-    metadata = core_raster._get_basic_metadata_raster(raster_1)
+    metadata = core_raster.get_metadata_raster(raster_1)
 
     assert isinstance(metadata, dict)
     assert metadata["width"] == 10
@@ -88,7 +88,7 @@ def test_raster_to_metadata():
 def test_raster_to_metadata_nodata():
     """ Test: raster to metadata. """
     raster_2 = create_sample_raster(nodata=0.0)
-    metadata = core_raster._get_basic_metadata_raster(raster_2)
+    metadata = core_raster.get_metadata_raster(raster_2)
 
     assert isinstance(metadata, dict)
     assert metadata["width"] == 10
@@ -108,7 +108,7 @@ def test_raster_to_metadata_nodata():
 def test_raster_to_metadata_single_raster():
     """ Test: raster to metadata. Single raster. """
     raster_1 = create_sample_raster()
-    metadata = core_raster._get_basic_metadata_raster(raster_1)
+    metadata = core_raster.get_metadata_raster(raster_1)
 
     assert isinstance(metadata, dict)
     assert metadata["width"] == 10
@@ -186,24 +186,6 @@ def test_raster_has_nodata_false():
 
     gdal.Unlink(raster_1)
 
-def test_rasters_have_nodata_true():
-    """ Test: rasters have nodata. True case. """
-    raster_1 = create_sample_raster(nodata=0)
-    raster_2 = create_sample_raster()
-    assert core_raster._check_raster_has_nodata_list([raster_1, raster_2])
-
-    gdal.Unlink(raster_1)
-    gdal.Unlink(raster_2)
-
-def test_rasters_have_nodata_false():
-    """ Test: rasters have nodata. False case. """
-    raster_1 = create_sample_raster()
-    raster_2 = create_sample_raster()
-    assert not core_raster._check_raster_has_nodata_list([raster_1, raster_2])
-
-    gdal.Unlink(raster_1)
-    gdal.Unlink(raster_2)
-
 def test_rasters_have_same_nodata_true():
     """ Test: rasters have same nodata. True case. """
     raster_1 = create_sample_raster(nodata=0)
@@ -222,13 +204,6 @@ def test_rasters_have_same_nodata_false():
     gdal.Unlink(raster_1)
     gdal.Unlink(raster_2)
 
-def test_get_first_nodata_value():
-    """ Test: get first nodata value. """
-    raster_1 = create_sample_raster(nodata=0)
-    assert core_raster._get_first_nodata_value(raster_1) == 0
-
-    gdal.Unlink(raster_1)
-
 def test_count_bands_in_rasters_single_band_rasters():
     """ Test: count bands in rasters. Single band rasters. """
     raster1 = create_sample_raster(width=10, height=10, bands=1)
@@ -236,7 +211,11 @@ def test_count_bands_in_rasters_single_band_rasters():
     raster3 = create_sample_raster(width=10, height=10, bands=1)
 
     rasters = [raster1, raster2, raster3]
-    bands = core_raster._raster_count_bands_list(rasters)
+    raster1_bands = core_raster.get_metadata_raster(rasters[0])["bands"]
+    raster2_bands = core_raster.get_metadata_raster(rasters[1])["bands"]
+    raster3_bands = core_raster.get_metadata_raster(rasters[2])["bands"]
+
+    bands = raster1_bands + raster2_bands + raster3_bands
 
     assert bands == 3
 
@@ -251,7 +230,12 @@ def test_count_bands_in_rasters_multiple_band_rasters():
     raster3 = create_sample_raster(width=10, height=10, bands=1)
 
     rasters = [raster1, raster2, raster3]
-    bands = core_raster._raster_count_bands_list(rasters)
+
+    raster1_bands = core_raster.get_metadata_raster(rasters[0])["bands"]
+    raster2_bands = core_raster.get_metadata_raster(rasters[1])["bands"]
+    raster3_bands = core_raster.get_metadata_raster(rasters[2])["bands"]
+
+    bands = raster1_bands + raster2_bands + raster3_bands
 
     assert bands == 6
 
@@ -310,7 +294,7 @@ def rasters_intersect_non_intersecting_difpixel():
     gdal.Unlink(raster2)
 
 def test_rasters_intersection_true():
-    """ Test: Rasters intersection. True Case """ 
+    """ Test: Rasters intersection. True Case """
     raster1 = create_sample_raster(width=10, height=10, x_min=0, y_max=10)
     raster2 = create_sample_raster(width=10, height=10, x_min=5, y_max=15)
     intersection1 = core_raster.get_raster_intersection(raster1, raster2)

@@ -90,8 +90,8 @@ def _raster_reproject(
         if not utils_path._check_is_valid_output_filepath(out_path):
             raise ValueError(f"Invalid output path: {out_path}")
 
-    ref = core_raster._raster_open(raster)
-    metadata = core_raster._get_basic_metadata_raster(ref)
+    ref = core_raster._open_raster(raster)
+    metadata = core_raster.get_metadata_raster(ref)
 
     out_format = utils_gdal._get_raster_driver_name_from_path(out_path)
 

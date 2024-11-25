@@ -43,7 +43,7 @@ def _raster_get_proximity(
     array = core_raster_io.raster_to_array(raster, filled=True)
 
     if unit.lower() == "geo":
-        metadata = core_raster._get_basic_metadata_raster(raster)
+        metadata = core_raster.get_metadata_raster(raster)
         pixel_height = metadata["pixel_height"]
         pixel_width = metadata["pixel_width"]
     else:

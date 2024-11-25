@@ -10,7 +10,7 @@ from osgeo import gdal
 # Internal
 from utils_tests import create_sample_raster
 from buteo.raster.align import _raster_align_to_reference, raster_align
-from buteo.raster.core_raster import check_rasters_are_aligned, _get_basic_metadata_raster
+from buteo.raster.core_raster import check_rasters_are_aligned, get_metadata_raster
 
 
 
@@ -76,7 +76,7 @@ def test_align_rasters_multiple_rasters():
     assert len(aligned_rasters) == len(rasters)
     assert check_rasters_are_aligned(aligned_rasters)
 
-    metadata = _get_basic_metadata_raster(aligned_rasters[0])
+    metadata = get_metadata_raster(aligned_rasters[0])
 
     assert metadata["width"] == 15
     assert metadata["height"] == 16

@@ -8,6 +8,7 @@ import pytest
 from osgeo import osr, gdal, ogr
 from buteo.utils import utils_projection
 
+
 # Sample fixtures
 @pytest.fixture
 def sample_wkt():
@@ -202,7 +203,7 @@ def test_get_projection_from_vector(sample_vector):
 
 # Test reproject_bbox
 def test_reproject_bbox():
-    bbox = [0, 0, 10, 10]  # xmin, ymin, xmax, ymax
+    bbox = [-10, -10, 10, 10]  # xmin, ymin, xmax, ymax
     source_srs = osr.SpatialReference()
     source_srs.ImportFromEPSG(4326)
     target_srs = osr.SpatialReference()
@@ -216,7 +217,7 @@ def test_reproject_bbox():
 
 # Test _reproject_point
 def test_reproject_point():
-    point = [0, 0]  # lon, lat
+    point = [-10, 10]  # lon, lat
     source_srs = osr.SpatialReference()
     source_srs.ImportFromEPSG(4326)
     target_srs = osr.SpatialReference()
@@ -225,14 +226,15 @@ def test_reproject_point():
     new_point = utils_projection._reproject_point(point, source_srs, target_srs)
     assert len(new_point) == 2
     # Check that coordinates have been transformed
-    assert new_point[0] != point[0]
-    assert new_point[1] != point[1]
+    assert float(new_point[0]) != float(point[0])
+    assert float(new_point[1]) != float(point[1])
 
 # Test _get_utm_epsg_from_latlng
 def test_get_utm_epsg_from_latlng():
-    latlng = [12.0, 55.0]  # Copenhagen coordinates
-    epsg_code = utils_projection._get_utm_epsg_from_latlng(latlng)
-    assert epsg_code == 'EPSG:32632'  # UTM zone 32N
+    lat = 55.495972
+    lng = 9.473052
+    epsg_code = utils_projection._get_utm_epsg_from_latlng([lat, lng])
+    assert epsg_code == '32632'  # UTM zone 32N
 
 # Test _get_transformer
 def test_get_transformer():
@@ -262,7 +264,7 @@ def test_set_projection(tmp_path):
     # Set projection
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
-    result = utils_projection.set_projection(filename, srs)
+    result = utils_projection.set_projection_raster(filename, srs)
     assert result is True
 
     # Verify projection set
@@ -272,9 +274,6 @@ def test_set_projection(tmp_path):
     srs_result.ImportFromWkt(ds.GetProjection())
     assert srs_result.GetAuthorityCode(None) == '4326'
     ds = None
-
-
-
 
 # Tests for reproject_bbox
 def test_reproject_bbox_valid(sample_bbox, wgs84_srs, utm_zone_srs):
@@ -419,12 +418,6 @@ def test_reproject_point_invalid_projections(sample_point):
             target_projection=None
         )
 
-# Tests for _get_utm_epsg_from_latlng
-def test_get_utm_epsg_from_latlng_valid():
-    latlng = [55.0, 12.0]  # Copenhagen coordinates
-    epsg_code = utils_projection._get_utm_epsg_from_latlng(latlng)
-    assert epsg_code == '32N'
-
 def test_get_utm_epsg_from_latlng_invalid_latlng():
     # latlng is None
     with pytest.raises(ValueError):
@@ -481,7 +474,7 @@ def test_set_projection_raster(sample_raster, wgs84_srs):
     ds = None
 
     # Set projection
-    result = utils_projection.set_projection(sample_raster, wgs84_srs)
+    result = utils_projection.set_projection_raster(sample_raster, wgs84_srs)
 
     assert result is True
 
@@ -496,60 +489,28 @@ def test_set_projection_raster(sample_raster, wgs84_srs):
 def test_set_projection_invalid_inputs():
     # dataset is None
     with pytest.raises(ValueError):
-        utils_projection.set_projection(
+        utils_projection.set_projection_raster(
             dataset=None,
             projection=4326
         )
     # projection is None
     with pytest.raises(ValueError):
-        utils_projection.set_projection(
+        utils_projection.set_projection_raster(
             dataset="sample.tif",
             projection=None
         )
     # dataset invalid type
     with pytest.raises(ValueError):
-        utils_projection.set_projection(
+        utils_projection.set_projection_raster(
             dataset=123,
             projection=4326
         )
     # projection invalid type
     with pytest.raises(ValueError):
-        utils_projection.set_projection(
+        utils_projection.set_projection_raster(
             dataset="sample.tif",
             projection=123.456
         )
-
-def test_set_projection_vector(tmp_path, wgs84_srs):
-    # Create a vector dataset without projection
-    filepath = str(tmp_path / "sample.shp")
-    driver = ogr.GetDriverByName('ESRI Shapefile')
-    ds = driver.CreateDataSource(filepath)
-    layer = ds.CreateLayer("layer", geom_type=ogr.wkbPoint)
-    feature_def = layer.GetLayerDefn()
-    feature = ogr.Feature(feature_def)
-    wkt = "POINT (12.0 55.0)"
-    geometry = ogr.CreateGeometryFromWkt(wkt)
-    feature.SetGeometry(geometry)
-    layer.CreateFeature(feature)
-    feature = None
-    ds = None
-
-    # Ensure the vector has no projection
-    ds = ogr.Open(filepath, 0)
-    layer = ds.GetLayer()
-    assert layer.GetSpatialRef() is None
-    ds = None
-
-    # Set projection
-    result = utils_projection.set_projection(filepath, wgs84_srs)
-    assert result is True
-
-    # Verify projection is set
-    ds = ogr.Open(filepath, 0)
-    layer = ds.GetLayer()
-    srs = layer.GetSpatialRef()
-    assert srs.IsSame(wgs84_srs)
-    ds = None
 
 # Tests for _get_transformer
 def test_get_transformer_valid(wgs84_srs, utm_zone_srs):

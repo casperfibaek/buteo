@@ -38,8 +38,8 @@ def _raster_add_border(
     """Internal.
     Add a border to a raster.
     """
-    in_raster = core_raster._raster_open(raster)
-    metadata = core_raster._get_basic_metadata_raster(in_raster)
+    in_raster = core_raster._open_raster(raster)
+    metadata = core_raster.get_metadata_raster(in_raster)
 
     # Parse the driver
     driver_name = "GTiff" if out_path is None else utils_gdal._get_raster_driver_name_from_path(out_path)

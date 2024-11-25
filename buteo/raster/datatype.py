@@ -16,7 +16,7 @@ from buteo.utils import (
     utils_path,
     utils_translate,
 )
-from buteo.raster.core_raster import _raster_open, _get_basic_metadata_raster
+from buteo.raster.core_raster import _open_raster, get_metadata_raster
 
 
 
@@ -41,8 +41,8 @@ def _raster_set_datatype(
     if out_path is None:
         out_path = utils_path._get_temp_filepath("set_datatype.tif")
 
-    ref = _raster_open(raster)
-    metadata = _get_basic_metadata_raster(ref)
+    ref = _open_raster(raster)
+    metadata = get_metadata_raster(ref)
 
     driver_name = utils_gdal._get_raster_driver_name_from_path(out_path)
     driver = gdal.GetDriverByName(driver_name)
@@ -214,7 +214,7 @@ def raster_get_datatype(
         if not utils_gdal._check_is_raster(input_raster):
             raise ValueError(f"Unable to open input raster: {input_raster}")
 
-        metadata = _get_basic_metadata_raster(input_raster)
+        metadata = get_metadata_raster(input_raster)
         datatypes.append(metadata["dtype_name"])
 
     if input_is_list:

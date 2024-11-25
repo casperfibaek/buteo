@@ -45,7 +45,7 @@ def raster_warp(
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), f"out_path is not a valid output path: {out_path}"
 
     out_format = utils_gdal._get_driver_name_from_path(out_path)
-    input_metadata = core_raster._get_basic_metadata_raster(raster)
+    input_metadata = core_raster.get_metadata_raster(raster)
     if src_projection is None:
         src_projection = input_metadata["projection_wkt"]
     else:
@@ -63,31 +63,31 @@ def raster_warp(
 
     if dst_extent is not None:
         if isinstance(dst_extent, (str, gdal.Dataset)):
-            dst_extent = core_raster._get_basic_metadata_raster(dst_extent)["bbox_gdal"]
+            dst_extent = core_raster.get_metadata_raster(dst_extent)["bbox_gdal"]
 
     if dst_x_res is not None:
         if isinstance(dst_x_res, (str, gdal.Dataset)):
-            metadata = core_raster._get_basic_metadata_raster(dst_x_res)
+            metadata = core_raster.get_metadata_raster(dst_x_res)
             dst_x_res = metadata["pixel_width"]
 
     if dst_y_res is not None:
         if isinstance(dst_y_res, (str, gdal.Dataset)):
-            metadata = core_raster._get_basic_metadata_raster(dst_y_res)
+            metadata = core_raster.get_metadata_raster(dst_y_res)
             dst_y_res = metadata["pixel_height"]
 
     if dst_width is not None:
         if isinstance(dst_width, (str, gdal.Dataset)):
-            metadata = core_raster._get_basic_metadata_raster(dst_width)
+            metadata = core_raster.get_metadata_raster(dst_width)
             dst_width = metadata["width"]
 
     if dst_height is not None:
         if isinstance(dst_height, (str, gdal.Dataset)):
-            metadata = core_raster._get_basic_metadata_raster(dst_height)
+            metadata = core_raster.get_metadata_raster(dst_height)
             dst_height = metadata["height"]
 
     if dst_nodata is not None:
         if isinstance(dst_nodata, (str, gdal.Dataset)):
-            metadata = core_raster._get_basic_metadata_raster(dst_nodata)
+            metadata = core_raster.get_metadata_raster(dst_nodata)
             dst_nodata = metadata["nodata_value"]
 
     warp_options = gdal.WarpOptions(

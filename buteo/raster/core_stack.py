@@ -174,9 +174,9 @@ def raster_stack_vrt_list(
 
         for idx, raster_input in enumerate(rasters):
             if idx == 0:
-                master_bands = core_raster._get_basic_metadata_raster(raster_input)["bands"]
+                master_bands = core_raster.get_metadata_raster(raster_input)["bands"]
             else:
-                if master_bands != core_raster._get_basic_metadata_raster(raster_input)["bands"]:
+                if master_bands != core_raster.get_metadata_raster(raster_input)["bands"]:
                     raise ValueError("All rasters must have the same number of bands when separate is False.")
 
     # Generate a temporary output file path if out_path is not provided
@@ -193,7 +193,7 @@ def raster_stack_vrt_list(
 
     # Build VRT options based on whether a reference raster is provided or not
     if reference is not None:
-        meta = core_raster._get_basic_metadata_raster(reference)
+        meta = core_raster.get_metadata_raster(reference)
         options = gdal.BuildVRTOptions(
             resampleAlg=resample_algorithm,
             separate=separate,
@@ -219,7 +219,7 @@ def raster_stack_vrt_list(
         tmp_vrt_list = []
 
         for idx, raster in enumerate(rasters):
-            bands_in_raster = core_raster._get_basic_metadata_raster(raster)["bands"]
+            bands_in_raster = core_raster.get_metadata_raster(raster)["bands"]
 
             for band in range(bands_in_raster):
                 tmp_vrt_path = utils_path._get_temp_filepath(

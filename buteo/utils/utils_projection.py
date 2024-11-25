@@ -2,7 +2,7 @@
 
 # Standard Library
 import math
-from typing import Union, List
+from typing import Union, List, Optional
 
 # External
 import numpy as np
@@ -920,24 +920,26 @@ def _reproject_latlng_point_to_utm(
         raise RuntimeError(f"UTM transformation failed: {str(e)}") from e
 
 
-def set_projection(
-    dataset: Union[str, gdal.Dataset, ogr.DataSource],
+# TODO: Create a function to define the projection of a vector after creation.
+
+def set_projection_raster(
+    dataset: Union[str, gdal.Dataset],
     projection: Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-    pixel_size_x: float = 1.0,
-    pixel_size_y: float = -1.0,
+    pixel_size_x: Optional[float] = None,
+    pixel_size_y: Optional[float] = None,
 ) -> bool:
-    """Sets the projection of a dataset and optionally adjusts pixel size.
+    """Sets the projection of a raster and optionally adjusts pixel size.
 
     Parameters
     ----------
-    dataset : Union[str, gdal.Dataset, ogr.DataSource]
-        The dataset to set the projection of.
-    projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
+    dataset : Union[str, gdal.Dataset]
+        The raster dataset to set the projection of.
+    projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference] 
         The projection to set.
-    pixel_size_x : float, optional
-        The x pixel size, by default 1.0
-    pixel_size_y : float, optional
-        The y pixel size (negative for north-up), by default -1.0
+    pixel_size_x : Optional[float], optional
+        The x pixel size, by default None
+    pixel_size_y : Optional[float], optional
+        The y pixel size (negative for north-up), by default None
 
     Returns
     -------
@@ -954,8 +956,8 @@ def set_projection(
     if dataset is None or projection is None:
         raise ValueError("Dataset and projection cannot be None")
 
-    if not isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)):
-        raise ValueError("Dataset must be a string, gdal.Dataset, or ogr.DataSource")
+    if not isinstance(dataset, (str, gdal.Dataset)):
+        raise ValueError("Dataset must be a string or gdal.Dataset")
 
     if not isinstance(projection, (str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference)):
         raise ValueError("Projection must be a string, int, gdal.Dataset, ogr.DataSource, or osr.SpatialReference")
@@ -968,41 +970,34 @@ def set_projection(
         raise ValueError(f"Invalid projection: {str(e)}") from e
 
     # Open dataset if string path provided
-    opened = dataset if isinstance(dataset, (gdal.Dataset, ogr.DataSource)) else None
+    opened = dataset if isinstance(dataset, gdal.Dataset) else None
     if opened is None:
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         try:
             opened = gdal.Open(dataset, gdal.GA_Update)
-            if opened is None:
-                opened = ogr.Open(dataset, 1)  # 1 = Update mode
         except Exception as e:
             gdal.PopErrorHandler()
-            raise RuntimeError(f"Could not open dataset: {str(e)}") from e
+            raise RuntimeError(f"Could not open raster dataset: {str(e)}") from e
         gdal.PopErrorHandler()
 
     if opened is None:
-        raise RuntimeError(f"Could not open dataset: {dataset}")
+        raise RuntimeError(f"Could not open raster dataset: {dataset}")
 
     try:
-        # Set projection based on dataset type
-        if isinstance(opened, gdal.Dataset):
-            opened.SetProjection(proj.ExportToWkt())
+        # Set projection
+        opened.SetProjection(proj.ExportToWkt())
 
-            # Update geotransform if it's a raster
+        # Update geotransform only if pixel sizes are specified
+        if pixel_size_x is not None or pixel_size_y is not None:
             gt = opened.GetGeoTransform()
             if gt:
-                # Ensure pixel_size_y is negative for north-up orientation
-                pixel_size_y = -abs(pixel_size_y)
                 new_gt = list(gt)
-                new_gt[1] = pixel_size_x  # x pixel size
-                new_gt[5] = pixel_size_y  # y pixel size
+                if pixel_size_x is not None:
+                    new_gt[1] = pixel_size_x  # x pixel size
+                if pixel_size_y is not None:
+                    # Ensure pixel_size_y is negative for north-up orientation
+                    new_gt[5] = -abs(pixel_size_y)  # y pixel size
                 opened.SetGeoTransform(new_gt)
-
-        elif isinstance(opened, ogr.DataSource):
-            layer = opened.GetLayer()
-            if layer is None:
-                raise RuntimeError("Vector dataset has no layers")
-            layer.SetSpatialRef(proj)
 
         opened.FlushCache()
 

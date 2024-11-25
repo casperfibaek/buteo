@@ -8,7 +8,7 @@ from osgeo import gdal
 
 # Internal
 from buteo.utils import utils_io, utils_base
-from buteo.raster.core_raster import _get_basic_metadata_raster
+from buteo.raster.core_raster import get_metadata_raster
 
 
 
@@ -18,7 +18,7 @@ def _raster_to_metadata(
     """Internal."""
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
-    metadata = _get_basic_metadata_raster(raster)
+    metadata = get_metadata_raster(raster)
 
     return metadata
 

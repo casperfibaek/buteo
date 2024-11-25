@@ -94,7 +94,7 @@ def raster_get_footprints(
 
     footprints = []
     for idx, in_raster in enumerate(input_list):
-        metadata = core_raster._get_basic_metadata_raster(in_raster)
+        metadata = core_raster.get_metadata_raster(in_raster)
         name = os.path.splitext(os.path.basename(metadata["name"]))[0]
 
         # Projections

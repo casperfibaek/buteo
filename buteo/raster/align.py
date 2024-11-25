@@ -132,7 +132,7 @@ def _raster_align_to_reference(
 
     creation_options = utils_gdal._get_default_creation_options(creation_options)
 
-    reference_metadata = core_raster._get_basic_metadata_raster(reference)
+    reference_metadata = core_raster.get_metadata_raster(reference)
 
     target_projection = reference_metadata["projection_osr"]
     reference_bbox = reference_metadata["bbox"]
@@ -146,7 +146,7 @@ def _raster_align_to_reference(
 
     # Reproject the rasters to the reference projection.
     for idx, raster in enumerate(input_rasters):
-        raster_metadata = core_raster._get_basic_metadata_raster(raster)
+        raster_metadata = core_raster.get_metadata_raster(raster)
         raster_path = utils_gdal._get_path_from_dataset(raster)
 
         raster_reprojected = None
@@ -161,9 +161,9 @@ def _raster_align_to_reference(
                 prefix="tmp_reprojection_",
                 add_uuid=True,
             )
-            raster_ds = core_raster._raster_open(raster_reprojected)
+            raster_ds = core_raster._open_raster(raster_reprojected)
         else:
-            raster_ds = core_raster._raster_open(raster_path)
+            raster_ds = core_raster._open_raster(raster_path)
 
         destination_ds = core_raster_io.raster_create_empty(
             out_path=path_list[idx],
@@ -180,7 +180,7 @@ def _raster_align_to_reference(
             overwrite=overwrite,
         )
 
-        destination_ds = core_raster._raster_open(destination_ds, writeable=True)
+        destination_ds = core_raster._open_raster(destination_ds, writeable=True)
 
         warp_options = gdal.WarpOptions(
             resampleAlg=utils_translate._translate_resample_method(resample_alg),
@@ -272,7 +272,7 @@ def _raster_find_best_align_reference(
     for idx, intersection in enumerate(intersections_arr):
         if intersection == most_intersections:
             raster = input_rasters[idx]
-            raster_area = core_raster._get_basic_metadata_raster(raster)["area_latlng"]
+            raster_area = core_raster.get_metadata_raster(raster)["area_latlng"]
 
             if raster_area > largest_area:
                 largest_area = raster_area
@@ -305,11 +305,11 @@ def _raster_find_best_align_reference(
         copy_if_same=False,
     )
 
-    best_reference_meta = core_raster._get_basic_metadata_raster(best_reference)
+    best_reference_meta = core_raster.get_metadata_raster(best_reference)
 
     best_geom = best_reference_meta["geom"]
     for raster_path in matched_rasters:
-        raster_meta = core_raster._get_basic_metadata_raster(raster_path)
+        raster_meta = core_raster.get_metadata_raster(raster_path)
         raster_geom = raster_meta["geom"]
 
         if not raster_geom.Intersects(best_geom):

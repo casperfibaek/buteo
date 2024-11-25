@@ -131,8 +131,8 @@ def vector_rasterize(
     x_min, x_max, y_min, y_max = source_layer.GetExtent()
 
     if isinstance(pixel_size, (gdal.Dataset, str)):
-        pixel_size_x = core_raster._raster_open(pixel_size).GetGeoTransform()[1]
-        pixel_size_y = abs(core_raster._raster_open(pixel_size).GetGeoTransform()[5])
+        pixel_size_x = core_raster._open_raster(pixel_size).GetGeoTransform()[1]
+        pixel_size_y = abs(core_raster._open_raster(pixel_size).GetGeoTransform()[5])
     elif isinstance(pixel_size, (int, float)):
         pixel_size_x = pixel_size
         pixel_size_y = pixel_size

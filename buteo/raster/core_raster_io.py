@@ -22,6 +22,89 @@ from buteo.raster import core_raster, core_offsets
 
 
 
+def _raster_to_array(
+    raster: Union[gdal.Dataset, str],
+    *,
+    bands: Union[List[int], str, int] = 'all',
+    filled: bool = False,
+    fill_value: Optional[Union[int, float]] = None,
+    pixel_offsets: Optional[Union[List[int], Tuple[int, int, int, int]]] = None,
+    cast: Optional[Union[np.dtype, str]] = None,
+):
+    """Internal function to convert a single raster to a numpy array in channel-first format.
+
+    Parameters
+    ----------
+    raster : gdal.Dataset or str
+        The raster to convert to an array.
+
+    bands : list or str or int, optional
+        The bands to read. Can be "all", an int, or a list of integers.
+        Please note that bands are 1-indexed. Default: "all".
+
+    filled : bool, optional
+        Whether to fill masked values. Default: False.
+
+    fill_value : int or float, optional
+        The value to fill masked values with. Default: None.
+
+    pixel_offsets : list or tuple, optional
+        A list of [x_offset, y_offset, x_size, y_size] to use as the extent.
+        Default: None.
+
+    cast : str or dtype, optional
+        A type to cast the array to. Default: None.
+        
+    Returns
+    -------
+    np.ndarray
+        A numpy array in channel-first format (C, H, W).
+    """
+    metadata = core_raster.get_metadata_raster(raster)
+    shape = metadata["shape"]
+    dtype = metadata["dtype"] if cast is None else cast
+    dtype = utils_translate._parse_dtype(dtype)
+    has_nodata = metadata["nodata"]
+    nodata_value = np.array(metadata["nodata_value"], dtype=dtype) if has_nodata else None
+
+    x_offset, y_offset, x_size, y_size = 0, 0, shape[1], shape[0]
+    if pixel_offsets is not None:
+        x_offset, y_offset, x_size, y_size = pixel_offsets
+
+    bands_to_process = []
+    if (isinstance(bands, str) and bands.lower() == "all") or bands == -1:
+        bands_to_process = utils_gdal._convert_to_band_list(-1, metadata["bands"])
+    else:
+        bands_to_process = utils_gdal._convert_to_band_list(bands, metadata["bands"])
+
+    output_array = np.ma.zeros((len(bands_to_process), y_size, x_size), dtype=dtype)
+
+    r_open = core_raster._open_raster(raster)
+    for idx, band_num in enumerate(bands_to_process):
+        band = r_open.GetRasterBand(band_num)
+        data = band.ReadAsArray(x_offset, y_offset, x_size, y_size)
+
+        if cast is not None:
+            output_array[idx] = utils_translate._safe_numpy_casting(data, dtype)
+        else:
+            output_array[idx] = data
+
+    if has_nodata:
+        output_array = np.ma.masked_equal(output_array, nodata_value)
+
+        if filled:
+            fill_val = nodata_value if fill_value is None else fill_value
+            if isinstance(fill_val, np.ndarray) and fill_val.ndim == 0:
+                fill_val = fill_val.item()
+            output_array = output_array.filled(fill_val)
+
+    if filled and np.ma.isMaskedArray(output_array):
+        fill_val = 0 if fill_value is None else fill_value
+        output_array = output_array.filled(fill_val)
+
+    return output_array
+
+
 def raster_to_array(
     raster: Union[gdal.Dataset, str, List[Union[str, gdal.Dataset]]],
     *,
@@ -160,7 +243,7 @@ def raster_to_array(
     assert core_raster.check_rasters_are_aligned(raster), "Rasters are not aligned."
 
     # Read metadata
-    metadata = core_raster._get_basic_metadata_raster(raster[0])
+    metadata = core_raster.get_metadata_raster(raster[0])
     shape = metadata["shape"]
     dtype = metadata["dtype"] if cast is None else cast
     dtype = utils_translate._parse_dtype(dtype)
@@ -200,11 +283,14 @@ def raster_to_array(
     bands_to_process = []
     output_shape = shape
     if (isinstance(bands, str) and bands.lower() == "all") or bands == -1:
-        total_channels = core_raster._raster_count_bands_list(raster)
+        total_channels = 0
+        for r in raster:
+            total_channels += core_raster.get_metadata_raster(r)["bands"]
+
         output_shape = [y_size, x_size, total_channels]
 
         for r in raster:
-            meta = core_raster._get_basic_metadata_raster(r)
+            meta = core_raster.get_metadata_raster(r)
             bands_in_raster = meta["bands"]
             bands_to_process.append(
                 utils_gdal._convert_to_band_list(-1, bands_in_raster),
@@ -212,7 +298,7 @@ def raster_to_array(
     else:
         channels = 0
         for r in raster:
-            meta = core_raster._get_basic_metadata_raster(r)
+            meta = core_raster.get_metadata_raster(r)
             bands_in_raster = meta["bands"]
             bands_in_raster_list = utils_gdal._convert_to_band_list(bands, bands_in_raster)
             bands_to_process.append(bands_in_raster_list)
@@ -228,7 +314,7 @@ def raster_to_array(
 
         # We can read all at once
         if len(raster) == 1 and (bands == "all" or bands == -1) and False == True:
-            r_open = core_raster._raster_open(r_path)
+            r_open = core_raster._open_raster(r_path)
             data = r_open.ReadAsArray(x_offset, y_offset, x_size, y_size)
 
             if data.ndim != 3:
@@ -244,7 +330,7 @@ def raster_to_array(
         # We need to read bands one by one
         else:
             for n_band in bands_to_process[idx]:
-                r_open = core_raster._raster_open(r_path)
+                r_open = core_raster._open_raster(r_path)
 
                 band = r_open.GetRasterBand(n_band)
                 data = band.ReadAsArray(x_offset, y_offset, x_size, y_size)
@@ -416,7 +502,7 @@ def array_to_raster(
     if pixel_offsets is not None and bbox is not None:
         raise ValueError("Cannot specify both pixel offsets and bounding box.")
 
-    metadata_ref = core_raster._get_basic_metadata_raster(reference)
+    metadata_ref = core_raster.get_metadata_raster(reference)
 
     if pixel_offsets is None:
         pixel_offsets = [0, 0, metadata_ref["width"], metadata_ref["height"]]
@@ -728,7 +814,7 @@ class raster_to_array_chunks:
         self.current_chunk = 0
         self.channel_last = channel_last
 
-        self.shape = core_raster._get_basic_metadata_raster(self.raster)["shape"]
+        self.shape = core_raster.get_metadata_raster(self.raster)["shape"]
 
         assert self.chunks > 0, "The number of chunks must be greater than 0."
         assert self.overlap >= 0, "The overlap must be greater than or equal to 0."
@@ -1067,7 +1153,7 @@ def raster_create_copy(
     driver_name = utils_gdal._get_driver_name_from_path(out_path)
     driver = gdal.GetDriverByName(driver_name)
 
-    src_ds = core_raster._raster_open(raster)
+    src_ds = core_raster._open_raster(raster)
     dst_ds = driver.CreateCopy(out_path, src_ds) # pylint: disable=unused-variable
     dst_ds = None
     src_ds = None
@@ -1163,7 +1249,7 @@ def raster_extract_bands(
     driver_name = utils_gdal._get_driver_name_from_path(out_path)
     driver = gdal.GetDriverByName(driver_name)
 
-    src_ds = core_raster._raster_open(raster)
+    src_ds = core_raster._open_raster(raster)
     dst_ds = driver.Create(
         out_path,
         src_ds.RasterXSize,

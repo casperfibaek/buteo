@@ -41,7 +41,7 @@ def _raster_has_nodata(
     """
     assert isinstance(raster, (str, gdal.Dataset)), f"Invalid raster. {raster}"
 
-    metadata = core_raster._get_basic_metadata_raster(raster)
+    metadata = core_raster.get_metadata_raster(raster)
 
     if metadata["nodata"]:
         return True
@@ -97,7 +97,7 @@ def _raster_get_nodata(
     """
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
-    metadata = core_raster._get_basic_metadata_raster(raster)
+    metadata = core_raster.get_metadata_raster(raster)
 
     return metadata["nodata_value"]
 
@@ -169,10 +169,10 @@ def _raster_set_nodata(
     assert isinstance(overwrite, bool), f"Invalid overwrite. {overwrite}"
 
     if in_place:
-        opened = core_raster._raster_open(raster)
+        opened = core_raster._open_raster(raster)
     else:
         copy = core_raster_io.raster_create_copy(raster, out_path, overwrite=overwrite)
-        opened = core_raster._raster_open(copy)
+        opened = core_raster._open_raster(copy)
 
     bands = opened.RasterCount
 

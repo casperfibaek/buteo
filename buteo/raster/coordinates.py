@@ -32,7 +32,7 @@ def raster_create_grid_with_coordinates(
     """
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
-    meta = core_raster._get_basic_metadata_raster(raster)
+    meta = core_raster.get_metadata_raster(raster)
 
     step_x = meta["pixel_width"]
     size_x = meta["width"]

@@ -48,8 +48,8 @@ def _raster_resample(
         if not utils_path._check_is_valid_output_filepath(out_path):
             raise ValueError(f"Invalid output path: {out_path}")
 
-    ref = core_raster._raster_open(raster)
-    metadata = core_raster._get_basic_metadata_raster(ref)
+    ref = core_raster._open_raster(raster)
+    metadata = core_raster.get_metadata_raster(ref)
 
     if isinstance(target_size, (gdal.Dataset, str)):
         x_res, y_res = utils_gdal._get_raster_size(target_size)

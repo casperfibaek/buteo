@@ -81,7 +81,7 @@ def raster_to_grid(
 
     use_grid = core_vector.vector_open(grid)
     grid_metadata = _vector_to_metadata(use_grid)
-    raster_metadata = core_raster._get_basic_metadata_raster(raster)
+    raster_metadata = core_raster.get_metadata_raster(raster)
 
     # Reproject raster if necessary.
     if not raster_metadata["projection_osr"].IsSame(grid_metadata["projection_osr"]):
@@ -94,7 +94,7 @@ def raster_to_grid(
     # Only use the polygons in the grid that intersect the extent of the raster.
     use_grid = _vector_intersect(use_grid, raster_metadata["extent_datasource"]())
 
-    ref = core_raster._raster_open(raster)
+    ref = core_raster._open_raster(raster)
     use_grid = core_vector.vector_open(use_grid)
 
     layer = use_grid.GetLayer(process_layer)

@@ -16,7 +16,7 @@ from buteo.utils import (
     utils_gdal,
     utils_projection,
 )
-from buteo.raster.core_raster import _get_basic_metadata_raster
+from buteo.raster.core_raster import get_metadata_raster
 from buteo.vector.core_vector import _get_basic_metadata_vector, vector_create_attribute_from_fid
 from buteo.vector.rasterize import vector_rasterize
 from buteo.raster.align import _raster_align_to_reference
@@ -76,7 +76,7 @@ def _raster_get_zonal_statistics(
     if out_path is None:
         out_path = utils_path._get_temp_filepath("zonal_statistics.tif")
 
-    raster_metadata = _get_basic_metadata_raster(raster)
+    raster_metadata = get_metadata_raster(raster)
     vector_metadata = _get_basic_metadata_vector(vector)
 
     # assert the projection is the same
@@ -84,7 +84,7 @@ def _raster_get_zonal_statistics(
 
     # clip raster to vector
     raster_clipped = raster_clip(raster, vector, add_timestamp=True, add_uuid=True)
-    raster_clipped_metadata = _get_basic_metadata_raster(raster_clipped)
+    raster_clipped_metadata = get_metadata_raster(raster_clipped)
 
     vector_updated = vector_create_attribute_from_fid(vector, "_zonal_id")
     import pdb; pdb.set_trace()

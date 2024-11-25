@@ -90,7 +90,7 @@ def _raster_clip(
     # Input is a raster (use extent)
     elif utils_gdal._check_is_raster(clip_geom):
         clip_ds = core_raster.raster_to_extent(clip_geom)
-        clip_metadata = core_raster._get_basic_metadata_raster(clip_geom)
+        clip_metadata = core_raster.get_metadata_raster(clip_geom)
         memory_files.append(clip_ds)
     else:
         if utils_path._check_file_exists(clip_geom):
@@ -108,9 +108,9 @@ def _raster_clip(
     else:
         warp_options.append("CUTLINE_ALL_TOUCHED=FALSE")
 
-    origin_layer = core_raster.raster_open(raster)
+    origin_layer = core_raster.open_raster(raster)
 
-    raster_metadata = core_raster._get_basic_metadata_raster(raster)
+    raster_metadata = core_raster.get_metadata_raster(raster)
     origin_projection = raster_metadata["projection_osr"]
 
     # Fast check: Does the extent of the two inputs overlap?

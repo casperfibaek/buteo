@@ -28,8 +28,8 @@ def _raster_vectorize(
     attribute_field: Optional[str] = None,
 ):
     """Internal."""
-    meta = core_raster._get_basic_metadata_raster(raster)
-    opened = core_raster._raster_open(raster)
+    meta = core_raster.get_metadata_raster(raster)
+    opened = core_raster._open_raster(raster)
     src_band = opened.GetRasterBand(band)
 
     projection = meta["projection_osr"]
@@ -52,7 +52,7 @@ def _raster_vectorize(
     if attribute_field is None:
         attr_index = -1
     else:
-        metadata = core_raster._get_basic_metadata_raster(raster)
+        metadata = core_raster.get_metadata_raster(raster)
         layer = metadata["layers"][0]["field_names"]
         if attribute_field not in layer:
             raise AttributeError(f"Attribute field ({attribute_field}) not found in raster.")
