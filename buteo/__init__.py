@@ -122,12 +122,13 @@ orfeo-toolbox
 esa-snap
 """
 from .utils import *
-from .raster import *
-from .vector import *
-from .array import *
-from .eo import *
-from .ai import *
-from .bindings import *
+from .core_raster import *
+# from .raster import *
+# from .vector import *
+# from .array import *
+# from .eo import *
+# from .ai import *
+# from .bindings import *
 
 # import os; os.environ["GDAL_PAM_ENABLED"] = "FALSE"
 

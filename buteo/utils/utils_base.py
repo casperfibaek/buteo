@@ -289,6 +289,30 @@ def _type_check(
 ) -> bool:
     """Type check function that supports nested types and collections.
     
+    Parameters
+    ----------
+    variable : Any
+        The variable to check.
+
+    types : Union[List[Union[type, List[type], None]], Tuple[Union[type, List[type], None], ...]]
+        The type or types to check against.
+
+    name : str, optional
+        The name of the variable to check.
+
+    throw_error : bool, optional
+        Whether to throw an error if the type check fails.
+
+    Returns
+    -------
+    bool
+        True if the variable matches any of the types, False otherwise.
+
+    Raises
+    ------
+    TypeError
+        If the variable is not found in the list of types
+
     Examples
     --------
     >>> _type_check("hello", [str])  # True
@@ -330,7 +354,7 @@ def _type_check(
             else:
                 expected_types.append(t.__name__)
 
-        raise ValueError(
+        raise TypeError(
             f"Type mismatch for '{name}': Expected {' or '.join(expected_types)}, got {actual_type}"
         )
 

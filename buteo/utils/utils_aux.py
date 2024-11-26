@@ -10,6 +10,7 @@ import sys
 import shutil
 from datetime import datetime
 from typing import List
+import numpy as np
 
 
 
@@ -230,3 +231,68 @@ def split_number(num: int, parts: int) -> List[int]:
         result[i] += 1
 
     return result
+
+
+def channel_first_to_last(arr: np.ndarray) -> np.ndarray:
+    """Converts a numpy array from channel first to channel last format.
+    `(-batch-, channel, height, width)` -> `(-batch-, height, width, channel)`
+
+    If 4D, it is assumed that the input array is in batch, channel, height, width format.
+    If 3D, it is assumed that the input array is in channel, height, width format.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to convert.
+
+    Returns
+    -------
+    np.ndarray
+        The converted array.
+    """
+    if not isinstance(arr, np.ndarray):
+        raise ValueError("Input array should be a numpy array.")
+
+    if arr.ndim not in [3, 4]:
+        raise ValueError("Input array should be 3 or 4-dimensional with shape (-batch-, channels, height, width)")
+
+    # Swap the axes to change from channel first to channel last format
+    if arr.ndim == 3:
+        arr = np.transpose(arr, (1, 2, 0))
+    else:
+        arr = np.transpose(arr, (0, 2, 3, 1))
+
+    return arr
+
+
+def channel_last_to_first(arr: np.ndarray) -> np.ndarray:
+    """Converts a numpy array from channel last to channel first format.
+
+    `(-batch-, height, width, channel)` -> `(-batch-, channel, height, width)`
+
+    If 4D, it is assumed that the input array is in batch, channel, height, width format.
+    If 3D, it is assumed that the input array is in channel, height, width format.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to convert.
+
+    Returns
+    -------
+    np.ndarray
+        The converted array.
+    """
+    if not isinstance(arr, np.ndarray):
+        raise ValueError("Input array should be a numpy array.")
+
+    if arr.ndim not in [3, 4]:
+        raise ValueError("Input array should be 3 or 4-dimensional with shape (-batch-, height, width, channels)")
+
+    # Swap the axes to change from channel last to channel first format
+    if arr.ndim == 3:
+        arr = np.transpose(arr, (2, 0, 1))
+    else:
+        arr = np.transpose(arr, (0, 3, 1, 2))
+
+    return arr

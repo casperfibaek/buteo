@@ -233,7 +233,7 @@ def _check_is_valid_geotransform(geotransform: List[Union[int, float]]) -> bool:
 def _get_pixel_offsets(
     geotransform: List[Union[int, float]],
     bbox_ogr: List[Union[int, float]],
-) -> List[int]:
+) -> tuple[int, int, int, int]:
     """Get the pixels offsets for a bbox and a geotransform.
 
     Parameters
@@ -249,8 +249,8 @@ def _get_pixel_offsets(
 
     Returns
     -------
-    List[int]
-        A list of pixel offsets. `[x_start, y_start, x_size, y_size]`
+    Tuple[int, int, int, int]
+        A tuple of pixel offsets. `(x_start, y_start, x_size, y_size)`
         Where:
             x_start: Starting pixel in x direction
             y_start: Starting pixel in y direction
@@ -267,7 +267,7 @@ def _get_pixel_offsets(
     Examples
     --------
     >>> _get_pixel_offsets([0, 1, 0, 10, 0, -1], [2, 4, 4, 8])
-    [2, 2, 2, 4]
+    (2, 2, 2, 4)
     >>> _get_pixel_offsets([0, 0, 0, 0, 0, 0], [0, 1, 0, 1])
     Raises ValueError
     """
@@ -305,7 +305,7 @@ def _get_pixel_offsets(
     x_size = abs(x_size)
     y_size = abs(y_size)
 
-    return [x_start, y_start, x_size, y_size]
+    return (x_start, y_start, x_size, y_size)
 
 
 def _get_bbox_from_geotransform(

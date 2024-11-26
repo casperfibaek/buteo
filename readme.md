@@ -126,3 +126,9 @@ numba
 optional:
 orfeo-toolbox
 esa-snap
+
+# Design principles
+Functions only return one type
+Use type hinting
+Keep the internal representation to a minimum
+Reduce the amount of dependencies

@@ -8,7 +8,7 @@ from osgeo import gdal
 
 # Internal
 from buteo.utils import utils_io, utils_base
-from buteo.raster.core_raster import get_metadata_raster
+from buteo.core_raster.core_raster_info import get_metadata_raster
 
 
 

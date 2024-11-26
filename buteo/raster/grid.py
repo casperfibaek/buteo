@@ -14,7 +14,7 @@ from osgeo import gdal, ogr
 
 # Internal
 from buteo.utils import utils_base, utils_gdal, utils_bbox, utils_path
-from buteo.raster import core_raster, core_stack
+from buteo.raster import core_raster, stack
 from buteo.raster.clip import _raster_clip
 from buteo.vector import core_vector
 from buteo.vector.intersect import _vector_intersect
@@ -190,7 +190,7 @@ def raster_to_grid(
     if generate_vrt:
         vrt_name = f"{out_dir}{name}.vrt"
 
-        core_stack.raster_stack_vrt_list(generated, vrt_name, separate=False)
+        stack.raster_stack_vrt_list(generated, vrt_name, separate=False)
 
         return (generated, vrt_name)
 
