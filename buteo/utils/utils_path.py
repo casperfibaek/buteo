@@ -5,7 +5,6 @@ Functions that make interacting with the toolbox easier.
 
 # Standard Library
 import os
-import shutil
 import fnmatch
 from glob import glob
 from uuid import uuid4
@@ -18,6 +17,49 @@ from osgeo import gdal, ogr
 # Internal
 from buteo.utils import utils_base, utils_gdal
 
+
+
+def _glob_vsimem(
+    pattern: str,
+) -> List[str]:
+    """Find files in vsimem using glob.
+
+    Example:
+    `_glob_vsimem("*/patches/*.tif")` will return all tif files in the patches folder of all subfolders.
+
+    Parameters
+    ----------
+    pattern: str
+        The pattern to match.
+
+    Returns
+    -------
+    List[str]
+        A list of the files matching the pattern.
+
+    Raises
+    ------
+    TypeError
+        If pattern is not a string.
+    ValueError
+        If pattern is empty.
+    """
+    if not isinstance(pattern, str):
+        raise TypeError("pattern must be a string.")
+
+    if not pattern:
+        raise ValueError("pattern cannot be empty.")
+
+    try:
+        virtual_fs = _get_vsimem_content()
+        if not virtual_fs:
+            return []
+
+        matches = [path for path in virtual_fs if fnmatch.fnmatch(path, pattern)]
+        return matches
+    except (RuntimeError, OSError) as e:
+        warn(f"Error while searching vsimem: {str(e)}", UserWarning)
+        return []
 
 
 def _get_vsimem_content(
@@ -72,49 +114,6 @@ def _get_vsimem_content(
     # Convert paths to unix style
     converted = _get_unix_path_list(vsimem) if vsimem else []
     return converted if isinstance(converted, list) else [converted]
-
-
-def _glob_vsimem(
-    pattern: str,
-) -> List[str]:
-    """Find files in vsimem using glob.
-
-    Example:
-    `_glob_vsimem("*/patches/*.tif")` will return all tif files in the patches folder of all subfolders.
-
-    Parameters
-    ----------
-    pattern: str
-        The pattern to match.
-
-    Returns
-    -------
-    List[str]
-        A list of the files matching the pattern.
-
-    Raises
-    ------
-    TypeError
-        If pattern is not a string.
-    ValueError
-        If pattern is empty.
-    """
-    if not isinstance(pattern, str):
-        raise TypeError("pattern must be a string.")
-
-    if not pattern:
-        raise ValueError("pattern cannot be empty.")
-
-    try:
-        virtual_fs = _get_vsimem_content()
-        if not virtual_fs:
-            return []
-
-        matches = [path for path in virtual_fs if fnmatch.fnmatch(path, pattern)]
-        return matches
-    except (RuntimeError, OSError) as e:
-        warn(f"Error while searching vsimem: {str(e)}", UserWarning)
-        return []
 
 
 def _get_unix_path(path: Union[str, None]) -> str:
@@ -421,256 +420,6 @@ def _check_dir_exists_vsimem(path: str) -> bool:
 
     except (RuntimeError, OSError):
         return False
-
-
-def _delete_dir_content(
-    folder: str,
-    delete_subfolders: bool = True,
-) -> bool:
-    """Delete all files and folders in a folder.
-    If only the files are to be deleted, set delete_subfolders to False.
-
-    Parameters
-    ----------
-    folder: str
-        The path to the folder.
-    delete_subfolders: bool
-        If True, delete subfolders as well. Default: True
-
-    Returns
-    -------
-    bool
-        True if all content was successfully deleted, False otherwise.
-
-    Raises
-    ------
-    TypeError
-        If folder is not a string or delete_subfolders is not a bool
-    ValueError
-        If folder is empty string
-    RuntimeError
-        If folder doesn't exist
-    """
-    # Type checking
-    if not isinstance(folder, str):
-        raise TypeError("folder must be a string")
-    if not isinstance(delete_subfolders, bool):
-        raise TypeError("delete_subfolders must be a bool")
-
-    # Value checking
-    if not folder.strip():
-        raise ValueError("folder cannot be empty")
-    if not _check_dir_exists(folder):
-        raise RuntimeError(f"folder does not exist: {folder}")
-
-    try:
-        # Handle physical filesystem
-        if not _check_dir_exists_vsimem(folder):
-            for item in os.listdir(folder):
-                try:
-                    path = os.path.join(folder, item)
-                    if os.path.isfile(path):
-                        os.remove(path)
-                    elif os.path.isdir(path) and delete_subfolders:
-                        shutil.rmtree(path)
-                except (OSError, RuntimeError) as e:
-                    warn(f"Failed to remove {path}: {str(e)}", UserWarning)
-                    return False
-
-        # Handle virtual filesystem (vsimem)
-        else:
-            try:
-                vsimem = _get_vsimem_content(folder)
-                if vsimem:  # Only attempt deletion if there are files
-                    for f in vsimem:
-                        gdal.Unlink(f)
-            except RuntimeError as e:
-                warn(f"Failed to access or clear vsimem folder {folder}: {str(e)}", UserWarning)
-                return False
-
-        # Verify deletion was successful
-        remaining_content = (
-            os.listdir(folder) if not _check_dir_exists_vsimem(folder)
-            else _get_vsimem_content(folder)
-        )
-
-        if remaining_content and (delete_subfolders or
-            all(not os.path.isdir(os.path.join(folder, x)) for x in remaining_content)):
-            warn(f"Failed to remove all content from: {folder}", UserWarning)
-            return False
-
-        return True
-
-    except (OSError, RuntimeError, PermissionError) as e:
-        warn(f"Error while clearing folder {folder}: {str(e)}", UserWarning)
-        return False
-
-
-def _delete_dir(folder: str) -> bool:
-    """Delete a folder and all its content. Handles both physical and virtual (vsimem) folders.
-
-    Parameters
-    ----------
-    folder: str
-        The path to the folder to delete.
-
-    Returns
-    -------
-    bool
-        True if the folder was successfully deleted, False otherwise.
-
-    Raises
-    ------
-    TypeError
-        If folder is not a string
-    ValueError
-        If folder is empty string
-    RuntimeError
-        If folder doesn't exist
-    """
-    # Type checking
-    if not isinstance(folder, str):
-        raise TypeError("folder must be a string")
-    if not folder.strip():
-        raise ValueError("folder cannot be empty")
-    if not _check_dir_exists(folder):
-        raise RuntimeError(f"folder does not exist: {folder}")
-
-    try:
-        # Handle physical filesystem
-        if not _check_dir_exists_vsimem(folder):
-            try:
-                shutil.rmtree(folder)
-                return not _check_dir_exists(folder)
-            except (OSError, PermissionError) as e:
-                warn(f"Failed to remove folder {folder}: {str(e)}", UserWarning)
-                return False
-
-        # Handle virtual filesystem (vsimem)
-        try:
-            vsimem = _get_vsimem_content(folder)
-            # Delete all files in the folder
-            for f in vsimem:
-                gdal.Unlink(f)
-            # Delete the folder itself
-            if folder != "/vsimem/":  # Don't delete root vsimem
-                gdal.Unlink(folder)
-            return not _check_dir_exists_vsimem(folder)
-        except RuntimeError as e:
-            warn(f"Failed to remove vsimem folder {folder}: {str(e)}", UserWarning)
-            return False
-
-    except (OSError, RuntimeError, PermissionError) as e:
-        warn(f"Error while deleting folder {folder}: {str(e)}", UserWarning)
-        return False
-
-
-def _delete_file(file: str) -> bool:
-    """Delete a file from physical or virtual (vsimem) filesystem.
-
-    Parameters
-    ----------
-    file: str
-        The path to the file to delete.
-
-    Returns
-    -------
-    bool
-        True if the file was successfully deleted, False otherwise.
-
-    Raises
-    ------
-    TypeError
-        If file is not a string
-    ValueError
-        If file is empty string
-    RuntimeError
-        If file doesn't exist
-    """
-    # Type checking
-    if not isinstance(file, str):
-        raise TypeError("file must be a string")
-    if not file.strip():
-        raise ValueError("file cannot be empty")
-    if not _check_file_exists(file):
-        raise RuntimeError(f"file does not exist: {file}")
-
-    try:
-        # Handle physical filesystem
-        if not _check_file_exists_vsimem(file):
-            try:
-                os.remove(file)
-                return not _check_file_exists(file)
-            except (OSError, PermissionError) as e:
-                warn(f"Failed to remove file {file}: {str(e)}", UserWarning)
-                return False
-
-        # Handle virtual filesystem (vsimem)
-        try:
-            gdal.Unlink(file)
-            return not _check_file_exists_vsimem(file)
-        except RuntimeError as e:
-            warn(f"Failed to remove vsimem file {file}: {str(e)}", UserWarning)
-            return False
-
-    except (OSError, RuntimeError) as e:
-        warn(f"Error while deleting file {file}: {str(e)}", UserWarning)
-        return False
-
-
-def _create_dir_if_not_exists(path: str) -> str:
-    """Make a directory if it does not exist.
-    This does not work for creating directories in GDAL vsimem.
-    On vsimem, it is not possible to create a folder without a file in it.
-
-    If the folder already exists in vsimem, the path to the folder is returned.
-
-    Parameters
-    ----------
-    path: str
-        The path to the folder.
-
-    Returns
-    -------
-    str
-        The path to the folder (normalized to unix-style).
-
-    Raises
-    ------
-    TypeError
-        If path is not a string
-    ValueError
-        If path is empty
-    RuntimeError
-        If directory creation fails
-    """
-    # Type checking
-    if not isinstance(path, str):
-        raise TypeError("path must be a string")
-    if not path.strip():
-        raise ValueError("path cannot be empty")
-
-    # Normalize path to unix-style
-    unix_path = _get_unix_path(path)
-
-    # Check if directory already exists (either on disk or in vsimem)
-    if _check_dir_exists(unix_path):
-        return unix_path
-
-    try:
-        # Handle physical filesystem
-        if not _check_dir_exists_vsimem(unix_path):
-            os.makedirs(unix_path, exist_ok=True)
-
-            if not _check_dir_exists(unix_path):
-                raise RuntimeError(f"Failed to create directory: {unix_path}")
-
-        # For vsimem, we don't create the directory as it's not possible
-        # without creating a file in it. We just return the path.
-        return unix_path
-
-    except (OSError, PermissionError) as e:
-        raise RuntimeError(f"Failed to create directory {unix_path}: {str(e)}") from None
 
 
 def _get_dir_from_path(path: str) -> str:
@@ -1258,143 +1007,6 @@ def _check_is_valid_output_path_list(
         return True
 
     except (TypeError, ValueError):
-        return False
-
-
-def _delete_if_required(
-    path: str,
-    overwrite: bool = True,
-) -> bool:
-    """Delete a file if overwrite is True and the file exists.
-
-    Parameters
-    ----------
-    path: str
-        The path to the file to potentially delete.
-    overwrite: bool
-        If True, delete the file if it exists.
-
-    Returns
-    -------
-    bool
-        True if deletion was successful or not needed, False if deletion failed.
-
-    Raises
-    ------
-    TypeError
-        If path is not a string or overwrite is not a bool
-    ValueError
-        If path is empty or None
-    """
-    # Type checking
-    if not isinstance(path, str):
-        raise TypeError("path must be a string")
-    if not isinstance(overwrite, bool):
-        raise TypeError("overwrite must be a bool")
-
-    # Value checking
-    if not path.strip():
-        raise ValueError("path cannot be empty")
-
-    try:
-        # If overwrite is False or file doesn't exist, no action needed
-        if not overwrite or not _check_file_exists(path):
-            return True
-
-        # Handle virtual filesystem (vsimem) files
-        if _check_is_valid_mem_filepath(path):
-            try:
-                gdal.Unlink(path)
-            except RuntimeError as e:
-                warn(f"Failed to delete vsimem file {path}: {str(e)}", UserWarning)
-                return False
-        # Handle physical files
-        else:
-            try:
-                os.remove(path)
-            except (OSError, PermissionError) as e:
-                warn(f"Failed to delete file {path}: {str(e)}", UserWarning)
-                return False
-
-        # Verify deletion was successful
-        if _check_file_exists(path):
-            warn(f"File still exists after deletion attempt: {path}", UserWarning)
-            return False
-
-        return True
-
-    except (OSError, RuntimeError, PermissionError) as e:
-        warn(f"Error while deleting file {path}: {str(e)}", UserWarning)
-        return False
-
-
-def _delete_if_required_list(
-    output_list: List[str],
-    overwrite: bool = True,
-) -> bool:
-    """Delete a list of files if overwrite is True and the files exist.
-
-    Parameters
-    ----------
-    output_list: List[str]
-        The list of paths to the files.
-    overwrite: bool
-        If True, delete files if they exist.
-
-    Returns
-    -------
-    bool
-        True if all deletions were successful or not needed, False if any deletion failed.
-
-    Raises
-    ------
-    TypeError
-        If output_list is not a list or overwrite is not a bool
-        If any path in output_list is not a string
-    ValueError
-        If output_list is empty or contains empty strings
-    RuntimeError
-        If any deletion operation fails
-    """
-    # Type checking
-    if not isinstance(output_list, list):
-        raise TypeError("output_list must be a list")
-    if not isinstance(overwrite, bool):
-        raise TypeError("overwrite must be a bool")
-
-    # Check for empty list
-    if not output_list:
-        raise ValueError("output_list cannot be empty")
-
-    try:
-        # Validate all paths before attempting any deletions
-        for path in output_list:
-            if path is None:
-                raise TypeError("Paths cannot be None")
-            if not isinstance(path, str):
-                raise TypeError("All paths must be strings")
-            if not path.strip():
-                raise ValueError("Paths cannot be empty strings")
-
-        # Attempt deletion for each file
-        deletion_results = []
-        for path in output_list:
-            try:
-                result = _delete_if_required(path, overwrite=overwrite)
-                deletion_results.append(result)
-            except (OSError, PermissionError, RuntimeError) as e:
-                warn(f"Failed to delete {path}: {str(e)}", UserWarning)
-                deletion_results.append(False)
-
-        # Check if all deletions were successful
-        if not all(deletion_results):
-            failed_paths = [p for p, r in zip(output_list, deletion_results) if not r]
-            raise RuntimeError(f"Failed to delete files: {failed_paths}")
-
-        return True
-
-    except (OSError, RuntimeError, PermissionError, TypeError, ValueError) as e:
-        warn(f"Error during deletion operations: {str(e)}", UserWarning)
         return False
 
 

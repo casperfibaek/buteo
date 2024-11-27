@@ -119,7 +119,7 @@ def _raster_reproject(
     if dtype is None:
         dtype = metadata["dtype"]
 
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
 
     # Translate for GdalWarp
     resample_alg = utils_translate._translate_resample_method(resample_alg)
@@ -230,9 +230,9 @@ def raster_reproject(
 
     input_is_list = isinstance(raster, list)
 
-    raster_list = utils_io._get_input_paths(raster, "raster")
-    out_path_list = utils_io._get_output_paths(
-        raster_list,
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         overwrite=overwrite,
         prefix=prefix,
@@ -241,15 +241,16 @@ def raster_reproject(
         change_ext="tif",
     )
 
-    utils_path._delete_if_required_list(out_path_list, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     output = []
-    for index, in_raster in enumerate(raster_list):
+    for index, in_raster in enumerate(in_paths):
         output.append(
             _raster_reproject(
                 in_raster,
                 projection,
-                out_path=out_path_list[index],
+                out_path=out_paths[index],
                 resample_alg=resample_alg,
                 copy_if_same=copy_if_same,
                 overwrite=overwrite,

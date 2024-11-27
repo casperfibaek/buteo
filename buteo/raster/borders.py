@@ -89,7 +89,7 @@ def _raster_add_border(
         new_arr = np.ma.array(new_arr, mask=mask)
         new_arr.fill_value = in_arr.fill_value
 
-    utils_path._delete_if_required(output_name, overwrite)
+    utils_io._delete_if_required(output_name, overwrite)
 
     dest_raster = driver.Create(
         output_name,
@@ -124,7 +124,7 @@ def _raster_add_border(
 
 def raster_add_border(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
-    out_path: Optional[str] = None,
+    out_paths: Optional[str] = None,
     border_size: int = 100,
     border_size_unit: str = "px",
     border_value: int = 0,
@@ -179,7 +179,7 @@ def raster_add_border(
         The output raster with added borders.
     """
     utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
-    utils_base._type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(out_paths, [str, None], "out_path")
     utils_base._type_check(border_size, [int], "border_size")
     utils_base._type_check(border_size_unit, [str], "border_size_unit")
     utils_base._type_check(border_value, [int, float], "border_value")
@@ -192,10 +192,10 @@ def raster_add_border(
 
     input_is_list = isinstance(raster, list)
 
-    input_rasters = utils_io._get_input_paths(raster, "raster")
-    out_path = utils_io._get_output_paths(
-        input_rasters,
-        out_path,
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
+        out_paths,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
@@ -204,12 +204,13 @@ def raster_add_border(
         overwrite=overwrite,
     )
 
-    utils_path._delete_if_required_list(out_path, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
-    for idx, raster in enumerate(input_rasters):
+    for idx, raster in enumerate(in_paths):
         _raster_add_border(
             raster,
-            out_path=out_path[idx],
+            out_path=out_paths[idx],
             border_size=border_size,
             border_size_unit=border_size_unit,
             border_value=border_value,
@@ -218,6 +219,6 @@ def raster_add_border(
         )
 
     if input_is_list:
-        return out_path
+        return out_paths
 
-    return out_path[0]
+    return out_paths[0]

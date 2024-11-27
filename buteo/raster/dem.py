@@ -81,9 +81,9 @@ def raster_dem_to_slope(
 
     input_is_list = isinstance(raster, list)
 
-    input_list = utils_io._get_input_paths(raster, "raster")
-    output_list = utils_io._get_output_paths(
-        input_list,
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         overwrite=overwrite,
         prefix=prefix,
@@ -93,7 +93,8 @@ def raster_dem_to_slope(
         change_ext=out_format,
     )
 
-    utils_path._delete_if_required_list(output_list, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     creation_options = utils_gdal._get_default_creation_options(creation_options)
 
@@ -105,9 +106,9 @@ def raster_dem_to_slope(
     )
 
     slope_rasters = []
-    for idx, in_raster in enumerate(input_list):
+    for idx, in_raster in enumerate(in_paths):
         ds = gdal.DEMProcessing(
-            output_list[idx],
+            out_paths[idx],
             in_raster,
             'slope',
             options=slope_options,
@@ -119,7 +120,7 @@ def raster_dem_to_slope(
         ds.FlushCache()  # Write to disk.
         ds = None  # Close the dataset and release resources
 
-        slope_rasters.append(output_list[idx])
+        slope_rasters.append(out_paths[idx])
 
     if input_is_list:
         return slope_rasters
@@ -191,9 +192,9 @@ def raster_dem_to_aspect(
 
     input_is_list = isinstance(raster, list)
 
-    input_list = utils_io._get_input_paths(raster, "raster")
-    output_list = utils_io._get_output_paths(
-        input_list,
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         overwrite=overwrite,
         prefix=prefix,
@@ -203,7 +204,8 @@ def raster_dem_to_aspect(
         change_ext=out_format,
     )
 
-    utils_path._delete_if_required_list(output_list, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     creation_options = utils_gdal._get_default_creation_options(creation_options)
 
@@ -214,9 +216,9 @@ def raster_dem_to_aspect(
     )
 
     aspect_rasters = []
-    for idx, in_raster in enumerate(input_list):
+    for idx, in_raster in enumerate(in_paths):
         ds = gdal.DEMProcessing(
-            output_list[idx],
+            out_paths[idx],
             in_raster,
             'aspect',
             options=aspect_options,
@@ -228,7 +230,7 @@ def raster_dem_to_aspect(
         ds.FlushCache()  # Write to disk.
         ds = None  # Close the dataset and release resources
 
-        aspect_rasters.append(output_list[idx])
+        aspect_rasters.append(out_paths[idx])
 
     if input_is_list:
         return aspect_rasters
@@ -300,9 +302,9 @@ def raster_dem_to_hillshade(
 
     input_is_list = isinstance(raster, list)
 
-    input_list = utils_io._get_input_paths(raster, "raster")
-    output_list = utils_io._get_output_paths(
-        input_list,
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         overwrite=overwrite,
         prefix=prefix,
@@ -312,7 +314,8 @@ def raster_dem_to_hillshade(
         change_ext=out_format,
     )
 
-    utils_path._delete_if_required_list(output_list, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     creation_options = utils_gdal._get_default_creation_options(creation_options)
 
@@ -323,9 +326,9 @@ def raster_dem_to_hillshade(
     )
 
     hillshade_rasters = []
-    for idx, in_raster in enumerate(input_list):
+    for idx, in_raster in enumerate(in_paths):
         ds = gdal.DEMProcessing(
-            output_list[idx],
+            out_paths[idx],
             in_raster,
             'hillshade',
             options=hillshade_options,
@@ -337,7 +340,7 @@ def raster_dem_to_hillshade(
         ds.FlushCache()  # Write to disk.
         ds = None  # Close the dataset and release resources
 
-        hillshade_rasters.append(output_list[idx])
+        hillshade_rasters.append(out_paths[idx])
 
     if input_is_list:
         return hillshade_rasters
@@ -418,9 +421,9 @@ def raster_dem_to_orientation(
 
     input_is_list = isinstance(raster, list)
 
-    input_list = utils_io._get_input_paths(raster, "raster")
-    output_list = utils_io._get_output_paths(
-        input_list,
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         overwrite=overwrite,
         prefix=prefix,
@@ -430,12 +433,13 @@ def raster_dem_to_orientation(
         change_ext=out_format,
     )
 
-    utils_path._delete_if_required_list(output_list, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     creation_options = utils_gdal._get_default_creation_options(creation_options)
 
     orientation_rasters = []
-    for idx, in_raster in enumerate(input_list):
+    for idx, in_raster in enumerate(in_paths):
         aspect_raster = raster_dem_to_aspect(in_raster, zero_for_flat=True)
         slope_raster = raster_dem_to_slope(in_raster, slope_format="percent")
 
@@ -479,11 +483,11 @@ def raster_dem_to_orientation(
         array_to_raster(
             destination,
             reference=in_raster,
-            out_path=output_list[idx],
+            out_path=out_paths[idx],
             creation_options=creation_options,
         )
 
-        orientation_rasters.append(output_list[idx])
+        orientation_rasters.append(out_paths[idx])
 
     if input_is_list:
         return orientation_rasters

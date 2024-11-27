@@ -98,7 +98,7 @@ def _raster_resample(
     if out_nodata is not None and not utils_translate._check_is_value_within_dtype_range(out_nodata, dtype):
         raise ValueError(f"Invalid nodata value for datatype. value: {out_nodata}, dtype: {dtype}")
 
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
 
     if verbose == 0:
         gdal.PushErrorHandler("CPLQuietErrorHandler")
@@ -243,9 +243,9 @@ def raster_resample(
 
     input_is_list = isinstance(raster, list)
 
-    input_rasters = utils_io._get_input_paths(raster, "raster")
-    output_rasters = utils_io._get_output_paths(
-        input_rasters,
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         add_uuid=add_uuid,
         add_timestamp=add_timestamp,
@@ -254,16 +254,17 @@ def raster_resample(
         overwrite=overwrite,
     )
 
-    utils_path._delete_if_required_list(output_rasters, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     resampled_rasters = []
-    for idx, in_raster in enumerate(input_rasters):
+    for idx, in_raster in enumerate(in_paths):
         resampled_rasters.append(
             _raster_resample(
                 in_raster,
                 target_size,
                 target_in_pixels=target_in_pixels,
-                out_path=output_rasters[idx],
+                out_path=out_paths[idx],
                 resample_alg=resample_alg,
                 overwrite=overwrite,
                 creation_options=creation_options,

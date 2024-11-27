@@ -7,7 +7,7 @@ A module to handle the various aspects of NODATA in raster files.
 # TODO: raster_invert_nodata
 
 # Standard library
-from typing import List, Union, Optional
+from typing import Union, Optional, List
 
 # External
 from osgeo import gdal
@@ -17,7 +17,6 @@ from buteo.utils import (
     utils_io,
     utils_base,
     utils_gdal,
-    utils_path,
     utils_translate,
 )
 from buteo.core_raster.core_raster_read import _open_raster
@@ -143,7 +142,7 @@ def raster_has_nodata(
 
     input_is_list = isinstance(raster, list)
 
-    input_paths = utils_io._get_input_paths(raster, "raster")
+    input_paths = utils_io._get_input_paths(raster, "raster") # type: ignore
 
     nodata_values = []
     for in_raster in input_paths:
@@ -178,25 +177,25 @@ def _raster_get_nodata(
 
 
 def raster_get_nodata(
-    raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
-) -> Union[float, int, List[Union[float, int]]]:
-    """Get the nodata value of a raster or a list of rasters.
+    raster: Union[str, gdal.Dataset, list[Union[str, gdal.Dataset]]],
+) -> Union[float, int, list[Union[float, int]]]:
+    """Get the nodata value of a raster or a sequence of rasters.
 
     Parameters
     ----------
-    raster : Union[str, gdal.Dataset, List]
+    raster : Union[str, gdal.Dataset, Sequence]
         The raster to get nodata values from.
 
     Returns
     -------
     Union[float, int, None, List[Union[float, int, None]]]
-        The nodata value of the raster or list of rasters.
+        The nodata value of the raster or sequence of rasters.
     """
     utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
     input_is_list = isinstance(raster, list)
 
-    input_paths = utils_io._get_input_paths(raster, "raster")
+    input_paths = utils_io._get_input_paths(raster, "raster") # type: ignore
 
     nodata_values = []
     for in_raster in input_paths:
@@ -237,11 +236,11 @@ def _raster_set_nodata(
     str
         Returns the path to the raster with nodata set.
     """
-    assert isinstance(raster, (str, gdal.Dataset)), f"Invalid raster. {raster}"
-    assert isinstance(nodata, (float, int, type(None))), f"Invalid nodata value. {nodata}"
-    assert isinstance(out_path, (str, type(None))), f"Invalid out_path. {out_path}"
-    assert isinstance(in_place, bool), f"Invalid in_place. {in_place}"
-    assert isinstance(overwrite, bool), f"Invalid overwrite. {overwrite}"
+    utils_base._type_check(raster, [str, gdal.Dataset], "raster")
+    utils_base._type_check(nodata, [float, int, None], "nodata")
+    utils_base._type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(in_place, [bool], "in_place")
+    utils_base._type_check(overwrite, [bool], "overwrite")
 
     if in_place:
         opened = _open_raster(raster)
@@ -273,6 +272,9 @@ def _raster_set_nodata(
 
     opened.FlushCache()
     opened = None
+
+    if out_path is None:
+        raise ValueError("Output path is None. This should not happen.")
 
     return out_path
 
@@ -332,9 +334,9 @@ def raster_set_nodata(
 
     input_is_list = isinstance(raster, list)
 
-    input_paths = utils_io._get_input_paths(raster, "raster")
-    output_paths = utils_io._get_output_paths(
-        input_paths,
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        in_paths, # type: ignore
         out_path,
         in_place=in_place,
         prefix=prefix,
@@ -342,19 +344,20 @@ def raster_set_nodata(
     )
 
     if not in_place:
-        utils_path._delete_if_required_list(output_paths, overwrite)
+        utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     nodata_set = []
-    for idx, in_raster in enumerate(input_paths):
+    for idx, in_raster in enumerate(in_paths):
         nodata_set.append(_raster_set_nodata(
             in_raster,
             nodata,
-            out_path=output_paths[idx],
+            out_path=out_paths[idx],
             in_place=in_place,
             overwrite=overwrite,
         ))
 
     if input_is_list:
-        return output_paths
+        return out_paths
 
-    return output_paths[0]
+    return out_paths[0]

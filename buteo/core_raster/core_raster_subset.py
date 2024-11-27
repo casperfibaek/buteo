@@ -8,6 +8,7 @@ from osgeo import gdal
 
 # Internal
 from buteo.utils import (
+    utils_io,
     utils_gdal,
     utils_path,
 )
@@ -63,7 +64,7 @@ def raster_extract_bands(
             f"Output path {out_path} is not valid or already exists. "
         )
 
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
 
     driver_name = utils_gdal._get_driver_name_from_path(out_path)
     driver = gdal.GetDriverByName(driver_name)

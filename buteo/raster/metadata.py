@@ -79,10 +79,10 @@ def raster_to_metadata(
     utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
 
     input_is_list = isinstance(raster, list)
-    input_rasters = utils_io._get_input_paths(raster, "raster")
+    in_paths = utils_io._get_input_paths(raster, "raster")
 
     metadata = []
-    for in_raster in input_rasters:
+    for in_raster in in_paths:
         metadata.append(_raster_to_metadata(in_raster))
 
     if input_is_list:

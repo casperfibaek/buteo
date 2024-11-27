@@ -166,7 +166,7 @@ def _raster_clip(
         out_nodata = None
 
     # Removes file if it exists and overwrite is True.
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
 
     if verbose == 0:
         gdal.PushErrorHandler("CPLQuietErrorHandler")
@@ -325,8 +325,8 @@ def raster_clip(
     utils_base._type_check(ram_min, [int, None], "ram_min")
 
     input_is_list = isinstance(raster, list)
-    input_rasters = utils_io._get_input_paths(raster, "raster")
-    out_path_list = utils_io._get_output_paths(
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
         raster,
         out_path,
         prefix=prefix,
@@ -336,15 +336,16 @@ def raster_clip(
         change_ext="tif",
         overwrite=overwrite,
     )
-    utils_path._delete_if_required_list(out_path_list, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     output = []
-    for index, in_raster in enumerate(input_rasters):
+    for index, in_raster in enumerate(in_paths):
         output.append(
             _raster_clip(
                 in_raster,
                 clip_geom,
-                out_path=out_path_list[index],
+                out_path=out_paths[index],
                 resample_alg=resample_alg,
                 crop_to_geom=crop_to_geom,
                 adjust_bbox=adjust_bbox,

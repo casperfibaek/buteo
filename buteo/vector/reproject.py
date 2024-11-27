@@ -117,9 +117,9 @@ def vector_reproject(
 
     input_is_list = isinstance(vector, list)
 
-    input_data = utils_io._get_input_paths(vector, "vector")
-    output_data = utils_io._get_output_paths(
-        input_data,
+    in_paths = utils_io._get_input_paths(vector, "vector")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         prefix=prefix,
         suffix=suffix,
@@ -127,15 +127,16 @@ def vector_reproject(
         overwrite=overwrite,
     )
 
-    utils_path._delete_if_required_list(output_data, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     output = []
-    for idx, in_vector in enumerate(input_data):
+    for idx, in_vector in enumerate(in_paths):
         output.append(
             _vector_reproject(
                 in_vector,
                 projection,
-                out_path=output_data[idx],
+                out_path=out_paths[idx],
                 prefix=prefix,
                 suffix=suffix,
                 add_uuid=add_uuid,

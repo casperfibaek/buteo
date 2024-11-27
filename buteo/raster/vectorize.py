@@ -40,7 +40,7 @@ def _raster_vectorize(
         if not utils_path._check_is_valid_output_filepath(out_path, overwrite=True):
             raise ValueError(f"out_path is not a valid output path: {out_path}")
 
-    utils_path._delete_if_required(out_path, overwrite=True)
+    utils_io._delete_if_required(out_path, overwrite=True)
 
     driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
     driver = ogr.GetDriverByName(driver_name)
@@ -128,9 +128,9 @@ def raster_vectorize(
 
     input_is_list = isinstance(raster, list)
 
-    input_list = utils_io._get_input_paths(raster, "raster")
-    output_list = utils_io._get_output_paths(
-        input_list,
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         overwrite=overwrite,
         prefix=prefix,
@@ -140,14 +140,15 @@ def raster_vectorize(
         change_ext="gpkg",
     )
 
-    utils_path._delete_if_required_list(output_list, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     vectorized_rasters = []
-    for idx, in_raster in enumerate(input_list):
+    for idx, in_raster in enumerate(in_paths):
         vectorized_rasters.append(
             _raster_vectorize(
                 in_raster,
-                out_path=output_list[idx],
+                out_path=out_paths[idx],
                 band=band,
                 attribute_field=attribute_field,
             )

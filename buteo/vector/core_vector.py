@@ -389,9 +389,9 @@ def vector_filter(
     utils_base._type_check(overwrite, [bool], "overwrite")
 
     input_is_list = isinstance(vector, list)
-    input_list = utils_io._get_input_paths(vector, "vector")
-    output_list = utils_io._get_output_paths(
-        input_list,
+    in_paths = utils_io._get_input_paths(vector, "vector")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         prefix=prefix,
         suffix=suffix,
@@ -400,14 +400,15 @@ def vector_filter(
         change_ext="gpkg",
     )
 
-    utils_path._delete_if_required_list(output_list, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     output = []
-    for idx, in_vector in enumerate(input_list):
+    for idx, in_vector in enumerate(in_paths):
         output.append(_vector_filter(
             in_vector,
             filter_function,
-            out_path=output_list[idx],
+            out_path=out_paths[idx],
             process_layer=process_layer,
             prefix=prefix,
             suffix=suffix,
@@ -438,10 +439,10 @@ def vector_add_index(
     utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
 
     input_is_list = isinstance(vector, list)
-    input_list = utils_io._get_input_paths(vector, "vector")
+    in_paths = utils_io._get_input_paths(vector, "vector")
 
     try:
-        for in_vector in input_list:
+        for in_vector in in_paths:
             metadata = _get_basic_metadata_vector(in_vector)
             ref = _vector_open(in_vector)
 
@@ -455,9 +456,9 @@ def vector_add_index(
         raise RuntimeError(f"Error while creating indices for {vector}") from None
 
     if input_is_list:
-        return input_list
+        return in_paths
 
-    return input_list[0]
+    return in_paths[0]
 
 
 def _vector_get_attribute_table(
@@ -584,11 +585,11 @@ def vector_get_attribute_table(
     utils_base._type_check(return_header, [bool], "return_header")
 
     input_is_list = isinstance(vector, list)
-    input_list = utils_io._get_input_paths(vector, "vector")
+    in_paths = utils_io._get_input_paths(vector, "vector")
 
     output_attributes = []
     output_headers = []
-    for in_vector in input_list:
+    for in_vector in in_paths:
         if return_header:
             header, table = _vector_get_attribute_table(
                 in_vector,
@@ -664,9 +665,9 @@ def vector_filter_layer(
     """
     input_is_list = isinstance(vector, list)
 
-    input_list = utils_io._get_input_paths(vector, "vector")
-    output_list = utils_io._get_output_paths(
-        input_list,
+    in_paths = utils_io._get_input_paths(vector, "vector")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         prefix=prefix,
         suffix=suffix,
@@ -675,12 +676,13 @@ def vector_filter_layer(
         change_ext="gpkg",
     )
 
-    utils_path._delete_if_required_list(output_list, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     output = []
-    for idx, in_vector in enumerate(input_list):
+    for idx, in_vector in enumerate(in_paths):
         ref = _vector_open(in_vector)
-        out_path = output_list[idx]
+        out_path = out_paths[idx]
 
         if isinstance(layer_name_or_idx, int):
             layer = ref.GetLayerByIndex(layer_name_or_idx)
@@ -796,19 +798,19 @@ def vector_copy(
 
     input_is_list = isinstance(vector, list)
 
-    input_list = utils_io._get_input_paths(vector, "vector")
-    output_list = utils_io._get_output_paths(input_list, out_path)
+    in_paths = utils_io._get_input_paths(vector, "vector")
+    out_paths = utils_io._get_output_paths(in_paths, out_path)
 
-    utils_path._delete_if_required_list(output_list, overwrite=True)
+    utils_path._delete_if_required_list(out_paths, overwrite=True)
 
     output = []
-    for idx, in_vector in enumerate(input_list):
+    for idx, in_vector in enumerate(in_paths):
         ref = _vector_open(in_vector)
 
-        driver_name = utils_gdal._get_vector_driver_name_from_path(output_list[idx])
+        driver_name = utils_gdal._get_vector_driver_name_from_path(out_paths[idx])
         driver = ogr.GetDriverByName(driver_name)
 
-        destination = driver.CreateDataSource(output_list[idx])
+        destination = driver.CreateDataSource(out_paths[idx])
         layers = ref.GetLayerCount()
 
         for layer_index in range(layers):
@@ -820,7 +822,7 @@ def vector_copy(
         destination = None
         ref = None
 
-        output.append(output_list[idx])
+        output.append(out_paths[idx])
 
     if input_is_list:
         return output
@@ -850,10 +852,10 @@ def vector_reset_fids(
 
     input_is_list = isinstance(vector, list)
 
-    input_list = utils_io._get_input_paths(vector, "vector")
+    in_paths = utils_io._get_input_paths(vector, "vector")
 
     output = []
-    for idx, in_vector in enumerate(input_list):
+    for idx, in_vector in enumerate(in_paths):
         ref = _vector_open(in_vector)
 
         layers = ref.GetLayerCount()
@@ -887,7 +889,7 @@ def vector_reset_fids(
 
         ref = None
 
-        output.append(input_list[idx])
+        output.append(in_paths[idx])
 
     if input_is_list:
         return output
@@ -913,10 +915,10 @@ def vector_create_fid_field(
 
     input_is_list = isinstance(vector, list)
 
-    input_list = utils_io._get_input_paths(vector, "vector")
+    in_paths = utils_io._get_input_paths(vector, "vector")
 
     output = []
-    for idx, in_vector in enumerate(input_list):
+    for idx, in_vector in enumerate(in_paths):
         ref = _vector_open(in_vector)
 
         layers = ref.GetLayerCount()
@@ -941,7 +943,7 @@ def vector_create_fid_field(
 
         ref = None
 
-        output.append(input_list[idx])
+        output.append(in_paths[idx])
 
     if input_is_list:
         return output
@@ -972,10 +974,10 @@ def vector_create_attribute_from_fid(
 
     input_is_list = isinstance(vector, list)
 
-    input_list = utils_io._get_input_paths(vector, "vector")
+    in_paths = utils_io._get_input_paths(vector, "vector")
 
     output = []
-    for idx, in_vector in enumerate(input_list):
+    for idx, in_vector in enumerate(in_paths):
         ref = _vector_open(in_vector)
 
         layers = ref.GetLayerCount()
@@ -1000,7 +1002,7 @@ def vector_create_attribute_from_fid(
 
         ref = None
 
-        output.append(input_list[idx])
+        output.append(in_paths[idx])
 
     if input_is_list:
         return output
@@ -1231,9 +1233,9 @@ def vector_add_field(
 
     input_is_list = isinstance(vector, list)
 
-    input_list = utils_io._get_input_paths(vector, "vector")
+    in_paths = utils_io._get_input_paths(vector, "vector")
 
-    for idx, in_vector in enumerate(input_list):
+    for idx, in_vector in enumerate(in_paths):
         ref = _vector_open(in_vector)
 
         layers = ref.GetLayerCount()
@@ -1249,9 +1251,9 @@ def vector_add_field(
         ref = None
 
     if input_is_list:
-        return input_list
+        return in_paths
     
-    return input_list[0]
+    return in_paths[0]
 
 
 def vector_set_attribute_table(
@@ -1293,9 +1295,9 @@ def vector_set_attribute_table(
     match_idx = header.index(match)
 
     input_is_list = isinstance(vector, list)
-    input_list = utils_io._get_input_paths(vector, "vector")
+    in_paths = utils_io._get_input_paths(vector, "vector")
 
-    for in_vector in input_list:
+    for in_vector in in_paths:
         ref = _vector_open(in_vector)
 
         layers = ref.GetLayerCount()
@@ -1338,9 +1340,9 @@ def vector_set_attribute_table(
         ref = None
 
     if input_is_list:
-        return input_list
+        return in_paths
     
-    return input_list[0]
+    return in_paths[0]
 
 
 def vector_delete_fields(
@@ -1366,9 +1368,9 @@ def vector_delete_fields(
     assert isinstance(fields, list), "fields must be a list."
 
     input_is_list = isinstance(vector, list)
-    input_list = utils_io._get_input_paths(vector, "vector")
+    in_paths = utils_io._get_input_paths(vector, "vector")
 
-    for in_vector in input_list:
+    for in_vector in in_paths:
         ref = _vector_open(in_vector)
 
         layers = ref.GetLayerCount()
@@ -1389,6 +1391,6 @@ def vector_delete_fields(
         ref = None
 
     if input_is_list:
-        return input_list
+        return in_paths
     
-    return input_list[0]
+    return in_paths[0]

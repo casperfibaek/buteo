@@ -269,11 +269,10 @@ def raster_get_footprints(
 
     input_is_list = isinstance(raster, list)
 
-    input_list = utils_io._get_input_paths(raster, "raster")
-    output_list = utils_io._get_output_paths(
-        input_list,
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
-        overwrite=overwrite,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
@@ -281,10 +280,11 @@ def raster_get_footprints(
         change_ext=out_format,
     )
 
-    utils_path._delete_if_required_list(output_list, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     footprints = []
-    for idx, in_raster in enumerate(input_list):
+    for idx, in_raster in enumerate(in_paths):
         metadata = get_metadata_raster(in_raster)
         name = os.path.splitext(os.path.basename(metadata["name"]))[0]
 
@@ -303,7 +303,7 @@ def raster_get_footprints(
             footprint = utils_bbox._get_vector_from_geom(
                 footprint_geom,
                 projection_osr=projection_latlng,
-                out_path=output_list[idx],
+                out_path=out_paths[idx],
                 name=name,
             )
         else:
@@ -313,7 +313,7 @@ def raster_get_footprints(
             footprint = utils_bbox._get_vector_from_geom(
                 footprint_geom,
                 projection_osr=projection_osr,
-                out_path=output_list[idx],
+                out_path=out_paths[idx],
                 name=name,
             )
 

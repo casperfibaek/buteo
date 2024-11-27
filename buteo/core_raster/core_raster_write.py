@@ -73,8 +73,11 @@ def save_dataset_to_disk(
         suffix=suffix,
         add_uuid=add_uuid,
         add_timestamp=add_timestamp,
-        overwrite=overwrite,
     )
+
+    utils_io._check_overwrite_policy(output_paths, overwrite)
+    utils_io._delete_if_required_list(output_paths, overwrite)
+
     creation_options = utils_gdal._get_default_creation_options(creation_options)
 
     for idx, dataset in enumerate(input_data):
@@ -85,7 +88,7 @@ def save_dataset_to_disk(
             driver_name = utils_gdal._get_driver_name_from_path(dataset)
             driver = gdal.GetDriverByName(driver_name)
             src_ds = gdal.Open(dataset)
-            utils_path._delete_if_required(output_paths[idx], overwrite)
+            utils_io._delete_if_required(output_paths[idx], overwrite)
             driver.CreateCopy(output_paths[idx], src_ds, options=creation_options)
             src_ds = None
 
@@ -94,7 +97,7 @@ def save_dataset_to_disk(
             driver_name = utils_gdal._get_driver_name_from_path(dataset)
             driver = ogr.GetDriverByName(driver_name)
             src_ds = ogr.Open(dataset)
-            utils_path._delete_if_required(output_paths[idx], overwrite)
+            utils_io._delete_if_required(output_paths[idx], overwrite)
             driver.CopyDataSource(src_ds, output_paths[idx])
             src_ds = None
 
@@ -200,7 +203,7 @@ def raster_create_empty(
     driver_name = utils_gdal._get_driver_name_from_path(out_path)
     driver = gdal.GetDriverByName(driver_name)
 
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
 
     destination = driver.Create(
         out_path,
@@ -239,7 +242,7 @@ def raster_create_empty(
 
 def raster_create_from_array(
     arr: np.ndarray,
-    out_path: str = None,
+    out_path: Optional[str] = None,
     pixel_size: Union[Union[float, int], List[Union[float, int]]] = 1.0,
     x_min: Union[float, int] = 0.0,
     y_max: Union[float, int] = 0.0,
@@ -310,7 +313,7 @@ def raster_create_from_array(
     driver_name = utils_gdal._get_driver_name_from_path(out_path)
     driver = gdal.GetDriverByName(driver_name)
 
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
 
     height, width, bands = arr.shape
 
@@ -384,7 +387,7 @@ def raster_create_copy(
             f"Output path {out_path} is not valid or already exists. "
         )
 
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
 
     driver_name = utils_gdal._get_driver_name_from_path(out_path)
     driver = gdal.GetDriverByName(driver_name)

@@ -115,16 +115,6 @@ class TestDirectoryOperations:
         
         with pytest.raises(TypeError):
             utils_path._check_dir_exists(None)
-            
-    def test_create_dir_if_not_exists(self, tmp_path):
-        """Test directory creation"""
-        new_dir = str(tmp_path / "newdir")
-        result = utils_path._create_dir_if_not_exists(new_dir)
-        assert os.path.exists(new_dir)
-        assert isinstance(result, str)
-        
-        with pytest.raises(TypeError):
-            utils_path._create_dir_if_not_exists(None)
 
 class TestPathManipulation:
     def test_get_dir_from_path(self, temp_files):

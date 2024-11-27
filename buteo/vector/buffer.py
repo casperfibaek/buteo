@@ -188,9 +188,9 @@ def vector_buffer(
     utils_base._type_check(overwrite, [bool], "overwrite")
 
     input_is_list = isinstance(vector, list)
-    input_data = utils_io._get_input_paths(vector, "vector")
-    output_data = utils_io._get_output_paths(
-        input_data,
+    in_paths = utils_io._get_input_paths(vector, "vector")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         in_place=in_place,
         prefix=prefix,
@@ -201,15 +201,16 @@ def vector_buffer(
     )
 
     if not in_place:
-        utils_path._delete_if_required_list(output_data, overwrite)
+        utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     output = []
-    for idx, in_vector in enumerate(input_data):
+    for idx, in_vector in enumerate(in_paths):
         output.append(
             _vector_buffer(
                 in_vector,
                 distance,
-                out_path=output_data[idx],
+                out_path=out_paths[idx],
                 in_place=in_place,
             )
         )

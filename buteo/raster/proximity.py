@@ -159,9 +159,9 @@ def raster_get_proximity(
     assert unit.lower() in ["geo", "pixel"], f"Invalid unit. {unit}"
 
     input_is_list = isinstance(raster, list)
-    input_rasters = utils_io._get_input_paths(raster, "raster")
-    output_rasters = utils_io._get_output_paths(
-        input_rasters,
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         in_place=False,
         prefix=prefix,
@@ -171,15 +171,16 @@ def raster_get_proximity(
         change_ext="tif"
     )
 
-    utils_path._delete_if_required_list(output_rasters, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     output = []
-    for idx, in_raster in enumerate(input_rasters):
+    for idx, in_raster in enumerate(in_paths):
         output.append(_raster_get_proximity(
             in_raster,
             target_value=target_value,
             unit=unit.lower(),
-            out_path=output_rasters[idx],
+            out_path=out_paths[idx],
             max_dist=max_dist,
             add_border=add_border,
             border_value=border_value,

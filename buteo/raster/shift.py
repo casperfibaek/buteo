@@ -49,7 +49,7 @@ def _raster_shift(
         if not utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite):
             raise ValueError(f"out_path is not a valid output path: {out_path}")
 
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
 
     driver = gdal.GetDriverByName(utils_gdal._get_raster_driver_name_from_path(out_path))
 
@@ -150,9 +150,9 @@ def raster_shift(
 
     input_is_list = isinstance(raster, list)
 
-    input_list = utils_io._get_input_paths(raster, "raster")
-    output_list = utils_io._get_output_paths(
-        input_list,
+    in_paths = utils_io._get_input_paths(raster, "raster")
+    out_paths = utils_io._get_output_paths(
+        in_paths,
         out_path,
         overwrite=overwrite,
         prefix=prefix,
@@ -162,15 +162,16 @@ def raster_shift(
         change_ext="tif",
     )
 
-    utils_path._delete_if_required_list(output_list, overwrite)
+    utils_io._check_overwrite_policy(out_paths, overwrite)
+    utils_io._delete_if_required_list(out_paths, overwrite)
 
     shifted_rasters = []
-    for idx, in_raster in enumerate(input_list):
+    for idx, in_raster in enumerate(in_paths):
         shifted_rasters.append(
             _raster_shift(
                 in_raster,
                 shift_list,
-                out_path=output_list[idx],
+                out_path=out_paths[idx],
                 overwrite=overwrite,
                 creation_options=creation_options,
             )
@@ -226,7 +227,7 @@ def raster_shift_pixel(
         if not utils_path._check_is_valid_output_filepath(out_path):
             raise ValueError(f"out_path is not a valid output path: {out_path}")
 
-    utils_path._delete_if_required(out_path, overwrite=True)
+    utils_io._delete_if_required(out_path, overwrite=True)
 
     return core_raster_io.array_to_raster(
         arr,

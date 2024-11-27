@@ -10,6 +10,7 @@ from osgeo import gdal, osr
 # Internal
 from buteo.utils import (
     utils_base,
+    utils_io,
     utils_gdal,
     utils_bbox,
     utils_path,
@@ -312,7 +313,8 @@ def array_to_raster(
         metadata_ref["geotransform"][5],
     )
 
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_io._check_overwrite_policy([out_path], overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
 
     destination = driver.Create(
         out_path,

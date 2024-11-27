@@ -42,7 +42,7 @@ def _singlepart_to_multipart(
     out_format = utils_gdal._get_path_from_dataset(out_path, dataset_type="vector")
     driver = ogr.GetDriverByName(out_format)
 
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
 
     metadata = _vector_to_metadata(ref)
     destination = driver.CreateDataSource(out_path)
@@ -90,11 +90,11 @@ def _multipart_to_singlepart(
     out_format = utils_gdal._get_path_from_dataset(out_path, dataset_type="vector")
     driver = ogr.GetDriverByName(out_format)
 
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
 
     metadata = _vector_to_metadata(ref)
 
-    utils_path._delete_if_required(out_path, overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
 
     destination = driver.CreateDataSource(out_path)
 
