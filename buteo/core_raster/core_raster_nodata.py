@@ -16,7 +16,6 @@ from osgeo import gdal
 from buteo.utils import (
     utils_io,
     utils_base,
-    utils_gdal,
     utils_translate,
 )
 from buteo.core_raster.core_raster_read import _open_raster
@@ -220,14 +219,11 @@ def _raster_set_nodata(
     ----------
     raster : Union[str, gdal.Dataset]
         The raster to set nodata values for.
-
     nodata : float, int, or None
         The nodata value to set for the raster.
         If nodata is None, nodata will be removed from the raster.
-
     out_path : str, optional
         The destination of the changed raster, default: None
-
     in_place : bool, optional
         Should the raster be changed in_place or copied?, default: True
 
@@ -297,26 +293,19 @@ def raster_set_nodata(
     ----------
     raster : Union[str, gdal.Dataset, List]
         The raster(s) to set nodata values for.
-
     nodata : float, int, or None
         The nodata value to set for the raster(s).
         If nodata is None, nodata will be removed from the raster(s).
-
     out_path : str, optional
         The destination of the changed rasters, default: None
-
     in_place : bool, optional
         Should the rasters be changed in_place or copied?, default: True
-
     overwrite : bool, optional
         Should the rasters be overwritten if they already exist? default: True
-
     prefix : str, optional
         Prefix to add to the output, default: ""
-
     suffix : str, optional
         Suffix to add to the output, default: "_nodata_set"
-
     creation_options : List, optional
         Creation options for the output rasters, default: None
 

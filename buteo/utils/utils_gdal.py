@@ -956,7 +956,6 @@ def _check_is_raster(
     ----------
     potential_raster : Any
         The variable to check. Expected to be either str path to raster or gdal.Dataset.
-
     empty_is_invalid : bool, optional
         If True, an empty raster is considered invalid. Default: False.
 
@@ -1605,7 +1604,6 @@ def _convert_to_band_list(
         The band number or list of band numbers to convert.
         If -1, returns a list of all bands.
         Values must be between 1 and band_count inclusive.
-
     band_count : int
         The number of bands in the raster.
         Must be greater than 0.

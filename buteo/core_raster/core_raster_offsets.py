@@ -153,13 +153,10 @@ def _compute_chunk_positions(
     ----------
     length : int
         The length of the axis.
-
     chunk_size : int
         The size of the chunks.
-
     overlap : int
         The amount of overlap between chunks.
-
     border_strategy : int
         The border strategy to use when splitting the raster into chunks. Can be 1, 2, or 3.
         1. Ignore border chunks if they do not fit the chunk size.
@@ -177,7 +174,7 @@ def _compute_chunk_positions(
         If input parameters have incorrect types.
 
     ValueError
-        If input parameters have invalid
+        If input parameters have invalid values.
     """
     _type_check(length, [int], "length")
     _type_check(chunk_size, [int], "chunk_size")
@@ -191,18 +188,18 @@ def _compute_chunk_positions(
 
     pos = 0
     while pos < length:
-        end = pos + chunk_size
-        if end > length:
+        if pos + chunk_size > length:
             if border_strategy == 1:
                 break
             elif border_strategy == 2:
                 pos = length - chunk_size
-            # For border_strategy 3, include the last chunk even if smaller
+            elif border_strategy == 3:
+                pass  # Last chunk may be smaller than chunk_size
         if pos not in positions:
             positions.append(pos)
-        pos += step
-        if border_strategy in [2, 3] and pos + chunk_size > length:
+        if pos + chunk_size >= length:
             break
+        pos += step
 
     return positions
 
@@ -221,19 +218,15 @@ def _get_chunk_offsets_fixed_size(
     ----------
     image_shape : Sequence[int]
         A tuple or list containing the image shape in channel-first format (channels, height, width).
-
     chunk_size_x : int
         The size of the chunks in the x-direction.
-
     chunk_size_y : int
         The size of the chunks in the y-direction.
-
     border_strategy : int, optional
         The border strategy to use when splitting the raster into chunks. Can be 1, 2, or 3. Default: 1.
         1. Ignore border chunks if they do not fit the chunk size.
         2. Oversample border chunks to fit the chunk size.
         3. Shrink the last chunk to fit the image size (creates uneven chunks).
-
     overlap : int, optional
         The amount of overlap to apply to each chunk, in pixels. Default: 0.
 

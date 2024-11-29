@@ -599,10 +599,8 @@ def reproject_bbox(
     ----------
     bbox_ogr : List[Union[int, float]]
         The OGR formatted bbox to reproject.
-
     source_projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
         The source projection.
-
     target_projection : Union[str, int, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
         The target projection.
 

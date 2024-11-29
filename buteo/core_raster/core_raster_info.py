@@ -220,7 +220,7 @@ def get_metadata_raster(raster: Union[str, gdal.Dataset]) -> Dict[str, Any]:
         "x_max": info["transform"][0] + info["transform"][1] * info["size"][0],
         "y_min": info["transform"][3] + info["transform"][5] * info["size"][1],
         "y_max": info["transform"][3],
-        "shape": [dataset.RasterYSize, dataset.RasterXSize, info["bands"]],
+        "shape": [info["bands"], dataset.RasterYSize, dataset.RasterXSize],
         "bands": info["bands"],
         "dtype_gdal": info["dtype"],
         "dtype": dtype_numpy,

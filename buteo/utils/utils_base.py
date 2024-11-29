@@ -293,13 +293,10 @@ def _type_check(
     ----------
     variable : Any
         The variable to check.
-
     types : Union[List[Union[type, List[type], None]], Tuple[Union[type, List[type], None], ...]]
         The type or types to check against.
-
     name : str, optional
         The name of the variable to check.
-
     throw_error : bool, optional
         Whether to throw an error if the type check fails.
 

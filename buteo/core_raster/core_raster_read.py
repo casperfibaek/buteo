@@ -29,10 +29,8 @@ def _read_raster_band(
     ----------
     raster : gdal.Dataset
         The raster dataset to read from
-
     band_idx : int
         The band index to read (1-based, as GDAL uses 1-based indexing)
-
     pixel_offsets : tuple, optional
         (x_offset, y_offset, x_size, y_size)
 

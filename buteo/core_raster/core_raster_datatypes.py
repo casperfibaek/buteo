@@ -81,16 +81,12 @@ def _raster_set_datatype(
     ----------
     raster : str or gdal.Dataset
         Input raster to change data type.
-
     dtype_str : str or np.dtype
         Target data type for the output raster.
-
     out_path : str, optional
         Output file path. If not provided, a temporary file will be created.
-
     overwrite : bool, optional
         If True, overwrites the existing file.
-
     creation_options : list of str, optional
         GDAL creation options for the output raster.
 
@@ -103,10 +99,8 @@ def _raster_set_datatype(
     ------
     ValueError
         If unable to open input raster or create output raster.
-
     TypeError
         If input arguments are of incorrect type.
-
     FileExistsError
         If output file already exists and overwrite is False.
     """
@@ -203,29 +197,21 @@ def raster_set_datatype(
     ----------
     raster : str or gdal.Dataset or list
         The input raster(s) for which the datatype will be changed.
-
     dtype : str
         The target datatype for the output raster(s).
-
     out_path : path or list, optional
         The output location for the processed raster(s). Default: None.
-
     creation_options : list, optional
         A list of GDAL creation options for the output raster(s). Default is
         ["TILED=YES", "NUM_THREADS=ALL_CPUS", "BIGTIFF=YES", "COMPRESS=LZW"].
-
     add_uuid : bool, optional
         Determines whether to add a UUID to the output path. Default: False.
-
     add_timestamp : bool, optional
         Determines whether to add a timestamp to the output path. Default: False.
-
     prefix : str, optional
         A prefix to add to the output path. Default: "".
-
     suffix : str, optional
         A suffix to add to the output path. Default: "".
-
     overwrite : bool, optional
         Determines whether to overwrite existing files with the same name. Default: True.
 

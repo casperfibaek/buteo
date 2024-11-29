@@ -121,20 +121,17 @@ class raster_to_array_chunks:
             raise ValueError("The number of chunks must be greater than 0.")
         if self.overlap < 0:
             raise ValueError("Overlap must be greater than or equal to 0.")
-        if self.chunks <= self.shape[1]:
-            raise ValueError("The number of chunks must be less than or equal to the number of columns in the raster.")
-        if self.chunks <= self.shape[0]:
-            raise ValueError("The number of chunks must be less than or equal to the number of rows in the raster.")
         if self.chunk_size is not None:
             if len(self.chunk_size) != 2:
                 raise ValueError("Chunk size must be a list or tuple of length 2.")
             if any([val < 1 for val in self.chunk_size]):
                 raise ValueError("Chunk size must be greater than 0.")
+            if self.chunk_size[0] > self.shape[1] or self.chunk_size[1] > self.shape[2]:
+                raise ValueError("Chunk size must be smaller than the raster size.")
         if self.border_strategy not in [1, 2, 3]:
             raise ValueError("The border strategy must be 1, 2, or 3.")
 
         if self.chunk_size is not None:
-            # These now assume channel_first
             self.offsets = _get_chunk_offsets_fixed_size(
                 self.shape,
                 self.chunk_size[0],
@@ -144,12 +141,7 @@ class raster_to_array_chunks:
             )
 
         else:
-            # These now assume channel_first
-            self.offsets = _get_chunk_offsets(
-                self.shape,
-                self.chunks,
-                self.overlap,
-            )
+            self.offsets = _get_chunk_offsets(self.shape, self.chunks, self.overlap)
 
         self.total_chunks = len(self.offsets)
 

@@ -27,10 +27,8 @@ def _print_progress(
     ----------
     count : int
         The current count.
-
     total : int
         The total count.
-
     name : str, optional.
         The name of the process. Default: "Processing".
 
@@ -81,7 +79,6 @@ def _get_timing(
     ----------
     before : datetime
         The time to compare to. In a datetime object.
-
     print_msg : bool, optional.
         If True, print the message. Default: True.
 
@@ -129,7 +126,6 @@ def _get_folder_size(
     ----------
     start_path : str, optional.
         The path to the folder. Default: ".".
-
     rough : bool, optional.
         If True, return the size in MB. Default: True.
 
@@ -206,7 +202,6 @@ def split_number(num: int, parts: int) -> List[int]:
     ----------
     num : int
         The number to split.
-
     parts : int
         The number of parts to split the number into.
 

@@ -411,7 +411,6 @@ def _get_input_paths(
     ----------
     inputs : Union[gdal.Dataset, ogr.DataSource, str, List[Union[gdal.Dataset, ogr.DataSource, str]]]
         The input data to parse.
-
     input_type : str, optional
         The input type. Can be "raster", "vector" or "mixed". Default: "mixed".
 
@@ -499,25 +498,18 @@ def _get_output_paths(
     ----------
     inputs : Union[str, gdal.Dataset, ogr.DataSource, List[Union[str, gdal.Dataset, ogr.DataSource]]]
         The input file(s) or dataset(s)
-
     output_path : Optional[Union[str, List[str]]], optional
         The output path(s), by default None
-
     in_place : bool, optional
         If True, outputs will be same as inputs, by default False
-
     prefix : str, optional
         Prefix to add to filenames, by default ""
-
     suffix : str, optional
         Suffix to add to filenames, by default ""
-
     change_ext : Optional[str], optional
         New extension for output files, by default None
-
     add_uuid : bool, optional
         Add unique identifier to filenames, by default False
-
     add_timestamp : bool, optional
         Add timestamp to filenames, by default False
 
@@ -633,7 +625,6 @@ def _check_overwrite_policy(
     ----------
     output_paths : List[str]
         List of output file paths.
-
     overwrite : Union[bool, List[bool]]
         Overwrite flag(s). Can be a single boolean or a list of booleans corresponding to each output path.
 
@@ -646,10 +637,8 @@ def _check_overwrite_policy(
     ------
     FileExistsError
         If overwrite is False and a file already exists at any output path.
-
     ValueError
         If the length of overwrite list does not match the number of output paths.
-
     TypeError
         If overwrite is not a boolean or a list of booleans.
     """

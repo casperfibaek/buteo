@@ -39,25 +39,18 @@ def raster_to_array(
     ----------
     raster : Union[gdal.Dataset, str]
         The raster to convert
-    
     bands : Union[List[int], str, int], optional
         Band selection (1-based). Can be "all", int, or list of ints
-    
     filled : bool, optional
         Fill nodata values
-    
     fill_value : Optional[Union[int, float]], optional
         Value to fill nodata with
-    
     pixel_offsets : Optional[Tuple[int, int, int, int]], optional
         (x_offset, y_offset, x_size, y_size) for reading subset
-    
     bbox : Optional[List[float]], optional
         [xmin, ymin, xmax, ymax] to read
-    
     bbox_srs : Optional[Union[str, osr.SpatialReference]], optional
         Coordinate system of bbox
-    
     cast : Optional[Union[np.dtype, str]], optional
         Output data type
 
@@ -156,32 +149,24 @@ def array_to_raster(
     ----------
     array : np.ndarray
         The NumPy array to convert.
-
     reference : Union[str, gdal.Dataset]
         The reference raster to use for the output.
-
     out_path : Optional[str], optional
         The destination path to save the raster. If None, a temporary path is used.
-
     set_nodata : Optional[Union[float, int, str, bool]], optional
         How to set the nodata value:
             - "arr": Use the nodata value from the NumPy array.
             - "ref": Use the nodata value from the reference raster.
             - Value: Use the specified value.
             - None or False: Do not set nodata value.
-
     pixel_offsets : Optional[Union[List[int], Tuple[int, int, int, int]]], optional
         Pixel offsets in the format [x_offset, y_offset, x_size, y_size].
-
     bbox : Optional[List[float]], optional
         Bounding box [min_x, min_y, max_x, max_y] defining the area to write.
-
     bbox_srs : Optional[Union[str, osr.SpatialReference]], optional
         Spatial reference system of the bounding box.
-
     overwrite : bool, optional
         If True, overwrites the output file if it exists.
-
     creation_options : Optional[List[str]], optional
         List of GDAL creation options.
 
