@@ -11,6 +11,7 @@ from pathlib import Path
 
 from buteo.core_raster.core_raster_array import (
     raster_to_array,
+    raster_to_array_random_patches,
     array_to_raster
 )
 
@@ -216,3 +217,84 @@ class TestArrayToRaster:
         data = ds.ReadAsArray()
         assert np.array_equal(data, new_arr)
         ds = None
+
+
+class TestRasterToArrayRandomPatches:
+    def test_random_patches_basic(self, sample_raster_dataset):
+        """Test basic functionality of raster_to_array_random_patches."""
+        patch_size = (5, 5)
+        num_patches = 2
+        arr = raster_to_array_random_patches(
+            sample_raster_dataset,
+            patch_size=patch_size,
+            num_patches=num_patches
+        )
+        assert arr.shape == (num_patches, 3, patch_size[0], patch_size[1])
+        assert arr.dtype == np.float32
+
+    def test_random_patches_filled_nodata(self, sample_raster_dataset):
+        """Test raster_to_array_random_patches with filled nodata values."""
+        # Set nodata value and create nodata pixels
+        ds = gdal.Open(sample_raster_dataset, gdal.GA_Update)
+        band = ds.GetRasterBand(1)
+        band.SetNoDataValue(-9999)
+        data = band.ReadAsArray()
+        # Set every second pixel to nodata:
+        data[::2, ::2] = -9999
+        band.WriteArray(data)
+        ds.FlushCache()
+        ds = None
+        # Test filled nodata
+        patch_size = (5, 5)
+        num_patches = 3
+        arr = raster_to_array_random_patches(
+            sample_raster_dataset,
+            patch_size=patch_size,
+            num_patches=num_patches,
+            filled=True,
+            fill_value=0
+        )
+        assert arr.shape == (num_patches, 3, patch_size[0], patch_size[1])
+        assert arr.dtype == np.float32
+
+        # Since its every second pixel is nodata, it should be safe.
+        assert arr[0, :, :, :].min() == 0
+        assert arr[1, :, :, :].min() == 0
+        assert arr[2, :, :, :].min() == 0
+
+    def test_random_patches_invalid_inputs(self, sample_raster_dataset):
+        """Test invalid inputs for raster_to_array_random_patches."""
+        with pytest.raises(TypeError):
+            raster_to_array_random_patches(123, patch_size=(5, 5), num_patches=2)
+        with pytest.raises(ValueError):
+            raster_to_array_random_patches(sample_raster_dataset, patch_size=(0, 5), num_patches=2)
+        with pytest.raises(ValueError):
+            raster_to_array_random_patches(sample_raster_dataset, patch_size=(5, 5), num_patches=-1)
+        with pytest.raises(ValueError):
+            raster_to_array_random_patches(sample_raster_dataset, patch_size=(5,), num_patches=2)
+
+    def test_random_patches_with_specific_bands(self, sample_raster_dataset):
+        """Test raster_to_array_random_patches with specific band selection."""
+        patch_size = (4, 4)
+        num_patches = 4
+        arr = raster_to_array_random_patches(
+            sample_raster_dataset,
+            patch_size=patch_size,
+            num_patches=num_patches,
+            bands=[1, 3]
+        )
+        assert arr.shape == (num_patches, 2, patch_size[0], patch_size[1])
+        assert arr.dtype == np.float32
+
+    def test_random_patches_cast_dtype(self, sample_raster_dataset):
+        """Test casting dtype in raster_to_array_random_patches."""
+        patch_size = (3, 3)
+        num_patches = 1
+        arr = raster_to_array_random_patches(
+            sample_raster_dataset,
+            patch_size=patch_size,
+            num_patches=num_patches,
+            cast=np.int32
+        )
+        assert arr.shape == (num_patches, 3, patch_size[0], patch_size[1])
+        assert arr.dtype == np.int32

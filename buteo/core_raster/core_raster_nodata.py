@@ -243,10 +243,10 @@ def _raster_set_nodata(
     utils_base._type_check(overwrite, [bool], "overwrite")
 
     if in_place:
-        opened = _open_raster(raster)
+        opened = _open_raster(raster, writeable=True)
     else:
         copy = raster_create_copy(raster, out_path, overwrite=overwrite)
-        opened = _open_raster(copy)
+        opened = _open_raster(copy, writeable=True)
 
     bands = opened.RasterCount
 
@@ -267,14 +267,15 @@ def _raster_set_nodata(
             raster_band.SetNoDataValue(nodata)
             raster_band = None
 
-    if in_place:
-        out_path = utils_gdal._get_path_from_dataset(opened)
 
     opened.FlushCache()
     opened = None
 
     if out_path is None:
         raise ValueError("Output path is None. This should not happen.")
+
+    if in_place:
+        return raster
 
     return out_path
 
@@ -345,7 +346,7 @@ def raster_set_nodata(
 
     if not in_place:
         utils_io._check_overwrite_policy(out_paths, overwrite)
-    utils_io._delete_if_required_list(out_paths, overwrite)
+        utils_io._delete_if_required_list(out_paths, overwrite)
 
     nodata_set = []
     for idx, in_raster in enumerate(in_paths):

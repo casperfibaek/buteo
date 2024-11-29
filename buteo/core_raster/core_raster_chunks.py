@@ -26,34 +26,25 @@ class raster_to_array_chunks:
     ----------
     raster : Union[gdal.Dataset, str]
         The raster to read.
-
     chunks : int
         The number of chunks to read. The area is chunked in way that ensures
         that the chunks are as square as possible. Default: 1.
-
     chunk_size : list or tuple, optional
         The raster can be split into chunks of a fixed size,
         instead of splitting into a fixed number of chunks.
-
         The list should be in the format [x_size, y_size].
         If this is provided, the chunks parameter is ignored. Default: None.
-
     overlap : int, optional
         The number of pixels to overlap. Default: 0.
-
     bands : list or str or int, optional
         The bands to read. Can be "all", an int, or a list of integers, or a single
         integer. Please note that bands are 1-indexed. Default: "all".
-
     filled : bool, optional
         Whether to fill masked values. Default: False.
-
     fill_value : int or float, optional
         The value to fill masked values with. Default: None.
-
     skip : int, optional
         The number of chunks to skip when iterating. Default: 0.
-
     border_strategy : int, optional
         The border strategy to use when splitting the raster into chunks.
         border_strategy ignored when chunk_size and overlaps are provided.
@@ -61,7 +52,6 @@ class raster_to_array_chunks:
         1. Ignore the border chunks if they do not fit the chunk size.
         2. Oversample the border chunks to fit the chunk size.
         3. Shrink the last chunk to fit the image size. (Creates uneven chunks.)
-
     cast : type or str, optional
         The data type to cast the output to. Default: None.
 

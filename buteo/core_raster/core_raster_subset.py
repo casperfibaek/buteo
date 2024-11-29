@@ -29,16 +29,12 @@ def raster_extract_bands(
     ----------
     raster : str or gdal.Dataset
         The raster to extract the band from.
-
     band : int or list
         The band to extract. Can be a single band or a list of bands.
-
     out_path : str, optional
         The output path. If None, a temporary file will be created.
-
     overwrite : bool, optional
         If True, the output raster will be overwritten if it exists. Default: True.
-
     creation_options : list or None, optional
         The creation options for the output raster. Default: None.
 
@@ -70,6 +66,12 @@ def raster_extract_bands(
     driver = gdal.GetDriverByName(driver_name)
 
     src_ds = _open_raster(raster)
+
+    # test that the band numbers are valid
+    for b in band:
+        if not 1 <= b <= src_ds.RasterCount:
+            raise ValueError(f"Band {b} does not exist. Valid band numbers are 1 to {src_ds.RasterCount}.")
+
     dst_ds = driver.Create(
         out_path,
         src_ds.RasterXSize,

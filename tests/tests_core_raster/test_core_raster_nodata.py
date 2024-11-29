@@ -7,6 +7,7 @@ import sys; sys.path.append("../../")
 import pytest
 import numpy as np
 from osgeo import gdal
+from uuid import uuid4
 
 from buteo.core_raster.core_raster_nodata import (
     check_rasters_have_same_nodata,
@@ -20,7 +21,7 @@ from buteo.core_raster.core_raster_nodata import (
 @pytest.fixture
 def raster_without_nodata(tmp_path):
     """Create a sample raster without nodata values."""
-    raster_path = tmp_path / "no_nodata.tif"
+    raster_path = tmp_path / f"no_nodata_{uuid4().hex}.tif"
     driver = gdal.GetDriverByName('GTiff')
     ds = driver.Create(str(raster_path), 10, 10, 1, gdal.GDT_Float32)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
@@ -34,7 +35,7 @@ def raster_without_nodata(tmp_path):
 @pytest.fixture
 def raster_with_nodata(tmp_path):
     """Create a sample raster with nodata values."""
-    raster_path = tmp_path / "with_nodata.tif"
+    raster_path = tmp_path / f"with_nodata_{uuid4().hex}.tif"
     driver = gdal.GetDriverByName('GTiff')
     ds = driver.Create(str(raster_path), 10, 10, 1, gdal.GDT_Float32)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
@@ -50,7 +51,7 @@ def raster_with_nodata(tmp_path):
 @pytest.fixture
 def raster_with_different_nodata(tmp_path):
     """Create a sample raster with different nodata value."""
-    raster_path = tmp_path / "different_nodata.tif"
+    raster_path = tmp_path / f"different_nodata_{uuid4().hex}.tif"
     driver = gdal.GetDriverByName('GTiff')
     ds = driver.Create(str(raster_path), 10, 10, 1, gdal.GDT_Float32)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])

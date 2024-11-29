@@ -8,7 +8,6 @@ import pytest
 import numpy as np
 from osgeo import gdal
 from pathlib import Path
-import os
 
 from buteo.core_raster.core_raster_datatypes import (
     raster_get_datatype,

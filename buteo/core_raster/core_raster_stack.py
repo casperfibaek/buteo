@@ -13,6 +13,7 @@ from buteo.utils import (
     utils_base,
     utils_path,
     utils_translate,
+    utils_gdal,
 )
 from buteo.core_raster.core_raster_extent import check_rasters_are_aligned
 from buteo.core_raster.core_raster_array import raster_to_array, array_to_raster
@@ -25,70 +26,68 @@ def raster_stack_list(
     out_path: Optional[str] = None,
     *,
     overwrite: bool = True,
-    dtype: Optional[str] = None,
+    dtype: Optional[Union[str, np.dtype, type]] = None,
     creation_options: Optional[List[str]] = None,
-) -> Union[str, List[str]]:
-    """Stacks a list of aligned rasters into a single raster file.
+) -> str:
+    """Stack aligned rasters into a single raster file.
 
     Parameters
     ----------
-    rasters : list
+    rasters : List[Union[str, gdal.Dataset]]
         List of rasters to stack. These rasters must be aligned.
-
-    out_path : str or None, optional
-        The destination to save the output raster. If not provided, a temporary file will be created. Default: None.
-
-    overwrite : bool, optional
-        If the file exists, should it be overwritten? Default: True.
-
-    dtype : str, optional
-        The data type of the output raster. If not provided, the data type of the input rasters will be used. Default: None.
-
-    creation_options : list, optional
-        A list of GDAL creation options for the output raster. Default is
-        ["TILED=YES", "NUM_THREADS=ALL_CPUS", "BIGTIFF=YES", "COMPRESS=LZW"].
+    out_path : Optional[str]
+        The destination to save the output raster. If not provided, creates a temporary file.
+    overwrite : bool
+        If True, overwrite existing file.
+    dtype : Optional[Union[str, np.dtype, type]]
+        Output raster data type. If None, uses input raster dtype.
+    creation_options : Optional[List[str]]
+        GDAL creation options. Defaults to None.
 
     Returns
     -------
-    str or list
-        The file path(s) to the newly created raster(s).
+    str
+        Path to the created raster.
+
+    Raises
+    ------
+    ValueError
+        If rasters are not aligned or invalid.
+    TypeError
+        If input parameters have invalid types.
     """
     utils_base._type_check(rasters, [[str, gdal.Dataset]], "rasters")
     utils_base._type_check(out_path, [str, None], "out_path")
     utils_base._type_check(overwrite, [bool], "overwrite")
-    utils_base._type_check(dtype, [str, None, np.dtype, type(np.uint8)], "dtype")
+    utils_base._type_check(dtype, [str, None, np.dtype, type], "dtype")
     utils_base._type_check(creation_options, [[str], None], "creation_options")
 
-    # Get input raster file paths
-    input_data = utils_io._get_input_paths(rasters, "raster")
+    input_data = utils_io._get_input_paths(rasters, "raster") # type: ignore
 
-    # Generate a temporary output file path if out_path is not provided
+    if not utils_gdal._check_is_raster_list(input_data):
+        raise ValueError("Input must be a list of valid rasters")
+
+    if not check_rasters_are_aligned(input_data, same_bands=True): # type: ignore
+        raise ValueError("Input rasters must be aligned")
+
     if out_path is None:
-        out_path = utils_path._get_temp_filepath(
-            "temp_stack",
-            ext="tif",
-            add_uuid=True,
-            add_timestamp=True,
-        )
-    else:
-        assert utils_path._check_is_valid_output_filepath(out_path), "Invalid output path."
+        out_path = utils_path._get_temp_filepath("temp_stack", ext="tif", add_uuid=True)
 
-    # Check if input rasters are aligned
-    assert check_rasters_are_aligned(input_data), "Rasters are not aligned."
+    if not utils_path._check_is_valid_output_filepath(out_path):
+        raise ValueError(f"Invalid output path: {out_path}")
 
-    # Read input rasters as NumPy arrays and stack them
-    array = raster_to_array(input_data, cast=dtype)
+    arrays = [raster_to_array(raster, cast=dtype) for raster in input_data]
 
-    # Write the stacked array as a raster file
-    out_path = array_to_raster(
-        array,
+    # stack along the first axis
+    arrays_stacked = np.concatenate(arrays, axis=0)
+
+    return array_to_raster(
+        arrays_stacked,
         reference=input_data[0],
         out_path=out_path,
         overwrite=overwrite,
         creation_options=creation_options,
     )
-
-    return out_path
 
 
 def raster_stack_vrt_list(
@@ -100,10 +99,8 @@ def raster_stack_vrt_list(
     nodata_src: Optional[float] = None,
     nodata_VRT: Optional[float] = None,
     nodata_hide: Optional[bool] = None,
-    options: Optional[List] = None,
     overwrite: bool = True,
     reference: Optional[str] = None,
-    creation_options: Optional[List[str]] = None,
 ) -> str:
     """Create a virtual raster (.vrt) by stacking a list of input rasters.
 
@@ -115,46 +112,31 @@ def raster_stack_vrt_list(
     ----------
     rasters : List[Union[str, gdal.Dataset]]
         A list of input rasters as either file paths or GDAL datasets to be stacked.
-
     out_path : Optional[str], default=None
         The destination file path to save the output VRT raster. If not provided, a
         temporary file path will be generated.
-
     separate : bool, default=True
         If True, the raster bands will be kept separate and stacked in the order of
         the input rasters. If False, the raster bands will be merged, but all input
         rasters must have the same number of bands.
-
     resample_alg : str, default='nearest'
         The resampling algorithm to use when building the VRT. Accepts any algorithm
         supported by GDAL's BuildVRT function (e.g., 'nearest', 'bilinear', 'cubic').
-
     nodata_src : Optional[float], default=None
         The NoData value to use for the source rasters. If not provided, the NoData
         value from the input rasters will be used.
-
     nodata_VRT : Optional[float], default=None
         The NoData value to use for the output VRT raster. If not provided, the NoData
         value from the input rasters will be used.
-
     nodata_hide : Optional[bool], default=None
         If True, the NoData value will be hidden in the VRT. If not provided, the value
         will be determined by the input rasters.
-
-    options : Optional[List], default=None
-        A list of VRT options for GDAL. If not provided, default options will be used.
-
     overwrite : bool, default=True
         If True and the output file exists, it will be overwritten. If False and the
         output file exists, an error will be raised.
-
     reference : Optional[str], default=None
         A reference raster file path or GDAL dataset to use for aligning the stacked
         rasters. If not provided, the alignment of the input rasters will be used.
-
-    creation_options : Optional[List[str]], default=None
-        A list of GDAL creation options for the output VRT raster. If not provided,
-        the default options will be used.
 
     Returns
     -------
@@ -166,9 +148,14 @@ def raster_stack_vrt_list(
     utils_base._type_check(out_path, [str, None], "out_path")
     utils_base._type_check(separate, [bool], "separate")
     utils_base._type_check(resample_alg, [str], "resample_alg")
-    utils_base._type_check(options, [list, None], "options")
     utils_base._type_check(overwrite, [bool], "overwrite")
-    utils_base._type_check(creation_options, [[str], None], "creation_options")
+
+    # Check if the input rasters are valid
+    if len(rasters) == 0:
+        raise ValueError("Input rasters list is empty.")
+
+    if not utils_gdal._check_is_raster_list(rasters):
+        raise ValueError("Input rasters must be a list of valid rasters.")
 
     # Check if all rasters have the same number of bands when separate is False
     if not separate:
@@ -190,13 +177,17 @@ def raster_stack_vrt_list(
             add_timestamp=True,
         )
 
+    # Check if the output file path is valid
+    utils_io._check_overwrite_policy([out_path], overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
+
     # Translate the input resample algorithm to a GDAL-compatible format
     resample_algorithm = utils_translate._translate_resample_method(resample_alg)
 
     # Build VRT options based on whether a reference raster is provided or not
     if reference is not None:
         meta = get_metadata_raster(reference)
-        options = gdal.BuildVRTOptions(
+        vrt_options = gdal.BuildVRTOptions(
             resampleAlg=resample_algorithm,
             separate=separate,
             outputBounds=meta["bbox_gdal"],
@@ -208,7 +199,7 @@ def raster_stack_vrt_list(
             hideNodata=nodata_hide,
         )
     else:
-        options = gdal.BuildVRTOptions(
+        vrt_options = gdal.BuildVRTOptions(
             resampleAlg=resample_algorithm,
             separate=separate,
             srcNodata=nodata_src,
@@ -251,7 +242,7 @@ def raster_stack_vrt_list(
 
                 tmp_vrt_code = None
 
-        vrt = gdal.BuildVRT(out_path, tmp_vrt_list, options=options)
+        vrt = gdal.BuildVRT(out_path, tmp_vrt_list, options=vrt_options)
 
         # Clean up temporary VRTs
         for tmp_vrt_path in tmp_vrt_list:
@@ -259,7 +250,7 @@ def raster_stack_vrt_list(
 
     # Create a VRT by merging bands if separate is False
     else:
-        vrt = gdal.BuildVRT(out_path, rasters, options=options)
+        vrt = gdal.BuildVRT(out_path, rasters, options=vrt_options)
 
     # Flush cache to ensure data is written to the output file
     vrt.FlushCache()

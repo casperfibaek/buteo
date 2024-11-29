@@ -145,6 +145,52 @@ def get_metadata_raster(raster: Union[str, gdal.Dataset]) -> Dict[str, Any]:
         If input type is invalid
     ValueError
         If raster is invalid or metadata cannot be extracted
+
+    Examples
+    --------
+    >>> from buteo.core_raster import core_raster_info
+    >>> metadata = core_raster_info.get_metadata_raster("path/to/raster.tif")
+    >>> print(metadata)
+    >>> {
+    >>>     "path": "path/to/raster.tif",
+    >>>     "basename": "raster.tif",
+    >>>     "name": "raster",
+    >>>     "folder": "path/to",
+    >>>     "ext": ".tif",
+    >>>     "in_memory": False,
+    >>>     "driver": "GTiff",
+    >>>     "projection_osr": osr.SpatialReference,
+    >>>     "projection_wkt": "PROJCS[...]",
+    >>>     "geotransform": (0.0, 1.0, 0.0, 0.0, 0.0, -1.0),
+    >>>     "size": (512, 512),
+    >>>     "width": 512,
+    >>>     "height": 512,
+    >>>     "pixel_width": 1.0,
+    >>>     "pixel_height": 1.0,
+    >>>     "x_min": 0.0,
+    >>>     "x_max": 512.0,
+    >>>     "y_min": -512.0,
+    >>>     "y_max": 0.0,
+    >>>     "shape": [512, 512, 1],
+    >>>     "bands": 1,
+    >>>     "dtype_gdal": 1,
+    >>>     "dtype": numpy.uint8,
+    >>>     "dtype_name": "uint8",
+    >>>     "pixel_size": (1.0, 1.0),
+    >>>     "origin": (0.0, 0.0),
+    >>>     "nodata": False,
+    >>>     "nodata_value": None,
+    >>>     "bbox": [0.0, 512.0, -512.0, 0.0],
+    >>>     "bbox_latlng": [0.0, 90.0, 0.0, 180.0],
+    >>>     "bbox_gdal": (0.0, 1.0, -512.0, 0.0),
+    >>>     "bbox_gdal_latlng": (0.0, 90.0, 0.0, 180.0),
+    >>>     "bounds_latlng": "POLYGON ((0 90, 0 0, 180 0, 180 90, 0 90))",
+    >>>     "bounds_raster": "POLYGON ((0 -512, 512 -512, 512 0, 0 0, 0 -512))",
+    >>>     "centroid": (256.0, -256.0),
+    >>>     "centroid_latlng": (90.0, 0.0),
+    >>>     "area": 262144.0,
+    >>>     "area_latlng": 32400.0
+    >>> }
     """
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 

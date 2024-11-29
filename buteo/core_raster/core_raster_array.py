@@ -230,7 +230,6 @@ def array_to_raster(
     utils_base._type_check(overwrite, [bool], "overwrite")
     utils_base._type_check(creation_options, [list, type(None)], "creation_options")
 
-
     if isinstance(set_nodata, str) and set_nodata not in ["arr", "ref"]:
         raise ValueError("set_nodata must be 'arr', 'ref', a numeric value, or None/False.")
 
@@ -345,3 +344,135 @@ def array_to_raster(
     destination = None
 
     return out_path
+
+
+def _validata_raster_patch_parameters(
+    metadata: dict,
+    patch_size: Tuple[int, int],
+    num_patches: int,
+) -> None:
+    """Validates parameters for random patch extraction.
+
+    Parameters
+    ----------
+    metadata : dict
+        Raster metadata dictionary
+    patch_size : Tuple[int, int]
+        Size of patches to extract (height, width)
+    num_patches : int
+        Number of patches to extract
+
+    Raises
+    ------
+    ValueError
+        If patch size or num_patches are invalid
+    """
+    patch_height, patch_width = patch_size
+
+    if patch_height > metadata["height"] or patch_width > metadata["width"]:
+        raise ValueError("Patch size is larger than raster dimensions")
+
+    if patch_height <= 0 or patch_width <= 0:
+        raise ValueError("Patch dimensions must be positive")
+
+    if num_patches <= 0:
+        raise ValueError("Number of patches must be positive")
+
+
+def raster_to_array_random_patches(
+    raster: Union[gdal.Dataset, str],
+    patch_size: Tuple[int, int],
+    num_patches: int,
+    *,
+    bands: Union[List[int], str, int] = 'all',
+    filled: bool = False,
+    fill_value: Optional[Union[int, float]] = None,
+    cast: Optional[Union[np.dtype, str, Type[np.int32]]] = None,
+) -> np.ndarray:
+    """Converts a raster into random patches in format (P x C x H x W).
+
+    Parameters
+    ----------
+    raster : Union[gdal.Dataset, str]
+        The raster to convert
+    patch_size : Tuple[int, int]
+        The size of patches (height, width)
+    num_patches : int
+        Number of patches to extract
+    bands : Union[List[int], str, int], optional
+        Band selection (1-based)
+    filled : bool, optional
+        Fill nodata values
+    fill_value : Optional[Union[int, float]], optional
+        Value to fill nodata with
+    cast : Optional[Union[np.dtype, str]], optional
+        Output data type
+
+    Returns
+    -------
+    np.ndarray
+        4D array in P x C x H x W format
+
+    Raises
+    ------
+    ValueError
+        If parameters are invalid or incompatible
+    TypeError
+        If input types are invalid
+    """
+    utils_base._type_check(raster, [gdal.Dataset, str], "raster")
+    utils_base._type_check(patch_size, [tuple], "patch_size")
+    utils_base._type_check(num_patches, [int], "num_patches")
+    utils_base._type_check(bands, [list, str, int], "bands")
+    utils_base._type_check(filled, [bool], "filled")
+    utils_base._type_check(fill_value, [int, float, type(None)], "fill_value")
+    utils_base._type_check(cast, [np.dtype, str, type(None), type(np.int32)], "cast")
+
+    raster = _open_raster(raster)
+    metadata = get_metadata_raster(raster)
+
+    _validata_raster_patch_parameters(metadata, patch_size, num_patches)
+
+    if bands == "all" or bands == -1:
+        bands = list(range(1, metadata["bands"] + 1))
+    elif isinstance(bands, int):
+        bands = [bands]
+
+    patch_height, patch_width = patch_size
+    offsets = [
+        (
+            np.random.randint(0, metadata["width"] - patch_width),
+            np.random.randint(0, metadata["height"] - patch_height),
+            patch_width,
+            patch_height
+        )
+        for _ in range(num_patches)
+    ]
+
+    patches = []
+    for offset in offsets:
+        arrays = []
+        for band_idx in bands:
+            if not isinstance(band_idx, int):
+                raise ValueError(f"Band index must be integer, got {type(band_idx)}")
+
+            arr = _read_raster_band(raster, band_idx, offset)
+            if cast is not None:
+                arr = utils_translate._safe_numpy_casting(arr, cast)
+            arrays.append(arr)
+        patches.append(np.stack(arrays))
+
+    output = np.stack(patches)
+
+    if metadata["nodata"]:
+        nodata_value = np.array(metadata["nodata_value"], dtype=output.dtype)
+        output = np.ma.masked_equal(output, nodata_value)
+
+        if filled:
+            if isinstance(fill_value, (float, int)):
+                if not utils_translate._check_is_value_within_dtype_range(fill_value, output.dtype):
+                    raise ValueError(f"Fill value {fill_value} invalid for {output.dtype}")
+            fill_val = fill_value if fill_value is not None else nodata_value
+            output = output.filled(fill_val)
+
+    return output
