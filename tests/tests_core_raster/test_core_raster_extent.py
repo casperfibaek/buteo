@@ -10,12 +10,11 @@ from pathlib import Path
 
 from buteo.core_raster.core_raster_extent import (
     get_raster_overlap_fraction,
-    raster_to_extent,
     get_raster_intersection,
     check_rasters_intersect,
     check_rasters_are_aligned,
-    raster_get_footprints,
     raster_to_vector_extent,
+    _raster_to_vector_extent,
 )
 
 @pytest.fixture
@@ -87,7 +86,7 @@ class TestRasterToExtent:
     def test_basic_extent(self, reference_raster, tmp_path):
         """Test basic extent extraction."""
         out_path = tmp_path / "extent.gpkg"
-        result = raster_to_extent(reference_raster, str(out_path))
+        result = _raster_to_vector_extent(reference_raster, str(out_path))
         assert Path(result).exists()
 
         # Verify extent geometry
@@ -106,7 +105,7 @@ class TestRasterToExtent:
     def test_latlng_conversion(self, reference_raster, tmp_path):
         """Test extent extraction with lat/lng conversion."""
         out_path = tmp_path / "extent_latlng.gpkg"
-        result = raster_to_extent(reference_raster, str(out_path), latlng=True)
+        result = _raster_to_vector_extent(reference_raster, str(out_path), latlng=True)
         assert Path(result).exists()
 
         ds = gdal.OpenEx(result, gdal.OF_VECTOR)
@@ -118,9 +117,9 @@ class TestRasterToExtent:
     def test_invalid_inputs(self, reference_raster):
         """Test with invalid inputs."""
         with pytest.raises(TypeError):
-            raster_to_extent(123)
+            _raster_to_vector_extent(123)
         with pytest.raises(ValueError):
-            raster_to_extent(reference_raster, "invalid/path/extent.gpkg")
+            _raster_to_vector_extent(reference_raster, "invalid/path/extent.gpkg")
 
 class TestGetRasterIntersection:
     def test_self_intersection(self, reference_raster):
@@ -211,7 +210,7 @@ class TestRasterToVectorExtent:
     def test_basic_vector_extent(self, reference_raster, tmp_path):
         """Test basic vector extent creation."""
         out_path = tmp_path / "vector_extent.gpkg"
-        result = raster_to_vector_extent(reference_raster, str(out_path))
+        result = _raster_to_vector_extent(reference_raster, str(out_path))
         
         assert Path(result).exists()
         ds = ogr.Open(str(out_path))
@@ -231,7 +230,7 @@ class TestRasterToVectorExtent:
     def test_with_metadata(self, reference_raster, tmp_path):
         """Test vector extent creation with metadata."""
         out_path = tmp_path / "vector_extent_metadata.gpkg"
-        result = raster_to_vector_extent(
+        result = _raster_to_vector_extent(
             reference_raster,
             str(out_path),
             metadata=True
@@ -252,7 +251,7 @@ class TestRasterToVectorExtent:
     def test_with_latlng(self, reference_raster, tmp_path):
         """Test vector extent creation with lat/lng coordinates."""
         out_path = tmp_path / "vector_extent_latlng.gpkg"
-        result = raster_to_vector_extent(
+        result = _raster_to_vector_extent(
             reference_raster,
             str(out_path),
             latlng=True
@@ -267,7 +266,7 @@ class TestRasterToVectorExtent:
     def test_different_output_format(self, reference_raster, tmp_path):
         """Test vector extent creation with different output format."""
         out_path = tmp_path / "vector_extent.shp"
-        result = raster_to_vector_extent(
+        result = _raster_to_vector_extent(
             reference_raster,
             str(out_path),
             out_format="shp"
@@ -282,7 +281,7 @@ class TestRasterToVectorExtent:
     def test_with_prefix_suffix(self, reference_raster, tmp_path):
         """Test vector extent creation with prefix and suffix."""
         out_path = tmp_path / "extent.gpkg"
-        result = raster_to_vector_extent(
+        result = _raster_to_vector_extent(
             reference_raster,
             str(out_path),
             prefix="test_",
@@ -296,7 +295,7 @@ class TestRasterGetFootprints:
     def test_single_raster_footprint(self, reference_raster, tmp_path):
         """Test getting footprint for single raster."""
         out_path = tmp_path / "footprint.gpkg"
-        result = raster_get_footprints(
+        result = raster_to_vector_extent(
             reference_raster,
             str(out_path)
         )
@@ -313,7 +312,7 @@ class TestRasterGetFootprints:
             tmp_path / "footprint1.gpkg",
             tmp_path / "footprint2.gpkg"
         ]
-        results = raster_get_footprints(
+        results = raster_to_vector_extent(
             [reference_raster, overlapping_raster],
             [str(p) for p in out_paths]
         )
@@ -331,7 +330,7 @@ class TestRasterGetFootprints:
     def test_footprints_with_metadata(self, reference_raster, tmp_path):
         """Test getting footprints with metadata."""
         out_path = tmp_path / "footprint_metadata.gpkg"
-        result = raster_get_footprints(
+        result = raster_to_vector_extent(
             reference_raster,
             str(out_path),
             metadata=True
@@ -350,7 +349,7 @@ class TestRasterGetFootprints:
     def test_footprints_latlng(self, reference_raster, tmp_path):
         """Test getting footprints in lat/lng coordinates."""
         out_path = tmp_path / "footprint_latlng.gpkg"
-        result = raster_get_footprints(
+        result = raster_to_vector_extent(
             reference_raster,
             str(out_path),
             latlng=True
@@ -365,7 +364,7 @@ class TestRasterGetFootprints:
     def test_footprints_with_uuid(self, reference_raster, tmp_path):
         """Test getting footprints with UUID in filename."""
         out_path = tmp_path / "footprint.gpkg"
-        result = raster_get_footprints(
+        result = raster_to_vector_extent(
             reference_raster,
             str(out_path),
             add_uuid=True
@@ -378,10 +377,10 @@ class TestRasterGetFootprints:
     def test_invalid_inputs(self, reference_raster):
         """Test invalid inputs for getting footprints."""
         with pytest.raises(TypeError):
-            raster_get_footprints(123)
+            raster_to_vector_extent(123)
         
         with pytest.raises(ValueError):
-            raster_get_footprints(
+            raster_to_vector_extent(
                 [reference_raster, reference_raster],
                 "single_output.gpkg"  # Should be list for multiple inputs
             )
@@ -389,7 +388,7 @@ class TestRasterGetFootprints:
     def test_footprints_different_formats(self, reference_raster, tmp_path):
         """Test getting footprints in different output formats."""
         out_path = tmp_path / "footprint.shp"
-        result = raster_get_footprints(
+        result = raster_to_vector_extent(
             reference_raster,
             str(out_path),
             out_format="shp"
