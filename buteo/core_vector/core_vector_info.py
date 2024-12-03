@@ -17,6 +17,158 @@ from buteo.vector.core_vector import _vector_open
 
 
 
+def _get_basic_metadata_vector(
+    vector: Union[str, ogr.DataSource],
+) -> Dict[str, Any]:
+    """Get basic metadata from a vector.
+
+    Parameters
+    ----------
+    raster : str or ogr.DataSource
+        The raster to get the metadata from.
+
+    Returns
+    -------
+    Dict[str]
+        A dictionary with the metadata.
+    """
+    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
+
+    datasource = _vector_open(vector)
+
+    # Paths
+    path = utils_path._get_unix_path(datasource.GetDescription())
+    in_memory = utils_path._check_is_valid_mem_filepath(path)
+
+    layers = []
+    vector_bbox = None
+    layer_count = datasource.GetLayerCount()
+    total_features = 0
+    for layer_index in range(layer_count):
+        layer = datasource.GetLayerByIndex(layer_index)
+
+        x_min, x_max, y_min, y_max = layer.GetExtent()
+        layer_bbox = [x_min, x_max, y_min, y_max]
+        vector_bbox = layer_bbox
+
+        layer_name = layer.GetName()
+
+        column_fid = layer.GetFIDColumn()
+        column_geom = layer.GetGeometryColumn()
+
+        if column_geom == "":
+            column_geom = "geom"
+
+        feature_count = layer.GetFeatureCount()
+
+        projection_osr = layer.GetSpatialRef()
+        projection_wkt = layer.GetSpatialRef().ExportToWkt()
+
+        if layer_index > 0:
+            v_x_min, v_x_max, v_y_min, v_y_max = vector_bbox
+            if x_min < v_x_min:
+                vector_bbox[0] = x_min
+            if x_max > v_x_max:
+                vector_bbox[1] = x_max
+            if y_min < v_y_min:
+                vector_bbox[2] = y_min
+            if y_max > v_y_max:
+                vector_bbox[3] = y_max
+
+        layer_defn = layer.GetLayerDefn()
+
+        geom_type_ogr = layer_defn.GetGeomType()
+        geom_type = ogr.GeometryTypeToName(layer_defn.GetGeomType())
+
+        field_count = layer_defn.GetFieldCount()
+        field_names = []
+        field_types = []
+        field_types_ogr = []
+
+        for field_index in range(field_count):
+            field_defn = layer_defn.GetFieldDefn(field_index)
+            field_names.append(field_defn.GetName())
+            field_type = field_defn.GetType()
+            field_types_ogr.append(field_type)
+            field_types.append(field_defn.GetFieldTypeName(field_type))
+
+        layer_dict = {
+            "layer_name": layer_name,
+            "x_min": x_min,
+            "x_max": x_max,
+            "y_min": y_min,
+            "y_max": y_max,
+            "column_fid": column_fid,
+            "column_geom": column_geom,
+            "feature_count": feature_count,
+            "projection_wkt": projection_wkt,
+            "projection_osr": projection_osr,
+            "geom_type": geom_type,
+            "geom_type_ogr": geom_type_ogr,
+            "field_count": field_count,
+            "field_names": field_names,
+            "field_types": field_types,
+            "field_types_ogr": field_types_ogr,
+            "bbox": layer_bbox,
+        }
+
+        layers.append(layer_dict)
+        total_features += feature_count
+
+    x_min, x_max, y_min, y_max = vector_bbox
+    area = (x_max - x_min) * (y_max - y_min)
+
+    bbox_latlng = utils_projection.reproject_bbox(vector_bbox, projection_osr, utils_projection._get_default_projection_osr())
+    bounds_latlng = utils_bbox._get_bounds_from_bbox_as_geom(vector_bbox, projection_osr)
+    bounds_area = bounds_latlng.GetArea()
+    x_min, x_max, y_min, y_max = vector_bbox
+    area = (x_max - x_min) * (y_max - y_min)
+    bounds_wkt = bounds_latlng.ExportToWkt()
+    bounds_vector_raw = utils_bbox._get_geom_from_bbox(vector_bbox)
+    bounds_vector = bounds_vector_raw.ExportToWkt()
+
+    _centroid = bounds_vector_raw.Centroid()
+    centroid = (_centroid.GetX(), _centroid.GetY())
+    if projection_osr.IsGeographic():
+        centroid_latlng = (centroid[1], centroid[0])
+    else:
+        _centroid_latlng = bounds_latlng.Centroid()
+        centroid_latlng = (_centroid_latlng.GetY(), _centroid_latlng.GetX())
+
+
+    metadata = {
+        "path": path,
+        "basename": os.path.basename(path),
+        "name": os.path.splitext(os.path.basename(path))[0],
+        "folder": os.path.dirname(path),
+        "ext": os.path.splitext(path)[1],
+        "in_memory": in_memory,
+        "driver": datasource.GetDriver().GetName(),
+        "projection_osr": projection_osr,
+        "projection_wkt": projection_wkt,
+        "feature_count": total_features,
+        "bbox": vector_bbox,
+        "bbox_gdal": utils_bbox._get_gdal_bbox_from_ogr_bbox(vector_bbox),
+        "bbox_latlng": bbox_latlng,
+        "bounds_latlng": bounds_wkt,
+        "bounds_vector": bounds_vector,
+        "centroid": centroid,
+        "centroid_latlng": centroid_latlng,
+        "x_min": vector_bbox[0],
+        "x_max": vector_bbox[1],
+        "y_min": vector_bbox[2],
+        "y_max": vector_bbox[3],
+        "area_bounds": bounds_area,
+        "area": area,
+        "layer_count": layer_count,
+        "layers": layers,
+    }
+
+    layer = None
+    datasource = None
+    return metadata
+
+
 def _vector_to_metadata(
     vector: Union[str, ogr.DataSource, gdal.Dataset],
 ) -> Dict[str, Any]:

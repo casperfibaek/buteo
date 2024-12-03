@@ -6,7 +6,7 @@ import sys; sys.path.append("../../")
 
 import pytest
 import numpy as np
-from osgeo import gdal
+from osgeo import gdal, osr
 from buteo.core_raster import core_raster_read
 
 
@@ -19,6 +19,11 @@ def test_raster(tmp_path):
     driver = gdal.GetDriverByName('GTiff')
     ds = driver.Create(filename, 10, 10, 3, gdal.GDT_Float32)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+
+    # Set projection to Pseudo Mercator
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    ds.SetProjection(srs.ExportToWkt())
     
     # Add some test data
     for band in range(3):
@@ -65,25 +70,21 @@ class TestReadRasterBand:
             core_raster_read._read_raster_band(ds, 4)
         ds = None
 
-class TestValidateRasterDataset:
-    """Test _validate_raster_dataset function"""
+class TestCheckRasterHasCRS:
+    """Test check_raster_has_crs function"""
 
-    def test_no_projection(self, mem_raster):
-        """Test handling of raster with no projection"""
-        with pytest.warns(UserWarning):
-            core_raster_read._validate_raster_dataset(mem_raster, "test", None)
-        assert mem_raster.GetProjectionRef() != ""
+    def test_raster_with_crs(self, test_raster):
+        """Test raster that has a CRS"""
+        assert core_raster_read.check_raster_has_crs(test_raster) is True
 
-    def test_custom_projection(self, mem_raster):
-        """Test setting custom projection"""
-        with pytest.warns(UserWarning):
-            core_raster_read._validate_raster_dataset(mem_raster, "test", 3857)
-        assert "3857" in mem_raster.GetProjectionRef()
+    def test_raster_without_crs(self, mem_raster):
+        """Test raster that does not have a CRS"""
+        assert core_raster_read.check_raster_has_crs(mem_raster) is False
 
-    def test_invalid_projection(self, mem_raster):
-        """Test invalid projection"""
+    def test_invalid_raster_path(self):
+        """Test invalid raster path"""
         with pytest.raises(ValueError):
-            core_raster_read._validate_raster_dataset(mem_raster, "test", "invalid_proj")
+            core_raster_read.check_raster_has_crs("nonexistent.tif")
 
 class TestOpenRaster:
     """Test open_raster function"""

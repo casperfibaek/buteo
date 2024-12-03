@@ -1,4 +1,8 @@
-""" ### Core functionality to make simple work of raster analysis! ### """
+"""
+### Core functionality to make simple work of raster analysis! ###
+    * raster_to_mask
+    * raster_invert_nodata 
+"""
 from .core_raster_read import *
 from .core_raster_offsets import *
 from .core_raster_array import *

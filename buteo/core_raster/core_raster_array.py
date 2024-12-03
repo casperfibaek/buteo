@@ -5,7 +5,7 @@ from typing import List, Optional, Union, Tuple, Type
 
 # External
 import numpy as np
-from osgeo import gdal, osr
+from osgeo import gdal
 
 # Internal
 from buteo.utils import (
@@ -15,7 +15,6 @@ from buteo.utils import (
     utils_bbox,
     utils_path,
     utils_translate,
-    utils_projection,
 )
 from buteo.core_raster.core_raster_read import _open_raster, _read_raster_band
 from buteo.core_raster.core_raster_info import get_metadata_raster
@@ -30,7 +29,6 @@ def raster_to_array(
     fill_value: Optional[Union[int, float]] = None,
     pixel_offsets: Optional[Tuple[int, int, int, int]] = None,
     bbox: Optional[List[float]] = None,
-    bbox_srs: Optional[Union[str, osr.SpatialReference]] = None,
     cast: Optional[Union[np.dtype, str, Type[np.int32]]] = None,
 ) -> np.ndarray:
     """Converts a raster into a NumPy array in channel-first format (C x H x W).
@@ -48,9 +46,7 @@ def raster_to_array(
     pixel_offsets : Optional[Tuple[int, int, int, int]], optional
         (x_offset, y_offset, x_size, y_size) for reading subset
     bbox : Optional[List[float]], optional
-        [xmin, ymin, xmax, ymax] to read
-    bbox_srs : Optional[Union[str, osr.SpatialReference]], optional
-        Coordinate system of bbox
+        [xmin, xmax, ymin, ymax] to read. Assummed to be in the same crs as the raster.
     cast : Optional[Union[np.dtype, str]], optional
         Output data type
 
@@ -74,7 +70,6 @@ def raster_to_array(
     utils_base._type_check(fill_value, [int, float, type(None)], "fill_value")
     utils_base._type_check(pixel_offsets, [tuple, type(None)], "pixel_offsets")
     utils_base._type_check(bbox, [list, type(None)], "bbox")
-    utils_base._type_check(bbox_srs, [str, osr.SpatialReference, type(None)], "bbox_srs")
     utils_base._type_check(cast, [np.dtype, str, type(None), type(np.int32)], "cast")
 
     if bbox is not None and pixel_offsets is not None:
@@ -87,10 +82,6 @@ def raster_to_array(
         pixel_offsets = (0, 0, metadata["width"], metadata["height"])
 
     if bbox is not None:
-
-        if bbox_srs is not None:
-            bbox = utils_projection.reproject_bbox(bbox, bbox_srs, metadata["projection_wkt"])
-
         if not utils_bbox._check_bboxes_intersect(metadata["bbox"], bbox):
             raise ValueError("bbox outside raster extent")
 
@@ -138,7 +129,6 @@ def array_to_raster(
     set_nodata: Optional[Union[float, int, str, bool]] = "arr",
     pixel_offsets: Optional[Union[List[int], Tuple[int, int, int, int]]] = None,
     bbox: Optional[List[float]] = None,
-    bbox_srs: Optional[Union[str, osr.SpatialReference]] = None,
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
 ) -> str:
@@ -162,9 +152,7 @@ def array_to_raster(
     pixel_offsets : Optional[Union[List[int], Tuple[int, int, int, int]]], optional
         Pixel offsets in the format [x_offset, y_offset, x_size, y_size].
     bbox : Optional[List[float]], optional
-        Bounding box [min_x, min_y, max_x, max_y] defining the area to write.
-    bbox_srs : Optional[Union[str, osr.SpatialReference]], optional
-        Spatial reference system of the bounding box.
+        Bounding box [min_x, min_y, max_x, max_y] defining the area to write. Same crs as raster.
     overwrite : bool, optional
         If True, overwrites the output file if it exists.
     creation_options : Optional[List[str]], optional
@@ -211,7 +199,6 @@ def array_to_raster(
     utils_base._type_check(set_nodata, [float, int, str, bool, type(None)], "set_nodata")
     utils_base._type_check(pixel_offsets, [list, tuple, type(None)], "pixel_offsets")
     utils_base._type_check(bbox, [list, type(None)], "bbox")
-    utils_base._type_check(bbox_srs, [str, osr.SpatialReference, type(None)], "bbox_srs")
     utils_base._type_check(overwrite, [bool], "overwrite")
     utils_base._type_check(creation_options, [list, type(None)], "creation_options")
 
@@ -240,8 +227,6 @@ def array_to_raster(
             raise ValueError("Bounding box must be a list of 4 floats or integers.")
         if not utils_bbox._check_is_valid_bbox(bbox):
             raise ValueError("Bounding box is not valid.")
-        if bbox_srs is not None:
-            bbox = utils_projection.reproject_bbox(bbox, bbox_srs, metadata_ref["projection_wkt"])
         pixel_offsets = utils_bbox._get_pixel_offsets(metadata_ref["geotransform"], bbox)
 
     if pixel_offsets is None:

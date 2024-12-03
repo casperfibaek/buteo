@@ -20,10 +20,8 @@ from buteo.core_raster.core_raster_read import _open_raster
 
 
 
-def save_dataset_to_disk(
-    dataset: Union[
-        gdal.Dataset, ogr.DataSource, str, List[Union[gdal.Dataset, ogr.DataSource, str]]
-    ],
+def raster_save_to_disk(
+    raster: Union[gdal.Dataset, str, List[Union[gdal.Dataset, str]]],
     out_path: Union[str, List[str]],
     prefix: str = "",
     suffix: str = "",
@@ -32,12 +30,12 @@ def save_dataset_to_disk(
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
 ) -> Union[str, List[str]]:
-    """Writes a dataset to disk. Can be a raster or a vector. Can be a single dataset or a list of datasets.
+    """Writes a raster dataset to disk. Can be a single raster or a list of rasters.
 
     Parameters
     ----------
-    dataset : Union[gdal.Dataset, ogr.DataSource, str, List[Union[gdal.Dataset, ogr.DataSource, str]]]
-        The dataset to write to disk.
+    raster : Union[gdal.Dataset, str, List[Union[gdal.Dataset, str]]]
+        The raster dataset to write to disk.
     out_path : Union[str, List[str]]
         The output path or list of output paths.
     prefix : str, optional
@@ -61,15 +59,15 @@ def save_dataset_to_disk(
     Raises
     ------
     ValueError
-        If the dataset type is invalid.
+        If the raster is invalid.
     RuntimeError
-        If the driver for the output dataset could not be obtained.
+        If the driver for the output raster could not be obtained.
     """
-    input_is_list = isinstance(dataset, list)
+    input_is_list = isinstance(raster, list)
 
-    in_paths = utils_io._get_input_paths(dataset, "mixed")
+    in_paths = utils_io._get_input_paths(raster, "raster") # type: ignore
     out_paths = utils_io._get_output_paths(
-        in_paths,  # type: ignore
+        in_paths, # type: ignore
         out_path,
         prefix=prefix,
         suffix=suffix,
@@ -83,34 +81,21 @@ def save_dataset_to_disk(
     creation_options = utils_gdal._get_default_creation_options(creation_options)
 
     for idx, ds in enumerate(in_paths):
-        driver = None
+        if not utils_gdal._check_is_raster(ds):
+            raise ValueError(f"Invalid raster dataset: {ds}")
 
-        if utils_gdal._check_is_raster(ds):
-            driver_name = utils_gdal._get_driver_name_from_path(ds)
-            driver = gdal.GetDriverByName(driver_name)
-            if driver is None:
-                raise RuntimeError(f"Could not get GDAL driver for raster: {driver_name}")
-            src_ds = gdal.Open(ds)
-            if src_ds is None:
-                raise ValueError(f"Unable to open raster dataset: {ds}")
-            utils_io._delete_if_required(out_paths[idx], overwrite)
-            driver.CreateCopy(out_paths[idx], src_ds, options=creation_options)
-            src_ds = None
+        driver_name = utils_gdal._get_driver_name_from_path(ds)
+        driver = gdal.GetDriverByName(driver_name)
+        if driver is None:
+            raise RuntimeError(f"Could not get GDAL driver for raster: {driver_name}")
 
-        elif utils_gdal._check_is_vector(ds):
-            driver_name = utils_gdal._get_driver_name_from_path(ds)
-            driver = ogr.GetDriverByName(driver_name)
-            if driver is None:
-                raise RuntimeError(f"Could not get OGR driver for vector: {driver_name}")
-            src_ds = ogr.Open(ds)
-            if src_ds is None:
-                raise ValueError(f"Unable to open vector dataset: {ds}")
-            utils_io._delete_if_required(out_paths[idx], overwrite)
-            driver.CopyDataSource(src_ds, out_paths[idx])
-            src_ds = None
+        src_ds = gdal.Open(ds)
+        if src_ds is None:
+            raise ValueError(f"Unable to open raster dataset: {ds}")
 
-        else:
-            raise ValueError(f"Invalid dataset type: {ds}")
+        utils_io._delete_if_required(out_paths[idx], overwrite)
+        driver.CreateCopy(out_paths[idx], src_ds, options=creation_options)
+        src_ds = None
 
     return out_paths if input_is_list else out_paths[0]
 
@@ -431,3 +416,38 @@ def raster_set_band_descriptions(raster, bands, descriptions):
     ds = None
 
     return raster
+
+
+def raster_set_crs(
+    raster: Union[str, gdal.Dataset],
+    projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
+) -> str:
+    """Set the projection of a raster.
+
+    Parameters
+    ----------
+    raster : str or gdal.Dataset
+        The raster to update.
+    projection : int, str, gdal.Dataset, ogr.DataSource, or osr.SpatialReference
+        The projection to set.
+
+    Returns
+    -------
+    str
+        The path to the updated raster. (Same as input)
+    """
+    assert utils_gdal._check_is_raster(raster), "Raster is not valid."
+
+    ds = gdal.Open(raster, gdal.GA_Update)
+    parsed_projection = utils_projection.parse_projection_wkt(projection)
+    ds.SetProjection(parsed_projection)
+    ds.FlushCache()
+
+    # Verify that the projection is the same as the parameter
+    current_projection = utils_projection._get_projection_from_raster(ds)
+    if not utils_projection._check_projections_match(parsed_projection, current_projection):
+        raise RuntimeError("Failed to set crs.")
+
+    raster_path = utils_gdal._get_path_from_dataset(raster)
+
+    return raster_path

@@ -5,9 +5,6 @@ from sys import argv
 if not os.path.exists("tests/"):
     raise FileNotFoundError("No tests found.")
 
-if not os.path.exists("tests/tmp/"):
-    os.makedirs("tests/tmp/")
-
 RUN_TESTS = "all"
 if len(argv) == 1:
     RUN_TESTS = "all"

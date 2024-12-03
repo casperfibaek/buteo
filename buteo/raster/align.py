@@ -49,43 +49,30 @@ def _raster_align_to_reference(
     ----------
     rasters : list of str
         A list of rasters to align.
-
     reference : str or gdal.Dataset
         Path to the reference raster or vector.
-
     out_path : str or list of str, optional
         Paths to the output. If not provided, the output will be in-memory rasters.
-
     resample_alg : str, optional
         Resampling algorithm to use. Default: "nearest".
-
     target_nodata : int or float, optional
         Nodata value to use for the output rasters.
-
     overwrite : bool, optional
         Overwrite existing files. Default: True.
-
     creation_options : list, optional
         List of creation options.
-
     prefix : str, optional
         Prefix to add to the output file name. Default: "".
-
     suffix : str, optional
         Suffix to add to the output file name. Default: "".
-
     add_uuid : bool, optional
         Whether to add a uuid to the output file name. Default: False.
-
     add_timestamp : bool, optional
         Whether to add a timestamp to the output file name. Default: False.
-
     ram : float, optional
         The proportion of total ram to allow usage of. Default: 0.8.
-
     ram_max: int, optional
         The maximum amount of ram to use in MB. Default: None.
-
     ram_min: int, optional
         The minimum amount of ram to use in MB. Default: 100.
 
@@ -214,11 +201,9 @@ def _raster_find_best_align_reference(
     ----------
     rasters : Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
         List of rasters to align.
-
     method : str
         Bounding box method to use for finding the best reference.
         Options include: "reference", "intersection", and "union".
-
     out_path : str, optional
         Path to the output raster, default: None
 
@@ -382,43 +367,30 @@ def raster_align(
     ----------
     rasters : Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
         The rasters to align.
-
     out_path : List[str] or str, optional
         The output path(s), default: None
-
     reference : Str or gdal.Dataset, optional
         The reference raster to align to, default: None
-
     method : str, optional
         The method to use, default: "reference" [reference, intersection, union]
-
     resample_alg : str, optional
         The resampling algorithm to use, default: "nearest"
-
     overwrite : bool, optional
         Whether to overwrite existing files, default: True
-
     creation_options : Optional[List[str]], optional
         The creation options to use, default: None
-
     prefix : str, optional
         The prefix to add to the output file name, default: ""
-
     suffix : str, optional
         The suffix to add to the output file name, default: ""
-
     add_uuid : bool, optional
         Whether to add a uuid to the output file name, default: False
-
     add_timestamp : bool, optional
         Whether to add a timestamp to the output file name, default: False
-
     ram : float, optional
         The proportion of total ram to allow usage of, default: 0.8
-
     ram_min : int, optional
         The minimum amount of RAM to use in MB, default: 100
-
     ram_max : int, optional
         The maximum amount of RAM to use in MB, default: None
 

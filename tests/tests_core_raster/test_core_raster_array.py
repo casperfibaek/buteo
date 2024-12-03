@@ -8,6 +8,7 @@ import pytest
 import numpy as np
 from osgeo import gdal
 from pathlib import Path
+from osgeo import osr
 
 from buteo.core_raster.core_raster_array import (
     raster_to_array,
@@ -21,6 +22,9 @@ def sample_raster_dataset(tmp_path):
     raster_path = tmp_path / "sample_raster.tif"
     driver = gdal.GetDriverByName("GTiff")
     ds = driver.Create(str(raster_path), 20, 10, 3, gdal.GDT_Float32) # (path, width, height, bands, dtype)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    ds.SetProjection(srs.ExportToWkt())
     ds.SetGeoTransform((0, 1, 0, 0, 0, -1))
     for i in range(1, 4):
         band = ds.GetRasterBand(i)
@@ -62,10 +66,10 @@ class TestRasterToArray:
         ymax = gt[3]
         bbox = [
             xmin, xmin + 1,
-            ymax - 1, ymax,
+            ymax, ymax + 1,
         ]
         arr = raster_to_array(sample_raster_dataset, bbox=bbox)
-        assert arr.shape == (3, 10, 20)
+        assert arr.shape == (3, 1, 1)
         ds = None
 
     def test_filled_nodata(self, sample_raster_dataset):
@@ -106,11 +110,11 @@ class TestRasterToArray:
         xmin = gt[0]
         ymax = gt[3]
         bbox = [
-            xmin, xmin + 1,
-            ymax - 1, ymax,
+            xmin, xmin + 1.00001,
+            ymax, ymax + 1.00001,
         ]
-        arr = raster_to_array(sample_raster_dataset, bbox=bbox, bbox_srs="EPSG:4326")
-        assert arr.shape == (3, 10, 20)
+        arr = raster_to_array(sample_raster_dataset, bbox=bbox)
+        assert arr.shape == (3, 1, 1)
         ds = None
 
 class TestArrayToRaster:

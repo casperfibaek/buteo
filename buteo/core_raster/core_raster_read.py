@@ -1,18 +1,16 @@
 """###. Basic functionality for working with rasters. ###"""
 
 # Standard library
-import warnings
 from typing import Optional, Union, List, Sequence, Tuple
 
 # External
-from osgeo import gdal, osr
+from osgeo import gdal
 import numpy as np
 
 # Internal
 from buteo.utils import (
     utils_base,
     utils_path,
-    utils_projection,
     utils_io,
 )
 
@@ -61,54 +59,10 @@ def _read_raster_band(
     return band.ReadAsArray()
 
 
-def _validate_raster_dataset(
-    dataset: gdal.Dataset,
-    raster_path: str,
-    default_projection: Optional[Union[str, int, osr.SpatialReference]] = None,
-) -> None:
-    """Validates and sets projection for a raster dataset.
-
-    Parameters
-    ----------
-    dataset : gdal.Dataset
-        The dataset to validate
-    raster_path : str
-        Path to the raster file
-    default_projection : str, int, or osr.SpatialReference, optional
-        The default projection to use if none exists
-
-    Raises
-    ------
-    ValueError
-        If dataset is invalid or projection cannot be set
-    """
-    utils_base._type_check(dataset, [gdal.Dataset], "dataset")
-    utils_base._type_check(raster_path, [str], "raster_path")
-    utils_base._type_check(default_projection, [type(None), str, int, osr.SpatialReference], "default_projection")
-
-    if dataset.GetDescription() == "":
-        dataset.SetDescription(raster_path)
-
-    if dataset.GetProjectionRef() == "":
-        if default_projection is None:
-            dataset.SetProjection(utils_projection._get_default_projection())
-            dataset.SetGeoTransform([0, 1/dataset.RasterXSize, 0, 0, 0, -1/dataset.RasterYSize])
-            warnings.warn(f"Input raster {raster_path} has no projection. Setting to EPSG:4326.", UserWarning)
-        else:
-            try:
-                projection = utils_projection.parse_projection(default_projection)
-                dataset.SetProjection(projection.ExportToWkt())
-                dataset.SetGeoTransform([0, 1, 0, 0, 0, -1])
-                warnings.warn(f"Input raster {raster_path} has no projection. Setting to {default_projection}.", UserWarning)
-            except Exception as exc:
-                raise ValueError(f"Input has no projection and default projection is invalid: {default_projection}") from exc
-
-
 def _open_raster(
     raster: Union[str, gdal.Dataset],
     *,
     writeable: bool = False,
-    default_projection: Optional[Union[str, int, osr.SpatialReference]] = None,
 ) -> gdal.Dataset:
     """Opens a raster in read or write mode.
 
@@ -118,8 +72,6 @@ def _open_raster(
         A path to a raster or a GDAL dataset
     writeable : bool, optional
         If True, opens in write mode. Default: False
-    default_projection : str, int, or osr.SpatialReference, optional
-        Default projection if none exists. Default: None
 
     Returns
     -------
@@ -135,11 +87,9 @@ def _open_raster(
     """
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
     utils_base._type_check(writeable, [bool], "writeable")
-    utils_base._type_check(default_projection, [type(None), str, int, osr.SpatialReference], "default_projection")
 
     # if already opened
     if isinstance(raster, gdal.Dataset):
-        _validate_raster_dataset(raster, raster.GetDescription(), default_projection)
         return raster
 
     if not utils_path._check_file_exists(raster):
@@ -152,7 +102,9 @@ def _open_raster(
     dataset = gdal.Open(raster, gdal.GF_Write if writeable else gdal.GF_Read)
     gdal.PopErrorHandler()
 
-    _validate_raster_dataset(dataset, raster, default_projection)
+    if dataset is None:
+        raise ValueError(f"Could not open raster: {raster}")
+
     return dataset
 
 
@@ -160,7 +112,6 @@ def open_raster(
     raster: Union[str, gdal.Dataset, Sequence[Union[str, gdal.Dataset]]],
     *,
     writeable: bool = False,
-    default_projection: int = 4326,
 ) -> Union[gdal.Dataset, List[gdal.Dataset]]:
     """Opens one or more rasters in read or write mode.
 
@@ -170,8 +121,6 @@ def open_raster(
         Path(s) to raster(s) or GDAL dataset(s)
     writeable : bool, optional
         Open in write mode. Default: False
-    default_projection : int, optional
-        Default projection if none exists. Default: 4326
 
     Returns
     -------
@@ -187,7 +136,6 @@ def open_raster(
     """
     utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
     utils_base._type_check(writeable, [bool], "writeable")
-    utils_base._type_check(default_projection, [int], "default_projection")
 
     input_is_sequence = isinstance(raster, Sequence) and not isinstance(raster, str)
     rasters = utils_io._get_input_paths(raster, "raster") # type: ignore
@@ -195,8 +143,30 @@ def open_raster(
     opened = []
     for r in rasters:
         try:
-            opened.append(_open_raster(r, writeable=writeable, default_projection=default_projection))
+            opened.append(_open_raster(r, writeable=writeable))
         except Exception as e:
             raise ValueError(f"Could not open raster: {r}") from e
 
     return opened if input_is_sequence else opened[0]
+
+
+def check_raster_has_crs(raster: Union[str, gdal.Dataset]) -> bool:
+    """Check if a raster has a defined coordinate reference system.
+
+    Parameters
+    ----------
+    raster : str or gdal.Dataset
+        Path to raster or GDAL dataset
+
+    Returns
+    -------
+    bool
+        True if raster has a defined CRS, False otherwise
+    """
+    dataset = _open_raster(raster)
+    projection = dataset.GetProjection()
+
+    if isinstance(raster, str):
+        dataset = None
+
+    return bool(projection)

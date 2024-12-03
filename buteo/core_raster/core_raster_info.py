@@ -3,6 +3,7 @@
 # Standard library
 import os
 from typing import Union, Dict, Any
+from warnings import warn
 
 # External
 from osgeo import gdal, osr
@@ -43,6 +44,11 @@ def _get_basic_info_raster(dataset: gdal.Dataset) -> Dict[str, Any]:
 
     transform = dataset.GetGeoTransform()
     projection_wkt = dataset.GetProjectionRef()
+
+    if not projection_wkt:
+        projection_wkt = utils_projection._get_default_projection()
+        warn("Dataset has no projection defined. Using default projection.")
+
     projection_osr = osr.SpatialReference()
     projection_osr.ImportFromWkt(projection_wkt)
 
@@ -194,7 +200,7 @@ def get_metadata_raster(raster: Union[str, gdal.Dataset]) -> Dict[str, Any]:
     """
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
-    dataset = _open_raster(raster, writeable=False, default_projection=3857)
+    dataset = _open_raster(raster, writeable=False)
     info = _get_basic_info_raster(dataset)
     description = dataset.GetDescription()
     path = utils_path._get_unix_path(description) if description != "" else "in_memory.mem"

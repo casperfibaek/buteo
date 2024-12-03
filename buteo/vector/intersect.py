@@ -19,7 +19,7 @@ from buteo.utils import (
 from buteo.vector import core_vector
 from buteo.vector.metadata import _vector_to_metadata
 from buteo.vector.reproject import _vector_reproject
-from buteo.vector.merge import vector_merge_layers
+from buteo.core_vector.core_vector_merge import vector_merge_layers
 
 
 

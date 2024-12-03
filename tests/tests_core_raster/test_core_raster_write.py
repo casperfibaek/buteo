@@ -10,12 +10,15 @@ from osgeo import gdal, ogr, osr
 from pathlib import Path
 
 from buteo.core_raster.core_raster_write import (
-    save_dataset_to_disk,
+    raster_save_to_disk,
     raster_create_empty,
     raster_create_from_array,
     raster_create_copy,
-    raster_set_band_descriptions
+    raster_set_band_descriptions,
+    raster_set_crs,
 )
+
+
 
 @pytest.fixture
 def sample_raster(tmp_path):
@@ -51,25 +54,16 @@ class TestSaveDatasetToDisk:
     def test_save_raster(self, sample_raster, tmp_path):
         """Test saving a raster dataset."""
         out_path = tmp_path / "output.tif"
-        result = save_dataset_to_disk(sample_raster, str(out_path))
+        result = raster_save_to_disk(sample_raster, str(out_path))
         assert Path(result).exists()
         ds = gdal.Open(result)
         assert ds.RasterCount == 3
         ds = None
 
-    def test_save_vector(self, sample_vector, tmp_path):
-        """Test saving a vector dataset."""
-        out_path = tmp_path / "output.gpkg"
-        result = save_dataset_to_disk(sample_vector, str(out_path))
-        assert Path(result).exists()
-        ds = ogr.Open(result)
-        assert ds.GetLayerCount() == 1
-        ds = None
-
     def test_save_multiple_datasets(self, sample_raster, tmp_path):
         """Test saving multiple datasets."""
         out_paths = [tmp_path / "out1.tif", tmp_path / "out2.tif"]
-        results = save_dataset_to_disk(
+        results = raster_save_to_disk(
             [sample_raster, sample_raster],
             [str(p) for p in out_paths]
         )
@@ -78,7 +72,7 @@ class TestSaveDatasetToDisk:
     def test_save_with_creation_options(self, sample_raster, tmp_path):
         """Test saving with creation options."""
         out_path = tmp_path / "compressed.tif"
-        result = save_dataset_to_disk(
+        result = raster_save_to_disk(
             sample_raster,
             str(out_path),
             creation_options=["COMPRESS=LZW"]
@@ -326,3 +320,63 @@ class TestRasterSetBandDescriptions:
                 bands=[1],
                 descriptions=[1]  # Should be string
             )
+
+class TestRasterSetCRS:
+    def test_set_crs_with_epsg_code(self, sample_raster):
+        """Test setting CRS using an EPSG code."""
+        result = raster_set_crs(sample_raster, 4326)
+        ds = gdal.Open(result)
+        spatial_ref = osr.SpatialReference(wkt=ds.GetProjection())
+        assert spatial_ref.GetAuthorityCode(None) == '4326'
+        ds = None
+
+    def test_set_crs_with_epsg_string(self, sample_raster):
+        """Test setting CRS using an EPSG string."""
+        result = raster_set_crs(sample_raster, "EPSG:3857")
+        ds = gdal.Open(result)
+        spatial_ref = osr.SpatialReference(wkt=ds.GetProjection())
+        assert spatial_ref.GetAuthorityCode(None) == '3857'
+        ds = None
+
+    def test_set_crs_with_spatial_reference(self, sample_raster):
+        """Test setting CRS using an osr.SpatialReference object."""
+        srs = osr.SpatialReference()
+        srs.ImportFromEPSG(32633)  # WGS 84 / UTM zone 33N
+        result = raster_set_crs(sample_raster, srs)
+        ds = gdal.Open(result)
+        spatial_ref = osr.SpatialReference(wkt=ds.GetProjection())
+        assert spatial_ref.GetAuthorityCode(None) == '32633'
+        ds = None
+
+    def test_set_crs_with_gdal_dataset(self, sample_raster, tmp_path):
+        """Test setting CRS using another GDAL Dataset."""
+        # Create a reference raster with known CRS
+        ref_path = tmp_path / "reference.tif"
+        raster_create_empty(
+            str(ref_path),
+            projection="EPSG:26915"  # NAD83 / UTM zone 15N
+        )
+        result = raster_set_crs(sample_raster, str(ref_path))
+        ds = gdal.Open(result)
+        spatial_ref = osr.SpatialReference(wkt=ds.GetProjection())
+        assert spatial_ref.GetAuthorityCode(None) == '26915'
+        ds = None
+
+    def test_set_crs_invalid_input(self, sample_raster):
+        """Test setting CRS with invalid input."""
+        with pytest.raises(ValueError):
+            raster_set_crs(sample_raster, "INVALID_CRS")
+
+    def test_set_crs_in_place(self, sample_raster):
+        """Test that raster_set_crs modifies the raster in place."""
+        original_ds = gdal.Open(sample_raster)
+        original_proj = original_ds.GetProjection()
+        original_ds = None
+
+        raster_set_crs(sample_raster, 4326)
+
+        ds = gdal.Open(sample_raster)
+        new_proj = ds.GetProjection()
+        ds = None
+
+        assert original_proj != new_proj
