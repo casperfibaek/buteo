@@ -103,10 +103,10 @@ def vector_from_bbox(
 
     if out_path is None:
         out_path = utils_path._get_temp_filepath("temp_bbox.gpkg", add_timestamp=True, add_uuid=True)
-    
+
     if not utils_path._check_is_valid_output_filepath(out_path):
         raise ValueError(f"Invalid output path: {out_path}")
-    
+
     driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
     driver = ogr.GetDriverByName(driver_name)
 
@@ -214,10 +214,10 @@ def vector_from_points(
 
     if out_path is None:
         out_path = utils_path._get_temp_filepath("temp_points.gpkg", add_timestamp=True, add_uuid=True)
-    
+
     if not utils_path._check_is_valid_output_filepath(out_path):
         raise ValueError(f"Invalid output path: {out_path}")
-    
+
     driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
     driver = ogr.GetDriverByName(driver_name)
 
@@ -405,3 +405,7 @@ def vector_set_crs(
     dst_ds = None
 
     return out_path
+
+# extract layer
+# convert3D_to_2D
+# convert2D_to_3D

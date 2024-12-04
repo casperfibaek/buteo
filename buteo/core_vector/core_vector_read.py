@@ -25,7 +25,7 @@ from buteo.utils import (
 
 
 
-def _open_vector(
+def open_vector(
     vector: Union[str, ogr.DataSource],
     *,
     writeable: bool = False,
@@ -73,6 +73,28 @@ def _open_vector(
     return dataset
 
 
+def _vector_get_layers(
+    vector: ogr.DataSource,
+    layer_name_or_id: Optional[Union[str, int]] = None,
+) -> List[ogr.Layer]:
+    """ Helper function to get layers from a vector. """
+    if layer_name_or_id is not None:
+        if isinstance(layer_name_or_id, int):
+            layer = vector.GetLayer(layer_name_or_id)
+            if layer is None:
+                raise ValueError(f"Layer with index {layer_name_or_id} does not exist")
+            layers = [layer]
+        else:
+            layer = vector.GetLayerByName(layer_name_or_id)
+            if layer is None:
+                raise ValueError(f"Layer with name '{layer_name_or_id}' does not exist")
+            layers = [layer]
+    else:
+        layers = [vector.GetLayer(i) for i in range(vector.GetLayerCount())]
+
+    return layers
+
+
 def check_vector_has_geometry(
     vector: Union[str, ogr.DataSource],
     *,
@@ -90,32 +112,18 @@ def check_vector_has_geometry(
     Returns
     -------
     bool
-        True if the vector has a geometry column, False otherwise
+        True if all vector layers have geometry columns, False otherwise
     """
     utils_base._type_check(vector, [str, ogr.DataSource], "vector")
     utils_base._type_check(layer_name_or_id, [type(None), str, int], "layer_name_or_id")
 
-    ref = _open_vector(vector)
+    ref = open_vector(vector)
+    layers = _vector_get_layers(ref, layer_name_or_id)
 
-    if layer_name_or_id is None:
-        layer_count = ref.GetLayerCount()
-        for idx in range(layer_count):
-            layer = ref.GetLayer(idx)
-            if layer.GetGeomType() == ogr.wkbNone:
-                continue
+    if len(layers) == 0:
+        raise ValueError("No layers found in vector")
 
-            if layer.GetFeatureCount() == 0:
-                continue
-
-            feature = layer.GetNextFeature()
-            if feature is not None and feature.GetGeometryRef() is not None:
-                return True
-        return False
-    else:
-        layer = ref.GetLayer(layer_name_or_id) if isinstance(layer_name_or_id, int) else ref.GetLayerByName(layer_name_or_id)
-        if layer is None:
-            return False
-
+    for layer in layers:
         if layer.GetGeomType() == ogr.wkbNone:
             return False
 
@@ -123,7 +131,10 @@ def check_vector_has_geometry(
             return False
 
         feature = layer.GetNextFeature()
-        return feature is not None and feature.GetGeometryRef() is not None
+        if feature is None or feature.GetGeometryRef() is None:
+            return False
+
+    return True
 
 
 def check_vector_has_attributes(
@@ -146,39 +157,22 @@ def check_vector_has_attributes(
     Returns
     -------
     bool
-        True if the vector has attributes, False otherwise
+        True if all layers have the specified attributes, False otherwise
     """
     utils_base._type_check(vector, [str, ogr.DataSource], "vector")
     utils_base._type_check(layer_name_or_id, [type(None), str, int], "layer_name_or_id")
     utils_base._type_check(attributes, [type(None), str, list], "attributes")
 
-    ref = _open_vector(vector)
+    if attributes is not None and isinstance(attributes, str):
+        attributes = [attributes]
 
-    if layer_name_or_id is None:
-        layer_count = ref.GetLayerCount()
-        for idx in range(layer_count):
-            layer = ref.GetLayer(idx)
-            defn = layer.GetLayerDefn()
-            field_count = defn.GetFieldCount()
+    ref = open_vector(vector)
+    layers = _vector_get_layers(ref, layer_name_or_id)
 
-            if field_count == 0:
-                continue
+    if len(layers) == 0:
+        raise ValueError("No layers found in vector")
 
-            if attributes is not None:
-                if isinstance(attributes, str):
-                    attributes = [attributes]
-
-                field_names = [defn.GetFieldDefn(i).GetName() for i in range(field_count)]
-                if all(attr in field_names for attr in attributes):
-                    return True
-            else:
-                return True
-        return False
-    else:
-        layer = ref.GetLayer(layer_name_or_id) if isinstance(layer_name_or_id, int) else ref.GetLayerByName(layer_name_or_id)
-        if layer is None:
-            return False
-
+    for layer in layers:
         defn = layer.GetLayerDefn()
         field_count = defn.GetFieldCount()
 
@@ -186,13 +180,11 @@ def check_vector_has_attributes(
             return False
 
         if attributes is not None:
-            if isinstance(attributes, str):
-                attributes = [attributes]
-
             field_names = [defn.GetFieldDefn(i).GetName() for i in range(field_count)]
-            return all(attr in field_names for attr in attributes)
+            if not all(attr in field_names for attr in attributes):
+                return False
 
-        return True
+    return True
 
 
 def check_vector_has_crs(
@@ -212,37 +204,146 @@ def check_vector_has_crs(
     Returns
     -------
     bool
-        True if the vector has a CRS defined, False otherwise
+        True if all vector layers have a CRS defined, False otherwise
     """
     utils_base._type_check(vector, [str, ogr.DataSource], "vector")
     utils_base._type_check(layer_name_or_id, [type(None), str, int], "layer_name_or_id")
 
-    ref = _open_vector(vector)
+    ref = open_vector(vector)
+    layers = _vector_get_layers(ref, layer_name_or_id)
 
-    if layer_name_or_id is None:
-        layer_count = ref.GetLayerCount()
-        for idx in range(layer_count):
-            layer = ref.GetLayer(idx)
-            spatial_ref = layer.GetSpatialRef()
-            if spatial_ref is None or spatial_ref.ExportToWkt() == '':
-                return False
-        return True if layer_count > 0 else False
-    else:
-        layer = ref.GetLayer(layer_name_or_id) if isinstance(layer_name_or_id, int) else ref.GetLayerByName(layer_name_or_id)
-        if layer is None:
+    if len(layers) == 0:
+        raise ValueError("No layers found in vector")
+
+    for layer in layers:
+        spatial_ref = layer.GetSpatialRef()
+        if spatial_ref is None or spatial_ref.ExportToWkt() == '':
             return False
 
-        spatial_ref = layer.GetSpatialRef()
-        return spatial_ref is not None and not spatial_ref.ExportToWkt() == ''
+    return True
 
 
-def check_vector_has_invalid_geometry(
+def check_vector_has_multiple_layers(
+    vector: Union[str, ogr.DataSource],
+) -> bool:
+    """Checks if a vector has multiple layers.
+
+    Parameters
+    ----------
+    vector : str or ogr.DataSource
+        A path to a vector or an OGR datasource
+
+    Returns
+    -------
+    bool
+        True if the vector has multiple layers, False otherwise
+    """
+    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
+
+    ref = open_vector(vector)
+    layer_count = ref.GetLayerCount()
+    ref = None
+
+    return layer_count > 1
+
+
+def check_vector_is_geometry_type(
+    vector: Union[str, ogr.DataSource],
+    geometry_type: Union[str, List[str]],
+    *,
+    layer_name_or_id: Optional[Union[str, int]] = None,
+) -> bool:
+    """Checks if a vector has a specific geometry type.
+
+    Parameters
+    ----------
+    vector : str or ogr.DataSource
+        A path to a vector or an OGR datasource
+    geometry_type : str or List[str]
+        The geometry type to check for, or multiple types. ex. ['POINT', 'LINESTRING'] or 'POLYGON'
+    layer_name_or_id : str or int, optional
+        The name or index of the layer to check. Default: None (checks all layers)
+
+    Returns
+    -------
+    bool
+        True if all vector layers have the specified geometry type, False otherwise
+
+    Notes
+    -----
+    Valid geometry types are:
+        'POINT'
+        'LINE STRING'
+        'POLYGON'
+        'MULTIPOINT'
+        'MULTILINESTRING'
+        'MULTIPOLYGON'
+        'GEOMETRYCOLLECTION'
+        '3D POINT'
+        '3D LINE STRING'
+        '3D POLYGON'
+        '3D MULTIPOINT'
+        '3D MULTILINESTRING'
+        '3D MULTIPOLYGON'
+        '3D GEOMETRYCOLLECTION'
+        'NONE'
+    """
+    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
+    utils_base._type_check(geometry_type, [str, [str]], "geometry_type")
+    utils_base._type_check(layer_name_or_id, [type(None), str, int], "layer_name_or_id")
+
+    if isinstance(geometry_type, str):
+        geometry_type = [geometry_type]
+
+    if not all(isinstance(geom, str) for geom in geometry_type):
+        raise ValueError("geometry_type must be a string or list of strings")
+
+    valid_geometry_types = [
+        'POINT',
+        'LINE STRING',
+        'POLYGON',
+        'MULTIPOINT',
+        'MULTILINESTRING',
+        'MULTIPOLYGON',
+        'GEOMETRYCOLLECTION',
+        '3D POINT',
+        '3D LINE STRING',
+        '3D POLYGON',
+        '3D MULTIPOINT',
+        '3D MULTILINESTRING',
+        '3D MULTIPOLYGON',
+        '3D GEOMETRYCOLLECTION',
+        'NONE',
+    ]
+
+    # convert all strings to uppercase
+    geometry_type = [geom.upper() for geom in geometry_type]
+
+    if not all(geom in valid_geometry_types for geom in geometry_type):
+        raise ValueError("Invalid geometry type provided, must be one of: " + ", ".join(valid_geometry_types))
+
+    ref = open_vector(vector)
+    layers = _vector_get_layers(ref, layer_name_or_id)
+
+    if len(layers) == 0:
+        raise ValueError("No layers found in vector")
+
+    for layer in layers:
+        layer_defn = layer.GetLayerDefn()
+        layer_geom_type = ogr.GeometryTypeToName(layer_defn.GetGeomType())
+
+        if not isinstance(layer_geom_type, str) or layer_geom_type.upper() not in geometry_type:
+            return False
+
+    return True
+
+
+def check_vector_is_point_type(
     vector: Union[str, ogr.DataSource],
     *,
     layer_name_or_id: Optional[Union[str, int]] = None,
-    allow_empty: bool = False,
 ) -> bool:
-    """Checks if a vector has invalid geometry.
+    """Checks if a vector has a point geometry type.
 
     Parameters
     ----------
@@ -250,116 +351,90 @@ def check_vector_has_invalid_geometry(
         A path to a vector or an OGR datasource
     layer_name_or_id : str or int, optional
         The name or index of the layer to check. Default: None (checks all layers)
-    allow_empty : bool, optional
-        If True, empty geometries are considered valid. Default: False
 
     Returns
     -------
     bool
-        True if the vector has invalid geometry, False if all geometries are valid
+        True if all vector layers have a point geometry type, False otherwise
+
+    Notes
+    -----
+    Valid point geometry types are:
+        'POINT'
+        '3D POINT'
+        'MULTIPOINT'
+        '3D MULTIPOINT'
     """
-    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
-    utils_base._type_check(layer_name_or_id, [type(None), str, int], "layer_name_or_id")
-    utils_base._type_check(allow_empty, [bool], "allow_empty")
-
-    ref = _open_vector(vector)
-
-    if not allow_empty:
-        return check_vector_has_geometry(vector, layer_name_or_id=layer_name_or_id)
-
-    if layer_name_or_id is None:
-        layer_count = ref.GetLayerCount()
-        for idx in range(layer_count):
-            layer = ref.GetLayer(idx)
-            if layer.GetFeatureCount() == 0 and not allow_empty:
-                return True
-
-            for feature in layer:
-                geom = feature.GetGeometryRef()
-                if geom is None:
-                    return True
-                if not geom.IsValid():
-                    return True
-        return False
-    else:
-        layer = ref.GetLayer(layer_name_or_id) if isinstance(layer_name_or_id, int) else ref.GetLayerByName(layer_name_or_id)
-        if layer is None:
-            return True
-
-        if layer.GetFeatureCount() == 0 and not allow_empty:
-            return True
-
-        for feature in layer:
-            geom = feature.GetGeometryRef()
-            if geom is None:
-                return True
-            if not geom.IsValid():
-                return True
-
-        return False
+    return check_vector_is_geometry_type(
+        vector,
+        ["POINT", "3D POINT", "MULTIPOINT", "3D MULTIPOINT"],
+        layer_name_or_id=layer_name_or_id,
+    )
 
 
-def vector_fix_geometry(
+def check_vector_is_line_type(
     vector: Union[str, ogr.DataSource],
     *,
     layer_name_or_id: Optional[Union[str, int]] = None,
 ) -> bool:
-    """Attempts to fix invalid geometries in a vector.
+    """Checks if a vector has a line geometry type.
 
     Parameters
     ----------
     vector : str or ogr.DataSource
         A path to a vector or an OGR datasource
     layer_name_or_id : str or int, optional
-        The name or index of the layer to fix. Default: None (fixes all layers)
+        The name or index of the layer to check. Default: None (checks all layers)
 
     Returns
     -------
     bool
-        True if all geometries are now valid, False if some remain invalid
+        True if all vector layers have a line geometry type, False otherwise
+
+    Notes
+    -----
+    Valid line geometry types are:
+        'LINE STRING'
+        '3D LINE STRING'
+        'MULTILINESTRING'
+        '3D MULTILINESTRING'
     """
-    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
-    utils_base._type_check(layer_name_or_id, [type(None), str, int], "layer_name_or_id")
+    return check_vector_is_geometry_type(
+        vector,
+        ["LINE STRING", "3D LINE STRING", "MULTILINESTRING", "3D MULTILINESTRING"],
+        layer_name_or_id=layer_name_or_id,
+    )
 
-    ref = _open_vector(vector, writeable=True)
 
-    if layer_name_or_id is None:
-        layer_count = ref.GetLayerCount()
-        all_valid = True
-        for idx in range(layer_count):
-            layer = ref.GetLayer(idx)
-            layer.ResetReading()
-            for feature in layer:
-                geom = feature.GetGeometryRef()
-                if geom is None:
-                    continue
+def check_vector_is_polygon_type(
+    vector: Union[str, ogr.DataSource],
+    *,
+    layer_name_or_id: Optional[Union[str, int]] = None,
+) -> bool:
+    """Checks if a vector has a polygon geometry type.
 
-                if not geom.IsValid():
-                    fixed_geom = geom.Buffer(0)
-                    if fixed_geom is not None and fixed_geom.IsValid():
-                        feature.SetGeometry(fixed_geom)
-                        layer.SetFeature(feature)
+    Parameters
+    ----------
+    vector : str or ogr.DataSource
+        A path to a vector or an OGR datasource
+    layer_name_or_id : str or int, optional
+        The name or index of the layer to check. Default: None (checks all layers)
 
-            layer.ResetReading()
-            if check_vector_has_invalid_geometry(ref, layer_name_or_id=idx):
-                all_valid = False
-        return all_valid
-    else:
-        layer = ref.GetLayer(layer_name_or_id) if isinstance(layer_name_or_id, int) else ref.GetLayerByName(layer_name_or_id)
-        if layer is None:
-            return False
-
-        layer.ResetReading()
-        for feature in layer:
-            geom = feature.GetGeometryRef()
-            if geom is None:
-                continue
-
-            if not geom.IsValid():
-                fixed_geom = geom.Buffer(0)
-                if fixed_geom is not None and fixed_geom.IsValid():
-                    feature.SetGeometry(fixed_geom)
-                    layer.SetFeature(feature)
-
-        layer.ResetReading()
-        return not check_vector_has_invalid_geometry(ref, layer_name_or_id=layer_name_or_id)
+    Returns
+    -------
+    bool
+        True if all vector layers have a polygon geometry type, False otherwise
+    
+    Notes
+    -----
+    Valid polygon geometry types are:
+        'POLYGON'
+        '3D POLYGON'
+        'MULTIPOLYGON'
+        '3D MULTIPOLYGON'
+    """
+    return check_vector_is_geometry_type(
+        vector,
+        ["POLYGON", "3D POLYGON", "MULTIPOLYGON", "3D MULTIPOLYGON"],
+        layer_name_or_id=layer_name_or_id,
+    )
