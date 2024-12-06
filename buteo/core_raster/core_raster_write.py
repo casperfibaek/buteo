@@ -20,9 +20,11 @@ from buteo.core_raster.core_raster_read import _open_raster
 
 
 
-def raster_save_to_disk(
+def raster_create_copy(
     raster: Union[gdal.Dataset, str, List[Union[gdal.Dataset, str]]],
     out_path: Union[str, List[str]],
+    bands: Optional[List[int]] = None,
+    *,
     prefix: str = "",
     suffix: str = "",
     add_uuid: bool = False,
@@ -38,6 +40,8 @@ def raster_save_to_disk(
         The raster dataset to write to disk.
     out_path : Union[str, List[str]]
         The output path or list of output paths.
+    bands : Optional[List[int]], optional
+        The bands to write. Default: None (all bands).
     prefix : str, optional
         A prefix to add to the output path. Default: "".
     suffix : str, optional
@@ -89,12 +93,23 @@ def raster_save_to_disk(
         if driver is None:
             raise RuntimeError(f"Could not get GDAL driver for raster: {driver_name}")
 
-        src_ds = gdal.Open(ds)
+        src_ds = _open_raster(ds)
         if src_ds is None:
             raise ValueError(f"Unable to open raster dataset: {ds}")
 
         utils_io._delete_if_required(out_paths[idx], overwrite)
-        driver.CreateCopy(out_paths[idx], src_ds, options=creation_options)
+
+        if bands is not None:
+            # Create a new dataset with only the specified bands
+            vrt_options = gdal.BuildVRTOptions(bandList=bands)
+            temp_vrt = gdal.BuildVRT('subset_bands', src_ds, options=vrt_options)
+            if temp_vrt is None:
+                raise RuntimeError("Failed to create temporary VRT dataset")
+            driver.CreateCopy(out_paths[idx], temp_vrt, options=creation_options)
+            temp_vrt = None
+        else:
+            driver.CreateCopy(out_paths[idx], src_ds, options=creation_options)
+
         src_ds = None
 
     return out_paths if input_is_list else out_paths[0]
@@ -339,51 +354,6 @@ def raster_create_from_array(
     return out_path
 
 
-def raster_create_copy(
-    raster: Union[str, gdal.Dataset],
-    out_path: Optional[str] = None,
-    overwrite: bool = True,
-) -> str:
-    """Create a copy of a raster.
-
-    Parameters
-    ----------
-    raster : str or gdal.Dataset
-        The raster to copy.
-    out_path : str, optional
-        The output path. If None, a temporary file will be created.
-
-    Returns
-    -------
-    str
-        The path to the output raster.
-    """
-    assert utils_gdal._check_is_raster(raster), "Raster is not valid."
-
-    if out_path is None:
-        out_path = utils_path._get_temp_filepath(
-            utils_gdal._get_path_from_dataset(raster),
-            ext="tif",
-        )
-    else:
-        assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), (
-            f"Output path {out_path} is not valid or already exists. "
-        )
-
-    utils_io._check_overwrite_policy([out_path], overwrite)
-    utils_io._delete_if_required(out_path, overwrite)
-
-    driver_name = utils_gdal._get_driver_name_from_path(out_path)
-    driver = gdal.GetDriverByName(driver_name)
-
-    src_ds = _open_raster(raster)
-    dst_ds = driver.CreateCopy(out_path, src_ds) # pylint: disable=unused-variable
-    dst_ds = None
-    src_ds = None
-
-    return out_path
-
-
 def raster_set_band_descriptions(raster, bands, descriptions):
     """Update the band descriptions of a raster.
 
@@ -406,7 +376,7 @@ def raster_set_band_descriptions(raster, bands, descriptions):
     assert all([isinstance(description, str) for description in descriptions]), "Descriptions must be a list of strings."
     assert utils_gdal._check_is_raster(raster), "Raster is not valid."
 
-    ds = gdal.Open(raster, gdal.GA_Update)
+    ds = _open_raster(raster, writeable=True)
 
     for idx, band in enumerate(bands):
         rb = ds.GetRasterBand(band)
@@ -438,7 +408,7 @@ def raster_set_crs(
     """
     assert utils_gdal._check_is_raster(raster), "Raster is not valid."
 
-    ds = gdal.Open(raster, gdal.GA_Update)
+    ds = _open_raster(raster, writeable=True)
     parsed_projection = utils_projection.parse_projection_wkt(projection)
     ds.SetProjection(parsed_projection)
     ds.FlushCache()

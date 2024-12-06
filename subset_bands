@@ -1,0 +1,31 @@
+<VRTDataset rasterXSize="10" rasterYSize="10">
+  <GeoTransform>  0.0000000000000000e+00,  1.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00, -1.0000000000000000e+00</GeoTransform>
+  <VRTRasterBand dataType="Float32" band="1">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">C:/Users/casper.fibaek/AppData/Local/Temp/pytest-of-Casper.Fibaek/pytest-493/test_save_mixed_band_list0/sample.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+      <SourceProperties RasterXSize="10" RasterYSize="10" DataType="Float32" BlockXSize="10" BlockYSize="10" />
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <DstRect xOff="0" yOff="0" xSize="10" ySize="10" />
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Float32" band="2">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">C:/Users/casper.fibaek/AppData/Local/Temp/pytest-of-Casper.Fibaek/pytest-493/test_save_mixed_band_list0/sample.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <SourceProperties RasterXSize="10" RasterYSize="10" DataType="Float32" BlockXSize="10" BlockYSize="10" />
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <DstRect xOff="0" yOff="0" xSize="10" ySize="10" />
+    </SimpleSource>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Float32" band="3">
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">C:/Users/casper.fibaek/AppData/Local/Temp/pytest-of-Casper.Fibaek/pytest-493/test_save_mixed_band_list0/sample.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+      <SourceProperties RasterXSize="10" RasterYSize="10" DataType="Float32" BlockXSize="10" BlockYSize="10" />
+      <SrcRect xOff="0" yOff="0" xSize="10" ySize="10" />
+      <DstRect xOff="0" yOff="0" xSize="10" ySize="10" />
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>

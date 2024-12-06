@@ -8,7 +8,7 @@ from osgeo import ogr
 
 # Internal
 from buteo.utils import utils_base
-from buteo.core_vector.core_vector_read import open_vector, _vector_get_layer
+from buteo.core_vector.core_vector_read import _open_vector, _vector_get_layer
 
 
 
@@ -34,7 +34,7 @@ def check_vector_has_geometry(
     utils_base._type_check(vector, [str, ogr.DataSource], "vector")
     utils_base._type_check(layer_name_or_id, [type(None), str, int], "layer_name_or_id")
 
-    ref = open_vector(vector)
+    ref = _open_vector(vector)
     layers = _vector_get_layer(ref, layer_name_or_id)
 
     if len(layers) == 0:
@@ -83,7 +83,7 @@ def check_vector_has_attributes(
     if attributes is not None and isinstance(attributes, str):
         attributes = [attributes]
 
-    ref = open_vector(vector)
+    ref = _open_vector(vector)
     layers = _vector_get_layer(ref, layer_name_or_id)
 
     if len(layers) == 0:
@@ -126,7 +126,7 @@ def check_vector_has_crs(
     utils_base._type_check(vector, [str, ogr.DataSource], "vector")
     utils_base._type_check(layer_name_or_id, [type(None), str, int], "layer_name_or_id")
 
-    ref = open_vector(vector)
+    ref = _open_vector(vector)
     layers = _vector_get_layer(ref, layer_name_or_id)
 
     if len(layers) == 0:
@@ -157,7 +157,7 @@ def check_vector_has_multiple_layers(
     """
     utils_base._type_check(vector, [str, ogr.DataSource], "vector")
 
-    ref = open_vector(vector)
+    ref = _open_vector(vector)
     layer_count = ref.GetLayerCount()
     ref = None
 
@@ -239,7 +239,7 @@ def check_vector_is_geometry_type(
     if not all(geom in valid_geometry_types for geom in geometry_type):
         raise ValueError("Invalid geometry type provided, must be one of: " + ", ".join(valid_geometry_types))
 
-    ref = open_vector(vector)
+    ref = _open_vector(vector)
     layers = _vector_get_layer(ref, layer_name_or_id)
 
     if len(layers) == 0:
@@ -383,7 +383,7 @@ def check_vector_has_invalid_geometry(
     utils_base._type_check(layer_name_or_id, [type(None), str, int], "layer_name_or_id")
     utils_base._type_check(allow_empty, [bool], "allow_empty")
 
-    ref = open_vector(vector)
+    ref = _open_vector(vector)
     layers = _vector_get_layer(ref, layer_name_or_id)
 
     if len(layers) == 0:

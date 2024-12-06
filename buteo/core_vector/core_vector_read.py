@@ -12,7 +12,7 @@ The basic module for interacting with vector data
 
 """
 # Standard library
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Sequence
 
 # External
 from osgeo import ogr, gdal
@@ -21,11 +21,12 @@ from osgeo import ogr, gdal
 from buteo.utils import (
     utils_base,
     utils_path,
+    utils_io,
 )
 
 
 
-def open_vector(
+def _open_vector(
     vector: Union[str, ogr.DataSource],
     *,
     writeable: bool = False,
@@ -71,6 +72,48 @@ def open_vector(
         raise ValueError(f"Could not open vector: {vector}")
 
     return dataset
+
+
+def open_vector(
+    vector: Union[str, ogr.DataSource, Sequence[Union[str, ogr.DataSource]]],
+    *,
+    writeable: bool = False,
+) -> Union[ogr.DataSource, List[ogr.DataSource]]:
+    """Opens one or more vector in read or write mode.
+
+    Parameters
+    ----------
+    vector : str, ogr.DataSource, or Sequence[Union[str, ogr.DataSource]]
+        Path(s) to vectors(s) or ogr DataSources(s)
+    writeable : bool, optional
+        Open in write mode. Default: False
+
+    Returns
+    -------
+    Union[v, List[ogr.DataSource]]
+        Single ogr DataSource or list of datasources
+
+    Raises
+    ------
+    TypeError
+        If input types are invalid
+    ValueError
+        If raster(s) cannot be opened
+    """
+    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "raster")
+    utils_base._type_check(writeable, [bool], "writeable")
+
+    input_is_sequence = isinstance(vector, Sequence) and not isinstance(vector, str)
+    vectors = utils_io._get_input_paths(vector, "vector") # type: ignore
+
+    opened = []
+    for v in vectors:
+        try:
+            opened.append(_open_vector(v, writeable=writeable))
+        except Exception as e:
+            raise ValueError(f"Could not open raster: {v}") from e
+
+    return opened if input_is_sequence else opened[0]
 
 
 def _vector_get_layer(

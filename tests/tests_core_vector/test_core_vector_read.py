@@ -8,7 +8,7 @@ import pytest
 from osgeo import ogr, osr, gdal
 
 from buteo.core_vector.core_vector_read import (
-    open_vector,
+    _open_vector,
     _vector_get_layer,
 )
 
@@ -153,37 +153,37 @@ def multilayer_vector(tmp_path):
 class TestOpenVector:
     def test_open_valid_vector(self, valid_vector):
         """Test opening a valid vector file."""
-        ds = open_vector(valid_vector)
+        ds = _open_vector(valid_vector)
         assert isinstance(ds, ogr.DataSource)
         assert ds.GetLayerCount() == 1
 
     def test_open_nonexistent_vector(self):
         """Test opening a nonexistent vector file."""
         with pytest.raises(ValueError):
-            open_vector("nonexistent.gpkg")
+            _open_vector("nonexistent.gpkg")
 
     def test_open_invalid_input(self):
         """Test opening with invalid input type."""
         with pytest.raises(TypeError):
-            open_vector(123)
+            _open_vector(123)
 
     def test_open_write_mode(self, valid_vector):
         """Test opening in write mode."""
-        ds = open_vector(valid_vector, writeable=True)
+        ds = _open_vector(valid_vector, writeable=True)
         assert isinstance(ds, ogr.DataSource)
         layer = ds.GetLayer()
         assert layer.TestCapability(ogr.OLCRandomWrite)
 
     def test_open_complex_vector(self, complex_vector):
         """Test opening a complex vector with multiple layers."""
-        ds = open_vector(complex_vector)
+        ds = _open_vector(complex_vector)
         assert ds.GetLayerCount() == 2
         assert ds.GetLayer('points') is not None
         assert ds.GetLayer('polygons') is not None
 
     def test_open_write_mode_multilayer(self, multilayer_vector):
         """Test opening multilayer vector in write mode."""
-        ds = open_vector(multilayer_vector, writeable=True)
+        ds = _open_vector(multilayer_vector, writeable=True)
         for i in range(3):
             layer = ds.GetLayer(i)
             assert layer.TestCapability(ogr.OLCRandomWrite)
@@ -196,14 +196,14 @@ class TestOpenVector:
         _ = ds.CreateLayer('test')
         ds = None
 
-        opened_ds = open_vector(vsimem_path)
+        opened_ds = _open_vector(vsimem_path)
         assert opened_ds is not None
         assert opened_ds.GetLayer(0) is not None
         gdal.Unlink(vsimem_path)
 
     def test_open_vector_no_geometry(self, vector_no_geometry):
         """Test opening a vector without geometry."""
-        ds = open_vector(vector_no_geometry)
+        ds = _open_vector(vector_no_geometry)
         assert isinstance(ds, ogr.DataSource)
         assert ds.GetLayerCount() == 1
         layer = ds.GetLayer()
@@ -211,7 +211,7 @@ class TestOpenVector:
 
     def test_open_multitype_vector(self, multitype_vector):
         """Test opening a vector with multiple layers of different types."""
-        ds = open_vector(multitype_vector)
+        ds = _open_vector(multitype_vector)
         assert isinstance(ds, ogr.DataSource)
         assert ds.GetLayerCount() == 4
         assert ds.GetLayer('points') is not None
@@ -222,21 +222,21 @@ class TestOpenVector:
 class TestVectorGetLayer:
     def test_get_layer_by_index(self, valid_vector):
         """Test getting a layer by index."""
-        ds = open_vector(valid_vector)
+        ds = _open_vector(valid_vector)
         layers = _vector_get_layer(ds, 0)
         assert len(layers) == 1
         assert layers[0].GetName() == 'test'
 
     def test_get_layer_by_name(self, valid_vector):
         """Test getting a layer by name."""
-        ds = open_vector(valid_vector)
+        ds = _open_vector(valid_vector)
         layers = _vector_get_layer(ds, 'test')
         assert len(layers) == 1
         assert layers[0].GetName() == 'test'
 
     def test_get_all_layers(self, multilayer_vector):
         """Test getting all layers from a vector."""
-        ds = open_vector(multilayer_vector)
+        ds = _open_vector(multilayer_vector)
         layers = _vector_get_layer(ds)
         assert len(layers) == 3
         for i, layer in enumerate(layers):
@@ -244,19 +244,19 @@ class TestVectorGetLayer:
 
     def test_get_nonexistent_layer_by_index(self, valid_vector):
         """Test getting a nonexistent layer by index."""
-        ds = open_vector(valid_vector)
+        ds = _open_vector(valid_vector)
         with pytest.raises(ValueError):
             _vector_get_layer(ds, 1)
 
     def test_get_nonexistent_layer_by_name(self, valid_vector):
         """Test getting a nonexistent layer by name."""
-        ds = open_vector(valid_vector)
+        ds = _open_vector(valid_vector)
         with pytest.raises(ValueError):
             _vector_get_layer(ds, 'nonexistent')
 
     def test_get_layer_from_multitype_vector(self, multitype_vector):
         """Test getting layers from a multitype vector."""
-        ds = open_vector(multitype_vector)
+        ds = _open_vector(multitype_vector)
         layers = _vector_get_layer(ds, 'points')
         assert len(layers) == 1
         assert layers[0].GetName() == 'points'

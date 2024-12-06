@@ -8,7 +8,7 @@ from osgeo import ogr
 
 # Internal
 from buteo.utils import utils_base, utils_io, utils_gdal
-from buteo.core_vector.core_vector_read import open_vector, _vector_get_layer
+from buteo.core_vector.core_vector_read import _open_vector, _vector_get_layer
 from buteo.core_vector.core_vector_validation import check_vector_has_invalid_geometry
 
 
@@ -85,7 +85,7 @@ def _vector_fix_geometry(
     in_path = in_paths[0]
     out_path = out_paths[0]
 
-    ref = open_vector(in_path)
+    ref = _open_vector(in_path)
     layers = _vector_get_layer(ref, layer_name_or_id)
 
     # Create output data source

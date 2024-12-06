@@ -10,10 +10,9 @@ from osgeo import gdal, ogr, osr
 from pathlib import Path
 
 from buteo.core_raster.core_raster_write import (
-    raster_save_to_disk,
+    raster_create_copy,
     raster_create_empty,
     raster_create_from_array,
-    raster_create_copy,
     raster_set_band_descriptions,
     raster_set_crs,
 )
@@ -50,11 +49,12 @@ def sample_vector(tmp_path):
     ds = None
     return str(vector_path)
 
-class TestSaveDatasetToDisk:
+
+class TestRasterCreateCopy:
     def test_save_raster(self, sample_raster, tmp_path):
         """Test saving a raster dataset."""
         out_path = tmp_path / "output.tif"
-        result = raster_save_to_disk(sample_raster, str(out_path))
+        result = raster_create_copy(sample_raster, str(out_path))
         assert Path(result).exists()
         ds = gdal.Open(result)
         assert ds.RasterCount == 3
@@ -63,7 +63,7 @@ class TestSaveDatasetToDisk:
     def test_save_multiple_datasets(self, sample_raster, tmp_path):
         """Test saving multiple datasets."""
         out_paths = [tmp_path / "out1.tif", tmp_path / "out2.tif"]
-        results = raster_save_to_disk(
+        results = raster_create_copy(
             [sample_raster, sample_raster],
             [str(p) for p in out_paths]
         )
@@ -72,7 +72,7 @@ class TestSaveDatasetToDisk:
     def test_save_with_creation_options(self, sample_raster, tmp_path):
         """Test saving with creation options."""
         out_path = tmp_path / "compressed.tif"
-        result = raster_save_to_disk(
+        result = raster_create_copy(
             sample_raster,
             str(out_path),
             creation_options=["COMPRESS=LZW"]
@@ -80,6 +80,114 @@ class TestSaveDatasetToDisk:
         ds = gdal.Open(result)
         assert ds.GetMetadataItem("COMPRESSION", "IMAGE_STRUCTURE") == "LZW"
         ds = None
+
+    def test_save_specific_bands(self, sample_raster, tmp_path):
+        """Test saving specific bands from the raster."""
+        out_path = tmp_path / "band_subset.tif"
+        result = raster_create_copy(
+            sample_raster,
+            str(out_path),
+            bands=[1, 3]  # Only copy first and third bands
+        )
+        ds = gdal.Open(result)
+        assert ds.RasterCount == 2
+        # Check if the band data is correct
+        band1 = ds.GetRasterBand(1).ReadAsArray()
+        band2 = ds.GetRasterBand(2).ReadAsArray()
+        assert np.all(band1 == 1)  # First band should be all 1's
+        assert np.all(band2 == 3)  # Second band should be all 3's
+        ds = None
+
+    def test_save_single_band(self, sample_raster, tmp_path):
+        """Test saving a single band from the raster."""
+        out_path = tmp_path / "single_band.tif"
+        result = raster_create_copy(
+            sample_raster,
+            str(out_path),
+            bands=[2]  # Only copy second band
+        )
+        ds = gdal.Open(result)
+        assert ds.RasterCount == 1
+        band = ds.GetRasterBand(1).ReadAsArray()
+        assert np.all(band == 2)  # Second band should be all 2's
+        ds = None
+
+    def test_save_invalid_band(self, sample_raster, tmp_path):
+        """Test saving with invalid band number."""
+        out_path = tmp_path / "invalid_band.tif"
+        with pytest.raises(RuntimeError):
+            raster_create_copy(
+                sample_raster,
+                str(out_path),
+                bands=[4]  # Invalid band number (sample has 3 bands)
+            )
+
+    def test_save_with_prefix_suffix(self, sample_raster, tmp_path):
+        """Test saving with prefix and suffix."""
+        out_path = tmp_path / "output.tif"
+        result = raster_create_copy(
+            sample_raster,
+            str(out_path),
+            prefix="test_",
+            suffix="_processed"
+        )
+        assert Path(result).name.startswith("test_")
+        assert "_processed" in Path(result).name
+
+    def test_save_with_uuid_timestamp(self, sample_raster, tmp_path):
+        """Test saving with UUID and timestamp."""
+        out_path = tmp_path / "output.tif"
+        result = raster_create_copy(
+            sample_raster,
+            str(out_path),
+            add_uuid=True,
+            add_timestamp=True
+        )
+        # Basic check that filename got longer due to UUID and timestamp
+        assert len(Path(result).name) > len("output.tif")
+
+    def test_overwrite_protection(self, sample_raster, tmp_path):
+        """Test overwrite protection."""
+        out_path = tmp_path / "protected.tif"
+        
+        # Create the file first
+        raster_create_copy(sample_raster, str(out_path))
+        
+        # Try to overwrite with overwrite=False
+        with pytest.raises(FileExistsError):
+            raster_create_copy(
+                sample_raster,
+                str(out_path),
+                overwrite=False
+            )
+
+    def test_save_invalid_input(self, sample_raster, tmp_path):
+        """Test saving with invalid input."""
+        out_path = tmp_path / "output.tif"
+        with pytest.raises(ValueError):
+            raster_create_copy(
+                "nonexistent.tif",
+                str(out_path)
+            )
+
+    def test_save_mixed_band_list(self, sample_raster, tmp_path):
+        """Test saving with mixed order of bands."""
+        out_path = tmp_path / "mixed_bands.tif"
+        result = raster_create_copy(
+            sample_raster,
+            str(out_path),
+            bands=[3, 1, 2]  # Reorder bands
+        )
+        ds = gdal.Open(result)
+        assert ds.RasterCount == 3
+        band1 = ds.GetRasterBand(1).ReadAsArray()
+        band2 = ds.GetRasterBand(2).ReadAsArray()
+        band3 = ds.GetRasterBand(3).ReadAsArray()
+        assert np.all(band1 == 3)  # First band should be all 3's
+        assert np.all(band2 == 1)  # Second band should be all 1's
+        assert np.all(band3 == 2)  # Third band should be all 2's
+        ds = None
+
 
 class TestRasterCreateEmpty:
     def test_basic_creation(self, tmp_path):
@@ -214,50 +322,6 @@ class TestRasterCreateFromArray:
         assert gt[0] == x_min
         assert gt[3] == y_max
         ds = None
-
-class TestRasterCreateCopy:
-    def test_basic_copy(self, sample_raster, tmp_path):
-        """Test basic raster copying."""
-        out_path = tmp_path / "copy.tif"
-        result = raster_create_copy(sample_raster, str(out_path))
-        
-        assert Path(result).exists()
-        original = gdal.Open(sample_raster)
-        copy = gdal.Open(result)
-        
-        assert original.RasterCount == copy.RasterCount
-        assert original.RasterXSize == copy.RasterXSize
-        assert original.RasterYSize == copy.RasterYSize
-        
-        original = None
-        copy = None
-
-    def test_copy_with_overwrite(self, sample_raster, tmp_path):
-        """Test copying with overwrite."""
-        out_path = tmp_path / "overwrite.tif"
-        
-        # Create initial file
-        raster_create_copy(sample_raster, str(out_path))
-        
-        # Test overwrite
-        result = raster_create_copy(sample_raster, str(out_path), overwrite=True)
-        assert Path(result).exists()
-
-    def test_copy_without_output_path(self, sample_raster):
-        """Test copying without specifying output path."""
-        result = raster_create_copy(sample_raster)
-
-        ds = gdal.Open(result)
-        assert ds is not None
-
-        # Clean up temporary file
-        gdal.Unlink(result)
-        ds = None
-
-    def test_copy_invalid_input(self):
-        """Test copying with invalid input."""
-        with pytest.raises(AssertionError):
-            raster_create_copy("nonexistent.tif")
 
 class TestRasterSetBandDescriptions:
     def test_set_single_band_description(self, sample_raster):
