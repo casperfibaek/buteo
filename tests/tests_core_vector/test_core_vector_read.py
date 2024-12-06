@@ -9,13 +9,7 @@ from osgeo import ogr, osr, gdal
 
 from buteo.core_vector.core_vector_read import (
     open_vector,
-    check_vector_has_geometry,
-    check_vector_has_attributes,
-    check_vector_has_crs,
-    check_vector_is_geometry_type,
-    check_vector_is_point_type,
-    check_vector_is_line_type,
-    check_vector_is_polygon_type,
+    _vector_get_layer,
 )
 
 @pytest.fixture
@@ -207,214 +201,74 @@ class TestOpenVector:
         assert opened_ds.GetLayer(0) is not None
         gdal.Unlink(vsimem_path)
 
+    def test_open_vector_no_geometry(self, vector_no_geometry):
+        """Test opening a vector without geometry."""
+        ds = open_vector(vector_no_geometry)
+        assert isinstance(ds, ogr.DataSource)
+        assert ds.GetLayerCount() == 1
+        layer = ds.GetLayer()
+        assert layer.GetGeomType() == ogr.wkbNone
 
-class TestCheckVectorHasGeometry:
-    def test_vector_with_geometry(self, valid_vector):
-        """Test checking vector with geometry."""
-        assert check_vector_has_geometry(valid_vector) is True
+    def test_open_multitype_vector(self, multitype_vector):
+        """Test opening a vector with multiple layers of different types."""
+        ds = open_vector(multitype_vector)
+        assert isinstance(ds, ogr.DataSource)
+        assert ds.GetLayerCount() == 4
+        assert ds.GetLayer('points') is not None
+        assert ds.GetLayer('lines') is not None
+        assert ds.GetLayer('polygons') is not None
+        assert ds.GetLayer('table') is not None
 
-    def test_vector_without_geometry(self, vector_no_geometry):
-        """Test checking vector without geometry."""
-        assert check_vector_has_geometry(vector_no_geometry) is False
+class TestVectorGetLayer:
+    def test_get_layer_by_index(self, valid_vector):
+        """Test getting a layer by index."""
+        ds = open_vector(valid_vector)
+        layers = _vector_get_layer(ds, 0)
+        assert len(layers) == 1
+        assert layers[0].GetName() == 'test'
 
-    def test_specific_layer(self, valid_vector):
-        """Test checking specific layer."""
-        assert check_vector_has_geometry(valid_vector, layer_name_or_id="test") is True
+    def test_get_layer_by_name(self, valid_vector):
+        """Test getting a layer by name."""
+        ds = open_vector(valid_vector)
+        layers = _vector_get_layer(ds, 'test')
+        assert len(layers) == 1
+        assert layers[0].GetName() == 'test'
 
+    def test_get_all_layers(self, multilayer_vector):
+        """Test getting all layers from a vector."""
+        ds = open_vector(multilayer_vector)
+        layers = _vector_get_layer(ds)
+        assert len(layers) == 3
+        for i, layer in enumerate(layers):
+            assert layer.GetName() == f'layer_{i}'
+
+    def test_get_nonexistent_layer_by_index(self, valid_vector):
+        """Test getting a nonexistent layer by index."""
+        ds = open_vector(valid_vector)
         with pytest.raises(ValueError):
-            check_vector_has_geometry(valid_vector, layer_name_or_id="nonexistent")
+            _vector_get_layer(ds, 1)
 
-    def test_layer_without_geometry(self, multitype_vector):
-        """Test checking layer without geometry."""
-        assert not check_vector_has_geometry(multitype_vector, layer_name_or_id="table")
-
-
-class TestCheckVectorHasAttributes:
-    def test_vector_with_attributes(self, valid_vector):
-        """Test checking vector with attributes."""
-        assert check_vector_has_attributes(valid_vector) is True
-        assert check_vector_has_attributes(valid_vector, attributes="name") is True
-        assert check_vector_has_attributes(valid_vector, attributes=["name"]) is True
-
-    def test_vector_specific_attributes(self, valid_vector):
-        """Test checking for specific attributes."""
-        assert check_vector_has_attributes(valid_vector, attributes="nonexistent") is False
-        assert check_vector_has_attributes(valid_vector, attributes=["name", "nonexistent"]) is False
-
-    def test_specific_layer(self, valid_vector):
-        """Test checking attributes in specific layer."""
-        assert check_vector_has_attributes(valid_vector, layer_name_or_id="test") is True
-
+    def test_get_nonexistent_layer_by_name(self, valid_vector):
+        """Test getting a nonexistent layer by name."""
+        ds = open_vector(valid_vector)
         with pytest.raises(ValueError):
-            check_vector_has_attributes(valid_vector, layer_name_or_id="nonexistent")
+            _vector_get_layer(ds, 'nonexistent')
 
-    def test_multiple_attributes(self, complex_vector):
-        """Test checking multiple attributes."""
-        assert not check_vector_has_attributes(complex_vector, attributes=["name", "value"])
-        assert not check_vector_has_attributes(complex_vector, attributes=["area"])
+    def test_get_layer_from_multitype_vector(self, multitype_vector):
+        """Test getting layers from a multitype vector."""
+        ds = open_vector(multitype_vector)
+        layers = _vector_get_layer(ds, 'points')
+        assert len(layers) == 1
+        assert layers[0].GetName() == 'points'
 
-    def test_attributes_by_layer(self, complex_vector):
-        """Test checking attributes in specific layers."""
-        assert check_vector_has_attributes(
-            complex_vector,
-            layer_name_or_id="points",
-            attributes=["name", "value"]
-        )
-        assert not check_vector_has_attributes(
-            complex_vector,
-            layer_name_or_id="points",
-            attributes=["area"]
-        )
+        layers = _vector_get_layer(ds, 'lines')
+        assert len(layers) == 1
+        assert layers[0].GetName() == 'lines'
 
-    def test_nonexistent_attributes(self, complex_vector):
-        """Test checking for nonexistent attributes."""
-        assert not check_vector_has_attributes(complex_vector, attributes=["nonexistent"])
+        layers = _vector_get_layer(ds, 'polygons')
+        assert len(layers) == 1
+        assert layers[0].GetName() == 'polygons'
 
-
-class TestCheckVectorHasCRS:
-    def test_vector_with_crs(self, valid_vector):
-        """Test checking vector with CRS."""
-        assert check_vector_has_crs(valid_vector) is True
-
-    def test_vector_without_crs(self, vector_no_geometry):
-        """Test checking vector without CRS."""
-        assert check_vector_has_crs(vector_no_geometry) is False
-
-    def test_specific_layer(self, valid_vector):
-        """Test checking CRS in specific layer."""
-        assert check_vector_has_crs(valid_vector, layer_name_or_id="test") is True
-
-        with pytest.raises(ValueError):
-            check_vector_has_crs(valid_vector, layer_name_or_id="nonexistent")
-
-    def test_multiple_layer_crs(self, multitype_vector):
-        """Test CRS check across multiple layers."""
-        assert check_vector_has_crs(multitype_vector, layer_name_or_id="points")
-        assert check_vector_has_crs(multitype_vector, layer_name_or_id="lines")
-        assert check_vector_has_crs(multitype_vector, layer_name_or_id="polygons")
-        assert not check_vector_has_crs(multitype_vector, layer_name_or_id="table")
-
-    def test_mixed_crs_layers(self, tmp_path):
-        """Test with layers having different CRS settings."""
-        vector_path = tmp_path / "mixed_crs.gpkg"
-        driver = ogr.GetDriverByName('GPKG')
-        ds = driver.CreateDataSource(str(vector_path))
-
-        # Layer with CRS
-        srs = osr.SpatialReference()
-        srs.ImportFromEPSG(4326)
-        _ = ds.CreateLayer('with_crs', srs, ogr.wkbPoint)
-
-        # Layer without CRS
-        _ = ds.CreateLayer('without_crs', None, ogr.wkbPoint)
-
-        ds = None
-
-        assert check_vector_has_crs(str(vector_path), layer_name_or_id="with_crs")
-        assert not check_vector_has_crs(str(vector_path), layer_name_or_id="without_crs")
-
-
-class TestCheckVectorIsGeometryType:
-    def test_single_geometry_type(self, valid_vector):
-        """Test checking single geometry type."""
-        assert check_vector_is_geometry_type(valid_vector, "3D POINT") is True
-        assert check_vector_is_geometry_type(valid_vector, "POLYGON") is False
-
-    def test_multiple_geometry_types(self, valid_vector):
-        """Test checking multiple geometry types."""
-        assert check_vector_is_geometry_type(valid_vector, ["3D POINT", "POLYGON"]) is True
-        assert check_vector_is_geometry_type(valid_vector, ["POLYGON", "LINE STRING"]) is False
-
-    def test_specific_layer(self, complex_vector):
-        """Test checking geometry type in specific layer."""
-        assert check_vector_is_geometry_type(complex_vector, "3D POINT", layer_name_or_id="points") is True
-        assert check_vector_is_geometry_type(complex_vector, "3D POLYGON", layer_name_or_id="polygons") is True
-        
-        with pytest.raises(ValueError):
-            check_vector_is_geometry_type(complex_vector, "POINT", layer_name_or_id="nonexistent")
-
-    def test_multitype_layers(self, multitype_vector):
-        """Test geometry types across different layers."""
-        assert check_vector_is_geometry_type(multitype_vector, "POINT", layer_name_or_id="points") is True
-        assert check_vector_is_geometry_type(multitype_vector, "LINE STRING", layer_name_or_id="lines") is True
-        assert check_vector_is_geometry_type(multitype_vector, "POLYGON", layer_name_or_id="polygons") is True
-        assert check_vector_is_geometry_type(multitype_vector, "NONE", layer_name_or_id="table") is True
-
-    def test_invalid_geometry_type(self, valid_vector):
-        """Test with invalid geometry type."""
-        with pytest.raises(ValueError):
-            check_vector_is_geometry_type(valid_vector, "INVALID_TYPE")
-
-    def test_multilayer_same_type(self, multilayer_vector):
-        """Test multiple layers with same geometry type."""
-        assert check_vector_is_geometry_type(multilayer_vector, "3D POINT") is True
-        assert check_vector_is_geometry_type(multilayer_vector, ["3D POINT"]) is True
-        assert check_vector_is_geometry_type(multilayer_vector, "3D POLYGON") is False
-
-    def test_type_parameter_validation(self, valid_vector):
-        """Test validation of geometry_type parameter."""
-        with pytest.raises(TypeError):
-            check_vector_is_geometry_type(valid_vector, 123)
-            
-        with pytest.raises(TypeError):
-            check_vector_is_geometry_type(valid_vector, None)
-
-
-class TestCheckVectorIsPointType:
-    def test_point_type(self, valid_vector):
-        """Test checking if vector is point type."""
-        assert check_vector_is_point_type(valid_vector) is True
-
-    def test_non_point_type(self, complex_vector):
-        """Test checking if vector is not point type."""
-        assert check_vector_is_point_type(complex_vector) is False
-
-    def test_specific_layer(self, multitype_vector):
-        """Test checking point type in specific layer."""
-        assert check_vector_is_point_type(multitype_vector, layer_name_or_id="points") is True
-        assert check_vector_is_point_type(multitype_vector, layer_name_or_id="lines") is False
-
-    def test_invalid_layer(self, multitype_vector):
-        """Test checking point type in invalid layer."""
-        with pytest.raises(ValueError):
-            check_vector_is_point_type(multitype_vector, layer_name_or_id="nonexistent")
-
-
-class TestCheckVectorIsLineType:
-    def test_line_type(self, multitype_vector):
-        """Test checking if vector is line type."""
-        assert check_vector_is_line_type(multitype_vector, layer_name_or_id="lines") is True
-
-    def test_non_line_type(self, valid_vector):
-        """Test checking if vector is not line type."""
-        assert check_vector_is_line_type(valid_vector) is False
-
-    def test_specific_layer(self, multitype_vector):
-        """Test checking line type in specific layer."""
-        assert check_vector_is_line_type(multitype_vector, layer_name_or_id="lines") is True
-        assert check_vector_is_line_type(multitype_vector, layer_name_or_id="points") is False
-
-    def test_invalid_layer(self, multitype_vector):
-        """Test checking line type in invalid layer."""
-        with pytest.raises(ValueError):
-            check_vector_is_line_type(multitype_vector, layer_name_or_id="nonexistent")
-
-
-class TestCheckVectorIsPolygonType:
-    def test_polygon_type(self, complex_vector):
-        """Test checking if vector is polygon type."""
-        assert check_vector_is_polygon_type(complex_vector, layer_name_or_id="polygons") is True
-
-    def test_non_polygon_type(self, valid_vector):
-        """Test checking if vector is not polygon type."""
-        assert check_vector_is_polygon_type(valid_vector) is False
-
-    def test_specific_layer(self, multitype_vector):
-        """Test checking polygon type in specific layer."""
-        assert check_vector_is_polygon_type(multitype_vector, layer_name_or_id="polygons") is True
-        assert check_vector_is_polygon_type(multitype_vector, layer_name_or_id="points") is False
-
-    def test_invalid_layer(self, multitype_vector):
-        """Test checking polygon type in invalid layer."""
-        with pytest.raises(ValueError):
-            check_vector_is_polygon_type(multitype_vector, layer_name_or_id="nonexistent")
+        layers = _vector_get_layer(ds, 'table')
+        assert len(layers) == 1
+        assert layers[0].GetName() == 'table'

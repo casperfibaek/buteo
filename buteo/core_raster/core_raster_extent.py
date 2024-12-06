@@ -12,7 +12,6 @@ from buteo.utils import (
     utils_base,
     utils_gdal,
     utils_bbox,
-    utils_path,
     utils_projection,
     utils_io,
 )
@@ -285,7 +284,6 @@ def _raster_to_vector_extent(
     suffix: str = "",
     add_uuid: bool = False,
     add_timestamp: bool = False,
-    out_format: str = "gpkg",
 ) -> str:
     """Converts the extent of a raster to a vector file.
 
@@ -309,8 +307,6 @@ def _raster_to_vector_extent(
         If True, a unique identifier will be added to the output vector name., default: False
     add_timestamp : bool, optional
         If True, a timestamp will be added to the output vector name., default: False
-    out_format : str, optional
-        The output format of the vector. If None, the format is inferred from the output path., default: "gpkg"
 
     Returns
     -------
@@ -340,7 +336,6 @@ def _raster_to_vector_extent(
         add_uuid=add_uuid,
         add_timestamp=add_timestamp,
     )[0]
-    out_path = utils_path._get_changed_path_ext(out_path, out_format)
 
     utils_io._check_overwrite_policy([out_path], overwrite)
     utils_io._delete_if_required(out_path, overwrite)
@@ -458,7 +453,7 @@ def _raster_to_vector_extent(
 
 def raster_to_vector_extent(
     raster: Union[str, gdal.Dataset, list[Union[str, gdal.Dataset]]],
-    out_path: Optional[str] = None,
+    out_path: Optional[Union[str, List[str]]] = None,
     metadata: bool = False,
     latlng: bool = False,
     *,
@@ -467,7 +462,6 @@ def raster_to_vector_extent(
     suffix: str = "",
     add_uuid: bool = False,
     add_timestamp: bool = False,
-    out_format: str = "gpkg",
 ) -> Union[str, List[str], gdal.Dataset]:
     """Gets the footprints of a raster or a list of rasters.
 
@@ -475,7 +469,7 @@ def raster_to_vector_extent(
     ----------
     raster : Union[str, List, gdal.Dataset]
         The raster(s) to be shifted.
-    out_path : Optional[str], optional
+    out_path : Optional[str, Union[str, List[str]]], optional
         The path to the output raster. If None, the raster is created in memory., default: None
     metadata : bool, optional
         If True, metadata is added to the output raster., default: False
@@ -491,8 +485,6 @@ def raster_to_vector_extent(
         If True, a unique identifier will be added to the output raster name., default: False
     add_timestamp : bool, optional
         If True, a timestamp will be added to the output raster name., default: False
-    out_format : str, optional
-        The output format of the raster. If None, the format is inferred from the output path., default: "gpkg"
 
     Returns
     -------
@@ -519,7 +511,6 @@ def raster_to_vector_extent(
         suffix=suffix,
         add_uuid=add_uuid,
         add_timestamp=add_timestamp,
-        change_ext=out_format,
     )
 
     utils_io._check_overwrite_policy(out_paths, overwrite)
@@ -537,7 +528,6 @@ def raster_to_vector_extent(
             suffix=suffix,
             add_uuid=add_uuid,
             add_timestamp=add_timestamp,
-            out_format=out_format,
         )
 
         footprints.append(footprint)

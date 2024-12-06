@@ -269,7 +269,6 @@ class TestRasterToVectorExtent:
         result = _raster_to_vector_extent(
             reference_raster,
             str(out_path),
-            out_format="shp"
         )
         
         assert Path(result).exists()
@@ -387,15 +386,14 @@ class TestRasterGetFootprints:
 
     def test_footprints_different_formats(self, reference_raster, tmp_path):
         """Test getting footprints in different output formats."""
-        out_path = tmp_path / "footprint.shp"
+        out_path = tmp_path / "footprint.fgb"
         result = raster_to_vector_extent(
             reference_raster,
             str(out_path),
-            out_format="shp"
         )
         
         assert Path(result).exists()
-        assert result.endswith(".shp")
+        assert result.endswith(".fgb")
         ds = ogr.Open(str(result))
         assert ds is not None
         ds = None

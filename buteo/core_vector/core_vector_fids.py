@@ -196,4 +196,3 @@ def vector_create_attribute_from_fid(
         return output
     
     return output[0]
-

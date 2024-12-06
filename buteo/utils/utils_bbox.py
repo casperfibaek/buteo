@@ -13,7 +13,7 @@ The GDAL geotransform is a list of six parameters:</br>
 """
 
 # Standard library
-from typing import List, Union, Dict, Any, Optional
+from typing import List, Union, Dict, Optional
 from uuid import uuid4
 
 # External
@@ -2273,9 +2273,12 @@ def _get_vector_from_geom(
         if layer.CreateFeature(feature) != 0:
             raise RuntimeError("Could not create feature in layer")
 
+        vector_ds.FlushCache()
+        del vector_ds
+
     except Exception as e:
-        # Cleanup in case of error
         if 'vector_ds' in locals():
+            del vector_ds
             vector_ds = None
         if utils_path._check_file_exists(path):
             driver.DeleteDataSource(path)
