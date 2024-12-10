@@ -456,7 +456,7 @@ def _get_input_paths(
         if not all(isinstance(val, (gdal.Dataset, ogr.DataSource, str)) for val in inputs):
             raise TypeError("All list elements must be gdal.Dataset, ogr.DataSource, or str")
 
-        parsed_inputs = utils_gdal._get_path_from_dataset_list(inputs, allow_mixed=True)
+        parsed_inputs = utils_gdal._get_path_from_dataset_list(inputs, allow_mixed=True if input_type == "mixed" else False)
 
     # Validate paths
     parsed_inputs = [utils_path._parse_path(path) for path in parsed_inputs if path]

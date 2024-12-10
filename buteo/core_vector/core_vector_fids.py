@@ -135,7 +135,7 @@ def vector_create_fid_field(
 
     if input_is_list:
         return output
-    
+
     return output[0]
 
 

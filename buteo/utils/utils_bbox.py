@@ -15,6 +15,7 @@ The GDAL geotransform is a list of six parameters:</br>
 # Standard library
 from typing import List, Union, Dict, Optional
 from uuid import uuid4
+from warnings import warn
 
 # External
 import numpy as np
@@ -781,18 +782,34 @@ def _get_geom_from_bbox(
     except (ValueError, TypeError) as e:
         raise ValueError(f"Could not convert bbox values to float: {str(e)}") from e
 
+    if any(np.isnan(val) for val in [x_min, x_max, y_min, y_max]):
+        raise ValueError("Bounding box contains NaN values")
+
     # Create geometry
     try:
-        ring = ogr.Geometry(ogr.wkbLinearRing)
-        ring.AddPoint(x_min, y_min)
-        ring.AddPoint(x_max, y_min)
-        ring.AddPoint(x_max, y_max)
-        ring.AddPoint(x_min, y_max)
-        ring.AddPoint(x_min, y_min)  # Close the ring
+        # if all are zero
+        if x_min == 0 and x_max == 0 and y_min == 0 and y_max == 0:
+            wkt = """POLYGON Z ((0 0 0,
+                        0.000001 0.0 0,
+                        0.000001 0.000001 0,
+                        0.0 0.000001 0,
+                        0 0 0))"""
+            geom = ogr.CreateGeometryFromWkt(wkt)
 
-        geom = ogr.Geometry(ogr.wkbPolygon)
-        if geom.AddGeometry(ring) != 0:
-            raise ValueError("Failed to add ring to polygon")
+            warn("Bounding box is zero ([0, 0, 0, 0]), creating a very small polygon instead.")
+
+        else:
+            ring = ogr.Geometry(ogr.wkbLinearRing)
+            ring.AddPoint(x_min, y_min)
+            ring.AddPoint(x_max, y_min)
+            ring.AddPoint(x_max, y_max)
+            ring.AddPoint(x_min, y_max)
+            ring.CloseRings()  # Ensure the ring is closed properly
+
+            geom = ogr.Geometry(ogr.wkbPolygon)
+
+            if geom.AddGeometry(ring) != 0:
+                raise ValueError("Failed to add ring to polygon")
 
         if not geom.IsValid():
             raise ValueError("Created geometry is not valid")

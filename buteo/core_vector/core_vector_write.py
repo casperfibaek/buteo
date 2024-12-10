@@ -307,7 +307,7 @@ def vector_create_from_points(
         proj = utils_projection.parse_projection(projection)
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath("temp_points.gpkg", add_timestamp=True, add_uuid=True)
+        out_path = utils_path._get_temp_filepath("temp_points.fgb", add_timestamp=True, add_uuid=True)
 
     if not utils_path._check_is_valid_output_filepath(out_path):
         raise ValueError(f"Invalid output path: {out_path}")
@@ -379,16 +379,45 @@ def vector_create_from_geojson(
         proj = utils_projection.parse_projection(projection)
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath("temp_geojson.fgb", add_timestamp=True, add_uuid=True)
+        out_path = utils_path._get_temp_filepath("temp_from_geojson.fgb", add_timestamp=True, add_uuid=True)
 
     driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
     driver = ogr.GetDriverByName(driver_name)
 
     datasource = driver.CreateDataSource(out_path)
-    datasource.ImportFromJson(geojson)
-    datasource.SetProjection(proj.ExportToWkt())
-    datasource.SyncToDisk()
+    try:
+        geojson_ds = ogr.Open(geojson)
+    except RuntimeError as e:
+        raise ValueError(f"Could not open GeoJSON string: {e}") from e
 
+    if geojson_ds is None:
+        raise ValueError("Could not open GeoJSON string.")
+
+    # Copy all layers from the GeoJSON to the output datasource
+    for i in range(geojson_ds.GetLayerCount()):
+        src_layer = geojson_ds.GetLayer(i)
+        layer_name = src_layer.GetName()
+        geom_type = src_layer.GetGeomType()
+        dst_layer = datasource.CreateLayer(layer_name, proj, geom_type=geom_type)
+
+        if dst_layer is None:
+            raise RuntimeError(f"Could not create layer: {layer_name}")
+
+        src_layer_defn = src_layer.GetLayerDefn()
+
+        for i in range(src_layer_defn.GetFieldCount()):
+            field_defn = src_layer_defn.GetFieldDefn(i)
+            dst_layer.CreateField(field_defn)
+
+        src_layer.ResetReading()
+
+        for src_feat in src_layer:
+            dst_feat = ogr.Feature(dst_layer.GetLayerDefn())
+            dst_feat.SetFrom(src_feat)
+            dst_layer.CreateFeature(dst_feat)
+            dst_feat = None
+
+    datasource.SyncToDisk()
     datasource = None
 
     return out_path
@@ -431,23 +460,16 @@ def vector_set_crs(
         If the input vector could not be opened.
     """
     utils_base._type_check(vector, [str, ogr.DataSource], "vector")
-    utils_base._type_check(
-        projection,
-        [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-        "projection",
-    )
+    utils_base._type_check(projection,[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
     utils_base._type_check(out_path, [str, None], "out_path")
     utils_base._type_check(overwrite, [bool], "overwrite")
 
     in_vector_path = utils_io._get_input_paths(vector, "vector")[0]
 
     if out_path is None:
-        if overwrite:
-            out_path = in_vector_path
-        else:
-            out_path = utils_path._get_temp_filepath("vector_change_crs.gpkg")
+        out_path = utils_path._get_temp_filepath("vector_change_crs.fgb", add_uuid=True, add_timestamp=True)
     else:
-        out_path = utils_io._get_output_paths(out_path)[0]
+        out_path = utils_io._get_output_paths(in_vector_path, out_path)[0]
 
     utils_io._check_overwrite_policy([out_path], overwrite)
     utils_io._delete_if_required(out_path, overwrite)

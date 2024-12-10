@@ -80,7 +80,8 @@ class TestVectorCreateFromBbox:
         ds = ogr.Open(result)
         assert ds is not None
         layer = ds.GetLayer(0)
-        assert layer.GetGeomType() == ogr.wkbPolygon
+        assert layer.GetFeatureCount() == 1
+        assert layer.GetExtent() == (0, 1, 0, 1)
 
     def test_bbox_with_projection(self, tmp_path):
         """Test creating bbox with specific projection."""

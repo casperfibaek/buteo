@@ -94,7 +94,7 @@ class TestGetBoundsInfoRaster:
         assert 'bbox_gdal' in bounds
         assert 'bbox_gdal_latlng' in bounds
         assert 'bounds_latlng' in bounds
-        assert 'bounds_raster' in bounds
+        assert 'bounds' in bounds
         assert 'centroid' in bounds
         assert 'centroid_latlng' in bounds
         assert 'area' in bounds

@@ -404,7 +404,7 @@ def _raster_to_vector_extent(
             ("bbox_gdal", "str", metadata_raster["bbox_gdal"]),
             ("bbox_gdal_latlng", "str", metadata_raster["bbox_gdal_latlng"]),
             ("bounds_latlng", "str", metadata_raster["bounds_latlng"]),
-            ("bounds_raster", "str", metadata_raster["bounds_raster"]),
+            ("bounds", "str", metadata_raster["bounds"]),
             ("centroid", "str", metadata_raster["centroid"]),
             ("centroid_latlng", "str", metadata_raster["centroid_latlng"]),
             ("area", "float", metadata_raster["area"]),

@@ -37,6 +37,6 @@ def vector_create_index(
 
     return in_paths[0]
 
+# vector_create_index
 # vector_delete_index
-# vector_validate_index
-# vector_vector_has_index
+# check_vector_has_valid_index
