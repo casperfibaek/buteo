@@ -102,7 +102,7 @@ def raster_create_copy(
         if bands is not None:
             # Create a new dataset with only the specified bands
             vrt_options = gdal.BuildVRTOptions(bandList=bands)
-            temp_vrt = gdal.BuildVRT('subset_bands', src_ds, options=vrt_options)
+            temp_vrt = gdal.BuildVRT('/vsimem/subset_bands.vrt', src_ds, options=vrt_options)
             if temp_vrt is None:
                 raise RuntimeError("Failed to create temporary VRT dataset")
             driver.CreateCopy(out_paths[idx], temp_vrt, options=creation_options)

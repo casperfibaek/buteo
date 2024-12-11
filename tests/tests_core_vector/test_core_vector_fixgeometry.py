@@ -12,6 +12,8 @@ from buteo.core_vector.core_vector_fixgeometry import (
     _vector_fix_geometry,
     vector_fix_geometry,
 )
+
+
 @pytest.fixture
 def invalid_vector(tmp_path):
     """Create a vector with invalid geometry."""
