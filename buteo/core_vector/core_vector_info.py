@@ -66,6 +66,8 @@ def _get_basic_info_vector(
     geom_type = layer.GetGeomType()
     geom_type_name = ogr.GeometryTypeToName(geom_type)
     feature_count = layer.GetFeatureCount()
+    fid_column = layer.GetFIDColumn()
+    geom_column = layer.GetGeometryColumn()
 
     layer = None
     layer_list = None
@@ -77,6 +79,8 @@ def _get_basic_info_vector(
         "geom_type_name": geom_type_name,
         "projection_wkt": projection_wkt,
         "projection_osr": projection_osr,
+        "column_geom": geom_column,
+        "column_fid": fid_column,
     }
 
 
@@ -162,21 +166,14 @@ def get_metadata_vector(
     Parameters
     ----------
     datasource : Union[str, ogr.DataSource]
-        The vector to get metadata from.
-    projection_osr : osr.SpatialReference
-        The source projection
-    layer_name_or_id : Union[str, int], optional
-        The layer name or index to extract information from, default: None (all).
-
+        The datasource to extract metadata from
+    layer_name_or_id : Optional[Union[str, int]], optional
+        The layer name or index to extract information from, default: None.
+    
     Returns
     -------
     Dict[str, Any]
-        Dictionary containing bounds information
-
-    Raises
-    ------
-    ValueError
-        If bounds computation fails
+        Metadata dictionary containing information about the vector.
     """
     utils_base._type_check(datasource, [str, ogr.DataSource], "datasource")
     utils_base._type_check(layer_name_or_id, [str, int, None], "layer_name_or_id")

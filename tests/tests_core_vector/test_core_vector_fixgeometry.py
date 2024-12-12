@@ -6,11 +6,10 @@ import sys; sys.path.append("../../")
 import os
 
 import pytest
-from osgeo import ogr, osr, gdal
+from osgeo import ogr, osr
 
 from buteo.core_vector.core_vector_fixgeometry import (
     _vector_fix_geometry,
-    vector_fix_geometry,
 )
 
 

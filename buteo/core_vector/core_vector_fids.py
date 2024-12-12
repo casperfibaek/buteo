@@ -194,5 +194,5 @@ def vector_create_attribute_from_fid(
 
     if input_is_list:
         return output
-    
+
     return output[0]
