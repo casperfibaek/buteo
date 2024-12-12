@@ -188,9 +188,6 @@ class TestRasterCreateCopy:
             assert np.all(band2 == 1)  # Second band should be all 1's
             assert np.all(band3 == 2)  # Third band should be all 2's
 
-        # if os.path.exists("./subset_bands"):
-        #     os.remove("./subset_bands")
-
 
 class TestRasterCreateEmpty:
     def test_basic_creation(self, tmp_path):

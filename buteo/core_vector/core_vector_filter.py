@@ -1,3 +1,4 @@
+""" Core functions for filtering vectors by functions. """
 # Standard library
 from typing import Union, Optional,Callable
 
