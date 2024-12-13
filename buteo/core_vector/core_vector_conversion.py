@@ -115,11 +115,13 @@ def _geom_conversions_required(source_geom_dict, target_geom_dict):
 
 def vector_convert_geometry(
     vector: Union[str, ogr.DataSource],
-    multigeometry: bool,
+    multigeometry: Optional[bool] = None,
     z: Optional[bool] = None,
     m: Optional[bool] = None,
     output_path: Optional[str] = None,
     layer_name_or_id: Union[str, int] = 0,
+    z_attribute: Optional[str] = None,
+    m_attribute: Optional[str] = None,
     *,
     prefix: str = "",
     suffix: str = "",
@@ -133,8 +135,8 @@ def vector_convert_geometry(
     ----------
     vector : str or ogr.DataSource
         The vector to convert.
-    multigeometry : bool
-        If True, the output vector will contain multiparts.
+    multigeometry : bool, optional
+        If True, the output vector will be multiparts. If False it will be singleparts. Default: None
     z : bool, optional
         If True, the output vector will be 3D. Default: None
     m : bool, optional
@@ -143,6 +145,10 @@ def vector_convert_geometry(
         The output path. Default: None (in-memory is created)
     layer_name_or_id : str or int, optional
         The name or index of the layer to convert. Default: 0
+    z_attribute : str, optional
+        The name of the attribute to use for Z values. If None, 0.0 is inserted Default: None
+    m_attribute : str, optional
+        The name of the attribute to use for M values. If None, 0.0 is inserted Default: None
     prefix : str, optional
         Prefix to add to output path. Default: ""
     suffix : str, optional
@@ -156,11 +162,13 @@ def vector_convert_geometry(
         The path to the converted vector
     """
     utils_base._type_check(vector, [str, ogr.DataSource], "vector")
-    utils_base._type_check(multigeometry, [bool], "multigeometry")
+    utils_base._type_check(multigeometry, [type(None), bool], "multigeometry")
     utils_base._type_check(z, [type(None), bool], "z")
     utils_base._type_check(m, [type(None), bool], "m")
     utils_base._type_check(output_path, [type(None), str], "output_path")
     utils_base._type_check(layer_name_or_id, [str, int], "layer_name_or_id")
+    utils_base._type_check(z_attribute, [type(None), str], "z_attribute")
+    utils_base._type_check(m_attribute, [type(None), str], "m_attribute")
     utils_base._type_check(prefix, [str], "prefix")
     utils_base._type_check(suffix, [str], "suffix")
     utils_base._type_check(overwrite, [bool], "overwrite")
