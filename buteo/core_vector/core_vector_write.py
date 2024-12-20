@@ -14,6 +14,7 @@ from buteo.utils import (
     utils_bbox,
     utils_path,
     utils_projection,
+    utils_translate
 )
 from buteo.core_vector.core_vector_read import _open_vector, _vector_get_layer
 
@@ -148,6 +149,126 @@ def vector_create_copy(
         src_ds = None
 
     return out_paths if input_is_list else out_paths[0]
+
+
+
+def vector_create_empty_copy(
+    vector: Union[ogr.DataSource, str],
+    out_path: Optional[str] = None,
+    layer_names_or_ids: Optional[Union[str, int, List[Union[str, int]]]] = None,
+    geom_type: Optional[int] = None,
+    *,
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = False,
+    add_timestamp: bool = False,
+    overwrite: bool = True,
+) -> str:
+    """
+    Creates an empty copy of a vector dataset. No features are copied, only the structure.
+
+    Parameters
+    ----------
+    vector : Union[ogr.DataSource, str]
+        The input vector dataset.
+    out_path : Optional[str], optional
+        The output path. If None, a temporary file will be created. Default is None.
+    layer_names_or_ids : Optional[Union[str, int, List[Union[str, int]]]], optional
+        The layer names or ids to copy. If None, all layers will be copied. Default is None.
+    geom_type : Optional[int], optional
+        The geometry type of the output. If None, the same as the input will be used. Default is None.
+    prefix : str, optional
+        A prefix to add to the output path. Default is an empty string.
+    suffix : str, optional
+        A suffix to add to the output path. Default is an empty string.
+    add_uuid : bool, optional
+        If True, a UUID will be added to the output path. Default is False.
+    add_timestamp : bool, optional
+        If True, a timestamp will be added to the output path. Default is False.
+    overwrite : bool, optional
+        If True, the output will be overwritten if it already exists. Default is True.
+
+    Returns
+    -------
+    str
+        The output path.
+    """
+    utils_base._type_check(vector, [ogr.DataSource, str], "vector")
+    utils_base._type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(layer_names_or_ids, [str, int, [str, int], None], "layer_names_or_ids")
+    utils_base._type_check(geom_type, [int, None], "geom_type")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(add_timestamp, [bool], "add_timestamp")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+
+    in_path = utils_io._get_input_paths(vector, "vector")[0]
+    out_path = utils_io._get_output_paths(
+        in_path,
+        out_path,
+        prefix=prefix,
+        suffix=suffix,
+        add_uuid=add_uuid,
+        add_timestamp=add_timestamp,
+    )[0]
+
+    utils_io._check_overwrite_policy([out_path], overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
+
+    driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
+    driver = ogr.GetDriverByName(driver_name)
+
+    if driver is None:
+        raise RuntimeError(f"Could not get OGR driver for output format: {driver_name}")
+
+    src_ds = _open_vector(in_path, writeable=False)
+    if src_ds is None:
+        raise ValueError(f"Unable to open vector dataset: {in_path}")
+
+    dst_ds = driver.CreateDataSource(out_path)
+    if dst_ds is None:
+        raise RuntimeError(f"Could not create output datasource: {out_path}")
+
+    if layer_names_or_ids is None:
+        layers = _vector_get_layer(src_ds, layer_name_or_id=None)
+    elif layer_names_or_ids is not None and not isinstance(layer_names_or_ids, list):
+        layers = _vector_get_layer(src_ds, layer_name_or_id=layer_names_or_ids)
+    else:
+        layers = [_vector_get_layer(src_ds, layer_name_or_id=layer_name_or_id)[0] for layer_name_or_id in layer_names_or_ids]
+
+    for src_layer in layers:
+        layer_name = src_layer.GetName()
+        srs = src_layer.GetSpatialRef()
+
+        if geom_type is None:
+            target_geom_type = src_layer.GetGeomType()
+        else:
+            if utils_translate._check_geom_is_geomtype(geom_type):
+                target_geom_type = utils_translate._convert_geomtype_to_wkb(geom_type)
+            elif utils_translate._check_geom_is_wkbgeom(geom_type):
+                target_geom_type = geom_type
+            else:
+                raise ValueError(f"Invalid geometry type: {geom_type}")
+
+        dst_layer = dst_ds.CreateLayer(layer_name, srs=srs, geom_type=target_geom_type)
+        if dst_layer is None:
+            raise RuntimeError(f"Could not create layer: {layer_name}")
+
+        # Copy fields
+        src_layer_defn = src_layer.GetLayerDefn()
+        for i in range(src_layer_defn.GetFieldCount()):
+            field_defn = src_layer_defn.GetFieldDefn(i)
+            dst_layer.CreateField(field_defn)
+
+        dst_layer.SyncToDisk()
+        dst_layer = None
+        src_layer = None
+
+    src_ds = None
+    dst_ds = None
+
+    return out_path
 
 
 def vector_create_from_bbox(

@@ -11,115 +11,466 @@ from typing import Union, Optional, List
 # External
 from osgeo import ogr
 
-wkbMBit = 0x40000000
-
-
 # Internal
 from buteo.utils import (
     utils_base,
     utils_gdal,
     utils_path,
     utils_io,
+    utils_translate
 )
 from buteo.core_vector.core_vector_read import _open_vector, _vector_get_layer
+from buteo.core_vector.core_vector_write import vector_create_empty_copy, vector_create_copy
+from buteo.core_vector.core_vector_info import _get_basic_info_vector
 
 
-def _parse_geom_type(geom_type: int) -> dict[str, Union[int, str, bool]]:
-    """Parse the geometry type to a 2D or 3D type."""
-    if geom_type == 1:
-        return {"type": "point", "multi": False, "3D": False, "M": False, "number": 1}
-    elif geom_type == 2:
-        return {"type": "linestring", "multi": False, "3D": False, "M": False, "number": 2}
-    elif geom_type == 3:
-        return {"type": "polygon", "multi": False, "3D": False, "M": False, "number": 3}
-    elif geom_type == 4:
-        return {"type": "point", "multi": True, "3D": False, "M": False, "number": 4}
-    elif geom_type == 5:
-        return {"type": "linestring", "multi": True, "3D": False, "M": False, "number": 5}
-    elif geom_type == 6:
-        return {"type": "polygon", "multi": True, "3D": False, "M": False, "number": 6}
-    elif geom_type == 7:
-        return {"type": "geometrycollection", "multi": False, "3D": False, "M": False, "number": 7}
-    elif geom_type == 1001:
-        return {"type": "point", "multi": False, "3D": True, "M": False, "number": 1001}
-    elif geom_type == 1002:
-        return {"type": "linestring", "multi": False, "3D": True, "M": False, "number": 1002}
-    elif geom_type == 1003:
-        return {"type": "polygon", "multi": False, "3D": True, "M": False, "number": 1003}
-    elif geom_type == 1004:
-        return {"type": "point", "multi": True, "3D": True, "M": False, "number": 1004}
-    elif geom_type == 1005:
-        return {"type": "linestring", "multi": True, "3D": True, "M": False, "number": 1005}
-    elif geom_type == 1006:
-        return {"type": "polygon", "multi": True, "3D": True, "M": False, "number": 1006}
-    elif geom_type == 1007:
-        return {"type": "geometrycollection", "multi": False, "3D": True, "M": False, "number": 1007}
-    elif geom_type == 2001:
-        return {"type": "point", "multi": False, "3D": False, "M": True, "number": 2001}
-    elif geom_type == 2002:
-        return {"type": "linestring", "multi": False, "3D": False, "M": True, "number": 2002}
-    elif geom_type == 2003:
-        return {"type": "polygon", "multi": False, "3D": False, "M": True, "number": 2003}
-    elif geom_type == 2004:
-        return {"type": "point", "multi": True, "3D": False, "M": True, "number": 2004}
-    elif geom_type == 2005:
-        return {"type": "linestring", "multi": True, "3D": False, "M": True, "number": 2005}
-    elif geom_type == 2006:
-        return {"type": "polygon", "multi": True, "3D": False, "M": True, "number": 2006}
-    elif geom_type == 2007:
-        return {"type": "geometrycollection", "multi": False, "3D": False, "M": True, "number": 2007}
-    elif geom_type == 3001:
-        return {"type": "point", "multi": False, "3D": True, "M": True, "number": 3001}
-    elif geom_type == 3002:
-        return {"type": "linestring", "multi": False, "3D": True, "M": True, "number": 3002}
-    elif geom_type == 3003:
-        return {"type": "polygon", "multi": False, "3D": True, "M": True, "number": 3003}
-    elif geom_type == 3004:
-        return {"type": "point", "multi": True, "3D": True, "M": True, "number": 3004}
-    elif geom_type == 3005:
-        return {"type": "linestring", "multi": True, "3D": True, "M": True, "number": 3005}
-    elif geom_type == 3006:
-        return {"type": "polygon", "multi": True, "3D": True, "M": True, "number": 3006}
-    elif geom_type == 3007:
-        return {"type": "geometrycollection", "multi": False, "3D": True, "M": True, "number": 3007}
-    else:
-        raise ValueError(f"Invalid geometry type: {geom_type}")
 
-
-def _geom_conversions_required(source_geom_dict, target_geom_dict):
-    """ Determine which geometry conversions are required to convert between two geometries. """
-    operations = []
-    if source_geom_dict["3D"] and not target_geom_dict["3D"]:
-        operations.append("flatten_to_2D")
-
-    if not source_geom_dict["3D"] and target_geom_dict["3D"]:
-        operations.append("promote_to_3D")
-
-    if source_geom_dict["multi"] and not target_geom_dict["multi"]:
-        operations.append("explode_to_singleparts")
-
-    if not source_geom_dict["multi"] and target_geom_dict["multi"]:
-        operations.append("aggregate_to_multiparts")
-
-    if source_geom_dict["m"] and not target_geom_dict["m"]:
-        operations.append("remove_m")
-
-    if not source_geom_dict["m"] and target_geom_dict["m"]:
-        operations.append("add_m")
-
-    if source_geom_dict["type"] != target_geom_dict["type"]:
-        raise ValueError("Cannot convert between different geometry types.")
-
-    return operations
-
-
-def vector_convert_geometry(
+def check_vector_is_multipart(
     vector: Union[str, ogr.DataSource],
-    multigeometry: Optional[bool] = None,
+    layer_name_or_id: Union[str, int] = 0,
+) -> bool:
+    """
+    Checks if a vector is multipart. That if it contains features with multiple geometries.
+
+    Parameters
+    ----------
+    vector : str or ogr.DataSource
+        The vector to check.
+    layer_name_or_id : str or int, optional
+        The name or index of the layer to check. Default: 0
+
+    Returns
+    -------
+    bool
+        True if the vector is multipart, False otherwise.
+    """
+    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
+    utils_base._type_check(layer_name_or_id, [str, int], "layer_name_or_id")
+
+    ds = _open_vector(vector, writeable=False)
+    layer = _vector_get_layer(ds, layer_name_or_id)[0]
+
+    if not isinstance(layer, ogr.Layer):
+        raise ValueError("Could not open the layer.")
+
+    layer.ResetReading()
+    feature_count = layer.GetFeatureCount()
+
+    for _i in range(feature_count):
+        feature = layer.GetNextFeature()
+        geom = feature.GetGeometryRef()
+        if geom.GetGeometryCount() > 1:
+            return True
+
+    return False
+
+
+def vector_multipart_to_singlepart(
+    vector: Union[str, ogr.DataSource],
+    layer_name_or_id: Union[str, int] = 0,
+    output_path: Optional[str] = None,
+    output_multitype: Optional[bool] = None,
+    *,
+    prefix: str = "",
+    suffix: str = "",
+    overwrite: bool = False,
+) -> str:
+    """
+    Convert a multipart vector to a singlepart vector. That is, split features with multiple geometries into multiple features.
+    Copies the attributes from the original feature to all the new features.
+
+    Parameters
+    ----------
+    vector : str or ogr.DataSource
+        The vector to convert.
+    layer_name_or_id : str or int, optional
+        The name or index of the layer to convert. Default: 0
+    output_path : str, optional
+        The output path. Default: None (in-memory is created)
+    output_multitype : bool, optional
+        If True, the output vector will be of the "multi"types. That is MultiPolygon, MultiPoint, etc. Default: None
+        If False, the output vector will be of the "single"types. That is Polygon, Point, etc.
+        If None, no changes. Default: None
+    prefix : str, optional
+        Prefix to add to output path. Default: ""
+    suffix : str, optional
+        Suffix to add to output path. Default: ""
+    overwrite : bool, optional
+        If True, overwrites existing files. Default: False
+
+    Returns
+    -------
+    str
+        The path to the converted vector
+    """
+    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
+    utils_base._type_check(layer_name_or_id, [str, int], "layer_name_or_id")
+    utils_base._type_check(output_path, [type(None), str], "output_path")
+    utils_base._type_check(output_multitype, [type(None), bool], "output_multitype")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+
+    in_path = utils_io._get_input_paths(vector, "vector")
+    out_path = utils_io._get_output_paths(in_path, output_path, prefix=prefix, suffix=suffix) # type: ignore
+
+    utils_io._check_overwrite_policy(out_path, overwrite)
+    utils_io._delete_if_required_list(out_path, overwrite)
+
+    in_path = in_path[0]
+    out_path = out_path[0]
+
+    src_ds = _open_vector(in_path, writeable=False)
+    src_lyr = _vector_get_layer(src_ds, layer_name_or_id)[0]
+
+    if not isinstance(src_lyr, ogr.Layer):
+        raise ValueError("Could not open the layer.")
+
+    try:
+        dst_ds_path = vector_create_empty_copy(
+            in_path,
+            out_path,
+            layer_names_or_ids=layer_name_or_id,
+            prefix=prefix,
+            suffix=suffix,
+            overwrite=overwrite,
+        )
+        dst_ds = _open_vector(dst_ds_path, writeable=True)
+        dst_lyr = _vector_get_layer(dst_ds, layer_name_or_id)[0]
+
+        if not isinstance(dst_lyr, ogr.Layer):
+            raise ValueError("Could not open the layer.")
+
+        src_lyr.ResetReading()
+        feature_count = src_lyr.GetFeatureCount()
+
+        for _i in range(feature_count):
+            src_feat = src_lyr.GetNextFeature()
+            src_geom = src_feat.GetGeometryRef()
+
+            geom_count = src_geom.GetGeometryCount()
+
+            if geom_count == 1:
+                dst_lyr.CreateFeature(src_feat)
+                continue
+
+            for j in range(geom_count):
+                part = src_geom.GetGeometryRef(j)
+                feat = ogr.Feature(dst_lyr.GetLayerDefn())
+                feat.SetGeometry(part)
+                feat.SetFrom(src_feat)
+                dst_lyr.CreateFeature(feat)
+                feat = None
+
+        dst_lyr.SyncToDisk()
+        dst_lyr = None
+        dst_ds = None
+
+    except Exception as e:
+        utils_io._delete_file(out_path)
+        raise ValueError("Could not convert the vector.") from e
+
+    return out_path
+
+
+def vector_singlepart_to_multipart(
+    vector: Union[str, ogr.DataSource],
+    layer_name_or_id: Union[str, int] = 0,
+    output_path: Optional[str] = None,
+    attribute: Optional[str] = None,
+    *,
+    prefix: str = "",
+    suffix: str = "",
+    overwrite: bool = False,
+) -> str:
+    """
+    Convert a singlepart vector to a multipart vector. That is, merge features with the same attributes into a single feature with multiple geometries.
+
+    Parameters
+    ----------
+    vector : str or ogr.DataSource
+        The vector to convert.
+    layer_name_or_id : str or int, optional
+        The name or index of the layer to convert. Default: 0
+    output_path : str, optional
+        The output path. Default: None (in-memory is created)
+    attribute : str, optional
+        The attribute to use for merging features. If None, all features are merged. Default: None
+    prefix : str, optional
+        Prefix to add to output path. Default: ""
+    suffix : str, optional
+        Suffix to add to output path. Default: ""
+    overwrite : bool, optional
+        If True, overwrites existing files. Default: False
+
+    Returns
+    -------
+    str
+        The path to the converted vector
+    """
+    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
+    utils_base._type_check(layer_name_or_id, [str, int], "layer_name_or_id")
+    utils_base._type_check(output_path, [type(None), str], "output_path")
+    utils_base._type_check(attribute, [type(None), str], "attribute")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+
+    in_path = utils_io._get_input_paths(vector, "vector")
+    out_path = utils_io._get_output_paths(in_path, output_path, prefix=prefix, suffix=suffix) # type: ignore
+
+    utils_io._check_overwrite_policy(out_path, overwrite)
+    utils_io._delete_if_required_list(out_path, overwrite)
+
+    in_path = in_path[0]
+    out_path = out_path[0]
+
+    src_ds = _open_vector(in_path, writeable=False)
+    src_lyr = _vector_get_layer(src_ds, layer_name_or_id)[0]
+
+    if not isinstance(src_lyr, ogr.Layer):
+        raise ValueError("Could not open the layer.")
+
+    if attribute is not None:
+        layer_defn = src_lyr.GetLayerDefn()
+        field_index = layer_defn.GetFieldIndex(attribute)
+        if field_index == -1:
+            raise ValueError("The attribute does not exist in the layer.")
+
+    try:
+        dst_ds_path = vector_create_empty_copy(
+            in_path,
+            out_path,
+            layer_names_or_ids=layer_name_or_id,
+            prefix=prefix,
+            suffix=suffix,
+            overwrite=overwrite,
+        )
+        dst_ds = _open_vector(dst_ds_path, writeable=True)
+        dst_lyr = _vector_get_layer(dst_ds, layer_name_or_id)[0]
+
+        if not isinstance(dst_lyr, ogr.Layer):
+            raise ValueError("Could not open the layer.")
+
+        src_lyr.ResetReading()
+        feature_count = src_lyr.GetFeatureCount()
+
+        if attribute is None:
+            features = {}
+            for _i in range(feature_count):
+                src_feat = src_lyr.GetNextFeature()
+                geom = src_feat.GetGeometryRef()
+                key_i = geom.ExportToWkt()
+                if key_i in features:
+                    features[key_i].append(src_feat)
+                else:
+                    features[key_i] = [src_feat]
+
+            for key, feature_list in features.items():
+                geom = ogr.CreateGeometryFromWkt(key)
+                feat = ogr.Feature(dst_lyr.GetLayerDefn())
+                feat.SetGeometry(geom)
+                for src_feat in feature_list:
+                    feat.SetFrom(src_feat)
+                dst_lyr.CreateFeature(feat)
+                feat = None
+
+        else:
+            features = {}
+            for _i in range(feature_count):
+                src_feat = src_lyr.GetNextFeature()
+                key_i = src_feat.GetField(attribute)
+                if key_i in features:
+                    features[key_i].append(src_feat)
+                else:
+                    features[key_i] = [src_feat]
+
+            for _j, features_list in features.items():
+                geom = ogr.Geometry(ogr.wkbGeometryCollection)
+                for src_feat in features_list:
+                    geom.AddGeometry(src_feat.GetGeometryRef())
+                feat = ogr.Feature(dst_lyr.GetLayerDefn())
+                feat.SetGeometry(geom)
+                for src_feat in features_list:
+                    feat.SetFrom(src_feat)
+                dst_lyr.CreateFeature(feat)
+                feat = None
+
+        dst_lyr.SyncToDisk()
+        dst_lyr = None
+        dst_ds = None
+
+    except Exception as e:
+        utils_io._delete_file(out_path)
+        raise ValueError("Could not convert the vector.") from e
+
+    return out_path
+
+
+def _convert_multitype(input_geom: ogr.Geometry, multitype: bool) -> Union[ogr.Geometry, List[ogr.Geometry]]:
+    geom_type = input_geom.GetGeometryType()
+    if utils_translate._check_geom_is_wkbgeom(geom_type):
+        geom_type = utils_translate._convert_wkb_to_geomtype(geom_type)
+
+    if multitype:
+        converted_type = utils_translate._convert_singletype_int_to_multitype_int(geom_type)
+    else:
+        converted_type = utils_translate._convert_multitype_int_to_singletype_int(geom_type)
+
+    if geom_type == converted_type:
+        return input_geom
+
+    converted_type = utils_translate._convert_geomtype_to_wkb(converted_type)
+
+    if geom_type == ogr.wkbGeometryCollection:
+        return input_geom
+
+    if multitype is True:
+        new_geom = ogr.Geometry(converted_type)
+        new_geom.AddGeometry(input_geom)
+
+        return new_geom
+
+    else:
+        separated = []
+        for i in range(input_geom.GetGeometryCount()):
+            part = input_geom.GetGeometryRef(i)
+            if part is not None:
+                separated.append(part.Clone())
+
+        return separated
+
+
+def vector_change_multitype(
+    vector: Union[str, ogr.DataSource],
+    multitype: bool,
+    layer_name_or_id: Union[str, int] = 0,
+    output_path: Optional[str] = None,
+    *,
+    prefix: str = "",
+    suffix: str = "",
+    overwrite: bool = False,
+) -> str:
+    """
+    This function changes the type of a vector. Either from Multi to Single or vice versa.
+    Examples: MultiPolygon to Polygon, MultiPoint to Point. Point to MultiPoint, etc.
+
+    Parameters
+    ----------
+    vector : str or ogr.DataSource
+        The vector to convert.
+    multitype : bool
+        If True, the output vector will be of the "multi"types. That is MultiPolygon, MultiPoint, etc.
+        If False, the output vector will be of the "single"types. That is Polygon, Point, etc.
+    layer_name_or_id : str or int, optional
+        The name or index of the layer to convert. Default: 0
+    output_path : str, optional
+        The output path. Default: None (in-memory is created)
+    prefix : str, optional
+        Prefix to add to output path. Default: ""
+    suffix : str, optional
+        Suffix to add to output path. Default: ""
+    overwrite : bool, optional
+        If True, overwrites existing files. Default: False
+
+    Returns
+    -------
+    str
+        The path to the converted vector
+    """
+    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
+    utils_base._type_check(multitype, [bool], "multitype")
+    utils_base._type_check(layer_name_or_id, [str, int], "layer_name_or_id")
+    utils_base._type_check(output_path, [type(None), str], "output_path")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+
+    in_path = utils_io._get_input_paths(vector, "vector")
+    out_path = utils_io._get_output_paths(in_path, output_path, prefix=prefix, suffix=suffix) # type: ignore
+
+    utils_io._check_overwrite_policy(out_path, overwrite)
+    utils_io._delete_if_required_list(out_path, overwrite)
+
+    in_path = in_path[0]
+    out_path = out_path[0]
+
+    src_ds = _open_vector(in_path, writeable=False)
+    src_lyr = _vector_get_layer(src_ds, layer_name_or_id)[0]
+
+    if not isinstance(src_lyr, ogr.Layer):
+        raise ValueError("Could not open the layer.")
+
+    curr_multi = _get_basic_info_vector(src_ds, layer_name_or_id)["geom_multi"]
+
+    if curr_multi == multitype:
+        return in_path
+
+    if multitype is True:
+        target_geom_type = utils_translate._convert_singletype_int_to_multitype_int(src_lyr.GetGeomType())
+    else:
+        target_geom_type = utils_translate._convert_multitype_int_to_singletype_int(src_lyr.GetGeomType())
+
+    if utils_translate._check_geom_is_geomtype(target_geom_type):
+        target_geom_type = utils_translate._convert_geomtype_to_wkb(target_geom_type)
+
+    try:
+        dst_ds_path = vector_create_empty_copy(
+            in_path,
+            out_path,
+            layer_names_or_ids=layer_name_or_id,
+            geom_type=target_geom_type,
+            prefix=prefix,
+            suffix=suffix,
+            overwrite=overwrite,
+        )
+        dst_ds = _open_vector(dst_ds_path, writeable=True)
+        dst_lyr = _vector_get_layer(dst_ds, layer_name_or_id)[0]
+        dst_lyr_defn = dst_lyr.GetLayerDefn()
+
+        if not isinstance(dst_lyr, ogr.Layer):
+            raise ValueError("Could not open the layer.")
+
+        src_lyr.ResetReading()
+        feature_count = src_lyr.GetFeatureCount()
+
+        for _i in range(feature_count):
+            src_feat = src_lyr.GetNextFeature()
+            src_geom = src_feat.GetGeometryRef()
+
+            geom_list = _convert_multitype(src_geom, multitype)
+
+            if not isinstance(geom_list, list):
+                geom_list = [geom_list]
+
+            for geom in geom_list:
+                feat = ogr.Feature(dst_lyr_defn)
+                feat.SetGeometry(geom)
+
+                # Copy only the attributes from the source feature
+                for fld_idx in range(src_feat.GetFieldCount()):
+                    feat.SetField(fld_idx, src_feat.GetField(fld_idx))
+
+                dst_lyr.CreateFeature(feat)
+                feat = None
+
+        dst_lyr.SyncToDisk()
+        dst_lyr = None
+        dst_ds = None
+
+    except Exception as e:
+        utils_io._delete_file(out_path)
+        raise ValueError("Could not convert the vector.") from e
+
+    return out_path
+
+
+def vector_change_dimensionality(
+    vector: Union[str, ogr.DataSource],
     z: Optional[bool] = None,
     m: Optional[bool] = None,
-    output_path: Optional[str] = None,
     layer_name_or_id: Union[str, int] = 0,
+    output_path: Optional[str] = None,
     z_attribute: Optional[str] = None,
     m_attribute: Optional[str] = None,
     *,
@@ -127,20 +478,266 @@ def vector_convert_geometry(
     suffix: str = "",
     overwrite: bool = False,
 ) -> str:
+    """
+    Change the dimensionality of a vector. That is, add or remove Z and M values.
+
+    Parameters
+    ----------
+    vector : str or ogr.DataSource
+        The vector to convert.
+    z : bool, optional
+        If True, the output vector will be 3D.
+        If False, the output vector will be 2D.
+        If None, no changes. Default: None
+    m : bool, optional
+        If True, the output vector will have M (measure) values.
+        If False, the output vector will not have M values.
+        If None, no changes. Default: None
+    layer_name_or_id : str or int, optional
+        The name or index of the layer to convert. Default: 0
+    output_path : str, optional
+        The output path. Default: None (in-memory is created)
+    z_attribute : str, optional
+        The name of the attribute to use for Z values. If None, 0.0 is inserted. Default: None
+    m_attribute : str, optional
+        The name of the attribute to use for M values. If None, 0.0 is inserted. Default: None
+    prefix : str, optional
+        Prefix to add to output path. Default: ""
+    suffix : str, optional
+        Suffix to add to output path. Default: ""
+    overwrite : bool, optional
+        If True, overwrites existing files. Default: False
+
+    Returns
+    -------
+    str
+        The path to the converted vector
+    """
+    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
+    utils_base._type_check(z, [type(None), bool], "z")
+    utils_base._type_check(m, [type(None), bool], "m")
+    utils_base._type_check(layer_name_or_id, [str, int], "layer_name_or_id")
+    utils_base._type_check(output_path, [type(None), str], "output_path")
+    utils_base._type_check(z_attribute, [type(None), str], "z_attribute")
+    utils_base._type_check(m_attribute, [type(None), str], "m_attribute")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+
+    in_path = utils_io._get_input_paths(vector, "vector")
+    out_path = utils_io._get_output_paths(in_path, output_path, prefix=prefix, suffix=suffix)  # type: ignore
+
+    utils_io._check_overwrite_policy(out_path, overwrite)
+    utils_io._delete_if_required_list(out_path, overwrite)
+
+    in_path = in_path[0]
+    out_path = out_path[0]
+
+    src_ds = _open_vector(in_path, writeable=False)
+    src_lyr = _vector_get_layer(src_ds, layer_name_or_id)[0]
+    layer_defn = src_lyr.GetLayerDefn()
+
+    curr_geom_type = layer_defn.GetGeomType()
+    if not utils_translate._check_geom_is_geomtype(curr_geom_type):
+        curr_geom_type = utils_translate._convert_wkb_to_geomtype(curr_geom_type)
+
+    hasZ = curr_geom_type in [1001, 1002, 1003, 1004, 1005, 1006, 3001, 3002, 3003, 3004, 3005, 3006]
+
+    target_geom_type = curr_geom_type
+    if z is False and hasZ:
+        target_geom_type -= 1000
+    elif z is True and not hasZ:
+        target_geom_type += 1000
+
+    hasM = curr_geom_type in [2001, 2002, 2003, 2004, 2005, 2006, 3001, 3002, 3003, 3004, 3005, 3006]
+
+    if m is False and hasM:
+        target_geom_type -= 2000
+    elif m is True and not hasM:
+        target_geom_type += 2000
+
+    if target_geom_type == curr_geom_type:
+        return in_path
+
+    target_geom_type = utils_translate._convert_geomtype_to_wkb(target_geom_type) if utils_translate._check_geom_is_geomtype(target_geom_type) else target_geom_type
+
+    if not isinstance(src_lyr, ogr.Layer):
+        raise ValueError("Could not open the layer.")
+
+    if z_attribute is not None:
+        field_index = layer_defn.GetFieldIndex(z_attribute)
+        if field_index == -1:
+            raise ValueError("The z_attribute does not exist in the layer.")
+
+    if m_attribute is not None:
+        field_index = layer_defn.GetFieldIndex(m_attribute)
+        if field_index == -1:
+            raise ValueError("The m_attribute does not exist in the layer.")
+
+    try:
+        dst_ds_path = vector_create_empty_copy(
+            in_path,
+            out_path,
+            layer_names_or_ids=layer_name_or_id,
+            geom_type=target_geom_type,
+            prefix=prefix,
+            suffix=suffix,
+            overwrite=overwrite,
+        )
+        dst_ds = _open_vector(dst_ds_path, writeable=True)
+        dst_lyr = _vector_get_layer(dst_ds, layer_name_or_id)[0]
+
+        if not isinstance(dst_lyr, ogr.Layer):
+            raise ValueError("Could not open the layer.")
+
+        src_lyr.ResetReading()
+        feature_count = src_lyr.GetFeatureCount()
+
+        for _i in range(feature_count):
+            src_feat = src_lyr.GetNextFeature()
+            src_geom = src_feat.GetGeometryRef()
+
+            if src_geom is None:
+                continue
+
+            geom_copy = src_geom.Clone()
+            geom_copy.FlattenTo2D()
+
+            if z is not None and z is True:
+                if z_attribute is not None:
+                    z_value = src_feat.GetFieldAsDouble(z_attribute)
+                else:
+                    z_value = 0.0
+                geom_copy = _set_z_value_to_geometry(geom_copy, z_value)
+            elif z is not None and z is False:
+                geom_copy.FlattenTo2D()
+
+            if m is not None and m is True:
+                if m_attribute is not None:
+                    m_value = src_feat.GetFieldAsDouble(m_attribute)
+                else:
+                    m_value = 0.0
+                geom_copy = _set_m_value_to_geometry(geom_copy, m_value)
+            elif m is not None and m is False:
+                # Remove M values
+                geom_copy.FlattenTo2D()
+
+            feat = ogr.Feature(dst_lyr.GetLayerDefn())
+            feat.SetFrom(src_feat)
+            feat.SetGeometry(geom_copy)
+            dst_lyr.CreateFeature(feat)
+            feat = None
+
+        dst_lyr.SyncToDisk()
+        dst_lyr = None
+        dst_ds = None
+
+    except Exception as e:
+        utils_io._delete_file(out_path)
+        raise ValueError("Could not convert the vector.") from e
+
+    return out_path
+
+
+def _set_z_value_to_geometry(geometry: ogr.Geometry, z_value: float) -> ogr.Geometry:
+    geom_type = geometry.GetGeometryType()
+    if geom_type == ogr.wkbPoint:
+        x = geometry.GetX()
+        y = geometry.GetY()
+        new_geom = ogr.Geometry(ogr.wkbPoint25D)
+        new_geom.AddPoint(x, y, z_value)
+        return new_geom
+    elif geom_type == ogr.wkbLineString or geom_type == ogr.wkbLinearRing:
+        new_geom = ogr.Geometry(ogr.wkbLineString25D)
+        for i in range(geometry.GetPointCount()):
+            x, y, _ = geometry.GetPoint(i)
+            new_geom.AddPoint(x, y, z_value)
+        return new_geom
+    elif geom_type == ogr.wkbPolygon:
+        new_geom = ogr.Geometry(ogr.wkbPolygon25D)
+        for i in range(geometry.GetGeometryCount()):
+            ring = geometry.GetGeometryRef(i)
+            new_ring = _set_z_value_to_geometry(ring, z_value)
+            new_geom.AddGeometry(new_ring)
+        return new_geom
+    elif geom_type == ogr.wkbMultiPoint or geom_type == ogr.wkbMultiLineString or geom_type == ogr.wkbMultiPolygon or geom_type == ogr.wkbGeometryCollection:
+        new_geom = ogr.Geometry(ogr.wkbSetZ(geom_type)) # type: ignore
+        for i in range(geometry.GetGeometryCount()):
+            sub_geom = geometry.GetGeometryRef(i)
+            new_sub_geom = _set_z_value_to_geometry(sub_geom, z_value)
+            new_geom.AddGeometry(new_sub_geom)
+        return new_geom
+    else:
+        return geometry
+
+
+def _set_m_value_to_geometry(geometry: ogr.Geometry, m_value: float) -> ogr.Geometry:
+    geom_type = geometry.GetGeometryType()
+    if geom_type == ogr.wkbPoint:
+        x = geometry.GetX()
+        y = geometry.GetY()
+        new_geom = ogr.Geometry(ogr.wkbPointM)
+        new_geom.AddPointM(x, y, m_value)
+        return new_geom
+    elif geom_type == ogr.wkbLineString or geom_type == ogr.wkbLinearRing:
+        new_geom = ogr.Geometry(ogr.wkbLineStringM)
+        for i in range(geometry.GetPointCount()):
+            x, y, _ = geometry.GetPoint(i)
+            new_geom.AddPointM(x, y, m_value)
+        return new_geom
+    elif geom_type == ogr.wkbPolygon:
+        new_geom = ogr.Geometry(ogr.wkbPolygonM)
+        for i in range(geometry.GetGeometryCount()):
+            ring = geometry.GetGeometryRef(i)
+            new_ring = _set_m_value_to_geometry(ring, m_value)
+            new_geom.AddGeometry(new_ring)
+        return new_geom
+    elif geom_type == ogr.wkbMultiPoint or geom_type == ogr.wkbMultiLineString or geom_type == ogr.wkbMultiPolygon or geom_type == ogr.wkbGeometryCollection:
+        new_geom = ogr.Geometry(ogr.wkbSetM(geom_type)) # pylint: disable=no-member
+        for i in range(geometry.GetGeometryCount()):
+            sub_geom = geometry.GetGeometryRef(i)
+            new_sub_geom = _set_m_value_to_geometry(sub_geom, m_value)
+            new_geom.AddGeometry(new_sub_geom)
+        return new_geom
+    else:
+        return geometry
+
+
+def vector_convert_geometry(
+    vector: Union[str, ogr.DataSource],
+    *,
+    multitype: Optional[bool] = None,
+    multipart: Optional[bool] = None,
+    z: Optional[bool] = None,
+    m: Optional[bool] = None,
+    output_path: Optional[str] = None,
+    layer_name_or_id: Union[str, int] = 0,
+    z_attribute: Optional[str] = None,
+    m_attribute: Optional[str] = None,
+    prefix: str = "",
+    suffix: str = "",
+    overwrite: bool = False,
+) -> str:
     """ Convert the geometry of a vector to a different subtype.
-    
+
     Convert between multiparts and singleparts, 2D and 3D, and with or without M values.
 
     Parameters
     ----------
     vector : str or ogr.DataSource
         The vector to convert.
-    multigeometry : bool, optional
-        If True, the output vector will be multiparts. If False it will be singleparts. Default: None
+    multitype : bool, optional
+        If True, the output vector will be of the "multi"types. That is MultiPolygon, MultiPoint, etc. Default: None
+    multipart : bool, optional
+        If True, the output vector will be multiparts. Features will be merged into a single feature with multiple geometries.
+        The merged features will have the same attributes.
+        If False, the output will be singleparts. If a multi feature is encountered, it will be split into multiple features.
+        The split features will have the same attributes.
+        If None, no changes. Default: None
     z : bool, optional
-        If True, the output vector will be 3D. Default: None
+        If True, the output vector will be 3D. If None, no changes. Default: None
     m : bool, optional
-        If True, the output vector will have M (measure) values. Default: None
+        If True, the output vector will have M (measure) values. If None, no changes. Default: None
     output_path : str, optional
         The output path. Default: None (in-memory is created)
     layer_name_or_id : str or int, optional
@@ -162,7 +759,8 @@ def vector_convert_geometry(
         The path to the converted vector
     """
     utils_base._type_check(vector, [str, ogr.DataSource], "vector")
-    utils_base._type_check(multigeometry, [type(None), bool], "multigeometry")
+    utils_base._type_check(multitype, [type(None), bool], "multitype")
+    utils_base._type_check(multipart, [type(None), bool], "multipart")
     utils_base._type_check(z, [type(None), bool], "z")
     utils_base._type_check(m, [type(None), bool], "m")
     utils_base._type_check(output_path, [type(None), str], "output_path")
@@ -173,45 +771,178 @@ def vector_convert_geometry(
     utils_base._type_check(suffix, [str], "suffix")
     utils_base._type_check(overwrite, [bool], "overwrite")
 
-    ds = _open_vector(vector, writeable=False)
+    if multitype is False and multipart is True:
+        raise ValueError("Cannot set both multitype to False and multipart to True.")
+
+    in_path = utils_io._get_input_paths(vector, "vector")
+    out_path = utils_io._get_output_paths(in_path, output_path, prefix=prefix, suffix=suffix) # type: ignore
+
+    utils_io._check_overwrite_policy(out_path, overwrite)
+    utils_io._delete_if_required_list(out_path, overwrite)
+
+    in_path = in_path[0]
+    out_path = out_path[0]
+
+    ds = _open_vector(in_path, writeable=False)
     layer = _vector_get_layer(ds, layer_name_or_id)[0]
 
     if not isinstance(layer, ogr.Layer):
         raise ValueError("Could not open the layer.")
-    
-    target_dict = {
 
-    }
+    meta = _get_basic_info_vector(ds, layer_name_or_id)
 
-    return ""
+    # Check if conversion is necessary
+    if multitype is True and meta["geom_multi"] is True:
+        multitype = None
+    elif multitype is False and meta["geom_multi"] is False:
+        multitype = None
+
+    if z is not None and z_attribute is None:
+        if z is True and meta["geom_3d"] is True:
+            z = None
+        elif z is False and meta["geom_3d"] is False:
+            z = None
+
+    if m is not None and m_attribute is None:
+        if m is True and meta["geom_m"] is True:
+            m = None
+        elif m is False and meta["geom_m"] is False:
+            m = None
+
+    # We don't check the other way, because not all the features are possibly multiparts
+    if not check_vector_is_multipart(in_path, layer_name_or_id) and not multipart:
+        multipart = None
+
+    temp_path_1 = utils_path._get_temp_filepath("temp_path_1.fgb", add_timestamp=True, add_uuid=True)
+    temp_path_2 = utils_path._get_temp_filepath("temp_path_2.fgb", add_timestamp=True, add_uuid=True)
+    temp_path_3 = utils_path._get_temp_filepath("temp_path_3.fgb", add_timestamp=True, add_uuid=True)
+
+    # First we convert the types:
+    converted = in_path
+    if multipart is True:
+        converted = vector_singlepart_to_multipart(
+            converted,
+            layer_name_or_id=layer_name_or_id,
+            output_path=temp_path_1,
+            overwrite=overwrite,
+        )
+    elif multipart is False:
+        converted = vector_multipart_to_singlepart(
+            converted,
+            layer_name_or_id=layer_name_or_id,
+            output_path=temp_path_1,
+            overwrite=overwrite,
+        )
+
+    # Then we convert the multitype
+    if multitype is not None:
+        converted = vector_change_multitype(
+            converted,
+            multitype,
+            layer_name_or_id=layer_name_or_id,
+            output_path=temp_path_2,
+            overwrite=overwrite,
+        )
+
+    # Then we convert the dimensionality
+    if z is not None or m is not None:
+        converted = vector_change_dimensionality(
+            converted,
+            z=z,
+            m=m,
+            layer_name_or_id=layer_name_or_id,
+            output_path=temp_path_3,
+            z_attribute=z_attribute,
+            m_attribute=m_attribute,
+            overwrite=overwrite,
+        )
+
+    # Copy the final result to the output path
+    output = vector_create_copy(
+        converted,
+        out_path=out_path,
+        overwrite=overwrite,
+    )
+
+    utils_gdal.delete_dataset_if_in_memory_list([temp_path_1, temp_path_2, temp_path_3])
+
+    if not isinstance(output, str):
+        raise ValueError("Could not create the output vector.")
+
+    return output
 
 
 if __name__ == "__main__":
+    from osgeo import osr, gdal
+
     # Create a 2D vector with three points using WKT
+    wgs84_proj = osr.SpatialReference()
+    wgs84_proj.ImportFromEPSG(4326)
+
     point_wkts_2d = ["POINT (0 0)", "POINT (1 1)", "POINT (2 2)"]
     driver = ogr.GetDriverByName("ESRI Shapefile")
     path_2d = "/vsimem/points_2d.shp"
     ds_2d = driver.CreateDataSource(path_2d)
-    layer_2d = ds_2d.CreateLayer("layer_2d", geom_type=ogr.wkbPoint)
+    layer_2d = ds_2d.CreateLayer("layer_2d", geom_type=ogr.wkbPoint, srs=wgs84_proj)
     for wkt in point_wkts_2d:
         geometry = ogr.CreateGeometryFromWkt(wkt)
         feature = ogr.Feature(layer_2d.GetLayerDefn())
         feature.SetGeometry(geometry)
         layer_2d.CreateFeature(feature)
+        geometry = None
         feature = None
 
+    layer_2d.SyncToDisk()
+    layer_2d = None
+    ds_2d = None
+
     # Create a similar 3D vector
-    point_wkts_3d = ["POINT Z (0 0 0)", "POINT Z (1 1 1)", "POINT Z (2 2 2)"]
+    point_wkts_3d = ["MULTIPOINT Z (0 0 0)", "MULTIPOINT Z (1 1 1)", "MULTIPOINT Z (2 2 2)"]
     path_3d = "/vsimem/points_3d.shp"
     ds_3d = driver.CreateDataSource(path_3d)
-    layer_3d = ds_3d.CreateLayer("layer_3d", geom_type=ogr.wkbPoint25D)
+    layer_3d = ds_3d.CreateLayer("layer_3d", geom_type=ogr.wkbMultiPoint25D, srs=wgs84_proj)
     for wkt in point_wkts_3d:
         geometry = ogr.CreateGeometryFromWkt(wkt)
         feature = ogr.Feature(layer_3d.GetLayerDefn())
         feature.SetGeometry(geometry)
         layer_3d.CreateFeature(feature)
+        geometry = None
         feature = None
 
+    layer_3d = None
+    ds_3d = None
+    wgs84_proj = None
+    ds_3d = None
 
+    convert_2d_to_3d = vector_change_dimensionality(
+        path_2d,
+        z=True,
+        output_path="/vsimem/points_2d_to_3d.gpkg",
+    )
 
-    import pdb; pdb.set_trace()
+    convert_3d_to_2d = vector_change_dimensionality(
+        path_3d,
+        z=False,
+        output_path="/vsimem/points_3d_to_2d.shp",
+    )
+
+    convert_multi_to_single = vector_change_multitype(
+        path_3d,
+        multitype=False,
+        output_path="/vsimem/points_multi_to_single.shp",
+    )
+
+    print(_get_basic_info_vector(_open_vector(path_2d))["geom_type_fullname"])
+    print(_get_basic_info_vector(_open_vector(convert_2d_to_3d))["geom_type_fullname"])
+
+    print("")
+
+    print(_get_basic_info_vector(_open_vector(path_3d))["geom_type_fullname"])
+    print(_get_basic_info_vector(_open_vector(convert_3d_to_2d))["geom_type_fullname"])
+
+    print("")
+
+    print(_get_basic_info_vector(_open_vector(path_3d))["geom_type_fullname"])
+    print(_get_basic_info_vector(_open_vector(convert_multi_to_single))["geom_type_fullname"])
+
+    utils_gdal.delete_dataset_if_in_memory_list([path_2d, path_3d, convert_3d_to_2d, convert_2d_to_3d, convert_multi_to_single])

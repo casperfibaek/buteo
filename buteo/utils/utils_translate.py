@@ -8,7 +8,7 @@ from typing import List, Tuple, Union, Dict, Type
 
 # External
 import numpy as np
-from osgeo import gdal, gdal_array
+from osgeo import gdal, gdal_array, ogr
 
 
 
@@ -780,3 +780,273 @@ def _safe_numpy_casting(
         return np.clip(np.rint(arr), min_val, max_val).astype(target_dtype)
 
     return np.clip(arr, min_val, max_val).astype(target_dtype)
+
+
+def _convert_geomtype_to_wkb(geomtype: int) -> int:
+    """
+    Converts a geometry type integer to a WKB integer.
+
+    Parameters
+    ----------
+    geomtype : int
+        The geometry type integer.
+
+    Returns
+    -------
+    int
+        The WKB geometry type integer.
+    """
+    if geomtype == 0:
+        return ogr.wkbNone
+    elif geomtype == 1:
+        return ogr.wkbPoint
+    elif geomtype == 2:
+        return ogr.wkbLineString
+    elif geomtype == 3:
+        return ogr.wkbPolygon
+    elif geomtype == 4:
+        return ogr.wkbMultiPoint
+    elif geomtype == 5:
+        return ogr.wkbMultiLineString
+    elif geomtype == 6:
+        return ogr.wkbMultiPolygon
+    elif geomtype == 7:
+        return ogr.wkbGeometryCollection
+    elif geomtype == 1001:
+        return ogr.wkbPoint25D
+    elif geomtype == 1002:
+        return ogr.wkbLineString25D
+    elif geomtype == 1003:
+        return ogr.wkbPolygon25D
+    elif geomtype == 1004:
+        return ogr.wkbMultiPoint25D
+    elif geomtype == 1005:
+        return ogr.wkbMultiLineString25D
+    elif geomtype == 1006:
+        return ogr.wkbMultiPolygon25D
+    elif geomtype == 1007:
+        return ogr.wkbGeometryCollection25D
+    elif geomtype == 2001:
+        return ogr.wkbPointM
+    elif geomtype == 2002:
+        return ogr.wkbLineStringM
+    elif geomtype == 2003:
+        return ogr.wkbPolygonM
+    elif geomtype == 2004:
+        return ogr.wkbMultiPointM
+    elif geomtype == 2005:
+        return ogr.wkbMultiLineStringM
+    elif geomtype == 2006:
+        return ogr.wkbMultiPolygonM
+    elif geomtype == 2007:
+        return ogr.wkbGeometryCollectionM
+    elif geomtype == 3001:
+        return ogr.wkbPointZM
+    elif geomtype == 3002:
+        return ogr.wkbLineStringZM
+    elif geomtype == 3003:
+        return ogr.wkbPolygonZM
+    elif geomtype == 3004:
+        return ogr.wkbMultiPointZM
+    elif geomtype == 3005:
+        return ogr.wkbMultiLineStringZM
+    elif geomtype == 3006:
+        return ogr.wkbMultiPolygonZM
+    elif geomtype == 3007:
+        return ogr.wkbGeometryCollectionZM
+    else:
+        raise ValueError(f"Invalid geometry type: {geomtype}")
+
+
+def _convert_wkb_to_geomtype(wkbtype: int) -> int:
+    """
+    Converts a WKB geometry type integer to a geometry type integer.
+
+    Parameters
+    ----------
+    wkbtype : int
+        The WKB geometry type integer.
+
+    Returns
+    -------
+    int
+        The geometry type integer.
+    """
+    if wkbtype == ogr.wkbNone:
+        return 0
+    elif wkbtype == ogr.wkbPoint:
+        return 1
+    elif wkbtype == ogr.wkbLineString:
+        return 2
+    elif wkbtype == ogr.wkbPolygon:
+        return 3
+    elif wkbtype == ogr.wkbMultiPoint:
+        return 4
+    elif wkbtype == ogr.wkbMultiLineString:
+        return 5
+    elif wkbtype == ogr.wkbMultiPolygon:
+        return 6
+    elif wkbtype == ogr.wkbGeometryCollection:
+        return 7
+    elif wkbtype == ogr.wkbPoint25D:
+        return 1001
+    elif wkbtype == ogr.wkbLineString25D:
+        return 1002
+    elif wkbtype == ogr.wkbPolygon25D:
+        return 1003
+    elif wkbtype == ogr.wkbMultiPoint25D:
+        return 1004
+    elif wkbtype == ogr.wkbMultiLineString25D:
+        return 1005
+    elif wkbtype == ogr.wkbMultiPolygon25D:
+        return 1006
+    elif wkbtype == ogr.wkbGeometryCollection25D:
+        return 1007
+    elif wkbtype == ogr.wkbPointM:
+        return 2001
+    elif wkbtype == ogr.wkbLineStringM:
+        return 2002
+    elif wkbtype == ogr.wkbPolygonM:
+        return 2003
+    elif wkbtype == ogr.wkbMultiPointM:
+        return 2004
+    elif wkbtype == ogr.wkbMultiLineStringM:
+        return 2005
+    elif wkbtype == ogr.wkbMultiPolygonM:
+        return 2006
+    elif wkbtype == ogr.wkbGeometryCollectionM:
+        return 2007
+    elif wkbtype == ogr.wkbPointZM:
+        return 3001
+    elif wkbtype == ogr.wkbLineStringZM:
+        return 3002
+    elif wkbtype == ogr.wkbPolygonZM:
+        return 3003
+    elif wkbtype == ogr.wkbMultiPointZM:
+        return 3004
+    elif wkbtype == ogr.wkbMultiLineStringZM:
+        return 3005
+    elif wkbtype == ogr.wkbMultiPolygonZM:
+        return 3006
+    elif wkbtype == ogr.wkbGeometryCollectionZM:
+        return 3007
+    else:
+        raise ValueError(f"Invalid WKB type: {wkbtype}")
+
+
+def _check_geom_is_wkbgeom(wkbtype: int) -> bool:
+    """
+    Checks if a WKB type is a geometry type.
+
+    Parameters
+    ----------
+    wkbtype : int
+        The WKB type integer.
+
+    Returns
+    -------
+    bool
+        True if the WKB type is a geometry type, False otherwise.
+    """
+    return wkbtype in [
+        ogr.wkbNone,
+        ogr.wkbPoint,
+        ogr.wkbLineString,
+        ogr.wkbPolygon,
+        ogr.wkbMultiPoint,
+        ogr.wkbMultiLineString,
+        ogr.wkbMultiPolygon,
+        ogr.wkbGeometryCollection,
+        ogr.wkbPoint25D,
+        ogr.wkbLineString25D,
+        ogr.wkbPolygon25D,
+        ogr.wkbMultiPoint25D,
+        ogr.wkbMultiLineString25D,
+        ogr.wkbMultiPolygon25D,
+        ogr.wkbGeometryCollection25D,
+        ogr.wkbPointM,
+        ogr.wkbLineStringM,
+        ogr.wkbPolygonM,
+        ogr.wkbMultiPointM,
+        ogr.wkbMultiLineStringM,
+        ogr.wkbMultiPolygonM,
+        ogr.wkbGeometryCollectionM,
+        ogr.wkbPointZM,
+        ogr.wkbLineStringZM,
+        ogr.wkbPolygonZM,
+        ogr.wkbMultiPointZM,
+        ogr.wkbMultiLineStringZM,
+        ogr.wkbMultiPolygonZM,
+        ogr.wkbGeometryCollectionZM
+    ]
+
+def _check_geom_is_geomtype(geomtype: int) -> bool:
+    """
+    Checks if a geometry type is a valid geometry type.
+
+    Parameters
+    ----------
+    geomtype : int
+        The geometry type integer.
+
+    Returns
+    -------
+    bool
+        True if the geometry type is a valid geometry type, False otherwise.
+    """
+    return geomtype in [
+        0, 1, 2, 3, 4, 5, 6, 7,
+        1001, 1002, 1003, 1004, 1005, 1006, 1007,
+        2001, 2002, 2003, 2004, 2005, 2006, 2007,
+        3001, 3002, 3003, 3004, 3005, 3006, 3007
+    ]
+
+
+def _convert_multitype_int_to_singletype_int(geomtype: int) -> int:
+    """
+    Converts a multi-type geometry type integer to a single-type geometry type integer.
+
+    Parameters
+    ----------
+    geomtype : int
+        The multi-type geometry type integer.
+
+    Returns
+    -------
+    int
+        The single-type geometry type integer.
+    """
+    as_geomtype = _convert_wkb_to_geomtype(geomtype) if _check_geom_is_wkbgeom(geomtype) else geomtype
+    if as_geomtype in [4, 5, 6, 1004, 1005, 1006, 2004, 2005, 2006, 3004, 3005, 3006]:
+        return as_geomtype - 3
+    elif as_geomtype in [7, 1007, 2007, 3007]:
+        raise ValueError("Cannot convert GeometryCollection to single-type geometry")
+    elif as_geomtype in [1, 2, 3, 1001, 1002, 1003, 2001, 2002, 2003, 3001, 3002, 3003]:
+        return as_geomtype
+    else:
+        raise ValueError(f"Invalid geometry type: {geomtype}")
+
+
+def _convert_singletype_int_to_multitype_int(geomtype: int) -> int:
+    """
+    Converts a single-type geometry type integer to a multi-type geometry type integer.
+
+    Parameters
+    ----------
+    geomtype : int
+        The single-type geometry type integer.
+
+    Returns
+    -------
+    int
+        The multi-type geometry type integer.
+    """
+    as_geomtype = _convert_wkb_to_geomtype(geomtype) if _check_geom_is_wkbgeom(geomtype) else geomtype
+    if as_geomtype in [1, 2, 3, 1001, 1002, 1003, 2001, 2002, 2003, 3001, 3002, 3003]:
+        return as_geomtype + 3
+    elif as_geomtype in [7, 1007, 2007, 3007]:
+        raise ValueError("Cannot convert GeometryCollection to multi-type geometry")
+    elif as_geomtype in [4, 5, 6, 1004, 1005, 1006, 2004, 2005, 2006, 3004, 3005, 3006]:
+        return geomtype
+    else:
+        raise ValueError(f"Invalid geometry type: {geomtype}")

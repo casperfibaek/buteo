@@ -14,10 +14,91 @@ from buteo.utils import (
     utils_gdal,
     utils_bbox,
     utils_projection,
+    utils_translate,
     utils_path,
 )
 from buteo.core_vector.core_vector_read import _open_vector, _vector_get_layer
 
+
+
+def _parse_geom_type(geom_type: int) -> dict[str, Union[int, str, bool]]:
+    """Parse the geometry type to a 2D or 3D type."""
+
+    if not utils_translate._check_geom_is_geomtype(geom_type):
+        if not utils_translate._check_geom_is_wkbgeom(geom_type):
+            raise ValueError(f"Invalid geometry type: {geom_type}")
+
+        geom_type = utils_translate._convert_wkb_to_geomtype(geom_type)
+
+    geom_type_fullname = ogr.GeometryTypeToName(geom_type)
+    geom_type_complex = utils_translate._convert_geomtype_to_wkb(geom_type)
+
+    geom_dict = {}
+    if geom_type == 1:
+        geom_dict = {"type": "point", "multi": False, "3D": False, "M": False, "number_simple": 1}
+    elif geom_type == 2:
+        geom_dict = {"type": "linestring", "multi": False, "3D": False, "M": False, "number_simple": 2}
+    elif geom_type == 3:
+        geom_dict = {"type": "polygon", "multi": False, "3D": False, "M": False, "number_simple": 3}
+    elif geom_type == 4:
+        geom_dict = {"type": "point", "multi": True, "3D": False, "M": False, "number_simple": 4}
+    elif geom_type == 5:
+        geom_dict = {"type": "linestring", "multi": True, "3D": False, "M": False, "number_simple": 5}
+    elif geom_type == 6:
+        geom_dict = {"type": "polygon", "multi": True, "3D": False, "M": False, "number_simple": 6}
+    elif geom_type == 7:
+        geom_dict = {"type": "geometrycollection", "multi": False, "3D": False, "M": False, "number_simple": 7}
+    elif geom_type == 1001:
+        geom_dict = {"type": "point", "multi": False, "3D": True, "M": False, "number_simple": 1001}
+    elif geom_type == 1002:
+        geom_dict = {"type": "linestring", "multi": False, "3D": True, "M": False, "number_simple": 1002}
+    elif geom_type == 1003:
+        geom_dict = {"type": "polygon", "multi": False, "3D": True, "M": False, "number_simple": 1003}
+    elif geom_type == 1004:
+        geom_dict = {"type": "point", "multi": True, "3D": True, "M": False, "number_simple": 1004}
+    elif geom_type == 1005:
+        geom_dict = {"type": "linestring", "multi": True, "3D": True, "M": False, "number_simple": 1005}
+    elif geom_type == 1006:
+        geom_dict = {"type": "polygon", "multi": True, "3D": True, "M": False, "number_simple": 1006}
+    elif geom_type == 1007:
+        geom_dict = {"type": "geometrycollection", "multi": False, "3D": True, "M": False, "number_simple": 1007}
+    elif geom_type == 2001:
+        geom_dict = {"type": "point", "multi": False, "3D": False, "M": True, "number_simple": 2001}
+    elif geom_type == 2002:
+        geom_dict = {"type": "linestring", "multi": False, "3D": False, "M": True, "number_simple": 2002}
+    elif geom_type == 2003:
+        geom_dict = {"type": "polygon", "multi": False, "3D": False, "M": True, "number_simple": 2003}
+    elif geom_type == 2004:
+        geom_dict = {"type": "point", "multi": True, "3D": False, "M": True, "number_simple": 2004}
+    elif geom_type == 2005:
+        geom_dict = {"type": "linestring", "multi": True, "3D": False, "M": True, "number_simple": 2005}
+    elif geom_type == 2006:
+        geom_dict = {"type": "polygon", "multi": True, "3D": False, "M": True, "number_simple": 2006}
+    elif geom_type == 2007:
+        geom_dict = {"type": "geometrycollection", "multi": False, "3D": False, "M": True, "number_simple": 2007}
+    elif geom_type == 3001:
+        geom_dict = {"type": "point", "multi": False, "3D": True, "M": True, "number_simple": 3001}
+    elif geom_type == 3002:
+        geom_dict = {"type": "linestring", "multi": False, "3D": True, "M": True, "number_simple": 3002}
+    elif geom_type == 3003:
+        geom_dict = {"type": "polygon", "multi": False, "3D": True, "M": True, "number_simple": 3003}
+    elif geom_type == 3004:
+        geom_dict = {"type": "point", "multi": True, "3D": True, "M": True, "number_simple": 3004}
+    elif geom_type == 3005:
+        geom_dict = {"type": "linestring", "multi": True, "3D": True, "M": True, "number_simple": 3005}
+    elif geom_type == 3006:
+        geom_dict = {"type": "polygon", "multi": True, "3D": True, "M": True, "number_simple": 3006}
+    elif geom_type == 3007:
+        geom_dict = {"type": "geometrycollection", "multi": False, "3D": True, "M": True, "number_simple": 3007}
+    else:
+        raise ValueError(f"Invalid geometry type: {geom_type}")
+
+    geom_dict.update({
+        "number_complex": geom_type_complex,
+        "fullname": geom_type_fullname
+    })
+
+    return geom_dict
 
 
 def _get_basic_info_vector(
@@ -64,10 +145,12 @@ def _get_basic_info_vector(
 
     feature_count = layer.GetFeatureCount()
     geom_type = layer.GetGeomType()
-    geom_type_name = ogr.GeometryTypeToName(geom_type)
+
     feature_count = layer.GetFeatureCount()
     fid_column = layer.GetFIDColumn()
     geom_column = layer.GetGeometryColumn()
+
+    geom_dict = _parse_geom_type(geom_type)
 
     layer = None
     layer_list = None
@@ -75,8 +158,13 @@ def _get_basic_info_vector(
     return {
         "layer_name": layer_name,
         "feature_count": feature_count,
-        "geom_type": geom_type,
-        "geom_type_name": geom_type_name,
+        "geom_type_int": geom_dict["number_simple"],
+        "geom_type_int_complex": geom_dict["number_complex"],
+        "geom_type_name": geom_dict["type"],
+        "geom_type_fullname": geom_dict["fullname"],
+        "geom_multi": geom_dict["multi"],
+        "geom_3d": geom_dict["3D"],
+        "geom_m": geom_dict["M"],
         "projection_wkt": projection_wkt,
         "projection_osr": projection_osr,
         "column_geom": geom_column,
