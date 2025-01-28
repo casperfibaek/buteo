@@ -69,7 +69,7 @@ class TestGetBasicInfoVector:
         assert isinstance(info, dict)
         assert info['layer_name'] == 'layer'
         assert info['feature_count'] == 10
-        assert info['geom_type_name'] == 'Point'
+        assert info['geom_type_name'] == 'point'
         assert isinstance(info['projection_wkt'], str)
         assert isinstance(info['projection_osr'], osr.SpatialReference)
 

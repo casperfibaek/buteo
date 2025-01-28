@@ -257,6 +257,7 @@ def get_metadata_vector(
         The datasource to extract metadata from
     layer_name_or_id : Optional[Union[str, int]], optional
         The layer name or index to extract information from, default: None.
+        If None, processes all the layers.
     
     Returns
     -------

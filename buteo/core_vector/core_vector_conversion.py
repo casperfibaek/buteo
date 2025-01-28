@@ -3,8 +3,6 @@
 Convert geometries from multiparts and singleparts and vice versa.
 """
 
-import sys; sys.path.append("../")
-
 # Standard library
 from typing import Union, Optional, List
 
@@ -574,133 +572,238 @@ def vector_change_dimensionality(
         if field_index == -1:
             raise ValueError("The m_attribute does not exist in the layer.")
 
-    try:
-        dst_ds_path = vector_create_empty_copy(
-            in_path,
-            out_path,
-            layer_names_or_ids=layer_name_or_id,
-            geom_type=target_geom_type,
-            prefix=prefix,
-            suffix=suffix,
-            overwrite=overwrite,
-        )
-        dst_ds = _open_vector(dst_ds_path, writeable=True)
-        dst_lyr = _vector_get_layer(dst_ds, layer_name_or_id)[0]
+    # try:
+    dst_ds_path = vector_create_empty_copy(
+        in_path,
+        out_path,
+        layer_names_or_ids=layer_name_or_id,
+        geom_type=target_geom_type,
+        prefix=prefix,
+        suffix=suffix,
+        overwrite=overwrite,
+    )
+    dst_ds = _open_vector(dst_ds_path, writeable=True)
+    dst_lyr = _vector_get_layer(dst_ds, layer_name_or_id)[0]
 
-        if not isinstance(dst_lyr, ogr.Layer):
-            raise ValueError("Could not open the layer.")
+    if not isinstance(dst_lyr, ogr.Layer):
+        raise ValueError("Could not open the layer.")
 
-        src_lyr.ResetReading()
-        feature_count = src_lyr.GetFeatureCount()
+    src_lyr.ResetReading()
+    feature_count = src_lyr.GetFeatureCount()
 
-        for _i in range(feature_count):
-            src_feat = src_lyr.GetNextFeature()
-            src_geom = src_feat.GetGeometryRef()
+    for _i in range(feature_count):
+        src_feat = src_lyr.GetNextFeature()
+        src_geom = src_feat.GetGeometryRef()
 
-            if src_geom is None:
-                continue
+        if src_geom is None:
+            continue
 
-            geom_copy = src_geom.Clone()
+        geom_copy = src_geom.Clone()
+        geom_copy.FlattenTo2D()
+
+        if z is not None and z is True:
+            if z_attribute is not None:
+                z_value = src_feat.GetFieldAsDouble(z_attribute)
+            else:
+                z_value = 0.0
+            geom_copy = _set_z_value_to_geometry(geom_copy, z_value)
+        elif z is not None and z is False:
             geom_copy.FlattenTo2D()
 
-            if z is not None and z is True:
-                if z_attribute is not None:
-                    z_value = src_feat.GetFieldAsDouble(z_attribute)
-                else:
-                    z_value = 0.0
-                geom_copy = _set_z_value_to_geometry(geom_copy, z_value)
-            elif z is not None and z is False:
-                geom_copy.FlattenTo2D()
+        if m is not None and m is True:
+            if m_attribute is not None:
+                m_value = src_feat.GetFieldAsDouble(m_attribute)
+            else:
+                m_value = 0.0
+            geom_copy = _set_m_value_to_geometry(geom_copy, m_value)
+        elif m is not None and m is False:
+            # Remove M values
+            geom_copy.FlattenTo2D()
 
-            if m is not None and m is True:
-                if m_attribute is not None:
-                    m_value = src_feat.GetFieldAsDouble(m_attribute)
-                else:
-                    m_value = 0.0
-                geom_copy = _set_m_value_to_geometry(geom_copy, m_value)
-            elif m is not None and m is False:
-                # Remove M values
-                geom_copy.FlattenTo2D()
+        feat = ogr.Feature(dst_lyr.GetLayerDefn())
+        feat.SetFrom(src_feat)
+        feat.SetGeometry(geom_copy)
+        dst_lyr.CreateFeature(feat)
+        feat = None
 
-            feat = ogr.Feature(dst_lyr.GetLayerDefn())
-            feat.SetFrom(src_feat)
-            feat.SetGeometry(geom_copy)
-            dst_lyr.CreateFeature(feat)
-            feat = None
+    dst_lyr.SyncToDisk()
+    dst_lyr = None
+    dst_ds = None
 
-        dst_lyr.SyncToDisk()
-        dst_lyr = None
-        dst_ds = None
-
-    except Exception as e:
-        utils_io._delete_file(out_path)
-        raise ValueError("Could not convert the vector.") from e
+    # except Exception as e:
+    #     utils_io._delete_file(out_path)
+    #     raise ValueError("Could not convert the vector.") from e
 
     return out_path
 
 
-def _set_z_value_to_geometry(geometry: ogr.Geometry, z_value: float) -> ogr.Geometry:
+def _set_z_value_to_geometry(
+    geometry: ogr.Geometry,
+    z_value: float,
+) -> ogr.Geometry:
+    """Set Z value for a geometry."""
     geom_type = geometry.GetGeometryType()
-    if geom_type == ogr.wkbPoint:
+    if geom_type == ogr.wkbPoint or geom_type == ogr.wkbPointM:
         x = geometry.GetX()
         y = geometry.GetY()
-        new_geom = ogr.Geometry(ogr.wkbPoint25D)
-        new_geom.AddPoint(x, y, z_value)
-        return new_geom
-    elif geom_type == ogr.wkbLineString or geom_type == ogr.wkbLinearRing:
-        new_geom = ogr.Geometry(ogr.wkbLineString25D)
-        for i in range(geometry.GetPointCount()):
-            x, y, _ = geometry.GetPoint(i)
+        m = geometry.GetM() if hasattr(geometry, 'GetM') else None
+        if m is not None:
+            new_geom = ogr.Geometry(ogr.wkbPointZM)
+            new_geom.AddPointZM(x, y, z_value, m)
+        else:
+            new_geom = ogr.Geometry(ogr.wkbPoint25D)
             new_geom.AddPoint(x, y, z_value)
         return new_geom
-    elif geom_type == ogr.wkbPolygon:
-        new_geom = ogr.Geometry(ogr.wkbPolygon25D)
+    elif geom_type in (ogr.wkbLineString, ogr.wkbLinearRing, ogr.wkbLineStringM):
+        has_m = geom_type == ogr.wkbLineStringM
+        if has_m:
+            new_geom = ogr.Geometry(ogr.wkbLineStringZM)
+        else:
+            new_geom = ogr.Geometry(ogr.wkbLineString25D)
+
+        for i in range(geometry.GetPointCount()):
+            x, y = geometry.GetX(i), geometry.GetY(i)
+            m = geometry.GetM(i) if has_m else None
+            if m is not None:
+                new_geom.AddPointZM(x, y, z_value, m)
+            else:
+                new_geom.AddPoint(x, y, z_value)
+
+        if geom_type == ogr.wkbLinearRing:
+            linear_ring = ogr.Geometry(ogr.wkbLinearRing)
+            linear_ring.AssignSpatialReference(geometry.GetSpatialReference())
+            linear_ring.AddGeometry(new_geom)
+            return linear_ring
+        return new_geom
+
+    elif geom_type in (ogr.wkbPolygon, ogr.wkbPolygonM):
+        has_m = geom_type == ogr.wkbPolygonM
+        if has_m:
+            new_geom = ogr.Geometry(ogr.wkbPolygonZM)
+        else:
+            new_geom = ogr.Geometry(ogr.wkbPolygon25D)
+
         for i in range(geometry.GetGeometryCount()):
             ring = geometry.GetGeometryRef(i)
-            new_ring = _set_z_value_to_geometry(ring, z_value)
+            if has_m:
+                ring_points = ogr.Geometry(ogr.wkbLineStringZM)
+            else:
+                ring_points = ogr.Geometry(ogr.wkbLineString25D)
+
+            for j in range(ring.GetPointCount()):
+                x, y = ring.GetX(j), ring.GetY(j)
+                m = ring.GetM(j) if has_m else None
+                if m is not None:
+                    ring_points.AddPointZM(x, y, z_value, m)
+                else:
+                    ring_points.AddPoint(x, y, z_value)
+
+            if has_m:
+                new_ring = ogr.Geometry(ogr.wkbLinearRing | ogr.wkb25DBit | 0x40000000)
+            else:
+                new_ring = ogr.Geometry(ogr.wkbLinearRing | ogr.wkb25DBit)
+
+            for j in range(ring_points.GetPointCount()):
+                x, y = ring_points.GetX(j), ring_points.GetY(j)
+                z = ring_points.GetZ(j)
+                m = ring_points.GetM(j) if has_m else None
+                if m is not None:
+                    new_ring.AddPointZM(x, y, z, m)
+                else:
+                    new_ring.AddPoint(x, y, z)
             new_geom.AddGeometry(new_ring)
         return new_geom
-    elif geom_type == ogr.wkbMultiPoint or geom_type == ogr.wkbMultiLineString or geom_type == ogr.wkbMultiPolygon or geom_type == ogr.wkbGeometryCollection:
-        new_geom = ogr.Geometry(ogr.wkbSetZ(geom_type)) # type: ignore
+
+    elif geom_type in (ogr.wkbMultiPoint, ogr.wkbMultiLineString, ogr.wkbMultiPolygon,
+                      ogr.wkbGeometryCollection, ogr.wkbMultiPointM, ogr.wkbMultiLineStringM,
+                      ogr.wkbMultiPolygonM, ogr.wkbGeometryCollectionM):
+        has_m = geom_type & 0x40000000
+        if has_m:
+            new_type = geom_type | ogr.wkb25DBit | 0x40000000
+        else:
+            new_type = geom_type | ogr.wkb25DBit
+
+        new_geom = ogr.Geometry(new_type)
         for i in range(geometry.GetGeometryCount()):
             sub_geom = geometry.GetGeometryRef(i)
             new_sub_geom = _set_z_value_to_geometry(sub_geom, z_value)
             new_geom.AddGeometry(new_sub_geom)
         return new_geom
+
     else:
         return geometry
 
 
-def _set_m_value_to_geometry(geometry: ogr.Geometry, m_value: float) -> ogr.Geometry:
+# TODO: FIX - Causes errors
+def _set_m_value_to_geometry(
+    geometry: ogr.Geometry,
+    m_value: float,
+) -> ogr.Geometry:
     geom_type = geometry.GetGeometryType()
-    if geom_type == ogr.wkbPoint:
-        x = geometry.GetX()
-        y = geometry.GetY()
-        new_geom = ogr.Geometry(ogr.wkbPointM)
-        new_geom.AddPointM(x, y, m_value)
+
+    if geom_type in (ogr.wkbPoint, ogr.wkbPoint25D):
+        x, y = geometry.GetX(), geometry.GetY()
+        z = geometry.GetZ() if geom_type == ogr.wkbPoint25D else 0.0
+        new_type = ogr.wkbPointZM if geom_type == ogr.wkbPoint25D else ogr.wkbPointM
+        new_geom = ogr.Geometry(new_type)
+        new_geom.AddPointZM(x, y, z, m_value) if z else new_geom.AddPointM(x, y, m_value) # pylint: disable=expression-not-assigned
+
         return new_geom
-    elif geom_type == ogr.wkbLineString or geom_type == ogr.wkbLinearRing:
-        new_geom = ogr.Geometry(ogr.wkbLineStringM)
-        for i in range(geometry.GetPointCount()):
-            x, y, _ = geometry.GetPoint(i)
-            new_geom.AddPointM(x, y, m_value)
-        return new_geom
-    elif geom_type == ogr.wkbPolygon:
-        new_geom = ogr.Geometry(ogr.wkbPolygonM)
+
+    if geom_type in (ogr.wkbPolygon, ogr.wkbPolygon25D):
+        has_z = geom_type == ogr.wkbPolygon25D
+        new_geom = ogr.Geometry(ogr.wkbPolygonZM) if has_z else ogr.Geometry(ogr.wkbPolygonM)
         for i in range(geometry.GetGeometryCount()):
             ring = geometry.GetGeometryRef(i)
-            new_ring = _set_m_value_to_geometry(ring, m_value)
+            if has_z:
+                new_ring = ogr.Geometry(ogr.wkbLinearRing | ogr.wkb25DBit)
+            else:
+                new_ring = ogr.Geometry(ogr.wkbLinearRing)
+            for j in range(ring.GetPointCount()):
+                x, y, z = ring.GetPoint(j) if has_z else (*ring.GetPoint(j)[:2], 0.0)
+                if has_z:
+                    new_ring.AddPointZM(x, y, z, m_value)
+                else:
+                    new_ring.AddPointM(x, y, m_value)
             new_geom.AddGeometry(new_ring)
         return new_geom
-    elif geom_type == ogr.wkbMultiPoint or geom_type == ogr.wkbMultiLineString or geom_type == ogr.wkbMultiPolygon or geom_type == ogr.wkbGeometryCollection:
-        new_geom = ogr.Geometry(ogr.wkbSetM(geom_type)) # pylint: disable=no-member
+
+    if geom_type in (ogr.wkbLineString, ogr.wkbLinearRing, ogr.wkbLineString25D):
+        has_z = geom_type == ogr.wkbLineString25D
+        is_ring = geom_type == ogr.wkbLinearRing
+
+        if is_ring and has_z:
+            new_type = ogr.wkbLinearRing | ogr.wkb25DBit | 0x40000000
+        elif is_ring:
+            new_type = ogr.wkbLinearRing | 0x40000000
+        elif has_z:
+            new_type = ogr.wkbLineStringZM
+        else:
+            new_type = ogr.wkbLineStringM
+
+        new_geom = ogr.Geometry(new_type)
+        for i in range(geometry.GetPointCount()):
+            x, y, z = geometry.GetPoint(i) if has_z else (*geometry.GetPoint(i)[:2], 0.0)
+            new_geom.AddPointZM(x, y, z, m_value) if has_z else new_geom.AddPointM(x, y, m_value) # pylint: disable=expression-not-assigned
+
+        return new_geom
+
+    multi_types = {
+        ogr.wkbMultiPoint: ogr.wkbMultiPointM,
+        ogr.wkbMultiLineString: ogr.wkbMultiLineStringM,
+        ogr.wkbMultiPolygon: ogr.wkbMultiPolygonM,
+        ogr.wkbGeometryCollection: ogr.wkbGeometryCollection
+    }
+
+    if geom_type in multi_types:
+        new_geom = ogr.Geometry(multi_types[geom_type])
         for i in range(geometry.GetGeometryCount()):
             sub_geom = geometry.GetGeometryRef(i)
             new_sub_geom = _set_m_value_to_geometry(sub_geom, m_value)
             new_geom.AddGeometry(new_sub_geom)
         return new_geom
-    else:
-        return geometry
+
+    return geometry
 
 
 def vector_convert_geometry(
@@ -864,85 +967,10 @@ def vector_convert_geometry(
         overwrite=overwrite,
     )
 
+
     utils_gdal.delete_dataset_if_in_memory_list([temp_path_1, temp_path_2, temp_path_3])
 
     if not isinstance(output, str):
         raise ValueError("Could not create the output vector.")
 
     return output
-
-
-if __name__ == "__main__":
-    from osgeo import osr, gdal
-
-    # Create a 2D vector with three points using WKT
-    wgs84_proj = osr.SpatialReference()
-    wgs84_proj.ImportFromEPSG(4326)
-
-    point_wkts_2d = ["POINT (0 0)", "POINT (1 1)", "POINT (2 2)"]
-    driver = ogr.GetDriverByName("ESRI Shapefile")
-    path_2d = "/vsimem/points_2d.shp"
-    ds_2d = driver.CreateDataSource(path_2d)
-    layer_2d = ds_2d.CreateLayer("layer_2d", geom_type=ogr.wkbPoint, srs=wgs84_proj)
-    for wkt in point_wkts_2d:
-        geometry = ogr.CreateGeometryFromWkt(wkt)
-        feature = ogr.Feature(layer_2d.GetLayerDefn())
-        feature.SetGeometry(geometry)
-        layer_2d.CreateFeature(feature)
-        geometry = None
-        feature = None
-
-    layer_2d.SyncToDisk()
-    layer_2d = None
-    ds_2d = None
-
-    # Create a similar 3D vector
-    point_wkts_3d = ["MULTIPOINT Z (0 0 0)", "MULTIPOINT Z (1 1 1)", "MULTIPOINT Z (2 2 2)"]
-    path_3d = "/vsimem/points_3d.shp"
-    ds_3d = driver.CreateDataSource(path_3d)
-    layer_3d = ds_3d.CreateLayer("layer_3d", geom_type=ogr.wkbMultiPoint25D, srs=wgs84_proj)
-    for wkt in point_wkts_3d:
-        geometry = ogr.CreateGeometryFromWkt(wkt)
-        feature = ogr.Feature(layer_3d.GetLayerDefn())
-        feature.SetGeometry(geometry)
-        layer_3d.CreateFeature(feature)
-        geometry = None
-        feature = None
-
-    layer_3d = None
-    ds_3d = None
-    wgs84_proj = None
-    ds_3d = None
-
-    convert_2d_to_3d = vector_change_dimensionality(
-        path_2d,
-        z=True,
-        output_path="/vsimem/points_2d_to_3d.gpkg",
-    )
-
-    convert_3d_to_2d = vector_change_dimensionality(
-        path_3d,
-        z=False,
-        output_path="/vsimem/points_3d_to_2d.shp",
-    )
-
-    convert_multi_to_single = vector_change_multitype(
-        path_3d,
-        multitype=False,
-        output_path="/vsimem/points_multi_to_single.shp",
-    )
-
-    print(_get_basic_info_vector(_open_vector(path_2d))["geom_type_fullname"])
-    print(_get_basic_info_vector(_open_vector(convert_2d_to_3d))["geom_type_fullname"])
-
-    print("")
-
-    print(_get_basic_info_vector(_open_vector(path_3d))["geom_type_fullname"])
-    print(_get_basic_info_vector(_open_vector(convert_3d_to_2d))["geom_type_fullname"])
-
-    print("")
-
-    print(_get_basic_info_vector(_open_vector(path_3d))["geom_type_fullname"])
-    print(_get_basic_info_vector(_open_vector(convert_multi_to_single))["geom_type_fullname"])
-
-    utils_gdal.delete_dataset_if_in_memory_list([path_2d, path_3d, convert_3d_to_2d, convert_2d_to_3d, convert_multi_to_single])

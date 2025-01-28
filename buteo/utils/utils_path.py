@@ -897,6 +897,39 @@ def _check_is_valid_filepath_list(path_list: List[str]) -> bool:
         return False
 
 
+def _check_dir_is_vsimem(path: str) -> bool:
+    """Check if a path is a vsimem path.
+
+    Parameters
+    ----------
+    path: str
+        The path to test.
+    
+    Returns
+    -------
+    bool
+        True if path is a vsimem path, False otherwise.
+    """
+    # Type checking
+    if not isinstance(path, str):
+        raise TypeError("path must be a string")
+
+    try:
+        # Handle empty or whitespace-only strings
+        if not path.strip():
+            return False
+
+        # Convert path to normalized form
+        path = path.replace("\\", "/")  # Handle Windows paths
+        path_parts = path.strip("/").split("/")
+
+        # Check for virtual filesystem prefixes
+        return any(vfs in ["vsimem", "vsizip"] for vfs in path_parts)
+
+    except (TypeError, ValueError, AttributeError):
+        return False
+
+
 def _check_is_valid_output_filepath(
     path: str,
     overwrite: bool = True,
@@ -942,9 +975,8 @@ def _check_is_valid_output_filepath(
         if not overwrite and _check_file_exists(path):
             return False
 
-        # Get directory path and check if parent directory exists/is writable
-        dir_path = _get_dir_from_path(path)
-        if not _check_dir_exists(dir_path):
+        # Get directory path and check if parent directory exists/is writable or vsimem
+        if not _check_dir_is_vsimem(path) and not _check_dir_exists(_get_dir_from_path(path)):
             return False
 
         return True

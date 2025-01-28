@@ -1,25 +1,25 @@
+""" Module for converting a vector to an extent polygon. """
+
 # Standard library
-import os
-from typing import Union, Optional, List, Dict, Any, Callable, Tuple
+from typing import Union, Optional
 
 # External
-from osgeo import ogr, gdal, osr
+from osgeo import ogr
 
 # Internal
 from buteo.utils import (
-    utils_io,
     utils_base,
     utils_gdal,
-    utils_bbox,
     utils_path,
-    utils_projection,
 )
+from buteo.core_vector.core_vector_info import get_metadata_vector
 
 
 
 def vector_to_extent(
     vector: Union[str, ogr.DataSource],
     out_path: Optional[str] = None,
+    layer_name_or_id: Optional[Union[str, int]] = None,
     *,
     latlng: bool = False,
     overwrite: bool = True,
@@ -33,6 +33,9 @@ def vector_to_extent(
 
     out_path : str, optional
         The path to save the extent to. If None, the extent is saved in memory. Default: None.
+
+    layer_name_or_id : int, optional
+        The layer to use. Default: 0.
 
     latlng : bool, optional
         If True, the extent is returned in latlng coordinates. If false,
@@ -57,20 +60,20 @@ def vector_to_extent(
     if not utils_path._check_is_valid_output_filepath(out_path):
         raise ValueError(f"Invalid output path: {out_path}")
 
-    metadata = _get_basic_metadata_vector(vector)
+    metadata = get_metadata_vector(vector, layer_name_or_id=layer_name_or_id)
 
     if latlng:
-        extent = metadata["bounds_latlng"]
+        extent = metadata["layers"][0]["bounds_latlng"]
     else:
-        extent = metadata["bounds_vector"]
+        extent = metadata["layers"][0]["bounds"]
 
-    extent = ogr.CreateGeometryFromWkt(extent, metadata["projection_osr"])
+    extent = ogr.CreateGeometryFromWkt(extent, metadata["layers"][0]["projection_osr"])
 
     driver_name = utils_gdal._get_driver_name_from_path(out_path)
 
     driver = ogr.GetDriverByName(driver_name)
     extent_ds = driver.CreateDataSource(out_path)
-    extent_layer = extent_ds.CreateLayer("extent", metadata["projection_osr"], ogr.wkbPolygon)
+    extent_layer = extent_ds.CreateLayer("extent", metadata["layers"][0]["projection_osr"], ogr.wkbPolygon)
     extent_feature = ogr.Feature(extent_layer.GetLayerDefn())
     extent_feature.SetGeometry(extent)
     extent_layer.CreateFeature(extent_feature)

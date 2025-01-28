@@ -1,23 +1,20 @@
+""" Module for vector attribute operations. """
 # Standard library
-import os
-from typing import Union, Optional, List, Dict, Any, Callable, Tuple
+from typing import Union, Optional, List, Any, Tuple
 
 # External
-from osgeo import ogr, gdal, osr
+from osgeo import ogr
 
 # Internal
 from buteo.utils import (
     utils_io,
     utils_base,
-    utils_gdal,
-    utils_bbox,
-    utils_path,
-    utils_projection,
 )
+from buteo.core_vector.core_vector_info import get_metadata_vector
+from buteo.core_vector.core_vector_read import _open_vector
 
 
-# Use a convert to CSV trick.
-
+# TODO: Use a convert to CSV trick.
 
 def _vector_get_attribute_table(
     vector: Union[str, ogr.DataSource],
@@ -25,8 +22,7 @@ def _vector_get_attribute_table(
     include_fids: bool = False,
     include_geometry: bool = False,
     include_attributes: bool = True,
-    return_header: bool = True,
-) -> Union[Dict[str, Any], Tuple[Dict[str, Any]]]:
+) -> Tuple[List[str], List[List[Any]]]:
     """Get the attribute table(s) of a vector.
 
     Parameters
@@ -46,9 +42,6 @@ def _vector_get_attribute_table(
     include_attributes : bool, optional
         If True, will include the attribute columns. Default: True.
 
-    return_header : bool, optional
-        If True, will return the header. Default: True.
-
     Returns
     -------
     attribute_table : Dict[str, Any]
@@ -59,10 +52,9 @@ def _vector_get_attribute_table(
     assert isinstance(include_fids, bool), "include_fids must be a boolean."
     assert isinstance(include_geometry, bool), "include_geometry must be a boolean."
     assert isinstance(include_attributes, bool), "include_attributes must be a boolean."
-    assert isinstance(return_header, bool), "return_header must be a boolean."
 
-    ref = _vector_open(vector)
-    metadata = _get_basic_metadata_vector(ref)
+    ref = _open_vector(vector)
+    metadata = get_metadata_vector(ref)
 
     attribute_table_header = metadata["layers"][process_layer]["field_names"]
     attribute_table = []
@@ -94,10 +86,7 @@ def _vector_get_attribute_table(
     ref = None
     layer = None
 
-    if return_header:
-        return attribute_table_header, attribute_table
-
-    return attribute_table
+    return attribute_table_header, attribute_table
 
 
 def vector_get_attribute_table(
@@ -106,8 +95,7 @@ def vector_get_attribute_table(
     include_fids: bool = False,
     include_geometry: bool = False,
     include_attributes: bool = True,
-    return_header: bool = True,
-) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+) -> Union[Tuple[List[str], List[List[Any]]], List[Tuple[List[str], List[List[Any]]]]]:
     """Get the attribute table(s) of a vector.
 
     Parameters
@@ -140,46 +128,27 @@ def vector_get_attribute_table(
     utils_base._type_check(include_fids, [bool], "include_fids")
     utils_base._type_check(include_geometry, [bool], "include_geometry")
     utils_base._type_check(include_attributes, [bool], "include_attributes")
-    utils_base._type_check(return_header, [bool], "return_header")
 
     input_is_list = isinstance(vector, list)
-    in_paths = utils_io._get_input_paths(vector, "vector")
+    in_paths = utils_io._get_input_paths(vector, "vector") # type: ignore
 
     output_attributes = []
     output_headers = []
     for in_vector in in_paths:
-        if return_header:
-            header, table = _vector_get_attribute_table(
-                in_vector,
-                process_layer=process_layer,
-                include_fids=include_fids,
-                include_geometry=include_geometry,
-                include_attributes=include_attributes,
-                return_header=True,
-            )
-            output_headers.append(header)
-            output_attributes.append(table)
+        header, table = _vector_get_attribute_table(
+            in_vector,
+            process_layer=process_layer,
+            include_fids=include_fids,
+            include_geometry=include_geometry,
+            include_attributes=include_attributes,
+        )
+        output_headers.append(header)
+        output_attributes.append(table)
 
-        else:
-            output_attributes.append(_vector_get_attribute_table(
-                in_vector,
-                process_layer=process_layer,
-                include_fids=include_fids,
-                include_geometry=include_geometry,
-                include_attributes=include_attributes,
-                return_header=False,
-            ))
-
-    if return_header:
-        if input_is_list:
-            return output_headers, output_attributes
-
-        return output_headers[0], output_attributes[0]
-    
     if input_is_list:
-        return output_attributes
+        return output_headers, output_attributes
 
-    return output_attributes[0]
+    return output_headers[0], output_attributes[0]
 
 
 def vector_add_field(
@@ -233,8 +202,8 @@ def vector_add_field(
 
     in_paths = utils_io._get_input_paths(vector, "vector")
 
-    for idx, in_vector in enumerate(in_paths):
-        ref = _vector_open(in_vector)
+    for _idx, in_vector in enumerate(in_paths):
+        ref = _open_vector(in_vector, writeable=True)
 
         layers = ref.GetLayerCount()
 
@@ -250,7 +219,7 @@ def vector_add_field(
 
     if input_is_list:
         return in_paths
-    
+
     return in_paths[0]
 
 
@@ -273,8 +242,8 @@ def vector_set_attribute_table(
     attribute_table : List[List[Any]]
         The attributes to update in the table.
 
-    match_fids : bool, optional
-        If True, will match the FIDs of the input vector and the attribute table. Default: False.
+    match : str, optional
+        The field to match on for updates. Default: 'fid'.
 
     Returns
     -------
@@ -290,56 +259,59 @@ def vector_set_attribute_table(
     if match is not None:
         assert match in header, "match must be in header."
 
-    match_idx = header.index(match)
+    match_idx = header.index(match) if match is not None else -1
 
     input_is_list = isinstance(vector, list)
     in_paths = utils_io._get_input_paths(vector, "vector")
 
     for in_vector in in_paths:
-        ref = _vector_open(in_vector)
-
-        layers = ref.GetLayerCount()
+        ds = _open_vector(in_vector, writeable=True)
+        layers = ds.GetLayerCount()
 
         for layer_index in range(layers):
-            layer = ref.GetLayer(layer_index)
-            layer.ResetReading()
+            current_layer = ds.GetLayer(layer_index)
+            current_layer.ResetReading()
 
-            layer_defn = layer.GetLayerDefn()
+            layer_defn = current_layer.GetLayerDefn()
             field_names = [layer_defn.GetFieldDefn(i).GetName() for i in range(layer_defn.GetFieldCount())]
 
+            # Create missing fields
             for field in header:
-                if field not in field_names and field != 'fid':
-                    layer.CreateField(ogr.FieldDefn(field, ogr.OFTString))
+                if field not in field_names and field not in ('fid', match):
+                    current_layer.CreateField(ogr.FieldDefn(field, ogr.OFTString))
+
+            def update_feature(feat, fields, values):
+                if feat is None:
+                    return
+                try:
+                    for field_idx, field in enumerate(fields):
+                        if field in (match, 'fid'):
+                            continue
+                        feat.SetField(field, values[field_idx])
+                    current_layer.SetFeature(feat)
+                except Exception:
+                    pass
 
             if match is not None:
-                for attr in attribute_table:
-                    attr_id = attr[match_idx]
-                    feature = layer.GetFeature(attr_id)
-
-                    for field_idx, field in enumerate(header):
-                        if field == match:
-                            continue
-
-                        feature.SetField(field, attr[field_idx])
-
-                    layer.SetFeature(feature)
-
+                for row in attribute_table:
+                    try:
+                        feat = current_layer.GetFeature(int(row[match_idx]))
+                        if feat is not None:
+                            update_feature(feat, header, row)
+                    except (ValueError, TypeError):
+                        continue
             else:
-                feature_idx = 0
-                for feature in layer:
-                    for field_idx, field in enumerate(header):
-                        feature.SetField(field, attribute_table[feature_idx][field_idx])
-                        feature_idx += 1
+                for idx, feat in enumerate(current_layer):
+                    if idx < len(attribute_table):
+                        update_feature(feat, header, attribute_table[idx])
 
-                    layer.SetFeature(feature)
+            current_layer.SyncToDisk()
 
-            layer.SyncToDisk()
-
-        ref = None
+        ds = None
 
     if input_is_list:
         return in_paths
-    
+
     return in_paths[0]
 
 
@@ -369,7 +341,7 @@ def vector_delete_fields(
     in_paths = utils_io._get_input_paths(vector, "vector")
 
     for in_vector in in_paths:
-        ref = _vector_open(in_vector)
+        ref = _open_vector(in_vector, writeable=True)
 
         layers = ref.GetLayerCount()
 
@@ -382,7 +354,8 @@ def vector_delete_fields(
 
             for field in fields:
                 if field in field_names:
-                    layer.DeleteField(field)
+                    field_idx = layer.FindFieldIndex(field, 1)
+                    layer.DeleteField(field_idx)
 
             layer.SyncToDisk()
 
@@ -390,5 +363,5 @@ def vector_delete_fields(
 
     if input_is_list:
         return in_paths
-    
+
     return in_paths[0]
