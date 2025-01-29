@@ -248,13 +248,13 @@ class TestRasterCreateFromArray:
 
     def test_3d_array(self, tmp_path):
         """Test creating raster from 3D array."""
-        arr = np.ones((100, 100, 3), dtype=np.float32)
+        arr = np.ones((3, 100, 100), dtype=np.float32)
         out_path = tmp_path / "from_3d.tif"
         result = raster_create_from_array(arr, str(out_path))
         ds = gdal.Open(result)
         assert ds.RasterCount == 3
         data = ds.ReadAsArray()
-        assert np.array_equal(data, arr.transpose(2, 0, 1))
+        assert np.array_equal(data, arr)
         ds = None
 
     def test_with_masked_array(self, tmp_path):

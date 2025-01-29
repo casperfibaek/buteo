@@ -280,7 +280,7 @@ def vector_set_attribute_table(
                 if field not in field_names and field not in ('fid', match):
                     current_layer.CreateField(ogr.FieldDefn(field, ogr.OFTString))
 
-            def update_feature(feat, fields, values):
+            def update_feature(feat, fields, values, layer):
                 if feat is None:
                     return
                 try:
@@ -288,8 +288,8 @@ def vector_set_attribute_table(
                         if field in (match, 'fid'):
                             continue
                         feat.SetField(field, values[field_idx])
-                    current_layer.SetFeature(feat)
-                except Exception:
+                    layer.SetFeature(feat)
+                except (TypeError, ValueError, RuntimeError):
                     pass
 
             if match is not None:
@@ -297,13 +297,13 @@ def vector_set_attribute_table(
                     try:
                         feat = current_layer.GetFeature(int(row[match_idx]))
                         if feat is not None:
-                            update_feature(feat, header, row)
+                            update_feature(feat, header, row, current_layer)
                     except (ValueError, TypeError):
                         continue
             else:
                 for idx, feat in enumerate(current_layer):
                     if idx < len(attribute_table):
-                        update_feature(feat, header, attribute_table[idx])
+                        update_feature(feat, header, attribute_table[idx], current_layer)
 
             current_layer.SyncToDisk()
 

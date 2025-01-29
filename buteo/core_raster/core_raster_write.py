@@ -251,7 +251,6 @@ def raster_create_from_array(
     x_min: Union[float, int] = 0.0,
     y_max: Union[float, int] = 0.0,
     projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference] = "EPSG:3857",
-    channel_last: bool = True,
     overwrite: bool = True,
     creation_options: Union[List[str], None] = None,
 ) -> str:
@@ -294,10 +293,7 @@ def raster_create_from_array(
         raise ValueError("Array must be 2 or 3 dimensional (3rd dimension considered bands.)")
 
     if arr.ndim == 2:
-        arr = arr[:, :, np.newaxis]
-
-    if not channel_last:
-        arr = np.transpose(arr, (2, 0, 1))
+        arr = arr[np.newaxis, :, :]
 
     if out_path is not None and not utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite):
         raise ValueError(
@@ -314,7 +310,7 @@ def raster_create_from_array(
     utils_io._check_overwrite_policy([out_path], overwrite)
     utils_io._delete_if_required(out_path, overwrite)
 
-    height, width, bands = arr.shape
+    bands, height, width = arr.shape
 
     destination = driver.Create(
         out_path,
@@ -346,7 +342,7 @@ def raster_create_from_array(
 
     for idx in range(0, bands):
         dst_band = destination.GetRasterBand(idx + 1)
-        dst_band.WriteArray(arr[:, :, idx])
+        dst_band.WriteArray(arr[idx, :, :])
 
         if nodata:
             dst_band.SetNoDataValue(nodata_value)

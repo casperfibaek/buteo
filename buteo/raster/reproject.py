@@ -20,7 +20,8 @@ from buteo.utils import (
     utils_projection,
     utils_translate,
 )
-from buteo.raster import core_raster
+from buteo.core_raster.core_raster_info import get_metadata_raster
+from buteo.core_raster.core_raster_read import _open_raster
 
 
 
@@ -41,7 +42,7 @@ def _find_common_projection(
     Returns
     -------
     osr.SpatialReference
-        The common projection.
+        The most frequently occuring projection.
     """
     utils_base._type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
 
@@ -61,7 +62,7 @@ def _find_common_projection(
 def _raster_reproject(
     raster: Union[str, gdal.Dataset],
     projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
-    out_path: Optional[Union[str, List[str]]] = None,
+    out_path: Optional[str] = None,
     *,
     resample_alg: str = "nearest",
     copy_if_same: bool = True,
@@ -74,7 +75,7 @@ def _raster_reproject(
     add_uuid: bool = False,
     add_timestamp: bool = True,
     memory: float = 0.8,
-) -> Union[str, List[str]]:
+) -> str:
     """Internal."""
     assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
 
@@ -90,8 +91,8 @@ def _raster_reproject(
         if not utils_path._check_is_valid_output_filepath(out_path):
             raise ValueError(f"Invalid output path: {out_path}")
 
-    ref = core_raster._open_raster(raster)
-    metadata = core_raster.get_metadata_raster(ref)
+    ref = _open_raster(raster)
+    metadata = get_metadata_raster(ref)
 
     out_format = utils_gdal._get_raster_driver_name_from_path(out_path)
 
@@ -122,11 +123,15 @@ def _raster_reproject(
     utils_io._delete_if_required(out_path, overwrite)
 
     # Translate for GdalWarp
-    resample_alg = utils_translate._translate_resample_method(resample_alg)
+    resample_alg_gdal = utils_translate._translate_resample_method(resample_alg)
     creation_options = utils_gdal._get_default_creation_options(creation_options)
     memory_limit = utils_gdal._get_dynamic_memory_limit(memory)
+
+    if dtype is None:
+        dtype = metadata["dtype"]
+
     output_dtype = utils_translate._translate_dtype_numpy_to_gdal(
-        utils_translate._parse_dtype(dtype),
+        utils_translate._parse_dtype(dtype), # type: ignore
     )
     src_projection = original_projection.ExportToWkt()
     dst_projection = target_projection.ExportToWkt()
@@ -135,7 +140,7 @@ def _raster_reproject(
         format=out_format,
         srcSRS=src_projection,
         dstSRS=dst_projection,
-        resampleAlg=resample_alg,
+        resampleAlg=resample_alg_gdal,
         outputType=output_dtype,
         creationOptions=creation_options,
         srcNodata=src_nodata,
@@ -153,7 +158,7 @@ def _raster_reproject(
 
 
 def raster_reproject(
-    raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
+    raster: Union[str, gdal.Dataset, ogr.DataSource, List[Union[str, gdal.Dataset, ogr.DataSource]]],
     projection: Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference],
     out_path: Optional[Union[str, List[str]]] = None,
     *,
@@ -232,9 +237,8 @@ def raster_reproject(
 
     in_paths = utils_io._get_input_paths(raster, "raster")
     out_paths = utils_io._get_output_paths(
-        in_paths,
+        in_paths, # type: ignore
         out_path,
-        overwrite=overwrite,
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,

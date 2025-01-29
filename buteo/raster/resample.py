@@ -19,7 +19,10 @@ from buteo.utils import (
     utils_path,
     utils_translate,
 )
-from buteo.raster import core_raster, core_raster_io
+from buteo.core_raster.core_raster_read import _open_raster
+from buteo.core_raster.core_raster_info import get_metadata_raster
+from buteo.core_raster.core_raster_write import raster_create_from_array
+from buteo.core_raster.core_raster_array import raster_to_array
 
 
 
@@ -48,8 +51,8 @@ def _raster_resample(
         if not utils_path._check_is_valid_output_filepath(out_path):
             raise ValueError(f"Invalid output path: {out_path}")
 
-    ref = core_raster._open_raster(raster)
-    metadata = core_raster.get_metadata_raster(ref)
+    ref = _open_raster(raster)
+    metadata = get_metadata_raster(ref)
 
     if isinstance(target_size, (gdal.Dataset, str)):
         x_res, y_res = utils_gdal._get_raster_size(target_size)
@@ -95,7 +98,7 @@ def _raster_resample(
     if dtype is None:
         dtype = metadata["dtype"]
 
-    if out_nodata is not None and not utils_translate._check_is_value_within_dtype_range(out_nodata, dtype):
+    if out_nodata is not None and not utils_translate._check_is_value_within_dtype_range(out_nodata, dtype): # type: ignore
         raise ValueError(f"Invalid nodata value for datatype. value: {out_nodata}, dtype: {dtype}")
 
     utils_io._delete_if_required(out_path, overwrite)
@@ -108,26 +111,26 @@ def _raster_resample(
             format=out_format,
             xRes=x_res,
             yRes=y_res,
-            outputType=utils_translate._translate_dtype_numpy_to_gdal(dtype),
+            outputType=utils_translate._translate_dtype_numpy_to_gdal(dtype), # type: ignore
             resampleAlg=utils_translate._translate_resample_method(resample_alg),
             creationOptions=utils_gdal._get_default_creation_options(creation_options),
             srcNodata=metadata["nodata_value"],
             dstNodata=out_nodata,
             multithread=True,
-            warpMemoryLimit=utils_gdal._get_dynamic_memory_limit(ram, min_mb=ram_min, max_mb=ram_max),
+            warpMemoryLimit=utils_gdal._get_dynamic_memory_limit(ram, min_mb=ram_min if ram_min is not None else 100, max_mb=ram_max),
         )
     else:
         options = gdal.WarpOptions(
             format=out_format,
-            width=x_pixels,
-            height=y_pixels,
-            outputType=utils_translate._translate_dtype_numpy_to_gdal(dtype),
+            width=int(x_pixels),
+            height=int(y_pixels),
+            outputType=utils_translate._translate_dtype_numpy_to_gdal(dtype), # type: ignore
             resampleAlg=utils_translate._translate_resample_method(resample_alg),
             creationOptions=utils_gdal._get_default_creation_options(creation_options),
             srcNodata=metadata["nodata_value"],
             dstNodata=out_nodata,
             multithread=True,
-            warpMemoryLimit=utils_gdal._get_dynamic_memory_limit(ram, min_mb=ram_min, max_mb=ram_max),
+            warpMemoryLimit=utils_gdal._get_dynamic_memory_limit(ram, min_mb=ram_min if ram_min is not None else 100, max_mb=ram_max),
         )
 
     resampled = gdal.Warp(out_path, ref, options=options)
@@ -142,7 +145,7 @@ def _raster_resample(
 
 
 def raster_resample(
-    raster,
+    raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
     target_size,
     out_path=None,
     *,
@@ -243,15 +246,14 @@ def raster_resample(
 
     input_is_list = isinstance(raster, list)
 
-    in_paths = utils_io._get_input_paths(raster, "raster")
+    in_paths = utils_io._get_input_paths(raster, "raster") # type: ignore
     out_paths = utils_io._get_output_paths(
-        in_paths,
+        in_paths, # type: ignore
         out_path,
         add_uuid=add_uuid,
         add_timestamp=add_timestamp,
         prefix=prefix,
         suffix=suffix,
-        overwrite=overwrite,
     )
 
     utils_io._check_overwrite_policy(out_paths, overwrite)
@@ -286,33 +288,28 @@ def resample_array(
     arr,
     target_shape_pixels,
     resample_alg="bilinear",
-    channel_last=True,
 ):
     """Resample a numpy array using the GDAL algorithms."""
     utils_base._type_check(arr, [np.ndarray, np.ma.MaskedArray], "arr")
     utils_base._type_check(target_shape_pixels, [tuple, [int, float]], "target_shape_pixels")
     utils_base._type_check(resample_alg, [str], "resample_alg")
-    utils_base._type_check(channel_last, [bool], "channel_last")
 
     assert len(arr.shape) in [2, 3], f"Invalid array shape: {arr.shape}"
     assert len(target_shape_pixels) in [2, 3], f"Invalid target_shape_pixels: {target_shape_pixels}"
 
     if len(target_shape_pixels) == 3:
-        if channel_last:
-            target_shape_pixels = (target_shape_pixels[0], target_shape_pixels[1])
-        else:
-            target_shape_pixels = (target_shape_pixels[1], target_shape_pixels[2])
-    else:
-        raise ValueError(f"Invalid target_shape_pixels: {target_shape_pixels}")
+        target_shape_pixels = (target_shape_pixels[1], target_shape_pixels[2])
+    elif len(target_shape_pixels) == 2:
+        target_shape_pixels = (target_shape_pixels[0], target_shape_pixels[1])
 
-    arr_as_raster = core_raster_io.raster_create_from_array(arr, channel_last=channel_last)
+    arr_as_raster = raster_create_from_array(arr)
     resampled = _raster_resample(
         arr_as_raster,
-        target_shape_pixels,
+        list(target_shape_pixels),
         target_in_pixels=True,
         resample_alg=resample_alg,
     )
-    out_arr = core_raster_io.raster_to_array(resampled)
+    out_arr = raster_to_array(resampled)
 
     utils_gdal.delete_dataset_if_in_memory(arr_as_raster)
     utils_gdal.delete_dataset_if_in_memory(resampled)

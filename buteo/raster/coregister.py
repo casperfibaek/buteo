@@ -84,7 +84,7 @@ def coregister_images_efolki(
 
     if not _check_projections_match(master, slave):
         reprojected = True
-        reprojected_slave = _raster_reproject(slave, projection=master, resample_alg=resample_alg, copy_if_same=False)
+        reprojected_slave = _raster_reproject(slave, projection=master, resample_alg_gdal=resample_alg, copy_if_same=False)
     else:
         reprojected = False
         reprojected_slave = slave
@@ -188,7 +188,7 @@ def coregister_images_gefolki(
 
     if not _check_projections_match(master, slave):
         reprojected = True
-        reprojected_slave = _raster_reproject(slave, projection=master, resample_alg=resample_alg, copy_if_same=False)
+        reprojected_slave = _raster_reproject(slave, projection=master, resample_alg_gdal=resample_alg, copy_if_same=False)
     else:
         reprojected = False
         reprojected_slave = slave

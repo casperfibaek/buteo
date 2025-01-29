@@ -50,8 +50,9 @@ def convolve_distance(
     if maximum_distance is None:
         maximum_distance = np.sqrt(binary_array.shape[0] ** 2 + binary_array.shape[1] ** 2)
 
-    radius_cols = int(np.ceil(maximum_distance / pixel_height))
-    radius_rows = int(np.ceil(maximum_distance / pixel_width))
+    maximum_distance_float = float(maximum_distance)  # type: ignore
+    radius_cols = int(np.ceil(maximum_distance_float / pixel_height))
+    radius_rows = int(np.ceil(maximum_distance_float / pixel_width))
 
     kernel_cols = radius_cols * 2
     kernel_rows = radius_rows * 2
