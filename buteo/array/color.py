@@ -7,9 +7,11 @@ from typing import Tuple
 import numpy as np
 from numba import jit, prange
 
-# TOOD: Change order of channels
 
-@jit(nopython=True, fastmath=True, cache=True, nogil=True, inline='always')
+# TODO: Fix rounding errors in HSL to RGB conversion. Can it be made deterministic?
+
+
+@jit(nopython=True, cache=True, nogil=True, inline='always')
 def _single_hue_to_rgb(
     p: float,
     q: float,
@@ -46,7 +48,7 @@ def _single_hue_to_rgb(
     return p
 
 
-@jit(nopython=True, fastmath=True, cache=True, nogil=True, inline='always')
+@jit(nopython=True, cache=True, nogil=True, inline='always')
 def _single_hsl_to_rgb(
     hue: float,
     saturation: float,
@@ -83,7 +85,7 @@ def _single_hsl_to_rgb(
     return r, g, b
 
 
-@jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
+@jit(nopython=True, cache=True, nogil=True)
 def color_hsl_to_rgb(hsl_array: np.ndarray) -> np.ndarray:
     """
     Convert an HSL array to an RGB array with shape (3, height, width).
@@ -102,11 +104,11 @@ def color_hsl_to_rgb(hsl_array: np.ndarray) -> np.ndarray:
     assert hsl_array.shape[0] == 3, "First dimension must be channels"
     assert hsl_array.min() >= 0 and hsl_array.max() <= 1, "Input array must be normalized"
 
-    c, height, width = hsl_array.shape
+    height, width = hsl_array.shape[1], hsl_array.shape[2]
     rgb_array = np.empty_like(hsl_array, dtype=np.float32)
 
     for i in prange(height):
-        for j in prange(width):
+        for j in range(width):
             h, s, l = hsl_array[0, i, j], hsl_array[1, i, j], hsl_array[2, i, j]
             r, g, b = _single_hsl_to_rgb(h, s, l)
             rgb_array[0, i, j] = r
@@ -116,7 +118,7 @@ def color_hsl_to_rgb(hsl_array: np.ndarray) -> np.ndarray:
     return rgb_array
 
 
-@jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
+@jit(nopython=True, cache=True, nogil=True)
 def color_rgb_to_hsl(rgb_array: np.ndarray) -> np.ndarray:
     """Convert an RGB array to an HSL array.
 
@@ -139,7 +141,7 @@ def color_rgb_to_hsl(rgb_array: np.ndarray) -> np.ndarray:
     cmax = np.zeros((height, width), dtype=rgb_array.dtype)
 
     for i in prange(height):
-        for j in prange(width):
+        for j in range(width):
             cmin[i, j] = min(rgb_array[0, i, j], rgb_array[1, i, j], rgb_array[2, i, j])
             cmax[i, j] = max(rgb_array[0, i, j], rgb_array[1, i, j], rgb_array[2, i, j])
 
@@ -150,7 +152,7 @@ def color_rgb_to_hsl(rgb_array: np.ndarray) -> np.ndarray:
 
     red, green, blue = rgb_array[0], rgb_array[1], rgb_array[2]
     for i in prange(height):
-        for j in prange(width):
+        for j in range(width):
             if delta[i, j] != 0:
                 saturation[i, j] = delta[i, j] / (1 - abs(2 * luminosity[i, j] - 1))
                 if cmax[i, j] == red[i, j]:
@@ -167,7 +169,7 @@ def color_rgb_to_hsl(rgb_array: np.ndarray) -> np.ndarray:
 
     hsl_array = np.zeros_like(rgb_array)
     for i in prange(height):
-        for j in prange(width):
+        for j in range(width):
             hsl_array[0, i, j] = hue[i, j]
             hsl_array[1, i, j] = saturation[i, j]
             hsl_array[2, i, j] = luminosity[i, j]
