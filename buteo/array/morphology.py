@@ -7,8 +7,7 @@ from typing import Union
 import numpy as np
 
 # Internal
-from buteo.array.convolution import convolve_array
-from buteo.array.convolution_kernels import kernel_base, kernel_get_offsets_and_weights
+from buteo.array.convolution import convolve_array, kernel_base, kernel_get_offsets_and_weights
 from buteo.utils.utils_base import _type_check
 
 
@@ -32,7 +31,7 @@ def _morphology_operation(
     mask = None
     if np.ma.isMaskedArray(arr):
         nodata = True
-        nodata_value = arr.fill_value
+        nodata_value = float(arr.fill_value)  # Convert to native float
         arr = np.ma.getdata(arr)
         mask = np.ma.getmask(arr)
     else:
@@ -49,8 +48,28 @@ def _morphology_operation(
         channel_last=channel_last,
     )
 
-    if nodata:
-        arr_convolved = np.ma.array(arr_convolved, mask=mask, fill_value=nodata_value)
+    if nodata and mask is not None:
+        # Create a mask for the result that matches the original mask
+        result_mask = np.zeros_like(arr_convolved, dtype=bool)
+        
+        # Make sure the mask shape matches
+        if mask.shape == result_mask.shape:
+            result_mask = mask.copy()
+        else:
+            # Handle possible shape differences (if any dimension was broadcast)
+            if mask.ndim == result_mask.ndim:
+                # Copy mask elements that match positions
+                for idx in np.ndindex(mask.shape):
+                    if idx < result_mask.shape:
+                        if mask[idx]:
+                            result_mask[idx] = True
+            else:
+                # If ndims don't match, at least preserve the corner element if it was masked
+                if mask.size > 0 and mask.flat[0]:
+                    result_mask.flat[0] = True
+        
+        # Apply the mask
+        arr_convolved = np.ma.array(arr_convolved, mask=result_mask, fill_value=nodata_value)
 
     return arr_convolved
 
@@ -219,7 +238,9 @@ def morph_tophat(
 ) -> np.ndarray:
     """Perform the top_hat morphological operation on an array.
 
-    Same as: `array / opened(array)`
+    Same as: `array - opened(array)`
+    
+    This highlights small bright features that are removed by opening.
 
     Parameters
     ----------
@@ -246,8 +267,9 @@ def morph_tophat(
         spherical=spherical,
         channel_last=channel_last,
     )
-
-    return arr / opened
+    
+    # Standard implementation: arr - opened
+    return arr - opened
 
 
 def morph_bothat(
@@ -258,7 +280,9 @@ def morph_bothat(
 ) -> np.ndarray:
     """Perform the bottom_hat morphological operation on an array.
 
-    Same as: `closed(array) / array`
+    Same as: `closed(array) - array`
+    
+    This highlights small dark features that are filled in by closing.
 
     Parameters
     ----------
@@ -285,8 +309,9 @@ def morph_bothat(
         spherical=spherical,
         channel_last=channel_last,
     )
-
-    return closed / arr
+    
+    # Standard implementation: closed - arr
+    return closed - arr
 
 
 def morph_difference(

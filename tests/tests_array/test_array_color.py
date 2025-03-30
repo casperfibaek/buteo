@@ -1,26 +1,9 @@
-import pytest
-import numpy as np
-from buteo.array import color
-
 # pylint: skip-file
 # type: ignore
 
-import sys; sys.path.append("../../")
-
-
-@pytest.fixture
-def sample_rgb():
-    return np.array([
-        [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], # Red and Green
-        [[0.0, 0.0, 1.0], [0.5, 0.5, 0.5]]  # Blue and Gray
-    ], dtype=np.float32).transpose(2, 0, 1)
-
-@pytest.fixture 
-def sample_hsl():
-    return np.array([
-        [[0.0, 1.0, 0.5], [0.33, 1.0, 0.5]], # Red and Green
-        [[0.67, 1.0, 0.5], [0.0, 0.0, 0.5]]  # Blue and Gray  
-    ], dtype=np.float32).transpose(2, 0, 1)
+import pytest
+import numpy as np
+from buteo.array import color
 
 def test_rgb_to_hsl(sample_rgb, sample_hsl):
     converted = color.color_rgb_to_hsl(sample_rgb)

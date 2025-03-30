@@ -9,6 +9,60 @@ import numpy as np
 # Internal
 from buteo.array.loaders import MultiArray
 
+# Import all functions from the new modular structure for backward compatibility
+# Basic augmentations
+from buteo.ai.augmentation.basic import (
+    augmentation_rotation,
+    augmentation_rotation_xy,
+    augmentation_mirror,
+    augmentation_mirror_xy,
+    AugmentationRotation,
+    AugmentationRotationXY,
+    AugmentationMirror,
+    AugmentationMirrorXY,
+)
+
+# Noise augmentations
+from buteo.ai.augmentation.noise import (
+    augmentation_noise_uniform,
+    augmentation_noise_normal,
+    AugmentationNoiseUniform,
+    AugmentationNoiseNormal,
+)
+
+# Transform augmentations
+from buteo.ai.augmentation.transform import (
+    augmentation_channel_scale,
+    augmentation_contrast,
+    augmentation_blur,
+    augmentation_blur_xy,
+    augmentation_sharpen,
+    augmentation_sharpen_xy,
+    augmentation_misalign,
+    AugmentationChannelScale,
+    AugmentationContrast,
+    AugmentationBlur,
+    AugmentationBlurXY,
+    AugmentationSharpen,
+    AugmentationSharpenXY,
+    AugmentationMisalign,
+    AugmentationMisalignLabel,
+)
+
+# Mix augmentations
+from buteo.ai.augmentation.mix import (
+    augmentation_cutmix,
+    augmentation_mixup,
+    AugmentationCutmix,
+    AugmentationMixup,
+)
+
+# Label augmentations
+from buteo.ai.augmentation.labels import (
+    augmentation_label_smoothing,
+    AugmentationLabelSmoothing,
+)
+
 
 
 class Dataset:
@@ -35,7 +89,7 @@ class Dataset:
     def __init__(self,
         X: Union[np.ndarray, MultiArray],
         y: Union[np.ndarray, MultiArray],
-        callback: Callable = None,
+        callback: Optional[Callable] = None,
     ):
         assert len(X) == len(y), "X and y must have the same length."
         assert callback is None or callable(callback), "Callback must be callable."
@@ -94,9 +148,9 @@ class DatasetAugmentation:
     def __init__(self,
         X: Union[np.ndarray, MultiArray],
         y: Union[np.ndarray, MultiArray],
-        callback_pre_augmentation: Callable = None,
-        callback_post_augmentation: Callable = None,
-        augmentations: Optional[List] = None,
+        callback_pre_augmentation: Optional[Callable] = None,
+        callback_post_augmentation: Optional[Callable] = None,
+        augmentations: Optional[List[Callable]] = None,
     ):
         assert len(X) == len(y), "X and y must have the same length."
         assert callback_pre_augmentation is None or callable(callback_pre_augmentation), "callback_pre_augmentation must be callable."
@@ -125,7 +179,7 @@ class DatasetAugmentation:
 
         # Apply augmentations
         for aug in self.augmentations:
-            if not isinstance(aug, Callable):
+            if not callable(aug):
                 raise ValueError("Augmentations must be callable.")
 
             if aug.requires_dataset:

@@ -1,14 +1,10 @@
 # pylint: skip-file
 # type: ignore
 
-# Standard library
-import sys; sys.path.append("../../")
-
 import pytest
 import numpy as np
 from osgeo import gdal
 from pathlib import Path
-from osgeo import osr
 
 from buteo.core_raster.core_raster_array import (
     raster_to_array,
@@ -18,13 +14,11 @@ from buteo.core_raster.core_raster_array import (
 
 @pytest.fixture
 def sample_raster_dataset(tmp_path):
-    """Creates a sample raster dataset for testing."""
-    raster_path = tmp_path / "sample_raster.tif"
+    """Creates a sample raster dataset with random values for testing."""
+    raster_path = tmp_path / "sample_raster_random.tif"
     driver = gdal.GetDriverByName("GTiff")
-    ds = driver.Create(str(raster_path), 20, 10, 3, gdal.GDT_Float32) # (path, width, height, bands, dtype)
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    ds.SetProjection(srs.ExportToWkt())
+    ds = driver.Create(str(raster_path), 20, 10, 3, gdal.GDT_Float32)
+    ds.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
     ds.SetGeoTransform((0, 1, 0, 0, 0, -1))
     for i in range(1, 4):
         band = ds.GetRasterBand(i)

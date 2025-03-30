@@ -1,4 +1,4 @@
-"""### Convolution module.  ###"""
+"""### Base convolution operations for arrays. ###"""
 
 # Standard library
 from typing import Union, Optional
@@ -9,8 +9,7 @@ from numba import jit, prange
 
 # Internal
 from buteo.utils.utils_base import _type_check
-from buteo.array.convolution_funcs import _hood_to_value
-
+from buteo.array.convolution.funcs import _hood_to_value
 
 
 def pad_array(
@@ -59,13 +58,16 @@ def pad_array(
     method = method.lower()
     assert method in ["same", "edge", "constant"], "method must be one of ['same', 'edge', 'constant']"
 
+    # Initialize padded_view with a default value
+    padded_view = None
+    
     if method in ["same", "edge"]:
         padded_view = np.pad(
             arr,
             pad_width=((pad_size, pad_size), (pad_size, pad_size), (0, 0)),
             mode='edge',
         )
-    elif method == "constant":
+    else:  # method == "constant"
         padded_view = np.pad(
             arr,
             pad_width=((pad_size, pad_size), (pad_size, pad_size), (0, 0)),
@@ -94,8 +96,8 @@ def _convolve_array_2D(
     hood_size = len(offsets)
     weights_total = np.sum(weights)
 
-    nodata_value = np.float32(nodata_value)
-    mask_2d = mask[:, :, 0]
+    nodata_value = float(nodata_value)
+    mask_2d = mask[:, :, 0] if mask is not None else np.ones((arr.shape[0], arr.shape[1]), dtype=np.uint8)
 
     for idx_y in prange(arr.shape[0]):
         for idx_x in range(arr.shape[1]):
@@ -278,7 +280,7 @@ def _convolve_array_channels_CHW(
     """Internal function for convoling a 3D array along its channels.
     Input should be float32. Channel-first version.
     """
-    result = np.zeros((1, arr.shape[0], arr.shape[1]), dtype="float32")
+    result = np.zeros((1, arr.shape[1], arr.shape[2]), dtype="float32")
 
     hood_size = arr.shape[0]
     center_idx = int(hood_size / 2)
@@ -380,9 +382,11 @@ def convolve_array_channels(
     _type_check(func_value, [int, float], "value")
 
     assert arr.ndim == 3, "arr must be a 3D array"
-    assert method in range(1, 18), "method must be between 1 and 17"
+    assert method in range(1, 20), "method must be between 1 and 19"
 
-    if arr.shape[2] == 1:
+    if channel_last and arr.shape[2] == 1:
+        return arr
+    elif not channel_last and arr.shape[0] == 1:
         return arr
 
     arr = arr.astype(np.float32, copy=False)
@@ -470,6 +474,10 @@ def convolve_array(
     channel_last : bool, optional
         Whether the channels are the last axis in the array. Default: True.
 
+    mask : np.ndarray, optional
+        A mask array with the same shape as arr. If provided, only pixels where
+        mask is non-zero will be processed. Default: None.
+
     Returns
     -------
     numpy.ndarray
@@ -492,7 +500,7 @@ def convolve_array(
 
     assert len(offsets) == len(weights), "offsets and weights must be the same length"
     assert arr.ndim in [2, 3], "arr must be 2 or 3 dimensional"
-    assert method in range(1, 18), "method must be between 1 and 17"
+    assert method in range(1, 20), "method must be between 1 and 19"
 
     arr = arr.astype(np.float32, copy=False)
 

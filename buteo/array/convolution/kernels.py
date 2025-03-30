@@ -1,4 +1,4 @@
-"""### Convolutions kernels. ###"""
+"""### Convolution kernels for array operations. ###"""
 
 # Standard library
 from typing import Tuple
@@ -7,6 +7,44 @@ from typing import Tuple
 import numpy as np
 from numba import jit
 
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
+def _distance_2D(p1: np.ndarray, p2: np.ndarray) -> float:
+    """Returns the distance between two points. (2D)"""
+    d1 = (p1[0] - p2[0]) ** 2
+    d2 = (p1[1] - p2[1]) ** 2
+
+    return np.sqrt(d1 + d2)
+
+
+@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
+def _area_covered(square, radius):
+    """Calculates the area covered by a circle within a square.
+    Monte-carlo(ish) method. Can be parallelized.
+    """
+    n_points = 100
+    min_y = square[:, 0].min()
+    max_y = square[:, 0].max()
+    min_x = square[:, 1].min()
+    max_x = square[:, 1].max()
+
+    steps = int(np.rint(np.sqrt(n_points)))
+    range_y = np.linspace(min_x, max_x, steps)
+    range_x = np.linspace(min_y, max_y, steps)
+
+    center = np.array([0.0, 0.0], dtype=np.float32)
+    adjusted_radius = radius + 0.5
+
+    points_within = 0
+    for y in range_y:
+        for x in range_x:
+            point = np.array([y, x], dtype=np.float32)
+            if _distance_2D(center, point) <= adjusted_radius:
+                points_within += 1
+
+    area = points_within / (steps ** 2)
+
+    return area
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
@@ -69,54 +107,6 @@ def _simple_unsharp_kernel_2d_3x3() -> Tuple[np.ndarray, np.ndarray]:
     return offsets, weights
 
 
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
-def _simple_shift_kernel_2d(
-    x_offset: float,
-    y_offset: float,
-) -> Tuple[np.ndarray, np.ndarray]:
-    """Create a 2D shift kernel. For augmentations."""
-    return kernel_shift(x_offset, y_offset)
-
-
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, inline="always")
-def _distance_2D(p1: np.ndarray, p2: np.ndarray) -> float:
-    """Returns the distance between two points. (2D)"""
-    d1 = (p1[0] - p2[0]) ** 2
-    d2 = (p1[1] - p2[1]) ** 2
-
-    return np.sqrt(d1 + d2)
-
-
-@jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
-def _area_covered(square, radius):
-    """Calculates the area covered by a circle within a square.
-    Monte-carlo(ish) method. Can be parallelized.
-    """
-    n_points = 100
-    min_y = square[:, 0].min()
-    max_y = square[:, 0].max()
-    min_x = square[:, 1].min()
-    max_x = square[:, 1].max()
-
-    steps = int(np.rint(np.sqrt(n_points)))
-    range_y = np.linspace(min_x, max_x, steps)
-    range_x = np.linspace(min_y, max_y, steps)
-
-    center = np.array([0.0, 0.0], dtype=np.float32)
-    adjusted_radius = radius + 0.5
-
-    points_within = 0
-    for y in range_y:
-        for x in range_x:
-            point = np.array([y, x], dtype=np.float32)
-            if _distance_2D(center, point) <= adjusted_radius:
-                points_within += 1
-
-    area = points_within / (steps ** 2)
-
-    return area
-
-
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, parallel=True)
 def _circular_kernel_2D(radius):
     """Creates a circular 2D kernel. Supports fractional radii."""
@@ -159,7 +149,6 @@ def _distance_weighted_kernel_2D(radius, method, decay=0.2, sigma=2.0):
 
     Parameters
     ----------
-
     radius : float
         Radius of the kernel.
 
@@ -168,9 +157,8 @@ def _distance_weighted_kernel_2D(radius, method, decay=0.2, sigma=2.0):
         0. linear
         1. sqrt
         2. power
-        3. log
-        4. gaussian
-        5. constant
+        3. gaussian
+        4. constant
     """
     size = np.int64(np.ceil(radius) * 2 + 1)
     kernel = np.zeros((size, size), dtype=np.float32)
@@ -277,7 +265,6 @@ def kernel_base(
         kernel /= np.sum(kernel)
 
     return kernel
-
 
 
 @jit(nopython=True, nogil=True, cache=True, fastmath=True, inline='always')
@@ -466,7 +453,7 @@ def kernel_sobel(
 def kernel_get_offsets_and_weights(
     kernel: np.ndarray,
     remove_zero_weights: bool = True,
-) -> Tuple[np.ndarray, np.ndarray, int]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Generates a list of offsets and weights for a given kernel.
 
     Parameters
@@ -491,7 +478,7 @@ def kernel_get_offsets_and_weights(
     index = 0
     for col in range(-step, step + 1):
         for row in range(-step, step + 1):
-            if kernel[col + step, row + step] != 0.0:
+            if not remove_zero_weights or kernel[col + step, row + step] != 0.0:
                 offsets[index][0] = col
                 offsets[index][1] = row
                 weights[index] = kernel[col + step, row + step]

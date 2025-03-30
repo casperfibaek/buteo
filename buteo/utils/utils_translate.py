@@ -625,7 +625,6 @@ def _check_is_gdal_dtype_int(gdal_dtype: int) -> bool:
 
     return gdal_dtype in [
         gdal.GDT_Byte,
-        gdal.GDT_Int8,
         gdal.GDT_Int16,
         gdal.GDT_Int32,
         gdal.GDT_UInt16,

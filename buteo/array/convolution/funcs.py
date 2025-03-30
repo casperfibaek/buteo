@@ -1,4 +1,4 @@
-"""### Convolutions functions on arrays. ###"""
+"""### Convolution functions for array operations. ###"""
 
 # Standard library
 from typing import Union
@@ -6,7 +6,6 @@ from typing import Union
 # External
 import numpy as np
 from numba import jit
-
 
 
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
@@ -39,6 +38,7 @@ def _hood_sum(
     """Get the weighted sum."""
     return np.sum(np.multiply(values, weights))
 
+
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
 def _hood_mean(
     values: np.ndarray,
@@ -53,7 +53,7 @@ def _hood_mode(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    """Get the weighted sum."""
+    """Get the weighted mode."""
     values_ints = np.rint(values)
     unique = np.unique(values_ints)
 
@@ -110,13 +110,14 @@ def _hood_contrast(
 
     return np.abs(local_max - local_min)
 
+
 @jit(nopython=True, nogil=True, fastmath=True, cache=True)
 def _hood_quantile(
     values: np.ndarray,
     weights: np.ndarray,
     quantile: float,
 ) -> Union[float, int]:
-    """Get the weighted median."""
+    """Get the weighted quantile."""
     sort_mask = np.argsort(values)
     sorted_data = values[sort_mask]
     sorted_weights = weights[sort_mask]
@@ -143,7 +144,7 @@ def _hood_z_score(
     weights: np.ndarray,
     center_idx: int,
 ) -> Union[float, int]:
-    """Get the local z score ."""
+    """Get the local z score."""
     std = _hood_standard_deviation(values, weights)
     mean = _hood_sum(values, weights)
 
@@ -172,7 +173,7 @@ def _hood_standard_deviation(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    "Get the weighted standard deviation."
+    """Get the weighted standard deviation."""
     summed = _hood_sum(values, weights)
     variance = np.sum(np.multiply(np.power(np.subtract(values, summed), 2), weights))
     return np.sqrt(variance)
@@ -183,7 +184,7 @@ def _hood_variance(
     values: np.ndarray,
     weights: np.ndarray,
 ) -> Union[float, int]:
-    "Get the weighted variation."
+    """Get the weighted variance."""
     summed = _hood_sum(values, weights)
     variance = np.sum(np.multiply(np.power(np.subtract(values, summed), 2), weights))
     return variance
@@ -296,7 +297,7 @@ def _hood_to_value(
 
     Parameters
     ----------
-    method : str
+    method : int
         The method to use for combining the values and weights.
 
         The following methods are valid:

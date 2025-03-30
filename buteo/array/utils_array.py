@@ -4,6 +4,52 @@
 import numpy as np
 from numba import jit, prange
 
+def channel_first_to_last(arr: np.ndarray) -> np.ndarray:
+    """
+    Convert a channel-first array to channel-last format.
+    
+    Parameters
+    ----------
+    arr : np.ndarray
+        The input array in channel-first format (channels, height, width) or
+        (batch, channels, height, width) for 4D arrays
+        
+    Returns
+    -------
+    np.ndarray
+        The output array in channel-last format (height, width, channels) or
+        (batch, height, width, channels) for 4D arrays
+    """
+    if len(arr.shape) == 3:
+        return np.transpose(arr, (1, 2, 0))
+    elif len(arr.shape) == 4:
+        return np.transpose(arr, (0, 2, 3, 1))
+    else:
+        raise ValueError(f"Input array must be 3D or 4D, got {len(arr.shape)}D")
+
+def channel_last_to_first(arr: np.ndarray) -> np.ndarray:
+    """
+    Convert a channel-last array to channel-first format.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        The input array in channel-last format (height, width, channels) or
+        (batch, height, width, channels) for 4D arrays
+
+    Returns
+    -------
+    np.ndarray
+        The output array in channel-first format (channels, height, width) or
+        (batch, channels, height, width) for 4D arrays
+    """
+    if len(arr.shape) == 3:
+        return np.transpose(arr, (2, 0, 1))
+    elif len(arr.shape) == 4:
+        return np.transpose(arr, (0, 3, 1, 2))
+    else:
+        raise ValueError(f"Input array must be 3D or 4D, got {len(arr.shape)}D")
+
 
 
 @jit(nopython=True, nogil=True, parallel=True, fastmath=True, inline="always")

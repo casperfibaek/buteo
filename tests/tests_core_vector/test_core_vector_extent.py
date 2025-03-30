@@ -6,13 +6,10 @@ import pytest
 from osgeo import ogr, osr
 from buteo.core_vector.core_vector_extent import vector_to_extent
 
-# Standard library
-import sys; sys.path.append("../../")
-
 @pytest.fixture
-def simple_vector(tmp_path):
-    """Create a simple vector with a single polygon."""
-    vector_path = tmp_path / "simple.gpkg"
+def simple_extent_vector(tmp_path):
+    """Create a simple vector with a single polygon for extent testing."""
+    vector_path = tmp_path / "simple_extent.gpkg"
     driver = ogr.GetDriverByName('GPKG')
     ds = driver.CreateDataSource(str(vector_path))
     srs = osr.SpatialReference()
@@ -31,9 +28,9 @@ def simple_vector(tmp_path):
     return str(vector_path)
 
 @pytest.fixture
-def complex_vector(tmp_path):
-    """Create a complex vector with multiple features."""
-    vector_path = tmp_path / "complex.gpkg"
+def complex_extent_vector(tmp_path):
+    """Create a complex vector with multiple features for extent testing."""
+    vector_path = tmp_path / "complex_extent.gpkg"
     driver = ogr.GetDriverByName('GPKG')
     ds = driver.CreateDataSource(str(vector_path))
     srs = osr.SpatialReference()
@@ -56,10 +53,10 @@ def complex_vector(tmp_path):
     return str(vector_path)
 
 class TestVectorToExtent:
-    def test_simple_extent(self, simple_vector, tmp_path):
+    def test_simple_extent(self, simple_extent_vector, tmp_path):
         """Test creating extent from simple vector."""
         out_path = str(tmp_path / "simple_extent.gpkg")
-        result = vector_to_extent(simple_vector, out_path)
+        result = vector_to_extent(simple_extent_vector, out_path)
         
         # Check if output exists
         assert os.path.exists(result)
@@ -78,10 +75,10 @@ class TestVectorToExtent:
         assert env[3] == 1  # maxY
         ds = None
 
-    def test_complex_extent(self, complex_vector, tmp_path):
+    def test_complex_extent(self, complex_extent_vector, tmp_path):
         """Test creating extent from complex vector."""
         out_path = str(tmp_path / "complex_extent.gpkg")
-        result = vector_to_extent(complex_vector, out_path)
+        result = vector_to_extent(complex_extent_vector, out_path)
         
         # Check if output exists
         assert os.path.exists(result)
@@ -100,10 +97,10 @@ class TestVectorToExtent:
         assert env[3] == 2   # maxY
         ds = None
 
-    def test_latlng_extent(self, simple_vector, tmp_path):
+    def test_latlng_extent(self, simple_extent_vector, tmp_path):
         """Test creating extent with latlng option."""
         out_path = str(tmp_path / "latlng_extent.gpkg")
-        result = vector_to_extent(simple_vector, out_path, latlng=True)
+        result = vector_to_extent(simple_extent_vector, out_path, latlng=True)
         
         # Check if output exists
         assert os.path.exists(result)
@@ -115,9 +112,9 @@ class TestVectorToExtent:
         assert srs.GetAuthorityCode(None) == '4326'
         ds = None
 
-    def test_memory_output(self, simple_vector):
+    def test_memory_output(self, simple_extent_vector):
         """Test creating extent in memory."""
-        result = vector_to_extent(simple_vector, out_path=None)
+        result = vector_to_extent(simple_extent_vector, out_path=None)
         
         # Check if path is memory path
         assert "/vsimem/" in result
@@ -127,10 +124,10 @@ class TestVectorToExtent:
         assert ds is not None
         ds = None
 
-    def test_invalid_output_path(self, simple_vector):
+    def test_invalid_output_path(self, simple_extent_vector):
         """Test error on invalid output path."""
         with pytest.raises(ValueError):
-            vector_to_extent(simple_vector, out_path="invalid/path/test.gpkg")
+            vector_to_extent(simple_extent_vector, out_path="invalid/path/test.gpkg")
 
     def test_invalid_input(self, tmp_path):
         """Test error on invalid input."""

@@ -7,8 +7,7 @@ from typing import Union, Optional
 import numpy as np
 
 # Internal
-from buteo.array.convolution import convolve_array
-from buteo.array.convolution_kernels import kernel_base, kernel_get_offsets_and_weights
+from buteo.array.convolution import convolve_array, kernel_base, kernel_get_offsets_and_weights
 from buteo.utils.utils_base import _type_check
 
 
@@ -28,7 +27,62 @@ def filter_operation(
     kernel: Optional[np.ndarray] = None,
     channel_last: bool = True,
 ) -> np.ndarray:
-    """Internal function to perform filter operations on arrays and rasters."""
+    """Internal function to perform filter operations on arrays and rasters.
+    
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to perform operations on.
+    
+    method : int
+        The method to use for the operation. Methods:
+        1: Mean/Sum (normalised=True for mean, normalised=False for sum)
+        2: Max
+        3: Min
+        4: Mean (same as 1 with normalised=True)
+        5: Median
+        6: Variance
+        7: Standard Deviation
+        9: Mode
+    
+    radius : Union[int, float], optional
+        Radius of the moving window, can be fractional. Default: 1
+    
+    spherical : bool, optional
+        Whether to use a spherical moving window. Default: True
+    
+    normalised : bool, optional
+        Whether to normalise the result. Default: True
+    
+    hole : bool, optional
+        Whether to create a hole in the kernel. Default: False
+    
+    func_value : Union[int, float], optional
+        Value to use for the function. Default: 0.0
+    
+    distance_weighted : bool, optional
+        Whether to weight the moving window by distance. Default: False
+    
+    distance_method : int, optional
+        Method to use for distance weighting. Default: 0
+    
+    distance_decay : Union[int, float], optional
+        Decay rate for distance weighting. Default: 0.2
+    
+    distance_sigma : Union[int, float], optional
+        Sigma for distance weighting. Default: 2.0
+    
+    kernel : Optional[np.ndarray], optional
+        Custom kernel to use. Default: None
+    
+    channel_last : bool, optional
+        Whether the channels are the last dimension. Default: True
+    
+    Returns
+    -------
+    np.ndarray
+        The filtered array.
+    """
     _type_check(arr, [np.ndarray], "arr")
     _type_check(method, [int], "method")
     _type_check(radius, [int, float], "radius")
@@ -61,15 +115,17 @@ def filter_operation(
     mask = None
     if np.ma.isMaskedArray(arr):
         nodata = True
-        nodata_value = arr.fill_value
-        arr = np.ma.getdata(arr)
+        # Safe access to fill_value for masked arrays
+        nodata_value = float(getattr(arr, 'fill_value', -9999.9))
+        data = np.ma.getdata(arr)
         mask = np.ma.getmask(arr)
     else:
         nodata = False
         nodata_value = 0.0
+        data = arr
 
     arr_convolved = convolve_array(
-        arr,
+        data,
         offsets,
         weights,
         method=method,
@@ -80,7 +136,14 @@ def filter_operation(
     )
 
     if nodata:
-        arr_convolved = np.ma.array(arr_convolved, mask=mask, fill_value=nodata_value)
+        # Preserve mask and fill_value
+        if isinstance(mask, np.ndarray):
+            # Handle case when mask is an array
+            arr_convolved = np.ma.array(arr_convolved, mask=mask, fill_value=nodata_value)
+        else:
+            # Handle case when mask is a boolean
+            mask_array = np.full(arr_convolved.shape, mask, dtype=bool)
+            arr_convolved = np.ma.array(arr_convolved, mask=mask_array, fill_value=nodata_value)
 
     return arr_convolved
 
@@ -441,7 +504,7 @@ def filter_sum(
     """
     return _filter_operation(
         arr,
-        method=1,
+        method=1,  # Use method 1 for sum (with normalised=False)
         radius=radius,
         normalised=False,
         spherical=spherical,

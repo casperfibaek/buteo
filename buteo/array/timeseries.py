@@ -6,8 +6,30 @@ import numpy as np
 
 
 def timeseries_least_square_slope(arr):
-    """Compute the least squares slope for a set of data points along the last channel."""
+    """Compute the least squares slope for a set of data points along the last channel.
+    
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        A 3D array with shape (height, width, time_steps)
+    
+    Returns
+    -------
+    numpy.ndarray
+        Array of slopes with shape (height, width, 1)
+        
+    Notes
+    -----
+    This function calculates the slope of a linear trend for each pixel
+    in the array along the time dimension (last axis). It uses a standard
+    least squares method which is sensitive to outliers.
+    
+    For a more robust approach that handles outliers better, use
+    timeseries_robust_least_squares_slope instead.
+    """
     assert arr.ndim == 3, "Input array must be 3D"
+    assert arr.shape[0] > 0 and arr.shape[1] > 0, "Height and width dimensions must be non-empty"
+    assert arr.shape[2] >= 1, "Time dimension must have at least 1 point"
 
     y = arr
     x_range = np.arange(y.shape[-1], dtype=np.float32)
@@ -26,9 +48,34 @@ def timeseries_least_square_slope(arr):
 
 
 def timeseries_robust_least_squares_slope(arr, std_threshold=1.0, splits=10, report_progress=True):
-    """Compute the robust least squares slope for a set of data points along the last channel."""
+    """Compute the robust least squares slope for a set of data points along the last channel.
+    
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        A 3D array with shape (height, width, time_steps)
+    
+    std_threshold : float, optional
+        The threshold in standard deviations to use for outlier detection.
+        Higher values include more points, lower values are more restrictive.
+        Default: 1.0
+        
+    splits : int, optional
+        Number of parts to split the array into for processing.
+        Must be less than or equal to the height of the array.
+        Default: 10
+        
+    report_progress : bool, optional
+        Whether to print progress information.
+        Default: True
+    
+    Returns
+    -------
+    numpy.ndarray
+        Array of slopes with shape (height, width, 1)
+    """
     assert arr.ndim == 3, "Input array must be 3D"
-    assert arr.shape[0] > splits, "Input array must have at least splits rows"
+    assert arr.shape[0] >= splits, "Input array must have at least as many rows as splits"
     y_list = np.array_split(arr, splits, axis=0)
     slope_list = []
 

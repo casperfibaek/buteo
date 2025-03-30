@@ -3,7 +3,6 @@
 
 # Standard library
 import sys; sys.path.append("../../")
-import os
 
 import pytest
 import numpy as np
@@ -179,14 +178,15 @@ class TestRasterCreateCopy:
             str(out_path),
             bands=[3, 1, 2]  # Reorder bands
         )
-        with gdal.Open(result) as ds:
-            assert ds.RasterCount == 3
-            band1 = ds.GetRasterBand(1).ReadAsArray()
-            band2 = ds.GetRasterBand(2).ReadAsArray()
-            band3 = ds.GetRasterBand(3).ReadAsArray()
-            assert np.all(band1 == 3)  # First band should be all 3's
-            assert np.all(band2 == 1)  # Second band should be all 1's
-            assert np.all(band3 == 2)  # Third band should be all 2's
+        ds = gdal.Open(result)
+        assert ds.RasterCount == 3
+        band1 = ds.GetRasterBand(1).ReadAsArray()
+        band2 = ds.GetRasterBand(2).ReadAsArray()
+        band3 = ds.GetRasterBand(3).ReadAsArray()
+        assert np.all(band1 == 3)  # First band should be all 3's
+        assert np.all(band2 == 1)  # Second band should be all 1's
+        assert np.all(band3 == 2)  # Third band should be all 2's
+        ds = None
 
 
 class TestRasterCreateEmpty:

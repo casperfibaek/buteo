@@ -4,6 +4,7 @@ Merges vectors into a single vector file.
 """
 
 # Standard library
+import os
 from typing import Union, List, Optional
 
 # External
@@ -98,6 +99,26 @@ def vector_merge_features(
             target_projection = utils_projection.parse_projection_wkt(projection)
     except Exception as e:
         raise ValueError(f"Failed to process projection: {str(e)}") from e
+
+    # Ensure output directory exists
+    out_dir = os.path.dirname(out_path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+
+    # First, create an empty target file to avoid "No such file or directory" error
+    driver = ogr.GetDriverByName(driver_name)
+    if driver is None:
+        raise RuntimeError(f"Could not get driver: {driver_name}")
+    
+    # Delete existing file if overwrite=True
+    if overwrite and utils_path._check_file_exists(out_path):
+        utils_gdal._delete_raster_or_vector(out_path)
+    
+    # Create empty dataset
+    ds = driver.CreateDataSource(out_path)
+    if ds is None:
+        raise RuntimeError(f"Could not create dataset: {out_path}")
+    ds = None  # Close the dataset
 
     # Perform merge
     try:
