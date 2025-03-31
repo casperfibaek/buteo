@@ -7,7 +7,6 @@ The list is a combination of the [release checklist](#release-checklist) and the
 * [x] Merge Peter code
 * [ ] Verify AI Package
 * [ ] Verify Array package
-* [ ] Verify Bindings package
 * [ ] Verify EO Package
 * [ ] Verify Raster package
 * [ ] Verify Vector package
