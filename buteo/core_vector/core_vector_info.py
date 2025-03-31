@@ -1,7 +1,7 @@
 """ ### Metadata functions for vector layers. ### """
 
 # Standard library
-from typing import Union, Dict, Any, Optional
+from typing import Union, Dict, Any, Optional, Tuple
 from warnings import warn
 import os
 
@@ -12,11 +12,15 @@ from osgeo import ogr, osr
 from buteo.utils import (
     utils_base,
     utils_gdal,
-    utils_bbox,
+    # utils_bbox, # Removed old import - This line should be removed
     utils_projection,
     utils_translate,
     utils_path,
 )
+# Import necessary bbox functions from their new locations
+from buteo.bbox.operations import _get_gdal_bbox_from_ogr_bbox
+from buteo.bbox.conversion import _get_geom_from_bbox
+
 from buteo.core_vector.core_vector_read import _open_vector, _vector_get_layer
 
 
@@ -209,14 +213,16 @@ def _get_bounds_info_vector(
         raise ValueError("Could not read layer from dataset.")
 
     layer = layer_list[0]
-    bbox = layer.GetExtent()
+    bbox = layer.GetExtent() # Returns tuple (minX, maxX, minY, maxY)
 
     default_projection = utils_projection._get_default_projection_osr()
 
     if utils_projection._check_projections_match(projection_osr, default_projection):
         bbox_latlng = bbox
     else:
-        bbox_latlng = utils_projection.reproject_bbox(bbox, projection_osr, default_projection)
+        # Convert tuple bbox to list [minX, maxX, minY, maxY] for reproject_bbox
+        bbox_list = [bbox[0], bbox[1], bbox[2], bbox[3]]
+        bbox_latlng = utils_projection.reproject_bbox(bbox_list, projection_osr, default_projection)
 
     centroid_x = (bbox[0] + bbox[1]) / 2
     centroid_y = (bbox[2] + bbox[3]) / 2
@@ -226,11 +232,12 @@ def _get_bounds_info_vector(
     centroid_latlng_y = (bbox_latlng[2] + bbox_latlng[3]) / 2
     centroid_latlng = (centroid_latlng_x, centroid_latlng_y)
 
-    bounds = utils_bbox._get_geom_from_bbox(bbox)
-    bounds_latlng = utils_bbox._get_geom_from_bbox(bbox_latlng)
+    # Use imported function _get_geom_from_bbox which expects [minX, maxX, minY, maxY]
+    bounds = _get_geom_from_bbox([bbox[0], bbox[1], bbox[2], bbox[3]])
+    bounds_latlng = _get_geom_from_bbox(bbox_latlng)
 
     return {
-        "bbox": bbox,
+        "bbox": [bbox[0], bbox[1], bbox[2], bbox[3]], # Return as list
         "bbox_latlng": bbox_latlng,
         "bounds": bounds.ExportToWkt(),
         "bounds_latlng": bounds_latlng.ExportToWkt(),
@@ -258,7 +265,7 @@ def get_metadata_vector(
     layer_name_or_id : Optional[Union[str, int]], optional
         The layer name or index to extract information from, default: None.
         If None, processes all the layers.
-    
+
     Returns
     -------
     Dict[str, Any]
@@ -268,6 +275,7 @@ def get_metadata_vector(
     utils_base._type_check(layer_name_or_id, [str, int, None], "layer_name_or_id")
 
     ds = _open_vector(datasource, writeable=False)
+    if ds is None: raise ValueError(f"Could not open vector: {datasource}") # Add check
     description = ds.GetDescription()
     path = utils_path._get_unix_path(description) if description != "" else "in_memory.mem"
 

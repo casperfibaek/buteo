@@ -12,10 +12,13 @@ from buteo.utils import (
     utils_base,
     utils_io,
     utils_gdal,
-    utils_bbox,
+    # utils_bbox, # Removed old import
     utils_path,
     utils_translate,
 )
+# Import necessary bbox functions from their new locations
+from buteo.bbox.validation import _check_bboxes_intersect, _check_is_valid_bbox # Added _check_is_valid_bbox
+from buteo.bbox.operations import _get_pixel_offsets
 from buteo.core_raster.core_raster_read import _open_raster, _read_raster_band
 from buteo.core_raster.core_raster_info import get_metadata_raster
 
@@ -82,10 +85,12 @@ def raster_to_array(
         pixel_offsets = (0, 0, metadata["width"], metadata["height"])
 
     if bbox is not None:
-        if not utils_bbox._check_bboxes_intersect(metadata["bbox"], bbox):
+        # Use imported _check_bboxes_intersect
+        if not _check_bboxes_intersect(metadata["bbox"], bbox):
             raise ValueError("bbox outside raster extent")
 
-        pixel_offsets = utils_bbox._get_pixel_offsets(metadata["geotransform"], bbox)
+        # Use imported _get_pixel_offsets
+        pixel_offsets = _get_pixel_offsets(metadata["geotransform"], bbox)
 
     dtype = cast if cast is not None else metadata["dtype"]
     dtype = utils_translate._parse_dtype(dtype)
@@ -225,9 +230,11 @@ def array_to_raster(
     if bbox is not None:
         if not (len(bbox) == 4 and all(isinstance(val, (float, int)) for val in bbox)):
             raise ValueError("Bounding box must be a list of 4 floats or integers.")
-        if not utils_bbox._check_is_valid_bbox(bbox):
+        # Use imported _check_is_valid_bbox (from buteo.bbox.validation)
+        if not _check_is_valid_bbox(bbox): # Corrected this line
             raise ValueError("Bounding box is not valid.")
-        pixel_offsets = utils_bbox._get_pixel_offsets(metadata_ref["geotransform"], bbox)
+        # Use imported _get_pixel_offsets (from buteo.bbox.operations)
+        pixel_offsets = _get_pixel_offsets(metadata_ref["geotransform"], bbox)
 
     if pixel_offsets is None:
         pixel_offsets = [0, 0, metadata_ref["width"], metadata_ref["height"]]

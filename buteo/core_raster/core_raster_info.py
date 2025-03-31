@@ -11,12 +11,15 @@ from osgeo import gdal, osr
 # Internal
 from buteo.utils import (
     utils_base,
-    utils_bbox,
+    # utils_bbox, # Removed old import
     utils_path,
     utils_gdal,
     utils_translate,
     utils_projection,
 )
+# Import necessary bbox functions from their new locations
+from buteo.bbox.operations import _get_bbox_from_geotransform, _get_gdal_bbox_from_ogr_bbox
+from buteo.bbox.conversion import _get_geom_from_bbox, _get_bounds_from_bbox_as_geom
 
 from buteo.core_raster.core_raster_read import _open_raster
 
@@ -89,8 +92,10 @@ def _get_bounds_info_raster(
         If bounds computation fails
     """
     transform = dataset.GetGeoTransform()
-    bbox = utils_bbox._get_bbox_from_geotransform(transform, dataset.RasterXSize, dataset.RasterYSize)
-    bounds_raster = utils_bbox._get_geom_from_bbox(bbox)
+    # Use imported _get_bbox_from_geotransform
+    bbox = _get_bbox_from_geotransform(transform, dataset.RasterXSize, dataset.RasterYSize)
+    # Use imported _get_geom_from_bbox
+    bounds_raster = _get_geom_from_bbox(bbox)
 
     try:
         bbox_latlng = utils_projection.reproject_bbox(
@@ -98,11 +103,13 @@ def _get_bounds_info_raster(
             projection_osr,
             utils_projection._get_default_projection_osr()
         )
-        bounds_latlng = utils_bbox._get_bounds_from_bbox_as_geom(bbox, projection_osr)
+        # Use imported _get_bounds_from_bbox_as_geom
+        bounds_latlng = _get_bounds_from_bbox_as_geom(bbox, projection_osr)
     except RuntimeError as e:
         if "Point outside of projection domain" in str(e):
-            bbox_latlng = [0.0, 90.0, 0.0, 180.0]
-            bounds_latlng = utils_bbox._get_bounds_from_bbox_as_geom(
+            bbox_latlng = [0.0, 90.0, 0.0, 180.0] # Default WGS84 bbox? Seems arbitrary.
+            # Use imported _get_bounds_from_bbox_as_geom (Corrected usage)
+            bounds_latlng = _get_bounds_from_bbox_as_geom(
                 bbox_latlng,
                 utils_projection._get_default_projection_osr()
             )
@@ -121,8 +128,9 @@ def _get_bounds_info_raster(
     return {
         "bbox": bbox,
         "bbox_latlng": bbox_latlng,
-        "bbox_gdal": utils_bbox._get_gdal_bbox_from_ogr_bbox(bbox),
-        "bbox_gdal_latlng": utils_bbox._get_gdal_bbox_from_ogr_bbox(bbox_latlng),
+        # Use imported _get_gdal_bbox_from_ogr_bbox
+        "bbox_gdal": _get_gdal_bbox_from_ogr_bbox(bbox),
+        "bbox_gdal_latlng": _get_gdal_bbox_from_ogr_bbox(bbox_latlng),
         "bounds_latlng": bounds_latlng.ExportToWkt(),
         "bounds": bounds_raster.ExportToWkt(),
         "centroid": (centroid.GetX(), centroid.GetY()),

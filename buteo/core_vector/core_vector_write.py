@@ -1,7 +1,8 @@
 """ Module for writing vector data to disk or memory. """
 # Standard library
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Dict, Any, Tuple # Added Dict, Any, Tuple
 import json
+import os # Added os import
 
 # External
 from osgeo import ogr, gdal, osr
@@ -11,11 +12,15 @@ from buteo.utils import (
     utils_io,
     utils_base,
     utils_gdal,
-    utils_bbox,
+    # utils_bbox, # Removed old import - This line is now removed
     utils_path,
     utils_projection,
     utils_translate
 )
+# Import necessary bbox functions from their new locations
+from buteo.bbox.validation import _check_is_valid_bbox
+from buteo.bbox.conversion import _get_geom_from_bbox
+
 from buteo.core_vector.core_vector_read import _open_vector, _vector_get_layer
 
 
@@ -64,9 +69,9 @@ def vector_create_copy(
     RuntimeError
         If the driver for the output vector could not be obtained.
     """
-    utils_base._type_check(vector, [ogr.DataSource, str, [ogr.DataSource, str]], "vector")
-    utils_base._type_check(out_path, [str, [str]], "out_path")
-    utils_base._type_check(layer_names_or_ids, [str, int, [str, int], None], "layer_names_or_ids")
+    utils_base._type_check(vector, [ogr.DataSource, str, list], "vector") # Allow list directly
+    utils_base._type_check(out_path, [str, list], "out_path") # Allow list directly
+    utils_base._type_check(layer_names_or_ids, [str, int, list, None], "layer_names_or_ids") # Allow list directly
     utils_base._type_check(prefix, [str], "prefix")
     utils_base._type_check(suffix, [str], "suffix")
     utils_base._type_check(add_uuid, [bool], "add_uuid")
@@ -74,9 +79,9 @@ def vector_create_copy(
     utils_base._type_check(overwrite, [bool], "overwrite")
 
     input_is_list = isinstance(vector, list)
-    in_paths = utils_io._get_input_paths(vector, "vector")  # type: ignore
+    in_paths = utils_io._get_input_paths(vector, "vector")
     out_paths = utils_io._get_output_paths(
-        in_paths,  # type: ignore
+        in_paths,
         out_path,
         prefix=prefix,
         suffix=suffix,
@@ -113,10 +118,11 @@ def vector_create_copy(
             if dst_ds is None:
                 raise RuntimeError(f"Could not create output datasource: {out_vector_path}")
 
-            if not isinstance(layer_names_or_ids, list):
-                layer_names_or_ids = [layer_names_or_ids]
+            target_layers = layer_names_or_ids
+            if not isinstance(target_layers, list):
+                target_layers = [target_layers]
 
-            for layer_name_or_id in layer_names_or_ids:
+            for layer_name_or_id in target_layers:
                 layers = _vector_get_layer(src_ds, layer_name_or_id)
                 for src_layer in layers:
                     layer_name = src_layer.GetName()
@@ -139,14 +145,14 @@ def vector_create_copy(
                         dst_feat = ogr.Feature(dst_layer.GetLayerDefn())
                         dst_feat.SetFrom(src_feat)
                         dst_layer.CreateFeature(dst_feat)
-                        dst_feat = None
+                        dst_feat = None # Destroy feature
 
-                    dst_layer = None
+                    dst_layer = None # Destroy layer
 
             dst_ds.FlushCache()
-            dst_ds = None
+            dst_ds = None # Destroy datasource
 
-        src_ds = None
+        src_ds = None # Destroy source datasource
 
     return out_paths if input_is_list else out_paths[0]
 
@@ -195,7 +201,7 @@ def vector_create_empty_copy(
     """
     utils_base._type_check(vector, [ogr.DataSource, str], "vector")
     utils_base._type_check(out_path, [str, None], "out_path")
-    utils_base._type_check(layer_names_or_ids, [str, int, [str, int], None], "layer_names_or_ids")
+    utils_base._type_check(layer_names_or_ids, [str, int, list, None], "layer_names_or_ids") # Allow list
     utils_base._type_check(geom_type, [int, None], "geom_type")
     utils_base._type_check(prefix, [str], "prefix")
     utils_base._type_check(suffix, [str], "suffix")
@@ -204,7 +210,7 @@ def vector_create_empty_copy(
     utils_base._type_check(overwrite, [bool], "overwrite")
 
     in_path = utils_io._get_input_paths(vector, "vector")[0]
-    out_path = utils_io._get_output_paths(
+    out_path_processed = utils_io._get_output_paths( # Renamed variable
         in_path,
         out_path,
         prefix=prefix,
@@ -213,10 +219,10 @@ def vector_create_empty_copy(
         add_timestamp=add_timestamp,
     )[0]
 
-    utils_io._check_overwrite_policy([out_path], overwrite)
-    utils_io._delete_if_required(out_path, overwrite)
+    utils_io._check_overwrite_policy([out_path_processed], overwrite)
+    utils_io._delete_if_required(out_path_processed, overwrite)
 
-    driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
+    driver_name = utils_gdal._get_vector_driver_name_from_path(out_path_processed)
     driver = ogr.GetDriverByName(driver_name)
 
     if driver is None:
@@ -226,16 +232,17 @@ def vector_create_empty_copy(
     if src_ds is None:
         raise ValueError(f"Unable to open vector dataset: {in_path}")
 
-    dst_ds = driver.CreateDataSource(out_path)
+    dst_ds = driver.CreateDataSource(out_path_processed)
     if dst_ds is None:
-        raise RuntimeError(f"Could not create output datasource: {out_path}")
+        raise RuntimeError(f"Could not create output datasource: {out_path_processed}")
 
-    if layer_names_or_ids is None:
+    target_layers = layer_names_or_ids
+    if target_layers is None:
         layers = _vector_get_layer(src_ds, layer_name_or_id=None)
-    elif layer_names_or_ids is not None and not isinstance(layer_names_or_ids, list):
-        layers = _vector_get_layer(src_ds, layer_name_or_id=layer_names_or_ids)
-    else:
-        layers = [_vector_get_layer(src_ds, layer_name_or_id=layer_name_or_id)[0] for layer_name_or_id in layer_names_or_ids]
+    elif not isinstance(target_layers, list):
+        layers = _vector_get_layer(src_ds, layer_name_or_id=target_layers)
+    else: # Is list
+        layers = [_vector_get_layer(src_ds, layer_name_or_id=layer_id)[0] for layer_id in target_layers]
 
     for src_layer in layers:
         layer_name = src_layer.GetName()
@@ -268,7 +275,7 @@ def vector_create_empty_copy(
     src_ds = None
     dst_ds = None
 
-    return out_path
+    return out_path_processed
 
 
 def vector_create_from_bbox(
@@ -298,31 +305,43 @@ def vector_create_from_bbox(
     utils_base._type_check(projection, [str, osr.SpatialReference, None], "projection")
     utils_base._type_check(out_path, [str, None], "out_path")
 
-    assert utils_bbox._check_is_valid_bbox(bbox), "bbox is not a valid bounding box."
+    # Use imported function
+    if not _check_is_valid_bbox(bbox):
+        raise ValueError("bbox is not a valid bounding box.")
 
     if projection is None:
         proj = utils_projection._get_default_projection_osr()
     else:
         proj = utils_projection.parse_projection(projection)
 
-    if utils_projection._projection_is_latlng(proj):
-        bbox = [bbox[2], bbox[3], bbox[0], bbox[1]]
+    # Bbox format for _get_geom_from_bbox is [xmin, xmax, ymin, ymax]
+    # No need to reorder based on projection here.
+    # if utils_projection._projection_is_latlng(proj):
+    #     bbox = [bbox[2], bbox[3], bbox[0], bbox[1]] # This reordering was incorrect
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath("temp_bbox.fgb", add_timestamp=True, add_uuid=True)
+        out_path = utils_path._get_temp_filepath("temp_bbox.gpkg", add_timestamp=True, add_uuid=True) # Changed default to gpkg
 
     if not utils_path._check_is_valid_output_filepath(out_path):
         raise ValueError(f"Invalid output path: {out_path}")
 
     driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
     driver = ogr.GetDriverByName(driver_name)
+    if driver is None: raise RuntimeError(f"Could not get driver: {driver_name}")
 
     datasource = driver.CreateDataSource(out_path)
-    layer = datasource.CreateLayer("bbox", geom_type=ogr.wkbPolygon, srs=proj)
-    feature = ogr.Feature(layer.GetLayerDefn())
-    feature.SetGeometry(utils_bbox._get_geom_from_bbox(bbox))
+    if datasource is None: raise RuntimeError(f"Could not create datasource: {out_path}")
 
-    layer.CreateFeature(feature)
+    layer = datasource.CreateLayer("bbox", geom_type=ogr.wkbPolygon, srs=proj)
+    if layer is None: raise RuntimeError("Could not create layer.")
+
+    feature = ogr.Feature(layer.GetLayerDefn())
+    # Use imported function
+    feature.SetGeometry(_get_geom_from_bbox(bbox))
+
+    if layer.CreateFeature(feature) != ogr.OGRERR_NONE:
+        raise RuntimeError("Could not create feature.")
+
     layer.SyncToDisk()
 
     datasource = None
@@ -368,22 +387,29 @@ def vector_create_from_wkt(
         proj = utils_projection.parse_projection(projection)
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath("temp_geom.fgb", add_timestamp=True, add_uuid=True)
+        out_path = utils_path._get_temp_filepath("temp_geom.gpkg", add_timestamp=True, add_uuid=True) # Changed default to gpkg
 
     driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
     driver = ogr.GetDriverByName(driver_name)
+    if driver is None: raise RuntimeError(f"Could not get driver: {driver_name}")
 
     datasource = driver.CreateDataSource(out_path)
+    if datasource is None: raise RuntimeError(f"Could not create datasource: {out_path}")
 
-    geom_type = ogr.CreateGeometryFromWkt(wkt).GetGeometryType()
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    if geom is None: raise ValueError("Could not create geometry from WKT.")
+    geom_type = geom.GetGeometryType()
 
     layer = datasource.CreateLayer("temp_geom", geom_type=geom_type, srs=proj)
+    if layer is None: raise RuntimeError("Could not create layer.")
+
     layer_defn = layer.GetLayerDefn()
-
     feature = ogr.Feature(layer_defn)
-    feature.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
+    feature.SetGeometry(geom)
 
-    layer.CreateFeature(feature)
+    if layer.CreateFeature(feature) != ogr.OGRERR_NONE:
+        raise RuntimeError("Could not create feature.")
+
     layer.SyncToDisk()
 
     datasource = None
@@ -428,16 +454,21 @@ def vector_create_from_points(
         proj = utils_projection.parse_projection(projection)
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath("temp_points.fgb", add_timestamp=True, add_uuid=True)
+        out_path = utils_path._get_temp_filepath("temp_points.gpkg", add_timestamp=True, add_uuid=True) # Changed default to gpkg
 
     if not utils_path._check_is_valid_output_filepath(out_path):
         raise ValueError(f"Invalid output path: {out_path}")
 
     driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
     driver = ogr.GetDriverByName(driver_name)
+    if driver is None: raise RuntimeError(f"Could not get driver: {driver_name}")
 
     datasource = driver.CreateDataSource(out_path)
+    if datasource is None: raise RuntimeError(f"Could not create datasource: {out_path}")
+
     layer = datasource.CreateLayer("points", geom_type=ogr.wkbPoint, srs=proj)
+    if layer is None: raise RuntimeError("Could not create layer.")
+
     layer_defn = layer.GetLayerDefn()
 
     for point in points:
@@ -449,7 +480,8 @@ def vector_create_from_points(
             geom.AddPoint(point[0], point[1])
         feature.SetGeometry(geom)
 
-        layer.CreateFeature(feature)
+        if layer.CreateFeature(feature) != ogr.OGRERR_NONE:
+             raise RuntimeError("Could not create feature.")
         feature = None
 
     layer.GetExtent()
@@ -500,12 +532,15 @@ def vector_create_from_geojson(
         proj = utils_projection.parse_projection(projection)
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath("temp_from_geojson.fgb", add_timestamp=True, add_uuid=True)
+        out_path = utils_path._get_temp_filepath("temp_from_geojson.gpkg", add_timestamp=True, add_uuid=True) # Changed default to gpkg
 
     driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
     driver = ogr.GetDriverByName(driver_name)
+    if driver is None: raise RuntimeError(f"Could not get driver: {driver_name}")
 
     datasource = driver.CreateDataSource(out_path)
+    if datasource is None: raise RuntimeError(f"Could not create datasource: {out_path}")
+
     try:
         geojson_ds = ogr.Open(geojson)
     except RuntimeError as e:
@@ -526,8 +561,8 @@ def vector_create_from_geojson(
 
         src_layer_defn = src_layer.GetLayerDefn()
 
-        for i in range(src_layer_defn.GetFieldCount()):
-            field_defn = src_layer_defn.GetFieldDefn(i)
+        for field_idx in range(src_layer_defn.GetFieldCount()): # Renamed loop variable
+            field_defn = src_layer_defn.GetFieldDefn(field_idx)
             dst_layer.CreateField(field_defn)
 
         src_layer.ResetReading()
@@ -535,7 +570,8 @@ def vector_create_from_geojson(
         for src_feat in src_layer:
             dst_feat = ogr.Feature(dst_layer.GetLayerDefn())
             dst_feat.SetFrom(src_feat)
-            dst_layer.CreateFeature(dst_feat)
+            if dst_layer.CreateFeature(dst_feat) != ogr.OGRERR_NONE:
+                 raise RuntimeError("Could not create feature.")
             dst_feat = None
 
     datasource.SyncToDisk()
@@ -588,7 +624,7 @@ def vector_set_crs(
     in_vector_path = utils_io._get_input_paths(vector, "vector")[0]
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath("vector_change_crs.fgb", add_uuid=True, add_timestamp=True)
+        out_path = utils_path._get_temp_filepath("vector_change_crs.gpkg", add_uuid=True, add_timestamp=True) # Changed default to gpkg
     else:
         out_path = utils_io._get_output_paths(in_vector_path, out_path)[0]
 
@@ -633,7 +669,8 @@ def vector_set_crs(
         for src_feat in src_layer:
             dst_feat = ogr.Feature(dst_layer.GetLayerDefn())
             dst_feat.SetFrom(src_feat)
-            dst_layer.CreateFeature(dst_feat)
+            if dst_layer.CreateFeature(dst_feat) != ogr.OGRERR_NONE:
+                 raise RuntimeError("Could not create feature.")
             dst_feat = None
 
     src_ds = None

@@ -11,10 +11,14 @@ from osgeo import gdal, ogr
 from buteo.utils import (
     utils_base,
     utils_gdal,
-    utils_bbox,
+    # utils_bbox, # Removed old import
     utils_projection,
     utils_io,
 )
+# Import necessary bbox functions from their new locations
+from buteo.bbox.operations import _get_bbox_from_geotransform
+from buteo.bbox.conversion import _get_geom_from_bbox, _get_bounds_from_bbox_as_geom, _get_vector_from_geom
+
 from buteo.core_raster.core_raster_read import _open_raster
 from buteo.core_raster.core_raster_info import _get_basic_info_raster, get_metadata_raster
 
@@ -56,18 +60,22 @@ def get_raster_overlap_fraction(
 
     # Get bounds for first raster
     info1 = _get_basic_info_raster(ds1)
-    bbox1 = utils_bbox._get_bbox_from_geotransform(
+    # Use imported function
+    bbox1 = _get_bbox_from_geotransform(
         info1["transform"], ds1.RasterXSize, ds1.RasterYSize
     )
-    geom1 = utils_bbox._get_geom_from_bbox(bbox1)
+    # Use imported function
+    geom1 = _get_geom_from_bbox(bbox1)
     geom1.AssignSpatialReference(info1["projection_osr"])
 
     # Get bounds for second raster
     info2 = _get_basic_info_raster(ds2)
-    bbox2 = utils_bbox._get_bbox_from_geotransform(
+    # Use imported function
+    bbox2 = _get_bbox_from_geotransform(
         info2["transform"], ds2.RasterXSize, ds2.RasterYSize
     )
-    geom2 = utils_bbox._get_geom_from_bbox(bbox2)
+    # Use imported function
+    geom2 = _get_geom_from_bbox(bbox2)
     geom2.AssignSpatialReference(info2["projection_osr"])
 
     try:
@@ -114,18 +122,22 @@ def get_raster_intersection(
 
     # Get bounds for first raster
     info1 = _get_basic_info_raster(ds1)
-    bbox1 = utils_bbox._get_bbox_from_geotransform(
+    # Use imported function
+    bbox1 = _get_bbox_from_geotransform(
         info1["transform"], ds1.RasterXSize, ds1.RasterYSize
     )
-    geom1 = utils_bbox._get_geom_from_bbox(bbox1)
+    # Use imported function
+    geom1 = _get_geom_from_bbox(bbox1)
     geom1.AssignSpatialReference(info1["projection_osr"])
 
     # Get bounds for second raster
     info2 = _get_basic_info_raster(ds2)
-    bbox2 = utils_bbox._get_bbox_from_geotransform(
+    # Use imported function
+    bbox2 = _get_bbox_from_geotransform(
         info2["transform"], ds2.RasterXSize, ds2.RasterYSize
     )
-    geom2 = utils_bbox._get_geom_from_bbox(bbox2)
+    # Use imported function
+    geom2 = _get_geom_from_bbox(bbox2)
     geom2.AssignSpatialReference(info2["projection_osr"])
 
     try:
@@ -168,18 +180,22 @@ def check_rasters_intersect(
 
     # Get bounds for first raster
     info1 = _get_basic_info_raster(ds1)
-    bbox1 = utils_bbox._get_bbox_from_geotransform(
+    # Use imported function
+    bbox1 = _get_bbox_from_geotransform(
         info1["transform"], ds1.RasterXSize, ds1.RasterYSize
     )
-    geom1 = utils_bbox._get_geom_from_bbox(bbox1)
+    # Use imported function
+    geom1 = _get_geom_from_bbox(bbox1)
     geom1.AssignSpatialReference(info1["projection_osr"])
 
     # Get bounds for second raster
     info2 = _get_basic_info_raster(ds2)
-    bbox2 = utils_bbox._get_bbox_from_geotransform(
+    # Use imported function
+    bbox2 = _get_bbox_from_geotransform(
         info2["transform"], ds2.RasterXSize, ds2.RasterYSize
     )
-    geom2 = utils_bbox._get_geom_from_bbox(bbox2)
+    # Use imported function
+    geom2 = _get_geom_from_bbox(bbox2)
     geom2.AssignSpatialReference(info2["projection_osr"])
 
     return geom1.Intersects(geom2)
@@ -351,21 +367,25 @@ def _raster_to_vector_extent(
     bbox = metadata_raster["bbox"]
 
     if latlng:
-        footprint_geom = utils_bbox._get_bounds_from_bbox_as_geom(
+        # Use imported function
+        footprint_geom = _get_bounds_from_bbox_as_geom(
             bbox,
             projection_osr,
         )
-        footprint = utils_bbox._get_vector_from_geom(
+        # Use imported function
+        footprint = _get_vector_from_geom(
             footprint_geom,
             projection_osr=projection_latlng,
             out_path=out_path,
             name=os.path.basename(out_path),
         )
     else:
-        footprint_geom = utils_bbox._get_geom_from_bbox(
+        # Use imported function
+        footprint_geom = _get_geom_from_bbox(
             bbox,
         )
-        footprint = utils_bbox._get_vector_from_geom(
+        # Use imported function
+        footprint = _get_vector_from_geom(
             footprint_geom,
             projection_osr=projection_osr,
             out_path=out_path,
