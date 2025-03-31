@@ -4,10 +4,12 @@ Dissolve vectors by attributes or geometry.
 """
 
 # Standard library
-from typing import Union, Optional, List
+import os
+import tempfile
+from typing import Union, Optional, List, cast
 
 # External
-from osgeo import ogr
+from osgeo import ogr, gdal
 
 # Internal
 from buteo.utils import (
@@ -16,9 +18,9 @@ from buteo.utils import (
     utils_gdal,
     utils_path,
 )
-from buteo.vector import core_vector
-from buteo.vector.metadata import _vector_to_metadata
-
+from buteo.core_vector.core_vector_read import open_vector as vector_open
+from buteo.core_vector.core_vector_info import get_metadata_vector
+from buteo.core_vector.core_vector_index import vector_add_index
 
 
 def _vector_dissolve(
@@ -28,14 +30,12 @@ def _vector_dissolve(
     overwrite: bool = True,
     add_index: bool = True,
     process_layer: int = -1,
-) -> Union[str, ogr.DataSource]:
-    """Internal."""
+) -> str:
+    """Internal dissolve implementation."""
     assert utils_gdal._check_is_vector(vector), "Invalid input vector"
 
-    vector_list = utils_base._get_variable_as_list(vector)
-
     if out_path is None:
-        out_path = utils_path._get_temp_filepath("dissolve.shp", suffix="_dissolve")
+        out_path = utils_path._get_temp_filepath(vector, suffix="_dissolve", ext="gpkg")
 
     assert utils_path._check_is_valid_output_filepath(out_path, overwrite=overwrite), "Invalid output path"
 
@@ -43,8 +43,19 @@ def _vector_dissolve(
 
     driver = ogr.GetDriverByName(out_format)
 
-    ref = core_vector._vector_open(vector_list[0])
-    metadata = _vector_to_metadata(ref)
+    # Get datasource
+    ds_result = vector_open(vector, writeable=False)
+    
+    # Ensure we have a single DataSource object
+    if isinstance(ds_result, list):
+        if not ds_result:
+            raise ValueError("No valid vector datasource found")
+        ref = ds_result[0]
+    else:
+        ref = ds_result
+    
+    # Now ref is guaranteed to be a single ogr.DataSource
+    metadata = get_metadata_vector(ref)
 
     layers = []
 
@@ -58,6 +69,9 @@ def _vector_dissolve(
                 }
             )
     else:
+        if process_layer >= len(metadata["layers"]):
+            raise ValueError(f"Invalid process_layer index: {process_layer}. Only {len(metadata['layers'])} layers available.")
+        
         layers.append(
             {
                 "name": metadata["layers"][process_layer]["layer_name"],
@@ -66,17 +80,18 @@ def _vector_dissolve(
             }
         )
 
-    utils_path._delete_if_required(out_path, overwrite=overwrite)
+    utils_io._delete_if_required(out_path, overwrite=overwrite)
 
     destination = driver.CreateDataSource(out_path)
+    if destination is None:
+        raise RuntimeError(f"Could not create output datasource: {out_path}")
 
-    # Check if attribute table is valid
-    for index in range(len(metadata["layers"])):
-        layer = layers[index]
+    # Process each layer
+    for layer in layers:
         if attribute is not None and attribute not in layer["fields"]:
             layer_fields = layer["fields"]
             raise ValueError(
-                f"Invalid attribute for layer. Layers has the following fields: {layer_fields}"
+                f"Invalid attribute for layer. Layer has the following fields: {layer_fields}"
             )
 
         geom_col = layer["geom"]
@@ -90,19 +105,27 @@ def _vector_dissolve(
                 sql = f"SELECT {attribute}, ST_Union({geom_col}) AS geom FROM {name} GROUP BY {attribute};"
 
             result = ref.ExecuteSQL(sql, dialect="SQLITE")
-        except:
-            sql = None
-            if attribute is None:
-                sql = f"SELECT ST_Union(geometry) AS geom FROM {name};"
-            else:
-                sql = f"SELECT {attribute}, ST_Union(geometry) AS geom FROM {name} GROUP BY {attribute};"
+        except Exception as e:
+            # Try alternative column name if the first attempt fails
+            try:
+                if attribute is None:
+                    sql = f"SELECT ST_Union(geometry) AS geom FROM {name};"
+                else:
+                    sql = f"SELECT {attribute}, ST_Union(geometry) AS geom FROM {name} GROUP BY {attribute};"
 
-            result = ref.ExecuteSQL(sql, dialect="SQLITE")
+                result = ref.ExecuteSQL(sql, dialect="SQLITE")
+            except Exception as inner_e:
+                raise RuntimeError(f"Error executing SQL dissolve: {str(e)}, then: {str(inner_e)}")
 
-        destination.CopyLayer(result, name, ["OVERWRITE=YES"])
+        # Copy layer to destination
+        if result:
+            destination.CopyLayer(result, name, ["OVERWRITE=YES"])
+            ref.ReleaseResultSet(result)
+        else:
+            raise RuntimeError("Failed to create result layer from SQL query")
 
     if add_index:
-        core_vector.vector_add_index(destination)
+        vector_add_index(destination)
 
     destination.FlushCache()
 
@@ -110,9 +133,9 @@ def _vector_dissolve(
 
 
 def vector_dissolve(
-    vector: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
+    vector: Union[str, ogr.DataSource, gdal.Dataset, List[Union[str, ogr.DataSource, gdal.Dataset]]],
     attribute: Optional[str] = None,
-    out_path: Optional[str] = None,
+    out_path: Optional[Union[str, List[str]]] = None,
     add_index: bool = True,
     process_layer: int = -1,
     prefix: str = "",
@@ -120,25 +143,25 @@ def vector_dissolve(
     add_uuid: bool = False,
     overwrite: bool = True,
     allow_lists: bool = True,
-):
-    """Clips a vector to a geometry.
+) -> Union[str, List[str]]:
+    """Dissolve vector geometries, optionally grouping by attribute.
 
     Parameters
     ----------
-    vector : Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]]
-        The vector(s) to clip.
+    vector : Union[str, ogr.DataSource, gdal.Dataset, List[Union[str, ogr.DataSource, gdal.Dataset]]]
+        The vector(s) to dissolve.
 
     attribute : Optional[str], optional
         The attribute to use for the dissolve, default: None
 
-    out_path : Optional[str], optional
+    out_path : Optional[Union[str, List[str]]], optional
         The output path, default: None
 
     add_index : bool, optional
         Add a spatial index to the output, default: True
 
     process_layer : int, optional
-        The layer to process, default: -1
+        The layer to process, default: -1 (all layers)
 
     prefix : str, optional
         The prefix to add to the output path, default: ""
@@ -157,10 +180,10 @@ def vector_dissolve(
 
     Returns
     -------
-    Union[str, ogr.DataSource]
-        The output path or ogr.DataSource
+    Union[str, List[str]]
+        The output path(s) for the dissolved vector(s)
     """
-    utils_base._type_check(vector, [ogr.DataSource, str, [str, ogr.DataSource]], "vector")
+    utils_base._type_check(vector, [ogr.DataSource, gdal.Dataset, str, [str, ogr.DataSource, gdal.Dataset]], "vector")
     utils_base._type_check(attribute, [str, None], "attribute")
     utils_base._type_check(out_path, [str, [str], None], "out_path")
     utils_base._type_check(add_index, [bool], "add_index")
@@ -174,17 +197,51 @@ def vector_dissolve(
     if not allow_lists and isinstance(vector, list):
         raise ValueError("Lists are not allowed when allow_lists is False.")
 
+    input_is_list = isinstance(vector, list)
     vector_list = utils_base._get_variable_as_list(vector)
 
     assert utils_gdal._check_is_vector_list(vector_list), f"Invalid input vector: {vector_list}"
 
-    path_list = utils_io._get_output_paths(
-        vector_list,
-        out_path,
-        prefix=prefix,
-        suffix=suffix,
-        add_uuid=add_uuid,
-    )
+    # Handle output paths
+    if out_path is None:
+        # Create temp paths for each input
+        path_list = []
+        for path in vector_list:
+            # When using prefix, save to disk instead of vsimem
+            if prefix or suffix or add_uuid:
+                # Use first path as base dir to create actual files
+                base_dir = os.path.dirname(utils_gdal._get_path_from_dataset(vector_list[0]))
+                if not base_dir or base_dir == "/vsimem":
+                    # Fall back to temp dir if no valid directory
+                    base_dir = tempfile.gettempdir()
+                
+                basename = os.path.basename(utils_gdal._get_path_from_dataset(path))
+                name, ext = os.path.splitext(basename)
+                if not ext:
+                    ext = ".gpkg"
+                
+                # Create path with prefix/suffix
+                new_name = f"{prefix}{name}{suffix}{ext}"
+                temp_path = os.path.join(base_dir, new_name)
+            else:
+                # Use vsimem
+                temp_path = utils_path._get_temp_filepath(
+                    path,
+                    prefix=prefix,
+                    suffix=suffix,
+                    add_uuid=add_uuid,
+                )
+            path_list.append(temp_path)
+    elif isinstance(out_path, list):
+        # Use provided output paths directly
+        if len(out_path) != len(vector_list):
+            raise ValueError("Number of output paths must match number of input vectors")
+        path_list = out_path
+    else:
+        # Single output path for a single input
+        if len(vector_list) > 1:
+            raise ValueError("Single output path provided for multiple inputs")
+        path_list = [out_path]
 
     assert utils_path._check_is_valid_output_path_list(path_list, overwrite=overwrite), f"Invalid output path generated. {path_list}"
 
@@ -201,7 +258,7 @@ def vector_dissolve(
             )
         )
 
-    if isinstance(vector, list):
+    if input_is_list:
         return output
 
     return output[0]

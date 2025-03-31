@@ -1,6 +1,6 @@
 """ Core functions for filtering vectors by functions. """
 # Standard library
-from typing import Union, Optional,Callable
+from typing import Union, Optional, Callable, Any
 
 # External
 from osgeo import ogr
@@ -16,6 +16,128 @@ from buteo.utils import (
 from buteo.core_vector.core_vector_info import get_metadata_vector
 from buteo.core_vector.core_vector_read import _open_vector, _vector_get_layer
 
+
+
+def vector_filter_layer(
+    vector: Union[str, ogr.DataSource],
+    layer_name_or_idx: Union[str, int, None] = None,
+    *,
+    out_path: Optional[str] = None,
+    add_uuid: bool = False,
+    prefix: str = "",
+    suffix: str = "",
+    overwrite: bool = True,
+) -> str:
+    """Filters a vector by layer name or index.
+
+    If no layer name or index is provided, the first layer is returned.
+
+    Parameters
+    ----------
+    vector : str or ogr.DataSource
+        The vector to filter.
+    layer_name_or_idx : str or int, optional
+        The name or index of the layer to filter. Default: None (first layer)
+    out_path : str, optional
+        The output path. Default: None (in-memory is created)
+    add_uuid : bool, optional
+        Add a UUID to the output path. Default: False
+    prefix : str, optional
+        Prefix to add to output path. Default: ""
+    suffix : str, optional
+        Suffix to add to output path. Default: ""
+    overwrite : bool, optional
+        If True, overwrites existing files. Default: True
+
+    Returns
+    -------
+    str
+        The path to the filtered vector
+    """
+    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
+    utils_base._type_check(layer_name_or_idx, [str, int, type(None)], "layer_name_or_idx")
+    utils_base._type_check(out_path, [str, type(None)], "out_path")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+
+    ds = _open_vector(vector)
+    
+    # Get layer count
+    layer_count = ds.GetLayerCount()
+    if layer_count == 0:
+        raise ValueError(f"Vector has no layers: {vector}")
+    
+    # Handle default case
+    if layer_name_or_idx is None:
+        layer_name_or_idx = 0
+    
+    # Get the target layer
+    layer = None
+    if isinstance(layer_name_or_idx, int):
+        if layer_name_or_idx >= layer_count:
+            raise ValueError(f"Layer index out of range: {layer_name_or_idx}")
+        layer = ds.GetLayer(layer_name_or_idx)
+    else:
+        layer = ds.GetLayerByName(layer_name_or_idx)
+        if layer is None:
+            raise ValueError(f"Layer name not found: {layer_name_or_idx}")
+
+    # Prepare output path
+    if out_path is None:
+        out_path = utils_path._get_temp_filepath(
+            vector, 
+            prefix=prefix, 
+            suffix=suffix,
+            add_uuid=add_uuid
+        )
+    else:
+        if not utils_path._check_is_valid_output_filepath(out_path):
+            raise ValueError(f"Invalid output path: {out_path}")
+
+    utils_io._check_overwrite_policy([out_path], overwrite)
+    utils_io._delete_if_required(out_path, overwrite)
+
+    # Create new vector with just the filtered layer
+    driver_name = utils_gdal._get_vector_driver_name_from_path(out_path)
+    driver = ogr.GetDriverByName(driver_name)
+    
+    if driver is None:
+        raise ValueError(f"Could not get driver for output path: {out_path}")
+    
+    ds_out = driver.CreateDataSource(out_path)
+    
+    # Get layer definition
+    layer_defn = layer.GetLayerDefn()
+    fields_count = layer_defn.GetFieldCount()
+    
+    # Create output layer
+    layer_out = ds_out.CreateLayer(
+        layer.GetName(),
+        layer.GetSpatialRef(),
+        layer.GetGeomType(),
+    )
+    
+    # Copy field definitions
+    for i in range(fields_count):
+        field_defn = layer_defn.GetFieldDefn(i)
+        layer_out.CreateField(field_defn)
+    
+    # Copy features
+    layer.ResetReading()
+    feature = layer.GetNextFeature()
+    
+    while feature:
+        layer_out.CreateFeature(feature)
+        feature = layer.GetNextFeature()
+    
+    # Clean up
+    layer_out.SyncToDisk()
+    ds_out.FlushCache()
+    ds_out = None
+    
+    return out_path
 
 
 def vector_filter_by_function(

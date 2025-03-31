@@ -17,9 +17,11 @@ from buteo.utils import (
     utils_path,
     utils_io,
 )
-from buteo.raster import core_raster, core_raster_io
+from buteo.core_raster.core_raster_info import get_metadata_raster
+from buteo.core_raster.core_raster_read import _open_raster
+from buteo.core_raster.core_raster_array import raster_to_array, array_to_raster
 from buteo.array.convolution import convolve_array_simple
-from buteo.array.convolution_kernels import kernel_shift
+from buteo.array.convolution.kernels import kernel_shift
 
 
 
@@ -38,8 +40,8 @@ def _raster_shift(
     for shift in shift_list:
         assert isinstance(shift, (int, float)), f"shift must be an int or a float: {shift}"
 
-    ref = core_raster._open_raster(raster)
-    metadata = core_raster.get_metadata_raster(ref)
+    ref = _open_raster(raster)
+    metadata = get_metadata_raster(ref)
 
     x_shift, y_shift = shift_list
 
@@ -210,7 +212,7 @@ def raster_shift_pixel(
     utils_base._type_check(shift_list, [[int, float], tuple], "shift_list")
     utils_base._type_check(out_path, [str, None], "out_path")
 
-    arr = core_raster_io.raster_to_array(raster)
+    arr = raster_to_array(raster)
 
     offsets, weights = kernel_shift(shift_list[0], shift_list[1])
 
@@ -224,12 +226,12 @@ def raster_shift_pixel(
     if out_path is None:
         out_path = utils_path._get_temp_filepath("shifted_raster.tif")
     else:
-        if not utils_path._check_is_valid_output_filepath(out_path):
+        if not utils_path._check_is_valid_output_filepath(out_path, overwrite=True):
             raise ValueError(f"out_path is not a valid output path: {out_path}")
 
-    utils_io._delete_if_required(out_path, overwrite=True)
+    utils_io._delete_if_required(out_path, True)
 
-    return core_raster_io.array_to_raster(
+    return array_to_raster(
         arr,
         reference=raster,
         out_path=out_path,

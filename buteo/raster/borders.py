@@ -21,7 +21,9 @@ from buteo.utils import (
     utils_path,
     utils_translate,
 )
-from buteo.raster import core_raster, core_raster_io
+from buteo.core_raster.core_raster_read import _open_raster
+from buteo.core_raster.core_raster_info import get_metadata_raster
+from buteo.core_raster.core_raster_array import raster_to_array
 
 
 
@@ -38,8 +40,8 @@ def _raster_add_border(
     """Internal.
     Add a border to a raster.
     """
-    in_raster = core_raster._open_raster(raster)
-    metadata = core_raster.get_metadata_raster(in_raster)
+    in_raster = _open_raster(raster)
+    metadata = get_metadata_raster(in_raster)
 
     # Parse the driver
     driver_name = "GTiff" if out_path is None else utils_gdal._get_raster_driver_name_from_path(out_path)
@@ -59,7 +61,7 @@ def _raster_add_border(
         )
         output_name = out_path
 
-    in_arr = core_raster_io.raster_to_array(in_raster)
+    in_arr = raster_to_array(in_raster)
 
     if border_size_unit == "px":
         border_size_y = border_size

@@ -7,15 +7,14 @@ from typing import Optional
 import numpy as np
 
 # Internal
-from buteo.array.filters import filter_operation
-from buteo.array.convolution_kernels import kernel_base
+from buteo.array.filters import filter_operation, kernel_base
 
 
 
 def spatial_label_smoothing(
-    arr: np.array,
+    arr: np.ndarray,
     radius: int = 2, *,
-    classes: Optional[np.array] = None,
+    classes: Optional[np.ndarray] = None,
     method: Optional[str] = "half",
     variance: Optional[np.ndarray] = None,
     channel_last: bool = True,

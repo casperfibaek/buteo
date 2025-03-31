@@ -17,7 +17,8 @@ from buteo.utils import (
     utils_path,
     utils_io
 )
-from buteo.raster import core_raster
+from buteo.core_raster.core_raster_info import get_metadata_raster
+from buteo.core_raster.core_raster_read import _open_raster
 
 
 
@@ -28,8 +29,8 @@ def _raster_vectorize(
     attribute_field: Optional[str] = None,
 ):
     """Internal."""
-    meta = core_raster.get_metadata_raster(raster)
-    opened = core_raster._open_raster(raster)
+    meta = get_metadata_raster(raster)
+    opened = _open_raster(raster)
     src_band = opened.GetRasterBand(band)
 
     projection = meta["projection_osr"]
@@ -52,7 +53,7 @@ def _raster_vectorize(
     if attribute_field is None:
         attr_index = -1
     else:
-        metadata = core_raster.get_metadata_raster(raster)
+        metadata = get_metadata_raster(raster)
         layer = metadata["layers"][0]["field_names"]
         if attribute_field not in layer:
             raise AttributeError(f"Attribute field ({attribute_field}) not found in raster.")

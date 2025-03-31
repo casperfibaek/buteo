@@ -7,20 +7,21 @@ Cut rasters to grids. Use vectors or rasters as grids.
 
 # Standard library
 from uuid import uuid4
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Tuple, Any
 
 # External
 from osgeo import gdal, ogr
 
 # Internal
 from buteo.utils import utils_base, utils_gdal, utils_bbox, utils_path
-from buteo.raster import core_raster, stack
+from buteo.core_raster.core_raster_info import get_metadata_raster
+from buteo.core_raster.core_raster_read import _open_raster
+from buteo.core_raster.core_raster_stack import raster_stack_vrt_list
 from buteo.raster.clip import _raster_clip
-from buteo.vector import core_vector
+from buteo.core_vector.core_vector_read import open_vector
+from buteo.core_vector.core_vector_info import get_metadata_vector
 from buteo.vector.intersect import _vector_intersect
 from buteo.vector.reproject import _vector_reproject
-from buteo.vector.metadata import _vector_to_metadata
-
 
 
 def raster_to_grid(
@@ -28,13 +29,13 @@ def raster_to_grid(
     grid: Union[str, ogr.DataSource],
     out_dir: str,
     *,
-    use_field: bool = None,
+    use_field: Optional[str] = None,
     generate_vrt: bool = True,
     overwrite: bool = True,
     process_layer: int = 0,
     creation_options: Optional[List[str]] = None,
     verbose: int = 0,
-) -> str:
+) -> Union[List[str], Tuple[List[str], Optional[str]]]:
     """Clips a raster to a grid. Generates .vrt.
 
     Parameters
@@ -48,7 +49,7 @@ def raster_to_grid(
     out_dir : str
         The output directory.
 
-    use_field : bool, optional
+    use_field : Optional[str], optional
         A field to use to name the grid cells, default: None.
 
     generate_vrt : bool, optional
@@ -68,8 +69,9 @@ def raster_to_grid(
 
     Returns
     -------
-    str
-        The file path for the newly created raster.
+    Union[List[str], Tuple[List[str], Optional[str]]]
+        If generate_vrt is True, returns a tuple of (list of clip paths, vrt path)
+        If generate_vrt is False, returns a list of clip paths
     """
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
     utils_base._type_check(grid, [str, ogr.DataSource], "grid")
@@ -79,28 +81,33 @@ def raster_to_grid(
     utils_base._type_check(creation_options, [[str], None], "creation_options")
     utils_base._type_check(verbose, [int], "verbose")
 
-    use_grid = core_vector.vector_open(grid)
-    grid_metadata = _vector_to_metadata(use_grid)
-    raster_metadata = core_raster.get_metadata_raster(raster)
+    # Open and get metadata
+    raster_path = raster if isinstance(raster, str) else None
+    grid_path = grid if isinstance(grid, str) else None
+    
+    use_grid = open_vector(grid)
+    grid_metadata = get_metadata_vector(use_grid)
+    raster_metadata = get_metadata_raster(raster)
 
     # Reproject raster if necessary.
     if not raster_metadata["projection_osr"].IsSame(grid_metadata["projection_osr"]):
         use_grid = _vector_reproject(grid, raster_metadata["projection_osr"])
-        grid_metadata = _vector_to_metadata(use_grid)
+        grid_metadata = get_metadata_vector(use_grid)
 
         if not isinstance(grid_metadata, dict):
             raise RuntimeError("Error while parsing metadata.")
 
     # Only use the polygons in the grid that intersect the extent of the raster.
-    use_grid = _vector_intersect(use_grid, raster_metadata["extent_datasource"]())
+    extent_ds = raster_metadata["extent_datasource"]()
+    use_grid = _vector_intersect(use_grid, extent_ds)
 
-    ref = core_raster._open_raster(raster)
-    use_grid = core_vector.vector_open(use_grid)
+    ref = _open_raster(raster)
+    use_grid = open_vector(use_grid)
 
     layer = use_grid.GetLayer(process_layer)
     feature_count = layer.GetFeatureCount()
     raster_extent = raster_metadata["bbox"]
-    filetype = utils_path._get_ext_from_path(raster)
+    filetype = utils_path._get_ext_from_path(raster_path if raster_path else "tif")
     name = raster_metadata["name"]
     geom_type = grid_metadata["layers"][process_layer]["geom_type_ogr"]
 
@@ -115,7 +122,6 @@ def raster_to_grid(
 
     # For the sake of good reporting - lets first establish how many features intersect
     # the raster.
-
     if verbose:
         print("Finding intersections.")
 
@@ -136,13 +142,14 @@ def raster_to_grid(
 
     if intersections == 0:
         print("Warning: Found 0 intersections. Returning empty list.")
-        return ([], None)
+        if generate_vrt:
+            return ([], None)
+        return []
 
     driver = ogr.GetDriverByName("GPKG")
 
     clipped = 0
     for _ in range(feature_count):
-
         feature = layer.GetNextFeature()
         geom = feature.GetGeometryRef()
 
@@ -150,7 +157,8 @@ def raster_to_grid(
             continue
 
         if verbose == 1:
-            utils_base.progress(clipped, intersections - 1, "clip_grid")
+            # Use a simple progress message instead of utils_base.progress
+            print(f"Processing: {clipped+1}/{intersections}")
 
         fid = feature.GetFID()
 
@@ -189,9 +197,7 @@ def raster_to_grid(
 
     if generate_vrt:
         vrt_name = f"{out_dir}{name}.vrt"
-
-        stack.raster_stack_vrt_list(generated, vrt_name, separate=False)
-
+        raster_stack_vrt_list(generated, vrt_name, separate=False)
         return (generated, vrt_name)
 
     return generated

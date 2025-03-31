@@ -13,27 +13,35 @@ from buteo.utils import (
     utils_gdal,
     utils_path,
 )
-from buteo.vector import core_vector
-from buteo.vector.metadata import _vector_to_metadata
+from buteo.core_vector.core_vector_read import open_vector as vector_open
+from buteo.core_vector.core_vector_info import get_metadata_vector
 
 # TODO: Implement grid functions
 # TODO: create_grid, create_grid_points, create_grid_linestrings
 
 
 
-def create_hexagonal_grid(extend, projection, cell_size, out_path=None):
-    """Create a hexagonal grid in a given extend and projection.
+def create_hexagonal_grid(extent, projection, cell_size, out_path=None):
+    """Create a hexagonal grid in a given extent and projection.
 
-    Args:
-        extend (list): [xmin, ymin, xmax, ymax]
-        projection (str): EPSG code
-        cell_size (float): size of the hexagon
-        out_path (str): path to save the grid
+    Parameters
+    ----------
+    extent : list
+        [xmin, ymin, xmax, ymax]
+    projection : str
+        EPSG code or projection string
+    cell_size : float
+        Size of the hexagon
+    out_path : str, optional
+        Path to save the grid, by default None
 
-    Returns:
-        None
+    Returns
+    -------
+    str
+        Path to the created grid
     """
-    # vector = core_vector._vector_open(extend)
+    # Not implemented yet
+    # vector = vector_open(extent)
 
     # vector.ExecuteSQL("CREATE TABLE hex_grid (id INTEGER PRIMARY KEY, geom GEOMETRY)")
     # vector.ExecuteSQL("SELECT AddGeometryColumn('hex_grid', 'geom', 4326, 'POLYGON', 2)")

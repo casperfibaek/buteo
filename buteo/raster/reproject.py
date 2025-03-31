@@ -5,7 +5,7 @@ Can uses references from vector or other raster datasets.
 """
 
 # Standard library
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Sequence
 
 # External
 import numpy as np
@@ -22,7 +22,6 @@ from buteo.utils import (
 )
 from buteo.core_raster.core_raster_info import get_metadata_raster
 from buteo.core_raster.core_raster_read import _open_raster
-
 
 
 def _find_common_projection(
@@ -46,12 +45,12 @@ def _find_common_projection(
     """
     utils_base._type_check(rasters, [str, gdal.Dataset, [str, gdal.Dataset]], "rasters")
 
-    rasters = utils_base._get_variable_as_list(rasters)
+    rasters_list = utils_base._get_variable_as_list(rasters)
 
-    assert utils_gdal._check_is_raster_list(rasters), "rasters must be a list of rasters."
+    assert utils_gdal._check_is_raster_list(rasters_list), "rasters must be a list of rasters."
 
     # Get the projection of each raster
-    projections = [utils_projection.parse_projection(raster) for raster in rasters]
+    projections = [utils_projection.parse_projection(raster) for raster in rasters_list]
 
     # Get the most common projection
     common_projection = max(set(projections), key=projections.count)
@@ -69,14 +68,64 @@ def _raster_reproject(
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
     dst_nodata: Union[str, int, float] = "infer",
-    dtype: Optional[str] = None,
+    dtype: Optional[Union[str, np.dtype, type]] = None,
     prefix: str = "",
     suffix: str = "reprojected",
     add_uuid: bool = False,
     add_timestamp: bool = True,
     memory: float = 0.8,
 ) -> str:
-    """Internal."""
+    """Internal reproject implementation.
+    
+    Parameters
+    ----------
+    raster : Union[str, gdal.Dataset]
+        The raster to reproject.
+        
+    projection : Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
+        The projection to reproject to.
+        
+    out_path : Optional[str], optional
+        Output path, by default None
+        
+    resample_alg : str, optional
+        Resampling algorithm, by default "nearest"
+        
+    copy_if_same : bool, optional
+        Copy if input and output projections are the same, by default True
+        
+    overwrite : bool, optional
+        Overwrite existing files, by default True
+        
+    creation_options : Optional[List[str]], optional
+        GDAL creation options, by default None
+        
+    dst_nodata : Union[str, int, float], optional
+        Output nodata value, by default "infer"
+        
+    dtype : Optional[Union[str, np.dtype, type]], optional
+        Output data type, by default None
+        
+    prefix : str, optional
+        Prefix for output filename, by default ""
+        
+    suffix : str, optional
+        Suffix for output filename, by default "reprojected"
+        
+    add_uuid : bool, optional
+        Add UUID to output filename, by default False
+        
+    add_timestamp : bool, optional
+        Add timestamp to output filename, by default True
+        
+    memory : float, optional
+        Memory limit as a fraction of available memory, by default 0.8
+        
+    Returns
+    -------
+    str
+        Output path
+    """
     assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
 
     if out_path is None:
@@ -127,12 +176,16 @@ def _raster_reproject(
     creation_options = utils_gdal._get_default_creation_options(creation_options)
     memory_limit = utils_gdal._get_dynamic_memory_limit(memory)
 
+    # Handle dtype conversion
     if dtype is None:
-        dtype = metadata["dtype"]
-
-    output_dtype = utils_translate._translate_dtype_numpy_to_gdal(
-        utils_translate._parse_dtype(dtype), # type: ignore
-    )
+        # Use metadata dtype directly if none provided
+        output_dtype = utils_translate._translate_dtype_numpy_to_gdal(
+            utils_translate._parse_dtype(metadata["dtype"]),
+        )
+    else:
+        output_dtype = utils_translate._translate_dtype_numpy_to_gdal(
+            utils_translate._parse_dtype(dtype),
+        )
     src_projection = original_projection.ExportToWkt()
     dst_projection = target_projection.ExportToWkt()
 
@@ -167,16 +220,17 @@ def raster_reproject(
     overwrite: bool = True,
     creation_options: Optional[List[str]] = None,
     dst_nodata: Union[str, int, float] = "infer",
-    dtype: Optional[str] = None,
+    dtype: Optional[Union[str, np.dtype, type]] = None,
     prefix: str = "",
     suffix: str = "",
     add_uuid: bool = False,
+    add_timestamp: bool = True,
 ) -> Union[str, List[str]]:
     """Reproject raster(s) to a target coordinate reference system.
 
     Parameters
     ----------
-    raster : Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]]
+    raster : Union[str, gdal.Dataset, ogr.DataSource, List[Union[str, gdal.Dataset, ogr.DataSource]]]
         The raster(s) to reproject.
 
     projection : Union[int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference]
@@ -204,7 +258,7 @@ def raster_reproject(
     dst_nodata : Union[str, int, float], optional
         The nodata value for the output raster, default: "infer".
 
-    dtype : Optional[str], optional
+    dtype : Optional[Union[str, np.dtype, type]], optional
         The data type for the output raster, default: None.
 
     prefix : str, optional
@@ -215,35 +269,57 @@ def raster_reproject(
 
     add_uuid : bool, optional
         If True, add a UUID to the output path, default: False.
+        
+    add_timestamp : bool, optional
+        If True, add a timestamp to the output path, default: True.
 
     Returns
     -------
     Union[str, List[str]]
         The output path(s).
     """
-    utils_base._type_check(raster, [str, gdal.Dataset, [str, gdal.Dataset]], "raster")
+    utils_base._type_check(raster, [str, gdal.Dataset, ogr.DataSource, [str, gdal.Dataset, ogr.DataSource]], "raster")
     utils_base._type_check(projection, [int, str, gdal.Dataset, ogr.DataSource, osr.SpatialReference], "projection")
-    utils_base._type_check(out_path, [list, str, None], "out_path")
+    utils_base._type_check(out_path, [str, [str], None], "out_path")
     utils_base._type_check(resample_alg, [str], "resample_alg")
+    utils_base._type_check(copy_if_same, [bool], "copy_if_same")
     utils_base._type_check(overwrite, [bool], "overwrite")
     utils_base._type_check(creation_options, [[str], None], "creation_options")
     utils_base._type_check(dst_nodata, [str, int, float], "dst_nodata")
-    utils_base._type_check(dtype, [str, None, np.dtype, type(np.int8)], "dtype")
+    utils_base._type_check(dtype, [str, None, np.dtype, type], "dtype")
     utils_base._type_check(prefix, [str], "prefix")
-    utils_base._type_check(suffix, [str], "postfix")
+    utils_base._type_check(suffix, [str], "suffix")
     utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(add_timestamp, [bool], "add_timestamp")
 
     input_is_list = isinstance(raster, list)
 
     in_paths = utils_io._get_input_paths(raster, "raster")
-    out_paths = utils_io._get_output_paths(
-        in_paths, # type: ignore
-        out_path,
-        prefix=prefix,
-        suffix=suffix,
-        add_uuid=add_uuid,
-        change_ext="tif",
-    )
+    
+    # Handle output paths
+    if out_path is None:
+        # Create temp paths for each input
+        out_paths = []
+        for path in in_paths:
+            temp_path = utils_path._get_temp_filepath(
+                path,
+                prefix=prefix,
+                suffix=suffix,
+                add_uuid=add_uuid,
+                add_timestamp=add_timestamp,
+                ext="tif",
+            )
+            out_paths.append(temp_path)
+    elif isinstance(out_path, list):
+        # Use provided output paths directly
+        if len(out_path) != len(in_paths):
+            raise ValueError("Number of output paths must match number of input paths")
+        out_paths = out_path
+    else:
+        # Single output path for a single input
+        if len(in_paths) > 1:
+            raise ValueError("Single output path provided for multiple inputs")
+        out_paths = [out_path]
 
     utils_io._check_overwrite_policy(out_paths, overwrite)
     utils_io._delete_if_required_list(out_paths, overwrite)
@@ -263,6 +339,7 @@ def raster_reproject(
                 dtype=dtype,
                 prefix=prefix,
                 suffix=suffix,
+                add_timestamp=add_timestamp,
             )
         )
 

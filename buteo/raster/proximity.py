@@ -16,7 +16,8 @@ from buteo.utils import (
     utils_io,
     utils_path,
 )
-from buteo.raster import core_raster, core_raster_io
+from buteo.core_raster.core_raster_array import raster_to_array, array_to_raster
+from buteo.core_raster.core_raster_info import get_metadata_raster
 from buteo.array.distance import convolve_distance
 
 
@@ -40,10 +41,10 @@ def _raster_get_proximity(
     if out_path is None:
         out_path = utils_path._get_temp_filepath("proximity_raster.tif")
 
-    array = core_raster_io.raster_to_array(raster, filled=True)
+    array = raster_to_array(raster, filled=True)
 
     if unit.lower() == "geo":
-        metadata = core_raster.get_metadata_raster(raster)
+        metadata = get_metadata_raster(raster)
         pixel_height = metadata["pixel_height"]
         pixel_width = metadata["pixel_width"]
     else:
@@ -69,7 +70,7 @@ def _raster_get_proximity(
     if add_border:
         array = array[1:-1, 1:-1]
 
-    out_path = core_raster_io.array_to_raster(
+    out_path = array_to_raster(
         array,
         reference=raster,
         out_path=out_path,

@@ -5,7 +5,7 @@ Merges vectors into a single vector file.
 
 # Standard library
 import os
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Tuple
 
 # External
 from osgeo import ogr
@@ -18,7 +18,106 @@ from buteo.utils import (
     utils_path,
     utils_projection,
 )
+from buteo.core_vector.core_vector_read import _open_vector
 
+
+def vector_merge_layers(
+    vectors: Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]],
+    out_path: Optional[str] = None,
+    prefix: str = "",
+    suffix: str = "",
+    add_uuid: bool = False,
+    overwrite: bool = True,
+) -> str:
+    """Merge vector layers into a single file.
+    
+    This is a simpler version of vector_merge_features specifically for merging
+    layers from the same or different vectors.
+
+    Parameters
+    ----------
+    vectors : Union[str, ogr.DataSource, List[Union[str, ogr.DataSource]]]
+        Vector or list of vectors to merge.
+    out_path : Optional[str], optional
+        Output path. If None, a temporary path is created. Default: None
+    prefix : str, optional
+        Prefix to add to output filename. Default: ""
+    suffix : str, optional
+        Suffix to add to output filename. Default: ""
+    add_uuid : bool, optional
+        Add a UUID to output filename. Default: False
+    overwrite : bool, optional
+        Whether to overwrite existing files. Default: True
+
+    Returns
+    -------
+    str
+        Path to the output merged vector file
+    """
+    # Input validation
+    utils_base._type_check(vectors, [str, ogr.DataSource, [str, ogr.DataSource]], "vectors")
+    utils_base._type_check(out_path, [str, None], "out_path")
+    utils_base._type_check(prefix, [str], "prefix")
+    utils_base._type_check(suffix, [str], "suffix")
+    utils_base._type_check(add_uuid, [bool], "add_uuid")
+    utils_base._type_check(overwrite, [bool], "overwrite")
+
+    # Convert to list if necessary
+    vector_list = utils_base._get_variable_as_list(vectors)
+    
+    # Define output path
+    if out_path is None:
+        out_path = utils_path._get_temp_filepath(
+            vector_list[0], 
+            prefix=prefix, 
+            suffix=suffix or "_merged", 
+            add_uuid=add_uuid,
+            ext="gpkg"
+        )
+    
+    # Handle overwrite
+    if utils_path._check_file_exists(out_path):
+        if overwrite:
+            utils_gdal._delete_raster_or_vector(out_path)
+        else:
+            raise ValueError(f"Output file already exists: {out_path}")
+
+    # Create output datasource
+    drv_name = utils_gdal._get_vector_driver_name_from_path(out_path)
+    drv = ogr.GetDriverByName(drv_name)
+    ds_out = drv.CreateDataSource(out_path)
+    
+    # Process each input vector
+    for vector in vector_list:
+        ds = _open_vector(vector)
+        
+        # Process each layer in the input vector
+        for i in range(ds.GetLayerCount()):
+            layer = ds.GetLayer(i)
+            layer_name = layer.GetName()
+            
+            # Create output layer with same geometry type and spatial reference
+            out_layer = ds_out.CreateLayer(
+                layer_name,
+                layer.GetSpatialRef(),
+                layer.GetGeomType()
+            )
+            
+            # Copy field definitions
+            layer_defn = layer.GetLayerDefn()
+            for i in range(layer_defn.GetFieldCount()):
+                field_defn = layer_defn.GetFieldDefn(i)
+                out_layer.CreateField(field_defn)
+            
+            # Copy features
+            for feature in layer:
+                out_layer.CreateFeature(feature.Clone())
+    
+    # Clean up
+    ds_out.FlushCache()
+    ds_out = None
+    
+    return out_path
 
 
 def vector_merge_features(

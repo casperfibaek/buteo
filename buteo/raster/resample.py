@@ -41,12 +41,22 @@ def _raster_resample(
     ram: float = 0.8,
     ram_max: Optional[int] = None,
     ram_min: Optional[int] = 100,
+    add_uuid: bool = False,
+    add_timestamp: bool = True,
+    prefix: str = "",
+    suffix: str = "resampled",
 ) -> Union[str, gdal.Dataset]:
     """Internal."""
     assert isinstance(raster, (gdal.Dataset, str)), f"The input raster must be in the form of a str or a gdal.Dataset: {raster}"
 
     if out_path is None:
-        out_path = utils_path._get_temp_filepath(name="resampled_raster.tif")
+        out_path = utils_path._get_temp_filepath(
+            name="resampled_raster.tif",
+            prefix=prefix,
+            suffix=suffix,
+            add_uuid=add_uuid,
+            add_timestamp=add_timestamp
+        )
     else:
         if not utils_path._check_is_valid_output_filepath(out_path):
             raise ValueError(f"Invalid output path: {out_path}")
@@ -146,18 +156,18 @@ def _raster_resample(
 
 def raster_resample(
     raster: Union[str, gdal.Dataset, List[Union[str, gdal.Dataset]]],
-    target_size,
-    out_path=None,
+    target_size: Union[List[Union[int, float]], int, float, gdal.Dataset, str],
+    out_path: Optional[Union[str, List[str]]] = None,
     *,
-    target_in_pixels=False,
-    resample_alg="nearest",
-    creation_options=None,
-    dtype=None,
-    dst_nodata="infer",
-    prefix="",
-    suffix="",
-    overwrite=True,
-    add_uuid=False,
+    target_in_pixels: bool = False,
+    resample_alg: str = "nearest",
+    creation_options: Optional[List[str]] = None,
+    dtype: Optional[str] = None,
+    dst_nodata: Union[float, int, str] = "infer",
+    prefix: str = "",
+    suffix: str = "",
+    overwrite: bool = True,
+    add_uuid: bool = False,
     add_timestamp: bool = False,
     verbose: int = 0,
     ram: float = 0.8,
@@ -236,7 +246,7 @@ def raster_resample(
     utils_base._type_check(dst_nodata, [str, int, float, None], "dst_nodata")
     utils_base._type_check(dtype, [str, None, np.dtype, type(np.int8)], "dtype")
     utils_base._type_check(prefix, [str], "prefix")
-    utils_base._type_check(suffix, [str], "postfix")
+    utils_base._type_check(suffix, [str], "suffix")
     utils_base._type_check(add_uuid, [bool], "add_uuid")
     utils_base._type_check(add_timestamp, [bool], "add_timestamp")
     utils_base._type_check(verbose, [int], "verbose")
@@ -275,6 +285,11 @@ def raster_resample(
                 ram=ram,
                 ram_max=ram_max,
                 ram_min=ram_min,
+                add_uuid=add_uuid,
+                add_timestamp=add_timestamp,
+                prefix=prefix,
+                suffix=suffix,
+                verbose=verbose,
             )
         )
 

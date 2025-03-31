@@ -22,9 +22,9 @@ from buteo.utils import (
 )
 from buteo.raster.reproject import raster_reproject
 from buteo.vector.reproject import vector_reproject
-from buteo.vector.metadata import _vector_to_metadata
-from buteo.vector import core_vector
-from buteo.raster import core_raster
+from buteo.core_vector.core_vector_info import get_metadata_vector
+from buteo.core_vector.core_vector_read import open_vector
+from buteo.core_raster.core_raster_read import open_raster
 
 
 
@@ -125,14 +125,15 @@ def vector_rasterize(
         vector_fn = vector_reproject(vector, pixel_size, add_uuid=True, suffix="_reprojected")
 
     # Open the data source and read in the extent
-    source_ds = core_vector._vector_open(vector_fn)
-    source_meta = _vector_to_metadata(vector_fn)
+    source_ds = open_vector(vector_fn)
+    source_meta = get_metadata_vector(vector_fn)
     source_layer = source_ds.GetLayer()
     x_min, x_max, y_min, y_max = source_layer.GetExtent()
 
     if isinstance(pixel_size, (gdal.Dataset, str)):
-        pixel_size_x = core_raster._open_raster(pixel_size).GetGeoTransform()[1]
-        pixel_size_y = abs(core_raster._open_raster(pixel_size).GetGeoTransform()[5])
+        raster_ds = open_raster(pixel_size)
+        pixel_size_x = raster_ds.GetGeoTransform()[1]
+        pixel_size_y = abs(raster_ds.GetGeoTransform()[5])
     elif isinstance(pixel_size, (int, float)):
         pixel_size_x = pixel_size
         pixel_size_y = pixel_size
@@ -146,7 +147,7 @@ def vector_rasterize(
     y_res = int((y_max - y_min) / pixel_size_y)
 
     if extent is not None:
-        extent_vector = _vector_to_metadata(extent)
+        extent_vector = get_metadata_vector(extent)
         extent_dict = extent_vector["bbox_dict"]
         x_res = int((extent_dict["x_max"] - extent_dict["x_min"]) / abs(pixel_size_x))
         y_res = int((extent_dict["y_max"] - extent_dict["y_min"]) / abs(pixel_size_y))

@@ -609,8 +609,12 @@ def reproject_bbox(
     List[Union[int, float]]:
         The reprojected bbox.
     """
-    if not isinstance(bbox_ogr, list):
-        raise ValueError("bbox_ogr must be a list.")
+    if not isinstance(bbox_ogr, (list, tuple)):
+        raise ValueError("bbox_ogr must be a list or tuple.")
+        
+    # Convert to list if it's a tuple
+    if isinstance(bbox_ogr, tuple):
+        bbox_ogr = list(bbox_ogr)
 
     if len(bbox_ogr) != 4:
         raise ValueError("bbox_ogr must have 4 elements.")

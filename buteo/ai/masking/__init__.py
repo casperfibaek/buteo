@@ -3,9 +3,9 @@
 This module provides various masking functions for image data.
 """
 
-# Import masking functionality from original file
-# This will be refactored in the future to import from the submodules
-from buteo.ai.masking import MaskImages, mask_replace_2d, mask_replace_3d
+# Import masking functionality 
+# TODO: Create a proper masking implementation within submodules
+# and reference that instead of this placeholder comment
 
 # Import from noise module
 from .noise import (

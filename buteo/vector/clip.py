@@ -15,8 +15,8 @@ from buteo.utils import (
     utils_path,
     utils_projection,
 )
-from buteo.vector import core_vector
-from buteo.raster import core_raster
+from buteo.core_vector.core_vector_info import _get_basic_info_vector as _get_basic_metadata_vector
+from buteo.core_raster.core_raster_extent import raster_to_vector_extent as raster_to_extent
 from buteo.vector.reproject import _vector_reproject
 
 
@@ -52,12 +52,45 @@ def _vector_clip(
     to_clear = []
     geometry_to_clip = None
     if utils_gdal._check_is_raster(clip_geom):
-        geometry_to_clip = core_raster.raster_to_extent(clip_geom)
+        geometry_to_clip = raster_to_extent(clip_geom)
         to_clear.append(geometry_to_clip)
 
     if utils_gdal._check_is_vector(clip_geom):
         if to_extent:
-            geometry_to_clip = core_vector.vector_to_extent(clip_geom)
+            # Convert vector to extent (not implemented yet - using direct geometry approach)
+            clip_ds = utils_gdal._get_path_from_dataset(clip_geom)
+            metadata = _get_basic_metadata_vector(clip_ds)
+            x_min, x_max, y_min, y_max = metadata["bbox"]
+            
+            # Create temporary extent vector from bbox
+            geometry_to_clip = utils_path._get_temp_filepath(clip_geom, suffix="_extent", ext="gpkg")
+            
+            # Create ring from bbox
+            ring = ogr.Geometry(ogr.wkbLinearRing)
+            ring.AddPoint(x_min, y_min)
+            ring.AddPoint(x_min, y_max)
+            ring.AddPoint(x_max, y_max)
+            ring.AddPoint(x_max, y_min)
+            ring.AddPoint(x_min, y_min)
+            
+            # Create polygon and set spatial reference
+            polygon = ogr.Geometry(ogr.wkbPolygon)
+            polygon.AddGeometry(ring)
+            
+            # Create vector file
+            driver = ogr.GetDriverByName("GPKG")
+            ds = driver.CreateDataSource(geometry_to_clip)
+            layer = ds.CreateLayer('extent', metadata["projection_osr"], ogr.wkbPolygon)
+            
+            # Add feature to layer
+            feature = ogr.Feature(layer.GetLayerDefn())
+            feature.SetGeometry(polygon)
+            layer.CreateFeature(feature)
+            
+            # Clean up
+            feature = None
+            layer = None
+            ds = None
             to_clear.append(geometry_to_clip)
         else:
             geometry_to_clip = utils_gdal._get_path_from_dataset(clip_geom)
@@ -69,7 +102,7 @@ def _vector_clip(
     if clip_vector_reprojected != geometry_to_clip:
         to_clear.append(clip_vector_reprojected)
 
-    x_min, x_max, y_min, y_max = core_vector._get_basic_metadata_vector(clip_vector_reprojected)["bbox"]
+    x_min, x_max, y_min, y_max = _get_basic_metadata_vector(clip_vector_reprojected)["bbox"]
 
     options.append(f"-spat {x_min} {y_min} {x_max} {y_max}")
     options.append(f'-clipsrc "{clip_vector_reprojected}"')

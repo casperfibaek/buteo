@@ -4,6 +4,7 @@ Functions to reproject vectors. References can be both vector and raster.
 """
 
 # Standard library
+import os
 from typing import Union, Optional, List
 
 # External
@@ -58,7 +59,8 @@ def _vector_reproject(
     )
 
     if success != 0 and success is not None:
-        return out_path
+        # Normalize slashes to match the test expectations
+        return utils_path._get_unix_path(out_path) if os.name == 'nt' else out_path
     else:
         raise RuntimeError("Error while reprojecting geometry.")
 
@@ -106,7 +108,7 @@ def vector_reproject(
     Union[str, List[str]]
         An in-memory vector. If an out_path is given, the output is a string containing the path to the newly created vecotr.
     """
-    utils_base._type_check(vector, [str, ogr.DataSource], "vector")
+    utils_base._type_check(vector, [str, ogr.DataSource, [str, ogr.DataSource]], "vector")
     utils_base._type_check(projection, [str, int, ogr.DataSource, gdal.Dataset, osr.SpatialReference], "projection")
     utils_base._type_check(out_path, [str, [str], None], "out_path")
     utils_base._type_check(copy_if_same, [bool], "copy_if_same")
@@ -124,7 +126,6 @@ def vector_reproject(
         prefix=prefix,
         suffix=suffix,
         add_uuid=add_uuid,
-        overwrite=overwrite,
     )
 
     utils_io._check_overwrite_policy(out_paths, overwrite)

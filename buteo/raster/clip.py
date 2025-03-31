@@ -20,8 +20,12 @@ from buteo.utils import (
     utils_path,
     utils_translate,
 )
-from buteo.raster import core_raster
-from buteo.vector import core_vector
+from buteo.core_raster.core_raster_info import get_metadata_raster
+from buteo.core_raster.core_raster_read import open_raster, _open_raster
+from buteo.core_raster.core_raster_extent import raster_to_vector_extent as raster_to_extent
+from buteo.core_vector.core_vector_read import _open_vector
+from buteo.core_vector.core_vector_filter import vector_filter_layer
+from buteo.core_vector.core_vector_info import _get_basic_info_vector
 from buteo.vector.reproject import _vector_reproject
 
 
@@ -72,13 +76,13 @@ def _raster_clip(
 
     # Input is a vector.
     if utils_gdal._check_is_vector(clip_geom):
-        clip_ds = core_vector._vector_open(clip_geom)
+        clip_ds = _open_vector(clip_geom)
 
         if clip_ds.GetLayerCount() > 1:
-            clip_ds = core_vector.vector_filter_layer(clip_ds, layer_name_or_idx=layer_to_clip, add_uuid=True)
+            clip_ds = vector_filter_layer(clip_ds, layer_name_or_idx=layer_to_clip, add_uuid=True)
             memory_files.append(clip_ds)
 
-        clip_metadata = core_vector._get_basic_metadata_vector(clip_ds)
+        clip_metadata = _get_basic_info_vector(clip_ds)
 
         if to_extent:
             clip_ds = utils_bbox._get_vector_from_bbox(clip_metadata["bbox"], clip_metadata["projection_osr"])
@@ -89,8 +93,8 @@ def _raster_clip(
 
     # Input is a raster (use extent)
     elif utils_gdal._check_is_raster(clip_geom):
-        clip_ds = core_raster.raster_to_extent(clip_geom)
-        clip_metadata = core_raster.get_metadata_raster(clip_geom)
+        clip_ds = raster_to_extent(clip_geom)
+        clip_metadata = get_metadata_raster(clip_geom)
         memory_files.append(clip_ds)
     else:
         if utils_path._check_file_exists(clip_geom):
@@ -108,9 +112,9 @@ def _raster_clip(
     else:
         warp_options.append("CUTLINE_ALL_TOUCHED=FALSE")
 
-    origin_layer = core_raster.open_raster(raster)
+    origin_layer = open_raster(raster)
 
-    raster_metadata = core_raster.get_metadata_raster(raster)
+    raster_metadata = get_metadata_raster(raster)
     origin_projection = raster_metadata["projection_osr"]
 
     # Fast check: Does the extent of the two inputs overlap?
@@ -120,7 +124,7 @@ def _raster_clip(
 
     if not origin_projection.IsSame(clip_metadata["projection_osr"]):
         clip_ds = _vector_reproject(clip_ds, origin_projection)
-        clip_metadata = core_vector._get_basic_metadata_vector(clip_ds)
+        clip_metadata = _get_basic_info_vector(clip_ds)
         memory_files.append(clip_ds)
 
     output_bounds = raster_metadata["bbox"]

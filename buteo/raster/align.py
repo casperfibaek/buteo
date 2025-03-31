@@ -21,7 +21,10 @@ from buteo.utils import (
     utils_translate,
     utils_projection,
 )
-from buteo.raster import core_raster, core_raster_io
+from buteo.core_raster.core_raster_info import get_metadata_raster
+from buteo.core_raster.core_raster_extent import check_rasters_intersect
+from buteo.core_raster.core_raster_read import _open_raster, open_raster
+from buteo.core_raster.core_raster_write import raster_create_empty
 from buteo.raster.reproject import raster_reproject
 
 
@@ -102,7 +105,7 @@ def _raster_align_to_reference(
 
     # Verify that all of the rasters overlap the reference
     for raster in input_rasters:
-        assert core_raster.check_rasters_intersect(raster, reference), (
+        assert check_rasters_intersect(raster, reference), (
             f"Raster: {utils_gdal._get_path_from_dataset(raster)} does not intersect reference."
         )
 
@@ -119,7 +122,7 @@ def _raster_align_to_reference(
 
     creation_options = utils_gdal._get_default_creation_options(creation_options)
 
-    reference_metadata = core_raster.get_metadata_raster(reference)
+    reference_metadata = get_metadata_raster(reference)
 
     target_projection = reference_metadata["projection_osr"]
     reference_bbox = reference_metadata["bbox"]
@@ -133,7 +136,7 @@ def _raster_align_to_reference(
 
     # Reproject the rasters to the reference projection.
     for idx, raster in enumerate(input_rasters):
-        raster_metadata = core_raster.get_metadata_raster(raster)
+        raster_metadata = get_metadata_raster(raster)
         raster_path = utils_gdal._get_path_from_dataset(raster)
 
         raster_reprojected = None
@@ -148,11 +151,11 @@ def _raster_align_to_reference(
                 prefix="tmp_reprojection_",
                 add_uuid=True,
             )
-            raster_ds = core_raster._open_raster(raster_reprojected)
+            raster_ds = _open_raster(raster_reprojected)
         else:
-            raster_ds = core_raster._open_raster(raster_path)
+            raster_ds = _open_raster(raster_path)
 
-        destination_ds = core_raster_io.raster_create_empty(
+        destination_ds = raster_create_empty(
             out_path=path_list[idx],
             width=x_pixels,
             height=y_pixels,
@@ -167,7 +170,7 @@ def _raster_align_to_reference(
             overwrite=overwrite,
         )
 
-        destination_ds = core_raster._open_raster(destination_ds, writeable=True)
+        destination_ds = _open_raster(destination_ds, writeable=True)
 
         warp_options = gdal.WarpOptions(
             resampleAlg=utils_translate._translate_resample_method(resample_alg),
@@ -241,7 +244,7 @@ def _raster_find_best_align_reference(
                 continue
 
             # Uses the latlng bounding box to determine if the rasters intersect.
-            intersection = core_raster.check_rasters_intersect(raster_i, raster_j)
+            intersection = check_rasters_intersect(raster_i, raster_j)
 
             if intersection:
                 intersections += 1
@@ -257,7 +260,7 @@ def _raster_find_best_align_reference(
     for idx, intersection in enumerate(intersections_arr):
         if intersection == most_intersections:
             raster = input_rasters[idx]
-            raster_area = core_raster.get_metadata_raster(raster)["area_latlng"]
+            raster_area = get_metadata_raster(raster)["area_latlng"]
 
             if raster_area > largest_area:
                 largest_area = raster_area
@@ -277,7 +280,7 @@ def _raster_find_best_align_reference(
         all_other_rasters.append(raster_path)
 
     for raster in all_other_rasters:
-        assert core_raster.check_rasters_intersect(best_reference, raster), (
+        assert check_rasters_intersect(best_reference, raster), (
             f"Rasters {best_reference} and {raster} do not intersect."
         )
 
@@ -290,11 +293,11 @@ def _raster_find_best_align_reference(
         copy_if_same=False,
     )
 
-    best_reference_meta = core_raster.get_metadata_raster(best_reference)
+    best_reference_meta = get_metadata_raster(best_reference)
 
     best_geom = best_reference_meta["geom"]
     for raster_path in matched_rasters:
-        raster_meta = core_raster.get_metadata_raster(raster_path)
+        raster_meta = get_metadata_raster(raster_path)
         raster_geom = raster_meta["geom"]
 
         if not raster_geom.Intersects(best_geom):
@@ -325,7 +328,7 @@ def _raster_find_best_align_reference(
     width = int(round((outbox_bbox[1] - outbox_bbox[0]) / best_reference_meta["pixel_width"]))
     height = int(round((outbox_bbox[3] - outbox_bbox[2]) / best_reference_meta["pixel_height"]))
 
-    out_path = core_raster_io.raster_create_empty(
+    out_path = raster_create_empty(
         out_path=out_path,
         width=width,
         height=height,

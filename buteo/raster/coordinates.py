@@ -9,7 +9,7 @@ from osgeo import gdal
 
 # Internal
 from buteo.utils import utils_base
-from buteo.raster import core_raster
+from buteo.core_raster.core_raster_info import get_metadata_raster
 
 
 
@@ -17,22 +17,24 @@ from buteo.raster import core_raster
 def raster_create_grid_with_coordinates(
     raster: Union[str, gdal.Dataset],
     latlng: bool = False,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Create a grid of coordinates from a raster. Format is (x, y, xy).
+) -> np.ndarray:
+    """Create a grid of coordinates from a raster.
 
     Parameters
     ----------
     raster : str or gdal.Dataset
         The raster to create the grid from.
+    latlng : bool, optional
+        If True, returns coordinates in lat/lng format, by default False
 
     Returns
     -------
     np.ndarray
-        A NumPy array of shape (x, y, xy-coordinates).
+        A NumPy array of shape (height, width, 2) containing x,y coordinates.
     """
     utils_base._type_check(raster, [str, gdal.Dataset], "raster")
 
-    meta = core_raster.get_metadata_raster(raster)
+    meta = get_metadata_raster(raster)
 
     step_x = meta["pixel_width"]
     size_x = meta["width"]

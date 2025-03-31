@@ -10,10 +10,12 @@ from numba import jit, prange
 
 # Internal
 from buteo.array.convolution import convolve_array_simple
-from buteo.array.convolution_kernels import (
-    _simple_blur_kernel_2d_3x3,
-    _simple_unsharp_kernel_2d_3x3,
-    _simple_shift_kernel_2d,
+from buteo.array.convolution.kernels import (
+    kernel_base,
+    kernel_shift,
+    kernel_unsharp,
+    kernel_sobel,
+    kernel_get_offsets_and_weights
 )
 
 
@@ -209,7 +211,8 @@ def augmentation_blur(
     if not inplace:
         X = X.copy()
 
-    offsets, weights = _simple_blur_kernel_2d_3x3()
+    kernel = kernel_base(radius=1.0, circular=True, distance_weighted=True, method=3)
+    offsets, weights = kernel_get_offsets_and_weights(kernel)
 
     if channel_last:
         if channel_to_adjust != -1:
@@ -348,7 +351,7 @@ def augmentation_sharpen(
     if not inplace:
         X = X.copy()
 
-    offsets, weights = _simple_unsharp_kernel_2d_3x3()
+    offsets, weights = kernel_unsharp()
 
     if channel_last:
         if channel_to_adjust == -1:
@@ -501,7 +504,7 @@ def augmentation_misalign(
         X = X.copy()
 
     if per_channel:
-        offsets, weights = _simple_shift_kernel_2d(
+        offsets, weights = kernel_shift(
             min(np.random.rand(), max_offset),
             min(np.random.rand(), max_offset),
         )
@@ -528,7 +531,7 @@ def augmentation_misalign(
                     )
 
     else:
-        offsets, weights = _simple_shift_kernel_2d(
+        offsets, weights = kernel_shift(
             min(np.random.rand(), max_offset),
             min(np.random.rand(), max_offset),
         )

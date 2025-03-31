@@ -8,7 +8,7 @@ import numpy as np
 from osgeo import gdal
 
 # Internal
-from buteo.raster.core_raster_io import raster_to_array, array_to_raster
+from buteo.core_raster.core_raster_array import raster_to_array, array_to_raster
 from buteo.raster.align import _raster_align_to_reference
 from buteo.raster.reproject import _raster_reproject
 from buteo.utils.utils_projection import _check_projections_match
@@ -84,15 +84,15 @@ def coregister_images_efolki(
 
     if not _check_projections_match(master, slave):
         reprojected = True
-        reprojected_slave = _raster_reproject(slave, projection=master, resample_alg_gdal=resample_alg, copy_if_same=False)
+        reprojected_slave = _raster_reproject(slave, projection=master, resample_alg=resample_alg, copy_if_same=False)
     else:
         reprojected = False
         reprojected_slave = slave
 
     aligned_slave = _raster_align_to_reference(reprojected_slave, master, resample_alg=resample_alg)
 
-    master_arr = raster_to_array(master, filled=True, fill_value=fill_value, cast=np.float32) # QB
-    slave_arr = raster_to_array(aligned_slave, filled=True, fill_value=fill_value, cast=np.float32) # WV
+    master_arr = raster_to_array(master, filled=True, fill_value=fill_value, cast="float32") # QB
+    slave_arr = raster_to_array(aligned_slave, filled=True, fill_value=fill_value, cast="float32") # WV
 
     if reprojected:
         delete_dataset_if_in_memory(reprojected_slave)
@@ -188,15 +188,15 @@ def coregister_images_gefolki(
 
     if not _check_projections_match(master, slave):
         reprojected = True
-        reprojected_slave = _raster_reproject(slave, projection=master, resample_alg_gdal=resample_alg, copy_if_same=False)
+        reprojected_slave = _raster_reproject(slave, projection=master, resample_alg=resample_alg, copy_if_same=False)
     else:
         reprojected = False
         reprojected_slave = slave
 
     aligned_slave = _raster_align_to_reference(reprojected_slave, master, resample_alg=resample_alg)
 
-    master_arr = raster_to_array(master, filled=True, fill_value=fill_value, cast=np.float32) # QB
-    slave_arr = raster_to_array(aligned_slave, filled=True, fill_value=fill_value, cast=np.float32) # WV
+    master_arr = raster_to_array(master, filled=True, fill_value=fill_value, cast="float32") # QB
+    slave_arr = raster_to_array(aligned_slave, filled=True, fill_value=fill_value, cast="float32") # WV
 
     if reprojected:
         delete_dataset_if_in_memory(reprojected_slave)

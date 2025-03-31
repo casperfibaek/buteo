@@ -7,11 +7,69 @@ from typing import Optional, Tuple
 # External
 import numpy as np
 
-# Internal
-from buteo.ai.augmentation_utils import (
-    _rotate_arr,
-    _mirror_arr,
-)
+# Internal - utilities for array operations
+from buteo.array.convolution import convolve_array_simple
+
+
+def _rotate_arr(arr: np.ndarray, k: int, channel_last: bool = True) -> np.ndarray:
+    """Rotates an array by 90 degrees k times.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to rotate.
+    k : int
+        The number of 90 degree rotations to apply (1=90°, 2=180°, 3=270°).
+    channel_last : bool, optional
+        Whether the channels are in the last dimension, by default True.
+
+    Returns
+    -------
+    np.ndarray
+        The rotated array.
+    """
+    if channel_last:
+        axes = (0, 1)
+    else:
+        axes = (1, 2)
+
+    # Using np.rot90 with the appropriate axes
+    return np.rot90(arr, k=k, axes=axes)
+
+
+def _mirror_arr(arr: np.ndarray, k: int, channel_last: bool = True) -> np.ndarray:
+    """Mirrors an array along specified axes.
+
+    Parameters
+    ----------
+    arr : np.ndarray
+        The array to mirror.
+    k : int
+        1: flip horizontally, 2: flip vertically, 3: flip both.
+    channel_last : bool, optional
+        Whether the channels are in the last dimension, by default True.
+
+    Returns
+    -------
+    np.ndarray
+        The mirrored array.
+    """
+    if channel_last:
+        if k == 1:  # horizontal flip
+            return np.flip(arr, axis=1)
+        if k == 2:  # vertical flip
+            return np.flip(arr, axis=0)
+        if k == 3:  # both
+            return np.flip(np.flip(arr, axis=0), axis=1)
+    else:
+        if k == 1:  # horizontal flip 
+            return np.flip(arr, axis=2)
+        if k == 2:  # vertical flip
+            return np.flip(arr, axis=1)
+        if k == 3:  # both
+            return np.flip(np.flip(arr, axis=1), axis=2)
+    
+    return arr
 
 
 def augmentation_rotation(

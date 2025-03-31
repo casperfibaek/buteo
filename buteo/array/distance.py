@@ -12,8 +12,6 @@ from buteo.array.utils_array import _create_grid
 
 
 
-# TODO: Split assert
-@jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
 def convolve_distance(
     array: np.ndarray,
     target: Union[int, float] = 1,
@@ -55,10 +53,28 @@ def convolve_distance(
     else:
         binary_array = (array == target).astype(np.uint8)
 
+    # Calculate default maximum distance if not provided
     if maximum_distance is None:
-        maximum_distance = np.sqrt(binary_array.shape[0] ** 2 + binary_array.shape[1] ** 2)
+        max_dist = np.sqrt(binary_array.shape[0] ** 2 + binary_array.shape[1] ** 2)
+    else:
+        max_dist = float(maximum_distance)
+    
+    # Convert pixel dimensions to float
+    pixel_width_float = float(pixel_width)
+    pixel_height_float = float(pixel_height)
+    
+    # Call the numba-accelerated implementation
+    return _distance_calculation(binary_array, max_dist, pixel_width_float, pixel_height_float)
 
-    maximum_distance_float = float(maximum_distance)  # type: ignore
+
+@jit(nopython=True, parallel=True, fastmath=True, cache=True, nogil=True)
+def _distance_calculation(
+    binary_array: np.ndarray,
+    maximum_distance_float: float,
+    pixel_width: float = 1.0,
+    pixel_height: float = 1.0,
+) -> np.ndarray:
+    """Internal implementation for distance calculation with numba acceleration."""
     radius_cols = int(np.ceil(maximum_distance_float / pixel_height))
     radius_rows = int(np.ceil(maximum_distance_float / pixel_width))
 
@@ -92,12 +108,12 @@ def convolve_distance(
 
     selected_range = np.arange(coord_grid.shape[0])
     selected_range = selected_range[np.argsort(coord_grid_values)][1:]
-    selected_range = selected_range[coord_grid_values[selected_range] <= maximum_distance]
+    selected_range = selected_range[coord_grid_values[selected_range] <= maximum_distance_float]
 
     coord_grid = coord_grid[selected_range]
     coord_grid_values = coord_grid_values[selected_range]
 
-    distances = np.full_like(binary_array, maximum_distance, dtype=np.float32)
+    distances = np.full_like(binary_array, maximum_distance_float, dtype=np.float32)
     for col in prange(binary_array.shape[0]):
         for row in range(binary_array.shape[1]):
             if binary_array[col, row] == 1:

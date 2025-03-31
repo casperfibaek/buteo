@@ -234,3 +234,43 @@ def vector_delete_index(
     sql_request = None
 
     return sql_result == 1
+
+
+def vector_add_index(
+    vector: Union[str, ogr.DataSource],
+    layer_name_or_id: Union[str, int, None] = None,
+    overwrite: bool = True,
+) -> Union[bool, list[bool]]:
+    """
+    Add spatial index to one or all layers in a vector.
+
+    Parameters
+    ----------
+    vector : Union[str, ogr.DataSource]
+        The vector to add the index to.
+    layer_name_or_id : Union[str, int, None], optional
+        The layer name or index to add the index to. 
+        If None, all layers are indexed. Default: None
+    overwrite : bool, optional
+        If True, existing indexes are overwritten. Default: True
+
+    Returns
+    -------
+    Union[bool, list[bool]]
+        True if the index was added successfully, False otherwise.
+        If multiple layers are indexed, a list of booleans is returned.
+    """
+    ds = _open_vector(vector, writeable=True)
+    
+    # If layer not specified, apply to all layers
+    if layer_name_or_id is None:
+        results = []
+        layer_count = ds.GetLayerCount()
+        
+        for i in range(layer_count):
+            results.append(vector_create_index(ds, i, overwrite=overwrite))
+        
+        return results
+    else:
+        # Apply to specific layer
+        return vector_create_index(ds, layer_name_or_id, overwrite=overwrite)

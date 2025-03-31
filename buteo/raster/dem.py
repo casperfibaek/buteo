@@ -8,7 +8,7 @@ from osgeo import gdal
 import numpy as np
 
 # Internal
-from buteo.raster.core_raster_io import raster_to_array, array_to_raster
+from buteo.core_raster.core_raster_array import raster_to_array, array_to_raster
 from buteo.utils import utils_base, utils_gdal, utils_io, utils_path
 
 
