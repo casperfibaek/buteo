@@ -66,8 +66,8 @@ def _check_is_valid_bbox(bbox_ogr: BboxType) -> bool:
             has_nan = any(np.isnan(v) for v in bbox_ogr)
 
             if not has_nan:
-                # Unpack values
-                x_min, x_max, y_min, y_max = bbox_ogr
+                # Unpack values - only y_min and y_max are used in this function's logic
+                _, _, y_min, y_max = bbox_ogr
 
                 # Allow infinite values - if any are infinite, only y order matters
                 has_inf = any(np.isinf(v) for v in bbox_ogr)
@@ -297,13 +297,13 @@ def _check_bboxes_intersect(
     if bbox1_crosses_dateline and bbox2_crosses_dateline:
         # Both cross dateline - they always overlap in x if y overlaps
         return True
-    elif bbox1_crosses_dateline:
+    elif bbox1_crosses_dateline: # Revert to elif
         # bbox1 crosses, bbox2 does not. Overlap if bbox2 overlaps with either part of bbox1
         return (bbox2_x_max >= bbox1_x_min or bbox2_x_min <= bbox1_x_max)
-    elif bbox2_crosses_dateline:
+    elif bbox2_crosses_dateline: # Revert to elif
         # bbox2 crosses, bbox1 does not. Overlap if bbox1 overlaps with either part of bbox2
         return (bbox1_x_max >= bbox2_x_min or bbox1_x_min <= bbox2_x_max)
-    else:
+    else: # Restore else
         # Neither crosses dateline - standard overlap check
         return not (bbox1_x_max < bbox2_x_min or bbox1_x_min > bbox2_x_max)
 
@@ -374,10 +374,7 @@ def _check_bboxes_within(
 
     if all(np.isinf(v) for v in bbox2_ogr):
         return True  # Any finite box is contained within an infinite box
-    elif any(np.isinf(v) for v in bbox2_ogr):
-        # If container has some infinite bounds but bbox1 is finite,
-        # containment depends on the finite bounds.
-        pass # Continue to standard checks
+    # Removed elif and pass, logic continues below if container has some infinite bounds
 
     # Standard y-containment check
     y_within = bbox1_y_min >= bbox2_y_min and bbox1_y_max <= bbox2_y_max
@@ -393,8 +390,9 @@ def _check_bboxes_within(
         x_within_dateline = (bbox1_x_min >= bbox2_x_min and bbox1_x_max <= 180.0) or \
                             (bbox1_x_min >= -180.0 and bbox1_x_max <= bbox2_x_max)
         return x_within_dateline and y_within
-    else: # bbox2 does not cross dateline
-        # bbox1 also cannot cross dateline if it's within bbox2
-        if bbox1_x_min > bbox1_x_max:
-            return False
-        return x_within_standard and y_within
+
+    # bbox2 does not cross dateline (Removed else and dedented)
+    # bbox1 also cannot cross dateline if it's within bbox2
+    if bbox1_x_min > bbox1_x_max:
+        return False
+    return x_within_standard and y_within

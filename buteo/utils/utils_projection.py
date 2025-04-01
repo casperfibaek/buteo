@@ -47,6 +47,9 @@ def _get_default_projection_osr() -> osr.SpatialReference:
     if spatial_ref.ImportFromWkt(wkt) != 0:
         raise RuntimeError("Could not create default projection.")
 
+    # Ensure traditional GIS axis order (Lon, Lat) or (X, Y)
+    spatial_ref.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
     return spatial_ref
 
 

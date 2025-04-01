@@ -269,6 +269,63 @@ def _get_geojson_from_bbox(
     return geojson
 
 
+# Helper function for _get_vector_from_geom
+def _create_vector_datasource(
+    path: str,
+    driver_name: str,
+) -> Tuple[ogr.DataSource, ogr.Driver]:
+    """Gets GDAL driver and creates an OGR DataSource."""
+    driver = ogr.GetDriverByName(driver_name)
+    if driver is None:
+        raise RuntimeError(f"Could not get GDAL driver for format: {driver_name}")
+
+    # Delete existing file if it exists (driver handles this)
+    if utils_path._check_file_exists(path):
+        if driver.DeleteDataSource(path) != ogr.OGRERR_NONE:
+            # Warn instead of error if deletion fails, creation might still work
+            warn(f"Could not delete existing file at {path}. Attempting to overwrite.", UserWarning)
+
+    # Create datasource
+    vector_ds = driver.CreateDataSource(path)
+    if vector_ds is None:
+        raise RuntimeError(f"Could not create vector datasource at: {path}")
+
+    return vector_ds, driver
+
+
+# Helper function for _get_vector_from_geom
+def _write_geom_to_layer(
+    vector_ds: ogr.DataSource,
+    geom: ogr.Geometry,
+    layer_name: str,
+    projection_osr: osr.SpatialReference,
+) -> None:
+    """Creates a layer and writes a geometry feature to it."""
+    try:
+        # Create layer
+        layer = vector_ds.CreateLayer(layer_name, projection_osr, geom.GetGeometryType())
+        if layer is None:
+            raise RuntimeError("Could not create layer in datasource.")
+
+        # Create feature
+        feature_defn = layer.GetLayerDefn()
+        feature = ogr.Feature(feature_defn)
+        if feature.SetGeometry(geom) != ogr.OGRERR_NONE:
+            raise RuntimeError("Could not set geometry on feature.")
+
+        if layer.CreateFeature(feature) != ogr.OGRERR_NONE:
+            raise RuntimeError("Could not create feature in layer.")
+
+        # Cleanup GDAL objects
+        feature.Destroy()
+        layer = None  # Dereference layer
+        vector_ds.FlushCache()
+
+    except RuntimeError as e: # Catch specific GDAL/OGR runtime errors
+        # Let the caller handle cleanup of the datasource
+        raise RuntimeError(f"Failed during layer/feature creation: {e!s}") from e
+
+
 def _get_vector_from_bbox(
     bbox_ogr: BboxType,
     projection_osr: Optional[osr.SpatialReference] = None,
@@ -497,7 +554,10 @@ def _transform_bbox_coordinates(
         gdal.PopErrorHandler()
 
 
-def _create_polygon_from_points(points: List[List[float]]) -> ogr.Geometry:
+def _create_polygon_from_points(
+    points: List[List[float]],
+    projection_osr: Optional[osr.SpatialReference] = None, # Added optional SRS
+) -> ogr.Geometry:
     """Creates an OGR Polygon Geometry from a list of coordinate pairs.
 
     Assumes the points define the outer ring of the polygon. The ring
@@ -508,6 +568,9 @@ def _create_polygon_from_points(points: List[List[float]]) -> ogr.Geometry:
     points : List[List[float]]
         A list of coordinate pairs defining the polygon vertices:
         `[[x1, y1], [x2, y2], ..., [xn, yn]]`.
+    projection_osr : osr.SpatialReference, optional
+        The spatial reference system to assign to the created geometry.
+        Default: None.
 
     Returns
     -------
@@ -519,6 +582,8 @@ def _create_polygon_from_points(points: List[List[float]]) -> ogr.Geometry:
     ValueError
         If `points` is empty, contains invalid coordinates, or if
         geometry creation fails (e.g., adding ring, validation).
+    TypeError
+        If `projection_osr` is not an `osr.SpatialReference` or None.
     """
     # Input validation
     if not points:
@@ -526,6 +591,8 @@ def _create_polygon_from_points(points: List[List[float]]) -> ogr.Geometry:
     if not all(isinstance(p, (list, tuple)) and len(p) == 2 and
                all(isinstance(coord, (int, float)) for coord in p) for p in points):
         raise ValueError("Input 'points' must be a list of coordinate pairs (e.g., [[x1, y1], ...]).")
+    if projection_osr is not None and not isinstance(projection_osr, osr.SpatialReference):
+        raise TypeError("Input 'projection_osr' must be an osr.SpatialReference or None.")
 
     # Create linear ring
     ring = ogr.Geometry(ogr.wkbLinearRing)
@@ -546,6 +613,10 @@ def _create_polygon_from_points(points: List[List[float]]) -> ogr.Geometry:
     polygon = ogr.Geometry(ogr.wkbPolygon)
     if polygon.AddGeometry(ring) != ogr.OGRERR_NONE:
         raise ValueError("Failed to add ring to polygon geometry.")
+
+    # Assign SRS if provided
+    if projection_osr is not None:
+        polygon.AssignSpatialReference(projection_osr)
 
     # Validate the created polygon
     if not polygon.IsValid():
@@ -598,7 +669,10 @@ def _get_bounds_from_bbox_as_geom(
     # If already in WGS84, just convert bbox to geometry directly
     if utils_projection._check_projections_match(projection_osr, target_projection):
         try:
-            return _get_geom_from_bbox(bbox_ogr)
+            # Create geometry and assign the WGS84 SRS
+            geom = _get_geom_from_bbox(bbox_ogr)
+            geom.AssignSpatialReference(target_projection)
+            return geom
         except ValueError as e:
             raise ValueError(f"Failed to create geometry from WGS84 bbox: {e!s}") from e
 
@@ -618,9 +692,9 @@ def _get_bounds_from_bbox_as_geom(
     except (ValueError, TypeError) as e:
         raise ValueError(f"Failed to transform bbox coordinates: {e!s}") from e
 
-    # Create polygon geometry from transformed points
+    # Create polygon geometry from transformed points, assigning target SRS
     try:
-        return _create_polygon_from_points(transformed_points)
+        return _create_polygon_from_points(transformed_points, target_projection)
     except ValueError as e:
         raise ValueError(f"Failed to create polygon from transformed points: {e!s}") from e
 
@@ -676,6 +750,8 @@ def _get_vector_from_geom(
 ) -> str:
     """Saves an OGR Geometry object to a vector file (default: temporary GeoPackage).
 
+    Refactored to use helper functions for clarity and reduced complexity.
+
     Parameters
     ----------
     geom : ogr.Geometry
@@ -714,8 +790,7 @@ def _get_vector_from_geom(
         If `geom` is invalid, `out_path` is invalid (if provided), or if temporary
         path generation fails.
     RuntimeError
-        If GDAL driver operations fail (e.g., getting driver, creating datasource,
-        creating layer/feature, saving file).
+        If GDAL driver operations fail.
 
     Examples
     --------
@@ -726,32 +801,27 @@ def _get_vector_from_geom(
     >>> # Example saving to a specific file (requires write access)
     >>> # path = _get_vector_from_geom(point_geom, out_path='./my_point.gpkg')
     >>> _get_vector_from_geom(None)
-    Raises TypeError: geom cannot be None
+    Raises TypeError: Input 'geom' must be an ogr.Geometry object.
     """
-    # Input validation
+    # --- Input Validation ---
     if not isinstance(geom, ogr.Geometry):
         raise TypeError("Input 'geom' must be an ogr.Geometry object.")
     if not geom.IsValid():
-        # Attempt to fix minor issues before failing
         geom_fixed = geom.MakeValid()
         if geom_fixed is None or not geom_fixed.IsValid():
             raise ValueError("Input geometry is invalid and could not be fixed.")
-        geom = geom_fixed  # Use the fixed geometry
+        geom = geom_fixed
     if projection_osr is not None and not isinstance(projection_osr, osr.SpatialReference):
         raise TypeError("Input 'projection_osr' must be an osr.SpatialReference or None.")
 
-    # Determine output path and driver
+    # --- Determine Path and Driver ---
     path: str
     driver_name: str
     try:
         if out_path is None:
-            # Create temporary path in /vsimem/ (GeoPackage default)
             path = utils_path._get_temp_filepath(
-                f"{name}.gpkg",
-                prefix=prefix,
-                suffix=suffix,
-                add_uuid=add_uuid,
-                add_timestamp=add_timestamp,
+                f"{name}.gpkg", prefix=prefix, suffix=suffix,
+                add_uuid=add_uuid, add_timestamp=add_timestamp
             )
             driver_name = "GPKG"
         else:
@@ -761,65 +831,33 @@ def _get_vector_from_geom(
                 raise ValueError(f"Invalid output path provided: {out_path}")
             path = out_path
             driver_name = utils_gdal._get_vector_driver_name_from_path(path)
-
     except (ValueError, TypeError) as e:
         raise ValueError(f"Error determining output path or driver: {e!s}") from e
 
-    # Get GDAL driver
-    driver = ogr.GetDriverByName(driver_name)
-    if driver is None:
-        raise RuntimeError(f"Could not get GDAL driver for format: {driver_name}")
-
-    # Delete existing file if it exists (driver handles this)
-    if utils_path._check_file_exists(path):
-        if driver.DeleteDataSource(path) != ogr.OGRERR_NONE:
-            # Warn instead of error if deletion fails, creation might still work
-            warn(f"Could not delete existing file at {path}. Attempting to overwrite.", UserWarning)
-
-    # Create datasource
-    vector_ds = driver.CreateDataSource(path)
-    if vector_ds is None:
-        raise RuntimeError(f"Could not create vector datasource at: {path}")
-
+    # --- Create Datasource and Write Geometry ---
+    vector_ds: Optional[ogr.DataSource] = None
+    driver: Optional[ogr.Driver] = None
     try:
-        # Set projection (default to WGS84 if not provided)
+        vector_ds, driver = _create_vector_datasource(path, driver_name)
         proj: osr.SpatialReference = projection_osr or utils_projection._get_default_projection_osr()
+        _write_geom_to_layer(vector_ds, geom, name, proj)
 
-        # Create layer
-        layer = vector_ds.CreateLayer(name, proj, geom.GetGeometryType())
-        if layer is None:
-            raise RuntimeError("Could not create layer in datasource.")
-
-        # Create feature
-        feature_defn = layer.GetLayerDefn()
-        feature = ogr.Feature(feature_defn)
-        if feature.SetGeometry(geom) != ogr.OGRERR_NONE:
-            raise RuntimeError("Could not set geometry on feature.")
-
-        if layer.CreateFeature(feature) != ogr.OGRERR_NONE:
-            raise RuntimeError("Could not create feature in layer.")
-
-        # Cleanup GDAL objects
-        feature.Destroy()
-        layer = None  # Dereference layer
-        vector_ds.FlushCache()
-        vector_ds = None  # Dereference datasource to close file
-
-    except RuntimeError as e: # Catch specific GDAL/OGR runtime errors
-        # Ensure datasource is closed/dereferenced on error
-        if 'vector_ds' in locals() and vector_ds is not None:
-            vector_ds = None
+    except (RuntimeError, ValueError) as e:
         # Attempt to delete partially created file on error
-        if utils_path._check_file_exists(path):
+        if path is not None and driver is not None and utils_path._check_file_exists(path):
             try:
                 driver.DeleteDataSource(path)
-            except RuntimeError:  # If deletion fails, ignore
+            except RuntimeError: # If deletion fails, ignore
                 pass
-        raise RuntimeError(f"Failed during vector creation process: {e!s}") from e
+        # Re-raise the original error
+        raise RuntimeError(f"Failed to create vector from geometry: {e!s}") from e
+    finally:
+        # Ensure datasource is closed/dereferenced
+        if vector_ds is not None:
+            vector_ds = None
 
-    # Final check if file exists
+    # --- Final Check ---
     if not utils_path._check_file_exists(path):
-        # This case should ideally be caught by errors above, but added as safety
         raise RuntimeError(f"Vector file was not successfully created at: {path}")
 
     return path

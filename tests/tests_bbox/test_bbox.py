@@ -7,6 +7,7 @@ from typing import Union, Sequence
 import pytest
 import numpy as np
 from osgeo import ogr, osr, gdal
+from beartype.roar import BeartypeCallHintParamViolation # Import specific exception
 
 # Internal
 # Import internal functions directly for testing
@@ -34,12 +35,14 @@ from buteo.bbox.conversion import (
     _get_wkt_from_bbox,
     _get_geojson_from_bbox,
     _get_vector_from_bbox,
-    # _transform_point, # Unused
-    # _transform_bbox_coordinates, # Unused
-    # _create_polygon_from_points, # Unused
-    # _get_bounds_from_bbox_as_geom, # Unused
-    # _get_bounds_from_bbox_as_wkt, # Unused
-    # _get_vector_from_geom, # Unused
+    _transform_point,
+    _transform_bbox_coordinates,
+    _create_polygon_from_points,
+    _get_bounds_from_bbox_as_geom, # Now tested
+    _get_bounds_from_bbox_as_wkt, # Now tested
+    _get_vector_from_geom, # Tested indirectly via _get_vector_from_bbox
+    _create_vector_datasource, # Helper, not tested directly
+    _write_geom_to_layer, # Helper, not tested directly
 )
 from buteo.bbox.source import (
     _get_bbox_from_raster,
@@ -50,8 +53,6 @@ from buteo.bbox.source import (
     # _get_utm_zone_from_dataset_list, # Not tested directly yet
     get_bbox_from_dataset, # Public API
 )
-
-# Removed commented out block for unused imports
 
 # Type Aliases (redefined for clarity within tests)
 BboxType = Sequence[Union[int, float]]
@@ -406,6 +407,121 @@ class TestBboxConversion:
         except RuntimeError:
             pass
 
+
+# Test Transformation and Geometry Creation Functions
+class TestBboxTransformations:
+    """Tests for transformation and geometry creation functions."""
+
+    def test_transform_point(self, wgs84_srs: osr.SpatialReference, utm32n_srs: osr.SpatialReference):
+        """Test _transform_point."""
+        # Ensure traditional GIS axis order (X, Y) or (Lon, Lat) for consistency
+        wgs84_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+        utm32n_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+
+        transformer = osr.CoordinateTransformation(wgs84_srs, utm32n_srs)
+        point_wgs = [12.0, 55.0] # Approx Copenhagen (Lon, Lat)
+        transformed = _transform_point(point_wgs, transformer) # Should return (X, Y)
+        assert isinstance(transformed, list)
+        assert len(transformed) == 2
+        # Check if coordinates are roughly in the expected UTM32N range (X, Y) for Copenhagen
+        assert 680000 < transformed[0] < 720000, f"Transformed X ({transformed[0]}) out of expected range (680k-720k)"
+        assert 6090000 < transformed[1] < 6130000, f"Transformed Y ({transformed[1]}) out of expected range (6.09M-6.13M)"
+
+    def test_transform_point_invalid_input(self, wgs84_srs: osr.SpatialReference, utm32n_srs: osr.SpatialReference):
+        """Test _transform_point with invalid inputs."""
+        transformer = osr.CoordinateTransformation(wgs84_srs, utm32n_srs)
+        with pytest.raises(ValueError):
+            _transform_point([12.0], transformer) # type: ignore
+        with pytest.raises(ValueError):
+            _transform_point([12.0, 'a'], transformer) # type: ignore
+        with pytest.raises(TypeError):
+            _transform_point([12.0, 55.0], None) # type: ignore
+
+    def test_transform_bbox_coordinates(self, sample_bbox_latlng: BboxType, wgs84_srs: osr.SpatialReference, utm32n_srs: osr.SpatialReference):
+        """Test _transform_bbox_coordinates."""
+        transformer = osr.CoordinateTransformation(wgs84_srs, utm32n_srs)
+        transformed_coords = _transform_bbox_coordinates(sample_bbox_latlng, transformer)
+        assert isinstance(transformed_coords, list)
+        assert len(transformed_coords) == 4
+        assert all(isinstance(coord, list) and len(coord) == 2 for coord in transformed_coords)
+        # Basic check: transformed coords should not be identical to input lat/lng
+        assert transformed_coords[0] != list(sample_bbox_latlng[0:2])
+
+    def test_transform_bbox_coordinates_invalid(self, wgs84_srs: osr.SpatialReference, utm32n_srs: osr.SpatialReference):
+        """Test _transform_bbox_coordinates with invalid inputs."""
+        transformer = osr.CoordinateTransformation(wgs84_srs, utm32n_srs)
+        with pytest.raises(ValueError):
+            _transform_bbox_coordinates([0, 1, 0], transformer) # type: ignore
+        with pytest.raises(TypeError):
+            _transform_bbox_coordinates([0, 1, 0, 1], None) # type: ignore
+
+    def test_create_polygon_from_points(self):
+        """Test _create_polygon_from_points."""
+        points = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]] # No closing point
+        polygon = _create_polygon_from_points(points)
+        assert isinstance(polygon, ogr.Geometry)
+        assert polygon.GetGeometryName() == "POLYGON"
+        assert polygon.IsValid()
+        # Check if ring is closed
+        ring = polygon.GetGeometryRef(0)
+        assert ring.GetPointCount() == 5
+        assert ring.GetPoint_2D(0) == ring.GetPoint_2D(4)
+
+    def test_create_polygon_from_points_closed(self):
+        """Test _create_polygon_from_points with already closed ring."""
+        points = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]] # Closed
+        polygon = _create_polygon_from_points(points)
+        assert isinstance(polygon, ogr.Geometry)
+        ring = polygon.GetGeometryRef(0)
+        assert ring.GetPointCount() == 5 # Should not add extra point
+
+    def test_create_polygon_from_points_invalid(self):
+        """Test _create_polygon_from_points with invalid inputs."""
+        with pytest.raises(ValueError):
+            _create_polygon_from_points([]) # Empty list
+        with pytest.raises(ValueError):
+            _create_polygon_from_points([[0, 0], [1]]) # Invalid point format
+
+    def test_get_bounds_from_bbox_as_geom(self, utm32n_srs: osr.SpatialReference, wgs84_srs: osr.SpatialReference):
+        """Test _get_bounds_from_bbox_as_geom."""
+        # Bbox roughly around Copenhagen in UTM32N
+        utm_bbox = [680000, 720000, 6090000, 6130000]
+        geom_wgs84 = _get_bounds_from_bbox_as_geom(utm_bbox, utm32n_srs)
+        assert isinstance(geom_wgs84, ogr.Geometry)
+        assert geom_wgs84.GetGeometryName() == "POLYGON"
+        assert geom_wgs84.IsValid()
+        # Check if the resulting geometry has WGS84 SRS
+        geom_srs = geom_wgs84.GetSpatialReference()
+        assert geom_srs is not None
+        # Compare Authority Codes (e.g., 'EPSG', '4326') as a robust check
+        assert geom_srs.GetAuthorityCode(None) == wgs84_srs.GetAuthorityCode(None)
+        assert geom_srs.GetAuthorityName(None) == wgs84_srs.GetAuthorityName(None)
+        # Check if envelope is roughly correct in WGS84
+        envelope = geom_wgs84.GetEnvelope() # lng_min, lng_max, lat_min, lat_max
+        assert 11.8 < envelope[0] < 12.8 # Longitude min
+        assert 12.0 < envelope[1] < 13.0 # Longitude max
+        assert 54.8 < envelope[2] < 55.8 # Latitude min
+        assert 55.0 < envelope[3] < 56.0 # Latitude max
+
+    def test_get_bounds_from_bbox_as_geom_already_wgs84(self, sample_bbox_latlng: BboxType, wgs84_srs: osr.SpatialReference):
+        """Test _get_bounds_from_bbox_as_geom when input is already WGS84."""
+        geom_wgs84 = _get_bounds_from_bbox_as_geom(sample_bbox_latlng, wgs84_srs)
+        assert isinstance(geom_wgs84, ogr.Geometry)
+        # Check if envelope matches input bbox
+        envelope = geom_wgs84.GetEnvelope()
+        np.testing.assert_allclose(envelope, (sample_bbox_latlng[0], sample_bbox_latlng[1], sample_bbox_latlng[2], sample_bbox_latlng[3]))
+
+    def test_get_bounds_from_bbox_as_wkt(self, utm32n_srs: osr.SpatialReference):
+        """Test _get_bounds_from_bbox_as_wkt."""
+        utm_bbox = [680000, 720000, 6090000, 6130000]
+        wkt_wgs84 = _get_bounds_from_bbox_as_wkt(utm_bbox, utm32n_srs)
+        assert isinstance(wkt_wgs84, str)
+        assert wkt_wgs84.startswith("POLYGON")
+        # Quick check for lat/lng like coordinates
+        assert "12." in wkt_wgs84
+        assert "55." in wkt_wgs84
+
+
 # Test Source Functions (Public API and Internals)
 class TestBboxSource:
     """Tests for bbox source functions."""
@@ -450,7 +566,8 @@ class TestBboxSource:
             get_bbox_from_dataset("")
 
     def test_get_bbox_none_input(self):
-        with pytest.raises(TypeError):
+        # Beartype catches the None violation before the internal TypeError
+        with pytest.raises(BeartypeCallHintParamViolation): # Use imported exception directly
             get_bbox_from_dataset(None) # type: ignore
 
     def test_internal_get_bbox_from_raster(self, create_temp_raster):

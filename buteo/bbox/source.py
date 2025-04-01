@@ -216,6 +216,72 @@ def _get_bbox_from_vector_layer(
     return bbox_ogr
 
 
+# Helper for get_bbox_from_dataset
+def _get_bbox_from_opened_dataset(
+    ds_object: Union[gdal.Dataset, ogr.DataSource],
+) -> List[float]:
+    """Extracts bbox from an already opened GDAL/OGR dataset."""
+    if isinstance(ds_object, gdal.Dataset):
+        assert isinstance(ds_object, gdal.Dataset) # Assert for type checker
+        return _get_bbox_from_raster(ds_object)
+
+    assert isinstance(ds_object, ogr.DataSource) # Assert for type checker
+    return _get_bbox_from_vector(ds_object)
+
+
+# Helper for get_bbox_from_dataset
+def _get_bbox_from_path(
+    dataset_path: str,
+) -> List[float]:
+    """Opens a dataset from path and extracts bbox."""
+    if not dataset_path.strip():
+        raise ValueError("Dataset path string cannot be empty.")
+
+    opened_ds: Optional[Union[gdal.Dataset, ogr.DataSource]] = None # Track opened dataset for finally block
+    error_handler_pushed = False
+
+    try:
+        # Suppress GDAL errors during open attempts
+        gdal.PushErrorHandler("CPLQuietErrorHandler")
+        error_handler_pushed = True
+        raster_ds: Optional[gdal.Dataset] = None
+        vector_ds: Optional[ogr.DataSource] = None
+
+        try:
+            # Try opening as raster
+            raster_ds = gdal.Open(dataset_path, gdal.GA_ReadOnly)
+        except RuntimeError: # Catch if gdal.Open raises error for non-raster
+            raster_ds = None
+        finally:
+            # Pop handler regardless of gdal.Open success/failure
+            if error_handler_pushed:
+                gdal.PopErrorHandler()
+                error_handler_pushed = False # Reset flag
+
+        if raster_ds is not None:
+            opened_ds = raster_ds # Assign for finally block cleanup
+            return _get_bbox_from_raster(raster_ds) # Pass specific type
+
+        # If gdal.Open failed or returned None, try ogr.Open
+        vector_ds = ogr.Open(dataset_path, gdal.GA_ReadOnly)
+        if vector_ds is not None:
+            opened_ds = vector_ds # Assign for finally block cleanup
+            return _get_bbox_from_vector(vector_ds) # Pass specific type
+
+        # If both failed
+        raise RuntimeError(f"Could not open dataset as either raster or vector: {dataset_path}")
+
+    finally:
+        # Ensure locally opened datasets are closed
+        if opened_ds is not None:
+            # GDAL Datasets and OGR DataSources are closed by dereferencing in Python's GC
+            opened_ds = None
+        # Ensure error handler is popped if it was pushed and not popped earlier
+        # This check might be redundant now as it's handled in the inner finally, but keep for safety
+        if error_handler_pushed:
+            gdal.PopErrorHandler()
+
+
 @beartype
 def get_bbox_from_dataset(
     dataset: DatasetType,
@@ -223,6 +289,8 @@ def get_bbox_from_dataset(
     """Extracts the OGR bounding box from a raster or vector dataset.
 
     The bounding box is returned in the dataset's native projection.
+
+    Refactored to use helper functions for clarity and reduced complexity.
 
     Parameters
     ----------
@@ -262,61 +330,17 @@ def get_bbox_from_dataset(
     if not isinstance(dataset, (str, gdal.Dataset, ogr.DataSource)):
         raise TypeError(f"Dataset must be a string, gdal.Dataset, or ogr.DataSource. Got: {type(dataset)}")
 
-    opened_locally = False
-    ds_object: Optional[Union[gdal.Dataset, ogr.DataSource]] = None
-    error_handler_pushed = False # Track if error handler was pushed
+    # Input validation (handled by beartype)
 
     try:
-        # Handle already opened datasets
         if isinstance(dataset, (gdal.Dataset, ogr.DataSource)):
-            ds_object = dataset
-            # Narrow type before calling specific function, add asserts for Pylance
-            if isinstance(ds_object, gdal.Dataset):
-                assert isinstance(ds_object, gdal.Dataset) # Assert for type checker
-                return _get_bbox_from_raster(ds_object)
+            return _get_bbox_from_opened_dataset(dataset)
 
-            # Removed unnecessary elif (pylint R1705)
-            assert isinstance(ds_object, ogr.DataSource) # Assert for type checker
-            return _get_bbox_from_vector(ds_object)
+        if isinstance(dataset, str):
+            return _get_bbox_from_path(dataset)
 
-        # Handle path input (must be string here)
-        if not dataset.strip():
-            raise ValueError("Dataset path string cannot be empty.")
-
-        # Suppress GDAL errors during open attempts
-        gdal.PushErrorHandler("CPLQuietErrorHandler")
-        error_handler_pushed = True
-        raster_ds = None
-        vector_ds = None
-
-        try:
-            # Try opening as raster
-            raster_ds = gdal.Open(dataset, gdal.GA_ReadOnly)
-        except RuntimeError: # Catch if gdal.Open raises error for non-raster
-            raster_ds = None
-        finally:
-            # Pop handler regardless of gdal.Open success/failure
-            if error_handler_pushed:
-                gdal.PopErrorHandler()
-                error_handler_pushed = False
-
-        if raster_ds is not None:
-            opened_locally = True
-            ds_object = raster_ds
-            assert isinstance(ds_object, gdal.Dataset)
-            return _get_bbox_from_raster(ds_object)
-        else:
-            # If gdal.Open failed or returned None, try ogr.Open
-            # No need for error handler here, ogr.Open usually returns None on failure
-            vector_ds = ogr.Open(dataset, gdal.GA_ReadOnly)
-            if vector_ds is not None:
-                opened_locally = True
-                ds_object = vector_ds
-                assert isinstance(ds_object, ogr.DataSource)
-                return _get_bbox_from_vector(ds_object)
-            else:
-                # If both failed
-                raise RuntimeError(f"Could not open dataset as either raster or vector: {dataset}")
+        # Should be unreachable due to beartype validation, but included for safety
+        raise TypeError(f"Unexpected dataset type: {type(dataset)}")
 
     except (ValueError, TypeError, RuntimeError) as e:
         # Re-raise exceptions from internal functions or open attempts
@@ -324,14 +348,6 @@ def get_bbox_from_dataset(
     except Exception as e:
         # Catch unexpected errors
         raise RuntimeError(f"An unexpected error occurred processing dataset: {e!s}") from e
-    finally:
-        # Ensure locally opened datasets are closed
-        if opened_locally and ds_object is not None:
-            # GDAL Datasets and OGR DataSources are closed by dereferencing
-            ds_object = None
-        # Ensure error handler is popped if it was pushed and not popped earlier
-        if error_handler_pushed:
-            gdal.PopErrorHandler()
 
 
 def _get_utm_zone_from_bbox(
@@ -376,9 +392,10 @@ def _get_utm_zone_from_bbox(
     # Input validation (checks format and lat/lng bounds)
     if not _check_is_valid_bbox_latlng(bbox_ogr_latlng):
         # Reuse validation error message if applicable
+        # Check if it's a valid bbox first
         if not _check_is_valid_bbox(bbox_ogr_latlng):
             raise ValueError(f"Invalid bbox format: {bbox_ogr_latlng}")
-        # Simplified else: if it's a valid bbox but not lat/lng (pylint R1720)
+        # If it's a valid bbox but not lat/lng
         raise ValueError(f"Bbox is not in valid WGS84 lat/long format: {bbox_ogr_latlng}")
 
     try:

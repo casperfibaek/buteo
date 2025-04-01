@@ -94,7 +94,8 @@ class TestVectorCreateFromBbox:
 
     def test_invalid_bbox(self):
         """Test with invalid bbox."""
-        with pytest.raises(AssertionError):
+        # The function should raise ValueError for invalid bbox format
+        with pytest.raises(ValueError):
             vector_create_from_bbox([0, 1])  # Invalid bbox length
 
 class TestVectorCreateFromWkt:
